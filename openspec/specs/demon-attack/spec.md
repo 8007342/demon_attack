@@ -31,4 +31,4 @@ The Flutter app SHALL embed a Flame game scene as its background.
 
 #### Scenario: Rendering the landing page
 - **WHEN** Flutter loads the landing page
-- **THEN** Flame renders a quiet static starfield behind the content without audio or animation
+- **THEN** Flame renders a clearly visible, quiet static starfield behind the content without audio or animation

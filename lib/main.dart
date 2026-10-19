@@ -39,7 +39,9 @@ class LandingPage extends StatelessWidget {
     body: Stack(
       children: [
         Positioned.fill(
-          child: ExcludeSemantics(child: GameWidget(game: QuietSky())),
+          child: ExcludeSemantics(
+            child: GameWidget.controlled(gameFactory: QuietSky.new),
+          ),
         ),
         SafeArea(
           child: LayoutBuilder(
@@ -232,16 +234,20 @@ class QuietSky extends FlameGame {
   void render(Canvas canvas) {
     super.render(canvas);
     final random = math.Random(1982);
-    final paint = Paint()..color = const Color(0xFF263038);
-    for (var i = 0; i < 65; i++) {
+    final paint = Paint();
+    for (var i = 0; i < 95; i++) {
       final point = Offset(
         random.nextDouble() * size.x,
         random.nextDouble() * size.y,
       );
-      canvas.drawRect(
-        Rect.fromLTWH(point.dx, point.dy, i % 4 == 0 ? 2 : 1, 1),
-        paint,
-      );
+      final bright = i % 7 == 0;
+      paint.color = bright ? const Color(0xFFB5C8BC) : const Color(0xFF718895);
+      final radius = bright ? 1.8 : 1.2;
+      canvas.drawCircle(point, radius, paint);
+      if (bright) {
+        paint.color = const Color(0x228EAE9C);
+        canvas.drawCircle(point, 4, paint);
+      }
     }
     final glow = Paint()
       ..shader =
