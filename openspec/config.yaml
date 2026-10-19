@@ -1,0 +1,6 @@
+schema: spec-driven
+context: |
+  Demon Attack is inspired by Atari's 1982 title.
+  Stack: Flutter with Flame, targeting mobile web, Android and iOS.
+  First release: quiet dark Under Construction landing page for the Oct 20 live coding event.
+  Keep the interface responsive, accessible, and visually restrained.
