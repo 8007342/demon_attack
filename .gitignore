@@ -49,3 +49,11 @@ app.*.map.json
 
 # Local forge session context
 .forge-startup-context.md
+
+# Deployment dependencies and local caches
+node_modules/
+.wrangler/
+.cache/
+.dev.vars
+.env
+.env.*
