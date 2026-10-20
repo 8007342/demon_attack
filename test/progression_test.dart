@@ -44,7 +44,8 @@ void main() {
           expect(events, contains('wave'));
           expect(events, isNot(contains('victory')));
         } else {
-          expect(model.mode, RunMode.levelClear);
+          expect(model.mode, RunMode.salvage);
+          reach(model, RunMode.levelClear);
           tick(model, 3.8);
           expect(model.mode, RunMode.levelClear);
           expect(model.level, level);

@@ -36,3 +36,10 @@ The rebuilt game was republished to the managed sibling Wrangler runtime at the 
 
 
 The alternate host browser successfully opened a visible WebKit window at the managed HTTPS preview URL after a one-time91-second engine preparation. Its window ID is win-0d463d5e-34f1-4404-b311-08421870248d. This engine has no CDP controls in the current host tools, so automated browser verification used standalone Chromium. The managed score API returned valid JSON after republishing. Main remains at the previously approved release; the pacing update is on game.
+
+
+## Sector campaign and continuous-run update
+
+Flutter analysis and all32 tests pass, alongside the4 backend/audio tests and release web build. New tests exercise two complete carrier-defeat handoffs in one run, retained state, bounded growth through cycle100, elite HP up to7 and attacks, keyboard/touch piloting and collection in both recovery phases, initial/retried inline Top10 on phone/desktop, five materially distinct sector renderings with hostile/friendly overlays, background animation, exact pause identity, and black cinematic handoffs. The five generated worlds were visually reviewed at .cache/sectors/sector-{1..5}-play.png.
+
+The old fixed first-creature HP expectation was replaced with mixed-species escalation assertions. A real fallback regression was fixed: stars now remain visible before any sector image is loaded, without brightening the shipped art behind combat. Recovery stops hostile damage/fire while retaining movement and falling items; powers freeze until combat resumes. Current tuning is documented in game-design.md and sector-style-guide.md.

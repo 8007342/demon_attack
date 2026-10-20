@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'game/model.dart';
+import 'game/campaign_story.dart';
 import 'game/scene.dart';
 import 'services/audio.dart';
 import 'services/scores.dart';
@@ -73,7 +74,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   final focus = FocusNode();
   late final scores = widget.scoreService ?? ScoreService();
   bool muted = false, loading = false, submitted = false;
-  String? screen, error;
+  String? screen, error, boardError;
+  bool boardLoading = true;
+  int boardRequest = 0;
   List<ScoreEntry> board = [];
   final initials = [0, 0, 0];
   final wheels = List.generate(
@@ -90,6 +93,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     scene = DemonScene(model, _tick);
     audioCue('menu', 1, 1, 0);
+    _refreshBoard();
   }
 
   @override
@@ -126,6 +130,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             (model.boss?.phase ?? 0) + 1,
             model.cycle,
           );
+        case 'salvage':
+          audioSfx('wave');
         case 'levelclear':
           audioCue('levelclear', model.level, 1, model.cycle);
         case 'travel':
@@ -209,28 +215,36 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     return KeyEventResult.ignored;
   }
 
-  Future<void> _loadScores({bool enter = false}) async {
+  Future<void> _refreshBoard() async {
+    final request = ++boardRequest;
     setState(() {
-      screen = enter ? 'entry' : 'scores';
-      loading = true;
-      error = null;
+      boardLoading = true;
+      boardError = null;
     });
     try {
       final result = await scores.load();
-      if (mounted) {
+      if (mounted && request == boardRequest) {
         setState(() {
           board = result;
-          loading = false;
+          boardLoading = false;
         });
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && request == boardRequest) {
         setState(() {
-          loading = false;
-          error = 'The score relay is unavailable.';
+          boardLoading = false;
+          boardError = 'The score relay is unavailable.';
         });
       }
     }
+  }
+
+  void _enterInitials() {
+    setState(() {
+      screen = 'entry';
+      error = null;
+      loading = false;
+    });
   }
 
   Future<void> _submit() async {
@@ -248,8 +262,18 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           board = result;
           loading = false;
           submitted = true;
-          screen = 'scores';
+          screen = null;
+          boardRequest++;
+          boardLoading = false;
+          boardError = null;
+          model.mode = RunMode.title;
+          model.events.clear();
+          keys.clear();
+          scene.keyboardDirection = 0;
         });
+        audioResume();
+        audioCue('menu', 1, 1, 0);
+        focus.requestFocus();
       }
     } catch (_) {
       if (mounted) {
@@ -372,83 +396,34 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       ),
       Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(30, 75, 30, 65),
+          key: const ValueKey('landing-scroll'),
+          padding: const EdgeInsets.fromLTRB(24, 84, 24, 70),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _label('TRANSMISSION 001 · KRYBOR', mint, size: 9),
-                const SizedBox(height: 24),
-                _sprite(0, 0, 84),
-                const SizedBox(height: 18),
-                const FittedBox(
-                  child: Text(
-                    'DEMON',
-                    style: TextStyle(
-                      fontSize: 74,
-                      height: .95,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 10,
-                      color: Color(0xFFE9F2F2),
-                    ),
+            constraints: const BoxConstraints(maxWidth: 960),
+            child: bounds.maxWidth > 820
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(child: _titleHero()),
+                      const SizedBox(width: 64),
+                      Expanded(child: _landingScores()),
+                    ],
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 420),
+                        child: _titleHero(),
+                      ),
+                      const SizedBox(height: 36),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 380),
+                        child: _landingScores(),
+                      ),
+                    ],
                   ),
-                ),
-                const FittedBox(
-                  child: Text(
-                    'ATTACK',
-                    style: TextStyle(
-                      fontSize: 66,
-                      height: 1.05,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 10,
-                      color: mint,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 23),
-                _label(
-                  'THE SWARM IS ALIVE.',
-                  const Color(0xFFA7B6C8),
-                  size: 10,
-                ),
-                const SizedBox(height: 34),
-                SizedBox(
-                  width: 280,
-                  child: FilledButton(
-                    onPressed: _start,
-                    child: const Text('START GAME  →'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: 280,
-                  child: OutlinedButton(
-                    onPressed: () => _loadScores(),
-                    child: const Text('TOP 10 SCORES'),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.swipe, size: 16, color: Color(0xFF6F8296)),
-                    const SizedBox(width: 10),
-                    _label(
-                      'DRAG TO MOVE  /  ← →',
-                      const Color(0xFF8D9EB3),
-                      size: 9,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _label(
-                  'AUTO FIRE · THREE LIVES · NO MERCY',
-                  const Color(0xFF60758C),
-                  size: 8,
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -486,6 +461,181 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       ),
     ],
   );
+  Widget _titleHero() => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      _label('TRANSMISSION 001 · KRYBOR', mint, size: 9),
+      const SizedBox(height: 24),
+      _sprite(0, 0, 84),
+      const SizedBox(height: 18),
+      const FittedBox(
+        child: Text(
+          'DEMON',
+          style: TextStyle(
+            fontSize: 74,
+            height: .95,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 10,
+            color: Color(0xFFE9F2F2),
+          ),
+        ),
+      ),
+      const FittedBox(
+        child: Text(
+          'ATTACK',
+          style: TextStyle(
+            fontSize: 66,
+            height: 1.05,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 10,
+            color: mint,
+          ),
+        ),
+      ),
+      const SizedBox(height: 23),
+      _label('THE SWARM IS ALIVE.', const Color(0xFFA7B6C8), size: 10),
+      const SizedBox(height: 34),
+      SizedBox(
+        width: 280,
+        child: FilledButton(
+          onPressed: _start,
+          child: const Text('START GAME  →'),
+        ),
+      ),
+      const SizedBox(height: 30),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.swipe, size: 16, color: Color(0xFF6F8296)),
+          const SizedBox(width: 10),
+          _label('DRAG TO MOVE  /  ← →', const Color(0xFF8D9EB3), size: 9),
+        ],
+      ),
+      const SizedBox(height: 10),
+      _label(
+        'AUTO FIRE · THREE LIVES · NO MERCY',
+        const Color(0xFF60758C),
+        size: 8,
+      ),
+    ],
+  );
+
+  Widget _landingScores() => Container(
+    key: const ValueKey('landing-top10'),
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: const Color(0xC9081220),
+      border: Border.all(color: const Color(0xFF2B4254)),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.emoji_events_outlined, color: gold, size: 18),
+            const SizedBox(width: 10),
+            const Text(
+              'TOP 10',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 3,
+              ),
+            ),
+            const Spacer(),
+            IconButton(
+              tooltip: 'Refresh scores',
+              onPressed: boardLoading ? null : _refreshBoard,
+              icon: const Icon(Icons.refresh, size: 17, color: mint),
+            ),
+          ],
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _label(
+            'KRYBOR HALL OF FAME',
+            const Color(0xFF8AA1B8),
+            size: 8,
+          ),
+        ),
+        const SizedBox(height: 18),
+        if (boardLoading)
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        if (!boardLoading && boardError != null) ...[
+          Text(
+            boardError!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: gold, fontSize: 11),
+          ),
+          TextButton(onPressed: _refreshBoard, child: const Text('RETRY')),
+        ],
+        if (!boardLoading && boardError == null && board.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: _label(
+              'NO SIGNALS YET. BE THE FIRST.',
+              const Color(0xFF8AA1B8),
+              size: 9,
+            ),
+          ),
+        if (!boardLoading && boardError == null)
+          ...List.generate(
+            board.length,
+            (i) => Container(
+              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 2),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFF1E3043))),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 28,
+                    child: Text(
+                      '${i + 1}'.padLeft(2, '0'),
+                      style: TextStyle(
+                        color: i == 0 ? gold : const Color(0xFF647D94),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    board[i].initials,
+                    style: TextStyle(
+                      color: i == 0 ? gold : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 4,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    board[i].score.toString().padLeft(6, '0'),
+                    style: const TextStyle(
+                      color: mint,
+                      fontSize: 12,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (submitted)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: _label('SIGNAL RECEIVED', mint, size: 9),
+          ),
+      ],
+    ),
+  );
+
   Widget _cabinet(BoxConstraints bounds) {
     // Flame is rendered once behind this transparent arena; overlays stay in logical alignment.
     return Column(
@@ -526,7 +676,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _label(
-                    'LV ${model.level.toString().padLeft(2, '0')} / RUN ${model.cycle + 1}',
+                    'LV ${model.level.toString().padLeft(2, '0')} / CYCLE ${model.cycle + 1}',
                     mint,
                     size: 9,
                   ),
@@ -617,7 +767,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       [
                         if (!submitted)
                           FilledButton(
-                            onPressed: () => _loadScores(enter: true),
+                            onPressed: _enterInitials,
                             child: const Text('RECORD SCORE'),
                           ),
                         const SizedBox(height: 12),
@@ -650,15 +800,20 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     final fadeOut = Curves.easeInCubic.transform(((1 - p) / .18).clamp(0, 1));
     final opacity = math.min(fadeIn, fadeOut);
     final clear = phase == RunMode.levelClear || phase == RunMode.victory;
+    final salvage = phase == RunMode.salvage;
     final travel = phase == RunMode.travel;
-    final heading = clear
+    final heading = salvage
+        ? 'SECTOR CLEAR · RECOVERY WINDOW'
+        : clear
         ? 'SECTOR SECURED'
         : travel
         ? 'JUMP DRIVE ACTIVE'
         : model.waveTransition
         ? 'SWARM REINFORCEMENTS'
         : 'INCOMING TRANSMISSION';
-    final detail = clear
+    final detail = salvage
+        ? 'PILOT TO COLLECT · ${model.transitionLeft.ceil()}s LEFT'
+        : clear
         ? 'ALL WAVES CLEARED · ${model.score.toString().padLeft(6, '0')} PTS'
         : travel
         ? 'NEXT: LV ${model.nextLevel.toString().padLeft(2, '0')} · ${model.nextLevelName}'
@@ -667,7 +822,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         : 'WAVE ${model.wave} / ${model.wavesPerLevel} · STAY ALIVE';
     return IgnorePointer(
       child: Align(
-        alignment: Alignment(0, model.waveTransition ? -.25 : .25),
+        alignment: Alignment(0, model.waveTransition || salvage ? -.25 : .25),
         child: Opacity(
           opacity: opacity,
           child: Transform.translate(
@@ -716,6 +871,22 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       backgroundColor: const Color(0xFF24374B),
                     ),
                   ),
+                  if (!model.waveTransition && !salvage) ...[
+                    const SizedBox(height: 14),
+                    Text(
+                      travel
+                          ? CampaignStory.travel(model.level, model.cycle)
+                          : clear
+                          ? CampaignStory.victories[model.level - 1]
+                          : CampaignStory.arrival(model.level, model.cycle),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        height: 1.6,
+                        color: Color(0xFF9AAEC3),
+                      ),
+                    ),
+                  ],
                   if (travel) ...[
                     const SizedBox(height: 12),
                     _label(
@@ -745,7 +916,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       },
       onPointerMove: (e) {
         if (touch != e.pointer) return;
-        if (model.combat) {
+        if (model.canPilot) {
           model.moveBy(e.delta.dx / bounds.maxWidth * 360 * 1.3);
         }
         setState(() {
@@ -782,7 +953,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     size: 10,
                   ),
                   const SizedBox(height: 9),
-                  _label('AUTO FIRE ENGAGED', const Color(0xFF536F82), size: 7),
+                  _label(
+                    model.canPilot && !model.combat
+                        ? 'COLLECT POWERUPS · WEAPONS SAFE'
+                        : 'AUTO FIRE ENGAGED',
+                    const Color(0xFF536F82),
+                    size: 7,
+                  ),
                 ],
               ),
             ),
@@ -860,7 +1037,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               _label('KRYBOR HALL OF FAME', mint, size: 9),
               const SizedBox(height: 14),
               Text(
-                screen == 'entry' ? 'LEAVE YOUR MARK' : 'TOP 10',
+                'LEAVE YOUR MARK',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 32,
@@ -869,152 +1046,85 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 ),
               ),
               const SizedBox(height: 20),
-              if (screen == 'entry') ...[
-                _label(
-                  'SCORE ${model.score.toString().padLeft(6, '0')}',
-                  gold,
-                  size: 17,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    3,
-                    (index) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 9),
-                      child: Column(
-                        children: [
-                          IconButton(
-                            tooltip: 'Previous character ${index + 1}',
-                            onPressed: loading
-                                ? null
-                                : () => _rotateInitial(index, -1),
-                            icon: const Icon(Icons.arrow_drop_up, color: mint),
+
+              _label(
+                'SCORE ${model.score.toString().padLeft(6, '0')}',
+                gold,
+                size: 17,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  3,
+                  (index) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 9),
+                    child: Column(
+                      children: [
+                        IconButton(
+                          tooltip: 'Previous character ${index + 1}',
+                          onPressed: loading
+                              ? null
+                              : () => _rotateInitial(index, -1),
+                          icon: const Icon(Icons.arrow_drop_up, color: mint),
+                        ),
+                        Container(
+                          width: 58,
+                          height: 105,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF122232),
+                            border: Border.all(color: const Color(0xFF405A6D)),
                           ),
-                          Container(
-                            width: 58,
-                            height: 105,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF122232),
-                              border: Border.all(
-                                color: const Color(0xFF405A6D),
-                              ),
-                            ),
-                            child: ListWheelScrollView.useDelegate(
-                              key: ValueKey('wheel-$index'),
-                              controller: wheels[index],
-                              physics: loading
-                                  ? const NeverScrollableScrollPhysics()
-                                  : const FixedExtentScrollPhysics(),
-                              itemExtent: 36,
-                              perspective: .004,
-                              onSelectedItemChanged: (value) =>
-                                  initials[index] = value % 36,
-                              childDelegate: ListWheelChildLoopingListDelegate(
-                                children: List.generate(
-                                  36,
-                                  (i) => Center(
-                                    child: Text(
-                                      alphabet[i],
-                                      style: const TextStyle(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                        color: mint,
-                                      ),
+                          child: ListWheelScrollView.useDelegate(
+                            key: ValueKey('wheel-$index'),
+                            controller: wheels[index],
+                            physics: loading
+                                ? const NeverScrollableScrollPhysics()
+                                : const FixedExtentScrollPhysics(),
+                            itemExtent: 36,
+                            perspective: .004,
+                            onSelectedItemChanged: (value) =>
+                                initials[index] = value % 36,
+                            childDelegate: ListWheelChildLoopingListDelegate(
+                              children: List.generate(
+                                36,
+                                (i) => Center(
+                                  child: Text(
+                                    alphabet[i],
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: mint,
                                     ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                          IconButton(
-                            tooltip: 'Next character ${index + 1}',
-                            onPressed: loading
-                                ? null
-                                : () => _rotateInitial(index, 1),
-                            icon: const Icon(
-                              Icons.arrow_drop_down,
-                              color: mint,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _label(
-                  'THREE CHARACTERS. THAT’S YOUR LEGEND.',
-                  const Color(0xFF7C91A6),
-                  size: 8,
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: loading ? null : _submit,
-                  child: Text(loading ? 'TRANSMITTING…' : 'SAVE SCORE'),
-                ),
-              ] else ...[
-                if (loading)
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: CircularProgressIndicator(),
-                  ),
-                if (!loading && error == null && board.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(26),
-                    child: _label(
-                      'NO SIGNALS YET. BE THE FIRST.',
-                      const Color(0xFF8B9EB3),
-                    ),
-                  ),
-                if (!loading && error == null)
-                  ...List.generate(
-                    board.length,
-                    (i) => Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 10,
-                      ),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Color(0xFF223447)),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 38,
-                            child: _label(
-                              '${i + 1}'.padLeft(2, '0'),
-                              i == 0 ? gold : const Color(0xFF6A8198),
-                            ),
-                          ),
-                          Text(
-                            board[i].initials,
-                            style: TextStyle(
-                              letterSpacing: 5,
-                              fontWeight: FontWeight.bold,
-                              color: i == 0 ? gold : Colors.white,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            board[i].score.toString().padLeft(6, '0'),
-                            style: const TextStyle(
-                              color: mint,
-                              letterSpacing: 2,
-                            ),
-                          ),
-                        ],
-                      ),
+                        IconButton(
+                          tooltip: 'Next character ${index + 1}',
+                          onPressed: loading
+                              ? null
+                              : () => _rotateInitial(index, 1),
+                          icon: const Icon(Icons.arrow_drop_down, color: mint),
+                        ),
+                      ],
                     ),
                   ),
-                if (submitted)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: _label('SIGNAL RECEIVED', mint, size: 9),
-                  ),
-              ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _label(
+                'THREE CHARACTERS. THAT’S YOUR LEGEND.',
+                const Color(0xFF7C91A6),
+                size: 8,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: loading ? null : _submit,
+                child: Text(loading ? 'TRANSMITTING…' : 'SAVE SCORE'),
+              ),
               if (error != null) ...[
                 const SizedBox(height: 18),
                 Text(
@@ -1026,11 +1136,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     height: 1.7,
                   ),
                 ),
-                if (screen == 'scores')
-                  TextButton(
-                    onPressed: () => _loadScores(),
-                    child: const Text('RETRY'),
-                  ),
               ],
               const SizedBox(height: 24),
               TextButton(

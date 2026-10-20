@@ -16,7 +16,7 @@ void main() {
       await tester.pump();
       expect(find.text('DEMON'), findsOneWidget);
       expect(find.text('ATTACK'), findsOneWidget);
-      expect(find.text('TOP 10 SCORES'), findsOneWidget);
+      expect(find.text('TOP 10'), findsOneWidget);
       expect(find.text('UNDER CONSTRUCTION'), findsNothing);
       final start = find.text('START GAME  →');
       expect(start, findsOneWidget);
@@ -24,7 +24,7 @@ void main() {
       await tester.tap(start);
       await tester.pump();
       expect(find.text('SCORE'), findsOneWidget);
-      expect(find.text('LV 01 / RUN 1'), findsOneWidget);
+      expect(find.text('LV 01 / CYCLE 1'), findsOneWidget);
       expect(find.text('INCOMING TRANSMISSION'), findsOneWidget);
       expect(find.text('◀     SLIDE TO PILOT     ▶'), findsOneWidget);
       expect(find.byTooltip('Pause game'), findsOneWidget);

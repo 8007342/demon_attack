@@ -5,6 +5,7 @@ enum RunMode {
   playing,
   paused,
   transition,
+  salvage,
   levelClear,
   travel,
   victory,
@@ -14,12 +15,15 @@ enum RunMode {
 enum Power { spread, rapid, shield }
 
 class Demon {
-  Demon(this.x, this.y, this.kind, this.maxHp, this.seed)
+  Demon(this.x, this.y, this.kind, this.maxHp, this.seed, {this.elite = false})
     : hp = maxHp,
       homeX = x,
       homeY = y;
   double x, y, homeX, homeY;
   final int kind, maxHp;
+  final bool elite;
+  int get moltStage => maxHp - hp;
+  double attackLeft = 2.4;
   final double seed;
   int hp;
   double dive = 0, targetX = 0, flash = 0, telegraph = 0;
@@ -84,12 +88,18 @@ class ArcadeModel {
   double _fire = 0, _enemyFire = 1.5, _dive = 3, _flock = 0, _accumulator = 0;
   double get speed => 1 + math.min(cycle, 8) * .1;
   bool get combat => mode == RunMode.playing;
+  bool get canPilot =>
+      combat ||
+      mode == RunMode.salvage ||
+      (mode == RunMode.transition && wave > 1);
   bool get isBoss => boss != null;
-  int get wavesPerLevel => level == 5 ? 1 : 3 + ((level - 1) ~/ 2);
+  int get wavesPerLevel =>
+      level == 5 ? 1 : 3 + ((level - 1) ~/ 2) + math.min(cycle, 3);
   int get nextLevel => level == 5 ? 1 : level + 1;
   RunMode get presentationMode => mode == RunMode.paused ? _beforePause : mode;
   bool get cinematic => [
     RunMode.transition,
+    RunMode.salvage,
     RunMode.levelClear,
     RunMode.travel,
     RunMode.victory,
@@ -113,6 +123,7 @@ class ArcadeModel {
   ][level - 1];
   String get banner => switch (presentationMode) {
     RunMode.victory => 'CARRIER DESTROYED',
+    RunMode.salvage => 'COLLECT SALVAGE',
     RunMode.levelClear => '$levelName SECURED',
     RunMode.travel => 'APPROACHING $nextLevelName',
     _ =>
@@ -158,20 +169,27 @@ class ArcadeModel {
     _dive = 3;
     _flock = 2;
     if (boss == null) {
-      final count = 6 + level * 2 + (wave - 1) * 2;
+      final count = math.min(
+        24,
+        6 + level * 2 + (wave - 1) * 2 + math.min(cycle, 4) * 2,
+      );
       for (var i = 0; i < count; i++) {
         // Later waves mix previously encountered creatures into the native flock.
-        final kind = wave > 1 && i % 4 == 0
+        final kind = cycle > 0
+            ? (i + wave + level) % 4
+            : wave > 1 && i % 4 == 0
             ? math.max(0, level - 2)
             : level - 1;
-        final hp = 1 + (kind ~/ 2) + math.min(cycle, 3);
+        final elite = cycle > 0 && (i + wave) % 5 == 0;
+        final hp = 1 + (kind ~/ 2) + math.min(cycle, 3) + (elite ? 2 : 0);
         demons.add(
           Demon(
-            50 + (i % 5) * 64.0,
-            70 + (i ~/ 5) * 48.0,
+            38 + (i % 6) * 56.0,
+            70 + (i ~/ 6) * 48.0,
             kind,
             hp.toInt(),
             i * 1.7 + wave * .6,
+            elite: elite,
           ),
         );
       }
@@ -194,9 +212,8 @@ class ArcadeModel {
       events.add('wave');
     } else {
       clearedLevel = level;
-      pickups.clear();
-      _enterPhase(RunMode.levelClear, 4);
-      events.add('levelclear');
+      _enterPhase(RunMode.salvage, 2);
+      events.add('salvage');
     }
   }
 
@@ -242,10 +259,19 @@ class ArcadeModel {
       b.age += dt;
     }
     blasts.removeWhere((b) => b.age > .55);
+    if (canPilot) {
+      final delta = targetX - shipX;
+      shipX += delta.clamp(-330 * dt, 330 * dt);
+      _updatePickups(dt, mode == RunMode.salvage ? 144 : 64);
+    }
     if (cinematic) {
       transitionLeft = math.max(0, transitionLeft - dt);
       if (transitionLeft <= 0) {
-        if (mode == RunMode.levelClear || mode == RunMode.victory) {
+        if (mode == RunMode.salvage) {
+          pickups.clear();
+          _enterPhase(RunMode.levelClear, 4);
+          events.add('levelclear');
+        } else if (mode == RunMode.levelClear || mode == RunMode.victory) {
           _enterPhase(RunMode.travel, 4);
           events.add('travel');
         } else if (mode == RunMode.travel) {
@@ -261,8 +287,6 @@ class ArcadeModel {
     }
     if (!combat) return;
     levelClock += dt;
-    final delta = targetX - shipX;
-    shipX += delta.clamp(-330 * dt, 330 * dt);
     invulnerable = math.max(0, invulnerable - dt);
     powerLeft = math.max(0, powerLeft - dt);
     if (powerLeft == 0) power = null;
@@ -280,14 +304,6 @@ class ArcadeModel {
     }
     _updateDemons(dt);
     _updateBoss(dt);
-    for (final p in pickups) {
-      p.y += 64 * dt;
-      if ((p.x - shipX).abs() < 22 && (p.y - shipY).abs() < 23) {
-        collect(p.power);
-        p.y = height + 20;
-      }
-    }
-    pickups.removeWhere((p) => p.y > height + 10);
     for (final s in shots) {
       s.x += s.vx * dt;
       s.y += s.vy * dt;
@@ -301,26 +317,68 @@ class ArcadeModel {
     }
   }
 
+  void _updatePickups(double dt, double fallSpeed) {
+    for (final p in pickups) {
+      p.y += fallSpeed * dt;
+      if ((p.x - shipX).abs() < 22 && (p.y - shipY).abs() < 23) {
+        collect(p.power);
+        p.y = height + 20;
+      }
+    }
+    pickups.removeWhere((p) => p.y > height + 10);
+  }
+
+  void _hostile(Shot shot) {
+    if (shots.where((s) => s.hostile).length < 120) shots.add(shot);
+  }
+
   void _updateDemons(double dt) {
     _dive -= dt;
-    if (_dive <= 0 && demons.isNotEmpty) {
-      final d = demons[random.nextInt(demons.length)];
+    final readyDivers = demons
+        .where((d) => d.dive == 0 && d.telegraph <= 0)
+        .toList();
+    if (_dive <= 0 && readyDivers.isNotEmpty) {
+      final d = readyDivers[random.nextInt(readyDivers.length)];
       if (level >= 2 || cycle > 0) {
-        d.telegraph = .7;
+        d.telegraph = d.elite ? .55 : .7;
         d.targetX = shipX;
       }
-      _dive = (4.2 - level * .45) / speed;
+      _dive = math.max(
+        .8,
+        (4.2 - level * .45 - math.min(cycle, 5) * .22) / speed,
+      );
     }
     for (final d in demons) {
       d.flash = math.max(0, d.flash - dt);
+      if (d.elite && dt > 0) {
+        d.attackLeft -= dt;
+        if (d.attackLeft <= 0) {
+          final aim = ((shipX - d.x) * .3).clamp(-70.0, 70.0);
+          for (final offset in [-32.0, 0.0, 32.0]) {
+            _hostile(
+              Shot(d.x, d.y + 12, aim + offset, 130 * speed, hostile: true),
+            );
+          }
+          if (d.dive == 0 && d.telegraph <= 0) {
+            d.telegraph = .55;
+            d.targetX = shipX;
+          }
+          d.attackLeft = math.max(2.0, 4 - math.min(cycle, 5) * .3);
+        }
+      }
       if (d.telegraph > 0) {
         d.telegraph -= dt;
         if (d.telegraph <= 0) d.dive = .001;
       }
       if (d.dive > 0) {
-        d.dive += dt * speed * (d.angry ? 1.3 : 1);
-        d.x += (d.targetX - d.x) * dt * 1.8;
-        d.y += (115 + d.kind * 16) * dt * speed * (d.angry ? 1.3 : 1);
+        d.dive += dt * speed * (d.angry ? 1.3 : 1) * (d.elite ? 1.15 : 1);
+        d.x += (d.targetX - d.x) * dt * (d.elite ? 2.1 : 1.8);
+        d.y +=
+            (115 + d.kind * 16) *
+            dt *
+            speed *
+            (d.angry ? 1.3 : 1) *
+            (d.elite ? 1.15 : 1);
         if (d.y > height + 20) {
           d.dive = 0;
           d.y = d.homeY;
@@ -342,7 +400,7 @@ class ArcadeModel {
     if (_enemyFire <= 0 && demons.isNotEmpty) {
       final d = demons[random.nextInt(demons.length)];
       final aim = ((shipX - d.x) * .22).clamp(-65.0, 65.0);
-      shots.add(
+      _hostile(
         Shot(d.x, d.y + 12, aim, (100 + level * 13) * speed, hostile: true),
       );
       _enemyFire = math.max(.45, 1.8 - level * .18 - cycle * .05);
@@ -377,7 +435,7 @@ class ArcadeModel {
     // Fan attacks force positioning without tracking a player after launch.
     if ((levelClock * 1.1).floor() != ((levelClock - dt) * 1.1).floor()) {
       for (var i = -1; i <= 1; i++) {
-        shots.add(
+        _hostile(
           Shot(
             b.x,
             b.y + 42,
@@ -426,6 +484,7 @@ class ArcadeModel {
   }
 
   void hitDemon(Demon d) {
+    if (!combat || !demons.contains(d)) return;
     d.hp--;
     d.flash = .12;
     if (d.hp <= 0) {
@@ -439,8 +498,8 @@ class ArcadeModel {
       }
     } else {
       events.add('hit');
-      if (d.angry) {
-        d.telegraph = .7;
+      if (d.angry && d.dive == 0 && d.telegraph <= 0) {
+        d.telegraph = d.elite ? .55 : .7;
         d.targetX = shipX;
       }
     }

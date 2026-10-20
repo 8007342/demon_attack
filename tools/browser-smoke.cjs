@@ -38,6 +38,10 @@ async function textVisible(page, value) {
       const context = await browser.newContext({viewport, hasTouch: name === 'phone'});
       const page = await context.newPage();
       const midi = [];
+      const scoreLoads = [];
+      page.on('response', response => {
+        if (new URL(response.url()).pathname === '/api/scores' && response.request().method() === 'GET') scoreLoads.push(response);
+      });
       page.on('response', response => { if (response.url().endsWith('.mid')) midi.push({url: response.url(), status: response.status()}); });
       page.on('pageerror', error => errors.push(`${name}: ${error.message}`));
       page.on('console', message => {
@@ -46,6 +50,24 @@ async function textVisible(page, value) {
       await page.goto(process.env.URL || 'http://127.0.0.1:8765', {waitUntil: 'networkidle'});
       await page.locator('flt-glass-pane, flutter-view').first().waitFor({state: 'attached'});
       await page.waitForTimeout(1800);
+      await semantics(page);
+      assert(scoreLoads.length > 0, `${name}: landing should automatically request global scores`);
+      assert.equal(scoreLoads.at(-1).status(), 200, `${name}: landing score GET must succeed`);
+      const board = await scoreLoads.at(-1).json();
+      assert(Array.isArray(board.scores) && board.scores.length <= 10, `${name}: bounded Top10 response`);
+      assert.equal(await page.getByRole('button', {name: 'TOP 10 SCORES', exact: true}).count(), 0, `${name}: no separate leaderboard navigation`);
+      assert(await textVisible(page, 'START GAME'), `${name}: inline scores preserve immediate Start`);
+      const foundInitials = new Set();
+      let boardHeading = await textVisible(page, 'TOP 10');
+      for (let step = 0; step < (name === 'phone' ? 5 : 1); step++) {
+        for (const entry of board.scores) if (await page.getByText(entry.initials, {exact: true}).count()) foundInitials.add(entry.initials);
+        boardHeading ||= await textVisible(page, 'TOP 10');
+        if (name === 'phone') { await page.mouse.move(viewport.width / 2, viewport.height / 2); await page.mouse.wheel(0, 330); await page.waitForTimeout(150); }
+      }
+      assert(boardHeading, `${name}: Top10 belongs directly on landing`);
+      for (const entry of board.scores) assert(foundInitials.has(entry.initials), `${name}: landing scroll includes score initials ${entry.initials}`);
+      await page.screenshot({path: `/tmp/demon-board-${name}.png`});
+      if (name === 'phone') { await page.mouse.wheel(0, -4000); await page.waitForTimeout(200); }
       await page.mouse.click(12, viewport.height - 12);
       await page.screenshot({path: `/tmp/demon-title-${name}.png`});
       if (name === 'desktop') await page.screenshot({path: '/tmp/demon-title.png'});
@@ -96,7 +118,7 @@ async function textVisible(page, value) {
       assert(midi.length > 0, `${name}: MIDI soundtrack should be requested`);
       assert(midi.every(response => response.status === 200), `${name}: MIDI responses should succeed: ${JSON.stringify(midi)}`);
       assert(await page.evaluate(() => typeof window.demonAudio?.unlock === 'function'), `${name}: synthesizer should be loaded`);
-      console.log(`${name}: title, Enter start, arrows, P pause/resume, controller drag passed; ${midi.length} MIDI responses succeeded`);
+      console.log(`${name}: inline Top10 GET, title, Enter start, arrows, P pause/resume, controller drag passed; ${midi.length} MIDI responses succeeded`);
       await context.close();
     }
     assert.deepEqual(errors, [], 'Browser runtime/console errors');

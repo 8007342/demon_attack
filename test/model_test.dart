@@ -92,7 +92,9 @@ void main() {
       expect(m.lives, 3);
       expect(m.score, 5000);
       expect(m.speed, 1.1);
-      expect(m.demons.first.maxHp, 2);
+      expect(m.demons.first.maxHp, greaterThan(1));
+      expect(m.wavesPerLevel, greaterThan(3));
+      expect(m.demons.map((d) => d.kind).toSet().length, greaterThan(1));
       expect(Carrier(2).formCount, 4);
     },
   );

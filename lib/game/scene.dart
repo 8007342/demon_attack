@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'model.dart';
+import 'sector_background.dart';
 
 const ink = Color(0xFF080D18);
 const mint = Color(0xFF70F5D5);
@@ -14,6 +15,7 @@ class DemonScene extends FlameGame {
   final ArcadeModel model;
   final VoidCallback onTick;
   ui.Image? atlas, sky;
+  final sectors = SectorBackground();
   double ambient = 0, _notify = 0;
   double environment = 0;
   double keyboardDirection = 0;
@@ -32,6 +34,15 @@ class DemonScene extends FlameGame {
     } catch (e) {
       assetError = '$e';
     }
+    await Future.wait(
+      List.generate(5, (i) async {
+        try {
+          sectors.images[i] = await images.load('sector-${i + 1}.png');
+        } catch (_) {
+          /* Keep the original sky as a fallback. */
+        }
+      }),
+    );
   }
 
   @override
@@ -44,7 +55,7 @@ class DemonScene extends FlameGame {
           : model.level - 1;
       environment += (destination - environment) * math.min(1, dt * .65);
     }
-    if (model.combat && keyboardDirection != 0) {
+    if (model.canPilot && keyboardDirection != 0) {
       model.moveBy(keyboardDirection * dt * 280);
     }
     model.update(dt);
@@ -82,123 +93,8 @@ class DemonScene extends FlameGame {
     canvas.restore();
   }
 
-  void _background(Canvas c) {
-    c.drawRect(const Rect.fromLTWH(0, 0, 360, 520), Paint()..color = ink);
-    final image = sky;
-    if (image != null) {
-      // Generated texture stays behind the independently moving celestial layers.
-      final w = image.width.toDouble(), h = image.height.toDouble();
-      c.drawImageRect(
-        image,
-        Rect.fromLTWH(w * .2, 0, w * .6, h),
-        const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()
-          ..filterQuality = FilterQuality.none
-          ..color = const Color(0x99506080),
-      );
-      c.drawRect(
-        const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()..color = const Color(0x88080D18),
-      );
-    }
-    final palettes = [
-      const Color(0xFF67CFC2),
-      const Color(0xFFAD8FE3),
-      const Color(0xFFEF9A7D),
-      const Color(0xFF8B9ACB),
-      const Color(0xFFEFAE68),
-    ];
-    final base = environment.floor().clamp(0, 4);
-    final tint = Color.lerp(
-      palettes[base],
-      palettes[math.min(4, base + 1)],
-      environment - base,
-    )!;
-    final random = math.Random(1982);
-    for (var i = 0; i < 100; i++) {
-      final depth = i % 3 + 1;
-      final x = random.nextDouble() * 360;
-      final y = (random.nextDouble() * 520 + ambient * depth * 1.3) % 520;
-      final alpha = i % 7 == 0 ? .8 : .25 + depth * .1;
-      c.drawRect(
-        Rect.fromLTWH(
-          x.floorToDouble(),
-          y.floorToDouble(),
-          i % 7 == 0 ? 2 : 1,
-          i % 7 == 0 ? 2 : 1,
-        ),
-        Paint()
-          ..color = Color.lerp(
-            tint,
-            Colors.white,
-            .5,
-          )!.withValues(alpha: alpha),
-      );
-    }
-    final rise = math.sin(ambient * .012 + environment * .48) * 48;
-    final center = Offset(293, 113 - rise);
-    c.save();
-    c.translate(center.dx, center.dy);
-    c.rotate(-.35);
-    c.drawOval(
-      const Rect.fromLTWH(-84, -16, 168, 32),
-      Paint()
-        ..color = tint.withValues(alpha: .22)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 8,
-    );
-    c.drawCircle(Offset.zero, 39, Paint()..color = const Color(0xFF272B49));
-    for (var i = 0; i < 8; i++) {
-      c.drawRect(
-        Rect.fromLTWH(-33, -28 + i * 8, 66, 3),
-        Paint()..color = tint.withValues(alpha: .06 + (i % 3) * .025),
-      );
-    }
-    c.drawArc(
-      const Rect.fromLTWH(-84, -16, 168, 32),
-      0,
-      math.pi,
-      false,
-      Paint()
-        ..color = tint.withValues(alpha: .3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 5,
-    );
-    c.restore();
-    c.drawCircle(
-      Offset(62, 174 + rise * .7),
-      16,
-      Paint()..color = tint.withValues(alpha: .16),
-    );
-    c.drawCircle(
-      Offset(56, 170 + rise * .7),
-      14,
-      Paint()..color = const Color(0xFF11182A),
-    );
-    final horizon = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Colors.transparent, tint.withValues(alpha: .12)],
-      ).createShader(const Rect.fromLTWH(0, 380, 360, 140));
-    c.drawRect(const Rect.fromLTWH(0, 380, 360, 140), horizon);
-    final path = Path()..moveTo(0, 520);
-    for (var x = 0; x <= 360; x += 12) {
-      path.lineTo(
-        x.toDouble(),
-        500 - math.sin(x * .053 + ambient * .009) * 7 - (x % 36 == 0 ? 7 : 0),
-      );
-    }
-    path
-      ..lineTo(360, 520)
-      ..close();
-    c.drawPath(path, Paint()..color = const Color(0xFF101E2C));
-    c.drawLine(
-      const Offset(0, 515),
-      const Offset(360, 515),
-      Paint()..color = tint.withValues(alpha: .35),
-    );
-  }
+  void _background(Canvas c) =>
+      sectors.paint(c, environment, ambient, model.cycle, sky);
 
   void sprite(
     Canvas c,
@@ -250,6 +146,45 @@ class DemonScene extends FlameGame {
                 (d.seed.floor().isEven ? 1 : -1),
         d.y - (1 - entrance) * (d.y + 45),
       );
+      if (d.elite) {
+        final armor = (d.maxHp - d.moltStage).clamp(1, 7);
+        final halo = Paint()
+          ..color = (d.angry ? gold : violet).withValues(alpha: .25)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1;
+        c.drawArc(
+          Rect.fromCircle(center: pos, radius: 24),
+          model.clock * .5,
+          math.pi * 1.5,
+          false,
+          halo,
+        );
+        // Every hit removes an outer plate; stages beyond the atlas's three
+        // molts still have a visibly distinct silhouette and exposed core.
+        for (var plate = 0; plate < armor; plate++) {
+          final angle = math.pi + plate * math.pi / math.max(1, armor - 1);
+          final offset = Offset(math.cos(angle) * 21, math.sin(angle) * 21);
+          c.drawRect(
+            Rect.fromCenter(center: pos + offset, width: 4, height: 5),
+            Paint()..color = (d.angry ? gold : violet).withValues(alpha: .7),
+          );
+        }
+        if (d.moltStage < 4) {
+          for (final side in [-1.0, 1.0]) {
+            c.drawPath(
+              Path()
+                ..moveTo(pos.dx + side * 9, pos.dy - 12)
+                ..lineTo(
+                  pos.dx + side * (17 - d.moltStage),
+                  pos.dy - 27 + d.moltStage * 3,
+                )
+                ..lineTo(pos.dx + side * 13, pos.dy - 10)
+                ..close(),
+              Paint()..color = d.angry ? gold : violet,
+            );
+          }
+        }
+      }
       if (d.telegraph > 0) {
         c.drawCircle(
           pos,

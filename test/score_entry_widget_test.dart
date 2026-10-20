@@ -113,6 +113,11 @@ void main() {
         ),
         findsOneWidget,
       );
+      await tester.drag(
+        find.byKey(const ValueKey('landing-scroll')),
+        const Offset(0, -400),
+      );
+      await tester.pump();
       expect(find.text('SIGNAL RECEIVED'), findsOneWidget);
       expect(find.byType(ListWheelScrollView), findsNothing);
       expect(tester.takeException(), isNull);
