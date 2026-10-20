@@ -16,6 +16,7 @@ The authoritative production atlas layout is [sprite-atlas.md](sprite-atlas.md),
 | 5 | Eight explosion frames |
 | 6 | Four carrier transformation forms; four pickup badges |
 | 7 | Four console tile variants; four spark frames |
+| 8–19 | Three intermediate molts per species, each with four normal and four highlighted wing frames |
 
 The shield, sliding door, health meters, and core vulnerability are renderer overlays tied to simulation state. The creatures have normal, three intermediate damaged silhouettes, and angry appearances. Rows8–19 provide the intermediate molts; each nonlethal hit updates the rendering lookup. Four carrier forms are available; later cycles unlock the later forms.
 
@@ -48,10 +49,12 @@ Top 10 uses aligned rank, three-character initials, and score columns. Initial e
 | Menu | Sparse sine-pad motif; 32 beats |
 | Levels 1–4 | Distinct 32-beat scores with increasing melodic subdivisions; percussion from LV2 |
 | Boss phases 1–4 | Four increasingly dense 32-beat scores; each has a denser later-cycle version |
-| Victory | Eight-beat major fanfare and sustained chord, non-looping |
+| Victory | Eight-beat major fanfare; final cadence continues until travel |
+| Level clear | Immediate eight-beat major flourish with a 90 ms music fade |
+| Travel | Sixteen-beat suspended arpeggio bridge on the common musical grid |
 | Game over | Eight-beat descending cue and dark chord, non-looping |
 
-The carrier has up to four visual forms, each with its own increasing MIDI intensity. Voices use square lead, sawtooth bass, sine pad, and triangle percussion. A shared audio-clock scheduler runs with lookahead and asynchronous cue loading; a request counter rejects stale loads. Changes queue to the next bar rather than cutting and restarting immediately. Firing, hits, explosions, power collection, and life loss use short separate synth effects.
+The carrier has up to four visual forms, each with its own increasing MIDI intensity. Voices use square lead, sawtooth bass, sine pad, and triangle percussion. A shared audio-clock scheduler runs with lookahead and asynchronous cue loading; a request counter rejects stale loads. Track changes queue to the next bar; level-clear rewards respond immediately with a short music-only crossfade. Firing, hits, explosions, power collection, and life loss use short separate synth effects.
 
 Visiting the page remains silent until a user gesture unlocks browser audio. Start and sound controls should support that gesture deliberately. Muting ramps the master gain. Pause suspends the audio context; Resume restarts scheduling. The current bridge also responds to visibility changes. Confirm that its behavior remains aligned with the application's deliberate pause/resume controls.
 
@@ -60,3 +63,7 @@ Future refinements: stem crossfades, per-mode tempo ramps, music/effects balance
 ## Review gates
 
 At native scale every demon species, angry state, player, and pickup must be recognizable, with no screenshot or original-game sprite reused. Inspect extracted alpha edges and atlas frames; generated concept sheets require review before becoming production assets. Enemy bullets must remain visible on every background. Musical loops should have no silent boundary, old voices should release cleanly, state changes must not restore stale cues, and first visit must stay silent until interaction. Browser checks should cover music through a complete boss transformation, victory, next cycle, pause, resume, and muted play.
+
+## Multiwave and cinematic presentation
+
+LV1–2 have three waves; LV3–4 have four. Intermediate-wave banners last 1.4 s and retain the level’s musical identity. The final wave instead leads to a 4 s level-clear scene and 4 s travel scene before the next level’s 2.3 s introduction. Show travel with the same cosmic palette, advancing the horizon / planetary composition rather than exposing combat. The carrier’s defeat has a distinct 5.5 s triumph, then 4 s travel before the next cycle. Keep score and lives legible, freeze power timers, suppress damage and auto-fire, and retain exact visual progress while paused. Use the model’s normalized transitionProgress to drive these scenes so animation and phase timing agree.

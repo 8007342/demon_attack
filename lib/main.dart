@@ -126,6 +126,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             (model.boss?.phase ?? 0) + 1,
             model.cycle,
           );
+        case 'levelclear':
+          audioCue('levelclear', model.level, 1, model.cycle);
+        case 'travel':
+          audioCue('travel', model.level, 1, model.cycle);
         case 'victory':
           audioCue('victory', model.level, 1, model.cycle);
         case 'gameover':
@@ -526,7 +530,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     mint,
                     size: 9,
                   ),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 3),
+                  _label(
+                    model.level == 5
+                        ? 'CARRIER'
+                        : 'WAVE ${model.wave} / ${model.wavesPerLevel}',
+                    const Color(0xFF839DB5),
+                    size: 7,
+                  ),
+                  const SizedBox(height: 3),
                   Row(
                     children: List.generate(
                       3,
@@ -581,50 +593,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                if (model.mode == RunMode.transition ||
-                    model.mode == RunMode.victory)
-                  Positioned.fill(
-                    child: Center(
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 28,
-                          horizontal: 12,
-                        ),
-                        color: const Color(0xCE080D18),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _label(
-                              model.mode == RunMode.victory
-                                  ? 'SECTOR SECURED'
-                                  : 'INCOMING TRANSMISSION',
-                              mint,
-                              size: 8,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              model.banner,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 2,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            _label(
-                              model.mode == RunMode.victory
-                                  ? 'THE SWARM WILL EVOLVE'
-                                  : 'STAY ALIVE. KEEP MOVING.',
-                              const Color(0xFF9CAAC0),
-                              size: 9,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                if (model.cinematic && model.mode != RunMode.paused)
+                  Positioned.fill(child: _interlude()),
                 if (model.mode == RunMode.paused)
                   Positioned.fill(
                     child: _gameOverlay('SIGNAL PAUSED', 'TAKE A BREATH.', [
@@ -673,6 +643,96 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   // A render-only view avoids updating the simulation twice when the full-screen sky is mounted.
   late final _ArenaView _arenaProxy = _ArenaView(scene);
+  Widget _interlude() {
+    final phase = model.presentationMode;
+    final p = model.transitionProgress;
+    final fadeIn = Curves.easeOutCubic.transform((p / .14).clamp(0, 1));
+    final fadeOut = Curves.easeInCubic.transform(((1 - p) / .18).clamp(0, 1));
+    final opacity = math.min(fadeIn, fadeOut);
+    final clear = phase == RunMode.levelClear || phase == RunMode.victory;
+    final travel = phase == RunMode.travel;
+    final heading = clear
+        ? 'SECTOR SECURED'
+        : travel
+        ? 'JUMP DRIVE ACTIVE'
+        : model.waveTransition
+        ? 'SWARM REINFORCEMENTS'
+        : 'INCOMING TRANSMISSION';
+    final detail = clear
+        ? 'ALL WAVES CLEARED · ${model.score.toString().padLeft(6, '0')} PTS'
+        : travel
+        ? 'NEXT: LV ${model.nextLevel.toString().padLeft(2, '0')} · ${model.nextLevelName}'
+        : model.level == 5
+        ? 'SHIELD CONTACT · WEAPONS READY'
+        : 'WAVE ${model.wave} / ${model.wavesPerLevel} · STAY ALIVE';
+    return IgnorePointer(
+      child: Align(
+        alignment: Alignment(0, model.waveTransition ? -.25 : .25),
+        child: Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, (1 - fadeIn) * 24 - (1 - fadeOut) * 14),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 340),
+              margin: const EdgeInsets.symmetric(horizontal: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0x00080D18),
+                    Color(0xCA080D18),
+                    Color(0x00080D18),
+                  ],
+                ),
+                border: Border.symmetric(
+                  horizontal: BorderSide(
+                    color: (clear ? gold : mint).withValues(alpha: .24),
+                  ),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _label(heading, clear ? gold : mint, size: 8),
+                  const SizedBox(height: 12),
+                  Text(
+                    model.banner,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label(detail, const Color(0xFFAABCD0), size: 8),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: 124,
+                    height: 2,
+                    child: LinearProgressIndicator(
+                      value: p,
+                      color: clear ? gold : mint,
+                      backgroundColor: const Color(0xFF24374B),
+                    ),
+                  ),
+                  if (travel) ...[
+                    const SizedBox(height: 12),
+                    _label(
+                      'SIGNAL LOCK  ${(p * 100).floor()}%',
+                      const Color(0xFF7896AB),
+                      size: 7,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _controller() => LayoutBuilder(
     builder: (context, bounds) => Listener(
       onPointerDown: (e) {

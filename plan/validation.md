@@ -24,3 +24,12 @@ The host-browser tool still fails HTTPS navigation with ERR_CONNECTION_CLOSED on
 ## Playtest focus
 
 Review touch sensitivity, projectile readability, wave pacing, boss door timing, and perceived music intensity on the actual device. Music generation and scheduling are tested; human listening remains the final check for musical taste and mix. Client-submitted scores are a casual honor board and remain forgeable. Native sound needs a separate adapter; the deployed web game has the MIDI synthesizer.
+
+
+## Multiwave and cinematic update
+
+The smooth-level-progression checkpoint passes flutter analyze, all21 Flutter tests, all4 backend/audio tests, strict OpenSpec validation, and a new release web build. A dedicated renderer test loads the shipping pixel atlas and sky, confirms different victory/travel frames, checks exact pixel equality during pause, and checks that departure-to-travel and travel-to-arrival black-fade boundaries match. Review images are in .cache/cinematics/ (ignored by Git).
+
+The model tests traverse all14 waves before the carrier (3/3/4/4), verify same-level pickup preservation, protected cutscene power timers, 72 shield hits and24 gated core hits, 5.5-second carrier triumph, 4-second sector celebrations, 4-second travel, and retained score/lives on the next cycle. Immediate level-clear, continuing victory cadence, travel and next-level MIDI handoffs pass audio scheduler tests. The soundtrack now contains17 original MIDI files.
+
+The rebuilt game was republished to the managed sibling Wrangler runtime at the usual HTTPS preview URL. Standalone Chromium verifies phone and desktop Enter start, arrows, controller drag, pause/resume, synthesizer presence and successful MIDI loading against the actual sibling service. The visible host Chromium tool continues to report ERR_CONNECTION_CLOSED; browser availability is reported separately from the running service.

@@ -54,3 +54,14 @@ for phase in range(1, 5):
 write('menu', [(beat, 1.6, 52 + [0,7,12,15,12,7,3,7][i%8], 36, 2) for i, beat in enumerate(range(0,32,2))])
 write('victory', [(i*.5, .45, 60 + interval, 90, 0) for i, interval in enumerate([0,4,7,12,7,12,16,19])] + [(4,3.8,n,70,2) for n in [48,60,64,67,72]], 8)
 write('gameover', [(i, .9, n, 65, 2) for i,n in enumerate([55,54,51,48])] + [(4,3.8,n,45,2) for n in [36,48,51,54]], 8)
+# A distinct level-clear phrase celebrates regular sectors without using the
+# longer carrier finale. The last bar can repeat while a cutscene finishes.
+write('levelclear', [(i*.5, .4, 67 + interval, 84, 0) for i, interval in enumerate([0, 4, 7, 12, 11, 7, 4, 12])] + [(4, 3.9, n, 62, 2) for n in [48, 55, 60, 64, 67]], 8)
+travel_notes = []
+for bar, chord in enumerate([[48,55,62], [52,59,66], [45,52,60], [50,57,64]]):
+    for pitch in chord:
+        travel_notes.append((bar*4, 3.95, pitch, 42, 2))
+    for step in range(8):
+        travel_notes.append((bar*4 + step*.5, .35, chord[step%3]+12, 36 + step*2, 0))
+    travel_notes.append((bar*4, 3.8, chord[0]-12, 45, 1))
+write('travel', travel_notes, 16)

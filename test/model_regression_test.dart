@@ -28,7 +28,7 @@ void main() {
       expect(model.mode, RunMode.victory);
       expect(model.boss, isNull);
       expect(model.score, 5000);
-      advance(model, 4.6);
+      advance(model, 9.6);
       expect(model.level, 1);
       expect(model.cycle, 1);
       expect(model.mode, RunMode.transition);
@@ -36,20 +36,22 @@ void main() {
     },
   );
 
-  test('clearing each wave visits all four levels and then the carrier', () {
-    final model = ArcadeModel()..start();
-    for (var level = 1; level <= 4; level++) {
-      expect(model.level, level);
-      advance(model, 2.4);
-      expect(model.mode, RunMode.playing);
+  test(
+    'same-level wave entrance clears shots and retains uncollected pickups',
+    () {
+      final model = ArcadeModel()..start();
+      model.mode = RunMode.playing;
       model.demons.clear();
+      model.pickups.add(Pickup(20, 100, Power.spread));
+      model.shots.add(Shot(20, 200, 0, 20, hostile: true));
       model.update(1 / 60);
-      expect(model.level, level + 1);
+      expect(model.level, 1);
+      expect(model.wave, 2);
       expect(model.mode, RunMode.transition);
-    }
-    expect(model.level, 5);
-    expect(model.boss, isNotNull);
-  });
+      expect(model.shots, isEmpty);
+      expect(model.pickups.single.power, Power.spread);
+    },
+  );
 
   test('last life ends the run without progressing an empty wave', () {
     final model = ArcadeModel()..start();
@@ -71,6 +73,7 @@ void main() {
     'closed door protects core after shield breaks, then open central door takes damage',
     () {
       final model = ArcadeModel()..start();
+      model.mode = RunMode.playing;
       final boss = Carrier(0);
       model.boss = boss;
       final core = boss.core;

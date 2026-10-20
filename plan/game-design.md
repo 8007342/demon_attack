@@ -6,23 +6,23 @@ This original remake uses winged demons, a horizontally moving defender, permane
 
 The arena is 360 × 520 logical units; ship y=477. The responsive interface places a separate futuristic touch console beneath it. Dragging moves a horizontal target; arrow keys also move it. The ship approaches that target at up to 330 units/s, clamped to x=18–342. Baseline fire interval is 0.23 s and bullets travel upward at 390 units/s. The simulation advances at 60 fixed steps/s and clamps one update's elapsed time to 0.1 s.
 
-A new run has three lives, zero score, and a zero-based cycle counter. One unprotected hit removes a life and grants 2.5 s invulnerability. The third death ends the run. The initial ship has 2 s protection. Pause freezes combat, transition timers, powers, and effects; Resume restores the previous mode. A level introduction lasts 2.3 s. On boss defeat, hostile entities disappear immediately, points are awarded once, and a 4.5 s victory transition precedes the next cycle's LV1. Score and remaining lives persist.
+A new run has three lives, zero score, and a zero-based cycle counter. One unprotected hit removes a life and grants 2.5 s invulnerability. The third death ends the run. The initial ship has 2 s protection. Pause freezes combat, transition timers, powers, and effects; Resume restores the previous mode. Each level starts with a 2.3 s introduction. LV1–2 contain three combat waves each; LV3–4 contain four. Clearing an intermediate wave gives a 1.4 s wave introduction within the same level, without level-victory music. Clearing the final wave holds the current level for a 4 s level-clear scene, followed by a 4 s travel scene, then the next level introduction. After LV4 this route introduces the carrier. On boss defeat, hostile entities disappear immediately, points are awarded once, and a 5.5 s triumph precedes 4 s of travel to the next cycle's LV1 / wave 1. Score, remaining lives, and active powers persist; power durations freeze throughout cinematics. All cinematic phases can be paused and resumed without losing progress.
 
-| Level | Title | Roster in first cycle | Base HP | Identity |
+| Level | Title | Wave rosters in first cycle | Base HP | Identity |
 | --- | --- | --- | --- | --- |
-| 1 | KRYBOR | 8 teal demons | 1 | Winged introductory flock |
-| 2 | RINGFALL | 10 violet demons | 1 | Dives begin |
-| 3 | EMBER MOON | 12 coral predators | 2 | Multi-hit forms and angry survivors |
-| 4 | THE HOLLOW | 14 crowned elders | 2 | Denser, faster attacks |
-| 5 | THE CARRIER | Carrier with replenished flocks | Shield 18 / core 16 | Shield, sliding door, successive boss forms |
+| 1 | KRYBOR | 8 / 10 / 12 teal demons | 1 | Winged introductory flock |
+| 2 | RINGFALL | 10 / 12 / 14, violet dominant | 1 | Dives begin |
+| 3 | EMBER MOON | 12 / 14 / 16 / 18, coral dominant | 2 | Multi-hit forms and angry survivors |
+| 4 | THE HOLLOW | 14 / 16 / 18 / 20, elder dominant | 2 | Denser, faster attacks |
+| 5 | THE CARRIER | Carrier with replenished flocks | Shield 72 / core 24 | Shield, sliding door, successive boss forms |
 
-Ordinary HP is `1 + floor((level−1)/2) + min(cycle,3)`, currently reaching 5 in LV3–4. Each species has normal, three intermediate molt, and angry wing animations. Each nonlethal hit reveals the next weakened silhouette; the final remaining HP of a multi-hit creature triggers anger and a telegraphed dive.
+After wave 1, every fourth spawn mixes in the previous level’s species. Ordinary HP is `1 + floor(kind/2) + min(cycle,3)` (species kind is zero-based), currently reaching 5 in LV3–4. Each species has normal, three intermediate molt, and angry wing animations. Each nonlethal hit reveals the next weakened silhouette; the final remaining HP of a multi-hit creature triggers anger and a telegraphed dive.
 
 Flocks use individual sinusoidal paths around home positions, producing organic wing motion rather than synchronized mechanical marching. A dive warns for 0.7 s and samples the player's x once. Diving creatures steer toward that sampled x, descend, then rejoin their home position after leaving the arena. Dives begin in LV2, or LV1 on later cycles. Dive interval is `(4.2−level×0.45)/speed`; base vertical dive speed is `115+kind×16`. Angry dives progress faster. Hostile aimed drops come from one randomly selected demon per firing interval, with limited lateral velocity. Movement multiplier is `1+min(cycle,8)×0.1`, capped at 1.8. Hostile fire interval has a 0.45 s floor.
 
 ## Boss
 
-The carrier cruises near y=205 with a 12-unit vertical bob and an 80-unit horizontal sweep. Shield HP is `18+cycle×6`; core HP is `16+cycle×8`. Shield hits across the hull width remove one HP. After the shield is gone, damage requires a shot through the center aperture while the sliding door is sufficiently open (`door >= 0.65`). Its width follows the visible opening; closed hull blocks shots. The sinusoidal opening accelerates with damage phase. There are `min(4,2+cycle)` transformation phases, beginning with two and reaching four. Music and art react to phase changes.
+The carrier cruises near y=205 with a 12-unit vertical bob and an 80-unit horizontal sweep. Shield HP is `72+cycle×18`; core HP is `24+cycle×10`. This gives the shield a substantially longer opening phase than the earlier prototype. Shield hits across the hull width remove one HP. After the shield is gone, damage requires a shot through the center aperture while the sliding door is sufficiently open (`door >= 0.65`). Its width follows the visible opening; closed hull blocks shots. The sinusoidal opening accelerates with damage phase. There are `min(4,2+cycle)` transformation phases, beginning with two and reaching four. Music and art react to phase changes.
 
 The carrier releases three demons at a time when fewer than ten are present. Flock additions are clamped to a maximum of ten simultaneous minions. Their HP is `1+min(cycle,2)`, capped at three, and their forms advance with cycle. Flocks replenish continuously, while the exposed core remains reachable; players need not clear every minion to damage or defeat the carrier. This is deliberate survival pressure. The carrier also launches a three-shot downward fan. Boss kill score is `5000×(cycle+1)`; killing it clears minions without awarding their kill scores.
 
@@ -42,7 +42,7 @@ Game-over initials entry uses exactly three rotating character wheels from A–Z
 
 ## Acceptance and follow-up tuning
 
-- Complete four waves, break the shield, hit the core through the visible door, defeat the boss, and return to a faster LV1 without reloading.
+- Complete all three / three / four / four waves, with level-clear and travel cinematics only after each level’s final wave; break the shield, hit the core through the visible door, defeat the boss, and return to a faster LV1 without reloading.
 - Confirm three unprotected hits end a run, invulnerability prevents collision stacking, pause freezes timers, and power replacement/expiry works.
 - Confirm multi-hit enemies display an angry final state; later cycles add HP and unlock carrier forms through the fourth form.
 - Ensure individual dive warnings and hostile projectiles stay legible against each scene; no direct player-tracking dive after launch.

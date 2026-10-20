@@ -45,8 +45,9 @@
     gain.gain.exponentialRampToValueAtTime(.0001, at + Math.max(.025, duration));
     oscillator.connect(gain); gain.connect(output);
     oscillator.start(at); oscillator.stop(at + duration + .04);
-    voices.add(oscillator);
-    oscillator.onended = () => { voices.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
+    const entry = { oscillator, gain, output };
+    voices.add(entry);
+    oscillator.onended = () => { voices.delete(entry); oscillator.disconnect(); gain.disconnect(); };
   }
   function schedule() {
     if (!context || paused || context.state !== 'running') return;
@@ -79,19 +80,34 @@
   }
   async function cue(mode, level = 1, phase = 1, cycle = 0) {
     const ticket = ++requested;
-    const name = mode === 'level' ? `level-${Math.min(4,Math.max(1,Math.round(level)))}` : mode === 'boss' ? `boss-${Math.min(4,Math.max(1,Math.round(phase)))}-${cycle > 0 ? 1 : 0}` : ['menu','victory','gameover'].includes(mode) ? mode : 'menu';
+    const name = mode === 'level' ? `level-${Math.min(4,Math.max(1,Math.round(level)))}` : mode === 'boss' ? `boss-${Math.min(4,Math.max(1,Math.round(phase)))}-${cycle > 0 ? 1 : 0}` : ['menu','victory','gameover','levelclear','travel'].includes(mode) ? mode : 'menu';
     const track = await load(name);
     if (ticket !== requested || !track) return;
-    const entry = { name, track, loop: !['victory','gameover'].includes(name), loopTail: name === 'victory' };
+    const entry = { name, track, loop: !['victory','gameover','levelclear'].includes(name), loopTail: name === 'victory' || name === 'levelclear' };
     if (active?.name === name || pending?.name === name) return;
-    if (!active) { active = entry; beat = 0; if (context) nextBeat = context.currentTime + .04; }
-    else pending = entry;
+    if (!active || name === 'levelclear') {
+      // Clear feedback must follow the final kill, rather than wait up to a bar.
+      // Release current/future scheduled music voices over 90ms; effects survive.
+      if (context && name === 'levelclear') for (const voice of voices) {
+        if (voice.output !== music) continue;
+        voice.gain.gain.cancelScheduledValues(context.currentTime);
+        voice.gain.gain.setTargetAtTime(.0001, context.currentTime, .025);
+        voice.oscillator.stop(context.currentTime + .09);
+      }
+      active = entry; pending = null; beat = 0;
+      if (context) nextBeat = context.currentTime + .02;
+      schedule();
+    } else pending = entry;
   }
   function mute(value = true) { muted = !!value; if (master) master.gain.setTargetAtTime(muted ? 0 : .65, context.currentTime, .03); return muted; }
   function pause() { paused = true; if (context) context.suspend().catch(() => {}); }
   async function resume() { paused = false; if (context) { await context.resume().catch(() => {}); nextBeat = context.currentTime + .04; } }
   function sfx(name) {
     if (!context || paused || context.state !== 'running') return;
+    if (name === 'wave') {
+      [72, 79, 84].forEach((pitch, index) => voice({ pitch, velocity: 60, channel: 0 }, context.currentTime + .005 + index*.1, .22, effects));
+      return;
+    }
     const shapes = { shot: [82, .055, 35], explosion: [35, .24, 95], hit: [47, .12, 85], powerup: [84,.3,80], life: [43,.4,90] };
     const [pitch, duration, velocity] = shapes[name] || shapes.hit;
     voice({ pitch, velocity, channel: name==='explosion' ? 9 : 0 }, context.currentTime+.005, duration, effects);
@@ -100,5 +116,6 @@
   window.demonAudio = Object.freeze({ unlock, cue, mute, pause, resume, sfx, get muted() { return muted; } });
   // Unlock from real DOM gestures, including Flutter canvas input.
   for (const type of ['pointerdown','keydown']) window.addEventListener(type, unlock, { once: true, capture: true });
+  load('levelclear'); load('travel');
   cue('menu');
 })();

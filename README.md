@@ -1,8 +1,8 @@
 # Demon Attack
 
-An original pixel arcade remake inspired by Imagic's 1982 Demon Attack and its expanded conversions. Flutter and Flame power four swarm levels, a shielded carrier with a sliding core door, and increasingly evolved repeat runs.
+An original pixel arcade remake inspired by Imagic's 1982 Demon Attack and its expanded conversions. Flutter and Flame power four multi-wave swarm levels, animated victory/travel cutscenes, a shielded carrier with a sliding core door, and increasingly evolved repeat runs.
 
-Drag the bottom controller panel or use **← →** to pilot. Firing is automatic. Start with three lives; one unprotected hit costs one life. Collect spread, rapid-fire, and shield powers. Press **P / Esc** to pause. Sound starts after a user gesture and can be muted.
+Drag the bottom controller panel or use **← →** to pilot. Firing is automatic. LV1–2 have three waves each; LV3–4 have four. Clear a sector for a victory flourish, ship departure, star-flight and destination arrival before combat resumes. Start with three lives; one unprotected hit costs one life. Collect spread, rapid-fire, and shield powers. Press **P / Esc** to pause. Sound starts after a user gesture and can be muted.
 
 Top10 scores are shared through a Cloudflare SQLite Durable Object. Enter only three rotating A–Z/0–9 initials. Scores are client-reported arcade scores, not a cheat-proof competition.
 

@@ -7,7 +7,7 @@ test('MIDI player unlocks on gesture, schedules notes, switches cues and honors 
   let callback, synthesizer;
   const fetched = [];
   const voices = [];
-  const parameter = () => ({ value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, setTargetAtTime(value) { this.value = value; } });
+  const parameter = () => ({ value: 0, cancelScheduledValues() {}, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, setTargetAtTime(value) { this.value = value; } });
   class AudioContext {
     constructor() { synthesizer = this; this.currentTime = 0; this.state = 'suspended'; }
     createGain() { return { gain: parameter(), connect() {}, disconnect() {} }; }
@@ -46,4 +46,24 @@ test('MIDI player unlocks on gesture, schedules notes, switches cues and honors 
   await audio.cue('level', 2);
   for (let step=0; step<8; step++) { synthesizer.currentTime += .5; callback(); }
   assert.ok(fetched.includes('/audio/midi/level-2.mid'), 'next level replaces victory on the shared bar grid');
+  const beforeClear = voices.length;
+  await audio.cue('levelclear');
+  assert.ok(fetched.includes('/audio/midi/levelclear.mid'));
+  assert.ok(voices.length > beforeClear, 'level-clear notes begin immediately, without waiting for the next bar');
+  for (let step=0; step<12; step++) { synthesizer.currentTime += .5; callback(); }
+  const clearTail = voices.length;
+  for (let step=0; step<8; step++) { synthesizer.currentTime += .5; callback(); }
+  assert.ok(voices.length > clearTail, 'clear cadence fills delayed cutscene handoff');
+  await audio.cue('travel');
+  const beforeTravel = voices.length;
+  for (let step=0; step<12; step++) { synthesizer.currentTime += .5; callback(); }
+  assert.ok(fetched.includes('/audio/midi/travel.mid'));
+  assert.ok(voices.length > beforeTravel, 'travel interlude produces notes through cutscene');
+  const beforeWave = voices.length; audio.sfx('wave');
+  assert.equal(voices.length, beforeWave + 3, 'new-wave ascending stinger layers over music');
+  await audio.cue('level', 3);
+  const beforeLevel = voices.length;
+  for (let step=0; step<8; step++) { synthesizer.currentTime += .5; callback(); }
+  assert.ok(fetched.includes('/audio/midi/level-3.mid'));
+  assert.ok(voices.length > beforeLevel, 'travel returns to next level without silent state');
 });

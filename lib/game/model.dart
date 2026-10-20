@@ -1,6 +1,15 @@
 import 'dart:math' as math;
 
-enum RunMode { title, playing, paused, transition, victory, gameOver }
+enum RunMode {
+  title,
+  playing,
+  paused,
+  transition,
+  levelClear,
+  travel,
+  victory,
+  gameOver,
+}
 
 enum Power { spread, rapid, shield }
 
@@ -39,15 +48,15 @@ class Blast {
 
 class Carrier {
   Carrier(int cycle)
-    : shieldMax = 18 + cycle * 6,
-      coreMax = 16 + cycle * 8,
+    : shieldMax = 72 + cycle * 18,
+      coreMax = 24 + cycle * 10,
       formCount = math.min(4, 2 + cycle) {
     shield = shieldMax;
     core = coreMax;
   }
   final int shieldMax, coreMax, formCount;
   late int shield, core;
-  double x = 180, y = 190;
+  double x = 180, y = 205;
   int get phase =>
       ((1 - core / coreMax) * formCount).floor().clamp(0, formCount - 1);
   double door = 0;
@@ -66,14 +75,35 @@ class ArcadeModel {
   final List<Blast> blasts = [];
   final List<String> events = [];
   Carrier? boss;
-  int lives = 3, score = 0, level = 1, cycle = 0, kills = 0;
+  int lives = 3, score = 0, level = 1, cycle = 0, kills = 0, wave = 1;
+  int? clearedLevel;
   double shipX = 180, targetX = 180, clock = 0, levelClock = 0;
   double invulnerable = 0, powerLeft = 0, transitionLeft = 0;
+  double transitionDuration = 2.3;
   Power? power;
   double _fire = 0, _enemyFire = 1.5, _dive = 3, _flock = 0, _accumulator = 0;
   double get speed => 1 + math.min(cycle, 8) * .1;
   bool get combat => mode == RunMode.playing;
   bool get isBoss => boss != null;
+  int get wavesPerLevel => level == 5 ? 1 : 3 + ((level - 1) ~/ 2);
+  int get nextLevel => level == 5 ? 1 : level + 1;
+  RunMode get presentationMode => mode == RunMode.paused ? _beforePause : mode;
+  bool get cinematic => [
+    RunMode.transition,
+    RunMode.levelClear,
+    RunMode.travel,
+    RunMode.victory,
+  ].contains(presentationMode);
+  bool get waveTransition => presentationMode == RunMode.transition && wave > 1;
+  double get transitionProgress =>
+      (1 - transitionLeft / transitionDuration).clamp(0, 1);
+  String get nextLevelName => const [
+    'KRYBOR',
+    'RINGFALL',
+    'EMBER MOON',
+    'THE HOLLOW',
+    'THE CARRIER',
+  ][nextLevel - 1];
   String get levelName => const [
     'KRYBOR',
     'RINGFALL',
@@ -81,9 +111,15 @@ class ArcadeModel {
     'THE HOLLOW',
     'THE CARRIER',
   ][level - 1];
-  String get banner => mode == RunMode.victory
-      ? 'CARRIER DESTROYED'
-      : 'LEVEL ${level.toString().padLeft(2, '0')} · $levelName';
+  String get banner => switch (presentationMode) {
+    RunMode.victory => 'CARRIER DESTROYED',
+    RunMode.levelClear => '$levelName SECURED',
+    RunMode.travel => 'APPROACHING $nextLevelName',
+    _ =>
+      waveTransition
+          ? 'WAVE $wave / $wavesPerLevel'
+          : 'LEVEL ${level.toString().padLeft(2, '0')} · $levelName',
+  };
 
   void start() {
     lives = 3;
@@ -91,6 +127,8 @@ class ArcadeModel {
     level = 1;
     cycle = 0;
     kills = 0;
+    wave = 1;
+    clearedLevel = null;
     shipX = targetX = 180;
     clock = 0;
     power = null;
@@ -102,43 +140,70 @@ class ArcadeModel {
   }
 
   void _beginLevel() {
-    demons.clear();
-    shots.clear();
-    pickups.clear();
-    blasts.clear();
+    wave = 1;
+    clearedLevel = null;
     boss = level == 5 ? Carrier(cycle) : null;
     levelClock = 0;
+    pickups.clear();
+    blasts.clear();
+    _spawnWave();
+    events.add(boss == null ? 'level' : 'boss');
+  }
+
+  void _spawnWave() {
+    demons.clear();
+    shots.clear();
     _fire = 0;
     _enemyFire = 1.7;
     _dive = 3;
     _flock = 2;
     if (boss == null) {
-      final count = 6 + level * 2;
+      final count = 6 + level * 2 + (wave - 1) * 2;
       for (var i = 0; i < count; i++) {
-        final kind = level - 1;
-        final hp = 1 + ((level - 1) ~/ 2) + math.min(cycle, 3);
+        // Later waves mix previously encountered creatures into the native flock.
+        final kind = wave > 1 && i % 4 == 0
+            ? math.max(0, level - 2)
+            : level - 1;
+        final hp = 1 + (kind ~/ 2) + math.min(cycle, 3);
         demons.add(
           Demon(
             50 + (i % 5) * 64.0,
-            70 + (i ~/ 5) * 54.0,
+            70 + (i ~/ 5) * 48.0,
             kind,
             hp.toInt(),
-            i * 1.7,
+            i * 1.7 + wave * .6,
           ),
         );
       }
     }
-    mode = RunMode.transition;
-    transitionLeft = 2.3;
-    events.add(boss == null ? 'level' : 'boss');
+    if (boss == null) _updateDemons(0);
+    _enterPhase(RunMode.transition, wave > 1 ? 1.4 : 2.3);
+  }
+
+  void _enterPhase(RunMode phase, double duration) {
+    mode = phase;
+    transitionDuration = duration;
+    transitionLeft = duration;
+  }
+
+  void _completeWave() {
+    shots.clear();
+    if (wave < wavesPerLevel) {
+      wave++;
+      _spawnWave();
+      events.add('wave');
+    } else {
+      clearedLevel = level;
+      pickups.clear();
+      _enterPhase(RunMode.levelClear, 4);
+      events.add('levelclear');
+    }
   }
 
   void moveTo(double x) => targetX = x.clamp(18, width - 18);
   void moveBy(double dx) => moveTo(targetX + dx);
   void pause() {
-    if (mode == RunMode.playing ||
-        mode == RunMode.transition ||
-        mode == RunMode.victory) {
+    if (mode == RunMode.playing || cinematic) {
       _beforePause = mode;
       mode = RunMode.paused;
       events.add('pause');
@@ -177,12 +242,16 @@ class ArcadeModel {
       b.age += dt;
     }
     blasts.removeWhere((b) => b.age > .55);
-    if (mode == RunMode.transition || mode == RunMode.victory) {
-      transitionLeft -= dt;
+    if (cinematic) {
+      transitionLeft = math.max(0, transitionLeft - dt);
       if (transitionLeft <= 0) {
-        if (mode == RunMode.victory) {
-          cycle++;
-          level = 1;
+        if (mode == RunMode.levelClear || mode == RunMode.victory) {
+          _enterPhase(RunMode.travel, 4);
+          events.add('travel');
+        } else if (mode == RunMode.travel) {
+          if (level == 5) cycle++;
+          level = nextLevel;
+          shipX = targetX = 180;
           _beginLevel();
         } else {
           mode = RunMode.playing;
@@ -228,8 +297,7 @@ class ArcadeModel {
       (s) => s.y < -10 || s.y > height + 10 || s.x < -10 || s.x > width + 10,
     );
     if (combat && demons.isEmpty && boss == null) {
-      level++;
-      _beginLevel();
+      _completeWave();
     }
   }
 
@@ -381,7 +449,7 @@ class ArcadeModel {
   /// Shield can be hit across its width. Core needs the exposed central door.
   bool hitBoss(double shotX) {
     final b = boss;
-    if (b == null) return false;
+    if (b == null || !combat) return false;
     if (b.shield > 0) {
       b.shield--;
       events.add('hit');
@@ -402,8 +470,8 @@ class ArcadeModel {
       demons.clear();
       shots.clear();
       pickups.clear();
-      mode = RunMode.victory;
-      transitionLeft = 4.5;
+      clearedLevel = level;
+      _enterPhase(RunMode.victory, 5.5);
       events.add('victory');
     }
     return true;

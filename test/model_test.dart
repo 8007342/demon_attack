@@ -84,7 +84,7 @@ void main() {
       expect(m.hitBoss(b.x), true);
       expect(m.mode, RunMode.victory);
       expect(m.score, 5000);
-      for (var i = 0; i < 50; i++) {
+      for (var i = 0; i < 100; i++) {
         m.update(.1);
       }
       expect(m.cycle, 1);
