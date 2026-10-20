@@ -8,4 +8,4 @@
 
 ## 3. Release
 - [x] 3.1 Pass analysis, Flutter/backend tests, strict specs and release build; refresh local Wrangler/browser and push verified game checkpoint.
-- [ ] 3.2 Sync final specifications and merge/push the verified final fix to main, then return to game.
+- [x] 3.2 Sync final specifications and merge/push the verified final fix to main, then return to game.
