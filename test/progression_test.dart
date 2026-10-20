@@ -91,8 +91,8 @@ void main() {
         expect(model.mode, phase);
         expect(model.lives, lives);
         expect(model.score, score);
-        expect(model.power, Power.rapid);
-        expect(model.powerLeft, 9);
+        expect(model.hasPower(Power.rapid), isTrue);
+        expect(model.timeLeft(Power.rapid), 9);
         final progress = model.transitionProgress;
         expect(progress, greaterThan(0));
         final remaining = model.transitionLeft;
@@ -157,8 +157,8 @@ void main() {
       expect(model.score, 6234);
       expect(model.lives, 2);
       expect(model.speed, greaterThan(1));
-      expect(model.power, Power.spread);
-      expect(model.powerLeft, 9);
+      expect(model.hasPower(Power.spread), isTrue);
+      expect(model.timeLeft(Power.spread), 9);
     },
   );
 }

@@ -46,3 +46,12 @@ The old fixed first-creature HP expectation was replaced with mixed-species esca
 
 
 The final actual-Wrangler browser pass succeeds on desktop1280×900 and phone390×844: initial Top10 GET returns200, inline scores and mobile scroll are checked, Enter starts, arrows/pointer/touch pilot, P pause/resume works, and all7 MIDI responses per viewport succeed. No runtime or console errors. The browser driver inspects the accessibility scoreboard and then reloads for an independent raw-keyboard test; this prevents its activated semantics DOM from stealing canvas focus. Score API smoke returned valid JSON. A fresh visible WebKit window was opened at the managed local preview URL.
+
+
+## Combined temporary powers
+
+Analysis, all38 Flutter tests, all4 backend/audio tests, strict OpenSpec validation and the release web build pass. New checks cover simultaneous spread/rapid volleys, independent nine-second expiry and type-only refresh, shield-only consumption, protected timer retention, and clearing powers for a new game. Widget checks verify all three colored glyph layers remain visible, expired/consumed layers disappear independently, and touching the combined badge still pilots the ship on a390×844 viewport. The rendered composite was visually reviewed at .cache/powers/combined-glyph.png.
+
+The managed sibling Wrangler preview was refreshed and opened in a visible WebKit window at https://www.demon-attack.localhost:18443/.
+
+Actual-Wrangler Chromium smoke passes on desktop and phone: inline Top10, Enter start, arrows, controller drag, pause/resume and seven successful MIDI responses per viewport; no runtime exceptions or console errors.

@@ -329,7 +329,7 @@ class DemonScene extends FlameGame {
         Offset(model.shipX, ArcadeModel.shipY),
         42,
       );
-      if (model.power == Power.shield || model.invulnerable > 0) {
+      if (model.hasPower(Power.shield) || model.invulnerable > 0) {
         c.drawCircle(
           Offset(model.shipX, ArcadeModel.shipY),
           22,

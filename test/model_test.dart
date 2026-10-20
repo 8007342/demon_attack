@@ -57,11 +57,11 @@ void main() {
     m.collect(Power.shield);
     m.hitPlayer();
     expect(m.lives, 3);
-    expect(m.power, isNull);
+    expect(m.activePowers, isEmpty);
     m.collect(Power.rapid);
-    m.powerLeft = .01;
+    m.powerTimers[Power.rapid] = .01;
     m.update(.02);
-    expect(m.power, isNull);
+    expect(m.activePowers, isEmpty);
   });
   test(
     'boss shield and door gate core damage; victory loops with retained lives and score',

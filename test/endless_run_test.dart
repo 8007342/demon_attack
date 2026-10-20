@@ -64,8 +64,8 @@ void main() {
         expect(m.lives, 2);
         expect(m.score, previousScore);
         expect(m.kills, kills);
-        expect(m.power, Power.rapid);
-        expect(m.powerLeft, 9);
+        expect(m.hasPower(Power.rapid), isTrue);
+        expect(m.timeLeft(Power.rapid), 9);
         expect(m.demons.any((d) => d.elite), isTrue);
         final maxHp = m.demons
             .map((d) => d.maxHp)
@@ -89,10 +89,10 @@ void main() {
       m.moveTo(250);
       advance(m, .4);
       expect(m.shipX, 250);
-      expect(m.power, Power.spread);
-      final duration = m.powerLeft;
+      expect(m.hasPower(Power.spread), isTrue);
+      final duration = m.timeLeft(Power.spread);
       advance(m, .3);
-      expect(m.powerLeft, duration);
+      expect(m.timeLeft(Power.spread), duration);
       until(m, RunMode.playing);
       while (m.wave < m.wavesPerLevel) {
         defeatRoster(m);
@@ -108,7 +108,7 @@ void main() {
       expect(m.lives, 3);
       advance(m, 1.7);
       expect(m.mode, RunMode.salvage);
-      expect(m.power, Power.shield);
+      expect(m.hasPower(Power.shield), isTrue);
       expect(m.shots, isEmpty);
       final progress = m.transitionProgress;
       m.pause();

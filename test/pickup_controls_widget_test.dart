@@ -78,7 +78,7 @@ void main() {
           }
           await tester.pump();
           expect(model.shipX, greaterThan(before + 50));
-          expect(model.power, Power.spread);
+          expect(model.hasPower(Power.spread), isTrue);
           expect(model.pickups, isEmpty);
           expect(model.mode, mode);
           expect(tester.takeException(), isNull);

@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'game/model.dart';
+import 'widgets/power_status.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
 import 'services/audio.dart';
@@ -726,23 +727,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     child: GameWidget(game: _arenaProxy, autofocus: false),
                   ),
                 ),
-                if (model.power != null)
-                  Positioned(
-                    left: 16,
-                    bottom: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      color: const Color(0xDD14283A),
-                      child: _label(
-                        '${model.power!.name.toUpperCase()}  ${model.powerLeft.ceil()}s',
-                        mint,
-                        size: 9,
-                      ),
-                    ),
-                  ),
                 if (model.cinematic && model.mode != RunMode.paused)
                   Positioned.fill(child: _interlude()),
                 if (model.mode == RunMode.paused)
@@ -944,21 +928,32 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             ),
             child: CustomPaint(
               painter: ConsolePainter(touch == null ? null : touchPosition),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Row(
                 children: [
-                  _label(
-                    '◀     SLIDE TO PILOT     ▶',
-                    touch != null ? mint : const Color(0xFF99B4C7),
-                    size: 10,
-                  ),
-                  const SizedBox(height: 9),
-                  _label(
-                    model.canPilot && !model.combat
-                        ? 'COLLECT POWERUPS · WEAPONS SAFE'
-                        : 'AUTO FIRE ENGAGED',
-                    const Color(0xFF536F82),
-                    size: 7,
+                  if (model.activePowers.isNotEmpty) ...[
+                    const SizedBox(width: 10),
+                    PowerStatus(timers: Map.of(model.powerTimers)),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _label(
+                          '◀     SLIDE TO PILOT     ▶',
+                          touch != null ? mint : const Color(0xFF99B4C7),
+                          size: 10,
+                        ),
+                        const SizedBox(height: 9),
+                        _label(
+                          model.canPilot && !model.combat
+                              ? 'COLLECT POWERUPS · WEAPONS SAFE'
+                              : 'AUTO FIRE ENGAGED',
+                          const Color(0xFF536F82),
+                          size: 7,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

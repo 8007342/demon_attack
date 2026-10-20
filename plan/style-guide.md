@@ -67,3 +67,7 @@ At native scale every demon species, angry state, player, and pickup must be rec
 ## Multiwave and cinematic presentation
 
 LV1–2 have three waves; LV3–4 have four. Intermediate-wave banners last 1.4 s and retain the level’s musical identity. The final wave instead leads to a 4 s level-clear scene and 4 s travel scene before the next level’s 2.3 s introduction. Show travel with the same cosmic palette, advancing the horizon / planetary composition rather than exposing combat. The carrier’s defeat has a distinct 5.5 s triumph, then 4 s travel before the next cycle. Keep score and lives legible, freeze power timers, suppress damage and auto-fire, and retain exact visual progress while paused. Use the model’s normalized transitionProgress to drive these scenes so animation and phase timing agree.
+
+## Combined power glyphs
+
+Power status uses transparent pixel-grid layers rather than opaque pickup tiles: spread cyan #70F5D5 arrows, rapid gold #F4CA79 central lightning, shield violet #A888FF outer enclosure. Layers combine in one badge without hiding the side arrows or shield. Display individual names, countdowns and timer bars beside the mark inside the controller panel, leaving the arena unobstructed. Losing one modifier removes only its visual layer and row.

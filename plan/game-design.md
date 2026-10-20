@@ -32,11 +32,11 @@ Continuous flocks permit score farming. A future competitive integrity policy ma
 
 A demon elimination awards `(100+kind×75+(maxHp−1)×50)×(cycle+1)` once; damage alone earns no points. Kill count persists through levels and cycles. Every fifth kill drops the next power in a repeating spread → rapid → shield sequence. Pickups descend at 64 units/s and disappear below the arena. These deterministic defaults make powers discoverable during short tests.
 
-Exactly one power is active at a time; collecting another replaces it and starts a nine-second timer. Spread adds two angled bullets to the central shot. Rapid reduces fire interval to 0.105 s. Shield absorbs one collision, consumes itself, and grants 1 s invulnerability. Pause freezes expiry. Current life loss preserves an active non-shield power; no extra lives are awarded.
+Spread, rapid and shield can all be active together, each with its own nine-second timer. Collecting a type refreshes only that type; expiry or shield consumption never cancels the others. Spread adds two angled bullets to the central shot. Rapid reduces fire interval to 0.105 s. Shield absorbs one collision, consumes itself, and grants 1 s invulnerability. Pause freezes expiry. Current life loss preserves active offensive powers; no extra lives are awarded.
 
 ## Screen and interaction requirements
 
-Title presents the demon emblem, Demon Attack, Start, an automatically loaded inline Top10, a sound control, and short drag / arrow / auto-fire guidance. Start supplies the browser's audio-unlock gesture. HUD shows score, level/cycle, lives, current power, and boss health when relevant. The touch console has a recessed pixel panel, clear drag feedback, and comfortable targets separate from the arena. Initial touch must not teleport the ship. Desktop must support a complete run with arrow movement and automatic fire.
+Title presents the demon emblem, Demon Attack, Start, an automatically loaded inline Top10, a sound control, and short drag / arrow / auto-fire guidance. Start supplies the browser's audio-unlock gesture. HUD shows score, level/cycle, lives, active-power glyphs/timers, and boss health when relevant. The touch console has a recessed pixel panel, clear drag feedback, and comfortable targets separate from the arena. Initial touch must not teleport the ship. Desktop must support a complete run with arrow movement and automatic fire.
 
 Game-over initials entry uses exactly three rotating character wheels from A–Z and 0–9, initially AAA, with visible up/down targets and keyboard support. It offers Submit rather than freeform text entry. Top 10 is embedded beside the title on desktop and below it on the mobile landing scroll, with loading/retry independent of Start. Successful score entry returns to this board. It presents rank, initials, and score; the Cloudflare Durable Object is the shared authority. A network failure must not falsely claim submission success. Server checks initials and score bounds; client-provided scores alone cannot establish legitimate play.
 
@@ -49,3 +49,5 @@ Game-over initials entry uses exactly three rotating character wheels from A–Z
 - Confirm door-closed shots do zero core damage and victory awards exactly one boss bonus.
 - Validate relative touch and keyboard controls, narrow-phone layout, complete score submission/retrieval, audio unlock, and pause/resume in the actual browser.
 - Further visual work may add flock separation steering and reduced-motion settings. These are refinements, not claims of current simulation behavior.
+
+The controller panel displays a composite pixel badge: cyan spread arrows, a central gold rapid-fire bolt, and an outer violet shield. Names, seconds and per-type timer bars remain visible beside it, and the whole status still passes drag input to the ship controller.

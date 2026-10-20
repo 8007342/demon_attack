@@ -82,9 +82,13 @@ class ArcadeModel {
   int lives = 3, score = 0, level = 1, cycle = 0, kills = 0, wave = 1;
   int? clearedLevel;
   double shipX = 180, targetX = 180, clock = 0, levelClock = 0;
-  double invulnerable = 0, powerLeft = 0, transitionLeft = 0;
+  double invulnerable = 0, transitionLeft = 0;
   double transitionDuration = 2.3;
-  Power? power;
+  static const powerDuration = 9.0;
+  final Map<Power, double> powerTimers = {};
+  Iterable<Power> get activePowers => Power.values.where(hasPower);
+  bool hasPower(Power value) => timeLeft(value) > 0;
+  double timeLeft(Power value) => powerTimers[value] ?? 0;
   double _fire = 0, _enemyFire = 1.5, _dive = 3, _flock = 0, _accumulator = 0;
   double get speed => 1 + math.min(cycle, 8) * .1;
   bool get combat => mode == RunMode.playing;
@@ -142,8 +146,7 @@ class ArcadeModel {
     clearedLevel = null;
     shipX = targetX = 180;
     clock = 0;
-    power = null;
-    powerLeft = 0;
+    powerTimers.clear();
     invulnerable = 2;
     _accumulator = 0;
     events.clear();
@@ -288,13 +291,17 @@ class ArcadeModel {
     if (!combat) return;
     levelClock += dt;
     invulnerable = math.max(0, invulnerable - dt);
-    powerLeft = math.max(0, powerLeft - dt);
-    if (powerLeft == 0) power = null;
+    for (final value in Power.values) {
+      if (powerTimers.containsKey(value)) {
+        powerTimers[value] = math.max(0, powerTimers[value]! - dt);
+      }
+    }
+    powerTimers.removeWhere((_, remaining) => remaining <= 0);
     _fire -= dt;
     if (_fire <= 0) {
-      _fire += power == Power.rapid ? .105 : .23;
+      _fire += hasPower(Power.rapid) ? .105 : .23;
       shots.add(Shot(shipX, shipY - 13, 0, -390));
-      if (power == Power.spread) {
+      if (hasPower(Power.spread)) {
         shots.addAll([
           Shot(shipX - 5, shipY - 8, -90, -370),
           Shot(shipX + 5, shipY - 8, 90, -370),
@@ -537,16 +544,14 @@ class ArcadeModel {
   }
 
   void collect(Power value) {
-    power = value;
-    powerLeft = 9;
+    powerTimers[value] = powerDuration;
     events.add('powerup');
   }
 
   void hitPlayer() {
     if (!combat || invulnerable > 0) return;
-    if (power == Power.shield) {
-      power = null;
-      powerLeft = 0;
+    if (hasPower(Power.shield)) {
+      powerTimers.remove(Power.shield);
       invulnerable = 1;
       events.add('hit');
       return;
