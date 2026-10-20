@@ -16,7 +16,7 @@ A new run has three lives, zero score, and a zero-based cycle counter. One unpro
 | 4 | THE HOLLOW | 14 crowned elders | 2 | Denser, faster attacks |
 | 5 | THE CARRIER | Carrier with replenished flocks | Shield 18 / core 16 | Shield, sliding door, successive boss forms |
 
-Ordinary HP is `1 + floor((level−1)/2) + min(cycle,3)`, currently reaching 5 in LV3–4. Each sprite has normal and angry wing animations; the final remaining HP of a multi-hit creature triggers anger and a telegraphed dive. The implemented atlas supplies two damage appearances per species, not a separate sprite for every intermediate HP. More elaborate molt art remains an enhancement.
+Ordinary HP is `1 + floor((level−1)/2) + min(cycle,3)`, currently reaching 5 in LV3–4. Each species has normal, three intermediate molt, and angry wing animations. Each nonlethal hit reveals the next weakened silhouette; the final remaining HP of a multi-hit creature triggers anger and a telegraphed dive.
 
 Flocks use individual sinusoidal paths around home positions, producing organic wing motion rather than synchronized mechanical marching. A dive warns for 0.7 s and samples the player's x once. Diving creatures steer toward that sampled x, descend, then rejoin their home position after leaving the arena. Dives begin in LV2, or LV1 on later cycles. Dive interval is `(4.2−level×0.45)/speed`; base vertical dive speed is `115+kind×16`. Angry dives progress faster. Hostile aimed drops come from one randomly selected demon per firing interval, with limited lateral velocity. Movement multiplier is `1+min(cycle,8)×0.1`, capped at 1.8. Hostile fire interval has a 0.45 s floor.
 
@@ -24,7 +24,7 @@ Flocks use individual sinusoidal paths around home positions, producing organic 
 
 The carrier cruises near y=205 with a 12-unit vertical bob and an 80-unit horizontal sweep. Shield HP is `18+cycle×6`; core HP is `16+cycle×8`. Shield hits across the hull width remove one HP. After the shield is gone, damage requires a shot through the center aperture while the sliding door is sufficiently open (`door >= 0.65`). Its width follows the visible opening; closed hull blocks shots. The sinusoidal opening accelerates with damage phase. There are `min(4,2+cycle)` transformation phases, beginning with two and reaching four. Music and art react to phase changes.
 
-The carrier releases three demons at a time when fewer than ten are present. The threshold currently permits up to twelve after a release. Their HP is `1+min(cycle,2)`, capped at three, and their forms advance with cycle. Flocks replenish continuously, while the exposed core remains reachable; players need not clear every minion to damage or defeat the carrier. This is deliberate survival pressure. The carrier also launches a three-shot downward fan. Boss kill score is `5000×(cycle+1)`; killing it clears minions without awarding their kill scores.
+The carrier releases three demons at a time when fewer than ten are present. Flock additions are clamped to a maximum of ten simultaneous minions. Their HP is `1+min(cycle,2)`, capped at three, and their forms advance with cycle. Flocks replenish continuously, while the exposed core remains reachable; players need not clear every minion to damage or defeat the carrier. This is deliberate survival pressure. The carrier also launches a three-shot downward fan. Boss kill score is `5000×(cycle+1)`; killing it clears minions without awarding their kill scores.
 
 Continuous flocks permit score farming. A future competitive integrity policy may limit per-boss minion scoring or use elapsed-time validation, but finite flocks are not a current gameplay requirement. Shield and core HP grow without a cap; playtesting should determine whether later-cycle endurance needs a cap independently of speed.
 
@@ -48,4 +48,4 @@ Game-over initials entry uses exactly three rotating character wheels from A–Z
 - Ensure individual dive warnings and hostile projectiles stay legible against each scene; no direct player-tracking dive after launch.
 - Confirm door-closed shots do zero core damage and victory awards exactly one boss bonus.
 - Validate relative touch and keyboard controls, narrow-phone layout, complete score submission/retrieval, audio unlock, and pause/resume in the actual browser.
-- Further visual work may add separate intermediate molts, flock separation steering, gradual planet transitions, and reduced-motion settings. These are refinements, not claims of current simulation behavior.
+- Further visual work may add flock separation steering and reduced-motion settings. These are refinements, not claims of current simulation behavior.

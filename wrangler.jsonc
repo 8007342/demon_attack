@@ -5,13 +5,37 @@
   "workers_dev": false,
   "preview_urls": false,
   "routes": [
-    { "pattern": "demonattack.tlatoani.net", "custom_domain": true }
+    {
+      "pattern": "demonattack.tlatoani.net",
+      "custom_domain": true
+    }
   ],
   "build": {
     "command": "npm run build"
   },
   "assets": {
     "directory": "./build/web",
-    "not_found_handling": "single-page-application"
-  }
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "main": "worker/index.mjs",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "HIGH_SCORES",
+        "class_name": "HighScores"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "HighScores"
+      ]
+    }
+  ]
 }

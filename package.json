@@ -2,12 +2,17 @@
   "name": "demon-attack",
   "version": "1.0.0",
   "private": true,
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "bash scripts/build-web.sh",
     "dev": "wrangler dev --ip 0.0.0.0",
     "deploy": "wrangler deploy",
-    "deploy:check": "wrangler deploy --dry-run"
+    "deploy:check": "wrangler deploy --dry-run",
+    "test:worker": "node --test test-worker/*.test.mjs"
   },
-  "devDependencies": { "wrangler": "4.151.2" }
+  "devDependencies": {
+    "wrangler": "4.151.2"
+  }
 }

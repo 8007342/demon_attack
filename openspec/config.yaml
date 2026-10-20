@@ -1,6 +1,9 @@
 schema: spec-driven
 context: |
-  Demon Attack is inspired by Atari's 1982 title.
-  Stack: Flutter with Flame, targeting mobile web, Android and iOS.
-  First release: quiet dark Under Construction landing page for the Oct 20 live coding event.
-  Keep the interface responsive, accessible, and visually restrained.
+  Demon Attack is an original remake inspired by Imagic's 1982 game for Atari hardware and expanded conversions.
+  Stack: Flutter with Flame, mobile-first web plus Android and iOS foundations.
+  Build four demon-swarm levels, a shield-and-sliding-door carrier boss, and evolving repeat cycles.
+  Pixel artwork, parallax planets, touch controller panel, arrow keys, permanent auto-fire, three lives.
+  Adaptive original MIDI-event synthesized music and Cloudflare Durable Object Top10 with three A-Z0-9 initials.
+  Work and push on game; merge main only when stable. Production is demonattack.tlatoani.net.
+  Keep specs and plan/ coherent with implementation; validate on the managed local Wrangler preview.
