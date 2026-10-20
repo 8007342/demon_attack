@@ -11,4 +11,4 @@
 ## 3. Integration and release
 - [x] 3.1 Pass analysis, complete Flutter tests, backend/audio tests, strict OpenSpec validation and release build; update plan evidence.
 - [x] 3.2 Reload local Wrangler and browser; verify score API, menu, recovery controls and assets; push game checkpoint.
-- [ ] 3.3 Sync final specs, merge the validated game branch into main, push the production trigger and return checkout to game.
+- [x] 3.3 Sync final specs, merge the validated game branch into main, push the production trigger and return checkout to game.
