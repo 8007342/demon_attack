@@ -1,6 +1,6 @@
 # Demon Attack — game design and current tuning
 
-This original remake uses winged demons, a horizontally moving defender, permanent auto-fire, four increasingly difficult waves, and a low-flying brood carrier. Artwork and music are original. Historical references belong in the research document; values below describe `lib/game/model.dart` and are tuning defaults rather than claims about the 1982 game.
+This original remake uses winged demons, a horizontally moving defender, permanent auto-fire, four increasingly difficult multi-wave sectors, and a low-flying brood carrier. Artwork and music are original. Historical references belong in the research document; values below describe `lib/game/model.dart` and are tuning defaults rather than claims about the 1982 game.
 
 ## Current simulation
 
@@ -36,9 +36,9 @@ Exactly one power is active at a time; collecting another replaces it and starts
 
 ## Screen and interaction requirements
 
-Title presents the demon emblem, Demon Attack, Start, Top 10, a sound control, and short drag / arrow / auto-fire guidance. Start supplies the browser's audio-unlock gesture. HUD shows score, level/cycle, lives, current power, and boss health when relevant. The touch console has a recessed pixel panel, clear drag feedback, and comfortable targets separate from the arena. Initial touch must not teleport the ship. Desktop must support a complete run with arrow movement and automatic fire.
+Title presents the demon emblem, Demon Attack, Start, an automatically loaded inline Top10, a sound control, and short drag / arrow / auto-fire guidance. Start supplies the browser's audio-unlock gesture. HUD shows score, level/cycle, lives, current power, and boss health when relevant. The touch console has a recessed pixel panel, clear drag feedback, and comfortable targets separate from the arena. Initial touch must not teleport the ship. Desktop must support a complete run with arrow movement and automatic fire.
 
-Game-over initials entry uses exactly three rotating character wheels from A–Z and 0–9, initially AAA, with visible up/down targets and keyboard support. It offers Submit rather than freeform text entry. Top 10 presents rank, initials, and score; the Cloudflare Durable Object is the shared authority. A network failure must not falsely claim submission success. Server checks initials and score bounds; client-provided scores alone cannot establish legitimate play.
+Game-over initials entry uses exactly three rotating character wheels from A–Z and 0–9, initially AAA, with visible up/down targets and keyboard support. It offers Submit rather than freeform text entry. Top 10 is embedded beside the title on desktop and below it on the mobile landing scroll, with loading/retry independent of Start. Successful score entry returns to this board. It presents rank, initials, and score; the Cloudflare Durable Object is the shared authority. A network failure must not falsely claim submission success. Server checks initials and score bounds; client-provided scores alone cannot establish legitimate play.
 
 ## Acceptance and follow-up tuning
 

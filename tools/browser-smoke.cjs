@@ -68,6 +68,11 @@ async function textVisible(page, value) {
       for (const entry of board.scores) assert(foundInitials.has(entry.initials), `${name}: landing scroll includes score initials ${entry.initials}`);
       await page.screenshot({path: `/tmp/demon-board-${name}.png`});
       if (name === 'phone') { await page.mouse.wheel(0, -4000); await page.waitForTimeout(200); }
+      // Inspect accessibility first, then reload for an independent raw-keyboard run.
+      // Flutter's activated semantics DOM takes focus from canvas keyboard input.
+      await page.reload({waitUntil: 'networkidle'});
+      await page.locator('flt-glass-pane, flutter-view').first().waitFor({state: 'attached'});
+      await page.waitForTimeout(1000);
       await page.mouse.click(12, viewport.height - 12);
       await page.screenshot({path: `/tmp/demon-title-${name}.png`});
       if (name === 'desktop') await page.screenshot({path: '/tmp/demon-title.png'});
