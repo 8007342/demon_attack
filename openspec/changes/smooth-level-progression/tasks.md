@@ -12,4 +12,4 @@
 
 ## 4. Integration
 - [x] 4.1 Pass analyze, Flutter tests, audio/backend tests, strict OpenSpec validation and release web build; update guides and validation evidence.
-- [ ] 4.2 Push the verified checkpoint to game and reload managed local Wrangler, confirming playable assets and score API.
+- [x] 4.2 Push the verified checkpoint to game and reload managed local Wrangler, confirming playable assets and score API.
