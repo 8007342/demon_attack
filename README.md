@@ -1,47 +1,53 @@
 # Demon Attack
 
-Demon Attack game, inspired by Atari's 1982 title of the same name.
-Built with Flutter and Flame for mobile web, Android, and iOS.
+An original pixel arcade remake inspired by Imagic's 1982 Demon Attack and its expanded conversions. Flutter and Flame power four swarm levels, a shielded carrier with a sliding core door, and increasingly evolved repeat runs.
 
-The landing page displays a pixel demon logo, **Demon Attack**, and **Under Construction** over a quiet starfield.
+Drag the bottom controller panel or use **← →** to pilot. Firing is automatic. Start with three lives; one unprotected hit costs one life. Collect spread, rapid-fire, and shield powers. Press **P / Esc** to pause. Sound starts after a user gesture and can be muted.
+
+Top10 scores are shared through a Cloudflare SQLite Durable Object. Enter only three rotating A–Z/0–9 initials. Scores are client-reported arcade scores, not a cheat-proof competition.
 
 ## Development
 
 ```sh
-flutter pub get
-flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
+npm ci
+npm run dev
 ```
+
+Wrangler runs the pinned Flutter web build and serves the app, MIDI synth, assets and `/api/scores` together. `flutter run -d web-server` is useful for the Dart UI alone, but does not serve the Worker API or copy the browser audio bridge.
+
+The managed local preview is https://www.demon-attack.localhost:18443/. After Dart edits rebuild with `npm run build`; reload the preview runtime after Worker bindings or Wrangler config changes. Assets are watched. Local Durable Object scores are separate from production and reset when the managed sibling container is replaced.
 
 ## Validation
 
 ```sh
 flutter analyze
 flutter test
-flutter build web
+npm run test:worker
+npm run build
 openspec validate --all --strict
 ```
 
+`tools/browser-smoke.cjs` drives a standalone Playwright Chromium against `URL` (default `http://127.0.0.1:8765`) and captures phone/desktop screenshots. Install Playwright's Chromium separately; it is a developer tool, not a runtime dependency.
+
 ## Project layout
 
-- `lib/main.dart`: responsive landing page and Flame starfield.
-- `openspec/specs/`: requirements; update these before changing behavior.
-- `openspec/config.yaml`: OpenSpec project context.
-- `plan/roadmap.md`: remaining work.
+- `lib/game/model.dart`: deterministic combat and progression.
+- `lib/game/scene.dart`: Flame rendering, sprite animation and celestial parallax.
+- `lib/main.dart`: responsive cabinet, touch/keyboard controls and score wheels.
+- `worker/index.mjs`: same-origin API and persistent Top10.
+- `web/audio/`: original MIDI cues, generator and browser synthesizer.
+- `assets/images/`: original sprite atlas and generated cosmic artwork.
+- `openspec/changes/build-demon-attack-game/`: current behavior requirements and tracked implementation.
+- `plan/`: original-game research, game tuning, visual/music guides and validation evidence.
 
-## Cloudflare deployment
+Regenerate sprite pixels with `python3 tools/generate_sprites.py`; regenerate MIDI with `python3 web/audio/generate-midi.py`.
 
-Production domain: **https://demonattack.tlatoani.net**. This uses Cloudflare Workers Static Assets (including SPA navigation fallback).
+## Deployment
 
-Requirements: Node.js 22+, npm, Bash, and Git. The build uses Flutter from `.flutter-version`, downloading that SDK automatically when a matching local installation is unavailable. Flutter and Flame assets, including the web renderer, are bundled in `build/web`.
+Production: https://demonattack.tlatoani.net. Work and push checkpoints on **game**. Pushes to **main** auto-deploy; merge only after stable playtesting.
 
 ```sh
-npm ci
-npx wrangler login
-npx wrangler deploy
+npm run deploy:check
 ```
 
-Wrangler automatically runs `npm run build` before deployment. `npm run deploy:check` runs that same build and validates the upload without publishing. `npm run dev` builds and serves the app through Wrangler locally.
-
-The Cloudflare account must contain the active `tlatoani.net` zone. Wrangler configures `demonattack.tlatoani.net` as a custom domain, including DNS and TLS. For CI, configure `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in the build environment; keep credentials out of source control.
-
-For Cloudflare Workers Builds, connect this repository with root directory `/`, worker name `demon-attack`, Node.js 22 or later, and deploy command `npx wrangler deploy`. Leave the separate build command empty because Wrangler invokes the build itself. The normal npm dependency installation uses the committed lockfile.
+This builds and validates without publishing. Production uses Worker Static Assets, the `ASSETS` binding, and the `HIGH_SCORES` SQLite Durable Object with migration `v1`. The Cloudflare account needs the active custom-domain zone. Node.js22+, npm, Bash and Git are required; the build obtains the pinned Flutter SDK automatically if necessary. Credentials stay outside source control.

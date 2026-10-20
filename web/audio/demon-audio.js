@@ -96,7 +96,7 @@
     const [pitch, duration, velocity] = shapes[name] || shapes.hit;
     voice({ pitch, velocity, channel: name==='explosion' ? 9 : 0 }, context.currentTime+.005, duration, effects);
   }
-  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); else resume(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
   window.demonAudio = Object.freeze({ unlock, cue, mute, pause, resume, sfx, get muted() { return muted; } });
   // Unlock from real DOM gestures, including Flutter canvas input.
   for (const type of ['pointerdown','keydown']) window.addEventListener(type, unlock, { once: true, capture: true });
