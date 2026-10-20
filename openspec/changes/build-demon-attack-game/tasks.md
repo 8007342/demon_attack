@@ -19,7 +19,7 @@
 
 ## 5. Integration
 - [x] 5.1 Wire Worker assets, migration and build; pass analyze, Flutter tests, backend tests, release web build and strict OpenSpec validation.
-- [ ] 5.2 Refresh Wrangler preview, verify API persistence and playable browser flow, document test evidence, and push validated checkpoints to game only.
+- [x] 5.2 Refresh Wrangler preview, verify API persistence and playable browser flow, document test evidence, and push validated checkpoints to game only.
 
 ## Workflow follow-up
 - Review gameplay tuning on the host browser before merging a stable release into main.
