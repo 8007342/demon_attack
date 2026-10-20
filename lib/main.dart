@@ -1,12 +1,8 @@
 import 'dart:math' as math;
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/link.dart';
 
-const eventUrl =
-    'https://eventship.com/event/building-a-game-in-a-framework-i-ve-never-touched';
 const ink = Color(0xFF090D12);
-const muted = Color(0xFF849099);
 const accent = Color(0xFFD0E4B0);
 
 void main() => runApp(const DemonAttackApp());
@@ -16,7 +12,7 @@ class DemonAttackApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'Demon Attack · Coded Live Oct 20',
+    title: 'Demon Attack · Under Construction',
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       brightness: Brightness.dark,
@@ -48,169 +44,47 @@ class LandingPage extends StatelessWidget {
             builder: (context, bounds) => SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: bounds.maxHeight),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 28,
-                  ),
-                  child: IntrinsicHeight(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 48,
+                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.blur_on, color: accent, size: 22),
-                            SizedBox(width: 10),
-                            Text(
-                              'DEMON ATTACK',
-                              style: TextStyle(
-                                fontSize: 12,
-                                letterSpacing: 2.5,
-                              ),
-                            ),
-                          ],
+                        Semantics(
+                          label: 'Demon logo',
+                          image: true,
+                          child: const CustomPaint(
+                            size: Size(144, 112),
+                            painter: DemonLogoPainter(),
+                          ),
                         ),
-                        const Spacer(),
-                        Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 560),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 9,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: const Color(0xFF354038),
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
-                                    color: const Color(0xFF111A16),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.circle,
-                                        size: 6,
-                                        color: accent,
-                                      ),
-                                      SizedBox(width: 9),
-                                      Text(
-                                        'UNDER CONSTRUCTION',
-                                        style: TextStyle(
-                                          color: accent,
-                                          fontSize: 10,
-                                          letterSpacing: 1.7,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 32),
-                                const Text(
-                                  'A little chaos.\nBuilt from scratch.',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    height: 1.8,
-                                    color: muted,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'Coded Live\nOct 20',
-                                  semanticsLabel: 'Coded Live Oct 20',
-                                  style: TextStyle(
-                                    fontSize: 51,
-                                    height: 1.13,
-                                    letterSpacing: -3,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFFF0F0E8),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                const Text(
-                                  'An arcade classic, a new framework.\nWatch Demon Attack take shape,\none line at a time.',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    height: 1.9,
-                                    color: muted,
-                                  ),
-                                ),
-                                const SizedBox(height: 32),
-                                Link(
-                                  uri: Uri.parse(eventUrl),
-                                  target: LinkTarget.blank,
-                                  builder: (context, followLink) =>
-                                      OutlinedButton(
-                                        onPressed: followLink,
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: accent,
-                                          side: const BorderSide(
-                                            color: Color(0xFF48563F),
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 20,
-                                            vertical: 19,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              4,
-                                            ),
-                                          ),
-                                        ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'Join the live build',
-                                              style: TextStyle(fontSize: 12),
-                                            ),
-                                            SizedBox(width: 20),
-                                            Icon(Icons.north_east, size: 16),
-                                          ],
-                                        ),
-                                      ),
-                                ),
-                                const SizedBox(height: 20),
-                                const Text(
-                                  'LIVE CODING / OCTOBER 20',
-                                  style: TextStyle(
-                                    color: muted,
-                                    fontSize: 9,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                              ],
+                        const SizedBox(height: 36),
+                        const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'DEMON ATTACK',
+                            semanticsLabel: 'Demon Attack',
+                            style: TextStyle(
+                              fontSize: 44,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 5,
+                              color: Color(0xFFF0F0E8),
                             ),
                           ),
                         ),
-                        const Spacer(),
-                        const SizedBox(height: 48),
-                        const Divider(color: Color(0xFF252D32)),
-                        const SizedBox(height: 12),
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'FLUTTER + FLAME',
-                              style: TextStyle(
-                                color: muted,
-                                fontSize: 9,
-                                letterSpacing: 1.3,
-                              ),
-                            ),
-                            Text(
-                              'INSERT CURIOSITY',
-                              style: TextStyle(
-                                color: muted,
-                                fontSize: 9,
-                                letterSpacing: 1.3,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 24),
+                        const Text(
+                          'UNDER CONSTRUCTION',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 11,
+                            height: 1.8,
+                            letterSpacing: 3,
+                          ),
                         ),
                       ],
                     ),
@@ -223,6 +97,53 @@ class LandingPage extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// A crisp arcade demon mark drawn on a pixel grid.
+class DemonLogoPainter extends CustomPainter {
+  const DemonLogoPainter();
+
+  static const pixels = [
+    '010000000000010',
+    '011000000000110',
+    '011100000001110',
+    '001111111111100',
+    '000111111111000',
+    '001110111011100',
+    '111110111011111',
+    '111111111111111',
+    '110011111110011',
+    '100001111100001',
+    '000001010100000',
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cell = math.min(size.width / 15, size.height / 11);
+    final offset = Offset(
+      (size.width - cell * 15) / 2,
+      (size.height - cell * 11) / 2,
+    );
+    final paint = Paint()..color = accent;
+    for (var y = 0; y < pixels.length; y++) {
+      for (var x = 0; x < pixels[y].length; x++) {
+        if (pixels[y][x] == '1') {
+          canvas.drawRect(
+            Rect.fromLTWH(
+              offset.dx + x * cell,
+              offset.dy + y * cell,
+              cell,
+              cell,
+            ),
+            paint,
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(DemonLogoPainter oldDelegate) => false;
 }
 
 /// A static, understated Flame scene. No animation or motion sensitivity cost.

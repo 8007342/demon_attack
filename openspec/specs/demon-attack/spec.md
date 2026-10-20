@@ -1,7 +1,7 @@
 # Demon Attack
 
 ## Purpose
-A mobile web game inspired by the 1982 arcade classic, built live with Flutter and Flame. The first release is an event landing page.
+A mobile web game inspired by the 1982 arcade classic, built live with Flutter and Flame. The first release is an construction landing page.
 
 ## Requirements
 
@@ -12,19 +12,12 @@ The app SHALL run in Flutter on mobile web with readable content and a quiet dar
 - **WHEN** a visitor opens the page at 390 CSS pixels wide
 - **THEN** the content fits without horizontal scrolling and displays Under Construction
 
-### Requirement: Live coding announcement
-The landing page SHALL display “Coded Live Oct 20”.
+### Requirement: Construction identity
+The landing page SHALL display only a demon logo, “Demon Attack” as the primary heading, and “Under Construction” over the starfield.
 
-#### Scenario: Viewing the announcement
+#### Scenario: Viewing the landing page
 - **WHEN** the page loads
-- **THEN** the visitor sees Coded Live Oct 20 as the primary heading
-
-### Requirement: Event link
-The landing page SHALL provide an accessible link to https://eventship.com/event/building-a-game-in-a-framework-i-ve-never-touched.
-
-#### Scenario: Joining the live build
-- **WHEN** a visitor activates Join the live build
-- **THEN** the event URL opens in a new browser tab
+- **THEN** the visitor sees the logo, Demon Attack, and Under Construction without event announcements, links, or footer content
 
 ### Requirement: Flame foundation
 The Flutter app SHALL embed a Flame game scene as its background.

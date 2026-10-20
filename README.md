@@ -3,7 +3,7 @@
 Demon Attack game, inspired by Atari's 1982 title of the same name.
 Built with Flutter and Flame for mobile web, Android, and iOS.
 
-The first version is a quiet dark “Under Construction” landing page announcing **Coded Live Oct 20** with a link to the [live build](https://eventship.com/event/building-a-game-in-a-framework-i-ve-never-touched).
+The landing page displays a pixel demon logo, **Demon Attack**, and **Under Construction** over a quiet starfield.
 
 ## Development
 
