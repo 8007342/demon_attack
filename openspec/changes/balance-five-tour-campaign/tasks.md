@@ -66,4 +66,4 @@
 ## 12. Reinforcement pressure and carrier force field
 - [x] 12.1 Trigger multiple stronger reinforcement flocks promptly as comrades fall; give each sentinel its own separate largest reinforcement escort, unaffected by earlier flocks; verify bounded completion and replay.
 - [x] 12.2 Draw the carrier force field as a symmetric fixed-width lower egg outside the hull; contract its depth and projectile impacts toward the hull as depleted, preserve hatch gates, and add accurate illustrated field advice.
-- [ ] 12.3 Run integrated tests/browser/release preview checks, document tuning, and push main remotely.
+- [x] 12.3 Run integrated tests/browser/release preview checks, document tuning, and push main remotely.
