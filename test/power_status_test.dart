@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/main.dart';
 import 'package:demon_attack/services/scores.dart';
@@ -20,9 +21,8 @@ void main() {
           {Power.spread, Power.rapid},
         ]) {
           final recorder = ui.PictureRecorder();
-          PowerGlyphPainter(
-            active,
-          ).paint(ui.Canvas(recorder), const Size(64, 64));
+          PowerGlyphPainter(active)
+              .paint(ui.Canvas(recorder), const Size(64, 64));
           final picture = recorder.endRecording();
           final image = await picture.toImage(64, 64);
           final data = (await image.toByteData(
@@ -104,8 +104,8 @@ void main() {
         findsOneWidget,
       );
       final initial = scene.model.targetX;
-      await tester.drag(
-        find.byKey(const ValueKey('combined-power-glyph')),
+      await tester.dragFrom(
+        tester.getCenter(find.byKey(const ValueKey('combined-power-glyph'))),
         const Offset(40, 0),
       );
       expect(scene.model.targetX, greaterThan(initial));

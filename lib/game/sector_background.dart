@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 /// Complete independently painted worlds: artwork, moons, orbitals and horizon
@@ -75,7 +76,7 @@ class SectorBackground {
         Paint()..color = const Color(0x80060914),
       );
     }
-    final random = math.Random(1982 + sector * 709);
+    final random = math.Random(1982 + sector * 709 + cycle * 41);
     for (var i = 0; i < 80; i++) {
       final depth = i % 3 + 1;
       final x = random.nextDouble() * 360;
@@ -92,6 +93,45 @@ class SectorBackground {
             alpha: image == null ? .65 + .1 * depth : .12 + .06 * depth,
           ),
       );
+    }
+    // Additional route layers move at independent depth rates. Their dark
+    // silhouettes remain behind shots and preserve each world's original tint.
+    for (var depth = 0; depth <= cycle.clamp(0, 4); depth++) {
+      final speed = 1.8 + depth * 1.7;
+      final drift = (time * speed) % 96;
+      for (var i = -1; i < 6; i++) {
+        final x =
+            (i * 83.0 + depth * 31 + time * (.2 + depth * .13)) % 440 - 40;
+        final y = 430 + depth * 17.0 + drift * .17;
+        final h = 20.0 + ((i + 2) * 19 + cycle * 11 + depth * 7) % 53;
+        final paint = Paint()
+          ..color = tint.withValues(alpha: .035 + depth * .012);
+        if (sector == 2 || sector == 3) {
+          c.drawPath(
+            Path()
+              ..moveTo(x - 35, 540)
+              ..lineTo(x, y - h)
+              ..lineTo(x + 42, 540)
+              ..close(),
+            paint,
+          );
+        } else {
+          c.drawRect(Rect.fromLTWH(x, y - h, 18 + depth * 7.0, 130), paint);
+          c.drawLine(
+            Offset(x - 24, y - h + 9),
+            Offset(x + 38, y - h + 9),
+            Paint()..color = tint.withValues(alpha: .08),
+          );
+        }
+      }
+      // Slowly passing orbital girders add depth at the screen edges.
+      for (final side in [0.0, 345.0]) {
+        final y = (time * speed * 2.4 + depth * 103) % 620 - 70;
+        c.drawRect(
+          Rect.fromLTWH(side, y, 15, 45 + depth * 5.0),
+          Paint()..color = tint.withValues(alpha: .05 + depth * .015),
+        );
+      }
     }
     // Moon constellations grow as the route approaches occupied space.
     for (var i = 0; i <= sector; i++) {

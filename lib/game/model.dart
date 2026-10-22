@@ -1,5 +1,8 @@
 import 'dart:math' as math;
 
+import 'difficulty.dart';
+export 'difficulty.dart';
+
 enum RunMode {
   title,
   playing,
@@ -10,18 +13,44 @@ enum RunMode {
   travel,
   victory,
   gameOver,
+  completed,
 }
 
 enum Power { spread, rapid, shield }
 
+enum HeartPart {
+  left,
+  right,
+  top;
+
+  int get mask => 1 << index;
+}
+
+enum EnemyArchetype { ordinary, shieldSentinel, armoredSentinel }
+
+class HeartPickup {
+  HeartPickup(this.x, this.y, this.part);
+  double x, y;
+  final HeartPart part;
+}
+
 class Demon {
-  Demon(this.x, this.y, this.kind, this.maxHp, this.seed, {this.elite = false})
-    : hp = maxHp,
-      homeX = x,
-      homeY = y;
+  Demon(
+    this.x,
+    this.y,
+    this.kind,
+    this.maxHp,
+    this.seed, {
+    this.elite = false,
+    this.archetype = EnemyArchetype.ordinary,
+  }) : hp = maxHp,
+       homeX = x,
+       homeY = y;
   double x, y, homeX, homeY;
   final int kind, maxHp;
   final bool elite;
+  final EnemyArchetype archetype;
+  bool get isLarge => archetype != EnemyArchetype.ordinary;
   int get moltStage => maxHp - hp;
   double attackLeft = 2.4;
   final double seed;
@@ -44,16 +73,23 @@ class Pickup {
 }
 
 class Blast {
-  Blast(this.x, this.y, {this.big = false});
+  Blast(
+    this.x,
+    this.y, {
+    this.big = false,
+    this.archetype = EnemyArchetype.ordinary,
+  });
   final double x, y;
   final bool big;
+  final EnemyArchetype archetype;
+  bool get isLarge => archetype != EnemyArchetype.ordinary;
   double age = 0;
 }
 
 class Carrier {
-  Carrier(int cycle)
-    : shieldMax = 72 + cycle * 18,
-      coreMax = 24 + cycle * 10,
+  Carrier(int cycle, {Difficulty difficulty = Difficulty.normal})
+    : shieldMax = DifficultyPolicy(difficulty).bossHealth(72 + cycle * 18),
+      coreMax = DifficultyPolicy(difficulty).bossHealth(24 + cycle * 10),
       formCount = math.min(4, 2 + cycle) {
     shield = shieldMax;
     core = coreMax;
@@ -79,6 +115,15 @@ class ArcadeModel {
   final List<Blast> blasts = [];
   final List<String> events = [];
   Carrier? boss;
+  Carrier? wreckBoss;
+  Difficulty difficulty = Difficulty.normal;
+  DifficultyPolicy get policy => DifficultyPolicy(difficulty);
+  int medals = 0;
+  double _activeMilliseconds = 0;
+  int get activeMilliseconds => _activeMilliseconds.round();
+  int? get remainingLives => mode == RunMode.completed ? lives : null;
+  final List<int> heartSlots = [0, 0, 0];
+  final List<HeartPickup> heartPickups = [];
   int lives = 3, score = 0, level = 1, cycle = 0, kills = 0, wave = 1;
   int? clearedLevel;
   double shipX = 180, targetX = 180, clock = 0, levelClock = 0;
@@ -90,7 +135,7 @@ class ArcadeModel {
   bool hasPower(Power value) => timeLeft(value) > 0;
   double timeLeft(Power value) => powerTimers[value] ?? 0;
   double _fire = 0, _enemyFire = 1.5, _dive = 3, _flock = 0, _accumulator = 0;
-  double get speed => 1 + math.min(cycle, 8) * .1;
+  double get speed => (1 + math.min(cycle, 4) * .1) * policy.hostileRate;
   bool get combat => mode == RunMode.playing;
   bool get canPilot =>
       combat ||
@@ -136,8 +181,14 @@ class ArcadeModel {
           : 'LEVEL ${level.toString().padLeft(2, '0')} · $levelName',
   };
 
-  void start() {
-    lives = 3;
+  void start({Difficulty difficulty = Difficulty.normal}) {
+    this.difficulty = difficulty;
+    lives = policy.startingLives;
+    medals = 0;
+    _activeMilliseconds = 0;
+    heartSlots.fillRange(0, 3, 0);
+    heartPickups.clear();
+    wreckBoss = null;
     score = 0;
     level = 1;
     cycle = 0;
@@ -153,12 +204,115 @@ class ArcadeModel {
     _beginLevel();
   }
 
+  /// Compact entrance snapshot. Call when consuming the `checkpoint` event.
+  Map<String, dynamic> checkpoint() => {
+    'schemaVersion': 1,
+    'difficulty': difficulty.name,
+    'routeIndex': cycle,
+    'sector': level,
+    'wave': wave,
+    'score': score,
+    'lives': lives,
+    'medals': medals,
+    'kills': kills,
+    'heartSlots': List<int>.of(heartSlots),
+    'activeMilliseconds': activeMilliseconds,
+  };
+
+  /// Restores a fresh wave, validating before changing this model.
+  /// Unknown optional fields and schema versions are deliberately tolerated.
+  bool restoreCheckpoint(Map<String, dynamic> data) {
+    int? integer(Object? value, int fallback, int min, int max) {
+      if (value == null) return fallback;
+      return value is int && value >= min && value <= max ? value : null;
+    }
+
+    final rawDifficulty = data['difficulty'];
+    final restoredDifficulty = rawDifficulty == null
+        ? Difficulty.normal
+        : Difficulty.values.where((d) => d.name == rawDifficulty).firstOrNull;
+    if (restoredDifficulty == null) return false;
+    final route = integer(
+      data['routeIndex'] ?? data['cycle'] ?? data['route'],
+      0,
+      0,
+      4,
+    );
+    final sector = integer(data['sector'] ?? data['level'], 1, 1, 5);
+    if (route == null || sector == null) return false;
+    final maxWave = sector == 5
+        ? 1
+        : 3 + ((sector - 1) ~/ 2) + math.min(route, 3);
+    final restoredWave = integer(data['wave'], 1, 1, maxWave.toInt());
+    final restoredLives = integer(
+      data['lives'],
+      DifficultyPolicy(restoredDifficulty).startingLives,
+      1,
+      1000000,
+    );
+    final restoredScore = integer(data['score'], 0, 0, 9007199254740991);
+    final restoredMedals = integer(data['medals'], 0, 0, 4);
+    final restoredKills = integer(data['kills'], 0, 0, 9007199254740991);
+    final restoredTime = integer(
+      data['activeMilliseconds'],
+      0,
+      0,
+      9007199254740991,
+    );
+    final rawHearts = data['heartSlots'];
+    final restoredHearts = <int>[0, 0, 0];
+    if (rawHearts != null) {
+      if (rawHearts is! List || rawHearts.length != 3) return false;
+      for (var i = 0; i < 3; i++) {
+        final mask = integer(rawHearts[i], 0, 0, 6);
+        if (mask == null) return false;
+        restoredHearts[i] = mask;
+      }
+    }
+    if (restoredWave == null ||
+        restoredLives == null ||
+        restoredScore == null ||
+        restoredMedals == null ||
+        restoredKills == null ||
+        restoredTime == null) {
+      return false;
+    }
+    // A recorded medal always belongs to an already completed route.
+    if (restoredMedals > route) return false;
+    difficulty = restoredDifficulty;
+    cycle = route;
+    level = sector;
+    wave = restoredWave;
+    lives = restoredLives;
+    score = restoredScore;
+    medals = restoredMedals;
+    kills = restoredKills;
+    _activeMilliseconds = restoredTime.toDouble();
+    heartSlots.setAll(0, restoredHearts);
+    heartPickups.clear();
+    powerTimers.clear();
+    pickups.clear();
+    blasts.clear();
+    events.clear();
+    clearedLevel = null;
+    wreckBoss = null;
+    shipX = targetX = 180;
+    clock = levelClock = _accumulator = 0;
+    invulnerable = 2;
+    boss = level == 5 ? Carrier(cycle, difficulty: difficulty) : null;
+    _spawnWave();
+    events.add(boss == null ? 'level' : 'boss');
+    return true;
+  }
+
   void _beginLevel() {
     wave = 1;
     clearedLevel = null;
-    boss = level == 5 ? Carrier(cycle) : null;
+    wreckBoss = null;
+    boss = level == 5 ? Carrier(cycle, difficulty: difficulty) : null;
     levelClock = 0;
     pickups.clear();
+    heartPickups.clear();
     blasts.clear();
     _spawnWave();
     events.add(boss == null ? 'level' : 'boss');
@@ -172,10 +326,17 @@ class ArcadeModel {
     _dive = 3;
     _flock = 2;
     if (boss == null) {
-      final count = math.min(
-        24,
-        6 + level * 2 + (wave - 1) * 2 + math.min(cycle, 4) * 2,
-      );
+      final count = policy.rosterCount(sector: level, wave: wave, route: cycle);
+      final rows = (count / 6).ceil();
+      final spacing = rows <= 4 ? 48.0 : 160.0 / (rows - 1);
+      final specialEligible =
+          (wave == wavesPerLevel &&
+              level >= 2 &&
+              (difficulty != Difficulty.easy || level.isEven)) ||
+          (cycle >= 1 &&
+              difficulty != Difficulty.easy &&
+              wave >= 3 &&
+              (wave + level + cycle).isEven);
       for (var i = 0; i < count; i++) {
         // Later waves mix previously encountered creatures into the native flock.
         final kind = cycle > 0
@@ -184,21 +345,31 @@ class ArcadeModel {
             ? math.max(0, level - 2)
             : level - 1;
         final elite = cycle > 0 && (i + wave) % 5 == 0;
-        final hp = 1 + (kind ~/ 2) + math.min(cycle, 3) + (elite ? 2 : 0);
+        final archetype = specialEligible && i == count - 1
+            ? (cycle >= 2 && difficulty != Difficulty.easy
+                  ? EnemyArchetype.armoredSentinel
+                  : EnemyArchetype.shieldSentinel)
+            : EnemyArchetype.ordinary;
+        final hp = archetype == EnemyArchetype.ordinary
+            ? 1 + (kind ~/ 2) + math.min(cycle, 3) + (elite ? 2 : 0)
+            : (archetype == EnemyArchetype.armoredSentinel ? 8 : 5) +
+                  math.min(cycle, 4);
         demons.add(
           Demon(
             38 + (i % 6) * 56.0,
-            70 + (i ~/ 6) * 48.0,
+            70 + (i ~/ 6) * spacing,
             kind,
             hp.toInt(),
             i * 1.7 + wave * .6,
             elite: elite,
+            archetype: archetype,
           ),
         );
       }
     }
     if (boss == null) _updateDemons(0);
     _enterPhase(RunMode.transition, wave > 1 ? 1.4 : 2.3);
+    events.add('checkpoint');
   }
 
   void _enterPhase(RunMode phase, double duration) {
@@ -246,7 +417,8 @@ class ArcadeModel {
   void update(double dt) {
     if (mode == RunMode.paused ||
         mode == RunMode.title ||
-        mode == RunMode.gameOver) {
+        mode == RunMode.gameOver ||
+        mode == RunMode.completed) {
       return;
     }
     _accumulator += dt.clamp(0, .1);
@@ -257,11 +429,12 @@ class ArcadeModel {
   }
 
   void _step(double dt) {
+    if (mode == RunMode.gameOver || mode == RunMode.completed) return;
     clock += dt;
     for (final b in blasts) {
       b.age += dt;
     }
-    blasts.removeWhere((b) => b.age > .55);
+    blasts.removeWhere((b) => b.age > (b.isLarge ? 1.4 : .55));
     if (canPilot) {
       final delta = targetX - shipX;
       shipX += delta.clamp(-330 * dt, 330 * dt);
@@ -272,8 +445,12 @@ class ArcadeModel {
       if (transitionLeft <= 0) {
         if (mode == RunMode.salvage) {
           pickups.clear();
+          heartPickups.clear();
           _enterPhase(RunMode.levelClear, 4);
           events.add('levelclear');
+        } else if (mode == RunMode.victory && cycle >= 4) {
+          mode = RunMode.completed;
+          events.add('completed');
         } else if (mode == RunMode.levelClear || mode == RunMode.victory) {
           _enterPhase(RunMode.travel, 4);
           events.add('travel');
@@ -289,6 +466,7 @@ class ArcadeModel {
       return;
     }
     if (!combat) return;
+    _activeMilliseconds += dt * 1000;
     levelClock += dt;
     invulnerable = math.max(0, invulnerable - dt);
     for (final value in Power.values) {
@@ -312,7 +490,7 @@ class ArcadeModel {
     _updateDemons(dt);
     _updateBoss(dt);
     for (final s in shots) {
-      s.x += s.vx * dt;
+      s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1);
       s.y += s.vy * dt;
     }
     _collisions();
@@ -333,6 +511,14 @@ class ArcadeModel {
       }
     }
     pickups.removeWhere((p) => p.y > height + 10);
+    for (final p in heartPickups) {
+      p.y += fallSpeed * dt;
+      if ((p.x - shipX).abs() < 22 && (p.y - shipY).abs() < 23) {
+        collectHeart(p.part);
+        p.y = height + 20;
+      }
+    }
+    heartPickups.removeWhere((p) => p.y > height + 10);
   }
 
   void _hostile(Shot shot) {
@@ -340,25 +526,30 @@ class ArcadeModel {
   }
 
   void _updateDemons(double dt) {
-    _dive -= dt;
+    _dive -= dt * policy.hostileRate;
     final readyDivers = demons
         .where((d) => d.dive == 0 && d.telegraph <= 0)
         .toList();
     if (_dive <= 0 && readyDivers.isNotEmpty) {
       final d = readyDivers[random.nextInt(readyDivers.length)];
       if (level >= 2 || cycle > 0) {
-        d.telegraph = d.elite ? .55 : .7;
+        d.telegraph = d.isLarge
+            ? .9
+            : d.elite
+            ? .55
+            : .7;
         d.targetX = shipX;
       }
       _dive = math.max(
         .8,
-        (4.2 - level * .45 - math.min(cycle, 5) * .22) / speed,
+        (4.2 - level * .45 - math.min(cycle, 4) * .22) /
+            (1 + math.min(cycle, 4) * .1),
       );
     }
     for (final d in demons) {
       d.flash = math.max(0, d.flash - dt);
-      if (d.elite && dt > 0) {
-        d.attackLeft -= dt;
+      if ((d.elite || d.isLarge) && dt > 0) {
+        d.attackLeft -= dt * policy.hostileRate;
         if (d.attackLeft <= 0) {
           final aim = ((shipX - d.x) * .3).clamp(-70.0, 70.0);
           for (final offset in [-32.0, 0.0, 32.0]) {
@@ -367,19 +558,20 @@ class ArcadeModel {
             );
           }
           if (d.dive == 0 && d.telegraph <= 0) {
-            d.telegraph = .55;
+            d.telegraph = d.isLarge ? .9 : .55;
             d.targetX = shipX;
           }
           d.attackLeft = math.max(2.0, 4 - math.min(cycle, 5) * .3);
         }
       }
       if (d.telegraph > 0) {
-        d.telegraph -= dt;
+        d.telegraph -= dt * policy.hostileRate;
         if (d.telegraph <= 0) d.dive = .001;
       }
       if (d.dive > 0) {
         d.dive += dt * speed * (d.angry ? 1.3 : 1) * (d.elite ? 1.15 : 1);
-        d.x += (d.targetX - d.x) * dt * (d.elite ? 2.1 : 1.8);
+        d.x +=
+            (d.targetX - d.x) * dt * policy.hostileRate * (d.elite ? 2.1 : 1.8);
         d.y +=
             (115 + d.kind * 16) *
             dt *
@@ -398,12 +590,12 @@ class ArcadeModel {
                           levelClock * (.9 + d.kind * .12) * speed + d.seed,
                         ) *
                         29 +
-                    math.sin(levelClock * .44) * 13)
-                .clamp(20, width - 20);
+                    math.sin(levelClock * .44 * policy.hostileRate) * 13)
+                .clamp(d.isLarge ? 30 : 20, width - (d.isLarge ? 30 : 20));
         d.y = d.homeY + math.sin(levelClock * 1.7 * speed + d.seed) * 14;
       }
     }
-    _enemyFire -= dt;
+    _enemyFire -= dt * policy.hostileRate;
     if (_enemyFire <= 0 && demons.isNotEmpty) {
       final d = demons[random.nextInt(demons.length)];
       final aim = ((shipX - d.x) * .22).clamp(-65.0, 65.0);
@@ -418,12 +610,12 @@ class ArcadeModel {
     final b = boss;
     if (b == null) return;
     b.x = 180 + math.sin(levelClock * .7 * speed) * 80;
-    b.y = 205 + math.sin(levelClock * .9) * 12;
+    b.y = 205 + math.sin(levelClock * .9 * policy.hostileRate) * 12;
     b.door = ((math.sin(levelClock * (1.8 + b.phase * .25)) - .1) * 2).clamp(
       0,
       1,
     );
-    _flock -= dt;
+    _flock -= dt * policy.hostileRate;
     if (_flock <= 0 && demons.length < 10) {
       final flockSize = math.min(3, 10 - demons.length);
       for (var i = 0; i < flockSize; i++) {
@@ -440,7 +632,8 @@ class ArcadeModel {
       _flock = math.max(2.2, 5 - b.phase * .5 - cycle * .2);
     }
     // Fan attacks force positioning without tracking a player after launch.
-    if ((levelClock * 1.1).floor() != ((levelClock - dt) * 1.1).floor()) {
+    if ((levelClock * 1.1 * policy.hostileRate).floor() !=
+        ((levelClock - dt) * 1.1 * policy.hostileRate).floor()) {
       for (var i = -1; i <= 1; i++) {
         _hostile(
           Shot(
@@ -468,7 +661,8 @@ class ArcadeModel {
       }
       var hit = false;
       for (final d in List<Demon>.of(demons)) {
-        if ((s.x - d.x).abs() < 16 && (s.y - d.y).abs() < 14) {
+        if ((s.x - d.x).abs() < (d.isLarge ? 27 : 16) &&
+            (s.y - d.y).abs() < (d.isLarge ? 18 : 14)) {
           hitDemon(d);
           hit = true;
           break;
@@ -497,16 +691,30 @@ class ArcadeModel {
     if (d.hp <= 0) {
       demons.remove(d);
       kills++;
-      score += (100 + d.kind * 75 + (d.maxHp - 1) * 50) * (cycle + 1);
-      blasts.add(Blast(d.x, d.y));
+      score +=
+          ((100 + d.kind * 75 + (d.maxHp - 1) * 50) *
+                  (cycle + 1) *
+                  policy.enemyPoints)
+              .round();
+      blasts.add(Blast(d.x, d.y, archetype: d.archetype));
       events.add('explosion');
+      if (policy.heartDropChance > 0 &&
+          random.nextDouble() < policy.heartDropChance) {
+        heartPickups.add(
+          HeartPickup(d.x, d.y, HeartPart.values[random.nextInt(3)]),
+        );
+      }
       if (kills % 5 == 0) {
         pickups.add(Pickup(d.x, d.y, Power.values[(kills ~/ 5 - 1) % 3]));
       }
     } else {
       events.add('hit');
       if (d.angry && d.dive == 0 && d.telegraph <= 0) {
-        d.telegraph = d.elite ? .55 : .7;
+        d.telegraph = d.isLarge
+            ? .9
+            : d.elite
+            ? .55
+            : .7;
         d.targetX = shipX;
       }
     }
@@ -532,13 +740,33 @@ class ArcadeModel {
     if (b.core <= 0) {
       score += 5000 * (cycle + 1);
       blasts.add(Blast(b.x, b.y, big: true));
+      wreckBoss = b;
       boss = null;
+      medals = cycle + 1;
+      lives++;
       demons.clear();
       shots.clear();
       pickups.clear();
+      heartPickups.clear();
       clearedLevel = level;
       _enterPhase(RunMode.victory, 5.5);
       events.add('victory');
+      events.add('bossDefeated');
+    }
+    return true;
+  }
+
+  /// Returns false for an excess duplicate or a Hard-mode pickup.
+  bool collectHeart(HeartPart part) {
+    if (difficulty == Difficulty.hard) return false;
+    final slot = heartSlots.indexWhere((mask) => mask & part.mask == 0);
+    if (slot < 0) return false;
+    heartSlots[slot] |= part.mask;
+    events.add('heart');
+    if (heartSlots[slot] == 7) {
+      heartSlots[slot] = 0;
+      lives++;
+      events.add('extraLife');
     }
     return true;
   }

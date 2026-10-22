@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../game/model.dart';
 
 const powerColors = <Power, Color>{
@@ -125,11 +126,23 @@ class PowerGlyphPainter extends CustomPainter {
     paint.style = PaintingStyle.fill;
     if (active.contains(Power.spread)) {
       paint.color = powerColors[Power.spread]!;
+      // Three squat, flared cannon barrels with open muzzles, no crossbars.
       for (final x in [8.0, 16.0, 24.0]) {
-        canvas.drawRect(Rect.fromLTWH(x - 1, 12, 2, 12), paint);
-        canvas.drawRect(Rect.fromLTWH(x - 4, 11, 8, 2), paint);
-        canvas.drawRect(Rect.fromLTWH(x - 2, 9, 4, 2), paint);
-        canvas.drawRect(Rect.fromLTWH(x - 1, 7, 2, 2), paint);
+        canvas.drawPath(
+          Path()
+            ..moveTo(x - 3, 26)
+            ..lineTo(x - 2, 10)
+            ..lineTo(x + 2, 10)
+            ..lineTo(x + 3, 26)
+            ..close(),
+          paint,
+        );
+        canvas.drawRect(Rect.fromLTWH(x - 3, 8, 6, 4), paint);
+        canvas.drawRect(
+          Rect.fromLTWH(x - 1, 8, 2, 3),
+          Paint()..color = const Color(0xFF0A1421),
+        );
+        canvas.drawRect(Rect.fromLTWH(x - 1, 3, 2, 3), paint);
       }
     }
     if (active.contains(Power.rapid)) {

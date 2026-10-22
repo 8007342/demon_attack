@@ -1,10 +1,16 @@
 # Demon Attack
 
-An original pixel arcade remake inspired by Imagic's 1982 Demon Attack and its expanded conversions. Flutter and Flame power four multi-wave swarm levels, animated victory/travel cutscenes, a shielded carrier with a sliding core door, and increasingly evolved repeat runs.
+An original pixel arcade remake inspired by Imagic's 1982 Demon Attack and its expanded conversions. Flutter and Flame power a finite campaign of five carrier victories, with four multi-wave sectors before each boss, named destinations, layered parallax worlds, and fleet recognition cutscenes.
 
-Drag the bottom controller panel or use **← →** to pilot. Firing is automatic. The first cycle has three waves in LV1–2 and four in LV3–4; defeating the carrier continues the same run with more waves, mixed creatures and multi-molt elites. Clear a sector for a victory flourish, ship departure, star-flight and destination arrival before combat resumes. Start with three lives; one unprotected hit costs one life. Collect and combine spread, rapid-fire, and shield powers; each has its own nine-second timer. The layered controller badge and countdowns show the active combination. Between waves, keep piloting to collect falling powers. The final wave grants a protected two-second salvage window. Press **P / Esc** to pause. Sound starts after a user gesture and can be muted.
+Drag the bottom controller panel or use **← →** to pilot. Firing is automatic. Press **P / Esc** to pause. Sound starts after a user gesture and can be muted. Collect and combine spread, rapid-fire, and shield powers; each has its own nine-second timer. Cannon glyphs, a rapid-fire bolt, a shield, and countdowns show the active combination without moving the controller guidance. Between waves, keep piloting to collect falling powers; each sector ends with a protected salvage window.
 
-Top10 scores load directly on the landing page and are shared through a Cloudflare SQLite Durable Object. Enter only three rotating A–Z/0–9 initials. Scores are client-reported arcade scores, not a cheat-proof competition.
+Normal starts with three lives. Three game overs before any boss victory unlock Easy: five starting lives, 10% slower hostile movement and attacks, 20% less boss health, smaller flocks, and 25% fewer enemy points. A Normal boss victory unlocks Hard, with three starting lives and larger flocks. Later routes add more enemies, with stronger growth in Normal and Hard. Scarce shielded line-wing sentinels, followed by heavier armored variants, join late waves. Player movement and firing remain equally responsive in every mode.
+
+Each boss awards a difficulty-specific medal and +1UP. Easy and Normal also drop rare left/right/top heart pieces: assemble all three complementary parts to gain a life. Three unfinished hearts can store duplicates; a fourth copy of a part is ignored until a slot clears. Hard earns extra lives only from bosses. The fifth medal ends the campaign. Time counts active combat only.
+
+**Resume Game** restarts the saved wave without powerups. A compact browser-local checkpoint is saved at wave and boss entrances; leaving partway through a wave replays that wave's starting score, lives, and accumulated time. Older snapshots receive defaults for missing optional fields. Unlock history is stored separately and survives new runs; clearing browser storage removes local progress.
+
+Top10 scores load on the landing page through a Cloudflare SQLite Durable Object. Each unlocked difficulty has its own board. Enter three rotating A–Z/0–9 initials. Rows display five medal positions, active time, and score; five-medal finishers also show their remaining lives. Existing scores stay on Normal with unknown time. Scores are client-reported arcade scores, not a cheat-proof competition.
 
 ## Development
 
@@ -28,16 +34,19 @@ openspec validate --all --strict
 ```
 
 `tools/browser-smoke.cjs` drives a standalone Playwright Chromium against `URL` (default `http://127.0.0.1:8765`) and captures phone/desktop screenshots. Install Playwright's Chromium separately; it is a developer tool, not a runtime dependency.
+`tools/campaign-browser-smoke.cjs` additionally checks unlocked boards, achievement rows, compatible saved-wave resume and reload on desktop, phone and landscape. It uses isolated local state and mocked score rows, and accepts the same `URL` and `PLAYWRIGHT_MODULE` settings.
 
 ## Project layout
 
 - `lib/game/model.dart`: deterministic combat and progression.
+- `lib/game/difficulty.dart`: lives, hostile pacing, roster, scoring, and heart-drop policies.
+- `lib/services/run_storage.dart`: compatible local checkpoints and permanent unlock history.
 - `lib/game/scene.dart`: Flame rendering, sprite animation and celestial parallax.
 - `lib/main.dart`: responsive cabinet, touch/keyboard controls and score wheels.
-- `worker/index.mjs`: same-origin API and persistent Top10.
+- `worker/index.mjs`: same-origin API and independent persistent difficulty Top10s.
 - `web/audio/`: original MIDI cues, generator and browser synthesizer.
 - `assets/images/`: original sprite atlas and generated cosmic artwork.
-- `openspec/changes/build-demon-attack-game/`: current behavior requirements and tracked implementation.
+- `openspec/changes/`: tracked requirements and implementation, including `balance-five-tour-campaign`.
 - `plan/`: original-game research, game tuning, visual/music guides and validation evidence.
 
 Regenerate sprite pixels with `python3 tools/generate_sprites.py`; regenerate MIDI with `python3 web/audio/generate-midi.py`.

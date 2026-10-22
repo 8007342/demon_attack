@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import 'package:demon_attack/game/difficulty.dart';
 import 'package:demon_attack/services/scores.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -55,6 +57,62 @@ void main() {
         addTearDown(service.close);
         await expectLater(service.load(), throwsA(anything));
       }
+    },
+  );
+  test(
+    'mode boards and completion metadata survive HTTP round trips',
+    () async {
+      final service = ScoreService(
+        endpoint: Uri.parse('https://game.test/api/scores'),
+        client: MockClient((request) async {
+          if (request.method == 'GET') {
+            expect(request.url.queryParameters['difficulty'], 'hard');
+          } else {
+            expect(jsonDecode(request.body), {
+              'initials': 'DAN',
+              'score': 4200,
+              'difficulty': 'hard',
+              'medals': 5,
+              'activeMilliseconds': 123456,
+              'remainingLives': 7,
+            });
+          }
+          return http.Response(
+            jsonEncode({
+              'scores': [
+                {
+                  'initials': 'DAN',
+                  'score': 4200,
+                  'difficulty': 'hard',
+                  'medals': 5,
+                  'activeMilliseconds': 123456,
+                  'remainingLives': 7,
+                },
+                {'initials': 'OLD', 'score': 20},
+              ],
+            }),
+            200,
+          );
+        }),
+      );
+      addTearDown(service.close);
+      final entries = await service.load(difficulty: Difficulty.hard);
+      expect(entries.first.difficulty, Difficulty.hard);
+      expect(entries.first.medals, 5);
+      expect(entries.first.activeMilliseconds, 123456);
+      expect(entries.first.remainingLives, 7);
+      expect(entries.last.difficulty, Difficulty.normal);
+      expect(entries.last.medals, 0);
+      expect(entries.last.activeMilliseconds, isNull);
+      expect(entries.last.remainingLives, isNull);
+      await service.submit(
+        'DAN',
+        4200,
+        difficulty: Difficulty.hard,
+        medals: 5,
+        activeMilliseconds: 123456,
+        remainingLives: 7,
+      );
     },
   );
 }

@@ -1,0 +1,31 @@
+## 1. Difficulty and finite campaign model
+- [x] 1.1 Add explicit difficulty policy, starting lives, mode-dependent enemy points and roster budgets, Easy hostile speed/cadence and boss health tuning; preserve existing powers and player responsiveness.
+- [x] 1.2 Add five-boss completion, once-only medal/+1UP rewards, combat-only accumulated time, and final remaining lives; replace endless-run expectations with bounded campaign tests.
+- [x] 1.3 Add complementary heart drops, three-slot inventory and collection feedback in Easy/Normal, with Hard boss-only extra lives; verify duplicates, overflow and completed-slot reuse.
+
+## 2. Checkpoints and unlocks
+- [x] 2.1 Add version-tolerant compact checkpoint/history codecs, platform storage abstraction and safe unavailable-storage behavior; cover older missing fields, unknown fields and corruption.
+- [x] 2.2 Save at wave and boss entrances only, clear terminal runs, restore checkpoints without powers, and expose Resume Game; verify score/lives/route/medals/hearts/time restore together and replay cannot duplicate rewards.
+- [x] 2.3 Persist three-failure Easy unlock and Normal-boss Hard unlock; expose unlocked start buttons and retain permanent unlocks independently of checkpoints.
+
+## 3. Enemy variety and carrier visuals
+- [x] 3.1 Add rare broad-wing shielded/armored sentinel archetypes and later-route variants, final-wave refresh eligibility, later Normal/Hard wave eligibility, bounded counts, multi-hit dives and unique defeat animation.
+- [x] 3.2 Center belly/shield/hatch geometry on a shared coordinate, replace boss meters with depleting shield coverage and escalating damage effects, and retain a falling-wreck cinematic after boss removal.
+- [x] 3.3 Verify difficulty density order and bounded later-route scaling, enemy telegraphs, hit rules, single kill rewards and shield/core door collision regression.
+
+## 4. Story and presentation
+- [x] 4.1 Implement the 25 named route destinations and connected arrivals/departures/recognition/final ending; replace numeric level/cycle HUD headings and display arbitrary life counts.
+- [x] 4.2 Compose distinctive same-theme parallax variants with independent layer rates and increased later-route complexity; preserve projectile readability and existing creature/power artwork.
+- [x] 4.3 Create five medal designs per difficulty with increasing detail and corresponding silhouettes; animate medal and +1UP recognition between carrier collapse and the next destination.
+- [x] 4.4 Enlarge cinematic text and travel progress bars responsively; fix controller guidance displacement under composite power status while retaining drag input and timers, and redraw the standalone spread glyph as clearly recognizable twin cannons without cross-shaped silhouettes.
+
+## 5. Durable mode scores
+- [x] 5.1 Add backward-compatible SQLite achievement columns, validated expanded API payloads and independent mode filtering/pruning while preserving existing Normal scores and stable ties.
+- [x] 5.2 Extend score client/result metadata and retries; show unlocked-mode tabs, five medal positions, active time and finisher heart × remaining lives on responsive score rows.
+- [x] 5.3 Verify populated legacy database migration, old payloads, malformed metadata, independent Top10 pruning and metadata-preserving network retries with worker/client tests.
+
+## 6. Integrated validation and documentation
+- [x] 6.1 Run Flutter analysis/tests and worker tests; update relevant widget, progression, cinematic and background coverage for this campaign while preserving existing controls/power regressions.
+- [x] 6.2 Validate managed Wrangler on desktop, narrow phone and landscape: unlocked boards, checkpoint reload, all heart states, controller alignment, boss symmetry, legible interludes and medal rows.
+- [x] 6.3 Playtest all five routes in each mode using a reproducible harness where needed; assess Normal boss pressure, Easy accessibility, rare-enemy overlap and final reward/completion flow, then adjust documented tuning.
+- [x] 6.4 Update plan/game-design.md and README with the implemented balance, storage semantics, mode unlocks, named route and leaderboard behavior; validate the OpenSpec change without deploying production.

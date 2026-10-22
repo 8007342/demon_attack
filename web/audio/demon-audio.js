@@ -104,11 +104,15 @@
   async function resume() { paused = false; if (context) { await context.resume().catch(() => {}); nextBeat = context.currentTime + .04; } }
   function sfx(name) {
     if (!context || paused || context.state !== 'running') return;
+    if (name === 'extraLife') {
+      [76, 81, 88].forEach((pitch, index) => voice({ pitch, velocity: 75, channel: 0 }, context.currentTime + .005 + index*.09, .3, effects));
+      return;
+    }
     if (name === 'wave') {
       [72, 79, 84].forEach((pitch, index) => voice({ pitch, velocity: 60, channel: 0 }, context.currentTime + .005 + index*.1, .22, effects));
       return;
     }
-    const shapes = { shot: [82, .055, 35], explosion: [35, .24, 95], hit: [47, .12, 85], powerup: [84,.3,80], life: [43,.4,90] };
+    const shapes = { shot: [82, .055, 35], explosion: [35, .24, 95], hit: [47, .12, 85], powerup: [84,.3,80], heart: [88,.16,65], life: [43,.4,90] };
     const [pitch, duration, velocity] = shapes[name] || shapes.hit;
     voice({ pitch, velocity, channel: name==='explosion' ? 9 : 0 }, context.currentTime+.005, duration, effects);
   }

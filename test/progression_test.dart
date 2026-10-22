@@ -139,7 +139,7 @@ void main() {
       }
       expect(model.mode, RunMode.victory);
       expect(model.score, 6234);
-      expect(model.lives, 2);
+      expect(model.lives, 3);
       expect(model.shots, isEmpty);
       expect(model.demons, isEmpty);
       model.hitPlayer();
@@ -155,7 +155,7 @@ void main() {
       expect(model.level, 1);
       expect(model.wave, 1);
       expect(model.score, 6234);
-      expect(model.lives, 2);
+      expect(model.lives, 3);
       expect(model.speed, greaterThan(1));
       expect(model.hasPower(Power.spread), isTrue);
       expect(model.timeLeft(Power.spread), 9);

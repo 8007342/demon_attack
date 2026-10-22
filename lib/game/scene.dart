@@ -1,9 +1,12 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+
 import 'model.dart';
 import 'sector_background.dart';
+import '../widgets/heart_parts.dart';
 
 const ink = Color(0xFF080D18);
 const mint = Color(0xFF70F5D5);
@@ -120,6 +123,12 @@ class DemonScene extends FlameGame {
   }
 
   void _combat(Canvas c) {
+    for (final p in model.heartPickups) {
+      c.save();
+      c.translate(p.x - 10, p.y - 10);
+      HeartPartPainter(p.part.mask).paint(c, const Size(20, 20));
+      c.restore();
+    }
     for (final p in model.pickups) {
       c.drawCircle(
         Offset(p.x, p.y),
@@ -146,6 +155,29 @@ class DemonScene extends FlameGame {
                 (d.seed.floor().isEven ? 1 : -1),
         d.y - (1 - entrance) * (d.y + 45),
       );
+      if (d.isLarge) {
+        _sentinel(c, pos, d.archetype, d.hp / d.maxHp, d.flash > 0, d.seed);
+        if (d.telegraph > 0) {
+          c.drawLine(
+            pos + const Offset(0, 22),
+            pos + const Offset(0, 55),
+            Paint()
+              ..color = const Color(0xBBFF786C)
+              ..strokeWidth = 2,
+          );
+          c.drawPath(
+            Path()
+              ..moveTo(pos.dx - 6, pos.dy + 47)
+              ..lineTo(pos.dx, pos.dy + 55)
+              ..lineTo(pos.dx + 6, pos.dy + 47),
+            Paint()
+              ..color = const Color(0xBBFF786C)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2,
+          );
+        }
+        continue;
+      }
       if (d.elite) {
         final armor = (d.maxHp - d.moltStage).clamp(1, 7);
         final halo = Paint()
@@ -242,7 +274,7 @@ class DemonScene extends FlameGame {
       for (final direction in [-1, 1]) {
         c.drawRect(
           Rect.fromLTWH(
-            core.dx + direction * 16 - (direction < 0 ? 0 : closed),
+            core.dx + (direction < 0 ? -16 : 16 - closed),
             core.dy - 11,
             closed,
             22,
@@ -258,7 +290,7 @@ class DemonScene extends FlameGame {
         c.drawArc(
           Rect.fromCenter(
             center: Offset(b.x, b.y + 24),
-            width: 166,
+            width: 40 + 126 * b.shield / b.shieldMax,
             height: 38,
           ),
           0,
@@ -266,34 +298,18 @@ class DemonScene extends FlameGame {
           false,
           shieldPaint,
         );
-        for (var x = -70; x <= 70; x += 14) {
+        for (var x = -3; x <= 3; x++) {
           c.drawLine(
-            Offset(b.x + x, b.y + 39),
-            Offset(b.x + x + 5, b.y + 45),
+            Offset(b.x + x * (5 + 18 * b.shield / b.shieldMax), b.y + 39),
+            Offset(
+              b.x + x * (5 + 18 * b.shield / b.shieldMax) + x.sign * 3,
+              b.y + 45,
+            ),
             Paint()..color = mint.withValues(alpha: .35),
           );
         }
       }
-      final remaining = b.shield > 0
-          ? b.shield / b.shieldMax
-          : b.core / b.coreMax;
-      c.drawRect(
-        const Rect.fromLTWH(72, 26, 216, 3),
-        Paint()..color = const Color(0xFF263049),
-      );
-      c.drawRect(
-        Rect.fromLTWH(72, 26, 216 * remaining, 3),
-        Paint()..color = b.shield > 0 ? mint : gold,
-      );
-      _text(
-        c,
-        b.shield > 0
-            ? 'SHIELD ${b.shield} / ${b.shieldMax}'
-            : 'CORE ${b.core} · TIME THE DOOR',
-        const Offset(180, 12),
-        8,
-        b.shield > 0 ? mint : gold,
-      );
+      _damage(c, Offset(b.x, b.y), 1 - b.core / b.coreMax, model.clock);
       c.restore();
     }
     for (final s in model.shots) {
@@ -341,6 +357,27 @@ class DemonScene extends FlameGame {
       }
     }
     for (final b in model.blasts) {
+      if (b.isLarge) {
+        final p = (b.age / .55).clamp(0.0, 1.0);
+        for (final side in [-1.0, 1.0]) {
+          c.save();
+          c.translate(b.x + side * p * 28, b.y + p * p * 45);
+          c.rotate(side * p * 1.4);
+          c.drawRect(
+            Rect.fromLTWH(side < 0 ? -40 : 0, 0, 40, 3),
+            Paint()..color = gold.withValues(alpha: 1 - p),
+          );
+          for (var i = 0; i < 5; i++) {
+            c.drawCircle(
+              Offset(side * i * 8, p * i * 7),
+              2,
+              Paint()..color = const Color(0xFFFF8676).withValues(alpha: 1 - p),
+            );
+          }
+          c.restore();
+        }
+        continue;
+      }
       sprite(
         c,
         5,
@@ -349,6 +386,99 @@ class DemonScene extends FlameGame {
         b.big ? 200 : 56,
       );
     }
+  }
+
+  void _damage(Canvas c, Offset center, double damage, double time) {
+    if (damage < .12) return;
+    for (var i = 0; i < (damage * 10).ceil(); i++) {
+      final x = center.dx + math.sin(i * 7.1) * 65;
+      final y = center.dy - 12 + math.cos(i * 4.1) * 20;
+      final rise = (time * 18 + i * 13) % 45;
+      c.drawCircle(
+        Offset(x + math.sin(time + i) * rise * .12, y - rise),
+        3 + rise * .15,
+        Paint()
+          ..color = const Color(0xFF78808A)
+              .withValues(alpha: damage * .28 * (1 - rise / 45)),
+      );
+      if (damage > .4) {
+        c.drawRect(
+          Rect.fromLTWH(x, y + math.sin(time * 11 + i) * 3, 2, 2),
+          Paint()..color = gold,
+        );
+      }
+      if (damage > .65) {
+        c.drawPath(
+          Path()
+            ..moveTo(x - 3, y)
+            ..lineTo(x + math.sin(time * 17 + i) * 3, y - 7 - damage * 8)
+            ..lineTo(x + 3, y)
+            ..close(),
+          Paint()..color = const Color(0xEEFF9862),
+        );
+      }
+    }
+  }
+
+  void _sentinel(
+    Canvas c,
+    Offset pos,
+    EnemyArchetype type,
+    double health,
+    bool flash,
+    double seed,
+  ) {
+    final heavy = type == EnemyArchetype.armoredSentinel;
+    final color = flash
+        ? Colors.white
+        : heavy
+        ? gold
+        : violet;
+    c.save();
+    c.translate(pos.dx, pos.dy);
+    final flap = math.sin(model.clock * 5 + seed) * 3;
+    for (final side in [-1.0, 1.0]) {
+      for (var line = 0; line < 4; line++) {
+        c.drawPath(
+          Path()
+            ..moveTo(side * 5, line * 4.0 - 8)
+            ..lineTo(side * (24 + line * 3), line * 2.0 - 10 + flap)
+            ..lineTo(side * (49 - line * 5), line * 3.0 - 6 + flap),
+          Paint()
+            ..color = color
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = heavy ? 3 : 2,
+        );
+      }
+      c.drawRect(
+        Rect.fromLTWH(side * 13 - 3, -6, 6, 13),
+        Paint()..color = color,
+      );
+    }
+    c.drawPath(
+      Path()
+        ..moveTo(0, -12)
+        ..lineTo(8, 1)
+        ..lineTo(0, 14)
+        ..lineTo(-8, 1)
+        ..close(),
+      Paint()..color = color,
+    );
+    c.drawRect(
+      const Rect.fromLTWH(-3, -1, 6, 3),
+      Paint()..color = const Color(0xFFFF8676),
+    );
+    c.drawArc(
+      Rect.fromCenter(center: Offset.zero, width: 106, height: 44),
+      0,
+      math.pi,
+      false,
+      Paint()
+        ..color = mint.withValues(alpha: .25 + health * .4)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1 + health * 2,
+    );
+    c.restore();
   }
 
   // All cutscene motion is derived from simulation progress, so pausing freezes
@@ -366,6 +496,23 @@ class DemonScene extends FlameGame {
     final envelope = math.sin(math.pi * p);
     final bar = (wave ? 9.0 : 24.0) * math.min(1.0, envelope * 4);
 
+    if (triumph && model.wreckBoss != null) {
+      final wreck = model.wreckBoss!;
+      c.save();
+      c.translate(wreck.x, wreck.y + p * p * 360);
+      c.rotate(p * .55);
+      sprite(
+        c,
+        6,
+        wreck.phase,
+        Offset.zero,
+        184,
+        height: 118,
+        tint: const Color(0xFF8B665F),
+      );
+      _damage(c, Offset.zero, 1, p * 10);
+      c.restore();
+    }
     if (clear || triumph) {
       final random = math.Random(triumph ? 1982 : 8200 + model.level);
       final count = triumph ? 10 : 5;
@@ -603,21 +750,5 @@ class DemonScene extends FlameGame {
         ..strokeWidth = 2,
     );
     sprite(c, 4, frame, center, width);
-  }
-
-  void _text(Canvas c, String value, Offset center, double size, Color color) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: value,
-        style: TextStyle(
-          color: color,
-          fontSize: size,
-          fontFamily: 'monospace',
-          letterSpacing: 1,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(c, center - Offset(tp.width / 2, tp.height / 2));
   }
 }

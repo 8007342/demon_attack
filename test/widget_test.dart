@@ -24,7 +24,7 @@ void main() {
       await tester.tap(start);
       await tester.pump();
       expect(find.text('SCORE'), findsOneWidget);
-      expect(find.text('LV 01 / CYCLE 1'), findsOneWidget);
+      expect(find.text('KRYBOR'), findsNWidgets(2));
       expect(find.text('INCOMING TRANSMISSION'), findsOneWidget);
       expect(find.text('◀     SLIDE TO PILOT     ▶'), findsOneWidget);
       expect(find.byTooltip('Pause game'), findsOneWidget);

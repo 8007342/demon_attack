@@ -94,7 +94,11 @@ void main() {
       );
       expect(find.byType(ListWheelScrollView), findsNWidgets(3));
       expect(submissions, [
-        {'initials': 'B9A', 'score': 12345},
+        {
+          'initials': 'B9A',
+          'score': 12345,
+          'activeMilliseconds': scene.model.activeMilliseconds,
+        },
       ]);
       await tester.tap(find.text('SAVE SCORE'));
       await tester.pump();

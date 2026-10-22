@@ -1,23 +1,66 @@
-/// Route descriptions are shared by arrivals, victories and later-cycle travel.
+/// Named destinations share a world theme while approaching the brood base.
 abstract final class CampaignStory {
+  static const destinations = [
+    [
+      'Krybor',
+      'Krybor Slums',
+      'Krybor Docks',
+      'Krybor Mountains',
+      'Krybor Command',
+    ],
+    [
+      'Ringfall',
+      'Ringfall Patrol Belt',
+      'Ringfall Wreckfields',
+      'Ringfall Shipyards',
+      'Ringfall Blockade',
+    ],
+    [
+      'Ember Moon',
+      'Ember Ashlands',
+      'Ember Forges',
+      'Ember Crucible',
+      'Ember Brood Heart',
+    ],
+    [
+      'The Hollow',
+      'Hollow Outskirts',
+      'Hollow Towers',
+      'Hollow Catacombs',
+      'Hollow Throne',
+    ],
+    [
+      'The Carrier',
+      'Brood Ark',
+      'Siege Carrier',
+      'Brood Citadel',
+      'Brood Flagship',
+    ],
+  ];
   static const arrivals = [
-    'The frontier outpost is falling silent. Follow the signal beyond Krybor.',
-    'Patrol satellites watch the rings. The swarms are guarding a route inward.',
-    'The eclipsed moons are spawning grounds. Something below is waking.',
-    'Brood towers fill the hollow. Every signal points to the carrier.',
-    'The fortress guards the brood heart. Break the shield. Time the hatch.',
+    'Follow the lost frontier signal. Rescue the outpost and chart the route inward.',
+    'Patrol satellites mark the enemy supply route. Break through their watch.',
+    'Heat signatures rise beneath the ash. Silence the brood foundries.',
+    'The towers answer a single command. Trace it through the ancient hollow.',
+    'The carrier guards the brood heart. Break its field and strike through the hatch.',
   ];
   static const victories = [
-    'Krybor survives. The signal leads into the orbital patrol belt.',
-    'The patrol is broken. Follow the brood toward the burning moons.',
-    'The hatcheries fall quiet. Ancient towers answer from the hollow.',
-    'The towers lose their signal. The carrier is exposed at last.',
-    'The carrier falls, but the brood remembers. The frontier is changing.',
+    'The frontier signal is restored. The fleet has recognized your service.',
+    'The patrol is broken. The fleet has recognized your courage.',
+    'The foundries fall silent. The fleet has recognized your resolve.',
+    'The command towers are dark. The fleet has recognized your valor.',
+    'The carrier falls. The fleet has recognized your labor.',
   ];
-  static String arrival(int level, int cycle) => cycle == 0
-      ? arrivals[level - 1]
-      : '${arrivals[level - 1]} The brood has adapted: cycle ${cycle + 1}.';
-  static String travel(int level, int cycle) => level == 5
-      ? 'A new brood rises. Return to Krybor: cycle ${cycle + 2}, faster and more evolved.'
-      : victories[level - 1];
+  static String name(int level, int cycle) =>
+      destinations[(level - 1).clamp(0, 4)][cycle.clamp(0, 4)];
+  static String arrival(int level, int cycle) =>
+      '${name(level, cycle)}. ${arrivals[(level - 1).clamp(0, 4)]}';
+  static String travel(int level, int cycle) {
+    if (level == 5 && cycle >= 4) {
+      return 'The Brood Flagship is falling. The frontier is free. Return home, fleet champion.';
+    }
+    final nextLevel = level == 5 ? 1 : level + 1;
+    final nextCycle = level == 5 ? cycle + 1 : cycle;
+    return '${victories[(level - 1).clamp(0, 4)]} Set course for ${name(nextLevel, nextCycle)}. ${level == 5 ? 'The recovered charts reveal a deeper route toward their base.' : 'Follow the signal before the brood regroups.'}';
+  }
 }
