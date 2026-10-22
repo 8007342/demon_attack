@@ -61,4 +61,4 @@
 - [x] 11.1 Simplify arrivals to automatic illustrated loading hints (including enemy escalation, boss +1UP and all five medals) without guide/actions, and defer swarm entrances until hints clear.
 - [x] 11.2 Route qualifying terminal scores directly to initials and other results beneath the matching difficulty leaderboard, preserving network retry and metadata.
 - [x] 11.3 Remove heart seams and fit combined power status inside the left controller area across viewport sizes.
-- [ ] 11.4 Validate tests/browser/release preview, merge game into main and push remote.
+- [x] 11.4 Validate tests/browser/release preview, merge game into main and push remote.

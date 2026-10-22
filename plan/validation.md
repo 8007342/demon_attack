@@ -73,3 +73,5 @@ The final user decision replaces guide/hold/menu/manual settings with automatic 
 Flutter:115 tests pass, analysis clean. Worker:8 tests pass. Strict OpenSpec:11 items pass. Added checks cover score thresholds90/100/101 against tenth-place100, automatic loading despite legacy manual preferences, offscreen/frozen/deferred swarm arrival, and power-console containment/drag input across widths240–1100. Original art scene checks cover all ten illustrated hints.
 
 Final release build succeeded. Refreshed managed Wrangler browser checks pass: desktop/phone gameplay and keyboard/controller/audio, desktop/phone/landscape campaign boards and checkpoint migration/reload, and phone/landscape automatic hints without extra controls. Reviewed phone hint/swarm runtime captures. No browser runtime exceptions or console errors. Preview remains available at https://www.demon-attack.localhost:18443/.
+
+Merged game into main with merge 88d2630 and pushed both branches; upstream confirmed durable acceptance. All 43 tracked campaign tasks are complete.
