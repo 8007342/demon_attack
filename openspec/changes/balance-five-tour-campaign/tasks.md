@@ -36,9 +36,9 @@
 - [x] 7.3 Gate sentinels after the first boss, stage a slow entrance after the swarm, hover above its protection, and launch a telegraphed heavy fast dive; verify gate, vertical separation, entrance safety and return behavior.
 - [x] 7.4 Reduce rare heart drops and make the three complementary-piece slots and completed-heart collapse/+1UP clearly visible; test duplicates, reuse, notification timing and stored inventory compatibility.
 - [x] 7.5 Enlarge cinematic captions, extend each story phase by roughly one third of a second, and make named route details recognizable in matching parallax scenery; verify narrow-phone/landscape layout, pause and phase timing.
-- [ ] 7.6 Run relevant/full checks, rebuild release assets, reload managed local preview and verify browser renders before telling the user to reload; record results and push the game branch.
+- [x] 7.6 Run relevant/full checks, rebuild release assets, reload managed local preview and verify browser renders before telling the user to reload; record results and push the game branch.
 
 ## 8. Injured sentinel last stand
 - [x] 8.1 Add a rare low-health self-sacrifice attack for only a minority of sentinels: distinct movement tell, fixed sampled aim, fast rush, interruptible by player fire, one-way impact/exit removal without player kill rewards; test dodging, pause and once-only cleanup.
 - [x] 8.2 Give the last-stand tell and rush distinct pixel sprite poses/charge markings, persist the warning and fairness rules in art/combat specs, and review rendered frames.
-- [ ] 8.3 Re-run integrated checks, rebuild/reload the local preview including the last-stand change and report when to reload.
+- [x] 8.3 Re-run integrated checks, rebuild/reload the local preview including the last-stand change and report when to reload.
