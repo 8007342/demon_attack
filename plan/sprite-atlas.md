@@ -54,3 +54,20 @@ Rows 8–19 append three distinct intermediate damage stages per species. Existi
 | 17, 18, 19 | Gold elder | Amber-to-rose body; broken asymmetric crown and exposed belly |
 
 All forms keep the animated wing poses. Damage stages change silhouettes through shortened or broken horns, missing membrane sections, crown erosion, and tail loss, alongside visible armor cracks and color progression. A five-hit enemy can display intact, molt 1, molt 2, molt 3, then its original final angry form before destruction. A lower-health enemy can skip intermediate forms. Use actual remaining health to select stages consistently.
+
+## Instructional illustration sheet
+
+`assets/images/hint-scenes.png` is a 1254×1254 original imagegen illustration sheet, separate from combat sprites. These larger, more detailed pixel paintings appear only in briefings and the Field Guide. Never replace combat animation frames with these paintings. `HintArt` uses explicit source rectangles `(left,top,width,height)` and nearest-neighbor sampling:
+
+| Scene | Source rectangle |
+| --- | --- |
+| heart_quarters |0,0,626,222 |
+| carrier_hatch |628,0,626,222 |
+| ordinary_dodge |0,284,626,222 |
+| shield_refresh |628,284,626,222 |
+| powerful_choice |0,568,626,219 |
+| large_choice |628,568,626,219 |
+| giant_rush |0,852,626,287 |
+| shield_weapon_combo |628,852,626,287 |
+
+Seven catalog hints use the first seven scene keys; the eighth combination illustration is available for future use. Exact heart masks 1/2/4/8→15 and power choice/combination glyphs reuse gameplay painters as UI overlays. Keep brief instruction text outside the raster and supply meaningful semantic descriptions.
