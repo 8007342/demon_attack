@@ -120,7 +120,7 @@ An eligible wave SHALL introduce a small ordinary swarm before a large threat. T
 - **THEN** the small swarm enters before the sentinel's slow descent, high hover, warning and fast dive occur in that order
 
 ### Requirement: Rare sentinel sacrifice rush
-A minority of sentinels SHALL be eligible once for a sacrifice rush at 25% health or below. It SHALL lock aim at the start of a distinct movement tell, then rush on a straight path without retargeting. Normal/Hard SHALL use 0.9s/600 units/s; Easy 1s/540 units/s. Impact or escape SHALL destroy it without kill rewards. Player fire SHALL interrupt either phase and grant normal kill rewards.
+A minority of sentinels SHALL be eligible once for a sacrifice rush at 25% health or below. It SHALL lock aim at the start of a distinct movement tell, then rush on a straight path without retargeting. Normal SHALL use 0.9s/600 units/s; Easy 1s/540 units/s; calibrated Hard approximately 0.857s/630 units/s. Impact or escape SHALL destroy it without kill rewards. Player fire SHALL interrupt either phase and grant normal kill rewards.
 
 #### Scenario: Dodge after the tell
 - **WHEN** the player moves aside after an injured eligible sentinel begins its tell
@@ -171,7 +171,7 @@ Each carrier encounter SHALL select a seeded random starting movement direction 
 - **THEN** movement accelerates and the eyes visibly intensify without enabling hits through a closed door
 
 ### Requirement: Dedicated sentinel escorts and prompt replenishment
-Ordinary waves SHALL replenish through multiple finite casualty-triggered flocks with progressive strength. Every sentinel SHALL bring a separate fresh escort larger than ordinary reinforcement groups. Earlier flocks SHALL NOT fulfill that escort. Escorts SHALL settle below their sentinel before it attacks. Active populations SHALL remain bounded and wave completion SHALL wait for remaining scheduled flocks.
+Ordinary waves SHALL replenish through multiple finite casualty-triggered flocks with the same capped parent-wave evolution. Every sentinel SHALL bring a separate fresh escort larger than ordinary reinforcement groups. Earlier flocks SHALL NOT fulfill that escort. Escorts SHALL settle below their sentinel before it attacks. Active populations SHALL remain bounded and wave completion SHALL wait for remaining scheduled flocks.
 
 #### Scenario: Earlier ordinary flocks
 - **WHEN** ordinary reinforcements arrive before a sentinel's escort
@@ -179,4 +179,19 @@ Ordinary waves SHALL replenish through multiple finite casualty-triggered flocks
 
 #### Scenario: Falling comrades
 - **WHEN** enemies start falling in a wave with remaining reinforcements
-- **THEN** replacement groups begin arriving promptly without long empty combat gaps
+- **THEN** replacement groups request prompt entry while respecting the wave population budget
+
+### Requirement: Bounded parent-wave evolution
+Initial ordinary enemies, reinforcements and escorts SHALL share species, health and elite rules. Reinforcement ordinal SHALL NOT add HP or make all arrivals elite. Ordinary HP SHALL cap at five with two route evolution tiers. Elite births SHALL share a whole-wave budget. Second ordinary groups SHALL add at most one body and admissions SHALL obey wave-specific population ceilings.
+
+#### Scenario: Parent and sub-wave creatures
+- **WHEN** the same species and elite state occurs in a parent roster and its reinforcements
+- **THEN** both have equal health and the new group does not reset the wave elite budget
+
+#### Scenario: Mode-aware offensive efficacy
+- **WHEN** the player combines Powerful and Large
+- **THEN** damage remains two per target, never multiplies again for splash, and area radii are 32/30/28 for Easy/Normal/Hard
+
+#### Scenario: Shared elite birth limits
+- **WHEN** a reinforcement or escort joins a wave
+- **THEN** it shares the existing elite budget: zero on route zero, otherwise 1/2/3 total births for Easy/Normal/Hard, never a fresh per-group allowance

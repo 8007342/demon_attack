@@ -335,7 +335,7 @@ void main() {
         });
       final saved = m.checkpoint();
       final planned = m.flocksPlanned;
-      expect(planned, inInclusiveRange(2, 4));
+      expect(planned, difficulty == Difficulty.easy ? 1 : 2);
       expect(m.demons.any((d) => d.isLarge), isFalse);
       m.mode = RunMode.playing;
       m.invulnerable = 1000;
@@ -360,7 +360,7 @@ void main() {
     }
   });
 
-  test('fresh tough escorts settle before the delayed shielded sentinel', () {
+  test('fresh escorts share species health and settle before the delayed shielded sentinel', () {
     final m = ArcadeModel()
       ..restoreCheckpoint({'routeIndex': 1, 'sector': 2, 'wave': 4});
     final sentinel = m.demons.singleWhere((d) => d.isLarge);
@@ -375,11 +375,26 @@ void main() {
     );
     m.mode = RunMode.playing;
     m.invulnerable = 1000;
-    advance(m, 2.7);
+    for (var frame = 0; frame < 162; frame++) {
+      m.update(1 / 60);
+      m.shots.removeWhere((s) => !s.hostile);
+    }
     final escorts = m.demons.where((d) => d.isEscort).toList();
     expect(escorts, hasLength(m.plannedEscortSize));
     expect(escorts.every((d) => !initial.contains(d)), isTrue);
-    expect(escorts.every((d) => d.elite && d.entering), isTrue);
+    expect(
+      escorts.every(
+        (d) =>
+            d.entering &&
+            d.maxHp ==
+                m.policy.ordinaryHealth(
+                  route: m.cycle,
+                  kind: d.kind,
+                  elite: d.elite,
+                ),
+      ),
+      isTrue,
+    );
     expect(sentinel.entranceProgress, 0);
     advance(m, .8);
     expect(escorts.every((d) => !d.entering), isTrue);

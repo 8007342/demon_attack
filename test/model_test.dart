@@ -90,7 +90,7 @@ void main() {
     expect(m.lives, 4);
     expect(m.medals, 1);
     expect(m.score, 5000);
-    expect(m.speed, 1.1);
+    expect(m.speed, 1.04);
     expect(m.demons.first.maxHp, greaterThan(1));
     expect(m.wavesPerLevel, greaterThan(3));
     expect(m.demons.map((d) => d.kind).toSet().length, greaterThan(1));

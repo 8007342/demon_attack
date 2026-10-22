@@ -48,8 +48,8 @@ void main() {
         p.rosterCount(sector: 1, wave: 1, route: 4) -
         p.rosterCount(sector: 1, wave: 1, route: 0);
     expect(growth(easy), 4);
-    expect(growth(normal), 12);
-    expect(growth(hard), 16);
+    expect(growth(normal), 4);
+    expect(growth(hard), 4);
   });
 
   test(
@@ -218,7 +218,18 @@ void main() {
     m.hitDemon(sentinel);
     expect(sentinel.hp, sentinel.maxHp);
     expect(sentinel.entranceProgress, 0);
-    advance(m, 4.3);
+    // Crowded ordinary arrivals may defer the dedicated escort until its
+    // bounded admission budget has room. It remains a fresh separate event.
+    for (var frame = 0; frame < 600 && !m.escortSpawned; frame++) {
+      if (frame % 30 == 0) {
+        final victim = m.demons
+            .where((d) => !d.isLarge && !d.entering)
+            .firstOrNull;
+        if (victim != null) m.hitDemon(victim, damage: 1000);
+      }
+      m.update(1 / 60);
+    }
+    advance(m, 1.5);
     expect(m.flocksSpawned, greaterThanOrEqualTo(1));
     expect(m.escortSpawned, isTrue);
     expect(sentinel.entranceProgress, inExclusiveRange(0, 1));
@@ -457,7 +468,7 @@ void main() {
         advance(m, .1);
       }
       expect(d.rushing, isTrue);
-      final expectedSpeed = difficulty == Difficulty.easy ? 540 : 600;
+      final expectedSpeed = 600 * m.policy.hostileRate;
       expect(
         d.rushVx * d.rushVx + d.rushVy * d.rushVy,
         closeTo(expectedSpeed * expectedSpeed, .001),
