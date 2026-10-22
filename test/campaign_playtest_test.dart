@@ -31,56 +31,58 @@ void steer(ArcadeModel model) {
 
 void main() {
   for (final difficulty in Difficulty.values) {
-    test(
-      'continuous ${difficulty.name} campaign completes using real shots',
-      () {
-        final model = ArcadeModel(seed: 1982)..start(difficulty: difficulty);
-        var entrances = 0;
-        var bossVictories = 0;
-        var completions = 0;
-        var maxHostileShots = 0;
-        var maxLarge = 0;
-        final visitedRoutes = <int>{};
-        for (
-          var frame = 0;
-          frame < 540000 && model.mode != RunMode.completed;
-          frame++
-        ) {
-          if (model.combat) {
-            model.invulnerable = 2;
-            steer(model);
-            visitedRoutes.add(model.cycle);
-          }
-          model.update(1 / 60);
-          for (final event in model.takeEvents()) {
-            if (event == 'checkpoint') entrances++;
-            if (event == 'bossDefeated') bossVictories++;
-            if (event == 'completed') completions++;
-          }
-          maxHostileShots = math.max(
-            maxHostileShots,
-            model.shots.where((s) => s.hostile).length,
-          );
-          maxLarge = math.max(
-            maxLarge,
-            model.demons.where((d) => d.isLarge).length,
-          );
+    test('continuous ${difficulty.name} campaign completes using real shots', () {
+      final model = ArcadeModel(seed: 1982)..start(difficulty: difficulty);
+      var entrances = 0;
+      var bossVictories = 0;
+      var completions = 0;
+      var maxHostileShots = 0;
+      var maxLarge = 0;
+      final visitedRoutes = <int>{};
+      for (
+        var frame = 0;
+        frame < 900000 && model.mode != RunMode.completed;
+        frame++
+      ) {
+        if (model.combat) {
+          model.invulnerable = 2;
+          steer(model);
+          visitedRoutes.add(model.cycle);
         }
-        expect(model.mode, RunMode.completed);
-        expect(visitedRoutes, {0, 1, 2, 3, 4});
-        expect(entrances, 111); // 106 ordinary waves and five carriers.
-        expect(bossVictories, 5);
-        expect(completions, 1);
-        expect(model.medals, 5);
-        expect(
-          model.remainingLives,
-          greaterThanOrEqualTo(model.policy.startingLives + 5),
+        model.update(1 / 60);
+        for (final event in model.takeEvents()) {
+          if (event == 'checkpoint') entrances++;
+          if (event == 'bossDefeated') bossVictories++;
+          if (event == 'completed') completions++;
+        }
+        maxHostileShots = math.max(
+          maxHostileShots,
+          model.shots.where((s) => s.hostile).length,
         );
-        expect(model.kills, greaterThan(1500));
-        expect(model.activeMilliseconds, greaterThan(1000000));
-        expect(maxLarge, 1);
-        expect(maxHostileShots, lessThanOrEqualTo(120));
-      },
-    );
+        maxLarge = math.max(
+          maxLarge,
+          model.demons.where((d) => d.isLarge).length,
+        );
+      }
+      expect(
+        model.mode,
+        RunMode.completed,
+        reason:
+            'route=${model.cycle} level=${model.level} wave=${model.wave} kills=${model.kills} demons=${model.demons.length} flocks=${model.flocksRemaining} escort=${model.escortSpawned} boss=${model.boss?.core}',
+      );
+      expect(visitedRoutes, {0, 1, 2, 3, 4});
+      expect(entrances, 111); // 106 ordinary waves and five carriers.
+      expect(bossVictories, 5);
+      expect(completions, 1);
+      expect(model.medals, 5);
+      expect(
+        model.remainingLives,
+        greaterThanOrEqualTo(model.policy.startingLives + 5),
+      );
+      expect(model.kills, greaterThan(1500));
+      expect(model.activeMilliseconds, greaterThan(1000000));
+      expect(maxLarge, 1);
+      expect(maxHostileShots, lessThanOrEqualTo(120));
+    });
   }
 }

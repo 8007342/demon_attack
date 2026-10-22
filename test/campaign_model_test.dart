@@ -219,7 +219,8 @@ void main() {
     expect(sentinel.hp, sentinel.maxHp);
     expect(sentinel.entranceProgress, 0);
     advance(m, 4.3);
-    expect(m.flocksSpawned, 1);
+    expect(m.flocksSpawned, greaterThanOrEqualTo(1));
+    expect(m.escortSpawned, isTrue);
     expect(sentinel.entranceProgress, inExclusiveRange(0, 1));
     expect(sentinel.telegraph, 0);
     expect(sentinel.dive, 0);

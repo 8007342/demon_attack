@@ -157,6 +157,21 @@ class _HintArtState extends State<HintArt> {
         mainAxisSize: MainAxisSize.min,
         children: [power(Power.spread), arrow, power(Power.large)],
       ),
+      'carrier_field' => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          power(Power.shield),
+          arrow,
+          const Text(
+            'CORE',
+            style: TextStyle(
+              color: Color(0xFFFFD594),
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
       'shield_refresh' || 'shield_weapon_combo' => Row(
         mainAxisSize: MainAxisSize.min,
         children: [power(Power.shield), plus, power(Power.powerful)],
@@ -214,6 +229,9 @@ const _descriptions = <String, String>{
   'heart_quarters': 'Four different heart quarters assemble one extra life.',
   'carrier_hatch':
       'Shoot the exposed gold carrier core when its hatch is open.',
+  'carrier_field':
+      'A broad force field protects the carrier from below. '
+      'Wear down the field to expose the carrier core.',
   'ordinary_dodge':
       'The monster draws back its wings; the ship sidesteps its shot.',
   'shield_refresh':
@@ -249,6 +267,7 @@ class _HintScenePainter extends CustomPainter {
   static const _tiles = <String, Rect>{
     'heart_quarters': Rect.fromLTWH(0, 0, 626, 222),
     'carrier_hatch': Rect.fromLTWH(628, 0, 626, 222),
+    'carrier_field': Rect.fromLTWH(628, 0, 626, 222),
     'ordinary_dodge': Rect.fromLTWH(0, 284, 626, 222),
     'shield_refresh': Rect.fromLTWH(628, 284, 626, 222),
     'powerful_choice': Rect.fromLTWH(0, 568, 626, 219),
@@ -284,6 +303,25 @@ class _HintScenePainter extends CustomPainter {
         ..filterQuality = FilterQuality.none
         ..isAntiAlias = false,
     );
+    if (scene == 'carrier_field') {
+      // A stepped egg-shaped lower envelope spans the whole carrier, rather
+      // than marking only its hatch. It uses the combat field's cyan palette.
+      final radiusX = destination.width * .48;
+      final radiusY = destination.height * .72;
+      final top = destination.top + destination.height * .13;
+      final paint = Paint()..isAntiAlias = false;
+      for (var x = 0.0; x <= radiusX; x += 3) {
+        final y = (top + radiusY * math.sqrt(1 - x * x / (radiusX * radiusX)))
+            .roundToDouble();
+        for (final side in [-1, 1]) {
+          final left = (destination.center.dx + side * x - 1).roundToDouble();
+          paint.color = const Color(0x5539DFCC);
+          canvas.drawRect(Rect.fromLTWH(left - 1, y - 1, 5, 5), paint);
+          paint.color = const Color(0xFF70F5D5);
+          canvas.drawRect(Rect.fromLTWH(left, y, 3, 2), paint);
+        }
+      }
+    }
     if (scene == 'stronger_swarm') {
       // Crop out the player's shield from the source and place the real shield
       // glyph around the bird, so the illustration teaches enemy defenses.

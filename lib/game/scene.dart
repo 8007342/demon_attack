@@ -307,35 +307,36 @@ class DemonScene extends FlameGame {
         );
       }
       if (b.shield > 0) {
-        // Preserve the narrowing symmetric shield geometry as stepped pixels.
-        final radius = 20 + 63 * b.shield / b.shieldMax;
-        final paint = Paint()..color = mint;
-        for (var x = 0.0; x <= radius; x += 3) {
-          final y = 24 + 19 * math.sqrt(1 - math.pow(x / radius, 2));
+        // A fixed-width egg encases the hull; depletion brings its surface
+        // inward vertically, so incoming fire visibly reaches nearer the ship.
+        final strength = b.shield / b.shieldMax;
+        final paint = Paint()..isAntiAlias = false;
+        for (var offset = 0.0; offset <= b.forceFieldHalfWidth; offset += 2) {
           for (final side in [-1.0, 1.0]) {
+            final worldX = b.x + side * offset;
+            final surface = b.forceFieldSurfaceY(worldX);
+            paint.color = mint.withValues(alpha: .65 + strength * .3);
             c.drawRect(
               Rect.fromLTWH(
-                (b.x + side * x - 1).roundToDouble(),
-                (b.y + y).roundToDouble(),
-                3,
+                (worldX - 1).roundToDouble(),
+                surface.roundToDouble(),
                 2,
+                strength > .5 ? 3 : 2,
               ),
               paint,
             );
-          }
-        }
-        for (var x = -3; x <= 3; x++) {
-          for (var step = 0; step < 3; step++) {
-            c.drawRect(
-              Rect.fromLTWH(
-                (b.x + x * (5 + 18 * b.shield / b.shieldMax) + x.sign * step)
-                    .roundToDouble(),
-                b.y.roundToDouble() + 39 + step * 2,
-                2,
-                2,
-              ),
-              paint,
-            );
+            if (strength > .25) {
+              paint.color = violet.withValues(alpha: .22 + strength * .2);
+              c.drawRect(
+                Rect.fromLTWH(
+                  (worldX - 1).roundToDouble(),
+                  surface.roundToDouble() - 4,
+                  2,
+                  2,
+                ),
+                paint,
+              );
+            }
           }
         }
       }

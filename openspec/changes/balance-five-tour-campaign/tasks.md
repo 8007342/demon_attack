@@ -62,3 +62,8 @@
 - [x] 11.2 Route qualifying terminal scores directly to initials and other results beneath the matching difficulty leaderboard, preserving network retry and metadata.
 - [x] 11.3 Remove heart seams and fit combined power status inside the left controller area across viewport sizes.
 - [x] 11.4 Validate tests/browser/release preview, merge game into main and push remote.
+
+## 12. Reinforcement pressure and carrier force field
+- [x] 12.1 Trigger multiple stronger reinforcement flocks promptly as comrades fall; give each sentinel its own separate largest reinforcement escort, unaffected by earlier flocks; verify bounded completion and replay.
+- [x] 12.2 Draw the carrier force field as a symmetric fixed-width lower egg outside the hull; contract its depth and projectile impacts toward the hull as depleted, preserve hatch gates, and add accurate illustrated field advice.
+- [ ] 12.3 Run integrated tests/browser/release preview checks, document tuning, and push main remotely.

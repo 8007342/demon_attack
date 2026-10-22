@@ -23,6 +23,13 @@ class TacticalHint {
 
 const List<TacticalHint> tacticalHints = [
   TacticalHint(
+    id: 'carrier_field',
+    title: 'Wear down the field. Expose the carrier.',
+    detail: 'The force field catches shots until depleted; then target the open hatch.',
+    scene: 'carrier_field',
+  ),
+
+  TacticalHint(
     id: 'stronger_swarm',
     title: 'Later waves grow stronger. Watch for shields.',
     detail:
@@ -109,7 +116,9 @@ class HintDeck {
           (hint) =>
               hint.isEligible(difficulty) &&
               (!hint.requiresLaterRoute || route >= 1) &&
-              (hint.id != 'carrier_hatch' || level >= 3 || route >= 1),
+              (!{'carrier_hatch', 'carrier_field'}.contains(hint.id) ||
+                  level >= 3 ||
+                  route >= 1),
         )
         .toList();
     var candidates = eligible

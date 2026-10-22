@@ -70,8 +70,18 @@ Actual-Wrangler Chromium smoke passes on desktop and phone: inline Top10, Enter 
 
 The final user decision replaces guide/hold/menu/manual settings with automatic loading-only hints. Ten contextual hints now include stronger later enemies, boss extra lives and five-medal completion. Initial swarm entrances wait offscreen for the hint to clear. Final scores load the matching board and open initials directly when qualifying; full-board ties remain below the board as a personal result, matching the server's older-first ties. Ranking unavailability preserves submission access and failed submissions retain initials. Heart interiors use color without dark seams. The controller reserves proportional left/right slots so all combined powers/timers stay inside beside stable pilot guidance.
 
-Flutter:115 tests pass, analysis clean. Worker:8 tests pass. Strict OpenSpec:11 items pass. Added checks cover score thresholds90/100/101 against tenth-place100, automatic loading despite legacy manual preferences, offscreen/frozen/deferred swarm arrival, and power-console containment/drag input across widths240–1100. Original art scene checks cover all ten illustrated hints.
+Flutter:115 tests pass, analysis clean. Worker:8 tests pass. Strict OpenSpec: 11 items pass. Added checks cover score thresholds90/100/101 against tenth-place100, automatic loading despite legacy manual preferences, offscreen/frozen/deferred swarm arrival, and power-console containment/drag input across widths240–1100. Original art scene checks cover all ten illustrated hints.
 
 Final release build succeeded. Refreshed managed Wrangler browser checks pass: desktop/phone gameplay and keyboard/controller/audio, desktop/phone/landscape campaign boards and checkpoint migration/reload, and phone/landscape automatic hints without extra controls. Reviewed phone hint/swarm runtime captures. No browser runtime exceptions or console errors. Preview remains available at https://www.demon-attack.localhost:18443/.
 
 Merged game into main with merge 88d2630 and pushed both branches; upstream confirmed durable acceptance. All 43 tracked campaign tasks are complete.
+
+## Reinforcement pressure and carrier field — 2026-10-22
+
+Normal now replenishes from the first route with two to three finite flocks; Hard has two to four and later Easy has two. The first casualty brings replenishment within about 0.6 seconds, with successive groups larger and tougher. Every sentinel receives a separate fresh 12–20-enemy escort larger than ordinary reinforcement groups, independent of previous arrivals, reserving capacity within a 61-enemy cap. Regression tests verify first-casualty timing, multiple stronger groups, fresh escort identity after earlier reinforcements, capacity, and protected sentinel staging. Complete real-shot simulated campaigns finish in all difficulties; the heavier Hard campaign requires a larger simulation ceiling.
+
+The carrier field stays 220 units wide outside its 184-unit hull and contracts in depth from 75 toward 43 as it depletes. Rendering, flank projectile interception and hit flashes share the model's surface. Tests verify symmetry, full width at low strength, pre-damage impact positions, and continued closed-hatch protection after the field breaks. Native full/low-field captures in .cache/cinematics were reviewed; the illustrated carrier_field hint was added and reviewed.
+
+Full Flutter suite: 119 tests pass. Flutter analysis: clean. Worker suite: 8 tests pass. Strict OpenSpec: 11 items pass. Release web build succeeds.
+
+Refreshed managed local Wrangler and passed desktop/phone gameplay controls/audio, desktop/phone/landscape campaign boards and compatible checkpoint reload, plus phone/landscape automatic illustrated hints and delayed initial entrances. No browser runtime exceptions or console errors. The local preview is ready to reload.

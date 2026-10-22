@@ -37,6 +37,7 @@ void main() {
       final model = ArcadeModel()..start();
       model.mode = RunMode.playing;
       model.demons.clear();
+      model.flocksSpawned = model.flocksPlanned;
       model.pickups.add(Pickup(20, 100, Power.spread));
       model.shots.add(Shot(20, 200, 0, 20, hostile: true));
       model.update(1 / 60);

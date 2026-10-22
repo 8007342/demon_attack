@@ -125,3 +125,10 @@ First-wave arrivals SHALL replace repeated arrival story text with a randomly se
 #### Scenario: Stable shuffled selection
 - **WHEN** an arrival card rebuilds or the player pauses and resumes
 - **THEN** the selected hint remains unchanged and its card is not counted as a new draw
+
+### Requirement: Encasing carrier field
+The carrier's force field SHALL keep a width larger than the hull at every remaining strength, showing a symmetric pixelated lower egg outside the ship. Depletion SHALL bring the lower surface and projectile impacts progressively toward the hull rather than narrowing the field. At zero strength the field SHALL disappear and the exposed hatch rules SHALL apply. A matching illustrated hint SHALL explain wearing down the field before attacking the carrier.
+
+#### Scenario: Nearly depleted field
+- **WHEN** the carrier retains only a little shield energy
+- **THEN** its field still spans the ship but shots hit nearer its underside than at full strength

@@ -17,11 +17,30 @@ class DifficultyPolicy {
   };
   int reinforcementFlocks({required int route, required int sector}) =>
       switch (difficulty) {
-        Difficulty.easy => route == 0 ? 0 : (1 + route ~/ 3).clamp(1, 2),
-        Difficulty.normal => (route + (sector >= 3 ? 1 : 0)).clamp(0, 3),
-        Difficulty.hard => (1 + route).clamp(1, 4),
+        Difficulty.easy => route == 0 ? 0 : 2,
+        Difficulty.normal => (2 + route ~/ 3).clamp(2, 3),
+        Difficulty.hard => (2 + route).clamp(2, 4),
       };
-  int get reinforcementSize => difficulty == Difficulty.easy ? 4 : 6;
+  int reinforcementSize({required int route, required int flock}) =>
+      (switch (difficulty) {
+        Difficulty.easy => 4 + flock,
+        Difficulty.normal => 6 + flock * 2,
+        Difficulty.hard => 8 + flock * 2,
+      }) +
+      route.clamp(0, 4) ~/ 2;
+  int escortSize({required int route, required int sector}) => math.max(
+    12,
+    reinforcementSize(
+          route: route,
+          flock: math.max(
+            0,
+            reinforcementFlocks(route: route, sector: sector) - 1,
+          ),
+        ) +
+        4,
+  );
+  int reinforcementHealth({required int route, required int flock}) =>
+      2 + route.clamp(0, 3) + flock * 2 + difficulty.index;
   int bossHealth(int normal) =>
       math.max(1, (normal * (difficulty == Difficulty.easy ? .8 : 1)).round());
   int rosterCount({

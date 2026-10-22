@@ -45,6 +45,7 @@ class Demon {
     this.maxHp,
     this.seed, {
     this.elite = false,
+    this.isEscort = false,
     this.archetype = EnemyArchetype.ordinary,
     this.lastStandEligible = false,
     this.shieldMax = 0,
@@ -56,7 +57,7 @@ class Demon {
        homeY = y;
   double x, y, homeX, homeY;
   final int kind, maxHp;
-  final bool elite;
+  final bool elite, isEscort;
   final EnemyArchetype archetype;
   bool get isLarge => archetype != EnemyArchetype.ordinary;
   int get moltStage => maxHp - hp;
@@ -144,6 +145,13 @@ class Carrier {
   final int startingDirection;
   final double startingPhase;
   double motionPhase = 0, horizontalVelocity = 0;
+  double get forceFieldHalfWidth => 110;
+  double get forceFieldDepth => 43 + 32 * shield / shieldMax;
+  double forceFieldSurfaceY(double worldX) {
+    final offset = ((worldX - x) / forceFieldHalfWidth).clamp(-1.0, 1.0);
+    return y + 12 + (forceFieldDepth - 12) * math.sqrt(1 - offset * offset);
+  }
+
   double get rage => (1 - (shield + core) / (shieldMax + coreMax)).clamp(0, 1);
   double get movementRate => 1 + rage * .9;
   int get direction => horizontalVelocity < 0 ? -1 : 1;
@@ -190,10 +198,13 @@ class ArcadeModel {
   final List<HeartPickup> heartPickups = [];
   int lives = 3, score = 0, level = 1, cycle = 0, kills = 0, wave = 1;
   int? clearedLevel;
-  static const maxActiveDemons = 42;
+  static const maxActiveDemons = 61;
   int flocksPlanned = 0, flocksSpawned = 0;
   int get flocksRemaining => flocksPlanned - flocksSpawned;
-  double _reinforcementLeft = 0;
+  double _reinforcementLeft = 0, _reinforcementCooldown = 0, _escortLeft = 0;
+  int _reinforcementCasualties = 0;
+  bool escortSpawned = false;
+  int get plannedEscortSize => policy.escortSize(route: cycle, sector: level);
   double shipX = 180, targetX = 180, clock = 0, levelClock = 0;
   double invulnerable = 0, transitionLeft = 0;
   static const storyReadingTime = 1 / 3;
@@ -418,7 +429,11 @@ class ArcadeModel {
     flocksPlanned = boss == null
         ? policy.reinforcementFlocks(route: cycle, sector: level)
         : 0;
-    _reinforcementLeft = 6;
+    _reinforcementLeft = 2.4;
+    _reinforcementCooldown = .6;
+    _reinforcementCasualties = 0;
+    _escortLeft = 2.6;
+    escortSpawned = false;
     if (boss == null) {
       final count = policy.rosterCount(sector: level, wave: wave, route: cycle);
       final rows = (count / 6).ceil();
@@ -431,10 +446,6 @@ class ArcadeModel {
               (difficulty != Difficulty.easy &&
                   wave >= 3 &&
                   (wave + level + cycle).isEven));
-      if (specialEligible) {
-        flocksPlanned = math.max(1, flocksPlanned);
-        _reinforcementLeft = 3.2;
-      }
       for (var i = 0; i < count; i++) {
         // Later waves mix previously encountered creatures into the native flock.
         final kind = cycle > 0
@@ -455,7 +466,11 @@ class ArcadeModel {
         final large = archetype != EnemyArchetype.ordinary;
         final demon = Demon(
           large ? width / 2 : 38 + (i % 6) * 56.0,
-          large ? 44 : (specialEligible ? 124 : 70) + (i ~/ 6) * spacing,
+          large
+              ? 44
+              : (specialEligible
+                    ? 124 + (i ~/ 6) * 32.0
+                    : 70 + (i ~/ 6) * spacing),
           kind,
           hp.toInt(),
           i * 1.7 + wave * .6,
@@ -495,18 +510,53 @@ class ArcadeModel {
   }
 
   void _updateReinforcements(double dt) {
-    if (boss != null || flocksRemaining <= 0) return;
+    if (boss != null) return;
+    final sentinel = demons
+        .where((d) => d.isLarge && d.waitingForEscort)
+        .firstOrNull;
+    _escortLeft -= dt * policy.hostileRate;
+    if (sentinel != null && _escortLeft <= 0) {
+      if (_spawnReinforcementGroup(plannedEscortSize, escort: true)) {
+        escortSpawned = true;
+        sentinel.waitingForEscort = false;
+        sentinel.entranceDelay = 1.15;
+        events.add('escort');
+      }
+    }
+    if (flocksRemaining <= 0) return;
     _reinforcementLeft -= dt * policy.hostileRate;
-    if (_reinforcementLeft > 0 && demons.isNotEmpty) return;
-    final count = policy.reinforcementSize;
-    if (demons.length + count > maxActiveDemons) return;
+    _reinforcementCooldown -= dt * policy.hostileRate;
+    final casualtiesNeeded = 1 + flocksSpawned;
+    final empty = demons.every((d) => d.isLarge && d.waitingForEscort);
+    if (!empty &&
+        (_reinforcementCooldown > 0 ||
+            (_reinforcementCasualties < casualtiesNeeded &&
+                _reinforcementLeft > 0))) {
+      return;
+    }
+    final count = policy.reinforcementSize(route: cycle, flock: flocksSpawned);
+    // Ordinary arrivals must leave capacity for the sentinel's own new escort.
+    final reserve = sentinel != null && sentinel.waitingForEscort
+        ? plannedEscortSize
+        : 0;
+    if (demons.length + count + reserve > maxActiveDemons) return;
+    if (!_spawnReinforcementGroup(count, escort: false)) return;
+    flocksSpawned++;
+    _reinforcementCasualties = 0;
+    _reinforcementCooldown = .6;
+    _reinforcementLeft = 2.4;
+    events.add('reinforcements');
+  }
+
+  bool _spawnReinforcementGroup(int count, {required bool escort}) {
+    if (demons.length + count > maxActiveDemons) return false;
     final sentinel = demons.where((d) => d.isLarge).firstOrNull;
     final top = sentinel != null ? 124.0 : 70.0;
     final slots = <(double, double)>[];
-    for (var row = 0; row < 8 && slots.length < count; row++) {
+    for (var row = 0; row < 11 && slots.length < count; row++) {
       for (var col = 0; col < 6 && slots.length < count; col++) {
         final x = 38 + col * 56.0, y = top + row * 32;
-        if (y > 348) break;
+        if (y > 412) break;
         if (demons.any(
           (d) =>
               !d.isLarge &&
@@ -518,18 +568,22 @@ class ArcadeModel {
         slots.add((x, y));
       }
     }
-    if (slots.length < count) return;
+    if (slots.length < count) return false;
+    final strength = policy.reinforcementHealth(
+      route: cycle,
+      flock: escort ? flocksPlanned : flocksSpawned,
+    );
     for (var i = 0; i < count; i++) {
       final kind = (level + cycle + flocksSpawned + i) % 4;
-      final escort = sentinel != null && sentinel.waitingForEscort;
       final d =
           Demon(
               slots[i].$1,
               slots[i].$2,
               kind,
-              (1 + kind ~/ 2 + math.min(cycle, 3) + (escort ? 2 : 0)).toInt(),
+              strength + kind ~/ 2 + (escort ? 2 : 0),
               random.nextDouble() * 8,
-              elite: escort || (cycle > 1 && i.isEven),
+              elite: escort || flocksSpawned > 0 || cycle > 0,
+              isEscort: escort,
             )
             ..entranceProgress = 0
             ..entranceDelay = 0
@@ -538,13 +592,7 @@ class ArcadeModel {
       d.y = d.entranceStartY;
       demons.add(d);
     }
-    flocksSpawned++;
-    _reinforcementLeft = math.max(4, 8 - cycle * .65);
-    if (sentinel != null && sentinel.waitingForEscort) {
-      sentinel.waitingForEscort = false;
-      sentinel.entranceDelay = 1.15;
-    }
-    events.add('reinforcements');
+    return true;
   }
 
   void _enterPhase(RunMode phase, double duration) {
@@ -974,6 +1022,22 @@ class ArcadeModel {
         }
         continue;
       }
+      final shieldedCarrier = boss;
+      if (shieldedCarrier != null &&
+          shieldedCarrier.shield > 0 &&
+          (s.x - shieldedCarrier.x).abs() <=
+              shieldedCarrier.forceFieldHalfWidth) {
+        final surface = shieldedCarrier.forceFieldSurfaceY(s.x);
+        final radius = s.blastRadius > 0 ? 5.0 : 2.0;
+        final previousY = s.y - s.vy / 60;
+        if (s.y <= surface + radius && previousY >= surface - radius) {
+          s.y = surface;
+          if (s.blastRadius > 0) _explodeShot(s, hitCarrier: false);
+          hitBoss(s.x, damage: s.damage);
+          s.y = height + 20;
+          continue;
+        }
+      }
       var hit = false;
       for (final d in List<Demon>.of(demons)) {
         if (!d.entering &&
@@ -993,6 +1057,7 @@ class ArcadeModel {
       final b = boss;
       if (!hit &&
           b != null &&
+          b.shield == 0 &&
           (s.x - b.x).abs() < 78 + (s.blastRadius > 0 ? 5 : 0) &&
           s.y < b.y + 43 + (s.blastRadius > 0 ? 5 : 0) &&
           s.y > b.y - 25 - (s.blastRadius > 0 ? 5 : 0)) {
@@ -1013,7 +1078,7 @@ class ArcadeModel {
     }
   }
 
-  void _explodeShot(Shot shot) {
+  void _explodeShot(Shot shot, {bool hitCarrier = true}) {
     blasts.add(Blast(shot.x, shot.y, blastRadius: shot.blastRadius));
     final radius = shot.blastRadius + 14;
     for (final d in List<Demon>.of(demons)) {
@@ -1023,9 +1088,16 @@ class ArcadeModel {
       }
     }
     final b = boss;
-    if (b != null &&
+    if (b == null || !hitCarrier) return;
+    final touchesField =
+        b.shield > 0 &&
+        (shot.x - b.x).abs() <= b.forceFieldHalfWidth + shot.blastRadius &&
+        (shot.y - b.forceFieldSurfaceY(shot.x)).abs() <= shot.blastRadius + 5;
+    final touchesHull =
+        b.shield == 0 &&
         (shot.x - b.x).abs() <= 78 + shot.blastRadius &&
-        (shot.y - b.y).abs() <= 43 + shot.blastRadius) {
+        (shot.y - b.y).abs() <= 43 + shot.blastRadius;
+    if (touchesField || touchesHull) {
       hitBoss(shot.x, damage: shot.damage, blastRadius: shot.blastRadius);
     }
   }
@@ -1033,6 +1105,7 @@ class ArcadeModel {
   // Self-sacrifice shares the large death visuals, but cannot produce rewards.
   void _sacrifice(Demon d) {
     if (!demons.remove(d)) return;
+    if (boss == null) _reinforcementCasualties++;
     blasts.add(Blast(d.x, d.y, archetype: d.archetype));
     events.add('explosion');
   }
@@ -1053,6 +1126,7 @@ class ArcadeModel {
     d.hp -= damage;
     if (d.hp <= 0) {
       demons.remove(d);
+      if (boss == null) _reinforcementCasualties++;
       kills++;
       score +=
           ((100 + d.kind * 75 + (d.maxHp - 1) * 50) *
@@ -1108,9 +1182,10 @@ class ArcadeModel {
     final b = boss;
     if (b == null || !combat || damage <= 0) return false;
     if (b.shield > 0) {
+      final impactY = b.forceFieldSurfaceY(shotX);
       b.shield = math.max(0, b.shield - damage);
       events.add('hit');
-      blasts.add(Blast(shotX, b.y + 39));
+      blasts.add(Blast(shotX, impactY));
       if (b.shield == 0) events.add('boss');
       return true;
     }

@@ -169,3 +169,14 @@ Each carrier encounter SHALL select a seeded random starting movement direction 
 #### Scenario: Damaged carrier moves faster
 - **WHEN** carrier health falls
 - **THEN** movement accelerates and the eyes visibly intensify without enabling hits through a closed door
+
+### Requirement: Dedicated sentinel escorts and prompt replenishment
+Ordinary waves SHALL replenish through multiple finite casualty-triggered flocks with progressive strength. Every sentinel SHALL bring a separate fresh escort larger than ordinary reinforcement groups. Earlier flocks SHALL NOT fulfill that escort. Escorts SHALL settle below their sentinel before it attacks. Active populations SHALL remain bounded and wave completion SHALL wait for remaining scheduled flocks.
+
+#### Scenario: Earlier ordinary flocks
+- **WHEN** ordinary reinforcements arrive before a sentinel's escort
+- **THEN** the sentinel still brings its own fresh larger defending swarm
+
+#### Scenario: Falling comrades
+- **WHEN** enemies start falling in a wave with remaining reinforcements
+- **THEN** replacement groups begin arriving promptly without long empty combat gaps

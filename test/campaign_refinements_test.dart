@@ -293,7 +293,9 @@ void main() {
       m.shots.add(
         Shot(
           b.forecastX(1 / 60, m.speed) + 25,
-          b.y + 15,
+          state == 'shield'
+              ? b.forceFieldSurfaceY(b.forecastX(1 / 60, m.speed) + 25)
+              : b.y + 15,
           0,
           0,
           kind: ShotKind.large,
@@ -373,9 +375,10 @@ void main() {
     );
     m.mode = RunMode.playing;
     m.invulnerable = 1000;
-    advance(m, 3.3);
-    final escorts = m.demons.where((d) => !initial.contains(d)).toList();
-    expect(escorts, hasLength(6));
+    advance(m, 2.7);
+    final escorts = m.demons.where((d) => d.isEscort).toList();
+    expect(escorts, hasLength(m.plannedEscortSize));
+    expect(escorts.every((d) => !initial.contains(d)), isTrue);
     expect(escorts.every((d) => d.elite && d.entering), isTrue);
     expect(sentinel.entranceProgress, 0);
     advance(m, .8);
