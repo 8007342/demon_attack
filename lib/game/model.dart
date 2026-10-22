@@ -16,15 +16,18 @@ enum RunMode {
   completed,
 }
 
-enum Power { spread, rapid, shield }
+enum Power { spread, rapid, shield, powerful, large }
 
 enum HeartPart {
-  left,
-  right,
-  top;
+  bottomLeft,
+  bottomRight,
+  topLeft,
+  topRight;
 
   int get mask => 1 << index;
 }
+
+enum ShotKind { ordinary, sentinel, powerful, large }
 
 enum EnemyArchetype { ordinary, shieldSentinel, armoredSentinel }
 
@@ -44,7 +47,11 @@ class Demon {
     this.elite = false,
     this.archetype = EnemyArchetype.ordinary,
     this.lastStandEligible = false,
+    this.shieldMax = 0,
+    this.armorMax = 0,
   }) : hp = maxHp,
+       shield = shieldMax,
+       armor = armorMax,
        homeX = x,
        homeY = y;
   double x, y, homeX, homeY;
@@ -53,12 +60,19 @@ class Demon {
   final EnemyArchetype archetype;
   bool get isLarge => archetype != EnemyArchetype.ordinary;
   int get moltStage => maxHp - hp;
-  double attackLeft = 2.4;
+  final int shieldMax, armorMax;
+  int shield, armor;
+  double attackLeft = 2.4, volleyLeft = 1.5;
+  double evadeLeft = 0, evadeCooldown = 0, evadeOffset = 0;
+  double get defenseFraction =>
+      (shield + armor) / math.max(1, shieldMax + armorMax);
   // Spawned sentinels arrive after the small flock has settled. Hand-created
   // demons start present, matching ordinary demons and checkpoint test fixtures.
   double entranceProgress = 1;
   double entranceElapsed = 0;
-  bool get entering => isLarge && entranceProgress < 1;
+  bool get entering => entranceProgress < 1;
+  bool waitingForEscort = false;
+  double entranceDelay = .35, entranceDuration = 1.8, entranceStartY = -48;
   final bool lastStandEligible;
   bool lastStand = false, rushing = false;
   double get lastStandTellProgress =>
@@ -72,10 +86,22 @@ class Demon {
 }
 
 class Shot {
-  Shot(this.x, this.y, this.vx, this.vy, {this.hostile = false});
+  Shot(
+    this.x,
+    this.y,
+    this.vx,
+    this.vy, {
+    this.hostile = false,
+    this.kind = ShotKind.ordinary,
+    this.damage = 1,
+    this.blastRadius = 0,
+  });
   double x, y;
   final double vx, vy;
   final bool hostile;
+  final ShotKind kind;
+  final int damage;
+  final double blastRadius;
 }
 
 class Pickup {
@@ -90,22 +116,46 @@ class Blast {
     this.y, {
     this.big = false,
     this.archetype = EnemyArchetype.ordinary,
+    this.blastRadius = 0,
   });
   final double x, y;
   final bool big;
+  final double blastRadius;
   final EnemyArchetype archetype;
   bool get isLarge => archetype != EnemyArchetype.ordinary;
   double age = 0;
 }
 
 class Carrier {
-  Carrier(int cycle, {Difficulty difficulty = Difficulty.normal})
-    : shieldMax = DifficultyPolicy(difficulty).bossHealth(72 + cycle * 18),
-      coreMax = DifficultyPolicy(difficulty).bossHealth(24 + cycle * 10),
-      formCount = math.min(4, 2 + cycle) {
+  Carrier(
+    int cycle, {
+    Difficulty difficulty = Difficulty.normal,
+    this.startingDirection = 1,
+    this.startingPhase = 0,
+  }) : shieldMax = DifficultyPolicy(difficulty).bossHealth(72 + cycle * 18),
+       coreMax = DifficultyPolicy(difficulty).bossHealth(24 + cycle * 10),
+       formCount = math.min(4, 2 + cycle) {
     shield = shieldMax;
     core = coreMax;
+    motionPhase = startingPhase;
+    x = forecastX(0, 1);
+    horizontalVelocity = startingDirection.toDouble();
   }
+  final int startingDirection;
+  final double startingPhase;
+  double motionPhase = 0, horizontalVelocity = 0;
+  double get rage => (1 - (shield + core) / (shieldMax + coreMax)).clamp(0, 1);
+  double get movementRate => 1 + rage * .9;
+  int get direction => horizontalVelocity < 0 ? -1 : 1;
+  double forecastX(double seconds, double speed) {
+    final phase =
+        motionPhase + seconds * .7 * speed * movementRate * startingDirection;
+    return (180 +
+            math.sin(phase) * (80 + rage * 10) +
+            math.sin(phase * 2 + startingPhase) * rage * 8)
+        .clamp(82, 278);
+  }
+
   final int shieldMax, coreMax, formCount;
   late int shield, core;
   double x = 180, y = 205;
@@ -140,10 +190,15 @@ class ArcadeModel {
   final List<HeartPickup> heartPickups = [];
   int lives = 3, score = 0, level = 1, cycle = 0, kills = 0, wave = 1;
   int? clearedLevel;
+  static const maxActiveDemons = 42;
+  int flocksPlanned = 0, flocksSpawned = 0;
+  int get flocksRemaining => flocksPlanned - flocksSpawned;
+  double _reinforcementLeft = 0;
   double shipX = 180, targetX = 180, clock = 0, levelClock = 0;
   double invulnerable = 0, transitionLeft = 0;
   static const storyReadingTime = 1 / 3;
-  double transitionDuration = 2.3 + storyReadingTime;
+  static const arrivalHintDuration = 4.5;
+  double transitionDuration = arrivalHintDuration;
   static const powerDuration = 9.0;
   final Map<Power, double> powerTimers = {};
   Iterable<Power> get activePowers => Power.values.where(hasPower);
@@ -223,7 +278,8 @@ class ArcadeModel {
 
   /// Compact entrance snapshot. Call when consuming the `checkpoint` event.
   Map<String, dynamic> checkpoint() => {
-    'schemaVersion': 1,
+    'schemaVersion': 2,
+    'heartParts': 4,
     'difficulty': difficulty.name,
     'routeIndex': cycle,
     'sector': level,
@@ -276,14 +332,21 @@ class ArcadeModel {
       0,
       9007199254740991,
     );
+    final heartParts = data['heartParts'];
+    if (heartParts != null && (heartParts is! int || heartParts != 4)) {
+      return false;
+    }
+    final fourParts = heartParts == 4;
     final rawHearts = data['heartSlots'];
     final restoredHearts = <int>[0, 0, 0];
     if (rawHearts != null) {
       if (rawHearts is! List || rawHearts.length != 3) return false;
       for (var i = 0; i < 3; i++) {
-        final mask = integer(rawHearts[i], 0, 0, 6);
-        if (mask == null) return false;
-        restoredHearts[i] = mask;
+        final mask = integer(rawHearts[i], 0, 0, fourParts ? 14 : 6);
+        if (mask == null || rawHearts[i] == null) return false;
+        restoredHearts[i] = fourParts
+            ? mask
+            : (mask & 3) | ((mask & 4) != 0 ? 12 : 0);
       }
     }
     if (restoredWave == null ||
@@ -318,17 +381,24 @@ class ArcadeModel {
     shipX = targetX = 180;
     clock = levelClock = _accumulator = 0;
     invulnerable = 2;
-    boss = level == 5 ? Carrier(cycle, difficulty: difficulty) : null;
+    boss = level == 5 ? _newCarrier() : null;
     _spawnWave();
     events.add(boss == null ? 'level' : 'boss');
     return true;
   }
 
+  Carrier _newCarrier() => Carrier(
+    cycle,
+    difficulty: difficulty,
+    startingDirection: random.nextBool() ? 1 : -1,
+    startingPhase: random.nextDouble() * math.pi * 2,
+  );
+
   void _beginLevel() {
     wave = 1;
     clearedLevel = null;
     wreckBoss = null;
-    boss = level == 5 ? Carrier(cycle, difficulty: difficulty) : null;
+    boss = level == 5 ? _newCarrier() : null;
     levelClock = 0;
     pickups.clear();
     heartPickups.clear();
@@ -344,6 +414,11 @@ class ArcadeModel {
     _enemyFire = 1.7;
     _dive = 3;
     _flock = 2;
+    flocksSpawned = 0;
+    flocksPlanned = boss == null
+        ? policy.reinforcementFlocks(route: cycle, sector: level)
+        : 0;
+    _reinforcementLeft = 6;
     if (boss == null) {
       final count = policy.rosterCount(sector: level, wave: wave, route: cycle);
       final rows = (count / 6).ceil();
@@ -356,6 +431,10 @@ class ArcadeModel {
               (difficulty != Difficulty.easy &&
                   wave >= 3 &&
                   (wave + level + cycle).isEven));
+      if (specialEligible) {
+        flocksPlanned = math.max(1, flocksPlanned);
+        _reinforcementLeft = 3.2;
+      }
       for (var i = 0; i < count; i++) {
         // Later waves mix previously encountered creatures into the native flock.
         final kind = cycle > 0
@@ -371,8 +450,8 @@ class ArcadeModel {
             : EnemyArchetype.ordinary;
         final hp = archetype == EnemyArchetype.ordinary
             ? 1 + (kind ~/ 2) + math.min(cycle, 3) + (elite ? 2 : 0)
-            : (archetype == EnemyArchetype.armoredSentinel ? 8 : 5) +
-                  math.min(cycle, 4);
+            : (archetype == EnemyArchetype.armoredSentinel ? 12 : 9) +
+                  math.min(cycle, 4) * 2;
         final large = archetype != EnemyArchetype.ordinary;
         final demon = Demon(
           large ? width / 2 : 38 + (i % 6) * 56.0,
@@ -382,20 +461,82 @@ class ArcadeModel {
           i * 1.7 + wave * .6,
           elite: elite,
           archetype: archetype,
+          shieldMax: large ? 3 + cycle : 0,
+          armorMax: large
+              ? (archetype == EnemyArchetype.armoredSentinel ? 4 : 2) +
+                    cycle ~/ 2
+              : 0,
           lastStandEligible:
               large &&
               random.nextDouble() < (difficulty == Difficulty.easy ? .15 : .25),
         );
         if (large) {
           demon.entranceProgress = 0;
+          demon.waitingForEscort = true;
           demon.y = -48;
         }
         demons.add(demon);
       }
     }
     if (boss == null) _updateDemons(0);
-    _enterPhase(RunMode.transition, (wave > 1 ? 1.4 : 2.3) + storyReadingTime);
+    _enterPhase(
+      RunMode.transition,
+      wave > 1 ? 1.4 + storyReadingTime : arrivalHintDuration,
+    );
     events.add('checkpoint');
+  }
+
+  void _updateReinforcements(double dt) {
+    if (boss != null || flocksRemaining <= 0) return;
+    _reinforcementLeft -= dt * policy.hostileRate;
+    if (_reinforcementLeft > 0 && demons.isNotEmpty) return;
+    final count = policy.reinforcementSize;
+    if (demons.length + count > maxActiveDemons) return;
+    final sentinel = demons.where((d) => d.isLarge).firstOrNull;
+    final top = sentinel != null ? 124.0 : 70.0;
+    final slots = <(double, double)>[];
+    for (var row = 0; row < 8 && slots.length < count; row++) {
+      for (var col = 0; col < 6 && slots.length < count; col++) {
+        final x = 38 + col * 56.0, y = top + row * 32;
+        if (y > 348) break;
+        if (demons.any(
+          (d) =>
+              !d.isLarge &&
+              (d.homeX - x).abs() < 28 &&
+              (d.homeY - y).abs() < 26,
+        )) {
+          continue;
+        }
+        slots.add((x, y));
+      }
+    }
+    if (slots.length < count) return;
+    for (var i = 0; i < count; i++) {
+      final kind = (level + cycle + flocksSpawned + i) % 4;
+      final escort = sentinel != null && sentinel.waitingForEscort;
+      final d =
+          Demon(
+              slots[i].$1,
+              slots[i].$2,
+              kind,
+              (1 + kind ~/ 2 + math.min(cycle, 3) + (escort ? 2 : 0)).toInt(),
+              random.nextDouble() * 8,
+              elite: escort || (cycle > 1 && i.isEven),
+            )
+            ..entranceProgress = 0
+            ..entranceDelay = 0
+            ..entranceDuration = .8
+            ..entranceStartY = -32 - i * 8.0;
+      d.y = d.entranceStartY;
+      demons.add(d);
+    }
+    flocksSpawned++;
+    _reinforcementLeft = math.max(4, 8 - cycle * .65);
+    if (sentinel != null && sentinel.waitingForEscort) {
+      sentinel.waitingForEscort = false;
+      sentinel.entranceDelay = 1.15;
+    }
+    events.add('reinforcements');
   }
 
   void _enterPhase(RunMode phase, double duration) {
@@ -420,11 +561,19 @@ class ArcadeModel {
   void moveTo(double x) => targetX = x.clamp(18, width - 18);
   void moveBy(double dx) => moveTo(targetX + dx);
   void pause() {
+    if (mode == RunMode.paused) return;
     if (mode == RunMode.playing || cinematic) {
       _beforePause = mode;
       mode = RunMode.paused;
       events.add('pause');
     }
+  }
+
+  /// Player-controlled continuation when automatic hint advance is disabled.
+  void continueIntroduction() {
+    if (presentationMode != RunMode.transition || wave != 1) return;
+    if (mode == RunMode.paused) resume();
+    transitionLeft = 0;
   }
 
   void resume() {
@@ -505,15 +654,30 @@ class ArcadeModel {
     _fire -= dt;
     if (_fire <= 0) {
       _fire += hasPower(Power.rapid) ? .105 : .23;
-      shots.add(Shot(shipX, shipY - 13, 0, -390));
+      final powerful = hasPower(Power.powerful), large = hasPower(Power.large);
+      Shot playerShot(double x, double y, double vx, double vy) => Shot(
+        x,
+        y,
+        vx,
+        vy,
+        kind: large
+            ? ShotKind.large
+            : powerful
+            ? ShotKind.powerful
+            : ShotKind.ordinary,
+        damage: powerful ? 2 : 1,
+        blastRadius: large ? 30 : 0,
+      );
+      shots.add(playerShot(shipX, shipY - 13, 0, -390));
       if (hasPower(Power.spread)) {
         shots.addAll([
-          Shot(shipX - 5, shipY - 8, -90, -370),
-          Shot(shipX + 5, shipY - 8, 90, -370),
+          playerShot(shipX - 5, shipY - 8, -90, -370),
+          playerShot(shipX + 5, shipY - 8, 90, -370),
         ]);
       }
       events.add('shot');
     }
+    _updateReinforcements(dt);
     _updateDemons(dt);
     _updateBoss(dt);
     for (final s in shots) {
@@ -524,7 +688,7 @@ class ArcadeModel {
     shots.removeWhere(
       (s) => s.y < -10 || s.y > height + 10 || s.x < -10 || s.x > width + 10,
     );
-    if (combat && demons.isEmpty && boss == null) {
+    if (combat && demons.isEmpty && boss == null && flocksRemaining == 0) {
       _completeWave();
     }
   }
@@ -578,12 +742,17 @@ class ArcadeModel {
     for (final d in List<Demon>.of(demons)) {
       d.flash = math.max(0, d.flash - dt);
       if (d.entering) {
+        if (d.waitingForEscort) continue;
         d.entranceElapsed += dt;
-        d.entranceProgress = ((d.entranceElapsed - .35) / 1.8).clamp(0, 1);
+        d.entranceProgress =
+            ((d.entranceElapsed - d.entranceDelay) / d.entranceDuration).clamp(
+              0,
+              1,
+            );
         final progress = d.entranceProgress;
         final eased = progress * progress * (3 - 2 * progress);
         d.x = d.homeX;
-        d.y = -48 + (d.homeY + 48) * eased;
+        d.y = d.entranceStartY + (d.homeY - d.entranceStartY) * eased;
         continue;
       }
       if (d.lastStand) {
@@ -608,6 +777,23 @@ class ArcadeModel {
           }
         }
         continue;
+      }
+      if (d.isLarge && d.dive == 0 && d.telegraph <= 0) {
+        d.volleyLeft -= dt * policy.hostileRate;
+        if (d.volleyLeft <= 0) {
+          final aim = ((shipX - d.x) * .35).clamp(-85.0, 85.0);
+          _hostile(
+            Shot(
+              d.x,
+              d.y + 14,
+              aim,
+              240 * speed,
+              hostile: true,
+              kind: ShotKind.sentinel,
+            ),
+          );
+          d.volleyLeft = 1.65;
+        }
       }
       if ((d.elite || d.isLarge) && dt > 0) {
         d.attackLeft -= dt * policy.hostileRate;
@@ -635,7 +821,14 @@ class ArcadeModel {
             final aim = ((d.targetX - d.x) * .3).clamp(-70.0, 70.0);
             for (final offset in [-32.0, 0.0, 32.0]) {
               _hostile(
-                Shot(d.x, d.y + 12, aim + offset, 210 * speed, hostile: true),
+                Shot(
+                  d.x,
+                  d.y + 12,
+                  aim + offset,
+                  240 * speed,
+                  hostile: true,
+                  kind: ShotKind.sentinel,
+                ),
               );
             }
           }
@@ -661,9 +854,19 @@ class ArcadeModel {
         }
       } else {
         if (d.isLarge) {
-          d.x = (d.homeX + math.sin(levelClock * .4 * speed + d.seed) * 42)
-              .clamp(62, width - 62);
-          d.y = d.homeY + math.sin(levelClock * .65 * speed + d.seed) * 5;
+          _evade(d, dt);
+          final nextX =
+              (d.homeX +
+                      math.sin(levelClock * .4 * speed + d.seed) * 42 +
+                      d.evadeOffset)
+                  .clamp(62, width - 62);
+          d.x += (nextX - d.x).clamp(
+            -90 * dt * policy.hostileRate,
+            90 * dt * policy.hostileRate,
+          );
+          final nextY =
+              d.homeY + math.sin(levelClock * .65 * speed + d.seed) * 5;
+          d.y += (nextY - d.y).clamp(-20 * dt, 20 * dt);
           continue;
         }
         d.x =
@@ -689,11 +892,39 @@ class ArcadeModel {
     }
   }
 
+  void _evade(Demon d, double dt) {
+    d.evadeCooldown = math.max(0, d.evadeCooldown - dt);
+    d.evadeLeft = math.max(0, d.evadeLeft - dt);
+    if (d.telegraph > 0) return;
+    if (d.evadeLeft <= 0) {
+      d.evadeOffset += (-d.evadeOffset).clamp(-65 * dt, 65 * dt);
+    }
+    if (d.evadeCooldown > 0) return;
+    for (final shot in shots) {
+      if (shot.hostile || shot.vy >= 0) continue;
+      final arrival = (d.y - shot.y) / shot.vy;
+      final projectedX = shot.x + shot.vx * arrival;
+      if (arrival < 0 || arrival > .55 || (projectedX - d.x).abs() > 38) {
+        continue;
+      }
+      var direction = projectedX < d.x ? 1 : -1;
+      if (d.x < 110) direction = 1;
+      if (d.x > width - 110) direction = -1;
+      d.evadeOffset = direction * 54.0;
+      d.evadeLeft = .6;
+      d.evadeCooldown = 1.4;
+      break;
+    }
+  }
+
   void _updateBoss(double dt) {
     final b = boss;
     if (b == null) return;
-    b.x = 180 + math.sin(levelClock * .7 * speed) * 80;
-    b.y = 205 + math.sin(levelClock * .9 * policy.hostileRate) * 12;
+    final oldX = b.x;
+    b.motionPhase += dt * .7 * speed * b.movementRate * b.startingDirection;
+    b.x = b.forecastX(0, speed);
+    b.horizontalVelocity = dt > 0 ? (b.x - oldX) / dt : b.horizontalVelocity;
+    b.y = 205 + math.sin(b.motionPhase * 1.28) * (12 + b.rage * 6);
     b.door = ((math.sin(levelClock * (1.8 + b.phase * .25)) - .1) * 2).clamp(
       0,
       1,
@@ -745,9 +976,15 @@ class ArcadeModel {
       var hit = false;
       for (final d in List<Demon>.of(demons)) {
         if (!d.entering &&
-            (s.x - d.x).abs() < (d.isLarge ? 27 : 16) &&
-            (s.y - d.y).abs() < (d.isLarge ? 18 : 14)) {
-          hitDemon(d);
+            (s.x - d.x).abs() <
+                (d.isLarge ? 27 : 16) + (s.blastRadius > 0 ? 5 : 0) &&
+            (s.y - d.y).abs() <
+                (d.isLarge ? 18 : 14) + (s.blastRadius > 0 ? 5 : 0)) {
+          if (s.blastRadius > 0) {
+            _explodeShot(s);
+          } else {
+            hitDemon(d, damage: s.damage);
+          }
           hit = true;
           break;
         }
@@ -755,10 +992,14 @@ class ArcadeModel {
       final b = boss;
       if (!hit &&
           b != null &&
-          (s.x - b.x).abs() < 78 &&
-          s.y < b.y + 43 &&
-          s.y > b.y - 25) {
-        hitBoss(s.x);
+          (s.x - b.x).abs() < 78 + (s.blastRadius > 0 ? 5 : 0) &&
+          s.y < b.y + 43 + (s.blastRadius > 0 ? 5 : 0) &&
+          s.y > b.y - 25 - (s.blastRadius > 0 ? 5 : 0)) {
+        if (s.blastRadius > 0) {
+          _explodeShot(s);
+        } else {
+          hitBoss(s.x, damage: s.damage);
+        }
         hit = true;
       }
       if (hit) s.y = height + 20;
@@ -771,6 +1012,23 @@ class ArcadeModel {
     }
   }
 
+  void _explodeShot(Shot shot) {
+    blasts.add(Blast(shot.x, shot.y, blastRadius: shot.blastRadius));
+    final radius = shot.blastRadius + 14;
+    for (final d in List<Demon>.of(demons)) {
+      final dx = shot.x - d.x, dy = shot.y - d.y;
+      if (dx * dx + dy * dy <= radius * radius) {
+        hitDemon(d, damage: shot.damage);
+      }
+    }
+    final b = boss;
+    if (b != null &&
+        (shot.x - b.x).abs() <= 78 + shot.blastRadius &&
+        (shot.y - b.y).abs() <= 43 + shot.blastRadius) {
+      hitBoss(shot.x, damage: shot.damage, blastRadius: shot.blastRadius);
+    }
+  }
+
   // Self-sacrifice shares the large death visuals, but cannot produce rewards.
   void _sacrifice(Demon d) {
     if (!demons.remove(d)) return;
@@ -778,10 +1036,20 @@ class ArcadeModel {
     events.add('explosion');
   }
 
-  void hitDemon(Demon d) {
-    if (!combat || d.entering || !demons.contains(d)) return;
-    d.hp--;
+  void hitDemon(Demon d, {int damage = 1}) {
+    if (!combat || damage <= 0 || d.entering || !demons.contains(d)) return;
     d.flash = .12;
+    if (d.shield > 0) {
+      d.shield = math.max(0, d.shield - damage);
+      events.add('hit');
+      return;
+    }
+    if (d.armor > 0) {
+      d.armor = math.max(0, d.armor - damage);
+      events.add('hit');
+      return;
+    }
+    d.hp -= damage;
     if (d.hp <= 0) {
       demons.remove(d);
       kills++;
@@ -795,11 +1063,21 @@ class ArcadeModel {
       if (policy.heartDropChance > 0 &&
           random.nextDouble() < policy.heartDropChance) {
         heartPickups.add(
-          HeartPickup(d.x, d.y, HeartPart.values[random.nextInt(3)]),
+          HeartPickup(
+            d.x,
+            d.y,
+            HeartPart.values[random.nextInt(HeartPart.values.length)],
+          ),
         );
       }
-      if (kills % 5 == 0) {
-        pickups.add(Pickup(d.x, d.y, Power.values[(kills ~/ 5 - 1) % 3]));
+      if (kills % 8 == 0) {
+        pickups.add(
+          Pickup(
+            d.x,
+            d.y,
+            Power.values[(kills ~/ 8 - 1) % Power.values.length],
+          ),
+        );
       }
     } else {
       events.add('hit');
@@ -825,19 +1103,21 @@ class ArcadeModel {
   }
 
   /// Shield can be hit across its width. Core needs the exposed central door.
-  bool hitBoss(double shotX) {
+  bool hitBoss(double shotX, {int damage = 1, double blastRadius = 0}) {
     final b = boss;
-    if (b == null || !combat) return false;
+    if (b == null || !combat || damage <= 0) return false;
     if (b.shield > 0) {
-      b.shield--;
+      b.shield = math.max(0, b.shield - damage);
       events.add('hit');
       blasts.add(Blast(shotX, b.y + 39));
       if (b.shield == 0) events.add('boss');
       return true;
     }
-    if (b.door < .65 || (shotX - b.x).abs() > 12 * b.door) return false;
+    if (b.door < .65 || (shotX - b.x).abs() > 12 * b.door + blastRadius) {
+      return false;
+    }
     final old = b.phase;
-    b.core--;
+    b.core = math.max(0, b.core - damage);
     events.add('hit');
     blasts.add(Blast(b.x, b.y + 18));
     if (b.phase != old) events.add('boss');
@@ -867,7 +1147,7 @@ class ArcadeModel {
     if (slot < 0) return false;
     heartSlots[slot] |= part.mask;
     events.add('heart');
-    if (heartSlots[slot] == 7) {
+    if (heartSlots[slot] == 15) {
       heartSlots[slot] = 0;
       lastCompletedHeartSlot = slot;
       heartAssemblyLeft = .85;
@@ -878,6 +1158,14 @@ class ArcadeModel {
   }
 
   void collect(Power value) {
+    final excluded = switch (value) {
+      Power.spread => Power.large,
+      Power.large => Power.spread,
+      Power.rapid => Power.powerful,
+      Power.powerful => Power.rapid,
+      Power.shield => null,
+    };
+    if (excluded != null) powerTimers.remove(excluded);
     powerTimers[value] = powerDuration;
     events.add('powerup');
   }

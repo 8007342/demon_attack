@@ -10,14 +10,14 @@ void steer(ArcadeModel model) {
   final boss = model.boss;
   if (boss != null) {
     final flight = (ArcadeModel.shipY - boss.y) / 390;
-    model.moveTo(
-      180 + math.sin((model.levelClock + flight) * .7 * model.speed) * 80,
-    );
+    model.moveTo(boss.forecastX(flight, model.speed));
   } else if (model.demons.isNotEmpty) {
     final demon = model.demons.first;
     final flight = (ArcadeModel.shipY - demon.y) / 390;
     final time = model.levelClock + flight;
-    final x = demon.dive > 0
+    final x = demon.isLarge
+        ? demon.x
+        : demon.dive > 0
         ? demon.targetX + (demon.x - demon.targetX) * math.exp(-1.8 * flight)
         : demon.homeX +
               math.sin(
@@ -43,7 +43,7 @@ void main() {
         final visitedRoutes = <int>{};
         for (
           var frame = 0;
-          frame < 360000 && model.mode != RunMode.completed;
+          frame < 540000 && model.mode != RunMode.completed;
           frame++
         ) {
           if (model.combat) {

@@ -16,18 +16,27 @@ void reach(ArcadeModel model, RunMode mode) {
 
 void clearWave(ArcadeModel model) {
   expect(model.mode, RunMode.playing);
-  for (final demon in List<Demon>.of(model.demons)) {
-    while (model.demons.contains(demon)) {
-      model.hitDemon(demon);
+  final wave = model.wave;
+  for (
+    var frame = 0;
+    frame < 2400 && model.combat && model.wave == wave;
+    frame++
+  ) {
+    for (final demon in List<Demon>.of(model.demons)) {
+      if (demon.entering) continue;
+      while (model.demons.contains(demon)) {
+        model.hitDemon(demon);
+      }
     }
+    model.update(1 / 60);
   }
-  model.update(1 / 60);
+  expect(model.combat, isFalse);
 }
 
 void main() {
   test('story phases add reading time and salvage stays two seconds', () {
     final m = ArcadeModel()..start();
-    expect(m.transitionDuration, closeTo(2.3 + 1 / 3, .0001));
+    expect(m.transitionDuration, ArcadeModel.arrivalHintDuration);
     reach(m, RunMode.playing);
     clearWave(m);
     expect(m.transitionDuration, closeTo(1.4 + 1 / 3, .0001));

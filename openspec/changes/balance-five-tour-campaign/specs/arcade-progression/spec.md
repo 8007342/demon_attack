@@ -37,3 +37,10 @@ Accumulated time SHALL count only active combat simulation. Pauses, cinematics, 
 #### Scenario: Paused journey
 - **WHEN** a player pauses or watches a cutscene
 - **THEN** accumulated playing time remains unchanged
+
+### Requirement: Readable arrival hint interval
+First-wave illustrated arrivals SHALL last 4.5 seconds by default, with the complete text and image visible throughout. A visible Hold/Pause action SHALL freeze the card, remaining interval and game state until explicit Resume, which SHALL continue the same card from the paused point. Hint time SHALL NOT count as active combat or consume power timers. Other story and interwave phase timing SHALL remain independently defined.
+
+#### Scenario: Hold to understand
+- **WHEN** the player holds an arrival hint before its interval ends
+- **THEN** its content and countdown stay unchanged indefinitely and combat cannot begin until the player resumes

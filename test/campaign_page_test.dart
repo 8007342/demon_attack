@@ -55,6 +55,41 @@ Future<void> disposePage(WidgetTester tester) async {
 
 void main() {
   testWidgets(
+    'arrival hint holds, guide stays paused, and manual preference persists',
+    (tester) async {
+      final storage = RunStorage(store: MemoryLocalStore());
+      await showPage(tester, storage);
+      await tester.tap(find.text('START GAME  →'));
+      await tester.pump();
+      final model = sceneOf(tester).model;
+      expect(find.text('TACTICAL BRIEFING'), findsOneWidget);
+      expect(find.text('INCOMING TRANSMISSION'), findsNothing);
+      await tester.tap(find.text('HOLD'));
+      await tester.pump();
+      final remaining = model.transitionLeft;
+      await tester.pump(const Duration(seconds: 10));
+      expect(model.transitionLeft, remaining);
+      expect(find.text('SIGNAL PAUSED'), findsOneWidget);
+      await tester.tap(find.text('FIELD GUIDE'));
+      await tester.pump();
+      expect(find.text('Auto-advance hints'), findsOneWidget);
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+      expect(storage.loadHistory().autoAdvanceHints, isFalse);
+      await tester.tap(find.byTooltip('Close field guide'));
+      await tester.pump();
+      expect(model.mode, RunMode.paused);
+      expect(find.text('CONTINUE'), findsOneWidget);
+      await tester.tap(find.text('CONTINUE'));
+      await tester.pump();
+      expect(model.transitionLeft, 0);
+      expect(model.mode, isNot(RunMode.paused));
+      expect(tester.takeException(), isNull);
+      await disposePage(tester);
+    },
+  );
+
+  testWidgets(
     'resume restarts checkpoint in saved mode with inventory and no powers',
     (tester) async {
       final storage = RunStorage(store: MemoryLocalStore());
@@ -139,7 +174,11 @@ void main() {
     final guidance = find.text('◀     SLIDE TO PILOT     ▶');
     final before = tester.getCenter(guidance);
     scene.model.mode = RunMode.playing;
-    scene.model.powerTimers.addAll({for (final p in Power.values) p: 9});
+    scene.model.powerTimers.addAll({
+      Power.spread: 9,
+      Power.rapid: 9,
+      Power.shield: 9,
+    });
     scene.onTick();
     await tester.pump();
     expect(tester.getCenter(guidance), before);
@@ -197,15 +236,16 @@ void main() {
       final scene = sceneOf(tester);
       scene.model.mode = RunMode.playing;
       for (var i = 0; i < 3; i++) {
-        scene.model.collectHeart(HeartPart.left);
+        scene.model.collectHeart(HeartPart.bottomLeft);
       }
       scene.onTick();
       await tester.pump();
-      expect(find.text('1/3'), findsNWidgets(3));
+      expect(find.text('1/4'), findsNWidgets(3));
       expect(find.text('HEART PIECE COLLECTED'), findsOneWidget);
-      expect(scene.model.collectHeart(HeartPart.left), isFalse);
-      scene.model.collectHeart(HeartPart.right);
-      scene.model.collectHeart(HeartPart.top);
+      expect(scene.model.collectHeart(HeartPart.bottomLeft), isFalse);
+      scene.model.collectHeart(HeartPart.bottomRight);
+      scene.model.collectHeart(HeartPart.topLeft);
+      scene.model.collectHeart(HeartPart.topRight);
       scene.onTick();
       await tester.pump();
       expect(scene.model.lives, 4);
@@ -216,13 +256,13 @@ void main() {
         tester
             .widget<HeartParts>(find.byKey(const ValueKey('heart-slot-0')))
             .mask,
-        7,
+        15,
       );
       scene.model.pause();
       scene.update(1);
       expect(scene.model.heartAssemblyLeft, greaterThan(0));
       scene.model.resume();
-      scene.model.collectHeart(HeartPart.left);
+      scene.model.collectHeart(HeartPart.bottomLeft);
       scene.onTick();
       await tester.pump();
       expect(
@@ -232,7 +272,7 @@ void main() {
         1,
         reason: 'A newly stored piece remains visible during the previous reward flash',
       );
-      expect(find.text('1/3'), findsNWidgets(3));
+      expect(find.text('1/4'), findsNWidgets(3));
       for (var i = 0; i < 20; i++) {
         scene.update(.1);
       }

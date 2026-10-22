@@ -21,7 +21,10 @@ void main() {
     expect(m.shots.map((s) => s.vx).toSet(), {0.0, -90.0, 90.0});
     advance(m, .1);
     expect(m.shots.where((s) => !s.hostile).length, 6);
-    expect(m.activePowers, containsAll(Power.values));
+    expect(
+      m.activePowers,
+      containsAll([Power.spread, Power.rapid, Power.shield]),
+    );
   });
   test(
     'collection refreshes only its type and expiry leaves other effects',
@@ -55,14 +58,14 @@ void main() {
     m.hitPlayer();
     expect(m.lives, 3);
     expect(m.hasPower(Power.shield), isFalse);
-    expect(m.timeLeft(Power.spread), 9);
-    expect(m.timeLeft(Power.rapid), 9);
+    expect(m.timeLeft(Power.large), 9);
+    expect(m.timeLeft(Power.powerful), 9);
     m.hitPlayer();
     expect(m.lives, 3);
     m.invulnerable = 0;
     m.hitPlayer();
     expect(m.lives, 2);
-    expect(m.activePowers.toSet(), {Power.spread, Power.rapid});
+    expect(m.activePowers.toSet(), {Power.large, Power.powerful});
   });
   test(
     'all timers survive recovery pause and a carrier loop; Start clears them',

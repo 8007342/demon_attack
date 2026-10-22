@@ -96,21 +96,24 @@ void main() {
     () {
       final m = ArcadeModel()..start();
       for (var i = 0; i < 3; i++) {
-        expect(m.collectHeart(HeartPart.left), isTrue);
+        expect(m.collectHeart(HeartPart.bottomLeft), isTrue);
       }
       expect(m.heartSlots, [1, 1, 1]);
-      expect(m.collectHeart(HeartPart.left), isFalse);
+      expect(m.collectHeart(HeartPart.bottomLeft), isFalse);
       expect(m.heartSlots, [1, 1, 1]);
-      m.collectHeart(HeartPart.right);
+      m.collectHeart(HeartPart.bottomRight);
       expect(m.heartSlots, [3, 1, 1]);
-      m.collectHeart(HeartPart.top);
+      m.collectHeart(HeartPart.topLeft);
+      expect(m.heartSlots, [7, 1, 1]);
+      expect(m.lives, 3);
+      m.collectHeart(HeartPart.topRight);
       expect(m.heartSlots, [0, 1, 1]);
       expect(m.lives, 4);
       expect(m.takeEvents().where((e) => e == 'extraLife').length, 1);
-      m.collectHeart(HeartPart.left);
+      m.collectHeart(HeartPart.bottomLeft);
       expect(m.heartSlots, [1, 1, 1]);
       m.start(difficulty: Difficulty.hard);
-      expect(m.collectHeart(HeartPart.left), isFalse);
+      expect(m.collectHeart(HeartPart.bottomLeft), isFalse);
       expect(m.heartSlots, [0, 0, 0]);
     },
   );
@@ -128,7 +131,7 @@ void main() {
           m.hitDemon(d);
         }
         drops.add(m.heartPickups.length);
-        expect(m.pickups.length, 1000);
+        expect(m.pickups.length, 625);
       }
       expect(const DifficultyPolicy(Difficulty.easy).heartDropChance, .012);
       expect(const DifficultyPolicy(Difficulty.normal).heartDropChance, .008);
@@ -145,7 +148,7 @@ void main() {
       final m = ArcadeModel()..start();
       m.mode = RunMode.salvage;
       m.heartPickups.add(
-        HeartPickup(m.shipX, ArcadeModel.shipY - 4, HeartPart.top),
+        HeartPickup(m.shipX, ArcadeModel.shipY - 4, HeartPart.topLeft),
       );
       advance(m, .1);
       expect(m.heartPickups, isEmpty);
@@ -215,7 +218,8 @@ void main() {
     m.hitDemon(sentinel);
     expect(sentinel.hp, sentinel.maxHp);
     expect(sentinel.entranceProgress, 0);
-    advance(m, 1);
+    advance(m, 4.3);
+    expect(m.flocksSpawned, 1);
     expect(sentinel.entranceProgress, inExclusiveRange(0, 1));
     expect(sentinel.telegraph, 0);
     expect(sentinel.dive, 0);
@@ -227,7 +231,7 @@ void main() {
     advance(m, 1);
     expect(sentinel.entranceProgress, entrance);
     m.resume();
-    advance(m, .9);
+    advance(m, 1.6);
     expect(sentinel.entranceProgress, 1);
     expect(sentinel.telegraph, greaterThan(0));
     expect(sentinel.y + 32, lessThan(swarm.first.homeY - 28));
@@ -292,14 +296,15 @@ void main() {
     () {
       final m = ArcadeModel()..start();
       m.mode = RunMode.playing;
-      m.collectHeart(HeartPart.top);
-      m.collectHeart(HeartPart.left);
-      m.collectHeart(HeartPart.right);
+      m.collectHeart(HeartPart.topLeft);
+      m.collectHeart(HeartPart.bottomLeft);
+      m.collectHeart(HeartPart.bottomRight);
+      m.collectHeart(HeartPart.topRight);
       expect(m.lastCompletedHeartSlot, 0);
       expect(m.heartAssemblyLeft, .85);
       expect(m.heartSlots, [0, 0, 0]);
       expect(m.lives, 4);
-      m.collectHeart(HeartPart.right);
+      m.collectHeart(HeartPart.bottomRight);
       expect(m.heartSlots, [2, 0, 0]);
       advance(m, .2);
       final remaining = m.heartAssemblyLeft;
@@ -470,7 +475,7 @@ void main() {
       m.mode = RunMode.playing;
       m.invulnerable = protection == 'invulnerable' ? 10 : 0;
       m.lives = protection == 'lastLife' ? 1 : 3;
-      m.kills = 4;
+      m.kills = 7;
       if (protection == 'shield') m.collect(Power.shield);
       m.demons.clear();
       final d =
@@ -498,13 +503,13 @@ void main() {
       );
       expect(m.hasPower(Power.shield), isFalse);
       if (protection == 'lastLife') expect(m.mode, RunMode.gameOver);
-      expect(m.kills, 4);
+      expect(m.kills, 7);
       expect(m.score, 0);
       expect(m.pickups, isEmpty);
       expect(m.heartPickups, isEmpty);
       expect(m.blasts.where((b) => b.isLarge), hasLength(1));
       m.hitDemon(d);
-      expect(m.kills, 4);
+      expect(m.kills, 7);
     }
   });
 
@@ -514,7 +519,7 @@ void main() {
       for (final rushing in [false, true]) {
         final m = ArcadeModel()..start(difficulty: Difficulty.hard);
         m.mode = RunMode.playing;
-        m.kills = 4;
+        m.kills = 7;
         final d = Demon(
           90,
           90,
@@ -532,12 +537,12 @@ void main() {
         m.shots.add(Shot(d.x, d.y, 0, 0));
         m.update(1 / 60);
         expect(m.demons, isNot(contains(d)));
-        expect(m.kills, 5);
+        expect(m.kills, 8);
         expect(m.score, 600);
         expect(m.pickups, hasLength(1));
         expect(m.blasts.where((b) => b.isLarge), hasLength(1));
         m.hitDemon(d);
-        expect(m.kills, 5);
+        expect(m.kills, 8);
         expect(m.score, 600);
       }
     },

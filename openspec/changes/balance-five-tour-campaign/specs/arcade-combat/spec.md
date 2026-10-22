@@ -30,6 +30,41 @@ Each of the first four carrier victories SHALL continue the same run at the firs
 - **WHEN** the fifth carrier is defeated
 - **THEN** the campaign finishes without a sixth route
 
+### Requirement: Scores and powers
+Kills SHALL award larger scores for stronger enemies and bosses. Powers SHALL last nine independent seconds: Rapid/Powerful form one exclusive group, Spread/Large another, and Shield is independent. Collection SHALL replace only the other member of its group; recollection refreshes only itself. Expiry and shield consumption SHALL remove only that effect. Power clocks SHALL freeze outside combat and on pause; new runs clear all effects. Guaranteed drops SHALL cycle all five types every eight kills.
+
+#### Scenario: Replace fast fire
+- **WHEN** Powerful is collected while Rapid, Spread and Shield are active
+- **THEN** Powerful replaces Rapid for nine seconds and preserves Spread and Shield with their remaining timers
+
+#### Scenario: Replace area fire
+- **WHEN** Spread is collected while Large and Powerful are active
+- **THEN** Spread replaces Large and Powerful retains its remaining time
+
+#### Scenario: Restore rapid fire
+- **WHEN** Rapid is collected while Powerful is active
+- **THEN** Rapid replaces Powerful without altering the other offensive group or Shield
+
+#### Scenario: Legal triple combination
+- **WHEN** Powerful, Large and Shield are active
+- **THEN** all three work concurrently and consuming Shield leaves both offensive effects active
+
+#### Scenario: Power expires
+- **WHEN** one active power's duration elapses
+- **THEN** that effect ends while the other active effects continue with their own remaining time
+
+#### Scenario: Combined firing
+- **WHEN** spread and rapid fire are active together
+- **THEN** every rapid-fire volley includes the central and both angled shots
+
+#### Scenario: Shield protects combined powers
+- **WHEN** the ship is hit with spread, rapid fire and shield active
+- **THEN** shield is consumed without losing a life or cancelling spread or rapid fire
+
+#### Scenario: Refresh one modifier
+- **WHEN** an already-active type is collected
+- **THEN** only that type returns to nine seconds and other timers are unchanged
+
 ## ADDED Requirements
 
 ### Requirement: Difficulty balance
@@ -40,14 +75,14 @@ Easy SHALL reduce enemy movement and attack cadence by 10% and boss shield/core 
 - **THEN** roster counts increase from Easy to Normal to Hard and Easy enemies award fewer points
 
 ### Requirement: Complementary heart collection
-Easy and Normal enemies SHALL rarely drop complementary left/right/top heart pieces, more often in Easy. Rates SHALL be substantially below the initial 4%/3% per-kill tuning. Three slots SHALL each accept one of each part; pickups fill the earliest eligible slot and excess copies are ignored. Completing a heart SHALL immediately grant one life, free its slot, and show a completed-heart/+1UP cue independently of the cleared slot. Shapes SHALL show filled and missing regions of one heart.
+Easy and Normal enemies SHALL rarely drop four complementary heart quarters, more often in Easy, at rates substantially below the initial 4%/3%. Three slots SHALL accept bottom-left, bottom-right, top-left and top-right; pickups fill the earliest eligible slot and excess copies are ignored. Completion SHALL grant one life, free the slot and independently show a completed-heart/+1UP cue. Shapes SHALL show filled and missing quarters.
 
 #### Scenario: Repeated left pieces
-- **WHEN** three left pieces are collected with empty slots
-- **THEN** each slot holds a left piece and further left pieces are ignored until a slot completes
+- **WHEN** three bottom-left quarters are collected with empty slots
+- **THEN** each slot holds a bottom-left quarter and further bottom-left quarters are ignored until a slot completes
 
 #### Scenario: Completed heart
-- **WHEN** a slot containing left and right collects a top
+- **WHEN** a slot containing three different quarters collects its missing fourth quarter
 - **THEN** exactly one life is granted, a completed-heart and +1UP cue is visible, and that slot becomes available again
 
 #### Scenario: Dense waves
@@ -102,3 +137,35 @@ A minority of sentinels SHALL be eligible once for a sacrifice rush at 25% healt
 #### Scenario: Rare eligibility
 - **WHEN** an ineligible or healthier sentinel is updated repeatedly
 - **THEN** it retains normal behavior without repeated chance rolls that would eventually force a sacrifice rush
+
+### Requirement: Powerful and explosive shots
+Powerful SHALL double player-shot damage at normal fire cadence with a distinctive shot. Large SHALL create a small bounded pixel explosion on impact that damages nearby demons. Combined Powerful/Large SHALL retain both effects. Area damage SHALL reach the carrier core only when its shield is depleted and sliding door is open, without bypassing either protection or awarding duplicate kills.
+
+#### Scenario: Nearby demons
+- **WHEN** a Large shot hits one demon with another inside the blast radius
+- **THEN** both take the appropriate damage while enemies outside the radius remain unaffected
+
+#### Scenario: Protected core and splash
+- **WHEN** a Large impact overlaps a carrier with an active shield or closed door
+- **THEN** the core takes no damage
+
+### Requirement: Finite reinforcement flocks
+Ordinary waves SHALL add a finite difficulty/route/sector-dependent number of small reinforcement flocks during combat: up to two in Easy, three in Normal and four in Hard. Each flock SHALL contain four to six demons, subject to a 42-active-enemy cap. A fresh escort flock SHALL precede an eligible sentinel's delayed entrance. Reinforcements SHALL NOT create checkpoints or prevent eventual wave completion.
+
+#### Scenario: Reinforcement budget ends
+- **WHEN** a wave has used its reinforcement allowance and all remaining enemies are defeated
+- **THEN** the wave completes without additional flocks or a replacement checkpoint
+
+### Requirement: Sentinel defenses and evasion
+Large sentinels SHALL possess separately depleted shield and armor defenses from their first appearance, protecting hull health. They SHALL evade threatening incoming fire with bounded lateral moves and fire visually distinct faster bullets than ordinary demons. Their existing slow entrance, hover and warned dive SHALL remain readable.
+
+#### Scenario: Protected hull
+- **WHEN** a sentinel with remaining defensive layers is hit
+- **THEN** damage reduces the appropriate layer before hull health and its appearance reflects the depleted layer
+
+### Requirement: Carrier movement escalation
+Each carrier encounter SHALL select a seeded random starting movement direction and phase. Damage SHALL progressively increase movement speed and a visible rage state while preserving bounded movement and existing shield/door protection.
+
+#### Scenario: Damaged carrier moves faster
+- **WHEN** carrier health falls
+- **THEN** movement accelerates and the eyes visibly intensify without enabling hits through a closed door

@@ -7,9 +7,9 @@ class HeartParts extends StatelessWidget {
   final double size;
   @override
   Widget build(BuildContext context) => Semantics(
-    label: mask == 7
+    label: mask == 15
         ? 'Complete heart, extra life'
-        : 'Heart pieces: ${[if (mask & 1 != 0) 'left', if (mask & 2 != 0) 'right', if (mask & 4 != 0) 'top'].join(', ')}${mask == 0 ? 'empty' : ''}',
+        : 'Heart pieces: ${[if (mask & 1 != 0) 'bottom left', if (mask & 2 != 0) 'bottom right', if (mask & 4 != 0) 'top left', if (mask & 8 != 0) 'top right'].join(', ')}${mask == 0 ? 'empty' : ''}',
     child: CustomPaint(
       size: Size.square(size),
       painter: HeartPartPainter(mask),
@@ -47,11 +47,7 @@ class HeartPartPainter extends CustomPainter {
     for (var y = 0; y < rows.length; y++) {
       for (var x = 0; x < 16; x++) {
         if (rows[y][x] != '#') continue;
-        final part = y < 6
-            ? 4
-            : x < 8
-            ? 1
-            : 2;
+        final part = y < 6 ? (x < 8 ? 4 : 8) : (x < 8 ? 1 : 2);
         final edge =
             x == 0 ||
             x == 15 ||
@@ -61,9 +57,9 @@ class HeartPartPainter extends CustomPainter {
             rows[y][x + 1] != '#' ||
             rows[y - 1][x] != '#' ||
             rows[y + 1][x] != '#';
-        final seam = (y == 5 || y >= 6 && x == 7) && mask != 7;
+        final seam = (y == 5 || x == 7) && mask != 15;
         paint.color = edge
-            ? mask == 7
+            ? mask == 15
                   ? const Color(0xFFFFD594)
                   : const Color(0xFF758A9E)
             : seam
@@ -90,8 +86,8 @@ class HeartInventory extends StatelessWidget {
     mainAxisSize: MainAxisSize.min,
     children: List.generate(3, (index) {
       final completed = completedSlot == index && slots[index] == 0;
-      final mask = completed ? 7 : slots[index];
-      final count = [1, 2, 4].where((part) => mask & part != 0).length;
+      final mask = completed ? 15 : slots[index];
+      final count = [1, 2, 4, 8].where((part) => mask & part != 0).length;
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         child: Column(
@@ -103,7 +99,7 @@ class HeartInventory extends StatelessWidget {
               size: 22,
             ),
             Text(
-              completed ? '+1' : '$count/3',
+              completed ? '+1' : '$count/4',
               key: ValueKey('heart-count-$index'),
               style: TextStyle(
                 fontSize: 8,

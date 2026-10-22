@@ -116,13 +116,13 @@ void main() {
   ) async {
     await tester.runAsync(() async {
       final empty = await pixels(const HeartPartPainter(0));
-      final complete = await pixels(const HeartPartPainter(7));
+      final complete = await pixels(const HeartPartPainter(15));
       expect(complete, isNot(orderedEquals(empty)));
       final parts = <String>{};
-      for (final mask in [1, 2, 4]) {
+      for (final mask in [1, 2, 4, 8]) {
         parts.add((await pixels(HeartPartPainter(mask))).join(','));
       }
-      expect(parts.length, 3);
+      expect(parts.length, 4);
     });
   });
 }

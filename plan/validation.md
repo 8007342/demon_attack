@@ -13,7 +13,7 @@ Branch: `game`. No production deployment or main merge performed.
 
 ## Browser and managed preview
 
-`tools/browser-smoke.cjs` ran against the actual sibling Wrangler service on desktop1280×900 and phone390×844. Enter starts without a mouse fallback. Arrows, pointer/touch drag and P pause/resume work. Title emblem, player, demon wingbeats, explosion effects, stars, planetary layers and controller panel render correctly. MIDI requests return200. No console errors or browser runtime exceptions.
+`tools/browser-smoke.cjs` ran against the actual sibling Wrangler service on desktop 1280×900 and phone 390×844. Enter starts without a mouse fallback. Arrows, pointer/touch drag and P pause/resume work. Title emblem, player, demon wingbeats, explosion effects, stars, planetary layers and controller panel render correctly. MIDI requests return200. No console errors or browser runtime exceptions.
 
 Screenshots were captured at `/tmp/demon-title.png`, `/tmp/demon-play.png` and the corresponding `-phone.png` files. These temporary captures are review evidence, not shipped assets.
 
@@ -45,7 +45,7 @@ Flutter analysis and all32 tests pass, alongside the4 backend/audio tests and re
 The old fixed first-creature HP expectation was replaced with mixed-species escalation assertions. A real fallback regression was fixed: stars now remain visible before any sector image is loaded, without brightening the shipped art behind combat. Recovery stops hostile damage/fire while retaining movement and falling items; powers freeze until combat resumes. Current tuning is documented in game-design.md and sector-style-guide.md.
 
 
-The final actual-Wrangler browser pass succeeds on desktop1280×900 and phone390×844: initial Top10 GET returns200, inline scores and mobile scroll are checked, Enter starts, arrows/pointer/touch pilot, P pause/resume works, and all7 MIDI responses per viewport succeed. No runtime or console errors. The browser driver inspects the accessibility scoreboard and then reloads for an independent raw-keyboard test; this prevents its activated semantics DOM from stealing canvas focus. Score API smoke returned valid JSON. A fresh visible WebKit window was opened at the managed local preview URL.
+The final actual-Wrangler browser pass succeeds on desktop 1280×900 and phone 390×844: initial Top10 GET returns200, inline scores and mobile scroll are checked, Enter starts, arrows/pointer/touch pilot, P pause/resume works, and all7 MIDI responses per viewport succeed. No runtime or console errors. The browser driver inspects the accessibility scoreboard and then reloads for an independent raw-keyboard test; this prevents its activated semantics DOM from stealing canvas focus. Score API smoke returned valid JSON. A fresh visible WebKit window was opened at the managed local preview URL.
 
 
 ## Combined temporary powers
@@ -55,3 +55,13 @@ Analysis, all38 Flutter tests, all4 backend/audio tests, strict OpenSpec validat
 The managed sibling Wrangler preview was refreshed and opened in a visible WebKit window at https://www.demon-attack.localhost:18443/.
 
 Actual-Wrangler Chromium smoke passes on desktop and phone: inline Top10, Enter start, arrows, controller drag, pause/resume and seven successful MIDI responses per viewport; no runtime exceptions or console errors.
+
+## Combat refinements and illustrated arrivals — 2026-10-22
+
+- Flutter analysis: no issues; full Flutter suite: 105 passing tests. Worker suite: 8 passing tests. Strict OpenSpec validation: 11 items pass (existing archive advisory on the unrelated smooth-level-progression delta remains).
+- Tests cover finite reinforcement flocks, protected sentinel escorts, real shields/armor, shot evasion, fast sentinel bolts, carrier starting-direction variation and damage acceleration, four-quarter heart migration/assembly, mutually replacing offensive powers, Powerful damage and Large splash with carrier gates, Hard-to-Easy unlock migration, contextual nonrepeating hints, shield-hit grace/refill, pause stability, untimed guide and persistent manual-advance choice.
+- Release web build succeeds. Managed local Wrangler was stopped before build and recreated afterwards; no production deployment or main merge.
+- Browser smoke passes desktop 1280×900 and phone 390×844 gameplay/keyboard/controller/audio; campaign smoke passes desktop, phone and landscape 844×390 with unlocked-mode boards, medal/time/life metadata, compatible checkpoint migration and reload. The browser harness now waits for the longer arrival hint before checking active piloting.
+- Original hint illustrations reviewed at native size and in phone runtime captures. The separate 1254×1254 atlas uses explicit crop rectangles and nearest-neighbor drawing, with exact gameplay heart/power overlays. Combat supplemental atlas now 1024×640 with articulated flight/dive frames.
+- Hint research and project timing choices are documented in plan/hint-usability.md. The 4.5-second default is adjustable through Hold and a persistent automatic-advance switch; the Field Guide is untimed. The taught shield strategy is hit consumption → one-second invulnerability → fresh pickup, not passive timer expiration.
+- Dedicated hint browser smoke passes phone and landscape: manual cards remain after five seconds, the guide opens/closes without resuming, Continue starts play, illustration asset loads 200, and no runtime exceptions occur. Reviewed captures: /tmp/demon-hint-{phone,landscape}.png and /tmp/demon-guide-{phone,landscape}.png.

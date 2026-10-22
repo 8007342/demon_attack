@@ -6,11 +6,15 @@ const powerColors = <Power, Color>{
   Power.spread: Color(0xFF70F5D5),
   Power.rapid: Color(0xFFF4CA79),
   Power.shield: Color(0xFFA888FF),
+  Power.powerful: Color(0xFFFF786C),
+  Power.large: Color(0xFFFFAD53),
 };
 const powerNames = <Power, String>{
   Power.spread: 'SPREAD',
   Power.rapid: 'RAPID',
   Power.shield: 'SHIELD',
+  Power.powerful: 'POWERFUL',
+  Power.large: 'LARGE',
 };
 
 class PowerStatus extends StatelessWidget {
@@ -41,7 +45,7 @@ class PowerStatus extends StatelessWidget {
             ),
             const SizedBox(width: 7),
             SizedBox(
-              width: 70,
+              width: 92,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: active
@@ -96,8 +100,8 @@ class PowerStatus extends StatelessWidget {
   }
 }
 
-/// Transparent layers leave the spread's side arrows and shield visible behind
-/// the central lightning bolt. Coordinates follow the original pixel grid.
+/// Side weapon layers leave room for a central bolt/heavy cannon and the outer
+/// shield. Each mark uses the original logical pixel grid.
 class PowerGlyphPainter extends CustomPainter {
   const PowerGlyphPainter(this.active);
   final Set<Power> active;
@@ -126,8 +130,8 @@ class PowerGlyphPainter extends CustomPainter {
     paint.style = PaintingStyle.fill;
     if (active.contains(Power.spread)) {
       paint.color = powerColors[Power.spread]!;
-      // Three squat, flared cannon barrels with open muzzles, no crossbars.
-      for (final x in [8.0, 16.0, 24.0]) {
+      // Twin side barrels leave the central modifier unobstructed.
+      for (final x in [8.0, 24.0]) {
         canvas.drawPath(
           Path()
             ..moveTo(x - 3, 26)
@@ -144,6 +148,38 @@ class PowerGlyphPainter extends CustomPainter {
         );
         canvas.drawRect(Rect.fromLTWH(x - 1, 3, 2, 3), paint);
       }
+    }
+    if (active.contains(Power.large)) {
+      paint.color = powerColors[Power.large]!;
+      // Wide explosive shells and their stepped bursts occupy the side lanes.
+      for (final x in [8.0, 24.0]) {
+        canvas.drawRect(Rect.fromLTWH(x - 3, 12, 6, 11), paint);
+        canvas.drawRect(Rect.fromLTWH(x - 2, 10, 4, 2), paint);
+        canvas.drawRect(Rect.fromLTWH(x - 2, 24, 4, 2), paint);
+        canvas.drawRect(Rect.fromLTWH(x - 1, 5, 2, 3), paint);
+        canvas.drawRect(Rect.fromLTWH(x - 4, 8, 2, 2), paint);
+        canvas.drawRect(Rect.fromLTWH(x + 2, 8, 2, 2), paint);
+        canvas.drawRect(
+          Rect.fromLTWH(x - 1, 14, 2, 6),
+          Paint()..color = const Color(0xFF0A1421),
+        );
+      }
+    }
+    if (active.contains(Power.powerful)) {
+      paint.color = powerColors[Power.powerful]!;
+      // A chunky central double-shell cannon, with an open muzzle.
+      canvas.drawRect(const Rect.fromLTWH(13, 11, 6, 15), paint);
+      canvas.drawRect(const Rect.fromLTWH(12, 8, 8, 5), paint);
+      canvas.drawRect(
+        const Rect.fromLTWH(14, 8, 4, 3),
+        Paint()..color = const Color(0xFF0A1421),
+      );
+      canvas.drawRect(const Rect.fromLTWH(13, 3, 2, 3), paint);
+      canvas.drawRect(const Rect.fromLTWH(17, 3, 2, 3), paint);
+      canvas.drawRect(
+        const Rect.fromLTWH(15, 15, 2, 7),
+        Paint()..color = const Color(0xFFFFD6A4),
+      );
     }
     if (active.contains(Power.rapid)) {
       final bolt = Path()

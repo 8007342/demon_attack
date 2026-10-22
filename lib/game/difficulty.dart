@@ -15,6 +15,13 @@ class DifficultyPolicy {
     Difficulty.normal => .008,
     Difficulty.hard => 0,
   };
+  int reinforcementFlocks({required int route, required int sector}) =>
+      switch (difficulty) {
+        Difficulty.easy => route == 0 ? 0 : (1 + route ~/ 3).clamp(1, 2),
+        Difficulty.normal => (route + (sector >= 3 ? 1 : 0)).clamp(0, 3),
+        Difficulty.hard => (1 + route).clamp(1, 4),
+      };
+  int get reinforcementSize => difficulty == Difficulty.easy ? 4 : 6;
   int bossHealth(int normal) =>
       math.max(1, (normal * (difficulty == Difficulty.easy ? .8 : 1)).round());
   int rosterCount({

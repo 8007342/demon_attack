@@ -34,7 +34,7 @@ void main() {
       for (var i = 0; i < 5; i++) {
         successful.recordFailure();
       }
-      expect(successful.easyUnlocked, isFalse);
+      expect(successful.easyUnlocked, isTrue);
     },
   );
 
@@ -71,4 +71,19 @@ void main() {
     denied.saveHistory(RunHistory());
     denied.clearCheckpoint();
   });
+  test(
+    'legacy Hard unlock also makes Easy available to share with friends',
+    () {
+      final history = RunHistory.fromJson({
+        'hardUnlocked': true,
+        'easyUnlocked': false,
+      });
+      expect(history.unlocked(Difficulty.hard), isTrue);
+      expect(history.unlocked(Difficulty.easy), isTrue);
+      expect(history.everBeatBoss, isTrue);
+      final unlocked = RunHistory()..recordBoss(Difficulty.normal);
+      expect(unlocked.easyUnlocked, isTrue);
+      expect(unlocked.hardUnlocked, isTrue);
+    },
+  );
 }

@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:demon_attack/game/model.dart';
 
@@ -19,9 +17,8 @@ void main() {
     boss.core = 1;
     model.boss = boss;
     model.levelClock = .6;
-    final nextTime = model.levelClock + 1 / 60;
-    final x = 180 + math.sin(nextTime * .7) * 80;
-    final y = 205 + math.sin(nextTime * .9) * 12;
+    final x = boss.forecastX(1 / 60, model.speed);
+    final y = boss.y;
     model.shots.add(Shot(x, y + 10, 0, 0));
     expect(() => model.update(1 / 60), returnsNormally);
     expect(model.mode, RunMode.victory);

@@ -135,7 +135,7 @@ async function semantics(page) {
       assert.equal(checkpoint.wave, 2);
       assert.equal(checkpoint.score, 12345);
       assert.equal(checkpoint.lives, 7);
-      assert.deepEqual(checkpoint.heartSlots, [1, 3, 4]);
+      assert.deepEqual(checkpoint.heartSlots, [1, 3, 12]);
       assert.equal(checkpoint.activeMilliseconds, 62000);
       await page.screenshot({ path: `/tmp/campaign-resume-${name}.png` });
       await page.reload({ waitUntil: "networkidle" });

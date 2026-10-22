@@ -15,12 +15,17 @@ void until(ArcadeModel m, RunMode mode) {
 }
 
 void defeatRoster(ArcadeModel m) {
-  for (final d in List<Demon>.of(m.demons)) {
-    while (m.demons.contains(d)) {
-      m.hitDemon(d);
+  final wave = m.wave;
+  for (var frame = 0; frame < 2400 && m.combat && m.wave == wave; frame++) {
+    for (final d in List<Demon>.of(m.demons)) {
+      if (d.entering) continue;
+      while (m.demons.contains(d)) {
+        m.hitDemon(d);
+      }
     }
+    m.update(1 / 60);
   }
-  m.update(1 / 60);
+  expect(m.combat, isFalse, reason: 'all finite flocks must clear the wave');
 }
 
 void main() {

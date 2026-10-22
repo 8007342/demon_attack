@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'game/model.dart';
+import 'game/hints.dart';
+import 'widgets/hint_art.dart';
 import 'widgets/power_status.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
@@ -85,6 +87,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Map<String, dynamic>? savedCheckpoint;
   Difficulty boardDifficulty = Difficulty.normal;
   bool handledRunEnd = false;
+  final hintDeck = HintDeck();
+  TacticalHint? arrivalHint;
+  bool manualHintHold = false, hintArtPrecached = false;
   String? heartNotice;
   double heartNoticeUntil = 0;
   bool muted = false, loading = false, submitted = false;
@@ -116,6 +121,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     scene = DemonScene(model, _tick);
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!hintArtPrecached) {
+      hintArtPrecached = true;
+      precacheImage(const AssetImage('assets/images/hint-scenes.png'), context);
+    }
   }
 
   @override
@@ -169,6 +183,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           heartNoticeUntil = model.clock + 1.6;
           audioSfx('extraLife');
         case 'checkpoint':
+          if (model.wave == 1) {
+            arrivalHint = hintDeck.next(
+              difficulty: model.difficulty,
+              level: model.level,
+              route: model.cycle,
+            );
+            manualHintHold = !history.autoAdvanceHints;
+            if (manualHintHold) model.pause();
+          }
           savedCheckpoint = model.checkpoint();
           storage.saveCheckpoint(savedCheckpoint!);
         case 'bossDefeated':
@@ -262,6 +285,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   KeyEventResult _key(FocusNode node, KeyEvent event) {
     final key = event.logicalKey;
+    if (screen == 'guide') {
+      if (event is KeyDownEvent && key == LogicalKeyboardKey.escape) {
+        setState(() => screen = null);
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
     if (key == LogicalKeyboardKey.arrowLeft ||
         key == LogicalKeyboardKey.arrowRight) {
       if (event is KeyUpEvent) {
@@ -449,7 +479,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         ],
                       ),
                     ),
-                  if (screen != null) Positioned.fill(child: _scoreOverlay()),
+                  if (screen != null)
+                    Positioned.fill(
+                      child: screen == 'guide'
+                          ? _fieldGuide()
+                          : _scoreOverlay(),
+                    ),
                 ],
               );
             },
@@ -618,7 +653,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             ),
           ),
         ],
-      const SizedBox(height: 30),
+      const SizedBox(height: 10),
+      TextButton.icon(
+        onPressed: _openGuide,
+        icon: const Icon(Icons.auto_stories_outlined, size: 17),
+        label: const Text('FIELD GUIDE'),
+      ),
+      const SizedBox(height: 20),
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -671,42 +712,43 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           ),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 4,
-          children: [
-            for (final difficulty in [
-              Difficulty.normal,
-              Difficulty.easy,
-              Difficulty.hard,
-            ])
-              if (history.unlocked(difficulty))
-                TextButton(
-                  key: ValueKey('board-${difficulty.name}'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: boardDifficulty == difficulty
-                        ? mint
-                        : const Color(0xFF8AA1B8),
-                    backgroundColor: boardDifficulty == difficulty
-                        ? const Color(0xFF1A3040)
-                        : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+        if (history.easyUnlocked || history.hardUnlocked)
+          Wrap(
+            spacing: 4,
+            children: [
+              for (final difficulty in [
+                Difficulty.normal,
+                Difficulty.easy,
+                Difficulty.hard,
+              ])
+                if (history.unlocked(difficulty))
+                  TextButton(
+                    key: ValueKey('board-${difficulty.name}'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: boardDifficulty == difficulty
+                          ? mint
+                          : const Color(0xFF8AA1B8),
+                      backgroundColor: boardDifficulty == difficulty
+                          ? const Color(0xFF1A3040)
+                          : Colors.transparent,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                    onPressed: () {
+                      if (difficulty == boardDifficulty) return;
+                      setState(() {
+                        boardDifficulty = difficulty;
+                        submitted = false;
+                        board = [];
+                      });
+                      _refreshBoard();
+                    },
+                    child: Text(
+                      difficulty.name.toUpperCase(),
+                      style: const TextStyle(fontSize: 11),
+                    ),
                   ),
-                  onPressed: () {
-                    if (difficulty == boardDifficulty) return;
-                    setState(() {
-                      boardDifficulty = difficulty;
-                      submitted = false;
-                      board = [];
-                    });
-                    _refreshBoard();
-                  },
-                  child: Text(
-                    difficulty.name.toUpperCase(),
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                ),
-          ],
-        ),
+            ],
+          ),
         const SizedBox(height: 12),
         if (boardLoading)
           const Padding(
@@ -967,9 +1009,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                if (model.cinematic && model.mode != RunMode.paused)
+                if (model.cinematic &&
+                    (model.mode != RunMode.paused || _showingArrivalHint))
                   Positioned.fill(child: _interlude()),
-                if (model.mode == RunMode.paused)
+                if (model.mode == RunMode.paused && !_showingArrivalHint)
                   Positioned.fill(
                     child: _gameOverlay('SIGNAL PAUSED', 'TAKE A BREATH.', [
                       FilledButton(
@@ -977,6 +1020,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         child: const Text('RESUME'),
                       ),
                       const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: _openGuide,
+                        child: const Text('FIELD GUIDE'),
+                      ),
                       TextButton(
                         onPressed: _title,
                         child: const Text('RETURN TO TITLE'),
@@ -1031,7 +1078,212 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   // A render-only view avoids updating the simulation twice when the full-screen sky is mounted.
   late final _ArenaView _arenaProxy = _ArenaView(scene);
+  bool get _showingArrivalHint =>
+      arrivalHint != null &&
+      model.presentationMode == RunMode.transition &&
+      model.wave == 1;
+
+  void _openGuide() {
+    if (model.mode != RunMode.title && model.mode != RunMode.paused) {
+      model.pause();
+    }
+    setState(() => screen = 'guide');
+  }
+
+  Widget _hintInterlude(TacticalHint hint) => LayoutBuilder(
+    builder: (context, bounds) {
+      final paused = model.mode == RunMode.paused;
+      final compact = bounds.maxHeight < 360;
+      return Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: SizedBox(
+            width: math.min(460, bounds.maxWidth),
+            child: Container(
+              key: const ValueKey('arrival-hint'),
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.all(compact ? 12 : 18),
+              decoration: BoxDecoration(
+                color: const Color(0xF0080D18),
+                border: Border.all(color: const Color(0xFF304D60)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _label(
+                    paused ? 'SIGNAL PAUSED' : 'TACTICAL BRIEFING',
+                    mint,
+                    size: 11,
+                  ),
+                  const SizedBox(height: 10),
+                  HintArt(scene: hint.scene, height: compact ? 115 : 180),
+                  const SizedBox(height: 14),
+                  Text(
+                    hint.title,
+                    key: ValueKey('hint-${hint.id}'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  LinearProgressIndicator(
+                    value: model.transitionProgress,
+                    minHeight: 6,
+                    color: mint,
+                    backgroundColor: const Color(0xFF24374B),
+                  ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: paused && manualHintHold
+                            ? () {
+                                model.continueIntroduction();
+                                setState(() => manualHintHold = false);
+                              }
+                            : _pause,
+                        child: Text(
+                          paused && manualHintHold
+                              ? 'CONTINUE'
+                              : paused
+                              ? 'RESUME'
+                              : 'HOLD',
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _openGuide,
+                        child: const Text('FIELD GUIDE'),
+                      ),
+                      if (paused)
+                        TextButton(
+                          onPressed: _title,
+                          child: const Text('MENU'),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  Widget _fieldGuide() => Material(
+    color: const Color(0xFA080D18),
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'FIELD GUIDE',
+                      style: TextStyle(
+                        color: mint,
+                        fontSize: 23,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close field guide',
+                    onPressed: () => setState(() => screen = null),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Text(
+                'Study at your own pace. Your flight is on hold.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Color(0xFFAABCD0), fontSize: 13),
+              ),
+            ),
+            SwitchListTile(
+              title: const Text(
+                'Auto-advance hints',
+                style: TextStyle(fontSize: 15),
+              ),
+              subtitle: const Text(
+                'Turn off to continue each briefing yourself.',
+                style: TextStyle(fontSize: 12),
+              ),
+              value: history.autoAdvanceHints,
+              onChanged: (value) {
+                setState(() {
+                  history.autoAdvanceHints = value;
+                  if (!value && _showingArrivalHint) {
+                    manualHintHold = true;
+                    model.pause();
+                  }
+                });
+                storage.saveHistory(history);
+              },
+            ),
+            Expanded(
+              child: ListView(
+                key: const ValueKey('field-guide-scroll'),
+                padding: const EdgeInsets.all(20),
+                children: [
+                  for (final hint in tacticalHints.where(
+                    (hint) => hint.isEligible(model.difficulty),
+                  ))
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF101A29),
+                        border: Border.all(color: const Color(0xFF304D60)),
+                      ),
+                      child: Column(
+                        children: [
+                          HintArt(scene: hint.scene, height: 170),
+                          const SizedBox(height: 14),
+                          Text(
+                            hint.title,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 21,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            hint.detail,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFFB7C7D8),
+                              fontSize: 15,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
   Widget _interlude() {
+    if (_showingArrivalHint) return _hintInterlude(arrivalHint!);
     final phase = model.presentationMode;
     final p = model.transitionProgress;
     final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));

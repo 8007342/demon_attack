@@ -42,3 +42,17 @@
 - [x] 8.1 Add a rare low-health self-sacrifice attack for only a minority of sentinels: distinct movement tell, fixed sampled aim, fast rush, interruptible by player fire, one-way impact/exit removal without player kill rewards; test dodging, pause and once-only cleanup.
 - [x] 8.2 Give the last-stand tell and rush distinct pixel sprite poses/charge markings, persist the warning and fairness rules in art/combat specs, and review rendered frames.
 - [x] 8.3 Re-run integrated checks, rebuild/reload the local preview including the last-stand change and report when to reload.
+
+## 9. Layered swarm combat refinement
+- [x] 9.1 Add finite escalating mid-wave flocks and strong sentinel escort arrivals, with meaningful initial shields/armor, bounded shot evasion, distinct faster sentinel bullets and tested wave completion/checkpoint replay.
+- [x] 9.2 Revise articulated wide-wing flight, predatory dives and final-rush sprites; remove external ordinary-enemy tell marks, soften explosion opacity, refine smoke and render damage-driven angry carrier eyes/motion with randomized opening direction; review pixel frames.
+- [x] 9.3 Change hearts to four complementary quadrants, migrate legacy top pieces into both top quarters without losing progress, and verify four-part UI/assembly/overflow/restore.
+- [x] 9.4 Reduce power-drop frequency, add mutually replacing Powerful/Fast and Large/Spread groups, double-damage and bounded area-hit behavior, unique projectiles/pickups and composable shield glyphs; test timers, damage, gates and rewards.
+- [x] 9.5 Make Hard unlock Easy, migrate existing Hard histories, and use neutral Top10 heading with difficulty tabs as the only mode labels; verify landing behavior.
+- [ ] 9.6 Update persistent specs/guides, run model/widget/worker/browser checks, rebuild/reload the local preview, record results and push the game branch.
+
+## 10. Illustrated tactical arrivals
+- [x] 10.1 Research brief visual-instruction usability from primary sources, persist sourced readability/timing/accessibility guidelines, and design concise contextual hints with no immediate repeats.
+- [x] 10.2 Generate and review original detailed pixel-art hint illustrations, connect a tested hint catalog/shuffle bag, and verify the shield-consumption invulnerability/refill tactic against gameplay.
+- [x] 10.3 Replace repeated first-wave arrival story with stable illustrated hints, retain travel storytelling, provide pause/untimed field-guide review, and test phone/landscape presentation and selection boundaries.
+- [ ] 10.4 Validate all ongoing refinements together, rebuild/reload the preview, record evidence and push game before reporting readiness.

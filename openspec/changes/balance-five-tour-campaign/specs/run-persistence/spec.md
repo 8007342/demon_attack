@@ -22,7 +22,7 @@ Missing fields in older saves SHALL receive safe defaults, unknown optional fiel
 - **THEN** starting a new Normal run remains possible without a crash
 
 ### Requirement: Permanent mode unlocks
-Normal SHALL always be available. Easy SHALL unlock after three game overs while no boss has ever been beaten in any mode. Hard SHALL unlock only upon a Normal boss victory. Unlocks SHALL persist locally and remain unlocked thereafter; interruptions SHALL NOT count as failures.
+Normal SHALL always be available. Easy SHALL unlock after three game overs while no boss has ever been beaten in any mode. Hard SHALL unlock only upon a Normal boss victory and SHALL also unlock Easy. Older local history with Hard already unlocked SHALL expose Easy as well. Unlocks SHALL persist locally and remain unlocked thereafter; interruptions SHALL NOT count as failures.
 
 #### Scenario: Easy unlock
 - **WHEN** a player with no boss victories loses their third run
@@ -31,3 +31,14 @@ Normal SHALL always be available. Easy SHALL unlock after three game overs while
 #### Scenario: Hard eligibility
 - **WHEN** a player defeats a boss in Easy
 - **THEN** Hard remains locked until a Normal boss is defeated
+
+### Requirement: Four-quarter heart compatibility
+New checkpoints SHALL mark four-quarter heart inventory explicitly with `heartParts: 4` and schema version 2. Each slot SHALL use bottom-left=1, bottom-right=2, top-left=4 and top-right=8. Loading an older checkpoint without the four-part marker SHALL preserve the old lower bits and convert its single top bit to both upper quarters.
+
+#### Scenario: Legacy top piece
+- **WHEN** a saved legacy slot contains top bit 4 without a four-part marker
+- **THEN** it restores both top quarters as mask 12 without losing that earned progress
+
+#### Scenario: New top-left quarter
+- **WHEN** a checkpoint marked with four heart parts contains mask 4
+- **THEN** it restores only the top-left quarter

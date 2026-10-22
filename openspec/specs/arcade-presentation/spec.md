@@ -16,6 +16,10 @@ Creatures, player, boss, fire, smoke, explosions, warnings, pickups and controll
 - **WHEN** a large creature is drawn larger than an ordinary demon
 - **THEN** its outline, segmented wings and damage forms retain visible logical pixels and discrete animation poses without smooth vector edges
 
+#### Scenario: Articulated heavy flight and subtle tell
+- **WHEN** a sentinel hovers or prepares its attack
+- **THEN** its wide wings articulate through eight distinct slow pixel poses and its own small pose change supplies the warning without an oversized detached marker
+
 #### Scenario: Carrier damage and attack warning
 - **WHEN** carrier fire or a rare creature's dive warning is visible
 - **THEN** the effect uses original bounded-palette pixel frames, and the warning is a creature-associated sprite cue rather than an arrow
@@ -59,3 +63,22 @@ The controller panel SHALL show a single composite pixel glyph formed from the v
 #### Scenario: One effect ends
 - **WHEN** shield is consumed or an effect expires
 - **THEN** the other layers and countdowns remain visible and touch piloting continues
+
+### Requirement: Illustrated gameplay instruction
+Gameplay hints SHALL pair one brief actionable sentence with one original pixel illustration of the same mechanic, with real legible UI text and equivalent semantic information. The picture SHALL preserve the combat art's logical pixel grid and palette. Timed hints SHALL support holding the current card and revisiting the same instruction without a timer. Advice SHALL describe actual game rules and SHALL NOT imply protections that the simulation does not grant.
+
+#### Scenario: One tactic at a glance
+- **WHEN** an illustrated hint is shown at phone size
+- **THEN** one recommended action is legible in both the sentence and picture without clipping or unrelated decorative detail
+
+#### Scenario: Read at the player's pace
+- **WHEN** the player holds a timed hint or opens its untimed review
+- **THEN** its complete text and illustration remain available until the player chooses to continue
+
+#### Scenario: Accurate shield advice
+- **WHEN** a hint explains shield renewal
+- **THEN** it associates the grace period with absorbing a hit and never claims that unused shield expiry grants invulnerability
+
+#### Scenario: Manual briefing preference
+- **WHEN** the player disables automatic hint advancement and starts another sector
+- **THEN** its illustrated briefing waits for Continue without advancing on a timer

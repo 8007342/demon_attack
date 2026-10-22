@@ -23,7 +23,7 @@ The API SHALL reject malformed initials, invalid modes, noninteger or out-of-ran
 - **THEN** it is accepted as a Normal result with default metadata
 
 ### Requirement: Inline landing Top10
-The landing page SHALL display separate unlocked-mode Top10 tabs, with loading, empty, unavailable and retry independent of starting play. Desktop SHALL show the board beside the title; mobile SHALL scroll below it. Rows SHALL show rank, initials, five medal positions, active time and score; five-medal finishers SHALL additionally show a heart times remaining lives. Successful submission SHALL return to its mode board.
+The landing page SHALL display a neutral Top10 heading with unlocked difficulty tabs labelled only by mode; a lone Normal tab SHALL be hidden. It SHALL provide loading, empty, unavailable and retry independent of starting play. Desktop SHALL show the board beside the title; mobile SHALL scroll below it. Rows SHALL show rank, initials, five medal positions, active time and score; five-medal finishers SHALL additionally show a heart times remaining lives. Successful submission SHALL return to its mode board.
 
 #### Scenario: Unavailable scores
 - **WHEN** the endpoint fails

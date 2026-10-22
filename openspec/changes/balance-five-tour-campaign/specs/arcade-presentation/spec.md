@@ -1,5 +1,24 @@
 ## MODIFIED Requirements
 
+### Requirement: Illustrated gameplay instruction
+Gameplay hints SHALL pair one brief actionable sentence with one original pixel illustration of the same mechanic, with real legible UI text and equivalent semantic information. The picture SHALL preserve the combat art's logical pixel grid and palette. Timed hints SHALL support holding the current card and revisiting the same instruction without a timer. Advice SHALL describe actual game rules and SHALL NOT imply protections that the simulation does not grant.
+
+#### Scenario: One tactic at a glance
+- **WHEN** an illustrated hint is shown at phone size
+- **THEN** one recommended action is legible in both the sentence and picture without clipping or unrelated decorative detail
+
+#### Scenario: Read at the player's pace
+- **WHEN** the player holds a timed hint or opens its untimed review
+- **THEN** its complete text and illustration remain available until the player chooses to continue
+
+#### Scenario: Accurate shield advice
+- **WHEN** a hint explains shield renewal
+- **THEN** it associates the grace period with absorbing a hit and never claims that unused shield expiry grants invulnerability
+
+#### Scenario: Manual briefing preference
+- **WHEN** the player disables automatic hint advancement and starts another sector
+- **THEN** its illustrated briefing waits for Continue without advancing on a timer
+
 ### Requirement: Original pixel artwork
 Creatures, player, boss, fire, smoke, explosions, warnings, pickups and controller artwork SHALL use original Atari-era-inspired pixel art on fixed low-resolution grids, bounded palettes and nearest-neighbor sampling. Original-game sprites/screenshots SHALL NOT be copied or traced. Creatures and effects SHALL use discrete pixel frames, including runtime-generated art; smooth vector silhouettes, antialiased curves, gradients and continuously deforming flames SHALL NOT replace those frames.
 
@@ -10,6 +29,10 @@ Creatures, player, boss, fire, smoke, explosions, warnings, pickups and controll
 #### Scenario: Enlarged rare creature
 - **WHEN** a large creature is drawn larger than an ordinary demon
 - **THEN** its outline, segmented wings and damage forms retain visible logical pixels and discrete animation poses without smooth vector edges
+
+#### Scenario: Articulated heavy flight and subtle tell
+- **WHEN** a sentinel hovers or prepares its attack
+- **THEN** its wide wings articulate through eight distinct slow pixel poses and its own small pose change supplies the warning without an oversized detached marker
 
 #### Scenario: Carrier damage and attack warning
 - **WHEN** carrier fire or a rare creature's dive warning is visible
@@ -42,7 +65,7 @@ The app SHALL provide title, play, pause, victory, campaign-complete and game-ov
 - **THEN** Top10 appears without a separate scoreboard action and locked difficulty tabs are hidden
 
 ### Requirement: Layered power status glyph
-The controller panel SHALL show a single composite pixel glyph with distinct spread arrows, rapid-fire lightning and enclosing shield. Each effect SHALL show its own name, countdown and duration bar. Removing an effect SHALL remove only its glyph layer and timer. Status SHALL not block piloting or displace the controller guidance label as effects change. The standalone multi-fire glyph SHALL resemble twin cannons rather than crosses.
+The controller panel SHALL show a single composite pixel glyph with distinct Spread side cannons, Rapid central lightning, Powerful central heavy cannon, Large side explosive shells and enclosing Shield. Each active effect SHALL show its own name, countdown and duration bar. Only one effect per offensive group SHALL appear. Removing an effect SHALL remove only its glyph layer and timer. Status SHALL not block piloting or displace the controller guidance label as effects change. The standalone multi-fire glyph SHALL resemble twin cannons rather than crosses.
 
 #### Scenario: Triple combination
 - **WHEN** all three modifiers are active
@@ -55,7 +78,7 @@ The controller panel SHALL show a single composite pixel glyph with distinct spr
 ## ADDED Requirements
 
 ### Requirement: Readable story interludes
-Story captions SHALL use substantially larger text and more arena area than the initial campaign captions, a larger travel bar and approximately one third of a second of extra reading time per text-bearing phase. Arrivals, carrier falls, recognition, departures and the ending SHALL tell a continuous story matching every route's names and scenery. Complete messages SHALL remain visible without clipping on narrow phones and landscape.
+Story captions SHALL use substantially larger text and more arena area than the initial campaign captions, a larger travel bar and approximately one third of a second of extra reading time per text-bearing phase. Travel, carrier falls, recognition, departures and the ending SHALL tell a continuous story matching every route's names and scenery. Complete messages SHALL remain visible without clipping on narrow phones and landscape.
 
 #### Scenario: Phone interlude
 - **WHEN** travel is shown on a 390-pixel-wide phone
@@ -76,8 +99,40 @@ Every mode SHALL have five distinguishable medal awards and matching empty silho
 - **THEN** the score row shows its three Normal medals and two empty medal silhouettes
 
 ### Requirement: Distinct sacrifice tell
-An injured sentinel's last-stand tell SHALL combine a distinct pixel pose or warning mark with an unmistakable preparatory movement for its full 0.9-second warning interval. It SHALL remain distinguishable from ordinary dive warnings through shape and motion, not color alone. The rush and self-destruction SHALL retain the original pixel-frame style and SHALL NOT imply a return to formation or a player-earned reward.
+An injured sentinel's last-stand tell SHALL combine a subtle distinct pixel pose on the creature itself with a small preparatory movement for its full 0.9-second warning interval. It SHALL remain distinguishable from ordinary dive warnings through shape and motion, not color alone. The rush and self-destruction SHALL retain the original pixel-frame style and SHALL NOT imply a return to formation or a player-earned reward.
 
 #### Scenario: Recognize the last stand
 - **WHEN** a sentinel commits to its sacrifice attack
-- **THEN** its special pose or sprite mark and preparatory movement clearly signal the rush before it accelerates, giving the player time to move away from the sampled aim point
+- **THEN** its special pose and preparatory movement signal the rush before it accelerates, giving the player time to move away from the sampled aim point
+
+### Requirement: Articulated sentinel and readable effects
+Sentinel wings SHALL use eight articulated pixel poses across a slow 3.2-second stroke, with separate normal warning, falcon-like dive and last-stand poses. Tells SHALL remain confined to the creature, without arrows or oversized detached markers. Sentinel defenses and faster bullets SHALL be visibly distinct. Carrier rage eyes, stepped smoke and reduced-opacity explosions SHALL communicate damage while keeping threats readable.
+
+#### Scenario: Damaged crowded encounter
+- **WHEN** sentinel bullets, damaged carrier smoke and explosions overlap
+- **THEN** the different projectile shapes remain identifiable through restrained translucent effects and the sentinel's own pose provides its warning
+
+### Requirement: Extended power glyph combinations
+Every legal offensive pair plus Shield SHALL retain distinguishable original pixel glyph layers and independent timers. Powerful SHALL use a chunky red central cannon or double-shell mark; Large SHALL use amber explosive shell heads at the sides. Replacement SHALL remove only the replaced group's glyph and timer while preserving controller touch input.
+
+#### Scenario: Powerful explosive shield
+- **WHEN** Powerful, Large and Shield are active
+- **THEN** red central cannon, amber side shells and violet shield remain visible, with three independent countdowns and working drag controls
+
+### Requirement: Contextual arrival hints
+First-wave arrivals SHALL replace repeated arrival story text with a randomly selected eligible five-to-nine-word gameplay hint and one matching pixel illustration. A shuffled bag SHALL avoid repeating eligible hints until exhausted, including across bag boundaries when alternatives exist. Selection SHALL occur once per entrance and stay stable through rebuilds and pause. Travel SHALL retain destination storytelling.
+
+#### Scenario: Relevant encounter advice
+- **WHEN** a Hard run is on its first route
+- **THEN** arrival hints exclude heart collection and sentinel tactics while retaining applicable movement, power or carrier advice
+
+#### Scenario: Stable shuffled selection
+- **WHEN** an arrival card rebuilds or the player pauses and resumes
+- **THEN** the selected hint remains unchanged and its card is not counted as a new draw
+
+### Requirement: Untimed field guide
+The landing and pause screens SHALL offer a clearly labelled Field Guide containing the same hint text and meaningful illustrations without automatic advancement. Opening it during play SHALL preserve paused game and hint state; closing it SHALL NOT silently resume combat. The guide SHALL remain available after a timed hint disappears. Players SHALL be able to persistently disable automatic hint advancement before play; subsequent arrival cards SHALL wait indefinitely for explicit Continue.
+
+#### Scenario: Revisit a missed hint
+- **WHEN** the player opens the Field Guide after an arrival card has advanced
+- **THEN** the same instruction and illustration can be read without a countdown
