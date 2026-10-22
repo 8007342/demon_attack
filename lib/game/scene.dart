@@ -17,7 +17,7 @@ class DemonScene extends FlameGame {
   DemonScene(this.model, this.onTick);
   final ArcadeModel model;
   final VoidCallback onTick;
-  ui.Image? atlas, sky;
+  ui.Image? atlas, effectsAtlas, sky;
   final sectors = SectorBackground();
   double ambient = 0, _notify = 0;
   double environment = 0;
@@ -29,6 +29,7 @@ class DemonScene extends FlameGame {
   Future<void> onLoad() async {
     try {
       atlas = await images.load('combat.png');
+      effectsAtlas = await images.load('sentinel-effects.png');
     } catch (e) {
       assetError = '$e';
     }
@@ -122,6 +123,37 @@ class DemonScene extends FlameGame {
     );
   }
 
+  // Every effects cell is 64x32 logical pixels, enlarged exactly 2x in
+  // the PNG. Integer destinations preserve the original square-pixel grid.
+  void effectSprite(
+    Canvas c,
+    int row,
+    int col,
+    Offset center, {
+    double scale = 1,
+    Color? tint,
+  }) {
+    final image = effectsAtlas;
+    if (image == null) return;
+    final paint = Paint()
+      ..isAntiAlias = false
+      ..filterQuality = FilterQuality.none;
+    if (tint != null) {
+      paint.colorFilter = ColorFilter.mode(tint, BlendMode.srcATop);
+    }
+    c.drawImageRect(
+      image,
+      Rect.fromLTWH(col * 128.0, row * 64.0, 128, 64),
+      Rect.fromLTWH(
+        (center.dx - 64 * scale).roundToDouble(),
+        (center.dy - 32 * scale).roundToDouble(),
+        128 * scale,
+        64 * scale,
+      ),
+      paint,
+    );
+  }
+
   void _combat(Canvas c) {
     for (final p in model.heartPickups) {
       c.save();
@@ -156,41 +188,27 @@ class DemonScene extends FlameGame {
         d.y - (1 - entrance) * (d.y + 45),
       );
       if (d.isLarge) {
-        _sentinel(c, pos, d.archetype, d.hp / d.maxHp, d.flash > 0, d.seed);
-        if (d.telegraph > 0) {
-          c.drawLine(
-            pos + const Offset(0, 22),
-            pos + const Offset(0, 55),
-            Paint()
-              ..color = const Color(0xBBFF786C)
-              ..strokeWidth = 2,
-          );
-          c.drawPath(
-            Path()
-              ..moveTo(pos.dx - 6, pos.dy + 47)
-              ..lineTo(pos.dx, pos.dy + 55)
-              ..lineTo(pos.dx + 6, pos.dy + 47),
-            Paint()
-              ..color = const Color(0xBBFF786C)
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 2,
-          );
+        // Large creatures have their own delayed entrance in simulation.
+        if (d.entranceProgress > 0) {
+          _sentinel(c, Offset(d.x, d.y), d);
         }
         continue;
       }
       if (d.elite) {
         final armor = (d.maxHp - d.moltStage).clamp(1, 7);
-        final halo = Paint()
-          ..color = (d.angry ? gold : violet).withValues(alpha: .25)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1;
-        c.drawArc(
-          Rect.fromCircle(center: pos, radius: 24),
-          model.clock * .5,
-          math.pi * 1.5,
-          false,
-          halo,
-        );
+        for (var i = 0; i < 12; i++) {
+          if ((i + (model.clock * 2).floor()) % 4 == 0) continue;
+          final angle = i * math.pi / 6;
+          c.drawRect(
+            Rect.fromLTWH(
+              (pos.dx + math.cos(angle) * 24).roundToDouble(),
+              (pos.dy + math.sin(angle) * 24).roundToDouble(),
+              2,
+              2,
+            ),
+            Paint()..color = d.angry ? gold : violet,
+          );
+        }
         // Every hit removes an outer plate; stages beyond the atlas's three
         // molts still have a visibly distinct silhouette and exposed core.
         for (var plate = 0; plate < armor; plate++) {
@@ -203,34 +221,22 @@ class DemonScene extends FlameGame {
         }
         if (d.moltStage < 4) {
           for (final side in [-1.0, 1.0]) {
-            c.drawPath(
-              Path()
-                ..moveTo(pos.dx + side * 9, pos.dy - 12)
-                ..lineTo(
-                  pos.dx + side * (17 - d.moltStage),
-                  pos.dy - 27 + d.moltStage * 3,
-                )
-                ..lineTo(pos.dx + side * 13, pos.dy - 10)
-                ..close(),
-              Paint()..color = d.angry ? gold : violet,
-            );
+            for (var step = 0; step < 5 - d.moltStage; step++) {
+              c.drawRect(
+                Rect.fromLTWH(
+                  (pos.dx + side * (10 + step)).roundToDouble(),
+                  (pos.dy - 12 - step * 2).roundToDouble(),
+                  2,
+                  3,
+                ),
+                Paint()..color = d.angry ? gold : violet,
+              );
+            }
           }
         }
       }
       if (d.telegraph > 0) {
-        c.drawCircle(
-          pos,
-          22,
-          Paint()
-            ..color = const Color(0xAAFF786C)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1,
-        );
-        c.drawLine(
-          pos + const Offset(0, 22),
-          pos + const Offset(0, 36),
-          Paint()..color = const Color(0x66FF786C),
-        );
+        effectSprite(c, 5, 4 + (model.clock * 8).floor() % 4, pos);
       }
       sprite(
         c,
@@ -283,30 +289,36 @@ class DemonScene extends FlameGame {
         );
       }
       if (b.shield > 0) {
-        final shieldPaint = Paint()
-          ..color = mint.withValues(alpha: .35 + math.sin(model.clock * 8) * .1)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3;
-        c.drawArc(
-          Rect.fromCenter(
-            center: Offset(b.x, b.y + 24),
-            width: 40 + 126 * b.shield / b.shieldMax,
-            height: 38,
-          ),
-          0,
-          math.pi,
-          false,
-          shieldPaint,
-        );
+        // Preserve the narrowing symmetric shield geometry as stepped pixels.
+        final radius = 20 + 63 * b.shield / b.shieldMax;
+        final paint = Paint()..color = mint;
+        for (var x = 0.0; x <= radius; x += 3) {
+          final y = 24 + 19 * math.sqrt(1 - math.pow(x / radius, 2));
+          for (final side in [-1.0, 1.0]) {
+            c.drawRect(
+              Rect.fromLTWH(
+                (b.x + side * x - 1).roundToDouble(),
+                (b.y + y).roundToDouble(),
+                3,
+                2,
+              ),
+              paint,
+            );
+          }
+        }
         for (var x = -3; x <= 3; x++) {
-          c.drawLine(
-            Offset(b.x + x * (5 + 18 * b.shield / b.shieldMax), b.y + 39),
-            Offset(
-              b.x + x * (5 + 18 * b.shield / b.shieldMax) + x.sign * 3,
-              b.y + 45,
-            ),
-            Paint()..color = mint.withValues(alpha: .35),
-          );
+          for (var step = 0; step < 3; step++) {
+            c.drawRect(
+              Rect.fromLTWH(
+                (b.x + x * (5 + 18 * b.shield / b.shieldMax) + x.sign * step)
+                    .roundToDouble(),
+                b.y.roundToDouble() + 39 + step * 2,
+                2,
+                2,
+              ),
+              paint,
+            );
+          }
         }
       }
       _damage(c, Offset(b.x, b.y), 1 - b.core / b.coreMax, model.clock);
@@ -358,24 +370,12 @@ class DemonScene extends FlameGame {
     }
     for (final b in model.blasts) {
       if (b.isLarge) {
-        final p = (b.age / .55).clamp(0.0, 1.0);
-        for (final side in [-1.0, 1.0]) {
-          c.save();
-          c.translate(b.x + side * p * 28, b.y + p * p * 45);
-          c.rotate(side * p * 1.4);
-          c.drawRect(
-            Rect.fromLTWH(side < 0 ? -40 : 0, 0, 40, 3),
-            Paint()..color = gold.withValues(alpha: 1 - p),
-          );
-          for (var i = 0; i < 5; i++) {
-            c.drawCircle(
-              Offset(side * i * 8, p * i * 7),
-              2,
-              Paint()..color = const Color(0xFFFF8676).withValues(alpha: 1 - p),
-            );
-          }
-          c.restore();
-        }
+        effectSprite(
+          c,
+          4,
+          (b.age / 1.4 * 8).floor().clamp(0, 7),
+          Offset(b.x, b.y + (b.age * 12).floorToDouble()),
+        );
         continue;
       }
       sprite(
@@ -390,95 +390,64 @@ class DemonScene extends FlameGame {
 
   void _damage(Canvas c, Offset center, double damage, double time) {
     if (damage < .12) return;
-    for (var i = 0; i < (damage * 10).ceil(); i++) {
-      final x = center.dx + math.sin(i * 7.1) * 65;
-      final y = center.dy - 12 + math.cos(i * 4.1) * 20;
-      final rise = (time * 18 + i * 13) % 45;
-      c.drawCircle(
-        Offset(x + math.sin(time + i) * rise * .12, y - rise),
-        3 + rise * .15,
-        Paint()
-          ..color = const Color(0xFF78808A)
-              .withValues(alpha: damage * .28 * (1 - rise / 45)),
-      );
-      if (damage > .4) {
-        c.drawRect(
-          Rect.fromLTWH(x, y + math.sin(time * 11 + i) * 3, 2, 2),
-          Paint()..color = gold,
+    // Paired vents preserve the carrier's silhouette. Animation is held at
+    // eight frames/sec, with solid dithered smoke rather than soft particles.
+    for (var vent = 0; vent < (damage * 4).ceil(); vent++) {
+      final frame = (time * 8 + vent).floor() % 4;
+      for (final side in [-1.0, 1.0]) {
+        final point =
+            center + Offset(side * (18 + vent * 13), -3 - vent % 2 * 8);
+        effectSprite(
+          c,
+          3,
+          frame,
+          point + Offset(side * frame * 2, -10.0 - frame * 5),
+          scale: .5,
         );
-      }
-      if (damage > .65) {
-        c.drawPath(
-          Path()
-            ..moveTo(x - 3, y)
-            ..lineTo(x + math.sin(time * 17 + i) * 3, y - 7 - damage * 8)
-            ..lineTo(x + 3, y)
-            ..close(),
-          Paint()..color = const Color(0xEEFF9862),
-        );
+        if (damage > .4) {
+          effectSprite(c, 5, frame, point, scale: .5);
+        }
+        if (damage > .65) {
+          effectSprite(c, 3, 4 + frame, point + const Offset(0, -8), scale: .5);
+        }
       }
     }
   }
 
-  void _sentinel(
-    Canvas c,
-    Offset pos,
-    EnemyArchetype type,
-    double health,
-    bool flash,
-    double seed,
-  ) {
-    final heavy = type == EnemyArchetype.armoredSentinel;
-    final color = flash
-        ? Colors.white
-        : heavy
-        ? gold
-        : violet;
-    c.save();
-    c.translate(pos.dx, pos.dy);
-    final flap = math.sin(model.clock * 5 + seed) * 3;
-    for (final side in [-1.0, 1.0]) {
-      for (var line = 0; line < 4; line++) {
-        c.drawPath(
-          Path()
-            ..moveTo(side * 5, line * 4.0 - 8)
-            ..lineTo(side * (24 + line * 3), line * 2.0 - 10 + flap)
-            ..lineTo(side * (49 - line * 5), line * 3.0 - 6 + flap),
-          Paint()
-            ..color = color
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = heavy ? 3 : 2,
+  void _sentinel(Canvas c, Offset pos, Demon demon) {
+    final heavy = demon.archetype == EnemyArchetype.armoredSentinel;
+    final warning = demon.telegraph > 0;
+    final frame = demon.lastStand
+        ? demon.rushing
+              ? 4 + (model.clock * 12).floor() % 4
+              : (demon.lastStandTellProgress * 4).floor().clamp(0, 3)
+        : warning
+        ? 4 + (model.clock * 8).floor() % 4
+        : ((model.clock / .7 + demon.seed).floor() % 4);
+    effectSprite(
+      c,
+      demon.lastStand ? (heavy ? 7 : 6) : (heavy ? 1 : 0),
+      frame,
+      pos,
+      tint: demon.flash > 0 ? Colors.white : null,
+    );
+    final health = demon.hp / demon.maxHp;
+    if (demon.hp > 1) {
+      effectSprite(c, 2, ((1 - health) * 4).floor().clamp(0, 3), pos);
+    }
+    if (heavy) {
+      // Chest, shoulders and outer plates disappear as the armor is shed.
+      final layers = (health * 4).ceil();
+      for (var layer = 0; layer < layers; layer++) {
+        effectSprite(
+          c,
+          2,
+          4 + layer,
+          pos,
+          tint: demon.flash > 0 ? Colors.white : null,
         );
       }
-      c.drawRect(
-        Rect.fromLTWH(side * 13 - 3, -6, 6, 13),
-        Paint()..color = color,
-      );
     }
-    c.drawPath(
-      Path()
-        ..moveTo(0, -12)
-        ..lineTo(8, 1)
-        ..lineTo(0, 14)
-        ..lineTo(-8, 1)
-        ..close(),
-      Paint()..color = color,
-    );
-    c.drawRect(
-      const Rect.fromLTWH(-3, -1, 6, 3),
-      Paint()..color = const Color(0xFFFF8676),
-    );
-    c.drawArc(
-      Rect.fromCenter(center: Offset.zero, width: 106, height: 44),
-      0,
-      math.pi,
-      false,
-      Paint()
-        ..color = mint.withValues(alpha: .25 + health * .4)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1 + health * 2,
-    );
-    c.restore();
   }
 
   // All cutscene motion is derived from simulation progress, so pausing freezes
@@ -499,8 +468,10 @@ class DemonScene extends FlameGame {
     if (triumph && model.wreckBoss != null) {
       final wreck = model.wreckBoss!;
       c.save();
-      c.translate(wreck.x, wreck.y + p * p * 360);
-      c.rotate(p * .55);
+      c.translate(
+        wreck.x.roundToDouble(),
+        (wreck.y + p * p * 360).roundToDouble(),
+      );
       sprite(
         c,
         6,
@@ -543,14 +514,7 @@ class DemonScene extends FlameGame {
             Paint()..color = color.withValues(alpha: fade),
           );
         }
-        c.drawCircle(
-          origin,
-          5 + age * 52,
-          Paint()
-            ..color = color.withValues(alpha: fade * .35)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1,
-        );
+        effectSprite(c, 5, (age / 1.15 * 4).floor().clamp(0, 3), origin);
       }
       // The rescued sector glows once before the ship accelerates away.
       c.drawRect(

@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Animated victory and travel
-Level completion SHALL show a four-second animated celebration and ship departure, followed by a four-second travel flyby and eased arrival into the next sector. Boss victory SHALL show carrier collapse, medal recognition and +1UP before story-led travel into the next route; the fifth victory SHALL lead to campaign completion. Motion SHALL remain continuous across phases.
+Level completion SHALL show an animated celebration and ship departure, followed by a travel flyby and eased arrival into the next sector. Text-bearing cinematic phases SHALL allow approximately one third of a second more reading time than their preceding durations: ordinary level-clear and travel phases SHALL each last approximately 4.33 seconds rather than four seconds. Boss victory SHALL show carrier collapse, medal recognition and +1UP before story-led travel into the next route, with the same additional reading allowance for its captions; the fifth victory SHALL lead to campaign completion. Motion SHALL remain continuous across phases.
 
 #### Scenario: Sector handoff
 - **WHEN** a level ends

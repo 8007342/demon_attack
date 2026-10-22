@@ -91,7 +91,9 @@ void main() {
         ..core = 1
         ..door = 1;
       m.hitBoss(m.boss!.x);
-      advance(m, 9.6);
+      for (var frame = 0; frame < 900 && m.cycle == 0; frame++) {
+        m.update(1 / 60);
+      }
       expect(m.cycle, 1);
       expect(m.level, 1);
       expect(m.activePowers.length, 3);

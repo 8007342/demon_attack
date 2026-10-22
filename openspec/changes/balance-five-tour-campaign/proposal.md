@@ -7,10 +7,10 @@ Players find the carrier disproportionately hard, and interrupted sessions lose 
 - Add Easy (five starting lives), Normal and Hard (three starting lives), permanent local unlocks, distinct enemy density and points, and mode-specific Top10 boards.
 - Save compact, version-tolerant wave-start checkpoints; Resume restarts that wave without powers.
 - End the campaign after five boss victories, awarding a difficulty-specific medal and +1UP after each; count only active playtime.
-- Add rare complementary heart pieces in Easy/Normal with three unfinished heart slots.
-- Expand later-run waves and introduce scarce, armored wide-wing enemies with distinct defeat animation.
-- Name all route variants, enrich themed parallax, enlarge story interludes and travel progress, and connect carrier collapse, fleet recognition and the next route.
-- Replace boss health bars with symmetric, depleting shield geometry and progressive damage effects; fix controller-label displacement.
+- Add rare complementary heart pieces in Easy/Normal with three unfinished heart slots and clear completed-heart/+1UP feedback; reduce the initial excessive drop frequency.
+- Expand later-run waves and introduce scarce, armored pixel-sprite wide-wing enemies only after the first boss victory, entering slowly after a small swarm and hovering above it with very slow segmented wing poses before a warning and fast heavy dive.
+- Name all route variants, make each location visibly distinct in themed parallax, enlarge story interludes and travel progress, add approximately one third of a second of reading time, and connect carrier collapse, fleet recognition and the next route.
+- Replace boss health bars with symmetric, depleting shield geometry and progressive pixel-frame damage effects; fix controller-label displacement and establish persistent original Atari-era pixel-art/animation rules.
 - Preserve existing scores and extend rows with five medal slots, time, and finishing lives for completed campaigns.
 
 ## Capabilities

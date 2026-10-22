@@ -11,8 +11,8 @@ class DifficultyPolicy {
   double get hostileRate => difficulty == Difficulty.easy ? .9 : 1;
   double get enemyPoints => difficulty == Difficulty.easy ? .75 : 1;
   double get heartDropChance => switch (difficulty) {
-    Difficulty.easy => .04,
-    Difficulty.normal => .03,
+    Difficulty.easy => .012,
+    Difficulty.normal => .008,
     Difficulty.hard => 0,
   };
   int bossHealth(int normal) =>

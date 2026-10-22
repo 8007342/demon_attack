@@ -6,11 +6,19 @@ Present original animated pixel-art worlds and responsive arcade screens with ad
 ## Requirements
 
 ### Requirement: Original pixel artwork
-Demons, player, boss, explosions, pickups, and the controller panel SHALL use a coherent original pixel-art style with animated creature and effect frames.
+Creatures, player, boss, fire, smoke, explosions, warnings, pickups and controller artwork SHALL use original Atari-era-inspired pixel art on fixed low-resolution grids, bounded palettes and nearest-neighbor sampling. Original-game sprites/screenshots SHALL NOT be copied or traced. Creatures and effects SHALL use discrete pixel frames, including runtime-generated art; smooth vector silhouettes, antialiased curves, gradients and continuously deforming flames SHALL NOT replace those frames.
 
 #### Scenario: Creature flight
 - **WHEN** a demon is active
 - **THEN** its wings animate and its damage state remains visually readable
+
+#### Scenario: Enlarged rare creature
+- **WHEN** a large creature is drawn larger than an ordinary demon
+- **THEN** its outline, segmented wings and damage forms retain visible logical pixels and discrete animation poses without smooth vector edges
+
+#### Scenario: Carrier damage and attack warning
+- **WHEN** carrier fire or a rare creature's dive warning is visible
+- **THEN** the effect uses original bounded-palette pixel frames, and the warning is a creature-associated sprite cue rather than an arrow
 
 ### Requirement: Planetary parallax
 Each of the five levels SHALL have a distinct original pixel-art environment with terrain, planets, moons and satellites. Background complexity and visible demon infrastructure SHALL grow toward the carrier and on later cycles, with relative layer motion and smooth transitions that preserve threat readability.

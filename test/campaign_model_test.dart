@@ -27,12 +27,12 @@ void main() {
             );
             rosters.add(m.demons.length);
             expect(m.demons.length, lessThanOrEqualTo(36));
-            expect(m.demons.every((d) => d.homeY <= 230), isTrue);
+            expect(m.demons.every((d) => d.homeY <= 284), isTrue);
             expect(
               m.demons.where((d) => d.isLarge).length,
               lessThanOrEqualTo(1),
             );
-            if (route == 0 && wave < waves) {
+            if (route == 0) {
               expect(m.demons.any((d) => d.isLarge), isFalse);
             }
           }
@@ -130,8 +130,11 @@ void main() {
         drops.add(m.heartPickups.length);
         expect(m.pickups.length, 1000);
       }
+      expect(const DifficultyPolicy(Difficulty.easy).heartDropChance, .012);
+      expect(const DifficultyPolicy(Difficulty.normal).heartDropChance, .008);
+      expect(drops[0], inInclusiveRange(35, 90));
       expect(drops[0], greaterThan(drops[1]));
-      expect(drops[1], inInclusiveRange(80, 220));
+      expect(drops[1], inInclusiveRange(20, 65));
       expect(drops[2], 0);
     },
   );
@@ -186,6 +189,379 @@ void main() {
         expect(m.score, score);
         expect(m.blasts.where((b) => b.archetype == archetype).length, 1);
       }
+    },
+  );
+
+  test('sentinels wait for the swarm, enter protected, and hover above it', () {
+    final m = ArcadeModel();
+    expect(
+      m.restoreCheckpoint({'routeIndex': 1, 'sector': 2, 'wave': 4}),
+      isTrue,
+    );
+    final sentinel = m.demons.singleWhere((d) => d.isLarge);
+    final swarm = m.demons.where((d) => !d.isLarge).toList();
+    expect(sentinel.entranceProgress, 0);
+    expect(sentinel.y, -48);
+    advance(m, 1);
+    expect(sentinel.entranceProgress, 0);
+    expect(sentinel.y, -48);
+    while (!m.combat) {
+      m.update(1 / 60);
+    }
+    m.invulnerable = 100;
+    sentinel.attackLeft = .01;
+    m.moveTo(18);
+    advance(m, .3);
+    m.hitDemon(sentinel);
+    expect(sentinel.hp, sentinel.maxHp);
+    expect(sentinel.entranceProgress, 0);
+    advance(m, 1);
+    expect(sentinel.entranceProgress, inExclusiveRange(0, 1));
+    expect(sentinel.telegraph, 0);
+    expect(sentinel.dive, 0);
+    expect(sentinel.attackLeft, .01);
+    m.hitDemon(sentinel);
+    expect(sentinel.hp, sentinel.maxHp);
+    m.pause();
+    final entrance = sentinel.entranceProgress;
+    advance(m, 1);
+    expect(sentinel.entranceProgress, entrance);
+    m.resume();
+    advance(m, .9);
+    expect(sentinel.entranceProgress, 1);
+    expect(sentinel.telegraph, greaterThan(0));
+    expect(sentinel.y + 32, lessThan(swarm.first.homeY - 28));
+    expect(
+      m.shots.where((s) => s.hostile && s.y < 90),
+      isEmpty,
+      reason: 'sentinel volleys follow the visible warning',
+    );
+    final target = sentinel.targetX;
+    m.moveTo(330);
+    advance(m, 1);
+    expect(sentinel.targetX, target);
+    expect(sentinel.dive, greaterThan(0));
+    final y = sentinel.y;
+    advance(m, .1);
+    expect(sentinel.y - y, greaterThan(28));
+    final hp = sentinel.hp;
+    sentinel.y = ArcadeModel.height + 19;
+    m.update(1 / 60);
+    expect(sentinel.dive, 0);
+    expect(sentinel.y, sentinel.homeY);
+    expect(sentinel.hp, hp);
+    expect(sentinel.homeY, 44);
+  });
+
+  test('every mode reserves a separate upper lane on rare later waves', () {
+    for (final difficulty in Difficulty.values) {
+      var eligible = 0;
+      var total = 0;
+      for (var route = 1; route < 5; route++) {
+        for (var sector = 1; sector <= 4; sector++) {
+          final waves = 3 + (sector - 1) ~/ 2 + route.clamp(0, 3);
+          for (var wave = 1; wave <= waves; wave++) {
+            final m = ArcadeModel()
+              ..restoreCheckpoint({
+                'difficulty': difficulty.name,
+                'routeIndex': route,
+                'sector': sector,
+                'wave': wave,
+              });
+            total++;
+            final large = m.demons.where((d) => d.isLarge).toList();
+            if (large.isEmpty) continue;
+            eligible++;
+            expect(large, hasLength(1));
+            expect(wave, greaterThanOrEqualTo(3));
+            expect(large.single.homeY, 44);
+            expect(
+              m.demons.where((d) => !d.isLarge).every((d) => d.homeY >= 124),
+              isTrue,
+            );
+          }
+        }
+      }
+      expect(eligible, greaterThan(0));
+      expect(eligible, lessThan(total / 2));
+    }
+  });
+
+  test(
+    'heart assembly preserves real slots, pauses, and resets on restart',
+    () {
+      final m = ArcadeModel()..start();
+      m.mode = RunMode.playing;
+      m.collectHeart(HeartPart.top);
+      m.collectHeart(HeartPart.left);
+      m.collectHeart(HeartPart.right);
+      expect(m.lastCompletedHeartSlot, 0);
+      expect(m.heartAssemblyLeft, .85);
+      expect(m.heartSlots, [0, 0, 0]);
+      expect(m.lives, 4);
+      m.collectHeart(HeartPart.right);
+      expect(m.heartSlots, [2, 0, 0]);
+      advance(m, .2);
+      final remaining = m.heartAssemblyLeft;
+      expect(remaining, lessThan(.85));
+      m.pause();
+      advance(m, 1);
+      expect(m.heartAssemblyLeft, remaining);
+      m.resume();
+      advance(m, 1);
+      expect(m.heartAssemblyLeft, 0);
+      m.restoreCheckpoint(m.checkpoint());
+      expect(m.lastCompletedHeartSlot, isNull);
+      expect(m.heartAssemblyLeft, 0);
+      m.start();
+      expect(m.heartSlots, [0, 0, 0]);
+    },
+  );
+
+  test('last-stand eligibility is seeded, rare, and limited to sentinels', () {
+    final counts = <int>[];
+    for (final difficulty in Difficulty.values) {
+      var eligible = 0;
+      for (var seed = 0; seed < 200; seed++) {
+        final snapshot = {
+          'difficulty': difficulty.name,
+          'routeIndex': 1,
+          'sector': 2,
+          'wave': 4,
+        };
+        final m = ArcadeModel(seed: seed)..restoreCheckpoint(snapshot);
+        final repeat = ArcadeModel(seed: seed)..restoreCheckpoint(snapshot);
+        final d = m.demons.singleWhere((d) => d.isLarge);
+        expect(
+          d.lastStandEligible,
+          repeat.demons.singleWhere((d) => d.isLarge).lastStandEligible,
+        );
+        if (d.lastStandEligible) eligible++;
+        expect(
+          m.demons.where((d) => !d.isLarge).any((d) => d.lastStandEligible),
+          isFalse,
+        );
+      }
+      counts.add(eligible);
+      expect(eligible, inInclusiveRange(10, 80));
+    }
+    expect(counts[0], lessThan(counts[1]));
+    expect(counts[1], counts[2]);
+  });
+
+  test('low-health last stand samples aim once, climbs, pauses and rushes straight', () {
+    final m = ArcadeModel()..start();
+    m.mode = RunMode.playing;
+    m.invulnerable = 0;
+    m.demons.clear();
+    final d = Demon(
+      90,
+      90,
+      2,
+      16,
+      0,
+      archetype: EnemyArchetype.armoredSentinel,
+      lastStandEligible: true,
+    );
+    m.demons.addAll([d, Demon(20, 70, 0, 1000, 0)]);
+    d.hp = 6;
+    d.entranceProgress = 0;
+    m.hitDemon(d);
+    expect(d.hp, 6);
+    expect(d.lastStand, isFalse);
+    d.entranceProgress = 1;
+    m.hitDemon(d);
+    expect(d.lastStand, isFalse);
+    m.hitDemon(d);
+    expect(d.hp, 4);
+    expect(d.lastStand, isTrue);
+    expect(d.telegraph, .9);
+    expect(d.rushing, isFalse);
+    expect(d.targetX, 180);
+    m.moveTo(330);
+    advance(m, .3);
+    expect(d.y, lessThan(90));
+    expect(d.x, 90);
+    expect(d.lastStandTellProgress, closeTo(1 / 3, .0001));
+    final tell = d.telegraph;
+    m.hitDemon(d);
+    expect(d.telegraph, tell, reason: 'another hit must not restart the tell');
+    expect(d.targetX, 180);
+    m.pause();
+    advance(m, 1);
+    expect(d.telegraph, tell);
+    m.resume();
+    advance(m, .6);
+    expect(d.rushing, isTrue);
+    expect(d.rushVx * d.rushVx + d.rushVy * d.rushVy, closeTo(600 * 600, .001));
+    final vx = d.rushVx, vy = d.rushVy;
+    final x = d.x, y = d.y;
+    m.pause();
+    advance(m, .5);
+    expect(d.x, x);
+    expect(d.y, y);
+    m.resume();
+    advance(m, .1);
+    expect(d.x, closeTo(x + vx * .1, .0001));
+    expect(d.y, closeTo(y + vy * .1, .0001));
+    m.hitDemon(d);
+    expect(d.rushVx, vx);
+    expect(d.rushVy, vy);
+    expect(d.targetX, 180);
+    final lives = m.lives;
+    advance(m, 1);
+    expect(m.demons, isNot(contains(d)));
+    expect(
+      m.lives,
+      lives,
+      reason: 'moving after the tell dodges the sampled line',
+    );
+    expect(m.kills, 0);
+    expect(m.score, 0);
+    expect(m.pickups, isEmpty);
+    expect(m.heartPickups, isEmpty);
+    expect(m.blasts.where((b) => b.isLarge), hasLength(1));
+    m.hitDemon(d);
+    expect(m.kills, 0);
+  });
+
+  test('Easy slows the last-stand tell and fixed rush by ten percent', () {
+    for (final difficulty in Difficulty.values) {
+      final m = ArcadeModel()..start(difficulty: difficulty);
+      m.mode = RunMode.playing;
+      m.demons.clear();
+      final d = Demon(
+        90,
+        90,
+        2,
+        8,
+        0,
+        archetype: EnemyArchetype.shieldSentinel,
+        lastStandEligible: true,
+      )..hp = 3;
+      m.demons.add(d);
+      m.hitDemon(d);
+      m.moveTo(330);
+      advance(m, .5);
+      expect(d.telegraph, closeTo(.9 - .5 * m.policy.hostileRate, .0001));
+      advance(m, .4);
+      if (difficulty == Difficulty.easy) {
+        expect(d.rushing, isFalse);
+        expect(d.telegraph, closeTo(.09, .0001));
+        advance(m, .1);
+      }
+      expect(d.rushing, isTrue);
+      final expectedSpeed = difficulty == Difficulty.easy ? 540 : 600;
+      expect(
+        d.rushVx * d.rushVx + d.rushVy * d.rushVy,
+        closeTo(expectedSpeed * expectedSpeed, .001),
+      );
+      final vx = d.rushVx, vy = d.rushVy;
+      m.moveTo(18);
+      advance(m, .1);
+      expect(d.rushVx, vx);
+      expect(d.rushVy, vy);
+    }
+  });
+
+  test('last-stand impact respects lives, invulnerability and shield without rewards', () {
+    for (final protection in ['none', 'invulnerable', 'shield', 'lastLife']) {
+      final m = ArcadeModel()..start();
+      m.mode = RunMode.playing;
+      m.invulnerable = protection == 'invulnerable' ? 10 : 0;
+      m.lives = protection == 'lastLife' ? 1 : 3;
+      m.kills = 4;
+      if (protection == 'shield') m.collect(Power.shield);
+      m.demons.clear();
+      final d =
+          Demon(
+              m.shipX,
+              ArcadeModel.shipY,
+              2,
+              8,
+              0,
+              archetype: EnemyArchetype.shieldSentinel,
+              lastStandEligible: true,
+            )
+            ..lastStand = true
+            ..rushing = true;
+      m.demons.addAll([d, Demon(20, 70, 0, 1000, 0)]);
+      m.update(1 / 60);
+      expect(m.demons, isNot(contains(d)));
+      expect(
+        m.lives,
+        protection == 'lastLife'
+            ? 0
+            : protection == 'none'
+            ? 2
+            : 3,
+      );
+      expect(m.hasPower(Power.shield), isFalse);
+      if (protection == 'lastLife') expect(m.mode, RunMode.gameOver);
+      expect(m.kills, 4);
+      expect(m.score, 0);
+      expect(m.pickups, isEmpty);
+      expect(m.heartPickups, isEmpty);
+      expect(m.blasts.where((b) => b.isLarge), hasLength(1));
+      m.hitDemon(d);
+      expect(m.kills, 4);
+    }
+  });
+
+  test(
+    'shooting interrupts last-stand tell or rush and awards one normal kill',
+    () {
+      for (final rushing in [false, true]) {
+        final m = ArcadeModel()..start(difficulty: Difficulty.hard);
+        m.mode = RunMode.playing;
+        m.kills = 4;
+        final d = Demon(
+          90,
+          90,
+          2,
+          8,
+          0,
+          archetype: EnemyArchetype.shieldSentinel,
+          lastStandEligible: true,
+        )..hp = 3;
+        m.demons.clear();
+        m.demons.addAll([d, Demon(20, 70, 0, 1000, 0)]);
+        m.hitDemon(d);
+        m.hitDemon(d);
+        d.rushing = rushing;
+        m.shots.add(Shot(d.x, d.y, 0, 0));
+        m.update(1 / 60);
+        expect(m.demons, isNot(contains(d)));
+        expect(m.kills, 5);
+        expect(m.score, 600);
+        expect(m.pickups, hasLength(1));
+        expect(m.blasts.where((b) => b.isLarge), hasLength(1));
+        m.hitDemon(d);
+        expect(m.kills, 5);
+        expect(m.score, 600);
+      }
+    },
+  );
+
+  test(
+    'ineligible low-health sentinels keep their ordinary reusable dives',
+    () {
+      final m = ArcadeModel()..start();
+      m.mode = RunMode.playing;
+      final d = Demon(90, 44, 2, 8, 0, archetype: EnemyArchetype.shieldSentinel)
+        ..hp = 2;
+      m.demons.add(d);
+      m.hitDemon(d);
+      expect(d.lastStand, isFalse);
+      expect(d.telegraph, .9);
+      d.telegraph = 0;
+      d.dive = .1;
+      d.y = ArcadeModel.height + 19;
+      m.update(1 / 60);
+      expect(m.demons, contains(d));
+      expect(d.dive, 0);
+      expect(d.y, 44);
+      expect(d.hp, 1);
     },
   );
 

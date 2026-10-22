@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// Three complementary polygons share one heart outline: left/right/top = 1/2/4.
+/// A deliberately stepped 16px heart, shared by pickups and inventory slots.
 class HeartParts extends StatelessWidget {
   const HeartParts({super.key, required this.mask, this.size = 24});
   final int mask;
   final double size;
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Heart parts: ${mask & 7}',
+    label: mask == 7
+        ? 'Complete heart, extra life'
+        : 'Heart pieces: ${[if (mask & 1 != 0) 'left', if (mask & 2 != 0) 'right', if (mask & 4 != 0) 'top'].join(', ')}${mask == 0 ? 'empty' : ''}',
     child: CustomPaint(
       size: Size.square(size),
       painter: HeartPartPainter(mask),
@@ -18,57 +20,101 @@ class HeartParts extends StatelessWidget {
 class HeartPartPainter extends CustomPainter {
   const HeartPartPainter(this.mask);
   final int mask;
-  static Path outline() => Path()
-    ..moveTo(16, 30)
-    ..lineTo(3, 17)
-    ..cubicTo(-5, 7, 7, -1, 16, 7)
-    ..cubicTo(25, -1, 37, 7, 29, 17)
-    ..close();
+  static const rows = [
+    '................',
+    '..####....####..',
+    '.######..######.',
+    '################',
+    '################',
+    '################',
+    '################',
+    '.##############.',
+    '..############..',
+    '...##########...',
+    '....########....',
+    '.....######.....',
+    '......####......',
+    '.......##.......',
+    '................',
+    '................',
+  ];
+
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
-    canvas.scale(size.width / 32, size.height / 32);
-    canvas.drawPath(outline(), Paint()..color = const Color(0xFF29394A));
-    canvas.save();
-    canvas.clipPath(outline());
-    final pieces = [
-      Path()
-        ..moveTo(0, 15)
-        ..lineTo(16, 15)
-        ..lineTo(16, 32)
-        ..lineTo(0, 32)
-        ..close(),
-      Path()
-        ..moveTo(16, 15)
-        ..lineTo(32, 15)
-        ..lineTo(32, 32)
-        ..lineTo(16, 32)
-        ..close(),
-      Path()..addRect(const Rect.fromLTWH(0, 0, 32, 15)),
-    ];
-    for (var i = 0; i < 3; i++) {
-      if (mask & (1 << i) != 0) {
-        canvas.drawPath(pieces[i], Paint()..color = const Color(0xFFFF8676));
+    canvas.scale(size.width / 16, size.height / 16);
+    final paint = Paint()..isAntiAlias = false;
+    for (var y = 0; y < rows.length; y++) {
+      for (var x = 0; x < 16; x++) {
+        if (rows[y][x] != '#') continue;
+        final part = y < 6
+            ? 4
+            : x < 8
+            ? 1
+            : 2;
+        final edge =
+            x == 0 ||
+            x == 15 ||
+            y == 0 ||
+            y == 15 ||
+            rows[y][x - 1] != '#' ||
+            rows[y][x + 1] != '#' ||
+            rows[y - 1][x] != '#' ||
+            rows[y + 1][x] != '#';
+        final seam = (y == 5 || y >= 6 && x == 7) && mask != 7;
+        paint.color = edge
+            ? mask == 7
+                  ? const Color(0xFFFFD594)
+                  : const Color(0xFF758A9E)
+            : seam
+            ? const Color(0xFF080D18)
+            : mask & part != 0
+            ? const Color(0xFFFF8676)
+            : const Color(0xFF263547);
+        canvas.drawRect(Rect.fromLTWH(x.toDouble(), y.toDouble(), 1, 1), paint);
       }
-      canvas.drawPath(
-        pieces[i],
-        Paint()
-          ..color = const Color(0xFF080D18)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
-      );
     }
-    canvas.restore();
-    canvas.drawPath(
-      outline(),
-      Paint()
-        ..color = const Color(0xFFF4CA79)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = .8,
-    );
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(HeartPartPainter oldDelegate) => mask != oldDelegate.mask;
+}
+
+class HeartInventory extends StatelessWidget {
+  const HeartInventory({super.key, required this.slots, this.completedSlot});
+  final List<int> slots;
+  final int? completedSlot;
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: List.generate(3, (index) {
+      final completed = completedSlot == index && slots[index] == 0;
+      final mask = completed ? 7 : slots[index];
+      final count = [1, 2, 4].where((part) => mask & part != 0).length;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            HeartParts(
+              key: ValueKey('heart-slot-$index'),
+              mask: mask,
+              size: 22,
+            ),
+            Text(
+              completed ? '+1' : '$count/3',
+              key: ValueKey('heart-count-$index'),
+              style: TextStyle(
+                fontSize: 8,
+                color: completed
+                    ? const Color(0xFFFFD594)
+                    : const Color(0xFFB5C4D2),
+              ),
+            ),
+          ],
+        ),
+      );
+    }),
+  );
 }

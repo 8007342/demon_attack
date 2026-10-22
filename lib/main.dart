@@ -85,6 +85,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Map<String, dynamic>? savedCheckpoint;
   Difficulty boardDifficulty = Difficulty.normal;
   bool handledRunEnd = false;
+  String? heartNotice;
+  double heartNoticeUntil = 0;
   bool muted = false, loading = false, submitted = false;
   String? screen, error, boardError;
   bool boardLoading = true;
@@ -158,6 +160,14 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           audioCue('travel', model.level, 1, model.cycle);
         case 'victory':
           audioCue('victory', model.level, 1, model.cycle);
+        case 'heart':
+          heartNotice = 'HEART PIECE COLLECTED';
+          heartNoticeUntil = model.clock + 1.25;
+          audioSfx('heart');
+        case 'extraLife':
+          heartNotice = 'HEART ASSEMBLED · +1UP';
+          heartNoticeUntil = model.clock + 1.6;
+          audioSfx('extraLife');
         case 'checkpoint':
           savedCheckpoint = model.checkpoint();
           storage.saveCheckpoint(savedCheckpoint!);
@@ -206,6 +216,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       screen = null;
       submitted = false;
       handledRunEnd = false;
+      heartNotice = null;
     });
     _tick();
     focus.requestFocus();
@@ -218,6 +229,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       screen = null;
       submitted = false;
       handledRunEnd = false;
+      heartNotice = null;
       model.start(difficulty: difficulty);
     });
     _tick();
@@ -863,22 +875,31 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               style: const TextStyle(color: Color(0xFF839DB5), fontSize: 8),
             ),
             const SizedBox(height: 3),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '♥ ×${model.lives}',
-                  style: const TextStyle(
-                    color: Color(0xFFFF8C89),
-                    fontSize: 12,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '♥ ×${model.lives}',
+                    style: const TextStyle(
+                      color: Color(0xFFFF8C89),
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                if (model.difficulty != Difficulty.hard) ...[
-                  const SizedBox(width: 7),
-                  for (var index = 0; index < 3; index++)
-                    HeartParts(mask: model.heartSlots[index], size: 16),
+                  if (model.difficulty != Difficulty.hard) ...[
+                    const SizedBox(width: 7),
+                    HeartInventory(
+                      slots: model.heartSlots,
+                      completedSlot: model.heartAssemblyLeft > 0
+                          ? model.lastCompletedHeartSlot
+                          : null,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ],
         ),
@@ -900,7 +921,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     return Column(
       children: [
         Container(
-          height: 82,
+          height: 94,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: const BoxDecoration(
             color: Color(0xF0080D18),
@@ -918,6 +939,34 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     child: GameWidget(game: _arenaProxy, autofocus: false),
                   ),
                 ),
+                if (heartNotice != null &&
+                    model.clock < heartNoticeUntil &&
+                    model.mode != RunMode.paused)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    right: 8,
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          color: const Color(0xE8080D18),
+                          child: Text(
+                            heartNotice!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFFFFD594),
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 if (model.cinematic && model.mode != RunMode.paused)
                   Positioned.fill(child: _interlude()),
                 if (model.mode == RunMode.paused)
@@ -1015,11 +1064,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         : CampaignStory.name(model.level, model.cycle);
     final story = bossVictory
         ? model.medals == 5
-              ? 'Five carriers have fallen. The brood command is broken. The frontier remembers your courage.'
-              : 'Your courage carries the fleet forward. Another carrier guards the route inward. Take this honor, and keep flying.'
-        : travel || clear
+              ? 'Five carriers fallen. Brood command is broken. The frontier is free.'
+              : 'A medal for your courage. A life for the journey. Keep flying, defender.'
+        : clear
+        ? CampaignStory.departure(model.level, model.cycle)
+        : travel
         ? CampaignStory.travel(model.level, model.cycle)
-        : CampaignStory.arrival(model.level, model.cycle);
+        : CampaignStory.briefing(model.level, model.cycle);
     return IgnorePointer(
       child: LayoutBuilder(
         builder: (context, bounds) {
@@ -1038,8 +1089,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       constraints: const BoxConstraints(maxWidth: 460),
                       margin: const EdgeInsets.symmetric(horizontal: 14),
                       padding: EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: compact ? 12 : 26,
+                        horizontal: 16,
+                        vertical: compact ? 10 : 20,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xD9080D18),
@@ -1057,7 +1108,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: color,
-                              fontSize: compact ? 12 : 15,
+                              fontSize: compact ? 16 : 19,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.2,
                             ),
@@ -1067,7 +1118,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                             destination.toUpperCase(),
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: compact ? 20 : 28,
+                              fontSize: compact ? 28 : 36,
                               height: 1.15,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.5,
@@ -1088,7 +1139,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                                   child: Medal(
                                     difficulty: model.difficulty,
                                     ordinal: (model.medals - 1).clamp(0, 4),
-                                    size: compact ? 42 : 72,
+                                    size: compact ? 40 : 64,
                                   ),
                                 ),
                                 const SizedBox(width: 20),
@@ -1111,7 +1162,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                               story,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: compact ? 12 : 16,
+                                fontSize: compact ? 18 : 22,
                                 height: 1.5,
                                 color: const Color(0xFFCCD9E6),
                               ),

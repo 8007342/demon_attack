@@ -53,14 +53,55 @@ abstract final class CampaignStory {
   ];
   static String name(int level, int cycle) =>
       destinations[(level - 1).clamp(0, 4)][cycle.clamp(0, 4)];
+  static const routeDetails = [
+    [
+      'A lost signal flickers beyond the frontier outpost. Follow it inward.',
+      'Crowded roofs shelter the last frontier families. Hold their sky.',
+      'Cargo cranes line the dark piers. Reopen the fleet supply route.',
+      'Relay lights climb the mountain ridges. Trace their hidden signal.',
+      'Uplink arrays surround frontier command. Break the brood blockade.',
+    ],
+    [
+      'Abandoned satellites mark the route through the planetary rings.',
+      'Patrol relays sweep the belt. Slip between their watch stations.',
+      'Broken hulls drift among the rocks. The brood left no survivors.',
+      'Orbital gantries cradle unfinished warships. Cut their supply line.',
+      'Fortress pylons seal the rings. Open a path for the fleet.',
+    ],
+    [
+      'Ember light reveals a foundry signal beneath the volcanic crust.',
+      'Ash drifts over buried settlements. The foundries are still awake.',
+      'Furnace stacks feed the brood engines. Silence their production.',
+      'Lava channels converge at the crucible. Push through the heat.',
+      'The brood heart burns beneath the forges. Extinguish its beacon.',
+    ],
+    [
+      'Ancient towers answer one command. Follow it into the hollow.',
+      'Ruined arches mark the outskirts. Something watches from within.',
+      'Tiered towers relay the command signal. Break their chain.',
+      'Buried vaults pulse beneath the ruins. Their defenses are waking.',
+      'The throne beacon calls the last carrier. Sever its command.',
+    ],
+    [
+      'The carrier guards the inward route. Break its field; time the hatch.',
+      'The ark carries a new brood. Strike before it reaches the frontier.',
+      'Siege armor shields the next carrier. Watch for its opening.',
+      'The citadel commands the shipyards. Bring its fortress hull down.',
+      'The flagship guards their base. This is the final stand.',
+    ],
+  ];
+  static String briefing(int level, int cycle) =>
+      routeDetails[(level - 1).clamp(0, 4)][cycle.clamp(0, 4)];
   static String arrival(int level, int cycle) =>
-      '${name(level, cycle)}. ${arrivals[(level - 1).clamp(0, 4)]}';
+      '${name(level, cycle)}. ${briefing(level, cycle)}';
+  static String departure(int level, int cycle) =>
+      '${name(level, cycle)} is secure. The fleet follows your signal inward.';
   static String travel(int level, int cycle) {
     if (level == 5 && cycle >= 4) {
-      return 'The Brood Flagship is falling. The frontier is free. Return home, fleet champion.';
+      return 'The frontier is free. Return home, fleet champion.';
     }
     final nextLevel = level == 5 ? 1 : level + 1;
     final nextCycle = level == 5 ? cycle + 1 : cycle;
-    return '${victories[(level - 1).clamp(0, 4)]} Set course for ${name(nextLevel, nextCycle)}. ${level == 5 ? 'The recovered charts reveal a deeper route toward their base.' : 'Follow the signal before the brood regroups.'}';
+    return 'Set course for ${name(nextLevel, nextCycle)}. ${briefing(nextLevel, nextCycle)}';
   }
 }

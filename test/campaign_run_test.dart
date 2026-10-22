@@ -38,7 +38,7 @@ void main() {
             if (m.level == 5) break;
             totalWaves++;
             expect(m.demons.length, lessThanOrEqualTo(36));
-            expect(m.demons.every((d) => d.homeY <= 230), isTrue);
+            expect(m.demons.every((d) => d.homeY <= 284), isTrue);
             expect(
               m.demons.where((d) => d.isLarge).length,
               lessThanOrEqualTo(1),

@@ -25,6 +25,34 @@ void clearWave(ArcadeModel model) {
 }
 
 void main() {
+  test('story phases add reading time and salvage stays two seconds', () {
+    final m = ArcadeModel()..start();
+    expect(m.transitionDuration, closeTo(2.3 + 1 / 3, .0001));
+    reach(m, RunMode.playing);
+    clearWave(m);
+    expect(m.transitionDuration, closeTo(1.4 + 1 / 3, .0001));
+    while (m.wave < m.wavesPerLevel) {
+      reach(m, RunMode.playing);
+      clearWave(m);
+    }
+    reach(m, RunMode.playing);
+    clearWave(m);
+    expect(m.mode, RunMode.salvage);
+    expect(m.transitionDuration, 2);
+    reach(m, RunMode.levelClear);
+    expect(m.transitionDuration, closeTo(4 + 1 / 3, .0001));
+    reach(m, RunMode.travel);
+    expect(m.transitionDuration, closeTo(4 + 1 / 3, .0001));
+    m.restoreCheckpoint({'sector': 5});
+    reach(m, RunMode.playing);
+    final boss = m.boss!..shield = 0;
+    boss
+      ..core = 1
+      ..door = 1;
+    m.hitBoss(boss.x);
+    expect(m.transitionDuration, closeTo(5.5 + 1 / 3, .0001));
+  });
+
   test('only the last wave advances each level through clear and travel', () {
     final model = ArcadeModel()..start();
     for (var level = 1; level <= 4; level++) {

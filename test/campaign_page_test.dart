@@ -5,6 +5,7 @@ import 'package:demon_attack/main.dart';
 import 'package:demon_attack/services/run_storage.dart';
 import 'package:demon_attack/services/scores.dart';
 import 'package:demon_attack/widgets/medal.dart';
+import 'package:demon_attack/widgets/heart_parts.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -183,6 +184,61 @@ void main() {
       expect(find.byType(Medal), findsNWidgets(5));
       expect(find.text('01:02'), findsOneWidget);
       expect(find.text('♥ ×7'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await disposePage(tester);
+    },
+  );
+  testWidgets(
+    'heart assembly flashes a full heart and life reward before slot reuse',
+    (tester) async {
+      await showPage(tester, RunStorage(store: MemoryLocalStore()));
+      await tester.tap(find.text('START GAME  →'));
+      await tester.pump();
+      final scene = sceneOf(tester);
+      scene.model.mode = RunMode.playing;
+      for (var i = 0; i < 3; i++) {
+        scene.model.collectHeart(HeartPart.left);
+      }
+      scene.onTick();
+      await tester.pump();
+      expect(find.text('1/3'), findsNWidgets(3));
+      expect(find.text('HEART PIECE COLLECTED'), findsOneWidget);
+      expect(scene.model.collectHeart(HeartPart.left), isFalse);
+      scene.model.collectHeart(HeartPart.right);
+      scene.model.collectHeart(HeartPart.top);
+      scene.onTick();
+      await tester.pump();
+      expect(scene.model.lives, 4);
+      expect(scene.model.heartSlots, [0, 1, 1]);
+      expect(find.text('HEART ASSEMBLED · +1UP'), findsOneWidget);
+      expect(find.text('♥ ×4'), findsOneWidget);
+      expect(
+        tester
+            .widget<HeartParts>(find.byKey(const ValueKey('heart-slot-0')))
+            .mask,
+        7,
+      );
+      scene.model.pause();
+      scene.update(1);
+      expect(scene.model.heartAssemblyLeft, greaterThan(0));
+      scene.model.resume();
+      scene.model.collectHeart(HeartPart.left);
+      scene.onTick();
+      await tester.pump();
+      expect(
+        tester
+            .widget<HeartParts>(find.byKey(const ValueKey('heart-slot-0')))
+            .mask,
+        1,
+        reason: 'A newly stored piece remains visible during the previous reward flash',
+      );
+      expect(find.text('1/3'), findsNWidgets(3));
+      for (var i = 0; i < 20; i++) {
+        scene.update(.1);
+      }
+      await tester.pump();
+      expect(find.text('HEART ASSEMBLED · +1UP'), findsNothing);
+      expect(scene.model.heartSlots, [1, 1, 1]);
       expect(tester.takeException(), isNull);
       await disposePage(tester);
     },
