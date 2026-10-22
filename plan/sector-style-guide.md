@@ -16,4 +16,18 @@ Every prompt used the same production constraints: original intricate 16-bit pix
 
 Complete worlds crossfade with `DemonScene.environment`: both the source painting and its animated geometry blend. Travel begins shifting toward the next sector before arrival. Paintings use nearest-neighbor sampling and a dark veil so projectiles, vulnerable cores and creature silhouettes remain the brightest gameplay elements. Cinematic blackout boundaries and letterbox behavior are preserved. Salvage remains an active control phase and retains the normal ship and pickups.
 
-Elite creatures use the existing animated atlas plus a rotating broken halo, outer armor plates and long horns. Each hit removes a plate and shortens the horns. This remains legible beyond the three intermediate atlas molts, up to seven hit stages, while preserving final angry forms.
+## Named route scenery requirements
+
+Every route variant must be identifiable by its scenery at ordinary phone size with the destination label hidden. A new name, tint, generic tower count or more tiny lights is insufficient. Keep the original sector palette and painting as a foundation, then change the silhouette, placement and scale of location-specific pixel-grid structures. Use at least one clear foreground/middle-distance landmark plus supporting details, concentrated around the arena edges and horizon. Parallax movement may be continuous; the artwork retains crisp pixels.
+
+| Sector family | Route variants and required visual distinction |
+| --- | --- |
+| Krybor | Frontier: sparse outpost beacons and low shelters. Slums: dense irregular stacked dwellings, patchwork roofs and narrow gaps. Docks: recognizable docking arms/gantries, open berths and cargo stacks. Mountains: stepped peaks, ridges and sparse infrastructure. Command: orderly fortified terraces, command towers and antenna arrays. |
+| Ringfall | Original ringed belt. Patrol Belt: repeated patrol relays and guarded lanes. Wreckfields: broken hull silhouettes and debris clusters. Shipyards: construction frames, docking ribs and unfinished hulls. Blockade: aligned defensive platforms and barriers. |
+| Ember | Original volcanic moon. Ashlands: low ash dunes and sparse burned spires. Forges: furnace stacks and industrial channels. Crucible: enclosed crater walls around a concentrated molten basin. Brood Heart: clustered organic-looking pixel nests and a central pulsating furnace silhouette. |
+| Hollow | Original floating ruins. Outskirts: sparse broken arches on separated rocks. Towers: prominent vertical gothic clusters. Catacombs: layered vault mouths and recessed crypt structures. Throne: a monumental symmetrical seat/keep surrounded by subordinate ruins. |
+| Carrier | Original carrier territory. Brood Ark: clustered brood pods and large transport silhouettes. Siege Carrier: gun platforms and fortified outriggers. Brood Citadel: dense nested ramparts and spires. Brood Flagship: dominant command-fortress silhouette and organized escort infrastructure. |
+
+Compare Slums against Docks explicitly in screenshot review. Their difference must survive the dark veil and small display scale: dense inhabited blocks versus open berths and cranes. Perform the same label-hidden comparison for the other families. Captions and arrival names must describe the visible destination, and the travel crossfade must reveal those landmarks before arrival.
+
+Elite creatures use the existing animated atlas plus a broken halo, outer armor plates and long horns. Each hit removes a plate and shortens the horns. This remains legible beyond the three intermediate atlas molts, up to seven hit stages, while preserving final angry forms. New combat overlays must follow the fixed logical pixel grid and discrete frame rules in [style-guide.md](style-guide.md); scenery's continuous parallax is not permission to draw smooth vector creatures or fire.

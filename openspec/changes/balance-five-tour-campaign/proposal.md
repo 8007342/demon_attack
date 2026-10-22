@@ -1,0 +1,33 @@
+# Proposal
+
+## Why
+Players find the carrier disproportionately hard, and interrupted sessions lose all progress. A finite, narrated campaign with adaptive difficulty unlocks and visible achievements will make progress approachable and rewarding while preserving a demanding Hard mode.
+
+## What Changes
+- Add Easy (five starting lives), Normal and Hard (three starting lives), permanent local unlocks, distinct enemy density and points, and mode-specific Top10 boards.
+- Save compact, version-tolerant wave-start checkpoints; Resume restarts that wave without powers.
+- End the campaign after five boss victories, awarding a difficulty-specific medal and +1UP after each; count only active playtime.
+- Add rare complementary four-quarter heart pieces in Easy/Normal with three unfinished heart slots and clear completed-heart/+1UP feedback; reduce the initial excessive drop frequency.
+- Expand later-run waves and introduce scarce, armored pixel-sprite wide-wing enemies only after the first boss victory, entering slowly after a small swarm and hovering above it with very slow segmented wing poses before a warning and fast heavy dive.
+- Name all route variants, make each location visibly distinct in themed parallax, enlarge story interludes and travel progress, add approximately one third of a second of reading time, and connect carrier collapse, fleet recognition and the next route.
+- Replace boss health bars with symmetric, depleting shield geometry and progressive pixel-frame damage effects; fix controller-label displacement and establish persistent original Atari-era pixel-art/animation rules.
+- Add Powerful/Large fire with two mutually exclusive offensive groups, independent Shield and nine-second timers; preserve core protection against splash.
+- Add finite reinforcement flocks, sentinel evasion and real shield/armor layers, articulated wing strokes, subtler creature-only tells and carrier rage movement.
+- Migrate old heart saves to four quarters; let Hard unlock Easy and simplify difficulty score tabs.
+- Replace repeated first-wave arrival prose with contextual shuffled illustrated tips, a 4.5-second default, Hold/Resume and an untimed Field Guide informed by primary usability guidance.
+- Preserve existing scores and extend rows with five medal slots, time, and finishing lives for completed campaigns.
+
+## Capabilities
+
+### New Capabilities
+- `run-persistence`: compatible wave checkpoints and permanent local difficulty unlocks.
+
+### Modified Capabilities
+- `arcade-combat`: difficulty tuning, density, armored special enemies and heart collection.
+- `arcade-progression`: five-boss ending, rewards and active playtime.
+- `arcade-presentation`: medals, readable story scenes, named parallax routes and boss feedback.
+- `high-scores`: per-mode boards and backward-compatible achievement metadata.
+- `demon-attack`: unlocked mode selection, Resume and named HUD destinations.
+
+## Impact
+Flutter/Flame model, scene, backgrounds, story, landing/HUD/controller widgets, a local storage abstraction, score client and Cloudflare Durable Object schema/API; model, widget, migration and browser verification. Existing endless-run expectations must change. Existing scores remain Normal entries with absent metadata defaulted. No production deployment is included.

@@ -24,8 +24,8 @@ void main() {
       await tester.tap(start);
       await tester.pump();
       expect(find.text('SCORE'), findsOneWidget);
-      expect(find.text('LV 01 / CYCLE 1'), findsOneWidget);
-      expect(find.text('INCOMING TRANSMISSION'), findsOneWidget);
+      expect(find.text('KRYBOR'), findsOneWidget);
+      expect(find.text('TACTICAL BRIEFING'), findsOneWidget);
       expect(find.text('◀     SLIDE TO PILOT     ▶'), findsOneWidget);
       expect(find.byTooltip('Pause game'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -51,7 +51,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
     await tester.pump();
     expect(find.text('SIGNAL PAUSED'), findsOneWidget);
-    await tester.tap(find.text('RESUME'));
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
     await tester.pump();
     expect(find.text('SIGNAL PAUSED'), findsNothing);
     expect(tester.takeException(), isNull);

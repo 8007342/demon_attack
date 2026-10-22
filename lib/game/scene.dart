@@ -1,9 +1,12 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+
 import 'model.dart';
 import 'sector_background.dart';
+import '../widgets/heart_parts.dart';
 
 const ink = Color(0xFF080D18);
 const mint = Color(0xFF70F5D5);
@@ -14,7 +17,7 @@ class DemonScene extends FlameGame {
   DemonScene(this.model, this.onTick);
   final ArcadeModel model;
   final VoidCallback onTick;
-  ui.Image? atlas, sky;
+  ui.Image? atlas, effectsAtlas, sky;
   final sectors = SectorBackground();
   double ambient = 0, _notify = 0;
   double environment = 0;
@@ -26,6 +29,7 @@ class DemonScene extends FlameGame {
   Future<void> onLoad() async {
     try {
       atlas = await images.load('combat.png');
+      effectsAtlas = await images.load('sentinel-effects.png');
     } catch (e) {
       assetError = '$e';
     }
@@ -104,10 +108,14 @@ class DemonScene extends FlameGame {
     double width, {
     double? height,
     Color? tint,
+    double opacity = 1,
   }) {
     final a = atlas;
     if (a == null) return;
-    final paint = Paint()..filterQuality = FilterQuality.none;
+    final paint = Paint()
+      ..isAntiAlias = false
+      ..color = Colors.white.withValues(alpha: opacity)
+      ..filterQuality = FilterQuality.none;
     if (tint != null) {
       paint.colorFilter = ColorFilter.mode(tint, BlendMode.srcATop);
     }
@@ -119,19 +127,72 @@ class DemonScene extends FlameGame {
     );
   }
 
+  // Every effects cell is 64x32 logical pixels, enlarged exactly 2x in
+  // the PNG. Integer destinations preserve the original square-pixel grid.
+  void effectSprite(
+    Canvas c,
+    int row,
+    int col,
+    Offset center, {
+    double scale = 1,
+    Color? tint,
+    double opacity = 1,
+  }) {
+    final image = effectsAtlas;
+    if (image == null) return;
+    final paint = Paint()
+      ..isAntiAlias = false
+      ..color = Colors.white.withValues(alpha: opacity)
+      ..filterQuality = FilterQuality.none;
+    if (tint != null) {
+      paint.colorFilter = ColorFilter.mode(tint, BlendMode.srcATop);
+    }
+    c.drawImageRect(
+      image,
+      Rect.fromLTWH(col * 128.0, row * 64.0, 128, 64),
+      Rect.fromLTWH(
+        (center.dx - 64 * scale).roundToDouble(),
+        (center.dy - 32 * scale).roundToDouble(),
+        128 * scale,
+        64 * scale,
+      ),
+      paint,
+    );
+  }
+
   void _combat(Canvas c) {
+    for (final p in model.heartPickups) {
+      c.save();
+      c.translate(p.x - 10, p.y - 10);
+      HeartPartPainter(p.part.mask).paint(c, const Size(20, 20));
+      c.restore();
+    }
     for (final p in model.pickups) {
       c.drawCircle(
         Offset(p.x, p.y),
         13,
         Paint()..color = mint.withValues(alpha: .12),
       );
-      sprite(c, 4, 4 + p.power.index, Offset(p.x, p.y), 30);
+      switch (p.power) {
+        case Power.powerful:
+          effectSprite(c, 5, 4, Offset(p.x, p.y), scale: .5);
+        case Power.large:
+          effectSprite(c, 5, 5, Offset(p.x, p.y), scale: .5);
+        case Power.spread:
+        case Power.rapid:
+        case Power.shield:
+          sprite(c, 4, 4 + p.power.index, Offset(p.x, p.y), 30);
+      }
     }
     for (final d in model.demons) {
-      final frame =
-          ((model.clock * 8 + d.seed).floor() % 4) + (d.angry ? 4 : 0);
-      final entrance = model.presentationMode == RunMode.transition
+      // Ordinary tells are changes to the existing monster animation only:
+      // quicker cocked wing frames and the atlas's own angry eyes/palette.
+      final warning = d.telegraph > 0;
+      final frame = warning
+          ? 4 + ((model.clock * 12 + d.seed).floor() % 2)
+          : ((model.clock * 8 + d.seed).floor() % 4) + (d.angry ? 4 : 0);
+      final entrance =
+          !d.entering && model.presentationMode == RunMode.transition
           ? Curves.easeOutCubic.transform(
               ((model.transitionProgress - (d.seed % 5) * .035) / .75).clamp(
                 0.0,
@@ -146,19 +207,28 @@ class DemonScene extends FlameGame {
                 (d.seed.floor().isEven ? 1 : -1),
         d.y - (1 - entrance) * (d.y + 45),
       );
+      if (d.isLarge) {
+        // Large creatures have their own delayed entrance in simulation.
+        if (d.entranceProgress > 0) {
+          _sentinel(c, Offset(d.x, d.y), d);
+        }
+        continue;
+      }
       if (d.elite) {
         final armor = (d.maxHp - d.moltStage).clamp(1, 7);
-        final halo = Paint()
-          ..color = (d.angry ? gold : violet).withValues(alpha: .25)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1;
-        c.drawArc(
-          Rect.fromCircle(center: pos, radius: 24),
-          model.clock * .5,
-          math.pi * 1.5,
-          false,
-          halo,
-        );
+        for (var i = 0; i < 12; i++) {
+          if ((i + (model.clock * 2).floor()) % 4 == 0) continue;
+          final angle = i * math.pi / 6;
+          c.drawRect(
+            Rect.fromLTWH(
+              (pos.dx + math.cos(angle) * 24).roundToDouble(),
+              (pos.dy + math.sin(angle) * 24).roundToDouble(),
+              2,
+              2,
+            ),
+            Paint()..color = d.angry ? gold : violet,
+          );
+        }
         // Every hit removes an outer plate; stages beyond the atlas's three
         // molts still have a visibly distinct silhouette and exposed core.
         for (var plate = 0; plate < armor; plate++) {
@@ -171,34 +241,19 @@ class DemonScene extends FlameGame {
         }
         if (d.moltStage < 4) {
           for (final side in [-1.0, 1.0]) {
-            c.drawPath(
-              Path()
-                ..moveTo(pos.dx + side * 9, pos.dy - 12)
-                ..lineTo(
-                  pos.dx + side * (17 - d.moltStage),
-                  pos.dy - 27 + d.moltStage * 3,
-                )
-                ..lineTo(pos.dx + side * 13, pos.dy - 10)
-                ..close(),
-              Paint()..color = d.angry ? gold : violet,
-            );
+            for (var step = 0; step < 5 - d.moltStage; step++) {
+              c.drawRect(
+                Rect.fromLTWH(
+                  (pos.dx + side * (10 + step)).roundToDouble(),
+                  (pos.dy - 12 - step * 2).roundToDouble(),
+                  2,
+                  3,
+                ),
+                Paint()..color = d.angry ? gold : violet,
+              );
+            }
           }
         }
-      }
-      if (d.telegraph > 0) {
-        c.drawCircle(
-          pos,
-          22,
-          Paint()
-            ..color = const Color(0xAAFF786C)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1,
-        );
-        c.drawLine(
-          pos + const Offset(0, 22),
-          pos + const Offset(0, 36),
-          Paint()..color = const Color(0x66FF786C),
-        );
       }
       sprite(
         c,
@@ -229,6 +284,7 @@ class DemonScene extends FlameGame {
         );
       }
       sprite(c, 6, b.phase, Offset(b.x, b.y), 184, height: 118);
+      _carrierEyes(c, b);
       final core = Offset(b.x, b.y + 25);
       c.drawRect(
         Rect.fromCenter(center: core, width: 32, height: 22),
@@ -242,7 +298,7 @@ class DemonScene extends FlameGame {
       for (final direction in [-1, 1]) {
         c.drawRect(
           Rect.fromLTWH(
-            core.dx + direction * 16 - (direction < 0 ? 0 : closed),
+            core.dx + (direction < 0 ? -16 : 16 - closed),
             core.dy - 11,
             closed,
             22,
@@ -251,69 +307,74 @@ class DemonScene extends FlameGame {
         );
       }
       if (b.shield > 0) {
-        final shieldPaint = Paint()
-          ..color = mint.withValues(alpha: .35 + math.sin(model.clock * 8) * .1)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3;
-        c.drawArc(
-          Rect.fromCenter(
-            center: Offset(b.x, b.y + 24),
-            width: 166,
-            height: 38,
-          ),
-          0,
-          math.pi,
-          false,
-          shieldPaint,
-        );
-        for (var x = -70; x <= 70; x += 14) {
-          c.drawLine(
-            Offset(b.x + x, b.y + 39),
-            Offset(b.x + x + 5, b.y + 45),
-            Paint()..color = mint.withValues(alpha: .35),
-          );
+        // Preserve the narrowing symmetric shield geometry as stepped pixels.
+        final radius = 20 + 63 * b.shield / b.shieldMax;
+        final paint = Paint()..color = mint;
+        for (var x = 0.0; x <= radius; x += 3) {
+          final y = 24 + 19 * math.sqrt(1 - math.pow(x / radius, 2));
+          for (final side in [-1.0, 1.0]) {
+            c.drawRect(
+              Rect.fromLTWH(
+                (b.x + side * x - 1).roundToDouble(),
+                (b.y + y).roundToDouble(),
+                3,
+                2,
+              ),
+              paint,
+            );
+          }
+        }
+        for (var x = -3; x <= 3; x++) {
+          for (var step = 0; step < 3; step++) {
+            c.drawRect(
+              Rect.fromLTWH(
+                (b.x + x * (5 + 18 * b.shield / b.shieldMax) + x.sign * step)
+                    .roundToDouble(),
+                b.y.roundToDouble() + 39 + step * 2,
+                2,
+                2,
+              ),
+              paint,
+            );
+          }
         }
       }
-      final remaining = b.shield > 0
-          ? b.shield / b.shieldMax
-          : b.core / b.coreMax;
-      c.drawRect(
-        const Rect.fromLTWH(72, 26, 216, 3),
-        Paint()..color = const Color(0xFF263049),
-      );
-      c.drawRect(
-        Rect.fromLTWH(72, 26, 216 * remaining, 3),
-        Paint()..color = b.shield > 0 ? mint : gold,
-      );
-      _text(
-        c,
-        b.shield > 0
-            ? 'SHIELD ${b.shield} / ${b.shieldMax}'
-            : 'CORE ${b.core} · TIME THE DOOR',
-        const Offset(180, 12),
-        8,
-        b.shield > 0 ? mint : gold,
-      );
+      _damage(c, Offset(b.x, b.y), 1 - b.core / b.coreMax, model.clock);
       c.restore();
     }
     for (final s in model.shots) {
-      final color = s.hostile ? const Color(0xFFFF8676) : mint;
-      final paint = Paint()..color = color;
-      if (s.hostile) {
-        c.drawRect(
-          Rect.fromCenter(center: Offset(s.x, s.y), width: 5, height: 7),
-          paint,
-        );
-        c.drawRect(
-          Rect.fromLTWH(s.x - 1, s.y - 2, 2, 3),
-          Paint()..color = const Color(0xFFFFE3AF),
-        );
+      final x = s.x.roundToDouble(), y = s.y.roundToDouble();
+      final p = Paint()..isAntiAlias = false;
+      void block(double dx, double dy, double w, double h, Color color) {
+        p.color = color;
+        c.drawRect(Rect.fromLTWH(x + dx, y + dy, w, h), p);
+      }
+
+      if (s.kind == ShotKind.sentinel) {
+        // Fast hostile bolts have a forked red head and an amber central spine.
+        block(-2, -7, 4, 11, const Color(0xFFFF4C70));
+        block(-4, -2, 2, 6, const Color(0xFFFF8676));
+        block(2, -2, 2, 6, const Color(0xFFFF8676));
+        block(-1, -4, 2, 10, const Color(0xFFFFE3AF));
+        block(-1, 6, 2, 2, const Color(0xFFFF4C70));
+      } else if (s.kind == ShotKind.large) {
+        final rim = s.damage > 1 ? gold : violet;
+        block(-3, -5, 6, 10, rim);
+        block(-5, -2, 10, 5, rim);
+        block(-2, -7, 4, 2, const Color(0xFFFFF5C9));
+        block(-2, -2, 4, 5, const Color(0xFFFFF5C9));
+        block(-1, 5, 2, 4, mint);
+      } else if (s.kind == ShotKind.powerful) {
+        block(-2, -5, 4, 10, gold);
+        block(-1, -7, 2, 10, const Color(0xFFFFF5C9));
+        block(-3, 3, 6, 2, gold);
+        block(-1, 5, 2, 4, mint);
+      } else if (s.hostile) {
+        block(-2, -3, 5, 7, const Color(0xFFFF8676));
+        block(-1, -2, 2, 3, const Color(0xFFFFE3AF));
       } else {
-        c.drawRect(Rect.fromLTWH(s.x - 1, s.y - 5, 2, 10), paint);
-        c.drawRect(
-          Rect.fromLTWH(s.x - 2, s.y + 4, 4, 5),
-          Paint()..color = color.withValues(alpha: .2),
-        );
+        block(-1, -5, 2, 10, mint);
+        block(-2, 4, 4, 5, mint.withValues(alpha: .2));
       }
     }
     if (model.mode != RunMode.gameOver &&
@@ -341,13 +402,127 @@ class DemonScene extends FlameGame {
       }
     }
     for (final b in model.blasts) {
+      if (b.isLarge) {
+        effectSprite(
+          c,
+          4,
+          (b.age / 1.4 * 8).floor().clamp(0, 7),
+          Offset(b.x, b.y + (b.age * 12).floorToDouble()),
+          opacity: .65,
+        );
+        continue;
+      }
       sprite(
         c,
         5,
         (b.age / .55 * 8).floor().clamp(0, 7),
         Offset(b.x, b.y),
-        b.big ? 200 : 56,
+        b.blastRadius > 0
+            ? 32
+            : b.big
+            ? 200
+            : 56,
+        opacity: b.blastRadius > 0 ? .5 : .65,
       );
+    }
+  }
+
+  void _damage(Canvas c, Offset center, double damage, double time) {
+    if (damage < .12) return;
+    // Paired vents preserve the carrier's silhouette. Animation is held at
+    // eight frames/sec, with solid dithered smoke rather than soft particles.
+    for (var vent = 0; vent < (damage * 4).ceil(); vent++) {
+      final frame = (time * 8 + vent).floor() % 4;
+      for (final side in [-1.0, 1.0]) {
+        final point =
+            center + Offset(side * (18 + vent * 13), -3 - vent % 2 * 8);
+        effectSprite(
+          c,
+          3,
+          frame,
+          point + Offset(side * frame * 2, -10.0 - frame * 5),
+          scale: .5,
+        );
+        if (damage > .4) {
+          effectSprite(c, 5, frame, point, scale: .5);
+        }
+        if (damage > .65) {
+          effectSprite(c, 3, 4 + frame, point + const Offset(0, -8), scale: .5);
+        }
+      }
+    }
+  }
+
+  void _carrierEyes(Canvas c, Carrier carrier) {
+    if (carrier.rage <= 0) return;
+    // Match the native hull eye pixels. Stepped red surrounds supply glow
+    // without blurred circles; the hotter inner pixels remain symmetrical.
+    final center = Offset(carrier.x.roundToDouble(), carrier.y.roundToDouble());
+    final pulse = (model.clock * 6).floor().isEven ? .12 : 0.0;
+    final hot = Color.lerp(gold, const Color(0xFFFF274E), carrier.rage)!;
+    final paint = Paint()..isAntiAlias = false;
+    for (var column = 0; column < 6; column++) {
+      final x = 17.0 + column * 6;
+      final y = 12.0 - column ~/ 2 * 4;
+      for (final side in [-1.0, 1.0]) {
+        final left = center.dx + side * x - 3;
+        paint.color = const Color(0xFFFF274E)
+            .withValues(alpha: carrier.rage * (.18 + pulse));
+        c.drawRect(Rect.fromLTWH(left - 2, center.dy + y - 2, 10, 12), paint);
+        paint.color = hot;
+        c.drawRect(Rect.fromLTWH(left, center.dy + y, 6, 8), paint);
+        if (carrier.rage > .6 && column < 3) {
+          paint.color = const Color(0xFFFFC7AF);
+          c.drawRect(Rect.fromLTWH(left + 2, center.dy + y + 4, 2, 2), paint);
+        }
+      }
+    }
+  }
+
+  void _sentinel(Canvas c, Offset pos, Demon demon) {
+    final species = demon.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
+    final warning = demon.telegraph > 0;
+    final diving = demon.dive > 0;
+    final row = demon.lastStand
+        ? 6 + species
+        : warning || diving
+        ? 8 + species
+        : species;
+    final frame = demon.lastStand
+        ? demon.rushing
+              ? 4 + (model.clock * 12).floor() % 4
+              : (demon.lastStandTellProgress * 4).floor().clamp(0, 3)
+        : diving
+        ? 4 + (model.clock * 8).floor() % 4
+        : warning
+        ? (model.clock * 8).floor() % 4
+        : ((model.clock / .4 + demon.seed).floor() % 8);
+    effectSprite(
+      c,
+      row,
+      frame,
+      pos,
+      tint: demon.flash > 0 ? Colors.white : null,
+    );
+    if (demon.shield > 0 && demon.shieldMax > 0) {
+      effectSprite(
+        c,
+        2,
+        ((1 - demon.shield / demon.shieldMax) * 4).floor().clamp(0, 3),
+        pos,
+      );
+    }
+    if (demon.armor > 0 && demon.armorMax > 0) {
+      final layers = (demon.armor / demon.armorMax * 4).ceil();
+      for (var layer = 0; layer < layers; layer++) {
+        effectSprite(
+          c,
+          2,
+          4 + layer,
+          pos,
+          tint: demon.flash > 0 ? Colors.white : null,
+        );
+      }
     }
   }
 
@@ -366,6 +541,25 @@ class DemonScene extends FlameGame {
     final envelope = math.sin(math.pi * p);
     final bar = (wave ? 9.0 : 24.0) * math.min(1.0, envelope * 4);
 
+    if (triumph && model.wreckBoss != null) {
+      final wreck = model.wreckBoss!;
+      c.save();
+      c.translate(
+        wreck.x.roundToDouble(),
+        (wreck.y + p * p * 360).roundToDouble(),
+      );
+      sprite(
+        c,
+        6,
+        wreck.phase,
+        Offset.zero,
+        184,
+        height: 118,
+        tint: const Color(0xFF8B665F),
+      );
+      _damage(c, Offset.zero, 1, p * 10);
+      c.restore();
+    }
     if (clear || triumph) {
       final random = math.Random(triumph ? 1982 : 8200 + model.level);
       final count = triumph ? 10 : 5;
@@ -393,16 +587,15 @@ class DemonScene extends FlameGame {
               width: ray.isEven ? 3 : 2,
               height: ray.isEven ? 3 : 2,
             ),
-            Paint()..color = color.withValues(alpha: fade),
+            Paint()..color = color.withValues(alpha: fade * .65),
           );
         }
-        c.drawCircle(
+        effectSprite(
+          c,
+          5,
+          (age / 1.15 * 4).floor().clamp(0, 3),
           origin,
-          5 + age * 52,
-          Paint()
-            ..color = color.withValues(alpha: fade * .35)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1,
+          opacity: .65,
         );
       }
       // The rescued sector glows once before the ship accelerates away.
@@ -603,21 +796,5 @@ class DemonScene extends FlameGame {
         ..strokeWidth = 2,
     );
     sprite(c, 4, frame, center, width);
-  }
-
-  void _text(Canvas c, String value, Offset center, double size, Color color) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: value,
-        style: TextStyle(
-          color: color,
-          fontSize: size,
-          fontFamily: 'monospace',
-          letterSpacing: 1,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(c, center - Offset(tp.width / 2, tp.height / 2));
   }
 }

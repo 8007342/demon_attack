@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
 import 'package:flame/game.dart';
@@ -22,16 +23,15 @@ Future<Uint8List> _capture(
   scene.paintArena(ui.Canvas(recorder), Vector2(360, 520), combat: combat);
   final picture = recorder.endRecording();
   final image = await picture.toImage(360, 520);
-  final bytes = (await image.toByteData(
-    format: ui.ImageByteFormat.rawRgba,
-  ))!.buffer.asUint8List();
+  final bytes = (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!
+      .buffer
+      .asUint8List();
   if (output != null) {
     final file = File(output);
     await file.parent.create(recursive: true);
     await file.writeAsBytes(
-      (await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      ))!.buffer.asUint8List(),
+      (await image.toByteData(format: ui.ImageByteFormat.png))!.buffer
+          .asUint8List(),
     );
   }
   image.dispose();
@@ -164,4 +164,107 @@ void main() {
       });
     },
   );
+  testWidgets('named Krybor districts show distinct moving pixel landmarks', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final model = ArcadeModel()..start();
+      model.mode = RunMode.playing;
+      final scene = DemonScene(model, () {});
+      scene.sectors.images[0] = await _decode('assets/images/sector-1.png');
+      try {
+        final views = <Uint8List>[];
+        for (var route = 1; route < 5; route++) {
+          model.cycle = route;
+          scene.ambient = 0;
+          views.add(
+            await _capture(
+              scene,
+              combat: false,
+              output: '.cache/sectors/krybor-district-$route.png',
+            ),
+          );
+        }
+        expect(views.map(_hash).toSet(), hasLength(4));
+        expect(
+          _differentPixelFraction(views[0], views[1]),
+          greaterThan(.04),
+          reason: 'Slum roofs and dock gantries should visibly distinguish the same base world',
+        );
+        model.cycle = 2;
+        scene.ambient = 20;
+        final movingDocks = await _capture(scene, combat: false);
+        expect(_hash(movingDocks), isNot(_hash(views[1])));
+      } finally {
+        scene.sectors.images[0]!.dispose();
+      }
+    });
+  });
+  testWidgets('every named route family has distinct horizon silhouettes', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final model = ArcadeModel()..start();
+      model.mode = RunMode.playing;
+      final scene = DemonScene(model, () {});
+      for (var family = 0; family < 5; family++) {
+        scene.sectors.images[family] = await _decode(
+          'assets/images/sector-${family + 1}.png',
+        );
+      }
+      try {
+        for (var family = 0; family < 5; family++) {
+          scene.environment = family.toDouble();
+          scene.ambient = 0;
+          final views = <Uint8List>[];
+          final recorder = ui.PictureRecorder();
+          final strip = ui.Canvas(recorder);
+          for (var route = 1; route < 5; route++) {
+            model.cycle = route;
+            final output = '.cache/sectors/family-$family-route-$route.png';
+            views.add(await _capture(scene, output: output, combat: false));
+            final image = await _decode(output);
+            strip.drawImageRect(
+              image,
+              const ui.Rect.fromLTWH(0, 320, 360, 200),
+              ui.Rect.fromLTWH((route - 1) * 360, 0, 360, 200),
+              ui.Paint()..filterQuality = ui.FilterQuality.none,
+            );
+            image.dispose();
+          }
+          final picture = recorder.endRecording();
+          final contact = await picture.toImage(1440, 200);
+          await File('.cache/sectors/family-$family-horizons.png').writeAsBytes(
+            (await contact.toByteData(format: ui.ImageByteFormat.png))!.buffer
+                .asUint8List(),
+          );
+          contact.dispose();
+          picture.dispose();
+          for (var a = 0; a < 4; a++) {
+            for (var b = a + 1; b < 4; b++) {
+              expect(
+                _differentPixelFraction(
+                  Uint8List.sublistView(views[a], 340 * 360 * 4),
+                  Uint8List.sublistView(views[b], 340 * 360 * 4),
+                ),
+                greaterThan(.035),
+                reason:
+                    'Family $family routes ${a + 1}/${b + 1} need '
+                    'different landmark silhouettes at the horizon',
+              );
+            }
+          }
+          scene.ambient = 20;
+          expect(
+            _hash(await _capture(scene, combat: false)),
+            isNot(_hash(views.last)),
+          );
+        }
+      } finally {
+        for (final image in scene.sectors.images) {
+          image?.dispose();
+        }
+      }
+    });
+  });
 }

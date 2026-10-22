@@ -1,13 +1,20 @@
 import 'dart:math' as math;
+
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'game/model.dart';
-import 'widgets/power_status.dart';
+import 'game/hints.dart';
+import 'widgets/hint_art.dart';
+import 'widgets/pilot_console_content.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
 import 'services/audio.dart';
 import 'services/scores.dart';
+import 'services/run_storage.dart';
+import 'widgets/medal.dart';
+import 'widgets/heart_parts.dart';
 export 'game/scene.dart' show DemonScene;
 
 void main() => runApp(const DemonAttackApp());
@@ -63,8 +70,9 @@ class DemonAttackApp extends StatelessWidget {
 }
 
 class ArcadePage extends StatefulWidget {
-  const ArcadePage({super.key, this.scoreService});
+  const ArcadePage({super.key, this.scoreService, this.runStorage});
   final ScoreService? scoreService;
+  final RunStorage? runStorage;
   @override
   State<ArcadePage> createState() => _ArcadePageState();
 }
@@ -74,6 +82,18 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   late final DemonScene scene;
   final focus = FocusNode();
   late final scores = widget.scoreService ?? ScoreService();
+  late final storage = widget.runStorage ?? RunStorage();
+  late final RunHistory history;
+  Map<String, dynamic>? savedCheckpoint;
+  Difficulty boardDifficulty = Difficulty.normal;
+  bool handledRunEnd = false;
+  final hintDeck = HintDeck();
+  TacticalHint? arrivalHint;
+  bool hintArtPrecached = false;
+  ScoreEntry? finalResult;
+  bool showFinalResult = false;
+  String? heartNotice;
+  double heartNoticeUntil = 0;
   bool muted = false, loading = false, submitted = false;
   String? screen, error, boardError;
   bool boardLoading = true;
@@ -92,9 +112,26 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    history = storage.loadHistory();
+    final saved = storage.loadCheckpoint();
+    if (saved != null) {
+      final candidate = ArcadeModel();
+      if (candidate.restoreCheckpoint(saved)) {
+        savedCheckpoint = candidate.checkpoint();
+      }
+    }
     scene = DemonScene(model, _tick);
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!hintArtPrecached) {
+      hintArtPrecached = true;
+      precacheImage(const AssetImage('assets/images/hint-scenes.png'), context);
+    }
   }
 
   @override
@@ -139,8 +176,33 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           audioCue('travel', model.level, 1, model.cycle);
         case 'victory':
           audioCue('victory', model.level, 1, model.cycle);
+        case 'heart':
+          heartNotice = 'HEART PIECE COLLECTED';
+          heartNoticeUntil = model.clock + 1.25;
+          audioSfx('heart');
+        case 'extraLife':
+          heartNotice = 'HEART ASSEMBLED · +1UP';
+          heartNoticeUntil = model.clock + 1.6;
+          audioSfx('extraLife');
+        case 'checkpoint':
+          if (model.wave == 1) {
+            arrivalHint = hintDeck.next(
+              difficulty: model.difficulty,
+              level: model.level,
+              route: model.cycle,
+            );
+          }
+          savedCheckpoint = model.checkpoint();
+          storage.saveCheckpoint(savedCheckpoint!);
+        case 'bossDefeated':
+          history.recordBoss(model.difficulty);
+          storage.saveHistory(history);
         case 'gameover':
+          _finishRun(failed: true);
           audioCue('gameover', model.level, 1, model.cycle);
+        case 'completed':
+          _finishRun(failed: false);
+          audioCue('victory', model.level, 1, model.cycle);
         case 'pause':
           audioPause();
         case 'resume':
@@ -149,23 +211,106 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           audioSfx(event);
       }
     }
+    if (!handledRunEnd &&
+        (model.mode == RunMode.gameOver || model.mode == RunMode.completed)) {
+      _finishRun(failed: model.mode == RunMode.gameOver);
+    }
     setState(() {});
   }
 
-  void _start() {
+  void _finishRun({required bool failed}) {
+    if (handledRunEnd) return;
+    handledRunEnd = true;
+    if (failed) {
+      history.recordFailure();
+      storage.saveHistory(history);
+    }
+    storage.clearCheckpoint();
+    savedCheckpoint = null;
+    finalResult = ScoreEntry(
+      'YOU',
+      model.score,
+      difficulty: model.difficulty,
+      medals: model.medals,
+      activeMilliseconds: model.activeMilliseconds,
+      remainingLives: model.medals == 5 ? model.lives : null,
+    );
+    boardDifficulty = model.difficulty;
+    screen = 'ranking';
+    _title(keepScreen: true);
+    _routeFinalScore();
+  }
+
+  Future<void> _routeFinalScore() async {
+    final result = finalResult!;
+    final request = ++boardRequest;
+    boardLoading = true;
+    boardError = null;
+    try {
+      final entries = await scores.load(difficulty: result.difficulty);
+      if (!mounted || request != boardRequest) return;
+      setState(() {
+        board = entries;
+        boardLoading = false;
+        final qualifies =
+            entries.length < 10 || result.score > entries.last.score;
+        showFinalResult = !qualifies;
+        screen = qualifies ? 'entry' : null;
+        error = null;
+        loading = false;
+      });
+    } catch (_) {
+      if (!mounted || request != boardRequest) return;
+      // Preserve a chance to submit when the ranking relay is unavailable.
+      setState(() {
+        boardLoading = false;
+        boardError = 'The score relay is unavailable.';
+        screen = 'entry';
+        error = null;
+        loading = false;
+      });
+    }
+  }
+
+  void _resumeGame() {
+    final saved = savedCheckpoint;
+    if (saved == null) return;
+    audioUnlock();
+    audioResume();
+    if (!model.restoreCheckpoint(saved)) {
+      setState(() => savedCheckpoint = null);
+      storage.clearCheckpoint();
+      return;
+    }
+    setState(() {
+      screen = null;
+      submitted = false;
+      handledRunEnd = false;
+      showFinalResult = false;
+      heartNotice = null;
+    });
+    _tick();
+    focus.requestFocus();
+  }
+
+  void _start([Difficulty difficulty = Difficulty.normal]) {
     audioUnlock();
     audioResume();
     setState(() {
       screen = null;
       submitted = false;
-      model.start();
+      handledRunEnd = false;
+      showFinalResult = false;
+      heartNotice = null;
+      model.start(difficulty: difficulty);
     });
+    _tick();
     focus.requestFocus();
   }
 
-  void _title() {
+  void _title({bool keepScreen = false}) {
     setState(() {
-      screen = null;
+      if (!keepScreen) screen = null;
       model.mode = RunMode.title;
       model.events.clear();
       keys.clear();
@@ -223,7 +368,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       boardError = null;
     });
     try {
-      final result = await scores.load();
+      final result = await scores.load(difficulty: boardDifficulty);
       if (mounted && request == boardRequest) {
         setState(() {
           board = result;
@@ -240,14 +385,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     }
   }
 
-  void _enterInitials() {
-    setState(() {
-      screen = 'entry';
-      error = null;
-      loading = false;
-    });
-  }
-
   Future<void> _submit() async {
     setState(() {
       loading = true;
@@ -257,10 +394,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       final result = await scores.submit(
         initials.map((i) => alphabet[i]).join(),
         model.score,
+        difficulty: model.difficulty,
+        medals: model.medals,
+        activeMilliseconds: model.activeMilliseconds,
+        remainingLives: model.medals == 5 ? model.lives : null,
       );
       if (mounted) {
         setState(() {
           board = result;
+          boardDifficulty = model.difficulty;
           loading = false;
           submitted = true;
           screen = null;
@@ -371,7 +513,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         ],
                       ),
                     ),
-                  if (screen != null) Positioned.fill(child: _scoreOverlay()),
+                  if (screen != null)
+                    Positioned.fill(
+                      child: screen == 'ranking'
+                          ? const ColoredBox(
+                              color: Color(0xEE080D18),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          : _scoreOverlay(),
+                    ),
                 ],
               );
             },
@@ -390,7 +540,17 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _label('KRYBOR / DEFENSE SYSTEM', const Color(0xFF94A6B8), size: 9),
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: _label(
+                  'KRYBOR / DEFENSE SYSTEM',
+                  const Color(0xFF94A6B8),
+                  size: 9,
+                ),
+              ),
+            ),
             _muteButton(),
           ],
         ),
@@ -503,6 +663,33 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           child: const Text('START GAME  →'),
         ),
       ),
+      if (savedCheckpoint != null) ...[
+        const SizedBox(height: 12),
+        SizedBox(
+          width: 280,
+          child: OutlinedButton(
+            onPressed: _resumeGame,
+            child: const Text('RESUME GAME'),
+          ),
+        ),
+        const SizedBox(height: 6),
+        _label(
+          'RESTART THE SAVED WAVE · NO POWERUPS',
+          const Color(0xFF8D9EB3),
+          size: 8,
+        ),
+      ],
+      for (final difficulty in [Difficulty.easy, Difficulty.hard])
+        if (history.unlocked(difficulty)) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: 280,
+            child: OutlinedButton(
+              onPressed: () => _start(difficulty),
+              child: Text('${difficulty.name.toUpperCase()} MODE'),
+            ),
+          ),
+        ],
       const SizedBox(height: 30),
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -513,11 +700,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         ],
       ),
       const SizedBox(height: 10),
-      _label(
-        'AUTO FIRE · THREE LIVES · NO MERCY',
-        const Color(0xFF60758C),
-        size: 8,
-      ),
+      _label('FIVE CARRIERS · ONE FRONTIER', const Color(0xFF60758C), size: 8),
     ],
   );
 
@@ -559,7 +742,45 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             size: 8,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
+        if (history.easyUnlocked || history.hardUnlocked)
+          Wrap(
+            spacing: 4,
+            children: [
+              for (final difficulty in [
+                Difficulty.normal,
+                Difficulty.easy,
+                Difficulty.hard,
+              ])
+                if (history.unlocked(difficulty))
+                  TextButton(
+                    key: ValueKey('board-${difficulty.name}'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: boardDifficulty == difficulty
+                          ? mint
+                          : const Color(0xFF8AA1B8),
+                      backgroundColor: boardDifficulty == difficulty
+                          ? const Color(0xFF1A3040)
+                          : Colors.transparent,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                    onPressed: () {
+                      if (difficulty == boardDifficulty) return;
+                      setState(() {
+                        boardDifficulty = difficulty;
+                        submitted = false;
+                        board = [];
+                      });
+                      _refreshBoard();
+                    },
+                    child: Text(
+                      difficulty.name.toUpperCase(),
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ),
+            ],
+          ),
+        const SizedBox(height: 12),
         if (boardLoading)
           const Padding(
             padding: EdgeInsets.all(24),
@@ -587,47 +808,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             ),
           ),
         if (!boardLoading && boardError == null)
-          ...List.generate(
-            board.length,
-            (i) => Container(
-              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 2),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFF1E3043))),
-              ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 28,
-                    child: Text(
-                      '${i + 1}'.padLeft(2, '0'),
-                      style: TextStyle(
-                        color: i == 0 ? gold : const Color(0xFF647D94),
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    board[i].initials,
-                    style: TextStyle(
-                      color: i == 0 ? gold : Colors.white,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    board[i].score.toString().padLeft(6, '0'),
-                    style: const TextStyle(
-                      color: mint,
-                      fontSize: 12,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          ...List.generate(board.length, (i) => _scoreRow(i, board[i])),
+        if (showFinalResult && finalResult?.difficulty == boardDifficulty) ...[
+          const SizedBox(height: 18),
+          _label('YOUR FINAL SCORE', gold, size: 11),
+          _scoreRow(-1, finalResult!),
+        ],
         if (submitted)
           Padding(
             padding: const EdgeInsets.only(top: 16),
@@ -637,85 +823,189 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     ),
   );
 
+  String _playingTime(int? milliseconds) {
+    if (milliseconds == null) return '—';
+    final seconds = milliseconds ~/ 1000;
+    final minutes = seconds ~/ 60;
+    return '${minutes.toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
+  }
+
+  Widget _medals(Difficulty difficulty, int count, {double size = 18}) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: List.generate(
+      5,
+      (index) => Medal(
+        difficulty: difficulty,
+        ordinal: index,
+        earned: index < count,
+        size: size,
+      ),
+    ),
+  );
+
+  Widget _scoreRow(int index, ScoreEntry entry) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: Color(0xFF1E3043))),
+    ),
+    child: LayoutBuilder(
+      builder: (context, bounds) {
+        final compact = bounds.maxWidth < 320;
+        return Row(
+          children: [
+            SizedBox(
+              width: 22,
+              child: Text(
+                index < 0 ? '—' : '${index + 1}'.padLeft(2, '0'),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: index == 0 ? gold : const Color(0xFF647D94),
+                ),
+              ),
+            ),
+            Text(
+              entry.initials,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: index == 0 ? gold : Colors.white,
+              ),
+            ),
+            const SizedBox(width: 7),
+            _medals(entry.difficulty, entry.medals, size: compact ? 14 : 18),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Text(
+                _playingTime(entry.activeMilliseconds),
+                style: const TextStyle(color: Color(0xFF9AAEC3), fontSize: 10),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  entry.score.toString().padLeft(6, '0'),
+                  style: const TextStyle(color: mint, fontSize: 11),
+                ),
+                if (entry.medals == 5 && entry.remainingLives != null)
+                  Text(
+                    '♥ ×${entry.remainingLives}',
+                    style: const TextStyle(
+                      color: Color(0xFFFF8C89),
+                      fontSize: 10,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
+    ),
+  );
+
+  Widget _hud() => Row(
+    children: [
+      Expanded(
+        flex: 4,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _label('SCORE', const Color(0xFF7B91A8), size: 8),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                model.score.toString().padLeft(6, '0'),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            _label(
+              _playingTime(model.activeMilliseconds),
+              const Color(0xFF9AAEC3),
+              size: 9,
+            ),
+          ],
+        ),
+      ),
+      Expanded(
+        flex: 8,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              CampaignStory.name(model.level, model.cycle).toUpperCase(),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              style: const TextStyle(
+                color: mint,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              '${model.difficulty.name.toUpperCase()} · ${model.level == 5 ? 'CARRIER CONTACT' : 'WAVE ${model.wave} / ${model.wavesPerLevel}'}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF839DB5), fontSize: 8),
+            ),
+            const SizedBox(height: 3),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '♥ ×${model.lives}',
+                    style: const TextStyle(
+                      color: Color(0xFFFF8C89),
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (model.difficulty != Difficulty.hard) ...[
+                    const SizedBox(width: 7),
+                    HeartInventory(
+                      slots: model.heartSlots,
+                      completedSlot: model.heartAssemblyLeft > 0
+                          ? model.lastCompletedHeartSlot
+                          : null,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      SizedBox(width: 38, child: _muteButton()),
+      SizedBox(
+        width: 38,
+        child: IconButton(
+          tooltip: 'Pause game',
+          onPressed: _pause,
+          icon: const Icon(Icons.pause, size: 20),
+        ),
+      ),
+    ],
+  );
+
   Widget _cabinet(BoxConstraints bounds) {
     // Flame is rendered once behind this transparent arena; overlays stay in logical alignment.
     return Column(
       children: [
         Container(
-          height: 62,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
+          height: 94,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: const BoxDecoration(
             color: Color(0xF0080D18),
             border: Border(bottom: BorderSide(color: Color(0xFF26394C))),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _label('SCORE', const Color(0xFF7B91A8), size: 8),
-                    const SizedBox(height: 4),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        model.score.toString().padLeft(6, '0'),
-                        maxLines: 1,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _label(
-                    'LV ${model.level.toString().padLeft(2, '0')} / CYCLE ${model.cycle + 1}',
-                    mint,
-                    size: 9,
-                  ),
-                  const SizedBox(height: 3),
-                  _label(
-                    model.level == 5
-                        ? 'CARRIER'
-                        : 'WAVE ${model.wave} / ${model.wavesPerLevel}',
-                    const Color(0xFF839DB5),
-                    size: 7,
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: List.generate(
-                      3,
-                      (i) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Icon(
-                          Icons.favorite,
-                          size: 12,
-                          color: i < model.lives
-                              ? const Color(0xFFFF8C89)
-                              : const Color(0xFF29354A),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              _muteButton(),
-              IconButton(
-                tooltip: 'Pause game',
-                onPressed: _pause,
-                icon: const Icon(Icons.pause, size: 20),
-              ),
-            ],
-          ),
+          child: _hud(),
         ),
         Expanded(
           child: LayoutBuilder(
@@ -727,9 +1017,38 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     child: GameWidget(game: _arenaProxy, autofocus: false),
                   ),
                 ),
-                if (model.cinematic && model.mode != RunMode.paused)
+                if (heartNotice != null &&
+                    model.clock < heartNoticeUntil &&
+                    model.mode != RunMode.paused)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    right: 8,
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          color: const Color(0xE8080D18),
+                          child: Text(
+                            heartNotice!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFFFFD594),
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (model.cinematic &&
+                    (model.mode != RunMode.paused || _showingArrivalHint))
                   Positioned.fill(child: _interlude()),
-                if (model.mode == RunMode.paused)
+                if (model.mode == RunMode.paused && !_showingArrivalHint)
                   Positioned.fill(
                     child: _gameOverlay('SIGNAL PAUSED', 'TAKE A BREATH.', [
                       FilledButton(
@@ -743,29 +1062,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       ),
                     ]),
                   ),
-                if (model.mode == RunMode.gameOver)
-                  Positioned.fill(
-                    child: _gameOverlay(
-                      'SIGNAL LOST',
-                      model.score.toString().padLeft(6, '0'),
-                      [
-                        if (!submitted)
-                          FilledButton(
-                            onPressed: _enterInitials,
-                            child: const Text('RECORD SCORE'),
-                          ),
-                        const SizedBox(height: 12),
-                        OutlinedButton(
-                          onPressed: _start,
-                          child: const Text('TRY AGAIN'),
-                        ),
-                        TextButton(
-                          onPressed: _title,
-                          child: const Text('RETURN TO TITLE'),
-                        ),
-                      ],
-                    ),
-                  ),
               ],
             ),
           ),
@@ -777,113 +1073,242 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   // A render-only view avoids updating the simulation twice when the full-screen sky is mounted.
   late final _ArenaView _arenaProxy = _ArenaView(scene);
-  Widget _interlude() {
-    final phase = model.presentationMode;
-    final p = model.transitionProgress;
-    final fadeIn = Curves.easeOutCubic.transform((p / .14).clamp(0, 1));
-    final fadeOut = Curves.easeInCubic.transform(((1 - p) / .18).clamp(0, 1));
-    final opacity = math.min(fadeIn, fadeOut);
-    final clear = phase == RunMode.levelClear || phase == RunMode.victory;
-    final salvage = phase == RunMode.salvage;
-    final travel = phase == RunMode.travel;
-    final heading = salvage
-        ? 'SECTOR CLEAR · RECOVERY WINDOW'
-        : clear
-        ? 'SECTOR SECURED'
-        : travel
-        ? 'JUMP DRIVE ACTIVE'
-        : model.waveTransition
-        ? 'SWARM REINFORCEMENTS'
-        : 'INCOMING TRANSMISSION';
-    final detail = salvage
-        ? 'PILOT TO COLLECT · ${model.transitionLeft.ceil()}s LEFT'
-        : clear
-        ? 'ALL WAVES CLEARED · ${model.score.toString().padLeft(6, '0')} PTS'
-        : travel
-        ? 'NEXT: LV ${model.nextLevel.toString().padLeft(2, '0')} · ${model.nextLevelName}'
-        : model.level == 5
-        ? 'SHIELD CONTACT · WEAPONS READY'
-        : 'WAVE ${model.wave} / ${model.wavesPerLevel} · STAY ALIVE';
-    return IgnorePointer(
-      child: Align(
-        alignment: Alignment(0, model.waveTransition || salvage ? -.25 : .25),
-        child: Opacity(
-          opacity: opacity,
-          child: Transform.translate(
-            offset: Offset(0, (1 - fadeIn) * 24 - (1 - fadeOut) * 14),
+  bool get _showingArrivalHint =>
+      arrivalHint != null &&
+      model.presentationMode == RunMode.transition &&
+      model.wave == 1;
+
+  Widget _hintInterlude(TacticalHint hint) => LayoutBuilder(
+    builder: (context, bounds) {
+      final paused = model.mode == RunMode.paused;
+      final compact = bounds.maxHeight < 360;
+      return Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: SizedBox(
+            width: math.min(460, bounds.maxWidth),
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 340),
-              margin: const EdgeInsets.symmetric(horizontal: 18),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+              key: const ValueKey('arrival-hint'),
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.all(compact ? 12 : 18),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0x00080D18),
-                    Color(0xCA080D18),
-                    Color(0x00080D18),
-                  ],
-                ),
-                border: Border.symmetric(
-                  horizontal: BorderSide(
-                    color: (clear ? gold : mint).withValues(alpha: .24),
-                  ),
-                ),
+                color: const Color(0xF0080D18),
+                border: Border.all(color: const Color(0xFF304D60)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _label(heading, clear ? gold : mint, size: 8),
-                  const SizedBox(height: 12),
+                  _label(
+                    paused ? 'SIGNAL PAUSED' : 'TACTICAL BRIEFING',
+                    mint,
+                    size: 11,
+                  ),
+                  const SizedBox(height: 10),
+                  HintArt(scene: hint.scene, height: compact ? 115 : 180),
+                  const SizedBox(height: 14),
                   Text(
-                    model.banner,
+                    hint.title,
+                    key: ValueKey('hint-${hint.id}'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 19,
+                      color: Colors.white,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _label(detail, const Color(0xFFAABCD0), size: 8),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    width: 124,
-                    height: 2,
-                    child: LinearProgressIndicator(
-                      value: p,
-                      color: clear ? gold : mint,
-                      backgroundColor: const Color(0xFF24374B),
-                    ),
+                  LinearProgressIndicator(
+                    value: model.transitionProgress,
+                    minHeight: 6,
+                    color: mint,
+                    backgroundColor: const Color(0xFF24374B),
                   ),
-                  if (!model.waveTransition && !salvage) ...[
-                    const SizedBox(height: 14),
-                    Text(
-                      travel
-                          ? CampaignStory.travel(model.level, model.cycle)
-                          : clear
-                          ? CampaignStory.victories[model.level - 1]
-                          : CampaignStory.arrival(model.level, model.cycle),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        height: 1.6,
-                        color: Color(0xFF9AAEC3),
-                      ),
-                    ),
-                  ],
-                  if (travel) ...[
-                    const SizedBox(height: 12),
-                    _label(
-                      'SIGNAL LOCK  ${(p * 100).floor()}%',
-                      const Color(0xFF7896AB),
-                      size: 7,
-                    ),
-                  ],
                 ],
               ),
             ),
           ),
         ),
+      );
+    },
+  );
+
+  Widget _interlude() {
+    if (_showingArrivalHint) return _hintInterlude(arrivalHint!);
+    final phase = model.presentationMode;
+    final p = model.transitionProgress;
+    final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));
+    final fadeOut = Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
+    final bossVictory = phase == RunMode.victory;
+    final recognition = bossVictory && p >= .32;
+    final clear = phase == RunMode.levelClear;
+    final salvage = phase == RunMode.salvage;
+    final travel = phase == RunMode.travel;
+    final wave = model.waveTransition;
+    final color = clear || bossVictory ? gold : mint;
+    final heading = bossVictory
+        ? recognition
+              ? 'THE FLEET RECOGNIZES YOUR SERVICE'
+              : 'THE CARRIER IS FALLING'
+        : salvage
+        ? 'RECOVERY WINDOW'
+        : clear
+        ? 'SECTOR SECURED'
+        : travel
+        ? 'JUMP DRIVE ACTIVE'
+        : wave
+        ? 'SWARM REINFORCEMENTS'
+        : 'INCOMING TRANSMISSION';
+    final destination = travel
+        ? CampaignStory.name(
+            model.nextLevel,
+            model.level == 5 ? model.cycle + 1 : model.cycle,
+          )
+        : CampaignStory.name(model.level, model.cycle);
+    final story = bossVictory
+        ? model.medals == 5
+              ? 'Five carriers fallen. Brood command is broken. The frontier is free.'
+              : 'A medal for your courage. A life for the journey. Keep flying, defender.'
+        : clear
+        ? CampaignStory.departure(model.level, model.cycle)
+        : travel
+        ? CampaignStory.travel(model.level, model.cycle)
+        : CampaignStory.briefing(model.level, model.cycle);
+    return IgnorePointer(
+      child: LayoutBuilder(
+        builder: (context, bounds) {
+          final compact = bounds.maxHeight < 500;
+          return Align(
+            alignment: Alignment(0, wave || salvage ? -.25 : .15),
+            child: Opacity(
+              opacity: math.min(fadeIn, fadeOut),
+              child: Transform.translate(
+                offset: Offset(0, (1 - fadeIn) * 20),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: SizedBox(
+                    width: math.min(460, bounds.maxWidth),
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 460),
+                      margin: const EdgeInsets.symmetric(horizontal: 14),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: compact ? 10 : 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xD9080D18),
+                        border: Border.symmetric(
+                          horizontal: BorderSide(
+                            color: color.withValues(alpha: .4),
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            heading,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: compact ? 16 : 19,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          SizedBox(height: compact ? 6 : 14),
+                          Text(
+                            destination.toUpperCase(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: compact ? 28 : 36,
+                              height: 1.15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          if (recognition) ...[
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Transform.scale(
+                                  scale:
+                                      .8 +
+                                      .2 *
+                                          Curves.easeOutBack.transform(
+                                            ((p - .32) / .2).clamp(0, 1),
+                                          ),
+                                  child: Medal(
+                                    difficulty: model.difficulty,
+                                    ordinal: (model.medals - 1).clamp(0, 4),
+                                    size: compact ? 40 : 64,
+                                  ),
+                                ),
+                                const SizedBox(width: 20),
+                                const Text(
+                                  '♥ +1UP',
+                                  style: TextStyle(
+                                    color: Color(0xFFFF8C89),
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (!wave &&
+                              !salvage &&
+                              !(bossVictory && !recognition)) ...[
+                            SizedBox(height: compact ? 8 : 18),
+                            Text(
+                              story,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: compact ? 18 : 22,
+                                height: 1.5,
+                                color: const Color(0xFFCCD9E6),
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: compact ? 8 : 18),
+                          if (salvage)
+                            Text(
+                              'PILOT TO COLLECT · ${model.transitionLeft.ceil()}s LEFT',
+                              style: const TextStyle(color: mint, fontSize: 14),
+                            ),
+                          if (wave)
+                            Text(
+                              'WAVE ${model.wave} / ${model.wavesPerLevel} · STAY ALIVE',
+                              style: const TextStyle(color: mint, fontSize: 14),
+                            ),
+                          if (!salvage && !wave)
+                            SizedBox(
+                              height: compact ? 6 : 10,
+                              width: double.infinity,
+                              child: LinearProgressIndicator(
+                                value: p,
+                                color: color,
+                                backgroundColor: const Color(0xFF24374B),
+                              ),
+                            ),
+                          if (travel && !compact) ...[
+                            const SizedBox(height: 10),
+                            _label(
+                              'DESTINATION LOCK ${(p * 100).floor()}%',
+                              const Color(0xFF9AAEC3),
+                              size: 11,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -928,34 +1353,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             ),
             child: CustomPaint(
               painter: ConsolePainter(touch == null ? null : touchPosition),
-              child: Row(
-                children: [
-                  if (model.activePowers.isNotEmpty) ...[
-                    const SizedBox(width: 10),
-                    PowerStatus(timers: Map.of(model.powerTimers)),
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _label(
-                          '◀     SLIDE TO PILOT     ▶',
-                          touch != null ? mint : const Color(0xFF99B4C7),
-                          size: 10,
-                        ),
-                        const SizedBox(height: 9),
-                        _label(
-                          model.canPilot && !model.combat
-                              ? 'COLLECT POWERUPS · WEAPONS SAFE'
-                              : 'AUTO FIRE ENGAGED',
-                          const Color(0xFF536F82),
-                          size: 7,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              child: PilotConsoleContent(
+                timers: Map.of(model.powerTimers),
+                touching: touch != null,
+                collecting: model.canPilot && !model.combat,
               ),
             ),
           ),

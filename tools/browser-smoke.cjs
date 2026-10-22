@@ -84,7 +84,7 @@ async function textVisible(page, value) {
       await page.locator('flt-semantics-host').evaluate(el => { el.style.pointerEvents = 'none'; for (const child of el.querySelectorAll('*')) child.style.pointerEvents = 'none'; });
       // Pointer down gives Flutter's Focus node keyboard ownership after semantics activation.
       await page.mouse.click(viewport.width / 2, viewport.height - 65);
-      await page.waitForTimeout(2400);
+      await page.waitForTimeout(4600);
       // A brief movement check exercises key-down and key-up independently.
       await page.keyboard.down('ArrowRight');
       await page.waitForTimeout(240);

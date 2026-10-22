@@ -6,11 +6,23 @@ Present original animated pixel-art worlds and responsive arcade screens with ad
 ## Requirements
 
 ### Requirement: Original pixel artwork
-Demons, player, boss, explosions, pickups, and the controller panel SHALL use a coherent original pixel-art style with animated creature and effect frames.
+Creatures, player, boss, fire, smoke, explosions, warnings, pickups and controller artwork SHALL use original Atari-era-inspired pixel art on fixed low-resolution grids, bounded palettes and nearest-neighbor sampling. Original-game sprites/screenshots SHALL NOT be copied or traced. Creatures and effects SHALL use discrete pixel frames, including runtime-generated art; smooth vector silhouettes, antialiased curves, gradients and continuously deforming flames SHALL NOT replace those frames.
 
 #### Scenario: Creature flight
 - **WHEN** a demon is active
 - **THEN** its wings animate and its damage state remains visually readable
+
+#### Scenario: Enlarged rare creature
+- **WHEN** a large creature is drawn larger than an ordinary demon
+- **THEN** its outline, segmented wings and damage forms retain visible logical pixels and discrete animation poses without smooth vector edges
+
+#### Scenario: Articulated heavy flight and subtle tell
+- **WHEN** a sentinel hovers or prepares its attack
+- **THEN** its wide wings articulate through eight distinct slow pixel poses and its own small pose change supplies the warning without an oversized detached marker
+
+#### Scenario: Carrier damage and attack warning
+- **WHEN** carrier fire or a rare creature's dive warning is visible
+- **THEN** the effect uses original bounded-palette pixel frames, and the warning is a creature-associated sprite cue rather than an arrow
 
 ### Requirement: Planetary parallax
 Each of the five levels SHALL have a distinct original pixel-art environment with terrain, planets, moons and satellites. Background complexity and visible demon infrastructure SHALL grow toward the carrier and on later cycles, with relative layer motion and smooth transitions that preserve threat readability.
@@ -51,3 +63,18 @@ The controller panel SHALL show a single composite pixel glyph formed from the v
 #### Scenario: One effect ends
 - **WHEN** shield is consumed or an effect expires
 - **THEN** the other layers and countdowns remain visible and touch piloting continues
+
+### Requirement: Illustrated gameplay instruction
+Gameplay hints SHALL pair one brief actionable sentence with one original pixel illustration and equivalent semantics. Hints SHALL advance automatically during loading without guide, Hold, Menu or manual-advance controls. Normal pause SHALL freeze the card. Advice SHALL describe actual game rules without promising protection the simulation does not grant.
+
+#### Scenario: One tactic at a glance
+- **WHEN** an illustrated hint is shown at phone size
+- **THEN** one recommended action is legible in both the sentence and picture without clipping or unrelated decorative detail
+
+#### Scenario: Automatic loading hint
+- **WHEN** a sector begins
+- **THEN** one complete illustrated hint appears during loading and disappears automatically before the initial swarm flies in
+
+#### Scenario: Accurate shield advice
+- **WHEN** a hint explains shield renewal
+- **THEN** it associates the grace period with absorbing a hit and never claims that unused shield expiry grants invulnerability

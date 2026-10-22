@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/main.dart';
 import 'package:demon_attack/services/scores.dart';
@@ -12,17 +13,20 @@ import 'package:http/testing.dart';
 
 void main() {
   testWidgets(
-    'triple glyph retains each layer and removes only consumed shield',
+    'every legal offensive combination preserves its layers and shield',
     (tester) async {
       await tester.runAsync(() async {
         for (final active in [
-          Power.values.toSet(),
+          {Power.spread, Power.rapid, Power.shield},
+          {Power.spread, Power.powerful, Power.shield},
+          {Power.large, Power.rapid, Power.shield},
+          {Power.large, Power.powerful, Power.shield},
           {Power.spread, Power.rapid},
+          {Power.large, Power.powerful},
         ]) {
           final recorder = ui.PictureRecorder();
-          PowerGlyphPainter(
-            active,
-          ).paint(ui.Canvas(recorder), const Size(64, 64));
+          PowerGlyphPainter(active)
+              .paint(ui.Canvas(recorder), const Size(64, 64));
           final picture = recorder.endRecording();
           final image = await picture.toImage(64, 64);
           final data = (await image.toByteData(
@@ -46,9 +50,11 @@ void main() {
                   'Each active glyph must stay visible in the combined mark',
             );
           }
-          if (active.length == 3) {
+          if (active.contains(Power.large) && active.contains(Power.powerful)) {
             final png = await image.toByteData(format: ui.ImageByteFormat.png);
-            final file = File('.cache/powers/combined-glyph.png');
+            final file = File(
+              '.cache/powers/combined-glyph-${active.length}.png',
+            );
             await file.parent.create(recursive: true);
             await file.writeAsBytes(png!.buffer.asUint8List());
           }
@@ -104,11 +110,53 @@ void main() {
         findsOneWidget,
       );
       final initial = scene.model.targetX;
-      await tester.drag(
-        find.byKey(const ValueKey('combined-power-glyph')),
+      await tester.dragFrom(
+        tester.getCenter(find.byKey(const ValueKey('combined-power-glyph'))),
         const Offset(40, 0),
       );
       expect(scene.model.targetX, greaterThan(initial));
+      scene.model.collect(Power.powerful);
+      scene.onTick();
+      await tester.pump();
+      expect(
+        find.descendant(of: status, matching: find.text('RAPID')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: status, matching: find.text('POWERFUL')),
+        findsOneWidget,
+      );
+      expect(scene.model.powerTimers[Power.spread], 9);
+      expect(scene.model.powerTimers[Power.shield], 5);
+      scene.model.collect(Power.large);
+      scene.onTick();
+      await tester.pump();
+      expect(
+        find.descendant(of: status, matching: find.text('SPREAD')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: status, matching: find.text('LARGE')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<CustomPaint>(
+              find.byKey(const ValueKey('combined-power-glyph')),
+            )
+            .painter,
+        isA<PowerGlyphPainter>().having((p) => p.active, 'active layers', {
+          Power.powerful,
+          Power.large,
+          Power.shield,
+        }),
+      );
+      final replacementTarget = scene.model.targetX;
+      await tester.dragFrom(
+        tester.getCenter(find.byKey(const ValueKey('combined-power-glyph'))),
+        const Offset(-35, 0),
+      );
+      expect(scene.model.targetX, lessThan(replacementTarget));
       scene.model.hitPlayer();
       scene.onTick();
       await tester.pump();
@@ -117,11 +165,31 @@ void main() {
         findsNothing,
       );
       expect(
-        find.descendant(of: status, matching: find.text('SPREAD')),
+        find.descendant(of: status, matching: find.text('LARGE')),
         findsOneWidget,
       );
       expect(
+        find.descendant(of: status, matching: find.text('POWERFUL')),
+        findsOneWidget,
+      );
+      scene.model.collect(Power.rapid);
+      scene.model.collect(Power.spread);
+      scene.onTick();
+      await tester.pump();
+      expect(
+        find.descendant(of: status, matching: find.text('POWERFUL')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: status, matching: find.text('LARGE')),
+        findsNothing,
+      );
+      expect(
         find.descendant(of: status, matching: find.text('RAPID')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: status, matching: find.text('SPREAD')),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
