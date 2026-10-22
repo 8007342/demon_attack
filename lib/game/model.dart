@@ -203,6 +203,7 @@ class ArcadeModel {
   int get flocksRemaining => flocksPlanned - flocksSpawned;
   double _reinforcementLeft = 0, _reinforcementCooldown = 0, _escortLeft = 0;
   int _reinforcementCasualties = 0;
+  int _ordinaryBirthOrdinal = 0, _eliteBirths = 0, _waveRoster = 0;
   bool escortSpawned = false;
   int get plannedEscortSize => policy.escortSize(route: cycle, sector: level);
   double shipX = 180, targetX = 180, clock = 0, levelClock = 0;
@@ -216,7 +217,7 @@ class ArcadeModel {
   bool hasPower(Power value) => timeLeft(value) > 0;
   double timeLeft(Power value) => powerTimers[value] ?? 0;
   double _fire = 0, _enemyFire = 1.5, _dive = 3, _flock = 0, _accumulator = 0;
-  double get speed => (1 + math.min(cycle, 4) * .1) * policy.hostileRate;
+  double get speed => (1 + math.min(cycle, 4) * .04) * policy.hostileRate;
   bool get combat => mode == RunMode.playing;
   bool get canPilot =>
       combat ||
@@ -429,13 +430,17 @@ class ArcadeModel {
     flocksPlanned = boss == null
         ? policy.reinforcementFlocks(route: cycle, sector: level)
         : 0;
-    _reinforcementLeft = 2.4;
+    _reinforcementLeft = 4.5;
     _reinforcementCooldown = .6;
     _reinforcementCasualties = 0;
+    _ordinaryBirthOrdinal = 0;
+    _eliteBirths = 0;
+    _waveRoster = 0;
     _escortLeft = 2.6;
     escortSpawned = false;
     if (boss == null) {
       final count = policy.rosterCount(sector: level, wave: wave, route: cycle);
+      _waveRoster = count;
       final rows = (count / 6).ceil();
       final spacing = rows <= 4 ? 48.0 : 160.0 / (rows - 1);
       final specialEligible =
@@ -447,23 +452,19 @@ class ArcadeModel {
                   wave >= 3 &&
                   (wave + level + cycle).isEven));
       for (var i = 0; i < count; i++) {
-        // Later waves mix previously encountered creatures into the native flock.
-        final kind = cycle > 0
-            ? (i + wave + level) % 4
-            : wave > 1 && i % 4 == 0
-            ? math.max(0, level - 2)
-            : level - 1;
-        final elite = cycle > 0 && (i + wave) % 5 == 0;
         final archetype = specialEligible && i == count - 1
             ? (cycle >= 2 && difficulty != Difficulty.easy
                   ? EnemyArchetype.armoredSentinel
                   : EnemyArchetype.shieldSentinel)
             : EnemyArchetype.ordinary;
-        final hp = archetype == EnemyArchetype.ordinary
-            ? 1 + (kind ~/ 2) + math.min(cycle, 3) + (elite ? 2 : 0)
-            : (archetype == EnemyArchetype.armoredSentinel ? 12 : 9) +
-                  math.min(cycle, 4) * 2;
         final large = archetype != EnemyArchetype.ordinary;
+        final profile = large ? null : _ordinaryProfile();
+        final kind = profile?.$1 ?? (i + wave + level) % 4;
+        final elite = profile?.$3 ?? false;
+        final hp =
+            profile?.$2 ??
+            (archetype == EnemyArchetype.armoredSentinel ? 12 : 9) +
+                math.min(cycle, 4) * 2;
         final demon = Demon(
           large ? width / 2 : 38 + (i % 6) * 56.0,
           large
@@ -509,6 +510,24 @@ class ArcadeModel {
     events.add('checkpoint');
   }
 
+  (int, int, bool) _ordinaryProfile() {
+    final index = _ordinaryBirthOrdinal++;
+    final kind = cycle > 0
+        ? (index + wave + level) % 4
+        : wave > 1 && index % 4 == 0
+        ? math.max(0, level - 2)
+        : level - 1;
+    final elite =
+        (index + 1) % 10 == 0 &&
+        _eliteBirths < policy.eliteBudget(route: cycle);
+    if (elite) _eliteBirths++;
+    return (
+      kind,
+      policy.ordinaryHealth(route: cycle, kind: kind, elite: elite),
+      elite,
+    );
+  }
+
   void _updateReinforcements(double dt) {
     if (boss != null) return;
     final sentinel = demons
@@ -543,13 +562,21 @@ class ArcadeModel {
     if (!_spawnReinforcementGroup(count, escort: false)) return;
     flocksSpawned++;
     _reinforcementCasualties = 0;
-    _reinforcementCooldown = .6;
-    _reinforcementLeft = 2.4;
+    _reinforcementCooldown = 1.2;
+    _reinforcementLeft = 4.5;
     events.add('reinforcements');
   }
 
   bool _spawnReinforcementGroup(int count, {required bool escort}) {
     if (demons.length + count > maxActiveDemons) return false;
+    final ordinaryCount = demons.where((d) => !d.isLarge).length;
+    final allowance = escort
+        ? plannedEscortSize
+        : policy.reinforcementSize(
+            route: cycle,
+            flock: math.max(0, flocksPlanned - 1),
+          );
+    if (ordinaryCount + count > _waveRoster + allowance) return false;
     final sentinel = demons.where((d) => d.isLarge).firstOrNull;
     final top = sentinel != null ? 124.0 : 70.0;
     final slots = <(double, double)>[];
@@ -569,20 +596,16 @@ class ArcadeModel {
       }
     }
     if (slots.length < count) return false;
-    final strength = policy.reinforcementHealth(
-      route: cycle,
-      flock: escort ? flocksPlanned : flocksSpawned,
-    );
     for (var i = 0; i < count; i++) {
-      final kind = (level + cycle + flocksSpawned + i) % 4;
+      final profile = _ordinaryProfile();
       final d =
           Demon(
               slots[i].$1,
               slots[i].$2,
-              kind,
-              strength + kind ~/ 2 + (escort ? 2 : 0),
+              profile.$1,
+              profile.$2,
               random.nextDouble() * 8,
-              elite: escort || flocksSpawned > 0 || cycle > 0,
+              elite: profile.$3,
               isEscort: escort,
             )
             ..entranceProgress = 0
@@ -714,8 +737,8 @@ class ArcadeModel {
             : powerful
             ? ShotKind.powerful
             : ShotKind.ordinary,
-        damage: powerful ? 2 : 1,
-        blastRadius: large ? 30 : 0,
+        damage: policy.weaponDamage(powerful: powerful),
+        blastRadius: large ? policy.largeBlastRadius : 0,
       );
       shots.add(playerShot(shipX, shipY - 13, 0, -390));
       if (hasPower(Power.spread)) {
@@ -784,8 +807,8 @@ class ArcadeModel {
       }
       _dive = math.max(
         .8,
-        (4.2 - level * .45 - math.min(cycle, 4) * .22) /
-            (1 + math.min(cycle, 4) * .1),
+        (4.2 - level * .45 - math.min(cycle, 4) * .08) /
+            (1 + math.min(cycle, 4) * .04),
       );
     }
     for (final d in List<Demon>.of(demons)) {

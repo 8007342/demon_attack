@@ -122,7 +122,10 @@ void main() {
         reach(model, RunMode.playing);
         expect(model.level, level);
         expect(model.wave, wave);
-        expect(model.demons.length, 6 + level * 2 + (wave - 1) * 2);
+        expect(
+          model.demons.length,
+          model.policy.rosterCount(sector: level, wave: wave, route: 0),
+        );
         model.takeEvents();
         clearWave(model);
         expect(model.level, level);

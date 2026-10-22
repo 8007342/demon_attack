@@ -8,31 +8,32 @@ void advance(ArcadeModel model, double seconds) {
 }
 
 void main() {
-  test('first Normal casualty promptly brings a stronger fresh flock, then another', () {
-    final m = ArcadeModel()..restoreCheckpoint({'wave': 2});
-    m.mode = RunMode.playing;
-    m.invulnerable = 1000;
-    expect(m.flocksPlanned, greaterThanOrEqualTo(2));
-    final initial = m.demons.toSet();
-    m.hitDemon(m.demons.first, damage: 1000);
-    advance(m, .65);
-    expect(m.flocksSpawned, 1);
-    final first = m.demons.where((d) => !initial.contains(d)).toList();
-    expect(first, hasLength(m.policy.reinforcementSize(route: 0, flock: 0)));
-    expect(first.every((d) => d.maxHp > 1), isTrue);
-    final beforeSecond = m.demons.toSet();
-    for (final d in m.demons.where(initial.contains).take(2).toList()) {
-      m.hitDemon(d, damage: 1000);
-    }
-    advance(m, .65);
-    expect(m.flocksSpawned, 2);
-    final second = m.demons.where((d) => !beforeSecond.contains(d)).toList();
-    expect(second.length, greaterThan(first.length));
-    expect(
-      second.map((d) => d.maxHp).reduce((a, b) => a < b ? a : b),
-      greaterThan(first.map((d) => d.maxHp).reduce((a, b) => a > b ? a : b)),
-    );
-  });
+  test(
+    'first Normal casualty promptly brings a bounded fresh flock, then another',
+    () {
+      final m = ArcadeModel()..restoreCheckpoint({'wave': 2});
+      m.mode = RunMode.playing;
+      m.invulnerable = 1000;
+      expect(m.flocksPlanned, greaterThanOrEqualTo(2));
+      final initial = m.demons.toSet();
+      m.hitDemon(m.demons.first, damage: 1000);
+      advance(m, .65);
+      expect(m.flocksSpawned, 1);
+      final first = m.demons.where((d) => !initial.contains(d)).toList();
+      expect(first, hasLength(m.policy.reinforcementSize(route: 0, flock: 0)));
+      expect(first.every((d) => d.maxHp == 1), isTrue);
+      final beforeSecond = m.demons.toSet();
+      for (final d in m.demons.where(initial.contains).take(3).toList()) {
+        m.hitDemon(d, damage: 1000);
+      }
+      advance(m, 1.25);
+      expect(m.flocksSpawned, 2);
+      final second = m.demons.where((d) => !beforeSecond.contains(d)).toList();
+      expect(second.length, greaterThan(first.length));
+      expect(second.length, first.length + 1);
+      expect(second.every((d) => d.maxHp == 1), isTrue);
+    },
+  );
 
   test('a sentinel gets its own largest fresh escort after prior ordinary arrivals', () {
     for (final difficulty in Difficulty.values) {
@@ -53,8 +54,10 @@ void main() {
       expect(sentinel.waitingForEscort, isTrue);
       expect(sentinel.entranceProgress, 0);
       final earlier = m.demons.toSet();
-      for (final d in earlier.where((d) => !d.isLarge)) {
-        d.hp = 1000;
+      final openingSize = m.policy.rosterCount(sector: 2, wave: 4, route: 1);
+      while (m.demons.where((d) => !d.isLarge).length > openingSize) {
+        final d = m.demons.firstWhere((d) => !d.isLarge && !d.entering);
+        m.hitDemon(d, damage: 1000);
       }
       for (var frame = 0; frame < 240 && !m.escortSpawned; frame++) {
         m.update(1 / 60);
@@ -64,7 +67,7 @@ void main() {
       final escorts = m.demons.where((d) => d.isEscort).toList();
       expect(escorts, hasLength(m.plannedEscortSize));
       expect(
-        escorts.every((d) => !earlier.contains(d) && d.elite && d.homeY >= 124),
+        escorts.every((d) => !earlier.contains(d) && d.homeY >= 124),
         isTrue,
       );
       for (var flock = 0; flock < m.flocksPlanned; flock++) {
@@ -81,36 +84,44 @@ void main() {
     }
   });
 
-  test('group size and health rise with route and difficulty inside finite budgets', () {
-    for (var route = 0; route < 5; route++) {
-      final policies = Difficulty.values.map(DifficultyPolicy.new).toList();
-      final counts = policies
-          .map((p) => p.reinforcementFlocks(route: route, sector: 1))
-          .toList();
-      expect(counts[0], lessThanOrEqualTo(counts[1]));
-      expect(counts[1], lessThanOrEqualTo(counts[2]));
-      expect(counts[2], lessThanOrEqualTo(4));
-      for (var flock = 0; flock < 2; flock++) {
-        for (var mode = 0; mode < 2; mode++) {
+  test(
+    'group counts stay finite and species health does not inflate by mode',
+    () {
+      for (var route = 0; route < 5; route++) {
+        final policies = Difficulty.values.map(DifficultyPolicy.new).toList();
+        for (final p in policies) {
           expect(
-            policies[mode].reinforcementSize(route: route, flock: flock),
-            lessThan(
-              policies[mode + 1].reinforcementSize(route: route, flock: flock),
-            ),
+            p.reinforcementFlocks(route: route, sector: 1),
+            lessThanOrEqualTo(2),
           );
           expect(
-            policies[mode].reinforcementHealth(route: route, flock: flock),
-            lessThan(
-              policies[mode + 1].reinforcementHealth(
-                route: route,
-                flock: flock,
-              ),
+            p.reinforcementSize(route: route, flock: 1),
+            p.reinforcementSize(route: route, flock: 0) + 1,
+          );
+          for (var kind = 0; kind < 4; kind++) {
+            for (final elite in [false, true]) {
+              expect(
+                p.ordinaryHealth(route: route, kind: kind, elite: elite),
+                policies.first.ordinaryHealth(
+                  route: route,
+                  kind: kind,
+                  elite: elite,
+                ),
+              );
+            }
+          }
+        }
+        for (var mode = 0; mode < 2; mode++) {
+          expect(
+            policies[mode].reinforcementSize(route: route, flock: 0),
+            lessThanOrEqualTo(
+              policies[mode + 1].reinforcementSize(route: route, flock: 0),
             ),
           );
         }
       }
-    }
-  });
+    },
+  );
 
   test('full-width carrier field intercepts flank bolts before hull and contracts in depth', () {
     final m = ArcadeModel()..restoreCheckpoint({'sector': 5});

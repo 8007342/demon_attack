@@ -67,3 +67,9 @@
 - [x] 12.1 Trigger multiple stronger reinforcement flocks promptly as comrades fall; give each sentinel its own separate largest reinforcement escort, unaffected by earlier flocks; verify bounded completion and replay.
 - [x] 12.2 Draw the carrier force field as a symmetric fixed-width lower egg outside the hull; contract its depth and projectile impacts toward the hull as depleted, preserve hatch gates, and add accurate illustrated field advice.
 - [x] 12.3 Run integrated tests/browser/release preview checks, document tuning, and push main remotely.
+
+## 13. Research-backed bounded difficulty calibration
+- [x] 13.1 Research authoritative challenge/pacing guidance with Astra, document one coherent campaign curve and proportional mode/weapon tuning, and distinguish principles from numeric hypotheses.
+- [x] 13.2 Share a capped parent-wave evolution profile across opening, reinforcement and dedicated escort swarms; remove compounding HP/elite/size ramps and bound simultaneous pressure while preserving mid-fight arrivals and interwave breathers.
+- [x] 13.3 Calibrate offensive power efficacy across modes without runaway stacking, and audit actual generated campaign stats, shots-to-kill, mode ordering, sub-wave caps and complete campaigns.
+- [ ] 13.4 Run integrated/browser/release checks, record evidence and push main remotely.

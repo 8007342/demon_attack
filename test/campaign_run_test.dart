@@ -169,9 +169,9 @@ void main() {
       until(m, RunMode.playing);
       expect(m.wavesPerLevel, 6);
       expect(m.demons.length, lessThanOrEqualTo(30));
-      expect(m.speed, 1.4);
-      expect(m.demons.every((d) => d.maxHp <= 7), isTrue);
-      expect(m.demons.any((d) => d.maxHp == 7), isTrue);
+      expect(m.speed, 1.16);
+      expect(m.demons.every((d) => d.maxHp <= 5), isTrue);
+      expect(m.demons.any((d) => d.maxHp == 4), isTrue);
       final elite = m.demons.firstWhere((d) => d.elite);
       elite.attackLeft = .01;
       m.shots.clear();

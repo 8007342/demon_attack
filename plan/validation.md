@@ -85,3 +85,14 @@ The carrier field stays 220 units wide outside its 184-unit hull and contracts i
 Full Flutter suite: 119 tests pass. Flutter analysis: clean. Worker suite: 8 tests pass. Strict OpenSpec: 11 items pass. Release web build succeeds.
 
 Refreshed managed local Wrangler and passed desktop/phone gameplay controls/audio, desktop/phone/landscape campaign boards and compatible checkpoint reload, plus phone/landscape automatic illustrated hints and delayed initial entrances. No browser runtime exceptions or console errors. The local preview is ready to reload.
+
+
+## Research-backed bounded calibration — 2026-10-22
+
+Astra researched original Valve AI Director/playtesting presentations and the original GameFlow paper, then independently reviewed the implementation. Sources, accepted formulas, assumptions, integer weapon breakpoints and measured evidence are in [difficulty-calibration.md](difficulty-calibration.md). The original reinforcement formula compounded health, count and elite fan attacks; the replacement shares the parent wave blueprint, caps ordinary HP at five, limits elite births across the complete wave and limits admissions instead of filling to the global entity ceiling. Two finite Normal/Hard sub-waves add at most one body between groups; Easy has a single later-route group. Dedicated fresh escorts remain larger, without a hidden health tier or renewed elite budget.
+
+The reproducible generated audit enumerates all 318 valid mode/route/sector/wave configurations and checks actual births and each defense layer. First-wave Normal baseline hits fall 73→17, Hard 112→21. Worst-wave hits fall 362/671/1121→159/213/240 for Easy/Normal/Hard. Complete protected real-shot campaigns finish with five medals in every mode; current ordinary-wave median times are 14.9/20.2/21.0 seconds and p95 times 24.6/37.6/41.7. Peak hostile bullets are 11/12/15 in that pilot, compared with 80/120/120 before. These are regression workloads, not human survival or enjoyment claims. Full tables and tooling are committed for future calibration.
+
+122 Flutter tests pass, including all 318 generated configurations and actual integer projectile/area breakpoints. Full Flutter analysis is clean. Worker suite: 8 tests pass. Strict OpenSpec: 11 items pass. Release web build succeeds. Final UI/browser checks follow below.
+
+Managed local Wrangler was rebuilt/refreshed. Desktop/phone controls and audio, desktop/phone/landscape mode boards and checkpoint reload, and phone/landscape automatic hints/initial entrances all pass with no browser runtime exceptions or console errors. Preview is ready to reload. The calibrated build preserves the field, escort identity, campaign rewards, snapshots and score metadata.
