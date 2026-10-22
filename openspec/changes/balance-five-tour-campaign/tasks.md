@@ -72,4 +72,4 @@
 - [x] 13.1 Research authoritative challenge/pacing guidance with Astra, document one coherent campaign curve and proportional mode/weapon tuning, and distinguish principles from numeric hypotheses.
 - [x] 13.2 Share a capped parent-wave evolution profile across opening, reinforcement and dedicated escort swarms; remove compounding HP/elite/size ramps and bound simultaneous pressure while preserving mid-fight arrivals and interwave breathers.
 - [x] 13.3 Calibrate offensive power efficacy across modes without runaway stacking, and audit actual generated campaign stats, shots-to-kill, mode ordering, sub-wave caps and complete campaigns.
-- [ ] 13.4 Run integrated/browser/release checks, record evidence and push main remotely.
+- [x] 13.4 Run integrated/browser/release checks, record evidence and push main remotely.

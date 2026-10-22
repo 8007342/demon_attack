@@ -96,3 +96,5 @@ The reproducible generated audit enumerates all 318 valid mode/route/sector/wave
 122 Flutter tests pass, including all 318 generated configurations and actual integer projectile/area breakpoints. Full Flutter analysis is clean. Worker suite: 8 tests pass. Strict OpenSpec: 11 items pass. Release web build succeeds. Final UI/browser checks follow below.
 
 Managed local Wrangler was rebuilt/refreshed. Desktop/phone controls and audio, desktop/phone/landscape mode boards and checkpoint reload, and phone/landscape automatic hints/initial entrances all pass with no browser runtime exceptions or console errors. Preview is ready to reload. The calibrated build preserves the field, escort identity, campaign rewards, snapshots and score metadata.
+
+Research-backed calibration merged into main at 5e22b15 and both game/main pushes were durably accepted upstream. All 50 tracked campaign tasks are complete.
