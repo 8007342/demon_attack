@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../game/model.dart';
 import 'heart_parts.dart';
+import 'medal.dart';
 import 'power_status.dart';
 
 /// Rich instructional illustrations are separate from the combat sprite atlas.
@@ -160,6 +161,50 @@ class _HintArtState extends State<HintArt> {
         mainAxisSize: MainAxisSize.min,
         children: [power(Power.shield), plus, power(Power.powerful)],
       ),
+      'stronger_swarm' => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          power(Power.shield),
+          plus,
+          const Text(
+            'ARMOR',
+            style: TextStyle(
+              color: Color(0xFFF4CA79),
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      'boss_reward' => const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          HeartParts(mask: 15, size: 32),
+          SizedBox(width: 10),
+          Text(
+            '+1UP',
+            style: TextStyle(
+              color: Color(0xFFFFD594),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      'campaign_medals' => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var ordinal = 0; ordinal < 5; ordinal++)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: Medal(
+                difficulty: Difficulty.normal,
+                ordinal: ordinal,
+                size: 32,
+              ),
+            ),
+        ],
+      ),
       _ => null,
     };
   }
@@ -184,6 +229,13 @@ const _descriptions = <String, String>{
       'The player moves sideways away from the old position.',
   'shield_weapon_combo':
       'The ship uses a shield and a powerful weapon together.',
+  'stronger_swarm':
+      'Later enemies have stronger shields and armor. '
+      'A large armored bird is enclosed by its protective shield.',
+  'boss_reward':
+      'Defeat a carrier to earn one extra life, shown by a full heart.',
+  'campaign_medals':
+      'Five distinct campaign medals, one for each carrier victory.',
 };
 
 class _HintScenePainter extends CustomPainter {
@@ -203,6 +255,9 @@ class _HintScenePainter extends CustomPainter {
     'large_choice': Rect.fromLTWH(628, 568, 626, 219),
     'giant_rush': Rect.fromLTWH(0, 852, 626, 287),
     'shield_weapon_combo': Rect.fromLTWH(628, 852, 626, 287),
+    'stronger_swarm': Rect.fromLTWH(628, 852, 626, 170),
+    'boss_reward': Rect.fromLTWH(628, 0, 626, 222),
+    'campaign_medals': Rect.fromLTWH(628, 0, 626, 222),
   };
 
   @override
@@ -229,6 +284,37 @@ class _HintScenePainter extends CustomPainter {
         ..filterQuality = FilterQuality.none
         ..isAntiAlias = false,
     );
+    if (scene == 'stronger_swarm') {
+      // Crop out the player's shield from the source and place the real shield
+      // glyph around the bird, so the illustration teaches enemy defenses.
+      final shieldSize = destination.height * .92;
+      canvas.save();
+      canvas.translate(
+        destination.center.dx - shieldSize / 2,
+        destination.center.dy - shieldSize / 2,
+      );
+      const PowerGlyphPainter({Power.shield})
+          .paint(canvas, Size.square(shieldSize));
+      canvas.restore();
+      final plate = math.max(3.0, (shieldSize / 20).floorToDouble());
+      for (final side in [-1, 1]) {
+        final x = (destination.center.dx + side * plate * 3 - plate)
+            .roundToDouble();
+        final y = (destination.center.dy + plate).roundToDouble();
+        canvas.drawRect(
+          Rect.fromLTWH(x, y, plate * 2, plate * 2),
+          Paint()
+            ..color = const Color(0xFFF4CA79)
+            ..isAntiAlias = false,
+        );
+        canvas.drawRect(
+          Rect.fromLTWH(x, y, plate * 2, 2),
+          Paint()
+            ..color = const Color(0xFFFFF5C9)
+            ..isAntiAlias = false,
+        );
+      }
+    }
   }
 
   @override

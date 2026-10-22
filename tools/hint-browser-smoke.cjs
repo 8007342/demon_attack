@@ -27,22 +27,16 @@ function playwrightModule() {
       await page.waitForTimeout(200);
       await page.getByRole('button',{name:'START GAME  →',exact:true}).click();
       await page.waitForTimeout(500);
-      await page.getByRole('button',{name:'CONTINUE',exact:true}).waitFor();
-      await page.waitForTimeout(5000);
-      assert.equal(await page.getByRole('button',{name:'CONTINUE',exact:true}).count(),1,'manual hint must not advance');
       await page.screenshot({path:`/tmp/demon-hint-${name}.png`});
-      await page.getByRole('button',{name:'FIELD GUIDE',exact:true}).click();
-      await page.waitForTimeout(350);
-      await page.screenshot({path:`/tmp/demon-guide-${name}.png`});
-      assert(await page.getByRole('switch',{name:/Auto-advance hints/}).count(),'guide timing preference is present');
-      await page.screenshot({path:`/tmp/demon-guide-${name}.png`});
-      await page.getByRole('button',{name:'Close field guide',exact:true}).click();
-      await page.getByRole('button',{name:'CONTINUE',exact:true}).click();
-      await page.waitForTimeout(300);
-      assert.equal(await page.getByRole('button',{name:'CONTINUE',exact:true}).count(),0);
+      assert((await page.locator('flt-semantics-host').innerHTML()).includes('TACTICAL BRIEFING'));
+      for (const name of ['CONTINUE','HOLD','MENU','FIELD GUIDE'])
+        assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
+      await page.waitForTimeout(5000);
+      assert(!(await page.locator('flt-semantics-host').innerHTML()).includes('TACTICAL BRIEFING'),'loading hint advances automatically');
+      await page.screenshot({path:`/tmp/demon-arrival-${name}.png`});
       assert.equal((await page.request.get(new URL('/assets/assets/images/hint-scenes.png',page.url()).href)).status(),200);
       assert.deepEqual(errors,[]);
-      console.log(`${name}: illustrated held hint, untimed guide and explicit continuation passed`);
+      console.log(`${name}: automatic illustrated loading hint, no extra controls and subsequent swarm entrance passed`);
       await context.close();
     }
   } finally { await browser.close(); }

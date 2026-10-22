@@ -10,6 +10,56 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  for (final score in [90, 100, 101]) {
+    testWidgets(
+      'terminal score $score routes by current tenth-place threshold',
+      (tester) async {
+        final entries = List.generate(
+          10,
+          (i) => {'initials': 'AAA', 'score': 1000 - i * 100},
+        );
+        final service = ScoreService(
+          client: MockClient(
+            (request) async =>
+                http.Response(jsonEncode({'scores': entries}), 200),
+          ),
+        );
+        await tester.pumpWidget(
+          MaterialApp(home: ArcadePage(scoreService: service)),
+        );
+        await tester.pump();
+        await tester.tap(find.text('START GAME  →'));
+        await tester.pump();
+        final scene =
+            tester
+                    .widgetList<GameWidget>(
+                      find.byWidgetPredicate((w) => w is GameWidget),
+                    )
+                    .first
+                    .game
+                as DemonScene;
+        scene.model
+          ..score = score
+          ..mode = RunMode.gameOver;
+        scene.onTick();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        expect(find.text('RECORD SCORE'), findsNothing);
+        if (score > 100) {
+          expect(find.byType(ListWheelScrollView), findsNWidgets(3));
+        } else {
+          expect(find.byType(ListWheelScrollView), findsNothing);
+          expect(find.text('YOUR FINAL SCORE'), findsOneWidget);
+          expect(find.text(score.toString().padLeft(6, '0')), findsWidgets);
+          expect(find.text('TOP 10'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump();
+      },
+    );
+  }
+
   testWidgets(
     'score wheels retain initials after failed submission and retry',
     (tester) async {
@@ -55,11 +105,10 @@ void main() {
         ..mode = RunMode.gameOver;
       scene.onTick();
       await tester.pump();
-      expect(find.text('RECORD SCORE'), findsOneWidget);
-      await tester.tap(find.text('RECORD SCORE'));
+      expect(find.text('RECORD SCORE'), findsNothing);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      expect(loads, 1);
+      expect(loads, 2);
       expect(find.byType(ListWheelScrollView), findsNWidgets(3));
       expect(find.byType(TextField), findsNothing);
       expect(find.byType(EditableText), findsNothing);

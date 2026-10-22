@@ -65,20 +65,16 @@ The controller panel SHALL show a single composite pixel glyph formed from the v
 - **THEN** the other layers and countdowns remain visible and touch piloting continues
 
 ### Requirement: Illustrated gameplay instruction
-Gameplay hints SHALL pair one brief actionable sentence with one original pixel illustration of the same mechanic, with real legible UI text and equivalent semantic information. The picture SHALL preserve the combat art's logical pixel grid and palette. Timed hints SHALL support holding the current card and revisiting the same instruction without a timer. Advice SHALL describe actual game rules and SHALL NOT imply protections that the simulation does not grant.
+Gameplay hints SHALL pair one brief actionable sentence with one original pixel illustration and equivalent semantics. Hints SHALL advance automatically during loading without guide, Hold, Menu or manual-advance controls. Normal pause SHALL freeze the card. Advice SHALL describe actual game rules without promising protection the simulation does not grant.
 
 #### Scenario: One tactic at a glance
 - **WHEN** an illustrated hint is shown at phone size
 - **THEN** one recommended action is legible in both the sentence and picture without clipping or unrelated decorative detail
 
-#### Scenario: Read at the player's pace
-- **WHEN** the player holds a timed hint or opens its untimed review
-- **THEN** its complete text and illustration remain available until the player chooses to continue
+#### Scenario: Automatic loading hint
+- **WHEN** a sector begins
+- **THEN** one complete illustrated hint appears during loading and disappears automatically before the initial swarm flies in
 
 #### Scenario: Accurate shield advice
 - **WHEN** a hint explains shield renewal
 - **THEN** it associates the grace period with absorbing a hit and never claims that unused shield expiry grants invulnerability
-
-#### Scenario: Manual briefing preference
-- **WHEN** the player disables automatic hint advancement and starts another sector
-- **THEN** its illustrated briefing waits for Continue without advancing on a timer

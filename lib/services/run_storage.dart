@@ -27,10 +27,9 @@ class RunHistory {
     this.everBeatBoss = false,
     this.easyUnlocked = false,
     this.hardUnlocked = false,
-    this.autoAdvanceHints = true,
   });
   int failures;
-  bool everBeatBoss, easyUnlocked, hardUnlocked, autoAdvanceHints;
+  bool everBeatBoss, easyUnlocked, hardUnlocked;
 
   bool unlocked(Difficulty difficulty) => switch (difficulty) {
     Difficulty.normal => true,
@@ -57,7 +56,6 @@ class RunHistory {
     'everBeatBoss': everBeatBoss,
     'easyUnlocked': easyUnlocked,
     'hardUnlocked': hardUnlocked,
-    'autoAdvanceHints': autoAdvanceHints,
   };
 
   factory RunHistory.fromJson(Map<String, dynamic> data) {
@@ -73,7 +71,6 @@ class RunHistory {
           data['hardUnlocked'] == true ||
           (!everBeatBoss && count >= 3),
       hardUnlocked: data['hardUnlocked'] == true,
-      autoAdvanceHints: data['autoAdvanceHints'] != false,
     );
   }
 }

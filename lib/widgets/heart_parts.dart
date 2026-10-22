@@ -57,13 +57,10 @@ class HeartPartPainter extends CustomPainter {
             rows[y][x + 1] != '#' ||
             rows[y - 1][x] != '#' ||
             rows[y + 1][x] != '#';
-        final seam = (y == 5 || x == 7) && mask != 15;
         paint.color = edge
             ? mask == 15
                   ? const Color(0xFFFFD594)
                   : const Color(0xFF758A9E)
-            : seam
-            ? const Color(0xFF080D18)
             : mask & part != 0
             ? const Color(0xFFFF8676)
             : const Color(0xFF263547);

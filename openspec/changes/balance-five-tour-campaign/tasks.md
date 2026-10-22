@@ -56,3 +56,9 @@
 - [x] 10.2 Generate and review original detailed pixel-art hint illustrations, connect a tested hint catalog/shuffle bag, and verify the shield-consumption invulnerability/refill tactic against gameplay.
 - [x] 10.3 Replace repeated first-wave arrival story with stable illustrated hints, retain travel storytelling, provide pause/untimed field-guide review, and test phone/landscape presentation and selection boundaries.
 - [x] 10.4 Validate all ongoing refinements together, rebuild/reload the preview, record evidence and push game before reporting readiness.
+
+## 11. Session completion polish
+- [x] 11.1 Simplify arrivals to automatic illustrated loading hints (including enemy escalation, boss +1UP and all five medals) without guide/actions, and defer swarm entrances until hints clear.
+- [x] 11.2 Route qualifying terminal scores directly to initials and other results beneath the matching difficulty leaderboard, preserving network retry and metadata.
+- [x] 11.3 Remove heart seams and fit combined power status inside the left controller area across viewport sizes.
+- [ ] 11.4 Validate tests/browser/release preview, merge game into main and push remote.

@@ -18,8 +18,9 @@ const powerNames = <Power, String>{
 };
 
 class PowerStatus extends StatelessWidget {
-  const PowerStatus({super.key, required this.timers});
+  const PowerStatus({super.key, required this.timers, this.compact = false});
   final Map<Power, double> timers;
+  final bool compact;
   @override
   Widget build(BuildContext context) {
     final active = Power.values.where((p) => (timers[p] ?? 0) > 0).toList();
@@ -32,20 +33,20 @@ class PowerStatus extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(5),
+              padding: EdgeInsets.all(compact ? 2 : 5),
               decoration: BoxDecoration(
                 color: const Color(0xEF0A1421),
                 border: Border.all(color: const Color(0xFF46617A)),
               ),
               child: CustomPaint(
                 key: const ValueKey('combined-power-glyph'),
-                size: const Size(40, 40),
+                size: Size.square(compact ? 32 : 40),
                 painter: PowerGlyphPainter(active.toSet()),
               ),
             ),
-            const SizedBox(width: 7),
+            SizedBox(width: compact ? 4 : 7),
             SizedBox(
-              width: 92,
+              width: compact ? 86 : 92,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: active

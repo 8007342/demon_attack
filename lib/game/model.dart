@@ -474,6 +474,14 @@ class ArcadeModel {
           demon.entranceProgress = 0;
           demon.waitingForEscort = true;
           demon.y = -48;
+        } else if (wave == 1) {
+          // The arrival hint owns the whole introduction. The initial swarm
+          // remains above the arena until combat resumes, then flies in.
+          demon.entranceProgress = 0;
+          demon.entranceDelay = (i % 6) * .045 + (i ~/ 6) * .08;
+          demon.entranceDuration = 1;
+          demon.entranceStartY = -48 - (i ~/ 6) * 20.0;
+          demon.y = demon.entranceStartY;
         }
         demons.add(demon);
       }
@@ -567,13 +575,6 @@ class ArcadeModel {
       mode = RunMode.paused;
       events.add('pause');
     }
-  }
-
-  /// Player-controlled continuation when automatic hint advance is disabled.
-  void continueIntroduction() {
-    if (presentationMode != RunMode.transition || wave != 1) return;
-    if (mode == RunMode.paused) resume();
-    transitionLeft = 0;
   }
 
   void resume() {
@@ -881,7 +882,7 @@ class ArcadeModel {
       }
     }
     _enemyFire -= dt * policy.hostileRate;
-    final shooters = demons.where((d) => !d.isLarge).toList();
+    final shooters = demons.where((d) => !d.isLarge && !d.entering).toList();
     if (_enemyFire <= 0 && shooters.isNotEmpty) {
       final d = shooters[random.nextInt(shooters.length)];
       final aim = ((shipX - d.x) * .22).clamp(-65.0, 65.0);

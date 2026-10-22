@@ -23,6 +23,26 @@ class TacticalHint {
 
 const List<TacticalHint> tacticalHints = [
   TacticalHint(
+    id: 'stronger_swarm',
+    title: 'Later waves grow stronger. Watch for shields.',
+    detail:
+        'Enemy shields and armor absorb hits before the creature takes damage.',
+    scene: 'stronger_swarm',
+  ),
+  TacticalHint(
+    id: 'boss_reward',
+    title: 'Beat the boss. Earn another life.',
+    detail: 'Every defeated carrier awards one medal and one extra life.',
+    scene: 'boss_reward',
+  ),
+  TacticalHint(
+    id: 'campaign_medals',
+    title: 'Collect all five medals. Liberate the frontier.',
+    detail: 'Defeat five carriers to earn all five campaign medals.',
+    scene: 'campaign_medals',
+  ),
+
+  TacticalHint(
     id: 'heart_quarters',
     title: 'Fit four quarters. Earn another life.',
     detail: 'Fill one heart with four different quarters; duplicates use other slots.',

@@ -55,35 +55,26 @@ Future<void> disposePage(WidgetTester tester) async {
 
 void main() {
   testWidgets(
-    'arrival hint holds, guide stays paused, and manual preference persists',
+    'arrival hints auto advance without extra actions or legacy holds',
     (tester) async {
-      final storage = RunStorage(store: MemoryLocalStore());
-      await showPage(tester, storage);
+      final local = MemoryLocalStore();
+      local.write(RunStorage.historyKey, '{"autoAdvanceHints":false}');
+      await showPage(tester, RunStorage(store: local));
+      expect(find.text('FIELD GUIDE'), findsNothing);
       await tester.tap(find.text('START GAME  →'));
       await tester.pump();
       final model = sceneOf(tester).model;
       expect(find.text('TACTICAL BRIEFING'), findsOneWidget);
-      expect(find.text('INCOMING TRANSMISSION'), findsNothing);
-      await tester.tap(find.text('HOLD'));
+      for (final action in ['HOLD', 'FIELD GUIDE', 'MENU', 'CONTINUE']) {
+        expect(find.text(action), findsNothing);
+      }
+      expect(model.mode, RunMode.transition);
+      for (var i = 0; i < 300; i++) {
+        model.update(1 / 60);
+      }
+      sceneOf(tester).onTick();
       await tester.pump();
-      final remaining = model.transitionLeft;
-      await tester.pump(const Duration(seconds: 10));
-      expect(model.transitionLeft, remaining);
-      expect(find.text('SIGNAL PAUSED'), findsOneWidget);
-      await tester.tap(find.text('FIELD GUIDE'));
-      await tester.pump();
-      expect(find.text('Auto-advance hints'), findsOneWidget);
-      await tester.tap(find.byType(Switch));
-      await tester.pump();
-      expect(storage.loadHistory().autoAdvanceHints, isFalse);
-      await tester.tap(find.byTooltip('Close field guide'));
-      await tester.pump();
-      expect(model.mode, RunMode.paused);
-      expect(find.text('CONTINUE'), findsOneWidget);
-      await tester.tap(find.text('CONTINUE'));
-      await tester.pump();
-      expect(model.transitionLeft, 0);
-      expect(model.mode, isNot(RunMode.paused));
+      expect(find.text('TACTICAL BRIEFING'), findsNothing);
       expect(tester.takeException(), isNull);
       await disposePage(tester);
     },
@@ -149,8 +140,11 @@ void main() {
       await tester.pump();
       expect(storage.loadCheckpoint(), isNull);
       expect(storage.loadHistory().failures, 3);
-      await tester.tap(find.text('RETURN TO TITLE'));
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      if (find.text('← BACK').evaluate().isNotEmpty) {
+        await tester.tap(find.text('← BACK'));
+        await tester.pump();
+      }
       expect(find.text('EASY MODE'), findsOneWidget);
       expect(find.byKey(const ValueKey('board-easy')), findsOneWidget);
       expect(find.text('RESUME GAME'), findsNothing);

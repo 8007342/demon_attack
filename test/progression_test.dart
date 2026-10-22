@@ -34,6 +34,58 @@ void clearWave(ArcadeModel model) {
 }
 
 void main() {
+  test('the first swarm flies in only after the arrival hint disappears', () {
+    for (final difficulty in Difficulty.values) {
+      final model = ArcadeModel()
+        ..restoreCheckpoint({
+          'difficulty': difficulty.name,
+          'routeIndex': 4,
+          'sector': 4,
+        });
+      final initial = List<Demon>.of(model.demons);
+      expect(
+        initial.every(
+          (d) => d.entering && d.entranceProgress == 0 && d.y < -30,
+        ),
+        isTrue,
+      );
+      tick(model, ArcadeModel.arrivalHintDuration - .2);
+      expect(model.mode, RunMode.transition);
+      expect(
+        initial.every(
+          (d) => d.entranceProgress == 0 && d.y == d.entranceStartY,
+        ),
+        isTrue,
+      );
+      model.pause();
+      tick(model, 2);
+      expect(initial.every((d) => d.entranceProgress == 0), isTrue);
+      model.resume();
+      reach(model, RunMode.playing);
+      expect(initial.every((d) => d.entranceProgress == 0), isTrue);
+      tick(model, .5);
+      expect(
+        initial.any((d) => d.entranceProgress > 0 && d.entranceProgress < 1),
+        isTrue,
+      );
+      expect(model.shots.where((s) => s.hostile), isEmpty);
+      final progress = initial.first.entranceProgress;
+      model.pause();
+      tick(model, 1);
+      model.resume();
+      expect(initial.first.entranceProgress, progress);
+      tick(model, 1.2);
+      expect(initial.every((d) => !d.entering), isTrue);
+    }
+    final interwave = ArcadeModel()
+      ..restoreCheckpoint({'sector': 2, 'wave': 2});
+    expect(interwave.demons.every((d) => !d.entering), isTrue);
+    final carrier = ArcadeModel()..restoreCheckpoint({'sector': 5});
+    expect(carrier.boss, isNotNull);
+    expect(carrier.demons, isEmpty);
+    expect(carrier.mode, RunMode.transition);
+  });
+
   test('story phases add reading time and salvage stays two seconds', () {
     final m = ArcadeModel()..start();
     expect(m.transitionDuration, ArcadeModel.arrivalHintDuration);

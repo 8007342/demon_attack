@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'game/model.dart';
 import 'game/hints.dart';
 import 'widgets/hint_art.dart';
-import 'widgets/power_status.dart';
+import 'widgets/pilot_console_content.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
 import 'services/audio.dart';
@@ -89,7 +89,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   bool handledRunEnd = false;
   final hintDeck = HintDeck();
   TacticalHint? arrivalHint;
-  bool manualHintHold = false, hintArtPrecached = false;
+  bool hintArtPrecached = false;
+  ScoreEntry? finalResult;
+  bool showFinalResult = false;
   String? heartNotice;
   double heartNoticeUntil = 0;
   bool muted = false, loading = false, submitted = false;
@@ -189,8 +191,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               level: model.level,
               route: model.cycle,
             );
-            manualHintHold = !history.autoAdvanceHints;
-            if (manualHintHold) model.pause();
           }
           savedCheckpoint = model.checkpoint();
           storage.saveCheckpoint(savedCheckpoint!);
@@ -211,6 +211,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           audioSfx(event);
       }
     }
+    if (!handledRunEnd &&
+        (model.mode == RunMode.gameOver || model.mode == RunMode.completed)) {
+      _finishRun(failed: model.mode == RunMode.gameOver);
+    }
     setState(() {});
   }
 
@@ -223,6 +227,49 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     }
     storage.clearCheckpoint();
     savedCheckpoint = null;
+    finalResult = ScoreEntry(
+      'YOU',
+      model.score,
+      difficulty: model.difficulty,
+      medals: model.medals,
+      activeMilliseconds: model.activeMilliseconds,
+      remainingLives: model.medals == 5 ? model.lives : null,
+    );
+    boardDifficulty = model.difficulty;
+    screen = 'ranking';
+    _title(keepScreen: true);
+    _routeFinalScore();
+  }
+
+  Future<void> _routeFinalScore() async {
+    final result = finalResult!;
+    final request = ++boardRequest;
+    boardLoading = true;
+    boardError = null;
+    try {
+      final entries = await scores.load(difficulty: result.difficulty);
+      if (!mounted || request != boardRequest) return;
+      setState(() {
+        board = entries;
+        boardLoading = false;
+        final qualifies =
+            entries.length < 10 || result.score > entries.last.score;
+        showFinalResult = !qualifies;
+        screen = qualifies ? 'entry' : null;
+        error = null;
+        loading = false;
+      });
+    } catch (_) {
+      if (!mounted || request != boardRequest) return;
+      // Preserve a chance to submit when the ranking relay is unavailable.
+      setState(() {
+        boardLoading = false;
+        boardError = 'The score relay is unavailable.';
+        screen = 'entry';
+        error = null;
+        loading = false;
+      });
+    }
   }
 
   void _resumeGame() {
@@ -239,6 +286,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       screen = null;
       submitted = false;
       handledRunEnd = false;
+      showFinalResult = false;
       heartNotice = null;
     });
     _tick();
@@ -252,6 +300,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       screen = null;
       submitted = false;
       handledRunEnd = false;
+      showFinalResult = false;
       heartNotice = null;
       model.start(difficulty: difficulty);
     });
@@ -259,9 +308,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     focus.requestFocus();
   }
 
-  void _title() {
+  void _title({bool keepScreen = false}) {
     setState(() {
-      screen = null;
+      if (!keepScreen) screen = null;
       model.mode = RunMode.title;
       model.events.clear();
       keys.clear();
@@ -285,13 +334,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   KeyEventResult _key(FocusNode node, KeyEvent event) {
     final key = event.logicalKey;
-    if (screen == 'guide') {
-      if (event is KeyDownEvent && key == LogicalKeyboardKey.escape) {
-        setState(() => screen = null);
-        return KeyEventResult.handled;
-      }
-      return KeyEventResult.ignored;
-    }
     if (key == LogicalKeyboardKey.arrowLeft ||
         key == LogicalKeyboardKey.arrowRight) {
       if (event is KeyUpEvent) {
@@ -341,14 +383,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         });
       }
     }
-  }
-
-  void _enterInitials() {
-    setState(() {
-      screen = 'entry';
-      error = null;
-      loading = false;
-    });
   }
 
   Future<void> _submit() async {
@@ -481,8 +515,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     ),
                   if (screen != null)
                     Positioned.fill(
-                      child: screen == 'guide'
-                          ? _fieldGuide()
+                      child: screen == 'ranking'
+                          ? const ColoredBox(
+                              color: Color(0xEE080D18),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
                           : _scoreOverlay(),
                     ),
                 ],
@@ -653,13 +690,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             ),
           ),
         ],
-      const SizedBox(height: 10),
-      TextButton.icon(
-        onPressed: _openGuide,
-        icon: const Icon(Icons.auto_stories_outlined, size: 17),
-        label: const Text('FIELD GUIDE'),
-      ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 30),
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -778,6 +809,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           ),
         if (!boardLoading && boardError == null)
           ...List.generate(board.length, (i) => _scoreRow(i, board[i])),
+        if (showFinalResult && finalResult?.difficulty == boardDifficulty) ...[
+          const SizedBox(height: 18),
+          _label('YOUR FINAL SCORE', gold, size: 11),
+          _scoreRow(-1, finalResult!),
+        ],
         if (submitted)
           Padding(
             padding: const EdgeInsets.only(top: 16),
@@ -820,7 +856,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             SizedBox(
               width: 22,
               child: Text(
-                '${index + 1}'.padLeft(2, '0'),
+                index < 0 ? '—' : '${index + 1}'.padLeft(2, '0'),
                 style: TextStyle(
                   fontSize: 10,
                   color: index == 0 ? gold : const Color(0xFF647D94),
@@ -1021,51 +1057,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       ),
                       const SizedBox(height: 12),
                       TextButton(
-                        onPressed: _openGuide,
-                        child: const Text('FIELD GUIDE'),
-                      ),
-                      TextButton(
                         onPressed: _title,
                         child: const Text('RETURN TO TITLE'),
                       ),
                     ]),
-                  ),
-                if (model.mode == RunMode.gameOver ||
-                    model.mode == RunMode.completed)
-                  Positioned.fill(
-                    child: _gameOverlay(
-                      model.mode == RunMode.completed
-                          ? 'FRONTIER LIBERATED'
-                          : 'SIGNAL LOST',
-                      model.score.toString().padLeft(6, '0'),
-                      [
-                        _medals(model.difficulty, model.medals, size: 36),
-                        const SizedBox(height: 12),
-                        Text(
-                          '${_playingTime(model.activeMilliseconds)} ACTIVE PLAY${model.medals == 5 ? ' · ♥ ×${model.lives}' : ''}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFF9AAEC3),
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        if (!submitted)
-                          FilledButton(
-                            onPressed: _enterInitials,
-                            child: const Text('RECORD SCORE'),
-                          ),
-                        const SizedBox(height: 12),
-                        OutlinedButton(
-                          onPressed: () => _start(model.difficulty),
-                          child: const Text('TRY AGAIN'),
-                        ),
-                        TextButton(
-                          onPressed: _title,
-                          child: const Text('RETURN TO TITLE'),
-                        ),
-                      ],
-                    ),
                   ),
               ],
             ),
@@ -1082,13 +1077,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       arrivalHint != null &&
       model.presentationMode == RunMode.transition &&
       model.wave == 1;
-
-  void _openGuide() {
-    if (model.mode != RunMode.title && model.mode != RunMode.paused) {
-      model.pause();
-    }
-    setState(() => screen = 'guide');
-  }
 
   Widget _hintInterlude(TacticalHint hint) => LayoutBuilder(
     builder: (context, bounds) {
@@ -1136,36 +1124,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     color: mint,
                     backgroundColor: const Color(0xFF24374B),
                   ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    children: [
-                      TextButton(
-                        onPressed: paused && manualHintHold
-                            ? () {
-                                model.continueIntroduction();
-                                setState(() => manualHintHold = false);
-                              }
-                            : _pause,
-                        child: Text(
-                          paused && manualHintHold
-                              ? 'CONTINUE'
-                              : paused
-                              ? 'RESUME'
-                              : 'HOLD',
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _openGuide,
-                        child: const Text('FIELD GUIDE'),
-                      ),
-                      if (paused)
-                        TextButton(
-                          onPressed: _title,
-                          child: const Text('MENU'),
-                        ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -1173,113 +1131,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         ),
       );
     },
-  );
-
-  Widget _fieldGuide() => Material(
-    color: const Color(0xFA080D18),
-    child: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'FIELD GUIDE',
-                      style: TextStyle(
-                        color: mint,
-                        fontSize: 23,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Close field guide',
-                    onPressed: () => setState(() => screen = null),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Text(
-                'Study at your own pace. Your flight is on hold.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFFAABCD0), fontSize: 13),
-              ),
-            ),
-            SwitchListTile(
-              title: const Text(
-                'Auto-advance hints',
-                style: TextStyle(fontSize: 15),
-              ),
-              subtitle: const Text(
-                'Turn off to continue each briefing yourself.',
-                style: TextStyle(fontSize: 12),
-              ),
-              value: history.autoAdvanceHints,
-              onChanged: (value) {
-                setState(() {
-                  history.autoAdvanceHints = value;
-                  if (!value && _showingArrivalHint) {
-                    manualHintHold = true;
-                    model.pause();
-                  }
-                });
-                storage.saveHistory(history);
-              },
-            ),
-            Expanded(
-              child: ListView(
-                key: const ValueKey('field-guide-scroll'),
-                padding: const EdgeInsets.all(20),
-                children: [
-                  for (final hint in tacticalHints.where(
-                    (hint) => hint.isEligible(model.difficulty),
-                  ))
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 24),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF101A29),
-                        border: Border.all(color: const Color(0xFF304D60)),
-                      ),
-                      child: Column(
-                        children: [
-                          HintArt(scene: hint.scene, height: 170),
-                          const SizedBox(height: 14),
-                          Text(
-                            hint.title,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 21,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            hint.detail,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFB7C7D8),
-                              fontSize: 15,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
   );
 
   Widget _interlude() {
@@ -1502,44 +1353,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             ),
             child: CustomPaint(
               painter: ConsolePainter(touch == null ? null : touchPosition),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Center(
-                    key: const ValueKey('controller-guidance'),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _label(
-                          '◀     SLIDE TO PILOT     ▶',
-                          touch != null ? mint : const Color(0xFF99B4C7),
-                          size: 10,
-                        ),
-                        const SizedBox(height: 9),
-                        _label(
-                          model.canPilot && !model.combat
-                              ? 'COLLECT POWERUPS · WEAPONS SAFE'
-                              : 'AUTO FIRE ENGAGED',
-                          const Color(0xFF536F82),
-                          size: 7,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (model.activePowers.isNotEmpty)
-                    Positioned(
-                      left: 8,
-                      bottom: 70,
-                      child: IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: const BoxDecoration(
-                            color: Color(0xED101F2D),
-                          ),
-                          child: PowerStatus(timers: Map.of(model.powerTimers)),
-                        ),
-                      ),
-                    ),
-                ],
+              child: PilotConsoleContent(
+                timers: Map.of(model.powerTimers),
+                touching: touch != null,
+                collecting: model.canPilot && !model.combat,
               ),
             ),
           ),

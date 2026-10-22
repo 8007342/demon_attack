@@ -51,7 +51,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
     await tester.pump();
     expect(find.text('SIGNAL PAUSED'), findsOneWidget);
-    await tester.tap(find.text('RESUME'));
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
     await tester.pump();
     expect(find.text('SIGNAL PAUSED'), findsNothing);
     expect(tester.takeException(), isNull);

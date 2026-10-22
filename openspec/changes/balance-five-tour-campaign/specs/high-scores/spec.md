@@ -36,3 +36,16 @@ The landing page SHALL display a neutral Top10 heading with unlocked difficulty 
 #### Scenario: Finisher row
 - **WHEN** a result has five medals and four remaining lives
 - **THEN** its row displays all five medals, active time, score and heart ×4
+
+## ADDED Requirements
+
+### Requirement: Direct terminal score routing
+At run completion the client SHALL check the matching difficulty Top10 and open three-character entry directly for qualifying scores. Nonqualifying results SHALL appear below that difficulty's board on landing. Ranking-load failures SHALL preserve submission access; submission failures SHALL retain initials and run metadata for retry.
+
+#### Scenario: Tenth-place tie
+- **WHEN** a finished score ties tenth place in a full board
+- **THEN** its personal final result appears below that difficulty board without initials entry
+
+#### Scenario: Qualifying result
+- **WHEN** a score exceeds tenth place or the matching board has fewer than ten entries
+- **THEN** the three-character entry appears directly
