@@ -1549,11 +1549,16 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 touch == null ? null : touchPosition,
                 steering: model.steering,
                 defeatActive: model.defeatActive,
+                tiltActive: tilt.isActive,
+                hasPowers: model.powerTimers.isNotEmpty,
+                combat: model.combat,
               ),
               child: PilotConsoleContent(
                 timers: Map.of(model.powerTimers),
                 touching: touch != null,
                 collecting: model.canPilot && !model.combat,
+                tiltActive: tilt.isActive,
+                steering: model.steering,
               ),
             ),
           ),
@@ -1773,11 +1778,17 @@ class ConsolePainter extends CustomPainter {
     this.touch, {
     this.steering = 0.0,
     this.defeatActive = false,
+    this.tiltActive = false,
+    this.hasPowers = false,
+    this.combat = true,
   });
 
   final double? touch;
   final double steering;
   final bool defeatActive;
+  final bool tiltActive;
+  final bool hasPowers;
+  final bool combat;
 
   @override
   void paint(Canvas c, Size s) {
@@ -1800,48 +1811,114 @@ class ConsolePainter extends CustomPainter {
       return;
     }
 
-    final p = Paint()
-      ..color = const Color(0xFF203547)
+    final pGrid = Paint()
+      ..color = const Color(0xFF1B2D3E)
       ..strokeWidth = 1;
-    for (var x = 8.0; x < s.width; x += 12) {
-      c.drawLine(Offset(x, 8), Offset(x, s.height - 8), p);
+    for (var x = 8.0; x < s.width; x += 14) {
+      c.drawLine(Offset(x, 8), Offset(x, s.height - 8), pGrid);
     }
-    for (var y = 8.0; y < s.height; y += 12) {
-      c.drawLine(Offset(8, y), Offset(s.width - 8, y), p);
+    for (var y = 8.0; y < s.height; y += 14) {
+      c.drawLine(Offset(8, y), Offset(s.width - 8, y), pGrid);
     }
 
+    // Inner console display housing
     c.drawRect(
-      Rect.fromLTWH(s.width * .2, 20, s.width * .6, s.height - 40),
-      Paint()..color = const Color(0xEE101F2D),
+      Rect.fromLTWH(s.width * .18, 16, s.width * .64, s.height - 32),
+      Paint()..color = const Color(0xF20B1522),
     );
 
-    // Corner brackets
-    for (final x in [5.0, s.width - 8]) {
-      for (final y in [5.0, s.height - 8]) {
+    // Tactical corner framing brackets
+    for (final x in [6.0, s.width - 9]) {
+      for (final y in [6.0, s.height - 9]) {
         c.drawRect(
           Rect.fromLTWH(x, y, 3, 3),
-          Paint()..color = const Color(0xFF668094),
+          Paint()..color = const Color(0xFF4C6B82),
         );
       }
     }
 
-    c.drawLine(
-      Offset(s.width * .3, s.height - 11),
-      Offset(s.width * .7, s.height - 11),
+    // Discreet diegetic LED status indicators along top rail
+    const ledSpacing = 16.0;
+    final ledStartX = s.width * 0.5 - ledSpacing * 1.5;
+    const ledY = 9.0;
+
+    // LED 1: PWR
+    c.drawRect(
+      Rect.fromLTWH(ledStartX, ledY, 3, 3),
       Paint()
-        ..color = mint.withValues(alpha: .25)
-        ..strokeWidth = 2,
+        ..color = hasPowers ? const Color(0xFF70F5D5) : const Color(0xFF223647),
+    );
+    // LED 2: AUTO
+    c.drawRect(
+      Rect.fromLTWH(ledStartX + ledSpacing, ledY, 3, 3),
+      Paint()
+        ..color = combat ? const Color(0xFFFFD594) : const Color(0xFF223647),
+    );
+    // LED 3: GYRO
+    c.drawRect(
+      Rect.fromLTWH(ledStartX + ledSpacing * 2, ledY, 3, 3),
+      Paint()
+        ..color = tiltActive ? const Color(0xFF39DFCC) : const Color(0xFF223647),
+    );
+    // LED 4: SYS
+    c.drawRect(
+      Rect.fromLTWH(ledStartX + ledSpacing * 3, ledY, 3, 3),
+      Paint()..color = const Color(0xFF70F5D5).withValues(alpha: 0.6),
     );
 
-    // Active touch reticle
-    if (touch != null) {
+    // Recessed sliding track rail
+    final railStartX = s.width * 0.22;
+    final railEndX = s.width * 0.78;
+    final railY = s.height - 10;
+    c.drawLine(
+      Offset(railStartX, railY),
+      Offset(railEndX, railY),
+      Paint()
+        ..color = const Color(0xFF243B4E)
+        ..strokeWidth = 2,
+    );
+    // Center notch
+    c.drawLine(
+      Offset(s.width * 0.5, railY - 3),
+      Offset(s.width * 0.5, railY + 3),
+      Paint()
+        ..color = const Color(0xFF4C6B82)
+        ..strokeWidth = 1.5,
+    );
+    // Quarter ticks
+    for (final frac in [0.36, 0.64]) {
+      c.drawLine(
+        Offset(s.width * frac, railY - 2),
+        Offset(s.width * frac, railY + 2),
+        Paint()
+          ..color = const Color(0xFF334F66)
+          ..strokeWidth = 1,
+      );
+    }
+
+    // Active pilot reticle indicator
+    final activeX = touch != null
+        ? touch! * s.width
+        : (steering != 0.0 ? s.width * 0.5 + steering * (s.width * 0.26) : null);
+
+    if (activeX != null) {
+      // Glowing carriage indicator on rail
       c.drawRect(
         Rect.fromCenter(
-          center: Offset(touch! * s.width, s.height / 2),
-          width: 40,
-          height: s.height - 12,
+          center: Offset(activeX, railY),
+          width: 14,
+          height: 4,
         ),
-        Paint()..color = mint.withValues(alpha: .12),
+        Paint()..color = mint,
+      );
+      // Soft tracking pillar
+      c.drawRect(
+        Rect.fromCenter(
+          center: Offset(activeX, s.height * 0.5),
+          width: 38,
+          height: s.height - 14,
+        ),
+        Paint()..color = mint.withValues(alpha: .10),
       );
     }
   }
@@ -1850,5 +1927,8 @@ class ConsolePainter extends CustomPainter {
   bool shouldRepaint(ConsolePainter oldDelegate) =>
       touch != oldDelegate.touch ||
       steering != oldDelegate.steering ||
-      defeatActive != oldDelegate.defeatActive;
+      defeatActive != oldDelegate.defeatActive ||
+      tiltActive != oldDelegate.tiltActive ||
+      hasPowers != oldDelegate.hasPowers ||
+      combat != oldDelegate.combat;
 }
