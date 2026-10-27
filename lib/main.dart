@@ -1811,7 +1811,7 @@ class ConsolePainter extends CustomPainter {
     }
 
     c.drawRect(
-      Rect.fromLTWH(s.width * .2, 16, s.width * .6, s.height - 32),
+      Rect.fromLTWH(s.width * .2, 20, s.width * .6, s.height - 40),
       Paint()..color = const Color(0xEE101F2D),
     );
 
@@ -1825,97 +1825,11 @@ class ConsolePainter extends CustomPainter {
       }
     }
 
-    // Strategic angle ticks (7 increments: -24° to +24°)
-    final cx = s.width * 0.5;
-    final cy = s.height * 0.5;
-    final currentAngleNorm = steering.clamp(-1.0, 1.0);
-    final activeIndex =
-        ((currentAngleNorm + 1.0) / 2.0 * 6.0).round().clamp(0, 6);
-
-    for (var i = 0; i < 7; i++) {
-      final tickX = cx + (i - 3) * (s.width * 0.08);
-      final isActive = i == activeIndex;
-      final pTick = Paint()
-        ..color = isActive ? mint : const Color(0xFF3B566E)
-        ..strokeWidth = isActive ? 2 : 1;
-      c.drawLine(
-        Offset(tickX, s.height - 18),
-        Offset(tickX, s.height - 10),
-        pTick,
-      );
-    }
-
-    // Yoke & dual flight steering handles
-    final yokeAngle = currentAngleNorm * (math.pi / 4.5); // ±40 degrees
-    c.save();
-    c.translate(cx, cy);
-    c.rotate(yokeAngle);
-
-    final pYoke = Paint()
-      ..color = mint.withValues(alpha: 0.85)
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke;
-
-    // Yoke center ring
-    c.drawCircle(Offset.zero, 11, pYoke);
-    c.drawCircle(Offset.zero, 3, Paint()..color = mint);
-
-    // Dual grips
-    c.drawLine(const Offset(-32, 0), const Offset(-11, 0), pYoke);
-    c.drawLine(const Offset(11, 0), const Offset(32, 0), pYoke);
-    c.drawLine(const Offset(-32, -8), const Offset(-32, 8), pYoke);
-    c.drawLine(const Offset(32, -8), const Offset(32, 8), pYoke);
-
-    // Horizon line
     c.drawLine(
-      const Offset(-42, 0),
-      const Offset(-36, 0),
+      Offset(s.width * .3, s.height - 11),
+      Offset(s.width * .7, s.height - 11),
       Paint()
-        ..color = const Color(0x8854D2D2)
-        ..strokeWidth = 1.5,
-    );
-    c.drawLine(
-      const Offset(36, 0),
-      const Offset(42, 0),
-      Paint()
-        ..color = const Color(0x8854D2D2)
-        ..strokeWidth = 1.5,
-    );
-
-    c.restore();
-
-    // Twin Gun Pod Indicators at left and right
-    final pPod = Paint()
-      ..color = const Color(0xFF4C6A85)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    final podL = Rect.fromCenter(
-      center: Offset(s.width * 0.12, cy),
-      width: 14,
-      height: 26,
-    );
-    final podR = Rect.fromCenter(
-      center: Offset(s.width * 0.88, cy),
-      width: 14,
-      height: 26,
-    );
-    c.drawRect(podL, pPod);
-    c.drawRect(podR, pPod);
-
-    // Gun barrels pointing according to current steering
-    final barrelOffset = Offset(currentAngleNorm * 5, -8);
-    c.drawLine(
-      podL.topCenter,
-      podL.topCenter + barrelOffset,
-      Paint()
-        ..color = mint
-        ..strokeWidth = 2,
-    );
-    c.drawLine(
-      podR.topCenter,
-      podR.topCenter + barrelOffset,
-      Paint()
-        ..color = mint
+        ..color = mint.withValues(alpha: .25)
         ..strokeWidth = 2,
     );
 
