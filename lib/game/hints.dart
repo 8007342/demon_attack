@@ -33,7 +33,7 @@ const List<TacticalHint> tacticalHints = [
     id: 'stronger_swarm',
     title: 'Later waves grow stronger. Watch for shields.',
     detail:
-        'Enemy shields and armor absorb hits before the creature takes damage.',
+        'Diving shields absorb hits; large diving shields require weapon powerups to break.',
     scene: 'stronger_swarm',
   ),
   TacticalHint(
@@ -74,6 +74,13 @@ const List<TacticalHint> tacticalHints = [
     detail:
         'One second of protection lets you collect fresh shields or weapons.',
     scene: 'shield_refresh',
+  ),
+  TacticalHint(
+    id: 'sling_shot',
+    title: 'Slide and shoot strategically to angle shots.',
+    detail:
+        'Banking sideways bends your shot trajectory into moving giants or open hatches.',
+    scene: 'sling_shot',
   ),
   TacticalHint(
     id: 'powerful_choice',
@@ -140,6 +147,7 @@ class HintDeck {
               'heart_quarters',
               'ordinary_dodge',
               'shield_refresh',
+              'sling_shot',
             }.contains(hint.id),
           )
           .firstOrNull;

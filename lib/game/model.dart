@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
 import 'difficulty.dart';
+import 'swarm_policy.dart';
 export 'difficulty.dart';
+export 'swarm_policy.dart';
 
 enum RunMode {
   title,
@@ -56,6 +58,8 @@ class Demon {
        homeX = x,
        homeY = y;
   double x, y, homeX, homeY;
+  double vx = 0, vy = 0, bank = 0;
+  int diveShield = 0, diveShieldMax = 0;
   final int kind, maxHp;
   final bool elite, isEscort;
   final EnemyArchetype archetype;
@@ -65,6 +69,8 @@ class Demon {
   int shield, armor;
   double attackLeft = 2.4, volleyLeft = 1.5;
   double evadeLeft = 0, evadeCooldown = 0, evadeOffset = 0;
+  double get evadeTimer => evadeLeft;
+  set evadeTimer(double value) => evadeLeft = value;
   double get defenseFraction =>
       (shield + armor) / math.max(1, shieldMax + armorMax);
   // Spawned sentinels arrive after the small flock has settled. Hand-created
@@ -127,14 +133,42 @@ class Blast {
   double age = 0;
 }
 
+class SupplyCrate {
+  SupplyCrate(this.x, this.y, this.power, {this.maxHp = 3}) : hp = maxHp;
+  double x, y;
+  final Power power;
+  final int maxHp;
+  int hp;
+  double vy = 28.0;
+  double swingTime = 0.0;
+  double hitFlash = 0.0;
+  bool get destroyed => hp <= 0;
+}
+
+class FallingPart {
+  FallingPart(
+    this.x,
+    this.y,
+    this.power, {
+    this.vx = 0.0,
+    this.vy = -18.0,
+    this.vRot = 3.5,
+  });
+  double x, y, vx, vy;
+  final Power power;
+  double rotation = 0.0;
+  final double vRot;
+  double age = 0.0;
+}
+
 class Carrier {
   Carrier(
     int cycle, {
     Difficulty difficulty = Difficulty.normal,
     this.startingDirection = 1,
     this.startingPhase = 0,
-  }) : shieldMax = DifficultyPolicy(difficulty).bossHealth(72 + cycle * 18),
-       coreMax = DifficultyPolicy(difficulty).bossHealth(24 + cycle * 10),
+  }) : shieldMax = DifficultyPolicy(difficulty).bossShieldForRoute(cycle),
+       coreMax = DifficultyPolicy(difficulty).bossCoreForRoute(cycle),
        formCount = math.min(4, 2 + cycle) {
     shield = shieldMax;
     core = coreMax;
@@ -142,6 +176,7 @@ class Carrier {
     x = forecastX(0, 1);
     horizontalVelocity = startingDirection.toDouble();
   }
+  static const double sideHatchOffset = 46.0;
   final int startingDirection;
   final double startingPhase;
   double motionPhase = 0, horizontalVelocity = 0;
@@ -170,6 +205,9 @@ class Carrier {
   int get phase =>
       ((1 - core / coreMax) * formCount).floor().clamp(0, formCount - 1);
   double door = 0;
+  double sideDoorLeft = 0;
+  double sideDoorRight = 0;
+  bool get sideHatchesLocked => phase >= formCount - 1;
 }
 
 /// Pure fixed-step simulation; renderers and input never change its clock.
@@ -183,6 +221,9 @@ class ArcadeModel {
   final List<Shot> shots = [];
   final List<Pickup> pickups = [];
   final List<Blast> blasts = [];
+  final List<SupplyCrate> supplyCrates = [];
+  final List<FallingPart> fallingParts = [];
+  double crateSpawnTimer = 0.0;
   final List<String> events = [];
   Carrier? boss;
   Carrier? wreckBoss;
@@ -205,8 +246,40 @@ class ArcadeModel {
   int _reinforcementCasualties = 0;
   int _ordinaryBirthOrdinal = 0, _eliteBirths = 0, _waveRoster = 0;
   bool escortSpawned = false;
+  bool _spawnedFromCheckpoint = false;
   int get plannedEscortSize => policy.escortSize(route: cycle, sector: level);
   double shipX = 180, targetX = 180, clock = 0, levelClock = 0;
+  double shipVx = 0, shipBank = 0, shipThrust = 0;
+  double steering = 0, aimAngle = 0;
+  double touchSensitivity = 1.0;
+  bool tiltEnabled = false;
+  bool _steeringActive = false;
+  static const List<double> interimAnglesDeg = [
+    -24,
+    -18,
+    -12,
+    -6,
+    0,
+    6,
+    12,
+    18,
+    24,
+  ];
+  double get interimAimAngleDeg {
+    if (shipVx.abs() <= 15 && steering.abs() < 0.05) return 0;
+    final deg = aimAngle * 180 / math.pi;
+    return ((deg / 6.0).round() * 6.0).clamp(-24.0, 24.0);
+  }
+
+  static const double defeatDuration = 3.6;
+  double defeatTimer = 0;
+  double cameraPanY = 0;
+  bool get defeatActive => mode == RunMode.gameOver && defeatTimer > 0;
+  double get defeatProgress => defeatDuration <= 0
+      ? 1.0
+      : (1.0 - defeatTimer / defeatDuration).clamp(0.0, 1.0);
+  double get visualClock =>
+      defeatActive ? clock + (defeatDuration - defeatTimer) : clock;
   double invulnerable = 0, transitionLeft = 0;
   static const storyReadingTime = 1 / 3;
   static const arrivalHintDuration = 4.5;
@@ -216,6 +289,11 @@ class ArcadeModel {
   Iterable<Power> get activePowers => Power.values.where(hasPower);
   bool hasPower(Power value) => timeLeft(value) > 0;
   double timeLeft(Power value) => powerTimers[value] ?? 0;
+  bool get hasOffensivePower =>
+      hasPower(Power.powerful) ||
+      hasPower(Power.large) ||
+      hasPower(Power.rapid) ||
+      hasPower(Power.spread);
   double _fire = 0, _enemyFire = 1.5, _dive = 3, _flock = 0, _accumulator = 0;
   double get speed => (1 + math.min(cycle, 4) * .04) * policy.hostileRate;
   bool get combat => mode == RunMode.playing;
@@ -280,8 +358,15 @@ class ArcadeModel {
     wave = 1;
     clearedLevel = null;
     shipX = targetX = 180;
+    shipVx = shipBank = shipThrust = 0;
+    steering = aimAngle = 0;
+    _steeringActive = false;
+    defeatTimer = cameraPanY = 0;
     clock = 0;
     powerTimers.clear();
+    supplyCrates.clear();
+    fallingParts.clear();
+    crateSpawnTimer = 0.0;
     invulnerable = 2;
     _accumulator = 0;
     events.clear();
@@ -385,16 +470,23 @@ class ArcadeModel {
     heartAssemblyLeft = 0;
     heartPickups.clear();
     powerTimers.clear();
+    supplyCrates.clear();
+    fallingParts.clear();
+    crateSpawnTimer = 0.0;
     pickups.clear();
     blasts.clear();
     events.clear();
     clearedLevel = null;
     wreckBoss = null;
     shipX = targetX = 180;
+    shipVx = shipBank = shipThrust = 0;
+    steering = aimAngle = 0;
+    _steeringActive = false;
+    defeatTimer = cameraPanY = 0;
     clock = levelClock = _accumulator = 0;
     invulnerable = 2;
     boss = level == 5 ? _newCarrier() : null;
-    _spawnWave();
+    _spawnWave(fromCheckpoint: true);
     events.add(boss == null ? 'level' : 'boss');
     return true;
   }
@@ -415,11 +507,15 @@ class ArcadeModel {
     pickups.clear();
     heartPickups.clear();
     blasts.clear();
+    supplyCrates.clear();
+    fallingParts.clear();
+    crateSpawnTimer = 0.0;
     _spawnWave();
     events.add(boss == null ? 'level' : 'boss');
   }
 
-  void _spawnWave() {
+  void _spawnWave({bool fromCheckpoint = false}) {
+    _spawnedFromCheckpoint = fromCheckpoint;
     demons.clear();
     shots.clear();
     _fire = 0;
@@ -492,11 +588,18 @@ class ArcadeModel {
           demon.y = -48;
         } else if (wave == 1) {
           // The arrival hint owns the whole introduction. The initial swarm
-          // remains above the arena until combat resumes, then flies in.
+          // glides down during the second half of the opening transition and
+          // settles into formation as combat begins.
           demon.entranceProgress = 0;
           demon.entranceDelay = (i % 6) * .045 + (i ~/ 6) * .08;
-          demon.entranceDuration = 1;
+          demon.entranceDuration = fromCheckpoint ? 1.0 : 1.25;
           demon.entranceStartY = -48 - (i ~/ 6) * 20.0;
+          demon.y = demon.entranceStartY;
+        } else if (!fromCheckpoint) {
+          demon.entranceProgress = 0;
+          demon.entranceDelay = (i % 6) * .035 + (i ~/ 6) * .06;
+          demon.entranceDuration = .85;
+          demon.entranceStartY = -40 - (i ~/ 6) * 16.0;
           demon.y = demon.entranceStartY;
         }
         demons.add(demon);
@@ -638,7 +741,25 @@ class ArcadeModel {
   }
 
   void moveTo(double x) => targetX = x.clamp(18, width - 18);
-  void moveBy(double dx) => moveTo(targetX + dx);
+  void moveBy(double dx) {
+    moveTo(targetX + dx);
+    steering = (dx / 28.0).clamp(-1.0, 1.0);
+    _steeringActive = false;
+  }
+
+  void steerBy(double delta, {bool analog = true}) {
+    final scaled = delta * touchSensitivity;
+    moveTo(targetX + scaled);
+    final raw = (scaled / (analog ? 20.0 : 14.0)).clamp(-1.0, 1.0);
+    steering = (steering * 0.3 + raw * 0.7).clamp(-1.0, 1.0);
+    _steeringActive = false;
+  }
+
+  void setSteering(double value) {
+    steering = value.clamp(-1.0, 1.0);
+    _steeringActive = steering.abs() > 0.02;
+  }
+
   void pause() {
     if (mode == RunMode.paused) return;
     if (mode == RunMode.playing || cinematic) {
@@ -664,8 +785,8 @@ class ArcadeModel {
   void update(double dt) {
     if (mode == RunMode.paused ||
         mode == RunMode.title ||
-        mode == RunMode.gameOver ||
-        mode == RunMode.completed) {
+        mode == RunMode.completed ||
+        (mode == RunMode.gameOver && defeatTimer <= 0)) {
       return;
     }
     _accumulator += dt.clamp(0, .1);
@@ -676,7 +797,20 @@ class ArcadeModel {
   }
 
   void _step(double dt) {
-    if (mode == RunMode.gameOver || mode == RunMode.completed) return;
+    if (mode == RunMode.completed) return;
+    if (mode == RunMode.gameOver) {
+      if (defeatTimer <= 0) return;
+      defeatTimer = math.max(0, defeatTimer - dt);
+      for (final b in blasts) {
+        b.age += dt;
+      }
+      blasts.removeWhere((b) => b.age > (b.isLarge ? 1.4 : .75));
+      _updateDefeatCelebration(dt);
+      if (defeatTimer <= 0) {
+        events.add('gameover');
+      }
+      return;
+    }
     clock += dt;
     for (final b in blasts) {
       b.age += dt;
@@ -684,11 +818,84 @@ class ArcadeModel {
     blasts.removeWhere((b) => b.age > (b.isLarge ? 1.4 : .55));
     if (canPilot) {
       heartAssemblyLeft = math.max(0, heartAssemblyLeft - dt);
+      if (_steeringActive && steering.abs() > 0.02) {
+        targetX = (targetX + steering * 290 * touchSensitivity * dt).clamp(
+          18.0,
+          width - 18.0,
+        );
+      } else {
+        final decay = 6.5 * dt;
+        if (steering.abs() <= decay) {
+          steering = 0;
+        } else {
+          steering -= steering.sign * decay;
+        }
+      }
+      final oldShipX = shipX;
       final delta = targetX - shipX;
-      shipX += delta.clamp(-330 * dt, 330 * dt);
+      final desiredVx = (delta / math.max(dt, 1 / 120)).clamp(-360.0, 360.0);
+      if (delta.abs() < 0.75 && shipVx.abs() < 18) {
+        shipX = targetX;
+        shipVx = 0;
+        shipThrust = 0;
+      } else {
+        final reversing =
+            shipVx != 0 && desiredVx != 0 && shipVx.sign != desiredVx.sign;
+        final braking = reversing || desiredVx.abs() < shipVx.abs();
+        final rate = braking ? 3200.0 : 2600.0;
+        final dv = (desiredVx - shipVx).clamp(-rate * dt, rate * dt);
+        shipVx = (shipVx + dv).clamp(-360.0, 360.0);
+        final nextX = shipX + shipVx * dt;
+        if ((delta > 0 && nextX >= targetX) ||
+            (delta < 0 && nextX <= targetX)) {
+          shipX = targetX;
+          shipVx = dt > 0
+              ? ((shipX - oldShipX) / dt).clamp(-360.0, 360.0)
+              : 0;
+        } else {
+          shipX = nextX.clamp(18.0, width - 18.0);
+          if (shipX <= 18.0 || shipX >= width - 18.0) {
+            shipVx = 0;
+          }
+        }
+        shipThrust = ((desiredVx - shipVx).abs() / 360.0).clamp(0.0, 1.0);
+      }
+      shipBank =
+          (shipBank +
+                  ((shipVx / 330.0).clamp(-1.0, 1.0) - shipBank) *
+                      (1 - math.exp(-16 * dt)))
+              .clamp(-1.0, 1.0);
+      if (shipVx.abs() <= 15 && steering.abs() < 0.05) {
+        aimAngle = 0;
+      } else {
+        final rawAngle = (steering * 0.28 + (shipVx / 360.0) * 0.18).clamp(
+          -0.42,
+          0.42,
+        );
+        final rawDeg = rawAngle * 180.0 / math.pi;
+        final snappedDeg = ((rawDeg / 6.0).round() * 6.0).clamp(-24.0, 24.0);
+        final snappedRad = (snappedDeg * math.pi / 180.0).clamp(-0.42, 0.42);
+        aimAngle = (snappedRad * 0.7 + rawAngle * 0.3).clamp(-0.42, 0.42);
+      }
       _updatePickups(dt, mode == RunMode.salvage ? 144 : 64);
+    } else {
+      shipVx = 0;
+      shipThrust = 0;
+      steering = 0;
+      _steeringActive = false;
+      aimAngle *= math.exp(-12 * dt);
+      if (aimAngle.abs() < 0.001) aimAngle = 0;
+      shipBank *= math.exp(-12 * dt);
+      if (shipBank.abs() < 0.001) shipBank = 0;
     }
     if (cinematic) {
+      if (mode == RunMode.transition) {
+        if (wave > 1) {
+          _advanceWaveEntrance(dt);
+        } else if (!_spawnedFromCheckpoint && transitionProgress >= 0.45) {
+          _advanceWaveEntrance(dt * 0.36);
+        }
+      }
       transitionLeft = math.max(0, transitionLeft - dt);
       if (transitionLeft <= 0) {
         if (mode == RunMode.salvage) {
@@ -706,6 +913,9 @@ class ArcadeModel {
           if (level == 5) cycle++;
           level = nextLevel;
           shipX = targetX = 180;
+          shipVx = shipBank = shipThrust = 0;
+          steering = aimAngle = 0;
+          _steeringActive = false;
           _beginLevel();
         } else {
           mode = RunMode.playing;
@@ -722,11 +932,58 @@ class ArcadeModel {
         powerTimers[value] = math.max(0, powerTimers[value]! - dt);
       }
     }
-    powerTimers.removeWhere((_, remaining) => remaining <= 0);
+    powerTimers.removeWhere((power, remaining) {
+      if (remaining <= 0) {
+        if (power != Power.shield) {
+          final side =
+              power == Power.rapid ? (random.nextBool() ? 1.0 : -1.0) : 0.0;
+          fallingParts.add(
+            FallingPart(
+              shipX + side * 14.0,
+              ArcadeModel.shipY + 4,
+              power,
+              vx: (random.nextDouble() - 0.5) * 40.0 + side * 20.0,
+              vy: -25.0 - random.nextDouble() * 15.0,
+              vRot: (random.nextBool() ? 1.0 : -1.0) *
+                  (3.0 + random.nextDouble() * 3.0),
+            ),
+          );
+        }
+        return true;
+      }
+      return false;
+    });
+
+    for (final part in fallingParts) {
+      part.vy += 160.0 * dt;
+      part.x += part.vx * dt;
+      part.y += part.vy * dt;
+      part.rotation += part.vRot * dt;
+      part.age += dt;
+    }
+    fallingParts.removeWhere((p) => p.y > height + 20 || p.age > 2.5);
+
+    for (final crate in supplyCrates) {
+      crate.y += crate.vy * dt;
+      crate.swingTime += dt;
+      crate.hitFlash = math.max(0, crate.hitFlash - dt);
+    }
+    supplyCrates.removeWhere((c) => c.y > ArcadeModel.shipY + 30);
     _fire -= dt;
     if (_fire <= 0) {
       _fire += hasPower(Power.rapid) ? .105 : .23;
       final powerful = hasPower(Power.powerful), large = hasPower(Power.large);
+      final double slingVx;
+      if (shipVx.abs() <= 15 && steering.abs() < 0.05) {
+        slingVx = 0.0;
+      } else if (steering.abs() >= 0.05) {
+        slingVx = (math.sin(aimAngle) * 340.0 + shipVx * 0.08).clamp(
+          -145.0,
+          145.0,
+        );
+      } else {
+        slingVx = (shipVx * 0.16).clamp(-58.0, 58.0);
+      }
       Shot playerShot(double x, double y, double vx, double vy) => Shot(
         x,
         y,
@@ -740,11 +997,13 @@ class ArcadeModel {
         damage: policy.weaponDamage(powerful: powerful),
         blastRadius: large ? policy.largeBlastRadius : 0,
       );
-      shots.add(playerShot(shipX, shipY - 13, 0, -390));
+      shots.add(
+        playerShot(shipX + shipBank * 3, shipY - 13, slingVx, -390),
+      );
       if (hasPower(Power.spread)) {
         shots.addAll([
-          playerShot(shipX - 5, shipY - 8, -90, -370),
-          playerShot(shipX + 5, shipY - 8, 90, -370),
+          playerShot(shipX - 5, shipY - 8, -90 + slingVx * 0.85, -370),
+          playerShot(shipX + 5, shipY - 8, 90 + slingVx * 0.85, -370),
         ]);
       }
       events.add('shot');
@@ -788,11 +1047,156 @@ class ArcadeModel {
     if (shots.where((s) => s.hostile).length < 120) shots.add(shot);
   }
 
+  double _smootherstep(double t) {
+    final c = t.clamp(0.0, 1.0);
+    return c * c * c * (c * (c * 6 - 15) + 10);
+  }
+
+  void _igniteDiveShield(Demon d) {
+    if (demons.any((o) => o.isLarge && o.waitingForEscort)) return;
+    if (d.isLarge) {
+      d.diveShieldMax = 4 + (cycle ~/ 2);
+    } else if (d.elite || d.kind >= 2 || d.maxHp >= 3) {
+      d.diveShieldMax = d.elite ? 3 : 2;
+    } else {
+      d.diveShieldMax = 1;
+    }
+    d.diveShield = d.diveShieldMax;
+  }
+
+  (double, double) _boidsOffset(Demon d) {
+    if (d.isLarge || demons.any((o) => o.isLarge && o.waitingForEscort)) {
+      return (0, 0);
+    }
+    var sepX = 0.0, sepY = 0.0;
+    var cohX = 0.0, cohY = 0.0;
+    var cohCount = 0;
+    for (final other in demons) {
+      if (identical(other, d) ||
+          other.isLarge ||
+          other.entering ||
+          other.dive > 0 ||
+          other.lastStand) {
+        continue;
+      }
+      final dx = d.x - other.x;
+      final dy = d.y - other.y;
+      final distSq = dx * dx + dy * dy;
+      if (distSq <= 0.0001 || distSq >= 68 * 68) continue;
+      final dist = math.sqrt(distSq);
+      if (dist < 36) {
+        sepX += (dx / dist) * (36 - dist) * 0.35;
+        sepY += (dy / dist) * (36 - dist) * 0.20;
+      }
+      cohX += other.x - d.x;
+      cohY += other.y - d.y;
+      cohCount++;
+    }
+    if (cohCount > 0) {
+      sepX += (cohX / cohCount) * 0.025;
+      sepY += (cohY / cohCount) * 0.02;
+    }
+    final staggerX = math.sin(d.seed * 3.1) * 3.5;
+    final staggerY = math.cos(d.seed * 2.3) * 2.5;
+    return (
+      (sepX + staggerX).clamp(-8.0, 8.0),
+      (sepY + staggerY).clamp(-6.0, 6.0),
+    );
+  }
+
+  (double, double) _targetFormationPosition(Demon d) {
+    if (d.isLarge) {
+      if (d.entering) return (d.homeX, d.homeY);
+      final nextX =
+          (d.homeX +
+                  math.sin(levelClock * .4 * speed + d.seed) * 42 +
+                  d.evadeOffset)
+              .clamp(62.0, width - 62.0);
+      final nextY = d.homeY + math.sin(levelClock * .65 * speed + d.seed) * 5;
+      return (nextX, nextY);
+    }
+    final (boidsX, boidsY) = _boidsOffset(d);
+    final evadeX = d.evadeOffset * (d.evadeLeft / 0.32).clamp(0.0, 1.0);
+    final targetFormX =
+        (d.homeX +
+                math.sin(levelClock * (.9 + d.kind * .12) * speed + d.seed) *
+                    29 +
+                math.sin(levelClock * .44 * policy.hostileRate) * 13 +
+                boidsX +
+                evadeX)
+            .clamp(20.0, width - 20.0);
+    var targetFormY =
+        d.homeY + math.sin(levelClock * 1.7 * speed + d.seed) * 14 + boidsY;
+    if (d.telegraph > 0) {
+      final totalTell = d.elite ? 0.55 : 0.7;
+      final progress = (d.telegraph / totalTell).clamp(0.0, 1.0);
+      targetFormY -= 8.0 * math.sin((1 - progress) * math.pi);
+    }
+    return (targetFormX, targetFormY);
+  }
+
+  void _updateDemonKinematics(Demon d, double prevX, double prevY, double dt) {
+    if (dt <= 0) {
+      d.vx = d.vy = d.bank = 0;
+      return;
+    }
+    d.vx = (d.x - prevX) / dt;
+    d.vy = (d.y - prevY) / dt;
+    final refSpeed = d.isLarge ? 120.0 : (d.dive > 0 ? 180.0 : 95.0);
+    final targetBank = (d.vx / refSpeed).clamp(-1.0, 1.0);
+    d.bank =
+        (d.bank + (targetBank - d.bank) * (1 - math.exp(-14 * dt))).clamp(
+          -1.0,
+          1.0,
+        );
+  }
+
+  void _advanceWaveEntrance(double dt) {
+    for (final d in demons) {
+      if (!d.entering || d.waitingForEscort) continue;
+      final prevX = d.x, prevY = d.y;
+      d.entranceElapsed += dt;
+      d.entranceProgress =
+          ((d.entranceElapsed - d.entranceDelay) / d.entranceDuration).clamp(
+            0.0,
+            1.0,
+          );
+      final s = _smootherstep(d.entranceProgress);
+      final (targetFormX, targetFormY) = _targetFormationPosition(d);
+      final arcX =
+          math.sin(math.pi * (1 - s)) *
+          32 *
+          (d.seed.floor().isEven ? 1 : -1) *
+          (1 - s);
+      d.x = (d.homeX + arcX + (targetFormX - d.homeX) * s).clamp(
+        18.0,
+        width - 18.0,
+      );
+      d.y = d.entranceStartY + (targetFormY - d.entranceStartY) * s;
+      _updateDemonKinematics(d, prevX, prevY, dt);
+    }
+  }
+
+  int get _maxConcurrentSmallDives => difficulty == Difficulty.easy
+      ? (level <= 2 ? 1 : 2)
+      : (level <= 2 && cycle == 0
+            ? 1
+            : (difficulty == Difficulty.hard ? 3 : 2));
+
   void _updateDemons(double dt) {
     _dive -= dt * policy.hostileRate;
+    var activeSmallDives = demons
+        .where((d) => !d.isLarge && (d.dive > 0 || d.telegraph > 0))
+        .length;
+    final maxSmallDives = _maxConcurrentSmallDives;
     final readyDivers = demons
         .where(
-          (d) => !d.entering && !d.lastStand && d.dive == 0 && d.telegraph <= 0,
+          (d) =>
+              !d.entering &&
+              !d.lastStand &&
+              d.dive == 0 &&
+              d.telegraph <= 0 &&
+              (d.isLarge || activeSmallDives < maxSmallDives),
         )
         .toList();
     if (_dive <= 0 && readyDivers.isNotEmpty) {
@@ -804,6 +1208,7 @@ class ArcadeModel {
             ? .55
             : .7;
         d.targetX = shipX;
+        if (!d.isLarge) activeSmallDives++;
       }
       _dive = math.max(
         .8,
@@ -812,19 +1217,32 @@ class ArcadeModel {
       );
     }
     for (final d in List<Demon>.of(demons)) {
+      final prevX = d.x, prevY = d.y;
       d.flash = math.max(0, d.flash - dt);
       if (d.entering) {
-        if (d.waitingForEscort) continue;
+        if (d.waitingForEscort) {
+          d.vx = d.vy = d.bank = 0;
+          continue;
+        }
         d.entranceElapsed += dt;
         d.entranceProgress =
             ((d.entranceElapsed - d.entranceDelay) / d.entranceDuration).clamp(
-              0,
-              1,
+              0.0,
+              1.0,
             );
-        final progress = d.entranceProgress;
-        final eased = progress * progress * (3 - 2 * progress);
-        d.x = d.homeX;
-        d.y = d.entranceStartY + (d.homeY - d.entranceStartY) * eased;
+        final s = _smootherstep(d.entranceProgress);
+        final (targetFormX, targetFormY) = _targetFormationPosition(d);
+        final arcX =
+            math.sin(math.pi * (1 - s)) *
+            32 *
+            (d.seed.floor().isEven ? 1 : -1) *
+            (1 - s);
+        d.x = (d.homeX + arcX + (targetFormX - d.homeX) * s).clamp(
+          18.0,
+          width - 18.0,
+        );
+        d.y = d.entranceStartY + (targetFormY - d.entranceStartY) * s;
+        _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
       }
       if (d.lastStand) {
@@ -846,8 +1264,10 @@ class ArcadeModel {
           d.y += d.rushVy * dt;
           if (d.x < -56 || d.x > width + 56 || d.y < -32 || d.y > height + 32) {
             _sacrifice(d);
+            continue;
           }
         }
+        _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
       }
       if (d.isLarge && d.dive == 0 && d.telegraph <= 0) {
@@ -878,9 +1298,12 @@ class ArcadeModel {
               );
             }
           }
-          if (d.dive == 0 && d.telegraph <= 0) {
+          if (d.dive == 0 &&
+              d.telegraph <= 0 &&
+              (d.isLarge || activeSmallDives < maxSmallDives)) {
             d.telegraph = d.isLarge ? .9 : .55;
             d.targetX = shipX;
+            if (!d.isLarge) activeSmallDives++;
           }
           d.attackLeft = math.max(2.0, 4 - math.min(cycle, 5) * .3);
         }
@@ -889,6 +1312,7 @@ class ArcadeModel {
         d.telegraph -= dt * policy.hostileRate;
         if (d.telegraph <= 0) {
           d.dive = .001;
+          _igniteDiveShield(d);
           if (d.isLarge) {
             final aim = ((d.targetX - d.x) * .3).clamp(-70.0, 70.0);
             for (final offset in [-32.0, 0.0, 32.0]) {
@@ -907,7 +1331,17 @@ class ArcadeModel {
         }
       }
       if (d.dive > 0) {
-        d.dive += dt * speed * (d.angry ? 1.3 : 1) * (d.elite ? 1.15 : 1);
+        if (d.diveShieldMax == 0) {
+          _igniteDiveShield(d);
+        }
+        final shatteredSlow =
+            d.isLarge && d.diveShieldMax > 0 && d.diveShield == 0 ? 0.7 : 1.0;
+        d.dive +=
+            dt *
+            speed *
+            (d.angry ? 1.3 : 1) *
+            (d.elite ? 1.15 : 1) *
+            shatteredSlow;
         d.x +=
             (d.targetX - d.x) *
             dt *
@@ -918,38 +1352,60 @@ class ArcadeModel {
             dt *
             speed *
             (d.angry ? 1.3 : 1) *
-            (d.elite ? 1.15 : 1);
+            (d.elite ? 1.15 : 1) *
+            shatteredSlow;
         if (d.y > height + 20) {
           d.dive = 0;
-          d.y = d.homeY;
-          d.x = d.homeX;
+          d.diveShield = 0;
+          d.diveShieldMax = 0;
+          d.vx = d.vy = d.bank = 0;
+          if (d.isLarge) {
+            d.y = d.homeY;
+            d.x = d.homeX;
+          } else {
+            d.entranceStartY = -36;
+            d.entranceProgress = 0;
+            d.entranceDuration = 0.65;
+            d.entranceDelay = 0;
+            d.entranceElapsed = 0;
+            d.y = d.entranceStartY;
+          }
+        } else {
+          _updateDemonKinematics(d, prevX, prevY, dt);
         }
       } else {
         if (d.isLarge) {
           _evade(d, dt);
-          final nextX =
-              (d.homeX +
-                      math.sin(levelClock * .4 * speed + d.seed) * 42 +
-                      d.evadeOffset)
-                  .clamp(62, width - 62);
+          final (nextX, nextY) = _targetFormationPosition(d);
           d.x += (nextX - d.x).clamp(
             -90 * dt * policy.hostileRate,
             90 * dt * policy.hostileRate,
           );
-          final nextY =
-              d.homeY + math.sin(levelClock * .65 * speed + d.seed) * 5;
           d.y += (nextY - d.y).clamp(-20 * dt, 20 * dt);
+          _updateDemonKinematics(d, prevX, prevY, dt);
           continue;
         }
-        d.x =
-            (d.homeX +
-                    math.sin(
-                          levelClock * (.9 + d.kind * .12) * speed + d.seed,
-                        ) *
-                        29 +
-                    math.sin(levelClock * .44 * policy.hostileRate) * 13)
-                .clamp(20, width - 20);
-        d.y = d.homeY + math.sin(levelClock * 1.7 * speed + d.seed) * 14;
+        if (dt > 0) {
+          if (_evadeSmall(d, dt, activeSmallDives, maxSmallDives)) {
+            activeSmallDives++;
+          }
+        }
+        final (targetFormX, targetFormY) = _targetFormationPosition(d);
+        if (dt <= 0) {
+          d.x = targetFormX;
+          d.y = targetFormY;
+          d.vx = d.vy = d.bank = 0;
+        } else if (d.evadeLeft > 0 ||
+            d.evadeOffset.abs() > 0.5 ||
+            d.telegraph > 0) {
+          d.x += (targetFormX - d.x).clamp(-220 * dt, 220 * dt);
+          d.y += (targetFormY - d.y).clamp(-160 * dt, 160 * dt);
+          _updateDemonKinematics(d, prevX, prevY, dt);
+        } else {
+          d.x = targetFormX;
+          d.y = targetFormY;
+          _updateDemonKinematics(d, prevX, prevY, dt);
+        }
       }
     }
     _enemyFire -= dt * policy.hostileRate;
@@ -962,6 +1418,93 @@ class ArcadeModel {
       );
       _enemyFire = math.max(.45, 1.8 - level * .18 - cycle * .05);
     }
+  }
+
+  bool _evadeSmall(
+    Demon d,
+    double dt,
+    int activeSmallDives,
+    int maxSmallDives,
+  ) {
+    d.evadeCooldown = math.max(0, d.evadeCooldown - dt);
+    d.evadeLeft = math.max(0, d.evadeLeft - dt);
+    if (d.evadeLeft <= 0) {
+      d.evadeOffset += (-d.evadeOffset).clamp(-90 * dt, 90 * dt);
+    }
+    if ((level < 2 && cycle == 0) || d.telegraph > 0 || d.evadeCooldown > 0) {
+      return false;
+    }
+    if (demons.any((o) => !o.isLarge && !identical(o, d) && o.evadeLeft > 0)) {
+      return false;
+    }
+    if (demons.any((o) => o.isLarge && o.waitingForEscort)) {
+      return false;
+    }
+    Shot? nearestShot;
+    var bestArrival = 999.0;
+    for (final shot in shots) {
+      if (shot.hostile || shot.vy >= 0) continue;
+      final arrival = (d.y - shot.y) / shot.vy;
+      if (arrival < 0.06 || arrival > 0.34) continue;
+      final projectedX = shot.x + shot.vx * arrival;
+      if ((projectedX - d.x).abs() < 26 && arrival < bestArrival) {
+        bestArrival = arrival;
+        nearestShot = shot;
+      }
+    }
+    if (nearestShot == null) return false;
+    var leftNeighbors = 0, rightNeighbors = 0;
+    for (final other in demons) {
+      if (identical(other, d) || other.isLarge || other.entering) continue;
+      final dx = other.x - d.x, dy = other.y - d.y;
+      if (dx * dx + dy * dy <= 72 * 72) {
+        if (dx < 0) {
+          leftNeighbors++;
+        } else {
+          rightNeighbors++;
+        }
+      }
+    }
+    final action = SwarmPolicy.suggest(
+      demonX: d.x,
+      demonY: d.y,
+      shotX: nearestShot.x,
+      shotY: nearestShot.y,
+      shotVx: nearestShot.vx,
+      shipX: shipX,
+      shipVx: shipVx,
+      crowdBalance: ((rightNeighbors - leftNeighbors) / 4.0).clamp(-1.0, 1.0),
+      healthRatio: d.hp / math.max(1, d.maxHp),
+      tierFactor: d.elite ? 1.0 : ((d.kind >= 2 || d.maxHp >= 3) ? 0.35 : -0.75),
+    );
+    final cooldown = difficulty == Difficulty.easy
+        ? 3.2
+        : (difficulty == Difficulty.normal ? 2.4 : 1.8);
+    if (action == 'evade_left' || action == 'evade_right') {
+      var dir = action == 'evade_left' ? -1.0 : 1.0;
+      if (d.x < 44) dir = 1.0;
+      if (d.x > width - 44) dir = -1.0;
+      d.evadeOffset = dir * 24.0;
+      d.evadeLeft = 0.32;
+      d.evadeCooldown = cooldown;
+      return false;
+    }
+    if (action == 'dive_commit' && activeSmallDives < maxSmallDives) {
+      d.telegraph = d.elite ? 0.55 : 0.7;
+      d.targetX = (shipX + shipVx * 0.22).clamp(24.0, width - 24.0);
+      d.evadeCooldown = cooldown;
+      return true;
+    }
+    final projectedX = nearestShot.x + nearestShot.vx * bestArrival;
+    if ((projectedX - d.x).abs() < 18) {
+      var dir = projectedX <= d.x ? 1.0 : -1.0;
+      if (d.x < 44) dir = 1.0;
+      if (d.x > width - 44) dir = -1.0;
+      d.evadeOffset = dir * 22.0;
+      d.evadeLeft = 0.32;
+      d.evadeCooldown = cooldown;
+    }
+    return false;
   }
 
   void _evade(Demon d, double dt) {
@@ -997,29 +1540,57 @@ class ArcadeModel {
     b.x = b.forecastX(0, speed);
     b.horizontalVelocity = dt > 0 ? (b.x - oldX) / dt : b.horizontalVelocity;
     b.y = 205 + math.sin(b.motionPhase * 1.28) * (12 + b.rage * 6);
-    b.door = ((math.sin(levelClock * (1.8 + b.phase * .25)) - .1) * 2).clamp(
-      0,
-      1,
-    );
+    b.door =
+        ((math.sin(levelClock * (1.55 + b.phase * .22)) -
+                    (cycle == 0 ? 0.0 : .1)) *
+                2)
+            .clamp(0, 1);
+    if (b.sideHatchesLocked) {
+      b.sideDoorLeft = 0;
+      b.sideDoorRight = 0;
+    } else {
+      final sideBonus = cycle <= 1 ? 0.15 : 0.0;
+      final sideRamp = ((levelClock - 0.65) / 0.35).clamp(0.0, 1.0);
+      b.sideDoorLeft =
+          (((math.sin(levelClock * (1.45 + b.phase * .2) + 1.9) + sideBonus) *
+                      2)
+                  .clamp(0.0, 1.0) *
+              sideRamp);
+      b.sideDoorRight =
+          (((math.sin(levelClock * (1.45 + b.phase * .2) + 4.1) + sideBonus) *
+                      2)
+                  .clamp(0.0, 1.0) *
+              sideRamp);
+    }
     _flock -= dt * policy.hostileRate;
-    if (_flock <= 0 && demons.length < 10) {
-      final flockSize = math.min(3, 10 - demons.length);
+    final maxMinions = cycle == 0 ? 6 : (cycle == 1 ? 8 : 10);
+    if (_flock <= 0 && demons.length < maxMinions) {
+      final flockSize = math.min(3, maxMinions - demons.length);
       for (var i = 0; i < flockSize; i++) {
-        final d = Demon(
-          (b.x + (i - 1) * 35).clamp(30, 330),
-          b.y + 52,
-          math.min(3, cycle + 1),
-          1 + math.min(cycle, 2),
-          random.nextDouble() * 8,
-        );
-        d.homeY = b.y + 70;
+        final d =
+            Demon(
+                (b.x + (i - 1) * 35).clamp(30, 330),
+                b.y + 52,
+                math.min(3, cycle + 1),
+                1 + math.min(cycle, 2),
+                random.nextDouble() * 8,
+              )
+              ..homeY = b.y + 70
+              ..entranceProgress = 0
+              ..entranceDelay = i * .06
+              ..entranceDuration = .55
+              ..entranceStartY = b.y + 36;
+        d.y = d.entranceStartY;
         demons.add(d);
       }
-      _flock = math.max(2.2, 5 - b.phase * .5 - cycle * .2);
+      _flock =
+          math.max(2.4, 5.6 - b.phase * 0.45 - cycle * 0.25) /
+          policy.hostileRate;
     }
     // Fan attacks force positioning without tracking a player after launch.
-    if ((levelClock * 1.1 * policy.hostileRate).floor() !=
-        ((levelClock - dt) * 1.1 * policy.hostileRate).floor()) {
+    final fanRate = (0.85 + math.min(cycle, 3) * 0.08) * policy.hostileRate;
+    if ((levelClock * fanRate).floor() !=
+        ((levelClock - dt) * fanRate).floor()) {
       for (var i = -1; i <= 1; i++) {
         _hostile(
           Shot(
@@ -1030,6 +1601,24 @@ class ArcadeModel {
             hostile: true,
           ),
         );
+      }
+    }
+
+    // Fleet Supplies: progressive tactical drops after boss shield is depleted
+    if (b.shield == 0 && combat) {
+      crateSpawnTimer += dt;
+      final struggle = lives <= 2;
+      final spawnInterval = struggle ? 11.0 : 16.0;
+      if (crateSpawnTimer >= spawnInterval && supplyCrates.length < 2) {
+        crateSpawnTimer = 0.0;
+        final roll = random.nextDouble();
+        final power = roll < 0.70
+            ? Power.large
+            : (roll < 0.80
+                ? Power.powerful
+                : (roll < 0.90 ? Power.spread : Power.shield));
+        final spawnX = 50.0 + random.nextDouble() * 260.0;
+        supplyCrates.add(SupplyCrate(spawnX, -20.0, power));
       }
     }
   }
@@ -1062,6 +1651,27 @@ class ArcadeModel {
         }
       }
       var hit = false;
+      for (final crate in List<SupplyCrate>.of(supplyCrates)) {
+        if ((s.x - crate.x).abs() < 16 + (s.blastRadius > 0 ? 6 : 0) &&
+            (s.y - crate.y).abs() < 16 + (s.blastRadius > 0 ? 6 : 0)) {
+          crate.hp -= s.damage;
+          crate.hitFlash = 0.16;
+          events.add('hit');
+          if (s.blastRadius > 0) {
+            _explodeShot(s, hitCarrier: false);
+          }
+          s.y = height + 20;
+          hit = true;
+          if (crate.destroyed) {
+            supplyCrates.remove(crate);
+            blasts.add(Blast(crate.x, crate.y, big: true));
+            pickups.add(Pickup(crate.x, crate.y, crate.power));
+            events.add('salvage');
+          }
+          break;
+        }
+      }
+      if (hit) continue;
       for (final d in List<Demon>.of(demons)) {
         if (!d.entering &&
             (s.x - d.x).abs() <
@@ -1136,6 +1746,50 @@ class ArcadeModel {
   void hitDemon(Demon d, {int damage = 1}) {
     if (!combat || damage <= 0 || d.entering || !demons.contains(d)) return;
     d.flash = .12;
+    if (d.dive > 0 && d.diveShieldMax == 0) {
+      _igniteDiveShield(d);
+    }
+    if (d.dive > 0 && d.diveShield > 0) {
+      if (d.isLarge) {
+        if (!hasOffensivePower) {
+          d.flash = .12;
+          events.add('hit');
+          return;
+        }
+        final breakerDamage =
+            damage +
+            (hasPower(Power.powerful) ? 1 : 0) +
+            (hasPower(Power.large) ? 1 : 0);
+        d.diveShield = math.max(0, d.diveShield - breakerDamage);
+        if (d.diveShield == 0) {
+          score += (250 * (cycle + 1) * policy.enemyPoints).round();
+          if (d.shield > 0) {
+            d.shield--;
+          } else if (d.armor > 0) {
+            d.armor--;
+          } else if (d.hp > 1) {
+            d.hp--;
+          }
+        }
+        events.add('hit');
+        return;
+      } else {
+        if (damage > d.diveShield) {
+          final overflow = damage - d.diveShield;
+          d.diveShield = 0;
+          score += (25 * policy.enemyPoints).round();
+          damage = overflow;
+        } else {
+          d.diveShield -= damage;
+          if (d.diveShield == 0) {
+            score += (25 * policy.enemyPoints).round();
+          }
+          d.flash = .14;
+          events.add('hit');
+          return;
+        }
+      }
+    }
     if (d.shield > 0) {
       d.shield = math.max(0, d.shield - damage);
       events.add('hit');
@@ -1148,14 +1802,15 @@ class ArcadeModel {
     }
     d.hp -= damage;
     if (d.hp <= 0) {
+      final wasDiving = d.dive > 0;
       demons.remove(d);
       if (boss == null) _reinforcementCasualties++;
       kills++;
-      score +=
-          ((100 + d.kind * 75 + (d.maxHp - 1) * 50) *
-                  (cycle + 1) *
-                  policy.enemyPoints)
-              .round();
+      final basePoints =
+          (100 + d.kind * 75 + (d.maxHp - 1) * 50) *
+          (cycle + 1) *
+          policy.enemyPoints;
+      score += (basePoints * (wasDiving ? 1.5 : 1.0)).round();
       blasts.add(Blast(d.x, d.y, archetype: d.archetype));
       events.add('explosion');
       if (policy.heartDropChance > 0 &&
@@ -1168,12 +1823,12 @@ class ArcadeModel {
           ),
         );
       }
-      if (kills % 8 == 0) {
+      if (kills % 8 == 0 || (d.isLarge && wasDiving)) {
         pickups.add(
           Pickup(
             d.x,
             d.y,
-            Power.values[(kills ~/ 8 - 1) % Power.values.length],
+            Power.values[(math.max(1, kills ~/ 8) - 1) % Power.values.length],
           ),
         );
       }
@@ -1186,10 +1841,22 @@ class ArcadeModel {
         d.lastStand = true;
         d.telegraph = .9;
         d.dive = 0;
+        d.diveShield = 0;
+        d.diveShieldMax = 0;
         d.targetX = shipX;
         d._lastStandX = d.x;
         d._lastStandY = d.y;
-      } else if (!d.lastStand && d.angry && d.dive == 0 && d.telegraph <= 0) {
+      } else if (!d.lastStand &&
+          d.angry &&
+          d.dive == 0 &&
+          d.telegraph <= 0 &&
+          (d.isLarge ||
+              demons
+                      .where(
+                        (o) => !o.isLarge && (o.dive > 0 || o.telegraph > 0),
+                      )
+                      .length <
+                  _maxConcurrentSmallDives)) {
         d.telegraph = d.isLarge
             ? .9
             : d.elite
@@ -1200,7 +1867,7 @@ class ArcadeModel {
     }
   }
 
-  /// Shield can be hit across its width. Core needs the exposed central door.
+  /// Shield can be hit across its width. Core needs an exposed central or side hatch.
   bool hitBoss(double shotX, {int damage = 1, double blastRadius = 0}) {
     final b = boss;
     if (b == null || !combat || damage <= 0) return false;
@@ -1212,13 +1879,30 @@ class ArcadeModel {
       if (b.shield == 0) events.add('boss');
       return true;
     }
-    if (b.door < .65 || (shotX - b.x).abs() > 12 * b.door + blastRadius) {
+    final centerHit =
+        b.door >= .60 && (shotX - b.x).abs() <= 12 * b.door + blastRadius;
+    final leftHit =
+        !b.sideHatchesLocked &&
+        b.sideDoorLeft >= .55 &&
+        (shotX - (b.x - Carrier.sideHatchOffset)).abs() <=
+            11 * b.sideDoorLeft + blastRadius;
+    final rightHit =
+        !b.sideHatchesLocked &&
+        b.sideDoorRight >= .55 &&
+        (shotX - (b.x + Carrier.sideHatchOffset)).abs() <=
+            11 * b.sideDoorRight + blastRadius;
+    if (!centerHit && !leftHit && !rightHit) {
       return false;
     }
     final old = b.phase;
     b.core = math.max(0, b.core - damage);
     events.add('hit');
-    blasts.add(Blast(b.x, b.y + 18));
+    final hitX = centerHit
+        ? b.x
+        : (leftHit
+              ? b.x - Carrier.sideHatchOffset
+              : b.x + Carrier.sideHatchOffset);
+    blasts.add(Blast(hitX, b.y + 18));
     if (b.phase != old) events.add('boss');
     if (b.core <= 0) {
       score += 5000 * (cycle + 1);
@@ -1264,7 +1948,19 @@ class ArcadeModel {
       Power.powerful => Power.rapid,
       Power.shield => null,
     };
-    if (excluded != null) powerTimers.remove(excluded);
+    if (excluded != null && powerTimers.containsKey(excluded)) {
+      powerTimers.remove(excluded);
+      fallingParts.add(
+        FallingPart(
+          shipX,
+          ArcadeModel.shipY + 4,
+          excluded,
+          vx: (random.nextDouble() - 0.5) * 50.0,
+          vy: -28.0,
+          vRot: (random.nextBool() ? 1.0 : -1.0) * 4.5,
+        ),
+      );
+    }
     powerTimers[value] = powerDuration;
     events.add('powerup');
   }
@@ -1278,12 +1974,129 @@ class ArcadeModel {
       return;
     }
     lives--;
+    shipVx = shipBank = shipThrust = 0;
+    steering = aimAngle = 0;
+    _steeringActive = false;
     invulnerable = 2.5;
     blasts.add(Blast(shipX, shipY));
     events.add('life');
     if (lives <= 0) {
       mode = RunMode.gameOver;
-      events.add('gameover');
+      defeatTimer = defeatDuration;
+      cameraPanY = 0;
+      blasts.addAll([
+        Blast(shipX, shipY, big: true),
+        Blast(shipX - 14, shipY - 8)..age = -0.08,
+        Blast(shipX + 14, shipY - 6)..age = -0.16,
+        Blast(shipX - 10, shipY + 8)..age = -0.24,
+        Blast(shipX + 12, shipY + 7)..age = -0.32,
+      ]);
+      events.add('defeat');
+    }
+  }
+
+  void _updateDefeatCelebration(double dt) {
+    final p = defeatProgress;
+    final elapsed = defeatDuration - defeatTimer;
+    final t = clock + elapsed;
+    if (p < 0.28 &&
+        (elapsed * 14).floor() != (math.max(0.0, elapsed - dt) * 14).floor()) {
+      final angle = t * 7.3;
+      blasts.add(
+        Blast(shipX + math.cos(angle) * 18, shipY + math.sin(angle) * 10),
+      );
+    }
+    for (final s in shots) {
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+    }
+    shots.removeWhere(
+      (s) => s.y < -10 || s.y > height + 10 || s.x < -10 || s.x > width + 10,
+    );
+
+    final b = boss;
+    if (b != null) {
+      final oldX = b.x;
+      final targetBossX = 180.0 + math.sin(t * 2.2) * 26.0;
+      final targetBossY = 175.0 + math.cos(t * 2.8) * 8.0;
+      final blend = (dt * 3.8).clamp(0.0, 1.0);
+      b.x += (targetBossX - b.x) * blend;
+      b.y += (targetBossY - b.y) * blend;
+      b.horizontalVelocity = dt > 0 ? (b.x - oldX) / dt : 0;
+      b.door = 1.0;
+      b.sideDoorLeft = 1.0;
+      b.sideDoorRight = 1.0;
+      if (demons.length < 8) {
+        for (var i = demons.length; i < 8; i++) {
+          demons.add(
+            Demon(b.x, b.y + 24, i % 4, 2, i * 0.8)..entranceProgress = 1,
+          );
+        }
+      }
+      final smalls = demons.where((d) => !d.isLarge).toList();
+      for (var i = 0; i < smalls.length; i++) {
+        final d = smalls[i];
+        d.entranceProgress = 1;
+        d.dive = 0;
+        d.diveShield = 0;
+        final haloAngle =
+            t * 2.8 + i * (math.pi * 2 / math.max(1, smalls.length));
+        final prevX = d.x, prevY = d.y;
+        final hx = b.x + math.cos(haloAngle) * 112.0;
+        final hy = b.y + math.sin(haloAngle) * 62.0;
+        d.x += (hx - d.x) * (dt * 5.0).clamp(0.0, 1.0);
+        d.y += (hy - d.y) * (dt * 5.0).clamp(0.0, 1.0);
+        _updateDemonKinematics(d, prevX, prevY, dt);
+      }
+    } else {
+      final smalls = demons.where((d) => !d.isLarge).toList();
+      for (var i = 0; i < smalls.length; i++) {
+        final d = smalls[i];
+        d.entranceProgress = 1;
+        d.dive = 0;
+        d.diveShield = 0;
+        final phase =
+            t * 3.2 +
+            i * (math.pi * 2 / math.max(1, smalls.length)) +
+            d.seed * 0.25;
+        final cx = 180.0 + math.sin(phase) * 110.0;
+        final cy = 230.0 + math.sin(phase * 2) * 58.0;
+        final prevX = d.x, prevY = d.y;
+        final blend = (dt * 4.5).clamp(0.0, 1.0);
+        d.x += (cx - d.x) * blend;
+        d.y += (cy - d.y) * blend;
+        _updateDemonKinematics(d, prevX, prevY, dt);
+      }
+    }
+
+    final larges = demons.where((d) => d.isLarge).toList();
+    for (var i = 0; i < larges.length; i++) {
+      final d = larges[i];
+      d.waitingForEscort = false;
+      d.entranceProgress = 1;
+      d.dive = 0;
+      d.diveShield = 0;
+      d.lastStand = false;
+      d.rushing = false;
+      d.telegraph = 0.5;
+      final spread = (i - (larges.length - 1) / 2.0) * 90.0;
+      final ax = 180.0 + spread + math.sin(t * 2.4 + i) * 18.0;
+      final ay = 155.0 + math.cos(t * 3.0 + i) * 8.0;
+      final prevX = d.x, prevY = d.y;
+      final blend = (dt * 3.8).clamp(0.0, 1.0);
+      d.x += (ax - d.x) * blend;
+      d.y += (ay - d.y) * blend;
+      _updateDemonKinematics(d, prevX, prevY, dt);
+    }
+
+    if (p >= 0.62) {
+      final u = ((p - 0.62) / 0.38).clamp(0.0, 1.0);
+      final ease = u < 0.5
+          ? 4 * u * u * u
+          : 1 - math.pow(-2 * u + 2, 3).toDouble() / 2;
+      cameraPanY = ease * 520.0;
+    } else {
+      cameraPanY = 0;
     }
   }
 }

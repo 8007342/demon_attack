@@ -11,11 +11,17 @@ class PilotConsoleContent extends StatelessWidget {
     required this.timers,
     required this.touching,
     required this.collecting,
+    this.steering = 0.0,
+    this.aimAngle = 0.0,
+    this.tiltActive = false,
   });
 
   final Map<Power, double> timers;
   final bool touching;
   final bool collecting;
+  final double steering;
+  final double aimAngle;
+  final bool tiltActive;
 
   @override
   Widget build(BuildContext context) => IgnorePointer(
@@ -50,7 +56,7 @@ class PilotConsoleContent extends StatelessWidget {
                         child: Text(
                           '◀     SLIDE TO PILOT     ▶',
                           style: TextStyle(
-                            color: touching
+                            color: touching || tiltActive
                                 ? const Color(0xFF70F5D5)
                                 : const Color(0xFF99B4C7),
                             fontSize: 10,

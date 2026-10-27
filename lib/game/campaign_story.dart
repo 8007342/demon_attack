@@ -96,12 +96,24 @@ abstract final class CampaignStory {
       '${name(level, cycle)}. ${briefing(level, cycle)}';
   static String departure(int level, int cycle) =>
       '${name(level, cycle)} is secure. The fleet follows your signal inward.';
+  static String tourEscalation(int nextCycle) => switch (nextCycle) {
+    1 => 'EMERGENCY BEACON DETECTED: The falling Carrier broadcasted distress coordinates into uncharted Krybor depths. Mutated brood swarms awaken across Tour II!',
+    2 => 'BROOD MUTATION INTENSIFIES: Ancient volcanic foundries beneath Ember Moon ignite under hive command. Heavier armor and thermal shields detected across Tour III!',
+    3 => 'CITADEL COUNTER-ATTACK: Siege dreadnoughts mobilize from the Hollow catacombs. Severe atmospheric storm fronts and apex predators awaken across Tour IV!',
+    4 => 'FINAL CONVERGENCE: The Brood Flagship locks orbit over the planetary heart. Total fleet victory or extinction across Tour V!',
+    _ => 'DEEP SECTOR RE-ENTRY: Brood reinforcements detected across the star system.',
+  };
+
   static String travel(int level, int cycle) {
     if (level == 5 && cycle >= 4) {
       return 'The frontier is free. Return home, fleet champion.';
     }
-    final nextLevel = level == 5 ? 1 : level + 1;
-    final nextCycle = level == 5 ? cycle + 1 : cycle;
-    return 'Set course for ${name(nextLevel, nextCycle)}. ${briefing(nextLevel, nextCycle)}';
+    if (level == 5) {
+      final nextLevel = 1;
+      final nextCycle = cycle + 1;
+      return '${tourEscalation(nextCycle)} Set course for ${name(nextLevel, nextCycle)}. ${briefing(nextLevel, nextCycle)}';
+    }
+    final nextLevel = level + 1;
+    return 'Set course for ${name(nextLevel, cycle)}. ${briefing(nextLevel, cycle)}';
   }
 }

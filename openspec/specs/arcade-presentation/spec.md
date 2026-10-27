@@ -24,6 +24,42 @@ Creatures, player, boss, fire, smoke, explosions, warnings, pickups and controll
 - **WHEN** carrier fire or a rare creature's dive warning is visible
 - **THEN** the effect uses original bounded-palette pixel frames, and the warning is a creature-associated sprite cue rather than an arrow
 
+### Requirement: Stepped 2.5D pixel lighting and banked poses
+The renderer SHALL present 2.5D depth using nearest-neighbor stepped directional hemisphere/rim highlights, banked ship transforms (`shipBank`), angled sling-shot bolts, 3-tier diving bow-shock shields (`diveShield`), and open/sealed carrier auxiliary side doors (`sideDoorLeft`, `sideDoorRight`) without smooth GLSL normal-map blur.
+
+#### Scenario: Stepped 2.5D pixel lighting, banked ship poses, and 3-tier dive shields
+- **WHEN** the player ship banks, creatures dive with their 3-tier atmospheric shields, or the carrier exposes its center and auxiliary side hatches
+- **THEN** volume and shielding render as crisp stepped pixel layers with directional highlights and shadow contrast
+
+#### Scenario: Sling-shooting arrival hint
+- **WHEN** the `sling_shot` arrival card is selected during sector loading
+- **THEN** it pairs a concise 5–9 word action sentence on strafing to curve shots with an original pixel illustration of banked diagonal shots entering an open hatch
+
+### Requirement: Thermal re-entry plasma fire vs. geometric force shields
+Diving creature shields (`diveShield`) SHALL use a strictly thermal blackbody gradient (blinding white stagnation core -> incandescent solar yellow -> superheated ablation orange -> deep crimson/charcoal smoke trail and embers, with zero cyan/violet bands). Technological force shields SHALL use cool geometric cyan/teal/violet hex and segmented pixel barriers.
+
+#### Scenario: Thermal blackbody dive shields vs. cool geometric force shields
+- **WHEN** a creature dives with an atmospheric re-entry shield or an entity displays a technological force shield
+- **THEN** the re-entry shield renders as a white-yellow-orange-crimson thermal envelope with embers and zero cyan/violet bands, while the force shield renders as a geometric cyan/teal/violet barrier
+
+### Requirement: Multi-part Dreadnought Carrier presentation
+The Brood Dreadnought Carrier SHALL render as a `184 × 120` logical pixel multi-part sprite hierarchy across 4 evolution forms (`Carrier`, `Brood Ark`, `Siege Carrier`, `Brood Flagship`) with articulated mandibles, dorsal retro-thrusters, tracking ventral dual-turrets, 3 launch bay shutters, progressive fracture overlays, orbital retro-burn arrival, and sequential meltdown.
+
+#### Scenario: Dreadnought multi-part hierarchy, arrival, and meltdown
+- **WHEN** the Brood Dreadnought arrives, fights across its 4 forms, or is defeated
+- **THEN** it displays its `184 × 120` multi-part carapace and sub-components, descends with orbital retro-burn and klaxon telemetry, and explodes sequentially from wing pylons to auxiliary bays to central core
+
+### Requirement: Cockpit Control Panel, defeat celebration, and 3-beat opening zoom-out
+The bottom panel SHALL render a Stylized Starfighter Cockpit Control Panel combining the Weapon/Shield Telemetry Schematic with a rotating Steering Yoke & Gun Angle Gimbal (`±6°, ±12°, ±18°, ±24°`) for touch and 3D device tilt. New games SHALL open with a 3-beat Cockpit Panel zoom-out; final life loss SHALL show an enemy victory celebration and skyward pan to High Scores.
+
+#### Scenario: Cockpit Control Panel yoke, interim gun angles, and 3-beat opening zoom-out
+- **WHEN** a new game starts or the pilot steers via touch drag or calibrated 3D device tilt
+- **THEN** the camera pulls back continuously from the igniting Cockpit Control Panel into the live arena without fading to black, and the rotating yoke and gimbal reflect interim shooting angles (`0°, ±6°, ±12°, ±18°, ±24°`)
+
+#### Scenario: Last-life-lost victory celebration and skyward High Score pan
+- **WHEN** the player loses their final life
+- **THEN** the ship explodes, surviving enemies, Sentinels, or the Dreadnought perform a victory celebration swarm, and the camera pans skyward into the starfield High Scores table
+
 ### Requirement: Planetary parallax
 Each of the five levels SHALL have a distinct original pixel-art environment with terrain, planets, moons and satellites. Background complexity and visible demon infrastructure SHALL grow toward the carrier and on later cycles, with relative layer motion and smooth transitions that preserve threat readability.
 
@@ -33,7 +69,7 @@ Each of the five levels SHALL have a distinct original pixel-art environment wit
 
 #### Scenario: Territory story
 - **WHEN** the player travels toward the carrier or begins a harder cycle
-- **THEN** cinematic captions and environmental occupation details communicate the deeper threat
+- **THEN** cinematic captions, pictorial pixel-art storyboard interludes, and environmental occupation details communicate the deeper threat
 
 ### Requirement: Arcade screens
 The app SHALL provide title, play, pause, victory and game-over screens, inline Top10 on the title, three-wheel score entry, a score/lives/level/wave HUD, and a futuristic pixel controller panel.
@@ -78,3 +114,11 @@ Gameplay hints SHALL pair one brief actionable sentence with one original pixel 
 #### Scenario: Accurate shield advice
 - **WHEN** a hint explains shield renewal
 - **THEN** it associates the grace period with absorbing a hit and never claims that unused shield expiry grants invulnerability
+
+## Research and reference traceability
+
+- Master reference index: [plan/reference-register.md](../../../plan/reference-register.md)
+- External & sibling source disposition ledger: [plan/research-source-ledger.md](../../../plan/research-source-ledger.md)
+- Project-committed UX cheatsheets:
+  - [.tillandsias/cheatsheets/ux/game-flow-and-combat-pacing.md](../../../.tillandsias/cheatsheets/ux/game-flow-and-combat-pacing.md)
+  - [.tillandsias/cheatsheets/ux/arcade-25d-motion-and-transitions.md](../../../.tillandsias/cheatsheets/ux/arcade-25d-motion-and-transitions.md)

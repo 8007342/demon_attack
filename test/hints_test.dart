@@ -10,7 +10,7 @@ void main() {
       tacticalHints.map((hint) => hint.id).toSet().length,
       tacticalHints.length,
     );
-    expect(tacticalHints, hasLength(11));
+    expect(tacticalHints, hasLength(12));
     for (final hint in tacticalHints) {
       expect(hint.title.split(RegExp(r'\s+')).length, lessThanOrEqualTo(8));
       expect(hint.detail.split(RegExp(r'\s+')).length, lessThanOrEqualTo(12));
@@ -68,13 +68,14 @@ void main() {
     'new pilots see varied fundamentals and first carriers get hatch guidance',
     () {
       final openings = <String>{};
-      for (var seed = 0; seed < 20; seed++) {
+      for (var seed = 0; seed < 30; seed++) {
         final deck = HintDeck(random: Random(seed));
         final intro = deck.next(difficulty: Difficulty.normal);
         expect({
           'heart_quarters',
           'ordinary_dodge',
           'shield_refresh',
+          'sling_shot',
         }, contains(intro.id));
         openings.add(intro.id);
         expect(
@@ -82,7 +83,7 @@ void main() {
           'carrier_hatch',
         );
       }
-      expect(openings, hasLength(3));
+      expect(openings, hasLength(4));
     },
   );
 

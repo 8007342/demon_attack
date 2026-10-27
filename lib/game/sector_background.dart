@@ -3,16 +3,19 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-/// Complete independently painted worlds: artwork, moons, orbitals and horizon
-/// geometry crossfade together, rather than recoloring a shared planet.
+/// Complete independently painted worlds inspired by the top-down scrolling
+/// arcade aesthetic of the classic 1984 arcade flight game "1942".
+/// Features top-down vertical scrolling oceans, organic island archipelagos,
+/// military airstrips, coastal fortresses, volcanic atolls, and mothership superstructures
+/// with high-altitude drifting cloud shadows.
 class SectorBackground {
   final List<ui.Image?> images = List.filled(5, null);
   static const colors = [
-    Color(0xFF68C9DE),
-    Color(0xFFB49AE9),
-    Color(0xFFF6916E),
-    Color(0xFF79C798),
-    Color(0xFFE8787C),
+    Color(0xFF68C9DE), // Krybor: Cyan / Coastal Ocean
+    Color(0xFFB49AE9), // Ringfall: Amethyst / Cloud Ocean
+    Color(0xFFF6916E), // Ember Moon: Incandescent Orange / Volcanic Basalt
+    Color(0xFF79C798), // The Hollow: Bioluminescent Jade / Deep Abyss
+    Color(0xFFE8787C), // Brood Carrier: Crimson / Dreadnought Hull
   ];
 
   void paint(
@@ -20,18 +23,19 @@ class SectorBackground {
     double environment,
     double time,
     int cycle,
-    ui.Image? fallback,
-  ) {
+    ui.Image? fallback, {
+    int wave = 1,
+  }) {
     final near = environment.floor().clamp(0, 4);
     final far = math.min(4, near + 1);
     final blend = (environment - near).clamp(0.0, 1.0);
-    _layer(c, near, time, cycle, fallback);
+    _layer(c, near, time, cycle, wave, fallback);
     if (far != near && blend > .001) {
       c.saveLayer(
         const Rect.fromLTWH(0, 0, 360, 520),
         Paint()..color = Colors.white.withValues(alpha: blend),
       );
-      _layer(c, far, time, cycle, fallback);
+      _layer(c, far, time, cycle, wave, fallback);
       c.restore();
     }
   }
@@ -41,13 +45,17 @@ class SectorBackground {
     int sector,
     double time,
     int cycle,
+    int wave,
     ui.Image? fallback,
   ) {
     final tint = colors[sector];
+
+    // Background base fill
     c.drawRect(
       const Rect.fromLTWH(0, 0, 360, 520),
       Paint()..color = const Color(0xFF070B16),
     );
+
     final image = images[sector] ?? fallback;
     if (image != null) {
       final imageRatio = image.width / image.height;
@@ -73,221 +81,673 @@ class SectorBackground {
       );
       c.drawRect(
         const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()..color = const Color(0x80060914),
+        Paint()..color = const Color(0x66060914),
       );
     }
-    final random = math.Random(1982 + sector * 709 + cycle * 41);
-    for (var i = 0; i < 80; i++) {
-      final depth = i % 3 + 1;
-      final x = random.nextDouble() * 360;
-      final y = (random.nextDouble() * 520 + time * depth * .65) % 520;
+
+    // Top-down 1942-style vertical scrolling planetary world
+    // Smooth high-altitude downward scroll at 24 px/s
+    final scrollY = (time * 24.0) % 520.0;
+
+    // 1. Deep Ocean & Water Surface / Atmospheric base
+    _paint1942WaterBase(c, sector, scrollY, tint, time);
+
+    // 2. Wave crests and wake ripples
+    _paint1942WaveCrests(c, sector, scrollY, tint, time);
+
+    // 3. 1942-Style Landmasses, Atolls, Airstrips, and Fortresses
+    _paint1942Landmasses(c, sector, scrollY, tint, time, cycle);
+
+    // 4. Autonomous marine fauna & scout vessels with wake lines
+    _paint1942Vessels(c, sector, scrollY, tint, time);
+
+    // 5. High-Altitude Parallax Drifting Clouds & Soft Drop Shadows
+    _paint1942CloudsAndShadows(c, sector, time, tint);
+
+    // 6. District and coastal route landmarks (gantries, docks, antennas, forges)
+    _routeLandmarks(c, sector, cycle, time);
+
+    // 7. Atmospheric lighting scaling with wave
+    _paintAtmosphere(c, sector, time, wave, tint);
+  }
+
+  /// 1. Deep Ocean / Base Atmospheric Gradient
+  void _paint1942WaterBase(
+    Canvas c,
+    int sector,
+    double scrollY,
+    Color tint,
+    double time,
+  ) {
+    final Color oceanDeep;
+    final Color oceanMid;
+
+    switch (sector) {
+      case 0: // Krybor: Classic 1942 Pacific deep navy/azure ocean
+        oceanDeep = const Color(0xFF09162A);
+        oceanMid = const Color(0xFF0E223D);
+      case 1: // Ringfall: Cloud sea and amethyst stratosphere
+        oceanDeep = const Color(0xFF15102A);
+        oceanMid = const Color(0xFF1E173D);
+      case 2: // Ember Moon: Dark basalt sea with ash clouds
+        oceanDeep = const Color(0xFF1D0F14);
+        oceanMid = const Color(0xFF2B161D);
+      case 3: // The Hollow: Bioluminescent deep abyssal trench
+        oceanDeep = const Color(0xFF0A1C1C);
+        oceanMid = const Color(0xFF0F2B2B);
+      case 4: // Carrier: Dreadnought colossal dark armor trench
+        oceanDeep = const Color(0xFF13141A);
+        oceanMid = const Color(0xFF1B1D26);
+      default:
+        oceanDeep = const Color(0xFF09162A);
+        oceanMid = const Color(0xFF0E223D);
+    }
+
+    // Gradient sea wash
+    final gradient = ui.Gradient.linear(
+      const Offset(0, 0),
+      const Offset(0, 520),
+      [oceanDeep, oceanMid, oceanDeep],
+      [0.0, 0.5, 1.0],
+    );
+    c.drawRect(
+      const Rect.fromLTWH(0, 0, 360, 520),
+      Paint()..shader = gradient,
+    );
+  }
+
+  /// 2. Water swells, wake patterns, and surface foam lines
+  void _paint1942WaveCrests(
+    Canvas c,
+    int sector,
+    double scrollY,
+    Color tint,
+    double time,
+  ) {
+    if (sector == 4) {
+      // For Brood Carrier, draw hull panel seams instead of waves
+      final pSeam = Paint()
+        ..color = const Color(0xFF262A36).withValues(alpha: 0.45)
+        ..strokeWidth = 1.0;
+      for (var y = 0.0; y < 520; y += 65) {
+        final sy = (y + scrollY) % 520.0;
+        c.drawLine(Offset(0, sy), Offset(360, sy), pSeam);
+      }
+      for (var x = 30.0; x < 360; x += 80) {
+        c.drawLine(Offset(x, 0), Offset(x, 520), pSeam);
+      }
+      return;
+    }
+
+    final pFoam = Paint()
+      ..color = tint.withValues(alpha: 0.16)
+      ..strokeWidth = 1.0;
+
+    // Scrolling wave crest ripples
+    for (var i = 0; i < 18; i++) {
+      final y = (i * 32.0 + scrollY) % 520.0;
+      final xOffset = math.sin((i * 47) + time * 1.5) * 16.0;
+      final waveLen = 22.0 + (i % 5) * 8.0;
+      final wx = ((i * 73.0) + xOffset) % (360.0 - waveLen);
+
+      c.drawLine(
+        Offset(wx, y),
+        Offset(wx + waveLen, y),
+        pFoam,
+      );
+      // Small wake glint
       c.drawRect(
-        Rect.fromLTWH(
-          x.floorToDouble(),
-          y.floorToDouble(),
-          i % 13 == 0 ? 2 : 1,
-          1,
-        ),
-        Paint()
-          ..color = tint.withValues(
-            alpha: image == null ? .65 + .1 * depth : .12 + .06 * depth,
-          ),
+        Rect.fromLTWH(wx + waveLen * 0.4, y - 1, 4, 1),
+        Paint()..color = Colors.white.withValues(alpha: 0.22),
       );
     }
-    // Additional route layers move at independent depth rates. Their dark
-    // silhouettes remain behind shots and preserve each world's original tint.
-    for (var depth = 0; depth <= cycle.clamp(0, 4); depth++) {
-      final speed = 1.8 + depth * 1.7;
-      final drift = (time * speed) % 96;
-      for (var i = -1; i < 6; i++) {
-        final x =
-            (i * 83.0 + depth * 31 + time * (.2 + depth * .13)) % 440 - 40;
-        final y = 430 + depth * 17.0 + drift * .17;
-        final h = 20.0 + ((i + 2) * 19 + cycle * 11 + depth * 7) % 53;
-        final paint = Paint()
-          ..color = tint.withValues(alpha: .035 + depth * .012);
-        if (sector == 2 || sector == 3) {
-          c.drawPath(
-            Path()
-              ..moveTo(x - 35, 540)
-              ..lineTo(x, y - h)
-              ..lineTo(x + 42, 540)
-              ..close(),
-            paint,
-          );
-        } else {
-          c.drawRect(Rect.fromLTWH(x, y - h, 18 + depth * 7.0, 130), paint);
+  }
+
+  /// 3. Biome Landmasses: Islands, Atolls, Airstrips, and Defense Fortresses
+  void _paint1942Landmasses(
+    Canvas c,
+    int sector,
+    double scrollY,
+    Color tint,
+    double time,
+    int cycle,
+  ) {
+    switch (sector) {
+      case 0:
+        _paintKryborIslands(c, scrollY, tint, time, cycle);
+      case 1:
+        _paintRingfallSkyPlatforms(c, scrollY, tint, time, cycle);
+      case 2:
+        _paintEmberVolcanicAtolls(c, scrollY, tint, time, cycle);
+      case 3:
+        _paintHollowAbyssalTrenches(c, scrollY, tint, time, cycle);
+      case 4:
+        _paintCarrierSuperstructure(c, scrollY, tint, time, cycle);
+    }
+  }
+
+  /// Sector 0: Krybor 1942-Style Island Archipelago & Military Airfields
+  void _paintKryborIslands(
+    Canvas c,
+    double scrollY,
+    Color tint,
+    double time,
+    int cycle,
+  ) {
+    // 2 Major organic islands scrolling through the area
+    for (var idx = 0; idx < 2; idx++) {
+      final baseY = (idx * 270.0 + scrollY) % 520.0;
+      final islandX = idx == 0 ? 90.0 : 250.0;
+
+      // Outer golden sand beach (wider path)
+      final beachPath = Path();
+      beachPath.addOval(
+        Rect.fromCenter(
+          center: Offset(islandX, baseY + 60),
+          width: idx == 0 ? 140 : 120,
+          height: idx == 0 ? 190 : 160,
+        ),
+      );
+      c.drawPath(
+        beachPath,
+        Paint()..color = const Color(0xFFC4B17B).withValues(alpha: 0.75),
+      );
+
+      // Shallow turquoise coastal reef fringe
+      c.drawPath(
+        beachPath,
+        Paint()
+          ..color = const Color(0xFF4AC4B8).withValues(alpha: 0.35)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 5.0,
+      );
+
+      // Inner lush tropical jungle/canopy
+      final junglePath = Path();
+      junglePath.addOval(
+        Rect.fromCenter(
+          center: Offset(islandX, baseY + 60),
+          width: idx == 0 ? 116 : 98,
+          height: idx == 0 ? 166 : 138,
+        ),
+      );
+      c.drawPath(
+        junglePath,
+        Paint()..color = const Color(0xFF1B4E38).withValues(alpha: 0.9),
+      );
+
+      // Deep jungle foliage shading
+      c.drawCircle(
+        Offset(islandX - 10, baseY + 45),
+        24,
+        Paint()..color = const Color(0xFF133C2A).withValues(alpha: 0.7),
+      );
+      c.drawCircle(
+        Offset(islandX + 15, baseY + 75),
+        22,
+        Paint()..color = const Color(0xFF133C2A).withValues(alpha: 0.7),
+      );
+
+      // 1942 Iconic Airfield Runway on the larger island
+      if (idx == 0) {
+        final runwayX = islandX - 6;
+        final runwayY = baseY + 10;
+        // Dark asphalt tarmac
+        c.drawRect(
+          Rect.fromLTWH(runwayX, runwayY, 20, 100),
+          Paint()..color = const Color(0xFF22262E),
+        );
+        // White dashed center line (-- -- --)
+        final pLine = Paint()
+          ..color = Colors.white.withValues(alpha: 0.7)
+          ..strokeWidth = 1.5;
+        for (var dy = 4.0; dy < 96.0; dy += 12) {
           c.drawLine(
-            Offset(x - 24, y - h + 9),
-            Offset(x + 38, y - h + 9),
-            Paint()..color = tint.withValues(alpha: .08),
+            Offset(runwayX + 10, runwayY + dy),
+            Offset(runwayX + 10, runwayY + dy + 6),
+            pLine,
           );
         }
-      }
-      // Slowly passing orbital girders add depth at the screen edges.
-      for (final side in [0.0, 345.0]) {
-        final y = (time * speed * 2.4 + depth * 103) % 620 - 70;
+        // Runway threshold stripes
+        for (var tx = 2.0; tx <= 18.0; tx += 4) {
+          c.drawLine(
+            Offset(runwayX + tx, runwayY + 2),
+            Offset(runwayX + tx, runwayY + 8),
+            pLine,
+          );
+          c.drawLine(
+            Offset(runwayX + tx, runwayY + 92),
+            Offset(runwayX + tx, runwayY + 98),
+            pLine,
+          );
+        }
+        // Coastal radar tower
+        c.drawCircle(
+          Offset(runwayX - 16, runwayY + 50),
+          6,
+          Paint()..color = const Color(0xFF4C5D6E),
+        );
+        final radarAngle = time * 3.5;
+        c.drawLine(
+          Offset(runwayX - 16, runwayY + 50),
+          Offset(
+            runwayX - 16 + math.cos(radarAngle) * 9,
+            runwayY + 50 + math.sin(radarAngle) * 9,
+          ),
+          Paint()
+            ..color = const Color(0xFF54D2D2)
+            ..strokeWidth = 1.5,
+        );
+      } else {
+        // Hexagonal coastal defense battery on Island 2
+        final fortX = islandX;
+        final fortY = baseY + 50;
         c.drawRect(
-          Rect.fromLTWH(side, y, 15, 45 + depth * 5.0),
-          Paint()..color = tint.withValues(alpha: .05 + depth * .015),
+          Rect.fromCenter(center: Offset(fortX, fortY), width: 28, height: 28),
+          Paint()..color = const Color(0xFF333D4B),
+        );
+        c.drawCircle(
+          Offset(fortX, fortY),
+          7,
+          Paint()..color = const Color(0xFF1E242C),
+        );
+        c.drawCircle(
+          Offset(fortX, fortY),
+          3,
+          Paint()..color = const Color(0xFF88A4BE),
         );
       }
     }
-    // Moon constellations grow as the route approaches occupied space.
-    for (var i = 0; i <= sector; i++) {
-      final x = i.isEven ? 30.0 + i * 14 : 320.0 - i * 10;
-      final y = 65.0 + i * 52 + math.sin(time * .018 + i) * 15;
-      final radius = 6.0 + (sector + i) % 4 * 3;
-      c.drawCircle(
-        Offset(x, y),
-        radius,
-        Paint()..color = tint.withValues(alpha: .2),
+  }
+
+  /// Sector 1: Ringfall Floating Sky Docks & Cloud Platforms
+  void _paintRingfallSkyPlatforms(
+    Canvas c,
+    double scrollY,
+    Color tint,
+    double time,
+    int cycle,
+  ) {
+    for (var i = 0; i < 2; i++) {
+      final baseY = (i * 260.0 + scrollY) % 520.0;
+      final platX = i == 0 ? 110.0 : 250.0;
+
+      // Platform shadow on cloud layer below
+      c.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(platX + 10, baseY + 70),
+            width: 90,
+            height: 120,
+          ),
+          const Radius.circular(8),
+        ),
+        Paint()..color = const Color(0x33000000),
       );
-      c.drawCircle(
-        Offset(x - radius * .3, y - radius * .15),
-        radius * .88,
-        Paint()..color = const Color(0xFF101525),
+
+      // High-tech floating sky platform
+      c.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(platX, baseY + 60),
+            width: 86,
+            height: 114,
+          ),
+          const Radius.circular(8),
+        ),
+        Paint()..color = const Color(0xFF282542),
       );
-    }
-    // Orbiting hardware stays near the side channels; solar wings distinguish
-    // frontier survey satellites from the thorned relays in demon territory.
-    final occupation = math.min(7, cycle);
-    for (var i = 0; i < 1 + sector + occupation; i++) {
-      final side = i.isEven ? 1.0 : -1.0;
-      final x = 180 + side * (128 + math.sin(time * .04 + i) * 17);
-      final y = 110.0 + (i * 63 + time * (1.4 + sector * .2)) % 285;
-      c.save();
-      c.translate(x, y);
-      c.rotate(math.sin(time * .06 + i) * .25);
+
+      // Inner platform landing deck
       c.drawRect(
-        const Rect.fromLTWH(-2, -4, 5, 8),
-        Paint()..color = tint.withValues(alpha: .4),
+        Rect.fromCenter(
+          center: Offset(platX, baseY + 60),
+          width: 50,
+          height: 84,
+        ),
+        Paint()..color = const Color(0xFF1B192E),
+      );
+
+      // Energy guidance lines & pulsing beacons
+      final pGuidance = Paint()
+        ..color = tint.withValues(alpha: 0.6)
+        ..strokeWidth = 1.5;
+      c.drawLine(
+        Offset(platX - 20, baseY + 24),
+        Offset(platX - 20, baseY + 96),
+        pGuidance,
       );
       c.drawLine(
-        const Offset(-12, 0),
-        const Offset(12, 0),
-        Paint()..color = tint.withValues(alpha: .3),
+        Offset(platX + 20, baseY + 24),
+        Offset(platX + 20, baseY + 96),
+        pGuidance,
       );
-      if (sector < 3 && i < sector + 1) {
-        for (final sign in [-1.0, 1.0]) {
-          c.drawRect(
-            Rect.fromLTWH(sign * 9 - 4, -5, 8, 10),
-            Paint()..color = tint.withValues(alpha: .17),
-          );
-          c.drawLine(
-            Offset(sign * 9, -5),
-            Offset(sign * 9, 5),
-            Paint()..color = tint.withValues(alpha: .28),
-          );
-        }
-      } else {
-        c.drawPath(
-          Path()
-            ..moveTo(-11, -7)
-            ..lineTo(-5, 0)
-            ..lineTo(-11, 7)
-            ..moveTo(11, -7)
-            ..lineTo(5, 0)
-            ..lineTo(11, 7),
-          Paint()
-            ..color = tint.withValues(alpha: .35)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2,
-        );
-      }
-      c.drawRect(
-        const Rect.fromLTWH(-1, -1, 2, 2),
-        Paint()
-          ..color = tint.withValues(
-            alpha: .4 + .2 * math.sin(time * 2 + i).abs(),
-          ),
-      );
-      c.restore();
-    }
-    // Sector-specific foreground structures, independently animated beacons.
-    for (var i = 0; i < 8 + sector * 3 + occupation; i++) {
-      final x = (i * 47.0 + 13) % 360;
-      final h = 4.0 + (i * 17 % 19) + sector * 5;
-      final y = 513.0 - h;
-      if (sector == 0) {
-        c.drawRect(
-          Rect.fromLTWH(x, y, 9, h),
-          Paint()..color = const Color(0xFF142A38),
-        );
-        c.drawRect(
-          Rect.fromLTWH(x + 2, y - 2, 5, 2),
-          Paint()..color = tint.withValues(alpha: .25),
-        );
-      } else if (sector == 1) {
-        c.drawCircle(
-          Offset(x, y + h * .5),
-          h * .45,
-          Paint()..color = const Color(0xFF201A35),
-        );
-        c.drawCircle(
-          Offset(x - 2, y + h * .4),
-          h * .12,
-          Paint()..color = const Color(0xFF110F24),
-        );
-      } else if (sector == 2) {
-        c.drawPath(
-          Path()
-            ..moveTo(x - 8, 520)
-            ..lineTo(x + 2, y - 12)
-            ..lineTo(x + 13, 520)
-            ..close(),
-          Paint()..color = const Color(0xFF281923),
-        );
-        c.drawLine(
-          Offset(x + 3, y + 7),
-          Offset(x + 6, 517),
-          Paint()
-            ..color = tint.withValues(
-              alpha: .2 + .08 * math.sin(time + i).abs(),
-            ),
-        );
-      } else {
-        c.drawRect(
-          Rect.fromLTWH(x, y, 7, h + 7),
-          Paint()
-            ..color = sector == 3
-                ? const Color(0xFF132921)
-                : const Color(0xFF301722),
-        );
-        c.drawPath(
-          Path()
-            ..moveTo(x - 3, y)
-            ..lineTo(x + 3, y - 12)
-            ..lineTo(x + 10, y)
-            ..close(),
-          Paint()..color = const Color(0xFF100E1C),
-        );
-        c.drawRect(
-          Rect.fromLTWH(x + 3, y + 5, 1, 4),
-          Paint()..color = tint.withValues(alpha: .35),
-        );
-      }
-    }
-    _routeLandmarks(c, sector, cycle, time);
-    if (cycle > 0) {
-      // Occupation scars grow each run without obstructing the firing lane.
-      for (var i = 0; i < math.min(8, cycle + 2); i++) {
-        final y = 35.0 + i * 56;
-        for (final side in [0.0, 354.0]) {
-          c.drawRect(
-            Rect.fromLTWH(side, y, 6, 20),
-            Paint()..color = const Color(0xFF793849).withValues(alpha: .45),
-          );
-          c.drawRect(
-            Rect.fromLTWH(side + 2, y + 4, 2, 8),
-            Paint()..color = const Color(0xFFFF8C87).withValues(alpha: .3),
+
+      // Corner guidance beacons blinking in sequence
+      final pulse = (math.sin(time * 4.0 + i) + 1.0) * 0.5;
+      for (final cx in [-38.0, 38.0]) {
+        for (final cy in [-50.0, 50.0]) {
+          c.drawCircle(
+            Offset(platX + cx, baseY + 60 + cy),
+            3,
+            Paint()..color = Color.lerp(tint, Colors.white, pulse)!,
           );
         }
       }
     }
   }
 
-  /// Coarse four-unit pixels distinguish named districts without covering fire.
+  /// Sector 2: Ember Moon Volcanic Atolls & Glowing Magma Veins
+  void _paintEmberVolcanicAtolls(
+    Canvas c,
+    double scrollY,
+    Color tint,
+    double time,
+    int cycle,
+  ) {
+    for (var i = 0; i < 2; i++) {
+      final baseY = (i * 260.0 + scrollY) % 520.0;
+      final atollX = i == 0 ? 120.0 : 240.0;
+
+      // Dark basalt volcanic island
+      final basaltPath = Path();
+      basaltPath.addOval(
+        Rect.fromCenter(
+          center: Offset(atollX, baseY + 60),
+          width: i == 0 ? 130 : 110,
+          height: i == 0 ? 170 : 150,
+        ),
+      );
+      c.drawPath(
+        basaltPath,
+        Paint()..color = const Color(0xFF211317),
+      );
+      c.drawPath(
+        basaltPath,
+        Paint()
+          ..color = const Color(0xFF3B1D22)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4.0,
+      );
+
+      // Caldera crater with incandescent magma pool
+      final calderaCenter = Offset(atollX, baseY + 50);
+      c.drawCircle(
+        calderaCenter,
+        18,
+        Paint()..color = const Color(0xFF140A0D),
+      );
+      final magmaGlow = 0.7 + math.sin(time * 3.0 + i) * 0.25;
+      c.drawCircle(
+        calderaCenter,
+        12,
+        Paint()..color = const Color(0xFFFF5222).withValues(alpha: magmaGlow),
+      );
+      c.drawCircle(
+        calderaCenter,
+        6,
+        Paint()..color = const Color(0xFFFFDF7A).withValues(alpha: magmaGlow),
+      );
+
+      // Glowing magma river carving through the rock into the ash sea
+      final riverPath = Path();
+      riverPath.moveTo(calderaCenter.dx, calderaCenter.dy);
+      riverPath.quadraticBezierTo(
+        calderaCenter.dx + 25,
+        calderaCenter.dy + 40,
+        calderaCenter.dx + 15,
+        calderaCenter.dy + 90,
+      );
+      c.drawPath(
+        riverPath,
+        Paint()
+          ..color = const Color(0xFFFF4818)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4.0,
+      );
+      c.drawPath(
+        riverPath,
+        Paint()
+          ..color = const Color(0xFFFFD460)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+    }
+  }
+
+  /// Sector 3: The Hollow Bioluminescent Abyssal Trenches
+  void _paintHollowAbyssalTrenches(
+    Canvas c,
+    double scrollY,
+    Color tint,
+    double time,
+    int cycle,
+  ) {
+    for (var i = 0; i < 2; i++) {
+      final baseY = (i * 260.0 + scrollY) % 520.0;
+      final trenchX = i == 0 ? 100.0 : 260.0;
+
+      // Sunken alien continental shelf
+      final shelfPath = Path();
+      shelfPath.addOval(
+        Rect.fromCenter(
+          center: Offset(trenchX, baseY + 60),
+          width: 120,
+          height: 160,
+        ),
+      );
+      c.drawPath(
+        shelfPath,
+        Paint()..color = const Color(0xFF0B2120),
+      );
+
+      // Bioluminescent abyssal trench fissure
+      final fissurePath = Path();
+      fissurePath.moveTo(trenchX - 20, baseY + 10);
+      fissurePath.quadraticBezierTo(
+        trenchX + 15,
+        baseY + 50,
+        trenchX - 10,
+        baseY + 110,
+      );
+
+      // Glowing aquatic trench glow
+      c.drawPath(
+        fissurePath,
+        Paint()
+          ..color = const Color(0xFF2BF2A3).withValues(alpha: 0.35)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 12.0
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+      c.drawPath(
+        fissurePath,
+        Paint()
+          ..color = const Color(0xFF62FFD2)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5,
+      );
+
+      // Ancient sunken alien monoliths
+      for (var m = 0; m < 3; m++) {
+        final mx = trenchX + (m - 1) * 32.0;
+        final my = baseY + 45.0 + (m % 2) * 25.0;
+        c.drawRect(
+          Rect.fromLTWH(mx - 4, my - 6, 8, 12),
+          Paint()..color = const Color(0xFF143D39),
+        );
+        c.drawRect(
+          Rect.fromLTWH(mx - 2, my - 4, 4, 8),
+          Paint()..color = const Color(0xFF38FFBE).withValues(alpha: 0.7),
+        );
+      }
+    }
+  }
+
+  /// Sector 4: Brood Carrier Colossal Exterior Superstructure
+  void _paintCarrierSuperstructure(
+    Canvas c,
+    double scrollY,
+    Color tint,
+    double time,
+    int cycle,
+  ) {
+    // Top-down flight over gargantuan mothership hull plates
+    for (var i = 0; i < 3; i++) {
+      final baseY = (i * 180.0 + scrollY) % 520.0;
+
+      // Heavy interlocking graphene armor tiles
+      c.drawRect(
+        Rect.fromLTWH(20, baseY + 10, 150, 75),
+        Paint()..color = const Color(0xFF1E212B),
+      );
+      c.drawRect(
+        Rect.fromLTWH(180, baseY + 20, 160, 75),
+        Paint()..color = const Color(0xFF171A24),
+      );
+
+      // Rivets & armor panel borders
+      c.drawRect(
+        Rect.fromLTWH(20, baseY + 10, 150, 75),
+        Paint()
+          ..color = const Color(0xFF34394A)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+      c.drawRect(
+        Rect.fromLTWH(180, baseY + 20, 160, 75),
+        Paint()
+          ..color = const Color(0xFF34394A)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+
+      // Central thermal exhaust trench with plasma glow
+      final trenchY = baseY + 80;
+      c.drawRect(
+        Rect.fromLTWH(0, trenchY, 360, 16),
+        Paint()..color = const Color(0xFF0F1017),
+      );
+      final plasmaPulse = 0.5 + math.sin(time * 5.0 + i) * 0.3;
+      c.drawRect(
+        Rect.fromLTWH(0, trenchY + 4, 360, 8),
+        Paint()..color = const Color(0xFFFF3344).withValues(alpha: plasmaPulse),
+      );
+
+      // Blinking carrier warning lights
+      for (var lx = 30.0; lx < 360.0; lx += 45.0) {
+        c.drawCircle(
+          Offset(lx, trenchY + 2),
+          2.5,
+          Paint()..color = const Color(0xFFFF8888),
+        );
+        c.drawCircle(
+          Offset(lx, trenchY + 14),
+          2.5,
+          Paint()..color = const Color(0xFFFF8888),
+        );
+      }
+    }
+  }
+
+  /// 4. Autonomous marine fauna & scout vessels with wake trails
+  void _paint1942Vessels(
+    Canvas c,
+    int sector,
+    double scrollY,
+    Color tint,
+    double time,
+  ) {
+    if (sector == 4) return; // Superstructure has no marine vessels
+
+    for (var i = 0; i < 3; i++) {
+      final vy = (i * 175.0 + scrollY * 1.3) % 520.0;
+      final vx = ((i * 110.0 + 40.0) + math.sin(time * 0.8 + i) * 20.0) % 320.0 + 20.0;
+
+      // White water V-wake lines behind moving vessel
+      final pWake = Paint()
+        ..color = Colors.white.withValues(alpha: 0.28)
+        ..strokeWidth = 1.2;
+      c.drawLine(Offset(vx, vy), Offset(vx - 8, vy - 14), pWake);
+      c.drawLine(Offset(vx, vy), Offset(vx + 8, vy - 14), pWake);
+
+      // Vessel / creature hull
+      c.drawRect(
+        Rect.fromCenter(center: Offset(vx, vy), width: 4, height: 7),
+        Paint()..color = const Color(0xFFE2EFF5),
+      );
+    }
+  }
+
+  /// 5. High-Altitude Parallax Drifting Clouds & Soft Drop Shadows
+  void _paint1942CloudsAndShadows(
+    Canvas c,
+    int sector,
+    double time,
+    Color tint,
+  ) {
+    // Clouds scroll slightly faster (parallax velocity 36 px/s)
+    final cloudScrollY = (time * 36.0) % 520.0;
+
+    for (var i = 0; i < 4; i++) {
+      final cy = (i * 135.0 + cloudScrollY) % 520.0;
+      final cx = (i * 85.0 + 35.0 + math.sin(time * 0.25 + i) * 30.0) % 360.0;
+      final w = 60.0 + (i % 3) * 18.0;
+      final h = 32.0 + (i % 2) * 12.0;
+
+      // 1. Soft ground shadow cast onto ocean & islands below
+      final shadowOffset = const Offset(14, 22);
+      c.drawOval(
+        Rect.fromCenter(
+          center: Offset(cx, cy) + shadowOffset,
+          width: w * 0.95,
+          height: h * 0.95,
+        ),
+        Paint()..color = const Color(0x35000000),
+      );
+
+      // 2. Fluffy white high-altitude cumulus cloud body
+      final cloudPaint = Paint()..color = Colors.white.withValues(alpha: 0.42);
+      c.drawCircle(Offset(cx - w * 0.2, cy), h * 0.45, cloudPaint);
+      c.drawCircle(Offset(cx, cy - h * 0.1), h * 0.55, cloudPaint);
+      c.drawCircle(Offset(cx + w * 0.2, cy), h * 0.42, cloudPaint);
+
+      // Highlight crest
+      c.drawCircle(
+        Offset(cx - 2, cy - h * 0.18),
+        h * 0.35,
+        Paint()..color = Colors.white.withValues(alpha: 0.55),
+      );
+    }
+  }
+
+  /// 6. Atmospheric lighting scaling with wave progression
+  void _paintAtmosphere(
+    Canvas c,
+    int sector,
+    double time,
+    int wave,
+    Color tint,
+  ) {
+    final intensity = (wave / 4.0).clamp(0.25, 1.0);
+    // Subtle top-down sunbeam sweep
+    final sunX = 180.0 + math.sin(time * 0.15) * 80.0;
+    final sweepGradient = ui.Gradient.radial(
+      Offset(sunX, 0),
+      400,
+      [
+        tint.withValues(alpha: 0.08 * intensity),
+        Colors.transparent,
+      ],
+      [0.0, 1.0],
+    );
+    c.drawRect(
+      const Rect.fromLTWH(0, 0, 360, 520),
+      Paint()..shader = sweepGradient,
+    );
+  }
+
+  /// 7. Distinct route and district horizon silhouettes
   void _routeLandmarks(Canvas c, int sector, int route, double time) {
     if (route == 0) return;
     c.save();

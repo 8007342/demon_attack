@@ -57,8 +57,17 @@ class DifficultyPolicy {
     Difficulty.hard => 28,
   };
 
+  static const List<int> _normalBossShieldByRoute = [48, 68, 92, 116, 140];
+  static const List<int> _normalBossCoreByRoute = [16, 24, 34, 44, 56];
+
   int bossHealth(int normal) =>
       math.max(1, (normal * (difficulty == Difficulty.easy ? .8 : 1)).round());
+
+  int bossShieldForRoute(int route) =>
+      bossHealth(_normalBossShieldByRoute[route.clamp(0, 4)]);
+
+  int bossCoreForRoute(int route) =>
+      bossHealth(_normalBossCoreByRoute[route.clamp(0, 4)]);
 
   int rosterCount({
     required int sector,

@@ -59,8 +59,8 @@ void main() {
           }
           until(m, RunMode.playing);
           final boss = m.boss!;
-          expect(boss.shieldMax, m.policy.bossHealth(72 + route * 18));
-          expect(boss.coreMax, m.policy.bossHealth(24 + route * 10));
+          expect(boss.shieldMax, m.policy.bossShieldForRoute(route));
+          expect(boss.coreMax, m.policy.bossCoreForRoute(route));
           m.invulnerable = 100;
           advance(m, 4);
           expect(

@@ -8,11 +8,13 @@ import 'game/model.dart';
 import 'game/hints.dart';
 import 'widgets/hint_art.dart';
 import 'widgets/pilot_console_content.dart';
+import 'widgets/storyboard_banner.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
 import 'services/audio.dart';
 import 'services/scores.dart';
 import 'services/run_storage.dart';
+import 'services/tilt_control.dart';
 import 'widgets/medal.dart';
 import 'widgets/heart_parts.dart';
 export 'game/scene.dart' show DemonScene;
@@ -106,6 +108,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   );
   final alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   final keys = <LogicalKeyboardKey>{};
+  final tilt = TiltController();
+  bool touchInputEnabled = true;
   int? touch;
   double touchPosition = .5;
   @override
@@ -121,6 +125,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       }
     }
     scene = DemonScene(model, _tick);
+    scene.topScores = board;
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
   }
@@ -139,6 +144,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     focus.dispose();
     scores.close();
+    tilt.disable();
     for (final wheel in wheels) {
       wheel.dispose();
     }
@@ -157,6 +163,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   void _tick() {
     if (!mounted) return;
+    if (tilt.isActive && model.canPilot) {
+      model.setSteering(tilt.steeringValue);
+    }
     for (final event in model.takeEvents()) {
       switch (event) {
         case 'level':
@@ -176,6 +185,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           audioCue('travel', model.level, 1, model.cycle);
         case 'victory':
           audioCue('victory', model.level, 1, model.cycle);
+        case 'defeat':
+          audioCue('gameover', model.level, 1, model.cycle);
         case 'heart':
           heartNotice = 'HEART PIECE COLLECTED';
           heartNoticeUntil = model.clock + 1.25;
@@ -198,8 +209,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           history.recordBoss(model.difficulty);
           storage.saveHistory(history);
         case 'gameover':
-          _finishRun(failed: true);
-          audioCue('gameover', model.level, 1, model.cycle);
+          if (!model.defeatActive) {
+            _finishRun(failed: true);
+            audioCue('gameover', model.level, 1, model.cycle);
+          }
         case 'completed':
           _finishRun(failed: false);
           audioCue('victory', model.level, 1, model.cycle);
@@ -212,6 +225,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       }
     }
     if (!handledRunEnd &&
+        !model.defeatActive &&
         (model.mode == RunMode.gameOver || model.mode == RunMode.completed)) {
       _finishRun(failed: model.mode == RunMode.gameOver);
     }
@@ -252,6 +266,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       setState(() {
         board = entries;
         boardLoading = false;
+        scene.topScores = entries;
         final qualifies =
             entries.length < 10 || result.score > entries.last.score;
         showFinalResult = !qualifies;
@@ -335,15 +350,33 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   KeyEventResult _key(FocusNode node, KeyEvent event) {
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.arrowLeft ||
-        key == LogicalKeyboardKey.arrowRight) {
+        key == LogicalKeyboardKey.arrowRight ||
+        key == LogicalKeyboardKey.keyA ||
+        key == LogicalKeyboardKey.keyD) {
       if (event is KeyUpEvent) {
         keys.remove(key);
       } else {
         keys.add(key);
       }
-      scene.keyboardDirection =
-          (keys.contains(LogicalKeyboardKey.arrowRight) ? 1 : 0) -
-          (keys.contains(LogicalKeyboardKey.arrowLeft) ? 1 : 0).toDouble();
+      final right = keys.contains(LogicalKeyboardKey.arrowRight) ||
+          keys.contains(LogicalKeyboardKey.keyD);
+      final left = keys.contains(LogicalKeyboardKey.arrowLeft) ||
+          keys.contains(LogicalKeyboardKey.keyA);
+      final dir = (right ? 1 : 0) - (left ? 1 : 0).toDouble();
+      scene.keyboardDirection = dir;
+      model.setSteering(dir);
+      return KeyEventResult.handled;
+    }
+    if (event is KeyDownEvent && model.defeatActive) {
+      model.defeatTimer = 0;
+      _tick();
+      return KeyEventResult.handled;
+    }
+    if (event is KeyDownEvent &&
+        _showingArrivalHint &&
+        (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.enter)) {
+      model.transitionLeft = 0;
+      _tick();
       return KeyEventResult.handled;
     }
     if (event is KeyDownEvent &&
@@ -373,6 +406,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         setState(() {
           board = result;
           boardLoading = false;
+          scene.topScores = result;
         });
       }
     } catch (_) {
@@ -403,6 +437,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         setState(() {
           board = result;
           boardDifficulty = model.difficulty;
+          scene.topScores = result;
           loading = false;
           submitted = true;
           screen = null;
@@ -533,28 +568,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   Widget _titleScreen(BoxConstraints bounds) => Stack(
     children: [
-      Positioned(
-        top: 22,
-        left: 24,
-        right: 24,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: _label(
-                  'KRYBOR / DEFENSE SYSTEM',
-                  const Color(0xFF94A6B8),
-                  size: 9,
-                ),
-              ),
-            ),
-            _muteButton(),
-          ],
-        ),
-      ),
       Center(
         child: SingleChildScrollView(
           key: const ValueKey('landing-scroll'),
@@ -586,6 +599,46 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     ],
                   ),
           ),
+        ),
+      ),
+      Positioned(
+        top: 22,
+        left: 24,
+        right: 24,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: _label(
+                  'KRYBOR / DEFENSE SYSTEM',
+                  const Color(0xFF94A6B8),
+                  size: 9,
+                ),
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  key: const ValueKey('title-touch-toggle-button'),
+                  tooltip: touchInputEnabled
+                      ? 'Touch Controls: On (Tap for Desktop mode)'
+                      : 'Desktop Mode: On (Tap for Touch mode)',
+                  onPressed: () =>
+                      setState(() => touchInputEnabled = !touchInputEnabled),
+                  icon: Icon(
+                    touchInputEnabled ? Icons.touch_app : Icons.keyboard,
+                    color: touchInputEnabled ? mint : const Color(0xFF95A9BB),
+                    size: 19,
+                  ),
+                ),
+                _muteButton(),
+              ],
+            ),
+          ],
         ),
       ),
       Positioned(
@@ -934,28 +987,28 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       ),
       Expanded(
         flex: 8,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              CampaignStory.name(model.level, model.cycle).toUpperCase(),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: const TextStyle(
-                color: mint,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                CampaignStory.name(model.level, model.cycle).toUpperCase(),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: const TextStyle(
+                  color: mint,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            Text(
-              '${model.difficulty.name.toUpperCase()} · ${model.level == 5 ? 'CARRIER CONTACT' : 'WAVE ${model.wave} / ${model.wavesPerLevel}'}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF839DB5), fontSize: 8),
-            ),
-            const SizedBox(height: 3),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
+              Text(
+                '${model.difficulty.name.toUpperCase()} · ${model.level == 5 ? 'CARRIER CONTACT' : 'WAVE ${model.wave} / ${model.wavesPerLevel}'}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF839DB5), fontSize: 8),
+              ),
+              const SizedBox(height: 3),
+              Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -978,8 +1031,26 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                   ],
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      ),
+      SizedBox(
+        width: 38,
+        child: IconButton(
+          key: const ValueKey('touch-toggle-button'),
+          tooltip: touchInputEnabled
+              ? 'Switch to Desktop Mode'
+              : 'Switch to Touch Mode',
+          onPressed: () => setState(() {
+            touchInputEnabled = !touchInputEnabled;
+            touch = null;
+          }),
+          icon: Icon(
+            touchInputEnabled ? Icons.touch_app : Icons.keyboard,
+            color: touchInputEnabled ? mint : const Color(0xFF95A9BB),
+            size: 19,
+          ),
         ),
       ),
       SizedBox(width: 38, child: _muteButton()),
@@ -1009,67 +1080,136 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         ),
         Expanded(
           child: LayoutBuilder(
-            builder: (context, area) => Stack(
-              children: [
-                Positioned.fill(
-                  child: ColoredBox(
-                    color: ink,
-                    child: GameWidget(game: _arenaProxy, autofocus: false),
+            builder: (context, area) => GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                if (model.defeatActive) {
+                  model.defeatTimer = 0;
+                  _tick();
+                } else if (_showingArrivalHint &&
+                    model.level == 1 &&
+                    model.wave == 1 &&
+                    model.cycle == 0) {
+                  model.transitionLeft = 0;
+                  _tick();
+                }
+              },
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ColoredBox(
+                      color: ink,
+                      child: GameWidget(game: _arenaProxy, autofocus: false),
+                    ),
                   ),
-                ),
-                if (heartNotice != null &&
-                    model.clock < heartNoticeUntil &&
-                    model.mode != RunMode.paused)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    right: 8,
-                    child: IgnorePointer(
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          color: const Color(0xE8080D18),
-                          child: Text(
-                            heartNotice!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFFFD594),
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                  if (heartNotice != null &&
+                      model.clock < heartNoticeUntil &&
+                      model.mode != RunMode.paused)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      right: 8,
+                      child: IgnorePointer(
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            color: const Color(0xE8080D18),
+                            child: Text(
+                              heartNotice!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Color(0xFFFFD594),
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                if (model.cinematic &&
-                    (model.mode != RunMode.paused || _showingArrivalHint))
-                  Positioned.fill(child: _interlude()),
-                if (model.mode == RunMode.paused && !_showingArrivalHint)
-                  Positioned.fill(
-                    child: _gameOverlay('SIGNAL PAUSED', 'TAKE A BREATH.', [
-                      FilledButton(
-                        onPressed: _pause,
-                        child: const Text('RESUME'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextButton(
-                        onPressed: _title,
-                        child: const Text('RETURN TO TITLE'),
-                      ),
-                    ]),
-                  ),
-              ],
+                  if (model.cinematic &&
+                      (model.mode != RunMode.paused || _showingArrivalHint))
+                    Positioned.fill(child: _interlude()),
+                  if (model.mode == RunMode.paused && !_showingArrivalHint)
+                    Positioned.fill(
+                      child: _gameOverlay('SIGNAL PAUSED', 'TAKE A BREATH.', [
+                        FilledButton(
+                          onPressed: _pause,
+                          child: const Text('RESUME'),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton(
+                          onPressed: () => setState(() {
+                            touchInputEnabled = !touchInputEnabled;
+                            touch = null;
+                          }),
+                          child: Text(
+                            touchInputEnabled
+                                ? 'CONTROLS: TOUCH (ON)'
+                                : 'CONTROLS: DESKTOP (TOUCH OFF)',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: _title,
+                          child: const Text('RETURN TO TITLE'),
+                        ),
+                      ]),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
-        _controller(),
+        if (touchInputEnabled) _controller() else _desktopController(),
       ],
     );
   }
+
+  Widget _desktopController() => Container(
+    height: 44,
+    width: double.infinity,
+    margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+    decoration: BoxDecoration(
+      color: const Color(0xFF0F1A26),
+      border: Border.all(color: const Color(0xFF2B3F52)),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.keyboard, size: 16, color: mint),
+        const SizedBox(width: 8),
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: _label(
+              'DESKTOP MODE · ← / A  → / D TO STEER · AUTO-FIRING',
+              const Color(0xFF8AA3BA),
+              size: 9,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        TextButton(
+          key: const ValueKey('enable-touch-bottom'),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          onPressed: () => setState(() => touchInputEnabled = true),
+          child: const Text(
+            'ENABLE TOUCH',
+            style: TextStyle(fontSize: 10, color: mint),
+          ),
+        ),
+      ],
+    ),
+  );
 
   // A render-only view avoids updating the simulation twice when the full-screen sky is mounted.
   late final _ArenaView _arenaProxy = _ArenaView(scene);
@@ -1081,7 +1221,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Widget _hintInterlude(TacticalHint hint) => LayoutBuilder(
     builder: (context, bounds) {
       final paused = model.mode == RunMode.paused;
-      final compact = bounds.maxHeight < 360;
+      final compact = bounds.maxHeight < 400;
+      final p = model.transitionProgress;
+
       return Center(
         child: FittedBox(
           fit: BoxFit.scaleDown,
@@ -1090,37 +1232,75 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             child: Container(
               key: const ValueKey('arrival-hint'),
               margin: const EdgeInsets.symmetric(horizontal: 12),
-              padding: EdgeInsets.all(compact ? 12 : 18),
+              padding: EdgeInsets.all(compact ? 10 : 16),
               decoration: BoxDecoration(
-                color: const Color(0xF0080D18),
-                border: Border.all(color: const Color(0xFF304D60)),
+                color: const Color(0xF2080D18),
+                border: Border.all(color: mint.withValues(alpha: 0.6)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _label(
-                    paused ? 'SIGNAL PAUSED' : 'TACTICAL BRIEFING',
-                    mint,
-                    size: 11,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: FittedBox(
+                          alignment: Alignment.centerLeft,
+                          fit: BoxFit.scaleDown,
+                          child: _label(
+                            paused ? 'SIGNAL PAUSED' : 'TACTICAL BRIEFING',
+                            mint,
+                            size: 11,
+                          ),
+                        ),
+                      ),
+                      _label(
+                        'SECTOR ${model.level} · WAVE ${model.wave}',
+                        const Color(0xFF8AA3BA),
+                        size: 9,
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 8),
+                  // Tactical Map Progress indicator [0]-0-0-0-0 .. [0-0-0-0-0]
+                  StoryboardBanner(
+                    level: model.level,
+                    cycle: model.cycle,
+                    phase: model.presentationMode,
+                    progress: p,
+                    steering: model.steering,
+                    compact: true,
+                    height: compact ? 36 : 46,
+                  ),
+                  const SizedBox(height: 8),
+                  // Restored Illustrated Tactical Pixel Art
+                  HintArt(scene: hint.scene, height: compact ? 95 : 135),
                   const SizedBox(height: 10),
-                  HintArt(scene: hint.scene, height: compact ? 115 : 180),
-                  const SizedBox(height: 14),
                   Text(
                     hint.title,
                     key: ValueKey('hint-${hint.id}'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: compact ? 18 : 22,
                       fontWeight: FontWeight.bold,
-                      height: 1.2,
+                      height: 1.15,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 6),
+                  Text(
+                    hint.detail,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFFB0C4D8),
+                      fontSize: 11,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   LinearProgressIndicator(
-                    value: model.transitionProgress,
-                    minHeight: 6,
+                    value: p,
+                    minHeight: 5,
                     color: mint,
                     backgroundColor: const Color(0xFF24374B),
                   ),
@@ -1227,6 +1407,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                               letterSpacing: 1.5,
                             ),
                           ),
+                          SizedBox(height: compact ? 6 : 10),
+                          StoryboardBanner(
+                            level: model.level,
+                            cycle: model.cycle,
+                            phase: phase,
+                            progress: p,
+                            steering: model.steering,
+                            compact: compact,
+                          ),
                           if (recognition) ...[
                             const SizedBox(height: 12),
                             Row(
@@ -1316,21 +1505,25 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Widget _controller() => LayoutBuilder(
     builder: (context, bounds) => Listener(
       onPointerDown: (e) {
+        if (!touchInputEnabled) return;
         if (touch != null) return;
         touch = e.pointer;
         touchPosition = (e.localPosition.dx / bounds.maxWidth).clamp(0, 1);
+        final steerNorm = ((touchPosition - 0.5) * 2.0).clamp(-1.0, 1.0);
+        model.setSteering(steerNorm);
         audioUnlock();
         focus.requestFocus();
         setState(() {});
       },
       onPointerMove: (e) {
-        if (touch != e.pointer) return;
+        if (!touchInputEnabled || touch != e.pointer) return;
+        touchPosition = (e.localPosition.dx / bounds.maxWidth).clamp(0, 1);
+        final steerNorm = ((touchPosition - 0.5) * 2.0).clamp(-1.0, 1.0);
+        model.setSteering(steerNorm);
         if (model.canPilot) {
           model.moveBy(e.delta.dx / bounds.maxWidth * 360 * 1.3);
         }
-        setState(() {
-          touchPosition = (e.localPosition.dx / bounds.maxWidth).clamp(0, 1);
-        });
+        setState(() {});
       },
       onPointerUp: (e) {
         if (touch == e.pointer) setState(() => touch = null);
@@ -1352,7 +1545,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               border: Border.all(color: const Color(0xFF34485B), width: 2),
             ),
             child: CustomPaint(
-              painter: ConsolePainter(touch == null ? null : touchPosition),
+              painter: ConsolePainter(
+                touch == null ? null : touchPosition,
+                steering: model.steering,
+                defeatActive: model.defeatActive,
+              ),
               child: PilotConsoleContent(
                 timers: Map.of(model.powerTimers),
                 touching: touch != null,
@@ -1572,10 +1769,37 @@ class _SpritePainter extends CustomPainter {
 }
 
 class ConsolePainter extends CustomPainter {
-  const ConsolePainter(this.touch);
+  const ConsolePainter(
+    this.touch, {
+    this.steering = 0.0,
+    this.defeatActive = false,
+  });
+
   final double? touch;
+  final double steering;
+  final bool defeatActive;
+
   @override
   void paint(Canvas c, Size s) {
+    if (defeatActive) {
+      // Offline emergency scanlines and warning flicker
+      final pLine = Paint()
+        ..color = const Color(0x33FF4444)
+        ..strokeWidth = 1;
+      for (var y = 2.0; y < s.height; y += 4) {
+        c.drawLine(Offset(0, y), Offset(s.width, y), pLine);
+      }
+      final pStatic = Paint()
+        ..color = const Color(0x22FFAA33)
+        ..strokeWidth = 2;
+      c.drawLine(
+        Offset(8, s.height * 0.5),
+        Offset(s.width - 8, s.height * 0.5),
+        pStatic,
+      );
+      return;
+    }
+
     final p = Paint()
       ..color = const Color(0xFF203547)
       ..strokeWidth = 1;
@@ -1585,10 +1809,13 @@ class ConsolePainter extends CustomPainter {
     for (var y = 8.0; y < s.height; y += 12) {
       c.drawLine(Offset(8, y), Offset(s.width - 8, y), p);
     }
+
     c.drawRect(
-      Rect.fromLTWH(s.width * .2, 20, s.width * .6, s.height - 40),
+      Rect.fromLTWH(s.width * .2, 16, s.width * .6, s.height - 32),
       Paint()..color = const Color(0xEE101F2D),
     );
+
+    // Corner brackets
     for (final x in [5.0, s.width - 8]) {
       for (final y in [5.0, s.height - 8]) {
         c.drawRect(
@@ -1597,13 +1824,102 @@ class ConsolePainter extends CustomPainter {
         );
       }
     }
+
+    // Strategic angle ticks (7 increments: -24° to +24°)
+    final cx = s.width * 0.5;
+    final cy = s.height * 0.5;
+    final currentAngleNorm = steering.clamp(-1.0, 1.0);
+    final activeIndex =
+        ((currentAngleNorm + 1.0) / 2.0 * 6.0).round().clamp(0, 6);
+
+    for (var i = 0; i < 7; i++) {
+      final tickX = cx + (i - 3) * (s.width * 0.08);
+      final isActive = i == activeIndex;
+      final pTick = Paint()
+        ..color = isActive ? mint : const Color(0xFF3B566E)
+        ..strokeWidth = isActive ? 2 : 1;
+      c.drawLine(
+        Offset(tickX, s.height - 18),
+        Offset(tickX, s.height - 10),
+        pTick,
+      );
+    }
+
+    // Yoke & dual flight steering handles
+    final yokeAngle = currentAngleNorm * (math.pi / 4.5); // ±40 degrees
+    c.save();
+    c.translate(cx, cy);
+    c.rotate(yokeAngle);
+
+    final pYoke = Paint()
+      ..color = mint.withValues(alpha: 0.85)
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke;
+
+    // Yoke center ring
+    c.drawCircle(Offset.zero, 11, pYoke);
+    c.drawCircle(Offset.zero, 3, Paint()..color = mint);
+
+    // Dual grips
+    c.drawLine(const Offset(-32, 0), const Offset(-11, 0), pYoke);
+    c.drawLine(const Offset(11, 0), const Offset(32, 0), pYoke);
+    c.drawLine(const Offset(-32, -8), const Offset(-32, 8), pYoke);
+    c.drawLine(const Offset(32, -8), const Offset(32, 8), pYoke);
+
+    // Horizon line
     c.drawLine(
-      Offset(s.width * .3, s.height - 11),
-      Offset(s.width * .7, s.height - 11),
+      const Offset(-42, 0),
+      const Offset(-36, 0),
       Paint()
-        ..color = mint.withValues(alpha: .25)
+        ..color = const Color(0x8854D2D2)
+        ..strokeWidth = 1.5,
+    );
+    c.drawLine(
+      const Offset(36, 0),
+      const Offset(42, 0),
+      Paint()
+        ..color = const Color(0x8854D2D2)
+        ..strokeWidth = 1.5,
+    );
+
+    c.restore();
+
+    // Twin Gun Pod Indicators at left and right
+    final pPod = Paint()
+      ..color = const Color(0xFF4C6A85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    final podL = Rect.fromCenter(
+      center: Offset(s.width * 0.12, cy),
+      width: 14,
+      height: 26,
+    );
+    final podR = Rect.fromCenter(
+      center: Offset(s.width * 0.88, cy),
+      width: 14,
+      height: 26,
+    );
+    c.drawRect(podL, pPod);
+    c.drawRect(podR, pPod);
+
+    // Gun barrels pointing according to current steering
+    final barrelOffset = Offset(currentAngleNorm * 5, -8);
+    c.drawLine(
+      podL.topCenter,
+      podL.topCenter + barrelOffset,
+      Paint()
+        ..color = mint
         ..strokeWidth = 2,
     );
+    c.drawLine(
+      podR.topCenter,
+      podR.topCenter + barrelOffset,
+      Paint()
+        ..color = mint
+        ..strokeWidth = 2,
+    );
+
+    // Active touch reticle
     if (touch != null) {
       c.drawRect(
         Rect.fromCenter(
@@ -1617,5 +1933,8 @@ class ConsolePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(ConsolePainter oldDelegate) => touch != oldDelegate.touch;
+  bool shouldRepaint(ConsolePainter oldDelegate) =>
+      touch != oldDelegate.touch ||
+      steering != oldDelegate.steering ||
+      defeatActive != oldDelegate.defeatActive;
 }

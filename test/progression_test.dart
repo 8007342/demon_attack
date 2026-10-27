@@ -215,18 +215,24 @@ void main() {
         ..score = 1234;
       model.collect(Power.spread);
       final boss = model.boss!;
-      expect(boss.shield, 72);
-      expect(boss.core, 24);
-      for (var hit = 0; hit < 72; hit++) {
+      expect(boss.shield, 48);
+      expect(boss.core, 16);
+      for (var hit = 0; hit < 48; hit++) {
         expect(model.hitBoss(boss.x), isTrue);
-        expect(boss.core, 24);
-        expect(boss.shield, 71 - hit);
+        expect(boss.core, 16);
+        expect(boss.shield, 47 - hit);
       }
       boss.door = 0;
+      boss.sideDoorLeft = 0;
+      boss.sideDoorRight = 0;
       expect(model.hitBoss(boss.x), isFalse);
       boss.door = 1;
       expect(model.hitBoss(boss.x + 30), isFalse);
-      for (var hit = 0; hit < 24; hit++) {
+      // Early form allows side hatch hits when side doors open.
+      boss.sideDoorLeft = 1;
+      expect(model.hitBoss(boss.x - Carrier.sideHatchOffset), isTrue);
+      boss.sideDoorLeft = 0;
+      for (var hit = 0; hit < 15; hit++) {
         expect(model.hitBoss(boss.x), isTrue);
       }
       expect(model.mode, RunMode.victory);

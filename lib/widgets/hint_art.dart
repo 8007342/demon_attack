@@ -220,6 +220,37 @@ class _HintArtState extends State<HintArt> {
             ),
         ],
       ),
+      'sling_shot' => const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'SLIDE',
+            style: TextStyle(
+              color: Color(0xFF70F5D5),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          plus,
+          Text(
+            'FIRE',
+            style: TextStyle(
+              color: Color(0xFFE1EBF4),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          arrow,
+          Text(
+            'ANGLED SHOT',
+            style: TextStyle(
+              color: Color(0xFFFFD594),
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
       _ => null,
     };
   }
@@ -237,6 +268,8 @@ const _descriptions = <String, String>{
   'shield_refresh':
       'An enemy hit breaks the shield. During brief protection, '
       'the ghostly ship moves a short distance to a fresh shield and weapon.',
+  'sling_shot':
+      'A banking ship slides sideways and slings an angled shot into an open hatch and moving giant.',
   'powerful_choice':
       'A rapid chain of thin shots is replaced by a slower heavy shot.',
   'large_choice':
@@ -270,6 +303,7 @@ class _HintScenePainter extends CustomPainter {
     'carrier_field': Rect.fromLTWH(628, 0, 626, 222),
     'ordinary_dodge': Rect.fromLTWH(0, 284, 626, 222),
     'shield_refresh': Rect.fromLTWH(628, 284, 626, 222),
+    'sling_shot': Rect.fromLTWH(628, 0, 626, 222),
     'powerful_choice': Rect.fromLTWH(0, 568, 626, 219),
     'large_choice': Rect.fromLTWH(628, 568, 626, 219),
     'giant_rush': Rect.fromLTWH(0, 852, 626, 287),
@@ -352,6 +386,43 @@ class _HintScenePainter extends CustomPainter {
             ..isAntiAlias = false,
         );
       }
+    }
+    if (scene == 'sling_shot') {
+      final paint = Paint()..isAntiAlias = false;
+      final shipX = (destination.left + destination.width * .28).roundToDouble();
+      final shipY = (destination.bottom - destination.height * .16).roundToDouble();
+      // Lateral slide indicator & banked ship silhouette with angled thruster vector.
+      paint.color = const Color(0x6670F5D5);
+      canvas.drawRect(Rect.fromLTWH(shipX - 18, shipY + 2, 14, 3), paint);
+      paint.color = const Color(0xFF70F5D5);
+      canvas.drawRect(Rect.fromLTWH(shipX - 8, shipY, 16, 4), paint);
+      canvas.drawRect(Rect.fromLTWH(shipX - 3, shipY - 5, 7, 5), paint);
+      paint.color = const Color(0xFFFFD594);
+      canvas.drawRect(Rect.fromLTWH(shipX + 3, shipY - 2, 6, 2), paint);
+      // Angled thruster vector opposite the bank.
+      paint.color = const Color(0xFFFF8676);
+      canvas.drawRect(Rect.fromLTWH(shipX - 6, shipY + 4, 4, 4), paint);
+      // Stepped pixel curved/angled trajectory slinging into the side hatch / target.
+      final targetX = (destination.center.dx + destination.width * .12).roundToDouble();
+      final targetY = (destination.top + destination.height * .46).roundToDouble();
+      for (var step = 0; step <= 14; step++) {
+        final t = step / 14.0;
+        final curve = math.sin(t * math.pi) * destination.width * .05;
+        final px = (shipX + (targetX - shipX) * t + curve).roundToDouble();
+        final py = (shipY - 8 + (targetY - (shipY - 8)) * t).roundToDouble();
+        paint.color = step.isEven
+            ? const Color(0xFF70F5D5)
+            : const Color(0xFFFFD594);
+        canvas.drawRect(
+          Rect.fromLTWH(px, py, step > 11 ? 4 : 3, step > 11 ? 4 : 3),
+          paint,
+        );
+      }
+      // Target hatch highlight on the boss flank.
+      paint.color = const Color(0xFFFFD594);
+      canvas.drawRect(Rect.fromLTWH(targetX - 5, targetY - 4, 10, 8), paint);
+      paint.color = const Color(0xFFFFF5C9);
+      canvas.drawRect(Rect.fromLTWH(targetX - 3, targetY - 2, 6, 4), paint);
     }
   }
 

@@ -102,7 +102,7 @@ class PowerStatus extends StatelessWidget {
 }
 
 /// Side weapon layers leave room for a central bolt/heavy cannon and the outer
-/// shield. Each mark uses the original logical pixel grid.
+/// shield. Each mark uses the original logical pixel grid over a cockpit ship schematic.
 class PowerGlyphPainter extends CustomPainter {
   const PowerGlyphPainter(this.active);
   final Set<Power> active;
@@ -111,6 +111,29 @@ class PowerGlyphPainter extends CustomPainter {
     canvas.save();
     canvas.scale(size.width / 32, size.height / 32);
     final paint = Paint()..isAntiAlias = false;
+
+    // Stylized cockpit starfighter chassis schematic (dark slate tones distinct from powerColors).
+    paint
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFF152536);
+    canvas.drawPath(
+      Path()
+        ..moveTo(16, 4)
+        ..lineTo(21, 14)
+        ..lineTo(28, 22)
+        ..lineTo(28, 27)
+        ..lineTo(20, 25)
+        ..lineTo(12, 25)
+        ..lineTo(4, 27)
+        ..lineTo(4, 22)
+        ..lineTo(11, 14)
+        ..close(),
+      paint,
+    );
+    paint.color = const Color(0xFF233B52);
+    canvas.drawRect(const Rect.fromLTWH(14, 9, 4, 15), paint);
+    canvas.drawRect(const Rect.fromLTWH(7, 19, 18, 4), paint);
+
     if (active.contains(Power.shield)) {
       paint
         ..color = powerColors[Power.shield]!
