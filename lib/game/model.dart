@@ -271,7 +271,7 @@ class ArcadeModel {
     return ((deg / 6.0).round() * 6.0).clamp(-24.0, 24.0);
   }
 
-  static const double defeatDuration = 3.6;
+  static const double defeatDuration = 5.8;
   double defeatTimer = 0;
   double cameraPanY = 0;
   bool get defeatActive => mode == RunMode.gameOver && defeatTimer > 0;
@@ -1999,7 +1999,7 @@ class ArcadeModel {
     final p = defeatProgress;
     final elapsed = defeatDuration - defeatTimer;
     final t = clock + elapsed;
-    if (p < 0.28 &&
+    if (p < 0.16 &&
         (elapsed * 14).floor() != (math.max(0.0, elapsed - dt) * 14).floor()) {
       final angle = t * 7.3;
       blasts.add(
@@ -2014,59 +2014,74 @@ class ArcadeModel {
       (s) => s.y < -10 || s.y > height + 10 || s.x < -10 || s.x > width + 10,
     );
 
+    // Reinforcements swarm in to join the celebration
+    if (demons.length < 12) {
+      for (var i = demons.length; i < 12; i++) {
+        final enterX = i.isEven ? -16.0 : 376.0;
+        final enterY = 35.0 + (i % 6) * 36.0;
+        demons.add(
+          Demon(enterX, enterY, i % 4, 2, i * 0.8)
+            ..entranceProgress = 1
+            ..waitingForEscort = false,
+        );
+      }
+    }
+
     final b = boss;
     if (b != null) {
       final oldX = b.x;
-      final targetBossX = 180.0 + math.sin(t * 2.2) * 26.0;
-      final targetBossY = 175.0 + math.cos(t * 2.8) * 8.0;
-      final blend = (dt * 3.8).clamp(0.0, 1.0);
+      // Swaggering rhythmic boss victory dance:
+      final targetBossX = 180.0 + math.sin(t * 2.5) * 38.0;
+      // Syncopated double-bounce groove
+      final targetBossY =
+          175.0 - math.sin(t * 4.6).abs() * 16.0 + math.sin(t * 9.2) * 3.0;
+      final blend = (dt * 4.2).clamp(0.0, 1.0);
       b.x += (targetBossX - b.x) * blend;
       b.y += (targetBossY - b.y) * blend;
       b.horizontalVelocity = dt > 0 ? (b.x - oldX) / dt : 0;
-      b.door = 1.0;
-      b.sideDoorLeft = 1.0;
-      b.sideDoorRight = 1.0;
-      if (demons.length < 8) {
-        for (var i = demons.length; i < 8; i++) {
-          demons.add(
-            Demon(b.x, b.y + 24, i % 4, 2, i * 0.8)..entranceProgress = 1,
-          );
-        }
+      // Teasing door animations: central mouth laughing and alternating side-door winks
+      b.door = (math.sin(t * 5.6) * 0.5 + 0.5);
+      b.sideDoorLeft = math.sin(t * 4.2) > 0.1 ? 1.0 : 0.0;
+      b.sideDoorRight = math.sin(t * 4.2 + math.pi) > 0.1 ? 1.0 : 0.0;
+    }
+
+    // Creature Swarm: paired celebrating creatures flocking and high-fiving
+    final smalls = demons.where((d) => !d.isLarge).toList();
+    final pairCount = math.max(1, (smalls.length / 2).ceil());
+    for (var i = 0; i < smalls.length; i++) {
+      final d = smalls[i];
+      d.entranceProgress = 1;
+      d.dive = 0;
+      d.diveShield = 0;
+      final pairIndex = i ~/ 2;
+      final isSecond = i % 2 == 1;
+
+      final double anchorX, anchorY;
+      if (b != null) {
+        final orbitAngle =
+            t * 2.2 + pairIndex * (math.pi * 2 / pairCount);
+        anchorX = b.x + math.cos(orbitAngle) * 115.0;
+        anchorY = b.y + math.sin(orbitAngle) * 58.0;
+      } else {
+        final flockPhase =
+            t * 2.4 + pairIndex * (math.pi * 2 / pairCount);
+        anchorX = 180.0 + math.sin(flockPhase) * 105.0;
+        anchorY = 220.0 + math.sin(flockPhase * 2) * 55.0;
       }
-      final smalls = demons.where((d) => !d.isLarge).toList();
-      for (var i = 0; i < smalls.length; i++) {
-        final d = smalls[i];
-        d.entranceProgress = 1;
-        d.dive = 0;
-        d.diveShield = 0;
-        final haloAngle =
-            t * 2.8 + i * (math.pi * 2 / math.max(1, smalls.length));
-        final prevX = d.x, prevY = d.y;
-        final hx = b.x + math.cos(haloAngle) * 112.0;
-        final hy = b.y + math.sin(haloAngle) * 62.0;
-        d.x += (hx - d.x) * (dt * 5.0).clamp(0.0, 1.0);
-        d.y += (hy - d.y) * (dt * 5.0).clamp(0.0, 1.0);
-        _updateDemonKinematics(d, prevX, prevY, dt);
-      }
-    } else {
-      final smalls = demons.where((d) => !d.isLarge).toList();
-      for (var i = 0; i < smalls.length; i++) {
-        final d = smalls[i];
-        d.entranceProgress = 1;
-        d.dive = 0;
-        d.diveShield = 0;
-        final phase =
-            t * 3.2 +
-            i * (math.pi * 2 / math.max(1, smalls.length)) +
-            d.seed * 0.25;
-        final cx = 180.0 + math.sin(phase) * 110.0;
-        final cy = 230.0 + math.sin(phase * 2) * 58.0;
-        final prevX = d.x, prevY = d.y;
-        final blend = (dt * 4.5).clamp(0.0, 1.0);
-        d.x += (cx - d.x) * blend;
-        d.y += (cy - d.y) * blend;
-        _updateDemonKinematics(d, prevX, prevY, dt);
-      }
+
+      // High-five clap oscillation: pairs approach to touch wingtips then bounce apart
+      final clapPhase = (t * 4.0 + pairIndex * 1.4) % (math.pi * 2);
+      final separation = (math.cos(clapPhase) * 0.5 + 0.5) * 26.0 + 4.0;
+      final targetX =
+          anchorX + (isSecond ? separation * 0.5 : -separation * 0.5);
+      final targetY = anchorY +
+          (isSecond ? math.sin(t * 5.0) * 2.5 : -math.sin(t * 5.0) * 2.5);
+
+      final prevX = d.x, prevY = d.y;
+      final blend = (dt * 5.0).clamp(0.0, 1.0);
+      d.x += (targetX - d.x) * blend;
+      d.y += (targetY - d.y) * blend;
+      _updateDemonKinematics(d, prevX, prevY, dt);
     }
 
     final larges = demons.where((d) => d.isLarge).toList();
@@ -2089,8 +2104,8 @@ class ArcadeModel {
       _updateDemonKinematics(d, prevX, prevY, dt);
     }
 
-    if (p >= 0.62) {
-      final u = ((p - 0.62) / 0.38).clamp(0.0, 1.0);
+    if (p >= 0.74) {
+      final u = ((p - 0.74) / 0.26).clamp(0.0, 1.0);
       final ease = u < 0.5
           ? 4 * u * u * u
           : 1 - math.pow(-2 * u + 2, 3).toDouble() / 2;

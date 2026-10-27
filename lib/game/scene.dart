@@ -564,11 +564,15 @@ class DemonScene extends FlameGame {
         c.translate(0, -180 * descent);
         _bossOrbitalArrivalEffects(c, b, p, descent);
       }
-      final carrierBank = (b.horizontalVelocity / 90).clamp(-1.0, 1.0);
+      final carrierBank = model.defeatActive
+          ? (math.sin(model.visualClock * 2.5) * 0.45).clamp(-1.0, 1.0)
+          : (b.horizontalVelocity / 90).clamp(-1.0, 1.0);
       final hullDamage = (1 - b.core / b.coreMax).clamp(0.0, 1.0);
       if (bossAtlas != null) {
         final mandibleFrame = model.presentationMode == RunMode.transition
             ? (model.transitionProgress * 3.99).floor().clamp(0, 3)
+            : model.defeatActive
+            ? ((model.visualClock * 9.0).floor() % 4)
             : b.sideHatchesLocked
             ? 0
             : ((model.visualClock * (3 + b.rage * 4) + b.door * 2).floor() % 4);
@@ -1734,7 +1738,7 @@ class DemonScene extends FlameGame {
       }
     }
 
-    // 2. Ordinary Small Demons: Synchronized figure-8 victory swarms & celebratory spark bursts
+    // 2. Ordinary Small Demons: Synchronized victory swarms, high-five wing claps, & spark bursts
     final smallDemons = model.demons.where((d) => !d.isLarge).toList();
     for (var i = 0; i < smallDemons.length; i++) {
       final d = smallDemons[i];
@@ -1762,6 +1766,42 @@ class DemonScene extends FlameGame {
       );
     }
 
+    // High-Five wing clashes between paired celebrating creatures
+    for (var i = 0; i < smallDemons.length - 1; i += 2) {
+      final d1 = smallDemons[i];
+      final d2 = smallDemons[i + 1];
+      final dx = (d1.x - d2.x).abs();
+      final dy = (d1.y - d2.y).abs();
+      if (dx < 18.0 && dy < 16.0) {
+        final hx = (d1.x + d2.x) * 0.5;
+        final hy = (d1.y + d2.y) * 0.5;
+        final clapStrength = (1.0 - dx / 18.0).clamp(0.0, 1.0);
+        final flashPaint = Paint()..isAntiAlias = false;
+
+        // Central bright high-five sparkle
+        flashPaint.color = Colors.white.withValues(alpha: clapStrength);
+        c.drawRect(Rect.fromCenter(center: Offset(hx, hy), width: 3.5, height: 3.5), flashPaint);
+
+        // Radiant arcade spark pips
+        flashPaint.color = mint.withValues(alpha: clapStrength * 0.95);
+        c.drawRect(Rect.fromLTWH(hx - 5, hy - 1, 2, 2), flashPaint);
+        c.drawRect(Rect.fromLTWH(hx + 3, hy - 1, 2, 2), flashPaint);
+        flashPaint.color = const Color(0xFFFFD54F).withValues(alpha: clapStrength * 0.95);
+        c.drawRect(Rect.fromLTWH(hx - 1, hy - 5, 2, 2), flashPaint);
+        c.drawRect(Rect.fromLTWH(hx - 1, hy + 3, 2, 2), flashPaint);
+
+        // Micro-shockwave ring
+        c.drawCircle(
+          Offset(hx, hy),
+          5.0 + (1.0 - clapStrength) * 4.0,
+          Paint()
+            ..color = mint.withValues(alpha: clapStrength * 0.5)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0,
+        );
+      }
+    }
+
     // 3. Big Birds (Sentinels) Apex Hover & Twin Skyward Salute Beams
     for (final d in model.demons) {
       if (d.isLarge) {
@@ -1784,9 +1824,23 @@ class DemonScene extends FlameGame {
       }
     }
 
-    // 4. Carrier Boss Dominance Pulse & Circling Drone Halo
+    // 4. Carrier Boss Dominance Pulse, Victory Dance Exhaust Flares & Drone Halo
     final b = model.boss;
     if (b != null) {
+      // Alternating retro-thruster burst plumes dancing to the groove
+      final danceBeat = math.sin(model.visualClock * 9.2);
+      final flarePaint = Paint()..isAntiAlias = false;
+      for (final side in [-52.0, -24.0, 24.0, 52.0]) {
+        final sideBeat = (side < 0) ? danceBeat : -danceBeat;
+        if (sideBeat > 0.15) {
+          final plumeLen = 8.0 + sideBeat * 16.0;
+          flarePaint.color = const Color(0xFFFFD54F);
+          c.drawRect(Rect.fromLTWH(b.x + side - 3, b.y + 36, 6, plumeLen * 0.5), flarePaint);
+          flarePaint.color = const Color(0xFFFF5252);
+          c.drawRect(Rect.fromLTWH(b.x + side - 2, b.y + 36 + plumeLen * 0.4, 4, plumeLen * 0.5), flarePaint);
+        }
+      }
+
       final pulseRadius = 110.0 + math.sin(model.visualClock * 10) * 14.0;
       c.drawOval(
         Rect.fromCenter(center: Offset(b.x, b.y), width: pulseRadius * 2, height: 110),
