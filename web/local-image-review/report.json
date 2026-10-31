@@ -1,0 +1,266 @@
+{
+  "generated_at_utc": "2026-10-31T03:29:27.295202+00:00",
+  "workflow": "Forge local stable-diffusion.cpp MCP generator followed by local deterministic preparation",
+  "inference_policy": "local-only; no hosted image-generation fallback",
+  "processor": "tools/prepare_local_image_candidates.py",
+  "processor_version": 1,
+  "local_tool": "Version: ImageMagick 7.1.2-34 Q16-HDRI x86_64 c5d4ca8a0:20261014 https://imagemagick.org",
+  "logical_cell_size": 32,
+  "palette_limit": 16,
+  "atlas": "candidate-atlas.png",
+  "candidates": [
+    {
+      "name": "ship",
+      "source": "assets/ship-source.png",
+      "preview": "assets/ship-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Rejected as a production sprite: the result is painterly, opaque, and not a clean isolated game sprite."
+      ],
+      "prompt": "One isolated video game player spaceship sprite, top-down orthographic view. It flies upward on the screen: sharp nose at the top, broad short left and right wings, narrow tapered rear and two engines at the bottom. Symmetrical single small starfighter silhouette, 16-bit arcade pixel art with hard square pixels, limited palette of dark navy, teal, pale gold. Plain pure magenta background. Center the ONE ship, fill about 70 percent of the canvas. This is one sprite only, not a sheet, not multiple views, not a collage, not a lineup.",
+      "negative_prompt": "sprite sheet, contact sheet, grid, multiple objects, multiple views, collage, spacecraft interior, spaceship hangar, industrial building, tank, vehicle lineup, painterly, watercolor, texture, soft edges, blur, gradients, text, logo, border, frame, user interface",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 271828,
+      "steps": 20,
+      "sha256": "305a1154aa7b58f2658c001a4719752034991477d39c2666c346cff7e683b39b"
+    },
+    {
+      "name": "cannon",
+      "source": "assets/cannon-source.png",
+      "preview": "assets/cannon-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 15,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Rejected as an attachment: the result is a painterly vehicle composite rather than a separable cannon pod."
+      ],
+      "prompt": "A single isolated modular twin wingtip cannon pod attachment for an original retro arcade starfighter. Top-down orthographic pixel art, tiny compact mirrored pair of mechanical cannons pointing upward, dark navy casing, teal metal edge, pale gold muzzle dots. One asset only, centered on a solid vivid magenta background. Hard pixel blocks with a strict small palette. No ship body, no hands, no interface, no labels, no grid, no sheet, no collage.",
+      "negative_prompt": "spaceship, full vehicle, multiple items, sprite sheet, contact sheet, grid, text, logo, photograph, painterly blur, gradients, shadows on background, frame, user interface",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 3141592,
+      "steps": 20,
+      "sha256": "af71c7797ad0c3c48d3b38359b219c3a2d1a9991fc72167086f5cf5f86d983b9"
+    },
+    {
+      "name": "force_field",
+      "source": "assets/force_field-source.png",
+      "preview": "assets/force_field-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 14,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Rejected as a production effect: the result is a painterly bubble composite, not transparent or frame-ready."
+      ],
+      "prompt": "A single isolated compact energy force-field shield sprite for a retro arcade starfighter, viewed straight from above. A cool cyan teal violet segmented oval energy bubble with stepped hexagonal gaps, dim center that can surround a small ship, bold simple 16-bit pixel art made of square pixels. One shield only, centered on a solid vivid magenta background, no ship, no text, no icon frame, no grid, no sheet, no collage.",
+      "negative_prompt": "ship, spacecraft, multiple shields, sprite sheet, contact sheet, grid, text, logo, photograph, painterly blur, gradients, realistic glass, frame, user interface",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 3141593,
+      "steps": 20,
+      "sha256": "22ea626b5cb33ce3e0c1217a0f09c445e326a1110f2d01dfccd89b2cea27da58"
+    },
+    {
+      "name": "ordinary_demon",
+      "source": "assets/ordinary_demon-source.png",
+      "preview": "assets/ordinary_demon-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: the generated sample is opaque and does not provide the stable multi-frame identity needed for the ordinary demon animation."
+      ],
+      "prompt": "A single isolated enemy demon creature sprite for a vertical retro arcade space shooter, top-down orthographic view, facing down toward the player. Compact symmetrical winged alien with two curved horns, broad pointed wings, small central armored body and two bright red eyes. Readable 16-bit arcade pixel art, hard square pixels, limited dark violet, magenta, crimson and pale yellow palette. Plain pure vivid magenta background, centered, one creature only, fills about 65 percent of a square canvas. No scene, no text, no frame, no sprite sheet.",
+      "negative_prompt": "spaceship, aircraft, bird, bat photograph, realistic anatomy, multiple creatures, sprite sheet, contact sheet, grid, collage, text, logo, painterly, watercolor, gradients, blur, soft edges, scenery, stars, frame, interface",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731004,
+      "steps": 20,
+      "sha256": "0a7b5561f67ecfb17f89f12dba033ab300a30445d56489b1f0d8aaef50ea5e1a"
+    },
+    {
+      "name": "shield_sentinel",
+      "source": "assets/shield_sentinel-source.png",
+      "preview": "assets/shield_sentinel-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque painterly output does not isolate the creature, segmented shield, or shield state frames."
+      ],
+      "prompt": "A single shield sentinel demon enemy sprite for a vertical retro arcade space shooter, top-down orthographic view, facing downward toward the player. Distinct large alien with a central demon face and two long angular wings, surrounded by a clean segmented cyan teal energy shield ring with four gaps. 16-bit arcade pixel art, bold square pixel clusters, strict palette of midnight violet, crimson, teal and pale gold. Plain vivid magenta background, centered, one creature with its shield only, fills about 65 percent of square canvas. No scene, no text, no sheet.",
+      "negative_prompt": "spaceship, aircraft, human, multiple creatures, sprite sheet, contact sheet, grid, collage, text, logo, painterly, watercolor, gradients, blur, soft edges, scenery, stars, frame, interface",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731005,
+      "steps": 20,
+      "sha256": "b11369183c7880b50ec2524062dd0b866b9500781e412a0a93e25269a00ea36f"
+    },
+    {
+      "name": "armored_sentinel",
+      "source": "assets/armored_sentinel-source.png",
+      "preview": "assets/armored_sentinel-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 15,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque output is not a usable transparent sprite and does not provide consistent damage or animation frames."
+      ],
+      "prompt": "A single armored sentinel demon enemy sprite for a vertical retro arcade space shooter, top-down orthographic view, facing downward toward the player. Large heavy horned alien with broad jagged wings, plated dark armor, orange gold glowing chest core and distinct chunky armor plates along both sides. 16-bit arcade pixel art with hard square pixels, limited palette of near-black plum, burgundy, orange and pale gold. Plain pure vivid magenta background, centered, one creature only, fills about 70 percent of square canvas. No shield bubble, no scene, no text, no sheet.",
+      "negative_prompt": "spaceship, aircraft, tank, human, multiple creatures, sprite sheet, contact sheet, grid, collage, text, logo, painterly, watercolor, gradients, blur, soft edges, scenery, stars, frame, interface",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731006,
+      "steps": 20,
+      "sha256": "b4b3e1b4e3405f8f38990adbebd2274849b1df857c3d268110395f19645763f6"
+    },
+    {
+      "name": "carrier_boss",
+      "source": "assets/carrier_boss-source.png",
+      "preview": "assets/carrier_boss-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque output does not pass boss silhouette, pixel-art, or multi-state animation requirements."
+      ],
+      "prompt": "A single imposing carrier boss enemy sprite for a vertical retro arcade space shooter, top-down orthographic view, facing downward toward the player. Huge symmetrical demonic mothership, wide crescent shaped armored hull, central glowing red eye/core, layered swept wings with visible gun turrets, two engine pods at rear. Iconic readable 16-bit arcade pixel art, hard blocky square pixels, limited midnight violet, dark red, orange and pale gold palette. Plain vivid magenta background, centered, one complete boss ship only, fills about 78 percent of square canvas. No scene, no stars, no text, no labels, no sheet.",
+      "negative_prompt": "ordinary small spaceship, fighter jet, aircraft photograph, multiple ships, sprite sheet, contact sheet, grid, collage, text, logo, painterly, watercolor, gradients, blur, soft edges, scenery, planet, frame, interface",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731007,
+      "steps": 20,
+      "sha256": "0a141837cc84704663083bf3e2ce45d1f6db61c65fb87220da926ee913b50fd3"
+    }
+  ],
+  "integration_status": "research-only; model outputs are comparison references, not production assets; none pass sprite isolation, transparency, and animation review"
+}
