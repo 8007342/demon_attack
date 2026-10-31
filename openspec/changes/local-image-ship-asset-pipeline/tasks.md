@@ -14,3 +14,9 @@
 
 - [x] 3.1 Build the Flutter web app and publish it to the managed local preview; verify the game root and review page are both served at their documented local paths.
 - [x] 3.2 Inspect the generated contact sheet and host-browser request logs, correct any broken asset paths, and record the visual result and remaining limitations in `FORGE_DIAGNOSTICS.md`.
+
+## 4. Astra prompt and background comparison pass
+
+- [x] 4.1 Have the Astra prompt-design agent derive seven sprite prompts and two background prompts from the project art guides; record prompts and local generation provenance.
+- [x] 4.2 Extend local processing and the review page to show the additional sprite candidates and current-vs-generated portrait backgrounds.
+- [x] 4.3 Inspect the side-by-side compositions and record rejection reasons without replacing production artwork.

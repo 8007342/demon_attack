@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Local Sprite Asset Review</title>
+  <title>Local Model Asset Comparison</title>
   <style>
     :root { color-scheme: dark; --bg:#080d18; --panel:#111c2b; --line:#263b50; --mint:#70f5d5; --gold:#f4ca79; --bad:#ff786c; --muted:#9caebe; }
     * { box-sizing:border-box; }
@@ -22,6 +22,10 @@
     .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr)); gap:16px; }
     .status { display:inline-block; color:#1b100e; background:var(--bad); padding:2px 9px; border-radius:999px; font-size:.75rem; font-weight:800; letter-spacing:.05em; }
     .images { display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:start; }
+    .backgrounds { margin-top:28px; }
+    .background-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr)); gap:16px; }
+    .background-pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .background-pair img { display:block; width:100%; aspect-ratio:2/3; object-fit:cover; image-rendering:pixelated; background:#050910; border:1px solid var(--line); border-radius:8px; }
     figure { margin:0; min-width:0; }
     figure img { width:100%; aspect-ratio:1; object-fit:contain; background:#050910; border:1px solid var(--line); border-radius:8px; }
     figure.preview img { image-rendering:pixelated; }
@@ -40,7 +44,7 @@
 <body>
 <main>
   <header>
-    <div><p>DEMON ATTACK · RESEARCH BRANCH</p><h1>Local Sprite Asset Review</h1></div>
+    <div><p>DEMON ATTACK · RESEARCH BRANCH</p><h1>Local Model Asset Comparison</h1></div>
     <a href="../">Back to game</a>
   </header>
 
@@ -49,12 +53,17 @@
   </section>
 
   <section class="atlas">
-    <h2>Pixel-grid comparison strip</h2>
+    <h2>Sprite candidates · original and Astra-crafted variants</h2>
     <img src="candidate-atlas.png" alt="Pixel-reduced local model candidates for the ship, equipment, and enemy creatures">
-    <p>Each square reduces a 512×512 model output to a 32×32 logical preview, quantizes to at most 16 colors, then enlarges with nearest-neighbor sampling. This exposes the source model's style and background problems; it does not repair them.</p>
+    <p>Each square reduces a 512×512 model output to a 32×32 logical preview, quantizes to at most 16 colors, then enlarges with nearest-neighbor sampling. Originals stay untouched beside their Astra-crafted variants; previews expose the model output without repairing it.</p>
   </section>
 
   <section id="candidates" class="cards" aria-live="polite"></section>
+  <section class="backgrounds">
+    <h2>Portrait background comparison</h2>
+    <p>Each local candidate is paired with the current in-game sector painting at the same 2:3 aspect ratio. The generated concept is lower resolution than production art and remains research-only.</p>
+    <div id="background-candidates" class="background-grid" aria-live="polite"></div>
+  </section>
   <section id="empty" class="empty">No local candidate report is available. Run <code>python3 tools/prepare_local_image_candidates.py</code> from the project root, then rebuild the local preview.</section>
   <footer id="provenance"></footer>
 </main>
@@ -81,6 +90,18 @@
         </dl>
         <p><strong>Review:</strong> ${item.reasons.map(escapeHtml).join('; ')}</p>
         <details><summary>Prompt and negative prompt</summary><h3>Prompt</h3><pre>${escapeHtml(item.prompt)}</pre><h3>Negative prompt</h3><pre>${escapeHtml(item.negative_prompt)}</pre></details>
+      </article>`).join('');
+    const backgrounds = report.background_candidates || [];
+    document.querySelector('#background-candidates').innerHTML = backgrounds.map((item) => `
+      <article class="card">
+        <h2>${escapeHtml(item.location)} <span class="status">REFERENCE</span></h2>
+        <div class="background-pair">
+          <figure><img src="${escapeHtml(item.current)}" alt="Current in-game ${escapeHtml(item.location)} background"><figcaption>Current artwork · ${escapeHtml(item.current_source)}</figcaption></figure>
+          <figure><img src="${escapeHtml(item.source)}" alt="Local Astra-prompted ${escapeHtml(item.location)} background concept"><figcaption>Local SDXS concept · ${escapeHtml(item.source_dimensions.width)}×${escapeHtml(item.source_dimensions.height)}</figcaption></figure>
+        </div>
+        <dl><dt>Model</dt><dd>${escapeHtml(item.model)} · ${escapeHtml(item.tier)} · ${escapeHtml(item.backend)}</dd><dt>Seed</dt><dd>${escapeHtml(item.seed)} · ${escapeHtml(item.steps)} steps</dd><dt>License</dt><dd>${escapeHtml(item.license_metadata)}</dd></dl>
+        <p><strong>Review:</strong> ${escapeHtml(item.review)} Alpha: ${item.source_has_alpha ? 'yes' : 'no'}.</p>
+        <details><summary>Background prompt</summary><pre>${escapeHtml(item.prompt)}</pre><h3>Negative prompt</h3><pre>${escapeHtml(item.negative_prompt)}</pre></details>
       </article>`).join('');
     document.querySelector('#provenance').textContent = `${report.workflow} · Prepared ${report.generated_at_utc} · ${report.processor} · no inference or external requests are performed by this page.`;
   }).catch(() => { document.querySelector('#empty').style.display='block'; });

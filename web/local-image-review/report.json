@@ -1,9 +1,9 @@
 {
-  "generated_at_utc": "2026-10-31T03:29:27.295202+00:00",
+  "generated_at_utc": "2026-10-31T03:44:42.291528+00:00",
   "workflow": "Forge local stable-diffusion.cpp MCP generator followed by local deterministic preparation",
   "inference_policy": "local-only; no hosted image-generation fallback",
   "processor": "tools/prepare_local_image_candidates.py",
-  "processor_version": 1,
+  "processor_version": 2,
   "local_tool": "Version: ImageMagick 7.1.2-34 Q16-HDRI x86_64 c5d4ca8a0:20261014 https://imagemagick.org",
   "logical_cell_size": 32,
   "palette_limit": 16,
@@ -260,7 +260,309 @@
       "seed": 731007,
       "steps": 20,
       "sha256": "0a141837cc84704663083bf3e2ce45d1f6db61c65fb87220da926ee913b50fd3"
+    },
+    {
+      "name": "ship_v2",
+      "source": "assets/ship_v2-source.png",
+      "preview": "assets/ship_v2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 15,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque output; prompt was authored for the 32\u00d732 logical sprite contract, but the local wrapper provides no transparency, reference image, or pose control."
+      ],
+      "prompt": "One isolated original player starfighter sprite, strict top-down view, pointing upward with sharp nose at top and compact symmetric short wings, narrow tail, twin rear engines. Clear separate left/right cannon hardpoints and small ivory cockpit, readable silhouette at 32\u00d732 logical pixels. 16-bit arcade pixel art with hard square pixels, crisp one-pixel outline #100E2C, restrained palette teal #39DFCC, navy, pale-gold #EFBD57, ivory and tiny cyan engine glow. Center one ship on flat pure magenta, occupy about 24\u00d728 logical-pixel equivalent with margin. Clean orthographic sprite, no angle sheet.",
+      "negative_prompt": "multiple views, banked view, side view, sprite sheet, collage, second ship, ground shadow, landscape, aircraft photo, gradients, antialiasing, painterly texture, soft edges, text, UI, logo, frame",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731008,
+      "steps": 20,
+      "sha256": "073ed5b7518350eee663a18b0b3912c9f981caf136f425d3e55e0c56614c9f30"
+    },
+    {
+      "name": "cannon_v2",
+      "source": "assets/cannon_v2-source.png",
+      "preview": "assets/cannon_v2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque output and no guaranteed separable attachment pivot; compare to the initial cannon candidate."
+      ],
+      "prompt": "One isolated modular twin-cannon hardpoint sprite: perfectly mirrored pair of compact upward-pointing barrels with small independent teal casing and pale-gold muzzle pixels; no hull or wings. Flat top-down original 16-bit arcade pixel art, 32\u00d732 logical-pixel canvas intent, hard square pixels, one-pixel midnight outline, bounded navy/teal/gold/ivory palette. Center on pure magenta with generous empty margin, sharp silhouette and no cast shadow.",
+      "negative_prompt": "ship, wings, full vehicle, hands, perspective, multiple parts not touching as one pair, sheet, grid, text, UI, gradient, blur, antialiasing, painterly",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731009,
+      "steps": 20,
+      "sha256": "2634323861974e9f297e7dc5aa0cc4a3d90a508ae02ac6ef61aaa6c179aa65de"
+    },
+    {
+      "name": "force_field_v2",
+      "source": "assets/force_field_v2-source.png",
+      "preview": "assets/force_field_v2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque single frame; the wrapper cannot provide alpha or timer-state sequences."
+      ],
+      "prompt": "One isolated technological force-field loop concept, top-down: symmetric oval segmented cyan/teal/violet pixel barrier around a completely empty center, four deliberate gaps, crisp stepped hex geometry and a few discrete ivory glints. 32\u00d732 logical-cell intent, hard-edged original arcade pixels, palette #39DFCC #70F5D5 #A888FF plus midnight outline; one stable-state frame only, centered on flat pure magenta.",
+      "negative_prompt": "ship inside, creature, thermal fire, orange/red flames, smooth glass bubble, gradients, blur, antialiasing, sheet, text, UI, logo, shadows",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731010,
+      "steps": 20,
+      "sha256": "a9c15c389d7910edd4f4aa62012162ec481d9057da93f123b172010b6b4214c9"
+    },
+    {
+      "name": "ordinary_demon_v2",
+      "source": "assets/ordinary_demon_v2-source.png",
+      "preview": "assets/ordinary_demon_v2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 15,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque single pose; cannot establish the four-frame flap or identity across damage states."
+      ],
+      "prompt": "One small original winged demon combat sprite, top-down toward viewer, head downscreen as existing enemies: central teal torso, two curved horns, visible ivory teeth, tiny red angry eyes, broad scalloped membrane wings with readable left/right separation and small tail. Silhouette legible at 32\u00d732 logical pixels. Hard square pixels, one-pixel #100E2C outline, bounded teal #39DFCC/ivory/red/amber palette, flat magenta background, one sprite centered; one neutral wing pose, not a frame sequence.",
+      "negative_prompt": "bird, bat photo, humanoid portrait, ship, multiple creatures, scenery, action scene, feathers, gradients, soft edges, antialiasing, blur, text, UI, sprite sheet",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731011,
+      "steps": 20,
+      "sha256": "e5113825c0642a1162a66c25f99e83c0a5bdf4a4040b2627636681ae3cdc8d5f"
+    },
+    {
+      "name": "shield_sentinel_v2",
+      "source": "assets/shield_sentinel_v2-source.png",
+      "preview": "assets/shield_sentinel_v2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque single hover pose; cannot represent segmented alpha, eight articulated poses, or warning/dive transitions."
+      ],
+      "prompt": "One large shield-sentinel sprite, broad horizontal body, visibly separated articulated wing-root, outer and tip segments, horned demon face, small red eyes and teeth; cool structured segmented cyan/teal/violet shield halo with clear gaps around it. Original hard-pixel 16-bit sprite designed for a 64\u00d732 logical cell, midnight outline and limited atlas palette; single neutral hover pose centered on pure magenta, threat silhouette stays readable.",
+      "negative_prompt": "small ordinary demon, bird, aircraft, warm fire aura, continuous smooth wings, arrow warning, multiple pose sheet, scenery, gradients, glow blur, text, UI",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731012,
+      "steps": 20,
+      "sha256": "629810bf1477a1f211074ba7c1143ebb3ba321bad07a2d4f670ebf2995b3817d"
+    },
+    {
+      "name": "armored_sentinel_v2",
+      "source": "assets/armored_sentinel_v2-source.png",
+      "preview": "assets/armored_sentinel_v2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 14,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque single pose; compare the heavy sentinel silhouette and armor color blocking."
+      ],
+      "prompt": "One heavy armored sentinel demon, broad horizontal 64\u00d732-style sprite footprint, horned head, separated wing segments, thick violet armor plates, coral exposed seam cracks and tiny gold/ivory core glint, minimal red eyes; original hard-square pixel art, one-pixel midnight outline, bounded violet/coral/gold palette, neutral hover pose, centered on pure magenta.",
+      "negative_prompt": "spaceship, tank, human knight, shield bubble, fire plume, extra creatures, sheet, gradient metal, specular photorealism, smooth curves, antialiasing, blur, text, UI",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731013,
+      "steps": 20,
+      "sha256": "c15c30bda61a4b9064f6bad8998c2e6fa1422ef6cd801847172f23c70c7c637e"
+    },
+    {
+      "name": "carrier_boss_v2",
+      "source": "assets/carrier_boss_v2-source.png",
+      "preview": "assets/carrier_boss_v2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 15,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: opaque single intact state; does not encode the carrier\u2019s transformation or damage effects."
+      ],
+      "prompt": "One original Brood Carrier boss sprite, front/top-down facing player: wide crescent biomechanical saucer hull with ribbed chitin plates, twin dorsal stabilizers, recessed amber conduits, fore mandibles and three closed stepped launch shutters, central aperture. Broad readable single-cell silhouette that could scale up; original hard-edged pixel art with midnight outline, violet armored hull, restrained coral/gold highlights; single intact state on flat magenta, no damage overlays.",
+      "negative_prompt": "ordinary fighter, human aircraft, organic creature alone, multiple ships, scene, open hatch, UI, labels, text, smooth gradients, photorealism, blur, sheet",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731014,
+      "steps": 20,
+      "sha256": "3747665b5a8751abb18a8594ec732eca6f676e74fd40768830f0c0ef4d2d8f48"
     }
   ],
-  "integration_status": "research-only; model outputs are comparison references, not production assets; none pass sprite isolation, transparency, and animation review"
+  "background_candidates": [
+    {
+      "name": "background_krybor_v2",
+      "location": "KRYBOR \u00b7 cold lunar frontier",
+      "source": "assets/background_krybor_v2-source.png",
+      "preview": "assets/background_krybor_v2-preview.png",
+      "current": "assets/background_krybor_v2-current.png",
+      "current_source": "assets/images/sector-1.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 768
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "seed": 731015,
+      "steps": 20,
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "sha256": "276ae0aadd06489311f86e06bcee63b30f875e3fee493eb6577041054a0d9f15",
+      "prompt": "Portrait 2:3 original intricate 16-bit pixel-art background concept for KRYBOR, a cold blue rocky lunar frontier. Distant pale ringed ice planet high on the right, small friendly moon, a few tiny geometric human outpost beacons and low shelters on a far uneven horizon. Leave the central 60 percent firing lane almost empty and very dark; concentrate terrain and landmarks at side edges, top corners, and low horizon. Sparse stars, near-black navy shadows, dim blue silhouettes, restrained dithering, crisp chunky square pixels, layered depth implied through pixel clusters, no parallax blur. Gameplay readability first: enemy silhouettes and cyan, warm red/orange projectiles must remain brighter than all scenery. Whole image is background only.",
+      "negative_prompt": "characters, demons, player ship, enemies, bullets, text, HUD, logo, watermark, bright central object, large bright nebula, gradients, photorealism, smooth vector, noisy texture, interface",
+      "review": "Rejected as a replacement: the output became a crowded painterly city with sky-blue haze instead of crisp pixel scenery and a quiet dark firing lane. Retain only for later model comparison against sector 1."
+    },
+    {
+      "name": "background_ringfall_v2",
+      "location": "RINGFALL \u00b7 violet ringed gas giant",
+      "source": "assets/background_ringfall_v2-source.png",
+      "preview": "assets/background_ringfall_v2-preview.png",
+      "current": "assets/background_ringfall_v2-current.png",
+      "current_source": "assets/images/sector-2.png",
+      "source_dimensions": {
+        "width": 512,
+        "height": 768
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "seed": 731016,
+      "steps": 20,
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "sha256": "9f6758373b738bbeea5f9f0699750a3067f7a72287af79cba9f7d30101ca07d4",
+      "prompt": "Portrait 2:3 original intricate 16-bit pixel-art background concept for RINGFALL: a vast violet gas giant fills the distant sky with broad diagonal planetary rings, a purple cratered moon near the horizon, a sparse asteroid belt restricted to both side edges, and a few tiny abandoned orbital satellites. Leave the central 60 percent firing lane almost empty, near-black, and unobstructed; place recognizable landmarks in top corners, along the side margins, and low horizon. Sparse stars, deep navy-violet shadows, subdued low-luminance silhouettes, restrained dithering, crisp chunky square pixels, no parallax blur. Ensure enemy silhouettes and cyan, warm red/orange projectiles remain brighter than scenery. Whole image is background only.",
+      "negative_prompt": "characters, demons, player ship, enemies, bullets, text, HUD, logo, watermark, bright central object, crowded center, giant bright planet center, gradients, photorealism, smooth vector, noisy texture, interface",
+      "review": "Rejected as a replacement: the output is noisy/painterly, omits Ringfall\u2019s defining gas giant and broad diagonal rings, and makes the center much brighter and busier than current sector 2. Retain only for later model comparison."
+    }
+  ],
+  "integration_status": "research-only; all model outputs are references; none pass transparency/state-consistency gates and no live game asset is replaced"
 }

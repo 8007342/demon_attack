@@ -132,6 +132,49 @@ def main() -> int:
             }
         )
 
+    background_results = []
+    for candidate in manifest.get("background_candidates", []):
+        source = (RESEARCH / candidate["source"]).resolve()
+        if RESEARCH.resolve() not in source.parents or not source.is_file():
+            raise ValueError(f"Background source is missing or outside research root: {source}")
+        raw_name = f"{candidate['name']}-source.png"
+        current_name = f"{candidate['name']}-current.png"
+        preview_name = f"{candidate['name']}-preview.png"
+        raw_output = WEB_ASSETS / raw_name
+        current_output = WEB_ASSETS / current_name
+        preview_output = WEB_ASSETS / preview_name
+        shutil.copyfile(source, raw_output)
+        current_source = (ROOT / candidate["compare_to"]).resolve()
+        if ROOT.resolve() not in current_source.parents or not current_source.is_file():
+            raise ValueError(f"Comparison background is missing or outside repository: {current_source}")
+        shutil.copyfile(current_source, current_output)
+        width, height, channels, _colors = identify(source)
+        if (width, height) != (candidate["width"], candidate["height"]):
+            raise ValueError(f"Unexpected background dimensions for {candidate['name']}: {width}x{height}")
+        # Keep detailed scenery; only resize to a common 2:3 review preview.
+        run("magick", str(source), "-strip", "-filter", "point", "-resize", "384x576!", "-strip", str(preview_output))
+        background_results.append({
+            "name": candidate["name"],
+            "location": candidate["location"],
+            "source": f"assets/{raw_name}",
+            "preview": f"assets/{preview_name}",
+            "current": f"assets/{current_name}",
+            "current_source": candidate["compare_to"],
+            "source_dimensions": {"width": width, "height": height},
+            "source_channels": channels,
+            "source_has_alpha": "a" in channels.replace("gray", "").replace("cmyk", ""),
+            "seed": candidate["seed"],
+            "steps": candidate["steps"],
+            "model": manifest["generator"]["model"],
+            "tier": manifest["generator"]["tier"],
+            "backend": manifest["generator"]["backend"],
+            "license_metadata": manifest["generator"]["license_metadata"],
+            "sha256": candidate["sha256"],
+            "prompt": candidate["prompt"],
+            "negative_prompt": candidate["negative_prompt"],
+            "review": candidate["review"],
+        })
+
     preview_paths = [str(WEB_ASSETS / f"{r['name']}-pixel-preview.png") for r in results]
     atlas = WEB_ROOT / "candidate-atlas.png"
     run(
@@ -152,12 +195,13 @@ def main() -> int:
         "workflow": manifest["workflow"],
         "inference_policy": manifest["inference_policy"],
         "processor": "tools/prepare_local_image_candidates.py",
-        "processor_version": 1,
+        "processor_version": 2,
         "local_tool": run("magick", "-version").splitlines()[0],
         "logical_cell_size": LOGICAL_SIZE,
         "palette_limit": PALETTE_LIMIT,
         "atlas": "candidate-atlas.png",
         "candidates": results,
+        "background_candidates": background_results,
         "integration_status": manifest["processing"]["integration_status"],
     }
     (WEB_ROOT / "report.json").write_text(

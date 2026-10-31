@@ -107,12 +107,199 @@
       "prompt": "A single imposing carrier boss enemy sprite for a vertical retro arcade space shooter, top-down orthographic view, facing downward toward the player. Huge symmetrical demonic mothership, wide crescent shaped armored hull, central glowing red eye/core, layered swept wings with visible gun turrets, two engine pods at rear. Iconic readable 16-bit arcade pixel art, hard blocky square pixels, limited midnight violet, dark red, orange and pale gold palette. Plain vivid magenta background, centered, one complete boss ship only, fills about 78 percent of square canvas. No scene, no stars, no text, no labels, no sheet.",
       "negative_prompt": "ordinary small spaceship, fighter jet, aircraft photograph, multiple ships, sprite sheet, contact sheet, grid, collage, text, logo, painterly, watercolor, gradients, blur, soft edges, scenery, planet, frame, interface",
       "review": "Reference only: opaque output does not pass boss silhouette, pixel-art, or multi-state animation requirements."
+    },
+    {
+      "name": "ship_v2",
+      "source": "raw/ship-v2-candidate.png",
+      "sha256": "073ed5b7518350eee663a18b0b3912c9f981caf136f425d3e55e0c56614c9f30",
+      "width": 512,
+      "height": 512,
+      "has_alpha": false,
+      "steps": 20,
+      "seed": 731008,
+      "elapsed_seconds": 41.6,
+      "prompt": "One isolated original player starfighter sprite, strict top-down view, pointing upward with sharp nose at top and compact symmetric short wings, narrow tail, twin rear engines. Clear separate left/right cannon hardpoints and small ivory cockpit, readable silhouette at 32\u00d732 logical pixels. 16-bit arcade pixel art with hard square pixels, crisp one-pixel outline #100E2C, restrained palette teal #39DFCC, navy, pale-gold #EFBD57, ivory and tiny cyan engine glow. Center one ship on flat pure magenta, occupy about 24\u00d728 logical-pixel equivalent with margin. Clean orthographic sprite, no angle sheet.",
+      "negative_prompt": "multiple views, banked view, side view, sprite sheet, collage, second ship, ground shadow, landscape, aircraft photo, gradients, antialiasing, painterly texture, soft edges, text, UI, logo, frame",
+      "review": "Reference only: opaque output; prompt was authored for the 32\u00d732 logical sprite contract, but the local wrapper provides no transparency, reference image, or pose control.",
+      "prompt_author": "Astra prompt-design agent"
+    },
+    {
+      "name": "cannon_v2",
+      "source": "raw/cannon-v2-candidate.png",
+      "sha256": "2634323861974e9f297e7dc5aa0cc4a3d90a508ae02ac6ef61aaa6c179aa65de",
+      "width": 512,
+      "height": 512,
+      "has_alpha": false,
+      "steps": 20,
+      "seed": 731009,
+      "elapsed_seconds": 41.95,
+      "prompt": "One isolated modular twin-cannon hardpoint sprite: perfectly mirrored pair of compact upward-pointing barrels with small independent teal casing and pale-gold muzzle pixels; no hull or wings. Flat top-down original 16-bit arcade pixel art, 32\u00d732 logical-pixel canvas intent, hard square pixels, one-pixel midnight outline, bounded navy/teal/gold/ivory palette. Center on pure magenta with generous empty margin, sharp silhouette and no cast shadow.",
+      "negative_prompt": "ship, wings, full vehicle, hands, perspective, multiple parts not touching as one pair, sheet, grid, text, UI, gradient, blur, antialiasing, painterly",
+      "review": "Reference only: opaque output and no guaranteed separable attachment pivot; compare to the initial cannon candidate.",
+      "prompt_author": "Astra prompt-design agent"
+    },
+    {
+      "name": "force_field_v2",
+      "source": "raw/force-field-v2-candidate.png",
+      "sha256": "a9c15c389d7910edd4f4aa62012162ec481d9057da93f123b172010b6b4214c9",
+      "width": 512,
+      "height": 512,
+      "has_alpha": false,
+      "steps": 20,
+      "seed": 731010,
+      "elapsed_seconds": 42.19,
+      "prompt": "One isolated technological force-field loop concept, top-down: symmetric oval segmented cyan/teal/violet pixel barrier around a completely empty center, four deliberate gaps, crisp stepped hex geometry and a few discrete ivory glints. 32\u00d732 logical-cell intent, hard-edged original arcade pixels, palette #39DFCC #70F5D5 #A888FF plus midnight outline; one stable-state frame only, centered on flat pure magenta.",
+      "negative_prompt": "ship inside, creature, thermal fire, orange/red flames, smooth glass bubble, gradients, blur, antialiasing, sheet, text, UI, logo, shadows",
+      "review": "Reference only: opaque single frame; the wrapper cannot provide alpha or timer-state sequences.",
+      "prompt_author": "Astra prompt-design agent"
+    },
+    {
+      "name": "ordinary_demon_v2",
+      "source": "raw/ordinary-demon-v2-candidate.png",
+      "sha256": "e5113825c0642a1162a66c25f99e83c0a5bdf4a4040b2627636681ae3cdc8d5f",
+      "width": 512,
+      "height": 512,
+      "has_alpha": false,
+      "steps": 20,
+      "seed": 731011,
+      "elapsed_seconds": 41.98,
+      "prompt": "One small original winged demon combat sprite, top-down toward viewer, head downscreen as existing enemies: central teal torso, two curved horns, visible ivory teeth, tiny red angry eyes, broad scalloped membrane wings with readable left/right separation and small tail. Silhouette legible at 32\u00d732 logical pixels. Hard square pixels, one-pixel #100E2C outline, bounded teal #39DFCC/ivory/red/amber palette, flat magenta background, one sprite centered; one neutral wing pose, not a frame sequence.",
+      "negative_prompt": "bird, bat photo, humanoid portrait, ship, multiple creatures, scenery, action scene, feathers, gradients, soft edges, antialiasing, blur, text, UI, sprite sheet",
+      "review": "Reference only: opaque single pose; cannot establish the four-frame flap or identity across damage states.",
+      "prompt_author": "Astra prompt-design agent"
+    },
+    {
+      "name": "shield_sentinel_v2",
+      "source": "raw/shield-sentinel-v2-candidate.png",
+      "sha256": "629810bf1477a1f211074ba7c1143ebb3ba321bad07a2d4f670ebf2995b3817d",
+      "width": 512,
+      "height": 512,
+      "has_alpha": false,
+      "steps": 20,
+      "seed": 731012,
+      "elapsed_seconds": 41.51,
+      "prompt": "One large shield-sentinel sprite, broad horizontal body, visibly separated articulated wing-root, outer and tip segments, horned demon face, small red eyes and teeth; cool structured segmented cyan/teal/violet shield halo with clear gaps around it. Original hard-pixel 16-bit sprite designed for a 64\u00d732 logical cell, midnight outline and limited atlas palette; single neutral hover pose centered on pure magenta, threat silhouette stays readable.",
+      "negative_prompt": "small ordinary demon, bird, aircraft, warm fire aura, continuous smooth wings, arrow warning, multiple pose sheet, scenery, gradients, glow blur, text, UI",
+      "review": "Reference only: opaque single hover pose; cannot represent segmented alpha, eight articulated poses, or warning/dive transitions.",
+      "prompt_author": "Astra prompt-design agent"
+    },
+    {
+      "name": "armored_sentinel_v2",
+      "source": "raw/armored-sentinel-v2-candidate.png",
+      "sha256": "c15c30bda61a4b9064f6bad8998c2e6fa1422ef6cd801847172f23c70c7c637e",
+      "width": 512,
+      "height": 512,
+      "has_alpha": false,
+      "steps": 20,
+      "seed": 731013,
+      "elapsed_seconds": 41.64,
+      "prompt": "One heavy armored sentinel demon, broad horizontal 64\u00d732-style sprite footprint, horned head, separated wing segments, thick violet armor plates, coral exposed seam cracks and tiny gold/ivory core glint, minimal red eyes; original hard-square pixel art, one-pixel midnight outline, bounded violet/coral/gold palette, neutral hover pose, centered on pure magenta.",
+      "negative_prompt": "spaceship, tank, human knight, shield bubble, fire plume, extra creatures, sheet, gradient metal, specular photorealism, smooth curves, antialiasing, blur, text, UI",
+      "review": "Reference only: opaque single pose; compare the heavy sentinel silhouette and armor color blocking.",
+      "prompt_author": "Astra prompt-design agent"
+    },
+    {
+      "name": "carrier_boss_v2",
+      "source": "raw/carrier-boss-v2-candidate.png",
+      "sha256": "3747665b5a8751abb18a8594ec732eca6f676e74fd40768830f0c0ef4d2d8f48",
+      "width": 512,
+      "height": 512,
+      "has_alpha": false,
+      "steps": 20,
+      "seed": 731014,
+      "elapsed_seconds": 42.33,
+      "prompt": "One original Brood Carrier boss sprite, front/top-down facing player: wide crescent biomechanical saucer hull with ribbed chitin plates, twin dorsal stabilizers, recessed amber conduits, fore mandibles and three closed stepped launch shutters, central aperture. Broad readable single-cell silhouette that could scale up; original hard-edged pixel art with midnight outline, violet armored hull, restrained coral/gold highlights; single intact state on flat magenta, no damage overlays.",
+      "negative_prompt": "ordinary fighter, human aircraft, organic creature alone, multiple ships, scene, open hatch, UI, labels, text, smooth gradients, photorealism, blur, sheet",
+      "review": "Reference only: opaque single intact state; does not encode the carrier\u2019s transformation or damage effects.",
+      "prompt_author": "Astra prompt-design agent"
     }
   ],
   "processing": {
     "preview_logical_size": "32x32",
     "resampling": "nearest-neighbor",
     "palette_limit": 16,
-    "integration_status": "research-only; model outputs are comparison references, not production assets; none pass sprite isolation, transparency, and animation review"
-  }
+    "integration_status": "research-only; all model outputs are references; none pass transparency/state-consistency gates and no live game asset is replaced"
+  },
+  "prompt_authoring": {
+    "agent": "Astra prompt-design agent",
+    "basis": [
+      "plan/style-guide.md",
+      "plan/sector-style-guide.md",
+      "plan/sprite-atlas.md"
+    ],
+    "note": "Prompts follow the project palette, silhouette, composition, and readability rules. The exposed local generator is prompt-only and opaque, so outputs remain references."
+  },
+  "background_candidates": [
+    {
+      "name": "background_krybor_v2",
+      "source": "raw/background-krybor-v2-candidate.png",
+      "sha256": "276ae0aadd06489311f86e06bcee63b30f875e3fee493eb6577041054a0d9f15",
+      "width": 512,
+      "height": 768,
+      "has_alpha": false,
+      "steps": 20,
+      "seed": 731015,
+      "elapsed_seconds": 63.51,
+      "compare_to": "assets/images/sector-1.png",
+      "location": "KRYBOR \u00b7 cold lunar frontier",
+      "prompt": "Portrait 2:3 original intricate 16-bit pixel-art background concept for KRYBOR, a cold blue rocky lunar frontier. Distant pale ringed ice planet high on the right, small friendly moon, a few tiny geometric human outpost beacons and low shelters on a far uneven horizon. Leave the central 60 percent firing lane almost empty and very dark; concentrate terrain and landmarks at side edges, top corners, and low horizon. Sparse stars, near-black navy shadows, dim blue silhouettes, restrained dithering, crisp chunky square pixels, layered depth implied through pixel clusters, no parallax blur. Gameplay readability first: enemy silhouettes and cyan, warm red/orange projectiles must remain brighter than all scenery. Whole image is background only.",
+      "negative_prompt": "characters, demons, player ship, enemies, bullets, text, HUD, logo, watermark, bright central object, large bright nebula, gradients, photorealism, smooth vector, noisy texture, interface",
+      "review": "Rejected as a replacement: the output became a crowded painterly city with sky-blue haze instead of crisp pixel scenery and a quiet dark firing lane. Retain only for later model comparison against sector 1."
+    },
+    {
+      "name": "background_ringfall_v2",
+      "source": "raw/background-ringfall-v2-candidate.png",
+      "sha256": "9f6758373b738bbeea5f9f0699750a3067f7a72287af79cba9f7d30101ca07d4",
+      "width": 512,
+      "height": 768,
+      "has_alpha": false,
+      "steps": 20,
+      "seed": 731016,
+      "elapsed_seconds": 55.75,
+      "compare_to": "assets/images/sector-2.png",
+      "location": "RINGFALL \u00b7 violet ringed gas giant",
+      "prompt": "Portrait 2:3 original intricate 16-bit pixel-art background concept for RINGFALL: a vast violet gas giant fills the distant sky with broad diagonal planetary rings, a purple cratered moon near the horizon, a sparse asteroid belt restricted to both side edges, and a few tiny abandoned orbital satellites. Leave the central 60 percent firing lane almost empty, near-black, and unobstructed; place recognizable landmarks in top corners, along the side margins, and low horizon. Sparse stars, deep navy-violet shadows, subdued low-luminance silhouettes, restrained dithering, crisp chunky square pixels, no parallax blur. Ensure enemy silhouettes and cyan, warm red/orange projectiles remain brighter than scenery. Whole image is background only.",
+      "negative_prompt": "characters, demons, player ship, enemies, bullets, text, HUD, logo, watermark, bright central object, crowded center, giant bright planet center, gradients, photorealism, smooth vector, noisy texture, interface",
+      "review": "Rejected as a replacement: the output is noisy/painterly, omits Ringfall\u2019s defining gas giant and broad diagonal rings, and makes the center much brighter and busier than current sector 2. Retain only for later model comparison."
+    }
+  ],
+  "generation_passes": [
+    {
+      "name": "initial local samples",
+      "asset_names": [
+        "ship",
+        "cannon",
+        "force_field",
+        "ordinary_demon",
+        "shield_sentinel",
+        "armored_sentinel",
+        "carrier_boss"
+      ],
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "steps": 20,
+      "note": "Fixed-seed local prompt-only candidates."
+    },
+    {
+      "name": "Astra-crafted prompt comparison",
+      "asset_names": [
+        "ship_v2",
+        "cannon_v2",
+        "force_field_v2",
+        "ordinary_demon_v2",
+        "shield_sentinel_v2",
+        "armored_sentinel_v2",
+        "carrier_boss_v2",
+        "background_krybor_v2",
+        "background_ringfall_v2"
+      ],
+      "prompt_author": "Astra prompt-design agent",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "steps": 20,
+      "note": "Nine outputs; all first_use=false, has_alpha=false, bigger_tier_offer=null. No larger tier was offered. Sprite outputs are 512x512. Background outputs are 512x768 portrait concepts."
+    }
+  ]
 }

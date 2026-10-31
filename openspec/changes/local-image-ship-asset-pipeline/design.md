@@ -2,14 +2,14 @@
 
 ## Context
 
-The Forge MCP image tool runs local `stable-diffusion.cpp` inference and writes PNGs to an ephemeral directory. Its current I0 interface accepts prompts and output controls but no image-reference input or transparency control. Three actual outputs were therefore captured as research sources; none meets the project's production sprite contract. See `FORGE_DIAGNOSTICS.md` for the measurements and prompt records.
+The Forge MCP image tool runs local `stable-diffusion.cpp` inference and writes PNGs to an ephemeral directory. Its current I0 interface accepts prompts and output controls but no image-reference input or transparency control. Multiple actual outputs were therefore captured as research sources; none meets the project's production sprite contract. Astra prompt-designed sprite variants and two paired sector-background concepts extend the comparison set. See `FORGE_DIAGNOSTICS.md` for the measurements and prompt records.
 
 ## Goals / Non-Goals
 
 **Goals:**
 - Preserve generated sources and provenance in the research branch.
 - Produce deterministic, visibly pixelated previews and an automated rejection report using local tools only.
-- Serve a local review page that makes the model's output quality and the processing result easy to compare.
+- Serve a local review page that makes model output quality, Astra prompt variants, and local background comparisons easy to inspect.
 
 **Non-Goals:**
 - Changing the production combat atlas or player rendering in this experiment.
@@ -22,7 +22,7 @@ The Forge MCP image tool runs local `stable-diffusion.cpp` inference and writes 
 2. **Keep raw sources and derived previews separate.** Raw outputs plus prompt/model metadata live under `assets/research/local-image-pipeline/`; processed, web-served candidates live under `web/local-image-review/`. They do not enter `assets/images/combat.png` or Flutter's declared runtime image directory.
 3. **Use a local ImageMagick command for deterministic reduction.** Reduce each 512px image to a 32px logical preview with point sampling and a bounded palette, then enlarge with nearest-neighbor scaling. ImageMagick is available through the Forge's local package shim. The processing script fails with a local dependency message if `magick` is unavailable; it never downloads tools or calls a network API itself.
 4. **Treat opaque or non-isolated output as rejected.** The processor reports dimensions, alpha presence, palette size, and the explicit quality gate. The current model outputs have no alpha and fail the isolated-sprite gate. The review page shows both raw and reduced forms with the failure visible instead of implying that chroma removal or resizing fixed the art.
-5. **Serve a static review surface.** The project build copies a page under `web/` and the derived preview images next to it. The existing local Wrangler service can serve it without changing game routes or the combat renderer.
+5. **Serve a static review surface.** The project build copies a page under `web/`, derived sprite previews, and paired copies of the current sector paintings next to the generated background concepts. The existing local Wrangler service can serve it without changing game routes or the combat renderer.
 
 ## Risks / Trade-offs
 

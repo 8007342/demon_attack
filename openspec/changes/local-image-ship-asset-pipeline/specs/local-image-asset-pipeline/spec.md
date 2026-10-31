@@ -38,3 +38,11 @@ The project SHALL provide a locally served review surface that presents source c
 #### Scenario: No candidates are prepared
 - **WHEN** the local review page is opened without a candidate output set
 - **THEN** it explains how to run the local preparation workflow and does not present stale or shipping assets as new candidates
+
+
+### Requirement: Side-by-side local background comparison
+The review surface SHALL show each locally generated background beside its corresponding current in-game sector painting at the same portrait aspect ratio, with source provenance and explicit research-only status. It SHALL preserve existing sector art and SHALL NOT promote concept backgrounds automatically.
+
+#### Scenario: Compare a local sector concept
+- **WHEN** a reviewer opens the background comparison section
+- **THEN** the current sector artwork and its local concept are visible together with their source labels, prompt provenance, and reference status

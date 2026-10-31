@@ -2,12 +2,12 @@
 
 ## Why
 
-The local Forge generator can produce image candidates, but the current agent tool emits opaque, prompt-only images that do not meet the game's pixel-grid, transparency, or frame-consistency requirements. We need a repeatable local-only path from model output to reviewable ship, equipment, effect, and enemy-creature prototypes before any generated art enters the combat atlas.
+The local Forge generator can produce image candidates, but the current agent tool emits opaque, prompt-only images that do not meet the game's pixel-grid, transparency, or frame-consistency requirements. We need a repeatable local-only path from model output to reviewable ship, equipment, effect, and enemy-creature prototypes before any generated art enters the combat atlas, and compare future model outputs against current sector backgrounds.
 
 ## What Changes
 
 - Add a local asset-preparation command that accepts output from the Forge's local image model, records prompt/model/seed provenance, and deterministically converts sources into pixel-grid previews and a documented sprite sheet.
-- Add a local review page for the generated source images and processed ship, weapon, shield, and enemy candidates, including animation/timer-state previews where generated frames can be derived safely.
+- Add a local review page for the generated source images and processed ship, weapon, shield, and enemy candidates with prompt-agent provenance, plus paired comparisons between local background concepts and the current sector paintings.
 - Keep generated candidates separate from shipping combat assets until reviewed; do not use hosted image services or transmit prompts/artwork to remote inference services.
 - Document the current model's quality limitations and a manifest-based path toward prompt-driven modular additions such as “add cannons.”
 
