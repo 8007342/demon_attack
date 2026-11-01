@@ -18,7 +18,7 @@ class DemonScene extends FlameGame {
   DemonScene(this.model, this.onTick);
   final ArcadeModel model;
   final VoidCallback onTick;
-  ui.Image? atlas, effectsAtlas, sky, bossAtlas, cockpitAtlas;
+  ui.Image? atlas, effectsAtlas, sky, bossAtlas, cockpitAtlas, shipParts;
   final sectors = SectorBackground();
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
@@ -45,6 +45,10 @@ class DemonScene extends FlameGame {
     } catch (_) {}
     try {
       cockpitAtlas = await images.load('cockpit-panel.png');
+    } catch (_) {}
+    try {
+      // Layered hull + weapon modules from tools/asset_pipeline (ship family).
+      shipParts = await images.load('ship-parts.png');
     } catch (_) {}
     await Future.wait(
       List.generate(5, (i) async {
@@ -161,10 +165,11 @@ class DemonScene extends FlameGame {
       final sy = ((baseY + panY * (0.35 + depth * 0.22)) % 520).floorToDouble();
       final twinkle =
           0.35 + 0.55 * math.sin(model.visualClock * 3.5 + i * 1.7).abs();
-      paint.color = (i % 7 == 0
-              ? gold
-              : (i % 4 == 0 ? mint : const Color(0xFFD8E6FF)))
-          .withValues(alpha: (twinkle * (0.28 + depth * 0.18)).clamp(0.1, 0.95));
+      paint.color =
+          (i % 7 == 0 ? gold : (i % 4 == 0 ? mint : const Color(0xFFD8E6FF)))
+              .withValues(
+                alpha: (twinkle * (0.28 + depth * 0.18)).clamp(0.1, 0.95),
+              );
       final sz = i % 11 == 0 ? 2.0 : 1.0;
       c.drawRect(Rect.fromLTWH(sx, sy, sz, sz), paint);
     }
@@ -179,10 +184,7 @@ class DemonScene extends FlameGame {
   void _paintDefeatLeaderboard(Canvas c, double boardY) {
     // Dark translucent backdrop panel
     final cardRect = Rect.fromLTWH(24, boardY + 60, 312, 380);
-    c.drawRect(
-      cardRect,
-      Paint()..color = const Color(0xF2070D18),
-    );
+    c.drawRect(cardRect, Paint()..color = const Color(0xF2070D18));
     c.drawRect(
       cardRect,
       Paint()
@@ -197,10 +199,34 @@ class DemonScene extends FlameGame {
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
     const clen = 10.0;
-    c.drawPath(Path()..moveTo(24, boardY + 60 + clen)..lineTo(24, boardY + 60)..lineTo(24 + clen, boardY + 60), cornerPaint);
-    c.drawPath(Path()..moveTo(336 - clen, boardY + 60)..lineTo(336, boardY + 60)..lineTo(336, boardY + 60 + clen), cornerPaint);
-    c.drawPath(Path()..moveTo(24, boardY + 440 - clen)..lineTo(24, boardY + 440)..lineTo(24 + clen, boardY + 440), cornerPaint);
-    c.drawPath(Path()..moveTo(336 - clen, boardY + 440)..lineTo(336, boardY + 440)..lineTo(336, boardY + 440 - clen), cornerPaint);
+    c.drawPath(
+      Path()
+        ..moveTo(24, boardY + 60 + clen)
+        ..lineTo(24, boardY + 60)
+        ..lineTo(24 + clen, boardY + 60),
+      cornerPaint,
+    );
+    c.drawPath(
+      Path()
+        ..moveTo(336 - clen, boardY + 60)
+        ..lineTo(336, boardY + 60)
+        ..lineTo(336, boardY + 60 + clen),
+      cornerPaint,
+    );
+    c.drawPath(
+      Path()
+        ..moveTo(24, boardY + 440 - clen)
+        ..lineTo(24, boardY + 440)
+        ..lineTo(24 + clen, boardY + 440),
+      cornerPaint,
+    );
+    c.drawPath(
+      Path()
+        ..moveTo(336 - clen, boardY + 440)
+        ..lineTo(336, boardY + 440)
+        ..lineTo(336, boardY + 440 - clen),
+      cornerPaint,
+    );
 
     // Header text
     _paintBitmapText(
@@ -289,7 +315,10 @@ class DemonScene extends FlameGame {
     }
 
     // Interactive skip / continue prompt
-    final blink = (math.sin(model.visualClock * 6).abs() * 0.7 + 0.3).clamp(0.0, 1.0);
+    final blink = (math.sin(model.visualClock * 6).abs() * 0.7 + 0.3).clamp(
+      0.0,
+      1.0,
+    );
     _paintBitmapText(
       c,
       'TAP OR PRESS ANY KEY TO SUBMIT',
@@ -330,8 +359,14 @@ class DemonScene extends FlameGame {
     painter.paint(c, drawPos);
   }
 
-  void _background(Canvas c) =>
-      sectors.paint(c, environment, ambient, model.cycle, sky, wave: model.wave);
+  void _background(Canvas c) => sectors.paint(
+    c,
+    environment,
+    ambient,
+    model.cycle,
+    sky,
+    wave: model.wave,
+  );
 
   void bossSprite(
     Canvas c,
@@ -538,7 +573,13 @@ class DemonScene extends FlameGame {
         d.angry ? 44 : 40,
         tint: d.flash > 0 ? Colors.white : null,
       );
-      _creatureLighting(c, pos, bank, width: d.angry ? 36 : 32, diving: d.dive > 0);
+      _creatureLighting(
+        c,
+        pos,
+        bank,
+        width: d.angry ? 36 : 32,
+        diving: d.dive > 0,
+      );
       c.restore();
       if (warning) {
         _wingTellChevrons(c, pos);
@@ -576,14 +617,7 @@ class DemonScene extends FlameGame {
             : b.sideHatchesLocked
             ? 0
             : ((model.visualClock * (3 + b.rage * 4) + b.door * 2).floor() % 4);
-        bossSprite(
-          c,
-          1,
-          mandibleFrame,
-          Offset(b.x, b.y),
-          184,
-          height: 120,
-        );
+        bossSprite(c, 1, mandibleFrame, Offset(b.x, b.y), 184, height: 120);
         bossSprite(
           c,
           0,
@@ -605,14 +639,7 @@ class DemonScene extends FlameGame {
         }
         final turretFrame =
             ((model.visualClock * 6 + (model.shipX > b.x ? 1 : 0)).floor() % 4);
-        bossSprite(
-          c,
-          2,
-          turretFrame,
-          Offset(b.x, b.y),
-          184,
-          height: 120,
-        );
+        bossSprite(c, 2, turretFrame, Offset(b.x, b.y), 184, height: 120);
         _carrierTurretBarrels(c, b);
       } else {
         sprite(c, 6, b.phase, Offset(b.x, b.y), 184, height: 118);
@@ -695,9 +722,14 @@ class DemonScene extends FlameGame {
             ..color = shieldColor.withValues(alpha: 0.8)
             ..strokeWidth = 1.5;
           final arcX =
-              b.x + math.sin(model.visualClock * 9) * (b.forceFieldHalfWidth * 0.7);
+              b.x +
+              math.sin(model.visualClock * 9) * (b.forceFieldHalfWidth * 0.7);
           final arcY = b.forceFieldSurfaceY(arcX);
-          c.drawLine(Offset(arcX - 6, arcY - 3), Offset(arcX + 4, arcY + 2), arcP);
+          c.drawLine(
+            Offset(arcX - 6, arcY - 3),
+            Offset(arcX + 4, arcY + 2),
+            arcP,
+          );
         }
       }
       _damage(c, Offset(b.x, b.y), hullDamage, model.visualClock);
@@ -844,6 +876,78 @@ class DemonScene extends FlameGame {
     }
   }
 
+  // Rows of assets/images/ship-parts.png (see ship-parts.json); columns are
+  // the wear states fresh, worn, critical. Each cell is a full 48x48 logical
+  // layer at 2x, so layers stack at the same origin.
+  static const _shipCell = 96.0, _shipSize = 48.0;
+  static const _shipRows = {
+    Power.spread: 1,
+    Power.large: 2,
+    Power.rapid: 3,
+    Power.powerful: 4,
+    Power.shield: 5,
+  };
+  static const _shipLayerOrder = [
+    Power.shield,
+    Power.rapid,
+    Power.powerful,
+    Power.spread,
+    Power.large,
+  ];
+
+  int _wearColumn(Power power) {
+    final left = model.timeLeft(power);
+    if (left > ArcadeModel.powerDuration * 0.5) return 0;
+    if (left > 2.5) return 1;
+    // Overheating: flicker between worn and glowing-critical plating.
+    return (model.clock * 12).floor() % 2 == 0 ? 2 : 1;
+  }
+
+  void _shipLayer(Canvas c, int row, int column, Offset center) {
+    c.drawImageRect(
+      shipParts!,
+      Rect.fromLTWH(column * _shipCell, row * _shipCell, _shipCell, _shipCell),
+      Rect.fromCenter(center: center, width: _shipSize, height: _shipSize),
+      Paint()
+        ..filterQuality = FilterQuality.none
+        ..isAntiAlias = false,
+    );
+  }
+
+  void _shipLayers(Canvas c, Offset center) {
+    final at = Offset(center.dx.roundToDouble(), center.dy.roundToDouble());
+    _shipLayer(c, 0, 0, at);
+    for (final power in _shipLayerOrder) {
+      if (model.hasPower(power)) {
+        _shipLayer(c, _shipRows[power]!, _wearColumn(power), at);
+      }
+    }
+  }
+
+  void _shipPartSprite(Canvas c, FallingPart part) {
+    // A spent module tumbles away in its critical state; wing pods drop one side.
+    final row = _shipRows[part.power]!;
+    final paired = part.power == Power.rapid || part.power == Power.powerful;
+    final half = part.vx < 0 ? 0.0 : _shipCell / 2;
+    final src = paired
+        ? Rect.fromLTWH(
+            2 * _shipCell + half,
+            row * _shipCell,
+            _shipCell / 2,
+            _shipCell,
+          )
+        : Rect.fromLTWH(2 * _shipCell, row * _shipCell, _shipCell, _shipCell);
+    final w = paired ? _shipSize / 2 : _shipSize;
+    c.drawImageRect(
+      shipParts!,
+      src,
+      Rect.fromCenter(center: Offset.zero, width: w, height: _shipSize),
+      Paint()
+        ..filterQuality = FilterQuality.none
+        ..isAntiAlias = false,
+    );
+  }
+
   void _playerShip(Canvas c) {
     final center = Offset(model.shipX, ArcadeModel.shipY);
     final bank = model.shipBank.clamp(-1.0, 1.0);
@@ -851,13 +955,14 @@ class DemonScene extends FlameGame {
     final paint = Paint()..isAntiAlias = false;
 
     // Angled ventral thruster flame opposite the bank direction.
-    final flameLen = 7.0 + thrust * 6.0 + ((model.clock * 18).floor() % 2) * 2.0;
+    final flameLen =
+        7.0 + thrust * 6.0 + ((model.clock * 18).floor() % 2) * 2.0;
     final tailShift = (-bank * 5.0).roundToDouble();
     paint.color = mint.withValues(alpha: 0.48 + thrust * 0.25);
     c.drawRect(
       Rect.fromLTWH(
         (center.dx - 3 + tailShift * 0.5).roundToDouble(),
-        (center.dy + 13).roundToDouble(),
+        (center.dy + (shipParts == null ? 13 : 18)).roundToDouble(),
         6,
         flameLen,
       ),
@@ -867,7 +972,7 @@ class DemonScene extends FlameGame {
     c.drawRect(
       Rect.fromLTWH(
         (center.dx - 1 + tailShift).roundToDouble(),
-        (center.dy + 14).roundToDouble(),
+        (center.dy + (shipParts == null ? 14 : 19)).roundToDouble(),
         2,
         (flameLen * 0.65).roundToDouble(),
       ),
@@ -894,7 +999,11 @@ class DemonScene extends FlameGame {
     c.rotate(bank * 0.14);
     c.scale(1.0 - bank.abs() * 0.14, 1.0);
     c.translate(-center.dx, -center.dy);
-    sprite(c, 4, (model.clock * 14).floor() % 4, center, 42);
+    if (shipParts != null) {
+      _shipLayers(c, center);
+    } else {
+      sprite(c, 4, (model.clock * 14).floor() % 4, center, 42);
+    }
     // 2.5D directional hemisphere & rim lighting on the banked ship wings/hull.
     if (bank.abs() > 0.08) {
       final raised = bank < 0 ? 1.0 : -1.0;
@@ -967,7 +1076,7 @@ class DemonScene extends FlameGame {
 
     // Composable weapon attachments:
     // 1. Rapid fire: Wingtip dual accelerator cannons at (center.dx ± 16, center.dy + 2)
-    if (model.hasPower(Power.rapid)) {
+    if (shipParts == null && model.hasPower(Power.rapid)) {
       final tRapid = model.timeLeft(Power.rapid);
       final overheat = tRapid < 2.5;
       final Color podColor = overheat
@@ -997,7 +1106,7 @@ class DemonScene extends FlameGame {
     }
 
     // 2. Spread shot: Nose trifurcated prism emitter at (center.dx, center.dy - 13)
-    if (model.hasPower(Power.spread)) {
+    if (shipParts == null && model.hasPower(Power.spread)) {
       final tSpread = model.timeLeft(Power.spread);
       final overheat = tSpread < 2.5;
       final Color prismColor = overheat
@@ -1033,7 +1142,7 @@ class DemonScene extends FlameGame {
     }
 
     // 3. Large / Explosive shot: Heavy hyper-plasma barrel between the dual turrets
-    if (model.hasPower(Power.large)) {
+    if (shipParts == null && model.hasPower(Power.large)) {
       final tLarge = model.timeLeft(Power.large);
       final overheat = tLarge < 2.5;
       final Color cannonColor = overheat
@@ -1073,6 +1182,11 @@ class DemonScene extends FlameGame {
       c.save();
       c.translate(part.x, part.y);
       c.rotate(part.rotation);
+      if (shipParts != null && _shipRows.containsKey(part.power)) {
+        _shipPartSprite(c, part);
+        c.restore();
+        continue;
+      }
       c.drawRect(
         const Rect.fromLTWH(-3, -3, 6, 6),
         Paint()..color = const Color(0xFFFF5522),
@@ -1174,22 +1288,14 @@ class DemonScene extends FlameGame {
     final canopyX = cx + swing;
     final canopyY = cy - 22.0;
     c.drawArc(
-      Rect.fromCenter(
-        center: Offset(canopyX, canopyY),
-        width: 34,
-        height: 20,
-      ),
+      Rect.fromCenter(center: Offset(canopyX, canopyY), width: 34, height: 20),
       math.pi,
       math.pi,
       true,
       Paint()..color = const Color(0xFFF0F5FA),
     );
     c.drawArc(
-      Rect.fromCenter(
-        center: Offset(canopyX, canopyY),
-        width: 14,
-        height: 20,
-      ),
+      Rect.fromCenter(center: Offset(canopyX, canopyY), width: 14, height: 20),
       math.pi,
       math.pi,
       true,
@@ -1277,9 +1383,7 @@ class DemonScene extends FlameGame {
         ),
         paint,
       );
-      paint.color = diving
-          ? const Color(0xB8FF9100)
-          : const Color(0x9970F5D5);
+      paint.color = diving ? const Color(0xB8FF9100) : const Color(0x9970F5D5);
       c.drawRect(
         Rect.fromLTWH(
           (pos.dx + lead * (half * 0.65) - 1).roundToDouble(),
@@ -1351,23 +1455,20 @@ class DemonScene extends FlameGame {
             ((1 - absNorm * 0.7) * 3.0 +
                     (math.sin(model.clock * 32 + dx * 1.3).abs() * 3.0))
                 .roundToDouble();
-        paint.color = const Color(0xFFDD2C00).withValues(
-          alpha: (0.55 + 0.35 * ratio) * (1 - absNorm * 0.35),
-        );
+        paint.color = const Color(0xFFDD2C00)
+            .withValues(alpha: (0.55 + 0.35 * ratio) * (1 - absNorm * 0.35));
         c.drawRect(
           Rect.fromLTWH(sx, sy - 4 - tongueHeight, 3, 2 + tongueHeight),
           paint,
         );
-        paint.color = const Color(0xFFFF6D00).withValues(
-          alpha: 0.75 + 0.2 * ratio,
-        );
+        paint.color = const Color(0xFFFF6D00)
+            .withValues(alpha: 0.75 + 0.2 * ratio);
         c.drawRect(Rect.fromLTWH(sx, sy - 4 + jitter, 3, 3), paint);
 
         // Primary compression shock (incandescent solar yellow-gold).
-        paint.color = (absNorm < 0.55
-                ? const Color(0xFFFFD54F)
-                : const Color(0xFFFFAB00))
-            .withValues(alpha: 0.85 + 0.15 * ratio);
+        paint.color =
+            (absNorm < 0.55 ? const Color(0xFFFFD54F) : const Color(0xFFFFAB00))
+                .withValues(alpha: 0.85 + 0.15 * ratio);
         c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 2), paint);
 
         // Leading stagnation nose (blinding white-hot core).
@@ -1383,7 +1484,10 @@ class DemonScene extends FlameGame {
       for (final side in [-1.0, 1.0]) {
         final wx = (pos.dx + side * 23 - 1).roundToDouble();
         paint.color = const Color(0xFFFF9100).withValues(alpha: 0.85);
-        c.drawRect(Rect.fromLTWH(wx, (pos.dy + 3 - sparkShift).roundToDouble(), 2, 3), paint);
+        c.drawRect(
+          Rect.fromLTWH(wx, (pos.dy + 3 - sparkShift).roundToDouble(), 2, 3),
+          paint,
+        );
         paint.color = const Color(0xFFFF3D00).withValues(alpha: 0.7);
         c.drawRect(
           Rect.fromLTWH(
@@ -1597,8 +1701,10 @@ class DemonScene extends FlameGame {
 
   void _sentinelDiveShield(Canvas c, Offset pos, Demon demon) {
     // Tier 3: Massive roaring spacecraft atmospheric re-entry plasma bow shock (~104 px).
-    final ratio =
-        (demon.diveShield / math.max(1, demon.diveShieldMax)).clamp(0.3, 1.0);
+    final ratio = (demon.diveShield / math.max(1, demon.diveShieldMax)).clamp(
+      0.3,
+      1.0,
+    );
     final paint = Paint()..isAntiAlias = false;
     const halfSpan = 52.0;
     for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
@@ -1614,28 +1720,25 @@ class DemonScene extends FlameGame {
           ((1 - absNorm * 0.65) * 5.0 +
                   math.sin(model.clock * 34 + dx * 1.1).abs() * 5.0)
               .roundToDouble();
-      paint.color = const Color(0xFFDD2C00).withValues(
-        alpha: (0.5 + 0.35 * ratio) * (1 - absNorm * 0.3),
-      );
+      paint.color = const Color(0xFFDD2C00)
+          .withValues(alpha: (0.5 + 0.35 * ratio) * (1 - absNorm * 0.3));
       c.drawRect(
         Rect.fromLTWH(sx, sy - 6 - tongueHeight, 3, 2 + tongueHeight),
         paint,
       );
 
       // Turbulent ablation envelope (superheated flame orange).
-      paint.color = const Color(0xFFFF6D00).withValues(
-        alpha: 0.72 + 0.22 * ratio,
-      );
+      paint.color = const Color(0xFFFF6D00)
+          .withValues(alpha: 0.72 + 0.22 * ratio);
       c.drawRect(
         Rect.fromLTWH(sx, (sy - 5 + jitter).roundToDouble(), 3, 3),
         paint,
       );
 
       // Primary compression shock (incandescent solar yellow-gold).
-      paint.color = (absNorm < 0.5
-              ? const Color(0xFFFFD54F)
-              : const Color(0xFFFFAB00))
-          .withValues(alpha: 0.85 + 0.15 * ratio);
+      paint.color =
+          (absNorm < 0.5 ? const Color(0xFFFFD54F) : const Color(0xFFFFAB00))
+              .withValues(alpha: 0.85 + 0.15 * ratio);
       c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 3), paint);
 
       // Leading stagnation nose (blinding white-hot core).
@@ -1664,7 +1767,12 @@ class DemonScene extends FlameGame {
     }
   }
 
-  void _bossOrbitalArrivalEffects(Canvas c, Carrier b, double p, double descent) {
+  void _bossOrbitalArrivalEffects(
+    Canvas c,
+    Carrier b,
+    double p,
+    double descent,
+  ) {
     if (descent <= 0.01) return;
     final flamePaint = Paint()..isAntiAlias = false;
     final flicker = (model.visualClock * 24).floor() % 4;
@@ -1674,9 +1782,15 @@ class DemonScene extends FlameGame {
       final by = b.y - 38;
       final plumeLen = (18.0 + descent * 34.0 + flicker * 3.0);
       flamePaint.color = const Color(0xFFFFD54F).withValues(alpha: 0.9);
-      c.drawRect(Rect.fromLTWH(bx - 3, by - plumeLen * 0.5, 6, plumeLen * 0.5), flamePaint);
+      c.drawRect(
+        Rect.fromLTWH(bx - 3, by - plumeLen * 0.5, 6, plumeLen * 0.5),
+        flamePaint,
+      );
       flamePaint.color = const Color(0xFFFF6D00).withValues(alpha: 0.75);
-      c.drawRect(Rect.fromLTWH(bx - 4, by - plumeLen, 8, plumeLen * 0.6), flamePaint);
+      c.drawRect(
+        Rect.fromLTWH(bx - 4, by - plumeLen, 8, plumeLen * 0.6),
+        flamePaint,
+      );
     }
     // Atmospheric / gravitational entry shockwaves.
     final rippleW = 220.0 * (1.0 - descent * 0.5);
@@ -1685,11 +1799,20 @@ class DemonScene extends FlameGame {
       ..color = mint.withValues(alpha: (0.45 * (1.0 - descent)).clamp(0.0, 1.0))
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
-    c.drawOval(Rect.fromCenter(center: Offset(b.x, b.y + 35), width: rippleW, height: rippleH), ripplePaint);
+    c.drawOval(
+      Rect.fromCenter(
+        center: Offset(b.x, b.y + 35),
+        width: rippleW,
+        height: rippleH,
+      ),
+      ripplePaint,
+    );
   }
 
   void _carrierTurretBarrels(Canvas c, Carrier b) {
-    final aim = math.atan2(ArcadeModel.shipY - (b.y + 36), model.shipX - b.x).clamp(0.4, 2.74);
+    final aim = math
+        .atan2(ArcadeModel.shipY - (b.y + 36), model.shipX - b.x)
+        .clamp(0.4, 2.74);
     final turretPaint = Paint()
       ..color = const Color(0xFFF4CA79)
       ..style = PaintingStyle.fill;
@@ -1732,9 +1855,16 @@ class DemonScene extends FlameGame {
         final fa = f * (math.pi / 3) + 0.4;
         final fdist = prog * 85.0;
         final fx = model.shipX + math.cos(fa) * fdist;
-        final fy = ArcadeModel.shipY + math.sin(fa) * fdist * 0.7 + (prog * prog * 40.0);
-        fragPaint.color = (f.isEven ? mint : const Color(0xFFD6E2EE)).withValues(alpha: shockAlpha);
-        c.drawRect(Rect.fromLTWH(fx, fy, f % 2 == 0 ? 3 : 2, f % 3 == 0 ? 3 : 2), fragPaint);
+        final fy =
+            ArcadeModel.shipY +
+            math.sin(fa) * fdist * 0.7 +
+            (prog * prog * 40.0);
+        fragPaint.color = (f.isEven ? mint : const Color(0xFFD6E2EE))
+            .withValues(alpha: shockAlpha);
+        c.drawRect(
+          Rect.fromLTWH(fx, fy, f % 2 == 0 ? 3 : 2, f % 3 == 0 ? 3 : 2),
+          fragPaint,
+        );
       }
     }
 
@@ -1762,7 +1892,10 @@ class DemonScene extends FlameGame {
       final sparkY = d.y + sparkPhase * 14.0;
       c.drawRect(
         Rect.fromLTWH(d.x + (i.isEven ? 4 : -4), sparkY, 1.5, 1.5),
-        Paint()..color = (i % 3 == 0 ? gold : mint).withValues(alpha: 1.0 - sparkPhase),
+        Paint()
+          ..color = (i % 3 == 0 ? gold : mint).withValues(
+            alpha: 1.0 - sparkPhase,
+          ),
       );
     }
 
@@ -1780,13 +1913,17 @@ class DemonScene extends FlameGame {
 
         // Central bright high-five sparkle
         flashPaint.color = Colors.white.withValues(alpha: clapStrength);
-        c.drawRect(Rect.fromCenter(center: Offset(hx, hy), width: 3.5, height: 3.5), flashPaint);
+        c.drawRect(
+          Rect.fromCenter(center: Offset(hx, hy), width: 3.5, height: 3.5),
+          flashPaint,
+        );
 
         // Radiant arcade spark pips
         flashPaint.color = mint.withValues(alpha: clapStrength * 0.95);
         c.drawRect(Rect.fromLTWH(hx - 5, hy - 1, 2, 2), flashPaint);
         c.drawRect(Rect.fromLTWH(hx + 3, hy - 1, 2, 2), flashPaint);
-        flashPaint.color = const Color(0xFFFFD54F).withValues(alpha: clapStrength * 0.95);
+        flashPaint.color = const Color(0xFFFFD54F)
+            .withValues(alpha: clapStrength * 0.95);
         c.drawRect(Rect.fromLTWH(hx - 1, hy - 5, 2, 2), flashPaint);
         c.drawRect(Rect.fromLTWH(hx - 1, hy + 3, 2, 2), flashPaint);
 
@@ -1805,7 +1942,8 @@ class DemonScene extends FlameGame {
     // 3. Big Birds (Sentinels) Apex Hover & Twin Skyward Salute Beams
     for (final d in model.demons) {
       if (d.isLarge) {
-        final beamAlpha = (0.5 + 0.4 * math.sin(model.visualClock * 14).abs()).clamp(0.0, 1.0);
+        final beamAlpha = (0.5 + 0.4 * math.sin(model.visualClock * 14).abs())
+            .clamp(0.0, 1.0);
         final beamPaint = Paint()
           ..color = const Color(0xFF70F5D5).withValues(alpha: beamAlpha)
           ..strokeWidth = 2.5;
@@ -1835,15 +1973,30 @@ class DemonScene extends FlameGame {
         if (sideBeat > 0.15) {
           final plumeLen = 8.0 + sideBeat * 16.0;
           flarePaint.color = const Color(0xFFFFD54F);
-          c.drawRect(Rect.fromLTWH(b.x + side - 3, b.y + 36, 6, plumeLen * 0.5), flarePaint);
+          c.drawRect(
+            Rect.fromLTWH(b.x + side - 3, b.y + 36, 6, plumeLen * 0.5),
+            flarePaint,
+          );
           flarePaint.color = const Color(0xFFFF5252);
-          c.drawRect(Rect.fromLTWH(b.x + side - 2, b.y + 36 + plumeLen * 0.4, 4, plumeLen * 0.5), flarePaint);
+          c.drawRect(
+            Rect.fromLTWH(
+              b.x + side - 2,
+              b.y + 36 + plumeLen * 0.4,
+              4,
+              plumeLen * 0.5,
+            ),
+            flarePaint,
+          );
         }
       }
 
       final pulseRadius = 110.0 + math.sin(model.visualClock * 10) * 14.0;
       c.drawOval(
-        Rect.fromCenter(center: Offset(b.x, b.y), width: pulseRadius * 2, height: 110),
+        Rect.fromCenter(
+          center: Offset(b.x, b.y),
+          width: pulseRadius * 2,
+          height: 110,
+        ),
         Paint()
           ..color = const Color(0xFFFF3D68).withValues(alpha: 0.4)
           ..style = PaintingStyle.stroke
@@ -1890,7 +2043,15 @@ class DemonScene extends FlameGame {
       final debrisRight = Offset(70 + p * 60, p * p * 140);
       bossSprite(c, 3, 3, debrisRight, 92, height: 60);
     } else {
-      sprite(c, 6, wreck.phase, Offset.zero, 184, height: 118, tint: const Color(0xFF8B665F));
+      sprite(
+        c,
+        6,
+        wreck.phase,
+        Offset.zero,
+        184,
+        height: 118,
+        tint: const Color(0xFF8B665F),
+      );
     }
     _damage(c, Offset.zero, 1, p * 10);
     c.restore();
@@ -1914,7 +2075,12 @@ class DemonScene extends FlameGame {
     if (triumph && model.wreckBoss != null) {
       final wreck = model.wreckBoss!;
       final fallY = (wreck.y + p * p * 360).roundToDouble();
-      _bossMeltdownWreckage(c, wreck, Offset(wreck.x.roundToDouble(), fallY), p);
+      _bossMeltdownWreckage(
+        c,
+        wreck,
+        Offset(wreck.x.roundToDouble(), fallY),
+        p,
+      );
     }
     if (clear || triumph) {
       final random = math.Random(triumph ? 1982 : 8200 + model.level);

@@ -20,3 +20,17 @@
 - [x] 4.1 Have the Astra prompt-design agent derive seven sprite prompts and two background prompts from the project art guides; record prompts and local generation provenance.
 - [x] 4.2 Extend local processing and the review page to show the additional sprite candidates and current-vs-generated portrait backgrounds.
 - [x] 4.3 Inspect the side-by-side compositions and record rejection reasons without replacing production artwork.
+
+## 5. Large-host model tier comparison
+
+- [x] 5.1 On the RTX A5000 host, follow the tool's bigger-tier offer flow (user-approved) to tier I1 (SDXL-Lightning-4step); record that no I2/I3 offer was returned afterwards.
+- [x] 5.2 Re-run the seven Astra sprite prompts and two background prompts at I1 with the same seeds (two images each, 4 steps, 1024² sprites / 832×1216 backgrounds) and preserve raw outputs, hashes, and per-candidate generator provenance in the manifest.
+- [x] 5.3 Extend the processor with per-candidate model/tier metadata and the review page with an I0-vs-I1 side-by-side comparison; record visual review notes without replacing production artwork.
+
+## 6. Automated ship asset pipeline (I0 plumbing)
+
+- [x] 6.1 Add `tools/asset_pipeline/` (plan/ingest/process/review/accept/pack) with a `ship` family spec: hull plus combinable weapon modules on a shared 48×48 canvas.
+- [x] 6.2 Generate 24 I0 candidates sequentially, then ingest, process, and QA-grade them; publish the review gallery with loadout and wear sheets.
+- [x] 6.3 Pack a provisional `ship-parts.png` and draw it in-game as layered modules with wear states and jettisoned critical parts; keep the code-drawn fallback; analyzer clean, 131 tests pass.
+- [ ] 6.4 Human acceptance of each part (blocked on review).
+- [ ] 6.5 Re-run the queue at I1, and at I2/I3 once offered, then compare in the same gallery.

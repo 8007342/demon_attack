@@ -11,3 +11,6 @@ Work branch: `game`. Production `main` remains unchanged until stable.
 Tracked implementation tasks: `openspec/changes/build-demon-attack-game/tasks.md`.
 Current design and tunables: `game-design.md`. Art direction: `style-guide.md`.
 Historical references and screenshots: `research-original.md`.
+
+Asset pipeline (branch `research/local-image-large-models`): see `asset-pipeline/README.md`.
+Left: stage-0 deterministic isolate/pixelize/QA scripts; consented I2/I3 ladder once Tillandsias #679 lands; ComfyUI workflow templates once studio lands; style LoRA; a vertical slice with one demon species' full frame set.

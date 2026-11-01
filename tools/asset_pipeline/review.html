@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Pipeline Review</title>
+<style>
+  :root { color-scheme: dark; --bg:#080d18; --panel:#111c2b; --line:#263b50; --mint:#70f5d5; --gold:#f4ca79; --bad:#ff786c; --warn:#f4ca79; --ok:#70f5d5; --muted:#9caebe; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:24px; background:radial-gradient(ellipse at top,#17263a,var(--bg) 58%); color:#edf5f4; font:15px/1.5 system-ui,sans-serif; }
+  main { max-width:1280px; margin:0 auto; }
+  h1 { margin:0; color:var(--mint); letter-spacing:.08em; text-transform:uppercase; font-size:1.5rem; }
+  h2 { margin:1.6rem 0 .6rem; font-size:1.15rem; color:var(--gold); text-transform:capitalize; }
+  p, .muted { color:var(--muted); }
+  img { image-rendering:pixelated; display:block; max-width:100%; }
+  .panel { border:1px solid var(--line); border-radius:12px; background:linear-gradient(145deg,#142235,#0c1421); padding:16px; margin:14px 0; }
+  .sheets { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr)); gap:16px; align-items:start; }
+  .labels { display:grid; grid-template-columns:repeat(6,1fr); gap:2px; font-size:.68rem; color:var(--muted); margin-top:6px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr)); gap:12px; }
+  .card { border:1px solid var(--line); border-radius:10px; background:#0d1726; padding:10px; }
+  .card.picked { border-color:var(--mint); box-shadow:0 0 0 1px var(--mint) inset; }
+  .imgs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .imgs img { width:100%; aspect-ratio:1; object-fit:contain; background:#050910; border:1px solid var(--line); border-radius:6px; }
+  .imgs figcaption { font-size:.65rem; color:var(--muted); text-align:center; }
+  figure { margin:0; }
+  .badge { display:inline-block; font-size:.7rem; font-weight:800; padding:1px 8px; border-radius:999px; color:#06121a; }
+  .PASS { background:var(--ok); } .WARN { background:var(--warn); } .FAIL { background:var(--bad); }
+  .pick { background:var(--mint); color:#062019; }
+  .meta { font-size:.75rem; color:var(--muted); margin:.4rem 0 0; }
+  code { font-size:.72rem; background:#050910; border:1px solid var(--line); border-radius:4px; padding:2px 5px; display:block; overflow-x:auto; white-space:nowrap; margin-top:6px; color:var(--gold); }
+  .reasons { font-size:.75rem; color:var(--bad); margin:.3rem 0 0; }
+  .filters { display:flex; gap:8px; flex-wrap:wrap; }
+  .filters button { background:#0d1726; color:#edf5f4; border:1px solid var(--line); border-radius:999px; padding:4px 12px; cursor:pointer; }
+  .filters button[aria-pressed="true"] { border-color:var(--mint); color:var(--mint); }
+</style>
+</head>
+<body>
+<main>
+  <p>DEMON ATTACK · LOCAL ASSET PIPELINE</p>
+  <h1 id="title">Asset pipeline review</h1>
+  <p id="desc"></p>
+  <section class="panel">
+    <div class="sheets">
+      <div><h2 style="margin-top:0">Current in-game ship</h2><img src="current-ship.png" alt="Current ship sprite" style="width:192px"><p class="muted">combat.png row 4, a 32×32 logical sprite.</p></div>
+      <div id="loadouts"></div>
+      <div id="wear"></div>
+    </div>
+  </section>
+  <div class="filters" id="filters"></div>
+  <div id="parts"></div>
+  <p class="muted" id="foot"></p>
+</main>
+<script>
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let report, filter = 'all';
+function render() {
+  const parts = document.querySelector('#parts');
+  parts.innerHTML = report.parts.map((part) => {
+    const items = report.candidates.filter((c) => c.part === part && (filter === 'all' || c.status === filter))
+      .sort((a, b) => b.score - a.score);
+    const pick = report.picks[part];
+    return `<h2>${esc(part)} ${pick ? `<span class="badge pick">${pick.provisional ? 'provisional pick' : 'accepted'}: ${esc(pick.id)}</span>` : ''}</h2>
+      <div class="cards">${items.map((c) => `
+        <article class="card ${c.picked ? 'picked' : ''}">
+          <div><span class="badge ${esc(c.status)}">${esc(c.status)}</span> <strong>${esc(c.id)}</strong></div>
+          <div class="imgs">
+            <figure><img loading="lazy" src="${esc(c.raw)}" alt="raw"><figcaption>raw ${esc(c.tier)}</figcaption></figure>
+            ${c.layer ? `<figure><img loading="lazy" src="${esc(c.mask)}" alt="matte"><figcaption>matte</figcaption></figure>
+            <figure><img loading="lazy" src="${esc(c.context)}" alt="in context"><figcaption>${part === 'hull' ? 'layer' : 'on hull'}</figcaption></figure>` : '<figure></figure><figure></figure>'}
+          </div>
+          <p class="meta">score ${esc(c.score)} · ${esc(c.model)} · seed ${esc(c.seed)} · cover ${esc(c.isolation.coverage)} · sym ${esc(c.symmetry)}${c.layer ? ` · fill ${esc(c.slot_fill)} · ${esc(c.palette_colours)} colours` : ''}</p>
+          ${c.reasons.length ? `<p class="reasons">${c.reasons.map(esc).join('; ')}</p>` : ''}
+          ${c.layer ? `<code>pipeline.py accept ${esc(part)} ${esc(c.id)}</code>` : ''}
+        </article>`).join('') || '<p class="muted">No candidates match this filter.</p>'}</div>`;
+  }).join('');
+}
+fetch('report.json').then((r) => r.json()).then((data) => {
+  report = data;
+  document.querySelector('#title').textContent = `${data.family} · asset pipeline review`;
+  document.querySelector('#desc').textContent = data.description;
+  const s = data.sheets || {};
+  if (s.loadouts) document.querySelector('#loadouts').innerHTML = `<h2 style="margin-top:0">All 18 loadouts (current picks)</h2><img src="${esc(s.loadouts.file)}" alt="Loadout combinations"><div class="labels">${s.loadouts.labels.map((l) => `<span>${esc(l)}</span>`).join('')}</div>`;
+  if (s.wear) document.querySelector('#wear').innerHTML = `<h2 style="margin-top:0">Wear states</h2><img src="${esc(s.wear.file)}" alt="Wear states"><p class="muted">Columns: ${s.wear.labels.map(esc).join(' → ')}. Derived deterministically from each accepted layer.</p>`;
+  const counts = {all: data.candidates.length};
+  data.candidates.forEach((c) => counts[c.status] = (counts[c.status] || 0) + 1);
+  document.querySelector('#filters').innerHTML = ['all', 'PASS', 'WARN', 'FAIL'].map((f) => `<button data-f="${f}" aria-pressed="${f === filter}">${f} (${counts[f] || 0})</button>`).join('');
+  document.querySelector('#filters').addEventListener('click', (e) => {
+    const f = e.target.dataset.f; if (!f) return; filter = f;
+    document.querySelectorAll('#filters button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.f === f));
+    render();
+  });
+  document.querySelector('#foot').textContent = `Pipeline v${data.pipeline_version} · generated ${data.generated} · canvas ${data.canvas.width}×${data.canvas.height} logical. Accept a candidate with the command on its card, then re-run review and pack.`;
+  render();
+}).catch(() => { document.querySelector('#parts').innerHTML = '<p>No report. Run <code>pipeline.py review</code>.</p>'; });
+</script>
+</body>
+</html>

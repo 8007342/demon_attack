@@ -42,6 +42,12 @@ def identify(path: Path) -> tuple[int, int, str, int]:
     return int(width), int(height), channels.lower(), int(colors)
 
 
+def generator_fields(manifest: dict, candidate: dict) -> dict:
+    """Per-candidate generator provenance, falling back to the manifest default (I0 passes)."""
+    default = manifest["generator"]
+    return {key: candidate.get(key, default[key]) for key in ("model", "tier", "backend", "license_metadata")}
+
+
 def main() -> int:
     if shutil.which("magick") is None:
         print(
@@ -92,7 +98,7 @@ def main() -> int:
         output_has_alpha = "a" in out_channels.replace("gray", "").replace("cmyk", "")
 
         reasons = []
-        if (width, height) != (512, 512):
+        if (width, height) != (candidate.get("width", 512), candidate.get("height", 512)):
             reasons.append("unexpected source dimensions")
         if not alpha_present:
             reasons.append("source has opaque background")
@@ -108,6 +114,8 @@ def main() -> int:
         results.append(
             {
                 "name": candidate["name"],
+                "prompt_key": candidate.get("prompt_key", candidate["name"]),
+                "pass": candidate.get("pass", ""),
                 "source": f"assets/{raw_name}",
                 "preview": f"assets/{preview_name}",
                 "source_dimensions": {"width": width, "height": height},
@@ -122,10 +130,7 @@ def main() -> int:
                 "reasons": reasons,
                 "prompt": candidate["prompt"],
                 "negative_prompt": candidate["negative_prompt"],
-                "model": manifest["generator"]["model"],
-                "tier": manifest["generator"]["tier"],
-                "backend": manifest["generator"]["backend"],
-                "license_metadata": manifest["generator"]["license_metadata"],
+                **generator_fields(manifest, candidate),
                 "seed": candidate["seed"],
                 "steps": candidate["steps"],
                 "sha256": candidate["sha256"],
@@ -152,9 +157,11 @@ def main() -> int:
         if (width, height) != (candidate["width"], candidate["height"]):
             raise ValueError(f"Unexpected background dimensions for {candidate['name']}: {width}x{height}")
         # Keep detailed scenery; only resize to a common 2:3 review preview.
-        run("magick", str(source), "-strip", "-filter", "point", "-resize", "384x576!", "-strip", str(preview_output))
+        run("magick", str(source), "-strip", "-resize", "384x576^", "-gravity", "center", "-extent", "384x576", "-strip", str(preview_output))
         background_results.append({
             "name": candidate["name"],
+            "prompt_key": candidate.get("prompt_key", candidate["name"]),
+            "pass": candidate.get("pass", ""),
             "location": candidate["location"],
             "source": f"assets/{raw_name}",
             "preview": f"assets/{preview_name}",
@@ -165,10 +172,7 @@ def main() -> int:
             "source_has_alpha": "a" in channels.replace("gray", "").replace("cmyk", ""),
             "seed": candidate["seed"],
             "steps": candidate["steps"],
-            "model": manifest["generator"]["model"],
-            "tier": manifest["generator"]["tier"],
-            "backend": manifest["generator"]["backend"],
-            "license_metadata": manifest["generator"]["license_metadata"],
+            **generator_fields(manifest, candidate),
             "sha256": candidate["sha256"],
             "prompt": candidate["prompt"],
             "negative_prompt": candidate["negative_prompt"],
@@ -195,11 +199,12 @@ def main() -> int:
         "workflow": manifest["workflow"],
         "inference_policy": manifest["inference_policy"],
         "processor": "tools/prepare_local_image_candidates.py",
-        "processor_version": 2,
+        "processor_version": 3,
         "local_tool": run("magick", "-version").splitlines()[0],
         "logical_cell_size": LOGICAL_SIZE,
         "palette_limit": PALETTE_LIMIT,
         "atlas": "candidate-atlas.png",
+        "generation_passes": manifest.get("generation_passes", []),
         "candidates": results,
         "background_candidates": background_results,
         "integration_status": manifest["processing"]["integration_status"],

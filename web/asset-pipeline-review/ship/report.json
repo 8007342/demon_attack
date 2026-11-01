@@ -1,0 +1,854 @@
+{
+  "family": "ship",
+  "description": "Player starfighter: a hull plus combinable weapon modules, each with fresh/worn/critical wear states. Every part is a full-canvas layer on one shared logical canvas, so layers stack without per-part offsets.",
+  "generated": "2026-11-01T23:24:01+00:00",
+  "pipeline_version": 2,
+  "canvas": {
+    "width": 48,
+    "height": 48,
+    "pixel_scale": 2
+  },
+  "picks": {
+    "hull": {
+      "id": "hull-I0-820000-3",
+      "provisional": true
+    },
+    "spread": {
+      "id": "spread-I0-820010-0",
+      "provisional": true
+    },
+    "large": {
+      "id": "large-I0-820020-0",
+      "provisional": true
+    },
+    "rapid": {
+      "id": "rapid-I0-820030-1",
+      "provisional": true
+    },
+    "powerful": {
+      "id": "powerful-I0-820040-0",
+      "provisional": true
+    },
+    "shield": {
+      "id": "shield-I0-820050-1",
+      "provisional": true
+    }
+  },
+  "sheets": {
+    "loadouts": {
+      "file": "loadouts.png",
+      "labels": [
+        "bare hull",
+        "shield",
+        "rapid",
+        "rapid + shield",
+        "powerful",
+        "powerful + shield",
+        "spread",
+        "spread + shield",
+        "spread + rapid",
+        "spread + rapid + shield",
+        "spread + powerful",
+        "spread + powerful + shield",
+        "large",
+        "large + shield",
+        "large + rapid",
+        "large + rapid + shield",
+        "large + powerful",
+        "large + powerful + shield"
+      ]
+    },
+    "wear": {
+      "file": "wear.png",
+      "labels": [
+        "fresh",
+        "worn",
+        "critical"
+      ]
+    }
+  },
+  "candidates": [
+    {
+      "id": "hull-I0-820000-0",
+      "part": "hull",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "WARN",
+      "score": 0.58,
+      "reasons": [
+        "source is asymmetric (IoU 0.23); mirroring changed its design"
+      ],
+      "raw": "img/hull-I0-820000-0-raw.png",
+      "seed": 820000,
+      "prompt": "small starfighter spaceship seen from directly above, nose pointing up, swept delta wings, twin rear engines, cockpit canopy, navy and teal armor plates, pale gold trim, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          71,
+          101,
+          105
+        ],
+        "background_noise": 15.3,
+        "coverage": 0.0374,
+        "components": 40,
+        "largest_component_share": 0.723,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.226,
+      "layer": "img/hull-I0-820000-0-layer.png",
+      "mask": "img/hull-I0-820000-0-mask.png",
+      "context": "img/hull-I0-820000-0-context.png",
+      "slot_fill": 0.241,
+      "palette_colours": 4,
+      "picked": false
+    },
+    {
+      "id": "hull-I0-820000-1",
+      "part": "hull",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "FAIL",
+      "score": 0.247,
+      "reasons": [
+        "not a single object (largest component under half of the mask)"
+      ],
+      "raw": "img/hull-I0-820000-1-raw.png",
+      "seed": 820000,
+      "prompt": "small starfighter spaceship seen from directly above, nose pointing up, swept delta wings, twin rear engines, cockpit canopy, navy and teal armor plates, pale gold trim, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          84,
+          79,
+          102
+        ],
+        "background_noise": 29.41,
+        "coverage": 0.1043,
+        "components": 54,
+        "largest_component_share": 0.179,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.567,
+      "layer": "img/hull-I0-820000-1-layer.png",
+      "mask": "img/hull-I0-820000-1-mask.png",
+      "context": "img/hull-I0-820000-1-context.png",
+      "slot_fill": 0.175,
+      "palette_colours": 5,
+      "picked": false
+    },
+    {
+      "id": "hull-I0-820000-2",
+      "part": "hull",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "FAIL",
+      "score": 0.141,
+      "reasons": [
+        "isolation failed (object covers 0% of frame)"
+      ],
+      "raw": "img/hull-I0-820000-2-raw.png",
+      "seed": 820000,
+      "prompt": "small starfighter spaceship seen from directly above, nose pointing up, swept delta wings, twin rear engines, cockpit canopy, navy and teal armor plates, pale gold trim, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          94,
+          143,
+          156
+        ],
+        "background_noise": 62.98,
+        "coverage": 0.0003,
+        "components": 3,
+        "largest_component_share": 0.509,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.0,
+      "layer": "img/hull-I0-820000-2-layer.png",
+      "mask": "img/hull-I0-820000-2-mask.png",
+      "context": "img/hull-I0-820000-2-context.png",
+      "slot_fill": 0.0,
+      "palette_colours": 0,
+      "picked": false
+    },
+    {
+      "id": "hull-I0-820000-3",
+      "part": "hull",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.867,
+      "reasons": [],
+      "raw": "img/hull-I0-820000-3-raw.png",
+      "seed": 820000,
+      "prompt": "small starfighter spaceship seen from directly above, nose pointing up, swept delta wings, twin rear engines, cockpit canopy, navy and teal armor plates, pale gold trim, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          82,
+          138,
+          138
+        ],
+        "background_noise": 19.2,
+        "coverage": 0.418,
+        "components": 10,
+        "largest_component_share": 0.988,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.81,
+      "layer": "img/hull-I0-820000-3-layer.png",
+      "mask": "img/hull-I0-820000-3-mask.png",
+      "context": "img/hull-I0-820000-3-context.png",
+      "slot_fill": 0.371,
+      "palette_colours": 5,
+      "picked": true
+    },
+    {
+      "id": "spread-I0-820010-0",
+      "part": "spread",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.922,
+      "reasons": [],
+      "raw": "img/spread-I0-820010-0-raw.png",
+      "seed": 820010,
+      "prompt": "three-pronged golden prism emitter weapon module, trident shaped crystal cannon pointing up, gold and ivory metal, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          170,
+          119,
+          129
+        ],
+        "background_noise": 11.55,
+        "coverage": 0.1476,
+        "components": 22,
+        "largest_component_share": 0.82,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.84,
+      "layer": "img/spread-I0-820010-0-layer.png",
+      "mask": "img/spread-I0-820010-0-mask.png",
+      "context": "img/spread-I0-820010-0-context.png",
+      "slot_fill": 0.726,
+      "palette_colours": 4,
+      "picked": true
+    },
+    {
+      "id": "spread-I0-820010-1",
+      "part": "spread",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "FAIL",
+      "score": 0.147,
+      "reasons": [
+        "isolation failed (object covers 0% of frame)",
+        "not a single object (largest component under half of the mask)"
+      ],
+      "raw": "img/spread-I0-820010-1-raw.png",
+      "seed": 820010,
+      "prompt": "three-pronged golden prism emitter weapon module, trident shaped crystal cannon pointing up, gold and ivory metal, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          160,
+          96,
+          100
+        ],
+        "background_noise": 44.79,
+        "coverage": 0.0013,
+        "components": 10,
+        "largest_component_share": 0.318,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.081,
+      "layer": "img/spread-I0-820010-1-layer.png",
+      "mask": "img/spread-I0-820010-1-mask.png",
+      "context": "img/spread-I0-820010-1-context.png",
+      "slot_fill": 0.0,
+      "palette_colours": 0,
+      "picked": false
+    },
+    {
+      "id": "spread-I0-820010-2",
+      "part": "spread",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "WARN",
+      "score": 0.793,
+      "reasons": [
+        "source is asymmetric (IoU 0.25); mirroring changed its design"
+      ],
+      "raw": "img/spread-I0-820010-2-raw.png",
+      "seed": 820010,
+      "prompt": "three-pronged golden prism emitter weapon module, trident shaped crystal cannon pointing up, gold and ivory metal, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          169,
+          105,
+          122
+        ],
+        "background_noise": 14.93,
+        "coverage": 0.1566,
+        "components": 30,
+        "largest_component_share": 0.963,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.245,
+      "layer": "img/spread-I0-820010-2-layer.png",
+      "mask": "img/spread-I0-820010-2-mask.png",
+      "context": "img/spread-I0-820010-2-context.png",
+      "slot_fill": 0.429,
+      "palette_colours": 3,
+      "picked": false
+    },
+    {
+      "id": "spread-I0-820010-3",
+      "part": "spread",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "WARN",
+      "score": 0.813,
+      "reasons": [
+        "source is asymmetric (IoU 0.45); mirroring changed its design"
+      ],
+      "raw": "img/spread-I0-820010-3-raw.png",
+      "seed": 820010,
+      "prompt": "three-pronged golden prism emitter weapon module, trident shaped crystal cannon pointing up, gold and ivory metal, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          209,
+          199,
+          190
+        ],
+        "background_noise": 7.39,
+        "coverage": 0.1571,
+        "components": 21,
+        "largest_component_share": 0.872,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.453,
+      "layer": "img/spread-I0-820010-3-layer.png",
+      "mask": "img/spread-I0-820010-3-mask.png",
+      "context": "img/spread-I0-820010-3-context.png",
+      "slot_fill": 0.381,
+      "palette_colours": 3,
+      "picked": false
+    },
+    {
+      "id": "large-I0-820020-0",
+      "part": "large",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.909,
+      "reasons": [],
+      "raw": "img/large-I0-820020-0-raw.png",
+      "seed": 820020,
+      "prompt": "single heavy plasma cannon barrel pointing up, thick armored orange glowing muzzle, mechanical weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          157,
+          110,
+          115
+        ],
+        "background_noise": 8.79,
+        "coverage": 0.2471,
+        "components": 10,
+        "largest_component_share": 0.995,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.89,
+      "layer": "img/large-I0-820020-0-layer.png",
+      "mask": "img/large-I0-820020-0-mask.png",
+      "context": "img/large-I0-820020-0-context.png",
+      "slot_fill": 0.4,
+      "palette_colours": 2,
+      "picked": true
+    },
+    {
+      "id": "large-I0-820020-1",
+      "part": "large",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "WARN",
+      "score": 0.871,
+      "reasons": [
+        "source is asymmetric (IoU 0.42); mirroring changed its design"
+      ],
+      "raw": "img/large-I0-820020-1-raw.png",
+      "seed": 820020,
+      "prompt": "single heavy plasma cannon barrel pointing up, thick armored orange glowing muzzle, mechanical weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          181,
+          114,
+          99
+        ],
+        "background_noise": 16.68,
+        "coverage": 0.2294,
+        "components": 10,
+        "largest_component_share": 0.991,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.42,
+      "layer": "img/large-I0-820020-1-layer.png",
+      "mask": "img/large-I0-820020-1-mask.png",
+      "context": "img/large-I0-820020-1-context.png",
+      "slot_fill": 0.744,
+      "palette_colours": 4,
+      "picked": false
+    },
+    {
+      "id": "large-I0-820020-2",
+      "part": "large",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "WARN",
+      "score": 0.653,
+      "reasons": [
+        "source is asymmetric (IoU 0.19); mirroring changed its design",
+        "silhouette fills little of its slot"
+      ],
+      "raw": "img/large-I0-820020-2-raw.png",
+      "seed": 820020,
+      "prompt": "single heavy plasma cannon barrel pointing up, thick armored orange glowing muzzle, mechanical weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          196,
+          119,
+          102
+        ],
+        "background_noise": 8.58,
+        "coverage": 0.0515,
+        "components": 26,
+        "largest_component_share": 0.64,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.191,
+      "layer": "img/large-I0-820020-2-layer.png",
+      "mask": "img/large-I0-820020-2-mask.png",
+      "context": "img/large-I0-820020-2-context.png",
+      "slot_fill": 0.111,
+      "palette_colours": 3,
+      "picked": false
+    },
+    {
+      "id": "large-I0-820020-3",
+      "part": "large",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.882,
+      "reasons": [],
+      "raw": "img/large-I0-820020-3-raw.png",
+      "seed": 820020,
+      "prompt": "single heavy plasma cannon barrel pointing up, thick armored orange glowing muzzle, mechanical weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          199,
+          143,
+          93
+        ],
+        "background_noise": 9.16,
+        "coverage": 0.278,
+        "components": 11,
+        "largest_component_share": 0.994,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.843,
+      "layer": "img/large-I0-820020-3-layer.png",
+      "mask": "img/large-I0-820020-3-mask.png",
+      "context": "img/large-I0-820020-3-context.png",
+      "slot_fill": 0.333,
+      "palette_colours": 2,
+      "picked": false
+    },
+    {
+      "id": "rapid-I0-820030-0",
+      "part": "rapid",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.792,
+      "reasons": [],
+      "raw": "img/rapid-I0-820030-0-raw.png",
+      "seed": 820030,
+      "prompt": "slim twin-barrel rapid-fire gatling pod pointing up, cyan energy coils, compact wingtip weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          185,
+          100,
+          127
+        ],
+        "background_noise": 17.84,
+        "coverage": 0.2436,
+        "components": 59,
+        "largest_component_share": 0.963,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.498,
+      "layer": "img/rapid-I0-820030-0-layer.png",
+      "mask": "img/rapid-I0-820030-0-mask.png",
+      "context": "img/rapid-I0-820030-0-context.png",
+      "slot_fill": 0.291,
+      "palette_colours": 5,
+      "picked": false
+    },
+    {
+      "id": "rapid-I0-820030-1",
+      "part": "rapid",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.812,
+      "reasons": [],
+      "raw": "img/rapid-I0-820030-1-raw.png",
+      "seed": 820030,
+      "prompt": "slim twin-barrel rapid-fire gatling pod pointing up, cyan energy coils, compact wingtip weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          186,
+          117,
+          123
+        ],
+        "background_noise": 12.41,
+        "coverage": 0.309,
+        "components": 36,
+        "largest_component_share": 0.969,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.723,
+      "layer": "img/rapid-I0-820030-1-layer.png",
+      "mask": "img/rapid-I0-820030-1-mask.png",
+      "context": "img/rapid-I0-820030-1-context.png",
+      "slot_fill": 0.323,
+      "palette_colours": 2,
+      "picked": true
+    },
+    {
+      "id": "rapid-I0-820030-2",
+      "part": "rapid",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.812,
+      "reasons": [],
+      "raw": "img/rapid-I0-820030-2-raw.png",
+      "seed": 820030,
+      "prompt": "slim twin-barrel rapid-fire gatling pod pointing up, cyan energy coils, compact wingtip weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          66,
+          126,
+          144
+        ],
+        "background_noise": 12.3,
+        "coverage": 0.2195,
+        "components": 48,
+        "largest_component_share": 0.889,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.819,
+      "layer": "img/rapid-I0-820030-2-layer.png",
+      "mask": "img/rapid-I0-820030-2-mask.png",
+      "context": "img/rapid-I0-820030-2-context.png",
+      "slot_fill": 0.373,
+      "palette_colours": 3,
+      "picked": false
+    },
+    {
+      "id": "rapid-I0-820030-3",
+      "part": "rapid",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.758,
+      "reasons": [],
+      "raw": "img/rapid-I0-820030-3-raw.png",
+      "seed": 820030,
+      "prompt": "slim twin-barrel rapid-fire gatling pod pointing up, cyan energy coils, compact wingtip weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          124,
+          176,
+          171
+        ],
+        "background_noise": 22.04,
+        "coverage": 0.2616,
+        "components": 74,
+        "largest_component_share": 0.878,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.764,
+      "layer": "img/rapid-I0-820030-3-layer.png",
+      "mask": "img/rapid-I0-820030-3-mask.png",
+      "context": "img/rapid-I0-820030-3-context.png",
+      "slot_fill": 0.25,
+      "palette_colours": 3,
+      "picked": false
+    },
+    {
+      "id": "powerful-I0-820040-0",
+      "part": "powerful",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "WARN",
+      "score": 0.72,
+      "reasons": [
+        "silhouette fills little of its slot"
+      ],
+      "raw": "img/powerful-I0-820040-0-raw.png",
+      "seed": 820040,
+      "prompt": "long heavy armor-piercing rail cannon pointing up, coral red energy rails, wing-mounted weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          195,
+          118,
+          115
+        ],
+        "background_noise": 11.8,
+        "coverage": 0.1082,
+        "components": 64,
+        "largest_component_share": 0.757,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.568,
+      "layer": "img/powerful-I0-820040-0-layer.png",
+      "mask": "img/powerful-I0-820040-0-mask.png",
+      "context": "img/powerful-I0-820040-0-context.png",
+      "slot_fill": 0.077,
+      "palette_colours": 2,
+      "picked": true
+    },
+    {
+      "id": "powerful-I0-820040-1",
+      "part": "powerful",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "FAIL",
+      "score": 0.134,
+      "reasons": [
+        "isolation failed (object covers 1% of frame)",
+        "not a single object (largest component under half of the mask)"
+      ],
+      "raw": "img/powerful-I0-820040-1-raw.png",
+      "seed": 820040,
+      "prompt": "long heavy armor-piercing rail cannon pointing up, coral red energy rails, wing-mounted weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          197,
+          152,
+          147
+        ],
+        "background_noise": 39.25,
+        "coverage": 0.0063,
+        "components": 105,
+        "largest_component_share": 0.112,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.03,
+      "layer": "img/powerful-I0-820040-1-layer.png",
+      "mask": "img/powerful-I0-820040-1-mask.png",
+      "context": "img/powerful-I0-820040-1-context.png",
+      "slot_fill": 0.0,
+      "palette_colours": 0,
+      "picked": false
+    },
+    {
+      "id": "powerful-I0-820040-2",
+      "part": "powerful",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "WARN",
+      "score": 0.614,
+      "reasons": [
+        "source is asymmetric (IoU 0.12); mirroring changed its design",
+        "silhouette fills little of its slot"
+      ],
+      "raw": "img/powerful-I0-820040-2-raw.png",
+      "seed": 820040,
+      "prompt": "long heavy armor-piercing rail cannon pointing up, coral red energy rails, wing-mounted weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          190,
+          141,
+          143
+        ],
+        "background_noise": 10.95,
+        "coverage": 0.0812,
+        "components": 63,
+        "largest_component_share": 0.595,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.122,
+      "layer": "img/powerful-I0-820040-2-layer.png",
+      "mask": "img/powerful-I0-820040-2-mask.png",
+      "context": "img/powerful-I0-820040-2-context.png",
+      "slot_fill": 0.054,
+      "palette_colours": 2,
+      "picked": false
+    },
+    {
+      "id": "powerful-I0-820040-3",
+      "part": "powerful",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "WARN",
+      "score": 0.713,
+      "reasons": [
+        "silhouette fills little of its slot"
+      ],
+      "raw": "img/powerful-I0-820040-3-raw.png",
+      "seed": 820040,
+      "prompt": "long heavy armor-piercing rail cannon pointing up, coral red energy rails, wing-mounted weapon module, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          186,
+          125,
+          118
+        ],
+        "background_noise": 13.07,
+        "coverage": 0.1951,
+        "components": 38,
+        "largest_component_share": 0.706,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.587,
+      "layer": "img/powerful-I0-820040-3-layer.png",
+      "mask": "img/powerful-I0-820040-3-mask.png",
+      "context": "img/powerful-I0-820040-3-context.png",
+      "slot_fill": 0.077,
+      "palette_colours": 2,
+      "picked": false
+    },
+    {
+      "id": "shield-I0-820050-0",
+      "part": "shield",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "FAIL",
+      "score": 0.212,
+      "reasons": [
+        "not a single object (largest component under half of the mask)"
+      ],
+      "raw": "img/shield-I0-820050-0-raw.png",
+      "seed": 820050,
+      "prompt": "round violet shield generator emitter device, glowing purple energy core in a hexagonal metal ring, top-down, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          100,
+          71,
+          103
+        ],
+        "background_noise": 33.45,
+        "coverage": 0.0374,
+        "components": 133,
+        "largest_component_share": 0.319,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.591,
+      "layer": "img/shield-I0-820050-0-layer.png",
+      "mask": "img/shield-I0-820050-0-mask.png",
+      "context": "img/shield-I0-820050-0-context.png",
+      "slot_fill": 0.208,
+      "palette_colours": 2,
+      "picked": false
+    },
+    {
+      "id": "shield-I0-820050-1",
+      "part": "shield",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.968,
+      "reasons": [],
+      "raw": "img/shield-I0-820050-1-raw.png",
+      "seed": 820050,
+      "prompt": "round violet shield generator emitter device, glowing purple energy core in a hexagonal metal ring, top-down, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          111,
+          99,
+          106
+        ],
+        "background_noise": 12.02,
+        "coverage": 0.4615,
+        "components": 2,
+        "largest_component_share": 0.998,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.945,
+      "layer": "img/shield-I0-820050-1-layer.png",
+      "mask": "img/shield-I0-820050-1-mask.png",
+      "context": "img/shield-I0-820050-1-context.png",
+      "slot_fill": 0.611,
+      "palette_colours": 4,
+      "picked": true
+    },
+    {
+      "id": "shield-I0-820050-2",
+      "part": "shield",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.821,
+      "reasons": [],
+      "raw": "img/shield-I0-820050-2-raw.png",
+      "seed": 820050,
+      "prompt": "round violet shield generator emitter device, glowing purple energy core in a hexagonal metal ring, top-down, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          155,
+          104,
+          111
+        ],
+        "background_noise": 26.13,
+        "coverage": 0.089,
+        "components": 125,
+        "largest_component_share": 0.581,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.643,
+      "layer": "img/shield-I0-820050-2-layer.png",
+      "mask": "img/shield-I0-820050-2-mask.png",
+      "context": "img/shield-I0-820050-2-context.png",
+      "slot_fill": 0.597,
+      "palette_colours": 2,
+      "picked": false
+    },
+    {
+      "id": "shield-I0-820050-3",
+      "part": "shield",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "status": "PASS",
+      "score": 0.947,
+      "reasons": [],
+      "raw": "img/shield-I0-820050-3-raw.png",
+      "seed": 820050,
+      "prompt": "round violet shield generator emitter device, glowing purple energy core in a hexagonal metal ring, top-down, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "isolation": {
+        "background_rgb": [
+          205,
+          172,
+          157
+        ],
+        "background_noise": 11.5,
+        "coverage": 0.3709,
+        "components": 4,
+        "largest_component_share": 0.999,
+        "touches_border": 0.0
+      },
+      "symmetry": 0.86,
+      "layer": "img/shield-I0-820050-3-layer.png",
+      "mask": "img/shield-I0-820050-3-mask.png",
+      "context": "img/shield-I0-820050-3-context.png",
+      "slot_fill": 0.569,
+      "palette_colours": 4,
+      "picked": false
+    }
+  ],
+  "parts": [
+    "hull",
+    "spread",
+    "large",
+    "rapid",
+    "powerful",
+    "shield"
+  ]
+}

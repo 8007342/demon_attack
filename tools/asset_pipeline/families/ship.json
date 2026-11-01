@@ -1,0 +1,187 @@
+{
+  "family": "ship",
+  "version": 3,
+  "description": "Player starfighter: a hull plus combinable weapon modules, each with fresh/worn/critical wear states. Every part is a full-canvas layer on one shared logical canvas, so layers stack without per-part offsets.",
+  "canvas": {
+    "width": 48,
+    "height": 48,
+    "pixel_scale": 2
+  },
+  "background_key": "#FF00FF",
+  "outline": "#100E2C",
+  "base_palette": [
+    "#100E2C",
+    "#1E2838",
+    "#263345",
+    "#3C4C66",
+    "#6A7F9E",
+    "#39DFCC",
+    "#70F5D5",
+    "#1F8F8A",
+    "#EFBD57",
+    "#FFF5C9"
+  ],
+  "layer_order": [
+    "hull",
+    "shield",
+    "rapid",
+    "powerful",
+    "spread",
+    "large"
+  ],
+  "wear_states": [
+    "fresh",
+    "worn",
+    "critical"
+  ],
+  "style_prompt": "16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+  "style_negative": "multiple objects, sprite sheet, grid, collage, text, logo, frame, border, perspective, side view, shadow, landscape, photo, blurry, gradient background",
+  "parts": [
+    {
+      "id": "hull",
+      "power": null,
+      "slot": {
+        "x": 10,
+        "y": 6,
+        "w": 28,
+        "h": 40
+      },
+      "mirror": false,
+      "symmetry": "mirror-left",
+      "accent": [],
+      "prompt": "small starfighter spaceship seen from directly above, nose pointing up, swept delta wings, twin rear engines, cockpit canopy, navy and teal armor plates, pale gold trim",
+      "negative": "weapons, missiles, people, planet",
+      "dock": null
+    },
+    {
+      "id": "spread",
+      "power": "spread",
+      "slot": {
+        "x": 18,
+        "y": 0,
+        "w": 12,
+        "h": 14
+      },
+      "mirror": false,
+      "symmetry": "mirror-left",
+      "accent": [
+        "#B8862F",
+        "#EFBD57",
+        "#FFE59A"
+      ],
+      "prompt": "three-pronged golden prism emitter weapon module, trident shaped crystal cannon pointing up, gold and ivory metal",
+      "negative": "spaceship, wings, hand, person",
+      "dock": "down"
+    },
+    {
+      "id": "large",
+      "power": "large",
+      "slot": {
+        "x": 19,
+        "y": 0,
+        "w": 10,
+        "h": 18
+      },
+      "mirror": false,
+      "symmetry": "mirror-left",
+      "accent": [
+        "#9E4A12",
+        "#FFAD53",
+        "#FFE0A8"
+      ],
+      "prompt": "single heavy plasma cannon barrel pointing up, thick armored orange glowing muzzle, mechanical weapon module",
+      "negative": "spaceship, wings, tank, hand, person, multiple guns",
+      "dock": "down"
+    },
+    {
+      "id": "rapid",
+      "power": "rapid",
+      "slot": {
+        "x": 0,
+        "y": 14,
+        "w": 10,
+        "h": 22
+      },
+      "mirror": true,
+      "symmetry": "none",
+      "accent": [
+        "#1F6E9E",
+        "#6EDCFF",
+        "#D8F7FF"
+      ],
+      "prompt": "slim twin-barrel rapid-fire gatling pod pointing up, cyan energy coils, compact wingtip weapon module",
+      "negative": "spaceship, wings, rifle, hand, person, multiple pods",
+      "dock": "inward"
+    },
+    {
+      "id": "powerful",
+      "power": "powerful",
+      "slot": {
+        "x": 2,
+        "y": 10,
+        "w": 10,
+        "h": 26
+      },
+      "mirror": true,
+      "symmetry": "mirror-left",
+      "accent": [
+        "#8E2F3A",
+        "#FF786C",
+        "#FFC7AF"
+      ],
+      "prompt": "long heavy armor-piercing rail cannon pointing up, coral red energy rails, wing-mounted weapon module",
+      "negative": "spaceship, wings, rifle, hand, person, multiple guns",
+      "dock": "inward"
+    },
+    {
+      "id": "shield",
+      "power": "shield",
+      "slot": {
+        "x": 18,
+        "y": 24,
+        "w": 12,
+        "h": 12
+      },
+      "mirror": false,
+      "symmetry": "mirror-left",
+      "accent": [
+        "#5B3FA8",
+        "#A888FF",
+        "#E2D6FF"
+      ],
+      "prompt": "round violet shield generator emitter device, glowing purple energy core in a hexagonal metal ring, top-down",
+      "negative": "spaceship, wings, bubble, person, planet",
+      "dock": null
+    }
+  ],
+  "generation": {
+    "count_per_part": 4,
+    "seed_base": 820000,
+    "tiers": {
+      "I0": {
+        "model": "SDXS-512-0.9",
+        "width": 512,
+        "height": 512,
+        "steps": 8
+      },
+      "I1": {
+        "model": "SDXL-Lightning-4step",
+        "width": 1024,
+        "height": 1024,
+        "steps": 4
+      },
+      "I2": {
+        "model": "FLUX.1-schnell Q4_0",
+        "width": 1024,
+        "height": 1024,
+        "steps": 4
+      },
+      "I3": {
+        "model": "FLUX.1-schnell Q8_0",
+        "width": 1024,
+        "height": 1024,
+        "steps": 4
+      }
+    }
+  }
+}

@@ -1,16 +1,124 @@
 {
-  "generated_at_utc": "2026-10-31T03:44:42.291528+00:00",
+  "generated_at_utc": "2026-11-01T22:54:53.211968+00:00",
   "workflow": "Forge local stable-diffusion.cpp MCP generator followed by local deterministic preparation",
   "inference_policy": "local-only; no hosted image-generation fallback",
   "processor": "tools/prepare_local_image_candidates.py",
-  "processor_version": 2,
-  "local_tool": "Version: ImageMagick 7.1.2-34 Q16-HDRI x86_64 c5d4ca8a0:20261014 https://imagemagick.org",
+  "processor_version": 3,
+  "local_tool": "Version: ImageMagick 7.1.2-35 Q16-HDRI x86_64 acaf7e418:20261031 https://imagemagick.org",
   "logical_cell_size": 32,
   "palette_limit": 16,
   "atlas": "candidate-atlas.png",
+  "generation_passes": [
+    {
+      "name": "initial local samples",
+      "asset_names": [
+        "ship",
+        "cannon",
+        "force_field",
+        "ordinary_demon",
+        "shield_sentinel",
+        "armored_sentinel",
+        "carrier_boss"
+      ],
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "steps": 20,
+      "note": "Fixed-seed local prompt-only candidates."
+    },
+    {
+      "name": "Astra-crafted prompt comparison",
+      "asset_names": [
+        "ship_v2",
+        "cannon_v2",
+        "force_field_v2",
+        "ordinary_demon_v2",
+        "shield_sentinel_v2",
+        "armored_sentinel_v2",
+        "carrier_boss_v2",
+        "background_krybor_v2",
+        "background_ringfall_v2"
+      ],
+      "prompt_author": "Astra prompt-design agent",
+      "model": "SDXS-512-0.9",
+      "tier": "I0",
+      "backend": "vulkan",
+      "steps": 20,
+      "note": "Nine outputs; all first_use=false, has_alpha=false, bigger_tier_offer=null. No larger tier was offered. Sprite outputs are 512x512. Background outputs are 512x768 portrait concepts."
+    },
+    {
+      "name": "Large-host I1 comparison",
+      "date": "2026-11-01",
+      "host_accelerator": "NVIDIA RTX A5000 (24 GB), Vulkan backend",
+      "asset_names": [
+        "ship_i1_1",
+        "ship_i1_2",
+        "cannon_i1_1",
+        "cannon_i1_2",
+        "force_field_i1_1",
+        "force_field_i1_2",
+        "ordinary_demon_i1_1",
+        "ordinary_demon_i1_2",
+        "shield_sentinel_i1_1",
+        "shield_sentinel_i1_2",
+        "armored_sentinel_i1_1",
+        "armored_sentinel_i1_2",
+        "carrier_boss_i1_1",
+        "carrier_boss_i1_2",
+        "background_krybor_i1_1",
+        "background_krybor_i1_2",
+        "background_ringfall_i1_1",
+        "background_ringfall_i1_2"
+      ],
+      "prompt_author": "Astra prompt-design agent (same prompts and seeds as the I0 v2 pass)",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "steps": 4,
+      "count_per_prompt": 2,
+      "dimensions": {
+        "sprites": "1024x1024",
+        "backgrounds": "832x1216"
+      },
+      "tier_consent": "I0 first call on this host returned bigger_tier_offer I1 (SDXL-Lightning-4step); user approved; subsequent I1 calls returned bigger_tier_offer=null, so I2/I3 were never offered and were not requested.",
+      "probes": [
+        {
+          "file": "raw/ship-i0-rerun-candidate.png",
+          "tier": "I0",
+          "model": "SDXS-512-0.9",
+          "seed": 731008,
+          "steps": 20,
+          "size": "512x512",
+          "elapsed_seconds": 155.19,
+          "note": "first_use=true on this host (engine build); triggered the I1 offer"
+        },
+        {
+          "file": "raw/ship-i1-misconfigured-candidate.png",
+          "tier": "I1",
+          "seed": 731008,
+          "steps": 20,
+          "size": "512x512",
+          "elapsed_seconds": 5.32,
+          "note": "Broken collage/oversaturation: Lightning-4step is distilled for ~4 steps at 1024px; 20 steps at 512px is out of distribution"
+        },
+        {
+          "file": "raw/ship-i1-probe-candidate.png",
+          "tier": "I1",
+          "seed": 731008,
+          "steps": 4,
+          "size": "1024x1024",
+          "elapsed_seconds": 4.68,
+          "note": "Correct settings; clean symmetric top-down ship"
+        }
+      ],
+      "note": "All outputs opaque (has_alpha=false). Batch of 2 per prompt took ~6.7s on GPU."
+    }
+  ],
   "candidates": [
     {
       "name": "ship",
+      "prompt_key": "ship",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 initial prompts",
       "source": "assets/ship-source.png",
       "preview": "assets/ship-pixel-preview.png",
       "source_dimensions": {
@@ -47,6 +155,8 @@
     },
     {
       "name": "cannon",
+      "prompt_key": "cannon",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 initial prompts",
       "source": "assets/cannon-source.png",
       "preview": "assets/cannon-pixel-preview.png",
       "source_dimensions": {
@@ -83,6 +193,8 @@
     },
     {
       "name": "force_field",
+      "prompt_key": "force_field",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 initial prompts",
       "source": "assets/force_field-source.png",
       "preview": "assets/force_field-pixel-preview.png",
       "source_dimensions": {
@@ -119,6 +231,8 @@
     },
     {
       "name": "ordinary_demon",
+      "prompt_key": "ordinary_demon",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 initial prompts",
       "source": "assets/ordinary_demon-source.png",
       "preview": "assets/ordinary_demon-pixel-preview.png",
       "source_dimensions": {
@@ -155,6 +269,8 @@
     },
     {
       "name": "shield_sentinel",
+      "prompt_key": "shield_sentinel",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 initial prompts",
       "source": "assets/shield_sentinel-source.png",
       "preview": "assets/shield_sentinel-pixel-preview.png",
       "source_dimensions": {
@@ -191,6 +307,8 @@
     },
     {
       "name": "armored_sentinel",
+      "prompt_key": "armored_sentinel",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 initial prompts",
       "source": "assets/armored_sentinel-source.png",
       "preview": "assets/armored_sentinel-pixel-preview.png",
       "source_dimensions": {
@@ -227,6 +345,8 @@
     },
     {
       "name": "carrier_boss",
+      "prompt_key": "carrier_boss",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 initial prompts",
       "source": "assets/carrier_boss-source.png",
       "preview": "assets/carrier_boss-pixel-preview.png",
       "source_dimensions": {
@@ -263,6 +383,8 @@
     },
     {
       "name": "ship_v2",
+      "prompt_key": "ship",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 Astra prompts",
       "source": "assets/ship_v2-source.png",
       "preview": "assets/ship_v2-pixel-preview.png",
       "source_dimensions": {
@@ -299,6 +421,8 @@
     },
     {
       "name": "cannon_v2",
+      "prompt_key": "cannon",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 Astra prompts",
       "source": "assets/cannon_v2-source.png",
       "preview": "assets/cannon_v2-pixel-preview.png",
       "source_dimensions": {
@@ -335,6 +459,8 @@
     },
     {
       "name": "force_field_v2",
+      "prompt_key": "force_field",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 Astra prompts",
       "source": "assets/force_field_v2-source.png",
       "preview": "assets/force_field_v2-pixel-preview.png",
       "source_dimensions": {
@@ -371,6 +497,8 @@
     },
     {
       "name": "ordinary_demon_v2",
+      "prompt_key": "ordinary_demon",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 Astra prompts",
       "source": "assets/ordinary_demon_v2-source.png",
       "preview": "assets/ordinary_demon_v2-pixel-preview.png",
       "source_dimensions": {
@@ -407,6 +535,8 @@
     },
     {
       "name": "shield_sentinel_v2",
+      "prompt_key": "shield_sentinel",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 Astra prompts",
       "source": "assets/shield_sentinel_v2-source.png",
       "preview": "assets/shield_sentinel_v2-pixel-preview.png",
       "source_dimensions": {
@@ -443,6 +573,8 @@
     },
     {
       "name": "armored_sentinel_v2",
+      "prompt_key": "armored_sentinel",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 Astra prompts",
       "source": "assets/armored_sentinel_v2-source.png",
       "preview": "assets/armored_sentinel_v2-pixel-preview.png",
       "source_dimensions": {
@@ -479,6 +611,8 @@
     },
     {
       "name": "carrier_boss_v2",
+      "prompt_key": "carrier_boss",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 Astra prompts",
       "source": "assets/carrier_boss_v2-source.png",
       "preview": "assets/carrier_boss_v2-pixel-preview.png",
       "source_dimensions": {
@@ -512,11 +646,545 @@
       "seed": 731014,
       "steps": 20,
       "sha256": "3747665b5a8751abb18a8594ec732eca6f676e74fd40768830f0c0ef4d2d8f48"
+    },
+    {
+      "name": "ship_i1_1",
+      "prompt_key": "ship",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/ship_i1_1-source.png",
+      "preview": "assets/ship_i1_1-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Strongest ship so far: symmetric top-down starfighter with readable twin booms and cockpit. Still illustrative linework, not hard pixels; lavender (not magenta) opaque background."
+      ],
+      "prompt": "One isolated original player starfighter sprite, strict top-down view, pointing upward with sharp nose at top and compact symmetric short wings, narrow tail, twin rear engines. Clear separate left/right cannon hardpoints and small ivory cockpit, readable silhouette at 32\u00d732 logical pixels. 16-bit arcade pixel art with hard square pixels, crisp one-pixel outline #100E2C, restrained palette teal #39DFCC, navy, pale-gold #EFBD57, ivory and tiny cyan engine glow. Center one ship on flat pure magenta, occupy about 24\u00d728 logical-pixel equivalent with margin. Clean orthographic sprite, no angle sheet.",
+      "negative_prompt": "multiple views, banked view, side view, sprite sheet, collage, second ship, ground shadow, landscape, aircraft photo, gradients, antialiasing, painterly texture, soft edges, text, UI, logo, frame",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731008,
+      "steps": 4,
+      "sha256": "745a574f66724ae6b876eab34449c71fba9a8a199416c340545e9d54eda3b387"
+    },
+    {
+      "name": "ship_i1_2",
+      "prompt_key": "ship",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/ship_i1_2-source.png",
+      "preview": "assets/ship_i1_2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Clean swept-wing fighter, good teal/ivory blocking and nose-up orientation. Opaque lavender background; detail density too high for a 32\u00d732 cell without redraw."
+      ],
+      "prompt": "One isolated original player starfighter sprite, strict top-down view, pointing upward with sharp nose at top and compact symmetric short wings, narrow tail, twin rear engines. Clear separate left/right cannon hardpoints and small ivory cockpit, readable silhouette at 32\u00d732 logical pixels. 16-bit arcade pixel art with hard square pixels, crisp one-pixel outline #100E2C, restrained palette teal #39DFCC, navy, pale-gold #EFBD57, ivory and tiny cyan engine glow. Center one ship on flat pure magenta, occupy about 24\u00d728 logical-pixel equivalent with margin. Clean orthographic sprite, no angle sheet.",
+      "negative_prompt": "multiple views, banked view, side view, sprite sheet, collage, second ship, ground shadow, landscape, aircraft photo, gradients, antialiasing, painterly texture, soft edges, text, UI, logo, frame",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731008,
+      "steps": 4,
+      "sha256": "3788728d6dccc75383e8f7c87501f2d5abc268d75672dcd914320429ed66b7c0"
+    },
+    {
+      "name": "cannon_i1_1",
+      "prompt_key": "cannon",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/cannon_i1_1-source.png",
+      "preview": "assets/cannon_i1_1-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Prompt failure: renders a tiled sheet of rifles/guns instead of a single mirrored hardpoint pair."
+      ],
+      "prompt": "One isolated modular twin-cannon hardpoint sprite: perfectly mirrored pair of compact upward-pointing barrels with small independent teal casing and pale-gold muzzle pixels; no hull or wings. Flat top-down original 16-bit arcade pixel art, 32\u00d732 logical-pixel canvas intent, hard square pixels, one-pixel midnight outline, bounded navy/teal/gold/ivory palette. Center on pure magenta with generous empty margin, sharp silhouette and no cast shadow.",
+      "negative_prompt": "ship, wings, full vehicle, hands, perspective, multiple parts not touching as one pair, sheet, grid, text, UI, gradient, blur, antialiasing, painterly",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731009,
+      "steps": 4,
+      "sha256": "74b810603ac3c819f65df0b3c71fa51d5caf4f4692123b5cf65d2f4437468880"
+    },
+    {
+      "name": "cannon_i1_2",
+      "prompt_key": "cannon",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/cannon_i1_2-source.png",
+      "preview": "assets/cannon_i1_2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Prompt failure: grid of handheld guns; no symmetric twin pod. Needs a rewritten prompt that avoids the word 'cannon'."
+      ],
+      "prompt": "One isolated modular twin-cannon hardpoint sprite: perfectly mirrored pair of compact upward-pointing barrels with small independent teal casing and pale-gold muzzle pixels; no hull or wings. Flat top-down original 16-bit arcade pixel art, 32\u00d732 logical-pixel canvas intent, hard square pixels, one-pixel midnight outline, bounded navy/teal/gold/ivory palette. Center on pure magenta with generous empty margin, sharp silhouette and no cast shadow.",
+      "negative_prompt": "ship, wings, full vehicle, hands, perspective, multiple parts not touching as one pair, sheet, grid, text, UI, gradient, blur, antialiasing, painterly",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731009,
+      "steps": 4,
+      "sha256": "79d7669d69449eb8f27211626c33d55bc92e7e6dace0ca4f8cf6b70e1ad41554"
+    },
+    {
+      "name": "force_field_i1_1",
+      "prompt_key": "force_field",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/force_field_i1_1-source.png",
+      "preview": "assets/force_field_i1_1-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Readable concentric tech-ring with cyan/violet palette, but fills the frame as a square tile and lacks the four deliberate gaps."
+      ],
+      "prompt": "One isolated technological force-field loop concept, top-down: symmetric oval segmented cyan/teal/violet pixel barrier around a completely empty center, four deliberate gaps, crisp stepped hex geometry and a few discrete ivory glints. 32\u00d732 logical-cell intent, hard-edged original arcade pixels, palette #39DFCC #70F5D5 #A888FF plus midnight outline; one stable-state frame only, centered on flat pure magenta.",
+      "negative_prompt": "ship inside, creature, thermal fire, orange/red flames, smooth glass bubble, gradients, blur, antialiasing, sheet, text, UI, logo, shadows",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731010,
+      "steps": 4,
+      "sha256": "604e92841cc7ea2e119c9080f4221f1b935c7e666b495c93cb1ffe51b68fb6b5"
+    },
+    {
+      "name": "force_field_i1_2",
+      "prompt_key": "force_field",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/force_field_i1_2-source.png",
+      "preview": "assets/force_field_i1_2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Crisper ring with crosshair framing; reads as a HUD reticle more than a shield loop. Opaque background."
+      ],
+      "prompt": "One isolated technological force-field loop concept, top-down: symmetric oval segmented cyan/teal/violet pixel barrier around a completely empty center, four deliberate gaps, crisp stepped hex geometry and a few discrete ivory glints. 32\u00d732 logical-cell intent, hard-edged original arcade pixels, palette #39DFCC #70F5D5 #A888FF plus midnight outline; one stable-state frame only, centered on flat pure magenta.",
+      "negative_prompt": "ship inside, creature, thermal fire, orange/red flames, smooth glass bubble, gradients, blur, antialiasing, sheet, text, UI, logo, shadows",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731010,
+      "steps": 4,
+      "sha256": "83d47088be0e5e2a9598913a336bdf934b95291c961b34d5d00c87113cd0d0d9"
+    },
+    {
+      "name": "ordinary_demon_i1_1",
+      "prompt_key": "ordinary_demon",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/ordinary_demon_i1_1-source.png",
+      "preview": "assets/ordinary_demon_i1_1-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 15,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Good identity match: teal winged demon with curved horns, orange eyes and teeth, scalloped wings. Front-facing, opaque grey background; usable as a design reference."
+      ],
+      "prompt": "One small original winged demon combat sprite, top-down toward viewer, head downscreen as existing enemies: central teal torso, two curved horns, visible ivory teeth, tiny red angry eyes, broad scalloped membrane wings with readable left/right separation and small tail. Silhouette legible at 32\u00d732 logical pixels. Hard square pixels, one-pixel #100E2C outline, bounded teal #39DFCC/ivory/red/amber palette, flat magenta background, one sprite centered; one neutral wing pose, not a frame sequence.",
+      "negative_prompt": "bird, bat photo, humanoid portrait, ship, multiple creatures, scenery, action scene, feathers, gradients, soft edges, antialiasing, blur, text, UI, sprite sheet",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731011,
+      "steps": 4,
+      "sha256": "5c30a94f658f14379158995f0ab03639eca5eae913223700e0dc02ef8dc3cc8a"
+    },
+    {
+      "name": "ordinary_demon_i1_2",
+      "prompt_key": "ordinary_demon",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/ordinary_demon_i1_2-source.png",
+      "preview": "assets/ordinary_demon_i1_2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Strong reference: teal demon with red wing membranes, horns, teeth and tail. Most on-brief creature of the batch; still painted, not pixel."
+      ],
+      "prompt": "One small original winged demon combat sprite, top-down toward viewer, head downscreen as existing enemies: central teal torso, two curved horns, visible ivory teeth, tiny red angry eyes, broad scalloped membrane wings with readable left/right separation and small tail. Silhouette legible at 32\u00d732 logical pixels. Hard square pixels, one-pixel #100E2C outline, bounded teal #39DFCC/ivory/red/amber palette, flat magenta background, one sprite centered; one neutral wing pose, not a frame sequence.",
+      "negative_prompt": "bird, bat photo, humanoid portrait, ship, multiple creatures, scenery, action scene, feathers, gradients, soft edges, antialiasing, blur, text, UI, sprite sheet",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731011,
+      "steps": 4,
+      "sha256": "212ef172a7772e721220b64a374136c0fb1cd190162bb3cca33f078e1ce91437"
+    },
+    {
+      "name": "shield_sentinel_i1_1",
+      "prompt_key": "shield_sentinel",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/shield_sentinel_i1_1-source.png",
+      "preview": "assets/shield_sentinel_i1_1-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Menacing horned demon head framed by a violet ring; the ring reads as an emblem rather than a segmented shield halo. Bust, not full body."
+      ],
+      "prompt": "One large shield-sentinel sprite, broad horizontal body, visibly separated articulated wing-root, outer and tip segments, horned demon face, small red eyes and teeth; cool structured segmented cyan/teal/violet shield halo with clear gaps around it. Original hard-pixel 16-bit sprite designed for a 64\u00d732 logical cell, midnight outline and limited atlas palette; single neutral hover pose centered on pure magenta, threat silhouette stays readable.",
+      "negative_prompt": "small ordinary demon, bird, aircraft, warm fire aura, continuous smooth wings, arrow warning, multiple pose sheet, scenery, gradients, glow blur, text, UI",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731012,
+      "steps": 4,
+      "sha256": "f89561444480de01756cd1a5c720d487f94d1fba27833076191894a445297c0e"
+    },
+    {
+      "name": "shield_sentinel_i1_2",
+      "prompt_key": "shield_sentinel",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/shield_sentinel_i1_2-source.png",
+      "preview": "assets/shield_sentinel_i1_2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Drifted to a standing humanoid winged demon; no shield halo, wrong (vertical) footprint for a 64\u00d732 cell."
+      ],
+      "prompt": "One large shield-sentinel sprite, broad horizontal body, visibly separated articulated wing-root, outer and tip segments, horned demon face, small red eyes and teeth; cool structured segmented cyan/teal/violet shield halo with clear gaps around it. Original hard-pixel 16-bit sprite designed for a 64\u00d732 logical cell, midnight outline and limited atlas palette; single neutral hover pose centered on pure magenta, threat silhouette stays readable.",
+      "negative_prompt": "small ordinary demon, bird, aircraft, warm fire aura, continuous smooth wings, arrow warning, multiple pose sheet, scenery, gradients, glow blur, text, UI",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731012,
+      "steps": 4,
+      "sha256": "7005c407d167d8922c854d1cc61011423209453b1d60c857e9d05b653691bd37"
+    },
+    {
+      "name": "armored_sentinel_i1_1",
+      "prompt_key": "armored_sentinel",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/armored_sentinel_i1_1-source.png",
+      "preview": "assets/armored_sentinel_i1_1-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Drifted to a humanoid armored knight with a side sheet of props; violet/coral palette is on brief but footprint and composition are wrong."
+      ],
+      "prompt": "One heavy armored sentinel demon, broad horizontal 64\u00d732-style sprite footprint, horned head, separated wing segments, thick violet armor plates, coral exposed seam cracks and tiny gold/ivory core glint, minimal red eyes; original hard-square pixel art, one-pixel midnight outline, bounded violet/coral/gold palette, neutral hover pose, centered on pure magenta.",
+      "negative_prompt": "spaceship, tank, human knight, shield bubble, fire plume, extra creatures, sheet, gradient metal, specular photorealism, smooth curves, antialiasing, blur, text, UI",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731013,
+      "steps": 4,
+      "sha256": "e670fd2fe862acf1fbd58205deb3175e6fd54f0b6eb52e5ef2cae1e331d04645"
+    },
+    {
+      "name": "armored_sentinel_i1_2",
+      "prompt_key": "armored_sentinel",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/armored_sentinel_i1_2-source.png",
+      "preview": "assets/armored_sentinel_i1_2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Winged armored demon in violet/gold with coral wings; palette and armor read well, but humanoid standing pose instead of broad hover footprint."
+      ],
+      "prompt": "One heavy armored sentinel demon, broad horizontal 64\u00d732-style sprite footprint, horned head, separated wing segments, thick violet armor plates, coral exposed seam cracks and tiny gold/ivory core glint, minimal red eyes; original hard-square pixel art, one-pixel midnight outline, bounded violet/coral/gold palette, neutral hover pose, centered on pure magenta.",
+      "negative_prompt": "spaceship, tank, human knight, shield bubble, fire plume, extra creatures, sheet, gradient metal, specular photorealism, smooth curves, antialiasing, blur, text, UI",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731013,
+      "steps": 4,
+      "sha256": "5533fa299e5b63584fbeea81d9d66762047eee144f45ef3a0aeace683b0eb4fe"
+    },
+    {
+      "name": "carrier_boss_i1_1",
+      "prompt_key": "carrier_boss",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/carrier_boss_i1_1-source.png",
+      "preview": "assets/carrier_boss_i1_1-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Striking violet/amber biomechanical moth-carrier silhouette; broad, symmetric, boss-worthy. Opaque frame; best boss reference so far."
+      ],
+      "prompt": "One original Brood Carrier boss sprite, front/top-down facing player: wide crescent biomechanical saucer hull with ribbed chitin plates, twin dorsal stabilizers, recessed amber conduits, fore mandibles and three closed stepped launch shutters, central aperture. Broad readable single-cell silhouette that could scale up; original hard-edged pixel art with midnight outline, violet armored hull, restrained coral/gold highlights; single intact state on flat magenta, no damage overlays.",
+      "negative_prompt": "ordinary fighter, human aircraft, organic creature alone, multiple ships, scene, open hatch, UI, labels, text, smooth gradients, photorealism, blur, sheet",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731014,
+      "steps": 4,
+      "sha256": "8703af582d6c58ccd9f1c7fec6fbd195cff9eb17a0f16f809e21a7fdf44cd69b"
+    },
+    {
+      "name": "carrier_boss_i1_2",
+      "prompt_key": "carrier_boss",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "source": "assets/carrier_boss_i1_2-source.png",
+      "preview": "assets/carrier_boss_i1_2-pixel-preview.png",
+      "source_dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "preview_dimensions": {
+        "width": 96,
+        "height": 96
+      },
+      "logical_cell": {
+        "width": 32,
+        "height": 32
+      },
+      "preview_palette_colors": 16,
+      "palette_limit": 16,
+      "resampling": "nearest-neighbor",
+      "status": "REJECTED",
+      "reasons": [
+        "source has opaque background",
+        "Reference only: Renders a perspective spaceship with smaller escorts (a sheet); off-brief for a single top-down boss cell."
+      ],
+      "prompt": "One original Brood Carrier boss sprite, front/top-down facing player: wide crescent biomechanical saucer hull with ribbed chitin plates, twin dorsal stabilizers, recessed amber conduits, fore mandibles and three closed stepped launch shutters, central aperture. Broad readable single-cell silhouette that could scale up; original hard-edged pixel art with midnight outline, violet armored hull, restrained coral/gold highlights; single intact state on flat magenta, no damage overlays.",
+      "negative_prompt": "ordinary fighter, human aircraft, organic creature alone, multiple ships, scene, open hatch, UI, labels, text, smooth gradients, photorealism, blur, sheet",
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "seed": 731014,
+      "steps": 4,
+      "sha256": "eabdb6f3bb3e33b51a5a1f62538d4f8b22ee9a171fcc26e234f678e1ade4ee40"
     }
   ],
   "background_candidates": [
     {
       "name": "background_krybor_v2",
+      "prompt_key": "background_krybor",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 Astra prompts",
       "location": "KRYBOR \u00b7 cold lunar frontier",
       "source": "assets/background_krybor_v2-source.png",
       "preview": "assets/background_krybor_v2-preview.png",
@@ -541,6 +1209,8 @@
     },
     {
       "name": "background_ringfall_v2",
+      "prompt_key": "background_ringfall",
+      "pass": "I0 \u00b7 SDXS-512 \u00b7 Astra prompts",
       "location": "RINGFALL \u00b7 violet ringed gas giant",
       "source": "assets/background_ringfall_v2-source.png",
       "preview": "assets/background_ringfall_v2-preview.png",
@@ -562,6 +1232,110 @@
       "prompt": "Portrait 2:3 original intricate 16-bit pixel-art background concept for RINGFALL: a vast violet gas giant fills the distant sky with broad diagonal planetary rings, a purple cratered moon near the horizon, a sparse asteroid belt restricted to both side edges, and a few tiny abandoned orbital satellites. Leave the central 60 percent firing lane almost empty, near-black, and unobstructed; place recognizable landmarks in top corners, along the side margins, and low horizon. Sparse stars, deep navy-violet shadows, subdued low-luminance silhouettes, restrained dithering, crisp chunky square pixels, no parallax blur. Ensure enemy silhouettes and cyan, warm red/orange projectiles remain brighter than scenery. Whole image is background only.",
       "negative_prompt": "characters, demons, player ship, enemies, bullets, text, HUD, logo, watermark, bright central object, crowded center, giant bright planet center, gradients, photorealism, smooth vector, noisy texture, interface",
       "review": "Rejected as a replacement: the output is noisy/painterly, omits Ringfall\u2019s defining gas giant and broad diagonal rings, and makes the center much brighter and busier than current sector 2. Retain only for later model comparison."
+    },
+    {
+      "name": "background_krybor_i1_1",
+      "prompt_key": "background_krybor",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "location": "KRYBOR \u00b7 cold lunar frontier",
+      "source": "assets/background_krybor_i1_1-source.png",
+      "preview": "assets/background_krybor_i1_1-preview.png",
+      "current": "assets/background_krybor_i1_1-current.png",
+      "current_source": "assets/images/sector-1.png",
+      "source_dimensions": {
+        "width": 832,
+        "height": 1216
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "seed": 731015,
+      "steps": 4,
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "sha256": "fbf7cfd84719cb2d031ce5a2cc2548628ef7e08b23cf7857f1db65a3a5c8ce46",
+      "prompt": "Portrait 2:3 original intricate 16-bit pixel-art background concept for KRYBOR, a cold blue rocky lunar frontier. Distant pale ringed ice planet high on the right, small friendly moon, a few tiny geometric human outpost beacons and low shelters on a far uneven horizon. Leave the central 60 percent firing lane almost empty and very dark; concentrate terrain and landmarks at side edges, top corners, and low horizon. Sparse stars, near-black navy shadows, dim blue silhouettes, restrained dithering, crisp chunky square pixels, layered depth implied through pixel clusters, no parallax blur. Gameplay readability first: enemy silhouettes and cyan, warm red/orange projectiles must remain brighter than all scenery. Whole image is background only.",
+      "negative_prompt": "characters, demons, player ship, enemies, bullets, text, HUD, logo, watermark, bright central object, large bright nebula, gradients, photorealism, smooth vector, noisy texture, interface",
+      "review": "Rejected as a replacement: Polished cold-blue lunar illustration with ringed moon and spires; atmospheric and on palette, but a human figure and boat appear and the center lane is not kept dark. Illustration, not pixel art."
+    },
+    {
+      "name": "background_krybor_i1_2",
+      "prompt_key": "background_krybor",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "location": "KRYBOR \u00b7 cold lunar frontier",
+      "source": "assets/background_krybor_i1_2-source.png",
+      "preview": "assets/background_krybor_i1_2-preview.png",
+      "current": "assets/background_krybor_i1_2-current.png",
+      "current_source": "assets/images/sector-1.png",
+      "source_dimensions": {
+        "width": 832,
+        "height": 1216
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "seed": 731015,
+      "steps": 4,
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "sha256": "9d80f5b624343f206381c9991f87def6e0170a1c9c7f59f533275dfd85c6e143",
+      "prompt": "Portrait 2:3 original intricate 16-bit pixel-art background concept for KRYBOR, a cold blue rocky lunar frontier. Distant pale ringed ice planet high on the right, small friendly moon, a few tiny geometric human outpost beacons and low shelters on a far uneven horizon. Leave the central 60 percent firing lane almost empty and very dark; concentrate terrain and landmarks at side edges, top corners, and low horizon. Sparse stars, near-black navy shadows, dim blue silhouettes, restrained dithering, crisp chunky square pixels, layered depth implied through pixel clusters, no parallax blur. Gameplay readability first: enemy silhouettes and cyan, warm red/orange projectiles must remain brighter than all scenery. Whole image is background only.",
+      "negative_prompt": "characters, demons, player ship, enemies, bullets, text, HUD, logo, watermark, bright central object, large bright nebula, gradients, photorealism, smooth vector, noisy texture, interface",
+      "review": "Rejected as a replacement: Blue mountain lake with orange sunset highlights; attractive but the warm horizon band would compete with orange enemy projectiles."
+    },
+    {
+      "name": "background_ringfall_i1_1",
+      "prompt_key": "background_ringfall",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "location": "RINGFALL \u00b7 violet ringed gas giant",
+      "source": "assets/background_ringfall_i1_1-source.png",
+      "preview": "assets/background_ringfall_i1_1-preview.png",
+      "current": "assets/background_ringfall_i1_1-current.png",
+      "current_source": "assets/images/sector-2.png",
+      "source_dimensions": {
+        "width": 832,
+        "height": 1216
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "seed": 731016,
+      "steps": 4,
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "sha256": "a3b49286943e0fc1e1c4f9b82b8c70ce9b8725875bb08200681715a55660ac1c",
+      "prompt": "Portrait 2:3 original intricate 16-bit pixel-art background concept for RINGFALL: a vast violet gas giant fills the distant sky with broad diagonal planetary rings, a purple cratered moon near the horizon, a sparse asteroid belt restricted to both side edges, and a few tiny abandoned orbital satellites. Leave the central 60 percent firing lane almost empty, near-black, and unobstructed; place recognizable landmarks in top corners, along the side margins, and low horizon. Sparse stars, deep navy-violet shadows, subdued low-luminance silhouettes, restrained dithering, crisp chunky square pixels, no parallax blur. Ensure enemy silhouettes and cyan, warm red/orange projectiles remain brighter than scenery. Whole image is background only.",
+      "negative_prompt": "characters, demons, player ship, enemies, bullets, text, HUD, logo, watermark, bright central object, crowded center, giant bright planet center, gradients, photorealism, smooth vector, noisy texture, interface",
+      "review": "Rejected as a replacement: Violet world with large pink planet; strong mood and palette, but no gas-giant rings and bright pink valley through the firing lane."
+    },
+    {
+      "name": "background_ringfall_i1_2",
+      "prompt_key": "background_ringfall",
+      "pass": "I1 \u00b7 SDXL-Lightning \u00b7 Astra prompts",
+      "location": "RINGFALL \u00b7 violet ringed gas giant",
+      "source": "assets/background_ringfall_i1_2-source.png",
+      "preview": "assets/background_ringfall_i1_2-preview.png",
+      "current": "assets/background_ringfall_i1_2-current.png",
+      "current_source": "assets/images/sector-2.png",
+      "source_dimensions": {
+        "width": 832,
+        "height": 1216
+      },
+      "source_channels": "srgb  3.0",
+      "source_has_alpha": false,
+      "seed": 731016,
+      "steps": 4,
+      "model": "SDXL-Lightning-4step",
+      "tier": "I1",
+      "backend": "vulkan",
+      "license_metadata": "openrail++",
+      "sha256": "09b79be53a66b9cee0c18925cf27597427177129e959f01edf92e27f79a899db",
+      "prompt": "Portrait 2:3 original intricate 16-bit pixel-art background concept for RINGFALL: a vast violet gas giant fills the distant sky with broad diagonal planetary rings, a purple cratered moon near the horizon, a sparse asteroid belt restricted to both side edges, and a few tiny abandoned orbital satellites. Leave the central 60 percent firing lane almost empty, near-black, and unobstructed; place recognizable landmarks in top corners, along the side margins, and low horizon. Sparse stars, deep navy-violet shadows, subdued low-luminance silhouettes, restrained dithering, crisp chunky square pixels, no parallax blur. Ensure enemy silhouettes and cyan, warm red/orange projectiles remain brighter than scenery. Whole image is background only.",
+      "negative_prompt": "characters, demons, player ship, enemies, bullets, text, HUD, logo, watermark, bright central object, crowded center, giant bright planet center, gradients, photorealism, smooth vector, noisy texture, interface",
+      "review": "Rejected as a replacement: Closest to brief: diagonal rings and violet gas giant at top-right, moons, dark side cliffs. Includes a human figure and a bright pink path down the center lane."
     }
   ],
   "integration_status": "research-only; all model outputs are references; none pass transparency/state-consistency gates and no live game asset is replaced"

@@ -1,0 +1,74 @@
+{
+  "family": "ship",
+  "pipeline_version": 2,
+  "packed": "2026-11-01T23:22:25+00:00",
+  "cell": {
+    "width": 96,
+    "height": 96
+  },
+  "logical": {
+    "width": 48,
+    "height": 48,
+    "pixel_scale": 2
+  },
+  "wear_states": [
+    "fresh",
+    "worn",
+    "critical"
+  ],
+  "rows": {
+    "hull": 0,
+    "spread": 1,
+    "large": 2,
+    "rapid": 3,
+    "powerful": 4,
+    "shield": 5
+  },
+  "layer_order": [
+    "hull",
+    "shield",
+    "rapid",
+    "powerful",
+    "spread",
+    "large"
+  ],
+  "provisional": true,
+  "sources": {
+    "hull": {
+      "candidate": "hull-I0-820000-3",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "provisional": true
+    },
+    "spread": {
+      "candidate": "spread-I0-820010-0",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "provisional": true
+    },
+    "large": {
+      "candidate": "large-I0-820020-0",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "provisional": true
+    },
+    "rapid": {
+      "candidate": "rapid-I0-820030-1",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "provisional": true
+    },
+    "powerful": {
+      "candidate": "powerful-I0-820040-0",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "provisional": true
+    },
+    "shield": {
+      "candidate": "shield-I0-820050-1",
+      "tier": "I0",
+      "model": "SDXS-512-0.9",
+      "provisional": true
+    }
+  }
+}
