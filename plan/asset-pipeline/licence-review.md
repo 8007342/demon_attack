@@ -143,3 +143,11 @@
 - **Problematic:** 2b FLUX.2-klein-9B (non-commercial); FLUX.2-dev (non-commercial); 12b Depth-Anything-V2-Base/Large (`cc-by-nc-4.0`); `lllyasviel/LayerDiffuse_Diffusers` (`openrail`, not allowlisted); `ntc-ai/SDXL-LoRA-slider.pixel-art` (turbo-merge example).
 - **Caveats to approve explicitly:** FLUX.1-schnell is gated (auto-accept login). The lightx2v LoRAs are not Qwen-official. BiRefNet and BEN2 train on DIS5K (dataset terms not checked). Comfy-Org repacks bundle unreviewed third-party models. OpenRAIL use restrictions apply to SDXL and its derivatives.
 - **UNVERIFIED:** 7c "Wan2.2-FLF2V-A14B". No official repo exists, so there is no card to approve against.
+
+## Addendum (2026-11-01): DINOv2-small
+
+| Model | Official card | Licence id (card metadata) | Non-commercial base? | Allowlist | Status |
+|---|---|---|---|---|---|
+| DINOv2-small (embedding model for identity-similarity QA) | https://huggingface.co/facebook/dinov2-small | `apache-2.0` | No | Yes | VERIFIED (HF API `cardData.license`, not gated) |
+
+The forge's format owner (calmecacpilli) confirms this falls under the operator's standing approval.
