@@ -1,7 +1,7 @@
 {
   "family": "ship",
-  "pipeline_version": 2,
-  "packed": "2026-11-01T23:22:25+00:00",
+  "pipeline_version": 3,
+  "packed": "2026-11-01T23:28:54+00:00",
   "cell": {
     "width": 96,
     "height": 96
@@ -35,9 +35,9 @@
   "provisional": true,
   "sources": {
     "hull": {
-      "candidate": "hull-I0-820000-3",
-      "tier": "I0",
-      "model": "SDXS-512-0.9",
+      "candidate": "hull-I1-820000-3",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
       "provisional": true
     },
     "spread": {
@@ -47,27 +47,27 @@
       "provisional": true
     },
     "large": {
-      "candidate": "large-I0-820020-0",
-      "tier": "I0",
-      "model": "SDXS-512-0.9",
+      "candidate": "large-I1-820020-1",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
       "provisional": true
     },
     "rapid": {
-      "candidate": "rapid-I0-820030-1",
-      "tier": "I0",
-      "model": "SDXS-512-0.9",
+      "candidate": "rapid-I1-820030-1",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
       "provisional": true
     },
     "powerful": {
-      "candidate": "powerful-I0-820040-0",
-      "tier": "I0",
-      "model": "SDXS-512-0.9",
+      "candidate": "powerful-I1-820040-1",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
       "provisional": true
     },
     "shield": {
-      "candidate": "shield-I0-820050-1",
-      "tier": "I0",
-      "model": "SDXS-512-0.9",
+      "candidate": "shield-I1-820050-1",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
       "provisional": true
     }
   }

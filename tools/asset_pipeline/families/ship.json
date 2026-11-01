@@ -1,6 +1,6 @@
 {
   "family": "ship",
-  "version": 3,
+  "version": 4,
   "description": "Player starfighter: a hull plus combinable weapon modules, each with fresh/worn/critical wear states. Every part is a full-canvas layer on one shared logical canvas, so layers stack without per-part offsets.",
   "canvas": {
     "width": 48,
@@ -151,7 +151,15 @@
       ],
       "prompt": "round violet shield generator emitter device, glowing purple energy core in a hexagonal metal ring, top-down",
       "negative": "spaceship, wings, bubble, person, planet",
-      "dock": null
+      "dock": null,
+      "critical_ramp": [
+        "#2A1F5C",
+        "#5B3FA8",
+        "#A888FF",
+        "#C9B8FF",
+        "#E2D6FF",
+        "#FFFFFF"
+      ]
     }
   ],
   "generation": {

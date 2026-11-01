@@ -1,7 +1,7 @@
 {
   "family": "ship",
-  "pipeline_version": 2,
-  "processed": "2026-11-01T23:21:54+00:00",
+  "pipeline_version": 3,
+  "processed": "2026-11-01T23:28:53+00:00",
   "candidates": [
     {
       "id": "hull-I0-820000-0",
@@ -776,6 +776,760 @@
         11
       ],
       "palette_colours": 4
+    },
+    {
+      "id": "hull-I1-820000-0",
+      "part": "hull",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/hull/I1-s820000-0.png",
+      "isolation": {
+        "background_rgb": [
+          78,
+          47,
+          107
+        ],
+        "background_noise": 82.26,
+        "coverage": 0.0278,
+        "components": 98,
+        "largest_component_share": 0.228,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.243,
+      "status": "FAIL",
+      "score": 0.131,
+      "reasons": [
+        "not a single object (largest component under half of the mask)"
+      ],
+      "layer": "candidates/hull/hull-I1-820000-0.png",
+      "mask": "candidates/hull/hull-I1-820000-0-mask.png",
+      "slot_fill": 0.066,
+      "sprite_size": [
+        28,
+        11
+      ],
+      "palette_colours": 2
+    },
+    {
+      "id": "hull-I1-820000-1",
+      "part": "hull",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/hull/I1-s820000-1.png",
+      "isolation": {
+        "background_rgb": [
+          125,
+          64,
+          127
+        ],
+        "background_noise": 1.61,
+        "coverage": 0.1152,
+        "components": 118,
+        "largest_component_share": 0.648,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.275,
+      "status": "WARN",
+      "score": 0.726,
+      "reasons": [
+        "source is asymmetric (IoU 0.28); mirroring changed its design"
+      ],
+      "layer": "candidates/hull/hull-I1-820000-1.png",
+      "mask": "candidates/hull/hull-I1-820000-1-mask.png",
+      "slot_fill": 0.271,
+      "sprite_size": [
+        24,
+        40
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "hull-I1-820000-2",
+      "part": "hull",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/hull/I1-s820000-2.png",
+      "isolation": {
+        "background_rgb": [
+          153,
+          76,
+          135
+        ],
+        "background_noise": 2.35,
+        "coverage": 0.2713,
+        "components": 29,
+        "largest_component_share": 0.994,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.802,
+      "status": "PASS",
+      "score": 0.881,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I1-820000-2.png",
+      "mask": "candidates/hull/hull-I1-820000-2-mask.png",
+      "slot_fill": 0.311,
+      "sprite_size": [
+        28,
+        28
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "hull-I1-820000-3",
+      "part": "hull",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/hull/I1-s820000-3.png",
+      "isolation": {
+        "background_rgb": [
+          149,
+          98,
+          144
+        ],
+        "background_noise": 1.77,
+        "coverage": 0.3413,
+        "components": 48,
+        "largest_component_share": 0.992,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.731,
+      "status": "PASS",
+      "score": 0.885,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I1-820000-3.png",
+      "mask": "candidates/hull/hull-I1-820000-3-mask.png",
+      "slot_fill": 0.364,
+      "sprite_size": [
+        28,
+        27
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "spread-I1-820010-0",
+      "part": "spread",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/spread/I1-s820010-0.png",
+      "isolation": {
+        "background_rgb": [
+          191,
+          73,
+          163
+        ],
+        "background_noise": 2.64,
+        "coverage": 0.1431,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.805,
+      "status": "PASS",
+      "score": 0.879,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I1-820010-0.png",
+      "mask": "candidates/spread/spread-I1-820010-0-mask.png",
+      "slot_fill": 0.298,
+      "sprite_size": [
+        6,
+        14
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "spread-I1-820010-1",
+      "part": "spread",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/spread/I1-s820010-1.png",
+      "isolation": {
+        "background_rgb": [
+          158,
+          68,
+          149
+        ],
+        "background_noise": 2.46,
+        "coverage": 0.1296,
+        "components": 2,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.929,
+      "status": "PASS",
+      "score": 0.9,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I1-820010-1.png",
+      "mask": "candidates/spread/spread-I1-820010-1-mask.png",
+      "slot_fill": 0.298,
+      "sprite_size": [
+        6,
+        14
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "spread-I1-820010-2",
+      "part": "spread",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/spread/I1-s820010-2.png",
+      "isolation": {
+        "background_rgb": [
+          181,
+          106,
+          92
+        ],
+        "background_noise": 68.23,
+        "coverage": 0.0008,
+        "components": 18,
+        "largest_component_share": 0.432,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.0,
+      "status": "FAIL",
+      "score": 0.132,
+      "reasons": [
+        "isolation failed (object covers 0% of frame)",
+        "not a single object (largest component under half of the mask)"
+      ],
+      "layer": "candidates/spread/spread-I1-820010-2.png",
+      "mask": "candidates/spread/spread-I1-820010-2-mask.png",
+      "slot_fill": 0.0,
+      "sprite_size": [
+        8,
+        14
+      ],
+      "palette_colours": 0
+    },
+    {
+      "id": "spread-I1-820010-3",
+      "part": "spread",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/spread/I1-s820010-3.png",
+      "isolation": {
+        "background_rgb": [
+          140,
+          85,
+          124
+        ],
+        "background_noise": 15.62,
+        "coverage": 0.2118,
+        "components": 12,
+        "largest_component_share": 0.993,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.9,
+      "status": "PASS",
+      "score": 0.882,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I1-820010-3.png",
+      "mask": "candidates/spread/spread-I1-820010-3-mask.png",
+      "slot_fill": 0.345,
+      "sprite_size": [
+        8,
+        14
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "large-I1-820020-0",
+      "part": "large",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/large/I1-s820020-0.png",
+      "isolation": {
+        "background_rgb": [
+          177,
+          86,
+          155
+        ],
+        "background_noise": 2.49,
+        "coverage": 0.3645,
+        "components": 2,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.95,
+      "status": "PASS",
+      "score": 0.913,
+      "reasons": [],
+      "layer": "candidates/large/large-I1-820020-0.png",
+      "mask": "candidates/large/large-I1-820020-0-mask.png",
+      "slot_fill": 0.333,
+      "sprite_size": [
+        10,
+        11
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "large-I1-820020-1",
+      "part": "large",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/large/I1-s820020-1.png",
+      "isolation": {
+        "background_rgb": [
+          150,
+          68,
+          146
+        ],
+        "background_noise": 2.28,
+        "coverage": 0.1782,
+        "components": 11,
+        "largest_component_share": 0.998,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.869,
+      "status": "PASS",
+      "score": 0.927,
+      "reasons": [],
+      "layer": "candidates/large/large-I1-820020-1.png",
+      "mask": "candidates/large/large-I1-820020-1-mask.png",
+      "slot_fill": 0.433,
+      "sprite_size": [
+        10,
+        13
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "large-I1-820020-2",
+      "part": "large",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/large/I1-s820020-2.png",
+      "isolation": {
+        "background_rgb": [
+          154,
+          76,
+          163
+        ],
+        "background_noise": 1.82,
+        "coverage": 0.2976,
+        "components": 2,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.92,
+      "status": "PASS",
+      "score": 0.906,
+      "reasons": [],
+      "layer": "candidates/large/large-I1-820020-2.png",
+      "mask": "candidates/large/large-I1-820020-2-mask.png",
+      "slot_fill": 0.322,
+      "sprite_size": [
+        10,
+        11
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "large-I1-820020-3",
+      "part": "large",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/large/I1-s820020-3.png",
+      "isolation": {
+        "background_rgb": [
+          148,
+          107,
+          167
+        ],
+        "background_noise": 1.49,
+        "coverage": 0.2783,
+        "components": 7,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.919,
+      "status": "PASS",
+      "score": 0.891,
+      "reasons": [],
+      "layer": "candidates/large/large-I1-820020-3.png",
+      "mask": "candidates/large/large-I1-820020-3-mask.png",
+      "slot_fill": 0.267,
+      "sprite_size": [
+        10,
+        7
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "rapid-I1-820030-0",
+      "part": "rapid",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/rapid/I1-s820030-0.png",
+      "isolation": {
+        "background_rgb": [
+          169,
+          97,
+          175
+        ],
+        "background_noise": 2.13,
+        "coverage": 0.2351,
+        "components": 47,
+        "largest_component_share": 0.976,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.793,
+      "status": "PASS",
+      "score": 0.807,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I1-820030-0.png",
+      "mask": "candidates/rapid/rapid-I1-820030-0-mask.png",
+      "slot_fill": 0.232,
+      "sprite_size": [
+        10,
+        10
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "rapid-I1-820030-1",
+      "part": "rapid",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/rapid/I1-s820030-1.png",
+      "isolation": {
+        "background_rgb": [
+          199,
+          118,
+          184
+        ],
+        "background_noise": 2.01,
+        "coverage": 0.1247,
+        "components": 26,
+        "largest_component_share": 0.993,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.806,
+      "status": "PASS",
+      "score": 0.874,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I1-820030-1.png",
+      "mask": "candidates/rapid/rapid-I1-820030-1-mask.png",
+      "slot_fill": 0.464,
+      "sprite_size": [
+        10,
+        17
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "rapid-I1-820030-2",
+      "part": "rapid",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/rapid/I1-s820030-2.png",
+      "isolation": {
+        "background_rgb": [
+          102,
+          53,
+          130
+        ],
+        "background_noise": 1.98,
+        "coverage": 0.1327,
+        "components": 141,
+        "largest_component_share": 0.133,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.773,
+      "status": "FAIL",
+      "score": 0.267,
+      "reasons": [
+        "not a single object (largest component under half of the mask)"
+      ],
+      "layer": "candidates/rapid/rapid-I1-820030-2.png",
+      "mask": "candidates/rapid/rapid-I1-820030-2-mask.png",
+      "slot_fill": 0.236,
+      "sprite_size": [
+        10,
+        10
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "rapid-I1-820030-3",
+      "part": "rapid",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/rapid/I1-s820030-3.png",
+      "isolation": {
+        "background_rgb": [
+          185,
+          53,
+          167
+        ],
+        "background_noise": 2.35,
+        "coverage": 0.3799,
+        "components": 12,
+        "largest_component_share": 0.999,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.93,
+      "status": "PASS",
+      "score": 0.834,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I1-820030-3.png",
+      "mask": "candidates/rapid/rapid-I1-820030-3-mask.png",
+      "slot_fill": 0.318,
+      "sprite_size": [
+        10,
+        10
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "powerful-I1-820040-0",
+      "part": "powerful",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/powerful/I1-s820040-0.png",
+      "isolation": {
+        "background_rgb": [
+          87,
+          72,
+          92
+        ],
+        "background_noise": 68.24,
+        "coverage": 0.0,
+        "components": 30,
+        "largest_component_share": 0.159,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.0,
+      "status": "FAIL",
+      "score": 0.0,
+      "reasons": [
+        "nothing separable from the background"
+      ],
+      "layer": null
+    },
+    {
+      "id": "powerful-I1-820040-1",
+      "part": "powerful",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/powerful/I1-s820040-1.png",
+      "isolation": {
+        "background_rgb": [
+          164,
+          130,
+          157
+        ],
+        "background_noise": 1.48,
+        "coverage": 0.3642,
+        "components": 28,
+        "largest_component_share": 0.998,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.647,
+      "status": "PASS",
+      "score": 0.829,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I1-820040-1.png",
+      "mask": "candidates/powerful/powerful-I1-820040-1-mask.png",
+      "slot_fill": 0.208,
+      "sprite_size": [
+        10,
+        9
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "powerful-I1-820040-2",
+      "part": "powerful",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/powerful/I1-s820040-2.png",
+      "isolation": {
+        "background_rgb": [
+          119,
+          46,
+          114
+        ],
+        "background_noise": 1.72,
+        "coverage": 0.2023,
+        "components": 120,
+        "largest_component_share": 0.893,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.37,
+      "status": "WARN",
+      "score": 0.752,
+      "reasons": [
+        "source is asymmetric (IoU 0.37); mirroring changed its design",
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I1-820040-2.png",
+      "mask": "candidates/powerful/powerful-I1-820040-2-mask.png",
+      "slot_fill": 0.162,
+      "sprite_size": [
+        10,
+        8
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "powerful-I1-820040-3",
+      "part": "powerful",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/powerful/I1-s820040-3.png",
+      "isolation": {
+        "background_rgb": [
+          198,
+          84,
+          169
+        ],
+        "background_noise": 2.49,
+        "coverage": 0.2015,
+        "components": 6,
+        "largest_component_share": 0.9,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.466,
+      "status": "WARN",
+      "score": 0.761,
+      "reasons": [
+        "source is asymmetric (IoU 0.47); mirroring changed its design",
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I1-820040-3.png",
+      "mask": "candidates/powerful/powerful-I1-820040-3-mask.png",
+      "slot_fill": 0.138,
+      "sprite_size": [
+        10,
+        9
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "shield-I1-820050-0",
+      "part": "shield",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/shield/I1-s820050-0.png",
+      "isolation": {
+        "background_rgb": [
+          150,
+          82,
+          163
+        ],
+        "background_noise": 2.58,
+        "coverage": 0.255,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.985,
+      "status": "PASS",
+      "score": 0.988,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I1-820050-0.png",
+      "mask": "candidates/shield/shield-I1-820050-0-mask.png",
+      "slot_fill": 0.583,
+      "sprite_size": [
+        10,
+        12
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "shield-I1-820050-1",
+      "part": "shield",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/shield/I1-s820050-1.png",
+      "isolation": {
+        "background_rgb": [
+          147,
+          100,
+          172
+        ],
+        "background_noise": 2.03,
+        "coverage": 0.5398,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.986,
+      "status": "PASS",
+      "score": 0.994,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I1-820050-1.png",
+      "mask": "candidates/shield/shield-I1-820050-1-mask.png",
+      "slot_fill": 0.722,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "shield-I1-820050-2",
+      "part": "shield",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/shield/I1-s820050-2.png",
+      "isolation": {
+        "background_rgb": [
+          145,
+          67,
+          167
+        ],
+        "background_noise": 1.9,
+        "coverage": 0.2515,
+        "components": 9,
+        "largest_component_share": 0.992,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.963,
+      "status": "PASS",
+      "score": 0.977,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I1-820050-2.png",
+      "mask": "candidates/shield/shield-I1-820050-2-mask.png",
+      "slot_fill": 0.556,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "shield-I1-820050-3",
+      "part": "shield",
+      "tier": "I1",
+      "model": "SDXL-Lightning-4step",
+      "raw": "raw/shield/I1-s820050-3.png",
+      "isolation": {
+        "background_rgb": [
+          134,
+          59,
+          167
+        ],
+        "background_noise": 1.82,
+        "coverage": 0.2559,
+        "components": 77,
+        "largest_component_share": 0.534,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.831,
+      "status": "PASS",
+      "score": 0.863,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I1-820050-3.png",
+      "mask": "candidates/shield/shield-I1-820050-3-mask.png",
+      "slot_fill": 0.5,
+      "sprite_size": [
+        10,
+        12
+      ],
+      "palette_colours": 6
     }
   ]
 }

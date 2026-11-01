@@ -33,4 +33,5 @@
 - [x] 6.2 Generate 24 I0 candidates sequentially, then ingest, process, and QA-grade them; publish the review gallery with loadout and wear sheets.
 - [x] 6.3 Pack a provisional `ship-parts.png` and draw it in-game as layered modules with wear states and jettisoned critical parts; keep the code-drawn fallback; analyzer clean, 131 tests pass.
 - [ ] 6.4 Human acceptance of each part (blocked on review).
-- [ ] 6.5 Re-run the queue at I1, and at I2/I3 once offered, then compare in the same gallery.
+- [x] 6.5 Re-run the queue at I1 (24 more candidates in the same gallery; 5 of 6 provisional picks now I1); the shield gets a violet critical ramp per the style guide.
+- [ ] 6.6 Re-run at I2/I3 once offered (operator pre-approved the ladder).

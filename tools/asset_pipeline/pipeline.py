@@ -25,7 +25,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
-PIPELINE_VERSION = 2
+PIPELINE_VERSION = 3
 ROOT = Path(__file__).resolve().parents[2]
 FAMILIES = Path(__file__).resolve().parent / "families"
 WEAR_HEAT = ["#9E1B1B", "#E8430C", "#FF6B1A", "#FFBF1F", "#FFE042", "#FFF8DC"]
@@ -285,12 +285,14 @@ def derive_wear(layer: np.ndarray, spec: dict, part: dict, state: str) -> np.nda
     rows = np.arange(out.shape[0])[:, None].repeat(out.shape[1], 1)
     heat = 1.0 - (rows - top) / max(bottom - top, 1)
     lum = layer[..., :3].astype(np.float64) @ np.array([0.3, 0.59, 0.11]) / 255
-    level = np.clip((0.55 * heat + 0.45 * lum) * (len(WEAR_HEAT) - 1), 0, len(WEAR_HEAT) - 1).round().astype(int)
-    for i, colour in enumerate(WEAR_HEAT):
+    # Force-field hardware must never run warm (style guide), so parts may carry their own ramp.
+    ramp = part.get("critical_ramp", WEAR_HEAT)
+    level = np.clip((0.55 * heat + 0.45 * lum) * (len(ramp) - 1), 0, len(ramp) - 1).round().astype(int)
+    for i, colour in enumerate(ramp):
         sel = hot & (level == i)
         out[sel, :3] = hex_rgb(colour).astype(np.uint8)
     cracks = order[-max(2, len(order) // 30):]
-    out[ys[cracks], xs[cracks], :3] = hex_rgb(WEAR_HEAT[0]).astype(np.uint8)
+    out[ys[cracks], xs[cracks], :3] = hex_rgb(ramp[0]).astype(np.uint8)
     return out
 
 
