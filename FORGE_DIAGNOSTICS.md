@@ -188,3 +188,7 @@ On this host the managed Wrangler preview again reports `serving: true` at `http
 - ComfyUI "studio": a sibling container (`imagegen-studio`, port 8188, read-only model cache, no egress), opted in with `[imagegen] studio=true`. It isn't on trunk yet (drafts #791/#793/#794). It exposes ComfyUI's own HTTP API, with no MCP workflow surface yet. Our feature list (reference conditioning, ControlNet, LoRA load/train, transparency, batch/seed, metadata with model hash and workflow JSON) has been filed as a work order.
 - Licensing: the RMBG-1.4/2.0 background-removal models are never-shippable. Transparency must come from LayerDiffuse or a permissively licensed matte.
 - The browser `ERR_CONNECTION_CLOSED` and the `demon_attack`/`demon-attack` hostname contradiction were acknowledged as a forge defect and filed.
+
+### Concurrent `image.generate` calls crash the engine (2026-11-01)
+
+Six `image.generate` calls sent at once (I0, 512², count 4) crashed every one except the first. One failed with "model manager memory on Vulkan0: reported free 180.38 MB / total 24564.00 MB … cannot make enough memory available". The other four exited with status 139 (sd-cli segfault). Retried one at a time, all succeeded in about 8–10 s each. Several responses also reported `backend: "mixed"`, which suggests another process (possibly the ollama inference service) held most of the 24 GB at that moment. The asset pipeline therefore runs requests sequentially, and the tool should serialize or queue concurrent calls.
