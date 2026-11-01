@@ -1,5 +1,9 @@
 # Local model licence review
 
+> **Operator decision (2026-11-01, relayed by the host coordinator), verbatim:** "For our own projects we shall have a standing approval to use all of those free models, we'll not be selling any of those assets."
+> This covers the allowlist-clean rows below for Tillandsias projects (demon_attack, kumbia-kombat). Rows flagged as problematic are excluded. Fetching still goes through the forge licence register, and gated click-through terms (FLUX.1-schnell) still need the operator's own acceptance. If any project's assets are later sold, revisit the OpenRAIL and use-restriction notes.
+
+
 **Prepared for operator approval.** The operator approves each model against its official model card. This page is a record of what those cards say. It is not legal advice and it does not approve anything.
 
 - Prepared: 2026-11-01
