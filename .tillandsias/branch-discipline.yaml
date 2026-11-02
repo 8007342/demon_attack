@@ -1,0 +1,14 @@
+# Branch discipline seed (order 1443-w79y), created by
+# `tillandsias-plan discipline raise --to 1` (order 1446-xqi6).
+# Levels only move forward; read it with `tillandsias-plan discipline show`.
+version: 1
+level: 1
+enforcement:
+  default_branch: enforced
+  ref_grammar: advised
+default_branch: main
+integration:
+  linux: game
+  forge: game
+  windows: game
+  macos: game
