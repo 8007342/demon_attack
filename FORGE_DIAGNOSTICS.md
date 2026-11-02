@@ -192,3 +192,31 @@ On this host the managed Wrangler preview again reports `serving: true` at `http
 ### Concurrent `image.generate` calls crash the engine (2026-11-01)
 
 Six `image.generate` calls sent at once (I0, 512², count 4) crashed every one except the first. One failed with "model manager memory on Vulkan0: reported free 180.38 MB / total 24564.00 MB … cannot make enough memory available". The other four exited with status 139 (sd-cli segfault). Retried one at a time, all succeeded in about 8–10 s each. Several responses also reported `backend: "mixed"`, which suggests another process (possibly the ollama inference service) held most of the 24 GB at that moment. The asset pipeline therefore runs requests sequentially, and the tool should serialize or queue concurrent calls.
+
+## I2/I3 FLUX tier runs (2026-11-02)
+
+The `accel_vram_gb` envelope fix is live (`accel_vram_gb=24`). The first I1 attempts failed because only 0.76–1.18 GB of VRAM was free. The second failure was an exit-139 segfault ("corrupted double-linked list") instead of a clean busy error. The host coordinator found the enclave's inference container (ollama, qwen2.5:14b, 32k context) holding 22.2 GB and unloaded it with keep_alive 0. They filed VRAM-holder reporting with a clean `gpu_memory_busy` error (PR #806) and a model load/unload facility. Direct admission of an already-granted tier is PR #825, which is not in this build.
+
+The ladder was then walked with the user's standing consent: I0 → I1 offer → I1 (4.7 s) → I2 offer → I2 → I3 offer → I3. Each tier offer's `ask` sentence was relayed verbatim.
+
+- **I2, FLUX.1-schnell Q4_0 + ae + T5-XXL Q4_K (apache-2.0):** the first call took 275 s including download and load. After that, 34–36 s per 4 × 1024² batch at 4 steps on Vulkan.
+- **I3, FLUX.1-schnell Q8_0 + T5-XXL Q8_0 (apache-2.0):** the first call took 459 s including download. After that, 36–37 s per batch, about the same speed as I2.
+- An I2 call is admitted without a token once the tier has been granted. Every I2 response still offers I3 with a fresh token, so each I3 batch used that call's token.
+- Ship family: 6 parts × 4 images × 2 tiers = 48 raws, ingested (96 in `runs.json` in total), processed and reviewed at `/asset-pipeline-review/ship/`.
+
+QA (PASS/WARN/FAIL, best score), I1 → I2 → I3:
+
+| Part | I1 | I2 | I3 |
+|---|---|---|---|
+| hull | 2/1/1, 0.89 | 4/0/0, **0.99** | 4/0/0, 0.97 |
+| spread | 3/0/1, 0.90 | 1/1/2, 0.92 | 2/1/1, 0.92 |
+| large | 4/0/0, 0.93 | 4/0/0, 0.95 | 4/0/0, **0.96** |
+| rapid | 3/0/1, **0.87** | 0/4/0, 0.79 | 1/3/0, 0.81 |
+| powerful | 1/2/1, **0.83** | 0/4/0, 0.78 | 0/4/0, 0.76 |
+| shield | 4/0/0, 0.99 | 4/0/0, 1.00 | 4/0/0, **1.00** |
+
+Visual review: FLUX follows the prompts far better than SDXL-Lightning. It gives flat magenta backgrounds, real 16-bit pixel-art styling, one object per image, and a cannon for "large" where I1 drew a ship. Q4 and Q8 give almost the same composition for the same seed; Q8 adds slightly finer detail at no meaningful speed cost. Remaining faults:
+- rapid and powerful come out at a diagonal instead of "pointing up", which explains the WARNs on the symmetry and orientation gates;
+- spread sometimes draws a framed card or a winged emblem;
+- one hull variant per tier adds stray sparkles.
+Fix these with orientation wording or ControlNet once the studio lands, rather than with a bigger model. Best candidates by score: hull-I2-820000-3, large-I3-820020-0 and shield-I3-820050-0. A human still has to accept each one.

@@ -34,4 +34,4 @@
 - [x] 6.3 Pack a provisional `ship-parts.png` and draw it in-game as layered modules with wear states and jettisoned critical parts; keep the code-drawn fallback; analyzer clean, 131 tests pass.
 - [ ] 6.4 Human acceptance of each part (blocked on review).
 - [x] 6.5 Re-run the queue at I1 (24 more candidates in the same gallery; 5 of 6 provisional picks now I1); the shield gets a violet critical ramp per the style guide.
-- [ ] 6.6 Re-run at I2/I3 once offered (operator pre-approved the ladder).
+- [x] 6.6 Re-run at I2/I3 once offered (operator pre-approved the ladder): 48 FLUX candidates on 2026-11-02; follow-up review work continues in `asset-review-progression`.

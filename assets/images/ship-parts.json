@@ -1,7 +1,7 @@
 {
   "family": "ship",
-  "pipeline_version": 3,
-  "packed": "2026-11-01T23:28:54+00:00",
+  "pipeline_version": 4,
+  "packed": "2026-11-02T05:21:32+00:00",
   "cell": {
     "width": 96,
     "height": 96
@@ -33,41 +33,55 @@
     "large"
   ],
   "provisional": true,
+  "wing_muzzles": {
+    "rapid": {
+      "x": -15.5,
+      "y": -10.0
+    },
+    "powerful": {
+      "x": -17.0,
+      "y": -13.0
+    }
+  },
+  "nose_muzzle": {
+    "x": 0.0,
+    "y": -10.0
+  },
   "sources": {
     "hull": {
-      "candidate": "hull-I1-820000-3",
-      "tier": "I1",
-      "model": "SDXL-Lightning-4step",
-      "provisional": true
+      "candidate": "hull-I2-820000-0",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "provisional": false
     },
     "spread": {
-      "candidate": "spread-I0-820010-0",
-      "tier": "I0",
-      "model": "SDXS-512-0.9",
+      "candidate": "spread-I3-820013-2",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
       "provisional": true
     },
     "large": {
-      "candidate": "large-I1-820020-1",
-      "tier": "I1",
-      "model": "SDXL-Lightning-4step",
+      "candidate": "large-I3-820020-2",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
       "provisional": true
     },
     "rapid": {
-      "candidate": "rapid-I1-820030-1",
-      "tier": "I1",
-      "model": "SDXL-Lightning-4step",
+      "candidate": "rapid-I2-820032-0",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
       "provisional": true
     },
     "powerful": {
-      "candidate": "powerful-I1-820040-1",
-      "tier": "I1",
-      "model": "SDXL-Lightning-4step",
-      "provisional": true
+      "candidate": "powerful-I2-820041-2",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "provisional": false
     },
     "shield": {
-      "candidate": "shield-I1-820050-1",
-      "tier": "I1",
-      "model": "SDXL-Lightning-4step",
+      "candidate": "shield-I3-820051-3",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
       "provisional": true
     }
   }

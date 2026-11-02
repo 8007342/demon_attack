@@ -295,6 +295,35 @@ class ArcadeModel {
       hasPower(Power.rapid) ||
       hasPower(Power.spread);
   double _fire = 0, _enemyFire = 1.5, _dive = 3, _flock = 0, _accumulator = 0;
+
+  /// Left wing muzzle of each wing module, in logical px from the ship centre
+  /// (the right muzzle mirrors it). The scene replaces these with the
+  /// `wing_muzzles` packed into ship-parts.json for the shipped art.
+  final Map<Power, ({double x, double y})> wingMuzzles = {
+    Power.rapid: (x: -15.5, y: -10.0),
+    Power.powerful: (x: -17.0, y: -8.0),
+  };
+
+  /// Side the next wing-cannon shot leaves from: -1 left, 1 right.
+  int wingSide = -1;
+
+  /// Seconds of recoil left on the [left, right] wing cannon after a shot.
+  final List<double> wingRecoil = [0, 0];
+  static const wingRecoilDuration = 0.09;
+
+  /// Seconds of muzzle flash left on the nose after a single-shooter shot.
+  double noseFlash = 0;
+
+  /// The wing module whose cannons own the primary shot. Any wing powerup
+  /// (powerful first, then rapid) fits the wing cannons; they then fire
+  /// alternately whatever nose module is active. Spread still adds its angled
+  /// pair from the nose, and large still enlarges every primary shot.
+  Power? get wingGun {
+    if (hasPower(Power.powerful)) return Power.powerful;
+    if (hasPower(Power.rapid)) return Power.rapid;
+    return null;
+  }
+
   double get speed => (1 + math.min(cycle, 4) * .04) * policy.hostileRate;
   bool get combat => mode == RunMode.playing;
   bool get canPilot =>
@@ -519,6 +548,9 @@ class ArcadeModel {
     demons.clear();
     shots.clear();
     _fire = 0;
+    wingSide = -1;
+    wingRecoil[0] = wingRecoil[1] = 0;
+    noseFlash = 0;
     _enemyFire = 1.7;
     _dive = 3;
     _flock = 2;
@@ -849,9 +881,7 @@ class ArcadeModel {
         if ((delta > 0 && nextX >= targetX) ||
             (delta < 0 && nextX <= targetX)) {
           shipX = targetX;
-          shipVx = dt > 0
-              ? ((shipX - oldShipX) / dt).clamp(-360.0, 360.0)
-              : 0;
+          shipVx = dt > 0 ? ((shipX - oldShipX) / dt).clamp(-360.0, 360.0) : 0;
         } else {
           shipX = nextX.clamp(18.0, width - 18.0);
           if (shipX <= 18.0 || shipX >= width - 18.0) {
@@ -935,8 +965,9 @@ class ArcadeModel {
     powerTimers.removeWhere((power, remaining) {
       if (remaining <= 0) {
         if (power != Power.shield) {
-          final side =
-              power == Power.rapid ? (random.nextBool() ? 1.0 : -1.0) : 0.0;
+          final side = power == Power.rapid
+              ? (random.nextBool() ? 1.0 : -1.0)
+              : 0.0;
           fallingParts.add(
             FallingPart(
               shipX + side * 14.0,
@@ -944,7 +975,8 @@ class ArcadeModel {
               power,
               vx: (random.nextDouble() - 0.5) * 40.0 + side * 20.0,
               vy: -25.0 - random.nextDouble() * 15.0,
-              vRot: (random.nextBool() ? 1.0 : -1.0) *
+              vRot:
+                  (random.nextBool() ? 1.0 : -1.0) *
                   (3.0 + random.nextDouble() * 3.0),
             ),
           );
@@ -970,6 +1002,9 @@ class ArcadeModel {
     }
     supplyCrates.removeWhere((c) => c.y > ArcadeModel.shipY + 30);
     _fire -= dt;
+    wingRecoil[0] = math.max(0, wingRecoil[0] - dt);
+    wingRecoil[1] = math.max(0, wingRecoil[1] - dt);
+    noseFlash = math.max(0, noseFlash - dt);
     if (_fire <= 0) {
       _fire += hasPower(Power.rapid) ? .105 : .23;
       final powerful = hasPower(Power.powerful), large = hasPower(Power.large);
@@ -997,9 +1032,24 @@ class ArcadeModel {
         damage: policy.weaponDamage(powerful: powerful),
         blastRadius: large ? policy.largeBlastRadius : 0,
       );
-      shots.add(
-        playerShot(shipX + shipBank * 3, shipY - 13, slingVx, -390),
-      );
+      final wing = wingGun;
+      if (wing != null) {
+        // Wing cannons alternate the primary shot: left, right, left, ...
+        final muzzle = wingMuzzles[wing]!;
+        shots.add(
+          playerShot(
+            shipX + wingSide * muzzle.x.abs() + shipBank * 3,
+            shipY + muzzle.y,
+            slingVx,
+            -390,
+          ),
+        );
+        wingRecoil[wingSide < 0 ? 0 : 1] = wingRecoilDuration;
+        wingSide = -wingSide;
+      } else {
+        shots.add(playerShot(shipX + shipBank * 3, shipY - 13, slingVx, -390));
+        noseFlash = wingRecoilDuration;
+      }
       if (hasPower(Power.spread)) {
         shots.addAll([
           playerShot(shipX - 5, shipY - 8, -90 + slingVx * 0.85, -370),
@@ -1144,11 +1194,10 @@ class ArcadeModel {
     d.vy = (d.y - prevY) / dt;
     final refSpeed = d.isLarge ? 120.0 : (d.dive > 0 ? 180.0 : 95.0);
     final targetBank = (d.vx / refSpeed).clamp(-1.0, 1.0);
-    d.bank =
-        (d.bank + (targetBank - d.bank) * (1 - math.exp(-14 * dt))).clamp(
-          -1.0,
-          1.0,
-        );
+    d.bank = (d.bank + (targetBank - d.bank) * (1 - math.exp(-14 * dt))).clamp(
+      -1.0,
+      1.0,
+    );
   }
 
   void _advanceWaveEntrance(double dt) {
@@ -1475,7 +1524,9 @@ class ArcadeModel {
       shipVx: shipVx,
       crowdBalance: ((rightNeighbors - leftNeighbors) / 4.0).clamp(-1.0, 1.0),
       healthRatio: d.hp / math.max(1, d.maxHp),
-      tierFactor: d.elite ? 1.0 : ((d.kind >= 2 || d.maxHp >= 3) ? 0.35 : -0.75),
+      tierFactor: d.elite
+          ? 1.0
+          : ((d.kind >= 2 || d.maxHp >= 3) ? 0.35 : -0.75),
     );
     final cooldown = difficulty == Difficulty.easy
         ? 3.2
@@ -1553,14 +1604,14 @@ class ArcadeModel {
       final sideRamp = ((levelClock - 0.65) / 0.35).clamp(0.0, 1.0);
       b.sideDoorLeft =
           (((math.sin(levelClock * (1.45 + b.phase * .2) + 1.9) + sideBonus) *
-                      2)
-                  .clamp(0.0, 1.0) *
-              sideRamp);
+                  2)
+              .clamp(0.0, 1.0) *
+          sideRamp);
       b.sideDoorRight =
           (((math.sin(levelClock * (1.45 + b.phase * .2) + 4.1) + sideBonus) *
-                      2)
-                  .clamp(0.0, 1.0) *
-              sideRamp);
+                  2)
+              .clamp(0.0, 1.0) *
+          sideRamp);
     }
     _flock -= dt * policy.hostileRate;
     final maxMinions = cycle == 0 ? 6 : (cycle == 1 ? 8 : 10);
@@ -1615,8 +1666,8 @@ class ArcadeModel {
         final power = roll < 0.70
             ? Power.large
             : (roll < 0.80
-                ? Power.powerful
-                : (roll < 0.90 ? Power.spread : Power.shield));
+                  ? Power.powerful
+                  : (roll < 0.90 ? Power.spread : Power.shield));
         final spawnX = 50.0 + random.nextDouble() * 260.0;
         supplyCrates.add(SupplyCrate(spawnX, -20.0, power));
       }
@@ -2058,13 +2109,11 @@ class ArcadeModel {
 
       final double anchorX, anchorY;
       if (b != null) {
-        final orbitAngle =
-            t * 2.2 + pairIndex * (math.pi * 2 / pairCount);
+        final orbitAngle = t * 2.2 + pairIndex * (math.pi * 2 / pairCount);
         anchorX = b.x + math.cos(orbitAngle) * 115.0;
         anchorY = b.y + math.sin(orbitAngle) * 58.0;
       } else {
-        final flockPhase =
-            t * 2.4 + pairIndex * (math.pi * 2 / pairCount);
+        final flockPhase = t * 2.4 + pairIndex * (math.pi * 2 / pairCount);
         anchorX = 180.0 + math.sin(flockPhase) * 105.0;
         anchorY = 220.0 + math.sin(flockPhase * 2) * 55.0;
       }
@@ -2074,7 +2123,8 @@ class ArcadeModel {
       final separation = (math.cos(clapPhase) * 0.5 + 0.5) * 26.0 + 4.0;
       final targetX =
           anchorX + (isSecond ? separation * 0.5 : -separation * 0.5);
-      final targetY = anchorY +
+      final targetY =
+          anchorY +
           (isSecond ? math.sin(t * 5.0) * 2.5 : -math.sin(t * 5.0) * 2.5);
 
       final prevX = d.x, prevY = d.y;

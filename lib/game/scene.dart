@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import 'model.dart';
 import 'sector_background.dart';
@@ -49,6 +51,20 @@ class DemonScene extends FlameGame {
     try {
       // Layered hull + weapon modules from tools/asset_pipeline (ship family).
       shipParts = await images.load('ship-parts.png');
+      final meta = jsonDecode(
+        await rootBundle.loadString('assets/images/ship-parts.json'),
+      ) as Map<String, dynamic>;
+      final nose = meta['nose_muzzle'];
+      if (nose is Map) noseMuzzleY = (nose['y'] as num).toDouble();
+      final muzzles = meta['wing_muzzles'] as Map<String, dynamic>? ?? {};
+      for (final MapEntry(:key, :value) in muzzles.entries) {
+        final power = Power.values.where((p) => p.name == key).firstOrNull;
+        if (power == null || value is! Map) continue;
+        model.wingMuzzles[power] = (
+          x: (value['x'] as num).toDouble(),
+          y: (value['y'] as num).toDouble(),
+        );
+      }
     } catch (_) {}
     await Future.wait(
       List.generate(5, (i) async {
@@ -914,12 +930,75 @@ class DemonScene extends FlameGame {
     );
   }
 
+  /// Top of the hull's centre column (logical px from the ship centre), where
+  /// the single shooter's nose flash is drawn; read from ship-parts.json.
+  double noseMuzzleY = -10;
+
   void _shipLayers(Canvas c, Offset center) {
     final at = Offset(center.dx.roundToDouble(), center.dy.roundToDouble());
     _shipLayer(c, 0, 0, at);
+    if (model.noseFlash > ArcadeModel.wingRecoilDuration * 0.45) {
+      // Single shooter: a 2-frame nose flash, distinct from the wing kick.
+      final paint = Paint()..isAntiAlias = false;
+      paint.color = const Color(0xFFFFF5C9);
+      c.drawRect(
+        Rect.fromLTWH(at.dx - 1, at.dy + noseMuzzleY - 3, 2, 3),
+        paint,
+      );
+      paint.color = mint;
+      c.drawRect(
+        Rect.fromLTWH(at.dx - 2, at.dy + noseMuzzleY - 1, 4, 1),
+        paint,
+      );
+    }
+    final wingGun = model.wingGun;
     for (final power in _shipLayerOrder) {
-      if (model.hasPower(power)) {
+      if (!model.hasPower(power)) continue;
+      if (power == wingGun) {
+        _wingCannons(c, power, at);
+      } else {
         _shipLayer(c, _shipRows[power]!, _wearColumn(power), at);
+      }
+    }
+  }
+
+  /// Wing cannons drawn one half at a time: the side that just fired kicks
+  /// back 2px and shows a 2-frame muzzle flash, so alternating shots read as
+  /// left, right, left, ...
+  void _wingCannons(Canvas c, Power power, Offset at) {
+    final row = _shipRows[power]!, column = _wearColumn(power);
+    final muzzle = model.wingMuzzles[power]!;
+    final paint = Paint()
+      ..filterQuality = FilterQuality.none
+      ..isAntiAlias = false;
+    for (final side in const [0, 1]) {
+      final recoil = model.wingRecoil[side] / ArcadeModel.wingRecoilDuration;
+      final kick = recoil > 0.45 ? 2.0 : (recoil > 0 ? 1.0 : 0.0);
+      c.drawImageRect(
+        shipParts!,
+        Rect.fromLTWH(
+          column * _shipCell + side * _shipCell / 2,
+          row * _shipCell,
+          _shipCell / 2,
+          _shipCell,
+        ),
+        Rect.fromLTWH(
+          at.dx - _shipSize / 2 + side * _shipSize / 2,
+          at.dy - _shipSize / 2 + kick,
+          _shipSize / 2,
+          _shipSize,
+        ),
+        paint,
+      );
+      if (recoil > 0.45) {
+        final x = at.dx + (side == 0 ? -1 : 1) * muzzle.x.abs();
+        final y = at.dy + muzzle.y - 3;
+        paint.color = const Color(0xFFFFF5C9);
+        c.drawRect(Rect.fromLTWH(x - 1, y, 2, 2), paint);
+        paint.color = power == Power.powerful
+            ? const Color(0xFFFF786C)
+            : const Color(0xFF6EDCFF);
+        c.drawRect(Rect.fromLTWH(x - 2, y + 2, 4, 1), paint);
       }
     }
   }

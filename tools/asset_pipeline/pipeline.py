@@ -25,7 +25,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
-PIPELINE_VERSION = 3
+PIPELINE_VERSION = 4
 ROOT = Path(__file__).resolve().parents[2]
 FAMILIES = Path(__file__).resolve().parent / "families"
 WEAR_HEAT = ["#9E1B1B", "#E8430C", "#FF6B1A", "#FFBF1F", "#FFE042", "#FFF8DC"]
@@ -150,6 +150,41 @@ def otsu(values: np.ndarray) -> float:
     between = np.zeros_like(centers)
     between[valid] = (total_mean * weight[valid] - mean[valid] * total) ** 2 / (weight[valid] * w1[valid])
     return float(centers[np.argmax(between)])
+
+
+def orient_vertical(rgb: np.ndarray, mask: np.ndarray, bg: list[int]) -> tuple[np.ndarray, np.ndarray, float]:
+    """Rotate an elongated object so its long axis is vertical with the narrow end (the muzzle) on top.
+
+    FLUX-schnell ignores negative prompts, so "pointing up" alone still yields diagonal or sideways
+    cannons. Objects that are not clearly elongated (major/minor axis ratio below 1.4) stay unchanged."""
+    ys, xs = np.nonzero(mask)
+    if len(xs) < 32:
+        return rgb, mask, 0.0
+    cov = np.cov(np.vstack([xs - xs.mean(), ys - ys.mean()]))
+    vals, vecs = np.linalg.eigh(cov)
+    if vals[1] < (1.4 ** 2) * max(vals[0], 1e-6):
+        return rgb, mask, 0.0
+    major = vecs[:, 1]
+    # Angle that turns the major axis onto the image's vertical (PIL rotates counter-clockwise).
+    angle = float(np.degrees(np.arctan2(major[0], major[1])))
+    def turn(deg: float) -> tuple[np.ndarray, np.ndarray]:
+        if abs(deg) < 0.5:
+            return rgb, mask
+        img = Image.fromarray(rgb.clip(0, 255).astype(np.uint8)).rotate(
+            -deg, resample=Image.BICUBIC, expand=True, fillcolor=tuple(int(v) for v in bg))
+        m = Image.fromarray((mask * 255).astype(np.uint8)).rotate(-deg, resample=Image.NEAREST, expand=True)
+        return np.asarray(img).astype(np.float64), np.asarray(m) > 127
+    out_rgb, out_mask = turn(angle)
+    ys, xs = np.nonzero(out_mask)
+    span = ys.max() - ys.min() + 1
+    band = max(1, span // 5)
+    top = out_mask[ys.min():ys.min() + band].sum()
+    bottom = out_mask[ys.max() + 1 - band:ys.max() + 1].sum()
+    if top > bottom:  # the wider end is up: flip so the muzzle points up
+        angle += 180.0
+        out_rgb, out_mask = turn(angle)
+    angle = (angle + 180.0) % 360.0 - 180.0
+    return out_rgb, out_mask, round(angle, 1)
 
 
 def symmetry_iou(mask: np.ndarray) -> float:
@@ -309,8 +344,9 @@ def cmd_plan(args) -> None:
             "family": spec["family"], "part": part["id"], "tier": args.tier,
             "prompt": f"{part['prompt']}, {spec['style_prompt']}",
             "negative_prompt": f"{part['negative']}, {spec['style_negative']}",
-            "width": tier["width"], "height": tier["height"], "steps": tier["steps"],
-            "seed": spec["generation"]["seed_base"] + index * 10,
+            "width": part.get("gen_size", {}).get("width", tier["width"]),
+            "height": part.get("gen_size", {}).get("height", tier["height"]), "steps": tier["steps"],
+            "seed": spec["generation"]["seed_base"] + index * 10 + args.round,
             "count": spec["generation"]["count_per_part"],
         })
     path = out_dir(args.family) / f"queue-{args.tier}.json"
@@ -366,6 +402,8 @@ def cmd_process(args) -> None:
         part = parts[image["part"]]
         rgb = np.asarray(Image.open(base / image["file"]).convert("RGB")).astype(np.float64)
         mask, iso = isolate(rgb)
+        if part.get("orient") == "vertical" and mask.sum() >= 16:
+            rgb, mask, iso["rotated_deg"] = orient_vertical(rgb, mask, iso["background_rgb"])
         sym = symmetry_iou(mask)
         entry = {"id": image["id"], "part": part["id"], "tier": image["tier"], "model": image["model"],
                  "raw": image["file"], "isolation": iso, "source_symmetry": round(sym, 3)}
@@ -490,7 +528,29 @@ def cmd_review(args) -> None:
         sys.exit("run `process` first")
     runs = {r["id"]: r for r in load_json(base / "runs.json", {"images": []})["images"]}
     chosen = picks(spec, base)
-    hull = load_layer(base, chosen["hull"]) if "hull" in chosen else None
+    selections = load_json(base / "selections.json", {"selections": {}})["selections"]
+    groups = spec.get("slot_groups", {})
+    group_of = {pid: g for g, members in groups.items() for pid in members}
+    # The selected ship: every human-accepted part, at most one per slot group (nose, wing).
+    selected = {}
+    for part in spec["parts"]:
+        pid = part["id"]
+        cand = chosen.get(pid)
+        if not cand or cand["provisional"]:
+            continue
+        if pid in group_of and any(group_of.get(o) == group_of[pid] for o in selected):
+            continue
+        selected[pid] = load_layer(base, cand)
+    if "hull" not in selected and "hull" in chosen:
+        selected["hull"] = load_layer(base, chosen["hull"])
+
+    def on_selected_ship(part_id: str, layer: np.ndarray) -> tuple[np.ndarray, list[str]]:
+        """Candidate layer swapped into the selected ship, replacing whatever shares its slot."""
+        layers = {pid: lay for pid, lay in selected.items()
+                  if pid != part_id and (part_id not in group_of or group_of.get(pid) != group_of[part_id])}
+        layers[part_id] = layer
+        return composite(spec, layers, list(layers)), sorted(p for p in layers if p != part_id)
+
     cards = []
     for c in data["candidates"]:
         raw_thumb = web / "img" / f"{c['id']}-raw.png"
@@ -502,11 +562,25 @@ def cmd_review(args) -> None:
             layer = load_layer(base, c)
             save_scaled(layer, web / "img" / f"{c['id']}-layer.png", 4)
             shutil.copyfile(base / c["mask"], web / "img" / f"{c['id']}-mask.png")
-            context = layer if c["part"] == "hull" or hull is None else composite(
-                spec, {"hull": hull, c["part"]: layer}, ["hull", c["part"]])
+            context, with_parts = on_selected_ship(c["part"], layer)
             save_scaled(context, web / "img" / f"{c['id']}-context.png", 4)
+            contexts = [{"label": "on selected ship", "parts": with_parts, "file": f"img/{c['id']}-context.png"}]
+            if group_of.get(c["part"]) == "nose":
+                # Nose modules show on both ship modes: the single shooter (no powerups, nose fire)
+                # and the wing shooter (wing cannons fitted by a powerup).
+                bare = {"hull": selected["hull"], c["part"]: layer} if "hull" in selected else {c["part"]: layer}
+                contexts = [{"label": "single shooter", "parts": sorted(p for p in bare if p != c["part"]),
+                             "file": f"img/{c['id']}-single.png"}]
+                save_scaled(composite(spec, bare, list(bare)), web / "img" / f"{c['id']}-single.png", 4)
+                wing = next((pid for pid in groups.get("wing", []) if pid in selected), None)
+                if wing:
+                    armed = {**bare, wing: selected[wing]}
+                    save_scaled(composite(spec, armed, list(armed)), web / "img" / f"{c['id']}-wing.png", 4)
+                    contexts.append({"label": "wing shooter", "parts": sorted(p for p in armed if p != c["part"]),
+                                     "file": f"img/{c['id']}-wing.png"})
             card.update(layer=f"img/{c['id']}-layer.png", mask=f"img/{c['id']}-mask.png",
-                        context=f"img/{c['id']}-context.png", slot_fill=c["slot_fill"],
+                        context=f"img/{c['id']}-context.png", contexts=contexts, context_parts=with_parts,
+                        slot_fill=c["slot_fill"],
                         palette_colours=c["palette_colours"])
         card["picked"] = chosen.get(c["part"], {}).get("id") == c["id"]
         cards.append(card)
@@ -531,11 +605,28 @@ def cmd_review(args) -> None:
     current = ROOT / "assets/images/combat.png"
     if current.exists():
         Image.open(current).crop((0, 4 * 64, 64, 5 * 64)).resize((192, 192), Image.NEAREST).save(web / "current-ship.png")
+    ship_modes = []
+    if selected:
+        save_scaled(composite(spec, selected, list(selected)), web / "selected-ship.png", 4)
+        if "hull" in selected:
+            save_scaled(selected["hull"], web / "ship-single.png", 4)
+            ship_modes.append({"label": "single shooter (no powerups)", "file": "ship-single.png", "parts": ["hull"]})
+            wing = next((pid for pid in groups.get("wing", []) if pid in selected), None)
+            if wing:
+                armed = {"hull": selected["hull"], wing: selected[wing]}
+                save_scaled(composite(spec, armed, list(armed)), web / "ship-wing.png", 4)
+                ship_modes.append({"label": "wing shooter (powerup fitted)", "file": "ship-wing.png",
+                                   "parts": ["hull", wing]})
     save_json(web / "report.json", {
         "family": spec["family"], "description": spec["description"], "generated": now(),
         "pipeline_version": PIPELINE_VERSION, "canvas": spec["canvas"],
         "picks": {pid: {"id": c["id"], "provisional": c["provisional"]} for pid, c in chosen.items()},
         "sheets": sheets, "candidates": cards, "parts": [p["id"] for p in spec["parts"]],
+        "slot_groups": groups,
+        "accepted": {pid: selections[pid] for pid in selections},
+        "selected_ship": {"file": "selected-ship.png", "parts": sorted(selected), "modes": ship_modes} if selected else None,
+        "retired_tiers": load_json(base / "runs.json", {}).get("retired_tiers", []),
+        "progress": {"accepted": sum(1 for p in spec["parts"] if p["id"] in selections), "total": len(spec["parts"])},
     })
     index = Path(__file__).resolve().parent / "review.html"
     shutil.copyfile(index, web / "index.html")
@@ -568,6 +659,52 @@ def cmd_accept(args) -> None:
     print(json.dumps(sel["selections"][args.part]))
 
 
+def cmd_withdraw(args) -> None:
+    """Withdraw a part's acceptance; the decision is kept in the selection history."""
+    spec = family_spec(args.family)
+    base = out_dir(args.family)
+    sel = load_json(base / "selections.json", {"family": spec["family"], "selections": {}})
+    current = sel["selections"].pop(args.part, None)
+    if current is None:
+        sys.exit(f"{args.part} has no accepted candidate")
+    sel.setdefault("withdrawn", []).append({**current, "part": args.part, "withdrawn_at": now(), "reason": args.note})
+    save_json(base / "selections.json", sel)
+    print(json.dumps({"withdrawn": args.part, "candidate": current["candidate"]}))
+
+
+def cmd_retire(args) -> None:
+    """Drop every raw image and candidate from the given tiers (they stay in Git history)."""
+    spec = family_spec(args.family)
+    base = out_dir(args.family)
+    tiers = set(args.tiers.split(",")) if args.tiers else set()
+    seeds = {int(v) for v in args.seeds.split(",")} if args.seeds else set()
+    if not tiers and not seeds:
+        sys.exit("give --tiers and/or --seeds")
+    accepted = load_json(base / "selections.json", {"selections": {}})["selections"]
+    runs = load_json(base / "runs.json", {"family": spec["family"], "images": []})
+    blocked = [s["candidate"] for s in accepted.values()
+               if any(f"-{t}-" in s["candidate"] for t in tiers) or any(f"-{x}-" in s["candidate"] for x in seeds)]
+    if blocked:
+        sys.exit(f"accepted candidates come from a retired tier: {', '.join(blocked)}")
+    keep, removed = [], 0
+    for image in runs["images"]:
+        if image["tier"] in tiers or image["seed"] in seeds:
+            for path in (base / image["file"], base / "candidates" / image["part"] / f"{image['id']}.png",
+                         base / "candidates" / image["part"] / f"{image['id']}-mask.png"):
+                path.unlink(missing_ok=True)
+            removed += 1
+        else:
+            keep.append(image)
+    runs["images"] = keep
+    runs["retired_tiers"] = sorted(set(runs.get("retired_tiers", [])) | tiers)
+    runs["retired_seeds"] = sorted(set(runs.get("retired_seeds", [])) | seeds)
+    save_json(base / "runs.json", runs)
+    for tier in tiers:
+        (base / f"queue-{tier}.json").unlink(missing_ok=True)
+    print(json.dumps({"removed": removed, "remaining": len(keep), "retired_tiers": runs["retired_tiers"],
+                      "retired_seeds": runs["retired_seeds"]}))
+
+
 def cmd_pack(args) -> None:
     spec = family_spec(args.family)
     base = out_dir(args.family)
@@ -590,12 +727,32 @@ def cmd_pack(args) -> None:
             variant = derive_wear(layer, spec, part, state)
             atlas.alpha_composite(Image.fromarray(variant, "RGBA").resize((w, h), Image.NEAREST), (col * w, r * h))
         rows[part["id"]] = r
+    # Muzzle of each wing module (left side, logical px from the ship centre). Wing cannons fire
+    # alternately left/right from these points; the right muzzle mirrors the left.
+    muzzles = {}
+    half_w, half_h = spec["canvas"]["width"] / 2, spec["canvas"]["height"] / 2
+    for pid in spec.get("slot_groups", {}).get("wing", []):
+        opaque = docked[pid][..., 3] > 0
+        opaque[:, spec["canvas"]["width"] // 2:] = False
+        ys, xs = np.nonzero(opaque)
+        if len(ys):
+            top = ys.min()
+            row = xs[ys == top]
+            muzzles[pid] = {"x": round(float(row.mean()) + 0.5 - half_w, 1), "y": round(float(top) - half_h, 1)}
+    # Nose muzzle: top of the hull's centre column, where single shots leave.
+    nose_muzzle = None
+    hull_alpha = docked["hull"][..., 3] > 0
+    cx = spec["canvas"]["width"] // 2
+    column = np.nonzero(hull_alpha[:, cx - 1:cx + 1].any(axis=1))[0]
+    if len(column):
+        nose_muzzle = {"x": 0.0, "y": round(float(column.min()) - half_h, 1)}
     target = ROOT / "assets/images" / f"{spec['family']}-parts.png"
     atlas.save(target, optimize=True)
     meta = {
         "family": spec["family"], "pipeline_version": PIPELINE_VERSION, "packed": now(),
         "cell": {"width": w, "height": h}, "logical": spec["canvas"], "wear_states": states,
         "rows": rows, "layer_order": spec["layer_order"], "provisional": bool(provisional),
+        "wing_muzzles": muzzles, "nose_muzzle": nose_muzzle,
         "sources": {pid: {"candidate": c["id"], "tier": c["tier"], "model": c["model"], "provisional": c["provisional"]}
                     for pid, c in chosen.items()},
     }
@@ -608,7 +765,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("plan"); p.add_argument("--family", default="ship"); p.add_argument("--tier", default="I0")
-    p.add_argument("--parts"); p.set_defaults(fn=cmd_plan)
+    p.add_argument("--parts")
+    p.add_argument("--round", type=int, default=0, choices=range(10),
+                   help="alternative round: adds 0-9 to each part's seed so new rounds never reuse seeds")
+    p.set_defaults(fn=cmd_plan)
     p = sub.add_parser("ingest"); p.add_argument("--family", default="ship"); p.add_argument("--tier", default="I0")
     p.add_argument("--results", required=True); p.set_defaults(fn=cmd_ingest)
     p = sub.add_parser("process"); p.add_argument("--family", default="ship"); p.set_defaults(fn=cmd_process)
@@ -616,6 +776,12 @@ def main() -> None:
     p = sub.add_parser("accept"); p.add_argument("--family", default="ship"); p.add_argument("part")
     p.add_argument("candidate"); p.add_argument("--by", default="human"); p.add_argument("--note", default="")
     p.set_defaults(fn=cmd_accept)
+    p = sub.add_parser("withdraw"); p.add_argument("--family", default="ship"); p.add_argument("part")
+    p.add_argument("--note", default=""); p.set_defaults(fn=cmd_withdraw)
+    p = sub.add_parser("retire"); p.add_argument("--family", default="ship")
+    p.add_argument("--tiers", help="comma-separated tiers to drop, e.g. I0,I1")
+    p.add_argument("--seeds", help="comma-separated generation seeds to drop (a rejected prompt round)")
+    p.set_defaults(fn=cmd_retire)
     p = sub.add_parser("pack"); p.add_argument("--family", default="ship")
     p.add_argument("--provisional", action="store_true"); p.set_defaults(fn=cmd_pack)
     args = ap.parse_args()

@@ -1,6 +1,6 @@
 {
   "family": "ship",
-  "version": 4,
+  "version": 5,
   "description": "Player starfighter: a hull plus combinable weapon modules, each with fresh/worn/critical wear states. Every part is a full-canvas layer on one shared logical canvas, so layers stack without per-part offsets.",
   "canvas": {
     "width": 48,
@@ -69,8 +69,8 @@
         "#EFBD57",
         "#FFE59A"
       ],
-      "prompt": "three-pronged golden prism emitter weapon module, trident shaped crystal cannon pointing up, gold and ivory metal",
-      "negative": "spaceship, wings, hand, person",
+      "prompt": "flat 2D sprite seen from directly above like a vertical shooter power-up: a small weapon pod with three short gun barrels fanning outward toward the top, navy steel body with teal panels and pale gold trim",
+      "negative": "isometric, 3D, perspective, angled view, spaceship, starfighter, aircraft, wings, hull, cockpit, engines, hand, person, trident, crown, emblem",
       "dock": "down"
     },
     {
@@ -89,9 +89,14 @@
         "#FFAD53",
         "#FFE0A8"
       ],
-      "prompt": "single heavy plasma cannon barrel pointing up, thick armored orange glowing muzzle, mechanical weapon module",
-      "negative": "spaceship, wings, tank, hand, person, multiple guns",
-      "dock": "down"
+      "prompt": "detached weapon part only: one short thick plasma cannon barrel pointing straight up, navy steel body with teal panels and pale gold trim, glowing orange muzzle tip",
+      "negative": "spaceship, starfighter, aircraft, wings, hull, cockpit, engines, tank, hand, person, multiple guns",
+      "dock": "down",
+      "orient": "vertical",
+      "gen_size": {
+        "width": 576,
+        "height": 1024
+      }
     },
     {
       "id": "rapid",
@@ -109,9 +114,14 @@
         "#6EDCFF",
         "#D8F7FF"
       ],
-      "prompt": "slim twin-barrel rapid-fire gatling pod pointing up, cyan energy coils, compact wingtip weapon module",
-      "negative": "spaceship, wings, rifle, hand, person, multiple pods",
-      "dock": "inward"
+      "prompt": "slim twin-barrel rapid-fire gatling cannon pod, tall and narrow, standing upright, perfectly vertical, barrels pointing straight up toward the top edge, symmetrical, cyan energy coils, compact wingtip weapon module",
+      "negative": "spaceship, wings, rifle, hand, person, multiple pods, diagonal, tilted, rotated, angled, horizontal",
+      "dock": "inward",
+      "orient": "vertical",
+      "gen_size": {
+        "width": 576,
+        "height": 1024
+      }
     },
     {
       "id": "powerful",
@@ -129,9 +139,14 @@
         "#FF786C",
         "#FFC7AF"
       ],
-      "prompt": "long heavy armor-piercing rail cannon pointing up, coral red energy rails, wing-mounted weapon module",
-      "negative": "spaceship, wings, rifle, hand, person, multiple guns",
-      "dock": "inward"
+      "prompt": "long heavy rail cannon, tall and narrow, standing upright, perfectly vertical, barrel pointing straight up toward the top edge, symmetrical, coral red energy rails along the barrel, wing-mounted weapon module",
+      "negative": "spaceship, wings, rifle, hand, person, multiple guns, diagonal, tilted, rotated, angled, horizontal, laser beam",
+      "dock": "inward",
+      "orient": "vertical",
+      "gen_size": {
+        "width": 576,
+        "height": 1024
+      }
     },
     {
       "id": "shield",
@@ -149,8 +164,8 @@
         "#A888FF",
         "#E2D6FF"
       ],
-      "prompt": "round violet shield generator emitter device, glowing purple energy core in a hexagonal metal ring, top-down",
-      "negative": "spaceship, wings, bubble, person, planet",
+      "prompt": "round shield generator emitter device, bright glowing violet and lavender energy core filling the center, thin hexagonal metal ring, top-down",
+      "negative": "spaceship, wings, bubble, person, planet, dark core, black center",
       "dock": null,
       "critical_ramp": [
         "#2A1F5C",
@@ -190,6 +205,20 @@
         "height": 1024,
         "steps": 4
       }
-    }
+    },
+    "retired_tiers": [
+      "I0",
+      "I1"
+    ]
+  },
+  "slot_groups": {
+    "nose": [
+      "spread",
+      "large"
+    ],
+    "wing": [
+      "rapid",
+      "powerful"
+    ]
   }
 }
