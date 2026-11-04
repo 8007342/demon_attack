@@ -13,7 +13,8 @@ Detailed reports in this folder:
 
 | Capability | State |
 |---|---|
-| Forge `image.generate` I0 SDXS / I1 SDXL-Lightning | Working on this host. I1 needs 1024² at 4 steps. |
+| Forge `image.generate` I0 SDXS / I1 SDXL-Lightning | Working on the RTX A5000 host. I1 needs 1024² at 4 steps. |
+| Forge `image.generate` on a low-power host (i7-4650U, 7.7 GiB) | Does not start: `Vulkan0` lacks 16-bit storage and there is no CPU fallback. See `FORGE_DIAGNOSTICS.md`, 2026-11-04. |
 | I2 FLUX.1-schnell Q4 / I3 FLUX.1-schnell Q8 (forge-defined, Apache-2.0) | Blocked: the host envelope lacks `accel_vram_gb`. Fix is Tillandsias PR #679. |
 | ComfyUI "studio" sibling container (port 8188, HTTP API, no MCP yet) | Not on trunk yet (drafts #791/#793/#794). Our feature list is filed as a work order. |
 | Deterministic post-processing (pixelize / palette / alpha / QA) | Only the review thumbnailer exists (`tools/prepare_local_image_candidates.py`). |

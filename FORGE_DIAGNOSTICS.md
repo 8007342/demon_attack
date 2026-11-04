@@ -220,3 +220,41 @@ Visual review: FLUX follows the prompts far better than SDXL-Lightning. It gives
 - spread sometimes draws a framed card or a winged emblem;
 - one hull variant per tier adds stray sparkles.
 Fix these with orientation wording or ControlNet once the studio lands, rather than with a bigger model. Best candidates by score: hull-I2-820000-3, large-I3-820020-0 and shield-I3-820050-0. A human still has to accept each one.
+
+## Low-power host: the engine cannot start (2026-11-04)
+
+Everything above was measured on the RTX A5000 24 GB host. This pass tried the same tool on a low-power host. **No image was generated at any size.** There are no candidates, no timings and no gallery from this host.
+
+Host as seen from the forge: Intel Core i7-4650U (AVX2, FMA, F16C), 4 CPUs, 7.7 GiB RAM, about 5 GiB available, 15 GB free disk. No `/dev/dri` in the forge. `gpu.status` returned `holders: []` and `free_vram_gb: null`. The i7-4650U has Intel HD 5000 integrated graphics, which is the likely `Vulkan0`, but the GPU's identity was not observed from the forge.
+
+| Call | Result |
+|---|---|
+| No tier given, 256², 4 steps | `consent_required`: I0 SDXS-512-0.9 not on this computer, 1.3 GB download |
+| I0 with the operator's yes and token, 256², 4 steps, count 1 | Ran past the 120 s foreground limit, then `engine_failed`, exit 139 |
+| I0 without a token, 64², 1 step, the smallest request possible | Same failure, same error text |
+
+```
+[W] auto-fit: no GPU devices; using the default backend --- backend_fit.cpp:444
+[V] Found 2 backend devices: #0 Vulkan0, #1 CPU
+[V] Initializing backend: Vulkan0 --- ggml_extend_backend.cpp:420
+ggml_vulkan: device Vulkan0 does not support 16-bit storage.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  Unsupported device
+```
+
+Findings:
+
+- **The failure does not depend on size or memory.** The 64², 1-step call fails the same way, during backend initialisation and before any sampling, so a smaller request cannot help.
+- **The engine does not fall back to the CPU backend it lists.** Auto-fit reports no GPU devices and uses the default backend, which is Vulkan0. The device is then rejected and the process dies. `image.generate` has no parameter to choose a backend.
+- **The model was charged for before the engine was tested.** The operator approved 1.3 GB for a tier this host cannot run. The second call needed no token and reached the engine, which is why the model is taken to be installed; the file itself is on the host and is not visible from the forge. A preflight of the Vulkan device, ahead of the consent offer, would have saved the download.
+- **Exit 139 has more than one cause.** The concurrent-call crash recorded above also exits 139. Read the error text to tell them apart: that one is out of memory or a segfault under load, and this one is `Unsupported device`. Serialising calls does not help here. Only one call ran at a time throughout this pass.
+- **Not tried:** tiers above I0, which were not offered and would use the same engine, so the same failure is expected but unproven. The `studio.*` pipeline, because this project has no `[imagegen] studio = true` config. A CPU-only build, described below.
+
+### Possible CPU-only route (not attempted)
+
+Building `stable-diffusion.cpp` for CPU inside the forge looks feasible: github.com and huggingface.co answer through the proxy, `cmake`, `gcc` and `g++` are installed, and the CPU has AVX2. The forge cannot see the host's model, so this needs a second download. `sd_turbo.safetensors` is 5.21 GB, too large for the available RAM, so a model around the size of SDXS is the target; the specific file has not been chosen. It would measure this hardware but would bypass the Tillandsias image pipeline, so it would not show that pipeline working here. Per-image time is unmeasured. The operator has not decided whether to do this.
+
+### Asks for Tillandsias
+
+1. Check the Vulkan device's required features before making a download offer, and report an unsupported device as a named refusal rather than `engine_failed`.
+2. Fall back to the CPU backend when the Vulkan device is unsupported, or expose a backend choice on `image.generate`.
