@@ -11,3 +11,4 @@ Work branch: `game`. Production `main` remains unchanged until stable.
 Tracked implementation tasks: `openspec/changes/build-demon-attack-game/tasks.md`.
 Current design and tunables: `game-design.md`. Art direction: `style-guide.md`.
 Historical references and screenshots: `research-original.md`.
+Local image generation limits by host: `local-image-host-limits.md`.
