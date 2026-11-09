@@ -18,13 +18,58 @@ ArcadeModel arena({int level = 2, Difficulty difficulty = Difficulty.normal}) {
   m.shots.clear();
   m.flocksPlanned = m.flocksSpawned;
   m.ground.clearField();
+  // A quiet front that never schedules arrivals but allows breakthroughs,
+  // so each test stages exactly the units it needs.
+  m.ground.front = const GroundFront(
+    presence: 0,
+    interval: 0,
+    firstDelay: 0,
+    demonHp: 99,
+    breakthroughs: true,
+    baseStrength: 1,
+    basePressure: 0,
+    shots: 2,
+  );
   m.invulnerable = 0;
   return m;
 }
 
-GroundUnit unit(ArcadeModel m, double z, {int side = 0, int shots = 2}) {
+/// A real run, flown by a simple pilot that kills air demons at [killEvery]
+/// seconds (fast or slow players) while protected; returns per-sector stats.
+ArcadeModel campaign(
+  Difficulty d, {
+  double killEvery = .5,
+  int untilLevel = 5,
+  int route = 0,
+}) {
+  final m = ArcadeModel(seed: 1982)..start(difficulty: d);
+  var next = 0.0;
+  for (var f = 0; f < 60 * 60 * 30; f++) {
+    if (m.level >= untilLevel && m.cycle >= route) break;
+    if (m.combat) {
+      m.invulnerable = 2;
+      if (m.levelClock >= next) {
+        next = m.levelClock + killEvery;
+        final target = m.demons.where((x) => !x.entering).firstOrNull;
+        if (target != null) m.hitDemon(target, damage: 99);
+      }
+    } else {
+      next = 0;
+    }
+    m.update(1 / 60);
+  }
+  return m;
+}
+
+GroundUnit unit(
+  ArcadeModel m,
+  double z, {
+  int side = 0,
+  int shots = 2,
+  int hp = 99,
+}) {
   final u = GroundUnit(m.ground.nextId++, m.level - 1, side, .5, z,
-      shotsLeft: shots);
+      shotsLeft: shots, hp: hp);
   m.ground.units.add(u);
   return u;
 }
@@ -65,77 +110,160 @@ void main() {
     }
   });
 
-  group('introduction pacing', () {
-    GroundPlan plan(Difficulty d, int route, int sector, int wave) => GroundPlan.of(d,
-        route: route,
-        sector: sector,
-        wave: wave,
-        wavesPerLevel: 3 + ((sector - 1) ~/ 2) + (route < 3 ? route : 3));
-
-    test('first Krybor: one unit, only in the final wave; none on Easy', () {
-      for (var wave = 1; wave < 3; wave++) {
-        expect(plan(Difficulty.normal, 0, 1, wave).budget, 0);
-      }
-      expect(plan(Difficulty.normal, 0, 1, 3).budget, 1);
-      expect(plan(Difficulty.hard, 0, 1, 3).budget, 1);
-      expect(plan(Difficulty.normal, 0, 1, 3).firstDelay, greaterThan(5));
-      for (var wave = 1; wave <= 3; wave++) {
-        expect(plan(Difficulty.easy, 0, 1, wave).budget, 0);
-      }
-    });
-
-    test('a gentle ramp through sector 4 and none over the carrier', () {
+  group('the ground front', () {
+    test('ground activity starts early in Krybor on every difficulty', () {
       for (final d in Difficulty.values) {
-        var last = 0;
-        for (var sector = 1; sector <= 4; sector++) {
-          final total = [
-            for (var w = 1; w <= 4; w++) plan(d, 0, sector, w).budget,
-          ].reduce((a, b) => a + b);
-          expect(total, greaterThanOrEqualTo(last), reason: '$d sector $sector');
-          last = total;
-          final p = plan(d, 0, sector, 2);
-          expect(p.maxActive, lessThanOrEqualTo(2));
-        }
-        expect(plan(d, 0, 5, 1).budget, 0);
-        expect(plan(d, 4, 5, 1).budget, 0);
+        final f = GroundFront.of(d, route: 0, sector: 1);
+        expect(f.active, isTrue, reason: '$d');
+        expect(f.firstDelay, inInclusiveRange(4, 8));
+        expect(f.breakthroughs, isFalse);
+        expect(GroundFront.of(d, route: 0, sector: 2).breakthroughs, isFalse);
+        expect(GroundFront.of(d, route: 0, sector: 3).breakthroughs, isTrue);
+        expect(GroundFront.of(d, route: 4, sector: 5).active, isFalse);
       }
-      // Sector 2 opens with no units; they join from its second wave.
-      expect(plan(Difficulty.normal, 0, 2, 1).budget, 0);
-      expect(plan(Difficulty.normal, 0, 2, 2).budget, 1);
+      final m = ArcadeModel(seed: 1982)..start(difficulty: Difficulty.easy);
+      var firstAt = -1.0;
+      for (var f = 0; f < 60 * 120 && firstAt < 0; f++) {
+        if (m.combat) m.invulnerable = 2;
+        m.update(1 / 60);
+        if (m.ground.unitsSpawned > 0) firstAt = m.levelClock;
+      }
+      expect(firstAt, inInclusiveRange(4, 8));
+      expect(m.level, 1);
     });
 
-    test('difficulty orders the budgets Easy <= Normal <= Hard', () {
+    test('later sectors are tougher and less escorted, ordered by difficulty', () {
       for (var route = 0; route < 5; route++) {
-        for (var sector = 1; sector <= 4; sector++) {
-          for (var wave = 1; wave <= 7; wave++) {
-            final e = plan(Difficulty.easy, route, sector, wave),
-                n = plan(Difficulty.normal, route, sector, wave),
-                h = plan(Difficulty.hard, route, sector, wave);
-            expect(e.budget, lessThanOrEqualTo(n.budget));
-            expect(n.budget, lessThanOrEqualTo(h.budget));
-            expect(e.maxActive, lessThanOrEqualTo(h.maxActive));
-            expect(e.shots, lessThanOrEqualTo(n.shots));
+        for (final sector in [3, 4]) {
+          final e = GroundFront.of(Difficulty.easy, route: route, sector: sector),
+              n = GroundFront.of(Difficulty.normal, route: route, sector: sector),
+              h = GroundFront.of(Difficulty.hard, route: route, sector: sector);
+          expect(e.demonHp, lessThan(n.demonHp));
+          expect(n.demonHp, lessThanOrEqualTo(h.demonHp));
+          expect(e.baseStrength, greaterThan(n.baseStrength));
+          expect(n.baseStrength, greaterThan(h.baseStrength));
+          expect(e.presence, lessThanOrEqualTo(h.presence));
+          expect(e.baseStrength, greaterThan(h.baseStrength));
+        }
+        final three = GroundFront.of(Difficulty.normal, route: route, sector: 3),
+            four = GroundFront.of(Difficulty.normal, route: route, sector: 4);
+        expect(four.demonHp, greaterThan(three.demonHp));
+        expect(four.baseStrength, lessThan(three.baseStrength));
+      }
+    });
+
+    for (final d in Difficulty.values) {
+      test('${d.name}: allies win every skirmish in sectors 1-2; nothing reaches fire range', () {
+        final m = campaign(d, untilLevel: 3, killEvery: 1);
+        final g = m.ground;
+        expect(g.unitsSpawned, greaterThanOrEqualTo(3), reason: 'the ground is alive');
+        // Only allies (and the odd ordinary homing pickup) destroy them.
+        expect(g.unitsKilledByAllies, greaterThanOrEqualTo(g.unitsDestroyed - g.homingHits));
+        // Every finished skirmish was won (up to two are still under way).
+        expect(g.unitsKilledByAllies + g.homingHits,
+            greaterThanOrEqualTo(g.unitsSpawned - 2),
+            reason: 'allies won ${g.unitsKilledByAllies} of ${g.unitsSpawned}');
+        expect(g.unitsKilledByAllies, greaterThanOrEqualTo(2));
+        expect(g.breakthroughsBySector[0] + g.breakthroughsBySector[1], 0);
+        expect(g.missilesLaunched, 0);
+        expect(g.alliesRetreated, 0);
+        final names = m.takeGameEvents().map((e) => e.name).toSet();
+        expect(names, contains(GameEventNames.groundForceSighted));
+        expect(names, contains(GameEventNames.groundUnitDestroyed));
+        expect(names, isNot(contains(GameEventNames.groundBreakthrough)));
+        expect(names, isNot(contains(GameEventNames.allyUnderAttack)));
+      });
+    }
+
+    test('the schedule runs on combat time, not air-wave speed', () {
+      List<double> arrivals(double killEvery) {
+        final m = ArcadeModel(seed: 1982)..start();
+        final at = <double>[];
+        var next = 0.0, seen = 0;
+        for (var f = 0; f < 60 * 400 && m.level == 1; f++) {
+          if (m.combat) {
+            m.invulnerable = 2;
+            if (m.levelClock >= next) {
+              next = m.levelClock + killEvery;
+              final t = m.demons.where((x) => !x.entering).firstOrNull;
+              if (t != null) m.hitDemon(t, damage: 99);
+            }
+          }
+          m.update(1 / 60);
+          if (m.ground.unitsSpawned > seen) {
+            seen = m.ground.unitsSpawned;
+            at.add(m.levelClock);
           }
         }
+        return at;
+      }
+
+      final fast = arrivals(.5), slow = arrivals(1.6);
+      expect(fast.length, greaterThanOrEqualTo(2), reason: 'a fast player still sees activity');
+      expect(slow.length, greaterThan(fast.length), reason: 'more combat time, more of the war');
+      // Same arrival times for the stretch both players fought.
+      final n = fast.length;
+      for (var i = 0; i < n; i++) {
+        expect(slow[i], closeTo(fast[i], 1.0), reason: 'arrival $i');
+      }
+      // A slow player is never swamped: arrivals stay paced by time.
+      for (var i = 1; i < slow.length; i++) {
+        expect(slow[i] - slow[i - 1], greaterThan(4));
       }
     });
 
-    test('a real first-Krybor run fields its single unit in the final wave', () {
-      final m = ArcadeModel(seed: 1982)..start();
-      final spawnWaves = <int>[];
-      var seen = 0;
-      for (var f = 0; f < 60 * 400 && m.level == 1; f++) {
-        if (m.combat) {
-          m.invulnerable = 2;
-          if (m.demons.isNotEmpty) m.moveTo(m.demons.first.x);
-        }
-        m.update(1 / 60);
-        if (m.ground.unitsSpawned > seen) {
-          seen = m.ground.unitsSpawned;
-          spawnWaves.add(m.wave);
-        }
+    test('later sectors: unchecked pressure breaks through, with a call for help first', () {
+      final m = arena(level: 4);
+      m.ground.front = GroundFront.of(Difficulty.normal, route: 0, sector: 4);
+      m.ground.alliedStrength = m.ground.front.baseStrength;
+      m.invulnerable = 100;
+      final u = unit(m, GroundTuning.spawnZ, hp: 7);
+      run(m, 12);
+      expect(u.brokeThrough, isTrue);
+      final names = gameEvents(m);
+      final call = names.indexOf(GameEventNames.allyUnderAttack);
+      final breakthrough = names.indexOf(GameEventNames.groundBreakthrough);
+      expect(call, isNonNegative);
+      expect(breakthrough, greaterThan(call));
+      expect(names, contains(GameEventNames.groundForceInRange));
+      expect(m.ground.missilesLaunched, greaterThan(0));
+    });
+
+    test('a well-escorted unit is stopped by its ally; strong allies push ahead', () {
+      final m = arena(level: 3);
+      m.ground.front = GroundFront.of(Difficulty.normal, route: 0, sector: 3);
+      m.ground.alliedStrength = 1;
+      final u = unit(m, GroundTuning.spawnZ, hp: 4);
+      final a = GroundAlly(m.ground.nextId++, u.sector, u.side, .2,
+          u.z - GroundTuning.allyLead, GroundTuning.allyHp)
+        ..attacker = u;
+      u.ally = a;
+      m.ground.allies.add(a);
+      run(m, 12);
+      expect(u.destroyedByAllies, isTrue);
+      expect(u.brokeThrough, isFalse);
+      expect(m.ground.alliedStrength, greaterThan(.95));
+    });
+
+    test('the pressure meter rises with unchecked units and reports itself', () {
+      final m = arena(level: 4);
+      m.ground.front = GroundFront.of(Difficulty.normal, route: 0, sector: 4);
+      m.ground.pressure = m.ground.front.basePressure;
+      m.invulnerable = 100;
+      for (var i = 0; i < 3; i++) {
+        unit(m, 700 + i * 200, side: i % 2);
       }
-      expect(spawnWaves, [3]);
+      final before = m.ground.pressure;
+      run(m, 6);
+      expect(m.ground.pressure, greaterThan(before));
+      expect(m.ground.pressure, inInclusiveRange(0, 1));
+      final levels = m
+          .takeGameEvents()
+          .where((e) => e.name == GameEventNames.groundPressure)
+          .map((e) => e.data['level'] as double)
+          .toList();
+      expect(levels, isNotEmpty);
+      expect(levels.every((v) => v >= 0 && v <= 1), isTrue);
     });
   });
 
@@ -413,25 +541,34 @@ void main() {
     });
   });
 
-  group('drop guarantee', () {
+  group('homing drops', () {
     void kill(ArcadeModel m) {
       final d = Demon(150, 200, 0, 1, 0);
       m.demons.add(d);
       m.hitDemon(d);
     }
 
-    test('no homing drops while no ground units are alive (sectors 1-4)', () {
+    test('without a breakthrough threat they are an ordinary pickup', () {
       final m = arena();
-      for (var i = 0; i < 60; i++) {
+      unit(m, 600).ally = GroundAlly(99, 1, 0, .2, 500, 8); // escorted, safe
+      m.ground.front = GroundFront.of(Difficulty.normal, route: 0, sector: 2);
+      var drops = <int>[];
+      for (var i = 0; i < 80; i++) {
         kill(m);
+        if (m.ground.pickups.isNotEmpty) {
+          drops.add(m.kills);
+          m.ground.pickups.clear();
+        }
       }
-      expect(m.ground.pickups, isEmpty);
+      expect(drops, [20, 60]);
     });
 
-    test('the pity timer guarantees one within seconds of ground pressure', () {
+    test('a looming breakthrough makes them urgent: pity within seconds', () {
       for (final d in Difficulty.values) {
         final m = arena(difficulty: d);
-        unit(m, 1300);
+        unit(m, 1300); // unescorted: it will break through
+        m.update(1 / 60);
+        expect(m.groundBreakthroughThreat, isTrue);
         run(m, GroundTuning.pityTime(d) + .1);
         kill(m);
         expect(m.ground.pickups, hasLength(1), reason: '$d');
@@ -447,23 +584,16 @@ void main() {
       expect(p.x, inInclusiveRange(GroundCamera.laneLeft, GroundCamera.laneRight));
     });
 
-    test('a pickup arrives before a fresh unit reaches firing range', () {
+    test('a pickup arrives before a threatening unit reaches fire range', () {
       for (final d in Difficulty.values) {
         final m = arena(difficulty: d);
         final u = unit(m, GroundTuning.spawnZ);
-        var killsMade = 0;
-        // A modest kill stream: one kill every 1.5 s.
         for (var f = 0; f < 60 * 20 && m.ground.pickups.isEmpty; f++) {
-          if (f % 90 == 0) {
-            kill(m);
-            killsMade++;
-          }
+          if (f % 90 == 0) kill(m);
           m.update(1 / 60);
         }
         expect(m.ground.pickups, isNotEmpty, reason: '$d');
-        final secondsToRange = (u.z - GroundTuning.fireZ) /
-            (GroundTuning.approachSpeed * m.policy.hostileRate);
-        expect(secondsToRange, greaterThan(0), reason: '$d after $killsMade kills');
+        expect(u.brokeThrough, isFalse, reason: '$d: in time to help');
       }
     });
 
@@ -487,7 +617,7 @@ void main() {
     test('an ordinary power-up over the carrier too', () {
       final m = arena(level: 5);
       var drops = 0;
-      for (var i = 0; i < 40; i++) {
+      for (var i = 0; i < 80; i++) {
         kill(m);
         if (m.ground.pickups.isNotEmpty) {
           drops++;
@@ -522,7 +652,7 @@ void main() {
     test('overwhelmed allies are totalled and retreat; they never die', () {
       final m = arena();
       final a = engaged(m, unit(m, 1100));
-      run(m, 1);
+      run(m, 1.5);
       expect(gameEvents(m), contains(GameEventNames.allyUnderAttack));
       run(m, GroundTuning.demonTracerEvery * (GroundTuning.allyHp + 1));
       expect(a.totalled, isTrue);
@@ -593,6 +723,8 @@ void main() {
       'allySaved',
       'allyRetreated',
       'fleetIntact',
+      'groundBreakthrough',
+      'groundPressure',
     ]));
     final m = arena();
     unit(m, GroundTuning.sightZ + 5);
