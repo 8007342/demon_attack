@@ -66,6 +66,8 @@ void main() {
       await tester.runAsync(() async {
         final model = ArcadeModel()..start();
         final scene = DemonScene(model, () {});
+        await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
+        scene.sectors.flyover.reducedMotionOverride = false;
         scene.atlas = await _decode('assets/images/combat.png');
         scene.sky = await _decode('assets/images/cosmic-sky.png');
         for (var i = 0; i < 5; i++) {
@@ -171,6 +173,8 @@ void main() {
       final model = ArcadeModel()..start();
       model.mode = RunMode.playing;
       final scene = DemonScene(model, () {});
+      await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
+      scene.sectors.flyover.reducedMotionOverride = false;
       scene.sectors.images[0] = await _decode('assets/images/sector-1.png');
       try {
         final views = <Uint8List>[];
@@ -207,6 +211,8 @@ void main() {
       final model = ArcadeModel()..start();
       model.mode = RunMode.playing;
       final scene = DemonScene(model, () {});
+      await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
+      scene.sectors.flyover.reducedMotionOverride = false;
       for (var family = 0; family < 5; family++) {
         scene.sectors.images[family] = await _decode(
           'assets/images/sector-${family + 1}.png',

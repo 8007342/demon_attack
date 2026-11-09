@@ -1,0 +1,1391 @@
+{
+ "creature/ember/ash-borer": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated creature, oblique three-quarter top-down view, game sprite, simple readable silhouette, centered, small, tiny charcoal grey alien burrowing grub with orange mandibles, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 13401
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00012_.png",
+    "sha256": "6a4abf0f5db801e2d12a1735fafcaf9b4fd126b953a7ddd462a94afa9e92a3a6",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00012_.png",
+    "sha256": "9f39b0538e09f16e0b17cf87234052489d13ee5051d9936138cbf216c8c8869c",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "creature/ember/cinder-newt": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated creature, oblique three-quarter top-down view, game sprite, simple readable silhouette, centered, small, tiny black alien salamander lizard with glowing orange spots, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 13400
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00010_.png",
+    "sha256": "bcca6f62ba0fcf3fc86ae04d9a3f78712fe922e595304cf5cff51bd1c3d2c803",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00010_.png",
+    "sha256": "bd31eb9cdda3df934d7dd99f354a4eeec40fd7fffefebbe1f5d25b1620bad367",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "creature/hollow/bone-skitter": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated creature, oblique three-quarter top-down view, game sprite, simple readable silhouette, centered, small, tiny pale bone white alien spider skitter with green eyes, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 14401
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00016_.png",
+    "sha256": "2978cba6afaeb91742765e82d30bd561f787fe97b8b3072556416aeaa16a1ef4",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00016_.png",
+    "sha256": "df2f7fbc4d880422c20a012c2305f939603f3e21267abf03559f5add96308495",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "creature/hollow/spore-crawler": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated creature, oblique three-quarter top-down view, game sprite, simple readable silhouette, centered, small, tiny green glowing alien spore crawler with tentacles, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 14400
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00014_.png",
+    "sha256": "1754278548d98d888604b6dc4bb76837b0c02216c1cdc6c89c0062faf627039e",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00014_.png",
+    "sha256": "f48a01da9cf9ee5c0425e271b1d9e8acdd2545586c8cf635b9c39ac8c2b4806d",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "creature/krybor/frost-hopper": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated creature, oblique three-quarter top-down view, game sprite, simple readable silhouette, centered, small, tiny pale blue six legged alien hopper insect, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11400
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00032_.png",
+    "sha256": "17d425768cf0b52e56fa59958479cd843524bb888e523a32b9dc37d59b41cd8b",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00032_.png",
+    "sha256": "f1db35c949b172aa9f94d940463c74b6c40aa5f82eff2add6d9a40621620dc03",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "creature/krybor/shell-crawler": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated creature, oblique three-quarter top-down view, game sprite, simple readable silhouette, centered, small, tiny armored grey blue alien pillbug crawler with segmented shell, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11401
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00033_.png",
+    "sha256": "211a4a099d9284c687ce252e20c7074401494e7dc4c3d425450b6f512257de9e",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00033_.png",
+    "sha256": "a5d5ec2f3a4604b2ff6ad4a29f5eab21f5e485767b1163604ffb49a3d459a1b6",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "creature/ringfall/dust-grazer": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated creature, oblique three-quarter top-down view, game sprite, simple readable silhouette, centered, small, tiny lilac alien slug grazer with feelers, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12401
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00048_.png",
+    "sha256": "d2bdafcc18adc409c144d3215e444a3accbd306681a6f4c494a8f3fed6bc5551",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00048_.png",
+    "sha256": "ce41ddd29d8f3e2c61324d0e9c1d505ed21fbfdd449ee7142d57e2fc855141af",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "creature/ringfall/rock-mite": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated creature, oblique three-quarter top-down view, game sprite, simple readable silhouette, centered, small, tiny violet alien rock mite with eight short legs, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12400
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00047_.png",
+    "sha256": "bab29711a8bdf770247a0b618da6568ecdc850f14d1ae0f09fcc25f2af9237bd",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00047_.png",
+    "sha256": "69d3dd0bc83c7631ff2a965dbc0a5a30b59297293af3061706dc7b9e6ef1233b",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/0/outpost-dome": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, small human frontier outpost, low rounded shelter dome and a radio beacon mast, dim cyan windows, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11200
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00022_.png",
+    "sha256": "e38595b0e52e7908e4382975d3a219e4139d23ec3c09cb418d326db9d09309ba",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00022_.png",
+    "sha256": "79ebb34a27a6c534c3968f726f73af1e2b619ef5eb2aa5f90ae36f0f5567d100",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/0/outpost-shelters": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, row of three low prefab frontier shelters with antennas, sparse cyan lights, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11201
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00023_.png",
+    "sha256": "deb74e4c7747800481168be3df7b9792234583a7566054f872e68cfd7909326a",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00023_.png",
+    "sha256": "f211cd319715172cd76e43f9d54b6804df789868324f7daf32be3e8a46d67c60",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/1/slum-roofs": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, crowded cluster of patchwork corrugated roofs, ladders and water tanks, tiny lit windows, cramped frontier slum block, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11211
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00025_.png",
+    "sha256": "756ac870e7e5580f33c95729ccbaab2ab11c9fc57dcf78f54364a65353c005e2",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00025_.png",
+    "sha256": "b44fc4192c6adcc491c03bbecae8f0ee362aae6ad9d35b77f9719642b9feba5f",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/1/slum-stack": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, dense irregular stacked shanty dwellings piled on each other, patchwork metal roofs, narrow alleys, many tiny warm windows, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11210
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00024_.png",
+    "sha256": "85db6b646933fbd8a6dcb4e7cddda5768b6262d1cb3af6788215259b834a7bb2",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00024_.png",
+    "sha256": "fb153686bd22162bc022444e3a2a0e29a78e824d26d29607f86cca5c46a02653",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/2/dock-berth": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, empty open docking berth pier with mooring arms, landing pad markings and stacked cargo crates, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11221
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00027_.png",
+    "sha256": "df60620782f365569fb6b77d60e1d6bd7d3c9857af7bde76684b7c5b65a5ab91",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00027_.png",
+    "sha256": "eab941edf2fdcaff75d4ee5afb05f4c5fe1f3371e5e105a65991dfcf8a9bb7aa",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/2/dock-gantry": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, frontier cargo dock gantry crane over an open landing berth, steel lattice arm, cargo containers stacked beside it, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11220
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00026_.png",
+    "sha256": "a575f5e856bf39a123b0e26a96d2a511b9a5538317335d69cab4c3771240ac8b",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00026_.png",
+    "sha256": "ad92a83fa4e56c4a88a55d326413d40af064f954910b44792db81d37b750a954",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/3/mountain-peak": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, single stepped rocky mountain peak with snow ridges and a tiny relay light at the summit, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11230
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00028_.png",
+    "sha256": "29c72534a5ae3625008f6fc676b38045a6c88ae219d3c5248385ba03913496fc",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00028_.png",
+    "sha256": "e304ee87790e0406e1b033f039ef968398b53923e17b33a77ef00ac0ec4c7165",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/3/mountain-relay": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, small relay antenna station perched on a jagged snowy ridge, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11231
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00029_.png",
+    "sha256": "e78f79cb25b6ef6c2db9776699b3bf84285ef065c94c1d453d6df8cb45543dbd",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00029_.png",
+    "sha256": "3312eada242d91582c703e7a0ff1059fed0c2568f05cb07cc9cb0b57e2b83878",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/4/command-array": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, grid of uplink satellite dishes and antenna array on a fortified square terrace, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11241
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00031_.png",
+    "sha256": "b790222179825479078af19256ccd14f039a0eeff9dde2fdc17c0e9d3ba775a6",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00031_.png",
+    "sha256": "820c9314589894007af1cbbe6eabb0f36dcbfe7c95ef015c5c6930131a21ed7a",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/krybor/4/command-tower": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, orderly fortified military command tower on stepped terraces with a radar dish and antenna array, rows of cyan lights, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11240
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00030_.png",
+    "sha256": "6d9ed922f35b202756fadc3031381cca60b070ce05e0808244eabc9a1f8e15eb",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00030_.png",
+    "sha256": "42eb2024ab7926777cb6af9f6147b6171058f6addf3c28327ca839ad9a5edd76",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/0/abandoned-relay": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, abandoned orbital relay station with solar panel wings resting on an asteroid, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12200
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00037_.png",
+    "sha256": "eccdb256c44079f4e4629cfe30f8507c709b68a0622a7e04906eeb56015ebfec",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00037_.png",
+    "sha256": "42f1bd15ef338a81c75cc630d8f9df300cb28e02ea18a1b937b1bacd5841d7d3",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/0/ring-arch": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, natural rock arch of violet asteroid ice with dust, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12201
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00038_.png",
+    "sha256": "ef7ffae9fbdb4fcc76043d274f62432ebd5ec9a48aca5ed614416df8b5c12fce",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00038_.png",
+    "sha256": "57f87f2191b7ae91e721ab023d2fb77986cdc42e52f0e11a3a0b1d1a294d5ef7",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/1/patrol-gate": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, pair of marker buoys forming a guarded patrol lane gate with blinking lights, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12211
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00040_.png",
+    "sha256": "8d6e8fc6015953ab4033c23e228f97fb08519a57f6dffadae5ceee742a5423be",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00040_.png",
+    "sha256": "d50417cbc097929cbb73d7103bc521cfa33717790823504f8114ac4e63d5d0ae",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/1/patrol-relay": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, winged patrol relay pylon with a searchlight lamp on a guarded asteroid platform, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12210
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00039_.png",
+    "sha256": "c77157c8e778f1b4f303d231c4a57d31f6e233f49cf3fcf66a2920d284ec8e25",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00039_.png",
+    "sha256": "ba8463cd9c44d57cf94f02f2f35850277c9c6dc0983d723d3f2e1c6aa8994203",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/2/wreck-debris": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, cluster of twisted hull plates and scattered debris chunks, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12221
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00042_.png",
+    "sha256": "629ba546484ae0dbe9668d11386ef486ada96adcdd514efb80506358aa2e4a00",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00042_.png",
+    "sha256": "67c4ffc734480e8c6551d5e885501607d521ee20fe1d4925a1c6a2dceb60cb18",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/2/wreck-hull": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, broken derelict starship hull section split open with exposed ribs, drifting debris, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12220
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00041_.png",
+    "sha256": "d55c6413d9605079bd89e5a956b57802efb2e74cb4dbfd1d6ed2368f8f5fd302",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00041_.png",
+    "sha256": "6150ae93c75666e8f5138eac5dcea4675783877b2f722664cc910a09919b6261",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/3/yard-crane": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, orbital construction crane gantry with welding lights, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12231
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00044_.png",
+    "sha256": "c9d0c643f1a114e9d050d3bae2666bc3e39411a7e6e0758095526ba7bb4aa66c",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00044_.png",
+    "sha256": "de4a7c77dc0e88a561e0041c13c35c8d26f958b59499994bf9b90868cf7024f0",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/3/yard-frame": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, open orbital shipyard construction frame cage with docking ribs around an unfinished warship hull, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12230
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00043_.png",
+    "sha256": "ff23bfec2cfbdc07e7d7fa409e1a9027c0a67da0df51da61f4331680a555f46d",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00043_.png",
+    "sha256": "1f99827827230969475887085256b7e71e346ca199bca6fc6c8cc32746f94b0c",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/4/blockade-barrier": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, segmented armored barrier wall with turret pods, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12241
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00046_.png",
+    "sha256": "b33cfeba25ea7f3feb630e1290f9a6bae4c47a6706ec02e63df90d772e5959d5",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00046_.png",
+    "sha256": "a75fc7274092abc3ff68837a36ed4fefe244e3c3c571a5b2245817983168c3ac",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "landmark/ringfall/4/blockade-platform": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, armored defensive gun platform with heavy barrier plates, aligned in a blockade line, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12240
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00045_.png",
+    "sha256": "4be19d1688ec51e1760d9321283145038cf113bd17dc8a47b05811b830e99d9b",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00045_.png",
+    "sha256": "fea51a61526167efa949f26de2c780504dc5c753ed8ad2265e02083210bd1c53",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "prop/ember/basalt-columns": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, cluster of black hexagonal basalt columns with orange glow cracks, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 13100
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00049_.png",
+    "sha256": "7bf3a1756474875e1e64be63cf7ea3a963276d25a12a32391e64652fa7250102",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00049_.png",
+    "sha256": "641eea7dd2b62a7d808a2fe61b28a5bb4df0554a3c3ff26bdd9b50103477c9cd",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "prop/ember/ember-vent": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, small volcanic fumarole vent glowing orange with ash, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 13101
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00050_.png",
+    "sha256": "2468dc82a913a440027b30c484da2dc260b5ce76b4c0718f93b0d8d529119e40",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00050_.png",
+    "sha256": "eea14c65fb65fa012a0d49548fb0043aed9ee2acf2e4c4a2215be0308ab48a91",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "prop/krybor/frost-crater": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, small round lunar crater with frost rim, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11101
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00020_.png",
+    "sha256": "4ea451c14b46abadd7d08d52e38a45b5c4d620f7d40d05734cc365579b601e51",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00020_.png",
+    "sha256": "00742b0a3644b7107b68407bc14753a9ae6f732f9bbd1813b260b8b332b35ac6",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "prop/krybor/ice-boulders": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, cluster of pale blue ice boulders and frosted rocks, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11100
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00019_.png",
+    "sha256": "26ec2e5dbac70360011ded256e6b5e9f61d56605ce042d96bcc941a31bab38b6",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00019_.png",
+    "sha256": "1572620670f80731dd6f3480305148d4a66b8d6835e7ff5d3eaf7709ef4139d0",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "prop/krybor/survey-beacon": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, small frontier survey beacon mast with a dim cyan lamp on a rock base, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 11102
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00021_.png",
+    "sha256": "ce55afe4442c548ca5fbdadbd888c08e426c2672e65b1199aaaa3c131ff22b94",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00021_.png",
+    "sha256": "9c14afa61399ee12fbf506aa2febd9062d9919bdbb5600490043811169fdb86a",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "prop/ringfall/crater-pit": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, small deep crater pit on violet asteroid rock, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12102
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00036_.png",
+    "sha256": "0289574b424e294ff68c5a5c9737d4d02d24ffd56d81e8a7875a5f54fd019747",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00036_.png",
+    "sha256": "c8b11826a7e44bb269131a12d207982c8316a46f7caaade6ac91551f3e6fae60",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "prop/ringfall/dead-satellite": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, small abandoned satellite with folded solar panels, dim violet metal, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12101
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00035_.png",
+    "sha256": "d1b5c639d40c68af46cd8d16388bace6284a75a1a871c24c2a6fd10564383b94",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00035_.png",
+    "sha256": "56c980d2353636451b567dcc7afe3404d5620c41184b96e223f71914b1019d53",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "prop/ringfall/ring-rocks": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "overrides": {
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, cluster of violet asteroid rocks and lilac ice shards, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 12100
+  },
+  "strength": null,
+  "outputs": [
+   {
+    "file": "sprite-alpha_00034_.png",
+    "sha256": "6ea0a00aa864a182f7f2f1f4b3e534b46e18eaebbc0265d780a14189f49ddc14",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   },
+   {
+    "file": "sprite-rgb_00034_.png",
+    "sha256": "37d9560434bbe72037d11238d657839c29669979d44f44150cdacf5a09cf803e",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors",
+     "layer_xl_transparent_conv.safetensors",
+     "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/carrier/mid": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, distant red black demonic fortress hull ridges with spiked plating and occult ring structures, blood red storm haze",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 15000,
+   "$node:22.seed": 15001,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00013_.png",
+    "sha256": "50ead71297d0b749ddd9c59f365f05119b7135e75f9a8c95f819e67b12504fb1",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/ember/ground": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, close black basalt rubble with glowing orange ember cracks and ash dust",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 13020,
+   "$node:22.seed": 13021,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00027_.png",
+    "sha256": "f1cc38156d560f7c56686c57381cefe68ff378b0397b19be5cd3d725ca6bbf8b",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/ember/mid": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, distant black volcanic ridges with dim glowing red lava seams, ash haze, eclipse lit rims",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 13000,
+   "$node:22.seed": 13001,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00025_.png",
+    "sha256": "367654343bb10ee44c7232209a910f8f8d400ac00ddf9065c14b197fd963c3de",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/ember/near": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, black basalt column terraces split by thin dim lava rivers, cooled magma crust, coral rim light",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 13010,
+   "$node:22.seed": 13011,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00026_.png",
+    "sha256": "1f9b18dd879c70d22069f00795abdbafc40f20b58af1ee1d3810262db7505768",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/hollow/ground": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, close broken gothic stone tiles and rubble, glowing green moss and alien roots",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 14020,
+   "$node:22.seed": 14021,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00012_.png",
+    "sha256": "f53db46c1f56e586b122406d6b36ee9e5e05f31058b4029afb1e3af24b3ae5a2",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/hollow/mid": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, distant floating emerald rock islands in an abyss with ruined arches, green nebula mist",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 14000,
+   "$node:22.seed": 14001,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00010_.png",
+    "sha256": "f3d842fd01ff1a5fad572085b9a4e9bd7df35d4ab49c91124a87736e38114515",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/hollow/near": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, floating dark rock shelves overgrown with green bioluminescent moss and broken gothic masonry",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 14010,
+   "$node:22.seed": 14011,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00011_.png",
+    "sha256": "10a6e9acf56104d3fed73d394b86b0331431025e4009a04b7b2acf7d64eb3a74",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/krybor/ground": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, close icy lunar ground ledge, frost covered rubble, small craters and pale cyan ice crystals, dark navy rock",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 11020,
+   "$node:22.seed": 11021,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00021_.png",
+    "sha256": "40bafc84a56cb0e395c1b005582ebf71cac91e3cc9b4b23cc95107d96510a3da",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/krybor/mid": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, distant cold blue lunar mountain ridges with snow capped stepped peaks, long ridge lines, deep navy valleys",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 11000,
+   "$node:22.seed": 11001,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00019_.png",
+    "sha256": "9fe496c6364dcea6a8e37f620ba30c8912b4d29026db3ee64bfab0fa0b7e72bc",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/krybor/near": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, cold blue rocky lunar plateau terraces, shallow craters, icy boulders and frost cracks, dark navy shadows",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 11010,
+   "$node:22.seed": 11011,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00020_.png",
+    "sha256": "178fb7c90bc5d02466d5acde0de7b6cc8e8212d2379b97fbbebe15717118cb3d",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/ringfall/ground": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, close violet asteroid surface, cratered rubble and lilac ice shards, dark purple rock",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 12020,
+   "$node:22.seed": 12021,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00024_.png",
+    "sha256": "678446bf865a19b7ca2208f56be3c2d1f0bc6a3325f677e2bc8a8b9e1399e5d4",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/ringfall/mid": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, distant violet planetary ring band of dense small asteroids and ice debris, purple dust lanes",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 12000,
+   "$node:22.seed": 12001,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00022_.png",
+    "sha256": "24c939855209047aea284be0e6335235c4c725f3be8562b7433eab9f1463426a",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "strip/ringfall/near": {
+  "workflow": "art/workflows/backgrounds/strip-sheet.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, large violet cratered asteroids floating in a ring belt, broken rock shelves, dark purple shadows",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 12010,
+   "$node:22.seed": 12011,
+   "$node:22.denoise": 0.62
+  },
+  "strength": 0.8,
+  "outputs": [
+   {
+    "file": "strip-seamless_00023_.png",
+    "sha256": "fe97e283dab32511489d06acabb71dcb606c75d1906556c45c89929f65b15095",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ }
+}

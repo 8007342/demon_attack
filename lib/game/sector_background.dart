@@ -3,10 +3,47 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'flyover_background.dart';
+import 'model.dart';
+
 /// Complete independently painted worlds: artwork, moons, orbitals and horizon
 /// geometry crossfade together, rather than recoloring a shared planet.
+///
+/// When the flyover atlases are loaded each world is an oblique 3/4 flyover:
+/// the painted sky is the far layer (~0.02x) and [FlyoverBackground] streams
+/// mid ridges, near terrain with route landmarks, and ground with creatures.
+/// Without them (older tests, failed loads) the legacy painted horizon and
+/// procedural landmarks render instead.
 class SectorBackground {
   final List<ui.Image?> images = List.filled(5, null);
+  final flyover = FlyoverBackground();
+
+  /// Loads the flyover atlases; missing files leave the legacy renderer.
+  Future<void> loadFlyover(Future<ui.Image> Function(String file) load) async {
+    const ids = ['krybor', 'ringfall', 'ember', 'hollow', 'carrier'];
+    Future<ui.Image?> attempt(String f) async {
+      try {
+        return await load(f);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final loaded = await Future.wait([
+      for (final id in ids) attempt('flyover-$id.png'),
+      attempt('flyover-props.png'),
+      attempt('flyover-creatures.png'),
+    ]);
+    for (var i = 0; i < 5; i++) {
+      flyover.strips[i] = loaded[i];
+    }
+    flyover.props = loaded[5];
+    flyover.creatures = loaded[6];
+  }
+
+  /// Scene hook: advance flight distance and creature reactions (visual only).
+  void advance(double dt, ArcadeModel model, double environment) =>
+      flyover.advance(dt, model, environment);
   static const colors = [
     Color(0xFF68C9DE),
     Color(0xFFB49AE9),
@@ -35,6 +72,98 @@ class SectorBackground {
       _layer(c, far, time, cycle, fallback, wave: wave);
       c.restore();
     }
+    if (flyover.ready(near)) {
+      flyover.paintShadow(c);
+      c.drawRect(const Rect.fromLTWH(0, 0, 360, 520), _laneVeil);
+    }
+  }
+
+  /// Keeps the central firing lane darker than any bank detail.
+  static final _laneVeil = Paint()
+    ..shader = const LinearGradient(
+      colors: [
+        Color(0x00060914),
+        Color(0x52060914),
+        Color(0x52060914),
+        Color(0x00060914),
+      ],
+      stops: [.22, .40, .60, .78],
+    ).createShader(const Rect.fromLTWH(0, 0, 360, 520));
+
+  static final _groundVeil = Paint()
+    ..shader = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0x00060914), Color(0x00060914), Color(0xB0060914)],
+      stops: [0, .45, .85],
+    ).createShader(const Rect.fromLTWH(0, 0, 360, 520));
+
+  /// Far layer: the sector's painted sky, drifting at ~0.02x of ground speed
+  /// (a slow eased sway, since a painting cannot tile), stars, then the
+  /// streamed flyover layers.
+  void _flyoverLayer(
+    Canvas c,
+    int sector,
+    double time,
+    int cycle,
+    ui.Image? fallback,
+    int wave,
+  ) {
+    final tint = colors[sector];
+    final reduced = flyover.reducedMotion;
+    c.drawRect(
+      const Rect.fromLTWH(0, 0, 360, 520),
+      Paint()..color = const Color(0xFF070B16),
+    );
+    final image = images[sector] ?? fallback;
+    if (image != null) {
+      final imageRatio = image.width / image.height;
+      const ratio = 360 / 520;
+      final source = imageRatio > ratio
+          ? Rect.fromLTWH(
+              (image.width - image.height * ratio) / 2,
+              0,
+              image.height * ratio,
+              image.height.toDouble(),
+            )
+          : Rect.fromLTWH(
+              0,
+              (image.height - image.width / ratio) / 2,
+              image.width.toDouble(),
+              image.width / ratio,
+            );
+      const sway = 44.0;
+      final phase = flyover.distance * .02 / sway * math.pi;
+      final dy = (-sway + sway * (1 - math.cos(phase)) / 2).roundToDouble();
+      c.drawImageRect(
+        image,
+        source,
+        Rect.fromLTWH(-16, dy, 392, 520 + sway),
+        Paint()..filterQuality = FilterQuality.none,
+      );
+      c.drawRect(
+        const Rect.fromLTWH(0, 0, 360, 520),
+        Paint()..color = const Color(0x8A060914),
+      );
+      c.drawRect(const Rect.fromLTWH(0, 0, 360, 520), _groundVeil);
+    }
+    final random = math.Random(1982 + sector * 709 + cycle * 41);
+    final starTime = reduced ? 0.0 : time;
+    for (var i = 0; i < 70; i++) {
+      final depth = i % 3 + 1;
+      final x = random.nextDouble() * 360;
+      final y = (random.nextDouble() * 520 + starTime * depth * .35) % 520;
+      final twinkle = reduced ? 0 : 0.025 * math.sin(time * 2.5 + i).abs();
+      c.drawRect(
+        Rect.fromLTWH(x.floorToDouble(), y.floorToDouble(), i % 13 == 0 ? 2 : 1, 1),
+        Paint()
+          ..color = tint.withValues(
+            alpha: (.10 + .05 * depth + twinkle).clamp(0.0, 1.0),
+          ),
+      );
+    }
+    flyover.paintLayers(c, sector, cycle.clamp(0, 4));
+    _paintSectorAtmosphere(c, sector, starTime, tint, wave);
   }
 
   void _layer(
@@ -45,6 +174,10 @@ class SectorBackground {
     ui.Image? fallback, {
     int wave = 1,
   }) {
+    if (flyover.ready(sector)) {
+      _flyoverLayer(c, sector, time, cycle, fallback, wave);
+      return;
+    }
     final tint = colors[sector];
     c.drawRect(
       const Rect.fromLTWH(0, 0, 360, 520),

@@ -55,6 +55,8 @@ class DemonScene extends FlameGame {
         }
       }),
     );
+    // --- flyover parallax hook (background only) ---
+    await sectors.loadFlyover(images.load);
   }
 
   @override
@@ -66,6 +68,8 @@ class DemonScene extends FlameGame {
           ? model.nextLevel - 1
           : model.level - 1;
       environment += (destination - environment) * math.min(1, dt * .65);
+      // --- flyover parallax hook (visual only; reads model state) ---
+      sectors.advance(dt, model, environment);
     }
     if (model.canPilot && keyboardDirection != 0) {
       model.moveBy(keyboardDirection * dt * 280);

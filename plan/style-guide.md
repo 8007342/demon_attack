@@ -52,6 +52,27 @@ The separate sentinel/effect atlas is documented in [sprite-atlas.md](sprite-atl
 
 The intended scenery has far stars, slower planet layers, and a closer horizon, with planets and moons rising or setting as the game advances. Background luminance stays below enemy and projectile luminance. Smooth palette and planetary movement between levels is the target; exact layer speeds and transition timing are renderer tuning, not simulation defaults. Reduced-motion support should remove shake and decorative motion without hiding warning cues.
 
+### Backgrounds: oblique flyover parallax
+
+Every sector is an endless oblique 3/4 flyover down a canyon: the ship flies forward and the ground streams toward the player. Layers, back to front, with speeds relative to the ground:
+
+| Layer | Speed | Content | Luminance cap |
+| --- | --- | --- | --- |
+| Far | ~0.02× (slow eased sway) | The sector's painted sky (`sector-N.png`): planets, moons, nebulae; sparse stars; its painted horizon is veiled | painting under a 54% veil |
+| Mid | 0.2× | Ridge/mountain banks along both edges | 0.15 |
+| Near | 0.6× | Terrain banks plus route landmarks | 0.21 (landmarks 0.44) |
+| Ground | 1.0× | Closest banks, small props, creatures, the ship's shadow | 0.27 (props 0.36, creatures 0.42) |
+
+- Layers are composable for any session length: seamless vertically tiling strips (three variants per layer per sector, never the same variant twice in a row, mirrored for the right bank) and a library of landmark/prop sprites placed by seeded, stateless scattering per fixed segment. The same distance draws the same picture on every device.
+- The central lane stays dark and clear: banks occupy the outer edges, a horizontal lane veil darkens the middle, and background luminance stays below threats, projectiles and cores.
+- Route identity lives in the near-layer landmarks (two per named route, see the table in [sector-style-guide.md](sector-style-guide.md)); sector identity in the painted sky, the palette median-cut from it and each sector's materials.
+- Creatures: two original pixel species per sector, darker and more demonic deeper into the campaign (frost hoppers and shell crawlers on Krybor; rock mites and dust grazers in Ringfall; cinder newts and ash borers on Ember; spore crawlers and bone skitters in the Hollow; brood larvae and hive ticks on the Carrier). They walk or crawl with discrete four-frame gaits on the ground banks, scatter from explosions and the falling carrier wreck, burrow (burrowing species) and duck as the ship's shadow passes. Reactions are visual only and read explosion, wreck and ship state.
+- Travel accelerates the flight (up to 10× at mid-travel) while the destination world crossfades in, so its landmarks show before arrival. Cinematic blackout and letterbox bars still cover the scenery.
+- Reduced motion (`disableAnimations`/`reduceMotion`) freezes flight, star and particle drift and creature walking; scenery and warning cues stay visible.
+- All layers draw with `FilterQuality.none` at 2 arena units per logical pixel, batched with `Canvas.drawAtlas` (about six calls per sector).
+
+The generator, prompts and seeds are in [asset-pipeline.md](asset-pipeline.md).
+
 Title centers an original horned demon emblem and the Demon Attack wordmark, with Start, Top 10, sound, and short controls guidance. The game HUD displays score, level/cycle, lives, and current power; carrier shield coverage and hull damage communicate boss condition during its encounter. Touch controls occupy a recessed futuristic laptop-style trackpad beneath the arena, with cyan corner lights, pixel circuit traces, and a visible drag indicator. Keep fingers away from combat. Real interface text remains legible and accessible; no fake labels baked into generated art.
 
 Top 10 uses aligned rank, three-character initials, and score columns. Initial entry offers three rotating wheels with A–Z and 0–9, clear upper/lower controls, a highlighted middle selection, and Submit. Avoid a freeform text field. Game-over and victory keep a darkened arena behind their overlays. Review phone portrait, narrow desktop, and wide desktop without horizontal overflow.
