@@ -118,6 +118,7 @@ class CommsDirector {
     Map<int, Map<CommsSide, List<String>>>? roster,
     Set<String>? reserve,
     this.anchor = commsAnchor,
+    this.groupGap = commsGroupGap,
     this.onStart,
     this.onStop,
   }) : random = random ?? math.Random(1982),
@@ -153,6 +154,10 @@ class CommsDirector {
   /// not assigned to when nobody on the call has a line.
   Set<String> reserve;
   final String anchor;
+
+  /// Seconds between two lines of one [CommsTriggerSpec.group].
+  final Map<String, double> groupGap;
+  final _groupFired = <String, double>{};
   void Function(CommsMessage)? onStart, onStop;
 
   /// This run's crew (see [CommsLineup]).
@@ -205,6 +210,7 @@ class CommsDirector {
     _lastFired.clear();
     _speakerUsed.clear();
     _signatureAt.clear();
+    _groupFired.clear();
     _signatures = 0;
     celebrateUntil = -1;
     for (final slot in slots) {
@@ -243,6 +249,12 @@ class CommsDirector {
     final key = '${demon ? 'd' : 'h'}:$name';
     final last = _lastFired[key];
     if (last != null && at - last < spec.cooldown) return;
+    final group = spec.group;
+    if (group != null && !spec.critical) {
+      final gap = groupGap[group] ?? 0;
+      final lastGroup = _groupFired[group];
+      if (lastGroup != null && at - lastGroup < gap) return;
+    }
     if (spec.chance < 1 && random.nextDouble() >= spec.chance) {
       _lastFired[key] = at;
       return;
@@ -261,6 +273,7 @@ class CommsDirector {
       if (character == null) break;
       used.add(line.speaker);
       _lastFired[key] = at;
+      if (group != null && !demon) _groupFired[group] = at;
       _speakerUsed[line.speaker] = at;
       if (line.signature) {
         _signatureAt[line.speaker] = at;

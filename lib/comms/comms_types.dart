@@ -74,6 +74,7 @@ class CommsTriggerSpec {
     this.delay = 0,
     this.mood = CommsMood.stern,
     this.chain = 0,
+    this.group,
   });
   final String name;
 
@@ -85,6 +86,10 @@ class CommsTriggerSpec {
 
   /// Extra lines from other crew members after the first (celebrations).
   final int chain;
+
+  /// Rate-limit family (e.g. `ground`): one line per family per its gap, so
+  /// ground-war narration never drowns out the air callouts.
+  final String? group;
   static const criticalPriority = 8;
   bool get critical => priority >= criticalPriority;
 }

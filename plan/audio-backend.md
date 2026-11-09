@@ -94,9 +94,9 @@ One portrait frame per 1/15 s across the whole clip (`mouth` in the manifest and
 
 | Set | Clips | Audio | Opus | AAC |
 | --- | ---: | ---: | ---: | ---: |
-| Human lines | 188 | 491 s | 1.31 MB | 1.96 MB |
-| Demon grunts | 53 | 55 s | 0.15 MB | 0.25 MB |
-| **Total** | **241** | **546 s** | **1.46 MB** | **2.21 MB** |
+| Human lines | 207 | 547 s | 1.46 MB | 2.18 MB |
+| Demon grunts | 63 | 68 s | 0.19 MB | 0.31 MB |
+| **Total** | **270** | **615 s** | **1.64 MB** | **2.49 MB** |
 
 Clips load lazily (`prefetch` the lines a sector can use); a typical line is 2–3 s and 5–8 KB of Opus. `test-worker/comms-audio.test.mjs` covers the no-op before the gesture, the shared master, ducking and its release, the two-voice cap with steal-by-priority and drop, voice volume, a missing clip freeing its slot, and that every manifest clip ships both formats within budget.
 

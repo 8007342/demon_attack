@@ -34,6 +34,11 @@ const commsGroundPool = ['march', 'kessler', 'voss', 'mensah'];
 const commsLineupFleet = 5;
 const commsLineupGround = 2;
 
+/// Seconds between two lines of one rate-limit group.
+const commsGroupGap = <String, double>{
+  'ground': 8.0,
+};
+
 /// Demon officers on the brood net per sector (1-5).
 const commsDemonSectors = <int, List<String>>{
   1: ['gorrak'],
@@ -510,8 +515,9 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     priority: 5,
     cooldown: 18.0,
     ttl: 3.0,
+    group: 'ground',
     lines: [
-      CommsLine(id: 'groundForceSighted.h0', speaker: 'admiral', duration: 1.511, text: 'Ground forces ahead!', mouth: '22444535333543433220000'),
+      CommsLine(id: 'groundForceSighted.h0', speaker: 'admiral', duration: 3.198, text: 'Ground enemies incoming! Ground forces ahead!', mouth: '224445444554444533322200000344444544553333322000'),
       CommsLine(id: 'groundForceSighted.h1', speaker: 'wisp', duration: 2.619, text: 'Demon ground troops below. Marking them now.', mouth: '4445444444533333344445224433555543320000'),
       CommsLine(id: 'groundForceSighted.h2', speaker: 'anvil', duration: 2.728, text: 'Movement on the ground. Brood infantry.', mouth: '33553344433344432220002455544533333320000'),
       CommsLine(id: 'groundForceSighted.h3', speaker: 'kessler', duration: 2.727, text: 'Bulwark here. Brood walkers moving on our line!', mouth: '44554422442002453544333355433333333220000'),
@@ -524,6 +530,7 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     priority: 6,
     cooldown: 14.0,
     ttl: 2.0,
+    group: 'ground',
     lines: [
       CommsLine(id: 'groundForceInRange.h0', speaker: 'sparrow', duration: 2.132, text: 'Ground targets in range. Fire!', mouth: '45445333333553335330000244322000'),
       CommsLine(id: 'groundForceInRange.h1', speaker: 'rook', duration: 1.52, text: 'Strafing run! Hit them now!', mouth: '22444454453353543322000'),
@@ -538,6 +545,7 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     cooldown: 14.0,
     ttl: 3.0,
     mood: CommsMood.worried,
+    group: 'ground',
     lines: [
       CommsLine(id: 'allyUnderAttack.h0', speaker: 'kessler', duration: 1.88, text: 'We\'re pinned down. Need air support!', mouth: '45334454444554444433225300000'),
       CommsLine(id: 'allyUnderAttack.h1', speaker: 'kessler', duration: 2.356, text: 'Please shoot these enemies! They\'re all over us!', mouth: '225433335353344432223444554332220000'),
@@ -553,6 +561,7 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     cooldown: 12.0,
     ttl: 3.0,
     mood: CommsMood.happy,
+    group: 'ground',
     lines: [
       CommsLine(id: 'allySaved.h0', speaker: 'kessler', duration: 2.114, text: 'That did it! Thanks for the cover, flyer!', mouth: '44433555004433454444335443220000'),
       CommsLine(id: 'allySaved.h1', speaker: 'voss', duration: 1.894, text: 'They\'re scattering! We owe you one!', mouth: '44444444435200544445554320000'),
@@ -567,12 +576,73 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     cooldown: 20.0,
     ttl: 3.0,
     mood: CommsMood.worried,
+    group: 'ground',
     lines: [
       CommsLine(id: 'allyRetreated.h0', speaker: 'kessler', duration: 1.727, text: 'I\'m totalled! Going back to base!', mouth: '33534455344544223443222000'),
       CommsLine(id: 'allyRetreated.h1', speaker: 'voss', duration: 3.534, text: 'Lantern\'s rig is totalled. We\'re limping home. Cover the gap!', mouth: '444445533443333444522000054454333445520023454443200000'),
       CommsLine(id: 'allyRetreated.h2', speaker: 'march', duration: 4.691, text: 'Bastion\'s command track is wrecked. Pulling back to base. Hold the line for us!', mouth: '44444455334444334433334430002244554422254432220000035545444522222220000'),
       CommsLine(id: 'allyRetreated.h3', speaker: 'mensah', duration: 3.339, text: 'Granite\'s crumbled! Heading back to base to patch up!', mouth: '334444323445555334454445354442223333333200000000000', signature: true),
       CommsLine(id: 'allyRetreated.h4', speaker: 'admiral', duration: 4.058, text: 'A ground team is heading home for repairs. Cover their retreat.', mouth: '4355444544453544453345533333333223300000033445544333333222000'),
+    ],
+  ),
+  'groundUnitDestroyed': CommsTriggerSpec(
+    name: 'groundUnitDestroyed',
+    priority: 2,
+    cooldown: 22.0,
+    ttl: 2.0,
+    chance: 0.45,
+    mood: CommsMood.happy,
+    group: 'ground',
+    lines: [
+      CommsLine(id: 'groundUnitDestroyed.h0', speaker: 'kessler', duration: 2.68, text: 'Bulwark here. Splashed a walker. Line\'s holding.', mouth: '45554334433344443544333222444533553220000'),
+      CommsLine(id: 'groundUnitDestroyed.h1', speaker: 'voss', duration: 2.623, text: 'Lantern got one! Scratch one brood crawler.', mouth: '4444445435445300023344334554542244332000'),
+      CommsLine(id: 'groundUnitDestroyed.h2', speaker: 'march', duration: 4.037, text: 'Bastion reports another contact down. This sector is ours.', mouth: '4444334545354535544433443332233335200353333333335344522220000'),
+      CommsLine(id: 'groundUnitDestroyed.h3', speaker: 'mensah', duration: 2.934, text: 'Granite here. One less demon on the ground.', mouth: '334444334455544443224553335333332220000000000'),
+      CommsLine(id: 'groundUnitDestroyed.h4', speaker: 'rook', duration: 1.831, text: 'Ground crews are crushing it down there!', mouth: '4544545542233335344433320000'),
+    ],
+  ),
+  'groundPressureRising': CommsTriggerSpec(
+    name: 'groundPressureRising',
+    priority: 5,
+    cooldown: 30.0,
+    ttl: 3.0,
+    mood: CommsMood.worried,
+    group: 'ground',
+    lines: [
+      CommsLine(id: 'groundPressureRising.h0', speaker: 'kessler', duration: 2.369, text: 'They\'re pushing harder. Could use some help soon.', mouth: '353344445444432223355433352222220000'),
+      CommsLine(id: 'groundPressureRising.h1', speaker: 'voss', duration: 3.087, text: 'More of them every minute down here. Keep an eye on us.', mouth: '45544555354454433333333300000234544443333332000'),
+      CommsLine(id: 'groundPressureRising.h2', speaker: 'march', duration: 3.49, text: 'Bastion to air wing. Pressure is building on our line.', mouth: '44443345333444454435200024443352254543533335333220000'),
+      CommsLine(id: 'groundPressureRising.h3', speaker: 'mensah', duration: 3.133, text: 'Granite\'s starting to crack. Not yet, but soon.', mouth: '334444224445323444300533544222223552200000000000'),
+    ],
+  ),
+  'groundPressureHigh': CommsTriggerSpec(
+    name: 'groundPressureHigh',
+    priority: 6,
+    cooldown: 24.0,
+    ttl: 3.0,
+    mood: CommsMood.worried,
+    group: 'ground',
+    lines: [
+      CommsLine(id: 'groundPressureHigh.h0', speaker: 'kessler', duration: 2.783, text: 'We can\'t hold much longer! Need air support now!', mouth: '323443355543354444300554444433354333320000'),
+      CommsLine(id: 'groundPressureHigh.h1', speaker: 'voss', duration: 2.15, text: 'Lantern\'s line is buckling! Help us!', mouth: '454445544444334445452244533330000'),
+      CommsLine(id: 'groundPressureHigh.h2', speaker: 'march', duration: 3.069, text: 'All air units, the ground line is about to break!', mouth: '33453344555353332344444544453353332223330000000'),
+      CommsLine(id: 'groundPressureHigh.h3', speaker: 'mensah', duration: 3.534, text: 'Granite\'s crumbling fast! Send everything you\'ve got!', mouth: '334444222445553344432200245434333555223443000000000000'),
+      CommsLine(id: 'groundPressureHigh.h4', speaker: 'admiral', duration: 3.117, text: 'The ground line is failing. Give them cover, pilot.', mouth: '45454455444443333332200000344533343534453322000'),
+    ],
+  ),
+  'groundBreakthrough': CommsTriggerSpec(
+    name: 'groundBreakthrough',
+    priority: 7,
+    cooldown: 14.0,
+    ttl: 2.5,
+    mood: CommsMood.worried,
+    group: 'ground',
+    lines: [
+      CommsLine(id: 'groundBreakthrough.h0', speaker: 'admiral', duration: 3.012, text: 'Breakthrough! Enemy ground units in firing range!', mouth: '4443224430003455544445454445444444533322330000'),
+      CommsLine(id: 'groundBreakthrough.h1', speaker: 'kessler', duration: 2.064, text: 'They broke through! Missiles coming your way!', mouth: '3353442234455333333445353320000'),
+      CommsLine(id: 'groundBreakthrough.h2', speaker: 'march', duration: 2.789, text: 'Breach in the line! They\'re targeting the air wing!', mouth: '444444445444452222334444455534435533220000'),
+      CommsLine(id: 'groundBreakthrough.h3', speaker: 'kestrel', duration: 2.625, text: 'Ground breakthrough. Watch for missiles from below!', mouth: '3344454442244522543334544333454533200000'),
+      CommsLine(id: 'groundBreakthrough.h4', speaker: 'anvil', duration: 2.847, text: 'They\'re through the line. Dodge the ground fire!', mouth: '2244333533554432000002444543553333333220000'),
     ],
   ),
 };
@@ -745,6 +815,34 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'allyRetreated.d2', speaker: 'skarn', duration: 1.089, grunt: 'gloat', gloss: 'GROUND VICTORY', mouth: '44444444444433000'),
       CommsLine(id: 'allyRetreated.d3', speaker: 'morth', duration: 1.071, grunt: 'gloat', gloss: 'GROUND VICTORY', mouth: '43444444444330000'),
       CommsLine(id: 'allyRetreated.d4', speaker: 'ulgra', duration: 1.101, grunt: 'gloat', gloss: 'GROUND VICTORY', mouth: '44447444444443000'),
+    ],
+  ),
+  'groundPressureHigh': CommsTriggerSpec(
+    name: 'groundPressureHigh',
+    priority: 4,
+    cooldown: 24.0,
+    ttl: 2.0,
+    delay: 0.8,
+    lines: [
+      CommsLine(id: 'groundPressureHigh.d0', speaker: 'gorrak', duration: 1.024, grunt: 'rally', gloss: 'PRESS THE ATTACK', mouth: '3344444477743000'),
+      CommsLine(id: 'groundPressureHigh.d1', speaker: 'vexxa', duration: 1.066, grunt: 'rally', gloss: 'PRESS THE ATTACK', mouth: '4344444444443000'),
+      CommsLine(id: 'groundPressureHigh.d2', speaker: 'skarn', duration: 1.046, grunt: 'rally', gloss: 'PRESS THE ATTACK', mouth: '3333444444444000'),
+      CommsLine(id: 'groundPressureHigh.d3', speaker: 'morth', duration: 1.046, grunt: 'rally', gloss: 'PRESS THE ATTACK', mouth: '3333444444443000'),
+      CommsLine(id: 'groundPressureHigh.d4', speaker: 'ulgra', duration: 1.045, grunt: 'rally', gloss: 'PRESS THE ATTACK', mouth: '4333444777444000'),
+    ],
+  ),
+  'groundBreakthrough': CommsTriggerSpec(
+    name: 'groundBreakthrough',
+    priority: 5,
+    cooldown: 16.0,
+    ttl: 2.0,
+    delay: 0.6,
+    lines: [
+      CommsLine(id: 'groundBreakthrough.d0', speaker: 'gorrak', duration: 1.448, grunt: 'roar', gloss: 'BREAKTHROUGH', mouth: '4444447777777774443000'),
+      CommsLine(id: 'groundBreakthrough.d1', speaker: 'vexxa', duration: 1.514, grunt: 'roar', gloss: 'BREAKTHROUGH', mouth: '44433477774444444443000'),
+      CommsLine(id: 'groundBreakthrough.d2', speaker: 'skarn', duration: 1.418, grunt: 'roar', gloss: 'BREAKTHROUGH', mouth: '4444447777777744443000'),
+      CommsLine(id: 'groundBreakthrough.d3', speaker: 'morth', duration: 1.471, grunt: 'roar', gloss: 'BREAKTHROUGH', mouth: '44433447744774444430000'),
+      CommsLine(id: 'groundBreakthrough.d4', speaker: 'ulgra', duration: 1.578, grunt: 'roar', gloss: 'BREAKTHROUGH', mouth: '444444777777777774443000'),
     ],
   ),
 };

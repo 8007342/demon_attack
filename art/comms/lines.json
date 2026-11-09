@@ -1,5 +1,6 @@
 {
-  "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). 'signature': catchphrases and puns, rationed by the director. Tone: allies never die; a downed ship or squad is 'totalled' and heads back to base.",
+  "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. Tone: allies never die; a downed ship or squad is 'totalled' and heads back to base.",
+  "groupGap": {"ground": 8},
   "triggers": {
     "sectorStart": {"priority": 4, "cooldown": 20, "ttl": 6, "mood": "stern", "lines": [
       {"speaker": "admiral", "text": "Overwatch to squadron. New sector, same promise. Keep them off the fleet."},
@@ -273,8 +274,8 @@
       {"speaker": "admiral", "text": "That's the last reserve. Bring it home, pilot. We'll launch again."},
       {"speaker": "lindqvist", "text": "Recovery has your pod. Rest up. The fleet will be ready when you are."}
     ]},
-    "groundForceSighted": {"priority": 5, "cooldown": 18, "ttl": 3, "mood": "stern", "lines": [
-      {"speaker": "admiral", "text": "Ground forces ahead!"},
+    "groundForceSighted": {"priority": 5, "cooldown": 18, "ttl": 3, "mood": "stern", "group": "ground", "lines": [
+      {"speaker": "admiral", "text": "Ground enemies incoming! Ground forces ahead!"},
       {"speaker": "wisp", "text": "Demon ground troops below. Marking them now."},
       {"speaker": "anvil", "text": "Movement on the ground. Brood infantry."},
       {"speaker": "kessler", "text": "Bulwark here. Brood walkers moving on our line!"},
@@ -287,14 +288,14 @@
       {"speaker": "morth", "grunt": "order", "gloss": "GROUND ADVANCE"},
       {"speaker": "ulgra", "grunt": "order", "gloss": "GROUND ADVANCE"}
     ]}},
-    "groundForceInRange": {"priority": 6, "cooldown": 14, "ttl": 2, "mood": "stern", "lines": [
+    "groundForceInRange": {"priority": 6, "cooldown": 14, "ttl": 2, "mood": "stern", "group": "ground", "lines": [
       {"speaker": "sparrow", "text": "Ground targets in range. Fire!"},
       {"speaker": "rook", "text": "Strafing run! Hit them now!"},
       {"speaker": "anvil", "text": "They're under your guns. Take the shot."},
       {"speaker": "voss", "text": "Lantern here. They're right under you. Light them up!"},
       {"speaker": "mensah", "text": "You're right over them. Bring the rain!"}
     ]},
-    "allyUnderAttack": {"priority": 7, "cooldown": 14, "ttl": 3, "mood": "worried", "lines": [
+    "allyUnderAttack": {"priority": 7, "cooldown": 14, "ttl": 3, "mood": "worried", "group": "ground", "lines": [
       {"speaker": "kessler", "text": "We're pinned down. Need air support!"},
       {"speaker": "kessler", "text": "Please shoot these enemies! They're all over us!"},
       {"speaker": "voss", "text": "Pick up some homing missiles! We need them off our backs!"},
@@ -308,7 +309,7 @@
       {"speaker": "morth", "grunt": "order", "gloss": "SURROUND ORDER"},
       {"speaker": "ulgra", "grunt": "order", "gloss": "SURROUND ORDER"}
     ]}},
-    "allySaved": {"priority": 5, "cooldown": 12, "ttl": 3, "mood": "happy", "lines": [
+    "allySaved": {"priority": 5, "cooldown": 12, "ttl": 3, "mood": "happy", "group": "ground", "lines": [
       {"speaker": "kessler", "text": "That did it! Thanks for the cover, flyer!"},
       {"speaker": "voss", "text": "They're scattering! We owe you one!"},
       {"speaker": "march", "text": "Pressure's off. Bastion thanks you, air wing."},
@@ -320,7 +321,7 @@
       {"speaker": "skarn", "grunt": "alarm", "gloss": "GROUND ROUTED"},
       {"speaker": "morth", "grunt": "alarm", "gloss": "GROUND ROUTED"}
     ]}},
-    "allyRetreated": {"priority": 6, "cooldown": 20, "ttl": 3, "mood": "worried", "lines": [
+    "allyRetreated": {"priority": 6, "cooldown": 20, "ttl": 3, "mood": "worried", "group": "ground", "lines": [
       {"speaker": "kessler", "text": "I'm totalled! Going back to base!"},
       {"speaker": "voss", "text": "Lantern's rig is totalled. We're limping home. Cover the gap!"},
       {"speaker": "march", "text": "Bastion's command track is wrecked. Pulling back to base. Hold the line for us!"},
@@ -332,6 +333,45 @@
       {"speaker": "skarn", "grunt": "gloat", "gloss": "GROUND VICTORY"},
       {"speaker": "morth", "grunt": "gloat", "gloss": "GROUND VICTORY"},
       {"speaker": "ulgra", "grunt": "gloat", "gloss": "GROUND VICTORY"}
+    ]}},
+    "groundUnitDestroyed": {"priority": 2, "cooldown": 22, "ttl": 2, "chance": 0.45, "mood": "happy", "group": "ground", "lines": [
+      {"speaker": "kessler", "text": "Bulwark here. Splashed a walker. Line's holding."},
+      {"speaker": "voss", "text": "Lantern got one! Scratch one brood crawler."},
+      {"speaker": "march", "text": "Bastion reports another contact down. This sector is ours."},
+      {"speaker": "mensah", "text": "Granite here. One less demon on the ground."},
+      {"speaker": "rook", "text": "Ground crews are crushing it down there!"}
+    ]},
+    "groundPressureRising": {"priority": 5, "cooldown": 30, "ttl": 3, "mood": "worried", "group": "ground", "lines": [
+      {"speaker": "kessler", "text": "They're pushing harder. Could use some help soon."},
+      {"speaker": "voss", "text": "More of them every minute down here. Keep an eye on us."},
+      {"speaker": "march", "text": "Bastion to air wing. Pressure is building on our line."},
+      {"speaker": "mensah", "text": "Granite's starting to crack. Not yet, but soon."}
+    ]},
+    "groundPressureHigh": {"priority": 6, "cooldown": 24, "ttl": 3, "mood": "worried", "group": "ground", "lines": [
+      {"speaker": "kessler", "text": "We can't hold much longer! Need air support now!"},
+      {"speaker": "voss", "text": "Lantern's line is buckling! Help us!"},
+      {"speaker": "march", "text": "All air units, the ground line is about to break!"},
+      {"speaker": "mensah", "text": "Granite's crumbling fast! Send everything you've got!"},
+      {"speaker": "admiral", "text": "The ground line is failing. Give them cover, pilot."}
+    ], "demon": {"priority": 4, "cooldown": 24, "ttl": 2, "delay": 0.8, "lines": [
+      {"speaker": "gorrak", "grunt": "rally", "gloss": "PRESS THE ATTACK"},
+      {"speaker": "vexxa", "grunt": "rally", "gloss": "PRESS THE ATTACK"},
+      {"speaker": "skarn", "grunt": "rally", "gloss": "PRESS THE ATTACK"},
+      {"speaker": "morth", "grunt": "rally", "gloss": "PRESS THE ATTACK"},
+      {"speaker": "ulgra", "grunt": "rally", "gloss": "PRESS THE ATTACK"}
+    ]}},
+    "groundBreakthrough": {"priority": 7, "cooldown": 14, "ttl": 2.5, "mood": "worried", "group": "ground", "lines": [
+      {"speaker": "admiral", "text": "Breakthrough! Enemy ground units in firing range!"},
+      {"speaker": "kessler", "text": "They broke through! Missiles coming your way!"},
+      {"speaker": "march", "text": "Breach in the line! They're targeting the air wing!"},
+      {"speaker": "kestrel", "text": "Ground breakthrough. Watch for missiles from below!"},
+      {"speaker": "anvil", "text": "They're through the line. Dodge the ground fire!"}
+    ], "demon": {"priority": 5, "cooldown": 16, "ttl": 2, "delay": 0.6, "lines": [
+      {"speaker": "gorrak", "grunt": "roar", "gloss": "BREAKTHROUGH"},
+      {"speaker": "vexxa", "grunt": "roar", "gloss": "BREAKTHROUGH"},
+      {"speaker": "skarn", "grunt": "roar", "gloss": "BREAKTHROUGH"},
+      {"speaker": "morth", "grunt": "roar", "gloss": "BREAKTHROUGH"},
+      {"speaker": "ulgra", "grunt": "roar", "gloss": "BREAKTHROUGH"}
     ]}}
   }
 }

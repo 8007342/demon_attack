@@ -67,6 +67,13 @@ abstract final class GameEventNames {
   /// Data `scope`: 'level' (at sector clear) or 'campaign' (at victory).
   static const fleetIntact = 'fleetIntact';
 
+  /// Demon ground units broke through the allied line to firing range.
+  static const groundBreakthrough = 'groundBreakthrough';
+
+  /// The ground war's pressure on the allied line, 0..1 (data `level`;
+  /// `pressure` or `value` are accepted too).
+  static const groundPressure = 'groundPressure';
+
   static const all = [
     groundForceSighted,
     groundForceInRange,
@@ -79,7 +86,15 @@ abstract final class GameEventNames {
     allySaved,
     allyRetreated,
     fleetIntact,
+    groundBreakthrough,
+    groundPressure,
   ];
+
+  /// [groundPressure] crossing [GameEventObserver.pressureRising] /
+  /// [GameEventObserver.pressureHigh] upward (each re-arms once the pressure
+  /// falls back below [GameEventObserver.pressureCalm]).
+  static const groundPressureRising = 'groundPressureRising';
+  static const groundPressureHigh = 'groundPressureHigh';
 
   // --- Derived by GameEventObserver (data `variant`, `payload`, `clock`).
 
@@ -232,9 +247,14 @@ class GameEventObserver {
   bool _diveRunAnnounced = false;
   FleetTally tally = FleetTally();
 
+  /// Ground pressure bands (hysteresis on the way down).
+  static const pressureCalm = .3, pressureRising = .45, pressureHigh = .8;
+  int _pressureBand = 0;
+
   /// [freshRun] false (a restored checkpoint) disables `flawlessRun`.
   void reset({bool freshRun = true}) {
     tally = FleetTally()..wholeRun = freshRun;
+    _pressureBand = 0;
     _seenLarge.clear();
     _seenElite.clear();
     _seenPickups.clear();
@@ -322,6 +342,21 @@ class GameEventObserver {
     switch (event.name) {
       case GameEventNames.allyRetreated:
         tally.lose();
+      case GameEventNames.groundPressure:
+        final raw =
+            event.data['level'] ??
+            event.data['pressure'] ??
+            event.data['value'];
+        final level = raw is num ? raw.toDouble() : double.tryParse('$raw');
+        if (level == null) break;
+        if (level < pressureCalm) _pressureBand = 0;
+        if (level >= pressureHigh && _pressureBand < 2) {
+          _pressureBand = 2;
+          out.add(_event(GameEventNames.groundPressureHigh));
+        } else if (level >= pressureRising && _pressureBand < 1) {
+          _pressureBand = 1;
+          out.add(_event(GameEventNames.groundPressureRising));
+        }
       case GameEventNames.fleetIntact:
         final scope = event.data['scope'];
         if (scope == 'campaign') {
@@ -344,6 +379,7 @@ class GameEventObserver {
     tally
       ..sector = 0
       ..sectorShips = 0;
+    _pressureBand = 0;
     emit(GameEventNames.sectorStart, variant: '${model.level}');
   }
 

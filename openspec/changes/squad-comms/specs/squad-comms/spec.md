@@ -53,6 +53,19 @@ A demon officer's line SHALL be an unintelligible creature grunt. It SHALL be su
 - **WHEN** the platform requests reduced motion and an officer grunts
 - **THEN** the tile enlarges without shake and the static transitions become plain fades
 
+### Requirement: Ground war narration
+The radio SHALL narrate the ground war:
+- sightings ("Ground enemies incoming");
+- allied kill reports, as occasional chatter;
+- calls for help that rise as `groundPressure` crosses 0.45 and then 0.8, re-arming once it falls below 0.3;
+- urgent `groundBreakthrough` warnings.
+
+Ground lines SHALL share a rate-limit group, at most one per 8 s, and SHALL stay below gameplay-critical priority, so the air callouts keep the channel.
+
+#### Scenario: Busy ground war
+- **WHEN** ground kills, sightings and pressure changes arrive every second
+- **THEN** at most one ground line is queued per 8 s, and air warnings still play
+
 ### Requirement: Allies never die
 Lines SHALL never speak of death or grief. A downed player ship, or an allied unit knocked out (`allyRetreated`, alias `allyLost`), SHALL be described as totalled and returning to base.
 

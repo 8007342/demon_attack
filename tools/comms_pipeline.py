@@ -133,6 +133,12 @@ def stage_dart(_args):
     out.append(f"const commsLineupFleet = {cast['lineup']['fleet']};")
     out.append(f"const commsLineupGround = {cast['lineup']['ground']};")
     out.append('')
+    out.append('/// Seconds between two lines of one rate-limit group.')
+    out.append('const commsGroupGap = <String, double>{')
+    for group, gap in lines.get('groupGap', {}).items():
+        out.append(f'  {dart_string(group)}: {dart_num(gap)},')
+    out.append('};')
+    out.append('')
     out.append('/// Demon officers on the brood net per sector (1-5).')
     out.append('const commsDemonSectors = <int, List<String>>{')
     for sector, ids in cast['demonSectors'].items():
@@ -161,6 +167,8 @@ def stage_dart(_args):
                 out.append(f"    mood: CommsMood.{spec['mood']},")
             if spec.get('chain'):
                 out.append(f"    chain: {spec['chain']},")
+            if kind == 'human' and spec.get('group'):
+                out.append(f"    group: {dart_string(spec['group'])},")
             out.append('    lines: [')
             for clip_id, line in entries:
                 meta = clips.get(clip_id, {})
@@ -765,7 +773,8 @@ def stage_verify(_args):
                 problems.append(f'{f.name}: {lufs:.1f} LUFS')
         if m['kind'] == 'demon' and not (.5 <= m['duration'] <= 1.9):
             problems.append(f'{clip_id}: grunt length {m["duration"]}')
-        if len(m['mouth']) != int(np.ceil(m['duration'] * SR / (SR // spec['mouth_fps']))):
+        # The manifest rounds durations to ms, so allow one frame of slack.
+        if abs(len(m['mouth']) - m['duration'] * SR / (SR // spec['mouth_fps'])) > 1.01:
             problems.append(f'{clip_id}: mouth track length')
     for p in problems:
         print('FAIL', p)
