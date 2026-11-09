@@ -224,55 +224,69 @@ void main() {
     await _snap(tester, 'wide-demon-zoom');
   });
 
-  for (final size in [
-    const Size(390, 844),
-    const Size(360, 640),
-    const Size(700, 900),
+  for (final (name, size) in [
+    ('phone-360x780', const Size(360, 780)),
+    ('phone-390x844', const Size(390, 844)),
+    ('phone-412x915', const Size(412, 915)),
+    ('phone-360x640', const Size(360, 640)),
+    ('landscape-740x360', const Size(740, 360)),
+    ('narrow-700x900', const Size(700, 900)),
   ]) {
-    testWidgets(
-      'compact ${size.width.toInt()}x${size.height.toInt()}: stack stays in the HUD band',
-      (tester) async {
-        final rig = await _launch(tester, size);
-        await rig.run([], .1);
-        await rig.run(['reinforcements'], .9);
-        final stack = find.byKey(const ValueKey('comms-hud-stack'));
-        expect(stack, findsOneWidget);
-        expect(find.byKey(const ValueKey('comms-tile-0')), findsNothing);
-        expect(
-          rig.director.active.length,
-          2,
-          reason: 'human line and demon grunt',
-        );
-        final arena = _arena(tester);
-        final ship = Rect.fromLTWH(
-          arena.left,
-          arena.top + arena.height * .7,
-          arena.width,
-          arena.height * .3,
-        );
-        for (final m in rig.director.active) {
-          final strip = tester.getRect(
-            find.byKey(ValueKey('comms-strip-${m.line.id}')),
-          );
-          expect(
-            strip.bottom,
-            lessThanOrEqualTo(arena.top + .5),
-            reason: 'inside the HUD band',
-          );
-          expect(strip.overlaps(ship), isFalse);
-          expect(
-            strip.right,
-            lessThanOrEqualTo(arena.right - 3 * 38 + .5),
-            reason: 'buttons stay usable',
-          );
+    testWidgets('compact $name: the call dock never covers the HUD', (
+      tester,
+    ) async {
+      final rig = await _launch(tester, size);
+      await rig.run([], .1);
+      await rig.run(['reinforcements'], .9);
+      final stack = find.byKey(const ValueKey('comms-hud-stack'));
+      expect(stack, findsOneWidget);
+      expect(find.byKey(const ValueKey('comms-tile-0')), findsNothing);
+      expect(
+        rig.director.active.length,
+        2,
+        reason: 'human line and demon grunt',
+      );
+      // One strip, the second message collapsed into a chip.
+      final rects = [
+        for (final m in rig.director.active) ...[
+          ...find
+              .byKey(ValueKey('comms-strip-${m.line.id}'))
+              .evaluate()
+              .map((e) => tester.getRect(find.byWidget(e.widget))),
+          ...find
+              .byKey(ValueKey('comms-chip-${m.line.id}'))
+              .evaluate()
+              .map((e) => tester.getRect(find.byWidget(e.widget))),
+        ],
+      ];
+      expect(rects, hasLength(2));
+      expect(find.byKey(const ValueKey('hud-score')), findsOneWidget);
+      expect(find.byKey(const ValueKey('hud-lives')), findsOneWidget);
+      expect(find.byKey(const ValueKey('hud-hearts')), findsOneWidget);
+      final hud = [
+        for (final key in ['hud-score', 'hud-lives', 'hud-hearts'])
+          (key, tester.getRect(find.byKey(ValueKey(key)))),
+      ];
+      final arena = _arena(tester);
+      final ship = Rect.fromLTWH(
+        arena.left,
+        arena.top + arena.height * .7,
+        arena.width,
+        arena.height * .3,
+      );
+      for (final r in [...rects, tester.getRect(stack)]) {
+        for (final (key, h) in hud) {
+          expect(r.overlaps(h), isFalse, reason: '$key $h vs comms $r');
         }
-        if (size.width == 390) await _snap(tester, 'phone-stacked');
-        if (size.width == 390) {
-          await rig.run([], .2);
-          await _snap(tester, 'phone-demon-zoom');
-        }
-      },
-    );
+        expect(r.top, greaterThanOrEqualTo(arena.top), reason: 'below HUD');
+        expect(r.overlaps(ship), isFalse, reason: 'player ship region');
+      }
+      await _snap(tester, 'compact-$name');
+      if (size.width == 390) {
+        await rig.run([], .2);
+        await _snap(tester, 'phone-demon-zoom');
+      }
+    });
   }
 
   testWidgets('reduced motion: no zoom shake, call still shows', (

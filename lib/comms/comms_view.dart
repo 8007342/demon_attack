@@ -41,16 +41,10 @@ class CommsLayout {
     );
   }
 
-  /// True: two tiles on each side of the arena. False: compact HUD stack.
+  /// True: two tiles on each side of the arena. False: the compact dock at
+  /// the top of the arena ([CommsHudStack]).
   final bool side;
   final double sideWidth, tileWidth;
-
-  /// Height of the compact stack's band (the HUD row above the arena).
-  static const hudBand = 94.0;
-  static const stripHeight = 44.0, stripGap = 2.0;
-
-  /// Right inset of the compact stack, keeping the HUD buttons usable.
-  static const hudButtons = 3 * 38.0 + 12;
 
   /// Rects of the four tiles (slot order) inside a screen of [size].
   List<Rect> tileRects(Size size) {
@@ -678,126 +672,250 @@ class CommsSidePanels extends StatelessWidget {
   }
 }
 
-/// Phones and narrow windows: active messages stacked inside the HUD band,
-/// above the arena (never over the play area).
+/// Phones and narrow windows: a compact, translucent call dock at the top
+/// of the arena, just below the HUD band (the HUD stays readable). One
+/// strip shows the most important active line; a second active line
+/// collapses into a chip, and waiting lines show as `+n`. It dims while the
+/// player is being hit ([dimmed]).
 class CommsHudStack extends StatelessWidget {
-  const CommsHudStack({super.key, required this.director, required this.now});
+  const CommsHudStack({
+    super.key,
+    required this.director,
+    required this.now,
+    this.dimmed = false,
+  });
   final CommsDirector director;
   final double now;
+  final bool dimmed;
+
+  static const stripHeight = 36.0, chipHeight = 18.0, gap = 2.0;
+  static const portrait = 34.0;
+
+  /// Tallest the dock gets (strip + chip row).
+  static const maxHeight = stripHeight + gap + chipHeight;
 
   @override
   Widget build(BuildContext context) {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    // Spoken lines win the strip (their subtitle must be readable); a
+    // demon grunt takes it only when nobody else is talking.
     final shown = [...director.active]
-      ..sort((a, b) => a.startedAt.compareTo(b.startedAt));
-    final visible = shown.take(2).toList();
+      ..sort(
+        (a, b) => a.isDemon != b.isDemon
+            ? (a.isDemon ? 1 : -1)
+            : b.priority != a.priority
+            ? b.priority.compareTo(a.priority)
+            : a.startedAt.compareTo(b.startedAt),
+      );
+    if (shown.isEmpty) return const SizedBox.shrink();
     final waiting = director.queue.where((m) => now >= m.readyAt).length;
+    final main = shown.first;
+    final rest = shown.skip(1).toList();
     return IgnorePointer(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final (i, m) in visible.indexed) ...[
-            if (i > 0) const SizedBox(height: CommsLayout.stripGap),
-            _strip(m, reduce, i == visible.length - 1 ? waiting : 0),
+      child: AnimatedOpacity(
+        opacity: dimmed ? .3 : 1,
+        duration: Duration(milliseconds: reduce ? 0 : 120),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _strip(main, reduce),
+            if (rest.isNotEmpty || waiting > 0) ...[
+              const SizedBox(height: gap),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  for (final m in rest) _chip(m, reduce),
+                  if (waiting > 0)
+                    Container(
+                      height: chipHeight,
+                      margin: const EdgeInsets.only(left: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      alignment: Alignment.center,
+                      color: const Color(0xA60A1220),
+                      child: Text(
+                        '+$waiting',
+                        style: const TextStyle(color: _muted, fontSize: 9),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _strip(CommsMessage m, bool reduce, int waiting) {
+  int _frame(CommsMessage m) => m.speaking(now)
+      ? m.frame(now)
+      : restFrame(
+          now,
+          m.character.id.length,
+          slot: m.slot < 0 ? null : director.slots[m.slot],
+        );
+
+  double _zoom(CommsMessage m, bool reduce) => m.isDemon && m.speaking(now)
+      ? 1 +
+            .22 *
+                (reduce
+                    ? 1
+                    : Curves.easeOut.transform(
+                        (m.age(now) / .2).clamp(0.0, 1.0),
+                      ))
+      : 1.0;
+
+  double _fade(CommsMessage m, bool reduce) => reduce
+      ? 1.0
+      : (math.min(m.age(now), m.endsAt - now) / .18).clamp(0.0, 1.0);
+
+  Widget _strip(CommsMessage m, bool reduce) {
     final c = m.character;
     final accent = Color(c.accent);
-    final age = m.age(now), left = m.endsAt - now;
-    final fade = reduce ? 1.0 : (math.min(age, left) / .18).clamp(0.0, 1.0);
     final speaking = m.speaking(now);
-    final frame = speaking
-        ? m.frame(now)
-        : restFrame(
-            now,
-            c.id.length,
-            slot: m.slot < 0 ? null : director.slots[m.slot],
-          );
-    // Grunts pop the officer's portrait a little, inside the strip.
-    final zoom = m.isDemon && speaking
-        ? 1 +
-              .22 *
-                  (reduce
-                      ? 1
-                      : Curves.easeOut.transform((age / .2).clamp(0.0, 1.0)))
-        : 1.0;
+    final tag = c.isDemon ? c.name : c.callsign;
+    final celebrating = director.celebrating(now) && !c.isDemon;
     return Opacity(
       key: ValueKey('comms-strip-${m.line.id}'),
-      opacity: fade,
+      opacity: _fade(m, reduce),
       child: Container(
-        height: CommsLayout.stripHeight,
+        height: stripHeight,
         decoration: BoxDecoration(
-          color: const Color(0xFA0A1220),
+          color: const Color(0xB30A1220),
           border: Border(
-            left: BorderSide(color: accent, width: 3),
-            top: BorderSide(
-              color: speaking ? accent.withValues(alpha: .55) : _line,
-            ),
+            left: BorderSide(color: accent, width: 2),
             bottom: BorderSide(
-              color: speaking ? accent.withValues(alpha: .55) : _line,
+              color: speaking ? accent.withValues(alpha: .5) : _line,
             ),
           ),
         ),
         child: Row(
           children: [
             SizedBox(
-              width: 44,
-              height: 44,
+              width: portrait,
+              height: portrait,
               child: ClipRect(
                 child: CustomPaint(
-                  painter: _MiniPortrait(c, frame, zoom, now, m, reduce),
+                  painter: _MiniPortrait(
+                    c,
+                    _frame(m),
+                    _zoom(m, reduce),
+                    now,
+                    m,
+                    reduce,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 6),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
+              child: m.line.isGrunt
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            '${director.celebrating(now) && !c.isDemon ? '★ FLEET INTACT · ' : ''}${c.isDemon ? c.name : '${c.callsign} · ${c.rank}'}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: accent,
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1,
-                            ),
+                        Text(
+                          tag,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
                           ),
                         ),
-                        if (waiting > 0)
-                          Text(
-                            '+$waiting',
-                            style: const TextStyle(color: _muted, fontSize: 8),
-                          ),
+                        CommsSubtitle(
+                          message: m,
+                          now: now,
+                          fontSize: 10,
+                          maxLines: 1,
+                          glyphHeight: 8,
+                        ),
                       ],
+                    )
+                  : Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '${celebrating ? '★ ' : ''}$tag  ',
+                              style: TextStyle(
+                                color: celebrating
+                                    ? const Color(0xFFFFD86B)
+                                    : accent,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: .8,
+                              ),
+                            ),
+                            TextSpan(text: m.line.text ?? ''),
+                          ],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: _text,
+                          fontSize: 10.5,
+                          height: 1.15,
+                          shadows: [
+                            Shadow(color: Color(0xFF000000), blurRadius: 2),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 1),
-                    CommsSubtitle(
-                      message: m,
-                      now: now,
-                      fontSize: 10,
-                      maxLines: 2,
-                      glyphHeight: 10,
-                    ),
-                  ],
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// A collapsed second line: tiny portrait and who is talking.
+  Widget _chip(CommsMessage m, bool reduce) {
+    final c = m.character;
+    final accent = Color(c.accent);
+    return Opacity(
+      key: ValueKey('comms-chip-${m.line.id}'),
+      opacity: _fade(m, reduce),
+      child: Container(
+        height: chipHeight,
+        margin: const EdgeInsets.only(left: 4),
+        padding: const EdgeInsets.only(right: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xA60A1220),
+          border: Border(left: BorderSide(color: accent, width: 2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: chipHeight,
+              height: chipHeight,
+              child: ClipRect(
+                child: CustomPaint(
+                  painter: _MiniPortrait(
+                    c,
+                    _frame(m),
+                    _zoom(m, reduce),
+                    now,
+                    m,
+                    reduce,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 4),
+            Text(
+              c.isDemon ? '${c.name} · ${m.line.gloss ?? ''}' : c.callsign,
+              style: TextStyle(
+                color: accent,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+                letterSpacing: .8,
+              ),
+            ),
           ],
         ),
       ),
@@ -823,11 +941,11 @@ class _MiniPortrait extends CustomPainter {
             ? const Color(0xFF2A0F1C)
             : const Color(0xFF0F2030),
     );
-    final side = commsPortraitSmallCell * zoom;
+    final side = commsPortraitSmallCell * zoom * (size.width < 30 ? .5 : 1);
     paintPortrait(
       canvas,
       Rect.fromCenter(
-        center: r.center.translate(0, 2),
+        center: r.center.translate(0, side * .1),
         width: side,
         height: side,
       ),

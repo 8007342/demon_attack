@@ -1016,6 +1016,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       Expanded(
         flex: 4,
         child: Column(
+          key: const ValueKey('hud-score'),
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1066,6 +1067,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
+                    key: const ValueKey('hud-lives'),
                     '♥ ×${model.lives}',
                     style: const TextStyle(
                       color: Color(0xFFFF8C89),
@@ -1076,6 +1078,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                   if (model.difficulty != Difficulty.hard) ...[
                     const SizedBox(width: 7),
                     HeartInventory(
+                      key: const ValueKey('hud-hearts'),
                       slots: model.heartSlots,
                       completedSlot: model.heartAssemblyLeft > 0
                           ? model.lastCompletedHeartSlot
@@ -1112,25 +1115,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             color: Color(0xF0080D18),
             border: Border(bottom: BorderSide(color: Color(0xFF26394C))),
           ),
-          // --- squad comms: compact call stack inside the HUD band.
-          child: Stack(
-            children: [
-              Positioned.fill(child: _hud()),
-              if (!CommsLayout.of(bounds.biggest).side)
-                Positioned(
-                  key: const ValueKey('comms-hud-stack'),
-                  left: -6,
-                  right: 3 * 38,
-                  top: 2,
-                  child: CommsAtlasScope(
-                    child: CommsHudStack(
-                      director: squadComms.director,
-                      now: squadComms.now,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          child: _hud(),
         ),
         Expanded(
           child: LayoutBuilder(
@@ -1187,6 +1172,29 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                   if (model.cinematic &&
                       (model.mode != RunMode.paused || _showingArrivalHint))
                     Positioned.fill(child: _interlude()),
+                  // --- squad comms: compact dock at the top of the arena,
+                  // below the HUD band so score, lives and hearts stay
+                  // readable; it dims while the player is being hit.
+                  if (!CommsLayout.of(bounds.biggest).side &&
+                      model.mode != RunMode.paused)
+                    Positioned(
+                      key: const ValueKey('comms-hud-stack'),
+                      left: 4,
+                      right: 4,
+                      top: heartNotice != null && model.clock < heartNoticeUntil
+                          ? 44
+                          : 4,
+                      child: CommsAtlasScope(
+                        child: CommsHudStack(
+                          director: squadComms.director,
+                          now: squadComms.now,
+                          dimmed:
+                              model.combat &&
+                              model.invulnerable > .4 &&
+                              model.levelClock > 2.5,
+                        ),
+                      ),
+                    ),
                   if (model.mode == RunMode.paused && !_showingArrivalHint)
                     Positioned.fill(
                       child: _gameOverlay('SIGNAL PAUSED', 'TAKE A BREATH.', [
