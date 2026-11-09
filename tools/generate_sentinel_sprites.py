@@ -262,7 +262,7 @@ def destruction(frame, base_pose=STROKE[2]):
 
 
 def muzzle(frame, heavy):
-    """Sentinel beak bolt discharge, on the full pose so it can replace the
+    """Sentinel maw bolt discharge, on the full pose so it can replace the
     hover frame for a beat."""
     pose = STROKE[[2, 2, 3, 2][frame]]
     return sentinel(heavy, pose, fire=[1, 2, 1, 0][frame])

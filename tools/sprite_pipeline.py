@@ -257,8 +257,11 @@ def finish():
             save_detail(detail_map(src), FAM / 'detail' / f'{species}.png')
         for molt in (1, 2, 3):
             m = SRC / 'molts' / f'{species}-m{molt}.png'
+            out = FAM / 'detail' / f'{species}-m{molt}.png'
             if m.exists():
-                save_detail(detail_map(m), FAM / 'detail' / f'{species}-m{molt}.png')
+                save_detail(detail_map(m), out)
+            elif out.exists():
+                out.unlink()  # no molt source: the molt reuses the intact hide map
 
 
 def save_detail(arr, path: Path):

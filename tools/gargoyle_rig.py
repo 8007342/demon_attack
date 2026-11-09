@@ -824,7 +824,7 @@ def _clean_specks(cv, R, names):
             same_mat = [c for c, (yy, xx) in zip(neigh, ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)))
                         if c and R.mat[yy, xx] == R.mat[y, x]]
             if len(same_mat) >= 3:
-                best = max(set(same_mat), key=same_mat.count)
+                best = max(sorted(set(same_mat)), key=same_mat.count)  # sorted: hash-order independent
                 cv.px(x, y, best)
 
 

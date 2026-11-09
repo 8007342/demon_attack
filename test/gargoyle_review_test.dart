@@ -52,8 +52,7 @@ Demon _place(
     ..hp = hp
     ..flash = flash;
   model.demons.add(d);
-  scene.creatures.motion.update(model, 1 / 60);
-  final m = scene.creatures.motion.of(d)!
+  final m = scene.creatures.motion.track(d)
     ..dir = dir
     ..phase = phase
     ..gliding = glide;

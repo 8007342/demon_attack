@@ -107,11 +107,13 @@ class CreatureMotionTracker {
 
   CreatureMotion? of(Demon d) => _state[d];
 
+  /// The state for [d], created on first use.
+  CreatureMotion track(Demon d) => _state[d] ??= CreatureMotion(d.seed);
+
   void update(ArcadeModel model, double dt) {
     for (final d in model.demons) {
       if (d.isLarge) continue;
-      final m = _state[d] ??= CreatureMotion(d.seed);
-      m.update(d.x, d.y, dt);
+      track(d).update(d.x, d.y, dt);
     }
   }
 }
