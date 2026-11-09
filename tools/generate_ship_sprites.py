@@ -39,7 +39,7 @@ POWER_M = to_px(*WING_MUZZLES['powerful'])   # (9.3, 14.7)
 NOSE_M = to_px(*NOSE_MUZZLE)                 # (32, 18.7)
 SPREAD_M = to_px(-5, -8)                     # spread pair spawn (x mirrored)
 
-ROWS = {'hull': 0, 'spread': 1, 'rapid': 2, 'shield': 3, 'powerful': 4, 'large': 5, 'shots': 6}
+ROWS = {'hull': 0, 'spread': 1, 'rapid': 2, 'shield': 3, 'powerful': 4, 'large': 5, 'shots': 6, 'homing': 7}
 MIR = ((lambda x: x), (lambda x: 64 - x))
 
 HULL_RIM = {'hul2': ('hul3', 'hul1'), 'teal2': ('teal3', 'teal1'), 'hul1': (None, 'hul0')}
@@ -387,15 +387,105 @@ def shot(kind, frame):
     return cv
 
 
+# ---------------------------------------------------------------------------
+# Homing missiles (row 7): wing pylons with up to three missiles, the missile
+# in flight with a cyan exhaust, the lock-on reticle, launch flashes, the
+# pylon deploy, the jettisoned pylon and the pickup badge.
+# Launch order (model): left outer, right outer, left inner.
+# ---------------------------------------------------------------------------
+HOMING_SLOTS = ((17.5, 41), (46.5, 41), (21, 43))
+
+
+def _rack_missile(cv, x, y):
+    cv.rect(x - 1, y - 4, 2, 8, 'met3')
+    cv.px(x - 1, y - 5, 'mint')
+    cv.px(x, y - 5, 'mint')
+    cv.px(x - 2, y + 2, 'hul2')
+    cv.px(x + 1, y + 2, 'hul2')
+    cv.px(x - 1, y + 4, 'cyan')
+
+
+def homing_rack(loaded, heat=0):
+    cv = Canvas()
+    for f in MIR:
+        cv.rect(min(f(16), f(22)), 46, 6, 2, 'hul1')  # pylon under the wing
+        cv.px(f(19), 46, 'teal2')
+    for i, (x, y) in enumerate(HOMING_SLOTS):
+        if i >= 3 - loaded:
+            _rack_missile(cv, x, y)
+    cv.outline('ink')
+    cv.rim({'hul1': ('hul2', 'hul0'), 'met3': ('white', 'met2')})
+    return cv
+
+
+def homing_missile(frame):
+    """In flight, pointing up, centred at (32, 32)."""
+    cv = Canvas()
+    cv.rect(30.5, 25, 3, 11, 'met3')
+    cv.rect(31, 23, 2, 2, 'mint')
+    cv.px(31, 22, 'white')
+    cv.rect(32.5, 26, 1, 9, 'met2')
+    for f in MIR:
+        cv.poly([(f(30.5), 31), (f(28), 36), (f(30.5), 35)], 'hul2')
+    flame = 4 + frame * 2
+    cv.rect(30.5, 36, 3, flame, 'cyan')
+    cv.rect(31, 36, 2, flame - 2, 'white')
+    cv.px(31.5, 36 + flame, 'mint')
+    cv.outline('ink')
+    return cv
+
+
+def homing_reticle(frame):
+    cv = Canvas()
+    r = 11 if frame == 0 else 9
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            x, y = 32 + sx * r, 32 + sy * r
+            cv.rect(min(x, x - sx * 5), y - (1 if sy > 0 else 0), 5, 2, 'mint')
+            cv.rect(x - (1 if sx > 0 else 0), min(y, y - sy * 5), 2, 5, 'mint')
+    cv.rect(31, 31, 2, 2, 'white' if frame else 'cyan')
+    for d in (-5, 4):
+        cv.px(32 + d, 32, 'cyan')
+        cv.px(32, 32 + d, 'cyan')
+    return cv
+
+
+def homing_launch_flash(frame):
+    cv = homing_rack(0)
+    cv.a[:] = 0
+    for f in MIR:
+        x = f(19)
+        r = 4 - frame
+        cv.ellipse(x, 40, r, r + 1, 'cyan')
+        cv.ellipse(x, 40, r - 1.5, r - 1, 'white')
+    return cv
+
+
+def homing_badge():
+    cv = Canvas()
+    cv.ellipse(32, 32, 20, 20, 'ink2')
+    cv.ellipse(32, 32, 18, 18, 'deep')
+    for i in range(32):
+        a = i * 2 * math.pi / 32
+        cv.rect(math.floor(32 + math.cos(a) * 19 - .5), math.floor(32 + math.sin(a) * 19 - .5), 2, 2,
+                'mint' if i % 4 else 'white')
+    for x, y in ((25, 34), (32, 30), (39, 34)):
+        cv.rect(x - 1.5, y - 7, 3, 11, 'met3')
+        cv.rect(x - 1, y - 9, 2, 2, 'mint')
+        cv.rect(x - 1.5, y + 4, 3, 3, 'cyan')
+    cv.outline('ink')
+    return cv
+
+
 def build():
-    a = Atlas(16, 7)
+    a = Atlas(16, 8)
     a.put(0, 0, hull())
     a.put(1, 0, hull(flash=True))
     for i in range(4):
         a.put(2 + i, 0, exhaust(i))
         a.put(6 + i, 0, nose_flash(i))
     for kind, row in ROWS.items():
-        if kind in ('hull', 'shots'):
+        if kind in ('hull', 'shots', 'homing'):
             continue
         make = MODULES[kind]
         for wear in range(3):
@@ -419,6 +509,31 @@ def build():
     for i, kind in enumerate(('ordinary', 'rapid', 'powerful', 'large', 'spread', 'hostile', 'sentinel', 'impact')):
         for f in range(2):
             a.put(i * 2 + f, 6, shot(kind, f))
+    h = ROWS['homing']
+    for loaded in range(4):
+        a.put(3 - loaded, h, homing_rack(loaded))
+    for f in range(2):
+        a.put(4 + f, h, homing_missile(f))
+        a.put(6 + f, h, homing_reticle(f))
+        a.put(8 + f, h, homing_launch_flash(f))
+    full = homing_rack(3)
+    for i in range(4):
+        cv = full.copy()
+        if i == 0:
+            ink = cv.is_color('ink')
+            cv.a[:] = 0
+            cv._paint(ink, 'mint')
+        elif i == 1:
+            cv.recolor('ink', 'mint')
+        elif i == 2:
+            cv.map_colors({'hul1': 'met3', 'met3': 'white'})
+        a.put(10 + i, h, cv)
+    spent = homing_rack(0)
+    spent.a[:, 32:] = 0  # one empty pylon, centred, for the jettison debris
+    ys, xs = spent.opaque().nonzero()
+    spent.shift(int(round(32 - (xs.min() + xs.max() + 1) / 2)), int(round(32 - (ys.min() + ys.max() + 1) / 2)))
+    a.put(14, h, spent)
+    a.put(15, h, homing_badge())
     a.save(ROOT / 'assets/images/ship-weapons.png')
     meta = {
         'family': 'ship-weapons',
@@ -435,6 +550,8 @@ def build():
                        'bubble_critical': [8, 9], 'deploy': [10, 13], 'detached': 14, 'pulse': 15},
             'shots': {'ordinary': [0, 1], 'rapid': [2, 3], 'powerful': [4, 5], 'large': [6, 7],
                       'spread': [8, 9], 'hostile': [10, 11], 'sentinel': [12, 13], 'impact': [14, 15]},
+            'homing': {'rack_loaded_3_to_0': [0, 3], 'missile': [4, 5], 'reticle': [6, 7],
+                       'launch_flash': [8, 9], 'deploy': [10, 13], 'detached': 14, 'badge': 15},
         },
         'mirrored_left_only': ['rapid', 'powerful'],
         'wing_muzzles': {k: {'x': v[0], 'y': v[1]} for k, v in WING_MUZZLES.items()},

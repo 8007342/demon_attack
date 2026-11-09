@@ -1,9 +1,14 @@
 import 'dart:math' as math;
 
 import 'difficulty.dart';
+import 'game_events.dart';
 import 'swarm_policy.dart';
 export 'difficulty.dart';
+export 'game_events.dart';
 export 'swarm_policy.dart';
+
+// --- ground war (demon ground forces, allies, homing missiles) ---
+part 'ground_war.dart';
 
 enum RunMode {
   title,
@@ -225,6 +230,16 @@ class ArcadeModel {
   final List<FallingPart> fallingParts = [];
   double crateSpawnTimer = 0.0;
   final List<String> events = [];
+
+  // --- ground war state (see ground_war.dart) ---
+  final GroundWar ground = GroundWar();
+
+  /// Drains the named gameplay events for music/comms hooks.
+  List<GameEvent> takeGameEvents() {
+    final result = List<GameEvent>.of(ground.events);
+    ground.events.clear();
+    return result;
+  }
   Carrier? boss;
   Carrier? wreckBoss;
   Difficulty difficulty = Difficulty.normal;
@@ -399,6 +414,7 @@ class ArcadeModel {
     invulnerable = 2;
     _accumulator = 0;
     events.clear();
+    ground.resetRun(); // --- ground war
     _beginLevel();
   }
 
@@ -515,6 +531,7 @@ class ArcadeModel {
     clock = levelClock = _accumulator = 0;
     invulnerable = 2;
     boss = level == 5 ? _newCarrier() : null;
+    _groundBeginLevel(); // --- ground war
     _spawnWave(fromCheckpoint: true);
     events.add(boss == null ? 'level' : 'boss');
     return true;
@@ -539,6 +556,7 @@ class ArcadeModel {
     supplyCrates.clear();
     fallingParts.clear();
     crateSpawnTimer = 0.0;
+    _groundBeginLevel(); // --- ground war
     _spawnWave();
     events.add(boss == null ? 'level' : 'boss');
   }
@@ -566,6 +584,7 @@ class ArcadeModel {
     _waveRoster = 0;
     _escortLeft = 2.6;
     escortSpawned = false;
+    _groundBeginWave(); // --- ground war
     if (boss == null) {
       final count = policy.rosterCount(sector: level, wave: wave, route: cycle);
       _waveRoster = count;
@@ -767,6 +786,7 @@ class ArcadeModel {
       events.add('wave');
     } else {
       clearedLevel = level;
+      _groundEndLevel(); // --- ground war
       _enterPhase(RunMode.salvage, 2);
       events.add('salvage');
     }
@@ -936,11 +956,13 @@ class ArcadeModel {
         if (mode == RunMode.salvage) {
           pickups.clear();
           heartPickups.clear();
+          _groundLevelCleared(); // --- ground war
           _enterPhase(RunMode.levelClear, 4 + storyReadingTime);
           events.add('levelclear');
         } else if (mode == RunMode.victory && cycle >= 4) {
           mode = RunMode.completed;
           events.add('completed');
+          _groundCampaignComplete(); // --- ground war
         } else if (mode == RunMode.levelClear || mode == RunMode.victory) {
           _enterPhase(RunMode.travel, 4 + storyReadingTime);
           events.add('travel');
@@ -1057,6 +1079,8 @@ class ArcadeModel {
     _updateReinforcements(dt);
     _updateDemons(dt);
     _updateBoss(dt);
+    _updateGround(dt); // --- ground war
+    if (!combat) return;
     for (final s in shots) {
       s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1);
       s.y += s.vy * dt;
@@ -1098,6 +1122,7 @@ class ArcadeModel {
       }
     }
     heartPickups.removeWhere((p) => p.y > height + 10);
+    _updateHomingPickups(dt, fallSpeed); // --- ground war
   }
 
   void _hostile(Shot shot) {
@@ -1800,7 +1825,9 @@ class ArcadeModel {
     events.add('explosion');
   }
 
-  void hitDemon(Demon d, {int damage = 1}) {
+  /// [homing]: a homing missile's heavy hit, which can break a sentinel's
+  /// dive shield like an offensive module.
+  void hitDemon(Demon d, {int damage = 1, bool homing = false}) {
     if (!combat || damage <= 0 || d.entering || !demons.contains(d)) return;
     d.flash = .12;
     if (d.dive > 0 && d.diveShieldMax == 0) {
@@ -1808,7 +1835,7 @@ class ArcadeModel {
     }
     if (d.dive > 0 && d.diveShield > 0) {
       if (d.isLarge) {
-        if (!hasOffensivePower) {
+        if (!hasOffensivePower && !homing) {
           d.flash = .12;
           events.add('hit');
           return;
@@ -1889,6 +1916,7 @@ class ArcadeModel {
           ),
         );
       }
+      _groundDropOnKill(d); // --- ground war
     } else {
       events.add('hit');
       if (d.isLarge &&
@@ -1972,6 +2000,7 @@ class ArcadeModel {
       shots.clear();
       pickups.clear();
       heartPickups.clear();
+      ground.clearField(); // --- ground war
       clearedLevel = level;
       _enterPhase(RunMode.victory, 5.5 + storyReadingTime);
       events.add('victory');

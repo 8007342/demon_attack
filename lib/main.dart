@@ -223,6 +223,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           audioSfx(event);
       }
     }
+    // --- ground war events: one no-op-safe dispatcher (game_events.dart) ---
+    // The music bridge (`// --- music event hook`) and the commander comms
+    // panel subscribe with GameEvents.listen; nothing is registered yet.
+    for (final event in model.takeGameEvents()) {
+      dispatchGameEvent(event);
+    }
     if (!handledRunEnd &&
         !model.defeatActive &&
         (model.mode == RunMode.gameOver || model.mode == RunMode.completed)) {
@@ -1818,6 +1824,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               ),
               child: PilotConsoleContent(
                 timers: Map.of(model.powerTimers),
+                homingMissiles: model.ground.salvo.busy // --- ground war HUD
+                    ? model.ground.salvo.loaded +
+                          (model.ground.salvo.active != null ? 1 : 0)
+                    : 0,
                 touching: touch != null,
                 collecting: model.canPilot && !model.combat,
                 tiltActive: tilt.isActive,

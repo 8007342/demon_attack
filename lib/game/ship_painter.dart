@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ class ShipPainter {
   ui.Image? image;
 
   static const double cell = 64, size = 48;
-  static const int hullRow = 0, shotRow = 6;
+  static const int hullRow = 0, shotRow = 6, homingRow = 7;
   static const rows = {
     Power.spread: 1,
     Power.rapid: 2,
@@ -139,6 +140,55 @@ class ShipPainter {
     // Single shooter: nose cannon flash, distinct from the wing kick.
     final nose = kick(m.noseFlash);
     if (nose > 0) layer(c, hullRow, 6 + _flashFrame(nose), at);
+    paintHomingRack(c, m, at, live: live);
+  }
+
+  // --- homing missiles (row 7 of ship-weapons.png) ---
+
+  bool get _hasHomingRow => (image?.height ?? 0) >= (homingRow + 1) * cell;
+
+  /// Wing pylons with the missiles still loaded; a launch flash when one
+  /// leaves. Combines with every other module and the shield.
+  void paintHomingRack(Canvas c, ArcadeModel m, Offset at, {bool live = true}) {
+    final salvo = m.ground.salvo;
+    if (!salvo.busy || !_hasHomingRow) return;
+    final loaded = salvo.loaded.clamp(0, 3);
+    layer(c, homingRow, 3 - loaded, at);
+    final h = salvo.active;
+    if (live && h != null && h.age < .12) {
+      layer(c, homingRow, 8 + (h.age / .06).floor().clamp(0, 1), at);
+    }
+  }
+
+  /// A homing missile in flight (cyan exhaust), turned along its heading.
+  void paintHomingMissile(Canvas c, HomingMissile h, double clock) {
+    final at = Offset(h.x.roundToDouble(), h.y.roundToDouble());
+    if (!_hasHomingRow) {
+      final p = Paint()..isAntiAlias = false;
+      c.drawRect(Rect.fromCenter(center: at, width: 3, height: 8), p..color = const Color(0xFFD8E2FF));
+      c.drawRect(Rect.fromLTWH(at.dx - 1, at.dy + 4, 2, 4), p..color = const Color(0xFF6EDCFF));
+      return;
+    }
+    c.save();
+    c.translate(at.dx, at.dy);
+    // Quarter-step headings keep the pixel grid readable.
+    final steps = (h.heading / (math.pi / 8)).round();
+    c.rotate(steps * math.pi / 8);
+    layer(c, homingRow, 4 + (clock * 16).floor() % 2, Offset.zero, scale: 1.3);
+    c.restore();
+  }
+
+  /// Lock-on reticle on the current homing target.
+  void paintReticle(Canvas c, Offset at, double clock, {double scale = 1}) {
+    if (!_hasHomingRow) return;
+    layer(c, homingRow, 6 + (clock * 6).floor() % 2,
+        Offset(at.dx.roundToDouble(), at.dy.roundToDouble()), scale: scale);
+  }
+
+  /// The homing pickup badge (drawn at [width] arena units).
+  void paintHomingBadge(Canvas c, Offset at, double width) {
+    if (!_hasHomingRow) return;
+    layer(c, homingRow, 15, at, scale: width / size);
   }
 
   void _module(

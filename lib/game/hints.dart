@@ -11,10 +11,14 @@ class TacticalHint {
     required this.scene,
     this.requiresHearts = false,
     this.requiresLaterRoute = false,
+    this.requiresGroundForces = false,
   });
 
   final String id, title, detail, scene;
   final bool requiresHearts, requiresLaterRoute;
+
+  /// Ground units only fight over sectors 1-4.
+  final bool requiresGroundForces;
 
   /// The persistent guide can show future tactics, but hides impossible pickups.
   bool isEligible(Difficulty difficulty) =>
@@ -94,6 +98,21 @@ const List<TacticalHint> tacticalHints = [
     detail: 'LARGE replaces SPREAD; explosions reach nearby enemies and open carrier hatches.',
     scene: 'large_choice',
   ),
+  // --- ground war hints (see ground_war.dart) ---
+  TacticalHint(
+    id: 'ground_missiles',
+    title: 'Ground launchers glow first. Sidestep their missile.',
+    detail: 'Missiles fly where you were; your shots pass over ground units.',
+    scene: 'ground_missiles',
+    requiresGroundForces: true,
+  ),
+  TacticalHint(
+    id: 'homing_missiles',
+    title: 'Grab homing missiles to strike ground launchers.',
+    detail: 'Three missiles fire automatically, hitting the biggest threat first.',
+    scene: 'homing_missiles',
+    requiresGroundForces: true,
+  ),
   TacticalHint(
     id: 'giant_rush',
     title: 'Move aside when a giant commits.',
@@ -123,6 +142,7 @@ class HintDeck {
           (hint) =>
               hint.isEligible(difficulty) &&
               (!hint.requiresLaterRoute || route >= 1) &&
+              (!hint.requiresGroundForces || level <= 4) &&
               (!{'carrier_hatch', 'carrier_field'}.contains(hint.id) ||
                   level >= 3 ||
                   route >= 1),
@@ -150,6 +170,15 @@ class HintDeck {
               'sling_shot',
             }.contains(hint.id),
           )
+          .firstOrNull;
+    } else if (level == 2 && !_introduced.contains('ground_missiles')) {
+      // The first ground unit fought late over Krybor; teach it next.
+      preferred = candidates
+          .where((hint) => hint.id == 'ground_missiles')
+          .firstOrNull;
+    } else if (level == 3 && !_introduced.contains('homing_missiles')) {
+      preferred = candidates
+          .where((hint) => hint.id == 'homing_missiles')
           .firstOrNull;
     } else if (level == 5 && !_introduced.contains('carrier_hatch')) {
       preferred = candidates

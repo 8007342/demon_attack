@@ -143,3 +143,116 @@ Stages in detail:
 ### Verification
 
 `flutter test` covers atlas sizes, binary alpha, the bounded palette, sentinel pose rules (distinct frames, folding recovery and rush) and wing-cannon alternation. Visual review uses the gallery (`flutter build web -t lib/gallery_main.dart -o <outside-src>/gallery`, served by `preview.publish` from an ignored folder) and host browser screenshots at desktop and phone sizes.
+
+## Ground forces
+
+The demon ground army, the allied human ground units that skirmish with it,
+their ground effects and the demon ground-to-air missile share one atlas,
+`assets/images/ground-forces.png`. They drive along the oblique ground plane
+of the flyover (see "Backgrounds" above) and use its camera: drawn with
+`drawAtlas` at `2·z0/z` arena units per texel and modulated by the distance
+fog. Like the combat sprites, **silhouettes, launchers and every frame are
+authored on the texel grid** (`build_*` functions in the driver). That keeps
+the move cycles, telegraph, fire and wreck/limp frames aligned pixel for
+pixel. The SDXL + pixel-art-xl + LayerDiffuse keyframe of each unit
+contributes only a −1/0/+1 shading texture on the hull ramp (high-pass
+luminance, thresholded at ±1.4 σ). The keyframes came out top-down, or facing
+the wrong way, or as people instead of vehicles. None gave a 3/4 vehicle
+facing screen right with a launcher that can be lifted, at 20 texels, so AI
+silhouettes are not used.
+
+### Layout (v2: 12 columns × 10 rows of 32×24 texels, 384×240 px, binary alpha)
+
+| Row | Content | Columns |
+| --- | --- | --- |
+| 0–3 | Demon unit per sector: Krybor captured rocket buggy with an imp driver; Ringfall salvage-hull missile crawler; Ember lava-forged artillery beast; Hollow walking gargoyle launch tower | 0–3 move cycle (wheels/treads turning, legs stepping, body bob, blinking lamps, pulsing vents/cracks/runes, exhaust puffs), 4 telegraph A (launcher raised, warhead lit), 5 telegraph B (bright warm muzzle glow), 6 fire (launch flash, recoil, smoke), 7 post-fire (smoking tube, launcher settling), 8–9 burning wreck (two flame flicker frames over the same torn hulk, scorch, embers), 10–11 empty |
+| 4–7 | Allied unit per sector: Krybor frontier snow rover; Ringfall militia rover; Ember foundry defense turret (its move cycle is a traverse, a sweeping running light and a turning radar mast); Hollow resistance walker | 0–3 move, 4–5 firing (cyan muzzle flash big/small, recoil), 6 hit (hull flash + cyan sparks), 7–8 totalled and limping (dents, dead lights, sparks, smoke, a blown tyre / missing wheel with the axle dragging / drooping barrel / dragging leg; intact and upright, never a wreck), 9 crew escape pod with cyan thruster, 10–11 empty |
+| 8 | Effects | 0–5 ground explosion (flash → fireball → big fireball → rolling smoke → smoke + flung debris → thinning smoke, settled debris), 6 scorch decal, 7 missile launch flash, 8 tracer impact spark, 9 small skirmish blast, 10–11 grey smoke puffs small / large |
+| 9 | Missile | 0–1 demon ground missile nose-on (22×22: shaded warhead, X fins, warm exhaust ring that flickers), 2–4 trail puffs dense → thin, 5–11 empty |
+
+Units stand bottom-centred on the cell's last row, facing screen right; the
+renderer mirrors them for the right band. Every frame of a unit shares the
+move cycle's horizontal offset. `GroundAtlas.demonSize` / `allySize` in the
+generated `lib/game/ground_atlas.dart` are the measured content boxes: the
+union of the four move frames, outline included, smoke excluded.
+
+| Path | Role |
+| --- | --- |
+| `art/families/ground-forces.json` | Spec: per-unit prompts, seeds and `selected` keyframe; style and negative prompts; candidate count; demon hull ramp luminances, rim luminance and chroma cap; reserved colour sets (demon warm, demon steel, ally cyan, ally hull, smoke, scorch). |
+| `art/families/ground-forces-runs.json` | Provenance of every ingested run: workflow, prompt, negative prompt, seed, models, SHA-256 of each raw output. |
+| `art/workflows/backgrounds/sprite-transparent.json` | The workflow (shared with the flyover sprites); the driver overrides the SaveImage prefixes to `ground/…`. |
+| `art/sprites/sources/ground/<unit>.png` | Selected keyframes cropped to the LayerDiffuse alpha and box-downscaled to ≤64 px: the inputs of record for `offline` (~55 KB total). |
+| `tools/ground_forces_assets.py` | The driver (below). |
+| `assets/images/ground-forces.png`, `lib/game/ground_atlas.dart` | The atlas and its generated grid contract. |
+| `art/contact/ground-forces-contact.png` | A labelled 4× atlas, then each unit row on its sector ground tile: every frame at 2× (near, z = z0) and 1× (z = 2·z0), plus the idle and glow/fire frames fogged at the horizon (z = 9·z0). The whole sheet is shown at 2×. |
+
+### Rerunning
+
+```bash
+python3 -m venv $SCRATCH/ground/venv && $SCRATCH/ground/venv/bin/pip install pillow numpy scipy
+PY=$SCRATCH/ground/venv/bin/python
+export GROUND_WORK=$SCRATCH/ground/work GROUND_RAW=$SCRATCH/ground/raw   # never the checkout
+$PY tools/ground_forces_assets.py offline   # committed sources -> atlas, Dart, contact sheet; no GPU, byte-identical
+$PY tools/ground_forces_assets.py all       # jobs -> run -> ingest -> pack
+$PY tools/ground_forces_assets.py jobs      # 30 jobs: 10 keyframes x 3 candidate seeds
+$PY tools/ground_forces_assets.py run [--only demon-ember]   # ComfyUI HTTP (COMFY_URL, default http://studio:8188), one job in flight
+$PY tools/ground_forces_assets.py ingest    # raws -> $GROUND_RAW, provenance, refresh sources of record for `selected`
+$PY tools/ground_forces_assets.py pack      # refresh sources from raws if present, then offline
+```
+
+A job takes about 18 s on the shared GPU. `run` skips jobs whose outputs
+already exist (`--force` redoes them) and keeps one job in flight. Seeds are
+720100–720400 (demons), 721100–721400 (allies), 722100 (missile) and 722200
+(explosion), each with +1 and +2 candidates.
+
+### Processing stages
+
+1. **Keyframes.** One LayerDiffuse transparent keyframe per unit, missile
+   and explosion, at seed, seed+1 and seed+2. The pick is recorded as
+   `selected` in the spec.
+2. **Sources.** The pick is cropped to its alpha (≥140), box-downscaled to
+   ≤64 px and stored as RGBA.
+3. **Texture.** The source is box-sampled to 32×24 and high-passed. It
+   shifts hull texels h1–h3 by one ramp step in body space, so the texture
+   rides the gait bob.
+4. **Authoring.** The integer code grid is built from primitives: lit 3/4
+   boxes (top face h3 with an h4 front edge, side h2, underside and right end
+   h1), wheels with six notches turning 15° a frame, and treads with crawling
+   links. Two-group leg gaits lift one leg group and swing the other. Tubes
+   are rasterised at the launcher angle (idle / raised / recoil / post-fire
+   per unit), with seams and warhead noses. Accents come from reserved codes.
+5. **Frames.** Exhaust puffs drift and thin one step per move frame, so the
+   cycle loops. Telegraph frames re-run the builder with the launcher raised
+   and paint the warhead glow. The fire frame adds a warm cross flash and
+   smoke; post-fire adds a smoking muzzle. Wrecks drop the launcher and darken
+   the hull, quench the accents, tear the top along a seeded profile and
+   punch holes. A scorch ellipse goes underneath, and there are two frames of
+   flame tongues (one wide, heights flicker), embers and dark smoke. Allies
+   are never wrecked: the hit frame lifts the hull one step and adds cyan
+   sparks. Limp frames dent the hull, kill half the cyan lights, switch the
+   builder to its damaged variant and add sparks and grey smoke. Allied fire
+   is cyan only.
+6. **Finish.** A one-texel dark outline goes on, with a rim light over lit
+   top edges, so silhouettes separate from the very dark ground tiles. The
+   unit is bottom-centred, and codes map to colours. Demon hulls use a
+   five-step **mid-value** ramp (luma 0.06–0.40, rim 0.56, chroma ≤ 0.36).
+   It is picked from `art/palettes/flyover-<sector>.json` plus the reserved
+   demon-steel greys, which fill in where a sector palette has no mid values
+   (Ember). Bright warm accents (eyes, vents, cracks, runes, warheads) come
+   from the reserved warm set. Allies use the reserved grey-blue hull (a
+   lighter ramp than the demons') and the cyan `#70F5D5` family. Effects, the
+   missile and the pod use the smoke ramp as iron plus the warm or cyan set.
+7. **Effects.** The explosion and small blast are seeded value-noise heat
+   fields with smoke shaded from the upper left and flung debris. The scorch,
+   launch flash, tracer spark, puffs, pod and missile are procedural.
+
+### Runtime contract
+
+`GroundAtlas` (generated; same API every run) gives the file, the grid, the
+row helpers and every column constant. A ground unit is one `drawAtlas` rect
+`(col·32, row·24, 32, 24)`, anchored at its bottom centre on the ground
+point. It uses the landmark camera (`y = 172 + 348·z0/z`, scale `2·z0/z`) and
+colour `fog(z)` with `BlendMode.modulate`, mirrored for the right band. Move
+frames loop 0→3. The missile cell is meant to be drawn centred and scaled up
+with nearest-neighbour as it closes on the camera, trailed by puffs 2→4. The
+escape pod and smoke puffs (row 8, cols 10–11) are free sprites.

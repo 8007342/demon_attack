@@ -9,6 +9,7 @@ class PilotConsoleContent extends StatelessWidget {
   const PilotConsoleContent({
     super.key,
     required this.timers,
+    this.homingMissiles = 0,
     required this.touching,
     required this.collecting,
     this.steering = 0.0,
@@ -17,6 +18,9 @@ class PilotConsoleContent extends StatelessWidget {
   });
 
   final Map<Power, double> timers;
+
+  /// Homing missiles still to fire (loaded plus the one in flight).
+  final int homingMissiles;
   final bool touching;
   final bool collecting;
   final double steering;
@@ -39,7 +43,11 @@ class PilotConsoleContent extends StatelessWidget {
                   key: const ValueKey('controller-power-slot'),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: PowerStatus(timers: timers, compact: true),
+                    child: PowerStatus(
+                      timers: timers,
+                      homingMissiles: homingMissiles,
+                      compact: true,
+                    ),
                   ),
                 ),
               ),

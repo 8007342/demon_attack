@@ -6,6 +6,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'ground_painter.dart';
 import 'model.dart';
 import 'sector_background.dart';
 import 'ship_painter.dart';
@@ -26,6 +27,8 @@ class DemonScene extends FlameGame {
   final ship = ShipPainter();
   final sectors = SectorBackground();
   final creatures = CreaturePresentation();
+  // --- ground war (ground_painter.dart) ---
+  final groundForces = GroundPainter();
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;
@@ -79,6 +82,10 @@ class DemonScene extends FlameGame {
     );
     // --- flyover parallax hook (background only) ---
     await sectors.loadFlyover(images.load);
+    // --- ground war art (tools/ground_forces_assets.py) ---
+    try {
+      groundForces.image = await images.load('ground-forces.png');
+    } catch (_) {}
   }
 
   @override
@@ -131,7 +138,9 @@ class DemonScene extends FlameGame {
       _background(canvas);
       final active = model.mode != RunMode.title;
       if (active && combat) {
+        groundForces.paintGround(canvas, model); // --- ground war: on the ground
         _combat(canvas);
+        groundForces.paintAir(canvas, model, ship); // --- ground war: in the air
         _cinematic(canvas);
       }
       canvas.restore();
@@ -139,7 +148,9 @@ class DemonScene extends FlameGame {
       _background(canvas);
       final active = model.mode != RunMode.title;
       if (active && combat) {
+        groundForces.paintGround(canvas, model); // --- ground war: on the ground
         _combat(canvas);
+        groundForces.paintAir(canvas, model, ship); // --- ground war: in the air
         _cinematic(canvas);
       }
     }

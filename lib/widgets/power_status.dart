@@ -18,16 +18,24 @@ const powerNames = <Power, String>{
 };
 
 class PowerStatus extends StatelessWidget {
-  const PowerStatus({super.key, required this.timers, this.compact = false});
+  const PowerStatus({
+    super.key,
+    required this.timers,
+    this.homingMissiles = 0,
+    this.compact = false,
+  });
   final Map<Power, double> timers;
+
+  /// Homing missiles still to fire; shown as a HOMING row with pips.
+  final int homingMissiles;
   final bool compact;
   @override
   Widget build(BuildContext context) {
     final active = Power.values.where((p) => (timers[p] ?? 0) > 0).toList();
-    if (active.isEmpty) return const SizedBox.shrink();
+    if (active.isEmpty && homingMissiles <= 0) return const SizedBox.shrink();
     return Semantics(
       label:
-          'Active power-ups: ${active.map((p) => '${powerNames[p]} ${timers[p]!.ceil()} seconds').join(', ')}',
+          'Active power-ups: ${[for (final p in active) '${powerNames[p]} ${timers[p]!.ceil()} seconds', if (homingMissiles > 0) 'HOMING $homingMissiles missiles'].join(', ')}',
       child: ExcludeSemantics(
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -41,7 +49,10 @@ class PowerStatus extends StatelessWidget {
               child: CustomPaint(
                 key: const ValueKey('combined-power-glyph'),
                 size: Size.square(compact ? 32 : 40),
-                painter: PowerGlyphPainter(active.toSet()),
+                painter: PowerGlyphPainter(
+                  active.toSet(),
+                  homingMissiles: homingMissiles,
+                ),
               ),
             ),
             SizedBox(width: compact ? 4 : 7),
@@ -50,7 +61,7 @@ class PowerStatus extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: active
-                    .map(
+                    .map<Widget>(
                       (p) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 3),
                         child: Column(
@@ -91,7 +102,10 @@ class PowerStatus extends StatelessWidget {
                         ),
                       ),
                     )
-                    .toList(),
+                    .toList()
+                  ..addAll([
+                    if (homingMissiles > 0) _homingRow(homingMissiles),
+                  ]),
               ),
             ),
           ],
@@ -99,13 +113,52 @@ class PowerStatus extends StatelessWidget {
       ),
     );
   }
+
+  Widget _homingRow(int count) => Padding(
+    key: const ValueKey('power-homing'),
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          homingName,
+          style: TextStyle(
+            color: homingColor,
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+            letterSpacing: .5,
+          ),
+        ),
+        Row(
+          key: ValueKey('power-homing-$count'),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < 3; i++)
+              Container(
+                width: 4,
+                height: 7,
+                margin: const EdgeInsets.only(left: 2),
+                color: i < count ? homingColor : const Color(0xFF25384D),
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
 }
+
+/// Homing missiles: a salvo, not a timer (see ground_war.dart).
+const homingColor = Color(0xFF6EDCFF);
+const homingName = 'HOMING';
 
 /// Side weapon layers leave room for a central bolt/heavy cannon and the outer
 /// shield. Each mark uses the original logical pixel grid over a cockpit ship schematic.
 class PowerGlyphPainter extends CustomPainter {
-  const PowerGlyphPainter(this.active);
+  const PowerGlyphPainter(this.active, {this.homingMissiles = 0});
   final Set<Power> active;
+
+  /// Missiles left on the wing pylons (0-3), drawn under the wings.
+  final int homingMissiles;
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
@@ -225,11 +278,23 @@ class PowerGlyphPainter extends CustomPainter {
       );
       canvas.drawPath(bolt, paint..color = powerColors[Power.rapid]!);
     }
+    if (homingMissiles > 0) {
+      // Pylon missiles under the wings: left outer, right outer, left inner.
+      const slots = [(5.0, 18.0), (26.0, 18.0), (9.0, 21.0)];
+      for (var i = 0; i < 3; i++) {
+        if (i < 3 - homingMissiles.clamp(0, 3)) continue;
+        final (x, y) = slots[i];
+        canvas.drawRect(Rect.fromLTWH(x, y, 2, 7), paint..color = const Color(0xFFD8E2FF));
+        canvas.drawRect(Rect.fromLTWH(x, y - 1, 2, 1), paint..color = const Color(0xFF70F5D5));
+        canvas.drawRect(Rect.fromLTWH(x, y + 7, 2, 2), paint..color = homingColor);
+      }
+    }
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(PowerGlyphPainter oldDelegate) =>
+      homingMissiles != oldDelegate.homingMissiles ||
       active.length != oldDelegate.active.length ||
       !active.containsAll(oldDelegate.active);
 }

@@ -23,3 +23,5 @@ Reproduce current data: `dart tools/analyze_difficulty.dart /tmp/difficulty-curr
 | hard | 5 | 26 | 29–59 | 104–240 | 59–135 | 44 | 3 | 2.22 |
 
 Standard hits sum actual hull, shield and armor. Powerful hits round each defense layer separately at two damage per hit. Large preserves damage per target: with zero overlap it has the Standard budget; Powerful + Large has the Powerful budget. With perfect simultaneous overlap, an individual arrival group needs at least the largest per-enemy layered hit budget; that is a theoretical coverage bound, not measured throughput. Spread and Large cannot stack, and Rapid and Powerful cannot stack. Current Large radii are Easy 32, Normal 30, Hard 28.
+
+Ground war (2026-11-09): ground units never join the ordinary swarm, so these 318-wave budgets are unchanged; rerunning the audit reproduces them. The ground war's own calibration (bands, exposure and clear times per difficulty) is in [difficulty-calibration.md](difficulty-calibration.md#ground-war-ground-forces-allies-homing-missiles).

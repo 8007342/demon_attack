@@ -1,0 +1,662 @@
+{
+ "ally-ember/721300": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small human foundry defense gun turret on a squat armoured bunker base, grey blue steel, a long cannon barrel, cyan sensor lights, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721300,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00019_.png",
+    "sha256": "0e0dc26c614c1493d24ba24653243f55a1b680e0ef78523d1c18fcb2dc77dc8b"
+   },
+   {
+    "file": "sprite-rgb_00019_.png",
+    "sha256": "d88dc0196fecb7865f4a6bf077cdeeaa0b9fcd1b5f34b027ec99b7cbfa20a816"
+   }
+  ]
+ },
+ "ally-ember/721301": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small human foundry defense gun turret on a squat armoured bunker base, grey blue steel, a long cannon barrel, cyan sensor lights, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721301,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00020_.png",
+    "sha256": "5fa159ffd21e7a77e1db3566a8ea44049093c060d7a6e7c1db6261e7de2f8cda"
+   },
+   {
+    "file": "sprite-rgb_00020_.png",
+    "sha256": "348cf09b19e582c8ded869258e91d2efa50da92153b65f79aa34462de98a65ba"
+   }
+  ]
+ },
+ "ally-ember/721302": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small human foundry defense gun turret on a squat armoured bunker base, grey blue steel, a long cannon barrel, cyan sensor lights, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721302,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00021_.png",
+    "sha256": "be7a754cb995fea1ac08c43a5215d1e082ab6e0c7a95dfc7d36cbf0d8f34e91c"
+   },
+   {
+    "file": "sprite-rgb_00021_.png",
+    "sha256": "fde02f14903dfd26cf0fbcee77331b84974b601544b4f7df83a37842272ba439"
+   }
+  ]
+ },
+ "ally-hollow/721400": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small two legged human resistance mech walker, grey blue armour, a boxy cockpit with a cyan visor, a gun pod on the side, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721400,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00022_.png",
+    "sha256": "10d1f191df85fe354902ca5387701255311dd186c96470260fed9c653747fe42"
+   },
+   {
+    "file": "sprite-rgb_00022_.png",
+    "sha256": "b5f4fbe986d1f0b8a6af22c92340516674bd2c460631a15aa8596bfd48db3785"
+   }
+  ]
+ },
+ "ally-hollow/721401": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small two legged human resistance mech walker, grey blue armour, a boxy cockpit with a cyan visor, a gun pod on the side, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721401,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00023_.png",
+    "sha256": "0cc3b59498fb84bd2d1738bcdb3e610805b7b8168be2c434d7442476fe0df7e9"
+   },
+   {
+    "file": "sprite-rgb_00023_.png",
+    "sha256": "03a835674ef7b3e663cbd76eafeef77eb38bc3885241d843ebabc6d806f3b0da"
+   }
+  ]
+ },
+ "ally-hollow/721402": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small two legged human resistance mech walker, grey blue armour, a boxy cockpit with a cyan visor, a gun pod on the side, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721402,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00024_.png",
+    "sha256": "2f4411b80ae7b2842aada652799408f9ab92c6025769fe89a8929b27fdefdeb4"
+   },
+   {
+    "file": "sprite-rgb_00024_.png",
+    "sha256": "37ff5d73500c85f9b1a60a3eff480a2d4d98a6e21c2e31ad26d3a7a04dad03ea"
+   }
+  ]
+ },
+ "ally-krybor/721100": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small human frontier snow rover, grey blue armoured hull, four big wheels, a small roof turret gun, cyan headlights and cyan stripe markings, military, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721100,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00013_.png",
+    "sha256": "b63e5dd4b74bc8d9c6b201a1b28e742ebd8518803f503a1cd78061e11d8e27af"
+   },
+   {
+    "file": "sprite-rgb_00013_.png",
+    "sha256": "2038ca27d524c6f569b225122b86c3ac54306458b32eb7663588c5c1b58ce3fd"
+   }
+  ]
+ },
+ "ally-krybor/721101": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small human frontier snow rover, grey blue armoured hull, four big wheels, a small roof turret gun, cyan headlights and cyan stripe markings, military, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721101,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00014_.png",
+    "sha256": "9ad12ae3396f93fc0add76b5f1d80491a1f1ec6f2b2a3c4771732afb6398150b"
+   },
+   {
+    "file": "sprite-rgb_00014_.png",
+    "sha256": "0d26fc721115909cbb2fecebfbb6a4faf25407448e5b2df75d67a8dbdadf0f33"
+   }
+  ]
+ },
+ "ally-krybor/721102": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small human frontier snow rover, grey blue armoured hull, four big wheels, a small roof turret gun, cyan headlights and cyan stripe markings, military, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721102,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00015_.png",
+    "sha256": "d77b8f24391e3dddb23c35cbfec17cff09ac98bb13f59a5998b636958037a7bc"
+   },
+   {
+    "file": "sprite-rgb_00015_.png",
+    "sha256": "c411d1c7442262d200bb9a973dee514f187aa2ce22b0a9353ddb0807cbd429dd"
+   }
+  ]
+ },
+ "ally-ringfall/721200": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small salvage militia armoured rover, grey blue patched metal hull, six wheels, a twin machine gun turret, teal cyan lights and markings, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721200,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00016_.png",
+    "sha256": "ea94693bf5eaefe0f58cbc8974bc96b6822f6cd0f0dd02f40364281729104095"
+   },
+   {
+    "file": "sprite-rgb_00016_.png",
+    "sha256": "48181e2ec0ed4766178948b22a96fd69c0a03a0c67f5cf71a2880f9db2b9d593"
+   }
+  ]
+ },
+ "ally-ringfall/721201": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small salvage militia armoured rover, grey blue patched metal hull, six wheels, a twin machine gun turret, teal cyan lights and markings, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721201,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00017_.png",
+    "sha256": "7cacdbaaba6a61ab2c17db551e66c30cc56a75dc51b12e05462c7d0c5033eb49"
+   },
+   {
+    "file": "sprite-rgb_00017_.png",
+    "sha256": "5284aa5acee525e1575ea69810b9b3d887315ee75bec65994b3c60a254d3171c"
+   }
+  ]
+ },
+ "ally-ringfall/721202": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, small salvage militia armoured rover, grey blue patched metal hull, six wheels, a twin machine gun turret, teal cyan lights and markings, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 721202,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00018_.png",
+    "sha256": "f407c20424eeff40a98a95aa1bf391a01186cd7ac9b34e813a5d2ba321c7cdd2"
+   },
+   {
+    "file": "sprite-rgb_00018_.png",
+    "sha256": "94eba27a441d1b8d7b4cb21f7d723c3571dc9a1211bf33e910433cd9ff99f76c"
+   }
+  ]
+ },
+ "demon-ember/720300": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, four legged lava forged demonic artillery beast, black basalt armour plates with molten orange cracks, curved horns, a big mortar cannon barrel mounted on its back, glowing ember eyes, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720300,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00007_.png",
+    "sha256": "34606062fb6804d0165ec3254e52b8f8d15d5231faf050af8bad08606c700874"
+   },
+   {
+    "file": "sprite-rgb_00007_.png",
+    "sha256": "9b951f786dd20f7b972cb087da5c0472d8a73b871c6f7755ead9bf3119a5936b"
+   }
+  ]
+ },
+ "demon-ember/720301": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, four legged lava forged demonic artillery beast, black basalt armour plates with molten orange cracks, curved horns, a big mortar cannon barrel mounted on its back, glowing ember eyes, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720301,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00008_.png",
+    "sha256": "f3efae4025e8be8b64fae6866da38cd75289447a23706710bbe870688caf5e54"
+   },
+   {
+    "file": "sprite-rgb_00008_.png",
+    "sha256": "41e4dbc1d740b55eaabe70966e759101d7901efc8b63b0f404628661928c9f4a"
+   }
+  ]
+ },
+ "demon-ember/720302": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, four legged lava forged demonic artillery beast, black basalt armour plates with molten orange cracks, curved horns, a big mortar cannon barrel mounted on its back, glowing ember eyes, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720302,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00009_.png",
+    "sha256": "b022c1962856f07a2a7ac3cea645cce8bd10081045febf60130c41136724504e"
+   },
+   {
+    "file": "sprite-rgb_00009_.png",
+    "sha256": "2f12f3ea9ddee6c250adfe42c3744e0335c83f5ba634c4d62086c6030cc02248"
+   }
+  ]
+ },
+ "demon-hollow/720400": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, walking gothic siege gargoyle launch tower, dark stone and iron, pointed arches, short stone legs, horned gargoyle head, a missile launch tube on top with red glowing runes, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720400,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00010_.png",
+    "sha256": "962d242e559ebe195d11b3f39918bb40f5b27a5ed8d8989264524725fccde9fd"
+   },
+   {
+    "file": "sprite-rgb_00010_.png",
+    "sha256": "06aaa428811b5762403354a8a93fe9b77fe8c0e364bf65eb45530e136e86161e"
+   }
+  ]
+ },
+ "demon-hollow/720401": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, walking gothic siege gargoyle launch tower, dark stone and iron, pointed arches, short stone legs, horned gargoyle head, a missile launch tube on top with red glowing runes, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720401,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00011_.png",
+    "sha256": "69cf32c7497b983c26a9a62b6249ac8ec4aae56df936e038afe017eb54f597cf"
+   },
+   {
+    "file": "sprite-rgb_00011_.png",
+    "sha256": "489186efcc9ea6cb49ac2d472a2c2e9ba134a5d17002b94d4b0cec4c214e474b"
+   }
+  ]
+ },
+ "demon-hollow/720402": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, walking gothic siege gargoyle launch tower, dark stone and iron, pointed arches, short stone legs, horned gargoyle head, a missile launch tube on top with red glowing runes, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720402,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00012_.png",
+    "sha256": "455c9a28dff0b7cff9714d35a6b1dd9334d29d9fe0bbd862e246aec9e0f057ff"
+   },
+   {
+    "file": "sprite-rgb_00012_.png",
+    "sha256": "2036b135e37399b1ba586b1af77efa9dc18c60dfb917a4c828f0a117bc0b8d3f"
+   }
+  ]
+ },
+ "demon-krybor/720100": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, captured frontier six wheeled rocket buggy, battered dark steel armour, a twin rocket launcher rack on the back, a small horned imp driver with glowing red eyes, red hazard lamps, demonic war vehicle, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720100,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00001_.png",
+    "sha256": "2c885192f7d9c127d7d791180dd0b61cfcfee167ab1ce76b7db7f65711b70ee8"
+   },
+   {
+    "file": "sprite-rgb_00001_.png",
+    "sha256": "cb20d3714bcc7d0b0655338bd73b153e6b16480de095fb8322ab791c20ebeb0a"
+   }
+  ]
+ },
+ "demon-krybor/720101": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, captured frontier six wheeled rocket buggy, battered dark steel armour, a twin rocket launcher rack on the back, a small horned imp driver with glowing red eyes, red hazard lamps, demonic war vehicle, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720101,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00002_.png",
+    "sha256": "a9691bc46d18cac8e61986d26548224132f3b8ee3df587ba4453bc77a528271c"
+   },
+   {
+    "file": "sprite-rgb_00002_.png",
+    "sha256": "3a2de77837db5812390a8abc0739d66023ebe33a1a4bbeecb46b991bbe77f1ed"
+   }
+  ]
+ },
+ "demon-krybor/720102": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, captured frontier six wheeled rocket buggy, battered dark steel armour, a twin rocket launcher rack on the back, a small horned imp driver with glowing red eyes, red hazard lamps, demonic war vehicle, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720102,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00003_.png",
+    "sha256": "2dec947a9f4d20630f10dec845a818d83c7890f13769828f3a5718574b743b03"
+   },
+   {
+    "file": "sprite-rgb_00003_.png",
+    "sha256": "c5b076b1e4ad7dc4e42ef806dee7e4ecbb2c7cdeb72e45e9861596d11f92ee45"
+   }
+  ]
+ },
+ "demon-ringfall/720200": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, low tracked missile crawler welded from salvaged spaceship hull plates, dark violet metal, heavy caterpillar treads, a long missile launcher arm on top, glowing orange vents and red demon eye sensors, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720200,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00004_.png",
+    "sha256": "ea2bf571b35a487d4252e968057857a3407f38633d1aef084500a191b9f2c903"
+   },
+   {
+    "file": "sprite-rgb_00004_.png",
+    "sha256": "0c45caadfb81ed3c6eb71e3673f3dc38d82cd222f6d35140a722bb0ad2544cbb"
+   }
+  ]
+ },
+ "demon-ringfall/720201": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, low tracked missile crawler welded from salvaged spaceship hull plates, dark violet metal, heavy caterpillar treads, a long missile launcher arm on top, glowing orange vents and red demon eye sensors, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720201,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00005_.png",
+    "sha256": "c55feeedede648536b9bfed4f766b9e8719c403dfc4967713a18ad5da83b951a"
+   },
+   {
+    "file": "sprite-rgb_00005_.png",
+    "sha256": "8dcc94cbab7074164ed10dd5273bdbd2d54965e6819f56f51fd7fd5db6f4c1b7"
+   }
+  ]
+ },
+ "demon-ringfall/720202": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated, low tracked missile crawler welded from salvaged spaceship hull plates, dark violet metal, heavy caterpillar treads, a long missile launcher arm on top, glowing orange vents and red demon eye sensors, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 720202,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00006_.png",
+    "sha256": "509ad8221777504f216862967e121baab4eb38a46ca967d55957d0373fade2d5"
+   },
+   {
+    "file": "sprite-rgb_00006_.png",
+    "sha256": "41d6c9d41ae1533d8137701774941325b6c705508d455b4d90409a50f86a3a5a"
+   }
+  ]
+ },
+ "explosion/722200": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, crisp square pixels, original artwork, centered, isolated, pixel art explosion fireball, bright yellow core, orange and red fire, dark smoke edges, round burst, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 722200,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00028_.png",
+    "sha256": "8463bbcc32f785353d4d00567ff290fa591188db2b65b72dcb65951446e07785"
+   },
+   {
+    "file": "sprite-rgb_00028_.png",
+    "sha256": "587411c34d53e6e0cdb182f1aa497e05bbba0d807034cfc4c2890a22d010314e"
+   }
+  ]
+ },
+ "explosion/722201": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, crisp square pixels, original artwork, centered, isolated, pixel art explosion fireball, bright yellow core, orange and red fire, dark smoke edges, round burst, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 722201,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00029_.png",
+    "sha256": "c81a8076c25e12a09efc00e12f63b3d284336691fe7fd3caed29f473cf336cac"
+   },
+   {
+    "file": "sprite-rgb_00029_.png",
+    "sha256": "3085f3c9808ed773c5b54be3c2b95e744dd4714fd9c73e651df86c7c4a7a5a5a"
+   }
+  ]
+ },
+ "explosion/722202": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, crisp square pixels, original artwork, centered, isolated, pixel art explosion fireball, bright yellow core, orange and red fire, dark smoke edges, round burst, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 722202,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00030_.png",
+    "sha256": "944904b3cc887cf8bb414a072faf730db0896dc0e2f94c40075faff2a37b1728"
+   },
+   {
+    "file": "sprite-rgb_00030_.png",
+    "sha256": "0d88d945495e41e95ee6cebd8e69015d8a8ee41ce1933c86b62b22ea9eaa1a41"
+   }
+  ]
+ },
+ "missile/722100": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, crisp square pixels, original artwork, centered, isolated, huge demonic missile warhead flying straight at the viewer, seen nose on from the front, round dark iron nose cone, four fins in a cross, a ring of glowing orange rocket exhaust flame around it, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 722100,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00025_.png",
+    "sha256": "53b73d3fa69babde28fab8939402f4b6f26a55a95a64ed7965e16256545b0bfe"
+   },
+   {
+    "file": "sprite-rgb_00025_.png",
+    "sha256": "be48159f6b34191fc623a05b0a7cd65afbde0fde39ce3e84916fb158349ebd21"
+   }
+  ]
+ },
+ "missile/722101": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, crisp square pixels, original artwork, centered, isolated, huge demonic missile warhead flying straight at the viewer, seen nose on from the front, round dark iron nose cone, four fins in a cross, a ring of glowing orange rocket exhaust flame around it, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 722101,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00026_.png",
+    "sha256": "a5b816c4f162469aadb57d49ed146875c999fb1e0fd1be98e05b5dcf358e553f"
+   },
+   {
+    "file": "sprite-rgb_00026_.png",
+    "sha256": "25900fbd88b8244ae00a465c023e6e5d8a53a71a94c1700746832a2fde3fc985"
+   }
+  ]
+ },
+ "missile/722102": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "prompt": "pixel art, 16-bit arcade shooter game sprite, crisp square pixels, original artwork, centered, isolated, huge demonic missile warhead flying straight at the viewer, seen nose on from the front, round dark iron nose cone, four fins in a cross, a ring of glowing orange rocket exhaust flame around it, transparent background",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "seed": 722102,
+  "models": [
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "layer_xl_transparent_conv.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "outputs": [
+   {
+    "file": "sprite-alpha_00027_.png",
+    "sha256": "c72fa854dad635545c7a401e9d39742b0041983f0f7dcfa9cf51e2329b6b231f"
+   },
+   {
+    "file": "sprite-rgb_00027_.png",
+    "sha256": "54f2ece4271917d9bfcc86c09d42fe65fa8d530e1d079de3f5ee3ef1d8d849f5"
+   }
+  ]
+ }
+}
