@@ -92,36 +92,52 @@ class ShipPainter {
   int _flashFrame(double k) => ((1 - k) * 4).floor().clamp(0, 3);
 
   /// Draws the composed ship at [center] (caller applies bank transform).
-  void paintShip(Canvas c, ArcadeModel m, Offset center) {
+  ///
+  /// [live] false is the cinematic pose: the same equipped modules, at rest.
+  /// Weapon timers do not tick outside combat, so a muzzle flash, hit frame
+  /// or deploy frame caught when combat ended would otherwise hold for the
+  /// whole cutscene.
+  void paintShip(Canvas c, ArcadeModel m, Offset center, {bool live = true}) {
     final at = Offset(center.dx.roundToDouble(), center.dy.roundToDouble());
     layer(c, hullRow, 2 + (m.clock * 14).floor() % 4, at);
-    final hit = m.invulnerable > 2.25;
+    final hit = live && m.invulnerable > 2.25;
     layer(c, hullRow, hit ? 1 : 0, at);
 
-    final volley = _kick(
+    double kick(double seconds) => live ? _kick(seconds) : 0;
+    final volley = kick(
       [m.noseFlash, m.wingRecoil[0], m.wingRecoil[1]].reduce(
         (a, b) => a > b ? a : b,
       ),
     );
     final wingGun = m.wingGun;
 
-    if (m.hasPower(Power.shield)) _module(c, m, Power.shield, at, 0);
+    if (m.hasPower(Power.shield)) {
+      _module(c, m, Power.shield, at, 0, settled: !live);
+    }
     for (final p in const [Power.spread, Power.large]) {
-      if (m.hasPower(p)) _module(c, m, p, at, volley);
+      if (m.hasPower(p)) _module(c, m, p, at, volley, settled: !live);
     }
     for (final p in const [Power.rapid, Power.powerful]) {
       if (!m.hasPower(p)) continue;
       if (p == wingGun) {
         for (final side in const [0, 1]) {
-          _module(c, m, p, at, _kick(m.wingRecoil[side]), mirror: side == 1);
+          _module(
+            c,
+            m,
+            p,
+            at,
+            kick(m.wingRecoil[side]),
+            mirror: side == 1,
+            settled: !live,
+          );
         }
       } else {
-        _module(c, m, p, at, 0);
+        _module(c, m, p, at, 0, settled: !live);
       }
     }
 
     // Single shooter: nose cannon flash, distinct from the wing kick.
-    final nose = _kick(m.noseFlash);
+    final nose = kick(m.noseFlash);
     if (nose > 0) layer(c, hullRow, 6 + _flashFrame(nose), at);
   }
 
@@ -132,10 +148,11 @@ class ShipPainter {
     Offset at,
     double kick, {
     bool mirror = false,
+    bool settled = false,
   }) {
     final row = rows[p]!;
     final deploy = _deploy(m, p);
-    if (deploy < deploySeconds) {
+    if (!settled && deploy < deploySeconds) {
       final f = (deploy / deploySeconds * 4).floor().clamp(0, 3);
       layer(c, row, 10 + f, at, mirror: mirror);
       return;

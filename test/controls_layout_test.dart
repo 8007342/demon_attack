@@ -9,10 +9,11 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
-  testWidgets('title and HUD touch toggle switches between touch console and desktop strip', (
+  testWidgets('one touch layout everywhere: no desktop mode, keyboard steers', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(400, 800);
+    // A wide desktop browser gets the same pilot console as a phone.
+    tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -21,44 +22,36 @@ void main() {
       client: MockClient((_) async => http.Response('{"scores":[]}', 200)),
     );
 
-    await tester.pumpWidget(MaterialApp(home: ArcadePage(scoreService: mockScores)));
+    await tester.pumpWidget(
+      MaterialApp(home: ArcadePage(scoreService: mockScores)),
+    );
     await tester.pump();
 
-    // Title screen toggle button
-    final titleToggle = find.byKey(const ValueKey('title-touch-toggle-button'));
-    expect(titleToggle, findsOneWidget);
+    void expectNoDesktopMode() {
+      expect(
+        find.byKey(const ValueKey('title-touch-toggle-button')),
+        findsNothing,
+      );
+      expect(find.byKey(const ValueKey('touch-toggle-button')), findsNothing);
+      expect(find.byKey(const ValueKey('enable-touch-bottom')), findsNothing);
+      expect(find.textContaining('DESKTOP'), findsNothing);
+      expect(find.textContaining('CONTROLS:'), findsNothing);
+      expect(find.byIcon(Icons.touch_app), findsNothing);
+      expect(find.byIcon(Icons.keyboard), findsNothing);
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is Tooltip && (w.message ?? '').contains('Desktop'),
+        ),
+        findsNothing,
+      );
+    }
 
-    // Toggle off on title screen -> Desktop mode
-    await tester.tap(titleToggle);
-    await tester.pump();
-
-    // Start game in desktop mode
+    expectNoDesktopMode();
     await tester.tap(find.text('START GAME  →'));
     await tester.pump();
-
-    // Verify desktop strip is active and touch console is not rendered
-    expect(find.text('DESKTOP MODE · ← / A  → / D TO STEER · AUTO-FIRING'), findsOneWidget);
-    expect(find.text('◀     SLIDE TO PILOT     ▶'), findsNothing);
-
-    // Tap "ENABLE TOUCH" on desktop strip
-    final enableTouchBtn = find.byKey(const ValueKey('enable-touch-bottom'));
-    expect(enableTouchBtn, findsOneWidget);
-    await tester.tap(enableTouchBtn);
-    await tester.pump();
-
-    // Verify touch console is back
+    expectNoDesktopMode();
     expect(find.text('◀     SLIDE TO PILOT     ▶'), findsOneWidget);
-    expect(find.text('DESKTOP MODE · ← / A  → / D TO STEER · AUTO-FIRING'), findsNothing);
 
-    // Toggle off via in-game HUD toggle button
-    final hudToggle = find.byKey(const ValueKey('touch-toggle-button'));
-    expect(hudToggle, findsOneWidget);
-    await tester.tap(hudToggle);
-    await tester.pump();
-
-    expect(find.text('DESKTOP MODE · ← / A  → / D TO STEER · AUTO-FIRING'), findsOneWidget);
-
-    // Enter gameplay mode
     final scene =
         tester
                 .widgetList<GameWidget>(
@@ -71,22 +64,28 @@ void main() {
     scene.onTick();
     await tester.pump();
 
-    // Pause menu also allows toggling controls
+    // Keyboard controls still steer in the one remaining layout.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(scene.keyboardDirection, 1);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyA);
+    await tester.pump();
+    expect(scene.keyboardDirection, -1);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyA);
+    await tester.pump();
+    expect(scene.keyboardDirection, 0);
+
+    // The pause menu no longer offers a controls toggle.
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
     await tester.pump();
     expect(find.text('SIGNAL PAUSED'), findsOneWidget);
-    final pauseToggle = find.text('CONTROLS: DESKTOP (TOUCH OFF)');
-    expect(pauseToggle, findsOneWidget);
-    await tester.tap(pauseToggle);
-    await tester.pump();
-    expect(find.text('CONTROLS: TOUCH (ON)'), findsOneWidget);
-
-    // Resume game
+    expectNoDesktopMode();
     await tester.tap(find.text('RESUME'));
     await tester.pump();
     expect(find.text('◀     SLIDE TO PILOT     ▶'), findsOneWidget);
+    expect(tester.takeException(), isNull);
 
-    // Dispose
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
   });
@@ -103,7 +102,9 @@ void main() {
       client: MockClient((_) async => http.Response('{"scores":[]}', 200)),
     );
 
-    await tester.pumpWidget(MaterialApp(home: ArcadePage(scoreService: mockScores)));
+    await tester.pumpWidget(
+      MaterialApp(home: ArcadePage(scoreService: mockScores)),
+    );
     await tester.pump();
     await tester.tap(find.text('START GAME  →'));
     await tester.pump();

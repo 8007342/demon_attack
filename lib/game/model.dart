@@ -921,6 +921,9 @@ class ArcadeModel {
       if (shipBank.abs() < 0.001) shipBank = 0;
     }
     if (cinematic) {
+      // Spent modules are debris, not loot: they keep tumbling off screen
+      // through salvage, level clear and travel instead of freezing.
+      _updateFallingParts(dt);
       if (mode == RunMode.transition) {
         if (wave > 1) {
           _advanceWaveEntrance(dt);
@@ -986,14 +989,7 @@ class ArcadeModel {
       return false;
     });
 
-    for (final part in fallingParts) {
-      part.vy += 160.0 * dt;
-      part.x += part.vx * dt;
-      part.y += part.vy * dt;
-      part.rotation += part.vRot * dt;
-      part.age += dt;
-    }
-    fallingParts.removeWhere((p) => p.y > height + 20 || p.age > 2.5);
+    _updateFallingParts(dt);
 
     for (final crate in supplyCrates) {
       crate.y += crate.vy * dt;
@@ -1072,6 +1068,17 @@ class ArcadeModel {
     if (combat && demons.isEmpty && boss == null && flocksRemaining == 0) {
       _completeWave();
     }
+  }
+
+  void _updateFallingParts(double dt) {
+    for (final part in fallingParts) {
+      part.vy += 160.0 * dt;
+      part.x += part.vx * dt;
+      part.y += part.vy * dt;
+      part.rotation += part.vRot * dt;
+      part.age += dt;
+    }
+    fallingParts.removeWhere((p) => p.y > height + 20 || p.age > 2.5);
   }
 
   void _updatePickups(double dt, double fallSpeed) {
