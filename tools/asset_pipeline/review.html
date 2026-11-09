@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Pipeline Review</title>
+<style>
+  :root { color-scheme: dark; --bg:#080d18; --panel:#111c2b; --line:#263b50; --mint:#70f5d5; --gold:#f4ca79; --bad:#ff786c; --warn:#f4ca79; --ok:#70f5d5; --muted:#9caebe; --violet:#a888ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:24px 16px; background:radial-gradient(ellipse at top,#17263a,var(--bg) 58%); color:#edf5f4; font:15px/1.5 system-ui,sans-serif; }
+  main { max-width:1280px; margin:0 auto; }
+  h1 { margin:0; color:var(--mint); letter-spacing:.08em; text-transform:uppercase; font-size:1.5rem; }
+  h2 { margin:0 0 .6rem; font-size:1.15rem; color:var(--gold); }
+  p, .muted { color:var(--muted); }
+  img { image-rendering:pixelated; display:block; max-width:100%; }
+  .panel { border:1px solid var(--line); border-radius:12px; background:linear-gradient(145deg,#142235,#0c1421); padding:16px; margin:14px 0; }
+  .progress { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .bar { flex:1 1 220px; height:10px; border-radius:999px; background:#050910; border:1px solid var(--line); overflow:hidden; }
+  .bar > span { display:block; height:100%; background:linear-gradient(90deg,var(--mint),var(--violet)); }
+  .steps { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .step { font-size:.75rem; padding:2px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); text-decoration:none; }
+  .step.done { border-color:var(--mint); color:var(--mint); }
+  .sheets { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:16px; align-items:start; }
+  .labels { display:grid; grid-template-columns:repeat(6,1fr); gap:2px; font-size:.68rem; color:var(--muted); margin-top:6px; }
+  .controls { display:flex; gap:8px 16px; flex-wrap:wrap; align-items:center; margin:18px 0 6px; }
+  .filters { display:flex; gap:6px; flex-wrap:wrap; }
+  .filters button { background:#0d1726; color:#edf5f4; border:1px solid var(--line); border-radius:999px; padding:4px 12px; cursor:pointer; font:inherit; font-size:.85rem; }
+  .filters button[aria-pressed="true"] { border-color:var(--mint); color:var(--mint); }
+  label.toggle { display:flex; gap:6px; align-items:center; color:var(--muted); font-size:.9rem; cursor:pointer; }
+  details.part { border:1px solid var(--line); border-radius:12px; background:#0b1422; margin:12px 0; }
+  details.part > summary { list-style:none; cursor:pointer; padding:12px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  details.part > summary::-webkit-details-marker { display:none; }
+  details.part > summary::before { content:'▸'; color:var(--muted); }
+  details.part[open] > summary::before { content:'▾'; }
+  details.part.accepted { border-color:#2c6b5f; }
+  .part-name { font-weight:800; color:var(--gold); text-transform:capitalize; font-size:1.05rem; }
+  .thumb { width:48px; height:48px; background:#050910; border:1px solid var(--line); border-radius:6px; }
+  .part-body { padding:0 16px 16px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr)); gap:12px; }
+  .card { border:1px solid var(--line); border-radius:10px; background:#0d1726; padding:10px; }
+  .card.accepted { border-color:var(--mint); box-shadow:0 0 0 1px var(--mint) inset; }
+  .card.provisional { border-color:#6b5a2c; }
+  .imgs { display:grid; grid-template-columns:repeat(auto-fit,minmax(64px,1fr)); gap:6px; margin-top:6px; }
+  .modes { display:flex; gap:12px; flex-wrap:wrap; }
+  .modes figure img { width:160px; background:#0b1220; border-radius:8px; }
+  .modes figcaption { font-size:.75rem; color:var(--muted); }
+  .imgs img { width:100%; aspect-ratio:1; object-fit:contain; background:#050910; border:1px solid var(--line); border-radius:6px; }
+  .imgs figcaption { font-size:.65rem; color:var(--muted); text-align:center; }
+  figure { margin:0; }
+  .badge { display:inline-block; font-size:.7rem; font-weight:800; padding:1px 8px; border-radius:999px; color:#06121a; }
+  .PASS { background:var(--ok); } .WARN { background:var(--warn); } .FAIL { background:var(--bad); }
+  .acc { background:var(--mint); color:#062019; } .prov { background:#6b5a2c; color:#fff5c9; } .open { background:#263b50; color:#edf5f4; }
+  .meta { font-size:.75rem; color:var(--muted); margin:.4rem 0 0; }
+  code { font-size:.72rem; background:#050910; border:1px solid var(--line); border-radius:4px; padding:2px 5px; display:block; overflow-x:auto; white-space:nowrap; margin-top:6px; color:var(--gold); }
+  .reasons { font-size:.75rem; color:var(--bad); margin:.3rem 0 0; }
+</style>
+</head>
+<body>
+<main>
+  <p>DEMON ATTACK · LOCAL ASSET PIPELINE</p>
+  <h1 id="title">Asset pipeline review</h1>
+  <p id="desc"></p>
+
+  <section class="panel" aria-labelledby="progress-h">
+    <h2 id="progress-h">Progress</h2>
+    <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><strong id="progress-text"></strong></div>
+    <div class="steps" id="steps"></div>
+    <p class="muted" id="retired"></p>
+  </section>
+
+  <section class="panel">
+    <div class="sheets">
+      <div id="selected"></div>
+      <div id="loadouts"></div>
+      <div id="wear"></div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <div class="filters" id="status-filters" aria-label="Filter by QA status"></div>
+    <div class="filters" id="tier-filters" aria-label="Filter by model tier"></div>
+    <label class="toggle"><input type="checkbox" id="hide-accepted"> Hide accepted parts</label>
+  </div>
+  <div id="parts"></div>
+  <p class="muted" id="foot"></p>
+</main>
+<script>
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
+};
+let report;
+const state = { status: 'all', tier: 'all', hideAccepted: store.get('review.hideAccepted', false), open: store.get('review.open', {}) };
+
+function card(c, part) {
+  const accepted = report.accepted[part]?.candidate === c.id;
+  const provisional = !accepted && report.picks[part]?.id === c.id;
+  const contexts = c.contexts || (c.context ? [{label: 'on selected ship', parts: c.context_parts || [], file: c.context}] : []);
+  const ctx = contexts.map((x) => { const t = `${x.label}${x.parts.length ? ` (${x.parts.join(' + ')})` : ''}`;
+    return `<figure><img loading="lazy" src="${esc(x.file)}" alt="${esc(t)}"><figcaption>${esc(t)}</figcaption></figure>`; }).join('');
+  return `<article class="card ${accepted ? 'accepted' : provisional ? 'provisional' : ''}">
+    <div><span class="badge ${esc(c.status)}">${esc(c.status)}</span> ${accepted ? '<span class="badge acc">accepted</span>' : provisional ? '<span class="badge prov">provisional</span>' : ''} <strong>${esc(c.id)}</strong></div>
+    <div class="imgs">
+      <figure><img loading="lazy" src="${esc(c.raw)}" alt="raw source"><figcaption>raw ${esc(c.tier)}</figcaption></figure>
+      ${c.layer ? `<figure><img loading="lazy" src="${esc(c.layer)}" alt="pixel layer"><figcaption>pixel layer</figcaption></figure>${ctx}` : ''}
+    </div>
+    <p class="meta">score ${esc(c.score)} · ${esc(c.model)} · seed ${esc(c.seed)} · cover ${esc(c.isolation.coverage)}${c.isolation.rotated_deg ? ` · rotated ${esc(c.isolation.rotated_deg)}°` : ''}${c.layer ? ` · fill ${esc(c.slot_fill)} · ${esc(c.palette_colours)} colours` : ''}</p>
+    ${c.reasons.length ? `<p class="reasons">${c.reasons.map(esc).join('; ')}</p>` : ''}
+    ${c.layer && !accepted ? `<code>pipeline.py accept ${esc(part)} ${esc(c.id)}</code>` : ''}
+  </article>`;
+}
+
+function render() {
+  const order = [...report.parts].sort((a, b) => (a in report.accepted) - (b in report.accepted));
+  document.querySelector('#parts').innerHTML = order.map((part) => {
+    const acc = report.accepted[part];
+    if (acc && state.hideAccepted) return '';
+    const all = report.candidates.filter((c) => c.part === part);
+    const items = all.filter((c) => (state.status === 'all' || c.status === state.status) && (state.tier === 'all' || c.tier === state.tier))
+      .sort((a, b) => (b.id === acc?.candidate) - (a.id === acc?.candidate) || b.score - a.score);
+    const open = state.open[part] ?? !acc;
+    const accCard = acc && all.find((c) => c.id === acc.candidate);
+    const head = acc
+      ? `${accCard?.layer ? `<img class="thumb" src="${esc(accCard.layer)}" alt="">` : ''}<span class="badge acc">accepted</span> <span class="muted">${esc(acc.candidate)} · by ${esc(acc.by)} · ${esc((acc.at || '').slice(0, 10))}</span>`
+      : `<span class="badge open">open</span> <span class="muted">${all.length} candidates · provisional pick ${esc(report.picks[part]?.id || 'none')}</span>`;
+    return `<details class="part ${acc ? 'accepted' : ''}" id="part-${esc(part)}" data-part="${esc(part)}" ${open ? 'open' : ''}>
+      <summary><span class="part-name">${esc(part)}</span> ${head}</summary>
+      <div class="part-body"><div class="cards">${items.map((c) => card(c, part)).join('') || '<p class="muted">No candidates match these filters.</p>'}</div></div>
+    </details>`;
+  }).join('') || '<p class="muted">Every part is accepted. Untick “Hide accepted parts” to review them.</p>';
+  document.querySelectorAll('details.part').forEach((d) => d.addEventListener('toggle', () => {
+    state.open[d.dataset.part] = d.open; store.set('review.open', state.open);
+  }));
+}
+
+function filters(sel, key, values, counts) {
+  const el = document.querySelector(sel);
+  el.innerHTML = values.map((v) => `<button data-v="${esc(v)}" aria-pressed="${v === state[key]}">${esc(v)} (${counts[v] || 0})</button>`).join('');
+  el.addEventListener('click', (e) => {
+    const v = e.target.dataset.v; if (!v) return; state[key] = v;
+    el.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === v));
+    render();
+  });
+}
+
+fetch('report.json').then((r) => r.json()).then((data) => {
+  report = data;
+  report.accepted = data.accepted || {};
+  document.querySelector('#title').textContent = `${data.family} · asset pipeline review`;
+  document.querySelector('#desc').textContent = data.description;
+  const pr = data.progress || {accepted: Object.keys(report.accepted).length, total: data.parts.length};
+  document.querySelector('#bar').style.width = `${(100 * pr.accepted / Math.max(pr.total, 1)).toFixed(0)}%`;
+  document.querySelector('#progress-text').textContent = `${pr.accepted} of ${pr.total} parts accepted`;
+  document.querySelector('#steps').innerHTML = data.parts.map((p) => `<a class="step ${p in report.accepted ? 'done' : ''}" href="#part-${esc(p)}">${p in report.accepted ? '✓ ' : ''}${esc(p)}</a>`).join('');
+  if (data.retired_tiers?.length) document.querySelector('#retired').textContent = `Retired tiers (removed from review): ${data.retired_tiers.join(', ')}.`;
+  const sel = data.selected_ship;
+  if (sel) {
+    const modes = sel.modes?.length ? sel.modes : [{label: 'selected ship', file: sel.file}];
+    document.querySelector('#selected').innerHTML = `<h2>Selected ship</h2><div class="modes">${modes.map((m) => `<figure><img src="${esc(m.file)}" alt="${esc(m.label)}"><figcaption>${esc(m.label)}</figcaption></figure>`).join('')}</div><p class="muted">Accepted parts: ${sel.parts.map(esc).join(' + ')}. No powerups: one shot from the nose. A wing powerup fits the wing cannons, which fire alternately. Nose candidates are shown on both ships.</p>`;
+  }
+  const s = data.sheets || {};
+  if (s.loadouts) document.querySelector('#loadouts').innerHTML = `<h2>All 18 loadouts (accepted + provisional picks)</h2><img src="${esc(s.loadouts.file)}" alt="Loadout combinations"><div class="labels">${s.loadouts.labels.map((l) => `<span>${esc(l)}</span>`).join('')}</div>`;
+  if (s.wear) document.querySelector('#wear').innerHTML = `<h2>Wear states</h2><img src="${esc(s.wear.file)}" alt="Wear states"><p class="muted">Columns: ${s.wear.labels.map(esc).join(' → ')}. Derived deterministically from each picked layer.</p>`;
+  const sc = {all: data.candidates.length}, tc = {all: data.candidates.length};
+  data.candidates.forEach((c) => { sc[c.status] = (sc[c.status] || 0) + 1; tc[c.tier] = (tc[c.tier] || 0) + 1; });
+  filters('#status-filters', 'status', ['all', 'PASS', 'WARN', 'FAIL'], sc);
+  filters('#tier-filters', 'tier', ['all', ...Object.keys(tc).filter((t) => t !== 'all').sort()], tc);
+  const hide = document.querySelector('#hide-accepted');
+  hide.checked = state.hideAccepted;
+  hide.addEventListener('change', () => { state.hideAccepted = hide.checked; store.set('review.hideAccepted', hide.checked); render(); });
+  document.querySelector('#foot').textContent = `Pipeline v${data.pipeline_version} · generated ${data.generated} · canvas ${data.canvas.width}×${data.canvas.height} logical. Accept a candidate with the command on its card, then re-run review and pack.`;
+  render();
+}).catch(() => { document.querySelector('#parts').innerHTML = '<p>No report yet. Run <code>pipeline.py review</code>.</p>'; });
+</script>
+</body>
+</html>

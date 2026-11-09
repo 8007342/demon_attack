@@ -1,0 +1,88 @@
+{
+  "family": "ship",
+  "pipeline_version": 4,
+  "packed": "2026-11-02T05:21:32+00:00",
+  "cell": {
+    "width": 96,
+    "height": 96
+  },
+  "logical": {
+    "width": 48,
+    "height": 48,
+    "pixel_scale": 2
+  },
+  "wear_states": [
+    "fresh",
+    "worn",
+    "critical"
+  ],
+  "rows": {
+    "hull": 0,
+    "spread": 1,
+    "large": 2,
+    "rapid": 3,
+    "powerful": 4,
+    "shield": 5
+  },
+  "layer_order": [
+    "hull",
+    "shield",
+    "rapid",
+    "powerful",
+    "spread",
+    "large"
+  ],
+  "provisional": true,
+  "wing_muzzles": {
+    "rapid": {
+      "x": -15.5,
+      "y": -10.0
+    },
+    "powerful": {
+      "x": -17.0,
+      "y": -13.0
+    }
+  },
+  "nose_muzzle": {
+    "x": 0.0,
+    "y": -10.0
+  },
+  "sources": {
+    "hull": {
+      "candidate": "hull-I2-820000-0",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "provisional": false
+    },
+    "spread": {
+      "candidate": "spread-I3-820013-2",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "provisional": true
+    },
+    "large": {
+      "candidate": "large-I3-820020-2",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "provisional": true
+    },
+    "rapid": {
+      "candidate": "rapid-I2-820032-0",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "provisional": true
+    },
+    "powerful": {
+      "candidate": "powerful-I2-820041-2",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "provisional": false
+    },
+    "shield": {
+      "candidate": "shield-I3-820051-3",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "provisional": true
+    }
+  }
+}

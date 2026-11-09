@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import 'model.dart';
 import 'sector_background.dart';
@@ -18,7 +20,7 @@ class DemonScene extends FlameGame {
   DemonScene(this.model, this.onTick);
   final ArcadeModel model;
   final VoidCallback onTick;
-  ui.Image? atlas, effectsAtlas, sky, bossAtlas, cockpitAtlas;
+  ui.Image? atlas, effectsAtlas, sky, bossAtlas, cockpitAtlas, shipParts;
   final sectors = SectorBackground();
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
@@ -45,6 +47,24 @@ class DemonScene extends FlameGame {
     } catch (_) {}
     try {
       cockpitAtlas = await images.load('cockpit-panel.png');
+    } catch (_) {}
+    try {
+      // Layered hull + weapon modules from tools/asset_pipeline (ship family).
+      shipParts = await images.load('ship-parts.png');
+      final meta = jsonDecode(
+        await rootBundle.loadString('assets/images/ship-parts.json'),
+      ) as Map<String, dynamic>;
+      final nose = meta['nose_muzzle'];
+      if (nose is Map) noseMuzzleY = (nose['y'] as num).toDouble();
+      final muzzles = meta['wing_muzzles'] as Map<String, dynamic>? ?? {};
+      for (final MapEntry(:key, :value) in muzzles.entries) {
+        final power = Power.values.where((p) => p.name == key).firstOrNull;
+        if (power == null || value is! Map) continue;
+        model.wingMuzzles[power] = (
+          x: (value['x'] as num).toDouble(),
+          y: (value['y'] as num).toDouble(),
+        );
+      }
     } catch (_) {}
     await Future.wait(
       List.generate(5, (i) async {
@@ -844,6 +864,141 @@ class DemonScene extends FlameGame {
     }
   }
 
+  // Rows of assets/images/ship-parts.png (see ship-parts.json); columns are
+  // the wear states fresh, worn, critical. Each cell is a full 48x48 logical
+  // layer at 2x, so layers stack at the same origin.
+  static const _shipCell = 96.0, _shipSize = 48.0;
+  static const _shipRows = {
+    Power.spread: 1,
+    Power.large: 2,
+    Power.rapid: 3,
+    Power.powerful: 4,
+    Power.shield: 5,
+  };
+  static const _shipLayerOrder = [
+    Power.shield,
+    Power.rapid,
+    Power.powerful,
+    Power.spread,
+    Power.large,
+  ];
+
+  int _wearColumn(Power power) {
+    final left = model.timeLeft(power);
+    if (left > ArcadeModel.powerDuration * 0.5) return 0;
+    if (left > 2.5) return 1;
+    // Overheating: flicker between worn and glowing-critical plating.
+    return (model.clock * 12).floor() % 2 == 0 ? 2 : 1;
+  }
+
+  void _shipLayer(Canvas c, int row, int column, Offset center) {
+    c.drawImageRect(
+      shipParts!,
+      Rect.fromLTWH(column * _shipCell, row * _shipCell, _shipCell, _shipCell),
+      Rect.fromCenter(center: center, width: _shipSize, height: _shipSize),
+      Paint()
+        ..filterQuality = FilterQuality.none
+        ..isAntiAlias = false,
+    );
+  }
+
+  /// Top of the hull's centre column (logical px from the ship centre), where
+  /// the single shooter's nose flash is drawn; read from ship-parts.json.
+  double noseMuzzleY = -10;
+
+  void _shipLayers(Canvas c, Offset center) {
+    final at = Offset(center.dx.roundToDouble(), center.dy.roundToDouble());
+    _shipLayer(c, 0, 0, at);
+    if (model.noseFlash > ArcadeModel.wingRecoilDuration * 0.45) {
+      // Single shooter: a 2-frame nose flash, distinct from the wing kick.
+      final paint = Paint()..isAntiAlias = false;
+      paint.color = const Color(0xFFFFF5C9);
+      c.drawRect(
+        Rect.fromLTWH(at.dx - 1, at.dy + noseMuzzleY - 3, 2, 3),
+        paint,
+      );
+      paint.color = mint;
+      c.drawRect(
+        Rect.fromLTWH(at.dx - 2, at.dy + noseMuzzleY - 1, 4, 1),
+        paint,
+      );
+    }
+    final wingGun = model.wingGun;
+    for (final power in _shipLayerOrder) {
+      if (!model.hasPower(power)) continue;
+      if (power == wingGun) {
+        _wingCannons(c, power, at);
+      } else {
+        _shipLayer(c, _shipRows[power]!, _wearColumn(power), at);
+      }
+    }
+  }
+
+  /// Wing cannons drawn one half at a time: the side that just fired kicks
+  /// back 2px and shows a 2-frame muzzle flash, so alternating shots read as
+  /// left, right, left, ...
+  void _wingCannons(Canvas c, Power power, Offset at) {
+    final row = _shipRows[power]!, column = _wearColumn(power);
+    final muzzle = model.wingMuzzles[power]!;
+    final paint = Paint()
+      ..filterQuality = FilterQuality.none
+      ..isAntiAlias = false;
+    for (final side in const [0, 1]) {
+      final recoil = model.wingRecoil[side] / ArcadeModel.wingRecoilDuration;
+      final kick = recoil > 0.45 ? 2.0 : (recoil > 0 ? 1.0 : 0.0);
+      c.drawImageRect(
+        shipParts!,
+        Rect.fromLTWH(
+          column * _shipCell + side * _shipCell / 2,
+          row * _shipCell,
+          _shipCell / 2,
+          _shipCell,
+        ),
+        Rect.fromLTWH(
+          at.dx - _shipSize / 2 + side * _shipSize / 2,
+          at.dy - _shipSize / 2 + kick,
+          _shipSize / 2,
+          _shipSize,
+        ),
+        paint,
+      );
+      if (recoil > 0.45) {
+        final x = at.dx + (side == 0 ? -1 : 1) * muzzle.x.abs();
+        final y = at.dy + muzzle.y - 3;
+        paint.color = const Color(0xFFFFF5C9);
+        c.drawRect(Rect.fromLTWH(x - 1, y, 2, 2), paint);
+        paint.color = power == Power.powerful
+            ? const Color(0xFFFF786C)
+            : const Color(0xFF6EDCFF);
+        c.drawRect(Rect.fromLTWH(x - 2, y + 2, 4, 1), paint);
+      }
+    }
+  }
+
+  void _shipPartSprite(Canvas c, FallingPart part) {
+    // A spent module tumbles away in its critical state; wing pods drop one side.
+    final row = _shipRows[part.power]!;
+    final paired = part.power == Power.rapid || part.power == Power.powerful;
+    final half = part.vx < 0 ? 0.0 : _shipCell / 2;
+    final src = paired
+        ? Rect.fromLTWH(
+            2 * _shipCell + half,
+            row * _shipCell,
+            _shipCell / 2,
+            _shipCell,
+          )
+        : Rect.fromLTWH(2 * _shipCell, row * _shipCell, _shipCell, _shipCell);
+    final w = paired ? _shipSize / 2 : _shipSize;
+    c.drawImageRect(
+      shipParts!,
+      src,
+      Rect.fromCenter(center: Offset.zero, width: w, height: _shipSize),
+      Paint()
+        ..filterQuality = FilterQuality.none
+        ..isAntiAlias = false,
+    );
+  }
+
   void _playerShip(Canvas c) {
     final center = Offset(model.shipX, ArcadeModel.shipY);
     final bank = model.shipBank.clamp(-1.0, 1.0);
@@ -851,13 +1006,14 @@ class DemonScene extends FlameGame {
     final paint = Paint()..isAntiAlias = false;
 
     // Angled ventral thruster flame opposite the bank direction.
-    final flameLen = 7.0 + thrust * 6.0 + ((model.clock * 18).floor() % 2) * 2.0;
+    final flameLen =
+        7.0 + thrust * 6.0 + ((model.clock * 18).floor() % 2) * 2.0;
     final tailShift = (-bank * 5.0).roundToDouble();
     paint.color = mint.withValues(alpha: 0.48 + thrust * 0.25);
     c.drawRect(
       Rect.fromLTWH(
         (center.dx - 3 + tailShift * 0.5).roundToDouble(),
-        (center.dy + 13).roundToDouble(),
+        (center.dy + (shipParts == null ? 13 : 18)).roundToDouble(),
         6,
         flameLen,
       ),
@@ -867,7 +1023,7 @@ class DemonScene extends FlameGame {
     c.drawRect(
       Rect.fromLTWH(
         (center.dx - 1 + tailShift).roundToDouble(),
-        (center.dy + 14).roundToDouble(),
+        (center.dy + (shipParts == null ? 14 : 19)).roundToDouble(),
         2,
         (flameLen * 0.65).roundToDouble(),
       ),
@@ -894,7 +1050,11 @@ class DemonScene extends FlameGame {
     c.rotate(bank * 0.14);
     c.scale(1.0 - bank.abs() * 0.14, 1.0);
     c.translate(-center.dx, -center.dy);
-    sprite(c, 4, (model.clock * 14).floor() % 4, center, 42);
+    if (shipParts != null) {
+      _shipLayers(c, center);
+    } else {
+      sprite(c, 4, (model.clock * 14).floor() % 4, center, 42);
+    }
     // 2.5D directional hemisphere & rim lighting on the banked ship wings/hull.
     if (bank.abs() > 0.08) {
       final raised = bank < 0 ? 1.0 : -1.0;
@@ -967,7 +1127,7 @@ class DemonScene extends FlameGame {
 
     // Composable weapon attachments:
     // 1. Rapid fire: Wingtip dual accelerator cannons at (center.dx ± 16, center.dy + 2)
-    if (model.hasPower(Power.rapid)) {
+    if (shipParts == null && model.hasPower(Power.rapid)) {
       final tRapid = model.timeLeft(Power.rapid);
       final overheat = tRapid < 2.5;
       final Color podColor = overheat
@@ -997,7 +1157,7 @@ class DemonScene extends FlameGame {
     }
 
     // 2. Spread shot: Nose trifurcated prism emitter at (center.dx, center.dy - 13)
-    if (model.hasPower(Power.spread)) {
+    if (shipParts == null && model.hasPower(Power.spread)) {
       final tSpread = model.timeLeft(Power.spread);
       final overheat = tSpread < 2.5;
       final Color prismColor = overheat
@@ -1033,7 +1193,7 @@ class DemonScene extends FlameGame {
     }
 
     // 3. Large / Explosive shot: Heavy hyper-plasma barrel between the dual turrets
-    if (model.hasPower(Power.large)) {
+    if (shipParts == null && model.hasPower(Power.large)) {
       final tLarge = model.timeLeft(Power.large);
       final overheat = tLarge < 2.5;
       final Color cannonColor = overheat
@@ -1073,6 +1233,11 @@ class DemonScene extends FlameGame {
       c.save();
       c.translate(part.x, part.y);
       c.rotate(part.rotation);
+      if (shipParts != null && _shipRows.containsKey(part.power)) {
+        _shipPartSprite(c, part);
+        c.restore();
+        continue;
+      }
       c.drawRect(
         const Rect.fromLTWH(-3, -3, 6, 6),
         Paint()..color = const Color(0xFFFF5522),

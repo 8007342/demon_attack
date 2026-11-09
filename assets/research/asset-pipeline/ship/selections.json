@@ -1,0 +1,37 @@
+{
+  "family": "ship",
+  "selections": {
+    "hull": {
+      "candidate": "hull-I2-820000-0",
+      "by": "user",
+      "at": "2026-11-02T04:08:09+00:00",
+      "note": "picked from I2 review gallery 2026-11-02"
+    },
+    "powerful": {
+      "candidate": "powerful-I2-820041-2",
+      "by": "user",
+      "at": "2026-11-02T05:14:00+00:00",
+      "note": "picked from review gallery 2026-11-02"
+    }
+  },
+  "withdrawn": [
+    {
+      "candidate": "spread-I3-820010-3",
+      "by": "user",
+      "at": "2026-11-02T04:54:31+00:00",
+      "note": "picked from review gallery 2026-11-02",
+      "part": "spread",
+      "withdrawn_at": "2026-11-02T05:14:00+00:00",
+      "reason": "wing-cannon redesign: regenerate nose modules to match the selected hull"
+    },
+    {
+      "candidate": "large-I3-820020-2",
+      "by": "user",
+      "at": "2026-11-02T04:54:31+00:00",
+      "note": "picked from review gallery 2026-11-02",
+      "part": "large",
+      "withdrawn_at": "2026-11-02T05:14:00+00:00",
+      "reason": "wing-cannon redesign: regenerate nose modules to match the selected hull"
+    }
+  ]
+}
