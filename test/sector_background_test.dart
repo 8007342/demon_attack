@@ -213,6 +213,8 @@ void main() {
       final scene = DemonScene(model, () {});
       await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
       scene.sectors.flyover.reducedMotionOverride = false;
+      // Fly a little way in so every route has several landmarks on screen.
+      scene.sectors.flyover.distance = 640;
       for (var family = 0; family < 5; family++) {
         scene.sectors.images[family] = await _decode(
           'assets/images/sector-${family + 1}.png',

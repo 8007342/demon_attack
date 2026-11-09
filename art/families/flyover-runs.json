@@ -746,15 +746,15 @@
  "landmark/ember/2/forge-channel": {
   "workflow": "art/workflows/backgrounds/sprite-transparent.json",
   "overrides": {
-   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, squat industrial smelting furnace block with a glowing open mouth, pipes and a short chimney, dark night palette, crisp pixels, transparent background",
-   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon, heart shape, love heart",
-   "seed": 20221
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, large industrial foundry hall with a glowing molten metal sluice pouring into a channel, pipes and a crane, dark night palette, crisp pixels, transparent background",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "seed": 22221
   },
   "strength": null,
   "outputs": [
    {
-    "file": "sprite-alpha_00101_.png",
-    "sha256": "47a08b06bc33df862bc4fd2a77a084b0d855f808f02b30e094ff24af8e525148",
+    "file": "sprite-alpha_00108_.png",
+    "sha256": "cba854707cf2f64728266272a7dcf3fea4192074b200db368a8c0479fcdb216b",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors",
@@ -763,8 +763,8 @@
     ]
    },
    {
-    "file": "sprite-rgb_00101_.png",
-    "sha256": "caae18f4f977c3525e0457af3180553928c2f210b665d45c4bad4b201d67edd9",
+    "file": "sprite-rgb_00108_.png",
+    "sha256": "90bc882135b89e15b9d3e2c4e3a4880e532449b7bf47310459973e498b530bf9",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors",
@@ -777,15 +777,15 @@
  "landmark/ember/2/forge-stacks": {
   "workflow": "art/workflows/backgrounds/sprite-transparent.json",
   "overrides": {
-   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, industrial furnace smokestacks cluster with glowing furnace mouths and molten feed channels, dark night palette, crisp pixels, transparent background",
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, cluster of three tall industrial furnace smokestacks rising from a foundry block with glowing furnace doors and pipes, dark night palette, crisp pixels, transparent background",
    "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
-   "seed": 13220
+   "seed": 22220
   },
   "strength": null,
   "outputs": [
    {
-    "file": "sprite-alpha_00056_.png",
-    "sha256": "f75ee6ef4dcd0581b8e28f687775527d01a379592f74f50c897d94a951d3453b",
+    "file": "sprite-alpha_00107_.png",
+    "sha256": "8ff232f0b37288ba3c555de756fd3e5ec50572a07271a0e0e2a1812983d432bb",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors",
@@ -794,8 +794,8 @@
     ]
    },
    {
-    "file": "sprite-rgb_00056_.png",
-    "sha256": "4883160d14afc7002b649d7922a957b3443673ae79ccc6b8663244a7400a66b7",
+    "file": "sprite-rgb_00107_.png",
+    "sha256": "3aae1364241edaaf522c069726cc72aaf8193e859921cd2bbdcc3eb480423c99",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors",
@@ -1614,15 +1614,15 @@
  "landmark/ringfall/1/patrol-gate": {
   "workflow": "art/workflows/backgrounds/sprite-transparent.json",
   "overrides": {
-   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, pair of marker buoys forming a guarded patrol lane gate with blinking lights, dark night palette, crisp pixels, transparent background",
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, pair of tall armored checkpoint pylons with an energy barrier arch between them and warning lights, guarded lane gate, dark night palette, crisp pixels, transparent background",
    "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
-   "seed": 12211
+   "seed": 21211
   },
   "strength": null,
   "outputs": [
    {
-    "file": "sprite-alpha_00040_.png",
-    "sha256": "8d6e8fc6015953ab4033c23e228f97fb08519a57f6dffadae5ceee742a5423be",
+    "file": "sprite-alpha_00106_.png",
+    "sha256": "b2b5ecd3a378ea2ac44532d734a608b28b3f739a0c6b04ac9a246029e5a77c0b",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors",
@@ -1631,8 +1631,8 @@
     ]
    },
    {
-    "file": "sprite-rgb_00040_.png",
-    "sha256": "d50417cbc097929cbb73d7103bc521cfa33717790823504f8114ac4e63d5d0ae",
+    "file": "sprite-rgb_00106_.png",
+    "sha256": "d935870c0bcb249e8d4a3a4d3c388ef42b3386ecb18ae539b2e8ef98b1058ced",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors",
@@ -1645,15 +1645,15 @@
  "landmark/ringfall/1/patrol-relay": {
   "workflow": "art/workflows/backgrounds/sprite-transparent.json",
   "overrides": {
-   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, winged patrol relay pylon with a searchlight lamp on a guarded asteroid platform, dark night palette, crisp pixels, transparent background",
+   "prompt": "pixel art, single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered, tall slender patrol beacon tower with a rotating searchlight dish on top, guard platform and blinking warning lights, dark night palette, crisp pixels, transparent background",
    "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
-   "seed": 12210
+   "seed": 21210
   },
   "strength": null,
   "outputs": [
    {
-    "file": "sprite-alpha_00039_.png",
-    "sha256": "c77157c8e778f1b4f303d231c4a57d31f6e233f49cf3fcf66a2920d284ec8e25",
+    "file": "sprite-alpha_00105_.png",
+    "sha256": "96c6e9f3f5a5bd2e930580c1ebcda0f400c0a1d04d56742b03b7bf13f945a6f1",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors",
@@ -1662,8 +1662,8 @@
     ]
    },
    {
-    "file": "sprite-rgb_00039_.png",
-    "sha256": "ba8463cd9c44d57cf94f02f2f35850277c9c6dc0983d723d3f2e1c6aa8994203",
+    "file": "sprite-rgb_00105_.png",
+    "sha256": "aec26b17e32c85c1d0f01c9ab30062421ee34fd65ccdd15006f6fc6ea830f380",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors",
@@ -1855,6 +1855,121 @@
      "sdxl-full/sd_xl_base_1.0.safetensors",
      "layer_xl_transparent_conv.safetensors",
      "vae_transparent_decoder.safetensors"
+    ]
+   }
+  ]
+ },
+ "plane/carrier": {
+  "workflow": "art/workflows/backgrounds/ground-tile.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, seamless top-down texture of dark demonic biomechanical hull plating with ribs, sinew seams and dim red pores",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 15050,
+   "$node:22.seed": 15051,
+   "$node:32.seed": 15052,
+   "$node:22.denoise": 0.62,
+   "$node:32.denoise": 0.62
+  },
+  "strength": 0.95,
+  "outputs": [
+   {
+    "file": "ground-tile_00008_.png",
+    "sha256": "90b44a2d5671f28ee77c2b41a55a41099ebc85201b33ab3598572f0fe10a7c88",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "plane/ember": {
+  "workflow": "art/workflows/backgrounds/ground-tile.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, seamless top-down texture of black basalt ground with faint dim orange ember cracks, cooled lava crust and ash dust",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 13050,
+   "$node:22.seed": 13051,
+   "$node:32.seed": 13052,
+   "$node:22.denoise": 0.62,
+   "$node:32.denoise": 0.62
+  },
+  "strength": 0.95,
+  "outputs": [
+   {
+    "file": "ground-tile_00006_.png",
+    "sha256": "06f3a62c80bcfa423c711decce6f0211854a12a3e1b1e90fe25780cefe8fc1f2",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "plane/hollow": {
+  "workflow": "art/workflows/backgrounds/ground-tile.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, seamless top-down texture of dark broken gothic flagstones and rubble with dim green moss and alien roots",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 14050,
+   "$node:22.seed": 14051,
+   "$node:32.seed": 14052,
+   "$node:22.denoise": 0.62,
+   "$node:32.denoise": 0.62
+  },
+  "strength": 0.95,
+  "outputs": [
+   {
+    "file": "ground-tile_00007_.png",
+    "sha256": "427799b8ab597bd21e5457b15fd91b37fc16ac63fdddc42bf14de6b55b349267",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "plane/krybor": {
+  "workflow": "art/workflows/backgrounds/ground-tile.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, seamless top-down texture of cold blue lunar regolith ground, small craters, frost cracks, scattered pebbles and ice, dark navy",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 11050,
+   "$node:22.seed": 11051,
+   "$node:32.seed": 11052,
+   "$node:22.denoise": 0.62,
+   "$node:32.denoise": 0.62
+  },
+  "strength": 0.95,
+  "outputs": [
+   {
+    "file": "ground-tile_00004_.png",
+    "sha256": "fe81b1330bc7af6ca812ce38ea77e8f2b517aeea7101d5817b3f9ae49dd138a2",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
+    ]
+   }
+  ]
+ },
+ "plane/ringfall": {
+  "workflow": "art/workflows/backgrounds/ground-tile.json",
+  "overrides": {
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, seamless top-down texture of violet asteroid rock surface, craters, lilac ice dust and rubble, dark purple",
+   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
+   "$node:12.seed": 12050,
+   "$node:22.seed": 12051,
+   "$node:32.seed": 12052,
+   "$node:22.denoise": 0.62,
+   "$node:32.denoise": 0.62
+  },
+  "strength": 0.95,
+  "outputs": [
+   {
+    "file": "ground-tile_00005_.png",
+    "sha256": "fad113db6c76b29a42da8e3a20b442dff9e8c25c9a6da9fadfa6251df7db0775",
+    "models": [
+     "pixel-art-xl.safetensors",
+     "sdxl-full/sd_xl_base_1.0.safetensors"
     ]
    }
   ]
@@ -2324,27 +2439,6 @@
    }
   ]
  },
- "strip/carrier/ground": {
-  "workflow": "art/workflows/backgrounds/strip-sheet.json",
-  "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, close organic biomechanical hull surface with ribs, sinew cables, horn spikes and red glowing pores",
-   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
-   "$node:12.seed": 15020,
-   "$node:22.seed": 15021,
-   "$node:22.denoise": 0.62
-  },
-  "strength": 0.8,
-  "outputs": [
-   {
-    "file": "strip-seamless_00048_.png",
-    "sha256": "5c91f1378bddd4fa1269c56cdad006f59d949b4cbec3f349ef32f6179b5423b8",
-    "models": [
-     "pixel-art-xl.safetensors",
-     "sdxl-full/sd_xl_base_1.0.safetensors"
-    ]
-   }
-  ]
- },
  "strip/carrier/mid": {
   "workflow": "art/workflows/backgrounds/strip-sheet.json",
   "overrides": {
@@ -2366,10 +2460,10 @@
    }
   ]
  },
- "strip/carrier/near": {
+ "strip/carrier/wall": {
   "workflow": "art/workflows/backgrounds/strip-sheet.json",
   "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, biomechanical demonic fortress superstructure with ribbed armor, spikes and dim red vents",
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, biomechanical demonic fortress superstructure with ribbed armor, spikes and dim red vents, crumbling broken cliff rim with scattered detached boulders",
    "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
    "$node:12.seed": 15010,
    "$node:22.seed": 15011,
@@ -2378,29 +2472,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00047_.png",
-    "sha256": "35b4c959063a9abda475e1e3c648c46a3e89024b115a0bb21d98b9738800dcaa",
-    "models": [
-     "pixel-art-xl.safetensors",
-     "sdxl-full/sd_xl_base_1.0.safetensors"
-    ]
-   }
-  ]
- },
- "strip/ember/ground": {
-  "workflow": "art/workflows/backgrounds/strip-sheet.json",
-  "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, close black basalt rubble with glowing orange ember cracks and ash dust",
-   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
-   "$node:12.seed": 13020,
-   "$node:22.seed": 13021,
-   "$node:22.denoise": 0.62
-  },
-  "strength": 0.8,
-  "outputs": [
-   {
-    "file": "strip-seamless_00042_.png",
-    "sha256": "9cc23a9fd3e9886911ab32ee2c0f78f3778d43e1e46b57aea8e02cebd454379d",
+    "file": "strip-seamless_00057_.png",
+    "sha256": "24b716f6c117c3cdaf692458535d41e90b3a02871f3cb24ec99603f6d204122a",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2420,7 +2493,7 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00040_.png",
+    "file": "strip-seamless_00053_.png",
     "sha256": "94ce2f1cebeb708c2458a4f2a2c433bd810bd8ecbd696903d36209ac40e4ada5",
     "models": [
      "pixel-art-xl.safetensors",
@@ -2429,10 +2502,10 @@
    }
   ]
  },
- "strip/ember/near": {
+ "strip/ember/wall": {
   "workflow": "art/workflows/backgrounds/strip-sheet.json",
   "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, black basalt column terraces split by thin dim lava rivers, cooled magma crust, coral rim light",
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, black basalt column terraces split by thin dim lava rivers, cooled magma crust, coral rim light, crumbling broken cliff rim with scattered detached boulders",
    "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
    "$node:12.seed": 13010,
    "$node:22.seed": 13011,
@@ -2441,29 +2514,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00041_.png",
-    "sha256": "c330a7b80d058037453e42433a6873a79ed670e007c001a75c732e012b6bec38",
-    "models": [
-     "pixel-art-xl.safetensors",
-     "sdxl-full/sd_xl_base_1.0.safetensors"
-    ]
-   }
-  ]
- },
- "strip/hollow/ground": {
-  "workflow": "art/workflows/backgrounds/strip-sheet.json",
-  "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, close broken gothic stone tiles and rubble, glowing green moss and alien roots",
-   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
-   "$node:12.seed": 14020,
-   "$node:22.seed": 14021,
-   "$node:22.denoise": 0.62
-  },
-  "strength": 0.8,
-  "outputs": [
-   {
-    "file": "strip-seamless_00045_.png",
-    "sha256": "94a3c152bd90dcc8e03474b6c27613d03119a75bcb4a1e99175088b7878f1f70",
+    "file": "strip-seamless_00055_.png",
+    "sha256": "89218dd19ab686868a4e5dc4a8daa9ccb612d60edabece9167c306a0be901635",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2492,10 +2544,10 @@
    }
   ]
  },
- "strip/hollow/near": {
+ "strip/hollow/wall": {
   "workflow": "art/workflows/backgrounds/strip-sheet.json",
   "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, floating dark rock shelves overgrown with green bioluminescent moss and broken gothic masonry",
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, floating dark rock shelves overgrown with green bioluminescent moss and broken gothic masonry, crumbling broken cliff rim with scattered detached boulders",
    "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
    "$node:12.seed": 14010,
    "$node:22.seed": 14011,
@@ -2504,29 +2556,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00044_.png",
-    "sha256": "998b03164f68b95d7c44de396e5068c4485a76f4aaaffcdd791456309e62494a",
-    "models": [
-     "pixel-art-xl.safetensors",
-     "sdxl-full/sd_xl_base_1.0.safetensors"
-    ]
-   }
-  ]
- },
- "strip/krybor/ground": {
-  "workflow": "art/workflows/backgrounds/strip-sheet.json",
-  "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, close icy lunar ground ledge, frost covered rubble, small craters and pale cyan ice crystals, dark navy rock",
-   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
-   "$node:12.seed": 11020,
-   "$node:22.seed": 11021,
-   "$node:22.denoise": 0.62
-  },
-  "strength": 0.8,
-  "outputs": [
-   {
-    "file": "strip-seamless_00036_.png",
-    "sha256": "58d246664e39a53d0f78a73341b578effcea13becf54673dfd8a5846c704dd31",
+    "file": "strip-seamless_00056_.png",
+    "sha256": "56d4e0b456dc33d6599517708bc6174e6f1e7c8d6444cb9628cd87bf050efc61",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2546,7 +2577,7 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00034_.png",
+    "file": "strip-seamless_00049_.png",
     "sha256": "a02cb16b4071a2ea7bac781b02358cbdc7aa3c09809df42db6b4ca2b4ff95a57",
     "models": [
      "pixel-art-xl.safetensors",
@@ -2555,10 +2586,10 @@
    }
   ]
  },
- "strip/krybor/near": {
+ "strip/krybor/wall": {
   "workflow": "art/workflows/backgrounds/strip-sheet.json",
   "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, cold blue rocky lunar plateau terraces, shallow craters, icy boulders and frost cracks, dark navy shadows",
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, cold blue rocky lunar plateau terraces, shallow craters, icy boulders and frost cracks, dark navy shadows, crumbling broken cliff rim with scattered detached boulders",
    "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
    "$node:12.seed": 11010,
    "$node:22.seed": 11011,
@@ -2567,29 +2598,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00035_.png",
-    "sha256": "e6306ffd8d9c2d06d238d6e4222a1bcf0db3c533275d676e8666383799f16290",
-    "models": [
-     "pixel-art-xl.safetensors",
-     "sdxl-full/sd_xl_base_1.0.safetensors"
-    ]
-   }
-  ]
- },
- "strip/ringfall/ground": {
-  "workflow": "art/workflows/backgrounds/strip-sheet.json",
-  "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, close violet asteroid surface, cratered rubble and lilac ice shards, dark purple rock",
-   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
-   "$node:12.seed": 12020,
-   "$node:22.seed": 12021,
-   "$node:22.denoise": 0.62
-  },
-  "strength": 0.8,
-  "outputs": [
-   {
-    "file": "strip-seamless_00039_.png",
-    "sha256": "4cf095f9987ca9fcb214edc9cbd3fd501339969323dd6ea0e8a4e08c6ebce61c",
+    "file": "strip-seamless_00050_.png",
+    "sha256": "a3b6b21bb203202439d5b6d71bdc127571a2ad5ffd5aa6cb46c6feaaaddfac58",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2609,7 +2619,7 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00037_.png",
+    "file": "strip-seamless_00051_.png",
     "sha256": "a5b8f9e7c98eb71b7865d9f2138b5552389b76fc9826b442790b16951a11d36a",
     "models": [
      "pixel-art-xl.safetensors",
@@ -2618,10 +2628,10 @@
    }
   ]
  },
- "strip/ringfall/near": {
+ "strip/ringfall/wall": {
   "workflow": "art/workflows/backgrounds/strip-sheet.json",
   "overrides": {
-   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, large violet cratered asteroids floating in a ring belt, broken rock shelves, dark purple shadows",
+   "prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork, vertical canyon rim terrain strips with sheer cliff walls dropping into a black abyss, large violet cratered asteroids floating in a ring belt, broken rock shelves, dark purple shadows, crumbling broken cliff rim with scattered detached boulders",
    "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
    "$node:12.seed": 12010,
    "$node:22.seed": 12011,
@@ -2630,8 +2640,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00038_.png",
-    "sha256": "b9d7ba14b72f7b3a96b7c8f491890a8b434cbb832f421d1e784227616f124bb6",
+    "file": "strip-seamless_00052_.png",
+    "sha256": "44bfc2a2bb8e5308e3319d3241e5ed9cdb9b703ff88fd4ad18d4c101c486d849",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"

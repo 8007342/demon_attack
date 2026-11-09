@@ -48,7 +48,9 @@ RAW = Path(os.environ.get("FLYOVER_RAW", str(ROOT / ".cache/flyover-raw")))
 ASSETS = ROOT / "assets/images"
 DART_OUT = ROOT / "lib/game/flyover_atlas.dart"
 CONTACT_OUT = ROOT / "art/contact/flyover-contact.png"
-LAYERS = ("mid", "near", "ground")
+# Shipped strip layers: far ridges (drawn rotated along the horizon) and the
+# slim broken side walls.  The ground plane is a separate 2-D seamless tile.
+LAYERS = ("mid", "wall")
 VOID = (7, 11, 22)
 
 
@@ -163,7 +165,7 @@ def bank_contour(sector_id: str, layer: str, variant: int, h: int, cfg: dict) ->
     return np.clip(edge, 8, 62).astype(int)
 
 
-FACE_DEPTH = {"mid": 4, "near": 5, "ground": 6}
+FACE_DEPTH = {"mid": 4, "wall": 5}
 
 
 def bank_masks(edge: np.ndarray, layer: str, w: int = 64):
@@ -180,6 +182,43 @@ def bank_masks(edge: np.ndarray, layer: str, w: int = 64):
     return top, face, rim
 
 
+def broken_edge(top: np.ndarray, seed: int) -> np.ndarray:
+    """Break a bank's inner edge: bite holes out of it and scatter detached
+    boulders beyond it, so a slim wall reads as a crumbling rim rather than a
+    solid column.  Periodic vertically like everything else."""
+    h, w = top.shape
+    rng = np.random.default_rng(seed)
+    out = top.copy()
+    ys, xs = np.mgrid[0:h, 0:w]
+    edge = np.array([np.where(r)[0].max() + 1 if r.any() else 0 for r in top])
+    for _ in range(14):
+        cy = int(rng.integers(0, h))
+        cx = int(edge[cy]) + int(rng.integers(-5, 1))
+        r = float(rng.uniform(1.5, 3.5))
+        dy = np.minimum(np.abs(ys - cy), h - np.abs(ys - cy))
+        out &= ~((dy ** 2 + (xs - cx) ** 2) <= r * r)
+    for _ in range(16):
+        cy = int(rng.integers(0, h))
+        cx = int(edge[cy]) + int(rng.integers(2, 9))
+        r = float(rng.uniform(1.2, 2.8))
+        dy = np.minimum(np.abs(ys - cy), h - np.abs(ys - cy))
+        out |= (dy ** 2 + ((xs - cx) * 1.3) ** 2) <= r * r
+    return out
+
+
+def layer_masks(sector_id, layer, v, lh, lw, cfg):
+    edge = bank_contour(sector_id, layer, v, lh, cfg)
+    top, face, rim = bank_masks(edge, layer, lw)
+    if cfg.get("broken"):
+        top = broken_edge(top, stable_seed("broken", sector_id, layer, v))
+        face = np.zeros_like(top)
+        for k in range(1, FACE_DEPTH[layer] + 1):
+            face |= np.roll(top, k, axis=0)
+        face &= ~top
+        rim = top & ~np.roll(top, -1, axis=1)
+    return top, face, rim
+
+
 def cmd_layouts(_args) -> None:
     s = spec()
     st = s["strip"]
@@ -190,7 +229,7 @@ def cmd_layouts(_args) -> None:
     # Bank interiors are filled with texture cut from the sector's own painted
     # world (its horizon band for ridges, its foreground for terrain/ground),
     # so img2img inherits that sector's materials, colours and identity.
-    bands = {"mid": (0.74, 0.97), "near": (0.70, 1.0), "ground": (0.80, 1.0)}
+    bands = {"mid": (0.74, 0.97), "wall": (0.70, 1.0)}
     for sector in s["sectors"]:
         painting = np.asarray(Image.open(ROOT / sector["painting"]).convert("RGB")).astype(np.float32)
         ph, pw = painting.shape[:2]
@@ -213,8 +252,7 @@ def cmd_layouts(_args) -> None:
                     k += 1
                 tex = np.concatenate(reps, axis=0)[: lh * sx]
                 tex = tex * min(3.0, 0.30 / max(1e-3, float((tex @ np.array([0.2126, 0.7152, 0.0722])).mean() / 255)))
-                edge = bank_contour(sector["id"], layer, v, lh, cfg)
-                top, face, rim = bank_masks(edge, layer, lw)
+                top, face, rim = layer_masks(sector["id"], layer, v, lh, lw, cfg)
                 up = lambda m: np.kron(m, np.ones((sx, sx), dtype=bool))
                 block = np.zeros((lh * sx, bw, 3), dtype=np.float32)
                 block[:] = VOID
@@ -229,7 +267,30 @@ def cmd_layouts(_args) -> None:
     mask = np.zeros((H, W), dtype=np.uint8)
     mask[H // 2 - band // 2 : H // 2 + band // 2] = 255
     Image.fromarray(mask).convert("RGB").save(WORK / "inputs" / "seam-mask.png")
+    Image.fromarray(mask.T.copy()).convert("RGB").save(WORK / "inputs" / "seam-mask-v.png")
+    plane_layouts(s)
     print("layouts ->", WORK / "inputs")
+
+
+def plane_layouts(s) -> None:
+    """Ground-plane img2img inputs: the sector painting's foreground band,
+    mirrored into a square so the generator starts from that world's
+    materials; the workflow then makes it seamless in x and y."""
+    W, H = s["plane"]["sheet_px"]
+    for sector in s["sectors"]:
+        painting = np.asarray(Image.open(ROOT / sector["painting"]).convert("RGB")).astype(np.float32)
+        ph, pw = painting.shape[:2]
+        band = painting[int(ph * 0.72) :]
+        band = np.asarray(Image.fromarray(band.astype(np.uint8)).resize((W // 2, band.shape[0] * W // 2 // pw),
+                                                                        Image.Resampling.BOX)).astype(np.float32)
+        row = np.concatenate([band, band[:, ::-1]], axis=1)
+        reps, k = [], 0
+        while sum(r.shape[0] for r in reps) < H:
+            reps.append(row if k % 2 == 0 else row[::-1])
+            k += 1
+        tex = np.concatenate(reps, axis=0)[:H]
+        tex = tex * min(3.0, 0.26 / max(1e-3, float((tex @ np.array([0.2126, 0.7152, 0.0722])).mean() / 255)))
+        Image.fromarray(np.clip(tex, 0, 255).astype(np.uint8)).save(WORK / "inputs" / f"{sector['id']}-plane-layout.png")
 
 
 # --------------------------------------------------------------------------
@@ -261,7 +322,25 @@ def job_list() -> list[dict]:
                     "$node:22.denoise": st["seam_strength"],
                 },
             })
-        sprite_wf = s["sprite"]["workflow"]
+        pl = s["plane"]
+        jobs.append({
+            "id": f"plane/{sector['id']}",
+            "kind": "plane",
+            "workflow": pl["workflow"],
+            "inputs": {"init_image": str(WORK / "inputs" / f"{sector['id']}-plane-layout.png"),
+                       "mask": str(WORK / "inputs" / "seam-mask.png"),
+                       "mask_v": str(WORK / "inputs" / "seam-mask-v.png")},
+            "strength": pl["strength"],
+            "overrides": {
+                "prompt": f"{s['style_prompt']}, {sector['plane']}",
+                "negative_prompt": neg,
+                "$node:12.seed": base + 50,
+                "$node:22.seed": base + 51,
+                "$node:32.seed": base + 52,
+                "$node:22.denoise": pl["seam_strength"],
+                "$node:32.denoise": pl["seam_strength"],
+            },
+        })
         for pi, prop in enumerate(sector["props"]):
             jobs.append(_sprite_job(s, sector, f"prop/{sector['id']}/{prop['id']}", prop["prompt"], base + 100 + pi, s["landmark_prompt"]))
         for ri, route in enumerate(sector["routes"]):
@@ -446,15 +525,19 @@ def process_strips(s, sector, pal) -> dict:
         q = quantise(arr, pal, cfg["luma_cap"], chroma=cfg.get("chroma_cap", 1.0))
         strips = []
         for v in range(n):
-            edge = bank_contour(sector["id"], layer, v, lh, cfg)
-            top, face, _ = bank_masks(edge, layer, lw)
+            top, face, _ = layer_masks(sector["id"], layer, v, lh, lw, cfg)
             layout = top | face
             # Alpha follows the generated cliffs (non-void pixels) but stays
             # inside a dilated layout and fills the layout's interior, so the
             # bank always reaches the screen edge and never the central lane.
             solid = lum[:, v * lw : (v + 1) * lw] > 0.085
-            alpha_m = (solid & _dilate(layout, 3)) | _erode(layout, 6)
-            alpha_m = _keep_left_connected(alpha_m)
+            if cfg.get("broken"):
+                # Slim walls keep their detached boulders; only specks go.
+                alpha_m = (solid & _dilate(layout, 2)) | _erode(layout, 3)
+                alpha_m = _drop_specks(alpha_m, 6)
+            else:
+                alpha_m = (solid & _dilate(layout, 3)) | _erode(layout, 6)
+                alpha_m = _keep_left_connected(alpha_m)
             block = q[:, v * lw : (v + 1) * lw].astype(np.float32)
             # Inner rim: one-pixel lit lip where the top surface meets the drop.
             rim = alpha_m & ~np.roll(alpha_m, -1, axis=1)
@@ -467,6 +550,57 @@ def process_strips(s, sector, pal) -> dict:
             strips.append({"rgba": rgba, "edge": real_edge})
         out[layer] = strips
     return out
+
+
+def _drop_specks(m: np.ndarray, min_px: int) -> np.ndarray:
+    """Remove 4-connected components smaller than min_px (vertical wrap)."""
+    h, w = m.shape
+    seen = np.zeros_like(m)
+    out = m.copy()
+    for y0 in range(h):
+        for x0 in range(w):
+            if not m[y0, x0] or seen[y0, x0]:
+                continue
+            stack, comp = [(y0, x0)], []
+            seen[y0, x0] = True
+            while stack:
+                y, x = stack.pop()
+                comp.append((y, x))
+                for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    ny, nx = (y + dy) % h, x + dx
+                    if 0 <= nx < w and m[ny, nx] and not seen[ny, nx]:
+                        seen[ny, nx] = True
+                        stack.append((ny, nx))
+            if len(comp) < min_px:
+                for y, x in comp:
+                    out[y, x] = False
+    return out
+
+
+def process_plane(s, sector, pal):
+    """Ground plane: 2-D seamless tile, un-rolled in x and y, quantised dark."""
+    files = raw_files(f"plane/{sector['id']}")
+    if not files:
+        print("missing plane", sector["id"])
+        return None
+    n = s["plane"]["logical"]
+    arr = np.asarray(Image.open(files[-1]).convert("RGB").resize((n, n), Image.Resampling.BOX)).astype(np.float32)
+    arr = np.roll(np.roll(arr, -n // 2, axis=0), -n // 2, axis=1)
+    # Macro tile: repeat the seamless tile and modulate it with smooth,
+    # periodic low-frequency light so the receding plane does not show a
+    # regular grid of identical tiles toward the horizon.
+    reps = s["plane"].get("macro", 4)
+    big = np.tile(arr, (reps, reps, 1))
+    N = n * reps
+    rng = np.random.default_rng(stable_seed("macro", sector["id"]))
+    yy, xx = np.mgrid[0:N, 0:N] / N
+    mod = np.zeros((N, N))
+    for fx, fy in ((1, 0), (0, 1), (1, 1), (2, 1), (1, 2), (3, 2), (2, 3)):
+        mod += rng.uniform(.4, 1) / (fx + fy) * np.sin(2 * np.pi * (fx * xx + fy * yy + rng.random()))
+    mod /= np.abs(mod).max()
+    big = big * (1 + s["plane"].get("macro_amp", .4) * mod)[..., None]
+    q = quantise(big, pal, s["plane"]["luma_cap"], chroma=s["plane"]["chroma_cap"])
+    return np.dstack([q, np.full(q.shape[:2], 255, dtype=np.uint8)])
 
 
 def _dilate(m: np.ndarray, r: int) -> np.ndarray:
@@ -566,6 +700,15 @@ def outline(rgba: np.ndarray, pal: np.ndarray) -> np.ndarray:
     dark = pal[np.argmin(pal.sum(1))].astype(np.uint8)
     padded[ring, :3] = dark
     padded[ring, 3] = 255
+    # Faint rim light: outline pixels lit from the upper left (the style
+    # guide's key light) take a muted light palette colour.
+    pl = pal @ np.array([0.2126, 0.7152, 0.0722]) / 255
+    pc = (pal.max(1) - pal.min(1)) / 255
+    ok = (pl <= 0.58) & (pc <= 0.34)
+    cand = np.where(ok)[0]
+    light = pal[cand[np.argmax(pl[cand])]].astype(np.uint8) if len(cand) else dark
+    lit = ring & (np.roll(pa, 1, 0) | np.roll(pa, 1, 1)) & ~(np.roll(pa, -1, 0) | np.roll(pa, -1, 1))
+    padded[lit, :3] = light
     return padded
 
 
@@ -636,6 +779,7 @@ def cmd_process(_args) -> dict:
     for si, sector in enumerate(s["sectors"]):
         pal = load_palette(sector["id"])
         sec = {"id": sector["id"], "strips": process_strips(s, sector, pal),
+               "plane": process_plane(s, sector, pal),
                "props": [], "landmarks": [], "creatures": []}
         for prop in sector["props"]:
             r = process_sprite(f"prop/{sector['id']}/{prop['id']}", prop["h"], pal, 0.34, max_w=30, chroma=0.36)
@@ -647,7 +791,7 @@ def cmd_process(_args) -> dict:
                 if r is not None:
                     sec["landmarks"].append({"id": lm["id"], "route": ri, "rgba": r})
         for cr in sector["creatures"]:
-            r = process_sprite(f"creature/{sector['id']}/{cr['id']}", cr["h"], pal, 0.36, max_w=cr["h"] + 5, chroma=0.28)
+            r = process_sprite(f"creature/{sector['id']}/{cr['id']}", cr["h"], pal, 0.42, max_w=cr["h"] + 5, chroma=0.34)
             if r is not None:
                 r = outline(r, pal)
                 sec["creatures"].append({"id": cr["id"], "gait": cr["gait"], "frames": creature_frames(r, cr["gait"])})
@@ -701,6 +845,9 @@ def cmd_pack(args) -> None:
                 layer_edges.append(strip["edge"])
             edges.append(layer_edges)
         Image.fromarray(sheet, "RGBA").save(ASSETS / f"flyover-{sec['id']}.png", optimize=True)
+        if sec["plane"] is not None:
+            # Palette PNG: the tile only uses the sector palette (<= 43 colours).
+            Image.fromarray(sec["plane"][..., :3], "RGB").convert("P", palette=Image.Palette.ADAPTIVE, colors=256).save(ASSETS / f"flyover-{sec['id']}-ground.png", optimize=True)
         dart_sectors.append({"id": sec["id"], "edges": edges})
         for p in sec["props"]:
             sprite_items.append(p["rgba"])
@@ -836,7 +983,11 @@ def contact(data, s) -> None:
         for layer in LAYERS:
             for strip in sec["strips"].get(layer, []):
                 parts.append(np.concatenate([strip["rgba"], strip["rgba"]], axis=0))
-        sprites = [p["rgba"] for p in sec["props"]] + [l["rgba"] for l in sec["landmarks"]]
+        if sec.get("plane") is not None:
+            # A crop of the ground macro tile, stacked twice to show its seam.
+            row2 = sec["plane"][:192, :384]
+            parts.append(np.concatenate([row2, row2], axis=0))
+        sprites =[p["rgba"] for p in sec["props"]] + [l["rgba"] for l in sec["landmarks"]]
         for cr in sec["creatures"]:
             sprites.append(np.concatenate(cr["frames"], axis=1))
         H = lh * 2
