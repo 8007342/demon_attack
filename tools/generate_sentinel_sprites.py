@@ -1,173 +1,102 @@
 """Original sentinel and damage-effect atlas (128x64 logical cells, 1x).
 
-    .cache/asset-venv/bin/python tools/generate_sentinel_sprites.py
+    python tools/generate_sentinel_sprites.py
 
 Writes assets/images/sentinel-effects.png: eight 128x64 columns, fourteen
-rows (contract in plan/sprite-atlas.md). Rows 0-9 keep the meaning they had
-on the old 64x32 grid so renderer lookups are unchanged; rows 10-13 add hit
-flashes, escalated smoke/fire and sentinel weapon fire. Shapes are authored
-here; no source-game sprite or third-party art is used.
+rows (contract in plan/sprite-atlas.md). Rows keep the meaning they had
+before the gargoyle redesign so renderer lookups are unchanged.
+
+The two sentinels are large gargoyles posed with tools/gargoyle_rig.py, the
+same rig as the ordinary creatures: the shield sentinel is a horned violet
+warden, the armoured sentinel a crowned gold colossus. Broad bat-wing
+membranes stretch between finger bones and beat through a slow eight-pose
+stroke; warning, last-stand charge, tucked-wing rush, stoop-dive and maw
+discharge poses are cues on the creature itself. Shapes are authored here;
+no source-game sprite or third-party art is used.
 """
 from __future__ import annotations
 
 import math
 
-from sprite_kit import ROOT, Atlas, Canvas, lerp_pt, polar
+import numpy as np
+
+import gargoyle_rig as G
+from sprite_kit import ROOT, Atlas, Canvas
 
 W, H = 128, 64
 CX = 64.0
+wp = G.wp
 
+KIND = {False: 'warden', True: 'colossus'}
 PAL = {
-    False: ('vio0', 'vio1', 'vio2', 'vio3'),   # shield sentinel
-    True: ('gol0', 'gol1', 'gol2', 'gol3'),    # armoured sentinel
+    False: ('gv0', 'gv1', 'gv2', 'gv3'),   # shield sentinel (warden)
+    True: ('gg0', 'gg1', 'gg2', 'gg3'),    # armoured sentinel (colossus)
 }
 
-# (humerus, forearm, primary fan start, fan spread, primary length scale)
-# Eight poses: slow heavy stroke; roots, forearms and primaries articulate
-# separately so the span stays broad while the segments change direction.
+# Wing poses (elevation, sweep, forearm, fold, finger curl). The slow heavy
+# stroke: 0-3 extended wings drive down, 4-7 the wrists lead a folded
+# recovery (span under 70 % of the level pose) and the wings unfold again.
 STROKE = [
-    (30, 44, 70, 13, 1.00),   # 0 raised
-    (18, 24, 44, 12, 1.00),   # 1 opening
-    (6, 4, 18, 11, 1.00),     # 2 level, full span
-    (-6, -12, -2, 10, 0.98),  # 3 driving
-    (-22, -40, -56, 8, 0.84),  # 4 low, beginning to fold
-    (-34, -66, -98, 6, 0.62),  # 5 recovery: wings folded in, primaries trail
-    (-4, -22, -82, 6, 0.70),   # 6 rising, wrist leads, still folded
-    (22, 34, 30, 11, 0.92),   # 7 unfolding
+    wp(40, 4, 8, .1, -18),     # 0 raised
+    wp(24, 6, 2, 0, -10),      # 1 opening
+    wp(8, 8, -2, 0, 0),        # 2 level, full span
+    wp(-16, 12, -6, .04, 10),  # 3 driving
+    wp(-36, 14, -8, .18, 18),  # 4 low
+    wp(-22, 2, 18, .62, 8),    # 5 recovery: folded, wrist leads
+    wp(6, -6, 24, .66, -6),    # 6 rising, still folded
+    wp(28, -2, 14, .3, -14),   # 7 unfolding
 ]
-WARNING = [(34, 56, 86, 10, 0.96), (36, 60, 92, 10, 0.94), (34, 58, 88, 11, 0.98), (32, 54, 84, 11, 1.0)]
-CHARGE = [(40, 70, 100, 8, 0.90), (44, 74, 104, 8, 0.88), (42, 72, 102, 7, 0.92), (46, 76, 106, 7, 0.90)]
-DIVE = [(-24, -52, -82, 6, 0.88), (-22, -50, -80, 6, 0.90), (-26, -54, -84, 6, 0.86), (-23, -51, -81, 6, 0.89)]
-RUSH = [(-62, -88, -100, 2, 0.56), (-64, -90, -102, 2, 0.54), (-62, -88, -100, 2, 0.58), (-63, -89, -101, 2, 0.55)]
-
-SHOULDER = (55.0, 25.0)
-L_HUM, L_FORE = 13.0, 16.0
-PRIMARY = (24.0, 25.0, 24.0, 22.0, 19.0, 16.0)
+WARNING = [wp(44, 0, 12, .12, -22), wp(47, 0, 14, .12, -24), wp(45, 2, 12, .14, -22), wp(43, 2, 10, .12, -20)]
+CHARGE = [wp(58, -4, 24, .3, -26), wp(61, -4, 26, .32, -28), wp(59, -2, 24, .28, -26), wp(62, -4, 28, .32, -30)]
+DIVE = [wp(-28, -26, 30, .58, 30), wp(-32, -28, 32, .6, 32), wp(-26, -24, 28, .56, 28), wp(-30, -27, 31, .59, 31)]
+RUSH = [wp(-14, -30, 40, .95, 20), wp(-18, -32, 42, .96, 22), wp(-12, -30, 38, .94, 18), wp(-16, -31, 41, .95, 21)]
 
 
-def wing(cv: Canvas, pose, heavy, mirror, alert=False, glow=None):
-    d, m, b, l = PAL[heavy]
-    a1, a2, fan, spread, scale = pose
-    s = SHOULDER if not mirror else (128 - SHOULDER[0], SHOULDER[1])
-    e = polar(s, a1, L_HUM, mirror)
-    w = polar(e, a2, L_FORE, mirror)
-    # Primary feathers fan from the wrist; secondaries hang from the arm.
-    tips = [polar(w, fan - k * spread, ln * scale, mirror) for k, ln in enumerate(PRIMARY)]
-    secs = []
-    for k in range(6):
-        root = lerp_pt(s, w, .25 + k * .14)
-        drop = a2 - 78 - k * 3 if k > 2 else a1 - 82 - k * 3
-        secs.append(polar(root, drop, 13 + k * 1.4, mirror))
-    body_edge = (s[0] + (3 if not mirror else -3), s[1] + 12)
-    # Covert sheet: one broad surface from shoulder to wrist to the trailing
-    # secondaries, so the wing has area, not just bones.
-    cv.poly([s, e, w, tips[-1]] + secs[::-1] + [body_edge], 'ink')
-    cv.poly([s, e, w, lerp_pt(w, tips[-1], .6)] + [lerp_pt(q, s, .08) for q in secs[::-1]] + [body_edge], m)
-    cv.poly([s, e, w, lerp_pt(w, secs[-1], .45), lerp_pt(s, secs[0], .45)], b)
-    # Secondary feather edges (segment separation lines).
-    for k, q in enumerate(secs):
-        root = lerp_pt(s, w, .25 + k * .14)
-        cv.line(lerp_pt(root, q, .3), q, d if k % 2 else 'ink2')
-    for k, tip in enumerate(tips):
-        cv.line(w, tip, 'ink', 4)
-    for k, tip in enumerate(tips):
-        mid = lerp_pt(w, tip, .55)
-        cv.line(w, tip, b if k % 2 == 0 else m, 2)
-        cv.line(mid, tip, l if k % 2 == 0 else b)
-        if heavy or alert:
-            cv.px(tip[0], tip[1], 'ivory' if not alert else ('fire1' if k % 2 else 'eye_r'))
-    # Arm: thick armoured leading edge.
-    cv.line(s, e, 'ink', 5)
-    cv.line(e, w, 'ink', 4)
-    cv.line(s, e, m, 3)
-    cv.line(e, w, m, 2)
-    cv.line(s, e, l)
-    if heavy:
-        mid = lerp_pt(s, e, .5)
-        cv.ellipse(mid[0], mid[1], 3, 2.5, 'gol3')
-        cv.ellipse(w[0], w[1], 2, 2, 'met2')
-    if glow:
-        cv.ellipse(w[0], w[1], 1.6, 1.6, glow)
-    return tips
+def _view(pitch=30):
+    return G.View(size=(W, H), origin=(64, 30), scale=1.4, pitch=pitch)
 
 
-def body(cv: Canvas, heavy, stance=None, frame=0, fire=0):
-    d, m, b, l = PAL[heavy]
-    alert = stance is not None
-    hot = 'eye_r' if stance in ('warning', 'charge') else ('cor2' if stance == 'rush' else None)
-    # Tapered feathered abdomen and tail fan.
-    cv.poly([(56, 30), (72, 30), (70, 44), (66, 52), (62, 52), (58, 44)], 'ink')
-    cv.poly([(58, 31), (70, 31), (68, 43), (65, 50), (63, 50), (60, 43)], m)
-    for k in range(5):
-        x = 59 + k * 2.5
-        cv.line((x, 46), (x + (k - 2) * 1.2, 56), 'ink', 2)
-        cv.line((x, 47), (x + (k - 2) * 1.2, 55), b if k % 2 else m)
-    # Broad shoulders and chest.
-    cv.poly([(49, 25), (55, 20.5), (73, 20.5), (79, 25), (80, 30), (74, 36.5), (54, 36.5), (48, 30)], 'ink')
-    cv.poly([(51, 25), (56, 22), (72, 22), (77, 25), (78, 29.5), (73, 35), (55, 35), (50, 29.5)], b)
-    cv.ellipse(64, 30.5, 6.5, 4.5, l if not heavy else 'gol3')
-    for f in ((lambda x: x), (lambda x: 128 - x)):
-        cv.line((f(53), 27), (f(57), 33), m)  # pectoral feather seams
-    # Rank insignia on the chest: violet crescent / gold sunburst.
-    if heavy:
-        cv.ellipse(64, 30, 2.5, 2.5, 'blood')
-        for a in range(8):
-            ang = a * math.pi / 4
-            cv.px(64 + math.cos(ang) * 4, 30 + math.sin(ang) * 4, 'gol1')
-    else:
-        cv.poly([(60, 29), (64, 32), (68, 29), (66, 31.5), (64, 33), (62, 31.5)], 'vio0')
-    # Head with swept horns.
-    cv.poly([(58, 14), (61, 10), (67, 10), (70, 14), (70, 20), (67, 24), (61, 24), (58, 20)], 'ink')
-    cv.poly([(59.5, 14), (62, 11.5), (66, 11.5), (68.5, 14), (68.5, 19.5), (66, 22.5), (62, 22.5), (59.5, 19.5)], b)
-    for f in ((lambda x: x), (lambda x: 128 - x)):
-        cv.poly([(f(60), 13), (f(55), 6), (f(54), 2), (f(57), 5), (f(62), 11)], 'ink')
-        cv.poly([(f(60), 12), (f(56), 6), (f(55.5), 4), (f(58), 6.5), (f(61.5), 11)], 'ivory')
-    if heavy:
-        cv.rect(60, 8, 8, 3, 'gol2')  # crowned helm
-        cv.rect(62, 5, 4, 3, 'gol3')
-        cv.px(63, 6, 'blood'); cv.px(64, 6, 'blood')
-    # Eyes and beak.
-    eye = hot or 'ivory'
-    cv.rect(60.5, 15, 3, 2, eye); cv.rect(64.5, 15, 3, 2, eye)
-    cv.px(61.5, 15, 'white' if not hot else 'fire1'); cv.px(65.5, 15, 'white' if not hot else 'fire1')
-    beak = 'fire1' if fire == 2 else ('fire2' if fire else 'gol2')
-    cv.poly([(62, 19), (66, 19), (64, 24 + (2 if stance in ('dive', 'rush') else 0))], beak)
-    if fire == 2:
-        cv.rect(63, 21, 2, 2, 'fire0')
-    # Talons.
-    for f in ((lambda x: x), (lambda x: 128 - x)):
-        reach = 4 if stance in ('dive', 'rush') else 0
-        cv.line((f(59), 36), (f(57), 40 + reach), 'ink', 2)
-        cv.px(f(57), 41 + reach, 'ivory'); cv.px(f(56), 41 + reach, 'ivory')
-    # Stance cues on the creature itself (no arrows).
+def _build(heavy, pose, stance=None, frame=0, fire=0, wings_on=True, pitch=30):
+    sp = G.SPECIES[KIND[heavy]]
+    dmg = G.Damage(angry=stance in ('charge', 'rush'), flare=stance == 'warning' and frame % 2 == 1, fire=fire)
+    B, wings, face = G.build_creature(sp, pose, _view(pitch), dmg, wings_on=wings_on)
+    ax, ay = G.v(1, 0, 0), G.v(0, 1, 0)
+    # Stance cues stay on the creature itself (no arrows or detached marks).
     if stance == 'warning':
-        cv.rect(58, 15, 12, 1, 'eye_r' if frame % 2 else 'fire1')
+        band = 'eye_r' if frame % 2 else 'fire1'
+        B.decal(face['H3']((0, -.4, 3.4)), ax, ay, [(x, 0, band) for x in range(-4, 4)], (), force=True)
+        for side, w in wings.items():
+            B.decal(w['wrist'], ax, ay, [(0, 0, band), (1, 0, band), (0, 1, band), (1, 1, band)], (), force=True)
     if stance == 'charge':
-        cv.rect(60, 8 - frame % 2, 8, 1, 'cor2')  # crest flares upward
-        for f in ((lambda x: x), (lambda x: 128 - x)):
-            cv.rect(min(f(52), f(54)), 26 + frame, 2, 4, 'cor2')  # shoulder vents
+        for s in (-1, 1):  # shoulder vents flare, crest burns upward
+            B.decal(G.v(s * 6.6 * sp.bulk, -4.0, 2.2), ax, ay,
+                    [(0, y, 'cor2' if y % 2 else 'fire1') for y in range(-1, 3 + frame % 2)], (), force=True)
+        B.decal(face['H3']((0, -3.4, .6)), ax, ay, [(0, -y, 'fire1' if y < 2 else 'cor2') for y in range(3 + frame % 2)]
+                + [(-1, -1, 'cor2'), (1, -1, 'cor2')], (), force=True)
     if stance == 'rush':
-        for f in ((lambda x: x), (lambda x: 128 - x)):
-            cv.rect(min(f(50), f(51)), 28 + frame, 1, 6, 'cor2')
-        cv.poly([(62, 52), (66, 52), (64, 60 + frame % 2)], 'cor2')
+        for s in (-1, 1):
+            B.decal(G.v(s * 7.0 * sp.bulk, -2.0, 1.0), ax, ay, [(0, y + frame % 2, 'cor2') for y in range(5)], (), force=True)
+        B.decal(G.v(0, 10.0, -2.0), ax, ay, [(x, y, 'cor2') for y in range(3) for x in range(-1 + y // 2, 2 - y // 2)]
+                + [(0, 3 + frame % 2, 'fire1')], (), force=True)
+    return B, sp, dmg
 
 
-def sentinel(heavy, pose, stance=None, frame=0, fire=0):
-    cv = Canvas(W, H)
-    glow = 'eye_r' if stance in ('warning', 'charge') and frame % 2 else None
-    for mirror in (False, True):
-        wing(cv, pose, heavy, mirror, alert=stance in ('warning', 'charge'), glow=glow)
-    body(cv, heavy, stance, frame, fire)
-    cv.outline('ink')
-    d, m, b, l = PAL[heavy]
-    cv.rim({b: (l, m), m: (b, d)})
+def sentinel(heavy, pose, stance=None, frame=0, fire=0, pitch=30):
+    if not isinstance(pose, G.Pose):
+        pose = G.Pose(pose, pose, lift=0, tail=.4 * math.sin(frame * 1.3), legs=-.8 if stance in ('dive', 'rush') else 0,
+                      jaw=.6 if (fire or stance in ('charge', 'rush')) else 0)
+    B, sp, dmg = _build(heavy, pose, stance, frame, fire, pitch=pitch)
+    cv, _, _ = G.rasterize(B, sp, _view(pitch), dmg)
     return cv
 
 
 def flash(cv: Canvas, heavy):
+    sp = G.SPECIES[KIND[heavy]]
     d, m, b, l = PAL[heavy]
     out = cv.copy()
-    out.map_colors({l: 'white', b: 'ivory', m: l, d: b, 'met2': 'white', 'gol3': 'white'})
+    mapping = {l: 'white', b: 'ivory', m: l, d: b, 'met2': 'white', 'met1': 'met3', 'gg3': 'white',
+               sp.wing[0]: sp.wing[1], sp.wing[1]: sp.wing[2], sp.wing[2]: b, 'bone1': 'bone2', 'bone2': 'white'}
+    out.map_colors(mapping)
     return out
 
 
@@ -193,33 +122,40 @@ def shield_envelope(state):
 
 
 def armor_layer(i):
-    """Four armour layers (chest, gorget, shoulders, outer pauldrons):
-    shaped metal plates with gold trim and rivets, readable on both the
-    violet and the gold sentinel."""
-    cv = Canvas(W, H)
-    mir = ((lambda x: x), (lambda x: 128 - x))
-    if i == 0:
-        cv.poly([(58.5, 28.5), (69.5, 28.5), (68.5, 35), (64, 38.5), (59.5, 35)], 'met2')
-        cv.line((59.5, 29), (68.5, 29), 'met3')
-        cv.line((60, 34.5), (64, 38), 'gol2'); cv.line((68, 34.5), (64, 38), 'gol2')
-        cv.px(64, 32, 'gol3')
-    elif i == 1:
-        cv.poly([(58, 21.5), (70, 21.5), (68.5, 25.5), (59.5, 25.5)], 'met1')
-        cv.line((59, 22), (69, 22), 'gol2')
-        cv.px(61, 24, 'met3'); cv.px(67, 24, 'met3')
-    elif i == 2:
-        for f in mir:
-            cv.poly([(f(48.5), 24.5), (f(54.5), 20.5), (f(57.5), 26.5), (f(51.5), 29.5)], 'met2')
-            cv.line((f(49.5), 24.5), (f(54.5), 21.5), 'met3')
-            cv.line((f(51.5), 29), (f(57), 26.5), 'gol2')
-            cv.px(f(53), 25, 'gol3')
-    else:
-        for f in mir:
-            cv.poly([(f(41), 23), (f(46.5), 20), (f(48.5), 25), (f(43), 27.5)], 'met1')
-            cv.line((f(42), 23), (f(46.5), 21), 'met2')
-            cv.px(f(45), 23.5, 'gol2')
-    cv.outline('ink')
-    return cv
+    """Four armour layers (chest plate, gorget, shoulder plates, outer
+    pauldrons): metal with gold trim on the gargoyle's body, rendered by the
+    rig in the hover pose (the body holds still through the stroke, so the
+    plates stay aligned) and kept as the pixels each plate adds."""
+    pose = G.Pose(STROKE[2], STROKE[2], lift=0)
+    heavy = False
+
+    def body(with_layer):
+        B, sp, dmg = _build(heavy, pose, wings_on=False)
+        if with_layer:
+            bulk = sp.bulk
+            if i == 0:
+                B.ell(G.v(0, 3.0, 5.0), (4.6, 3.2, 1.8), 'eplate', 'body')
+                B.sph(G.v(0, 4.4, 6.6), .9, 'crown', 'body')
+            elif i == 1:
+                B.ell(G.v(0, -5.8, 2.6), (8.0, 1.7, 2.6), 'eplate', 'body')
+                for s in (-1, 1):
+                    B.sph(G.v(s * 5.6, -6.4, 4.4), .9, 'crown', 'body')
+            elif i == 2:
+                for s in (-1, 1):
+                    B.ell(G.v(s * 7.4 * bulk, -5.4, 1.4), (3.4, 2.2, 3.4), 'eplate', 'body')
+                    B.sph(G.v(s * 7.4 * bulk, -7.4, 2.0), 1.0, 'crown', 'body')
+            else:
+                for s in (-1, 1):
+                    B.ell(G.v(s * 9.4 * bulk, -.6, 3.6), (2.2, 3.2, 2.4), 'eplate', 'body')
+                    B.sph(G.v(s * 9.6 * bulk, 1.8, 5.4), .9, 'crown', 'body')
+        cv, _, _ = G.rasterize(B, sp, _view(), dmg)
+        return cv
+
+    plain, armed = body(False), body(True)
+    out = Canvas(W, H)
+    diff = (armed.a != plain.a).any(-1) & (armed.a[..., 3] > 0)
+    out.a[diff] = armed.a[diff]
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -342,9 +278,9 @@ def build():
             a.put(c, 10 + r, flash(cv, heavy))
         for f in range(4):
             a.put(f, 6 + r, sentinel(heavy, CHARGE[f], 'charge', f))
-            a.put(4 + f, 6 + r, sentinel(heavy, RUSH[f], 'rush', f))
+            a.put(4 + f, 6 + r, sentinel(heavy, RUSH[f], 'rush', f, pitch=44))
             a.put(f, 8 + r, sentinel(heavy, WARNING[f], 'warning', f))
-            a.put(4 + f, 8 + r, sentinel(heavy, DIVE[f], 'dive', f))
+            a.put(4 + f, 8 + r, sentinel(heavy, DIVE[f], 'dive', f, pitch=48))
             a.put(f + 4 * r, 13, muzzle(f, heavy))
     for s in range(4):
         a.put(s, 2, shield_envelope(s))

@@ -97,11 +97,11 @@ entries and rerunning the pipeline.
 
 ## Sprites
 
-Combat creatures, sentinels, the carrier, the player ship, its cannons, muzzle flashes and every projectile. The contract (layouts, palette, timings) is [sprite-atlas.md](sprite-atlas.md); the visual rules are in [style-guide.md](style-guide.md#64-grid-detail-and-animation).
+Combat creatures, sentinels, the carrier, the player ship, its cannons, muzzle flashes and every projectile. The contract (layouts, palette, timings, frame selection) is [sprite-atlas.md](sprite-atlas.md); the visual rules are in [style-guide.md](style-guide.md#creature-direction-gargoyles-not-birds).
 
 ### Principle
 
-Silhouettes, poses, armour, insignia, weapon mounts and effects are **authored deterministically** in Python on the logical grid (`tools/sprite_kit.py` + four generators), because eight-pose articulated strokes, molts, death sequences and recoil frames must stay aligned pixel for pixel across hundreds of frames. ComfyUI contributes **keyframe concept and shading detail**: renders are finished onto the grid and the bounded palette and enter the atlas only as a four-level luminance map on each species' plain body pixels, mapped onto the ramp of whatever frame is drawn (intact, molt, angry). AI output never replaces an authored outline, so every frame stays readable at phone size and in palette.
+Silhouettes, poses, armour, insignia, weapon mounts and effects are **authored deterministically** in Python on the logical grid, because thirty directional flight frames per damage state, molts, flashes, death sequences and recoil frames must stay aligned pixel for pixel across hundreds of cells. Since the gargoyle round the creatures and sentinels come from `tools/gargoyle_rig.py`, a tiny 3-D rig (volumes, bat-wing membranes, decals) rasterised with a z-buffer and a quantised key light onto the bounded palette: left and right banking frames are real renders of the same anatomy, so asymmetric details stay on their side without mirroring tricks, and wing in-betweens come from joint-angle tables (`FLAP`, `GLIDE`, `COCKED`, `DIVE` in `generate_sprites.py`; `STROKE`, `WARNING`, `CHARGE`, `DIVE`, `RUSH` in `generate_sentinel_sprites.py`). ComfyUI contributes **concept and shading detail only**: gargoyle keyframes are finished onto the grid as a four-level luminance map that nudges the key-light value of hide pixels (stony, leathery texture) before quantisation. AI output never replaces an authored outline, face, insignia or palette, so every frame stays readable at phone size.
 
 ### Files
 
@@ -110,14 +110,16 @@ Silhouettes, poses, armour, insignia, weapon mounts and effects are **authored d
 | `art/workflows/sprites/keyframe-sdxl-pixel.json` | ComfyUI API workflow: SDXL base + pixel-art-xl LoRA, 1024², 26 steps dpmpp_2m karras, nodes titled `$seed`, `$prompt`, `$negative_prompt` |
 | `art/workflows/sprites/variant-qwen-edit.json` | ComfyUI API workflow: Qwen-Image-Edit-2511 fp8 + Lightning 4-step LoRA; keyframe (`$input`) → molt variant |
 | `art/families/sprites/creatures.json` | Family spec (contract `1935-k2ib/v1`, kind `layered-parts`, slots = species, locked palette, 64 × 64 native) validated by `studio.validate_family` |
-| `art/families/sprites/palette.json` | Locked `tillandsias.palette/v1` palette, generated from `sprite_kit.PALETTE` |
-| `art/families/sprites/prompts.json` | Style prompt, negative prompt, per-species prompts and fixed seeds (640100/640200/640300/640400 + candidate index), molt edit prompts and seed 641000 + molt |
+| `art/families/sprites/palette.json` | Locked `tillandsias.palette/v1` palette, written by the `atlases` stage from `sprite_kit.PALETTE` |
+| `art/families/sprites/prompts.json` | Gargoyle style prompt, negative prompt (no birds, feathers, beaks, gore, frontal standing poses), per-species prompts and fixed seeds (650100/650200/650300/650400 + candidate index), molt edit prompts (cracked stone with glowing fissures, chipped horns, torn wings) and seed 651000 + molt |
 | `art/families/sprites/selections.json` | Chosen keyframe seed per species and why |
 | `art/sprites/sources/keyframes/*.png`, `molts/*.png` | Selected AI sources, kept as 256 px nearest copies (inputs of record) |
 | `art/families/sprites/detail/*.png` | Finished 64-grid luminance detail maps consumed by `generate_sprites.py` |
-| `art/sprites/review/*.png` | Contact sheets of every atlas and of AI sources vs. finished detail |
+| `art/sprites/review/*.png` | Contact sheets: every atlas block (`combat-<species>.png`, `combat-shared.png`), `combat-directions.png` (left / neutral / right flight sets, intact and molt 3, 3×), `sentinel-effects.png`, `boss-carrier.png`, `ship-weapons.png`, `ai-sources-and-detail.png`, and the in-engine sheets `in-engine-motion-damage.png` and `in-engine-sectors.png` |
+| `tools/gargoyle_rig.py` | The 3-D creature rig and rasteriser shared by the combat and sentinel generators |
 | `tools/sprite_pipeline.py` | Driver for every stage |
 | `tools/generate_sprites.py`, `generate_ship_sprites.py`, `generate_sentinel_sprites.py`, `generate_boss_sprites.py` | Deterministic packers writing `assets/images/` |
+| `test/gargoyle_review_test.dart` | Atlas contract checks, motion-state checks, and the in-engine review frames (`.cache/gargoyle-review/`) |
 | `lib/gallery_main.dart` | In-engine QA harness (staged models through the real scene) |
 
 ### Rerun
@@ -125,21 +127,23 @@ Silhouettes, poses, armour, insignia, weapon mounts and effects are **authored d
 A Python venv with Pillow, NumPy and SciPy (`python3 -m venv <dir> && <dir>/bin/pip install pillow numpy scipy`; keep it outside `/home/forge/src`, which is a small shared tmpfs), then:
 
 ```bash
-python tools/sprite_pipeline.py offline     # finish -> atlases -> sheets; no GPU, byte-identical output
+python tools/sprite_pipeline.py offline     # finish -> atlases -> sheets; no GPU, byte-identical output (~45 s)
 python tools/sprite_pipeline.py all         # keyframes -> edits -> finish -> atlases -> sheets
 python tools/sprite_pipeline.py keyframes   # or any single stage: edits, finish, atlases, sheets
+flutter test test/gargoyle_review_test.dart && python tools/sprite_pipeline.py screens   # in-engine review sheets
 ```
 
-GPU stages post the committed workflows to the project's ComfyUI studio over its HTTP API (`$COMFYUI_URL`, default `http://studio:8188`, the same server `studio.run_workflow` drives) with the seeds and prompts above, so the same models and seeds reproduce the candidates; raw outputs go to `$SPRITE_PIPELINE_CACHE` (default `~/.cache/demon-attack/sprite-pipeline`, never the repo). Agents can run the same workflows through `studio.run_workflow` / `studio.queue_workflow` (`$prompt`/`$seed` overrides, `inputs: {input: <keyframe>}` for edits) and drop the outputs into the cache as `<species>-<seed>.png`. Finishing is CPU-only and deterministic: colour-key matte from the border, largest component, head/torso window (central 34 % of the width, top 80 % of the height), box-sampled onto the body box and quantised to four levels at the 20/55/85 % luminance quantiles.
+GPU stages post the committed workflows to the project's ComfyUI studio over its HTTP API (`$COMFYUI_URL`, default `http://studio:8188`, the same server `studio.run_workflow` drives) with the seeds and prompts above, so the same models and seeds reproduce the candidates; raw outputs go to `$SPRITE_PIPELINE_CACHE` (default `~/.cache/demon-attack/sprite-pipeline`, never the repo). Agents can run the same workflows through `studio.run_workflow` / `studio.queue_workflow` (`$prompt`/`$seed` overrides, `inputs: {input: <keyframe>}` for edits) and drop the outputs into the cache as `<species>-<seed>.png`. `edits` skips molts that already exist under `art/sprites/sources/molts/`; delete them to regenerate. Finishing is CPU-only and deterministic: colour-key matte from the border, largest component, head/torso window (central 34 % of the width, top 80 % of the height), box-sampled onto the hide box `(20, 14)–(44, 52)` of the 64-grid and quantised to four levels at the 20/55/85 % luminance quantiles.
 
 Stages in detail:
 
 1. **keyframes**: four candidates per species at seed, seed+1, … (prompts.json); pick in `selections.json`.
-2. **edits**: three molt variants of the selected keyframe (cracks; cracked with glowing flesh; shattered with broken horn); used as molt detail maps.
+2. **edits**: three molt variants of the selected keyframe (glowing cracks; badly cracked with a chipped horn and torn wings; shattered with a broken horn and shredded wings); used as molt detail maps.
 3. **finish**: → `detail/<species>.png` and `detail/<species>-m<k>.png`.
-4. **atlases**: the four generators. Wing in-betweens are not AI-interpolated: the eight-pose strokes come from the joint-angle tables (`STROKE`, `COCKED`, `DIVE`, … in the generators), which keeps them exactly aligned. Wan2.2 VACE in-betweening was evaluated as unnecessary for that reason and to spare the shared GPU.
+4. **atlases**: `palette.json`, then the four generators. The rig is deterministic (no randomness, fixed tables); Wan2.2 VACE in-betweening and ControlNet pose guidance were considered and not used, because the rig already produces exactly aligned in-betweens and turnarounds for every direction and damage state, and that spares the shared GPU.
 5. **sheets**: contact sheets for review.
+6. **screens**: composes the in-engine review frames (not part of `offline`; it depends on a Flutter test run).
 
 ### Verification
 
-`flutter test` covers atlas sizes, binary alpha, the bounded palette, sentinel pose rules (distinct frames, folding recovery and rush) and wing-cannon alternation. Visual review uses the gallery (`flutter build web -t lib/gallery_main.dart -o <outside-src>/gallery`, served by `preview.publish` from an ignored folder) and host browser screenshots at desktop and phone sizes.
+`flutter test` covers atlas sizes, binary alpha, the bounded palette, the gargoyle atlas contract (30 distinct flight frames per damage variant, right banks are not mirrors of left banks, folded upstroke narrower than the level downstroke, every flash, action and elite cell present), the motion state machine (hysteresis without flicker, glide when sinking, longer downstroke when climbing, priority of actions), sentinel pose rules (distinct frames, folding recovery and rush, warnings confined to the creature) and wing-cannon alternation. Visual review uses `test/gargoyle_review_test.dart`'s phone-size renders (every species left / neutral / right in downstroke and upstroke, glides, damage states, elites, combat over each sector background) and the contact sheets above.

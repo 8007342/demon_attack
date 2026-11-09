@@ -1,20 +1,25 @@
 """Original deterministic combat atlas (64x64 logical grid, stored 1x).
 
-    .cache/asset-venv/bin/python tools/generate_sprites.py
+    python tools/generate_sprites.py
 
-Writes assets/images/combat.png. Layout is the contract in
-plan/sprite-atlas.md: sixteen 64x64 columns; seven rows per species (four
-species), then shared effect, pickup and fallback rows. Every creature is
-rasterised at pixel centres on the 64-grid with a bounded palette, a 1px ink
-outline and a top-left rim light. No source-game sprite, screenshot or
-third-party art is used; shapes are authored here from first principles.
+Writes assets/images/combat.png (2048 x 2560: thirty-two 64x64 columns,
+nine rows per gargoyle species, then four shared rows). The layout is the
+contract in plan/sprite-atlas.md and is mirrored by lib/game/sprite_atlas.dart.
 
-Optional AI detail (tools/sprite_pipeline.py): when
-art/families/sprites/detail/<species>.png exists (a palette-finished 64x64
-head/torso layer produced by the committed ComfyUI workflows), its pixels
-inside the species' body mask replace the procedural body shading. The
-silhouette, wings, eyes and insignia always come from this file so every
-frame stays aligned.
+Creatures are demonic gargoyles posed with tools/gargoyle_rig.py: a small 3-D
+rig (hide volumes, bat-wing membranes between finger bones, horns, clawed
+hands and feet, barbed tail) rasterised at logical pixel centres with a
+quantised key light onto the bounded palette, a 1 px outline and depth
+contours. Every flight frame exists for three directions (banking left,
+neutral 3/4, banking right) as real renders, so asymmetric details (damage on
+the port wing, slanted rank marks, the tail, weapon mounts) stay on the same
+anatomical side. No source-game sprite, screenshot or third-party art is used.
+
+Optional AI detail (tools/sprite_pipeline.py): art/families/sprites/detail/
+<species>[-m<k>].png, a four-level luminance map finished from the committed
+ComfyUI keyframes, nudges the key-light value of hide pixels (stony,
+leathery texture). It never changes a silhouette, a face, an insignia or a
+palette.
 """
 from __future__ import annotations
 
@@ -24,280 +29,79 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from sprite_kit import ROOT, Atlas, Canvas, lerp_pt, polar
+import gargoyle_rig as G
+from sprite_kit import ROOT, Atlas, Canvas
 
-COLS, ROWS = 16, 32
+COLS, ROWS = 32, 40
 SPECIES = ('teal', 'violet', 'coral', 'gold')
-RAMP = {
-    'teal': ('teal0', 'teal1', 'teal2', 'teal3'),
-    'violet': ('vio0', 'vio1', 'vio2', 'vio3'),
-    'coral': ('cor0', 'cor1', 'cor2', 'cor3'),
-    'gold': ('gol0', 'gol1', 'gol2', 'gol3'),
-}
-MOLT = {
-    'teal': ('mt1', 'mt2', 'mt3'),
-    'violet': ('mv1', 'mv2', 'mv3'),
-    'coral': ('mc1', 'mc2', 'mc3'),
-    'gold': ('mg1', 'mg2', 'mg3'),
-}
+SPECIES_ROWS = 9
+SHARED_ROW = 36
 DETAIL_DIR = ROOT / 'art/families/sprites/detail'
+wp = G.wp
 
 # ---------------------------------------------------------------------------
-# Wing kinematics. Angles in degrees: 0 = straight out, +90 = straight up.
-# (humerus, forearm, [4 finger angles], finger length scale, membrane reach)
-# Eight poses make one articulated down/up stroke: roots, forearms and
-# fingers move separately (the downstroke leads with the wrist, the upstroke
-# trails folded fingers) so the silhouette changes each frame.
+# Frame tables. Wing poses: (elevation, sweep, forearm, fold, finger curl).
+# The flap cycle is a downstroke (0-3: extended wings drive down, the body
+# lifts) and an upstroke (4-7: wrists lead, the wings fold and rise, the
+# body drops). LIFT is the whole-body offset in logical px; the Dart lookup
+# mirrors it (CombatAtlas.flightLift) to align elite overlays.
 # ---------------------------------------------------------------------------
-STROKE = [
-    (62, 70, (88, 66, 44, 22), 0.92),     # 0 top: raised, fingers fanned up
-    (40, 42, (62, 40, 18, -6), 1.00),     # 1 early down
-    (18, 14, (34, 12, -12, -38), 1.00),   # 2 level: full span
-    (-4, -14, (8, -16, -38, -62), 0.98),  # 3 driving down
-    (-22, -36, (-22, -42, -62, -82), 0.90),  # 4 bottom: narrowest
-    (-8, -20, (-46, -64, -80, -96), 0.72),  # 5 recovery: wrist leads, folded
-    (20, 26, (-20, -42, -62, -82), 0.74),  # 6 rising, fingers trailing
-    (46, 56, (52, 26, 0, -26), 0.86),     # 7 unfolding near the top
+FLAP = [
+    wp(55, 5, 10, .12, -20),   # 0 top: raised, unfolding
+    wp(30, 8, 0, 0, -10),      # 1 driving down
+    wp(6, 10, -4, 0, 0),       # 2 level, full span
+    wp(-22, 16, -8, .05, 12),  # 3 driving low, fingers trailing up
+    wp(-42, 18, -10, .2, 20),  # 4 bottom
+    wp(-24, 4, 14, .42, 10),   # 5 recovery: wrist leads, folded
+    wp(8, -6, 22, .5, -6),     # 6 rising folded
+    wp(38, -2, 18, .32, -16),  # 7 unfolding near the top
 ]
-COCKED = [(52, 66, (104, 84, 64, 44), 0.96), (48, 60, (98, 78, 58, 38), 1.0)]
-DIVE = [(-28, -46, (-56, -72, -88, -104), 0.96), (-22, -40, (-50, -66, -82, -98), 1.0)]
-FIRE_POSE = STROKE[2]
-
-SHOULDER = (27.0, 30.0)
-HIP = (29.0, 44.0)
-L_HUMERUS, L_FOREARM = 5.0, 6.5
-FINGERS = (12.5, 16.0, 14.5, 11.5)
-
-
-def wing_points(pose, mirror=False, droop=0.0):
-    a1, a2, fingers, scale = pose
-    s = SHOULDER if not mirror else (64 - SHOULDER[0], SHOULDER[1])
-    h = HIP if not mirror else (64 - HIP[0], HIP[1])
-    e = polar(s, a1, L_HUMERUS, mirror)
-    w = polar(e, a2, L_FOREARM * (0.85 + 0.15 * scale), mirror)
-    tips = [polar(w, fa - droop, fl * scale, mirror) for fa, fl in zip(fingers, FINGERS)]
-    return s, e, w, tips, h
+FLAP_LIFT = [0, -1, -2, -2, -1, 0, 1, 1]
+GLIDE = [wp(16, 4, -8, 0, -4), wp(10, 6, -6, 0, 2)]
+GLIDE_LIFT = [0, 1]
+LIFT = FLAP_LIFT + GLIDE_LIFT        # flight frame -> lift (10 entries)
+DIRS = (-1, 0, 1)                    # left, neutral, right
+YAW, ROLL = 38, 12
+COCKED = [wp(70, 0, 16, .15, -24), wp(66, 2, 20, .2, -28)]
+DIVE = [wp(30, -18, 16, .5, 26), wp(22, -20, 20, .56, 30)]
+DIVE_PITCH = 52
+FIRE_LIFT = [0, 0, -1, 0]
+ANTICIPATION_LIFT = [0, 0, -1, -1]
+VARIANTS = ('intact', 'm1', 'm2', 'm3', 'angry')
 
 
-def scallop(w, p, q, depth=0.3):
-    m = lerp_pt(p, q, .5)
-    return lerp_pt(m, w, depth)
+def damage(variant, fire=0, flare=False):
+    if variant == 'angry':
+        return G.Damage(molt=2, angry=True, fire=fire, flare=flare)
+    molt = 0 if variant == 'intact' else int(variant[1])
+    return G.Damage(molt=molt, fire=fire, flare=flare)
 
 
-def draw_wing(cv: Canvas, pose, ramp, mirror=False, tears=0, membrane=None, rng_seed=0):
-    dark, mid, base, light = ramp
-    mem_a, mem_b = membrane or (mid, base)
-    s, e, w, tips, h = wing_points(pose, mirror)
-    # Inner membrane (plagiopatagium) from the last finger back to the hip.
-    cv.poly([s, e, w, tips[3], scallop(w, tips[3], h, .14), h], mem_a)
-    # Finger panels alternate tone so each digit reads at phone size.
-    for i in range(3):
-        cv.poly([w, tips[i], scallop(w, tips[i], tips[i + 1], .16), tips[i + 1]], mem_b if i % 2 == 0 else mem_a)
-    # Leading-edge propatagium.
-    cv.poly([s, lerp_pt(s, e, .5), e, w, tips[0], lerp_pt(e, tips[0], .5)], mem_b)
-    # Bones: thick arm, thin fingers, claw at the wrist.
-    cv.line(s, e, 'ink2', 2)
-    cv.line(e, w, 'ink2', 2)
-    for t in tips:
-        cv.line(w, t, dark)
-    cv.line(s, e, light)  # leading-edge highlight on the arm
-    cv.px(w[0], w[1] - 1, 'ivory')  # wrist thumb claw
-    # Battle tears: holes punched between fingers and notched trailing edges.
-    for k in range(tears):
-        i = (k + rng_seed) % 3
-        hole = lerp_pt(w, scallop(w, tips[i], tips[i + 1], .3), .62 + .08 * (k % 2))
-        r = 1.2 + 0.4 * (k // 3)
-        cv.clear(cv.ellipse_mask(hole[0], hole[1], r, r))
-        notch = scallop(w, tips[(i + 1) % 4], h if i == 2 else tips[(i + 2) % 4], .05)
-        cv.clear(cv.ellipse_mask(notch[0], notch[1], 1.6, 1.6))
+def flight_pose(frame, d):
+    """Flight frame 0-9 (8 flap + 2 glide) for direction d. Turning frames
+    are asymmetric: the inner wing (toward the turn) beats shallower and
+    folds more, the outer wing reaches further, the tail trails outward and
+    the head leads into the turn."""
+    w = FLAP[frame] if frame < 8 else GLIDE[frame - 8]
+    lift = LIFT[frame]
+    phase = math.sin(2 * math.pi * (frame % 8) / 8)
+    tail = .5 * phase if d == 0 else -.8 * d + .25 * phase
+    left, right = w, w
+    if d:
+        inner = G.WingPose(w.elev * .7 - 6, w.sweep - 6, w.fore, min(1, w.fold + .14), w.curl)
+        outer = G.WingPose(w.elev * 1.08 + 4, w.sweep + 6, w.fore, max(0, w.fold - .06), w.curl)
+        left, right = (inner, outer) if d < 0 else (outer, inner)
+    legs = -.6 if frame >= 8 else .3 * phase
+    return G.Pose(left, right, lift=lift, tail=tail, legs=legs, head_turn=8 * d)
+
+
+def view(d, pitch=34):
+    return G.View(yaw=YAW * d, roll=ROLL * d, pitch=pitch)
 
 
 # ---------------------------------------------------------------------------
-# Bodies. Each species: silhouette, armour, rank insignia, weapon mount.
-# A narrow skull with a pointed chin sits on a broader chest; wings attach at
-# the shoulders so the membranes dominate the silhouette.
+# AI shading detail (four-level luminance map on the 64-grid).
 # ---------------------------------------------------------------------------
-HEAD = [(27.5, 15), (30, 12.5), (34, 12.5), (36.5, 15), (38.5, 19), (37.5, 24), (35, 28), (32, 30.5),
-        (29, 28), (26.5, 24), (25.5, 19)]
-TORSO = [(26, 30), (29, 27.5), (35, 27.5), (38, 30), (39, 35), (37.5, 41), (35, 46), (32, 48),
-         (29, 46), (26.5, 41), (25, 35)]
-MIR = ((lambda x: x), (lambda x: 64 - x))
-
-
-def body_mask(cv: Canvas):
-    return cv.poly_mask(HEAD) | cv.poly_mask(TORSO)
-
-
-def horns(cv, species, molt, ramp):
-    dark, mid, base, light = ramp
-    if species == 'teal':
-        # Curled ram horns: sweep out, up, then hook back in.
-        pts = [(29, 15), (26, 12), (24, 8), (24.5, 4.5), (27, 3), (26.5, 6), (27, 9), (30, 13)]
-        for f in MIR:
-            cv.poly([(f(x), y) for x, y in pts], 'ivory')
-            cv.line((f(25), 7), (f(26.5), 11), 'belly')
-        if molt >= 1:
-            cv.clear(cv.ellipse_mask(25.5, 3.5, 2.2, 1.5))
-        if molt >= 2:
-            cv.clear(cv.ellipse_mask(38.5, 3.5, 2.2, 1.5))
-        if molt >= 3:
-            cv.clear(cv.ellipse_mask(24.5, 6.5, 1.8, 1.6))
-    elif species == 'violet':
-        # Short armoured horns with riveted metal caps.
-        for f in MIR:
-            cv.poly([(f(29), 15), (f(26), 10), (f(26.5), 6.5), (f(30.5), 12.5)], 'met2')
-            cv.poly([(f(26), 10), (f(26.5), 6.5), (f(28), 9)], 'met3')
-        if molt >= 2:
-            cv.clear(cv.ellipse_mask(26.5, 7, 2, 2.2))
-        if molt >= 3:
-            cv.clear(cv.ellipse_mask(37.5, 7.5, 2, 2.5))
-    elif species == 'coral':
-        # Long swept-back predator horns.
-        pts = [(29, 15), (24, 11), (19, 8.5), (15, 9), (19, 11.5), (24, 14.5), (28.5, 17.5)]
-        for f in MIR:
-            cv.poly([(f(x), y) for x, y in pts], 'cor3')
-            cv.line((f(18), 9.5), (f(23), 12), 'ivory')
-        if molt >= 1:
-            cv.clear(cv.ellipse_mask(15.5, 9.5, 2.2, 2))
-        if molt >= 2:
-            cv.clear(cv.ellipse_mask(48.5, 9.5, 2.5, 2))
-        if molt >= 3:
-            cv.clear(cv.ellipse_mask(19, 10, 2, 2))
-    else:
-        # Elder crown: three tines with a ruby at the band.
-        heights = [6, 9, 6]
-        for i, cx in enumerate((28.5, 32, 35.5)):
-            top = 13 - heights[i] + (molt if i != 1 else max(0, molt - 1) * 2)
-            if molt >= 3 and i == 2:
-                top = 11
-            cv.poly([(cx - 2, 13.5), (cx, top), (cx + 2, 13.5)], 'gol3')
-            cv.px(cx - .5, top + 1.5, 'white')
-        cv.poly([(27, 12), (37, 12), (37.5, 15), (26.5, 15)], 'gol2')
-        cv.rect(27, 12, 10, 1, 'gol3')
-        cv.px(31.5, 13, 'blood'); cv.px(32, 13, 'blood')
-
-
-def draw_body(cv: Canvas, species, molt=0, angry=False, fire=0, ramp=None, flare=False, elite=False):
-    dark, mid, base, light = ramp
-    body = MOLT[species][molt - 1] if molt else base
-    # Talons and arms first so the torso overlaps their roots.
-    for f in MIR:
-        cv.poly([(f(29), 45), (f(27.5), 50.5), (f(30.5), 50.5), (f(31), 46)], mid)
-        cv.px(f(27.5), 51, 'ivory'); cv.px(f(29.5), 51, 'ivory')
-        cv.poly([(f(26.5), 32), (f(23.5), 37), (f(24.5), 41.5), (f(26.5), 40), (f(27.5), 34)], mid)
-        cv.px(f(23.5), 41.5, 'ivory'); cv.px(f(25), 42.5, 'ivory')
-    if species == 'coral':
-        # Segmented whip tail ending in a stinger emitter (its weapon mount).
-        if molt < 3:
-            tail = [(30.5, 45), (33.5, 45), (35, 51), (37, 55.5), (35, 59), (32.5, 55), (31, 50)]
-            cv.poly(tail, mid)
-            for y in (49, 52, 55):
-                cv.line((32, y), (34.5, y + .5), dark)
-            if molt < 2:
-                cv.poly([(34, 57.5), (36.5, 62), (38.5, 57)], 'ivory')
-                cv.px(36, 59, 'fire1' if fire else 'blood')
-        else:
-            cv.poly([(30.5, 45), (33.5, 45), (34, 50), (31, 50)], mid)
-            cv.px(32, 50, 'blood')
-    cv.poly(TORSO, body)
-    cv.poly(HEAD, body)
-    # Lower torso and jaw in the mid tone give volume under the top-left key.
-    cv.poly([(27, 41), (29.5, 45.5), (32, 47.5), (34.5, 45.5), (37, 41), (32, 44)], mid)
-    cv.poly([(29.5, 27.5), (32, 30), (34.5, 27.5), (32, 29)], mid)
-    cv.line((32, 15), (32, 18), light)  # brow ridge
-    horns(cv, species, molt, ramp)
-
-    # Armour and rank insignia on the chest.
-    if species == 'teal':
-        cv.poly([(28.5, 32), (35.5, 32), (36, 37), (32, 41), (28, 37)], light if not molt else body)
-        cv.poly([(29.5, 33.5), (32, 36), (34.5, 33.5), (34.5, 35.5), (32, 38), (29.5, 35.5)], 'ivory')
-    elif species == 'violet':
-        cv.poly([(27, 30.5), (37, 30.5), (37.5, 38), (32, 42.5), (26.5, 38)], 'met1')
-        cv.poly([(27.5, 31), (36.5, 31), (36.5, 32.5), (27.5, 32.5)], 'met2')
-        cv.rect(29, 35, 6, 1, 'vio3'); cv.rect(29, 37, 6, 1, 'vio3')  # twin bars
-        cv.px(27.5, 31, 'met3')
-        # Pauldrons with downward barb cannons (weapon mounts).
-        for f in MIR:
-            cv.poly([(f(23.5), 28.5), (f(27.5), 26.5), (f(29), 30.5), (f(25), 32.5)], 'met2')
-            cv.px(f(25.5), 28, 'met3')
-            x = min(f(24), f(25))
-            cv.rect(x, 32, 2, 4, 'met1')
-            cv.rect(x, 36, 2, 1, 'fire1' if fire else 'ink2')
-    elif species == 'coral':
-        cv.poly([(28.5, 31.5), (35.5, 31.5), (36, 36.5), (32, 40.5), (28, 36.5)], 'cor3' if not molt else body)
-        for k in range(3):  # three fang-slash marks
-            cv.line((29.5 + k * 2.2, 33), (30.7 + k * 2.2, 37), 'cor0')
-    else:
-        cv.poly([(28, 31), (36, 31), (37, 37), (32, 42), (27, 37)], 'gol3' if not molt else body)
-        cv.poly([(32, 33), (34, 36), (32, 39), (30, 36)], 'blood')  # star jewel
-        cv.px(32, 35, 'ivory')
-        cv.poly([(29.5, 26.5), (32, 32), (34.5, 26.5), (32, 28.5)], mid)  # beard
-        for f in MIR:  # orbs held in each claw: the elder's weapon mounts
-            cv.ellipse(f(24), 42.5, 1.7, 1.7, 'fire1' if fire else 'vio2')
-            cv.px(f(24) - .5, 41.5, 'white')
-
-    # Molt damage: cracks and an exposed glowing belly grow with each stage.
-    if molt:
-        cv.poly([(29.5, 39), (34.5, 39), (35.5, 42 + molt), (32, 44.5 + molt * .7), (28.5, 42)], 'belly')
-        cv.line((28, 31), (29.5, 35 + molt), 'ink')
-        cv.line((29.5, 35 + molt), (28, 38 + molt), 'ink')
-        if molt >= 2:
-            cv.line((36.5, 30), (35, 35), 'ink')
-            cv.line((35, 35), (36.5, 38), 'blood')
-            cv.line((28, 17), (29.5, 21), 'ink')
-        if molt >= 3:
-            cv.line((36.5, 16), (34.5, 21), 'ink')
-            cv.line((33, 42), (31, 46), 'blood')
-
-    # Face: slanted brows, glowing eyes, fanged mouth (teal's throat emitter).
-    hot = angry or flare
-    eye = 'eye_r' if hot else 'ivory'
-    ey = 19 if not angry else 20
-    for side, f in enumerate(MIR):
-        # Dark slanted socket with a 2x2 glowing eye and a bright pupil glint.
-        cv.poly([(f(26.5), ey - 1.5), (f(31.5), ey + (1 if angry else 0)), (f(31), ey + 2.5), (f(27), ey + 2)], 'ink')
-        x0 = 28 if side == 0 else 34
-        cv.rect(x0, ey + .5, 2, 2, eye)
-        cv.px(x0 + (1 if side == 0 else 0), ey + .5, 'fire1' if hot else 'white')
-    my = 25
-    open_ = 2 if (angry or (species == 'teal' and fire)) else 1
-    cv.rect(29.5, my, 5, open_ + 1, 'ink')
-    if species == 'teal' and fire:
-        cv.rect(30.5, my, 3, open_, 'fire0' if fire == 2 else 'fire1')
-    for x in (30, 34):
-        cv.px(x, my + open_ + .5, 'white')
-    for x in (31, 33):
-        cv.px(x, my, 'white')
-    if angry:
-        cv.px(26.5, 23, 'blood'); cv.px(37.5, 22, 'blood')
-
-SPECIES_RIM = {}
-for sp, (d, m, b, l) in RAMP.items():
-    SPECIES_RIM[sp] = {b: (l, m), m: (b, d)}
-
-
-def creature(species, pose, molt=0, angry=False, fire=0, flare=False, raise_body=0):
-    ramp = RAMP[species]
-    cv = Canvas()
-    membrane = ('hot1', 'hot2') if angry else None
-    tears = [0, 2, 4, 6][molt]
-    for mirror in (False, True):
-        draw_wing(cv, pose, ramp, mirror, tears=tears if not mirror else max(0, tears - 1),
-                  membrane=membrane, rng_seed=1 if mirror else 0)
-    draw_body(cv, species, molt, angry, fire, ramp, flare)
-    apply_detail(cv, species, molt, angry)
-    cv.outline('ink')
-    rim = dict(SPECIES_RIM[species])
-    if angry:
-        rim.update({'hot2': ('ivory', 'hot1'), 'hot1': (None, 'hot0')})
-    if molt:
-        rim[MOLT[species][molt - 1]] = (ramp[3], ramp[1])
-    cv.rim(rim)
-    if raise_body:
-        cv.shift(0, -raise_body)
-    return cv
-
-
 _detail_cache = {}
 
 
@@ -308,148 +112,176 @@ def _detail(name):
     return _detail_cache[name]
 
 
-def apply_detail(cv: Canvas, species, molt, angry):
-    """Textures the plain body with an AI-derived 4-level luminance map
-    (tools/sprite_pipeline.py finish). Levels map onto the ramp of the body
-    colour being drawn, so the same map shades intact, molt and angry frames
-    in palette; silhouette, eyes, plates and insignia are never touched."""
-    layer = (_detail(f'{species}-m{molt}') if molt else None)
+def texture(species, molt, lift):
+    layer = _detail(f'{species}-m{molt}') if molt else None
     if layer is None:
         layer = _detail(species)
     if layer is None:
-        return
-    d, m, b, l = RAMP[species]
-    body = MOLT[species][molt - 1] if molt else b
-    tones = (m, body, body, l if not molt else 'belly')
-    target = body_mask(cv) & cv.is_color(body) & (layer[..., 3] > 0)
-    level = np.digitize(layer[..., 0], [70, 135, 205])
-    for k, tone in enumerate(tones):
-        sel = target & (level == k)
-        if tone != body:
-            cv._paint(sel, tone)
+        return None
+    lv = np.digitize(layer[..., 0], [70, 135, 205]).astype(float)
+    valid = layer[..., 3] > 0
+    # Fixed to the body: shift by the frame's lift so bobbing keeps texture.
+    lv = np.roll(lv, lift, axis=0)
+    valid = np.roll(valid, lift, axis=0)
+
+    def fn(R):
+        t = np.where(valid, (lv - 1.5) * .07, 0.0)
+        return np.where(R.mat == 'hide', t, 0.0)
+    return fn
+
+
+def render(species, pose, vw, dmg, elite_level=0, wings_on=True):
+    sp = G.SPECIES[species]
+    cv, _, _ = G.render(sp, pose, vw, dmg, texture(species, dmg.molt, pose.lift),
+                        elite_level=elite_level, wings_on=wings_on)
+    return cv
+
+
+# ---------------------------------------------------------------------------
+# Hit flash: every ramp steps toward white; the outline stays.
+# ---------------------------------------------------------------------------
+def _flash_map(species):
+    sp = G.SPECIES[species]
+    m = {}
+    for ramp in (sp.hide, sp.wing[:3], ('bone0', 'bone1', 'bone2', 'fang'), ('met0', 'met1', 'met2', 'met3'),
+                 ('gg0', 'gg1', 'gg2', 'gg3'), ('hot0', 'hot1', 'hot2'), sp.belly):
+        for i, c in enumerate(ramp):
+            m[c] = ramp[min(len(ramp) - 1, i + 2)] if i + 2 < len(ramp) else ('ivory' if i < len(ramp) - 1 else 'white')
+    m[sp.hide[3]] = 'white'
+    m[sp.hide[2]] = 'ivory'
+    m['gink'] = 'gink'
+    return m
 
 
 def highlight(cv: Canvas, species):
-    """Hit-flash variant: every ramp jumps toward white; ink outline stays."""
-    d, m, b, l = RAMP[species]
-    mapping = {l: 'white', b: 'ivory', m: l, d: b, 'ink2': 'night',
-               'belly': 'white', 'met1': 'met3', 'met2': 'white', 'met0': 'met2',
-               'hot2': 'white', 'hot1': 'ivory', 'hot0': 'hot2'}
-    for mt in MOLT[species]:
-        mapping[mt] = 'ivory'
     out = cv.copy()
-    out.map_colors(mapping)
+    out.map_colors(_flash_map(species))
     return out
 
 
 # ---------------------------------------------------------------------------
-# Death sequence: hit-white, seams glow, wings shear off, core burst, shreds.
+# Death: flash, glowing fissures, then the stone body shatters into tumbling
+# chunks, a core burst, embers and dust.
 # ---------------------------------------------------------------------------
 def death_frames(species):
-    ramp = RAMP[species]
-    frames = []
-    whole = creature(species, STROKE[2], molt=3)
-    frames.append(highlight(whole, species))
+    whole = render(species, flight_pose(2, 0), view(0), damage('m3'))
+    frames = [highlight(whole, species)]
     seams = whole.copy()
-    for (a, b) in (((27, 31), (30, 40)), ((37, 30), (34, 41)), ((26, 18), (31, 24)), ((38, 17), (33, 25))):
+    for (a, b) in (((27, 26), (30, 36)), ((37, 25), (34, 37)), ((29, 18), (33, 22)), ((20, 22), (26, 25)),
+                   ((44, 22), (38, 26))):
         seams.line(a, b, 'fire1')
-    seams.recolor('belly', 'fire0')
     frames.append(seams)
-    # Pieces: left wing, right wing, body, drawn separately so they can drift.
-    def piece(which):
-        cv = Canvas()
-        if which in ('L', 'R'):
-            draw_wing(cv, STROKE[3 if which == 'L' else 1], ramp, which == 'R', tears=5)
-        else:
-            draw_body(cv, species, 3, True, 0, ramp)
-        cv.outline('ink')
-        cv.rim(SPECIES_RIM[species])
-        return cv
-    L, R, B = piece('L'), piece('R'), piece('B')
+    src = whole.a
+    ys, xs = np.nonzero(src[..., 3])
     for k in range(6):  # frames 2..7
         cv = Canvas()
-        t = k / 5
-        if k < 4:
-            lw = L.rotated(-12 * (k + 1), 25, 30); lw.shift(-2 * (k + 1), 1 + 2 * k)
-            rw = R.rotated(12 * (k + 1), 39, 30); rw.shift(2 * (k + 1), 2 * k)
-            cv.paste(lw); cv.paste(rw)
-        if k < 2:
-            b = B.copy(); b.shift(0, k)
-            cv.paste(b)
-        # Core burst grows then breaks into embers.
-        r = [5, 9, 12, 13, 12, 10][k]
-        if k < 4:
-            cv.ellipse(32, 36, r, r * .85, 'fire3' if k > 1 else 'fire2')
-            cv.ellipse(32, 36, r * .65, r * .55, 'fire1')
-            cv.ellipse(32, 36, r * .35, r * .3, 'fire0')
-            for i in range(8):
-                a = i * math.pi / 4 + k * .3
-                cv.line((32 + math.cos(a) * r, 36 + math.sin(a) * r * .85),
-                        (32 + math.cos(a) * (r + 3), 36 + math.sin(a) * (r + 3) * .85), 'fire1')
-        # Membrane shreds and bone bits fly outward and fall.
-        for i in range(10):
-            a = i * 2 * math.pi / 10 + 0.4
-            dist = 6 + 26 * t
-            x = 32 + math.cos(a) * dist
-            y = 36 + math.sin(a) * dist * .8 + 10 * t * t
-            col = [ramp[1], ramp[2], 'ivory', ramp[0], 'fire3'][i % 5]
-            if k >= 4 and i % 2:
-                col = 'smk1' if k == 5 else 'fire4'
-            size = 2 if (i % 3 and k < 4) else 1
-            cv.rect(int(x), int(y), size, size + (1 if i % 4 == 0 else 0), col)
+        t = (k + 1) / 6
+        for y, x in zip(ys, xs):
+            cx, cy = x // 5, y // 5  # 5x5 stone chunks drift apart
+            ang = ((cx * 37 + cy * 61) % 360) * math.pi / 180
+            spd = 6 + ((cx * 13 + cy * 7) % 9)
+            dx = math.cos(ang) * spd * t + (x - 32) * .35 * t
+            dy = math.sin(ang) * spd * t * .6 + 14 * t * t
+            if k >= 3 and (cx + cy + k) % 3 == 0:
+                continue
+            if k >= 5 and (x + y) % 2:
+                continue
+            nx, ny = int(x + dx), int(y + dy)
+            if 0 <= nx < 64 and 0 <= ny < 64:
+                col = src[y, x].copy()
+                if k >= 2 and (cx + cy) % 2 == 0:
+                    col[:3] = (255, 107, 26) if k < 4 else (74, 68, 88)
+                cv.a[ny, nx] = col
+        r = [5, 9, 12, 12, 9, 0][k]
+        if r:
+            cv.ellipse(32, 30, r, r * .85, 'fire3' if k > 1 else 'fire2')
+            cv.ellipse(32, 30, r * .62, r * .52, 'fire1')
+            cv.ellipse(32, 30, r * .3, r * .26, 'fire0')
         if k >= 3:
-            for i in range(6):  # smoke puffs
-                a = i * math.pi / 3 + 0.2
-                cx, cy = 32 + math.cos(a) * (8 + k * 2), 34 + math.sin(a) * (6 + k) - k * 2
-                cv.ellipse(cx, cy, 3 - (k - 3) * .5, 2.5 - (k - 3) * .5, 'smk1' if k < 5 else 'smk0')
-                cv.px(cx - 1, cy - 1, 'smk2')
-        if k < 4:
-            cv.outline('ink')
+            for i in range(6):  # dust puffs
+                a = i * math.pi / 3 + .2
+                px, py = 32 + math.cos(a) * (8 + k * 2), 30 + math.sin(a) * (6 + k) - k * 2
+                cv.ellipse(px, py, 3 - (k - 3) * .5, 2.5 - (k - 3) * .5, 'smk1' if k < 5 else 'smk0')
+                cv.px(px - 1, py - 1, 'smk2')
         frames.append(cv)
     return frames
 
 
 # ---------------------------------------------------------------------------
-# Elite overlays: shoulder plates that follow each wing pose; helm and chest
-# armour at four integrity levels; rank insignia (gold double chevron).
+# Elite overlays: the armour pixels a render gains over the same pose
+# without armour (wings omitted so the plates never paint over a wing).
 # ---------------------------------------------------------------------------
-def elite_wing_plates(pose):
-    cv = Canvas()
-    for mirror in (False, True):
-        s, e, w, tips, h = wing_points(pose, mirror)
-        mid = lerp_pt(s, e, .5)
-        cv.ellipse(mid[0], mid[1], 2.6, 2.2, 'gol2')
-        cv.px(mid[0] - 1, mid[1] - 1, 'gol3')
-        cv.ellipse(w[0], w[1], 1.6, 1.6, 'met2')
-        cv.px(w[0], w[1], 'met3')
-    cv.outline('ink')
-    return cv
+def elite_overlay(species, pose, vw, level):
+    pose = G.Pose(pose.left, pose.right, lift=0, tail=pose.tail, legs=pose.legs, head_turn=pose.head_turn)
+    plain = render(species, pose, vw, damage('intact'), wings_on=False)
+    armed = render(species, pose, vw, damage('intact'), elite_level=level, wings_on=False)
+    out = Canvas()
+    diff = (armed.a != plain.a).any(-1) & (armed.a[..., 3] > 0)
+    out.a[diff] = armed.a[diff]
+    return out
 
 
-def elite_armor(level):
-    """level 4 = full, 1 = nearly stripped. Transparent outside the plates."""
-    cv = Canvas()
-    if level >= 1:
-        # Rank insignia: gold double chevron on the brow, always visible.
-        for k in range(2):
-            cv.poly([(28, 15 + k * 2.5), (32, 17.5 + k * 2.5), (36, 15 + k * 2.5), (36, 16.5 + k * 2.5),
-                     (32, 19 + k * 2.5), (28, 16.5 + k * 2.5)], 'gol3' if k == 0 else 'gol2')
-    if level >= 2:
-        # Side helm plates.
-        for f in ((lambda x: x), (lambda x: 64 - x)):
-            cv.poly([(f(24), 16), (f(26), 13), (f(27), 22), (f(25), 25)], 'met2')
-            cv.px(f(25), 15, 'met3')
-    if level >= 3:
-        # Elite horn caps / crest spikes.
-        for f in ((lambda x: x), (lambda x: 64 - x)):
-            cv.poly([(f(28), 12), (f(26), 4), (f(30), 11)], 'gol2')
-            cv.px(f(27), 6, 'gol3')
-    if level >= 4:
-        # Gorget and belly plate.
-        cv.poly([(27, 41), (37, 41), (35, 47), (29, 47)], 'met1')
-        cv.rect(29, 43, 6, 1, 'gol2')
-    cv.outline('ink')
-    return cv
+FIT_REPORT = []
+
+
+def check_fit_margin(cv, where):
+    """Records frames whose silhouette touches the cell border (clipped)."""
+    a = cv.a[..., 3] > 0
+    if a[0].any() or a[-1].any() or a[:, 0].any() or a[:, -1].any():
+        FIT_REPORT.append(where)
+
+
+def species_block(atlas: Atlas, k, sp):
+    r0 = k * SPECIES_ROWS
+    put = atlas.put
+
+    class _Fit:
+        def put(self, c, r, cv):
+            check_fit_margin(cv, (sp, c, r))
+            put(c, r, cv)
+    atlas = _Fit()
+    # Rows 0-4: flight sets (10 frames x 3 directions) per damage variant.
+    for vi, variant in enumerate(VARIANTS):
+        dm = damage(variant)
+        for di, d in enumerate(DIRS):
+            for f in range(10):
+                cv = render(sp, flight_pose(f, d), view(d), dm)
+                atlas.put(di * 10 + f, r0 + vi, cv)
+                if f % 2 == 0 and f < 8:
+                    slot = vi * 12 + di * 4 + f // 2
+                    atlas.put(slot % 32, r0 + 5 + slot // 32, highlight(cv, sp))
+    # Row 7: actions.
+    a = r0 + 7
+    for i in range(4):  # anticipation: wings cocked high, eyes flare
+        pose = G.Pose(COCKED[i // 2], COCKED[i // 2], lift=ANTICIPATION_LIFT[i], legs=-.4)
+        atlas.put(i, a, render(sp, pose, view(0), G.Damage(flare=(i % 2 == 1))))
+    for i in range(4):  # weapon fire: charge, flash, recoil, settle
+        fire = [1, 2, 1, 0][i]
+        pose = G.Pose(FLAP[2], FLAP[2], lift=FIRE_LIFT[i], jaw=.6 if fire else 0)
+        atlas.put(4 + i, a, render(sp, pose, view(0), G.Damage(fire=fire)))
+        w = FLAP[[2, 3, 2, 1][i]]
+        pose = G.Pose(w, w, lift=0, jaw=.8)
+        atlas.put(8 + i, a, render(sp, pose, view(0), damage('angry', fire=fire)))
+    for i, fr in enumerate(death_frames(sp)):
+        atlas.put(12 + i, a, fr)
+    dive_cells = []
+    for vi, variant in enumerate(VARIANTS):
+        for i in range(2):
+            pose = G.Pose(DIVE[i], DIVE[i], lift=0, legs=-1, tail=.3 * (1 - 2 * i), jaw=.5)
+            cv = render(sp, pose, view(0, DIVE_PITCH), damage(variant))
+            atlas.put(20 + vi * 2 + i, a, cv)
+            if vi == 0:
+                dive_cells.append(cv)
+    for i, cv in enumerate(dive_cells):
+        atlas.put(30 + i, a, highlight(cv, sp))
+    # Row 8: elite armour overlays (direction x level; dive x level).
+    e = r0 + 8
+    for di, d in enumerate(DIRS):
+        for lvl in range(4):
+            atlas.put(di * 4 + lvl, e, elite_overlay(sp, flight_pose(8, d), view(d), 4 - lvl))
+    for lvl in range(4):
+        pose = G.Pose(DIVE[0], DIVE[0], lift=0, legs=-1, tail=.3)
+        atlas.put(12 + lvl, e, elite_overlay(sp, pose, view(0, DIVE_PITCH), 4 - lvl))
 
 
 # ---------------------------------------------------------------------------
@@ -578,49 +410,31 @@ def fallback_carrier(form):
     return cv
 
 
+
+
 def build(atlas: Atlas):
     for k, sp in enumerate(SPECIES):
-        r0 = k * 7
-        for f in range(8):
-            atlas.put(f, r0, creature(sp, STROKE[f]))
-            atlas.put(8 + f, r0, creature(sp, STROKE[f], angry=True))
-            atlas.put(f, r0 + 5, highlight(creature(sp, STROKE[f]), sp))
-            for molt in (1, 2, 3):
-                c = creature(sp, STROKE[f], molt=molt)
-                atlas.put(f, r0 + molt, c)
-                atlas.put(8 + f, r0 + molt, highlight(c, sp))
-            atlas.put(f, r0 + 6, elite_wing_plates(STROKE[f]))
-        # Anticipation (dive warning): wings cocked high, eyes flaring.
-        for i in range(4):
-            atlas.put(i, r0 + 4, creature(sp, COCKED[i // 2], flare=(i % 2 == 1), raise_body=i // 2))
-        for i in range(4):
-            atlas.put(4 + i, r0 + 4, creature(sp, DIVE[i % 2]))
-        # Weapon fire: charge, flash, recoil, settle.
-        for i in range(4):
-            atlas.put(8 + i, r0 + 4, creature(sp, FIRE_POSE, fire=[1, 2, 1, 0][i], raise_body=[0, 0, 1, 0][i]))
-        for i in range(4):
-            atlas.put(12 + i, r0 + 4, creature(sp, STROKE[[2, 3, 2, 1][i]], angry=True, fire=[1, 2, 1, 0][i]))
-        for i, fr in enumerate(death_frames(sp)):
-            atlas.put(8 + i, r0 + 5, fr)
-        for lvl in range(4):
-            atlas.put(8 + lvl, r0 + 6, elite_armor(4 - lvl))
-    # Shared rows.
+        species_block(atlas, k, sp)
+    # Shared rows (unchanged content, moved below the species blocks).
+    s = SHARED_ROW
     for k in range(8):
-        atlas.put(k, 28, explosion(k))
-        atlas.put(8 + k, 28, explosion(k, large=True))
+        atlas.put(k, s, explosion(k))
+        atlas.put(8 + k, s, explosion(k, large=True))
     for k in range(4):
-        atlas.put(k, 29, sparks(k))
-        atlas.put(4 + k, 29, impact(k))
-        atlas.put(8 + k, 29, enemy_muzzle(k))
-        atlas.put(12 + k, 29, sparks(k, 'mint'))
+        atlas.put(k, s + 1, sparks(k))
+        atlas.put(4 + k, s + 1, impact(k))
+        atlas.put(8 + k, s + 1, enemy_muzzle(k))
+        atlas.put(12 + k, s + 1, sparks(k, 'mint'))
     for i, kind in enumerate(('spread', 'rapid', 'shield', 'heart', 'powerful', 'large')):
-        atlas.put(i, 30, badge(kind))
+        atlas.put(i, s + 2, badge(kind))
     for f in range(4):
-        atlas.put(f, 31, fallback_ship(f))
-        atlas.put(4 + f, 31, fallback_carrier(f))
+        atlas.put(f, s + 3, fallback_ship(f))
+        atlas.put(4 + f, s + 3, fallback_carrier(f))
 
 
 if __name__ == '__main__':
     atlas = Atlas(COLS, ROWS)
     build(atlas)
+    if FIT_REPORT:
+        print('frames touching the cell border:', len(FIT_REPORT), [w for w in FIT_REPORT if not (w[2] % 9 == 7 and 12 <= w[1] < 20)])
     atlas.save(ROOT / 'assets/images/combat.png')

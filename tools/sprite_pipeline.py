@@ -6,6 +6,8 @@
     .cache/asset-venv/bin/python tools/sprite_pipeline.py finish     # CPU: matte, grid, palette
     .cache/asset-venv/bin/python tools/sprite_pipeline.py atlases    # CPU: deterministic packers
     .cache/asset-venv/bin/python tools/sprite_pipeline.py sheets     # CPU: review contact sheets
+    .cache/asset-venv/bin/python tools/sprite_pipeline.py screens    # CPU: in-engine review sheets
+                                                     #   (after flutter test test/gargoyle_review_test.dart)
 
 Stages and files (all committed except the GPU cache):
 
@@ -23,14 +25,19 @@ Stages and files (all committed except the GPU cache):
 3. finish: colour-key matte from the white border, crop to the creature,
    then the head/torso window is sampled onto the 64-grid body box and
    reduced to a four-level luminance map: art/families/sprites/detail/
-   <species>[-m<k>].png. The atlas generator maps those levels onto the ramp
-   of whichever frame it draws (intact, molt, angry, flash), so AI texture
-   adds shading detail while silhouettes, eyes, insignia, outlines and
-   palette stay authored and aligned across every frame.
+   <species>[-m<k>].png. The gargoyle rig (tools/gargoyle_rig.py) uses those
+   levels to nudge the key-light value of hide pixels before it quantises
+   them onto the palette ramp, so AI texture adds stony, leathery shading
+   while silhouettes, faces, insignia, outlines and palette stay authored and
+   aligned across every frame.
 4. atlases: tools/generate_sprites.py (combat), generate_ship_sprites.py,
-   generate_sentinel_sprites.py, generate_boss_sprites.py. Pure functions of
-   their inputs: same inputs, same bytes.
+   generate_sentinel_sprites.py, generate_boss_sprites.py, plus
+   art/families/sprites/palette.json from sprite_kit.PALETTE. Pure
+   functions of their inputs: same inputs, same bytes.
 5. sheets: contact sheets under art/sprites/review/ for human review.
+6. screens (not part of offline/all): composes the in-engine review frames
+   that test/gargoyle_review_test.dart renders into .cache/gargoyle-review/
+   into art/sprites/review/in-engine-*.png.
 
 The GPU stages are optional for rebuilding atlases: the committed sources
 and detail maps are the inputs of record. Re-running keyframes with the same
@@ -63,10 +70,11 @@ COMFY = os.environ.get('COMFYUI_URL', 'http://studio:8188')
 PY = sys.executable
 
 sys.path.insert(0, str(ROOT / 'tools'))
-from sprite_kit import PALETTE_RGB  # noqa: E402
+from sprite_kit import PALETTE, PALETTE_RGB  # noqa: E402,F401
 
-# Head/torso box on the 64-grid (generate_sprites.HEAD/TORSO bounds).
-BODY_BOX = (25, 12, 40, 50)
+# Hide box on the 64-grid covering the gargoyle's head, shoulders and torso
+# in the neutral 3/4 view (tools/gargoyle_rig.py, origin (32, 31)).
+BODY_BOX = (20, 14, 44, 52)
 
 
 def load(path, default=None):
@@ -143,7 +151,7 @@ def keyframes():
             out.parent.mkdir(parents=True, exist_ok=True)
             png = run_workflow(ROOT / kf['workflow'], seed, f"{spec['style']}, {item['prompt']}", spec['negative'])[0]
             out.write_bytes(png)
-            print('keyframe', out.relative_to(ROOT))
+            print('keyframe', out)
     keep_selected()
 
 
@@ -259,7 +267,14 @@ def save_detail(arr, path: Path):
     print('detail', path.relative_to(ROOT))
 
 
+def palette_json():
+    out = {'schema': 'tillandsias.palette/v1', 'name': 'demon-attack-combat',
+           'colours': list(dict.fromkeys(PALETTE.values()))}
+    (FAM / 'palette.json').write_text(json.dumps(out, indent=1) + '\n')
+
+
 def atlases():
+    palette_json()
     for tool in ('generate_sprites.py', 'generate_ship_sprites.py', 'generate_sentinel_sprites.py',
                  'generate_boss_sprites.py'):
         subprocess.run([PY, str(ROOT / 'tools' / tool)], check=True)
@@ -281,8 +296,24 @@ def sheets():
         print('sheet', (REVIEW / out).relative_to(ROOT))
 
     for k, sp in enumerate(('teal', 'violet', 'coral', 'gold')):
-        sheet('combat.png', 64, 64, list(range(k * 7, k * 7 + 7)), 2, f'combat-{sp}.png')
-    sheet('combat.png', 64, 64, [28, 29, 30, 31], 2, 'combat-shared.png')
+        sheet('combat.png', 64, 64, list(range(k * 9, k * 9 + 9)), 2, f'combat-{sp}.png')
+    sheet('combat.png', 64, 64, [36, 37, 38, 39], 2, 'combat-shared.png', cols=16)
+    # Directional flight frames: per species the left / neutral / right
+    # flight sets (0-3 downstroke, 4-7 upstroke, 8-9 glide) of the intact
+    # and molt-3 rows, at 3x.
+    im = Image.open(ROOT / 'assets/images/combat.png').convert('RGBA')
+    s = Image.new('RGBA', (10 * 192, 24 * 144), bg)
+    for k in range(4):
+        for vi, v in enumerate((0, 3)):
+            for d in range(3):
+                y = (k * 6 + vi * 3 + d) * 144
+                r = (k * 9 + v) * 64
+                for f in range(10):
+                    c = (d * 10 + f) * 64
+                    cell = im.crop((c, r + 8, c + 64, r + 56)).resize((192, 144), Image.NEAREST)
+                    s.alpha_composite(cell, (f * 192, y))
+    s.save(REVIEW / 'combat-directions.png', optimize=True)
+    print('sheet', (REVIEW / 'combat-directions.png').relative_to(ROOT))
     sheet('ship-weapons.png', 64, 64, list(range(7)), 2, 'ship-weapons.png')
     sheet('sentinel-effects.png', 128, 64, list(range(14)), 1, 'sentinel-effects.png')
     sheet('boss-carrier.png', 368, 240, list(range(7)), 1, 'boss-carrier.png')
@@ -306,7 +337,26 @@ def sheets():
     print('sheet', (REVIEW / 'ai-sources-and-detail.png').relative_to(ROOT))
 
 
-STAGES = {'keyframes': keyframes, 'edits': edits, 'finish': finish, 'atlases': atlases, 'sheets': sheets}
+def screens():
+    """In-engine review: the phone-size frames rendered by
+    test/gargoyle_review_test.dart, composed at 2x."""
+    src = ROOT / '.cache/gargoyle-review'
+    groups = {'in-engine-motion-damage.png': ['motion', 'damage'],
+              'in-engine-sectors.png': [f'sector-{i}' for i in range(1, 6)]}
+    for out, names in groups.items():
+        ims = [Image.open(src / f'{n}.png').convert('RGBA') for n in names if (src / f'{n}.png').exists()]
+        if not ims:
+            continue
+        w, h = ims[0].size
+        s = Image.new('RGBA', (len(ims) * (w * 2 + 8) - 8, h * 2), (0, 0, 0, 255))
+        for i, im in enumerate(ims):
+            s.paste(im.resize((w * 2, h * 2), Image.NEAREST), (i * (w * 2 + 8), 0))
+        s.save(REVIEW / out, optimize=True)
+        print('sheet', (REVIEW / out).relative_to(ROOT))
+
+
+STAGES = {'keyframes': keyframes, 'edits': edits, 'finish': finish, 'atlases': atlases, 'sheets': sheets,
+          'screens': screens}
 
 if __name__ == '__main__':
     arg = sys.argv[1] if len(sys.argv) > 1 else 'all'

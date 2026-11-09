@@ -94,6 +94,7 @@ class Tri:
     mat: str
     part: str
     holes: list = field(default_factory=list)  # [(center3d, radius)]
+    flip: bool = False  # mirrored winding (starboard wing)
 
 
 @dataclass
@@ -107,6 +108,7 @@ class Decal:
     pixels: list  # [(dx, dy, colour)]
     parts: tuple
     force: bool = False  # draw even if occluded (glows on top)
+    mats: tuple = ()     # alternatively: draw where one of these materials shows
 
 
 # ---------------------------------------------------------------------------
@@ -190,9 +192,10 @@ class Raster:
             for hc, hr in t.holes:
                 hit &= ((P - hc) ** 2).sum(-1) > hr * hr
         nrm = norm(np.cross(p1 - p0, p2 - p0))
-        back = nrm[2] < 0
-        if back:
+        if nrm[2] < 0:
             nrm = -nrm
+        raw = np.cross(p1 - p0, p2 - p0)[2]
+        back = (raw < 0) == t.flip
         n = np.broadcast_to(nrm, X.shape + (3,))
         self._commit(hit, z, n, t.mat, t.part, np.full(X.shape, back))
 
@@ -243,17 +246,24 @@ class Species:
 
 TEAL = Species('teal', ('gt0', 'gt1', 'gt2', 'gt3'), ('gtw0', 'gtw1', 'gtw2', 'gt2'),
                ('bone0', 'bone1', 'bone2'), ('gt1', 'gt2', 'gt3'),
-               scale=1.0, span=1.0, bulk=.9, head=1.08)
+               scale=1.0, span=1.0, bulk=.9, head=1.25)
 VIOLET = Species('violet', ('gv0', 'gv1', 'gv2', 'gv3'), ('gvw0', 'gvw1', 'gvw2', 'gv2'),
                  ('met0', 'met1', 'met2'), ('met1', 'met2', 'met3'),
-                 scale=1.0, span=.84, bulk=1.3, head=.9)
+                 scale=1.12, span=.78, bulk=1.4, head=1.0)
 CORAL = Species('coral', ('gc0', 'gc1', 'gc2', 'gc3'), ('gcw0', 'gcw1', 'gcw2', 'gc2'),
                 ('bone0', 'bone1', 'bone2'), ('gc1', 'gc2', 'gc3'),
-                scale=1.0, span=1.1, bulk=.85, head=.95)
+                scale=1.0, span=.98, bulk=.85, head=1.08)
 GOLD = Species('gold', ('gg0', 'gg1', 'gg2', 'gg3'), ('ggw0', 'ggw1', 'ggw2', 'gg2'),
                ('gg1', 'gg2', 'gg3'), ('gg1', 'gg2', 'gg3'),
-               scale=1.0, span=1.04, bulk=1.05, head=1.0)
-SPECIES = {'teal': TEAL, 'violet': VIOLET, 'coral': CORAL, 'gold': GOLD}
+               scale=1.0, span=.96, bulk=1.05, head=1.12)
+WARDEN = Species('warden', ('gv0', 'gv1', 'gv2', 'gv3'), ('gvw0', 'gvw1', 'gvw2', 'gv2'),
+                 ('gv0', 'gv1', 'gv2'), ('met1', 'met2', 'met3'),
+                 scale=1.0, span=1.5, bulk=1.25, head=1.05)
+COLOSSUS = Species('colossus', ('gg0', 'gg1', 'gg2', 'gg3'), ('ggw0', 'ggw1', 'ggw2', 'gg2'),
+                   ('gg1', 'gg2', 'gg3'), ('gg1', 'gg2', 'gg3'),
+                   scale=1.0, span=1.46, bulk=1.4, head=1.0)
+SPECIES = {'teal': TEAL, 'violet': VIOLET, 'coral': CORAL, 'gold': GOLD, 'warden': WARDEN, 'colossus': COLOSSUS}
+MAW_WEAPON = ('teal', 'warden', 'colossus')
 
 LIGHT = norm(v(-.55, -.7, .65))
 
@@ -279,9 +289,9 @@ class Damage:
 class Builder:
     """Collects posed primitives in world space for one frame."""
 
-    def __init__(self, view: View, lift):
+    def __init__(self, view: View, lift, sp=None):
         self.view = view
-        s = view.scale
+        s = view.scale * (sp.scale if sp is not None else 1.0)
         self.M = rot_z(view.roll) @ rot_x(view.pitch) @ rot_y(view.yaw)
         self.s = s
         self.lift = lift
@@ -319,12 +329,12 @@ class Builder:
                 self.sph(p, r, mat, part)
             acc += L
 
-    def tri(self, a, b, c, mat, part, holes=()):
+    def tri(self, a, b, c, mat, part, holes=(), flip=False):
         self.prims.append(Tri((self.W(a), self.W(b), self.W(c)), mat, part,
-                              [(self.W(h), r * self.s) for h, r in holes]))
+                              [(self.W(h), r * self.s) for h, r in holes], flip))
 
-    def decal(self, anchor, ax, ay, pixels, parts, force=False):
-        self.decals.append(Decal(self.W(anchor), self.Wd(ax), self.Wd(ay), pixels, parts, force))
+    def decal(self, anchor, ax, ay, pixels, parts, force=False, mats=()):
+        self.decals.append(Decal(self.W(anchor), self.Wd(ax), self.Wd(ay), pixels, parts, force, mats))
 
 
 # ---------------------------------------------------------------------------
@@ -343,22 +353,23 @@ def build_wing(B: Builder, sp: Species, side, w: WingPose, tears, mat_prefix='wi
     panels between fingers and from the last finger to the flank, with a
     scalloped, notched trailing edge. side -1 = the creature's port wing
     (screen left in the neutral view)."""
-    k = sp.span
+    k = sp.span * .92
+    P = rot_x(-B.view.pitch)  # wings beat in the camera plane
+
+    def pdir(a, sweep=0.0):
+        a, sw = math.radians(a), math.radians(sweep)
+        return P @ v(side * math.cos(a) * math.cos(sw), -math.sin(a) * math.cos(sw), math.sin(sw))
+
     root = v(side * 3.4 * sp.bulk, -6.2, -3.2)
-    hum = direction(w.elev, w.sweep - 18 * w.fold, side)
-    elbow = root + hum * 7.2 * k * (1 - .1 * w.fold)
-    fsweep = w.sweep - 20 - 95 * w.fold
-    fore = direction(w.elev + w.fore, fsweep, side)
-    wrist = elbow + fore * 9.5 * k * (1 - .25 * w.fold)
-    fl = (15.5, 17.5, 13.5)
+    ah = w.elev
+    elbow = root + pdir(ah, w.sweep) * 6.6 * k * (1 - .1 * w.fold)
+    af = ah + w.fore - 128 * w.fold
+    wrist = elbow + pdir(af, w.sweep * .6 - 25 * w.fold) * 8.6 * k * (1 - .28 * w.fold)
+    fl = (13.6, 15.4, 12.6)
     tips = []
     for i, L in enumerate(fl):
-        spread = (12 + 34 * i) * (1 - .45 * w.fold)
-        d = direction(w.elev + w.fore + w.curl * (0.5 + .4 * i) - 22 * i * (1 - .5 * w.fold) * 0,
-                      fsweep - spread - 25 * w.fold, side)
-        # Fingers fan from outward (leading) toward the back/down trailing edge.
-        d = norm(d + v(0, .32 * i, -.18 * i))
-        tips.append(wrist + d * L * k * (1 - .42 * w.fold))
+        a = af - (6 + 31 * i) * (1 - .35 * w.fold) - 18 * w.fold + w.curl * (.6 + .3 * i)
+        tips.append(wrist + pdir(a, w.sweep * .3 - 12 * w.fold - 4 * i) * L * k * (1 - .45 * w.fold))
     hip = v(side * 3.6, 7.5, -2.4)
     flank = v(side * 4.2, 1.5, -3.4)
     # Membrane panels; the trailing edges scallop toward the bones.
@@ -371,17 +382,17 @@ def build_wing(B: Builder, sp: Species, side, w: WingPose, tears, mat_prefix='wi
     holes = tears_for(side, tears, wrist, tips, elbow, hip)
     for i, (a, b, c) in enumerate(panels):
         s = scallop(b, c)
-        B.tri(a, b, s, front, f'wing{side}', holes)
-        B.tri(a, s, c, front, f'wing{side}', holes)
+        B.tri(a, b, s, front, f'wing{side}', holes, side > 0)
+        B.tri(a, s, c, front, f'wing{side}', holes, side > 0)
     # Inner panel from the last finger to the flank and hip.
     s2 = scallop(tips[2], hip, .22)
     for tri in ((wrist, tips[2], s2), (wrist, s2, hip), (wrist, hip, flank),
                 (wrist, flank, elbow), (elbow, flank, root)):
-        B.tri(*tri, front, f'wing{side}', holes)
+        B.tri(*tri, front, f'wing{side}', holes, side > 0)
     # Leading edge membrane (propatagium) root->wrist.
     lead = lerp(root, wrist, .5) + v(0, -1.0, 1.4)
-    B.tri(root, elbow, lead, front, f'wing{side}')
-    B.tri(elbow, wrist, lead, front, f'wing{side}')
+    B.tri(root, elbow, lead, front, f'wing{side}', (), side > 0)
+    B.tri(elbow, wrist, lead, front, f'wing{side}', (), side > 0)
     # Bones over the membrane.
     bone = 'wbone'
     B.chain([root, elbow], 1.25, 1.0, bone, f'arm{side}')
@@ -389,7 +400,7 @@ def build_wing(B: Builder, sp: Species, side, w: WingPose, tears, mat_prefix='wi
     for t in tips:
         B.chain([wrist, t], .78, .72, 'wfinger', f'wing{side}')
     # Thumb hook at the wrist.
-    thumb = wrist + direction(w.elev + 60, w.sweep + 30, side) * 2.4
+    thumb = wrist + pdir(af + 70, 20) * 2.4
     B.chain([wrist, thumb], .9, .72, 'claw', f'arm{side}')
     return dict(root=root, elbow=elbow, wrist=wrist, tips=tips)
 
@@ -402,7 +413,7 @@ def tears_for(side, tears, wrist, tips, elbow, hip):
     out.append((lerp(lerp(tips[0], tips[1], .5), wrist, .05), 1.3))
     out.append((lerp(lerp(tips[2], hip, .45), wrist, .06), 1.4))
     n = tears if side < 0 else max(0, tears - 1)
-    spots = [(0, .62, 1.5), (1, .55, 1.6), (2, .5, 1.7), (0, .35, 1.3), (1, .3, 1.5), (2, .72, 1.9)]
+    spots = [(0, .62, 2.1), (1, .55, 2.3), (2, .5, 2.4), (0, .35, 1.8), (1, .92, 2.6), (2, .95, 2.8)]
     for i in range(n):
         f, t, r = spots[i % len(spots)]
         a = tips[f] if f < 2 else tips[2]
@@ -415,13 +426,14 @@ def head_rot(turn):
     return rot_y(turn)
 
 
-def build_creature(sp: Species, pose: Pose, view: View, dmg: Damage, elite_level=None):
-    B = Builder(view, pose.lift)
+def build_creature(sp: Species, pose: Pose, view: View, dmg: Damage, elite_level=0, wings_on=True):
+    B = Builder(view, pose.lift, sp)
     side_l, side_r = -1, 1
-    tears = [0, 2, 3, 5][dmg.molt]
+    tears = [0, 2, 4, 6][dmg.molt]
     wings = {}
-    for side, w in ((side_l, pose.left), (side_r, pose.right)):
-        wings[side] = build_wing(B, sp, side, w, tears)
+    if wings_on:
+        for side, w in ((side_l, pose.left), (side_r, pose.right)):
+            wings[side] = build_wing(B, sp, side, w, tears)
     H = sp.hide
     bulk = sp.bulk
     name = sp.name
@@ -441,12 +453,12 @@ def build_creature(sp: Species, pose: Pose, view: View, dmg: Damage, elite_level
     sw = pose.legs
     for s in (-1, 1):
         hip = v(s * 2.8, 8, -.8)
-        knee = v(s * 4.2, 10.6, 2.6 + 1.2 * sw)
-        ankle = v(s * 3.6, 14.2, .4 + 1.6 * sw)
+        knee = v(s * 4.4, 9.6, 3.2 + 1.0 * sw)
+        ankle = v(s * 3.6, 11.8, -3.0 + 1.8 * sw)
         B.chain([hip, knee], 2.1, 1.6, 'hide', 'leg')
         B.chain([knee, ankle], 1.3, 1.0, 'hide', 'leg')
         for t in (-1, 0, 1):
-            toe = ankle + v(s * .6 + t * 1.1, 1.8, 1.4)
+            toe = ankle + v(s * .6 + t * 1.1, 1.9, -.8)
             B.chain([ankle, toe], .8, .72, 'claw', 'leg')
     # --- tail with a barb ----------------------------------------------------
     ts = pose.tail
@@ -519,7 +531,30 @@ def build_creature(sp: Species, pose: Pose, view: View, dmg: Damage, elite_level
     face = dict(H3=H3, hr=hr, hs=hs, snout=snout_len)
     build_face(B, sp, face, pose, dmg)
     build_insignia(B, sp, dmg, wings)
+    if elite_level:
+        build_elite(B, sp, H3, elite_level)
     return B, wings, face
+
+
+def build_elite(B, sp, H3, level):
+    """Elite armour, shed one level per hit: 4 gorget + gold-trimmed
+    pauldrons, 3 crest spikes, 2 side helm plates, 1 the gold double-chevron
+    brow rank mark (always kept)."""
+    hs = sp.head
+    if level >= 4:
+        B.ell(v(0, -3.6, 4.2), (3.6, 1.6, 1.8), 'eplate', 'body')
+        for s in (-1, 1):
+            B.ell(v(s * 6.6 * sp.bulk, -5.4, .8), (2.8, 1.7, 2.6), 'eplate', 'body')
+            B.sph(v(s * 6.6 * sp.bulk, -6.8, 1.2), 1.0, 'crown', 'body')
+    if level >= 3:
+        for x in (-1.4, 0, 1.4):
+            B.chain([H3((x, -2.6, .2)), H3((x * 1.4, -5.2 + abs(x) * .6, -1.0))], 1.0, .72, 'crown', 'head')
+    if level >= 2:
+        for s in (-1, 1):
+            B.ell(H3((s * 3.3, .4, 1.2)), np.array((1.0, 2.0, 1.8)) * hs, 'eplate', 'head')
+    chevron = [(x, y, 'gg3' if y < 1 else 'gg2') for y, xs in ((0, (-2, 2)), (1, (-1, 1)), (1, (-2, 2)), (2, (-1, 1)))
+               for x in xs] + [(0, 1, 'gg3'), (0, 2, 'gg2')]
+    B.decal(H3((0, -2.6, 3.0)), v(1, 0, 0), v(0, 1, 0), chevron, ('head',), force=True)
 
 
 def build_horns(B, sp, H3, molt):
@@ -529,10 +564,10 @@ def build_horns(B, sp, H3, molt):
         port = s < 0
         if name == 'teal':
             # Curled ram horns: out, up, back, then hooking forward.
-            pts = [(s * 2.2, -2.6, .6), (s * 4.4, -4.4, -.4), (s * 6.0, -5.0, -2.2), (s * 6.4, -3.4, -3.6),
-                   (s * 5.6, -1.8, -2.4), (s * 5.4, -1.4, -.6)]
+            pts = [(s * 2.0, -2.8, .6), (s * 4.0, -5.2, .2), (s * 6.2, -6.4, -1.0), (s * 7.6, -5.2, -1.8),
+                   (s * 7.4, -3.2, -1.2), (s * 6.4, -2.4, .2)]
             cut = {1: 6 if port else 6, 2: 5 if port else 6, 3: 4 if port else 5}.get(molt, 6)
-            B.chain([H3(p) for p in pts[:cut]], 1.45, .75, hm, 'head')
+            B.chain([H3(p) for p in pts[:cut]], 1.6, .8, hm, 'head')
         elif name == 'violet':
             # Short thick horns with riveted metal caps.
             pts = [(s * 2.4, -2.6, .4), (s * 4.0, -4.6, -.2), (s * 4.6, -6.0, -1.2)]
@@ -542,15 +577,15 @@ def build_horns(B, sp, H3, molt):
                 B.sph(H3(pts[2]), 1.25, 'cap', 'head')
         elif name == 'coral':
             # Long swept-back predator horns.
-            pts = [(s * 2.0, -2.4, .4), (s * 3.6, -3.8, -1.8), (s * 5.0, -4.6, -4.4), (s * 6.0, -4.8, -7.2)]
-            n = 4 if molt < (1 if port else 2) else 3
-            B.chain([H3(p) for p in pts[:n]], 1.35, .72, hm, 'head')
+            pts = [(s * 2.0, -2.4, .4), (s * 3.8, -4.0, -1.6), (s * 5.4, -5.4, -4.2), (s * 6.6, -6.4, -7.4), (s * 7.2, -6.6, -10.0)]
+            n = 5 if molt < (1 if port else 2) else 3
+            B.chain([H3(p) for p in pts[:n]], 1.45, .72, hm, 'head')
         else:
             # Elder: back-swept horns behind a crown.
             pts = [(s * 2.4, -2.2, -.6), (s * 4.6, -3.4, -2.2), (s * 5.8, -5.4, -3.0), (s * 5.4, -7.2, -2.2)]
             n = 4 if molt < (2 if port else 3) else 3
             B.chain([H3(p) for p in pts[:n]], 1.3, .72, hm, 'head')
-    if name == 'gold':
+    if name in ('gold', 'colossus'):
         # Crown band with three tines and a ruby.
         tines = [(-2.2, 3.4 - .6 * (molt >= 1)), (0, 4.4 - (molt >= 2) * 2), (2.2, 3.4 - (molt >= 3) * 2.2)]
         for x, ht in tines:
@@ -585,30 +620,34 @@ def build_face(B, sp, face, pose, dmg):
     hot = dmg.angry or dmg.flare
     eye = 'eye_r' if hot else sp.eye
     core = 'fire1' if hot else 'gglow'
-    # Eyes: glowing slits under the brow, drawn even if the brow overhangs.
+    # Eyes: 2x2 glowing eyes in dark slanted sockets under the brow.
     for s in (-1, 1):
-        a = H3((s * 1.75, -.3, 3.3))
+        a = H3((s * 1.8, -.2, 3.4))
+        inner, outer = (0, -1) if s < 0 else (-1, 0)
+        o2 = outer + (-1 if s < 0 else 1)
+        px = [(x, -1, 'gink') for x in range(-2, 2)] + [(o2, 0, 'gink'), (o2, 1, 'gink')]
+        px += [(inner, 0, core), (outer, 0, eye), (inner, 1, eye), (outer, 1, eye if not dmg.flare else 'fire1')]
         if dmg.angry:
-            px = [(-1, -1, 'gink'), (0, -1, 'gink'), (1, -1, 'gink'), (0, 0, eye), (1, 0, core) if s < 0 else (-1, 0, core),
-                  (-1 if s < 0 else 1, 0, eye)]
-        else:
-            px = [(0, 0, eye), (s * -1, 0, core), (0, 1, eye) if not dmg.flare else (0, 1, 'fire1'),
-                  (s * -1, -1, 'gink'), (0, -1, 'gink'), (s, -1, 'gink')]
+            px += [(inner, 0, 'gink'), (outer, 0, eye), (inner, 1, core)]
         B.decal(a, ax, ay, px, ('head',))
-    # Snarling maw with fangs.
-    open_ = 1 + (1 if (dmg.angry or pose.jaw > .3) else 0)
-    m = H3((0, 2.2 + pose.jaw * .4, 2.6 + snout * .75))
-    px = []
-    w = 2 if sp.name != 'violet' else 3
-    for dx in range(-w, w + 1):
-        for dy in range(0, open_):
-            px.append((dx, dy, 'gink' if not (sp.name == 'teal' and dmg.fire) else ('fire0' if dmg.fire == 2 else 'fire1')))
-    # Fangs: upper at the corners, lower inside.
-    px += [(-w, 0, 'fang'), (w, 0, 'fang'), (-w + 1, open_ - 1 + (1 if open_ > 1 else 0), 'fang') if open_ > 1 else (-1, 1, 'fang'),
-           (w - 1, open_ - 1 + (1 if open_ > 1 else 0), 'fang') if open_ > 1 else (1, 1, 'fang')]
-    if sp.name == 'teal' and dmg.fire:
-        px += [(0, -1, 'fire1'), (0, open_, 'fire1')]
-    B.decal(m, ax, ay, px, ('head',))
+    # Snarling maw with fangs; the teal throat emitter glows inside it.
+    open_ = 2 if (dmg.angry or pose.jaw > .3 or (sp.name in MAW_WEAPON and dmg.fire)) else 1
+    m = H3((0, 2.3 + pose.jaw * .4, 2.6 + snout * .75))
+    w = 3 if sp.name in ('violet', 'coral') else 2
+    inside = 'fire5'
+    if sp.name in MAW_WEAPON and dmg.fire:
+        inside = 'fire0' if dmg.fire == 2 else 'fire1'
+    px = [(dx, 0, 'gink') for dx in range(-w, w + 1)]
+    px += [(-w + 1, 0, 'fang'), (w - 1, 0, 'fang')]  # upper fangs
+    if open_ > 1:
+        px += [(dx, 1, inside) for dx in range(-w + 1, w)] + [(-w, 1, 'gink'), (w, 1, 'gink')]
+        px += [(-w + 1, 1, 'fang'), (w - 1, 1, 'fang'), (0, 2, 'gink')] + [(dx, 2, 'gink') for dx in range(-w + 1, w)]
+        px += [(-w + 2, 2, 'fang'), (w - 2, 2, 'fang')]  # lower fangs
+    else:
+        px += [(-w + 1, 1, 'fang'), (w - 1, 1, 'fang')]
+    if sp.name in MAW_WEAPON and dmg.fire:
+        px += [(0, -1, 'fire1'), (-1, 1 + open_, 'fire2'), (1, 1 + open_, 'fire2'), (0, 1 + open_, 'fire1')]
+    B.decal(m, ax, ay, px, ('head',), force=bool(sp.name in MAW_WEAPON and dmg.fire))
     # Nostrils / brow ridge highlight.
     B.decal(H3((0, -1.9, 3.8)), ax, ay, [(-1, 0, sp.hide[3]), (1, 0, sp.hide[3])], ('head',))
     if sp.name == 'gold':
@@ -643,6 +682,16 @@ def build_insignia(B, sp, dmg, wings):
             for t in range(3):
                 px.append((-2 + k * 2 + (1 if t == 0 else 0) - 0, -1 + t, 'gc3'))
         B.decal(chest, ax, ay, px, ('body',))
+    elif name == 'warden':
+        # Steel breastplate with a violet crescent rank mark.
+        B.ell(v(0, -1.4, 3.4), (4.6, 3.6, 2.0), 'plate', 'body')
+        px = _shape(['c...c', 'cc+cc', '.ccc.'], {'c': 'gv1', '+': 'gv1'})
+        B.decal(v(0, -1.6, 5.4), ax, ay, px, ('body',))
+    elif name == 'colossus':
+        # Gold breastplate with a ruby sunburst.
+        B.ell(v(0, -1.2, 3.6), (4.4, 3.6, 1.8), 'crown', 'body')
+        px = _shape(['r.r.r', '.rrr.', 'rr+rr', '.rrr.', 'r.r.r'], {'r': 'blood', '+': 'ivory'})
+        B.decal(v(0, -1.2, 5.4), ax, ay, px, ('body',))
     else:
         # Ruby star jewel on a gold breastplate.
         B.ell(v(0, -1.2, 3.6), (3.8, 3.2, 1.6), 'crown', 'body')
@@ -651,15 +700,22 @@ def build_insignia(B, sp, dmg, wings):
     # Molt cracks with glowing fissures on the stony hide.
     if dmg.molt:
         glow = 'fire1' if dmg.angry else 'fire2'
-        cracks = {
-            1: [((-3.2, -2.6, 4.2), [(0, 0), (1, 1), (1, 2)])],
-            2: [((-3.2, -2.6, 4.2), [(0, 0), (1, 1), (1, 2), (0, 3)]), ((2.6, 1.6, 4.0), [(0, 0), (-1, 1), (0, 2)])],
-            3: [((-3.2, -2.6, 4.2), [(0, 0), (1, 1), (1, 2), (0, 3), (1, 4)]), ((2.6, 1.6, 4.0), [(0, 0), (-1, 1), (0, 2), (-1, 3)]),
-                ((-1.2, 4.4, 3.4), [(0, 0), (1, 0), (2, 1)])],
-        }[dmg.molt]
-        for anchor, path in cracks:
-            px = [(x, y, glow if i % 2 else 'gink') for i, (x, y) in enumerate(path)]
-            B.decal(v(*anchor), ax, ay, px, ('body',))
+        zig = [(0, 0), (1, 1), (1, 2), (2, 3), (1, 4), (2, 5)]
+        cracks = [((-3.4, -3.4, 4.0), zig[:4], 1), ((3.0, 0.6, 3.8), [(0, 0), (-1, 1), (-1, 2), (-2, 3), (-1, 4)], 2),
+                  ((-4.6, -5.4, 1.5), [(0, 0), (1, 0), (2, 1), (3, 1)], 2), ((-1.0, 3.6, 3.2), zig, 3),
+                  ((5.0, -4.6, 1.6), [(0, 0), (-1, 1), (-1, 2), (-2, 2)], 3)]
+        mats = ('hide', 'belly', 'plate', 'crown')
+        for anchor, path, stage in cracks:
+            if stage > dmg.molt:
+                continue
+            px = []
+            for i, (x, y) in enumerate(path):
+                px += [(x - 1, y, 'gink'), (x, y, glow if i % 3 else 'fire0'), (x + 1, y, 'fire3')]
+            B.decal(v(*anchor), ax, ay, px, (), mats=mats)
+        # The fissured stone glows through at the core on the last molt.
+        if dmg.molt >= 3:
+            B.decal(v(0, 2.4, 4.6), ax, ay, [(0, 0, 'fire1'), (-1, 0, 'fire2'), (1, 0, 'fire2'), (0, 1, 'fire2')],
+                    (), mats=mats)
 
 
 # ---------------------------------------------------------------------------
@@ -682,6 +738,7 @@ def materials(sp: Species, dmg: Damage):
         'plate': ('met0', 'met1', 'met2', 'met3'),
         'barrel': ('met0', 'met0', 'met1', 'met2'),
         'crown': ('gg0', 'gg1', 'gg2', 'gg3'),
+        'eplate': ('met0', 'met1', 'met2', 'met3'),
         'barb': (hide[0], hide[1], hide[2], hide[3]) if sp.name != 'coral' else ('bone0', 'bone1', 'bone2', 'fang'),
         'orb': ('vio1', 'vio2', 'vio3', 'white'),
         'muzzle': ('ink2', 'ink2', 'met1', 'met1'),
@@ -720,8 +777,13 @@ def shade(R: Raster, mats, texture=None):
     return out
 
 
-def render(sp: Species, pose: Pose, view: View, dmg: Damage, texture_fn=None, outline='gink'):
-    B, wings, face = build_creature(sp, pose, view, dmg)
+def render(sp: Species, pose: Pose, view: View, dmg: Damage, texture_fn=None, outline='gink',
+           elite_level=0, wings_on=True):
+    B, wings, face = build_creature(sp, pose, view, dmg, elite_level, wings_on)
+    return rasterize(B, sp, view, dmg, texture_fn, outline)
+
+
+def rasterize(B, sp, view, dmg, texture_fn=None, outline='gink'):
     w, h = view.size
     R = Raster(w, h, view.origin)
     for p in B.prims:
@@ -793,10 +855,10 @@ def _contours(cv, R):
 def _decals(cv, R, decals):
     for d in decals:
         for dx, dy, col in d.pixels:
-            p = d.anchor + d.ax * dx + d.ay * dy
+            p = d.anchor + v(dx, dy, 0)
             x = int(math.floor(p[0] + R.origin[0]))
             y = int(math.floor(p[1] + R.origin[1]))
             if not (0 <= x < R.w and 0 <= y < R.h):
                 continue
-            if d.force or R.part[y, x] in d.parts:
+            if d.force or R.part[y, x] in d.parts or (d.mats and R.mat[y, x] in d.mats):
                 cv.px(x, y, col)
