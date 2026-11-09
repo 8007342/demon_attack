@@ -1,0 +1,178 @@
+{
+  "schema": "demon-attack.ground-forces/v2",
+  "name": "ground-forces",
+  "notes": "Demon ground army, allied human ground units (never killed: totalled, limping, crew pods), ground effects and the ground-to-air missile. Every value is an input to tools/ground_forces_assets.py. Silhouettes, launchers and every animation frame are authored on the texel grid; each unit's selected ComfyUI keyframe (LayerDiffuse transparent sprite) contributes a -1/0/+1 shading texture on its hull ramp, so all frames stay aligned pixel for pixel. Demon hull ramps are picked from the sector palette plus the reserved demon_steel greys at the demon_ramp luminances (chroma <= demon_hull_chroma).",
+  "atlas": {
+    "file": "assets/images/ground-forces.png",
+    "cell": [
+      32,
+      24
+    ],
+    "columns": 12,
+    "rows": 10
+  },
+  "style_prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
+  "sprite": {
+    "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+    "canvas_px": [
+      1024,
+      1024
+    ],
+    "candidates": 3,
+    "source_px": 64
+  },
+  "caps": {
+    "demon_ramp": [
+      0.06,
+      0.11,
+      0.18,
+      0.28,
+      0.4
+    ],
+    "demon_rim_luma": 0.56,
+    "demon_hull_chroma": 0.36
+  },
+  "reserved": {
+    "demon_warm": [
+      "#3A0A0C",
+      "#7A1410",
+      "#B8260F",
+      "#E8501A",
+      "#FF8A2A",
+      "#FFC85A",
+      "#FFF0B8"
+    ],
+    "ally_cyan": [
+      "#0C3A40",
+      "#16626A",
+      "#2AA59A",
+      "#70F5D5",
+      "#D2FFF4"
+    ],
+    "ally_hull": [
+      "#232D3B",
+      "#364355",
+      "#4E5E73",
+      "#6E8299",
+      "#98ABC0",
+      "#C4D2E0"
+    ],
+    "smoke": [
+      "#16181E",
+      "#262A32",
+      "#3A3F48",
+      "#555B65",
+      "#7A808A"
+    ],
+    "scorch": [
+      "#08080A",
+      "#121214",
+      "#1C1A1A",
+      "#2A2422"
+    ],
+    "demon_steel": [
+      "#2E2A33",
+      "#463E4A",
+      "#615664",
+      "#827484",
+      "#A898A6"
+    ]
+  },
+  "units": [
+    {
+      "id": "demon-krybor",
+      "row": 0,
+      "sector": "krybor",
+      "side": "demon",
+      "kind": "buggy",
+      "seed": 720100,
+      "prompt": "captured frontier six wheeled rocket buggy, battered dark steel armour, a twin rocket launcher rack on the back, a small horned imp driver with glowing red eyes, red hazard lamps, demonic war vehicle",
+      "selected": 720100
+    },
+    {
+      "id": "demon-ringfall",
+      "row": 1,
+      "sector": "ringfall",
+      "side": "demon",
+      "kind": "crawler",
+      "seed": 720200,
+      "prompt": "low tracked missile crawler welded from salvaged spaceship hull plates, dark violet metal, heavy caterpillar treads, a long missile launcher arm on top, glowing orange vents and red demon eye sensors",
+      "selected": 720201
+    },
+    {
+      "id": "demon-ember",
+      "row": 2,
+      "sector": "ember",
+      "side": "demon",
+      "kind": "beast",
+      "seed": 720300,
+      "prompt": "four legged lava forged demonic artillery beast, black basalt armour plates with molten orange cracks, curved horns, a big mortar cannon barrel mounted on its back, glowing ember eyes",
+      "selected": 720301
+    },
+    {
+      "id": "demon-hollow",
+      "row": 3,
+      "sector": "hollow",
+      "side": "demon",
+      "kind": "tower",
+      "seed": 720400,
+      "prompt": "walking gothic siege gargoyle launch tower, dark stone and iron, pointed arches, short stone legs, horned gargoyle head, a missile launch tube on top with red glowing runes",
+      "selected": 720401
+    },
+    {
+      "id": "ally-krybor",
+      "row": 4,
+      "sector": "krybor",
+      "side": "ally",
+      "kind": "rover",
+      "seed": 721100,
+      "prompt": "small human frontier snow rover, grey blue armoured hull, four big wheels, a small roof turret gun, cyan headlights and cyan stripe markings, military",
+      "selected": 721100
+    },
+    {
+      "id": "ally-ringfall",
+      "row": 5,
+      "sector": "ringfall",
+      "side": "ally",
+      "kind": "rover",
+      "seed": 721200,
+      "prompt": "small salvage militia armoured rover, grey blue patched metal hull, six wheels, a twin machine gun turret, teal cyan lights and markings",
+      "selected": 721202
+    },
+    {
+      "id": "ally-ember",
+      "row": 6,
+      "sector": "ember",
+      "side": "ally",
+      "kind": "turret",
+      "seed": 721300,
+      "prompt": "small human foundry defense gun turret on a squat armoured bunker base, grey blue steel, a long cannon barrel, cyan sensor lights",
+      "selected": 721300
+    },
+    {
+      "id": "ally-hollow",
+      "row": 7,
+      "sector": "hollow",
+      "side": "ally",
+      "kind": "walker",
+      "seed": 721400,
+      "prompt": "small two legged human resistance mech walker, grey blue armour, a boxy cockpit with a cyan visor, a gun pod on the side",
+      "selected": 721402
+    }
+  ],
+  "extras": [
+    {
+      "id": "missile",
+      "seed": 722100,
+      "prompt": "huge demonic missile warhead flying straight at the viewer, seen nose on from the front, round dark iron nose cone, four fins in a cross, a ring of glowing orange rocket exhaust flame around it",
+      "selected": 722102
+    },
+    {
+      "id": "explosion",
+      "seed": 722200,
+      "prompt": "pixel art explosion fireball, bright yellow core, orange and red fire, dark smoke edges, round burst",
+      "selected": 722200
+    }
+  ]
+}

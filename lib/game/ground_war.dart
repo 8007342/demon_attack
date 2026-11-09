@@ -51,7 +51,7 @@ abstract final class GroundTuning {
   static const leaveZ = 120.0; // y ~ 677: well below the screen
 
   /// Sprite scale relative to the landmarks' texel size.
-  static const unitScale = 1.05;
+  static const unitScale = 1.25;
   static const unitWidthTexels = 28.0;
   static const allyWidthTexels = 20.0;
 
@@ -92,14 +92,14 @@ abstract final class GroundTuning {
   static double dropChance(Difficulty d) => switch (d) {
     Difficulty.easy => .14,
     Difficulty.normal => .12,
-    Difficulty.hard => .10,
+    Difficulty.hard => .07,
   };
 
   /// Seconds of ground pressure without homing before a drop is guaranteed.
   static double pityTime(Difficulty d) => switch (d) {
     Difficulty.easy => 5,
     Difficulty.normal => 6,
-    Difficulty.hard => 7,
+    Difficulty.hard => 8,
   };
 
   /// After the pity time, the fleet air-drops one if no kill delivers it.
@@ -150,7 +150,7 @@ class GroundPlan {
     required int wave,
     required int wavesPerLevel,
   }) {
-    if (sector < 1 || sector > 4 || const bool.fromEnvironment("NO_GROUND")) return none;
+    if (sector < 1 || sector > 4 || const bool.fromEnvironment("GROUND_WAR_DISABLED")) return none;
     final s = step(d, route, sector);
     final density = DifficultyPolicy(d).density;
     final shots = d == Difficulty.easy ? 1 : 2;

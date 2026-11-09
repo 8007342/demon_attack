@@ -56,6 +56,11 @@ void steer(ArcadeModel model, {bool react = true, double reaction = 0}) {
 
 void main(List<String> args) {
   final react = !args.contains('--naive');
+  // --seed=N: a different deterministic run (default 1982).
+  final seed = int.parse(
+    args.where((a) => a.startsWith('--seed=')).firstOrNull?.split('=').last ??
+        '1982',
+  );
   // --reaction=S: the pilot notices a missile only S seconds after launch.
   final reaction = double.parse(
     args.where((a) => a.startsWith('--reaction=')).firstOrNull?.split('=').last ??
@@ -64,7 +69,7 @@ void main(List<String> args) {
   args = args.where((a) => !a.startsWith('--')).toList();
   final results = <Map<String, Object?>>[];
   for (final difficulty in Difficulty.values) {
-    final m = ArcadeModel(seed: 1982)..start(difficulty: difficulty);
+    final m = ArcadeModel(seed: seed)..start(difficulty: difficulty);
     final waves = <Map<String, Object?>>[];
     Map<String, Object?>? current;
     var startMs = 0, peakActive = 0, peakBullets = 0, peakElites = 0;
@@ -154,7 +159,7 @@ void main(List<String> args) {
     });
   }
   final report = {
-    'seed': 1982,
+    'seed': seed,
     'method': 'Protected real-projectile pilot; fixed steering; no human survival inference. Includes organic power pickups. Cinematic time excluded.',
     'pilot': react
         ? 'dodges ground missiles (reaction ${reaction}s), collects homing'
