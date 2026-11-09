@@ -1,0 +1,35 @@
+# Hand-tuned 32 px badge, left half (mirrored by tools/generate_icons.py).
+# . clear  k ink  g/G cyan glow  Y/y/e gold rim  i bone  w/v/b/a violet ramp
+# r/o eyes  3/2/1 hull  c canopy  t/m teal wing
+....YYYYYYYYYYYY
+..YYyyyyyyyyyyyy
+.Yyykkkkkkkkkkkk
+.yykkGkkkkkkkkkk
+yykkGiGkkkkkkkkk
+yykkGiGkkkkkkkkk
+yykkGwiGkkkkkkkk
+yykkGwiGkkkkkkkk
+yykkGwwiGkkkGGGG
+yykkGbwwiGGGwwww
+yykkgGbbwwkvvvvv
+yykkkgGGbbkvvvvv
+yykkkkgGabvaaavv
+yykkkkkgGbvoorvv
+yykkkkkkgGbvrrav
+yykkkkkkgGbvvvvv
+yykkkkkkkgGbvkkk
+yykkkkkkkkgGaiaa
+yykkkkkkkkkgGbbb
+yykkkkkkkkkkgGba
+yykkkkkkkkkkkgGG
+yykkkkkkkkkkkgG3
+yykkkkkkkkkkkGk3
+yykkkkkkkkkkkGkc
+yykkkkkkkkkkGkmc
+yykkkkkkkkkGkmt3
+yykkkkkkkkGkmtt3
+yykkkkkkkGkmttt2
+.yykkkkkkGmtttt2
+.eyykkkkkkGkkkGm
+..eeyyyyyyyyyyyy
+....eeeeeeeeeeee

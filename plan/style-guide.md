@@ -84,6 +84,10 @@ Title centers an original horned demon emblem and the Demon Attack wordmark, wit
 
 Top 10 uses aligned rank, three-character initials, and score columns. Initial entry offers three rotating wheels with A–Z and 0–9, clear upper/lower controls, a highlighted middle selection, and Submit. Avoid a freeform text field. Game-over and victory keep a darkened arena behind their overlays. Review phone portrait, narrow desktop, and wide desktop without horizontal overflow.
 
+### App icon
+
+The installed-app and tab icon is a dedicated emblem, never an enemy atlas frame: a horned gargoyle-demon head (violet ramp, bone horns, burning red eyes, fangs) with the fleet starfighter (teal wings, slate hull, cyan canopy) rising at it from below, both wrapped in a stepped cyan glow on midnight #100E2C, inside a gold #EFBD57 rim. The midnight tile and gold rim keep it legible on light and dark tab bars and taskbars. Large sizes rasterise the geometry in `art/icons/icon-spec.json` onto a 64 logical grid (8× at 512, 3× at 192); 16, 32 and 48 px are hand-tuned pixel maps (`art/icons/badge-*.txt`). Maskable and apple-touch versions put the emblem in a gold ring inside the 80% safe circle on a full-bleed field. Regenerate everything with `tools/generate_icons.py`; edit the spec or maps, never the PNGs.
+
 ## Current music score and playback
 
 Musical direction: original music only, never imitating an existing game's soundtrack. Retro sci-fi arcade (analog bass, square leads, drum machines) fused with dark synth and orchestral tension. The campaign darkens sector by sector as the demonic swarm consumes the human frontier, and the carrier's four forms escalate. Every cue shares **120 BPM** and a four-beat bar, so transitions land on the next bar line. Tension grows through density, timbre and register, never tempo.

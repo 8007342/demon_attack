@@ -1,0 +1,74 @@
+{
+  "family": "app-icon",
+  "generator": "tools/generate_icons.py",
+  "concept": "A horned gargoyle-demon crest with burning eyes, and the fleet starfighter rising at it from below in a cyan engine glow, on a midnight tile with a gold rim.",
+  "palette": {
+    "ink": "#100e2c",
+    "ink2": "#1c1a40",
+    "night": "#2b2a55",
+    "glow0": "#0f4f5e",
+    "glow1": "#147c93",
+    "teal": "#39dfcc",
+    "mint": "#a6fff0",
+    "cyan": "#6edcff",
+    "hul1": "#24304c",
+    "hul2": "#3c4c70",
+    "hul3": "#6c80a8",
+    "vio0": "#3a2a78",
+    "vio1": "#5840a3",
+    "vio2": "#a888ff",
+    "vio3": "#e0d4ff",
+    "bone": "#fff5c9",
+    "coral": "#ff786c",
+    "eye": "#ff355f",
+    "gol0": "#6b3f1e",
+    "gol1": "#a36635",
+    "gol2": "#efbd57",
+    "gol3": "#fff0a8"
+  },
+  "geometry": {
+    "note": "Unit square, y down. Every shape is rasterised at pixel centres (4x4 supersampling, coverage >= 0.5) onto a logical grid, then scaled up nearest-neighbour.",
+    "tile_radius": 0.2,
+    "rim": 0.055,
+    "rim_gap": 0.03,
+    "horn": {"base": [0.40, 0.31], "ctrl": [0.15, 0.30], "tip": [0.20, 0.075], "width": 0.09,
+             "note": "Quadratic Bezier centreline from base through ctrl to tip, width tapering to the tip; mirrored for the right horn."},
+    "head": [[0.5, 0.23], [0.58, 0.235], [0.645, 0.28], [0.67, 0.355], [0.655, 0.44], [0.61, 0.51], [0.555, 0.555], [0.5, 0.575]],
+    "ears": [[0.66, 0.355], [0.78, 0.325], [0.665, 0.43]],
+    "brow": [[0.5, 0.375], [0.64, 0.33], [0.655, 0.36], [0.5, 0.415]],
+    "eyes": [[0.35, 0.38], [0.455, 0.43], [0.45, 0.465], [0.365, 0.43]],
+    "mouth": [[0.42, 0.48], [0.58, 0.48], [0.565, 0.505], [0.435, 0.505]],
+    "fang": [[0.432, 0.485], [0.47, 0.485], [0.448, 0.545]],
+    "ship": {
+      "hull": [[0.5, 0.615], [0.53, 0.68], [0.537, 0.75], [0.545, 0.88], [0.455, 0.88], [0.463, 0.75], [0.47, 0.68]],
+      "wing": [[0.52, 0.715], [0.715, 0.84], [0.715, 0.88], [0.52, 0.855]],
+      "canopy": [[0.5, 0.68], [0.515, 0.705], [0.515, 0.755], [0.485, 0.755], [0.485, 0.705]],
+      "flame": [[0.47, 0.88], [0.53, 0.88], [0.5, 0.935]]
+    },
+    "note_halves": "head and brow are right halves (top centre to bottom centre) made whole by mirroring; horn, ears, eyes, fang and ship.wing are one side, mirrored about x = 0.5; ship.hull, canopy, flame and mouth are whole.",
+    "glow_radius": 0.035
+  },
+  "compositions": {
+    "badge": "Rounded midnight tile, gold rim, transparent corners: favicons and purpose 'any' icons.",
+    "full_bleed": "Square midnight field to the edges, circular gold ring and emblem inside the central 80% safe circle: purpose 'maskable' and the apple-touch icon (iOS rounds it itself).",
+    "monochrome": "Emblem silhouette only, white on transparency, eyes cut out: purpose 'monochrome'."
+  },
+  "outputs": [
+    {"path": "web/favicon.ico", "kind": "ico", "sizes": [16, 32, 48]},
+    {"path": "web/favicon.svg", "kind": "svg"},
+    {"path": "web/icons/favicon-16.png", "kind": "badge", "size": 16},
+    {"path": "web/icons/favicon-32.png", "kind": "badge", "size": 32},
+    {"path": "web/icons/favicon-48.png", "kind": "badge", "size": 48},
+    {"path": "web/icons/apple-touch-icon.png", "kind": "full_bleed", "size": 180, "grid": 90, "ring": 0.46},
+    {"path": "web/icons/Icon-192.png", "kind": "badge", "size": 192, "grid": 64},
+    {"path": "web/icons/Icon-512.png", "kind": "badge", "size": 512, "grid": 64},
+    {"path": "web/icons/Icon-maskable-192.png", "kind": "full_bleed", "size": 192, "grid": 96, "ring": 0.385},
+    {"path": "web/icons/Icon-maskable-512.png", "kind": "full_bleed", "size": 512, "grid": 128, "ring": 0.385},
+    {"path": "web/icons/Icon-monochrome-512.png", "kind": "monochrome", "size": 512, "grid": 64}
+  ],
+  "hand_tuned": {
+    "16": "art/icons/badge-16.txt",
+    "32": "art/icons/badge-32.txt",
+    "48": "art/icons/badge-48.txt"
+  }
+}
