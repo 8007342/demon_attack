@@ -8,7 +8,7 @@ Original music only: retro sci-fi arcade fused with dark synth and orchestral te
 
 ### Recorded cues (primary)
 
-The shipping music is a set of recorded loops generated locally with ACE-Step 1.5 (apache-2.0) in the project's ComfyUI studio, one per cue, in `web/audio/music/<cue>.ogg` (Opus, 80 kbps) and `<cue>.m4a` (AAC-LC, 96 kbps, fallback for browsers that cannot decode Ogg Opus). `web/audio/music/manifest.json` records every cue's kind, length, loop points, chosen seed, source tempo, cut point and file hashes. See the cue table in [style-guide.md](style-guide.md#current-music-score-and-playback).
+The shipping music is a set of recorded loops generated locally with ACE-Step 1.5 (apache-2.0) in the project's ComfyUI studio, one per cue, in `web/audio/music/<cue>.ogg` (Opus, 80 kbps) and `<cue>.m4a` (AAC-LC, 128 kbps, fallback for browsers that cannot decode Ogg Opus). `web/audio/music/manifest.json` records every cue's kind, length, loop points, chosen seed, source tempo, cut point and file hashes. See the cue table in [style-guide.md](style-guide.md#current-music-score-and-playback).
 
 Pipeline, all committed and reproducible:
 

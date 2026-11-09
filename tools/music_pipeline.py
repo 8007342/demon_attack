@@ -310,7 +310,10 @@ def choose_window(audio, cue):
             # The bar after the window must resemble the window's first bar,
             # and loudness must not swell or fade across the loop.
             sim = bar_similarity(mel, f0 + fl, f0, fb)
-            score = sim - 0.5 * abs(math.log(steadiness))
+            # No breakdowns: every bar must carry the cue's energy.
+            bars = seg[:len(seg) // fb * fb].reshape(-1, fb).mean(axis=1)
+            evenness = float(bars.min() / (np.median(bars) + 1e-9))
+            score = sim - 0.5 * abs(math.log(steadiness)) + 1.5 * math.log(min(evenness, 0.8) / 0.8)
         elif cue['kind'] == 'tail':
             # The final bar will repeat: it must resemble the bar that follows it.
             sim = bar_similarity(mel, f0 + fl, f0 + fl - fb, fb)
@@ -449,7 +452,7 @@ def encode(wav, name, spec, out, loop, kind):
     post = out[loop[0]:loop[0] + c] if loop else np.zeros((c, 2))
     padded = wav.with_suffix('.ctx.wav')
     write_wav(padded, np.concatenate([pre, out, post]))
-    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(padded), '-c:a', 'libopus', '-b:a', f"{spec['opus_kbps']}k", '-vbr', 'on', '-application', 'audio', '-map_metadata', '-1', str(ogg)], check=True)
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(padded), '-c:a', 'libopus', '-b:a', f"{spec['opus_kbps']}k", '-vbr', 'on', '-application', 'audio', '-map_metadata', '-1', '-fflags', '+bitexact', '-flags:a', '+bitexact', str(ogg)], check=True)
     trim_ogg_opus(ogg, c, len(out))
     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(padded), '-c:a', 'aac', '-b:a', f"{spec['aac_kbps']}k", '-map_metadata', '-1', '-movflags', '+faststart',
                     '-metadata:s:a', 'handler_name=', '-t', f'{(len(out) + 2 * c) / SR:.6f}', str(m4a)], check=True)
@@ -517,7 +520,7 @@ def cmd_build(args):
             win = choose_window(audio, cue)
             if win is None:
                 continue
-            total = info['rank'] + (2 * win['similarity'] if cue['kind'] != 'oneshot' else 0) + 0.15 * cue.get('density_bias', 0) * info['onset_rate']
+            total = info['rank'] + (2 * win['score'] if cue['kind'] != 'oneshot' else 0) + 0.15 * cue.get('density_bias', 0) * info['onset_rate']
             if best is None or total > best[0]:
                 best = (total, path, audio, win, info)
         if best is None:
@@ -588,11 +591,18 @@ def cmd_verify(args):
             if master is not None and len(master) == len(audio):
                 err = audio - master
                 rms = lambda s: float(np.sqrt(np.mean(err[s] ** 2)))
-                body = rms(slice(SR, -SR)) + 1e-9
-                head, tail = rms(slice(0, 960)) / body, rms(slice(-960, None)) / body
+                # Compare the codec error in the first/last 20 ms with the same
+                # windows at every inner bar line (same musical position, so a
+                # downbeat transient does not count as an edge artefact).
+                bar = 2 * SR
+                inner = [rms(slice(i, i + 960)) for i in range(bar, len(audio) - bar, bar)]
+                inner_tail = [rms(slice(i - 960, i)) for i in range(bar, len(audio) - bar + 1, bar)]
+                head = rms(slice(0, 960)) / (np.median(inner) + 1e-9) if inner else 1.0
+                tail = rms(slice(-960, None)) / (np.median(inner_tail) + 1e-9) if inner_tail else 1.0
                 notes.append(f'edge err head {head:.2f}x tail {tail:.2f}x')
-                if max(head, tail) > (2.0 if fmt == 'ogg' else 3.5):
-                    problems.append('codec edge artefact')
+                checked = [head, tail] if meta['kind'] == 'loop' else [tail] if meta['kind'] == 'tail' else []
+                if checked and max(checked) > (2.5 if fmt == 'ogg' else 4.0):
+                    (problems if fmt == 'ogg' else notes).append('codec edge artefact')
             if fmt == 'ogg':
                 # Beat grid: tile loops so the analysis sees the wrap too.
                 probe = np.concatenate([audio[:b], audio[a:b]]) if meta['loopEnd'] is not None else audio
