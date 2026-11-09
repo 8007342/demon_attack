@@ -523,20 +523,14 @@ class DemonScene extends FlameGame {
           );
         }
       }
-      final bank = d.bank.abs() > 0.01
-          ? d.bank.clamp(-1.0, 1.0)
-          : (d.vx / 140).clamp(-1.0, 1.0);
+      // Gargoyle frames carry their own banking (3/4 left/neutral/right
+      // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
-      if (bank.abs() > 0.04) {
-        c.translate(pos.dx, pos.dy);
-        c.rotate(bank * 0.09);
-        c.scale(1.0 - bank.abs() * 0.1, 1.0);
-        c.translate(-pos.dx, -pos.dy);
-      }
       final cell = CombatAtlas.creature(
         d,
         model.clock,
         fireAge: creatures.fireAge(d),
+        motion: creatures.motion.of(d),
       );
       final size = d.angry ? 44.0 : 40.0;
       sprite(
@@ -548,20 +542,20 @@ class DemonScene extends FlameGame {
         tint: cell.tintFlash ? Colors.white : null,
       );
       if (d.elite) {
-        // Authored elite layers: wing-root plates follow the stroke pose;
-        // helm, crest and gorget plates shed one level per hit.
-        final b = CombatAtlas.base(d.kind);
-        final stroke = cell.row != b + 4;
-        if (stroke) {
-          sprite(c, b + 6, cell.col % 8, pos, size);
-        }
-        final level = (4 - d.hp).clamp(0, 3);
-        sprite(c, b + 6, CombatAtlas.eliteArmorCol + level, pos, size);
+        // Authored elite armour for this direction/pose, shed one level per
+        // hit, offset by the frame's whole-pixel body lift.
+        sprite(
+          c,
+          cell.eliteRow,
+          cell.eliteCol,
+          pos + Offset(0, cell.lift * size / CombatAtlas.cell),
+          size,
+        );
       }
       _creatureLighting(
         c,
         pos,
-        bank,
+        0,
         width: d.angry ? 36 : 32,
         diving: d.dive > 0,
       );
@@ -597,7 +591,7 @@ class DemonScene extends FlameGame {
       c.rotate(fx.bank.clamp(-1.0, 1.0) * 0.09);
       sprite(
         c,
-        CombatAtlas.base(fx.kind) + 5,
+        CombatAtlas.deathRow(fx.kind),
         CombatAtlas.deathCol + fx.frame,
         Offset.zero,
         44,

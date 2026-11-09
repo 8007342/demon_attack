@@ -54,6 +54,19 @@ PALETTE = {
     'smk0': '#2a2638', 'smk1': '#4a4458', 'smk2': '#7a7290', 'smk3': '#b4acc4',
     # hull (player ship)
     'hul0': '#141c30', 'hul1': '#24304c', 'hul2': '#3c4c70', 'hul3': '#6c80a8',
+    # gargoyle creatures (2026-11 round 2): darker, saturated hide ramps,
+    # membrane ramps, horn/bone, glowing eyes and a deeper outline
+    'gink': '#0a0716',
+    'gt0': '#082a33', 'gt1': '#0f5a63', 'gt2': '#16958a', 'gt3': '#5fd8bc',
+    'gtw0': '#0c2236', 'gtw1': '#163c55', 'gtw2': '#1f6c78',
+    'gv0': '#24164e', 'gv1': '#4a2fa0', 'gv2': '#9070ff', 'gv3': '#cdb8ff',
+    'gvw0': '#1e1440', 'gvw1': '#3a2678', 'gvw2': '#6a4cd0',
+    'gc0': '#4a0e24', 'gc1': '#9a2040', 'gc2': '#f25a64', 'gc3': '#ffa08a',
+    'gcw0': '#2e0a1e', 'gcw1': '#5e1638', 'gcw2': '#b8385a',
+    'gg0': '#3e2108', 'gg1': '#7a4a12', 'gg2': '#c8902a', 'gg3': '#ffd866',
+    'ggw0': '#2a1a10', 'ggw1': '#4a2c1a', 'ggw2': '#8a5a2e',
+    'bone0': '#4a3a2e', 'bone1': '#9a8466', 'bone2': '#d8c69a', 'fang': '#fff3d6',
+    'geye': '#ffd23f', 'gglow': '#fffbe0',
 }
 
 

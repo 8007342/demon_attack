@@ -1,30 +1,53 @@
+import 'creature_motion.dart';
 import 'model.dart';
 
+/// One creature draw: the atlas cell, whether to tint it white (action
+/// frames without an authored flash), and the elite armour overlay cell with
+/// the body lift (logical px) it must be offset by to stay on the body.
+typedef CreatureCell = ({
+  int row,
+  int col,
+  bool tintFlash,
+  int eliteRow,
+  int eliteCol,
+  int lift,
+});
+
 /// Cell coordinates of `assets/images/combat.png`, the 64x64-logical-grid
-/// combat atlas (stored 1x). The authoritative contract is
-/// plan/sprite-atlas.md; tools/generate_sprites.py writes the image.
+/// gargoyle combat atlas (stored 1x, 32 columns). The authoritative contract
+/// is plan/sprite-atlas.md; tools/generate_sprites.py writes the image.
 abstract final class CombatAtlas {
   static const double cell = 64;
-  static const int speciesRows = 7;
-  static const int strokeFrames = 8;
+  static const int columns = 32;
+  static const int speciesRows = 9;
 
-  /// One full wing stroke lasts 0.5 s (the old four-frame cadence), so each
-  /// of the eight poses holds 1/16 s.
-  static const double strokeFps = 16;
+  /// Flight set per direction: 8 flap poses (0-3 downstroke, 4-7 upstroke)
+  /// and 2 glide poses (8-9). Directions left, neutral, right occupy
+  /// columns 0-9, 10-19, 20-29 of each damage-variant row.
+  static const int flightFrames = 10;
+  static const int flapFrames = 8;
+
+  /// Whole-body lift (logical px, negative = up) of each flight frame, as
+  /// authored in tools/generate_sprites.py (FLAP_LIFT + GLIDE_LIFT).
+  static const List<int> flightLift = [0, -1, -2, -2, -1, 0, 1, 1, 0, 1];
+  static const List<int> fireLift = [0, 0, -1, 0];
+  static const List<int> anticipationLift = [0, 0, -1, -1];
 
   static int base(int kind) => kind.clamp(0, 3) * speciesRows;
-  static const int explosionRow = 28;
-  static const int effectRow = 29;
-  static const int pickupRow = 30;
-  static const int fallbackRow = 31;
+  static const int explosionRow = 36;
+  static const int effectRow = 37;
+  static const int pickupRow = 38;
+  static const int fallbackRow = 39;
 
-  // Columns inside a species' action row (base + 4).
-  static const int anticipationCol = 0, diveCol = 4, fireCol = 8;
-  static const int angryFireCol = 12;
-  // Columns inside a species' flash/death row (base + 5).
-  static const int deathCol = 8;
-  // Columns inside a species' elite row (base + 6).
-  static const int eliteArmorCol = 8;
+  // Columns inside a species' action row (base + 7).
+  static const int anticipationCol = 0, fireCol = 4, angryFireCol = 8;
+  static const int deathCol = 12, diveCol = 20, diveFlashCol = 30;
+  static int actionRow(int kind) => base(kind) + 7;
+  static int deathRow(int kind) => actionRow(kind);
+
+  // Elite overlay row (base + 8): direction * 4 + level, dive 12 + level.
+  static int eliteRow(int kind) => base(kind) + 8;
+  static const int eliteDiveCol = 12;
 
   // Effect row columns.
   static const int sparkCol = 0, impactCol = 4, enemyMuzzleCol = 8;
@@ -39,45 +62,98 @@ abstract final class CombatAtlas {
     Power.large => 5,
   };
 
+  /// Damage variant row offset: 0 intact, 1-3 molts, 4 angry.
+  static int variant(Demon d) => d.angry ? 4 : (d.maxHp - d.hp).clamp(0, 3);
+
+  /// Fallback motion when no tracker state exists (e.g. a single painted
+  /// frame in a test): direction from the simulation's smoothed bank,
+  /// stroke from the clock.
+  static ({int dir, int frame}) _fallback(Demon d, double clock) {
+    final dir = d.bank <= -0.45
+        ? -1
+        : d.bank >= 0.45
+        ? 1
+        : 0;
+    final f = ((clock * 16 + d.seed * 2).floor() % flapFrames);
+    return (dir: dir, frame: f);
+  }
+
   /// The cell for an ordinary creature this frame. Presentation only: it
-  /// reads simulation state and never changes it.
-  static ({int row, int col, bool tintFlash}) creature(
+  /// reads simulation state and never changes it. Priority: dive warning
+  /// (anticipation) > dive > weapon fire > flight (direction, stroke or
+  /// glide) with damage variant and hit flash.
+  static CreatureCell creature(
     Demon d,
     double clock, {
     double? fireAge,
+    CreatureMotion? motion,
   }) {
     final b = base(d.kind);
     final seed = d.seed;
+    final e = eliteRow(d.kind);
+    final level = (4 - d.hp).clamp(0, 3);
+    final neutralElite = 4 + level;
     if (d.telegraph > 0) {
-      // Anticipation: wings cocked high, eyes flaring, a short hunch.
+      // Anticipation: wings cocked high, eyes flaring, the body rising.
+      final f = (clock * 12 + seed).floor() % 4;
       return (
-        row: b + 4,
-        col: anticipationCol + ((clock * 12 + seed).floor() % 4),
+        row: b + 7,
+        col: anticipationCol + f,
         tintFlash: d.flash > 0,
+        eliteRow: e,
+        eliteCol: neutralElite,
+        lift: anticipationLift[f],
       );
     }
     if (d.dive > 0) {
+      final f = (clock * 8 + seed).floor() % 2;
+      final flash = d.flash > 0;
       return (
-        row: b + 4,
-        col: diveCol + ((clock * 12 + seed).floor() % 4),
-        tintFlash: d.flash > 0,
+        row: b + 7,
+        col: flash ? diveFlashCol + f : diveCol + variant(d) * 2 + f,
+        tintFlash: false,
+        eliteRow: e,
+        eliteCol: eliteDiveCol + level,
+        lift: 0,
       );
     }
     if (fireAge != null && fireAge < firePoseSeconds) {
       final f = (fireAge / firePoseSeconds * 4).floor().clamp(0, 3);
       return (
-        row: b + 4,
+        row: b + 7,
         col: (d.angry ? angryFireCol : fireCol) + f,
         tintFlash: d.flash > 0,
+        eliteRow: e,
+        eliteCol: neutralElite,
+        lift: d.angry ? 0 : fireLift[f],
       );
     }
-    final f = ((clock * strokeFps + seed * 2).floor() % strokeFrames);
-    if (d.angry) return (row: b, col: 8 + f, tintFlash: d.flash > 0);
-    final molt = (d.maxHp - d.hp).clamp(0, 3);
-    if (molt > 0) {
-      return (row: b + molt, col: f + (d.flash > 0 ? 8 : 0), tintFlash: false);
+    final fb = motion == null ? _fallback(d, clock) : null;
+    final dir = motion?.dir ?? fb!.dir;
+    final frame = motion?.frame ?? fb!.frame;
+    final di = dir + 1;
+    final v = variant(d);
+    final elite = di * 4 + level;
+    if (d.flash > 0) {
+      final pose = frame < flapFrames ? frame ~/ 2 : 1;
+      final slot = v * 12 + di * 4 + pose;
+      return (
+        row: b + 5 + slot ~/ columns,
+        col: slot % columns,
+        tintFlash: false,
+        eliteRow: e,
+        eliteCol: elite,
+        lift: flightLift[pose * 2],
+      );
     }
-    return (row: d.flash > 0 ? b + 5 : b, col: f, tintFlash: false);
+    return (
+      row: b + v,
+      col: di * flightFrames + frame,
+      tintFlash: false,
+      eliteRow: e,
+      eliteCol: elite,
+      lift: flightLift[frame],
+    );
   }
 
   static const double firePoseSeconds = 0.28;
@@ -91,8 +167,7 @@ class DeathFx {
   final int kind;
   final double x, y, bank;
   double age = 0;
-  int get frame =>
-      (age / CombatAtlas.deathSeconds * 8).floor().clamp(0, 7);
+  int get frame => (age / CombatAtlas.deathSeconds * 8).floor().clamp(0, 7);
 }
 
 /// Scene-side bookkeeping for presentation that the simulation does not
@@ -104,6 +179,7 @@ class CreaturePresentation {
   final _seenShot = Expando<bool>('seenShot');
   final _suppressedBlast = Expando<bool>('suppressedBlast');
   final List<DeathFx> deaths = [];
+  final motion = CreatureMotionTracker();
   List<Demon> _previous = const [];
 
   double? fireAge(Demon d) => _fireAge[d];
@@ -112,6 +188,7 @@ class CreaturePresentation {
   void update(ArcadeModel model, double dt) {
     final live = dt > 0 && model.mode != RunMode.paused;
     if (live) {
+      motion.update(model, dt);
       for (final d in model.demons) {
         final age = _fireAge[d];
         if (age != null) _fireAge[d] = age + dt;
