@@ -143,6 +143,8 @@ class HintDeck {
               hint.isEligible(difficulty) &&
               (!hint.requiresLaterRoute || route >= 1) &&
               (!hint.requiresGroundForces || level <= 4) &&
+              // Ground missiles first fly from Ember Moon (breakthroughs).
+              (hint.id != 'ground_missiles' || level >= 3 || route >= 1) &&
               (!{'carrier_hatch', 'carrier_field'}.contains(hint.id) ||
                   level >= 3 ||
                   route >= 1),
@@ -171,12 +173,12 @@ class HintDeck {
             }.contains(hint.id),
           )
           .firstOrNull;
-    } else if (level == 2 && !_introduced.contains('ground_missiles')) {
-      // The first ground unit fought late over Krybor; teach it next.
+    } else if (level == 3 && !_introduced.contains('ground_missiles')) {
+      // Ember Moon is where demon units can first break through and fire.
       preferred = candidates
           .where((hint) => hint.id == 'ground_missiles')
           .firstOrNull;
-    } else if (level == 3 && !_introduced.contains('homing_missiles')) {
+    } else if (level == 4 && !_introduced.contains('homing_missiles')) {
       preferred = candidates
           .where((hint) => hint.id == 'homing_missiles')
           .firstOrNull;
