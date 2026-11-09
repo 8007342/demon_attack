@@ -1,0 +1,13 @@
+{
+  "1": {"class_type": "LoadImage", "_meta": {"title": "image"},
+        "inputs": {"image": "$input"}},
+  "2": {"class_type": "LoadRembgByBiRefNetModel", "_meta": {"title": "birefnet"},
+        "inputs": {"model": "model.safetensors", "device": "AUTO", "use_weight": false, "dtype": "float32"}},
+  "3": {"class_type": "GetMaskByBiRefNet", "_meta": {"title": "mask"},
+        "inputs": {"model": ["2", 0], "images": ["1", 0], "width": 1024, "height": 1024,
+                   "upscale_method": "bilinear", "mask_threshold": 0.0}},
+  "4": {"class_type": "MaskToImage", "_meta": {"title": "mask image"},
+        "inputs": {"mask": ["3", 0]}},
+  "5": {"class_type": "SaveImage", "_meta": {"title": "save"},
+        "inputs": {"images": ["4", 0], "filename_prefix": "comms/matte"}}
+}

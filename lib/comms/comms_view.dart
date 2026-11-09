@@ -612,7 +612,7 @@ class CommsSidePanels extends StatelessWidget {
       rect: box,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xF2080D18),
+          color: zoom > 1 ? const Color(0xFF080D18) : const Color(0xF2080D18),
           border: Border.all(
             color: m != null ? accent.withValues(alpha: .7) : _line,
           ),

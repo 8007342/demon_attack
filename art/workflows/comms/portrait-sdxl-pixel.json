@@ -1,0 +1,20 @@
+{
+  "1": {"class_type": "CheckpointLoaderSimple", "_meta": {"title": "checkpoint"},
+        "inputs": {"ckpt_name": "sdxl-full/sd_xl_base_1.0.safetensors"}},
+  "2": {"class_type": "LoraLoader", "_meta": {"title": "pixel-art-xl"},
+        "inputs": {"model": ["1", 0], "clip": ["1", 1], "lora_name": "pixel-art-xl.safetensors",
+                   "strength_model": 1.0, "strength_clip": 1.0}},
+  "3": {"class_type": "CLIPTextEncode", "_meta": {"title": "$prompt"},
+        "inputs": {"clip": ["2", 1], "text": "pixel art character portrait, head and shoulders, facing viewer, flat solid grey background"}},
+  "4": {"class_type": "CLIPTextEncode", "_meta": {"title": "$negative_prompt"},
+        "inputs": {"clip": ["2", 1], "text": "text, watermark, logo, blurry, photo, 3d render"}},
+  "5": {"class_type": "EmptyLatentImage", "_meta": {"title": "canvas"},
+        "inputs": {"width": 1024, "height": 1024, "batch_size": 1}},
+  "6": {"class_type": "KSampler", "_meta": {"title": "$seed"},
+        "inputs": {"model": ["2", 0], "positive": ["3", 0], "negative": ["4", 0], "latent_image": ["5", 0],
+                   "seed": 1, "steps": 26, "cfg": 7.0, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 1.0}},
+  "7": {"class_type": "VAEDecode", "_meta": {"title": "decode"},
+        "inputs": {"samples": ["6", 0], "vae": ["1", 2]}},
+  "8": {"class_type": "SaveImage", "_meta": {"title": "save"},
+        "inputs": {"images": ["7", 0], "filename_prefix": "comms/keyframe"}}
+}
