@@ -18,7 +18,8 @@
     "shield": 3,
     "powerful": 4,
     "large": 5,
-    "shots": 6
+    "shots": 6,
+    "homing": 7
   },
   "columns": {
     "hull": {
@@ -110,6 +111,30 @@
         14,
         15
       ]
+    },
+    "homing": {
+      "rack_loaded_3_to_0": [
+        0,
+        3
+      ],
+      "missile": [
+        4,
+        5
+      ],
+      "reticle": [
+        6,
+        7
+      ],
+      "launch_flash": [
+        8,
+        9
+      ],
+      "deploy": [
+        10,
+        13
+      ],
+      "detached": 14,
+      "badge": 15
     }
   },
   "mirrored_left_only": [

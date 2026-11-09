@@ -1,32 +1,67 @@
-// dart run tools/profile_difficulty.dart /tmp/calibration-pilot.json
+// dart run tools/profile_difficulty.dart /tmp/calibration-pilot.json [--naive]
 // A protected deterministic pilot measures workload, not human survival or fun.
+// The default pilot sidesteps ground missiles and collects homing pickups;
+// --naive ignores both, to measure how much the ground war threatens a pilot
+// who never reacts to it.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:demon_attack/game/model.dart';
 
-void steer(ArcadeModel model) {
+/// Ground-war reactions, kept identical to test/campaign_playtest_test.dart:
+/// head for a falling homing pickup, and never stand in the danger band of
+/// a ground missile's fixed path.
+double groundAwareX(ArcadeModel model, double x, {double reaction = 0}) {
+  final pickup = model.ground.pickups.firstOrNull;
+  if (pickup != null && pickup.y > 250) x = pickup.x;
+  const danger =
+      GroundTuning.shipHalfWidth +
+      GroundTuning.missileMaxSize * GroundTuning.missileHitRatio +
+      16;
+  for (final m in model.ground.missiles) {
+    if (m.spent || m.t > 1.1 || m.age < reaction) continue;
+    if ((x - m.targetX).abs() >= danger) continue;
+    final sides = [
+      m.targetX - danger - 4,
+      m.targetX + danger + 4,
+    ].where((v) => v >= 18 && v <= ArcadeModel.width - 18);
+    x = sides.reduce(
+      (a, b) => (a - model.shipX).abs() <= (b - model.shipX).abs() ? a : b,
+    );
+  }
+  return x;
+}
+
+void steer(ArcadeModel model, {bool react = true, double reaction = 0}) {
+  var x = model.shipX;
   final boss = model.boss;
   if (boss != null) {
     final flight = (ArcadeModel.shipY - boss.y) / 390;
-    model.moveTo(boss.forecastX(flight, model.speed));
+    x = boss.forecastX(flight, model.speed);
   } else if (model.demons.isNotEmpty) {
     final d = model.demons.first;
     final flight = (ArcadeModel.shipY - d.y) / 390;
     final time = model.levelClock + flight;
-    final x = d.isLarge
+    x = d.isLarge
         ? d.x
         : d.dive > 0
         ? d.targetX + (d.x - d.targetX) * math.exp(-1.8 * flight)
         : d.homeX +
               math.sin(time * (.9 + d.kind * .12) * model.speed + d.seed) * 29 +
               math.sin(time * .44 * model.policy.hostileRate) * 13;
-    model.moveTo(x);
   }
+  model.moveTo(react ? groundAwareX(model, x, reaction: reaction) : x);
 }
 
 void main(List<String> args) {
+  final react = !args.contains('--naive');
+  // --reaction=S: the pilot notices a missile only S seconds after launch.
+  final reaction = double.parse(
+    args.where((a) => a.startsWith('--reaction=')).firstOrNull?.split('=').last ??
+        '0',
+  );
+  args = args.where((a) => !a.startsWith('--')).toList();
   final results = <Map<String, Object?>>[];
   for (final difficulty in Difficulty.values) {
     final m = ArcadeModel(seed: 1982)..start(difficulty: difficulty);
@@ -74,7 +109,7 @@ void main(List<String> args) {
           }
         }
         m.invulnerable = 2;
-        steer(m);
+        steer(m, react: react, reaction: reaction);
         peakActive = math.max(peakActive, m.demons.length);
         peakElites = math.max(
           peakElites,
@@ -104,12 +139,26 @@ void main(List<String> args) {
       'peakActive': peakActive,
       'peakHostileBullets': peakBullets,
       'peakOrdinaryElites': peakElites,
+      'ground': {
+        'unitsSpawned': m.ground.unitsSpawned,
+        'unitsDestroyed': m.ground.unitsDestroyed,
+        'missilesLaunched': m.ground.missilesLaunched,
+        'missileImpacts': m.ground.missileImpacts,
+        'homingCollected': m.ground.homingCollected,
+        'homingHits': m.ground.homingHits,
+        'alliesSaved': m.ground.alliesSaved,
+        'alliesRetreated': m.ground.alliesRetreated,
+        'fleetIntactRun': m.ground.fleetIntactRun,
+      },
       'waves': waves,
     });
   }
   final report = {
     'seed': 1982,
     'method': 'Protected real-projectile pilot; fixed steering; no human survival inference. Includes organic power pickups. Cinematic time excluded.',
+    'pilot': react
+        ? 'dodges ground missiles (reaction ${reaction}s), collects homing'
+        : 'naive (ignores the ground war)',
     'modes': results,
   };
   final output = args.isEmpty ? '/tmp/calibration-pilot.json' : args.first;
@@ -117,7 +166,7 @@ void main(List<String> args) {
       .writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
   for (final result in results) {
     stdout.writeln(
-      '${result['mode']}: ${result['activeMilliseconds']}ms, median wave ${result['medianOrdinaryMilliseconds']}ms, p95 ${result['p95OrdinaryMilliseconds']}ms, peak ${result['peakActive']} enemies/${result['peakHostileBullets']} bullets',
+      '${result['mode']}: ${result['activeMilliseconds']}ms, median wave ${result['medianOrdinaryMilliseconds']}ms, p95 ${result['p95OrdinaryMilliseconds']}ms, peak ${result['peakActive']} enemies/${result['peakHostileBullets']} bullets, ground ${jsonEncode(result['ground'])}',
     );
   }
 }

@@ -220,6 +220,55 @@ class _HintArtState extends State<HintArt> {
             ),
         ],
       ),
+      'ground_missiles' => const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'GLOW',
+            style: TextStyle(
+              color: Color(0xFFFF8676),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          arrow,
+          Text(
+            'SIDESTEP',
+            style: TextStyle(
+              color: Color(0xFF70F5D5),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      'homing_missiles' => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomPaint(
+            size: const Size(28, 28),
+            painter: PowerGlyphPainter(const {}, homingMissiles: 3),
+          ),
+          const SizedBox(width: 4),
+          const Text(
+            homingName,
+            style: TextStyle(
+              color: homingColor,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          arrow,
+          const Text(
+            'x3 AUTO',
+            style: TextStyle(
+              color: Color(0xFFE1EBF4),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
       'sling_shot' => const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -287,6 +336,12 @@ const _descriptions = <String, String>{
       'Defeat a carrier to earn one extra life, shown by a full heart.',
   'campaign_medals':
       'Five distinct campaign medals, one for each carrier victory.',
+  'ground_missiles':
+      'A launcher on the ground glows, then fires a large missile toward '
+      'where the ship was; the ship slides aside and it misses.',
+  'homing_missiles':
+      'Three homing missiles leave the ship one after another and lock on '
+      'to a ground launcher.',
 };
 
 class _HintScenePainter extends CustomPainter {
@@ -315,6 +370,10 @@ class _HintScenePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (scene == 'ground_missiles' || scene == 'homing_missiles') {
+      _groundScene(canvas, size, homing: scene == 'homing_missiles');
+      return;
+    }
     final atlas = image;
     if (atlas == null) return;
     final measured = _tiles[scene] ?? _tiles['shield_weapon_combo']!;
@@ -424,6 +483,82 @@ class _HintScenePainter extends CustomPainter {
       paint.color = const Color(0xFFFFF5C9);
       canvas.drawRect(Rect.fromLTWH(targetX - 3, targetY - 2, 6, 4), paint);
     }
+  }
+
+  /// Ground-war lessons drawn on the logical pixel grid: horizon, ground,
+  /// a launcher with its glow, the missile's fixed path, the ship.
+  void _groundScene(Canvas canvas, Size size, {required bool homing}) {
+    final u = math.max(2.0, (math.min(size.width / 120, size.height / 60)).floorToDouble());
+    final w = (size.width / u).floor(), h = (size.height / u).floor();
+    final ox = ((size.width - w * u) / 2).roundToDouble();
+    final oy = ((size.height - h * u) / 2).roundToDouble();
+    final paint = Paint()..isAntiAlias = false;
+    void px(num x, num y, num pw, num ph, Color c) {
+      paint.color = c;
+      canvas.drawRect(Rect.fromLTWH(ox + x * u, oy + y * u, pw * u, ph * u), paint);
+    }
+
+    final horizon = (h * .28).floor();
+    px(0, 0, w, horizon, const Color(0xFF0A1226));
+    for (var y = horizon; y < h; y++) {
+      final t = (y - horizon) / (h - horizon);
+      px(0, y, w, 1, Color.lerp(const Color(0xFF0B1522), const Color(0xFF1B2A3C), t)!);
+      if ((y - horizon) % 5 == 2) px(0, y, w, 1, const Color(0x2246617A));
+    }
+    for (var i = 0; i < 9; i++) {
+      px((i * 37) % w, (i * 11) % (horizon - 2), 1, 1, const Color(0xFF46617A));
+    }
+    // Launcher on the ground, left: a dark hull with a raised, glowing tube.
+    final lx = (w * .14).floor(), ly = (h * .62).floor();
+    px(lx, ly, 18, 5, const Color(0xFF34364F));
+    px(lx + 1, ly + 5, 4, 2, const Color(0xFF15142A));
+    px(lx + 12, ly + 5, 4, 2, const Color(0xFF15142A));
+    px(lx + 4, ly - 4, 6, 4, const Color(0xFF4A4C6A));
+    px(lx + 9, ly - 8, 3, 6, const Color(0xFF4A4C6A));
+    px(lx + 9, ly - 9, 3, 2, homing ? const Color(0xFF6B2C2C) : const Color(0xFFFFD594));
+    px(lx + 2, ly + 1, 2, 1, const Color(0xFFFF355F));
+    final shipX = (w * (homing ? .5 : .72)).floor(), shipY = h - 9;
+    if (!homing) {
+      // Warm warning brackets, the fixed path to the old position, the
+      // growing warhead, and the ship already aside.
+      px(lx - 1, ly + 8, 3, 1, const Color(0xFFFF8676));
+      px(lx + 16, ly + 8, 3, 1, const Color(0xFFFF8676));
+      final oldX = (w * .5).floor();
+      for (var k = 0; k <= 10; k++) {
+        final t = k / 10;
+        final x = (lx + 10 + (oldX - lx - 10) * t).round();
+        final y = (ly - 9 + (shipY - ly + 9) * t - 14 * math.sin(math.pi * t)).round();
+        final s = 1 + (t * 3).floor();
+        px(x, y, s, s, k == 10 ? const Color(0xFFFF8676) : const Color(0xFF7A7290));
+      }
+      px(oldX - 4, shipY + 5, 2, 1, const Color(0xFFFF8676));
+      px(oldX + 4, shipY + 5, 2, 1, const Color(0xFFFF8676));
+      for (var k = 1; k <= 3; k++) {
+        px(shipX - 3 - k * 4, shipY + 2, 2, 1, const Color(0x6670F5D5));
+      }
+    } else {
+      // Three missiles in sequence, the reticle locked on the launcher.
+      for (final (dx, dy) in const [(0, -6), (-6, -18), (-12, -30)]) {
+        final x = shipX + dx - (dy * .7).round(), y = shipY + dy;
+        px(x, y, 1, 3, const Color(0xFFD8E2FF));
+        px(x, y + 3, 1, 2, homingColor);
+      }
+      const m = Color(0xFF70F5D5);
+      for (final (cx, cy) in [(lx - 2, ly - 11), (lx + 17, ly - 11), (lx - 2, ly + 7), (lx + 17, ly + 7)]) {
+        px(cx, cy, 3, 1, m);
+        px(cx + (cx < lx ? 0 : 2), cy + (cy < ly ? 0 : -2), 1, 3, m);
+      }
+      for (var k = 0; k < 12; k++) {
+        final t = k / 12;
+        px((shipX - 12 + (lx + 9 - shipX + 12) * t).round(),
+            (shipY - 30 + (ly - shipY + 30) * t).round(), 1, 1, const Color(0x886EDCFF));
+      }
+    }
+    // The ship.
+    px(shipX - 1, shipY - 3, 2, 3, const Color(0xFF6EDCFF));
+    px(shipX - 4, shipY, 8, 2, const Color(0xFF3C4C70));
+    px(shipX - 1, shipY, 2, 4, const Color(0xFF6C80A8));
+    px(shipX - 1, shipY + 4, 2, 1, const Color(0xFF70F5D5));
   }
 
   @override
