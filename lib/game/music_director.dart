@@ -34,6 +34,10 @@ class MusicDirector {
     GameEventNames.reinforcementsArrived: 1.0,
   };
 
+  /// Ground-war pressure (the `groundPressure` event's 0..1 level) adds a
+  /// tier at 0.4 and two at 0.8.
+  static const pressureSteps = [0.4, 0.8];
+
   /// Ground-war events (from the shared bridge) that raise the tension.
   static const groundThreats = {
     GameEventNames.allyUnderAttack,
@@ -43,13 +47,17 @@ class MusicDirector {
   final Map<String, double> _lastTell = {};
   int? sentTier;
   int target = 1;
-  double _lowerFor = 0, _lifted = 0, _clock = 0;
+  double _lowerFor = 0, _lifted = 0, _clock = 0, _pressure = 0;
   final Set<Demon> _telling = {}, _lastStands = {};
   bool _hatchOpen = false;
   (int, int)? _scene;
 
   /// The intensity the current state asks for, before hysteresis.
-  static int targetTier(ArcadeModel model, {bool lifted = false}) {
+  static int targetTier(
+    ArcadeModel model, {
+    bool lifted = false,
+    double pressure = 0,
+  }) {
     final carrier = model.boss;
     int tier;
     if (carrier != null) {
@@ -69,6 +77,7 @@ class MusicDirector {
         tier = 4;
       }
     }
+    tier += pressureSteps.where((step) => pressure >= step).length;
     if (model.lives <= 1) tier++;
     return tier.clamp(1, 4);
   }
@@ -76,7 +85,16 @@ class MusicDirector {
   /// Listener for the shared bridge: ground threats lift the tier.
   void onGameEvent(GameEvent event) {
     if (groundThreats.contains(event.name)) _lifted = reinforcementLift;
+    if (event.name == groundPressure) {
+      final value =
+          event.data['level'] ?? event.data['pressure'] ?? event.data['value'];
+      if (value is num) _pressure = value.toDouble().clamp(0.0, 1.0);
+    }
   }
+
+  /// Ground-war retune names (matched as strings; owned by game_events.dart).
+  static const groundPressure = 'groundPressure';
+  static const groundBreakthrough = 'groundBreakthrough';
 
   void observe(ArcadeModel model, double dt) {
     final scene = (model.level, model.cycle);
@@ -97,7 +115,7 @@ class MusicDirector {
     }
     _lifted = (_lifted - dt).clamp(0, reinforcementLift);
     _tells(model);
-    final wanted = targetTier(model, lifted: _lifted > 0);
+    final wanted = targetTier(model, lifted: _lifted > 0, pressure: _pressure);
     if (sentTier == null || wanted > target) {
       target = wanted;
       _lowerFor = 0;
@@ -154,7 +172,7 @@ class MusicDirector {
   void _reset() {
     sentTier = null;
     target = 1;
-    _lowerFor = _lifted = 0;
+    _lowerFor = _lifted = _pressure = 0;
     _telling.clear();
     _lastStands.clear();
     _hatchOpen = false;
@@ -184,6 +202,7 @@ class MusicBridge {
     GameEventNames.lastStandTell: 'laststand',
     GameEventNames.carrierHatchOpen: 'hatch',
     GameEventNames.reinforcementsArrived: 'reinforce',
+    MusicDirector.groundBreakthrough: 'breakthrough',
   };
 
   void call(GameEvent event) {

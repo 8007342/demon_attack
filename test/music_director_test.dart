@@ -115,6 +115,32 @@ void main() {
     );
   });
 
+  test('ground pressure feeds the tier; a breakthrough plays its accent', () {
+    final log = Log();
+    final m = ArcadeModel()..restoreCheckpoint({'level': 2, 'wave': 1});
+    m.mode = RunMode.playing;
+    m.demons.clear();
+    log.director.observe(m, 1 / 60);
+    expect(log.tiers.last, 1);
+    log.director.onGameEvent(
+      const GameEvent(MusicDirector.groundPressure, {'level': 0.5}),
+    );
+    log.director.observe(m, 1 / 60);
+    expect(log.tiers.last, 2, reason: 'pressure 0.5 adds a tier');
+    log.director.onGameEvent(
+      const GameEvent(MusicDirector.groundPressure, {'pressure': 0.9}),
+    );
+    log.director.observe(m, 1 / 60);
+    expect(log.tiers.last, 3, reason: 'pressure 0.9 adds two');
+    final accents = <String>[];
+    MusicBridge(
+      onIntensity: (_) {},
+      onAccent: accents.add,
+      onFleetIntact: () {},
+    ).call(const GameEvent(MusicDirector.groundBreakthrough));
+    expect(accents, ['breakthrough']);
+  });
+
   test('carrier forms map to tiers; the central hatch tell is spaced', () {
     final log = Log();
     final m = ArcadeModel()..restoreCheckpoint({'level': 5, 'cycle': 2});
@@ -173,7 +199,13 @@ void main() {
         const GameEvent(GameEventNames.musicIntensity, {'tier': 1}),
       );
       expect(tiers, [3]);
-      expect(accents, ['dive', 'laststand', 'hatch', 'reinforce']);
+      expect(accents, [
+        'dive',
+        'laststand',
+        'hatch',
+        'reinforce',
+        'breakthrough',
+      ]);
       expect(fleet, 1);
     },
   );

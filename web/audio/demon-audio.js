@@ -24,14 +24,14 @@
   const bufferLimit = 12;       // decoded cues kept (a level is ~8: intro, 4 tiers, outro, accents, clear)
   const masterGain = .65, effectsGain = .9;  // effects sit above the denser rock/metal mixes
   // Cue table (mirrors web/audio/music/manifest.json; checked by test-worker).
-  const accentSlots = ['dive', 'laststand', 'hatch', 'reinforce'];
-  const accentQuantum = { dive: .25, reinforce: .25, laststand: .5, hatch: .5 };  // seconds: half-beat / beat
+  const accentSlots = ['dive', 'laststand', 'hatch', 'reinforce', 'breakthrough'];
+  const accentQuantum = { dive: .25, reinforce: .25, laststand: .5, hatch: .5, breakthrough: .5 };  // seconds: half-beat / beat
   const slotSeconds = 1.5;
   function cueInfo(name) {
     if (/^l[1-5]-t[1-4]$/.test(name)) return { kind: 'loop', beats: 32, level: +name[1], tier: +name[4] };
     if (/^l[1-5]-intro$/.test(name)) return { kind: 'tail', beats: 16, level: +name[1] };
     if (/^l[1-5]-outro$/.test(name)) return { kind: 'loop', beats: 16, level: +name[1] };
-    if (/^l[1-5]-accents$/.test(name)) return { kind: 'sprite', beats: 12, level: +name[1] };
+    if (/^l[1-5]-accents$/.test(name)) return { kind: 'sprite', beats: 15, level: +name[1] };
     return { menu: { kind: 'loop', beats: 32 }, alienwin: { kind: 'loop', beats: 32 },
       levelclear: { kind: 'tail', beats: 12 }, victory: { kind: 'tail', beats: 20 }, finale: { kind: 'tail', beats: 36 },
       'levelclear-fleet': { kind: 'tail', beats: 12 }, 'finale-fleet': { kind: 'tail', beats: 36 },
@@ -376,7 +376,7 @@
       source.onended = () => { try { source.disconnect(); gain.disconnect(); } catch { /* detached */ } };
     } else {
       // Fallback: a short synthesized figure with the same role.
-      const pitches = { dive: [64, 67, 76], laststand: [52, 53, 65], hatch: [40, 46, 58], reinforce: [52, 55, 64] }[name];
+      const pitches = { dive: [64, 67, 76], laststand: [52, 53, 65], hatch: [40, 46, 58], reinforce: [52, 55, 64], breakthrough: [52, 53, 52, 53] }[name];
       pitches.forEach((pitch, i) => voice({ pitch, velocity: 100, channel: 1 }, at + i * .125, .2));
     }
     accentsLive.push({ name, at, end: at + slotSeconds });

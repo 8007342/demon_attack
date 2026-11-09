@@ -92,52 +92,108 @@ Top 10 uses aligned rank, three-character initials, and score columns. Initial e
 
 ## Current music score and playback
 
-Musical direction: original music only, never imitating an existing game's soundtrack. Retro sci-fi arcade (analog bass, square leads, drum machines) fused with dark synth and orchestral tension. The campaign darkens sector by sector as the demonic swarm consumes the human frontier, and the carrier's four forms escalate. Every cue shares **120 BPM** and a four-beat bar, so transitions land on the next bar line. Tension grows through density, timbre and register, never tempo.
+Musical direction: original music only, never imitating an existing song, band, game or soundtrack. Each sector has its own genre and motif, and the campaign gets heavier and more demonic as the swarm closes in: punk, melodic rock, heavy metal, doom, then doom with death-metal colour at the carrier. The fleet's successes are a military march, and the aliens' victory is a cackle followed by a twisted triumphal march. Every cue shares **120 BPM** in 4/4, so all changes land on a bar line. Tension grows through arrangement density (drums, distortion, lead lines, register) across four intensity tiers per level, never through tempo. Everything is fully instrumental. The demonic levels get choir and chant-like pads as texture; the prompt asks for growl texture, but no clear vocals were generated or wanted.
 
-The shipping score is recorded: one ACE-Step 1.5 loop per cue in `web/audio/music/`, made and selected by `tools/music_pipeline.py` from `art/workflows/music/cues.json`. The pipeline and its checks are described in [audio-backend.md](audio-backend.md#recorded-cues-primary). Opus/OGG is the primary format, with AAC/M4A as the fallback. Files load lazily per cue.
+The recorded score is ACE-Step 1.5 re-performing a synthesized guide of each motif (audio-to-audio with the level's genre take as timbre reference). That keeps one motif across a level's cues. Method, commands and checks are in [audio-backend.md](audio-backend.md#recorded-cues-primary). Opus/OGG is the primary format and AAC/M4A the fallback. A level's set loads lazily when the level is cued.
 
-| Cue | Sector / role | Direction (prompt essence) | Key | Kind | Length | Seed | Opus | AAC |
-| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: |
-| `menu` | Title | dark ambient sci-fi pads, distant glassy arpeggio, sub pulse; calm, mysterious | E minor | loop | 32 beats / 16 s | 1101 | 183 KB | 257 KB |
-| `level-1` | Krybor frontier | synthwave: pulsing analog bass, bright square lead, 80s drum machine; heroic but tense | A minor | loop | 32 / 16 s | 1201 | 173 KB | 265 KB |
-| `level-2` | Ringfall | cold FM bells, fast sequenced arpeggios, tight drums, low strings; orbital pursuit | D minor | loop | 32 / 16 s | 1302 | 185 KB | 257 KB |
-| `level-3` | Ember Moon | dark industrial: distorted bass, anvil percussion, low brass stabs; furnace heat | C minor | loop | 32 / 16 s | 1402 | 168 KB | 258 KB |
-| `level-4` | The Hollow | dark synth horror: choir pads, gothic organ, war drums, dissonant strings; demonic dread | F minor | loop | 32 / 16 s | 1502 | 171 KB | 257 KB |
-| `boss-1-0` / `-1` | Carrier form 1 | dark orchestral synth battle: low brass, taiko, synth bass (later cycle: + string ostinato, rapid hats) | D minor | loop | 32 / 16 s | 2102 / 2113 | 167 / 170 KB | 259 / 259 KB |
-| `boss-2-0` / `-1` | Carrier form 2 | staccato string ostinato, aggressive bass, snare rolls, brass hits (+ double-time drums, arpeggio layer) | E♭ minor | loop | 32 / 16 s | 2202 / 2212 | 162 / 154 KB | 258 / 258 KB |
-| `boss-3-0` / `-1` | Carrier form 3 | demonic industrial orchestra: distorted bass, dark choir, chromatic brass (+ double kick, screaming lead) | E minor | loop | 32 / 16 s | 2303 / 2311 | 161 / 167 KB | 257 / 260 KB |
-| `boss-4-0` / `-1` | Carrier form 4 | frantic final battle: massive choir, blast beats, string tremolo, organ (+ chromatic synth arpeggios) | F minor | loop | 32 / 16 s | 2405 / 2413 | 154 / 168 KB | 257 / 263 KB |
-| `travel` | Between sectors | floating arpeggio, warm pads, soft pulse; hopeful, suspended | D major | loop | 16 / 8 s | 3101 | 90 KB | 130 KB |
-| `levelclear` | Sector cleared | bright arcade success jingle | G major | tail | 8 beats, then last bar loops (4–6 s) | 3303 | 73 KB | 100 KB |
-| `victory` | Carrier defeated | heroic synth + brass fanfare, timpani | C major | tail | 8 beats, then last bar loops (4–6 s) | 3201 | 66 KB | 99 KB |
-| `gameover` | Defeat | somber descending synth, decaying pads, distant bell | E minor | oneshot | 8 beats + 0.6 s fade (4.6 s) | 3403 | 56 KB | 76 KB |
-| **Total** | | | | | | | **2.41 MB** | **3.68 MB** |
+### Motifs
 
-Each loop is exactly 768 000 samples at 48 kHz (16 s; travel 8 s) and starts on a detected downbeat. Its seam is the original continuous waveform, and both codecs are primed with that context and trimmed by the container, so decoded files are sample-exact. `boss-4-0` is pinned (`"pick": 2405`) to the densest even candidate, because the automatic rank favoured a sparser one. Loudness is −18 LUFS integrated with peaks ≤ −1 dBFS. Only one cue is fetched at a time: about 170 KB for a sector.
+| Level | Genre | Key | Motif (riff · progression · hook) | Drums by tier (1 → 4) |
+| --- | --- | --- | --- | --- |
+| L1 Krybor | punk rock | E minor | Downstroked E5 eighths with a **G–A push** into every second bar · E E C D E E A–G B · shouted hook **B-B-A-G-E**, answered G-A-B-D-B | straight beat → driving beat → punk "oom-pah" skank (kick every beat, snare every off-beat) → skank + 16th hats |
+| L2 Ringfall | melodic rock | D major | Syncopated open-chord pushes on 1, 2&, 3, 4& · **D F♯m G A Bm G Em A** · soaring hook **A–F♯–A, C♯–B**, rising to F♯5 in the second half | half-feel with arpeggiated clean guitar → rock beat → 16th hats → ride and double kicks |
+| L3 Ember Moon | heavy metal | E minor | **Gallop** (eighth + two sixteenths) on an E pedal with a Phrygian F · E E C–D E E E F–G A–B · twin-guitar hook **E-F♯-G-B** harmonised in thirds at tier 4 | rock beat → gallop kicks → + off-beat hats → double bass |
+| L4 The Hollow | doom metal | C minor | Drop-C crawl **C… E♭ \| G♭-F-C \| E♭-D♭ \| C… B**: the G♭ tritone is the dread · tolling bell/lead motif **C-G-A♭-G, E♭-D-C** | half time (kick 1, snare 3, toms) → half time with organ → full time with choir → 16th double kick with crash/china |
+| L5 Carrier | doom-death metal | F minor | **F-G♭-E crawl answered by a low B tritone stab**, D♭-C, a chromatic D♭-D-E♭-E climb, final F-B · tremolo picking from tier 3 · choir, organ and bell | half time → 8th double kick → 16th double kick → blast beat |
+| Fleet march | military march | C major | Fanfare **G-G-C-E-G \| C6…**: levelclear plays bars 1–2 and a cadence, victory bars 1–4, the finale all 8 with choir and timpani | bass drum on every beat, snare drags and rolls, crashes. Fleet-intact variants add a brass descant, a trombone counterline and a drum corps (16th snare line, flams, sextuplet flourishes, tenor drums) |
+| Alien victory | twisted march | E Phrygian dominant | **E-F-G♯…, B-C-B-G♯**, falling to F: triumph bent out of tune | pounding march with timpani, gated guitars, organ and choir |
+
+### Cues
+
+| Cue | Kind | Source | Beats | Seconds | Loop | Opus | AAC |
+| --- | --- | --- | ---: | ---: | --- | ---: | ---: |
+| `alienwin` | loop | a2a s44 d0.45 | 32 | 16 | 0–16 s | 171 KB | 257 KB |
+| `cackle` | oneshot | synth | 8 | 4 | — | 30 KB | 51 KB |
+| `finale` | tail | a2a s42 d0.45 | 36 | 20 | 18–20 s | 212 KB | 322 KB |
+| `finale-fleet` | tail | a2a s43 d0.45 | 36 | 20 | 18–20 s | 210 KB | 321 KB |
+| `l1-accents` | sprite | synth | — | 7.5 | — | 77 KB | 122 KB |
+| `l1-intro` | tail | a2a s43 d0.45 | 16 | 10 | 8–10 s | 101 KB | 163 KB |
+| `l1-outro` | loop | a2a s42 d0.45 | 16 | 8 | 0–8 s | 91 KB | 130 KB |
+| `l1-t1` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 157 KB | 257 KB |
+| `l1-t2` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 169 KB | 257 KB |
+| `l1-t3` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 170 KB | 256 KB |
+| `l1-t4` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 169 KB | 256 KB |
+| `l2-accents` | sprite | synth | — | 7.5 | — | 77 KB | 122 KB |
+| `l2-intro` | tail | a2a s42 d0.45 | 16 | 10 | 8–10 s | 104 KB | 163 KB |
+| `l2-outro` | loop | a2a s41 d0.45 | 16 | 8 | 0–8 s | 86 KB | 130 KB |
+| `l2-t1` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 172 KB | 257 KB |
+| `l2-t2` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 164 KB | 257 KB |
+| `l2-t3` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 167 KB | 256 KB |
+| `l2-t4` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 166 KB | 256 KB |
+| `l3-accents` | sprite | synth | — | 7.5 | — | 79 KB | 123 KB |
+| `l3-intro` | tail | a2a s42 d0.45 | 16 | 10 | 8–10 s | 105 KB | 162 KB |
+| `l3-outro` | loop | a2a s41 d0.45 | 16 | 8 | 0–8 s | 87 KB | 130 KB |
+| `l3-t1` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 157 KB | 257 KB |
+| `l3-t2` | loop | a2a s45 d0.35 | 32 | 16 | 0–16 s | 159 KB | 257 KB |
+| `l3-t3` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 172 KB | 257 KB |
+| `l3-t4` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 159 KB | 256 KB |
+| `l4-accents` | sprite | synth | — | 7.5 | — | 75 KB | 122 KB |
+| `l4-intro` | tail | a2a s43 d0.45 | 16 | 10 | 8–10 s | 103 KB | 162 KB |
+| `l4-outro` | loop | a2a s41 d0.45 | 16 | 8 | 0–8 s | 85 KB | 130 KB |
+| `l4-t1` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 163 KB | 257 KB |
+| `l4-t2` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 166 KB | 257 KB |
+| `l4-t3` | loop | a2a s41 d0.45 | 32 | 16 | 0–16 s | 166 KB | 256 KB |
+| `l4-t4` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 165 KB | 257 KB |
+| `l5-accents` | sprite | synth | — | 7.5 | — | 77 KB | 122 KB |
+| `l5-intro` | tail | a2a s42 d0.45 | 16 | 10 | 8–10 s | 112 KB | 162 KB |
+| `l5-outro` | loop | a2a s41 d0.45 | 16 | 8 | 0–8 s | 85 KB | 130 KB |
+| `l5-t1` | loop | a2a s44 d0.45 | 32 | 16 | 0–16 s | 173 KB | 257 KB |
+| `l5-t2` | loop | a2a s44 d0.45 | 32 | 16 | 0–16 s | 170 KB | 256 KB |
+| `l5-t3` | loop | a2a s44 d0.45 | 32 | 16 | 0–16 s | 166 KB | 256 KB |
+| `l5-t4` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 164 KB | 257 KB |
+| `levelclear` | tail | a2a s41 d0.45 | 12 | 8 | 6–8 s | 89 KB | 131 KB |
+| `levelclear-fleet` | tail | a2a s41 d0.45 | 12 | 8 | 6–8 s | 85 KB | 130 KB |
+| `menu` | loop | text s1101 | 32 | 16 | 0–16 s | 183 KB | 257 KB |
+| `victory` | tail | a2a s44 d0.45 | 20 | 12 | 10–12 s | 132 KB | 195 KB |
+| **Total** | | | | | | **5.64 MB** | **8.66 MB** |
+
+The intensity tiers of a level are four arrangements of the same 8-bar motif: tier 1 is calm (palm-muted riff, sparse drums), tier 2 driving (full band), tier 3 intense (lead hook, busier drums) and tier 4 peril (double-time or blast, harmonised lead). They share bar 1, so the player switches between them on a bar line without losing the riff's place. The intro states the riff, brings the drums in with a fill and quotes the hook. Then its last bar loops until play begins. The outro is the riff at half energy with the hook in augmentation, for the travel after the level.
+
+### Game events to music
+
+| Game state (read by `MusicDirector`) | Music |
+| --- | --- |
+| Level arrival (`level`, carrier `boss` event) | `l<n>-intro`, on the next bar |
+| Play begins | tier from wave progress: first third → 1, second → 2, last → 3 |
+| Elite present / sentinel present | at least tier 2 / tier 3 |
+| Reinforcements arrive (`reinforcements` event) | +1 tier for 6 s, and the **reinforce** accent |
+| Ground war: `allyUnderAttack`, `groundForceInRange` (shared bridge) | +1 tier for 6 s |
+| Ground war: `groundPressure` level 0–1 | +1 tier from 0.4, +2 from 0.8 |
+| Ground war: `groundBreakthrough` | **breakthrough** accent |
+| A dive tell starts (telegraph) | **dive** accent (at most one per 2 s) |
+| Sentinel dive or last stand | tier 4; a new last stand plays the **laststand** accent |
+| One life left | +1 tier |
+| Carrier form *p* of *n* | tier 4 − (n − 1 − p), so the final form is tier 4; shield down +1 |
+| Carrier central hatch opens | **hatch** accent (at most one per 7.5 s) |
+| Calmer state | steps down only after 4 s of lower demand; up at once |
+| Wave cleared → salvage → `levelclear` | `levelclear` immediately (`levelclear-fleet` after `fleetIntact`) |
+| `travel` | the cleared level's `l<n>-outro` |
+| Carrier destroyed (`victory`) | `victory`; on the last route the campaign `finale` (`finale-fleet` after `fleetIntact`) |
+| `defeat` / `gameover` | `cackle` immediately, then `alienwin` on the bar 8 beats later |
+
+Accents keep one role and shape on every level: dive is the hook's first three notes rising over a root stab and snare; last stand is a tremolo on the tonic rising a semitone with a snare roll and crash; hatch is a low tritone stab with bell, choir and china; reinforcements is a two-chord riff hit with crash; breakthrough is an alarm of the tonic and its flat second, twice, then the hook's first note an octave up over a tom run. Each is played in the level's own pitches and instrumentation, and lands on the next half-beat (dive, reinforce) or beat (last stand, hatch, breakthrough).
 
 ### MIDI fallback score
 
-`web/audio/generate-midi.py` composes original Standard MIDI Format 0 files in `web/audio/midi/`. When every recorded format of a cue fails to load or decode, `web/audio/demon-audio.js` plays that cue's MIDI note events through its local Web Audio synthesizer on the same grid.
-
-| Cue | MIDI fallback |
-| --- | --- |
-| Menu | Sparse sine-pad motif; 32 beats |
-| Levels 1–4 | Distinct 32-beat scores with increasing melodic subdivisions; percussion from LV2 |
-| Boss phases 1–4 | Four increasingly dense 32-beat scores; each has a denser later-cycle version |
-| Victory | Eight-beat major fanfare; final cadence continues until travel |
-| Level clear | Immediate eight-beat major flourish with a 90 ms music fade |
-| Travel | Sixteen-beat suspended arpeggio bridge on the common musical grid |
-| Game over | Eight-beat descending cue and dark chord, non-looping |
-
-The carrier has up to four visual forms, each with its own increasing intensity in both scores. The MIDI voices use square lead, sawtooth bass, sine pad, and triangle percussion.
+`web/audio/generate-midi.py` writes Standard MIDI Format 0 files for every cue from the same motif events in `tools/music_motifs.py`: riff, bass, lead, kick and snare. When every recorded format of a cue fails, `web/audio/demon-audio.js` plays that cue's MIDI on the same grid, so a fallback tier still plays its level's motif. The MIDI voices use square lead, sawtooth riff and bass, sine pads and triangle percussion.
 
 ### Playback rules
 
-A shared audio-clock scheduler runs with lookahead and asynchronous cue loading, and a request counter rejects stale loads. Track changes queue to the next bar. The outgoing recorded cue releases over 120 ms across the bar line while the new one starts sample-exactly on it. Level-clear rewards respond immediately, with a 90 ms music-only crossfade. Tail cues hold their final bar until the next cue, so a long cutscene is never silent. Game over ends cleanly. Firing, hits, explosions, power collection, life loss and the wave/extra-life stingers stay short synth effects with unchanged trigger timing. Voice limiting steals the oldest voice per effect (shot 4, hit 4, explosion 5) and caps the total at 14. Explosions and life loss add a short filtered noise layer.
+A shared audio-clock scheduler runs with lookahead and asynchronous loading, and a request counter rejects stale loads. Cue changes land on the next bar, while tier changes land on the next bar *at the same loop position*: rising tiers cut on the downbeat, falling tiers fade over a beat. The intro hands over to play when its 16-beat opening has played. Clear, victory, the finale and the cackle start immediately with a 90 ms music-only fade. Tail cues hold their last bar, so a long cutscene is never silent, and the alien theme loops until the next cue. Accents never delay the game or replace the music. Effects stay short synth voices with unchanged timing and voice limits (shot 4, hit 4, explosion 5, 14 total). They play at 0.9 against recorded music at 0.7, and the rock and metal levels are mastered 1 dB below the marches so the effects stay audible.
 
-Visiting the page remains silent until a user gesture unlocks browser audio. Start and sound controls should support that gesture deliberately. Muting ramps the master gain. Pause suspends the audio context. Resume keeps the bar grid's phase, skipping only whole beats that fell behind, so it stays locked to the playing loop. The bridge also pauses on visibility changes. Confirm that this stays aligned with the application's deliberate pause/resume controls.
+Visiting the page stays silent until a user gesture unlocks browser audio. Muting ramps the master gain, and pause suspends the audio context. Resume keeps the bar grid's phase, skipping only whole beats that fell behind. The bridge also pauses on visibility changes.
 
-Future refinements: stem crossfades, per-mode tempo ramps, music/effects balance controls, and sound preference persistence. These are intended improvements, not claims about the current player.
+Future refinements: true stems (the tiers are full mixes crossfaded on bars, not separately mixable layers), music/effects balance controls, and sound preference persistence.
 
 ## Review gates
 

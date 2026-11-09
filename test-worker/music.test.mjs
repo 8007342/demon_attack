@@ -8,7 +8,7 @@ function seconds(name) {
   if (/^l\d-t\d$/.test(name)) return 16;
   if (/-intro$/.test(name)) return 10;
   if (/-outro$/.test(name)) return 8;
-  if (/-accents$/.test(name)) return 6;
+  if (/-accents$/.test(name)) return 7.5;
   return { menu: 16, levelclear: 8, victory: 12, finale: 20, 'levelclear-fleet': 8, 'finale-fleet': 20, cackle: 4, alienwin: 16 }[name];
 }
 
@@ -97,6 +97,10 @@ test('levels play intro then tiers of one motif: tier changes land on bars and k
   assert.ok(hatch >= now && onGrid(hatch, grid, .5), 'hatch accent on the beat');
   assert.equal(sources.at(-1).offset, 3, 'hatch slot of the sprite');
   assert.equal(await audio.accent('dive'), null, 'the same accent is not retriggered within a second');
+  ctx().currentTime += 1.9;  // past the two live accents (at most two at a time)
+  const breakthrough = await audio.accent('breakthrough');
+  assert.ok(onGrid(breakthrough, grid, .5), 'ground breakthrough accent on the beat');
+  assert.equal(sources.at(-1).offset, 6, 'breakthrough slot of the sprite');
   assert.equal(audio.state.active, 'l2-t2', 'accents never replace the music');
   // Stale loads: only the latest request wins.
   await Promise.all([audio.cue('level', 1), audio.cue('travel', 2)]);
@@ -188,7 +192,7 @@ test('every cue ships Opus and AAC files with whole-bar loops inside the downloa
     if (cue.loopEnd !== null) assert.equal(((cue.loopEnd - cue.loopStart) * 2) % 4, 0, `${name} loop is whole bars`);
     if (kind === 'loop') assert.equal(cue.seconds, cue.beats / 2, `${name} loop length`);
     if (kind === 'tail') assert.equal(cue.loopStart, cue.beats / 2, `${name} tail opening`);
-    if (kind === 'sprite') assert.deepEqual(cue.slots, ['dive', 'laststand', 'hatch', 'reinforce']);
+    if (kind === 'sprite') assert.deepEqual(cue.slots, ['dive', 'laststand', 'hatch', 'reinforce', 'breakthrough']);
     // The player's built-in table must agree with the manifest.
     assert.equal(seconds(name) !== undefined, true);
   }

@@ -22,7 +22,7 @@ from __future__ import annotations
 BEATS = 32
 BARS = 8
 TIERS = (1, 2, 3, 4)
-ACCENTS = ('dive', 'laststand', 'hatch', 'reinforce')
+ACCENTS = ('dive', 'laststand', 'hatch', 'reinforce', 'breakthrough')
 
 # Pitches (MIDI): E2 = 40, C2 = 36, F2 = 41.
 N = {name: i for i, name in enumerate(['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'])}
@@ -536,6 +536,13 @@ def accent_events(level: int, accent: str):
         # Carrier hatch opening: low tritone stab, bell, choir swell.
         ev = [(0, 1.5, tonic, 118, 'gtr'), (0, 1.5, tonic + 6, 110, 'gtr'), (0, 1.8, tonic + 36, 90, 'bell'),
               (0, 1.8, tonic + 24, 80, 'choir'), (0, 1.8, tonic + 30, 75, 'choir'), (0, .5, 36, 120, 'kick'), (0, 1.5, 52, 100, 'china')]
+    elif accent == 'breakthrough':
+        # Ground forces break through: alarm on the tonic and its flat second,
+        # twice, then the hook's first note an octave up over a tom run.
+        ev = [(0, .4, tonic, 118, 'gtr'), (.5, .4, tonic + 1, 118, 'gtr'), (1, .4, tonic, 118, 'gtr'), (1.5, .9, tonic + 1, 120, 'gtr'),
+              (1.5, .9, hook_notes[0] + 12 if hook_notes[0] + 12 <= 96 else hook_notes[0], 112, lead), (0, 1, 49, 112, 'crash')]
+        ev += [(k * .25, .2, (45, 43, 41, 43, 45, 43)[k], 105, 'tom') for k in range(6)]
+        ev += [(t, .3, 36, 115, 'kick') for t in (0, .5, 1, 1.5)]
     elif accent == 'reinforce':
         # Reinforcements arrive: two-chord riff hit (tonic, then bar-2 root) with crash.
         ev = [(0, .45, tonic, 115, 'gtr'), (.5, .9, roots[2], 115, 'gtr'), (0, 1, 49, 110, 'crash'), (0, .3, 36, 115, 'kick'), (.5, .3, 36, 110, 'kick'), (.5, .3, 38, 110, 'snare')]

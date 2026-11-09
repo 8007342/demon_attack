@@ -72,7 +72,7 @@
     {"name": "l2-accents", "group": "2", "kind": "sprite", "mode": "synth", "slot_beats": 3, "loudness_lufs": -20.0},
 
     {"name": "l3-t1", "group": "3", "tier": 1, "kind": "loop", "beats": 32},
-    {"name": "l3-t2", "group": "3", "tier": 2, "kind": "loop", "beats": 32},
+    {"name": "l3-t2", "group": "3", "tier": 2, "kind": "loop", "beats": 32, "seeds": [41, 42, 43, 44, 45, 46, 47, 48], "denoise": [0.45, 0.35], "note": "ACE tends to shift this gallop a sixteenth early at 0.45; the wider grid finds takes that keep the guide grid"},
     {"name": "l3-t3", "group": "3", "tier": 3, "kind": "loop", "beats": 32},
     {"name": "l3-t4", "group": "3", "tier": 4, "kind": "loop", "beats": 32},
     {"name": "l3-intro", "group": "3", "part": "intro", "kind": "tail", "beats": 16},
@@ -81,7 +81,7 @@
 
     {"name": "l4-t1", "group": "4", "tier": 1, "kind": "loop", "beats": 32},
     {"name": "l4-t2", "group": "4", "tier": 2, "kind": "loop", "beats": 32},
-    {"name": "l4-t3", "group": "4", "tier": 3, "kind": "loop", "beats": 32},
+    {"name": "l4-t3", "group": "4", "tier": 3, "kind": "loop", "beats": 32, "pick": 41, "pick_denoise": 0.45, "pick_reason": "the top-scored take (s43) leaves a click-like curvature at the Opus loop wrap; s41 keeps the guide grid (lag 0) with chroma 0.67"},
     {"name": "l4-t4", "group": "4", "tier": 4, "kind": "loop", "beats": 32},
     {"name": "l4-intro", "group": "4", "part": "intro", "kind": "tail", "beats": 16},
     {"name": "l4-outro", "group": "4", "part": "outro", "kind": "loop", "beats": 16},

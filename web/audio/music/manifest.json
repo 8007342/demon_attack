@@ -1,5 +1,28 @@
 {
  "cues": {
+  "alienwin": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "mode": "a2a",
+   "group": "alien",
+   "seed": 44,
+   "denoise": 0.45,
+   "motifChroma": 0.585,
+   "motifOnset": 0.559,
+   "referenceCloseness": 0.879,
+   "startSeconds": 4.0,
+   "bytes": {
+    "ogg": 175200,
+    "m4a": 262704
+   },
+   "sha256": {
+    "ogg": "501fbccddb6cdcd56cab7e11990f6247dfa6f762bc2f1df2c2bc5c73b4b8f456",
+    "m4a": "e9fd741fd8e8312e72c46e08c083346f23c23cd324016ef7524f91e90fda2925"
+   }
+  },
   "cackle": {
    "kind": "oneshot",
    "beats": 8,
@@ -17,10 +40,56 @@
     "m4a": "f3e602facfc3e4ecaf7f48c633dfabbad0961860636465f63f459386fb6c73e8"
    }
   },
+  "finale": {
+   "kind": "tail",
+   "beats": 36,
+   "seconds": 20.0,
+   "loopStart": 18.0,
+   "loopEnd": 20.0,
+   "mode": "a2a",
+   "group": "march",
+   "seed": 42,
+   "denoise": 0.45,
+   "motifChroma": 0.759,
+   "motifOnset": 0.64,
+   "referenceCloseness": 0.924,
+   "startSeconds": 2.0,
+   "bytes": {
+    "ogg": 217191,
+    "m4a": 329249
+   },
+   "sha256": {
+    "ogg": "de00dbd2848741364784e539fa9d0f800003d576634a812bee74644f909fae76",
+    "m4a": "7c5d9c39cd415239ae392a22ceabea4095cc206775d4eaef3c25a70f4742de13"
+   }
+  },
+  "finale-fleet": {
+   "kind": "tail",
+   "beats": 36,
+   "seconds": 20.0,
+   "loopStart": 18.0,
+   "loopEnd": 20.0,
+   "mode": "a2a",
+   "group": "march",
+   "seed": 43,
+   "denoise": 0.45,
+   "motifChroma": 0.71,
+   "motifOnset": 0.624,
+   "referenceCloseness": 0.878,
+   "startSeconds": 2.0,
+   "bytes": {
+    "ogg": 215498,
+    "m4a": 328893
+   },
+   "sha256": {
+    "ogg": "afb19e260df5d98ca14f70ee7e94ffa0661c9d179ed383fe2ee5127a3e5bc134",
+    "m4a": "9da806047f67f9322a664044f0727282c803319495c9a5c222563cbd5a0b2d02"
+   }
+  },
   "l1-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 6.0,
+   "seconds": 7.5,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -28,16 +97,17 @@
     "dive",
     "laststand",
     "hatch",
-    "reinforce"
+    "reinforce",
+    "breakthrough"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 63544,
-    "m4a": 100844
+    "ogg": 78931,
+    "m4a": 125405
    },
    "sha256": {
-    "ogg": "edfd820cbdfe5dd0c1e5d16ae11327febdd739932671d42691a32fa0e92354bc",
-    "m4a": "3159647933810dcb1aebdbc4320c52eb21743960841fe6eca0c09bce6f860c86"
+    "ogg": "0356d42659fc25ef2973c6f9f16bddc03207aead533ff7bbef1d2e2a37cbf461",
+    "m4a": "d98e8f5860febee48a0b112de89534ea657df26e9e50f0590ab9860c07ff290b"
    }
   },
   "l1-intro": {
@@ -48,20 +118,20 @@
    "loopEnd": 10.0,
    "mode": "a2a",
    "group": "1",
-   "seed": 42,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.398,
-   "motifOnset": 0.769,
-   "referenceCloseness": 0.933,
+   "motifChroma": 0.425,
+   "motifOnset": 0.724,
+   "referenceCloseness": 0.936,
    "startSeconds": 2.0,
    "part": "intro",
    "bytes": {
-    "ogg": 108541,
-    "m4a": 168026
+    "ogg": 103621,
+    "m4a": 166692
    },
    "sha256": {
-    "ogg": "6d4b4837dd45244032da1f8c0e49fa23ebbb85f08f6cd24704ab3bca73102413",
-    "m4a": "64d54f3f18c3efe1c845a979e8faeb58b178ac60ef2f8f1d03b7db77e1f591d4"
+    "ogg": "8988115f0d4169125604ddf5900d4574859e9ae5e6626ec4b21f46a349045405",
+    "m4a": "f3a8a708a7ca725f1027261a0a9f5433f7453cf7c4212f8d72d206b814b11e14"
    }
   },
   "l1-outro": {
@@ -96,20 +166,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "1",
-   "seed": 42,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.119,
-   "motifOnset": 0.915,
-   "referenceCloseness": 0.919,
+   "motifChroma": 0.104,
+   "motifOnset": 0.936,
+   "referenceCloseness": 0.935,
    "startSeconds": 4.0,
    "tier": 1,
    "bytes": {
-    "ogg": 163704,
-    "m4a": 263160
+    "ogg": 160762,
+    "m4a": 263592
    },
    "sha256": {
-    "ogg": "5f5a73b772e7a4a5d20022a0c5771b990ee1b3256748ca196b91f0d87b988446",
-    "m4a": "4adab5934a5df113e827c9cc0195e683bfed15ad3287e1f5a8896ebc77107f1f"
+    "ogg": "f3e32bb1f46d7d5e433e138e3a5c111faa7d2138a24d63822ae4b2d4aa900b18",
+    "m4a": "ec7abd4bc44a5d9849edeb0de712fcb6aa994c0b26abf88e1720372b0307222c"
    }
   },
   "l1-t2": {
@@ -120,20 +190,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "1",
-   "seed": 42,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.486,
-   "motifOnset": 0.923,
-   "referenceCloseness": 0.883,
+   "motifChroma": 0.585,
+   "motifOnset": 0.911,
+   "referenceCloseness": 0.9,
    "startSeconds": 4.0,
    "tier": 2,
    "bytes": {
-    "ogg": 173606,
-    "m4a": 262995
+    "ogg": 173101,
+    "m4a": 263141
    },
    "sha256": {
-    "ogg": "eb279416e6f2dc8996e7c25526536ec1e4f2602138b326e77067a9552d7fb02d",
-    "m4a": "33b0b2b376da2257076a01c530eb5abdfa1e85d23cc0c7d215c5324e84cffe78"
+    "ogg": "5feaa52370cd3a3757ff3e66c1ef701712507d6cfc380b942de0f6f6754281d8",
+    "m4a": "43bebcabed163460488070630314ce4a9d50841618f30221a76dbee01791cab4"
    }
   },
   "l1-t3": {
@@ -144,20 +214,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "1",
-   "seed": 42,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.518,
-   "motifOnset": 0.825,
-   "referenceCloseness": 0.797,
+   "motifChroma": 0.584,
+   "motifOnset": 0.746,
+   "referenceCloseness": 0.827,
    "startSeconds": 4.0,
    "tier": 3,
    "bytes": {
-    "ogg": 169867,
-    "m4a": 262583
+    "ogg": 174194,
+    "m4a": 262626
    },
    "sha256": {
-    "ogg": "91c61d1c947a3e6df09ddff2fa5cac0484422931e872256fe4cd8ec37a44b8ad",
-    "m4a": "741f985ee56552ceec6de4089491363198316e4fa7dc18c9c893cee7653ef7c4"
+    "ogg": "2d67f04aa5d69f861d86f83b0e8b469df6b155a3f12323e8ef55dd73ec783a3c",
+    "m4a": "21aaaaedc1d3b49680639abd1010cf80bb257b973a747978df28c684b61261e5"
    }
   },
   "l1-t4": {
@@ -168,26 +238,26 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "1",
-   "seed": 41,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.533,
-   "motifOnset": 0.687,
-   "referenceCloseness": 0.631,
+   "motifChroma": 0.57,
+   "motifOnset": 0.714,
+   "referenceCloseness": 0.689,
    "startSeconds": 4.0,
    "tier": 4,
    "bytes": {
-    "ogg": 179820,
-    "m4a": 262591
+    "ogg": 173182,
+    "m4a": 262593
    },
    "sha256": {
-    "ogg": "b09e34b6a73bacd8307fbe294698fce48c32081e834bace87d15572499b11f11",
-    "m4a": "d44f3300b640d13c1ac7f1dd426d0f41d02560313f55155863dd798d47a85e79"
+    "ogg": "ec92d8fda8cb66bc50e7632aecb9ec249b7a0c2749feceec833fededce5f4ea3",
+    "m4a": "a9bdce752e9b34daecc8247390f95f9b080b2c2e63b7072e20aa99118f1fe36c"
    }
   },
   "l2-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 6.0,
+   "seconds": 7.5,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -195,16 +265,17 @@
     "dive",
     "laststand",
     "hatch",
-    "reinforce"
+    "reinforce",
+    "breakthrough"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 63527,
-    "m4a": 100925
+    "ogg": 78483,
+    "m4a": 124792
    },
    "sha256": {
-    "ogg": "e7a23708548b104fc4b43aadbdaf1022a743db02c6b04fc4545b28aa95a68d06",
-    "m4a": "971aaf6ceb3ca97bdae303832f0980bff113355e9eb507f1395513b25245a95a"
+    "ogg": "c5f677a16244a83548920513e73404113f18a5fdbf266c76913cb9d4584fa46e",
+    "m4a": "e9b86ceaebf07c065339169c9fea5978182a529f91278eddd65d6b5ef158d35f"
    }
   },
   "l2-intro": {
@@ -263,20 +334,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 41,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.616,
-   "motifOnset": 0.925,
-   "referenceCloseness": 0.91,
+   "motifChroma": 0.623,
+   "motifOnset": 0.941,
+   "referenceCloseness": 0.922,
    "startSeconds": 4.0,
    "tier": 1,
    "bytes": {
-    "ogg": 177880,
-    "m4a": 262778
+    "ogg": 176539,
+    "m4a": 263054
    },
    "sha256": {
-    "ogg": "5798a3d59da39d223850329f615a27a2b29bad0a2f83a4981a823e998a6c0e59",
-    "m4a": "d27f34b208ab8b5979c08bd1b312e8c65deed8a7b56d7c7b171cce94c51a7aef"
+    "ogg": "cd14b8efcc3ae87e57779694574e32e22d94fc5be353bdfbbef945f1fb647ab1",
+    "m4a": "b91f45532c2234bfe650d45bb92a0f33a8834b73fd072f8df1ee5f86478b4e58"
    }
   },
   "l2-t2": {
@@ -295,12 +366,12 @@
    "startSeconds": 4.0,
    "tier": 2,
    "bytes": {
-    "ogg": 168202,
-    "m4a": 262773
+    "ogg": 168133,
+    "m4a": 262682
    },
    "sha256": {
-    "ogg": "8dc9bc8fc03de52376f5d5cf1502859205b103e73a64c253dae6e6c86742de6d",
-    "m4a": "0bf54525f26355f55e825ab8d06c43223cc2620b28560737ff500ae98e1ecf12"
+    "ogg": "53dc4c54b2713745fc4553a5e0ede70cf2baab4f91725b28a1fae3fc3a202e16",
+    "m4a": "38414473e5885e820dbfe4596b99717cd85475ad2cac12b56f20ae735121db0e"
    }
   },
   "l2-t3": {
@@ -335,26 +406,26 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 42,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.679,
-   "motifOnset": 0.476,
-   "referenceCloseness": 0.815,
+   "motifChroma": 0.664,
+   "motifOnset": 0.673,
+   "referenceCloseness": 0.803,
    "startSeconds": 4.0,
    "tier": 4,
    "bytes": {
-    "ogg": 167830,
-    "m4a": 262606
+    "ogg": 169755,
+    "m4a": 262586
    },
    "sha256": {
-    "ogg": "59bea9ec0244660d91e6c331529e4a63a1ac8768bf300a6cac31815392e35952",
-    "m4a": "7fa949e1d717401a70f72e7a2a263b489911e5c8a2c3680ad33b8f0779e4a689"
+    "ogg": "e0d56c6f197013e079c8e4049ddcb04eb816d6b9c787a98aed0795e4d140bbd7",
+    "m4a": "db4a256f2e150b0b8e771f48c24623ee9e2ba6e55e2b07c276ed384905822999"
    }
   },
   "l3-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 6.0,
+   "seconds": 7.5,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -362,16 +433,17 @@
     "dive",
     "laststand",
     "hatch",
-    "reinforce"
+    "reinforce",
+    "breakthrough"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 65668,
-    "m4a": 100146
+    "ogg": 81117,
+    "m4a": 125586
    },
    "sha256": {
-    "ogg": "d0fbea71d54c37ea3f78241394a99bd59ef1561654a9f092011eb5864470af0c",
-    "m4a": "f46ebf38afcc7eac845db1426b660d157cf64fb8b5d30bc49d51ca04151c7e6a"
+    "ogg": "f4c957c38a1f385993bd3bce967e1ba9fbaca09cd6ca6f66e20c7f76b10b6bf7",
+    "m4a": "60959132d9d91ed0fd9b79905be21ea6de133070ffb1e4e4ffda64e6932c46fc"
    }
   },
   "l3-intro": {
@@ -384,18 +456,18 @@
    "group": "3",
    "seed": 42,
    "denoise": 0.45,
-   "motifChroma": 0.437,
-   "motifOnset": 0.81,
-   "referenceCloseness": 0.845,
+   "motifChroma": 0.459,
+   "motifOnset": 0.816,
+   "referenceCloseness": 0.843,
    "startSeconds": 2.0,
    "part": "intro",
    "bytes": {
-    "ogg": 108190,
-    "m4a": 166079
+    "ogg": 107662,
+    "m4a": 166229
    },
    "sha256": {
-    "ogg": "d90d6008468f3e70c3eac13908a094c5dc6c3cb710605a8638b9021edf333df1",
-    "m4a": "268d4304e9be4be0e4f6903d5e623ea0bb2274588915cd5b36f26f2a16ae943c"
+    "ogg": "39f0b1e71ad0e68978883e69a47338b4c063af151239cd44c2b9cb4514357145",
+    "m4a": "babca0e3fe47f3884189f47d758c888b35569fa33e6325a976bacfbd827a698c"
    }
   },
   "l3-outro": {
@@ -430,20 +502,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "3",
-   "seed": 41,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.256,
-   "motifOnset": 0.912,
-   "referenceCloseness": 0.874,
+   "motifChroma": 0.31,
+   "motifOnset": 0.916,
+   "referenceCloseness": 0.886,
    "startSeconds": 4.0,
    "tier": 1,
    "bytes": {
-    "ogg": 161148,
-    "m4a": 262792
+    "ogg": 160432,
+    "m4a": 263160
    },
    "sha256": {
-    "ogg": "ef02f9528cd985c3f957f65158b040f5adf2ae28f10d25f77fdb7b57427a1033",
-    "m4a": "2a781b3b2159afe4307e8d84e26a92cf2c9957f4e5d749743ac7f2d6b30375d3"
+    "ogg": "bdde7973eb41387548e5f70c245b65515837fe3812d4e48a8f27c0afaa09d0e2",
+    "m4a": "9e85e0340d7085efedd81708a09f8b5dc0a85dc3aa5e7f95e4e8577de12282c7"
    }
   },
   "l3-t2": {
@@ -454,20 +526,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "3",
-   "seed": 41,
-   "denoise": 0.45,
-   "motifChroma": 0.213,
-   "motifOnset": 0.498,
-   "referenceCloseness": 0.773,
+   "seed": 45,
+   "denoise": 0.35,
+   "motifChroma": 0.441,
+   "motifOnset": 0.845,
+   "referenceCloseness": 0.748,
    "startSeconds": 4.0,
    "tier": 2,
    "bytes": {
-    "ogg": 161338,
-    "m4a": 262688
+    "ogg": 162949,
+    "m4a": 262660
    },
    "sha256": {
-    "ogg": "1e23da909707524e96bba515a0860e308090185d49acfe3610bd7e53a64686f3",
-    "m4a": "8d40217aed0bdc54e4635f401c0cb6cd9833374c8e5bfb9a1ace68fe1a1083b9"
+    "ogg": "d731f471077d6d2f77aa092153f4fc96bdad2cebcbd4f8c9ca72e701f18f3b4b",
+    "m4a": "f613e4b173e8c02071868fe71965909afbd5cac5de8731784c970e3aeb4eefeb"
    }
   },
   "l3-t3": {
@@ -478,20 +550,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "3",
-   "seed": 41,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.751,
-   "motifOnset": 0.64,
-   "referenceCloseness": 0.746,
+   "motifChroma": 0.687,
+   "motifOnset": 0.624,
+   "referenceCloseness": 0.785,
    "startSeconds": 4.0,
    "tier": 3,
    "bytes": {
-    "ogg": 179201,
-    "m4a": 262696
+    "ogg": 175634,
+    "m4a": 262689
    },
    "sha256": {
-    "ogg": "1cc4cb06469bdd618e3c38945d5b98ddb92183530cec878390fd39f9a72d22e4",
-    "m4a": "b838d314ca71eb51b7091d51ffe854283887cca9ea8752ae4660052412aa9d1e"
+    "ogg": "49485f436772adb1a0da567442e7655a449d406f77e2e9e9f9f62cc6dc547dc2",
+    "m4a": "d6dc08389b3938f6619144c04ec6c102ca8212d8da22d20716f5b66e84234ec3"
    }
   },
   "l3-t4": {
@@ -504,24 +576,24 @@
    "group": "3",
    "seed": 42,
    "denoise": 0.45,
-   "motifChroma": 0.756,
-   "motifOnset": 0.224,
-   "referenceCloseness": 0.573,
+   "motifChroma": 0.738,
+   "motifOnset": 0.246,
+   "referenceCloseness": 0.581,
    "startSeconds": 4.0,
    "tier": 4,
    "bytes": {
-    "ogg": 163300,
-    "m4a": 262583
+    "ogg": 162681,
+    "m4a": 262577
    },
    "sha256": {
-    "ogg": "102a40889633b523f946cf7f6f1cf2ea7f4a84078b96b3e015db8b5bba7310d9",
-    "m4a": "f43ea23dc6e838a781cecd687a53f22735ba6c303411b43498d1266b35dc8e39"
+    "ogg": "d15b6ee152be0776edbc77326f0d3573fb508758a2395e5d434c0723b3026243",
+    "m4a": "bc2d9842e4ff33f60646831c057b1b5b927cc9be7938e214405ecb494ac30673"
    }
   },
   "l4-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 6.0,
+   "seconds": 7.5,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -529,16 +601,17 @@
     "dive",
     "laststand",
     "hatch",
-    "reinforce"
+    "reinforce",
+    "breakthrough"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 62418,
-    "m4a": 100437
+    "ogg": 77203,
+    "m4a": 124908
    },
    "sha256": {
-    "ogg": "73c520234b3a37df91c77f37c0b47df497eab3416afb25032e35b26e6346b4b0",
-    "m4a": "269481ea5ab759b9d1c4a70f93ae4bf09539c607cff69d0fe5ac1fdddd32968f"
+    "ogg": "4c83f2c64505539146fc767650c1cde69dd3636a7900f560575da41af581b0e5",
+    "m4a": "de90af6a385b403c3400a0eb1f05b535abcdbab96944b14475474a3194d9714b"
    }
   },
   "l4-intro": {
@@ -549,20 +622,20 @@
    "loopEnd": 10.0,
    "mode": "a2a",
    "group": "4",
-   "seed": 42,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.456,
-   "motifOnset": 0.661,
-   "referenceCloseness": 0.907,
+   "motifChroma": 0.476,
+   "motifOnset": 0.646,
+   "referenceCloseness": 0.915,
    "startSeconds": 2.0,
    "part": "intro",
    "bytes": {
-    "ogg": 108505,
-    "m4a": 166761
+    "ogg": 105863,
+    "m4a": 166316
    },
    "sha256": {
-    "ogg": "3c1e5a66abc5e322062ec3085e424c752f92c63e884296f982619ce7259b6da4",
-    "m4a": "16459f56a981816fa52691e7d3e94168dc2cfa47e5dd3cc1bb035353d02a3eed"
+    "ogg": "0b96645cbd7ebb8043334696bab502c0c840236e6858aded61cdf52b573c38a4",
+    "m4a": "ccb5a88382cdc01ff197fcd94adbb90fe7f4dd143f455005f1cb7cd8a314ac3c"
    }
   },
   "l4-outro": {
@@ -605,12 +678,12 @@
    "startSeconds": 4.0,
    "tier": 1,
    "bytes": {
-    "ogg": 166999,
-    "m4a": 262606
+    "ogg": 166893,
+    "m4a": 262679
    },
    "sha256": {
-    "ogg": "5452bd40c62f3f02538cb9cd91b11a9bea5d8fbc3df165ceadf9e4745c385f62",
-    "m4a": "d1e3478074578479e1fd861b2429e2e4837b7cb05c6e56f526a21ec0ce582214"
+    "ogg": "fa90d2690ee529354c1517d0706ee51b62e2b7de67976e231cda276eb518f1a2",
+    "m4a": "e7ae2c24b8b1f93991bce1acdf1681fa9603389bb0d3fac27c0c5366ca6cc106"
    }
   },
   "l4-t2": {
@@ -629,12 +702,12 @@
    "startSeconds": 4.0,
    "tier": 2,
    "bytes": {
-    "ogg": 169754,
-    "m4a": 262869
+    "ogg": 169607,
+    "m4a": 262768
    },
    "sha256": {
-    "ogg": "b4ad8ad0f0cbcd246c644cee95c5e9f7e1e00e19708b29804dfd743dd77ce719",
-    "m4a": "3e6d82557a0f856eeab4980c500b4ff509b95b1c80245087254a262985affa4f"
+    "ogg": "c44a28ca7651a90a50616b60bcda4f642c32a957ea9698174b7e29d575b8de10",
+    "m4a": "1f2117831d4a4111e389abf08674267b964c5fd8c66d14957b2f56b38d34a2f0"
    }
   },
   "l4-t3": {
@@ -645,20 +718,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "4",
-   "seed": 42,
+   "seed": 41,
    "denoise": 0.45,
-   "motifChroma": 0.566,
-   "motifOnset": 0.244,
-   "referenceCloseness": 0.88,
+   "motifChroma": 0.673,
+   "motifOnset": 0.327,
+   "referenceCloseness": 0.788,
    "startSeconds": 4.0,
    "tier": 3,
    "bytes": {
-    "ogg": 165544,
-    "m4a": 262604
+    "ogg": 169613,
+    "m4a": 262606
    },
    "sha256": {
-    "ogg": "9d4887e83628120fb513334f3a0d8e9bd0955c0fc58088cffd150fe97e77b926",
-    "m4a": "2bb2ee58992da1cc728e59584ae2061045e11274f5cdd1aadd3c4f70bc187ffc"
+    "ogg": "365fa1cd689b17c226c1ec161b5bc6fd69e8abcba841a64607e625d047fbc898",
+    "m4a": "8b6db20a8b30b9890934c89619f4dbe24bf5b6dd80e4cdbc0089813a48d04ce0"
    }
   },
   "l4-t4": {
@@ -669,26 +742,26 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "4",
-   "seed": 42,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.602,
-   "motifOnset": 0.108,
-   "referenceCloseness": 0.832,
+   "motifChroma": 0.671,
+   "motifOnset": 0.201,
+   "referenceCloseness": 0.813,
    "startSeconds": 4.0,
    "tier": 4,
    "bytes": {
-    "ogg": 166918,
-    "m4a": 262733
+    "ogg": 169287,
+    "m4a": 262702
    },
    "sha256": {
-    "ogg": "d46bf1599a0fc60177d7ef5dc766c814878290ade61fa651fbff2f7b5da48ee8",
-    "m4a": "7e37dc896555fe1403e2d90fcbfbd91cbf0c3d596bb39e72e0ada6c82844c804"
+    "ogg": "6e95dc48e2a718ba74396353e7b4093bb976abd956963040f1e8481d13096d27",
+    "m4a": "7f2a9c907b70c138a3ebe409b43d0b860ae3217f6061f658c5ff6d145e6638d1"
    }
   },
   "l5-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 6.0,
+   "seconds": 7.5,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -696,16 +769,17 @@
     "dive",
     "laststand",
     "hatch",
-    "reinforce"
+    "reinforce",
+    "breakthrough"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 63046,
-    "m4a": 100145
+    "ogg": 78338,
+    "m4a": 124882
    },
    "sha256": {
-    "ogg": "8decf622373dc82570d9509e0fb619d44a7c1c65daa27353db621ed582bcadb7",
-    "m4a": "28865e1b45b1583a34367ecf89f971e847aa51438345050b2c582f88014b30fe"
+    "ogg": "f0d5135065a94b3c34d27486a1f0672e8f4949d15c1b53b7a76897c3a1136fd9",
+    "m4a": "0a7111dcc5211c75fb79ca9038d7fe95f5b0c189d53e7dfd120e90a671e58238"
    }
   },
   "l5-intro": {
@@ -764,20 +838,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "5",
-   "seed": 42,
+   "seed": 44,
    "denoise": 0.45,
-   "motifChroma": 0.519,
-   "motifOnset": 0.839,
-   "referenceCloseness": 0.832,
+   "motifChroma": 0.594,
+   "motifOnset": 0.84,
+   "referenceCloseness": 0.817,
    "startSeconds": 4.0,
    "tier": 1,
    "bytes": {
-    "ogg": 162901,
-    "m4a": 262681
+    "ogg": 177519,
+    "m4a": 262821
    },
    "sha256": {
-    "ogg": "fb84123f590c30ab0d39ec344d5ae2e0588e1ffd363cb43acba187fab93dcd26",
-    "m4a": "9ed8f81208b86730bced2396d4de5c0b4a0f29cedf708ba94d0342401fe7b2d2"
+    "ogg": "fb3ea3b06f2b95ab420d93d26a28923546fb3ca6f7c24fc52e23b35a4b3f67ef",
+    "m4a": "e3c3d8c0ddca31836395d484527de872518c1d93cec5a5bf91c5318fcbe47702"
    }
   },
   "l5-t2": {
@@ -788,20 +862,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "5",
-   "seed": 42,
+   "seed": 44,
    "denoise": 0.45,
-   "motifChroma": 0.446,
-   "motifOnset": 0.147,
-   "referenceCloseness": 0.715,
+   "motifChroma": 0.543,
+   "motifOnset": 0.198,
+   "referenceCloseness": 0.72,
    "startSeconds": 4.0,
    "tier": 2,
    "bytes": {
-    "ogg": 168071,
-    "m4a": 262561
+    "ogg": 174568,
+    "m4a": 262546
    },
    "sha256": {
-    "ogg": "ede0aa7c663cb54729ba28bda24d63daa79d162b6a2e8c7897eb7d0d6b0bd035",
-    "m4a": "74805e29d954281731296345dbab8e177fa724b0eba742daabcfc2786cb3a979"
+    "ogg": "d481c08e361ac58e69368a5d857b6bb61d5105553e01235a15814a15d6c10066",
+    "m4a": "4090a223c9153109dcbbade614adc423c2eb7dd720343f18154bbf9e81fcb7ff"
    }
   },
   "l5-t3": {
@@ -812,20 +886,20 @@
    "loopEnd": 16.0,
    "mode": "a2a",
    "group": "5",
-   "seed": 42,
+   "seed": 44,
    "denoise": 0.45,
-   "motifChroma": 0.489,
-   "motifOnset": 0.59,
-   "referenceCloseness": 0.807,
+   "motifChroma": 0.512,
+   "motifOnset": 0.652,
+   "referenceCloseness": 0.785,
    "startSeconds": 4.0,
    "tier": 3,
    "bytes": {
-    "ogg": 166575,
-    "m4a": 262676
+    "ogg": 169978,
+    "m4a": 262609
    },
    "sha256": {
-    "ogg": "c94cef9b76406cb4aa45ffb3968e05c3551ae3d24ccbfecddf0ed1c06622b201",
-    "m4a": "63b7fcce9b10a182c8f4db4399a15d1a088db7e2ecfb613b77129ddb47b00976"
+    "ogg": "59187482653401e6e3af5bc2b351383439becdf4ba47eb28624fb69eacca7a45",
+    "m4a": "cd8401c72b136f2991d868520bf23c2af2f0ba2512fee12a2725b06fb279e9d8"
    }
   },
   "l5-t4": {
@@ -848,8 +922,8 @@
     "m4a": 262665
    },
    "sha256": {
-    "ogg": "1aacec6d5923cf323b486b4561b2816204213a33a233ed8c5bcb2800adbe427e",
-    "m4a": "7e2b1bd0a9c27022a057d77a766c7893ec9e6271df3bb1e340c16496d53c4298"
+    "ogg": "0f2f276848248bcf38104f8191a1d735847ebd3200173b6703656e5d014ef403",
+    "m4a": "3bc53e612e3c0212bbf735ed2ce736aa024b22d03faa51d079b3c7e6c8bc4284"
    }
   },
   "levelclear": {
@@ -873,6 +947,29 @@
    "sha256": {
     "ogg": "f48d569132a49588d0c85432c622fff9df106eec634b1c78fe9d4bdc3bf8be56",
     "m4a": "8cdf6fdf7888e86e8926733b3e09db6f70cf52799e4cadc64998e53b25f447a7"
+   }
+  },
+  "levelclear-fleet": {
+   "kind": "tail",
+   "beats": 12,
+   "seconds": 8.0,
+   "loopStart": 6.0,
+   "loopEnd": 8.0,
+   "mode": "a2a",
+   "group": "march",
+   "seed": 41,
+   "denoise": 0.45,
+   "motifChroma": 0.458,
+   "motifOnset": 0.501,
+   "referenceCloseness": 0.902,
+   "startSeconds": 2.0,
+   "bytes": {
+    "ogg": 87497,
+    "m4a": 133591
+   },
+   "sha256": {
+    "ogg": "58d8206c8a25eade6ee50aaf9d37e78605907d109ee03ee9f9a8063e8f402c07",
+    "m4a": "da218d5269f509551be28a7e835aed968a81da21fc9581e3433aaf26847f4a56"
    }
   },
   "menu": {
@@ -903,19 +1000,19 @@
    "loopEnd": 12.0,
    "mode": "a2a",
    "group": "march",
-   "seed": 41,
+   "seed": 44,
    "denoise": 0.45,
-   "motifChroma": 0.777,
-   "motifOnset": 0.646,
-   "referenceCloseness": 0.9,
+   "motifChroma": 0.768,
+   "motifOnset": 0.66,
+   "referenceCloseness": 0.913,
    "startSeconds": 2.0,
    "bytes": {
-    "ogg": 132155,
-    "m4a": 199659
+    "ogg": 135059,
+    "m4a": 199368
    },
    "sha256": {
-    "ogg": "c0c5f143599f1a5aed830a533e2c83f749b316b8a8a21900e69a4768418e3326",
-    "m4a": "35cefc09701b867d500405fada79e698095290355ce9315a66d767775ee1af10"
+    "ogg": "95d1de66512be71e1c5af7188ff699f31d75ca4fc6e624e2efa9ca42b4f98219",
+    "m4a": "a64f45d0b303b7cdd381eb748baa245e98ea61310995ac75e4c50c7b830a5a3d"
    }
   }
  },

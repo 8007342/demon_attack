@@ -761,15 +761,30 @@ def a2a_scores(spec, work, cue, path, refs, cache={}):
     n, gfeat, rprof = cache[gkey]
     audio = fit_length(read_audio(path), n)
     win = window_of(audio, info_g)
-    sim = motif_similarity(gfeat, motif_features(win))
+    feat = motif_features(win)
+    sim = motif_similarity(gfeat, feat)
+    lag, _ = guide_lag(feat['onset'], gfeat['onset'])
     prof = mel_profile(win)
     closeness = float(np.dot(prof, rprof) / (np.linalg.norm(prof) * np.linalg.norm(rprof) + 1e-9))
     seed, d = parse_candidate(path)
-    info = {'seed': seed, 'denoise': d, 'motif': sim, 'reference_closeness': closeness, 'metrics': genre_metrics(win)}
+    info = {'seed': seed, 'denoise': d, 'motif': sim, 'reference_closeness': closeness, 'guide_lag_ms': round(lag * 1000), 'metrics': genre_metrics(win)}
     # Keep the motif (harmony and rhythm) first, then sound like the genre take;
     # a small preference for the stronger re-performance (higher denoise).
-    info['score'] = sim['chroma'] + 0.5 * sim['onset'] + 2.0 * closeness + 0.5 * d - (1.0 if sim['chroma'] < 0.25 else 0.0)
+    # A re-performance that moved its accents off the guide's sixteenths would
+    # break the shared grid of the tiers: penalise it.
+    info['score'] = (sim['chroma'] + 0.5 * sim['onset'] + 2.0 * closeness + 0.5 * d
+                     - (1.0 if sim['chroma'] < 0.25 else 0.0) - (1.5 if abs(lag) > 0.03 else 0.0))
     return info
+
+
+def guide_lag(onset, guide_onset):
+    """Lag (s) of the best onset-envelope correlation with the guide within
+    +-150 ms, and that correlation."""
+    n = min(len(onset), len(guide_onset))
+    lags = list(range(-15, 16))
+    corr = [_corr(onset[max(0, k):n + min(0, k)], guide_onset[max(0, -k):n - max(0, k)]) for k in lags]
+    best = int(np.argmax(corr))
+    return lags[best] * HOP / SR, corr[best]
 
 
 def window_of(audio, info_g):
@@ -795,7 +810,7 @@ def cmd_analyze(args):
                 refs = refs or chosen_refs(work)
                 info = a2a_scores(spec, work, cue, path, refs)
                 m = info['motif']
-                print(f"{path.stem:22} chroma={m['chroma']:.3f} onset={m['onset']:.3f} mel={m['mel']:.3f} ref={info['reference_closeness']:.3f} score={info['score']:.3f}")
+                print(f"{path.stem:22} chroma={m['chroma']:.3f} onset={m['onset']:.3f} mel={m['mel']:.3f} ref={info['reference_closeness']:.3f} lag={info['guide_lag_ms']:+d}ms score={info['score']:.3f}")
             report[path.stem] = info
     target.write_text(json.dumps(dict(sorted(report.items())), indent=1))
 
@@ -991,11 +1006,8 @@ def cmd_verify(args):
                 ginfo = guide_info(work, name)
                 gw = motif_features(window_of(read_audio(guide), ginfo))['onset']
                 cw = motif_features(audio[:ginfo['beats'] * SR // 2])['onset']
-                n = min(len(gw), len(cw))
-                lags = list(range(-15, 16))
-                corr = [_corr(cw[max(0, k):n + min(0, k)], gw[max(0, -k):n - max(0, k)]) for k in lags]
-                lag = lags[int(np.argmax(corr))] * HOP / SR
-                notes.append(f'guide lag {lag * 1000:+.0f}ms (r={max(corr):.2f})')
+                lag, r = guide_lag(cw, gw)
+                notes.append(f'guide lag {lag * 1000:+.0f}ms (r={r:.2f})')
                 if abs(lag) > 0.03:
                     problems.append('onsets are off the guide grid')
             elif fmt == 'ogg' and meta['kind'] in ('loop', 'tail'):
