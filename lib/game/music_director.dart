@@ -34,8 +34,8 @@ class MusicDirector {
     GameEventNames.reinforcementsArrived: 1.0,
   };
 
-  /// Ground-war pressure (the `groundPressure` event's 0..1 level) adds a
-  /// tier at 0.4 and two at 0.8.
+  /// Ground-war pressure (`model.ground.pressure`, 0..1; also published as
+  /// the `groundPressure` event) adds a tier at 0.4 and two at 0.8.
   static const pressureSteps = [0.4, 0.8];
 
   /// Ground-war events (from the shared bridge) that raise the tension.
@@ -85,16 +85,7 @@ class MusicDirector {
   /// Listener for the shared bridge: ground threats lift the tier.
   void onGameEvent(GameEvent event) {
     if (groundThreats.contains(event.name)) _lifted = reinforcementLift;
-    if (event.name == groundPressure) {
-      final value =
-          event.data['level'] ?? event.data['pressure'] ?? event.data['value'];
-      if (value is num) _pressure = value.toDouble().clamp(0.0, 1.0);
-    }
   }
-
-  /// Ground-war retune names (matched as strings; owned by game_events.dart).
-  static const groundPressure = 'groundPressure';
-  static const groundBreakthrough = 'groundBreakthrough';
 
   void observe(ArcadeModel model, double dt) {
     final scene = (model.level, model.cycle);
@@ -114,6 +105,7 @@ class MusicDirector {
       _tell(GameEventNames.reinforcementsArrived);
     }
     _lifted = (_lifted - dt).clamp(0, reinforcementLift);
+    _pressure = model.ground.pressure.clamp(0.0, 1.0);
     _tells(model);
     final wanted = targetTier(model, lifted: _lifted > 0, pressure: _pressure);
     if (sentTier == null || wanted > target) {
@@ -202,7 +194,7 @@ class MusicBridge {
     GameEventNames.lastStandTell: 'laststand',
     GameEventNames.carrierHatchOpen: 'hatch',
     GameEventNames.reinforcementsArrived: 'reinforce',
-    MusicDirector.groundBreakthrough: 'breakthrough',
+    GameEventNames.groundBreakthrough: 'breakthrough',
   };
 
   void call(GameEvent event) {

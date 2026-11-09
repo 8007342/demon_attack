@@ -122,14 +122,10 @@ void main() {
     m.demons.clear();
     log.director.observe(m, 1 / 60);
     expect(log.tiers.last, 1);
-    log.director.onGameEvent(
-      const GameEvent(MusicDirector.groundPressure, {'level': 0.5}),
-    );
+    m.ground.pressure = 0.5;
     log.director.observe(m, 1 / 60);
     expect(log.tiers.last, 2, reason: 'pressure 0.5 adds a tier');
-    log.director.onGameEvent(
-      const GameEvent(MusicDirector.groundPressure, {'pressure': 0.9}),
-    );
+    m.ground.pressure = 0.9;
     log.director.observe(m, 1 / 60);
     expect(log.tiers.last, 3, reason: 'pressure 0.9 adds two');
     final accents = <String>[];
@@ -137,7 +133,7 @@ void main() {
       onIntensity: (_) {},
       onAccent: accents.add,
       onFleetIntact: () {},
-    ).call(const GameEvent(MusicDirector.groundBreakthrough));
+    ).call(const GameEvent(GameEventNames.groundBreakthrough));
     expect(accents, ['breakthrough']);
   });
 

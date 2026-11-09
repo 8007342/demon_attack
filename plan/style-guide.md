@@ -172,8 +172,8 @@ The intensity tiers of a level are four arrangements of the same 8-bar motif: ti
 | Elite present / sentinel present | at least tier 2 / tier 3 |
 | Reinforcements arrive (`reinforcements` event) | +1 tier for 6 s, and the **reinforce** accent |
 | Ground war: `allyUnderAttack`, `groundForceInRange` (shared bridge) | +1 tier for 6 s |
-| Ground war: `groundPressure` level 0–1 | +1 tier from 0.4, +2 from 0.8 |
-| Ground war: `groundBreakthrough` | **breakthrough** accent |
+| Ground war: pressure `model.ground.pressure` (0–1) | +1 tier from 0.4, +2 from 0.8 |
+| Ground war: `groundBreakthrough` (L3–L4) | **breakthrough** accent |
 | A dive tell starts (telegraph) | **dive** accent (at most one per 2 s) |
 | Sentinel dive or last stand | tier 4; a new last stand plays the **laststand** accent |
 | One life left | +1 tier |
