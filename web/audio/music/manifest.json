@@ -1,0 +1,334 @@
+{
+ "cues": {
+  "boss-1-0": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 2102,
+   "sourceBpm": 120.0,
+   "startSeconds": 12.95,
+   "seamSimilarity": 0.856,
+   "bytes": {
+    "ogg": 171127,
+    "m4a": 264897
+   },
+   "sha256": {
+    "ogg": "41ba6030dcba748f57f904312953c842b14b0aa765beeafc0926e5caf2dcca11",
+    "m4a": "119ba993956b35a0a2b1a7df92590ec171ac7c68960b29cb68ec87762726f2db"
+   }
+  },
+  "boss-1-1": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 2113,
+   "sourceBpm": 120.0,
+   "startSeconds": 9.49,
+   "seamSimilarity": 0.998,
+   "bytes": {
+    "ogg": 174073,
+    "m4a": 265505
+   },
+   "sha256": {
+    "ogg": "a926d352813e7d818cb01a5f8960fa7548de177f77ded9e8777060228f838432",
+    "m4a": "55bfc05ff1e4ad2fe571ca3fc677b91d43a043633e41e65fdf3d1a73d402b138"
+   }
+  },
+  "boss-2-0": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 2202,
+   "sourceBpm": 120.0,
+   "startSeconds": 19.99,
+   "seamSimilarity": 0.97,
+   "bytes": {
+    "ogg": 166315,
+    "m4a": 264159
+   },
+   "sha256": {
+    "ogg": "2b9fb61c4ddaf8d92b7f5f27904f8d91cfef27d094bb41ef6e15be8800bac6d9",
+    "m4a": "38486c91f559ed195e4c1d0f2be353234b033debd51cf3f080d61548efcd0dde"
+   }
+  },
+  "boss-2-1": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 2212,
+   "sourceBpm": 120.0,
+   "startSeconds": 10.87,
+   "seamSimilarity": 0.998,
+   "bytes": {
+    "ogg": 157867,
+    "m4a": 264255
+   },
+   "sha256": {
+    "ogg": "08c5e39ea1bf7ccc2db0ec97b90fc1c217a3a9ed4759b606341cec085b431289",
+    "m4a": "4d8f770ed10ec6e02565197c32ea6deb9709a48fac6fb9699e8827f20768f4e9"
+   }
+  },
+  "boss-3-0": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 2303,
+   "sourceBpm": 120.0,
+   "startSeconds": 18.53,
+   "seamSimilarity": 0.926,
+   "bytes": {
+    "ogg": 164795,
+    "m4a": 263047
+   },
+   "sha256": {
+    "ogg": "6d71d79f393b8bbb7056585ab3ef84437322f14d76769118dc9a1aacbf028117",
+    "m4a": "a133fe441eba69bd0c414d7628970ed4d9e3f3bc4bd0ab0bdb5a5acd2baffc58"
+   }
+  },
+  "boss-3-1": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 2311,
+   "sourceBpm": 120.0,
+   "startSeconds": 14.99,
+   "seamSimilarity": 0.791,
+   "bytes": {
+    "ogg": 171103,
+    "m4a": 265955
+   },
+   "sha256": {
+    "ogg": "54af3a559c5637a86cf340def05c5eec162b67fd0a1dab320916f84797c7ca39",
+    "m4a": "f5c585fa29e0fe9d1af6e58540bebf4a3a6935d52bedcf45087c3d9421985e5e"
+   }
+  },
+  "boss-4-0": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 2405,
+   "sourceBpm": 120.0,
+   "startSeconds": 12.06,
+   "seamSimilarity": 0.963,
+   "bytes": {
+    "ogg": 157533,
+    "m4a": 262693
+   },
+   "sha256": {
+    "ogg": "817fd66fed392c8bd539d199bfa6e1208615cfca4bb57315b85b88e27db21eac",
+    "m4a": "29e3983e898ccdb7b1485873b9cbd6b214dabbb45c363136faaa5e96343b8a12"
+   }
+  },
+  "boss-4-1": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 2413,
+   "sourceBpm": 120.0,
+   "startSeconds": 12.52,
+   "seamSimilarity": 0.975,
+   "bytes": {
+    "ogg": 171720,
+    "m4a": 269799
+   },
+   "sha256": {
+    "ogg": "d297d97f8acf50ddd66f35d64b24f5510dc3699e2f2f302beae218b239c3e807",
+    "m4a": "e3f814eae4294bbf6e79cd3a31b10b0d1b02753e911cdae09c265b8e3257e3b9"
+   }
+  },
+  "gameover": {
+   "kind": "oneshot",
+   "beats": 8,
+   "seconds": 4.6,
+   "loopStart": null,
+   "loopEnd": null,
+   "seed": 3403,
+   "sourceBpm": 119.79,
+   "startSeconds": 0.01,
+   "seamSimilarity": 0.0,
+   "bytes": {
+    "ogg": 57021,
+    "m4a": 77617
+   },
+   "sha256": {
+    "ogg": "7590a462c2c9b74437b715f18d07fc1ff57a364de251015e97b0659e5375314f",
+    "m4a": "3b6decd9e80a2dbbd96d0a68363d7348ce99e25adcf9796e23a35b34fc4df501"
+   }
+  },
+  "level-1": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 1201,
+   "sourceBpm": 120.0,
+   "startSeconds": 6.02,
+   "seamSimilarity": 0.998,
+   "bytes": {
+    "ogg": 176797,
+    "m4a": 271211
+   },
+   "sha256": {
+    "ogg": "5e3c3c9b56c2c415c7b7b26e7ed73212d2dc201074d3b4eb2991fce23d1327f7",
+    "m4a": "dcbe0616e3c972d23aef3c4dd93190cf6efbfb43b688820bd69178c33ee0075d"
+   }
+  },
+  "level-2": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 1302,
+   "sourceBpm": 120.0,
+   "startSeconds": 10.11,
+   "seamSimilarity": 0.998,
+   "bytes": {
+    "ogg": 189710,
+    "m4a": 263510
+   },
+   "sha256": {
+    "ogg": "bc6c48b0960452592e7302ba1d8f6d0da5e2c8c7c53435e766123bd013fdad16",
+    "m4a": "c46e69775d27a2e5eafe7e82882603b7e567774f8fc84ba91f63f268863f9ae7"
+   }
+  },
+  "level-3": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 1402,
+   "sourceBpm": 120.0,
+   "startSeconds": 9.95,
+   "seamSimilarity": 0.999,
+   "bytes": {
+    "ogg": 172355,
+    "m4a": 264411
+   },
+   "sha256": {
+    "ogg": "98675c8c530cb5e8836aabb3c8fa32b7ba8af55336c8f6e4cc9fbd4d7c7aff95",
+    "m4a": "cb235cb5af3012d262a637301ab8bbe857da843b3712fd00bd3b2b15148bdd8f"
+   }
+  },
+  "level-4": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 1502,
+   "sourceBpm": 120.0,
+   "startSeconds": 3.5,
+   "seamSimilarity": 0.999,
+   "bytes": {
+    "ogg": 175218,
+    "m4a": 263086
+   },
+   "sha256": {
+    "ogg": "92942f999d21d2d4f317b93cfff5353deba35db94ebfc25a4e920e9488fd8106",
+    "m4a": "c56bdd784c1654bd9e5f66d8eb1841315374173982c9b3b83f3ff4c1daa18581"
+   }
+  },
+  "levelclear": {
+   "kind": "tail",
+   "beats": 8,
+   "seconds": 6.0,
+   "loopStart": 4.0,
+   "loopEnd": 6.0,
+   "seed": 3303,
+   "sourceBpm": 120.0,
+   "startSeconds": 0.0,
+   "seamSimilarity": 0.983,
+   "bytes": {
+    "ogg": 74943,
+    "m4a": 102702
+   },
+   "sha256": {
+    "ogg": "3afb9a0f6ea9b8affd126c99d44d5449dd7554c870f23abc686ea758a39b6018",
+    "m4a": "c27b8a4464c9d846925493848acbc6948a5e69d6cfcbf57cf8fde6c230c1cd49"
+   }
+  },
+  "menu": {
+   "kind": "loop",
+   "beats": 32,
+   "seconds": 16.0,
+   "loopStart": 0.0,
+   "loopEnd": 16.0,
+   "seed": 1101,
+   "sourceBpm": 120.0,
+   "startSeconds": 16.48,
+   "seamSimilarity": 0.849,
+   "bytes": {
+    "ogg": 187311,
+    "m4a": 262757
+   },
+   "sha256": {
+    "ogg": "3aa0767c6e791fc5f4dfc44ab24cc1450a5f4e35059624c1d24655181771e4a4",
+    "m4a": "fae6a357f4774db94b3cfae97eacbfe0ea63883a4bb10ad23973fda748b88af4"
+   }
+  },
+  "travel": {
+   "kind": "loop",
+   "beats": 16,
+   "seconds": 8.0,
+   "loopStart": 0.0,
+   "loopEnd": 8.0,
+   "seed": 3101,
+   "sourceBpm": 120.06,
+   "startSeconds": 10.04,
+   "seamSimilarity": 0.994,
+   "bytes": {
+    "ogg": 92077,
+    "m4a": 133243
+   },
+   "sha256": {
+    "ogg": "4a14a9a6a24acb3d7f8aae6d9899598dde199b69696ddb681908f024045b3856",
+    "m4a": "415ddf55ed82be7f4c9725871ce43c7ab19c743ac0c5af064d4fbcffb66126dd"
+   }
+  },
+  "victory": {
+   "kind": "tail",
+   "beats": 8,
+   "seconds": 6.0,
+   "loopStart": 4.0,
+   "loopEnd": 6.0,
+   "seed": 3201,
+   "sourceBpm": 120.0,
+   "startSeconds": 1.5,
+   "seamSimilarity": 0.847,
+   "bytes": {
+    "ogg": 67431,
+    "m4a": 101476
+   },
+   "sha256": {
+    "ogg": "a5f725146a23153568c074db149acf3cc873f36e468e38e363d7da3e343c7e74",
+    "m4a": "73fef6591d9495ac33506abf12eee74e1b329ffaad63f57cf98d1cdad336c4cd"
+   }
+  }
+ },
+ "schema": "demon-attack.music/v1",
+ "bpm": 120,
+ "sampleRate": 48000,
+ "formats": [
+  "ogg",
+  "m4a"
+ ]
+}

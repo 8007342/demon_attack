@@ -56,11 +56,36 @@ Title centers an original horned demon emblem and the Demon Attack wordmark, wit
 
 Top 10 uses aligned rank, three-character initials, and score columns. Initial entry offers three rotating wheels with A–Z and 0–9, clear upper/lower controls, a highlighted middle selection, and Submit. Avoid a freeform text field. Game-over and victory keep a darkened arena behind their overlays. Review phone portrait, narrow desktop, and wide desktop without horizontal overflow.
 
-## Current MIDI score and synthesizer
+## Current music score and playback
 
-`web/audio/generate-midi.py` composes original Standard MIDI Format 0 files in `web/audio/midi/`. `web/audio/demon-audio.js` parses their note events and plays them through a local Web Audio synthesizer. These are actual MIDI sequences, not prerecorded soundtrack files. The current score deliberately shares **120 BPM** and a four-beat bar across every mode, allowing transitions at the next bar boundary while previous note releases finish. Increasing note density and orchestration supplies tension instead of changing tempo.
+Musical direction: original music only, never imitating an existing game's soundtrack. Retro sci-fi arcade (analog bass, square leads, drum machines) fused with dark synth and orchestral tension. The campaign darkens sector by sector as the demonic swarm consumes the human frontier, and the carrier's four forms escalate. Every cue shares **120 BPM** and a four-beat bar, so transitions land on the next bar line. Tension grows through density, timbre and register, never tempo.
 
-| Cue | Current implementation |
+The shipping score is recorded: one ACE-Step 1.5 loop per cue in `web/audio/music/`, made and selected by `tools/music_pipeline.py` from `art/workflows/music/cues.json`. The pipeline and its checks are described in [audio-backend.md](audio-backend.md#recorded-cues-primary). Opus/OGG is the primary format, with AAC/M4A as the fallback. Files load lazily per cue.
+
+| Cue | Sector / role | Direction (prompt essence) | Key | Kind | Length | Seed | Opus | AAC |
+| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: |
+| `menu` | Title | dark ambient sci-fi pads, distant glassy arpeggio, sub pulse; calm, mysterious | E minor | loop | 32 beats / 16 s | 1101 | 183 KB | 257 KB |
+| `level-1` | Krybor frontier | synthwave: pulsing analog bass, bright square lead, 80s drum machine; heroic but tense | A minor | loop | 32 / 16 s | 1201 | 173 KB | 265 KB |
+| `level-2` | Ringfall | cold FM bells, fast sequenced arpeggios, tight drums, low strings; orbital pursuit | D minor | loop | 32 / 16 s | 1302 | 185 KB | 257 KB |
+| `level-3` | Ember Moon | dark industrial: distorted bass, anvil percussion, low brass stabs; furnace heat | C minor | loop | 32 / 16 s | 1402 | 168 KB | 258 KB |
+| `level-4` | The Hollow | dark synth horror: choir pads, gothic organ, war drums, dissonant strings; demonic dread | F minor | loop | 32 / 16 s | 1502 | 171 KB | 257 KB |
+| `boss-1-0` / `-1` | Carrier form 1 | dark orchestral synth battle: low brass, taiko, synth bass (later cycle: + string ostinato, rapid hats) | D minor | loop | 32 / 16 s | 2102 / 2113 | 167 / 170 KB | 259 / 259 KB |
+| `boss-2-0` / `-1` | Carrier form 2 | staccato string ostinato, aggressive bass, snare rolls, brass hits (+ double-time drums, arpeggio layer) | E♭ minor | loop | 32 / 16 s | 2202 / 2212 | 162 / 154 KB | 258 / 258 KB |
+| `boss-3-0` / `-1` | Carrier form 3 | demonic industrial orchestra: distorted bass, dark choir, chromatic brass (+ double kick, screaming lead) | E minor | loop | 32 / 16 s | 2303 / 2311 | 161 / 167 KB | 257 / 260 KB |
+| `boss-4-0` / `-1` | Carrier form 4 | frantic final battle: massive choir, blast beats, string tremolo, organ (+ chromatic synth arpeggios) | F minor | loop | 32 / 16 s | 2405 / 2413 | 154 / 168 KB | 257 / 263 KB |
+| `travel` | Between sectors | floating arpeggio, warm pads, soft pulse; hopeful, suspended | D major | loop | 16 / 8 s | 3101 | 90 KB | 130 KB |
+| `levelclear` | Sector cleared | bright arcade success jingle | G major | tail | 8 beats, then last bar loops (4–6 s) | 3303 | 73 KB | 100 KB |
+| `victory` | Carrier defeated | heroic synth + brass fanfare, timpani | C major | tail | 8 beats, then last bar loops (4–6 s) | 3201 | 66 KB | 99 KB |
+| `gameover` | Defeat | somber descending synth, decaying pads, distant bell | E minor | oneshot | 8 beats + 0.6 s fade (4.6 s) | 3403 | 56 KB | 76 KB |
+| **Total** | | | | | | | **2.41 MB** | **3.68 MB** |
+
+Each loop is exactly 768 000 samples at 48 kHz (16 s; travel 8 s) and starts on a detected downbeat. Its seam is the original continuous waveform, and both codecs are primed with that context and trimmed by the container, so decoded files are sample-exact. `boss-4-0` is pinned (`"pick": 2405`) to the densest even candidate, because the automatic rank favoured a sparser one. Loudness is −18 LUFS integrated with peaks ≤ −1 dBFS. Only one cue is fetched at a time: about 170 KB for a sector.
+
+### MIDI fallback score
+
+`web/audio/generate-midi.py` composes original Standard MIDI Format 0 files in `web/audio/midi/`. When every recorded format of a cue fails to load or decode, `web/audio/demon-audio.js` plays that cue's MIDI note events through its local Web Audio synthesizer on the same grid.
+
+| Cue | MIDI fallback |
 | --- | --- |
 | Menu | Sparse sine-pad motif; 32 beats |
 | Levels 1–4 | Distinct 32-beat scores with increasing melodic subdivisions; percussion from LV2 |
@@ -70,11 +95,15 @@ Top 10 uses aligned rank, three-character initials, and score columns. Initial e
 | Travel | Sixteen-beat suspended arpeggio bridge on the common musical grid |
 | Game over | Eight-beat descending cue and dark chord, non-looping |
 
-The carrier has up to four visual forms, each with its own increasing MIDI intensity. Voices use square lead, sawtooth bass, sine pad, and triangle percussion. A shared audio-clock scheduler runs with lookahead and asynchronous cue loading; a request counter rejects stale loads. Track changes queue to the next bar; level-clear rewards respond immediately with a short music-only crossfade. Firing, hits, explosions, power collection, and life loss use short separate synth effects.
+The carrier has up to four visual forms, each with its own increasing intensity in both scores. The MIDI voices use square lead, sawtooth bass, sine pad, and triangle percussion.
 
-Visiting the page remains silent until a user gesture unlocks browser audio. Start and sound controls should support that gesture deliberately. Muting ramps the master gain. Pause suspends the audio context; Resume restarts scheduling. The current bridge also responds to visibility changes. Confirm that its behavior remains aligned with the application's deliberate pause/resume controls.
+### Playback rules
 
-Future refinements: stem crossfades, per-mode tempo ramps, music/effects balance controls, sound preference persistence, and stronger sound-effect voice limiting. These are intended improvements, not claims about the current synthesizer.
+A shared audio-clock scheduler runs with lookahead and asynchronous cue loading, and a request counter rejects stale loads. Track changes queue to the next bar. The outgoing recorded cue releases over 120 ms across the bar line while the new one starts sample-exactly on it. Level-clear rewards respond immediately, with a 90 ms music-only crossfade. Tail cues hold their final bar until the next cue, so a long cutscene is never silent. Game over ends cleanly. Firing, hits, explosions, power collection, life loss and the wave/extra-life stingers stay short synth effects with unchanged trigger timing. Voice limiting steals the oldest voice per effect (shot 4, hit 4, explosion 5) and caps the total at 14. Explosions and life loss add a short filtered noise layer.
+
+Visiting the page remains silent until a user gesture unlocks browser audio. Start and sound controls should support that gesture deliberately. Muting ramps the master gain. Pause suspends the audio context. Resume keeps the bar grid's phase, skipping only whole beats that fell behind, so it stays locked to the playing loop. The bridge also pauses on visibility changes. Confirm that this stays aligned with the application's deliberate pause/resume controls.
+
+Future refinements: stem crossfades, per-mode tempo ramps, music/effects balance controls, and sound preference persistence. These are intended improvements, not claims about the current player.
 
 ## Review gates
 

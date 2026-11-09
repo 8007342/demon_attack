@@ -42,7 +42,7 @@ async function textVisible(page, value) {
       page.on('response', response => {
         if (new URL(response.url()).pathname === '/api/scores' && response.request().method() === 'GET') scoreLoads.push(response);
       });
-      page.on('response', response => { if (response.url().endsWith('.mid')) midi.push({url: response.url(), status: response.status()}); });
+      page.on('response', response => { if (/\.(mid|ogg|m4a)$/.test(new URL(response.url()).pathname)) midi.push({url: response.url(), status: response.status()}); });
       page.on('pageerror', error => errors.push(`${name}: ${error.message}`));
       page.on('console', message => {
         if (message.type() === 'error') errors.push(`${name}: ${message.text()}`);
@@ -120,10 +120,10 @@ async function textVisible(page, value) {
       }
       await page.screenshot({path: `/tmp/demon-play-${name}.png`});
       if (name === 'desktop') await page.screenshot({path: '/tmp/demon-play.png'});
-      assert(midi.length > 0, `${name}: MIDI soundtrack should be requested`);
-      assert(midi.every(response => response.status === 200), `${name}: MIDI responses should succeed: ${JSON.stringify(midi)}`);
-      assert(await page.evaluate(() => typeof window.demonAudio?.unlock === 'function'), `${name}: synthesizer should be loaded`);
-      console.log(`${name}: inline Top10 GET, title, Enter start, arrows, P pause/resume, controller drag passed; ${midi.length} MIDI responses succeeded`);
+      assert(midi.length > 0, `${name}: soundtrack (recorded cues or MIDI fallback) should be requested`);
+      assert(midi.every(response => response.status === 200), `${name}: soundtrack responses should succeed: ${JSON.stringify(midi)}`);
+      assert(await page.evaluate(() => typeof window.demonAudio?.unlock === 'function'), `${name}: audio bridge should be loaded`);
+      console.log(`${name}: inline Top10 GET, title, Enter start, arrows, P pause/resume, controller drag passed; ${midi.length} soundtrack responses succeeded`);
       await context.close();
     }
     assert.deepEqual(errors, [], 'Browser runtime/console errors');
