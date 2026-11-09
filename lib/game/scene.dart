@@ -627,23 +627,26 @@ class DemonScene extends FlameGame {
           184,
           height: 120,
         );
+        // Idle life: wing-sail breath, eye pulse, spine twitch and fissure
+        // flicker, four authored frames at 2 fps (row 0, then rows 7-9).
+        final idle = (model.visualClock * 2).floor() % 4;
         bossSprite(
           c,
-          0,
+          idle == 0 ? 0 : 6 + idle,
           b.phase.clamp(0, 3),
           Offset(b.x, b.y),
           184,
           height: 120,
         );
-        if (hullDamage > 0.15) {
+        final damageCell = _carrierDamageCell(hullDamage);
+        if (damageCell != null) {
           bossSprite(
             c,
-            3,
-            hullDamage > 0.55 ? 1 : 0,
+            damageCell.$1,
+            damageCell.$2,
             Offset(b.x, b.y),
             184,
             height: 120,
-            opacity: (hullDamage * 0.95).clamp(0.2, 1.0),
           );
         }
         final turretFrame =
@@ -921,27 +924,40 @@ class DemonScene extends FlameGame {
     }
   }
 
+  /// Carrier hull damage overlay (row, column) in boss-carrier.png: stone
+  /// cracks, then split stone with broken chunks, then gaping fissures and
+  /// torn sails; each stage alternates two authored flicker frames.
+  (int, int)? _carrierDamageCell(double damage) {
+    if (damage <= .15) return null;
+    final flick = (model.visualClock * 5).floor().isOdd;
+    if (damage > .75) return (10, flick ? 3 : 2);
+    if (damage > .45) return flick ? (10, 1) : (3, 1);
+    return flick ? (10, 0) : (3, 0);
+  }
+
   void _carrierEyes(Canvas c, Carrier carrier) {
     if (carrier.rage <= 0) return;
-    // Match the native hull eye pixels. Stepped red surrounds supply glow
-    // without blurred circles; the hotter inner pixels remain symmetrical.
+    // Rage over the authored gargoyle eyes (boss-carrier.png: slanted eyes
+    // from x 6.5 to 20 units off centre, y -8.5 to 0). Stepped red surrounds
+    // supply glow without blurred circles; the inner strip runs hotter.
     final center = Offset(carrier.x.roundToDouble(), carrier.y.roundToDouble());
     final pulse = (model.clock * 6).floor().isEven ? .12 : 0.0;
     final hot = Color.lerp(gold, const Color(0xFFFF274E), carrier.rage)!;
     final paint = Paint()..isAntiAlias = false;
-    for (var column = 0; column < 6; column++) {
-      final x = 17.0 + column * 6;
-      final y = 12.0 - column ~/ 2 * 4;
-      for (final side in [-1.0, 1.0]) {
-        final left = center.dx + side * x - 3;
+    // Three steps per eye, outer (higher) to inner (lower): x, y, width.
+    const steps = [(-20.0, -8.0, 5.0), (-15.0, -6.0, 4.0), (-11.0, -4.0, 4.0)];
+    for (final side in [-1.0, 1.0]) {
+      for (var i = 0; i < steps.length; i++) {
+        final (x, y, w) = steps[i];
+        final left = side < 0 ? center.dx + x : center.dx - x - w;
         paint.color = const Color(0xFFFF274E)
-            .withValues(alpha: carrier.rage * (.18 + pulse));
-        c.drawRect(Rect.fromLTWH(left - 2, center.dy + y - 2, 10, 12), paint);
-        paint.color = hot;
-        c.drawRect(Rect.fromLTWH(left, center.dy + y, 6, 8), paint);
-        if (carrier.rage > .6 && column < 3) {
+            .withValues(alpha: carrier.rage * (.2 + pulse));
+        c.drawRect(Rect.fromLTWH(left - 1, center.dy + y - 2, w + 2, 6), paint);
+        paint.color = hot.withValues(alpha: .35 + carrier.rage * .45);
+        c.drawRect(Rect.fromLTWH(left, center.dy + y, w, 2), paint);
+        if (carrier.rage > .6 && i == 1) {
           paint.color = const Color(0xFFFFC7AF);
-          c.drawRect(Rect.fromLTWH(left + 2, center.dy + y + 4, 2, 2), paint);
+          c.drawRect(Rect.fromLTWH(left + 1, center.dy + y, 2, 1), paint);
         }
       }
     }
@@ -1555,24 +1571,26 @@ class DemonScene extends FlameGame {
 
   void _carrierLighting(Canvas c, Offset center, double bank) {
     final paint = Paint()..isAntiAlias = false;
+    // Banking catches the key light on the leading bastion's carved ridge
+    // and drops the trailing one into shadow (war-ark hull geometry).
     final lead = bank >= 0 ? 1.0 : -1.0;
-    paint.color = const Color(0x669FFFEA);
+    paint.color = const Color(0x40FFE6C0);
     c.drawRect(
       Rect.fromLTWH(
-        (center.dx + lead * 52 - 12).roundToDouble(),
-        (center.dy - 24).roundToDouble(),
-        24,
-        3,
+        (center.dx + lead * 40 - 8).roundToDouble(),
+        (center.dy - 20).roundToDouble(),
+        16,
+        2,
       ),
       paint,
     );
-    paint.color = const Color(0x66060A16);
+    paint.color = const Color(0x55060A16);
     c.drawRect(
       Rect.fromLTWH(
-        (center.dx - lead * 56 - 12).roundToDouble(),
+        (center.dx - lead * 40 - 10).roundToDouble(),
         (center.dy - 14).roundToDouble(),
-        24,
-        5,
+        20,
+        6,
       ),
       paint,
     );

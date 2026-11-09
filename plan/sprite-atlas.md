@@ -11,7 +11,7 @@ All four sheets are **stored 1×**: one PNG pixel is one logical pixel. Render w
 | `assets/images/combat.png` | `tools/generate_sprites.py` (+ `tools/gargoyle_rig.py`) | 2048 × 2560 | 64 × 64, 32 cols × 40 rows | 40 × 40 (angry 44); shots/effects as noted |
 | `assets/images/ship-weapons.png` + `.json` | `tools/generate_ship_sprites.py` | 1024 × 448 | 64 × 64, 16 cols × 7 rows | 48 × 48, centred on the ship |
 | `assets/images/sentinel-effects.png` | `tools/generate_sentinel_sprites.py` (+ `tools/gargoyle_rig.py`) | 1024 × 896 | 128 × 64, 8 cols × 14 rows | 128 × 64 (effects at ×0.5–0.6) |
-| `assets/images/boss-carrier.png` | `tools/generate_boss_sprites.py` | 1472 × 1680 | 368 × 240, 4 cols × 7 rows | 184 × 120 |
+| `assets/images/boss-carrier.png` | `tools/generate_boss_sprites.py` | 1472 × 2640 | 368 × 240, 4 cols × 11 rows | 184 × 120 |
 
 Rebuild everything with `python tools/sprite_pipeline.py offline` (no GPU, byte-identical) or `... all` (re-runs the ComfyUI stages first).
 
@@ -160,19 +160,21 @@ The stroke is the same downstroke/upstroke anatomy as the ordinary creatures: po
 
 ## Carrier atlas: `boss-carrier.png`
 
-Shapes are authored in 184 × 120 design units; polygons, ellipses and lines rasterise at the native 368 × 240 (finer silhouettes, seams and outlines), boxes and dots keep a 2 × 2 footprint.
+The carrier is a gargoyle war-ark: a flying fortress of carved stone and bone with folded bat-membrane wing sails, built with the same 3-D rig as the gargoyles (`tools/gargoyle_rig.py`: ellipsoids, sphere chains, membrane triangles, z-buffer, quantised top-left key light, contour and outline passes) at the native 368 × 240 per cell; 1 design unit = 2 native px and the scene draws each cell at 184 × 120 arena units, centred on the carrier. Faces, emblem, rank carvings, fissures, jaws and vents are pixel decals in design units. AI detail maps (`art/families/carrier/detail/`) only nudge the key-light value of stone (hide), masonry and membrane pixels.
 
 | Row | Columns |
 | --- | --- |
-| 0 | Hull forms: Carrier, Brood Ark, Siege Carrier, Flagship. Each carries the brood sigil (horned crest with ruby) and one rank pip per form |
-| 1 | Mandible poses (closed, half, flared, clamped) with dorsal thruster plumes |
-| 2 | 0–2 tracking turrets and pulsing core; 3 bay shutters |
-| 3 | 0 cracked carapace; 1 exposed rib-core; 2/3 detached wing chunks and shrapnel |
-| 4 | Core blast doors at openness 0, ⅓, ⅔, 1: leaves slide into the frame, piston rods extend, hazard chevrons, lock pip when sealed |
-| 5 | Left side hatch at openness 0, ½, 1; 3 locked final-form plate with cross-bars (drawn mirrored for the right hatch) |
-| 6 | Charred wreck of each form: scorched palette, blast holes with ember rims, glowing fissures (falling-wreck scene) |
+| 0 | Hull forms, idle frame 0: Carrier (violet-grey stone, amber eyes, chevron), Brood Ark (bruised plum, magenta fissures, dorsal spines, twin bars), Siege Ark (ember-cracked crimson basalt, lava fissures, brow horns, fang slashes), Flagship (obsidian with a gold crown, gold bones and veins, star jewel). Each carries the horned brood sigil with its ruby on the forehead and one rank pip per form; the carved maw lip and both vent rims are part of the hull, in the form's stone |
+| 1 | Talon poses (closed, half, flared, clamped) with soul-fire from the four chimney pinnacles (x ±30, ±48 units) |
+| 2 | Spout-head turrets at (±28, 36) units, four breathing frames (mouth glow dim, lit, hot, lit); the scene's tracking barrels pivot in their mouths |
+| 3 | 0 stone cracks (damage stage 1); 1 split stone with broken chunks showing the glowing interior (stage 2); 2/3 petrified debris (wing shard, snapped horn and masonry) for the falling wreck |
+| 4 | Maw jaws at openness 0, ⅓, ⅔, 1: fanged stone shutters, the upper jaw rising and the lower jaw dropping into the lip; an ember rune glows in the seam when sealed |
+| 5 | Left clawed vent at openness 0, ½, 1 (three bone-stone talon fingers withdraw into the rim); 3 petrified final-form plug with a cross rune and ember lock eye (drawn mirrored for the right vent) |
+| 6 | Petrified, charred wreck of each form: ash stone, charred sails with holes, dead eyes, a broken horn, ember craters, with the talons, spouts, sealed jaws and plugged vents baked in (the meltdown draws no live overlays) |
+| 7–9 | Hull forms, idle frames 1–3. The idle cycle 0-1-2-3 runs at 2 fps: wing-sail breath (wrist and finger tips 0 / ½ / 1 / ½ unit), eye pulse (lit, flare with brow glow, lit, dim), spine twitch (none, first set, none, second set) and fissure flicker (each fissure's core steps between hot and mid by frame) |
+| 10 | 0/1 flicker frames of damage stages 1/2; 2/3 the two frames of stage 3 (gaping fissures, more broken chunks, torn sails) |
 
-Doors follow `Carrier.door`, side hatches `sideDoorLeft/Right` and `sideHatchesLocked`, all simulation state; the shield egg, core glow and eyes stay scene overlays tied to that state. Damage escalates with hull damage: smoke vents (> 12 %), sparks (> 40 %), flames (> 65 %), then black smoke columns, big flames and shed hull plates (> 80 %).
+Simulation geometry is unchanged: maw window 32 × 22 units at (0, 25) from the carrier centre, vents 22 × 16 at (±46, 21), barrels at (±28, 36), shield egg from `Carrier.forceFieldSurfaceY`. Jaws follow `Carrier.door` (frame `round(door × 3)`), vents `sideDoorLeft/Right` (`round(openness × 2)`) and `sideHatchesLocked` (col 3); the shield egg, the core window (violet while shielded, gold when vulnerable), vent glow and rage eyes stay scene overlays tied to that state. The damage overlay follows hull damage `1 − core / coreMax`: stage 1 above 15 %, 2 above 45 %, 3 above 75 %, alternating its two frames at 5 fps, drawn opaque; smoke vents (> 12 %), sparks (> 40 %), flames (> 65 %), black smoke columns, big flames and shed plates (> 80 %) stay anchored to the hull at the same offsets. Rage glows over the authored eyes (slanted, 6.5–20 units off centre, y −8.5 to 0).
 
 ## Instructional illustration sheet
 

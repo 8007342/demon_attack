@@ -1,0 +1,14 @@
+{
+ "schema": "demon-attack.carrier-selections/v1",
+ "detail": {
+  "hide": {"item": "stone", "seed": 652101, "crop": [600, 470, 1080, 783], "why": "Weathered stony gargoyle hide on the chest and arm: fine pits and chisel marks for the head, jowls and snout."},
+  "masonry": {"item": "stone_texture", "seed": 652301, "crop": [0, 0, 1536, 1001], "why": "Irregular carved blocks about 15 x 6 native px after sampling: the bastions, chimneys, buttresses and belly."},
+  "membrane": {"item": "membrane", "seed": 652201, "crop": [0, 0, 1536, 1001], "why": "Wrinkled, veined leather filling the frame: the folded wing sails."}
+ },
+ "rejected": {
+  "stone-652100": "A fortress-gargoyle concept with strong baked lighting; composition reference only.",
+  "stone-652102": "Same subject as 652101 with less surface detail.",
+  "stone_texture-652300": "Regular brick courses, too uniform for carved stone.",
+  "membrane-652200": "A whole bat on a flat ground rather than a membrane surface."
+ }
+}
