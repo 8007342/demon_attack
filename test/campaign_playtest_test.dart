@@ -105,16 +105,19 @@ void main() {
       expect(model.activeMilliseconds, greaterThan(1000000));
       expect(maxLarge, 1);
       expect(maxHostileShots, lessThanOrEqualTo(120));
-      // The ground war: units fought, the autopilot sidestepped nearly every
-      // missile and used the homing pickups it was given.
+      // The ground war: alive throughout; allies win alone in sectors 1-2,
+      // where nothing reaches fire range; the autopilot uses its homing
+      // pickups and sidesteps nearly every missile.
       final g = model.ground;
-      expect(g.unitsSpawned, greaterThan(100));
-      expect(g.missilesLaunched, greaterThan(10));
-      expect(g.missileImpacts, lessThanOrEqualTo(g.missilesLaunched * .12));
-      expect(g.homingCollected, greaterThan(50));
+      expect(g.unitsSpawned, greaterThan(150));
+      expect(g.unitsKilledByAllies, greaterThan(g.unitsSpawned * .3));
+      expect(g.unitsDestroyed, greaterThan(g.unitsSpawned * .8));
+      expect(g.breakthroughsBySector[0] + g.breakthroughsBySector[1], 0);
+      expect(g.impactsBySector[0] + g.impactsBySector[1], 0);
+      expect(g.breakthroughsBySector[2] + g.breakthroughsBySector[3], greaterThan(0));
+      expect(g.missileImpacts, lessThanOrEqualTo(math.max(2, g.missilesLaunched * .15)));
+      expect(g.homingCollected, greaterThan(30));
       expect(g.homingHits, greaterThan(g.homingCollected * 2));
-      expect(g.unitsDestroyed, greaterThan(g.unitsSpawned * .75));
-      expect(g.alliesSaved, greaterThan(g.alliesRetreated));
     });
   }
 }

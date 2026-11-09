@@ -103,6 +103,10 @@ A squad video call frames the arena as the shared screen (OpenSpec change `squad
 - **Celebration:** when the whole allied fleet survives, the left header turns into a gold FLEET INTACT banner and the crew speaks in sequence.
 - **Cast and tone:** the cast is original and diverse in age, gender and ethnicity, with no caricature and no stereotyped accents. Several of the senior officers are women, starting with the Fleet Admiral. Allies are never killed: a downed ship or squad is "totalled" and heads back to base.
 
+### App icon
+
+The installed-app and tab icon is a dedicated emblem, never an enemy atlas frame: a horned gargoyle-demon head (violet ramp, bone horns, burning red eyes, fangs) with the fleet starfighter (teal wings, slate hull, cyan canopy) rising at it from below, both wrapped in a stepped cyan glow on midnight #100E2C, inside a gold #EFBD57 rim. The midnight tile and gold rim keep it legible on light and dark tab bars and taskbars. Large sizes rasterise the geometry in `art/icons/icon-spec.json` onto a 64 logical grid (8× at 512, 3× at 192); 16, 32 and 48 px are hand-tuned pixel maps (`art/icons/badge-*.txt`). Maskable and apple-touch versions put the emblem in a gold ring inside the 80% safe circle on a full-bleed field. Regenerate everything with `tools/generate_icons.py`; edit the spec or maps, never the PNGs.
+
 ## Current music score and playback
 
 Musical direction: original music only, never imitating an existing game's soundtrack. Retro sci-fi arcade (analog bass, square leads, drum machines) fused with dark synth and orchestral tension. The campaign darkens sector by sector as the demonic swarm consumes the human frontier, and the carrier's four forms escalate. Every cue shares **120 BPM** and a four-beat bar, so transitions land on the next bar line. Tension grows through density, timbre and register, never tempo.

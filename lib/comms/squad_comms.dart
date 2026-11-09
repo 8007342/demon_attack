@@ -111,6 +111,11 @@ class SquadComms {
     final batch = [..._pending, ...events];
     _pending.clear();
     for (final event in batch) {
+      // Kill reports are the allies' own chatter; homing kills stay quiet.
+      if (event.name == GameEventNames.groundUnitDestroyed &&
+          (event.data['by'] ?? 'allies') != 'allies') {
+        continue;
+      }
       if (event.name == GameEventNames.sectorStart) _prefetch(event.variant);
       // Fleet intact: a short fanfare stinger under the celebration lines.
       if (playAudio &&

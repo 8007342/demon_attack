@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:demon_attack/comms/comms_bank.dart';
 import 'package:demon_attack/comms/comms_director.dart';
 import 'package:demon_attack/comms/comms_lineup.dart';
+import 'package:demon_attack/comms/squad_comms.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -83,5 +84,33 @@ void main() {
       commsHumanTriggers['groundForceSighted']!.lines.first.text,
       contains('Ground enemies incoming'),
     );
+  });
+
+  test('only allied kills are reported', () {
+    var t = 0.0;
+    final comms = SquadComms(playAudio: false, wallClock: () => t)
+      ..useLineup(CommsLineup.pick(9));
+    comms.tick(
+      events: const [
+        GameEvent(GameEventNames.groundUnitDestroyed, {'by': 'homing'}),
+      ],
+      paused: false,
+    );
+    expect(comms.director.queue, isEmpty);
+    expect(comms.director.active, isEmpty);
+    var reported = false;
+    for (var i = 0; i < 40 && !reported; i++) {
+      t += 30;
+      comms.tick(
+        events: const [
+          GameEvent(GameEventNames.groundUnitDestroyed, {'by': 'allies'}),
+        ],
+        paused: false,
+      );
+      reported = comms.director.history.any(
+        (id) => id.startsWith('groundUnitDestroyed'),
+      );
+    }
+    expect(reported, isTrue);
   });
 }

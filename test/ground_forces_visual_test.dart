@@ -125,7 +125,7 @@ void main() {
 
         // 1. Approach: small and dim at the horizon, growing toward the ship.
         final far = _unit(m, sector, 0, .5, 1350);
-        final mid = _unit(m, sector, 1, .4, 800);
+        final mid = _unit(m, sector, 1, .4, 800)..calledForHelp = true;
         _ally(m, mid);
         final near = _unit(m, sector, 0, .6, 480);
         await shot('1-approach');
@@ -195,11 +195,71 @@ void main() {
         expect(pod.ejects, isTrue);
         expect(limping.alive || pod.alive, isFalse);
         await shot('6-ally-retreat');
+
+        // 7. Early sectors: a quiet skirmish the allies win on their own,
+        // the beaten unit burning on the ground behind them.
+        m.ground.units.clear();
+        m.ground.allies.clear();
+        final beaten = _unit(m, sector, 0, .4, 640)
+          ..destroyed = true
+          ..destroyedByAllies = true
+          ..wreckAge = .35;
+        final fighting = _unit(m, sector, 1, .5, 900);
+        _ally(m, fighting);
+        _ally(m, beaten).z = 560;
+        m.ground.tracers.add(GroundTracer(fighting.ally!.x, fighting.ally!.bodyY,
+            fighting.x, fighting.bodyY, friendly: true)
+          ..age = .12);
+        await shot('7-allies-win');
         expect(far.alive, isTrue);
       }
       for (final e in moments.entries) {
         await _sheet(e.key, e.value);
       }
+    });
+  });
+
+  testWidgets('live simulation frames: early Krybor and an Hollow breakthrough',
+      (tester) async {
+    await tester.runAsync(() async {
+      final frames = <Uint8List>[];
+      // Early Krybor: fly a real run until the first skirmish is under way.
+      final m = ArcadeModel(seed: 1982)..start();
+      final scene = await _scene(m);
+      var next = 0.0;
+      for (var f = 0; f < 60 * 60; f++) {
+        if (m.combat) {
+          m.invulnerable = 2;
+          if (m.levelClock >= next) {
+            next = m.levelClock + 1;
+            final t = m.demons.where((x) => !x.entering).firstOrNull;
+            if (t != null) m.hitDemon(t, damage: 99);
+          }
+        }
+        m.update(1 / 60);
+        if (m.ground.tracers.isNotEmpty && m.ground.units.any((u) => u.z < 1000)) {
+          break;
+        }
+      }
+      expect(m.ground.unitsSpawned, greaterThan(0));
+      frames.add(await _render(scene));
+
+      // The Hollow: an unescorted unit breaks through and telegraphs.
+      final h = _stage(3);
+      final hs = await _scene(h);
+      hs.environment = 3;
+      h.ground.front = GroundFront.of(Difficulty.normal, route: 0, sector: 4);
+      h.invulnerable = 100;
+      final u = _unit(h, 3, 0, .5, GroundTuning.spawnZ)..hp = 50;
+      final escorted = _unit(h, 3, 1, .5, 1200)..hp = 50;
+      _ally(h, escorted);
+      for (var f = 0; f < 60 * 14 && !u.telegraphing; f++) {
+        h.update(1 / 60);
+      }
+      expect(u.brokeThrough, isTrue);
+      h.update(.5);
+      frames.add(await _render(hs));
+      await _sheet('8-live', frames);
     });
   });
 }

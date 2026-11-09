@@ -102,22 +102,33 @@ The generated full-wave/opening defense-budget ratio now peaks at about 2.255, i
 
 ## Ground war (ground forces, allies, homing missiles)
 
-Measured 2026-11-09 with `tools/profile_difficulty.dart`, averaged over four seeds (1982, 7, 42, 2026). Every run is the protected real-projectile pilot. Baseline: `dart run -DGROUND_WAR_DISABLED=true tools/profile_difficulty.dart out.json --seed=N` (same code, no ground units; homing still drops over the carrier). Attentive: `--reaction=0.8` (the pilot notices a missile 0.8 s after launch, then leaves its danger band, and collects homing pickups). Naive: `--naive` (never reacts to the ground war). The ordinary-wave defence budgets are unchanged: the 318-wave audit (`tools/analyze_difficulty.dart`) gives the same figures as [calibration-current.md](calibration-current.md), because ground units never join the swarm.
+Measured 2026-11-09 for the time-driven front (`openspec/changes/tune-ground-war-front`) with `tools/profile_difficulty.dart`, averaged over four seeds (1982, 7, 42, 2026); per-seed JSON includes `breakthroughsBySector` and `impactsBySector`. Every run is the protected real-projectile pilot:
+- **Attentive**: `--reaction=0.8`. It notices a missile 0.8 s after launch, leaves its danger band, and collects homing pickups.
+- **Naive**: `--naive`. It never reacts to the ground war: it never dodges and collects pickups only by chance.
+- **No-ground**: `-DGROUND_WAR_DISABLED=true`. It disables the front; ordinary homing drops remain.
+- **Pre-feature**: the median waves measured on the commit before the ground war (17.3 / 26.6 / 31.4 s). This is the reference for band 1.
+
+The ordinary-wave defence budgets are unchanged (318-wave audit = [calibration-current.md](calibration-current.md)), because ground units never join the swarm.
 
 **Intended bands** (project decisions, not research thresholds):
-1. The median ordinary-wave clear time stays within ±10% of the no-ground baseline in every mode. The ground war adds a movement test and a reward, not a slower grind.
-2. Easy < Normal < Hard holds for active campaign time and for missile exposure.
-3. An attentive pilot takes at most about one ground-missile hit per route (≤ 5 per campaign) in every mode. Missiles are a readable dodge, not attrition.
-4. Exposure for a pilot who ignores the ground war is ordered Easy ≪ Normal < Hard. Easy stays near one would-be hit per 1.5 active minutes or fewer.
+1. With the attentive pilot, the median ordinary-wave clear time stays within ±10% of the pre-feature baseline in every mode.
+2. Sectors 1–2 have zero breakthroughs and zero would-be hits in every mode and for every pilot. The ground is alive there, but the allies handle it.
+3. Breakthroughs are occasional over Ember (sector 3) and regular over the Hollow (sector 4), ordered Easy < Normal < Hard for an unhelping pilot.
+4. An attentive pilot takes at most about one ground-missile hit per campaign per difficulty; missiles stay a readable dodge.
+5. Exposure for an unhelping pilot is ordered Easy ≪ Normal < Hard, with Hard at most about twice Normal.
 
-| Mode | Median wave s (baseline → attentive) | Active min (baseline / attentive / naive) | Units | Missiles (attentive / naive) | Would-be hits (attentive / naive) | Homing salvos (attentive) | Allies saved / retreated (attentive) |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Easy | 17.3 → 17.1 (−1%) | 41.4 / 40.4 / 40.6 | 148 | 14 / 88 | 0.2 / 27 | 112 | 60 / 2 |
-| Normal | 26.6 → 26.7 (+0%) | 87.2 / 77.2 / 86.9 | 279 | 71 / 328 | 1.8 / 128 | 176 | 90 / 24 |
-| Hard | 31.4 → 29.7 (−5%) | 123.6 / 97.1 / 109.4 | 342 | 146 / 415 | 3.8 / 170 | 185 | 102 / 48 |
+| Mode | Median wave s, attentive (pre-feature) | Active min no-ground / attentive / naive | Units (allied kills), attentive | Breakthroughs S1–S4, attentive | Breakthroughs S1–S4, naive | Would-be hits S1–S4, attentive | Would-be hits S1–S4, naive | Homing salvos attentive / naive |
+| --- | ---: | ---: | ---: | --- | --- | --- | --- | ---: |
+| Easy | 17.3 (17.3) | 40.4 / 41.5 / 41.8 | 261 (199) | 0 · 0 · 0 · 1.8 | 0 · 0 · 5 · 13.5 | 0 · 0 · 0 · 0 | 0 · 0 · 1.5 · 3.5 | 57 / 18 |
+| Normal | 27.0 (26.6) | 85.9 / 82.4 / 83.4 | 615 (451) | 0 · 0 · 8.2 · 16.2 | 0 · 0 · 15.8 · 72.5 | 0 · 0 · 0 · 0.8 | 0 · 0 · 9 · 61 | 124 / 58 |
+| Hard | 29.0 (31.4) | 102.0 / 87.3 / 107.6 | 696 (481) | 0 · 0 · 11.5 · 21.2 | 0 · 0 · 37.5 · 101 | 0 · 0 · 0 · 0.2 | 0 · 0 · 33 · 91 | 160 / 83 |
 
-All bands hold. Notes:
-- Active campaign minutes are seed-noisy for the protected pilot: Hard per-seed totals spanned 111–137 minutes at baseline and 86–113 attentive. The long tail comes from sentinel waves, where the pilot's fixed aim stalls. Homing heavy hits shorten those stalls; that is why attentive Hard is faster on average while its median wave moves only 5%. A first measurement with Hard drops at 10% and a 7 s pity cut Hard's attentive total to 85 minutes, close to Normal's 81. Hard therefore uses 7% and 8 s, which restores the Normal/Hard separation without weakening the guarantee: a pickup still arrives before a fresh unit reaches the fire line (tested).
-- Would-be hits are counted even though the pilot is invulnerable. They estimate lives a human would lose; they are not losses.
-- A naive pilot's exposure (27/128/170) shows the missiles are real threats when ignored, so reacting to the telegraph matters. The 0.8 s reaction pilot shows they are readily dodgeable.
+All bands hold (band 1: +0%, +1.5%, −7.6%; band 5: Hard 125 ≈ 1.8 × Normal 70). Notes:
+- Breakthroughs per campaign aggregate five routes (each sector is visited once per route). The naive Normal pilot meets about 3 per Ember visit and 15 per Hollow visit.
+- Tuning history (all four-seed means):
+  - Ordinary homing drops every 20 kills made even the no-ground run collect 98–200 salvos, and shortened Normal and Hard median waves by 10–14%. Drops are now every 40 kills, matching each module's rotation cadence.
+  - A first Hard front (3 units over the Hollow, tougher units, weaker allies) gave a naive Hard pilot 318 would-be hits (4.5 × Normal). Hard now shares Normal's unit toughness and presence, and differs by weaker allies (0.58 vs 0.62 over the Hollow, 0.71 vs 0.76 over Ember) and its 1.05 hostile rate.
+  - A breakthrough feedback spiral (breakthrough → weaker allies → more pressure → more arrivals) was damped with the one-breakthrough-at-a-time hold and smaller breakthrough penalties.
+- Active campaign minutes remain seed-noisy for the protected pilot (sentinel-wave stalls). The median wave is the band metric.
+- Would-be hits are counted even though the pilot is invulnerable. They estimate lives a human would lose; they are not losses. A naive pilot shows the late-sector threat is real when ignored. The attentive pilot shows it is answerable: by dodging, and by homing missiles, which now drop mostly when a breakthrough looms.
 - Ally outcomes are positive only (saved bonus, fleet-intact bonus) and do not enter the bands.

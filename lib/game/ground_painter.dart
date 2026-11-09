@@ -207,8 +207,10 @@ class GroundPainter {
     if (a.flash > 0) {
       _cell(c, GroundAtlas.effectRow, GroundAtlas.tracerCol, a.x, a.bodyY + 3 * s, s);
     }
-    if (a.underAttack && a.announced) {
-      // Distress beacon: a blinking friendly cyan cross over the ally.
+    if (a.underAttack && (a.attacker?.calledForHelp ?? false)) {
+      // Distress beacon while calling for help (a breakthrough looms): a
+      // blinking friendly cyan cross over the ally. Quiet skirmishes the
+      // allies are winning show none.
       if ((clock * 3).floor().isEven) {
         final unit = math.max(1.0, (s * .9).roundToDouble());
         final top = a.y - GroundAtlas.cellH * s * .8 - 3 * unit;
