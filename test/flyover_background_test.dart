@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:demon_attack/game/flyover_atlas.dart';
+import 'package:demon_attack/game/flyover_background.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
 import 'package:flame/game.dart';
@@ -79,6 +80,15 @@ void main() {
             // central 100+ units of the 360-wide arena free.
             expect(unit - 48, lessThanOrEqualTo(64));
           }
+        }
+      }
+    }
+    // Side walls (layer 1) are slim: at most 38 texels = 76 arena units
+    // (about 20% of the arena) at the bottom of the screen, narrowing with depth.
+    for (final sector in FlyoverAtlas.edges) {
+      for (final edge in sector[1]) {
+        for (final unit in edge.codeUnits) {
+          expect(unit - 48, lessThanOrEqualTo(38));
         }
       }
     }
@@ -220,6 +230,55 @@ void main() {
     });
   });
 
+  testWidgets('review: creature scatter and duck sequences (Krybor)',
+      (tester) async {
+    await tester.runAsync(() async {
+      final model = ArcadeModel()..start();
+      model.mode = RunMode.playing;
+      model.demons.clear();
+      final scene = await _scene(model);
+      final flyover = scene.sectors.flyover;
+      scene.environment = 0;
+      model.level = 1;
+      // Find a distance where a creature stands low on screen.
+      var target = Offset.zero;
+      for (var d = 400.0; d < 4000; d += 13) {
+        flyover.distance = d;
+        final low = flyover.debugCreaturePositions(0).where((p) => p.dy > 380 && p.dy < 450);
+        if (low.isNotEmpty) {
+          target = low.first;
+          break;
+        }
+      }
+      expect(target, isNot(Offset.zero));
+      scene.sectors.advance(1 / 60, model, 0);
+      model.blasts.add(Blast(target.dx + 30, target.dy - 30, big: true));
+      for (var f = 0; f < 6; f++) {
+        await _capture(scene, output: '.cache/flyover/scatter-$f.png');
+        for (var k = 0; k < 5; k++) {
+          scene.sectors.advance(1 / 60, model, 0);
+        }
+      }
+      await File('.cache/flyover/scatter-target.txt')
+          .writeAsString('${target.dx} ${target.dy}');
+      model.blasts.clear();
+      // Duck: park the ship's shadow over the lowest creature.
+      for (var d = flyover.distance; d < flyover.distance + 3000; d += 7) {
+        flyover.distance = d;
+        final low = flyover.debugCreaturePositions(0).where((p) => p.dy > 470 && p.dy < 520);
+        if (low.isNotEmpty) {
+          model.shipX = (low.first.dx - 12).clamp(18.0, 342.0);
+          flyover.reducedMotionOverride = true; // hold the frame still
+          scene.update(1 / 60);
+          await _capture(scene, output: '.cache/flyover/duck.png');
+          await File('.cache/flyover/duck-target.txt')
+              .writeAsString('${low.first.dx} ${low.first.dy}');
+          break;
+        }
+      }
+    });
+  });
+
   testWidgets('creatures scatter from explosions and duck under the ship shadow',
       (tester) async {
     await tester.runAsync(() async {
@@ -251,6 +310,20 @@ void main() {
       }
       expect(before, isNotEmpty);
 
+      // Creatures live on the open ground beside the walls, never in the
+      // central lane, and grow as they approach the ship.
+      for (var step = 0; step < 40; step++) {
+        flyover.distance += 23;
+        for (final r in flyover.debugCreatureRects(2)) {
+          expect(r.right <= FlyoverBackground.laneLeft + .5 ||
+                  r.left >= FlyoverBackground.laneRight - .5, isTrue,
+              reason: 'creature $r entered the central lane');
+        }
+      }
+      final rects = flyover.debugCreatureRects(2)..sort((a, b) => a.bottom.compareTo(b.bottom));
+      if (rects.length > 1) {
+        expect(rects.last.height, greaterThan(rects.first.height));
+      }
       // Shadow: move the ship over a low creature and let the frame update.
       final low = flyover.debugCreaturePositions(2).where((p) => p.dy > 440);
       if (low.isNotEmpty) {

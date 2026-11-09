@@ -586,7 +586,20 @@ def process_plane(s, sector, pal):
     n = s["plane"]["logical"]
     arr = np.asarray(Image.open(files[-1]).convert("RGB").resize((n, n), Image.Resampling.BOX)).astype(np.float32)
     arr = np.roll(np.roll(arr, -n // 2, axis=0), -n // 2, axis=1)
-    q = quantise(arr, pal, s["plane"]["luma_cap"], chroma=s["plane"]["chroma_cap"])
+    # Macro tile: repeat the seamless tile and modulate it with smooth,
+    # periodic low-frequency light so the receding plane does not show a
+    # regular grid of identical tiles toward the horizon.
+    reps = s["plane"].get("macro", 4)
+    big = np.tile(arr, (reps, reps, 1))
+    N = n * reps
+    rng = np.random.default_rng(stable_seed("macro", sector["id"]))
+    yy, xx = np.mgrid[0:N, 0:N] / N
+    mod = np.zeros((N, N))
+    for fx, fy in ((1, 0), (0, 1), (1, 1), (2, 1), (1, 2), (3, 2), (2, 3)):
+        mod += rng.uniform(.4, 1) / (fx + fy) * np.sin(2 * np.pi * (fx * xx + fy * yy + rng.random()))
+    mod /= np.abs(mod).max()
+    big = big * (1 + s["plane"].get("macro_amp", .4) * mod)[..., None]
+    q = quantise(big, pal, s["plane"]["luma_cap"], chroma=s["plane"]["chroma_cap"])
     return np.dstack([q, np.full(q.shape[:2], 255, dtype=np.uint8)])
 
 
@@ -691,7 +704,7 @@ def outline(rgba: np.ndarray, pal: np.ndarray) -> np.ndarray:
     # guide's key light) take a muted light palette colour.
     pl = pal @ np.array([0.2126, 0.7152, 0.0722]) / 255
     pc = (pal.max(1) - pal.min(1)) / 255
-    ok = (pl <= 0.5) & (pc <= 0.3)
+    ok = (pl <= 0.58) & (pc <= 0.34)
     cand = np.where(ok)[0]
     light = pal[cand[np.argmax(pl[cand])]].astype(np.uint8) if len(cand) else dark
     lit = ring & (np.roll(pa, 1, 0) | np.roll(pa, 1, 1)) & ~(np.roll(pa, -1, 0) | np.roll(pa, -1, 1))
@@ -778,7 +791,7 @@ def cmd_process(_args) -> dict:
                 if r is not None:
                     sec["landmarks"].append({"id": lm["id"], "route": ri, "rgba": r})
         for cr in sector["creatures"]:
-            r = process_sprite(f"creature/{sector['id']}/{cr['id']}", cr["h"], pal, 0.36, max_w=cr["h"] + 5, chroma=0.28)
+            r = process_sprite(f"creature/{sector['id']}/{cr['id']}", cr["h"], pal, 0.42, max_w=cr["h"] + 5, chroma=0.34)
             if r is not None:
                 r = outline(r, pal)
                 sec["creatures"].append({"id": cr["id"], "gait": cr["gait"], "frames": creature_frames(r, cr["gait"])})
@@ -833,7 +846,8 @@ def cmd_pack(args) -> None:
             edges.append(layer_edges)
         Image.fromarray(sheet, "RGBA").save(ASSETS / f"flyover-{sec['id']}.png", optimize=True)
         if sec["plane"] is not None:
-            Image.fromarray(sec["plane"][..., :3], "RGB").save(ASSETS / f"flyover-{sec['id']}-ground.png", optimize=True)
+            # Palette PNG: the tile only uses the sector palette (<= 43 colours).
+            Image.fromarray(sec["plane"][..., :3], "RGB").convert("P", palette=Image.Palette.ADAPTIVE, colors=256).save(ASSETS / f"flyover-{sec['id']}-ground.png", optimize=True)
         dart_sectors.append({"id": sec["id"], "edges": edges})
         for p in sec["props"]:
             sprite_items.append(p["rgba"])
@@ -970,8 +984,8 @@ def contact(data, s) -> None:
             for strip in sec["strips"].get(layer, []):
                 parts.append(np.concatenate([strip["rgba"], strip["rgba"]], axis=0))
         if sec.get("plane") is not None:
-            # Ground tile repeated 2x2 so both seams are visible for review.
-            row2 = np.concatenate([sec["plane"], sec["plane"]], axis=1)
+            # A crop of the ground macro tile, stacked twice to show its seam.
+            row2 = sec["plane"][:192, :384]
             parts.append(np.concatenate([row2, row2], axis=0))
         sprites =[p["rgba"] for p in sec["props"]] + [l["rgba"] for l in sec["landmarks"]]
         for cr in sec["creatures"]:

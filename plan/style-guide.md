@@ -57,24 +57,26 @@ The extra resolution goes into motion and readable equipment, capped where it wo
 
 The intended scenery has far stars, slower planet layers, and a closer horizon, with planets and moons rising or setting as the game advances. Background luminance stays below enemy and projectile luminance. Smooth palette and planetary movement between levels is the target; exact layer speeds and transition timing are renderer tuning, not simulation defaults. Reduced-motion support should remove shake and decorative motion without hiding warning cues.
 
-### Backgrounds: oblique flyover parallax
+### Backgrounds: oblique flyover with a horizon
 
-Every sector is an endless oblique 3/4 flyover down a canyon: the ship flies forward and the ground streams toward the player. Layers, back to front, with speeds relative to the ground:
+Every sector is an endless oblique 3/4 flyover over the planet: a horizon line sits in the upper third (y = 172 of 520), the painted sky with its planets and moons is above it, and below it a receding ground plane streams toward the ship. One camera drives everything below the horizon: a point at forward distance z appears at y = 172 + 348·z0/z with scale z0/z (z0 = 174 ground texels, where one texel is two arena units at the bottom of the screen). Objects therefore emerge small near the horizon and grow and speed up as they approach.
 
-| Layer | Speed | Content | Luminance cap |
+| Layer | Motion | Content | Luminance cap |
 | --- | --- | --- | --- |
-| Far | ~0.02× (slow eased sway) | The sector's painted sky (`sector-N.png`): planets, moons, nebulae; sparse stars; its painted horizon is veiled | painting under a 54% veil |
-| Mid | 0.2× | Ridge/mountain banks along both edges | 0.13 (chroma ≤ 0.22) |
-| Near | 0.6× | Terrain banks plus route landmarks | 0.18, chroma ≤ 0.25 (landmarks 0.40) |
-| Ground | 1.0× | Closest banks, small props, creatures, the ship's shadow | 0.23, chroma ≤ 0.27 (props 0.34, creatures 0.36, chroma ≤ 0.28, dark outline) |
+| Far | ~0.02× (slow sway) | The sector's painted sky (`sector-N.png` rows above its horizon) plus its painted horizon band and sparse stars, baked once per sector into an image | painting under a 44–50% veil |
+| Ridges | 0.2× | Ridge silhouettes (the mid strips, rotated) standing on the ground near the horizon, three bands handing over as they approach | 0.13 × 0.55 |
+| Ground plane | 1.0× (perspective) | A 2-D seamless ground tile per sector, macro-modulated so it never shows a regular grid, rows compressed toward the horizon and darkened by distance fog | 0.13, chroma ≤ 0.22 |
+| Side walls | 1.0× (perspective) | Slim, broken cliff rims hugging both edges, at most ~20% of the width each at the bottom and tapering toward the horizon | 0.30, chroma ≤ 0.28 |
+| Landmarks / props | 1.0× (perspective) | Two landmarks per named route beside the walls; small sector props on the open ground | landmarks 0.40, props 0.34 |
+| Creatures | 1.0× (perspective) | Two species per sector on the open ground between each wall and the central lane, with a dark outline and a faint upper-left rim light | 0.42, chroma ≤ 0.34 |
 
-- Layers are composable for any session length: seamless vertically tiling strips (three variants per layer per sector, never the same variant twice in a row, mirrored for the right bank) and a library of landmark/prop sprites placed by seeded, stateless scattering per fixed segment. The same distance draws the same picture on every device.
-- The central lane stays dark and clear: banks occupy the outer edges, a horizontal lane veil darkens the middle, and background luminance stays below threats, projectiles and cores.
-- Route identity lives in the near-layer landmarks (two per named route, see the table in [sector-style-guide.md](sector-style-guide.md)); sector identity in the painted sky, the palette median-cut from it and each sector's materials.
-- Creatures: two original pixel species per sector, darker and more demonic deeper into the campaign (frost hoppers and shell crawlers on Krybor; rock mites and dust grazers in Ringfall; cinder newts and ash borers on Ember; spore crawlers and bone skitters in the Hollow; brood larvae and hive ticks on the Carrier). They walk or crawl with discrete four-frame gaits on the ground banks, scatter from explosions and the falling carrier wreck, burrow (burrowing species) and duck as the ship's shadow passes. Reactions are visual only and read explosion, wreck and ship state.
-- Travel accelerates the flight (up to 10× at mid-travel) while the destination world crossfades in, so its landmarks show before arrival. Cinematic blackout and letterbox bars still cover the scenery.
-- Reduced motion (`disableAnimations`/`reduceMotion`) freezes flight, star and particle drift and creature walking; scenery and warning cues stay visible.
-- All layers draw with `FilterQuality.none` at 2 arena units per logical pixel, batched with `Canvas.drawAtlas` (about six calls per sector).
+- Composable for any session length: seamless tiles (the ground repeats in x and y; walls tile vertically, three variants, never the same twice in a row, mirrored for the right side), plus landmarks, props and creatures placed by seeded, stateless scattering per world segment. The same distance draws the same picture on every device.
+- The central lane (x 96–264) stays clear: walls and landmarks hug the edges, creatures are clamped outside it, the ground there is dark, low-contrast texture, and all scenery stays below threat, projectile and core luminance.
+- Route identity lives in the landmarks (see the table in [sector-style-guide.md](sector-style-guide.md)); sector identity in the painted sky and horizon, the palette median-cut from it, and each sector's ground and wall materials.
+- Creatures: frost hoppers and shell crawlers (Krybor), rock mites and dust grazers (Ringfall), cinder newts and ash borers (Ember), spore crawlers and bone skitters (Hollow), brood larvae and hive ticks (Carrier) — darker and more demonic deeper into the campaign. Discrete frames: four-frame walk/crawl, two duck, two burrow. They dash away from explosions and the falling carrier wreck (sideways inside their band and along the ground), burrowers sink into a mound, and all duck while the ship's shadow passes. Visual only: they read blast, wreck and ship state.
+- Travel accelerates flight (up to 10× mid-travel) while the destination world fades in over the current one, so its landmarks appear before arrival. Cinematic blackout and letterbox bars still cover the scenery.
+- Reduced motion (`disableAnimations`/`reduceMotion`) freezes flight, sky sway, particle drift and creature walking; scenery and warning cues stay visible.
+- Performance: per sector per frame there is one sky image draw, one ground rect with a perspective `ImageShader`, one partial fog gradient (110 px), one ridge `drawAtlas`, one wall `drawVertices` mesh, one landmark/prop `drawAtlas` and one creature `drawAtlas`. Travel crossfades draw the destination with per-draw opacity instead of a full-screen `saveLayer`. Everything samples with `FilterQuality.none` (the sky bake is resampled once at load).
 
 The generator, prompts and seeds are in [asset-pipeline.md](asset-pipeline.md).
 

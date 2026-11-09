@@ -44,8 +44,8 @@
       "speed": 1.0,
       "base_width": 15,
       "amplitude": 8,
-      "luma_cap": 0.22,
-      "chroma_cap": 0.26,
+      "luma_cap": 0.3,
+      "chroma_cap": 0.28,
       "alpha": 1.0,
       "broken": true
     }
@@ -666,9 +666,11 @@
       1536
     ],
     "logical": 192,
-    "strength": 0.8,
+    "strength": 0.95,
     "seam_strength": 0.62,
-    "luma_cap": 0.17,
-    "chroma_cap": 0.24
+    "luma_cap": 0.13,
+    "chroma_cap": 0.22,
+    "macro": 4,
+    "macro_amp": 0.4
   }
 }
