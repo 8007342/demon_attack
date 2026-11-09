@@ -1,0 +1,19 @@
+# Hand-tuned 16 px badge, left half (mirrored by tools/generate_icons.py).
+# . clear  k ink  G cyan glow  Y/y/e gold rim  i bone  w/v/b/a violet ramp
+# r eyes  3/2 hull  c canopy  t/m teal wing
+.YYYYYYY
+Ykkkkkkk
+ykikkkkk
+ykwkkkkk
+ykwikkww
+ykbwikvv
+ykkbbvvv
+ykkkvrrv
+ykkkkbvk
+ykkkkkaa
+ykkkkkkG
+ykkkkkG3
+ykkkkGmc
+ykkkGmt3
+ekkGmtt2
+.eeeeeee
