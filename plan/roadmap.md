@@ -12,3 +12,6 @@ Tracked implementation tasks: `openspec/changes/build-demon-attack-game/tasks.md
 Current design and tunables: `game-design.md`. Art direction: `style-guide.md`.
 Historical references and screenshots: `research-original.md`.
 6. Flyover backgrounds (branch `work/parallax-flyover`): left — eyeball the flyover on a real phone GPU (headless host Chromium is software-rendered: ~2x slower than the old background there), consider pre-baking the veiled sky per sector if real devices drop frames, and replace the weakest generated landmarks (Ringfall Patrol Belt sphere/gate, Ember Forges channel) by rerunning their jobs with new prompts (`tools/flyover_assets.py run --only landmark/...`).
+
+Asset pipeline (branch `research/local-image-large-models`): see `asset-pipeline/README.md`.
+Left: stage-0 deterministic isolate/pixelize/QA scripts; consented I2/I3 ladder once Tillandsias #679 lands; ComfyUI workflow templates once studio lands; style LoRA; a vertical slice with one demon species' full frame set.

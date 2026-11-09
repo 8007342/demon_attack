@@ -680,7 +680,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     children: [
       _label('TRANSMISSION 001 · KRYBOR', mint, size: 9),
       const SizedBox(height: 24),
-      _sprite(0, 0, 84),
+      _sprite(0, 2, 84),
       const SizedBox(height: 18),
       const FittedBox(
         child: Text(
@@ -1928,7 +1928,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _sprite(0, 4, 58),
+                _sprite(0, 10, 58),
                 const SizedBox(height: 16),
                 Text(
                   heading,

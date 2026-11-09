@@ -37,24 +37,26 @@ List<int> _crop(Uint8List image, int x, int y, int width, int height) => [
 ];
 
 void main() {
-  testWidgets('effects atlas preserves solid original doubled pixel cells', (
+  testWidgets('effects atlas keeps hard-edged native 128x64 pixel cells', (
     tester,
   ) async {
     await tester.runAsync(() async {
+      // plan/sprite-atlas.md: 128x64 logical cells stored 1x, fourteen rows.
       final atlas = await _decode('assets/images/sentinel-effects.png');
       expect(atlas.width, 1024);
-      expect(atlas.height, 640);
+      expect(atlas.height, 896);
       final data = (await atlas.toByteData())!.buffer.asUint32List();
-      for (var y = 0; y < atlas.height; y += 2) {
-        for (var x = 0; x < atlas.width; x += 2) {
-          final index = y * atlas.width + x;
-          final pixel = data[index];
-          expect((pixel >> 24) & 255, isIn([0, 255]));
-          expect(data[index + 1], pixel);
-          expect(data[index + atlas.width], pixel);
-          expect(data[index + atlas.width + 1], pixel);
-        }
+      final colours = <int>{};
+      for (final pixel in data) {
+        final alpha = (pixel >> 24) & 255;
+        expect(alpha, isIn([0, 255]), reason: 'no antialiased edges');
+        if (alpha == 255) colours.add(pixel);
       }
+      expect(
+        colours.length,
+        lessThanOrEqualTo(80),
+        reason: 'a bounded palette, not continuous gradients',
+      );
       List<int> cell(int row, int col) => [
         for (var y = row * 64; y < (row + 1) * 64; y++)
           ...data.sublist(

@@ -1,0 +1,3604 @@
+{
+  "family": "ship",
+  "pipeline_version": 4,
+  "processed": "2026-11-02T05:21:29+00:00",
+  "candidates": [
+    {
+      "id": "hull-I2-820000-0",
+      "part": "hull",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/hull/I2-s820000-0.png",
+      "isolation": {
+        "background_rgb": [
+          221,
+          48,
+          92
+        ],
+        "background_noise": 1.4,
+        "coverage": 0.0932,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.834,
+      "status": "PASS",
+      "score": 0.875,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I2-820000-0.png",
+      "mask": "candidates/hull/hull-I2-820000-0-mask.png",
+      "slot_fill": 0.259,
+      "sprite_size": [
+        28,
+        26
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "hull-I2-820000-1",
+      "part": "hull",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/hull/I2-s820000-1.png",
+      "isolation": {
+        "background_rgb": [
+          227,
+          13,
+          100
+        ],
+        "background_noise": 1.71,
+        "coverage": 0.22,
+        "components": 5,
+        "largest_component_share": 0.986,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.988,
+      "status": "PASS",
+      "score": 0.966,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I2-820000-1.png",
+      "mask": "candidates/hull/hull-I2-820000-1-mask.png",
+      "slot_fill": 0.505,
+      "sprite_size": [
+        28,
+        36
+      ],
+      "palette_colours": 10
+    },
+    {
+      "id": "hull-I2-820000-2",
+      "part": "hull",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/hull/I2-s820000-2.png",
+      "isolation": {
+        "background_rgb": [
+          232,
+          3,
+          84
+        ],
+        "background_noise": 1.98,
+        "coverage": 0.2385,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.977,
+      "status": "PASS",
+      "score": 0.945,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I2-820000-2.png",
+      "mask": "candidates/hull/hull-I2-820000-2-mask.png",
+      "slot_fill": 0.43,
+      "sprite_size": [
+        28,
+        30
+      ],
+      "palette_colours": 9
+    },
+    {
+      "id": "hull-I2-820000-3",
+      "part": "hull",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/hull/I2-s820000-3.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          98,
+          156
+        ],
+        "background_noise": 1.58,
+        "coverage": 0.0768,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.982,
+      "status": "PASS",
+      "score": 0.993,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I2-820000-3.png",
+      "mask": "candidates/hull/hull-I2-820000-3-mask.png",
+      "slot_fill": 0.595,
+      "sprite_size": [
+        26,
+        40
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "hull-I3-820000-0",
+      "part": "hull",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/hull/I3-s820000-0.png",
+      "isolation": {
+        "background_rgb": [
+          231,
+          59,
+          96
+        ],
+        "background_noise": 0.99,
+        "coverage": 0.0962,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.859,
+      "status": "PASS",
+      "score": 0.885,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I3-820000-0.png",
+      "mask": "candidates/hull/hull-I3-820000-0-mask.png",
+      "slot_fill": 0.277,
+      "sprite_size": [
+        28,
+        27
+      ],
+      "palette_colours": 9
+    },
+    {
+      "id": "hull-I3-820000-1",
+      "part": "hull",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/hull/I3-s820000-1.png",
+      "isolation": {
+        "background_rgb": [
+          238,
+          36,
+          109
+        ],
+        "background_noise": 1.04,
+        "coverage": 0.2208,
+        "components": 5,
+        "largest_component_share": 0.997,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.985,
+      "status": "PASS",
+      "score": 0.974,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I3-820000-1.png",
+      "mask": "candidates/hull/hull-I3-820000-1-mask.png",
+      "slot_fill": 0.525,
+      "sprite_size": [
+        28,
+        37
+      ],
+      "palette_colours": 10
+    },
+    {
+      "id": "hull-I3-820000-2",
+      "part": "hull",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/hull/I3-s820000-2.png",
+      "isolation": {
+        "background_rgb": [
+          239,
+          29,
+          92
+        ],
+        "background_noise": 1.16,
+        "coverage": 0.2547,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.982,
+      "status": "PASS",
+      "score": 0.953,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I3-820000-2.png",
+      "mask": "candidates/hull/hull-I3-820000-2-mask.png",
+      "slot_fill": 0.448,
+      "sprite_size": [
+        28,
+        30
+      ],
+      "palette_colours": 9
+    },
+    {
+      "id": "hull-I3-820000-3",
+      "part": "hull",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/hull/I3-s820000-3.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          109,
+          151
+        ],
+        "background_noise": 1.03,
+        "coverage": 0.1168,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.924,
+      "status": "PASS",
+      "score": 0.875,
+      "reasons": [],
+      "layer": "candidates/hull/hull-I3-820000-3.png",
+      "mask": "candidates/hull/hull-I3-820000-3-mask.png",
+      "slot_fill": 0.202,
+      "sprite_size": [
+        28,
+        22
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "spread-I2-820010-0",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820010-0.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          48,
+          116
+        ],
+        "background_noise": 1.52,
+        "coverage": 0.1664,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.983,
+      "status": "PASS",
+      "score": 0.917,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I2-820010-0.png",
+      "mask": "candidates/spread/spread-I2-820010-0-mask.png",
+      "slot_fill": 0.321,
+      "sprite_size": [
+        12,
+        10
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "spread-I2-820010-1",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820010-1.png",
+      "isolation": {
+        "background_rgb": [
+          249,
+          67,
+          140
+        ],
+        "background_noise": 2.21,
+        "coverage": 0.8911,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.996,
+      "status": "FAIL",
+      "score": 0.351,
+      "reasons": [
+        "isolation failed (object covers 89% of frame)"
+      ],
+      "layer": "candidates/spread/spread-I2-820010-1.png",
+      "mask": "candidates/spread/spread-I2-820010-1-mask.png",
+      "slot_fill": 0.833,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "spread-I2-820010-2",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820010-2.png",
+      "isolation": {
+        "background_rgb": [
+          170,
+          28,
+          103
+        ],
+        "background_noise": 1.33,
+        "coverage": 0.0135,
+        "components": 6,
+        "largest_component_share": 0.936,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.94,
+      "status": "FAIL",
+      "score": 0.312,
+      "reasons": [
+        "isolation failed (object covers 1% of frame)"
+      ],
+      "layer": "candidates/spread/spread-I2-820010-2.png",
+      "mask": "candidates/spread/spread-I2-820010-2-mask.png",
+      "slot_fill": 0.31,
+      "sprite_size": [
+        8,
+        14
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "spread-I2-820010-3",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820010-3.png",
+      "isolation": {
+        "background_rgb": [
+          210,
+          74,
+          147
+        ],
+        "background_noise": 1.61,
+        "coverage": 0.1031,
+        "components": 102,
+        "largest_component_share": 0.524,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.367,
+      "status": "WARN",
+      "score": 0.702,
+      "reasons": [
+        "source is asymmetric (IoU 0.37); mirroring changed its design"
+      ],
+      "layer": "candidates/spread/spread-I2-820010-3.png",
+      "mask": "candidates/spread/spread-I2-820010-3-mask.png",
+      "slot_fill": 0.202,
+      "sprite_size": [
+        12,
+        10
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "large-I2-820020-0",
+      "part": "large",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/large/I2-s820020-0.png",
+      "isolation": {
+        "background_rgb": [
+          249,
+          44,
+          114
+        ],
+        "background_noise": 1.48,
+        "coverage": 0.1211,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -0.1
+      },
+      "source_symmetry": 0.994,
+      "status": "PASS",
+      "score": 0.947,
+      "reasons": [],
+      "layer": "candidates/large/large-I2-820020-0.png",
+      "mask": "candidates/large/large-I2-820020-0-mask.png",
+      "slot_fill": 0.422,
+      "sprite_size": [
+        10,
+        13
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "large-I2-820020-1",
+      "part": "large",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/large/I2-s820020-1.png",
+      "isolation": {
+        "background_rgb": [
+          193,
+          46,
+          91
+        ],
+        "background_noise": 1.55,
+        "coverage": 0.1136,
+        "components": 6,
+        "largest_component_share": 0.728,
+        "touches_border": 0.0,
+        "rotated_deg": -0.1
+      },
+      "source_symmetry": 0.889,
+      "status": "PASS",
+      "score": 0.893,
+      "reasons": [],
+      "layer": "candidates/large/large-I2-820020-1.png",
+      "mask": "candidates/large/large-I2-820020-1-mask.png",
+      "slot_fill": 0.456,
+      "sprite_size": [
+        6,
+        18
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "large-I2-820020-2",
+      "part": "large",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/large/I2-s820020-2.png",
+      "isolation": {
+        "background_rgb": [
+          245,
+          39,
+          105
+        ],
+        "background_noise": 1.49,
+        "coverage": 0.0637,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 94.3
+      },
+      "source_symmetry": 0.827,
+      "status": "PASS",
+      "score": 0.968,
+      "reasons": [],
+      "layer": "candidates/large/large-I2-820020-2.png",
+      "mask": "candidates/large/large-I2-820020-2-mask.png",
+      "slot_fill": 0.678,
+      "sprite_size": [
+        10,
+        17
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "large-I2-820020-3",
+      "part": "large",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/large/I2-s820020-3.png",
+      "isolation": {
+        "background_rgb": [
+          179,
+          69,
+          132
+        ],
+        "background_noise": 1.52,
+        "coverage": 0.1207,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 92.2
+      },
+      "source_symmetry": 0.557,
+      "status": "PASS",
+      "score": 0.923,
+      "reasons": [],
+      "layer": "candidates/large/large-I2-820020-3.png",
+      "mask": "candidates/large/large-I2-820020-3-mask.png",
+      "slot_fill": 0.611,
+      "sprite_size": [
+        10,
+        15
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "rapid-I2-820030-0",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820030-0.png",
+      "isolation": {
+        "background_rgb": [
+          238,
+          77,
+          137
+        ],
+        "background_noise": 1.53,
+        "coverage": 0.0676,
+        "components": 2,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -125.3
+      },
+      "source_symmetry": 0.511,
+      "status": "PASS",
+      "score": 0.876,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820030-0.png",
+      "mask": "candidates/rapid/rapid-I2-820030-0-mask.png",
+      "slot_fill": 0.464,
+      "sprite_size": [
+        9,
+        22
+      ],
+      "palette_colours": 10
+    },
+    {
+      "id": "rapid-I2-820030-1",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820030-1.png",
+      "isolation": {
+        "background_rgb": [
+          220,
+          53,
+          92
+        ],
+        "background_noise": 1.64,
+        "coverage": 0.1418,
+        "components": 16,
+        "largest_component_share": 0.957,
+        "touches_border": 0.0,
+        "rotated_deg": -91.3
+      },
+      "source_symmetry": 0.389,
+      "status": "PASS",
+      "score": 0.799,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820030-1.png",
+      "mask": "candidates/rapid/rapid-I2-820030-1-mask.png",
+      "slot_fill": 0.214,
+      "sprite_size": [
+        10,
+        11
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "rapid-I2-820030-2",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820030-2.png",
+      "isolation": {
+        "background_rgb": [
+          249,
+          90,
+          135
+        ],
+        "background_noise": 1.68,
+        "coverage": 0.1198,
+        "components": 4,
+        "largest_component_share": 0.999,
+        "touches_border": 0.0,
+        "rotated_deg": -90.1
+      },
+      "source_symmetry": 0.313,
+      "status": "PASS",
+      "score": 0.883,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820030-2.png",
+      "mask": "candidates/rapid/rapid-I2-820030-2-mask.png",
+      "slot_fill": 0.491,
+      "sprite_size": [
+        10,
+        22
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "rapid-I2-820030-3",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820030-3.png",
+      "isolation": {
+        "background_rgb": [
+          196,
+          64,
+          129
+        ],
+        "background_noise": 1.31,
+        "coverage": 0.0493,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 127.9
+      },
+      "source_symmetry": 0.723,
+      "status": "PASS",
+      "score": 0.738,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820030-3.png",
+      "mask": "candidates/rapid/rapid-I2-820030-3-mask.png",
+      "slot_fill": 0.386,
+      "sprite_size": [
+        10,
+        22
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "powerful-I2-820040-0",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820040-0.png",
+      "isolation": {
+        "background_rgb": [
+          242,
+          62,
+          107
+        ],
+        "background_noise": 1.49,
+        "coverage": 0.152,
+        "components": 4,
+        "largest_component_share": 0.998,
+        "touches_border": 0.0,
+        "rotated_deg": -145.7
+      },
+      "source_symmetry": 0.547,
+      "status": "WARN",
+      "score": 0.829,
+      "reasons": [
+        "source is asymmetric (IoU 0.55); mirroring changed its design"
+      ],
+      "layer": "candidates/powerful/powerful-I2-820040-0.png",
+      "mask": "candidates/powerful/powerful-I2-820040-0-mask.png",
+      "slot_fill": 0.269,
+      "sprite_size": [
+        10,
+        15
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "powerful-I2-820040-1",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820040-1.png",
+      "isolation": {
+        "background_rgb": [
+          192,
+          78,
+          126
+        ],
+        "background_noise": 1.49,
+        "coverage": 0.1372,
+        "components": 6,
+        "largest_component_share": 0.961,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.355,
+      "status": "WARN",
+      "score": 0.742,
+      "reasons": [
+        "source is asymmetric (IoU 0.36); mirroring changed its design",
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I2-820040-1.png",
+      "mask": "candidates/powerful/powerful-I2-820040-1-mask.png",
+      "slot_fill": 0.092,
+      "sprite_size": [
+        10,
+        8
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "powerful-I2-820040-2",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820040-2.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          57,
+          93
+        ],
+        "background_noise": 1.59,
+        "coverage": 0.2347,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 131.9
+      },
+      "source_symmetry": 0.446,
+      "status": "WARN",
+      "score": 0.86,
+      "reasons": [
+        "source is asymmetric (IoU 0.45); mirroring changed its design"
+      ],
+      "layer": "candidates/powerful/powerful-I2-820040-2.png",
+      "mask": "candidates/powerful/powerful-I2-820040-2-mask.png",
+      "slot_fill": 0.438,
+      "sprite_size": [
+        10,
+        16
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "powerful-I2-820040-3",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820040-3.png",
+      "isolation": {
+        "background_rgb": [
+          242,
+          46,
+          102
+        ],
+        "background_noise": 1.52,
+        "coverage": 0.0315,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -90.2
+      },
+      "source_symmetry": 0.949,
+      "status": "PASS",
+      "score": 0.789,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I2-820040-3.png",
+      "mask": "candidates/powerful/powerful-I2-820040-3-mask.png",
+      "slot_fill": 0.3,
+      "sprite_size": [
+        10,
+        19
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "shield-I2-820050-0",
+      "part": "shield",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/shield/I2-s820050-0.png",
+      "isolation": {
+        "background_rgb": [
+          244,
+          3,
+          116
+        ],
+        "background_noise": 2.04,
+        "coverage": 0.3613,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.997,
+      "status": "PASS",
+      "score": 0.996,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I2-820050-0.png",
+      "mask": "candidates/shield/shield-I2-820050-0-mask.png",
+      "slot_fill": 0.833,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "shield-I2-820050-1",
+      "part": "shield",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/shield/I2-s820050-1.png",
+      "isolation": {
+        "background_rgb": [
+          242,
+          81,
+          174
+        ],
+        "background_noise": 1.78,
+        "coverage": 0.2806,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.956,
+      "status": "PASS",
+      "score": 0.989,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I2-820050-1.png",
+      "mask": "candidates/shield/shield-I2-820050-1-mask.png",
+      "slot_fill": 0.75,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "shield-I2-820050-2",
+      "part": "shield",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/shield/I2-s820050-2.png",
+      "isolation": {
+        "background_rgb": [
+          150,
+          46,
+          109
+        ],
+        "background_noise": 1.48,
+        "coverage": 0.0689,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.795,
+      "status": "PASS",
+      "score": 0.963,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I2-820050-2.png",
+      "mask": "candidates/shield/shield-I2-820050-2-mask.png",
+      "slot_fill": 0.764,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 9
+    },
+    {
+      "id": "shield-I2-820050-3",
+      "part": "shield",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/shield/I2-s820050-3.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          135,
+          214
+        ],
+        "background_noise": 1.79,
+        "coverage": 0.1504,
+        "components": 17,
+        "largest_component_share": 0.869,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.911,
+      "status": "PASS",
+      "score": 0.96,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I2-820050-3.png",
+      "mask": "candidates/shield/shield-I2-820050-3-mask.png",
+      "slot_fill": 0.722,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "spread-I3-820010-0",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820010-0.png",
+      "isolation": {
+        "background_rgb": [
+          248,
+          46,
+          111
+        ],
+        "background_noise": 1.16,
+        "coverage": 0.1769,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.989,
+      "status": "PASS",
+      "score": 0.922,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I3-820010-0.png",
+      "mask": "candidates/spread/spread-I3-820010-0-mask.png",
+      "slot_fill": 0.333,
+      "sprite_size": [
+        12,
+        10
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "spread-I3-820010-1",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820010-1.png",
+      "isolation": {
+        "background_rgb": [
+          250,
+          54,
+          134
+        ],
+        "background_noise": 1.6,
+        "coverage": 0.1459,
+        "components": 68,
+        "largest_component_share": 0.657,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.945,
+      "status": "WARN",
+      "score": 0.81,
+      "reasons": [
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/spread/spread-I3-820010-1.png",
+      "mask": "candidates/spread/spread-I3-820010-1-mask.png",
+      "slot_fill": 0.167,
+      "sprite_size": [
+        12,
+        11
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "spread-I3-820010-2",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820010-2.png",
+      "isolation": {
+        "background_rgb": [
+          173,
+          38,
+          101
+        ],
+        "background_noise": 1.0,
+        "coverage": 0.0137,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.922,
+      "status": "FAIL",
+      "score": 0.294,
+      "reasons": [
+        "isolation failed (object covers 1% of frame)"
+      ],
+      "layer": "candidates/spread/spread-I3-820010-2.png",
+      "mask": "candidates/spread/spread-I3-820010-2-mask.png",
+      "slot_fill": 0.119,
+      "sprite_size": [
+        6,
+        14
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "spread-I3-820010-3",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820010-3.png",
+      "isolation": {
+        "background_rgb": [
+          213,
+          65,
+          139
+        ],
+        "background_noise": 1.15,
+        "coverage": 0.1589,
+        "components": 15,
+        "largest_component_share": 0.996,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.678,
+      "status": "PASS",
+      "score": 0.879,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I3-820010-3.png",
+      "mask": "candidates/spread/spread-I3-820010-3-mask.png",
+      "slot_fill": 0.369,
+      "sprite_size": [
+        12,
+        13
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "large-I3-820020-0",
+      "part": "large",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/large/I3-s820020-0.png",
+      "isolation": {
+        "background_rgb": [
+          248,
+          55,
+          116
+        ],
+        "background_noise": 1.02,
+        "coverage": 0.1434,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -0.0
+      },
+      "source_symmetry": 0.998,
+      "status": "PASS",
+      "score": 0.961,
+      "reasons": [],
+      "layer": "candidates/large/large-I3-820020-0.png",
+      "mask": "candidates/large/large-I3-820020-0-mask.png",
+      "slot_fill": 0.467,
+      "sprite_size": [
+        10,
+        13
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "large-I3-820020-1",
+      "part": "large",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/large/I3-s820020-1.png",
+      "isolation": {
+        "background_rgb": [
+          212,
+          59,
+          97
+        ],
+        "background_noise": 1.05,
+        "coverage": 0.1365,
+        "components": 3,
+        "largest_component_share": 0.741,
+        "touches_border": 0.0,
+        "rotated_deg": -0.0
+      },
+      "source_symmetry": 0.861,
+      "status": "PASS",
+      "score": 0.882,
+      "reasons": [],
+      "layer": "candidates/large/large-I3-820020-1.png",
+      "mask": "candidates/large/large-I3-820020-1-mask.png",
+      "slot_fill": 0.422,
+      "sprite_size": [
+        6,
+        18
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "large-I3-820020-2",
+      "part": "large",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/large/I3-s820020-2.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          51,
+          106
+        ],
+        "background_noise": 1.04,
+        "coverage": 0.0749,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 100.9
+      },
+      "source_symmetry": 0.853,
+      "status": "PASS",
+      "score": 0.974,
+      "reasons": [],
+      "layer": "candidates/large/large-I3-820020-2.png",
+      "mask": "candidates/large/large-I3-820020-2-mask.png",
+      "slot_fill": 0.689,
+      "sprite_size": [
+        10,
+        16
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "large-I3-820020-3",
+      "part": "large",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/large/I3-s820020-3.png",
+      "isolation": {
+        "background_rgb": [
+          197,
+          78,
+          136
+        ],
+        "background_noise": 1.02,
+        "coverage": 0.12,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 95.2
+      },
+      "source_symmetry": 0.705,
+      "status": "PASS",
+      "score": 0.949,
+      "reasons": [],
+      "layer": "candidates/large/large-I3-820020-3.png",
+      "mask": "candidates/large/large-I3-820020-3-mask.png",
+      "slot_fill": 0.722,
+      "sprite_size": [
+        10,
+        17
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "rapid-I3-820030-0",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820030-0.png",
+      "isolation": {
+        "background_rgb": [
+          245,
+          84,
+          136
+        ],
+        "background_noise": 1.05,
+        "coverage": 0.0537,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -125.2
+      },
+      "source_symmetry": 0.335,
+      "status": "PASS",
+      "score": 0.855,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820030-0.png",
+      "mask": "candidates/rapid/rapid-I3-820030-0-mask.png",
+      "slot_fill": 0.386,
+      "sprite_size": [
+        8,
+        22
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "rapid-I3-820030-1",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820030-1.png",
+      "isolation": {
+        "background_rgb": [
+          235,
+          61,
+          94
+        ],
+        "background_noise": 1.06,
+        "coverage": 0.1392,
+        "components": 45,
+        "largest_component_share": 0.892,
+        "touches_border": 0.0,
+        "rotated_deg": 89.8
+      },
+      "source_symmetry": 0.363,
+      "status": "WARN",
+      "score": 0.778,
+      "reasons": [
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/rapid/rapid-I3-820030-1.png",
+      "mask": "candidates/rapid/rapid-I3-820030-1-mask.png",
+      "slot_fill": 0.173,
+      "sprite_size": [
+        10,
+        11
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "rapid-I3-820030-2",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820030-2.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          64,
+          118
+        ],
+        "background_noise": 1.03,
+        "coverage": 0.0508,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.895,
+      "status": "PASS",
+      "score": 0.808,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820030-2.png",
+      "mask": "candidates/rapid/rapid-I3-820030-2-mask.png",
+      "slot_fill": 0.214,
+      "sprite_size": [
+        10,
+        9
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "rapid-I3-820030-3",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820030-3.png",
+      "isolation": {
+        "background_rgb": [
+          210,
+          72,
+          131
+        ],
+        "background_noise": 0.97,
+        "coverage": 0.0541,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -48.5
+      },
+      "source_symmetry": 0.73,
+      "status": "PASS",
+      "score": 0.872,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820030-3.png",
+      "mask": "candidates/rapid/rapid-I3-820030-3-mask.png",
+      "slot_fill": 0.445,
+      "sprite_size": [
+        8,
+        22
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "powerful-I3-820040-0",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820040-0.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          71,
+          106
+        ],
+        "background_noise": 0.94,
+        "coverage": 0.0712,
+        "components": 13,
+        "largest_component_share": 0.991,
+        "touches_border": 0.0,
+        "rotated_deg": -155.8
+      },
+      "source_symmetry": 0.383,
+      "status": "WARN",
+      "score": 0.781,
+      "reasons": [
+        "source is asymmetric (IoU 0.38); mirroring changed its design",
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I3-820040-0.png",
+      "mask": "candidates/powerful/powerful-I3-820040-0-mask.png",
+      "slot_fill": 0.192,
+      "sprite_size": [
+        10,
+        15
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "powerful-I3-820040-1",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820040-1.png",
+      "isolation": {
+        "background_rgb": [
+          191,
+          83,
+          125
+        ],
+        "background_noise": 0.97,
+        "coverage": 0.12,
+        "components": 6,
+        "largest_component_share": 0.999,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.217,
+      "status": "WARN",
+      "score": 0.729,
+      "reasons": [
+        "source is asymmetric (IoU 0.22); mirroring changed its design",
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I3-820040-1.png",
+      "mask": "candidates/powerful/powerful-I3-820040-1-mask.png",
+      "slot_fill": 0.1,
+      "sprite_size": [
+        10,
+        8
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "powerful-I3-820040-2",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820040-2.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          63,
+          93
+        ],
+        "background_noise": 0.99,
+        "coverage": 0.2489,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 132.5
+      },
+      "source_symmetry": 0.557,
+      "status": "PASS",
+      "score": 0.85,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I3-820040-2.png",
+      "mask": "candidates/powerful/powerful-I3-820040-2-mask.png",
+      "slot_fill": 0.331,
+      "sprite_size": [
+        10,
+        15
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "powerful-I3-820040-3",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820040-3.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          55,
+          101
+        ],
+        "background_noise": 1.0,
+        "coverage": 0.0291,
+        "components": 4,
+        "largest_component_share": 0.595,
+        "touches_border": 0.0,
+        "rotated_deg": -89.9
+      },
+      "source_symmetry": 0.903,
+      "status": "PASS",
+      "score": 0.738,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I3-820040-3.png",
+      "mask": "candidates/powerful/powerful-I3-820040-3-mask.png",
+      "slot_fill": 0.385,
+      "sprite_size": [
+        10,
+        21
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "shield-I3-820050-0",
+      "part": "shield",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/shield/I3-s820050-0.png",
+      "isolation": {
+        "background_rgb": [
+          245,
+          22,
+          123
+        ],
+        "background_noise": 1.18,
+        "coverage": 0.3694,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.998,
+      "status": "PASS",
+      "score": 0.997,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I3-820050-0.png",
+      "mask": "candidates/shield/shield-I3-820050-0-mask.png",
+      "slot_fill": 0.833,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "shield-I3-820050-1",
+      "part": "shield",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/shield/I3-s820050-1.png",
+      "isolation": {
+        "background_rgb": [
+          245,
+          67,
+          154
+        ],
+        "background_noise": 1.18,
+        "coverage": 0.2849,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.947,
+      "status": "PASS",
+      "score": 0.989,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I3-820050-1.png",
+      "mask": "candidates/shield/shield-I3-820050-1-mask.png",
+      "slot_fill": 0.75,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "shield-I3-820050-2",
+      "part": "shield",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/shield/I3-s820050-2.png",
+      "isolation": {
+        "background_rgb": [
+          162,
+          52,
+          107
+        ],
+        "background_noise": 1.12,
+        "coverage": 0.0772,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.74,
+      "status": "PASS",
+      "score": 0.955,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I3-820050-2.png",
+      "mask": "candidates/shield/shield-I3-820050-2-mask.png",
+      "slot_fill": 0.75,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "shield-I3-820050-3",
+      "part": "shield",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/shield/I3-s820050-3.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          106,
+          187
+        ],
+        "background_noise": 1.17,
+        "coverage": 0.2312,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.818,
+      "status": "PASS",
+      "score": 0.967,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I3-820050-3.png",
+      "mask": "candidates/shield/shield-I3-820050-3-mask.png",
+      "slot_fill": 0.778,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "rapid-I2-820031-0",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820031-0.png",
+      "isolation": {
+        "background_rgb": [
+          202,
+          44,
+          90
+        ],
+        "background_noise": 1.66,
+        "coverage": 0.1579,
+        "components": 5,
+        "largest_component_share": 0.25,
+        "touches_border": 0.0,
+        "rotated_deg": -89.7
+      },
+      "source_symmetry": 0.268,
+      "status": "FAIL",
+      "score": 0.285,
+      "reasons": [
+        "not a single object (largest component under half of the mask)"
+      ],
+      "layer": "candidates/rapid/rapid-I2-820031-0.png",
+      "mask": "candidates/rapid/rapid-I2-820031-0-mask.png",
+      "slot_fill": 0.323,
+      "sprite_size": [
+        10,
+        13
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "rapid-I2-820031-1",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820031-1.png",
+      "isolation": {
+        "background_rgb": [
+          251,
+          171,
+          192
+        ],
+        "background_noise": 1.72,
+        "coverage": 0.2343,
+        "components": 14,
+        "largest_component_share": 0.449,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.93,
+      "status": "FAIL",
+      "score": 0.283,
+      "reasons": [
+        "not a single object (largest component under half of the mask)"
+      ],
+      "layer": "candidates/rapid/rapid-I2-820031-1.png",
+      "mask": "candidates/rapid/rapid-I2-820031-1-mask.png",
+      "slot_fill": 0.191,
+      "sprite_size": [
+        10,
+        10
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "rapid-I2-820031-2",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820031-2.png",
+      "isolation": {
+        "background_rgb": [
+          185,
+          55,
+          126
+        ],
+        "background_noise": 1.36,
+        "coverage": 0.0346,
+        "components": 4,
+        "largest_component_share": 0.998,
+        "touches_border": 0.0,
+        "rotated_deg": -52.0
+      },
+      "source_symmetry": 0.888,
+      "status": "PASS",
+      "score": 0.772,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820031-2.png",
+      "mask": "candidates/rapid/rapid-I2-820031-2-mask.png",
+      "slot_fill": 0.509,
+      "sprite_size": [
+        10,
+        18
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "rapid-I2-820031-3",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820031-3.png",
+      "isolation": {
+        "background_rgb": [
+          169,
+          75,
+          126
+        ],
+        "background_noise": 1.54,
+        "coverage": 0.0402,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 44.8
+      },
+      "source_symmetry": 0.152,
+      "status": "PASS",
+      "score": 0.721,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820031-3.png",
+      "mask": "candidates/rapid/rapid-I2-820031-3-mask.png",
+      "slot_fill": 0.327,
+      "sprite_size": [
+        6,
+        22
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "powerful-I2-820041-0",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820041-0.png",
+      "isolation": {
+        "background_rgb": [
+          188,
+          81,
+          131
+        ],
+        "background_noise": 1.58,
+        "coverage": 0.0476,
+        "components": 2,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -90.6
+      },
+      "source_symmetry": 0.821,
+      "status": "PASS",
+      "score": 0.799,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I2-820041-0.png",
+      "mask": "candidates/powerful/powerful-I2-820041-0-mask.png",
+      "slot_fill": 0.415,
+      "sprite_size": [
+        8,
+        26
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "powerful-I2-820041-1",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820041-1.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          52,
+          94
+        ],
+        "background_noise": 1.61,
+        "coverage": 0.2085,
+        "components": 4,
+        "largest_component_share": 0.999,
+        "touches_border": 0.0,
+        "rotated_deg": 128.6
+      },
+      "source_symmetry": 0.68,
+      "status": "PASS",
+      "score": 0.875,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I2-820041-1.png",
+      "mask": "candidates/powerful/powerful-I2-820041-1-mask.png",
+      "slot_fill": 0.354,
+      "sprite_size": [
+        10,
+        16
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "powerful-I2-820041-2",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820041-2.png",
+      "isolation": {
+        "background_rgb": [
+          239,
+          39,
+          102
+        ],
+        "background_noise": 1.54,
+        "coverage": 0.0411,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -89.9
+      },
+      "source_symmetry": 0.944,
+      "status": "PASS",
+      "score": 0.82,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I2-820041-2.png",
+      "mask": "candidates/powerful/powerful-I2-820041-2-mask.png",
+      "slot_fill": 0.415,
+      "sprite_size": [
+        8,
+        26
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "powerful-I2-820041-3",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820041-3.png",
+      "isolation": {
+        "background_rgb": [
+          226,
+          6,
+          100
+        ],
+        "background_noise": 1.82,
+        "coverage": 0.1379,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 89.9
+      },
+      "source_symmetry": 0.247,
+      "status": "WARN",
+      "score": 0.73,
+      "reasons": [
+        "source is asymmetric (IoU 0.25); mirroring changed its design",
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I2-820041-3.png",
+      "mask": "candidates/powerful/powerful-I2-820041-3-mask.png",
+      "slot_fill": 0.092,
+      "sprite_size": [
+        10,
+        12
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "shield-I2-820051-0",
+      "part": "shield",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/shield/I2-s820051-0.png",
+      "isolation": {
+        "background_rgb": [
+          238,
+          73,
+          145
+        ],
+        "background_noise": 1.61,
+        "coverage": 0.2825,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.981,
+      "status": "PASS",
+      "score": 0.994,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I2-820051-0.png",
+      "mask": "candidates/shield/shield-I2-820051-0-mask.png",
+      "slot_fill": 0.778,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "shield-I2-820051-1",
+      "part": "shield",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/shield/I2-s820051-1.png",
+      "isolation": {
+        "background_rgb": [
+          166,
+          45,
+          98
+        ],
+        "background_noise": 1.39,
+        "coverage": 0.1036,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.911,
+      "status": "PASS",
+      "score": 0.983,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I2-820051-1.png",
+      "mask": "candidates/shield/shield-I2-820051-1-mask.png",
+      "slot_fill": 0.778,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "shield-I2-820051-2",
+      "part": "shield",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/shield/I2-s820051-2.png",
+      "isolation": {
+        "background_rgb": [
+          243,
+          84,
+          157
+        ],
+        "background_noise": 1.63,
+        "coverage": 0.2401,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.89,
+      "status": "PASS",
+      "score": 0.935,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I2-820051-2.png",
+      "mask": "candidates/shield/shield-I2-820051-2-mask.png",
+      "slot_fill": 0.444,
+      "sprite_size": [
+        12,
+        9
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "shield-I2-820051-3",
+      "part": "shield",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/shield/I2-s820051-3.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          65,
+          109
+        ],
+        "background_noise": 1.68,
+        "coverage": 0.5596,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.997,
+      "status": "PASS",
+      "score": 0.996,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I2-820051-3.png",
+      "mask": "candidates/shield/shield-I2-820051-3-mask.png",
+      "slot_fill": 0.625,
+      "sprite_size": [
+        10,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "rapid-I3-820031-0",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820031-0.png",
+      "isolation": {
+        "background_rgb": [
+          217,
+          50,
+          87
+        ],
+        "background_noise": 1.14,
+        "coverage": 0.1881,
+        "components": 34,
+        "largest_component_share": 0.984,
+        "touches_border": 0.0,
+        "rotated_deg": 90.4
+      },
+      "source_symmetry": 0.469,
+      "status": "PASS",
+      "score": 0.831,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820031-0.png",
+      "mask": "candidates/rapid/rapid-I3-820031-0-mask.png",
+      "slot_fill": 0.309,
+      "sprite_size": [
+        10,
+        12
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "rapid-I3-820031-1",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820031-1.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          56,
+          111
+        ],
+        "background_noise": 1.12,
+        "coverage": 0.0692,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 180.0
+      },
+      "source_symmetry": 0.53,
+      "status": "PASS",
+      "score": 0.884,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820031-1.png",
+      "mask": "candidates/rapid/rapid-I3-820031-1-mask.png",
+      "slot_fill": 0.491,
+      "sprite_size": [
+        10,
+        22
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "rapid-I3-820031-2",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820031-2.png",
+      "isolation": {
+        "background_rgb": [
+          189,
+          60,
+          124
+        ],
+        "background_noise": 0.99,
+        "coverage": 0.0318,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.678,
+      "status": "PASS",
+      "score": 0.701,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820031-2.png",
+      "mask": "candidates/rapid/rapid-I3-820031-2-mask.png",
+      "slot_fill": 0.25,
+      "sprite_size": [
+        10,
+        8
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "rapid-I3-820031-3",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820031-3.png",
+      "isolation": {
+        "background_rgb": [
+          193,
+          69,
+          110
+        ],
+        "background_noise": 0.99,
+        "coverage": 0.0286,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 50.0
+      },
+      "source_symmetry": 0.916,
+      "status": "PASS",
+      "score": 0.733,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820031-3.png",
+      "mask": "candidates/rapid/rapid-I3-820031-3-mask.png",
+      "slot_fill": 0.364,
+      "sprite_size": [
+        4,
+        22
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "powerful-I3-820041-0",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820041-0.png",
+      "isolation": {
+        "background_rgb": [
+          198,
+          83,
+          124
+        ],
+        "background_noise": 1.04,
+        "coverage": 0.0439,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -90.1
+      },
+      "source_symmetry": 0.938,
+      "status": "PASS",
+      "score": 0.807,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I3-820041-0.png",
+      "mask": "candidates/powerful/powerful-I3-820041-0-mask.png",
+      "slot_fill": 0.369,
+      "sprite_size": [
+        4,
+        26
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "powerful-I3-820041-1",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820041-1.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          66,
+          98
+        ],
+        "background_noise": 1.03,
+        "coverage": 0.1586,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -51.8
+      },
+      "source_symmetry": 0.717,
+      "status": "PASS",
+      "score": 0.868,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I3-820041-1.png",
+      "mask": "candidates/powerful/powerful-I3-820041-1-mask.png",
+      "slot_fill": 0.3,
+      "sprite_size": [
+        10,
+        16
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "powerful-I3-820041-2",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820041-2.png",
+      "isolation": {
+        "background_rgb": [
+          245,
+          51,
+          101
+        ],
+        "background_noise": 1.0,
+        "coverage": 0.0409,
+        "components": 3,
+        "largest_component_share": 0.999,
+        "touches_border": 0.0,
+        "rotated_deg": -90.0
+      },
+      "source_symmetry": 0.876,
+      "status": "PASS",
+      "score": 0.801,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I3-820041-2.png",
+      "mask": "candidates/powerful/powerful-I3-820041-2-mask.png",
+      "slot_fill": 0.385,
+      "sprite_size": [
+        8,
+        26
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "powerful-I3-820041-3",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820041-3.png",
+      "isolation": {
+        "background_rgb": [
+          243,
+          28,
+          104
+        ],
+        "background_noise": 1.19,
+        "coverage": 0.1506,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.986,
+      "status": "WARN",
+      "score": 0.869,
+      "reasons": [
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I3-820041-3.png",
+      "mask": "candidates/powerful/powerful-I3-820041-3-mask.png",
+      "slot_fill": 0.146,
+      "sprite_size": [
+        10,
+        9
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "shield-I3-820051-0",
+      "part": "shield",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/shield/I3-s820051-0.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          73,
+          148
+        ],
+        "background_noise": 1.18,
+        "coverage": 0.2944,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.996,
+      "status": "PASS",
+      "score": 0.997,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I3-820051-0.png",
+      "mask": "candidates/shield/shield-I3-820051-0-mask.png",
+      "slot_fill": 0.722,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "shield-I3-820051-1",
+      "part": "shield",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/shield/I3-s820051-1.png",
+      "isolation": {
+        "background_rgb": [
+          186,
+          55,
+          105
+        ],
+        "background_noise": 1.02,
+        "coverage": 0.1183,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.85,
+      "status": "PASS",
+      "score": 0.973,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I3-820051-1.png",
+      "mask": "candidates/shield/shield-I3-820051-1-mask.png",
+      "slot_fill": 0.778,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "shield-I3-820051-2",
+      "part": "shield",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/shield/I3-s820051-2.png",
+      "isolation": {
+        "background_rgb": [
+          244,
+          92,
+          158
+        ],
+        "background_noise": 1.09,
+        "coverage": 0.2757,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.87,
+      "status": "PASS",
+      "score": 0.976,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I3-820051-2.png",
+      "mask": "candidates/shield/shield-I3-820051-2-mask.png",
+      "slot_fill": 0.778,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "shield-I3-820051-3",
+      "part": "shield",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/shield/I3-s820051-3.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          73,
+          111
+        ],
+        "background_noise": 0.99,
+        "coverage": 0.5606,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.997,
+      "status": "PASS",
+      "score": 0.998,
+      "reasons": [],
+      "layer": "candidates/shield/shield-I3-820051-3.png",
+      "mask": "candidates/shield/shield-I3-820051-3-mask.png",
+      "slot_fill": 0.625,
+      "sprite_size": [
+        10,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "rapid-I2-820032-0",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820032-0.png",
+      "isolation": {
+        "background_rgb": [
+          251,
+          0,
+          117
+        ],
+        "background_noise": 2.92,
+        "coverage": 0.0589,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -0.1
+      },
+      "source_symmetry": 0.975,
+      "status": "PASS",
+      "score": 0.887,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820032-0.png",
+      "mask": "candidates/rapid/rapid-I2-820032-0-mask.png",
+      "slot_fill": 0.514,
+      "sprite_size": [
+        9,
+        22
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "rapid-I2-820032-1",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820032-1.png",
+      "isolation": {
+        "background_rgb": [
+          212,
+          29,
+          113
+        ],
+        "background_noise": 1.64,
+        "coverage": 0.0971,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -180.0
+      },
+      "source_symmetry": 0.98,
+      "status": "PASS",
+      "score": 0.873,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820032-1.png",
+      "mask": "candidates/rapid/rapid-I2-820032-1-mask.png",
+      "slot_fill": 0.455,
+      "sprite_size": [
+        5,
+        22
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "rapid-I2-820032-2",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820032-2.png",
+      "isolation": {
+        "background_rgb": [
+          250,
+          0,
+          84
+        ],
+        "background_noise": 2.51,
+        "coverage": 0.1865,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.979,
+      "status": "PASS",
+      "score": 0.856,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820032-2.png",
+      "mask": "candidates/rapid/rapid-I2-820032-2-mask.png",
+      "slot_fill": 0.4,
+      "sprite_size": [
+        10,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "rapid-I2-820032-3",
+      "part": "rapid",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/rapid/I2-s820032-3.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          5,
+          113
+        ],
+        "background_noise": 2.87,
+        "coverage": 0.0491,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -0.1
+      },
+      "source_symmetry": 0.966,
+      "status": "PASS",
+      "score": 0.711,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I2-820032-3.png",
+      "mask": "candidates/rapid/rapid-I2-820032-3-mask.png",
+      "slot_fill": 0.3,
+      "sprite_size": [
+        10,
+        18
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "powerful-I2-820042-0",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820042-0.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          2,
+          92
+        ],
+        "background_noise": 2.55,
+        "coverage": 0.0813,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 179.8
+      },
+      "source_symmetry": 0.897,
+      "status": "WARN",
+      "score": 0.858,
+      "reasons": [
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I2-820042-0.png",
+      "mask": "candidates/powerful/powerful-I2-820042-0-mask.png",
+      "slot_fill": 0.169,
+      "sprite_size": [
+        10,
+        19
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "powerful-I2-820042-1",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820042-1.png",
+      "isolation": {
+        "background_rgb": [
+          251,
+          9,
+          105
+        ],
+        "background_noise": 2.16,
+        "coverage": 0.0766,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.979,
+      "status": "WARN",
+      "score": 0.869,
+      "reasons": [
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I2-820042-1.png",
+      "mask": "candidates/powerful/powerful-I2-820042-1-mask.png",
+      "slot_fill": 0.154,
+      "sprite_size": [
+        10,
+        10
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "powerful-I2-820042-2",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820042-2.png",
+      "isolation": {
+        "background_rgb": [
+          107,
+          195,
+          222
+        ],
+        "background_noise": 1.52,
+        "coverage": 0.1966,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.3
+      },
+      "source_symmetry": 0.944,
+      "status": "PASS",
+      "score": 0.9,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I2-820042-2.png",
+      "mask": "candidates/powerful/powerful-I2-820042-2-mask.png",
+      "slot_fill": 0.285,
+      "sprite_size": [
+        10,
+        16
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "powerful-I2-820042-3",
+      "part": "powerful",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/powerful/I2-s820042-3.png",
+      "isolation": {
+        "background_rgb": [
+          243,
+          43,
+          122
+        ],
+        "background_noise": 1.62,
+        "coverage": 0.064,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -175.3
+      },
+      "source_symmetry": 0.22,
+      "status": "WARN",
+      "score": 0.718,
+      "reasons": [
+        "source is asymmetric (IoU 0.22); mirroring changed its design",
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I2-820042-3.png",
+      "mask": "candidates/powerful/powerful-I2-820042-3-mask.png",
+      "slot_fill": 0.062,
+      "sprite_size": [
+        10,
+        12
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "rapid-I3-820032-0",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820032-0.png",
+      "isolation": {
+        "background_rgb": [
+          250,
+          27,
+          116
+        ],
+        "background_noise": 2.03,
+        "coverage": 0.0751,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -0.1
+      },
+      "source_symmetry": 0.972,
+      "status": "PASS",
+      "score": 0.817,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820032-0.png",
+      "mask": "candidates/rapid/rapid-I3-820032-0-mask.png",
+      "slot_fill": 0.255,
+      "sprite_size": [
+        10,
+        15
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "rapid-I3-820032-1",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820032-1.png",
+      "isolation": {
+        "background_rgb": [
+          229,
+          30,
+          106
+        ],
+        "background_noise": 1.21,
+        "coverage": 0.1492,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.2
+      },
+      "source_symmetry": 0.968,
+      "status": "PASS",
+      "score": 0.849,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820032-1.png",
+      "mask": "candidates/rapid/rapid-I3-820032-1-mask.png",
+      "slot_fill": 0.364,
+      "sprite_size": [
+        10,
+        16
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "rapid-I3-820032-2",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820032-2.png",
+      "isolation": {
+        "background_rgb": [
+          249,
+          2,
+          82
+        ],
+        "background_noise": 1.92,
+        "coverage": 0.1873,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.988,
+      "status": "PASS",
+      "score": 0.85,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820032-2.png",
+      "mask": "candidates/rapid/rapid-I3-820032-2-mask.png",
+      "slot_fill": 0.373,
+      "sprite_size": [
+        10,
+        11
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "rapid-I3-820032-3",
+      "part": "rapid",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/rapid/I3-s820032-3.png",
+      "isolation": {
+        "background_rgb": [
+          248,
+          31,
+          108
+        ],
+        "background_noise": 1.63,
+        "coverage": 0.0488,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.977,
+      "status": "PASS",
+      "score": 0.716,
+      "reasons": [],
+      "layer": "candidates/rapid/rapid-I3-820032-3.png",
+      "mask": "candidates/rapid/rapid-I3-820032-3-mask.png",
+      "slot_fill": 0.309,
+      "sprite_size": [
+        10,
+        14
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "powerful-I3-820042-0",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820042-0.png",
+      "isolation": {
+        "background_rgb": [
+          249,
+          28,
+          95
+        ],
+        "background_noise": 1.55,
+        "coverage": 0.0926,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.1
+      },
+      "source_symmetry": 0.916,
+      "status": "PASS",
+      "score": 0.872,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I3-820042-0.png",
+      "mask": "candidates/powerful/powerful-I3-820042-0-mask.png",
+      "slot_fill": 0.2,
+      "sprite_size": [
+        10,
+        16
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "powerful-I3-820042-1",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820042-1.png",
+      "isolation": {
+        "background_rgb": [
+          250,
+          34,
+          105
+        ],
+        "background_noise": 1.6,
+        "coverage": 0.0515,
+        "components": 2,
+        "largest_component_share": 0.903,
+        "touches_border": 0.0,
+        "rotated_deg": 0.0
+      },
+      "source_symmetry": 0.976,
+      "status": "WARN",
+      "score": 0.84,
+      "reasons": [
+        "silhouette fills little of its slot"
+      ],
+      "layer": "candidates/powerful/powerful-I3-820042-1.png",
+      "mask": "candidates/powerful/powerful-I3-820042-1-mask.png",
+      "slot_fill": 0.108,
+      "sprite_size": [
+        10,
+        10
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "powerful-I3-820042-2",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820042-2.png",
+      "isolation": {
+        "background_rgb": [
+          148,
+          164,
+          201
+        ],
+        "background_noise": 0.87,
+        "coverage": 0.1883,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.5
+      },
+      "source_symmetry": 0.929,
+      "status": "PASS",
+      "score": 0.94,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I3-820042-2.png",
+      "mask": "candidates/powerful/powerful-I3-820042-2-mask.png",
+      "slot_fill": 0.431,
+      "sprite_size": [
+        10,
+        20
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "powerful-I3-820042-3",
+      "part": "powerful",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/powerful/I3-s820042-3.png",
+      "isolation": {
+        "background_rgb": [
+          248,
+          55,
+          112
+        ],
+        "background_noise": 1.14,
+        "coverage": 0.077,
+        "components": 5,
+        "largest_component_share": 0.933,
+        "touches_border": 0.0,
+        "rotated_deg": -179.6
+      },
+      "source_symmetry": 0.915,
+      "status": "PASS",
+      "score": 0.872,
+      "reasons": [],
+      "layer": "candidates/powerful/powerful-I3-820042-3.png",
+      "mask": "candidates/powerful/powerful-I3-820042-3-mask.png",
+      "slot_fill": 0.238,
+      "sprite_size": [
+        10,
+        13
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "spread-I2-820012-0",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820012-0.png",
+      "isolation": {
+        "background_rgb": [
+          201,
+          47,
+          115
+        ],
+        "background_noise": 1.31,
+        "coverage": 0.1113,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.647,
+      "status": "PASS",
+      "score": 0.908,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I2-820012-0.png",
+      "mask": "candidates/spread/spread-I2-820012-0-mask.png",
+      "slot_fill": 0.488,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "spread-I2-820012-1",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820012-1.png",
+      "isolation": {
+        "background_rgb": [
+          245,
+          93,
+          166
+        ],
+        "background_noise": 1.63,
+        "coverage": 0.1959,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.377,
+      "status": "WARN",
+      "score": 0.836,
+      "reasons": [
+        "source is asymmetric (IoU 0.38); mirroring changed its design"
+      ],
+      "layer": "candidates/spread/spread-I2-820012-1.png",
+      "mask": "candidates/spread/spread-I2-820012-1-mask.png",
+      "slot_fill": 0.393,
+      "sprite_size": [
+        12,
+        10
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "spread-I2-820012-2",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820012-2.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          70,
+          143
+        ],
+        "background_noise": 1.55,
+        "coverage": 0.1163,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.381,
+      "status": "WARN",
+      "score": 0.83,
+      "reasons": [
+        "source is asymmetric (IoU 0.38); mirroring changed its design"
+      ],
+      "layer": "candidates/spread/spread-I2-820012-2.png",
+      "mask": "candidates/spread/spread-I2-820012-2-mask.png",
+      "slot_fill": 0.369,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "spread-I2-820012-3",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820012-3.png",
+      "isolation": {
+        "background_rgb": [
+          227,
+          48,
+          105
+        ],
+        "background_noise": 1.52,
+        "coverage": 0.1252,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.589,
+      "status": "PASS",
+      "score": 0.914,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I2-820012-3.png",
+      "mask": "candidates/spread/spread-I2-820012-3-mask.png",
+      "slot_fill": 0.548,
+      "sprite_size": [
+        12,
+        14
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "large-I2-820022-0",
+      "part": "large",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/large/I2-s820022-0.png",
+      "isolation": {
+        "background_rgb": [
+          250,
+          50,
+          103
+        ],
+        "background_noise": 1.49,
+        "coverage": 0.076,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -40.7
+      },
+      "source_symmetry": 0.873,
+      "status": "PASS",
+      "score": 0.902,
+      "reasons": [],
+      "layer": "candidates/large/large-I2-820022-0.png",
+      "mask": "candidates/large/large-I2-820022-0-mask.png",
+      "slot_fill": 0.333,
+      "sprite_size": [
+        4,
+        18
+      ],
+      "palette_colours": 3
+    },
+    {
+      "id": "large-I2-820022-1",
+      "part": "large",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/large/I2-s820022-1.png",
+      "isolation": {
+        "background_rgb": [
+          250,
+          28,
+          133
+        ],
+        "background_noise": 2.03,
+        "coverage": 0.1495,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 20.9
+      },
+      "source_symmetry": 0.666,
+      "status": "PASS",
+      "score": 0.941,
+      "reasons": [],
+      "layer": "candidates/large/large-I2-820022-1.png",
+      "mask": "candidates/large/large-I2-820022-1-mask.png",
+      "slot_fill": 0.6,
+      "sprite_size": [
+        10,
+        18
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "large-I2-820022-2",
+      "part": "large",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/large/I2-s820022-2.png",
+      "isolation": {
+        "background_rgb": [
+          250,
+          0,
+          104
+        ],
+        "background_noise": 2.6,
+        "coverage": 0.0653,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 0.3
+      },
+      "source_symmetry": 0.382,
+      "status": "WARN",
+      "score": 0.824,
+      "reasons": [
+        "source is asymmetric (IoU 0.38); mirroring changed its design"
+      ],
+      "layer": "candidates/large/large-I2-820022-2.png",
+      "mask": "candidates/large/large-I2-820022-2-mask.png",
+      "slot_fill": 0.356,
+      "sprite_size": [
+        4,
+        18
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "large-I2-820022-3",
+      "part": "large",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/large/I2-s820022-3.png",
+      "isolation": {
+        "background_rgb": [
+          228,
+          36,
+          103
+        ],
+        "background_noise": 1.45,
+        "coverage": 0.0859,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 149.9
+      },
+      "source_symmetry": 0.554,
+      "status": "PASS",
+      "score": 0.846,
+      "reasons": [],
+      "layer": "candidates/large/large-I2-820022-3.png",
+      "mask": "candidates/large/large-I2-820022-3-mask.png",
+      "slot_fill": 0.322,
+      "sprite_size": [
+        6,
+        18
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "spread-I3-820012-0",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820012-0.png",
+      "isolation": {
+        "background_rgb": [
+          210,
+          54,
+          115
+        ],
+        "background_noise": 1.03,
+        "coverage": 0.1148,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.661,
+      "status": "PASS",
+      "score": 0.91,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I3-820012-0.png",
+      "mask": "candidates/spread/spread-I3-820012-0-mask.png",
+      "slot_fill": 0.488,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "spread-I3-820012-1",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820012-1.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          86,
+          158
+        ],
+        "background_noise": 1.14,
+        "coverage": 0.2003,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.389,
+      "status": "WARN",
+      "score": 0.845,
+      "reasons": [
+        "source is asymmetric (IoU 0.39); mirroring changed its design"
+      ],
+      "layer": "candidates/spread/spread-I3-820012-1.png",
+      "mask": "candidates/spread/spread-I3-820012-1-mask.png",
+      "slot_fill": 0.417,
+      "sprite_size": [
+        12,
+        10
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "spread-I3-820012-2",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820012-2.png",
+      "isolation": {
+        "background_rgb": [
+          245,
+          73,
+          141
+        ],
+        "background_noise": 1.07,
+        "coverage": 0.1196,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.42,
+      "status": "WARN",
+      "score": 0.851,
+      "reasons": [
+        "source is asymmetric (IoU 0.42); mirroring changed its design"
+      ],
+      "layer": "candidates/spread/spread-I3-820012-2.png",
+      "mask": "candidates/spread/spread-I3-820012-2-mask.png",
+      "slot_fill": 0.417,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "spread-I3-820012-3",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820012-3.png",
+      "isolation": {
+        "background_rgb": [
+          239,
+          56,
+          108
+        ],
+        "background_noise": 1.03,
+        "coverage": 0.1535,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.543,
+      "status": "WARN",
+      "score": 0.914,
+      "reasons": [
+        "source is asymmetric (IoU 0.54); mirroring changed its design"
+      ],
+      "layer": "candidates/spread/spread-I3-820012-3.png",
+      "mask": "candidates/spread/spread-I3-820012-3-mask.png",
+      "slot_fill": 0.571,
+      "sprite_size": [
+        12,
+        12
+      ],
+      "palette_colours": 9
+    },
+    {
+      "id": "large-I3-820022-0",
+      "part": "large",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/large/I3-s820022-0.png",
+      "isolation": {
+        "background_rgb": [
+          249,
+          58,
+          108
+        ],
+        "background_noise": 1.15,
+        "coverage": 0.0732,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 136.8
+      },
+      "source_symmetry": 0.79,
+      "status": "PASS",
+      "score": 0.91,
+      "reasons": [],
+      "layer": "candidates/large/large-I3-820022-0.png",
+      "mask": "candidates/large/large-I3-820022-0-mask.png",
+      "slot_fill": 0.411,
+      "sprite_size": [
+        6,
+        18
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "large-I3-820022-1",
+      "part": "large",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/large/I3-s820022-1.png",
+      "isolation": {
+        "background_rgb": [
+          248,
+          40,
+          129
+        ],
+        "background_noise": 1.57,
+        "coverage": 0.1484,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 22.7
+      },
+      "source_symmetry": 0.632,
+      "status": "PASS",
+      "score": 0.896,
+      "reasons": [],
+      "layer": "candidates/large/large-I3-820022-1.png",
+      "mask": "candidates/large/large-I3-820022-1-mask.png",
+      "slot_fill": 0.456,
+      "sprite_size": [
+        8,
+        18
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "large-I3-820022-2",
+      "part": "large",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/large/I3-s820022-2.png",
+      "isolation": {
+        "background_rgb": [
+          248,
+          6,
+          100
+        ],
+        "background_noise": 2.37,
+        "coverage": 0.0567,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": -0.1
+      },
+      "source_symmetry": 0.785,
+      "status": "PASS",
+      "score": 0.886,
+      "reasons": [],
+      "layer": "candidates/large/large-I3-820022-2.png",
+      "mask": "candidates/large/large-I3-820022-2-mask.png",
+      "slot_fill": 0.333,
+      "sprite_size": [
+        4,
+        18
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "large-I3-820022-3",
+      "part": "large",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/large/I3-s820022-3.png",
+      "isolation": {
+        "background_rgb": [
+          243,
+          45,
+          107
+        ],
+        "background_noise": 1.2,
+        "coverage": 0.0645,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0,
+        "rotated_deg": 157.5
+      },
+      "source_symmetry": 0.379,
+      "status": "WARN",
+      "score": 0.802,
+      "reasons": [
+        "source is asymmetric (IoU 0.38); mirroring changed its design"
+      ],
+      "layer": "candidates/large/large-I3-820022-3.png",
+      "mask": "candidates/large/large-I3-820022-3-mask.png",
+      "slot_fill": 0.267,
+      "sprite_size": [
+        6,
+        18
+      ],
+      "palette_colours": 4
+    },
+    {
+      "id": "spread-I2-820013-0",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820013-0.png",
+      "isolation": {
+        "background_rgb": [
+          245,
+          86,
+          148
+        ],
+        "background_noise": 1.59,
+        "coverage": 0.0906,
+        "components": 2,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.528,
+      "status": "WARN",
+      "score": 0.918,
+      "reasons": [
+        "source is asymmetric (IoU 0.53); mirroring changed its design"
+      ],
+      "layer": "candidates/spread/spread-I2-820013-0.png",
+      "mask": "candidates/spread/spread-I2-820013-0-mask.png",
+      "slot_fill": 0.631,
+      "sprite_size": [
+        12,
+        13
+      ],
+      "palette_colours": 8
+    },
+    {
+      "id": "spread-I2-820013-1",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820013-1.png",
+      "isolation": {
+        "background_rgb": [
+          247,
+          63,
+          129
+        ],
+        "background_noise": 1.48,
+        "coverage": 0.1106,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.984,
+      "status": "PASS",
+      "score": 0.934,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I2-820013-1.png",
+      "mask": "candidates/spread/spread-I2-820013-1-mask.png",
+      "slot_fill": 0.381,
+      "sprite_size": [
+        12,
+        11
+      ],
+      "palette_colours": 5
+    },
+    {
+      "id": "spread-I2-820013-2",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820013-2.png",
+      "isolation": {
+        "background_rgb": [
+          226,
+          60,
+          96
+        ],
+        "background_noise": 1.46,
+        "coverage": 0.1635,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.993,
+      "status": "PASS",
+      "score": 0.955,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I2-820013-2.png",
+      "mask": "candidates/spread/spread-I2-820013-2-mask.png",
+      "slot_fill": 0.452,
+      "sprite_size": [
+        12,
+        11
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "spread-I2-820013-3",
+      "part": "spread",
+      "tier": "I2",
+      "model": "FLUX.1-schnell-Q4_0+ae+T5-XXL-Q4_K",
+      "raw": "raw/spread/I2-s820013-3.png",
+      "isolation": {
+        "background_rgb": [
+          192,
+          56,
+          116
+        ],
+        "background_noise": 1.48,
+        "coverage": 0.0844,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.853,
+      "status": "PASS",
+      "score": 0.895,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I2-820013-3.png",
+      "mask": "candidates/spread/spread-I2-820013-3-mask.png",
+      "slot_fill": 0.321,
+      "sprite_size": [
+        12,
+        6
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "spread-I3-820013-0",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820013-0.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          82,
+          139
+        ],
+        "background_noise": 1.03,
+        "coverage": 0.1033,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.535,
+      "status": "WARN",
+      "score": 0.921,
+      "reasons": [
+        "source is asymmetric (IoU 0.54); mirroring changed its design"
+      ],
+      "layer": "candidates/spread/spread-I3-820013-0.png",
+      "mask": "candidates/spread/spread-I3-820013-0-mask.png",
+      "slot_fill": 0.655,
+      "sprite_size": [
+        12,
+        13
+      ],
+      "palette_colours": 7
+    },
+    {
+      "id": "spread-I3-820013-1",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820013-1.png",
+      "isolation": {
+        "background_rgb": [
+          246,
+          69,
+          127
+        ],
+        "background_noise": 0.98,
+        "coverage": 0.1492,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.742,
+      "status": "PASS",
+      "score": 0.891,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I3-820013-1.png",
+      "mask": "candidates/spread/spread-I3-820013-1-mask.png",
+      "slot_fill": 0.369,
+      "sprite_size": [
+        12,
+        11
+      ],
+      "palette_colours": 6
+    },
+    {
+      "id": "spread-I3-820013-2",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820013-2.png",
+      "isolation": {
+        "background_rgb": [
+          236,
+          64,
+          96
+        ],
+        "background_noise": 1.03,
+        "coverage": 0.1814,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.992,
+      "status": "PASS",
+      "score": 0.959,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I3-820013-2.png",
+      "mask": "candidates/spread/spread-I3-820013-2-mask.png",
+      "slot_fill": 0.464,
+      "sprite_size": [
+        12,
+        11
+      ],
+      "palette_colours": 9
+    },
+    {
+      "id": "spread-I3-820013-3",
+      "part": "spread",
+      "tier": "I3",
+      "model": "FLUX.1-schnell-Q8_0+ae+T5-XXL-Q8_0",
+      "raw": "raw/spread/I3-s820013-3.png",
+      "isolation": {
+        "background_rgb": [
+          202,
+          60,
+          115
+        ],
+        "background_noise": 0.99,
+        "coverage": 0.1014,
+        "components": 1,
+        "largest_component_share": 1.0,
+        "touches_border": 0.0
+      },
+      "source_symmetry": 0.89,
+      "status": "PASS",
+      "score": 0.909,
+      "reasons": [],
+      "layer": "candidates/spread/spread-I3-820013-3.png",
+      "mask": "candidates/spread/spread-I3-820013-3-mask.png",
+      "slot_fill": 0.345,
+      "sprite_size": [
+        12,
+        6
+      ],
+      "palette_colours": 6
+    }
+  ]
+}

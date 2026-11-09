@@ -1,0 +1,24 @@
+{
+  "schema": "demon-attack.sprite-prompts/v1",
+  "style": "pixel art game sprite, front view, symmetrical, single compact flying bat-winged demon creature, wings spread wide, small body, no legs visible, hard pixel edges, limited palette, dark navy outline, centered, plain flat white background",
+  "negative": "text, watermark, logo, signature, blurry, photo, 3d render, gradient background, scenery, ground, shadow, multiple creatures, grid, sprite sheet, cropped, asymmetric, standing, human, muscular body",
+  "keyframe": {
+    "workflow": "art/workflows/sprites/keyframe-sdxl-pixel.json",
+    "count": 4,
+    "species": {
+      "teal": {"seed": 640100, "prompt": "teal imp demon, curled ivory ram horns, glowing ivory eyes, small fangs, ivory chevron emblem on its chest plate"},
+      "violet": {"seed": 640200, "prompt": "violet armored demon, steel chest plate with two bars, steel shoulder pauldrons with small downward cannons, short metal-capped horns"},
+      "coral": {"seed": 640300, "prompt": "coral red predator demon, long swept-back pale horns, long segmented whip tail with a stinger, three claw slash marks on its chest"},
+      "gold": {"seed": 640400, "prompt": "golden elder demon king, three-pointed gold crown with a ruby, short beard, red star jewel on its chest, holding a glowing violet orb in each claw"}
+    }
+  },
+  "molt_edit": {
+    "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+    "seed": 641000,
+    "prompts": {
+      "1": "Same creature, same pose and colours. Add a few cracks to its chest armour and a small tear in each wing.",
+      "2": "Same creature, same pose. Its chest armour is badly cracked showing glowing orange flesh beneath, horns chipped, wings torn with holes.",
+      "3": "Same creature, same pose. Armour shattered, glowing wounds across the belly, one horn broken off, wings shredded."
+    }
+  }
+}
