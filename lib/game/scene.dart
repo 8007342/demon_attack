@@ -8,6 +8,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'model.dart';
 import 'sector_background.dart';
+import 'sprite_atlas.dart';
 import '../services/scores.dart';
 import '../widgets/heart_parts.dart';
 
@@ -22,6 +23,7 @@ class DemonScene extends FlameGame {
   final VoidCallback onTick;
   ui.Image? atlas, effectsAtlas, sky, bossAtlas, cockpitAtlas, shipParts;
   final sectors = SectorBackground();
+  final creatures = CreaturePresentation();
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;
@@ -91,6 +93,7 @@ class DemonScene extends FlameGame {
       model.moveBy(keyboardDirection * dt * 280);
     }
     model.update(dt);
+    creatures.update(model, dt);
     _notify += dt;
     if (_notify > .05 || model.events.isNotEmpty) {
       _notify = 0;
@@ -468,27 +471,19 @@ class DemonScene extends FlameGame {
         13,
         Paint()..color = mint.withValues(alpha: .12),
       );
-      switch (p.power) {
-        case Power.powerful:
-          effectSprite(c, 5, 4, Offset(p.x, p.y), scale: .5);
-        case Power.large:
-          effectSprite(c, 5, 5, Offset(p.x, p.y), scale: .5);
-        case Power.spread:
-        case Power.rapid:
-        case Power.shield:
-          sprite(c, 4, 4 + p.power.index, Offset(p.x, p.y), 30);
-      }
+      sprite(
+        c,
+        CombatAtlas.pickupRow,
+        CombatAtlas.badge(p.power),
+        Offset(p.x, p.y),
+        36,
+      );
     }
     for (final crate in model.supplyCrates) {
       _paintSupplyCrate(c, crate);
     }
     for (final d in model.demons) {
-      // Ordinary tells are changes to the existing monster animation only:
-      // quicker cocked wing frames and the atlas's own angry eyes/palette.
       final warning = d.telegraph > 0;
-      final frame = warning
-          ? 4 + ((model.clock * 12 + d.seed).floor() % 2)
-          : ((model.clock * 8 + d.seed).floor() % 4) + (d.angry ? 4 : 0);
       final pos = Offset(d.x, d.y);
       if (d.isLarge) {
         // Large creatures have their own delayed entrance in simulation.
@@ -498,7 +493,7 @@ class DemonScene extends FlameGame {
         continue;
       }
       if (d.elite) {
-        final armor = (d.maxHp - d.moltStage).clamp(1, 7);
+        // Rank halo: a slow dotted ring of elite insignia pips.
         for (var i = 0; i < 12; i++) {
           if ((i + (model.clock * 2).floor()) % 4 == 0) continue;
           final angle = i * math.pi / 6;
@@ -512,31 +507,6 @@ class DemonScene extends FlameGame {
             Paint()..color = d.angry ? gold : violet,
           );
         }
-        // Every hit removes an outer plate; stages beyond the atlas's three
-        // molts still have a visibly distinct silhouette and exposed core.
-        for (var plate = 0; plate < armor; plate++) {
-          final angle = math.pi + plate * math.pi / math.max(1, armor - 1);
-          final offset = Offset(math.cos(angle) * 21, math.sin(angle) * 21);
-          c.drawRect(
-            Rect.fromCenter(center: pos + offset, width: 4, height: 5),
-            Paint()..color = (d.angry ? gold : violet).withValues(alpha: .7),
-          );
-        }
-        if (d.moltStage < 4) {
-          for (final side in [-1.0, 1.0]) {
-            for (var step = 0; step < 5 - d.moltStage; step++) {
-              c.drawRect(
-                Rect.fromLTWH(
-                  (pos.dx + side * (10 + step)).roundToDouble(),
-                  (pos.dy - 12 - step * 2).roundToDouble(),
-                  2,
-                  3,
-                ),
-                Paint()..color = d.angry ? gold : violet,
-              );
-            }
-          }
-        }
       }
       final bank = d.bank.abs() > 0.01
           ? d.bank.clamp(-1.0, 1.0)
@@ -548,18 +518,49 @@ class DemonScene extends FlameGame {
         c.scale(1.0 - bank.abs() * 0.1, 1.0);
         c.translate(-pos.dx, -pos.dy);
       }
+      final cell = CombatAtlas.creature(
+        d,
+        model.clock,
+        fireAge: creatures.fireAge(d),
+      );
+      final size = d.angry ? 44.0 : 40.0;
       sprite(
         c,
-        d.hp < d.maxHp && !d.angry
-            ? 8 + d.kind * 3 + (d.maxHp - d.hp - 1).clamp(0, 2)
-            : d.kind,
-        frame,
+        cell.row,
+        cell.col,
         pos,
-        d.angry ? 44 : 40,
-        tint: d.flash > 0 ? Colors.white : null,
+        size,
+        tint: cell.tintFlash ? Colors.white : null,
       );
-      _creatureLighting(c, pos, bank, width: d.angry ? 36 : 32, diving: d.dive > 0);
+      if (d.elite) {
+        // Authored elite layers: wing-root plates follow the stroke pose;
+        // helm, crest and gorget plates shed one level per hit.
+        final b = CombatAtlas.base(d.kind);
+        final stroke = cell.row != b + 4;
+        if (stroke) {
+          sprite(c, b + 6, cell.col % 8, pos, size);
+        }
+        final level = (4 - d.hp).clamp(0, 3);
+        sprite(c, b + 6, CombatAtlas.eliteArmorCol + level, pos, size);
+      }
+      _creatureLighting(
+        c,
+        pos,
+        bank,
+        width: d.angry ? 36 : 32,
+        diving: d.dive > 0,
+      );
       c.restore();
+      final fired = creatures.fireAge(d);
+      if (fired != null && fired < 0.16) {
+        sprite(
+          c,
+          CombatAtlas.effectRow,
+          CombatAtlas.enemyMuzzleCol + (fired / 0.04).floor().clamp(0, 3),
+          pos + const Offset(0, 12),
+          20,
+        );
+      }
       if (warning) {
         _wingTellChevrons(c, pos);
       }
@@ -574,6 +575,19 @@ class DemonScene extends FlameGame {
           );
         }
       }
+    }
+    for (final fx in creatures.deaths) {
+      c.save();
+      c.translate(fx.x, fx.y);
+      c.rotate(fx.bank.clamp(-1.0, 1.0) * 0.09);
+      sprite(
+        c,
+        CombatAtlas.base(fx.kind) + 5,
+        CombatAtlas.deathCol + fx.frame,
+        Offset.zero,
+        44,
+      );
+      c.restore();
     }
     final b = model.boss;
     if (b != null) {
@@ -635,7 +649,14 @@ class DemonScene extends FlameGame {
         );
         _carrierTurretBarrels(c, b);
       } else {
-        sprite(c, 6, b.phase, Offset(b.x, b.y), 184, height: 118);
+        sprite(
+          c,
+          CombatAtlas.fallbackRow,
+          4 + b.phase.clamp(0, 3),
+          Offset(b.x, b.y),
+          184,
+          height: 118,
+        );
       }
       _carrierLighting(c, Offset(b.x, b.y), carrierBank);
       _carrierEyes(c, b);
@@ -797,10 +818,12 @@ class DemonScene extends FlameGame {
         );
         continue;
       }
+      // A creature with an authored death sequence replaces its blast.
+      if (creatures.suppressed(b)) continue;
       sprite(
         c,
-        5,
-        (b.age / .55 * 8).floor().clamp(0, 7),
+        CombatAtlas.explosionRow,
+        (b.blastRadius > 0 ? 8 : 0) + (b.age / .55 * 8).floor().clamp(0, 7),
         Offset(b.x, b.y),
         b.blastRadius > 0
             ? 32
@@ -1053,7 +1076,13 @@ class DemonScene extends FlameGame {
     if (shipParts != null) {
       _shipLayers(c, center);
     } else {
-      sprite(c, 4, (model.clock * 14).floor() % 4, center, 42);
+      sprite(
+        c,
+        CombatAtlas.fallbackRow,
+        (model.clock * 14).floor() % 4,
+        center,
+        42,
+      );
     }
     // 2.5D directional hemisphere & rim lighting on the banked ship wings/hull.
     if (bank.abs() > 0.08) {
@@ -1398,16 +1427,13 @@ class DemonScene extends FlameGame {
     );
 
     // Powerup Icon preview inside crate
-    switch (crate.power) {
-      case Power.large:
-        effectSprite(c, 5, 5, Offset(cx, cy), scale: .35);
-      case Power.powerful:
-        effectSprite(c, 5, 4, Offset(cx, cy), scale: .35);
-      case Power.spread:
-      case Power.rapid:
-      case Power.shield:
-        sprite(c, 4, 4 + crate.power.index, Offset(cx, cy), 18);
-    }
+    sprite(
+      c,
+      CombatAtlas.pickupRow,
+      CombatAtlas.badge(crate.power),
+      Offset(cx, cy),
+      22,
+    );
 
     // Health pips (dots showing durability)
     for (var i = 0; i < crate.maxHp; i++) {
@@ -2055,7 +2081,15 @@ class DemonScene extends FlameGame {
       final debrisRight = Offset(70 + p * 60, p * p * 140);
       bossSprite(c, 3, 3, debrisRight, 92, height: 60);
     } else {
-      sprite(c, 6, wreck.phase, Offset.zero, 184, height: 118, tint: const Color(0xFF8B665F));
+      sprite(
+        c,
+        CombatAtlas.fallbackRow,
+        4 + wreck.phase.clamp(0, 3),
+        Offset.zero,
+        184,
+        height: 118,
+        tint: const Color(0xFF8B665F),
+      );
     }
     _damage(c, Offset.zero, 1, p * 10);
     c.restore();
@@ -2316,6 +2350,6 @@ class DemonScene extends FlameGame {
         ..color = const Color(0xFFFFEDBF)
         ..strokeWidth = 2,
     );
-    sprite(c, 4, frame, center, width);
+    sprite(c, CombatAtlas.fallbackRow, frame, center, width);
   }
 }
