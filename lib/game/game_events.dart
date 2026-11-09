@@ -38,7 +38,9 @@ abstract final class GameEventNames {
   /// A demon ground unit is destroyed.
   static const groundUnitDestroyed = 'groundUnitDestroyed';
 
-  /// An allied ground unit comes under fire (data: sector, x, y).
+  /// Allies call for help: a demon unit is predicted to break through to
+  /// fire range (its ally is out-gunned, or it is unescorted: data
+  /// `unescorted`, `secondsToBreakthrough`, x, y). Sectors 3-4 only.
   /// Commander hook: "Pick up some homing missiles!" /
   /// "Please shoot these enemies!".
   static const allyUnderAttack = 'allyUnderAttack';
@@ -53,6 +55,14 @@ abstract final class GameEventNames {
 
   /// Deprecated alias of [allyRetreated] (same string).
   static const allyLost = allyRetreated;
+
+  /// A demon ground unit reached fire range alive (it will now telegraph
+  /// and fire at the player). Preceded by `allyUnderAttack` for that unit.
+  static const groundBreakthrough = 'groundBreakthrough';
+
+  /// The ground pressure meter crossed a tenth (data `level`, 0-1); for
+  /// music intensity. Also readable as `ArcadeModel.ground.pressure`.
+  static const groundPressure = 'groundPressure';
 
   /// The whole fleet held: no ally retreated and no wingmate was lost.
   /// Data `scope`: 'level' (at sector clear) or 'campaign' (at victory).
@@ -98,6 +108,8 @@ abstract final class GameEventNames {
     allySaved,
     allyRetreated,
     fleetIntact,
+    groundBreakthrough,
+    groundPressure,
   ];
 }
 

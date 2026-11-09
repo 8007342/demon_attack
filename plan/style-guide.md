@@ -90,6 +90,10 @@ Title centers an original horned demon emblem and the Demon Attack wordmark, wit
 
 Top 10 uses aligned rank, three-character initials, and score columns. Initial entry offers three rotating wheels with A–Z and 0–9, clear upper/lower controls, a highlighted middle selection, and Submit. Avoid a freeform text field. Game-over and victory keep a darkened arena behind their overlays. Review phone portrait, narrow desktop, and wide desktop without horizontal overflow.
 
+### App icon
+
+The installed-app and tab icon is a dedicated emblem, never an enemy atlas frame: a horned gargoyle-demon head (violet ramp, bone horns, burning red eyes, fangs) with the fleet starfighter (teal wings, slate hull, cyan canopy) rising at it from below, both wrapped in a stepped cyan glow on midnight #100E2C, inside a gold #EFBD57 rim. The midnight tile and gold rim keep it legible on light and dark tab bars and taskbars. Large sizes rasterise the geometry in `art/icons/icon-spec.json` onto a 64 logical grid (8× at 512, 3× at 192); 16, 32 and 48 px are hand-tuned pixel maps (`art/icons/badge-*.txt`). Maskable and apple-touch versions put the emblem in a gold ring inside the 80% safe circle on a full-bleed field. Regenerate everything with `tools/generate_icons.py`; edit the spec or maps, never the PNGs.
+
 ## Current music score and playback
 
 Musical direction: original music only, never imitating an existing song, band, game or soundtrack. Each sector has its own genre and motif, and the campaign gets heavier and more demonic as the swarm closes in: punk, melodic rock, heavy metal, doom, then doom with death-metal colour at the carrier. The fleet's successes are a military march, and the aliens' victory is a cackle followed by a twisted triumphal march. Every cue shares **120 BPM** in 4/4, so all changes land on a bar line. Tension grows through arrangement density (drums, distortion, lead lines, register) across four intensity tiers per level, never through tempo. Everything is fully instrumental. The demonic levels get choir and chant-like pads as texture; the prompt asks for growl texture, but no clear vocals were generated or wanted.

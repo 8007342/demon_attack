@@ -88,134 +88,139 @@ abstract final class GroundTuning {
   static const homingTurnRate = 9.0; // rad/s
   static const homingBoost = .1; // straight climb before steering
 
-  // Drops. Chance per ordinary kill while demon ground units are alive.
-  static double dropChance(Difficulty d) => switch (d) {
-    Difficulty.easy => .14,
-    Difficulty.normal => .12,
-    Difficulty.hard => .07,
+  // Drops. Homing missiles matter when a breakthrough looms: a high chance
+  // per kill while a demon unit threatens to (or did) reach fire range, a
+  // short pity timer and an airdrop fallback. Otherwise they are an ordinary
+  // pickup every [ordinaryDropEvery] kills (at 20, 60, 100, ...), the same
+  // cadence as each module in the eight-kill rotation.
+  static double threatDropChance(Difficulty d) => switch (d) {
+    Difficulty.easy => .3,
+    Difficulty.normal => .25,
+    Difficulty.hard => .2,
   };
 
-  /// Seconds of ground pressure without homing before a drop is guaranteed.
+  /// Seconds of breakthrough threat without homing before a drop is due.
   static double pityTime(Difficulty d) => switch (d) {
-    Difficulty.easy => 5,
-    Difficulty.normal => 6,
-    Difficulty.hard => 8,
+    Difficulty.easy => 3,
+    Difficulty.normal => 4,
+    Difficulty.hard => 5,
   };
 
   /// After the pity time, the fleet air-drops one if no kill delivers it.
-  static const pityAirdrop = 4.0;
+  static const pityAirdrop = 3.0;
+  static const ordinaryDropEvery = 40;
 
-  /// Level 5: one homing drop every this many kills (offset by half).
-  static const carrierDropEvery = 20;
+  /// Depth from which a threatened pair calls for help.
+  static const callZ = 1000.0;
+
+  /// Allied fire interval: 0.69 s at full strength, about 1.1 s at 0.2.
+  static double allyFireEvery(double strength) => .9 / (.7 + .6 * strength);
+
+  /// Demon fire interval at its ally (before the hostile rate).
+  static double demonFireEvery(double pressure) =>
+      demonTracerEvery / (.8 + .6 * pressure);
 }
 
-/// The introduction ramp: how many ground units a wave may field.
-class GroundPlan {
-  const GroundPlan({
-    required this.budget,
-    required this.maxActive,
+/// The ground front of one sector: a time-based schedule, independent of
+/// how fast the air waves are cleared, modulated by [GroundWar.pressure] and
+/// [GroundWar.alliedStrength].
+class GroundFront {
+  const GroundFront({
+    required this.presence,
     required this.interval,
     required this.firstDelay,
+    required this.demonHp,
+    required this.breakthroughs,
+    required this.baseStrength,
+    required this.basePressure,
     required this.shots,
-    required this.allyEvery,
   });
-  static const none = GroundPlan(
-    budget: 0,
-    maxActive: 0,
+  static const none = GroundFront(
+    presence: 0,
     interval: 0,
     firstDelay: 0,
+    demonHp: 1,
+    breakthroughs: false,
+    baseStrength: 1,
+    basePressure: 0,
     shots: 0,
-    allyEvery: 0,
   );
 
-  /// Units this wave, at most [maxActive] at once, [interval] apart after
-  /// [firstDelay] seconds of combat (both x 1/hostileRate).
-  final int budget, maxActive;
+  /// Demon units kept alive at once (one more under high pressure).
+  final int presence;
+
+  /// Seconds between arrivals at pressure 0.5 (shorter as pressure rises),
+  /// and the combat seconds into the level before the first one.
   final double interval, firstDelay;
 
-  /// Missiles each unit may fire.
+  /// Allied hits a demon unit can take.
+  final int demonHp;
+
+  /// False: allies always stop demon units before fire range (sectors 1-2).
+  final bool breakthroughs;
+
+  /// Where allied strength and pressure start and settle back to.
+  final double baseStrength, basePressure;
+
+  /// Missiles a broken-through unit may fire.
   final int shots;
 
-  /// Every [allyEvery]-th unit arrives already engaged with an ally (0: none).
-  final int allyEvery;
+  bool get active => presence > 0;
 
-  /// Effective ramp step: sector, plus later routes, minus one on Easy.
-  static int step(Difficulty d, int route, int sector) =>
-      sector + math.min<int>(route, 3) - (d == Difficulty.easy ? 1 : 0);
-
-  static GroundPlan of(
-    Difficulty d, {
-    required int route,
-    required int sector,
-    required int wave,
-    required int wavesPerLevel,
-  }) {
-    if (sector < 1 || sector > 4 || const bool.fromEnvironment("GROUND_WAR_DISABLED")) return none;
-    final s = step(d, route, sector);
-    final density = DifficultyPolicy(d).density;
-    final shots = d == Difficulty.easy ? 1 : 2;
-    int scaled(int n) => math.max(1, (n * density).round());
-    switch (s) {
-      case <= 0:
-        return none;
-      case 1:
-        // A single unit, late: the final wave, after its swarm settles.
-        if (wave < wavesPerLevel) return none;
-        return GroundPlan(
-          budget: 1,
-          maxActive: 1,
-          interval: 99,
-          firstDelay: 7,
-          shots: 1,
-          allyEvery: 1,
-        );
-      case 2:
-        if (wave < 2) return none;
-        return GroundPlan(
-          budget: 1,
-          maxActive: 1,
-          interval: 14,
-          firstDelay: 5,
-          shots: shots,
-          allyEvery: 2,
-        );
-      case 3:
-        return GroundPlan(
-          budget: scaled(2),
-          maxActive: d == Difficulty.easy ? 1 : 2,
-          interval: 11,
-          firstDelay: 4,
-          shots: shots,
-          allyEvery: 2,
-        );
-      case 4:
-        return GroundPlan(
-          budget: scaled(3),
-          maxActive: 2,
-          interval: 9,
-          firstDelay: 3.5,
-          shots: shots,
-          allyEvery: 2,
-        );
-      case 5:
-        return GroundPlan(
-          budget: scaled(3),
-          maxActive: d == Difficulty.hard ? 3 : 2,
-          interval: 8,
-          firstDelay: 3,
-          shots: shots,
-          allyEvery: 2,
-        );
-      default:
-        return GroundPlan(
-          budget: scaled(4),
-          maxActive: d == Difficulty.easy ? 2 : 3,
-          interval: 7,
-          firstDelay: 3,
-          shots: shots,
-          allyEvery: 2,
-        );
+  static GroundFront of(Difficulty d, {required int route, required int sector}) {
+    if (sector < 1 ||
+        sector > 4 ||
+        const bool.fromEnvironment('GROUND_WAR_DISABLED')) {
+      return none;
     }
+    final di = d.index; // easy 0, normal 1, hard 2
+    final r = math.min<int>(route, 3);
+    final shots = d == Difficulty.easy ? 1 : 2;
+    return switch (sector) {
+      // Ambient almost from the start of Krybor: allies win every skirmish.
+      1 => GroundFront(
+        presence: 1,
+        interval: 6,
+        firstDelay: const [6.0, 6.0, 5.0][di],
+        demonHp: 2,
+        breakthroughs: false,
+        baseStrength: 1,
+        basePressure: .1,
+        shots: shots,
+      ),
+      2 => GroundFront(
+        presence: 2,
+        interval: 6,
+        firstDelay: 3,
+        demonHp: 3,
+        breakthroughs: false,
+        baseStrength: .95,
+        basePressure: .2,
+        shots: shots,
+      ),
+      // Occasional breakthroughs: unescorted or out-gunned units get through.
+      3 => GroundFront(
+        presence: 2,
+        interval: 8,
+        firstDelay: 4,
+        demonHp: 4 + math.min<int>(di, 1) + r,
+        breakthroughs: true,
+        baseStrength: const [.86, .76, .71][di] - .03 * r,
+        basePressure: .35,
+        shots: shots,
+      ),
+      // Regular breakthroughs unless the player helps.
+      _ => GroundFront(
+        presence: 2,
+        interval: 8,
+        firstDelay: 3,
+        demonHp: 6 + math.min<int>(di, 1) + r,
+        breakthroughs: true,
+        baseStrength: const [.72, .62, .58][di] - .03 * r,
+        basePressure: .5,
+        shots: shots,
+      ),
+    };
   }
 }
 
@@ -230,11 +235,22 @@ class GroundUnit {
     this.across,
     this.z, {
     this.shotsLeft = 2,
+    this.hp = 1,
   });
   final int id, sector, side;
   final double across;
   double z;
   int shotsLeft;
+
+  /// Allied hits left before the unit is destroyed.
+  int hp;
+
+  /// It reached fire range alive (`groundBreakthrough`).
+  bool brokeThrough = false;
+
+  /// It is predicted to reach fire range: its ally is out-gunned or absent.
+  bool threatening = false, calledForHelp = false;
+  bool destroyedByAllies = false;
   double telegraph = 0, cooldown = 0, fireFlash = 0, tracerLeft = .6;
   bool destroyed = false, sighted = false, announcedInRange = false;
   double wreckAge = 0;
@@ -259,9 +275,12 @@ class GroundUnit {
       ? (1 - telegraph / GroundTuning.telegraph).clamp(0.0, 1.0)
       : 0;
 
-  /// Higher is more urgent for homing missiles: about to fire, then in
-  /// range and reloaded soonest, then closest.
+  /// Higher is more urgent for homing missiles: broken through, then
+  /// threatening to, then about to fire, in range and reloaded soonest,
+  /// then closest.
   double get threat =>
+      (brokeThrough ? 8000 : 0) +
+      (threatening ? 6000 : 0) +
       (telegraphing ? 4000 - telegraph * 100 : 0) +
       (inRange && shotsLeft > 0 ? 2000 - cooldown * 100 : 0) +
       (GroundTuning.spawnZ - z);
@@ -404,16 +423,35 @@ class GroundWar {
   final List<HomingPickup> pickups = [];
   final HomingSalvo salvo = HomingSalvo();
   final List<GameEvent> events = [];
-  GroundPlan plan = GroundPlan.none;
-  int spawnedThisWave = 0, nextId = 0, ordinal = 0;
+  GroundFront front = GroundFront.none;
+  int nextId = 0, ordinal = 0;
   double spawnLeft = 0;
 
-  /// Seconds of ground pressure without homing (pity timer).
+  /// Seconds of breakthrough threat without homing (pity timer).
+  double pityClock = 0;
+
+  /// The ground pressure meter, 0 (quiet) to 1 (front collapsing): live and
+  /// threatening demon units, breakthroughs and level progress push it up;
+  /// allied strength above the sector's base pulls it down. It shortens the
+  /// arrival interval and speeds the demons' fire. Music: `groundPressure`.
   double pressure = 0;
+  int _pressureStep = -1;
+
+  /// Allied strength, 0.2-1: the chance a demon unit is met by an ally and
+  /// how fast allies fire. Player help (homing kills, saves) and allied wins
+  /// raise it; retreats and breakthroughs lower it; it settles toward the
+  /// sector's base.
+  double alliedStrength = 1;
 
   // Run statistics (tests, profiler, an "allies held" tally).
   int unitsSpawned = 0, unitsDestroyed = 0, missilesLaunched = 0;
   int missileImpacts = 0, homingCollected = 0, homingHits = 0;
+  int unitsKilledByAllies = 0, breakthroughs = 0;
+
+  /// Per sector index 0-4: breakthroughs and missile hits on the ship
+  /// (counted even while invulnerable: "would-be hits").
+  final List<int> breakthroughsBySector = List.filled(5, 0);
+  final List<int> impactsBySector = List.filled(5, 0);
   int alliesSaved = 0, alliesRetreated = 0;
   int alliesSavedThisLevel = 0, alliesRetreatedThisLevel = 0;
 
@@ -444,9 +482,7 @@ class GroundWar {
       ..remaining = 0
       ..active = null
       ..gap = 0;
-    pressure = 0;
-    spawnedThisWave = 0;
-    plan = GroundPlan.none;
+    pityClock = 0;
   }
 
   void resetRun() {
@@ -455,6 +491,9 @@ class GroundWar {
     nextId = ordinal = 0;
     unitsSpawned = unitsDestroyed = missilesLaunched = 0;
     missileImpacts = homingCollected = homingHits = 0;
+    unitsKilledByAllies = breakthroughs = 0;
+    breakthroughsBySector.fillRange(0, 5, 0);
+    impactsBySector.fillRange(0, 5, 0);
     alliesSaved = alliesRetreated = alliesEngaged = 0;
     alliesSavedThisLevel = alliesRetreatedThisLevel = alliesEngagedThisLevel = 0;
     wingmatesLost = wingmatesLostThisLevel = 0;
@@ -468,23 +507,21 @@ extension GroundWarSimulation on ArcadeModel {
   /// New level (or restored entrance): nothing carries over.
   void _groundBeginLevel() {
     ground.clearField();
+    final front = GroundFront.of(difficulty, route: cycle, sector: level);
+    ground
+      ..front = front
+      ..spawnLeft = front.firstDelay
+      ..alliedStrength = front.baseStrength
+      ..pressure = front.basePressure
+      .._pressureStep = -1;
     ground.alliesSavedThisLevel = ground.alliesRetreatedThisLevel = 0;
     ground.alliesEngagedThisLevel = ground.wingmatesLostThisLevel = 0;
   }
 
-  /// Wave entrance: plan this wave's ground units. In-flight hostile
-  /// missiles never cross a wave boundary.
+  /// Wave entrance: in-flight hostile missiles never cross a wave boundary.
+  /// The ground front itself ignores air waves (time-based schedule).
   void _groundBeginWave() {
     ground.missiles.clear();
-    ground.spawnedThisWave = 0;
-    ground.plan = GroundPlan.of(
-      difficulty,
-      route: cycle,
-      sector: level,
-      wave: wave,
-      wavesPerLevel: wavesPerLevel,
-    );
-    ground.spawnLeft = ground.plan.firstDelay;
   }
 
   /// Bonus for a level whose allies all held (positive only).
@@ -536,6 +573,20 @@ extension GroundWarSimulation on ArcadeModel {
       }
       u.z -= u.z > GroundTuning.fireZ ? speedFar : speedNear;
       u.fireFlash = math.max(0, u.fireFlash - dt);
+      if (!ground.front.breakthroughs && u.z <= GroundTuning.fireZ + 80) {
+        // Sectors 1-2: the allies always finish a unit before fire range.
+        _destroyGroundUnit(u, byAllies: true);
+        continue;
+      }
+      if (!u.brokeThrough && u.z <= GroundTuning.fireZ) {
+        u.brokeThrough = true;
+        u.threatening = false;
+        ground.breakthroughs++;
+        ground.breakthroughsBySector[(level - 1).clamp(0, 4)]++;
+        _adjustStrength(-.02);
+        _groundEvent(GameEventNames.groundBreakthrough, {'x': u.x, 'y': u.y});
+      }
+      _predictBreakthrough(u);
       if (!u.sighted && u.z <= GroundTuning.sightZ) {
         u.sighted = true;
         _groundEvent(GameEventNames.groundForceSighted, {'x': u.x, 'y': u.y});
@@ -556,33 +607,109 @@ extension GroundWarSimulation on ArcadeModel {
     );
     _updateGroundMissiles(dt);
     _updateHomingSalvo(dt);
-    _updateGroundPressure(dt);
+    _updatePressureMeter(dt);
+    _updateHomingPity(dt);
+  }
+
+  void _adjustStrength(double delta) =>
+      ground.alliedStrength = (ground.alliedStrength + delta).clamp(.2, 1.0);
+
+  double get _allyFireEvery =>
+      GroundTuning.allyFireEvery(ground.alliedStrength);
+  double get _demonFireEvery =>
+      GroundTuning.demonFireEvery(ground.pressure) / policy.hostileRate;
+
+  /// Will [u] reach fire range alive? If so its ally (or, unescorted, the
+  /// nearest allies) call for help once: `allyUnderAttack`.
+  void _predictBreakthrough(GroundUnit u) {
+    if (!ground.front.breakthroughs || u.brokeThrough || u.destroyed) {
+      u.threatening = false;
+      return;
+    }
+    final toFire = (u.z - GroundTuning.fireZ) /
+        (GroundTuning.approachSpeed * policy.hostileRate);
+    final ally = u.ally;
+    if (ally == null || !ally.alive) {
+      u.threatening = true;
+    } else {
+      final kill = u.hp * _allyFireEvery;
+      final survive = ally.hp * _demonFireEvery;
+      u.threatening = kill > toFire || survive < kill;
+    }
+    if (u.threatening && !u.calledForHelp && u.z <= GroundTuning.callZ) {
+      u.calledForHelp = true;
+      final a = (ally != null && ally.alive) ? ally : null;
+      _groundEvent(GameEventNames.allyUnderAttack, {
+        'x': a?.x ?? u.x,
+        'y': a?.y ?? u.y,
+        'unescorted': a == null,
+        'secondsToBreakthrough': toFire,
+      });
+    }
+  }
+
+  void _updatePressureMeter(double dt) {
+    final g = ground, f = g.front;
+    if (!f.active) return;
+    var live = 0, threat = 0, broken = 0;
+    for (final u in g.units) {
+      if (!u.alive) continue;
+      live++;
+      if (u.threatening) threat++;
+      if (u.brokeThrough) broken++;
+    }
+    final progress = (levelClock / (wavesPerLevel * 20.0)).clamp(0.0, 1.0);
+    var target = f.basePressure +
+        .05 * math.min(cycle, 3) +
+        .08 * live +
+        .12 * threat +
+        .1 * broken +
+        .12 * progress -
+        .6 * (g.alliedStrength - f.baseStrength);
+    if (!f.breakthroughs) target = math.min(target, .45);
+    target = target.clamp(0.0, 1.0);
+    g.pressure += (target - g.pressure) * math.min(1.0, dt * .7);
+    // Allied strength drifts back toward the sector's base.
+    g.alliedStrength += (f.baseStrength - g.alliedStrength) * dt * .02;
+    final step = (g.pressure * 10).floor().clamp(0, 10);
+    if (step != g._pressureStep) {
+      g._pressureStep = step;
+      _groundEvent(GameEventNames.groundPressure, {
+        'level': double.parse(g.pressure.toStringAsFixed(2)),
+      });
+    }
   }
 
   void _spawnGroundUnits(double dt) {
-    final plan = ground.plan;
-    if (plan.budget <= ground.spawnedThisWave) return;
-    if (ground.liveUnits.length >= plan.maxActive) return;
-    ground.spawnLeft -= dt;
-    if (ground.spawnLeft > 0) return;
-    ground.spawnLeft = plan.interval;
-    ground.spawnedThisWave++;
-    ground.unitsSpawned++;
-    final ordinal = ground.ordinal++;
+    final g = ground, f = g.front;
+    if (!f.active) return;
+    g.spawnLeft -= dt;
+    if (g.spawnLeft > 0) return;
+    final cap = f.presence + (g.pressure > .75 ? 1 : 0);
+    if (g.liveUnits.length >= cap) return;
+    // One breakthrough at a time: the front holds new arrivals while a
+    // broken-through unit can still fire, so slower players aren't swamped.
+    if (g.units.any((u) => u.alive && u.brokeThrough && u.shotsLeft > 0)) return;
+    g.spawnLeft = f.interval / (.7 + .6 * g.pressure);
+    g.unitsSpawned++;
+    final ordinal = g.ordinal++;
     final side = (ordinal + level + cycle).isEven ? 0 : 1;
     final across = .15 + random.nextDouble() * .6;
     final unit = GroundUnit(
-      ground.nextId++,
+      g.nextId++,
       level - 1,
       side,
       across,
       GroundTuning.spawnZ,
-      shotsLeft: plan.shots,
+      shotsLeft: f.shots,
+      hp: f.demonHp,
     )..cooldown = .4;
-    ground.units.add(unit);
-    if (plan.allyEvery > 0 && ordinal % plan.allyEvery == 0) {
+    g.units.add(unit);
+    // Without breakthroughs every unit meets an ally; later, the allies are
+    // stretched as thin as their strength.
+    if (!f.breakthroughs || random.nextDouble() < g.alliedStrength) {
       final ally = GroundAlly(
-        ground.nextId++,
+        g.nextId++,
         level - 1,
         side,
         across < .5 ? across + .35 : across - .35,
@@ -590,7 +717,7 @@ extension GroundWarSimulation on ArcadeModel {
         GroundTuning.allyHp,
       )..attacker = unit;
       unit.ally = ally;
-      ground.allies.add(ally);
+      g.allies.add(ally);
     }
   }
 
@@ -645,6 +772,7 @@ extension GroundWarSimulation on ArcadeModel {
       if (!m.spent && m.hits(shipX)) {
         m.spent = true;
         ground.missileImpacts++;
+        ground.impactsBySector[(level - 1).clamp(0, 4)]++;
         blasts.add(Blast(m.x, m.y, big: true));
         hitPlayer();
         if (!combat) return;
@@ -672,11 +800,10 @@ extension GroundWarSimulation on ArcadeModel {
           a.announced = true;
           ground.alliesEngaged++;
           ground.alliesEngagedThisLevel++;
-          _groundEvent(GameEventNames.allyUnderAttack, {'x': a.x, 'y': a.y});
         }
         foe.tracerLeft -= dt * rate;
         if (foe.tracerLeft <= 0 && a.announced) {
-          foe.tracerLeft = GroundTuning.demonTracerEvery;
+          foe.tracerLeft = _demonFireEvery * rate;
           ground.tracers.add(GroundTracer(foe.x, foe.bodyY, a.x, a.bodyY));
           a.hp--;
           a.flash = .15;
@@ -684,6 +811,7 @@ extension GroundWarSimulation on ArcadeModel {
             a.totalled = true;
             ground.alliesRetreated++;
             ground.alliesRetreatedThisLevel++;
+            _adjustStrength(-.08);
             _groundEvent(GameEventNames.allyRetreated, {
               'x': a.x,
               'y': a.y,
@@ -694,10 +822,15 @@ extension GroundWarSimulation on ArcadeModel {
         }
         a.fireLeft -= dt;
         if (a.fireLeft <= 0 && a.announced) {
-          a.fireLeft = GroundTuning.allyTracerEvery;
+          a.fireLeft = _allyFireEvery;
           ground.tracers.add(
             GroundTracer(a.x, a.bodyY, foe.x, foe.bodyY, friendly: true),
           );
+          foe.hp--;
+          if (foe.hp <= 0) {
+            // The allies win this skirmish on their own.
+            _destroyGroundUnit(foe, byAllies: true);
+          }
         }
       } else {
         a.z -= GroundTuning.approachSpeed * rate * dt;
@@ -710,21 +843,35 @@ extension GroundWarSimulation on ArcadeModel {
     );
   }
 
-  void _destroyGroundUnit(GroundUnit u) {
+  void _destroyGroundUnit(GroundUnit u, {bool byAllies = false}) {
     if (u.destroyed) return;
     u.destroyed = true;
+    u.destroyedByAllies = byAllies;
     u.telegraph = 0;
+    u.threatening = false;
     ground.unitsDestroyed++;
-    score += ((400 + 100 * u.sector) * (cycle + 1) * policy.enemyPoints).round();
-    blasts.add(Blast(u.x, u.bodyY, big: true));
+    if (byAllies) {
+      ground.unitsKilledByAllies++;
+      _adjustStrength(.03);
+    } else {
+      score += ((400 + 100 * u.sector) * (cycle + 1) * policy.enemyPoints).round();
+      _adjustStrength(.08); // the player's help pushes the allies ahead
+    }
+    blasts.add(Blast(u.x, u.bodyY, big: !byAllies));
     events.add('groundExplosion');
-    _groundEvent(GameEventNames.groundUnitDestroyed, {'x': u.x, 'y': u.y});
+    _groundEvent(GameEventNames.groundUnitDestroyed, {
+      'x': u.x,
+      'y': u.y,
+      'by': byAllies ? 'allies' : 'homing',
+      'brokeThrough': u.brokeThrough,
+    });
     final ally = u.ally;
-    if (ally != null && ally.alive && ally.announced) {
+    if (!byAllies && ally != null && ally.alive && ally.announced) {
       // Positive only: a bonus and a tally, never a penalty.
       ally.saved = true;
       ground.alliesSaved++;
       ground.alliesSavedThisLevel++;
+      _adjustStrength(.04);
       score += 250 * (cycle + 1);
       _groundEvent(GameEventNames.allySaved, {'x': ally.x, 'y': ally.y});
     }
@@ -741,7 +888,7 @@ extension GroundWarSimulation on ArcadeModel {
     if (!salvo.busy) salvo.gap = GroundTuning.homingFirstDelay;
     salvo.remaining = GroundTuning.salvoSize;
     ground.homingCollected++;
-    ground.pressure = 0;
+    ground.pityClock = 0;
     events.add('powerup');
     _groundEvent(GameEventNames.homingPickup);
   }
@@ -926,21 +1073,26 @@ extension GroundWarSimulation on ArcadeModel {
   }
 
   // -------------------------------------------------------------------------
-  // Drops: rising chance while ground units live, a pity timer and an
-  // airdrop fallback; level 5 keeps a plain kill-count drop.
+  // Drops: homing missiles are urgent when a breakthrough looms (high chance
+  // per kill, pity timer, airdrop) and an ordinary pickup otherwise.
   // -------------------------------------------------------------------------
 
   bool get _homingAvailable =>
       ground.pickups.isNotEmpty || ground.salvo.busy;
 
-  void _updateGroundPressure(double dt) {
-    if (ground.liveUnits.isEmpty || _homingAvailable) {
-      if (_homingAvailable) ground.pressure = 0;
+  /// A demon unit is threatening to break through, or has and can still fire.
+  bool get groundBreakthroughThreat => ground.units.any(
+    (u) => u.alive && (u.threatening || (u.brokeThrough && u.shotsLeft > 0)),
+  );
+
+  void _updateHomingPity(double dt) {
+    if (_homingAvailable || !groundBreakthroughThreat) {
+      ground.pityClock = 0;
       return;
     }
-    ground.pressure += dt;
-    final pity = GroundTuning.pityTime(difficulty);
-    if (ground.pressure >= pity + GroundTuning.pityAirdrop) {
+    ground.pityClock += dt;
+    if (ground.pityClock >=
+        GroundTuning.pityTime(difficulty) + GroundTuning.pityAirdrop) {
       // No kill delivered it: the fleet air-drops one into the firing lane.
       _dropHoming(110 + random.nextDouble() * 140, 150);
     }
@@ -949,25 +1101,25 @@ extension GroundWarSimulation on ArcadeModel {
   /// Called for every ordinary kill (after the existing drop rules).
   void _groundDropOnKill(Demon d) {
     if (_homingAvailable) return;
-    if (level == 5) {
-      if (kills % GroundTuning.carrierDropEvery ==
-          GroundTuning.carrierDropEvery ~/ 2) {
+    if (groundBreakthroughThreat) {
+      final pityDue = ground.pityClock >= GroundTuning.pityTime(difficulty);
+      if (pityDue ||
+          random.nextDouble() < GroundTuning.threatDropChance(difficulty)) {
         _dropHoming(d.x, d.y);
       }
       return;
     }
-    final live = ground.liveUnits.length;
-    if (live == 0) return;
-    final pityDue = ground.pressure >= GroundTuning.pityTime(difficulty);
-    final chance = GroundTuning.dropChance(difficulty) + .04 * (live - 1);
-    if (pityDue || random.nextDouble() < chance) _dropHoming(d.x, d.y);
+    if (kills % GroundTuning.ordinaryDropEvery ==
+        GroundTuning.ordinaryDropEvery ~/ 2) {
+      _dropHoming(d.x, d.y);
+    }
   }
 
   void _dropHoming(double x, double y) {
     // Offset from a same-kill power pickup so both stay readable.
     final clash = pickups.any((p) => (p.x - x).abs() < 20 && (p.y - y).abs() < 20);
     ground.pickups.add(HomingPickup((x + (clash ? 24 : 0)).clamp(20, ArcadeModel.width - 20), y));
-    ground.pressure = 0;
+    ground.pityClock = 0;
   }
 
   void _updateHomingPickups(double dt, double fallSpeed) {
