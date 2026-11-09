@@ -11,6 +11,7 @@ import 'widgets/pilot_console_content.dart';
 import 'widgets/storyboard_banner.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
+import 'game/music_director.dart'; // --- music event hook
 import 'services/audio.dart';
 import 'services/scores.dart';
 import 'services/run_storage.dart';
@@ -111,6 +112,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   final tilt = TiltController();
   int? touch;
   double touchPosition = .5;
+  List<void Function()> _music = const []; // --- music event hook
   @override
   void initState() {
     super.initState();
@@ -124,6 +126,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       }
     }
     scene = DemonScene(model, _tick);
+    // --- music event hook: adaptive music listens on the shared event bridge
+    _music = [GameEvents.listen(MusicBridge().call), GameEvents.listen(scene.music.onGameEvent)];
     scene.topScores = board;
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
@@ -140,6 +144,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    for (final remove in _music) { remove(); } // --- music event hook
     WidgetsBinding.instance.removeObserver(this);
     focus.dispose();
     scores.close();

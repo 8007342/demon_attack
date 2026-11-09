@@ -68,6 +68,34 @@ abstract final class GameEventNames {
   /// Data `scope`: 'level' (at sector clear) or 'campaign' (at victory).
   static const fleetIntact = 'fleetIntact';
 
+  // --- music event hook: events derived read-only from the simulation by
+  // MusicDirector (lib/game/music_director.dart) once per frame. Any
+  // presentation layer may listen; MusicBridge turns them into music.
+
+  /// The adaptive-music intensity for the current level changed
+  /// (data `tier`: 1 calm .. 4 peril).
+  static const musicIntensity = 'musicIntensity';
+
+  /// A demon starts its dive tell (telegraph).
+  static const diveTell = 'diveTell';
+
+  /// A sentinel starts its last stand.
+  static const lastStandTell = 'lastStandTell';
+
+  /// The carrier's central hatch opens (its core is exposed).
+  static const carrierHatchOpen = 'carrierHatchOpen';
+
+  /// A reinforcement flock arrives.
+  static const reinforcementsArrived = 'reinforcementsArrived';
+
+  static const music = [
+    musicIntensity,
+    diveTell,
+    lastStandTell,
+    carrierHatchOpen,
+    reinforcementsArrived,
+  ];
+
   static const all = [
     groundForceSighted,
     groundForceInRange,
