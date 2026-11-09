@@ -1,0 +1,133 @@
+{
+  "family": "ship-weapons",
+  "generator": "tools/generate_ship_sprites.py",
+  "cell": {
+    "width": 64,
+    "height": 64
+  },
+  "logical": {
+    "width": 64,
+    "height": 64,
+    "pixel_scale": 1
+  },
+  "arena_size": 48,
+  "rows": {
+    "hull": 0,
+    "spread": 1,
+    "rapid": 2,
+    "shield": 3,
+    "powerful": 4,
+    "large": 5,
+    "shots": 6
+  },
+  "columns": {
+    "hull": {
+      "hull": 0,
+      "hit_flash": 1,
+      "exhaust": [
+        2,
+        5
+      ],
+      "nose_flash": [
+        6,
+        9
+      ]
+    },
+    "module": {
+      "wear": [
+        0,
+        2
+      ],
+      "recoil": [
+        3,
+        5
+      ],
+      "muzzle_flash": [
+        6,
+        9
+      ],
+      "deploy": [
+        10,
+        13
+      ],
+      "detached": 14,
+      "heat": 15
+    },
+    "shield": {
+      "wear": [
+        0,
+        2
+      ],
+      "bubble_healthy": [
+        3,
+        5
+      ],
+      "bubble_degrading": [
+        6,
+        7
+      ],
+      "bubble_critical": [
+        8,
+        9
+      ],
+      "deploy": [
+        10,
+        13
+      ],
+      "detached": 14,
+      "pulse": 15
+    },
+    "shots": {
+      "ordinary": [
+        0,
+        1
+      ],
+      "rapid": [
+        2,
+        3
+      ],
+      "powerful": [
+        4,
+        5
+      ],
+      "large": [
+        6,
+        7
+      ],
+      "spread": [
+        8,
+        9
+      ],
+      "hostile": [
+        10,
+        11
+      ],
+      "sentinel": [
+        12,
+        13
+      ],
+      "impact": [
+        14,
+        15
+      ]
+    }
+  },
+  "mirrored_left_only": [
+    "rapid",
+    "powerful"
+  ],
+  "wing_muzzles": {
+    "rapid": {
+      "x": -15.5,
+      "y": -10.0
+    },
+    "powerful": {
+      "x": -17.0,
+      "y": -13.0
+    }
+  },
+  "nose_muzzle": {
+    "x": 0.0,
+    "y": -10.0
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "contract": "1935-k2ib/v1",
+  "pipelineVersion": null,
+  "version": 1,
+  "project": "demon_attack",
+  "kind": "layered-parts",
+  "family": "creatures",
+  "slots": [
+    {"id": "teal"},
+    {"id": "violet"},
+    {"id": "coral"},
+    {"id": "gold"}
+  ],
+  "palette": {"locked": "art/families/sprites/palette.json"},
+  "frame": {"native": {"width": 64, "height": 64}},
+  "finish": {"alpha": {"source": "colour-key"}, "sample": "majority", "dither": "none"}
+}

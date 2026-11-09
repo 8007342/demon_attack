@@ -1,0 +1,18 @@
+{
+  "backend": "forge-mcp image.generate",
+  "created": "2026-11-02T05:19:18+00:00",
+  "requests": [
+    {
+      "family": "ship",
+      "part": "spread",
+      "tier": "I3",
+      "prompt": "flat 2D sprite seen from directly above like a vertical shooter power-up: a small weapon pod with three short gun barrels fanning outward toward the top, navy steel body with teal panels and pale gold trim, 16-bit arcade pixel art sprite, top-down orthographic view, crisp hard edges, flat colors, centered single object on a plain solid magenta background",
+      "negative_prompt": "isometric, 3D, perspective, angled view, spaceship, starfighter, aircraft, wings, hull, cockpit, engines, hand, person, trident, crown, emblem, multiple objects, sprite sheet, grid, collage, text, logo, frame, border, perspective, side view, shadow, landscape, photo, blurry, gradient background",
+      "width": 1024,
+      "height": 1024,
+      "steps": 4,
+      "seed": 820013,
+      "count": 4
+    }
+  ]
+}
