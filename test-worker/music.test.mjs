@@ -118,10 +118,13 @@ test('clear, victory, finale and the game-over cackle are immediate; the alien t
   // A missing tier falls back to its MIDI score through the synthesizer.
   await audio.intensity(3); await step(12);
   assert.equal(audio.state.active, 'l1-t3'); assert.equal(audio.state.source, 'midi');
-  // Fleet reported first (same frame as the clear): the bigger variant starts at once.
-  await audio.fleetIntact();
-  let now = ctx().currentTime; await audio.cue('levelclear');
+  // main.dart order in one tick: the clear cue, then the fleetIntact game event
+  // while the normal march is still loading. The bigger variant starts at once.
+  let now = ctx().currentTime;
+  const clearing = audio.cue('levelclear');
+  await audio.fleetIntact(); await clearing;
   assert.equal(sources.at(-1).buffer.name, 'levelclear-fleet');
+  assert.ok(!sources.some(s => s.buffer?.name === 'levelclear'), 'the normal march never sounded');
   assert.ok(sources.at(-1).at <= now + .03);
   await audio.cue('level', 2); await step(10);
   assert.equal(audio.state.fleetIntact, false, 'the flag does not outlive its celebration');

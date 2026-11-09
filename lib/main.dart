@@ -11,6 +11,7 @@ import 'widgets/pilot_console_content.dart';
 import 'widgets/storyboard_banner.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
+import 'game/music_director.dart'; // --- music event hook
 import 'services/audio.dart';
 import 'services/scores.dart';
 import 'services/run_storage.dart';
@@ -111,6 +112,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   final tilt = TiltController();
   int? touch;
   double touchPosition = .5;
+  List<void Function()> _music = const []; // --- music event hook
   @override
   void initState() {
     super.initState();
@@ -124,6 +126,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       }
     }
     scene = DemonScene(model, _tick);
+    // --- music event hook: adaptive music listens on the shared event bridge
+    _music = [GameEvents.listen(MusicBridge().call), GameEvents.listen(scene.music.onGameEvent)];
     scene.topScores = board;
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
@@ -140,6 +144,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    for (final remove in _music) { remove(); } // --- music event hook
     WidgetsBinding.instance.removeObserver(this);
     focus.dispose();
     scores.close();
@@ -222,6 +227,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         default:
           audioSfx(event);
       }
+    }
+    // --- ground war events: one no-op-safe dispatcher (game_events.dart) ---
+    // The music bridge (`// --- music event hook`) and the commander comms
+    // panel subscribe with GameEvents.listen; nothing is registered yet.
+    for (final event in model.takeGameEvents()) {
+      dispatchGameEvent(event);
     }
     if (!handledRunEnd &&
         !model.defeatActive &&
@@ -1818,6 +1829,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               ),
               child: PilotConsoleContent(
                 timers: Map.of(model.powerTimers),
+                homingMissiles: model.ground.salvo.busy // --- ground war HUD
+                    ? model.ground.salvo.loaded +
+                          (model.ground.salvo.active != null ? 1 : 0)
+                    : 0,
                 touching: touch != null,
                 collecting: model.canPilot && !model.combat,
                 tiltActive: tilt.isActive,

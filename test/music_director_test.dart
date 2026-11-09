@@ -2,13 +2,18 @@ import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/music_director.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Records what the director publishes on the shared game-event bridge.
 class Log {
-  final tiers = <int>[];
-  final accents = <String>[];
-  late final director = MusicDirector(
-    onIntensity: tiers.add,
-    onAccent: accents.add,
-  );
+  final events = <GameEvent>[];
+  late final director = MusicDirector(emit: events.add);
+  List<int> get tiers => [
+    for (final e in events)
+      if (e.name == GameEventNames.musicIntensity) e.data['tier'] as int,
+  ];
+  List<String> get tells => [
+    for (final e in events)
+      if (e.name != GameEventNames.musicIntensity) e.name,
+  ];
 }
 
 Demon demon({
@@ -53,7 +58,7 @@ void main() {
     },
   );
 
-  test('tells and arrivals send accents once per onset; the director never writes the model', () {
+  test('tells and arrivals are published once per onset; the director never writes the model', () {
     final log = Log();
     final m = ArcadeModel()..restoreCheckpoint({'level': 1, 'wave': 2});
     m.mode = RunMode.playing;
@@ -66,7 +71,9 @@ void main() {
     d.telegraph = .3;
     log.director.observe(m, 1 / 60);
     log.director.observe(m, 1 / 60);
-    expect(log.accents, ['dive'], reason: 'one accent per new dive tell');
+    expect(log.tells, [
+      GameEventNames.diveTell,
+    ], reason: 'one tell per new dive');
     d.telegraph = 0;
     d.dive = .2;
     log.director.observe(m, 3);
@@ -75,11 +82,11 @@ void main() {
     s.lastStand = true;
     s.telegraph = .5;
     log.director.observe(m, 1 / 60);
-    expect(log.accents.last, 'laststand');
+    expect(log.tells.last, GameEventNames.lastStandTell);
     expect(log.tiers.last, 4, reason: 'a last stand is peril');
     m.events.add('reinforcements');
     log.director.observe(m, 1 / 60);
-    expect(log.accents.last, 'reinforce');
+    expect(log.tells.last, GameEventNames.reinforcementsArrived);
     m.events.clear();
     expect(
       m.checkpoint(),
@@ -88,7 +95,27 @@ void main() {
     );
   });
 
-  test('carrier forms map to tiers; the central hatch accent is spaced', () {
+  test('ground threats from the shared bridge lift the tier', () {
+    final log = Log();
+    final m = ArcadeModel()..restoreCheckpoint({'level': 1, 'wave': 1});
+    m.mode = RunMode.playing;
+    m.demons.clear();
+    log.director.observe(m, 1 / 60);
+    expect(log.tiers.last, 1);
+    log.director.onGameEvent(const GameEvent(GameEventNames.allyUnderAttack));
+    log.director.observe(m, 1 / 60);
+    expect(log.tiers.last, 2);
+    for (var i = 0; i < 12; i++) {
+      log.director.observe(m, 1);
+    }
+    expect(
+      log.tiers.last,
+      1,
+      reason: 'the lift fades, then the calm delay passes',
+    );
+  });
+
+  test('carrier forms map to tiers; the central hatch tell is spaced', () {
     final log = Log();
     final m = ArcadeModel()..restoreCheckpoint({'level': 5, 'cycle': 2});
     m.mode = RunMode.playing;
@@ -103,41 +130,53 @@ void main() {
     log.director.observe(m, 1 / 60);
     expect(b.phase, 3);
     expect(log.tiers.last, 4, reason: 'final form is tier 4');
+    int hatches() =>
+        log.tells.where((t) => t == GameEventNames.carrierHatchOpen).length;
     b.door = 1;
     log.director.observe(m, 1 / 60);
     b.door = 0;
     log.director.observe(m, 2);
     b.door = 1;
     log.director.observe(m, 1 / 60);
-    expect(log.accents.where((a) => a == 'hatch'), hasLength(1));
+    expect(hatches(), 1);
     b.door = 0;
     log.director.observe(m, 6);
     b.door = 1;
     log.director.observe(m, 1 / 60);
-    expect(log.accents.where((a) => a == 'hatch'), hasLength(2));
+    expect(hatches(), 2);
   });
 
-  test('a fleetIntact event selects the bigger celebration in any mode', () {
-    var fleet = 0;
-    final director = MusicDirector(
-      onIntensity: (_) {},
-      onAccent: (_) {},
-      onFleetIntact: () => fleet++,
-    );
-    final m = ArcadeModel()..restoreCheckpoint({'level': 2, 'wave': 1});
-    m.mode = RunMode.salvage;
-    director.observe(m, 1 / 60);
-    expect(fleet, 0, reason: 'no event, normal celebration');
-    m.events
-      ..clear()
-      ..addAll(['levelclear', 'fleetIntact']);
-    director.observe(m, 1 / 60);
-    expect(fleet, 1);
-    expect(m.events, [
-      'levelclear',
-      'fleetIntact',
-    ], reason: 'events are left for main.dart');
-  });
+  test(
+    'the bridge listener plays tiers, accents and the fleet-intact celebration',
+    () {
+      final tiers = <int>[], accents = <String>[];
+      var fleet = 0;
+      final bridge = MusicBridge(
+        onIntensity: tiers.add,
+        onAccent: accents.add,
+        onFleetIntact: () => fleet++,
+      );
+      final remove = GameEvents.listen(bridge.call);
+      dispatchGameEvent(
+        const GameEvent(GameEventNames.musicIntensity, {'tier': 3}),
+      );
+      for (final name in MusicBridge.accents.keys) {
+        dispatchGameEvent(GameEvent(name));
+      }
+      dispatchGameEvent(const GameEvent(GameEventNames.groundMissileLaunch));
+      expect(fleet, 0, reason: 'no event, normal celebration');
+      dispatchGameEvent(
+        const GameEvent(GameEventNames.fleetIntact, {'scope': 'level'}),
+      );
+      remove();
+      dispatchGameEvent(
+        const GameEvent(GameEventNames.musicIntensity, {'tier': 1}),
+      );
+      expect(tiers, [3]);
+      expect(accents, ['dive', 'laststand', 'hatch', 'reinforce']);
+      expect(fleet, 1);
+    },
+  );
 
   test(
     'a new level resets the director so the first playing frame cues its tier',
