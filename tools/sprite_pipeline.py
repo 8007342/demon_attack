@@ -18,7 +18,10 @@ Stages and files (all committed except the GPU cache):
    $SPRITE_PIPELINE_CACHE (default ~/.cache/demon-attack/sprite-pipeline,
    outside the repo); the selected candidate (art/families/sprites/
    selections.json) is kept as a 256 px nearest copy under
-   art/sprites/sources/keyframes/.
+   art/sprites/sources/keyframes/. The carrier's hide, masonry and membrane
+   candidates (art/workflows/sprites/carrier-texture-sdxl.json,
+   art/families/carrier/prompts.json) are kept as selected crops under
+   art/sprites/sources/carrier/.
 2. edits: art/workflows/sprites/variant-qwen-edit.json turns the selected
    keyframe into three molt variants (prompts.json molt_edit), kept under
    art/sprites/sources/molts/.
@@ -29,7 +32,8 @@ Stages and files (all committed except the GPU cache):
    levels to nudge the key-light value of hide pixels before it quantises
    them onto the palette ramp, so AI texture adds stony, leathery shading
    while silhouettes, faces, insignia, outlines and palette stay authored and
-   aligned across every frame.
+   aligned across every frame. The carrier crops are high-passed and
+   quantised the same way into art/families/carrier/detail/.
 4. atlases: tools/generate_sprites.py (combat), generate_ship_sprites.py,
    generate_sentinel_sprites.py, generate_boss_sprites.py, plus
    art/families/sprites/palette.json from sprite_kit.PALETTE. Pure
@@ -153,6 +157,70 @@ def keyframes():
             out.write_bytes(png)
             print('keyframe', out)
     keep_selected()
+    carrier_keyframes()
+
+
+# ---------------------------------------------------------------------------
+# Carrier war-ark shading detail (art/families/carrier).
+# ---------------------------------------------------------------------------
+CAR = ART / 'families/carrier'
+CAR_SRC = SRC / 'carrier'
+CAR_CELL = (368, 240)
+
+
+def carrier_keyframes():
+    """SDXL + pixel-art-xl candidates for the carrier's hide, masonry and
+    membrane detail; the selected crops (selections.json) are kept, box
+    sampled to one 368 x 240 cell, under art/sprites/sources/carrier/."""
+    spec = load(CAR / 'prompts.json')
+    for name, item in spec['items'].items():
+        for i in range(item['count']):
+            seed = item['seed'] + i
+            out = CACHE / 'carrier' / f'{name}-{seed}.png'
+            if out.exists():
+                continue
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_bytes(run_workflow(ROOT / spec['workflow'], seed, item['prompt'], spec['negative'])[0])
+            print('carrier keyframe', out)
+    for detail, sel in load(CAR / 'selections.json')['detail'].items():
+        raw = CACHE / 'carrier' / f"{sel['item']}-{sel['seed']}.png"
+        if raw.exists():
+            CAR_SRC.mkdir(parents=True, exist_ok=True)
+            Image.open(raw).convert('RGB').crop(tuple(sel['crop'])).resize(CAR_CELL, Image.BOX).save(
+                CAR_SRC / f'{detail}.png', optimize=True)
+
+
+def _box_blur(a, r):
+    """Separable box blur (edge-clamped), numpy only."""
+    for axis in (0, 1):
+        pad = [(0, 0), (0, 0)]
+        pad[axis] = (r + 1, r)
+        c = np.cumsum(np.pad(a, pad, mode='edge'), axis=axis)
+        n = a.shape[axis]
+        a = (np.take(c, range(2 * r + 1, 2 * r + 1 + n), axis=axis) - np.take(c, range(0, n), axis=axis)) / (2 * r + 1)
+    return a
+
+
+def carrier_finish():
+    """Four-level high-passed luminance maps (fine stone, masonry and
+    membrane texture without the source's own lighting) at the carrier's
+    native cell size; generate_boss_sprites.py maps level -> key-light
+    offset."""
+    sel = load(CAR / 'selections.json', {'detail': {}})['detail']
+    for detail in sel:
+        src = CAR_SRC / f'{detail}.png'
+        if not src.exists():
+            continue
+        rgb = np.array(Image.open(src).convert('RGB')).astype(float)
+        lum = rgb @ np.array([.3, .59, .11])
+        hp = lum - _box_blur(lum, 9)
+        q = np.quantile(hp, [.2, .55, .85])
+        lv = np.digitize(hp, q)
+        greys = np.array([40, 100, 170, 240], dtype=np.uint8)
+        out = np.zeros(lum.shape + (4,), dtype=np.uint8)
+        out[..., :3] = greys[lv][..., None]
+        out[..., 3] = 255
+        save_detail(out, CAR / 'detail' / f'{detail}.png')
 
 
 def selected(species):
@@ -262,6 +330,7 @@ def finish():
                 save_detail(detail_map(m), out)
             elif out.exists():
                 out.unlink()  # no molt source: the molt reuses the intact hide map
+    carrier_finish()
 
 
 def save_detail(arr, path: Path):
@@ -319,7 +388,7 @@ def sheets():
     print('sheet', (REVIEW / 'combat-directions.png').relative_to(ROOT))
     sheet('ship-weapons.png', 64, 64, list(range(7)), 2, 'ship-weapons.png')
     sheet('sentinel-effects.png', 128, 64, list(range(14)), 1, 'sentinel-effects.png')
-    sheet('boss-carrier.png', 368, 240, list(range(7)), 1, 'boss-carrier.png')
+    sheet('boss-carrier.png', 368, 240, list(range(11)), 1, 'boss-carrier.png')
     # AI sources beside their finished detail maps.
     tiles = []
     for sp in ('teal', 'violet', 'coral', 'gold'):
@@ -356,6 +425,36 @@ def screens():
             s.paste(im.resize((w * 2, h * 2), Image.NEAREST), (i * (w * 2 + 8), 0))
         s.save(REVIEW / out, optimize=True)
         print('sheet', (REVIEW / out).relative_to(ROOT))
+    carrier_screens()
+
+
+def carrier_screens():
+    """The war-ark in engine (test/carrier_review_test.dart writes
+    .cache/carrier-review/): every form shielded and with the jaws open, the
+    jaw cycle, damage escalation (1x crops of the carrier band), then the
+    falling wreck and the carrier beside gargoyles and a sentinel over the
+    Carrier sector (full phone frames)."""
+    src = ROOT / '.cache/carrier-review'
+    if not (src / 'form-0-shield.png').exists():
+        return
+    rows = [[f'form-{f}-shield' for f in range(4)], [f'form-{f}-open' for f in range(4)],
+            [f'jaw-{k}' for k in range(4)], [f'damage-{k}' for k in range(1, 5)]]
+    box = (0, 110, 360, 300)
+    w, h = box[2] - box[0], box[3] - box[1]
+    s = Image.new('RGBA', (4 * w + 12, len(rows) * h + 4 * (len(rows) - 1)), (0, 0, 0, 255))
+    for r, names in enumerate(rows):
+        for c, n in enumerate(names):
+            s.paste(Image.open(src / f'{n}.png').convert('RGBA').crop(box), (c * (w + 4), r * (h + 4)))
+    s.save(REVIEW / 'in-engine-carrier.png', optimize=True)
+    print('sheet', (REVIEW / 'in-engine-carrier.png').relative_to(ROOT))
+    names = ['world-phone', 'world-final-phone', 'wreck-0-1', 'wreck-3-2']
+    ims = [Image.open(src / f'{n}.png').convert('RGBA') for n in names]
+    w, h = ims[0].size
+    s = Image.new('RGBA', (len(ims) * (w + 4) - 4, h), (0, 0, 0, 255))
+    for i, im in enumerate(ims):
+        s.paste(im, (i * (w + 4), 0))
+    s.save(REVIEW / 'in-engine-carrier-world.png', optimize=True)
+    print('sheet', (REVIEW / 'in-engine-carrier-world.png').relative_to(ROOT))
 
 
 STAGES = {'keyframes': keyframes, 'edits': edits, 'finish': finish, 'atlases': atlases, 'sheets': sheets,
