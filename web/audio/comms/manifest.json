@@ -1,0 +1,3425 @@
+{
+ "generator": "tools/comms_pipeline.py",
+ "kokoro": {
+  "repo": "hexgrad/Kokoro-82M",
+  "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+  "sample_rate": 24000,
+  "files_sha256": {
+   "config.json": "5abb01e2403b072bf03d04fde160443e209d7a0dad49a423be15196b9b43c17f",
+   "kokoro-v1_0.pth": "496dba118d1a58f5f3db2efc88dbdc216e0483fc89fe6e47ee1f2c53f18ad1e4",
+   "voices/af_alloy.pt": "6d877149dd8b348fbad12e5845b7e43d975390e9f3b68a811d1d86168bef5aa3",
+   "voices/af_aoede.pt": "c03bd1a4c3716c2d8eaa3d50022f62d5c31cfbd6e15933a00b17fefe13841cc4",
+   "voices/af_bella.pt": "8cb64e02fcc8de0327a8e13817e49c76c945ecf0052ceac97d3081480e8e48d6",
+   "voices/af_heart.pt": "0ab5709b8ffab19bfd849cd11d98f75b60af7733253ad0d67b12382a102cb4ff",
+   "voices/af_kore.pt": "8bfbc512321c3db49dff984ac675fa5ac7eaed5a96cc31104d3a9080e179d69d",
+   "voices/af_sarah.pt": "49bd364ea3be9eb3e9685e8f9a15448c4883112a7c0ff7ab139fa4088b08cef9",
+   "voices/am_echo.pt": "8bcfdc852bc985fb45c396c561e571ffb9183930071f962f1b50df5c97b161e8",
+   "voices/am_fenrir.pt": "98e507eca1db08230ae3b6232d59c10aec9630022d19accac4f5d12fcec3c37a",
+   "voices/am_liam.pt": "c82550757ddb31308b97f30040dda8c2d609a9e2de6135848d0a948368138518",
+   "voices/am_michael.pt": "9a443b79a4b22489a5b0ab7c651a0bcd1a30bef675c28333f06971abbd47bd37",
+   "voices/am_onyx.pt": "e8452be16cd0f6da7b4579eaf7b1e4506e92524882053d86d72b96b9a7fed584",
+   "voices/am_puck.pt": "dd1d8973f4ce4b7d8ae407c77a435f485dabc052081b80ea75c4f30b84f36223",
+   "voices/bf_emma.pt": "d0a423deabf4a52b4f49318c51742c54e21bb89bbbe9a12141e7758ddb5da701",
+   "voices/bf_isabella.pt": "cdd4c37003805104d1d08fb1e05855c8fb2c68de24ca6e71f264a30aaa59eefd",
+   "voices/bm_george.pt": "f1bc812213dc59774769e5c80004b13eeb79bd78130b11b2d7f934542dab811b"
+  }
+ },
+ "codec": {
+  "opus_kbps": 20,
+  "aac_kbps": 28,
+  "aac_cutoff_hz": 4000,
+  "sample_rate": 24000
+ },
+ "loudness": {
+  "human_lufs": -18.0,
+  "demon_lufs": -18.5,
+  "peak_dbfs": -3.0,
+  "decoded_peak_max_dbfs": 0.0,
+  "playback_gain_db": 2.0
+ },
+ "mouth_fps": 15,
+ "totals": {
+  "clips": 241,
+  "human": 188,
+  "demon": 53,
+  "seconds": 546.03,
+  "ogg_bytes": 1461025,
+  "m4a_bytes": 2212300
+ },
+ "clips": {
+  "sectorStart.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "sectorStart",
+   "duration": 4.72,
+   "mouth": "44554544333335443232200000555444333334453344333200023354444322253222000",
+   "lufs": -18.07,
+   "ogg_bytes": 12458,
+   "m4a_bytes": 18071,
+   "sha256": {
+    "ogg": "7dfa0ff8992acd5b9057e0a97f15c5d44d82eab38b33d74c20b2a8278e7d8efb",
+    "m4a": "22b2020576351ebfb1837c995d3df7f028b7bded2084ffc77c1f1f97e353dcef"
+   }
+  },
+  "sectorStart.h1": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "sectorStart",
+   "duration": 3.701,
+   "mouth": "44444444544332000000455443435335553333353223333333520000",
+   "lufs": -18.02,
+   "ogg_bytes": 9745,
+   "m4a_bytes": 14359,
+   "sha256": {
+    "ogg": "18573e2308ec6d1baa204bb782b7df7dcae306019cf18de7b362394fc3cb314d",
+    "m4a": "a6135257460e874cfb6013018de328512da6637b4e6e81887d8487c8463457f1"
+   }
+  },
+  "sectorStart.h2": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "sectorStart",
+   "duration": 2.271,
+   "mouth": "33344454545332200005433333532200000",
+   "lufs": -18.01,
+   "ogg_bytes": 6063,
+   "m4a_bytes": 9189,
+   "sha256": {
+    "ogg": "d7359085bd5b32018c4876f820e5c79034a3de6c7844669af27b0a91c964d289",
+    "m4a": "0b7cbfb33b5245db260c9d5b8ded680c5d73e476f5381574fd995e7d0d01dc24"
+   }
+  },
+  "sectorStart.h3": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "sectorStart",
+   "duration": 2.626,
+   "mouth": "4544544445544300022445444443444453320000",
+   "lufs": -18.01,
+   "ogg_bytes": 6974,
+   "m4a_bytes": 10496,
+   "sha256": {
+    "ogg": "7c2d929d59182e66afb8637598b6f4dcd2ec274f0a97afd819691dbaa18dda1b",
+    "m4a": "c32373f13eceb16b21d560614403cc0e68071c819dcf562c21e445a18bab94b4"
+   }
+  },
+  "sectorStart.h4": {
+   "speaker": "pip",
+   "kind": "human",
+   "trigger": "sectorStart",
+   "duration": 2.812,
+   "mouth": "3344453354545445445544353334444444443320000",
+   "lufs": -18.04,
+   "ogg_bytes": 7520,
+   "m4a_bytes": 11133,
+   "sha256": {
+    "ogg": "a6dc17441cfe8c4becf2ec70fdf279b3862b0d9904c45f8d7fd18ebba45176c9",
+    "m4a": "0f06019a57b1eebdcb71f47d2019d0d7ee8d9dc77f4cf06401ac4b8b1ab35174"
+   }
+  },
+  "sectorStart.h5": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "sectorStart",
+   "duration": 3.379,
+   "mouth": "334554444225444433332254334444535333333535533220000",
+   "lufs": -18.05,
+   "ogg_bytes": 8992,
+   "m4a_bytes": 13188,
+   "sha256": {
+    "ogg": "fcc079b6e72de25d901fbd88201ee20497d92200954fa4954d4ccac0391429ed",
+    "m4a": "d5dfb32396bf801f47322cc1e03d5823fea9236677a77ae2567f20cc0ca0d144"
+   }
+  },
+  "sectorStart.1.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "sectorStart.1",
+   "duration": 4.918,
+   "mouth": "22444333453332200000004455454443334445352235455533334443334554333333332000",
+   "lufs": -18.14,
+   "ogg_bytes": 12969,
+   "m4a_bytes": 18741,
+   "sha256": {
+    "ogg": "8cd30928e03e671df5546337417c893c7eacbd75146143c485e78ee5144f3622",
+    "m4a": "6f3f0f67ab468adb7742e6f49938c22a3c72fac126b91e1363a0b50c2f56b670"
+   }
+  },
+  "sectorStart.1.h1": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "sectorStart.1",
+   "duration": 3.521,
+   "mouth": "00444454544543222454334455433335354333322344333200000",
+   "lufs": -18.0,
+   "ogg_bytes": 9386,
+   "m4a_bytes": 13717,
+   "sha256": {
+    "ogg": "06e2aa62082c0b469f43e98d9b0cc5da9ec667f37f01cf675e4036b423917b13",
+    "m4a": "07ab43b3efdbdb35e4f0036bd0dee21865aa603cb2487886552c597501635f56"
+   }
+  },
+  "sectorStart.1.h2": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "sectorStart.1",
+   "duration": 2.831,
+   "mouth": "3354443344535444533443200543554444332200000",
+   "lufs": -18.04,
+   "ogg_bytes": 7651,
+   "m4a_bytes": 11232,
+   "sha256": {
+    "ogg": "c4e0fce1bcaeadea4e1eca4ad7637501c03a3781e8edcf74438554a4c13b6ce6",
+    "m4a": "4560d636937f97e574af0641aceac9319150634fd1c36648bd1314cabe82a784"
+   }
+  },
+  "sectorStart.1.h3": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "sectorStart.1",
+   "duration": 3.2,
+   "mouth": "224445433354453443225333344320000444453333552000",
+   "lufs": -18.06,
+   "ogg_bytes": 8514,
+   "m4a_bytes": 12513,
+   "sha256": {
+    "ogg": "e9101b2f52cf1025e65b710c5804c7fccc07c844798787dcb9087bb54e0a0a87",
+    "m4a": "25ac1a328a38b9a50a12665701467801a3b7064b53239878b736a572407702e4"
+   }
+  },
+  "sectorStart.2.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "sectorStart.2",
+   "duration": 4.245,
+   "mouth": "3544544454432200000334333444555445433543533335332000244333220000",
+   "lufs": -18.03,
+   "ogg_bytes": 11140,
+   "m4a_bytes": 16335,
+   "sha256": {
+    "ogg": "f7dc49880c8085ed852b79ae9566039dfc238995760409ef8ccf27c595e659e7",
+    "m4a": "520406bcdbfb5f9ce726a6baae4eaadf1e95e6bae92d5ce754efc40dc5b25090"
+   }
+  },
+  "sectorStart.2.h1": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "sectorStart.2",
+   "duration": 3.676,
+   "mouth": "33344454454454543544320000444443334435335543323353200000",
+   "lufs": -18.01,
+   "ogg_bytes": 9751,
+   "m4a_bytes": 14307,
+   "sha256": {
+    "ogg": "1935744c4e1c7f6e3ac7f75c8dcd519291e2618e9023c3e4bbd128785762beb3",
+    "m4a": "60eee1f320e0e60362638ac8c4057fb1d317bde703af5b8e5cfbceb72f25dd95"
+   }
+  },
+  "sectorStart.2.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "sectorStart.2",
+   "duration": 2.726,
+   "mouth": "35445335520034454544433344435333432222000",
+   "lufs": -18.23,
+   "ogg_bytes": 7239,
+   "m4a_bytes": 10819,
+   "sha256": {
+    "ogg": "d2639f6ed1538bebcafcf3405b131f9e2891b2222c34865baadef07d18101e61",
+    "m4a": "0181476fb6281167533dd41408b71c9204c5fe764e0d6ddd583ddb74c7876211"
+   }
+  },
+  "sectorStart.2.h3": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "sectorStart.2",
+   "duration": 2.474,
+   "mouth": "45544445533334444444553444354433200000",
+   "lufs": -18.12,
+   "ogg_bytes": 6656,
+   "m4a_bytes": 9921,
+   "sha256": {
+    "ogg": "796c1b12a12dadd88c8e19f1e8d2956b1c8bbccb0251344f69977d32b8332beb",
+    "m4a": "b9ca0c374cac3f0baf52b8f0fb00062c221ff598fc2d1abee9b24e4b721a4d20"
+   }
+  },
+  "sectorStart.3.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "sectorStart.3",
+   "duration": 3.981,
+   "mouth": "444545455353000004433445444454444533335520003443344433320000",
+   "lufs": -18.11,
+   "ogg_bytes": 10474,
+   "m4a_bytes": 15400,
+   "sha256": {
+    "ogg": "ba39c93bc4f9debdfacd4e8259ddba7384a3c204497ba109020544d0f02f0465",
+    "m4a": "8541ec3768cb781510f5e5bd7821aa91fec47397d278ee8c18157de304d3ed99"
+   }
+  },
+  "sectorStart.3.h1": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "sectorStart.3",
+   "duration": 3.62,
+   "mouth": "0034333444322000002245444545432255553343534443344200000",
+   "lufs": -18.28,
+   "ogg_bytes": 9607,
+   "m4a_bytes": 14063,
+   "sha256": {
+    "ogg": "f809e674c7830b60cddedfc22548da455f0fc20009ecd5cedb01bdbd939cff8f",
+    "m4a": "2760fb29c53b1013eddde399c3c797e8f0f4929151d8128220fde7119a55bc58"
+   }
+  },
+  "sectorStart.3.h2": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "sectorStart.3",
+   "duration": 3.81,
+   "mouth": "4443333343333333320000024433544533353533554455444335220000",
+   "lufs": -18.05,
+   "ogg_bytes": 10048,
+   "m4a_bytes": 14784,
+   "sha256": {
+    "ogg": "74f1a490b556dc35232ff97fe2665285f7ee86b8a18ce54e6d86256f5cff884d",
+    "m4a": "ef627705f13ca2c0346022a83925d3f328f804bc31543c3dc3e820a60137ebf7"
+   }
+  },
+  "sectorStart.3.h3": {
+   "speaker": "pip",
+   "kind": "human",
+   "trigger": "sectorStart.3",
+   "duration": 2.705,
+   "mouth": "44444445444355444345454544545444444320000",
+   "lufs": -18.03,
+   "ogg_bytes": 7259,
+   "m4a_bytes": 10800,
+   "sha256": {
+    "ogg": "f47ac968f4336bae87a131b19c7c9239eb58b845366998631aade6d4f6bd7de3",
+    "m4a": "f98121c716810eb99bc24279d4a88f7c5c6764d381bd487c6c0b501a12fe9426"
+   }
+  },
+  "sectorStart.4.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "sectorStart.4",
+   "duration": 3.484,
+   "mouth": "43444543520005553344444444355454443332200023333200000",
+   "lufs": -18.04,
+   "ogg_bytes": 9240,
+   "m4a_bytes": 13603,
+   "sha256": {
+    "ogg": "f611bd4ef14bf9c360ce5325a3be0cddc54e559e3fa1f8d895d837fe0d2ee1b6",
+    "m4a": "4b44c1604c67c8fb5327a994d61b938f91a1aa058acb9eed98c5b79cfbe74284"
+   }
+  },
+  "sectorStart.4.h1": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "sectorStart.4",
+   "duration": 3.216,
+   "mouth": "2244444445443523335344533455553322444444332220000",
+   "lufs": -18.07,
+   "ogg_bytes": 8607,
+   "m4a_bytes": 12598,
+   "sha256": {
+    "ogg": "bc261065592147727a1737031af5f48700c13d6a1076aa6ad7f41fd7a91fbbe3",
+    "m4a": "eab95b81148e1c6f3a218875ca7e2b47ae2a9636693f62e725268c5969086f99"
+   }
+  },
+  "sectorStart.4.h2": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "sectorStart.4",
+   "duration": 3.545,
+   "mouth": "335544444444440023444534443200005444455454444532200000",
+   "lufs": -18.01,
+   "ogg_bytes": 9419,
+   "m4a_bytes": 13753,
+   "sha256": {
+    "ogg": "2ac0e5530cdd138d38718ebec2e3595d02c5f2d997623e32c553d564c2b69079",
+    "m4a": "b952a0712f49d14405a83caa8d3bdda1ca6ff1d0ea5f0bc3d064915fb8fd44c9"
+   }
+  },
+  "sectorStart.4.h3": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "sectorStart.4",
+   "duration": 3.464,
+   "mouth": "3333345444434445444332000444454555522354333332222000",
+   "lufs": -18.0,
+   "ogg_bytes": 9052,
+   "m4a_bytes": 13518,
+   "sha256": {
+    "ogg": "915f84c32ab2657a8bc356bdaedc15cd589f464c0004eaf28e15c818ffb010a3",
+    "m4a": "3284abc7ba5124aa599c861b9618bff8699b2c569ce2f293dd321f831b9c16df"
+   }
+  },
+  "sectorStart.5.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "sectorStart.5",
+   "duration": 3.656,
+   "mouth": "3554445543002444433320000024545334544453333333443322000",
+   "lufs": -18.02,
+   "ogg_bytes": 9743,
+   "m4a_bytes": 14204,
+   "sha256": {
+    "ogg": "64e31789ddc49da05d0cfed54f056bc185d8a9e72b1ae65d21f2a21ba1cbca54",
+    "m4a": "a1a0907e2c7e73d894bc7a0cdd67c7c3907543679a69705d377013329468eefa"
+   }
+  },
+  "sectorStart.5.h1": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "sectorStart.5",
+   "duration": 4.019,
+   "mouth": "2244543334435555533333332000000025443333333225333222442000000",
+   "lufs": -18.23,
+   "ogg_bytes": 10586,
+   "m4a_bytes": 15494,
+   "sha256": {
+    "ogg": "e8b13e2fdc74b7c24a65a10acd50b8486c5039823c0961ba65cce5f49a69b8f3",
+    "m4a": "d9d3bfb7f7ba5f52acf9960eb672342bee471872fb917ac102a25687fce3386b"
+   }
+  },
+  "sectorStart.5.h2": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "sectorStart.5",
+   "duration": 3.043,
+   "mouth": "3334554544433454332222444455344353344533222000",
+   "lufs": -18.09,
+   "ogg_bytes": 8112,
+   "m4a_bytes": 11994,
+   "sha256": {
+    "ogg": "ee305a4904e8c69915c69947ec4810a56d4983e32d9007beb660842dd3d429e3",
+    "m4a": "8133261b64f457b49d57878bfab73bbcc0e167d092fb2acfc7b191ed374c4b2c"
+   }
+  },
+  "sectorStart.5.h3": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "sectorStart.5",
+   "duration": 3.591,
+   "mouth": "444444444454225422335333554333333200000544253443522000",
+   "lufs": -18.09,
+   "ogg_bytes": 9478,
+   "m4a_bytes": 13970,
+   "sha256": {
+    "ogg": "56aa3edda8414f90358875351968273ea54406a075af458ab43006d61a8a5c51",
+    "m4a": "f61f8204366a903bad96d2fbb8889907213ecb62cd8b89b4dcc2eea34a08e5c6"
+   }
+  },
+  "waveStart.h0": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "waveStart",
+   "duration": 1.354,
+   "mouth": "454333453345332200000",
+   "lufs": -18.01,
+   "ogg_bytes": 3735,
+   "m4a_bytes": 5880,
+   "sha256": {
+    "ogg": "246a9116175dd723c95272e801e2333d4b9e428de680610b1fe7e12c59a59516",
+    "m4a": "48a8a1d64689896422ea7c990d178640b87f2445825d9216aa3ce5c0564b6cfe"
+   }
+  },
+  "waveStart.h1": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "waveStart",
+   "duration": 1.208,
+   "mouth": "3534544453344320000",
+   "lufs": -18.02,
+   "ogg_bytes": 3342,
+   "m4a_bytes": 5386,
+   "sha256": {
+    "ogg": "56d2c004b5b8e93070a6994f6ffdd5e39156398b22d7521804d4621a4ead032d",
+    "m4a": "9d1ff31dca7915740d0bcba8c1cff6fb4805cd31e1defa2f2d0e224391c71edc"
+   }
+  },
+  "waveStart.h2": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "waveStart",
+   "duration": 1.796,
+   "mouth": "454433454443335533445200000",
+   "lufs": -18.02,
+   "ogg_bytes": 4831,
+   "m4a_bytes": 7458,
+   "sha256": {
+    "ogg": "7dc00cdc47369dee3b7fb99e9ff0eb9d0d50ad057e5d30eeff1605a893076f34",
+    "m4a": "8110557b766f78bc5e7c1a5537b84c68fb1333e665ae0a3a9c258dbc313ded43"
+   }
+  },
+  "waveStart.h3": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "waveStart",
+   "duration": 3.103,
+   "mouth": "44444445533334443322000000544454332255222332000",
+   "lufs": -18.21,
+   "ogg_bytes": 8249,
+   "m4a_bytes": 12230,
+   "sha256": {
+    "ogg": "bda88413fcb0049b505ecfb61b82db05a179c41b8284b9dd3557b6e1782d5745",
+    "m4a": "8173a34f5cf111d629b9a9d6dec1ae3c44aef8814296dff1e460740fd3a2a03e"
+   }
+  },
+  "waveStart.h4": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "waveStart",
+   "duration": 1.802,
+   "mouth": "3333334544454444555332200000",
+   "lufs": -18.0,
+   "ogg_bytes": 4839,
+   "m4a_bytes": 7523,
+   "sha256": {
+    "ogg": "9f1ea7a95bee9b14779954aa6497bb1ff9c73294a2f1bc45a43d499d87ceec67",
+    "m4a": "9d819b8b3b5c18d8c3619c4fe96f97a154382cb2eb351508e51ab82d98029152"
+   }
+  },
+  "waveStart.h5": {
+   "speaker": "pip",
+   "kind": "human",
+   "trigger": "waveStart",
+   "duration": 2.091,
+   "mouth": "45554444454444454444445443320000",
+   "lufs": -18.0,
+   "ogg_bytes": 5679,
+   "m4a_bytes": 8506,
+   "sha256": {
+    "ogg": "8a92f25ed983bbc49704caae57fdee2ee5c4b96c41f3b31643310ba3c715114d",
+    "m4a": "96b7b659702b584a68532d097587d95edf88190934108e132075b1d30d0f6fa6"
+   }
+  },
+  "reinforcements.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "reinforcements",
+   "duration": 1.967,
+   "mouth": "444454544433333353455433220000",
+   "lufs": -18.12,
+   "ogg_bytes": 5233,
+   "m4a_bytes": 8082,
+   "sha256": {
+    "ogg": "4e92dd25663d171341cb1a7c6208d62b64bd94bee4659b7df3e944b19322b0c9",
+    "m4a": "b150d90acd46c4b9751e5bf2022c5ce629e2fe6ba039f1d04206fa09de69a1a2"
+   }
+  },
+  "reinforcements.h1": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "reinforcements",
+   "duration": 2.107,
+   "mouth": "44544335200333335345333222200000",
+   "lufs": -18.09,
+   "ogg_bytes": 5701,
+   "m4a_bytes": 8608,
+   "sha256": {
+    "ogg": "3d1046feb9b99af9d44dfdc0341555293325c05f0f7894b2d85d38bc3886a91b",
+    "m4a": "2fc18ffaf075aa749cd88463ae0ff8ea8a882f05fa6e05f316f7c2b600dbbb7f"
+   }
+  },
+  "reinforcements.h2": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "reinforcements",
+   "duration": 1.708,
+   "mouth": "33334545333333222553200000",
+   "lufs": -18.68,
+   "ogg_bytes": 4600,
+   "m4a_bytes": 6976,
+   "sha256": {
+    "ogg": "53c254a4f28b7b147606d988cc1a0cbd456ea262cb5276109a8d6bd05bbf06fd",
+    "m4a": "e13489600f18680d3f7f0523494c0c72d756336b7be309285d09c09995ee3e40"
+   }
+  },
+  "reinforcements.h3": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "reinforcements",
+   "duration": 2.77,
+   "mouth": "334443354433345334452000244445334553350000",
+   "lufs": -18.01,
+   "ogg_bytes": 7327,
+   "m4a_bytes": 10991,
+   "sha256": {
+    "ogg": "523f33d7ee4542fc5cb61247d295c63d8e4637a2cad3bab137d2757c3b30450c",
+    "m4a": "7e45529dbd0a22ff36b37b4007971b32b7828a5b62d8ae7f8565132e8ffbd517"
+   }
+  },
+  "reinforcements.h4": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "reinforcements",
+   "duration": 3.031,
+   "mouth": "2244444554545444445300004454544422444333220000",
+   "lufs": -18.0,
+   "ogg_bytes": 8063,
+   "m4a_bytes": 11926,
+   "sha256": {
+    "ogg": "aed794aadac1ab312ad190fa2402bf4b4e0fd7175d8006ff34fc8f2bb510f77d",
+    "m4a": "6d8544f94419ba5ca707404edc7fba8adc742c921bc617c81a501d9c16ba1401"
+   }
+  },
+  "reinforcements.h5": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "reinforcements",
+   "duration": 2.223,
+   "mouth": "4544545445452234444343333445320000",
+   "lufs": -18.03,
+   "ogg_bytes": 5999,
+   "m4a_bytes": 8996,
+   "sha256": {
+    "ogg": "df9da8809825532534d392f83f0e87b02e0bdfe7f56720e7a27b33016682425d",
+    "m4a": "cd2b97fabdb991817ad29e6f40228a7b63fc4dc2521db76ed1d4863a36672c17"
+   }
+  },
+  "reinforcements.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "reinforcements",
+   "duration": 0.829,
+   "mouth": "7444444443000",
+   "lufs": -18.52,
+   "ogg_bytes": 2312,
+   "m4a_bytes": 4045,
+   "sha256": {
+    "ogg": "4f59037a031a330d48469d0aeafcef3de1e605579ca698bca7caf064e1c200aa",
+    "m4a": "23aab1694a16ef747bc2f816f17398979e762b66634f78928ccd4f5c42953ffb"
+   }
+  },
+  "reinforcements.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "reinforcements",
+   "duration": 0.8,
+   "mouth": "444444433000",
+   "lufs": -18.54,
+   "ogg_bytes": 2270,
+   "m4a_bytes": 3926,
+   "sha256": {
+    "ogg": "198bbc395fa8f1e6982e3d080b4826b4ccae03a46ddbf0500711713f71ffab0f",
+    "m4a": "66b49c8e4224ab0404821cfb7d1084b1014149965de117ea30df87b723d63cb0"
+   }
+  },
+  "reinforcements.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "reinforcements",
+   "duration": 0.793,
+   "mouth": "444447744000",
+   "lufs": -18.5,
+   "ogg_bytes": 2212,
+   "m4a_bytes": 3874,
+   "sha256": {
+    "ogg": "1cd31b9ee05378108534bb32984d87e727b70f2aa25614c6dd31e12c8d9c6719",
+    "m4a": "35410b923e77cb37d0ad7cd3ac61fa400bb9639ace7e3ff7df7471e91d6eeca6"
+   }
+  },
+  "reinforcements.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "reinforcements",
+   "duration": 0.817,
+   "mouth": "4444774430000",
+   "lufs": -18.51,
+   "ogg_bytes": 2291,
+   "m4a_bytes": 3934,
+   "sha256": {
+    "ogg": "317a8b5ec99031542f3172941d74603fe5d912ba1b16c0589d08bf5d00e59411",
+    "m4a": "0c5b481b57156984d732f9bce0fa484b428fb0fdb77835608ea0c9ecebe795a9"
+   }
+  },
+  "sentinelIncoming.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "sentinelIncoming",
+   "duration": 3.023,
+   "mouth": "2234544444533322200002455544534422333333220000",
+   "lufs": -18.11,
+   "ogg_bytes": 7985,
+   "m4a_bytes": 11909,
+   "sha256": {
+    "ogg": "34d483c5117a53b5359b014e379ca76bc25caf045645ac9cdfd40cc2202f182d",
+    "m4a": "caef1d95bb6747796048285b868462e5ce76105a9120e365b607f84a108c5d53"
+   }
+  },
+  "sentinelIncoming.h1": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "sentinelIncoming",
+   "duration": 2.798,
+   "mouth": "224444445433333345554520004433344535332000",
+   "lufs": -18.08,
+   "ogg_bytes": 7453,
+   "m4a_bytes": 11114,
+   "sha256": {
+    "ogg": "002341b9141889a28b2c21b8286184e942d063569627a7e39f4c782cd36e5548",
+    "m4a": "b245d6f65fe3c154f27b689f5d4166774d802719fa95f20b4f2af85129e3d239"
+   }
+  },
+  "sentinelIncoming.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "sentinelIncoming",
+   "duration": 3.871,
+   "mouth": "22344335553322445333000000444453354443532253334443222220000",
+   "lufs": -18.05,
+   "ogg_bytes": 10264,
+   "m4a_bytes": 15004,
+   "sha256": {
+    "ogg": "0b79334027709da80689e930e19ddfcf03aab6c873daa76f2b21fbd20a31cd35",
+    "m4a": "43323c97f74cb6af6dde5ea04816ae0994d88ecc14df63b8900e857be348bd55"
+   }
+  },
+  "sentinelIncoming.h3": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "sentinelIncoming",
+   "duration": 2.462,
+   "mouth": "4544543354432220000344454334454322000",
+   "lufs": -18.06,
+   "ogg_bytes": 6576,
+   "m4a_bytes": 9881,
+   "sha256": {
+    "ogg": "7e9607d8d5f9632fe61ceb84d32c1e6a8e1a6df4d8182960867b56b838f97c37",
+    "m4a": "d69c41a6e406f581fc07bd6b7e97a1b48de1a37d19bba4bac946935a5bd77f81"
+   }
+  },
+  "sentinelIncoming.h4": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "sentinelIncoming",
+   "duration": 3.406,
+   "mouth": "2234545453344334455553300000533333344433333333320000",
+   "lufs": -18.1,
+   "ogg_bytes": 9042,
+   "m4a_bytes": 13314,
+   "sha256": {
+    "ogg": "6821c84354bc6cf183072b79ffa7a43402ec2ef7f38855909ac8dde8750a35bf",
+    "m4a": "63cc7587c04f278ffc424266c0f82290c3586c878a575d1ea2797ff084b6a201"
+   }
+  },
+  "sentinelIncoming.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "sentinelIncoming",
+   "duration": 1.053,
+   "mouth": "4444444477444000",
+   "lufs": -18.5,
+   "ogg_bytes": 2894,
+   "m4a_bytes": 4802,
+   "sha256": {
+    "ogg": "c5fa61e49b2ec73c73e3102688b527a78630429bdfa6bacb88422f15f6dc4e4c",
+    "m4a": "a569fcffb0f6511398e97a9710aaadf7cd9f54880e202e0749c37455de07ccac"
+   }
+  },
+  "sentinelIncoming.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "sentinelIncoming",
+   "duration": 1.107,
+   "mouth": "33334444444433000",
+   "lufs": -18.5,
+   "ogg_bytes": 3085,
+   "m4a_bytes": 4976,
+   "sha256": {
+    "ogg": "995452c374f495a841ee6fb929b35fe1d0a15e833e70ba61c3dd6734dba59ad9",
+    "m4a": "0c760ef993dd2d79606d2050d480db92f1c833f2d18d4e58abe1c162ef2df6dc"
+   }
+  },
+  "sentinelIncoming.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "sentinelIncoming",
+   "duration": 1.09,
+   "mouth": "44444447774443000",
+   "lufs": -18.5,
+   "ogg_bytes": 3059,
+   "m4a_bytes": 5016,
+   "sha256": {
+    "ogg": "2ef96ab8aeebb7be1e8727b0a809dfed90182b38caa3bcdf6b59f062ce485275",
+    "m4a": "5f79f8c55374348296e7ded1ac48bfac4431257756c8d6a80f08aaeb43595a6d"
+   }
+  },
+  "sentinelIncoming.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "sentinelIncoming",
+   "duration": 1.043,
+   "mouth": "3334477774443000",
+   "lufs": -18.5,
+   "ogg_bytes": 2902,
+   "m4a_bytes": 4820,
+   "sha256": {
+    "ogg": "66f10e0343c52980c34c295d10b863d8b9f5f517eb532fb23a8d02ea2c4b0b1a",
+    "m4a": "797447b087d8b14e351a4106c5605e38e8996bf88338bc3e52ee990e91d7145b"
+   }
+  },
+  "sentinelDive.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "sentinelDive",
+   "duration": 1.477,
+   "mouth": "43434444435554533220000",
+   "lufs": -18.03,
+   "ogg_bytes": 4018,
+   "m4a_bytes": 6342,
+   "sha256": {
+    "ogg": "d25d2828d7d3ddb0d61e771e638f76e90ad5ad4c4fe3200959d3312b5b75fa38",
+    "m4a": "1d1cf3ac282bd61c9d92e092b3aac689b73fdb0c6405de0e5833e1d633e4c624"
+   }
+  },
+  "sentinelDive.h1": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "sentinelDive",
+   "duration": 1.794,
+   "mouth": "334455544333200033335322000",
+   "lufs": -18.05,
+   "ogg_bytes": 4832,
+   "m4a_bytes": 7447,
+   "sha256": {
+    "ogg": "a3eb3c1b269a1cfadec1f050a03079854c8a57eccd875680b36c1523a4780170",
+    "m4a": "f63bee0c618ca4a589e74cbdcf2b7c9ea945e5b16d53c5495444f467fbe79f69"
+   }
+  },
+  "sentinelDive.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "sentinelDive",
+   "duration": 2.46,
+   "mouth": "2244554333554322000344433335344320000",
+   "lufs": -18.15,
+   "ogg_bytes": 6571,
+   "m4a_bytes": 9891,
+   "sha256": {
+    "ogg": "abfb8bddf1e5d4cc37b255fb185a2a6819da673759ea5408b43f7e8d8209ecdc",
+    "m4a": "5447a7801356902f7e2766587d9fe59b9af5c3dccccbde8ff87b89889f7257c6"
+   }
+  },
+  "sentinelDive.h3": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "sentinelDive",
+   "duration": 1.657,
+   "mouth": "3554444544534433443220000",
+   "lufs": -18.0,
+   "ogg_bytes": 4557,
+   "m4a_bytes": 6985,
+   "sha256": {
+    "ogg": "79a466ec5214bffd554f1a9fc72dbf11c9d20fad77b33a62967dc2d958f7487e",
+    "m4a": "98752f0f2dce28bf31e24ff144bde57293fa397cbb56ff634deb0273f546be25"
+   }
+  },
+  "sentinelDive.h4": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "sentinelDive",
+   "duration": 1.73,
+   "mouth": "45443345454334444533220000",
+   "lufs": -18.0,
+   "ogg_bytes": 4702,
+   "m4a_bytes": 7236,
+   "sha256": {
+    "ogg": "0aacaf520592fd2be5bca89c7f57097a7cbd704f566890e5809555befc66d48b",
+    "m4a": "0a8239ecbdce58cc793d6b82f1454525684984ae762b931ce0d1cc9fd3bd70c3"
+   }
+  },
+  "diveWarning.h0": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "diveWarning",
+   "duration": 1.315,
+   "mouth": "44444433555433220000",
+   "lufs": -18.04,
+   "ogg_bytes": 3635,
+   "m4a_bytes": 5735,
+   "sha256": {
+    "ogg": "4332065ee94d122796309eebe26f6f776e68ae04707d4c641857497f3c540951",
+    "m4a": "9c8c2b9527928e0ca982cac84bdfc7c5c3a4f99c952e3653c5dfb05dec4efd0a"
+   }
+  },
+  "diveWarning.h1": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "diveWarning",
+   "duration": 1.133,
+   "mouth": "35544544333320000",
+   "lufs": -18.08,
+   "ogg_bytes": 3109,
+   "m4a_bytes": 5027,
+   "sha256": {
+    "ogg": "333e902d7aa53024aa100198d2d188d87f1639bd7af52410d793e5d9bf60e20a",
+    "m4a": "67d209223b151c1bc3224255cfd98427df9c34daacbd6cb32539955c1a2004b8"
+   }
+  },
+  "diveWarning.h2": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "diveWarning",
+   "duration": 1.909,
+   "mouth": "43444334445554435344453330000",
+   "lufs": -18.02,
+   "ogg_bytes": 5101,
+   "m4a_bytes": 7895,
+   "sha256": {
+    "ogg": "9db9315b136954ac296b0ee7fdcc05c368b47b2c97c3aec1b4126fd4e9bfe9cd",
+    "m4a": "277e6110acb3d2edcd854c15423b806fe5802905be318c00cb8e27b51211e93b"
+   }
+  },
+  "diveWarning.h3": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "diveWarning",
+   "duration": 2.489,
+   "mouth": "33444444334554443200024455454445320000",
+   "lufs": -18.02,
+   "ogg_bytes": 6638,
+   "m4a_bytes": 10002,
+   "sha256": {
+    "ogg": "6f658e7fd723e71eec3ec2f0a05abd3b0ad7dd1ed3c4b5983d39ba254c198245",
+    "m4a": "2cd91b2f32b8c9e437d363620d5b34b309f1dbb833668995ee1247217eb8a8c1"
+   }
+  },
+  "diveWarning.h4": {
+   "speaker": "pip",
+   "kind": "human",
+   "trigger": "diveWarning",
+   "duration": 1.697,
+   "mouth": "45453444533444544435330000",
+   "lufs": -18.0,
+   "ogg_bytes": 4582,
+   "m4a_bytes": 7136,
+   "sha256": {
+    "ogg": "d14675674e80e2ae5b1a5365fab4d06c1ad9ed83b9e026fc6cf4d0a7d6b26fc4",
+    "m4a": "2b27852aac663abb35bb1199c8008a6d6f862cac0a334454d1fcee7ba19460cd"
+   }
+  },
+  "diveWarning.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "diveWarning",
+   "duration": 0.989,
+   "mouth": "444444444443000",
+   "lufs": -18.5,
+   "ogg_bytes": 2669,
+   "m4a_bytes": 4611,
+   "sha256": {
+    "ogg": "a161f859c4157a28d143efd2f63501afff043c32ed2859f605fe415e1b1eceb0",
+    "m4a": "2e0a5435d40cda91fbda6de4dad2966178ddcefe2ad03ea7fe4955d29a85248a"
+   }
+  },
+  "diveWarning.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "diveWarning",
+   "duration": 0.892,
+   "mouth": "33347744433000",
+   "lufs": -18.5,
+   "ogg_bytes": 2526,
+   "m4a_bytes": 4212,
+   "sha256": {
+    "ogg": "af8950392606d2f71a539f544441a5e21c666439bacda52f0b3b3e9b3efcbf88",
+    "m4a": "9053cfea9dbb5ac73fc3bcfd8daabd5cb5930f3ba4695f89c36ca5f6eee8763b"
+   }
+  },
+  "diveWarning.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "diveWarning",
+   "duration": 0.828,
+   "mouth": "4347744443000",
+   "lufs": -18.5,
+   "ogg_bytes": 2324,
+   "m4a_bytes": 4002,
+   "sha256": {
+    "ogg": "1d8791b3efc41983ccc8ea5389282e34f1aeeb20c612f3ad0ca84329c515844c",
+    "m4a": "c565558e026c049119692ee89695590008a538dc121f3f98ca921d9008fab77b"
+   }
+  },
+  "diveWarning.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "diveWarning",
+   "duration": 0.765,
+   "mouth": "444447743000",
+   "lufs": -18.5,
+   "ogg_bytes": 2127,
+   "m4a_bytes": 3770,
+   "sha256": {
+    "ogg": "4347fd336ad031e6aacf76c665d23b3187587b73474d80ca40d1f71471086803",
+    "m4a": "929cb82087ad7384f41fc6b6cabbfcde7aeecda56b808fe3973ec48db401ef70"
+   }
+  },
+  "diveWarning.d4": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "diveWarning",
+   "duration": 0.833,
+   "mouth": "4444477743000",
+   "lufs": -18.5,
+   "ogg_bytes": 2331,
+   "m4a_bytes": 4049,
+   "sha256": {
+    "ogg": "5ab65a335b70c16d75989f085e907ca96516a458af9d145d6c72aae56e6fc870",
+    "m4a": "f3bb6eef4c04fc0fafb85881ef76a419ff699c981f2593c11eed41db238281e2"
+   }
+  },
+  "eliteSighted.h0": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "eliteSighted",
+   "duration": 2.705,
+   "mouth": "44444444353544333335520003333455332220000",
+   "lufs": -18.1,
+   "ogg_bytes": 7160,
+   "m4a_bytes": 10785,
+   "sha256": {
+    "ogg": "44aa8057d02447b427bf13791dcba672f2e01a10191c03c4bc6f1ad4fba6faff",
+    "m4a": "cac0ff86e233ae65e5311b33a7dd3bbaefbc515309cdb52201ff3f432725080f"
+   }
+  },
+  "eliteSighted.h1": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "eliteSighted",
+   "duration": 3.13,
+   "mouth": "33533333335442000000045544333543335533333200000",
+   "lufs": -18.38,
+   "ogg_bytes": 8295,
+   "m4a_bytes": 12336,
+   "sha256": {
+    "ogg": "4b5bb74896d553021c12a8cca527fecfc2d3e86cdeb4f2d6927300e75cc494e7",
+    "m4a": "cb30f953887fd4192345113c3d1cf7fa932c96ac44210cc5e94045a166296f0e"
+   }
+  },
+  "eliteSighted.h2": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "eliteSighted",
+   "duration": 2.666,
+   "mouth": "4455535454544333320000044434333443322000",
+   "lufs": -18.29,
+   "ogg_bytes": 7127,
+   "m4a_bytes": 10615,
+   "sha256": {
+    "ogg": "37e72190943c501b4a12d65ea0c7ce80f369b87a56d03627868247d74e01cf02",
+    "m4a": "56d40efbecdce11b3915dfa5e18ad7355adbf627e488c3d941e598f97ae96513"
+   }
+  },
+  "eliteSighted.h3": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "eliteSighted",
+   "duration": 1.925,
+   "mouth": "35545444432354444445333220000",
+   "lufs": -18.11,
+   "ogg_bytes": 5164,
+   "m4a_bytes": 7904,
+   "sha256": {
+    "ogg": "13cf4f9923c1b9a1603ac72ca5dd50b544b66608e39aed6bb34defb75a1a5a06",
+    "m4a": "e77f8f71e00a2c389ef2907ed13b28ff89e8683f16f867142d9f078753ca8468"
+   }
+  },
+  "eliteSighted.h4": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "eliteSighted",
+   "duration": 2.471,
+   "mouth": "45454344444454544500245433333333200000",
+   "lufs": -18.03,
+   "ogg_bytes": 6588,
+   "m4a_bytes": 9891,
+   "sha256": {
+    "ogg": "e505148b63e3afb94fcb03ba7779b4e79cf8fbaa57769c8276d21f542a647b5c",
+    "m4a": "4a0f26968f3ff70952a84c003563162670ae04f0a240751b47a9f395b3221853"
+   }
+  },
+  "eliteSighted.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "eliteSighted",
+   "duration": 1.071,
+   "mouth": "43334444477770000",
+   "lufs": -18.51,
+   "ogg_bytes": 2984,
+   "m4a_bytes": 4842,
+   "sha256": {
+    "ogg": "c3f772f64a5aa07de2a1ee80f22b185095c03d37b6dc111dd071d312b34b03ee",
+    "m4a": "cedbcf5f88f18811bb17612b6dd844913380b5cc10e99764ee1a0ca3ae0348e8"
+   }
+  },
+  "eliteSighted.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "eliteSighted",
+   "duration": 1.11,
+   "mouth": "33334444444443000",
+   "lufs": -18.53,
+   "ogg_bytes": 3140,
+   "m4a_bytes": 4992,
+   "sha256": {
+    "ogg": "5d27e3d0c734773f01be4640e6e420356a2371d13267bb68831ab0d370035ebe",
+    "m4a": "06577d9d81ac80ad2c51b6e7a896fd9eba8459902c490d601df884bf7ac426fd"
+   }
+  },
+  "eliteSighted.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "eliteSighted",
+   "duration": 1.096,
+   "mouth": "43334447774443000",
+   "lufs": -18.5,
+   "ogg_bytes": 3083,
+   "m4a_bytes": 4971,
+   "sha256": {
+    "ogg": "1c3c0fe125e59746be7548af11340599bcec856a6598c9aa78b1f410cb132747",
+    "m4a": "b638123917e80e5cd753812b879ad281f86c8c09ea2ef5d2ea541a5304a88754"
+   }
+  },
+  "eliteSighted.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "eliteSighted",
+   "duration": 1.093,
+   "mouth": "33344747774443000",
+   "lufs": -18.5,
+   "ogg_bytes": 3025,
+   "m4a_bytes": 4965,
+   "sha256": {
+    "ogg": "04c57144f2f1399f0a509e06eafcb8b6e3baba3f203474678c5105d5d07b3bdb",
+    "m4a": "9a6b394b8971fd5014ebe002c1776d106bbcdf6a45203a4b9ae73e3a7a63dc2d"
+   }
+  },
+  "shieldSpotted.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "shieldSpotted",
+   "duration": 1.248,
+   "mouth": "4544335533443320000",
+   "lufs": -18.05,
+   "ogg_bytes": 3431,
+   "m4a_bytes": 5506,
+   "sha256": {
+    "ogg": "9a18ae7926e711f047ffd0b0230f24b0608f7565c246597ec13441071125cdbb",
+    "m4a": "5c547867cf6abd60d554a7ae8029d43a5210a99f2bc9d0df801bd20677902e94"
+   }
+  },
+  "shieldSpotted.h1": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "shieldSpotted",
+   "duration": 2.135,
+   "mouth": "333555543333333332000244453220000",
+   "lufs": -18.08,
+   "ogg_bytes": 5745,
+   "m4a_bytes": 8707,
+   "sha256": {
+    "ogg": "e6ed1c85164eac48a150d303ad12f19a7a530c2644e6e4194129e7e7e796bbfd",
+    "m4a": "d4537cc20ae49379a3cdf7a3d7f3130751b59a9916291d128f8fe6b7810a63e3"
+   }
+  },
+  "shieldSpotted.h2": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "shieldSpotted",
+   "duration": 2.282,
+   "mouth": "33444454444455444432235423355220000",
+   "lufs": -18.0,
+   "ogg_bytes": 5978,
+   "m4a_bytes": 9211,
+   "sha256": {
+    "ogg": "7aa8c0d80c1c08779d3bba1884fa693e7feeb65cec1d516984d9deaa2f5b0295",
+    "m4a": "e3511fa38ae6ecc94c9f3691ef2bc1dfc5a93db4285034cacba6255ca088d630"
+   }
+  },
+  "shieldSpotted.h3": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "shieldSpotted",
+   "duration": 1.512,
+   "mouth": "33533455544433344320000",
+   "lufs": -18.01,
+   "ogg_bytes": 4086,
+   "m4a_bytes": 6504,
+   "sha256": {
+    "ogg": "3c5667e7369964eae9346032b578516ea7d254b5968a0094b072157df1a165ad",
+    "m4a": "06230a5cbdc697fa7f6551260e9d1bae6be99e4cf8327e6ca2a7de6031aaa7a0"
+   }
+  },
+  "shieldSpotted.h4": {
+   "speaker": "pip",
+   "kind": "human",
+   "trigger": "shieldSpotted",
+   "duration": 1.785,
+   "mouth": "334554444454345445333332000",
+   "lufs": -18.05,
+   "ogg_bytes": 4828,
+   "m4a_bytes": 7452,
+   "sha256": {
+    "ogg": "6756773e4ef8e1765f91f0366031fdf787f7541bb6a9c6b2c8080ba402561d69",
+    "m4a": "336ff20d69f425b052e00b4646e5be721c9fd98da0220f220332d5cb4723bd54"
+   }
+  },
+  "shieldCollected.h0": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "shieldCollected",
+   "duration": 1.5,
+   "mouth": "22335534430023533320000",
+   "lufs": -18.5,
+   "ogg_bytes": 4035,
+   "m4a_bytes": 6432,
+   "sha256": {
+    "ogg": "47abc8c008e360534e4ae3106604aeb8248f92fe8561ae7cff430c13a0f768b1",
+    "m4a": "6cb15a60b7134ec506fdb0d07d9440fab228f893598998fc294137ea9ce458a8"
+   }
+  },
+  "shieldCollected.h1": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "shieldCollected",
+   "duration": 1.698,
+   "mouth": "45453333322000544333220000",
+   "lufs": -18.05,
+   "ogg_bytes": 4568,
+   "m4a_bytes": 7152,
+   "sha256": {
+    "ogg": "c26d45b119f6447394801958019af14e4f7751440d510152fca3f0152a162856",
+    "m4a": "5545324a4269e9f79a0463572b8d0069cb58bd71a2f3d46a1702407bee3d8fd1"
+   }
+  },
+  "shieldCollected.h2": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "shieldCollected",
+   "duration": 1.145,
+   "mouth": "333454445443530000",
+   "lufs": -18.03,
+   "ogg_bytes": 3075,
+   "m4a_bytes": 5154,
+   "sha256": {
+    "ogg": "89eacae488cced2a9e0ce311c1ab2eadbae73c714f58b9741f8b15f676e91460",
+    "m4a": "023f1b54d3020696d22f18162fce410c6d3b4f1a2678e3b555f46eae189a745e"
+   }
+  },
+  "shieldCollected.h3": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "shieldCollected",
+   "duration": 1.78,
+   "mouth": "224444354443234445355322000",
+   "lufs": -18.0,
+   "ogg_bytes": 4771,
+   "m4a_bytes": 7430,
+   "sha256": {
+    "ogg": "84fc8f309f3a13ddb049a29c01857e1f7710ebcf451fd0e5fe107f9d2cd87577",
+    "m4a": "f1cd4ad943c3c2a233e5bfd5e7b7006950c32b5467552a96b2eeb9d213816aa8"
+   }
+  },
+  "shieldExpiring.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "shieldExpiring",
+   "duration": 1.592,
+   "mouth": "223455544443544433222000",
+   "lufs": -18.02,
+   "ogg_bytes": 4299,
+   "m4a_bytes": 6762,
+   "sha256": {
+    "ogg": "48cd571ebde67efb09e62e2527992a5cdf8dd928eff0bf931740ad96aa388607",
+    "m4a": "6f8502ef7ad9ab20cbbceaa97abaab1f3b47c9bdef171b4bb65092f01db89fb9"
+   }
+  },
+  "shieldExpiring.h1": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "shieldExpiring",
+   "duration": 1.794,
+   "mouth": "334444334444555344224550000",
+   "lufs": -18.01,
+   "ogg_bytes": 4788,
+   "m4a_bytes": 7431,
+   "sha256": {
+    "ogg": "e94aff8186b794b40d9a571711f69bf0c7fbe5dbf3210228befe1e194645b906",
+    "m4a": "69a29bc2b66667869592818e6f119f6a14d3aacba90ba3bb105302953e49de33"
+   }
+  },
+  "shieldExpiring.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "shieldExpiring",
+   "duration": 2.493,
+   "mouth": "33445545545433454322002444433442200000",
+   "lufs": -18.03,
+   "ogg_bytes": 6610,
+   "m4a_bytes": 10032,
+   "sha256": {
+    "ogg": "898752900f951cb2535bce70e80a4c96ce9d346c40597efbde608edc3082e04c",
+    "m4a": "f88af3d94c18dde80bcb59689c313a2d86eeb6c91310121df4799fd3033baf32"
+   }
+  },
+  "shieldExpiring.h3": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "shieldExpiring",
+   "duration": 1.238,
+   "mouth": "3533543353433322000",
+   "lufs": -18.0,
+   "ogg_bytes": 3410,
+   "m4a_bytes": 5457,
+   "sha256": {
+    "ogg": "03b000f2055d707cbb20258c9ddd152e4e8756e398881c07c215a076171066eb",
+    "m4a": "e076c1cdaa6bf1cb8532895f2efcf2a5d7df6c9db72e69467e89244b666cd8e5"
+   }
+  },
+  "shieldExpiring.h4": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "shieldExpiring",
+   "duration": 2.63,
+   "mouth": "2234444444345532200004553344543332220000",
+   "lufs": -18.04,
+   "ogg_bytes": 6973,
+   "m4a_bytes": 10478,
+   "sha256": {
+    "ogg": "79306cb7017df0a92d455b1e655a90d68b2b2a1c717fee2b37878b2f8ae0cab8",
+    "m4a": "15e4f079ecbc987a3cfb4e84049d6015d9a7330ee76924a3676ff90a30f964c1"
+   }
+  },
+  "shieldBroken.h0": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "shieldBroken",
+   "duration": 2.186,
+   "mouth": "223544353335352000443333332222000",
+   "lufs": -18.01,
+   "ogg_bytes": 5871,
+   "m4a_bytes": 8875,
+   "sha256": {
+    "ogg": "173f7bdad909d6f767e5ce7f4b022f71b67d40b6c726aa89ca09ee7d49edc703",
+    "m4a": "28fda788a71202b558cdd701592c69dfd5151a012a88c5f3c1bfadd27f024625"
+   }
+  },
+  "shieldBroken.h1": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "shieldBroken",
+   "duration": 1.176,
+   "mouth": "223355334443220000",
+   "lufs": -18.0,
+   "ogg_bytes": 3191,
+   "m4a_bytes": 5258,
+   "sha256": {
+    "ogg": "719da2a149835b2ad46e81f9901b358bbab5747aa63d7f94b180dada68e624fb",
+    "m4a": "ce3729e6439ee4e91ebe47adba2aee5a1c4d01782101ad372ce5f2aa78ffed69"
+   }
+  },
+  "shieldBroken.h2": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "shieldBroken",
+   "duration": 2.348,
+   "mouth": "333454444445200005443344455433220000",
+   "lufs": -18.13,
+   "ogg_bytes": 6256,
+   "m4a_bytes": 9437,
+   "sha256": {
+    "ogg": "86518365dda9e99bccadb369b27269b8709ba3864340fac1febbaddee637c65b",
+    "m4a": "843b18b7b3fe219d517f95cecfa8dc7e0d55046d9c0c3f3242f31605af737b78"
+   }
+  },
+  "shieldBroken.h3": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "shieldBroken",
+   "duration": 2.296,
+   "mouth": "33444554444455530044444544443220000",
+   "lufs": -18.0,
+   "ogg_bytes": 6168,
+   "m4a_bytes": 9284,
+   "sha256": {
+    "ogg": "41e1b0a4736cf422abe8440d0c812f2a16fa4f13077e35bd86d10ccc65b8e8c1",
+    "m4a": "acdc8224257ca872581e8392ac6f826c3d4cd52b37ff5e600a5f7b419ae7ab06"
+   }
+  },
+  "weaponPickup.h0": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "weaponPickup",
+   "duration": 1.212,
+   "mouth": "3554453344333200000",
+   "lufs": -18.0,
+   "ogg_bytes": 3323,
+   "m4a_bytes": 5408,
+   "sha256": {
+    "ogg": "c2b037fbe87cd6d31b0ba513d8657ef6ba50db8790310d2bd23d4885a3b34c1b",
+    "m4a": "8e2428ba2167acc8f83f0bc68900ef4bcc36a8f1feb6304c12657d6ad68e2dc7"
+   }
+  },
+  "weaponPickup.h1": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "weaponPickup",
+   "duration": 1.679,
+   "mouth": "45445543003335333333200000",
+   "lufs": -18.56,
+   "ogg_bytes": 4577,
+   "m4a_bytes": 7099,
+   "sha256": {
+    "ogg": "9bfcf73a0771f5b93f6a8f6306dc60b65aa3256cdc3d5b1803a41f7561a1b164",
+    "m4a": "ce7ded0496df2db163d0f582ae820727df96a562b84115558951f4b3ab699fbd"
+   }
+  },
+  "weaponPickup.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "weaponPickup",
+   "duration": 1.749,
+   "mouth": "225522333353333222442200000",
+   "lufs": -18.02,
+   "ogg_bytes": 4726,
+   "m4a_bytes": 7291,
+   "sha256": {
+    "ogg": "e15a781afad71afad84a3492752a63927b5d85f279f5c4601c1cfc846b5df86e",
+    "m4a": "6a174acd40b0a6710dd9a9b6b3f045cb74a560ef5b270312434a4d9b6efb407a"
+   }
+  },
+  "weaponPickup.h3": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "weaponPickup",
+   "duration": 1.772,
+   "mouth": "223334454433553354433530000",
+   "lufs": -18.06,
+   "ogg_bytes": 4776,
+   "m4a_bytes": 7424,
+   "sha256": {
+    "ogg": "5e814e6e8f599e3ad0a86b35bee647b22c73b646f7b61d5dc6f7a3de12160ed6",
+    "m4a": "643536882e4a0e153627b05e21c8083e5cd80b03e8334b62f5c89e8937f01c6d"
+   }
+  },
+  "weaponPickup.h4": {
+   "speaker": "pip",
+   "kind": "human",
+   "trigger": "weaponPickup",
+   "duration": 1.981,
+   "mouth": "455554444444454444444433320000",
+   "lufs": -18.03,
+   "ogg_bytes": 5308,
+   "m4a_bytes": 8214,
+   "sha256": {
+    "ogg": "6d6db44d62ce947f5826575c62590ad1ae2ab5f6dc9f95ce1b847639bf897a07",
+    "m4a": "5440a1822267b708218ff93e561c762d728d36001e661ed93f0f90ad0561fb90"
+   }
+  },
+  "weaponPickup.spread.h0": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "weaponPickup.spread",
+   "duration": 1.669,
+   "mouth": "44454444544544533333220000",
+   "lufs": -18.05,
+   "ogg_bytes": 4516,
+   "m4a_bytes": 6998,
+   "sha256": {
+    "ogg": "2ef40584e305eefa3a0c761b5b81268b23d6d8dbf4ad43fa2dce27a01aa50dc2",
+    "m4a": "8ceba876e0988e3604207c9e20ae07579cb6d0e9c850a4b6dd551798c1cf5d2a"
+   }
+  },
+  "weaponPickup.spread.h1": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "weaponPickup.spread",
+   "duration": 2.628,
+   "mouth": "3334445443353333552200254453334445330000",
+   "lufs": -18.03,
+   "ogg_bytes": 6985,
+   "m4a_bytes": 10494,
+   "sha256": {
+    "ogg": "59f1f8a8b3d1a5a26f784d51fe59c2b33dcf5179f75b3aaf9d8654ab88a7f96b",
+    "m4a": "c9eb8e75e575755102116a71994c2e39cf48fc66de7e96c63d73a29ace721dfd"
+   }
+  },
+  "weaponPickup.spread.h2": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "weaponPickup.spread",
+   "duration": 1.821,
+   "mouth": "0054533443535442333322220000",
+   "lufs": -18.0,
+   "ogg_bytes": 4823,
+   "m4a_bytes": 7568,
+   "sha256": {
+    "ogg": "8d86fa4f6ee5942f6825ebf9c562f36102c360d1d826825611f68bae9c83514d",
+    "m4a": "dd388381054cf6cbbe1b930b5875e82fed3fd4b8de2ef36fe8e8fa7c5ded8b88"
+   }
+  },
+  "weaponPickup.spread.h3": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "weaponPickup.spread",
+   "duration": 2.599,
+   "mouth": "003443344222445454455454454433333322000",
+   "lufs": -18.02,
+   "ogg_bytes": 6960,
+   "m4a_bytes": 10348,
+   "sha256": {
+    "ogg": "e095f5bf639eb9dd8ee9df9f643f184aed6d7ed64501b617120c9bc3979bb352",
+    "m4a": "2f858ba70e7ed7d7974a592dc49764d75f46114d42ec7f0f0b3f610494345c4e"
+   }
+  },
+  "weaponPickup.rapid.h0": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "weaponPickup.rapid",
+   "duration": 1.688,
+   "mouth": "44445333332200545533200000",
+   "lufs": -18.05,
+   "ogg_bytes": 4586,
+   "m4a_bytes": 7114,
+   "sha256": {
+    "ogg": "f5c3cad6a754abc63ab3297c9155f52a8fd9f104c5e6e1928b9debf2c0ac78f6",
+    "m4a": "6691a97bcfeb7418f19a03b795f58ebc5c543a7ad4811314439f1434b8c6ecbb"
+   }
+  },
+  "weaponPickup.rapid.h1": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "weaponPickup.rapid",
+   "duration": 1.492,
+   "mouth": "44445444555334443200000",
+   "lufs": -18.01,
+   "ogg_bytes": 4042,
+   "m4a_bytes": 6348,
+   "sha256": {
+    "ogg": "5990beb8155f426ba0281b5b9d42ba25a0d98426e721069b16092f07f33c7367",
+    "m4a": "937aeeadb4e3acee8348c380355047a5ff6f537fc359c4917e35bca1cac70da6"
+   }
+  },
+  "weaponPickup.rapid.h2": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "weaponPickup.rapid",
+   "duration": 3.275,
+   "mouth": "45433443344444355554444552000445333344444453320000",
+   "lufs": -18.02,
+   "ogg_bytes": 8709,
+   "m4a_bytes": 12841,
+   "sha256": {
+    "ogg": "9a9cd2acae0bb4e1d4d0386cea7020336d23d54161fefebc60a4f4e335e56745",
+    "m4a": "464406b6c76bd713e5183350425215cb50ef4428d516572b9a4687f55d5b75dd"
+   }
+  },
+  "weaponPickup.rapid.h3": {
+   "speaker": "pip",
+   "kind": "human",
+   "trigger": "weaponPickup.rapid",
+   "duration": 2.329,
+   "mouth": "33454444433544445444345444533552000",
+   "lufs": -18.0,
+   "ogg_bytes": 6271,
+   "m4a_bytes": 9419,
+   "sha256": {
+    "ogg": "15cd418bcb7ac40dff851719a766b69cbc0808f0725fcb30445e4c4e128bfed6",
+    "m4a": "3e8ad323afe27889b383c7288b8b87f2212001e36f71d66e8f1db8340da1ac17"
+   }
+  },
+  "weaponPickup.powerful.h0": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "weaponPickup.powerful",
+   "duration": 2.571,
+   "mouth": "224543334443222000244455344335543220000",
+   "lufs": -18.04,
+   "ogg_bytes": 6918,
+   "m4a_bytes": 10260,
+   "sha256": {
+    "ogg": "0f8dd95860a94393d29c1b59b456a066e0902a41a9544f5cc4d222323da907bb",
+    "m4a": "6dd940641e9dc4549e500f32e25e46d32451157b47828ee5d2d32ec50d9b4b30"
+   }
+  },
+  "weaponPickup.powerful.h1": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "weaponPickup.powerful",
+   "duration": 2.179,
+   "mouth": "444544443335352000035454443220000",
+   "lufs": -18.13,
+   "ogg_bytes": 5842,
+   "m4a_bytes": 8869,
+   "sha256": {
+    "ogg": "c979688d946caa2213b62da1958844f34020520fabdbf050a2343a92c471213d",
+    "m4a": "4ddb5b19995d5c0dc097002a2bdc238f3b15220a7fe4ae12138c132eedb20f28"
+   }
+  },
+  "weaponPickup.powerful.h2": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "weaponPickup.powerful",
+   "duration": 2.446,
+   "mouth": "2244444444552244444432534344455532000",
+   "lufs": -18.01,
+   "ogg_bytes": 6487,
+   "m4a_bytes": 9864,
+   "sha256": {
+    "ogg": "5285f51de386274ec53d2cb0cc113e68180e0242028c619652c31c8e3fda86da",
+    "m4a": "fc56346905e6a18ce66e2515186551cd240df96ff4a5a569338ffc802959855a"
+   }
+  },
+  "weaponPickup.powerful.h3": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "weaponPickup.powerful",
+   "duration": 2.246,
+   "mouth": "2244433444553334554544444335332000",
+   "lufs": -18.05,
+   "ogg_bytes": 5967,
+   "m4a_bytes": 9119,
+   "sha256": {
+    "ogg": "3f7f565df0441d023d0134e532f203eabee8c2f00bc40b5936a13659f84f27c7",
+    "m4a": "dfec564a247170b2f75850928b3acb76cf36e305d3c9d6933364be951519c538"
+   }
+  },
+  "weaponPickup.large.h0": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "weaponPickup.large",
+   "duration": 1.586,
+   "mouth": "455344422445353333322000",
+   "lufs": -18.08,
+   "ogg_bytes": 4290,
+   "m4a_bytes": 6735,
+   "sha256": {
+    "ogg": "757f4379cc5089e8434da0ea811a7169ce7be57ef73fdf83891e317eeef488dc",
+    "m4a": "a3171c939bdda7c7e77742ed0d3a6d55b73800c3e6d3097fbff0a4ca0fe9baba"
+   }
+  },
+  "weaponPickup.large.h1": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "weaponPickup.large",
+   "duration": 2.15,
+   "mouth": "444544444455345335443353332220000",
+   "lufs": -18.0,
+   "ogg_bytes": 5652,
+   "m4a_bytes": 8746,
+   "sha256": {
+    "ogg": "63759d984ece7c54bc4abdafdefaa0ee97f4e7282bb40fb9ed37b1f459160fd6",
+    "m4a": "6f10f9154e913ccb62a15c438967baae0f5669ac07955ea6fc371fbc633e6179"
+   }
+  },
+  "weaponPickup.large.h2": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "weaponPickup.large",
+   "duration": 2.038,
+   "mouth": "4544333445353322200000454322000",
+   "lufs": -18.06,
+   "ogg_bytes": 5466,
+   "m4a_bytes": 8352,
+   "sha256": {
+    "ogg": "8ab5b7455ceb057f86df2aa38663b84c9757f97ae63992ec5d6d0fe1cf5e2b74",
+    "m4a": "1728cd67e924e5b9c852c3af02a8babb84638927d75c363b282b00971c7e81e8"
+   }
+  },
+  "weaponPickup.large.h3": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "weaponPickup.large",
+   "duration": 1.901,
+   "mouth": "45443344445334554454332200000",
+   "lufs": -18.01,
+   "ogg_bytes": 5136,
+   "m4a_bytes": 7895,
+   "sha256": {
+    "ogg": "51a8b4221b47aad2387d252fbe9946c9daab28d390672f4152962c5f0f010bcc",
+    "m4a": "9b3900ff4d81b9b885dcd6713ce043a9ef6f076e8b9dd19bf6105ebf154bc287"
+   }
+  },
+  "homingPickup.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "homingPickup",
+   "duration": 1.492,
+   "mouth": "22445454435334433220000",
+   "lufs": -18.0,
+   "ogg_bytes": 4010,
+   "m4a_bytes": 6360,
+   "sha256": {
+    "ogg": "9b537b1756fa25e955f06fc5d6a1874079bb62b50f17997a2b3d72e314f8a2d0",
+    "m4a": "92dcd389d67c67717cf4e43e876719f37fcf1edd170a0fc2fbfb549a6ecc8714"
+   }
+  },
+  "homingPickup.h1": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "homingPickup",
+   "duration": 1.778,
+   "mouth": "444444334442235533353520000",
+   "lufs": -18.02,
+   "ogg_bytes": 4740,
+   "m4a_bytes": 7440,
+   "sha256": {
+    "ogg": "d7fbec0ccec92dccb2bc67ed466a26dd58aa672735e2a8e49296b1b9bc633032",
+    "m4a": "47101bbac83fba4aa0945886640253d908272a1cc3c6c80253ce3cef5383d8a0"
+   }
+  },
+  "homingPickup.h2": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "homingPickup",
+   "duration": 2.007,
+   "mouth": "4454544455333454444334432200000",
+   "lufs": -18.12,
+   "ogg_bytes": 5421,
+   "m4a_bytes": 8239,
+   "sha256": {
+    "ogg": "4f3729af6e754bf854372e66bbe4bed5d93e9bf1158cfea5989ece6df5b0458b",
+    "m4a": "1e1a7cc5bfe1e6816275f03bdd6fe8306836be5ff230e2d850f8d3296f51332c"
+   }
+  },
+  "homingPickup.h3": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "homingPickup",
+   "duration": 2.661,
+   "mouth": "2233223335453320000053533335333333220000",
+   "lufs": -18.35,
+   "ogg_bytes": 7099,
+   "m4a_bytes": 10629,
+   "sha256": {
+    "ogg": "37ff32eadb6e2b1cd4a43f651deea527ba5920205bc3c81fa4b39c0a519e4528",
+    "m4a": "c109c1477665a749b33873b7aa58c30313c804b8f400fee9158483b4667233b4"
+   }
+  },
+  "homingPickup.h4": {
+   "speaker": "march",
+   "kind": "human",
+   "trigger": "homingPickup",
+   "duration": 2.96,
+   "mouth": "444433453355334543322220002345333335544320000",
+   "lufs": -18.59,
+   "ogg_bytes": 7823,
+   "m4a_bytes": 11727,
+   "sha256": {
+    "ogg": "75a939c41f13dbaa7c9f376fc3047ef544cf3617407afb11c50398096efe4f42",
+    "m4a": "fa827a9678d5dd6210aeeb1a1a0fd04de86b124eb2137a1870b26feceeb2f5a6"
+   }
+  },
+  "lifeLost.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "lifeLost",
+   "duration": 3.11,
+   "mouth": "22333234445534445344320000005443333554435320000",
+   "lufs": -18.27,
+   "ogg_bytes": 8206,
+   "m4a_bytes": 12189,
+   "sha256": {
+    "ogg": "d26da22318c97a640126c12b1860d183d578f2e6c98dac46ce980f0e503c66d2",
+    "m4a": "7621042f63db592742dd68afb20fe6ec091db7853097822fab6f55b1132d619a"
+   }
+  },
+  "lifeLost.h1": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "lifeLost",
+   "duration": 1.793,
+   "mouth": "224544433000044445453222000",
+   "lufs": -18.03,
+   "ogg_bytes": 4781,
+   "m4a_bytes": 7457,
+   "sha256": {
+    "ogg": "82ec5c65ebb9d6e2d27a8501a53c82ac97e0b850ceaf8c59f0001c6d8d923b3f",
+    "m4a": "de1a2aacccd013931cb06b091cd8ab086e25d753fc9d8021ecfefcfa12494fb5"
+   }
+  },
+  "lifeLost.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "lifeLost",
+   "duration": 1.97,
+   "mouth": "335333552223453322444333200000",
+   "lufs": -18.04,
+   "ogg_bytes": 5256,
+   "m4a_bytes": 8119,
+   "sha256": {
+    "ogg": "4e79d0eea12fb348dd19acfd4787867109df3b02be7bb06c6acd723f184e519c",
+    "m4a": "44e1fb8fc4f3f1b79fc4bab31e16ab7e5409a610a99d41b0e9f287e121831ab4"
+   }
+  },
+  "lifeLost.h3": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "lifeLost",
+   "duration": 1.58,
+   "mouth": "335335455443344333200000",
+   "lufs": -18.02,
+   "ogg_bytes": 4309,
+   "m4a_bytes": 6667,
+   "sha256": {
+    "ogg": "d2fcfed197204ceb632b4bbade06207f48bf7e5bcc6269adbd1d0fe86c153663",
+    "m4a": "99cb14825dd3161046e3bfe8122c07d407893dfedad6b774bd0ca41e9cf3721a"
+   }
+  },
+  "lifeLost.h4": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "lifeLost",
+   "duration": 3.59,
+   "mouth": "444445544444533444220000234444444335555553004443332000",
+   "lufs": -18.02,
+   "ogg_bytes": 9443,
+   "m4a_bytes": 13942,
+   "sha256": {
+    "ogg": "f5edcfd5a6fb589967bbbc1b10873ff2ff6daef8dd45b195a712eb1b3696d5f0",
+    "m4a": "3b1b159a240113d31a555ccf1a65fc065a4c29c79529895a9ffaf6dd7fce171f"
+   }
+  },
+  "lifeLost.h5": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "lifeLost",
+   "duration": 3.403,
+   "mouth": "4345332223543533333333333322000035553333553332000000",
+   "lufs": -18.16,
+   "ogg_bytes": 8999,
+   "m4a_bytes": 13297,
+   "sha256": {
+    "ogg": "00bcc353ff9db9e926640a89993d0559e94a4ba614637f683b70ab4f14fce76b",
+    "m4a": "f20f159bc523503dc957f0f05305a41f338a864e0a0e2b060013bd54b50f3072"
+   }
+  },
+  "lifeLost.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "lifeLost",
+   "duration": 1.1,
+   "mouth": "43444444477443000",
+   "lufs": -18.5,
+   "ogg_bytes": 3047,
+   "m4a_bytes": 4968,
+   "sha256": {
+    "ogg": "ff2a809d4eeab444a565c54d88558b7a897800a04a754ebf0131b51a0970e875",
+    "m4a": "2aa3ab7cb24fdd708fe2743919f76eb12eea93e605b2a788a92a7fb0073ecad2"
+   }
+  },
+  "lifeLost.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "lifeLost",
+   "duration": 1.078,
+   "mouth": "33344444444330000",
+   "lufs": -18.56,
+   "ogg_bytes": 3067,
+   "m4a_bytes": 4901,
+   "sha256": {
+    "ogg": "341a4d6fd4ba61db4f8841ddeb250af11bd9174331b13cba1bd04fad31e13b53",
+    "m4a": "73619a04cdb0f04b349e5a5ee8997eb30d130765ea4955ac6cbcc85ca0b72908"
+   }
+  },
+  "lifeLost.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "lifeLost",
+   "duration": 1.132,
+   "mouth": "43447444444443000",
+   "lufs": -18.5,
+   "ogg_bytes": 3192,
+   "m4a_bytes": 5101,
+   "sha256": {
+    "ogg": "6c452a709d7ac022296275a86877e5b47be3b32a82c482395bd4bd4f09844789",
+    "m4a": "6a49824d9b90274afdc09e3ff341dabf052265ff5e770f47f7c5fba18ea147a1"
+   }
+  },
+  "lifeLost.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "lifeLost",
+   "duration": 1.102,
+   "mouth": "44447444444443000",
+   "lufs": -18.58,
+   "ogg_bytes": 3018,
+   "m4a_bytes": 4961,
+   "sha256": {
+    "ogg": "07c5b4fdf792597623a917a6cae07db3e2b2ec0a1c0a42389fe7e850ff0fbaa0",
+    "m4a": "8acf1b9c4397ba3ed24b1fe271df3d6ba77f46524c2a557444147c530a870221"
+   }
+  },
+  "lifeLost.d4": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "lifeLost",
+   "duration": 1.022,
+   "mouth": "7474744447743000",
+   "lufs": -18.5,
+   "ogg_bytes": 2819,
+   "m4a_bytes": 4678,
+   "sha256": {
+    "ogg": "e58a814e93d9aab1565b8619c1ca50b79dde694cf89a4d68593e13c2fe20e5f3",
+    "m4a": "1972646bbad218d1f586f6c1412742e029cecd48b4e6b05d287195c5552c5f84"
+   }
+  },
+  "lowLives.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "lowLives",
+   "duration": 3.014,
+   "mouth": "4544444322333330000034555445335433344533220000",
+   "lufs": -18.11,
+   "ogg_bytes": 8084,
+   "m4a_bytes": 11888,
+   "sha256": {
+    "ogg": "916d4b8e21fe1ad502feaccf83961e1a71d3b8318985f2157fda34d98af4ee48",
+    "m4a": "c23f13717f3cd569d5596e1cb6646420517fb7434daaf783ad04d07a00e906ce"
+   }
+  },
+  "lowLives.h1": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "lowLives",
+   "duration": 2.704,
+   "mouth": "44443533200034455545533224433443322222000",
+   "lufs": -18.11,
+   "ogg_bytes": 7130,
+   "m4a_bytes": 10787,
+   "sha256": {
+    "ogg": "aa06fa22a8492424c152c5386a862d8287791bf93637725504ca5b5382dcb226",
+    "m4a": "c5dcf76f245050eb6834abc1c3ef590b963b506afae5f1fca0c49a3a8983ec45"
+   }
+  },
+  "lowLives.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "lowLives",
+   "duration": 2.996,
+   "mouth": "355444453544200000033555444433333334432222000",
+   "lufs": -18.02,
+   "ogg_bytes": 7988,
+   "m4a_bytes": 11836,
+   "sha256": {
+    "ogg": "b844bfee4aafbf84d115dfe7a16693ce2a7a515d9bb05b0eb53b423f02ba5a5c",
+    "m4a": "79229d6d99fdb223f70281cf63aa0884b2d0d2869a819eda9f62ac1f9b6f6338"
+   }
+  },
+  "lowLives.h3": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "lowLives",
+   "duration": 2.952,
+   "mouth": "004444544444445300003443344435333545553220000",
+   "lufs": -18.03,
+   "ogg_bytes": 7816,
+   "m4a_bytes": 11664,
+   "sha256": {
+    "ogg": "550aba4d8e9688c652a7b068172427ff7815ee5eb98336b3b0743765bfee1cf4",
+    "m4a": "be6d9a98739ea5f3bedc18d15bfbaab990c6cf1d35bda9a5009b9e98e36c1a2a"
+   }
+  },
+  "lowLives.h4": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "lowLives",
+   "duration": 3.407,
+   "mouth": "4544444442005445444443200003333555444544454332200000",
+   "lufs": -18.02,
+   "ogg_bytes": 9029,
+   "m4a_bytes": 13297,
+   "sha256": {
+    "ogg": "8b70a6f62512448fb71084e839e24a4df4dc54f174b7f57255f53e08458e9b8b",
+    "m4a": "c3ef7d4e463bbc2d6c5db47c0f20b60dbc47f9d0c9d8813b9b0d5474f5681baa"
+   }
+  },
+  "extraLife.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "extraLife",
+   "duration": 2.718,
+   "mouth": "22444544543320000045444333354545443222000",
+   "lufs": -18.06,
+   "ogg_bytes": 7239,
+   "m4a_bytes": 10810,
+   "sha256": {
+    "ogg": "9bd3027812139404f3eb88db19edbaebe6c375d7236c75a1794b1f2bdb802164",
+    "m4a": "3d12bd674d9cd9defc782dfc1e46268da691562e56ca2c1fd6578972a3c7013a"
+   }
+  },
+  "extraLife.h1": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "extraLife",
+   "duration": 1.52,
+   "mouth": "22223444555433333322000",
+   "lufs": -18.02,
+   "ogg_bytes": 4129,
+   "m4a_bytes": 6485,
+   "sha256": {
+    "ogg": "ef767af0d40c5bd8b7436bd42af8351e3494821d16b73a14e01481ee1322bc6d",
+    "m4a": "8dc41dfc4bfb824f0943d76310ec10d4d0149d125fac6c8153d36185278d65bd"
+   }
+  },
+  "extraLife.h2": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "extraLife",
+   "duration": 1.967,
+   "mouth": "323543333333220005453353200000",
+   "lufs": -18.04,
+   "ogg_bytes": 5194,
+   "m4a_bytes": 8031,
+   "sha256": {
+    "ogg": "e739d6f5819daa784373ed71d2b3e6b366226eec550164b7138b70cf4e716b0a",
+    "m4a": "22e731eec6e5d03133abd40eb82b8ce9d538f90e1e7da5ffc069d7e442303307"
+   }
+  },
+  "extraLife.h3": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "extraLife",
+   "duration": 2.012,
+   "mouth": "3335455444433354445333333200000",
+   "lufs": -18.03,
+   "ogg_bytes": 5437,
+   "m4a_bytes": 8268,
+   "sha256": {
+    "ogg": "0b2252b31c4a58e14b88483dd17deaf0e2bafe1b0058fd5c70f48b7213c960a8",
+    "m4a": "e8303942ef4c810ca86b793c584a9b0db4ce276974e1755d7ea5e38532e533c9"
+   }
+  },
+  "salvage.h0": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "salvage",
+   "duration": 2.44,
+   "mouth": "3554444334432223355543334445332222000",
+   "lufs": -18.08,
+   "ogg_bytes": 6476,
+   "m4a_bytes": 9800,
+   "sha256": {
+    "ogg": "2ae5addd14fa4e0379e97d2ca5925da98a9466752cac9c156ba893551f2c20ad",
+    "m4a": "82deb29ba8e1592c869a1c5d5e1a76aec4b1538db9ea2ae89fbc55f25fa602f7"
+   }
+  },
+  "salvage.h1": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "salvage",
+   "duration": 1.529,
+   "mouth": "45544445444543333320000",
+   "lufs": -18.02,
+   "ogg_bytes": 4149,
+   "m4a_bytes": 6506,
+   "sha256": {
+    "ogg": "80bf0adeacbf6c308ac484ac3f034fb9cf66729012249df3309a2a0f2cff4da7",
+    "m4a": "c559147c6df9bae1bf8a86845109746c27458e30e077a44b8aa1d47c59e1269b"
+   }
+  },
+  "salvage.h2": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "salvage",
+   "duration": 2.376,
+   "mouth": "334444433443335522454333335344552000",
+   "lufs": -18.04,
+   "ogg_bytes": 6382,
+   "m4a_bytes": 9591,
+   "sha256": {
+    "ogg": "61462f9047927665b638d0c5b37bc11d58acf50266ab568be727e78223bddfc3",
+    "m4a": "2ab7ba4db769e2870787d691c5dcc849570ba247cb30c1b61cadbab462ebdce1"
+   }
+  },
+  "salvage.h3": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "salvage",
+   "duration": 2.779,
+   "mouth": "224445444433554322222234433345543335200000",
+   "lufs": -18.02,
+   "ogg_bytes": 7383,
+   "m4a_bytes": 10981,
+   "sha256": {
+    "ogg": "30b7116062fd25c879e6a11cd5af324237091715d63a5a96416fb6f9b53e9255",
+    "m4a": "71a6a033a4eff77da893efa245c93ea918a8ef40f0f4503c019f24a6ea1424c6"
+   }
+  },
+  "levelClear.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "levelClear",
+   "duration": 2.572,
+   "mouth": "223333343535333000045444455335443220000",
+   "lufs": -18.17,
+   "ogg_bytes": 6842,
+   "m4a_bytes": 10328,
+   "sha256": {
+    "ogg": "620485d0bc940f90a4be7a41ef1656241d7b75a49fc219d94155f5932ff902f2",
+    "m4a": "563757ad8dd491df29dc2915a8801d6ec3f61a939c9863a1bca240669fbff972"
+   }
+  },
+  "levelClear.h1": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "levelClear",
+   "duration": 1.695,
+   "mouth": "45544420002344453332220000",
+   "lufs": -18.04,
+   "ogg_bytes": 4602,
+   "m4a_bytes": 7103,
+   "sha256": {
+    "ogg": "7671ffaf62a4127c1f15e2253bc9d45f41136b916e0716664012c5ba816b8029",
+    "m4a": "785b5eaec2b708016d1c75a44e1d9d2c01f13fde1e40864b5aa6d29d77175fdd"
+   }
+  },
+  "levelClear.h2": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "levelClear",
+   "duration": 1.764,
+   "mouth": "334554445544223333333200000",
+   "lufs": -18.02,
+   "ogg_bytes": 4764,
+   "m4a_bytes": 7393,
+   "sha256": {
+    "ogg": "65ca4ac14e0e769cb95a5f9becc0ae9679845b0624878e8c670def5f098a964a",
+    "m4a": "a6a19e605886274e132395f1c65f8e9b80866b8b535817351228a62084027618"
+   }
+  },
+  "levelClear.h3": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "levelClear",
+   "duration": 2.091,
+   "mouth": "33344333444555544433343544530000",
+   "lufs": -18.0,
+   "ogg_bytes": 5648,
+   "m4a_bytes": 8516,
+   "sha256": {
+    "ogg": "d836755376ae2b560b74111e5d6548fd2a61469ca55a626c47ec7e2a03a187ad",
+    "m4a": "be87f8ae3c144063d990f55120f0a68fbae2af0ac4121ece866683f350558099"
+   }
+  },
+  "levelClear.h4": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "levelClear",
+   "duration": 2.698,
+   "mouth": "33445533444500000444554444444544443520000",
+   "lufs": -18.03,
+   "ogg_bytes": 7117,
+   "m4a_bytes": 10731,
+   "sha256": {
+    "ogg": "22ce8ac0626b82605b27110897f0c44a66aba5e53acbd6eed13528d2c690f7da",
+    "m4a": "c5b1999d4bc0f4135c10db8c14bf36e714193377262f98a7c973597f67cdc632"
+   }
+  },
+  "levelClear.h5": {
+   "speaker": "pip",
+   "kind": "human",
+   "trigger": "levelClear",
+   "duration": 2.08,
+   "mouth": "44454544443335345454543333220000",
+   "lufs": -18.09,
+   "ogg_bytes": 5646,
+   "m4a_bytes": 8522,
+   "sha256": {
+    "ogg": "33df48a753766f7793efc436905b0745ee160500179588e0d30b2082d49133b5",
+    "m4a": "c64323f256166d0645e0865427b4b5a6bdc972327adbc8594f1acb934ad96290"
+   }
+  },
+  "levelClear.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "levelClear",
+   "duration": 1.097,
+   "mouth": "44444444444330000",
+   "lufs": -18.59,
+   "ogg_bytes": 3050,
+   "m4a_bytes": 4963,
+   "sha256": {
+    "ogg": "32d99ab2dc0a66f4978831b17df3f2e12a9fc04fae151b9e72794cfc8ec64ced",
+    "m4a": "fa226647e53a9a75032088a9f040737dbabfa2a6e1ae660c590a09387b86f9e9"
+   }
+  },
+  "levelClear.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "levelClear",
+   "duration": 1.113,
+   "mouth": "33447744444430000",
+   "lufs": -18.5,
+   "ogg_bytes": 3145,
+   "m4a_bytes": 4987,
+   "sha256": {
+    "ogg": "1057edd1660bd32598b2eba7480af1b82f63520a8febd9f249065b640ef029be",
+    "m4a": "2636cbd9567d4bd5096a95595c02ddbb8da8b408ce4ecc1fffd27b26a2613bfc"
+   }
+  },
+  "levelClear.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "levelClear",
+   "duration": 1.171,
+   "mouth": "444444444444433000",
+   "lufs": -18.51,
+   "ogg_bytes": 3258,
+   "m4a_bytes": 5292,
+   "sha256": {
+    "ogg": "0e38fc67d172608a5e22b3a820f422d9caad37f139e1ce853f48bea6e11299f8",
+    "m4a": "116b8bef600e49d51ec64707d09d629549da65c65a6dbe8312def4576f4ba31e"
+   }
+  },
+  "levelClear.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "levelClear",
+   "duration": 1.14,
+   "mouth": "444444477443330000",
+   "lufs": -18.52,
+   "ogg_bytes": 3156,
+   "m4a_bytes": 5135,
+   "sha256": {
+    "ogg": "e4f1421852a1047d4a3146115cf4ee1a55968860de4955df3c5329e24d55db03",
+    "m4a": "4352c5e9c0c115de9ca503cbdbfeab1b5120892d66f6fc69f8154a11c0a9aa83"
+   }
+  },
+  "flawlessSector.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "flawlessSector",
+   "duration": 3.696,
+   "mouth": "45445445544453354433553333333300000233333333445433352000",
+   "lufs": -18.1,
+   "ogg_bytes": 9797,
+   "m4a_bytes": 14325,
+   "sha256": {
+    "ogg": "8ee5d566a8c23d5b92c34b0487c669ac0c0d133bd9991d4304a274003cce3b90",
+    "m4a": "8c23da5b66e196487e08d70323822cce62a4d2145f0dca89340d81366ebcd8c0"
+   }
+  },
+  "flawlessSector.h1": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "flawlessSector",
+   "duration": 2.595,
+   "mouth": "454455545334433225332244333443333220000",
+   "lufs": -18.0,
+   "ogg_bytes": 6952,
+   "m4a_bytes": 10363,
+   "sha256": {
+    "ogg": "731ee72096c80f19a6240b581ea6c42a886759da59ea6fab81ce7a2812c2ad40",
+    "m4a": "716b9a7f560609d86ddaacb060e99890c14002295ea0a83c03ee81c5e1795c62"
+   }
+  },
+  "flawlessSector.h2": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "flawlessSector",
+   "duration": 2.183,
+   "mouth": "334445444435333554445333533320000",
+   "lufs": -18.01,
+   "ogg_bytes": 5813,
+   "m4a_bytes": 8897,
+   "sha256": {
+    "ogg": "08539cbb6c3515d3f454d366fc2ef09aaa1c5c322a7a1cd9ae6466c29f66a958",
+    "m4a": "b6958e586c01852428e2f342855080cb63baf2ca3c8213bae320a353ec65604f"
+   }
+  },
+  "flawlessSector.h3": {
+   "speaker": "march",
+   "kind": "human",
+   "trigger": "flawlessSector",
+   "duration": 4.111,
+   "mouth": "44443345433554435223344444445335553333333335322000033522220000",
+   "lufs": -18.18,
+   "ogg_bytes": 10876,
+   "m4a_bytes": 15843,
+   "sha256": {
+    "ogg": "7d983e9f06c48a19e340fba0e789c5aa29c3502383f680bb0e526277d34f206e",
+    "m4a": "0daa8e7d177bc8ae53b46cbd12b7aa4ffb9962e176955c9434dc64196fcb8b5d"
+   }
+  },
+  "flawlessVictory.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "flawlessVictory",
+   "duration": 5.455,
+   "mouth": "4445444445444443333334533543333200000044445444555333353445550000002444533332222000",
+   "lufs": -18.04,
+   "ogg_bytes": 14409,
+   "m4a_bytes": 20665,
+   "sha256": {
+    "ogg": "824e591623c3a4e5234f86c8acf995d96299108bdcd497a681884def4f2b058b",
+    "m4a": "b78a59f09f86e34350b174b0b2a3c9da66d4525ec2cc475841a4905fc8b7abfc"
+   }
+  },
+  "flawlessVictory.h1": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "flawlessVictory",
+   "duration": 4.11,
+   "mouth": "44444533544435330000003555433335445433333333543333443533352000",
+   "lufs": -18.17,
+   "ogg_bytes": 10831,
+   "m4a_bytes": 15864,
+   "sha256": {
+    "ogg": "dbf0a4462abaf00716d39a5535529be8adbd5f77a5d2a1538239c66f27a27eb9",
+    "m4a": "c7a5145e8ffac5e9d584ad7483c54b76919b1955ae92e2b770facd9d05c4654e"
+   }
+  },
+  "flawlessVictory.h2": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "flawlessVictory",
+   "duration": 2.203,
+   "mouth": "3232444433553354333355333322220000",
+   "lufs": -18.08,
+   "ogg_bytes": 5933,
+   "m4a_bytes": 8969,
+   "sha256": {
+    "ogg": "0deb311908761a4c66c8f27dae82633c1a73a334f36e4c4718ba1616e82aa7de",
+    "m4a": "b0e0c47fb8723f5eea18447e4ccdf556f8f0878758d4d7febd57012e6d1570d4"
+   }
+  },
+  "flawlessVictory.h3": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "flawlessVictory",
+   "duration": 2.585,
+   "mouth": "355444533444433333344322353353522222000",
+   "lufs": -18.21,
+   "ogg_bytes": 6881,
+   "m4a_bytes": 10334,
+   "sha256": {
+    "ogg": "bd1a2ad7920a8ff2ec79ff2e2013e2d8fed8380433d5668ebd39996badbef798",
+    "m4a": "3b626e3b61a16fb7eb6c56c3088cfb770ab617fd46b1c894db1180136c595da3"
+   }
+  },
+  "flawlessVictory.h4": {
+   "speaker": "pip",
+   "kind": "human",
+   "trigger": "flawlessVictory",
+   "duration": 2.51,
+   "mouth": "44444545544422454544554444444433320000",
+   "lufs": -18.07,
+   "ogg_bytes": 6737,
+   "m4a_bytes": 10047,
+   "sha256": {
+    "ogg": "dc9dbf154c8ee3fca0972b8f20c7e3c1d7276b72723a4a47a016e3c1f2a123b9",
+    "m4a": "ce2080c4ed0349d9f9adc0fcd87d0ce2c891f0622e448f0384463b94d0aa9b94"
+   }
+  },
+  "flawlessVictory.h5": {
+   "speaker": "kessler",
+   "kind": "human",
+   "trigger": "flawlessVictory",
+   "duration": 2.724,
+   "mouth": "35444445534443200244444445455543333320000",
+   "lufs": -18.02,
+   "ogg_bytes": 7300,
+   "m4a_bytes": 10752,
+   "sha256": {
+    "ogg": "5301b87bf6b431f971520fc2622a3f99e56cd568341f905d3cfb7a9653eb9493",
+    "m4a": "c74defbdfbe44c0f6db471b29c10ee59ce17b81f373393d3b4e183df5ba719bd"
+   }
+  },
+  "flawlessRun.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "flawlessRun",
+   "duration": 5.216,
+   "mouth": "0044443354330054454444433443545334435333322200000034552244334555333533333220000",
+   "lufs": -18.1,
+   "ogg_bytes": 13799,
+   "m4a_bytes": 19810,
+   "sha256": {
+    "ogg": "c2358215feb9b522d6a3748e9a475d107b2fd92f4d0ce475e28899054a7295be",
+    "m4a": "c8359064a65561ab0404942959e30543e2fc4a22a47376101e0c0efd193a203b"
+   }
+  },
+  "flawlessRun.h1": {
+   "speaker": "nomad",
+   "kind": "human",
+   "trigger": "flawlessRun",
+   "duration": 4.939,
+   "mouth": "004444444444432244443530000045443320004444554455335534533345544435333220000",
+   "lufs": -18.01,
+   "ogg_bytes": 13008,
+   "m4a_bytes": 18834,
+   "sha256": {
+    "ogg": "48cba32962e99d9eb2735eb68df674b5ecda82d442702bec3e79035c140360c8",
+    "m4a": "03968ad123f5f49217d3302273e88331b33fb11f873e064af66688f64222f751"
+   }
+  },
+  "flawlessRun.h2": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "flawlessRun",
+   "duration": 4.169,
+   "mouth": "444455444544443224443334443354432225545543322000054445333220000",
+   "lufs": -18.0,
+   "ogg_bytes": 10913,
+   "m4a_bytes": 16057,
+   "sha256": {
+    "ogg": "4202daddd46960fed9c80416bcd87d14fea4204fb4926e2d4697f3dfd33abeb7",
+    "m4a": "03d02686574439736bea5007105c7d0e21bee11d16752433443f9200fba7622b"
+   }
+  },
+  "flawlessRun.h3": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "flawlessRun",
+   "duration": 2.783,
+   "mouth": "444433344335335522222200003445455433222000",
+   "lufs": -18.08,
+   "ogg_bytes": 7402,
+   "m4a_bytes": 11047,
+   "sha256": {
+    "ogg": "3f34bb3da9c9bc2dec87e964ecf7a70d993456d4b813d02e1422214092a57db1",
+    "m4a": "3eadc986921374627d647685cd1b5c2e57a31f8cb023d90fd7168bbc5bc95af4"
+   }
+  },
+  "flawlessRun.h4": {
+   "speaker": "mensah",
+   "kind": "human",
+   "trigger": "flawlessRun",
+   "duration": 3.524,
+   "mouth": "33444443444533352233432225333443353322233352255522000",
+   "lufs": -18.12,
+   "ogg_bytes": 9328,
+   "m4a_bytes": 13595,
+   "sha256": {
+    "ogg": "bccdb03bd4ceb931eabcecc6367d94cc5481144597f9fccb65a51d9e6ec2bb4d",
+    "m4a": "4d7e1e7980bb5acd93d80b3b85dc0d5b35eb32aff25deab1aaf4d9f448a6c6b7"
+   }
+  },
+  "flawlessRun.h5": {
+   "speaker": "voss",
+   "kind": "human",
+   "trigger": "flawlessRun",
+   "duration": 3.635,
+   "mouth": "4445434544300044545344334533353445520000444353444322000",
+   "lufs": -18.05,
+   "ogg_bytes": 9591,
+   "m4a_bytes": 14113,
+   "sha256": {
+    "ogg": "ac6210683d5a0f87946dfb64377db0288f6a51fe5a50187ba7aa41f5c21628ff",
+    "m4a": "2b0c16c211e58c6dd787b5be271c0774b8f3a0b35e0dc224f20912af7cb6978c"
+   }
+  },
+  "bossArrival.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "bossArrival",
+   "duration": 3.409,
+   "mouth": "2244444334433332000000454543355452245435343322330000",
+   "lufs": -18.0,
+   "ogg_bytes": 8989,
+   "m4a_bytes": 13297,
+   "sha256": {
+    "ogg": "3368f2ee30eaf07359dc3bf4adb2876d46e11459a3feb7cfda00648217143095",
+    "m4a": "9203d23b09992078b647874371f20d327ae8e0ef0fb510c4cc34b3006c47e7d4"
+   }
+  },
+  "bossArrival.h1": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "bossArrival",
+   "duration": 3.401,
+   "mouth": "0044334433354455320000023445322444322333333555200000",
+   "lufs": -18.13,
+   "ogg_bytes": 9029,
+   "m4a_bytes": 13284,
+   "sha256": {
+    "ogg": "ef14f00c8ed66a3410c88c967cc8a5d7df43e2588ee1e38feebe0abf9ed4a107",
+    "m4a": "f1e352af3442e1593df8608c4aa198db0b0dbb1c9e31f43fdd1e7c7d1b04f27d"
+   }
+  },
+  "bossArrival.h2": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "bossArrival",
+   "duration": 2.288,
+   "mouth": "33344334553224453354453332222200000",
+   "lufs": -18.15,
+   "ogg_bytes": 6153,
+   "m4a_bytes": 9248,
+   "sha256": {
+    "ogg": "b588bf21f4ffae40143f9cecd597d1399f40ebf911d32fe9f58ec4a6ebcd2011",
+    "m4a": "69b38b7c49fe5a28faca0c15b38685fd6775a5f93cde6f009ae2ef1ed11a0bf6"
+   }
+  },
+  "bossArrival.h3": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "bossArrival",
+   "duration": 3.246,
+   "mouth": "2244443344354430000004444444335444333555355532000",
+   "lufs": -18.02,
+   "ogg_bytes": 8601,
+   "m4a_bytes": 12682,
+   "sha256": {
+    "ogg": "58d958f62cc9c703d370464c4ff563b309951e86971d47c1b8a7cc3a8fac5abb",
+    "m4a": "7c72a8f76e9d4effbcd52d6e19189c5171e7fa87500532fcff86c7be7502a6c5"
+   }
+  },
+  "bossArrival.h4": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "bossArrival",
+   "duration": 3.478,
+   "mouth": "22444444544445330000255333333444554433533533332220000",
+   "lufs": -18.03,
+   "ogg_bytes": 9195,
+   "m4a_bytes": 13548,
+   "sha256": {
+    "ogg": "42301b3afd368584b792e7e9487dbcb6a5dc5a3a52eec230766da548f32089b6",
+    "m4a": "65c6fa536c8b2b4dcb540235953226fc4c6d2d4d0d55c379e8483d0f266d52e8"
+   }
+  },
+  "bossArrival.d0": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "bossArrival",
+   "duration": 1.505,
+   "mouth": "44444447777777744443000",
+   "lufs": -18.5,
+   "ogg_bytes": 4063,
+   "m4a_bytes": 6479,
+   "sha256": {
+    "ogg": "ad039ee85cc1a331ba0fd789d75a92f5e561bc9afb60260fe4576b6f14d2d404",
+    "m4a": "04e10863580676c3daedcc11189761cbd2cc4b6ec6a387ed113066b087bb0044"
+   }
+  },
+  "bossArrival.d1": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "bossArrival",
+   "duration": 1.606,
+   "mouth": "4443344777777777777440000",
+   "lufs": -18.5,
+   "ogg_bytes": 4350,
+   "m4a_bytes": 6826,
+   "sha256": {
+    "ogg": "66926737fc994adf96f05e5ade194283a258ff35f3e578b81dd59f7e276ffb52",
+    "m4a": "0a99d7164c4dbaef63c5e083c19004237a4b6a0bab59e5308ac26be83c52d0aa"
+   }
+  },
+  "bossArrival.d2": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "bossArrival",
+   "duration": 1.061,
+   "mouth": "4444444444444000",
+   "lufs": -18.5,
+   "ogg_bytes": 2945,
+   "m4a_bytes": 4858,
+   "sha256": {
+    "ogg": "0966f09813355b521cbd1e42867a8e981f2dd0e4c96de51abdee3df4309b8a24",
+    "m4a": "701244289b24a15977ec449f944abd2392c55a345325abeeddebb564ced8fe91"
+   }
+  },
+  "bossPhase.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "bossPhase",
+   "duration": 2.495,
+   "mouth": "44533455453353352000334444444432220000",
+   "lufs": -18.02,
+   "ogg_bytes": 6639,
+   "m4a_bytes": 10011,
+   "sha256": {
+    "ogg": "8c77e7100d2d16c0541b518d1b2ff18201ff47c4ce289644f5e73b56e718920d",
+    "m4a": "0d1a11c8fc0d3776c3b9a4ef85eb76ca5475d22db0d727cefd36971c5fbdfbe3"
+   }
+  },
+  "bossPhase.h1": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "bossPhase",
+   "duration": 2.105,
+   "mouth": "22444444444335453544533333550000",
+   "lufs": -18.06,
+   "ogg_bytes": 5648,
+   "m4a_bytes": 8594,
+   "sha256": {
+    "ogg": "34503417da320f4c3b19537b34aad8257245ca441c653bd1b8e944344da6c689",
+    "m4a": "fd5e33ed6b782e6cdf215da6dd10b6df1b782728d0ec30eb21627a1dc2e9d09f"
+   }
+  },
+  "bossPhase.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "bossPhase",
+   "duration": 1.905,
+   "mouth": "22344533444433353233455220000",
+   "lufs": -18.06,
+   "ogg_bytes": 5113,
+   "m4a_bytes": 7862,
+   "sha256": {
+    "ogg": "97661b2e6dfe43972a85a0a981f1b137c01798881cf3addc58a78f4f4fcb1375",
+    "m4a": "7318f6dd5e982d58762c52ccff2d3bbde9d56894f33566548137ae5d11e21fc1"
+   }
+  },
+  "bossPhase.h3": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "bossPhase",
+   "duration": 2.514,
+   "mouth": "43334554453322000024452002222443222000",
+   "lufs": -18.02,
+   "ogg_bytes": 6693,
+   "m4a_bytes": 10080,
+   "sha256": {
+    "ogg": "4eca58d9c21e8380f524cb37b855693897dee5bdbe466b471b6ea45bb0f751d6",
+    "m4a": "8f7bbacd8f089181c30a3ab8c8dccf60baa80b7bb613c45bedb2db909879c58c"
+   }
+  },
+  "bossPhase.h4": {
+   "speaker": "kestrel",
+   "kind": "human",
+   "trigger": "bossPhase",
+   "duration": 2.525,
+   "mouth": "45444454533455432333300044543332222000",
+   "lufs": -18.0,
+   "ogg_bytes": 6787,
+   "m4a_bytes": 10120,
+   "sha256": {
+    "ogg": "a79bff477537e5a71def05a2cd1c3037ffa83ed0c1854feb98144394b078c636",
+    "m4a": "97a9f5b3c2cdb2bbf546acb078c384578dfdaf9874292aed0fd954f0f90356fd"
+   }
+  },
+  "bossPhase.d0": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "bossPhase",
+   "duration": 1.58,
+   "mouth": "444444477777777774443000",
+   "lufs": -18.5,
+   "ogg_bytes": 4188,
+   "m4a_bytes": 6699,
+   "sha256": {
+    "ogg": "99a3080d092b5b048b0e2455dfd7b65bf8675a17912758db3c74c125d2f11f5a",
+    "m4a": "815ab22d9b76af82e04e8a754fe965b872a94e5e03458161ff2bfc8de04ab24d"
+   }
+  },
+  "bossPhase.d1": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "bossPhase",
+   "duration": 0.866,
+   "mouth": "4444774444000",
+   "lufs": -18.5,
+   "ogg_bytes": 2352,
+   "m4a_bytes": 4173,
+   "sha256": {
+    "ogg": "266d6c4465e038837d932df92ae8c4c22ed7778854ec76baa60d8c0840a1dcc1",
+    "m4a": "5f870dd16e2e5d70b5d4abf2e2c3257148a2a49b3572e897f12df4ab78c8f60b"
+   }
+  },
+  "bossPhase.d2": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "bossPhase",
+   "duration": 1.149,
+   "mouth": "444477444443330000",
+   "lufs": -18.52,
+   "ogg_bytes": 3147,
+   "m4a_bytes": 5176,
+   "sha256": {
+    "ogg": "9ce43dccc4ba3892d6f394612379d3856d4d963276c762a74a6726786dc0a7ab",
+    "m4a": "350350f49922969ba5183ebe008f7c1480e37e44fab6f12f4f6067349694afc3"
+   }
+  },
+  "bossDefeated.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "bossDefeated",
+   "duration": 3.145,
+   "mouth": "424444444533333520000454444333225333555333220000",
+   "lufs": -18.1,
+   "ogg_bytes": 8261,
+   "m4a_bytes": 12346,
+   "sha256": {
+    "ogg": "42668264772251ccbfc967cb5c472ff37a64ea0f2fcf57b22c6c133948e47f14",
+    "m4a": "5c70547545f0dbbdb00200088d03648890c6bc72b8adce2f7c80323206bca541"
+   }
+  },
+  "bossDefeated.h1": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "bossDefeated",
+   "duration": 1.693,
+   "mouth": "22345455444335334433220000",
+   "lufs": -18.1,
+   "ogg_bytes": 4551,
+   "m4a_bytes": 7112,
+   "sha256": {
+    "ogg": "cb0c705cbeb32ea4abc4207dfc6438d444b26073184d31be11c3a1ab341ee92b",
+    "m4a": "07479a60a4cd812242e5293428d93ab94352d8f994c4ce96cfcd00216fd821fe"
+   }
+  },
+  "bossDefeated.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "bossDefeated",
+   "duration": 2.808,
+   "mouth": "3344333333355320000004454555444322443220000",
+   "lufs": -18.04,
+   "ogg_bytes": 7476,
+   "m4a_bytes": 11117,
+   "sha256": {
+    "ogg": "59d612550e47834664c407ac490336201d87990ae839e2b9ca0b4d14cc63a193",
+    "m4a": "00774f43a5cc936e6aead8d196326b323f82787acd7a7012945e67a0db97455f"
+   }
+  },
+  "bossDefeated.h3": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "bossDefeated",
+   "duration": 1.555,
+   "mouth": "224444533322005533320000",
+   "lufs": -18.03,
+   "ogg_bytes": 4220,
+   "m4a_bytes": 6591,
+   "sha256": {
+    "ogg": "eafdae4fd89aaf3699ac86386b8e181d9732017a5198b2f69d2ac7621abfcdef",
+    "m4a": "64077106c07203a3096ba070926fcfd23250c9e4ae91615921356963c32c2cc8"
+   }
+  },
+  "bossDefeated.h4": {
+   "speaker": "sunny",
+   "kind": "human",
+   "trigger": "bossDefeated",
+   "duration": 2.251,
+   "mouth": "2244444444555544443345433333352000",
+   "lufs": -18.0,
+   "ogg_bytes": 5970,
+   "m4a_bytes": 9112,
+   "sha256": {
+    "ogg": "381cb9748c962d0328935239c9504d2872881f1e2894596002c748aa12c84e8d",
+    "m4a": "f62a512b6310446ff708deea5d5ae85045afdd6e4c814b9d0e91f452711d059d"
+   }
+  },
+  "bossDefeated.d0": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "bossDefeated",
+   "duration": 1.144,
+   "mouth": "444444447744430000",
+   "lufs": -18.5,
+   "ogg_bytes": 3214,
+   "m4a_bytes": 5170,
+   "sha256": {
+    "ogg": "8fd0bb5bf6f18a2040c5284a34b8455ee19292b950b9b86b03673f2ca0400235",
+    "m4a": "1bd546a3e207167d62e4f0cc4f807c11a8e89e45e5130b2e5a6b7659ee483e96"
+   }
+  },
+  "bossDefeated.d1": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "bossDefeated",
+   "duration": 1.146,
+   "mouth": "444444444433330000",
+   "lufs": -18.56,
+   "ogg_bytes": 3164,
+   "m4a_bytes": 5166,
+   "sha256": {
+    "ogg": "5423d84202a73dd0da81f53f4a689fb9bdde9cc43079058653e11403d8a96bbb",
+    "m4a": "7501b63e9d939764a59740a08b3256ff7c75ac8fb6452c8d2c7cdc53b020712f"
+   }
+  },
+  "defeat.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "defeat",
+   "duration": 5.002,
+   "mouth": "4444335333354453344445334433533332220000054454454533333320000054445333520000",
+   "lufs": -18.08,
+   "ogg_bytes": 13172,
+   "m4a_bytes": 19040,
+   "sha256": {
+    "ogg": "3ddaeaaebf9da40e920b54294053bb4f362af6a6294799d2e0609fcff90a255a",
+    "m4a": "e0928defe12b22b9b849415ce1ea33e922968c22c52cf7d26d7efa72449a103e"
+   }
+  },
+  "defeat.h1": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "defeat",
+   "duration": 3.805,
+   "mouth": "4444345444335333220000004444445433353320055544543333520000",
+   "lufs": -18.03,
+   "ogg_bytes": 10080,
+   "m4a_bytes": 14727,
+   "sha256": {
+    "ogg": "19bab5cdb3a3751c8b76560ed94c49ffb31c7c06d36723ff49b120ab381f00b7",
+    "m4a": "df6998f3e7d14796b63659d0dac167dd5d3cd6c81b3081d08dd3e060f94ad872"
+   }
+  },
+  "defeat.h2": {
+   "speaker": "lindqvist",
+   "kind": "human",
+   "trigger": "defeat",
+   "duration": 4.061,
+   "mouth": "4454444443334552244333433332000000333445354544455454544332000",
+   "lufs": -18.04,
+   "ogg_bytes": 10815,
+   "m4a_bytes": 15673,
+   "sha256": {
+    "ogg": "6b3aa99885c54650038042966e0790a66838ceb2663d583a1e7ec549b111387b",
+    "m4a": "710ec4b1e908e882ab71b671178429dfb0550adfb0732b56e6e0914bf52fbb3a"
+   }
+  },
+  "groundForceSighted.h0": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "groundForceSighted",
+   "duration": 1.511,
+   "mouth": "22444535333543433220000",
+   "lufs": -18.08,
+   "ogg_bytes": 4117,
+   "m4a_bytes": 6497,
+   "sha256": {
+    "ogg": "05dac957deccf6ad8bb8ce002372453ab85e41d73029eed9ef9590b9ee7cfb5e",
+    "m4a": "505f80f056f9506c8b02758830b7845e1a16115d507d6a5f902313df541fd5e8"
+   }
+  },
+  "groundForceSighted.h1": {
+   "speaker": "wisp",
+   "kind": "human",
+   "trigger": "groundForceSighted",
+   "duration": 2.619,
+   "mouth": "4445444444533333344445224433555543320000",
+   "lufs": -18.04,
+   "ogg_bytes": 7018,
+   "m4a_bytes": 10463,
+   "sha256": {
+    "ogg": "84ecd5cbb7e56e33197664ede42afcc89726bd0713be164fc48396ac027ab49b",
+    "m4a": "0e3b9d251a8d93b01c1abf3ced6fec2ca9bd05a887b7f8e735d9a66fae8b3248"
+   }
+  },
+  "groundForceSighted.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "groundForceSighted",
+   "duration": 2.728,
+   "mouth": "33553344433344432220002455544533333320000",
+   "lufs": -18.23,
+   "ogg_bytes": 7258,
+   "m4a_bytes": 10825,
+   "sha256": {
+    "ogg": "af9f6fbdb4179d621947304394457105eefd247e782b24f9311225a35085a5fa",
+    "m4a": "673867d84490bd17932d04afdd7716151be872ec59504af1f5cd38a96400ce38"
+   }
+  },
+  "groundForceSighted.h3": {
+   "speaker": "kessler",
+   "kind": "human",
+   "trigger": "groundForceSighted",
+   "duration": 2.727,
+   "mouth": "44554422442002453544333355433333333220000",
+   "lufs": -18.15,
+   "ogg_bytes": 7320,
+   "m4a_bytes": 10802,
+   "sha256": {
+    "ogg": "58eb3b6b2a3a9e3447517e4005500919c2d5f58fcce82b447ae0344959773b5a",
+    "m4a": "1c3285ce135343d4f07eb28c4e6645607acadcb68724200408de7b71e59c287e"
+   }
+  },
+  "groundForceSighted.h4": {
+   "speaker": "march",
+   "kind": "human",
+   "trigger": "groundForceSighted",
+   "duration": 4.295,
+   "mouth": "44443345333444554452000024555334454455344333223333333333322220000",
+   "lufs": -18.13,
+   "ogg_bytes": 11443,
+   "m4a_bytes": 16515,
+   "sha256": {
+    "ogg": "22a5cd89e50378aed9d1f729373d9e37635c19dcf2722cadaddadbf8ddb26d2a",
+    "m4a": "c2e11d3a0105cb945674eba546b259579660db41d85a6dff66109f41184d04c5"
+   }
+  },
+  "groundForceSighted.h5": {
+   "speaker": "mensah",
+   "kind": "human",
+   "trigger": "groundForceSighted",
+   "duration": 3.131,
+   "mouth": "33444444444444443335355455335200544222222220000",
+   "lufs": -18.03,
+   "ogg_bytes": 8264,
+   "m4a_bytes": 12283,
+   "sha256": {
+    "ogg": "e2ca479eeaf1463232c06857d605f8d71544022d0169d039975921d68e640a5c",
+    "m4a": "83eb96bed0383f992076355e3a25cab743fa0573849b8c96fff67f8bad732fe0"
+   }
+  },
+  "groundForceSighted.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "groundForceSighted",
+   "duration": 1.003,
+   "mouth": "7777444444440000",
+   "lufs": -18.53,
+   "ogg_bytes": 2779,
+   "m4a_bytes": 4666,
+   "sha256": {
+    "ogg": "370b71c3546150e32bb33a4673c8a957251a25f7e702d5dc306a2bfae566e252",
+    "m4a": "38d67479afa77f93238b3045566247ab9fa95ebf42adc2c9e600418ea015c0d3"
+   }
+  },
+  "groundForceSighted.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "groundForceSighted",
+   "duration": 0.975,
+   "mouth": "333444444430000",
+   "lufs": -18.51,
+   "ogg_bytes": 2721,
+   "m4a_bytes": 4499,
+   "sha256": {
+    "ogg": "a41bcb99cd7b395e93595ddd8d4c6b23328aefde51ee3af3708cfc5e27f96496",
+    "m4a": "89d474fe9d55c3e4e5b53c7adff58544beae268405976171507301866d034bba"
+   }
+  },
+  "groundForceSighted.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "groundForceSighted",
+   "duration": 0.825,
+   "mouth": "4444444443000",
+   "lufs": -18.5,
+   "ogg_bytes": 2299,
+   "m4a_bytes": 3989,
+   "sha256": {
+    "ogg": "76e83eb6543e6a9bd6c20d80d2b9b706448e3ff8a73c939e7248165c0453cb62",
+    "m4a": "71a506bf8bce4f17f4929442265f7b26f3badd2908b8636590f3b3c7285c613f"
+   }
+  },
+  "groundForceSighted.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "groundForceSighted",
+   "duration": 0.818,
+   "mouth": "4444777443000",
+   "lufs": -18.5,
+   "ogg_bytes": 2337,
+   "m4a_bytes": 3975,
+   "sha256": {
+    "ogg": "ea0adf8a80846a5d6ec04abdc49fd6792abf3445ed794b9a2bf9607a4300eaa7",
+    "m4a": "8f242fa629a3dd10ab562c9e2682b050a0853c9b2005216d197ab55d4f38f4d2"
+   }
+  },
+  "groundForceSighted.d4": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "groundForceSighted",
+   "duration": 0.95,
+   "mouth": "777777777443000",
+   "lufs": -18.5,
+   "ogg_bytes": 2591,
+   "m4a_bytes": 4463,
+   "sha256": {
+    "ogg": "4ff1e4a7758588619c72722e99db5a775af88a178dfe28bee8b7f0a0124c3580",
+    "m4a": "c5ec213d59b513d67742364e05e7e1c27f42aeea3755416266aae8f7d40e2781"
+   }
+  },
+  "groundForceInRange.h0": {
+   "speaker": "sparrow",
+   "kind": "human",
+   "trigger": "groundForceInRange",
+   "duration": 2.132,
+   "mouth": "45445333333553335330000244322000",
+   "lufs": -18.21,
+   "ogg_bytes": 5732,
+   "m4a_bytes": 8665,
+   "sha256": {
+    "ogg": "1143899884a09fcf59774a945e52365aae677fb6309256ac7918926b59a7e88a",
+    "m4a": "0a7f0a115f40cda5b5eb6b1330d4472290c2e1e89a648c2e4e0c5a7fbec20c9f"
+   }
+  },
+  "groundForceInRange.h1": {
+   "speaker": "rook",
+   "kind": "human",
+   "trigger": "groundForceInRange",
+   "duration": 1.52,
+   "mouth": "22444454453353543322000",
+   "lufs": -18.0,
+   "ogg_bytes": 4172,
+   "m4a_bytes": 6479,
+   "sha256": {
+    "ogg": "ff285188db784bc73dbd0c316722ce574b2a199bd9ed84fe77bdc18e140c59a5",
+    "m4a": "eaef6b841e5431e7cf97024bb9be0bf7ef4cd612102758f2f53967a6d039e4a7"
+   }
+  },
+  "groundForceInRange.h2": {
+   "speaker": "anvil",
+   "kind": "human",
+   "trigger": "groundForceInRange",
+   "duration": 2.296,
+   "mouth": "22445444555544322200233333444320000",
+   "lufs": -18.01,
+   "ogg_bytes": 6119,
+   "m4a_bytes": 9254,
+   "sha256": {
+    "ogg": "7347db380389d776b61103ab7f3001611ef3325adc713ef52eb1450594b721ad",
+    "m4a": "bb1d6cb1834588ae0c9fde4abb1416be89698584a877aba161b284a937653f20"
+   }
+  },
+  "groundForceInRange.h3": {
+   "speaker": "voss",
+   "kind": "human",
+   "trigger": "groundForceInRange",
+   "duration": 2.497,
+   "mouth": "44454444443005444443545522445344200000",
+   "lufs": -18.06,
+   "ogg_bytes": 6719,
+   "m4a_bytes": 10042,
+   "sha256": {
+    "ogg": "215ca4eae01e8de2a6408170ca51b9cb464c8cc1c3acee853e04a25bd1dcb17d",
+    "m4a": "a1dfeef21667cdaef5785d21c399a56789cb54d5424d741ab5e9282d224a3768"
+   }
+  },
+  "groundForceInRange.h4": {
+   "speaker": "mensah",
+   "kind": "human",
+   "trigger": "groundForceInRange",
+   "duration": 2.209,
+   "mouth": "3335444453233320033553533322200000",
+   "lufs": -18.11,
+   "ogg_bytes": 5922,
+   "m4a_bytes": 8980,
+   "sha256": {
+    "ogg": "b9dc8eda2e131fce6a52bad6ba0a88a6c2203692fe62f203c17cab2baa10e423",
+    "m4a": "0fd3a4e649765b84e61edb5743bcbe47794da8104ed06565b50b3f3336d01ce5"
+   }
+  },
+  "allyUnderAttack.h0": {
+   "speaker": "kessler",
+   "kind": "human",
+   "trigger": "allyUnderAttack",
+   "duration": 1.88,
+   "mouth": "45334454444554444433225300000",
+   "lufs": -18.05,
+   "ogg_bytes": 5031,
+   "m4a_bytes": 7765,
+   "sha256": {
+    "ogg": "76b196df2a5b8595b921b20a60172f7f2614f9b8a06453a430c52521ec56455a",
+    "m4a": "c2ec74d72b6967fd712df5bcd8eb6742bfac1663d4283e8406c12f37f3046e26"
+   }
+  },
+  "allyUnderAttack.h1": {
+   "speaker": "kessler",
+   "kind": "human",
+   "trigger": "allyUnderAttack",
+   "duration": 2.356,
+   "mouth": "225433335353344432223444554332220000",
+   "lufs": -18.13,
+   "ogg_bytes": 6290,
+   "m4a_bytes": 9491,
+   "sha256": {
+    "ogg": "d1250332ef5f5732fb70210e6ca2557922fb4b4f12b63c4e6ec66adfb1734563",
+    "m4a": "ee6038a8795d7adb7d145aa226a6b281220577ca20ae3e7034c995cff0e481f2"
+   }
+  },
+  "allyUnderAttack.h2": {
+   "speaker": "voss",
+   "kind": "human",
+   "trigger": "allyUnderAttack",
+   "duration": 2.946,
+   "mouth": "334443353345453335530005454544433344433330000",
+   "lufs": -18.01,
+   "ogg_bytes": 7785,
+   "m4a_bytes": 11573,
+   "sha256": {
+    "ogg": "0a900c4e2414316f0ecda0b6a75994f5a78c87d7526d630b19f7ac47ce071c9c",
+    "m4a": "3d17fad20bc7f30d982481815ecd26240d233920b8f5ccf7fc74f6c683fbff65"
+   }
+  },
+  "allyUnderAttack.h3": {
+   "speaker": "march",
+   "kind": "human",
+   "trigger": "allyUnderAttack",
+   "duration": 4.324,
+   "mouth": "44443345333445444553333555333335334433220000223443355333353222000",
+   "lufs": -18.23,
+   "ogg_bytes": 11413,
+   "m4a_bytes": 16605,
+   "sha256": {
+    "ogg": "daaf48a12bbb285ead67b304dec1d2c6037f0ea331d2c56e62415cacb6697075",
+    "m4a": "8aa5c9699c3e28a2c9032cd058d234012d3b5eee7fd58159c1c09e88e306ba91"
+   }
+  },
+  "allyUnderAttack.h4": {
+   "speaker": "mensah",
+   "kind": "human",
+   "trigger": "allyUnderAttack",
+   "duration": 3.557,
+   "mouth": "334444334544445223444555334432223552233332200000000000",
+   "lufs": -18.09,
+   "ogg_bytes": 9341,
+   "m4a_bytes": 13850,
+   "sha256": {
+    "ogg": "bf742a7194f53c27fb95ee1d79371ebb94538d3a5138130b682307da0005bbbb",
+    "m4a": "f81784e4b5a950b948f2667ba54689ddadb9cfda905f5b28ac457da95da8f414"
+   }
+  },
+  "allyUnderAttack.h5": {
+   "speaker": "voss",
+   "kind": "human",
+   "trigger": "allyUnderAttack",
+   "duration": 2.436,
+   "mouth": "4544453534454353333453344430033300000",
+   "lufs": -18.05,
+   "ogg_bytes": 6526,
+   "m4a_bytes": 9735,
+   "sha256": {
+    "ogg": "ab215ada56388f3ac606a879e036879eb405865ad33786fc470bfe1e1ca4cc6c",
+    "m4a": "ef362c4899c7e197a5fa57c23dc97607faee90a44f2f6f7611515957b6eeaf4d"
+   }
+  },
+  "allyUnderAttack.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "allyUnderAttack",
+   "duration": 0.844,
+   "mouth": "4444444443000",
+   "lufs": -18.5,
+   "ogg_bytes": 2346,
+   "m4a_bytes": 4044,
+   "sha256": {
+    "ogg": "77674b4a4bd0e0ab77b7ee9e0c515605c79902c50e297171ba85171c107c6c5e",
+    "m4a": "849646d6814ff7cd9a1d0aac449de7146d5fe76a12e118a5c313b109bb024c0a"
+   }
+  },
+  "allyUnderAttack.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "allyUnderAttack",
+   "duration": 0.817,
+   "mouth": "4344774440000",
+   "lufs": -18.5,
+   "ogg_bytes": 2325,
+   "m4a_bytes": 3999,
+   "sha256": {
+    "ogg": "35c559f12c46cd30ccf59f69884240d34470456a5e87ee4a3e80e772a3f26baf",
+    "m4a": "74e937c46f7baddd36eb2b4395c64c818a4da1d4d41d0ca6966d2d19e1376bbc"
+   }
+  },
+  "allyUnderAttack.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "allyUnderAttack",
+   "duration": 0.961,
+   "mouth": "444444444443000",
+   "lufs": -18.54,
+   "ogg_bytes": 2584,
+   "m4a_bytes": 4486,
+   "sha256": {
+    "ogg": "a2d1ae9b77f9ffafe05a674a9c7cee848642894ae273f3fa3012d3f0d19646ea",
+    "m4a": "b4f739dba4fb75e280b960f9239e064cf87b210208d72972feb4e2967c82b738"
+   }
+  },
+  "allyUnderAttack.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "allyUnderAttack",
+   "duration": 0.948,
+   "mouth": "444444444430000",
+   "lufs": -18.73,
+   "ogg_bytes": 2657,
+   "m4a_bytes": 4423,
+   "sha256": {
+    "ogg": "681702834b60fdb53ac6da55f93370d2b60b0579c03b08bda3c09d1f169c122d",
+    "m4a": "ae5d1df6f3bbe90b49ae92c367ef4b07a8336c79f5cea673c7592eea2a6e14da"
+   }
+  },
+  "allyUnderAttack.d4": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "allyUnderAttack",
+   "duration": 0.802,
+   "mouth": "7774444440000",
+   "lufs": -18.5,
+   "ogg_bytes": 2216,
+   "m4a_bytes": 3897,
+   "sha256": {
+    "ogg": "0fd7e4f603f3cfedc318beb5ea45a031e385b55e89821b30a733fb2a189842c5",
+    "m4a": "d323673e6109b6cb5a5f695cd3da6ad3585b04a1220b16ee916acebeab9e232e"
+   }
+  },
+  "allySaved.h0": {
+   "speaker": "kessler",
+   "kind": "human",
+   "trigger": "allySaved",
+   "duration": 2.114,
+   "mouth": "44433555004433454444335443220000",
+   "lufs": -18.02,
+   "ogg_bytes": 5792,
+   "m4a_bytes": 8667,
+   "sha256": {
+    "ogg": "a65d3ef7a75afc8ce6549fdaa7e1be84c9a9b7a9ceaf3fd2a80fbe924113c3d6",
+    "m4a": "0e94b4b0f46f37b825a59afc74af11a6d72b3ff880f694d7096623a55909c8fb"
+   }
+  },
+  "allySaved.h1": {
+   "speaker": "voss",
+   "kind": "human",
+   "trigger": "allySaved",
+   "duration": 1.894,
+   "mouth": "44444444435200544445554320000",
+   "lufs": -18.0,
+   "ogg_bytes": 5053,
+   "m4a_bytes": 7885,
+   "sha256": {
+    "ogg": "e2d3056cf0c7fb197f32adb9e3a5aef225cb528b3c357a272e406b8689af6fc1",
+    "m4a": "05defe4103c5018c13f62941064f9930b95dcbad8bcbdf69ed811048be53384e"
+   }
+  },
+  "allySaved.h2": {
+   "speaker": "march",
+   "kind": "human",
+   "trigger": "allySaved",
+   "duration": 2.906,
+   "mouth": "22444444443004433455345333352234445543520000",
+   "lufs": -18.13,
+   "ogg_bytes": 7699,
+   "m4a_bytes": 11449,
+   "sha256": {
+    "ogg": "a10db182c9dc4f08e4db8961c54511237df3abc59ef88128c5e64e04737e18fd",
+    "m4a": "6bfd1051e068ca8c01ad58e8d9ad16c2cf4eab88d47c4e051e8add1bb31bd9dc"
+   }
+  },
+  "allySaved.h3": {
+   "speaker": "mensah",
+   "kind": "human",
+   "trigger": "allySaved",
+   "duration": 3.258,
+   "mouth": "3344442224443334544435544300335222535220000000000",
+   "lufs": -18.02,
+   "ogg_bytes": 8526,
+   "m4a_bytes": 12770,
+   "sha256": {
+    "ogg": "69c505ce38f3cfd22b6c208d99466b58c34650379c1caebdd192142aa8ba1ed4",
+    "m4a": "496ae96f425ee106de6d64c6dea9581a9c6b31f14049c584c5b938f17a760321"
+   }
+  },
+  "allySaved.h4": {
+   "speaker": "voss",
+   "kind": "human",
+   "trigger": "allySaved",
+   "duration": 2.091,
+   "mouth": "44444553225443200444533354322000",
+   "lufs": -18.09,
+   "ogg_bytes": 5609,
+   "m4a_bytes": 8569,
+   "sha256": {
+    "ogg": "710e470d08847d2d63398c8b68e2e6ba0971a3ea0e6ab6f04725e553bbcefd54",
+    "m4a": "423f07449dd17b73869284f422a985b08be765f6292d4864108a5b4e4702f3a4"
+   }
+  },
+  "allySaved.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "allySaved",
+   "duration": 1.123,
+   "mouth": "44444444444433000",
+   "lufs": -18.53,
+   "ogg_bytes": 3080,
+   "m4a_bytes": 5113,
+   "sha256": {
+    "ogg": "2a186ac3330c6db6ee1f3c8aa39bc15fd222bd21ea9d47cf22d88e40c0827b66",
+    "m4a": "ca3179ad1ba503857ae89df32c228cc807544596c7095e03fbee5d6427486b49"
+   }
+  },
+  "allySaved.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "allySaved",
+   "duration": 1.118,
+   "mouth": "33377747444433000",
+   "lufs": -18.51,
+   "ogg_bytes": 3124,
+   "m4a_bytes": 5057,
+   "sha256": {
+    "ogg": "949a6f70525afa25e34b84d2d2941106208b735c4c0c31fc3fb6238743148523",
+    "m4a": "f22a0ba36d3c0972c0cef69b7e7f013e604853a68da8f11c3dfe1b7f27a34b8a"
+   }
+  },
+  "allySaved.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "allySaved",
+   "duration": 1.108,
+   "mouth": "44444444444433000",
+   "lufs": -18.52,
+   "ogg_bytes": 3083,
+   "m4a_bytes": 5025,
+   "sha256": {
+    "ogg": "e239a16185961e212553aac2e8988ab02327531e537bdb8330e4d0dfcf96542e",
+    "m4a": "8d22c150a13d90aa4711044a81c41a57ec89e3c21240ee8de049aed84e0d40c4"
+   }
+  },
+  "allySaved.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "allySaved",
+   "duration": 1.15,
+   "mouth": "334444444443330000",
+   "lufs": -18.51,
+   "ogg_bytes": 3187,
+   "m4a_bytes": 5173,
+   "sha256": {
+    "ogg": "ec07babab745fb3e25f45e6a8be39935c08dc099e8ab12564f23a91b96f3a47e",
+    "m4a": "82f12d72c10e5a95bb400224dfa062d4ad70a41d18834cbb8e9334175b5de563"
+   }
+  },
+  "allyRetreated.h0": {
+   "speaker": "kessler",
+   "kind": "human",
+   "trigger": "allyRetreated",
+   "duration": 1.727,
+   "mouth": "33534455344544223443222000",
+   "lufs": -18.04,
+   "ogg_bytes": 4656,
+   "m4a_bytes": 7236,
+   "sha256": {
+    "ogg": "ee00f2786f9889b7b82bcde6e7d83b3900c9f55267a1abe09ce8364fa80498a4",
+    "m4a": "b4eb09e5bcf648318408d498bb54930a96d82f186ce20ef82e743f8a0588c421"
+   }
+  },
+  "allyRetreated.h1": {
+   "speaker": "voss",
+   "kind": "human",
+   "trigger": "allyRetreated",
+   "duration": 3.534,
+   "mouth": "444445533443333444522000054454333445520023454443200000",
+   "lufs": -18.04,
+   "ogg_bytes": 9400,
+   "m4a_bytes": 13737,
+   "sha256": {
+    "ogg": "49359af2cf783466edc307e6df68ec65a94e492f38c106252575e7ff52fcf6bd",
+    "m4a": "6f8d135c7db0e6d435000fd91c76b6e935ca409f30b7f64fd309421d373e8851"
+   }
+  },
+  "allyRetreated.h2": {
+   "speaker": "march",
+   "kind": "human",
+   "trigger": "allyRetreated",
+   "duration": 4.691,
+   "mouth": "44444455334444334433334430002244554422254432220000035545444522222220000",
+   "lufs": -18.16,
+   "ogg_bytes": 12260,
+   "m4a_bytes": 17901,
+   "sha256": {
+    "ogg": "91969bece1f30217e2c3e9b7ee8f4d90aa30e6a5c64f355fdbe5922ec516c9f0",
+    "m4a": "88f0e9cc6f148c3aa515953204162f5c8a2bc05f22ffabe6bab6ad1bb0d51c49"
+   }
+  },
+  "allyRetreated.h3": {
+   "speaker": "mensah",
+   "kind": "human",
+   "trigger": "allyRetreated",
+   "duration": 3.339,
+   "mouth": "334444323445555334454445354442223333333200000000000",
+   "lufs": -18.08,
+   "ogg_bytes": 8789,
+   "m4a_bytes": 13037,
+   "sha256": {
+    "ogg": "5a72b782791f58f5c87c7e9bb12563e7417f5d2c9eb41f2baa2152acf8c4220b",
+    "m4a": "6946036bffc1fa9e04b702cfac093e81bd60236e2d531b921f348c09a64d293e"
+   }
+  },
+  "allyRetreated.h4": {
+   "speaker": "admiral",
+   "kind": "human",
+   "trigger": "allyRetreated",
+   "duration": 4.058,
+   "mouth": "4355444544453544453345533333333223300000033445544333333222000",
+   "lufs": -18.13,
+   "ogg_bytes": 10725,
+   "m4a_bytes": 15619,
+   "sha256": {
+    "ogg": "8cd2541cb02b084b079401a079dce0454f814b654072e28302ccc81c2240f9c2",
+    "m4a": "9785e2daec22b08b0a0b643d65a95cbb6e80223658df8a8cfb7c362e47fb18f9"
+   }
+  },
+  "allyRetreated.d0": {
+   "speaker": "gorrak",
+   "kind": "demon",
+   "trigger": "allyRetreated",
+   "duration": 1.083,
+   "mouth": "43447444444443000",
+   "lufs": -18.51,
+   "ogg_bytes": 3034,
+   "m4a_bytes": 4923,
+   "sha256": {
+    "ogg": "ebcb1a2d5dcc59514dd9a12292822278c97ffdeb75e0c2b300e28a5dfecdeac3",
+    "m4a": "8db395fda2b07524d330c68b90d1f426a9b37c757a19cc406d8b77d8608ee500"
+   }
+  },
+  "allyRetreated.d1": {
+   "speaker": "vexxa",
+   "kind": "demon",
+   "trigger": "allyRetreated",
+   "duration": 1.103,
+   "mouth": "33344444444430000",
+   "lufs": -18.51,
+   "ogg_bytes": 3081,
+   "m4a_bytes": 4962,
+   "sha256": {
+    "ogg": "cbbdacd6cb2769739685af3dafd029ddf69bc1baf018bf7f48d37e21557e7caa",
+    "m4a": "bf7a215e969601eeede3fad6f622f5b7d307d7e90bb1b793600687c90cfecd41"
+   }
+  },
+  "allyRetreated.d2": {
+   "speaker": "skarn",
+   "kind": "demon",
+   "trigger": "allyRetreated",
+   "duration": 1.089,
+   "mouth": "44444444444433000",
+   "lufs": -18.52,
+   "ogg_bytes": 2994,
+   "m4a_bytes": 4982,
+   "sha256": {
+    "ogg": "9eac5918bd407e2ed7e738ce708a919eb3d33df0cab38572240e696f5e136b45",
+    "m4a": "7c78fd4be53b07e50fe68b87127f9b11924340acf6c1a2fe9d5586ddc8829c6e"
+   }
+  },
+  "allyRetreated.d3": {
+   "speaker": "morth",
+   "kind": "demon",
+   "trigger": "allyRetreated",
+   "duration": 1.071,
+   "mouth": "43444444444330000",
+   "lufs": -18.57,
+   "ogg_bytes": 2936,
+   "m4a_bytes": 4824,
+   "sha256": {
+    "ogg": "187229f9cbd71016a6a473282f9ff41f080291ffe851cdb148ad7de89b83ca00",
+    "m4a": "e182debbecee83cd8f0da27c35e86a7cdaf9fe4e78e886c70d9181b6444c70ea"
+   }
+  },
+  "allyRetreated.d4": {
+   "speaker": "ulgra",
+   "kind": "demon",
+   "trigger": "allyRetreated",
+   "duration": 1.101,
+   "mouth": "44447444444443000",
+   "lufs": -18.5,
+   "ogg_bytes": 3036,
+   "m4a_bytes": 5023,
+   "sha256": {
+    "ogg": "ae173ff447985626776acd7f997feed016383b0ab32163e011b3c109c7a5f199",
+    "m4a": "1e87c50ded8c95af1876d7f4a94d180f6b1d06671189033a95df68e273508d99"
+   }
+  }
+ }
+}

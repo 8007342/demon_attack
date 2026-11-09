@@ -84,6 +84,19 @@ Title centers an original horned demon emblem and the Demon Attack wordmark, wit
 
 Top 10 uses aligned rank, three-character initials, and score columns. Initial entry offers three rotating wheels with A–Z and 0–9, clear upper/lower controls, a highlighted middle selection, and Submit. Avoid a freeform text field. Game-over and victory keep a darkened arena behind their overlays. Review phone portrait, narrow desktop, and wide desktop without horizontal overflow.
 
+### Squad comms video call
+
+A squad video call frames the arena as the shared screen (OpenSpec change `squad-comms`).
+
+- **Layout:**
+  - **Wide screens.** When the margins beside the 500-px cabinet are at least 150 px wide, two call tiles stand on each side and never cross the cabinet. The air squad (the Fleet Admiral and pilots) sits on the left. The ground link and the brood intercept sit on the right.
+  - **Phones and narrow windows.** At most two strips (44 px each) stack inside the 94-px HUD band, clear of the HUD buttons. They never reach the arena. A waiting line shows as a `+n` pip.
+- **Tile anatomy:** a name, rank and callsign tag; a video area with the pixel portrait at an integer scale, nearest-neighbour; scanlines; LIVE and signal-bar glyphs; a subtitle well. A caller connects and disconnects through blocky signal static. A speaking caller gets a stepped accent glow that pulses with the mouth.
+- **Motion:** portraits breathe with a one-logical-pixel bob, blink, and tilt their head now and then. After a line they hold the trigger's mood (smile, worried). A grunting demon officer gets a camera zoom onto the face in whole-pixel steps: the tile grows across its own margin on wide screens and pops inside the strip on phones. The zoom adds a small shake only when motion is allowed. With reduced motion there is no shake, and the static becomes a plain fade.
+- **Subtitles:** humans are subtitled with their line. Demon grunts show original bilateral 5 × 7 brood glyphs revealed over the clip, plus a `SIGINT · <intent>` gloss in salmon, so the player reads the enemy's intent without the grunt being words.
+- **Celebration:** when the whole allied fleet survives, the left header turns into a gold FLEET INTACT banner and the crew speaks in sequence.
+- **Cast and tone:** the cast is original and diverse in age, gender and ethnicity, with no caricature and no stereotyped accents. Several of the senior officers are women, starting with the Fleet Admiral. Allies are never killed: a downed ship or squad is "totalled" and heads back to base.
+
 ## Current music score and playback
 
 Musical direction: original music only, never imitating an existing game's soundtrack. Retro sci-fi arcade (analog bass, square leads, drum machines) fused with dark synth and orchestral tension. The campaign darkens sector by sector as the demonic swarm consumes the human frontier, and the carrier's four forms escalate. Every cue shares **120 BPM** and a four-beat bar, so transitions land on the next bar line. Tension grows through density, timbre and register, never tempo.

@@ -17,6 +17,10 @@ import 'services/run_storage.dart';
 import 'services/tilt_control.dart';
 import 'widgets/medal.dart';
 import 'widgets/heart_parts.dart';
+// --- squad comms
+import 'comms/comms_view.dart';
+import 'comms/squad_comms.dart';
+import 'game/game_events.dart';
 export 'game/scene.dart' show DemonScene;
 
 void main() => runApp(const DemonAttackApp());
@@ -72,9 +76,15 @@ class DemonAttackApp extends StatelessWidget {
 }
 
 class ArcadePage extends StatefulWidget {
-  const ArcadePage({super.key, this.scoreService, this.runStorage});
+  const ArcadePage({
+    super.key,
+    this.scoreService,
+    this.runStorage,
+    this.squadComms,
+  });
   final ScoreService? scoreService;
   final RunStorage? runStorage;
+  final SquadComms? squadComms;
   @override
   State<ArcadePage> createState() => _ArcadePageState();
 }
@@ -82,6 +92,18 @@ class ArcadePage extends StatefulWidget {
 class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   final model = ArcadeModel();
   late final DemonScene scene;
+  // --- squad comms: one shared GameEvent stream, read-only over the model.
+  late final gameEvents = GameEventObserver(model);
+  late final squadComms = widget.squadComms ?? SquadComms();
+  bool voiceOn = true;
+  void _resetComms({bool resume = false}) {
+    gameEvents.reset(freshRun: !resume);
+    squadComms.reset();
+    squadComms.startRun(storage.store, resume: resume);
+  }
+  // Music bridge: gameEvents.stream carries the same vocabulary, including
+  // flawlessVictory / flawlessRun for a fleet-intact celebration cue.
+  // --- end squad comms
   final focus = FocusNode();
   late final scores = widget.scoreService ?? ScoreService();
   late final storage = widget.runStorage ?? RunStorage();
@@ -165,7 +187,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     if (tilt.isActive && model.canPilot) {
       model.setSteering(tilt.steeringValue);
     }
-    for (final event in model.takeEvents()) {
+    final rawEvents = model.takeEvents();
+    // --- squad comms
+    squadComms.tick(
+      gameEvents.observe(rawEvents),
+      paused: model.mode == RunMode.paused || model.mode == RunMode.title,
+    );
+    for (final event in rawEvents) {
       switch (event) {
         case 'level':
           audioCue('level', model.level, 1, model.cycle);
@@ -291,6 +319,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     if (saved == null) return;
     audioUnlock();
     audioResume();
+    _resetComms(resume: true);
     if (!model.restoreCheckpoint(saved)) {
       setState(() => savedCheckpoint = null);
       storage.clearCheckpoint();
@@ -316,6 +345,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       handledRunEnd = false;
       showFinalResult = false;
       heartNotice = null;
+      _resetComms();
       model.start(difficulty: difficulty);
     });
     _tick();
@@ -325,6 +355,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   void _title({bool keepScreen = false}) {
     setState(() {
       if (!keepScreen) screen = null;
+      squadComms.reset(); // --- squad comms
       model.mode = RunMode.title;
       model.events.clear();
       keys.clear();
@@ -491,6 +522,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           child: LayoutBuilder(
             builder: (context, bounds) {
               final wide = bounds.maxWidth > 760;
+              final commsLayout = CommsLayout.of(bounds.biggest);
               return Stack(
                 children: [
                   Positioned.fill(
@@ -526,7 +558,20 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         child: _cabinet(bounds),
                       ),
                     ),
-                  if (wide && !title)
+                  // --- squad comms: the call uses the empty side margins.
+                  if (commsLayout.side && !title)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CommsAtlasScope(
+                          child: CommsSidePanels(
+                            director: squadComms.director,
+                            now: squadComms.now,
+                            layout: commsLayout,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (wide && !title && !commsLayout.side)
                     Positioned(
                       left: 28,
                       top: 30,
@@ -619,6 +664,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               ),
             ),
             _muteButton(),
+            _voiceButton(),
           ],
         ),
       ),
@@ -1017,6 +1063,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         ),
       ),
       SizedBox(width: 38, child: _muteButton()),
+      SizedBox(width: 38, child: _voiceButton()),
       SizedBox(
         width: 38,
         child: IconButton(
@@ -1039,7 +1086,25 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             color: Color(0xF0080D18),
             border: Border(bottom: BorderSide(color: Color(0xFF26394C))),
           ),
-          child: _hud(),
+          // --- squad comms: compact call stack inside the HUD band.
+          child: Stack(
+            children: [
+              Positioned.fill(child: _hud()),
+              if (!CommsLayout.of(bounds.biggest).side)
+                Positioned(
+                  key: const ValueKey('comms-hud-stack'),
+                  left: -6,
+                  right: 3 * 38,
+                  top: 2,
+                  child: CommsAtlasScope(
+                    child: CommsHudStack(
+                      director: squadComms.director,
+                      now: squadComms.now,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
         Expanded(
           child: LayoutBuilder(
@@ -1857,6 +1922,20 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           ),
         ),
       );
+  // --- squad comms: voice on/off next to sound; subtitles stay on.
+  Widget _voiceButton() => IconButton(
+    tooltip: voiceOn ? 'Mute squad voices' : 'Enable squad voices',
+    onPressed: () {
+      setState(() => voiceOn = !voiceOn);
+      audioUnlock();
+      squadComms.setVoice(voiceOn);
+    },
+    icon: Icon(
+      voiceOn ? Icons.record_voice_over_outlined : Icons.voice_over_off,
+      color: const Color(0xFF95A9BB),
+      size: 18,
+    ),
+  );
   Widget _muteButton() => IconButton(
     tooltip: muted ? 'Enable sound' : 'Mute sound',
     onPressed: () {
