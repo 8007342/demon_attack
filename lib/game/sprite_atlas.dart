@@ -124,10 +124,11 @@ class CreaturePresentation {
     for (final s in model.shots) {
       if (!s.hostile || (_seenShot[s] ?? false)) continue;
       _seenShot[s] = true;
-      if (s.kind == ShotKind.sentinel) continue;
+      final fromSentinel = s.kind == ShotKind.sentinel;
+      final muzzleDy = fromSentinel ? 14.0 : 12.0;
       for (final d in model.demons) {
-        if (d.isLarge) continue;
-        if ((d.x - s.x).abs() < 6 && (s.y - (d.y + 12)).abs() < 10) {
+        if (d.isLarge != fromSentinel) continue;
+        if ((d.x - s.x).abs() < 6 && (s.y - (d.y + muzzleDy)).abs() < 10) {
           _fireAge[d] = 0;
           break;
         }

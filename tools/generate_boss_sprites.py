@@ -1,19 +1,31 @@
-"""Generate high-detail 2x2 pixel-art Brood Dreadnought Carrier sprite sheet.
+"""Generate the Brood Dreadnought carrier atlas on its native grid.
 
-Output: assets/images/boss-carrier.png
-Physical dimensions: 1472 x 960 (4 columns x 4 rows of 368 x 240 cells).
-Logical dimensions per cell: 184 x 120 pixels, upscaled 2x2 with crisp alpha (0 or 255).
+    .cache/asset-venv/bin/python tools/generate_boss_sprites.py
+
+Output: assets/images/boss-carrier.png, 1472 x 1680: four columns x seven
+rows of 368 x 240 cells, stored 1x (the PNG pixel is the logical pixel).
+Shapes are authored in 184 x 120 "design units"; polygons, ellipses and
+lines rasterise at the native 368 x 240 resolution (finer silhouettes and
+seams), while boxes and dots keep their 2 x 2 design-unit footprint. The
+scene draws each cell at 184 x 120 arena units, unchanged.
+
+Rows: 0 hull forms, 1 mandibles/thrusters, 2 turrets/core/shutters,
+3 damage + debris, 4 core blast doors (openness 0, 1/3, 2/3, 1), 5 left
+side hatch (openness 0, 1/2, 1, then locked; mirrored for the right),
+6 charred wreck forms. Contract: plan/sprite-atlas.md.
 """
 from pathlib import Path
 import math
-import struct
-import zlib
+
+import numpy as np
+from PIL import Image
 
 CELL_W, CELL_H = 184, 120
-COLS, ROWS = 4, 4
-WIDTH = CELL_W * 2 * COLS   # 1472
-HEIGHT = CELL_H * 2 * ROWS  # 960
-pixels = bytearray(WIDTH * HEIGHT * 4)
+S = 2
+COLS, ROWS = 4, 7
+WIDTH = CELL_W * S * COLS   # 1472
+HEIGHT = CELL_H * S * ROWS  # 1680
+img = np.zeros((HEIGHT, WIDTH, 4), dtype=np.uint8)
 
 OUTLINE = '#131826'
 DARK_METAL = '#1c2438'
@@ -32,7 +44,6 @@ CRIMSON_DARK = '#691227'
 SCORCH_DARK = '#16111c'
 SCORCH_MID = '#2c2033'
 EMBER_BRIGHT = '#ffae52'
-
 PALETTES = [
     # Col 0: Carrier - Deep Imperial Violet/Indigo
     {
@@ -85,46 +96,48 @@ PALETTES = [
 ]
 
 
+
+
 def _rgb(color):
-    return bytes([int(color[i:i + 2], 16) for i in (1, 3, 5)] + [255])
+    return tuple(int(color[i:i + 2], 16) for i in (1, 3, 5)) + (255,)
 
 
-COLOR_CACHE = {}
+def _cell(c, r):
+    return img[r * CELL_H * S:(r + 1) * CELL_H * S, c * CELL_W * S:(c + 1) * CELL_W * S]
+
+
+_YS, _XS = np.mgrid[0:CELL_H * S, 0:CELL_W * S]
+# Native pixel centres expressed in design units.
+_UX = (_XS + .5) / S
+_UY = (_YS + .5) / S
+
+
+def _paint(c, r, mask, color):
+    _cell(c, r)[mask] = _rgb(color)
 
 
 def dot(c, r, x, y, color):
     if not (0 <= x < CELL_W and 0 <= y < CELL_H):
         return
-    rgba = COLOR_CACHE.get(color)
-    if rgba is None:
-        rgba = _rgb(color)
-        COLOR_CACHE[color] = rgba
-    px0 = (c * CELL_W + x) * 2
-    py0 = (r * CELL_H + y) * 2
-    for dy in range(2):
-        row_off = (py0 + dy) * WIDTH * 4
-        for dx in range(2):
-            off = row_off + (px0 + dx) * 4
-            pixels[off:off + 4] = rgba
+    _cell(c, r)[y * S:(y + 1) * S, x * S:(x + 1) * S] = _rgb(color)
+
+
+def fine(c, r, X, Y, color):
+    """One native pixel (X, Y in 368 x 240 space)."""
+    if 0 <= X < CELL_W * S and 0 <= Y < CELL_H * S:
+        _cell(c, r)[int(Y), int(X)] = _rgb(color)
 
 
 def clear_dot(c, r, x, y):
-    if not (0 <= x < CELL_W and 0 <= y < CELL_H):
-        return
-    px0 = (c * CELL_W + x) * 2
-    py0 = (r * CELL_H + y) * 2
-    zero = b'\x00\x00\x00\x00'
-    for dy in range(2):
-        row_off = (py0 + dy) * WIDTH * 4
-        for dx in range(2):
-            off = row_off + (px0 + dx) * 4
-            pixels[off:off + 4] = zero
+    if 0 <= x < CELL_W and 0 <= y < CELL_H:
+        _cell(c, r)[y * S:(y + 1) * S, x * S:(x + 1) * S] = 0
 
 
 def box(c, r, x, y, w, h, color):
-    for yy in range(y, y + h):
-        for xx in range(x, x + w):
-            dot(c, r, xx, yy, color)
+    x0, y0 = max(0, int(x)), max(0, int(y))
+    x1, y1 = min(CELL_W, int(x + w)), min(CELL_H, int(y + h))
+    if x1 > x0 and y1 > y0:
+        _cell(c, r)[y0 * S:y1 * S, x0 * S:x1 * S] = _rgb(color)
 
 
 def pair_box(c, r, x, y, w, h, color):
@@ -138,17 +151,21 @@ def pair_dot(c, r, x, y, color):
 
 
 def line(c, r, p0, p1, color, thickness=1):
-    x0, y0 = p0
-    x1, y1 = p1
-    steps = max(abs(x1 - x0), abs(y1 - y0), 1)
+    """Native-resolution line; a design-unit thickness t is 2t-1 native px."""
+    x0, y0 = (p0[0] + .5) * S, (p0[1] + .5) * S
+    x1, y1 = (p1[0] + .5) * S, (p1[1] + .5) * S
+    t = max(1, 2 * thickness - 1)
+    steps = int(max(abs(x1 - x0), abs(y1 - y0))) + 1
+    cell = _cell(c, r)
+    rgba = _rgb(color)
     for i in range(steps + 1):
-        t = i / steps
-        x = round(x0 + (x1 - x0) * t)
-        y = round(y0 + (y1 - y0) * t)
-        if thickness <= 1:
-            dot(c, r, x, y, color)
-        else:
-            box(c, r, x - thickness // 2, y - thickness // 2, thickness, thickness, color)
+        f = i / steps
+        X = int(x0 + (x1 - x0) * f - (t - 1) / 2)
+        Y = int(y0 + (y1 - y0) * f - (t - 1) / 2)
+        Xa, Ya = max(0, X), max(0, Y)
+        Xb, Yb = min(CELL_W * S, X + t), min(CELL_H * S, Y + t)
+        if Xb > Xa and Yb > Ya:
+            cell[Ya:Yb, Xa:Xb] = rgba
 
 
 def pair_line(c, r, p0, p1, color, thickness=1):
@@ -156,29 +173,35 @@ def pair_line(c, r, p0, p1, color, thickness=1):
     line(c, r, (CELL_W - 1 - p0[0], p0[1]), (CELL_W - 1 - p1[0], p1[1]), color, thickness)
 
 
-def polygon(c, r, pts, color):
-    xs = [p[0] for p in pts]
-    ys = [p[1] for p in pts]
-    min_x = max(0, int(min(xs)))
-    max_x = min(CELL_W - 1, int(max(xs)))
-    min_y = max(0, int(min(ys)))
-    max_y = min(CELL_H - 1, int(max(ys)))
+def poly_mask(pts):
+    inside = np.zeros((CELL_H * S, CELL_W * S), dtype=bool)
     n = len(pts)
-    for y in range(min_y, max_y + 1):
-        py = y + 0.5
-        for x in range(min_x, max_x + 1):
-            px = x + 0.5
-            inside = False
-            j = n - 1
-            for i in range(n):
-                xi, yi = pts[i]
-                xj, yj = pts[j]
-                if (yi > py) != (yj > py):
-                    if px < (xj - xi) * (py - yi) / (yj - yi) + xi:
-                        inside = not inside
-                j = i
-            if inside:
-                dot(c, r, x, y, color)
+    for i in range(n):
+        xi, yi = pts[i]
+        xj, yj = pts[i - 1]
+        if yi == yj:
+            continue
+        cond = (yi > _UY) != (yj > _UY)
+        xint = (xj - xi) * (_UY - yi) / (yj - yi) + xi
+        inside ^= cond & (_UX < xint)
+    return inside
+
+
+def polygon(c, r, pts, color):
+    _paint(c, r, poly_mask(pts), color)
+
+
+def ellipse(c, r, cx, cy, rx, ry, color, outline=None):
+    # Same equation as the design grid, evaluated at native pixel centres.
+    dx = (_UX - .5 - cx) / max(0.5, rx)
+    dy = (_UY - .5 - cy) / max(0.5, ry)
+    d = dx * dx + dy * dy
+    inside = d <= 1.0
+    if outline:
+        _paint(c, r, inside & (d >= 0.84), outline)
+        _paint(c, r, inside & (d < 0.84), color)
+    else:
+        _paint(c, r, inside, color)
 
 
 def pair_poly(c, r, pts, color):
@@ -191,19 +214,6 @@ def outlined_pair_poly(c, r, pts, fill_color, outline_color=OUTLINE):
     n = len(pts)
     for i in range(n):
         pair_line(c, r, pts[i], pts[(i + 1) % n], outline_color)
-
-
-def ellipse(c, r, cx, cy, rx, ry, color, outline=None):
-    for y in range(int(cy - ry - 1), int(cy + ry + 2)):
-        for x in range(int(cx - rx - 1), int(cx + rx + 2)):
-            dx = (x - cx) / max(0.5, rx)
-            dy = (y - cy) / max(0.5, ry)
-            d = dx * dx + dy * dy
-            if d <= 1.0:
-                if outline and d >= 0.76:
-                    dot(c, r, x, y, outline)
-                else:
-                    dot(c, r, x, y, color)
 
 
 def draw_launch_bay(c, r, cx, cy, w, h, pal, main_bay=False):
@@ -431,11 +441,30 @@ def draw_carrier_hull(c):
     draw_launch_bay(c, r, 138, 76, 20, 14, pal, main_bay=False)
     draw_launch_bay(c, r, 92, 78, 30, 18, pal, main_bay=True)
 
+    # Brood sigil emblem on the upper dome with one rank pip per form.
+    draw_emblem(c, r, pal, phase)
+
     # Central brood core housing arch above Center Main Bay
     ellipse(c, r, 92, 60, 12, 8, pal['deep'], outline=OUTLINE)
     ellipse(c, r, 92, 60, 9, 6, pal['conduit'], outline=OUTLINE)
     ellipse(c, r, 92, 60, 5, 3, pal['conduit_hi'])
     box(c, r, 90, 59, 4, 2, '#ffffff')
+
+
+def draw_emblem(c, r, pal, phase):
+    cx, cy = 92, 45
+    # Horned crest: a fine native-res sigil, readable as a mark, not text.
+    k = 1.4
+    polygon(c, r, [(cx - 7 * k, cy - 4 * k), (cx - 4 * k, cy - 1 * k), (cx, cy - 3 * k), (cx + 4 * k, cy - 1 * k),
+                   (cx + 7 * k, cy - 4 * k), (cx + 5 * k, cy + 2 * k), (cx, cy + 5 * k), (cx - 5 * k, cy + 2 * k)], OUTLINE)
+    polygon(c, r, [(cx - 5.5 * k, cy - 2.5 * k), (cx - 3.5 * k, cy), (cx, cy - 1.5 * k), (cx + 3.5 * k, cy),
+                   (cx + 5.5 * k, cy - 2.5 * k), (cx + 4 * k, cy + 1.5 * k), (cx, cy + 4 * k),
+                   (cx - 4 * k, cy + 1.5 * k)], pal['trim_hi'])
+    ellipse(c, r, cx, cy + 1, 2.2, 1.8, CRIMSON_HOT)
+    fine(c, r, cx * S, (cy + .3) * S, '#ffffff')
+    for i in range(phase + 1):
+        px = cx - phase * 1.5 + i * 3
+        box(c, r, int(px), cy + 8, 1, 1, pal['conduit_hi'])
 
 
 # =============================================================================
@@ -692,23 +721,125 @@ def draw_damage_and_wreckage(c):
             dot(c, r, x1, y1, '#ffffff')
 
 
+# =============================================================================
+# ROW 4: CORE BLAST DOORS; ROW 5: SIDE HATCH
+# =============================================================================
+CORE = (92, 85, 32, 22)          # scene: core at b.y + 25, 32 x 22 units
+SIDE = (46, 81, 22, 16)          # scene: left hatch at b.x - 46, b.y + 21
+
+
+def draw_hatches(c):
+    r = 4
+    pal = PALETTES[0]
+    # Core blast doors: openness c / 3. Leaves slide into the frame; piston
+    # rods extend; hazard chevrons and lock pips show which way they move.
+    cx, cy, w, h = CORE
+    x0, y0 = cx - w / 2, cy - h / 2
+    open_ = c / 3
+    leaf = (w / 2) * (1 - open_)
+    box(c, r, int(x0) - 2, int(y0) - 2, w + 4, 2, OUTLINE)
+    box(c, r, int(x0) - 2, int(y0) + h, w + 4, 2, OUTLINE)
+    box(c, r, int(x0) - 2, int(y0) - 1, 2, h + 2, LIGHT_METAL)
+    box(c, r, int(x0) + w, int(y0) - 1, 2, h + 2, LIGHT_METAL)
+    for side in (-1, 1):
+        if leaf < .5:
+            continue
+        lx = cx - leaf if side < 0 else cx
+        polygon(c, r, [(lx, y0), (lx + leaf, y0), (lx + leaf, y0 + h), (lx, y0 + h)], MID_METAL)
+        polygon(c, r, [(lx, y0), (lx + leaf, y0), (lx + leaf, y0 + 2), (lx, y0 + 2)], STEEL_HI)
+        edge = cx - .5 if side < 0 else cx
+        line(c, r, (edge, y0), (edge, y0 + h - 1), OUTLINE)
+        # Diagonal hazard chevrons on each leaf.
+        for k in range(0, int(leaf), 4):
+            hx = (cx - leaf + k) if side < 0 else (cx + k)
+            line(c, r, (hx, y0 + 4), (hx + 2, y0 + 8), EYE_GOLD)
+            line(c, r, (hx, y0 + 12), (hx + 2, y0 + 16), CRIMSON_HOT)
+        # Piston rod from the frame to the leaf.
+        frame_x = x0 - 1 if side < 0 else x0 + w
+        tip_x = cx - leaf if side < 0 else cx + leaf
+        line(c, r, (frame_x, cy + 7), (tip_x, cy + 7), STEEL_HI)
+    if c == 0:
+        box(c, r, cx - 1, cy - 2, 2, 4, CRIMSON_HOT)  # sealed lock pip
+
+    # Side hatch (row 5): cols 0-2 opening shutters, col 3 locked cross-bars.
+    hx, hy, hw, hh = SIDE
+    sx0, sy0 = hx - hw / 2, hy - hh / 2
+    r = 5
+    for k in (c,):
+        col = c
+        box(col, r, int(sx0) - 1, int(sy0) - 1, hw + 2, 1, OUTLINE)
+        box(col, r, int(sx0) - 1, int(sy0) + hh, hw + 2, 1, OUTLINE)
+        if k == 3:
+            polygon(col, r, [(sx0, sy0), (sx0 + hw, sy0), (sx0 + hw, sy0 + hh), (sx0, sy0 + hh)], '#3e4660')
+            line(col, r, (sx0 + 1, sy0 + 1), (sx0 + hw - 2, sy0 + hh - 2), '#23293a', 2)
+            line(col, r, (sx0 + hw - 2, sy0 + 1), (sx0 + 1, sy0 + hh - 2), '#23293a', 2)
+            ellipse(col, r, hx - .5, hy - .5, 2, 2, '#ff274e', outline=OUTLINE)
+            for bx in (sx0 + 1, sx0 + hw - 3):
+                box(col, r, int(bx), int(sy0) + 1, 2, 2, STEEL_HI)
+            continue
+        open_k = k / 2
+        petal = (hw / 2) * (1 - open_k)
+        for side in (-1, 1):
+            if petal < .5:
+                continue
+            px0 = hx - petal if side < 0 else hx
+            polygon(col, r, [(px0, sy0), (px0 + petal, sy0), (px0 + petal, sy0 + hh), (px0, sy0 + hh)], '#57617e')
+            line(col, r, (px0, sy0), (px0 + petal - .5, sy0), STEEL_HI)
+            ex = hx - .5 if side < 0 else hx
+            line(col, r, (ex, sy0), (ex, sy0 + hh - 1), OUTLINE)
+            for k2 in range(1, 3):
+                yy = sy0 + k2 * hh / 3
+                line(col, r, (px0 + 1, yy), (px0 + petal - 1.5, yy), DARK_METAL)
+        box(col, r, int(sx0) - 2, int(hy) - 3, 2, 6, STEEL_HI)
+        box(col, r, int(sx0) + hw, int(hy) - 3, 2, 6, STEEL_HI)
+
+
+# =============================================================================
+# ROW 6: CHARRED WRECK FORMS (falling-wreck sequence)
+# =============================================================================
+def draw_wreck_form(c):
+    src = _cell(c, 0).copy()
+    dst = _cell(c, 6)
+    o = src[..., 3] > 0
+    rgb = src[..., :3].astype(np.int32)
+    # Burn the palette toward scorched metal while keeping the outline.
+    lum = (rgb[..., 0] * 3 + rgb[..., 1] * 5 + rgb[..., 2] * 2) // 10
+    ramp = np.array([_rgb(SCORCH_DARK)[:3], _rgb(SCORCH_MID)[:3], _rgb('#4a3a4a')[:3],
+                     _rgb('#7a5a5a')[:3], _rgb('#a07a6a')[:3]])
+    idx = np.clip(lum // 52, 0, 4)
+    out = np.zeros_like(src)
+    out[o, :3] = ramp[idx[o]]
+    out[o, 3] = 255
+    dst[:] = out
+    # Punch blast holes through the hull and add glowing fissures.
+    rng = np.random.default_rng(1982 + c)
+    for _ in range(7):
+        hx, hy = rng.uniform(30, 154), rng.uniform(26, 92)
+        rad = rng.uniform(2, 4.5)
+        m = ((_UX - hx) / rad) ** 2 + ((_UY - hy) / (rad * .8)) ** 2
+        dst[(m <= 1) & o] = 0
+        ring = (m > 1) & (m <= 1.5) & o
+        dst[ring] = _rgb(EMBER_BRIGHT if rng.random() < .5 else CRIMSON_HOT)
+    for _ in range(6):
+        x0, y0 = rng.uniform(40, 144), rng.uniform(30, 80)
+        pts = [(x0, y0)]
+        for _ in range(3):
+            pts.append((pts[-1][0] + rng.uniform(-10, 10), pts[-1][1] + rng.uniform(4, 10)))
+        for a, b in zip(pts, pts[1:]):
+            line(c, 6, a, b, CRIMSON_DARK, 2)
+            line(c, 6, a, b, EYE_GOLD)
+    dst[~o] = 0
+
+
 for col in range(4):
     draw_carrier_hull(col)
     draw_mandibles_and_thrusters(col)
     draw_turrets_core_shutters(col)
     draw_damage_and_wreckage(col)
+    draw_hatches(col)
+for col in range(4):
+    draw_wreck_form(col)
 
-
-def chunk(kind, payload):
-    return (struct.pack('!I', len(payload)) + kind + payload +
-            struct.pack('!I', zlib.crc32(kind + payload)))
-
-
-raw = b''.join(b'\0' + pixels[y * WIDTH * 4:(y + 1) * WIDTH * 4]
-               for y in range(HEIGHT))
-png = b'\x89PNG\r\n\x1a\n'
-png += chunk(b'IHDR', struct.pack('!IIBBBBB', WIDTH, HEIGHT, 8, 6, 0, 0, 0))
-png += chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b'')
 target = Path(__file__).resolve().parents[1] / 'assets/images/boss-carrier.png'
-target.write_bytes(png)
-print(f'Generated {target}: {WIDTH}x{HEIGHT}, {len(png)} bytes')
+Image.fromarray(img, 'RGBA').save(target, optimize=True)
+print(f'Generated {target}: {WIDTH}x{HEIGHT}')

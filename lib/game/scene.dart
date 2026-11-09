@@ -670,17 +670,23 @@ class DemonScene extends FlameGame {
         Rect.fromCenter(center: core, width: 24, height: 12),
         Paint()..color = b.shield > 0 ? violet : gold,
       );
-      final closed = 16 * (1 - b.door);
-      for (final direction in [-1, 1]) {
-        c.drawRect(
-          Rect.fromLTWH(
-            core.dx + (direction < 0 ? -16 : 16 - closed),
-            core.dy - 11,
-            closed,
-            22,
-          ),
-          Paint()..color = const Color(0xFF57617E),
-        );
+      if (bossAtlas != null) {
+        // Authored blast doors: leaves, pistons and hazard chevrons.
+        final doorFrame = (b.door.clamp(0.0, 1.0) * 3).round();
+        bossSprite(c, 4, doorFrame, Offset(b.x, b.y), 184, height: 120);
+      } else {
+        final closed = 16 * (1 - b.door);
+        for (final direction in [-1, 1]) {
+          c.drawRect(
+            Rect.fromLTWH(
+              core.dx + (direction < 0 ? -16 : 16 - closed),
+              core.dy - 11,
+              closed,
+              22,
+            ),
+            Paint()..color = const Color(0xFF57617E),
+          );
+        }
       }
       if (b.shield > 0) {
         // A fixed-width egg encases the hull; depletion brings its surface
@@ -857,6 +863,18 @@ class DemonScene extends FlameGame {
         }
         if (damage > .65) {
           effectSprite(c, 3, 4 + frame, point + const Offset(0, -8), scale: .5);
+        }
+        if (damage > .8 && vent.isEven) {
+          // Critical hull: black smoke columns, big flames and shed plates.
+          effectSprite(
+            c,
+            12,
+            frame,
+            point + Offset(side * 3, -18.0 - frame * 4),
+            scale: .6,
+          );
+          effectSprite(c, 12, 4 + frame, point + const Offset(0, -6), scale: .5);
+          effectSprite(c, 5, 4 + (time * 6 + vent).floor() % 4, point, scale: .5);
         }
       }
     }
@@ -1547,6 +1565,39 @@ class DemonScene extends FlameGame {
 
   void _carrierSideHatches(Canvas c, Carrier b) {
     final paint = Paint()..isAntiAlias = false;
+    if (bossAtlas != null) {
+      // Interior glow first, then the authored shutter frame (mirrored for
+      // the right hatch); locked forms show cross-barred plates.
+      for (final (dx, openness, flip) in [
+        (-Carrier.sideHatchOffset, b.sideDoorLeft, false),
+        (Carrier.sideHatchOffset, b.sideDoorRight, true),
+      ]) {
+        final center = Offset(b.x + dx, b.y + 21);
+        c.drawRect(
+          Rect.fromCenter(center: center, width: 22, height: 16),
+          paint..color = const Color(0xFF070A14),
+        );
+        if (!b.sideHatchesLocked) {
+          c.drawRect(
+            Rect.fromCenter(center: center, width: 16, height: 9),
+            paint..color = b.shield > 0 ? violet : mint,
+          );
+        }
+        final frame = b.sideHatchesLocked
+            ? 3
+            : (openness.clamp(0.0, 1.0) * 2).round();
+        bossSprite(
+          c,
+          5,
+          frame,
+          Offset(b.x, b.y),
+          184,
+          height: 120,
+          flipX: flip,
+        );
+      }
+      return;
+    }
     final hatches = [
       (Offset(b.x - Carrier.sideHatchOffset, b.y + 21), b.sideDoorLeft),
       (Offset(b.x + Carrier.sideHatchOffset, b.y + 21), b.sideDoorRight),
@@ -1609,6 +1660,12 @@ class DemonScene extends FlameGame {
         : warning
         ? (model.clock * 8).floor() % 4
         : ((model.clock / .4 + demon.seed).floor() % 8);
+    // Hover-only presentation: the beak discharge plays over the stroke when
+    // this sentinel's bolt leaves, and hits use authored flash frames.
+    final hovering = !demon.lastStand && !warning && !diving;
+    final fired = creatures.fireAge(demon);
+    final firing = hovering && fired != null && fired < .28;
+    final flashFrame = hovering && demon.flash > 0;
     final bank = demon.bank.abs() > 0.01
         ? demon.bank.clamp(-1.0, 1.0)
         : (demon.vx / 140).clamp(-1.0, 1.0);
@@ -1621,10 +1678,10 @@ class DemonScene extends FlameGame {
     }
     effectSprite(
       c,
-      row,
-      frame,
+      firing ? 13 : (flashFrame ? 10 + species : row),
+      firing ? species * 4 + (fired / .07).floor().clamp(0, 3) : frame,
       pos,
-      tint: demon.flash > 0 ? Colors.white : null,
+      tint: demon.flash > 0 && !flashFrame ? Colors.white : null,
     );
     _creatureLighting(c, pos, bank, width: 92, diving: diving);
     c.restore();
@@ -1926,15 +1983,8 @@ class DemonScene extends FlameGame {
     c.translate(pos.dx, pos.dy);
     c.rotate(p * 0.22);
     if (bossAtlas != null) {
-      bossSprite(
-        c,
-        0,
-        wreck.phase.clamp(0, 3),
-        Offset.zero,
-        184,
-        height: 120,
-        tint: const Color(0xFF8B665F),
-      );
+      // Charred wreck form: burnt hull, blast holes and glowing fissures.
+      bossSprite(c, 6, wreck.phase.clamp(0, 3), Offset.zero, 184, height: 120);
       bossSprite(
         c,
         3,
