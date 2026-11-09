@@ -349,9 +349,26 @@ GalleryScene _carrierScene(int cycle, double damage, {double door = 0}) {
   );
 }
 
+/// The falling-wreck victory beat, looping its 4 s progress.
+GalleryScene _wreckScene(int cycle) {
+  final m = _staged()..cycle = cycle;
+  m.wreckBoss = Carrier(cycle)..core = 1;
+  m.mode = RunMode.victory;
+  m.transitionDuration = 4;
+  return GalleryScene(
+    m,
+    stage: (m, dt, t) {
+      m.shipX = -100;
+      m.transitionLeft = 4 - (t % 4);
+    },
+  );
+}
+
 List<Widget> _carriers() => [
   _tile('CARRIER FORM 1', _carrierScene(0, 0)),
   _tile('FORM 2 · HATCH CYCLE', _carrierScene(1, 0.3, door: -1)),
   _tile('FORM 3 · DAMAGED', _carrierScene(2, 0.6, door: -1)),
   _tile('FORM 4 · CRITICAL', _carrierScene(3, 0.85, door: -1)),
+  _tile('WRECK · FORM 1', _wreckScene(0)),
+  _tile('WRECK · FORM 4', _wreckScene(3)),
 ];
