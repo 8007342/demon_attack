@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'model.dart';
+import 'music_director.dart'; // --- music event hook
 import 'sector_background.dart';
 import 'ship_painter.dart';
 import 'sprite_atlas.dart';
@@ -26,6 +27,7 @@ class DemonScene extends FlameGame {
   final ship = ShipPainter();
   final sectors = SectorBackground();
   final creatures = CreaturePresentation();
+  final music = MusicDirector(); // --- music event hook (read-only)
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;
@@ -97,6 +99,7 @@ class DemonScene extends FlameGame {
       model.moveBy(keyboardDirection * dt * 280);
     }
     model.update(dt);
+    music.observe(model, dt); // --- music event hook (reads model, before onTick takes events)
     creatures.update(model, dt);
     _notify += dt;
     if (_notify > .05 || model.events.isNotEmpty) {

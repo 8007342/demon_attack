@@ -4,3 +4,6 @@ void audioSfx(String name) {}
 void audioMute(bool muted) {}
 void audioPause() {}
 void audioResume() {}
+void audioIntensity(int tier) {}
+void audioAccent(String name) {}
+void audioFleetIntact() {}
