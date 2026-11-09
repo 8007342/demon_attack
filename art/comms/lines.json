@@ -1,0 +1,377 @@
+{
+  "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. Tone: allies never die; a downed ship or squad is 'totalled' and heads back to base.",
+  "groupGap": {"ground": 8},
+  "triggers": {
+    "sectorStart": {"priority": 4, "cooldown": 20, "ttl": 6, "mood": "stern", "lines": [
+      {"speaker": "admiral", "text": "Overwatch to squadron. New sector, same promise. Keep them off the fleet."},
+      {"speaker": "lindqvist", "text": "Beacon on the line. Formation is yours, pilot. Lead us in."},
+      {"speaker": "sparrow", "text": "Sparrow on your wing. Let's light them up."},
+      {"speaker": "nomad", "text": "Nomad here. Steady as she goes.", "signature": true},
+      {"speaker": "pip", "text": "Cadet Pip, reporting for awesome! I mean, for duty!", "signature": true},
+      {"speaker": "sunny", "text": "Sunny here. Forecast says clear skies, with a chance of demons.", "signature": true}
+    ]},
+    "sectorStart.1": {"priority": 4, "cooldown": 20, "ttl": 6, "mood": "stern", "lines": [
+      {"speaker": "admiral", "text": "Krybor frontier. Find that lost signal and hold the sky over the outpost."},
+      {"speaker": "kestrel", "text": "Krybor below us. Those families are counting on us. Eyes up."},
+      {"speaker": "rook", "text": "Frontier skies. Nice and quiet. Wait, never mind."},
+      {"speaker": "wisp", "text": "Frontier signal is faint, but it's there. Following it in."}
+    ]},
+    "sectorStart.2": {"priority": 4, "cooldown": 20, "ttl": 6, "mood": "stern", "lines": [
+      {"speaker": "admiral", "text": "Ringfall belt. Their supply route runs through these rings. Break it."},
+      {"speaker": "wisp", "text": "Patrol relays everywhere. They'll see us coming, so let's be quick."},
+      {"speaker": "anvil", "text": "Ringfall. Mind the rocks, and mind your six."},
+      {"speaker": "sunny", "text": "Ooh, rings! This sector really put a ring on it.", "signature": true}
+    ]},
+    "sectorStart.3": {"priority": 4, "cooldown": 20, "ttl": 6, "mood": "stern", "lines": [
+      {"speaker": "admiral", "text": "Ember Moon. Their foundries are building the brood. Shut them down."},
+      {"speaker": "anvil", "text": "Heat's climbing. Keep your engines cool and your aim hot."},
+      {"speaker": "lindqvist", "text": "Ash cover is heavy. Trust your instruments over your eyes."},
+      {"speaker": "pip", "text": "Is it just me, or is this moon really, really hot?"}
+    ]},
+    "sectorStart.4": {"priority": 4, "cooldown": 20, "ttl": 6, "mood": "worried", "lines": [
+      {"speaker": "admiral", "text": "The Hollow. Those towers answer one command. Cut it."},
+      {"speaker": "wisp", "text": "Something old is watching from those ruins. I don't like it."},
+      {"speaker": "nomad", "text": "Hollow sector. Stay tight. Nobody wanders off."},
+      {"speaker": "kestrel", "text": "Kestrel has the high ground. Follow my lead through the towers.", "signature": true}
+    ]},
+    "sectorStart.5": {"priority": 4, "cooldown": 20, "ttl": 6, "mood": "stern", "lines": [
+      {"speaker": "admiral", "text": "This is it. The Carrier. Break its field and strike the hatch."},
+      {"speaker": "anvil", "text": "Biggest target we'll ever see. Hard to miss, harder to crack."},
+      {"speaker": "rook", "text": "That thing's the size of a moon. Okay. Okay. We've got this."},
+      {"speaker": "lindqvist", "text": "Every ship in the fleet is watching this feed. Make it count."}
+    ]},
+    "waveStart": {"priority": 2, "cooldown": 24, "ttl": 3, "chance": 0.55, "mood": "stern", "lines": [
+      {"speaker": "sparrow", "text": "Next wave forming up."},
+      {"speaker": "rook", "text": "Here comes round two!"},
+      {"speaker": "wisp", "text": "New contacts on the scope."},
+      {"speaker": "anvil", "text": "Another wing inbound. Reset and focus."},
+      {"speaker": "kestrel", "text": "Fresh formation, high and wide."},
+      {"speaker": "pip", "text": "More of them? Okay. Okay! I'm ready."}
+    ]},
+    "reinforcements": {"priority": 6, "cooldown": 14, "ttl": 3, "mood": "worried", "lines": [
+      {"speaker": "admiral", "text": "Enemy reinforcements incoming!"},
+      {"speaker": "sparrow", "text": "More of them dropping in from above!"},
+      {"speaker": "rook", "text": "They called their friends. Rude."},
+      {"speaker": "wisp", "text": "Reinforcements on the scope, high and closing."},
+      {"speaker": "nomad", "text": "Fresh wing arriving. Thin them out fast."},
+      {"speaker": "sunny", "text": "Reinforcements! Party just got crowded."}
+    ], "demon": {"priority": 5, "cooldown": 16, "ttl": 2, "delay": 0.7, "lines": [
+      {"speaker": "gorrak", "grunt": "order", "gloss": "REINFORCE ORDER"},
+      {"speaker": "vexxa", "grunt": "order", "gloss": "REINFORCE ORDER"},
+      {"speaker": "skarn", "grunt": "order", "gloss": "REINFORCE ORDER"},
+      {"speaker": "morth", "grunt": "order", "gloss": "REINFORCE ORDER"}
+    ]}},
+    "sentinelIncoming": {"priority": 8, "cooldown": 20, "ttl": 3, "mood": "worried", "lines": [
+      {"speaker": "admiral", "text": "Sentinel incoming! Big one, top of the screen!"},
+      {"speaker": "wisp", "text": "Heavy contact descending. That's a sentinel."},
+      {"speaker": "anvil", "text": "Sentinel on approach. Break its armor before it dives."},
+      {"speaker": "sparrow", "text": "Whoa, that's a big one! Sentinel coming in!"},
+      {"speaker": "lindqvist", "text": "Sentinel class on the board. Watch its eyes for the tell."}
+    ], "demon": {"priority": 6, "cooldown": 20, "ttl": 2, "delay": 0.9, "lines": [
+      {"speaker": "gorrak", "grunt": "rally", "gloss": "CHAMPION DEPLOYED"},
+      {"speaker": "vexxa", "grunt": "rally", "gloss": "CHAMPION DEPLOYED"},
+      {"speaker": "skarn", "grunt": "rally", "gloss": "CHAMPION DEPLOYED"},
+      {"speaker": "morth", "grunt": "rally", "gloss": "CHAMPION DEPLOYED"}
+    ]}},
+    "sentinelDive": {"priority": 9, "cooldown": 8, "ttl": 1.5, "mood": "worried", "lines": [
+      {"speaker": "admiral", "text": "It's diving! Move!"},
+      {"speaker": "sparrow", "text": "Sentinel dive! Get clear!"},
+      {"speaker": "anvil", "text": "Big one's committing. Sidestep now!"},
+      {"speaker": "rook", "text": "Incoming! Dodge, dodge, dodge!"},
+      {"speaker": "kestrel", "text": "Dive! Break left or right, now!"}
+    ]},
+    "diveWarning": {"priority": 5, "cooldown": 12, "ttl": 1.5, "mood": "worried", "lines": [
+      {"speaker": "sparrow", "text": "Divers coming down!"},
+      {"speaker": "rook", "text": "They're diving at you!"},
+      {"speaker": "wisp", "text": "Attack run. Watch your flanks."},
+      {"speaker": "nomad", "text": "Divers inbound. Keep moving."},
+      {"speaker": "pip", "text": "They're coming straight down!"}
+    ], "demon": {"priority": 4, "cooldown": 10, "ttl": 1.5, "delay": 0, "lines": [
+      {"speaker": "gorrak", "grunt": "order", "gloss": "DIVE ORDER"},
+      {"speaker": "vexxa", "grunt": "snarl", "gloss": "DIVE ORDER"},
+      {"speaker": "skarn", "grunt": "snarl", "gloss": "DIVE ORDER"},
+      {"speaker": "morth", "grunt": "order", "gloss": "DIVE ORDER"},
+      {"speaker": "ulgra", "grunt": "order", "gloss": "DIVE ORDER"}
+    ]}},
+    "eliteSighted": {"priority": 5, "cooldown": 30, "ttl": 3, "mood": "stern", "lines": [
+      {"speaker": "wisp", "text": "Gold-plated wing spotted. That's an elite."},
+      {"speaker": "anvil", "text": "Elite in the flock. It'll take more than one hit."},
+      {"speaker": "admiral", "text": "Elite demon sighted. Focus your fire."},
+      {"speaker": "kestrel", "text": "Elite marked. Hit it again and again."},
+      {"speaker": "sunny", "text": "Fancy armor on that one. Somebody dressed up."}
+    ], "demon": {"priority": 4, "cooldown": 30, "ttl": 2, "delay": 0.5, "lines": [
+      {"speaker": "gorrak", "grunt": "rally", "gloss": "ELITE ADVANCE"},
+      {"speaker": "vexxa", "grunt": "rally", "gloss": "ELITE ADVANCE"},
+      {"speaker": "skarn", "grunt": "rally", "gloss": "ELITE ADVANCE"},
+      {"speaker": "morth", "grunt": "rally", "gloss": "ELITE ADVANCE"}
+    ]}},
+    "shieldSpotted": {"priority": 6, "cooldown": 18, "ttl": 2.5, "mood": "happy", "lines": [
+      {"speaker": "admiral", "text": "Look for the shield!"},
+      {"speaker": "sparrow", "text": "Shield pickup falling. Grab it!"},
+      {"speaker": "wisp", "text": "Shield module in the air. Go get it."},
+      {"speaker": "rook", "text": "Free shield! Don't let it fall."},
+      {"speaker": "pip", "text": "Shield! Shield! It's right there!"}
+    ]},
+    "shieldCollected": {"priority": 3, "cooldown": 20, "ttl": 2, "mood": "happy", "lines": [
+      {"speaker": "anvil", "text": "Shield's up. Use it."},
+      {"speaker": "sparrow", "text": "Nice catch. You're covered."},
+      {"speaker": "admiral", "text": "Shield online."},
+      {"speaker": "sunny", "text": "Shield up! Now that's a bright idea.", "signature": true}
+    ]},
+    "shieldExpiring": {"priority": 8, "cooldown": 10, "ttl": 1.5, "mood": "worried", "lines": [
+      {"speaker": "admiral", "text": "Shield about to run out."},
+      {"speaker": "wisp", "text": "Shield's fading. Careful."},
+      {"speaker": "anvil", "text": "Shield's almost gone. Play it safe."},
+      {"speaker": "rook", "text": "Your shield's flickering!"},
+      {"speaker": "lindqvist", "text": "Shield at its limit. Don't count on it."}
+    ]},
+    "shieldBroken": {"priority": 6, "cooldown": 12, "ttl": 1.5, "mood": "worried", "lines": [
+      {"speaker": "sparrow", "text": "Shield took that one. You're exposed!"},
+      {"speaker": "anvil", "text": "Shield's down."},
+      {"speaker": "admiral", "text": "Shield spent. Fly careful now."},
+      {"speaker": "nomad", "text": "Shield's gone. Easy does it."}
+    ]},
+    "weaponPickup": {"priority": 3, "cooldown": 14, "ttl": 2, "mood": "happy", "lines": [
+      {"speaker": "rook", "text": "New toy! Try it out."},
+      {"speaker": "sparrow", "text": "Weapon upgrade locked in."},
+      {"speaker": "anvil", "text": "Good pickup. Make it count."},
+      {"speaker": "wisp", "text": "Weapon module online."},
+      {"speaker": "pip", "text": "Ooh, can I have one of those next?"}
+    ]},
+    "weaponPickup.spread": {"priority": 3, "cooldown": 14, "ttl": 2, "mood": "happy", "lines": [
+      {"speaker": "rook", "text": "Spread shot! Paint the whole sky."},
+      {"speaker": "wisp", "text": "Spread module fitted. Wide coverage."},
+      {"speaker": "kestrel", "text": "Spread shot. Good for crowds."},
+      {"speaker": "sunny", "text": "Spread shot! Spreading joy, one demon at a time.", "signature": true}
+    ]},
+    "weaponPickup.rapid": {"priority": 3, "cooldown": 14, "ttl": 2, "mood": "happy", "lines": [
+      {"speaker": "sparrow", "text": "Rapid fire! Let it rip!"},
+      {"speaker": "rook", "text": "Rapid cannons. Brrrrt!"},
+      {"speaker": "nomad", "text": "Rapid fire online. Keep the pressure on."},
+      {"speaker": "pip", "text": "So fast! Can I get rapid fire too?"}
+    ]},
+    "weaponPickup.powerful": {"priority": 3, "cooldown": 14, "ttl": 2, "mood": "happy", "lines": [
+      {"speaker": "anvil", "text": "Heavy cannons. That'll crack armor."},
+      {"speaker": "sparrow", "text": "Heavy shots fitted. Hit them hard."},
+      {"speaker": "wisp", "text": "Heavy rounds. Fewer shots, bigger holes."},
+      {"speaker": "lindqvist", "text": "Heavy cannons. Choose your targets."}
+    ]},
+    "weaponPickup.large": {"priority": 3, "cooldown": 14, "ttl": 2, "mood": "happy", "lines": [
+      {"speaker": "rook", "text": "Big shots! Hard to miss now."},
+      {"speaker": "wisp", "text": "Area rounds. They'll splash the pack."},
+      {"speaker": "sparrow", "text": "Blast rounds loaded. Boom!"},
+      {"speaker": "kestrel", "text": "Blast rounds. Aim into the crowd."}
+    ]},
+    "homingPickup": {"priority": 4, "cooldown": 14, "ttl": 2, "mood": "happy", "lines": [
+      {"speaker": "admiral", "text": "Homing missiles armed!"},
+      {"speaker": "wisp", "text": "Missiles locked and seeking."},
+      {"speaker": "rook", "text": "Homing missiles! They really get attached.", "signature": true},
+      {"speaker": "anvil", "text": "Seekers loaded. Let them do the aiming."},
+      {"speaker": "march", "text": "Bastion sees your missiles. Send some our way!"}
+    ]},
+    "lifeLost": {"priority": 6, "cooldown": 8, "ttl": 2, "mood": "worried", "lines": [
+      {"speaker": "admiral", "text": "Ship's totalled, pilot's safe. Next ship, launch!"},
+      {"speaker": "sparrow", "text": "Shake it off. You're still in this."},
+      {"speaker": "anvil", "text": "Took a hit. Breathe. Back in."},
+      {"speaker": "rook", "text": "Ouch! Get them back for that one."},
+      {"speaker": "nomad", "text": "Pod's away and safe. Spare ship's warm. Go."},
+      {"speaker": "lindqvist", "text": "Ejected clean. Recovery has you. Launch the reserve."}
+    ], "demon": {"priority": 4, "cooldown": 12, "ttl": 2, "delay": 0.4, "lines": [
+      {"speaker": "gorrak", "grunt": "gloat", "gloss": "TAUNT"},
+      {"speaker": "vexxa", "grunt": "gloat", "gloss": "TAUNT"},
+      {"speaker": "skarn", "grunt": "gloat", "gloss": "TAUNT"},
+      {"speaker": "morth", "grunt": "gloat", "gloss": "TAUNT"},
+      {"speaker": "ulgra", "grunt": "gloat", "gloss": "TAUNT"}
+    ]}},
+    "lowLives": {"priority": 7, "cooldown": 40, "ttl": 3, "mood": "worried", "lines": [
+      {"speaker": "admiral", "text": "Last ship, pilot. The whole fleet is behind you."},
+      {"speaker": "sparrow", "text": "Last one. I believe in you. Let's finish this."},
+      {"speaker": "anvil", "text": "One ship left. Slow down, pick your shots."},
+      {"speaker": "wisp", "text": "Final reserve ship. Stay calm. You can do this."},
+      {"speaker": "nomad", "text": "One ship, one pilot. That's always been enough."}
+    ]},
+    "extraLife": {"priority": 4, "cooldown": 20, "ttl": 2, "mood": "happy", "lines": [
+      {"speaker": "admiral", "text": "Heart assembled. Reserve ship on the line."},
+      {"speaker": "rook", "text": "Extra ship! You lucky thing."},
+      {"speaker": "sparrow", "text": "Spare ship ready. Nice work."},
+      {"speaker": "sunny", "text": "A whole new ship! You've got a big heart.", "signature": true}
+    ]},
+    "salvage": {"priority": 3, "cooldown": 20, "ttl": 3, "mood": "happy", "lines": [
+      {"speaker": "anvil", "text": "Wave's clear. Sweep up the salvage."},
+      {"speaker": "rook", "text": "Loot time! Grab everything."},
+      {"speaker": "wisp", "text": "Salvage drifting. Collect what you can."},
+      {"speaker": "kestrel", "text": "Salvage on the field. Quick pass, then regroup."}
+    ]},
+    "levelClear": {"priority": 5, "cooldown": 10, "ttl": 4, "mood": "happy", "lines": [
+      {"speaker": "admiral", "text": "Sector secure. Outstanding flying."},
+      {"speaker": "sparrow", "text": "We did it! Sky's ours."},
+      {"speaker": "rook", "text": "Ha! Did you see that? Textbook."},
+      {"speaker": "wisp", "text": "Scopes clear. Good work, everyone."},
+      {"speaker": "nomad", "text": "Clean sweep. Proud to fly with you."},
+      {"speaker": "pip", "text": "That was amazing! Can we do it again?"}
+    ], "demon": {"priority": 3, "cooldown": 10, "ttl": 3, "delay": 1.6, "lines": [
+      {"speaker": "gorrak", "grunt": "alarm", "gloss": "RETREAT"},
+      {"speaker": "vexxa", "grunt": "alarm", "gloss": "RETREAT"},
+      {"speaker": "skarn", "grunt": "alarm", "gloss": "RETREAT"},
+      {"speaker": "morth", "grunt": "alarm", "gloss": "RETREAT"}
+    ]}},
+    "flawlessSector": {"priority": 6, "cooldown": 10, "ttl": 4, "mood": "happy", "lines": [
+      {"speaker": "admiral", "text": "Not a single ship lost in this sector. Textbook, all of you."},
+      {"speaker": "kestrel", "text": "Every wing accounted for. That's how it's done."},
+      {"speaker": "sunny", "text": "Zero losses! That was out of this world.", "signature": true},
+      {"speaker": "march", "text": "Bastion reporting. Every ground team is still standing. Thank you!"}
+    ]},
+    "flawlessVictory": {"priority": 9, "cooldown": 30, "ttl": 6, "mood": "happy", "chain": 2, "lines": [
+      {"speaker": "admiral", "text": "All hands, all ships, all squads. Every one of you is coming home. Fleet intact!"},
+      {"speaker": "lindqvist", "text": "Beacon confirms. Full roster, no losses. I've never seen it done."},
+      {"speaker": "rook", "text": "Perfect run! I'm over the moon! All the moons!", "signature": true},
+      {"speaker": "sunny", "text": "Flawless! Somebody get this pilot a constellation!", "signature": true},
+      {"speaker": "pip", "text": "Everybody made it? Everybody? Best day ever!"},
+      {"speaker": "kessler", "text": "Ground's all present! Drinks are on Bulwark tonight!"}
+    ]},
+    "flawlessRun": {"priority": 10, "cooldown": 60, "ttl": 8, "mood": "happy", "chain": 3, "lines": [
+      {"speaker": "admiral", "text": "Five tours. Not one ship, not one squad lost. The whole fleet salutes you, pilot."},
+      {"speaker": "nomad", "text": "Thirty years flying, and this is the run I'll tell stories about."},
+      {"speaker": "kestrel", "text": "Every wing, every crew, every squad. Fleet intact. Legendary."},
+      {"speaker": "sparrow", "text": "Not a scratch on the whole fleet! You're unbelievable!"},
+      {"speaker": "mensah", "text": "Granite to air wing. Every trooper down here is cheering for you."},
+      {"speaker": "voss", "text": "Lantern here. All lights on, all teams home. Thank you, pilot!"}
+    ]},
+    "bossArrival": {"priority": 9, "cooldown": 30, "ttl": 4, "mood": "stern", "lines": [
+      {"speaker": "admiral", "text": "Carrier contact! Break its shield, then hit the hatch!"},
+      {"speaker": "anvil", "text": "Here comes the big one. Shield first, then the core."},
+      {"speaker": "rook", "text": "Oh, that's huge. That is really, really huge."},
+      {"speaker": "wisp", "text": "Carrier field is up. Wear it down before the hatch opens."},
+      {"speaker": "lindqvist", "text": "Carrier in range. All fleet guns, support the pilot."}
+    ], "demon": {"priority": 9, "cooldown": 30, "ttl": 3, "delay": 0.3, "lines": [
+      {"speaker": "ulgra", "grunt": "roar", "gloss": "WARDEN CHALLENGE"},
+      {"speaker": "ulgra", "grunt": "roar", "gloss": "WARDEN CHALLENGE"},
+      {"speaker": "ulgra", "grunt": "gloat", "gloss": "WARDEN CHALLENGE"}
+    ]}},
+    "bossPhase": {"priority": 6, "cooldown": 10, "ttl": 2, "mood": "stern", "lines": [
+      {"speaker": "admiral", "text": "It's changing form. Stay on the hatch."},
+      {"speaker": "wisp", "text": "Carrier's adapting. New pattern."},
+      {"speaker": "anvil", "text": "Field's down! Hit the core!"},
+      {"speaker": "sparrow", "text": "It's getting angry. Good. Keep going."},
+      {"speaker": "kestrel", "text": "New form. Same weak spot. Find the hatch."}
+    ], "demon": {"priority": 6, "cooldown": 10, "ttl": 2, "delay": 0.2, "lines": [
+      {"speaker": "ulgra", "grunt": "roar", "gloss": "WARDEN FURY"},
+      {"speaker": "ulgra", "grunt": "snarl", "gloss": "WARDEN FURY"},
+      {"speaker": "morth", "grunt": "alarm", "gloss": "HULL ALARM"}
+    ]}},
+    "bossDefeated": {"priority": 7, "cooldown": 20, "ttl": 4, "mood": "happy", "lines": [
+      {"speaker": "admiral", "text": "The Carrier is down! All ships, the fleet salutes you."},
+      {"speaker": "rook", "text": "It's falling! It's actually falling!"},
+      {"speaker": "anvil", "text": "Target destroyed. Hell of a run, pilot."},
+      {"speaker": "sparrow", "text": "Carrier down! Woohoo!"},
+      {"speaker": "sunny", "text": "Carrier down! Looks like it's lights out for them.", "signature": true}
+    ], "demon": {"priority": 6, "cooldown": 20, "ttl": 3, "delay": 0.2, "lines": [
+      {"speaker": "ulgra", "grunt": "alarm", "gloss": "WARDEN FALLS"},
+      {"speaker": "morth", "grunt": "alarm", "gloss": "ABANDON ARK"}
+    ]}},
+    "defeat": {"priority": 10, "cooldown": 30, "ttl": 4, "mood": "worried", "lines": [
+      {"speaker": "admiral", "text": "All ships totalled, but every pilot is safe. Regroup at base. We go again."},
+      {"speaker": "admiral", "text": "That's the last reserve. Bring it home, pilot. We'll launch again."},
+      {"speaker": "lindqvist", "text": "Recovery has your pod. Rest up. The fleet will be ready when you are."}
+    ]},
+    "groundForceSighted": {"priority": 5, "cooldown": 18, "ttl": 3, "mood": "stern", "group": "ground", "lines": [
+      {"speaker": "admiral", "text": "Ground enemies incoming! Ground forces ahead!"},
+      {"speaker": "wisp", "text": "Demon ground troops below. Marking them now."},
+      {"speaker": "anvil", "text": "Movement on the ground. Brood infantry."},
+      {"speaker": "kessler", "text": "Bulwark here. Brood walkers moving on our line!"},
+      {"speaker": "march", "text": "Bastion to air wing. Enemy armor on the ground, your side of the ridge."},
+      {"speaker": "mensah", "text": "Granite here. They're massing below you. Lots of them."}
+    ], "demon": {"priority": 4, "cooldown": 18, "ttl": 2, "delay": 0.8, "lines": [
+      {"speaker": "gorrak", "grunt": "order", "gloss": "GROUND ADVANCE"},
+      {"speaker": "vexxa", "grunt": "order", "gloss": "GROUND ADVANCE"},
+      {"speaker": "skarn", "grunt": "order", "gloss": "GROUND ADVANCE"},
+      {"speaker": "morth", "grunt": "order", "gloss": "GROUND ADVANCE"},
+      {"speaker": "ulgra", "grunt": "order", "gloss": "GROUND ADVANCE"}
+    ]}},
+    "groundForceInRange": {"priority": 6, "cooldown": 14, "ttl": 2, "mood": "stern", "group": "ground", "lines": [
+      {"speaker": "sparrow", "text": "Ground targets in range. Fire!"},
+      {"speaker": "rook", "text": "Strafing run! Hit them now!"},
+      {"speaker": "anvil", "text": "They're under your guns. Take the shot."},
+      {"speaker": "voss", "text": "Lantern here. They're right under you. Light them up!"},
+      {"speaker": "mensah", "text": "You're right over them. Bring the rain!"}
+    ]},
+    "allyUnderAttack": {"priority": 7, "cooldown": 14, "ttl": 3, "mood": "worried", "group": "ground", "lines": [
+      {"speaker": "kessler", "text": "We're pinned down. Need air support!"},
+      {"speaker": "kessler", "text": "Please shoot these enemies! They're all over us!"},
+      {"speaker": "voss", "text": "Pick up some homing missiles! We need them off our backs!"},
+      {"speaker": "march", "text": "Bastion to air wing, my teams are taking fire. Requesting support!"},
+      {"speaker": "mensah", "text": "Granite's surrounded! Anything you've got, send it down!"},
+      {"speaker": "voss", "text": "Lantern to air wing, we're taking fire! Help!"}
+    ], "demon": {"priority": 4, "cooldown": 16, "ttl": 2, "delay": 1.0, "lines": [
+      {"speaker": "gorrak", "grunt": "order", "gloss": "SURROUND ORDER"},
+      {"speaker": "vexxa", "grunt": "snarl", "gloss": "SURROUND ORDER"},
+      {"speaker": "skarn", "grunt": "order", "gloss": "SURROUND ORDER"},
+      {"speaker": "morth", "grunt": "order", "gloss": "SURROUND ORDER"},
+      {"speaker": "ulgra", "grunt": "order", "gloss": "SURROUND ORDER"}
+    ]}},
+    "allySaved": {"priority": 5, "cooldown": 12, "ttl": 3, "mood": "happy", "group": "ground", "lines": [
+      {"speaker": "kessler", "text": "That did it! Thanks for the cover, flyer!"},
+      {"speaker": "voss", "text": "They're scattering! We owe you one!"},
+      {"speaker": "march", "text": "Pressure's off. Bastion thanks you, air wing."},
+      {"speaker": "mensah", "text": "Granite's clear! Solid as a rock, thanks to you.", "signature": true},
+      {"speaker": "voss", "text": "Lantern is clear. Beautiful shooting!"}
+    ], "demon": {"priority": 3, "cooldown": 16, "ttl": 2, "delay": 1.2, "lines": [
+      {"speaker": "gorrak", "grunt": "alarm", "gloss": "GROUND ROUTED"},
+      {"speaker": "vexxa", "grunt": "alarm", "gloss": "GROUND ROUTED"},
+      {"speaker": "skarn", "grunt": "alarm", "gloss": "GROUND ROUTED"},
+      {"speaker": "morth", "grunt": "alarm", "gloss": "GROUND ROUTED"}
+    ]}},
+    "allyRetreated": {"priority": 6, "cooldown": 20, "ttl": 3, "mood": "worried", "group": "ground", "lines": [
+      {"speaker": "kessler", "text": "I'm totalled! Going back to base!"},
+      {"speaker": "voss", "text": "Lantern's rig is totalled. We're limping home. Cover the gap!"},
+      {"speaker": "march", "text": "Bastion's command track is wrecked. Pulling back to base. Hold the line for us!"},
+      {"speaker": "mensah", "text": "Granite's crumbled! Heading back to base to patch up!", "signature": true},
+      {"speaker": "admiral", "text": "A ground team is heading home for repairs. Cover their retreat."}
+    ], "demon": {"priority": 4, "cooldown": 20, "ttl": 2, "delay": 0.6, "lines": [
+      {"speaker": "gorrak", "grunt": "gloat", "gloss": "GROUND VICTORY"},
+      {"speaker": "vexxa", "grunt": "gloat", "gloss": "GROUND VICTORY"},
+      {"speaker": "skarn", "grunt": "gloat", "gloss": "GROUND VICTORY"},
+      {"speaker": "morth", "grunt": "gloat", "gloss": "GROUND VICTORY"},
+      {"speaker": "ulgra", "grunt": "gloat", "gloss": "GROUND VICTORY"}
+    ]}},
+    "groundUnitDestroyed": {"priority": 2, "cooldown": 22, "ttl": 2, "chance": 0.45, "mood": "happy", "group": "ground", "lines": [
+      {"speaker": "kessler", "text": "Bulwark here. Splashed a walker. Line's holding."},
+      {"speaker": "voss", "text": "Lantern got one! Scratch one brood crawler."},
+      {"speaker": "march", "text": "Bastion reports another contact down. This sector is ours."},
+      {"speaker": "mensah", "text": "Granite here. One less demon on the ground."},
+      {"speaker": "rook", "text": "Ground crews are crushing it down there!"}
+    ]},
+    "groundPressureRising": {"priority": 5, "cooldown": 30, "ttl": 3, "mood": "worried", "group": "ground", "lines": [
+      {"speaker": "kessler", "text": "They're pushing harder. Could use some help soon."},
+      {"speaker": "voss", "text": "More of them every minute down here. Keep an eye on us."},
+      {"speaker": "march", "text": "Bastion to air wing. Pressure is building on our line."},
+      {"speaker": "mensah", "text": "Granite's starting to crack. Not yet, but soon."}
+    ]},
+    "groundPressureHigh": {"priority": 6, "cooldown": 24, "ttl": 3, "mood": "worried", "group": "ground", "lines": [
+      {"speaker": "kessler", "text": "We can't hold much longer! Need air support now!"},
+      {"speaker": "voss", "text": "Lantern's line is buckling! Help us!"},
+      {"speaker": "march", "text": "All air units, the ground line is about to break!"},
+      {"speaker": "mensah", "text": "Granite's crumbling fast! Send everything you've got!"},
+      {"speaker": "admiral", "text": "The ground line is failing. Give them cover, pilot."}
+    ], "demon": {"priority": 4, "cooldown": 24, "ttl": 2, "delay": 0.8, "lines": [
+      {"speaker": "gorrak", "grunt": "rally", "gloss": "PRESS THE ATTACK"},
+      {"speaker": "vexxa", "grunt": "rally", "gloss": "PRESS THE ATTACK"},
+      {"speaker": "skarn", "grunt": "rally", "gloss": "PRESS THE ATTACK"},
+      {"speaker": "morth", "grunt": "rally", "gloss": "PRESS THE ATTACK"},
+      {"speaker": "ulgra", "grunt": "rally", "gloss": "PRESS THE ATTACK"}
+    ]}},
+    "groundBreakthrough": {"priority": 7, "cooldown": 14, "ttl": 2.5, "mood": "worried", "group": "ground", "lines": [
+      {"speaker": "admiral", "text": "Breakthrough! Enemy ground units in firing range!"},
+      {"speaker": "kessler", "text": "They broke through! Missiles coming your way!"},
+      {"speaker": "march", "text": "Breach in the line! They're targeting the air wing!"},
+      {"speaker": "kestrel", "text": "Ground breakthrough. Watch for missiles from below!"},
+      {"speaker": "anvil", "text": "They're through the line. Dodge the ground fire!"}
+    ], "demon": {"priority": 5, "cooldown": 16, "ttl": 2, "delay": 0.6, "lines": [
+      {"speaker": "gorrak", "grunt": "roar", "gloss": "BREAKTHROUGH"},
+      {"speaker": "vexxa", "grunt": "roar", "gloss": "BREAKTHROUGH"},
+      {"speaker": "skarn", "grunt": "roar", "gloss": "BREAKTHROUGH"},
+      {"speaker": "morth", "grunt": "roar", "gloss": "BREAKTHROUGH"},
+      {"speaker": "ulgra", "grunt": "roar", "gloss": "BREAKTHROUGH"}
+    ]}}
+  }
+}

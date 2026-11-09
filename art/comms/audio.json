@@ -1,0 +1,29 @@
+{
+  "comment": "Squad comms audio spec, read by tools/comms_pipeline.py. Human lines are Kokoro-82M TTS (voice + speed per cast member in cast.json); demon lines are synthesized grunts. Both go through the radio chain, are loudness-normalised and encoded to web/audio/comms/<clip id>.ogg (Opus) and .m4a (AAC-LC).",
+  "kokoro": {"repo": "hexgrad/Kokoro-82M", "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987", "sample_rate": 24000},
+  "pronounce": {
+    "Krybor": "[Krybor](/kɹˈIbɔɹ/)",
+    "Ringfall": "[Ringfall](/ɹˈɪŋfɔl/)",
+    "Woohoo": "[Woohoo](/wˈuhˈu/)",
+    "flyboy": "[flyboy](/flˈIbˌY/)",
+    "Brrrrt": "[Brrrrt](/bˈɜɹɹɹt/)"
+  },
+  "gibberish": {
+    "comment": "Nonsense syllables rendered by Kokoro from phonemes (never English words), then granulated and pitch/formant shifted under the growl layer.",
+    "voice": "am_echo",
+    "speed": 0.9,
+    "onsets": ["ɡ", "k", "b", "ɡɹ", "kɹ", "z", "m", "h", "d", "bɹ", "ʃ", "ŋɡ"],
+    "vowels": ["ɑ", "ʌ", "ɔ", "u", "æ", "O", "W"],
+    "codas": ["k", "ɡ", "z", "m", "ɹk", "ʃ", "b", ""]
+  },
+  "radio": {
+    "human": {"low_hz": 300, "high_hz": 3400, "drive": 1.9, "hiss_db": -44, "presence_hz": 1800, "presence_db": 3.0},
+    "demon": {"low_hz": 200, "high_hz": 3000, "drive": 2.4, "hiss_db": -40, "presence_hz": 1100, "presence_db": 4.0, "hum_hz": 55, "hum_db": -36},
+    "lead_s": 0.07,
+    "squelch_tail_s": 0.16,
+    "end_pad_s": 0.03
+  },
+  "loudness": {"human_lufs": -18.0, "demon_lufs": -18.5, "peak_dbfs": -3.0, "decoded_peak_max_dbfs": 0.0, "playback_gain_db": 2.0},
+  "codec": {"opus_kbps": 20, "aac_kbps": 28, "aac_cutoff_hz": 4000, "sample_rate": 24000},
+  "mouth_fps": 15
+}

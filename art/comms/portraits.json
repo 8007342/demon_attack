@@ -1,0 +1,172 @@
+{
+  "comment": "Squad comms portrait family. tools/comms_portraits.py reads this file. Prompts describe original generic subjects only. Character looks and row order come from art/comms/cast.json.",
+  "grid": 128,
+  "small": 48,
+  "frames": [
+    "idle",
+    "blink",
+    "talkA",
+    "talkB",
+    "talkC",
+    "talkD",
+    "shout",
+    "grunt",
+    "happy",
+    "worried",
+    "tiltL",
+    "tiltR"
+  ],
+  "keyframe": {
+    "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+    "style_workflow": "art/workflows/comms/portrait-sdxl-ipadapter.json",
+    "models": [
+      "sdxl-full/sd_xl_base_1.0.safetensors",
+      "pixel-art-xl.safetensors"
+    ],
+    "count": 3,
+    "style": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background",
+    "human": "heroic sci-fi military character",
+    "demon": "cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders",
+    "negative": "text, letters, watermark, logo, signature, frame, border, blurry, photo, photorealistic, 3d render, gradient background, scenery, landscape, multiple characters, cropped head, hands, gore, blood, nsfw, caricature",
+    "seeds": {
+      "admiral": 732200,
+      "lindqvist": 732300,
+      "kestrel": 732400,
+      "nomad": 732500,
+      "anvil": 731400,
+      "sparrow": 731100,
+      "rook": 731200,
+      "wisp": 731300,
+      "sunny": 732600,
+      "pip": 732700,
+      "march": 732800,
+      "kessler": 731500,
+      "voss": 731600,
+      "mensah": 732900,
+      "gorrak": 731700,
+      "vexxa": 731800,
+      "skarn": 731900,
+      "morth": 732000,
+      "ulgra": 732100
+    }
+  },
+  "edit": {
+    "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+    "models": [
+      "qwen_image_edit_2511_fp8mixed.safetensors",
+      "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+      "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "qwen_image_vae.safetensors"
+    ],
+    "seed": 733000,
+    "keep": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression:",
+    "prompts": {
+      "human": {
+        "blink": "eyes fully closed in a relaxed blink, everything else unchanged.",
+        "shout": "mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+        "grunt": "urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+        "happy": "warm happy smile showing a little teeth, cheerful eyes.",
+        "worried": "worried concerned frown, eyebrows pulled together and up, mouth tight."
+      },
+      "demon": {
+        "blink": "eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+        "shout": "mouth open barking an order, fangs showing, brow furrowed.",
+        "grunt": "jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+        "happy": "smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+        "worried": "alarmed angry snarl, eyes wide, teeth clenched, ears pinned back."
+      }
+    }
+  },
+  "matte": {
+    "workflow": "art/workflows/comms/matte-birefnet.json",
+    "models": [
+      "BiRefNet model.safetensors"
+    ]
+  },
+  "tilt_degrees": 5,
+  "picks": {
+    "sparrow": {
+      "count": 5,
+      "seed": 731103,
+      "keep": 0.55
+    },
+    "rook": {
+      "seed": 731200
+    },
+    "wisp": {
+      "seed": 731302
+    },
+    "anvil": {
+      "seed": 731402
+    },
+    "gorrak": {
+      "seed": 731701
+    },
+    "kessler": {
+      "seed": 731500
+    },
+    "voss": {
+      "seed": 731600
+    },
+    "vexxa": {
+      "seed": 731801
+    },
+    "skarn": {
+      "extra": "bright coral red skin and red-orange scaly hide, brass goggles",
+      "seed_base": 731910,
+      "seed": 731900,
+      "base_edit": "Recolour the creature's skin and hide to bright coral red with darker crimson shading; keep the glowing orange eyes; make the horns ivory."
+    },
+    "morth": {
+      "extra": "golden yellow skin, bone white armour plates and horns, gold and ivory colours",
+      "seed_base": 732010,
+      "seed": 732001,
+      "base_edit": "Recolour the skin to pale gold and bone ivory with warm amber shading, and add a third glowing green eye in the middle of the forehead."
+    },
+    "admiral": {
+      "seed": 732200,
+      "base_edit": "Make her look like a dignified woman in her early sixties: silver-grey hair and a few soft smile lines; keep her skin smooth and evenly lit."
+    },
+    "lindqvist": {
+      "seed": 732301
+    },
+    "kestrel": {
+      "seed": 732400
+    },
+    "ulgra": {
+      "extra": "close-up bust of head and shoulders only, deep crimson red skin, black horns, gold medals",
+      "seed_base": 732110,
+      "seed": 732111,
+      "base_edit": "Recolour the skin to deep crimson red with dark maroon shading, make the eyes glow white, and give it a wide jaw with visible fangs."
+    },
+    "nomad": {
+      "seed": 732501,
+      "eyes": [
+        50,
+        44,
+        90,
+        56
+      ],
+      "mouth": [
+        56,
+        66,
+        88,
+        82
+      ]
+    },
+    "sunny": {
+      "seed": 732602
+    },
+    "pip": {
+      "seed": 732700
+    },
+    "march": {
+      "seed": 732802,
+      "base_edit": "Make her look like a woman in her fifties: add grey streaks through her dark hair and faint smile lines and crow's feet around the eyes.",
+      "keep": 1.0
+    },
+    "mensah": {
+      "seed": 732902
+    }
+  }
+}

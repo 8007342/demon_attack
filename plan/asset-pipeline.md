@@ -261,3 +261,49 @@ colour `fog(z)` with `BlendMode.modulate`, mirrored for the right band. Move
 frames loop 0→3. The missile cell is meant to be drawn centred and scaled up
 with nearest-neighbour as it closes on the camera, trailed by puffs 2→4. The
 escape pod and smoke puffs (row 8, cols 10–11) are free sprites.
+
+## Squad comms portraits
+
+The video-call portraits of the squad comms cast (19 rows: 14 fleet and ground humans, 5 gargoyle demon officers, in `art/comms/cast.json` order) live in two atlases. `assets/images/comms-portraits.png` holds **128 × 128 logical px** cells, drawn at an integer scale (2× on desktop side panels). `assets/images/comms-portraits-small.png` holds 48 px cells for the phone overlay at 1×. Each row has twelve frames in `CommsFrame` order (`lib/comms/comms_types.dart`): 0 idle, 1 blink, 2–4 talk A/B/C (mouth opening), 5 talk D ('oo'), 6 shout, 7 grunt (the demon roar, or human alarm), 8 happy (demon smug gloat), 9 worried (demon alarmed snarl), 10 tilt left and 11 tilt right. `lib/comms/comms_portraits.dart` is generated, with the image paths, cell sizes and the row of each character id.
+
+### Principle
+
+ComfyUI makes one keyframe per character and five expression edits of it. Everything after that is deterministic CPU work on the logical grid, so lip sync and blinks never jitter. Each edit is registered to the idle frame by the integer shift that minimises the difference. It is then composited **only inside the face box** (only the eye box for the blink), so hair, helmet, uniform and wings stay identical across all twelve frames. Talk frames squash the shout mouth (its tight box around the dark opening, lips and teeth) to 35, 65 and 100 % of its height with nearest-neighbour row picks, centred on the closed mouth; the 'oo' frame is 80 % high and 60 % wide. Only pixels that differ from idle are painted. Tilts shear the rows above the chin pivot by ±5°: each row shifts horizontally, so its pixel clusters stay intact and nothing is resampled by rotation. The eye box comes from the blink edit's difference and the mouth box from the connected dark opening of the shout edit below the eyes, both searched near the centre column; `picks.<id>.eyes` / `.mouth` override either. The boxes used are written to `art/comms/portrait-faces.json`. Every frame then gets the combat sprites' top-left rim light (silhouette pixels facing up or left step 40 % toward ivory) and a 1 px midnight-ink outline, and snaps to a bounded palette. That palette is the combat palette of `tools/sprite_kit.py` plus 36 portrait colours (seven-step and five-step skin ramps and hair, olive, navy, green, crimson and bone ramps). The small atlas is a premultiplied area downsample of each finished frame, snapped to the same palette.
+
+### Files
+
+| Path | Role |
+| --- | --- |
+| `art/workflows/comms/portrait-sdxl-pixel.json` | Keyframe: SDXL base 1.0 + pixel-art-xl LoRA, 1024², 26 steps dpmpp_2m karras; nodes titled `$seed`, `$prompt`, `$negative_prompt` |
+| `art/workflows/comms/portrait-sdxl-ipadapter.json` | Same with IP-Adapter plus (ViT-H) in style-transfer mode on a `$style` reference; used when `picks.<id>.style_ref` is set (no shipping pick needed it) |
+| `art/workflows/comms/portrait-qwen-edit.json` | Qwen-Image-Edit-2511 fp8 + Lightning 4-step LoRA: keyframe (`$input`) → expression edit, and the optional `base_edit` |
+| `art/workflows/comms/matte-birefnet.json` | BiRefNet mask of each picked image (`$input`) |
+| `art/comms/portraits.json` | Style, human/demon prompt fragments, negative prompt, seeds, expression prompts, picks (seed, optional `extra` prompt, `base_edit`, `count`, `seed_base`, face boxes), tilt angle, cell sizes |
+| `art/comms/sources/<id>-{key,blink,shout,grunt,happy,worried}.png` | Inputs of record: each picked image with its BiRefNet alpha, cropped to the keyframe's head-and-shoulders square and stored at 2× the logical grid (256 px, adaptive 160-colour PNG) |
+| `art/comms/portrait-faces.json` | Generated: mouth and eye boxes per character |
+| `art/comms/portrait-runs.json` | Provenance of every ingested image: workflow, seed, prompt, source and raw-output SHA-256 (keyframe, base edit, five expressions) |
+| `art/contact/comms-portraits.png` | Review sheet: all frames at 2×, plus the small idle and roar at 1× |
+| `tools/comms_portraits.py` | The driver |
+
+### Rerun
+
+```bash
+PY=$SCRATCH/venv/bin/python        # pillow + numpy + scipy, outside /home/forge/src
+$PY tools/comms_portraits.py offline   # pack + sheet from art/comms/sources: no GPU, byte-identical
+$PY tools/comms_portraits.py all       # keyframes -> edits -> matte -> ingest -> pack -> sheet
+$PY tools/comms_portraits.py keyframes [id,id]   # single stages also: edits, matte, ingest, candidates
+```
+
+GPU stages post the committed workflows to the studio over HTTP (`$COMFYUI_URL`, default `http://studio:8188`) and write raw outputs, each with a provenance sidecar (workflow, seed, prompt, models, SHA-256), to `$COMMS_PORTRAIT_CACHE` (default `~/.cache/demon-attack/comms-portraits`, never the repo). `candidates` writes a review sheet of every keyframe candidate there. Stages:
+
+1. **keyframes**: three candidates per character at seed, seed+1, seed+2 (`count`/`seed_base` per pick for rerolls). The prompt is the style + the human or demon fragment + the cast `look` + an optional per-pick `extra`.
+2. **edits**: an optional `base_edit` first (Qwen edit that corrects age or colour but keeps the design: admiral and march aged, skarn recoloured coral, morth gold and bone with a third eye, ulgra crimson), then blink, shout, grunt/alarm, happy and worried. Each prompt is the shared "keep everything, change only the expression" preamble plus the expression.
+3. **matte**: BiRefNet alpha for the base and every edit.
+4. **ingest**: crop + alpha → `art/comms/sources/` (the head crop is computed once from the keyframe matte and shared by all frames).
+5. **pack** / **sheet**: the CPU stages above.
+
+Wan2.2 VACE in-betweens were not used. The talk cycle is a mouth-only repaint and the tilts a shear, both exactly aligned on the grid, which a video model cannot guarantee. Skipping it also spares the shared GPU.
+
+### Verification
+
+Judge the sheet at native size: 128 px at 2× for desktop panels and the 48 px atlas at 1× for phones. Check that eyes and mouth read at 48 px, that the face does not move outside the face box between frames, and that the shout, roar, happy and worried faces differ clearly.

@@ -1,0 +1,892 @@
+{
+ "admiral": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732200,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, dignified Black woman fleet admiral in her sixties, short silver-grey natural hair, calm warm eyes, navy admiral coat with gold braid epaulettes and a teal fleet star, headset microphone",
+   "source": null,
+   "sha256": "69a2f28d0aba365d80eabf6521bf20ae7d133f8de4dfad316adbba91f05a18c9"
+  },
+  "base": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733009,
+   "prompt": "Keep exactly the same character design, pose, framing, pixel art style and flat grey background. Make her look like a dignified woman in her early sixties: silver-grey hair and a few soft smile lines; keep her skin smooth and evenly lit.",
+   "source": "admiral-732200.png",
+   "sha256": "b7fa15efbcb1ae2447073b61196f29a1f0d874706e27a1a6ac27ba6f972ff838"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "admiral-732200-base.png",
+   "sha256": "cb9c72614326c9bd47bf8463908b132c2d03d471ac144b7ba6fe194641e71fe9"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "admiral-732200-base.png",
+   "sha256": "599c8cc8b795a4ebd1cd1199215f2146521ed34f08baa6a29ffa1df75a819cc0"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "admiral-732200-base.png",
+   "sha256": "86da0475fe4be3b89647f5528aeb53c6952bd5597b1b3a567f9710bd03486656"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "admiral-732200-base.png",
+   "sha256": "0b8ccdd0915769df546f8c2dd96047a4efa7ca07bc90231c7e6488852246f15e"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "admiral-732200-base.png",
+   "sha256": "44dde5a477351f8641cd7726d11e0136c8b74ecb917c4f31ac6d2a9000bdd39e"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "lindqvist": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732301,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, commodore woman in her fifties, pale skin, silver-blonde hair in a neat low bun, sharp grey eyes, navy uniform with gold commodore collar pins, composed slight smile",
+   "source": null,
+   "sha256": "0d0f5d82af434127f7713160673045f6616d2e346c03f7dc55a91bf60baf857e"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "lindqvist-732301.png",
+   "sha256": "674b7be63ed554352d6a5de975a8c3c416cb30fe0d405e804a8d072f68e1bc1d"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "lindqvist-732301.png",
+   "sha256": "e973adbb4356e6976e74935ef02edfbc9226865c6737e6e42ed8140a003258f6"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "lindqvist-732301.png",
+   "sha256": "997f6b64d9d92d364c23a2ed5dba2e6192bab7c6e63c48b4dd199f71c91e5f9c"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "lindqvist-732301.png",
+   "sha256": "c80752144a297f27fe16ccff61ea9f1f11eba663c47a05211d10c9e0d96a5101"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "lindqvist-732301.png",
+   "sha256": "82538ceccf2cb5f7b6b6d819025921c1058cbc11ec748a61fae53bac4aed33ef"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "kestrel": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732400,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, South Asian woman wing captain in her forties, warm brown skin, long dark hair tied back, a few grey strands, confident gaze, teal flight helmet with captain bars, headset",
+   "source": null,
+   "sha256": "04b03466c4cebbee56ec58a1e83fec76eb201a07f38aad2824ae397ea4ec4687"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "kestrel-732400.png",
+   "sha256": "78dbc0a805d3c8bdf6ed4559400ade00529622943edbfe719ff49ac95d3ed691"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "kestrel-732400.png",
+   "sha256": "7af7063eadcc3c1aaa670d3ea2d95f61d12f8687c277ffcbc871d42524bac4fc"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "kestrel-732400.png",
+   "sha256": "53ced38fd877e7fcc16b3294cdb21b731510408cb2b3938097a264cf8a9f1fe4"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "kestrel-732400.png",
+   "sha256": "0106249e665ad17cf1a3cac97119779ddf4cfc7d745df2ec7aeac7b8bb4b3a7a"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "kestrel-732400.png",
+   "sha256": "355f8f7714343d03ede0e862f06af16d684e01f4c195fdfb24964b6dfc980e27"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "nomad": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732501,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, veteran Black man pilot major in his fifties, deep brown skin, close-cropped grey hair and grey beard, laugh lines, calm expression, worn grey flight jacket with gold major leaf",
+   "source": null,
+   "sha256": "dcd41dcd58d11f785f11e453487071f2c93dbb0fd00482cf788a5d2c924f3561"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "nomad-732501.png",
+   "sha256": "14ed6c13d1d48bbf6fc60f9ce7f3cd5d8c25531f67a0bb4754d958806b039904"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "nomad-732501.png",
+   "sha256": "8d2cf95c506762eff49dddd68c1c0bd59147a72df9c6d03ab3c5dc5d9aa72db4"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "nomad-732501.png",
+   "sha256": "3fcbf32457c362a01d0a0c0458f05f70877b0af10720489403e46c3321dca3ef"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "nomad-732501.png",
+   "sha256": "147f02295e9371ad1ef3803cfdc62612765d472a7daa65505584db4c3ebb88a1"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "nomad-732501.png",
+   "sha256": "364f0f8b594187ffaf83119b89a01af666404c27ec095992dec0195e7a4cf6f2"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "anvil": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 731402,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, broad veteran pilot captain in his forties, fair skin, square jaw, blond buzz cut, small scar through one eyebrow, heavy grey flight helmet with gold stripe, steady look",
+   "source": null,
+   "sha256": "b6ed1b107a3e65d6021c96e97928d88a3498a02e2df0611a50522402f9e50043"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "anvil-731402.png",
+   "sha256": "8316deec43aca2f95db3f2d2e4b52486e71e8f05a44cde0366668bb721489df9"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "anvil-731402.png",
+   "sha256": "5b2caea8306f476e1a841f292fcba48f3d8fb04967c20b4323f884919252e66b"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "anvil-731402.png",
+   "sha256": "1e530ee3ff17103646d858ce50d7b655c50cb73baeff77596c71ddd9565db09e"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "anvil-731402.png",
+   "sha256": "7fe5b7abbd36f6c939ee72a0078c3e17d161a35ae1fe49dd67840bf93d7f3134"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "anvil-731402.png",
+   "sha256": "f39f1070876462386ed3e09c1c072211f0ee78a77e64b9eb1916a7245f316c35"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "sparrow": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 731103,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, young Black woman fighter pilot in her twenties, dark skin, short curly black hair, teal flight helmet pushed back, mint flight suit collar, bright confident grin",
+   "source": null,
+   "sha256": "0e7e3ff99a3236f6d35af01d1a093934c95216700e520e5a9350c34b9abebf5b"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "sparrow-731103.png",
+   "sha256": "b8dc50bedcbadbb80e524cab5c2506edcb8b5f0872dfe63bc7ec49f938f333b5"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "sparrow-731103.png",
+   "sha256": "6644a3e4487221202d5089a97379e6ef95c22c5ba0fc204febf5b3644e2215f5"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "sparrow-731103.png",
+   "sha256": "37f1b051bd10175e1b402c012aa24be39bea6d20e4a48be29f0ff80ed44386cf"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "sparrow-731103.png",
+   "sha256": "ae92d2823d4b4d3cb1db29cc11bf2594da0a5d56a169841e9f316578060ea4d6"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "sparrow-731103.png",
+   "sha256": "0b9ab8ee6bdb97472900ced4bf7ba0974578f52030255f5131f5cc378cd0d5ad"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "rook": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 731200,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, young man fighter pilot, messy red hair, freckles, orange-striped flight helmet with visor up, cocky smile, teal flight suit collar",
+   "source": null,
+   "sha256": "40aa37797aedb0f66d1928d9f64fb767d2fea49bc4f7a47b6f727aca60dfa70f"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "rook-731200.png",
+   "sha256": "014dd50ad54ca9cbbfbb4228a3fbd5a339a71ab00083259f7478d7b2ce343e08"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "rook-731200.png",
+   "sha256": "326347efad9b5659c35a366b30058e9b99b802aa290f8427495603543a70f747"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "rook-731200.png",
+   "sha256": "b141b3d4af346c52cf859009088bb823f82e95968286fa7b152b8b57a881d8e6"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "rook-731200.png",
+   "sha256": "6155377a2f5f0ba6de59c9e6287b3f8a7998b84d5a7c175712e6133687d8aa6d"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "rook-731200.png",
+   "sha256": "3490a43721cbfb86cb2641b5c4113ee75dabd8044fe1143c777771e856d46faf"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "wisp": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 731302,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, young East Asian woman ensign in her twenties, straight black bob haircut, round glasses, focused calm expression, violet-trimmed flight helmet",
+   "source": null,
+   "sha256": "ab5e446ad8532432498f591d56bb446856312e5febb5ab69c2ec36f05b56d3ca"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "wisp-731302.png",
+   "sha256": "7ff857381e0bb4b8a81742f849ba0d5c41ee4d376cc47148145a2620555e6d26"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "wisp-731302.png",
+   "sha256": "a3229ab8071172980f3a64d240869928721ee6ca7d5a5865d12940a2e15575ee"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "wisp-731302.png",
+   "sha256": "acdb559803b3e19b40c86291c2470ef44d2307d9671cff9ed310907f41a795c8"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "wisp-731302.png",
+   "sha256": "a53fda914950827e75cc1f9ed8dca2231864d04241255416c15a31fbdb092237"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "wisp-731302.png",
+   "sha256": "edc559412182e11dc57652bc2b0f218b2eed2253f9989b9ed8fa7245092048b5"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "sunny": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732602,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, cheerful Korean woman pilot in her thirties, light warm skin, shoulder-length dark hair with a gold hair clip, big friendly smile, gold-trimmed flight helmet, headset",
+   "source": null,
+   "sha256": "b652be83612ae7fb565da5901ab16b85a60a979d5972ff9e37510d635ddd039e"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "sunny-732602.png",
+   "sha256": "62143ce2555310ec3f43db0023976bd603f3df6d642ea8619756c77b4cb70bd5"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "sunny-732602.png",
+   "sha256": "0fd22544d97897ab48e1ffc98cc9bf7d1701e399176f2de4489d307ea50897e4"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "sunny-732602.png",
+   "sha256": "00c9e98bd7391db99ffdbea4743c1ac301a355439f14411805db337f7fc01e15"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "sunny-732602.png",
+   "sha256": "dfc46b4065d62be248385c48262d7cb29679e32788af63e7e8a5decc73deb35a"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "sunny-732602.png",
+   "sha256": "c2df38c3fc86a60b3d378520ee3b3b1a321dc64dfef21bd0ba79f480e767cd8a"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "pip": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732700,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, eager teenage Latino flight cadet, nineteen, tan skin, short dark wavy hair, wide hopeful eyes, oversized teal cadet helmet slightly askew, cadet collar badge",
+   "source": null,
+   "sha256": "d236f29a7406adf00e97ba02c04f091fc489d48882b1e738c3cf4cb0e2338981"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "pip-732700.png",
+   "sha256": "e18d701574d1a4c2e6c2725d4246261ca6f7a48ca75a391664d5e4d91d351204"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "pip-732700.png",
+   "sha256": "30ba92a4b8630e813008c3f6590137cae91dc4149a856185e28e3276b95847fc"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "pip-732700.png",
+   "sha256": "969cc5e3901e5df6cb8faa5411468e1564d8fe24a0a3e07ad458e02f7dee726d"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "pip-732700.png",
+   "sha256": "8b1386a058729b46886a409c0d2d6d408477775f3e2633fd15a09b8831a52fc4"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "pip-732700.png",
+   "sha256": "ef9f694c8bb6444af3b76e73a80ad2f4bc2dbcd52c81774b07fef808385b90c8"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "march": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732802,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, ground forces major woman in her fifties, olive skin, dark hair streaked with grey under an olive command helmet, determined steady eyes, armored collar with major insignia, radio headset",
+   "source": null,
+   "sha256": "7a33ddfa8d375b6c3baade5b2f6a760d06c5b1b28f7d4d6c209749ab961fefc4"
+  },
+  "base": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733009,
+   "prompt": "Keep exactly the same character design, pose, framing, pixel art style and flat grey background. Make her look like a woman in her fifties: add grey streaks through her dark hair and faint smile lines and crow's feet around the eyes.",
+   "source": "march-732802.png",
+   "sha256": "04d612633f153b63adf6bd4119c34b5ac21fe9bc55ae205b6dbd98ea94c584d2"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "march-732802-base.png",
+   "sha256": "f16cafa4d04ced1fe29ac9bfecc2278b987cfd4243725baa7b7ee82b17c770e2"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "march-732802-base.png",
+   "sha256": "79b9dc62b0a0349becc3b3a39a6dca205d336297a04cf973a826cfd41c3f96db"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "march-732802-base.png",
+   "sha256": "4a15e9728982e0d20b467763daee7764cf5f908cc5addcbba776313d20d74dff"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "march-732802-base.png",
+   "sha256": "149e7754d2f0e68ee5cc828e8ac66f1fa92da7c7ae0fae354401568f7b24fd8d"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "march-732802-base.png",
+   "sha256": "53012f00a2c26c948e803704afd2431744cca67017669063dd9d2e8ba92e22a7"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "kessler": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 731500,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, rugged ground squad sergeant in his forties, fair skin, stubble, dust-smudged face, olive combat helmet with teal visor strip and radio antenna, armored collar",
+   "source": null,
+   "sha256": "d76f639a0a6276ea86f20db25b94f71f58687c855e64c9149829bb5f44935d16"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "kessler-731500.png",
+   "sha256": "1e5adfdcd41dbaf684e4c1de3b49411ea03ba2498a5ae87866f61657b24302f3"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "kessler-731500.png",
+   "sha256": "af15ff7680b987d0ca62d0572640e6211744b69b7e7ed97e8967438f560b205a"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "kessler-731500.png",
+   "sha256": "e90f6b59047ce894e3b2a038df3c8e739d0160a20fc11b8daba661b189903eca"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "kessler-731500.png",
+   "sha256": "9655e65547ecca00a41f86d069b9323d10f975c4fddf3cbe368396d96bcb7bd5"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "kessler-731500.png",
+   "sha256": "463e434cf02898007fb607d83c3d829ef1e23cdad8cb11b63e0e111d4ec460fa"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "voss": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 731600,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, tough ground trooper corporal woman in her thirties, light skin, braided auburn hair under an olive combat helmet with a headlamp, soot on one cheek, armored collar, determined",
+   "source": null,
+   "sha256": "4c512afb7fe93b58d540753587c149ee4d38cc2bb49dce3135934f2c61345387"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "voss-731600.png",
+   "sha256": "b84c728c40a6e48b2961f4180d56617f3527a3c191d23a4db23b455b7ae387d5"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "voss-731600.png",
+   "sha256": "8a439aee623ebb1e3c7900e8cd5f70544ec1a6ac57d9da815e72cd3152484910"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "voss-731600.png",
+   "sha256": "a231e67892bdd0ae054d42dbd27d2a34f0658948fabcc756f516df8a85017a3d"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "voss-731600.png",
+   "sha256": "c6fd96e29385bf4ebaa60020a1ec357857bae4916699756f7d1e382b3771b034"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "voss-731600.png",
+   "sha256": "4a5a0b65b0b54f6cc6e245bd2adbf018d80564a48abba06e40a502bb8f20e7eb"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "mensah": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732902,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, heroic sci-fi military character, Ghanaian-descent ground sergeant in his thirties, dark brown skin, short black hair, broad shoulders, calm steady smile, olive combat helmet with gold chevron, armored collar with radio",
+   "source": null,
+   "sha256": "7e08e1b7983fa4f42a8e543c145b7c9042724f7e23ee8609bc110b31b88dfc2e"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a relaxed blink, everything else unchanged.",
+   "source": "mensah-732902.png",
+   "sha256": "676a3c2cc818da79bed818159a20d526ec7f7918d4551f840919d0cb245a5d4e"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "source": "mensah-732902.png",
+   "sha256": "0c110a067dbc7b5f9ffbac31b3e5ef71974c83df2cc584f9c7b2a8b6a397a69d"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "source": "mensah-732902.png",
+   "sha256": "30987ef2090bbd52610e95e90fae4ccc8e83e9c13b1d166087e1a601bd733bca"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: warm happy smile showing a little teeth, cheerful eyes.",
+   "source": "mensah-732902.png",
+   "sha256": "2acf95c76ca7d5f1dffa6fadfe073863fd17f4510baf29b611c88cb5f80da4c6"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: worried concerned frown, eyebrows pulled together and up, mouth tight.",
+   "source": "mensah-732902.png",
+   "sha256": "b83794b271ea99129d0a55bbe1d4a8fcf68ef5e547cb69668e517c41fa89399d"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "gorrak": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 731701,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, teal gargoyle demon officer, two thick curved horns, big underbite fangs, glowing red eyes, bat-wing shaped collar, military peaked cap with chevron insignia, epaulettes",
+   "source": null,
+   "sha256": "cef5f094daa9c72e3b48d40644e3e27d419af9a1d7584ca597430f42c7f27a1a"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "gorrak-731701.png",
+   "sha256": "adcdbcd48c52d5baa3084e276d78bf1e86fa96b84de0cfeb5d8608779ec0b83f"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "gorrak-731701.png",
+   "sha256": "ba26bd7ed23dae5e450d8a0314c2453a21196ceb6f586ea7d9d1e0b1768d8277"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "gorrak-731701.png",
+   "sha256": "88c67d060393a25e77359e3c98c9eb733772c2080433dd840aa57c05d3e51e0c"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "gorrak-731701.png",
+   "sha256": "6e90e2bfa215035a9385c51a063f55ead7f6137dfc0e9b6924e0393aa4496ab7"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "gorrak-731701.png",
+   "sha256": "70c89ef401f2ede82acf635a49e2ed60b7a8e3dd16214ed4889e7c2f4ad84744"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "vexxa": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 731801,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, violet gargoyle demon officer, long swept-back horns, narrow fanged grin, glowing yellow eyes, bat-wing ear fins, officer coat with twin-bar insignia",
+   "source": null,
+   "sha256": "6178516e9df8ba807faf9ae42e215f4b9df60bd8fd13fbb0c8ca136ee81dbed2"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "vexxa-731801.png",
+   "sha256": "1876bdb880021d2111606c033fb28f44ad33398a543307d11eb5cf8d7b35477a"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "vexxa-731801.png",
+   "sha256": "666addb967a1249e510a6f209acd2a5ce1f36bf698afeeab1d344486f430d596"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "vexxa-731801.png",
+   "sha256": "1d19a258162bfa3e75c68e8b5cb6b9cf66f02a503b911ce0337abcd8e5b6c5fe"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "vexxa-731801.png",
+   "sha256": "9759d7965232fb46780894c398c789c7b6a718d1c88147ac09f3b1dfae4598eb"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "vexxa-731801.png",
+   "sha256": "a42fe07ee283718499f63343ad9bbc0469858606a3eb8d86a2fe370a5bf094c6"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "skarn": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 731900,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, coral red gargoyle demon officer, stubby ram horns, tusks, glowing orange eyes, goggles on forehead, armored collar with fang-slash insignia",
+   "source": null,
+   "sha256": "cc05c0004a03062675750555f60dfdcad1da439362d21f7fa8d0fea08a727b79"
+  },
+  "base": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733009,
+   "prompt": "Keep exactly the same character design, pose, framing, pixel art style and flat grey background. Recolour the creature's skin and hide to bright coral red with darker crimson shading; keep the glowing orange eyes; make the horns ivory.",
+   "source": "skarn-731900.png",
+   "sha256": "d698ab9630273a10bdefb2ee9414066157dc0c77f8259bee59c9aae5fac52f45"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "skarn-731900-base.png",
+   "sha256": "7c2c1c9d06a6860544047ba52a692bdb0d0a8139d8035070df6114597cac32ef"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "skarn-731900-base.png",
+   "sha256": "f0c67edac3b35a11a9aff11c1ab0fac0fab2dadc4f272a289cd86b8207830000"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "skarn-731900-base.png",
+   "sha256": "d7c189928459fda6b5fd35a410fefd09c069fa4d072238273fc75d09de35a7e7"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "skarn-731900-base.png",
+   "sha256": "af5a544889b6a41c0c9d259e2d4a5d27da9be015d1e3536ff388e6d5d40d8747"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "skarn-731900-base.png",
+   "sha256": "8403914e0dcd8db423917fa661ed4bf933431a7bc38cc5474d8eac1b8bff8c1b"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "morth": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732001,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, gold and bone gargoyle demon officer, crown of many small horns, long chin fangs, three glowing green eyes, tall ceremonial military collar with star jewel insignia",
+   "source": null,
+   "sha256": "537f6daaabbb5abdeebf381cf0942aec5eeff0eace3f3549ac36f8e3b868f5cb"
+  },
+  "base": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733009,
+   "prompt": "Keep exactly the same character design, pose, framing, pixel art style and flat grey background. Recolour the skin to pale gold and bone ivory with warm amber shading, and add a third glowing green eye in the middle of the forehead.",
+   "source": "morth-732001.png",
+   "sha256": "714679a40c77588c5a5f337ce35d5742dc3832f5aeb27abffcbe49973f369597"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "morth-732001-base.png",
+   "sha256": "6f4520f36e8c08764c3259f3c92aa139e34d3ca188b40e0cf297cc98b41eb7a5"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "morth-732001-base.png",
+   "sha256": "b304d636c65239b7d559b00dfdb25ab4c09be76796984c3cd57f65752a825ea2"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "morth-732001-base.png",
+   "sha256": "ffcf7de2d2ecc3a6e3acd0c424b0fee6da34ee58f463d9881091650bc5b9501c"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "morth-732001-base.png",
+   "sha256": "2664cc28d2755f93f1289b95db359d07b5ed7c144f457c7f7ca1d4d3547c526b"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "morth-732001-base.png",
+   "sha256": "9249d2c79eddda6862c01b90bf7519f3dacab806b6d9bc4ab3ec099b659b73ea"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "ulgra": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 732111,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, massive dark crimson gargoyle demon admiral, huge branching horns, wide jaw full of fangs, glowing white eyes, bat-wing cape, heavy gold admiral epaulettes and medals, close-up bust of head and shoulders only, deep crimson red skin, black horns, gold medals",
+   "source": null,
+   "sha256": "033707e01cdaf342fbc0939d62920ba3562a6a94806d3bda14c232d9d37925d9"
+  },
+  "base": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733009,
+   "prompt": "Keep exactly the same character design, pose, framing, pixel art style and flat grey background. Recolour the skin to deep crimson red with dark maroon shading, make the eyes glow white, and give it a wide jaw with visible fangs.",
+   "source": "ulgra-732111.png",
+   "sha256": "17e3b34aaabf628164eb6a95cea8c18d159fb312f46acde40fdf52394a6abb45"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "ulgra-732111-base.png",
+   "sha256": "a24a29fd8fbc1594b0c022a5fcde310cfd4bec24416992245206637d581bf0ca"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "ulgra-732111-base.png",
+   "sha256": "9988b35816c49887afd004ab418f59fa3640752d9c80d768b6dbc1a69baa59df"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "ulgra-732111-base.png",
+   "sha256": "0425ab1a5b1f101c949be05837613b288ede5e746ec82bb25083df16ad9dec7c"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "ulgra-732111-base.png",
+   "sha256": "57650f4b9945ec53fd2ca67f418abd4ef1bdb84d668299adbda036decc5fdd8b"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "ulgra-732111-base.png",
+   "sha256": "bb6ac99f9951a6a68e1851c545efd48fa53c34d0ffb54ffed475de70f8f27f63"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ }
+}

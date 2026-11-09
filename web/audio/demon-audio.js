@@ -449,6 +449,7 @@
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
   window.demonAudio = Object.freeze({ unlock, cue, intensity, accent, fleetIntact, mute, pause, resume, sfx, get muted() { return muted; },
+    get graph() { return { context, master, music, effects }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.
     get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, offset: active?.player?.offset ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length, decoded: [...bufferCache.keys()], formats, scene: { ...scene }, accents: accentLog.slice(), fleetIntact: fleetIntactFlag }; } });
   // Unlock from real DOM gestures, including Flutter canvas input.
