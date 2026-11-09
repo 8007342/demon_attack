@@ -250,13 +250,13 @@ void main() {
             for (var b = a + 1; b < 4; b++) {
               expect(
                 _differentPixelFraction(
-                  Uint8List.sublistView(views[a], 340 * 360 * 4),
-                  Uint8List.sublistView(views[b], 340 * 360 * 4),
+                  Uint8List.sublistView(views[a], 0),
+                  Uint8List.sublistView(views[b], 0),
                 ),
                 greaterThan(.035),
                 reason:
                     'Family $family routes ${a + 1}/${b + 1} need '
-                    'different landmark silhouettes at the horizon',
+                    'different landmark silhouettes along the flyover banks',
               );
             }
           }

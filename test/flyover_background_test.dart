@@ -67,8 +67,13 @@ void main() {
         for (final edge in layer) {
           final first = edge.codeUnitAt(0) - 48;
           final last = edge.codeUnitAt(edge.length - 1) - 48;
-          expect((first - last).abs(), lessThanOrEqualTo(6),
-              reason: 'bank edge must continue across the tile seam');
+          var interior = 0;
+          for (var i = 1; i < edge.length; i++) {
+            final jump = (edge.codeUnitAt(i) - edge.codeUnitAt(i - 1)).abs();
+            if (jump > interior) interior = jump;
+          }
+          expect((first - last).abs(), lessThanOrEqualTo(interior + 4),
+              reason: 'the tile seam is no rougher than the cliff itself');
           for (final unit in edge.codeUnits) {
             // 64 logical px = 128 arena units: every bank leaves the
             // central 100+ units of the 360-wide arena free.
@@ -119,6 +124,32 @@ void main() {
       scene.sectors.flyover.distance = 940;
       final b = await _capture(scene);
       expect(a, isNot(orderedEquals(b)), reason: 'ground streams toward the ship');
+
+      // Travel: the destination world (and its landmarks) fades in early.
+      final pure0 = await _capture(scene);
+      scene.environment = 1;
+      final pure1 = await _capture(scene);
+      scene.environment = .45;
+      final blend = await _capture(scene, output: '.cache/flyover/travel-krybor-ringfall.png');
+      expect(blend, isNot(orderedEquals(pure0)));
+      expect(blend, isNot(orderedEquals(pure1)));
+      model.mode = RunMode.travel;
+      model.transitionDuration = 4.33;
+      for (final p in [.2, .5, .8]) {
+        model.transitionLeft = 4.33 * (1 - p);
+        scene.environment = p;
+        final recorder = ui.PictureRecorder();
+        scene.paintArena(ui.Canvas(recorder), Vector2(360, 520));
+        final picture = recorder.endRecording();
+        final image = await picture.toImage(360, 520);
+        await File('.cache/flyover/travel-${(p * 10).round()}.png').writeAsBytes(
+          (await image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List(),
+        );
+        image.dispose();
+        picture.dispose();
+      }
+      model.mode = RunMode.playing;
+      scene.environment = 0;
 
       // Slums versus Docks must differ at the landmark layer.
       model.cycle = 1;

@@ -20,9 +20,9 @@
     "landmark_scale": 1.25
   },
   "layers": {
-    "mid":    {"speed": 0.2, "base_width": 40, "amplitude": 10, "luma_cap": 0.15, "alpha": 0.92},
-    "near":   {"speed": 0.6, "base_width": 30, "amplitude": 8,  "luma_cap": 0.21, "alpha": 1.0},
-    "ground": {"speed": 1.0, "base_width": 19, "amplitude": 6,  "luma_cap": 0.27, "alpha": 1.0}
+    "mid":    {"speed": 0.2, "base_width": 40, "amplitude": 10, "luma_cap": 0.15, "chroma_cap": 0.24, "alpha": 0.92},
+    "near":   {"speed": 0.6, "base_width": 30, "amplitude": 8,  "luma_cap": 0.21, "chroma_cap": 0.28, "alpha": 1.0},
+    "ground": {"speed": 1.0, "base_width": 19, "amplitude": 6,  "luma_cap": 0.27, "chroma_cap": 0.30, "alpha": 1.0}
   },
   "sectors": [
     {
@@ -34,7 +34,7 @@
       },
       "props": [
         {"id": "ice-boulders", "h": 18, "prompt": "cluster of pale blue ice boulders and frosted rocks"},
-        {"id": "frost-crater", "h": 16, "prompt": "small round lunar crater with frost rim"},
+        {"id": "ice-spikes", "h": 16, "prompt": "small cluster of jagged frozen blue ice spikes and shards jutting from rock"},
         {"id": "survey-beacon", "h": 22, "prompt": "small frontier survey beacon mast with a dim cyan lamp on a rock base"}
       ],
       "routes": [
@@ -43,8 +43,8 @@
           {"id": "outpost-shelters", "h": 26, "prompt": "row of three low prefab frontier shelters with antennas, sparse cyan lights"}
         ]},
         {"name": "Krybor Slums", "landmarks": [
-          {"id": "slum-stack", "h": 46, "prompt": "dense irregular stacked shanty dwellings piled on each other, patchwork metal roofs, narrow alleys, many tiny warm windows"},
-          {"id": "slum-roofs", "h": 38, "prompt": "crowded cluster of patchwork corrugated roofs, ladders and water tanks, tiny lit windows, cramped frontier slum block"}
+          {"id": "slum-stack", "h": 46, "prompt": "tall teetering heap of dozens of small boxy makeshift shacks and cabins stacked four storeys high on top of each other, mismatched patchwork corrugated metal walls and roofs, ladders, pipes, many tiny lit square windows, cluttered vertical slum tower", "seed_offset": 7},
+          {"id": "slum-roofs", "h": 38, "prompt": "crowded dense block of many small boxy shanty huts packed tightly side by side, patchwork corrugated metal roofs at different heights, water tanks, antennas, narrow alleys, tiny lit windows", "seed_offset": 7}
         ]},
         {"name": "Krybor Docks", "landmarks": [
           {"id": "dock-gantry", "h": 44, "prompt": "frontier cargo dock gantry crane over an open landing berth, steel lattice arm, cargo containers stacked beside it"},
@@ -74,7 +74,7 @@
       "props": [
         {"id": "ring-rocks", "h": 18, "prompt": "cluster of violet asteroid rocks and lilac ice shards"},
         {"id": "dead-satellite", "h": 20, "prompt": "small abandoned satellite with folded solar panels, dim violet metal"},
-        {"id": "crater-pit", "h": 16, "prompt": "small deep crater pit on violet asteroid rock"}
+        {"id": "rock-spire", "h": 18, "prompt": "small jagged violet asteroid rock spire with lilac ice crust"}
       ],
       "routes": [
         {"name": "Ringfall", "landmarks": [
@@ -86,8 +86,8 @@
           {"id": "patrol-gate", "h": 30, "prompt": "pair of marker buoys forming a guarded patrol lane gate with blinking lights"}
         ]},
         {"name": "Ringfall Wreckfields", "landmarks": [
-          {"id": "wreck-hull", "h": 40, "prompt": "broken derelict starship hull section split open with exposed ribs, drifting debris"},
-          {"id": "wreck-debris", "h": 30, "prompt": "cluster of twisted hull plates and scattered debris chunks"}
+          {"id": "wreck-hull", "h": 40, "prompt": "large broken derelict spaceship hull cracked in half, exposed metal rib frames and torn armor plates, long wrecked fuselage lying on rock", "seed_offset": 7},
+          {"id": "wreck-debris", "h": 30, "prompt": "heap of twisted torn spaceship armor plates and a snapped engine nacelle half buried in rock, jagged wreckage pile", "seed_offset": 8, "negative_extra": "heart shape, love heart"}
         ]},
         {"name": "Ringfall Shipyards", "landmarks": [
           {"id": "yard-frame", "h": 46, "prompt": "open orbital shipyard construction frame cage with docking ribs around an unfinished warship hull"},
@@ -126,14 +126,14 @@
         ]},
         {"name": "Ember Forges", "landmarks": [
           {"id": "forge-stacks", "h": 48, "prompt": "industrial furnace smokestacks cluster with glowing furnace mouths and molten feed channels"},
-          {"id": "forge-channel", "h": 30, "prompt": "industrial molten metal channel with pipes and a glowing furnace block"}
+          {"id": "forge-channel", "h": 30, "prompt": "squat industrial smelting furnace block with a glowing open mouth, pipes and a short chimney", "seed_offset": 7, "negative_extra": "heart shape, love heart"}
         ]},
         {"name": "Ember Crucible", "landmarks": [
           {"id": "crucible-basin", "h": 44, "prompt": "enclosed circular crater wall around a concentrated glowing molten lava basin"},
           {"id": "crucible-wall", "h": 30, "prompt": "thick jagged crater rampart wall segment with lava light"}
         ]},
         {"name": "Ember Brood Heart", "landmarks": [
-          {"id": "brood-furnace", "h": 50, "prompt": "organic pulsating furnace hive, clustered fleshy nests around a glowing red heart core, demonic"},
+          {"id": "brood-furnace", "h": 50, "prompt": "towering organic demonic hive mound of fleshy ribbed chambers and egg sacs around a glowing red furnace vent, horned spikes", "seed_offset": 7, "negative_extra": "heart shape, love heart"},
           {"id": "brood-nests", "h": 30, "prompt": "cluster of organic egg nests with veins and dim red glow, demonic hive"}
         ]}
       ],
@@ -199,7 +199,7 @@
           {"id": "carrier-tower", "h": 44, "prompt": "angular gothic fortress tower with spikes and red windows"}
         ]},
         {"name": "Brood Ark", "landmarks": [
-          {"id": "ark-pods", "h": 36, "prompt": "cluster of glossy organic brood pods hanging from a ribbed spine, dim red glow"},
+          {"id": "ark-pods", "h": 36, "prompt": "cluster of large glossy organic egg pods bulging from a curved ribbed biomechanical spine, demonic, dim red glow", "seed_offset": 7, "negative_extra": "heart shape, love heart"},
           {"id": "ark-transport", "h": 44, "prompt": "large organic brood transport hull silhouette with pod bays"}
         ]},
         {"name": "Siege Carrier", "landmarks": [
@@ -211,7 +211,7 @@
           {"id": "citadel-spires", "h": 44, "prompt": "cluster of thin sharp demonic spires on a rampart"}
         ]},
         {"name": "Brood Flagship", "landmarks": [
-          {"id": "flagship-command", "h": 58, "prompt": "dominant demonic flagship command fortress with crown of spires, red glowing bridge"},
+          {"id": "flagship-command", "h": 58, "prompt": "towering tiered demonic command fortress with a crown of sharp spires, buttresses and a red glowing bridge window", "seed_offset": 7, "negative_extra": "heart shape, love heart"},
           {"id": "flagship-escort", "h": 32, "prompt": "small escort dock with a moored demonic escort craft"}
         ]}
       ],

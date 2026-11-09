@@ -43,7 +43,8 @@ SPEC_PATH = ROOT / "art/families/flyover-backgrounds.json"
 PALETTE_DIR = ROOT / "art/palettes"
 RUNS_PATH = ROOT / "art/families/flyover-runs.json"
 WORK = Path(os.environ.get("FLYOVER_WORK", "/work/tmp/imagegen/flyover"))
-RAW = ROOT / ".cache/flyover-raw"
+# Raw generations are large: keep them outside the checkout (FLYOVER_RAW).
+RAW = Path(os.environ.get("FLYOVER_RAW", str(ROOT / ".cache/flyover-raw")))
 ASSETS = ROOT / "assets/images"
 DART_OUT = ROOT / "lib/game/flyover_atlas.dart"
 CONTACT_OUT = ROOT / "art/contact/flyover-contact.png"
@@ -93,7 +94,7 @@ def load_palette(sector_id: str) -> np.ndarray:
     return np.array([[int(h[i : i + 2], 16) for i in (1, 3, 5)] for h in data["colors"]], dtype=np.float32)
 
 
-def quantise(rgb: np.ndarray, palette: np.ndarray, cap: float, lift: float = 1.0) -> np.ndarray:
+def quantise(rgb: np.ndarray, palette: np.ndarray, cap: float, lift: float = 1.0, chroma: float = 1.0) -> np.ndarray:
     """Normalise brightness under the layer's luminance cap, then snap to the
     sector palette restricted to colours that respect the cap."""
     lum = rgb @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32) / 255
@@ -101,7 +102,10 @@ def quantise(rgb: np.ndarray, palette: np.ndarray, cap: float, lift: float = 1.0
     scale = min(2.2, cap / max(hi, 1e-3)) * lift
     adj = np.clip(rgb * scale, 0, 255)
     pl = palette @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32) / 255
-    allowed = palette[pl <= cap + 0.02]
+    # Chroma cap: saturated reds/oranges are reserved for hostile fire and
+    # re-entry plasma, so scenery uses the muted end of the sector palette.
+    pc = (palette.max(1) - palette.min(1)) / 255
+    allowed = palette[(pl <= cap + 0.02) & (pc <= chroma)]
     if len(allowed) < 8:
         allowed = palette[np.argsort(pl)[:8]]
     flat = adj.reshape(-1, 3)
@@ -262,13 +266,13 @@ def job_list() -> list[dict]:
             jobs.append(_sprite_job(s, sector, f"prop/{sector['id']}/{prop['id']}", prop["prompt"], base + 100 + pi, s["landmark_prompt"]))
         for ri, route in enumerate(sector["routes"]):
             for li, lm in enumerate(route["landmarks"]):
-                jobs.append(_sprite_job(s, sector, f"landmark/{sector['id']}/{ri}/{lm['id']}", lm["prompt"], base + 200 + ri * 10 + li, s["landmark_prompt"]))
+                jobs.append(_sprite_job(s, sector, f"landmark/{sector['id']}/{ri}/{lm['id']}", lm["prompt"], base + 200 + ri * 10 + li + lm.get("seed_offset", 0) * 1000, s["landmark_prompt"], lm.get("negative_extra")))
         for ci, cr in enumerate(sector["creatures"]):
             jobs.append(_sprite_job(s, sector, f"creature/{sector['id']}/{cr['id']}", cr["prompt"], base + 400 + ci, s["creature_prompt"]))
     return jobs
 
 
-def _sprite_job(s, sector, jid, prompt, seed, kind_prompt):
+def _sprite_job(s, sector, jid, prompt, seed, kind_prompt, negative_extra=None):
     return {
         "id": jid,
         "kind": jid.split("/")[0],
@@ -278,7 +282,8 @@ def _sprite_job(s, sector, jid, prompt, seed, kind_prompt):
             "prompt": f"pixel art, {kind_prompt}, {prompt}, dark night palette, crisp pixels, transparent background",
             # Wrecked hulls, transports and flagships are legitimate sprite
             # subjects; only the terrain strips forbid spacecraft.
-            "negative_prompt": s["negative_prompt"].replace("spaceship, airplane, ", ""),
+            "negative_prompt": s["negative_prompt"].replace("spaceship, airplane, ", "")
+            + (f", {negative_extra}" if negative_extra else ""),
             "seed": seed,
         },
     }
@@ -359,6 +364,7 @@ def cmd_run(args) -> None:
                 with urllib.request.urlopen(url + "/view?" + q) as r:
                     p.write_bytes(r.read())
                 paths.append(str(p))
+        (dest / "job.json").write_text(json.dumps(job, indent=1))
         results[job["id"]] = sorted(paths)
         print(job["id"], len(paths))
     out = Path(args.results or WORK / "results.json")
@@ -377,6 +383,9 @@ def cmd_ingest(args) -> None:
     jobs = {j["id"]: j for j in job_list()}
     runs = json.loads(RUNS_PATH.read_text()) if RUNS_PATH.exists() else {}
     for jid, paths in results.items():
+        if jid not in jobs:  # outputs of a job the spec no longer contains
+            print("skip stale", jid)
+            continue
         dest = RAW / jid
         shutil.rmtree(dest, ignore_errors=True)
         dest.mkdir(parents=True, exist_ok=True)
@@ -434,7 +443,7 @@ def process_strips(s, sector, pal) -> dict:
         # The workflow rolled the sheet by half its height to repaint the seam.
         arr = np.roll(arr, -lh // 2, axis=0)
         lum = arr @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32) / 255
-        q = quantise(arr, pal, cfg["luma_cap"])
+        q = quantise(arr, pal, cfg["luma_cap"], chroma=cfg.get("chroma_cap", 1.0))
         strips = []
         for v in range(n):
             edge = bank_contour(sector["id"], layer, v, lh, cfg)
@@ -514,7 +523,7 @@ def load_sprite_raw(jid):
     return Image.open(rgb[0]).convert("RGB"), Image.open(al[0]).convert("L")
 
 
-def process_sprite(jid, target_h, pal, cap, max_w=None):
+def process_sprite(jid, target_h, pal, cap, max_w=None, chroma=1.0):
     loaded = load_sprite_raw(jid)
     if loaded is None:
         print("missing sprite", jid)
@@ -535,7 +544,7 @@ def process_sprite(jid, target_h, pal, cap, max_w=None):
         w = max_w
     rgb_s = np.asarray(rgb.resize((w, h), Image.Resampling.BOX)).astype(np.float32)
     al_s = np.asarray(al.resize((w, h), Image.Resampling.BOX))
-    q = quantise(rgb_s, pal, cap, lift=1.0)
+    q = quantise(rgb_s, pal, cap, lift=1.0, chroma=chroma)
     alpha = np.where(al_s >= 120, 255, 0).astype(np.uint8)
     # Despeckle isolated alpha pixels.
     nb = sum(np.roll(np.roll(alpha > 0, dy, 0), dx, 1) for dy in (-1, 0, 1) for dx in (-1, 0, 1) if dy or dx)
@@ -614,16 +623,16 @@ def cmd_process(_args) -> dict:
         sec = {"id": sector["id"], "strips": process_strips(s, sector, pal),
                "props": [], "landmarks": [], "creatures": []}
         for prop in sector["props"]:
-            r = process_sprite(f"prop/{sector['id']}/{prop['id']}", prop["h"], pal, 0.36, max_w=30)
+            r = process_sprite(f"prop/{sector['id']}/{prop['id']}", prop["h"], pal, 0.34, max_w=30, chroma=0.36)
             if r is not None:
                 sec["props"].append({"id": prop["id"], "rgba": r})
         for ri, route in enumerate(sector["routes"]):
             for lm in route["landmarks"]:
-                r = process_sprite(f"landmark/{sector['id']}/{ri}/{lm['id']}", round(lm["h"] * s["sprite"].get("landmark_scale", 1.0)), pal, 0.44, max_w=62)
+                r = process_sprite(f"landmark/{sector['id']}/{ri}/{lm['id']}", round(lm["h"] * s["sprite"].get("landmark_scale", 1.0)), pal, 0.40, max_w=62, chroma=0.42)
                 if r is not None:
                     sec["landmarks"].append({"id": lm["id"], "route": ri, "rgba": r})
         for cr in sector["creatures"]:
-            r = process_sprite(f"creature/{sector['id']}/{cr['id']}", cr["h"], pal, 0.42, max_w=cr["h"] + 5)
+            r = process_sprite(f"creature/{sector['id']}/{cr['id']}", cr["h"], pal, 0.42, max_w=cr["h"] + 5, chroma=0.5)
             if r is not None:
                 sec["creatures"].append({"id": cr["id"], "gait": cr["gait"], "frames": creature_frames(r, cr["gait"])})
         result["sectors"].append(sec)
@@ -760,7 +769,45 @@ def write_dart(s, sectors, items, meta, pos, cmeta, cpos):
     DART_OUT.write_text("\n".join(lines) + "\n")
 
 
+def landmark_sheet(data) -> None:
+    """Route identity review: rows = sectors, columns = routes (two landmarks
+    each) followed by the sector's props and first creature frames, 3x."""
+    cell_w, cell_h = 140, 80
+    sheet = np.zeros((cell_h * len(data["sectors"]), cell_w * 5 + 330, 4), dtype=np.uint8)
+    sheet[..., :3] = (14, 16, 26)
+    sheet[..., 3] = 255
+
+    def put(sp, x, y):
+        h, w = sp.shape[:2]
+        h, w = min(h, sheet.shape[0] - y), min(w, sheet.shape[1] - x)
+        if h <= 0 or w <= 0:
+            return
+        a = sp[:h, :w, 3:4] / 255
+        sheet[y : y + h, x : x + w, :3] = (sp[:h, :w, :3] * a + sheet[y : y + h, x : x + w, :3] * (1 - a)).astype(np.uint8)
+
+    for si, sec in enumerate(data["sectors"]):
+        for route in range(5):
+            x = route * cell_w + 2
+            for lm in [l for l in sec["landmarks"] if l["route"] == route]:
+                put(lm["rgba"], x, si * cell_h + cell_h - 2 - lm["rgba"].shape[0])
+                x += lm["rgba"].shape[1] + 3
+            sheet[si * cell_h : (si + 1) * cell_h, route * cell_w, :3] = (40, 44, 60)
+        x = 5 * cell_w + 2
+        for p in sec["props"]:
+            put(p["rgba"], x, si * cell_h + 4)
+            x += p["rgba"].shape[1] + 2
+        x = 5 * cell_w + 2
+        for cr in sec["creatures"]:
+            for f in cr["frames"]:
+                put(f, x, si * cell_h + cell_h - 2 - f.shape[0])
+                x += f.shape[1] + 1
+    img = Image.fromarray(sheet, "RGBA").convert("RGB")
+    img = img.resize((img.width * 3, img.height * 3), Image.Resampling.NEAREST)
+    img.save(CONTACT_OUT.with_name("flyover-landmarks.png"), optimize=True)
+
+
 def contact(data, s) -> None:
+    landmark_sheet(data)
     """Contact sheet: per sector row, strips (tiled twice) + sprites + creature frames, 2x."""
     rows = []
     lw, lh = s["strip"]["logical"]

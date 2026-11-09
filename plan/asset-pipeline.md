@@ -26,8 +26,10 @@ integer/NumPy work.
 ## Rerunning
 
 ```bash
-python3 -m venv .cache/asset-venv && .cache/asset-venv/bin/pip install pillow numpy
-PY=.cache/asset-venv/bin/python
+# Keep the venv and raw generations OFF the checkout (the forge's /home/forge/src is a small tmpfs).
+python3 -m venv $SCRATCH/asset-venv && $SCRATCH/asset-venv/bin/pip install pillow numpy
+PY=$SCRATCH/asset-venv/bin/python
+export FLYOVER_RAW=$SCRATCH/flyover-raw   # ingest copies raws here (default .cache/flyover-raw)
 $PY tools/flyover_assets.py palettes   # sector palettes from the paintings
 $PY tools/flyover_assets.py layouts    # img2img layout sheets + seam mask -> /work/tmp/imagegen/flyover/inputs
 $PY tools/flyover_assets.py jobs       # 90 jobs -> /work/tmp/imagegen/flyover/jobs.json
@@ -36,7 +38,7 @@ $PY tools/flyover_assets.py run        # direct ComfyUI HTTP backend (COMFY_URL,
 #   (--only strip/,landmark/krybor limits the jobs; outputs land in /work/tmp/imagegen/flyover/http)
 # or run each job through studio.run_workflow with the same workflow, inputs,
 # strength and overrides, and save {job id: [output paths]} as results.json.
-$PY tools/flyover_assets.py ingest [--results results.json]   # copy raws to .cache/flyover-raw, record provenance
+$PY tools/flyover_assets.py ingest [--results results.json]   # copy raws to $FLYOVER_RAW, record provenance
 $PY tools/flyover_assets.py pack       # process + atlases + Dart metadata + contact sheet
 flutter test test/flyover_background_test.dart test/sector_background_test.dart
 ```
