@@ -36,11 +36,11 @@ Each run SHALL seed a lineup of fleet officers and ground troopers around the Fl
 - **THEN** their pilots and ground troopers differ, while the Admiral speaks in both
 
 ### Requirement: Video-call layouts
-On a viewport whose margins beside the 500-px cabinet are at least 150 px wide, two call tiles SHALL stand on each side and SHALL never overlap the cabinet. Elsewhere, active messages SHALL stack in at most two strips inside the 94-px HUD band. The strips SHALL stay clear of the HUD buttons and SHALL never reach the arena, the player ship or the low arena.
+On a viewport whose margins beside the 500-px cabinet are at least 150 px wide, two call tiles SHALL stand on each side and SHALL never overlap the cabinet. Elsewhere, a compact translucent dock SHALL sit at the top of the arena below the HUD band, holding one strip and collapsing a second line into a chip. It SHALL never cover the HUD score, lives or hearts or the player ship, and SHALL dim while the player is hit.
 
 #### Scenario: Phone portrait
 - **WHEN** a pilot line and a demon grunt are active on a 390 × 844 screen
-- **THEN** both strips sit inside the HUD band, and a third waiting line shows as a `+1` pip
+- **THEN** the pilot line shows in the strip below the HUD, the grunt shows as a chip, a third waiting line shows as `+1`, and the score, lives and hearts stay uncovered
 
 #### Scenario: Wide desktop
 - **WHEN** four callers have spoken on a 1440 × 900 screen
