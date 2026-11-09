@@ -1,0 +1,9 @@
+{
+  "schema": "demon-attack.sprite-selections/v1",
+  "keyframes": {
+    "teal": {"seed": 640102, "by": "agent", "at": "2026-11-09", "note": "teal torso with chest emblem reads clearly; clean flat background"},
+    "violet": {"seed": 640203, "by": "agent", "at": "2026-11-09", "note": "steel pauldrons and plated chest match the armoured species"},
+    "coral": {"seed": 640302, "by": "agent", "at": "2026-11-09", "note": "largest torso, strong horn silhouette"},
+    "gold": {"seed": 640400, "by": "agent", "at": "2026-11-09", "note": "crown with ruby and chest jewel; only luminance is used, so its violet hue does not matter"}
+  }
+}

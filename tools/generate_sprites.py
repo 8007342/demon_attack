@@ -301,21 +301,32 @@ def creature(species, pose, molt=0, angry=False, fire=0, flare=False, raise_body
 _detail_cache = {}
 
 
+def _detail(name):
+    if name not in _detail_cache:
+        path = DETAIL_DIR / f'{name}.png'
+        _detail_cache[name] = np.array(Image.open(path).convert('RGBA')) if path.exists() else None
+    return _detail_cache[name]
+
+
 def apply_detail(cv: Canvas, species, molt, angry):
-    """Blends an AI-finished detail layer (if committed) into the head/torso
-    interior, keeping the authored silhouette, eyes and insignia on top."""
-    path = DETAIL_DIR / f'{species}.png'
-    if not path.exists():
+    """Textures the plain body with an AI-derived 4-level luminance map
+    (tools/sprite_pipeline.py finish). Levels map onto the ramp of the body
+    colour being drawn, so the same map shades intact, molt and angry frames
+    in palette; silhouette, eyes, plates and insignia are never touched."""
+    layer = (_detail(f'{species}-m{molt}') if molt else None)
+    if layer is None:
+        layer = _detail(species)
+    if layer is None:
         return
-    if species not in _detail_cache:
-        _detail_cache[species] = np.array(Image.open(path).convert('RGBA'))
-    layer = _detail_cache[species]
-    mask = body_mask(cv) & (layer[..., 3] > 0)
-    # Only texture pixels of the plain body colour; keep eyes, plates, marks.
-    ramp = RAMP[species]
-    body = MOLT[species][molt - 1] if molt else ramp[2]
-    mask &= cv.is_color(body)
-    cv.a[mask] = layer[mask]
+    d, m, b, l = RAMP[species]
+    body = MOLT[species][molt - 1] if molt else b
+    tones = (m, body, body, l if not molt else 'belly')
+    target = body_mask(cv) & cv.is_color(body) & (layer[..., 3] > 0)
+    level = np.digitize(layer[..., 0], [70, 135, 205])
+    for k, tone in enumerate(tones):
+        sel = target & (level == k)
+        if tone != body:
+            cv._paint(sel, tone)
 
 
 def highlight(cv: Canvas, species):
