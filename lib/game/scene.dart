@@ -814,6 +814,9 @@ class DemonScene extends FlameGame {
         (model.invulnerable == 0 || (model.clock * 12).floor() % 2 == 0)) {
       _playerShip(c);
     }
+    // Spent modules are debris outside the ship's own drawing, so they keep
+    // falling through cutscenes and damage blinking instead of vanishing.
+    _fallingParts(c);
     if (model.defeatActive) {
       _defeatCelebration(c);
     }
@@ -844,6 +847,35 @@ class DemonScene extends FlameGame {
         opacity: b.blastRadius > 0 ? .5 : .65,
       );
     }
+  }
+
+  /// Jettisoned overheated or replaced components tumbling off the ship.
+  void _fallingParts(Canvas c) {
+    for (final part in model.fallingParts) {
+      c.save();
+      c.translate(part.x, part.y);
+      c.rotate(part.rotation);
+      if (ship.ready && ShipPainter.rows.containsKey(part.power)) {
+        ship.paintPart(c, part);
+        c.restore();
+        continue;
+      }
+      c.drawRect(
+        const Rect.fromLTWH(-3, -3, 6, 6),
+        Paint()..color = const Color(0xFFFF5522),
+      );
+      c.drawRect(
+        const Rect.fromLTWH(-2, -2, 4, 4),
+        Paint()..color = const Color(0xFF4A2518),
+      );
+      c.restore();
+      c.drawCircle(
+        Offset(part.x - part.vx * 0.05, part.y - part.vy * 0.05),
+        2.5,
+        Paint()..color = const Color(0x55888888),
+      );
+    }
+
   }
 
   void _damage(Canvas c, Offset center, double damage, double time) {
@@ -1144,32 +1176,6 @@ class DemonScene extends FlameGame {
           Paint()..color = const Color(0x88FF5522),
         );
       }
-    }
-
-    // Jettisoned overheated components tumbling off the ship
-    for (final part in model.fallingParts) {
-      c.save();
-      c.translate(part.x, part.y);
-      c.rotate(part.rotation);
-      if (ship.ready && ShipPainter.rows.containsKey(part.power)) {
-        ship.paintPart(c, part);
-        c.restore();
-        continue;
-      }
-      c.drawRect(
-        const Rect.fromLTWH(-3, -3, 6, 6),
-        Paint()..color = const Color(0xFFFF5522),
-      );
-      c.drawRect(
-        const Rect.fromLTWH(-2, -2, 4, 4),
-        Paint()..color = const Color(0xFF4A2518),
-      );
-      c.restore();
-      c.drawCircle(
-        Offset(part.x - part.vx * 0.05, part.y - part.vy * 0.05),
-        2.5,
-        Paint()..color = const Color(0x55888888),
-      );
     }
 
     // Player Force Field with 3 Decay Stages
@@ -2274,9 +2280,17 @@ class DemonScene extends FlameGame {
         ..strokeWidth = 2,
     );
     if (ship.ready) {
-      final scale = width / 42 * 1.15;
-      ship.layer(c, ShipPainter.hullRow, 2 + frame, center, scale: scale);
-      ship.layer(c, ShipPainter.hullRow, 0, center, scale: scale);
+      // The same layered ship as [_playerShip]: hull, every equipped module
+      // and the shield bubble. Width 42 is the in-play size, so the handoff
+      // between cutscene and combat keeps the ship's scale.
+      final at = Offset(center.dx.roundToDouble(), center.dy.roundToDouble());
+      c.save();
+      c.translate(at.dx, at.dy);
+      c.scale(width / 42);
+      c.translate(-at.dx, -at.dy);
+      ship.paintShip(c, model, at, live: false);
+      ship.paintShield(c, model, at);
+      c.restore();
       return;
     }
     sprite(c, CombatAtlas.fallbackRow, frame, center, width);

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../game/campaign_story.dart';
 import '../game/model.dart';
 import '../game/sector_background.dart';
+import '../game/ship_painter.dart';
 
 /// Curated widescreen pictorial storyboard banner for sector arrivals,
 /// outpost liberation, hyperspace route traversal, and carrier destruction.
@@ -18,6 +19,8 @@ class StoryboardBanner extends StatelessWidget {
     this.steering = 0.0,
     this.compact = false,
     this.height,
+    this.ship,
+    this.pilot,
   });
 
   final int level;
@@ -27,6 +30,13 @@ class StoryboardBanner extends StatelessWidget {
   final double steering;
   final bool compact;
   final double? height;
+
+  /// The loaded ship atlas. With [pilot], every storyboard glyph is the real
+  /// layered ship with the pilot's current modules and shield.
+  final ShipPainter? ship;
+
+  /// The live run whose loadout and clock drive the ship glyph.
+  final ArcadeModel? pilot;
 
   static const _sectorShortNames = [
     'KRYBOR',
@@ -82,6 +92,10 @@ class StoryboardBanner extends StatelessWidget {
                       progress: clampedProgress,
                       steering: clampedSteering,
                       compact: compact,
+                      ship: ship,
+                      pilot: pilot,
+                      pixelRatio:
+                          MediaQuery.maybeDevicePixelRatioOf(context) ?? 1,
                     ),
                   ),
                   if (phase == RunMode.travel)
@@ -133,8 +147,14 @@ class _StoryboardPainter extends CustomPainter {
     required this.progress,
     required this.steering,
     required this.compact,
+    this.ship,
+    this.pilot,
+    this.pixelRatio = 1,
   });
 
+  final ShipPainter? ship;
+  final ArcadeModel? pilot;
+  final double pixelRatio;
   final int level;
   final int cycle;
   final RunMode phase;
@@ -567,12 +587,25 @@ class _StoryboardPainter extends CustomPainter {
     } else {
       shipPos = Offset.lerp(nodes[fromSector], nodes[toSector], progress.clamp(0.0, 1.0))!;
     }
-    _paintStarfighter(
-      canvas,
-      Offset(shipPos.dx, shipPos.dy - 12),
-      bank: 0.25 + steering * 0.2,
-      scale: compact ? 0.82 : 0.95,
-    );
+    if (_hasShipArt) {
+      // The real ship flies the leg nose-first, riding just above the route
+      // so the nodes and the lit leg stay readable beneath it.
+      final glyph = _glyphSize(compact ? 36 : 44);
+      _paintLoadoutShip(
+        canvas,
+        Offset(shipPos.dx, shipPos.dy - glyph * .42),
+        glyph,
+        heading: isBossWrap ? -math.pi / 2 : math.pi / 2,
+        bank: steering * .6,
+      );
+    } else {
+      _paintStarfighter(
+        canvas,
+        Offset(shipPos.dx, shipPos.dy - 12),
+        bank: 0.25 + steering * 0.2,
+        scale: compact ? 0.82 : 0.95,
+      );
+    }
   }
 
   void _paintBracket(
@@ -656,12 +689,66 @@ class _StoryboardPainter extends CustomPainter {
     );
   }
 
+  bool get _hasShipArt => pilot != null && (ship?.ready ?? false);
+
+  /// Logical size of one 64px ship cell, snapped so a cell covers a whole
+  /// number of half-cells (32 device pixels) on this screen: nearest-neighbour
+  /// sampling then keeps the source pixels even at 1x, 2x and 3x.
+  double _glyphSize(double target) {
+    final steps = math.max(1, (target * pixelRatio / 32).round());
+    return steps * 32 / pixelRatio;
+  }
+
+  Offset _snap(Offset p) => Offset(
+    (p.dx * pixelRatio).roundToDouble() / pixelRatio,
+    (p.dy * pixelRatio).roundToDouble() / pixelRatio,
+  );
+
+  /// The layered ship from ship-weapons.png: hull with its thruster frames,
+  /// the pilot's exact modules and the shield shimmer. [heading] is a quarter
+  /// turn multiple so the pixel grid stays axis-aligned; bank is a squash
+  /// across the wings like the in-play ship, and the bob is whole pixels.
+  void _paintLoadoutShip(
+    Canvas canvas,
+    Offset center,
+    double cellSize, {
+    double heading = 0,
+    double bank = 0,
+  }) {
+    final m = pilot!, art = ship!;
+    final clock = m.clock;
+    final sway = (math.sin(clock * 2.3) * .35 + bank).clamp(-1.0, 1.0);
+    final bob =
+        (math.sin(clock * 4.2) * 1.5 * pixelRatio).roundToDouble() / pixelRatio;
+    final at = _snap(center);
+    final unit = cellSize / ShipPainter.size;
+    canvas.save();
+    canvas.translate(at.dx, at.dy);
+    canvas.rotate(heading);
+    canvas.translate(0, bob);
+    canvas.scale(unit * (1 - sway.abs() * .14), unit);
+    // Flickering exhaust under the hull's own animated thruster frames.
+    final flicker = (clock * 18).floor() % 3;
+    final flame = Paint()..isAntiAlias = false;
+    flame.color = const Color(0x8870F5D5);
+    canvas.drawRect(Rect.fromLTWH(-3, 17, 6, 5.0 + flicker * 2), flame);
+    flame.color = const Color(0xFFFFEDBF);
+    canvas.drawRect(Rect.fromLTWH(-1, 18, 2, 3.0 + flicker), flame);
+    art.paintShip(canvas, m, Offset.zero, live: false);
+    art.paintShield(canvas, m, Offset.zero);
+    canvas.restore();
+  }
+
   void _paintStarfighter(
     Canvas canvas,
     Offset center, {
     double bank = 0.0,
     double scale = 1.0,
   }) {
+    if (_hasShipArt) {
+      _paintLoadoutShip(canvas, center, _glyphSize(34 * scale), bank: bank);
+      return;
+    }
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(bank * 0.35);
@@ -734,5 +821,8 @@ class _StoryboardPainter extends CustomPainter {
       oldDelegate.phase != phase ||
       oldDelegate.progress != progress ||
       oldDelegate.steering != steering ||
-      oldDelegate.compact != compact;
+      oldDelegate.compact != compact ||
+      oldDelegate.pixelRatio != pixelRatio ||
+      // The live ship glyph animates from the run clock and its loadout.
+      pilot != null;
 }

@@ -109,7 +109,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   final alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   final keys = <LogicalKeyboardKey>{};
   final tilt = TiltController();
-  bool touchInputEnabled = true;
   int? touch;
   double touchPosition = .5;
   @override
@@ -619,25 +618,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 ),
               ),
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  key: const ValueKey('title-touch-toggle-button'),
-                  tooltip: touchInputEnabled
-                      ? 'Touch Controls: On (Tap for Desktop mode)'
-                      : 'Desktop Mode: On (Tap for Touch mode)',
-                  onPressed: () =>
-                      setState(() => touchInputEnabled = !touchInputEnabled),
-                  icon: Icon(
-                    touchInputEnabled ? Icons.touch_app : Icons.keyboard,
-                    color: touchInputEnabled ? mint : const Color(0xFF95A9BB),
-                    size: 19,
-                  ),
-                ),
-                _muteButton(),
-              ],
-            ),
+            _muteButton(),
           ],
         ),
       ),
@@ -1035,24 +1016,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           ),
         ),
       ),
-      SizedBox(
-        width: 38,
-        child: IconButton(
-          key: const ValueKey('touch-toggle-button'),
-          tooltip: touchInputEnabled
-              ? 'Switch to Desktop Mode'
-              : 'Switch to Touch Mode',
-          onPressed: () => setState(() {
-            touchInputEnabled = !touchInputEnabled;
-            touch = null;
-          }),
-          icon: Icon(
-            touchInputEnabled ? Icons.touch_app : Icons.keyboard,
-            color: touchInputEnabled ? mint : const Color(0xFF95A9BB),
-            size: 19,
-          ),
-        ),
-      ),
       SizedBox(width: 38, child: _muteButton()),
       SizedBox(
         width: 38,
@@ -1141,18 +1104,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           child: const Text('RESUME'),
                         ),
                         const SizedBox(height: 12),
-                        OutlinedButton(
-                          onPressed: () => setState(() {
-                            touchInputEnabled = !touchInputEnabled;
-                            touch = null;
-                          }),
-                          child: Text(
-                            touchInputEnabled
-                                ? 'CONTROLS: TOUCH (ON)'
-                                : 'CONTROLS: DESKTOP (TOUCH OFF)',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
                         TextButton(
                           onPressed: _title,
                           child: const Text('RETURN TO TITLE'),
@@ -1164,52 +1115,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             ),
           ),
         ),
-        if (touchInputEnabled) _controller() else _desktopController(),
+        _controller(),
       ],
     );
   }
-
-  Widget _desktopController() => Container(
-    height: 44,
-    width: double.infinity,
-    margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-    padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(
-      color: const Color(0xFF0F1A26),
-      border: Border.all(color: const Color(0xFF2B3F52)),
-    ),
-    child: Row(
-      children: [
-        const Icon(Icons.keyboard, size: 16, color: mint),
-        const SizedBox(width: 8),
-        Expanded(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: _label(
-              'DESKTOP MODE · ← / A  → / D TO STEER · AUTO-FIRING',
-              const Color(0xFF8AA3BA),
-              size: 9,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        TextButton(
-          key: const ValueKey('enable-touch-bottom'),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          onPressed: () => setState(() => touchInputEnabled = true),
-          child: const Text(
-            'ENABLE TOUCH',
-            style: TextStyle(fontSize: 10, color: mint),
-          ),
-        ),
-      ],
-    ),
-  );
 
   // A render-only view avoids updating the simulation twice when the full-screen sky is mounted.
   late final _ArenaView _arenaProxy = _ArenaView(scene);
@@ -1781,6 +1690,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                             progress: p,
                             steering: model.steering,
                             compact: compact,
+                            ship: scene.ship,
+                            pilot: model,
                           ),
                           if (recognition) ...[
                             const SizedBox(height: 12),
@@ -1858,7 +1769,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Widget _controller() => LayoutBuilder(
     builder: (context, bounds) => Listener(
       onPointerDown: (e) {
-        if (!touchInputEnabled) return;
         if (touch != null) return;
         touch = e.pointer;
         touchPosition = (e.localPosition.dx / bounds.maxWidth).clamp(0, 1);
@@ -1869,7 +1779,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         setState(() {});
       },
       onPointerMove: (e) {
-        if (!touchInputEnabled || touch != e.pointer) return;
+        if (touch != e.pointer) return;
         touchPosition = (e.localPosition.dx / bounds.maxWidth).clamp(0, 1);
         final steerNorm = ((touchPosition - 0.5) * 2.0).clamp(-1.0, 1.0);
         model.setSteering(steerNorm);
