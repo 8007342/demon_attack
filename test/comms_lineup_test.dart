@@ -5,7 +5,6 @@ import 'package:demon_attack/comms/comms_director.dart';
 import 'package:demon_attack/comms/comms_lineup.dart';
 import 'package:demon_attack/comms/comms_types.dart';
 import 'package:demon_attack/comms/squad_comms.dart';
-import 'package:demon_attack/game/game_events.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/services/run_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -164,10 +163,10 @@ void main() {
     test('a flawless victory chains crew lines and raises the banner', () {
       final c = CommsDirector(random: math.Random(5))
         ..setLineup(CommsLineup.pick(5));
-      c.handle(const GameEvent(GameEvents.flawlessVictory), 0);
+      c.handle(const GameEvent(GameEventNames.flawlessVictory), 0);
       expect(c.celebrating(1), isTrue);
       expect(c.celebrating(CommsDirector.celebration + .1), isFalse);
-      final spec = commsHumanTriggers[GameEvents.flawlessVictory]!;
+      final spec = commsHumanTriggers[GameEventNames.flawlessVictory]!;
       var t = 0.0;
       while (t < 30) {
         c.update(t);
@@ -185,7 +184,7 @@ void main() {
 
     test('the mood face holds after a line', () {
       final c = CommsDirector(random: math.Random(2));
-      c.handle(const GameEvent(GameEvents.levelClear), 0);
+      c.handle(const GameEvent(GameEventNames.levelClear), 0);
       c.update(0);
       final m = c.active.firstWhere((m) => !m.isDemon);
       final slot = c.slots[m.slot];
@@ -216,40 +215,55 @@ void main() {
           }
         }
         expect(
-          commsHumanTriggers[GameEvents.allyRetreated]!.lines.first.text,
+          commsHumanTriggers[GameEventNames.allyRetreated]!.lines.first.text,
           contains('totalled'),
         );
         final model = ArcadeModel()..start();
-        final o = GameEventObserver(model);
+        final o = GameEventObserver(model, dispatch: false);
         o.observe(model.takeEvents());
         List<String> names(List<String> raw) => [
           for (final e in o.observe(raw)) e.name,
         ];
-        expect(names(['levelclear']), contains(GameEvents.flawlessSector));
-        expect(names(['allyLost']), [GameEvents.allyRetreated]);
-        expect(
-          names(['levelclear']),
-          isNot(contains(GameEvents.flawlessSector)),
-        );
-        expect(names(['level']), contains(GameEvents.sectorStart));
-        expect(names(['levelclear']), contains(GameEvents.flawlessSector));
+        List<String> queued(String scope) => [
+          for (final e in o.onGameEvent(
+            GameEvent(GameEventNames.fleetIntact, {'scope': scope}),
+          ))
+            e.name,
+        ];
+        // The model reports fleetIntact (ground allies held); the squad
+        // also has to keep every ship.
+        expect(queued('level'), [GameEventNames.flawlessSector]);
+        expect(names(['life']), contains(GameEventNames.lifeLost));
+        expect(queued('level'), isEmpty, reason: 'a ship was totalled');
+        expect(names(['level']), contains(GameEventNames.sectorStart));
+        expect(queued('level'), [GameEventNames.flawlessSector]);
         expect(
           names(['victory']),
-          isNot(contains(GameEvents.flawlessVictory)),
-          reason: 'the tour lost a ground unit',
+          isNot(contains(GameEventNames.flawlessVictory)),
+          reason: 'the tour lost a ship',
+        );
+        expect(names(['allyLost']), [GameEventNames.allyRetreated]);
+        expect(
+          o.onGameEvent(const GameEvent(GameEventNames.allyRetreated)),
+          isEmpty,
         );
         expect(
           names(['victory']),
-          contains(GameEvents.flawlessVictory),
-          reason: 'next tour is clean',
+          isNot(contains(GameEventNames.flawlessVictory)),
+          reason: 'the next tour lost a ground unit',
         );
-        expect(names(['completed']), isNot(contains(GameEvents.flawlessRun)));
+        expect(
+          names(['victory']),
+          contains(GameEventNames.flawlessVictory),
+          reason: 'a clean tour',
+        );
+        expect(queued('campaign'), isEmpty);
         o.reset();
-        expect(names(['completed']), contains(GameEvents.flawlessRun));
+        expect(queued('campaign'), [GameEventNames.flawlessRun]);
         o.reset(freshRun: false);
         expect(
-          names(['completed']),
-          isNot(contains(GameEvents.flawlessRun)),
+          queued('campaign'),
+          isEmpty,
           reason: 'a resumed run cannot prove its earlier sectors',
         );
       },

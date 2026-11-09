@@ -88,18 +88,34 @@ class SquadComms {
     if (playAudio) commsVolume(on ? 1 : 0);
   }
 
-  /// Feeds this frame's events and advances the clock unless [paused].
-  void tick(List<GameEvent> events, {required bool paused}) {
+  final _pending = <GameEvent>[];
+  void Function()? _detach;
+
+  /// Subscribes to the shared dispatcher; events are buffered until [tick].
+  void attach() {
+    _detach ??= GameEvents.listen(_pending.add);
+  }
+
+  void detach() {
+    _detach?.call();
+    _detach = null;
+  }
+
+  /// Feeds the buffered (and [events]) and advances the clock unless
+  /// [paused].
+  void tick({List<GameEvent> events = const [], required bool paused}) {
     final wall = wallClock?.call() ?? _watch.elapsedMicroseconds / 1e6;
     final dt = (wall - _lastWall).clamp(0.0, .1);
     _lastWall = wall;
     advance(dt, paused: paused);
-    for (final event in events) {
-      if (event.name == GameEvents.sectorStart) _prefetch(event.variant);
+    final batch = [..._pending, ...events];
+    _pending.clear();
+    for (final event in batch) {
+      if (event.name == GameEventNames.sectorStart) _prefetch(event.variant);
       // Fleet intact: a short fanfare stinger under the celebration lines.
       if (playAudio &&
-          (event.name == GameEvents.flawlessVictory ||
-              event.name == GameEvents.flawlessRun)) {
+          (event.name == GameEventNames.flawlessVictory ||
+              event.name == GameEventNames.flawlessRun)) {
         audioSfx('extraLife');
       }
       director.handle(event, clock);
@@ -128,6 +144,7 @@ class SquadComms {
   }
 
   void reset() {
+    _pending.clear();
     director.reset();
     if (playAudio) commsStopAll();
   }

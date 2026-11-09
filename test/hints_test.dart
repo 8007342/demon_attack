@@ -10,7 +10,7 @@ void main() {
       tacticalHints.map((hint) => hint.id).toSet().length,
       tacticalHints.length,
     );
-    expect(tacticalHints, hasLength(12));
+    expect(tacticalHints, hasLength(14));
     for (final hint in tacticalHints) {
       expect(hint.title.split(RegExp(r'\s+')).length, lessThanOrEqualTo(8));
       expect(hint.detail.split(RegExp(r'\s+')).length, lessThanOrEqualTo(12));

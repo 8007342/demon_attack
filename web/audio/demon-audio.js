@@ -231,6 +231,23 @@
     source.start(at); source.stop(at + duration + .02);
     source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
   }
+  // --- ground war sfx: synth voices + filtered noise, no new assets ---
+  function sweep(at, duration, from, to, level, type = 'sawtooth') {
+    if (!context.createOscillator) return;
+    const osc = context.createOscillator(), gain = context.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(from, at); osc.frequency.exponentialRampToValueAtTime(to, at + duration);
+    gain.gain.setValueAtTime(level, at); gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
+    osc.connect(gain); gain.connect(effects); osc.start(at); osc.stop(at + duration + .02);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+  }
+  function groundSfx(name, now) {
+    if (name === 'missileLaunch') { limitVoices('explosion'); noiseBurst(now, .55, .1, 3200); sweep(now, .5, 90, 340, .05); return true; }
+    if (name === 'missileIncoming') { sweep(now, .7, 1900, 700, .035, 'sine'); return true; }
+    if (name === 'homingLock') { limitVoices('hit'); voice({ pitch: 96, velocity: 55, channel: 0, tag: 'hit' }, now, .05, effects); voice({ pitch: 101, velocity: 55, channel: 0, tag: 'hit' }, now + .07, .06, effects); noiseBurst(now + .05, .3, .05, 5000); return true; }
+    if (name === 'groundExplosion') { limitVoices('explosion'); voice({ pitch: 31, velocity: 100, channel: 9, tag: 'explosion' }, now, .3, effects); noiseBurst(now, .7, .16, 1500); return true; }
+    return false;
+  }
   function sfx(name) {
     if (!context || paused || context.state !== 'running') return;
     const now = context.currentTime + .005;
@@ -240,6 +257,8 @@
       pitches.forEach((pitch, index) => voice({ pitch, velocity, channel: 0, tag: name }, now + index*step, length, effects));
       return;
     }
+    // --- ground war sfx (missile whoosh, incoming whistle, homing lock, ground blast) ---
+    if (groundSfx(name, now)) return;
     const shapes = { shot: [82, .055, 35], explosion: [35, .24, 95], hit: [47, .12, 85], powerup: [84,.3,80], heart: [88,.16,65], life: [43,.4,90] };
     const [pitch, duration, velocity] = shapes[name] || shapes.hit;
     const tag = shapes[name] ? name : 'hit';

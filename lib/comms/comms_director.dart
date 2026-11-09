@@ -225,7 +225,7 @@ class CommsDirector {
   void handle(GameEvent event, double at) {
     now = math.max(now, at);
     _retire();
-    if (event.name == GameEvents.sectorStart && event.variant != null) {
+    if (event.name == GameEventNames.sectorStart && event.variant != null) {
       setSector(int.tryParse(event.variant!) ?? sector, at);
     }
     final h = _spec(human, event);

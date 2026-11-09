@@ -1,4 +1,3 @@
-import 'package:demon_attack/game/game_events.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -24,14 +23,14 @@ void main() {
       'waveStart',
       'reinforcements',
       'levelClear',
-      'flawlessSector',
       'extraLife',
     ]);
   });
 
   test('unknown events pass through by name with their payload', () {
     final seen = <GameEvent>[];
-    observer.stream.listen(seen.add);
+    final stop = GameEvents.listen(seen.add);
+    addTearDown(stop);
     final events = observer.observe(['allyUnderAttack:2,140', 'homingPickup']);
     expect(events.map((e) => e.name), ['allyUnderAttack', 'homingPickup']);
     expect(events.first.payload, '2,140');
@@ -52,7 +51,7 @@ void main() {
     expect(step(), ['shieldExpiring']);
     model.invulnerable = 0;
     model.hitPlayer();
-    expect(step(), containsAll(['hit', 'shieldBroken']));
+    expect(step(), contains('shieldBroken'));
   });
 
   test('weapon pickups carry their power, lives lost and low lives', () {

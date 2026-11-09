@@ -251,7 +251,7 @@ void main() {
         },
         demon: const {},
       );
-      c.handle(const GameEvent('sectorStart', variant: '2'), 0);
+      c.handle(const GameEvent('sectorStart', {'variant': '2'}), 0);
       c.update(0);
       expect(c.history, ['s2.h0']);
       expect(c.sector, 2);
@@ -274,7 +274,7 @@ void main() {
       for (var i = 1; i < speakers.length; i++) {
         expect(speakers[i], isNot(speakers[i - 1]));
       }
-      c.handle(const GameEvent('sectorStart', variant: '2'), t);
+      c.handle(const GameEvent('sectorStart', {'variant': '2'}), t);
       final later = <String>{};
       for (var i = 0; i < 6; i++) {
         t += 5;
@@ -341,7 +341,7 @@ void main() {
       c.handle(const GameEvent('chatter'), 0);
       c.update(.6);
       c.update(5);
-      c.handle(const GameEvent('sectorStart', variant: '2'), 5);
+      c.handle(const GameEvent('sectorStart', {'variant': '2'}), 5);
       expect(c.slots.where((s) => s.occupant != null), isEmpty);
       expect(
         c.slots.where((s) => s.state(5.1) == CommsSlotState.disconnecting),
@@ -437,19 +437,19 @@ void main() {
 
     test('ground-force and homing events plug in by name', () {
       for (final name in [
-        GameEvents.groundForceSighted,
-        GameEvents.groundForceInRange,
-        GameEvents.homingPickup,
-        GameEvents.allyUnderAttack,
-        GameEvents.allySaved,
-        GameEvents.allyRetreated,
-        GameEvents.flawlessSector,
-        GameEvents.flawlessVictory,
-        GameEvents.flawlessRun,
+        GameEventNames.groundForceSighted,
+        GameEventNames.groundForceInRange,
+        GameEventNames.homingPickup,
+        GameEventNames.allyUnderAttack,
+        GameEventNames.allySaved,
+        GameEventNames.allyRetreated,
+        GameEventNames.flawlessSector,
+        GameEventNames.flawlessVictory,
+        GameEventNames.flawlessRun,
       ]) {
         expect(commsHumanTriggers, contains(name));
       }
-      final help = commsHumanTriggers[GameEvents.allyUnderAttack]!;
+      final help = commsHumanTriggers[GameEventNames.allyUnderAttack]!;
       expect(
         help.critical,
         isFalse,
@@ -470,10 +470,10 @@ void main() {
         );
       }
       final c = CommsDirector(random: math.Random(3));
-      c.handle(const GameEvent('sectorStart', variant: '4'), 0);
+      c.handle(const GameEvent('sectorStart', {'variant': '4'}), 0);
       c.update(0);
       c.update(8);
-      c.handle(const GameEvent('allyUnderAttack', payload: '2,140'), 8);
+      c.handle(const GameEvent('allyUnderAttack', {'payload': '2,140'}), 8);
       c.update(8);
       expect(
         c.active.where((m) => !m.isDemon).single.character.side,

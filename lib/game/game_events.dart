@@ -1,121 +1,221 @@
-/// One typed, read-only event vocabulary over the simulation, shared by every
-/// presentation layer (squad comms, the music bridge, future HUD cues).
+/// One place where gameplay moments leave the simulation for presentation
+/// layers: the adaptive music bridge (`// --- music event hook`) and the
+/// squad comms video call.
 ///
-/// The model keeps emitting its plain string events (`model.events`); the page
-/// takes them once per frame and hands them to [GameEventObserver.observe],
-/// which forwards each one unchanged as a [GameEvent] of the same name and
-/// adds derived events read from the model's public state (a new sentinel, a
-/// shield pickup in the air, the shield running out, ...). It never writes to
-/// the model.
+/// Two sources feed the same vocabulary and the same dispatcher:
+/// - the model queues structured [GameEvent]s (`ArcadeModel.takeGameEvents`:
+///   ground war, homing missiles, allies, fleet intact); the app drains them
+///   each tick and calls [dispatchGameEvent];
+/// - [GameEventObserver] turns the model's plain string events plus changes
+///   in its public state into derived events (sector start, sentinel dive,
+///   shield expiring, ...) and dispatches them too. It never writes to the
+///   model.
 ///
-/// Any string event the model gains later (for example the ground-forces
-/// events `groundForceSighted`, `groundForceInRange`, `homingPickup`,
-/// `allyUnderAttack`, `allySaved`, `allyRetreated`) passes through by name, so
-/// listeners plug in without touching this file. A raw event may carry a
-/// payload after a colon (`allyUnderAttack:2,140`); it is exposed as
-/// [GameEvent.payload].
+/// Nothing is registered by default, so dispatching is always safe (a no-op).
+/// Subscribe once, e.g. in main.dart:
+/// ```dart
+/// GameEvents.listen((e) => musicBridge.event(e.name, e.data));
+/// ```
 library;
-
-import 'dart:async';
 
 import 'model.dart';
 
-class GameEvent {
-  const GameEvent(this.name, {this.clock = 0, this.variant, this.payload});
+/// Stable event names.
+abstract final class GameEventNames {
+  // --- Ground war and homing missiles (queued by the model).
 
-  /// Raw model event names pass through unchanged; derived names are in
-  /// [GameEvents].
-  final String name;
+  /// A demon ground unit first becomes visible near the horizon.
+  /// Commander hook: "Ground forces ahead!".
+  static const groundForceSighted = 'groundForceSighted';
 
-  /// Model clock when observed.
-  final double clock;
+  /// A demon ground unit reaches the near ground where it may fire.
+  static const groundForceInRange = 'groundForceInRange';
 
-  /// Optional refinement a listener may key on, e.g. the sector of
-  /// `sectorStart` ('3') or the power of `weaponPickup` ('spread').
-  final String? variant;
+  /// A demon ground unit launches a ground-to-air missile.
+  static const groundMissileLaunch = 'groundMissileLaunch';
 
-  /// Text after the first ':' of a raw event, if any.
-  final String? payload;
+  /// The player picks up the homing-missile power-up.
+  /// Commander hook: "Homing missiles armed!".
+  static const homingPickup = 'homingPickup';
 
-  @override
-  String toString() =>
-      'GameEvent($name${variant == null ? '' : '.$variant'}'
-      '${payload == null ? '' : ':$payload'})';
-}
+  /// One homing missile leaves the rack (data: target kind).
+  static const homingLaunch = 'homingLaunch';
 
-/// Names of derived events. Raw model names (level, boss, wave, hit, life,
-/// powerup, reinforcements, escort, salvage, levelclear, victory, defeat, ...)
-/// are forwarded as they are.
-abstract final class GameEvents {
+  /// A homing missile strikes its target (data: target kind, killed).
+  static const homingHit = 'homingHit';
+
+  /// A demon ground unit is destroyed.
+  static const groundUnitDestroyed = 'groundUnitDestroyed';
+
+  /// An allied ground unit comes under fire (data: sector, x, y).
+  /// Commander hook: "Pick up some homing missiles!" /
+  /// "Please shoot these enemies!".
+  static const allyUnderAttack = 'allyUnderAttack';
+
+  /// An ally's attacker was destroyed while the ally still stood.
+  static const allySaved = 'allySaved';
+
+  /// An overwhelmed ally is totalled and limps off (or its crew ejects:
+  /// data `ejected`). Allies never die. Commander hook: "I'm totalled,
+  /// going back to base!".
+  static const allyRetreated = 'allyRetreated';
+
+  /// Deprecated alias of [allyRetreated] (same string).
+  static const allyLost = allyRetreated;
+
+  /// The whole fleet held: no ally retreated and no wingmate was lost.
+  /// Data `scope`: 'level' (at sector clear) or 'campaign' (at victory).
+  static const fleetIntact = 'fleetIntact';
+
+  static const all = [
+    groundForceSighted,
+    groundForceInRange,
+    groundMissileLaunch,
+    homingPickup,
+    homingLaunch,
+    homingHit,
+    groundUnitDestroyed,
+    allyUnderAttack,
+    allySaved,
+    allyRetreated,
+    fleetIntact,
+  ];
+
+  // --- Derived by GameEventObserver (data `variant`, `payload`, `clock`).
+
+  /// A sector entrance (variant: sector 1-5).
   static const sectorStart = 'sectorStart';
   static const waveStart = 'waveStart';
   static const reinforcements = 'reinforcements';
   static const sentinelIncoming = 'sentinelIncoming';
   static const sentinelDive = 'sentinelDive';
+
+  /// Two or more ordinary dives within [GameEventObserver.diveWindow].
   static const diveWarning = 'diveWarning';
   static const eliteSighted = 'eliteSighted';
+
+  /// A shield pickup is in the air.
   static const shieldSpotted = 'shieldSpotted';
   static const shieldCollected = 'shieldCollected';
+
+  /// The shield crosses [GameEventObserver.shieldWarningSeconds] left.
   static const shieldExpiring = 'shieldExpiring';
+
+  /// A hit consumed the shield.
   static const shieldBroken = 'shieldBroken';
+
+  /// A weapon module was fitted (variant: the power's name).
   static const weaponPickup = 'weaponPickup';
+
+  /// A player ship is totalled (the pilot ejects; the reserve launches).
   static const lifeLost = 'lifeLost';
   static const lowLives = 'lowLives';
   static const extraLife = 'extraLife';
   static const salvage = 'salvage';
   static const levelClear = 'levelClear';
   static const bossArrival = 'bossArrival';
+
+  /// A carrier form change or its field breaking (variant: phase).
   static const bossPhase = 'bossPhase';
   static const bossDefeated = 'bossDefeated';
   static const defeat = 'defeat';
-  // Ground forces and homing missiles (emitted by the model on their branch).
-  static const groundForceSighted = 'groundForceSighted';
-  static const groundForceInRange = 'groundForceInRange';
-  static const homingPickup = 'homingPickup';
-  static const allyUnderAttack = 'allyUnderAttack';
-  static const allySaved = 'allySaved';
 
-  /// An allied unit is knocked out and heads back to base (allies never
-  /// die). The raw name `allyLost` is accepted as an alias.
-  static const allyRetreated = 'allyRetreated';
-
-  /// Celebrations when the whole allied fleet survives: no ship and no ground
-  /// unit lost in the sector, in the tour up to its carrier victory, or in
-  /// the whole run (only for runs observed from their start).
+  /// Celebrations: [fleetIntact] with no player ship lost either, per
+  /// sector, per tour (at the carrier victory) and for the whole run (only
+  /// for runs observed from their start).
   static const flawlessSector = 'flawlessSector';
   static const flawlessVictory = 'flawlessVictory';
   static const flawlessRun = 'flawlessRun';
 
-  /// Raw model names renamed into the vocabulary above.
+  /// Raw model names renamed into this vocabulary.
   static const aliases = {
     'wave': waveStart,
     'escort': sentinelIncoming,
     'levelclear': levelClear,
-    'extraLife': extraLife,
     'allyLost': allyRetreated,
   };
+
+  /// High-frequency raw events that are not forwarded.
+  static const unforwarded = {'shot', 'hit', 'explosion'};
 }
 
-/// Losses of the allied fleet (player ships and ground units).
-class FleetTally {
-  int sector = 0, tour = 0, run = 0;
+/// A named gameplay moment with a small JSON-safe payload
+/// (`sector`, `x`, `y`, `target`, `variant`, ...).
+class GameEvent {
+  const GameEvent(this.name, [this.data = const {}]);
+  final String name;
+  final Map<String, Object?> data;
 
-  /// False after a checkpoint restore: earlier losses are unknown.
-  bool wholeRun = true;
-  void lose() {
-    sector++;
-    tour++;
-    run++;
+  /// Refinement a listener may key on, e.g. the sector of `sectorStart`
+  /// ('3') or the power of `weaponPickup` ('spread').
+  String? get variant => data['variant']?.toString();
+
+  /// Text after the first ':' of a raw string event, if any.
+  String? get payload => data['payload']?.toString();
+
+  /// Model clock when observed (derived events).
+  double get clock => (data['clock'] as num?)?.toDouble() ?? 0;
+
+  @override
+  String toString() => 'GameEvent($name, $data)';
+}
+
+typedef GameEventListener = void Function(GameEvent event);
+
+/// The single no-op-safe dispatcher.
+abstract final class GameEvents {
+  static final List<GameEventListener> _listeners = [];
+
+  /// Registers [listener]; returns a function that removes it.
+  static void Function() listen(GameEventListener listener) {
+    _listeners.add(listener);
+    return () => _listeners.remove(listener);
+  }
+
+  static int get listenerCount => _listeners.length;
+}
+
+/// Delivers [event] to every listener. A throwing listener never breaks the
+/// game loop or the other listeners.
+void dispatchGameEvent(GameEvent event) {
+  for (final listener in List.of(GameEvents._listeners)) {
+    try {
+      listener(event);
+    } catch (_) {
+      // Presentation hooks must never affect play.
+    }
   }
 }
 
-class GameEventObserver {
-  GameEventObserver(this.model);
-  final ArcadeModel model;
-  final _controller = StreamController<GameEvent>.broadcast(sync: true);
+/// Losses of the allied fleet: player ships and ground units.
+class FleetTally {
+  int sector = 0, tour = 0, run = 0;
 
-  /// Every observed event, raw and derived, in order.
-  Stream<GameEvent> get stream => _controller.stream;
+  /// Player ships lost in the sector / in the run (for [GameEventNames.
+  /// fleetIntact], which already accounts for ground allies).
+  int sectorShips = 0, runShips = 0;
+
+  /// False after a checkpoint restore: earlier losses are unknown.
+  bool wholeRun = true;
+  void lose({bool ship = false}) {
+    sector++;
+    tour++;
+    run++;
+    if (ship) {
+      sectorShips++;
+      runShips++;
+    }
+  }
+}
+
+/// Derives presentation events from the model's string events and public
+/// state, read-only.
+class GameEventObserver {
+  GameEventObserver(this.model, {this.dispatch = true});
+  final ArcadeModel model;
+
+  /// Publish derived events through [dispatchGameEvent] (tests may opt out).
+  final bool dispatch;
 
   /// Shield seconds left at which `shieldExpiring` fires.
   static const shieldWarningSeconds = 2.5;
@@ -129,7 +229,6 @@ class GameEventObserver {
   final _diveStarts = <double>[];
   final _powerLeft = <Power, double>{};
   Carrier? _boss;
-
   bool _diveRunAnnounced = false;
   FleetTally tally = FleetTally();
 
@@ -144,25 +243,40 @@ class GameEventObserver {
     _diveStarts.clear();
     _powerLeft.clear();
     _boss = null;
-
     _diveRunAnnounced = false;
   }
 
-  /// Converts this frame's raw model events (already taken from the model)
-  /// plus state changes into [GameEvent]s, publishes them on [stream] and
-  /// returns them.
+  GameEvent _event(String name, {String? variant, String? payload}) =>
+      GameEvent(name, {
+        'clock': model.clock,
+        'variant': ?variant,
+        'payload': ?payload,
+      });
+
+  List<GameEvent> _publish(List<GameEvent> out) {
+    if (dispatch) {
+      for (final event in out) {
+        dispatchGameEvent(event);
+      }
+    }
+    return out;
+  }
+
+  /// Converts this frame's raw model string events (already taken from the
+  /// model) plus state changes into [GameEvent]s, dispatches and returns
+  /// them.
   List<GameEvent> observe(List<String> raw) {
     final out = <GameEvent>[];
-    final clock = model.clock;
-    void emit(String name, {String? variant, String? payload}) => out.add(
-      GameEvent(name, clock: clock, variant: variant, payload: payload),
-    );
+    void emit(String name, {String? variant, String? payload}) =>
+        out.add(_event(name, variant: variant, payload: payload));
     final shieldBefore = _powerLeft[Power.shield] ?? 0;
     for (final entry in raw) {
       final colon = entry.indexOf(':');
       final name = colon < 0 ? entry : entry.substring(0, colon);
       final payload = colon < 0 ? null : entry.substring(colon + 1);
-      emit(GameEvents.aliases[name] ?? name, payload: payload);
+      if (!GameEventNames.unforwarded.contains(name)) {
+        emit(GameEventNames.aliases[name] ?? name, payload: payload);
+      }
       switch (name) {
         case 'level':
           _sectorStart(emit);
@@ -171,27 +285,23 @@ class GameEventObserver {
           if (boss != null && !identical(boss, _boss)) {
             _boss = boss;
             _sectorStart(emit);
-            emit(GameEvents.bossArrival);
+            emit(GameEventNames.bossArrival);
           } else if (boss != null) {
-            emit(GameEvents.bossPhase, variant: '${boss.phase}');
+            emit(GameEventNames.bossPhase, variant: '${boss.phase}');
           }
         case 'allyLost' || 'allyRetreated':
           tally.lose();
-        case 'levelclear':
-          if (tally.sector == 0) emit(GameEvents.flawlessSector);
         case 'victory':
-          if (tally.tour == 0) emit(GameEvents.flawlessVictory);
+          if (tally.tour == 0) emit(GameEventNames.flawlessVictory);
           tally.tour = 0;
           _boss = null;
-        case 'completed':
-          if (tally.run == 0 && tally.wholeRun) emit(GameEvents.flawlessRun);
         case 'life':
-          tally.lose();
-          emit(GameEvents.lifeLost);
-          if (model.lives == 1) emit(GameEvents.lowLives);
+          tally.lose(ship: true);
+          emit(GameEventNames.lifeLost);
+          if (model.lives == 1) emit(GameEventNames.lowLives);
         case 'hit':
           if (shieldBefore > .15 && !model.hasPower(Power.shield)) {
-            emit(GameEvents.shieldBroken);
+            emit(GameEventNames.shieldBroken);
             _powerLeft.remove(Power.shield);
           }
         case 'wave':
@@ -200,10 +310,29 @@ class GameEventObserver {
     }
     if (model.combat) _observeCombat(emit);
     _observePowers(emit);
-    for (final event in out) {
-      _controller.add(event);
+    return _publish(out);
+  }
+
+  /// Reads a structured event the model queued (subscribe with
+  /// `GameEvents.listen(observer.onGameEvent)`): counts ally retreats and
+  /// turns `fleetIntact` into the celebrations when no player ship was lost
+  /// either. Returns (and dispatches) what it derives.
+  List<GameEvent> onGameEvent(GameEvent event) {
+    final out = <GameEvent>[];
+    switch (event.name) {
+      case GameEventNames.allyRetreated:
+        tally.lose();
+      case GameEventNames.fleetIntact:
+        final scope = event.data['scope'];
+        if (scope == 'campaign') {
+          if (tally.runShips == 0 && tally.wholeRun) {
+            out.add(_event(GameEventNames.flawlessRun));
+          }
+        } else if (tally.sectorShips == 0) {
+          out.add(_event(GameEventNames.flawlessSector));
+        }
     }
-    return out;
+    return _publish(out);
   }
 
   void _sectorStart(
@@ -212,8 +341,10 @@ class GameEventObserver {
     // The model emits `level` (or `boss` in the carrier sector) exactly once
     // per sector entrance, including a restored checkpoint.
     _clearWave();
-    tally.sector = 0;
-    emit(GameEvents.sectorStart, variant: '${model.level}');
+    tally
+      ..sector = 0
+      ..sectorShips = 0;
+    emit(GameEventNames.sectorStart, variant: '${model.level}');
   }
 
   void _clearWave() {
@@ -232,15 +363,17 @@ class GameEventObserver {
     for (final d in model.demons) {
       if (d.isLarge) {
         if (_seenLarge.add(d) && !d.waitingForEscort) {
-          emit(GameEvents.sentinelIncoming);
+          emit(GameEventNames.sentinelIncoming);
         }
         final telling = d.telegraph > 0 || d.rushing;
-        if (telling && _telegraphing.add(d)) emit(GameEvents.sentinelDive);
+        if (telling && _telegraphing.add(d)) {
+          emit(GameEventNames.sentinelDive);
+        }
         if (!telling && d.dive <= 0) _telegraphing.remove(d);
         continue;
       }
       if (d.elite && !d.entering && _seenElite.add(d)) {
-        emit(GameEvents.eliteSighted);
+        emit(GameEventNames.eliteSighted);
       }
       if (d.dive > 0) {
         if (_diving.add(d)) _diveStarts.add(clock);
@@ -251,7 +384,7 @@ class GameEventObserver {
     _diveStarts.removeWhere((t) => clock - t > diveWindow);
     if (_diveStarts.length >= 2 && !_diveRunAnnounced) {
       _diveRunAnnounced = true;
-      emit(GameEvents.diveWarning);
+      emit(GameEventNames.diveWarning);
     } else if (_diveStarts.isEmpty) {
       _diveRunAnnounced = false;
     }
@@ -261,7 +394,7 @@ class GameEventObserver {
     _diving.removeWhere((d) => !model.demons.contains(d));
     for (final p in model.pickups) {
       if (_seenPickups.add(p) && p.power == Power.shield) {
-        emit(GameEvents.shieldSpotted);
+        emit(GameEventNames.shieldSpotted);
       }
     }
     _seenPickups.removeWhere((p) => !model.pickups.contains(p));
@@ -275,15 +408,15 @@ class GameEventObserver {
       final now = model.timeLeft(power);
       if (now > before + .05) {
         if (power == Power.shield) {
-          emit(GameEvents.shieldCollected);
+          emit(GameEventNames.shieldCollected);
         } else {
-          emit(GameEvents.weaponPickup, variant: power.name);
+          emit(GameEventNames.weaponPickup, variant: power.name);
         }
       } else if (power == Power.shield &&
           before >= shieldWarningSeconds &&
           now < shieldWarningSeconds &&
           now > 0) {
-        emit(GameEvents.shieldExpiring);
+        emit(GameEventNames.shieldExpiring);
       }
       if (now > 0) {
         _powerLeft[power] = now;
@@ -292,6 +425,4 @@ class GameEventObserver {
       }
     }
   }
-
-  void dispose() => _controller.close();
 }

@@ -97,11 +97,11 @@ entries and rerunning the pipeline.
 
 ## Sprites
 
-Combat creatures, sentinels, the carrier, the player ship, its cannons, muzzle flashes and every projectile. The contract (layouts, palette, timings) is [sprite-atlas.md](sprite-atlas.md); the visual rules are in [style-guide.md](style-guide.md#64-grid-detail-and-animation).
+Combat creatures, sentinels, the carrier, the player ship, its cannons, muzzle flashes and every projectile. The contract (layouts, palette, timings, frame selection) is [sprite-atlas.md](sprite-atlas.md); the visual rules are in [style-guide.md](style-guide.md#creature-direction-gargoyles-not-birds).
 
 ### Principle
 
-Silhouettes, poses, armour, insignia, weapon mounts and effects are **authored deterministically** in Python on the logical grid (`tools/sprite_kit.py` + four generators), because eight-pose articulated strokes, molts, death sequences and recoil frames must stay aligned pixel for pixel across hundreds of frames. ComfyUI contributes **keyframe concept and shading detail**: renders are finished onto the grid and the bounded palette and enter the atlas only as a four-level luminance map on each species' plain body pixels, mapped onto the ramp of whatever frame is drawn (intact, molt, angry). AI output never replaces an authored outline, so every frame stays readable at phone size and in palette.
+Silhouettes, poses, armour, insignia, weapon mounts and effects are **authored deterministically** in Python on the logical grid, because thirty directional flight frames per damage state, molts, flashes, death sequences and recoil frames must stay aligned pixel for pixel across hundreds of cells. Since the gargoyle round the creatures and sentinels come from `tools/gargoyle_rig.py`, a tiny 3-D rig (volumes, bat-wing membranes, decals) rasterised with a z-buffer and a quantised key light onto the bounded palette: left and right banking frames are real renders of the same anatomy, so asymmetric details stay on their side without mirroring tricks, and wing in-betweens come from joint-angle tables (`FLAP`, `GLIDE`, `COCKED`, `DIVE` in `generate_sprites.py`; `STROKE`, `WARNING`, `CHARGE`, `DIVE`, `RUSH` in `generate_sentinel_sprites.py`). ComfyUI contributes **concept and shading detail only**: gargoyle keyframes are finished onto the grid as a four-level luminance map that nudges the key-light value of hide pixels (stony, leathery texture) before quantisation. AI output never replaces an authored outline, face, insignia or palette, so every frame stays readable at phone size.
 
 ### Files
 
@@ -110,14 +110,16 @@ Silhouettes, poses, armour, insignia, weapon mounts and effects are **authored d
 | `art/workflows/sprites/keyframe-sdxl-pixel.json` | ComfyUI API workflow: SDXL base + pixel-art-xl LoRA, 1024², 26 steps dpmpp_2m karras, nodes titled `$seed`, `$prompt`, `$negative_prompt` |
 | `art/workflows/sprites/variant-qwen-edit.json` | ComfyUI API workflow: Qwen-Image-Edit-2511 fp8 + Lightning 4-step LoRA; keyframe (`$input`) → molt variant |
 | `art/families/sprites/creatures.json` | Family spec (contract `1935-k2ib/v1`, kind `layered-parts`, slots = species, locked palette, 64 × 64 native) validated by `studio.validate_family` |
-| `art/families/sprites/palette.json` | Locked `tillandsias.palette/v1` palette, generated from `sprite_kit.PALETTE` |
-| `art/families/sprites/prompts.json` | Style prompt, negative prompt, per-species prompts and fixed seeds (640100/640200/640300/640400 + candidate index), molt edit prompts and seed 641000 + molt |
+| `art/families/sprites/palette.json` | Locked `tillandsias.palette/v1` palette, written by the `atlases` stage from `sprite_kit.PALETTE` |
+| `art/families/sprites/prompts.json` | Gargoyle style prompt, negative prompt (no birds, feathers, beaks, gore, frontal standing poses), per-species prompts and fixed seeds (650100/650200/650300/650400 + candidate index), molt edit prompts (cracked stone with glowing fissures, chipped horns, torn wings) and seed 651000 + molt |
 | `art/families/sprites/selections.json` | Chosen keyframe seed per species and why |
 | `art/sprites/sources/keyframes/*.png`, `molts/*.png` | Selected AI sources, kept as 256 px nearest copies (inputs of record) |
 | `art/families/sprites/detail/*.png` | Finished 64-grid luminance detail maps consumed by `generate_sprites.py` |
-| `art/sprites/review/*.png` | Contact sheets of every atlas and of AI sources vs. finished detail |
+| `art/sprites/review/*.png` | Contact sheets: every atlas block (`combat-<species>.png`, `combat-shared.png`), `combat-directions.png` (left / neutral / right flight sets, intact and molt 3, 3×), `sentinel-effects.png`, `boss-carrier.png`, `ship-weapons.png`, `ai-sources-and-detail.png`, and the in-engine sheets `in-engine-motion-damage.png` and `in-engine-sectors.png` |
+| `tools/gargoyle_rig.py` | The 3-D creature rig and rasteriser shared by the combat and sentinel generators |
 | `tools/sprite_pipeline.py` | Driver for every stage |
 | `tools/generate_sprites.py`, `generate_ship_sprites.py`, `generate_sentinel_sprites.py`, `generate_boss_sprites.py` | Deterministic packers writing `assets/images/` |
+| `test/gargoyle_review_test.dart` | Atlas contract checks, motion-state checks, and the in-engine review frames (`.cache/gargoyle-review/`) |
 | `lib/gallery_main.dart` | In-engine QA harness (staged models through the real scene) |
 
 ### Rerun
@@ -125,21 +127,136 @@ Silhouettes, poses, armour, insignia, weapon mounts and effects are **authored d
 A Python venv with Pillow, NumPy and SciPy (`python3 -m venv <dir> && <dir>/bin/pip install pillow numpy scipy`; keep it outside `/home/forge/src`, which is a small shared tmpfs), then:
 
 ```bash
-python tools/sprite_pipeline.py offline     # finish -> atlases -> sheets; no GPU, byte-identical output
+python tools/sprite_pipeline.py offline     # finish -> atlases -> sheets; no GPU, byte-identical output (~45 s)
 python tools/sprite_pipeline.py all         # keyframes -> edits -> finish -> atlases -> sheets
 python tools/sprite_pipeline.py keyframes   # or any single stage: edits, finish, atlases, sheets
+flutter test test/gargoyle_review_test.dart && python tools/sprite_pipeline.py screens   # in-engine review sheets
 ```
 
-GPU stages post the committed workflows to the project's ComfyUI studio over its HTTP API (`$COMFYUI_URL`, default `http://studio:8188`, the same server `studio.run_workflow` drives) with the seeds and prompts above, so the same models and seeds reproduce the candidates; raw outputs go to `$SPRITE_PIPELINE_CACHE` (default `~/.cache/demon-attack/sprite-pipeline`, never the repo). Agents can run the same workflows through `studio.run_workflow` / `studio.queue_workflow` (`$prompt`/`$seed` overrides, `inputs: {input: <keyframe>}` for edits) and drop the outputs into the cache as `<species>-<seed>.png`. Finishing is CPU-only and deterministic: colour-key matte from the border, largest component, head/torso window (central 34 % of the width, top 80 % of the height), box-sampled onto the body box and quantised to four levels at the 20/55/85 % luminance quantiles.
+GPU stages post the committed workflows to the project's ComfyUI studio over its HTTP API (`$COMFYUI_URL`, default `http://studio:8188`, the same server `studio.run_workflow` drives) with the seeds and prompts above, so the same models and seeds reproduce the candidates; raw outputs go to `$SPRITE_PIPELINE_CACHE` (default `~/.cache/demon-attack/sprite-pipeline`, never the repo). Agents can run the same workflows through `studio.run_workflow` / `studio.queue_workflow` (`$prompt`/`$seed` overrides, `inputs: {input: <keyframe>}` for edits) and drop the outputs into the cache as `<species>-<seed>.png`. `edits` skips molts that already exist under `art/sprites/sources/molts/`; delete them to regenerate. Finishing is CPU-only and deterministic: colour-key matte from the border, largest component, head/torso window (central 34 % of the width, top 80 % of the height), box-sampled onto the hide box `(20, 14)–(44, 52)` of the 64-grid and quantised to four levels at the 20/55/85 % luminance quantiles.
 
 Stages in detail:
 
 1. **keyframes**: four candidates per species at seed, seed+1, … (prompts.json); pick in `selections.json`.
-2. **edits**: three molt variants of the selected keyframe (cracks; cracked with glowing flesh; shattered with broken horn); used as molt detail maps.
+2. **edits**: three molt variants of the selected keyframe (glowing cracks; badly cracked with a chipped horn and torn wings; shattered with a broken horn and shredded wings); used as molt detail maps.
 3. **finish**: → `detail/<species>.png` and `detail/<species>-m<k>.png`.
-4. **atlases**: the four generators. Wing in-betweens are not AI-interpolated: the eight-pose strokes come from the joint-angle tables (`STROKE`, `COCKED`, `DIVE`, … in the generators), which keeps them exactly aligned. Wan2.2 VACE in-betweening was evaluated as unnecessary for that reason and to spare the shared GPU.
+4. **atlases**: `palette.json`, then the four generators. The rig is deterministic (no randomness, fixed tables); Wan2.2 VACE in-betweening and ControlNet pose guidance were considered and not used, because the rig already produces exactly aligned in-betweens and turnarounds for every direction and damage state, and that spares the shared GPU.
 5. **sheets**: contact sheets for review.
+6. **screens**: composes the in-engine review frames (not part of `offline`; it depends on a Flutter test run).
 
 ### Verification
 
-`flutter test` covers atlas sizes, binary alpha, the bounded palette, sentinel pose rules (distinct frames, folding recovery and rush) and wing-cannon alternation. Visual review uses the gallery (`flutter build web -t lib/gallery_main.dart -o <outside-src>/gallery`, served by `preview.publish` from an ignored folder) and host browser screenshots at desktop and phone sizes.
+`flutter test` covers atlas sizes, binary alpha, the bounded palette, the gargoyle atlas contract (30 distinct flight frames per damage variant, right banks are not mirrors of left banks, folded upstroke narrower than the level downstroke, every flash, action and elite cell present), the motion state machine (hysteresis without flicker, glide when sinking, longer downstroke when climbing, priority of actions), sentinel pose rules (distinct frames, folding recovery and rush, warnings confined to the creature) and wing-cannon alternation. Visual review uses `test/gargoyle_review_test.dart`'s phone-size renders (every species left / neutral / right in downstroke and upstroke, glides, damage states, elites, combat over each sector background) and the contact sheets above.
+
+## Ground forces
+
+The demon ground army, the allied human ground units that skirmish with it,
+their ground effects and the demon ground-to-air missile share one atlas,
+`assets/images/ground-forces.png`. They drive along the oblique ground plane
+of the flyover (see "Backgrounds" above) and use its camera: drawn with
+`drawAtlas` at `2·z0/z` arena units per texel and modulated by the distance
+fog. Like the combat sprites, **silhouettes, launchers and every frame are
+authored on the texel grid** (`build_*` functions in the driver). That keeps
+the move cycles, telegraph, fire and wreck/limp frames aligned pixel for
+pixel. The SDXL + pixel-art-xl + LayerDiffuse keyframe of each unit
+contributes only a −1/0/+1 shading texture on the hull ramp (high-pass
+luminance, thresholded at ±1.4 σ). The keyframes came out top-down, or facing
+the wrong way, or as people instead of vehicles. None gave a 3/4 vehicle
+facing screen right with a launcher that can be lifted, at 20 texels, so AI
+silhouettes are not used.
+
+### Layout (v2: 12 columns × 10 rows of 32×24 texels, 384×240 px, binary alpha)
+
+| Row | Content | Columns |
+| --- | --- | --- |
+| 0–3 | Demon unit per sector: Krybor captured rocket buggy with an imp driver; Ringfall salvage-hull missile crawler; Ember lava-forged artillery beast; Hollow walking gargoyle launch tower | 0–3 move cycle (wheels/treads turning, legs stepping, body bob, blinking lamps, pulsing vents/cracks/runes, exhaust puffs), 4 telegraph A (launcher raised, warhead lit), 5 telegraph B (bright warm muzzle glow), 6 fire (launch flash, recoil, smoke), 7 post-fire (smoking tube, launcher settling), 8–9 burning wreck (two flame flicker frames over the same torn hulk, scorch, embers), 10–11 empty |
+| 4–7 | Allied unit per sector: Krybor frontier snow rover; Ringfall militia rover; Ember foundry defense turret (its move cycle is a traverse, a sweeping running light and a turning radar mast); Hollow resistance walker | 0–3 move, 4–5 firing (cyan muzzle flash big/small, recoil), 6 hit (hull flash + cyan sparks), 7–8 totalled and limping (dents, dead lights, sparks, smoke, a blown tyre / missing wheel with the axle dragging / drooping barrel / dragging leg; intact and upright, never a wreck), 9 crew escape pod with cyan thruster, 10–11 empty |
+| 8 | Effects | 0–5 ground explosion (flash → fireball → big fireball → rolling smoke → smoke + flung debris → thinning smoke, settled debris), 6 scorch decal, 7 missile launch flash, 8 tracer impact spark, 9 small skirmish blast, 10–11 grey smoke puffs small / large |
+| 9 | Missile | 0–1 demon ground missile nose-on (22×22: shaded warhead, X fins, warm exhaust ring that flickers), 2–4 trail puffs dense → thin, 5–11 empty |
+
+Units stand bottom-centred on the cell's last row, facing screen right; the
+renderer mirrors them for the right band. Every frame of a unit shares the
+move cycle's horizontal offset. `GroundAtlas.demonSize` / `allySize` in the
+generated `lib/game/ground_atlas.dart` are the measured content boxes: the
+union of the four move frames, outline included, smoke excluded.
+
+| Path | Role |
+| --- | --- |
+| `art/families/ground-forces.json` | Spec: per-unit prompts, seeds and `selected` keyframe; style and negative prompts; candidate count; demon hull ramp luminances, rim luminance and chroma cap; reserved colour sets (demon warm, demon steel, ally cyan, ally hull, smoke, scorch). |
+| `art/families/ground-forces-runs.json` | Provenance of every ingested run: workflow, prompt, negative prompt, seed, models, SHA-256 of each raw output. |
+| `art/workflows/backgrounds/sprite-transparent.json` | The workflow (shared with the flyover sprites); the driver overrides the SaveImage prefixes to `ground/…`. |
+| `art/sprites/sources/ground/<unit>.png` | Selected keyframes cropped to the LayerDiffuse alpha and box-downscaled to ≤64 px: the inputs of record for `offline` (~55 KB total). |
+| `tools/ground_forces_assets.py` | The driver (below). |
+| `assets/images/ground-forces.png`, `lib/game/ground_atlas.dart` | The atlas and its generated grid contract. |
+| `art/contact/ground-forces-contact.png` | A labelled 4× atlas, then each unit row on its sector ground tile: every frame at 2× (near, z = z0) and 1× (z = 2·z0), plus the idle and glow/fire frames fogged at the horizon (z = 9·z0). The whole sheet is shown at 2×. |
+
+### Rerunning
+
+```bash
+python3 -m venv $SCRATCH/ground/venv && $SCRATCH/ground/venv/bin/pip install pillow numpy scipy
+PY=$SCRATCH/ground/venv/bin/python
+export GROUND_WORK=$SCRATCH/ground/work GROUND_RAW=$SCRATCH/ground/raw   # never the checkout
+$PY tools/ground_forces_assets.py offline   # committed sources -> atlas, Dart, contact sheet; no GPU, byte-identical
+$PY tools/ground_forces_assets.py all       # jobs -> run -> ingest -> pack
+$PY tools/ground_forces_assets.py jobs      # 30 jobs: 10 keyframes x 3 candidate seeds
+$PY tools/ground_forces_assets.py run [--only demon-ember]   # ComfyUI HTTP (COMFY_URL, default http://studio:8188), one job in flight
+$PY tools/ground_forces_assets.py ingest    # raws -> $GROUND_RAW, provenance, refresh sources of record for `selected`
+$PY tools/ground_forces_assets.py pack      # refresh sources from raws if present, then offline
+```
+
+A job takes about 18 s on the shared GPU. `run` skips jobs whose outputs
+already exist (`--force` redoes them) and keeps one job in flight. Seeds are
+720100–720400 (demons), 721100–721400 (allies), 722100 (missile) and 722200
+(explosion), each with +1 and +2 candidates.
+
+### Processing stages
+
+1. **Keyframes.** One LayerDiffuse transparent keyframe per unit, missile
+   and explosion, at seed, seed+1 and seed+2. The pick is recorded as
+   `selected` in the spec.
+2. **Sources.** The pick is cropped to its alpha (≥140), box-downscaled to
+   ≤64 px and stored as RGBA.
+3. **Texture.** The source is box-sampled to 32×24 and high-passed. It
+   shifts hull texels h1–h3 by one ramp step in body space, so the texture
+   rides the gait bob.
+4. **Authoring.** The integer code grid is built from primitives: lit 3/4
+   boxes (top face h3 with an h4 front edge, side h2, underside and right end
+   h1), wheels with six notches turning 15° a frame, and treads with crawling
+   links. Two-group leg gaits lift one leg group and swing the other. Tubes
+   are rasterised at the launcher angle (idle / raised / recoil / post-fire
+   per unit), with seams and warhead noses. Accents come from reserved codes.
+5. **Frames.** Exhaust puffs drift and thin one step per move frame, so the
+   cycle loops. Telegraph frames re-run the builder with the launcher raised
+   and paint the warhead glow. The fire frame adds a warm cross flash and
+   smoke; post-fire adds a smoking muzzle. Wrecks drop the launcher and darken
+   the hull, quench the accents, tear the top along a seeded profile and
+   punch holes. A scorch ellipse goes underneath, and there are two frames of
+   flame tongues (one wide, heights flicker), embers and dark smoke. Allies
+   are never wrecked: the hit frame lifts the hull one step and adds cyan
+   sparks. Limp frames dent the hull, kill half the cyan lights, switch the
+   builder to its damaged variant and add sparks and grey smoke. Allied fire
+   is cyan only.
+6. **Finish.** A one-texel dark outline goes on, with a rim light over lit
+   top edges, so silhouettes separate from the very dark ground tiles. The
+   unit is bottom-centred, and codes map to colours. Demon hulls use a
+   five-step **mid-value** ramp (luma 0.06–0.40, rim 0.56, chroma ≤ 0.36).
+   It is picked from `art/palettes/flyover-<sector>.json` plus the reserved
+   demon-steel greys, which fill in where a sector palette has no mid values
+   (Ember). Bright warm accents (eyes, vents, cracks, runes, warheads) come
+   from the reserved warm set. Allies use the reserved grey-blue hull (a
+   lighter ramp than the demons') and the cyan `#70F5D5` family. Effects, the
+   missile and the pod use the smoke ramp as iron plus the warm or cyan set.
+7. **Effects.** The explosion and small blast are seeded value-noise heat
+   fields with smoke shaded from the upper left and flung debris. The scorch,
+   launch flash, tracer spark, puffs, pod and missile are procedural.
+
+### Runtime contract
+
+`GroundAtlas` (generated; same API every run) gives the file, the grid, the
+row helpers and every column constant. A ground unit is one `drawAtlas` rect
+`(col·32, row·24, 32, 24)`, anchored at its bottom centre on the ground
+point. It uses the landmark camera (`y = 172 + 348·z0/z`, scale `2·z0/z`) and
+colour `fog(z)` with `BlendMode.modulate`, mirrored for the right band. Move
+frames loop 0→3. The missile cell is meant to be drawn centred and scaled up
+with nearest-neighbour as it closes on the camera, trailed by puffs 2→4. The
+escape pod and smoke puffs (row 8, cols 10–11) are free sprites.

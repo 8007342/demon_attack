@@ -99,3 +99,25 @@ The compact controlled-arrival summaries are [baseline](calibration-baseline.md)
 Clear-time outliers were also reviewed rather than hidden by the median. For example, first-tour Normal Ember Moon wave 2 clears in 5.8 seconds with Spread active throughout, while wave 3 takes 12.1 seconds with only 1.7 seconds of powered time; wave 4 starts unpowered and takes 17.6 seconds. Those changes track temporary weapon availability and modest roster growth, not a fresh reinforcement HP tier. The profiler records entry powers, powered/area frames and volleys so future reviews can distinguish these effects. This preserves the reward of collecting powers without using larger raw damage multipliers to conceal inflated enemy health.
 
 The generated full-wave/opening defense-budget ratio now peaks at about 2.255, including dedicated escorts. A conservative project regression ceiling of 2.5 guards against recreating the former 9–11× opening-wave workload spikes. This is an engineering budget chosen for this game, not a threshold established by the cited literature; it measures required hits, not perceived intensity.
+
+## Ground war (ground forces, allies, homing missiles)
+
+Measured 2026-11-09 with `tools/profile_difficulty.dart`, averaged over four seeds (1982, 7, 42, 2026). Every run is the protected real-projectile pilot. Baseline: `dart run -DGROUND_WAR_DISABLED=true tools/profile_difficulty.dart out.json --seed=N` (same code, no ground units; homing still drops over the carrier). Attentive: `--reaction=0.8` (the pilot notices a missile 0.8 s after launch, then leaves its danger band, and collects homing pickups). Naive: `--naive` (never reacts to the ground war). The ordinary-wave defence budgets are unchanged: the 318-wave audit (`tools/analyze_difficulty.dart`) gives the same figures as [calibration-current.md](calibration-current.md), because ground units never join the swarm.
+
+**Intended bands** (project decisions, not research thresholds):
+1. The median ordinary-wave clear time stays within ±10% of the no-ground baseline in every mode. The ground war adds a movement test and a reward, not a slower grind.
+2. Easy < Normal < Hard holds for active campaign time and for missile exposure.
+3. An attentive pilot takes at most about one ground-missile hit per route (≤ 5 per campaign) in every mode. Missiles are a readable dodge, not attrition.
+4. Exposure for a pilot who ignores the ground war is ordered Easy ≪ Normal < Hard. Easy stays near one would-be hit per 1.5 active minutes or fewer.
+
+| Mode | Median wave s (baseline → attentive) | Active min (baseline / attentive / naive) | Units | Missiles (attentive / naive) | Would-be hits (attentive / naive) | Homing salvos (attentive) | Allies saved / retreated (attentive) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Easy | 17.3 → 17.1 (−1%) | 41.4 / 40.4 / 40.6 | 148 | 14 / 88 | 0.2 / 27 | 112 | 60 / 2 |
+| Normal | 26.6 → 26.7 (+0%) | 87.2 / 77.2 / 86.9 | 279 | 71 / 328 | 1.8 / 128 | 176 | 90 / 24 |
+| Hard | 31.4 → 29.7 (−5%) | 123.6 / 97.1 / 109.4 | 342 | 146 / 415 | 3.8 / 170 | 185 | 102 / 48 |
+
+All bands hold. Notes:
+- Active campaign minutes are seed-noisy for the protected pilot: Hard per-seed totals spanned 111–137 minutes at baseline and 86–113 attentive. The long tail comes from sentinel waves, where the pilot's fixed aim stalls. Homing heavy hits shorten those stalls; that is why attentive Hard is faster on average while its median wave moves only 5%. A first measurement with Hard drops at 10% and a 7 s pity cut Hard's attentive total to 85 minutes, close to Normal's 81. Hard therefore uses 7% and 8 s, which restores the Normal/Hard separation without weakening the guarantee: a pickup still arrives before a fresh unit reaches the fire line (tested).
+- Would-be hits are counted even though the pilot is invulnerable. They estimate lives a human would lose; they are not losses.
+- A naive pilot's exposure (27/128/170) shows the missiles are real threats when ignored, so reacting to the telegraph matters. The 0.8 s reaction pilot shows they are readily dodgeable.
+- Ally outcomes are positive only (saved bonus, fleet-intact bonus) and do not enter the bands.

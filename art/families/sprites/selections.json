@@ -1,9 +1,11 @@
 {
   "schema": "demon-attack.sprite-selections/v1",
+  "round": "2026-11 gargoyles",
   "keyframes": {
-    "teal": {"seed": 640102, "by": "agent", "at": "2026-11-09", "note": "teal torso with chest emblem reads clearly; clean flat background"},
-    "violet": {"seed": 640203, "by": "agent", "at": "2026-11-09", "note": "steel pauldrons and plated chest match the armoured species"},
-    "coral": {"seed": 640302, "by": "agent", "at": "2026-11-09", "note": "largest torso, strong horn silhouette"},
-    "gold": {"seed": 640400, "by": "agent", "at": "2026-11-09", "note": "crown with ruby and chest jewel; only luminance is used, so its violet hue does not matter"}
-  }
+    "teal": {"seed": 650101, "by": "agent", "at": "2026-11-09", "note": "compact stony imp torso with readable carved shading; plain grey background mattes cleanly"},
+    "violet": {"seed": 650201, "by": "agent", "at": "2026-11-09", "note": "massive brute with the most stone-like muscle texture"},
+    "coral": {"seed": 650303, "by": "agent", "at": "2026-11-09", "note": "strongest rough stone hide; only luminance is used, so its grey hue does not matter"},
+    "gold": {"seed": 650400, "by": "agent", "at": "2026-11-09", "note": "crowned elder with a golden carved-stone hide"}
+  },
+  "molts": "not regenerated this round: molt damage (fissures, holes, broken horns) is authored by the rig, and molt frames reuse the intact hide map; run the edits stage to add AI molt detail"
 }

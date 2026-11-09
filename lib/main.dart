@@ -20,7 +20,6 @@ import 'widgets/heart_parts.dart';
 // --- squad comms
 import 'comms/comms_view.dart';
 import 'comms/squad_comms.dart';
-import 'game/game_events.dart';
 export 'game/scene.dart' show DemonScene;
 
 void main() => runApp(const DemonAttackApp());
@@ -101,8 +100,21 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     squadComms.reset();
     squadComms.startRun(storage.store, resume: resume);
   }
-  // Music bridge: gameEvents.stream carries the same vocabulary, including
-  // flawlessVictory / flawlessRun for a fleet-intact celebration cue.
+  // The music bridge sees the derived events too (GameEvents.listen),
+  // including flawlessVictory / flawlessRun for a fleet-intact cue.
+  final _commsListeners = <void Function()>[];
+  void _attachComms() {
+    _commsListeners.add(GameEvents.listen(gameEvents.onGameEvent));
+    squadComms.attach();
+  }
+
+  void _detachComms() {
+    for (final remove in _commsListeners) {
+      remove();
+    }
+    _commsListeners.clear();
+    squadComms.detach();
+  }
   // --- end squad comms
   final focus = FocusNode();
   late final scores = widget.scoreService ?? ScoreService();
@@ -149,6 +161,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     scene.topScores = board;
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
+    _attachComms(); // --- squad comms
   }
 
   @override
@@ -163,6 +176,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _detachComms(); // --- squad comms
     focus.dispose();
     scores.close();
     tilt.disable();
@@ -188,11 +202,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       model.setSteering(tilt.steeringValue);
     }
     final rawEvents = model.takeEvents();
-    // --- squad comms
-    squadComms.tick(
-      gameEvents.observe(rawEvents),
-      paused: model.mode == RunMode.paused || model.mode == RunMode.title,
-    );
+    // --- squad comms: derived events go out through dispatchGameEvent.
+    gameEvents.observe(rawEvents);
     for (final event in rawEvents) {
       switch (event) {
         case 'level':
@@ -251,6 +262,16 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           audioSfx(event);
       }
     }
+    // --- ground war events: one no-op-safe dispatcher (game_events.dart) ---
+    // The music bridge (`// --- music event hook`) and the commander comms
+    // panel subscribe with GameEvents.listen; nothing is registered yet.
+    for (final event in model.takeGameEvents()) {
+      dispatchGameEvent(event);
+    }
+    // --- squad comms: play this frame's callouts.
+    squadComms.tick(
+      paused: model.mode == RunMode.paused || model.mode == RunMode.title,
+    );
     if (!handledRunEnd &&
         !model.defeatActive &&
         (model.mode == RunMode.gameOver || model.mode == RunMode.completed)) {
@@ -1883,6 +1904,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               ),
               child: PilotConsoleContent(
                 timers: Map.of(model.powerTimers),
+                homingMissiles: model.ground.salvo.busy // --- ground war HUD
+                    ? model.ground.salvo.loaded +
+                          (model.ground.salvo.active != null ? 1 : 0)
+                    : 0,
                 touching: touch != null,
                 collecting: model.canPilot && !model.combat,
                 tiltActive: tilt.isActive,
