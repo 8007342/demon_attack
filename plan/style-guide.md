@@ -59,9 +59,9 @@ Every sector is an endless oblique 3/4 flyover down a canyon: the ship flies for
 | Layer | Speed | Content | Luminance cap |
 | --- | --- | --- | --- |
 | Far | ~0.02× (slow eased sway) | The sector's painted sky (`sector-N.png`): planets, moons, nebulae; sparse stars; its painted horizon is veiled | painting under a 54% veil |
-| Mid | 0.2× | Ridge/mountain banks along both edges | 0.15 |
-| Near | 0.6× | Terrain banks plus route landmarks | 0.21 (landmarks 0.44) |
-| Ground | 1.0× | Closest banks, small props, creatures, the ship's shadow | 0.27 (props 0.36, creatures 0.42) |
+| Mid | 0.2× | Ridge/mountain banks along both edges | 0.13 (chroma ≤ 0.22) |
+| Near | 0.6× | Terrain banks plus route landmarks | 0.18, chroma ≤ 0.25 (landmarks 0.40) |
+| Ground | 1.0× | Closest banks, small props, creatures, the ship's shadow | 0.23, chroma ≤ 0.27 (props 0.34, creatures 0.36, chroma ≤ 0.28, dark outline) |
 
 - Layers are composable for any session length: seamless vertically tiling strips (three variants per layer per sector, never the same variant twice in a row, mirrored for the right bank) and a library of landmark/prop sprites placed by seeded, stateless scattering per fixed segment. The same distance draws the same picture on every device.
 - The central lane stays dark and clear: banks occupy the outer edges, a horizontal lane veil darkens the middle, and background luminance stays below threats, projectiles and cores.

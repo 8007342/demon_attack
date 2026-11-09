@@ -57,15 +57,15 @@ placeholders (`$prompt`, `$negative_prompt`, `$seed`, `$strength`, `$init_image`
    foreground band, cliff faces below protrusions are darkened. img2img at
    strength 0.8 turns this into canyon-rim terrain with 3/4 cliff walls.
 2. **Strips.** The rolled seamless sheet is box-downscaled to logical size,
-   un-rolled, brightness-normalised under the layer's luminance cap (mid 0.15,
-   near 0.21, ground 0.27) and snapped to the sector palette restricted to
+   un-rolled, brightness-normalised under the layer's luminance cap (mid 0.13,
+   near 0.18, ground 0.23) and snapped to the sector palette restricted to
    colours under that cap. Alpha follows the generated cliffs (non-void pixels)
    inside a dilated layout, is filled in the layout interior, and keeps only
    pixels connected to the outer screen edge; a one-pixel lit lip marks the drop.
    The final per-row edge is exported for runtime placement.
 3. **Sprites.** LayerDiffuse alpha → bbox crop → box downscale to the spec's
    logical height (max widths keep the lane clear) → palette quantise under a
-   cap (landmarks 0.44, props 0.36, creatures 0.42) → binary alpha → despeckle.
+   cap (landmarks 0.40, props 0.34, creatures 0.36) and a chroma cap (creatures 0.28) (saturated warm colours are reserved for hostile fire) → binary alpha → despeckle; creatures get a one-pixel outline in the darkest palette colour.
 4. **Creatures.** One generated pose per species becomes eight discrete frames
    on the logical grid: a four-frame walk (legs alternate, body bobs), crawl
    (one-pixel peristaltic column ripple) or burrow gait; two duck frames

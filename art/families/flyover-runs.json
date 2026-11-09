@@ -2336,8 +2336,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00033_.png",
-    "sha256": "9a08bfd419d932ec1a4c22ccd64f0dce4dc4141f465a8a46d697df8fa32099e4",
+    "file": "strip-seamless_00048_.png",
+    "sha256": "5c91f1378bddd4fa1269c56cdad006f59d949b4cbec3f349ef32f6179b5423b8",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2357,8 +2357,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00031_.png",
-    "sha256": "b5cdaccf0545ec62935669901cd5fc1bb9ad8fed0799f2233f7e551de46667a7",
+    "file": "strip-seamless_00046_.png",
+    "sha256": "b46a1c0c9e45c087face188ff7123bc3f6de325eeea57ecf8e5822c1e002c6e4",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2378,8 +2378,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00032_.png",
-    "sha256": "af3f7c627d667d12ad72e5102f97553f872a9bee42b31f5bb46217162306740f",
+    "file": "strip-seamless_00047_.png",
+    "sha256": "35b4c959063a9abda475e1e3c648c46a3e89024b115a0bb21d98b9738800dcaa",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2399,8 +2399,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00027_.png",
-    "sha256": "f1cc38156d560f7c56686c57381cefe68ff378b0397b19be5cd3d725ca6bbf8b",
+    "file": "strip-seamless_00042_.png",
+    "sha256": "9cc23a9fd3e9886911ab32ee2c0f78f3778d43e1e46b57aea8e02cebd454379d",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2420,8 +2420,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00025_.png",
-    "sha256": "367654343bb10ee44c7232209a910f8f8d400ac00ddf9065c14b197fd963c3de",
+    "file": "strip-seamless_00040_.png",
+    "sha256": "94ce2f1cebeb708c2458a4f2a2c433bd810bd8ecbd696903d36209ac40e4ada5",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2441,8 +2441,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00026_.png",
-    "sha256": "1f9b18dd879c70d22069f00795abdbafc40f20b58af1ee1d3810262db7505768",
+    "file": "strip-seamless_00041_.png",
+    "sha256": "c330a7b80d058037453e42433a6873a79ed670e007c001a75c732e012b6bec38",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2462,8 +2462,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00030_.png",
-    "sha256": "ca1473b8967f0d16154dcda8a511b29c032ea863108c4a00b3d5fd40c469f4f4",
+    "file": "strip-seamless_00045_.png",
+    "sha256": "94a3c152bd90dcc8e03474b6c27613d03119a75bcb4a1e99175088b7878f1f70",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2483,8 +2483,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00028_.png",
-    "sha256": "19d0ce0ee4199d3172603e0ff5dc11e71c9b9ed3acaa6aa49ef2e5f64303ea81",
+    "file": "strip-seamless_00043_.png",
+    "sha256": "5077fdf62b46242cc06b5cbe10460a348e88b47ec3e9894601eaf9023ab86779",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2504,8 +2504,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00029_.png",
-    "sha256": "f1a13b2e12a9dba8f9a563b5615e39a75a45e1e2eb83b29dcf58a0efa0466f00",
+    "file": "strip-seamless_00044_.png",
+    "sha256": "998b03164f68b95d7c44de396e5068c4485a76f4aaaffcdd791456309e62494a",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2525,8 +2525,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00021_.png",
-    "sha256": "40bafc84a56cb0e395c1b005582ebf71cac91e3cc9b4b23cc95107d96510a3da",
+    "file": "strip-seamless_00036_.png",
+    "sha256": "58d246664e39a53d0f78a73341b578effcea13becf54673dfd8a5846c704dd31",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2546,8 +2546,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00019_.png",
-    "sha256": "9fe496c6364dcea6a8e37f620ba30c8912b4d29026db3ee64bfab0fa0b7e72bc",
+    "file": "strip-seamless_00034_.png",
+    "sha256": "a02cb16b4071a2ea7bac781b02358cbdc7aa3c09809df42db6b4ca2b4ff95a57",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2567,8 +2567,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00020_.png",
-    "sha256": "178fb7c90bc5d02466d5acde0de7b6cc8e8212d2379b97fbbebe15717118cb3d",
+    "file": "strip-seamless_00035_.png",
+    "sha256": "e6306ffd8d9c2d06d238d6e4222a1bcf0db3c533275d676e8666383799f16290",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2588,8 +2588,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00024_.png",
-    "sha256": "678446bf865a19b7ca2208f56be3c2d1f0bc6a3325f677e2bc8a8b9e1399e5d4",
+    "file": "strip-seamless_00039_.png",
+    "sha256": "4cf095f9987ca9fcb214edc9cbd3fd501339969323dd6ea0e8a4e08c6ebce61c",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2609,8 +2609,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00022_.png",
-    "sha256": "24c939855209047aea284be0e6335235c4c725f3be8562b7433eab9f1463426a",
+    "file": "strip-seamless_00037_.png",
+    "sha256": "a5b8f9e7c98eb71b7865d9f2138b5552389b76fc9826b442790b16951a11d36a",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"
@@ -2630,8 +2630,8 @@
   "strength": 0.8,
   "outputs": [
    {
-    "file": "strip-seamless_00023_.png",
-    "sha256": "fe97e283dab32511489d06acabb71dcb606c75d1906556c45c89929f65b15095",
+    "file": "strip-seamless_00038_.png",
+    "sha256": "b9d7ba14b72f7b3a96b7c8f491890a8b434cbb832f421d1e784227616f124bb6",
     "models": [
      "pixel-art-xl.safetensors",
      "sdxl-full/sd_xl_base_1.0.safetensors"

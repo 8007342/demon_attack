@@ -145,6 +145,7 @@ class FlyoverBackground {
   }
 
   void _paintStrips(Canvas c, ui.Image image, int sector, int layer) {
+    final width = FlyoverAtlas.layerWidths[layer];
     final transforms = <RSTransform>[];
     final rects = <Rect>[];
     for (var side = 0; side < 2; side++) {
@@ -155,13 +156,16 @@ class FlyoverBackground {
         final v = _variant(sector, layer, side, k);
         final top = (520 - ((k + 1) * _tile - o)).roundToDouble();
         final col = side == 0 ? v : FlyoverAtlas.variants + v;
-        rects.add(Rect.fromLTWH(col * _w * 1.0, layer * _h * 1.0, _w * 1.0, _h * 1.0));
+        // Crop to the layer's widest bank: the rest of the tile is empty and
+        // blending it would only cost fill rate on phones.
+        final cropX = side == 0 ? col * _w : col * _w + _w - width;
+        rects.add(Rect.fromLTWH(cropX * 1.0, layer * _h * 1.0, width * 1.0, _h * 1.0));
         transforms.add(RSTransform.fromComponents(
           rotation: 0,
           scale: _px,
           anchorX: 0,
           anchorY: 0,
-          translateX: side == 0 ? 0 : 360 - _w * _px,
+          translateX: side == 0 ? 0 : 360 - width * _px,
           translateY: top,
         ));
       }
@@ -251,7 +255,7 @@ class FlyoverBackground {
   Iterable<_CritterView> _visibleCritters(int sector) sync* {
     final species = _species(sector);
     if (species.isEmpty) return;
-    final density = .34 + sector * .07;
+    final density = .30 + sector * .05;
     for (var side = 0; side < 2; side++) {
       final o = _layerOffset(2, side);
       final first = ((o - 40) / _critterSegment).floor();
@@ -290,7 +294,7 @@ class FlyoverBackground {
           final world = baseWorld + math.sin(heading) * reach * travel - (state?.dy ?? 0);
           final edge = _edgeAt(sector, 2, side, world);
           final spriteW = (kind.w) * _px;
-          if (edge < spriteW + 6) continue;
+          if (edge < spriteW + 4) continue;
           var x = 3 + _rand(id, 28) * (edge - spriteW - 6) + math.cos(heading) * reach * travel + (state?.dx ?? 0);
           x = x.clamp(2.0, edge - spriteW - 2);
           final y = _screenY(2, side, world);
@@ -334,8 +338,14 @@ class FlyoverBackground {
           s.burrowT = math.max(s.burrowT, 2.6);
         } else {
           final n = d < 1 ? const Offset(1, 0) : away / d;
-          s.fvx = n.dx;
-          s.fvy = n.dy;
+          // Banks are narrow, so the dash runs mainly along the bank: away
+          // from the blast vertically (seeded when it lands level with
+          // them), with only a small sideways component.
+          final vertical = n.dy.abs() > .35
+              ? n.dy.sign
+              : (_rand(v.id, 29) < .5 ? -1.0 : 1.0);
+          s.fvx = n.dx * .45;
+          s.fvy = vertical;
           s.fleeT = 1.1 + (1 - d / radius) * .6;
         }
       }
@@ -344,8 +354,7 @@ class FlyoverBackground {
       if (s.fleeT > 0) {
         s.fleeT -= dt;
         final speed = v.kind.gait == 'crawl' ? 28.0 : 52.0;
-        // Banks are narrow: mostly run along the bank, away from the blast.
-        s.dx += s.fvx * speed * dt * (v.x < 180 ? 1 : -1) * .6;
+        s.dx += s.fvx * speed * dt * (v.x < 180 ? 1 : -1);
         s.dy += s.fvy * speed * dt;
       }
       if (s.duckT > 0) s.duckT -= dt;
@@ -386,7 +395,7 @@ class FlyoverBackground {
         translateX: v.x.roundToDouble(),
         translateY: (v.y - v.kind.h * _px).roundToDouble(),
       ));
-      colors.add(const Color(0xD8FFFFFF));
+      colors.add(const Color(0xC8FFFFFF));
     }
     if (rects.isEmpty) return;
     c.drawAtlas(sheet, transforms, rects, colors, BlendMode.modulate, null, _pixelPaint);

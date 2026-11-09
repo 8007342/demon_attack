@@ -20,9 +20,9 @@
     "landmark_scale": 1.25
   },
   "layers": {
-    "mid":    {"speed": 0.2, "base_width": 40, "amplitude": 10, "luma_cap": 0.15, "chroma_cap": 0.24, "alpha": 0.92},
-    "near":   {"speed": 0.6, "base_width": 30, "amplitude": 8,  "luma_cap": 0.21, "chroma_cap": 0.28, "alpha": 1.0},
-    "ground": {"speed": 1.0, "base_width": 19, "amplitude": 6,  "luma_cap": 0.27, "chroma_cap": 0.30, "alpha": 1.0}
+    "mid":    {"speed": 0.2, "base_width": 42, "amplitude": 10, "luma_cap": 0.13, "chroma_cap": 0.22, "alpha": 0.92},
+    "near":   {"speed": 0.6, "base_width": 34, "amplitude": 8,  "luma_cap": 0.18, "chroma_cap": 0.25, "alpha": 1.0},
+    "ground": {"speed": 1.0, "base_width": 25, "amplitude": 6,  "luma_cap": 0.23, "chroma_cap": 0.27, "alpha": 1.0}
   },
   "sectors": [
     {
@@ -60,8 +60,8 @@
         ]}
       ],
       "creatures": [
-        {"id": "frost-hopper", "h": 12, "gait": "walk", "prompt": "tiny pale blue six legged alien hopper insect"},
-        {"id": "shell-crawler", "h": 11, "gait": "crawl", "prompt": "tiny armored grey blue alien pillbug crawler with segmented shell"}
+        {"id": "frost-hopper", "h": 10, "gait": "walk", "prompt": "tiny pale blue six legged alien hopper insect"},
+        {"id": "shell-crawler", "h": 9, "gait": "crawl", "prompt": "tiny armored grey blue alien pillbug crawler with segmented shell"}
       ]
     },
     {
@@ -99,8 +99,8 @@
         ]}
       ],
       "creatures": [
-        {"id": "rock-mite", "h": 11, "gait": "walk", "prompt": "tiny violet alien rock mite with eight short legs"},
-        {"id": "dust-grazer", "h": 12, "gait": "crawl", "prompt": "tiny lilac alien slug grazer with feelers"}
+        {"id": "rock-mite", "h": 9, "gait": "walk", "prompt": "tiny violet alien rock mite with eight short legs"},
+        {"id": "dust-grazer", "h": 10, "gait": "crawl", "prompt": "tiny lilac alien slug grazer with feelers"}
       ]
     },
     {
@@ -138,8 +138,8 @@
         ]}
       ],
       "creatures": [
-        {"id": "cinder-newt", "h": 12, "gait": "walk", "prompt": "tiny black alien salamander lizard with glowing orange spots"},
-        {"id": "ash-borer", "h": 11, "gait": "burrow", "prompt": "tiny charcoal grey alien burrowing grub with orange mandibles"}
+        {"id": "cinder-newt", "h": 10, "gait": "walk", "prompt": "tiny black alien salamander lizard with glowing orange spots"},
+        {"id": "ash-borer", "h": 9, "gait": "burrow", "prompt": "tiny charcoal grey alien burrowing grub with orange mandibles"}
       ]
     },
     {
@@ -177,8 +177,8 @@
         ]}
       ],
       "creatures": [
-        {"id": "spore-crawler", "h": 11, "gait": "crawl", "prompt": "tiny green glowing alien spore crawler with tentacles"},
-        {"id": "bone-skitter", "h": 12, "gait": "walk", "prompt": "tiny pale bone white alien spider skitter with green eyes"}
+        {"id": "spore-crawler", "h": 9, "gait": "crawl", "prompt": "tiny green glowing alien spore crawler with tentacles"},
+        {"id": "bone-skitter", "h": 10, "gait": "walk", "prompt": "tiny pale bone white alien spider skitter with green eyes"}
       ]
     },
     {
@@ -216,8 +216,8 @@
         ]}
       ],
       "creatures": [
-        {"id": "brood-larva", "h": 11, "gait": "crawl", "prompt": "tiny pale red demonic maggot larva"},
-        {"id": "hive-tick", "h": 12, "gait": "burrow", "prompt": "tiny dark red demonic tick with horns and glowing eyes"}
+        {"id": "brood-larva", "h": 9, "gait": "crawl", "prompt": "tiny pale red demonic maggot larva"},
+        {"id": "hive-tick", "h": 10, "gait": "burrow", "prompt": "tiny dark red demonic tick with horns and glowing eyes"}
       ]
     }
   ],

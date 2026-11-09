@@ -183,6 +183,43 @@ void main() {
     });
   });
 
+  testWidgets('review sheet: every sector and named route, with combat',
+      (tester) async {
+    await tester.runAsync(() async {
+      final model = ArcadeModel()..start();
+      model.mode = RunMode.playing;
+      final scene = await _scene(model);
+      scene.atlas = await _decode('assets/images/combat.png');
+      final recorder = ui.PictureRecorder();
+      final sheet = ui.Canvas(recorder);
+      for (var sector = 0; sector < 5; sector++) {
+        for (var route = 0; route < 5; route++) {
+          model.level = sector + 1;
+          model.cycle = route;
+          scene.environment = sector.toDouble();
+          scene.sectors.flyover.distance = 700 + route * 433.0;
+          final recorderCell = ui.PictureRecorder();
+          scene.paintArena(ui.Canvas(recorderCell), Vector2(360, 520));
+          final picture = recorderCell.endRecording();
+          sheet.save();
+          sheet.translate(route * 364.0, sector * 524.0);
+          sheet.drawPicture(picture);
+          sheet.restore();
+          picture.dispose();
+        }
+      }
+      final picture = recorder.endRecording();
+      final image = await picture.toImage(5 * 364, 5 * 524);
+      final file = File('.cache/flyover/review-routes.png');
+      await file.parent.create(recursive: true);
+      await file.writeAsBytes(
+        (await image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List(),
+      );
+      image.dispose();
+      picture.dispose();
+    });
+  });
+
   testWidgets('creatures scatter from explosions and duck under the ship shadow',
       (tester) async {
     await tester.runAsync(() async {
@@ -204,7 +241,14 @@ void main() {
       scene.sectors.advance(1 / 60, model, 2);
       expect(flyover.reactingCreatures, greaterThan(0));
       expect(model.blasts, hasLength(simulated), reason: 'visual only');
-      await _capture(scene, output: '.cache/flyover/reacting.png');
+      await File('.cache/flyover/reacting-target.txt')
+          .writeAsString('${target.dx} ${target.dy}');
+      for (var f = 0; f < 6; f++) {
+        await _capture(scene, output: '.cache/flyover/reacting-$f.png');
+        for (var k = 0; k < 6; k++) {
+          scene.sectors.advance(1 / 60, model, 2);
+        }
+      }
       expect(before, isNotEmpty);
 
       // Shadow: move the ship over a low creature and let the frame update.

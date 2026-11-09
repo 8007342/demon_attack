@@ -554,6 +554,21 @@ def process_sprite(jid, target_h, pal, cap, max_w=None, chroma=1.0):
     return rgba
 
 
+def outline(rgba: np.ndarray, pal: np.ndarray) -> np.ndarray:
+    """One-pixel outline in the palette's darkest colour, so tiny creatures
+    separate from the bank texture without being brightened."""
+    a = rgba[..., 3] > 0
+    padded = np.zeros((rgba.shape[0] + 2, rgba.shape[1] + 2, 4), dtype=np.uint8)
+    padded[1:-1, 1:-1] = rgba
+    pa = np.zeros(padded.shape[:2], dtype=bool)
+    pa[1:-1, 1:-1] = a
+    ring = (np.roll(pa, 1, 0) | np.roll(pa, -1, 0) | np.roll(pa, 1, 1) | np.roll(pa, -1, 1)) & ~pa
+    dark = pal[np.argmin(pal.sum(1))].astype(np.uint8)
+    padded[ring, :3] = dark
+    padded[ring, 3] = 255
+    return padded
+
+
 def creature_frames(base: np.ndarray, gait: str) -> list[np.ndarray]:
     """Discrete pixel frames from one generated creature pose.
 
@@ -632,8 +647,9 @@ def cmd_process(_args) -> dict:
                 if r is not None:
                     sec["landmarks"].append({"id": lm["id"], "route": ri, "rgba": r})
         for cr in sector["creatures"]:
-            r = process_sprite(f"creature/{sector['id']}/{cr['id']}", cr["h"], pal, 0.42, max_w=cr["h"] + 5, chroma=0.5)
+            r = process_sprite(f"creature/{sector['id']}/{cr['id']}", cr["h"], pal, 0.36, max_w=cr["h"] + 5, chroma=0.28)
             if r is not None:
+                r = outline(r, pal)
                 sec["creatures"].append({"id": cr["id"], "gait": cr["gait"], "frames": creature_frames(r, cr["gait"])})
         result["sectors"].append(sec)
     return result
@@ -745,6 +761,10 @@ def write_dart(s, sectors, items, meta, pos, cmeta, cpos):
         f"  static const stripWidth = {lw}, stripHeight = {lh}, variants = {s['strip']['variants']};",
         "  static const layers = ['mid', 'near', 'ground'];",
         "  static const layerSpeeds = [" + ", ".join(str(s["layers"][l]["speed"]) for l in LAYERS) + "];",
+        "  /// Widest bank per layer (logical px): strips are drawn cropped to it.",
+        "  static const layerWidths = [" + ", ".join(
+            str(min(lw, 1 + max([max(e) for sec in sectors for e in sec["edges"][li]] or [lw])))
+            for li in range(len(LAYERS))) + "];",
         "  static const sectors = [" + ", ".join(f"'{x['id']}'" for x in sectors) + "];",
         "  /// Bank edge (logical x) for each sector/layer/variant/row; strips are left banks.",
         "  static const edges = <List<List<String>>>[",

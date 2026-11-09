@@ -74,11 +74,13 @@ class SectorBackground {
     }
     if (flyover.ready(near)) {
       flyover.paintShadow(c);
-      c.drawRect(const Rect.fromLTWH(0, 0, 360, 520), _laneVeil);
+      c.drawRect(_laneRect, _laneVeil);
     }
   }
 
   /// Keeps the central firing lane darker than any bank detail.
+  /// Veils only cover the area they darken, to spare phone fill rate.
+  static const _laneRect = Rect.fromLTWH(79, 0, 202, 520);
   static final _laneVeil = Paint()
     ..shader = const LinearGradient(
       colors: [
@@ -87,16 +89,23 @@ class SectorBackground {
         Color(0x52060914),
         Color(0x00060914),
       ],
-      stops: [.22, .40, .60, .78],
-    ).createShader(const Rect.fromLTWH(0, 0, 360, 520));
+      stops: [0, .32, .68, 1],
+    ).createShader(_laneRect);
 
+  /// Recedes the painting's own static horizon below the streaming banks.
+  static const _groundRect = Rect.fromLTWH(0, 234, 360, 286);
   static final _groundVeil = Paint()
     ..shader = const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [Color(0x00060914), Color(0x00060914), Color(0xB0060914)],
-      stops: [0, .45, .85],
-    ).createShader(const Rect.fromLTWH(0, 0, 360, 520));
+      colors: [Color(0x00060914), Color(0xB0060914), Color(0xB0060914)],
+      stops: [0, .73, 1],
+    ).createShader(_groundRect);
+
+  /// The painted sky drawn pre-darkened (no separate full-screen veil pass).
+  static final _skyPaint = Paint()
+    ..filterQuality = FilterQuality.none
+    ..colorFilter = const ColorFilter.mode(Color(0x8A060914), BlendMode.srcATop);
 
   /// Far layer: the sector's painted sky, drifting at ~0.02x of ground speed
   /// (a slow eased sway, since a painting cannot tile), stars, then the
@@ -111,12 +120,13 @@ class SectorBackground {
   ) {
     final tint = colors[sector];
     final reduced = flyover.reducedMotion;
-    c.drawRect(
-      const Rect.fromLTWH(0, 0, 360, 520),
-      Paint()..color = const Color(0xFF070B16),
-    );
     final image = images[sector] ?? fallback;
-    if (image != null) {
+    if (image == null) {
+      c.drawRect(
+        const Rect.fromLTWH(0, 0, 360, 520),
+        Paint()..color = const Color(0xFF070B16),
+      );
+    } else {
       final imageRatio = image.width / image.height;
       const ratio = 360 / 520;
       final source = imageRatio > ratio
@@ -139,13 +149,9 @@ class SectorBackground {
         image,
         source,
         Rect.fromLTWH(-16, dy, 392, 520 + sway),
-        Paint()..filterQuality = FilterQuality.none,
+        _skyPaint,
       );
-      c.drawRect(
-        const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()..color = const Color(0x8A060914),
-      );
-      c.drawRect(const Rect.fromLTWH(0, 0, 360, 520), _groundVeil);
+      c.drawRect(_groundRect, _groundVeil);
     }
     final random = math.Random(1982 + sector * 709 + cycle * 41);
     final starTime = reduced ? 0.0 : time;
