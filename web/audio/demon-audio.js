@@ -109,6 +109,7 @@
     return entry;
   }
   function release(entry, at, seconds = .025) {
+    entry.released = true;
     entry.gain.gain.cancelScheduledValues(at);
     entry.gain.gain.setTargetAtTime(.0001, at, seconds);
     try { entry.oscillator.stop(at + seconds * 3.6); } catch { /* already stopped */ }
@@ -213,7 +214,7 @@
   const effectCeiling = 14;
   let noise;
   function limitVoices(tag) {
-    const now = context.currentTime, live = [...voices].filter(v => v.output === effects && v.at + .5 > now);
+    const now = context.currentTime, live = [...voices].filter(v => v.output === effects && !v.released && v.at + .5 > now);
     const same = live.filter(v => v.tag === tag);
     // Steal the oldest voice; the new trigger keeps its exact timing.
     if (same.length >= (effectLimits[tag] || 3)) release(same[0], now, .008);
@@ -250,7 +251,7 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
   window.demonAudio = Object.freeze({ unlock, cue, mute, pause, resume, sfx, get muted() { return muted; },
     // Read-only diagnostics for browser checks.
-    get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, decoded: [...bufferCache.keys()], formats }; } });
+    get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length, decoded: [...bufferCache.keys()], formats }; } });
   // Unlock from real DOM gestures, including Flutter canvas input.
   for (const type of ['pointerdown','keydown']) window.addEventListener(type, unlock, { once: true, capture: true });
   cue('menu');

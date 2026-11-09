@@ -30,6 +30,7 @@ import hashlib
 import json
 import math
 import shutil
+import struct
 import subprocess
 import sys
 import time
@@ -257,11 +258,15 @@ def analyse(audio, fixed_bpm=None):
     downbeats = first + bar * np.arange(-1, int((n - first) / bar) + 1)
     downbeats = downbeats[downbeats >= 0]
     return {
-        'bpm': bpm, 'grid_strength': strength, 'grid_contrast': strength / (off + 1e-9),
+        'bpm': bpm, 'phase8_s': phase8 / fps, 'grid_strength': strength, 'grid_contrast': strength / (off + 1e-9),
         'drift_ms': drift, 'bar_phase_scores': [round(s, 3) for s in scores],
         'downbeat_confidence': float(scores[k] - scores[int(order[1])]),
         'downbeats_s': [float(d / fps) for d in downbeats],
         'mean_rms': float(feat['rms'][skip:].mean()),
+        # Intensity proxies (loudness independent): onsets per second and
+        # spectral flux, used to check that levels and boss phases escalate.
+        'onset_rate': float(len(signal.find_peaks(env[skip:], height=0.08, distance=6)[0]) / ((n - skip) / fps)),
+        'flux': float(env[skip:].mean()),
     }
 
 
@@ -373,10 +378,91 @@ def render(audio, cue, start, spec):
     return out * gain, loop
 
 
-def encode(wav, name, spec):
+CODEC_CONTEXT = 4096  # samples of real context primed into each lossy encoder
+
+
+def patch_elst(path, extra):
+    """Shift the MP4 edit list start by `extra` samples (hidden priming context)."""
+    data = bytearray(path.read_bytes())
+    at = data.find(b'elst')
+    if at < 0:
+        raise SystemExit(f'{path}: no edit list')
+    version = data[at + 4]
+    entry = at + 12
+    if version == 0:
+        media = struct.unpack('>i', data[entry + 4:entry + 8])[0]
+        data[entry + 4:entry + 8] = struct.pack('>i', media + extra)
+    else:
+        media = struct.unpack('>q', data[entry + 8:entry + 16])[0]
+        data[entry + 8:entry + 16] = struct.pack('>q', media + extra)
+    path.write_bytes(bytes(data))
+
+
+def ogg_crc(page):
+    crc = 0
+    for byte in page:
+        crc ^= byte << 24
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x04C11DB7) & 0xFFFFFFFF if crc & 0x80000000 else (crc << 1) & 0xFFFFFFFF
+    return crc
+
+
+def ogg_pages(data):
+    pos = 0
+    while pos < len(data):
+        assert data[pos:pos + 4] == b'OggS', 'bad Ogg page'
+        nseg = data[pos + 26]
+        size = 27 + nseg + sum(data[pos + 27:pos + 27 + nseg])
+        yield pos, size
+        pos += size
+
+
+def trim_ogg_opus(path, head, length):
+    """Hide `head` primed samples via OpusHead pre-skip and end the stream after
+    `length` samples via the final granule position (RFC 7845 trimming)."""
+    data = bytearray(path.read_bytes())
+    pages = list(ogg_pages(data))
+    first, _ = pages[0]
+    body = first + 27 + data[first + 26]
+    assert data[body:body + 8] == b'OpusHead'
+    pre_skip = struct.unpack('<H', data[body + 10:body + 12])[0] + head
+    assert pre_skip < 65536
+    data[body + 10:body + 12] = struct.pack('<H', pre_skip)
+    last, _ = pages[-1]
+    data[last + 6:last + 14] = struct.pack('<q', pre_skip + length)
+    for start, size in (pages[0], pages[-1]):
+        data[start + 22:start + 26] = b'\0\0\0\0'
+        data[start + 22:start + 26] = struct.pack('<I', ogg_crc(data[start:start + size]))
+    path.write_bytes(bytes(data))
+
+
+def encode(wav, name, spec, out, loop, kind):
     ogg = OUT / f'{name}.ogg'; m4a = OUT / f'{name}.m4a'
-    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(wav), '-c:a', 'libopus', '-b:a', f"{spec['opus_kbps']}k", '-vbr', 'on', '-application', 'audio', '-map_metadata', '-1', str(ogg)], check=True)
-    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(wav), '-c:a', 'aac', '-b:a', f"{spec['aac_kbps']}k", '-map_metadata', '-1', '-movflags', '+faststart', str(m4a)], check=True)
+    # Lossy codecs smear the first/last frame. Prime each encoder with the
+    # audio that really precedes the file start when looping (the loop's own
+    # end) and append the audio that follows the loop end (the loop start),
+    # then hide both with the container's trimming (Opus pre-skip + final
+    # granule; MP4 edit list) so the decoded length stays exact and the wrap
+    # is coded as continuous audio.
+    c = CODEC_CONTEXT
+    pre = out[-c:] if kind == 'loop' else np.zeros((c, 2))
+    post = out[loop[0]:loop[0] + c] if loop else np.zeros((c, 2))
+    padded = wav.with_suffix('.ctx.wav')
+    write_wav(padded, np.concatenate([pre, out, post]))
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(padded), '-c:a', 'libopus', '-b:a', f"{spec['opus_kbps']}k", '-vbr', 'on', '-application', 'audio', '-map_metadata', '-1', str(ogg)], check=True)
+    trim_ogg_opus(ogg, c, len(out))
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(padded), '-c:a', 'aac', '-b:a', f"{spec['aac_kbps']}k", '-map_metadata', '-1', '-movflags', '+faststart',
+                    '-metadata:s:a', 'handler_name=', '-t', f'{(len(out) + 2 * c) / SR:.6f}', str(m4a)], check=True)
+    patch_elst(m4a, c)
+    # Trim the edit list duration to the cue itself.
+    data = bytearray(m4a.read_bytes())
+    at = data.find(b'elst')
+    if data[at + 4] == 0:
+        data[at + 12:at + 16] = struct.pack('>I', len(out))
+    else:
+        data[at + 12:at + 20] = struct.pack('>Q', len(out))
+    m4a.write_bytes(bytes(data))
+    padded.unlink()
     return ogg, m4a
 
 
@@ -401,7 +487,7 @@ def cmd_analyze(args):
             info = analyse(read_audio(path))
             info['rank'] = rank(info, cue)
             report[path.stem] = info
-            print(f"{path.stem:18} bpm={info['bpm']:.2f} contrast={info['grid_contrast']:.2f} drift={np.ptp(info['drift_ms']):5.1f}ms down={info['downbeat_confidence']:.2f} rank={info['rank']:.2f}")
+            print(f"{path.stem:18} bpm={info['bpm']:.2f} contrast={info['grid_contrast']:.2f} drift={np.ptp(info['drift_ms']):5.1f}ms down={info['downbeat_confidence']:.2f} onsets={info['onset_rate']:.1f}/s rank={info['rank']:.2f}")
     target = Path(args.work) / 'analysis.json'
     old = json.loads(target.read_text()) if target.exists() else {}
     old.update(report)
@@ -431,7 +517,7 @@ def cmd_build(args):
             win = choose_window(audio, cue)
             if win is None:
                 continue
-            total = info['rank'] + (2 * win['similarity'] if cue['kind'] != 'oneshot' else 0)
+            total = info['rank'] + (2 * win['similarity'] if cue['kind'] != 'oneshot' else 0) + 0.15 * cue.get('density_bias', 0) * info['onset_rate']
             if best is None or total > best[0]:
                 best = (total, path, audio, win, info)
         if best is None:
@@ -440,7 +526,7 @@ def cmd_build(args):
         out, loop = render(audio, cue, win['start'], spec)
         wav = work / f"{cue['name']}.wav"
         write_wav(wav, out)
-        ogg, m4a = encode(wav, cue['name'], spec)
+        ogg, m4a = encode(wav, cue["name"], spec, out, loop, cue["kind"])
         seed = int(path.stem.rsplit('-s', 1)[1])
         manifest['cues'][cue['name']] = {
             'kind': cue['kind'], 'beats': cue['beats'], 'seconds': len(out) / SR,
@@ -456,54 +542,90 @@ def cmd_build(args):
     manifest_path.write_text(json.dumps(manifest, indent=1) + '\n')
 
 
-def clicks(audio, threshold=8.0):
-    """Sample jumps much larger than the local second-difference level."""
-    d2 = np.abs(np.diff(audio, n=2, axis=0)).max(axis=1)
-    local = signal.medfilt(d2, 401) + 1e-4
-    hits = np.where(d2 > threshold * local + 0.02)[0]
-    return hits
+def wrap_report(audio, a, b):
+    """Discontinuity at the loop wrap relative to the loop's own sample steps."""
+    region = audio[a:b]
+    steps = np.abs(np.diff(region, axis=0)).max(axis=1)
+    wrap = float(np.abs(region[0] - region[-1]).max())
+    # Second difference (curvature) over the 8 samples either side of the wrap:
+    # a click shows up as a spike far above the loop's typical curvature.
+    ring = np.concatenate([region[-8:], region[:8]])
+    d2 = float(np.abs(np.diff(ring, n=2, axis=0)).max())
+    d2_all = np.abs(np.diff(region, n=2, axis=0)).max(axis=1)
+    return {'wrap_step': wrap, 'step_p999': float(np.percentile(steps, 99.9)),
+            'wrap_d2': d2, 'd2_p999': float(np.percentile(d2_all, 99.9))}
 
 
 def cmd_verify(args):
-    spec = load_spec()
+    """Check encoded cues: exact length, whole-bar loops, continuous wrap,
+    no codec edge artefacts against the master WAV, beats on the 120 BPM grid."""
     manifest = json.loads((OUT / 'manifest.json').read_text())
+    work = Path(args.work)
     ok = True
     for name, meta in manifest['cues'].items():
-        cue = cue_by_name(spec, name)
+        if args.cue and name not in args.cue:
+            continue
+        master = read_audio(work / f'{name}.wav') if (work / f'{name}.wav').exists() else None
         for fmt in ('ogg', 'm4a'):
             audio = read_audio(OUT / f'{name}.{fmt}')
             expected = round(meta['seconds'] * SR)
-            delta = len(audio) - expected
-            problems = []
-            if fmt == 'ogg' and delta != 0:
+            problems, notes = [], []
+            if len(audio) != expected:
                 problems.append(f'length {len(audio)} != {expected}')
+            peak = float(np.abs(audio).max())
+            if peak >= 0.999:
+                problems.append(f'peak {peak:.3f}')
             if meta['loopEnd'] is not None:
                 a, b = round(meta['loopStart'] * SR), round(meta['loopEnd'] * SR)
                 if (b - a) % (2 * SR) != 0:
                     problems.append('loop is not a whole number of bars')
-                region = audio[a:b]
-                joined = np.concatenate([region[-2048:], region[:2048]])
-                jump = np.abs(np.diff(joined, axis=0)).max(axis=1)
-                wrap = float(jump[2047]); typical = float(np.percentile(jump, 99))
-                if wrap > max(3 * typical, 0.05):
-                    problems.append(f'wrap jump {wrap:.4f} > 3x p99 {typical:.4f}')
-                hits = clicks(joined)
-                if len(hits):
-                    problems.append(f'{len(hits)} click(s) around the wrap')
-            peak = float(np.abs(audio).max())
-            if peak >= 0.999:
-                problems.append(f'peak {peak:.3f}')
-            status = 'ok' if not problems else '; '.join(problems)
-            if problems and fmt == 'ogg':
+                w = wrap_report(audio, a, b)
+                notes.append(f"wrap step {w['wrap_step']:.4f} (p99.9 {w['step_p999']:.4f}) curvature {w['wrap_d2']:.4f} (p99.9 {w['d2_p999']:.4f})")
+                if w['wrap_step'] > w['step_p999']:
+                    problems.append('wrap step exceeds the loop\'s 99.9th percentile step')
+                if w['wrap_d2'] > max(w['d2_p999'], 0.004):
+                    (problems if fmt == 'ogg' else notes).append('click-like curvature at the wrap')
+            if master is not None and len(master) == len(audio):
+                err = audio - master
+                rms = lambda s: float(np.sqrt(np.mean(err[s] ** 2)))
+                body = rms(slice(SR, -SR)) + 1e-9
+                head, tail = rms(slice(0, 960)) / body, rms(slice(-960, None)) / body
+                notes.append(f'edge err head {head:.2f}x tail {tail:.2f}x')
+                if max(head, tail) > (2.0 if fmt == 'ogg' else 3.5):
+                    problems.append('codec edge artefact')
+            if fmt == 'ogg':
+                # Beat grid: tile loops so the analysis sees the wrap too.
+                probe = np.concatenate([audio[:b], audio[a:b]]) if meta['loopEnd'] is not None else audio
+                info = analyse(probe, fixed_bpm=120.0)
+                offset = ((info['phase8_s'] + .125) % .25) - .125
+                notes.append(f'grid offset {offset * 1000:+.1f} ms')
+                if abs(offset) > 0.03 and meta['kind'] != 'oneshot':
+                    problems.append('beats are off the 120 BPM eighth-note grid')
+            status = 'ok' if not problems else 'FAIL ' + '; '.join(problems)
+            if problems:
                 ok = False
-            print(f'{name:11} {fmt} {len(audio)/SR:7.3f}s delta={delta:+5d} peak={peak:.3f} {status}')
+            print(f"{name:11} {fmt} {len(audio)/SR:6.3f}s peak={peak:.3f} {' '.join(notes)} {status}")
     sys.exit(0 if ok else 1)
+
+
+
+def cmd_table(args):
+    """Markdown cue table from the manifest (for the plan docs)."""
+    manifest = json.loads((OUT / 'manifest.json').read_text())
+    print('| Cue | Kind | Beats | Seconds | Loop | Seed | Opus | AAC |')
+    print('| --- | --- | ---: | ---: | --- | ---: | ---: | ---: |')
+    total = [0, 0]
+    for name, m in manifest['cues'].items():
+        loop = '—' if m['loopEnd'] is None else f"{m['loopStart']:g}–{m['loopEnd']:g} s"
+        total[0] += m['bytes']['ogg']; total[1] += m['bytes']['m4a']
+        print(f"| `{name}` | {m['kind']} | {m['beats']} | {m['seconds']:g} | {loop} | {m['seed']} | {m['bytes']['ogg'] / 1024:.0f} KB | {m['bytes']['m4a'] / 1024:.0f} KB |")
+    print(f"| **Total** | | | | | | **{total[0] / 1048576:.2f} MB** | **{total[1] / 1048576:.2f} MB** |")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='cmd', required=True)
-    for name in ('jobs', 'generate', 'ingest', 'analyze', 'build', 'verify'):
+    for name in ('jobs', 'generate', 'ingest', 'analyze', 'build', 'verify', 'table'):
         p = sub.add_parser(name)
         p.add_argument('--cue', nargs='*')
         p.add_argument('--work', default=str(ROOT / 'build/music'))
@@ -512,7 +634,7 @@ def main():
         if name == 'ingest':
             p.add_argument('list')
     args = parser.parse_args()
-    {'jobs': cmd_jobs, 'generate': cmd_generate, 'ingest': cmd_ingest, 'analyze': cmd_analyze, 'build': cmd_build, 'verify': cmd_verify}[args.cmd](args)
+    {'jobs': cmd_jobs, 'generate': cmd_generate, 'ingest': cmd_ingest, 'analyze': cmd_analyze, 'build': cmd_build, 'verify': cmd_verify, 'table': cmd_table}[args.cmd](args)
 
 
 if __name__ == '__main__':
