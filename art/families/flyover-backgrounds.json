@@ -1,226 +1,674 @@
 {
   "schema": "demon-attack.flyover/v1",
   "name": "flyover-backgrounds",
-  "notes": "Oblique 3/4 flyover parallax backgrounds. Every value here is an input to tools/flyover_assets.py; changing a seed or prompt and rerunning the pipeline reproduces the shipped atlases.",
+  "notes": "Oblique 3/4 flyover with a horizon. Every value here is an input to tools/flyover_assets.py; changing a seed or prompt and rerunning the pipeline reproduces the shipped atlases.",
   "style_prompt": "pixel art, 16-bit arcade vertical shooter background, aerial view looking down at the ground from high altitude at an oblique angle, night, deep shadow, crisp square pixels, original artwork",
   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, flat, people, humans, spaceship, airplane, bullets, character sheet, multiple views, grid, sky, horizon, clouds, grass, trees, forest, wood, wooden, medieval, cottage, farm, cute, cartoon",
-  "pixel": {"logical_scale": 8, "arena_scale": 2},
+  "pixel": {
+    "logical_scale": 8,
+    "arena_scale": 2
+  },
   "strip": {
     "workflow": "art/workflows/backgrounds/strip-sheet.json",
-    "sheet_px": [1536, 1536],
+    "sheet_px": [
+      1536,
+      1536
+    ],
     "variants": 3,
-    "logical": [64, 192],
+    "logical": [
+      64,
+      192
+    ],
     "seam_band_px": 256,
     "strength": 0.8,
     "seam_strength": 0.62
   },
   "sprite": {
     "workflow": "art/workflows/backgrounds/sprite-transparent.json",
-    "canvas_px": [1024, 1024],
+    "canvas_px": [
+      1024,
+      1024
+    ],
     "landmark_scale": 1.25
   },
   "layers": {
-    "mid":    {"speed": 0.2, "base_width": 42, "amplitude": 10, "luma_cap": 0.13, "chroma_cap": 0.22, "alpha": 0.92},
-    "near":   {"speed": 0.6, "base_width": 34, "amplitude": 8,  "luma_cap": 0.18, "chroma_cap": 0.25, "alpha": 1.0},
-    "ground": {"speed": 1.0, "base_width": 25, "amplitude": 6,  "luma_cap": 0.23, "chroma_cap": 0.27, "alpha": 1.0}
+    "mid": {
+      "speed": 0.2,
+      "base_width": 42,
+      "amplitude": 10,
+      "luma_cap": 0.13,
+      "chroma_cap": 0.22,
+      "alpha": 0.92
+    },
+    "wall": {
+      "speed": 1.0,
+      "base_width": 15,
+      "amplitude": 8,
+      "luma_cap": 0.22,
+      "chroma_cap": 0.26,
+      "alpha": 1.0,
+      "broken": true
+    }
   },
   "sectors": [
     {
-      "id": "krybor", "painting": "assets/images/sector-1.png", "seed": 11000,
+      "id": "krybor",
+      "painting": "assets/images/sector-1.png",
+      "seed": 11000,
       "layers": {
         "mid": "distant cold blue lunar mountain ridges with snow capped stepped peaks, long ridge lines, deep navy valleys",
-        "near": "cold blue rocky lunar plateau terraces, shallow craters, icy boulders and frost cracks, dark navy shadows",
-        "ground": "close icy lunar ground ledge, frost covered rubble, small craters and pale cyan ice crystals, dark navy rock"
+        "wall": "cold blue rocky lunar plateau terraces, shallow craters, icy boulders and frost cracks, dark navy shadows, crumbling broken cliff rim with scattered detached boulders"
       },
       "props": [
-        {"id": "ice-boulders", "h": 18, "prompt": "cluster of pale blue ice boulders and frosted rocks"},
-        {"id": "ice-spikes", "h": 16, "prompt": "small cluster of jagged frozen blue ice spikes and shards jutting from rock"},
-        {"id": "survey-beacon", "h": 22, "prompt": "small frontier survey beacon mast with a dim cyan lamp on a rock base"}
+        {
+          "id": "ice-boulders",
+          "h": 18,
+          "prompt": "cluster of pale blue ice boulders and frosted rocks"
+        },
+        {
+          "id": "ice-spikes",
+          "h": 16,
+          "prompt": "small cluster of jagged frozen blue ice spikes and shards jutting from rock"
+        },
+        {
+          "id": "survey-beacon",
+          "h": 22,
+          "prompt": "small frontier survey beacon mast with a dim cyan lamp on a rock base"
+        }
       ],
       "routes": [
-        {"name": "Krybor", "landmarks": [
-          {"id": "outpost-dome", "h": 30, "prompt": "small human frontier outpost, low rounded shelter dome and a radio beacon mast, dim cyan windows"},
-          {"id": "outpost-shelters", "h": 26, "prompt": "row of three low prefab frontier shelters with antennas, sparse cyan lights"}
-        ]},
-        {"name": "Krybor Slums", "landmarks": [
-          {"id": "slum-stack", "h": 46, "prompt": "tall teetering heap of dozens of small boxy makeshift shacks and cabins stacked four storeys high on top of each other, mismatched patchwork corrugated metal walls and roofs, ladders, pipes, many tiny lit square windows, cluttered vertical slum tower", "seed_offset": 7},
-          {"id": "slum-roofs", "h": 38, "prompt": "crowded dense block of many small boxy shanty huts packed tightly side by side, patchwork corrugated metal roofs at different heights, water tanks, antennas, narrow alleys, tiny lit windows", "seed_offset": 7}
-        ]},
-        {"name": "Krybor Docks", "landmarks": [
-          {"id": "dock-gantry", "h": 44, "prompt": "frontier cargo dock gantry crane over an open landing berth, steel lattice arm, cargo containers stacked beside it"},
-          {"id": "dock-berth", "h": 34, "prompt": "empty open docking berth pier with mooring arms, landing pad markings and stacked cargo crates"}
-        ]},
-        {"name": "Krybor Mountains", "landmarks": [
-          {"id": "mountain-peak", "h": 48, "prompt": "single stepped rocky mountain peak with snow ridges and a tiny relay light at the summit"},
-          {"id": "mountain-relay", "h": 34, "prompt": "small relay antenna station perched on a jagged snowy ridge"}
-        ]},
-        {"name": "Krybor Command", "landmarks": [
-          {"id": "command-tower", "h": 50, "prompt": "orderly fortified military command tower on stepped terraces with a radar dish and antenna array, rows of cyan lights"},
-          {"id": "command-array", "h": 36, "prompt": "grid of uplink satellite dishes and antenna array on a fortified square terrace"}
-        ]}
+        {
+          "name": "Krybor",
+          "landmarks": [
+            {
+              "id": "outpost-dome",
+              "h": 30,
+              "prompt": "small human frontier outpost, low rounded shelter dome and a radio beacon mast, dim cyan windows"
+            },
+            {
+              "id": "outpost-shelters",
+              "h": 26,
+              "prompt": "row of three low prefab frontier shelters with antennas, sparse cyan lights"
+            }
+          ]
+        },
+        {
+          "name": "Krybor Slums",
+          "landmarks": [
+            {
+              "id": "slum-stack",
+              "h": 46,
+              "prompt": "tall teetering heap of dozens of small boxy makeshift shacks and cabins stacked four storeys high on top of each other, mismatched patchwork corrugated metal walls and roofs, ladders, pipes, many tiny lit square windows, cluttered vertical slum tower",
+              "seed_offset": 7
+            },
+            {
+              "id": "slum-roofs",
+              "h": 38,
+              "prompt": "crowded dense block of many small boxy shanty huts packed tightly side by side, patchwork corrugated metal roofs at different heights, water tanks, antennas, narrow alleys, tiny lit windows",
+              "seed_offset": 7
+            }
+          ]
+        },
+        {
+          "name": "Krybor Docks",
+          "landmarks": [
+            {
+              "id": "dock-gantry",
+              "h": 44,
+              "prompt": "frontier cargo dock gantry crane over an open landing berth, steel lattice arm, cargo containers stacked beside it"
+            },
+            {
+              "id": "dock-berth",
+              "h": 34,
+              "prompt": "empty open docking berth pier with mooring arms, landing pad markings and stacked cargo crates"
+            }
+          ]
+        },
+        {
+          "name": "Krybor Mountains",
+          "landmarks": [
+            {
+              "id": "mountain-peak",
+              "h": 48,
+              "prompt": "single stepped rocky mountain peak with snow ridges and a tiny relay light at the summit"
+            },
+            {
+              "id": "mountain-relay",
+              "h": 34,
+              "prompt": "small relay antenna station perched on a jagged snowy ridge"
+            }
+          ]
+        },
+        {
+          "name": "Krybor Command",
+          "landmarks": [
+            {
+              "id": "command-tower",
+              "h": 50,
+              "prompt": "orderly fortified military command tower on stepped terraces with a radar dish and antenna array, rows of cyan lights"
+            },
+            {
+              "id": "command-array",
+              "h": 36,
+              "prompt": "grid of uplink satellite dishes and antenna array on a fortified square terrace"
+            }
+          ]
+        }
       ],
       "creatures": [
-        {"id": "frost-hopper", "h": 10, "gait": "walk", "prompt": "tiny pale blue six legged alien hopper insect"},
-        {"id": "shell-crawler", "h": 9, "gait": "crawl", "prompt": "tiny armored grey blue alien pillbug crawler with segmented shell"}
-      ]
+        {
+          "id": "frost-hopper",
+          "h": 15,
+          "gait": "walk",
+          "prompt": "tiny pale blue six legged alien hopper insect"
+        },
+        {
+          "id": "shell-crawler",
+          "h": 14,
+          "gait": "crawl",
+          "prompt": "tiny armored grey blue alien pillbug crawler with segmented shell"
+        }
+      ],
+      "plane": "seamless top-down texture of cold blue lunar regolith ground, small craters, frost cracks, scattered pebbles and ice, dark navy"
     },
     {
-      "id": "ringfall", "painting": "assets/images/sector-2.png", "seed": 12000,
+      "id": "ringfall",
+      "painting": "assets/images/sector-2.png",
+      "seed": 12000,
       "layers": {
         "mid": "distant violet planetary ring band of dense small asteroids and ice debris, purple dust lanes",
-        "near": "large violet cratered asteroids floating in a ring belt, broken rock shelves, dark purple shadows",
-        "ground": "close violet asteroid surface, cratered rubble and lilac ice shards, dark purple rock"
+        "wall": "large violet cratered asteroids floating in a ring belt, broken rock shelves, dark purple shadows, crumbling broken cliff rim with scattered detached boulders"
       },
       "props": [
-        {"id": "ring-rocks", "h": 18, "prompt": "cluster of violet asteroid rocks and lilac ice shards"},
-        {"id": "dead-satellite", "h": 20, "prompt": "small abandoned satellite with folded solar panels, dim violet metal"},
-        {"id": "rock-spire", "h": 18, "prompt": "small jagged violet asteroid rock spire with lilac ice crust"}
+        {
+          "id": "ring-rocks",
+          "h": 18,
+          "prompt": "cluster of violet asteroid rocks and lilac ice shards"
+        },
+        {
+          "id": "dead-satellite",
+          "h": 20,
+          "prompt": "small abandoned satellite with folded solar panels, dim violet metal"
+        },
+        {
+          "id": "rock-spire",
+          "h": 18,
+          "prompt": "small jagged violet asteroid rock spire with lilac ice crust"
+        }
       ],
       "routes": [
-        {"name": "Ringfall", "landmarks": [
-          {"id": "abandoned-relay", "h": 32, "prompt": "abandoned orbital relay station with solar panel wings resting on an asteroid"},
-          {"id": "ring-arch", "h": 30, "prompt": "natural rock arch of violet asteroid ice with dust"}
-        ]},
-        {"name": "Ringfall Patrol Belt", "landmarks": [
-          {"id": "patrol-relay", "h": 36, "prompt": "winged patrol relay pylon with a searchlight lamp on a guarded asteroid platform"},
-          {"id": "patrol-gate", "h": 30, "prompt": "pair of marker buoys forming a guarded patrol lane gate with blinking lights"}
-        ]},
-        {"name": "Ringfall Wreckfields", "landmarks": [
-          {"id": "wreck-hull", "h": 40, "prompt": "large broken derelict spaceship hull cracked in half, exposed metal rib frames and torn armor plates, long wrecked fuselage lying on rock", "seed_offset": 7},
-          {"id": "wreck-debris", "h": 30, "prompt": "heap of twisted torn spaceship armor plates and a snapped engine nacelle half buried in rock, jagged wreckage pile", "seed_offset": 8, "negative_extra": "heart shape, love heart"}
-        ]},
-        {"name": "Ringfall Shipyards", "landmarks": [
-          {"id": "yard-frame", "h": 46, "prompt": "open orbital shipyard construction frame cage with docking ribs around an unfinished warship hull"},
-          {"id": "yard-crane", "h": 36, "prompt": "orbital construction crane gantry with welding lights"}
-        ]},
-        {"name": "Ringfall Blockade", "landmarks": [
-          {"id": "blockade-platform", "h": 38, "prompt": "armored defensive gun platform with heavy barrier plates, aligned in a blockade line"},
-          {"id": "blockade-barrier", "h": 30, "prompt": "segmented armored barrier wall with turret pods"}
-        ]}
+        {
+          "name": "Ringfall",
+          "landmarks": [
+            {
+              "id": "abandoned-relay",
+              "h": 32,
+              "prompt": "abandoned orbital relay station with solar panel wings resting on an asteroid"
+            },
+            {
+              "id": "ring-arch",
+              "h": 30,
+              "prompt": "natural rock arch of violet asteroid ice with dust"
+            }
+          ]
+        },
+        {
+          "name": "Ringfall Patrol Belt",
+          "landmarks": [
+            {
+              "id": "patrol-relay",
+              "h": 36,
+              "prompt": "tall slender patrol beacon tower with a rotating searchlight dish on top, guard platform and blinking warning lights",
+              "seed_offset": 9
+            },
+            {
+              "id": "patrol-gate",
+              "h": 30,
+              "prompt": "pair of tall armored checkpoint pylons with an energy barrier arch between them and warning lights, guarded lane gate",
+              "seed_offset": 9
+            }
+          ]
+        },
+        {
+          "name": "Ringfall Wreckfields",
+          "landmarks": [
+            {
+              "id": "wreck-hull",
+              "h": 40,
+              "prompt": "large broken derelict spaceship hull cracked in half, exposed metal rib frames and torn armor plates, long wrecked fuselage lying on rock",
+              "seed_offset": 7
+            },
+            {
+              "id": "wreck-debris",
+              "h": 30,
+              "prompt": "heap of twisted torn spaceship armor plates and a snapped engine nacelle half buried in rock, jagged wreckage pile",
+              "seed_offset": 8,
+              "negative_extra": "heart shape, love heart"
+            }
+          ]
+        },
+        {
+          "name": "Ringfall Shipyards",
+          "landmarks": [
+            {
+              "id": "yard-frame",
+              "h": 46,
+              "prompt": "open orbital shipyard construction frame cage with docking ribs around an unfinished warship hull"
+            },
+            {
+              "id": "yard-crane",
+              "h": 36,
+              "prompt": "orbital construction crane gantry with welding lights"
+            }
+          ]
+        },
+        {
+          "name": "Ringfall Blockade",
+          "landmarks": [
+            {
+              "id": "blockade-platform",
+              "h": 38,
+              "prompt": "armored defensive gun platform with heavy barrier plates, aligned in a blockade line"
+            },
+            {
+              "id": "blockade-barrier",
+              "h": 30,
+              "prompt": "segmented armored barrier wall with turret pods"
+            }
+          ]
+        }
       ],
       "creatures": [
-        {"id": "rock-mite", "h": 9, "gait": "walk", "prompt": "tiny violet alien rock mite with eight short legs"},
-        {"id": "dust-grazer", "h": 10, "gait": "crawl", "prompt": "tiny lilac alien slug grazer with feelers"}
-      ]
+        {
+          "id": "rock-mite",
+          "h": 15,
+          "gait": "walk",
+          "prompt": "tiny violet alien rock mite with eight short legs"
+        },
+        {
+          "id": "dust-grazer",
+          "h": 14,
+          "gait": "crawl",
+          "prompt": "tiny lilac alien slug grazer with feelers"
+        }
+      ],
+      "plane": "seamless top-down texture of violet asteroid rock surface, craters, lilac ice dust and rubble, dark purple"
     },
     {
-      "id": "ember", "painting": "assets/images/sector-3.png", "seed": 13000,
+      "id": "ember",
+      "painting": "assets/images/sector-3.png",
+      "seed": 13000,
       "layers": {
         "mid": "distant black volcanic ridges with dim glowing red lava seams, ash haze, eclipse lit rims",
-        "near": "black basalt column terraces split by thin dim lava rivers, cooled magma crust, coral rim light",
-        "ground": "close black basalt rubble with glowing orange ember cracks and ash dust"
+        "wall": "black basalt column terraces split by thin dim lava rivers, cooled magma crust, coral rim light, crumbling broken cliff rim with scattered detached boulders"
       },
       "props": [
-        {"id": "basalt-columns", "h": 20, "prompt": "cluster of black hexagonal basalt columns with orange glow cracks"},
-        {"id": "ember-vent", "h": 16, "prompt": "small volcanic fumarole vent glowing orange with ash"},
-        {"id": "lava-pool", "h": 14, "prompt": "small round dim lava pool with black crust"}
+        {
+          "id": "basalt-columns",
+          "h": 20,
+          "prompt": "cluster of black hexagonal basalt columns with orange glow cracks"
+        },
+        {
+          "id": "ember-vent",
+          "h": 16,
+          "prompt": "small volcanic fumarole vent glowing orange with ash"
+        },
+        {
+          "id": "lava-pool",
+          "h": 14,
+          "prompt": "small round dim lava pool with black crust"
+        }
       ],
       "routes": [
-        {"name": "Ember Moon", "landmarks": [
-          {"id": "volcano-cone", "h": 40, "prompt": "small volcanic cone with a dim glowing crater and lava streak"},
-          {"id": "foundry-signal", "h": 30, "prompt": "half buried foundry signal tower in volcanic crust with a red lamp"}
-        ]},
-        {"name": "Ember Ashlands", "landmarks": [
-          {"id": "ash-dunes", "h": 24, "prompt": "low grey ash dunes with two burned dead spires sticking out"},
-          {"id": "burned-spire", "h": 36, "prompt": "single tall burned charred spire on ash dune"}
-        ]},
-        {"name": "Ember Forges", "landmarks": [
-          {"id": "forge-stacks", "h": 48, "prompt": "industrial furnace smokestacks cluster with glowing furnace mouths and molten feed channels"},
-          {"id": "forge-channel", "h": 30, "prompt": "squat industrial smelting furnace block with a glowing open mouth, pipes and a short chimney", "seed_offset": 7, "negative_extra": "heart shape, love heart"}
-        ]},
-        {"name": "Ember Crucible", "landmarks": [
-          {"id": "crucible-basin", "h": 44, "prompt": "enclosed circular crater wall around a concentrated glowing molten lava basin"},
-          {"id": "crucible-wall", "h": 30, "prompt": "thick jagged crater rampart wall segment with lava light"}
-        ]},
-        {"name": "Ember Brood Heart", "landmarks": [
-          {"id": "brood-furnace", "h": 50, "prompt": "towering organic demonic hive mound of fleshy ribbed chambers and egg sacs around a glowing red furnace vent, horned spikes", "seed_offset": 7, "negative_extra": "heart shape, love heart"},
-          {"id": "brood-nests", "h": 30, "prompt": "cluster of organic egg nests with veins and dim red glow, demonic hive"}
-        ]}
+        {
+          "name": "Ember Moon",
+          "landmarks": [
+            {
+              "id": "volcano-cone",
+              "h": 40,
+              "prompt": "small volcanic cone with a dim glowing crater and lava streak"
+            },
+            {
+              "id": "foundry-signal",
+              "h": 30,
+              "prompt": "half buried foundry signal tower in volcanic crust with a red lamp"
+            }
+          ]
+        },
+        {
+          "name": "Ember Ashlands",
+          "landmarks": [
+            {
+              "id": "ash-dunes",
+              "h": 24,
+              "prompt": "low grey ash dunes with two burned dead spires sticking out"
+            },
+            {
+              "id": "burned-spire",
+              "h": 36,
+              "prompt": "single tall burned charred spire on ash dune"
+            }
+          ]
+        },
+        {
+          "name": "Ember Forges",
+          "landmarks": [
+            {
+              "id": "forge-stacks",
+              "h": 48,
+              "prompt": "cluster of three tall industrial furnace smokestacks rising from a foundry block with glowing furnace doors and pipes",
+              "seed_offset": 9
+            },
+            {
+              "id": "forge-channel",
+              "h": 30,
+              "prompt": "large industrial foundry hall with a glowing molten metal sluice pouring into a channel, pipes and a crane",
+              "seed_offset": 9
+            }
+          ]
+        },
+        {
+          "name": "Ember Crucible",
+          "landmarks": [
+            {
+              "id": "crucible-basin",
+              "h": 44,
+              "prompt": "enclosed circular crater wall around a concentrated glowing molten lava basin"
+            },
+            {
+              "id": "crucible-wall",
+              "h": 30,
+              "prompt": "thick jagged crater rampart wall segment with lava light"
+            }
+          ]
+        },
+        {
+          "name": "Ember Brood Heart",
+          "landmarks": [
+            {
+              "id": "brood-furnace",
+              "h": 50,
+              "prompt": "towering organic demonic hive mound of fleshy ribbed chambers and egg sacs around a glowing red furnace vent, horned spikes",
+              "seed_offset": 7,
+              "negative_extra": "heart shape, love heart"
+            },
+            {
+              "id": "brood-nests",
+              "h": 30,
+              "prompt": "cluster of organic egg nests with veins and dim red glow, demonic hive"
+            }
+          ]
+        }
       ],
       "creatures": [
-        {"id": "cinder-newt", "h": 10, "gait": "walk", "prompt": "tiny black alien salamander lizard with glowing orange spots"},
-        {"id": "ash-borer", "h": 9, "gait": "burrow", "prompt": "tiny charcoal grey alien burrowing grub with orange mandibles"}
-      ]
+        {
+          "id": "cinder-newt",
+          "h": 15,
+          "gait": "walk",
+          "prompt": "tiny black alien salamander lizard with glowing orange spots"
+        },
+        {
+          "id": "ash-borer",
+          "h": 14,
+          "gait": "burrow",
+          "prompt": "tiny charcoal grey alien burrowing grub with orange mandibles"
+        }
+      ],
+      "plane": "seamless top-down texture of black basalt ground with faint dim orange ember cracks, cooled lava crust and ash dust"
     },
     {
-      "id": "hollow", "painting": "assets/images/sector-4.png", "seed": 14000,
+      "id": "hollow",
+      "painting": "assets/images/sector-4.png",
+      "seed": 14000,
       "layers": {
         "mid": "distant floating emerald rock islands in an abyss with ruined arches, green nebula mist",
-        "near": "floating dark rock shelves overgrown with green bioluminescent moss and broken gothic masonry",
-        "ground": "close broken gothic stone tiles and rubble, glowing green moss and alien roots"
+        "wall": "floating dark rock shelves overgrown with green bioluminescent moss and broken gothic masonry, crumbling broken cliff rim with scattered detached boulders"
       },
       "props": [
-        {"id": "broken-pillar", "h": 22, "prompt": "broken gothic stone pillar with green moss"},
-        {"id": "glow-fungus", "h": 14, "prompt": "cluster of glowing green alien mushrooms"},
-        {"id": "rubble-pile", "h": 14, "prompt": "pile of dark stone rubble with green moss"}
+        {
+          "id": "broken-pillar",
+          "h": 22,
+          "prompt": "broken gothic stone pillar with green moss"
+        },
+        {
+          "id": "glow-fungus",
+          "h": 14,
+          "prompt": "cluster of glowing green alien mushrooms"
+        },
+        {
+          "id": "rubble-pile",
+          "h": 14,
+          "prompt": "pile of dark stone rubble with green moss"
+        }
       ],
       "routes": [
-        {"name": "The Hollow", "landmarks": [
-          {"id": "ruin-arch", "h": 38, "prompt": "ruined gothic stone arch on a floating rock island"},
-          {"id": "demon-tower", "h": 46, "prompt": "ruined dark gothic demon tower on a floating rock"}
-        ]},
-        {"name": "Hollow Outskirts", "landmarks": [
-          {"id": "outskirt-arch", "h": 32, "prompt": "single broken half arch on a small separated floating stone"},
-          {"id": "outskirt-stones", "h": 24, "prompt": "few separated small floating stones with fallen masonry"}
-        ]},
-        {"name": "Hollow Towers", "landmarks": [
-          {"id": "tower-cluster", "h": 56, "prompt": "prominent tall vertical cluster of gothic spire towers with narrow green lit windows"},
-          {"id": "tower-spire", "h": 46, "prompt": "single tall thin gothic spire tower"}
-        ]},
-        {"name": "Hollow Catacombs", "landmarks": [
-          {"id": "crypt-vaults", "h": 36, "prompt": "layered terraces of recessed crypt vault mouths, dark arched doorways cut into stone"},
-          {"id": "crypt-mouth", "h": 28, "prompt": "single recessed crypt entrance with stone steps and green glow inside"}
-        ]},
-        {"name": "Hollow Throne", "landmarks": [
-          {"id": "throne-keep", "h": 56, "prompt": "monumental symmetrical dark throne keep with a huge seat and twin towers, green glowing sigil"},
-          {"id": "throne-ruin", "h": 32, "prompt": "small subordinate ruined shrine with pillars"}
-        ]}
+        {
+          "name": "The Hollow",
+          "landmarks": [
+            {
+              "id": "ruin-arch",
+              "h": 38,
+              "prompt": "ruined gothic stone arch on a floating rock island"
+            },
+            {
+              "id": "demon-tower",
+              "h": 46,
+              "prompt": "ruined dark gothic demon tower on a floating rock"
+            }
+          ]
+        },
+        {
+          "name": "Hollow Outskirts",
+          "landmarks": [
+            {
+              "id": "outskirt-arch",
+              "h": 32,
+              "prompt": "single broken half arch on a small separated floating stone"
+            },
+            {
+              "id": "outskirt-stones",
+              "h": 24,
+              "prompt": "few separated small floating stones with fallen masonry"
+            }
+          ]
+        },
+        {
+          "name": "Hollow Towers",
+          "landmarks": [
+            {
+              "id": "tower-cluster",
+              "h": 56,
+              "prompt": "prominent tall vertical cluster of gothic spire towers with narrow green lit windows"
+            },
+            {
+              "id": "tower-spire",
+              "h": 46,
+              "prompt": "single tall thin gothic spire tower"
+            }
+          ]
+        },
+        {
+          "name": "Hollow Catacombs",
+          "landmarks": [
+            {
+              "id": "crypt-vaults",
+              "h": 36,
+              "prompt": "layered terraces of recessed crypt vault mouths, dark arched doorways cut into stone"
+            },
+            {
+              "id": "crypt-mouth",
+              "h": 28,
+              "prompt": "single recessed crypt entrance with stone steps and green glow inside"
+            }
+          ]
+        },
+        {
+          "name": "Hollow Throne",
+          "landmarks": [
+            {
+              "id": "throne-keep",
+              "h": 56,
+              "prompt": "monumental symmetrical dark throne keep with a huge seat and twin towers, green glowing sigil"
+            },
+            {
+              "id": "throne-ruin",
+              "h": 32,
+              "prompt": "small subordinate ruined shrine with pillars"
+            }
+          ]
+        }
       ],
       "creatures": [
-        {"id": "spore-crawler", "h": 9, "gait": "crawl", "prompt": "tiny green glowing alien spore crawler with tentacles"},
-        {"id": "bone-skitter", "h": 10, "gait": "walk", "prompt": "tiny pale bone white alien spider skitter with green eyes"}
-      ]
+        {
+          "id": "spore-crawler",
+          "h": 14,
+          "gait": "crawl",
+          "prompt": "tiny green glowing alien spore crawler with tentacles"
+        },
+        {
+          "id": "bone-skitter",
+          "h": 15,
+          "gait": "walk",
+          "prompt": "tiny pale bone white alien spider skitter with green eyes"
+        }
+      ],
+      "plane": "seamless top-down texture of dark broken gothic flagstones and rubble with dim green moss and alien roots"
     },
     {
-      "id": "carrier", "painting": "assets/images/sector-5.png", "seed": 15000,
+      "id": "carrier",
+      "painting": "assets/images/sector-5.png",
+      "seed": 15000,
       "layers": {
         "mid": "distant red black demonic fortress hull ridges with spiked plating and occult ring structures, blood red storm haze",
-        "near": "biomechanical demonic fortress superstructure with ribbed armor, spikes and dim red vents",
-        "ground": "close organic biomechanical hull surface with ribs, sinew cables, horn spikes and red glowing pores"
+        "wall": "biomechanical demonic fortress superstructure with ribbed armor, spikes and dim red vents, crumbling broken cliff rim with scattered detached boulders"
       },
       "props": [
-        {"id": "horn-spikes", "h": 20, "prompt": "cluster of curved demonic horn spikes on dark armor"},
-        {"id": "red-vent", "h": 14, "prompt": "small biomechanical vent with dim red glow"},
-        {"id": "sinew-node", "h": 16, "prompt": "organic sinew node with cables, dark red"}
+        {
+          "id": "horn-spikes",
+          "h": 20,
+          "prompt": "cluster of curved demonic horn spikes on dark armor"
+        },
+        {
+          "id": "red-vent",
+          "h": 14,
+          "prompt": "small biomechanical vent with dim red glow"
+        },
+        {
+          "id": "sinew-node",
+          "h": 16,
+          "prompt": "organic sinew node with cables, dark red"
+        }
       ],
       "routes": [
-        {"name": "The Carrier", "landmarks": [
-          {"id": "carrier-turret", "h": 34, "prompt": "demonic carrier hull turret blister with twin spiked barrels"},
-          {"id": "carrier-tower", "h": 44, "prompt": "angular gothic fortress tower with spikes and red windows"}
-        ]},
-        {"name": "Brood Ark", "landmarks": [
-          {"id": "ark-pods", "h": 36, "prompt": "cluster of large glossy organic egg pods bulging from a curved ribbed biomechanical spine, demonic, dim red glow", "seed_offset": 7, "negative_extra": "heart shape, love heart"},
-          {"id": "ark-transport", "h": 44, "prompt": "large organic brood transport hull silhouette with pod bays"}
-        ]},
-        {"name": "Siege Carrier", "landmarks": [
-          {"id": "siege-battery", "h": 40, "prompt": "heavy demonic siege gun platform with three long barrels on armored outrigger"},
-          {"id": "siege-outrigger", "h": 30, "prompt": "fortified armored outrigger arm with gun pods"}
-        ]},
-        {"name": "Brood Citadel", "landmarks": [
-          {"id": "citadel-ramparts", "h": 54, "prompt": "dense nested demonic citadel ramparts with many sharp spires and a dark gate"},
-          {"id": "citadel-spires", "h": 44, "prompt": "cluster of thin sharp demonic spires on a rampart"}
-        ]},
-        {"name": "Brood Flagship", "landmarks": [
-          {"id": "flagship-command", "h": 58, "prompt": "towering tiered demonic command fortress with a crown of sharp spires, buttresses and a red glowing bridge window", "seed_offset": 7, "negative_extra": "heart shape, love heart"},
-          {"id": "flagship-escort", "h": 32, "prompt": "small escort dock with a moored demonic escort craft"}
-        ]}
+        {
+          "name": "The Carrier",
+          "landmarks": [
+            {
+              "id": "carrier-turret",
+              "h": 34,
+              "prompt": "demonic carrier hull turret blister with twin spiked barrels"
+            },
+            {
+              "id": "carrier-tower",
+              "h": 44,
+              "prompt": "angular gothic fortress tower with spikes and red windows"
+            }
+          ]
+        },
+        {
+          "name": "Brood Ark",
+          "landmarks": [
+            {
+              "id": "ark-pods",
+              "h": 36,
+              "prompt": "cluster of large glossy organic egg pods bulging from a curved ribbed biomechanical spine, demonic, dim red glow",
+              "seed_offset": 7,
+              "negative_extra": "heart shape, love heart"
+            },
+            {
+              "id": "ark-transport",
+              "h": 44,
+              "prompt": "large organic brood transport hull silhouette with pod bays"
+            }
+          ]
+        },
+        {
+          "name": "Siege Carrier",
+          "landmarks": [
+            {
+              "id": "siege-battery",
+              "h": 40,
+              "prompt": "heavy demonic siege gun platform with three long barrels on armored outrigger"
+            },
+            {
+              "id": "siege-outrigger",
+              "h": 30,
+              "prompt": "fortified armored outrigger arm with gun pods"
+            }
+          ]
+        },
+        {
+          "name": "Brood Citadel",
+          "landmarks": [
+            {
+              "id": "citadel-ramparts",
+              "h": 54,
+              "prompt": "dense nested demonic citadel ramparts with many sharp spires and a dark gate"
+            },
+            {
+              "id": "citadel-spires",
+              "h": 44,
+              "prompt": "cluster of thin sharp demonic spires on a rampart"
+            }
+          ]
+        },
+        {
+          "name": "Brood Flagship",
+          "landmarks": [
+            {
+              "id": "flagship-command",
+              "h": 58,
+              "prompt": "towering tiered demonic command fortress with a crown of sharp spires, buttresses and a red glowing bridge window",
+              "seed_offset": 7,
+              "negative_extra": "heart shape, love heart"
+            },
+            {
+              "id": "flagship-escort",
+              "h": 32,
+              "prompt": "small escort dock with a moored demonic escort craft"
+            }
+          ]
+        }
       ],
       "creatures": [
-        {"id": "brood-larva", "h": 9, "gait": "crawl", "prompt": "tiny pale red demonic maggot larva"},
-        {"id": "hive-tick", "h": 10, "gait": "burrow", "prompt": "tiny dark red demonic tick with horns and glowing eyes"}
-      ]
+        {
+          "id": "brood-larva",
+          "h": 14,
+          "gait": "crawl",
+          "prompt": "tiny pale red demonic maggot larva"
+        },
+        {
+          "id": "hive-tick",
+          "h": 14,
+          "gait": "burrow",
+          "prompt": "tiny dark red demonic tick with horns and glowing eyes"
+        }
+      ],
+      "plane": "seamless top-down texture of dark demonic biomechanical hull plating with ribs, sinew seams and dim red pores"
     }
   ],
   "creature_prompt": "single isolated creature, oblique three-quarter top-down view, game sprite, simple readable silhouette, centered, small",
-  "landmark_prompt": "single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered"
+  "landmark_prompt": "single isolated science fiction structure on an alien world, metal and stone, oblique three-quarter top-down isometric view, game background prop, standing on a small patch of ground, centered",
+  "plane": {
+    "workflow": "art/workflows/backgrounds/ground-tile.json",
+    "sheet_px": [
+      1536,
+      1536
+    ],
+    "logical": 192,
+    "strength": 0.8,
+    "seam_strength": 0.62,
+    "luma_cap": 0.17,
+    "chroma_cap": 0.24
+  }
 }
