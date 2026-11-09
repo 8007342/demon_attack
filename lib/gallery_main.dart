@@ -50,7 +50,8 @@ class GalleryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final page = Uri.base.queryParameters['page'] ?? 'creatures';
-    final tiles = switch (page) {
+    final only = int.tryParse(Uri.base.queryParameters['tile'] ?? '');
+    var tiles = switch (page) {
       'elites' => [_tile('ELITES', _elites())],
       'actions' => [_tile('FIRE / DEATH', _actions())],
       'weapons' => _weapons(),
@@ -58,6 +59,7 @@ class GalleryApp extends StatelessWidget {
       'carrier' => _carriers(),
       _ => [_tile('CREATURES', _creatures())],
     };
+    if (only != null && only < tiles.length) tiles = [tiles[only]];
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
@@ -240,9 +242,11 @@ GalleryScene _weaponScene(List<Power> powers, double sway) {
     live: true,
     stage: (m, dt, t) {
       for (final p in powers) {
+        // Hold just past the deploy transition; the last module of a combo
+        // runs its full timer so wear/overheat states cycle.
         m.powerTimers[p] = p == powers.last && powers.length > 1
-            ? 9 - (t % 9)
-            : ArcadeModel.powerDuration;
+            ? 8.7 - (t % 8.5)
+            : ArcadeModel.powerDuration - 1;
       }
       m.mode = RunMode.playing;
       m.lives = 99;
