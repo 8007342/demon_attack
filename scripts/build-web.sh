@@ -26,3 +26,5 @@ fi
 "$flutter_bin" config --no-analytics
 "$flutter_bin" pub get --enforce-lockfile
 "$flutter_bin" build web --release --base-href / --no-web-resources-cdn
+# Art gallery (lib/gallery_main.dart), linked from /console, served at /gallery/.
+"$flutter_bin" build web --release -t lib/gallery_main.dart --base-href /gallery/ --no-web-resources-cdn -o "$PWD/build/web/gallery"
