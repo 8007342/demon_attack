@@ -12,7 +12,7 @@
 //	run      execute the queue against a ComfyUI HTTP endpoint (optional;
 //	         agents normally run each job with studio.run_workflow, then ingest)
 //	ingest   copy raw outputs ({scene id: path} JSON) into the raw cache
-//	process  pixel finish: box-sample onto the 384 x 160 logical grid, cap the
+//	process  pixel finish: box-sample onto the 768 x 320 logical grid, cap the
 //	         luminance, quantise to the scene palette, write indexed PNGs to
 //	         assets/images/widescreen/
 //	contact  contact sheet of the finished scenes (art/contact/widescreen-contact.png)
@@ -475,10 +475,11 @@ func layoutVista(s Scene) *Canvas {
 	c.fillBelow(ridge(r, LW, 540, 40, 11, 70), RGB{9, 10, 22})
 	for i, sh := range [][3]float64{{90, 250, 420}, {260, 330, 300}, {40, 380, 220}, {380, 200, 180}} {
 		k := float64(i * 6)
-		c.capitalShip(sh[0], sh[1], sh[2], RGB{40 + k, 50 + k, 78 + k}, RGB{112, 245, 213})
+		c.capitalShip(sh[0], sh[1], sh[2], RGB{70 + k, 84 + k, 112 + k}, RGB{112, 245, 213})
+		c.line(sh[0]+sh[2]*.1, sh[1]+sh[2]*.05, sh[0]+sh[2]*.85, sh[1]+sh[2]*.08, 3, RGB{120, 140, 170}) // hull highlight
 	}
 	for i := 0; i < 14; i++ {
-		c.fighter(r.between(120, 620), r.between(170, 420), r.between(10, 18), RGB{70, 82, 110}, RGB{112, 245, 213})
+		c.fighter(r.between(120, 620), r.between(170, 420), r.between(12, 22), RGB{96, 110, 140}, RGB{112, 245, 213})
 	}
 	eye := RGB{244, 90, 100}
 	for i := 0; i < 70; i++ {
@@ -985,27 +986,54 @@ func cmdContact(s Spec) {
 		}
 		im := readPNG(path)
 		if sc.Layout == "wall" {
-			t := newCanvas(384, 160, RGB{})
-			for y := 0; y < 160; y += im.H {
-				for x := 0; x < 384; x += im.W {
+			t := newCanvas(s.Logical[0], s.Logical[1], RGB{})
+			for y := 0; y < t.H; y += im.H {
+				for x := 0; x < t.W; x += im.W {
 					t.paste(im, x, y)
 				}
 			}
 			im = t
 		}
-		tiles = append(tiles, im)
+		tiles = append(tiles, im.resize(im.W/2, im.H/2)) // half size: an overview, not the art of record
 	}
 	if len(tiles) == 0 {
 		return
 	}
 	rows := (len(tiles) + 1) / 2
-	sheet := newCanvas(2*388+4, rows*164+4, RGB{8, 13, 24})
+	cw, ch := s.Logical[0]/2+4, s.Logical[1]/2+4
+	sheet := newCanvas(2*cw+4, rows*ch+4, RGB{8, 13, 24})
 	for i, t := range tiles {
-		sheet.paste(t, (i%2)*388+4, (i/2)*164+4)
+		sheet.paste(t, (i%2)*cw+4, (i/2)*ch+4)
 	}
 	path := filepath.Join(root, "art/contact/widescreen-contact.png")
-	writePNG(path, sheet.rgba())
+	writePNG(path, indexed(sheet, 255))
 	fmt.Println("contact", path)
+}
+
+// indexed quantises a review image to n median-cut colours (keeps sheets small).
+func indexed(c *Canvas, n int) *image.Paletted {
+	pal := medianCut(c.Px, n)
+	cp := make(color.Palette, len(pal))
+	for i, p := range pal {
+		cp[i] = color.RGBA{clamp8(p[0]), clamp8(p[1]), clamp8(p[2]), 255}
+	}
+	img := image.NewPaletted(image.Rect(0, 0, c.W, c.H), cp)
+	cache := map[RGB]uint8{}
+	for i, p := range c.Px {
+		k, ok := cache[p]
+		if !ok {
+			best := math.Inf(1)
+			for j, q := range pal {
+				d := (p[0]-q[0])*(p[0]-q[0]) + (p[1]-q[1])*(p[1]-q[1]) + (p[2]-q[2])*(p[2]-q[2])
+				if d < best {
+					best, k = d, uint8(j)
+				}
+			}
+			cache[p] = k
+		}
+		img.Pix[i] = k
+	}
+	return img
 }
 
 func main() {

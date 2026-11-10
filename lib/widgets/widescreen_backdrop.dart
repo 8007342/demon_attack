@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 
 /// Wide-screen scenery beside the centred game column on desktop.
 ///
-/// Every scene is a 384 x 160 logical-pixel panorama (assets/images/
+/// Every scene is a 768 x 320 logical-pixel panorama (assets/images/
 /// widescreen/, built by tools/widescreen_assets) drawn at an integer
 /// nearest-neighbour scale, plus procedural pixel layers: a starfield, the
 /// fleet-bridge frame for menus (viewport struts, a console bank with
@@ -182,7 +182,7 @@ const _mint = Color(0xFF70F5D5);
 const _gold = Color(0xFFF4CA79);
 const _salmon = Color(0xFFF2828A);
 const _hull = Color(0xFF070B15);
-const _hullEdge = Color(0xFF1B2A40);
+const _hullEdge = Color(0xFF243852);
 
 class WidescreenBackdropPainter extends CustomPainter {
   WidescreenBackdropPainter({
@@ -206,8 +206,9 @@ class WidescreenBackdropPainter extends CustomPainter {
     ..isAntiAlias = false
     ..filterQuality = FilterQuality.none;
 
-  /// Screen pixels per logical pixel: the panorama is 160 logical rows tall
-  /// and always covers the height at a whole-number scale.
+  /// Screen pixels per unit of the procedural layers (bridge frame, lights,
+  /// sprites): one unit per 1/160 of the height, rounded up to whole pixels.
+  /// The panoramas pick their own whole-number scale in [_panorama].
   static double unit(Size size) => math.max(2, (size.height / 160).ceilToDouble());
 
   @override
@@ -251,7 +252,7 @@ class WidescreenBackdropPainter extends CustomPainter {
     }
     canvas.drawRect(full, Paint()..color = _ink);
     _starfield(canvas, size, u, .55);
-    _panorama(canvas, size, u, scene.name, 1);
+    _panorama(canvas, size, u, scene.name, 1, fit: true);
     switch (scene) {
       case BackdropScene.vista:
         _swarm(canvas, size, u, const Color(0xFF1A0F22), 34);
@@ -259,7 +260,7 @@ class WidescreenBackdropPainter extends CustomPainter {
         _veil(canvas, size, .18);
         _bridge(canvas, size, u, _mint, _gold);
       case BackdropScene.hall:
-        _veil(canvas, size, .2);
+        _veil(canvas, size, .08);
         _glints(canvas, size, u);
       case BackdropScene.defeat:
         _swarm(canvas, size, u, const Color(0xFF12040A), 46, wide: true);
@@ -274,7 +275,23 @@ class WidescreenBackdropPainter extends CustomPainter {
       case BackdropScene.sector:
         break;
     }
-    _edgeShade(canvas, size, .62);
+    if (scene == BackdropScene.vista) _focusShade(canvas, size);
+    _edgeShade(canvas, size, scene == BackdropScene.hall ? .4 : .62);
+    if (slots.isNotEmpty) _commandWall(canvas, size, u);
+  }
+
+  /// A soft dark pool behind the title content.
+  void _focusShade(Canvas c, Size size) {
+    final r = math.min(size.width * .32, 620.0);
+    c.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          size.center(Offset.zero),
+          r,
+          [_ink.withValues(alpha: .42), _ink.withValues(alpha: 0)],
+        ),
+    );
   }
 
   // ------------------------------------------------------------ layers
@@ -308,14 +325,26 @@ class WidescreenBackdropPainter extends CustomPainter {
     String id,
     double opacity, {
     double lean = 0,
+    bool fit = false,
   }) {
     final img = art[id];
     if (img == null || opacity <= 0) return;
-    final w = img.width * u, h = img.height * u;
+    // Each image covers the height at its own whole-number scale (menu
+    // scenes have twice the rows of the sector extensions).
+    // Sector extensions cover the height; menu scenes take the largest
+    // whole scale that fits it, so more of the composition shows, and fade
+    // out under the bridge's lintel and console.
+    final s = math.max(
+      1.0,
+      fit
+          ? (size.height / img.height).floorToDouble()
+          : (size.height / img.height).ceilToDouble(),
+    );
+    final w = img.width * s, h = img.height * s;
     final sway = reduceMotion ? 0.0 : math.sin(time * .045) * 3;
-    final dx = ((sway + lean) * u / 1).roundToDouble();
-    final left = ((size.width - w) / 2 / u).roundToDouble() * u + dx;
-    final top = ((size.height - h) / 2 / u).roundToDouble() * u;
+    final dx = ((sway + lean) * u).roundToDouble();
+    final left = ((size.width - w) / 2 / s).roundToDouble() * s + dx;
+    final top = ((size.height - h) / 2 / s).roundToDouble() * s;
     final dst = Rect.fromLTWH(left, top, w, h);
     _paint.color = Color.fromRGBO(255, 255, 255, opacity);
     c.drawImageRect(
@@ -325,6 +354,25 @@ class WidescreenBackdropPainter extends CustomPainter {
       _paint,
     );
     _paint.color = const Color(0xFFFFFFFF);
+    if (h < size.height) {
+      final gap = Paint()..color = _ink.withValues(alpha: opacity);
+      final feather = 10 * u;
+      c.drawRect(Rect.fromLTRB(0, 0, size.width, dst.top), gap);
+      c.drawRect(Rect.fromLTRB(0, dst.bottom, size.width, size.height), gap);
+      for (final top in [true, false]) {
+        final y0 = top ? dst.top - 1 : dst.bottom + 1;
+        final y1 = top ? dst.top + feather : dst.bottom - feather;
+        c.drawRect(
+          Rect.fromLTRB(0, math.min(y0, y1), size.width, math.max(y0, y1)),
+          Paint()
+            ..shader = ui.Gradient.linear(
+              Offset(0, y0),
+              Offset(0, y1),
+              [_ink.withValues(alpha: opacity), _ink.withValues(alpha: 0)],
+            ),
+        );
+      }
+    }
     if (w < size.width + 2 * u * 4) {
       // Feather the art's ends into the starfield.
       final feather = math.min(w * .12, 40 * u);
@@ -486,7 +534,7 @@ class WidescreenBackdropPainter extends CustomPainter {
     final w = size.width, h = size.height;
     final content = math.min(960.0, w - 48) / 2;
     final lintel = 5 * u;
-    final desk = 8 * u;
+    final desk = 10 * u;
     final hull = Paint()..color = _hull;
     final edge = Paint()..color = _hullEdge;
     // Lintel with rivets.
@@ -526,7 +574,19 @@ class WidescreenBackdropPainter extends CustomPainter {
     // Console bank.
     final top = h - desk;
     c.drawRect(Rect.fromLTWH(0, top, w, desk), hull);
+    // The desk's sloped work surface, a lit lip and panel seams below it.
+    c.drawRect(
+      Rect.fromLTWH(0, top, w, 3 * u),
+      Paint()..color = const Color(0xFF0D1524),
+    );
     c.drawRect(Rect.fromLTWH(0, top, w, u), edge);
+    _paint.color = light.withValues(alpha: .16);
+    c.drawRect(Rect.fromLTWH(0, top + 3 * u, w, u), _paint);
+    _paint.color = const Color(0xFF0F1A2B);
+    for (var x = 20 * u; x < w; x += 40 * u) {
+      if ((x - w / 2).abs() < content * .7) continue;
+      c.drawRect(Rect.fromLTWH(_snap(x, u), top + 4 * u, u, desk - 4 * u), _paint);
+    }
     const palette = [Color(0xFF70F5D5), Color(0xFFF4CA79), Color(0xFF6E8BB5)];
     var i = 0;
     for (var x = 2 * u; x < w - 2 * u; x += 3 * u, i++) {
@@ -538,16 +598,23 @@ class WidescreenBackdropPainter extends CustomPainter {
       final on = reduceMotion ? hsh % 2 == 0 : ((time + hsh % 97 * .1) % period) < period * .6;
       final color = hsh % 11 == 0 ? alert : (hsh % 4 == 0 ? light : palette[hsh % 3]);
       _paint.color = color.withValues(alpha: on ? .62 : .14);
-      c.drawRect(Rect.fromLTWH(x, top + 2 * u, u, u), _paint);
+      c.drawRect(Rect.fromLTWH(x, top + 5 * u, u, u), _paint);
       if (hsh % 5 == 0) {
         _paint.color = color.withValues(alpha: on ? .18 : .45);
-        c.drawRect(Rect.fromLTWH(x, top + 4 * u, u, u), _paint);
+        c.drawRect(Rect.fromLTWH(x, top + 7 * u, u, u), _paint);
       }
     }
     // Holographic maps in the outer viewports.
-    if (room > 34 * u) {
+    if (room > 34 * u && slots.isEmpty) {
       final r = math.min(room * .28, 22 * u);
-      final y = top - r * .55 - 3 * u;
+      final y = top - r * .42 - u;
+      // Projector pads on the desk.
+      for (final x in [w / 2 - content - room * .3, w / 2 + content + room * .3]) {
+        _paint.color = const Color(0xFF1A2940);
+        c.drawRect(Rect.fromLTWH(_snap(x - 5 * u, u), top, 10 * u, u), _paint);
+        _paint.color = (x < w / 2 ? light : alert).withValues(alpha: .4);
+        c.drawRect(Rect.fromLTWH(_snap(x - 3 * u, u), top, 6 * u, u), _paint);
+      }
       _hologram(c, u, Offset(w / 2 - content - room * .3, y), r, light, false);
       _hologram(c, u, Offset(w / 2 + content + room * .3, y), r, alert, true);
     }
@@ -556,16 +623,6 @@ class WidescreenBackdropPainter extends CustomPainter {
   /// A projected star map: dotted rings, a rotating sweep and contacts.
   void _hologram(Canvas c, double u, Offset o, double r, Color color, bool hostile) {
     final px = math.max(1.0, (u / 2).floorToDouble());
-    // Projector beam.
-    c.drawRect(
-      Rect.fromLTRB(o.dx - r, o.dy - r * 1.2, o.dx + r, o.dy + r * .5),
-      Paint()
-        ..shader = ui.Gradient.linear(
-          Offset(o.dx, o.dy + r * .5),
-          Offset(o.dx, o.dy - r * 1.2),
-          [color.withValues(alpha: .07), color.withValues(alpha: 0)],
-        ),
-    );
     for (final k in [1.0, .66, .33]) {
       final n = (40 * k).round() + 8;
       for (var j = 0; j < n; j++) {

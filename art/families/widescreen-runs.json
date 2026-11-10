@@ -30,9 +30,9 @@
   ],
   "negative_prompt": "text, letters, words, numbers, watermark, logo, signature, user interface, hud, frame, border, blurry, photo, 3d render, people, faces, bright daylight, pastel, white sky",
   "prompt": "pixel art, 16-bit, crisp pixels, dark moody night palette, deep navy shadows, cinematic wide panorama, low contrast, frozen violet blue moon landscape at night, jagged ice rocks and cliffs, distant outpost spires, dark starry sky",
-  "raw_sha256": "1fd4fc35ad2541556b690952d7b3c0ac0786ee5df2f3fac2f3c1fa5cc68b2e95",
+  "raw_sha256": "afd76d2612f02233ff7a2007669f83f0df6a0fab2f46460ac13661dfd231d78e",
   "seed": 7205101,
-  "strength": 0.52,
+  "strength": 0.35,
   "workflow": "art/workflows/widescreen/img2img-wide.json"
  },
  "sector-2": {
@@ -42,9 +42,9 @@
   ],
   "negative_prompt": "text, letters, words, numbers, watermark, logo, signature, user interface, hud, frame, border, blurry, photo, 3d render, people, faces, bright daylight, pastel, white sky",
   "prompt": "pixel art, 16-bit, crisp pixels, dark moody night palette, deep navy shadows, cinematic wide panorama, low contrast, purple asteroid field over a rocky violet plain at night, floating boulders, broken ring debris, dark starry sky",
-  "raw_sha256": "3418a32631fae0eb1d50f435e9f96eea325bf2a8969d943888d170ab6b789e5a",
+  "raw_sha256": "81ae7a38b0f1606f64ee7ea77769b0d34eb1373d9bdf327ffdb570338215a031",
   "seed": 7205201,
-  "strength": 0.52,
+  "strength": 0.35,
   "workflow": "art/workflows/widescreen/img2img-wide.json"
  },
  "sector-3": {
@@ -54,9 +54,9 @@
   ],
   "negative_prompt": "text, letters, words, numbers, watermark, logo, signature, user interface, hud, frame, border, blurry, photo, 3d render, people, faces, bright daylight, pastel, white sky",
   "prompt": "pixel art, 16-bit, crisp pixels, dark moody night palette, deep navy shadows, cinematic wide panorama, low contrast, volcanic moon at night, black basalt spires and lava rivers glowing orange red, smoke, dark red starry sky",
-  "raw_sha256": "31e84f1396b3b8646ee257297f47d84c94083ea2a09ea600159631db06fb1bdf",
+  "raw_sha256": "5542669c2ad7f7d56d0fc65cc54b402efe18e9b5b44d2e48c02199ddd41f4aca",
   "seed": 7205301,
-  "strength": 0.52,
+  "strength": 0.35,
   "workflow": "art/workflows/widescreen/img2img-wide.json"
  },
  "sector-4": {
@@ -66,9 +66,9 @@
   ],
   "negative_prompt": "text, letters, words, numbers, watermark, logo, signature, user interface, hud, frame, border, blurry, photo, 3d render, people, faces, bright daylight, pastel, white sky",
   "prompt": "pixel art, 16-bit, crisp pixels, dark moody night palette, deep navy shadows, cinematic wide panorama, low contrast, eerie green glowing ruins of a gothic alien city, broken arches and towers, green fog, floating rocks, dark sky",
-  "raw_sha256": "8777d0452c6b264ff62e8e5bba29629bc289b86ff4d6b2209482be3e3e3952f0",
+  "raw_sha256": "28b11f5b9ec786e964fb634fafbc8c5a9e3c3c4a70f4fa8983dc7828ea7fb5ac",
   "seed": 7205401,
-  "strength": 0.52,
+  "strength": 0.35,
   "workflow": "art/workflows/widescreen/img2img-wide.json"
  },
  "sector-5": {
@@ -78,9 +78,9 @@
   ],
   "negative_prompt": "text, letters, words, numbers, watermark, logo, signature, user interface, hud, frame, border, blurry, photo, 3d render, people, faces, bright daylight, pastel, white sky",
   "prompt": "pixel art, 16-bit, crisp pixels, dark moody night palette, deep navy shadows, cinematic wide panorama, low contrast, dark fortress territory, black gothic towers and gantries, crimson clouds, red fog, ominous alien fortress, dark sky",
-  "raw_sha256": "4f6f5b1085e416ebbc1399ec58d6b4c40d3afc82b480063bd57ad68c0b554448",
+  "raw_sha256": "f465e98f8d3b014a5def3bc461971a94ae6797953c2dd6006d72a510b0dd7966",
   "seed": 7205501,
-  "strength": 0.52,
+  "strength": 0.35,
   "workflow": "art/workflows/widescreen/img2img-wide.json"
  },
  "victory": {
@@ -102,9 +102,9 @@
   ],
   "negative_prompt": "text, letters, words, numbers, watermark, logo, signature, user interface, hud, frame, border, blurry, photo, 3d render, people, faces, bright daylight, pastel, white sky",
   "prompt": "pixel art, 16-bit, crisp pixels, dark moody night palette, deep navy shadows, cinematic wide panorama, low contrast, epic space vista, a fleet of silver starfighters and long capital battleships with cyan engine lights on the left, a vast swarm of tiny winged demon gargoyle silhouettes rising over a dark alien mountain horizon on the right, huge ringed violet planet high in the sky, teal nebula, dense small stars",
-  "raw_sha256": "e577ed48e093bb15533369552544e1c8df8043d5d0cb34f626f6e08aa7d42403",
+  "raw_sha256": "1ecbab19f5d029445a9b1a1a83c32e1f349f4b704ef6adad928c6e4c6e942c09",
   "seed": 7204101,
-  "strength": 0.45,
+  "strength": 0.38,
   "workflow": "art/workflows/widescreen/img2img-wide.json"
  },
  "wall": {

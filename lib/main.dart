@@ -590,9 +590,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                             // the bridge console visible on wide screens.
                             colors: WidescreenBackdrop.shows(bounds.biggest)
                                 ? const [
-                                    Color(0x22080D18),
-                                    Color(0x88080D18),
-                                    Color(0x99080D18),
+                                    Color(0x00080D18),
+                                    Color(0x55080D18),
+                                    Color(0x66080D18),
                                   ]
                                 : const [
                                     Color(0x33080D18),
@@ -603,7 +603,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                  if (title) _titleScreen(bounds),
+                  // --- widescreen backdrop: under a score overlay the hall
+                  // shows in the margins, so the landing steps aside there.
+                  if (title &&
+                      !(screen != null &&
+                          WidescreenBackdrop.shows(bounds.biggest)))
+                    _titleScreen(bounds),
                   if (!title)
                     Center(
                       child: SizedBox(
@@ -694,10 +699,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       blendMode: BlendMode.dstIn,
       shaderCallback: (rect) => LinearGradient(
         colors: const [
-          Color(0x52FFFFFF),
+          Color(0x2EFFFFFF),
           Color(0xFFFFFFFF),
           Color(0xFFFFFFFF),
-          Color(0x52FFFFFF),
+          Color(0x2EFFFFFF),
         ],
         stops: [0, .5 - inner, .5 + inner, 1],
       ).createShader(rect),

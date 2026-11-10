@@ -93,10 +93,23 @@ Future<_Rig> _launch(WidgetTester tester, Size size) async {
               .game
           as DemonScene;
   if (renderDir.isNotEmpty) {
+    // Decode straight from the files: Flame's image cache holds futures that
+    // were started inside the fake-async zone and never complete here.
     await tester.runAsync(() async {
-      try {
-        await scene.onLoad();
-      } catch (_) {}
+      Future<ui.Image> decode(String file) async {
+        final codec = await ui.instantiateImageCodec(
+          await File('assets/images/$file').readAsBytes(),
+        );
+        return (await codec.getNextFrame()).image;
+      }
+
+      scene.atlas = await decode('combat.png');
+      scene.sky = await decode('cosmic-sky.png');
+      scene.ship.image = await decode('ship-weapons.png');
+      for (var i = 0; i < 5; i++) {
+        scene.sectors.images[i] = await decode('sector-${i + 1}.png');
+      }
+      await scene.sectors.loadFlyover(decode);
     });
     scene.ambient = 41.3;
   }
@@ -246,6 +259,6 @@ void main() {
 
       await tester.pumpWidget(const SizedBox());
       await tester.pump();
-    });
+    }, timeout: const Timeout(Duration(minutes: 4)));
   }
 }
