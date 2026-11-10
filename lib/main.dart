@@ -21,12 +21,37 @@ import 'widgets/heart_parts.dart';
 // --- squad comms
 import 'comms/comms_view.dart';
 import 'comms/squad_comms.dart';
+// --- console route
+import 'widgets/dev_console.dart';
+export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
+// --- end console route
 export 'game/scene.dart' show DemonScene;
 
 void main() => runApp(const DemonAttackApp());
 
+// --- console route: '/console' opens the dev console, any other path the
+// arcade. A console launch pushes '/' (the address bar returns to /) with a
+// ConsoleStart argument; browser back returns to the console.
+MaterialPageRoute<void> _appRoute(RouteSettings settings) => MaterialPageRoute(
+  settings: settings,
+  builder: (_) => isConsoleRoute(settings.name)
+      ? DevConsolePage(
+          galleryUrl: '/gallery/',
+          onStart: (context, start) =>
+              Navigator.of(context).pushNamed('/', arguments: start),
+        )
+      : ArcadePage(
+          consoleStart: settings.arguments is ConsoleStart
+              ? settings.arguments as ConsoleStart
+              : null,
+        ),
+);
+// --- end console route
+
 class DemonAttackApp extends StatelessWidget {
-  const DemonAttackApp({super.key});
+  const DemonAttackApp({super.key, this.initialRoute}); // --- console route
+  /// Overrides the browser path (tests); null uses the platform route.
+  final String? initialRoute; // --- console route
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Demon Attack',
@@ -71,7 +96,11 @@ class DemonAttackApp extends StatelessWidget {
         ),
       ),
     ),
-    home: const ArcadePage(),
+    // --- console route
+    initialRoute: initialRoute,
+    onGenerateInitialRoutes: (name) => [_appRoute(RouteSettings(name: name))],
+    onGenerateRoute: _appRoute,
+    // --- end console route
   );
 }
 
@@ -81,10 +110,14 @@ class ArcadePage extends StatefulWidget {
     this.scoreService,
     this.runStorage,
     this.squadComms,
+    this.consoleStart, // --- console route
   });
   final ScoreService? scoreService;
   final RunStorage? runStorage;
   final SquadComms? squadComms;
+
+  /// --- console route: begin a run here instead of on the title screen.
+  final ConsoleStart? consoleStart;
   @override
   State<ArcadePage> createState() => _ArcadePageState();
 }
@@ -166,7 +199,31 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
     _attachComms(); // --- squad comms
+    // --- console route: the run begins before the first frame (no title).
+    final consoleStart = widget.consoleStart;
+    if (consoleStart != null) {
+      _startConsole(consoleStart);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _tick();
+        if (mounted) focus.requestFocus();
+      });
+    }
+    // --- end console route
   }
+
+  // --- console route: mirrors _start() bookkeeping, via ArcadeModel.startAt.
+  void _startConsole(ConsoleStart start) {
+    audioUnlock();
+    audioResume();
+    screen = null;
+    submitted = false;
+    handledRunEnd = false;
+    showFinalResult = false;
+    heartNotice = null;
+    _resetComms();
+    start.applyTo(model);
+  }
+  // --- end console route
 
   @override
   void didChangeDependencies() {
@@ -769,6 +826,19 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           child: const Text('START GAME  →'),
         ),
       ),
+      // --- console route: a console run returns to the console from title.
+      if (widget.consoleStart != null) ...[
+        const SizedBox(height: 12),
+        SizedBox(
+          width: 280,
+          child: OutlinedButton(
+            key: const ValueKey('back-to-console'),
+            onPressed: () => Navigator.of(context).maybePop(),
+            child: const Text('◀  BACK TO CONSOLE'),
+          ),
+        ),
+      ],
+      // --- end console route
       if (savedCheckpoint != null) ...[
         const SizedBox(height: 12),
         SizedBox(

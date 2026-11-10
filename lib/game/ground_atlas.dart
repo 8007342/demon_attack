@@ -2,21 +2,25 @@
 // change art/families/ground-forces.json and rerun the pipeline.
 //
 // Cell layout of `assets/images/ground-forces.png` (stored 1x, one texel per
-// pixel). Every cell is [cellW] x [cellH] texels; ground units stand
-// bottom-centred on the cell's last row and are authored facing screen right
-// (toward the central lane from the left band); the renderer mirrors them
-// for the right band.
+// pixel). Every cell is [cellW] x [cellH] texels. Demon units stand
+// bottom-centred on the cell's last row, authored side-on facing screen
+// right (toward the central lane from the left band); the renderer mirrors
+// them for the right band. Allies are seen from behind and above, driving up
+// the plane toward the horizon; a vehicle is two layers that share the cell
+// frame (hull, then turret), so drawing both at the same anchor aligns them.
 
-/// Grid contract of the ground-forces atlas (v2). Presentation only.
+/// Grid contract of the ground-forces atlas (v3). Presentation only.
 abstract final class GroundAtlas {
   static const String file = 'ground-forces.png';
-  static const int cellW = 32, cellH = 24, columns = 12, rows = 10;
+  static const int cellW = 40, cellH = 32, columns = 16, rows = 16;
 
   /// Rows 0-3: demon ground units for sectors 0-3 (Krybor, Ringfall, Ember,
-  /// Hollow). Rows 4-7: allied ground units for the same sectors.
+  /// Hollow). Rows 4-11: allied units, [allyVariants] per sector.
   static int demonRow(int sector) => sector.clamp(0, 3);
-  static int allyRow(int sector) => 4 + sector.clamp(0, 3);
-  static const int effectRow = 8, missileRow = 9;
+  static const int allyVariants = 2;
+  static int allyRow(int sector, [int variant = 0]) =>
+      4 + sector.clamp(0, 3) * allyVariants + variant % allyVariants;
+  static const int effectRow = 12, fxRow = 13, flameRow = 14, missileRow = 15;
 
   // Demon unit columns.
   static const int moveCol = 0, moveFrames = 4; // 0-3 move cycle
@@ -26,25 +30,62 @@ abstract final class GroundAtlas {
   static const int wreckCol = 8; // 8-9 burning hulk
 
   // Allied unit columns (allies never die: they are totalled and limp off).
-  static const int allyMoveCol = 0, allyMoveFrames = 4; // 0-3
-  static const int allyFireCol = 4; // 4-5 cyan muzzle flash
-  static const int allyHitCol = 6; // sparks on the hull
-  static const int allyLimpCol = 7; // 7-8 totalled: smoking, dragging
-  static const int allyPodCol = 9; // crew escape pod
+  static const int allyMoveCol = 0, allyMoveFrames = 4; // 0-3 treads/gait
+  static const int allyHitCol = 4; // hull flashes, sparks
+  static const int allyLimpCol = 5; // 5-6 totalled: dented, track thrown
+  static const int allyPodCol = 7; // crew escape pod
+  /// Vehicles and walkers: turret (torso) layer, one column per screen
+  /// angle in [allyTurretAngles] (degrees from straight up the plane toward
+  /// screen right; mirror the cell for the left).
+  static const int allyTurretCol = 8, allyTurretFrames = 5;
+  static const List<double> allyTurretAngles = [0.0, 22.5, 45.0, 67.5, 90.0];
+  /// Infantry squads: 8-9 kneeling volley (alternate shooters), 10 kneeling.
+  static const int squadFireCol = 8, squadKneelCol = 10;
+
+  /// Per ally row (row - 4): 0 vehicle (hull + turret), 1 infantry squad,
+  /// 2 walker (hull + torso; the torso rises by [allyBob] texels per move
+  /// frame).
+  static const List<int> allyKind = [0, 0, 0, 1, 0, 0, 2, 1];
+  static const List<List<int>> allyBob = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 1], [0, 0, 0, 0]];
+
+  /// Muzzle per ally row and turret angle: (dx from the cell centre, dy above
+  /// the cell bottom), texels, unmirrored.
+  static const List<List<(double, double)>> allyMuzzle = [
+    [(-0.8, 17.6), (1.7, 17.6), (4.6, 17.1), (8.3, 15.6), (11.0, 12.0)],
+    [(0.0, 18.2), (1.7, 18.1), (3.6, 17.7), (6.0, 16.5), (7.5, 14.0)],
+    [(-0.8, 15.6), (1.2, 15.6), (3.6, 15.2), (6.7, 14.0), (9.0, 11.1)],
+    [(-4.5, 8.5), (-4.5, 8.5), (-4.5, 8.5), (-4.5, 8.5), (-4.5, 8.5)],
+    [(0.0, 20.3), (3.6, 20.0), (7.9, 19.1), (13.1, 16.7), (16.4, 11.2)],
+    [(0.0, 26.1), (4.0, 25.8), (8.8, 24.8), (14.5, 22.1), (18.2, 16.1)],
+    [(8.5, 21.0), (10.6, 19.8), (12.5, 18.0), (13.5, 15.0), (10.5, 10.6)],
+    [(-3.5, 9.5), (-3.5, 9.5), (-3.5, 9.5), (-3.5, 9.5), (-3.5, 9.5)],
+  ];
 
   // Effect row columns.
-  static const int explosionCol = 0, explosionFrames = 6; // 0-5
-  static const int scorchCol = 6;
-  static const int launchFlashCol = 7;
-  static const int tracerCol = 8;
-  static const int smallBlastCol = 9;
-  static const int smokeSmallCol = 10, smokeLargeCol = 11;
+  static const int explosionCol = 0, explosionFrames = 10; // 0-9
+  static const int scorchCol = 10, scorchVariants = 3; // 10-12 ground decals
+  static const int launchFlashCol = 13;
+  static const int tracerCol = 14; // warm impact star
+  static const int smallBlastCol = 15;
+
+  // Fx row columns.
+  static const int shockCol = 0, shockFrames = 4; // ground shock ring
+  static const int dustCol = 4, dustFrames = 4; // kicked-up dust (ground)
+  static const int puffCol = 8, puffFrames = 5; // rising smoke (centred)
+  static const int sparkCol = 13, sparkFrames = 3; // hull sparks (centred)
+
+  // Flame row columns.
+  static const int flameCol = 0, flameFrames = 6; // flame tongue loop
+  static const int debrisCol = 6, debrisFrames = 4; // tumbling chunk
+  static const int muzzleCyanCol = 10, muzzleWarmCol = 13, muzzleFrames = 3;
 
   // Missile row columns.
   static const int missileCol = 0; // 0-1 nose toward camera, exhaust flicker
   static const int smokeCol = 2; // 2-4 trail puffs (dense -> thin)
+  static const int impactCyanCol = 5, impactWarmCol = 8, impactFrames = 3;
 
-  /// Visible content box (texels, bottom-centred) per sector.
+  /// Visible content box (texels, bottom-centred) per demon sector and per
+  /// ally row (hull move frames).
   static const List<(int, int)> demonSize = [(27, 18), (28, 18), (29, 21), (22, 21)];
-  static const List<(int, int)> allySize = [(21, 15), (22, 14), (20, 16), (15, 16)];
+  static const List<(int, int)> allySize = [(26, 16), (25, 24), (24, 22), (26, 17), (26, 16), (26, 17), (22, 16), (22, 17)];
 }

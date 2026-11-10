@@ -32,6 +32,7 @@ What `run` does:
 - **Queues heavy jobs:** it takes a forge-wide flock (`--lock heavy` by default), so heavy jobs from different agents run one at a time.
 - **Waits for headroom:** it starts the job only once `--need` GiB (default 3) is free under `memory.high`, counting anonymous memory plus shmem/tmpfs.
 - **Caps threads:** it limits OMP, MKL, OpenBLAS, numexpr, torch, rayon and GOMAXPROCS threads (`--threads`, default 4).
+- **Time limit:** `--timeout N` kills a job that runs longer than N seconds (exit 137, lock released). Jobs on the `flutter` lock default to 1800 s, because a flutter-lane client orphaned by a tray restart once sat idle for 43 min holding the queue.
 - **Fails loudly instead of stalling:** it kills the job's whole process group (TERM, then KILL, exit 137, reason printed) when pinned memory stays above `--kill-at` (default `memory.high` − 1.5 GiB), or the `memory.high` reclaim rate stays above `--max-events`/s, for `--grace` seconds (default 20).
 
 To wait for a background job, never `pgrep -f`; use:

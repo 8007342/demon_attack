@@ -15,8 +15,15 @@ void main() {
     m.hitPlayer();
     m.hitPlayer();
     expect(m.lives, 2);
+    // The life-loss sequence protects the player until the reserve is back.
+    expect(m.lifeLossPhase, LifeLossPhase.exploding);
     m.invulnerable = 0;
     m.hitPlayer();
+    expect(m.lives, 2);
+    m.lifeLossPhase = LifeLossPhase.none;
+    m.invulnerable = 0;
+    m.hitPlayer();
+    m.lifeLossPhase = LifeLossPhase.none;
     m.invulnerable = 0;
     m.hitPlayer();
     expect(m.mode, RunMode.gameOver);
@@ -45,7 +52,8 @@ void main() {
     expect(d.hp, 2);
     m.hitDemon(d);
     expect(d.angry, true);
-    expect(d.telegraph, greaterThan(0));
+    // A beat of divePrep (radio) before the dive tell.
+    expect(d.divePrep, greaterThan(0));
     m.hitDemon(d);
     expect(m.demons.contains(d), false);
     expect(m.score, 350);

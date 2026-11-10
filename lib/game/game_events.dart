@@ -77,6 +77,39 @@ abstract final class GameEventNames {
   /// Data `scope`: 'level' (at sector clear) or 'campaign' (at victory).
   static const fleetIntact = 'fleetIntact';
 
+  // --- Life-loss sequence and dive warnings (queued by the model).
+
+  /// The player ship explodes (data x, y, `lives` left, `final`: the last
+  /// life, which goes to the defeat celebration instead of a regroup).
+  static const playerDestroyed = 'playerDestroyed';
+
+  /// The explosion gives way to the regroup pause (data `duration`,
+  /// `shotsDrained`, `missilesDrained`, `lives`): hostile shots fizzle out,
+  /// the swarm reforms, nothing can hit the player. Demons celebrate on air.
+  static const regroupStart = 'regroupStart';
+
+  /// The reserve ship starts flying in from the bottom edge (data x, y,
+  /// `lives`, `protection` seconds of blinking protection). Play resumes;
+  /// the squad's new-life chatter plays during it, without blocking.
+  static const playerRespawn = 'playerRespawn';
+
+  /// A demon is about to start a dive tell: fires [ArcadeModel.divePrepBeat]
+  /// seconds (data `lead`) before the telegraph, so the demons can radio
+  /// first (data x, y, `sentinel`, `elite`).
+  static const divePrep = 'divePrep';
+
+  /// Sectors 1-2 drama: the allies stop a demon unit just short of fire
+  /// range (data x, y, `marginZ`: texels short of the fire line). The unit
+  /// never fires. Commander hook: "That was close!".
+  static const groundNearMiss = 'groundNearMiss';
+
+  /// A breakthrough is guaranteed / imminent: the unit is past the allies'
+  /// reach and will reach fire range in `secondsToBreakthrough` (data x, y).
+  /// Fires once per breakthrough, about 3 s ahead, after `allyUnderAttack`.
+  static const groundBreakthroughWarning = 'groundBreakthroughWarning';
+
+  static const lifeLoss = [playerDestroyed, regroupStart, playerRespawn];
+
   // --- terrain: what the convoy sees below (queued by the flyover's
   // TerrainRadio, lib/game/terrain_field.dart; visual only, rate-limited).
   // Data: `sector` (1-5), `side` ('left' | 'right' | 'both'), x, y.
@@ -147,6 +180,12 @@ abstract final class GameEventNames {
     fleetIntact,
     groundBreakthrough,
     groundPressure,
+    groundNearMiss,
+    groundBreakthroughWarning,
+    playerDestroyed,
+    regroupStart,
+    playerRespawn,
+    divePrep,
   ];
 
   /// [groundPressure] crossing [GameEventObserver.pressureRising] /

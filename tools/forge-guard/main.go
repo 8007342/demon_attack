@@ -121,11 +121,15 @@ func run(args []string) int {
 	grace := fs.Int("grace", 20, "seconds a limit must be exceeded before killing")
 	threads := fs.Int("threads", 4, "cap for OMP/MKL/torch/numexpr/rayon threads in the job")
 	startWait := fs.Int("start-timeout", 1800, "seconds to wait for the lock and headroom before giving up")
+	maxRun := fs.Int("timeout", 0, "kill the job after this many seconds of running (0 = no limit); default 1800 for lock \"flutter\"")
 	fs.Parse(args)
 	cmdArgs := fs.Args()
 	if len(cmdArgs) == 0 {
 		logf("run needs a command after --")
 		return 2
+	}
+	if *maxRun == 0 && *lock == "flutter" {
+		*maxRun = 1800
 	}
 	h := high()
 	if h <= 0 {
@@ -212,6 +216,7 @@ func run(args []string) int {
 	var overSince, stormSince time.Time
 	lastEvents, lastAt := highEvents(), time.Now()
 	killed := ""
+	started := time.Now()
 	for {
 		select {
 		case err := <-done:
@@ -230,6 +235,11 @@ func run(args []string) int {
 		case s := <-sigs:
 			syscall.Kill(-pgid, s.(syscall.Signal))
 		case now := <-tick.C:
+			if *maxRun > 0 && killed == "" && now.Sub(started) > time.Duration(*maxRun)*time.Second {
+				killed = fmt.Sprintf("ran longer than --timeout %ds (hung job?); lock %q released", *maxRun, *lock)
+				go killGroup(killed)
+				continue
+			}
 			if h <= 0 || killed != "" {
 				continue
 			}
