@@ -7,3 +7,6 @@ void audioResume() {}
 void audioIntensity(int tier) {}
 void audioAccent(String name) {}
 void audioFleetIntact() {}
+void audioSetLevel(String channel, String level) {}
+String audioLevel(String channel) => 'full';
+void audioPowerLayer(int active, bool falling) {}

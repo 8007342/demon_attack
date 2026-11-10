@@ -1,4 +1,5 @@
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 @JS('demonAudio.unlock')
 external void _unlock();
@@ -19,6 +20,12 @@ external void _accent(JSString name);
 external void _fleetIntact();
 @JS('demonAudio.mute')
 external void _mute(JSBoolean muted);
+@JS('demonAudio.setLevel')
+external void _setLevel(JSString channel, JSString level);
+@JS('demonAudio.levels')
+external JSObject? get _levels;
+@JS('demonAudio.powerLayer')
+external void _powerLayer(JSNumber active, JSBoolean falling);
 @JS('demonAudio.pause')
 external void _pause();
 @JS('demonAudio.resume')
@@ -33,3 +40,19 @@ void audioResume() => _resume();
 void audioIntensity(int tier) => _intensity(tier.toJS);
 void audioAccent(String name) => _accent(name.toJS);
 void audioFleetIntact() => _fleetIntact();
+
+/// Music / speech volume level ('mute' | 'low' | 'full'), remembered per
+/// device by web/audio/demon-audio.js.
+void audioSetLevel(String channel, String level) =>
+    _setLevel(channel.toJS, level.toJS);
+String audioLevel(String channel) {
+  try {
+    final value = _levels?.getProperty<JSAny?>(channel.toJS);
+    return value.isA<JSString>() ? (value as JSString).toDart : 'full';
+  } catch (_) {
+    return 'full';
+  }
+}
+
+void audioPowerLayer(int active, bool falling) =>
+    _powerLayer(active.toJS, falling.toJS);

@@ -25,6 +25,7 @@ import 'comms/comms_view.dart';
 import 'comms/squad_comms.dart';
 // --- console route
 import 'widgets/dev_console.dart';
+import 'widgets/level_toggle.dart'; // --- audio round: music / speech toggles
 export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
 // --- end console route
 export 'game/scene.dart' show DemonScene;
@@ -131,6 +132,27 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   late final gameEvents = GameEventObserver(model);
   late final squadComms = widget.squadComms ?? SquadComms();
   bool voiceOn = true;
+  // --- audio round: Music and Speech levels (Mute / Low / Full), read from
+  // the audio engine, which remembers them per device. Both muted also mutes
+  // the effects (the old sound switch).
+  AudioLevel musicLevel = AudioLevel.full, speechLevel = AudioLevel.full;
+  void _setMusicLevel(AudioLevel level) {
+    setState(() => musicLevel = level);
+    audioUnlock();
+    audioSetLevel('music', level.name);
+  }
+
+  void _setSpeechLevel(AudioLevel level) {
+    setState(() {
+      speechLevel = level;
+      voiceOn = level != AudioLevel.mute;
+    });
+    audioUnlock();
+    audioSetLevel('speech', level.name);
+    squadComms.setVoice(voiceOn);
+  }
+
+  // --- end audio round
   void _resetComms({bool resume = false}) {
     gameEvents.reset(freshRun: !resume);
     squadComms.reset();
@@ -173,7 +195,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   bool showFinalResult = false;
   String? heartNotice;
   double heartNoticeUntil = 0;
-  bool muted = false, loading = false, submitted = false;
+  bool loading = false, submitted = false;
   String? screen, error, boardError;
   bool boardLoading = true;
   int boardRequest = 0;
@@ -202,6 +224,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       }
     }
     scene = DemonScene(model, _tick);
+    // --- audio round: the remembered levels
+    musicLevel = AudioLevel.parse(audioLevel('music'));
+    speechLevel = AudioLevel.parse(audioLevel('speech'));
+    voiceOn = speechLevel != AudioLevel.mute;
+    if (!voiceOn) squadComms.setVoice(false);
     // --- music event hook: adaptive music listens on the shared event bridge
     _music = [GameEvents.listen(MusicBridge().call), GameEvents.listen(scene.music.onGameEvent)];
     scene.topScores = board;
@@ -830,8 +857,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 ),
               ),
             ),
-            _muteButton(),
-            _voiceButton(),
+            _musicToggle('menu'),
+            _speechToggle('menu'),
           ],
         ),
       ),
@@ -1245,8 +1272,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           ),
         ),
       ),
-      SizedBox(width: 38, child: _muteButton()),
-      SizedBox(width: 38, child: _voiceButton()),
+      _musicToggle('hud'),
+      _speechToggle('hud'),
       SizedBox(
         width: 38,
         child: IconButton(
@@ -2125,32 +2152,22 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           ),
         ),
       );
-  // --- squad comms: voice on/off next to sound; subtitles stay on.
-  Widget _voiceButton() => IconButton(
-    tooltip: voiceOn ? 'Mute squad voices' : 'Enable squad voices',
-    onPressed: () {
-      setState(() => voiceOn = !voiceOn);
-      audioUnlock();
-      squadComms.setVoice(voiceOn);
-    },
-    icon: Icon(
-      voiceOn ? Icons.record_voice_over_outlined : Icons.voice_over_off,
-      color: const Color(0xFF95A9BB),
-      size: 18,
-    ),
+  // --- audio round: Music and Speech toggles (subtitles stay on).
+  Widget _musicToggle(String where) => LevelToggle(
+    key: ValueKey('$where-music-level'),
+    channel: 'Music',
+    level: musicLevel,
+    icon: Icons.music_note,
+    mutedIcon: Icons.music_off,
+    onChanged: _setMusicLevel,
   );
-  Widget _muteButton() => IconButton(
-    tooltip: muted ? 'Enable sound' : 'Mute sound',
-    onPressed: () {
-      setState(() => muted = !muted);
-      audioUnlock();
-      audioMute(muted);
-    },
-    icon: Icon(
-      muted ? Icons.volume_off_outlined : Icons.volume_up_outlined,
-      color: const Color(0xFF95A9BB),
-      size: 19,
-    ),
+  Widget _speechToggle(String where) => LevelToggle(
+    key: ValueKey('$where-speech-level'),
+    channel: 'Speech',
+    level: speechLevel,
+    icon: Icons.record_voice_over_outlined,
+    mutedIcon: Icons.voice_over_off,
+    onChanged: _setSpeechLevel,
   );
   Widget _sprite(int row, int col, double size) => SizedBox(
     width: size,

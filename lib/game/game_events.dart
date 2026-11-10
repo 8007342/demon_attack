@@ -269,6 +269,15 @@ abstract final class GameEventNames {
   static const flawlessVictory = 'flawlessVictory';
   static const flawlessRun = 'flawlessRun';
 
+  // --- audio round: power-up music layer (published by MusicDirector).
+
+  /// The power-up state the music follows changed: data `active` (number of
+  /// powers running), `falling` (a pickup is in the air) and `level`. The
+  /// music adds the level's power layer while `active` > 0 and brightens
+  /// while `falling`, both on the next bar line.
+  static const musicPowerLayer = 'musicPowerLayer';
+  // --- end audio round
+
   /// Raw model names renamed into this vocabulary.
   static const aliases = {
     'wave': waveStart,

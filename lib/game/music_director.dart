@@ -7,10 +7,11 @@ import 'model.dart';
 /// (`// --- music event hook`). The director never writes to the model: it
 /// reads wave progress, reinforcement arrivals, elites and sentinels, dive and
 /// last-stand tells, the carrier's form, shield and hatch, and the player's
-/// lives. It publishes what it finds on the shared game-event bridge
+/// lives, and the active power-ups and falling pickups. It publishes what it
+/// finds on the shared game-event bridge
 /// (`dispatchGameEvent`, lib/game/game_events.dart): `musicIntensity` (tier
-/// 1 calm .. 4 peril), `diveTell`, `lastStandTell`, `carrierHatchOpen` and
-/// `reinforcementsArrived`. It also listens there ([onGameEvent]): allies under
+/// 1 calm .. 4 peril), `diveTell`, `lastStandTell`, `carrierHatchOpen`,
+/// `reinforcementsArrived` and `musicPowerLayer`. It also listens there ([onGameEvent]): allies under
 /// attack and demon ground units in range lift the tier like reinforcements.
 /// [MusicBridge] turns the events, and `fleetIntact`, into music.
 class MusicDirector {
@@ -51,6 +52,11 @@ class MusicDirector {
   final Set<Demon> _telling = {}, _lastStands = {};
   bool _hatchOpen = false;
   (int, int)? _scene;
+
+  // --- audio round: the power-up layer follows the active powers and any
+  // falling pickup (published as `musicPowerLayer` when either changes).
+  int _powers = 0;
+  bool _falling = false;
 
   /// The intensity the current state asks for, before hysteresis.
   static int targetTier(
@@ -107,6 +113,7 @@ class MusicDirector {
     _lifted = (_lifted - dt).clamp(0, reinforcementLift);
     _pressure = model.ground.pressure.clamp(0.0, 1.0);
     _tells(model);
+    _powerLayer(model);
     final wanted = targetTier(model, lifted: _lifted > 0, pressure: _pressure);
     if (sentTier == null || wanted > target) {
       target = wanted;
@@ -154,6 +161,21 @@ class MusicDirector {
     _hatchOpen = open;
   }
 
+  void _powerLayer(ArcadeModel model) {
+    final powers = model.powerTimers.values.where((t) => t > 0).length;
+    final falling = model.pickups.isNotEmpty;
+    if (powers == _powers && falling == _falling) return;
+    _powers = powers;
+    _falling = falling;
+    emit(
+      GameEvent(GameEventNames.musicPowerLayer, {
+        'active': powers,
+        'falling': falling,
+        'level': model.level,
+      }),
+    );
+  }
+
   void _tell(String name) {
     final last = _lastTell[name];
     if (last != null && _clock - last < (tellSpacing[name] ?? 1)) return;
@@ -169,6 +191,16 @@ class MusicDirector {
     _lastStands.clear();
     _hatchOpen = false;
     _lastTell.clear();
+    if (_powers != 0 || _falling) {
+      _powers = 0;
+      _falling = false;
+      emit(
+        const GameEvent(GameEventNames.musicPowerLayer, {
+          'active': 0,
+          'falling': false,
+        }),
+      );
+    }
   }
 }
 
@@ -181,13 +213,16 @@ class MusicBridge {
     void Function(int)? onIntensity,
     void Function(String)? onAccent,
     void Function()? onFleetIntact,
+    void Function(int active, bool falling)? onPowerLayer,
   }) : onIntensity = onIntensity ?? audioIntensity,
        onAccent = onAccent ?? audioAccent,
-       onFleetIntact = onFleetIntact ?? audioFleetIntact;
+       onFleetIntact = onFleetIntact ?? audioFleetIntact,
+       onPowerLayer = onPowerLayer ?? audioPowerLayer;
 
   final void Function(int) onIntensity;
   final void Function(String) onAccent;
   final void Function() onFleetIntact;
+  final void Function(int active, bool falling) onPowerLayer;
 
   static const accents = {
     GameEventNames.diveTell: 'dive',
@@ -212,6 +247,11 @@ class MusicBridge {
       onIntensity((event.data['tier'] as int?) ?? 1);
     } else if (event.name == GameEventNames.fleetIntact) {
       onFleetIntact();
+    } else if (event.name == GameEventNames.musicPowerLayer) {
+      onPowerLayer(
+        (event.data['active'] as int?) ?? 0,
+        (event.data['falling'] as bool?) ?? false,
+      );
     }
   }
 }
