@@ -661,6 +661,27 @@ class TerrainView implements GroundRelief {
     return GroundPose(x, y, climb: climb, pace: pace);
   }
 
+  // --- ground war v4: full-width units choose their own routes (by
+  // [heightAt]); this only stands them on the visible surface.
+  @override
+  GroundPose placeAt(double x, double z) {
+    _ensure();
+    final px = x.clamp(0.0, 360.0);
+    final y = yOf(px, z);
+    const dz = 10.0;
+    final ahead = _heightFast(px, math.max(GroundTuning.leaveZ * .8, z - dz));
+    final behind = _heightFast(px, z + dz);
+    final climb = (ahead - behind) / (2 * dz);
+    final pace = (1 - 2.4 * climb).clamp(.5, 1.25);
+    return GroundPose(x, y, climb: climb, pace: pace);
+  }
+
+  @override
+  double heightAt(double x, double z) {
+    _ensure();
+    return _heightFast(x.clamp(0.0, 360.0), z);
+  }
+
   // ---------------------------------------------------------------------
   // Vegetation
   // ---------------------------------------------------------------------

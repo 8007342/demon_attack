@@ -9,6 +9,7 @@ export 'swarm_policy.dart';
 
 // --- ground war (demon ground forces, allies, homing missiles) ---
 part 'ground_war.dart';
+part 'ground_war_v4.dart'; // --- ground war v4
 
 // --- life-loss sequence (explosion, regroup, re-emergence) ---
 part 'life_loss.dart';

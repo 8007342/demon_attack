@@ -138,6 +138,49 @@ abstract final class GameEventNames {
     convoyStuck,
   ];
 
+  // --- ground war v4 ---------------------------------------------------------
+  // The skirmish layer (lib/game/ground_war_v4.dart): frequent ambient
+  // fights between mixed demon forces and the convoy that never threaten the
+  // player. Queued by the model; each is rate-limited in the model
+  // (GroundV4Tuning.eventGap) except groundTide. Data always has `sector`;
+  // `force` / `allyForce` are 'vehicle', 'infantry', 'rockets' or
+  // 'heavyTank'.
+
+  /// A convoy ally starts a skirmish (x, y, force, allyForce). At most one
+  /// per 6 s. "Contact, left flank!"
+  static const groundSkirmish = 'groundSkirmish';
+
+  /// Foot soldiers on either side are in the fight (x, y, force,
+  /// allyForce). At most one per 12 s. "Infantry engaged!"
+  static const infantryEngaged = 'infantryEngaged';
+
+  /// The convoy (or its artillery: `by` 'artillery') wins a skirmish (x, y,
+  /// force, by). At most one per 7 s. "Target down, moving up."
+  static const skirmishWon = 'skirmishWon';
+
+  /// A battered ally falls back to its escort slot for field repairs (it is
+  /// never totalled by a skirmish) (x, y, force). At most one per 10 s.
+  /// "Falling back to repair!"
+  static const allyFallingBack = 'allyFallingBack';
+
+  /// A demon heavy tank enters the field (x, y). At most one per 20 s.
+  /// "Heavy armour on the horizon!"
+  static const heavyArmorSighted = 'heavyArmorSighted';
+
+  /// The ground battle's ebb and flow turns (data `state`: 'surge' or
+  /// 'lull'); about twice per 34 s tide cycle. Music / commander hook.
+  static const groundTide = 'groundTide';
+
+  static const groundWarV4 = [
+    groundSkirmish,
+    infantryEngaged,
+    skirmishWon,
+    allyFallingBack,
+    heavyArmorSighted,
+    groundTide,
+  ];
+  // --- end ground war v4 -----------------------------------------------------
+
   // --- music event hook: events derived read-only from the simulation by
   // MusicDirector (lib/game/music_director.dart) once per frame. Any
   // presentation layer may listen; MusicBridge turns them into music.
@@ -190,6 +233,7 @@ abstract final class GameEventNames {
     convoyClimbing,
     convoyClearingVegetation,
     convoyStuck,
+    ...groundWarV4, // --- ground war v4
   ];
 
   // --- Comms-specific derived events.
