@@ -194,6 +194,13 @@ abstract final class GameEventNames {
 
   /// A player ship is totalled (the pilot ejects; the reserve launches).
   static const lifeLost = 'lifeLost';
+
+  // --- music event hook: the life-loss moment, in three beats (emitted by
+  // the gameplay side; music: hit stinger + drop, demonic gloat, heroic
+  // re-entry accent back into the tier).
+  static const playerDestroyed = 'playerDestroyed';
+  static const regroupStart = 'regroupStart';
+  static const playerRespawn = 'playerRespawn';
   static const lowLives = 'lowLives';
   static const extraLife = 'extraLife';
   static const salvage = 'salvage';

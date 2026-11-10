@@ -14,24 +14,41 @@
   const midiRoot = new URL('./audio/midi/', document.baseURI);
   const musicRoot = new URL('./audio/music/', document.baseURI);
   const midiCache = new Map(), bytesCache = new Map(), bufferCache = new Map(), ready = new Map();  // ready: decoded buffers, synchronously
-  let context, master, music, effects, timer, pending, active, wanted, nextBeat = 0, beat = 0;
+  // music: the bus the comms layer ducks (demonAudio.graph); drop: the
+  // life-loss dip under it, so the two never fight over one gain.
+  let context, master, music, drop, sidechain, effects, timer, pending, active, wanted, nextBeat = 0, beat = 0;
   let muted = false, paused = false, requested = 0;
   // The level whose music plays: its intro, then its tiers.
   const scene = { level: 0, tier: 1, section: null, phaseTier: 0 };
   const voices = new Set(), accentsLive = [], accentLog = [], lastAccent = new Map();
-  const beatSeconds = .5;
+  // The scheduler grid follows the active cue's tempo. Each level runs at its
+  // own BPM, defined by an integer number of samples per bar at 48 kHz
+  // (tools/music_motifs.py BAR_SAMPLES, mirrored in manifest.json): L1 170,
+  // L2 160, L3 180, L4 150, Carrier 190. Marches, alien victory and menu: 120.
+  const levelBarSamples = { 1: 67765, 2: 72000, 3: 64000, 4: 76800, 5: 60632 };
+  const levelBeat = level => levelBarSamples[level] / 48000 / 4;
+  let beatSeconds = .5;
   const fileGain = .7;          // recorded cues are mastered to -18..-19 LUFS
   const bufferLimit = 12;       // decoded cues kept (a level is ~8: intro, 4 tiers, outro, accents, clear)
-  const masterGain = .65, effectsGain = .9;  // effects sit above the denser rock/metal mixes
+  const masterGain = .65, effectsGain = 1;  // effects sit above the battle-metal mixes
+  const sidechainDip = .8, sidechainTags = ['explosion', 'life', 'hit'];  // -2 dB music dip under big effects
   // Cue table (mirrors web/audio/music/manifest.json; checked by test-worker).
-  const accentSlots = ['dive', 'laststand', 'hatch', 'reinforce', 'breakthrough'];
-  const accentQuantum = { dive: .25, reinforce: .25, laststand: .5, hatch: .5, breakthrough: .5 };  // seconds: half-beat / beat
+  const accentSlots = ['dive', 'laststand', 'hatch', 'reinforce', 'breakthrough', 'destroyed', 'gloat', 'respawn'];
+  // Quantum in beats of the level's own grid: half-beat, beat, or a sixteenth for the hit.
+  const accentQuantum = { dive: .5, reinforce: .5, laststand: 1, hatch: 1, breakthrough: 1, destroyed: .25, gloat: 1, respawn: 1 };
+  const lifeLoss = ['destroyed', 'gloat', 'respawn'];
+  const dropLevel = .15, dropBars = 2;  // life loss: music dips under the hit stinger for two bars
   const slotSeconds = 1.5;
   function cueInfo(name) {
+    const info = levelCueInfo(name);
+    info.beatSeconds = info.level ? levelBeat(info.level) : .5;
+    return info;
+  }
+  function levelCueInfo(name) {
     if (/^l[1-5]-t[1-4]$/.test(name)) return { kind: 'loop', beats: 32, level: +name[1], tier: +name[4] };
     if (/^l[1-5]-intro$/.test(name)) return { kind: 'tail', beats: 16, level: +name[1] };
     if (/^l[1-5]-outro$/.test(name)) return { kind: 'loop', beats: 16, level: +name[1] };
-    if (/^l[1-5]-accents$/.test(name)) return { kind: 'sprite', beats: 15, level: +name[1] };
+    if (/^l[1-5]-accents$/.test(name)) return { kind: 'sprite', beats: 0, level: +name[1] };
     return { menu: { kind: 'loop', beats: 32 }, alienwin: { kind: 'loop', beats: 32 },
       levelclear: { kind: 'tail', beats: 12 }, victory: { kind: 'tail', beats: 20 }, finale: { kind: 'tail', beats: 36 },
       'levelclear-fleet': { kind: 'tail', beats: 12 }, 'finale-fleet': { kind: 'tail', beats: 36 },
@@ -112,17 +129,17 @@
     const info = cueInfo(name);
     const buffer = await loadBuffer(name);
     if (buffer) {
-      const opening = info.beats * beatSeconds;
+      const opening = info.beats * info.beatSeconds;
       const tail = info.kind === 'tail';
       return { name, info, buffer, loop: info.kind !== 'oneshot',
-        loopStart: tail ? Math.min(opening, buffer.duration - beatSeconds) : 0,
+        loopStart: tail ? Math.min(opening, buffer.duration - info.beatSeconds) : 0,
         loopEnd: tail ? buffer.duration : Math.min(buffer.duration, opening) };
     }
     const track = await loadMidi(name);
     return track ? { name, info, track, loop: info.kind === 'loop', loopTail: info.kind === 'tail' } : null;
   }
 
-  function voice(note, at, duration, output = music) {
+  function voice(note, at, duration, output = drop) {
     if (!context || paused || at < context.currentTime-.1) return;
     const oscillator = context.createOscillator(), gain = context.createGain();
     const percussion = note.channel === 9;
@@ -155,7 +172,7 @@
     if (entry.loop) { source.loopStart = entry.loopStart; source.loopEnd = entry.loopEnd; }
     if (fadeIn > 0) { gain.gain.setValueAtTime(0, at); gain.gain.linearRampToValueAtTime(fileGain, at + fadeIn); }
     else gain.gain.value = fileGain;
-    source.connect(gain); gain.connect(music);
+    source.connect(gain); gain.connect(drop);
     source.start(at, offset);
     entry.player = { source, gain, startedAt: at, offset };
     source.onended = () => { try { source.disconnect(); gain.disconnect(); } catch { /* detached */ } };
@@ -170,7 +187,8 @@
     try { player.source.stop(at + seconds + .01); } catch { /* not started */ }
   }
   function activate(entry, at, offsetBeats = 0, fadeIn = 0) {
-    active = entry; beat = offsetBeats;
+    // From here the grid runs at this cue's tempo (the bar that just ended was the old one's).
+    active = entry; beat = offsetBeats; beatSeconds = entry.info.beatSeconds;
     if (entry.info.tier) { scene.section = 'tiers'; scene.playing = entry.info.tier; }
     if (entry.buffer) startFile(entry, at, offsetBeats * beatSeconds, fadeIn);
     // A one-shot that hands over (the cackle) queues its successor at its end.
@@ -183,7 +201,8 @@
   function schedule() {
     if (!context || paused || context.state !== 'running') return;
     while (nextBeat < context.currentTime + .12) {
-      // All cues share 120 BPM; switching on a bar preserves pulse and release tails.
+      // Cues change on the active cue's bar line; a cue at another tempo then
+      // starts its own grid there (the old bar is always finished first).
       if (pending && due(pending)) {
         const entry = pending; pending = null;
         if (entry.inPlace) {
@@ -224,9 +243,9 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return false;
         context = new AudioContext();
-        master = context.createGain(); music = context.createGain(); effects = context.createGain();
+        master = context.createGain(); music = context.createGain(); drop = context.createGain(); sidechain = context.createGain(); effects = context.createGain();
         master.gain.value = muted ? 0 : masterGain; effects.gain.value = effectsGain;
-        music.connect(master); effects.connect(master); master.connect(context.destination);
+        drop.connect(sidechain); sidechain.connect(music); music.connect(master); effects.connect(master); master.connect(context.destination);
         nextBeat = context.currentTime + .04;
         timer = setInterval(schedule, 25);
         await context.resume();
@@ -260,11 +279,11 @@
       // Clear, victory and the cackle must follow the moment, rather than wait up to a bar.
       // Release current/future scheduled music voices over 90ms; effects survive.
       if (context && active) {
-        for (const voice of voices) if (voice.output === music) release(voice, context.currentTime);
+        for (const voice of voices) if (voice.output === drop) release(voice, context.currentTime);
         stopFile(active, context.currentTime, .09);
       }
       pending = null;
-      if (context) { nextBeat = context.currentTime + .02; beat = 0; }
+      if (context) { nextBeat = context.currentTime + .02; beat = 0; restoreMusic(context.currentTime); }
       activate(entry, nextBeat);
       schedule();
     } else pending = entry;
@@ -362,28 +381,50 @@
     const key = `l${scene.level}-accents`, sprite = ready.get(key) || null;
     if (!sprite) loadBuffer(key);
     const now = context.currentTime;
-    const quantum = accentQuantum[name];
+    const quantum = accentQuantum[name] * beatSeconds;
     const lastBeat = nextBeat - beatSeconds;
     const at = lastBeat + quantum * Math.max(0, Math.ceil((now + .03 - lastBeat) / quantum - 1e-9));
     for (const live of accentsLive.splice(0)) if (live.end > now) accentsLive.push(live);
-    if (accentsLive.length >= 2) return null;
+    // At most two accents at once, except the life-loss moments, which always play.
+    if (accentsLive.length >= 2 && !lifeLoss.includes(name)) return null;
     const slot = accentSlots.indexOf(name);
     if (sprite) {
       const source = context.createBufferSource(), gain = context.createGain();
+      // Accents bypass the life-loss drop (the hit must sound over it) but
+      // stay on the ducked music bus.
       source.buffer = sprite; gain.gain.value = fileGain;
       source.connect(gain); gain.connect(music);
       source.start(at, slot * slotSeconds, slotSeconds);
       source.onended = () => { try { source.disconnect(); gain.disconnect(); } catch { /* detached */ } };
     } else {
       // Fallback: a short synthesized figure with the same role.
-      const pitches = { dive: [64, 67, 76], laststand: [52, 53, 65], hatch: [40, 46, 58], reinforce: [52, 55, 64], breakthrough: [52, 53, 52, 53] }[name];
-      pitches.forEach((pitch, i) => voice({ pitch, velocity: 100, channel: 1 }, at + i * .125, .2));
+      const pitches = { dive: [64, 67, 76], laststand: [52, 53, 65], hatch: [40, 46, 58], reinforce: [52, 55, 64], breakthrough: [52, 53, 52, 53],
+        destroyed: [28, 40], gloat: [46, 45, 40], respawn: [52, 59, 64, 71] }[name];
+      pitches.forEach((pitch, i) => voice({ pitch, velocity: 100, channel: 1 }, at + i * .125, .2, music));
     }
+    // Life loss: the hit drops the music for two bars; the re-entry brings it
+    // back on the respawn accent's downbeat (its crash, one beat into the slot).
+    if (name === 'destroyed') dropMusic(at);
+    else if (name === 'respawn') restoreMusic(at + beatSeconds);
     accentsLive.push({ name, at, end: at + slotSeconds });
     accentLog.push({ name, at, requestedAt: now, level: scene.level, source: sprite ? 'file' : 'synth' });
     if (accentLog.length > 16) accentLog.shift();
     return at;
   }
+  function dropMusic(at) {
+    if (!drop) return;
+    drop.gain.cancelScheduledValues(at);
+    drop.gain.setTargetAtTime(dropLevel, at, .03);
+    drop.gain.setTargetAtTime(1, at + dropBars * 4 * beatSeconds, .2);  // restores itself if no respawn comes
+    dropState = { at, until: at + dropBars * 4 * beatSeconds };
+  }
+  function restoreMusic(at) {
+    if (!drop) return;
+    drop.gain.cancelScheduledValues(at);
+    drop.gain.setTargetAtTime(1, at, .05);
+    if (dropState) dropState.until = at;
+  }
+  let dropState = null;
   function mute(value = true) { muted = !!value; if (master) master.gain.setTargetAtTime(muted ? 0 : masterGain, context.currentTime, .03); return muted; }
   function pause() { paused = true; if (context) context.suspend().catch(() => {}); }
   async function resume() { paused = false; if (context) { await context.resume().catch(() => {}); realign(); } }
@@ -443,6 +484,12 @@
     const [pitch, duration, velocity] = shapes[name] || shapes.hit;
     const tag = shapes[name] ? name : 'hit';
     limitVoices(tag);
+    if (sidechainTags.includes(tag) && sidechain?.gain.setTargetAtTime) {
+      // Sidechain: the music bows briefly under explosions and hits.
+      sidechain.gain.cancelScheduledValues(now);
+      sidechain.gain.setTargetAtTime(sidechainDip, now, .01);
+      sidechain.gain.setTargetAtTime(1, now + .08, .06);
+    }
     voice({ pitch, velocity, channel: name==='explosion' ? 9 : 0, tag }, now, duration, effects);
     if (name === 'explosion') noiseBurst(now, .32, .12, 2400);
     else if (name === 'life') noiseBurst(now, .45, .08, 900);
@@ -451,7 +498,8 @@
   window.demonAudio = Object.freeze({ unlock, cue, intensity, accent, fleetIntact, mute, pause, resume, sfx, get muted() { return muted; },
     get graph() { return { context, master, music, effects }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.
-    get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, offset: active?.player?.offset ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length, decoded: [...bufferCache.keys()], formats, scene: { ...scene }, accents: accentLog.slice(), fleetIntact: fleetIntactFlag }; } });
+    get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, offset: active?.player?.offset ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length, decoded: [...bufferCache.keys()], formats, scene: { ...scene }, accents: accentLog.slice(), fleetIntact: fleetIntactFlag,
+      bpm: 60 / beatSeconds, beatSeconds, drop: dropState ? { ...dropState } : null }; } });
   // Unlock from real DOM gestures, including Flutter canvas input.
   for (const type of ['pointerdown','keydown']) window.addEventListener(type, unlock, { once: true, capture: true });
   cue('menu');

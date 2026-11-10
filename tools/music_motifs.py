@@ -7,12 +7,14 @@ One source of truth for three consumers:
   * tools/music_guide.py also renders the per-level accent sprites from it.
 
 All riffs, hooks and progressions are written for this game. None quotes or
-imitates an existing song or band. Everything sits on the shared 120 BPM 4/4
-grid (beat = 0.5 s); a loop is 8 bars = 32 beats.
+imitates an existing song or band. Times are in beats of 4/4. Round 3: each
+level runs at its own tempo (BPM, battle metal) with symphonic intros and
+outros; the marches, alien victory and menu stay at 120 BPM. A loop is
+8 bars = 32 beats.
 
 An event is (beat, duration_beats, midi_pitch, velocity 1..127, instrument).
 Instruments: kick snare hat ohat crash ride tom china | bass gtr mute chord clean
-trem lead lead2 brass choir organ bell timp pad snareroll.
+trem lead lead2 brass choir organ bell timp pad snareroll strings vocalise hey.
 For gtr/mute/trem the pitch is the power-chord root (the renderer adds the
 fifth and octave); chord plays a full triad given as the root with the quality
 in the instrument suffix (chord, chordm).
@@ -22,7 +24,7 @@ from __future__ import annotations
 BEATS = 32
 BARS = 8
 TIERS = (1, 2, 3, 4)
-ACCENTS = ('dive', 'laststand', 'hatch', 'reinforce', 'breakthrough')
+ACCENTS = ('dive', 'laststand', 'hatch', 'reinforce', 'breakthrough', 'destroyed', 'gloat', 'respawn')
 
 # Pitches (MIDI): E2 = 40, C2 = 36, F2 = 41.
 N = {name: i for i, name in enumerate(['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'])}
@@ -400,43 +402,322 @@ def pads(level: int, tier: int, bars: int = BARS):
     return ev
 
 
+# ------------------------------------------------------------------ round 3: battle metal
+# Per-level tempo (BPM). Each level's cues (intro, tiers, outro, accents) run
+# on that level's own grid; the marches, alien victory, cackle and menu keep 120.
+BPM_NOMINAL = {1: 170, 2: 160, 3: 180, 4: 150, 5: 190}
+# Every cue is whole bars, so a level's grid is defined by an integer number
+# of samples per bar at 48 kHz; the exact tempo follows from it (L1 169.996,
+# L5 189.999 BPM; the others are exact). Loops then wrap sample-exactly on the
+# same grid the player schedules (web/audio/demon-audio.js uses these values).
+BAR_SAMPLES = {lvl: round(4 * 60 * 48000 / bpm) for lvl, bpm in BPM_NOMINAL.items()}
+BPM = {lvl: 4 * 60 * 48000 / bar for lvl, bar in BAR_SAMPLES.items()}
+
+# Drum/arrangement style per level (round 3).
+BATTLE = {1: 'battlepunk', 2: 'powermetal', 3: 'battle', 4: 'doombattle', 5: 'blackened'}
+
+
+def bpm_of(name: str) -> float:
+    """Exact tempo of a cue: the level's for l<n>-*, 120 for everything else."""
+    if name.startswith('l') and len(name) > 2 and name[1].isdigit() and name[2] == '-':
+        return BPM[int(name[1])]
+    return 120
+
+
+def kick16(b0, vel=100):
+    return [(b0 + k * .25, .15, 36, vel - (0 if k % 4 == 0 else 12), 'kick') for k in range(16)]
+
+
+def battle_drums(level: int, tier: int, bars: int = BARS, fill_last: bool = True):
+    """Battle/power-metal drums: every tier drives; density rises with the tier."""
+    style = BATTLE[level]
+    ev = []
+    for bar in range(bars):
+        b0 = bar * 4
+        last = fill_last and bar == bars - 1
+        ev.append((b0, 2, 49, 115, 'crash'))
+        if style == 'battlepunk':
+            if tier <= 2:
+                # Fast skank: kick on every beat, snare on every off-beat.
+                for i in range(4):
+                    ev += [(b0 + i, .3, 36, 115, 'kick'), (b0 + i + .5, .3, 38, 112, 'snare')]
+                ev += [(b0 + i * .5, .2, 42, 75, 'hat') for i in range(8)]
+                if tier == 2:
+                    ev += [(b0 + i + .75, .15, 36, 95, 'kick') for i in range(4)]
+            elif tier == 3:
+                ev += kick16(b0, 108)
+                ev += [(b0 + s, .3, 38, 118, 'snare') for s in (1, 3)]
+                ev += [(b0 + i * .5, .3, 49 if i % 2 == 0 else 51, 85, 'crash' if i % 2 == 0 else 'ride') for i in range(8)]
+            else:
+                for k in range(16):  # blast beat
+                    ev.append((b0 + k * .25, .15, 36 if k % 2 == 0 else 38, 110, 'kick' if k % 2 == 0 else 'snare'))
+                ev += [(b0 + i, .6, 49, 100, 'crash') for i in range(4)]
+        elif style == 'powermetal':
+            if tier == 1:
+                ev += [(b0 + k * .5, .2, 36, 108, 'kick') for k in range(8)]
+            else:
+                ev += kick16(b0, 110)
+            ev += [(b0 + s, .3, 38, 118, 'snare') for s in (1, 3)]
+            ev += [(b0 + i * .5, .2, 42 if tier < 3 else 51, 80, 'hat' if tier < 3 else 'ride') for i in range(8)]
+            if tier >= 3:
+                ev += [(b0 + 2, 1, 49, 105, 'crash')]
+        elif style == 'battle':
+            if tier <= 3:
+                # Gallop kicks under the gallop riff: eighth + two sixteenths per beat.
+                for i in range(4):
+                    ev += [(b0 + i, .2, 36, 115, 'kick'), (b0 + i + .5, .15, 36, 100, 'kick'), (b0 + i + .75, .15, 36, 100, 'kick')]
+            else:
+                ev += kick16(b0, 112)
+            ev += [(b0 + s, .3, 38, 120, 'snare') for s in (1, 3)]
+            ev += [(b0 + i, .5, 49 if tier >= 2 else 51, 90, 'crash' if tier >= 2 else 'ride') for i in range(4)]
+            if bar % 2 == 1:  # war-march tom answer
+                ev += [(b0 + 3 + k * .25, .2, (45, 45, 43, 41)[k], 112, 'tom') for k in range(4)]
+        elif style == 'doombattle':
+            if tier == 1:
+                # War march: floor-tom eighths, snare on 3, kick on 1.
+                ev += [(b0 + k * .5, .3, 41, 100 + (15 if k % 2 == 0 else 0), 'tom') for k in range(8)]
+                ev += [(b0, .5, 36, 120, 'kick'), (b0 + 2, .5, 38, 120, 'snare')]
+            elif tier == 2:
+                ev += kick16(b0, 105)
+                ev += [(b0 + 2, .5, 38, 120, 'snare')]
+                ev += [(b0 + k * .5, .3, 41, 95, 'tom') for k in range(8)]
+            else:
+                ev += kick16(b0, 112)
+                ev += [(b0 + s, .3, 38, 120, 'snare') for s in (1, 3)]
+                ev += [(b0 + i * .5, .3, 49 if i % 2 == 0 else 52, 90, 'crash' if i % 2 == 0 else 'china') for i in range(8 if tier == 4 else 4)]
+        elif style == 'blackened':
+            if tier == 1:
+                ev += [(b0 + k * .5, .3, 41, 110, 'tom') for k in range(8)]
+                ev += kick16(b0, 100)
+                ev += [(b0 + s, .3, 38, 115, 'snare') for s in (1, 3)]
+            else:
+                for k in range(16):  # blast beat
+                    ev.append((b0 + k * .25, .15, 36 if k % 2 == 0 else 38, 112, 'kick' if k % 2 == 0 else 'snare'))
+                if tier >= 3:
+                    ev += kick16(b0, 95)
+                ev += [(b0 + i, .6, 49 if i % 2 == 0 else 52, 100, 'crash' if i % 2 == 0 else 'china') for i in range(4)]
+        if last:
+            ev = [e for e in ev if not (e[0] >= b0 + 2 and e[4] in ('snare', 'hat', 'ride', 'tom'))]
+            ev += [(b0 + 2 + k * .25, .2, (38, 38, 45, 45, 43, 43, 41, 41)[k], 100 + 3 * k, 'snare' if k < 2 else 'tom') for k in range(8)]
+    return ev
+
+
+def battle_rhythm(level: int, tier: int, bars: int = BARS):
+    """Distorted rhythm guitars on the level's riff roots, battle-metal picking."""
+    style = BATTLE[level]
+    roots = riff_roots(level)
+    q = MOTIFS[level].get('quality', [''] * BARS)
+    ev = []
+    for i in range(bars * 8):
+        r = roots[i % 64]
+        t = i * .5
+        bar = (i // 8) % BARS
+        accent = i % 8 == 0
+        if style == 'battlepunk':
+            # Sixteenth downpicking from tier 3, eighths below.
+            if tier >= 3:
+                ev += [(t, .22, r, 115 if accent else 104, 'gtr'), (t + .25, .2, r, 98, 'mute')]
+            else:
+                ev.append((t, .45, r, 116 if accent else 106, 'gtr'))
+        elif style == 'powermetal':
+            if i % 2 == 0 and tier >= 2:
+                ev += [(t, .45, r, 115, 'chord' + q[bar]), (t + .5, .2, r, 98, 'mute'), (t + .75, .2, r, 98, 'mute')]
+            elif tier == 1:
+                ev.append((t, .45, r, 112 if accent else 102, 'gtr'))
+        elif style == 'battle':
+            if i % 2 == 0:
+                ev += [(t, .45, r, 118 if accent else 110, 'gtr'), (t + .5, .2, roots[(i + 1) % 64], 100, 'mute'), (t + .75, .2, roots[(i + 1) % 64], 100, 'mute')]
+        elif style == 'doombattle':
+            if tier == 1:
+                if i % 4 == 0:
+                    ev.append((t, 1.9, r, 118, 'gtr'))
+            elif tier == 2:
+                ev += [(t, .45, r, 112 if accent else 104, 'gtr')]
+            else:
+                ev += [(t, .22, r, 112, 'gtr' if accent else 'mute'), (t + .25, .2, r, 100, 'mute')]
+        elif style == 'blackened':
+            if i % 2 == 0:
+                j = i + 1
+                while j < bars * 8 and roots[j % 64] == r and j % 8 != 0 and j - i < 4:
+                    j += 1
+                ev.append((t, (j - i) * .5 * .98, r, 118, 'trem'))
+    return ev
+
+
+def battle_bass(level: int, tier: int, bars: int = BARS):
+    roots = riff_roots(level)
+    ev = []
+    for i in range(bars * 8):
+        r = roots[i % 64] - 12 if roots[i % 64] >= 40 else roots[i % 64]
+        t = i * .5
+        if BATTLE[level] in ('battle', 'powermetal') and tier >= 2 and i % 2 == 0:
+            ev += [(t, .45, r, 105, 'bass'), (t + .5, .2, r, 95, 'bass'), (t + .75, .2, r, 95, 'bass')]
+        elif BATTLE[level] in ('battle', 'powermetal') and tier >= 2:
+            continue
+        else:
+            ev.append((t, .45, r, 105 if i % 2 == 0 else 95, 'bass'))
+    return ev
+
+
+def battle_lead(level: int, tier: int, bars: int = BARS):
+    """The level's hook as a lead guitar; harmonised in thirds at tier 4 (and
+    tier 3 for the power-metal and battle levels)."""
+    ev = [e for e in seq(MOTIFS[level]['hook'], inst='lead', vel=108) if e[0] < bars * 4]
+    if tier >= 4 or (tier == 3 and BATTLE[level] in ('powermetal', 'battle')):
+        ev += [(b, d, pt + (-4 if pt % 12 in (4, 7, 11) else -3), v - 8, 'lead2') for b, d, pt, v, _ in ev]
+    return ev
+
+
+def hey_chants(level: int, tier: int, bars: int = BARS):
+    """Gang shouts ("hey!") as rhythmic texture on the phrase ends."""
+    ev = []
+    for bar in range(bars):
+        b0 = bar * 4
+        if bar % 4 == 3 or (tier >= 4 and bar % 2 == 1):
+            ev += [(b0 + 2, .4, 62, 115, 'hey'), (b0 + 3, .4, 62, 120, 'hey')]
+    return ev
+
+
+def battle_pads(level: int, tier: int, bars: int = BARS):
+    """Choir/strings/organ above the band for the epic levels and peak tiers."""
+    style = BATTLE[level]
+    roots = bar_roots(level)
+    ev = []
+    for bar in range(bars):
+        r = roots[bar % BARS] + 24
+        b0 = bar * 4
+        minor = MOTIFS[level].get('quality', ['m'] * BARS)[bar % BARS] != '' or style != 'powermetal'
+        third = 3 if minor else 4
+        if tier >= 4 or style in ('doombattle', 'blackened') or (style == 'powermetal' and tier >= 3):
+            ev += [(b0, 3.9, r + 12, 78, 'choir'), (b0, 3.9, r + 12 + third, 70, 'choir'), (b0, 3.9, r + 19, 68, 'choir')]
+        if tier >= 3 and style in ('powermetal', 'battle', 'doombattle'):
+            ev += [(b0, 3.9, r, 70, 'strings'), (b0, 3.9, r + 7, 64, 'strings')]
+        if style == 'blackened' and tier >= 2:
+            ev += [(b0, 3.9, r, 70, 'organ'), (b0, 3.9, r + 6 if bar % 2 else r + 7, 60, 'organ')]
+    return ev
+
+
 def tier_events(level: int, tier: int):
-    """The whole 8-bar loop for one intensity tier."""
-    style = MOTIFS[level]['drums']
-    ev = drums(style, tier) + rhythm(level, tier) + bass(level, tier)
-    if style == 'doom' and tier == 1:
-        # The bell tolls the hook over the drone instead of a lead guitar.
-        ev += hook(level, tier, inst='bell')
-    elif tier >= 3 or (style == 'deathdoom' and tier >= 2):
-        ev += hook(level, tier)
-    elif tier == 2 and style in ('rock', 'punk'):
-        # Tier 2 states the hook once, in the second half (bars 5-8).
-        ev += [e for e in hook(level, tier) if e[0] >= 16]
-    ev += pads(level, tier)
+    """The whole 8-bar battle loop for one intensity tier (1 is already battle music)."""
+    ev = battle_drums(level, tier) + battle_rhythm(level, tier) + battle_bass(level, tier)
+    if tier >= 3 or (tier == 2 and BATTLE[level] in ('powermetal', 'battle')):
+        ev += battle_lead(level, tier)
+    elif tier == 2:
+        ev += [e for e in battle_lead(level, tier) if e[0] >= 16]
+    if tier >= 2:
+        ev += hey_chants(level, tier)
+    ev += battle_pads(level, tier)
     return sorted(ev)
 
 
+def orchestral_hit(b, root, vel=118):
+    """Brass + strings stab, timpani and crash on one downbeat."""
+    return [(b, .9, root + 24 + k, vel - 10, 'brass') for k in (0, 7, 12)] + \
+           [(b, .5, root + 12 + k, vel - 15, 'strings') for k in (0, 7, 12, 15)] + \
+           [(b, .9, root, vel, 'timp'), (b, 2, 49, vel, 'crash'), (b, .5, 36, vel, 'kick')]
+
+
 def intro_events(level: int):
-    """Arrival: 4 bars. Riff alone, drums enter with a fill, a hook pickup.
-    Loops its last bar until the level starts."""
-    style = MOTIFS[level]['drums']
-    ev = [e for e in rhythm(level, 2, bars=4)]
-    ev += [e for e in bass(level, 2, bars=4) if e[0] >= 8]
-    ev += [e for e in drums(style, 2, bars=4) if e[0] >= 8]
-    ev += [(0, 2, 49, 110, 'crash')]
-    ev += snare_roll(6, 2, 40, 110)
-    ev += [(b + 8, d, pitch, v, 'lead') for b, d, pitch, v, _ in seq(MOTIFS[level]['hook']) if b < 8]
-    ev += pads(level, 2, bars=4)
+    """Symphonic arrival, 4 bars at the level's tempo: orchestral hits on the
+    progression, choir and strings, a wordless soprano vocalise singing the
+    hook in augmentation; the band enters in bar 3 and rolls into the battle.
+    Loops its last bar until play begins."""
+    roots = bar_roots(level)
+    hook_notes = seq(MOTIFS[level]['hook'])
+    ev = []
+    for bar in range(4):
+        r = roots[bar]
+        b0 = bar * 4
+        ev += orchestral_hit(b0, r)
+        ev += [(b0, 3.9, r + 24 + k, 72, 'strings') for k in (0, 7, 12)]
+        ev += [(b0, 3.9, r + 36 + k, 74, 'choir') for k in (0, 3, 7)]
+    # Vocalise: the hook's first phrase at half speed, an octave up where needed.
+    for b, d, pt, v, _ in hook_notes:
+        if b < 8:
+            pitch = pt if pt >= 67 else pt + 12
+            ev.append((b * 2, d * 2 * .95, pitch, 92, 'vocalise'))
+    # Band from bar 3: sustained chords and double kick, toms into the downbeat.
+    for bar in (2, 3):
+        b0 = bar * 4
+        ev += [(b0, 1.9, roots[bar], 115, 'gtr'), (b0 + 2, 1.9, roots[bar], 112, 'gtr')]
+        ev += kick16(b0, 100)
+        ev += [(b0 + 1, .3, 38, 115, 'snare'), (b0 + 3, .3, 38, 115, 'snare')]
+    ev += [(14 + k * .25, .2, (45, 45, 43, 43, 41, 41, 38, 38)[k], 105 + 2 * k, 'tom' if k < 6 else 'snare') for k in range(8)]
+    ev += snare_roll(15, 1, 70, 120)
+    ev += [(b, d, pt - 12 if pt >= 40 else pt, v, 'bass') for b, d, pt, v, _ in [(i * 4, 3.9, roots[i], 100, '') for i in range(4)]]
     return sorted(ev)
 
 
 def outro_events(level: int):
-    """Travel after the level: 4 bars, half-time riff, hook in augmentation, loops."""
-    style = MOTIFS[level]['drums']
-    ev = rhythm(level, 1, bars=4) + bass(level, 1, bars=4)
-    ev += drums('doom' if style in ('doom', 'deathdoom') else style, 1, bars=4, fill_last=False)
-    ev += [(b * 2, d * 2, pitch, 85, 'lead') for b, d, pitch, v, _ in seq(MOTIFS[level]['hook']) if b < 8]
-    ev += pads(level, 1, bars=4)
+    """Symphonic travel after the level, 4 bars at its tempo (loops): strings
+    and choir on the progression, the vocalise sings the hook, half-time band."""
+    roots = bar_roots(level)
+    ev = []
+    for bar in range(4):
+        r = roots[bar]
+        b0 = bar * 4
+        ev += [(b0, 3.9, r + 24 + k, 76, 'strings') for k in (0, 7, 12, 15)]
+        ev += [(b0, 3.9, r + 36 + k, 70, 'choir') for k in (0, 3, 7)]
+        ev += [(b0, 3.9, r, 108, 'gtr'), (b0, 3.9, r - 12 if r >= 40 else r, 98, 'bass')]
+        ev += [(b0, .5, 36, 112, 'kick'), (b0 + 2, .5, 38, 112, 'snare'), (b0 + 1.5, .3, 36, 95, 'kick')]
+        ev += [(b0 + i * .5, .2, 51, 70, 'ride') for i in range(8)]
+        if bar % 2 == 0:
+            ev.append((b0, 2, 49, 105, 'crash'))
+    for b, d, pt, v, _ in seq(MOTIFS[level]['hook']):
+        if b < 8:
+            ev.append((b * 2, d * 2 * .95, pt if pt >= 67 else pt + 12, 88, 'vocalise'))
+    return sorted(ev)
+
+
+def accent_events(level: int, accent: str):
+    """Short accents in the level's motif and instrumentation. Same role and
+    shape on every level; each sounds within ~3 beats of its slot."""
+    m = MOTIFS[level]
+    roots = bar_roots(level)
+    tonic = roots[0]
+    hook_notes = [e[2] for e in seq(m['hook'])]
+    lead = 'lead'
+    if accent == 'dive':
+        a, b, c = hook_notes[:3]
+        ev = [(0, .25, a, 112, lead), (.25, .25, b, 112, lead), (.5, .9, c + 12 if c + 12 <= 96 else c, 118, lead),
+              (0, .45, tonic, 118, 'gtr'), (0, .2, 38, 112, 'snare'), (.25, .2, 38, 104, 'snare')]
+    elif accent == 'laststand':
+        ev = [(0, 1, tonic, 118, 'trem'), (1, 1, tonic + 1, 120, 'trem'), (1, 1.5, 49, 118, 'crash')]
+        ev += snare_roll(0, 1, 60, 120)
+        ev += [(1, 1, hook_notes[0] + 1, 112, lead)]
+    elif accent == 'hatch':
+        ev = [(0, 1.5, tonic, 120, 'gtr'), (0, 1.5, tonic + 6, 112, 'gtr'), (0, 1.8, tonic + 36, 92, 'bell'),
+              (0, 1.8, tonic + 24, 84, 'choir'), (0, 1.8, tonic + 30, 78, 'choir'), (0, .5, 36, 120, 'kick'), (0, 1.5, 52, 104, 'china')]
+    elif accent == 'reinforce':
+        ev = [(0, .45, tonic, 118, 'gtr'), (.5, .9, roots[2], 118, 'gtr'), (0, 1, 49, 115, 'crash'), (0, .3, 36, 118, 'kick'),
+              (.5, .3, 36, 115, 'kick'), (.5, .3, 38, 115, 'snare'), (1, .4, 62, 118, 'hey')]
+    elif accent == 'breakthrough':
+        ev = [(0, .4, tonic, 118, 'gtr'), (.5, .4, tonic + 1, 118, 'gtr'), (1, .4, tonic, 118, 'gtr'), (1.5, .9, tonic + 1, 120, 'gtr'),
+              (1.5, .9, hook_notes[0] + 12 if hook_notes[0] + 12 <= 96 else hook_notes[0], 112, lead), (0, 1, 49, 112, 'crash')]
+        ev += [(k * .25, .2, (45, 43, 41, 43, 45, 43)[k], 105, 'tom') for k in range(6)]
+        ev += [(t, .3, 36, 115, 'kick') for t in (0, .5, 1, 1.5)]
+    elif accent == 'destroyed':
+        # The player's ship is hit: one low orchestral hit, then the music drops.
+        ev = orchestral_hit(0, tonic - 12 if tonic >= 36 else tonic, 124)
+        ev += [(0, 2.2, tonic, 124, 'gtr'), (0, 2.2, tonic - 12 if tonic >= 36 else tonic, 110, 'bass'), (0, 2, 52, 110, 'china')]
+    elif accent == 'gloat':
+        # Demonic gloat while the fleet regroups: low choir sliding a tritone
+        # down to the tonic over a dissonant organ cluster.
+        ev = [(0, 1, tonic + 30, 96, 'choir'), (1, 1.6, tonic + 24, 100, 'choir'), (0, 2.6, tonic + 12, 82, 'organ'),
+              (0, 2.6, tonic + 13, 74, 'organ'), (0, 2.6, tonic + 18, 74, 'organ'), (0, .9, tonic + 6, 110, 'trem'), (1, 1.6, tonic, 116, 'trem'),
+              (1, .9, tonic, 110, 'timp')]
+    elif accent == 'respawn':
+        # Heroic re-entry: a one-beat snare roll into a crash, the hook's first
+        # three notes rising, tonic power chord to the fifth.
+        a, b, c = hook_notes[:3]
+        ev = snare_roll(0, 1, 60, 122)
+        ev += [(1, 1.5, 49, 120, 'crash'), (1, .9, tonic, 120, 'gtr'), (2, 1, tonic + 7, 120, 'gtr'), (1, .45, 36, 120, 'kick'),
+               (1, .45, a, 114, lead), (1.5, .45, b, 116, lead), (2, 1, c + 12 if c + 12 <= 96 else c, 120, lead),
+               (1, 1.8, tonic + 36, 80, 'vocalise')]
+    else:
+        raise ValueError(accent)
+    if BATTLE[level] == 'powermetal':
+        ev = [(b, d, pt, v, 'chord' if i == 'gtr' else i) for b, d, pt, v, i in ev]
     return sorted(ev)
 
 
@@ -510,46 +791,6 @@ def alien_events():
         ev += [(bar * 4, 3.9, r - 12 if r >= 40 else r, 100, 'bass')]
         ev += [(bar * 4, 3.9, r + 24 + k, 65, 'organ') for k in ((0, 4, 7) if major else (0, 3, 7))]
         ev += [(bar * 4, .9, r, 100, 'timp'), (bar * 4 + 2, .9, r + 7, 90, 'timp')]
-    return sorted(ev)
-
-
-def accent_events(level: int, accent: str):
-    """Short musical accents. Same role and shape on every level; pitches and
-    instrumentation come from the level's motif. Each fits a 2-beat slot."""
-    m = MOTIFS[level]
-    roots = bar_roots(level)
-    tonic = roots[0]
-    hook_notes = [e[2] for e in seq(m['hook'])]
-    style = m['drums']
-    lead = 'lead'
-    if accent == 'dive':
-        # Warning: the hook's first three notes, fast, rising an octave, over a root stab.
-        a, b, c = hook_notes[:3]
-        ev = [(0, .25, a, 110, lead), (.25, .25, b, 110, lead), (.5, .9, c + 12 if c + 12 <= 96 else c, 115, lead),
-              (0, .45, tonic, 115, 'gtr'), (0, .2, 38, 110, 'snare'), (.25, .2, 38, 100, 'snare')]
-    elif accent == 'laststand':
-        # Sentinel last stand: tremolo on the tonic rising a semitone (tension), crash at the top.
-        ev = [(0, 1, tonic, 115, 'trem'), (1, 1, tonic + 1, 118, 'trem'), (1, 1.5, 49, 115, 'crash')]
-        ev += snare_roll(0, 1, 60, 120)
-        ev += [(1, 1, hook_notes[0] + 1, 110, lead)]
-    elif accent == 'hatch':
-        # Carrier hatch opening: low tritone stab, bell, choir swell.
-        ev = [(0, 1.5, tonic, 118, 'gtr'), (0, 1.5, tonic + 6, 110, 'gtr'), (0, 1.8, tonic + 36, 90, 'bell'),
-              (0, 1.8, tonic + 24, 80, 'choir'), (0, 1.8, tonic + 30, 75, 'choir'), (0, .5, 36, 120, 'kick'), (0, 1.5, 52, 100, 'china')]
-    elif accent == 'breakthrough':
-        # Ground forces break through: alarm on the tonic and its flat second,
-        # twice, then the hook's first note an octave up over a tom run.
-        ev = [(0, .4, tonic, 118, 'gtr'), (.5, .4, tonic + 1, 118, 'gtr'), (1, .4, tonic, 118, 'gtr'), (1.5, .9, tonic + 1, 120, 'gtr'),
-              (1.5, .9, hook_notes[0] + 12 if hook_notes[0] + 12 <= 96 else hook_notes[0], 112, lead), (0, 1, 49, 112, 'crash')]
-        ev += [(k * .25, .2, (45, 43, 41, 43, 45, 43)[k], 105, 'tom') for k in range(6)]
-        ev += [(t, .3, 36, 115, 'kick') for t in (0, .5, 1, 1.5)]
-    elif accent == 'reinforce':
-        # Reinforcements arrive: two-chord riff hit (tonic, then bar-2 root) with crash.
-        ev = [(0, .45, tonic, 115, 'gtr'), (.5, .9, roots[2], 115, 'gtr'), (0, 1, 49, 110, 'crash'), (0, .3, 36, 115, 'kick'), (.5, .3, 36, 110, 'kick'), (.5, .3, 38, 110, 'snare')]
-    else:
-        raise ValueError(accent)
-    if style == 'rock':
-        ev = [(b, d, pt, v, 'chord' if i == 'gtr' else i) for b, d, pt, v, i in ev]
     return sorted(ev)
 
 
