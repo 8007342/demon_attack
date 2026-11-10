@@ -54,7 +54,7 @@
   "grunt_lengths": {
     "comment": "raw_max_s caps the synthesized grunt; min_s/max_s bound the final clip (with keying lead and tail). Unlisted triggers: 0.5-1.9 s.",
     "long": {"triggers": ["levelClear", "bossDefeated", "broodTaunt"], "raw_max_s": 2.0, "min_s": 0.8, "max_s": 2.25},
-    "short": {"triggers": ["regroupStart"], "raw_max_s": 0.72, "min_s": 0.4, "max_s": 0.9}
+    "short": {"triggers": ["regroupStart", "divePrep"], "raw_max_s": 0.72, "min_s": 0.4, "max_s": 0.9}
   },
   "loudness": {"human_lufs": -18.0, "demon_lufs": -18.5, "peak_dbfs": -4.0, "decoded_peak_max_dbfs": 0.0, "playback_gain_db": 2.0},
   "codec": {"opus_kbps": 16, "aac_kbps": 24, "aac_cutoff_hz": 4000, "sample_rate": 24000},

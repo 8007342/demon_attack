@@ -1,5 +1,5 @@
 {
- "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base.",
+ "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base. v4: \"divePrep\" (a demon is about to start a dive tell) carries brood battle cries; the reinforcements cheer chains a second brood voice; grunt kinds add \"cackle\" and \"warcry\".",
  "groupGap": {
   "ground": 6,
   "loot": 25
@@ -277,6 +277,21 @@
       "speaker": "skritch",
       "grunt": "rally",
       "gloss": "RALLY"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "rally",
+      "gloss": "WAVE CHEER"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "rally",
+      "gloss": "WAVE CHEER"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "rally",
+      "gloss": "WAVE CHEER"
      }
     ]
    }
@@ -368,8 +383,69 @@
       "speaker": "ulgra",
       "grunt": "order",
       "gloss": "REINFORCE ORDER"
+     },
+     {
+      "speaker": "skritch",
+      "grunt": "cackle",
+      "gloss": "GLEEFUL CACKLE"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "cackle",
+      "gloss": "SLOW HAPPY HUFF"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "cackle",
+      "gloss": "GLEEFUL CACKLE"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "GIDDY GIGGLE"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "rally",
+      "gloss": "MORE FRIENDS"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "cackle",
+      "gloss": "RUMBLING CHUCKLE"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "rally",
+      "gloss": "MORE STONE"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "cackle",
+      "gloss": "HISSING GIGGLE"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "gloat",
+      "gloss": "SMUG HISS"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "gloat",
+      "gloss": "TROOPER BOAST"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "rally",
+      "gloss": "REINFORCE"
+     },
+     {
+      "speaker": "skritch",
+      "grunt": "gloat",
+      "gloss": "IMP CHATTER"
      }
-    ]
+    ],
+    "chain": 1
    }
   },
   "sentinelIncoming": {
@@ -2342,6 +2418,21 @@
       "speaker": "ulgra",
       "grunt": "alarm",
       "gloss": "HOLD THE LINE"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "alarm",
+      "gloss": "SPRITELING PANIC"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "snarl",
+      "gloss": "HULK GRUMBLE"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "alarm",
+      "gloss": "SKULKER PANIC"
      }
     ]
    }
@@ -2446,6 +2537,51 @@
       "speaker": "morth",
       "grunt": "gloat",
       "gloss": "PROPHECY"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "SPRITELING GIGGLE"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "order",
+      "gloss": "SPRITELING REPORT"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "alarm",
+      "gloss": "SPRITELING PANIC"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "snarl",
+      "gloss": "HULK GRUMBLE"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "order",
+      "gloss": "HULK ACK"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "gloat",
+      "gloss": "HULK BOAST"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "snarl",
+      "gloss": "SKULKER HISS"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "order",
+      "gloss": "SKULKER REPORT"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "cackle",
+      "gloss": "SKULKER GIGGLE"
      }
     ]
    }
@@ -2517,6 +2653,21 @@
       "speaker": "blatch",
       "grunt": "rally",
       "gloss": "REGROUP"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "VICTORY CHEER"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "gloat",
+      "gloss": "VICTORY CHEER"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "cackle",
+      "gloss": "VICTORY CHEER"
      }
     ]
    }
@@ -3150,6 +3301,106 @@
      "emotion": "urgent"
     }
    ]
+  },
+  "divePrep": {
+   "priority": 3,
+   "cooldown": 6,
+   "ttl": 0.6,
+   "lines": [],
+   "demon": {
+    "priority": 4,
+    "cooldown": 5,
+    "ttl": 0.6,
+    "delay": 0,
+    "chance": 0.6,
+    "lines": [
+     {
+      "speaker": "skritch",
+      "grunt": "warcry",
+      "gloss": "DIVE CRY"
+     },
+     {
+      "speaker": "skritch",
+      "grunt": "cackle",
+      "gloss": "GLEEFUL SHRIEK"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "warcry",
+      "gloss": "CHARGE BELLOW"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "roar",
+      "gloss": "CHARGE BELLOW"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "warcry",
+      "gloss": "GUNNER CRY"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "snarl",
+      "gloss": "TARGET LOCKED"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "warcry",
+      "gloss": "TINY WAR CRY"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "GLEEFUL SHRIEK"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "warcry",
+      "gloss": "AVALANCHE ROAR"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "roar",
+      "gloss": "AVALANCHE ROAR"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "warcry",
+      "gloss": "STRIKE HISS"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "snarl",
+      "gloss": "STRIKE HISS"
+     },
+     {
+      "speaker": "gorrak",
+      "grunt": "warcry",
+      "gloss": "ATTACK CRY"
+     },
+     {
+      "speaker": "vexxa",
+      "grunt": "warcry",
+      "gloss": "ATTACK CRY"
+     },
+     {
+      "speaker": "skarn",
+      "grunt": "warcry",
+      "gloss": "ATTACK CRY"
+     },
+     {
+      "speaker": "morth",
+      "grunt": "warcry",
+      "gloss": "ATTACK CHANT"
+     },
+     {
+      "speaker": "ulgra",
+      "grunt": "warcry",
+      "gloss": "ATTACK BELLOW"
+     }
+    ]
+   }
   }
  }
 }

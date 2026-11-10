@@ -130,7 +130,18 @@ int restFrame(double now, int seed, {CommsSlot? slot}) {
 double idleBob(double now, int seed, {required bool reduceMotion}) =>
     reduceMotion ? 0 : (((now + seed * .37) / 1.7) % 1 < .5 ? 0 : -1);
 
-/// Draws one portrait frame with nearest-neighbour sampling.
+/// Sampling for a portrait cell of [cell] px drawn [side] px wide: crisp
+/// nearest-neighbour when magnified, filtered when shrunk (nearest would
+/// drop whole rows of a 2-3 px mouth and make it jump around).
+FilterQuality portraitFilter(double cell, double side) => side >= cell - .01
+    ? FilterQuality.none
+    : side >= cell * .5 - .01
+    ? FilterQuality.low
+    : FilterQuality.medium;
+
+/// Draws one portrait frame: nearest-neighbour when magnified. With
+/// [from] and [amount] < 1 (the lip-sync cross-fade) the previous mouth
+/// shape shows through; the frames differ only inside the mouth box.
 void paintPortrait(
   Canvas canvas,
   Rect dst,
@@ -138,6 +149,8 @@ void paintPortrait(
   int frame, {
   bool small = false,
   Color accent = const Color(0xFF39DFCC),
+  int? from,
+  double amount = 1,
 }) {
   final atlas = CommsPortraitAtlas.instance;
   final image = small ? (atlas.small ?? atlas.large) : atlas.large;
@@ -146,15 +159,22 @@ void paintPortrait(
     final cell =
         (image == atlas.small ? commsPortraitSmallCell : commsPortraitCell)
             .toDouble();
-    final src = Rect.fromLTWH(frame * cell, row * cell, cell, cell);
-    canvas.drawImageRect(
+    final quality = portraitFilter(cell, dst.width);
+    void draw(int f, double alpha) => canvas.drawImageRect(
       image,
-      src,
+      Rect.fromLTWH(f * cell, row * cell, cell, cell),
       dst,
       Paint()
-        ..filterQuality = FilterQuality.none
-        ..isAntiAlias = false,
+        ..filterQuality = quality
+        ..isAntiAlias = false
+        ..color = Color.fromRGBO(255, 255, 255, alpha),
     );
+    if (from != null && from != frame && amount < 1) {
+      draw(from, 1);
+      draw(frame, amount.clamp(0.0, 1.0));
+    } else {
+      draw(frame, 1);
+    }
     return;
   }
   // Fallback silhouette on a 12-cell grid while the atlas is missing.
@@ -357,7 +377,11 @@ class CommsTilePainter extends CustomPainter {
     canvas.clipRect(r);
     if (who != null && state != CommsSlotState.empty) {
       paintBackdrop(canvas, r, who, now, reduceMotion: reduceMotion);
-      final frame = m != null && m.speaking(now)
+      final talking = m != null && m.speaking(now);
+      final (from, _, amount) = talking
+          ? m.mouthBlend(now)
+          : (CommsFrame.idle, CommsFrame.idle, 1.0);
+      final frame = talking
           ? m.frame(now)
           : restFrame(now, slot.index * 7 + who.id.length, slot: slot);
       final cell = math.min(size.width, size.height);
@@ -391,6 +415,8 @@ class CommsTilePainter extends CustomPainter {
         who.id,
         frame,
         accent: accent,
+        from: reduceMotion ? null : from,
+        amount: amount,
       );
     } else {
       final label = TextPainter(
@@ -1006,6 +1032,8 @@ class _MiniPortrait extends CustomPainter {
       frame,
       small: true,
       accent: Color(who.accent),
+      from: !reduce && m.speaking(now) ? m.mouthBlend(now).$1 : null,
+      amount: m.speaking(now) ? m.mouthBlend(now).$3 : 1,
     );
     final age = m.age(now);
     if (!reduce && age < .25) {
@@ -1136,9 +1164,11 @@ class _TransmissionPortrait extends CustomPainter {
     canvas.clipRect(r);
     paintBackdrop(canvas, r, who, now, reduceMotion: reduce);
     final scale = size.width / commsPortraitCell;
-    final frame = m.speaking(now)
-        ? m.frame(now)
-        : restFrame(now, who.id.length);
+    final talking = m.speaking(now);
+    final frame = talking ? m.frame(now) : restFrame(now, who.id.length);
+    final (from, _, amount) = talking
+        ? m.mouthBlend(now)
+        : (CommsFrame.idle, CommsFrame.idle, 1.0);
     final bob = idleBob(now, who.id.length, reduceMotion: reduce) * scale;
     paintPortrait(
       canvas,
@@ -1146,6 +1176,8 @@ class _TransmissionPortrait extends CustomPainter {
       who.id,
       frame,
       accent: Color(who.accent),
+      from: reduce ? null : from,
+      amount: amount,
     );
     final age = m.age(now);
     if (age < .35) {

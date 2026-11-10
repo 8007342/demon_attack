@@ -198,6 +198,8 @@ def stage_dart(_args):
                     fields.append(f"mouth: '{meta['mouth']}'")
                 if meta.get('open'):
                     fields.append(f"open: '{meta['open']}'")
+                if meta.get('vis'):
+                    fields.append(f"vis: '{meta['vis']}'")
                 if line.get('signature'):
                     fields.append('signature: true')
                 if line.get('emotion'):
@@ -483,6 +485,8 @@ def stage_hotrefs(args):
     refs = json.loads((WORK / 'refs.json').read_text())
     model = None
     for register, rule in cb.get('registers', {}).items():
+        if not isinstance(rule, dict):
+            continue
         for c in cast['cast']:
             if 'voice' not in c or (args.only and c['id'] not in args.only.split(',')):
                 continue
@@ -623,66 +627,42 @@ def accept_expressive(clip_id, spec, line=None):
 # Grunt kinds: syllable plans as (duration s, gap after s, pitch start, pitch
 # end, loudness). Randomised a little per clip; shapes give each gesture its
 # character (barked order, rising rally, chuckling gloat, yelping alarm,
-# swelling roar, raspy snarl).
+# swelling roar, raspy snarl, v4: gleeful cackle and battle cry). `vowels`
+# biases the syllables' vowels, `onsets` their onsets (cackles laugh on h).
 GRUNT_KINDS = {
     'order': {'plans': [[(.17, .06, 1.15, 1.0, .9), (.30, 0, 1.05, .78, 1.0)],
                         [(.14, .05, 1.1, 1.05, .8), (.14, .06, 1.12, 1.0, .85), (.30, 0, 1.0, .75, 1.0)]],
               'growl': 0, 'rasp': 0},
     'rally': {'plans': [[(.13, .05, .95, 1.0, .75), (.13, .05, 1.05, 1.1, .85), (.42, 0, 1.15, 1.45, 1.0)]],
-              'growl': .05, 'rasp': 0},
+              'growl': .05, 'rasp': 0, 'vowels': ['ɑ', 'W', 'O']},
     'gloat': {'plans': [[(.09, .045, 1.25, 1.15, .8), (.09, .045, 1.05, .98, .75), (.09, .045, 1.2, 1.1, .8),
                          (.09, .05, 1.0, .95, .7), (.26, 0, .95, .8, .85)]],
-              'growl': -.05, 'rasp': .05},
+              'growl': -.05, 'rasp': .05, 'onsets': ['h', 'h', 'ɡ', 'k'], 'vowels': ['ʌ', 'æ', 'ɑ']},
     'alarm': {'plans': [[(.17, .04, 1.55, 1.6, .9), (.17, .04, 1.2, 1.15, .85), (.17, .04, 1.55, 1.6, .9), (.22, 0, 1.2, 1.0, .8)]],
-              'growl': -.1, 'rasp': 0},
+              'growl': -.1, 'rasp': 0, 'vowels': ['æ', 'ɑ']},
     'roar': {'plans': [[(.14, .05, .9, 1.0, .6), (1.15, 0, .95, .7, 1.0)]],
-             'growl': .2, 'rasp': .2},
+             'growl': .2, 'rasp': .2, 'vowels': ['ɑ', 'ɔ', 'W']},
     'snarl': {'plans': [[(.09, .05, 1.35, 1.3, .7), (.42, 0, 1.3, 1.05, 1.0)]],
-              'growl': .05, 'rasp': .35},
+              'growl': .05, 'rasp': .35, 'vowels': ['æ', 'ʌ']},
+    'cackle': {'plans': [[(.075, .04, 1.55, 1.45, .8), (.07, .04, 1.5, 1.4, .75), (.07, .04, 1.45, 1.35, .8),
+                          (.07, .04, 1.4, 1.3, .75), (.07, .045, 1.35, 1.25, .7), (.2, 0, 1.3, .95, .8)],
+                         [(.09, .04, 1.3, 1.5, .7), (.07, .035, 1.6, 1.5, .8), (.07, .035, 1.55, 1.45, .8),
+                          (.07, .035, 1.5, 1.4, .75), (.18, 0, 1.45, 1.1, .8)]],
+               'growl': -.1, 'rasp': .1, 'onsets': ['h', 'h', 'h', 'k'], 'vowels': ['æ', 'ʌ', 'ɑ']},
+    'warcry': {'plans': [[(.1, .03, .95, 1.1, .7), (.5, 0, 1.2, 1.55, 1.0)],
+                         [(.42, 0, 1.0, 1.45, 1.0)]],
+               'growl': .15, 'rasp': .2, 'onsets': ['ɡɹ', 'kɹ', 'bɹ', 'h', 'ɡ'], 'vowels': ['ɑ', 'W', 'æ']},
 }
 
-# Cartoon vowel formants (Hz) for an adult voice; scaled per officer.
-VOWELS = {'a': (730, 1090, 2440), 'o': (570, 840, 2410), 'u': (330, 870, 2240),
-          'ae': (660, 1720, 2410), 'uh': (520, 1190, 2390), 'oe': (450, 1300, 2300)}
-
-
-def resonate(x, freqs, gains, q=6.0):
-    from scipy import signal
-    y = 0
-    for f, g in zip(freqs, gains):
-        f = min(f, SR * .45)
-        b, a = signal.iirpeak(f, q, fs=SR)
-        y = y + g * signal.lfilter(b, a, x)
-    return y
-
-
-def granulate(x, length, rng, grain=0.06, jitter=0.03):
-    """Overlap-add Hann grains read from x (sorted with local jitter) into
-    `length` samples: time-stretches without changing pitch and smears any
-    remaining phonetic detail."""
-    import numpy as np
-    g = int(grain * SR)
-    hop = g // 3
-    win = np.hanning(g)
-    out = np.zeros(length + g)
-    norm = np.zeros(length + g)
-    span = max(1, len(x) - g)
-    for at in range(0, length, hop):
-        pos = at / max(1, length) * span + rng.normal(0, jitter * SR)
-        pos = int(np.clip(pos, 0, span))
-        grain_x = x[pos:pos + g]
-        out[at:at + len(grain_x)] += grain_x * win[:len(grain_x)]
-        norm[at:at + g] += win
-    return out[:length] / np.maximum(norm[:length], 1e-3)
-
-
-def gibberish_phonemes(rng, count, spec):
-    g = spec['gibberish']
-    sylls = []
-    for i in range(count):
-        s = rng.choice(g['onsets']) + rng.choice(g['vowels']) + rng.choice(g['codas'])
-        sylls.append(('ˈ' if i in (0, count - 1) else '') + s)
-    return ' '.join(sylls)
+# Formant targets (Hz, F1-F4) of the brood language's vowels for an adult
+# voice; scaled per speaker by `formant`. O and W are glides (o->u, a->u).
+VOWELS = {'ɑ': (730, 1090, 2440, 3400), 'ʌ': (640, 1190, 2390, 3300), 'ɔ': (570, 840, 2410, 3300),
+          'u': (330, 870, 2240, 3200), 'æ': (660, 1720, 2410, 3400),
+          'O': ((540, 900, 2350, 3300), (360, 820, 2250, 3200)), 'W': ((730, 1150, 2440, 3400), (380, 860, 2250, 3200))}
+# Formant bandwidths (Hz) of a big, throaty creature.
+BANDWIDTHS = (90, 110, 170, 250)
+# Consonant classes of the brood language's onsets and codas.
+PLOSIVES, NASALS, FRICATIVES = {'k', 'ɡ', 'b', 'd'}, {'m', 'ŋ'}, {'z', 'ʃ', 's'}
 
 
 def grunt_length_class(trigger, spec):
@@ -692,7 +672,65 @@ def grunt_length_class(trigger, spec):
     return 'normal'
 
 
-def synth_grunt(clip_id, officer, kind, tts, spec, length='normal'):
+def brood_syllables(rng, plan, shape, spec):
+    """Onset / vowel / coda of each syllable from the brood language spec
+    (audio.json -> gibberish), biased by the gesture."""
+    g = spec['gibberish']
+    out = []
+    for i, _ in enumerate(plan):
+        onset = rng.choice(shape.get('onsets', g['onsets']))
+        vowel = rng.choice(shape.get('vowels', g['vowels']))
+        coda = rng.choice(g['codas']) if i == len(plan) - 1 else rng.choice(['', '', *g['codas']])
+        out.append((onset, vowel, coda))
+    return out
+
+
+def smooth_steps(times, values, n, rate):
+    """A control track at `rate` Hz through (time, value) knots with
+    raised-cosine easing between them (no corners, no steps)."""
+    import numpy as np
+    t = np.arange(n) / rate
+    out = np.empty(n)
+    out[:] = values[0]
+    for (t0, v0), (t1, v1) in zip(zip(times, values), zip(times[1:], values[1:])):
+        m = (t >= t0) & (t < t1)
+        if t1 > t0 and m.any():
+            u = (t[m] - t0) / (t1 - t0)
+            out[m] = v0 + (v1 - v0) * (.5 - .5 * np.cos(np.pi * u))
+    out[t >= times[-1]] = values[-1]
+    return out
+
+
+def resonator_cascade(x, freqs, bws):
+    """Klatt cascade of time-varying 2nd-order resonators (one per formant):
+    coefficients change every sample from the smooth formant tracks and the
+    filter state carries on, so there is never a splice or a click."""
+    import numpy as np
+    y = x
+    for f, bw in zip(freqs, bws):
+        r = np.exp(-np.pi * bw / SR)
+        b = 2 * r * np.cos(2 * np.pi * np.minimum(f, SR * .45) / SR)
+        c = np.full_like(b, -r * r)
+        a = 1 - b - c
+        out = np.empty_like(y)
+        y1 = y2 = 0.0
+        for n, v in enumerate(y.tolist()):
+            o = a[n] * v + b[n] * y1 + c[n] * y2
+            out[n] = o
+            y2, y1 = y1, o
+        y = out
+    return y
+
+
+def synth_grunt(clip_id, officer, kind, spec, length='normal'):
+    """One creature vocalisation as continuous source-filter synthesis on a
+    single timeline (no clip splices): a vocal-fold-like glottal flow
+    (Rosenberg pulses on a continuous phase) with a smooth f0 contour,
+    vibrato, jitter and shimmer; period doubling (a subharmonic at f0/2) and
+    false-fold roughness for the growl; pulse-synchronous breath rasp;
+    plosive closures, fricative and nasal consonants of the brood language;
+    a time-varying formant cascade scaled to the speaker's size; raised-cosine
+    syllable envelopes that overlap into a breath floor between syllables."""
     import numpy as np
     from scipy import signal
     rng = np.random.default_rng(seed_of(clip_id))
@@ -709,106 +747,221 @@ def synth_grunt(clip_id, officer, kind, tts, spec, length='normal'):
                 for _ in range(int(rng.integers(2, 4)))]
         last = plan[-1]
         plan = plan[:-1] + [(last[0], .12, *last[2:])] + coda
-    total = sum(d + gap for d, gap, *_ in plan) + .05
+    lead, tail = .06, .14
+    total = lead + sum(d + gap for d, gap, *_ in plan) + tail
     if rule and total > rule['raw_max_s']:
-        scale = rule['raw_max_s'] / total
+        scale = (rule['raw_max_s'] - lead - tail) / (total - lead - tail)
         plan = [(d * scale, gap * scale, p0, p1, amp) for d, gap, p0, p1, amp in plan]
-        total = sum(d + gap for d, gap, *_ in plan) + .05
+        total = lead + sum(d + gap for d, gap, *_ in plan) + tail
+    sylls = brood_syllables(rng, plan, shape, spec)
     n = int(total * SR)
-    f0 = np.zeros(n)
-    env = np.zeros(n)
-    vowel_track = []
-    at = 0
-    names = list(VOWELS)
-    for d, gap, p0, p1, amp in plan:
-        m = int(d * SR)
-        t = np.linspace(0, 1, m)
-        f0[at:at + m] = params['base'] * (p0 + (p1 - p0) * t)
-        att = min(m // 3, int(.025 * SR))
-        e = np.ones(m)
-        e[:att] = np.linspace(0, 1, att) ** .7
-        e *= (1 - t) ** .35 if kind != 'roar' else np.sin(np.pi * np.clip(t * 1.1, 0, 1)) ** .5
-        env[at:at + m] = amp * e
-        vowel_track.append((at, m, rng.choice(names), rng.choice(names)))
-        gap_n = int(gap * SR)
-        f0[at + m:at + m + gap_n] = f0[at + m - 1]  # hold pitch through the gap
-        at += m + gap_n
-    f0[at:] = f0[at - 1] if at > 0 else params['base']
-    f0[f0 == 0] = params['base']
     t = np.arange(n) / SR
-    wobble = 1 + .045 * np.sin(2 * np.pi * params['wobble'] * t + rng.uniform(0, 6.3))
-    jitter = 1 + signal.lfilter([.02], [1, -.98], rng.normal(0, 1, n)) * .4
-    freq = f0 * wobble * jitter
-    phase = np.cumsum(freq / SR)
+    base = params['base']
+    fmt = params['formant']
+    rasp = float(np.clip(params['rasp'] + shape['rasp'], 0, .95))
+    growl = float(np.clip(params['growl'] + shape['growl'], 0, 1))
+    # ---- control knots (time, value)
+    f0_k, amp_k, noise_k, f_k = [(0, base * plan[0][2] * .9)], [], [], []
+    voice_env = np.zeros(n)
+    noise_env = np.zeros(n)
+    fric_env = np.zeros(n)
+    close_env = np.zeros(n)      # plosive closures and nasal murmur dim the voice
+    roll = np.zeros(n)           # rolled 'r' (trill AM)
+    formants = [[] for _ in range(4)]
+    at = lead
+
+    def bump(env, start, dur, level, rise, fall):
+        """Add a raised-cosine envelope (rise, hold, fall) into env."""
+        a, b = int(start * SR), int((start + dur) * SR)
+        r, f = max(2, int(rise * SR)), max(2, int(fall * SR))
+        seg = np.full(max(1, b - a), level, float)
+        seg[:min(r, len(seg))] *= .5 - .5 * np.cos(np.pi * np.arange(min(r, len(seg))) / r)
+        k = min(f, len(seg))
+        seg[len(seg) - k:] *= .5 + .5 * np.cos(np.pi * np.arange(k) / f)
+        a0, b0 = max(0, a), min(len(env), a + len(seg))
+        env[a0:b0] = np.maximum(env[a0:b0], seg[a0 - a:b0 - a])
+
+    for (d, gap, p0, p1, amp), (onset, vowel, coda) in zip(plan, sylls):
+        target = VOWELS[vowel]
+        start_f, end_f = (target if isinstance(target[0], tuple) else (target, target))
+        # Pitch: a little scoop up into the syllable, a cosine glide to the
+        # end pitch, and a small fall-off at its release.
+        f0_k += [(at, base * p0 * .92), (at + min(.04, d * .3), base * p0), (at + d, base * p1), (at + d + gap * .6, base * p1 * .94)]
+        cons = onset.replace('ɹ', '')
+        c_dur = min(.05, d * .3)
+        if cons in PLOSIVES or cons.endswith(('ɡ', 'k', 'b', 'd')):
+            # Closure, then a short burst crossfading into the vowel.
+            bump(close_env, at - .03, .045, .75, .015, .018)
+            bump(noise_env, at - .006, .03, .5, .01, .016)
+        if cons in NASALS or cons.startswith('ŋ'):
+            bump(close_env, at, c_dur, .55, .01, .02)
+        if cons in FRICATIVES:
+            bump(fric_env, at - .02, c_dur + .03, .7, .015, .02)
+        if cons == 'h':
+            bump(noise_env, at - .02, .05, .9, .015, .02)
+        if 'ɹ' in onset:
+            bump(roll, at, min(.08, d * .5), 1, .01, .02)
+        # Vowel envelope: rounded attack, kind-specific body, rounded release
+        # that runs on into the gap.
+        rise = min(.035, d * .35)
+        fall = min(.09, d * .45 + gap * .5)
+        if kind == 'roar':
+            bump(voice_env, at, d, amp, d * .35, d * .4)
+        else:
+            bump(voice_env, at, d + gap * .4, amp, rise, fall)
+        if coda:
+            cc = coda.replace('ɹ', '')
+            if 'ɹ' in coda:
+                bump(roll, at + d * .6, d * .4, 1, .01, .02)
+            if cc in PLOSIVES:
+                bump(close_env, at + d - .01, .04, .75, .015, .02)
+                bump(noise_env, at + d + .006, .03, .35, .01, .016)
+            elif cc in NASALS:
+                bump(close_env, at + d * .7, d * .3 + .03, .55, .015, .03)
+            elif cc in FRICATIVES:
+                bump(fric_env, at + d * .75, .07, .6, .015, .03)
+        for k in range(4):
+            fa, fb = start_f[k] * fmt, end_f[k] * fmt
+            locus = fa * (.75 if cons in ('b', 'm') else 1.12 if cons in ('k', 'ɡ') and k == 1 else .9)
+            formants[k] += [(at - .01, locus), (at + .04, fa), (at + d * .85, fb)]
+        at += d + gap
+    f0_k.append((total, f0_k[-1][1] * .9))
+    # ---- control tracks at 1 kHz, eased, then interpolated to audio rate
+    rate = 1000
+    m = int(np.ceil(total * rate)) + 1
+    def track(knots):
+        knots = sorted(knots)
+        return np.interp(t, np.arange(m) / rate, smooth_steps([k[0] for k in knots], [k[1] for k in knots], m, rate))
+    f0 = track(f0_k)
+    f0 *= 1 + .035 * np.sin(2 * np.pi * params['wobble'] * t + rng.uniform(0, 6.3))         # vibrato
+    f0 *= 1 + signal.lfilter([.015], [1, -.985], rng.normal(0, 1, n)) * .6                # jitter
+    f0 = np.clip(f0, 30, 900)
+    ftracks = [track(formants[k]) for k in range(4)]
+    # ---- glottal source: Rosenberg flow on a continuous phase, its derivative
+    phase = np.cumsum(f0 / SR)
     frac = phase % 1.0
-    pulse = np.where(frac < .55, 1 - np.cos(2 * np.pi * frac / .55), 0.0)
-    pulse = np.diff(pulse, prepend=0) * 18
-    # Subharmonic roughness: every other glottal cycle weaker (creature growl).
-    rasp = min(.9, params['rasp'] + shape['rasp'])
-    odd = (np.floor(phase) % 2) == 1
-    pulse = pulse * np.where(odd, 1 - .6 * rasp, 1.0)
+    tp, tn = .4, .16
+    # Opening and closing phases both raised-cosine: the flow derivative has
+    # no corner at closure, so even a 48 Hz growl never ticks.
+    flow = np.where(frac < tp, .5 - .5 * np.cos(np.pi * frac / tp),
+                    np.where(frac < tp + tn, .5 + .5 * np.cos(np.pi * (frac - tp) / tn), 0.0))
+    src = np.diff(flow, prepend=flow[0]) * SR / (f0 * 4)
+    # Period doubling: a smooth amplitude alternation at f0/2 (subharmonic).
+    src *= 1 - .55 * rasp * (.5 + .5 * np.cos(np.pi * phase))
+    # Shimmer and false-fold roughness: slow random amplitude modulation.
+    rough = signal.lfilter(*signal.butter(2, [25, 90], 'bandpass', fs=SR), rng.normal(0, 1, n))
+    rough /= np.abs(rough).max() + 1e-9
+    src *= 1 + .6 * growl * rough + .08 * signal.lfilter([.02], [1, -.98], rng.normal(0, 1, n))
+    # Ventricular growl: a second, rougher fold vibrating at half the pitch.
+    vphase = np.cumsum(f0 * .5 * (1 + .03 * rough) / SR)
+    vfrac = vphase % 1.0
+    vflow = np.where(vfrac < .3, .5 - .5 * np.cos(np.pi * vfrac / .3),
+                     np.where(vfrac < .5, .5 + .5 * np.cos(np.pi * (vfrac - .3) / .2), 0.0))
+    src += .4 * growl * np.diff(vflow, prepend=vflow[0]) * SR / (f0 * 2)
+    # Rolled r: trill-like amplitude flutter at ~28 Hz.
+    src *= 1 - .6 * roll * (.5 + .5 * np.sin(2 * np.pi * 28 * t))
+    # Breath rasp: noise gated by the glottal open phase (pulse-synchronous).
     noise = rng.normal(0, 1, n)
-    breath = noise * (np.clip(np.where(frac < .55, 1, .25), 0, 1)) * rasp * .5
-    source = pulse + breath
-    growl = np.zeros(n)
-    for start, m, va, vb in vowel_track:
-        seg = source[max(0, start - 200):start + m + 200]
-        fa = [f * params['formant'] for f in VOWELS[va]]
-        fb = [f * params['formant'] for f in VOWELS[vb]]
-        ya = resonate(seg, fa, (1, .55, .25))
-        yb = resonate(seg, fb, (1, .55, .25))
-        x = np.linspace(0, 1, len(seg)) ** 1.5
-        mix = ya * (1 - x) + yb * x
-        lo = max(0, start - 200)
-        growl[lo:lo + len(mix)] += mix * np.hanning(len(mix)) ** .1
-    growl *= env
-    # Gibberish layer: Kokoro nonsense syllables, shifted down by `formant`
-    # (resampling lowers pitch and formants together), then granulated back
-    # to the grunt length and shaped by the same syllable envelope.
-    g = spec['gibberish']
-    ps = gibberish_phonemes(rng, max(2, len(plan)), spec)
-    babble = tts.phonemes(ps, g['voice'], g['speed'])
-    babble = babble / (np.abs(babble).max() + 1e-9)
-    factor = params['formant'] * (1.25 if params['base'] > 150 else 1.0)
-    stretched = signal.resample(babble, int(len(babble) / factor))
-    layer = granulate(stretched, n, rng, grain=.07, jitter=.02)
-    # Ring-mod at a low rate for a throaty, non-human buzz.
-    layer *= 1 + .5 * np.sin(2 * np.pi * (params['base'] * .5) * t)
-    layer = signal.lfilter(*signal.butter(2, [120, 3800], 'bandpass', fs=SR), layer) * env
-    w = float(np.clip(params['growl'] + shape['growl'], .15, .9))
-    norm = lambda a: a / (np.sqrt(np.mean(a[np.abs(a) > 0] ** 2)) + 1e-9)
-    out = w * norm(growl) + (1 - w) * .8 * norm(layer)
-    out = np.tanh(out * .35) / .35
-    fade = int(.02 * SR)
-    out[-fade:] *= np.linspace(1, 0, fade)
-    return out / (np.abs(out).max() + 1e-9) * .8, ps
+    breath = signal.lfilter(*signal.butter(2, [300, 5000], 'bandpass', fs=SR), noise)
+    breath *= (.3 + .7 * flow) * (.25 + rasp)       # smooth, pulse-synchronous
+    voiced = (src * .8 + breath * .25) * voice_env * (1 - .9 * close_env)
+    # Aspiration (h, bursts) through the same vocal tract.
+    asp = signal.lfilter(*signal.butter(2, [400, 6000], 'bandpass', fs=SR), noise) * noise_env * .9
+    # A breath floor that swells and dies with the voice (never a constant hiss
+    # cut off at the clip's end): the voice envelope with a long release.
+    floor = signal.lfilter([.004], [1, -.996], voice_env) * .08
+    tract = resonator_cascade(voiced + asp + breath * floor * .3, ftracks, [b * (1 + .4 * rasp) for b in BANDWIDTHS])
+    # Fricatives bypass the tract (a narrow hiss / buzz).
+    fric = signal.lfilter(*signal.butter(2, [1800 * min(1.4, fmt + .3), 4500], 'bandpass', fs=SR), noise) * fric_env * .5
+    out = tract / (np.sqrt(np.mean(tract[voice_env > .3] ** 2)) + 1e-9) + fric
+    # Chest resonance and a soft saturation for the growl.
+    b, a = signal.iirpeak(min(SR * .45, base * 2.2), 1.2, fs=SR)
+    out = out + .5 * signal.lfilter(b, a, out)
+    drive = 1 + 1.5 * growl
+    out = np.tanh(drive * out / 3) * 3 / drive
+    out = signal.sosfilt(signal.butter(2, 45, 'highpass', fs=SR, output='sos'), out)
+    # Band-limit at the source: the demon radio passes 200-3000 Hz, and
+    # noise above 4.5 kHz would only add near-Nyquist ripple.
+    out = signal.sosfilt(signal.butter(4, 4500, 'lowpass', fs=SR, output='sos'), out)
+    edge = int(.015 * SR)
+    out[:edge] *= .5 - .5 * np.cos(np.pi * np.arange(edge) / edge)
+    out[-edge:] *= .5 + .5 * np.cos(np.pi * np.arange(edge) / edge)
+    return out / (np.abs(out).max() + 1e-9) * .8, ' '.join(o + v + c for o, v, c in sylls)
+
+
+def discontinuities(x, sr=SR):
+    """Clicks and splices in a synthesized growl: (spikes, steps). A spike
+    is a sample whose second difference exceeds both 10x the local median
+    level of second differences (30 ms around it) and 5 % of the clip's
+    peak, and is isolated (3x above every second difference 3-30 ms before
+    and after it, which a recurring glottal pulse never is): a waveform
+    corner or jump heard as a tick. A step is a jump of more
+    than 24 dB between neighbouring 2.5 ms blocks from (near-)silence (at
+    most -48 dB of the peak) to a loud block (above -30 dB) or back: a sound
+    cut off or switched on abruptly, as at a splice with a hard gap (a low
+    growl's own pulse-to-pulse swings stay above the silence line). Tuned for the
+    band-limited growls; it is not a general speech click detector (natural
+    sibilant bursts at 24 kHz trip the spike test)."""
+    import numpy as np
+    from scipy import ndimage
+    x = np.asarray(x, float)
+    peak = np.abs(x).max() + 1e-12
+    d2 = np.abs(np.diff(x, 2))
+    local = ndimage.median_filter(d2, size=int(.03 * sr), mode='nearest') * 1.4826
+    # Isolation: a click stands out 3x above everything 3-30 ms before and
+    # after it; glottal excitations recur every pitch period and do not.
+    near, far = int(.003 * sr), int(.03 * sr)
+    half = (far - near) // 2
+    centred = ndimage.maximum_filter1d(d2, size=2 * half + 1, mode='nearest')
+    shift = near + half
+    pad = np.pad(centred, shift, mode='edge')
+    around = np.maximum(pad[:len(d2)], pad[2 * shift:2 * shift + len(d2)])
+    hits = np.nonzero((d2 > 10 * local) & (d2 > .05 * peak) & (d2 > 3 * around))[0]
+    spikes = len({int(i) // int(.002 * sr) for i in hits})      # events, 2 ms apart
+    block = int(.0025 * sr)
+    nb = len(x) // block
+    env = np.sqrt(np.mean(x[:nb * block].reshape(nb, block) ** 2, 1)) + 1e-12
+    db = np.maximum(20 * np.log10(env / env.max()), -50)
+    jump = np.abs(np.diff(db))
+    loud = np.maximum(db[1:], db[:-1]) > -30
+    silent = np.minimum(db[1:], db[:-1]) <= -48
+    steps = int(np.sum((jump > 24) & loud & silent))
+    return spikes, steps
 
 
 def stage_grunts(args):
     cast, lines = load_specs()
     spec = audio_spec()
     people = cast_by_id(cast)
-    tts = None
     done = 0
-    meta = {}
+    report = {}
     for clip_id, trigger, kind, line in clip_entries(lines):
         if kind != 'demon':
             continue
         officer = people[line['speaker']]
         length = grunt_length_class(trigger, spec)
-        key = json.dumps([officer['grunt'], line['grunt'], GRUNT_KINDS[line['grunt']], spec['gibberish'], spec['kokoro']['revision'],
-                          length, spec['grunt_lengths'].get(length), 4], sort_keys=True)
+        key = json.dumps([officer['grunt'], line['grunt'], GRUNT_KINDS[line['grunt']], spec['gibberish'],
+                          length, spec['grunt_lengths'].get(length), 'v4-sourcefilter-1'], sort_keys=True)
         out = WORK / 'raw' / f'{clip_id}.wav'
         stamp = out.with_suffix('.key')
         if not args.force and out.exists() and stamp.exists() and stamp.read_text() == key:
             continue
-        tts = tts or Kokoro(spec)
-        audio, ps = synth_grunt(clip_id, officer, line['grunt'], tts, spec, length)
+        audio, ps = synth_grunt(clip_id, officer, line['grunt'], spec, length)
+        spikes, steps = discontinuities(audio)
+        report[clip_id] = {'syllables': ps, 'spikes': spikes, 'steps': steps, 'seconds': round(len(audio) / SR, 3)}
         write_wav(out, audio)
         stamp.write_text(key)
-        meta[clip_id] = ps
         done += 1
-    print(f'grunts: rendered {done} demon clips')
+    log = WORK / 'grunts.json'
+    old = json.loads(log.read_text()) if log.exists() else {}
+    old.update(report)
+    log.write_text(json.dumps(old, indent=1, ensure_ascii=False))
+    bad = {k: v for k, v in report.items() if v['spikes'] or v['steps']}
+    print(f'grunts: rendered {done} demon clips, {len(bad)} with clicks or abrupt steps')
+    for k, v in bad.items():
+        print(f'  {k}: {v["spikes"]} spikes, {v["steps"]} steps')
+    if bad:
+        sys.exit(1)
 
 
 def k_loudness(x):
@@ -857,13 +1010,16 @@ def trim_silence(x, threshold_db=-42):
 
 
 def mouth_track(clean, lead, total, demon, fps):
-    """One portrait frame per 1/fps s across the final clip."""
+    """Tracks per 1/fps s across the final clip: portrait frames (chr(48 +
+    CommsFrame index)), openness digits and visemes ('-', 'o', 'e')."""
     import numpy as np
     from scipy import signal
     hop = SR // fps
     frames = int(np.ceil(total / hop))
     level = np.full(frames, -90.0)
     low_ratio = np.zeros(frames)
+    front = np.zeros(frames)
+    fric = np.zeros(frames)
     peak = np.sqrt(np.max(signal.convolve(clean ** 2, np.ones(hop) / hop, 'same'))) + 1e-9
     for k in range(frames):
         a = k * hop - lead
@@ -872,11 +1028,13 @@ def mouth_track(clean, lead, total, demon, fps):
             continue
         rms = np.sqrt(np.mean(seg ** 2)) + 1e-12
         level[k] = 20 * np.log10(rms / peak)
-        spec = np.abs(np.fft.rfft(seg * np.hanning(len(seg))))
+        power = np.abs(np.fft.rfft(seg * np.hanning(len(seg)))) ** 2
         freqs = np.fft.rfftfreq(len(seg), 1 / SR)
-        voiced = spec[(freqs > 250) & (freqs < 4000)]
-        low = spec[(freqs > 250) & (freqs < 1000)]
-        low_ratio[k] = (low ** 2).sum() / ((voiced ** 2).sum() + 1e-12)
+        band = lambda lo, hi: power[(freqs > lo) & (freqs < hi)].sum()  # noqa: E731
+        voiced = band(250, 4000) + 1e-12
+        low_ratio[k] = band(250, 1000) / voiced          # o/u: energy under 1 kHz
+        front[k] = band(1800, 3400) / voiced             # ee/i: a high second formant
+        fric[k] = band(4000, 11000) / (band(80, 11000) + 1e-12)   # s/sh/f/t: teeth
     # Openness 0..1 from the level, smoothed with a fast attack and a slower
     # release (a mouth opens quickly and closes a little behind the sound).
     # Relative to the clip's own loud frames (its 90th percentile), so a
@@ -889,34 +1047,35 @@ def mouth_track(clean, lead, total, demon, fps):
     for k in range(frames):
         cur += (target[k] - cur) * (.7 if target[k] > cur else .4)
         openness[k] = cur
-    # Rounded vowels: the most low-heavy fifth of the open frames, and only
-    # when sustained for three frames or more.
-    open_mask = openness >= .4
-    rounded_cut = np.percentile(low_ratio[open_mask], 80) if open_mask.any() else 1.0
-    rounded = open_mask & (low_ratio >= rounded_cut)
-    sustained = np.zeros(frames, bool)
-    k = 0
-    while k < frames:
-        if rounded[k]:
-            j = k
-            while j < frames and rounded[j]:
-                j += 1
-            if j - k >= 3:
-                sustained[k:j] = True
-            k = j
-        else:
-            k += 1
+    # Visemes, relative to this clip's own open frames (speaker-independent):
+    # rounded = the most low-heavy fifth with little high-formant energy;
+    # spread = the most front-heavy fifth, or a fricative burst.
+    open_mask = openness >= .15
+    vis = np.array(['-'] * frames)
+    if open_mask.sum() >= 5:
+        lo_cut = np.percentile(low_ratio[open_mask], 80)
+        fr_lo = np.percentile(front[open_mask], 40)
+        fr_cut = np.percentile(front[open_mask], 80)
+        fx_cut = max(.25, np.percentile(fric[open_mask], 85))
+        vis[open_mask & (low_ratio >= lo_cut) & (front <= fr_lo)] = 'o'
+        vis[open_mask & ((front >= fr_cut) | (fric >= fx_cut))] = 'e'
+    vis = ''.join(hold_runs(list(vis), 2))
     out = []
     for k in range(frames):
         o = openness[k]
+        lvl = 0 if o < .12 else 1 if o < .3 else 2 if o < .52 else 3 if o < .76 else 4
         if demon:
-            out.append('0' if o < .2 else '3' if o < .5 else '4' if o < .9 else '7')
+            f = [0, 2, 3, 4, 12][lvl] if o < .93 else 7
         else:
-            c = '0' if o < .2 else '2' if o < .5 else '3' if o < .8 else '4'
-            out.append('5' if sustained[k] else c)
+            f = [0, 2, 3, 4, 12][lvl]
+            if 1 <= lvl <= 3 and vis[k] == 'o':
+                f = 5
+            elif 1 <= lvl <= 3 and vis[k] == 'e':
+                f = 13
+        out.append(chr(48 + f))
     out = hold_runs(out, 2)
     open_track = ''.join(str(int(round(o * 9))) for o in openness)
-    return ''.join(out), open_track
+    return ''.join(out), open_track, vis
 
 
 def hold_runs(frames, minimum):
@@ -1061,11 +1220,11 @@ def stage_radio(args):
             over = np.abs(out) > knee
             out[over] = np.sign(out[over]) * (knee + (ceiling - knee) * np.tanh((np.abs(out[over]) - knee) / (ceiling - knee)))
         write_wav(WORK / 'radio' / f'{clip_id}.wav', out)
-        mouth, open_track = mouth_track(clean, lead, len(out), demon, spec['mouth_fps'])
+        mouth, open_track, vis = mouth_track(clean, lead, len(out), demon, spec['mouth_fps'])
         meta[clip_id] = {
             'speaker': line['speaker'], 'kind': kind, 'trigger': trigger, 'engine': engine,
             'emotion': line.get('emotion'), 'samples': len(out),
-            'mouth': mouth, 'open': open_track,
+            'mouth': mouth, 'open': open_track, 'vis': vis,
             'lufs': round(k_loudness(out), 2),
         }
         if clip_id in fallbacks:
@@ -1106,7 +1265,7 @@ def stage_encode(args):
             'speaker': m['speaker'], 'kind': m['kind'], 'trigger': m['trigger'],
             'engine': m['engine'], **({'emotion': m['emotion']} if m.get('emotion') else {}),
             **({'fallback': m['fallback']} if m.get('fallback') else {}),
-            'duration': round(m['samples'] / SR, 3), 'mouth': m['mouth'], 'open': m['open'], 'lufs': m['lufs'],
+            'duration': round(m['samples'] / SR, 3), 'mouth': m['mouth'], 'open': m['open'], 'vis': m.get('vis', ''), 'lufs': m['lufs'],
             'ogg_bytes': ogg.stat().st_size, 'm4a_bytes': m4a.stat().st_size,
             'sha256': {'ogg': sha256(ogg), 'm4a': sha256(m4a)},
         }
@@ -1192,7 +1351,7 @@ def stage_verify(_args):
                 problems.append(f'{clip_id}: grunt length {m["duration"]}')
         if m['kind'] == 'human' and m.get('engine') not in ('chatterbox', 'kokoro'):
             problems.append(f'{clip_id}: engine {m.get("engine")}')
-        if len(m.get('open', '')) != len(m['mouth']):
+        if len(m.get('open', '')) != len(m['mouth']) or len(m.get('vis', '')) != len(m['mouth']):
             problems.append(f'{clip_id}: open track length')
         runs = [len(g[0]) for g in re.findall(r'((.)\2*)', m['mouth'])]
         if len(runs) > 1 and min(runs) < 2:

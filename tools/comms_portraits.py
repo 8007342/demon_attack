@@ -19,14 +19,16 @@ outside the repo). Every CPU stage is a pure function of the committed
 sources: same inputs, same bytes.
 
 Frames per atlas row (lib/comms/comms_types.dart CommsFrame):
-0 idle, 1 blink, 2 talkA, 3 talkB, 4 talkC, 5 talkD ('oo'), 6 shout,
-7 grunt (demon roar / human alarm), 8 happy (demon gloat), 9 worried
-(demon alarmed snarl), 10 tilt left, 11 tilt right.
+0 idle, 1 blink, 2 talkA (slightly open), 3 talkB (half), 4 talkC (open),
+5 talkD ('oo'), 6 shout, 7 grunt (demon roar / human alarm), 8 happy (demon
+gloat), 9 worried (demon alarmed snarl), 10 tilt left, 11 tilt right,
+12 talkWide, 13 talkEe (teeth).
 
 Qwen-Image-Edit makes blink, shout, grunt, happy and worried from the picked
 keyframe. Each edit is registered to the idle frame by an integer shift and
 composited only inside the face box (eyes for blink), so the body never
-jitters; talk frames reveal the shout mouth row by row inside the mouth box;
+jitters; talk frames are drawn on the idle lips (seam and corners measured
+per character), anchored so the opening sits exactly on the mouth;
 tilts shear the rows above the neck. Every frame then gets the combat
 sprites' top-left rim light and a 1 px ink outline.
 """
@@ -591,6 +593,202 @@ def talk_layer(idle_rgb, shout_rgb, box, amount, width=1.0, ramp=1.5):
     return layer, weight * feather(weight.shape, box, ramp)
 
 
+# --------------------------------------------------------------- talk mouths
+# v4: the talk frames are drawn, not squashed from the shout edit. Each
+# character's idle lips are measured once (the seam between the lips and the
+# two corners; `picks.<id>.lips` = [left, seam, right] overrides), and every
+# talk shape is drawn anchored on them: the upper lip lifts a little, the jaw
+# drops the rest, so the opening always sits exactly on the portrait's own
+# mouth. Colours come from the character's own pixels (lips and skin from
+# idle, mouth interior, tongue and teeth from the shout edit).
+
+# Talk shapes in CommsFrame order: (frame, name, height and width relative
+# to the lip width, share of the opening above the seam, profile exponent
+# (0.5 = ellipse, lower = flatter), upper teeth, lower teeth, tongue).
+TALK_SHAPES = [
+    (2, 'slight', .07, .80, .35, .60, False, False, False),
+    (3, 'half', .15, .86, .30, .55, True, False, False),
+    (4, 'open', .25, .90, .27, .50, True, False, True),
+    (12, 'wide', .36, .96, .25, .45, True, True, True),
+    (5, 'oo', .26, .46, .32, .50, False, False, False),
+    (13, 'ee', .13, 1.0, .40, .30, True, True, False),
+]
+TALK_FRAMES = [s[0] for s in TALK_SHAPES]
+
+
+def dark_line_rows(L, x0, x1, y0, y1):
+    """Per row: how much darker the row is than the rows two above and two
+    below it, over columns x0..x1 (a horizontal lip seam scores high)."""
+    rows = {}
+    for y in range(max(2, y0), min(L.shape[0] - 2, y1)):
+        seg = L[y, x0:x1]
+        around = (L[y - 2, x0:x1] + L[y + 2, x0:x1]) / 2
+        rows[y] = float(np.mean(np.clip(around - seg, 0, None)))
+    return rows
+
+
+def lip_geometry(cid, idle_rgb, alpha, shout_rgb, mouth_box, eyes, grid):
+    """Seam row, corners and colours of the idle mouth (logical grid)."""
+    pick = load(SPEC)['picks'].get(cid, {})
+    scale = grid / 128
+    L = idle_rgb @ np.array([.3, .59, .11])
+    bx0, by0, bx1, by1 = mouth_box
+    cx = (bx0 + bx1) // 2
+    if pick.get('lips'):
+        left, seam, right = [int(round(v * scale)) for v in pick['lips']]
+    else:
+        half = max(3, (bx1 - bx0) // 3)
+        lo = eyes[3] + max(2, grid // 20)
+        hi = min(grid - 3, (by0 + by1) // 2 + 1)
+        rows = dark_line_rows(L, cx - half, cx + half, lo, hi)
+        seam = max(rows, key=rows.get) if rows else (by0 + by1) // 2
+        # Corners: walk out from the centre along the seam while the row is
+        # darker than its neighbours above and below.
+        def dark(x):
+            return (L[seam - 2, x] + L[seam + 2, x]) / 2 - min(L[seam, x], L[seam - 1, x], L[seam + 1, x]) > 10
+        left = right = cx
+        misses = 0
+        while left > bx0 - grid // 16 and misses < 2:
+            left -= 1
+            misses = 0 if dark(left) else misses + 1
+        left += misses
+        misses = 0
+        while right < bx1 + grid // 16 and misses < 2:
+            right += 1
+            misses = 0 if dark(right) else misses + 1
+        right -= misses
+        if right - left < grid // 8:
+            left, right = cx - grid // 10, cx + grid // 10
+        # Smile lines and stubble can extend the dark seam: the mouth is at
+        # most a little wider than the shout edit's opening.
+        cap = int(round((bx1 - bx0) * 1.05))
+        if right - left + 1 > cap:
+            mid = (left + right) / 2
+            left, right = int(round(mid - cap / 2)), int(round(mid + cap / 2)) - 1
+    width = right - left + 1
+    cx = (left + right + 1) / 2
+    ut = max(1, int(round(width * .08)))
+    lt = max(2, int(round(width * .11)))
+
+    def median(img, mask):
+        pts = img[mask & alpha]
+        return np.median(pts, 0) if len(pts) else None
+
+    ys, xs = np.mgrid[0:grid, 0:grid]
+    band = (np.abs(xs + .5 - cx) < width * .3)
+    lip = median(idle_rgb, band & (ys > seam) & (ys <= seam + lt))
+    lip_up = median(idle_rgb, band & (ys < seam) & (ys >= seam - ut))
+    skin = median(idle_rgb, band & (ys > seam + lt + 1) & (ys <= seam + lt + 4))
+    box = (xs >= bx0) & (xs < bx1) & (ys >= by0) & (ys < by1) & alpha
+    sh = shout_rgb[box]
+    sl = sh @ np.array([.3, .59, .11])
+    dark = np.median(sh[sl <= np.percentile(sl, 20)], 0) if len(sh) else np.array([40, 16, 24.])
+    sat = sh.max(1) - sh.min(1)
+    teeth_pts = sh[(sl >= np.percentile(sl, 88)) & (sat < 70)] if len(sh) else []
+    teeth = np.median(teeth_pts, 0) if len(teeth_pts) else np.array([236, 228, 214.])
+    pink = sh[(sh[:, 0] > sh[:, 1] + 40) & (sh[:, 0] > sh[:, 2] + 20) & (sl > 70) & (sl < 170)] if len(sh) else []
+    tongue = np.median(pink, 0) if len(pink) > 3 else np.array([200, 80, 96.])
+    if kind(cid) == 'demon':
+        dark = np.minimum(dark, np.array([70, 20, 34.]))
+    fallback = np.median(idle_rgb[band & (ys >= seam - 4) & (ys <= seam + 4) & alpha], 0)
+    return {
+        'cx': cx, 'seam': seam, 'left': left, 'right': right, 'width': width, 'ut': ut, 'lt': lt,
+        'lip': lip if lip is not None else fallback, 'lip_up': lip_up if lip_up is not None else fallback,
+        'skin': skin if skin is not None else fallback, 'dark': dark, 'teeth': teeth, 'tongue': tongue,
+    }
+
+
+def draw_mouth(idle_rgb, alpha, geo, shape, demon):
+    """One talk shape drawn on a copy of the idle RGB; returns (rgb, mask of
+    changed pixels). Everything outside the mask is idle's exact RGB."""
+    _f, name, hf, wf, lift, p, top_teeth, low_teeth, tongue = shape
+    grid = idle_rgb.shape[0]
+    out = idle_rgb.copy()
+    mask = np.zeros(alpha.shape, bool)
+    w = geo['width']
+    h = max(2.0 if name != 'slight' else 1.4, hf * w)
+    hw = max(2.0, wf * w / 2)
+    cx, seam = geo['cx'], geo['seam'] + .5
+    ut = geo['ut'] + (1 if name == 'oo' else 0)
+    lt = geo['lt'] + (1 if name == 'oo' else 0)
+
+    def put(x, y, colour):
+        if 0 <= x < grid and 0 <= y < grid and alpha[y, x]:
+            out[y, x] = colour
+            mask[y, x] = True
+
+    if name == 'oo':
+        # Pursed lips: the idle seam beyond the rounded opening closes up
+        # into lip colour, so the mouth reads narrower.
+        for x in range(geo['left'], geo['right'] + 1):
+            if abs(x + .5 - cx) >= hw - .5:
+                for y in range(geo['seam'] - 1, geo['seam'] + 2):
+                    put(x, y, geo['lip'] if y > geo['seam'] - 1 else geo['lip_up'])
+    for x in range(int(np.floor(cx - hw - 1)), int(np.ceil(cx + hw + 1))):
+        u = (x + .5 - cx) / hw
+        if abs(u) >= 1:
+            continue
+        prof = (1 - u * u) ** p
+        top = seam - lift * h * prof
+        bot = seam + (1 - lift) * h * prof
+        open_px = [y for y in range(grid) if top <= y + .5 < bot]
+        if not open_px:
+            # The very corners: a 1 px crease on the seam.
+            put(x, geo['seam'], geo['dark'] * .8 + geo['lip'] * .2)
+            continue
+        y_top, y_bot = open_px[0], open_px[-1]
+        span = y_bot - y_top + 1
+        for y in open_px:
+            colour = geo['dark']
+            k = y - y_top
+            if tongue and span >= 4 and y_bot - y < max(1, round(span * .38)) and abs(u) < .72:
+                colour = geo['tongue']
+            if top_teeth and span >= 3 and k < max(1, round(span * .22)) and abs(u) < (.8 if not demon else .9):
+                colour = geo['teeth']
+            if low_teeth and span >= 4 and y_bot - y < max(1, round(span * .18)) and abs(u) < .7:
+                colour = geo['teeth']
+            if demon and top_teeth and span >= 4 and abs(abs(u) - .55) < .12 and k < span * .55:
+                colour = geo['teeth']          # upper fangs
+            if demon and low_teeth and span >= 5 and abs(abs(u) - .3) < .1 and y_bot - y < span * .45:
+                colour = geo['teeth']          # lower fangs
+            put(x, y, colour)
+        # The character's own lips move apart: the idle upper lip rows slide
+        # up above the opening and the lower lip rows (with the chin shading
+        # right under them) slide down below it, so the lips keep their
+        # pixel shading; a flat lip colour only where the shape needs more.
+        s0 = geo['seam']
+        for k in range(ut + 1):
+            y_src, y_dst = s0 - 1 - k, y_top - 1 - k
+            if y_dst < y_src and 0 <= y_src < grid:
+                put(x, y_dst, idle_rgb[y_src, x] if name != 'oo' else geo['lip_up'])
+        drop = y_bot - s0
+        for k in range(lt + 2):
+            y_src, y_dst = s0 + 1 + k, y_bot + 1 + k
+            if drop > 0 and 0 <= y_src < grid and 0 <= y_dst < grid:
+                put(x, y_dst, idle_rgb[y_src, x] if name != 'oo' or k >= lt else geo['lip'])
+        edge = lt + 2
+        if name in ('open', 'wide') and abs(u) < .8:
+            # The dropped jaw's soft shadow under the lower lip.
+            y = y_bot + 1 + edge
+            if 0 <= y < grid and alpha[y, x]:
+                put(x, y, idle_rgb[y, x] * .82)
+    return out, mask
+
+
+def talk_frames(cid, idle_rgb, alpha, shout_rgb, mouth_box, eyes, grid):
+    """All talk shapes of a character: {frame: rgb}, the box holding every
+    changed pixel, and the lip geometry."""
+    geo = lip_geometry(cid, idle_rgb, alpha, shout_rgb, mouth_box, eyes, grid)
+    demon = kind(cid) == 'demon'
+    frames, union = {}, np.zeros(alpha.shape, bool)
+    for shape in TALK_SHAPES:
+        rgb, mask = draw_mouth(idle_rgb, alpha, geo, shape, demon)
+        frames[shape[0]] = rgb
+        union |= mask
+    box = largest_box(union) or list(mouth_box)
+    return frames, box, geo
+
+
 def boxes_for(cid, grid):
     """Snapped idle + registered raw edits, and the fixed eye, mouth and face
     boxes shared by every frame of the character."""
@@ -627,9 +825,9 @@ def frames_for(cid, grid=None):
     frames = [to_rgba(idle_rgb, alpha),
               to_rgba(blend(idle_rgb, ed['blink'][0], feather(shape, eye_box, 2)), alpha)]
     shout_rgb = blend(idle_rgb, ed['shout'][0], wf)
-    for amount, width in ((0.35, 1.0), (0.65, 1.0), (1.0, 1.0), (0.8, 0.6)):
-        layer, w = talk_layer(idle_rgb, shout_rgb, mouth, amount, width)
-        frames.append(to_rgba(blend(idle_rgb, layer, w), alpha))
+    talk, talk_box, geo = talk_frames(cid, idle_rgb, alpha, ed['shout'][0], mouth, eyes, grid)
+    for f in (2, 3, 4, 5):
+        frames.append(to_rgba(talk[f], alpha))
     frames.append(to_rgba(shout_rgb, alpha))
     if kind(cid) == 'human':
         frames.append(to_rgba(blend(idle_rgb, ed['grunt'][0], wf), alpha))
@@ -640,7 +838,10 @@ def frames_for(cid, grid=None):
     pivot = min(grid - 1, mouth[3] + (mouth[3] - eyes[1]) // 2)
     deg = load(SPEC).get('tilt_degrees', 4)
     frames += [tilt(frames[0], pivot, -deg), tilt(frames[0], pivot, deg)]
-    return [finish_frame(f) for f in frames], mouth, eyes, face
+    frames += [to_rgba(talk[12], alpha), to_rgba(talk[13], alpha)]
+    lips = {'left': int(geo['left']), 'seam': int(geo['seam']), 'right': int(geo['right'])}
+    face = [min(face[0], talk_box[0]), min(face[1], talk_box[1]), max(face[2], talk_box[2]), max(face[3], talk_box[3])]
+    return [finish_frame(f) for f in frames], talk_box, eyes, face, lips
 
 
 def small_box(box, g, s):
@@ -659,8 +860,9 @@ def outside_equal(a, b, box):
 
 
 def check(atlas=None, small=None):
-    """For every character: frames 2-6 equal frame 0 outside the face box and
-    frame 1 equals frame 0 outside the eye box, in both atlases."""
+    """For every character: the talk frames (2-5, 12, 13) equal frame 0
+    outside the mouth box, the shout outside the face box and the blink
+    outside the eye box, in both atlases."""
     spec = load(SPEC)
     g, s = spec['grid'], spec['small']
     big = np.array(Image.open(ATLAS)) if atlas is None else atlas
@@ -671,16 +873,19 @@ def check(atlas=None, small=None):
         if cid not in faces:
             failures.append(f'{cid}: no faces entry')
             continue
-        face, eyes = faces[cid]['face'], faces[cid]['eyes']
+        face, eyes, mouth = faces[cid]['face'], faces[cid]['eyes'], faces[cid]['mouth']
         eye_box = [eyes[0] - 2, eyes[1] - 2, eyes[2] + 2, eyes[3] + 2]
         for atlas_px, cell, scale in ((big, g, False), (sm, s, True)):
-            cells = [atlas_px[row * cell:(row + 1) * cell, c * cell:(c + 1) * cell] for c in range(7)]
+            cells = [atlas_px[row * cell:(row + 1) * cell, c * cell:(c + 1) * cell] for c in range(len(spec['frames']))]
             fb = small_box(face, g, s) if scale else face
             eb = small_box(eye_box, g, s) if scale else eye_box
+            mb = small_box(mouth, g, s) if scale else mouth
             label = f'{cid} {cell}px'
-            for c in (2, 3, 4, 5, 6):
-                if not outside_equal(cells[0], cells[c], fb):
-                    failures.append(f'{label} frame {c} differs outside the face box')
+            if not outside_equal(cells[0], cells[6], fb):
+                failures.append(f'{label} shout differs outside the face box')
+            for c in TALK_FRAMES:
+                if not outside_equal(cells[0], cells[c], mb):
+                    failures.append(f'{label} talk frame {c} differs outside the mouth box')
             if not outside_equal(cells[0], cells[1], eb):
                 failures.append(f'{label} blink differs outside the eye box')
     print('outside-box identity:', 'OK for', len(cast_ids()), 'characters x 2 atlases' if not failures else f'{len(failures)} failures')
@@ -694,8 +899,8 @@ def finish():
     for cid in cast_ids():
         if not (SRC / f'{cid}-key.png').exists():
             continue
-        _, mouth, eyes, face = frames_for(cid)
-        print(cid, 'mouth', mouth, 'eyes', eyes, 'face', face)
+        _, mouth, eyes, face, lips = frames_for(cid)
+        print(cid, 'mouth', mouth, 'lips', lips, 'eyes', eyes, 'face', face)
 
 
 def pack():
@@ -709,8 +914,8 @@ def pack():
         if not (SRC / f'{cid}-key.png').exists():
             print('missing sources for', cid)
             continue
-        frames, mouth, eyes, face = frames_for(cid, g)
-        meta[cid] = {'mouth': mouth, 'eyes': eyes, 'face': face}
+        frames, mouth, eyes, face, lips = frames_for(cid, g)
+        meta[cid] = {'mouth': mouth, 'lips': lips, 'eyes': eyes, 'face': face}
         for col, f in enumerate(frames):
             big[row * g:(row + 1) * g, col * g:(col + 1) * g] = f
             small[row * s:(row + 1) * s, col * s:(col + 1) * s] = small_frame(f, s)
