@@ -87,24 +87,30 @@
   "finale-fleet": {
    "kind": "tail",
    "beats": 36,
+   "bpm": 120.0,
+   "barSamples": 96000,
    "seconds": 20.0,
    "loopStart": 18.0,
    "loopEnd": 20.0,
    "mode": "a2a",
    "group": "march",
    "seed": 43,
-   "denoise": 0.45,
-   "motifChroma": 0.71,
-   "motifOnset": 0.624,
-   "referenceCloseness": 0.878,
-   "startSeconds": 2.0,
+   "denoise": 0.55,
+   "motifChroma": 0.36,
+   "motifOnset": 0.912,
+   "startSeconds": 1.48,
+   "variantOf": "finale",
+   "flat15": 0.19,
+   "perc": 0.377,
+   "crestDb": 11.27,
+   "fluxAbs": 0.371,
    "bytes": {
-    "ogg": 215498,
-    "m4a": 328893
+    "ogg": 202684,
+    "m4a": 332171
    },
    "sha256": {
-    "ogg": "afb19e260df5d98ca14f70ee7e94ffa0661c9d179ed383fe2ee5127a3e5bc134",
-    "m4a": "9da806047f67f9322a664044f0727282c803319495c9a5c222563cbd5a0b2d02"
+    "ogg": "f81a66b9696e38294ecb374946cc82b2ebc766ea7b79d0050a97916973ad773f",
+    "m4a": "8f7ce13c68ea5b40469a4c05ea6fadc98241de148f3ea91b61970e8fa54d0754"
    }
   },
   "l1-accents": {
@@ -1153,24 +1159,30 @@
   "levelclear-fleet": {
    "kind": "tail",
    "beats": 12,
+   "bpm": 120.0,
+   "barSamples": 96000,
    "seconds": 8.0,
    "loopStart": 6.0,
    "loopEnd": 8.0,
    "mode": "a2a",
    "group": "march",
-   "seed": 41,
+   "seed": 43,
    "denoise": 0.45,
-   "motifChroma": 0.458,
-   "motifOnset": 0.501,
-   "referenceCloseness": 0.902,
-   "startSeconds": 2.0,
+   "motifChroma": 0.08,
+   "motifOnset": 0.85,
+   "startSeconds": 1.49,
+   "variantOf": "levelclear",
+   "flat15": 0.264,
+   "perc": 0.452,
+   "crestDb": 13.86,
+   "fluxAbs": 0.419,
    "bytes": {
-    "ogg": 87497,
-    "m4a": 133591
+    "ogg": 78150,
+    "m4a": 134559
    },
    "sha256": {
-    "ogg": "58d8206c8a25eade6ee50aaf9d37e78605907d109ee03ee9f9a8063e8f402c07",
-    "m4a": "da218d5269f509551be28a7e835aed968a81da21fc9581e3433aaf26847f4a56"
+    "ogg": "7929d852e186a2272fa28e2c3f2ec6d8e99cd659ef996931d46485ccba22f1d9",
+    "m4a": "dca6eaf73efd0579b54403c07447266875f6d3ae05254fc13ec3a6a919178653"
    }
   },
   "menu": {
