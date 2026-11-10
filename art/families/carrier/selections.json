@@ -3,12 +3,15 @@
  "detail": {
   "hide": {"item": "stone", "seed": 652101, "crop": [600, 470, 1080, 783], "why": "Weathered stony gargoyle hide on the chest and arm: fine pits and chisel marks for the head, jowls and snout."},
   "masonry": {"item": "stone_texture", "seed": 652301, "crop": [0, 0, 1536, 1001], "why": "Irregular carved blocks about 15 x 6 native px after sampling: the bastions, chimneys, buttresses and belly."},
-  "membrane": {"item": "membrane", "seed": 652201, "crop": [0, 0, 1536, 1001], "why": "Wrinkled, veined leather filling the frame: the folded wing sails."}
+  "membrane": {"item": "membrane", "seed": 652201, "crop": [0, 0, 1536, 1001], "why": "Wrinkled, veined leather filling the frame: the bat-wing solar sails."},
+  "plating": {"item": "plating", "seed": 653101, "crop": [64, 64, 1472, 960], "why": "Riveted hull panels with seams, hatches and greeble modules inside the frame border: tiled over every hull plate of the armada (2026-11 boss armada round)."}
  },
  "rejected": {
   "stone-652100": "A fortress-gargoyle concept with strong baked lighting; composition reference only.",
   "stone-652102": "Same subject as 652101 with less surface detail.",
   "stone_texture-652300": "Regular brick courses, too uniform for carved stone.",
-  "membrane-652200": "A whole bat on a flat ground rather than a membrane surface."
+  "membrane-652200": "A whole bat on a flat ground rather than a membrane surface.",
+  "plating-653100": "Diagonal plate rows: a strong direction that fights the hull's own panel lines.",
+  "plating-653102": "A single isolated module on a white ground, not a surface."
  }
 }

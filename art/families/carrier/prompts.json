@@ -1,12 +1,13 @@
 {
- "schema": "demon-attack.carrier-prompts/v1",
- "round": "2026-11 gargoyle war-ark carrier",
+ "schema": "demon-attack.carrier-prompts/v2",
+ "round": "2026-11 boss armada: gargoyle warships from frigate to dreadnought",
  "workflow": "art/workflows/sprites/carrier-texture-sdxl.json",
- "use": "Shading detail only: each selected output is finished into a 4-level luminance map (art/families/carrier/detail/*.png) that nudges the key-light value of stone and membrane pixels before quantisation. Silhouette, faces, emblem, rank marks, jaws, vents and palette stay authored in tools/generate_boss_sprites.py.",
+ "use": "Shading detail only: each selected output is finished into a 4-level luminance map (art/families/carrier/detail/*.png) that nudges the key-light value of hull plating, carved stone and membrane pixels before quantisation. Hull geometry, silhouettes, engines, faces, emblems, bays, jaws, turrets and palettes stay authored in tools/generate_boss_sprites.py.",
  "negative": "text, watermark, logo, signature, blurry, photo, gradient background, scenery, ground, multiple objects, grid, sprite sheet, cropped, bird, feathers, beak, gore, blood, realistic, human, spaceship, metal panels, neon",
  "items": {
   "stone": {"seed": 652100, "count": 3, "prompt": "pixel art game boss, front view, a huge flying gargoyle fortress carved from dark weathered stone and bone, gothic buttresses and spires, horned prows, folded bat wings with finger bones, glowing ember eyes, cracked stone texture, cartoonish scary, hard pixel edges, limited palette, dark outline, centered, plain flat white background"},
   "stone_texture": {"seed": 652300, "count": 2, "prompt": "pixel art texture, close-up of weathered carved gargoyle stone, rough chiselled surface with small cracks and pits, dark grey violet, hard pixel edges, limited palette, flat lighting, fills the frame"},
-  "membrane": {"seed": 652200, "count": 2, "prompt": "pixel art texture, close-up of a leathery bat wing membrane stretched between bony fingers, wrinkled veined hide, dark violet, hard pixel edges, limited palette, flat lighting, fills the frame"}
+  "membrane": {"seed": 652200, "count": 2, "prompt": "pixel art texture, close-up of a leathery bat wing membrane stretched between bony fingers, wrinkled veined hide, dark violet, hard pixel edges, limited palette, flat lighting, fills the frame"},
+  "plating": {"seed": 653100, "count": 3, "negative": "text, watermark, logo, signature, blurry, photo, gradient background, scenery, ground, grid, sprite sheet, cropped, character, creature, face, gore, blood, realistic, neon, perspective, vanishing point", "prompt": "pixel art texture, close-up of armored starship hull plating seen from above, rectangular riveted metal panels with seams, small vents and greebles, dark gunmetal violet, hard pixel edges, limited palette, flat lighting, fills the frame"}
  }
 }
