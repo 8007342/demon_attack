@@ -18,6 +18,7 @@ import 'services/run_storage.dart';
 import 'services/tilt_control.dart';
 import 'widgets/medal.dart';
 import 'widgets/heart_parts.dart';
+import 'widgets/widescreen_backdrop.dart'; // --- widescreen backdrop
 // --- squad comms
 import 'comms/comms_view.dart';
 import 'comms/squad_comms.dart';
@@ -617,23 +618,54 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
+                  // --- widescreen backdrop: scenery beside the column on
+                  // wide landscape screens; the comms panels stay on top.
+                  if (WidescreenBackdrop.shows(bounds.biggest))
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: WidescreenBackdrop(
+                          scene: _backdropScene(title),
+                          environment: scene.environment,
+                          time: scene.ambient,
+                          shipX: model.shipX,
+                          paused: model.mode == RunMode.paused,
+                          slots: commsLayout.side && !title
+                              ? commsLayout.tileRects(bounds.biggest)
+                              : const [],
+                        ),
+                      ),
+                    ),
+                  // --- end widescreen backdrop
                   if (title)
                     Positioned.fill(
                       child: Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [
-                              Color(0x33080D18),
-                              Color(0xAA080D18),
-                              Color(0xF5080D18),
-                            ],
+                            // --- widescreen backdrop: a lighter scrim keeps
+                            // the bridge console visible on wide screens.
+                            colors: WidescreenBackdrop.shows(bounds.biggest)
+                                ? const [
+                                    Color(0x00080D18),
+                                    Color(0x55080D18),
+                                    Color(0x66080D18),
+                                  ]
+                                : const [
+                                    Color(0x33080D18),
+                                    Color(0xAA080D18),
+                                    Color(0xF5080D18),
+                                  ],
                           ),
                         ),
                       ),
                     ),
-                  if (title) _titleScreen(bounds),
+                  // --- widescreen backdrop: under a score overlay the hall
+                  // shows in the margins, so the landing steps aside there.
+                  if (title &&
+                      !(screen != null &&
+                          WidescreenBackdrop.shows(bounds.biggest)))
+                    _titleScreen(bounds),
                   if (!title)
                     Center(
                       child: SizedBox(
@@ -677,12 +709,19 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     ),
                   if (screen != null)
                     Positioned.fill(
-                      child: screen == 'ranking'
-                          ? const ColoredBox(
-                              color: Color(0xEE080D18),
-                              child: Center(child: CircularProgressIndicator()),
-                            )
-                          : _scoreOverlay(),
+                      // --- widescreen backdrop: the hall shows through the
+                      // overlay's margins.
+                      child: _backdropMargins(
+                        bounds,
+                        screen == 'ranking'
+                            ? const ColoredBox(
+                                color: Color(0xEE080D18),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : _scoreOverlay(),
+                      ),
                     ),
                 ],
               );
@@ -692,6 +731,42 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       ),
     );
   }
+
+  // --- widescreen backdrop: which scene stands beside the column.
+  BackdropScene _backdropScene(bool title) {
+    if (title) {
+      return screen != null || showFinalResult
+          ? BackdropScene.hall
+          : BackdropScene.vista;
+    }
+    return switch (model.presentationMode) {
+      RunMode.gameOver => BackdropScene.defeat,
+      RunMode.victory || RunMode.completed => BackdropScene.victory,
+      _ => BackdropScene.sector,
+    };
+  }
+
+  /// Fades a full-screen overlay toward the screen edges on wide screens,
+  /// keeping the centre (and everything drawn there) fully opaque.
+  Widget _backdropMargins(BoxConstraints bounds, Widget overlay) {
+    if (!WidescreenBackdrop.shows(bounds.biggest)) return overlay;
+    final w = bounds.maxWidth;
+    final inner = (math.min(w, 600) / 2) / w;
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (rect) => LinearGradient(
+        colors: const [
+          Color(0x2EFFFFFF),
+          Color(0xFFFFFFFF),
+          Color(0xFFFFFFFF),
+          Color(0x2EFFFFFF),
+        ],
+        stops: [0, .5 - inner, .5 + inner, 1],
+      ).createShader(rect),
+      child: overlay,
+    );
+  }
+  // --- end widescreen backdrop
 
   Widget _titleScreen(BoxConstraints bounds) => Stack(
     children: [

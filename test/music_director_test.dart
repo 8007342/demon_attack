@@ -201,6 +201,10 @@ void main() {
         'hatch',
         'reinforce',
         'breakthrough',
+        'destroyed',
+        'destroyed',
+        'gloat',
+        'respawn',
       ]);
       expect(fleet, 1);
     },

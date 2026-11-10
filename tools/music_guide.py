@@ -23,7 +23,7 @@ from scipy import signal
 import music_motifs as motifs
 
 SR = 48000
-BEAT = 0.5
+BEAT = 0.5  # 120 BPM default; render() takes the cue's tempo
 TAU = 2 * np.pi
 
 
@@ -271,6 +271,12 @@ GENRE = {
     'doom': dict(drive=30.0, tone=3200, scoop=True, gtr=1.1, room=0.3),
     'deathdoom': dict(drive=34.0, tone=3600, scoop=True, gtr=1.1, room=0.28),
     'march': dict(drive=6.0, tone=4000, scoop=False, gtr=0.6, room=0.35),
+    # Round 3 battle styles: hotter gain, brighter cab, tight room.
+    'battlepunk': dict(drive=22.0, tone=5200, scoop=False, gtr=1.1, room=0.12),
+    'powermetal': dict(drive=20.0, tone=5400, scoop=True, gtr=1.0, room=0.2),
+    'battle': dict(drive=28.0, tone=5000, scoop=True, gtr=1.1, room=0.16),
+    'doombattle': dict(drive=32.0, tone=4200, scoop=True, gtr=1.15, room=0.28),
+    'blackened': dict(drive=36.0, tone=4800, scoop=True, gtr=1.1, room=0.3),
 }
 
 
@@ -283,10 +289,13 @@ def reverb_ir(seconds, key):
     return filt(ir, 'lp', 6000)
 
 
-def render(events, beats, style='rock', key=('guide',), tail_s=2.0):
-    """Mix events into stereo; returns float array (n, 2)."""
+def render(events, beats, style='rock', key=('guide',), tail_s=2.0, bpm=120):
+    """Mix events into stereo at `bpm`; returns float array (n, 2). The length
+    is round(beats * 60 / bpm * SR) samples (+ tail), so windows cut by the
+    pipeline at the same rounding are sample-exact."""
     g = GENRE.get(style, GENRE['rock'])
-    n = int((beats * BEAT + tail_s) * SR)
+    BEAT = 60.0 / bpm
+    n = int(round(beats * BEAT * SR)) + int(tail_s * SR)
     bus = {k: np.zeros((n, 2)) for k in ('drums', 'gtr', 'bass', 'lead', 'pad')}
 
     def place(target, x, t, pan=0.0, width=0.0):
@@ -329,6 +338,12 @@ def render(events, beats, style='rock', key=('guide',), tail_s=2.0):
             place(bus['drums'], timp_voice(pitch, vel, k), b, -.2)
         elif inst == 'pad':
             place(bus['pad'], formant_voice(pitch, ds, vel, k, 'u', 0.4), b)
+        elif inst == 'strings':
+            place(bus['pad'], strings_voice(pitch, ds, vel, k), b, ((pitch % 7) - 3) / 4)
+        elif inst == 'vocalise':
+            place(bus['lead'], vocalise_voice(pitch, ds, vel, k), b, 0.0)
+        elif inst == 'hey':
+            place(bus['drums'], hey_voice(vel, k), b, 0.0)
         else:
             raise ValueError(inst)
     # Lead delay (dotted eighth) for the solo voice.
@@ -345,7 +360,7 @@ def render(events, beats, style='rock', key=('guide',), tail_s=2.0):
 
 def style_of(name):
     if name.startswith('l') and name[1].isdigit():
-        return motifs.MOTIFS[int(name[1])]['drums']
+        return motifs.BATTLE[int(name[1])]
     return 'march' if name.split('-')[0] in ('levelclear', 'victory', 'finale') else 'metal'
 
 
@@ -355,39 +370,92 @@ def guide(name, pre_bars=2, post_bars=2):
     cuts (beat 4*pre_bars onwards) is the loop itself in musical context."""
     events, beats = motifs.cue_events(name)
     style = style_of(name)
+    bpm = motifs.bpm_of(name)
     loop = name.endswith(('t1', 't2', 't3', 't4')) or name == 'alienwin' or name.endswith('outro')
     if loop:
         pre = [(b - beats + 4 * pre_bars, d, pt, v, i) for b, d, pt, v, i in events if b >= beats - 4 * pre_bars]
         mid = [(b + 4 * pre_bars, d, pt, v, i) for b, d, pt, v, i in events]
         post = [(b + beats + 4 * pre_bars, d, pt, v, i) for b, d, pt, v, i in events if b < 4 * post_bars]
         total = beats + 4 * (pre_bars + post_bars)
-        audio = render(pre + mid + post, total, style, (name,), tail_s=0.0)
+        audio = render(pre + mid + post, total, style, (name,), tail_s=0.0, bpm=bpm)
         offset = 4 * pre_bars
     else:
         # One-shot and tail cues: one bar of count-in (snare pickup) before.
         lead_in = [(0, .2, 38, 60, 'snare'), (1, .2, 38, 60, 'snare'), (2, .2, 38, 70, 'snare'), (3, .2, 38, 80, 'snare')]
         total = beats + 4 + 4
         shifted = [(b + 4, d, pt, v, i) for b, d, pt, v, i in events]
-        audio = render(lead_in + shifted, total, style, (name,), tail_s=0.0)
+        audio = render(lead_in + shifted, total, style, (name,), tail_s=0.0, bpm=bpm)
         offset = 4
-    return audio, offset * BEAT, beats
+    return audio, offset * 60.0 / bpm, beats
 
 
-SLOT_BEATS = 3
+SLOT_SECONDS = 1.5
 
 
 def accents(level):
-    """Accent sprite: one 3-beat (1.5 s) slot per accent, in ACCENTS order."""
-    style = motifs.MOTIFS[level]['drums']
+    """Accent sprite: one 1.5 s slot per accent, in ACCENTS order, played at
+    the level's tempo."""
+    style = motifs.BATTLE[level]
+    bpm = motifs.BPM[level]
+    slot_beats = SLOT_SECONDS * bpm / 60.0
     out = []
     for name in motifs.ACCENTS:
         ev = motifs.accent_events(level, name)
-        x = render(ev, SLOT_BEATS, style, ('accent', level, name), tail_s=0.0)
+        x = fit(render(ev, slot_beats, style, ('accent', level, name), tail_s=0.0, bpm=bpm), int(SLOT_SECONDS * SR))
         # Fade the last 150 ms so each slot ends silent.
         f = int(0.15 * SR)
         x[-f:] *= np.linspace(1, 0, f)[:, None] ** 2
         out.append(x)
     return np.concatenate(out)
+
+
+def fit(x, n):
+    return x[:n] if len(x) >= n else np.concatenate([x, np.zeros((n - len(x), 2))])
+
+
+def strings_voice(pitch, dur_s, vel, key):
+    """String ensemble: detuned saws, slow bow attack, gentle vibrato."""
+    n = int((dur_s + 0.35) * SR)
+    t = np.arange(n) / SR
+    r = rng(*key)
+    x = np.zeros(n)
+    for d in (0.993, 0.998, 1.002, 1.007):
+        vib = 1 + 0.004 * np.sin(TAU * (5.0 + r.uniform(-.5, .5)) * t + r.uniform(0, 6))
+        x += saw(hz(pitch) * d, n, r.uniform(), vib=vib)
+    x = filt(filt(x, 'lp', 3200, 0.7), 'hp', 120)
+    x *= env_adsr(n, min(0.12, dur_s / 3), 0.4, 0.9, 0.3, int(dur_s * SR))
+    return x * (vel / 127) * 0.12
+
+
+def vocalise_voice(pitch, dur_s, vel, key):
+    """Wordless soprano 'ah' with operatic vibrato (formant synthesis)."""
+    n = int((dur_s + 0.4) * SR)
+    t = np.arange(n) / SR
+    r = rng(*key)
+    vib = 1 + 0.018 * np.sin(TAU * 5.6 * t) * np.clip((t - 0.12) / 0.25, 0, 1)
+    src = saw(hz(pitch), n, r.uniform(), vib=vib) + 0.4 * np.sin(TAU * np.cumsum(hz(pitch) * vib) / SR)
+    out = np.zeros(n)
+    for f, g, q in ((850, 1.0, 5), (1250, 0.55, 6), (2900, 0.35, 8), (3500, 0.2, 9)):
+        out += filt(src, 'bp', f, q) * g
+    out *= env_adsr(n, 0.09, 0.6, 0.9, 0.3, int(dur_s * SR))
+    return out * (vel / 127) * 0.4
+
+
+def hey_voice(vel, key):
+    """Gang shout "hey!": several voices, aspirated onset, /e/ formants."""
+    n = int(0.32 * SR)
+    t = np.arange(n) / SR
+    r = rng('hey', *key)
+    out = np.zeros(n)
+    for v in range(6):
+        f0 = r.uniform(140, 230)
+        off = int(r.uniform(0, 0.015) * SR)
+        ph = np.cumsum(np.full(n, f0) * (1 - 0.12 * t / 0.3)) / SR
+        src = ((ph % 1.0) ** 3) * 2 - 0.5 + 0.4 * r.standard_normal(n) * np.exp(-t / 0.03)
+        voice = sum(filt(src, 'bp', f, q) * g for f, g, q in ((550, 1.0, 5), (1850, 0.6, 6), (2600, 0.3, 7)))
+        e = np.clip(t / 0.01, 0, 1) * np.exp(-np.clip(t - 0.08, 0, None) / 0.05)
+        out[off:] += (voice * e)[:n - off]
+    return np.tanh(out * 1.5) * (vel / 127) * 0.5
 
 
 def cackle(seconds=3.0):

@@ -89,7 +89,9 @@
   "l1-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 7.5,
+   "bpm": 169.9993,
+   "barSamples": 67765,
+   "seconds": 12.0,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -98,166 +100,195 @@
     "laststand",
     "hatch",
     "reinforce",
-    "breakthrough"
+    "breakthrough",
+    "destroyed",
+    "gloat",
+    "respawn"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 78931,
-    "m4a": 125405
+    "ogg": 123931,
+    "m4a": 199857
    },
    "sha256": {
-    "ogg": "0356d42659fc25ef2973c6f9f16bddc03207aead533ff7bbef1d2e2a37cbf461",
-    "m4a": "d98e8f5860febee48a0b112de89534ea657df26e9e50f0590ab9860c07ff290b"
+    "ogg": "f30d71036d0ea2a465204dae00d53d5767523d48e7e798347644d4b7b3e47959",
+    "m4a": "abb54bcdbcbc3c8fd6751cf1d4f21f25a86f9f155440c87d1463770db8a729dc"
    }
   },
   "l1-intro": {
    "kind": "tail",
    "beats": 16,
-   "seconds": 10.0,
-   "loopStart": 8.0,
-   "loopEnd": 10.0,
+   "bpm": 169.9993,
+   "barSamples": 67765,
+   "seconds": 7.058854166666666,
+   "loopStart": 5.647083333333334,
+   "loopEnd": 7.058854166666666,
    "mode": "a2a",
-   "group": "1",
-   "seed": 43,
-   "denoise": 0.45,
-   "motifChroma": 0.425,
-   "motifOnset": 0.724,
-   "referenceCloseness": 0.936,
-   "startSeconds": 2.0,
+   "group": "s1",
+   "seed": 62,
+   "denoise": 0.55,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.779,
+   "motifOnset": 0.487,
+   "referenceCloseness": 0.893,
+   "startSeconds": 1.4117708333333332,
    "part": "intro",
    "bytes": {
-    "ogg": 103621,
-    "m4a": 166692
+    "ogg": 83152,
+    "m4a": 118635
    },
    "sha256": {
-    "ogg": "8988115f0d4169125604ddf5900d4574859e9ae5e6626ec4b21f46a349045405",
-    "m4a": "f3a8a708a7ca725f1027261a0a9f5433f7453cf7c4212f8d72d206b814b11e14"
+    "ogg": "4c3c2b300eb718bae781275d5759e88f60e9e9a0626ffeaa8594912326cb23e6",
+    "m4a": "1c1a8346e721ae7791ae018f23dc045fe02f1c96f457ee2aee4ab31eb477a7a0"
    }
   },
   "l1-outro": {
    "kind": "loop",
    "beats": 16,
-   "seconds": 8.0,
+   "bpm": 169.9993,
+   "barSamples": 67765,
+   "seconds": 5.647083333333334,
    "loopStart": 0.0,
-   "loopEnd": 8.0,
+   "loopEnd": 5.647083333333334,
    "mode": "a2a",
-   "group": "1",
-   "seed": 42,
-   "denoise": 0.45,
-   "motifChroma": 0.622,
-   "motifOnset": 0.944,
-   "referenceCloseness": 0.904,
-   "startSeconds": 4.0,
+   "group": "s1",
+   "seed": 62,
+   "denoise": 0.55,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.77,
+   "motifOnset": -0.002,
+   "referenceCloseness": 0.868,
+   "startSeconds": 2.8235416666666664,
    "part": "outro",
    "bytes": {
-    "ogg": 92712,
-    "m4a": 133108
+    "ogg": 68132,
+    "m4a": 94944
    },
    "sha256": {
-    "ogg": "2d940cb2a1bd305bf8a6c4cb0d7f3fc83588263c6c68a70c697a6333d3277996",
-    "m4a": "99acbc418f3f8cc74d99b5223260bc13b4af352d1d8f40ba69a85caf150bf174"
+    "ogg": "89a7c13b239245b25ab17b2524196e71e40ff66b5a8754b28d512372da0a11a0",
+    "m4a": "5c698caa21b9af5b56a584b992ef74d38a8031aef61195e953bca81b38a9a24f"
    }
   },
   "l1-t1": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 169.9993,
+   "barSamples": 67765,
+   "seconds": 11.294166666666667,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 11.294166666666667,
    "mode": "a2a",
    "group": "1",
-   "seed": 43,
+   "seed": 63,
    "denoise": 0.45,
-   "motifChroma": 0.104,
-   "motifOnset": 0.936,
-   "referenceCloseness": 0.935,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.431,
+   "motifOnset": 0.209,
+   "referenceCloseness": 0.731,
+   "startSeconds": 2.8235416666666664,
    "tier": 1,
    "bytes": {
-    "ogg": 160762,
-    "m4a": 263592
+    "ogg": 116079,
+    "m4a": 186568
    },
    "sha256": {
-    "ogg": "f3e32bb1f46d7d5e433e138e3a5c111faa7d2138a24d63822ae4b2d4aa900b18",
-    "m4a": "ec7abd4bc44a5d9849edeb0de712fcb6aa994c0b26abf88e1720372b0307222c"
+    "ogg": "d393b7117e0385b8fbe023f0804546b15c7caec18ca5546d6fce76584cc88d66",
+    "m4a": "534acaec62e927a6bd84271f645836f54bf7a41a7aa6371e9265d2025e29e268"
    }
   },
   "l1-t2": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 169.9993,
+   "barSamples": 67765,
+   "seconds": 11.294166666666667,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 11.294166666666667,
    "mode": "a2a",
    "group": "1",
-   "seed": 43,
+   "seed": 62,
    "denoise": 0.45,
-   "motifChroma": 0.585,
-   "motifOnset": 0.911,
-   "referenceCloseness": 0.9,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.758,
+   "motifOnset": 0.088,
+   "referenceCloseness": 0.727,
+   "startSeconds": 2.8235416666666664,
    "tier": 2,
    "bytes": {
-    "ogg": 173101,
-    "m4a": 263141
+    "ogg": 131445,
+    "m4a": 186541
    },
    "sha256": {
-    "ogg": "5feaa52370cd3a3757ff3e66c1ef701712507d6cfc380b942de0f6f6754281d8",
-    "m4a": "43bebcabed163460488070630314ce4a9d50841618f30221a76dbee01791cab4"
+    "ogg": "1fb7695f4e66424276c403fc8d7095b354b3a66b3c0863bb66fdb77b29d4b705",
+    "m4a": "0ca05e04074e0c01df81ee0cbd371481135a75c5a288f8e67679b73310b453aa"
    }
   },
   "l1-t3": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 169.9993,
+   "barSamples": 67765,
+   "seconds": 11.294166666666667,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 11.294166666666667,
    "mode": "a2a",
    "group": "1",
-   "seed": 43,
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.584,
-   "motifOnset": 0.746,
-   "referenceCloseness": 0.827,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.724,
+   "motifOnset": 0.449,
+   "referenceCloseness": 0.587,
+   "startSeconds": 2.8235416666666664,
    "tier": 3,
    "bytes": {
-    "ogg": 174194,
-    "m4a": 262626
+    "ogg": 131526,
+    "m4a": 186525
    },
    "sha256": {
-    "ogg": "2d67f04aa5d69f861d86f83b0e8b469df6b155a3f12323e8ef55dd73ec783a3c",
-    "m4a": "21aaaaedc1d3b49680639abd1010cf80bb257b973a747978df28c684b61261e5"
+    "ogg": "9939c25f1d9432552ef93a07ee130ee5936730a587275418587658a405b4abf6",
+    "m4a": "61953063d39adcb53abae11b1519803f0a20023c16ead09a0be8b4fb9f0d9674"
    }
   },
   "l1-t4": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 169.9993,
+   "barSamples": 67765,
+   "seconds": 11.294166666666667,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 11.294166666666667,
    "mode": "a2a",
    "group": "1",
-   "seed": 43,
+   "seed": 62,
    "denoise": 0.45,
-   "motifChroma": 0.57,
-   "motifOnset": 0.714,
-   "referenceCloseness": 0.689,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.645,
+   "motifOnset": 0.408,
+   "referenceCloseness": 0.624,
+   "startSeconds": 2.8235416666666664,
    "tier": 4,
    "bytes": {
-    "ogg": 173182,
-    "m4a": 262593
+    "ogg": 129133,
+    "m4a": 186605
    },
    "sha256": {
-    "ogg": "ec92d8fda8cb66bc50e7632aecb9ec249b7a0c2749feceec833fededce5f4ea3",
-    "m4a": "a9bdce752e9b34daecc8247390f95f9b080b2c2e63b7072e20aa99118f1fe36c"
+    "ogg": "ea7898cf7bf2ea35e47ff11de5a71e7eb918e6b21ea3673c0f253ca59924bf9d",
+    "m4a": "741d6b48854bed39ada3b25ff0fd2253737d8af846216fdfe54d90b0ab5bbf27"
    }
   },
   "l2-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 7.5,
+   "bpm": 160.0,
+   "barSamples": 72000,
+   "seconds": 12.0,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -266,166 +297,195 @@
     "laststand",
     "hatch",
     "reinforce",
-    "breakthrough"
+    "breakthrough",
+    "destroyed",
+    "gloat",
+    "respawn"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 78483,
-    "m4a": 124792
+    "ogg": 122641,
+    "m4a": 198497
    },
    "sha256": {
-    "ogg": "c5f677a16244a83548920513e73404113f18a5fdbf266c76913cb9d4584fa46e",
-    "m4a": "e9b86ceaebf07c065339169c9fea5978182a529f91278eddd65d6b5ef158d35f"
+    "ogg": "4c020179b2d2f438d166ac5cd9043b14192af0f07c185c60015f867f5870230f",
+    "m4a": "8e7123d4fde1053915da093a2aa84e490d9d862a604bed543ac9a2df78cd290e"
    }
   },
   "l2-intro": {
    "kind": "tail",
    "beats": 16,
-   "seconds": 10.0,
-   "loopStart": 8.0,
-   "loopEnd": 10.0,
+   "bpm": 160.0,
+   "barSamples": 72000,
+   "seconds": 7.5,
+   "loopStart": 6.0,
+   "loopEnd": 7.5,
    "mode": "a2a",
-   "group": "2",
-   "seed": 42,
-   "denoise": 0.45,
-   "motifChroma": 0.564,
-   "motifOnset": 0.605,
-   "referenceCloseness": 0.938,
-   "startSeconds": 2.0,
+   "group": "s2",
+   "seed": 63,
+   "denoise": 0.35,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.897,
+   "motifOnset": 0.619,
+   "referenceCloseness": 0.866,
+   "startSeconds": 1.5,
    "part": "intro",
    "bytes": {
-    "ogg": 106666,
-    "m4a": 167200
+    "ogg": 86751,
+    "m4a": 125819
    },
    "sha256": {
-    "ogg": "de3c924565687ecbb3f3cb23079a832d16a769c6f5888f73f417e37de5d92aea",
-    "m4a": "6b998fbca484a3623f0876c72e07dec14910693afe36fba1a5c02ce1f6cb6120"
+    "ogg": "11f9452a3e0cbbea50bb1b3d922123177a058fed17c86d9902de30071c2e452d",
+    "m4a": "9a7dbbba9207d9ba647924ae204f4311f95ac129fa2c38c33afe05133529b77f"
    }
   },
   "l2-outro": {
    "kind": "loop",
    "beats": 16,
-   "seconds": 8.0,
+   "bpm": 160.0,
+   "barSamples": 72000,
+   "seconds": 6.0,
    "loopStart": 0.0,
-   "loopEnd": 8.0,
+   "loopEnd": 6.0,
    "mode": "a2a",
-   "group": "2",
-   "seed": 41,
+   "group": "s2",
+   "seed": 62,
    "denoise": 0.45,
-   "motifChroma": 0.553,
-   "motifOnset": 0.944,
-   "referenceCloseness": 0.886,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.917,
+   "motifOnset": 0.197,
+   "referenceCloseness": 0.831,
+   "startSeconds": 3.0,
    "part": "outro",
    "bytes": {
-    "ogg": 87986,
-    "m4a": 133015
+    "ogg": 69417,
+    "m4a": 100736
    },
    "sha256": {
-    "ogg": "3b62844fdb5c90915358e73d2370f485b5c39c59f5c9e34293866455541c3dda",
-    "m4a": "00a46464c6ebe5d1138b5baa602ee5099fa76265b2bc2fe6fbaebffe93df089b"
+    "ogg": "8ab3cf2a6b0fe5c0b2744b6a056e1d5ca1eaecc29261e9d8adad312728ddd026",
+    "m4a": "1fa536bc0d734669cb003beb39ef56eac6a11939c1e9849b7c148a6a22b72348"
    }
   },
   "l2-t1": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 160.0,
+   "barSamples": 72000,
+   "seconds": 12.0,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 12.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 43,
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.623,
-   "motifOnset": 0.941,
-   "referenceCloseness": 0.922,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.583,
+   "motifOnset": -0.061,
+   "referenceCloseness": 0.936,
+   "startSeconds": 3.0,
    "tier": 1,
    "bytes": {
-    "ogg": 176539,
-    "m4a": 263054
+    "ogg": 120859,
+    "m4a": 198164
    },
    "sha256": {
-    "ogg": "cd14b8efcc3ae87e57779694574e32e22d94fc5be353bdfbbef945f1fb647ab1",
-    "m4a": "b91f45532c2234bfe650d45bb92a0f33a8834b73fd072f8df1ee5f86478b4e58"
+    "ogg": "e8d0d43e013fc8e854d6ddca82196cf7edc61e694522c3e74ff1b6a81fb93456",
+    "m4a": "403c0b41e90171b257b6e1fa057c794ee256450221e8104d77ae66c7d826b3cd"
    }
   },
   "l2-t2": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 160.0,
+   "barSamples": 72000,
+   "seconds": 12.0,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 12.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 42,
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.64,
-   "motifOnset": 0.868,
-   "referenceCloseness": 0.912,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.848,
+   "motifOnset": 0.527,
+   "referenceCloseness": 0.853,
+   "startSeconds": 3.0,
    "tier": 2,
    "bytes": {
-    "ogg": 168133,
-    "m4a": 262682
+    "ogg": 136340,
+    "m4a": 198009
    },
    "sha256": {
-    "ogg": "53dc4c54b2713745fc4553a5e0ede70cf2baab4f91725b28a1fae3fc3a202e16",
-    "m4a": "38414473e5885e820dbfe4596b99717cd85475ad2cac12b56f20ae735121db0e"
+    "ogg": "aced0ff2874ce461de96b347ed5609492a65cb9e77d8fed9d731c0971d5a33c4",
+    "m4a": "244602ad5c568f9d84f2c5368d701d39e6d94d95e012b0002ecffefd89698a12"
    }
   },
   "l2-t3": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 160.0,
+   "barSamples": 72000,
+   "seconds": 12.0,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 12.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 42,
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.693,
-   "motifOnset": 0.784,
-   "referenceCloseness": 0.892,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.76,
+   "motifOnset": 0.058,
+   "referenceCloseness": 0.773,
+   "startSeconds": 3.0,
    "tier": 3,
    "bytes": {
-    "ogg": 170832,
-    "m4a": 262642
+    "ogg": 134294,
+    "m4a": 198054
    },
    "sha256": {
-    "ogg": "a24100015dd949a182c159e5338f204398825e189034c50f62779583843b6dcc",
-    "m4a": "39e3f44284fdcf0f4e608a2e53d1e5fdbf8312fae4c06bc1bddefa47fedc4d27"
+    "ogg": "701b8d9a5004408c7f300b5065f745683f09d0449bc1e0136ec5963997674a13",
+    "m4a": "b7e609c3795c8abdaf8a6f3777da255ed81014c37ff5a928cb8629c116c9ef55"
    }
   },
   "l2-t4": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 160.0,
+   "barSamples": 72000,
+   "seconds": 12.0,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 12.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 43,
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.664,
-   "motifOnset": 0.673,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.755,
+   "motifOnset": 0.14,
    "referenceCloseness": 0.803,
-   "startSeconds": 4.0,
+   "startSeconds": 3.0,
    "tier": 4,
    "bytes": {
-    "ogg": 169755,
-    "m4a": 262586
+    "ogg": 133537,
+    "m4a": 197959
    },
    "sha256": {
-    "ogg": "e0d56c6f197013e079c8e4049ddcb04eb816d6b9c787a98aed0795e4d140bbd7",
-    "m4a": "db4a256f2e150b0b8e771f48c24623ee9e2ba6e55e2b07c276ed384905822999"
+    "ogg": "f74f7f08f186e96c27147c770014adb0137174194b0dc0ab03041b4b1aed59b0",
+    "m4a": "285ccaacbf7912a95ba32a65e5494e53e1f70da0948eafbcb5a79568a463d82b"
    }
   },
   "l3-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 7.5,
+   "bpm": 180.0,
+   "barSamples": 64000,
+   "seconds": 12.0,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -434,166 +494,195 @@
     "laststand",
     "hatch",
     "reinforce",
-    "breakthrough"
+    "breakthrough",
+    "destroyed",
+    "gloat",
+    "respawn"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 81117,
-    "m4a": 125586
+    "ogg": 127029,
+    "m4a": 199150
    },
    "sha256": {
-    "ogg": "f4c957c38a1f385993bd3bce967e1ba9fbaca09cd6ca6f66e20c7f76b10b6bf7",
-    "m4a": "60959132d9d91ed0fd9b79905be21ea6de133070ffb1e4e4ffda64e6932c46fc"
+    "ogg": "2da3361e430c052e2e63492b2df959a643320d2b03dfeae5474e040b37e6afe7",
+    "m4a": "08de8ddeb93aaef72142db2e065293a0949d820095ca223cad877ecb6560e585"
    }
   },
   "l3-intro": {
    "kind": "tail",
    "beats": 16,
-   "seconds": 10.0,
-   "loopStart": 8.0,
-   "loopEnd": 10.0,
+   "bpm": 180.0,
+   "barSamples": 64000,
+   "seconds": 6.666666666666667,
+   "loopStart": 5.333333333333333,
+   "loopEnd": 6.666666666666667,
    "mode": "a2a",
-   "group": "3",
-   "seed": 42,
+   "group": "s3",
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.459,
-   "motifOnset": 0.816,
-   "referenceCloseness": 0.843,
-   "startSeconds": 2.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.75,
+   "motifOnset": 0.525,
+   "referenceCloseness": 0.752,
+   "startSeconds": 1.3333333333333333,
    "part": "intro",
    "bytes": {
-    "ogg": 107662,
-    "m4a": 166229
+    "ogg": 75830,
+    "m4a": 112596
    },
    "sha256": {
-    "ogg": "39f0b1e71ad0e68978883e69a47338b4c063af151239cd44c2b9cb4514357145",
-    "m4a": "babca0e3fe47f3884189f47d758c888b35569fa33e6325a976bacfbd827a698c"
+    "ogg": "b5248ef14cdb98a196aff38fd29063d7995c1c2ff335d9ac37665ec17b60ffd7",
+    "m4a": "bb2f7c5021b6f9d4fc93d4628a0231f47125fa4463e48bf8eaf5f2390ab495d3"
    }
   },
   "l3-outro": {
    "kind": "loop",
    "beats": 16,
-   "seconds": 8.0,
+   "bpm": 180.0,
+   "barSamples": 64000,
+   "seconds": 5.333333333333333,
    "loopStart": 0.0,
-   "loopEnd": 8.0,
+   "loopEnd": 5.333333333333333,
    "mode": "a2a",
-   "group": "3",
-   "seed": 41,
-   "denoise": 0.45,
-   "motifChroma": 0.653,
-   "motifOnset": 0.905,
-   "referenceCloseness": 0.879,
-   "startSeconds": 4.0,
+   "group": "s3",
+   "seed": 61,
+   "denoise": 0.55,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.691,
+   "motifOnset": 0.223,
+   "referenceCloseness": 0.913,
+   "startSeconds": 2.6666666666666665,
    "part": "outro",
    "bytes": {
-    "ogg": 88972,
-    "m4a": 133094
+    "ogg": 61575,
+    "m4a": 89960
    },
    "sha256": {
-    "ogg": "1e9fba595a20bb01a35c2da3746df486931ec33e05219e38c195d64cf981eb5e",
-    "m4a": "d35927f8f5f2aaaef496ed728c4b9462a3bb9b86b25f5ee97531bb1c2696b9ff"
+    "ogg": "d8647e725bd4c92f64d4f66b11bc04c2979749b088717319a792f815bc56cc23",
+    "m4a": "410b75970c1d0591129c7dc3654499322bfd7f41c75cda6ab0d47a1c84b147e1"
    }
   },
   "l3-t1": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 180.0,
+   "barSamples": 64000,
+   "seconds": 10.666666666666666,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 10.666666666666666,
    "mode": "a2a",
    "group": "3",
-   "seed": 43,
+   "seed": 63,
    "denoise": 0.45,
-   "motifChroma": 0.31,
-   "motifOnset": 0.916,
-   "referenceCloseness": 0.886,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.307,
+   "motifOnset": 0.273,
+   "referenceCloseness": 0.859,
+   "startSeconds": 2.6666666666666665,
    "tier": 1,
    "bytes": {
-    "ogg": 160432,
-    "m4a": 263160
+    "ogg": 115600,
+    "m4a": 176169
    },
    "sha256": {
-    "ogg": "bdde7973eb41387548e5f70c245b65515837fe3812d4e48a8f27c0afaa09d0e2",
-    "m4a": "9e85e0340d7085efedd81708a09f8b5dc0a85dc3aa5e7f95e4e8577de12282c7"
+    "ogg": "077e0ddab11d71a63fceba22fd90f8c2ddef25632c7fd8780cefe61752dbfdd6",
+    "m4a": "e8ebdd98aeed850e8d3cc3d053452f8cec0bdb1f419a0cf4bf9e3c5fc8ac4134"
    }
   },
   "l3-t2": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 180.0,
+   "barSamples": 64000,
+   "seconds": 10.666666666666666,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 10.666666666666666,
    "mode": "a2a",
    "group": "3",
-   "seed": 45,
-   "denoise": 0.35,
-   "motifChroma": 0.441,
-   "motifOnset": 0.845,
-   "referenceCloseness": 0.748,
-   "startSeconds": 4.0,
+   "seed": 62,
+   "denoise": 0.45,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.822,
+   "motifOnset": 0.209,
+   "referenceCloseness": 0.843,
+   "startSeconds": 2.6666666666666665,
    "tier": 2,
    "bytes": {
-    "ogg": 162949,
-    "m4a": 262660
+    "ogg": 126911,
+    "m4a": 176265
    },
    "sha256": {
-    "ogg": "d731f471077d6d2f77aa092153f4fc96bdad2cebcbd4f8c9ca72e701f18f3b4b",
-    "m4a": "f613e4b173e8c02071868fe71965909afbd5cac5de8731784c970e3aeb4eefeb"
+    "ogg": "7f4c66d4c1af03f14e1eb488431939fb41152928cb8a10326b8cdd738312b6f1",
+    "m4a": "8a6b4e80e3a612104e42941d8155a543eafa2900e7b8a021653c18b958c58921"
    }
   },
   "l3-t3": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 180.0,
+   "barSamples": 64000,
+   "seconds": 10.666666666666666,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 10.666666666666666,
    "mode": "a2a",
    "group": "3",
-   "seed": 43,
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.687,
-   "motifOnset": 0.624,
-   "referenceCloseness": 0.785,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.643,
+   "motifOnset": 0.344,
+   "referenceCloseness": 0.856,
+   "startSeconds": 2.6666666666666665,
    "tier": 3,
    "bytes": {
-    "ogg": 175634,
-    "m4a": 262689
+    "ogg": 126555,
+    "m4a": 176174
    },
    "sha256": {
-    "ogg": "49485f436772adb1a0da567442e7655a449d406f77e2e9e9f9f62cc6dc547dc2",
-    "m4a": "d6dc08389b3938f6619144c04ec6c102ca8212d8da22d20716f5b66e84234ec3"
+    "ogg": "96ba4775ac52466c7aef0ac212477edd7b75e8035fbda710564495744e8112e5",
+    "m4a": "d90b97cd24df876e5bd96566fb6b4e2a3c0690b8a7fb0539ed89bb0f972d905f"
    }
   },
   "l3-t4": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 180.0,
+   "barSamples": 64000,
+   "seconds": 10.666666666666666,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 10.666666666666666,
    "mode": "a2a",
    "group": "3",
-   "seed": 42,
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.738,
-   "motifOnset": 0.246,
-   "referenceCloseness": 0.581,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.557,
+   "motifOnset": 0.396,
+   "referenceCloseness": 0.856,
+   "startSeconds": 2.6666666666666665,
    "tier": 4,
    "bytes": {
-    "ogg": 162681,
-    "m4a": 262577
+    "ogg": 124916,
+    "m4a": 176142
    },
    "sha256": {
-    "ogg": "d15b6ee152be0776edbc77326f0d3573fb508758a2395e5d434c0723b3026243",
-    "m4a": "bc2d9842e4ff33f60646831c057b1b5b927cc9be7938e214405ecb494ac30673"
+    "ogg": "002583fef9b48df6fa848580f164df1b752e00ae1a2f48b5f99d8913b7257fc6",
+    "m4a": "bbb249f25f3341ddd2a320d4f222b9f909dce52ec37be527d0c0570c714117b5"
    }
   },
   "l4-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 7.5,
+   "bpm": 150.0,
+   "barSamples": 76800,
+   "seconds": 12.0,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -602,166 +691,195 @@
     "laststand",
     "hatch",
     "reinforce",
-    "breakthrough"
+    "breakthrough",
+    "destroyed",
+    "gloat",
+    "respawn"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 77203,
-    "m4a": 124908
+    "ogg": 121961,
+    "m4a": 198394
    },
    "sha256": {
-    "ogg": "4c83f2c64505539146fc767650c1cde69dd3636a7900f560575da41af581b0e5",
-    "m4a": "de90af6a385b403c3400a0eb1f05b535abcdbab96944b14475474a3194d9714b"
+    "ogg": "4fe6c62e7ecd3200a46926f4c3bf54bac113c1b1e0980c666ad7ee73a0706d9d",
+    "m4a": "b1479082947859a654d4564f57a67066f2c34e41476dc516d3581fded9c9fa73"
    }
   },
   "l4-intro": {
    "kind": "tail",
    "beats": 16,
-   "seconds": 10.0,
-   "loopStart": 8.0,
-   "loopEnd": 10.0,
+   "bpm": 150.0,
+   "barSamples": 76800,
+   "seconds": 8.0,
+   "loopStart": 6.4,
+   "loopEnd": 8.0,
    "mode": "a2a",
-   "group": "4",
-   "seed": 43,
-   "denoise": 0.45,
-   "motifChroma": 0.476,
-   "motifOnset": 0.646,
-   "referenceCloseness": 0.915,
-   "startSeconds": 2.0,
+   "group": "s4",
+   "seed": 64,
+   "denoise": 0.35,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.843,
+   "motifOnset": 0.778,
+   "referenceCloseness": 0.85,
+   "startSeconds": 1.6,
    "part": "intro",
    "bytes": {
-    "ogg": 105863,
-    "m4a": 166316
+    "ogg": 86368,
+    "m4a": 133715
    },
    "sha256": {
-    "ogg": "0b96645cbd7ebb8043334696bab502c0c840236e6858aded61cdf52b573c38a4",
-    "m4a": "ccb5a88382cdc01ff197fcd94adbb90fe7f4dd143f455005f1cb7cd8a314ac3c"
+    "ogg": "8e3f208457b6018c570a05347059e792679c228db197407804eca5ca1306d8a9",
+    "m4a": "872890c55efaf1c232bca9e4d7eda7b3c43beedcdd87135e2820d1402f2c54bc"
    }
   },
   "l4-outro": {
    "kind": "loop",
    "beats": 16,
-   "seconds": 8.0,
+   "bpm": 150.0,
+   "barSamples": 76800,
+   "seconds": 6.4,
    "loopStart": 0.0,
-   "loopEnd": 8.0,
+   "loopEnd": 6.4,
    "mode": "a2a",
-   "group": "4",
-   "seed": 41,
+   "group": "s4",
+   "seed": 62,
    "denoise": 0.45,
-   "motifChroma": 0.626,
-   "motifOnset": 0.664,
-   "referenceCloseness": 0.795,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.898,
+   "motifOnset": 0.217,
+   "referenceCloseness": 0.898,
+   "startSeconds": 3.2,
    "part": "outro",
    "bytes": {
-    "ogg": 87288,
-    "m4a": 133015
+    "ogg": 72875,
+    "m4a": 107165
    },
    "sha256": {
-    "ogg": "968fbe34f93b98dd4d1ba093630031642c26826f3944b092e93d5c54264aab49",
-    "m4a": "312539964ad3a17e4ccb2756ded870c9c748b98901fa3bc66862a8b8cd83383d"
+    "ogg": "4ef37bb385d86a05316a4234b0769160d7fd0387babf26a7d983280b9159b065",
+    "m4a": "79920e86243af094e5357129ab04abbccfccc103bb9f5d81e1ef37847827d600"
    }
   },
   "l4-t1": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 150.0,
+   "barSamples": 76800,
+   "seconds": 12.8,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 12.8,
    "mode": "a2a",
    "group": "4",
-   "seed": 42,
+   "seed": 62,
    "denoise": 0.45,
-   "motifChroma": 0.363,
-   "motifOnset": 0.76,
-   "referenceCloseness": 0.747,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.778,
+   "motifOnset": 0.785,
+   "referenceCloseness": 0.76,
+   "startSeconds": 3.2,
    "tier": 1,
    "bytes": {
-    "ogg": 166893,
-    "m4a": 262679
+    "ogg": 135618,
+    "m4a": 210732
    },
    "sha256": {
-    "ogg": "fa90d2690ee529354c1517d0706ee51b62e2b7de67976e231cda276eb518f1a2",
-    "m4a": "e7ae2c24b8b1f93991bce1acdf1681fa9603389bb0d3fac27c0c5366ca6cc106"
+    "ogg": "755710da2467b994479fb00a6f8485dd2030b5c8220a25dc761fd9de17b37149",
+    "m4a": "8341882b8f8e54484dbdf69b16ed426f50781b00c04fd4c305bbd5807b7400d6"
    }
   },
   "l4-t2": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 150.0,
+   "barSamples": 76800,
+   "seconds": 12.8,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 12.8,
    "mode": "a2a",
    "group": "4",
-   "seed": 42,
+   "seed": 62,
    "denoise": 0.45,
-   "motifChroma": 0.715,
-   "motifOnset": 0.829,
-   "referenceCloseness": 0.901,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.836,
+   "motifOnset": 0.025,
+   "referenceCloseness": 0.715,
+   "startSeconds": 3.2,
    "tier": 2,
    "bytes": {
-    "ogg": 169607,
-    "m4a": 262768
+    "ogg": 138569,
+    "m4a": 210809
    },
    "sha256": {
-    "ogg": "c44a28ca7651a90a50616b60bcda4f642c32a957ea9698174b7e29d575b8de10",
-    "m4a": "1f2117831d4a4111e389abf08674267b964c5fd8c66d14957b2f56b38d34a2f0"
+    "ogg": "f75cb04a393f07d59ee3a48997273104f1343eeaa5c9dc0e1ff41037d8129793",
+    "m4a": "c2ce3eacb69b458c4336fdbe41d2c4711ee4fb0a70987afa4195ca297e50f561"
    }
   },
   "l4-t3": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 150.0,
+   "barSamples": 76800,
+   "seconds": 12.8,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 12.8,
    "mode": "a2a",
    "group": "4",
-   "seed": 41,
-   "denoise": 0.45,
-   "motifChroma": 0.673,
-   "motifOnset": 0.327,
-   "referenceCloseness": 0.788,
-   "startSeconds": 4.0,
+   "seed": 64,
+   "denoise": 0.35,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.897,
+   "motifOnset": 0.702,
+   "referenceCloseness": 0.69,
+   "startSeconds": 3.2,
    "tier": 3,
    "bytes": {
-    "ogg": 169613,
-    "m4a": 262606
+    "ogg": 141059,
+    "m4a": 210732
    },
    "sha256": {
-    "ogg": "365fa1cd689b17c226c1ec161b5bc6fd69e8abcba841a64607e625d047fbc898",
-    "m4a": "8b6db20a8b30b9890934c89619f4dbe24bf5b6dd80e4cdbc0089813a48d04ce0"
+    "ogg": "1c5aeedad65f6b75df4da2279afba79df4f4e20da32a57413521562a57a38a3b",
+    "m4a": "3c084bc2f39c81c4dbab5ad66d4ab1215fedaadbbf3605a0f398d48ef1c5437a"
    }
   },
   "l4-t4": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 150.0,
+   "barSamples": 76800,
+   "seconds": 12.8,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 12.8,
    "mode": "a2a",
    "group": "4",
-   "seed": 43,
+   "seed": 62,
    "denoise": 0.45,
-   "motifChroma": 0.671,
-   "motifOnset": 0.201,
-   "referenceCloseness": 0.813,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.714,
+   "motifOnset": 0.384,
+   "referenceCloseness": 0.638,
+   "startSeconds": 3.2,
    "tier": 4,
    "bytes": {
-    "ogg": 169287,
-    "m4a": 262702
+    "ogg": 139783,
+    "m4a": 210727
    },
    "sha256": {
-    "ogg": "6e95dc48e2a718ba74396353e7b4093bb976abd956963040f1e8481d13096d27",
-    "m4a": "7f2a9c907b70c138a3ebe409b43d0b860ae3217f6061f658c5ff6d145e6638d1"
+    "ogg": "729f3b8e583ebdd59878bef75292426a52bff5b7ebd71f69044b51554899afe0",
+    "m4a": "b0ce8d55848bebd1fbde0e40df8130858b4aecd93b2f79159b895d37e38db285"
    }
   },
   "l5-accents": {
    "kind": "sprite",
    "beats": null,
-   "seconds": 7.5,
+   "bpm": 189.9987,
+   "barSamples": 60632,
+   "seconds": 12.0,
    "loopStart": null,
    "loopEnd": null,
    "slotSeconds": 1.5,
@@ -770,160 +888,187 @@
     "laststand",
     "hatch",
     "reinforce",
-    "breakthrough"
+    "breakthrough",
+    "destroyed",
+    "gloat",
+    "respawn"
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 78338,
-    "m4a": 124882
+    "ogg": 124643,
+    "m4a": 198329
    },
    "sha256": {
-    "ogg": "f0d5135065a94b3c34d27486a1f0672e8f4949d15c1b53b7a76897c3a1136fd9",
-    "m4a": "0a7111dcc5211c75fb79ca9038d7fe95f5b0c189d53e7dfd120e90a671e58238"
+    "ogg": "cc543d8b4567cf3fae734a466a2e24f6d646c744ceb4779964c68b722ec969d0",
+    "m4a": "eb94cd1f0dbe973af72d32d75ec067edcedf4ba8fe470272949bc9c4877ac85d"
    }
   },
   "l5-intro": {
    "kind": "tail",
    "beats": 16,
-   "seconds": 10.0,
-   "loopStart": 8.0,
-   "loopEnd": 10.0,
+   "bpm": 189.9987,
+   "barSamples": 60632,
+   "seconds": 6.315833333333333,
+   "loopStart": 5.052666666666667,
+   "loopEnd": 6.315833333333333,
    "mode": "a2a",
-   "group": "5",
-   "seed": 42,
+   "group": "s5",
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.508,
-   "motifOnset": 0.608,
-   "referenceCloseness": 0.782,
-   "startSeconds": 2.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.772,
+   "motifOnset": 0.486,
+   "referenceCloseness": 0.847,
+   "startSeconds": 1.2631666666666665,
    "part": "intro",
    "bytes": {
-    "ogg": 114419,
-    "m4a": 166117
+    "ogg": 70470,
+    "m4a": 106748
    },
    "sha256": {
-    "ogg": "4b34b0d4ff4070c514c7063386dc77f7e38b4d9350ba7d13c2a6c165fe25e747",
-    "m4a": "a00ef4428a1d57c348bf714a273debc55c8a1014fc3f56bb9bf786bc3c46ed1b"
+    "ogg": "7957b1f24612212e385153a77db7cf9bf591ed15eb20d9e821a6d163e63f9639",
+    "m4a": "b5b10df653bdc671629f671fdd01336fffbc21a05ed180f91eb1d96aa1ff67fd"
    }
   },
   "l5-outro": {
    "kind": "loop",
    "beats": 16,
-   "seconds": 8.0,
+   "bpm": 189.9987,
+   "barSamples": 60632,
+   "seconds": 5.052666666666667,
    "loopStart": 0.0,
-   "loopEnd": 8.0,
+   "loopEnd": 5.052666666666667,
    "mode": "a2a",
-   "group": "5",
-   "seed": 41,
-   "denoise": 0.45,
-   "motifChroma": 0.652,
-   "motifOnset": 0.719,
-   "referenceCloseness": 0.822,
-   "startSeconds": 4.0,
+   "group": "s5",
+   "seed": 62,
+   "denoise": 0.55,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.803,
+   "motifOnset": 0.196,
+   "referenceCloseness": 0.845,
+   "startSeconds": 2.526333333333333,
    "part": "outro",
    "bytes": {
-    "ogg": 86946,
-    "m4a": 132998
+    "ogg": 57779,
+    "m4a": 85409
    },
    "sha256": {
-    "ogg": "b3408e747e9d48b4c92d05e2bad671e6d9e967ddb911ddc02fe3c80af43604bd",
-    "m4a": "d4ba4ad0f8c8a33711ad7e86d8303a57a6da090e208d2a9a7a2c2a4992a8a91d"
+    "ogg": "00cb01620bb7f6495dda61e5b8f5c17620b197b8ed868b36709f3a91fc2f8579",
+    "m4a": "3dad5ace2c94fdd4e3c74e69dfc4cc39dfc61e2cb726db0b6fb3835af33fca99"
    }
   },
   "l5-t1": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 189.9987,
+   "barSamples": 60632,
+   "seconds": 10.105333333333334,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 10.105333333333334,
    "mode": "a2a",
    "group": "5",
-   "seed": 44,
+   "seed": 61,
    "denoise": 0.45,
-   "motifChroma": 0.594,
-   "motifOnset": 0.84,
-   "referenceCloseness": 0.817,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.404,
+   "motifOnset": 0.088,
+   "referenceCloseness": 0.852,
+   "startSeconds": 2.526333333333333,
    "tier": 1,
    "bytes": {
-    "ogg": 177519,
-    "m4a": 262821
+    "ogg": 112526,
+    "m4a": 167190
    },
    "sha256": {
-    "ogg": "fb3ea3b06f2b95ab420d93d26a28923546fb3ca6f7c24fc52e23b35a4b3f67ef",
-    "m4a": "e3c3d8c0ddca31836395d484527de872518c1d93cec5a5bf91c5318fcbe47702"
+    "ogg": "bc721973e908da034eda61859b9c91b02a77eebe9a8884ec26f764f6453770cf",
+    "m4a": "cee843de0c19cee1b0e8f3214ecd9c27cd799e55ef681f01c096ddc2a5faa7e5"
    }
   },
   "l5-t2": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 189.9987,
+   "barSamples": 60632,
+   "seconds": 10.105333333333334,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 10.105333333333334,
    "mode": "a2a",
    "group": "5",
-   "seed": 44,
-   "denoise": 0.45,
-   "motifChroma": 0.543,
-   "motifOnset": 0.198,
-   "referenceCloseness": 0.72,
-   "startSeconds": 4.0,
+   "seed": 63,
+   "denoise": 0.35,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.771,
+   "motifOnset": 0.509,
+   "referenceCloseness": 0.802,
+   "startSeconds": 2.526333333333333,
    "tier": 2,
    "bytes": {
-    "ogg": 174568,
-    "m4a": 262546
+    "ogg": 111145,
+    "m4a": 167187
    },
    "sha256": {
-    "ogg": "d481c08e361ac58e69368a5d857b6bb61d5105553e01235a15814a15d6c10066",
-    "m4a": "4090a223c9153109dcbbade614adc423c2eb7dd720343f18154bbf9e81fcb7ff"
+    "ogg": "411668b721115958794f18939498284f46cb023ba2b6b508aa01066e98430812",
+    "m4a": "7962b9e1b74c801862925de327c8e0247ad87093e631ce56e8b4f441d05d4735"
    }
   },
   "l5-t3": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 189.9987,
+   "barSamples": 60632,
+   "seconds": 10.105333333333334,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 10.105333333333334,
    "mode": "a2a",
    "group": "5",
-   "seed": 44,
-   "denoise": 0.45,
-   "motifChroma": 0.512,
-   "motifOnset": 0.652,
-   "referenceCloseness": 0.785,
-   "startSeconds": 4.0,
+   "seed": 63,
+   "denoise": 0.35,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.806,
+   "motifOnset": 0.283,
+   "referenceCloseness": 0.836,
+   "startSeconds": 2.526333333333333,
    "tier": 3,
    "bytes": {
-    "ogg": 169978,
-    "m4a": 262609
+    "ogg": 112527,
+    "m4a": 167189
    },
    "sha256": {
-    "ogg": "59187482653401e6e3af5bc2b351383439becdf4ba47eb28624fb69eacca7a45",
-    "m4a": "cd8401c72b136f2991d868520bf23c2af2f0ba2512fee12a2725b06fb279e9d8"
+    "ogg": "3110974870ee5028f6fabbe90817a9f60e95cc1676d9c8bab45b2bbfbb48200e",
+    "m4a": "35aebeb9ad0328970758e8437a193f3ed383ed1b2cce47fbd29087671bd136c5"
    }
   },
   "l5-t4": {
    "kind": "loop",
    "beats": 32,
-   "seconds": 16.0,
+   "bpm": 189.9987,
+   "barSamples": 60632,
+   "seconds": 10.105333333333334,
    "loopStart": 0.0,
-   "loopEnd": 16.0,
+   "loopEnd": 10.105333333333334,
    "mode": "a2a",
    "group": "5",
-   "seed": 42,
+   "seed": 62,
    "denoise": 0.45,
-   "motifChroma": 0.399,
-   "motifOnset": 0.344,
-   "referenceCloseness": 0.803,
-   "startSeconds": 4.0,
+   "gridShiftMs": 0.0,
+   "guideLagR": 0.0,
+   "motifChroma": 0.567,
+   "motifOnset": 0.218,
+   "referenceCloseness": 0.914,
+   "startSeconds": 2.526333333333333,
    "tier": 4,
    "bytes": {
-    "ogg": 168102,
-    "m4a": 262665
+    "ogg": 115978,
+    "m4a": 167261
    },
    "sha256": {
-    "ogg": "0f2f276848248bcf38104f8191a1d735847ebd3200173b6703656e5d014ef403",
-    "m4a": "3bc53e612e3c0212bbf735ed2ce736aa024b22d03faa51d079b3c7e6c8bc4284"
+    "ogg": "1ea98dda5c45178de6ccbc1a70d49edaacd397c338ee86caa1d8c057dd60bd24",
+    "m4a": "2d6a1a4eafba21e7cd52fddc66600f2a3e214f1e00140906ca93f632bc3feeb1"
    }
   },
   "levelclear": {
@@ -1016,7 +1161,7 @@
    }
   }
  },
- "schema": "demon-attack.music/v2",
+ "schema": "demon-attack.music/v3",
  "bpm": 120,
  "sampleRate": 48000,
  "formats": [
@@ -1026,33 +1171,43 @@
  "motifs": {
   "1": {
    "name": "Krybor",
-   "genre": "punk rock",
+   "genre": "battle punk metal",
    "keyscale": "E minor",
-   "summary": "E5-power-chord downstroke riff with a G-A push into every second bar; progression E | E | C | D | E | E | A-G | B; shouted-melody lead hook B-B-A-G-E."
+   "summary": "E5-power-chord downstroke riff with a G-A push into every second bar; progression E | E | C | D | E | E | A-G | B; shouted-melody lead hook B-B-A-G-E.",
+   "bpm": 169.9993,
+   "barSamples": 67765
   },
   "2": {
    "name": "Ringfall",
-   "genre": "melodic rock",
+   "genre": "melodic power metal",
    "keyscale": "D major",
-   "summary": "Syncopated open-chord riff over D | F#m | G | A | Bm | G | Em | A; soaring lead hook A-F#-A, C#-B, rising to F#5 in the second half."
+   "summary": "Syncopated open-chord riff over D | F#m | G | A | Bm | G | Em | A; soaring lead hook A-F#-A, C#-B, rising to F#5 in the second half.",
+   "bpm": 160.0,
+   "barSamples": 72000
   },
   "3": {
    "name": "Ember Moon",
-   "genre": "heavy metal",
+   "genre": "heavy galloping battle metal",
    "keyscale": "E minor",
-   "summary": "Galloping E pedal riff (eighth + two sixteenths) with a Phrygian F; E | E | C-D | E | E | E | F-G | A-B; twin-guitar hook E-F#-G-B in thirds."
+   "summary": "Galloping E pedal riff (eighth + two sixteenths) with a Phrygian F; E | E | C-D | E | E | E | F-G | A-B; twin-guitar hook E-F#-G-B in thirds.",
+   "bpm": 180.0,
+   "barSamples": 64000
   },
   "4": {
    "name": "The Hollow",
-   "genre": "doom metal",
+   "genre": "epic doom-battle metal",
    "keyscale": "C minor",
-   "summary": "Slow drop-C riff C...Eb | Gb-F-C | Eb-Db | C...B, with the Gb tritone as its dread; half-time drums; tolling bell/lead motif C-G-Ab-G, Eb-D-C."
+   "summary": "Slow drop-C riff C...Eb | Gb-F-C | Eb-Db | C...B, with the Gb tritone as its dread; half-time drums; tolling bell/lead motif C-G-Ab-G, Eb-D-C.",
+   "bpm": 150.0,
+   "barSamples": 76800
   },
   "5": {
    "name": "The Carrier",
-   "genre": "doom-death metal",
+   "genre": "blackened battle and death metal",
    "keyscale": "F minor",
-   "summary": "F | F-Gb-E crawl answered by a low B tritone stab, Db-C, a chromatic Db-D-Eb-E climb and a final F-B stab; tremolo-picked and blast-beaten in the later forms."
+   "summary": "F | F-Gb-E crawl answered by a low B tritone stab, Db-C, a chromatic Db-D-Eb-E climb and a final F-B stab; tremolo-picked and blast-beaten in the later forms.",
+   "bpm": 189.9987,
+   "barSamples": 60632
   }
  }
 }
