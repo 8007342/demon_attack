@@ -79,7 +79,7 @@ abstract final class GroundTuning {
   /// Sprite scale relative to the landmarks' texel size.
   static const unitScale = 1.25;
   static const unitWidthTexels = 28.0;
-  static const allyWidthTexels = 20.0;
+  static const allyWidthTexels = 26.0;
 
   // Firing.
   static const telegraph = 1.1; // launcher raise (first half) + glow

@@ -11,6 +11,7 @@
 - [x] 2.1 Beacon only while calling for help
 - [x] 2.2 Hints: missile dodge at the first Ember entrance, homing at the first Hollow entrance
 - [x] 2.3 Review renders: staged moments plus live frames (early Krybor skirmish, Hollow breakthrough)
+- [x] 2.4 Ground art v3: convoy allies (two variants per sector, turret traverse, recoil, dust, squads) and multi-frame ground effects (see design.md, Art)
 
 ## 3. Calibration and tests
 - [x] 3.1 Profiler: per-sector breakthroughs and would-be hits, allied kills
