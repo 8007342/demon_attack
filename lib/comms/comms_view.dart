@@ -70,7 +70,7 @@ class CommsLayout {
 class CommsPortraitAtlas extends ChangeNotifier {
   CommsPortraitAtlas._();
   static final instance = CommsPortraitAtlas._();
-  ui.Image? large, small;
+  ui.Image? large, small, backdrops;
   Future<void>? _loading;
 
   Future<void> load([AssetBundle? bundle]) =>
@@ -89,6 +89,7 @@ class CommsPortraitAtlas extends ChangeNotifier {
 
     large = await one(commsPortraitImage);
     small = await one(commsPortraitSmallImage);
+    backdrops = await one(commsBackdropImage);
     notifyListeners();
   }
 }
@@ -176,6 +177,59 @@ void paintPortrait(
       Rect.fromLTWH(dst.left + 5 * u, dst.top + 6 * u, 2 * u, u),
       Paint()..color = _ink,
     );
+  }
+}
+
+/// The caller's room behind the portrait: a bridge or cockpit for the fleet,
+/// a command tent or tank interior for the ground squad, an infernal
+/// war-room for the brood. Drawn to cover [r] with a slow, slight parallax
+/// and a dark veil so the face stays readable.
+void paintBackdrop(
+  Canvas canvas,
+  Rect r,
+  CommsCharacter who,
+  double now, {
+  required bool reduceMotion,
+}) {
+  final image = CommsPortraitAtlas.instance.backdrops;
+  final index = commsBackdropOf[who.id];
+  final base = who.isDemon
+      ? const Color(0xFF2A0F1C)
+      : who.side == CommsSide.ground
+      ? const Color(0xFF1A2014)
+      : const Color(0xFF0F2030);
+  canvas.drawRect(r, Paint()..color = base);
+  if (image != null && index != null) {
+    final w = commsBackdropSize.w.toDouble(),
+        h = commsBackdropSize.h.toDouble();
+    final cols = math.max(1, image.width ~/ w);
+    final src = Rect.fromLTWH((index % cols) * w, (index ~/ cols) * h, w, h);
+    // Cover the area with 8% to spare for the parallax drift.
+    final cover = math.max(r.width / w, r.height / h) * 1.08;
+    final dw = w * cover, dh = h * cover;
+    final drift = reduceMotion
+        ? 0.0
+        : math.sin(now * .23 + who.id.length) * (dw - r.width) / 2;
+    final dst = Rect.fromCenter(
+      center: r.center.translate(drift, 0),
+      width: dw,
+      height: dh,
+    );
+    canvas.drawImageRect(
+      image,
+      src,
+      dst,
+      Paint()
+        ..filterQuality = FilterQuality.none
+        ..isAntiAlias = false,
+    );
+    canvas.drawRect(r, Paint()..color = const Color(0x6B050912));
+    return;
+  }
+  // Fallback until the backdrop atlas is packed: stepped console bands.
+  final band = Paint()..color = Color.lerp(base, const Color(0xFF000000), .35)!;
+  for (var y = r.top + r.height * .62; y < r.bottom; y += r.height * .09) {
+    canvas.drawRect(Rect.fromLTWH(r.left, y, r.width, r.height * .04), band);
   }
 }
 
@@ -302,14 +356,7 @@ class CommsTilePainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(r);
     if (who != null && state != CommsSlotState.empty) {
-      // Backdrop: a dim accent wash keeps each caller identifiable.
-      canvas.drawRect(
-        r,
-        Paint()
-          ..color =
-              (who.isDemon ? const Color(0xFF2A0F1C) : const Color(0xFF0F2030))
-                  .withValues(alpha: 1),
-      );
+      paintBackdrop(canvas, r, who, now, reduceMotion: reduceMotion);
       final frame = m != null && m.speaking(now)
           ? m.frame(now)
           : restFrame(now, slot.index * 7 + who.id.length, slot: slot);
@@ -683,13 +730,17 @@ class CommsHudStack extends StatelessWidget {
     required this.director,
     required this.now,
     this.dimmed = false,
+    this.hideTransmission = false,
   });
   final CommsDirector director;
   final double now;
   final bool dimmed;
 
-  static const stripHeight = 36.0, chipHeight = 18.0, gap = 2.0;
-  static const portrait = 34.0;
+  /// A full-size transmission card is showing the transmission line.
+  final bool hideTransmission;
+
+  static const stripHeight = 54.0, chipHeight = 22.0, gap = 2.0;
+  static const portrait = 48.0;
 
   /// Tallest the dock gets (strip + chip row).
   static const maxHeight = stripHeight + gap + chipHeight;
@@ -697,20 +748,23 @@ class CommsHudStack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    // Spoken lines win the strip (their subtitle must be readable); a
-    // demon grunt takes it only when nobody else is talking.
-    final shown = [...director.active]
-      ..sort(
-        (a, b) => a.isDemon != b.isDemon
-            ? (a.isDemon ? 1 : -1)
-            : b.priority != a.priority
-            ? b.priority.compareTo(a.priority)
-            : a.startedAt.compareTo(b.startedAt),
-      );
+    // Whoever is speaking wins the strip (a line in its subtitle hold
+    // yields); when several speak at once, spoken lines beat grunts so the
+    // subtitle stays readable.
+    int rank(CommsMessage m) => (m.speaking(now) ? 2 : 0) + (m.isDemon ? 0 : 1);
+    final shown =
+        [
+          for (final m in director.active)
+            if (!(hideTransmission && m.transmission)) m,
+        ]..sort(
+          (a, b) => rank(a) != rank(b)
+              ? rank(b).compareTo(rank(a))
+              : b.startedAt.compareTo(a.startedAt),
+        );
     if (shown.isEmpty) return const SizedBox.shrink();
     final waiting = director.queue.where((m) => now >= m.readyAt).length;
     final main = shown.first;
-    final rest = shown.skip(1).toList();
+    final rest = shown.skip(1).take(2).toList();
     return IgnorePointer(
       child: AnimatedOpacity(
         opacity: dimmed ? .3 : 1,
@@ -725,7 +779,7 @@ class CommsHudStack extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  for (final m in rest) _chip(m, reduce),
+                  for (final m in rest) Flexible(child: _chip(m, reduce)),
                   if (waiting > 0)
                     Container(
                       height: chipHeight,
@@ -907,13 +961,18 @@ class CommsHudStack extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            Text(
-              c.isDemon ? '${c.name} · ${m.line.gloss ?? ''}' : c.callsign,
-              style: TextStyle(
-                color: accent,
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-                letterSpacing: .8,
+            Flexible(
+              child: Text(
+                c.isDemon ? '${c.name} · ${m.line.gloss ?? ''}' : c.callsign,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: .8,
+                ),
               ),
             ),
           ],
@@ -934,14 +993,8 @@ class _MiniPortrait extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final r = Offset.zero & size;
-    canvas.drawRect(
-      r,
-      Paint()
-        ..color = who.isDemon
-            ? const Color(0xFF2A0F1C)
-            : const Color(0xFF0F2030),
-    );
-    final side = commsPortraitSmallCell * zoom * (size.width < 30 ? .5 : 1);
+    paintBackdrop(canvas, r, who, now, reduceMotion: reduce);
+    final side = commsPortraitSmallCell * zoom * (size.width < 40 ? .5 : 1);
     paintPortrait(
       canvas,
       Rect.fromCenter(
@@ -963,6 +1016,159 @@ class _MiniPortrait extends CustomPainter {
 
   @override
   bool shouldRepaint(_MiniPortrait old) => true;
+}
+
+/// Phones and narrow windows: a full-size transmission shown in place of a
+/// transition (travel, wave entrance): a big portrait with the smoothed
+/// lip-sync, the caller's backdrop, name and rank, and the subtitle.
+class CommsTransmission extends StatelessWidget {
+  const CommsTransmission({
+    super.key,
+    required this.message,
+    required this.now,
+  });
+  final CommsMessage message;
+  final double now;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final m = message;
+    final c = m.character;
+    final accent = Color(c.accent);
+    final mission = m.trigger.name.startsWith('transmissionMission');
+    final age = m.age(now), left = m.endsAt - now;
+    final fade = reduce ? 1.0 : (math.min(age, left) / .25).clamp(0.0, 1.0);
+    return IgnorePointer(
+      child: Opacity(
+        key: ValueKey('comms-transmission-${m.line.id}'),
+        opacity: fade,
+        child: ColoredBox(
+          color: const Color(0xE6050912),
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final width = math.min(box.maxWidth - 24, 340.0);
+              // Integer scale of the 128 px portrait that fits.
+              final room = math.min(width - 24, box.maxHeight - 150);
+              final scale = math.max(1, (room / commsPortraitCell).floor());
+              final side = (commsPortraitCell * scale).toDouble();
+              return Center(
+                child: Container(
+                  width: width,
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xF20A1220),
+                    border: Border.all(color: accent.withValues(alpha: .8)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        mission
+                            ? '◉ PRIORITY TRANSMISSION · FLEET COMMAND'
+                            : '◌ OPEN CHANNEL · SQUAD',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: mission
+                              ? const Color(0xFFFFD86B)
+                              : const Color(0xFF6FE7D2),
+                          fontSize: 9,
+                          letterSpacing: 1.6,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: SizedBox(
+                          width: side,
+                          height: side,
+                          child: CustomPaint(
+                            painter: _TransmissionPortrait(m, now, reduce),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _tag(c),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        m.line.text ?? '',
+                        style: const TextStyle(
+                          color: _text,
+                          fontSize: 14,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TransmissionPortrait extends CustomPainter {
+  _TransmissionPortrait(this.m, this.now, this.reduce);
+  final CommsMessage m;
+  final double now;
+  final bool reduce;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = Offset.zero & size;
+    final who = m.character;
+    canvas.save();
+    canvas.clipRect(r);
+    paintBackdrop(canvas, r, who, now, reduceMotion: reduce);
+    final scale = size.width / commsPortraitCell;
+    final frame = m.speaking(now)
+        ? m.frame(now)
+        : restFrame(now, who.id.length);
+    final bob = idleBob(now, who.id.length, reduceMotion: reduce) * scale;
+    paintPortrait(
+      canvas,
+      r.translate(0, bob),
+      who.id,
+      frame,
+      accent: Color(who.accent),
+    );
+    final age = m.age(now);
+    if (age < .35) {
+      final amount = 1 - age / .35;
+      if (reduce) {
+        canvas.drawRect(r, Paint()..color = _ink.withValues(alpha: amount));
+      } else {
+        paintStatic(canvas, r, now, amount * .8, who.id.length);
+      }
+    }
+    paintScanlines(canvas, r, pitch: math.max(2, scale).toDouble() + 1);
+    canvas.restore();
+    final speaking = m.speaking(now);
+    canvas.drawRect(
+      r.deflate(.5),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..color = speaking ? Color(who.accent) : _line,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_TransmissionPortrait old) => true;
 }
 
 /// Keeps a widget repainting when the portrait atlas finishes loading.

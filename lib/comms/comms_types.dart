@@ -35,7 +35,9 @@ class CommsLine {
     this.grunt,
     this.gloss,
     this.mouth = '',
+    this.open = '',
     this.signature = false,
+    this.emotion,
   });
 
   /// Clip id, also the audio file stem under web/audio/comms/.
@@ -58,6 +60,13 @@ class CommsLine {
   /// shout, '7' grunt/roar), measured from the clip's loudness envelope.
   final String mouth;
 
+  /// Mouth openness per 1/15 s, '0'-'9' (smoothed loudness envelope); the
+  /// lip-sync prefers it over [mouth] when present.
+  final String open;
+
+  /// Delivery the voice was rendered with (excited, urgent, panicked, ...).
+  final String? emotion;
+
   /// A catchphrase or pun: the director rations these so they stay fun.
   final bool signature;
   bool get isGrunt => grunt != null;
@@ -75,6 +84,10 @@ class CommsTriggerSpec {
     this.mood = CommsMood.stern,
     this.chain = 0,
     this.group,
+    this.urgent = false,
+    this.exchange,
+    this.overlap = false,
+    this.transmission = false,
   });
   final String name;
 
@@ -90,6 +103,21 @@ class CommsTriggerSpec {
   /// Rate-limit family (e.g. `ground`): one line per family per its gap, so
   /// ground-war narration never drowns out the air callouts.
   final String? group;
+
+  /// The only lines that may cut one already playing: true gameplay-critical
+  /// warnings (a sentinel's dive, the shield running out, a breakthrough).
+  final bool urgent;
+
+  /// A two-party exchange: [CommsSide.demon] or [CommsSide.fleet] speaks
+  /// first, the other side answers right after, and the channel is reserved
+  /// for both turns. Null: the two parts queue independently.
+  final CommsSide? exchange;
+
+  /// May overlap other voices (the regroup celebration), staggered.
+  final bool overlap;
+
+  /// Shown as a full-size transmission in place of a transition on phones.
+  final bool transmission;
   static const criticalPriority = 8;
   bool get critical => priority >= criticalPriority;
 }

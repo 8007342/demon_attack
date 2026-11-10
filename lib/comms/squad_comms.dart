@@ -103,13 +103,42 @@ class SquadComms {
 
   /// Feeds the buffered (and [events]) and advances the clock unless
   /// [paused].
-  void tick({List<GameEvent> events = const [], required bool paused}) {
+  ///
+  /// [combat] arms the brood's starvation timer.
+  void tick({
+    List<GameEvent> events = const [],
+    required bool paused,
+    bool combat = false,
+  }) {
     final wall = wallClock?.call() ?? _watch.elapsedMicroseconds / 1e6;
     final dt = (wall - _lastWall).clamp(0.0, .1);
     _lastWall = wall;
     advance(dt, paused: paused);
     final batch = [..._pending, ...events];
     _pending.clear();
+    // The life-loss sequence: if the model doesn't (yet) emit regroupStart /
+    // playerRespawn, they follow a lost ship; real events are deduplicated
+    // by the triggers' cooldowns.
+    final due = _synthetic.where((e) => e.$1 <= clock).toList();
+    _synthetic.removeWhere((e) => e.$1 <= clock);
+    batch.addAll(due.map((e) => e.$2));
+    for (final event in [...batch]) {
+      if (event.name == GameEventNames.lifeLost ||
+          event.name == GameEventNames.playerDestroyed) {
+        batch.add(const GameEvent(GameEventNames.regroupStart));
+        _synthetic.removeWhere(
+          (e) => e.$2.name == GameEventNames.playerRespawn,
+        );
+        _synthetic.add((
+          clock + respawnDelay,
+          const GameEvent(GameEventNames.playerRespawn),
+        ));
+      } else if (event.name == GameEventNames.playerRespawn) {
+        _synthetic.removeWhere(
+          (e) => e.$2.name == GameEventNames.playerRespawn,
+        );
+      }
+    }
     for (final event in batch) {
       // Kill reports are the allies' own chatter; homing kills stay quiet.
       if (event.name == GameEventNames.groundUnitDestroyed &&
@@ -125,8 +154,13 @@ class SquadComms {
       }
       director.handle(event, clock);
     }
-    director.update(clock);
+    director.update(clock, combat: combat && !paused);
   }
+
+  /// Seconds after a lost ship when the reserve is assumed launched (if the
+  /// model emits no `playerRespawn`).
+  static const respawnDelay = 2.8;
+  final _synthetic = <(double, GameEvent)>[];
 
   /// Advances the comms clock by [dt] seconds (tests drive this directly).
   void advance(double dt, {required bool paused}) {
@@ -150,6 +184,7 @@ class SquadComms {
 
   void reset() {
     _pending.clear();
+    _synthetic.clear();
     director.reset();
     if (playAudio) commsStopAll();
   }

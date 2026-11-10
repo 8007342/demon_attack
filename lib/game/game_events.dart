@@ -77,6 +77,26 @@ abstract final class GameEventNames {
   /// Data `scope`: 'level' (at sector clear) or 'campaign' (at victory).
   static const fleetIntact = 'fleetIntact';
 
+  // --- Losing a life (the gameplay branch's sequence).
+
+  /// The player ship explodes; hostile shots drain.
+  static const playerDestroyed = 'playerDestroyed';
+
+  /// The brood regroups before the next ship launches.
+  static const regroupStart = 'regroupStart';
+
+  /// The reserve ship re-emerges from the bottom with blinking protection.
+  static const playerRespawn = 'playerRespawn';
+
+  // --- Terrain the ground convoy navigates (the terrain branch).
+
+  /// Data `kind`: ridge | valley | canyon | forest | crystalField | ruins,
+  /// and `side`. [GameEvent.variant] reads `kind`.
+  static const terrainAhead = 'terrainAhead';
+  static const convoyClimbing = 'convoyClimbing';
+  static const convoyClearingVegetation = 'convoyClearingVegetation';
+  static const convoyStuck = 'convoyStuck';
+
   // --- music event hook: events derived read-only from the simulation by
   // MusicDirector (lib/game/music_director.dart) once per frame. Any
   // presentation layer may listen; MusicBridge turns them into music.
@@ -119,7 +139,35 @@ abstract final class GameEventNames {
     fleetIntact,
     groundBreakthrough,
     groundPressure,
+    playerDestroyed,
+    regroupStart,
+    playerRespawn,
+    terrainAhead,
+    convoyClimbing,
+    convoyClearingVegetation,
+    convoyStuck,
   ];
+
+  // --- Comms-specific derived events.
+
+  /// Several demons fell within [GameEventObserver.routWindow].
+  static const demonRout = 'demonRout';
+
+  /// The ground pressure fell back below [GameEventObserver.pressureCalm]
+  /// after rising.
+  static const groundPressureEased = 'groundPressureEased';
+
+  /// A new wave: the brood taunts first (a two-party exchange).
+  static const broodTaunt = 'broodTaunt';
+
+  /// Ambient brood radio the comms director raises when the demons have
+  /// been quiet too long.
+  static const broodChatter = 'broodChatter';
+
+  /// A full-size transmission: the fleet's mission briefing on travel
+  /// (variant: the next sector) or a junior-pilot moment on a new wave.
+  static const transmissionMission = 'transmissionMission';
+  static const transmissionJunior = 'transmissionJunior';
 
   /// [groundPressure] crossing [GameEventObserver.pressureRising] /
   /// [GameEventObserver.pressureHigh] upward (each re-arms once the pressure
@@ -194,7 +242,7 @@ class GameEvent {
 
   /// Refinement a listener may key on, e.g. the sector of `sectorStart`
   /// ('3') or the power of `weaponPickup` ('spread').
-  String? get variant => data['variant']?.toString();
+  String? get variant => (data['variant'] ?? data['kind'])?.toString();
 
   /// Text after the first ':' of a raw string event, if any.
   String? get payload => data['payload']?.toString();
@@ -282,9 +330,39 @@ class GameEventObserver {
   static const pressureCalm = .3, pressureRising = .45, pressureHigh = .8;
   int _pressureBand = 0;
 
+  /// [routKills] demon kills within [routWindow] seconds read as a rout.
+  static const routWindow = 3.0, routKills = 5, routGap = 8.0;
+  final _killTimes = <double>[];
+  int? _kills;
+  double _lastRout = -100;
+
+  void _observeKills(
+    void Function(String, {String? variant, String? payload}) emit,
+  ) {
+    final kills = model.kills, clock = model.clock;
+    final before = _kills;
+    _kills = kills;
+    if (before == null || kills <= before) {
+      if (before != null && kills < before) _killTimes.clear();
+      return;
+    }
+    for (var i = before; i < kills; i++) {
+      _killTimes.add(clock);
+    }
+    _killTimes.removeWhere((t) => clock - t > routWindow);
+    if (_killTimes.length >= routKills && clock - _lastRout > routGap) {
+      _lastRout = clock;
+      _killTimes.clear();
+      emit(GameEventNames.demonRout);
+    }
+  }
+
   /// [freshRun] false (a restored checkpoint) disables `flawlessRun`.
   void reset({bool freshRun = true}) {
     tally = FleetTally()..wholeRun = freshRun;
+    _killTimes.clear();
+    _kills = null;
+    _lastRout = -100;
     _pressureBand = 0;
     _seenLarge.clear();
     _seenElite.clear();
@@ -357,8 +435,16 @@ class GameEventObserver {
           }
         case 'wave':
           _clearWave();
+          emit(GameEventNames.broodTaunt);
+          emit(GameEventNames.transmissionJunior);
+        case 'travel':
+          emit(
+            GameEventNames.transmissionMission,
+            variant: '${model.nextLevel}',
+          );
       }
     }
+    _observeKills(emit);
     if (model.combat) _observeCombat(emit);
     _observePowers(emit);
     return _publish(out);
@@ -380,7 +466,10 @@ class GameEventObserver {
             event.data['value'];
         final level = raw is num ? raw.toDouble() : double.tryParse('$raw');
         if (level == null) break;
-        if (level < pressureCalm) _pressureBand = 0;
+        if (level < pressureCalm && _pressureBand > 0) {
+          _pressureBand = 0;
+          out.add(_event(GameEventNames.groundPressureEased));
+        }
         if (level >= pressureHigh && _pressureBand < 2) {
           _pressureBand = 2;
           out.add(_event(GameEventNames.groundPressureHigh));

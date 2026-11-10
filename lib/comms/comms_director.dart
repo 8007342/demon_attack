@@ -1,6 +1,12 @@
 /// Pacing and casting for squad comms: which line plays, who says it, when,
 /// and on which of the four video-call slots. Pure Dart, driven by explicit
 /// timestamps so tests are exact.
+///
+/// One radio channel: lines play one after another with a short natural gap
+/// and are never cut, except by a truly gameplay-critical warning
+/// ([CommsTriggerSpec.urgent]). Two-party exchanges reserve the channel for
+/// both turns. The brood gets a fair share of airtime (a share target and a
+/// starvation timer). The regroup celebration may overlap for about a second.
 library;
 
 import 'dart:math' as math;
@@ -8,6 +14,7 @@ import 'dart:math' as math;
 import '../game/game_events.dart';
 import 'comms_bank.dart';
 import 'comms_lineup.dart';
+import 'comms_mouth.dart';
 import 'comms_types.dart';
 
 class CommsMessage {
@@ -25,47 +32,41 @@ class CommsMessage {
   final CommsLine line;
   final CommsCharacter character;
   final int priority;
-  final double queuedAt, readyAt, expiresAt;
+  final double queuedAt;
+  double readyAt, expiresAt;
   final int sequence;
   double startedAt = double.nan;
   int slot = -1;
   bool interrupted = false;
+
+  /// The other side's answer in a two-party exchange.
+  CommsMessage? reply;
+
+  /// This message answers an exchange (it holds the reserved channel).
+  bool isReply = false;
   bool get isDemon => character.isDemon;
   bool get critical => priority >= CommsTriggerSpec.criticalPriority;
+  bool get urgent => trigger.urgent;
+  bool get overlap => trigger.overlap;
+  bool get transmission => trigger.transmission;
   bool get started => !startedAt.isNaN;
 
   /// Subtitles stay up a little after the clip ends.
   static const hold = .55;
   double get endsAt => startedAt + line.duration + hold;
+  double get speechEndsAt => startedAt + line.duration;
   double age(double now) => started ? now - startedAt : 0;
   bool speaking(double now) =>
       started && now - startedAt < line.duration && !interrupted;
 
-  /// Portrait frame for this message at [now] (see [CommsFrame]).
+  /// Portrait frame for this message at [now] (see [CommsFrame]): the
+  /// smoothed lip-sync of [CommsMouth].
   int frame(double now) {
     final t = now - startedAt;
     if (!started || t < 0 || t >= line.duration || interrupted) {
       return CommsFrame.idle;
     }
-    final index = (t * 15).floor();
-    final mouth = line.mouth;
-    if (mouth.isNotEmpty) {
-      final code = mouth.codeUnitAt(math.min(index, mouth.length - 1)) - 48;
-      return code.clamp(0, CommsFrame.count - 1);
-    }
-    if (isDemon) {
-      // Grunts: open into the roar at the peak, then settle.
-      final p = t / line.duration;
-      return p < .12
-          ? CommsFrame.talkB
-          : p < .7
-          ? CommsFrame.grunt
-          : p < .85
-          ? CommsFrame.talkC
-          : CommsFrame.idle;
-    }
-    const cycle = [2, 3, 4, 3, 2, 0, 5, 3, 4, 2, 0, 3];
-    return cycle[(index + sequence) % cycle.length];
+    return CommsMouth.of(line).frameAt(t);
   }
 
   @override
@@ -109,9 +110,11 @@ class CommsSlot {
 class CommsDirector {
   CommsDirector({
     math.Random? random,
-    this.maxActive = 2,
-    this.maxQueued = 4,
-    this.humanGap = 1.0,
+    this.maxQueued = 6,
+    this.lineGap = .35,
+    this.demonShare = .3,
+    this.starveAfter = 20,
+    this.overlapCap = 3,
     Map<String, CommsTriggerSpec>? human,
     Map<String, CommsTriggerSpec>? demon,
     Map<String, CommsCharacter>? cast,
@@ -138,14 +141,27 @@ class CommsDirector {
   /// How long the fleet-intact celebration banner stays up.
   static const celebration = 7.0;
 
-  final math.Random random;
+  /// Overlapping (regroup) voices start this far apart.
+  static const overlapStagger = .3;
 
-  /// Messages on screen at once (one human voice and one demon voice).
-  final int maxActive;
+  /// The trigger the director raises itself when the brood has been quiet
+  /// for [starveAfter] seconds of combat.
+  static const starvationTrigger = GameEventNames.broodChatter;
+
+  final math.Random random;
   final int maxQueued;
 
-  /// Quiet seconds between two non-critical human lines.
-  final double humanGap;
+  /// Natural pause between two lines on the channel.
+  final double lineGap;
+
+  /// Target share of airtime (seconds of speech) for the brood.
+  final double demonShare;
+
+  /// Seconds of combat without a demon line before the brood chimes in.
+  final double starveAfter;
+
+  /// Voices at once while overlapping lines (the regroup celebration) play.
+  final int overlapCap;
   final Map<String, CommsTriggerSpec> human, demon;
   final Map<String, CommsCharacter> cast;
   Map<int, Map<CommsSide, List<String>>> roster;
@@ -179,14 +195,36 @@ class CommsDirector {
   final _lastVariant = <String, int>{};
   final _speakerUsed = <String, double>{};
   int sector = 1, _sequence = 0;
-  double _humanQuietSince = -100, now = 0;
+  double now = 0;
+
+  /// When the channel's current speech ends (lines start [lineGap] later).
+  double _speechEnd = -100;
+
+  /// The reply an exchange has reserved the channel for.
+  CommsMessage? _reserved;
+
+  /// Seconds of speech started per side, and the last demon start.
+  double humanAirtime = 0, demonAirtime = 0;
+  double _lastDemon = 0;
 
   /// Lines started, for diagnostics and tests.
   final List<String> history = [];
 
+  /// Lines cut short (only by urgent warnings).
+  final List<String> interruptedLines = [];
+
+  double get demonShareNow {
+    final total = humanAirtime + demonAirtime;
+    return total <= 0 ? 0 : demonAirtime / total;
+  }
+
   List<String> get sectorCast => [
     for (final ids in (roster[sector] ?? const {}).values) ...ids,
   ];
+
+  /// The transmission currently on air, if any.
+  CommsMessage? get transmission =>
+      active.where((m) => m.transmission && !m.isDemon).firstOrNull;
 
   /// New sector: everyone on the call hangs up; the new crew connects as
   /// they speak.
@@ -213,6 +251,10 @@ class CommsDirector {
     _groupFired.clear();
     _signatures = 0;
     celebrateUntil = -1;
+    _reserved = null;
+    _speechEnd = -100;
+    humanAirtime = demonAirtime = 0;
+    _lastDemon = now;
     for (final slot in slots) {
       slot
         ..occupant = null
@@ -220,14 +262,14 @@ class CommsDirector {
         ..since = -100
         ..lastSpoke = -100;
     }
-    _humanQuietSince = -100;
   }
 
   CommsTriggerSpec? _spec(Map<String, CommsTriggerSpec> bank, GameEvent e) =>
       (e.variant == null ? null : bank['${e.name}.${e.variant}']) ??
       bank[e.name];
 
-  /// Queues the human line and the demon reaction for [event], if any.
+  /// Queues the lines for [event]: the human line and the demon part,
+  /// either independently or as a two-party exchange.
   void handle(GameEvent event, double at) {
     now = math.max(now, at);
     _retire();
@@ -235,64 +277,120 @@ class CommsDirector {
       setSector(int.tryParse(event.variant!) ?? sector, at);
     }
     final h = _spec(human, event);
-    if (h != null) _offer(event.name, h, at, demon: false);
     final d = _spec(demon, event);
+    final exchange = h?.exchange ?? d?.exchange;
+    if (exchange != null && h != null && d != null) {
+      final demonFirst = exchange == CommsSide.demon;
+      final first = _offer(
+        event.name,
+        demonFirst ? d : h,
+        at,
+        demon: demonFirst,
+      );
+      if (first != null) {
+        final answer = _make(
+          event.name,
+          demonFirst ? h : d,
+          at,
+          demon: !demonFirst,
+        );
+        if (answer != null) {
+          answer.isReply = true;
+          first.reply = answer;
+        }
+      } else {
+        _offer(event.name, demonFirst ? h : d, at, demon: !demonFirst);
+      }
+      return;
+    }
+    if (h != null) _offer(event.name, h, at, demon: false);
     if (d != null) _offer(event.name, d, at, demon: true);
   }
 
-  void _offer(
-    String name,
-    CommsTriggerSpec spec,
-    double at, {
-    required bool demon,
-  }) {
+  /// Checks cooldown, group gap, chance and duplicates; records the firing.
+  bool _admit(String name, CommsTriggerSpec spec, double at, bool demon) {
     final key = '${demon ? 'd' : 'h'}:$name';
     final last = _lastFired[key];
-    if (last != null && at - last < spec.cooldown) return;
+    if (last != null && at - last < spec.cooldown) return false;
     final group = spec.group;
-    if (group != null && !spec.critical) {
-      final gap = groupGap[group] ?? 0;
+    if (group != null && !spec.urgent) {
       final lastGroup = _groupFired[group];
-      if (lastGroup != null && at - lastGroup < gap) return;
+      if (lastGroup != null && at - lastGroup < (groupGap[group] ?? 0)) {
+        return false;
+      }
     }
     if (spec.chance < 1 && random.nextDouble() >= spec.chance) {
       _lastFired[key] = at;
-      return;
+      return false;
     }
     if ([
       ...queue,
       ...active,
     ].any((m) => m.trigger.name == spec.name && m.isDemon == demon)) {
-      return;
+      return false;
     }
+    _lastFired[key] = at;
+    if (group != null && !demon) _groupFired[group] = at;
+    return true;
+  }
+
+  CommsMessage? _build(
+    CommsTriggerSpec spec,
+    CommsLine line,
+    double at,
+    int i,
+  ) {
+    final character = cast[line.speaker];
+    if (character == null) return null;
+    _speakerUsed[line.speaker] = at;
+    if (line.signature) {
+      _signatureAt[line.speaker] = at;
+      _signatures++;
+    }
+    final ready = at + spec.delay + i * (spec.overlap ? overlapStagger : .01);
+    return CommsMessage(
+      trigger: spec,
+      line: line,
+      character: character,
+      priority: spec.priority,
+      queuedAt: at,
+      readyAt: ready,
+      // Chained lines wait their turn behind each other.
+      expiresAt: ready + spec.ttl + (spec.overlap ? 0 : i * 6),
+      sequence: _sequence++,
+    );
+  }
+
+  /// An exchange reply: admitted and picked now, queued when its turn comes.
+  CommsMessage? _make(
+    String name,
+    CommsTriggerSpec spec,
+    double at, {
+    required bool demon,
+  }) {
+    if (!_admit(name, spec, at, demon)) return null;
+    final line = _pickLine(spec, demon: demon);
+    return line == null ? null : _build(spec, line, at, 0);
+  }
+
+  /// Queues [spec]'s line (and its chain); returns the first message.
+  CommsMessage? _offer(
+    String name,
+    CommsTriggerSpec spec,
+    double at, {
+    required bool demon,
+  }) {
+    if (!_admit(name, spec, at, demon)) return null;
     final used = <String>{};
+    CommsMessage? first;
     for (var i = 0; i <= spec.chain; i++) {
       final line = _pickLine(spec, demon: demon, exclude: used);
       if (line == null) break;
-      final character = cast[line.speaker];
-      if (character == null) break;
       used.add(line.speaker);
-      _lastFired[key] = at;
-      if (group != null && !demon) _groupFired[group] = at;
-      _speakerUsed[line.speaker] = at;
-      if (line.signature) {
-        _signatureAt[line.speaker] = at;
-        _signatures++;
-      }
-      // Chained celebration lines follow one another; each waits its turn.
-      final ready = at + spec.delay + i * .01;
-      queue.add(
-        CommsMessage(
-          trigger: spec,
-          line: line,
-          character: character,
-          priority: spec.priority,
-          queuedAt: at,
-          readyAt: ready,
-          expiresAt: ready + spec.ttl + i * 6,
-          sequence: _sequence++,
-        ),
-      );
+      final m = _build(spec, line, at, i);
+      if (m == null) break;
+      first ??= m;
+      queue.add(m);
     }
     if (spec.name.startsWith('flawless')) {
       celebrateUntil = math.max(celebrateUntil, at + celebration);
@@ -301,6 +399,7 @@ class CommsDirector {
     while (queue.length > maxQueued) {
       queue.removeLast();
     }
+    return queue.contains(first) ? first : null;
   }
 
   /// Rotating cast: lines whose speaker is on this sector's call, preferring
@@ -350,31 +449,81 @@ class CommsDirector {
     return spec.lines[choice];
   }
 
-  void _sortQueue() => queue.sort(
-    (a, b) => b.priority != a.priority
-        ? b.priority.compareTo(a.priority)
-        : a.sequence.compareTo(b.sequence),
-  );
+  /// Queue order: urgent first, then priority with the brood's fairness
+  /// boost, then age. The boost never lifts a line past urgent warnings.
+  double _rank(CommsMessage m) {
+    if (m.urgent) return 100.0 + m.priority;
+    var p = m.priority.toDouble();
+    if (m.isDemon) {
+      if (demonShareNow < demonShare) p += 1.5;
+      if (now - _lastDemon > starveAfter) p += 2;
+    }
+    return p;
+  }
 
-  /// Drops finished messages and stale queued ones.
+  void _sortQueue() => queue.sort((a, b) {
+    final r = _rank(b).compareTo(_rank(a));
+    return r != 0 ? r : a.sequence.compareTo(b.sequence);
+  });
+
+  /// Drops finished messages and stale queued ones (a reserved reply only
+  /// expires after its own time-to-live).
   void _retire() {
     for (final m in [...active]) {
       if (now >= m.endsAt) {
         active.remove(m);
-        if (!m.isDemon) _humanQuietSince = math.min(now, m.endsAt);
         onStop?.call(m);
       }
     }
-    queue.removeWhere((m) => now > m.expiresAt);
+    queue.removeWhere((m) {
+      final stale = now > m.expiresAt;
+      if (stale && identical(m, _reserved)) _reserved = null;
+      return stale;
+    });
   }
 
-  /// Advances to [at]: finishes, expires, interrupts and starts messages.
-  void update(double at) {
+  bool get _channelSpeaking =>
+      active.any((m) => !m.overlap && !m.interrupted && now < m.speechEndsAt);
+
+  /// Advances to [at]: retires, sequences and starts messages. [combat]
+  /// enables the brood's starvation timer.
+  void update(double at, {bool combat = false}) {
     now = math.max(now, at);
     _retire();
+    if (combat &&
+        now - _lastDemon > starveAfter &&
+        !queue.any((m) => m.isDemon) &&
+        !_channelSpeaking) {
+      handle(const GameEvent(starvationTrigger), now);
+    }
+    _sortQueue();
+    // Overlapping lines start on their own stagger, up to the voice cap.
     for (final m in [...queue]) {
-      if (now < m.readyAt) continue;
-      if (_tryStart(m)) queue.remove(m);
+      if (!m.overlap || now < m.readyAt) continue;
+      if (active.where((a) => now < a.speechEndsAt).length >= overlapCap) {
+        break;
+      }
+      queue.remove(m);
+      _start(m);
+    }
+    // The channel: one line at a time, in order, after a natural gap.
+    for (final m in [...queue]) {
+      if (m.overlap || now < m.readyAt) continue;
+      if (_reserved != null && !identical(m, _reserved) && !m.urgent) {
+        continue;
+      }
+      if (_channelSpeaking) {
+        final current = active.firstWhere(
+          (a) => !a.overlap && !a.interrupted && now < a.speechEndsAt,
+        );
+        if (!m.urgent || current.urgent) break;
+        _interrupt(current);
+      } else if (now < _speechEnd + lineGap && !m.urgent) {
+        break;
+      }
+      queue.remove(m);
+      _start(m);
+      break;
     }
     for (final slot in slots) {
       if (slot.leaving != null &&
@@ -384,23 +533,7 @@ class CommsDirector {
     }
   }
 
-  bool _tryStart(CommsMessage m) {
-    final same = active.where((a) => a.isDemon == m.isDemon).toList();
-    if (same.isNotEmpty) {
-      final current = same.first;
-      // Gameplay-critical warnings cut a lower, non-critical line short.
-      if (!m.critical || current.critical || current.priority >= m.priority) {
-        return false;
-      }
-      _interrupt(current);
-    } else if (!m.isDemon && !m.critical && now - _humanQuietSince < humanGap) {
-      return false;
-    }
-    if (active.length >= maxActive) {
-      final lowest = active.reduce((a, b) => a.priority <= b.priority ? a : b);
-      if (!m.critical || lowest.priority >= m.priority) return false;
-      _interrupt(lowest);
-    }
+  void _start(CommsMessage m) {
     m.startedAt = now;
     m.slot = _assignSlot(m.character);
     slots[m.slot]
@@ -408,14 +541,36 @@ class CommsDirector {
       ..moodUntil = now + m.line.duration + moodHold;
     active.add(m);
     history.add(m.line.id);
+    if (m.isDemon) {
+      demonAirtime += m.line.duration;
+      _lastDemon = now;
+    } else {
+      humanAirtime += m.line.duration;
+    }
+    if (!m.overlap) _speechEnd = m.speechEndsAt;
+    if (identical(m, _reserved)) _reserved = null;
+    final reply = m.reply;
+    if (reply != null) {
+      // The answer follows right after this line; nothing else may start
+      // in between.
+      reply
+        ..readyAt = m.speechEndsAt + lineGap
+        ..expiresAt = m.speechEndsAt + lineGap + reply.trigger.ttl;
+      queue.add(reply);
+      _reserved = reply;
+    }
     onStart?.call(m);
-    return true;
   }
 
   void _interrupt(CommsMessage m) {
     m.interrupted = true;
     active.remove(m);
-    if (!m.isDemon) _humanQuietSince = now;
+    interruptedLines.add(m.line.id);
+    final reply = m.reply;
+    if (reply != null) {
+      queue.remove(reply);
+      if (identical(_reserved, reply)) _reserved = null;
+    }
     onStop?.call(m);
   }
 
@@ -472,7 +627,7 @@ class CommsDirector {
       ..since = at;
   }
 
-  /// The message currently shown on [slot], if any.
+  /// The message currently shown on [slot] (the newest one on it).
   CommsMessage? messageOn(int slot) =>
-      active.where((m) => m.slot == slot).firstOrNull;
+      active.where((m) => m.slot == slot).lastOrNull;
 }

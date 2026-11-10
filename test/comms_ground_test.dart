@@ -23,7 +23,7 @@ void main() {
     expect(p(.85), [GameEventNames.groundPressureHigh]);
     expect(p(.9), isEmpty);
     expect(p(.4), isEmpty, reason: 'still above calm');
-    expect(p(.2), isEmpty);
+    expect(p(.2), [GameEventNames.groundPressureEased]);
     expect(p(.5), [GameEventNames.groundPressureRising]);
     expect(
       o
@@ -74,7 +74,11 @@ void main() {
       'allyUnderAttack',
     ]) {
       expect(commsHumanTriggers[name]!.group, 'ground', reason: name);
-      expect(commsHumanTriggers[name]!.critical, isFalse, reason: name);
+      expect(
+        commsHumanTriggers[name]!.critical,
+        name == 'groundBreakthrough',
+        reason: 'only the breakthrough is an urgent warning',
+      );
     }
     expect(
       commsHumanTriggers['groundBreakthrough']!.priority,
