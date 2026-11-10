@@ -543,6 +543,58 @@ void main() {
       },
     );
   });
+  group('comms v4 brood voices', () {
+    test('battle cries on divePrep: many voices, no immediate repeat, nothing cut', () {
+      final d = CommsDirector(random: math.Random(3));
+      d.setSector(3, 0);
+      for (var t = 0.0; t < 600; t += .1) {
+        final tick = (t * 10).round();
+        if (tick % 23 == 0) d.handle(const GameEvent(GameEventNames.divePrep), t);
+        if (tick % 170 == 5) d.handle(const GameEvent(GameEventNames.waveStart), t);
+        d.update(t, combat: true);
+      }
+      final cries = d.history.where((id) => id.startsWith('divePrep.d')).toList();
+      expect(cries.length, greaterThan(20));
+      expect(cries.toSet().length, greaterThanOrEqualTo(8));
+      for (var i = 1; i < cries.length; i++) {
+        expect(cries[i], isNot(cries[i - 1]), reason: 'repeat at $i');
+      }
+      final voices = {
+        for (final id in cries)
+          commsDemonTriggers['divePrep']!.lines.firstWhere((l) => l.id == id).speaker,
+      };
+      expect(voices.length, greaterThanOrEqualTo(5), reason: '$voices');
+      expect(voices.intersection(commsMinions.toSet()).length, greaterThanOrEqualTo(4));
+      expect(d.interruptedLines, isEmpty);
+    });
+
+    test('battle cries are short enough to land before the dive', () {
+      for (final line in commsDemonTriggers['divePrep']!.lines) {
+        expect(line.duration, lessThanOrEqualTo(.9), reason: line.id);
+      }
+      expect(commsDemonTriggers['divePrep']!.overlap, isTrue);
+    });
+
+    test('reinforcements: the brood cheers with two different voices', () {
+      final d = CommsDirector(random: math.Random(8));
+      d.setSector(2, 0);
+      d.handle(const GameEvent(GameEventNames.reinforcements), 0);
+      for (var t = 0.0; t < 15; t += .05) {
+        d.update(t);
+      }
+      final cheers = [
+        for (final id in d.history.where((id) => id.startsWith('reinforcements.d')))
+          commsDemonTriggers['reinforcements']!.lines.firstWhere((l) => l.id == id).speaker,
+      ];
+      expect(cheers.length, 2, reason: '${d.history}');
+      expect(cheers.toSet().length, 2);
+      expect(d.interruptedLines, isEmpty);
+    });
+
+    test('several distinct minion timbres', () {
+      expect(commsMinions.toSet(), containsAll(['skritch', 'grunnok', 'blatch', 'nibb', 'krag', 'sliss']));
+    });
+  });
   group('shipped line bank', () {
     test('large and varied, every speaker in the cast', () {
       final lines = [

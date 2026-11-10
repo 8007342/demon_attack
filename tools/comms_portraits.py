@@ -916,9 +916,15 @@ def pack():
             continue
         frames, mouth, eyes, face, lips = frames_for(cid, g)
         meta[cid] = {'mouth': mouth, 'lips': lips, 'eyes': eyes, 'face': face}
+        smalls = [small_frame(f, s) for f in frames]
+        # A talk shape too thin to survive the 48 px downsample (identical
+        # to idle there) borrows the next opening, so phones still see it.
+        for f, wider in ((2, 3), (13, 3), (5, 3)):
+            if (smalls[f] == smalls[0]).all():
+                smalls[f] = smalls[wider]
         for col, f in enumerate(frames):
             big[row * g:(row + 1) * g, col * g:(col + 1) * g] = f
-            small[row * s:(row + 1) * s, col * s:(col + 1) * s] = small_frame(f, s)
+            small[row * s:(row + 1) * s, col * s:(col + 1) * s] = smalls[col]
     for arr, path in ((big, ATLAS), (small, ATLAS_SMALL)):
         path.parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(arr, 'RGBA').save(path, optimize=True)

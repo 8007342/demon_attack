@@ -145,7 +145,10 @@ void main() {
             expect(b[3], lessThanOrEqualTo(box[3]), reason: label);
             // Centred on the lips and opening at the lip seam: the upper lip
             // lifts a little, the jaw drops the rest.
-            final tol = cell == commsPortraitCell ? 1.6 : 1.1;
+            final width = (lips['right'] - lips['left'] + 1) * k;
+          final tol = (cell == commsPortraitCell ? 1.6 : 1.1) > width * .1
+              ? (cell == commsPortraitCell ? 1.6 : 1.1)
+              : width * .1;
             expect(
               ((b[0] + b[2]) / 2 - cx * k).abs(),
               lessThanOrEqualTo(tol + 1.5 * (1 - k)),

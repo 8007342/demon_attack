@@ -43,7 +43,7 @@ class CommsMouth {
   static const hysteresis = .05;
 
   /// Cross-fade at the start of each new shape (seconds).
-  static const blend = .035;
+  static const blend = .03;
 
   static final _cache = <String, CommsMouth>{};
 
@@ -125,7 +125,13 @@ class CommsMouth {
       current += (target - current).sign;
       level.add(current);
     }
-    // 4. no blips: a run shorter than minHold inside the clip that is not a
+    // The clip always ends on a closed mouth, closing step by step.
+    for (var i = level.length - 1, cap = 0; i >= 0; i--, cap++) {
+      if (level[i] <= cap) break;
+      level[i] = cap;
+    }
+    // 4. no blips (also where the closing ramp met the line): a run
+    // shorter than minHold inside the clip that is not a
     // step of a monotone ramp takes its predecessor's level.
     for (var pass = 0; pass < 8; pass++) {
       var changed = false;
@@ -139,11 +145,6 @@ class CommsMouth {
         changed = true;
       }
       if (!changed) break;
-    }
-    // The clip always ends on a closed mouth, closing step by step.
-    for (var i = level.length - 1, cap = 0; i >= 0; i--, cap++) {
-      if (level[i] <= cap) break;
-      level[i] = cap;
     }
     // 5. shapes: a run of an open level is the rounded 'oo' or the spread
     // 'ee' when most of it was measured so (demons keep fangs: no 'oo',

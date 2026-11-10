@@ -1356,9 +1356,10 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
   'divePrep': CommsTriggerSpec(
     name: 'divePrep',
     priority: 4,
-    cooldown: 5.0,
+    cooldown: 7.0,
     ttl: 0.6,
-    chance: 0.6,
+    chance: 0.5,
+    overlap: true,
     lines: [
       CommsLine(id: 'divePrep.d0', speaker: 'skritch', duration: 1.1, grunt: 'warcry', gloss: 'DIVE CRY'),
       CommsLine(id: 'divePrep.d1', speaker: 'skritch', duration: 1.1, grunt: 'cackle', gloss: 'GLEEFUL SHRIEK'),

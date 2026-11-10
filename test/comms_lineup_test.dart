@@ -17,8 +17,9 @@ void main() {
       expect(commsCast[commsAnchor]!.rank, contains('ADM'));
       expect(commsFleetPool, isNot(contains(commsAnchor)));
       expect(commsGroundPool.length, greaterThanOrEqualTo(2));
-      expect(commsCast.values.where((c) => c.isDemon).length, 8);
-      expect(commsMinions, hasLength(3));
+      expect(commsCast.values.where((c) => c.isDemon).length, 11);
+      // Lower-rank brood voices: several distinct minion timbres.
+      expect(commsMinions, hasLength(6));
     });
 
     test('a seed always picks the same lineup', () {
