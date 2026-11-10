@@ -204,7 +204,7 @@
      "onset": 0.937,
      "onsetOffsetMs": -1.8,
      "keyMatch": 0.814,
-     "peakDb": -7.69,
+     "peakDb": -7.32,
      "hitOffsetMs": 10.0
     },
     "swell": {
@@ -212,7 +212,7 @@
      "beat": 24,
      "keyMatch": 0.831,
      "onset": 0.623,
-     "peakDb": -8.29,
+     "peakDb": -8.41,
      "hitOffsetMs": -2.9
     },
     "fill": {
@@ -220,14 +220,14 @@
      "beat": 18,
      "landsOn": 20,
      "landOnset": 1.0,
-     "peakDb": -3.44,
+     "peakDb": -3.32,
      "hitOffsetMs": 10.0
     },
     "gallop": {
      "source": "l1-t2",
-     "beat": 20,
-     "kickDensity": 0.042,
-     "peakDb": -4.58,
+     "beat": 0,
+     "kickDensity": 0.034,
+     "peakDb": -4.11,
      "hitOffsetMs": 10.0
     },
     "lead": {
@@ -241,17 +241,17 @@
      "source": "l1-t4",
      "beat": 4,
      "keyMatch": 0.831,
-     "peakDb": -8.63,
+     "peakDb": -9.01,
      "hitOffsetMs": 10.0
     }
    },
    "bytes": {
-    "ogg": 134636,
-    "m4a": 146649
+    "ogg": 191490,
+    "m4a": 230261
    },
    "sha256": {
-    "ogg": "6725596287508f0d4f4fb7de06ae4aa446200455274daa19522e0bad3a9e845f",
-    "m4a": "1025a7da547d373957dfe6e197d8d32be5398a4e1dd67a324b49f1f50733c2e0"
+    "ogg": "8ae4146a7d025cff6e6870baecfd489b416a037a34d6ac2ea5ec80a46e367ff1",
+    "m4a": "f40d9d919d6af80f4db26b15e951bb38b1ad54199ec76b3227be6f25f90bed96"
    }
   },
   "l1-outro": {
@@ -515,7 +515,7 @@
      "onset": 0.547,
      "onsetOffsetMs": -5.0,
      "keyMatch": 0.875,
-     "peakDb": -7.46,
+     "peakDb": -7.28,
      "hitOffsetMs": 10.0
     },
     "swell": {
@@ -523,7 +523,7 @@
      "beat": 12,
      "keyMatch": 0.944,
      "onset": 0.09,
-     "peakDb": -7.87,
+     "peakDb": -8.53,
      "hitOffsetMs": -5.0
     },
     "fill": {
@@ -531,14 +531,14 @@
      "beat": 18,
      "landsOn": 20,
      "landOnset": 0.751,
-     "peakDb": -3.44,
+     "peakDb": -3.67,
      "hitOffsetMs": 10.0
     },
     "gallop": {
      "source": "l2-t2",
      "beat": 28,
-     "kickDensity": 0.015,
-     "peakDb": -7.58,
+     "kickDensity": 0.014,
+     "peakDb": -6.82,
      "hitOffsetMs": 10.0
     },
     "lead": {
@@ -552,17 +552,17 @@
      "source": "l2-t4",
      "beat": 20,
      "keyMatch": 0.871,
-     "peakDb": -8.01,
+     "peakDb": -7.88,
      "hitOffsetMs": 10.0
     }
    },
    "bytes": {
-    "ogg": 141524,
-    "m4a": 156477
+    "ogg": 202335,
+    "m4a": 244397
    },
    "sha256": {
-    "ogg": "88f62c7b5c3e41882018225244738dfcca223e04ada86474995993cc37d44f75",
-    "m4a": "ed50cb8eaf9b80e71beebae62405c31900ddd902d4dd35dd874ec7c8eba2b9a5"
+    "ogg": "c3a69614c4f0ca81ea14eb4c09de2c438b8e527120d35087f6a060b12d6efb23",
+    "m4a": "4e76cd6127ea7539282a3dd449a9d1ce6559eb9bfb94d594eec3622a25f5fd32"
    }
   },
   "l2-outro": {
@@ -826,7 +826,7 @@
      "onset": 1.0,
      "onsetOffsetMs": 0.0,
      "keyMatch": 0.844,
-     "peakDb": -6.59,
+     "peakDb": -6.55,
      "hitOffsetMs": 10.0
     },
     "swell": {
@@ -834,7 +834,7 @@
      "beat": 12,
      "keyMatch": 0.956,
      "onset": 1.0,
-     "peakDb": -7.98,
+     "peakDb": -8.34,
      "hitOffsetMs": -3.3
     },
     "fill": {
@@ -842,14 +842,14 @@
      "beat": 26,
      "landsOn": 28,
      "landOnset": 0.967,
-     "peakDb": -4.77,
+     "peakDb": -4.2,
      "hitOffsetMs": 10.0
     },
     "gallop": {
      "source": "l3-t3",
      "beat": 28,
-     "kickDensity": 0.012,
-     "peakDb": -3.98,
+     "kickDensity": 0.014,
+     "peakDb": -4.26,
      "hitOffsetMs": 10.0
     },
     "lead": {
@@ -863,17 +863,17 @@
      "source": "l3-t4",
      "beat": 12,
      "keyMatch": 0.943,
-     "peakDb": -9.8,
+     "peakDb": -10.09,
      "hitOffsetMs": 10.0
     }
    },
    "bytes": {
-    "ogg": 129243,
-    "m4a": 141504
+    "ogg": 179197,
+    "m4a": 223746
    },
    "sha256": {
-    "ogg": "c5eda103fd0ac193a379b785bdc8b469c99d2a47a25fbc7ff29a387562e1ad98",
-    "m4a": "dfef739204bb0760a2125e3a0c6fd42c787c93b14b6be45babe88af4b449c0ae"
+    "ogg": "9f9939e9d45b1bfc70e018973cd37f409937b578982b2f0a62d09003ea86b3dd",
+    "m4a": "9bc90a36e901660092db33a26891a98f0db89e4fc69c676c8ce1358c91565e7f"
    }
   },
   "l3-outro": {
@@ -1137,7 +1137,7 @@
      "onset": 0.982,
      "onsetOffsetMs": 0.0,
      "keyMatch": 0.572,
-     "peakDb": -9.84,
+     "peakDb": -9.5,
      "hitOffsetMs": 10.0
     },
     "swell": {
@@ -1145,7 +1145,7 @@
      "beat": 20,
      "keyMatch": 0.845,
      "onset": 0.759,
-     "peakDb": -9.7,
+     "peakDb": -9.48,
      "hitOffsetMs": 0.0
     },
     "fill": {
@@ -1153,14 +1153,14 @@
      "beat": 6,
      "landsOn": 8,
      "landOnset": 1.0,
-     "peakDb": -3.73,
+     "peakDb": -3.54,
      "hitOffsetMs": 10.0
     },
     "gallop": {
      "source": "l4-t3",
      "beat": 28,
-     "kickDensity": 0.015,
-     "peakDb": -4.19,
+     "kickDensity": 0.013,
+     "peakDb": -3.62,
      "hitOffsetMs": 10.0
     },
     "lead": {
@@ -1174,17 +1174,17 @@
      "source": "l4-t4",
      "beat": 4,
      "keyMatch": 0.917,
-     "peakDb": -9.78,
+     "peakDb": -10.46,
      "hitOffsetMs": 10.0
     }
    },
    "bytes": {
-    "ogg": 159463,
-    "m4a": 167763
+    "ogg": 220718,
+    "m4a": 259275
    },
    "sha256": {
-    "ogg": "cb5c4bb1de744365fc80bf12a8446958295ee79bdc947439a8e9d895fc66ac91",
-    "m4a": "d228a794c2214182fce0e0e64433b0d2001176df7c8104e6796418bb8e8abdf3"
+    "ogg": "f264389aeac89adbf10e38378455883a78058645b78671abe3de0bd0f6e8bf85",
+    "m4a": "9159a6ee63483ec2f6f3fe436029d4a713181c4b8e6b54c01676e5f3f1a384ab"
    }
   },
   "l4-outro": {
@@ -1448,7 +1448,7 @@
      "onset": 1.0,
      "onsetOffsetMs": -4.2,
      "keyMatch": 0.707,
-     "peakDb": -8.27,
+     "peakDb": -8.1,
      "hitOffsetMs": 10.0
     },
     "swell": {
@@ -1456,7 +1456,7 @@
      "beat": 0,
      "keyMatch": 0.938,
      "onset": 0.259,
-     "peakDb": -8.84,
+     "peakDb": -8.96,
      "hitOffsetMs": -5.8
     },
     "fill": {
@@ -1464,14 +1464,14 @@
      "beat": 16,
      "landsOn": 18,
      "landOnset": 1.0,
-     "peakDb": -2.69,
+     "peakDb": -2.32,
      "hitOffsetMs": 10.0
     },
     "gallop": {
      "source": "l5-t3",
      "beat": 28,
-     "kickDensity": 0.015,
-     "peakDb": -7.03,
+     "kickDensity": 0.014,
+     "peakDb": -3.56,
      "hitOffsetMs": 10.0
     },
     "lead": {
@@ -1485,17 +1485,17 @@
      "source": "l5-t4",
      "beat": 16,
      "keyMatch": 0.856,
-     "peakDb": -8.46,
+     "peakDb": -8.43,
      "hitOffsetMs": 10.0
     }
    },
    "bytes": {
-    "ogg": 130296,
-    "m4a": 132786
+    "ogg": 177003,
+    "m4a": 210201
    },
    "sha256": {
-    "ogg": "bbe4a4b65c23b9d4c12f84ed1cde55d2f4ae3c4a97cbde479685b953b495eaf4",
-    "m4a": "a8a832ffd0ef1c41269cf9b0d8e6ba4b1ce9066b02d0f52be2dc50d715bdea6e"
+    "ogg": "ecf9fee974d014674c2d5e0778febf57c6ddc7355ee6f20aa172c4db95bed752",
+    "m4a": "998d8d5a2be4122896581635ff724d36dcbab422056a8efda5b0e0edbc403527"
    }
   },
   "l5-outro": {

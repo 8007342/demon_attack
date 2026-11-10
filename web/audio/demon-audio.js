@@ -77,7 +77,7 @@
     lead: { role: 'tone', quantum: 4, beats: 7 },     // two bars of the tier-3 lead band from the next bar line
     low: { role: 'tone', quantum: 1, beats: 7 },      // low band of a tier-4 downbeat's two bars (bass weight)
   };
-  const layerSlotBeats = 8, layerCap = 4;
+  const layerSlotBeats = 8, layerCap = 4, layerTail = .04;
   const stackGain = [1, dB(-2), dB(-3.5), dB(-5)];  // later layers sit lower; the limiter holds the sum
   const layersLive = [], layerLog = [];
   let lastLayer = null, layerSeed = 1982;
@@ -510,7 +510,9 @@
     const source = context.createBufferSource(), gain = context.createGain();
     source.buffer = sprite; gain.gain.value = fileGain * stackGain[depth];
     source.connect(gain); gain.connect(music);
-    source.start(at, slot * slotLength, slotLength);
+    // The slot's last 50 ms are silent; stopping 40 ms early skips the codec's
+    // pre-echo of the next slot's attack.
+    source.start(at, slot * slotLength, slotLength - layerTail);
     source.onended = () => { try { source.disconnect(); gain.disconnect(); } catch { /* detached */ } };
     lastLayer = name;
     layersLive.push({ name, at, end: at + info.beats * beatSeconds, depth });

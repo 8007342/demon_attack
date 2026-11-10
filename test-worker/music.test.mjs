@@ -101,7 +101,7 @@ test('levels play intro then tiers of one motif at the level tempo: tier changes
   assert.ok(dive >= now && dive - now <= BEAT(2) / 2 + .031 && onGrid(dive, t1.at, BEAT(2) / 2), `dive accent on the half-beat of the 160 BPM grid (${dive - now})`);
   // A dive plays one composable layer of the level's layer sprite (two-bar slots).
   const layerSource = sources.at(-1);
-  assert.equal(layerSource.buffer.name, 'l2-layers'); assert.ok(near(layerSource.duration, 2 * BAR[2]));
+  assert.equal(layerSource.buffer.name, 'l2-layers'); assert.ok(near(layerSource.duration, 2 * BAR[2] - .04), 'the slot, minus its silent 40 ms guard');
   assert.ok(onGrid(layerSource.offset, 0, 2 * BAR[2]), 'a whole layer slot');
   assert.equal(audio.state.accents.at(-1).source, 'layers');
   const hatch = await audio.accent('hatch');

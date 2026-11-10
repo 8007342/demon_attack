@@ -1130,6 +1130,8 @@ def build_synth(spec, cue, work):
 # No generation; nobody listened.
 LAYER_SLOTS = ['stab', 'swell', 'fill', 'gallop', 'lead', 'low']
 LAYER_SLOT_BEATS = 8
+STEM_GUARD = 2400  # samples of silence at each layer slot's end
+LAYER_TAIL_S = 0.04  # demon-audio.js plays a slot for slotSeconds - this
 KEY_PROFILES = {  # Krumhansl-Kessler tonal hierarchies, tonic at index 0
     'major': [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88],
     'minor': [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17],
@@ -1277,7 +1279,9 @@ def build_stems(spec, cue, work):
             i = at(b0)
             m = min(len(a), slot - i)
             s[i:i + m] += a[:m] * g
-        s[min(slot - 480, at(beats + 1)):] = 0
+        # Silent for the last 50 ms: the next slot's hard attack pre-echoes in Opus,
+        # and the player stops each layer 40 ms before its slot ends (LAYER_TAIL_S).
+        s[min(slot - STEM_GUARD, at(beats + 1)):] = 0
         return s
     # stab: the tier-4 beat with the strongest onset plus key match.
     scores = []
@@ -1586,7 +1590,9 @@ def cmd_verify(args):
                 slot = round(meta['slotSeconds'] * SR)
                 if len(audio) != slot * len(meta['slots']):
                     problems.append('sprite slots do not tile the file')
-                ends = [float(np.abs(audio[(i + 1) * slot - 480:(i + 1) * slot]).max()) for i in range(len(meta['slots']))]
+                # Layer slots are played up to LAYER_TAIL_S before their end.
+                cut = round(LAYER_TAIL_S * SR) if meta.get('mode') == 'stems' else 0
+                ends = [float(np.abs(audio[(i + 1) * slot - cut - 480:(i + 1) * slot - cut]).max()) for i in range(len(meta['slots']))]
                 # AAC pre-echo of the next slot's attack is allowed (about -30 dB).
                 if max(ends) > (0.02 if fmt == 'ogg' else 0.05):
                     problems.append(f'slot does not end silent ({max(ends):.3f})')
