@@ -39,7 +39,7 @@ class CommsMouth {
   static const minHold = 2;
 
   /// Openness thresholds for levels 1-4 (with hysteresis).
-  static const thresholds = [.12, .3, .52, .76];
+  static const thresholds = [.17, .45, .66, .8];
   static const hysteresis = .05;
 
   /// Cross-fade at the start of each new shape (seconds).

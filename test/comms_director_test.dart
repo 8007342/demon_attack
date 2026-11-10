@@ -707,7 +707,13 @@ void main() {
         'convoyClimbing',
       };
       final rng = math.Random(2);
+      // The model fires divePrep before every dive (v4 battle cries); its
+      // own generator keeps the other events' sequence unchanged.
+      final dives = math.Random(5);
       for (var t = 0.0; t < 300; t += .1) {
+        if (dives.nextDouble() < .02) {
+          c.handle(const GameEvent(GameEventNames.divePrep), t);
+        }
         if (rng.nextDouble() < .03) {
           c.handle(
             GameEvent(GameEventNames.weaponPickup, {

@@ -163,7 +163,7 @@ Integration: load `audio/demon-audio.js` before Flutter bootstrap, then call `wi
 
 ## Squad comms voices
 
-The squad video call's radio lines are short clips in `web/audio/comms/<clip id>.ogg` (Opus) and `.m4a` (AAC-LC), one per line of the bank in `art/comms/lines.json` (clip ids `<trigger>.h<n>` for spoken lines, `<trigger>.d<n>` for demon grunts, in list order). `web/audio/comms/manifest.json` records every clip's speaker, kind, trigger, engine (`chatterbox`, `kokoro` or `grunt`), emotion, any fallback reason, duration, mouth and openness tracks, loudness, byte sizes and SHA-256, plus the Kokoro and Chatterbox revisions, the SHA-256 of every model and voice file, the emotion table and the reference clips.
+The squad video call's radio lines are short clips in `web/audio/comms/<clip id>.ogg` (Opus) and `.m4a` (AAC-LC), one per line of the bank in `art/comms/lines.json` (clip ids `<trigger>.h<n>` for spoken lines, `<trigger>.d<n>` for demon grunts, in list order). `web/audio/comms/manifest.json` records every clip's speaker, kind, trigger, engine (`chatterbox`, `kokoro` or `grunt`), emotion, any fallback reason, duration, mouth, openness and viseme tracks, loudness, byte sizes and SHA-256, plus the Kokoro and Chatterbox revisions, the SHA-256 of every model and voice file, the emotion table and the reference clips.
 
 ### Pipeline (`tools/comms_pipeline.py`)
 
@@ -173,9 +173,11 @@ Specs, all committed: `art/comms/cast.json` (characters, Kokoro voice and speed 
 | --- | --- |
 | `voices` | Kokoro-82M (CPU) speaks each human line with its character's voice and speed → 24 kHz WAV in `$COMMS_WORK/raw` (default `~/.cache/demon-attack/comms`, outside the checkout). These are the fallback renders and the length yardstick for `expressive`. Cached per clip on (voice, speed, text, revision, overrides). misaki's espeak-ng fallback is disabled (the bundled `espeakng-loader` library aborts on this host); every out-of-vocabulary word is spelt with an explicit phoneme override in `audio.json`. |
 | `refs` | One Kokoro reference clip per human character (their voice and speed, the neutral ~9 s sentence in `audio.json`) → `$COMMS_WORK/refs/<id>.wav`, hashes in `refs.json` and the manifest. |
-| `expressive` | Chatterbox (Resemble AI) clones each character's reference and speaks every line with its emotion's exaggeration / cfg weight / temperature, seeded per clip id → `$COMMS_WORK/expressive`. **One model process** (`--workers 1`, `--threads 6`, ~3 GB resident; between lines it pauses while the cgroup's anon+shmem is within 1.5 GB of `memory.high`), speakers grouped so each reference is prepared once, newest triggers first (`EXPRESSIVE_ORDER`); cached per (engine, revision, reference hash, text, emotion parameters); an incremental log in `expressive.json`. `--only`/`--limit` render subsets. |
-| `grunts` | Synthesised demon grunts, seeded by clip id (below). |
-| `radio` | Picks the engine per human clip: the Chatterbox render if it passes the accept rules (present, not silent, < 0.1 % clipped samples, trimmed length 0.55–1.9 × the Kokoro render of the same text, which catches truncation, babble loops and long noise tails), else the Kokoro render (`--kokoro-only` forces it). Then the radio chain (below), mouth and openness tracks, BS.1770 gated loudness normalisation (−18 LUFS human, −18.5 demon, soft limit at −4 dBFS). |
+| `hotrefs` | Optional (Chatterbox venv): a derived energetic reference per character, `refs/<id>.<register>.wav` (`chatterbox.registers`). Measured in v4 and not used by any emotion (below). |
+| `expressive` | Chatterbox (Resemble AI) clones each character's reference and speaks every line with its emotion's exaggeration / cfg weight / temperature and delivery text, seeded per clip id → `$COMMS_WORK/expressive`. **One model process, never a pool** (`--threads`, ~3–5 GB resident; between lines it pauses while the cgroup's anon+shmem is within 1.5 GB of `memory.high`). Hottest emotions first, one reference after another. A take that fails the accept rules is re-rolled with a new seed up to `accept.retries` (2) times, and the best take is kept. Each clip is written with its cache key as it finishes (cached per engine, revision, reference hash, delivery text and emotion parameters), so a killed run resumes where it stopped; `--limit` renders a batch and `--only` a subset; the log is `expressive.json`. |
+| `grunts` | Synthesised demon growls, seeded by clip id (below), with a click and splice check over the whole set; the stage fails on any hit. |
+| `radio` | Picks the engine per human clip: the Chatterbox render if it passes the accept rules (present, not silent, < 0.1 % clipped samples, trimmed length 0.55–1.9 × the Kokoro render of the same text, which catches truncation, babble loops and long noise tails, and for urgent/excited/triumphant/panicked lines a pitch-range floor), else the Kokoro render (`--kokoro-only` forces it). Then the emotion's **delivery** post-processing (below), the radio chain, mouth, openness and viseme tracks, and BS.1770 gated loudness normalisation (−18 LUFS human, −18.5 demon, soft limit at −4 dBFS). |
+| `prosody` | Pitch range (5–95 %, semitones), pitch sd, energy sd (dB over active 10 ms frames), voiced share and syllables per second, per clip and per emotion, of a folder of clean takes (`--dir`; `--post` measures after delivery; `--out` writes JSON). A numpy YIN tracker, close to librosa's pyin on spot checks. |
 | `encode` | ffmpeg: Opus 16 kbps VBR `voip` mono and AAC-LC 24 kbps mono with a 4 kHz cutoff (without it the native AAC encoder spends bits on the empty highs and rings up to 6 dB over the ceiling), 24 kHz, bit-exact; writes the manifest and removes stray files. Re-encoding the same masters reproduces the same bytes. |
 | `verify` | Decodes every file: length vs manifest (±60 ms), decoded peak ≤ 0 dBFS, loudness within 1.5 LU, grunt length per class, mouth/openness track lengths, no single-frame mouth flicker, engine recorded, hashes, bank ↔ manifest. |
 | `stats` | Median pitch, spectral centroid and speaking rate per character (distinctness check). |
@@ -206,23 +208,67 @@ $SCR/venv/bin/python -I tools/comms_pipeline.py verify && python3 tools/comms_pi
 
 (The Hugging Face Xet transfer backend is unreachable from the forge; `HF_HUB_DISABLE_XET=1` downloads the models over plain HTTPS.)
 
-### Expressive delivery (Chatterbox)
+### Expressive delivery (Chatterbox + delivery stage, v4)
 
-Kokoro holds each character's identity: Chatterbox clones the character's own Kokoro reference clip, so a line keeps that character's voice while gaining the emotion's delivery. Settings per emotion (`audio.json` → `chatterbox.emotions`; exaggeration 0.5 and cfg 0.5 are the model defaults, lower cfg is faster and more animated):
+Kokoro holds each character's identity: Chatterbox clones the character's own Kokoro reference clip, so a line keeps that character's voice while gaining the emotion's delivery. The operator heard v3 (exaggeration ≤ 0.95) as "still too flat", so v4 measured before choosing (`prosody` stage; test sets of 11 and 20 lines from eight speakers):
 
-| Emotion | Exaggeration | cfg weight | Temperature | Lines |
-| --- | ---: | ---: | ---: | ---: |
-| calm | 0.35 | 0.50 | 0.70 | 66 |
-| stern | 0.45 | 0.55 | 0.70 | 7 |
-| warm | 0.50 | 0.50 | 0.75 | 44 |
-| exhausted | 0.40 | 0.60 | 0.75 | 12 |
-| teasing | 0.65 | 0.45 | 0.80 | 34 |
-| urgent | 0.70 | 0.35 | 0.75 | 74 |
-| excited | 0.80 | 0.35 | 0.80 | 55 |
-| triumphant | 0.85 | 0.35 | 0.80 | 25 |
-| panicked | 0.95 | 0.30 | 0.80 | 29 |
+| Test (hot emotions) | Pitch range st | Pitch sd st | Energy sd dB | Syll/s | Length > 1.9× |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| v3 takes (20 lines) | 11.59 | 3.56 | 10.12 | 3.33 | 0 |
+| exaggeration 1.0–1.3, cfg 0.5, neutral ref | 11.87 | 3.65 | 9.42 | 3.49 | 0 |
+| same, derived energetic reference | 10.85 | 3.40 | 9.61 | 3.44 | 0 |
+| exaggeration 1.2–1.6, cfg 0.2–0.3 (11 lines) | 15.18 vs v3 14.23 | 4.33 vs 4.53 | 9.77 vs 10.07 | 3.29 vs 3.96 | 3 of 11 (up to 3.5×) |
 
-Chatterbox embeds Resemble AI's imperceptible Perth watermark in its output (left on); the radio chain and lossy coding probably weaken it. On this shared CPU, one process with 6 threads took a median of 11.3 s per line (7–39 s), so 346 lines take 4012 s, about 67 min. The 2026-11-10 render produced 346 lines, 0 errors. 341 passed the accept rules. 5 fell back to Kokoro because their Chatterbox take ran 1.9–2.4× longer than Kokoro's (`waveStart.h0`, `weaponPickup.h0`, `weaponPickup.rapid.h1`, `groundUnitDestroyed.h5`, `groundMissileLaunch.h5`). The manifest records each clip's `engine` and any `fallback` reason.
+Findings:
+
+- **Exaggeration and cfg barely move the measured prosody.** Low cfg (0.2–0.3) slows the delivery, which matches Chatterbox's own guidance that low cfg slows pacing and high exaggeration speeds it up. It also lets lengths run away (babble tails up to 3.5× Kokoro), which the accept rules reject.
+- **The energetic reference didn't help.** Each character's reference was re-voiced by Chatterbox at exaggeration 1.5 on an energetic sentence; the widest-pitched of three takes was kept, at speaker similarity 0.78–0.85. It did not widen the lines' pitch.
+- **What v4 uses:**
+  - exaggeration up to 1.3 at cfg 0.5;
+  - a closing "!" for the hot emotions (Chatterbox's own text normaliser turns "..." into ", ", so ellipses buy nothing);
+  - a deterministic **delivery** stage that measurably widens the contour.
+
+CAPS for stress is supported (a line's `stress` word list, or a hand-written `say`), but no line uses it, because it is unverified (nobody listens on the forge).
+
+| Emotion | Exaggeration | cfg | Temp | End | Expand | Shift st | Tempo | Dynamics | Lines |
+| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| calm | 0.45 | 0.50 | 0.70 |  | 1.10 | +0.0 | 1.00 | 1.05 | 70 |
+| stern | 0.55 | 0.50 | 0.70 |  | 1.10 | +0.0 | 1.00 | 1.10 | 12 |
+| warm | 0.60 | 0.50 | 0.75 |  | 1.20 | +0.2 | 1.00 | 1.10 | 47 |
+| exhausted | 0.50 | 0.55 | 0.75 |  | 1.05 | -0.3 | 0.97 | 1.00 | 13 |
+| teasing | 0.85 | 0.50 | 0.80 |  | 1.30 | +0.3 | 1.03 | 1.15 | 35 |
+| urgent | 1.00 | 0.50 | 0.80 | ! | 1.35 | +0.5 | 1.06 | 1.20 | 90 |
+| excited | 1.15 | 0.50 | 0.80 | ! | 1.40 | +0.8 | 1.06 | 1.20 | 59 |
+| triumphant | 1.20 | 0.50 | 0.80 | ! | 1.40 | +0.6 | 1.03 | 1.20 | 27 |
+| panicked | 1.30 | 0.50 | 0.80 | ! | 1.35 | +1.0 | 1.08 | 1.20 | 32 |
+
+**Delivery** (`deliver`, applied in `radio` to the clean take):
+
+- **Intonation expand.** It widens the intonation around the clip's median pitch: the voice is resampled at a rate that follows its own smoothed f0 contour (pitch and formants move together, at most ±3 st).
+- **Shift and tempo.** It shifts the pitch by a few tenths of a semitone, then WSOLA restores the length and applies the tempo.
+- **Dynamics.** It widens the 30 ms level contour, by at most ±6 dB.
+
+**Accept rules (v4).** Length ratio 0.55–1.9 and < 0.1 % clipped, as before, plus a pitch-range floor on the raw take: urgent 6.5 st, excited, triumphant and panicked 7 st (about v3's 10th–20th percentile). Failing takes are re-rolled up to twice before the Kokoro fallback.
+
+Before and after, the whole bank (medians; v3 = the shipped v3 takes, v4 = what ships, measured on the clean voice before the radio chain):
+
+| Emotion | n | v3 range st | v4 range st | v3 sd | v4 sd | v3 energy sd | v4 energy sd | v3 syll/s | v4 syll/s |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| calm | 70 | 8.4 | **10.0** | 2.63 | 3.17 | 9.34 | 9.34 | 3.88 | 3.96 |
+| stern | 12 | 7.9 | **10.1** | 2.55 | 3.15 | 9.20 | 9.50 | 3.88 | 4.38 |
+| warm | 47 | 9.9 | **11.4** | 3.10 | 3.59 | 9.48 | 9.51 | 3.90 | 4.12 |
+| exhausted | 13 | 8.1 | **8.8** | 2.55 | 2.84 | 9.71 | 9.64 | 4.27 | 4.48 |
+| teasing | 35 | 9.4 | **14.0** | 3.25 | 4.59 | 9.43 | 9.72 | 4.50 | 4.70 |
+| urgent | 90 | 10.0 | **15.0** | 3.23 | 4.75 | 9.29 | 9.12 | 4.14 | 4.77 |
+| excited | 59 | 11.0 | **16.5** | 3.50 | 5.11 | 9.07 | 9.53 | 4.26 | 4.17 |
+| triumphant | 27 | 11.7 | **17.1** | 3.62 | 5.25 | 9.16 | 9.38 | 3.96 | 4.24 |
+| panicked | 32 | 11.9 | **14.1** | 3.68 | 4.57 | 9.32 | 9.17 | 4.28 | 4.59 |
+| all | 385 | 9.8 | **12.9** | 3.18 | 4.09 | 9.29 | 9.37 | 4.08 | 4.37 |
+| hot, same 183 lines | 183 | 10.9 | **15.3** (raw take 12.5) | 3.51 | 4.89 | 9.18 | 9.28 | 4.11 | 4.45 |
+
+Energy variance stays about the same: at 10 ms it is dominated by consonant/vowel swings, which the smooth dynamics gain leaves alone. The widening is in pitch range, pitch movement and pace.
+
+Chatterbox embeds Resemble AI's imperceptible Perth watermark in its output (left on); the radio chain and lossy coding probably weaken it. The v4 render on this shared CPU: one process with 8 threads, 385 lines at a median of 10.4 s per line (7–41 s, re-rolls included), about 75 min in seven resumable batches; 15 takes were re-rolled, and 1 line fell back to Kokoro (`weaponPickup.h0`: pitch range 4.9 st < 7.0). The manifest records each clip's `engine` and any `fallback` reason.
 
 Never run several Chatterbox workers: each holds about 3 GB, and four of them pushed the forge cgroup past `memory.high` into a 1.5 h reclaim stall (see `tools/forge-guard/README.md`).
 
@@ -232,23 +278,94 @@ Silence trimmed (−42 dB, 15 ms pad) with 10 ms edge fades; 4th-order Butterwor
 
 Keying (v3, much softer than the first pass, which was ear-cutting): levels are relative to the voice peak before loudness normalisation. Key-up: a rounded 30 ms sine "tock" (820 Hz human, 574 Hz demon, 2 ms raised-cosine onset, level 0.07, no noise), a 50 ms breath of carrier noise low-passed at 1.5 kHz (level 0.06), and for fleet radios a quiet 45 ms 1.05 kHz key-up tone (0.035), all within the 70 ms before the voice. Key-down: an 80 ms low-passed noise tail (0.06) and a quieter closing tock. The old pass used a 1.45 kHz click with a noise burst at 0.55, a 3.2 kHz burst and a 160 ms 3.4 kHz squelch tail at 0.32.
 
-### Demon grunts
+### Demon growls (v4)
 
-Unintelligible, cartoonish creature vocalisations, never words. Each grunt is a plan of syllables per gesture (`GRUNT_KINDS`): `order` barks two or three falling syllables, `rally` rises into a long whoop, `gloat` chuckles in five bouncing pulses, `alarm` yelps high/low, `roar` swells one long bellow (more growl and rasp), `snarl` is a short raspy snap. Two layers share the syllable envelope:
+Unintelligible, cartoonish creature vocalisations, never words. The operator heard v3's brood radio as "a glitchy audio clip rather than a proper growling". The causes:
 
-1. **Growl**: a glottal pulse train at the officer's base pitch (Gorrak 70 Hz, Vexxa 190, Skarn 105, Morth 85, Ulgra 55) following the syllable's pitch contour, with wobble vibrato and jitter; every other cycle is weakened by the officer's `rasp` (period doubling, the throaty creature texture) plus pulse-synchronous breath noise; filtered through three cartoon-vowel formant resonators scaled by the officer's `formant` factor, sliding ("wah") from one vowel to another across each syllable.
-2. **Gibberish**: random nonsense syllables (onsets/vowels/codas in `audio.json`) spoken by Kokoro from phonemes with a voice no character uses (`am_echo`), resampled down by the officer's formant factor (pitch and formants drop together), granulated back to the grunt length with 70 ms jittered grains (smearing any phonetic detail), ring-modulated at half the base pitch and band-limited.
+- **Granular splices:** granulated Kokoro gibberish (70 ms jittered grains).
+- **Hard gaps:** syllables cut to digital zero between them.
+- **A gated, ringing layer:** per-syllable formant segments overlapped with near-rectangular windows, a ring modulator, and breath noise switched on and off every glottal cycle.
 
-They are mixed by the officer's `growl` weight, softly saturated and faded, then sent through the demon radio chain. The clip id seeds every random choice. Mouth tracks for grunts use frames 0, 3, 4 and 7 (the roar frame at the loudest moments, which drives the portrait zoom).
+v4 drops the TTS layer: the TTS route (pitch-shifted human nonsense through a monster chain) would bring back the granular smearing. Instead, each growl is **one continuous source-filter synthesis on a single timeline**:
 
-The three minions use the same synthesis with their own parameters: Skritch the scout imp squeaks (260 Hz, formant ×1.6, fast 12 Hz wobble, light growl: the gibberish layer is shifted up, chipmunk-like), Grunnok the trooper brute rumbles (58 Hz, formant ×0.58, heavy growl and rasp, slow wobble) and Blatch the gunner rasps (125 Hz, heavy rasp, 8 Hz wobble). Length classes (`audio.json` → `grunt_lengths`): officer replies in exchanges (`levelClear`, `bossDefeated` and `broodTaunt` demon lines) are **long**: the gesture, a breath, then a grumbling coda of two or three lower, slower syllables, capped at 2.0 s raw (final clips ≤ 2.25 s); the regroup celebration (`regroupStart`) is **short**: the gesture time-compressed to ≤ 0.72 s raw (final ≤ 0.9 s); everything else stays 0.5–1.9 s.
+- **Plan.** A syllable plan per gesture (`GRUNT_KINDS`):
+  - `order` barks;
+  - `rally` whoops;
+  - `gloat` chuckles;
+  - `alarm` yelps;
+  - `roar` bellows;
+  - `snarl` snaps;
+  - `cackle` (new) laughs in five or six quick rising-falling "heh" pulses;
+  - `warcry` (new) swells up into a held roar.
+  Syllables come from the brood language spec (`audio.json` → `gibberish` onsets, vowels and codas, biased per gesture: cackles laugh on *h*, war cries roll *gr/kr/br*).
+- **Source.** A vocal-fold-like Rosenberg glottal flow on a continuous phase. Both its opening and closing phases are raised-cosine, so the flow derivative has no corner and even a 48 Hz growl never ticks. The pitch contour is eased with raised cosines: a small scoop into each syllable, a glide, a fall-off, vibrato at the speaker's `wobble` and low-passed jitter and shimmer.
+- **Growl texture.**
+  - Subharmonics: a smooth amplitude alternation at f0/2 (period doubling) scaled by `rasp`.
+  - False-fold roughness: 25–90 Hz random amplitude modulation, plus a second, rougher fold pulsing at half the pitch, scaled by `growl`.
+  - Throat rasp: breath noise shaped by the glottal flow itself (pulse-synchronous, never gated).
+  - A ~28 Hz trill flutter on rolled *r*.
+- **Consonants.** Plosives are a 75 % closure with a soft 16 ms burst, nasals a dimmed murmur, fricatives a narrow hiss. A low throat murmur runs under the whole phrase, so between syllables the growl never drops to silence.
+- **Vocal tract.** A Klatt cascade of four resonators whose coefficients follow smooth formant tracks sample by sample (no block splices). Formants are scaled by the speaker's `formant` (small creatures up, big ones down) and capped at 3.8 kHz.
+- **Finish.** A chest resonance at about 2.2 × the base pitch, a soft tanh saturation by `growl`, a 45 Hz high-pass, a 4.5 kHz low-pass (the demon radio passes 200–3000 Hz anyway) and 15 ms raised-cosine edges.
 
-### Mouth and openness tracks
+**Click and splice check** (`discontinuities`, run on every growl by `grunts`; the stage fails on any hit):
 
-Two tracks per clip, one value per 1/15 s across the whole clip including the keying lead and tail:
+- A **spike** is a sample whose second difference exceeds 10× the median level of its 30 ms neighbourhood and 5 % of the peak, and is isolated: 3× above everything 3–60 ms before and after it. A recurring glottal or false-fold pulse never is.
+- A **step** is a jump of more than 24 dB between neighbouring 2.5 ms blocks, from near-silence (≤ −48 dB of the peak) to a loud block (> −30 dB) or back: a hard cut or a splice gap.
+
+On v3's grunts the check flags 110 of 137 clips (205 hard-gap steps, 1 spike). The v4 set: 0 of 189 clips (0 spikes, 0 steps). It is tuned for the band-limited growls and is not a general speech click detector: it also trips on 44 of 120 clean Kokoro lines (plosive onsets from silence, sibilant bursts).
+
+**Speakers** (11 on the brood net):
+
+| Speaker | Rank | Base Hz | Formant × | Rasp | Growl | Wobble Hz | Timbre |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Gorrak | Brood Marshal | 70 | 0.62 | 0.35 | 0.55 | 5.5 | deep gravelly bark |
+| Vexxa | Wing Colonel | 190 | 1.35 | 0.55 | 0.25 | 9.0 | shrill chittering rasp |
+| Skarn | Furnace Major | 105 | 0.85 | 0.7 | 0.45 | 7.0 | snorting bubbly gurgle |
+| Morth | Hollow Prelate | 85 | 0.75 | 0.25 | 0.4 | 3.5 | croaking resonant drone |
+| Ulgra | Ark Warden | 55 | 0.55 | 0.45 | 0.75 | 4.0 | huge booming bellow |
+| Skritch | Scout Imp (minion) | 260 | 1.6 | 0.3 | 0.15 | 12.0 | squeaky chattering giggle |
+| Grunnok | Trooper Brute (minion) | 58 | 0.58 | 0.5 | 0.8 | 3.0 | dim slow rumbling huff |
+| Blatch | Brood Gunner (minion) | 125 | 0.95 | 0.65 | 0.35 | 8.0 | raspy clicking cackle |
+| Nibb | Brood Spriteling (minion) | 330 | 1.8 | 0.15 | 0.1 | 14.0 | tiny giggling squeal |
+| Krag | Stone Hulk (minion) | 48 | 0.5 | 0.6 | 0.9 | 2.5 | grinding cavernous growl |
+| Sliss | Venom Skulker (minion) | 150 | 1.1 | 0.8 | 0.3 | 10.0 | breathy hissing snarl |
+
+**Length classes** (`audio.json` → `grunt_lengths`):
+
+- **Long:** officer replies in exchanges (the `levelClear`, `bossDefeated` and `broodTaunt` demon lines). The gesture, a breath, then a grumbling coda of two or three lower, slower syllables, capped at 2.0 s raw (final clips ≤ 2.25 s).
+- **Short:** the regroup celebration (`regroupStart`) and the battle cries (`divePrep`), time-compressed to ≤ 0.72 s raw (final ≤ 0.9 s), so a cry lands inside the 0.5 s before the dive telegraph.
+- **Everything else:** 0.5–1.9 s.
+
+**Brood airtime (v4).**
+
+- **Battle cries.** `divePrep` (fired `ArcadeModel.divePrepBeat` = 0.5 s before a dive telegraph) carries 17 battle cries, 12 of them from the six minions. They have a 7 s cooldown, a 50 % chance and a 0.6 s time-to-live. They may overlap other voices like the regroup cheer: they never cut a line, and the player's three-voice cap drops them if it is full.
+- **Reinforcements.** The cheer chains a second, different brood voice (19 variants, mostly minion cackles).
+- **Other triggers.** The new minions also chatter (`broodChatter`), cheer the regroup and the waves, and panic in a rout.
+- **Variety.** The director's picker never repeats the last variant and prefers speakers who haven't spoken lately. `test/comms_director_test.dart` checks over 10 simulated minutes that the cries cover at least 8 variants and at least 5 voices, with no immediate repeat and no line cut.
+
+### Mouth, openness and viseme tracks
+
+Three tracks per clip, one value per 1/15 s across the whole clip including the keying lead and tail:
 
 - `open`: mouth openness 0..1 written as one digit 0–9 per frame (openness = digit / 9). From the clean voice's RMS per 1/15 s, mapped linearly from 24 dB below the clip's 90th-percentile frame level (closed) up to that level (fully open), so an evenly loud expressive delivery still moves between small and wide mouths; then smoothed with a fast attack (0.7 per frame) and a slower release (0.4 per frame), so the mouth opens on the sound and closes slightly behind it.
-- `mouth`: portrait frame ids derived from the smoothed openness: humans `0` (< 0.2), `2` (< 0.5), `3` (< 0.8), `4`, and `5` (rounded) only for runs of at least three open frames (≥ 0.4) among the most low-frequency-heavy fifth (sustained o/u vowels); demons `0`, `3` (< 0.5), `4` (< 0.9), `7` (roar). Across the bank: human frames 37 % `4`, 28 % `3`, 16 % `2`, 15 % `0`, 4 % `5`; grunt frames 55 % `4`, 21 % `3`, 21 % `7`, 2 % `0`. Every run is held at least two frames (shorter runs merge into a neighbour), so there is no single-frame flicker; `verify` checks it.
+- `vis` (v4): a viseme estimate from the clean voice's spectrum, relative to the clip's own open frames.
+  - `o` (rounded o/u/w): the most low-heavy fifth (energy at 250–1000 Hz) with little energy at 1.8–3.4 kHz.
+  - `e` (spread ee/i, or teeth on s/sh/f/t): the most front-heavy fifth (1.8–3.4 kHz), or a fricative burst (4–11 kHz share in its top 15 %).
+  - `-`: plain.
+  Runs are held at least two frames.
+- `mouth`: portrait frames as the character code 48 + `CommsFrame` index, for tools and `verify`. It quantises openness into five levels (closed, slightly open, half, open, wide; thresholds 0.12, 0.3, 0.52, 0.76), with `o`/`e` turning levels 1–3 into 'oo'/'ee', and the demons' loudest moments (≥ 0.93) into the roar frame. Across the bank: human frames wide 36 %, ee 16 %, closed 15 %, open 10 %, slight 8 %, half 7 %, oo 7 %; growl frames roar 33 %, slight 20 %, wide 17 %, half 16 %, open 13 %, closed 0 %. Every run is held at least two frames; `verify` checks it.
+
+The game (`lib/comms/comms_mouth.dart`) builds its own 30 Hz track from `open` and `vis`:
+
+- it eases the 15 Hz openness linearly, then applies attack/release smoothing;
+- it quantises with hysteresis and moves **at most one level per 1/30 s**, so the mouth always passes through the in-between shapes instead of snapping from closed to wide;
+- no level blips for a single sample except as a step of a monotone ramp;
+- every clip ends closing step by step;
+- 'oo'/'ee' replace levels 1–3 for runs where most samples agree;
+- the painter cross-fades the first 30 ms of every new shape (a hard cut with reduced motion).
+
+The shapes themselves are drawn on each portrait's measured lips: see [asset-pipeline.md](asset-pipeline.md#squad-comms-portraits).
 
 ### Playback (`web/audio/comms-audio.js`)
 
@@ -258,11 +375,13 @@ Two tracks per clip, one value per 1/15 s across the whole clip including the ke
 
 | Set | Clips | Audio | Opus | AAC |
 | --- | ---: | ---: | ---: | ---: |
-| Human lines (341 Chatterbox, 5 Kokoro) | 346 | 1002 s | 2.20 MB | 3.50 MB |
-| Demon grunts (8 speakers) | 132 | 137 s | 0.32 MB | 0.57 MB |
-| **Total** | **478** | **1138 s** | **2.52 MB** | **4.07 MB** |
+| Human lines (384 Chatterbox, 1 Kokoro) | 385 | 1069 s | 2.35 MB | 3.75 MB |
+| Demon growls (11 speakers) | 189 | 193 s | 0.44 MB | 0.81 MB |
+| **Total** | **574** | **1262 s** | **2.78 MB** | **4.56 MB** |
 
-The expressive takes run longer than Kokoro's (a mean of 2.9 s per human line), so v3 lowered the bitrates to Opus 16 kbps and AAC 24 kbps; both remain clean for the 3.4 kHz radio band. Clips load lazily (`prefetch` the lines a sector can use), and a typical line is 2–3 s and 5–8 KB of Opus. Grunt lengths: long replies 1.36–2.01 s, regroup grunts 0.87 s, all others 0.5–1.9 s. `test-worker/comms-audio.test.mjs` covers:
+v3 shipped 478 clips in 2.52 + 4.07 MB; v4 adds 39 spoken lines (the ground war v4 events) and 57 growls, 1.11× the v3 bytes.
+
+The expressive takes run longer than Kokoro's (a mean of 2.9 s per human line), so v3 lowered the bitrates to Opus 16 kbps and AAC 24 kbps; both remain clean for the 3.4 kHz radio band. Clips load lazily (`prefetch` the lines a sector can use), and a typical line is 2–3 s and 5–8 KB of Opus. Growl lengths: long replies 1.45–2.00 s, regroup cheers and battle cries 0.64–0.79 s, all others 0.5–1.9 s. `test-worker/comms-audio.test.mjs` covers:
 
 - the no-op before the gesture and the shared master;
 - ducking and its release;

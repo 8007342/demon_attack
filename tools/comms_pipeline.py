@@ -1107,7 +1107,7 @@ def mouth_track(clean, lead, total, demon, fps):
     out = []
     for k in range(frames):
         o = openness[k]
-        lvl = 0 if o < .12 else 1 if o < .3 else 2 if o < .52 else 3 if o < .76 else 4
+        lvl = 0 if o < .2 else 1 if o < .48 else 2 if o < .69 else 3 if o < .83 else 4
         if demon:
             f = [0, 2, 3, 4, 12][lvl] if o < .93 else 7
         else:
