@@ -17,11 +17,11 @@ The **threat front** (`GroundFront`, `ground_war.dart`) is unchanged: same sched
 
 | Level | Breakthroughs before → after | Ground shots at the player before → after | Engagements/min before → after |
 | --- | --- | --- | --- |
-| L1 Krybor | 0 → 0 | 0 → 0 | 7.0 → 24.6 (3.5×) |
-| L2 Ringfall | 0 → 0 | 0 → 0 | 8.2 → 27.0 (3.3×) |
-| L3 Ember | 15 → 15 | 22 → 22 | 4.4 → 27.1 (6.2×) |
-| L4 Hollow | 22 → 22 | 29 → 29 | 4.2 → 30.7 (7.3×) |
-| L5 Carrier | 0 → 0 | 0 → 0 | 0 → 11.9 |
+| L1 Krybor | 0 → 0 | 0 → 0 | 6.9 → 25.0 (3.6×) |
+| L2 Ringfall | 0 → 0 | 0 → 0 | 8.0 → 26.5 (3.3×) |
+| L3 Ember | 19 → 19 | 31 → 31 | 3.9 → 26.1 (6.7×) |
+| L4 Hollow | 19 → 19 | 25 → 25 | 4.2 → 29.6 (7.0×) |
+| L5 Carrier | 0 → 0 | 0 → 0 | 0 → 11.6 |
 
 An "engagement" is an ally–foe pairing that starts on the visible ground (`GroundWar.alliesEngaged`, the same counter before and after). Allies retreated: 0 in every level, before and after.
 
