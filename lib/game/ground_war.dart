@@ -53,7 +53,7 @@ abstract final class GroundTuning {
   /// Sprite scale relative to the landmarks' texel size.
   static const unitScale = 1.25;
   static const unitWidthTexels = 28.0;
-  static const allyWidthTexels = 20.0;
+  static const allyWidthTexels = 26.0;
 
   // Firing.
   static const telegraph = 1.1; // launcher raise (first half) + glow
@@ -300,6 +300,10 @@ class GroundAlly {
   int hp;
   double fireLeft = .3, flash = 0;
   bool totalled = false, saved = false, announced = false;
+
+  /// Depth speed (texels/s; > 0 advancing, < 0 falling back) and seconds
+  /// of recoil left after a shot (0.14 per shot). Driven by the sim.
+  double vz = 0, recoil = 0;
 
   /// Seconds since it was totalled (limp / pod animation clock).
   double retreatAge = 0;

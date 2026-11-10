@@ -212,6 +212,80 @@ void main() {
           ..age = .12);
         await shot('7-allies-win');
         expect(far.alive, isTrue);
+
+        // 9. The convoy at station in the near band (both variants of the
+        // sector on each side), a demon unit far up the plane.
+        m.ground.units.clear();
+        m.ground.allies.clear();
+        m.ground.tracers.clear();
+        final distant = _unit(m, sector, 0, .5, 1100);
+        GroundAlly station(int id, int side, double across, double z) {
+          final a = GroundAlly(id, sector, side, across, z, 5)..announced = true;
+          m.ground.allies.add(a);
+          return a;
+        }
+        station(100, 0, .15, 250);
+        station(102, 0, .85, 290).attacker = distant;
+        station(103, 1, .2, 270);
+        station(105, 1, .8, 236);
+        await shot('9-convoy-station');
+
+        // 10. An ally advances up the plane and fires on its foe; the foe
+        // answers; another ally takes a hit.
+        m.ground.allies.clear();
+        final foe = _unit(m, sector, 0, .35, 760);
+        final adv = station(110, 0, .6, 520)
+          ..vz = 120
+          ..recoil = .1
+          ..attacker = foe;
+        foe.ally = adv;
+        final foe2 = _unit(m, sector, 1, .5, 900);
+        final adv2 = station(112, 1, .5, 470)
+          ..vz = 90
+          ..recoil = .04
+          ..flash = .1
+          ..attacker = foe2;
+        station(115, 1, .2, 262);
+        station(117, 0, .2, 250).vz = -60;
+        final (mx, my) = (adv.x, adv.bodyY);
+        m.ground.tracers
+          ..add(GroundTracer(mx, my, foe.x, foe.bodyY, friendly: true)..age = .05)
+          ..add(GroundTracer(foe2.x, foe2.bodyY, adv2.x, adv2.bodyY)..age = .17);
+        await shot('10-advance-fire');
+
+        // 11. Explosions mid-animation and burning wrecks at several ages.
+        m.ground.units.clear();
+        m.ground.allies.clear();
+        m.ground.tracers.clear();
+        for (final (side, across, z, age) in [
+          (0, .3, 900.0, .06),
+          (1, .4, 640.0, .3),
+          (0, .7, 480.0, .65),
+          (1, .7, 380.0, 2.0),
+          (0, .2, 330.0, 4.3),
+        ]) {
+          _unit(m, sector, side, across, z)
+            ..destroyed = true
+            ..wreckAge = age;
+        }
+        station(120, 0, .9, 255);
+        station(123, 1, .1, 280);
+        await shot('11-explosions-wrecks');
+
+        // 12. Totalled allies limping off the near band under retreat smoke.
+        m.ground.units.clear();
+        m.ground.allies.clear();
+        station(130, 0, .4, 260)
+          ..totalled = true
+          ..retreatAge = .5;
+        station(133, 1, .5, 300)
+          ..totalled = true
+          ..retreatAge = 1.6;
+        station(135, 0, .7, 420)
+          ..totalled = true
+          ..retreatAge = .3;
+        station(136, 1, .3, 240);
+        await shot('12-ally-retreat-smoke');
       }
       for (final e in moments.entries) {
         await _sheet(e.key, e.value);
