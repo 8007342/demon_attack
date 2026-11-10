@@ -1457,6 +1457,51 @@ def cmd_report(args):
     print('wrote', path)
 
 
+def cmd_compare(args):
+    """Old vs new shipped cues (decoded Opus): energy shares by band, crest
+    factor, 1-5 kHz flatness, percussive share, and the distance from the
+    synth motif guide (long-term spectrum, and the frame-level log-mel
+    correlation `melR`). `--old DIR` holds the previous round's .ogg files and
+    manifest.json. Prints a markdown table and writes <work>/compare.json."""
+    work = Path(args.work)
+    old_dir = Path(args.old)
+    new_m = json.loads((OUT / 'manifest.json').read_text())['cues']
+    old_m = json.loads((old_dir / 'manifest.json').read_text())['cues']
+
+    def body(audio, meta):
+        if meta['kind'] == 'tail':
+            return audio[:round(meta['loopStart'] * SR)]
+        if meta['loopEnd'] is not None:
+            return audio[round(meta['loopStart'] * SR):round(meta['loopEnd'] * SR)]
+        return audio
+
+    rows = {}
+    print('| Cue | Round | low / mid / gtr / air | Crest dB | Flat 1-5k | Perc | Guide dist | melR |')
+    print('| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |')
+    for name, meta in new_m.items():
+        if meta['kind'] == 'sprite' or name not in old_m:
+            continue
+        gpath = work / 'guides' / f'{name}.flac'
+        guide = None
+        if gpath.exists() and not guide_info(work, name).get('source'):
+            guide = window_of(read_audio(gpath), guide_info(work, name))
+        rows[name] = {}
+        for label, path, m in (('old', old_dir / f'{name}.ogg', old_m[name]), ('new', OUT / f'{name}.ogg', meta)):
+            a = body(read_audio(path), m)
+            mm = metal_metrics(a)
+            r = {k: round(v, 3) for k, v in mm.items()}
+            if guide is not None:
+                n = min(len(a), len(guide))
+                r['guide_distance'] = round(timbre_distance(a[:n], guide[:n]), 3)
+                bpm = m.get('bpm', 120.0)
+                r['guide_mel_r'] = round(motif_similarity(motif_features(guide[:n], bpm), motif_features(a[:n], bpm))['mel'], 3)
+            rows[name][label] = r
+            gd = r.get('guide_distance'); gm = r.get('guide_mel_r')
+            print(f"| `{name}` | {label} | {r['low']:.2f} / {r['mid']:.2f} / {r['gtr']:.2f} / {r['air']:.3f} | {r['crest_db']:.1f} | {r['flat15']:.3f} | {r['perc']:.3f} | "
+                  f"{'—' if gd is None else f'{gd:.2f}'} | {'—' if gm is None else f'{gm:.2f}'} |")
+    (work / 'compare.json').write_text(json.dumps(rows, indent=1))
+
+
 def cmd_table(args):
     """Markdown cue table from the manifest (for the plan docs)."""
     manifest = json.loads((OUT / 'manifest.json').read_text())
@@ -1479,7 +1524,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='cmd', required=True)
     commands = {'guides': cmd_guides, 'jobs': cmd_jobs, 'generate': cmd_generate, 'ingest': cmd_ingest, 'refs': cmd_refs,
-                'analyze': cmd_analyze, 'build': cmd_build, 'derive': cmd_derive, 'verify': cmd_verify, 'report': cmd_report, 'table': cmd_table}
+                'analyze': cmd_analyze, 'build': cmd_build, 'derive': cmd_derive, 'verify': cmd_verify, 'report': cmd_report, 'compare': cmd_compare, 'table': cmd_table}
     for name in commands:
         p = sub.add_parser(name)
         p.add_argument('--cue', nargs='*')
@@ -1491,6 +1536,8 @@ def main():
             p.add_argument('--batch', type=int, default=6, help='prompts queued at once (they then run back to back)')
         if name == 'ingest':
             p.add_argument('list')
+        if name == 'compare':
+            p.add_argument('--old', required=True, help='directory with the previous round\'s .ogg files and manifest.json')
     args = parser.parse_args()
     commands[args.cmd](args)
 

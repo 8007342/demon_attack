@@ -422,7 +422,22 @@
    "part": "intro",
    "kind": "tail",
    "mode": "text",
-   "beats": 16
+   "beats": 16,
+   "seeds": [
+    9101,
+    9102,
+    9103,
+    9104,
+    9105,
+    9106,
+    9107,
+    9108,
+    9109,
+    9110,
+    9111,
+    9112
+   ],
+   "note": "twelve seeds: the first six left no take with a clean seam, band timbre and the exact tempo"
   },
   {
    "name": "l2-outro",
@@ -534,7 +549,22 @@
    "part": "intro",
    "kind": "tail",
    "mode": "text",
-   "beats": 16
+   "beats": 16,
+   "seeds": [
+    9101,
+    9102,
+    9103,
+    9104,
+    9105,
+    9106,
+    9107,
+    9108,
+    9109,
+    9110,
+    9111,
+    9112
+   ],
+   "note": "twelve seeds: the first six left no take with a clean seam, band timbre and the exact tempo"
   },
   {
    "name": "l4-outro",
@@ -590,7 +620,22 @@
    "part": "intro",
    "kind": "tail",
    "mode": "text",
-   "beats": 16
+   "beats": 16,
+   "seeds": [
+    9101,
+    9102,
+    9103,
+    9104,
+    9105,
+    9106,
+    9107,
+    9108,
+    9109,
+    9110,
+    9111,
+    9112
+   ],
+   "note": "twelve seeds: the first six left no take with a clean seam, band timbre and the exact tempo"
   },
   {
    "name": "l5-outro",
@@ -621,7 +666,22 @@
    "kind": "tail",
    "mode": "text",
    "beats": 20,
-   "extra_tags": "heroic victory over the enemy carrier"
+   "extra_tags": "heroic victory over the enemy carrier",
+   "seeds": [
+    9101,
+    9102,
+    9103,
+    9104,
+    9105,
+    9106,
+    9107,
+    9108,
+    9109,
+    9110,
+    9111,
+    9112
+   ],
+   "note": "twelve seeds: the first six left no take with a clean seam, band timbre and the exact tempo"
   },
   {
    "name": "finale",
@@ -661,7 +721,10 @@
    "beats": 8,
    "fade_s": 0.0,
    "loudness_lufs": -17.0,
-   "next": "alienwin"
+   "next": "alienwin",
+   "pick": 41,
+   "pick_denoise": 0.5,
+   "pick_reason": "keeps the laugh syllables (onset r 0.67 to the formant guide) while re-voicing it; 0.4 stays the synth (mel r 0.96), 0.6 smears the syllables on most seeds"
   },
   {
    "name": "alienwin",
