@@ -180,7 +180,8 @@ def carrier_keyframes():
             if out.exists():
                 continue
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_bytes(run_workflow(ROOT / spec['workflow'], seed, item['prompt'], spec['negative'])[0])
+            out.write_bytes(run_workflow(ROOT / spec['workflow'], seed, item['prompt'],
+                                         item.get('negative', spec['negative']))[0])
             print('carrier keyframe', out)
     for detail, sel in load(CAR / 'selections.json')['detail'].items():
         raw = CACHE / 'carrier' / f"{sel['item']}-{sel['seed']}.png"
@@ -388,7 +389,7 @@ def sheets():
     print('sheet', (REVIEW / 'combat-directions.png').relative_to(ROOT))
     sheet('ship-weapons.png', 64, 64, list(range(7)), 2, 'ship-weapons.png')
     sheet('sentinel-effects.png', 128, 64, list(range(14)), 1, 'sentinel-effects.png')
-    sheet('boss-carrier.png', 368, 240, list(range(11)), 1, 'boss-carrier.png')
+    armada_sheets()
     # AI sources beside their finished detail maps.
     tiles = []
     for sp in ('teal', 'violet', 'coral', 'gold'):
@@ -407,6 +408,86 @@ def sheets():
                 s.alpha_composite(t, (x * 128, y * 128))
     s.save(REVIEW / 'ai-sources-and-detail.png', optimize=True)
     print('sheet', (REVIEW / 'ai-sources-and-detail.png').relative_to(ROOT))
+
+
+def armada_sheets():
+    """Boss armada review: per class, every form assembled (superstructure
+    under the bow on the Carrier sector's night), then the packed atlas,
+    and one line-up of all five classes at 1x (art/sprites/review/
+    boss-armada.png, boss-<class>.png)."""
+    sys.path.insert(0, str(ROOT / 'tools'))
+    import generate_boss_sprites as B
+    bg = (14, 10, 30, 255)
+    lineup = []
+    for k, C in enumerate(B.CLASSES):
+        path = ROOT / 'assets/images' / f"boss-{C['key']}.png"
+        if not path.exists():
+            continue
+        atlas = Image.open(path).convert('RGBA')
+        recs = _armada_table(C['key'])
+        tiles = []
+        for f in range(len(recs['superstructure'])):
+            tiles.append(_assemble(atlas, recs, f, bg))
+        tiles.append(_assemble(atlas, recs, -1, bg))
+        w = sum(t.width for t in tiles) + 6 * (len(tiles) - 1)
+        h = max(t.height for t in tiles) + atlas.height // 2 + 6
+        s = Image.new('RGBA', (max(w, atlas.width // 2), h), (0, 0, 0, 255))
+        x = 0
+        for t in tiles:
+            s.paste(t, (x, 0))
+            x += t.width + 6
+        small = Image.new('RGBA', atlas.size, (24, 20, 48, 255))
+        small.alpha_composite(atlas)
+        s.paste(small.resize((atlas.width // 2, atlas.height // 2), Image.NEAREST), (0, h - atlas.height // 2))
+        s.save(REVIEW / f"boss-{C['key']}.png", optimize=True)
+        print('sheet', (REVIEW / f"boss-{C['key']}.png").relative_to(ROOT))
+        lineup.append(tiles[len(tiles) - 2])
+    if lineup:
+        w = sum(t.width for t in lineup) + 6 * (len(lineup) - 1)
+        s = Image.new('RGBA', (w, max(t.height for t in lineup)), (0, 0, 0, 255))
+        x = 0
+        for t in lineup:
+            s.paste(t, (x, s.height - t.height))
+            x += t.width + 6
+        s.save(REVIEW / 'boss-armada.png', optimize=True)
+        print('sheet', (REVIEW / 'boss-armada.png').relative_to(ROOT))
+
+
+def _armada_table(key):
+    """Parse one class's sprite rects from lib/game/boss_atlas.dart."""
+    import re
+    src = (ROOT / 'lib/game/boss_atlas.dart').read_text()
+    block = src[src.index(f"key: '{key}'"):]
+    block = block[:block.index('    BossHull(') if '    BossHull(' in block else len(block)]
+    num = r'(-?[\d.]+)'
+    sprite = re.compile(r'BossSprite\(' + r',\s*'.join([num] * 6) + r'\)')
+
+    def field(name):
+        line = next(l for l in block.split('\n') if l.strip().startswith(name + ':'))
+        return [tuple(float(v) for v in m) for m in sprite.findall(line)]
+
+    hull_lines = block[block.index('      hull: ['):block.index('      hullPatch:')]
+    hull = [[tuple(float(v) for v in m) for m in sprite.findall(l)] for l in hull_lines.split('\n')[1:]
+            if 'BossSprite' in l]
+    return {'superstructure': field('superstructure'), 'superWreck': field('superWreck'), 'hull': hull,
+            'hullWreck': field('hullWreck'), 'engines': None}
+
+
+def _assemble(atlas, recs, form, bg):
+    """One form (or the wreck, form -1) assembled at 1x on the night sky."""
+    if form < 0:
+        layers = list(recs['superWreck']) + list(recs['hullWreck'])
+    else:
+        layers = [recs['superstructure'][form], recs['hull'][form][0]]
+    x0 = min(l[4] for l in layers)
+    y0 = min(l[5] for l in layers)
+    x1 = max(l[4] + l[2] / 2 for l in layers)
+    y1 = max(l[5] + l[3] / 2 for l in layers)
+    out = Image.new('RGBA', (int((x1 - x0) * 2), int((y1 - y0) * 2)), bg)
+    for x, y, w, h, dx, dy in layers:
+        cell = atlas.crop((int(x), int(y), int(x + w), int(y + h)))
+        out.alpha_composite(cell, (int((dx - x0) * 2), int((dy - y0) * 2)))
+    return out
 
 
 def screens():
@@ -429,33 +510,48 @@ def screens():
 
 
 def carrier_screens():
-    """The war-ark in engine (test/carrier_review_test.dart writes
-    .cache/carrier-review/): every form shielded and with the jaws open, the
-    jaw cycle, damage escalation (1x crops of the carrier band), then the
-    falling wreck and the carrier beside gargoyles and a sentinel over the
-    Carrier sector (full phone frames)."""
-    src = ROOT / '.cache/carrier-review'
-    if not (src / 'form-0-shield.png').exists():
+    """The armada in engine (test/carrier_review_test.dart writes
+    $BOSS_REVIEW_DIR, default .cache/carrier-review/). Per class: every form
+    shielded and open, the jaw cycle, engine thrust left / still / right and
+    damage escalation (1x crops of the top of the arena), then the class
+    beside gargoyles and a sentinel over the Carrier sector and its falling
+    wreck (full phone frames). Also one phone-frame line-up of all five
+    classes (in-engine-armada.png)."""
+    src = Path(os.environ.get('BOSS_REVIEW_DIR', ROOT / '.cache/carrier-review'))
+    if not (src / 'k0-form-0-shield.png').exists():
         return
-    rows = [[f'form-{f}-shield' for f in range(4)], [f'form-{f}-open' for f in range(4)],
-            [f'jaw-{k}' for k in range(4)], [f'damage-{k}' for k in range(1, 5)]]
-    box = (0, 110, 360, 300)
+    box = (0, 0, 360, 300)
     w, h = box[2] - box[0], box[3] - box[1]
-    s = Image.new('RGBA', (4 * w + 12, len(rows) * h + 4 * (len(rows) - 1)), (0, 0, 0, 255))
-    for r, names in enumerate(rows):
-        for c, n in enumerate(names):
-            s.paste(Image.open(src / f'{n}.png').convert('RGBA').crop(box), (c * (w + 4), r * (h + 4)))
-    s.save(REVIEW / 'in-engine-carrier.png', optimize=True)
-    print('sheet', (REVIEW / 'in-engine-carrier.png').relative_to(ROOT))
-    names = ['world-phone', 'world-final-phone', 'wreck-0-1', 'wreck-3-2']
-    ims = [Image.open(src / f'{n}.png').convert('RGBA') for n in names]
-    w, h = ims[0].size
-    s = Image.new('RGBA', (len(ims) * (w + 4) - 4, h), (0, 0, 0, 255))
-    for i, im in enumerate(ims):
-        s.paste(im, (i * (w + 4), 0))
-    s.save(REVIEW / 'in-engine-carrier-world.png', optimize=True)
-    print('sheet', (REVIEW / 'in-engine-carrier-world.png').relative_to(ROOT))
-
+    lineup = []
+    for k in range(5):
+        if not (src / f'k{k}-form-0-shield.png').exists():
+            continue
+        forms = len([f for f in range(4) if (src / f'k{k}-form-{f}-shield.png').exists()])
+        rows = [[f'k{k}-form-{f}-shield' for f in range(forms)], [f'k{k}-form-{f}-open' for f in range(forms)],
+                [f'k{k}-jaw-{j}' for j in range(4)], [f'k{k}-thrust-{i}' for i in range(3)],
+                [f'k{k}-damage-{i}' for i in range(1, 5)]]
+        s = Image.new('RGBA', (4 * w + 12, len(rows) * h + 4 * (len(rows) - 1)), (0, 0, 0, 255))
+        for r, names in enumerate(rows):
+            for c, n in enumerate(names):
+                s.paste(Image.open(src / f'{n}.png').convert('RGBA').crop(box), (c * (w + 4), r * (h + 4)))
+        s.save(REVIEW / f'in-engine-boss-{k}.png', optimize=True)
+        print('sheet', (REVIEW / f'in-engine-boss-{k}.png').relative_to(ROOT))
+        names = [f'k{k}-world-phone', f'k{k}-world-final-phone'] + [f'k{k}-wreck-{i}' for i in range(3)]
+        ims = [Image.open(src / f'{n}.png').convert('RGBA') for n in names]
+        fw, fh = ims[0].size
+        s = Image.new('RGBA', (len(ims) * (fw + 4) - 4, fh), (0, 0, 0, 255))
+        for i, im in enumerate(ims):
+            s.paste(im, (i * (fw + 4), 0))
+        s.save(REVIEW / f'in-engine-boss-{k}-world.png', optimize=True)
+        print('sheet', (REVIEW / f'in-engine-boss-{k}-world.png').relative_to(ROOT))
+        lineup.append(ims[0])
+    if lineup:
+        fw, fh = lineup[0].size
+        s = Image.new('RGBA', (len(lineup) * (fw + 4) - 4, fh), (0, 0, 0, 255))
+        for i, im in enumerate(lineup):
+            s.paste(im, (i * (fw + 4), 0))
+        s.save(REVIEW / 'in-engine-armada.png', optimize=True)
+        print('sheet', (REVIEW / 'in-engine-armada.png').relative_to(ROOT))
 
 STAGES = {'keyframes': keyframes, 'edits': edits, 'finish': finish, 'atlases': atlases, 'sheets': sheets,
           'screens': screens}
