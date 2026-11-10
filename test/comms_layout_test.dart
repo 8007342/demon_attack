@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:demon_attack/comms/comms_bank.dart';
 import 'package:demon_attack/comms/comms_director.dart';
+import 'package:demon_attack/comms/comms_mouth.dart';
+import 'package:demon_attack/comms/comms_portraits.dart';
 import 'package:demon_attack/comms/comms_view.dart';
 import 'package:demon_attack/comms/squad_comms.dart';
 import 'package:demon_attack/game/model.dart';
@@ -37,6 +40,20 @@ class _Rig {
       scene.onTick();
     }
     await tester.pump();
+  }
+
+  /// Runs until [test] holds (or [limit] seconds pass).
+  Future<bool> until(bool Function() test, {double limit = 12}) async {
+    for (var t = 0.0; t < limit; t += .05) {
+      if (test()) {
+        await tester.pump();
+        return true;
+      }
+      _wall += .05;
+      scene.onTick();
+    }
+    await tester.pump();
+    return test();
   }
 }
 
@@ -176,11 +193,16 @@ void main() {
   ) async {
     final rig = await _launch(tester, const Size(1440, 900));
     await rig.run([], 7);
-    await rig.run(['reinforcements'], 3.2);
-    await rig.run(['allyUnderAttack:1,120'], 1.4);
-    await rig.run(['groundForceSighted'], 3.0);
-    await rig.run(['shieldSpotted'], .2);
-    await rig.run([], .6);
+    for (final raw in [
+      'reinforcements',
+      'allyUnderAttack:1,120',
+      'groundForceSighted',
+      'diveWarning',
+    ]) {
+      if (rig.director.slots.every((s) => s.occupant != null)) break;
+      await rig.run([raw], 6);
+    }
+    await rig.until(() => rig.director.active.any((m) => !m.isDemon));
     final occupied = rig.director.slots.where((s) => s.occupant != null).length;
     expect(
       occupied,
@@ -203,10 +225,16 @@ void main() {
     );
     await _snap(tester, 'wide-four-slots');
     // A grunting officer's tile zooms in, inside its own margin.
-    await rig.run([], 2.5);
-    await rig.run(['eliteSighted'], 0);
-    await rig.run([], 1.05);
-    final demon = rig.director.active.where((m) => m.isDemon).firstOrNull;
+    await rig.run(['demonRout'], 0);
+    await rig.until(
+      () => rig.director.active.any(
+        (m) =>
+            m.isDemon && m.age(rig.comms.now) > .5 && m.speaking(rig.comms.now),
+      ),
+    );
+    final demon = rig.director.active
+        .where((m) => m.isDemon && m.speaking(rig.comms.now))
+        .firstOrNull;
     expect(demon, isNotNull);
     final zoomed = tester.getRect(
       find.byKey(ValueKey('comms-tile-${demon!.slot}')),
@@ -236,15 +264,16 @@ void main() {
       tester,
     ) async {
       final rig = await _launch(tester, size);
-      await rig.run([], .1);
-      await rig.run(['reinforcements'], .9);
+      await rig.run([], 7);
+      // A lost ship: our line plus the brood's overlapping celebration.
+      await rig.run(['life'], .5);
       final stack = find.byKey(const ValueKey('comms-hud-stack'));
       expect(stack, findsOneWidget);
       expect(find.byKey(const ValueKey('comms-tile-0')), findsNothing);
       expect(
         rig.director.active.length,
-        2,
-        reason: 'human line and demon grunt',
+        greaterThanOrEqualTo(2),
+        reason: '${rig.director.active}',
       );
       // One strip, the second message collapsed into a chip.
       final rects = [
@@ -259,7 +288,7 @@ void main() {
               .map((e) => tester.getRect(find.byWidget(e.widget))),
         ],
       ];
-      expect(rects, hasLength(2));
+      expect(rects.length, inInclusiveRange(2, 3), reason: 'strip + chips');
       expect(find.byKey(const ValueKey('hud-score')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-lives')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-hearts')), findsOneWidget);
@@ -283,19 +312,116 @@ void main() {
       }
       await _snap(tester, 'compact-$name');
       if (size.width == 390) {
-        await rig.run([], .2);
+        await rig.run([], 4);
+        await rig.run(['demonRout'], 0);
+        await rig.until(
+          () => rig.director.active.any(
+            (m) =>
+                m.isDemon &&
+                m.speaking(rig.comms.now) &&
+                m.age(rig.comms.now) > .25,
+          ),
+        );
         await _snap(tester, 'phone-demon-zoom');
       }
     });
   }
 
+  testWidgets('phone: a full transmission replaces the travel transition', (
+    tester,
+  ) async {
+    final rig = await _launch(tester, const Size(390, 844));
+    await rig.run([], 7);
+    rig.model.mode = RunMode.travel;
+    rig.model.transitionDuration = 12;
+    rig.model.transitionLeft = 12;
+    await rig.run(['travel'], 0);
+    final on = await rig.until(
+      () =>
+          rig.director.transmission != null &&
+          rig.director.transmission!.age(rig.comms.now) > 1.2,
+      limit: 20,
+    );
+    expect(on, isTrue, reason: '${rig.director.history}');
+    final card = find.byKey(
+      ValueKey('comms-transmission-${rig.director.transmission!.line.id}'),
+    );
+    expect(card, findsOneWidget);
+    final hud = tester.getRect(find.byKey(const ValueKey('hud-score')));
+    expect(tester.getRect(card).overlaps(hud), isFalse);
+    await _snap(tester, 'phone-transmission');
+  });
+
+  testWidgets('review: lip-sync sequences at desktop and phone sizes', (
+    tester,
+  ) async {
+    if (renderDir.isEmpty) return;
+    await tester.runAsync(() => CommsPortraitAtlas.instance.load());
+    for (final (id, speaker) in [
+      ('sectorStart.1.h0', 'admiral'),
+      ('allyUnderAttack.h0', 'kessler'),
+      ('reinforcements.d0', 'gorrak'),
+    ]) {
+      final line = [
+        for (final spec in [
+          ...commsHumanTriggers.values,
+          ...commsDemonTriggers.values,
+        ])
+          ...spec.lines,
+      ].firstWhere((l) => l.id == id);
+      expect(line.speaker, speaker);
+      final frames = CommsMouth.of(line).frames;
+      final count = frames.length.clamp(1, 24);
+      for (final (label, cell, small, scale) in [
+        ('desktop', commsPortraitCell, false, 2),
+        ('phone', commsPortraitSmallCell, true, 1),
+      ]) {
+        final w = cell * scale;
+        final recorder = ui.PictureRecorder();
+        final canvas = Canvas(recorder);
+        canvas.drawRect(
+          Rect.fromLTWH(0, 0, w * 12.0, (w * ((count + 11) ~/ 12)).toDouble()),
+          Paint()..color = const Color(0xFF0B1424),
+        );
+        for (var i = 0; i < count; i++) {
+          final r = Rect.fromLTWH(
+            (i % 12) * w.toDouble(),
+            (i ~/ 12) * w.toDouble(),
+            w.toDouble(),
+            w.toDouble(),
+          );
+          paintBackdrop(
+            canvas,
+            r,
+            commsCast[speaker]!,
+            i / 15,
+            reduceMotion: true,
+          );
+          paintPortrait(canvas, r, speaker, frames[i], small: small);
+        }
+        final picture = recorder.endRecording();
+        await tester.runAsync(() async {
+          final image = await picture.toImage(w * 12, w * ((count + 11) ~/ 12));
+          final png = await image.toByteData(format: ui.ImageByteFormat.png);
+          final file = File('$renderDir/mouth-$speaker-$label.png');
+          await file.parent.create(recursive: true);
+          await file.writeAsBytes(png!.buffer.asUint8List());
+          image.dispose();
+        });
+      }
+    }
+  });
+
   testWidgets('reduced motion: no zoom shake, call still shows', (
     tester,
   ) async {
     final rig = await _launch(tester, const Size(1440, 900), reduce: true);
-    await rig.run([], .1);
-    await rig.run(['reinforcements'], 1.0);
-    expect(rig.director.active.any((m) => m.isDemon), isTrue);
+    await rig.run([], 7);
+    await rig.run(['demonRout'], 0);
+    expect(
+      await rig.until(() => rig.director.active.any((m) => m.isDemon)),
+      isTrue,
+    );
     expect(tester.takeException(), isNull);
   });
 }

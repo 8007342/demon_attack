@@ -21,6 +21,8 @@ void main() {
     expect(first, containsAll(['level', 'sectorStart.1', 'checkpoint']));
     expect(step(['wave', 'reinforcements', 'levelclear', 'extraLife']), [
       'waveStart',
+      'broodTaunt',
+      'transmissionJunior',
       'reinforcements',
       'levelClear',
       'extraLife',

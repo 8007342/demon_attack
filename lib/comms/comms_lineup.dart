@@ -83,7 +83,7 @@ class CommsLineup {
           else if (ground.isNotEmpty)
             ground[(s - 1) % ground.length],
         ],
-        CommsSide.demon: [...?commsDemonSectors[s]],
+        CommsSide.demon: [...?commsDemonSectors[s], ...commsMinions],
       },
   };
 

@@ -1,6 +1,26 @@
 {
   "comment": "Squad comms audio spec, read by tools/comms_pipeline.py. Human lines are Kokoro-82M TTS (voice + speed per cast member in cast.json); demon lines are synthesized grunts. Both go through the radio chain, are loudness-normalised and encoded to web/audio/comms/<clip id>.ogg (Opus) and .m4a (AAC-LC).",
   "kokoro": {"repo": "hexgrad/Kokoro-82M", "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987", "sample_rate": 24000},
+  "chatterbox": {
+    "comment": "Expressive delivery: Chatterbox (Resemble AI, MIT) clones each character's Kokoro reference clip (refs stage) and speaks every human line with the emotion's settings. exaggeration = emotion intensity (0.25 flat .. 2 extreme; 0.5 is the model default), cfg_weight = pacing/adherence (lower = faster, more animated), temperature = sampling variety. A clip that fails the accept rules falls back to the Kokoro rendering.",
+    "repo": "ResembleAI/chatterbox",
+    "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18",
+    "files": ["ve.safetensors", "t3_cfg.safetensors", "s3gen.safetensors", "tokenizer.json", "conds.pt"],
+    "reference_text": "Radio check on the fleet channel. I read you loud and clear, and the weather over the frontier is quiet tonight. Stand by for further orders, and keep this line open.",
+    "emotions": {
+      "calm":       {"exaggeration": 0.35, "cfg_weight": 0.5,  "temperature": 0.7},
+      "stern":      {"exaggeration": 0.45, "cfg_weight": 0.55, "temperature": 0.7},
+      "warm":       {"exaggeration": 0.5,  "cfg_weight": 0.5,  "temperature": 0.75},
+      "exhausted":  {"exaggeration": 0.4,  "cfg_weight": 0.6,  "temperature": 0.75},
+      "teasing":    {"exaggeration": 0.65, "cfg_weight": 0.45, "temperature": 0.8},
+      "urgent":     {"exaggeration": 0.7,  "cfg_weight": 0.35, "temperature": 0.75},
+      "excited":    {"exaggeration": 0.8,  "cfg_weight": 0.35, "temperature": 0.8},
+      "triumphant": {"exaggeration": 0.85, "cfg_weight": 0.35, "temperature": 0.8},
+      "panicked":   {"exaggeration": 0.95, "cfg_weight": 0.3,  "temperature": 0.8}
+    },
+    "memory_headroom_gb": 1.5,
+    "accept": {"min_length_ratio": 0.55, "max_length_ratio": 1.9, "max_clipped_fraction": 0.001}
+  },
   "pronounce": {
     "Krybor": "[Krybor](/kɹˈIbɔɹ/)",
     "Ringfall": "[Ringfall](/ɹˈɪŋfɔl/)",
@@ -17,13 +37,21 @@
     "codas": ["k", "ɡ", "z", "m", "ɹk", "ʃ", "b", ""]
   },
   "radio": {
-    "human": {"low_hz": 300, "high_hz": 3400, "drive": 1.9, "hiss_db": -44, "presence_hz": 1800, "presence_db": 3.0},
-    "demon": {"low_hz": 200, "high_hz": 3000, "drive": 2.4, "hiss_db": -40, "presence_hz": 1100, "presence_db": 4.0, "hum_hz": 55, "hum_db": -36},
+    "comment": "v3 softer keying: levels are relative to the voice peak (1.0) before loudness normalisation. Click = rounded sine 'tock'; burst/tail = low-passed carrier noise (RMS-scaled); tone = quiet fleet key-up tone.",
+    "human": {"low_hz": 300, "high_hz": 3400, "drive": 1.9, "hiss_db": -52, "presence_hz": 1800, "presence_db": 3.0},
+    "demon": {"low_hz": 200, "high_hz": 3000, "drive": 2.4, "hiss_db": -48, "presence_hz": 1100, "presence_db": 4.0, "hum_hz": 55, "hum_db": -42},
+    "keying": {"click_hz": 820, "click_level": 0.07, "burst_s": 0.05, "burst_level": 0.06, "tail_level": 0.06, "noise_cutoff_hz": 1500,
+               "tone_hz": 1050, "tone_s": 0.045, "tone_level": 0.035},
     "lead_s": 0.07,
-    "squelch_tail_s": 0.16,
+    "squelch_tail_s": 0.08,
     "end_pad_s": 0.03
   },
-  "loudness": {"human_lufs": -18.0, "demon_lufs": -18.5, "peak_dbfs": -3.0, "decoded_peak_max_dbfs": 0.0, "playback_gain_db": 2.0},
-  "codec": {"opus_kbps": 20, "aac_kbps": 28, "aac_cutoff_hz": 4000, "sample_rate": 24000},
+  "grunt_lengths": {
+    "comment": "raw_max_s caps the synthesized grunt; min_s/max_s bound the final clip (with keying lead and tail). Unlisted triggers: 0.5-1.9 s.",
+    "long": {"triggers": ["levelClear", "bossDefeated", "broodTaunt"], "raw_max_s": 2.0, "min_s": 0.8, "max_s": 2.25},
+    "short": {"triggers": ["regroupStart"], "raw_max_s": 0.72, "min_s": 0.4, "max_s": 0.9}
+  },
+  "loudness": {"human_lufs": -18.0, "demon_lufs": -18.5, "peak_dbfs": -4.0, "decoded_peak_max_dbfs": 0.0, "playback_gain_db": 2.0},
+  "codec": {"opus_kbps": 16, "aac_kbps": 24, "aac_cutoff_hz": 4000, "sample_rate": 24000},
   "mouth_fps": 15
 }

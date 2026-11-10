@@ -17,7 +17,8 @@ void main() {
       expect(commsCast[commsAnchor]!.rank, contains('ADM'));
       expect(commsFleetPool, isNot(contains(commsAnchor)));
       expect(commsGroundPool.length, greaterThanOrEqualTo(2));
-      expect(commsCast.values.where((c) => c.isDemon).length, 5);
+      expect(commsCast.values.where((c) => c.isDemon).length, 8);
+      expect(commsMinions, hasLength(3));
     });
 
     test('a seed always picks the same lineup', () {
@@ -50,7 +51,10 @@ void main() {
         final fleet = lineup.roster[s]![CommsSide.fleet]!;
         expect(fleet.first, commsAnchor);
         seen.addAll(fleet);
-        expect(lineup.roster[s]![CommsSide.demon], commsDemonSectors[s]);
+        expect(lineup.roster[s]![CommsSide.demon], [
+          ...commsDemonSectors[s]!,
+          ...commsMinions,
+        ]);
       }
       expect(seen, containsAll(lineup.fleet));
       expect(

@@ -45,6 +45,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import zlib
@@ -130,6 +131,9 @@ def stage_dart(_args):
     out.append('/// Per-run lineups are seeded from these pools (lib/comms/comms_lineup.dart).')
     out.append(f"const commsFleetPool = {id_list(pools.get('fleet', []))};")
     out.append(f"const commsGroundPool = {id_list(pools.get('ground', []))};")
+    out.append('')
+    out.append('/// Lower-ranked demon voices that chime in from every sector.')
+    out.append(f"const commsMinions = {id_list(pools.get('minion', []))};")
     out.append(f"const commsLineupFleet = {cast['lineup']['fleet']};")
     out.append(f"const commsLineupGround = {cast['lineup']['ground']};")
     out.append('')
@@ -169,6 +173,16 @@ def stage_dart(_args):
                 out.append(f"    chain: {spec['chain']},")
             if kind == 'human' and spec.get('group'):
                 out.append(f"    group: {dart_string(spec['group'])},")
+            if spec.get('urgent'):
+                out.append('    urgent: true,')
+            exchange = lines['triggers'][trigger].get('exchange')
+            if exchange:
+                side = 'demon' if exchange == 'demon' else 'fleet'
+                out.append(f'    exchange: CommsSide.{side},')
+            if spec.get('overlap'):
+                out.append('    overlap: true,')
+            if spec.get('transmission'):
+                out.append('    transmission: true,')
             out.append('    lines: [')
             for clip_id, line in entries:
                 meta = clips.get(clip_id, {})
@@ -182,8 +196,12 @@ def stage_dart(_args):
                     fields.append(f"gloss: {dart_string(line['gloss'])}")
                 if meta.get('mouth'):
                     fields.append(f"mouth: '{meta['mouth']}'")
+                if meta.get('open'):
+                    fields.append(f"open: '{meta['open']}'")
                 if line.get('signature'):
                     fields.append('signature: true')
+                if line.get('emotion'):
+                    fields.append(f"emotion: '{line['emotion']}'")
                 out.append(f"      CommsLine({', '.join(fields)}),")
             out.append('    ],')
             out.append('  ),')
@@ -317,6 +335,194 @@ def stage_voices(args):
         (WORK / 'kokoro-files.json').write_text(json.dumps(files, indent=1))
 
 
+def stage_refs(args):
+    """Kokoro reference clip per human character (their voice and speed, a
+    neutral sentence): Chatterbox clones it, so identity stays on the
+    character's Kokoro voice while the delivery becomes expressive."""
+    cast, _lines = load_specs()
+    spec = audio_spec()
+    sentence = spec['chatterbox']['reference_text']
+    tts = None
+    made = {}
+    for c in cast['cast']:
+        if 'voice' not in c:
+            continue
+        voice = c['voice']
+        out = WORK / 'refs' / f"{c['id']}.wav"
+        key = json.dumps([voice['voice'], voice['speed'], sentence, spec['kokoro']['revision']])
+        stamp = out.with_suffix('.key')
+        if args.force or not (out.exists() and stamp.exists() and stamp.read_text() == key):
+            tts = tts or Kokoro(spec)
+            write_wav(out, trim_silence(tts.say(sentence, voice['voice'], voice['speed'])))
+            stamp.write_text(key)
+        made[c['id']] = {'voice': voice['voice'], 'speed': voice['speed'], 'sha256': sha256(out),
+                         'seconds': round(len(read_wav(out)) / SR, 2)}
+    (WORK / 'refs.json').write_text(json.dumps(made, indent=1))
+    print(f'refs: {len(made)} reference clips in {WORK / "refs"}')
+
+
+# ------------------------------------------------------------ Chatterbox stage
+# Runs in the Chatterbox venv (torch 2.6 CPU + chatterbox-tts), separate from
+# the Kokoro venv. Worker processes split the torch threads.
+
+def expressive_key(line, ref_sha, params, revision):
+    return json.dumps(['chatterbox', revision, ref_sha, line['text'], params], sort_keys=True)
+
+
+CGROUP = Path('/sys/fs/cgroup')
+
+
+def wait_for_memory(headroom_gb):
+    """Shared hosts: block while the cgroup is within `headroom_gb` of its
+    memory.high (or memory.max), so one model process never pushes the
+    group into reclaim throttling."""
+    import time
+    try:
+        limit = (CGROUP / 'memory.high').read_text().strip()
+        if limit == 'max':
+            limit = (CGROUP / 'memory.max').read_text().strip()
+        if limit == 'max':
+            return
+        limit = int(limit)
+    except OSError:
+        return
+    def pinned():
+        # Anonymous + shmem only: page cache is reclaimable and not a risk.
+        stat = dict(line.split() for line in (CGROUP / 'memory.stat').read_text().splitlines())
+        return int(stat.get('anon', 0)) + int(stat.get('shmem', 0))
+    waited = 0
+    while pinned() > limit - headroom_gb * 2 ** 30:
+        if waited % 60 == 0:
+            print(f'  memory: waiting for {headroom_gb} GB headroom', flush=True)
+        time.sleep(5)
+        waited += 5
+
+
+def _chatterbox_worker(job):
+    worker_id, threads, items, spec = job
+    import numpy as np
+    import torch
+    torch.set_num_threads(threads)
+    os.environ.setdefault('HF_HUB_DISABLE_XET', '1')
+    import time
+    from chatterbox.tts import ChatterboxTTS
+    from huggingface_hub import snapshot_download
+    cb = spec['chatterbox']
+    # Run under forge-guard (it waits for headroom before start and kills the
+    # job under pressure); between lines, pause while pinned memory is close
+    # to memory.high so a neighbour's spike doesn't tip the group over.
+    wait_for_memory(cb['memory_headroom_gb'])
+    path = snapshot_download(cb['repo'], revision=cb['revision'], allow_patterns=cb['files'])
+    model = ChatterboxTTS.from_local(path, 'cpu')
+    current_ref = None
+    results = []
+    log = WORK / 'expressive.json'
+    for clip_id, text, ref, params, key in items:
+        out = WORK / 'expressive' / f'{clip_id}.wav'
+        wait_for_memory(cb['memory_headroom_gb'])
+        t0 = time.time()
+        try:
+            if ref != current_ref:
+                model.prepare_conditionals(ref, exaggeration=params['exaggeration'])
+                current_ref = ref
+            torch.manual_seed(seed_of('cb:' + clip_id))
+            wav = model.generate(text, exaggeration=params['exaggeration'], cfg_weight=params['cfg_weight'],
+                                 temperature=params['temperature'])
+            audio = wav.squeeze(0).numpy().astype('float64')
+            if model.sr != SR:
+                from scipy import signal
+                audio = signal.resample_poly(audio, SR, model.sr)
+            write_wav(out, audio)
+            out.with_suffix('.key').write_text(key)
+            results.append((clip_id, round(time.time() - t0, 2), None))
+        except Exception as error:  # noqa: BLE001 - the Kokoro clip stays the fallback
+            results.append((clip_id, round(time.time() - t0, 2), repr(error)))
+        print(f'[w{worker_id}] {clip_id} {results[-1][1]}s{" FAIL " + results[-1][2] if results[-1][2] else ""}', flush=True)
+        # Incremental log: an interrupted run keeps its record.
+        record = json.loads(log.read_text()) if log.exists() else {}
+        record[clip_id] = {'seconds': results[-1][1], 'error': results[-1][2]}
+        log.write_text(json.dumps(record, indent=1))
+    return results
+
+
+# Render order when CPU time is short: the newest, most expressive lines first.
+EXPRESSIVE_ORDER = ['terrainAhead', 'convoy', 'playerRespawn', 'transmission', 'broodTaunt',
+                    'groundForce', 'ally', 'groundPressure', 'groundBreakthrough']
+
+
+def expressive_rank(clip_id):
+    for rank, prefix in enumerate(EXPRESSIVE_ORDER):
+        if clip_id.startswith(prefix):
+            return rank
+    return len(EXPRESSIVE_ORDER)
+
+
+def stage_expressive(args):
+    """Chatterbox voice cloning of every human line from the speaker's Kokoro
+    reference, with per-emotion exaggeration / cfg / temperature."""
+    import multiprocessing as mp
+    cast, lines = load_specs()
+    spec = audio_spec()
+    cb = spec['chatterbox']
+    refs = json.loads((WORK / 'refs.json').read_text())
+    todo = []
+    for clip_id, _trigger, kind, line in clip_entries(lines):
+        if kind != 'human':
+            continue
+        if args.only and not any(clip_id.startswith(p) for p in args.only.split(',')):
+            continue
+        params = cb['emotions'][line.get('emotion', 'calm')]
+        key = expressive_key(line, refs[line['speaker']]['sha256'], params, cb['revision'])
+        out = WORK / 'expressive' / f'{clip_id}.wav'
+        stamp = out.with_suffix('.key')
+        if not args.force and out.exists() and stamp.exists() and stamp.read_text() == key:
+            continue
+        todo.append((clip_id, line['text'], str(WORK / 'refs' / f"{line['speaker']}.wav"), params, key))
+    # Priority groups first; within a group, one speaker after another so the
+    # reference conditionals are prepared once per speaker.
+    todo.sort(key=lambda item: (expressive_rank(item[0]), item[2], item[0]))
+    if args.limit:
+        todo = todo[:args.limit]
+    (WORK / 'expressive').mkdir(parents=True, exist_ok=True)
+    workers = max(1, min(args.workers, len(todo)))
+    import time
+    t0 = time.time()
+    print(f'expressive: {len(todo)} lines on {workers} worker(s) x {args.threads} threads', flush=True)
+    if not todo:
+        return
+    if workers == 1:
+        # Default: one model process at a time (it holds ~3 GB).
+        results = _chatterbox_worker((0, args.threads, todo, spec))
+    else:
+        chunks = [todo[i::workers] for i in range(workers)]
+        with mp.get_context('spawn').Pool(workers) as pool:
+            results = [r for chunk in pool.map(_chatterbox_worker, [(i, args.threads, c, spec) for i, c in enumerate(chunks)]) for r in chunk]
+    failed = sum(1 for *_x, e in results if e)
+    print(f'expressive: {len(results)} done, {failed} failed, {time.time() - t0:.0f}s wall')
+
+
+def accept_expressive(clip_id, spec):
+    """Chatterbox output if it looks sane, else None (the Kokoro clip is used).
+    Checks: present, not silent, not clipped, and its length within a sane
+    ratio of the Kokoro rendering of the same text (catches truncation,
+    babbling loops and long trailing noise)."""
+    import numpy as np
+    path = WORK / 'expressive' / f'{clip_id}.wav'
+    if not path.exists():
+        return None, 'missing'
+    x = trim_silence(read_wav(path))
+    k = trim_silence(read_wav(WORK / 'raw' / f'{clip_id}.wav'))
+    rules = spec['chatterbox']['accept']
+    if len(x) < .3 * SR or np.sqrt(np.mean(x ** 2)) < 1e-3:
+        return None, 'empty'
+    if np.mean(np.abs(x) > .995) > rules['max_clipped_fraction']:
+        return None, 'clipped'
+    ratio = len(x) / max(1, len(k))
+    if not rules['min_length_ratio'] <= ratio <= rules['max_length_ratio']:
+        return None, f'length ratio {ratio:.2f}'
+    return x, None
+
+
 # Grunt kinds: syllable plans as (duration s, gap after s, pitch start, pitch
 # end, loudness). Randomised a little per clip; shapes give each gesture its
 # character (barked order, rising rally, chuckling gloat, yelping alarm,
@@ -382,7 +588,14 @@ def gibberish_phonemes(rng, count, spec):
     return ' '.join(sylls)
 
 
-def synth_grunt(clip_id, officer, kind, tts, spec):
+def grunt_length_class(trigger, spec):
+    for name, rule in spec['grunt_lengths'].items():
+        if isinstance(rule, dict) and trigger.split('.')[0] in rule['triggers']:
+            return name
+    return 'normal'
+
+
+def synth_grunt(clip_id, officer, kind, tts, spec, length='normal'):
     import numpy as np
     from scipy import signal
     rng = np.random.default_rng(seed_of(clip_id))
@@ -391,7 +604,19 @@ def synth_grunt(clip_id, officer, kind, tts, spec):
     plan = shape['plans'][int(rng.integers(len(shape['plans'])))]
     plan = [(d * rng.uniform(.9, 1.12), gap * rng.uniform(.8, 1.2), p0 * rng.uniform(.95, 1.05), p1 * rng.uniform(.95, 1.05), amp)
             for d, gap, p0, p1, amp in plan]
+    rule = spec['grunt_lengths'].get(length)
+    if length == 'long':
+        # A growled reply: the gesture, a breath, then a grumbling coda of
+        # two or three lower, slower syllables.
+        coda = [(rng.uniform(.16, .26), rng.uniform(.05, .09), rng.uniform(.85, 1.0), rng.uniform(.7, .85), rng.uniform(.6, .8))
+                for _ in range(int(rng.integers(2, 4)))]
+        last = plan[-1]
+        plan = plan[:-1] + [(last[0], .12, *last[2:])] + coda
     total = sum(d + gap for d, gap, *_ in plan) + .05
+    if rule and total > rule['raw_max_s']:
+        scale = rule['raw_max_s'] / total
+        plan = [(d * scale, gap * scale, p0, p1, amp) for d, gap, p0, p1, amp in plan]
+        total = sum(d + gap for d, gap, *_ in plan) + .05
     n = int(total * SR)
     f0 = np.zeros(n)
     env = np.zeros(n)
@@ -469,17 +694,19 @@ def stage_grunts(args):
     tts = None
     done = 0
     meta = {}
-    for clip_id, _trigger, kind, line in clip_entries(lines):
+    for clip_id, trigger, kind, line in clip_entries(lines):
         if kind != 'demon':
             continue
         officer = people[line['speaker']]
-        key = json.dumps([officer['grunt'], line['grunt'], GRUNT_KINDS[line['grunt']], spec['gibberish'], spec['kokoro']['revision'], 3], sort_keys=True)
+        length = grunt_length_class(trigger, spec)
+        key = json.dumps([officer['grunt'], line['grunt'], GRUNT_KINDS[line['grunt']], spec['gibberish'], spec['kokoro']['revision'],
+                          length, spec['grunt_lengths'].get(length), 4], sort_keys=True)
         out = WORK / 'raw' / f'{clip_id}.wav'
         stamp = out.with_suffix('.key')
         if not args.force and out.exists() and stamp.exists() and stamp.read_text() == key:
             continue
         tts = tts or Kokoro(spec)
-        audio, ps = synth_grunt(clip_id, officer, line['grunt'], tts, spec)
+        audio, ps = synth_grunt(clip_id, officer, line['grunt'], tts, spec, length)
         write_wav(out, audio)
         stamp.write_text(key)
         meta[clip_id] = ps
@@ -553,46 +780,102 @@ def mouth_track(clean, lead, total, demon, fps):
         voiced = spec[(freqs > 250) & (freqs < 4000)]
         low = spec[(freqs > 250) & (freqs < 1000)]
         low_ratio[k] = (low ** 2).sum() / ((voiced ** 2).sum() + 1e-12)
-    level = signal.medfilt(level, 3)
-    # Rounded vowels: the most low-heavy fifth of the open-mouth frames.
-    open_frames = low_ratio[level >= -16]
-    rounded = np.percentile(open_frames, 80) if len(open_frames) else 1.0
+    # Openness 0..1 from the level, smoothed with a fast attack and a slower
+    # release (a mouth opens quickly and closes a little behind the sound).
+    # Relative to the clip's own loud frames (its 90th percentile), so a
+    # compressed, evenly loud delivery still shows small and wide mouths.
+    voiced = level[level > -60]
+    top = np.percentile(voiced, 90) if len(voiced) else 0.0
+    target = np.clip((level - (top - 24)) / 24, 0, 1)
+    openness = np.zeros(frames)
+    cur = 0.0
+    for k in range(frames):
+        cur += (target[k] - cur) * (.7 if target[k] > cur else .4)
+        openness[k] = cur
+    # Rounded vowels: the most low-heavy fifth of the open frames, and only
+    # when sustained for three frames or more.
+    open_mask = openness >= .4
+    rounded_cut = np.percentile(low_ratio[open_mask], 80) if open_mask.any() else 1.0
+    rounded = open_mask & (low_ratio >= rounded_cut)
+    sustained = np.zeros(frames, bool)
+    k = 0
+    while k < frames:
+        if rounded[k]:
+            j = k
+            while j < frames and rounded[j]:
+                j += 1
+            if j - k >= 3:
+                sustained[k:j] = True
+            k = j
+        else:
+            k += 1
     out = []
     for k in range(frames):
-        v = level[k]
+        o = openness[k]
         if demon:
-            out.append('0' if v < -26 else '3' if v < -13 else '4' if v < -3 else '7')
+            out.append('0' if o < .2 else '3' if o < .5 else '4' if o < .9 else '7')
         else:
-            if v < -28:
-                c = '0'
-            elif v < -16:
-                c = '2'
-            elif v < -8:
-                c = '3'
-            else:
-                c = '4'
-            if c in '34' and low_ratio[k] >= rounded:
-                c = '5'
-            out.append(c)
-    return ''.join(out)
+            c = '0' if o < .2 else '2' if o < .5 else '3' if o < .8 else '4'
+            out.append('5' if sustained[k] else c)
+    out = hold_runs(out, 2)
+    open_track = ''.join(str(int(round(o * 9))) for o in openness)
+    return ''.join(out), open_track
 
 
-def squelch(rng, length_s, level, low, high):
+def hold_runs(frames, minimum):
+    """Merge runs shorter than `minimum` frames into a neighbour: no flicker."""
+    frames = list(frames)
+    changed = True
+    while changed:
+        changed = False
+        runs = []
+        k = 0
+        while k < len(frames):
+            j = k
+            while j < len(frames) and frames[j] == frames[k]:
+                j += 1
+            runs.append((k, j))
+            k = j
+        for i, (a, b) in enumerate(runs):
+            if b - a < minimum and len(runs) > 1:
+                donor = runs[i - 1] if i > 0 else runs[i + 1]
+                frames[a:b] = [frames[donor[0]]] * (b - a)
+                changed = True
+                break
+    return frames
+
+
+def squelch(rng, length_s, level, cutoff):
+    """A soft breath of low-passed carrier noise with a smooth rise and an
+    exponential fall (no harsh high-frequency hiss)."""
     import numpy as np
     from scipy import signal
-    m = int(length_s * SR)
-    noise = rng.normal(0, 1, m)
-    noise = signal.lfilter(*signal.butter(2, [low, high], 'bandpass', fs=SR), noise)
-    env = np.exp(-np.linspace(0, 4.5, m))
-    env[:int(.004 * SR)] *= np.linspace(0, 1, int(.004 * SR))
-    return noise / (np.abs(noise).max() + 1e-9) * env * level
+    m = max(8, int(length_s * SR))
+    noise = signal.sosfilt(signal.butter(4, [180, cutoff], 'bandpass', fs=SR, output='sos'), rng.normal(0, 1, m))
+    env = np.exp(-np.linspace(0, 5, m))
+    rise = max(2, int(.006 * SR))
+    env[:rise] *= np.sin(np.linspace(0, np.pi / 2, rise)) ** 2
+    return noise / (np.sqrt(np.mean(noise ** 2)) + 1e-9) * .3 * env * level
 
 
-def click(rng, freq, level):
+def click(freq, level):
+    """A gentle rounded 'tock': raised-cosine onset, quick decay, no noise."""
     import numpy as np
-    m = int(.009 * SR)
+    m = int(.03 * SR)
     t = np.arange(m) / SR
-    return (np.sin(2 * np.pi * freq * t) * np.exp(-t * 650) + rng.normal(0, .25, m) * np.exp(-t * 900)) * level
+    env = np.exp(-t * 160)
+    rise = int(.002 * SR)
+    env[:rise] *= np.sin(np.linspace(0, np.pi / 2, rise)) ** 2
+    return np.sin(2 * np.pi * freq * t) * env * level
+
+
+def tone(freq, seconds, level):
+    """A short soft key-up tone with sine fades."""
+    import numpy as np
+    m = int(seconds * SR)
+    t = np.arange(m) / SR
+    env = np.sin(np.pi * np.arange(m) / m) ** 2
+    return np.sin(2 * np.pi * freq * t) * env * level
 
 
 def radio_chain(x, demon, rng, spec):
@@ -619,11 +902,17 @@ def radio_chain(x, demon, rng, spec):
     total = lead + len(y) + tail + end
     out = np.zeros(total)
     out[lead:lead + len(y)] += y
-    # Key-up: a click, then a breath of open-carrier noise under the voice.
-    c = click(rng, 1450 if not demon else 980, .55)
+    k = r['keying']
+    # Key-up: a soft click, a low-passed breath of carrier noise and (fleet
+    # radios only) a quiet key-up tone, all well under the voice.
+    c = click(k['click_hz'] * (.7 if demon else 1), k['click_level'])
     out[:len(c)] += c
-    s = squelch(rng, .05, .22, 900, 3200)
-    out[len(c) // 2:len(c) // 2 + len(s)] += s
+    s = squelch(rng, k['burst_s'], k['burst_level'], k['noise_cutoff_hz'])
+    out[:len(s)] += s
+    if not demon and k.get('tone_level'):
+        t = tone(k['tone_hz'], k['tone_s'], k['tone_level'])
+        at = int(.008 * SR)
+        out[at:at + len(t)] += t
     hiss = signal.sosfilt(band, rng.normal(0, 1, total))
     hiss = hiss / (np.abs(hiss).max() + 1e-9) * 10 ** (p['hiss_db'] / 20) * 3
     hiss_env = np.ones(total)
@@ -634,13 +923,13 @@ def radio_chain(x, demon, rng, spec):
         t = np.arange(total) / SR
         hum = (np.sin(2 * np.pi * p['hum_hz'] * t) + .5 * np.sin(2 * np.pi * p['hum_hz'] * 3 * t))
         out += signal.sosfilt(band, hum) * 10 ** (p['hum_db'] / 20) * hiss_env
-    # Key-down: squelch tail ("kssh") and a closing click.
-    s = squelch(rng, r['squelch_tail_s'], .32, 1200, 3400 if not demon else 2800)
+    # Key-down: a short soft noise tail and a quiet closing click.
+    s = squelch(rng, r['squelch_tail_s'], k['tail_level'], k['noise_cutoff_hz'])
     at = lead + len(y)
     out[at:at + len(s)] += s[:total - at]
-    c = click(rng, 1250 if not demon else 860, .45)
-    at = lead + len(y) + tail - len(c)
-    out[at:at + len(c)] += c
+    c = click(k['click_hz'] * (.62 if demon else .85), k['click_level'] * .8)
+    at = max(0, min(total - len(c), lead + len(y) + tail - len(c) // 2))
+    out[at:at + len(c)] += c[:total - at]
     return out, x, lead
 
 
@@ -649,9 +938,19 @@ def stage_radio(args):
     cast, lines = load_specs()
     spec = audio_spec()
     meta = {}
+    fallbacks = {}
     for clip_id, trigger, kind, line in clip_entries(lines):
         demon = kind == 'demon'
-        raw = read_wav(WORK / 'raw' / f'{clip_id}.wav')
+        engine = 'grunt' if demon else 'kokoro'
+        raw = None
+        if not demon and not args.kokoro_only:
+            raw, why = accept_expressive(clip_id, spec)
+            if raw is None:
+                fallbacks[clip_id] = why
+            else:
+                engine = 'chatterbox'
+        if raw is None:
+            raw = read_wav(WORK / 'raw' / f'{clip_id}.wav')
         rng = np.random.default_rng(seed_of('radio:' + clip_id))
         out, clean, lead = radio_chain(raw, demon, rng, spec)
         target = spec['loudness']['demon_lufs' if demon else 'human_lufs']
@@ -665,14 +964,20 @@ def stage_radio(args):
             over = np.abs(out) > knee
             out[over] = np.sign(out[over]) * (knee + (ceiling - knee) * np.tanh((np.abs(out[over]) - knee) / (ceiling - knee)))
         write_wav(WORK / 'radio' / f'{clip_id}.wav', out)
+        mouth, open_track = mouth_track(clean, lead, len(out), demon, spec['mouth_fps'])
         meta[clip_id] = {
-            'speaker': line['speaker'], 'kind': kind, 'trigger': trigger,
-            'samples': len(out),
-            'mouth': mouth_track(clean, lead, len(out), demon, spec['mouth_fps']),
+            'speaker': line['speaker'], 'kind': kind, 'trigger': trigger, 'engine': engine,
+            'emotion': line.get('emotion'), 'samples': len(out),
+            'mouth': mouth, 'open': open_track,
             'lufs': round(k_loudness(out), 2),
         }
+        if clip_id in fallbacks:
+            meta[clip_id]['fallback'] = fallbacks[clip_id]
     (WORK / 'radio.json').write_text(json.dumps(meta, indent=1))
-    print(f'radio: processed {len(meta)} clips')
+    from collections import Counter
+    print(f'radio: processed {len(meta)} clips, engines {dict(Counter(m["engine"] for m in meta.values()))}')
+    for clip_id, why in fallbacks.items():
+        print(f'  kokoro fallback {clip_id}: {why}')
 
 
 def ffmpeg(*args):
@@ -702,7 +1007,9 @@ def stage_encode(args):
                '-metadata:s:a', 'handler_name=', m4a)
         clips[clip_id] = {
             'speaker': m['speaker'], 'kind': m['kind'], 'trigger': m['trigger'],
-            'duration': round(m['samples'] / SR, 3), 'mouth': m['mouth'], 'lufs': m['lufs'],
+            'engine': m['engine'], **({'emotion': m['emotion']} if m.get('emotion') else {}),
+            **({'fallback': m['fallback']} if m.get('fallback') else {}),
+            'duration': round(m['samples'] / SR, 3), 'mouth': m['mouth'], 'open': m['open'], 'lufs': m['lufs'],
             'ogg_bytes': ogg.stat().st_size, 'm4a_bytes': m4a.stat().st_size,
             'sha256': {'ogg': sha256(ogg), 'm4a': sha256(m4a)},
         }
@@ -714,9 +1021,20 @@ def stage_encode(args):
     kf = WORK / 'kokoro-files.json'
     if kf.exists():
         files = json.loads(kf.read_text())
+    cb = spec['chatterbox']
+    cb_files = {}
+    cb_snap = kokoro_files(cb['revision']).parents[2] / 'models--ResembleAI--chatterbox' / 'snapshots' / cb['revision']
+    for name in cb['files']:
+        if (cb_snap / name).exists():
+            cb_files[name] = sha256(cb_snap / name)
+    refs = json.loads((WORK / 'refs.json').read_text()) if (WORK / 'refs.json').exists() else {}
+    from collections import Counter
     manifest = {
         'generator': 'tools/comms_pipeline.py',
         'kokoro': {**spec['kokoro'], 'files_sha256': files},
+        'chatterbox': {'repo': cb['repo'], 'revision': cb['revision'], 'files_sha256': cb_files,
+                       'emotions': cb['emotions'], 'references': refs},
+        'engines': dict(Counter(c['engine'] for c in clips.values())),
         'codec': codec, 'loudness': spec['loudness'], 'mouth_fps': spec['mouth_fps'],
         'totals': {
             'clips': len(clips),
@@ -771,8 +1089,17 @@ def stage_verify(_args):
             lufs = k_loudness(x)
             if abs(lufs - target) > 1.5:
                 problems.append(f'{f.name}: {lufs:.1f} LUFS')
-        if m['kind'] == 'demon' and not (.5 <= m['duration'] <= 1.9):
-            problems.append(f'{clip_id}: grunt length {m["duration"]}')
+        if m['kind'] == 'demon':
+            rule = spec['grunt_lengths'].get(grunt_length_class(m['trigger'], spec), {'min_s': .5, 'max_s': 1.9})
+            if not rule.get('min_s', .5) <= m['duration'] <= rule['max_s']:
+                problems.append(f'{clip_id}: grunt length {m["duration"]}')
+        if m['kind'] == 'human' and m.get('engine') not in ('chatterbox', 'kokoro'):
+            problems.append(f'{clip_id}: engine {m.get("engine")}')
+        if len(m.get('open', '')) != len(m['mouth']):
+            problems.append(f'{clip_id}: open track length')
+        runs = [len(g[0]) for g in re.findall(r'((.)\2*)', m['mouth'])]
+        if len(runs) > 1 and min(runs) < 2:
+            problems.append(f'{clip_id}: single-frame mouth flicker')
         # The manifest rounds durations to ms, so allow one frame of slack.
         if abs(len(m['mouth']) - m['duration'] * SR / (SR // spec['mouth_fps'])) > 1.01:
             problems.append(f'{clip_id}: mouth track length')
@@ -827,18 +1154,26 @@ def stage_stats(_args):
 
 
 def stage_all(args):
-    for stage in (stage_voices, stage_grunts, stage_radio, stage_encode, stage_verify, stage_dart):
+    # `expressive` runs in the Chatterbox venv between `refs` and `radio`;
+    # without its outputs every human clip falls back to Kokoro.
+    for stage in (stage_voices, stage_refs, stage_grunts, stage_radio, stage_encode, stage_verify, stage_dart):
         stage(args)
 
 
-STAGES = {'dart': stage_dart, 'voices': stage_voices, 'grunts': stage_grunts, 'radio': stage_radio,
-          'encode': stage_encode, 'verify': stage_verify, 'stats': stage_stats, 'all': stage_all}
+STAGES = {'dart': stage_dart, 'voices': stage_voices, 'refs': stage_refs, 'expressive': stage_expressive,
+          'grunts': stage_grunts, 'radio': stage_radio, 'encode': stage_encode, 'verify': stage_verify,
+          'stats': stage_stats, 'all': stage_all}
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('stage', choices=sorted(STAGES))
     parser.add_argument('--force', action='store_true', help='re-render cached voices/grunts')
+    parser.add_argument('--workers', type=int, default=1, help='expressive: model processes (each ~3 GB)')
+    parser.add_argument('--threads', type=int, default=6, help='expressive: torch threads per process')
+    parser.add_argument('--only', default='', help='expressive: comma-separated clip id prefixes')
+    parser.add_argument('--limit', type=int, default=0, help='expressive: render at most N lines')
+    parser.add_argument('--kokoro-only', action='store_true', help='radio: ignore Chatterbox renders')
     args = parser.parse_args(argv)
     STAGES[args.stage](args)
 

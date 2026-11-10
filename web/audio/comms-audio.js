@@ -2,12 +2,14 @@
    tools/comms_pipeline.py). Shares demon-audio.js's AudioContext and master
    gain through window.demonAudio.graph, so master mute and pause (context
    suspend) apply to voices too. Ducks the music bus while a voice sounds and
-   caps simultaneous voices. Every call is a safe no-op before the first
+   caps simultaneous voices (3; only an urgent line, priority >= 8, may cut
+   one that is playing; anything else beyond the cap is dropped). Every call is a safe no-op before the first
    gesture has created the context. */
 (() => {
   'use strict';
   const root = new URL('./audio/comms/', document.baseURI);
-  const cap = 2;                 // voices sounding at once
+  const cap = 3;                 // voices sounding at once (a regroup chorus may overlap)
+  const urgent = 8;              // only this priority may cut a playing voice
   const duckGain = .4;           // music bus level under speech
   const duckAttack = .06;        // setTargetAtTime constants (s)
   const duckRelease = .12;
@@ -107,9 +109,10 @@
     if (!g || volume <= 0 || !id) return false;
     if (live.some(v => v.id === id)) return false;
     if (live.length >= cap) {
-      // Steal the lowest-priority (then oldest) voice, only for an equal or higher priority.
+      // A playing voice is never cut, except by an urgent (priority >= 8)
+      // warning: that steals the lowest-priority (then oldest) voice it outranks or equals.
       const victim = [...live].sort((a, b) => a.priority - b.priority || a.order - b.order)[0];
-      if (victim.priority > priority) { dropped++; return false; }
+      if (priority < urgent || victim.priority > priority) { dropped++; return false; }
       release(victim);
     }
     const entry = { id, priority, demon: !!demon, order: ++order, source: null, gain: null, startedAt: null, cancelled: false };

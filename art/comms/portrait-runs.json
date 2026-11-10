@@ -345,10 +345,10 @@
   },
   "grunt": {
    "workflow": "art/workflows/comms/portrait-qwen-edit.json",
-   "seed": 733002,
-   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "seed": 733012,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes opened wide but natural with visible irises and pupils and no white rings, eyebrows raised, mouth half open calling a warning.",
    "source": "wisp-731302.png",
-   "sha256": "acdb559803b3e19b40c86291c2470ef44d2307d9671cff9ed310907f41a795c8"
+   "sha256": "ca0dc9b76ed2e51c9cfc74b10a886134f66bfae702d0667d0d7c2334c1ffa82f"
   },
   "happy": {
    "workflow": "art/workflows/comms/portrait-qwen-edit.json",
@@ -435,10 +435,10 @@
   },
   "grunt": {
    "workflow": "art/workflows/comms/portrait-qwen-edit.json",
-   "seed": 733002,
-   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "seed": 733013,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: tense urgent expression, eyebrows raised and drawn together, focused narrowed eyes, mouth open calling a warning.",
    "source": "pip-732700.png",
-   "sha256": "969cc5e3901e5df6cb8faa5411468e1564d8fe24a0a3e07ad458e02f7dee726d"
+   "sha256": "28636578581f411d7daa57b7b067442dcece1efd6d8922bd0689d2519af2b454"
   },
   "happy": {
    "workflow": "art/workflows/comms/portrait-qwen-edit.json",
@@ -615,17 +615,17 @@
   },
   "shout": {
    "workflow": "art/workflows/comms/portrait-qwen-edit.json",
-   "seed": 733001,
-   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense eyes.",
+   "seed": 733011,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth wide open shouting an urgent order, eyebrows raised, intense focused eyes with visible irises, natural skin shading, no white outlines.",
    "source": "mensah-732902.png",
-   "sha256": "0c110a067dbc7b5f9ffbac31b3e5ef71974c83df2cc584f9c7b2a8b6a397a69d"
+   "sha256": "aa13b6d6eecb86e519ce98cd8446237c83e34df4f2df4afd3dbc60a12accad58"
   },
   "grunt": {
    "workflow": "art/workflows/comms/portrait-qwen-edit.json",
-   "seed": 733002,
-   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: urgent alarmed expression, eyes wide open with clear irises, eyebrows raised high, mouth half open calling a warning.",
+   "seed": 733013,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: tense urgent expression, eyebrows raised and drawn together, focused narrowed eyes, mouth open calling a warning.",
    "source": "mensah-732902.png",
-   "sha256": "30987ef2090bbd52610e95e90fae4ccc8e83e9c13b1d166087e1a601bd733bca"
+   "sha256": "53a6f0907ab9d65d21e7f3d2e12a3ae9325995ed6214b68dd11d26abbb477559"
   },
   "happy": {
    "workflow": "art/workflows/comms/portrait-qwen-edit.json",
@@ -888,5 +888,197 @@
    "sha256": "bb6ac99f9951a6a68e1851c545efd48fa53c34d0ffb54ffed475de70f8f27f63"
   },
   "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "skritch": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 733100,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, small skinny teal imp demon scout, oversized pointed ears, tiny horns, big round yellow eyes, toothy grin, little bat wings, leather scout cap with goggles and a radio antenna",
+   "source": null,
+   "sha256": "c9c10cb73978ec4a76903fd00cbed537b7d12ade3354ea00328c292b25fa5fd1"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "skritch-733100.png",
+   "sha256": "c454b525b6944feda732a56c7e34888da62472d076e928baba966cd41665b1a7"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "skritch-733100.png",
+   "sha256": "08781e847d26ee3077adfe3f140c992fbfd6b52065263deee3fe4124f04e19d3"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "skritch-733100.png",
+   "sha256": "7a2ece544fe5961f41face874624da8200750470d1e2962351688eda5fa9757e"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "skritch-733100.png",
+   "sha256": "889c427d06c4b6c3e28f2541fccec0545c05c2e183ede785112b7f6f20906dc5"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "skritch-733100.png",
+   "sha256": "e726b126c46b33d4713fb7f3e7ffa91c8ce345591a6f3dbc04d252ee48fc0708"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "grunnok": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 733200,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, hulking violet brute demon trooper, tiny head on huge shoulders, short blunt horns, small glowing red eyes, big lower tusks, dented iron helmet and shoulder armor with a single rank stripe",
+   "source": null,
+   "sha256": "acb189241ab891de0f4df6be236d942e0a1f74ca06970b37aef8ada06c34f5fc"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "grunnok-733200.png",
+   "sha256": "0b9625721394075cf5ea6d0c9dd8db1e6ac25dd6e5c6638bcb27e6bb4fb1af0b"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "grunnok-733200.png",
+   "sha256": "d4add750ecbb654a018f21da2ddcb1a3d5b165c5a2416cf8529c006c96848ab1"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "grunnok-733200.png",
+   "sha256": "8acfd1f9ed556e6c55dcfeda0f9dda5ebdd05b7891ad4c1fbb387c2a123d9418"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "grunnok-733200.png",
+   "sha256": "0ade7c49337daea0b84f516f03b794382b6319eb225cfcc7536c22c9a0496e39"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "grunnok-733200.png",
+   "sha256": "54b530189d9f6a61cc9278fa4f1b3e93b20e31e7008e85b7e33c9ecc8c77cf70"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "blatch": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 733300,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, wiry coral red demon gunner, one cybernetic targeting eyepiece, crooked horns, sharp fangs, ammo belt over the shoulder, gunner's headset, soot on the face",
+   "source": null,
+   "sha256": "6df920a16f73a3bdd1730d97cf4eadf14c72b6818e627fd2832bd38d8424ce79"
+  },
+  "base": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733009,
+   "prompt": "Keep exactly the same character design, pose, framing, pixel art style and flat grey background. Recolour the skin to coral red with crimson shading, add a cybernetic targeting eyepiece with a small red lens over one eye, and an ammunition belt across one shoulder.",
+   "source": "blatch-733300.png",
+   "sha256": "7f27ddc87e22860b1d30b874e712152fad5377e3b989367ad86eb1e64f574f84"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "blatch-733300-base.png",
+   "sha256": "aadee59fdab67814853104d5229b015c3c9294c6da712ed3c01c4a72c7e12963"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "blatch-733300-base.png",
+   "sha256": "c1df37e569da4947889e8242363eb560a3bf5bffaa9bafecd8b44cf471f247e2"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "blatch-733300-base.png",
+   "sha256": "9f2bff959a4ed48e5e1b5f0371e2db93d11a2d949ed416cb0ad1c77436ef1ee6"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "blatch-733300-base.png",
+   "sha256": "11a3692866b62ab721f553a6fee54428b86c14cad247fe3732ef5dcea15885ff"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "blatch-733300-base.png",
+   "sha256": "240135a4d3acca8e3736c4fdcad9628d43014eb75b9120921a511d390a84e172"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "_backdrops": {
+  "fleet-bridge": {
+   "workflow": "art/workflows/comms/backdrop-sdxl-pixel.json",
+   "seed": 734000,
+   "prompt": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading, starship command bridge interior, curved consoles with teal screens, large viewport showing stars and a planet, navy and gold trim",
+   "sha256": "678780f8418a366f964220f86afedd2df3ccdb7e1fc01a3225f4f3f5f358f811"
+  },
+  "fleet-cockpit": {
+   "workflow": "art/workflows/comms/backdrop-sdxl-pixel.json",
+   "seed": 734100,
+   "prompt": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading, fighter spacecraft cockpit interior seen from the pilot seat, canopy frame, glowing instrument panels and switches, stars outside",
+   "sha256": "f9be1d9cda0de34f6f342852b58311be0454a9d75139bed7d24b2b17ee5f6143"
+  },
+  "fleet-ops": {
+   "workflow": "art/workflows/comms/backdrop-sdxl-pixel.json",
+   "seed": 734201,
+   "prompt": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading, spaceship operations room, holographic tactical map table glowing teal, wall screens, metal bulkheads, dim blue light",
+   "sha256": "2c1096bf932e519ce81c2f75e36b8ebef2ee53cc5597b17dc4ef4de12445d400"
+  },
+  "ground-tent": {
+   "workflow": "art/workflows/comms/backdrop-sdxl-pixel.json",
+   "seed": 734300,
+   "prompt": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading, military field command tent interior, canvas walls, folding table with maps, radio set, hanging lantern, crates, olive and brown tones",
+   "sha256": "7730f4573df8fd6fef86cfa855b2fff0eb580adfca0bdc6ed10be42618080d66"
+  },
+  "ground-tank": {
+   "workflow": "art/workflows/comms/backdrop-sdxl-pixel.json",
+   "seed": 734400,
+   "prompt": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading, armored tank crew compartment interior, periscope, red warning lights, levers, riveted olive steel walls, ammunition racks",
+   "sha256": "6120679c5957dc780bc9699cf9749e4e61974b87e8207008c329055f8b962dd5"
+  },
+  "demon-warroom": {
+   "workflow": "art/workflows/comms/backdrop-sdxl-pixel.json",
+   "seed": 734500,
+   "prompt": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading, infernal war room, dark stone walls with hanging red war banners, glowing orange runes, table with a strategy map, braziers, purple shadows",
+   "sha256": "bce6e82b2c7ea54450a20f3abce8f1e4d115dcf14361b77933bcee4e332f0dd3"
+  },
+  "demon-throne": {
+   "workflow": "art/workflows/comms/backdrop-sdxl-pixel.json",
+   "seed": 734600,
+   "prompt": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading, demonic stone throne hall, tall pillars carved with horned skulls, glowing violet runes, brazier fire, tattered banners",
+   "sha256": "1544b8de7e36305b1320ef0954dc0db8ae115bad243572b4880f47b405ad5dab"
+  },
+  "demon-forge": {
+   "workflow": "art/workflows/comms/backdrop-sdxl-pixel.json",
+   "seed": 734701,
+   "prompt": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading, demonic foundry chamber, glowing lava channels, chains and anvils, rune-carved walls, smoke, red and orange glow",
+   "sha256": "588286d0b78015b6c3cd19ab67938d75452a56e377d2a5ba69ccb62fbd83c3f6"
+  }
  }
 }

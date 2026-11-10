@@ -20,6 +20,7 @@ import 'widgets/medal.dart';
 import 'widgets/heart_parts.dart';
 import 'widgets/widescreen_backdrop.dart'; // --- widescreen backdrop
 // --- squad comms
+import 'comms/comms_director.dart' show CommsMessage;
 import 'comms/comms_view.dart';
 import 'comms/squad_comms.dart';
 // --- console route
@@ -150,6 +151,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     _commsListeners.clear();
     squadComms.detach();
   }
+  /// Phones: the transmission on air, shown full size during a transition.
+  CommsMessage? _commsTransmission(BoxConstraints bounds) =>
+      !CommsLayout.of(bounds.biggest).side &&
+          model.cinematic &&
+          model.mode != RunMode.paused
+      ? squadComms.director.transmission
+      : null;
   // --- end squad comms
   final focus = FocusNode();
   late final scores = widget.scoreService ?? ScoreService();
@@ -334,6 +342,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     // --- squad comms: play this frame's callouts.
     squadComms.tick(
       paused: model.mode == RunMode.paused || model.mode == RunMode.title,
+      combat: model.combat,
     );
     if (!handledRunEnd &&
         !model.defeatActive &&
@@ -1320,6 +1329,16 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                   // --- squad comms: compact dock at the top of the arena,
                   // below the HUD band so score, lives and hearts stay
                   // readable; it dims while the player is being hit.
+                  // A full-size transmission replaces the transition art.
+                  if (_commsTransmission(bounds) case final transmission?)
+                    Positioned.fill(
+                      child: CommsAtlasScope(
+                        child: CommsTransmission(
+                          message: transmission,
+                          now: squadComms.now,
+                        ),
+                      ),
+                    ),
                   if (!CommsLayout.of(bounds.biggest).side &&
                       model.mode != RunMode.paused)
                     Positioned(
@@ -1337,6 +1356,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                               model.combat &&
                               model.invulnerable > .4 &&
                               model.levelClock > 2.5,
+                          hideTransmission: _commsTransmission(bounds) != null,
                         ),
                       ),
                     ),
