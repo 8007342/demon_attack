@@ -49,7 +49,7 @@ class TerrainProfile {
   static const sectors = <TerrainProfile>[
     // Krybor: cold frontier hills, ice ridges, frost-pine stands.
     TerrainProfile(
-      roll: 12,
+      roll: 26,
       weights: {
         TerrainKind.rolling: .14,
         TerrainKind.ridge: .26,
@@ -63,7 +63,7 @@ class TerrainProfile {
     ),
     // Ringfall: cratered ring rock, flat-topped mesas, crystal and wreck fields.
     TerrainProfile(
-      roll: 9,
+      roll: 21,
       weights: {
         TerrainKind.rolling: .12,
         TerrainKind.mesa: .26,
@@ -76,7 +76,7 @@ class TerrainProfile {
     ),
     // Ember: basalt mesas and lava canyons under a warm eclipse.
     TerrainProfile(
-      roll: 9,
+      roll: 21,
       weights: {
         TerrainKind.rolling: .1,
         TerrainKind.canyon: .28,
@@ -89,7 +89,7 @@ class TerrainProfile {
     ),
     // Hollow: sunken valleys between ruins and fungal groves.
     TerrainProfile(
-      roll: 11,
+      roll: 24,
       weights: {
         TerrainKind.rolling: .1,
         TerrainKind.valley: .28,
@@ -102,7 +102,7 @@ class TerrainProfile {
     ),
     // Carrier: sinew ridges and torn canyons, thorn thickets.
     TerrainProfile(
-      roll: 9,
+      roll: 21,
       weights: {
         TerrainKind.rolling: .1,
         TerrainKind.ridge: .32,
@@ -150,7 +150,8 @@ class TerrainField {
   final int sector, route, seed;
   final TerrainProfile profile;
 
-  static const segment = 300.0;
+  /// v4: one feature per 520 texels (was 300): fewer, far larger features.
+  static const segment = 520.0;
 
   final _features = <int, TerrainFeature>{};
 
@@ -188,20 +189,23 @@ class TerrainField {
     final sign = side == 0 ? -1.0 : 1.0;
     final w = j * segment + segment * (.3 + .4 * terrainRand(seed, j, 3));
     final q = terrainRand(seed, j, 4);
+    // v4 (coarse relief): heights about 2.2x and footprints about 2x the
+    // v3 features, reaching from the side bands across the firing lane.
+    final reach = terrainRand(seed, j, 5);
     return switch (kind) {
       TerrainKind.ridge =>
-        TerrainFeature(j, kind, 2, w, 24 + 10 * q, 0, 1, 42 + 14 * q),
+        TerrainFeature(j, kind, 2, w, 50 + 22 * q, 0, 1, 82 + 28 * q),
       TerrainKind.valley => TerrainFeature(
-          j, kind, side, w, 17 + 5 * q, sign * (34 + 30 * q), 125, 15),
+          j, kind, side, w, 38 + 12 * q, sign * (40 + 100 * reach), 235, 32),
       TerrainKind.canyon => TerrainFeature(
-          j, kind, side, w, 26 + 8 * q, sign * (36 + 28 * q), 135, 10),
+          j, kind, side, w, 52 + 16 * q, sign * (44 + 90 * reach), 245, 21),
       TerrainKind.mesa => TerrainFeature(
-          j, kind, side, w, 30 + 12 * q, sign * (36 + 30 * q), 60 + 20 * q,
-          17 + 9 * q),
+          j, kind, side, w, 62 + 22 * q, sign * (44 + 100 * reach), 110 + 40 * q,
+          34 + 16 * q),
       TerrainKind.rolling =>
         TerrainFeature(j, kind, 2, w, 0, 0, 1, 1),
-      _ => TerrainFeature(j, kind, side, w, 4 + 2 * q, sign * (45 + 25 * q),
-          135, 38),
+      _ => TerrainFeature(j, kind, side, w, 10 + 5 * q, sign * (50 + 60 * reach),
+          235, 64),
     };
   }
 
@@ -228,8 +232,9 @@ class TerrainField {
 
   /// Raw world height (texels) at lateral [s] and ground position [w].
   double heightAt(double s, double w) {
+    // v4: broad rolling hills (long wavelengths) with a little detail.
     var h = profile.roll *
-        (_noise(s / 70, w / 230, 5) + .45 * _noise(s / 32, w / 95, 7));
+        (_noise(s / 125, w / 390, 5) + .3 * _noise(s / 55, w / 160, 7));
     final j = (w / segment).floor();
     for (var k = j - 1; k <= j + 1; k++) {
       h += _featureHeight(feature(k), s, w);
@@ -243,8 +248,8 @@ class TerrainField {
         return 0;
       case TerrainKind.ridge:
         // A crest crossing the field, slanted and wavering.
-        final crest = f.w + .5 * s.abs().clamp(0.0, 150.0) +
-            14 * math.sin(s / 25 + f.id);
+        final crest = f.w + .5 * s.abs().clamp(0.0, 220.0) +
+            24 * math.sin(s / 48 + f.id);
         final t = (w - crest).abs() / f.width;
         if (t >= 1) return 0;
         final u = 1 - t;
@@ -253,14 +258,14 @@ class TerrainField {
       case TerrainKind.canyon:
         final along = (w - f.w).abs() / f.len;
         if (along >= 1) return 0;
-        final centre = f.s + 8 * math.sin((w - f.w) / 60 + f.id);
+        final centre = f.s + 16 * math.sin((w - f.w) / 110 + f.id);
         final t = (s - centre).abs() / f.width;
         final ends = 1 - _smooth(along);
         if (f.kind == TerrainKind.canyon) {
           // Steep walls, a flat floor and a low rim.
           final floor = 1 - _smoothstep(.55, 1, t);
           final rim = t > 1 && t < 1.7 ? math.sin((t - 1) / .7 * math.pi) : 0.0;
-          return ends * (-f.amp * floor + 4 * rim);
+          return ends * (-f.amp * floor + 9 * rim);
         }
         final dip = t < 1.6 ? math.exp(-t * t * 1.6) : 0.0;
         final lip = t > .8 && t < 2 ? math.sin((t - .8) / 1.2 * math.pi) : 0.0;
@@ -391,8 +396,8 @@ class TerrainView implements GroundRelief {
   /// Depth where relief has faded out completely (toward the horizon).
   static const fadeNear = 6 * _z0, fadeFar = 12 * _z0;
 
-  /// Relief kept in the central firing lane.
-  static const laneRelief = .18;
+  /// Relief kept in the central firing lane (v4: units cross it now).
+  static const laneRelief = .62;
 
   TerrainField? _a, _b;
   double _mix = 0;
@@ -446,20 +451,27 @@ class TerrainView implements GroundRelief {
   /// Envelope: gentle in the central lane, fading toward the horizon.
   static double envelope(double x, double z) {
     final d = (x - 180).abs();
-    // Zero on the centre line (the two side frames meet there), the lane
-    // share across the lane, full beyond it.
-    final lane = laneRelief * _smoothstep(0, 40, d) +
-        (1 - laneRelief) * _smoothstep(56, 100, d);
+    // The lane share across the lane, full beyond it; a little less right
+    // under the camera so the nearest hills never wall off the ship.
+    final lane = laneRelief + (1 - laneRelief) * _smoothstep(56, 100, d);
     final far = ((fadeFar - z) / (fadeFar - fadeNear)).clamp(0.0, 1.0);
-    return lane * far;
+    final near = .6 + .4 * _smoothstep(_z0, 2.6 * _z0, z);
+    return lane * far * near;
   }
+
+  /// The two edge frames blend across the centre (no seam on the line).
+  static double _centreBlend(double x) => _smoothstep(150, 210, x);
 
   /// Effective (displayed) height at screen [x] and depth [z], before
   /// occlusion: what `terrainHeight` is made of.
   double rawHeight(double x, double z) {
     final e = envelope(x, z);
     if (e <= 0) return 0;
-    return worldHeight(edgeLateral(x, z), cam + z) * e;
+    final m = _centreBlend(x);
+    final k = z / (2 * _z0);
+    final left = m < 1 ? worldHeight(-x * k, cam + z) : 0.0;
+    final right = m > 0 ? worldHeight((360 - x) * k, cam + z) : 0.0;
+    return (left + (right - left) * m) * e;
   }
 
   // ---------------------------------------------------------------------
@@ -470,6 +482,10 @@ class TerrainView implements GroundRelief {
   final Float64List gridHeight = Float64List(columns * 160);
   final Float64List gridY = Float64List(columns * 160);
   final Float64List gridShade = Float64List(columns * 160);
+
+  /// v4: additive light (0..1): lit slopes and a rim on every crest, so the
+  /// relief reads even on the darkest ground tiles.
+  final Float64List gridGlow = Float64List(columns * 160);
   final Uint8List _hidden = Uint8List(columns * 160);
 
   /// Per-vertex light (1 = flat ground; lit slopes above, shadowed below)
@@ -516,9 +532,18 @@ class TerrainView implements GroundRelief {
         final idx = i * columns + j;
         // Slope light, a little lift on high ground and depth in hollows,
         // and a dark band where ground disappears behind a crest.
-        var shade = 1 + 3.0 * (dot - light.$3) + .016 * gridHeight[idx];
-        if (_hidden[idx] == 1) shade *= .55;
-        gridShade[idx] = shade.clamp(.3, 1.9);
+        var shade = 1 + 4.2 * (dot - light.$3) + .02 * gridHeight[idx];
+        if (_hidden[idx] == 1) shade *= .5;
+        gridShade[idx] = shade.clamp(.25, 2.1);
+        // A crest: the ground just beyond this vertex is hidden by it.
+        final crest = _hidden[idx] == 0 &&
+            i + 1 < n &&
+            _hidden[(i + 1) * columns + j] == 1;
+        var glow = 1.5 * math.max(0.0, dot - light.$3) +
+            .004 * math.max(0.0, gridHeight[idx]) +
+            (crest ? .42 : 0);
+        if (_hidden[idx] == 1) glow = 0;
+        gridGlow[idx] = glow.clamp(0.0, 1.0);
       }
     }
   }
@@ -659,6 +684,27 @@ class TerrainView implements GroundRelief {
     final climb = (ahead - behind) / (2 * dz);
     final pace = (1 - 2.4 * climb).clamp(.5, 1.25);
     return GroundPose(x, y, climb: climb, pace: pace);
+  }
+
+  // --- ground war v4: full-width units choose their own routes (by
+  // [heightAt]); this only stands them on the visible surface.
+  @override
+  GroundPose placeAt(double x, double z) {
+    _ensure();
+    final px = x.clamp(0.0, 360.0);
+    final y = yOf(px, z);
+    const dz = 10.0;
+    final ahead = _heightFast(px, math.max(GroundTuning.leaveZ * .8, z - dz));
+    final behind = _heightFast(px, z + dz);
+    final climb = (ahead - behind) / (2 * dz);
+    final pace = (1 - 2.4 * climb).clamp(.5, 1.25);
+    return GroundPose(x, y, climb: climb, pace: pace);
+  }
+
+  @override
+  double heightAt(double x, double z) {
+    _ensure();
+    return _heightFast(x.clamp(0.0, 360.0), z);
   }
 
   // ---------------------------------------------------------------------

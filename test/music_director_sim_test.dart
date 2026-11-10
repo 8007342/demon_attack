@@ -39,12 +39,12 @@ void main() {
     expect(counts.containsKey(GameEventNames.diveTell), isFalse);
   });
 
-  test('level 2: dive tells are published, spaced at least 2 s apart', () {
+  test('level 2: dive tells are published, spaced at least 0.75 s apart (dive layers compose)', () {
     final r = run({'level': 2, 'wave': 2}, 40);
     // ignore: avoid_print
     print('L2 40 s: $r');
     final counts = r['counts'] as Map;
     expect(counts[GameEventNames.diveTell], greaterThan(2));
-    expect(counts[GameEventNames.diveTell], lessThanOrEqualTo(20));
+    expect(counts[GameEventNames.diveTell], lessThanOrEqualTo(40 / .75));
   });
 }

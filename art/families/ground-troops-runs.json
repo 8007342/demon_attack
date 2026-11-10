@@ -1,0 +1,332 @@
+{
+ "ally-rifle/740400": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00010_.png",
+    "sha256": "ef145196d9336a1538ac4fe1dedd074efcbcd76861ae252b2a622059e44f3add"
+   },
+   {
+    "file": "sprite-rgb_00010_.png",
+    "sha256": "90a3deba2321c668973a221ba5853bf9be6e7ada1bff32528ccafe9650f62d06"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a human space marine soldier seen from behind, grey-blue armour, helmet with a cyan visor glow, backpack, holding a rifle, walking away from the viewer, transparent background",
+  "seed": 740400,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ally-rifle/740401": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00011_.png",
+    "sha256": "4b01f11f80931d67abaa56a11c55a6eea84f2350e2cf223f5895984d11fd9999"
+   },
+   {
+    "file": "sprite-rgb_00011_.png",
+    "sha256": "c3e34cb2ffb9120797ac79bbc4d60d9589d5354d3a4c0dd1b542e4dc5d3eaa50"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a human space marine soldier seen from behind, grey-blue armour, helmet with a cyan visor glow, backpack, holding a rifle, walking away from the viewer, transparent background",
+  "seed": 740401,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ally-rifle/740402": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00012_.png",
+    "sha256": "7d3d4bc7a292192c2a91bcc3e4737800490399f62eb6e5b6bce5cd1a46de6ef3"
+   },
+   {
+    "file": "sprite-rgb_00012_.png",
+    "sha256": "d3da0fc03484fd1585c5f3614d8bcd4070971f67c351d501551f23bbafc80c4d"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a human space marine soldier seen from behind, grey-blue armour, helmet with a cyan visor glow, backpack, holding a rifle, walking away from the viewer, transparent background",
+  "seed": 740402,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ally-rocket/740500": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00013_.png",
+    "sha256": "47d25aa334690248015d1ccdc2cf5028289a00f954866945e621d1a8e209d851"
+   },
+   {
+    "file": "sprite-rgb_00013_.png",
+    "sha256": "3e50cc5de33cd47b0f4398c2dd0275c72653763228d5ab6e51a54fbd4239b91c"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a human space marine soldier seen from behind carrying a rocket launcher tube on the shoulder, grey-blue armour, helmet with a cyan visor glow, backpack, walking away from the viewer, transparent background",
+  "seed": 740500,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ally-rocket/740501": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00014_.png",
+    "sha256": "f62f82340d384e2a4d434b1eddb59193cf703665e9f9d4d373f9de3dd20d73bb"
+   },
+   {
+    "file": "sprite-rgb_00014_.png",
+    "sha256": "de0988b1323075c4b74de43fe8bccc4097be626ab5e5c76e09b6e2113d830d2f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a human space marine soldier seen from behind carrying a rocket launcher tube on the shoulder, grey-blue armour, helmet with a cyan visor glow, backpack, walking away from the viewer, transparent background",
+  "seed": 740501,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ally-rocket/740502": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00015_.png",
+    "sha256": "ac445d5a689e96aed752bb53509c8489add7a69d250f5e493e3728ede7dc9f66"
+   },
+   {
+    "file": "sprite-rgb_00015_.png",
+    "sha256": "295d52d57a47531c9a92ef9e755c62795fcdb27586d5a8bc43d27a74b39f4b54"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a human space marine soldier seen from behind carrying a rocket launcher tube on the shoulder, grey-blue armour, helmet with a cyan visor glow, backpack, walking away from the viewer, transparent background",
+  "seed": 740502,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "demon-grunt/740100": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00001_.png",
+    "sha256": "ae1e9df706af9d84d459a2b10f6d1fb9cb72bf6f3d356ffdaaf8959268670866"
+   },
+   {
+    "file": "sprite-rgb_00001_.png",
+    "sha256": "1415a271d9c1781a589588a5ba3d87b6f52407308465ce5fda1b034b3f656412"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small cartoon gargoyle demon soldier marching, stony grey-violet hide, curled horns poking through a dented iron helmet, glowing orange eyes, military webbing and an armour vest, folded bat wings, barbed tail, holding a long rifle, friendly-scary, transparent background",
+  "seed": 740100,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "demon-grunt/740101": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00002_.png",
+    "sha256": "a6e5b1758358c47e14db2ec0e7709dff7bf5b357a331bd38964dcbc866e2931e"
+   },
+   {
+    "file": "sprite-rgb_00002_.png",
+    "sha256": "f0e589faf93fc70059cd02f0c4e53f3d6550be4e05a83be333a513e8980613b4"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small cartoon gargoyle demon soldier marching, stony grey-violet hide, curled horns poking through a dented iron helmet, glowing orange eyes, military webbing and an armour vest, folded bat wings, barbed tail, holding a long rifle, friendly-scary, transparent background",
+  "seed": 740101,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "demon-grunt/740102": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00003_.png",
+    "sha256": "9d47bdfc7d5f5555f923592f55bb97554302810cf82d95187d8d2196d01b29a8"
+   },
+   {
+    "file": "sprite-rgb_00003_.png",
+    "sha256": "e1e4d99993bc5d88b9c5b3b2ff456067cafc1b1db9a561ab559568d79134668c"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small cartoon gargoyle demon soldier marching, stony grey-violet hide, curled horns poking through a dented iron helmet, glowing orange eyes, military webbing and an armour vest, folded bat wings, barbed tail, holding a long rifle, friendly-scary, transparent background",
+  "seed": 740102,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "demon-rocketeer/740200": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00004_.png",
+    "sha256": "eb9df09fc19d4b59359ce40fc5f1ed091f2a2bff49f65048c6342aff8f2ba09a"
+   },
+   {
+    "file": "sprite-rgb_00004_.png",
+    "sha256": "8b28439c04af1e67fb9fdd798737fd5b89b8501c978593e5032756651d418fd7"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a stocky cartoon gargoyle demon brute soldier, heavy shoulders, stone hide, ram horns, iron helmet and shoulder armour, a big rocket launcher tube carried on its shoulder, glowing orange eyes, folded stubby bat wings, friendly-scary, transparent background",
+  "seed": 740200,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "demon-rocketeer/740201": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00005_.png",
+    "sha256": "c5d998b6537a9d9f531b106625962449c135da0777a5d69bc94f42a11407d93e"
+   },
+   {
+    "file": "sprite-rgb_00005_.png",
+    "sha256": "f9520a8a4e781f70be17f279870d15859cefe3c9fa52f35ef58f51b06580c7b4"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a stocky cartoon gargoyle demon brute soldier, heavy shoulders, stone hide, ram horns, iron helmet and shoulder armour, a big rocket launcher tube carried on its shoulder, glowing orange eyes, folded stubby bat wings, friendly-scary, transparent background",
+  "seed": 740201,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "demon-rocketeer/740202": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00006_.png",
+    "sha256": "5b3280136ff62a8319f69906d8fe374d84da6a138ae646d431d075fc8176839e"
+   },
+   {
+    "file": "sprite-rgb_00006_.png",
+    "sha256": "ef039bcd016e414411cdd9201450332e9d1f5a4fd73a2792e0b5493a66a2243a"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a stocky cartoon gargoyle demon brute soldier, heavy shoulders, stone hide, ram horns, iron helmet and shoulder armour, a big rocket launcher tube carried on its shoulder, glowing orange eyes, folded stubby bat wings, friendly-scary, transparent background",
+  "seed": 740202,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "demon-tank/740300": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00007_.png",
+    "sha256": "cbdbb849d6748966e4e7d916d8dec2761b95a782588d8fd3aede53ef30c20860"
+   },
+   {
+    "file": "sprite-rgb_00007_.png",
+    "sha256": "23d08f2d53741043d28bbaf09792f2c4624e091699ab5157e943c7e51353545f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a demonic heavy battle tank seen from the side facing right, dark iron hull with a horned gargoyle prow, spiked caterpillar treads, a turret with a curled horn mantlet and a long cannon, glowing orange furnace vents, war machine, transparent background",
+  "seed": 740300,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "demon-tank/740301": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00008_.png",
+    "sha256": "4ccc6e7a4255a6b83f172f2bc7dadfc61e0e95b3e71fd7adb2945f15e3b16154"
+   },
+   {
+    "file": "sprite-rgb_00008_.png",
+    "sha256": "aab938521ba5ae6705ee6a19c611f017e04e2083607c6f989ef04db67bfe6845"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a demonic heavy battle tank seen from the side facing right, dark iron hull with a horned gargoyle prow, spiked caterpillar treads, a turret with a curled horn mantlet and a long cannon, glowing orange furnace vents, war machine, transparent background",
+  "seed": 740301,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "demon-tank/740302": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00009_.png",
+    "sha256": "8b836e664c8a8c842d00e2dc49459d7f1f5bebd3439b6bd74387886d386c017b"
+   },
+   {
+    "file": "sprite-rgb_00009_.png",
+    "sha256": "463ba9a71b457a398a5a63b99abcd9265da87cc6416d8a1f48264fff74d985f0"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a demonic heavy battle tank seen from the side facing right, dark iron hull with a horned gargoyle prow, spiked caterpillar treads, a turret with a curled horn mantlet and a long cannon, glowing orange furnace vents, war machine, transparent background",
+  "seed": 740302,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ }
+}

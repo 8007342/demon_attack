@@ -16,7 +16,10 @@
   const midiCache = new Map(), bytesCache = new Map(), bufferCache = new Map(), ready = new Map();  // ready: decoded buffers, synchronously
   // music: the bus the comms layer ducks (demonAudio.graph); drop: the
   // life-loss dip under it, so the two never fight over one gain.
-  let context, master, music, drop, sidechain, effects, timer, pending, active, wanted, nextBeat = 0, beat = 0;
+  // musicLevel: the player's music volume (Mute/Low/Full) after the duck;
+  // bright: a high shelf that opens while a power-up pickup is falling;
+  // limiter: a safety limiter on the master (Full music + stacked layers).
+  let context, master, music, musicLevel, bright, limiter, drop, sidechain, effects, timer, pending, active, wanted, nextBeat = 0, beat = 0;
   let muted = false, paused = false, requested = 0;
   // The level whose music plays: its intro, then its tiers.
   const scene = { level: 0, tier: 1, section: null, phaseTier: 0 };
@@ -29,7 +32,7 @@
   const levelBeat = level => levelBarSamples[level] / 48000 / 4;
   let beatSeconds = .5;
   const fileGain = .7;          // recorded cues are mastered to -18..-19 LUFS
-  const bufferLimit = 12;       // decoded cues kept (a level is ~8: intro, 4 tiers, outro, accents, clear)
+  const bufferLimit = 14;       // decoded cues kept (a level is ~10: intro, 4 tiers, outro, accents, layers, power, clear)
   const masterGain = .65, effectsGain = 1;  // effects sit above the battle-metal mixes
   const sidechainDip = .8, sidechainTags = ['explosion', 'life', 'hit'];  // -2 dB music dip under big effects
   // Cue table (mirrors web/audio/music/manifest.json; checked by test-worker).
@@ -39,6 +42,53 @@
   const lifeLoss = ['destroyed', 'gloat', 'respawn'];
   const dropLevel = .15, dropBars = 2;  // life loss: music dips under the hit stinger for two bars
   const slotSeconds = 1.5;
+  // --- audio round: player volume levels, composable dive layers, power layer.
+  // Volume levels per channel, cycled Mute -> Low -> Full by the HUD
+  // toggles and remembered per device. Music gains are relative to the
+  // round-3 mix (music then sat at fileGain .7 x master .65): Full is +6 dB
+  // louder than that, Low is 10 dB under Full. Speech gains live in
+  // comms-audio.js. Effects keep their level unless both music and speech are
+  // muted, which mutes everything (the old master mute).
+  const levelNames = ['mute', 'low', 'full'];
+  const dB = value => 10 ** (value / 20);
+  const musicLevels = { mute: 0, low: dB(-4), full: dB(6) };
+  const storageKeys = { music: 'demonAttack.musicVolume', speech: 'demonAttack.speechVolume' };
+  function storage() { try { return window.localStorage || null; } catch { return null; } }
+  function readLevel(channel) {
+    try { const value = storage()?.getItem(storageKeys[channel]); return levelNames.includes(value) ? value : 'full'; } catch { return 'full'; }
+  }
+  function writeLevel(channel, value) {
+    try { const store = storage(); if (!store) return false; store.setItem(storageKeys[channel], value); return true; } catch { return false; }  // private mode / denied storage
+  }
+  const levels = { music: readLevel('music'), speech: readLevel('speech') };
+  const limiterSettings = { threshold: -1.5, knee: 0, ratio: 20, attack: .002, release: .12 };
+  // Dive accents compose: each dive tell adds a different layer of the level's
+  // own recorded tiers (l<n>-layers: slices of the tier masters, so tempo and
+  // key are the level's), quantized to its grid, at most `layerCap` at once.
+  // role: hit / drums / tone; a new layer prefers a role not sounding yet.
+  // quantum: grid unit in beats; beats: how long the layer sounds (its slot
+  // is two bars and ends silent).
+  const layerSlots = ['stab', 'swell', 'fill', 'gallop', 'lead', 'low'];
+  const layerInfo = {
+    stab: { role: 'hit', quantum: .5, beats: 7.5 },   // a tier-4 riff stab in a 3+3+2 figure over two bars
+    swell: { role: 'hit', quantum: 1, beats: 5 },     // reversed tier-4 chord into its downbeat one beat later, ringing
+    fill: { role: 'drums', quantum: 2, beats: 6 },    // the densest tier-4 drum half-bar, then the bar it lands on
+    gallop: { role: 'drums', quantum: 2, beats: 7.5 },// two bars of tier-2/3 drums (kick gallop; backbeat stays on 2 and 4)
+    lead: { role: 'tone', quantum: 4, beats: 7 },     // two bars of the tier-3 lead band from the next bar line
+    low: { role: 'tone', quantum: 1, beats: 7 },      // low band of a tier-4 downbeat's two bars (bass weight)
+  };
+  const layerSlotBeats = 8, layerCap = 4, layerTail = .04;
+  const stackGain = [1, dB(-2), dB(-3.5), dB(-5)];  // later layers sit lower; the limiter holds the sum
+  const layersLive = [], layerLog = [];
+  let lastLayer = null, layerSeed = 1982;
+  const nextRandom = () => (layerSeed = (layerSeed * 16807) % 2147483647) / 2147483647;
+  // Power-ups: while one is active, l<n>-power (the level's tier-4 drums above
+  // 3 kHz: cymbals, snare crack) loops over the tiers at the same loop
+  // position, louder with two or more; while a pickup is falling the music's
+  // top end opens a little. Both change on bar lines.
+  const powerGain = { 0: 0, 1: dB(-6), 2: dB(-3) };
+  const brightDb = 3, brightHz = 3500;
+  const power = { active: 0, falling: false, player: null, brightOn: false };
   function cueInfo(name) {
     const info = levelCueInfo(name);
     info.beatSeconds = info.level ? levelBeat(info.level) : .5;
@@ -49,6 +99,8 @@
     if (/^l[1-5]-intro$/.test(name)) return { kind: 'tail', beats: 16, level: +name[1] };
     if (/^l[1-5]-outro$/.test(name)) return { kind: 'loop', beats: 16, level: +name[1] };
     if (/^l[1-5]-accents$/.test(name)) return { kind: 'sprite', beats: 0, level: +name[1] };
+    if (/^l[1-5]-layers$/.test(name)) return { kind: 'sprite', beats: 0, level: +name[1] };
+    if (/^l[1-5]-power$/.test(name)) return { kind: 'loop', beats: 32, level: +name[1], layer: true };
     return { menu: { kind: 'loop', beats: 32 }, alienwin: { kind: 'loop', beats: 32 },
       levelclear: { kind: 'tail', beats: 12 }, victory: { kind: 'tail', beats: 20 }, finale: { kind: 'tail', beats: 36 },
       'levelclear-fleet': { kind: 'tail', beats: 12 }, 'finale-fleet': { kind: 'tail', beats: 36 },
@@ -223,6 +275,7 @@
           activate(entry, nextBeat);
         }
       }
+      if (beat % 4 === 0) syncPower(nextBeat);
       if (active?.track) {
         const length = active.track.length;
         const local = active.loopTail && beat >= length ? length - 4 + ((beat - length) % 4) : beat % length;
@@ -243,9 +296,16 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return false;
         context = new AudioContext();
-        master = context.createGain(); music = context.createGain(); drop = context.createGain(); sidechain = context.createGain(); effects = context.createGain();
-        master.gain.value = muted ? 0 : masterGain; effects.gain.value = effectsGain;
-        drop.connect(sidechain); sidechain.connect(music); music.connect(master); effects.connect(master); master.connect(context.destination);
+        master = context.createGain(); music = context.createGain(); musicLevel = context.createGain(); drop = context.createGain(); sidechain = context.createGain(); effects = context.createGain();
+        master.gain.value = masterLevel(); effects.gain.value = effectsGain; musicLevel.gain.value = musicLevels[levels.music];
+        bright = context.createBiquadFilter?.() || null;
+        if (bright) { bright.type = 'highshelf'; bright.frequency.value = brightHz; bright.gain.value = 0; }
+        limiter = context.createDynamicsCompressor?.() || null;
+        if (limiter) for (const [key, value] of Object.entries(limiterSettings)) if (limiter[key]) limiter[key].value = value;
+        drop.connect(sidechain);
+        if (bright) { sidechain.connect(bright); bright.connect(music); } else sidechain.connect(music);
+        music.connect(musicLevel); musicLevel.connect(master); effects.connect(master);
+        if (limiter) { master.connect(limiter); limiter.connect(context.destination); } else master.connect(context.destination);
         nextBeat = context.currentTime + .04;
         timer = setInterval(schedule, 25);
         await context.resume();
@@ -260,7 +320,7 @@
   // A level's set loads lazily when the level is cued: bytes first, then
   // decoding in play order (tier 1 and the accents before the higher tiers).
   function preloadLevel(level) {
-    const names = [`l${level}-t1`, `l${level}-accents`, `l${level}-t2`, `l${level}-t3`, `l${level}-t4`, `l${level}-outro`];
+    const names = [`l${level}-t1`, `l${level}-accents`, `l${level}-layers`, `l${level}-t2`, `l${level}-power`, `l${level}-t3`, `l${level}-t4`, `l${level}-outro`];
     names.forEach(prefetch);
     if (!context) return;
     names.reduce((chain, name) => chain.then(() => loadBuffer(name)), Promise.resolve());
@@ -281,6 +341,7 @@
       if (context && active) {
         for (const voice of voices) if (voice.output === drop) release(voice, context.currentTime);
         stopFile(active, context.currentTime, .09);
+        stopPower(context.currentTime, .09);
       }
       pending = null;
       if (context) { nextBeat = context.currentTime + .02; beat = 0; restoreMusic(context.currentTime); }
@@ -375,7 +436,13 @@
   // beat of the music grid; never delays the caller.
   async function accent(name) {
     if (!context || paused || context.state !== 'running' || !accentSlots.includes(name) || !scene.level) return null;
-    if ((lastAccent.get(name) ?? -9) > context.currentTime - 1) return null;  // at most one per second each
+    if (levels.music === 'mute' && !lifeLoss.includes(name)) return null;  // nothing to hear; the life-loss drop still applies
+    // At most one per second each; dive layers compose, so dives may come every half second.
+    if ((lastAccent.get(name) ?? -9) > context.currentTime - (name === 'dive' ? .5 : 1)) return null;
+    if (name === 'dive') {
+      const layered = diveLayer();
+      if (layered !== undefined) { if (layered !== null) lastAccent.set(name, context.currentTime); return layered; }
+    }
     lastAccent.set(name, context.currentTime);
     // Only an already-decoded sprite is used; otherwise start loading it and use the fallback.
     const key = `l${scene.level}-accents`, sprite = ready.get(key) || null;
@@ -411,6 +478,89 @@
     if (accentLog.length > 16) accentLog.shift();
     return at;
   }
+  // Grid time of the next multiple of `quantum` beats, at least 30 ms ahead.
+  // Beat 0 is the active cue's start (a tier's loop start), so bar lines are
+  // multiples of 4.
+  function gridTime(quantum, now = context.currentTime) {
+    const unit = quantum * beatSeconds, origin = nextBeat - beat * beatSeconds;
+    return origin + unit * Math.max(0, Math.ceil((now + .03 - origin) / unit - 1e-9));
+  }
+  // Picks the next dive layer: never one already sounding, never the last
+  // one again, a role that is not sounding yet if there is one; an empty
+  // stack starts with a layer that lands within a beat.
+  function pickLayer() {
+    const live = new Set(layersLive.map(l => l.name)), roles = new Set(layersLive.map(l => layerInfo[l.name].role));
+    const open = layerSlots.filter(n => !live.has(n) && n !== lastLayer);
+    let pool = layersLive.length ? open.filter(n => !roles.has(layerInfo[n].role)) : open.filter(n => layerInfo[n].quantum <= 1);
+    if (!pool.length) pool = open;
+    return pool.length ? pool[Math.floor(nextRandom() * pool.length)] : null;
+  }
+  // undefined: no layer sprite decoded yet (use the single dive accent);
+  // null: the stack is full; else the scheduled time.
+  function diveLayer() {
+    const key = `l${scene.level}-layers`, sprite = ready.get(key) || null;
+    if (!sprite) { loadBuffer(key); return undefined; }
+    const now = context.currentTime;
+    for (const live of layersLive.splice(0)) if (live.end > now) layersLive.push(live);
+    if (layersLive.length >= layerCap) return null;
+    const name = pickLayer();
+    if (!name) return null;
+    const info = layerInfo[name], depth = layersLive.length;
+    const at = gridTime(info.quantum, now), slot = layerSlots.indexOf(name), slotLength = layerSlotBeats * beatSeconds;
+    const source = context.createBufferSource(), gain = context.createGain();
+    source.buffer = sprite; gain.gain.value = fileGain * stackGain[depth];
+    source.connect(gain); gain.connect(music);
+    // The slot's last 50 ms are silent; stopping 40 ms early skips the codec's
+    // pre-echo of the next slot's attack.
+    source.start(at, slot * slotLength, slotLength - layerTail);
+    source.onended = () => { try { source.disconnect(); gain.disconnect(); } catch { /* detached */ } };
+    lastLayer = name;
+    layersLive.push({ name, at, end: at + info.beats * beatSeconds, depth });
+    layerLog.push({ name, at, requestedAt: now, depth, level: scene.level });
+    if (layerLog.length > 16) layerLog.shift();
+    accentLog.push({ name: 'dive', layer: name, at, requestedAt: now, level: scene.level, source: 'layers' });
+    if (accentLog.length > 16) accentLog.shift();
+    return at;
+  }
+  // Power-up layer: what the game reports (active power count, a pickup in
+  // the air); the scheduler applies it on the next bar line.
+  function powerLayer(active = 0, falling = false) {
+    power.active = Math.max(0, Math.round(Number(active) || 0));
+    power.falling = !!falling;
+    if (scene.level) loadBuffer(`l${scene.level}-power`);
+    return { active: power.active, falling: power.falling };
+  }
+  function stopPower(at, seconds = beatSeconds) {
+    const player = power.player;
+    power.player = null;
+    if (!player) return;
+    player.gain.gain.cancelScheduledValues?.(at);
+    player.gain.gain.setTargetAtTime(0, at, seconds / 3);
+    try { player.source.stop(at + seconds + .05); } catch { /* not started */ }
+  }
+  // Runs on every bar line of the scheduler (at = that bar's time).
+  function syncPower(at) {
+    const tiers = scene.section === 'tiers' && active?.info.tier && active.info.level === scene.level;
+    const want = tiers && levels.music !== 'mute' ? Math.min(2, power.active) : 0;
+    const name = `l${scene.level}-power`, buffer = want ? ready.get(name) : null;
+    if (power.player && (power.player.name !== name || !want)) stopPower(at);
+    if (want && buffer && !power.player) {
+      const source = context.createBufferSource(), gain = context.createGain();
+      source.buffer = buffer; source.loop = true; source.loopStart = 0; source.loopEnd = Math.min(buffer.duration, 32 * beatSeconds);
+      gain.gain.setValueAtTime(0, at); gain.gain.linearRampToValueAtTime(fileGain * powerGain[want], at + .03);
+      source.connect(gain); gain.connect(drop);
+      const offset = (beat % 32) * beatSeconds;  // the tiers' loop position
+      source.start(at, offset);
+      source.onended = () => { try { source.disconnect(); gain.disconnect(); } catch { /* detached */ } };
+      power.player = { name, source, gain, at, offset, level: want };
+    } else if (want && power.player && power.player.level !== want) {
+      power.player.level = want;
+      power.player.gain.gain.setTargetAtTime(fileGain * powerGain[want], at, .05);
+    }
+    const brighten = tiers && power.falling;
+    if (bright && brighten !== power.brightOn) bright.gain.setTargetAtTime(brighten ? brightDb : 0, at, .08);
+    power.brightOn = brighten;
+  }
   function dropMusic(at) {
     if (!drop) return;
     drop.gain.cancelScheduledValues(at);
@@ -425,7 +575,25 @@
     if (dropState) dropState.until = at;
   }
   let dropState = null;
-  function mute(value = true) { muted = !!value; if (master) master.gain.setTargetAtTime(muted ? 0 : masterGain, context.currentTime, .03); return muted; }
+  // Master: silent when muted, or when both music and speech are set to Mute.
+  function masterLevel() { return muted || (levels.music === 'mute' && levels.speech === 'mute') ? 0 : masterGain; }
+  function applyLevels() {
+    if (!context) return;
+    const now = context.currentTime;
+    master.gain.setTargetAtTime(masterLevel(), now, .03);
+    musicLevel.gain.setTargetAtTime(musicLevels[levels.music], now, .03);
+  }
+  function mute(value = true) { muted = !!value; applyLevels(); return muted; }
+  // setLevel('music' | 'speech', 'mute' | 'low' | 'full'): applies and remembers
+  // the choice (storage may be unavailable; the choice then lasts the session).
+  function setLevel(channel, value) {
+    if (!(channel in levels) || !levelNames.includes(value)) return null;
+    levels[channel] = value;
+    const stored = writeLevel(channel, value);
+    applyLevels();
+    if (channel === 'speech') window.commsAudio?.setLevel?.(value);
+    return { ...levels, stored };
+  }
   function pause() { paused = true; if (context) context.suspend().catch(() => {}); }
   async function resume() { paused = false; if (context) { await context.resume().catch(() => {}); realign(); } }
 
@@ -495,11 +663,15 @@
     else if (name === 'life') noiseBurst(now, .45, .08, 900);
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
-  window.demonAudio = Object.freeze({ unlock, cue, intensity, accent, fleetIntact, mute, pause, resume, sfx, get muted() { return muted; },
+  window.demonAudio = Object.freeze({ unlock, cue, intensity, accent, fleetIntact, mute, pause, resume, sfx, setLevel, powerLayer, get muted() { return muted; },
+    get levels() { return { ...levels }; },
     get graph() { return { context, master, music, effects }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.
     get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, offset: active?.player?.offset ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length, decoded: [...bufferCache.keys()], formats, scene: { ...scene }, accents: accentLog.slice(), fleetIntact: fleetIntactFlag,
-      bpm: 60 / beatSeconds, beatSeconds, drop: dropState ? { ...dropState } : null }; } });
+      bpm: 60 / beatSeconds, beatSeconds, drop: dropState ? { ...dropState } : null,
+      levels: { ...levels }, masterGain: master?.gain.value ?? null, musicLevel: musicLevel?.gain.value ?? null, limiter: !!limiter,
+      layers: layersLive.filter(l => l.end > (context?.currentTime ?? 0)).map(l => ({ ...l })), layerLog: layerLog.slice(),
+      power: { active: power.active, falling: power.falling, playing: power.player ? { ...power.player, source: undefined, gain: undefined } : null, bright: power.brightOn } }; } });
   // Unlock from real DOM gestures, including Flutter canvas input.
   for (const type of ['pointerdown','keydown']) window.addEventListener(type, unlock, { once: true, capture: true });
   cue('menu');

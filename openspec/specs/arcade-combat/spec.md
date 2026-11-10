@@ -103,6 +103,17 @@ Kills SHALL award larger scores for stronger enemies and bosses. Spread, rapid-f
 - **WHEN** an already-active type is collected
 - **THEN** only that type returns to nine seconds and other timers are unchanged
 
+### Requirement: Perspective-scaled swarm hitboxes
+The simulation SHALL own each demon's perspective nearness and quantised scale (`Demon.nearness`, `Demon.scale`; `plan/perspective.md`), and every collision SHALL use that scale: ordinary shot hitboxes `±13 × ±10 · scale` (the drawn silhouette), sentinel `±27 × ±18 · scale`, ship contact `10 + 11 · scale`, blast reach `radius + 14 · scale`, hostile muzzles `12 · scale` / `14 · scale` below the centre, and evasive sidesteps proportional to scale. Demons SHALL remain unhittable while entering. Overall difficulty SHALL stay within about ±10% of the flat game (`ArcadeModel.perspective = false`) in hit rate, time to clear and lives lost, as measured by `test/perspective_difficulty_test.dart`.
+
+#### Scenario: What you see is what you hit
+- **WHEN** a diving gargoyle drawn at 1.5× passes beside the ship
+- **THEN** a shot or contact counts against its 1.5× box, while a shot passing 16 units beside a 1.1× top-row demon, visibly clear of its wing tips, misses
+
+#### Scenario: Difficulty holds
+- **WHEN** the deterministic pilot plays sectors 1, 3 and 5 on routes 0 and 1 with and without perspective
+- **THEN** pooled hit rate and time to clear differ by at most 10%, and lives lost by at most 10% or two standard errors
+
 ## Research and reference traceability
 
 - Master reference index: [plan/reference-register.md](../../../plan/reference-register.md)

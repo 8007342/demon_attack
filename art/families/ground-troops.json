@@ -1,0 +1,21 @@
+{
+ "schema": "demon-attack.ground-troops/v1",
+ "name": "ground-troops",
+ "notes": "Ground war v4: the mixed ground forces added beside assets/images/ground-forces.png. Demon infantry (anthropomorphised gargoyle-demon soldiers in military attire: helmet over the horns, webbing, armour vest, folded bat wings, barbed tail), demon rocket troopers, a demon heavy tank, and allied rifle and rocket troopers seen from behind. Every value is an input to tools/ground_troops (Go, standard library only). Silhouettes and every animation frame are authored on the texel grid; each unit's selected ComfyUI keyframe (SDXL + pixel-art-xl + LayerDiffuse transparent sprite) contributes a -1/0/+1 shading texture on its body ramp, so all frames stay aligned pixel for pixel. Colours come from the reserved sets of art/families/ground-forces.json so the new units sit in the same family.",
+ "atlas": {"file": "assets/images/ground-troops.png", "cell": [32, 24], "columns": 12, "rows": 6},
+ "style_prompt": "pixel art, 16-bit arcade game sprite, single full body character, side view facing right, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated",
+ "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, blood, gore, wounds, realistic weapons brand, crowd, many characters",
+ "sprite": {"workflow": "art/workflows/backgrounds/sprite-transparent.json", "candidates": 3, "source_px": 64},
+ "units": [
+  {"id": "demon-grunt", "row": 0, "side": "demon", "kind": "grunt", "seed": 740100, "selected": 740101,
+   "prompt": "a small cartoon gargoyle demon soldier marching, stony grey-violet hide, curled horns poking through a dented iron helmet, glowing orange eyes, military webbing and an armour vest, folded bat wings, barbed tail, holding a long rifle, friendly-scary"},
+  {"id": "demon-rocketeer", "row": 1, "side": "demon", "kind": "rocketeer", "seed": 740200, "selected": 740201,
+   "prompt": "a stocky cartoon gargoyle demon brute soldier, heavy shoulders, stone hide, ram horns, iron helmet and shoulder armour, a big rocket launcher tube carried on its shoulder, glowing orange eyes, folded stubby bat wings, friendly-scary"},
+  {"id": "demon-tank", "row": 2, "side": "demon", "kind": "tank", "seed": 740300, "selected": 740302,
+   "prompt": "a demonic heavy battle tank seen from the side facing right, dark iron hull with a horned gargoyle prow, spiked caterpillar treads, a turret with a curled horn mantlet and a long cannon, glowing orange furnace vents, war machine"},
+  {"id": "ally-rifle", "row": 3, "side": "ally", "kind": "rifle", "seed": 740400, "selected": 740401,
+   "prompt": "a human space marine soldier seen from behind, grey-blue armour, helmet with a cyan visor glow, backpack, holding a rifle, walking away from the viewer"},
+  {"id": "ally-rocket", "row": 4, "side": "ally", "kind": "rocket", "seed": 740500, "selected": 740500,
+   "prompt": "a human space marine soldier seen from behind carrying a rocket launcher tube on the shoulder, grey-blue armour, helmet with a cyan visor glow, backpack, walking away from the viewer"}
+ ]
+}

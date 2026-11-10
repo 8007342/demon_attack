@@ -1120,6 +1120,245 @@ def build_synth(spec, cue, work):
     return out, None, extra
 
 
+# ---------------------------------------------------------------- stems (audio round)
+# Composable dive layers (l<n>-layers, a sprite of LAYER_SLOTS two-bar slots)
+# and the power-up layer (l<n>-power, an 8-bar loop on the tier grid), cut
+# from the level's own tier masters (<work>/l<n>-t<k>.wav, else the shipped
+# Ogg decoded): the tempo is the level's by construction (sample-exact bars),
+# the key is the level's, and every slice starts on a grid beat chosen by
+# measurement (onset strength at the beat, key-profile match of its chroma).
+# No generation; nobody listened.
+LAYER_SLOTS = ['stab', 'swell', 'fill', 'gallop', 'lead', 'low']
+LAYER_SLOT_BEATS = 8
+STEM_GUARD = 2400  # samples of silence at each layer slot's end
+LAYER_TAIL_S = 0.04  # demon-audio.js plays a slot for slotSeconds - this
+KEY_PROFILES = {  # Krumhansl-Kessler tonal hierarchies, tonic at index 0
+    'major': [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88],
+    'minor': [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17],
+}
+PITCH = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11}
+
+
+def key_profile(keyscale):
+    tonic, mode = keyscale.split()
+    # Chroma bins below are pitch classes relative to A (440 Hz = bin 0).
+    return np.roll(np.array(KEY_PROFILES[mode]), (PITCH[tonic] - 9) % 12)
+
+
+def segment_chroma(audio, lo=80.0, hi=2000.0, n_fft=8192):
+    """Long-window chroma (5.9 Hz bins: the 2048-point STFT is too coarse
+    below 200 Hz and biased every tier towards one pitch class)."""
+    mono = audio.mean(axis=1)
+    if len(mono) < n_fft:
+        mono = np.pad(mono, (0, n_fft - len(mono)))
+    frames = np.lib.stride_tricks.sliding_window_view(mono, n_fft)[::2048] * np.hanning(n_fft)
+    mag = np.abs(np.fft.rfft(frames, axis=1))
+    freqs = np.fft.rfftfreq(n_fft, 1 / SR)
+    sel = (freqs > lo) & (freqs < hi)
+    pc = np.round(12 * np.log2(freqs[sel] / 440)).astype(int) % 12
+    c = np.array([mag[:, sel][:, pc == k].sum() for k in range(12)])
+    return c / (c.sum() + 1e-12)
+
+
+def key_match(audio, ref, lo=80.0, hi=2000.0):
+    """Chroma correlation with `ref`: a function (lo, hi) -> the level's own
+    mean tier chroma in that band (what the layer must agree with)."""
+    return _corr(segment_chroma(audio, lo, hi), ref(lo, hi))
+
+
+def estimate_key(chroma):
+    names = ['A', 'Bb', 'B', 'C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab']
+    r, k, m = max((_corr(chroma, np.roll(np.array(KEY_PROFILES[m]), k)), k, m) for k in range(12) for m in KEY_PROFILES)
+    return f'{names[k]} {m}', round(float(r), 3)
+
+
+def hpss_loop(audio, kernel=17):
+    """Median-filter HPSS of a loop (circularly padded, so the parts loop too).
+    Returns (harmonic, percussive) with soft (Wiener) masks."""
+    from scipy.ndimage import median_filter
+    pad = SR
+    x = np.concatenate([audio[-pad:], audio, audio[:pad]])
+    nper, hop = 2048, 512
+    out_h, out_p = np.zeros_like(x), np.zeros_like(x)
+    for ch in range(2):
+        _, _, z = signal.stft(x[:, ch], fs=SR, nperseg=nper, noverlap=nper - hop)
+        mag = np.abs(z)
+        harm = median_filter(mag, size=(1, kernel)); perc = median_filter(mag, size=(kernel, 1))
+        mh = harm ** 2 / (harm ** 2 + perc ** 2 + 1e-12)
+        for mask, out in ((mh, out_h), (1 - mh, out_p)):
+            _, y = signal.istft(z * mask, fs=SR, nperseg=nper, noverlap=nper - hop)
+            out[:, ch] = y[:len(x)]
+    return out_h[pad:pad + len(audio)], out_p[pad:pad + len(audio)]
+
+
+def band(audio, lo=None, hi=None, order=4):
+    """Zero-phase Butterworth band (transients stay on their beat)."""
+    if lo and hi:
+        sos = signal.butter(order, [lo, hi], 'bandpass', fs=SR, output='sos')
+    elif lo:
+        sos = signal.butter(order, lo, 'highpass', fs=SR, output='sos')
+    else:
+        sos = signal.butter(order, hi, 'lowpass', fs=SR, output='sos')
+    return signal.sosfiltfilt(sos, audio, axis=0)
+
+
+def onset_env(audio):
+    return features(audio)['env']
+
+
+def onset_at(env, sample, window_ms=25):
+    """Peak onset strength within +-window of `sample`, and its offset (ms)."""
+    f = sample / HOP
+    w = window_ms / 10
+    lo, hi = max(0, int(f - w)), min(len(env), int(f + w) + 1)
+    if hi <= lo:
+        return 0.0, 0.0
+    i = lo + int(np.argmax(env[lo:hi]))
+    return float(env[i]), (i - f) * 10.0
+
+
+def tier_source(work, level, tier):
+    wav = Path(work) / f'l{level}-t{tier}.wav'
+    return read_audio(wav if wav.exists() else OUT / f'l{level}-t{tier}.ogg')
+
+
+def envelope(n, attack=96, decay_from=None):
+    """Gain curve of n samples: a short linear attack; from `decay_from` a
+    raised-cosine release to exactly zero at n."""
+    g = np.ones(n)
+    a = min(attack, n)
+    g[:a] = np.linspace(0, 1, a, endpoint=False)
+    if decay_from is not None and decay_from < n:
+        t = np.linspace(0, 1, n - decay_from)
+        g[decay_from:] *= np.cos(t * np.pi / 2) ** 2
+    return g[:, None]
+
+
+def build_stems(spec, cue, work):
+    import music_motifs
+    level = int(cue['group'])
+    bar = music_motifs.BAR_SAMPLES[level]
+    beat = bar / 4
+    at = lambda b: int(round(b * beat))
+    key = spec['groups'][str(level)]['keyscale']
+    tiers = {t: tier_source(work, level, t) for t in range(1, 5)}
+    refs = {}
+
+    def profile(lo, hi):
+        if (lo, hi) not in refs:
+            refs[(lo, hi)] = np.mean([segment_chroma(a, lo, hi) for a in tiers.values()], axis=0)
+        return refs[(lo, hi)]
+    for t, a in tiers.items():
+        assert len(a) == 8 * bar, f'l{level}-t{t}: {len(a)} samples, expected 8 bars of {bar}'
+    n = len(tiers[4])
+    loop_at = lambda a, b0, beats: np.take(a, np.arange(at(b0), at(b0) + at(beats)) % n, axis=0)
+    if cue['kind'] == 'loop':
+        # Power layer: tier-4 percussive part above 3 kHz (cymbals, snare crack,
+        # blast top end), the whole loop, so it sits on the tiers at their loop position.
+        _, perc = hpss_loop(tiers[4])
+        out = normalise(band(perc, lo=3000), loudness_of(spec, cue), spec)
+        env = onset_env(out)
+        on = float(np.mean([onset_at(env, at(b))[0] for b in range(32)]))
+        off = float(np.mean([onset_at(env, at(b + .5))[0] for b in range(32)]))
+        mid = float(np.mean([onset_at(env, at(b + .25), 10)[0] for b in range(32)]))
+        extra = {'mode': 'stems', 'group': cue['group'], 'role': 'power', 'source': f'l{level}-t4', 'band': 'percussive above 3 kHz',
+                 'onsetOnBeat': round(on, 3), 'onsetOnEighth': round(off, 3), 'onsetOnSixteenth': round(mid, 3)}
+        return out, (0, len(out)), extra
+    # Layers sprite.
+    harm4, perc4 = hpss_loop(tiers[4])
+    harm3, _ = hpss_loop(tiers[3])
+    env4 = onset_env(tiers[4])
+    envp = onset_env(perc4)
+    slot = at(LAYER_SLOT_BEATS)
+    slots, info = [], {}
+
+    def place(parts, beats):
+        """parts: (beat offset, audio, gain); one slot that is silent after `beats` (+1 beat of release)."""
+        s = np.zeros((slot, 2))
+        for b0, a, g in parts:
+            i = at(b0)
+            m = min(len(a), slot - i)
+            s[i:i + m] += a[:m] * g
+        # Silent for the last 50 ms: the next slot's hard attack pre-echoes in Opus,
+        # and the player stops each layer 40 ms before its slot ends (LAYER_TAIL_S).
+        s[min(slot - STEM_GUARD, at(beats + 1)):] = 0
+        return s
+    # stab: the tier-4 beat with the strongest onset plus key match.
+    scores = []
+    for b in range(32):
+        strength, offset = onset_at(env4, at(b))
+        km = key_match(loop_at(tiers[4], b, 1), profile)
+        scores.append((strength + 0.5 * km, b, strength, offset, km))
+    _, sb, strength, offset, km = max(scores)
+    # Two bars of a syncopated 3+3+2 figure, re-hitting the same stab.
+    hit = loop_at(tiers[4], sb, .75) * envelope(at(.75), attack=48, decay_from=at(.3))
+    slots.append(place([(b, hit, g) for b, g in ((0, 1), (1.5, .85), (3, .75), (4, .85), (5.5, .7), (7, .6))], 7.5))
+    info['stab'] = {'source': f'l{level}-t4', 'beat': sb, 'onset': round(strength, 3), 'onsetOffsetMs': round(offset, 1), 'keyMatch': round(km, 3)}
+    # swell: the best key-matching downbeat; its harmonic beat reversed into the hit.
+    km, db = max((key_match(loop_at(harm4, b, 2), profile), b) for b in range(0, 32, 4))
+    rev = loop_at(harm4, db, 1)[::-1] * (np.linspace(0, 1, at(1)) ** 2)[:, None]
+    land = loop_at(tiers[4], db, 4) * envelope(at(4), attack=24, decay_from=at(1))
+    slots.append(place([(0, rev, .9), (1, land, 1)], 5))
+    info['swell'] = {'source': f'l{level}-t4', 'beat': db, 'keyMatch': round(km, 3), 'onset': round(onset_at(env4, at(db))[0], 3)}
+    # fill: the densest drum half-bar (percussive part) leading into a half-bar line.
+    frames = lambda b0, beats: np.take(envp, np.arange(int(at(b0) / HOP), int(at(b0 + beats) / HOP)) % len(envp))
+    _, fb = max((float(np.mean(frames(land_b - 2, 2))) + 0.5 * onset_at(envp, at(land_b % 32))[0], land_b) for land_b in range(2, 34, 2))
+    # The fill, then the bar of tier-4 drums it lands on.
+    fill = loop_at(perc4, fb - 2, 6) * envelope(at(6), attack=24, decay_from=at(4.5))
+    slots.append(place([(0, fill, 1)], 6))
+    info['fill'] = {'source': f'l{level}-t4', 'beat': (fb - 2) % 32, 'landsOn': fb % 32, 'landOnset': round(onset_at(envp, at(fb % 32))[0], 3)}
+    # gallop: the bar of tier-2/3 drums with the most kick (low-band) onsets.
+    best = None
+    for t in (2, 3):
+        _, p = hpss_loop(tiers[t])
+        low = onset_env(band(p, hi=200))
+        for b in range(0, 32, 4):
+            dens = float(np.mean(np.take(low, np.arange(int(at(b) / HOP), int(at(b + 8) / HOP)) % len(low))))
+            if best is None or dens > best[0]:
+                best = (dens, t, b, p)
+    dens, gt, gb, gp = best
+    gallop = band(loop_at(gp, gb, 7.5), lo=40) * envelope(at(7.5), attack=24, decay_from=at(6))
+    slots.append(place([(0, gallop, 1)], 7.5))
+    info['gallop'] = {'source': f'l{level}-t{gt}', 'beat': gb, 'kickDensity': round(dens, 3)}
+    best = gp = None
+    # lead: two bars of the tier-3 harmonic lead band (700 Hz-6 kHz) from a bar line:
+    # the pair with the best key match (and some level).
+    leads = []
+    for b in range(0, 32, 4):
+        seg = band(loop_at(harm3, b, 8), 700, 6000)
+        km = key_match(seg, profile, 200, 4000)
+        leads.append((km + 2 * float(np.sqrt(np.mean(seg ** 2))), b, km))
+    _, lb, km = max(leads)
+    lead = band(loop_at(harm3, lb, 8), 700, 6000)[:at(7)] * envelope(at(7), attack=240, decay_from=at(6))
+    slots.append(place([(0, lead, 1)], 7))
+    info['lead'] = {'source': f'l{level}-t3', 'beat': lb, 'keyMatch': round(km, 3)}
+    # low: low band of the tier-4 downbeat whose bass chroma best matches the key.
+    lows = [(key_match(loop_at(tiers[4], b, 2), profile, 40, 300) + onset_at(env4, at(b))[0], b) for b in range(0, 32, 4)]
+    _, ob = max(lows)
+    low = band(loop_at(tiers[4], ob, 7), hi=250) * envelope(at(7), attack=48, decay_from=at(4))
+    slots.append(place([(0, low, 1)], 7))
+    info['low'] = {'source': f'l{level}-t4', 'beat': ob, 'keyMatch': round(key_match(loop_at(tiers[4], ob, 2), profile, 40, 300), 3)}
+    # Each slot at the layer loudness (stack gain staging is in demon-audio.js).
+    lufs = loudness_of(spec, cue)
+    for i, s in enumerate(slots):
+        name = LAYER_SLOTS[i]
+        sounding = s[np.abs(s).max(axis=1) > 1e-6]
+        g = 10 ** ((lufs - k_weighted_loudness(sounding)) / 20)
+        g = min(g, 10 ** (spec['peak_dbfs'] / 20) / (np.abs(s).max() + 1e-12))
+        slots[i] = s * g
+        info[name]['peakDb'] = round(float(20 * np.log10(np.abs(slots[i]).max() + 1e-12)), 2)
+        # Transient placement: the slot's main onset against its grid point
+        # (the swell's hit is one beat in).
+        e = onset_env(slots[i])
+        target = at(1) if name == 'swell' else 0
+        info[name]['hitOffsetMs'] = round(onset_at(e, target, 40)[1], 1)
+    out = np.concatenate(slots)
+    extra = {'mode': 'stems', 'group': cue['group'], 'slotBeats': LAYER_SLOT_BEATS, 'slotSeconds': slot / SR, 'slots': LAYER_SLOTS,
+             'keyscale': key, 'measuredKey': dict(zip(('key', 'r'), estimate_key(profile(80.0, 2000.0)))),
+             'nominalKeyMatch': round(_corr(profile(80.0, 2000.0), key_profile(key)), 3), 'layers': info}
+    return out, None, extra
+
+
 def cmd_build(args):
     spec = load_spec()
     work = Path(args.work)
@@ -1143,6 +1382,8 @@ def cmd_build(args):
         cspec = dict(spec, loudness_lufs=loudness_of(spec, cue))
         if mode == 'synth':
             out, loop, extra = build_synth(spec, cue, work)
+        elif mode == 'stems':
+            out, loop, extra = build_stems(spec, cue, work)
         else:
             cands = [p for p in candidate_files(work, cue, spec) if p.stem in analysis]
             if cue.get('pick') is not None:
@@ -1349,7 +1590,9 @@ def cmd_verify(args):
                 slot = round(meta['slotSeconds'] * SR)
                 if len(audio) != slot * len(meta['slots']):
                     problems.append('sprite slots do not tile the file')
-                ends = [float(np.abs(audio[(i + 1) * slot - 480:(i + 1) * slot]).max()) for i in range(len(meta['slots']))]
+                # Layer slots are played up to LAYER_TAIL_S before their end.
+                cut = round(LAYER_TAIL_S * SR) if meta.get('mode') == 'stems' else 0
+                ends = [float(np.abs(audio[(i + 1) * slot - cut - 480:(i + 1) * slot - cut]).max()) for i in range(len(meta['slots']))]
                 # AAC pre-echo of the next slot's attack is allowed (about -30 dB).
                 if max(ends) > (0.02 if fmt == 'ogg' else 0.05):
                     problems.append(f'slot does not end silent ({max(ends):.3f})')

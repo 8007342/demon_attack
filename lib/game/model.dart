@@ -2,13 +2,16 @@ import 'dart:math' as math;
 
 import 'difficulty.dart';
 import 'game_events.dart';
+import 'perspective.dart';
 import 'swarm_policy.dart';
 export 'difficulty.dart';
 export 'game_events.dart';
+export 'perspective.dart';
 export 'swarm_policy.dart';
 
 // --- ground war (demon ground forces, allies, homing missiles) ---
 part 'ground_war.dart';
+part 'ground_war_v4.dart'; // --- ground war v4
 
 // --- life-loss sequence (explosion, regroup, re-emergence) ---
 part 'life_loss.dart';
@@ -102,6 +105,25 @@ class Demon {
   double divePrep = 0;
   bool _prepLead = false;
   bool get angry => hp == 1 && maxHp > 1;
+
+  // --- perspective (lib/game/perspective.dart) ---
+  /// Virtual nearness z0/z on the flyover camera; 0 until first placed.
+  double nearness = 0;
+
+  /// Quantised size factor: of the 40-unit sprite, or of the sentinel's
+  /// 128-unit cell. Drawn size, hitbox and muzzle all use it.
+  double scale = 1;
+
+  /// This entrance flies in from the horizon (wave and reinforcement
+  /// arrivals) rather than dropping in from above (re-entry after a dive).
+  bool arrivesFromDistance = false;
+
+  /// Shot hitbox half extents, set with [scale] by the depth pass; the
+  /// flat legacy box until then.
+  late double hitHalfWidth = isLarge ? 27.0 : 16.0;
+  late double hitHalfHeight = isLarge ? 18.0 : 14.0;
+  double get muzzleDy => (isLarge ? 14.0 : 12.0) * scale;
+  double get contactHalf => 10 + 11 * scale; // ship 10 + demon body 11
 }
 
 class Shot {
@@ -343,6 +365,10 @@ class ArcadeModel {
   int lives = 3, score = 0, level = 1, cycle = 0, kills = 0, wave = 1;
   int? clearedLevel;
   static const maxActiveDemons = 61;
+
+  /// Pseudo-3D swarm depth (plan/perspective.md). False restores the flat
+  /// legacy sizes, hitboxes and entrances; kept for calibration tests.
+  bool perspective = true;
   int flocksPlanned = 0, flocksSpawned = 0;
   int get flocksRemaining => flocksPlanned - flocksSpawned;
   double _reinforcementLeft = 0, _reinforcementCooldown = 0, _escortLeft = 0;
@@ -793,12 +819,14 @@ class ArcadeModel {
           demon.entranceDelay = (i % 6) * .045 + (i ~/ 6) * .08;
           demon.entranceDuration = fromCheckpoint ? 1.0 : 1.25;
           demon.entranceStartY = -48 - (i ~/ 6) * 20.0;
+          demon.arrivesFromDistance = true;
           demon.y = demon.entranceStartY;
         } else if (!fromCheckpoint) {
           demon.entranceProgress = 0;
           demon.entranceDelay = (i % 6) * .035 + (i ~/ 6) * .06;
           demon.entranceDuration = .85;
           demon.entranceStartY = -40 - (i ~/ 6) * 16.0;
+          demon.arrivesFromDistance = true;
           demon.y = demon.entranceStartY;
         }
         demons.add(demon);
@@ -913,7 +941,8 @@ class ArcadeModel {
             ..entranceProgress = 0
             ..entranceDelay = 0
             ..entranceDuration = .8
-            ..entranceStartY = -32 - i * 8.0;
+            ..entranceStartY = -32 - i * 8.0
+            ..arrivesFromDistance = true;
       d.y = d.entranceStartY;
       demons.add(d);
     }
@@ -1416,12 +1445,68 @@ class ArcadeModel {
           32 *
           (d.seed.floor().isEven ? 1 : -1) *
           (1 - s);
-      d.x = (d.homeX + arcX + (targetFormX - d.homeX) * s).clamp(
-        18.0,
-        width - 18.0,
-      );
-      d.y = d.entranceStartY + (targetFormY - d.entranceStartY) * s;
+      _placeEntering(d, s, targetFormX, targetFormY, arcX);
       _updateDemonKinematics(d, prevX, prevY, dt);
+    }
+    _updatePerspective(dt);
+  }
+
+  // --- perspective (lib/game/perspective.dart, plan/perspective.md) ---
+  /// Entrance placement: the flat legacy drop from above, or, for arrivals
+  /// with [Demon.arrivesFromDistance], a flight out of the horizon haze
+  /// whose depth moves linearly so it grows as it approaches its slot.
+  void _placeEntering(Demon d, double s, double tx, double ty, double arcX) {
+    if (perspective && d.arrivesFromDistance) {
+      final (n, u) = Perspective.approach(s, _targetNearness(d, ty));
+      final x0 = Perspective.arrivalX(d.homeX);
+      final y0 = Perspective.arrivalYFor(d.homeY);
+      d.nearness = n;
+      d.x = (x0 + (tx - x0) * u + arcX * .6).clamp(18.0, width - 18.0);
+      d.y = y0 + (ty - y0) * u;
+      return;
+    }
+    d.x = (d.homeX + arcX + (tx - d.homeX) * s).clamp(18.0, width - 18.0);
+    d.y = d.entranceStartY + (ty - d.entranceStartY) * s;
+  }
+
+  /// The nearness [d] settles toward at screen [y]: the flight sheet, a
+  /// breath in phase with its formation bob, a slow wander, a dive boost.
+  double _targetNearness(Demon d, double y) => Perspective.targetNearness(
+    y,
+    phase: levelClock * (d.isLarge ? .65 : 1.7) * speed + d.seed,
+    wanderPhase: levelClock * .53 + d.seed * 2.3,
+    diving: d.dive > 0 || d.rushing,
+  );
+
+  /// Depth pass after movement: eases each demon's nearness toward its
+  /// target (entering arrivals are placed exactly) and quantises its scale.
+  void _updatePerspective(double dt) {
+    for (final d in demons) {
+      if (!perspective) {
+        d.scale = 1;
+        d.hitHalfWidth = d.isLarge ? 27.0 : 16.0;
+        d.hitHalfHeight = d.isLarge ? 18.0 : 14.0;
+        continue;
+      }
+      final placed = d.entering && d.arrivesFromDistance;
+      if (!placed) {
+        final target = _targetNearness(d, d.y);
+        d.nearness = dt <= 0 || d.nearness == 0
+            ? target
+            : d.nearness +
+                  (target - d.nearness) *
+                      (1 - math.exp(-Perspective.followRate * dt));
+      }
+      d.scale = Perspective.scaleOf(
+        d.nearness,
+        large: d.isLarge,
+        angry: d.angry,
+      );
+      final (halfW, halfH) = d.isLarge
+          ? Perspective.largeHitHalf
+          : Perspective.smallHitHalf;
+      d.hitHalfWidth = halfW * d.scale;
+      d.hitHalfHeight = halfH * d.scale;
     }
   }
 
@@ -1483,11 +1568,7 @@ class ArcadeModel {
             32 *
             (d.seed.floor().isEven ? 1 : -1) *
             (1 - s);
-        d.x = (d.homeX + arcX + (targetFormX - d.homeX) * s).clamp(
-          18.0,
-          width - 18.0,
-        );
-        d.y = d.entranceStartY + (targetFormY - d.entranceStartY) * s;
+        _placeEntering(d, s, targetFormX, targetFormY, arcX);
         _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
       }
@@ -1528,7 +1609,7 @@ class ArcadeModel {
           _hostile(
             Shot(
               d.x,
-              d.y + 14,
+              d.y + d.muzzleDy,
               aim,
               240 * speed,
               hostile: true,
@@ -1545,7 +1626,13 @@ class ArcadeModel {
           if (!d.isLarge) {
             for (final offset in [-32.0, 0.0, 32.0]) {
               _hostile(
-                Shot(d.x, d.y + 12, aim + offset, 130 * speed, hostile: true),
+                Shot(
+                  d.x,
+                  d.y + d.muzzleDy,
+                  aim + offset,
+                  130 * speed,
+                  hostile: true,
+                ),
               );
             }
           }
@@ -1570,7 +1657,7 @@ class ArcadeModel {
               _hostile(
                 Shot(
                   d.x,
-                  d.y + 12,
+                  d.y + 12 * d.scale,
                   aim + offset,
                   240 * speed,
                   hostile: true,
@@ -1615,6 +1702,7 @@ class ArcadeModel {
             d.x = d.homeX;
           } else {
             d.entranceStartY = -36;
+            d.arrivesFromDistance = false; // loops back in from above
             d.entranceProgress = 0;
             d.entranceDuration = 0.65;
             d.entranceDelay = 0;
@@ -1665,10 +1753,17 @@ class ArcadeModel {
       final d = shooters[random.nextInt(shooters.length)];
       final aim = ((shipX - d.x) * .22).clamp(-65.0, 65.0);
       _hostile(
-        Shot(d.x, d.y + 12, aim, (100 + level * 13) * speed, hostile: true),
+        Shot(
+          d.x,
+          d.y + d.muzzleDy,
+          aim,
+          (100 + level * 13) * speed,
+          hostile: true,
+        ),
       );
       _enemyFire = math.max(.45, 1.8 - level * .18 - cycle * .05);
     }
+    _updatePerspective(dt);
   }
 
   bool _evadeSmall(
@@ -1749,11 +1844,12 @@ class ArcadeModel {
       return true;
     }
     final projectedX = nearestShot.x + nearestShot.vx * bestArrival;
-    if ((projectedX - d.x).abs() < 18) {
+    // A sidestep clears the demon's own (perspective-scaled) hitbox.
+    if ((projectedX - d.x).abs() < d.hitHalfWidth + 2) {
       var dir = projectedX <= d.x ? 1.0 : -1.0;
       if (d.x < 44) dir = 1.0;
       if (d.x > width - 44) dir = -1.0;
-      d.evadeOffset = dir * 22.0;
+      d.evadeOffset = dir * 22.0 * d.scale;
       d.evadeLeft = 0.32;
       d.evadeCooldown = cooldown;
     }
@@ -1772,13 +1868,15 @@ class ArcadeModel {
       if (shot.hostile || shot.vy >= 0) continue;
       final arrival = (d.y - shot.y) / shot.vy;
       final projectedX = shot.x + shot.vx * arrival;
-      if (arrival < 0 || arrival > .55 || (projectedX - d.x).abs() > 38) {
+      if (arrival < 0 ||
+          arrival > .55 ||
+          (projectedX - d.x).abs() > 38 * d.scale) {
         continue;
       }
       var direction = projectedX < d.x ? 1 : -1;
       if (d.x < 110) direction = 1;
       if (d.x > width - 110) direction = -1;
-      d.evadeOffset = direction * 54.0;
+      d.evadeOffset = direction * 54.0 * d.scale;
       d.evadeLeft = .6;
       d.evadeCooldown = 1.4;
       break;
@@ -1927,10 +2025,8 @@ class ArcadeModel {
       if (hit) continue;
       for (final d in List<Demon>.of(demons)) {
         if (!d.entering &&
-            (s.x - d.x).abs() <
-                (d.isLarge ? 27 : 16) + (s.blastRadius > 0 ? 5 : 0) &&
-            (s.y - d.y).abs() <
-                (d.isLarge ? 18 : 14) + (s.blastRadius > 0 ? 5 : 0)) {
+            (s.x - d.x).abs() < d.hitHalfWidth + (s.blastRadius > 0 ? 5 : 0) &&
+            (s.y - d.y).abs() < d.hitHalfHeight + (s.blastRadius > 0 ? 5 : 0)) {
           if (s.blastRadius > 0) {
             _explodeShot(s);
           } else {
@@ -1957,7 +2053,9 @@ class ArcadeModel {
       if (hit) s.y = height + 20;
     }
     for (final d in List<Demon>.of(demons)) {
-      if (!d.entering && (d.x - shipX).abs() < 21 && (d.y - shipY).abs() < 21) {
+      if (!d.entering &&
+          (d.x - shipX).abs() < d.contactHalf &&
+          (d.y - shipY).abs() < d.contactHalf) {
         hitPlayer();
         if (d.rushing) _sacrifice(d);
       }
@@ -1966,8 +2064,8 @@ class ArcadeModel {
 
   void _explodeShot(Shot shot, {bool hitCarrier = true}) {
     blasts.add(Blast(shot.x, shot.y, blastRadius: shot.blastRadius));
-    final radius = shot.blastRadius + 14;
     for (final d in List<Demon>.of(demons)) {
+      final radius = shot.blastRadius + 14 * d.scale;
       final dx = shot.x - d.x, dy = shot.y - d.y;
       if (dx * dx + dy * dy <= radius * radius) {
         hitDemon(d, damage: shot.damage);
