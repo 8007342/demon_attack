@@ -1345,15 +1345,18 @@ def stage_radio(args):
         rng = np.random.default_rng(seed_of('radio:' + clip_id))
         out, clean, lead = radio_chain(raw, demon, rng, spec)
         target = spec['loudness']['demon_lufs' if demon else 'human_lufs']
-        gain = 10 ** ((target - k_loudness(out)) / 20)
-        out = out * gain
         ceiling = 10 ** (spec['loudness']['peak_dbfs'] / 20) * .97
-        peak = np.abs(out).max()
-        if peak > ceiling:
-            # Gentle soft-knee limiting of the few transients above the ceiling.
+        # Normalise, soft-limit the transients over the ceiling, and repeat
+        # (a peaky delivery loses loudness to the limiter; v4's dynamics).
+        for _ in range(4):
+            out = out * 10 ** ((target - k_loudness(out)) / 20)
+            if np.abs(out).max() <= ceiling:
+                break
             knee = ceiling * .8
             over = np.abs(out) > knee
             out[over] = np.sign(out[over]) * (knee + (ceiling - knee) * np.tanh((np.abs(out[over]) - knee) / (ceiling - knee)))
+            if abs(k_loudness(out) - target) < .5:
+                break
         write_wav(WORK / 'radio' / f'{clip_id}.wav', out)
         mouth, open_track, vis = mouth_track(clean, lead, len(out), demon, spec['mouth_fps'])
         meta[clip_id] = {
