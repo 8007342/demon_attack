@@ -43,19 +43,28 @@ void main() {
           'sector': 4,
         });
       final initial = List<Demon>.of(model.demons);
+      // Waiting arrivals are parked, undrawn, at their far start point just
+      // above the horizon (plan/perspective.md).
+      final parked = [for (final d in initial) d.y];
       expect(
         initial.every(
-          (d) => d.entering && d.entranceProgress == 0 && d.y < -30,
+          (d) =>
+              d.entering &&
+              d.entranceProgress == 0 &&
+              d.arrivesFromDistance &&
+              (d.nearness - Perspective.nearFar).abs() < 1e-9 &&
+              d.y == Perspective.arrivalYFor(d.homeY),
         ),
         isTrue,
       );
       tick(model, ArcadeModel.arrivalHintDuration - .2);
       expect(model.mode, RunMode.transition);
       expect(
-        initial.every(
-          (d) => d.entranceProgress == 0 && d.y == d.entranceStartY,
-        ),
-        isTrue,
+        [
+          for (final d in initial)
+            if (d.entranceProgress == 0) d.y,
+        ],
+        parked,
       );
       model.pause();
       tick(model, 2);

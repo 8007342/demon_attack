@@ -475,6 +475,7 @@ class DemonScene extends FlameGame {
         }
         continue;
       }
+      if (_parked(d)) continue;
       c.save();
       _scaleAbout(c, pos, d.scale); // sizes below are at scale 1
       if (d.elite) {
@@ -1425,6 +1426,13 @@ class DemonScene extends FlameGame {
     return [for (final i in order) demons[i]];
   }
 
+  /// An arrival waiting to set out stays parked, undrawn, at its far start.
+  bool _parked(Demon d) =>
+      model.perspective &&
+      d.entering &&
+      d.arrivesFromDistance &&
+      d.entranceProgress <= 0;
+
   void _scaleAbout(Canvas c, Offset pos, double scale) {
     if (scale == 1) return;
     c.translate(pos.dx, pos.dy);
@@ -1433,18 +1441,19 @@ class DemonScene extends FlameGame {
   }
 
   /// Faint stepped pixel shadows on the flyover ground beneath each demon's
-  /// depth: they tie altitude to the terrain, sharpen as a diver closes in
-  /// and vanish for distant arrivals.
+  /// depth: they darken as a diver loses altitude and closes in, and stay
+  /// all but invisible under the high formation and distant arrivals.
   void _swarmShadows(Canvas c) {
     if (!model.perspective) return;
     final paint = Paint()..isAntiAlias = false;
     for (final d in model.demons) {
-      if (d.nearness <= 0 || (d.isLarge && d.entranceProgress <= 0)) continue;
+      if (d.nearness <= 0 || _parked(d)) continue;
+      if (d.isLarge && d.entranceProgress <= 0) continue;
       final gy = Perspective.groundY(d.nearness);
       if (gy > 524 || gy < d.y + 8) continue;
       final near = ((d.nearness - .5) / .2).clamp(0.0, 1.0);
-      final low = (1 - (gy - d.y) / 420).clamp(.4, 1.0);
-      final alpha = .24 * near * low;
+      final low = (1 - (gy - d.y) / 320).clamp(.15, 1.0);
+      final alpha = .5 * near * low;
       if (alpha < .02) continue;
       final w = ((d.isLarge ? 70.0 : 26.0) * d.nearness / 1.4).round() * 2.0;
       final x = d.x.roundToDouble(), y = gy.roundToDouble();

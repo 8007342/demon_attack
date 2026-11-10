@@ -115,6 +115,17 @@ Gameplay hints SHALL pair one brief actionable sentence with one original pixel 
 - **WHEN** a hint explains shield renewal
 - **THEN** it associates the grace period with absorbing a hit and never claims that unused shield expiry grants invulnerability
 
+### Requirement: Swarm perspective depth
+Gargoyles and sentinels SHALL be drawn at the simulation's quantised perspective scale, consistent with the flyover camera (nearness n = z0/z on a flight sheet from 0.62 at the top to the ship's 0.876): ordinary scale `1.8 · n` in 0.1 steps between 0.5 and 1.5, sentinels `n / 0.622` in 1/16 steps between 0.75 and 1.25; the carrier is not scaled. Wave and reinforcement arrivals SHALL set out small and hazed just above the horizon near the vanishing point and grow along a depth-linear approach into formation, staying undrawn until their entrance begins. Formation demons SHALL breathe about one size step in phase with their bob, and divers SHALL grow as they close on the ship. Demons SHALL be drawn far to near, with distance haze on arrivals and a faint pixel ground shadow beneath each demon's depth. Scale SHALL change only in quantised steps with nearest-neighbour sampling so pixels stay square and stable.
+
+#### Scenario: Arrival from the distance
+- **WHEN** a new wave enters
+- **THEN** its gargoyles appear about 20 units wide and hazed near the horizon and reach their roughly 48-unit formation size as they settle
+
+#### Scenario: Dive at the player
+- **WHEN** a gargoyle dives at the ship
+- **THEN** it grows to the 60-unit cap, passes in front of the formation and its ground shadow darkens as it closes in
+
 ## Research and reference traceability
 
 - Master reference index: [plan/reference-register.md](../../../plan/reference-register.md)
