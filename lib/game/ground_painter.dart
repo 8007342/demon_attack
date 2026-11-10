@@ -249,6 +249,12 @@ class GroundPainter {
     for (final missile in g.missiles) {
       _groundMissile(c, missile, clock);
     }
+    // Homing smoke: puffs laid along the flight, each sized by the
+    // perspective where it was laid, so a dive into the ground plane leaves
+    // a trail that narrows and fogs into the distance.
+    for (final puff in [...g.homingSmoke, ...?g.homing?.trail]) {
+      _homingPuff(c, puff);
+    }
     final h = g.homing;
     if (h != null) {
       if (h.target != null) {
@@ -261,14 +267,39 @@ class GroundPainter {
         };
         ship.paintReticle(c, Offset(tx, ty), clock, scale: size.toDouble());
       }
-      // A short cyan exhaust trail behind the missile.
+      // Exhaust flame right behind the warhead, scaled with perspective.
+      final scale = h.perspective;
       final speed = math.max(1.0, math.sqrt(h.vx * h.vx + h.vy * h.vy));
-      for (var k = 1; k <= 4; k++) {
-        _px(c, h.x - h.vx / speed * k * 4 - 1, h.y - h.vy / speed * k * 4 - 1,
-            k < 3 ? 2 : 1, _cyan.withValues(alpha: 1 - k * .2));
+      for (var k = 1; k <= 3; k++) {
+        final px = math.max(1.0, ((k < 2 ? 3 : 2) * scale).roundToDouble());
+        _px(c, h.x - h.vx / speed * k * 4 * scale - px / 2,
+            h.y - h.vy / speed * k * 4 * scale - px / 2, px,
+            (k == 1 ? _hot : _cyan).withValues(alpha: 1 - k * .22));
       }
-      ship.paintHomingMissile(c, h, clock);
+      if (h.toGround) {
+        // Fogged as it dives deep into the ground plane.
+        final light = depthLight(h.depth);
+        c.saveLayer(null, Paint()
+          ..colorFilter = ColorFilter.mode(
+              Color.fromARGB(255, (255 * light).round(), (255 * light).round(),
+                  (255 * (light * .9 + .1)).round()),
+              BlendMode.modulate));
+        ship.paintHomingMissile(c, h, clock, scale: scale);
+        c.restore();
+      } else {
+        ship.paintHomingMissile(c, h, clock);
+      }
     }
+  }
+
+  void _homingPuff(Canvas c, HomingPuff puff) {
+    final q = (puff.age / HomingPuff.life).clamp(0.0, 1.0);
+    final size = math.max(1.0, ((2 + q * 4) * puff.size).roundToDouble());
+    // Light where it was laid: far puffs sit in the haze.
+    final far = (1 - puff.size).clamp(0.0, 1.0);
+    final base = Color.lerp(const Color(0xFFDCE6F5), const Color(0xFF7A7290), q * .7 + far * .3)!;
+    _px(c, puff.x - size / 2, puff.y - size / 2 - q * 3 * puff.size, size,
+        base.withValues(alpha: (1 - q) * (.75 - far * .3)));
   }
 
   void _groundMissile(Canvas c, GroundMissile m, double clock) {

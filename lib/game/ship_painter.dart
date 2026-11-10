@@ -161,7 +161,12 @@ class ShipPainter {
   }
 
   /// A homing missile in flight (cyan exhaust), turned along its heading.
-  void paintHomingMissile(Canvas c, HomingMissile h, double clock) {
+  void paintHomingMissile(
+    Canvas c,
+    HomingMissile h,
+    double clock, {
+    double scale = 1,
+  }) {
     final at = Offset(h.x.roundToDouble(), h.y.roundToDouble());
     if (!_hasHomingRow) {
       final p = Paint()..isAntiAlias = false;
@@ -174,7 +179,13 @@ class ShipPainter {
     // Quarter-step headings keep the pixel grid readable.
     final steps = (h.heading / (math.pi / 8)).round();
     c.rotate(steps * math.pi / 8);
-    layer(c, homingRow, 4 + (clock * 16).floor() % 2, Offset.zero, scale: 1.3);
+    layer(
+      c,
+      homingRow,
+      4 + (clock * 16).floor() % 2,
+      Offset.zero,
+      scale: 1.3 * scale,
+    );
     c.restore();
   }
 

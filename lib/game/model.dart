@@ -267,6 +267,16 @@ class ArcadeModel {
   /// The ship is away: exploding or the swarm regrouping.
   bool get shipAway => holdHostileFire;
 
+  /// Seconds since the ship was destroyed (while the sequence runs).
+  double get lifeLossElapsed => switch (lifeLossPhase) {
+    LifeLossPhase.none => 0,
+    LifeLossPhase.exploding => LifeLossTuning.explode - lifeLossLeft,
+    LifeLossPhase.regrouping =>
+      LifeLossTuning.away - lifeLossLeft,
+    LifeLossPhase.emerging =>
+      LifeLossTuning.away + LifeLossTuning.emerge - lifeLossLeft,
+  };
+
   /// Regroup pause in progress (shots draining, the swarm reforming).
   bool get regrouping => lifeLossPhase == LifeLossPhase.regrouping;
 
