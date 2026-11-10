@@ -824,9 +824,9 @@ def a2a_scores(spec, work, cue, path, refs, cache={}):
     prof = mel_profile(win)
     closeness = float(np.dot(prof, rprof) / (np.linalg.norm(prof) * np.linalg.norm(rprof) + 1e-9))
     seed, d = parse_candidate(path)
-    tempo, tempo_ok, _ = tempo_check(win, info_g.get('bpm', 120.0))
+    tempo, tempo_ok, tempo_target, tempo_top = tempo_check(win, info_g.get('bpm', 120.0))
     info = {'seed': seed, 'denoise': d, 'motif': sim, 'reference_closeness': closeness, 'guide_lag_ms': round(lag * 1000),
-            'length_ok': length_ok, 'tempo': tempo, 'tempo_ok': tempo_ok, 'metrics': genre_metrics(win, info_g.get('bpm', 120.0))}
+            'length_ok': length_ok, 'tempo': tempo, 'tempo_ok': tempo_ok, 'pulse_target': round(tempo_target, 3), 'pulse_top': round(tempo_top, 3), 'metrics': genre_metrics(win, info_g.get('bpm', 120.0))}
     # Keep the motif (harmony and rhythm) first, then sound like the genre take;
     # a small preference for the stronger re-performance (higher denoise).
     # A re-performance that moved its accents off the guide's sixteenths would
@@ -873,11 +873,23 @@ def acf_tempo(audio, lo=100.0, hi=240.0):
     return best, score
 
 
+FOREIGN_PULSE = 0.8  # ACF score of a strong pulse (guides and clean takes: 1.1-2.5)
+
+
 def tempo_check(audio, bpm):
-    """Is the take's pulse the target tempo (or its half/double time)?"""
+    """Does a strong pulse other than the target tempo dominate the take?
+    That is the defect the timbre reference caused at these tempos (a 150 BPM
+    pulse scoring 2.0 against -0.5 at the 180 BPM target). Returns (best BPM,
+    ok, target score, top score). A take with no strong periodicity at all
+    (top < FOREIGN_PULSE: smeared drums) passes; its alignment is then judged
+    by the chroma check. The argmax of a weak ACF is noise: on the same take it
+    flips between 169.6 and 127 BPM after Opus coding (correlation 0.987)."""
     best, score = acf_tempo(np.concatenate([audio, audio]))
-    ratio = min((abs(best / bpm - 1), 'x1'), (abs(best * 2 / bpm - 1), 'half'), (abs(best / 2 / bpm - 1), 'double'))
-    return best, ratio[0] <= 0.025, score(bpm)
+    ratio = min(abs(best / bpm - 1), abs(best * 2 / bpm - 1), abs(best / 2 / bpm - 1))
+    top = float(score(best))
+    at_target = float(max(score(bpm), score(bpm / 2) if bpm / 2 >= 100 else -9, score(bpm * 2) if bpm * 2 <= 240 else -9))
+    foreign = top >= FOREIGN_PULSE and ratio > 0.025 and at_target < 0.5 * top
+    return best, bool(not foreign), at_target, top
 
 
 def chroma_alignment(cue, guide, bpm):
@@ -1151,11 +1163,12 @@ def cmd_verify(args):
                 notes.append(f'onset lag {lag * 1000:+.0f}ms (r={r:.2f}) chroma lag {clag * 1000:+.0f}ms (r={cbest:.2f}, at 0 {c0:.2f})')
                 if cbest >= 0.3 and c0 < 0.85 * cbest:
                     problems.append('the take is off the guide grid (chroma alignment)')
-                loop_audio = audio[a:b] if b else audio[:ginfo['windowSamples']]
-                tempo, tempo_ok, _ = tempo_check(loop_audio, bpm)
-                notes.append(f'tempo {tempo:.1f} (target {bpm:.2f})')
+                # Loops: the loop; tails (intros): the opening (the last-bar loop is too short).
+                loop_audio = audio[a:b] if meta['kind'] == 'loop' else audio[:ginfo['windowSamples']]
+                tempo, tempo_ok, at_target, top = tempo_check(loop_audio, bpm)
+                notes.append(f'pulse: target {at_target:.2f}, strongest {top:.2f} at {tempo:.1f}' + ('' if top >= FOREIGN_PULSE else ' (weak)'))
                 if not tempo_ok:
-                    problems.append(f'pulse {tempo:.1f} BPM is not the {bpm:g} BPM grid')
+                    problems.append(f'a foreign {tempo:.1f} BPM pulse dominates the {bpm:g} BPM grid')
                 r = 1.0  # the guide check stands in for the lattice check
             if fmt == 'ogg' and meta['kind'] in ('loop', 'tail') and not (meta.get('mode') == 'a2a' and guide.exists()):
                 # No reliable guide correlation: check the eighth lattice at the cue's tempo.

@@ -336,7 +336,19 @@
    "group": "1",
    "tier": 1,
    "kind": "loop",
-   "beats": 32
+   "beats": 32,
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l1-t2",
@@ -417,7 +429,22 @@
    "part": "intro",
    "kind": "tail",
    "beats": 16,
-   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah",
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact",
+   "pick": 63,
+   "pick_denoise": 0.35,
+   "pick_reason": "first take in score order whose Opus/AAC encode passes verify (higher-scored takes left a codec edge error at the tail loop)"
   },
   {
    "name": "l2-outro",
@@ -440,7 +467,19 @@
    "group": "3",
    "tier": 1,
    "kind": "loop",
-   "beats": 32
+   "beats": 32,
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l3-t2",
@@ -461,7 +500,19 @@
    "group": "3",
    "tier": 4,
    "kind": "loop",
-   "beats": 32
+   "beats": 32,
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l3-intro",
@@ -477,7 +528,19 @@
    "part": "outro",
    "kind": "loop",
    "beats": 16,
-   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah",
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l3-accents",
@@ -506,7 +569,19 @@
    "group": "4",
    "tier": 3,
    "kind": "loop",
-   "beats": 32
+   "beats": 32,
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l4-t4",
@@ -521,7 +596,19 @@
    "part": "intro",
    "kind": "tail",
    "beats": 16,
-   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah",
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l4-outro",
@@ -529,7 +616,19 @@
    "part": "outro",
    "kind": "loop",
    "beats": 16,
-   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah",
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l4-accents",
@@ -551,14 +650,38 @@
    "group": "5",
    "tier": 2,
    "kind": "loop",
-   "beats": 32
+   "beats": 32,
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l5-t3",
    "group": "5",
    "tier": 3,
    "kind": "loop",
-   "beats": 32
+   "beats": 32,
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l5-t4",
@@ -581,7 +704,19 @@
    "part": "outro",
    "kind": "loop",
    "beats": 16,
-   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah",
+   "seeds": [
+    61,
+    62,
+    63,
+    64
+   ],
+   "denoise": [
+    0.35,
+    0.45,
+    0.55
+   ],
+   "note": "wider grid: the first takes lost the pulse or left a codec edge/wrap artefact"
   },
   {
    "name": "l5-accents",

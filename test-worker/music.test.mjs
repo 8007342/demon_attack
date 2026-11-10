@@ -236,7 +236,7 @@ test('every cue ships Opus and AAC files with whole-bar loops inside the downloa
   const table = JSON.parse(js.match(/levelBarSamples = (\{[^}]+\})/)[1].replace(/(\d+):/g, '"$1":'));
   for (let level = 1; level <= 5; level++) {
     assert.equal(table[level], manifest.motifs[level].barSamples, `level ${level} grid`);
-    assert.equal(table[level], BAR[level] * 48000);
+    assert.equal(table[level], Math.round(BAR[level] * 48000));
     for (const part of ['t1', 'intro', 'outro']) assert.equal(manifest.cues[`l${level}-${part}`].barSamples, table[level]);
   }
   assert.ok(opus < 8 * 1024 * 1024, `Opus set stays under 8 MB (${opus} bytes)`);

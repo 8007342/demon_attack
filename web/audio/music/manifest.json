@@ -125,22 +125,22 @@
    "loopEnd": 7.058854166666666,
    "mode": "a2a",
    "group": "s1",
-   "seed": 51,
-   "denoise": 0.45,
+   "seed": 62,
+   "denoise": 0.55,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.665,
-   "motifOnset": 0.354,
-   "referenceCloseness": 0.847,
+   "motifChroma": 0.779,
+   "motifOnset": 0.487,
+   "referenceCloseness": 0.893,
    "startSeconds": 1.4117708333333332,
    "part": "intro",
    "bytes": {
-    "ogg": 76627,
-    "m4a": 118600
+    "ogg": 83152,
+    "m4a": 118635
    },
    "sha256": {
-    "ogg": "c138d0e96686edf87b94b0bb909c2e72e52ed0c5b608a86a6474b263dcf049b8",
-    "m4a": "0e53494fc645b6119800d5dde4723a2aeeeb3e19874e650e1feede56c85f0211"
+    "ogg": "4c3c2b300eb718bae781275d5759e88f60e9e9a0626ffeaa8594912326cb23e6",
+    "m4a": "1c1a8346e721ae7791ae018f23dc045fe02f1c96f457ee2aee4ab31eb477a7a0"
    }
   },
   "l1-outro": {
@@ -153,22 +153,22 @@
    "loopEnd": 5.647083333333334,
    "mode": "a2a",
    "group": "s1",
-   "seed": 51,
-   "denoise": 0.45,
+   "seed": 62,
+   "denoise": 0.55,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.806,
-   "motifOnset": 0.295,
-   "referenceCloseness": 0.72,
+   "motifChroma": 0.77,
+   "motifOnset": -0.002,
+   "referenceCloseness": 0.868,
    "startSeconds": 2.8235416666666664,
    "part": "outro",
    "bytes": {
-    "ogg": 65557,
-    "m4a": 94922
+    "ogg": 68132,
+    "m4a": 94944
    },
    "sha256": {
-    "ogg": "cc5f63d241a6a0609c65dd2dbf66a27b934509b35b6e183a6946aba0ded9bb6b",
-    "m4a": "87f2904532de5db8f325f61feffa4bf6baf6ed3521c964997b13d4f06995f430"
+    "ogg": "89a7c13b239245b25ab17b2524196e71e40ff66b5a8754b28d512372da0a11a0",
+    "m4a": "5c698caa21b9af5b56a584b992ef74d38a8031aef61195e953bca81b38a9a24f"
    }
   },
   "l1-t1": {
@@ -181,22 +181,22 @@
    "loopEnd": 11.294166666666667,
    "mode": "a2a",
    "group": "1",
-   "seed": 53,
+   "seed": 63,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.236,
-   "motifOnset": 0.082,
-   "referenceCloseness": 0.706,
+   "motifChroma": 0.431,
+   "motifOnset": 0.209,
+   "referenceCloseness": 0.731,
    "startSeconds": 2.8235416666666664,
    "tier": 1,
    "bytes": {
-    "ogg": 109626,
-    "m4a": 186679
+    "ogg": 116079,
+    "m4a": 186568
    },
    "sha256": {
-    "ogg": "e80785f0596cde773211f36596e803432ac24ff7c34f1ee3e9ea576bb07e917d",
-    "m4a": "1e42d6881d7fa983d5b3743dec450158a61d0234f0db5d558de1fc34adb31f7f"
+    "ogg": "d393b7117e0385b8fbe023f0804546b15c7caec18ca5546d6fce76584cc88d66",
+    "m4a": "534acaec62e927a6bd84271f645836f54bf7a41a7aa6371e9265d2025e29e268"
    }
   },
   "l1-t2": {
@@ -209,22 +209,22 @@
    "loopEnd": 11.294166666666667,
    "mode": "a2a",
    "group": "1",
-   "seed": 53,
+   "seed": 62,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.539,
-   "motifOnset": 0.106,
-   "referenceCloseness": 0.667,
+   "motifChroma": 0.758,
+   "motifOnset": 0.088,
+   "referenceCloseness": 0.727,
    "startSeconds": 2.8235416666666664,
    "tier": 2,
    "bytes": {
-    "ogg": 124492,
-    "m4a": 186654
+    "ogg": 131445,
+    "m4a": 186541
    },
    "sha256": {
-    "ogg": "3058a3456ead0efa574da1ff9f85d8ef44b61b44c1aa4adc2273f946563b1ca8",
-    "m4a": "d3dad5b9bc0110b0081769214b06ca8e143c5ea1935e64e0b8a93bb69d080d86"
+    "ogg": "1fb7695f4e66424276c403fc8d7095b354b3a66b3c0863bb66fdb77b29d4b705",
+    "m4a": "0ca05e04074e0c01df81ee0cbd371481135a75c5a288f8e67679b73310b453aa"
    }
   },
   "l1-t3": {
@@ -237,22 +237,22 @@
    "loopEnd": 11.294166666666667,
    "mode": "a2a",
    "group": "1",
-   "seed": 51,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.503,
-   "motifOnset": 0.266,
-   "referenceCloseness": 0.544,
+   "motifChroma": 0.724,
+   "motifOnset": 0.449,
+   "referenceCloseness": 0.587,
    "startSeconds": 2.8235416666666664,
    "tier": 3,
    "bytes": {
-    "ogg": 125303,
-    "m4a": 186583
+    "ogg": 131526,
+    "m4a": 186525
    },
    "sha256": {
-    "ogg": "18eeb35bf4031e6ed23ae7992ff92f40540905c05e6c40eddf238422ab8d663e",
-    "m4a": "32f3a4be9dd750c6f14abefc33b76007ee9f824b77304842d4c5828a75b7891b"
+    "ogg": "9939c25f1d9432552ef93a07ee130ee5936730a587275418587658a405b4abf6",
+    "m4a": "61953063d39adcb53abae11b1519803f0a20023c16ead09a0be8b4fb9f0d9674"
    }
   },
   "l1-t4": {
@@ -265,22 +265,22 @@
    "loopEnd": 11.294166666666667,
    "mode": "a2a",
    "group": "1",
-   "seed": 53,
+   "seed": 62,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.398,
-   "motifOnset": 0.102,
-   "referenceCloseness": 0.633,
+   "motifChroma": 0.645,
+   "motifOnset": 0.408,
+   "referenceCloseness": 0.624,
    "startSeconds": 2.8235416666666664,
    "tier": 4,
    "bytes": {
-    "ogg": 122556,
-    "m4a": 186405
+    "ogg": 129133,
+    "m4a": 186605
    },
    "sha256": {
-    "ogg": "bd967cea0ccbebd22f833dc22afc9df67d95938545f9d92faecfb04699e966c0",
-    "m4a": "46e4e0b96a25389d358975b448090b69d043c06b5a22d424ede6389c2dcf8e4f"
+    "ogg": "ea7898cf7bf2ea35e47ff11de5a71e7eb918e6b21ea3673c0f253ca59924bf9d",
+    "m4a": "741d6b48854bed39ada3b25ff0fd2253737d8af846216fdfe54d90b0ab5bbf27"
    }
   },
   "l2-accents": {
@@ -322,22 +322,22 @@
    "loopEnd": 7.5,
    "mode": "a2a",
    "group": "s2",
-   "seed": 51,
-   "denoise": 0.45,
+   "seed": 63,
+   "denoise": 0.35,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.689,
-   "motifOnset": 0.199,
-   "referenceCloseness": 0.832,
+   "motifChroma": 0.897,
+   "motifOnset": 0.619,
+   "referenceCloseness": 0.866,
    "startSeconds": 1.5,
    "part": "intro",
    "bytes": {
-    "ogg": 77576,
-    "m4a": 125550
+    "ogg": 86751,
+    "m4a": 125819
    },
    "sha256": {
-    "ogg": "fe1fab36de65f8bce7f7e40c8a36504ffd88d5220bc46081afe0a465666dbd4a",
-    "m4a": "1d2f65d7890c01e6386c41e7baa4beddda82fef1fd676d538e4a027a3b8a6d92"
+    "ogg": "11f9452a3e0cbbea50bb1b3d922123177a058fed17c86d9902de30071c2e452d",
+    "m4a": "9a7dbbba9207d9ba647924ae204f4311f95ac129fa2c38c33afe05133529b77f"
    }
   },
   "l2-outro": {
@@ -350,22 +350,22 @@
    "loopEnd": 6.0,
    "mode": "a2a",
    "group": "s2",
-   "seed": 52,
+   "seed": 62,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.786,
-   "motifOnset": 0.171,
-   "referenceCloseness": 0.856,
+   "motifChroma": 0.917,
+   "motifOnset": 0.197,
+   "referenceCloseness": 0.831,
    "startSeconds": 3.0,
    "part": "outro",
    "bytes": {
-    "ogg": 66021,
-    "m4a": 100647
+    "ogg": 69417,
+    "m4a": 100736
    },
    "sha256": {
-    "ogg": "d663af02d6f435abd2e1db44f7a287fc0b7b36676d5626bd7eee14a57ea92919",
-    "m4a": "ecc0bd1589a1cd3aa41d2185edad429c73df25375c67d66e832c822bc6e63b26"
+    "ogg": "8ab3cf2a6b0fe5c0b2744b6a056e1d5ca1eaecc29261e9d8adad312728ddd026",
+    "m4a": "1fa536bc0d734669cb003beb39ef56eac6a11939c1e9849b7c148a6a22b72348"
    }
   },
   "l2-t1": {
@@ -378,22 +378,22 @@
    "loopEnd": 12.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 52,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.344,
-   "motifOnset": 0.041,
-   "referenceCloseness": 0.924,
+   "motifChroma": 0.583,
+   "motifOnset": -0.061,
+   "referenceCloseness": 0.936,
    "startSeconds": 3.0,
    "tier": 1,
    "bytes": {
-    "ogg": 118344,
-    "m4a": 197985
+    "ogg": 120859,
+    "m4a": 198164
    },
    "sha256": {
-    "ogg": "08c1205d5fc17ce32e220b2951c69083bc2b4d09eb2abbbd3fcb3ff1912729d7",
-    "m4a": "4e80973e785f0d6c3aa645fe7ec8d0233f840abda0c642b865932c833c860919"
+    "ogg": "e8d0d43e013fc8e854d6ddca82196cf7edc61e694522c3e74ff1b6a81fb93456",
+    "m4a": "403c0b41e90171b257b6e1fa057c794ee256450221e8104d77ae66c7d826b3cd"
    }
   },
   "l2-t2": {
@@ -406,22 +406,22 @@
    "loopEnd": 12.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 53,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.696,
-   "motifOnset": 0.113,
-   "referenceCloseness": 0.893,
+   "motifChroma": 0.848,
+   "motifOnset": 0.527,
+   "referenceCloseness": 0.853,
    "startSeconds": 3.0,
    "tier": 2,
    "bytes": {
-    "ogg": 127092,
-    "m4a": 197907
+    "ogg": 136340,
+    "m4a": 198009
    },
    "sha256": {
-    "ogg": "173e531f2d0eea3d6e0157375b30f91fffbd3075035c0885926f12990a6575d1",
-    "m4a": "0f43d7012008c0ec06b30c6c97c02085bdf552651cdd1805b0c7f2bad2bbaeaf"
+    "ogg": "aced0ff2874ce461de96b347ed5609492a65cb9e77d8fed9d731c0971d5a33c4",
+    "m4a": "244602ad5c568f9d84f2c5368d701d39e6d94d95e012b0002ecffefd89698a12"
    }
   },
   "l2-t3": {
@@ -434,22 +434,22 @@
    "loopEnd": 12.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 52,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.729,
-   "motifOnset": 0.124,
-   "referenceCloseness": 0.885,
+   "motifChroma": 0.76,
+   "motifOnset": 0.058,
+   "referenceCloseness": 0.773,
    "startSeconds": 3.0,
    "tier": 3,
    "bytes": {
-    "ogg": 123211,
-    "m4a": 197935
+    "ogg": 134294,
+    "m4a": 198054
    },
    "sha256": {
-    "ogg": "26a18c6229be799e9d950eea498de13b8234cfa1f213a85d1507ecff24661bb8",
-    "m4a": "2ca6f00ded94077e53cea480cf7a66e4f22b541beb27fd52cfce6ec9d5cdb2cb"
+    "ogg": "701b8d9a5004408c7f300b5065f745683f09d0449bc1e0136ec5963997674a13",
+    "m4a": "b7e609c3795c8abdaf8a6f3777da255ed81014c37ff5a928cb8629c116c9ef55"
    }
   },
   "l2-t4": {
@@ -462,22 +462,22 @@
    "loopEnd": 12.0,
    "mode": "a2a",
    "group": "2",
-   "seed": 52,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.725,
-   "motifOnset": 0.172,
-   "referenceCloseness": 0.877,
+   "motifChroma": 0.755,
+   "motifOnset": 0.14,
+   "referenceCloseness": 0.803,
    "startSeconds": 3.0,
    "tier": 4,
    "bytes": {
-    "ogg": 122429,
-    "m4a": 197957
+    "ogg": 133537,
+    "m4a": 197959
    },
    "sha256": {
-    "ogg": "e5dc7ecd1ac80d5e95b13bb4d924e08759f3e2f6646dde2b6b9f238661d08bf8",
-    "m4a": "f6d57c081fce314b6e4806a28001690caa444d476f60ddc7281862b724431ec2"
+    "ogg": "f74f7f08f186e96c27147c770014adb0137174194b0dc0ab03041b4b1aed59b0",
+    "m4a": "285ccaacbf7912a95ba32a65e5494e53e1f70da0948eafbcb5a79568a463d82b"
    }
   },
   "l3-accents": {
@@ -519,22 +519,22 @@
    "loopEnd": 6.666666666666667,
    "mode": "a2a",
    "group": "s3",
-   "seed": 53,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.606,
-   "motifOnset": 0.234,
-   "referenceCloseness": 0.885,
+   "motifChroma": 0.75,
+   "motifOnset": 0.525,
+   "referenceCloseness": 0.752,
    "startSeconds": 1.3333333333333333,
    "part": "intro",
    "bytes": {
-    "ogg": 73770,
-    "m4a": 112363
+    "ogg": 75830,
+    "m4a": 112596
    },
    "sha256": {
-    "ogg": "b141ac249609c9f054e8100e48415ba3d856b3e6bfed2b5c4b713594bd31c5ab",
-    "m4a": "a5380ddfedb633e2e3ad52c64f43919cf9649082d0be3cd58a1dddbbc8c7872e"
+    "ogg": "b5248ef14cdb98a196aff38fd29063d7995c1c2ff335d9ac37665ec17b60ffd7",
+    "m4a": "bb2f7c5021b6f9d4fc93d4628a0231f47125fa4463e48bf8eaf5f2390ab495d3"
    }
   },
   "l3-outro": {
@@ -547,22 +547,22 @@
    "loopEnd": 5.333333333333333,
    "mode": "a2a",
    "group": "s3",
-   "seed": 52,
-   "denoise": 0.45,
+   "seed": 61,
+   "denoise": 0.55,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.507,
-   "motifOnset": 0.107,
-   "referenceCloseness": 0.828,
+   "motifChroma": 0.691,
+   "motifOnset": 0.223,
+   "referenceCloseness": 0.913,
    "startSeconds": 2.6666666666666665,
    "part": "outro",
    "bytes": {
-    "ogg": 60326,
-    "m4a": 89854
+    "ogg": 61575,
+    "m4a": 89960
    },
    "sha256": {
-    "ogg": "2823932697e0a41fe7e0c728b0cc01345fb08c7a82a7034e33b3a3406d3bb421",
-    "m4a": "e4461b1d391a8ae2ef80020c8b3d6dcb2f7e036a719beb0b0ebec25886ede052"
+    "ogg": "d8647e725bd4c92f64d4f66b11bc04c2979749b088717319a792f815bc56cc23",
+    "m4a": "410b75970c1d0591129c7dc3654499322bfd7f41c75cda6ab0d47a1c84b147e1"
    }
   },
   "l3-t1": {
@@ -575,22 +575,22 @@
    "loopEnd": 10.666666666666666,
    "mode": "a2a",
    "group": "3",
-   "seed": 51,
+   "seed": 63,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.251,
-   "motifOnset": 0.01,
-   "referenceCloseness": 0.925,
+   "motifChroma": 0.307,
+   "motifOnset": 0.273,
+   "referenceCloseness": 0.859,
    "startSeconds": 2.6666666666666665,
    "tier": 1,
    "bytes": {
-    "ogg": 104924,
-    "m4a": 176151
+    "ogg": 115600,
+    "m4a": 176169
    },
    "sha256": {
-    "ogg": "f2c1264fcf914a2351dca358fa92bf8be6576f280a9c766c661c2ddd3913f815",
-    "m4a": "abffa08596839e9b5c71b6c1c21da1cebc6e2b3647ffa6b991caf5a85b6c92aa"
+    "ogg": "077e0ddab11d71a63fceba22fd90f8c2ddef25632c7fd8780cefe61752dbfdd6",
+    "m4a": "e8ebdd98aeed850e8d3cc3d053452f8cec0bdb1f419a0cf4bf9e3c5fc8ac4134"
    }
   },
   "l3-t2": {
@@ -603,22 +603,22 @@
    "loopEnd": 10.666666666666666,
    "mode": "a2a",
    "group": "3",
-   "seed": 51,
+   "seed": 62,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.648,
-   "motifOnset": 0.004,
-   "referenceCloseness": 0.825,
+   "motifChroma": 0.822,
+   "motifOnset": 0.209,
+   "referenceCloseness": 0.843,
    "startSeconds": 2.6666666666666665,
    "tier": 2,
    "bytes": {
-    "ogg": 114298,
-    "m4a": 176208
+    "ogg": 126911,
+    "m4a": 176265
    },
    "sha256": {
-    "ogg": "badef4d8bb521cb5b1653c1a69bee4f8bdcce7943f319b6fad3aa4632cb063c9",
-    "m4a": "2006b1661323774a7bd22efb7f815a279267ffbc396c2e14355a4a181e2ea9d4"
+    "ogg": "7f4c66d4c1af03f14e1eb488431939fb41152928cb8a10326b8cdd738312b6f1",
+    "m4a": "8a6b4e80e3a612104e42941d8155a543eafa2900e7b8a021653c18b958c58921"
    }
   },
   "l3-t3": {
@@ -631,22 +631,22 @@
    "loopEnd": 10.666666666666666,
    "mode": "a2a",
    "group": "3",
-   "seed": 51,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.644,
-   "motifOnset": 0.132,
-   "referenceCloseness": 0.869,
+   "motifChroma": 0.643,
+   "motifOnset": 0.344,
+   "referenceCloseness": 0.856,
    "startSeconds": 2.6666666666666665,
    "tier": 3,
    "bytes": {
-    "ogg": 113653,
-    "m4a": 176175
+    "ogg": 126555,
+    "m4a": 176174
    },
    "sha256": {
-    "ogg": "f4acc9074c84676f5015fa8854d41c0b2ee162bef103eb1ef4f9c7708941d500",
-    "m4a": "2a9062f34eab9ff2aafe08332d9fce97210d43b334a16d7d490486497bd80731"
+    "ogg": "96ba4775ac52466c7aef0ac212477edd7b75e8035fbda710564495744e8112e5",
+    "m4a": "d90b97cd24df876e5bd96566fb6b4e2a3c0690b8a7fb0539ed89bb0f972d905f"
    }
   },
   "l3-t4": {
@@ -659,22 +659,22 @@
    "loopEnd": 10.666666666666666,
    "mode": "a2a",
    "group": "3",
-   "seed": 53,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.532,
-   "motifOnset": 0.1,
-   "referenceCloseness": 0.845,
+   "motifChroma": 0.557,
+   "motifOnset": 0.396,
+   "referenceCloseness": 0.856,
    "startSeconds": 2.6666666666666665,
    "tier": 4,
    "bytes": {
-    "ogg": 113162,
-    "m4a": 176167
+    "ogg": 124916,
+    "m4a": 176142
    },
    "sha256": {
-    "ogg": "eac9998d5b90774080e524073eff3c642cce523a1543ed62e0a631bda54a074c",
-    "m4a": "3bac379a98668801e4e1aada87648e4b5a5fdb907ba9295a57eae74d59ac9aa2"
+    "ogg": "002583fef9b48df6fa848580f164df1b752e00ae1a2f48b5f99d8913b7257fc6",
+    "m4a": "bbb249f25f3341ddd2a320d4f222b9f909dce52ec37be527d0c0570c714117b5"
    }
   },
   "l4-accents": {
@@ -716,22 +716,22 @@
    "loopEnd": 8.0,
    "mode": "a2a",
    "group": "s4",
-   "seed": 52,
-   "denoise": 0.45,
+   "seed": 64,
+   "denoise": 0.35,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.743,
-   "motifOnset": 0.679,
-   "referenceCloseness": 0.893,
+   "motifChroma": 0.843,
+   "motifOnset": 0.778,
+   "referenceCloseness": 0.85,
    "startSeconds": 1.6,
    "part": "intro",
    "bytes": {
-    "ogg": 87276,
-    "m4a": 134012
+    "ogg": 86368,
+    "m4a": 133715
    },
    "sha256": {
-    "ogg": "a68093db2d065e763d32630658ea19778e5861d1488a55277e812ab28920e2c2",
-    "m4a": "c7a3c274e7f28c53a02a1066f5be68114d7e4bead314ee89f6934e3e7ff4f389"
+    "ogg": "8e3f208457b6018c570a05347059e792679c228db197407804eca5ca1306d8a9",
+    "m4a": "872890c55efaf1c232bca9e4d7eda7b3c43beedcdd87135e2820d1402f2c54bc"
    }
   },
   "l4-outro": {
@@ -744,22 +744,22 @@
    "loopEnd": 6.4,
    "mode": "a2a",
    "group": "s4",
-   "seed": 52,
+   "seed": 62,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.897,
-   "motifOnset": 0.22,
-   "referenceCloseness": 0.844,
+   "motifChroma": 0.898,
+   "motifOnset": 0.217,
+   "referenceCloseness": 0.898,
    "startSeconds": 3.2,
    "part": "outro",
    "bytes": {
-    "ogg": 69412,
-    "m4a": 107083
+    "ogg": 72875,
+    "m4a": 107165
    },
    "sha256": {
-    "ogg": "49cf47689ff03419bfa27b8e57dca777be4c14a5c919054ee477c1cd56c5e4e8",
-    "m4a": "786676bd75fcb6b9da18cccfdc27502c7d602e6e3f8bbb5b93cb49acf89f3873"
+    "ogg": "4ef37bb385d86a05316a4234b0769160d7fd0387babf26a7d983280b9159b065",
+    "m4a": "79920e86243af094e5357129ab04abbccfccc103bb9f5d81e1ef37847827d600"
    }
   },
   "l4-t1": {
@@ -772,22 +772,22 @@
    "loopEnd": 12.8,
    "mode": "a2a",
    "group": "4",
-   "seed": 53,
+   "seed": 62,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.779,
-   "motifOnset": 0.204,
-   "referenceCloseness": 0.754,
+   "motifChroma": 0.778,
+   "motifOnset": 0.785,
+   "referenceCloseness": 0.76,
    "startSeconds": 3.2,
    "tier": 1,
    "bytes": {
-    "ogg": 127901,
-    "m4a": 210755
+    "ogg": 135618,
+    "m4a": 210732
    },
    "sha256": {
-    "ogg": "971dca6613094f65199fa2d6d2c4ea94ac09c43c5e11500b20db66309ce2a3f0",
-    "m4a": "e4a021679d41ff443f524d1b548ef84e08d408966b2b89eba8f30e6715798441"
+    "ogg": "755710da2467b994479fb00a6f8485dd2030b5c8220a25dc761fd9de17b37149",
+    "m4a": "8341882b8f8e54484dbdf69b16ed426f50781b00c04fd4c305bbd5807b7400d6"
    }
   },
   "l4-t2": {
@@ -800,22 +800,22 @@
    "loopEnd": 12.8,
    "mode": "a2a",
    "group": "4",
-   "seed": 52,
+   "seed": 62,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.612,
-   "motifOnset": 0.053,
-   "referenceCloseness": 0.748,
+   "motifChroma": 0.836,
+   "motifOnset": 0.025,
+   "referenceCloseness": 0.715,
    "startSeconds": 3.2,
    "tier": 2,
    "bytes": {
-    "ogg": 133163,
-    "m4a": 210795
+    "ogg": 138569,
+    "m4a": 210809
    },
    "sha256": {
-    "ogg": "8af44964bd5f37adde1187a0b186f3c876bfc2f2ef359f6853be3d45a41d9e04",
-    "m4a": "90a574f4d6613500a4cb74bc3eeae15281162100a185bbf60ee8d03e986bcade"
+    "ogg": "f75cb04a393f07d59ee3a48997273104f1343eeaa5c9dc0e1ff41037d8129793",
+    "m4a": "c2ce3eacb69b458c4336fdbe41d2c4711ee4fb0a70987afa4195ca297e50f561"
    }
   },
   "l4-t3": {
@@ -828,22 +828,22 @@
    "loopEnd": 12.8,
    "mode": "a2a",
    "group": "4",
-   "seed": 52,
-   "denoise": 0.45,
+   "seed": 64,
+   "denoise": 0.35,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.592,
-   "motifOnset": -0.035,
-   "referenceCloseness": 0.744,
+   "motifChroma": 0.897,
+   "motifOnset": 0.702,
+   "referenceCloseness": 0.69,
    "startSeconds": 3.2,
    "tier": 3,
    "bytes": {
-    "ogg": 132400,
-    "m4a": 210829
+    "ogg": 141059,
+    "m4a": 210732
    },
    "sha256": {
-    "ogg": "4ca5b01c237def45d56c700337723180bbf63e7cfc0c385355dbaaccfb270e1e",
-    "m4a": "b6d30b5221585f70064541faf0a97c9c8d8cec3f8066e3aeefbb6b8074a70f9f"
+    "ogg": "1c5aeedad65f6b75df4da2279afba79df4f4e20da32a57413521562a57a38a3b",
+    "m4a": "3c084bc2f39c81c4dbab5ad66d4ab1215fedaadbbf3605a0f398d48ef1c5437a"
    }
   },
   "l4-t4": {
@@ -856,22 +856,22 @@
    "loopEnd": 12.8,
    "mode": "a2a",
    "group": "4",
-   "seed": 52,
+   "seed": 62,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.709,
-   "motifOnset": 0.114,
-   "referenceCloseness": 0.71,
+   "motifChroma": 0.714,
+   "motifOnset": 0.384,
+   "referenceCloseness": 0.638,
    "startSeconds": 3.2,
    "tier": 4,
    "bytes": {
-    "ogg": 135444,
-    "m4a": 210856
+    "ogg": 139783,
+    "m4a": 210727
    },
    "sha256": {
-    "ogg": "245fbda9a431d8ee47d0c08ff9d825197c0db6a103515f47bcfb8c7dad477256",
-    "m4a": "2cf19a22292d0e7774a48b48051dd21b355e6e7f933defcec069142a2916d918"
+    "ogg": "729f3b8e583ebdd59878bef75292426a52bff5b7ebd71f69044b51554899afe0",
+    "m4a": "b0ce8d55848bebd1fbde0e40df8130858b4aecd93b2f79159b895d37e38db285"
    }
   },
   "l5-accents": {
@@ -913,22 +913,22 @@
    "loopEnd": 6.315833333333333,
    "mode": "a2a",
    "group": "s5",
-   "seed": 53,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.697,
-   "motifOnset": 0.678,
-   "referenceCloseness": 0.881,
+   "motifChroma": 0.772,
+   "motifOnset": 0.486,
+   "referenceCloseness": 0.847,
    "startSeconds": 1.2631666666666665,
    "part": "intro",
    "bytes": {
-    "ogg": 71051,
-    "m4a": 106681
+    "ogg": 70470,
+    "m4a": 106748
    },
    "sha256": {
-    "ogg": "e37334710e2204fcbfcda2457413216db0a828a92fe1a27606b9814832f58ed6",
-    "m4a": "a17c7856c53330888d340ec533efd83fb71e4b237b78798a18e06534ee9fb6f0"
+    "ogg": "7957b1f24612212e385153a77db7cf9bf591ed15eb20d9e821a6d163e63f9639",
+    "m4a": "b5b10df653bdc671629f671fdd01336fffbc21a05ed180f91eb1d96aa1ff67fd"
    }
   },
   "l5-outro": {
@@ -941,22 +941,22 @@
    "loopEnd": 5.052666666666667,
    "mode": "a2a",
    "group": "s5",
-   "seed": 53,
-   "denoise": 0.45,
+   "seed": 62,
+   "denoise": 0.55,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.692,
-   "motifOnset": 0.502,
-   "referenceCloseness": 0.834,
+   "motifChroma": 0.803,
+   "motifOnset": 0.196,
+   "referenceCloseness": 0.845,
    "startSeconds": 2.526333333333333,
    "part": "outro",
    "bytes": {
-    "ogg": 55517,
-    "m4a": 85339
+    "ogg": 57779,
+    "m4a": 85409
    },
    "sha256": {
-    "ogg": "088f39db8f09cbacd82e743f9d3052217760c27a9211d11e2031d90c64c81e31",
-    "m4a": "f61f6902f508d520037641e71e1717321b6b8c00545b0c72e93f2b59fc85191a"
+    "ogg": "00cb01620bb7f6495dda61e5b8f5c17620b197b8ed868b36709f3a91fc2f8579",
+    "m4a": "3dad5ace2c94fdd4e3c74e69dfc4cc39dfc61e2cb726db0b6fb3835af33fca99"
    }
   },
   "l5-t1": {
@@ -969,22 +969,22 @@
    "loopEnd": 10.105333333333334,
    "mode": "a2a",
    "group": "5",
-   "seed": 52,
+   "seed": 61,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.187,
-   "motifOnset": 0.071,
-   "referenceCloseness": 0.779,
+   "motifChroma": 0.404,
+   "motifOnset": 0.088,
+   "referenceCloseness": 0.852,
    "startSeconds": 2.526333333333333,
    "tier": 1,
    "bytes": {
-    "ogg": 98003,
-    "m4a": 167202
+    "ogg": 112526,
+    "m4a": 167190
    },
    "sha256": {
-    "ogg": "8abfac7fd79b542d2c6f92d1b1af226a16e3a90ad6453d09509eb66561d018f7",
-    "m4a": "d7c156cc6362d951536e6d4094aefb1e9de3f65068f984849531d16b74d60ec8"
+    "ogg": "bc721973e908da034eda61859b9c91b02a77eebe9a8884ec26f764f6453770cf",
+    "m4a": "cee843de0c19cee1b0e8f3214ecd9c27cd799e55ef681f01c096ddc2a5faa7e5"
    }
   },
   "l5-t2": {
@@ -997,22 +997,22 @@
    "loopEnd": 10.105333333333334,
    "mode": "a2a",
    "group": "5",
-   "seed": 51,
-   "denoise": 0.45,
+   "seed": 63,
+   "denoise": 0.35,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.355,
-   "motifOnset": 0.394,
-   "referenceCloseness": 0.75,
+   "motifChroma": 0.771,
+   "motifOnset": 0.509,
+   "referenceCloseness": 0.802,
    "startSeconds": 2.526333333333333,
    "tier": 2,
    "bytes": {
-    "ogg": 104857,
-    "m4a": 167233
+    "ogg": 111145,
+    "m4a": 167187
    },
    "sha256": {
-    "ogg": "ac1f242acd7ce5fa19ea236dff95373f35540eaef2851071d07ac728fb125f29",
-    "m4a": "4315c590a1296bf501238497daff06a781acf0a371f70dc56eda49303aec429b"
+    "ogg": "411668b721115958794f18939498284f46cb023ba2b6b508aa01066e98430812",
+    "m4a": "7962b9e1b74c801862925de327c8e0247ad87093e631ce56e8b4f441d05d4735"
    }
   },
   "l5-t3": {
@@ -1025,22 +1025,22 @@
    "loopEnd": 10.105333333333334,
    "mode": "a2a",
    "group": "5",
-   "seed": 53,
-   "denoise": 0.45,
+   "seed": 63,
+   "denoise": 0.35,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.392,
-   "motifOnset": -0.037,
-   "referenceCloseness": 0.79,
+   "motifChroma": 0.806,
+   "motifOnset": 0.283,
+   "referenceCloseness": 0.836,
    "startSeconds": 2.526333333333333,
    "tier": 3,
    "bytes": {
-    "ogg": 101329,
-    "m4a": 167271
+    "ogg": 112527,
+    "m4a": 167189
    },
    "sha256": {
-    "ogg": "2725ee59dd2b9551fd4b359b413096045d561286f054c5c7d2d0832c39f17d68",
-    "m4a": "2df421c89058af38080c169f89e76606c12d602640b1bbad2abc07fe0f2d283e"
+    "ogg": "3110974870ee5028f6fabbe90817a9f60e95cc1676d9c8bab45b2bbfbb48200e",
+    "m4a": "35aebeb9ad0328970758e8437a193f3ed383ed1b2cce47fbd29087671bd136c5"
    }
   },
   "l5-t4": {
@@ -1053,22 +1053,22 @@
    "loopEnd": 10.105333333333334,
    "mode": "a2a",
    "group": "5",
-   "seed": 52,
+   "seed": 62,
    "denoise": 0.45,
    "gridShiftMs": 0.0,
    "guideLagR": 0.0,
-   "motifChroma": 0.383,
-   "motifOnset": 0.116,
-   "referenceCloseness": 0.805,
+   "motifChroma": 0.567,
+   "motifOnset": 0.218,
+   "referenceCloseness": 0.914,
    "startSeconds": 2.526333333333333,
    "tier": 4,
    "bytes": {
-    "ogg": 107742,
-    "m4a": 167216
+    "ogg": 115978,
+    "m4a": 167261
    },
    "sha256": {
-    "ogg": "570b8cd256134ff30ccdd9a0e5ceaa9a4a1a14c5989e6de92a44a017b8d1bce8",
-    "m4a": "b42b0f511133098ab2393d8824b4a30913f2e766b9829e3ec85f71700f05c6bd"
+    "ogg": "1ea98dda5c45178de6ccbc1a70d49edaacd397c338ee86caa1d8c057dd60bd24",
+    "m4a": "2d6a1a4eafba21e7cd52fddc66600f2a3e214f1e00140906ca93f632bc3feeb1"
    }
   },
   "levelclear": {
