@@ -167,16 +167,35 @@ the wrong way, or as people instead of vehicles. None gave a 3/4 vehicle
 facing screen right with a launcher that can be lifted, at 20 texels, so AI
 silhouettes are not used.
 
-### Layout (v2: 12 columns × 10 rows of 32×24 texels, 384×240 px, binary alpha)
+### Layout (v3: 16 columns × 16 rows of 40×32 texels, 640×512 px, binary alpha)
+
+v3 rebuilt the allies and the ground effects. Allies are now seen **from
+behind and above**, driving up the plane with the player's convoy, authored
+by a small deterministic solid rasteriser in the driver (`View`: prisms,
+extrusions and rods projected with the flyover's forward foreshortening,
+back faces culled, faces lit from the upper left, a lit bevel where a deck
+meets the rear plate, sector camouflage: Krybor snow, Ringfall patch plates,
+Ember/Hollow teal bands). A vehicle is **two layers sharing the cell frame**:
+the hull (tread cleats crawl one row per frame, tyres turn) and a turret
+rendered at five screen angles, so the renderer traverses it toward its foe
+and mirrors it for the left. Demon units keep their v2 art, bottom-centred
+in the bigger cell.
 
 | Row | Content | Columns |
 | --- | --- | --- |
-| 0–3 | Demon unit per sector: Krybor captured rocket buggy with an imp driver; Ringfall salvage-hull missile crawler; Ember lava-forged artillery beast; Hollow walking gargoyle launch tower | 0–3 move cycle (wheels/treads turning, legs stepping, body bob, blinking lamps, pulsing vents/cracks/runes, exhaust puffs), 4 telegraph A (launcher raised, warhead lit), 5 telegraph B (bright warm muzzle glow), 6 fire (launch flash, recoil, smoke), 7 post-fire (smoking tube, launcher settling), 8–9 burning wreck (two flame flicker frames over the same torn hulk, scorch, embers), 10–11 empty |
-| 4–7 | Allied unit per sector: Krybor frontier snow rover; Ringfall militia rover; Ember foundry defense turret (its move cycle is a traverse, a sweeping running light and a turning radar mast); Hollow resistance walker | 0–3 move, 4–5 firing (cyan muzzle flash big/small, recoil), 6 hit (hull flash + cyan sparks), 7–8 totalled and limping (dents, dead lights, sparks, smoke, a blown tyre / missing wheel with the axle dragging / drooping barrel / dragging leg; intact and upright, never a wreck), 9 crew escape pod with cyan thruster, 10–11 empty |
-| 8 | Effects | 0–5 ground explosion (flash → fireball → big fireball → rolling smoke → smoke + flung debris → thinning smoke, settled debris), 6 scorch decal, 7 missile launch flash, 8 tracer impact spark, 9 small skirmish blast, 10–11 grey smoke puffs small / large |
-| 9 | Missile | 0–1 demon ground missile nose-on (22×22: shaded warhead, X fins, warm exhaust ring that flickers), 2–4 trail puffs dense → thin, 5–11 empty |
+| 0–3 | Demon unit per sector (as v2) | 0–3 move, 4–5 telegraph, 6 fire, 7 post-fire, 8–9 burning wreck |
+| 4–11 | Allies, two variants per sector (`allyRow(sector, variant)`): Krybor six-wheel scout rover / tracked snow APC; Ringfall salvage half-track with a gunner / militia infantry squad; Ember heavy battle tank / self-propelled howitzer; Hollow resistance walker / heavy infantry squad | 0–3 move (treads, tyres, gait; squads walk), 4 hit (hull flash, cyan sparks), 5–6 totalled (dents, dead lights, a thrown track or flat tyre; squads run), 7 escape pod, 8–12 turret / walker torso at screen angles 0, 22.5, 45, 67.5, 90° (squads: 8–9 kneeling volley with cyan flashes, 10 kneeling) |
+| 12 | Effects | 0–9 ground explosion (white flash → fireball → peak → fire stem under a rising smoke cap → thinning smoke, settled debris), 10–12 scorch decals (radial streaks, cooling embers), 13 missile launch flash, 14 warm impact star, 15 small blast |
+| 13 | Fx | 0–3 ground shock ring (flat perspective ellipse, white-hot → dust), 4–7 dust kicked up (ground anchored), 8–12 rising smoke puff life (centred), 13–15 hull sparks |
+| 14 | Flame / muzzle | 0–5 flame tongue loop (vertically periodic noise, seamless), 6–9 tumbling debris chunk, 10–12 cyan muzzle flash, 13–15 warm muzzle flash |
+| 15 | Missile / impact | 0–1 ground missile nose-on, 2–4 trail puffs, 5–7 cyan impact, 8–10 warm impact |
 
-Units stand bottom-centred on the cell's last row, facing screen right; the
+The generated contract also carries `allyKind` (0 vehicle, 1 squad, 2
+walker), `allyBob` (walker torso rise per move frame) and `allyMuzzle` (per
+row and turret angle, texels from the cell's bottom centre) so muzzle flashes
+and friendly tracers leave from the barrel.
+
+Demon units stand bottom-centred on the cell's last row, facing screen right; the
 renderer mirrors them for the right band. Every frame of a unit shares the
 move cycle's horizontal offset. `GroundAtlas.demonSize` / `allySize` in the
 generated `lib/game/ground_atlas.dart` are the measured content boxes: the

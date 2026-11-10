@@ -1,15 +1,15 @@
 {
-  "schema": "demon-attack.ground-forces/v2",
+  "schema": "demon-attack.ground-forces/v3",
   "name": "ground-forces",
-  "notes": "Demon ground army, allied human ground units (never killed: totalled, limping, crew pods), ground effects and the ground-to-air missile. Every value is an input to tools/ground_forces_assets.py. Silhouettes, launchers and every animation frame are authored on the texel grid; each unit's selected ComfyUI keyframe (LayerDiffuse transparent sprite) contributes a -1/0/+1 shading texture on its hull ramp, so all frames stay aligned pixel for pixel. Demon hull ramps are picked from the sector palette plus the reserved demon_steel greys at the demon_ramp luminances (chroma <= demon_hull_chroma).",
+  "notes": "Demon ground army, allied human ground units (never killed: totalled, limping, crew pods), ground effects and the ground-to-air missile. Every value is an input to tools/ground_forces_assets.py. Silhouettes, launchers and every animation frame are authored on the texel grid; each unit's selected ComfyUI keyframe (LayerDiffuse transparent sprite) contributes a -1/0/+1 shading texture on its hull ramp, so all frames stay aligned pixel for pixel. Demon hull ramps are picked from the sector palette plus the reserved demon_steel greys at the demon_ramp luminances (chroma <= demon_hull_chroma). v3: allies are authored seen from behind and above (driving up the plane with the convoy) by a deterministic solid rasteriser (hull layer + turret layer at five screen angles, or an infantry squad); the old ally keyframes contribute a sparse hull grit texture. Effects (10-frame explosion, shock ring, scorch decals, dust, smoke, flames, debris, muzzle flashes, impacts) are authored procedurally from seeded noise.",
   "atlas": {
     "file": "assets/images/ground-forces.png",
     "cell": [
-      32,
-      24
+      40,
+      32
     ],
-    "columns": 12,
-    "rows": 10
+    "columns": 16,
+    "rows": 16
   },
   "style_prompt": "pixel art, 16-bit arcade shooter game sprite, single vehicle seen from a high 3/4 top-down front view, facing right, side and top visible, night lighting, crisp square pixels, original artwork, centered, isolated",
   "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, ground, landscape, scenery, trees, grass, cute, cartoon, chibi, many objects, crowd",
@@ -77,6 +77,10 @@
       "#615664",
       "#827484",
       "#A898A6"
+    ],
+    "ally_crew": [
+      "#2F5A60",
+      "#7FC2B8"
     ]
   },
   "units": [
@@ -122,43 +126,43 @@
     },
     {
       "id": "ally-krybor",
-      "row": 4,
       "sector": "krybor",
       "side": "ally",
       "kind": "rover",
       "seed": 721100,
       "prompt": "small human frontier snow rover, grey blue armoured hull, four big wheels, a small roof turret gun, cyan headlights and cyan stripe markings, military",
-      "selected": 721100
+      "selected": 721100,
+      "role": "hull texture source for the v3 allies (no atlas row)"
     },
     {
       "id": "ally-ringfall",
-      "row": 5,
       "sector": "ringfall",
       "side": "ally",
       "kind": "rover",
       "seed": 721200,
       "prompt": "small salvage militia armoured rover, grey blue patched metal hull, six wheels, a twin machine gun turret, teal cyan lights and markings",
-      "selected": 721202
+      "selected": 721202,
+      "role": "hull texture source for the v3 allies (no atlas row)"
     },
     {
       "id": "ally-ember",
-      "row": 6,
       "sector": "ember",
       "side": "ally",
       "kind": "turret",
       "seed": 721300,
       "prompt": "small human foundry defense gun turret on a squat armoured bunker base, grey blue steel, a long cannon barrel, cyan sensor lights",
-      "selected": 721300
+      "selected": 721300,
+      "role": "hull texture source for the v3 allies (no atlas row)"
     },
     {
       "id": "ally-hollow",
-      "row": 7,
       "sector": "hollow",
       "side": "ally",
       "kind": "walker",
       "seed": 721400,
       "prompt": "small two legged human resistance mech walker, grey blue armour, a boxy cockpit with a cyan visor, a gun pod on the side",
-      "selected": 721402
+      "selected": 721402,
+      "role": "hull texture source for the v3 allies (no atlas row)"
     }
   ],
   "extras": [
@@ -173,6 +177,62 @@
       "seed": 722200,
       "prompt": "pixel art explosion fireball, bright yellow core, orange and red fire, dark smoke edges, round burst",
       "selected": 722200
+    }
+  ],
+  "allies": [
+    {
+      "sector": "krybor",
+      "variant": 0,
+      "kind": "rover",
+      "texture": "ally-krybor",
+      "seed": 731100
+    },
+    {
+      "sector": "krybor",
+      "variant": 1,
+      "kind": "apc",
+      "texture": "ally-krybor",
+      "seed": 731110
+    },
+    {
+      "sector": "ringfall",
+      "variant": 0,
+      "kind": "halftrack",
+      "texture": "ally-ringfall",
+      "seed": 731200
+    },
+    {
+      "sector": "ringfall",
+      "variant": 1,
+      "kind": "militia",
+      "seed": 731210
+    },
+    {
+      "sector": "ember",
+      "variant": 0,
+      "kind": "mbt",
+      "texture": "ally-ember",
+      "seed": 731300
+    },
+    {
+      "sector": "ember",
+      "variant": 1,
+      "kind": "spg",
+      "texture": "ally-ember",
+      "seed": 731310
+    },
+    {
+      "sector": "hollow",
+      "variant": 0,
+      "kind": "mech",
+      "texture": "ally-hollow",
+      "seed": 731400
+    },
+    {
+      "sector": "hollow",
+      "variant": 1,
+      "kind": "heavy",
+      "seed": 731410
     }
   ]
 }

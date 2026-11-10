@@ -177,7 +177,9 @@ void main() {
       m.shots.clear();
       m.update(1 / 60);
       expect(m.shots.where((s) => s.hostile).length, greaterThanOrEqualTo(3));
-      expect(elite.telegraph, greaterThanOrEqualTo(.55 - 1 / 60));
+      expect(elite.divePrep, greaterThan(0));
+      advance(m, ArcadeModel.divePrepBeat + 1 / 60);
+      expect(elite.telegraph, greaterThan(.55 - 3 / 60));
       final sampled = elite.targetX;
       m.moveTo(300);
       advance(m, .2);

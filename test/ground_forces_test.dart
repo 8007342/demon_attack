@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:demon_attack/game/flyover_background.dart';
+import 'package:demon_attack/game/ground_atlas.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -95,6 +98,68 @@ void main() {
         lessThan(GroundCamera.texel(GroundTuning.fireZ) / 3));
     expect(GroundCamera.yOf(GroundTuning.spawnZ), lessThan(220));
     expect(GroundCamera.yOf(GroundTuning.fireZ), greaterThan(300));
+  });
+
+  group('ground-forces atlas contract (v3)', () {
+    test('the PNG matches the generated grid', () {
+      final b = File('assets/images/${GroundAtlas.file}').readAsBytesSync();
+      int be(int o) => (b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3];
+      expect(be(16), GroundAtlas.columns * GroundAtlas.cellW);
+      expect(be(20), GroundAtlas.rows * GroundAtlas.cellH);
+    });
+
+    test('rows and columns stay inside the grid', () {
+      for (var s = 0; s < 4; s++) {
+        expect(GroundAtlas.demonRow(s), lessThan(4));
+        for (var v = 0; v < GroundAtlas.allyVariants; v++) {
+          final r = GroundAtlas.allyRow(s, v);
+          expect(r, inInclusiveRange(4, GroundAtlas.effectRow - 1));
+        }
+      }
+      final rows = {GroundAtlas.effectRow, GroundAtlas.fxRow, GroundAtlas.flameRow,
+          GroundAtlas.missileRow};
+      expect(rows.length, 4);
+      expect(rows.every((r) => r < GroundAtlas.rows), isTrue);
+      for (final last in [
+        GroundAtlas.explosionCol + GroundAtlas.explosionFrames,
+        GroundAtlas.scorchCol + GroundAtlas.scorchVariants,
+        GroundAtlas.smallBlastCol + 1,
+        GroundAtlas.puffCol + GroundAtlas.puffFrames,
+        GroundAtlas.sparkCol + GroundAtlas.sparkFrames,
+        GroundAtlas.muzzleWarmCol + GroundAtlas.muzzleFrames,
+        GroundAtlas.impactWarmCol + GroundAtlas.impactFrames,
+        GroundAtlas.allyTurretCol + GroundAtlas.allyTurretFrames,
+      ]) {
+        expect(last, lessThanOrEqualTo(GroundAtlas.columns));
+      }
+    });
+
+    test('every ally row has a kind, a bob cycle and a muzzle per angle', () {
+      const rows = 4 * GroundAtlas.allyVariants;
+      expect(GroundAtlas.allyKind.length, rows);
+      expect(GroundAtlas.allySize.length, rows);
+      expect(GroundAtlas.allyBob.every((b) => b.length == GroundAtlas.allyMoveFrames), isTrue);
+      expect(GroundAtlas.allyMuzzle.length, rows);
+      expect(GroundAtlas.allyTurretAngles.length, GroundAtlas.allyTurretFrames);
+      for (final m in GroundAtlas.allyMuzzle) {
+        expect(m.length, GroundAtlas.allyTurretFrames);
+      }
+      // Each sector mixes kinds: at least one vehicle or walker.
+      for (var s = 0; s < 4; s++) {
+        expect(
+          [0, 1].any((v) => GroundAtlas.allyKind[s * 2 + v] != 1),
+          isTrue,
+        );
+      }
+    });
+
+    test('allies fit the side band at station depth', () {
+      for (final (w, _) in GroundAtlas.allySize) {
+        expect(w, lessThanOrEqualTo(GroundTuning.allyWidthTexels));
+      }
+      final a = GroundAlly(1, 0, 0, 1, 250, 5);
+      expect(a.width, lessThan(GroundCamera.laneLeft - 6));
+    });
   });
 
   test('ground units stay in the side bands, out of the firing lane', () {

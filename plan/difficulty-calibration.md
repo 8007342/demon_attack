@@ -132,3 +132,26 @@ All bands hold (band 1: +0%, +1.5%, −7.6%; band 5: Hard 125 ≈ 1.8 × Normal 
 - Active campaign minutes remain seed-noisy for the protected pilot (sentinel-wave stalls). The median wave is the band metric.
 - Would-be hits are counted even though the pilot is invulnerable. They estimate lives a human would lose; they are not losses. A naive pilot shows the late-sector threat is real when ignored. The attentive pilot shows it is answerable: by dodging, and by homing missiles, which now drop mostly when a breakthrough looms.
 - Ally outcomes are positive only (saved bonus, fleet-intact bonus) and do not enter the bands.
+
+### Round 3 remeasure (gameplay-round-3)
+
+Measured 2026-11-10 with `tools/profile_difficulty.dart`, averaged over seeds 1982 and 7, with the attentive (`--reaction=0.8`) and naive pilots. Changes measured together:
+- the convoy allies;
+- the long ground homing arcs (0.95–1.75 s instead of about 0.5 s);
+- Ringfall near misses;
+- the guaranteed telegraphed breakthrough per Ember/Hollow visit;
+- the 0.5 s `divePrep` beat before every dive tell.
+
+The protected pilot never loses a life, so the new 2.3 s life-loss sequence does not enter these numbers. For a human it adds 2.3 s of threat-free time per life lost. Module timers are frozen during it, so powered time is unchanged.
+
+| Mode | Median wave s, attentive (pre-feature) | Breakthroughs S1–S4, attentive | Breakthroughs S1–S4, naive | Would-be hits S1–S4, attentive | Would-be hits S1–S4, naive | Near misses S2 (attentive / naive) |
+| --- | ---: | --- | --- | --- | --- | ---: |
+| Easy | 16.6 (17.3) | 0 · 0 · 5 · 6 | 0 · 0 · 8.5 · 16 | 0 · 0 · 0 · 0.5 | 0 · 0 · 2.5 · 7 | 25.5 / 38.5 |
+| Normal | 25.9 (26.6) | 0 · 0 · 9.5 · 15.5 | 0 · 0 · 20 · 74 | 0 · 0 · 1 · 0.5 | 0 · 0 · 8.5 · 50.5 | 57.5 / 78 |
+| Hard | 28.7 (31.4) | 0 · 0 · 10 · 16 | 0 · 0 · 24.5 · 87.5 | 0 · 0 · 0.5 · 0.5 | 0 · 0 · 10 · 65.5 | 81.5 / 82.5 |
+
+- **Band 1 holds:** median waves are −4%, −3% and −9% against the pre-feature baseline. The `divePrep` beat shifts dives later without changing their cadence.
+- **Band 2 holds:** sectors 1–2 still have zero breakthroughs, launches and would-be hits in every mode and for both pilots. Ringfall now shows its drama as about 5–16 near misses per visit.
+- **Band 3 holds, with a new floor:** every Ember visit now has at least one breakthrough (Easy attentive: exactly 5 in 5 visits, the guarantee). Hollow stays regular, ordered Easy < Normal ≤ Hard.
+- **Band 4 is at its edge:** an attentive pilot takes 0.5 / 1.5 / 1.0 would-be hits per campaign (previously 0 / 0.8 / 0.2). The guaranteed Ember breakthroughs now fire where nothing fired before, and the slower ground homing arcs answer a unit in range about 0.5 s later. This is still about one per campaign. If play shows it is too much, the first knob is giving the guaranteed unit one missile.
+- **Band 5 holds:** naive exposure is Easy 9.5 ≪ Normal 59 < Hard 75.5 (Hard ≈ 1.3 × Normal).

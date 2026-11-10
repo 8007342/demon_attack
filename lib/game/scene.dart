@@ -739,9 +739,20 @@ class DemonScene extends FlameGame {
         model.presentationMode != RunMode.travel &&
         model.presentationMode != RunMode.victory &&
         model.presentationMode != RunMode.transition &&
+        !model.shipAway && // --- life-loss sequence: the ship is away
         (model.invulnerable == 0 || (model.clock * 12).floor() % 2 == 0)) {
-      _playerShip(c);
+      // --- life-loss sequence: the reserve ship flies in from below.
+      final rise = model.shipDrawY - ArcadeModel.shipY;
+      if (rise.abs() > .01) {
+        c.save();
+        c.translate(0, rise.roundToDouble());
+        _playerShip(c);
+        c.restore();
+      } else {
+        _playerShip(c);
+      }
     }
+    _lifeLossEffects(c); // --- life-loss sequence
     // Spent modules are debris outside the ship's own drawing, so they keep
     // falling through cutscenes and damage blinking instead of vanishing.
     _fallingParts(c);
@@ -2269,5 +2280,209 @@ class DemonScene extends FlameGame {
       return;
     }
     sprite(c, CombatAtlas.fallbackRow, frame, center, width);
+  }
+
+  // =========================================================================
+  // --- life-loss sequence: ship explosion, debris, shot fizzles, regroup.
+  // Presentation only; state in lib/game/life_loss.dart.
+  // =========================================================================
+
+  static const _fireRamp = [
+    Color(0xFFFFFFFF),
+    Color(0xFFFFF5C9),
+    Color(0xFFFFD594),
+    Color(0xFFFFA85A),
+    Color(0xFFFF6A3D),
+    Color(0xFFC23B3B),
+    Color(0xFF5E2335),
+  ];
+  static const _smokeRamp = [
+    Color(0xFF7A7290),
+    Color(0xFF574F6E),
+    Color(0xFF3A3450),
+  ];
+  static const _hullTones = [
+    Color(0xFFD7E5EF),
+    Color(0xFF8FA3B8),
+    Color(0xFF4E6074),
+    Color(0xFF2A2230),
+  ];
+
+  /// Pixel block on the 2-unit explosion grid.
+  void _lp(Canvas c, double x, double y, double s, Color color) {
+    c.drawRect(
+      Rect.fromLTWH(x.roundToDouble(), y.roundToDouble(), s, s),
+      Paint()
+        ..color = color
+        ..isAntiAlias = false,
+    );
+  }
+
+  /// Deterministic hash noise in [0, 1).
+  static double _ln(int a, int b, int c) {
+    var h = a * 374761393 + b * 668265263 + c * 2147483647;
+    h = (h ^ (h >> 13)) * 1274126177;
+    return ((h ^ (h >> 16)) & 0xFFFF) / 65536.0;
+  }
+
+  void _lifeLossEffects(Canvas c) {
+    final m = model;
+    // Hostile shots fizzling out during the regroup: a pop of sparks.
+    for (final f in m.shotFizzles) {
+      final p = (f.age / ShotFizzle.life).clamp(0.0, 1.0);
+      final frame = (p * 4).floor();
+      final core = f.sentinel ? violet : const Color(0xFFFF8676);
+      if (frame == 0) {
+        _lp(c, f.x - 2, f.y - 2, 4, Colors.white);
+      }
+      final r = 2 + p * 7;
+      for (var k = 0; k < 6; k++) {
+        final a = k * math.pi / 3 + f.x * .1;
+        _lp(
+          c,
+          f.x + math.cos(a) * r - 1,
+          f.y + math.sin(a) * r - 1,
+          frame < 2 ? 2 : 1,
+          (k.isEven ? core : const Color(0xFFFFE3AF)).withValues(
+            alpha: 1 - p,
+          ),
+        );
+      }
+      if (frame >= 2) {
+        _lp(c, f.x - 1, f.y - 2 - p * 6, 2, _smokeRamp[0].withValues(alpha: .7 * (1 - p)));
+      }
+    }
+    if (m.lifeLossPhase == LifeLossPhase.none && m.shipDebris.isEmpty) return;
+    final t = m.lifeLossElapsed;
+    final cx = m.lifeLossX, cy = ArcadeModel.shipY;
+    if (m.lifeLossPhase != LifeLossPhase.none && t < 1.5) {
+      // 12 fps pixel animation: flash, fireball with noise holes, shock
+      // ring, then a rising smoke column with embers.
+      final f = (t * 12).floor();
+      final ft = f / 12;
+      if (ft < .17) {
+        final r = 8 + ft * 90;
+        for (var y = -r; y <= r; y += 2) {
+          for (var x = -r; x <= r; x += 2) {
+            if (x * x + y * y > r * r) continue;
+            _lp(c, cx + x, cy + y, 2, ft < .09 ? Colors.white : _fireRamp[1]);
+          }
+        }
+      }
+      if (ft >= .05 && ft < .9) {
+        final u = ((ft - .05) / .85).clamp(0.0, 1.0);
+        final r = 12 + 16 * math.sqrt(u);
+        for (var y = -r; y <= r; y += 2) {
+          for (var x = -r; x <= r; x += 2) {
+            final d = math.sqrt(x * x + y * y) / r;
+            if (d > 1) continue;
+            final n = _ln(x.round(), y.round(), f ~/ 2);
+            // Holes eat the fireball from the rim inward as it cools.
+            if (n < u * 1.1 - (1 - d) * .55) continue;
+            final heat = (d * .55 + u * .75 + n * .25).clamp(0.0, .999);
+            final col = _fireRamp[1 + (heat * 6).floor().clamp(0, 5)];
+            _lp(c, cx + x, cy + y - u * 10, 2, col);
+          }
+        }
+      }
+      if (ft >= .08 && ft < .6) {
+        final u = (ft - .08) / .52;
+        final r = 16 + u * 52;
+        final n = (r * 1.4).round();
+        for (var k = 0; k < n; k++) {
+          if (_ln(k, f, 7) < u * .7) continue;
+          final a = k / n * math.pi * 2;
+          _lp(
+            c,
+            cx + math.cos(a) * r - 1,
+            cy + math.sin(a) * r * .55 - 1,
+            2,
+            (u < .4 ? _fireRamp[2] : _fireRamp[4]).withValues(alpha: 1 - u),
+          );
+        }
+      }
+      if (ft >= .4) {
+        final u = ((ft - .4) / 1.1).clamp(0.0, 1.0);
+        for (var k = 0; k < 7; k++) {
+          final ox = (_ln(k, 3, 1) - .5) * 26 + math.sin(t * 2 + k) * 3;
+          final oy = -8 - u * (40 + k * 6) - _ln(k, 5, 2) * 8;
+          final rr = 4 + u * 7 + k % 3;
+          final col = _smokeRamp[k % 3].withValues(alpha: .75 * (1 - u));
+          for (var y = -rr; y <= rr; y += 2) {
+            for (var x = -rr; x <= rr; x += 2) {
+              if (x * x + y * y > rr * rr) continue;
+              _lp(c, cx + ox + x, cy + oy + y, 2, col);
+            }
+          }
+        }
+      }
+      // Embers drifting up out of the blast.
+      for (var k = 0; k < 14; k++) {
+        final life = (t * 1.6 + _ln(k, 9, 4)) % 1;
+        if (t > 1.2 && life > .6) continue;
+        final ex = cx + (_ln(k, 1, 8) - .5) * 50 + math.sin(t * 5 + k) * 4;
+        final ey = cy + 6 - life * 70;
+        _lp(c, ex, ey, 1, _fireRamp[2 + (life * 4).floor()].withValues(alpha: 1 - life));
+      }
+    }
+    // Hull shards and the fitted modules tumbling away.
+    for (final d in m.shipDebris) {
+      final fade = (1 - d.age / ShipDebris.life).clamp(0.0, 1.0);
+      if (d.power != null && ship.ready && ShipPainter.rows.containsKey(d.power)) {
+        c.save();
+        c.translate(d.x, d.y);
+        c.rotate(d.rotation);
+        ship.paintPart(
+          c,
+          FallingPart(0, 0, d.power!, vx: d.vx),
+        );
+        c.restore();
+      } else {
+        c.save();
+        c.translate(d.x.roundToDouble(), d.y.roundToDouble());
+        c.rotate((d.rotation / (math.pi / 4)).round() * (math.pi / 4));
+        final s = d.size;
+        c.drawRect(
+          Rect.fromLTWH(-s / 2, -s / 2, s, s),
+          Paint()
+            ..isAntiAlias = false
+            ..color = _hullTones[d.tone].withValues(alpha: fade),
+        );
+        c.drawRect(
+          Rect.fromLTWH(-s / 2, -s / 2, math.max(1, s / 2), 1),
+          Paint()
+            ..isAntiAlias = false
+            ..color = _fireRamp[3].withValues(alpha: fade),
+        );
+        c.restore();
+      }
+      // A short burning trail behind each piece.
+      final speed = math.max(1.0, math.sqrt(d.vx * d.vx + d.vy * d.vy));
+      for (var k = 1; k <= 3; k++) {
+        _lp(
+          c,
+          d.x - d.vx / speed * k * 3,
+          d.y - d.vy / speed * k * 3,
+          1,
+          _fireRamp[2 + k].withValues(alpha: fade * (1 - k * .25)),
+        );
+      }
+    }
+    // Fly-in exhaust: a tall mint thruster plume below the rising ship.
+    if (m.lifeLossPhase == LifeLossPhase.emerging) {
+      final y = m.shipDrawY;
+      final u = m.emergeProgress;
+      for (var k = 0; k < 10; k++) {
+        _lp(
+          c,
+          m.shipX - 2 + ((k * 7 + (m.clock * 30).floor()) % 3) - 1,
+          y + 18 + k * 4,
+          k < 3 ? 4 : 2,
+          (k < 2 ? const Color(0xFFFFEDBF) : mint).withValues(
+            alpha: (1 - k / 10) * (1 - u * .6),
+          ),
+        );
+      }
+    }
   }
 }
