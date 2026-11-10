@@ -591,6 +591,27 @@ void main() {
       expect(d.interruptedLines, isEmpty);
     });
 
+    test('the ground war v4 events are voiced (the tide only on a surge)', () {
+      for (final name in GameEventNames.groundWarV4) {
+        final key = name == GameEventNames.groundTide ? '$name.surge' : name;
+        expect(commsHumanTriggers[key]?.lines, isNotEmpty, reason: key);
+        expect(commsHumanTriggers[key]!.group, 'ground', reason: key);
+      }
+      expect(commsHumanTriggers[GameEventNames.groundTide], isNull);
+      expect(commsDemonTriggers['heavyArmorSighted']?.lines, isNotEmpty);
+      expect(commsDemonTriggers['groundTide.surge']?.lines, isNotEmpty);
+      final d = CommsDirector(random: math.Random(2));
+      // The surge line has a chance below 1: a few tides, past its cooldown.
+      for (var k = 0; k < 8 && d.history.isEmpty; k++) {
+        d.handle(
+          const GameEvent(GameEventNames.groundTide, {'variant': 'surge'}),
+          k * 40.0,
+        );
+        d.update(k * 40.0);
+      }
+      expect(d.history.first, startsWith('groundTide.surge.h'));
+    });
+
     test('several distinct minion timbres', () {
       expect(commsMinions.toSet(), containsAll(['skritch', 'grunnok', 'blatch', 'nibb', 'krag', 'sliss']));
     });

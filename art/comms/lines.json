@@ -3402,6 +3402,325 @@
     ],
     "overlap": true
    }
+  },
+  "groundSkirmish": {
+   "priority": 3,
+   "cooldown": 14,
+   "ttl": 2.5,
+   "chance": 0.55,
+   "group": "ground",
+   "mood": "stern",
+   "lines": [
+    {
+     "speaker": "kessler",
+     "text": "Contact, left flank! We are trading shots with them!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "voss",
+     "text": "They jumped us at the tree line! Returning fire!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Contact front! Convoy, hold your spacing and engage!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "march",
+     "text": "Ground units in contact. Keep rolling and keep firing.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Here they come again! Brace and hit back!",
+     "emotion": "excited"
+    },
+    {
+     "speaker": "voss",
+     "text": "Skirmish on the right! I have eyes on three of them!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Fight on the flank, Major. We can handle this one.",
+     "emotion": "calm"
+    },
+    {
+     "speaker": "march",
+     "text": "Convoy is engaged. Overwatch, we are holding.",
+     "emotion": "calm"
+    }
+   ]
+  },
+  "infantryEngaged": {
+   "priority": 3,
+   "cooldown": 20,
+   "ttl": 2.5,
+   "chance": 0.5,
+   "group": "ground",
+   "mood": "stern",
+   "lines": [
+    {
+     "speaker": "kessler",
+     "text": "Infantry engaged! Boots on the ground, keep them moving!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "voss",
+     "text": "Foot soldiers in the fight! Squad, on me!",
+     "emotion": "excited"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Our infantry is in it now. Covering fire, go!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "march",
+     "text": "Infantry engaged. Stay low and stay together.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Their foot troops are swarming the road! Push them back!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "voss",
+     "text": "Dismounts out! Clear that ridge!",
+     "emotion": "excited"
+    }
+   ]
+  },
+  "skirmishWon": {
+   "priority": 2,
+   "cooldown": 14,
+   "ttl": 2.5,
+   "chance": 0.55,
+   "group": "ground",
+   "mood": "happy",
+   "lines": [
+    {
+     "speaker": "kessler",
+     "text": "Target down! Moving up!",
+     "emotion": "triumphant"
+    },
+    {
+     "speaker": "voss",
+     "text": "Got them! Road is clear, rolling on!",
+     "emotion": "excited"
+    },
+    {
+     "speaker": "mensah",
+     "text": "That fight is ours. Convoy, advance.",
+     "emotion": "warm"
+    },
+    {
+     "speaker": "march",
+     "text": "Good work, all units. Keep the pace.",
+     "emotion": "warm"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Artillery made that easy! Thanks for the thunder!",
+     "emotion": "teasing"
+    },
+    {
+     "speaker": "voss",
+     "text": "Ha! They did not see that coming!",
+     "emotion": "triumphant"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Skirmish won. Nobody hurt, moving on.",
+     "emotion": "calm"
+    },
+    {
+     "speaker": "march",
+     "text": "Nicely done. Regroup and press on.",
+     "emotion": "warm"
+    }
+   ]
+  },
+  "allyFallingBack": {
+   "priority": 4,
+   "cooldown": 18,
+   "ttl": 2.5,
+   "group": "ground",
+   "mood": "worried",
+   "lines": [
+    {
+     "speaker": "kessler",
+     "text": "Taking a beating! Falling back to patch her up!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "voss",
+     "text": "Armour is dented, pulling back for repairs!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "One of ours is falling back to the escort line. Cover them!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "march",
+     "text": "Damaged unit falling back. Give them room to repair.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Need a breather! Back in the fight in a moment!",
+     "emotion": "exhausted"
+    },
+    {
+     "speaker": "voss",
+     "text": "Pulling back! Do not worry, we will be right back!",
+     "emotion": "panicked"
+    }
+   ]
+  },
+  "heavyArmorSighted": {
+   "priority": 5,
+   "cooldown": 30,
+   "ttl": 3,
+   "group": "ground",
+   "mood": "worried",
+   "lines": [
+    {
+     "speaker": "march",
+     "text": "Heavy armour on the horizon! Everyone, take note!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Big one coming in! That is a heavy tank!",
+     "emotion": "panicked"
+    },
+    {
+     "speaker": "voss",
+     "text": "Heavy tank, far ahead! Pilot, can you soften it up?",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Heavy armour rolling in. We will need help from up above.",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "admiral",
+     "text": "Heavy armour sighted below. Pilot, keep an eye on it.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "nomad",
+     "text": "Heavy tank down on the ground. Watch the convoy.",
+     "emotion": "calm"
+    }
+   ],
+   "demon": {
+    "priority": 4,
+    "cooldown": 30,
+    "ttl": 2,
+    "delay": 0.6,
+    "lines": [
+     {
+      "speaker": "krag",
+      "grunt": "roar",
+      "gloss": "HEAVY ARMOUR ROAR"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "rally",
+      "gloss": "TANK CHEER"
+     },
+     {
+      "speaker": "skarn",
+      "grunt": "gloat",
+      "gloss": "FURNACE PRIDE"
+     },
+     {
+      "speaker": "gorrak",
+      "grunt": "order",
+      "gloss": "ARMOUR ADVANCE"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "cackle",
+      "gloss": "GUNNER GLEE"
+     }
+    ]
+   }
+  },
+  "groundTide.surge": {
+   "priority": 3,
+   "cooldown": 30,
+   "ttl": 3,
+   "chance": 0.7,
+   "group": "ground",
+   "mood": "worried",
+   "lines": [
+    {
+     "speaker": "march",
+     "text": "They are surging on the ground! All units, dig in!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Here comes a whole wave of them! Hold the line!",
+     "emotion": "panicked"
+    },
+    {
+     "speaker": "voss",
+     "text": "They are pouring in down here! We could use some help!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Big push coming at the convoy. Steady, everyone.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "admiral",
+     "text": "The ground attack is surging. Pilot, support the convoy when you can.",
+     "emotion": "urgent"
+    }
+   ],
+   "demon": {
+    "priority": 4,
+    "cooldown": 30,
+    "ttl": 2,
+    "delay": 0.4,
+    "lines": [
+     {
+      "speaker": "sliss",
+      "grunt": "warcry",
+      "gloss": "SURGE HISS"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "warcry",
+      "gloss": "SURGE ROAR"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "GIDDY SURGE"
+     },
+     {
+      "speaker": "vexxa",
+      "grunt": "order",
+      "gloss": "SURGE ORDER"
+     },
+     {
+      "speaker": "morth",
+      "grunt": "rally",
+      "gloss": "SURGE CHANT"
+     }
+    ]
+   }
   }
  }
 }

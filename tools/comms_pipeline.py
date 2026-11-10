@@ -1608,6 +1608,7 @@ def stage_prosody(args):
     import numpy as np
     _cast, lines = load_specs()
     folder = Path(args.dir) if args.dir else WORK / 'expressive'
+    emotions = audio_spec()['chatterbox']['emotions']
     rows = {}
     for clip_id, _trigger, kind, line in clip_entries(lines):
         if kind != 'human':
@@ -1617,7 +1618,10 @@ def stage_prosody(args):
         path = folder / f'{clip_id}.wav'
         if not path.exists():
             continue
-        r = prosody(read_wav(path), line['text'])
+        x = read_wav(path)
+        if args.post:
+            x = deliver(trim_silence(x), emotions.get(line.get('emotion', 'calm'), {}).get('post'))
+        r = prosody(x, line['text'])
         r['emotion'] = line.get('emotion', 'calm')
         r['speaker'] = line['speaker']
         rows[clip_id] = r
@@ -1627,7 +1631,7 @@ def stage_prosody(args):
         sel = [r for r in rows.values() if emotion in ('all', r['emotion'])]
         if sel:
             table[emotion] = {'n': len(sel), **{k: round(float(np.median([r[k] for r in sel])), 2) for k in keys}}
-    print(f"prosody of {folder} ({len(rows)} clips), medians:")
+    print(f"prosody of {folder}{' after delivery' if args.post else ''} ({len(rows)} clips), medians:")
     print(f"{'emotion':11} {'n':>4} {'range st':>9} {'sd st':>6} {'energy sd':>9} {'syll/s':>7} {'voiced':>7}")
     for emotion, t in table.items():
         print(f"{emotion:11} {t['n']:4d} {t['pitch_range_st']:9.2f} {t['pitch_sd_st']:6.2f} {t['energy_sd_db']:9.2f} "
@@ -1684,6 +1688,7 @@ def main(argv=None):
     parser.add_argument('--kokoro-only', action='store_true', help='radio: ignore Chatterbox renders')
     parser.add_argument('--dir', default='', help='prosody: folder of clean <clip id>.wav renders')
     parser.add_argument('--out', default='', help='prosody: write per-clip numbers as JSON')
+    parser.add_argument('--post', action='store_true', help='prosody: measure after the delivery post-processing')
     args = parser.parse_args(argv)
     STAGES[args.stage](args)
 
