@@ -62,40 +62,74 @@ Integration: load `audio/demon-audio.js` before Flutter bootstrap, then call `wi
 
 ## Squad comms voices
 
-The squad video call's radio lines are short clips in `web/audio/comms/<clip id>.ogg` (Opus) and `.m4a` (AAC-LC), one per line of the bank in `art/comms/lines.json` (clip ids `<trigger>.h<n>` for spoken lines, `<trigger>.d<n>` for demon grunts, in list order). `web/audio/comms/manifest.json` records every clip's speaker, kind, trigger, duration, mouth track, loudness, byte sizes and SHA-256, plus the Kokoro revision and the SHA-256 of every model and voice file used.
+The squad video call's radio lines are short clips in `web/audio/comms/<clip id>.ogg` (Opus) and `.m4a` (AAC-LC), one per line of the bank in `art/comms/lines.json` (clip ids `<trigger>.h<n>` for spoken lines, `<trigger>.d<n>` for demon grunts, in list order). `web/audio/comms/manifest.json` records every clip's speaker, kind, trigger, engine (`chatterbox`, `kokoro` or `grunt`), emotion, any fallback reason, duration, mouth and openness tracks, loudness, byte sizes and SHA-256, plus the Kokoro and Chatterbox revisions, the SHA-256 of every model and voice file, the emotion table and the reference clips.
 
 ### Pipeline (`tools/comms_pipeline.py`)
 
-Specs, all committed: `art/comms/cast.json` (characters, Kokoro voice and speed per human, grunt parameters per demon officer), `art/comms/lines.json` (triggers and lines) and `art/comms/audio.json` (Kokoro repo + revision, pronunciation overrides, gibberish syllables, radio chain, loudness, codecs). Stages, run with the comms venv (`-I`):
+Specs, all committed: `art/comms/cast.json` (characters, Kokoro voice and speed per human, grunt parameters per demon), `art/comms/lines.json` (triggers and lines, each human line with an `emotion`) and `art/comms/audio.json` (Kokoro and Chatterbox repos + revisions, the reference sentence, the emotion table and accept rules, pronunciation overrides, gibberish syllables, grunt length classes, radio chain and keying, loudness, codecs). Two venvs: the **Kokoro venv** (Python 3.12, torch CPU, kokoro) runs every stage except `expressive`; the **Chatterbox venv** (Python 3.11, torch 2.6 CPU, chatterbox-tts 0.1.7, setuptools < 81 for its watermarker) runs `expressive`. Run every heavy stage through `forge-guard run --` (it queues heavy jobs forge-wide, waits for memory headroom, caps threads and kills a job under memory pressure instead of letting the cgroup stall).
 
 | Stage | Does |
 | --- | --- |
-| `voices` | Kokoro-82M (CPU, 6 torch threads) speaks each human line with its character's voice and speed → 24 kHz WAV in `$COMMS_WORK/raw` (default `~/.cache/demon-attack/comms`, outside the checkout). Cached per clip on (voice, speed, text, revision, overrides). misaki's espeak-ng fallback is disabled (the bundled `espeakng-loader` library aborts on this host); every out-of-vocabulary word is spelt with an explicit phoneme override in `audio.json` (`Krybor`, `Ringfall`, `Woohoo`, `flyboy`, `Brrrrt`). |
+| `voices` | Kokoro-82M (CPU) speaks each human line with its character's voice and speed → 24 kHz WAV in `$COMMS_WORK/raw` (default `~/.cache/demon-attack/comms`, outside the checkout). These are the fallback renders and the length yardstick for `expressive`. Cached per clip on (voice, speed, text, revision, overrides). misaki's espeak-ng fallback is disabled (the bundled `espeakng-loader` library aborts on this host); every out-of-vocabulary word is spelt with an explicit phoneme override in `audio.json`. |
+| `refs` | One Kokoro reference clip per human character (their voice and speed, the neutral ~9 s sentence in `audio.json`) → `$COMMS_WORK/refs/<id>.wav`, hashes in `refs.json` and the manifest. |
+| `expressive` | Chatterbox (Resemble AI) clones each character's reference and speaks every line with its emotion's exaggeration / cfg weight / temperature, seeded per clip id → `$COMMS_WORK/expressive`. **One model process** (`--workers 1`, `--threads 6`, ~3 GB resident; between lines it pauses while the cgroup's anon+shmem is within 1.5 GB of `memory.high`), speakers grouped so each reference is prepared once, newest triggers first (`EXPRESSIVE_ORDER`); cached per (engine, revision, reference hash, text, emotion parameters); an incremental log in `expressive.json`. `--only`/`--limit` render subsets. |
 | `grunts` | Synthesised demon grunts, seeded by clip id (below). |
-| `radio` | The radio chain (below), mouth track, BS.1770 gated loudness normalisation (−18 LUFS human, −18.5 demon, soft limit at −3 dBFS). |
-| `encode` | ffmpeg: Opus 20 kbps VBR `voip` mono and AAC-LC 28 kbps mono with a 4 kHz cutoff (without it the native AAC encoder spends bits on the empty highs and rings up to 6 dB over the ceiling), 24 kHz, bit-exact; writes the manifest and removes stray files. Re-encoding the same masters reproduces the same bytes. |
-| `verify` | Decodes every file: length vs manifest (±60 ms), decoded peak ≤ 0 dBFS, loudness within 1.5 LU, grunts 0.5–1.9 s, mouth track length, hashes, bank ↔ manifest. |
+| `radio` | Picks the engine per human clip: the Chatterbox render if it passes the accept rules (present, not silent, < 0.1 % clipped samples, trimmed length 0.55–1.9 × the Kokoro render of the same text, which catches truncation, babble loops and long noise tails), else the Kokoro render (`--kokoro-only` forces it). Then the radio chain (below), mouth and openness tracks, BS.1770 gated loudness normalisation (−18 LUFS human, −18.5 demon, soft limit at −4 dBFS). |
+| `encode` | ffmpeg: Opus 16 kbps VBR `voip` mono and AAC-LC 24 kbps mono with a 4 kHz cutoff (without it the native AAC encoder spends bits on the empty highs and rings up to 6 dB over the ceiling), 24 kHz, bit-exact; writes the manifest and removes stray files. Re-encoding the same masters reproduces the same bytes. |
+| `verify` | Decodes every file: length vs manifest (±60 ms), decoded peak ≤ 0 dBFS, loudness within 1.5 LU, grunt length per class, mouth/openness track lengths, no single-frame mouth flicker, engine recorded, hashes, bank ↔ manifest. |
 | `stats` | Median pitch, spectral centroid and speaking rate per character (distinctness check). |
-| `dart` | Generates `lib/comms/comms_bank.dart` with the measured durations and mouth tracks. |
-| `all` | `voices grunts radio encode verify dart`. |
+| `dart` | Generates `lib/comms/comms_bank.dart` with the measured durations and tracks. |
+| `all` | `voices refs grunts radio encode verify dart` (run `expressive` in its venv between `refs` and `radio`). |
 
 Setup (keep everything off the checkout):
 
 ```bash
 SCR=<scratch>/comms
+G=~/.cache/tillandsias-project/bin/forge-guard
 export UV_PYTHON_INSTALL_DIR=$SCR/py UV_CACHE_DIR=$SCR/cache HF_HOME=$SCR/hf HF_HUB_DISABLE_XET=1 COMMS_WORK=$SCR/work
-uv python install 3.12 && uv venv --python 3.12 $SCR/venv
+uv python install 3.12 3.11
+uv venv --python 3.12 $SCR/venv
 uv pip install --python $SCR/venv/bin/python --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple torch
 uv pip install --python $SCR/venv/bin/python kokoro soundfile numpy scipy espeakng-loader
 uv pip install --python $SCR/venv/bin/python <en_core_web_sm-3.8.0 wheel from the spaCy models release>
-$SCR/venv/bin/python -I tools/comms_pipeline.py all
+uv venv --python 3.11 $SCR/cb-venv
+uv pip install --python $SCR/cb-venv/bin/python --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple torch==2.6.0 torchaudio==2.6.0 chatterbox-tts soundfile scipy 'setuptools<81'
+$G run -- $SCR/venv/bin/python -I tools/comms_pipeline.py voices
+$G run -- $SCR/venv/bin/python -I tools/comms_pipeline.py refs
+$G run --threads 6 -- $SCR/cb-venv/bin/python -I tools/comms_pipeline.py expressive
+$G run -- $SCR/venv/bin/python -I tools/comms_pipeline.py grunts
+$G run -- $SCR/venv/bin/python -I tools/comms_pipeline.py radio
+$G run -- $SCR/venv/bin/python -I tools/comms_pipeline.py encode
+$SCR/venv/bin/python -I tools/comms_pipeline.py verify && python3 tools/comms_pipeline.py dart
 ```
 
-(The Hugging Face Xet transfer backend is unreachable from the forge; `HF_HUB_DISABLE_XET=1` downloads the model over plain HTTPS.)
+(The Hugging Face Xet transfer backend is unreachable from the forge; `HF_HUB_DISABLE_XET=1` downloads the models over plain HTTPS.)
+
+### Expressive delivery (Chatterbox)
+
+Kokoro holds each character's identity: Chatterbox clones the character's own Kokoro reference clip, so a line keeps that character's voice while gaining the emotion's delivery. Settings per emotion (`audio.json` → `chatterbox.emotions`; exaggeration 0.5 and cfg 0.5 are the model defaults, lower cfg is faster and more animated):
+
+| Emotion | Exaggeration | cfg weight | Temperature | Lines |
+| --- | ---: | ---: | ---: | ---: |
+| calm | 0.35 | 0.50 | 0.70 | 66 |
+| stern | 0.45 | 0.55 | 0.70 | 7 |
+| warm | 0.50 | 0.50 | 0.75 | 44 |
+| exhausted | 0.40 | 0.60 | 0.75 | 12 |
+| teasing | 0.65 | 0.45 | 0.80 | 34 |
+| urgent | 0.70 | 0.35 | 0.75 | 74 |
+| excited | 0.80 | 0.35 | 0.80 | 55 |
+| triumphant | 0.85 | 0.35 | 0.80 | 25 |
+| panicked | 0.95 | 0.30 | 0.80 | 29 |
+
+Chatterbox embeds Resemble AI's imperceptible Perth watermark in its output (left on); the radio chain and lossy coding probably weaken it. On this shared CPU, one process with 6 threads took a median of 11.3 s per line (7–39 s), so 346 lines take 4012 s, about 67 min. The 2026-11-10 render produced 346 lines, 0 errors. 341 passed the accept rules. 5 fell back to Kokoro because their Chatterbox take ran 1.9–2.4× longer than Kokoro's (`waveStart.h0`, `weaponPickup.h0`, `weaponPickup.rapid.h1`, `groundUnitDestroyed.h5`, `groundMissileLaunch.h5`). The manifest records each clip's `engine` and any `fallback` reason.
+
+Never run several Chatterbox workers: each holds about 3 GB, and four of them pushed the forge cgroup past `memory.high` into a 1.5 h reclaim stall (see `tools/forge-guard/README.md`).
 
 ### Radio chain
 
-Silence trimmed (−42 dB, 15 ms pad) with 10 ms edge fades; 4th-order Butterworth band-pass (human 300–3400 Hz; demon "enemy intercept" 200–3000 Hz), a presence peak (human +3 dB at 1.8 kHz, demon +4 dB at 1.1 kHz), tanh saturation (drive 1.9 / 2.4) and the band-pass again so the harmonics stay in band; band-limited hiss under the transmission (−44 / −40 dB, demons add a 55 Hz + 165 Hz hum). Key-up: a 9 ms click (1.45 kHz human, 0.98 kHz demon) and a 50 ms burst of open-carrier noise, 70 ms before the voice. Key-down: a 160 ms decaying squelch tail ("kssh") and a closing click.
+Silence trimmed (−42 dB, 15 ms pad) with 10 ms edge fades; 4th-order Butterworth band-pass (human 300–3400 Hz; demon "enemy intercept" 200–3000 Hz), a presence peak (human +3 dB at 1.8 kHz, demon +4 dB at 1.1 kHz), tanh saturation (drive 1.9 / 2.4) and the band-pass again so the harmonics stay in band; a faint band-limited hiss under the transmission (−52 / −48 dB, demons add a 55 Hz + 165 Hz hum at −42 dB).
+
+Keying (v3, much softer than the first pass, which was ear-cutting): levels are relative to the voice peak before loudness normalisation. Key-up: a rounded 30 ms sine "tock" (820 Hz human, 574 Hz demon, 2 ms raised-cosine onset, level 0.07, no noise), a 50 ms breath of carrier noise low-passed at 1.5 kHz (level 0.06), and for fleet radios a quiet 45 ms 1.05 kHz key-up tone (0.035), all within the 70 ms before the voice. Key-down: an 80 ms low-passed noise tail (0.06) and a quieter closing tock. The old pass used a 1.45 kHz click with a noise burst at 0.55, a 3.2 kHz burst and a 160 ms 3.4 kHz squelch tail at 0.32.
 
 ### Demon grunts
 
@@ -106,23 +140,34 @@ Unintelligible, cartoonish creature vocalisations, never words. Each grunt is a 
 
 They are mixed by the officer's `growl` weight, softly saturated and faded, then sent through the demon radio chain. The clip id seeds every random choice. Mouth tracks for grunts use frames 0, 3, 4 and 7 (the roar frame at the loudest moments, which drives the portrait zoom).
 
-### Mouth tracks
+The three minions use the same synthesis with their own parameters: Skritch the scout imp squeaks (260 Hz, formant ×1.6, fast 12 Hz wobble, light growl: the gibberish layer is shifted up, chipmunk-like), Grunnok the trooper brute rumbles (58 Hz, formant ×0.58, heavy growl and rasp, slow wobble) and Blatch the gunner rasps (125 Hz, heavy rasp, 8 Hz wobble). Length classes (`audio.json` → `grunt_lengths`): officer replies in exchanges (`levelClear`, `bossDefeated` and `broodTaunt` demon lines) are **long**: the gesture, a breath, then a grumbling coda of two or three lower, slower syllables, capped at 2.0 s raw (final clips ≤ 2.25 s); the regroup celebration (`regroupStart`) is **short**: the gesture time-compressed to ≤ 0.72 s raw (final ≤ 0.9 s); everything else stays 0.5–1.9 s.
 
-One portrait frame per 1/15 s across the whole clip (`mouth` in the manifest and the Dart bank), from the clean voice's RMS relative to the clip's loudest 1/15 s (median-filtered): `0` closed (< −28 dB), `2` slightly open, `3` half, `4` wide (≥ −8 dB), and `5` (rounded) for the most low-frequency-heavy fifth of the open frames. Lead-in and squelch tail frames are `0`.
+### Mouth and openness tracks
+
+Two tracks per clip, one value per 1/15 s across the whole clip including the keying lead and tail:
+
+- `open`: mouth openness 0..1 written as one digit 0–9 per frame (openness = digit / 9). From the clean voice's RMS per 1/15 s, mapped linearly from 24 dB below the clip's 90th-percentile frame level (closed) up to that level (fully open), so an evenly loud expressive delivery still moves between small and wide mouths; then smoothed with a fast attack (0.7 per frame) and a slower release (0.4 per frame), so the mouth opens on the sound and closes slightly behind it.
+- `mouth`: portrait frame ids derived from the smoothed openness: humans `0` (< 0.2), `2` (< 0.5), `3` (< 0.8), `4`, and `5` (rounded) only for runs of at least three open frames (≥ 0.4) among the most low-frequency-heavy fifth (sustained o/u vowels); demons `0`, `3` (< 0.5), `4` (< 0.9), `7` (roar). Across the bank: human frames 37 % `4`, 28 % `3`, 16 % `2`, 15 % `0`, 4 % `5`; grunt frames 55 % `4`, 21 % `3`, 21 % `7`, 2 % `0`. Every run is held at least two frames (shorter runs merge into a neighbour), so there is no single-frame flicker; `verify` checks it.
 
 ### Playback (`web/audio/comms-audio.js`)
 
-`window.commsAudio = {prefetch(ids), play(id, priority, demon), stop(id), stopAll(), setVolume(v), state}`. It shares demon-audio.js's AudioContext and master gain through `demonAudio.graph` (one added getter is the only change to demon-audio.js), so master mute and pause (context suspend) silence voices too. Voices run through their own bus gain (+2 dB playback gain × the voice volume; `setVolume(0)` mutes comms and stops live voices) into the master. `play` is a no-op returning false before the first gesture has created the context, at volume 0, or for a clip already playing. At most **2** voices sound at once: beyond the cap the lowest-priority (then oldest) voice is released over 40 ms if the new priority is at least as high, otherwise the new clip is dropped (`state.dropped`). While any voice is live the music bus ramps to 0.4 (`setTargetAtTime`, 60 ms) and returns to 1 (120 ms) 300 ms after the last voice ends; the effects bus is never ducked. Bytes may be fetched before the gesture; decoding waits for the context. Format order follows `canPlayType('audio/ogg; codecs="opus"')`; a clip whose formats all fail frees its slot. `state` reports `{context, voices, ducked, duckGain, musicGain, volume, loaded, played, dropped, maxConcurrent, cap, formats}`.
+`window.commsAudio = {prefetch(ids), play(id, priority, demon), stop(id), stopAll(), setVolume(v), state}`. It shares demon-audio.js's AudioContext and master gain through `demonAudio.graph` (one added getter is the only change to demon-audio.js), so master mute and pause (context suspend) silence voices too. Voices run through their own bus gain (+2 dB playback gain × the voice volume; `setVolume(0)` mutes comms and stops live voices) into the master. `play` is a no-op returning false before the first gesture has created the context, at volume 0, or for a clip already playing. At most **3** voices sound at once (the regroup celebration may overlap for about a second). A playing voice is never cut, except by an **urgent** line (priority ≥ 8): that releases the lowest-priority (then oldest) live voice over 40 ms, provided it doesn't outrank the new line. Any other play beyond the cap is dropped (`state.dropped`), so the Dart director queues instead. While any voice is live the music bus ramps to 0.4 (`setTargetAtTime`, 60 ms) and returns to 1 (120 ms) 300 ms after the last voice ends; the effects bus is never ducked. Bytes may be fetched before the gesture; decoding waits for the context. Format order follows `canPlayType('audio/ogg; codecs="opus"')`; a clip whose formats all fail frees its slot. `state` reports `{context, voices, ducked, duckGain, musicGain, volume, loaded, played, dropped, maxConcurrent, cap, formats}`.
 
 ### Sizes
 
 | Set | Clips | Audio | Opus | AAC |
 | --- | ---: | ---: | ---: | ---: |
-| Human lines | 207 | 547 s | 1.46 MB | 2.18 MB |
-| Demon grunts | 63 | 68 s | 0.19 MB | 0.31 MB |
-| **Total** | **270** | **615 s** | **1.64 MB** | **2.49 MB** |
+| Human lines (341 Chatterbox, 5 Kokoro) | 346 | 1002 s | 2.20 MB | 3.50 MB |
+| Demon grunts (8 speakers) | 132 | 137 s | 0.32 MB | 0.57 MB |
+| **Total** | **478** | **1138 s** | **2.52 MB** | **4.07 MB** |
 
-Clips load lazily (`prefetch` the lines a sector can use); a typical line is 2–3 s and 5–8 KB of Opus. `test-worker/comms-audio.test.mjs` covers the no-op before the gesture, the shared master, ducking and its release, the two-voice cap with steal-by-priority and drop, voice volume, a missing clip freeing its slot, and that every manifest clip ships both formats within budget.
+The expressive takes run longer than Kokoro's (a mean of 2.9 s per human line), so v3 lowered the bitrates to Opus 16 kbps and AAC 24 kbps; both remain clean for the 3.4 kHz radio band. Clips load lazily (`prefetch` the lines a sector can use), and a typical line is 2–3 s and 5–8 KB of Opus. Grunt lengths: long replies 1.36–2.01 s, regroup grunts 0.87 s, all others 0.5–1.9 s. `test-worker/comms-audio.test.mjs` covers:
+
+- the no-op before the gesture and the shared master;
+- ducking and its release;
+- the three-voice cap: non-urgent lines dropped and never cutting, urgent lines cutting the lowest-priority voice but never a higher one;
+- voice volume, and a missing clip freeing its slot;
+- every manifest clip shipping both formats within budget.
 
 ## Global leaderboard
 
