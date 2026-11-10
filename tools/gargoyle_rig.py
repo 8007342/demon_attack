@@ -862,3 +862,253 @@ def _decals(cv, R, decals):
                 continue
             if d.force or R.part[y, x] in d.parts or (d.mats and R.mat[y, x] in d.mats):
                 cv.px(x, y, col)
+
+
+# ---------------------------------------------------------------------------
+# Hard-surface kit (2026-11 boss armada): the same z-buffer, normals and
+# quantised key light, with primitives for engineered hulls. Faceted lofts,
+# tubes and spires shade as flat plates, so a warship reads as machined
+# armour while its gargoyle ornament keeps the rounded volumes above.
+# ---------------------------------------------------------------------------
+class WindowRaster(Raster):
+    """A Raster whose primitives only touch their screen bounding box (large
+    canvases with hundreds of plates, tubes and bone spheres)."""
+
+    def _win(self, x0, x1, y0, y1):
+        ox, oy = self.origin
+        a, b = max(0, int(math.floor(x0 + ox)) - 1), min(self.w, int(math.ceil(x1 + ox)) + 2)
+        c, d = max(0, int(math.floor(y0 + oy)) - 1), min(self.h, int(math.ceil(y1 + oy)) + 2)
+        if b <= a or d <= c:
+            return None
+        return (slice(c, d), slice(a, b))
+
+    def _commit_win(self, sl, hit, z, n, mat, part, back=False):
+        sel = hit & (z > self.z[sl])
+        if not sel.any():
+            return
+        self.z[sl][sel] = z[sel]
+        self.n[sl][sel] = n[sel]
+        p3 = self.p3[sl]
+        p3[sel, 0] = self.px[sl][sel]
+        p3[sel, 1] = self.py[sl][sel]
+        p3[sel, 2] = z[sel]
+        self.mat[sl][sel] = mat
+        self.part[sl][sel] = part
+        self.back[sl][sel] = back
+
+    def sphere(self, s: Sphere):
+        r = max(s.r, .72)
+        sl = self._win(s.c[0] - r, s.c[0] + r, s.c[1] - r, s.c[1] + r)
+        if sl is None:
+            return
+        dx, dy = self.px[sl] - s.c[0], self.py[sl] - s.c[1]
+        d2 = dx * dx + dy * dy
+        hit = d2 <= r * r
+        if not hit.any():
+            return
+        dz = np.sqrt(np.maximum(r * r - d2, 0))
+        n = np.stack([dx, dy, dz], -1) / r
+        self._commit_win(sl, hit, s.c[2] + dz, n, s.mat, s.part)
+
+    def ellipsoid(self, e: Ellipsoid):
+        rr = float(np.max(e.r))
+        sl = self._win(e.c[0] - rr, e.c[0] + rr, e.c[1] - rr, e.c[1] + rr)
+        if sl is None:
+            return
+        minv = e.m.T
+        X, Y = self.px[sl], self.py[sl]
+        o = np.stack([X - e.c[0], Y - e.c[1], np.zeros_like(X)], -1)
+        ol = (o @ minv.T) / e.r
+        dl = (minv @ v(0, 0, 1)) / e.r
+        a = dl @ dl
+        b = ol @ dl
+        c = (ol * ol).sum(-1) - 1
+        disc = b * b - a * c
+        hit = disc >= 0
+        if not hit.any():
+            return
+        t = (-b + np.sqrt(np.maximum(disc, 0))) / a
+        q = ol + t[..., None] * dl
+        n = (q / e.r) @ e.m.T
+        n /= np.linalg.norm(n, axis=-1, keepdims=True) + 1e-9
+        self._commit_win(sl, hit, e.c[2] + t, n, e.mat, e.part)
+
+    def tri(self, t: Tri):
+        p0, p1, p2 = (np.asarray(p, float) for p in t.p)
+        xs, ys = (p0[0], p1[0], p2[0]), (p0[1], p1[1], p2[1])
+        sl = self._win(min(xs), max(xs), min(ys), max(ys))
+        if sl is None:
+            return
+        den = (p1[1] - p2[1]) * (p0[0] - p2[0]) + (p2[0] - p1[0]) * (p0[1] - p2[1])
+        if abs(den) < 1e-6:
+            return
+        X, Y = self.px[sl], self.py[sl]
+        l0 = ((p1[1] - p2[1]) * (X - p2[0]) + (p2[0] - p1[0]) * (Y - p2[1])) / den
+        l1 = ((p2[1] - p0[1]) * (X - p2[0]) + (p0[0] - p2[0]) * (Y - p2[1])) / den
+        l2 = 1 - l0 - l1
+        hit = (l0 >= -1e-6) & (l1 >= -1e-6) & (l2 >= -1e-6)
+        if not hit.any():
+            return
+        z = l0 * p0[2] + l1 * p1[2] + l2 * p2[2]
+        if t.holes:
+            P = l0[..., None] * p0 + l1[..., None] * p1 + l2[..., None] * p2
+            for hc, hr in t.holes:
+                hit &= ((P - hc) ** 2).sum(-1) > hr * hr
+        raw = np.cross(p1 - p0, p2 - p0)
+        nrm = norm(raw)
+        if nrm[2] < 0:
+            nrm = -nrm
+        back = bool((raw[2] < 0) == t.flip)
+        self._commit_win(sl, hit, z, np.broadcast_to(nrm, X.shape + (3,)), t.mat, t.part, back)
+
+
+class ShipCam:
+    """Orthographic 3/4 camera over a ship whose bow faces the viewer.
+
+    Ship space: x right, y toward the bow (down the screen), h up from the
+    deck. Lengths along y are given in *deck units*: a point at h = 0 lands
+    on screen at exactly (x, y), so functional anchors can be placed in
+    screen units; a point h above the deck rises by h * sin(pitch). The map
+    is a true rotation of the stretched ship, so normals shade correctly:
+    decks catch the key light, sloped armour takes the middle tones and
+    vertical bulkheads facing the viewer fall into shadow."""
+
+    def __init__(self, pitch=35.0, scale=1.0):
+        t = math.radians(pitch)
+        self.sp, self.cp, self.tp = math.sin(t), math.cos(t), math.tan(t)
+        self.scale = scale
+        self.R = np.array([[1, 0, 0], [0, self.cp, -self.sp], [0, self.sp, self.cp]])
+
+    def true(self, p):
+        """Deck-unit ship point -> true (unstretched) ship coordinates."""
+        return np.array([p[0], p[1] / self.cp, p[2]], float)
+
+    def world(self, p):
+        return (self.R @ self.true(p)) * self.scale
+
+    def screen(self, p):
+        """Screen position (design units) of a ship point."""
+        w = self.R @ self.true(p)
+        return float(w[0]), float(w[1])
+
+
+class Hull:
+    """Primitive list in ship space for a ShipCam."""
+
+    def __init__(self, cam: ShipCam):
+        self.cam = cam
+        self.prims = []
+
+    def tri(self, a, b, c, mat, part, holes=(), flip=False):
+        W = self.cam.world
+        self.prims.append(Tri((W(a), W(b), W(c)), mat, part,
+                              [(W(h), r * self.cam.scale) for h, r in holes], flip))
+
+    def quad(self, a, b, c, d, mat, part):
+        self.tri(a, b, c, mat, part)
+        self.tri(a, c, d, mat, part)
+
+    def ell(self, c, r, mat, part, rot=None):
+        """Ellipsoid centred on a ship point; radii in true ship units along
+        the (optionally rotated) ship axes."""
+        m = self.cam.R @ (rot if rot is not None else np.eye(3))
+        self.prims.append(Ellipsoid(self.cam.world(c), np.asarray(r, float) * self.cam.scale, m, mat, part))
+
+    def sph(self, c, r, mat, part):
+        self.prims.append(Sphere(self.cam.world(c), r * self.cam.scale, mat, part))
+
+    def chain(self, pts, r0, r1, mat, part, step=.5):
+        pts = [np.asarray(p, float) for p in pts]
+        seg = [np.linalg.norm(self.cam.true(pts[i + 1]) - self.cam.true(pts[i])) for i in range(len(pts) - 1)]
+        total = sum(seg) or 1
+        acc = 0
+        for i, L in enumerate(seg):
+            n = max(1, int(L / step))
+            for k in range(n + (1 if i == len(seg) - 1 else 0)):
+                t = k / n
+                self.sph(pts[i] + (pts[i + 1] - pts[i]) * t, r0 + (r1 - r0) * ((acc + L * t) / total), mat, part)
+            acc += L
+
+    def loft(self, rings, mat, part, cap=True, mats=None):
+        """Faceted solid through rings [(polygon [(x, y)], h)], each with the
+        same vertex count (convex or star-shaped about its centroid); the
+        last ring is capped with a fan. `mats` optionally names a material
+        per band (len(rings) - 1) so bevels and skirts can differ."""
+        for k in range(len(rings) - 1):
+            (pa, ha), (pb, hb) = rings[k], rings[k + 1]
+            m = mats[k] if mats else mat
+            n = len(pa)
+            for i in range(n):
+                j = (i + 1) % n
+                self.quad((*pa[i], ha), (*pa[j], ha), (*pb[j], hb), (*pb[i], hb), m, part)
+        if cap:
+            poly, h = rings[-1]
+            cx = sum(p[0] for p in poly) / len(poly)
+            cy = sum(p[1] for p in poly) / len(poly)
+            for i in range(len(poly)):
+                j = (i + 1) % len(poly)
+                self.tri((cx, cy, h), (*poly[i], h), (*poly[j], h), mat, part)
+
+    def plate(self, poly, h0, h1, mat, part, bevel=1.5, bevel_mat=None, wall_mat=None):
+        """Extruded armour plate: walls from h0, a chamfer and a flat top."""
+        rings = [(poly, h0), (poly, h1 - bevel * .8), (inset(poly, bevel), h1)]
+        self.loft(rings, mat, part, mats=[wall_mat or mat, bevel_mat or mat])
+
+    def tube(self, a, b, ra, rb, mat, part, sides=8, cap=True, phase=.5):
+        """Faceted cylinder or cone between two ship points (radii in true
+        units), capped at b."""
+        A, B = self.cam.true(a), self.cam.true(b)
+        d = norm(B - A)
+        up = v(0, 0, 1) if abs(d[2]) < .9 else v(1, 0, 0)
+        u = norm(np.cross(d, up))
+        w = np.cross(d, u)
+        cp = self.cam.cp
+
+        def ring(P, r):
+            out = []
+            for i in range(sides):
+                t = 2 * math.pi * (i + phase) / sides
+                q = P + (u * math.cos(t) + w * math.sin(t)) * r
+                out.append((q[0], q[1] * cp, q[2]))
+            return out
+
+        r0, r1 = ring(A, ra), ring(B, rb)
+        for i in range(sides):
+            j = (i + 1) % sides
+            self.quad(r0[i], r0[j], r1[j], r1[i], mat, part)
+        if cap:
+            c = (B[0], B[1] * cp, B[2])
+            for i in range(sides):
+                self.tri(c, r1[i], r1[(i + 1) % sides], mat, part)
+
+
+def inset(poly, d):
+    """Shrink a convex/star-shaped polygon toward its centroid by about d."""
+    cx = sum(p[0] for p in poly) / len(poly)
+    cy = sum(p[1] for p in poly) / len(poly)
+    out = []
+    for x, y in poly:
+        L = math.hypot(x - cx, y - cy) or 1
+        k = max(0.0, (L - d) / L)
+        out.append((cx + (x - cx) * k, cy + (y - cy) * k))
+    return out
+
+
+def clean_specks_fast(cv, R, names):
+    """Vectorised _clean_specks for large canvases: a lone tone pixel whose
+    four neighbours share its material takes their majority tone."""
+    h, w = names.shape
+    pad = np.full((h + 2, w + 2), '', dtype=object)
+    pad[1:-1, 1:-1] = names
+    mpad = np.full((h + 2, w + 2), '', dtype=object)
+    mpad[1:-1, 1:-1] = R.mat
+    neigh = [pad[:-2, 1:-1], pad[2:, 1:-1], pad[1:-1, :-2], pad[1:-1, 2:]]
+    nmat = [mpad[:-2, 1:-1], mpad[2:, 1:-1], mpad[1:-1, :-2], mpad[1:-1, 2:]]
+    lone = names != ''
+    for nb in neigh:
+        lone &= nb != names
+    same = sum(((nm == R.mat) & (nb != '')).astype(int) for nb, nm in zip(neigh, nmat))
+    ys, xs = np.nonzero(lone & (same >= 3))
+    for y, x in zip(ys, xs):
+        cands = [nb[y, x] for nb, nm in zip(neigh, nmat) if nb[y, x] and nm[y, x] == R.mat[y, x]]
+        cv.px(x, y, max(sorted(set(cands)), key=cands.count))

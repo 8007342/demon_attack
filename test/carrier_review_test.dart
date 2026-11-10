@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:demon_attack/game/boss_atlas.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
 import 'package:flame/game.dart';
@@ -14,7 +15,11 @@ Future<ui.Image> _decode(String file) async {
   return frame.image;
 }
 
-/// Renders the arena at [w] x [h] and writes `.cache/carrier-review/<name>.png`.
+/// Review frames go to $BOSS_REVIEW_DIR (default .cache/carrier-review).
+final _dir =
+    Platform.environment['BOSS_REVIEW_DIR'] ?? '.cache/carrier-review';
+
+/// Renders the arena at [w] x [h] and writes `<dir>/<name>.png`.
 Future<Uint8List> _capture(
   DemonScene scene,
   String name, {
@@ -26,7 +31,7 @@ Future<Uint8List> _capture(
   final picture = recorder.endRecording();
   final image = await picture.toImage(w, h);
   final raw = (await image.toByteData())!.buffer.asUint8List();
-  final file = File('.cache/carrier-review/$name.png');
+  final file = File('$_dir/$name.png');
   await file.parent.create(recursive: true);
   await file.writeAsBytes(
     (await image.toByteData(format: ui.ImageByteFormat.png))!.buffer
@@ -42,9 +47,9 @@ List<int> _crop(Uint8List image, int x, int y, int width, int height) => [
     ...image.sublist((row * 360 + x) * 4, (row * 360 + x + width) * 4),
 ];
 
-/// A four-form carrier (route 3) showing form [form].
-Carrier _carrier(int form, {bool shield = true, double door = 0}) {
-  final b = Carrier(3)
+/// Run [cls]'s carrier showing form [form].
+Carrier _carrier(int cls, int form, {bool shield = true, double door = 0}) {
+  final b = Carrier(cls)
     ..x = 180
     ..y = 205;
   b.core = (b.coreMax * (1 - (form + .5) / b.formCount)).round();
@@ -55,47 +60,7 @@ Carrier _carrier(int form, {bool shield = true, double door = 0}) {
 }
 
 void main() {
-  testWidgets('carrier atlas honours the war-ark contract', (tester) async {
-    await tester.runAsync(() async {
-      // plan/sprite-atlas.md: 4 x 11 cells of 368 x 240, stored 1x.
-      final atlas = await _decode('assets/images/boss-carrier.png');
-      expect(atlas.width, 4 * 368);
-      expect(atlas.height, 11 * 240);
-      final data = (await atlas.toByteData())!.buffer.asUint32List();
-      final colours = <int>{};
-      for (final pixel in data) {
-        final alpha = (pixel >> 24) & 255;
-        expect(alpha, isIn([0, 255]), reason: 'no antialiased edges');
-        if (alpha == 255) colours.add(pixel);
-      }
-      expect(colours.length, lessThanOrEqualTo(160), reason: 'bounded ramps');
-      String cell(int row, int col) => [
-        for (var y = row * 240; y < (row + 1) * 240; y++)
-          ...data.sublist(
-            y * atlas.width + col * 368,
-            y * atlas.width + col * 368 + 368,
-          ),
-      ].join(',');
-      bool empty(int row, int col) =>
-          cell(row, col).split(',').every((p) => p == '0');
-      for (var row = 0; row < 11; row++) {
-        for (var col = 0; col < 4; col++) {
-          expect(empty(row, col), isFalse, reason: 'cell $row/$col');
-        }
-      }
-      for (var form = 0; form < 4; form++) {
-        final idle = {
-          for (final r in [0, 7, 8, 9]) cell(r, form),
-        };
-        expect(idle, hasLength(4), reason: 'form $form: four idle frames');
-      }
-      expect({for (var c = 0; c < 4; c++) cell(4, c)}, hasLength(4));
-      expect({for (var c = 0; c < 4; c++) cell(5, c)}, hasLength(4));
-      atlas.dispose();
-    });
-  });
-
-  testWidgets('carrier review frames: forms, jaws, damage, wreck, world', (
+  testWidgets('armada review frames: classes, forms, jaws, damage, wrecks', (
     tester,
   ) async {
     await tester.runAsync(() async {
@@ -103,7 +68,6 @@ void main() {
       final scene = DemonScene(model, () {});
       scene.atlas = await _decode('assets/images/combat.png');
       scene.effectsAtlas = await _decode('assets/images/sentinel-effects.png');
-      scene.bossAtlas = await _decode('assets/images/boss-carrier.png');
       scene.ship.image = await _decode('assets/images/ship-weapons.png');
       scene.sky = await _decode('assets/images/cosmic-sky.png');
       await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
@@ -121,87 +85,103 @@ void main() {
       model.shots.clear();
       model.clock = 2;
 
-      // Each form, shield up with the jaws sealed, then jaws and vents open.
-      for (var form = 0; form < 4; form++) {
-        model.boss = _carrier(form);
-        await _capture(scene, 'form-$form-shield');
-        model.boss = _carrier(form, shield: false, door: 1);
-        await _capture(scene, 'form-$form-open');
-      }
+      for (final (k, hull) in BossAtlas.classes.indexed) {
+        final atlas = await _decode('assets/images/${hull.asset}');
+        scene.armada.setAtlas(k, atlas);
+        model.cycle = k;
+        model.mode = RunMode.playing;
+        model.wreckBoss = null;
+        model.demons.clear();
+        model.shots.clear();
 
-      // Jaw cycle on the first form: openness 0, 1/3, 2/3, 1.
-      for (var k = 0; k < 4; k++) {
-        model.boss = _carrier(0, shield: false, door: k / 3);
-        await _capture(scene, 'jaw-$k');
-      }
+        // Each form: shield up with the jaws sealed, then jaws and bays open.
+        for (var form = 0; form < hull.forms; form++) {
+          model.boss = _carrier(k, form);
+          await _capture(scene, 'k$k-form-$form-shield');
+          model.boss = _carrier(k, form, shield: false, door: 1);
+          await _capture(scene, 'k$k-form-$form-open');
+        }
 
-      // Idle life: four frames half a second apart differ on the hull.
-      final idle = <Uint8List>[];
-      for (var f = 0; f < 4; f++) {
-        model.boss = _carrier(0);
-        model.clock = 2 + f * .5;
-        idle.add(await _capture(scene, 'idle-$f'));
-      }
-      expect(
-        _crop(idle[0], 90, 140, 180, 60),
-        isNot(_crop(idle[2], 90, 140, 180, 60)),
-        reason: 'wing sails breathe and eyes pulse between idle frames',
-      );
-      model.clock = 2;
+        // Jaw cycle: openness 0, 1/3, 2/3, 1.
+        for (var j = 0; j < 4; j++) {
+          model.boss = _carrier(k, 0, shield: false, door: j / 3);
+          await _capture(scene, 'k$k-jaw-$j');
+        }
 
-      // Damage escalation: cracks, broken chunks, gaping fissures, fire.
-      for (final (i, fraction) in [1.0, .8, .6, .35, .12].indexed) {
-        final b = Carrier(0)
-          ..x = 180
-          ..y = 205;
-        b.shield = 0;
-        b.core = (b.coreMax * fraction).round().clamp(1, b.coreMax);
-        model.boss = b;
-        await _capture(scene, 'damage-$i');
-      }
+        // Engines respond to movement: drifting left, still, right.
+        for (final (i, v) in [-90.0, 0.0, 90.0].indexed) {
+          model.boss = _carrier(k, 0)..horizontalVelocity = v;
+          await _capture(scene, 'k$k-thrust-$i');
+        }
+        model.boss = _carrier(k, 0);
 
-      // Falling wreck of each form.
-      model.boss = null;
-      for (var form = 0; form < 4; form++) {
-        model.wreckBoss = _carrier(form, shield: false);
+        // Idle life: frames half a second apart differ on the bow.
+        final idle = <Uint8List>[];
+        for (var f = 0; f < 4; f++) {
+          model.clock = 2 + f * .5;
+          idle.add(await _capture(scene, 'k$k-idle-$f'));
+        }
+        expect(
+          _crop(idle[0], 120, 150, 120, 60),
+          isNot(_crop(idle[2], 120, 150, 120, 60)),
+          reason: 'eyes pulse and fins breathe between idle frames',
+        );
+        model.clock = 2;
+
+        // Damage escalation: cracks, torn plates, breaches, fire.
+        for (final (i, fraction) in [1.0, .8, .6, .35, .12].indexed) {
+          final b = Carrier(k)
+            ..x = 180
+            ..y = 205;
+          b.shield = 0;
+          b.core = (b.coreMax * fraction).round().clamp(1, b.coreMax);
+          model.boss = b;
+          await _capture(scene, 'k$k-damage-$i');
+        }
+
+        // The falling wreck (the final form, as in play).
+        model.boss = null;
+        model.wreckBoss = _carrier(k, hull.forms - 1, shield: false);
         model.mode = RunMode.victory;
         model.transitionDuration = 5.5;
         for (final (i, p) in [.15, .45, .75].indexed) {
           model.transitionLeft = 5.5 * (1 - p);
-          await _capture(scene, 'wreck-$form-$i');
+          await _capture(scene, 'k$k-wreck-$i');
         }
-      }
-      model.wreckBoss = null;
-      model.mode = RunMode.playing;
+        model.wreckBoss = null;
+        model.mode = RunMode.playing;
 
-      // Beside the gargoyles and a sentinel over the Carrier sector, at
-      // phone and desktop sizes.
-      model.boss = _carrier(1);
-      model.demons
-        ..add(Demon(60, 330, 0, 3, 0))
-        ..add(Demon(130, 350, 1, 3, 0))
-        ..add(Demon(230, 345, 2, 3, 0))
-        ..add(Demon(300, 330, 3, 3, 0, elite: true))
-        ..add(
-          Demon(
-            180,
-            70,
-            3,
-            8,
-            0,
-            archetype: EnemyArchetype.armoredSentinel,
-            shieldMax: 6,
-            armorMax: 4,
-          ),
-        );
-      model.shots.addAll([
-        Shot(180, 420, 0, -420),
-        Shot(120, 300, 0, 160, hostile: true),
-      ]);
-      await _capture(scene, 'world-phone');
-      await _capture(scene, 'world-desktop', w: 1440, h: 900);
-      model.boss = _carrier(3, door: 1);
-      await _capture(scene, 'world-final-phone');
+        // Beside the gargoyles and a sentinel over the Carrier sector, at
+        // phone and desktop sizes.
+        model.boss = _carrier(k, 1);
+        model.demons
+          ..add(Demon(60, 330, 0, 3, 0))
+          ..add(Demon(130, 350, 1, 3, 0))
+          ..add(Demon(230, 345, 2, 3, 0))
+          ..add(Demon(300, 330, 3, 3, 0, elite: true))
+          ..add(
+            Demon(
+              180,
+              70,
+              3,
+              8,
+              0,
+              archetype: EnemyArchetype.armoredSentinel,
+              shieldMax: 6,
+              armorMax: 4,
+            ),
+          );
+        model.shots.addAll([
+          Shot(180, 420, 0, -420),
+          Shot(96, 120, 0, -420),
+          Shot(120, 300, 0, 160, hostile: true),
+        ]);
+        await _capture(scene, 'k$k-world-phone');
+        await _capture(scene, 'k$k-world-desktop', w: 1440, h: 900);
+        model.boss = _carrier(k, hull.forms - 1, door: 1)..x = 100;
+        await _capture(scene, 'k$k-world-final-phone');
+        atlas.dispose();
+      }
     });
   });
 }

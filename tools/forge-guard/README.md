@@ -6,7 +6,7 @@ A small Go tool that stops heavy local jobs from stalling the shared forge.
 
 On 2026-11-10 four parallel Chatterbox (torch) workers stalled the forge for about 1.5 h:
 
-- **Sized from the host:** the job took its worker count from `nproc`, which reports the host's 20 CPUs. It started 4 workers × 5 threads, each loading its own model copy.
+- **One model copy per worker:** the job started 4 workers, and each loaded its own copy of Chatterbox. The forge really does have 20 CPUs (`nproc` is accurate and `cpu.max` is unlimited), so memory, not CPU, was the constraint.
 - **Soft limit, silent stall:** the forge cgroup's limit is a soft `memory.high` (about 10.2 GiB here). Crossing it kills nothing; the kernel reclaims forever (9 million `high` events), so every process slows to a crawl and no error ever shows up.
 - **Killed workers came back:** the Python multiprocessing pool respawned workers that were killed.
 - **Waits that never ended:** agents waited with `until ! pgrep -f <name>`, and the pattern matched the waiting shell's own command line, so the wait could never finish.
