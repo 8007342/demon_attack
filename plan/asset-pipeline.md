@@ -262,6 +262,45 @@ frames loop 0→3. The missile cell is meant to be drawn centred and scaled up
 with nearest-neighbour as it closes on the camera, trailed by puffs 2→4. The
 escape pod and smoke puffs (row 8, cols 10–11) are free sprites.
 
+## Flyover vegetation
+
+Plants and obstacles the ground fleet pushes through on the relief (see
+[terrain-relief.md](terrain-relief.md)). The driver is **Go, standard
+library only** (`tools/vegetation/`), per the forge tooling rule for new
+tools. Like the ground forces, **silhouettes and every frame are authored on
+the texel grid** (`build*` and `frames` in `tools/vegetation/build.go`); the
+selected SDXL + pixel-art-xl + LayerDiffuse keyframe of each species adds
+only a −1/0/+1 shading texture on the body ramp (high-pass luminance at
+±1.4 σ). Body ramps come from the sector palette
+(`art/palettes/flyover-<sector>.json`) at the `body_luma` targets under the
+chroma cap, pulled toward the species hint hue; accents use the species
+accent at the glow cap; the outline is the palette's darkest colour.
+
+| Path | Role |
+| --- | --- |
+| `art/families/flyover-vegetation.json` | Spec: species (sector, kind, row, prompt, seed, selected, hint, accent), style and negative prompts, caps, atlas layout. |
+| `art/families/flyover-vegetation-runs.json` | Provenance of every ingested run (workflow, prompt, seed, models, SHA-256). |
+| `art/sprites/sources/vegetation/<id>.png` | Selected keyframes cropped to their alpha, ≤64 px: the inputs of record for `offline`. |
+| `tools/vegetation/` | The driver (`go run . jobs|run|ingest|pack|offline`). |
+| `assets/images/flyover-vegetation.png`, `lib/game/vegetation_atlas.dart` | Atlas (16 × 11 cells of 48×32 texels) and its generated contract. |
+| `art/contact/flyover-vegetation-contact.png` | Every species' eight frames on its sector ground at 3×, and the particle row. |
+
+Layout: rows 0–9 one species each, columns 0–7 idle A, idle B, bend A,
+bend B, break A, break B, break C, settled (facing right: falling or
+shoved to the right), columns 8–15 the same mirrored. Row 10: six 8×8
+particles × two frames (dust, needles/leaves, shards, splinters, spores,
+ash). Plants stand bottom-centred at x = 24 on the last row.
+
+```bash
+cd tools/vegetation
+export VEG_WORK=$SCRATCH/veg-work VEG_RAW=$SCRATCH/veg-raw   # never the checkout
+go run . offline   # committed sources -> atlas, Dart, contact; no GPU, byte-identical
+go run . jobs      # 30 jobs: 10 species x 3 candidate seeds (723100-724002)
+go run . run       # ComfyUI HTTP (COMFY_URL, default http://studio:8188), one job in flight
+go run . ingest    # raws -> $VEG_RAW, provenance, refresh sources for `selected`
+go run . pack      # refresh sources from raws if present, then offline
+```
+
 ## Squad comms portraits
 
 The video-call portraits of the squad comms cast (19 rows: 14 fleet and ground humans, 5 gargoyle demon officers, in `art/comms/cast.json` order) live in two atlases. `assets/images/comms-portraits.png` holds **128 × 128 logical px** cells, drawn at an integer scale (2× on desktop side panels). `assets/images/comms-portraits-small.png` holds 48 px cells for the phone overlay at 1×. Each row has twelve frames in `CommsFrame` order (`lib/comms/comms_types.dart`): 0 idle, 1 blink, 2–4 talk A/B/C (mouth opening), 5 talk D ('oo'), 6 shout, 7 grunt (the demon roar, or human alarm), 8 happy (demon smug gloat), 9 worried (demon alarmed snarl), 10 tilt left and 11 tilt right. `lib/comms/comms_portraits.dart` is generated, with the image paths, cell sizes and the row of each character id.

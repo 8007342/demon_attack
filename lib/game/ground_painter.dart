@@ -143,6 +143,7 @@ class GroundPainter {
           ((clock * 10 + u.id * .37).floor() % GroundAtlas.moveFrames);
     }
     _cell(c, row, col, u.x, u.y, s, mirror: mirror, light: light);
+    _climbDust(c, u.pose, u.x, u.y, s, clock + u.id * .37, light); // --- terrain
     if (u.telegraphing) {
       // A warm warning bracket under the launcher: readable at phone size.
       final p = u.telegraphProgress;
@@ -204,6 +205,7 @@ class GroundPainter {
         : GroundAtlas.allyMoveCol +
               ((clock * 9 + a.id * .31).floor() % GroundAtlas.allyMoveFrames);
     _cell(c, row, col, a.x, a.y, s, mirror: mirror, light: light);
+    _climbDust(c, a.pose, a.x, a.y, s, clock + a.id * .31, light); // --- terrain
     if (a.flash > 0) {
       _cell(c, GroundAtlas.effectRow, GroundAtlas.tracerCol, a.x, a.bodyY + 3 * s, s);
     }
@@ -220,6 +222,21 @@ class GroundPainter {
         _px(c, a.x + unit * .5, top, unit, _mint);
         _px(c, a.x - unit / 2, top, unit, Colors.white);
       }
+    }
+  }
+
+  // --- terrain: grey dust thrown up behind a unit grinding up a slope
+  // (the relief pose comes from the flyover; visual only).
+  void _climbDust(Canvas c, GroundPose? pose, double x, double y, double s,
+      double clock, double light) {
+    final climb = pose?.climb ?? 0;
+    if (climb < .1) return;
+    final n = climb > .3 ? 3 : 2;
+    for (var k = 0; k < n; k++) {
+      final q = (clock * 1.6 + k / n) % 1;
+      _cell(c, GroundAtlas.effectRow, GroundAtlas.smokeSmallCol,
+          x + (k.isEven ? -1 : 1) * (6 + q * 8) * s, y - q * 7 * s, s * (.5 + q * .5),
+          light: light * .8, opacity: (1 - q) * .6);
     }
   }
 
