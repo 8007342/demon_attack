@@ -357,16 +357,18 @@ def stage_refs(args):
             stamp.write_text(key)
         made[c['id']] = {'voice': voice['voice'], 'speed': voice['speed'], 'sha256': sha256(out),
                          'seconds': round(len(read_wav(out)) / SR, 2)}
+    old = json.loads((WORK / 'refs.json').read_text()) if (WORK / 'refs.json').exists() else {}
+    for cid, entry in made.items():
+        # Derived registers (hotrefs) stay valid while the neutral clip does.
+        if old.get(cid, {}).get('sha256') == entry['sha256'] and 'registers' in old[cid]:
+            entry['registers'] = old[cid]['registers']
     (WORK / 'refs.json').write_text(json.dumps(made, indent=1))
     print(f'refs: {len(made)} reference clips in {WORK / "refs"}')
 
 
 # ------------------------------------------------------------ Chatterbox stage
 # Runs in the Chatterbox venv (torch 2.6 CPU + chatterbox-tts), separate from
-# the Kokoro venv. Worker processes split the torch threads.
-
-def expressive_key(line, ref_sha, params, revision):
-    return json.dumps(['chatterbox', revision, ref_sha, line['text'], params], sort_keys=True)
+# the Kokoro venv. One model process (~3 GB); never a pool of workers.
 
 
 CGROUP = Path('/sys/fs/cgroup')
@@ -398,69 +400,136 @@ def wait_for_memory(headroom_gb):
         waited += 5
 
 
-def _chatterbox_worker(job):
-    worker_id, threads, items, spec = job
-    import numpy as np
+def expressive_key(line, ref_sha, params, revision, text=None):
+    return json.dumps(['chatterbox', revision, ref_sha, text or line['text'], params], sort_keys=True)
+
+
+# Hot emotions get the energetic reference, delivery punctuation and the
+# pitch-range accept floor (audio.json -> chatterbox.emotions.<e>.ref etc.).
+def emotion_params(spec, emotion):
+    """Generation parameters only (the cache key): exaggeration, cfg, temperature."""
+    e = spec['chatterbox']['emotions'][emotion or 'calm']
+    return {k: e[k] for k in ('exaggeration', 'cfg_weight', 'temperature') if k in e}
+
+
+def delivery_text(line, spec):
+    """What Chatterbox reads: the line's own `say` (hand-marked stress,
+    exclamations) if any, else the subtitle with the emotion's punctuation
+    rule (`end`: a closing '!' instead of '.'; `stress`: CAPS for words
+    listed in the line's `stress`). The subtitle (`text`) never changes."""
+    if line.get('say'):
+        return line['say']
+    text = line['text']
+    e = spec['chatterbox']['emotions'].get(line.get('emotion', 'calm'), {})
+    end = e.get('end')
+    if end:
+        # Sentence ends of a hot delivery: '.' -> '!' (questions stay).
+        text = re.sub(r'\.(\s|$)', lambda m: end + m.group(1), text)
+    for word in line.get('stress', []):
+        text = re.sub(rf'\b{re.escape(word)}\b', word.upper(), text, count=1)
+    return text
+
+
+def reference_path(speaker, register):
+    """Neutral Kokoro reference (refs stage) or a derived register (hotrefs)."""
+    return WORK / 'refs' / (f'{speaker}.wav' if register in (None, 'neutral') else f'{speaker}.{register}.wav')
+
+
+def load_chatterbox(spec, threads):
     import torch
     torch.set_num_threads(threads)
     os.environ.setdefault('HF_HUB_DISABLE_XET', '1')
-    import time
     from chatterbox.tts import ChatterboxTTS
     from huggingface_hub import snapshot_download
     cb = spec['chatterbox']
-    # Run under forge-guard (it waits for headroom before start and kills the
-    # job under pressure); between lines, pause while pinned memory is close
-    # to memory.high so a neighbour's spike doesn't tip the group over.
     wait_for_memory(cb['memory_headroom_gb'])
     path = snapshot_download(cb['repo'], revision=cb['revision'], allow_patterns=cb['files'])
-    model = ChatterboxTTS.from_local(path, 'cpu')
-    current_ref = None
-    results = []
-    log = WORK / 'expressive.json'
-    for clip_id, text, ref, params, key in items:
-        out = WORK / 'expressive' / f'{clip_id}.wav'
-        wait_for_memory(cb['memory_headroom_gb'])
-        t0 = time.time()
-        try:
-            if ref != current_ref:
-                model.prepare_conditionals(ref, exaggeration=params['exaggeration'])
-                current_ref = ref
-            torch.manual_seed(seed_of('cb:' + clip_id))
-            wav = model.generate(text, exaggeration=params['exaggeration'], cfg_weight=params['cfg_weight'],
-                                 temperature=params['temperature'])
-            audio = wav.squeeze(0).numpy().astype('float64')
-            if model.sr != SR:
-                from scipy import signal
-                audio = signal.resample_poly(audio, SR, model.sr)
-            write_wav(out, audio)
-            out.with_suffix('.key').write_text(key)
-            results.append((clip_id, round(time.time() - t0, 2), None))
-        except Exception as error:  # noqa: BLE001 - the Kokoro clip stays the fallback
-            results.append((clip_id, round(time.time() - t0, 2), repr(error)))
-        print(f'[w{worker_id}] {clip_id} {results[-1][1]}s{" FAIL " + results[-1][2] if results[-1][2] else ""}', flush=True)
-        # Incremental log: an interrupted run keeps its record.
-        record = json.loads(log.read_text()) if log.exists() else {}
-        record[clip_id] = {'seconds': results[-1][1], 'error': results[-1][2]}
-        log.write_text(json.dumps(record, indent=1))
-    return results
+    return ChatterboxTTS.from_local(path, 'cpu')
 
 
-# Render order when CPU time is short: the newest, most expressive lines first.
-EXPRESSIVE_ORDER = ['terrainAhead', 'convoy', 'playerRespawn', 'transmission', 'broodTaunt',
-                    'groundForce', 'ally', 'groundPressure', 'groundBreakthrough']
+def chatterbox_say(model, text, params, seed):
+    import torch
+    torch.manual_seed(seed)
+    wav = model.generate(text, exaggeration=params['exaggeration'], cfg_weight=params['cfg_weight'],
+                         temperature=params['temperature'])
+    audio = wav.squeeze(0).numpy().astype('float64')
+    if model.sr != SR:
+        from scipy import signal
+        audio = signal.resample_poly(audio, SR, model.sr)
+    return audio
 
 
-def expressive_rank(clip_id):
-    for rank, prefix in enumerate(EXPRESSIVE_ORDER):
-        if clip_id.startswith(prefix):
-            return rank
-    return len(EXPRESSIVE_ORDER)
+def speaker_similarity(model, a, b):
+    """Cosine similarity of Chatterbox's voice-encoder embeddings (16 kHz)."""
+    import numpy as np
+    from scipy import signal
+    embs = [model.ve.embeds_from_wavs([signal.resample_poly(x, 16000, SR).astype('float32')], sample_rate=16000).mean(0)
+            for x in (a, b)]
+    return float(np.dot(embs[0], embs[1]) / (np.linalg.norm(embs[0]) * np.linalg.norm(embs[1]) + 1e-9))
+
+
+def stage_hotrefs(args):
+    """Derived energetic references: Chatterbox clones each character's
+    neutral Kokoro reference speaking an energetic sentence at a high
+    exaggeration; of `takes` seeded takes the one with the widest pitch range
+    that keeps the voice (speaker similarity >= min_similarity), is not
+    clipped and has a sane length becomes refs/<id>.<register>.wav. The
+    reference strongly shapes Chatterbox's prosody, so hot emotions clone
+    this one instead of the calm radio check."""
+    import numpy as np
+    cast, _lines = load_specs()
+    spec = audio_spec()
+    cb = spec['chatterbox']
+    refs = json.loads((WORK / 'refs.json').read_text())
+    model = None
+    for register, rule in cb.get('registers', {}).items():
+        for c in cast['cast']:
+            if 'voice' not in c or (args.only and c['id'] not in args.only.split(',')):
+                continue
+            neutral = reference_path(c['id'], 'neutral')
+            out = reference_path(c['id'], register)
+            key = json.dumps([cb['revision'], refs[c['id']]['sha256'], rule], sort_keys=True)
+            stamp = out.with_suffix('.key')
+            if not args.force and out.exists() and stamp.exists() and stamp.read_text() == key:
+                continue
+            model = model or load_chatterbox(spec, args.threads)
+            model.prepare_conditionals(str(neutral), exaggeration=rule['exaggeration'])
+            base = read_wav(neutral)
+            words = len(rule['text'].split())
+            takes = []
+            for take in range(rule['takes']):
+                x = trim_silence(chatterbox_say(model, rule['text'], rule, seed_of(f'hot:{register}:{c["id"]}:{take}')))
+                p = prosody(x, rule['text'])
+                sim = speaker_similarity(model, x, base)
+                clipped = float(np.mean(np.abs(x) > .995))
+                sane = .2 <= p['seconds'] / words <= .6
+                ok = sim >= rule['min_similarity'] and clipped <= cb['accept']['max_clipped_fraction'] and sane
+                takes.append((ok, p['pitch_range_st'] + p['energy_sd_db'] * .2, take, x, p, sim))
+                print(f'  {register} {c["id"]} take {take}: sim {sim:.3f} range {p["pitch_range_st"]} '
+                      f'energy {p["energy_sd_db"]} {p["seconds"]}s {"ok" if ok else "reject"}', flush=True)
+            good = [t for t in takes if t[0]] or [max(takes, key=lambda t: t[5])]
+            _ok, _score, take, x, p, sim = max(good, key=lambda t: (t[0], t[1]))
+            write_wav(out, x / (np.abs(x).max() + 1e-9) * .9)
+            stamp.write_text(key)
+            refs[c['id']].setdefault('registers', {})[register] = {
+                'sha256': sha256(out), 'seconds': round(len(x) / SR, 2), 'take': take,
+                'similarity': round(sim, 3), 'prosody': p}
+            (WORK / 'refs.json').write_text(json.dumps(refs, indent=1))
+            print(f'hotrefs: {c["id"]} {register} take {take} sim {sim:.3f} range {p["pitch_range_st"]} st', flush=True)
+    print('hotrefs: done')
+
+
+# Render order when CPU time is short: the hottest deliveries first.
+EXPRESSIVE_ORDER = ['panicked', 'urgent', 'excited', 'triumphant', 'teasing']
 
 
 def stage_expressive(args):
-    """Chatterbox voice cloning of every human line from the speaker's Kokoro
-    reference, with per-emotion exaggeration / cfg / temperature."""
-    import multiprocessing as mp
+    """Chatterbox voice cloning of every human line from the speaker's
+    reference for the emotion's register, with per-emotion exaggeration /
+    cfg / temperature and delivery text. ONE model process; each clip is
+    written as it finishes (with its cache key), so an interrupted run
+    resumes where it stopped; --limit renders a batch."""
+    import time
     cast, lines = load_specs()
     spec = audio_spec()
     cb = spec['chatterbox']
@@ -471,41 +540,63 @@ def stage_expressive(args):
             continue
         if args.only and not any(clip_id.startswith(p) for p in args.only.split(',')):
             continue
-        params = cb['emotions'][line.get('emotion', 'calm')]
-        key = expressive_key(line, refs[line['speaker']]['sha256'], params, cb['revision'])
+        emotion = line.get('emotion', 'calm')
+        register = cb['emotions'][emotion].get('ref', 'neutral')
+        ref = reference_path(line['speaker'], register)
+        ref_sha = refs[line['speaker']]['sha256'] if register == 'neutral' else \
+            refs[line['speaker']]['registers'][register]['sha256']
+        params = emotion_params(spec, emotion)
+        text = delivery_text(line, spec)
+        key = expressive_key(line, ref_sha, params, cb['revision'], text)
         out = WORK / 'expressive' / f'{clip_id}.wav'
         stamp = out.with_suffix('.key')
         if not args.force and out.exists() and stamp.exists() and stamp.read_text() == key:
             continue
-        todo.append((clip_id, line['text'], str(WORK / 'refs' / f"{line['speaker']}.wav"), params, key))
-    # Priority groups first; within a group, one speaker after another so the
-    # reference conditionals are prepared once per speaker.
-    todo.sort(key=lambda item: (expressive_rank(item[0]), item[2], item[0]))
+        rank = EXPRESSIVE_ORDER.index(emotion) if emotion in EXPRESSIVE_ORDER else len(EXPRESSIVE_ORDER)
+        todo.append((rank, str(ref), clip_id, text, params, key))
+    # Hottest first; within a group one reference after another, so each
+    # reference's conditionals are prepared once.
+    todo.sort()
     if args.limit:
         todo = todo[:args.limit]
     (WORK / 'expressive').mkdir(parents=True, exist_ok=True)
-    workers = max(1, min(args.workers, len(todo)))
-    import time
-    t0 = time.time()
-    print(f'expressive: {len(todo)} lines on {workers} worker(s) x {args.threads} threads', flush=True)
+    print(f'expressive: {len(todo)} lines on 1 process x {args.threads} threads', flush=True)
     if not todo:
         return
-    if workers == 1:
-        # Default: one model process at a time (it holds ~3 GB).
-        results = _chatterbox_worker((0, args.threads, todo, spec))
-    else:
-        chunks = [todo[i::workers] for i in range(workers)]
-        with mp.get_context('spawn').Pool(workers) as pool:
-            results = [r for chunk in pool.map(_chatterbox_worker, [(i, args.threads, c, spec) for i, c in enumerate(chunks)]) for r in chunk]
-    failed = sum(1 for *_x, e in results if e)
-    print(f'expressive: {len(results)} done, {failed} failed, {time.time() - t0:.0f}s wall')
+    model = load_chatterbox(spec, args.threads)
+    log = WORK / 'expressive.json'
+    current = None
+    t_start = time.time()
+    failed = 0
+    for _rank, ref, clip_id, text, params, key in todo:
+        out = WORK / 'expressive' / f'{clip_id}.wav'
+        wait_for_memory(cb['memory_headroom_gb'])
+        t0 = time.time()
+        error = None
+        try:
+            if ref != current:
+                model.prepare_conditionals(ref, exaggeration=params['exaggeration'])
+                current = ref
+            audio = chatterbox_say(model, text, params, seed_of('cb:' + clip_id))
+            write_wav(out, audio)
+            out.with_suffix('.key').write_text(key)
+        except Exception as e:  # noqa: BLE001 - the Kokoro clip stays the fallback
+            error = repr(e)
+            failed += 1
+        seconds = round(time.time() - t0, 2)
+        print(f'{clip_id} {seconds}s{" FAIL " + error if error else ""}', flush=True)
+        record = json.loads(log.read_text()) if log.exists() else {}
+        record[clip_id] = {'seconds': seconds, 'error': error, 'text': text}
+        log.write_text(json.dumps(record, indent=1))
+    print(f'expressive: {len(todo)} done, {failed} failed, {time.time() - t_start:.0f}s wall')
 
 
-def accept_expressive(clip_id, spec):
+def accept_expressive(clip_id, spec, line=None):
     """Chatterbox output if it looks sane, else None (the Kokoro clip is used).
-    Checks: present, not silent, not clipped, and its length within a sane
-    ratio of the Kokoro rendering of the same text (catches truncation,
-    babbling loops and long trailing noise)."""
+    Checks: present, not silent, not clipped, its length within a sane ratio
+    of the Kokoro rendering of the same text (catches truncation, babbling
+    loops and long trailing noise), and for hot emotions a pitch-range floor
+    (a flat take of an urgent line is rejected)."""
     import numpy as np
     path = WORK / 'expressive' / f'{clip_id}.wav'
     if not path.exists():
@@ -520,6 +611,12 @@ def accept_expressive(clip_id, spec):
     ratio = len(x) / max(1, len(k))
     if not rules['min_length_ratio'] <= ratio <= rules['max_length_ratio']:
         return None, f'length ratio {ratio:.2f}'
+    emotion = (line or {}).get('emotion', 'calm')
+    floor = rules.get('min_pitch_range_st', {}).get(emotion)
+    if floor:
+        r = prosody(x)['pitch_range_st']
+        if r < floor:
+            return None, f'pitch range {r:.1f} st < {floor}'
     return x, None
 
 
@@ -944,7 +1041,7 @@ def stage_radio(args):
         engine = 'grunt' if demon else 'kokoro'
         raw = None
         if not demon and not args.kokoro_only:
-            raw, why = accept_expressive(clip_id, spec)
+            raw, why = accept_expressive(clip_id, spec, line)
             if raw is None:
                 fallbacks[clip_id] = why
             else:
@@ -1127,6 +1224,124 @@ def pitch_median(x):
     return float(np.median(f0s)) if f0s else 0.0
 
 
+def f0_track(x, fmin=70.0, fmax=480.0, hop=240, win=960, threshold=.25):
+    """YIN f0 per 10 ms (0 = unvoiced) of a clean 24 kHz voice: cumulative
+    mean normalised difference with parabolic refinement, voiced only above
+    -40 dB of the clip's loudest frame, then octave-jump folding against a
+    running median (no librosa: the Kokoro venv runs it too)."""
+    import numpy as np
+    lo, hi = int(SR / fmax), int(SR / fmin)
+    n = max(0, (len(x) - win - hi) // hop)
+    if n == 0:
+        return np.zeros(0)
+    idx = np.arange(n)[:, None] * hop + np.arange(win + hi)[None, :]
+    frames = x[idx]
+    rms = np.sqrt(np.mean(frames[:, :win] ** 2, axis=1)) + 1e-12
+    loud = 20 * np.log10(rms / rms.max()) > -40
+    size = 1 << int(np.ceil(np.log2(2 * (win + hi))))
+    a = np.fft.rfft(frames[:, :win], size)
+    b = np.fft.rfft(frames, size)
+    corr = np.fft.irfft(np.conj(a) * b, size)[:, :hi + 1]          # r(tau)
+    sq = np.cumsum(np.concatenate([np.zeros((n, 1)), frames ** 2], 1), 1)
+    e0 = sq[:, win][:, None]
+    taus = np.arange(hi + 1)
+    et = sq[:, taus + win] - sq[:, taus]
+    d = e0 + et - 2 * corr
+    d[:, 0] = 0
+    cum = np.cumsum(d[:, 1:], 1) / np.arange(1, hi + 1)
+    cmnd = np.ones_like(d)
+    cmnd[:, 1:] = d[:, 1:] / np.maximum(cum, 1e-12)
+    f0 = np.zeros(n)
+    for k in np.nonzero(loud)[0]:
+        row = cmnd[k]
+        below = np.nonzero(row[lo:hi] < threshold)[0]
+        if not len(below):
+            continue
+        t = lo + below[0]
+        while t + 1 < hi and row[t + 1] < row[t]:
+            t += 1
+        if 1 <= t < hi:
+            p, q, r = row[t - 1], row[t], row[t + 1]
+            den = p - 2 * q + r
+            t = t + (.5 * (p - r) / den if abs(den) > 1e-12 else 0)
+        f0[k] = SR / t
+    voiced = np.nonzero(f0 > 0)[0]
+    if len(voiced) > 4:
+        for j, k in enumerate(voiced):
+            ref = np.median(f0[voiced[max(0, j - 15):j + 16]])
+            ratio = f0[k] / ref
+            if ratio > 1.7:
+                f0[k] /= 2
+            elif ratio < .59:
+                f0[k] *= 2
+    return f0
+
+
+def prosody(x, text=None):
+    """Delivery numbers of one clean clip: pitch range (5-95 %, semitones),
+    pitch sd (semitones), energy sd (dB over active 10 ms frames), voiced
+    fraction, words and syllables per second."""
+    import numpy as np
+    x = trim_silence(x)
+    f0 = f0_track(x)
+    v = f0[f0 > 0]
+    st = 12 * np.log2(v / 100) if len(v) else np.zeros(0)
+    hop = 240
+    m = len(x) // hop
+    rms = np.sqrt(np.mean(x[:m * hop].reshape(m, hop) ** 2, 1)) + 1e-12 if m else np.ones(1)
+    db = 20 * np.log10(rms / rms.max())
+    active = db[db > -40]
+    seconds = len(x) / SR
+    out = {
+        'seconds': round(seconds, 3),
+        'pitch_range_st': round(float(np.percentile(st, 95) - np.percentile(st, 5)), 2) if len(st) > 5 else 0.0,
+        'pitch_sd_st': round(float(np.std(st)), 2) if len(st) > 5 else 0.0,
+        'f0_median': round(float(np.median(v)), 1) if len(v) else 0.0,
+        'energy_sd_db': round(float(np.std(active)), 2) if len(active) > 5 else 0.0,
+        'voiced': round(len(v) / max(1, len(f0)), 3),
+    }
+    if text:
+        words = re.findall(r"[A-Za-z']+", text)
+        sylls = sum(max(1, len(re.findall(r'[aeiouy]+', w.lower()))) for w in words)
+        out['words_per_s'] = round(len(words) / max(seconds, 1e-3), 2)
+        out['syll_per_s'] = round(sylls / max(seconds, 1e-3), 2)
+    return out
+
+
+def stage_prosody(args):
+    """Prosody of a directory of clean human renders (default the current
+    Chatterbox takes), per clip and per emotion -> JSON (--out) + table."""
+    import numpy as np
+    _cast, lines = load_specs()
+    folder = Path(args.dir) if args.dir else WORK / 'expressive'
+    rows = {}
+    for clip_id, _trigger, kind, line in clip_entries(lines):
+        if kind != 'human':
+            continue
+        if args.only and not any(clip_id.startswith(p) for p in args.only.split(',')):
+            continue
+        path = folder / f'{clip_id}.wav'
+        if not path.exists():
+            continue
+        r = prosody(read_wav(path), line['text'])
+        r['emotion'] = line.get('emotion', 'calm')
+        r['speaker'] = line['speaker']
+        rows[clip_id] = r
+    keys = ('pitch_range_st', 'pitch_sd_st', 'energy_sd_db', 'syll_per_s', 'voiced')
+    table = {}
+    for emotion in [*json.loads(AUDIO.read_text())['chatterbox']['emotions'], 'all']:
+        sel = [r for r in rows.values() if emotion in ('all', r['emotion'])]
+        if sel:
+            table[emotion] = {'n': len(sel), **{k: round(float(np.median([r[k] for r in sel])), 2) for k in keys}}
+    print(f"prosody of {folder} ({len(rows)} clips), medians:")
+    print(f"{'emotion':11} {'n':>4} {'range st':>9} {'sd st':>6} {'energy sd':>9} {'syll/s':>7} {'voiced':>7}")
+    for emotion, t in table.items():
+        print(f"{emotion:11} {t['n']:4d} {t['pitch_range_st']:9.2f} {t['pitch_sd_st']:6.2f} {t['energy_sd_db']:9.2f} "
+              f"{t['syll_per_s']:7.2f} {t['voiced']:7.2f}")
+    if args.out:
+        Path(args.out).write_text(json.dumps({'dir': str(folder), 'medians': table, 'clips': rows}, indent=1))
+
+
 def stage_stats(_args):
     import numpy as np
     cast, lines = load_specs()
@@ -1162,18 +1377,19 @@ def stage_all(args):
 
 STAGES = {'dart': stage_dart, 'voices': stage_voices, 'refs': stage_refs, 'expressive': stage_expressive,
           'grunts': stage_grunts, 'radio': stage_radio, 'encode': stage_encode, 'verify': stage_verify,
-          'stats': stage_stats, 'all': stage_all}
+          'stats': stage_stats, 'prosody': stage_prosody, 'hotrefs': stage_hotrefs, 'all': stage_all}
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('stage', choices=sorted(STAGES))
     parser.add_argument('--force', action='store_true', help='re-render cached voices/grunts')
-    parser.add_argument('--workers', type=int, default=1, help='expressive: model processes (each ~3 GB)')
-    parser.add_argument('--threads', type=int, default=6, help='expressive: torch threads per process')
+    parser.add_argument('--threads', type=int, default=6, help='expressive/hotrefs: torch threads')
     parser.add_argument('--only', default='', help='expressive: comma-separated clip id prefixes')
     parser.add_argument('--limit', type=int, default=0, help='expressive: render at most N lines')
     parser.add_argument('--kokoro-only', action='store_true', help='radio: ignore Chatterbox renders')
+    parser.add_argument('--dir', default='', help='prosody: folder of clean <clip id>.wav renders')
+    parser.add_argument('--out', default='', help='prosody: write per-clip numbers as JSON')
     args = parser.parse_args(argv)
     STAGES[args.stage](args)
 

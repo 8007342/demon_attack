@@ -18,6 +18,11 @@
       "triumphant": {"exaggeration": 0.85, "cfg_weight": 0.35, "temperature": 0.8},
       "panicked":   {"exaggeration": 0.95, "cfg_weight": 0.3,  "temperature": 0.8}
     },
+    "registers": {
+      "comment": "Derived references (hotrefs stage): Chatterbox clones the neutral Kokoro reference speaking `text` at a high exaggeration; of `takes` seeded takes the widest-pitched one that keeps the voice (speaker similarity >= min_similarity) becomes refs/<id>.<register>.wav. Emotions with ref = register clone it.",
+      "hot": {"text": "Contact, contact! They're diving right at us! Break left, break left, now! Yes! Got him! What a shot! Come on, push, push, we've got this!",
+              "exaggeration": 1.5, "cfg_weight": 0.3, "temperature": 0.85, "takes": 3, "min_similarity": 0.75}
+    },
     "memory_headroom_gb": 1.5,
     "accept": {"min_length_ratio": 0.55, "max_length_ratio": 1.9, "max_clipped_fraction": 0.001}
   },
