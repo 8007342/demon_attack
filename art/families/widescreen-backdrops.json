@@ -1,0 +1,123 @@
+{
+  "family": "widescreen-backdrops",
+  "about": "Wide-screen scenery behind the centred game column (lib/widgets/widescreen_backdrop.dart). Every scene is a 2.4:1 panorama authored as a composed layout, repainted by SDXL + pixel-art-xl img2img in the ComfyUI studio with a fixed seed, then box-sampled onto a 384 x 160 logical grid and quantised to a bounded palette. tools/widescreen_assets.py drives every stage.",
+  "logical": [384, 160],
+  "scale": 4,
+  "workflow": "art/workflows/widescreen/img2img-wide.json",
+  "negative_prompt": "text, letters, words, numbers, watermark, logo, signature, user interface, hud, frame, border, blurry, photo, 3d render, people, faces, bright daylight, pastel, white sky",
+  "style": "pixel art, 16-bit, crisp pixels, dark moody night palette, deep navy shadows, cinematic wide panorama, low contrast",
+  "scenes": [
+    {
+      "id": "vista",
+      "use": "title / landing",
+      "layout": "vista",
+      "prompt": "epic space vista, a fleet of silver starfighters and long capital battleships with cyan engine lights on the left, a vast swarm of tiny winged demon gargoyle silhouettes rising over a dark alien mountain horizon on the right, huge ringed violet planet high in the sky, teal nebula, dense small stars",
+      "seed": 7204101,
+      "strength": 0.45,
+      "cap": 0.56,
+      "colors": 30
+    },
+    {
+      "id": "hall",
+      "use": "top 10 / initials entry",
+      "layout": "hall",
+      "prompt": "grand hall of heroes inside a space fleet flagship, dark navy stone walls lined with rows of gold medals and star emblems in glowing alcoves, tall arched windows showing a starfield, cyan wall lamps, polished dark floor reflecting gold, symmetrical",
+      "seed": 7204201,
+      "strength": 0.45,
+      "cap": 0.54,
+      "colors": 30
+    },
+    {
+      "id": "defeat",
+      "use": "game over",
+      "layout": "defeat",
+      "prompt": "dark crimson apocalyptic sky, a triumphant horde of winged demon gargoyle silhouettes circling over burning black ruins and broken spires, huge blood red moon, embers, smoke, ominous",
+      "seed": 7204301,
+      "strength": 0.45,
+      "cap": 0.5,
+      "colors": 26
+    },
+    {
+      "id": "victory",
+      "use": "boss victory / campaign complete",
+      "layout": "victory",
+      "prompt": "golden dawn over a dark planet horizon, a fleet of starships flying in victory formation trailing light, gold fireworks and sparks in the navy sky, warm gold light rays, triumphant celebration",
+      "negative_extra": "balloons",
+      "seed": 7204401,
+      "strength": 0.45,
+      "cap": 0.6,
+      "colors": 30
+    },
+    {
+      "id": "sector-1",
+      "use": "gameplay, KRYBOR",
+      "layout": "sector",
+      "painting": "assets/images/sector-1.png",
+      "palette": "art/palettes/flyover-krybor.json",
+      "crop_top": 0.5,
+      "prompt": "frozen violet blue moon landscape at night, jagged ice rocks and cliffs, distant outpost spires, dark starry sky",
+      "seed": 7205101,
+      "strength": 0.52,
+      "cap": 0.42
+    },
+    {
+      "id": "sector-2",
+      "use": "gameplay, RINGFALL",
+      "layout": "sector",
+      "painting": "assets/images/sector-2.png",
+      "palette": "art/palettes/flyover-ringfall.json",
+      "crop_top": 0.52,
+      "prompt": "purple asteroid field over a rocky violet plain at night, floating boulders, broken ring debris, dark starry sky",
+      "seed": 7205201,
+      "strength": 0.52,
+      "cap": 0.42
+    },
+    {
+      "id": "sector-3",
+      "use": "gameplay, EMBER MOON",
+      "layout": "sector",
+      "painting": "assets/images/sector-3.png",
+      "palette": "art/palettes/flyover-ember.json",
+      "crop_top": 0.46,
+      "prompt": "volcanic moon at night, black basalt spires and lava rivers glowing orange red, smoke, dark red starry sky",
+      "seed": 7205301,
+      "strength": 0.52,
+      "cap": 0.42
+    },
+    {
+      "id": "sector-4",
+      "use": "gameplay, THE HOLLOW",
+      "layout": "sector",
+      "painting": "assets/images/sector-4.png",
+      "palette": "art/palettes/flyover-hollow.json",
+      "crop_top": 0.55,
+      "prompt": "eerie green glowing ruins of a gothic alien city, broken arches and towers, green fog, floating rocks, dark sky",
+      "seed": 7205401,
+      "strength": 0.52,
+      "cap": 0.42
+    },
+    {
+      "id": "sector-5",
+      "use": "gameplay, THE CARRIER",
+      "layout": "sector",
+      "painting": "assets/images/sector-5.png",
+      "palette": "art/palettes/flyover-carrier.json",
+      "crop_top": 0.52,
+      "prompt": "dark fortress territory, black gothic towers and gantries, crimson clouds, red fog, ominous alien fortress, dark sky",
+      "seed": 7205501,
+      "strength": 0.52,
+      "cap": 0.42
+    }
+  ],
+  "wall": {
+    "id": "wall",
+    "use": "command-centre wall behind the squad call slots (tileable)",
+    "layout": "wall",
+    "size": [96, 96],
+    "prompt": "seamless sci-fi command centre wall texture, dark navy metal panels with rivets, vents, cable conduits and tiny indicator lights, front view, flat",
+    "seed": 7206101,
+    "strength": 0.5,
+    "cap": 0.24,
+    "colors": 14
+  }
+}
