@@ -649,6 +649,16 @@ extension GroundWarV4 on ArcadeModel {
     return best;
   }
 
+  /// Lateral range: skirmish units roam the whole plane; a threat unit
+  /// weaves inside its own side band, so its missiles leave from where they
+  /// always did (the dodge stays exactly as hard as before).
+  (double, double) _v4Range(GroundUnit u) {
+    if (u.skirmish) return (14.0, 346.0);
+    final w = u.width;
+    final left = GroundCamera.bandX(u.side, 0, w), right = GroundCamera.bandX(u.side, 1, w);
+    return left < right ? (left, right) : (right, left);
+  }
+
   void _v4Steer(GroundUnit u, double dt) {
     u.retarget -= dt;
     if (u.retarget <= 0) {
@@ -658,7 +668,9 @@ extension GroundWarV4 on ArcadeModel {
     final maxV = GroundV4Tuning.lateral(u.force) * GroundCamera.texel(u.z);
     final want = ((u.goalX - u.lx!) * 1.4).clamp(-maxV, maxV);
     u.vx += (want - u.vx) * math.min(1.0, dt * 2.5);
-    u.lx = (u.lx! + u.vx * dt).clamp(14.0, 346.0);
+    final (lo, hi) = _v4Range(u);
+    u.lx = (u.lx! + u.vx * dt).clamp(lo, hi);
+    if (u.goalX < lo || u.goalX > hi) u.goalX = u.goalX.clamp(lo, hi);
     final foe = u.ally;
     if (u.vx.abs() > 3) {
       u.facing = u.vx > 0 ? 1 : -1;
@@ -697,9 +709,15 @@ extension GroundWarV4 on ArcadeModel {
       }
       a.holdZ = _v4SlotZ(a.slot);
       final foe = a.attacker;
-      final goal = foe != null && foe.alive && !a.fallingBack
+      var goal = foe != null && foe.alive && !a.fallingBack
           ? foe.x + (a.id.isEven ? -1 : 1) * 30
           : _v4SlotX(a.slot);
+      // Spread out: never stack on a neighbour at about the same depth.
+      for (final o in ground.allies) {
+        if (identical(o, a) || !o.alive || (o.z - a.z).abs() > 45) continue;
+        final d = a.x - o.x;
+        if (d.abs() < 30) goal += (d >= 0 ? 1 : -1) * (30 - d.abs()) * 1.5;
+      }
       final maxV = (a.force == GroundForce.vehicle ? 70.0 : 44.0) *
           GroundCamera.texel(a.z);
       final want = ((goal - lx) * 1.5).clamp(-maxV, maxV);

@@ -850,11 +850,11 @@ class FlyoverBackground implements GroundOccluders {
     }
 
     for (final u in g.units) {
-      if (u.alive) contact(u.side, u.x, u.z, u.width);
+      if (u.alive) contact(u.x < 180 ? 0 : 1, u.x, u.z, u.width);
     }
     for (final a in g.allies) {
       if (!a.alive) continue;
-      contact(a.side, a.x, a.z, a.width, ally: true);
+      contact(a.x < 180 ? 0 : 1, a.x, a.z, a.width, ally: true);
       final pose = a.pose;
       if (playing && pose != null && a.z < GroundTuning.sightZ) {
         radio.ally(a.id, a.side, pose.climb, dt, a.x, a.y, sector);
