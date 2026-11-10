@@ -1,106 +1,643 @@
 {
-  "schema": "demon-attack.music-cues/v2",
-  "about": "ACE-Step 1.5 cue spec, round 2. Every level has an original motif (tools/music_motifs.py). tools/music_guide.py renders each cue's motif arrangement to a guide; ACE-Step re-performs the guide audio-to-audio (acestep15-a2a.json: VAEEncodeAudio + partial denoise) with the level's genre take as ReferenceTimbreAudio, so all tiers, the intro and the outro of a level share riff, harmony, bar grid and instrument sound. Reference takes are text-to-music (acestep15-cue.json) and are not shipped. The pipeline picks one candidate per cue by motif similarity to its guide and spectral closeness to the reference, cuts the guide-aligned window, builds the loop seam and encodes. All music is original; prompts never name an existing song, band, game or composer.",
-  "workflows": {"text": "art/workflows/music/acestep15-cue.json", "a2a": "art/workflows/music/acestep15-a2a.json"},
-  "bpm": 120,
-  "beats_per_bar": 4,
-  "sample_rate": 48000,
-  "loudness_lufs": -18.0,
-  "peak_dbfs": -1.0,
-  "opus_kbps": 80,
-  "aac_kbps": 128,
-  "common_tags": "instrumental, no vocals, original video game soundtrack, 120 bpm, 4/4, steady tempo",
-  "lyrics": "[instrumental]",
-  "nodes": {"tags": "5.tags", "lyrics": "5.lyrics", "text_seed": "5.seed", "bpm": "5.bpm", "duration": "5.duration", "keyscale": "5.keyscale", "seconds": "7.seconds", "seed": "8.seed",
-            "codes": "5.generate_audio_codes", "denoise": "8.denoise", "guide": "11.audio", "reference": "14.audio"},
-  "kinds": {
-    "loop": "whole file loops; length = beats exactly; the first crossfade_s blend the continuation into the start so the wrap is continuous",
-    "tail": "plays `beats` once, then the appended copy of its last bar loops (loopStart..loopEnd) until the next cue",
-    "oneshot": "plays `beats` once and ends with a fade over `fade_s`",
-    "sprite": "accent sprite: one slot of `slot_beats` per accent (dive, laststand, hatch, reinforce), played on demand",
-    "reference": "text-to-music genre take used only as the timbre reference of its group; not shipped"
+ "schema": "demon-attack.music-cues/v3",
+ "about": "ACE-Step 1.5 cue spec, round 3: battle metal at a tempo per level, symphonic-metal intros and outros. Each level keeps its original motif (tools/music_motifs.py); tools/music_guide.py renders each cue's arrangement at the level's exact tempo (an integer number of samples per bar) to a guide, and ACE-Step re-performs it audio-to-audio (acestep15-a2a.json) with a genre take of the same level and style as ReferenceTimbreAudio. Marches, the alien victory, the cackle and the menu are unchanged from round 2 (120 BPM). Prompts describe genre traits only; they never name a song, band, game or composer.",
+ "workflows": {
+  "text": "art/workflows/music/acestep15-cue.json",
+  "a2a": "art/workflows/music/acestep15-a2a.json"
+ },
+ "bpm": 120,
+ "beats_per_bar": 4,
+ "sample_rate": 48000,
+ "loudness_lufs": -18.0,
+ "peak_dbfs": -1.0,
+ "opus_kbps": 80,
+ "aac_kbps": 128,
+ "common_tags": "instrumental, no vocals, original video game battle soundtrack, 4/4, steady tempo",
+ "lyrics": "[instrumental]",
+ "nodes": {
+  "tags": "5.tags",
+  "lyrics": "5.lyrics",
+  "text_seed": "5.seed",
+  "bpm": "5.bpm",
+  "duration": "5.duration",
+  "keyscale": "5.keyscale",
+  "seconds": "7.seconds",
+  "seed": "8.seed",
+  "codes": "5.generate_audio_codes",
+  "denoise": "8.denoise",
+  "guide": "11.audio",
+  "reference": "14.audio"
+ },
+ "kinds": {
+  "loop": "whole file loops; length = beats exactly; the first crossfade_s blend the continuation into the start so the wrap is continuous",
+  "tail": "plays `beats` once, then the appended copy of its last bar loops (loopStart..loopEnd) until the next cue",
+  "oneshot": "plays `beats` once and ends with a fade over `fade_s`",
+  "sprite": "accent sprite: one slot of `slot_beats` per accent (dive, laststand, hatch, reinforce), played on demand",
+  "reference": "text-to-music genre take used only as the timbre reference of its group; not shipped"
+ },
+ "tier_tags": {
+  "1": "driving battle rhythm, full band, aggressive, fast",
+  "2": "relentless double kick drums, gang chants, intense, fast",
+  "3": "harmonized lead guitar melody, very intense, fast, epic",
+  "4": "maximum intensity, blast beats, epic climax, harmonized twin leads, choir, very fast"
+ },
+ "tier_loudness_db": {
+  "1": -1.5,
+  "2": -1.0,
+  "3": 0.0,
+  "4": 0.5
+ },
+ "part_tags": {
+  "intro": "symphonic intro, orchestral hits, choir, building to the battle",
+  "outro": "symphonic outro, majestic, triumphant, half-time, soaring vocalise"
+ },
+ "groups": {
+  "1": {
+   "title": "L1 Krybor",
+   "genre": "battle punk metal",
+   "keyscale": "E minor",
+   "bpm": 170,
+   "loudness_lufs": -18.0,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental fast battle punk metal, raw distorted power chords, fast downpicked riffs, skank and blast drum beats, double kick drums, gang shouts, rebellious, aggressive, energetic",
+   "ref_seeds": [
+    5101,
+    5102,
+    5103
+   ]
   },
-  "tier_tags": {
-    "1": "restrained, palm-muted riff, sparse drums, building tension",
-    "2": "driving, full band, steady groove",
-    "3": "intense, lead guitar melody, busy drums, crash cymbals",
-    "4": "frantic, maximum intensity, double bass drums, harmonized lead guitars, climax"
+  "s1": {
+   "title": "L1 Krybor symphonic",
+   "genre": "symphonic metal",
+   "keyscale": "E minor",
+   "bpm": 170,
+   "loudness_lufs": -18.5,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, bold, rebellious",
+   "ref_seeds": [
+    5601,
+    5602,
+    5603
+   ]
   },
-  "tier_loudness_db": {"1": -2.0, "2": -1.0, "3": 0.0, "4": 0.5},
-  "part_tags": {"intro": "intro, drum fill, the riff enters, building", "outro": "laid back half-time outro, the riff winds down, spacious"},
-  "groups": {
-    "1": {"title": "L1 Krybor", "genre": "punk rock", "keyscale": "E minor", "loudness_lufs": -19.0, "denoise": [0.45], "seeds": [41, 42, 43, 44],
-          "tags": "instrumental punk rock, raw distorted power chords, fast downstroked rhythm guitars, driving punk drum beat, loud overdriven bass guitar, garage energy, rebellious, energetic",
-          "ref_seeds": [4101, 4102, 4103]},
-    "2": {"title": "L2 Ringfall", "genre": "melodic rock", "keyscale": "D major", "loudness_lufs": -19.0, "denoise": [0.45], "seeds": [41, 42, 43, 44],
-          "tags": "instrumental melodic rock, crunchy overdriven rhythm guitars, soaring melodic lead guitar, big rock drums, warm bass guitar, anthemic, uplifting, heroic",
-          "ref_seeds": [4201, 4202, 4203]},
-    "3": {"title": "L3 Ember Moon", "genre": "heavy metal", "keyscale": "E minor", "loudness_lufs": -19.0, "denoise": [0.45], "seeds": [41, 42, 43, 44],
-          "tags": "instrumental heavy metal, galloping distorted twin guitars, harmonized dual lead guitar, pounding double bass drums, aggressive bass guitar, fiery, powerful",
-          "ref_seeds": [4301, 4302, 4303]},
-    "4": {"title": "L4 The Hollow", "genre": "doom metal", "keyscale": "C minor", "loudness_lufs": -19.0, "denoise": [0.45], "seeds": [41, 42, 43, 44],
-          "tags": "instrumental doom metal, crushing slow downtuned distorted guitars, sludgy heavy bass, huge slow drums, tolling bell, dark choir, ominous, dread",
-          "ref_seeds": [4401, 4402, 4403]},
-    "5": {"title": "L5 The Carrier", "genre": "doom-death metal", "keyscale": "F minor", "loudness_lufs": -19.0, "denoise": [0.45], "seeds": [41, 42, 43, 44],
-          "tags": "instrumental doom death metal, crushing downtuned guitars, tremolo picking, blast beats, demonic choir chant, deep guttural growl texture, pipe organ, apocalyptic, evil",
-          "ref_seeds": [4501, 4502, 4503]},
-    "march": {"title": "Fleet march", "genre": "military march", "keyscale": "C major", "denoise": [0.45], "seeds": [41, 42, 43, 44],
-              "tags": "instrumental victorious military march, brass fanfare, snare drum rolls, marching band bass drum, cymbal crashes, triumphant, heroic, celebration, major key",
-              "ref_seeds": [4601, 4602, 4603]},
-    "alien": {"title": "Alien victory", "genre": "twisted alien march", "keyscale": "E minor", "denoise": [0.45], "seeds": [41, 42, 43, 44],
-              "tags": "instrumental twisted triumphant alien victory march, otherworldly, eerie theremin lead, sinister choir, distorted guitars, pounding war drums, wicked celebration",
-              "ref_seeds": [4701, 4702, 4703]}
+  "2": {
+   "title": "L2 Ringfall",
+   "genre": "melodic power metal",
+   "keyscale": "D major",
+   "bpm": 160,
+   "loudness_lufs": -18.0,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental melodic power metal, galloping double bass drums, soaring harmonized twin lead guitars, epic choir, crunchy rhythm guitars, triumphant, heroic, fast",
+   "ref_seeds": [
+    5201,
+    5202,
+    5203
+   ]
   },
-  "cues": [
-    {"name": "menu", "kind": "loop", "mode": "text", "density_bias": -1, "beats": 32, "gen_seconds": 40, "keyscale": "E minor", "seeds": [1101, 1102, 1103],
-     "tags": "dark ambient sci-fi synth, slow evolving analog pads, distant glassy arpeggio, soft sub bass pulse, lonely frontier at night, mysterious, spacious, cinematic, calm, seamless loop"},
-
-    {"name": "l1-t1", "group": "1", "tier": 1, "kind": "loop", "beats": 32},
-    {"name": "l1-t2", "group": "1", "tier": 2, "kind": "loop", "beats": 32},
-    {"name": "l1-t3", "group": "1", "tier": 3, "kind": "loop", "beats": 32},
-    {"name": "l1-t4", "group": "1", "tier": 4, "kind": "loop", "beats": 32},
-    {"name": "l1-intro", "group": "1", "part": "intro", "kind": "tail", "beats": 16},
-    {"name": "l1-outro", "group": "1", "part": "outro", "kind": "loop", "beats": 16},
-    {"name": "l1-accents", "group": "1", "kind": "sprite", "mode": "synth", "slot_beats": 3, "loudness_lufs": -20.0},
-
-    {"name": "l2-t1", "group": "2", "tier": 1, "kind": "loop", "beats": 32},
-    {"name": "l2-t2", "group": "2", "tier": 2, "kind": "loop", "beats": 32},
-    {"name": "l2-t3", "group": "2", "tier": 3, "kind": "loop", "beats": 32},
-    {"name": "l2-t4", "group": "2", "tier": 4, "kind": "loop", "beats": 32},
-    {"name": "l2-intro", "group": "2", "part": "intro", "kind": "tail", "beats": 16},
-    {"name": "l2-outro", "group": "2", "part": "outro", "kind": "loop", "beats": 16},
-    {"name": "l2-accents", "group": "2", "kind": "sprite", "mode": "synth", "slot_beats": 3, "loudness_lufs": -20.0},
-
-    {"name": "l3-t1", "group": "3", "tier": 1, "kind": "loop", "beats": 32},
-    {"name": "l3-t2", "group": "3", "tier": 2, "kind": "loop", "beats": 32, "seeds": [41, 42, 43, 44, 45, 46, 47, 48], "denoise": [0.45, 0.35], "note": "ACE tends to shift this gallop a sixteenth early at 0.45; the wider grid finds takes that keep the guide grid"},
-    {"name": "l3-t3", "group": "3", "tier": 3, "kind": "loop", "beats": 32},
-    {"name": "l3-t4", "group": "3", "tier": 4, "kind": "loop", "beats": 32},
-    {"name": "l3-intro", "group": "3", "part": "intro", "kind": "tail", "beats": 16},
-    {"name": "l3-outro", "group": "3", "part": "outro", "kind": "loop", "beats": 16},
-    {"name": "l3-accents", "group": "3", "kind": "sprite", "mode": "synth", "slot_beats": 3, "loudness_lufs": -20.0},
-
-    {"name": "l4-t1", "group": "4", "tier": 1, "kind": "loop", "beats": 32},
-    {"name": "l4-t2", "group": "4", "tier": 2, "kind": "loop", "beats": 32},
-    {"name": "l4-t3", "group": "4", "tier": 3, "kind": "loop", "beats": 32, "pick": 41, "pick_denoise": 0.45, "pick_reason": "the top-scored take (s43) leaves a click-like curvature at the Opus loop wrap; s41 keeps the guide grid (lag 0) with chroma 0.67"},
-    {"name": "l4-t4", "group": "4", "tier": 4, "kind": "loop", "beats": 32},
-    {"name": "l4-intro", "group": "4", "part": "intro", "kind": "tail", "beats": 16},
-    {"name": "l4-outro", "group": "4", "part": "outro", "kind": "loop", "beats": 16},
-    {"name": "l4-accents", "group": "4", "kind": "sprite", "mode": "synth", "slot_beats": 3, "loudness_lufs": -20.0},
-
-    {"name": "l5-t1", "group": "5", "tier": 1, "kind": "loop", "beats": 32},
-    {"name": "l5-t2", "group": "5", "tier": 2, "kind": "loop", "beats": 32},
-    {"name": "l5-t3", "group": "5", "tier": 3, "kind": "loop", "beats": 32},
-    {"name": "l5-t4", "group": "5", "tier": 4, "kind": "loop", "beats": 32},
-    {"name": "l5-intro", "group": "5", "part": "intro", "kind": "tail", "beats": 16},
-    {"name": "l5-outro", "group": "5", "part": "outro", "kind": "loop", "beats": 16},
-    {"name": "l5-accents", "group": "5", "kind": "sprite", "mode": "synth", "slot_beats": 3, "loudness_lufs": -20.0},
-
-    {"name": "levelclear", "group": "march", "kind": "tail", "beats": 12},
-    {"name": "victory", "group": "march", "kind": "tail", "beats": 20},
-    {"name": "finale", "group": "march", "kind": "tail", "beats": 36, "extra_tags": "grand finale, full orchestra, choir, timpani, biggest celebration"},
-    {"name": "levelclear-fleet", "group": "march", "kind": "tail", "beats": 12, "variant_of": "levelclear", "extra_tags": "the whole fleet survived, massed brass, trumpet descant, marching drum corps, snare drum line flourishes, tenor drums, jubilant"},
-    {"name": "finale-fleet", "group": "march", "kind": "tail", "beats": 36, "variant_of": "finale", "extra_tags": "grand finale, the whole fleet survived, massed brass and trumpet descant, marching drum corps, snare drum line flourishes, tenor drums, choir, timpani, biggest celebration"},
-    {"name": "cackle", "kind": "oneshot", "mode": "synth", "beats": 8, "fade_s": 0.0, "loudness_lufs": -17.0, "next": "alienwin"},
-    {"name": "alienwin", "group": "alien", "kind": "loop", "beats": 32}
-  ]
+  "s2": {
+   "title": "L2 Ringfall symphonic",
+   "genre": "symphonic metal",
+   "keyscale": "D major",
+   "bpm": 160,
+   "loudness_lufs": -18.5,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, bright, heroic",
+   "ref_seeds": [
+    5701,
+    5702,
+    5703
+   ]
+  },
+  "3": {
+   "title": "L3 Ember Moon",
+   "genre": "heavy galloping battle metal",
+   "keyscale": "E minor",
+   "bpm": 180,
+   "loudness_lufs": -18.0,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental heavy galloping battle metal, galloping riffs, thundering double kick drums, war march toms, harmonized lead guitars, gang chants, epic, aggressive",
+   "ref_seeds": [
+    5301,
+    5302,
+    5303
+   ]
+  },
+  "s3": {
+   "title": "L3 Ember Moon symphonic",
+   "genre": "symphonic metal",
+   "keyscale": "E minor",
+   "bpm": 180,
+   "loudness_lufs": -18.5,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, fiery, epic",
+   "ref_seeds": [
+    5801,
+    5802,
+    5803
+   ]
+  },
+  "4": {
+   "title": "L4 The Hollow",
+   "genre": "epic doom-battle metal",
+   "keyscale": "C minor",
+   "bpm": 150,
+   "loudness_lufs": -18.0,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental epic doom battle metal, crushing heavy riffs, war march drums, thunderous double kick, massive choir, orchestral strings, dark, mighty, warlike",
+   "ref_seeds": [
+    5401,
+    5402,
+    5403
+   ]
+  },
+  "s4": {
+   "title": "L4 The Hollow symphonic",
+   "genre": "symphonic metal",
+   "keyscale": "C minor",
+   "bpm": 150,
+   "loudness_lufs": -18.5,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, dark, solemn, mighty",
+   "ref_seeds": [
+    5901,
+    5902,
+    5903
+   ]
+  },
+  "5": {
+   "title": "L5 The Carrier",
+   "genre": "blackened battle and death metal",
+   "keyscale": "F minor",
+   "bpm": 190,
+   "loudness_lufs": -18.0,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental blackened battle death metal, tremolo picked guitars, blast beats, double kick drums, dark choir, pipe organ, demonic chants, apocalyptic, extreme, ferocious",
+   "ref_seeds": [
+    5501,
+    5502,
+    5503
+   ]
+  },
+  "s5": {
+   "title": "L5 The Carrier symphonic",
+   "genre": "symphonic metal",
+   "keyscale": "F minor",
+   "bpm": 190,
+   "loudness_lufs": -18.5,
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    51,
+    52,
+    53
+   ],
+   "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, dark, demonic, apocalyptic",
+   "ref_seeds": [
+    6001,
+    6002,
+    6003
+   ]
+  },
+  "march": {
+   "title": "Fleet march",
+   "genre": "military march",
+   "keyscale": "C major",
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    41,
+    42,
+    43,
+    44
+   ],
+   "tags": "instrumental victorious military march, brass fanfare, snare drum rolls, marching band bass drum, cymbal crashes, triumphant, heroic, celebration, major key",
+   "ref_seeds": [
+    4601,
+    4602,
+    4603
+   ]
+  },
+  "alien": {
+   "title": "Alien victory",
+   "genre": "twisted alien march",
+   "keyscale": "E minor",
+   "denoise": [
+    0.45
+   ],
+   "seeds": [
+    41,
+    42,
+    43,
+    44
+   ],
+   "tags": "instrumental twisted triumphant alien victory march, otherworldly, eerie theremin lead, sinister choir, distorted guitars, pounding war drums, wicked celebration",
+   "ref_seeds": [
+    4701,
+    4702,
+    4703
+   ]
+  }
+ },
+ "cues": [
+  {
+   "name": "menu",
+   "kind": "loop",
+   "mode": "text",
+   "density_bias": -1,
+   "beats": 32,
+   "gen_seconds": 40,
+   "keyscale": "E minor",
+   "seeds": [
+    1101,
+    1102,
+    1103
+   ],
+   "tags": "dark ambient sci-fi synth, slow evolving analog pads, distant glassy arpeggio, soft sub bass pulse, lonely frontier at night, mysterious, spacious, cinematic, calm, seamless loop",
+   "keep": true
+  },
+  {
+   "name": "l1-t1",
+   "group": "1",
+   "tier": 1,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l1-t2",
+   "group": "1",
+   "tier": 2,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l1-t3",
+   "group": "1",
+   "tier": 3,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l1-t4",
+   "group": "1",
+   "tier": 4,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l1-intro",
+   "group": "s1",
+   "part": "intro",
+   "kind": "tail",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l1-outro",
+   "group": "s1",
+   "part": "outro",
+   "kind": "loop",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l1-accents",
+   "group": "1",
+   "kind": "sprite",
+   "mode": "synth",
+   "slot_seconds": 1.5,
+   "loudness_lufs": -19.0
+  },
+  {
+   "name": "l2-t1",
+   "group": "2",
+   "tier": 1,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l2-t2",
+   "group": "2",
+   "tier": 2,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l2-t3",
+   "group": "2",
+   "tier": 3,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l2-t4",
+   "group": "2",
+   "tier": 4,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l2-intro",
+   "group": "s2",
+   "part": "intro",
+   "kind": "tail",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l2-outro",
+   "group": "s2",
+   "part": "outro",
+   "kind": "loop",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l2-accents",
+   "group": "2",
+   "kind": "sprite",
+   "mode": "synth",
+   "slot_seconds": 1.5,
+   "loudness_lufs": -19.0
+  },
+  {
+   "name": "l3-t1",
+   "group": "3",
+   "tier": 1,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l3-t2",
+   "group": "3",
+   "tier": 2,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l3-t3",
+   "group": "3",
+   "tier": 3,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l3-t4",
+   "group": "3",
+   "tier": 4,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l3-intro",
+   "group": "s3",
+   "part": "intro",
+   "kind": "tail",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l3-outro",
+   "group": "s3",
+   "part": "outro",
+   "kind": "loop",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l3-accents",
+   "group": "3",
+   "kind": "sprite",
+   "mode": "synth",
+   "slot_seconds": 1.5,
+   "loudness_lufs": -19.0
+  },
+  {
+   "name": "l4-t1",
+   "group": "4",
+   "tier": 1,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l4-t2",
+   "group": "4",
+   "tier": 2,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l4-t3",
+   "group": "4",
+   "tier": 3,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l4-t4",
+   "group": "4",
+   "tier": 4,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l4-intro",
+   "group": "s4",
+   "part": "intro",
+   "kind": "tail",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l4-outro",
+   "group": "s4",
+   "part": "outro",
+   "kind": "loop",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l4-accents",
+   "group": "4",
+   "kind": "sprite",
+   "mode": "synth",
+   "slot_seconds": 1.5,
+   "loudness_lufs": -19.0
+  },
+  {
+   "name": "l5-t1",
+   "group": "5",
+   "tier": 1,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l5-t2",
+   "group": "5",
+   "tier": 2,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l5-t3",
+   "group": "5",
+   "tier": 3,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l5-t4",
+   "group": "5",
+   "tier": 4,
+   "kind": "loop",
+   "beats": 32
+  },
+  {
+   "name": "l5-intro",
+   "group": "s5",
+   "part": "intro",
+   "kind": "tail",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l5-outro",
+   "group": "s5",
+   "part": "outro",
+   "kind": "loop",
+   "beats": 16,
+   "lyrics": "[intro]\nAaaah aaah aaaah\nOoooh aaaah"
+  },
+  {
+   "name": "l5-accents",
+   "group": "5",
+   "kind": "sprite",
+   "mode": "synth",
+   "slot_seconds": 1.5,
+   "loudness_lufs": -19.0
+  },
+  {
+   "name": "levelclear",
+   "group": "march",
+   "kind": "tail",
+   "beats": 12,
+   "keep": true
+  },
+  {
+   "name": "victory",
+   "group": "march",
+   "kind": "tail",
+   "beats": 20,
+   "keep": true
+  },
+  {
+   "name": "finale",
+   "group": "march",
+   "kind": "tail",
+   "beats": 36,
+   "extra_tags": "grand finale, full orchestra, choir, timpani, biggest celebration",
+   "keep": true
+  },
+  {
+   "name": "levelclear-fleet",
+   "group": "march",
+   "kind": "tail",
+   "beats": 12,
+   "variant_of": "levelclear",
+   "extra_tags": "the whole fleet survived, massed brass, trumpet descant, marching drum corps, snare drum line flourishes, tenor drums, jubilant",
+   "keep": true
+  },
+  {
+   "name": "finale-fleet",
+   "group": "march",
+   "kind": "tail",
+   "beats": 36,
+   "variant_of": "finale",
+   "extra_tags": "grand finale, the whole fleet survived, massed brass and trumpet descant, marching drum corps, snare drum line flourishes, tenor drums, choir, timpani, biggest celebration",
+   "keep": true
+  },
+  {
+   "name": "cackle",
+   "kind": "oneshot",
+   "mode": "synth",
+   "beats": 8,
+   "fade_s": 0.0,
+   "loudness_lufs": -17.0,
+   "next": "alienwin",
+   "keep": true
+  },
+  {
+   "name": "alienwin",
+   "group": "alien",
+   "kind": "loop",
+   "beats": 32,
+   "keep": true
+  }
+ ],
+ "keep": "Cues marked keep=true are the round-2 recordings (120 BPM) and are not regenerated in round 3; `build` leaves their files and manifest entries in place.",
+ "vocalise_note": "Intros and outros pass wordless vowel lyrics (no words) so ACE may voice the guide's soprano line as a vocalise; at denoise 0.45 the measured difference to [instrumental] is small (round-3 experiment)."
 }

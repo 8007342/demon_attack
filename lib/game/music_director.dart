@@ -195,6 +195,13 @@ class MusicBridge {
     GameEventNames.carrierHatchOpen: 'hatch',
     GameEventNames.reinforcementsArrived: 'reinforce',
     GameEventNames.groundBreakthrough: 'breakthrough',
+    // Life loss: hit stinger with a short music drop (lifeLost is the
+    // observer's older name for the same moment; the player plays it once),
+    // a demonic gloat while the fleet regroups, a heroic re-entry accent.
+    GameEventNames.playerDestroyed: 'destroyed',
+    GameEventNames.lifeLost: 'destroyed',
+    GameEventNames.regroupStart: 'gloat',
+    GameEventNames.playerRespawn: 'respawn',
   };
 
   void call(GameEvent event) {

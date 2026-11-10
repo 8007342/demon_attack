@@ -3,12 +3,16 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import vm from 'node:vm';
 
+// Each level's grid: integer samples per bar at 48 kHz (tools/music_motifs.py).
+const BAR = { 1: 67765 / 48000, 2: 72000 / 48000, 3: 64000 / 48000, 4: 76800 / 48000, 5: 60632 / 48000 };
+const BEAT = level => BAR[level] / 4;
 // Decoded durations of the instrumented cues (seconds), as the pipeline builds them.
 function seconds(name) {
-  if (/^l\d-t\d$/.test(name)) return 16;
-  if (/-intro$/.test(name)) return 10;
-  if (/-outro$/.test(name)) return 8;
-  if (/-accents$/.test(name)) return 7.5;
+  const level = +name[1];
+  if (/^l\d-t\d$/.test(name)) return 8 * BAR[level];
+  if (/-intro$/.test(name)) return 5 * BAR[level];
+  if (/-outro$/.test(name)) return 4 * BAR[level];
+  if (/-accents$/.test(name)) return 12;
   return { menu: 16, levelclear: 8, victory: 12, finale: 20, 'levelclear-fleet': 8, 'finale-fleet': 20, cackle: 4, alienwin: 16 }[name];
 }
 
@@ -45,9 +49,10 @@ async function player({ missing = new Set() } = {}) {
 }
 
 const onGrid = (t, origin, unit) => { const k = (t - origin) / unit; return Math.abs(k - Math.round(k)) < 1e-6; };
+const near = (a, b) => Math.abs(a - b) < 1e-9;
 const last = (sources, name) => sources.filter(s => s.buffer?.name === name).at(-1);
 
-test('levels play intro then tiers of one motif: tier changes land on bars and keep the loop position', async () => {
+test('levels play intro then tiers of one motif at the level tempo: tier changes land on bars and keep the loop position', async () => {
   const { audio, ctx, sources, fetched, step, settle } = await player();
   await audio.cue('menu');
   assert.ok(fetched.some(p => p.startsWith('/audio/music/menu.')), 'menu bytes fetched before the gesture');
@@ -62,51 +67,75 @@ test('levels play intro then tiers of one motif: tier changes land on bars and k
   assert.ok(!fetched.some(p => p.includes('/l3-')), 'other levels are not fetched');
   await step(8);
   const intro = last(sources, 'l2-intro');
-  assert.ok(intro && onGrid(intro.at, grid, 2), 'intro starts on the bar grid');
-  assert.equal(intro.loopStart, 8, 'intro loops its last bar after the opening');
+  assert.ok(intro && onGrid(intro.at, grid, 2), 'intro starts on the bar line of the 120 BPM menu');
+  assert.ok(near(intro.loopStart, 16 * BEAT(2)), 'intro loops its last bar after its 16-beat opening at 160 BPM');
+  assert.ok(near(audio.state.beatSeconds, BEAT(2)), 'the grid now runs at the level tempo');
   // Gameplay begins mid-intro: the first tier waits for the intro's opening (16 beats).
   await audio.intensity(1); await settle();
   assert.equal(audio.state.pending, 'l2-t1');
   await step(40);
   const t1 = last(sources, 'l2-t1');
-  assert.ok(Math.abs(t1.at - (intro.at + 8)) < 1e-9, 'tier 1 enters when the intro opening ends');
+  assert.ok(near(t1.at, intro.at + 16 * BEAT(2)), 'tier 1 enters when the intro opening ends');
   assert.equal(t1.offset, 0);
-  assert.equal(t1.loop, true); assert.equal(t1.loopEnd, 16);
+  assert.equal(t1.loop, true); assert.ok(near(t1.loopEnd, 8 * BAR[2]));
   await step(5);
   await audio.intensity(3); await settle();
   assert.equal(audio.state.pending, 'l2-t3', 'tier change waits for the bar');
   await step(10);
   const t3 = last(sources, 'l2-t3');
-  assert.ok(onGrid(t3.at, grid, 2), 'tier change lands on a bar line');
-  const expected = ((t3.at - t1.at) % 16);
+  assert.ok(onGrid(t3.at, t1.at, BAR[2]), 'tier change lands on a bar line of the level grid');
+  const expected = ((t3.at - t1.at) % (8 * BAR[2]));
   assert.ok(Math.abs(t3.offset - expected) < 1e-9 && t3.offset > 0, 'new tier continues at the same loop position');
   assert.ok(t1.stoppedAt >= t3.at && t1.stoppedAt <= t3.at + .1, 'rising tier: short crossfade at the bar');
   await audio.intensity(2); await settle(); await step(10);
   const t2 = last(sources, 'l2-t2');
-  assert.ok(onGrid(t2.at, grid, 2));
-  assert.ok(t3.stoppedAt >= t2.at + .45, 'falling tier: the old tier fades over a beat');
-  assert.ok(Math.abs(t2.offset - ((t2.at - t1.at) % 16)) < 1e-9);
+  assert.ok(onGrid(t2.at, t1.at, BAR[2]));
+  assert.ok(t3.stoppedAt >= t2.at + BEAT(2) * .9, 'falling tier: the old tier fades over a beat');
+  assert.ok(Math.abs(t2.offset - ((t2.at - t1.at) % (8 * BAR[2]))) < 1e-9);
   // Accents: quantized to the half-beat (dive) or beat (hatch) of the grid; never in the past.
   ctx().currentTime += .07;
   const now = ctx().currentTime;
   const dive = await audio.accent('dive');
-  assert.ok(dive >= now && dive - now <= .28 && onGrid(dive, grid, .25), `dive accent on the half-beat (${dive - now})`);
+  assert.ok(dive >= now && dive - now <= BEAT(2) / 2 + .031 && onGrid(dive, t1.at, BEAT(2) / 2), `dive accent on the half-beat of the 160 BPM grid (${dive - now})`);
   const spriteSource = sources.at(-1);
   assert.equal(spriteSource.buffer.name, 'l2-accents'); assert.equal(spriteSource.offset, 0); assert.equal(spriteSource.duration, 1.5);
   const hatch = await audio.accent('hatch');
-  assert.ok(hatch >= now && onGrid(hatch, grid, .5), 'hatch accent on the beat');
+  assert.ok(hatch >= now && onGrid(hatch, t1.at, BEAT(2)), 'hatch accent on the beat');
   assert.equal(sources.at(-1).offset, 3, 'hatch slot of the sprite');
   assert.equal(await audio.accent('dive'), null, 'the same accent is not retriggered within a second');
   ctx().currentTime += 1.9;  // past the two live accents (at most two at a time)
   const breakthrough = await audio.accent('breakthrough');
-  assert.ok(onGrid(breakthrough, grid, .5), 'ground breakthrough accent on the beat');
+  assert.ok(onGrid(breakthrough, t1.at, BEAT(2)), 'ground breakthrough accent on the beat');
   assert.equal(sources.at(-1).offset, 6, 'breakthrough slot of the sprite');
+  // Life loss: the hit lands on the next sixteenth and drops the music for two
+  // bars; the gloat and the heroic re-entry follow on the beat, and the re-entry
+  // restores the music on its downbeat.
+  ctx().currentTime += 1.6;
+  const hit = await audio.accent('destroyed');
+  assert.ok(onGrid(hit, t1.at, BEAT(2) / 4) && hit - ctx().currentTime <= BEAT(2) / 4 + .031, 'hit stinger on the next sixteenth');
+  assert.equal(sources.at(-1).offset, 7.5, 'destroyed slot');
+  assert.ok(near(audio.state.drop.at, hit) && near(audio.state.drop.until, hit + 2 * BAR[2]), 'music drops for two bars');
+  ctx().currentTime += .4;
+  const gloat = await audio.accent('gloat');
+  assert.ok(onGrid(gloat, t1.at, BEAT(2)) && sources.at(-1).offset === 9, 'demonic gloat on the beat');
+  ctx().currentTime += .4;
+  const back = await audio.accent('respawn');
+  assert.ok(onGrid(back, t1.at, BEAT(2)) && sources.at(-1).offset === 10.5, 'heroic re-entry on the beat');
+  assert.ok(near(audio.state.drop.until, back + BEAT(2)), 'the music returns on the re-entry downbeat');
   assert.equal(audio.state.active, 'l2-t2', 'accents never replace the music');
   // Stale loads: only the latest request wins.
   await Promise.all([audio.cue('level', 1), audio.cue('travel', 2)]);
   assert.equal(audio.state.pending, 'l2-outro', 'travel plays the cleared level\'s outro');
   await step(10);
-  assert.equal(audio.state.active, 'l2-outro'); assert.equal(sources.at(-1).loopEnd, 8);
+  assert.equal(audio.state.active, 'l2-outro'); assert.ok(near(sources.at(-1).loopEnd, 4 * BAR[2]));
+  const outro = last(sources, 'l2-outro');
+  // Across tempos: the next level's intro starts on an L2 bar line (the old
+  // bar is finished), then the grid runs at 180 BPM.
+  await audio.cue('level', 3); await step(12);
+  const intro3 = last(sources, 'l3-intro');
+  assert.ok(intro3 && onGrid(intro3.at, outro.at, BAR[2]), 'cross-tempo change lands on the old grid\'s bar line');
+  assert.ok(near(audio.state.beatSeconds, BEAT(3)), 'then the new cue keeps its own grid');
+  assert.ok(onGrid(audio.state.nextBeat, intro3.at, BEAT(3)), 'beats now step at 180 BPM from the intro start');
   // Pause/resume keeps phase.
   const before = audio.state.nextBeat; audio.pause(); assert.equal(ctx().state, 'suspended');
   await audio.resume(); assert.equal(audio.state.nextBeat, before, 'resume keeps the bar grid');
@@ -189,10 +218,11 @@ test('every cue ships Opus and AAC files with whole-bar loops inside the downloa
     opus += size;
     const level = name.match(/^l(\d)-/)?.[1];
     if (level) perLevel[level] = (perLevel[level] || 0) + size;
-    if (cue.loopEnd !== null) assert.equal(((cue.loopEnd - cue.loopStart) * 2) % 4, 0, `${name} loop is whole bars`);
-    if (kind === 'loop') assert.equal(cue.seconds, cue.beats / 2, `${name} loop length`);
-    if (kind === 'tail') assert.equal(cue.loopStart, cue.beats / 2, `${name} tail opening`);
-    if (kind === 'sprite') assert.deepEqual(cue.slots, ['dive', 'laststand', 'hatch', 'reinforce', 'breakthrough']);
+    const bar = cue.barSamples || 96000;
+    if (cue.loopEnd !== null) assert.equal(Math.round((cue.loopEnd - cue.loopStart) * 48000) % bar, 0, `${name} loop is whole bars`);
+    if (kind === 'loop') assert.equal(Math.round(cue.seconds * 48000), cue.beats / 4 * bar, `${name} loop length is exact at its tempo`);
+    if (kind === 'tail') assert.equal(Math.round(cue.loopStart * 48000), cue.beats / 4 * bar, `${name} tail opening`);
+    if (kind === 'sprite') assert.deepEqual(cue.slots, ['dive', 'laststand', 'hatch', 'reinforce', 'breakthrough', 'destroyed', 'gloat', 'respawn']);
     // The player's built-in table must agree with the manifest.
     assert.equal(seconds(name) !== undefined, true);
   }
@@ -201,6 +231,14 @@ test('every cue ships Opus and AAC files with whole-bar loops inside the downloa
     assert.equal(manifest.cues[`l${level}-t${tier}`].beats, 32, 'tiers share one 8-bar loop length so a change keeps position');
   }
   assert.equal(manifest.cues.cackle.next, 'alienwin');
+  // The player's bar table matches the pipeline's (manifest) for every level.
+  const js = await readFile(new URL('../web/audio/demon-audio.js', import.meta.url), 'utf8');
+  const table = JSON.parse(js.match(/levelBarSamples = (\{[^}]+\})/)[1].replace(/(\d+):/g, '"$1":'));
+  for (let level = 1; level <= 5; level++) {
+    assert.equal(table[level], manifest.motifs[level].barSamples, `level ${level} grid`);
+    assert.equal(table[level], BAR[level] * 48000);
+    for (const part of ['t1', 'intro', 'outro']) assert.equal(manifest.cues[`l${level}-${part}`].barSamples, table[level]);
+  }
   assert.ok(opus < 8 * 1024 * 1024, `Opus set stays under 8 MB (${opus} bytes)`);
   for (const [level, bytes] of Object.entries(perLevel)) assert.ok(bytes < 1.4 * 1024 * 1024, `level ${level} set loads lazily in a modest chunk (${bytes})`);
 });
