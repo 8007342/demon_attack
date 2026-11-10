@@ -437,6 +437,7 @@ class DemonScene extends FlameGame {
   }
 
   void _combat(Canvas c) {
+    _swarmShadows(c); // --- perspective: on the ground, under everything
     for (final p in model.heartPickups) {
       c.save();
       c.translate(p.x - 10, p.y - 10);
@@ -461,16 +462,23 @@ class DemonScene extends FlameGame {
       _paintSupplyCrate(c, crate);
     }
     _carrierBackdrop(c);
-    for (final d in model.demons) {
+    // --- perspective: far to near, each drawn at its simulated scale.
+    for (final d in _byDepth(model.demons)) {
       final warning = d.telegraph > 0;
       final pos = Offset(d.x, d.y);
       if (d.isLarge) {
         // Large creatures have their own delayed entrance in simulation.
         if (d.entranceProgress > 0) {
+          c.save();
+          _scaleAbout(c, pos, d.scale);
           _sentinel(c, pos, d);
+          c.restore();
         }
         continue;
       }
+      if (_parked(d)) continue;
+      c.save();
+      _scaleAbout(c, pos, d.scale); // sizes below are at scale 1
       if (d.elite) {
         // Rank halo: a slow dotted ring of elite insignia pips.
         for (var i = 0; i < 12; i++) {
@@ -505,6 +513,19 @@ class DemonScene extends FlameGame {
         size,
         tint: cell.tintFlash ? Colors.white : null,
       );
+      final haze = model.perspective ? Perspective.haze(d.nearness) : 0.0;
+      if (haze > 0) {
+        // Distance haze: arrivals emerge veiled in the horizon's dusk.
+        sprite(
+          c,
+          cell.row,
+          cell.col,
+          pos,
+          size,
+          tint: _hazeTone,
+          opacity: haze * .6,
+        );
+      }
       if (d.elite) {
         // Authored elite armour for this direction/pose, shed one level per
         // hit, offset by the frame's whole-pixel body lift.
@@ -548,6 +569,7 @@ class DemonScene extends FlameGame {
           );
         }
       }
+      c.restore();
     }
     for (final fx in creatures.deaths) {
       c.save();
@@ -558,7 +580,7 @@ class DemonScene extends FlameGame {
         CombatAtlas.deathRow(fx.kind),
         CombatAtlas.deathCol + fx.frame,
         Offset.zero,
-        44,
+        44 * fx.scale,
       );
       c.restore();
     }
@@ -1389,6 +1411,58 @@ class DemonScene extends FlameGame {
         ),
         paint,
       );
+    }
+  }
+
+  // --- perspective (lib/game/perspective.dart, plan/perspective.md) ---
+  static const _hazeTone = Color(0xFF454A74);
+
+  /// Draw order by depth: far demons first, ties in simulation order.
+  List<Demon> _byDepth(List<Demon> demons) {
+    final order = List<int>.generate(demons.length, (i) => i)
+      ..sort((a, b) {
+        final c = demons[a].nearness.compareTo(demons[b].nearness);
+        return c != 0 ? c : a - b;
+      });
+    return [for (final i in order) demons[i]];
+  }
+
+  /// An arrival waiting to set out stays parked, undrawn, at its far start.
+  bool _parked(Demon d) =>
+      model.perspective &&
+      d.entering &&
+      d.arrivesFromDistance &&
+      d.entranceProgress <= 0;
+
+  void _scaleAbout(Canvas c, Offset pos, double scale) {
+    if (scale == 1) return;
+    c.translate(pos.dx, pos.dy);
+    c.scale(scale);
+    c.translate(-pos.dx, -pos.dy);
+  }
+
+  /// Faint stepped pixel shadows on the flyover ground beneath each demon's
+  /// depth: they darken as a diver loses altitude and closes in, and stay
+  /// all but invisible under the high formation and distant arrivals.
+  void _swarmShadows(Canvas c) {
+    if (!model.perspective) return;
+    final paint = Paint()..isAntiAlias = false;
+    for (final d in model.demons) {
+      if (d.nearness <= 0 || _parked(d)) continue;
+      if (d.isLarge && d.entranceProgress <= 0) continue;
+      final gy = Perspective.groundY(d.nearness);
+      if (gy > 524 || gy < d.y + 8) continue;
+      final near = ((d.nearness - .5) / .2).clamp(0.0, 1.0);
+      final low = (1 - (gy - d.y) / 320).clamp(.15, 1.0);
+      final alpha = .5 * near * low;
+      if (alpha < .02) continue;
+      final w = ((d.isLarge ? 70.0 : 26.0) * d.nearness / 1.4).round() * 2.0;
+      final x = d.x.roundToDouble(), y = gy.roundToDouble();
+      paint.color = Color.fromRGBO(2, 4, 12, alpha);
+      final inner = (w * .62 / 2).round() * 2.0;
+      c.drawRect(Rect.fromLTWH(x - inner / 2, y - 3, inner, 2), paint);
+      c.drawRect(Rect.fromLTWH(x - w / 2, y - 1, w, 2), paint);
+      c.drawRect(Rect.fromLTWH(x - inner / 2, y + 1, inner, 2), paint);
     }
   }
 

@@ -163,9 +163,12 @@ abstract final class CombatAtlas {
 /// A creature's authored death sequence, spawned by the scene when an
 /// ordinary demon leaves the simulation destroyed.
 class DeathFx {
-  DeathFx(this.kind, this.x, this.y, this.bank);
+  DeathFx(this.kind, this.x, this.y, this.bank, {this.scale = 1});
   final int kind;
   final double x, y, bank;
+
+  /// The demon's perspective scale when it died (see Demon.scale).
+  final double scale;
   double age = 0;
   int get frame => (age / CombatAtlas.deathSeconds * 8).floor().clamp(0, 7);
 }
@@ -202,10 +205,9 @@ class CreaturePresentation {
       if (!s.hostile || (_seenShot[s] ?? false)) continue;
       _seenShot[s] = true;
       final fromSentinel = s.kind == ShotKind.sentinel;
-      final muzzleDy = fromSentinel ? 14.0 : 12.0;
       for (final d in model.demons) {
         if (d.isLarge != fromSentinel) continue;
-        if ((d.x - s.x).abs() < 6 && (s.y - (d.y + muzzleDy)).abs() < 10) {
+        if ((d.x - s.x).abs() < 6 && (s.y - (d.y + d.muzzleDy)).abs() < 10) {
           _fireAge[d] = 0;
           break;
         }
@@ -214,7 +216,7 @@ class CreaturePresentation {
     final current = model.demons.toSet();
     for (final d in _previous) {
       if (current.contains(d) || d.hp > 0 || d.isLarge) continue;
-      deaths.add(DeathFx(d.kind, d.x, d.y, d.bank));
+      deaths.add(DeathFx(d.kind, d.x, d.y, d.bank, scale: d.scale));
       for (final b in model.blasts) {
         if (b.age < 0.12 && (b.x - d.x).abs() < 1 && (b.y - d.y).abs() < 1) {
           _suppressedBlast[b] = true;
