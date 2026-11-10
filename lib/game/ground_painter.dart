@@ -541,12 +541,12 @@ class GroundPainter {
 
   void _homingPuff(Canvas c, HomingPuff puff) {
     final q = (puff.age / HomingPuff.life).clamp(0.0, 1.0);
-    final size = math.max(1.0, ((2 + q * 4) * puff.size).roundToDouble());
+    final size = math.max(1.0, ((3 + q * 5) * puff.size).roundToDouble());
     // Light where it was laid: far puffs sit in the haze.
     final far = (1 - puff.size).clamp(0.0, 1.0);
     final base = Color.lerp(const Color(0xFFDCE6F5), const Color(0xFF7A7290), q * .7 + far * .3)!;
     _px(c, puff.x - size / 2, puff.y - size / 2 - q * 3 * puff.size, size,
-        base.withValues(alpha: (1 - q) * (.75 - far * .3)));
+        base.withValues(alpha: (1 - q) * (.9 - far * .3)));
   }
 
   void _groundMissile(Canvas c, GroundMissile m, double clock) {

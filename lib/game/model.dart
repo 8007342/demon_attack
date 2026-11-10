@@ -921,6 +921,14 @@ class ArcadeModel {
   }
 
   void _enterPhase(RunMode phase, double duration) {
+    // A wave, salvage or victory scene that starts mid-sequence (a shot
+    // already in flight finished the fight) ends it: the reserve is back.
+    if (lifeLossPhase != LifeLossPhase.none) {
+      lifeLossPhase = LifeLossPhase.none;
+      lifeLossLeft = 0;
+      invulnerable = LifeLossTuning.protection;
+      shipX = targetX = width / 2;
+    }
     mode = phase;
     transitionDuration = duration;
     transitionLeft = duration;

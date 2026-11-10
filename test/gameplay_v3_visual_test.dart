@@ -148,6 +148,7 @@ void main() {
         ..front = GroundFront.none;
       final u = GroundUnit(900, 2, 1, .45, 1150, hp: 99);
       h.ground.units.add(u);
+      h.invulnerable = 0; // the ship stays visible (no protection blink)
       h.collectHoming();
       final arc = <Uint8List>[];
       _run(h, .14);

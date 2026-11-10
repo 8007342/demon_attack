@@ -1098,7 +1098,8 @@ extension GroundWarSimulation on ArcadeModel {
       score += ((400 + 100 * u.sector) * (cycle + 1) * policy.enemyPoints).round();
       _adjustStrength(.08); // the player's help pushes the allies ahead
     }
-    blasts.add(Blast(u.x, u.bodyY, big: !byAllies));
+    // The explosion, shock ring, debris and scorch are drawn on the ground
+    // plane by GroundPainter (perspective-scaled), not as an air blast.
     events.add('groundExplosion');
     _groundEvent(GameEventNames.groundUnitDestroyed, {
       'x': u.x,
@@ -1246,7 +1247,7 @@ extension GroundWarSimulation on ArcadeModel {
     h.trail.removeWhere((puff) => puff.age > HomingPuff.life);
     h._puffClock -= dt;
     if (h._puffClock <= 0) {
-      h._puffClock = .028;
+      h._puffClock = .016;
       h.trail.add(HomingPuff(h.x, h.y, h.perspective));
     }
   }

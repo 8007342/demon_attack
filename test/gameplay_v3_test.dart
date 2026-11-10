@@ -182,7 +182,17 @@ void main() {
       m.ground
         ..units.clear()
         ..allies.clear()
-        ..front = GroundFront.none;
+        // Breakthroughs allowed (no early-sector auto-kill), no arrivals.
+        ..front = const GroundFront(
+          presence: 0,
+          interval: 0,
+          firstDelay: 0,
+          demonHp: 1,
+          breakthroughs: true,
+          baseStrength: 1,
+          basePressure: 0,
+          shots: 0,
+        );
       final u = GroundUnit(900, 2, 0, .4, z, hp: 99);
       m.ground.units.add(u);
       return u;
