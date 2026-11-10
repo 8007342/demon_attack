@@ -408,66 +408,214 @@ void main() {
   });
 
   group('lip-sync', () {
-    test('no single-frame flicker and the mouth ends closed', () {
+    /// Openness levels must move one step per sample, never blip for a
+    /// single sample except as a step of a monotone ramp, and end closed.
+    void expectSmooth(CommsMouth mouth, String why) {
+      final l = mouth.levels;
+      expect(mouth.frames.last, CommsFrame.idle, reason: why);
+      for (var i = 1; i < l.length; i++) {
+        expect(
+          (l[i] - l[i - 1]).abs(),
+          lessThanOrEqualTo(1),
+          reason: '$why: jump at $i in $l',
+        );
+      }
+      var i = 0;
+      while (i < l.length) {
+        var j = i;
+        while (j < l.length && l[j] == l[i]) {
+          j++;
+        }
+        if (j - i < CommsMouth.minHold &&
+            i > 0 &&
+            j < l.length &&
+            l.length > CommsMouth.minHold) {
+          expect(
+            (l[i - 1] - l[i]).sign,
+            (l[i] - l[j]).sign,
+            reason: '$why: blip at $i in $l',
+          );
+        }
+        i = j;
+      }
+    }
+
+    test('eased, no blips, one level per sample, ends closed', () {
       final rng = math.Random(5);
       for (var trial = 0; trial < 200; trial++) {
         final n = 8 + rng.nextInt(50);
-        final mouth = String.fromCharCodes([
-          for (var i = 0; i < n; i++) 48 + [0, 2, 3, 4, 5][rng.nextInt(5)],
+        final open = String.fromCharCodes([
+          for (var i = 0; i < n; i++) 48 + rng.nextInt(10),
         ]);
         final line = CommsLine(
           id: 'flicker$trial',
           speaker: 'cmd',
           duration: n / 15,
           text: 'x',
-          mouth: mouth,
+          open: open,
         );
-        final frames = CommsMouth.of(line).frames;
-        expect(frames.last, CommsFrame.idle);
-        var i = 0;
-        while (i < frames.length) {
-          var j = i;
-          while (j < frames.length && frames[j] == frames[i]) {
-            j++;
-          }
-          expect(
-            j - i,
-            greaterThanOrEqualTo(CommsMouth.minHold),
-            reason: '$mouth -> $frames at $i',
-          );
-          i = j;
-        }
+        expectSmooth(CommsMouth.of(line), open);
       }
     });
 
-    test('every shipped clip has a smooth track', () {
-      for (final spec in [
-        ...commsHumanTriggers.values,
-        ...commsDemonTriggers.values,
-      ]) {
-        for (final line in spec.lines) {
-          final frames = CommsMouth.of(line).frames;
-          expect(frames, isNotEmpty);
-          var i = 0;
-          while (i < frames.length) {
-            var j = i;
-            while (j < frames.length && frames[j] == frames[i]) {
-              j++;
+    test('closed to fully open passes through the in-between shapes', () {
+      const line = CommsLine(
+        id: 'ramp',
+        speaker: 'cmd',
+        duration: 1,
+        text: 'x',
+        open: '099999999999990',
+      );
+      final frames = CommsMouth.of(line).frames;
+      final first = frames.indexWhere((f) => f != CommsFrame.idle);
+      final opening = <int>[];
+      for (final f in frames.skip(first)) {
+        if (opening.isEmpty || opening.last != f) opening.add(f);
+        if (opening.length == 4) break;
+      }
+      expect(opening, [
+        CommsFrame.talkA,
+        CommsFrame.talkB,
+        CommsFrame.talkC,
+        CommsFrame.talkWide,
+      ]);
+    });
+
+    test('rounded and spread visemes pick the oo and ee shapes', () {
+      const o = CommsLine(
+        id: 'vis-o',
+        speaker: 'cmd',
+        duration: 1,
+        text: 'x',
+        open: '055555555555550',
+        vis: '-oooooooooooo--',
+      );
+      const e = CommsLine(
+        id: 'vis-e',
+        speaker: 'cmd',
+        duration: 1,
+        text: 'x',
+        open: '055555555555550',
+        vis: '-eeeeeeeeeeee--',
+      );
+      expect(CommsMouth.of(o).frames, contains(CommsFrame.talkD));
+      expect(CommsMouth.of(e).frames, contains(CommsFrame.talkEe));
+    });
+
+    test('the cross-fade eases into each new shape', () {
+      const line = CommsLine(
+        id: 'blend',
+        speaker: 'cmd',
+        duration: 1,
+        text: 'x',
+        open: '099999999999990',
+      );
+      final mouth = CommsMouth.of(line);
+      final i = mouth.frames.indexWhere((f) => f != CommsFrame.idle);
+      final t = (i + 1e-6) / CommsMouth.fps;
+      final (from, to, start) = mouth.blendAt(t);
+      expect(from, isNot(to));
+      expect(start, closeTo(0, .001));
+      expect(mouth.blendAt(t + CommsMouth.blend / 2).$3, closeTo(.5, .01));
+      expect(mouth.blendAt(t + CommsMouth.blend).$3, 1);
+    });
+
+    test(
+      'every shipped clip has a smooth track that uses the in-between shapes',
+      () {
+        var withMiddle = 0, humans = 0;
+        for (final spec in [
+          ...commsHumanTriggers.values,
+          ...commsDemonTriggers.values,
+        ]) {
+          for (final line in spec.lines) {
+            final mouth = CommsMouth.of(line);
+            expect(mouth.frames, isNotEmpty);
+            expectSmooth(mouth, line.id);
+            if (!line.isGrunt && line.open.isNotEmpty) {
+              humans++;
+              if (mouth.levels.toSet().length >= 4) withMiddle++;
             }
-            if (frames.length >= CommsMouth.minHold) {
-              expect(
-                j - i,
-                greaterThanOrEqualTo(CommsMouth.minHold),
-                reason: line.id,
-              );
-            }
-            i = j;
           }
         }
+        // Nearly every spoken line moves through at least three open levels.
+        if (humans > 0) expect(withMiddle / humans, greaterThan(.9));
+      },
+    );
+  });
+  group('comms v4 brood voices', () {
+    test('battle cries on divePrep: many voices, no immediate repeat, nothing cut', () {
+      final d = CommsDirector(random: math.Random(3));
+      d.setSector(3, 0);
+      for (var t = 0.0; t < 600; t += .1) {
+        final tick = (t * 10).round();
+        if (tick % 23 == 0) d.handle(const GameEvent(GameEventNames.divePrep), t);
+        if (tick % 170 == 5) d.handle(const GameEvent(GameEventNames.waveStart), t);
+        d.update(t, combat: true);
       }
+      final cries = d.history.where((id) => id.startsWith('divePrep.d')).toList();
+      expect(cries.length, greaterThan(20));
+      expect(cries.toSet().length, greaterThanOrEqualTo(8));
+      for (var i = 1; i < cries.length; i++) {
+        expect(cries[i], isNot(cries[i - 1]), reason: 'repeat at $i');
+      }
+      final voices = {
+        for (final id in cries)
+          commsDemonTriggers['divePrep']!.lines.firstWhere((l) => l.id == id).speaker,
+      };
+      expect(voices.length, greaterThanOrEqualTo(5), reason: '$voices');
+      expect(voices.intersection(commsMinions.toSet()).length, greaterThanOrEqualTo(4));
+      expect(d.interruptedLines, isEmpty);
+    });
+
+    test('battle cries are short enough to land before the dive', () {
+      for (final line in commsDemonTriggers['divePrep']!.lines) {
+        expect(line.duration, lessThanOrEqualTo(.9), reason: line.id);
+      }
+      expect(commsDemonTriggers['divePrep']!.overlap, isTrue);
+    });
+
+    test('reinforcements: the brood cheers with two different voices', () {
+      final d = CommsDirector(random: math.Random(8));
+      d.setSector(2, 0);
+      d.handle(const GameEvent(GameEventNames.reinforcements), 0);
+      for (var t = 0.0; t < 15; t += .05) {
+        d.update(t);
+      }
+      final cheers = [
+        for (final id in d.history.where((id) => id.startsWith('reinforcements.d')))
+          commsDemonTriggers['reinforcements']!.lines.firstWhere((l) => l.id == id).speaker,
+      ];
+      expect(cheers.length, 2, reason: '${d.history}');
+      expect(cheers.toSet().length, 2);
+      expect(d.interruptedLines, isEmpty);
+    });
+
+    test('the ground war v4 events are voiced (the tide only on a surge)', () {
+      for (final name in GameEventNames.groundWarV4) {
+        final key = name == GameEventNames.groundTide ? '$name.surge' : name;
+        expect(commsHumanTriggers[key]?.lines, isNotEmpty, reason: key);
+        expect(commsHumanTriggers[key]!.group, 'ground', reason: key);
+      }
+      expect(commsHumanTriggers[GameEventNames.groundTide], isNull);
+      expect(commsDemonTriggers['heavyArmorSighted']?.lines, isNotEmpty);
+      expect(commsDemonTriggers['groundTide.surge']?.lines, isNotEmpty);
+      final d = CommsDirector(random: math.Random(2));
+      // The surge line has a chance below 1: a few tides, past its cooldown.
+      for (var k = 0; k < 8 && d.history.isEmpty; k++) {
+        d.handle(
+          const GameEvent(GameEventNames.groundTide, {'variant': 'surge'}),
+          k * 40.0,
+        );
+        d.update(k * 40.0);
+      }
+      expect(d.history.first, startsWith('groundTide.surge.h'));
+    });
+
+    test('several distinct minion timbres', () {
+      expect(commsMinions.toSet(), containsAll(['skritch', 'grunnok', 'blatch', 'nibb', 'krag', 'sliss']));
     });
   });
-
   group('shipped line bank', () {
     test('large and varied, every speaker in the cast', () {
       final lines = [
@@ -478,7 +626,7 @@ void main() {
         ...commsHumanTriggers.values,
         ...commsDemonTriggers.values,
       ]) {
-        expect(spec.lines.length, inInclusiveRange(2, 18), reason: spec.name);
+        expect(spec.lines.length, inInclusiveRange(2, 30), reason: spec.name);
         for (final line in spec.lines) {
           expect(commsCast, contains(line.speaker));
           expect(
@@ -559,7 +707,13 @@ void main() {
         'convoyClimbing',
       };
       final rng = math.Random(2);
+      // The model fires divePrep before every dive (v4 battle cries); its
+      // own generator keeps the other events' sequence unchanged.
+      final dives = math.Random(5);
       for (var t = 0.0; t < 300; t += .1) {
+        if (dives.nextDouble() < .02) {
+          c.handle(const GameEvent(GameEventNames.divePrep), t);
+        }
         if (rng.nextDouble() < .03) {
           c.handle(
             GameEvent(GameEventNames.weaponPickup, {

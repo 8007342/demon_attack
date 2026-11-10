@@ -139,7 +139,17 @@ class SquadComms {
         );
       }
     }
-    for (final event in batch) {
+    for (var event in batch) {
+      // comms v4: the ground tide's `state` ('surge' | 'lull') picks the
+      // variant, so only the surge is voiced ('groundTide.surge').
+      if (event.name == GameEventNames.groundTide &&
+          event.variant == null &&
+          event.data['state'] != null) {
+        event = GameEvent(event.name, {
+          ...event.data,
+          'variant': event.data['state'],
+        });
+      }
       // Kill reports are the allies' own chatter; homing kills stay quiet.
       if (event.name == GameEventNames.groundUnitDestroyed &&
           (event.data['by'] ?? 'allies') != 'allies') {

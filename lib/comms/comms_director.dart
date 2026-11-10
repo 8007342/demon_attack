@@ -69,6 +69,16 @@ class CommsMessage {
     return CommsMouth.of(line).frameAt(t);
   }
 
+  /// The lip-sync cross-fade at [now]: the previous shape, the current one
+  /// and how far the fade into it has come (see [CommsMouth.blendAt]).
+  (int from, int to, double amount) mouthBlend(double now) {
+    final t = now - startedAt;
+    if (!started || t < 0 || t >= line.duration || interrupted) {
+      return (CommsFrame.idle, CommsFrame.idle, 1);
+    }
+    return CommsMouth.of(line).blendAt(t);
+  }
+
   @override
   String toString() => 'CommsMessage(${line.id} @$slot p$priority)';
 }

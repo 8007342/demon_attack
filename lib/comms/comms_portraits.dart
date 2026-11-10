@@ -30,6 +30,9 @@ const commsPortraitRows = <String, int>{
   'skritch': 19,
   'grunnok': 20,
   'blatch': 21,
+  'nibb': 22,
+  'krag': 23,
+  'sliss': 24,
 };
 
 /// Dim interiors behind the portraits: [commsBackdropColumns] per row, each
@@ -72,4 +75,7 @@ const commsBackdropOf = <String, int>{
   'skritch': 5,
   'grunnok': 7,
   'blatch': 7,
+  'nibb': 5,
+  'krag': 7,
+  'sliss': 6,
 };

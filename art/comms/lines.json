@@ -1,5 +1,5 @@
 {
- "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base.",
+ "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base. v4: \"divePrep\" (a demon is about to start a dive tell) carries brood battle cries; the reinforcements cheer chains a second brood voice; grunt kinds add \"cackle\" and \"warcry\".",
  "groupGap": {
   "ground": 6,
   "loot": 25
@@ -277,6 +277,21 @@
       "speaker": "skritch",
       "grunt": "rally",
       "gloss": "RALLY"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "rally",
+      "gloss": "WAVE CHEER"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "rally",
+      "gloss": "WAVE CHEER"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "rally",
+      "gloss": "WAVE CHEER"
      }
     ]
    }
@@ -368,8 +383,69 @@
       "speaker": "ulgra",
       "grunt": "order",
       "gloss": "REINFORCE ORDER"
+     },
+     {
+      "speaker": "skritch",
+      "grunt": "cackle",
+      "gloss": "GLEEFUL CACKLE"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "cackle",
+      "gloss": "SLOW HAPPY HUFF"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "cackle",
+      "gloss": "GLEEFUL CACKLE"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "GIDDY GIGGLE"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "rally",
+      "gloss": "MORE FRIENDS"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "cackle",
+      "gloss": "RUMBLING CHUCKLE"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "rally",
+      "gloss": "MORE STONE"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "cackle",
+      "gloss": "HISSING GIGGLE"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "gloat",
+      "gloss": "SMUG HISS"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "gloat",
+      "gloss": "TROOPER BOAST"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "rally",
+      "gloss": "REINFORCE"
+     },
+     {
+      "speaker": "skritch",
+      "grunt": "gloat",
+      "gloss": "IMP CHATTER"
      }
-    ]
+    ],
+    "chain": 1
    }
   },
   "sentinelIncoming": {
@@ -2342,6 +2418,21 @@
       "speaker": "ulgra",
       "grunt": "alarm",
       "gloss": "HOLD THE LINE"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "alarm",
+      "gloss": "SPRITELING PANIC"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "snarl",
+      "gloss": "HULK GRUMBLE"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "alarm",
+      "gloss": "SKULKER PANIC"
      }
     ]
    }
@@ -2446,6 +2537,51 @@
       "speaker": "morth",
       "grunt": "gloat",
       "gloss": "PROPHECY"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "SPRITELING GIGGLE"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "order",
+      "gloss": "SPRITELING REPORT"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "alarm",
+      "gloss": "SPRITELING PANIC"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "snarl",
+      "gloss": "HULK GRUMBLE"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "order",
+      "gloss": "HULK ACK"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "gloat",
+      "gloss": "HULK BOAST"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "snarl",
+      "gloss": "SKULKER HISS"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "order",
+      "gloss": "SKULKER REPORT"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "cackle",
+      "gloss": "SKULKER GIGGLE"
      }
     ]
    }
@@ -2517,6 +2653,21 @@
       "speaker": "blatch",
       "grunt": "rally",
       "gloss": "REGROUP"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "VICTORY CHEER"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "gloat",
+      "gloss": "VICTORY CHEER"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "cackle",
+      "gloss": "VICTORY CHEER"
      }
     ]
    }
@@ -3150,6 +3301,426 @@
      "emotion": "urgent"
     }
    ]
+  },
+  "divePrep": {
+   "priority": 3,
+   "cooldown": 6,
+   "ttl": 0.6,
+   "lines": [],
+   "demon": {
+    "priority": 4,
+    "cooldown": 7,
+    "ttl": 0.6,
+    "delay": 0,
+    "chance": 0.5,
+    "lines": [
+     {
+      "speaker": "skritch",
+      "grunt": "warcry",
+      "gloss": "DIVE CRY"
+     },
+     {
+      "speaker": "skritch",
+      "grunt": "cackle",
+      "gloss": "GLEEFUL SHRIEK"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "warcry",
+      "gloss": "CHARGE BELLOW"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "roar",
+      "gloss": "CHARGE BELLOW"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "warcry",
+      "gloss": "GUNNER CRY"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "snarl",
+      "gloss": "TARGET LOCKED"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "warcry",
+      "gloss": "TINY WAR CRY"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "GLEEFUL SHRIEK"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "warcry",
+      "gloss": "AVALANCHE ROAR"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "roar",
+      "gloss": "AVALANCHE ROAR"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "warcry",
+      "gloss": "STRIKE HISS"
+     },
+     {
+      "speaker": "sliss",
+      "grunt": "snarl",
+      "gloss": "STRIKE HISS"
+     },
+     {
+      "speaker": "gorrak",
+      "grunt": "warcry",
+      "gloss": "ATTACK CRY"
+     },
+     {
+      "speaker": "vexxa",
+      "grunt": "warcry",
+      "gloss": "ATTACK CRY"
+     },
+     {
+      "speaker": "skarn",
+      "grunt": "warcry",
+      "gloss": "ATTACK CRY"
+     },
+     {
+      "speaker": "morth",
+      "grunt": "warcry",
+      "gloss": "ATTACK CHANT"
+     },
+     {
+      "speaker": "ulgra",
+      "grunt": "warcry",
+      "gloss": "ATTACK BELLOW"
+     }
+    ],
+    "overlap": true
+   }
+  },
+  "groundSkirmish": {
+   "priority": 3,
+   "cooldown": 14,
+   "ttl": 2.5,
+   "chance": 0.55,
+   "group": "ground",
+   "mood": "stern",
+   "lines": [
+    {
+     "speaker": "kessler",
+     "text": "Contact, left flank! We are trading shots with them!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "voss",
+     "text": "They jumped us at the tree line! Returning fire!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Contact front! Convoy, hold your spacing and engage!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "march",
+     "text": "Ground units in contact. Keep rolling and keep firing.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Here they come again! Brace and hit back!",
+     "emotion": "excited"
+    },
+    {
+     "speaker": "voss",
+     "text": "Skirmish on the right! I have eyes on three of them!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Fight on the flank, Major. We can handle this one.",
+     "emotion": "calm"
+    },
+    {
+     "speaker": "march",
+     "text": "Convoy is engaged. Overwatch, we are holding.",
+     "emotion": "calm"
+    }
+   ]
+  },
+  "infantryEngaged": {
+   "priority": 3,
+   "cooldown": 20,
+   "ttl": 2.5,
+   "chance": 0.5,
+   "group": "ground",
+   "mood": "stern",
+   "lines": [
+    {
+     "speaker": "kessler",
+     "text": "Infantry engaged! Boots on the ground, keep them moving!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "voss",
+     "text": "Foot soldiers in the fight! Squad, on me!",
+     "emotion": "excited"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Our infantry is in it now. Covering fire, go!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "march",
+     "text": "Infantry engaged. Stay low and stay together.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Their foot troops are swarming the road! Push them back!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "voss",
+     "text": "Dismounts out! Clear that ridge!",
+     "emotion": "excited"
+    }
+   ]
+  },
+  "skirmishWon": {
+   "priority": 2,
+   "cooldown": 14,
+   "ttl": 2.5,
+   "chance": 0.55,
+   "group": "ground",
+   "mood": "happy",
+   "lines": [
+    {
+     "speaker": "kessler",
+     "text": "Target down! Moving up!",
+     "emotion": "triumphant"
+    },
+    {
+     "speaker": "voss",
+     "text": "Got them! Road is clear, rolling on!",
+     "emotion": "excited"
+    },
+    {
+     "speaker": "mensah",
+     "text": "That fight is ours. Convoy, advance.",
+     "emotion": "warm"
+    },
+    {
+     "speaker": "march",
+     "text": "Good work, all units. Keep the pace.",
+     "emotion": "warm"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Artillery made that easy! Thanks for the thunder!",
+     "emotion": "teasing"
+    },
+    {
+     "speaker": "voss",
+     "text": "Ha! They did not see that coming!",
+     "emotion": "triumphant"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Skirmish won. Nobody hurt, moving on.",
+     "emotion": "calm"
+    },
+    {
+     "speaker": "march",
+     "text": "Nicely done. Regroup and press on.",
+     "emotion": "warm"
+    }
+   ]
+  },
+  "allyFallingBack": {
+   "priority": 4,
+   "cooldown": 18,
+   "ttl": 2.5,
+   "group": "ground",
+   "mood": "worried",
+   "lines": [
+    {
+     "speaker": "kessler",
+     "text": "Taking a beating! Falling back to patch her up!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "voss",
+     "text": "Armour is dented, pulling back for repairs!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "One of ours is falling back to the escort line. Cover them!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "march",
+     "text": "Damaged unit falling back. Give them room to repair.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Need a breather! Back in the fight in a moment!",
+     "emotion": "exhausted"
+    },
+    {
+     "speaker": "voss",
+     "text": "Pulling back! Do not worry, we will be right back!",
+     "emotion": "panicked"
+    }
+   ]
+  },
+  "heavyArmorSighted": {
+   "priority": 5,
+   "cooldown": 30,
+   "ttl": 3,
+   "group": "ground",
+   "mood": "worried",
+   "lines": [
+    {
+     "speaker": "march",
+     "text": "Heavy armour on the horizon! Everyone, take note!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Big one coming in! That is a heavy tank!",
+     "emotion": "panicked"
+    },
+    {
+     "speaker": "voss",
+     "text": "Heavy tank, far ahead! Pilot, can you soften it up?",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Heavy armour rolling in. We will need help from up above.",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "admiral",
+     "text": "Heavy armour sighted below. Pilot, keep an eye on it.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "nomad",
+     "text": "Heavy tank down on the ground. Watch the convoy.",
+     "emotion": "calm"
+    }
+   ],
+   "demon": {
+    "priority": 4,
+    "cooldown": 30,
+    "ttl": 2,
+    "delay": 0.6,
+    "lines": [
+     {
+      "speaker": "krag",
+      "grunt": "roar",
+      "gloss": "HEAVY ARMOUR ROAR"
+     },
+     {
+      "speaker": "grunnok",
+      "grunt": "rally",
+      "gloss": "TANK CHEER"
+     },
+     {
+      "speaker": "skarn",
+      "grunt": "gloat",
+      "gloss": "FURNACE PRIDE"
+     },
+     {
+      "speaker": "gorrak",
+      "grunt": "order",
+      "gloss": "ARMOUR ADVANCE"
+     },
+     {
+      "speaker": "blatch",
+      "grunt": "cackle",
+      "gloss": "GUNNER GLEE"
+     }
+    ]
+   }
+  },
+  "groundTide.surge": {
+   "priority": 3,
+   "cooldown": 30,
+   "ttl": 3,
+   "chance": 0.7,
+   "group": "ground",
+   "mood": "worried",
+   "lines": [
+    {
+     "speaker": "march",
+     "text": "They are surging on the ground! All units, dig in!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "kessler",
+     "text": "Here comes a whole wave of them! Hold the line!",
+     "emotion": "panicked"
+    },
+    {
+     "speaker": "voss",
+     "text": "They are pouring in down here! We could use some help!",
+     "emotion": "urgent"
+    },
+    {
+     "speaker": "mensah",
+     "text": "Big push coming at the convoy. Steady, everyone.",
+     "emotion": "stern"
+    },
+    {
+     "speaker": "admiral",
+     "text": "The ground attack is surging. Pilot, support the convoy when you can.",
+     "emotion": "urgent"
+    }
+   ],
+   "demon": {
+    "priority": 4,
+    "cooldown": 30,
+    "ttl": 2,
+    "delay": 0.4,
+    "lines": [
+     {
+      "speaker": "sliss",
+      "grunt": "warcry",
+      "gloss": "SURGE HISS"
+     },
+     {
+      "speaker": "krag",
+      "grunt": "warcry",
+      "gloss": "SURGE ROAR"
+     },
+     {
+      "speaker": "nibb",
+      "grunt": "cackle",
+      "gloss": "GIDDY SURGE"
+     },
+     {
+      "speaker": "vexxa",
+      "grunt": "order",
+      "gloss": "SURGE ORDER"
+     },
+     {
+      "speaker": "morth",
+      "grunt": "rally",
+      "gloss": "SURGE CHANT"
+     }
+    ]
+   }
   }
  }
 }

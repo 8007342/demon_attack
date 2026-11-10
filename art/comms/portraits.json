@@ -14,7 +14,9 @@
     "happy",
     "worried",
     "tiltL",
-    "tiltR"
+    "tiltR",
+    "talkWide",
+    "talkEe"
   ],
   "keyframe": {
     "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
@@ -50,7 +52,10 @@
       "ulgra": 732100,
       "skritch": 733100,
       "grunnok": 733200,
-      "blatch": 733300
+      "blatch": 733300,
+      "nibb": 733400,
+      "krag": 733500,
+      "sliss": 733600
     }
   },
   "edit": {
@@ -102,7 +107,12 @@
       "grunt_seed": 733012
     },
     "anvil": {
-      "seed": 731402
+      "seed": 731402,
+      "lips": [
+        49,
+        96,
+        77
+      ]
     },
     "gorrak": {
       "seed": 731701
@@ -120,23 +130,48 @@
       "extra": "bright coral red skin and red-orange scaly hide, brass goggles",
       "seed_base": 731910,
       "seed": 731900,
-      "base_edit": "Recolour the creature's skin and hide to bright coral red with darker crimson shading; keep the glowing orange eyes; make the horns ivory."
+      "base_edit": "Recolour the creature's skin and hide to bright coral red with darker crimson shading; keep the glowing orange eyes; make the horns ivory.",
+      "lips": [
+        53,
+        101,
+        79
+      ]
     },
     "morth": {
       "extra": "golden yellow skin, bone white armour plates and horns, gold and ivory colours",
       "seed_base": 732010,
       "seed": 732001,
-      "base_edit": "Recolour the skin to pale gold and bone ivory with warm amber shading, and add a third glowing green eye in the middle of the forehead."
+      "base_edit": "Recolour the skin to pale gold and bone ivory with warm amber shading, and add a third glowing green eye in the middle of the forehead.",
+      "lips": [
+        53,
+        91,
+        79
+      ]
     },
     "admiral": {
       "seed": 732200,
-      "base_edit": "Make her look like a dignified woman in her early sixties: silver-grey hair and a few soft smile lines; keep her skin smooth and evenly lit."
+      "base_edit": "Make her look like a dignified woman in her early sixties: silver-grey hair and a few soft smile lines; keep her skin smooth and evenly lit.",
+      "lips": [
+        44,
+        83,
+        63
+      ]
     },
     "lindqvist": {
-      "seed": 732301
+      "seed": 732301,
+      "lips": [
+        44,
+        80,
+        61
+      ]
     },
     "kestrel": {
-      "seed": 732400
+      "seed": 732400,
+      "lips": [
+        54,
+        96,
+        76
+      ]
     },
     "ulgra": {
       "extra": "close-up bust of head and shoulders only, deep crimson red skin, black horns, gold medals",
@@ -157,6 +192,11 @@
         66,
         88,
         82
+      ],
+      "lips": [
+        63,
+        74,
+        80
       ]
     },
     "sunny": {
@@ -170,7 +210,12 @@
     "march": {
       "seed": 732802,
       "base_edit": "Make her look like a woman in her fifties: add grey streaks through her dark hair and faint smile lines and crow's feet around the eyes.",
-      "keep": 1.0
+      "keep": 1.0,
+      "lips": [
+        51,
+        86,
+        72
+      ]
     },
     "mensah": {
       "seed": 732902,
@@ -182,7 +227,12 @@
         "gamma": 0.75,
         "contrast": 1.2,
         "mid": 70
-      }
+      },
+      "lips": [
+        52,
+        71,
+        71
+      ]
     },
     "skritch": {
       "seed": 733100
@@ -193,6 +243,25 @@
     "blatch": {
       "seed": 733300,
       "base_edit": "Recolour the skin to coral red with crimson shading, add a cybernetic targeting eyepiece with a small red lens over one eye, and an ammunition belt across one shoulder."
+    },
+    "nibb": {
+      "count": 4,
+      "seed": 733403,
+      "lips": [
+        48,
+        103,
+        77
+      ]
+    },
+    "krag": {
+      "count": 4,
+      "seed": 733502,
+      "base_edit": "Recolour the face and skin to cracked grey granite stone with darker grey shading and a few small moss patches; keep the glowing amber eyes and the iron chain."
+    },
+    "sliss": {
+      "count": 4,
+      "seed": 733603,
+      "base_edit": "Recolour the skin and head to amber orange scales with darker rust shading; keep the glowing eyes green and the orange scaled hood."
     }
   },
   "backdrops": {
@@ -272,7 +341,10 @@
       "ulgra": "demon-throne",
       "skritch": "demon-warroom",
       "grunnok": "demon-forge",
-      "blatch": "demon-forge"
+      "blatch": "demon-forge",
+      "nibb": "demon-warroom",
+      "krag": "demon-forge",
+      "sliss": "demon-throne"
     },
     "picks": {
       "fleet-bridge": 734000,

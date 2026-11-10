@@ -1,6 +1,18 @@
-/// Smoothed lip-sync: viseme-like mouth openness from a clip's envelope with
-/// attack/release smoothing, hysteresis and a minimum hold, so the portrait
-/// never flickers for a single frame.
+/// Smoothed lip-sync: mouth shapes from a clip's measured openness envelope
+/// and viseme estimates, at 30 samples per second.
+///
+/// 1. The 1/15 s openness track is eased (linearly interpolated) to 30 Hz
+///    and smoothed with a fast attack and a slower release.
+/// 2. It is quantised with hysteresis into five openness levels (closed,
+///    slightly open, half, open, wide).
+/// 3. The level moves at most one step per sample, so the mouth always
+///    passes through the in-between shapes (closed -> slight -> half ->
+///    open) instead of snapping from closed to fully open.
+/// 4. A level is held at least [minHold] samples unless it is part of such
+///    a monotone ramp, so there is never a single-sample blip.
+/// 5. Rounded ('o') and spread ('e') visemes swap the open shapes for the
+///    'oo' and teeth-showing 'ee' frames for runs where most samples agree.
+/// The painter cross-fades the first [blend] seconds of every change.
 library;
 
 import 'dart:math' as math;
@@ -8,53 +20,59 @@ import 'dart:math' as math;
 import 'comms_types.dart';
 
 class CommsMouth {
-  CommsMouth._(this.frames);
+  CommsMouth._(this.frames, this.levels);
 
-  /// One portrait frame per 1/15 s of the clip.
+  /// One portrait frame per 1/[fps] s of the clip.
   final List<int> frames;
-  static const fps = 15;
 
-  /// Openness rises fast and falls slower (per 1/15 s sample).
-  static const attack = .7, release = .38;
+  /// The openness level (0-4) behind each frame.
+  final List<int> levels;
 
-  /// A mouth shape is held at least this many samples (133 ms).
+  /// Samples per second of [frames]; the measured tracks are at [trackFps].
+  static const fps = 30, trackFps = 15;
+
+  /// Openness rises fast and falls slower (per 1/30 s sample).
+  static const attack = .55, release = .28;
+
+  /// A mouth shape is held at least this many samples (67 ms), except as a
+  /// step of a monotone opening or closing ramp.
   static const minHold = 2;
 
-  /// Openness thresholds for talkA, talkB and talkC (with hysteresis).
-  static const levels = [.16, .42, .7];
-  static const hysteresis = .06;
+  /// Openness thresholds for levels 1-4 (with hysteresis).
+  static const thresholds = [.17, .45, .66, .8];
+  static const hysteresis = .05;
+
+  /// Cross-fade at the start of each new shape (seconds).
+  static const blend = .03;
 
   static final _cache = <String, CommsMouth>{};
 
   static CommsMouth of(CommsLine line) =>
       _cache[line.id] ??= CommsMouth.build(line);
 
-  /// Openness 0..1 per sample: the measured `open` track, else the frame
+  static int _digit(String track, int i) =>
+      track.codeUnitAt(math.min(i, track.length - 1)) - 48;
+
+  /// Openness 0..1 per 1/15 s: the measured `open` track, else the frame
   /// track mapped to openness, else a gentle synthetic cycle.
   static List<double> openness(CommsLine line) {
-    final n = math.max(1, (line.duration * fps).ceil());
+    final n = math.max(1, (line.duration * trackFps).ceil());
     if (line.open.isNotEmpty) {
-      return [
-        for (var i = 0; i < n; i++)
-          (line.open.codeUnitAt(math.min(i, line.open.length - 1)) - 48) / 9,
-      ];
+      return [for (var i = 0; i < n; i++) _digit(line.open, i) / 9];
     }
     if (line.mouth.isNotEmpty) {
       const byFrame = {
-        0: 0.0,
-        1: 0.0,
-        2: .3,
-        3: .55,
-        4: .85,
-        5: .55,
-        6: 1.0,
-        7: 1.0,
+        CommsFrame.talkA: .2,
+        CommsFrame.talkB: .4,
+        CommsFrame.talkC: .62,
+        CommsFrame.talkD: .45,
+        CommsFrame.shout: .9,
+        CommsFrame.grunt: 1.0,
+        CommsFrame.talkWide: .88,
+        CommsFrame.talkEe: .35,
       };
       return [
-        for (var i = 0; i < n; i++)
-          byFrame[line.mouth.codeUnitAt(math.min(i, line.mouth.length - 1)) -
-                  48] ??
-              0,
+        for (var i = 0; i < n; i++) byFrame[_digit(line.mouth, i)] ?? 0.0,
       ];
     }
     // No measurement: syllable-like pulses at about 4 Hz.
@@ -64,91 +82,122 @@ class CommsMouth {
     ];
   }
 
+  /// Viseme per 1/15 s: 'o', 'e' or '-' (from `vis`, else the legacy
+  /// rounded frames of `mouth`).
+  static String _viseme(CommsLine line, int i) {
+    if (line.vis.isNotEmpty) {
+      return line.vis[math.min(i, line.vis.length - 1)];
+    }
+    if (line.mouth.isNotEmpty) {
+      final f = _digit(line.mouth, i);
+      if (f == CommsFrame.talkD) return 'o';
+      if (f == CommsFrame.talkEe) return 'e';
+    }
+    return '-';
+  }
+
   factory CommsMouth.build(CommsLine line) {
-    final raw = openness(line);
-    final rounded = <bool>[
-      for (var i = 0; i < raw.length; i++)
-        line.mouth.isNotEmpty &&
-            line.mouth.codeUnitAt(math.min(i, line.mouth.length - 1)) == 53,
-    ];
-    // 1. attack/release envelope follower
+    final coarse = openness(line);
+    final n = math.max(1, (line.duration * fps).ceil());
+    const k = fps ~/ trackFps;
+    // 1. ease the 15 Hz track to 30 Hz, then attack/release smoothing.
     final smooth = <double>[];
     var s = 0.0;
-    for (final v in raw) {
+    for (var i = 0; i < n; i++) {
+      final at = i / k;
+      final a = at.floor().clamp(0, coarse.length - 1);
+      final b = math.min(a + 1, coarse.length - 1);
+      final v = coarse[a] + (coarse[b] - coarse[a]) * (at - at.floor());
       s += (v - s) * (v > s ? attack : release);
       smooth.add(s);
     }
-    // 2. quantise with hysteresis
+    // 2. quantise with hysteresis; 3. at most one level per sample.
     final level = <int>[];
-    var current = 0;
+    var target = 0, current = 0;
     for (final v in smooth) {
-      while (current < levels.length && v > levels[current] + hysteresis) {
-        current++;
+      while (target < thresholds.length &&
+          v > thresholds[target] + hysteresis) {
+        target++;
       }
-      while (current > 0 && v < levels[current - 1] - hysteresis) {
-        current--;
+      while (target > 0 && v < thresholds[target - 1] - hysteresis) {
+        target--;
       }
+      current += (target - current).sign;
       level.add(current);
     }
-    // 3. minimum hold: a shape shorter than minHold samples merges into
-    // its predecessor (or successor at the start).
-    // The clip always ends on a closed mouth (held, too).
-    for (var k = math.max(0, level.length - minHold); k < level.length; k++) {
-      level[k] = 0;
+    // The clip always ends on a closed mouth, closing step by step.
+    for (var i = level.length - 1, cap = 0; i >= 0; i--, cap++) {
+      if (level[i] <= cap) break;
+      level[i] = cap;
     }
-    if (level.length > minHold) {
-      for (var pass = 0; pass < 8; pass++) {
-        var changed = false;
-        var i = 0;
-        while (i < level.length) {
-          var j = i;
-          while (j < level.length && level[j] == level[i]) {
-            j++;
-          }
-          if (j - i < minHold) {
-            final fill = i > 0 ? level[i - 1] : level[j];
-            for (var k = i; k < j; k++) {
-              level[k] = fill;
-            }
-            changed = true;
-          }
-          i = j;
+    // 4. no blips (also where the closing ramp met the line): a run
+    // shorter than minHold inside the clip that is not a
+    // step of a monotone ramp takes its predecessor's level.
+    for (var pass = 0; pass < 8; pass++) {
+      var changed = false;
+      for (final (i, j) in _runs(level).toList()) {
+        if (j - i >= minHold || i == 0 || j == level.length) continue;
+        final before = level[i - 1], after = level[j];
+        if ((before - level[i]).sign == (level[i] - after).sign) continue;
+        for (var q = i; q < j; q++) {
+          level[q] = before;
         }
-        if (!changed) break;
+        changed = true;
       }
+      if (!changed) break;
     }
-    // A run of the middle opening is the rounded 'oo' shape when most of it
-    // was measured rounded; the shape holds for the whole run.
+    // 5. shapes: a run of an open level is the rounded 'oo' or the spread
+    // 'ee' when most of it was measured so (demons keep fangs: no 'oo',
+    // and the loudest moments of a grunt are the roar frame).
     final frames = List<int>.filled(level.length, CommsFrame.idle);
-    var i = 0;
-    while (i < level.length) {
-      var j = i;
-      while (j < level.length && level[j] == level[i]) {
-        j++;
+    for (final (i, j) in _runs(level)) {
+      final l = level[i];
+      var o = 0, e = 0, loud = 0;
+      for (var q = i; q < j; q++) {
+        final c = _viseme(line, q ~/ k);
+        if (c == 'o') o++;
+        if (c == 'e') e++;
+        if (smooth[q] >= .93) loud++;
       }
-      final roundCount = [for (var k = i; k < j; k++) rounded[k]]
-          .where((r) => r)
-          .length;
-      final frame = switch (level[i]) {
-        0 => CommsFrame.idle,
-        1 => CommsFrame.talkA,
-        2 =>
-          !line.isGrunt && roundCount * 2 > j - i
-              ? CommsFrame.talkD
-              : CommsFrame.talkB,
-        _ => line.isGrunt ? CommsFrame.grunt : CommsFrame.talkC,
-      };
-      for (var k = i; k < j; k++) {
-        frames[k] = frame;
+      var frame = CommsFrame.byLevel[l];
+      if (line.isGrunt) {
+        if (l == 4 && loud * 2 >= j - i) frame = CommsFrame.grunt;
+      } else if (l >= 1 && l <= 3 && o * 2 > j - i) {
+        frame = CommsFrame.talkD;
+      } else if (l >= 1 && l <= 3 && e * 2 > j - i) {
+        frame = CommsFrame.talkEe;
       }
-      i = j;
+      for (var q = i; q < j; q++) {
+        frames[q] = frame;
+      }
     }
-    return CommsMouth._(frames);
+    return CommsMouth._(frames, level);
   }
 
-  int frameAt(double t) {
-    if (frames.isEmpty) return CommsFrame.idle;
-    final index = (t * fps).floor().clamp(0, frames.length - 1);
-    return frames[index];
+  static Iterable<(int, int)> _runs(List<int> values) sync* {
+    var i = 0;
+    while (i < values.length) {
+      var j = i;
+      while (j < values.length && values[j] == values[i]) {
+        j++;
+      }
+      yield (i, j);
+      i = j;
+    }
+  }
+
+  int _index(double t) => (t * fps).floor().clamp(0, frames.length - 1);
+
+  int frameAt(double t) => frames.isEmpty ? CommsFrame.idle : frames[_index(t)];
+
+  /// The shape before the current one and how far (0..1) the cross-fade
+  /// into the current shape has come at [t]: 1 once [blend] has passed.
+  (int from, int to, double amount) blendAt(double t) {
+    if (frames.isEmpty) return (CommsFrame.idle, CommsFrame.idle, 1);
+    final i = _index(t);
+    final to = frames[i];
+    if (i == 0 || frames[i - 1] == to) return (to, to, 1);
+    final into = t - i / fps;
+    return (frames[i - 1], to, (into / blend).clamp(0.0, 1.0).toDouble());
   }
 }

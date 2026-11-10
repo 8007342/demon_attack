@@ -1,25 +1,152 @@
 {
   "comment": "Squad comms audio spec, read by tools/comms_pipeline.py. Human lines are Kokoro-82M TTS (voice + speed per cast member in cast.json); demon lines are synthesized grunts. Both go through the radio chain, are loudness-normalised and encoded to web/audio/comms/<clip id>.ogg (Opus) and .m4a (AAC-LC).",
-  "kokoro": {"repo": "hexgrad/Kokoro-82M", "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987", "sample_rate": 24000},
+  "kokoro": {
+    "repo": "hexgrad/Kokoro-82M",
+    "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+    "sample_rate": 24000
+  },
   "chatterbox": {
     "comment": "Expressive delivery: Chatterbox (Resemble AI, MIT) clones each character's Kokoro reference clip (refs stage) and speaks every human line with the emotion's settings. exaggeration = emotion intensity (0.25 flat .. 2 extreme; 0.5 is the model default), cfg_weight = pacing/adherence (lower = faster, more animated), temperature = sampling variety. A clip that fails the accept rules falls back to the Kokoro rendering.",
     "repo": "ResembleAI/chatterbox",
     "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18",
-    "files": ["ve.safetensors", "t3_cfg.safetensors", "s3gen.safetensors", "tokenizer.json", "conds.pt"],
+    "files": [
+      "ve.safetensors",
+      "t3_cfg.safetensors",
+      "s3gen.safetensors",
+      "tokenizer.json",
+      "conds.pt"
+    ],
     "reference_text": "Radio check on the fleet channel. I read you loud and clear, and the weather over the frontier is quiet tonight. Stand by for further orders, and keep this line open.",
     "emotions": {
-      "calm":       {"exaggeration": 0.35, "cfg_weight": 0.5,  "temperature": 0.7},
-      "stern":      {"exaggeration": 0.45, "cfg_weight": 0.55, "temperature": 0.7},
-      "warm":       {"exaggeration": 0.5,  "cfg_weight": 0.5,  "temperature": 0.75},
-      "exhausted":  {"exaggeration": 0.4,  "cfg_weight": 0.6,  "temperature": 0.75},
-      "teasing":    {"exaggeration": 0.65, "cfg_weight": 0.45, "temperature": 0.8},
-      "urgent":     {"exaggeration": 0.7,  "cfg_weight": 0.35, "temperature": 0.75},
-      "excited":    {"exaggeration": 0.8,  "cfg_weight": 0.35, "temperature": 0.8},
-      "triumphant": {"exaggeration": 0.85, "cfg_weight": 0.35, "temperature": 0.8},
-      "panicked":   {"exaggeration": 0.95, "cfg_weight": 0.3,  "temperature": 0.8}
+      "calm": {
+        "exaggeration": 0.45,
+        "cfg_weight": 0.5,
+        "temperature": 0.7,
+        "post": {
+          "expand": 1.1,
+          "shift": 0.0,
+          "tempo": 1.0,
+          "dynamics": 1.05
+        }
+      },
+      "stern": {
+        "exaggeration": 0.55,
+        "cfg_weight": 0.5,
+        "temperature": 0.7,
+        "post": {
+          "expand": 1.1,
+          "shift": 0.0,
+          "tempo": 1.0,
+          "dynamics": 1.1
+        }
+      },
+      "warm": {
+        "exaggeration": 0.6,
+        "cfg_weight": 0.5,
+        "temperature": 0.75,
+        "post": {
+          "expand": 1.2,
+          "shift": 0.2,
+          "tempo": 1.0,
+          "dynamics": 1.1
+        }
+      },
+      "exhausted": {
+        "exaggeration": 0.5,
+        "cfg_weight": 0.55,
+        "temperature": 0.75,
+        "post": {
+          "expand": 1.05,
+          "shift": -0.3,
+          "tempo": 0.97,
+          "dynamics": 1.0
+        }
+      },
+      "teasing": {
+        "exaggeration": 0.85,
+        "cfg_weight": 0.5,
+        "temperature": 0.8,
+        "post": {
+          "expand": 1.3,
+          "shift": 0.3,
+          "tempo": 1.03,
+          "dynamics": 1.15
+        }
+      },
+      "urgent": {
+        "exaggeration": 1.0,
+        "cfg_weight": 0.5,
+        "temperature": 0.8,
+        "end": "!",
+        "post": {
+          "expand": 1.35,
+          "shift": 0.5,
+          "tempo": 1.06,
+          "dynamics": 1.2
+        }
+      },
+      "excited": {
+        "exaggeration": 1.15,
+        "cfg_weight": 0.5,
+        "temperature": 0.8,
+        "end": "!",
+        "post": {
+          "expand": 1.4,
+          "shift": 0.8,
+          "tempo": 1.06,
+          "dynamics": 1.2
+        }
+      },
+      "triumphant": {
+        "exaggeration": 1.2,
+        "cfg_weight": 0.5,
+        "temperature": 0.8,
+        "end": "!",
+        "post": {
+          "expand": 1.4,
+          "shift": 0.6,
+          "tempo": 1.03,
+          "dynamics": 1.2
+        }
+      },
+      "panicked": {
+        "exaggeration": 1.3,
+        "cfg_weight": 0.5,
+        "temperature": 0.8,
+        "end": "!",
+        "post": {
+          "expand": 1.35,
+          "shift": 1.0,
+          "tempo": 1.08,
+          "dynamics": 1.2
+        }
+      }
+    },
+    "registers": {
+      "comment": "Derived references (hotrefs stage, optional): Chatterbox clones the neutral Kokoro reference speaking `text` at a high exaggeration and keeps the widest-pitched take that keeps the voice. Measured in v4 on 20 hot lines: no gain in pitch range over the neutral reference (10.9 vs 11.9 st), so no emotion uses it (an emotion would opt in with \"ref\": \"hot\").",
+      "hot": {
+        "text": "Contact, contact! They're diving right at us! Break left, break left, now! Yes! Got him! What a shot! Come on, push, push, we've got this!",
+        "exaggeration": 1.5,
+        "cfg_weight": 0.3,
+        "temperature": 0.85,
+        "takes": 3,
+        "min_similarity": 0.75
+      }
     },
     "memory_headroom_gb": 1.5,
-    "accept": {"min_length_ratio": 0.55, "max_length_ratio": 1.9, "max_clipped_fraction": 0.001}
+    "accept": {
+      "min_length_ratio": 0.55,
+      "max_length_ratio": 1.9,
+      "max_clipped_fraction": 0.001,
+      "min_pitch_range_st": {
+        "urgent": 6.5,
+        "excited": 7.0,
+        "triumphant": 7.0,
+        "panicked": 7.0
+      },
+      "retries": 2
+    },
+    "emotions_comment": "v4 (measured, plan/audio-backend.md): exaggeration up to 1.3 at cfg 0.5 (lower cfg slowed delivery and let lengths run away; the derived energetic reference did not widen pitch, so every emotion clones the neutral reference); hot emotions end sentences on \"!\"; `post` is the deterministic delivery stage (intonation expand around the median pitch, shift in semitones, WSOLA tempo, level-contour dynamics)."
   },
   "pronounce": {
     "Krybor": "[Krybor](/kɹˈIbɔɹ/)",
@@ -32,26 +159,109 @@
     "comment": "Nonsense syllables rendered by Kokoro from phonemes (never English words), then granulated and pitch/formant shifted under the growl layer.",
     "voice": "am_echo",
     "speed": 0.9,
-    "onsets": ["ɡ", "k", "b", "ɡɹ", "kɹ", "z", "m", "h", "d", "bɹ", "ʃ", "ŋɡ"],
-    "vowels": ["ɑ", "ʌ", "ɔ", "u", "æ", "O", "W"],
-    "codas": ["k", "ɡ", "z", "m", "ɹk", "ʃ", "b", ""]
+    "onsets": [
+      "ɡ",
+      "k",
+      "b",
+      "ɡɹ",
+      "kɹ",
+      "z",
+      "m",
+      "h",
+      "d",
+      "bɹ",
+      "ʃ",
+      "ŋɡ"
+    ],
+    "vowels": [
+      "ɑ",
+      "ʌ",
+      "ɔ",
+      "u",
+      "æ",
+      "O",
+      "W"
+    ],
+    "codas": [
+      "k",
+      "ɡ",
+      "z",
+      "m",
+      "ɹk",
+      "ʃ",
+      "b",
+      ""
+    ]
   },
   "radio": {
     "comment": "v3 softer keying: levels are relative to the voice peak (1.0) before loudness normalisation. Click = rounded sine 'tock'; burst/tail = low-passed carrier noise (RMS-scaled); tone = quiet fleet key-up tone.",
-    "human": {"low_hz": 300, "high_hz": 3400, "drive": 1.9, "hiss_db": -52, "presence_hz": 1800, "presence_db": 3.0},
-    "demon": {"low_hz": 200, "high_hz": 3000, "drive": 2.4, "hiss_db": -48, "presence_hz": 1100, "presence_db": 4.0, "hum_hz": 55, "hum_db": -42},
-    "keying": {"click_hz": 820, "click_level": 0.07, "burst_s": 0.05, "burst_level": 0.06, "tail_level": 0.06, "noise_cutoff_hz": 1500,
-               "tone_hz": 1050, "tone_s": 0.045, "tone_level": 0.035},
+    "human": {
+      "low_hz": 300,
+      "high_hz": 3400,
+      "drive": 1.9,
+      "hiss_db": -52,
+      "presence_hz": 1800,
+      "presence_db": 3.0
+    },
+    "demon": {
+      "low_hz": 200,
+      "high_hz": 3000,
+      "drive": 2.4,
+      "hiss_db": -48,
+      "presence_hz": 1100,
+      "presence_db": 4.0,
+      "hum_hz": 55,
+      "hum_db": -42
+    },
+    "keying": {
+      "click_hz": 820,
+      "click_level": 0.07,
+      "burst_s": 0.05,
+      "burst_level": 0.06,
+      "tail_level": 0.06,
+      "noise_cutoff_hz": 1500,
+      "tone_hz": 1050,
+      "tone_s": 0.045,
+      "tone_level": 0.035
+    },
     "lead_s": 0.07,
     "squelch_tail_s": 0.08,
     "end_pad_s": 0.03
   },
   "grunt_lengths": {
     "comment": "raw_max_s caps the synthesized grunt; min_s/max_s bound the final clip (with keying lead and tail). Unlisted triggers: 0.5-1.9 s.",
-    "long": {"triggers": ["levelClear", "bossDefeated", "broodTaunt"], "raw_max_s": 2.0, "min_s": 0.8, "max_s": 2.25},
-    "short": {"triggers": ["regroupStart"], "raw_max_s": 0.72, "min_s": 0.4, "max_s": 0.9}
+    "long": {
+      "triggers": [
+        "levelClear",
+        "bossDefeated",
+        "broodTaunt"
+      ],
+      "raw_max_s": 2.0,
+      "min_s": 0.8,
+      "max_s": 2.25
+    },
+    "short": {
+      "triggers": [
+        "regroupStart",
+        "divePrep"
+      ],
+      "raw_max_s": 0.72,
+      "min_s": 0.4,
+      "max_s": 0.9
+    }
   },
-  "loudness": {"human_lufs": -18.0, "demon_lufs": -18.5, "peak_dbfs": -4.0, "decoded_peak_max_dbfs": 0.0, "playback_gain_db": 2.0},
-  "codec": {"opus_kbps": 16, "aac_kbps": 24, "aac_cutoff_hz": 4000, "sample_rate": 24000},
+  "loudness": {
+    "human_lufs": -18.0,
+    "demon_lufs": -18.5,
+    "peak_dbfs": -4.0,
+    "decoded_peak_max_dbfs": 0.0,
+    "playback_gain_db": 2.0
+  },
+  "codec": {
+    "opus_kbps": 16,
+    "aac_kbps": 24,
+    "aac_cutoff_hz": 4000,
+    "sample_rate": 24000
+  },
   "mouth_fps": 15
 }

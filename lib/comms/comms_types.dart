@@ -36,6 +36,7 @@ class CommsLine {
     this.gloss,
     this.mouth = '',
     this.open = '',
+    this.vis = '',
     this.signature = false,
     this.emotion,
   });
@@ -56,13 +57,18 @@ class CommsLine {
   /// Clip length in seconds.
   final double duration;
 
-  /// Portrait frame per 1/15 s of the clip ('0' idle, '2'-'5' talk, '6'
-  /// shout, '7' grunt/roar), measured from the clip's loudness envelope.
+  /// Portrait frame per 1/15 s of the clip, as the character code 48 +
+  /// [CommsFrame] index ('0' idle, '2'-'5' talk, '7' grunt/roar, '<' wide,
+  /// '=' ee), measured from the clip's loudness envelope and visemes.
   final String mouth;
 
   /// Mouth openness per 1/15 s, '0'-'9' (smoothed loudness envelope); the
   /// lip-sync prefers it over [mouth] when present.
   final String open;
+
+  /// Viseme estimate per 1/15 s from the clean voice's spectrum: '-' plain,
+  /// 'o' rounded (o/u/w), 'e' spread or teeth (ee, s, sh, f).
+  final String vis;
 
   /// Delivery the voice was rendered with (excited, urgent, panicked, ...).
   final String? emotion;
@@ -136,5 +142,11 @@ abstract final class CommsFrame {
   /// Humans: worried. Demons: alarmed snarl.
   static const worried = 9;
   static const tiltLeft = 10, tiltRight = 11;
-  static const count = 12;
+
+  /// Talk shapes added in v4: the widest opening and a teeth-showing 'ee'.
+  static const talkWide = 12, talkEe = 13;
+  static const count = 14;
+
+  /// The talk shapes, closed to wide (openness levels 0-4).
+  static const byLevel = [idle, talkA, talkB, talkC, talkWide];
 }

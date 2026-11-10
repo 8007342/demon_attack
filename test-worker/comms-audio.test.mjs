@@ -119,8 +119,11 @@ test('every bank clip ships Opus and AAC inside a modest budget', async () => {
       assert.equal(info.size, clip[`${ext}_bytes`], `${id}.${ext} size matches the manifest`);
     }
     assert.ok(clip.duration > .4 && clip.duration < 8, `${id} duration`);
-    assert.match(clip.mouth, /^[0-7]+$/);
+    // Frames as 48 + CommsFrame index: 0-7 and the v4 talk wide (<) and ee (=).
+    assert.match(clip.mouth, /^[0-7<=]+$/);
+    assert.match(clip.vis, /^[-oe]+$/);
+    assert.equal(clip.vis.length, clip.mouth.length);
   }
-  assert.ok(manifest.totals.ogg_bytes < 3e6, 'Opus budget');
-  assert.ok(manifest.totals.m4a_bytes < 4.5e6, 'AAC budget');
+  assert.ok(manifest.totals.ogg_bytes < 3.4e6, 'Opus budget (v4: 574 clips)');
+  assert.ok(manifest.totals.m4a_bytes < 5.4e6, 'AAC budget (v4: 574 clips)');
 });
