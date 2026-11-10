@@ -289,7 +289,14 @@ def reverb_ir(seconds, key):
     return filt(ir, 'lp', 6000)
 
 
-def render(events, beats, style='rock', key=('guide',), tail_s=2.0, bpm=120):
+# Bus levels of the guide mix. The metal-v2 round renders guides with the
+# drums forward (MIX_V2) so that a strong audio-to-audio re-performance keeps
+# the kit's pulse and the bar grid while it replaces the guitars' timbre.
+MIX = {'drums': 1.0, 'gtr': 0.9, 'bass': 0.9, 'lead': 0.8, 'pad': 0.7}
+MIX_V2 = {'drums': 1.8, 'gtr': 0.55, 'bass': 0.9, 'lead': 0.7, 'pad': 0.7}
+
+
+def render(events, beats, style='rock', key=('guide',), tail_s=2.0, bpm=120, mix=None):
     """Mix events into stereo at `bpm`; returns float array (n, 2). The length
     is round(beats * 60 / bpm * SR) samples (+ tail), so windows cut by the
     pipeline at the same rounding are sample-exact."""
@@ -350,7 +357,8 @@ def render(events, beats, style='rock', key=('guide',), tail_s=2.0, bpm=120):
     d = int(0.375 * SR)
     lead = bus['lead'].copy()
     lead[d:] += 0.25 * bus['lead'][:-d][:, ::-1]
-    mix = (bus['drums'] * 1.0 + bus['gtr'] * 0.9 + bus['bass'] * 0.9 + lead * 0.8 + bus['pad'] * 0.7)
+    lv = mix or MIX
+    mix = (bus['drums'] * lv['drums'] + bus['gtr'] * lv['gtr'] + bus['bass'] * lv['bass'] + lead * lv['lead'] + bus['pad'] * lv['pad'])
     wet = signal.fftconvolve(bus['drums'] * 0.5 + lead * 0.8 + bus['pad'] * 1.0 + bus['gtr'] * 0.2, reverb_ir(2.2, key), axes=0)[:n]
     mix = mix + g['room'] * wet
     # Bus glue: gentle compression via tanh, then loudness-ish normalisation.
@@ -364,7 +372,7 @@ def style_of(name):
     return 'march' if name.split('-')[0] in ('levelclear', 'victory', 'finale') else 'metal'
 
 
-def guide(name, pre_bars=2, post_bars=2):
+def guide(name, pre_bars=2, post_bars=2, mix=None):
     """Guide for one cue. Loops are rendered with `pre_bars` of the loop's end
     before and `post_bars` of its start after, so the window that the pipeline
     cuts (beat 4*pre_bars onwards) is the loop itself in musical context."""
@@ -377,14 +385,14 @@ def guide(name, pre_bars=2, post_bars=2):
         mid = [(b + 4 * pre_bars, d, pt, v, i) for b, d, pt, v, i in events]
         post = [(b + beats + 4 * pre_bars, d, pt, v, i) for b, d, pt, v, i in events if b < 4 * post_bars]
         total = beats + 4 * (pre_bars + post_bars)
-        audio = render(pre + mid + post, total, style, (name,), tail_s=0.0, bpm=bpm)
+        audio = render(pre + mid + post, total, style, (name,), tail_s=0.0, bpm=bpm, mix=mix)
         offset = 4 * pre_bars
     else:
         # One-shot and tail cues: one bar of count-in (snare pickup) before.
         lead_in = [(0, .2, 38, 60, 'snare'), (1, .2, 38, 60, 'snare'), (2, .2, 38, 70, 'snare'), (3, .2, 38, 80, 'snare')]
         total = beats + 4 + 4
         shifted = [(b + 4, d, pt, v, i) for b, d, pt, v, i in events]
-        audio = render(lead_in + shifted, total, style, (name,), tail_s=0.0, bpm=bpm)
+        audio = render(lead_in + shifted, total, style, (name,), tail_s=0.0, bpm=bpm, mix=mix)
         offset = 4
     return audio, offset * 60.0 / bpm, beats
 

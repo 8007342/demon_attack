@@ -541,9 +541,49 @@ def genre_metrics(audio, bpm=120.0):
             'low': float((power[:, freqs < 150].sum(1) / total).mean())}
 
 
-def to_exact_tempo(audio, bpm):
-    """Resample so the measured tempo lands exactly on 120 BPM (tiny pitch change)."""
-    ratio = bpm / 120.0
+def metal_metrics(audio):
+    """Timbre proxies for distorted-guitar metal against a synth rendering
+    (metal-v2 round). flat15: spectral flatness 1-5 kHz (distorted guitars
+    are noise-like there: ACE metal takes 0.26-0.47, the synth guide 0.22,
+    the round-3 a2a cues 0.09); perc: percussive share of the spectrogram
+    energy by median-filter HPSS (drum transients; round 3 0.20, metal
+    takes 0.28-0.39); crest_db (99.9th percentile over RMS; lower = denser,
+    more compressed); and the energy shares of the low (<150 Hz), mid
+    (150 Hz-1 kHz), guitar (1-5 kHz) and air (>5 kHz) bands."""
+    from scipy.ndimage import median_filter
+    mono = audio.mean(axis=1)
+    mag = stft_mag(mono)
+    power = mag ** 2 + 1e-12
+    freqs = np.linspace(0, SR / 2, mag.shape[1])
+    total = power.sum(1)
+    share = lambda lo, hi: float((power[:, (freqs >= lo) & (freqs < hi)].sum(1) / total).mean())
+    band = (freqs > 1000) & (freqs < 5000)
+    flat = float((np.exp(np.log(power[:, band]).mean(1)) / power[:, band].mean(1)).mean())
+    sp = mag[:, freqs < 12000]
+    harm = median_filter(sp, size=(17, 1)); perc = median_filter(sp, size=(1, 17))
+    p_share = float((perc ** 2).sum() / ((perc ** 2).sum() + (harm ** 2).sum() + 1e-12))
+    rms = np.sqrt(np.mean(mono ** 2)) + 1e-12
+    return {'flat15': flat, 'perc': p_share, 'crest_db': float(20 * np.log10(np.percentile(np.abs(mono), 99.9) / rms)),
+            'low': share(0, 150), 'mid': share(150, 1000), 'gtr': share(1000, 5000), 'air': share(5000, SR / 2)}
+
+
+def metal_score(m):
+    """Higher = more like a distorted band recording, less like the synth:
+    flatness and percussive share dominate; a hollow guitar band or a peaky
+    (uncompressed) mix costs a little."""
+    return (4.0 * min(m['flat15'], 0.45) + 3.0 * min(m['perc'], 0.42) + 1.5 * min(m['gtr'], 0.25)
+            - 0.08 * max(m['crest_db'] - 10.5, 0.0))
+
+
+def timbre_distance(a, b):
+    """1 - cosine of the mean-removed long-term log-mel spectra."""
+    pa, pb = mel_profile(a), mel_profile(b)
+    return float(1 - np.dot(pa, pb) / (np.linalg.norm(pa) * np.linalg.norm(pb) + 1e-9))
+
+
+def to_exact_tempo(audio, bpm, target=120.0):
+    """Resample so the measured tempo lands exactly on `target` (tiny pitch change)."""
+    ratio = bpm / target
     if abs(ratio - 1) < 1e-4:
         return audio
     new_len = int(round(len(audio) * ratio))
@@ -560,10 +600,10 @@ def bar_similarity(mel, a, b, frames):
 
 def choose_window(audio, cue):
     """Pick a downbeat-aligned window of exactly `beats` beats (+ continuation)."""
-    beat = SR // 2  # 120 BPM at 48 kHz: 24000 samples, exact
-    length = cue['beats'] * beat
-    bar = 4 * beat
-    info = analyse(audio, fixed_bpm=120.0)
+    bpm = cue.get('bpm', 120.0)
+    length = beats_samples(cue['beats'], bpm)
+    bar = beats_samples(4, bpm)
+    info = analyse(audio, fixed_bpm=bpm)
     feat = features(audio)
     mel, rms = feat['mel'], feat['rms']
     tail = bar if cue['kind'] != 'oneshot' else int(cue.get('fade_s', .5) * SR)
