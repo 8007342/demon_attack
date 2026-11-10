@@ -22,7 +22,7 @@ Detailed reports in this folder:
 ## What a drop-in asset must satisfy (the contract)
 
 - RGBA with **binary alpha**, since hit flashes use `srcATop`. Drawn with `FilterQuality.none` at 2× logical size.
-- Exact atlas cells: `combat.png` uses 64×64 cells (32 logical), `sentinel-effects.png` uses 128×64, and `boss-carrier.png` uses stacked 368×240 layers.
+- Exact atlas cells: `combat.png` uses 64×64 cells (32 logical), `sentinel-effects.png` uses 128×64, and the boss armada's `boss-<class>.png` atlases are packed sprites listed in `lib/game/boss_atlas.dart` (formerly `boss-carrier.png` useds stacked 368×240 layers.
 - **Complete frame sets with one identity**: demons have 4 wing frames, 4 angry frames and 3 molts per species. Sentinels have 8 hover poses plus warning, dive and last-stand frames. The carrier has 4 forms × layers. Explosions have 8 frames.
 - Palette: outline #100E2C, teal #39DFCC, violet #A888FF, coral #FF786C, gold #EFBD57, ivory #FFF5C9. Thermal fire is never cyan or violet; force shields are never warm.
 - Backgrounds keep the central 60% firing lane dark and contain no characters, ships, bullets or text. Today they are static 1024×1536 paintings under a 50% veil; all parallax is procedural.
