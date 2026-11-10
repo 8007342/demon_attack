@@ -47,7 +47,10 @@
       "vexxa": 731800,
       "skarn": 731900,
       "morth": 732000,
-      "ulgra": 732100
+      "ulgra": 732100,
+      "skritch": 733100,
+      "grunnok": 733200,
+      "blatch": 733300
     }
   },
   "edit": {
@@ -94,7 +97,9 @@
       "seed": 731200
     },
     "wisp": {
-      "seed": 731302
+      "seed": 731302,
+      "grunt_prompt": "urgent alarmed expression, eyes opened wide but natural with visible irises and pupils and no white rings, eyebrows raised, mouth half open calling a warning.",
+      "grunt_seed": 733012
     },
     "anvil": {
       "seed": 731402
@@ -158,7 +163,9 @@
       "seed": 732602
     },
     "pip": {
-      "seed": 732700
+      "seed": 732700,
+      "grunt_prompt": "tense urgent expression, eyebrows raised and drawn together, focused narrowed eyes, mouth open calling a warning.",
+      "grunt_seed": 733013
     },
     "march": {
       "seed": 732802,
@@ -166,7 +173,116 @@
       "keep": 1.0
     },
     "mensah": {
-      "seed": 732902
+      "seed": 732902,
+      "shout_prompt": "mouth wide open shouting an urgent order, eyebrows raised, intense focused eyes with visible irises, natural skin shading, no white outlines.",
+      "shout_seed": 733011,
+      "grunt_prompt": "tense urgent expression, eyebrows raised and drawn together, focused narrowed eyes, mouth open calling a warning.",
+      "grunt_seed": 733013,
+      "tone": {
+        "gamma": 0.75,
+        "contrast": 1.2,
+        "mid": 70
+      }
+    },
+    "skritch": {
+      "seed": 733100
+    },
+    "grunnok": {
+      "seed": 733200
+    },
+    "blatch": {
+      "seed": 733300,
+      "base_edit": "Recolour the skin to coral red with crimson shading, add a cybernetic targeting eyepiece with a small red lens over one eye, and an ammunition belt across one shoulder."
+    }
+  },
+  "backdrops": {
+    "comment": "Dim per-character interiors drawn behind the portrait (no characters). 160x128 logical px each, packed 4 per row into assets/images/comms-backdrops.png.",
+    "workflow": "art/workflows/comms/backdrop-sdxl-pixel.json",
+    "size": [
+      160,
+      128
+    ],
+    "columns": 4,
+    "count": 2,
+    "luminance_cap": 0.45,
+    "saturation": 0.8,
+    "style": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading",
+    "negative": "people, person, character, figure, face, creature, animal, text, letters, watermark, logo, signature, frame, border, blurry, photo, photorealistic, 3d render",
+    "variants": [
+      {
+        "id": "fleet-bridge",
+        "seed": 734000,
+        "prompt": "starship command bridge interior, curved consoles with teal screens, large viewport showing stars and a planet, navy and gold trim"
+      },
+      {
+        "id": "fleet-cockpit",
+        "seed": 734100,
+        "prompt": "fighter spacecraft cockpit interior seen from the pilot seat, canopy frame, glowing instrument panels and switches, stars outside"
+      },
+      {
+        "id": "fleet-ops",
+        "seed": 734200,
+        "prompt": "spaceship operations room, holographic tactical map table glowing teal, wall screens, metal bulkheads, dim blue light"
+      },
+      {
+        "id": "ground-tent",
+        "seed": 734300,
+        "prompt": "military field command tent interior, canvas walls, folding table with maps, radio set, hanging lantern, crates, olive and brown tones"
+      },
+      {
+        "id": "ground-tank",
+        "seed": 734400,
+        "prompt": "armored tank crew compartment interior, periscope, red warning lights, levers, riveted olive steel walls, ammunition racks"
+      },
+      {
+        "id": "demon-warroom",
+        "seed": 734500,
+        "prompt": "infernal war room, dark stone walls with hanging red war banners, glowing orange runes, table with a strategy map, braziers, purple shadows"
+      },
+      {
+        "id": "demon-throne",
+        "seed": 734600,
+        "prompt": "demonic stone throne hall, tall pillars carved with horned skulls, glowing violet runes, brazier fire, tattered banners"
+      },
+      {
+        "id": "demon-forge",
+        "seed": 734700,
+        "prompt": "demonic foundry chamber, glowing lava channels, chains and anvils, rune-carved walls, smoke, red and orange glow"
+      }
+    ],
+    "assign": {
+      "admiral": "fleet-bridge",
+      "lindqvist": "fleet-bridge",
+      "kestrel": "fleet-ops",
+      "nomad": "fleet-ops",
+      "anvil": "fleet-cockpit",
+      "sparrow": "fleet-cockpit",
+      "rook": "fleet-cockpit",
+      "wisp": "fleet-ops",
+      "sunny": "fleet-cockpit",
+      "pip": "fleet-cockpit",
+      "march": "ground-tent",
+      "kessler": "ground-tent",
+      "voss": "ground-tank",
+      "mensah": "ground-tank",
+      "gorrak": "demon-warroom",
+      "vexxa": "demon-warroom",
+      "skarn": "demon-forge",
+      "morth": "demon-throne",
+      "ulgra": "demon-throne",
+      "skritch": "demon-warroom",
+      "grunnok": "demon-forge",
+      "blatch": "demon-forge"
+    },
+    "picks": {
+      "fleet-bridge": 734000,
+      "fleet-cockpit": 734100,
+      "fleet-ops": 734201,
+      "ground-tent": 734300,
+      "ground-tank": 734400,
+      "demon-warroom": 734500,
+      "demon-throne": 734600,
+      "demon-forge": 734701
     }
   }
 }

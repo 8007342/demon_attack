@@ -27,4 +27,49 @@ const commsPortraitRows = <String, int>{
   'skarn': 16,
   'morth': 17,
   'ulgra': 18,
+  'skritch': 19,
+  'grunnok': 20,
+  'blatch': 21,
+};
+
+/// Dim interiors behind the portraits: [commsBackdropColumns] per row, each
+/// [commsBackdropSize] logical px, wider than the portrait cell for parallax.
+const commsBackdropImage = 'assets/images/comms-backdrops.png';
+const commsBackdropSize = (w: 160, h: 128);
+const commsBackdropColumns = 4;
+const commsBackdropNames = <String>[
+  'fleet-bridge',
+  'fleet-cockpit',
+  'fleet-ops',
+  'ground-tent',
+  'ground-tank',
+  'demon-warroom',
+  'demon-throne',
+  'demon-forge',
+];
+
+/// Backdrop index of every character.
+const commsBackdropOf = <String, int>{
+  'admiral': 0,
+  'lindqvist': 0,
+  'kestrel': 2,
+  'nomad': 2,
+  'anvil': 1,
+  'sparrow': 1,
+  'rook': 1,
+  'wisp': 2,
+  'sunny': 1,
+  'pip': 1,
+  'march': 3,
+  'kessler': 3,
+  'voss': 4,
+  'mensah': 4,
+  'gorrak': 5,
+  'vexxa': 5,
+  'skarn': 7,
+  'morth': 6,
+  'ulgra': 6,
+  'skritch': 5,
+  'grunnok': 7,
+  'blatch': 7,
 };

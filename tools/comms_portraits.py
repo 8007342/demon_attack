@@ -345,18 +345,6 @@ def snap(rgb: np.ndarray) -> np.ndarray:
     return PAL_RGB[d.argmin(1)].reshape(rgb.shape).astype(np.uint8)
 
 
-def base(cid, name, grid):
-    """Source (already head-cropped at 2x) -> logical grid, palette-snapped,
-    binary alpha, no outline yet."""
-    src = Image.open(SRC / f'{cid}-{name}.png').convert('RGBA').resize((grid, grid), Image.BOX)
-    arr = np.array(src)
-    alpha = arr[..., 3] > 110
-    out = np.zeros((grid, grid, 4), np.uint8)
-    out[alpha, :3] = snap(arr[..., :3])[alpha]
-    out[alpha, 3] = 255
-    return out
-
-
 def shift(img, dx, dy):
     out = np.zeros_like(img)
     h, w = img.shape[:2]
@@ -370,17 +358,6 @@ def diff(a, b):
     both = (a[..., 3] > 0) | (b[..., 3] > 0)
     d = np.abs(a.astype(int) - b.astype(int)).sum(-1) > 90
     return d & both
-
-
-def register(idle, edit, r=4):
-    """Integer shift of an edit that best matches idle (Qwen may drift a pixel or two)."""
-    best = (None, 0, 0)
-    for dy in range(-r, r + 1):
-        for dx in range(-r, r + 1):
-            score = diff(idle, shift(edit, dx, dy)).sum()
-            if best[0] is None or score < best[0]:
-                best = (score, dx, dy)
-    return shift(edit, best[1], best[2])
 
 
 def dilate(mask, n=1):
@@ -467,40 +444,6 @@ def face_boxes(cid, idle, blink, shout, grid):
     return clamp(mouth), clamp(eyes)
 
 
-def composite(idle, edit, region):
-    """Take the edit's pixels only where they differ inside the region box
-    (dilated by a pixel), the rest of the frame stays idle."""
-    x0, y0, x1, y1 = region
-    box = np.zeros(idle.shape[:2], bool)
-    box[max(0, y0):y1, max(0, x0):x1] = True
-    m = dilate(diff(idle, edit) & box, 1) & box
-    out = idle.copy()
-    out[m] = edit[m]
-    return out
-
-
-def blend_mouth(idle, shout, box, amount, round_shape=False):
-    """Talk frame: the shout mouth (inside its tight box) squashed to
-    `amount` of its height (and, for 'oo', 60 % of its width) with
-    nearest-neighbour row/column picks, centred on the box; only pixels that
-    differ from idle are painted, so skin around the mouth stays put."""
-    x0, y0, x1, y1 = box
-    h, w = y1 - y0, x1 - x0
-    th = max(1, int(round(h * amount)))
-    tw = max(1, int(round(w * (0.6 if round_shape else 1.0))))
-    oy = y0 + (h - th) // 2
-    ox = x0 + (w - tw) // 2
-    out = idle.copy()
-    for i in range(th):
-        sy = y0 + min(h - 1, int((i + .5) * h / th))
-        for j in range(tw):
-            sx = x0 + min(w - 1, int((j + .5) * w / tw))
-            px = shout[sy, sx]
-            if px[3] and np.abs(px.astype(int) - idle[sy, sx].astype(int)).sum() > 90:
-                out[oy + i, ox + j] = px
-    return out
-
-
 def tilt(img, pivot_y, degrees):
     """Lean the head by shearing every row above the neck pivot; rows keep
     their pixel clusters intact (no rotation resampling)."""
@@ -549,29 +492,201 @@ def finish_frame(frame):
     return outline(rim(frame))
 
 
-def frames_for(cid, grid=None):
-    """The twelve frames of one character, in CommsFrame order."""
-    grid = grid or load(SPEC)['grid']
-    idle = base(cid, 'key', grid)
-    ed = {}
+def raw(cid, name, grid):
+    """Source (head-cropped at 2x) -> logical grid as unsnapped float RGB and
+    binary alpha, after the character's optional `tone` (gamma, contrast)."""
+    src = Image.open(SRC / f'{cid}-{name}.png').convert('RGBA').resize((grid, grid), Image.BOX)
+    arr = np.array(src).astype(np.float64)
+    rgb, alpha = arr[..., :3], arr[..., 3] > 110
+    # Fill small enclosed matte holes (BiRefNet misses); keep real gaps.
+    from scipy import ndimage
+    lab, n = ndimage.label(ndimage.binary_fill_holes(alpha) & ~alpha)
+    fill = np.zeros_like(alpha)
+    for i in range(1, n + 1):
+        hole = lab == i
+        if hole.sum() <= grid * grid // 400:
+            fill |= hole
+    if fill.any():
+        _, (iy, ix) = ndimage.distance_transform_edt(~alpha, return_indices=True)
+        rgb = rgb.copy()
+        rgb[fill] = rgb[iy[fill], ix[fill]]      # nearest opaque colour
+        alpha = alpha | fill
+    tone =load(SPEC)['picks'].get(cid, {}).get('tone')
+    if tone:
+        rgb = 255 * (rgb / 255) ** tone.get('gamma', 1.0)
+        mid = tone.get('mid', 110.0)
+        rgb = np.clip(mid + (rgb - mid) * tone.get('contrast', 1.0), 0, 255)
+    return rgb, alpha
+
+
+def to_rgba(rgb, alpha):
+    """Snap a whole frame once: the palette lookup is per pixel and
+    deterministic, so a pixel whose RGB is unchanged keeps its exact colour."""
+    out = np.zeros(rgb.shape[:2] + (4,), np.uint8)
+    out[alpha, :3] = snap(rgb)[alpha]
+    out[alpha, 3] = 255
+    return out
+
+
+def best_shift(idle, edit, r=4):
+    """Integer shift of a snapped edit that best matches the snapped idle."""
+    best = (None, 0, 0)
+    for dy in range(-r, r + 1):
+        for dx in range(-r, r + 1):
+            score = diff(idle, shift(edit, dx, dy)).sum()
+            if best[0] is None or score < best[0]:
+                best = (score, dx, dy)
+    return best[1], best[2]
+
+
+def shift_raw(rgb, alpha, dx, dy):
+    a4 = np.concatenate([rgb, alpha[..., None].astype(np.float64)], -1)
+    s = shift(a4, dx, dy)
+    return s[..., :3], s[..., 3] > .5
+
+
+def feather(shape, box, ramp):
+    """Weight 1 deep inside the box, falling linearly to 0 at its edge over
+    `ramp` px; exactly 0 outside the box."""
+    h, w = shape
+    x0, y0, x1, y1 = box
+    ys, xs = np.mgrid[0:h, 0:w] + .5
+    d = np.minimum(np.minimum(xs - x0, x1 - xs), np.minimum(ys - y0, y1 - ys))
+    return np.clip(d / max(ramp, 1e-6), 0, 1)
+
+
+def blend(base_rgb, top_rgb, weight):
+    w = weight[..., None]
+    out = base_rgb * (1 - w) + top_rgb * w
+    # Exactly the base where the weight is 0, so those pixels snap identically.
+    out[weight <= 0] = base_rgb[weight <= 0]
+    return out
+
+
+def talk_layer(idle_rgb, shout_rgb, box, amount, width=1.0, ramp=1.5):
+    """The shout mouth squashed about the centre of the mouth box to
+    `amount` of its height (and `width` of its width), as an RGB layer and a
+    weight map: 1 inside the squashed band, ramping to 0 at its edges and at
+    the box edge; 0 outside the box."""
+    x0, y0, x1, y1 = box
+    h, w = y1 - y0, x1 - x0
+    cy, cx = y0 + h / 2, x0 + w / 2
+    layer = idle_rgb.copy()
+    weight = np.zeros(idle_rgb.shape[:2])
+    half_h, half_w = max(.5, h * amount / 2), max(.5, w * width / 2)
+    for y in range(y0, y1):
+        t = (y + .5 - cy) / half_h
+        if abs(t) > 1:
+            continue
+        sy = int(np.clip(cy + t * h / 2, y0, y1 - 1))
+        wy = np.clip((1 - abs(t)) * half_h / ramp, 0, 1)
+        for x in range(x0, x1):
+            u = (x + .5 - cx) / half_w
+            if abs(u) > 1:
+                continue
+            sx = int(np.clip(cx + u * w / 2, x0, x1 - 1))
+            wx = np.clip((1 - abs(u)) * half_w / ramp, 0, 1)
+            layer[y, x] = shout_rgb[sy, sx]
+            weight[y, x] = wy * wx
+    return layer, weight * feather(weight.shape, box, ramp)
+
+
+def boxes_for(cid, grid):
+    """Snapped idle + registered raw edits, and the fixed eye, mouth and face
+    boxes shared by every frame of the character."""
+    idle_rgb, alpha = raw(cid, 'key', grid)
+    idle = to_rgba(idle_rgb, alpha)
+    edits = {}
     for name in EDIT_FRAMES:
-        ed[name] = register(idle, base(cid, name, grid)) if (SRC / f'{cid}-{name}.png').exists() else idle
-    mouth, eyes = face_boxes(cid, idle, ed['blink'], ed['shout'], grid)
-    # The face region for expressions: eyes (with brows) down to below the mouth.
+        if not (SRC / f'{cid}-{name}.png').exists():
+            edits[name] = (idle_rgb, alpha)
+            continue
+        rgb, a = raw(cid, name, grid)
+        dx, dy = best_shift(idle, to_rgba(rgb, a))
+        edits[name] = shift_raw(rgb, a, dx, dy)
+    snapped = {k: to_rgba(*v) for k, v in edits.items()}
+    mouth, eyes = face_boxes(cid, idle, snapped['blink'], snapped['shout'], grid)
     pad = grid // 16
     face = [min(eyes[0], mouth[0]) - pad, eyes[1] - pad * 2, max(eyes[2], mouth[2]) + pad, mouth[3] + pad]
-    blink_f = composite(idle, ed['blink'], [eyes[0] - 1, eyes[1] - 1, eyes[2] + 1, eyes[3] + 1])
-    shout = composite(idle, ed['shout'], face)
-    talk = [blend_mouth(idle, shout, mouth, a) for a in (0.35, 0.65, 1.0)]
-    oo = blend_mouth(idle, shout, mouth, 0.8, round_shape=True)
-    grunt = composite(idle, ed['grunt'], face) if kind(cid) == 'human' else ed['grunt']
-    happy = composite(idle, ed['happy'], face)
-    worried = composite(idle, ed['worried'], face)
+    face = [int(np.clip(v, 0, grid)) for v in face]
+    return idle_rgb, alpha, edits, mouth, eyes, face
+
+
+def frames_for(cid, grid=None):
+    """The twelve frames of one character, in CommsFrame order.
+
+    Frames 0 and 2-6 differ only inside the fixed face box and frame 1 only
+    inside the eye box: every composite is blended in RGB with a weight that
+    is exactly 0 outside its box, then the whole frame is snapped once and
+    keeps the idle alpha, so rim light and outline are identical outside."""
+    grid = grid or load(SPEC)['grid']
+    idle_rgb, alpha, ed, mouth, eyes, face = boxes_for(cid, grid)
+    shape = idle_rgb.shape[:2]
+    wf = feather(shape, face, max(2, grid // 32))
+    eye_box = [eyes[0] - 2, eyes[1] - 2, eyes[2] + 2, eyes[3] + 2]
+    frames = [to_rgba(idle_rgb, alpha),
+              to_rgba(blend(idle_rgb, ed['blink'][0], feather(shape, eye_box, 2)), alpha)]
+    shout_rgb = blend(idle_rgb, ed['shout'][0], wf)
+    for amount, width in ((0.35, 1.0), (0.65, 1.0), (1.0, 1.0), (0.8, 0.6)):
+        layer, w = talk_layer(idle_rgb, shout_rgb, mouth, amount, width)
+        frames.append(to_rgba(blend(idle_rgb, layer, w), alpha))
+    frames.append(to_rgba(shout_rgb, alpha))
+    if kind(cid) == 'human':
+        frames.append(to_rgba(blend(idle_rgb, ed['grunt'][0], wf), alpha))
+    else:
+        frames.append(to_rgba(*ed['grunt']))          # the roar may move the whole head
+    for name in ('happy', 'worried'):
+        frames.append(to_rgba(blend(idle_rgb, ed[name][0], wf), alpha))
     pivot = min(grid - 1, mouth[3] + (mouth[3] - eyes[1]) // 2)
     deg = load(SPEC).get('tilt_degrees', 4)
-    frames = [idle, blink_f, *talk, oo, shout, grunt, happy, worried,
-              tilt(idle, pivot, -deg), tilt(idle, pivot, deg)]
-    return [finish_frame(f) for f in frames], mouth, eyes
+    frames += [tilt(frames[0], pivot, -deg), tilt(frames[0], pivot, deg)]
+    return [finish_frame(f) for f in frames], mouth, eyes, face
+
+
+def small_box(box, g, s):
+    """A big-grid box mapped onto the small grid, grown by the BOX filter's
+    footprint, so small pixels outside it only see unchanged big pixels."""
+    k = g / s
+    return [max(0, int(np.floor(box[0] / k)) - 1), max(0, int(np.floor(box[1] / k)) - 1),
+            min(s, int(np.ceil(box[2] / k)) + 1), min(s, int(np.ceil(box[3] / k)) + 1)]
+
+
+def outside_equal(a, b, box):
+    m = np.ones(a.shape[:2], bool)
+    x0, y0, x1, y1 = box
+    m[y0:y1, x0:x1] = False
+    return bool((a[m] == b[m]).all())
+
+
+def check(atlas=None, small=None):
+    """For every character: frames 2-6 equal frame 0 outside the face box and
+    frame 1 equals frame 0 outside the eye box, in both atlases."""
+    spec = load(SPEC)
+    g, s = spec['grid'], spec['small']
+    big = np.array(Image.open(ATLAS)) if atlas is None else atlas
+    sm = np.array(Image.open(ATLAS_SMALL)) if small is None else small
+    faces = load(ROOT / 'art/comms/portrait-faces.json', {})
+    failures = []
+    for row, cid in enumerate(cast_ids()):
+        if cid not in faces:
+            failures.append(f'{cid}: no faces entry')
+            continue
+        face, eyes = faces[cid]['face'], faces[cid]['eyes']
+        eye_box = [eyes[0] - 2, eyes[1] - 2, eyes[2] + 2, eyes[3] + 2]
+        for atlas_px, cell, scale in ((big, g, False), (sm, s, True)):
+            cells = [atlas_px[row * cell:(row + 1) * cell, c * cell:(c + 1) * cell] for c in range(7)]
+            fb = small_box(face, g, s) if scale else face
+            eb = small_box(eye_box, g, s) if scale else eye_box
+            label = f'{cid} {cell}px'
+            for c in (2, 3, 4, 5, 6):
+                if not outside_equal(cells[0], cells[c], fb):
+                    failures.append(f'{label} frame {c} differs outside the face box')
+            if not outside_equal(cells[0], cells[1], eb):
+                failures.append(f'{label} blink differs outside the eye box')
+    print('outside-box identity:', 'OK for', len(cast_ids()), 'characters x 2 atlases' if not failures else f'{len(failures)} failures')
+    for f in failures:
+        print('  ', f)
+    return not failures
 
 
 def finish():
@@ -579,8 +694,8 @@ def finish():
     for cid in cast_ids():
         if not (SRC / f'{cid}-key.png').exists():
             continue
-        _, mouth, eyes = frames_for(cid)
-        print(cid, 'mouth', mouth, 'eyes', eyes)
+        _, mouth, eyes, face = frames_for(cid)
+        print(cid, 'mouth', mouth, 'eyes', eyes, 'face', face)
 
 
 def pack():
@@ -594,8 +709,8 @@ def pack():
         if not (SRC / f'{cid}-key.png').exists():
             print('missing sources for', cid)
             continue
-        frames, mouth, eyes = frames_for(cid, g)
-        meta[cid] = {'mouth': mouth, 'eyes': eyes}
+        frames, mouth, eyes, face = frames_for(cid, g)
+        meta[cid] = {'mouth': mouth, 'eyes': eyes, 'face': face}
         for col, f in enumerate(frames):
             big[row * g:(row + 1) * g, col * g:(col + 1) * g] = f
             small[row * s:(row + 1) * s, col * s:(col + 1) * s] = small_frame(f, s)
@@ -617,7 +732,7 @@ const commsPortraitSmallCell = {s};
 const commsPortraitRows = <String, int>{{
 {rows}
 }};
-""")
+""" + pack_backdrops())
 
 
 def small_frame(frame, grid):
@@ -642,13 +757,18 @@ def sheet(zoom=2):
     small = Image.open(ATLAS_SMALL)
     g, s, z, n = spec['grid'], spec['small'], zoom, len(spec['frames'])
     label_w = 120
-    w = label_w + n * (g * z + 4) + 2 * (s + 6)
+    bd = Image.open(BACKDROPS) if BACKDROPS.exists() else None
+    bspec = bd_spec()
+    bw, bh = bspec['size']
+    index = {v['id']: i for i, v in enumerate(bspec['variants'])}
+    w = label_w + (n + 1) * (g * z + 4) + 2 * (s + 6)
     h = 20 + len(ids) * (g * z + 6)
     img = Image.new('RGBA', (w, h), (16, 14, 44, 255))
     draw = ImageDraw.Draw(img)
     for c, name in enumerate(spec['frames']):
         draw.text((label_w + c * (g * z + 4) + 4, 4), name, fill=(160, 200, 220, 255))
-    draw.text((label_w + n * (g * z + 4) + 2, 4), f'{s}px', fill=(160, 200, 220, 255))
+    draw.text((label_w + n * (g * z + 4) + 4, 4), 'on backdrop', fill=(160, 200, 220, 255))
+    draw.text((label_w + (n + 1) * (g * z + 4) + 2, 4), f'{s}px', fill=(160, 200, 220, 255))
     for r, cid in enumerate(ids):
         c = character(cid)
         y = 20 + r * (g * z + 6)
@@ -660,9 +780,17 @@ def sheet(zoom=2):
             x = label_w + col * (g * z + 4)
             img.paste((30, 40, 64, 255), (x, y, x + g * z, y + g * z))
             img.alpha_composite(cell, (x, y))
+        if bd is not None:
+            i = index[bspec['assign'][cid]]
+            br, bc = divmod(i, bspec['columns'])
+            ox, oy = bc * bw + (bw - g) // 2, br * bh + (bh - g) // 2
+            tile = bd.crop((ox, oy, ox + g, oy + g)).convert('RGBA')
+            tile.alpha_composite(big.crop((0, r * g, g, (r + 1) * g)))
+            x = label_w + n * (g * z + 4)
+            img.alpha_composite(tile.resize((g * z, g * z), Image.NEAREST), (x, y))
         for k, col in enumerate((0, 7)):
             cell = small.crop((col * s, r * s, (col + 1) * s, (r + 1) * s))
-            x = label_w + n * (g * z + 4) + 4 + k * (s + 4)
+            x = label_w + (n + 1) * (g * z + 4) + 4 + k * (s + 4)
             img.paste((30, 40, 64, 255), (x, y, x + s, y + s))
             img.alpha_composite(cell, (x, y))
     SHEET.parent.mkdir(parents=True, exist_ok=True)
@@ -692,9 +820,140 @@ def candidates(cid_list=None):
     print(out)
 
 
+# ---------------------------------------------------------------------------
+# Backdrops: dim interiors drawn behind each portrait.
+# ---------------------------------------------------------------------------
+BACKDROPS = ROOT / 'assets/images/comms-backdrops.png'
+
+
+def bd_spec():
+    return load(SPEC)['backdrops']
+
+
+def bd_path(vid, seed):
+    return CACHE / 'backdrops' / f'{vid}-{seed}.png'
+
+
+def bd_seed(variant):
+    return bd_spec()['picks'].get(variant['id'], variant['seed'])
+
+
+def backdrops(only=None):
+    """GPU: `count` candidates per backdrop variant."""
+    spec = bd_spec()
+    for v in spec['variants']:
+        if only and v['id'] not in only:
+            continue
+        prompt = f"{spec['style']}, {v['prompt']}"
+        for seed in [v['seed'] + i for i in range(spec['count'])]:
+            out = bd_path(v['id'], seed)
+            if out.exists():
+                continue
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_bytes(run_workflow(ROOT / spec['workflow'], seed, prompt, spec['negative'])[0])
+            record(out, workflow=spec['workflow'], seed=seed, prompt=prompt, negative=spec['negative'],
+                   models=load(SPEC)['keyframe']['models'])
+            print('backdrop', out.name, flush=True)
+
+
+def ingest_backdrops(only=None):
+    """Keep each picked backdrop at 2x its logical size (adaptive 160-colour PNG)."""
+    spec = bd_spec()
+    w, h = spec['size']
+    runs_path = ROOT / 'art/comms/portrait-runs.json'
+    runs = load(runs_path, {})
+    for v in spec['variants']:
+        if only and v['id'] not in only:
+            continue
+        raw_png = bd_path(v['id'], bd_seed(v))
+        if not raw_png.exists():
+            continue
+        img = Image.open(raw_png).convert('RGB').resize((2 * w, 2 * h), Image.BOX)
+        img.quantize(160, method=Image.Quantize.FASTOCTREE).save(SRC / f"backdrop-{v['id']}.png", optimize=True)
+        side = raw_png.with_suffix('.json')
+        if side.exists():
+            meta = json.loads(side.read_text())
+            runs.setdefault('_backdrops', {})[v['id']] = {k: meta.get(k) for k in ('workflow', 'seed', 'prompt', 'sha256')}
+        print('source', f"backdrop-{v['id']}.png")
+    runs_path.write_text(json.dumps(runs, indent=1) + '\n')
+
+
+def backdrop_frame(vid):
+    """Source -> logical size, desaturated and dimmed so its brightest
+    pixels stay under `luminance_cap` of white, snapped to the palette."""
+    spec = bd_spec()
+    w, h = spec['size']
+    rgb = np.array(Image.open(SRC / f'backdrop-{vid}.png').convert('RGB').resize((w, h), Image.BOX)).astype(np.float64)
+    y = lum(rgb)[..., None]
+    rgb = y + (rgb - y) * spec['saturation']
+    peak = np.percentile(lum(rgb), 99.5)
+    cap = spec['luminance_cap'] * 255
+    if peak > cap:
+        rgb = rgb * (cap / peak)
+    out = np.zeros((h, w, 4), np.uint8)
+    out[..., :3] = snap(np.clip(rgb, 0, 255))
+    out[..., 3] = 255
+    return out
+
+
+def pack_backdrops():
+    spec = bd_spec()
+    w, h = spec['size']
+    cols = spec['columns']
+    variants = spec['variants']
+    rows = -(-len(variants) // cols)
+    atlas = np.zeros((rows * h, cols * w, 4), np.uint8)
+    for i, v in enumerate(variants):
+        if not (SRC / f"backdrop-{v['id']}.png").exists():
+            print('missing backdrop source', v['id'])
+            continue
+        r, c = divmod(i, cols)
+        atlas[r * h:(r + 1) * h, c * w:(c + 1) * w] = backdrop_frame(v['id'])
+    Image.fromarray(atlas, 'RGBA').save(BACKDROPS, optimize=True)
+    print('atlas', BACKDROPS.relative_to(ROOT), atlas.shape[1], 'x', atlas.shape[0], BACKDROPS.stat().st_size, 'bytes')
+    index = {v['id']: i for i, v in enumerate(variants)}
+    of = '\n'.join(f"  '{cid}': {index[spec['assign'][cid]]}," for cid in cast_ids())
+    names = '\n'.join(f"  '{v['id']}'," for v in variants)
+    return f"""
+/// Dim interiors behind the portraits: [commsBackdropColumns] per row, each
+/// [commsBackdropSize] logical px, wider than the portrait cell for parallax.
+const commsBackdropImage = 'assets/images/comms-backdrops.png';
+const commsBackdropSize = (w: {w}, h: {h});
+const commsBackdropColumns = {cols};
+const commsBackdropNames = <String>[
+{names}
+];
+
+/// Backdrop index of every character.
+const commsBackdropOf = <String, int>{{
+{of}
+}};
+"""
+
+
+def bd_candidates(only=None):
+    spec = bd_spec()
+    vs = [v for v in spec['variants'] if not only or v['id'] in only]
+    tw, th = 320, 256
+    n = spec['count']
+    img = Image.new('RGB', (n * (tw + 4) + 110, len(vs) * (th + 4)), (20, 20, 30))
+    d = ImageDraw.Draw(img)
+    for y, v in enumerate(vs):
+        d.text((4, y * (th + 4) + 4), v['id'], fill=(255, 255, 255))
+        for x in range(n):
+            p = bd_path(v['id'], v['seed'] + x)
+            if p.exists():
+                img.paste(Image.open(p).convert('RGB').resize((tw, th), Image.BOX), (110 + x * (tw + 4), y * (th + 4)))
+                d.text((114 + x * (tw + 4), y * (th + 4) + 4), str(v['seed'] + x), fill=(255, 255, 0))
+    out = CACHE / 'bd-candidates.png'
+    img.save(out)
+    print(out)
+
+
 STAGES = {
     'keyframes': keyframes, 'edits': edits, 'matte': matte, 'ingest': ingest,
-    'finish': finish, 'pack': pack, 'sheet': sheet, 'candidates': candidates,
+    'finish': finish, 'pack': pack, 'sheet': sheet, 'candidates': candidates, 'check': check,
+    'backdrops': backdrops, 'bdingest': ingest_backdrops, 'bdcandidates': bd_candidates,
 }
 
 
@@ -702,10 +961,10 @@ def main(argv):
     stage = argv[0] if argv else 'offline'
     only = argv[1].split(',') if len(argv) > 1 else None
     if stage == 'offline':
-        pack(); sheet()
+        pack(); sheet(); check()
     elif stage == 'all':
-        keyframes(); edits(); matte(); ingest(); pack(); sheet()
-    elif stage in ('keyframes', 'edits', 'matte', 'ingest', 'candidates'):
+        keyframes(); edits(); matte(); ingest(); backdrops(); ingest_backdrops(); pack(); sheet(); check()
+    elif stage in ('keyframes', 'edits', 'matte', 'ingest', 'candidates', 'backdrops', 'bdingest', 'bdcandidates'):
         STAGES[stage](only)
     else:
         STAGES[stage]()
