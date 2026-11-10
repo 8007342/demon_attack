@@ -171,6 +171,89 @@
     "m4a": "60750cc785724f83e046ea83d6310811600d885552a88ee5748610ffdc86ebbb"
    }
   },
+  "l1-layers": {
+   "kind": "sprite",
+   "beats": null,
+   "bpm": 169.9993,
+   "barSamples": 67765,
+   "seconds": 16.94125,
+   "loopStart": null,
+   "loopEnd": null,
+   "mode": "stems",
+   "group": "1",
+   "slotBeats": 8,
+   "slotSeconds": 2.823541666666667,
+   "slots": [
+    "stab",
+    "swell",
+    "fill",
+    "gallop",
+    "lead",
+    "low"
+   ],
+   "keyscale": "E minor",
+   "measuredKey": {
+    "key": "E major",
+    "r": 0.727
+   },
+   "nominalKeyMatch": 0.623,
+   "layers": {
+    "stab": {
+     "source": "l1-t4",
+     "beat": 4,
+     "onset": 0.937,
+     "onsetOffsetMs": -1.8,
+     "keyMatch": 0.814,
+     "peakDb": -7.32,
+     "hitOffsetMs": 10.0
+    },
+    "swell": {
+     "source": "l1-t4",
+     "beat": 24,
+     "keyMatch": 0.831,
+     "onset": 0.623,
+     "peakDb": -8.41,
+     "hitOffsetMs": -2.9
+    },
+    "fill": {
+     "source": "l1-t4",
+     "beat": 18,
+     "landsOn": 20,
+     "landOnset": 1.0,
+     "peakDb": -3.32,
+     "hitOffsetMs": 10.0
+    },
+    "gallop": {
+     "source": "l1-t2",
+     "beat": 0,
+     "kickDensity": 0.034,
+     "peakDb": -4.11,
+     "hitOffsetMs": 10.0
+    },
+    "lead": {
+     "source": "l1-t3",
+     "beat": 20,
+     "keyMatch": 0.927,
+     "peakDb": -11.97,
+     "hitOffsetMs": 10.0
+    },
+    "low": {
+     "source": "l1-t4",
+     "beat": 4,
+     "keyMatch": 0.831,
+     "peakDb": -9.01,
+     "hitOffsetMs": 10.0
+    }
+   },
+   "bytes": {
+    "ogg": 191490,
+    "m4a": 230261
+   },
+   "sha256": {
+    "ogg": "8ae4146a7d025cff6e6870baecfd489b416a037a34d6ac2ea5ec80a46e367ff1",
+    "m4a": "f40d9d919d6af80f4db26b15e951bb38b1ad54199ec76b3227be6f25f90bed96"
+   }
+  },
   "l1-outro": {
    "kind": "loop",
    "beats": 16,
@@ -198,6 +281,31 @@
    "sha256": {
     "ogg": "ba17142f67ce7d85a3c207c5bf45e37892d5a9098e4469ffb70e4931e97afec0",
     "m4a": "41937a4ebf6dc2d95e6971422e046e90224fe044858b61f8cb5de4afd38d0752"
+   }
+  },
+  "l1-power": {
+   "kind": "loop",
+   "beats": 32,
+   "bpm": 169.9993,
+   "barSamples": 67765,
+   "seconds": 11.294166666666667,
+   "loopStart": 0.0,
+   "loopEnd": 11.294166666666667,
+   "mode": "stems",
+   "group": "1",
+   "role": "power",
+   "source": "l1-t4",
+   "band": "percussive above 3 kHz",
+   "onsetOnBeat": 0.538,
+   "onsetOnEighth": 0.154,
+   "onsetOnSixteenth": 0.006,
+   "bytes": {
+    "ogg": 130959,
+    "m4a": 187055
+   },
+   "sha256": {
+    "ogg": "a0d77b08aa912e4991fede8a7158469b91c25bdbc702e4bdeb8d08f9bdf5b5b1",
+    "m4a": "7507e53f878c941c7527770705035e434f604805abb8ca1a2faa9773851d0447"
    }
   },
   "l1-t1": {
@@ -374,6 +482,89 @@
     "m4a": "c1651d04c3eeac69c527b138cd1ea495a430d8230d97304845b23a6fad90124d"
    }
   },
+  "l2-layers": {
+   "kind": "sprite",
+   "beats": null,
+   "bpm": 160.0,
+   "barSamples": 72000,
+   "seconds": 18.0,
+   "loopStart": null,
+   "loopEnd": null,
+   "mode": "stems",
+   "group": "2",
+   "slotBeats": 8,
+   "slotSeconds": 3.0,
+   "slots": [
+    "stab",
+    "swell",
+    "fill",
+    "gallop",
+    "lead",
+    "low"
+   ],
+   "keyscale": "D major",
+   "measuredKey": {
+    "key": "A major",
+    "r": 0.821
+   },
+   "nominalKeyMatch": 0.686,
+   "layers": {
+    "stab": {
+     "source": "l2-t4",
+     "beat": 27,
+     "onset": 0.547,
+     "onsetOffsetMs": -5.0,
+     "keyMatch": 0.875,
+     "peakDb": -7.28,
+     "hitOffsetMs": 10.0
+    },
+    "swell": {
+     "source": "l2-t4",
+     "beat": 12,
+     "keyMatch": 0.944,
+     "onset": 0.09,
+     "peakDb": -8.53,
+     "hitOffsetMs": -5.0
+    },
+    "fill": {
+     "source": "l2-t4",
+     "beat": 18,
+     "landsOn": 20,
+     "landOnset": 0.751,
+     "peakDb": -3.67,
+     "hitOffsetMs": 10.0
+    },
+    "gallop": {
+     "source": "l2-t2",
+     "beat": 28,
+     "kickDensity": 0.014,
+     "peakDb": -6.82,
+     "hitOffsetMs": 10.0
+    },
+    "lead": {
+     "source": "l2-t3",
+     "beat": 20,
+     "keyMatch": 0.985,
+     "peakDb": -10.67,
+     "hitOffsetMs": 10.0
+    },
+    "low": {
+     "source": "l2-t4",
+     "beat": 20,
+     "keyMatch": 0.871,
+     "peakDb": -7.88,
+     "hitOffsetMs": 10.0
+    }
+   },
+   "bytes": {
+    "ogg": 202335,
+    "m4a": 244397
+   },
+   "sha256": {
+    "ogg": "c3a69614c4f0ca81ea14eb4c09de2c438b8e527120d35087f6a060b12d6efb23",
+    "m4a": "4e76cd6127ea7539282a3dd449a9d1ce6559eb9bfb94d594eec3622a25f5fd32"
+   }
+  },
   "l2-outro": {
    "kind": "loop",
    "beats": 16,
@@ -401,6 +592,31 @@
    "sha256": {
     "ogg": "1f56715b6a04d209a5fea8b3e90d9238883bc03e043f758c38d2091232d980e2",
     "m4a": "48bbcc40616d98b0d48322b28754a43f29d60644459dccecdbbe750aadf57018"
+   }
+  },
+  "l2-power": {
+   "kind": "loop",
+   "beats": 32,
+   "bpm": 160.0,
+   "barSamples": 72000,
+   "seconds": 12.0,
+   "loopStart": 0.0,
+   "loopEnd": 12.0,
+   "mode": "stems",
+   "group": "2",
+   "role": "power",
+   "source": "l2-t4",
+   "band": "percussive above 3 kHz",
+   "onsetOnBeat": 0.4,
+   "onsetOnEighth": 0.227,
+   "onsetOnSixteenth": 0.01,
+   "bytes": {
+    "ogg": 137618,
+    "m4a": 199637
+   },
+   "sha256": {
+    "ogg": "18c0b4b4b83ff77531eeedccf8d7792273eb1ba0a819315983ca0797640e98d1",
+    "m4a": "60dd289861415652222293ddee7ed98b813561a399361b635788ad49bc2d627a"
    }
   },
   "l2-t1": {
@@ -577,6 +793,89 @@
     "m4a": "16d19c40487c53a2812914b769a6057fa46eedafcd389415ec120546a8c4d7df"
    }
   },
+  "l3-layers": {
+   "kind": "sprite",
+   "beats": null,
+   "bpm": 180.0,
+   "barSamples": 64000,
+   "seconds": 16.0,
+   "loopStart": null,
+   "loopEnd": null,
+   "mode": "stems",
+   "group": "3",
+   "slotBeats": 8,
+   "slotSeconds": 2.6666666666666665,
+   "slots": [
+    "stab",
+    "swell",
+    "fill",
+    "gallop",
+    "lead",
+    "low"
+   ],
+   "keyscale": "E minor",
+   "measuredKey": {
+    "key": "E major",
+    "r": 0.83
+   },
+   "nominalKeyMatch": 0.645,
+   "layers": {
+    "stab": {
+     "source": "l3-t4",
+     "beat": 12,
+     "onset": 1.0,
+     "onsetOffsetMs": 0.0,
+     "keyMatch": 0.844,
+     "peakDb": -6.55,
+     "hitOffsetMs": 10.0
+    },
+    "swell": {
+     "source": "l3-t4",
+     "beat": 12,
+     "keyMatch": 0.956,
+     "onset": 1.0,
+     "peakDb": -8.34,
+     "hitOffsetMs": -3.3
+    },
+    "fill": {
+     "source": "l3-t4",
+     "beat": 26,
+     "landsOn": 28,
+     "landOnset": 0.967,
+     "peakDb": -4.2,
+     "hitOffsetMs": 10.0
+    },
+    "gallop": {
+     "source": "l3-t3",
+     "beat": 28,
+     "kickDensity": 0.014,
+     "peakDb": -4.26,
+     "hitOffsetMs": 10.0
+    },
+    "lead": {
+     "source": "l3-t3",
+     "beat": 28,
+     "keyMatch": 0.953,
+     "peakDb": -11.33,
+     "hitOffsetMs": 10.0
+    },
+    "low": {
+     "source": "l3-t4",
+     "beat": 12,
+     "keyMatch": 0.943,
+     "peakDb": -10.09,
+     "hitOffsetMs": 10.0
+    }
+   },
+   "bytes": {
+    "ogg": 179197,
+    "m4a": 223746
+   },
+   "sha256": {
+    "ogg": "9f9939e9d45b1bfc70e018973cd37f409937b578982b2f0a62d09003ea86b3dd",
+    "m4a": "9bc90a36e901660092db33a26891a98f0db89e4fc69c676c8ce1358c91565e7f"
+   }
+  },
   "l3-outro": {
    "kind": "loop",
    "beats": 16,
@@ -604,6 +903,31 @@
    "sha256": {
     "ogg": "a7f2fefccfabc2ae352b638a6564de900c4acf5fab349f882a506dd599619d15",
     "m4a": "23f53d117ec160f7043de7196d5996c9c462f7d76d9dd3f284756fa845065ae8"
+   }
+  },
+  "l3-power": {
+   "kind": "loop",
+   "beats": 32,
+   "bpm": 180.0,
+   "barSamples": 64000,
+   "seconds": 10.666666666666666,
+   "loopStart": 0.0,
+   "loopEnd": 10.666666666666666,
+   "mode": "stems",
+   "group": "3",
+   "role": "power",
+   "source": "l3-t4",
+   "band": "percussive above 3 kHz",
+   "onsetOnBeat": 0.497,
+   "onsetOnEighth": 0.319,
+   "onsetOnSixteenth": 0.024,
+   "bytes": {
+    "ogg": 118548,
+    "m4a": 176663
+   },
+   "sha256": {
+    "ogg": "9b113296faa27bccfdae74ef19c1f35d0077bd59cd343177300aefca6cb34074",
+    "m4a": "2b2ab2ed623eed081f4945d4d0813ddd45b50de2a3fc90362c34439c93981e73"
    }
   },
   "l3-t1": {
@@ -780,6 +1104,89 @@
     "m4a": "6c6e7b4f67eabd0851a34df3527166bbab8e1f39f7b59ddaeede3b1c2ac3724e"
    }
   },
+  "l4-layers": {
+   "kind": "sprite",
+   "beats": null,
+   "bpm": 150.0,
+   "barSamples": 76800,
+   "seconds": 19.2,
+   "loopStart": null,
+   "loopEnd": null,
+   "mode": "stems",
+   "group": "4",
+   "slotBeats": 8,
+   "slotSeconds": 3.2,
+   "slots": [
+    "stab",
+    "swell",
+    "fill",
+    "gallop",
+    "lead",
+    "low"
+   ],
+   "keyscale": "C minor",
+   "measuredKey": {
+    "key": "C major",
+    "r": 0.614
+   },
+   "nominalKeyMatch": 0.463,
+   "layers": {
+    "stab": {
+     "source": "l4-t4",
+     "beat": 8,
+     "onset": 0.982,
+     "onsetOffsetMs": 0.0,
+     "keyMatch": 0.572,
+     "peakDb": -9.5,
+     "hitOffsetMs": 10.0
+    },
+    "swell": {
+     "source": "l4-t4",
+     "beat": 20,
+     "keyMatch": 0.845,
+     "onset": 0.759,
+     "peakDb": -9.48,
+     "hitOffsetMs": 0.0
+    },
+    "fill": {
+     "source": "l4-t4",
+     "beat": 6,
+     "landsOn": 8,
+     "landOnset": 1.0,
+     "peakDb": -3.54,
+     "hitOffsetMs": 10.0
+    },
+    "gallop": {
+     "source": "l4-t3",
+     "beat": 28,
+     "kickDensity": 0.013,
+     "peakDb": -3.62,
+     "hitOffsetMs": 10.0
+    },
+    "lead": {
+     "source": "l4-t3",
+     "beat": 12,
+     "keyMatch": 0.836,
+     "peakDb": -7.14,
+     "hitOffsetMs": 10.0
+    },
+    "low": {
+     "source": "l4-t4",
+     "beat": 4,
+     "keyMatch": 0.917,
+     "peakDb": -10.46,
+     "hitOffsetMs": 10.0
+    }
+   },
+   "bytes": {
+    "ogg": 220718,
+    "m4a": 259275
+   },
+   "sha256": {
+    "ogg": "f264389aeac89adbf10e38378455883a78058645b78671abe3de0bd0f6e8bf85",
+    "m4a": "9159a6ee63483ec2f6f3fe436029d4a713181c4b8e6b54c01676e5f3f1a384ab"
+   }
+  },
   "l4-outro": {
    "kind": "loop",
    "beats": 16,
@@ -807,6 +1214,31 @@
    "sha256": {
     "ogg": "52068542f3977480d171c1845829cd0e26930de9a6de2f9289e267fe32361fb9",
     "m4a": "0eac94ffcd2e9fb7ced379cd8be40ff7df419e849ad518f746b42e04cee4b2ba"
+   }
+  },
+  "l4-power": {
+   "kind": "loop",
+   "beats": 32,
+   "bpm": 150.0,
+   "barSamples": 76800,
+   "seconds": 12.8,
+   "loopStart": 0.0,
+   "loopEnd": 12.8,
+   "mode": "stems",
+   "group": "4",
+   "role": "power",
+   "source": "l4-t4",
+   "band": "percussive above 3 kHz",
+   "onsetOnBeat": 0.311,
+   "onsetOnEighth": 0.593,
+   "onsetOnSixteenth": 0.017,
+   "bytes": {
+    "ogg": 149583,
+    "m4a": 213167
+   },
+   "sha256": {
+    "ogg": "aa8db9cd6cbfcf2cfd4c424318a809995b09dec5da6c16159cdbb5f13f17e627",
+    "m4a": "4848628819b199bdac07be59ad892f77c559ef2efcd4fbe818cfed70eeffc4ff"
    }
   },
   "l4-t1": {
@@ -983,6 +1415,89 @@
     "m4a": "1a6885c732b51a0b94f4fc60f76919b3a6c3f418c683040794f3ba974239d9d2"
    }
   },
+  "l5-layers": {
+   "kind": "sprite",
+   "beats": null,
+   "bpm": 189.9987,
+   "barSamples": 60632,
+   "seconds": 15.158,
+   "loopStart": null,
+   "loopEnd": null,
+   "mode": "stems",
+   "group": "5",
+   "slotBeats": 8,
+   "slotSeconds": 2.5263333333333335,
+   "slots": [
+    "stab",
+    "swell",
+    "fill",
+    "gallop",
+    "lead",
+    "low"
+   ],
+   "keyscale": "F minor",
+   "measuredKey": {
+    "key": "F minor",
+    "r": 0.766
+   },
+   "nominalKeyMatch": 0.766,
+   "layers": {
+    "stab": {
+     "source": "l5-t4",
+     "beat": 18,
+     "onset": 1.0,
+     "onsetOffsetMs": -4.2,
+     "keyMatch": 0.707,
+     "peakDb": -8.1,
+     "hitOffsetMs": 10.0
+    },
+    "swell": {
+     "source": "l5-t4",
+     "beat": 0,
+     "keyMatch": 0.938,
+     "onset": 0.259,
+     "peakDb": -8.96,
+     "hitOffsetMs": -5.8
+    },
+    "fill": {
+     "source": "l5-t4",
+     "beat": 16,
+     "landsOn": 18,
+     "landOnset": 1.0,
+     "peakDb": -2.32,
+     "hitOffsetMs": 10.0
+    },
+    "gallop": {
+     "source": "l5-t3",
+     "beat": 28,
+     "kickDensity": 0.014,
+     "peakDb": -3.56,
+     "hitOffsetMs": 10.0
+    },
+    "lead": {
+     "source": "l5-t3",
+     "beat": 12,
+     "keyMatch": 0.909,
+     "peakDb": -10.47,
+     "hitOffsetMs": 10.0
+    },
+    "low": {
+     "source": "l5-t4",
+     "beat": 16,
+     "keyMatch": 0.856,
+     "peakDb": -8.43,
+     "hitOffsetMs": 10.0
+    }
+   },
+   "bytes": {
+    "ogg": 177003,
+    "m4a": 210201
+   },
+   "sha256": {
+    "ogg": "ecf9fee974d014674c2d5e0778febf57c6ddc7355ee6f20aa172c4db95bed752",
+    "m4a": "998d8d5a2be4122896581635ff724d36dcbab422056a8efda5b0e0edbc403527"
+   }
+  },
   "l5-outro": {
    "kind": "loop",
    "beats": 16,
@@ -1010,6 +1525,31 @@
    "sha256": {
     "ogg": "a4c17e1c7cb93cdd8c0909fa2fbc101e40c4125e5c0d758a22ffb45463369479",
     "m4a": "98ea5df0ae93e883ed1bb37251dd11119e6ecd3f4c734ed1278e1cf233eafa13"
+   }
+  },
+  "l5-power": {
+   "kind": "loop",
+   "beats": 32,
+   "bpm": 189.9987,
+   "barSamples": 60632,
+   "seconds": 10.105333333333334,
+   "loopStart": 0.0,
+   "loopEnd": 10.105333333333334,
+   "mode": "stems",
+   "group": "5",
+   "role": "power",
+   "source": "l5-t4",
+   "band": "percussive above 3 kHz",
+   "onsetOnBeat": 0.408,
+   "onsetOnEighth": 0.274,
+   "onsetOnSixteenth": 0.008,
+   "bytes": {
+    "ogg": 115228,
+    "m4a": 167938
+   },
+   "sha256": {
+    "ogg": "8b88dcaad7fee1870ffbf2cff5695ce7dc7142315b1b24d36ada908d7ae72c07",
+    "m4a": "ec8721333482c8fe9ba65d3cbd5a189d2870147163220119a0d30c0e776dc626"
    }
   },
   "l5-t1": {
