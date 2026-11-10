@@ -150,6 +150,7 @@ void main(List<String> args) {
         'unitsKilledByAllies': m.ground.unitsKilledByAllies,
         'breakthroughsBySector': m.ground.breakthroughsBySector,
         'impactsBySector': m.ground.impactsBySector,
+        'nearMissesBySector': m.ground.nearMissesBySector,
         'missilesLaunched': m.ground.missilesLaunched,
         'missileImpacts': m.ground.missileImpacts,
         'homingCollected': m.ground.homingCollected,

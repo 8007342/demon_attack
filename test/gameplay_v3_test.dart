@@ -75,8 +75,9 @@ void main() {
       for (var i = 0; i < 12; i++) {
         m.shots.add(Shot(30.0 + i * 25, 200.0 + i * 20, 0, 60, hostile: true));
       }
-      final diver = m.demons.firstWhere((d) => !d.isLarge && !d.entering);
+      final diver = m.demons.firstWhere((d) => !d.isLarge);
       diver
+        ..entranceProgress = 1
         ..dive = .3
         ..y = 380;
       m.invulnerable = 0;
@@ -110,14 +111,14 @@ void main() {
       expect(m.shipDrawY, greaterThan(ArcadeModel.shipY + 10));
       expect(m.invulnerable, closeTo(LifeLossTuning.protection, 2 * dt));
       expect(m.canPilot, isTrue);
-      run(m, LifeLossTuning.emerge);
+      run(m, LifeLossTuning.emerge + 2 * dt);
       expect(m.shipDrawY, ArcadeModel.shipY);
       expect(m.lifeLossPhase, LifeLossPhase.none);
       // Still protected, then vulnerable again.
       final lives = m.lives;
       m.hitPlayer();
       expect(m.lives, lives);
-      run(m, LifeLossTuning.protection - LifeLossTuning.emerge + 2 * dt);
+      run(m, LifeLossTuning.protection - LifeLossTuning.emerge);
       expect(m.invulnerable, 0);
       m.hitPlayer();
       expect(m.lives, lives - 1);
@@ -190,7 +191,10 @@ void main() {
     test('homing to the ground flies a long perspective arc; air stays fast', () {
       for (final z in [400.0, 900.0, 1300.0]) {
         final m = playing(sector: 3);
-        m.demons.clear();
+        // One sturdy demon keeps the wave (and the ground clock) running.
+        m.demons
+          ..clear()
+          ..add(Demon(40, 60, 0, 99, 0));
         final u = stage(m, z);
         m.collectHoming();
         var launched = -1.0, minY = 999.0, minPerspective = 1.0;
