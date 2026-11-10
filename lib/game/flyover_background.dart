@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import 'flyover_atlas.dart';
 import 'model.dart';
+import 'terrain_field.dart';
+import 'vegetation_atlas.dart';
 
 /// Oblique 3/4 flyover with a horizon.
 ///
@@ -29,6 +31,24 @@ class FlyoverBackground {
   /// `assets/images/flyover-<sector>-ground.png`: 2-D seamless ground tile.
   final List<ui.Image?> planes = List.filled(5, null);
   ui.Image? props, creatures;
+
+  /// `assets/images/flyover-vegetation.png` (optional): plants and debris
+  /// the ground fleet pushes through.
+  ui.Image? vegetationSheet;
+
+  /// The relief under the camera (surface, navigation, vegetation queries),
+  /// shared with the ground war as its [GroundRelief].
+  final TerrainView terrain = TerrainView();
+
+  /// Rate-limited terrain radio events for the comms.
+  final TerrainRadio radio = TerrainRadio();
+
+  /// The relief, synced to the current flight distance.
+  TerrainView get relief => terrain..cam = _cam;
+
+  /// Sets the world(s) on screen: [sector]/[route], blending toward [far].
+  void prepare(int sector, int route, {int? far, double blend = 0}) =>
+      terrain.configure(sector, route, far: far, mix: blend);
 
   /// Arena units flown, measured at the bottom of the screen.
   double distance = 0;
@@ -86,12 +106,18 @@ class FlyoverBackground {
   /// while unpaused; reads [model] but never writes to it.
   void advance(double dt, ArcadeModel model, double environment) {
     _sector = environment.round().clamp(0, 4);
+    final near = environment.floor().clamp(0, 4);
+    prepare(near, model.cycle.clamp(0, 4),
+        far: math.min(4, near + 1), blend: environment - near);
+    // --- terrain: ground units ride the relief (visual and positional only).
+    model.ground.relief = relief;
     final mode = model.presentationMode;
     _shipX = model.shipX;
     _shadow = model.mode != RunMode.title &&
         (model.canPilot ||
             mode == RunMode.levelClear ||
             mode == RunMode.gameOver && model.defeatActive);
+    _pushVegetation(dt, model);
     if (reducedMotion) return;
     final p = model.transitionProgress;
     final factor = switch (mode) {
@@ -103,6 +129,7 @@ class FlyoverBackground {
     distance += dt * baseSpeed * factor;
     _clock += dt;
     _react(dt, model);
+    _moveParticles(dt);
   }
 
   // ---------------------------------------------------------------------
@@ -217,14 +244,6 @@ class FlyoverBackground {
     return image;
   }
 
-  static final _fogPaint = Paint()
-    ..shader = const LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xD8060914), Color(0x70060914), Color(0x00060914)],
-      stops: [0, .3, 1],
-    ).createShader(const Rect.fromLTWH(0, horizon, 360, 110));
-
   /// Draws one complete world.  [opacity] < 1 is used for the travel
   /// crossfade, so no full-screen saveLayer is needed.
   void paintWorld(Canvas c, int sector, int route, ui.Image? painting,
@@ -248,47 +267,120 @@ class FlyoverBackground {
           ..color = Color.fromARGB(alpha, 255, 255, 255),
       );
     }
-    _paintGround(c, plane, alpha);
-    c.drawRect(
-      const Rect.fromLTWH(0, horizon, 360, 110),
-      opacity >= 1 ? _fogPaint : (Paint()
-        ..shader = _fogPaint.shader
-        ..color = Color.fromARGB(alpha, 0, 0, 0)),
-    );
+    _paintGround(c, plane, sector, alpha);
     _paintRidges(c, strip, sector, alpha);
     _paintWalls(c, strip, sector, alpha);
     _paintSprites(c, sheet, sector, route, alpha);
+    final veg = vegetationSheet;
+    if (veg != null) _paintVegetation(c, veg, sector, route, alpha);
     _paintCritters(c, critterSheet, sector, alpha);
   }
 
-  /// The receding ground: one rect, one perspective image shader.
-  void _paintGround(Canvas c, ui.Image plane, int alpha) {
-    final n = plane.width.toDouble();
-    // Keep the camera offset small so float precision never degrades.
-    final cam = _cam % n;
-    const k = 2 * _z0, u0 = 96.0;
-    final m = Float64List(16);
-    m[0] = k; // x = (k*u + 180*v - k*u0 - 180*cam) / (v - cam)
-    m[4] = 180;
-    m[12] = -k * u0 - 180 * cam;
-    m[5] = horizon; // y = (horizon*v + g*z0 - horizon*cam) / (v - cam)
-    m[13] = _g * _z0 - horizon * cam;
-    m[7] = 1; // w = v - cam
-    m[15] = -cam;
-    m[10] = 1;
-    c.drawRect(
-      const Rect.fromLTWH(0, horizon, 360, 520 - horizon),
-      Paint()
-        ..color = Color.fromARGB(alpha, 255, 255, 255)
-        ..shader = ImageShader(
-          plane,
-          TileMode.repeated,
-          TileMode.repeated,
-          m,
-          filterQuality: FilterQuality.none,
-        ),
-    );
+  // Ground mesh buffers, reused every frame.
+  static final _meshIndices = _buildIndices();
+  final _meshPos = Float32List(TerrainView.columns * TerrainView.rows * 2);
+  final _meshTex = Float32List(TerrainView.columns * TerrainView.rows * 2);
+  final _meshCol = Int32List(TerrainView.columns * TerrainView.rows);
+
+  static Uint16List _buildIndices() {
+    const cols = TerrainView.columns;
+    final rows = TerrainView.rows;
+    final out = Uint16List((rows - 1) * (cols - 1) * 6);
+    var k = 0;
+    // Far rows first: nearer relief paints over what it hides.
+    for (var i = rows - 2; i >= 0; i--) {
+      for (var j = 0; j < cols - 1; j++) {
+        final a = i * cols + j, b = a + 1, c = a + cols, d = c + 1;
+        out[k++] = a;
+        out[k++] = b;
+        out[k++] = c;
+        out[k++] = b;
+        out[k++] = d;
+        out[k++] = c;
+      }
+    }
+    return out;
   }
+
+  /// Distance fog on the ground (the old 110 px gradient): 0 clear, toward
+  /// 0.85 at the horizon.
+  static double _groundFog(double flatY) {
+    final t = (flatY - horizon) / 110;
+    if (t >= 1) return 0;
+    if (t < .3) return .847 + (.439 - .847) * (t / .3).clamp(0.0, 1.0);
+    return .439 * (1 - (t - .3) / .7);
+  }
+
+  /// The receding ground as one textured triangle mesh: rows at fixed
+  /// depths, columns at fixed screen x, displaced by the relief, lit by the
+  /// sector's sky and fogged with distance (vertex colours).
+  void _paintGround(Canvas c, ui.Image plane, int sector, int alpha) {
+    final t = relief..prepare();
+    final n = plane.width.toDouble();
+    final cam = _cam % n;
+    const cols = TerrainView.columns;
+    final rows = TerrainView.rows;
+    final light = TerrainProfile.sectors[sector].lightColor;
+    // Vertex light is scaled down and the baked tile brightened instead,
+    // so lit slopes and high ground can brighten the tile while flat
+    // ground stays at about 82% of it.
+    const base = .82 / _groundGain;
+    for (var i = 0; i < rows; i++) {
+      final z = TerrainView.rowZ[i];
+      final fog = 1 - _groundFog(TerrainView.rowFlatY[i]);
+      final half = z / (2 * _z0);
+      for (var j = 0; j < cols; j++) {
+        final idx = i * cols + j;
+        final x = j * TerrainView.columnStep;
+        _meshPos[idx * 2] = x;
+        _meshPos[idx * 2 + 1] = t.gridY[idx];
+        _meshTex[idx * 2] = 96 + (x - 180) * half;
+        _meshTex[idx * 2 + 1] = cam + z;
+        final v = math.min(1.0, base * t.gridShade[idx]) * fog * 255;
+        final r = (v * light.$1).round().clamp(0, 255);
+        final g = (v * light.$2).round().clamp(0, 255);
+        final b = (v * light.$3).round().clamp(0, 255);
+        _meshCol[idx] = (alpha << 24) | (r << 16) | (g << 8) | b;
+      }
+    }
+    final vertices = ui.Vertices.raw(
+      VertexMode.triangles,
+      _meshPos,
+      textureCoordinates: _meshTex,
+      colors: _meshCol,
+      indices: _meshIndices,
+    );
+    c.drawVertices(
+      vertices,
+      BlendMode.modulate,
+      _groundPaint(plane),
+    );
+    vertices.dispose();
+  }
+
+  static const _groundGain = 1.8;
+  static const _gainFilter = ColorFilter.matrix(<double>[
+    _groundGain, 0, 0, 0, 0, //
+    0, _groundGain, 0, 0, 0, //
+    0, 0, _groundGain, 0, 0, //
+    0, 0, 0, 1, 0,
+  ]);
+  final _groundPaints = Expando<Paint>();
+
+  /// The ground tile brightened by [_groundGain], baked once per tile (a
+  /// colour filter on the mesh itself would cost a third of the frame).
+  Paint _groundPaint(ui.Image plane) => _groundPaints[plane] ??= () {
+        final recorder = ui.PictureRecorder();
+        Canvas(recorder).drawImage(plane, Offset.zero,
+            Paint()..colorFilter = _gainFilter);
+        final picture = recorder.endRecording();
+        final bright = picture.toImageSync(plane.width, plane.height);
+        picture.dispose();
+        return Paint()
+          ..shader = ImageShader(bright, TileMode.repeated, TileMode.repeated,
+              Matrix4.identity().storage,
+              filterQuality: FilterQuality.none);
+      }();
 
   /// Far ridges: rotated ridge strips standing on the ground near the
   /// horizon, approaching at 0.2x of the ground speed and handing over.
@@ -339,6 +431,7 @@ class FlyoverBackground {
   void _paintWalls(Canvas c, ui.Image strip, int sector, int alpha) {
     final width = FlyoverAtlas.layerWidths[1].toDouble();
     final cam = _cam;
+    final t = relief;
     // Screen rows: uniform steps plus every tile boundary, so no quad ever
     // spans two strip variants.
     final ys = <double>[];
@@ -366,6 +459,9 @@ class FlyoverBackground {
         final rb = ((k + 1) * _tile - wb).clamp(0.0, _tile);
         final row0 = _h * 1.0; // wall row in the atlas
         final xa = width * 2 * _scaleOf(za), xb = width * 2 * _scaleOf(zb);
+        // --- terrain: the rim rides the relief at its inner edge.
+        final ga = t.yOf(side == 0 ? xa * .6 : 360 - xa * .6, za);
+        final gb = t.yOf(side == 0 ? xb * .6 : 360 - xb * .6, zb);
         final fa = (255 * _fog(za)).round(), fb = (255 * _fog(zb)).round();
         final ca = (alpha << 24) | (fa << 16) | (fa << 8) | fa;
         final cb = (alpha << 24) | (fb << 16) | (fb << 8) | fb;
@@ -386,7 +482,7 @@ class FlyoverBackground {
           u0 = u1 - width;
         }
         // Two triangles: (0a,1a,0b) and (1a,1b,0b).
-        pos.addAll([sx0a, ya, sx1a, ya, sx0b, yb, sx1a, ya, sx1b, yb, sx0b, yb]);
+        pos.addAll([sx0a, ga, sx1a, ga, sx0b, gb, sx1a, ga, sx1b, gb, sx0b, gb]);
         tex.addAll([
           u0, row0 + ra, u1, row0 + ra, u0, row0 + rb,
           u1, row0 + ra, u1, row0 + rb, u0, row0 + rb,
@@ -416,17 +512,19 @@ class FlyoverBackground {
   /// and accelerate toward the ship; one sorted atlas draw.
   void _paintSprites(Canvas c, ui.Image sheet, int sector, int route, int alpha) {
     final cam = _cam;
+    final t = relief;
     final placed = <(double, RSTransform, Rect, Color)>[];
     void put(FlyoverSprite s, double w, int side, double offset, double size) {
       final z = w - cam;
       if (z < _z0 * .55 || z > _zFar) return;
       final scale = 2 * _scaleOf(z) * size;
-      final base = _yOf(z);
-      if (base - s.h * scale > 520) return;
       final edge = _wallEdge(sector, side, w);
       final centre = (edge + offset) * 2 * _scaleOf(z);
       final width = s.w * scale;
       final left = side == 0 ? centre - width / 2 : 360 - centre - width / 2;
+      // --- terrain: stands on the relief under its centre.
+      final base = t.yOf(left + width / 2, z);
+      if (base - s.h * scale > 520) return;
       final f = (255 * _fog(z)).round();
       placed.add((
         z,
@@ -561,7 +659,8 @@ class FlyoverBackground {
           final x = side == 0 ? inner : 360 - inner - spriteW;
           var facing = math.cos(heading) * dir * (side == 0 ? 1 : -1) >= 0;
           if (state != null && state.fleeT > 0) facing = state.fvx >= 0;
-          yield _CritterView(id, kind, x, _yOf(z), scale, z, moving, facing);
+          yield _CritterView(id, kind, x, relief.yOf(x + spriteW / 2, z), scale,
+              z, moving, facing);
         }
       }
     }
@@ -658,6 +757,192 @@ class FlyoverBackground {
       final f = (235 * _fog(v.z)).round();
       colors.add(Color.fromARGB(alpha, f, f, f));
     }
+    c.drawAtlas(sheet, transforms, rects, colors, BlendMode.modulate, null,
+        _pixelPaint);
+  }
+
+  // ---------------------------------------------------------------------
+  // Vegetation: pushed through by the ground units (visual only).
+  // ---------------------------------------------------------------------
+
+  final _particles = <VegetationParticle>[];
+
+  /// Push timeline (seconds after contact) of the bend / break frames.
+  static const _pushSteps = [.07, .16, .28, .4, .52];
+  static const _pushCols = [
+    VegetationAtlas.bendA,
+    VegetationAtlas.bendB,
+    VegetationAtlas.breakA,
+    VegetationAtlas.breakB,
+    VegetationAtlas.breakC,
+  ];
+
+  static int _particleKind(String kind) => switch (kind) {
+        'tree' => 1,
+        'crystal' => 2,
+        'debris' => 3,
+        'stalk' => 4,
+        _ => 5,
+      };
+
+  /// Ground units (demon and allied) shove the plants in their path; allies
+  /// tell the radio. Reads the model, never writes gameplay state.
+  void _pushVegetation(double dt, ArcadeModel model) {
+    final t = relief;
+    final sector = model.level;
+    final playing = model.combat && model.presentationMode != RunMode.travel;
+    radio.clock += dt;
+    if (playing) radio.lookAhead(t.primary, t.cam, sector);
+    final g = model.ground;
+    if (g.units.isEmpty && g.allies.isEmpty) return;
+    final plants = t.vegetation(TerrainView.vegetationNear, 6 * _z0);
+    void contact(int side, double x, double z, double width, {bool ally = false}) {
+      final window = 10 + z * .03;
+      for (final v in plants) {
+        if (v.side != side || v.hitAt != null) continue;
+        final vz = v.w - t.cam;
+        if ((vz - z).abs() > window) continue;
+        final vx = v.xAt(vz);
+        final scale = 2 * _scaleOf(vz) * v.size;
+        if ((vx - x).abs() > width * .45 + v.species.w * scale * .3) continue;
+        v.hitAt = _clock;
+        v.dir = vx >= x ? 1 : -1;
+        final vy = t.yOf(vx, vz);
+        if (ally && playing) radio.cleared(v, vx, vy, sector);
+        if (reducedMotion) continue;
+        final pk = _particleKind(v.species.kind);
+        for (var k = 0; k < 7; k++) {
+          final r1 = _rand(v.id, k, 61), r2 = _rand(v.id, k, 62);
+          final kind = k < 3 ? 0 : pk;
+          _particles.add(VegetationParticle(
+            kind,
+            vx + (r1 - .5) * 10 * scale,
+            vy - (kind == 0 ? 2 : 6 + 10 * r2) * scale,
+            (v.dir * (.3 + r1) * 30 + (r2 - .5) * 30) * scale,
+            -(kind == 0 ? 10 + 14 * r2 : 22 + 30 * r2) * scale,
+            scale * (kind == 0 ? 1.2 : 1),
+            .55 + .4 * r2,
+            r1,
+          ));
+        }
+      }
+    }
+
+    for (final u in g.units) {
+      if (u.alive) contact(u.side, u.x, u.z, u.width);
+    }
+    for (final a in g.allies) {
+      if (!a.alive) continue;
+      contact(a.side, a.x, a.z, a.width, ally: true);
+      final pose = a.pose;
+      if (playing && pose != null && a.z < GroundTuning.sightZ) {
+        radio.ally(a.id, a.side, pose.climb, dt, a.x, a.y, sector);
+      }
+    }
+    if (_particles.length > 160) _particles.removeRange(0, _particles.length - 160);
+  }
+
+  void _moveParticles(double dt) {
+    for (final p in _particles) {
+      p.age += dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt + 70 * p.scale * p.age * dt;
+    }
+    _particles.removeWhere((p) => p.age >= p.life);
+  }
+
+  /// Number of plants currently pushed over (tests/tools).
+  int get pushedVegetation =>
+      relief.vegetation().where((v) => v.hitAt != null).length;
+
+  /// Live burst particles (tests/tools).
+  int get vegetationParticles => _particles.length;
+
+  /// Screen rectangles of the plants on screen (tests/tools).
+  List<Rect> debugVegetationRects() => [
+        for (final v in relief.vegetation())
+          () {
+            final z = v.w - _cam;
+            final scale = 2 * _scaleOf(z) * v.size;
+            final x = v.xAt(z);
+            final y = relief.yOf(x, z);
+            return Rect.fromLTWH(x - VegetationAtlas.cellW * scale / 2,
+                y - VegetationAtlas.cellH * scale, VegetationAtlas.cellW * scale,
+                VegetationAtlas.cellH * scale);
+          }(),
+      ];
+
+  void _paintVegetation(
+      Canvas c, ui.Image sheet, int sector, int route, int alpha) {
+    final t = relief;
+    final field = t.field(sector, route);
+    final plants = t.vegetationOf(field);
+    if (plants.isEmpty && _particles.isEmpty) return;
+    final transforms = <RSTransform>[];
+    final rects = <Rect>[];
+    final colors = <Color>[];
+    const cw = VegetationAtlas.cellW * 1.0, ch = VegetationAtlas.cellH * 1.0;
+    for (final v in plants) {
+      final z = v.w - t.cam;
+      final scale = 2 * _scaleOf(z) * v.size;
+      var x = v.xAt(z);
+      int col;
+      final hit = v.hitAt;
+      if (hit == null) {
+        final sway = v.species.kind != 'debris' &&
+            !reducedMotion &&
+            ((_clock * .8 + _rand(v.id, 63)) % 2) >= 1;
+        col = sway ? VegetationAtlas.idleB : VegetationAtlas.idleA;
+      } else {
+        final e = reducedMotion ? 99.0 : _clock - hit;
+        col = VegetationAtlas.down;
+        for (var k = 0; k < _pushSteps.length; k++) {
+          if (e < _pushSteps[k]) {
+            col = _pushCols[k];
+            break;
+          }
+        }
+        if (v.species.kind == 'debris') {
+          // Shoved aside along the ground.
+          final u = (e / .6).clamp(0.0, 1.0);
+          x += v.dir * 9 * scale * (1 - (1 - u) * (1 - u));
+        }
+      }
+      if (v.dir < 0) col += VegetationAtlas.frames;
+      final base = t.yOf(x, z);
+      if (base - ch * scale > 520 || base < horizon) continue;
+      rects.add(Rect.fromLTWH(col * cw, v.species.row * ch, cw, ch));
+      transforms.add(RSTransform.fromComponents(
+        rotation: 0,
+        scale: scale,
+        anchorX: 0,
+        anchorY: 0,
+        translateX: (x - cw * scale / 2).roundToDouble(),
+        translateY: (base - ch * scale).roundToDouble(),
+      ));
+      final f = (240 * _fog(z)).round();
+      colors.add(Color.fromARGB(alpha, f, f, f));
+    }
+    if (sector == _sector) {
+      const ps = VegetationAtlas.particleSize * 1.0;
+      for (final p in _particles) {
+        final frame = p.age / p.life > .5 ? 1 : 0;
+        final col = p.kind * 2 + frame;
+        rects.add(Rect.fromLTWH(
+            col * cw, VegetationAtlas.particleRow * ch, ps, ps));
+        transforms.add(RSTransform.fromComponents(
+          rotation: 0,
+          scale: p.scale,
+          anchorX: ps / 2,
+          anchorY: ps / 2,
+          translateX: p.x.roundToDouble(),
+          translateY: p.y.roundToDouble(),
+        ));
+        final fade = (1 - p.age / p.life).clamp(0.0, 1.0);
+        colors.add(Color.fromARGB((alpha * (.4 + .6 * fade)).round(), 230, 230, 230));
+      }
+    }
+    if (rects.isEmpty) return;
     c.drawAtlas(sheet, transforms, rects, colors, BlendMode.modulate, null,
         _pixelPaint);
   }

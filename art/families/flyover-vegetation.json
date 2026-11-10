@@ -1,0 +1,44 @@
+{
+ "schema": "demon-attack.flyover-vegetation/v1",
+ "name": "flyover-vegetation",
+ "notes": "Per-sector vegetation and obstacles on the flyover's relief (alien trees, crystal shrubs, fungal stalks, thorn brush, ruined debris) that the ground fleet pushes through. Every value is an input to tools/vegetation (Go, stdlib only). Silhouettes and every frame (idle sway, push bend, topple / shatter / flatten / shove, settled) are authored on the texel grid; each species' selected ComfyUI keyframe (LayerDiffuse transparent sprite) contributes a -1/0/+1 shading texture on its body ramp. Body ramps are picked from the sector palette at the body_luma targets (chroma <= caps.chroma), pulled toward the species hint hue; accents use the species accent at glow_luma.",
+ "atlas": {
+  "file": "assets/images/flyover-vegetation.png",
+  "cell": [24, 32],
+  "columns": 16,
+  "rows": 11,
+  "frames": ["idle-a", "idle-b", "bend-a", "bend-b", "break-a", "break-b", "break-c", "down"],
+  "particles_row": 10,
+  "particles": ["dust", "leaves", "shards", "splinters", "spores", "ash"]
+ },
+ "style_prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated",
+ "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+ "sprite": {
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json",
+  "candidates": 3,
+  "source_px": 64
+ },
+ "caps": {"body_luma": [0.04, 0.08, 0.13, 0.2, 0.3], "glow_luma": 0.4, "chroma": 0.3, "hint_weight": 0.5},
+ "species": [
+  {"id": "frost-pine", "row": 0, "sector": "krybor", "kind": "tree", "seed": 723100, "selected": 723100, "hint": "#6F8FB0", "accent": "#CFE8FF",
+   "prompt": "alien frost pine tree, tall narrow conifer of blue-grey ice needles, frosted crooked trunk, icicles hanging from the branches"},
+  {"id": "ice-crystal-shrub", "row": 1, "sector": "krybor", "kind": "crystal", "seed": 723200, "selected": 723200, "hint": "#7FB6D8", "accent": "#E0F6FF",
+   "prompt": "low cluster of pale blue ice crystal shards growing from frozen rock, a small crystal shrub"},
+  {"id": "ring-crystal", "row": 2, "sector": "ringfall", "kind": "crystal", "seed": 723300, "selected": 723300, "hint": "#8A6FC8", "accent": "#E2CCFF",
+   "prompt": "violet alien crystal shrub, a cluster of tall faceted amethyst prisms growing from grey asteroid rock"},
+  {"id": "satellite-scrap", "row": 3, "sector": "ringfall", "kind": "debris", "seed": 723400, "selected": 723400, "hint": "#8A8C96", "accent": "#B8D0E0",
+   "prompt": "a small pile of ruined satellite debris, a bent solar panel and broken grey metal struts lying on rock"},
+  {"id": "cinder-tree", "row": 4, "sector": "ember", "kind": "tree", "seed": 723500, "selected": 723500, "hint": "#5A4A48", "accent": "#E07A3A",
+   "prompt": "a burnt alien cinder tree, black charred twisted trunk with forked bare branches, faint glowing ember cracks in the bark"},
+  {"id": "ash-thorn", "row": 5, "sector": "ember", "kind": "brush", "seed": 723600, "selected": 723600, "hint": "#5A5048", "accent": "#C0603A",
+   "prompt": "a low thicket of black thorn brush, dry spiky charred thorny branches, a tangled bush"},
+  {"id": "grave-fungus", "row": 6, "sector": "hollow", "kind": "stalk", "seed": 723700, "selected": 723700, "hint": "#7FB08A", "accent": "#B8FFC8",
+   "prompt": "tall alien fungal stalks, three thin pale green mushroom stems with drooping caps and faint glowing spots"},
+  {"id": "ruin-rubble", "row": 7, "sector": "hollow", "kind": "debris", "seed": 723800, "selected": 723800, "hint": "#7A8A80", "accent": "#A8C8B0",
+   "prompt": "ruined gothic stone debris, a broken carved column segment and fallen masonry blocks"},
+  {"id": "sinew-thorn", "row": 8, "sector": "carrier", "kind": "brush", "seed": 723900, "selected": 723900, "hint": "#8A4A50", "accent": "#E8C8B0",
+   "prompt": "a dark red demonic thorn bush of sinew and bone spikes, hooked thorns, organic and menacing"},
+  {"id": "brood-stalk", "row": 9, "sector": "carrier", "kind": "stalk", "seed": 724000, "selected": 724000, "hint": "#7A3A48", "accent": "#FF6A6A",
+   "prompt": "a tall dark organic brood stalk, a ribbed fleshy stem topped with a swollen pod, small glowing red veins"}
+ ]
+}

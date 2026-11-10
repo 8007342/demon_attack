@@ -1,0 +1,662 @@
+{
+ "ash-thorn/723600": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00016_.png",
+    "sha256": "605c03529e32afa01b118740ef24cad3d2a007200014096245259483a3e5926f"
+   },
+   {
+    "file": "sprite-rgb_00016_.png",
+    "sha256": "8894270592ba8bd2a3d33b714bda8c241bab225296b4f379eb1b823ac90072f6"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a low thicket of black thorn brush, dry spiky charred thorny branches, a tangled bush, transparent background",
+  "seed": 723600,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ash-thorn/723601": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00017_.png",
+    "sha256": "e6e059293e24ad3b00959959d51553b388f1c252c81787d112f5508d2f9777e2"
+   },
+   {
+    "file": "sprite-rgb_00017_.png",
+    "sha256": "6e92cc57132f567f151d203351489b87c31b808f2f8e7ec470eb43ce7d945642"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a low thicket of black thorn brush, dry spiky charred thorny branches, a tangled bush, transparent background",
+  "seed": 723601,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ash-thorn/723602": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00018_.png",
+    "sha256": "2873cabea67eca22ced99e79c309c7bbe1bf37aee3852319d6e2d6b37bfa7cb1"
+   },
+   {
+    "file": "sprite-rgb_00018_.png",
+    "sha256": "131aaf88f764403c25da979280793391843ac9b14e88fdc00af2829c647d2082"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a low thicket of black thorn brush, dry spiky charred thorny branches, a tangled bush, transparent background",
+  "seed": 723602,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "brood-stalk/724000": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00028_.png",
+    "sha256": "6b46a6858191c4775de234f3e262a845d544e076a777cf6dee0fef0983720bda"
+   },
+   {
+    "file": "sprite-rgb_00028_.png",
+    "sha256": "7c3a7f428dfa2981e1f590af97db779f3f1f87ebda0a73aa872fde543b1bf49c"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a tall dark organic brood stalk, a ribbed fleshy stem topped with a swollen pod, small glowing red veins, transparent background",
+  "seed": 724000,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "brood-stalk/724001": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00029_.png",
+    "sha256": "f1a3abc0f150fd1dd2eebb9f8e2b3545f5226cd3f7475d0732c645ac5847f0cc"
+   },
+   {
+    "file": "sprite-rgb_00029_.png",
+    "sha256": "cdbadc2e202612a5e96f0545d60faf8bc94b0815213fdcbbb8510da41b711777"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a tall dark organic brood stalk, a ribbed fleshy stem topped with a swollen pod, small glowing red veins, transparent background",
+  "seed": 724001,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "brood-stalk/724002": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00030_.png",
+    "sha256": "5c9c1157657825f6fdb8f15b91884f126d1eb234537d2a1688dc41316b3e0a7d"
+   },
+   {
+    "file": "sprite-rgb_00030_.png",
+    "sha256": "e14c61413e6e48fa79c7fdf62ec08db09c94faab4be9487c33d2834292e4443a"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a tall dark organic brood stalk, a ribbed fleshy stem topped with a swollen pod, small glowing red veins, transparent background",
+  "seed": 724002,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "cinder-tree/723500": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00013_.png",
+    "sha256": "f87c4d49be038403139bda7602a2c9c898fd4ce6605ac75c51bc78046a355a7a"
+   },
+   {
+    "file": "sprite-rgb_00013_.png",
+    "sha256": "53de1d5ae79793866347acd1c07a53a484a1ffeaeb4a4682c2a7a559beb1d8e2"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a burnt alien cinder tree, black charred twisted trunk with forked bare branches, faint glowing ember cracks in the bark, transparent background",
+  "seed": 723500,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "cinder-tree/723501": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00014_.png",
+    "sha256": "708b6054b064063eaf17c49b00c68667f11ffa8c47d2d09b1763ec2c57b250dd"
+   },
+   {
+    "file": "sprite-rgb_00014_.png",
+    "sha256": "5bf8ef7edd8c3352f3dac1d786b503ef5e605acfb4a57ffab00fe14da0fb1c9e"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a burnt alien cinder tree, black charred twisted trunk with forked bare branches, faint glowing ember cracks in the bark, transparent background",
+  "seed": 723501,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "cinder-tree/723502": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00015_.png",
+    "sha256": "bd01134e1dfaf45a414c1e40b2ad82d25722c5b72b3cac854a70a206f9f58c81"
+   },
+   {
+    "file": "sprite-rgb_00015_.png",
+    "sha256": "bd4afb2fb981d29fcf58a3cfc35b1db58480afbb33a73f9047efb8cc716f51a9"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a burnt alien cinder tree, black charred twisted trunk with forked bare branches, faint glowing ember cracks in the bark, transparent background",
+  "seed": 723502,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "frost-pine/723100": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00001_.png",
+    "sha256": "6c222a893a2f9be4e3ea6630981b70057906ce6ed66d676ea6ecf71397af70ea"
+   },
+   {
+    "file": "sprite-rgb_00001_.png",
+    "sha256": "bb6eca662bb81d1854e39f8baf239fd4fa16289c061d2a3dd8ef68cd185d30b4"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, alien frost pine tree, tall narrow conifer of blue-grey ice needles, frosted crooked trunk, icicles hanging from the branches, transparent background",
+  "seed": 723100,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "frost-pine/723101": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00002_.png",
+    "sha256": "be4ae667f3d5f2a0b5d5100cede3f8a333a1dd37c25c09238aa34c735159215a"
+   },
+   {
+    "file": "sprite-rgb_00002_.png",
+    "sha256": "74bec25bfbf31c2f0d12348791f60ed8593ebfea4af4ccc4f76da16bfd90aaf0"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, alien frost pine tree, tall narrow conifer of blue-grey ice needles, frosted crooked trunk, icicles hanging from the branches, transparent background",
+  "seed": 723101,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "frost-pine/723102": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00003_.png",
+    "sha256": "8493d596a9238fc64286bfddcbd6f73d5ce4844bb8119dd8430ed4f07f20a5c9"
+   },
+   {
+    "file": "sprite-rgb_00003_.png",
+    "sha256": "ed1089bab383b3977103fbaedcd482e0ee08972d5c47213778eb49fb5a8665a0"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, alien frost pine tree, tall narrow conifer of blue-grey ice needles, frosted crooked trunk, icicles hanging from the branches, transparent background",
+  "seed": 723102,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "grave-fungus/723700": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00019_.png",
+    "sha256": "b8f17e1209239aff1b249ac54954ecaabf3620b77f32814c8c48f457b7aa0f3d"
+   },
+   {
+    "file": "sprite-rgb_00019_.png",
+    "sha256": "6a9f89149b1f6f01dd4c943198fb7104c6dc8f816b9db7fd220f4526b7dc1f8c"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, tall alien fungal stalks, three thin pale green mushroom stems with drooping caps and faint glowing spots, transparent background",
+  "seed": 723700,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "grave-fungus/723701": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00020_.png",
+    "sha256": "879275be7363fb9f398d5df2676d8199179c526d504c1017dcf6dc5beff926c8"
+   },
+   {
+    "file": "sprite-rgb_00020_.png",
+    "sha256": "77989c9bb67546d524c2a285cbfddad076cd93bb4b9c4b61b2ecea9296ed9f94"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, tall alien fungal stalks, three thin pale green mushroom stems with drooping caps and faint glowing spots, transparent background",
+  "seed": 723701,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "grave-fungus/723702": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00021_.png",
+    "sha256": "f39b8ba85e9d4c5bd602cd2df9225ca36edfa00880e4b12084eb51aaacaf3a10"
+   },
+   {
+    "file": "sprite-rgb_00021_.png",
+    "sha256": "21664e1483e44bb379c3048723f4c03f473aa1f0a21aae1756c4540501a07e62"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, tall alien fungal stalks, three thin pale green mushroom stems with drooping caps and faint glowing spots, transparent background",
+  "seed": 723702,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ice-crystal-shrub/723200": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00004_.png",
+    "sha256": "5a086187adfbf050b50912ebc2520e34d161416102e05212e2aa509877ae72ff"
+   },
+   {
+    "file": "sprite-rgb_00004_.png",
+    "sha256": "2a07962c519628fd838b5838cf2c415f1f0665599c9aab8acacb9a383e91df64"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, low cluster of pale blue ice crystal shards growing from frozen rock, a small crystal shrub, transparent background",
+  "seed": 723200,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ice-crystal-shrub/723201": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00005_.png",
+    "sha256": "658d21740424f34b0b2bd90bc1acb43cc9a37125216a1dd924dfa734f68abde9"
+   },
+   {
+    "file": "sprite-rgb_00005_.png",
+    "sha256": "42fbd11bfe0496973428737d636618a373a32c4a915068b010862e5bafa25928"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, low cluster of pale blue ice crystal shards growing from frozen rock, a small crystal shrub, transparent background",
+  "seed": 723201,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ice-crystal-shrub/723202": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00006_.png",
+    "sha256": "6ba555afa0416545e41e338ed011b9a1085caff6d9e61034ed3f5c843b16195d"
+   },
+   {
+    "file": "sprite-rgb_00006_.png",
+    "sha256": "a10ffe70bc32ebf329493c48e64d7208f42c00d6accb22ce39a5e691a663aec1"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, low cluster of pale blue ice crystal shards growing from frozen rock, a small crystal shrub, transparent background",
+  "seed": 723202,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ring-crystal/723300": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00007_.png",
+    "sha256": "0ffbddff95a8450b91586de2d97231f36e99321e2188468ef059fe6627c1c65b"
+   },
+   {
+    "file": "sprite-rgb_00007_.png",
+    "sha256": "6e525da251d51031f614fce71b4f5a2bb41020adc29d8a6d7d585c26112c9732"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, violet alien crystal shrub, a cluster of tall faceted amethyst prisms growing from grey asteroid rock, transparent background",
+  "seed": 723300,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ring-crystal/723301": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00008_.png",
+    "sha256": "ebbac42b777acc9303a31d273b315684f3103430018eaffa17527b56b39f35d5"
+   },
+   {
+    "file": "sprite-rgb_00008_.png",
+    "sha256": "2ecf9283c005fc3c21a917169f4dd0a1a169808458df0e19dc1134f94936106d"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, violet alien crystal shrub, a cluster of tall faceted amethyst prisms growing from grey asteroid rock, transparent background",
+  "seed": 723301,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ring-crystal/723302": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00009_.png",
+    "sha256": "c43ad5cf79a464bfc3555c24971dae6bb330b45a1c112937057639cc45a24aca"
+   },
+   {
+    "file": "sprite-rgb_00009_.png",
+    "sha256": "4699934d52c7250e42f5dad10a7ea62de9aa6b45223f937095a3df66cc770703"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, violet alien crystal shrub, a cluster of tall faceted amethyst prisms growing from grey asteroid rock, transparent background",
+  "seed": 723302,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ruin-rubble/723800": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00022_.png",
+    "sha256": "d8bebca1dd0c6301979dce15fa78a171a1edd4b221bb13c7d811c687b5c01e2a"
+   },
+   {
+    "file": "sprite-rgb_00022_.png",
+    "sha256": "d8ca110e503d983e7d6bb4101ba50f2a1428304bc6a50370871523277c507431"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, ruined gothic stone debris, a broken carved column segment and fallen masonry blocks, transparent background",
+  "seed": 723800,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ruin-rubble/723801": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00023_.png",
+    "sha256": "826cccbae711a63821ffe1a33cafc91dd6182ed0b1b90e479d648904888071f2"
+   },
+   {
+    "file": "sprite-rgb_00023_.png",
+    "sha256": "f6868f90aed2bbf61627c30fd2302516334aec7db3d518f27a9b785c83426905"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, ruined gothic stone debris, a broken carved column segment and fallen masonry blocks, transparent background",
+  "seed": 723801,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ruin-rubble/723802": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00024_.png",
+    "sha256": "b92e08413113afa82704a21efabffa23ae05920828102507c120bdf9cb7e2de0"
+   },
+   {
+    "file": "sprite-rgb_00024_.png",
+    "sha256": "98b174d0249185abe2c66b1e66721992f227404576a1152df3aa6279679f6ba7"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, ruined gothic stone debris, a broken carved column segment and fallen masonry blocks, transparent background",
+  "seed": 723802,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "satellite-scrap/723400": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00010_.png",
+    "sha256": "5bdeac548c673d69f3048ff0f7af6d25bb27f1a4c25c969cbea887fb1880f8c7"
+   },
+   {
+    "file": "sprite-rgb_00010_.png",
+    "sha256": "8cab8e31d4a554020aeb722c5aa3bf3dc65ddf2cc9300296a838144e38a5280a"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small pile of ruined satellite debris, a bent solar panel and broken grey metal struts lying on rock, transparent background",
+  "seed": 723400,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "satellite-scrap/723401": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00011_.png",
+    "sha256": "5776d830fd22614df8a84dfd41c3c4e747a25aacfaa178e5cef27cfd20efa341"
+   },
+   {
+    "file": "sprite-rgb_00011_.png",
+    "sha256": "9e3660224ce520c1f9f79acc18176105b7596c97b88de3ade84eca10f00227b7"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small pile of ruined satellite debris, a bent solar panel and broken grey metal struts lying on rock, transparent background",
+  "seed": 723401,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "satellite-scrap/723402": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00012_.png",
+    "sha256": "bcc9a8f8401e381b9f5bb26394f7eecdec145df7a9485468db8398e909b02667"
+   },
+   {
+    "file": "sprite-rgb_00012_.png",
+    "sha256": "474aacff67f77230e60e8619083a5f8b78de89bbb8b9d6df3528fb63aacc0988"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small pile of ruined satellite debris, a bent solar panel and broken grey metal struts lying on rock, transparent background",
+  "seed": 723402,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "sinew-thorn/723900": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00025_.png",
+    "sha256": "f2f1f2b5f17c2793be32e4096e525a157c7172d132d6cc4f4cddae140606766e"
+   },
+   {
+    "file": "sprite-rgb_00025_.png",
+    "sha256": "d2710b666d94074cd5074fabf1bb5061b4f34ee95c6d1e4983774b7185177f3f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a dark red demonic thorn bush of sinew and bone spikes, hooked thorns, organic and menacing, transparent background",
+  "seed": 723900,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "sinew-thorn/723901": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00026_.png",
+    "sha256": "324679dc8962128002771b6b911e8094854ae7dbb085dffc02ecb9443e12cc03"
+   },
+   {
+    "file": "sprite-rgb_00026_.png",
+    "sha256": "61da7af26e55299c2f2ae9394359a1daa6a85dfc1ea9951deff8baeb2871ed2b"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a dark red demonic thorn bush of sinew and bone spikes, hooked thorns, organic and menacing, transparent background",
+  "seed": 723901,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "sinew-thorn/723902": {
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, clouds, landscape, scenery, people, animals, vehicles, cute, cartoon, many objects, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha_00027_.png",
+    "sha256": "802367f0ecdfc97365d7a313b1ebd5479ed98822a36cf7d23fa9c3dbc78a39cc"
+   },
+   {
+    "file": "sprite-rgb_00027_.png",
+    "sha256": "0479e4516e7dd1862c65eecf8c6ee5733626bf6c10d0ad2bc7728733014b4ff7"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single plant seen from a high 3/4 view, night lighting, dark muted colours, crisp square pixels, original artwork, centered, isolated, a dark red demonic thorn bush of sinew and bone spikes, hooked thorns, organic and menacing, transparent background",
+  "seed": 723902,
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ }
+}

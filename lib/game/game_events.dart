@@ -110,6 +110,34 @@ abstract final class GameEventNames {
 
   static const lifeLoss = [playerDestroyed, regroupStart, playerRespawn];
 
+  // --- terrain: what the convoy sees below (queued by the flyover's
+  // TerrainRadio, lib/game/terrain_field.dart; visual only, rate-limited).
+  // Data: `sector` (1-5), `side` ('left' | 'right' | 'both'), x, y.
+
+  /// A notable feature approaches (about 30 s out). Data `kind`: ridge,
+  /// valley, canyon, mesa, forest, crystalField or ruins. At most one per
+  /// 12 s and one per kind per 30 s. "Rough terrain ahead!"
+  static const terrainAhead = 'terrainAhead';
+
+  /// An allied unit crawls up a steep slope. At most one per 15 s.
+  static const convoyClimbing = 'convoyClimbing';
+
+  /// An allied unit pushes through vegetation or debris (data `kind`:
+  /// tree, crystal, brush, stalk, debris; `species`). At most one per 12 s.
+  /// "Clearing the tree line!"
+  static const convoyClearingVegetation = 'convoyClearingVegetation';
+
+  /// Rare and short: an allied unit stalls on a very steep wall for a
+  /// second. At most one per 45 s.
+  static const convoyStuck = 'convoyStuck';
+
+  static const terrain = [
+    terrainAhead,
+    convoyClimbing,
+    convoyClearingVegetation,
+    convoyStuck,
+  ];
+
   // --- music event hook: events derived read-only from the simulation by
   // MusicDirector (lib/game/music_director.dart) once per frame. Any
   // presentation layer may listen; MusicBridge turns them into music.

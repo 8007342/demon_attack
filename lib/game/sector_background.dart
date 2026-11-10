@@ -34,6 +34,7 @@ class SectorBackground {
       for (final id in ids) attempt('flyover-$id-ground.png'),
       attempt('flyover-props.png'),
       attempt('flyover-creatures.png'),
+      attempt('flyover-vegetation.png'),
     ]);
     for (var i = 0; i < 5; i++) {
       flyover.strips[i] = loaded[i];
@@ -41,6 +42,7 @@ class SectorBackground {
     }
     flyover.props = loaded[10];
     flyover.creatures = loaded[11];
+    flyover.vegetationSheet = loaded[12];
   }
 
   /// Scene hook: advance flight distance and creature reactions (visual only).
@@ -66,6 +68,8 @@ class SectorBackground {
     final far = math.min(4, near + 1);
     final blend = (environment - near).clamp(0.0, 1.0);
     if (flyover.ready(near) && flyover.ready(far)) {
+      // --- terrain: both worlds share one relief, morphing between sectors.
+      flyover.prepare(near, cycle.clamp(0, 4), far: far, blend: blend);
       // Flyover: the destination world is drawn over the current one with
       // per-draw opacity, so travel crossfades need no full-screen layer.
       _flyoverLayer(c, near, time, cycle, fallback, wave, 1);

@@ -311,7 +311,8 @@ class GroundPainter {
     }
     // Treads and gait: the convoy always rolls with the player; faster while
     // advancing on a foe, backward while falling back to station.
-    final rate = 7 + math.min(10.0, a.vz.abs() * .05);
+    // --- terrain: slower treads uphill (the flyover's relief pose).
+    final rate = (7 + math.min(10.0, a.vz.abs() * .05)) * (a.pose?.pace ?? 1);
     final dir = a.vz < 0 ? -1 : 1;
     final phase = ((clock * rate * dir + a.id * .37).floor() %
                 GroundAtlas.allyMoveFrames +
@@ -320,7 +321,9 @@ class GroundPainter {
     final moving = a.vz != 0;
     // Dust from the tracks and wheels, trailing toward the camera.
     if (kind != 1 || moving) {
-      final strength = moving ? .8 : .45;
+      // --- terrain: more dust while grinding up a slope.
+      final strength = (moving ? .8 : .45) +
+          (a.pose?.climb ?? 0).clamp(0.0, .5);
       final puffs = kind == 1 ? 1 : 3;
       for (var side = -1; side <= 1; side += 2) {
         for (var p = 0; p < puffs; p++) {

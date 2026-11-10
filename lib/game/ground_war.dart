@@ -331,10 +331,12 @@ class GroundUnit {
       GroundPlacement.place(side, across, z, GroundTuning.unitWidthTexels);
   double get scale => place.scale;
   double get width => place.width;
-  double get x => place.x;
+  // --- terrain: the relief pose, when the flyover provides one.
+  GroundPose? pose;
+  double get x => pose?.x ?? place.x;
 
   /// Ground contact (the sprite's bottom row).
-  double get y => place.y;
+  double get y => pose?.y ?? place.y;
 
   /// Where a homing missile aims and a launch leaves from.
   double get bodyY => y - 9 * scale;
@@ -399,8 +401,10 @@ class GroundAlly {
       GroundPlacement.place(side, across, z, GroundTuning.allyWidthTexels);
   double get scale => place.scale;
   double get width => place.width;
-  double get x => place.x;
-  double get y => place.y;
+  // --- terrain: the relief pose, when the flyover provides one.
+  GroundPose? pose;
+  double get x => pose?.x ?? place.x;
+  double get y => pose?.y ?? place.y;
   double get bodyY => y - 6 * scale;
   bool get alive => !totalled;
 
@@ -536,8 +540,30 @@ class HomingPickup {
   double x, y;
 }
 
+// --- terrain ---------------------------------------------------------------
+// The flyover's relief (lib/game/terrain_field.dart) may place ground objects
+// on its hills and valleys. Visual and positional only: the fire range gate,
+// breakthroughs and collisions read z, side and across, never a pose.
+
+/// Where the relief puts a ground object: screen ground contact, the slope
+/// along its travel (> 0 uphill toward the camera) and a visual pace.
+class GroundPose {
+  const GroundPose(this.x, this.y, {this.climb = 0, this.pace = 1});
+  final double x, y, climb, pace;
+}
+
+/// Installed by the scene as [GroundWar.relief]; null keeps flat ground.
+abstract interface class GroundRelief {
+  GroundPose place(int side, double across, double width, double z,
+      {bool ally = false});
+}
+// --- end terrain -------------------------------------------------------------
+
 /// All ground-war state, owned by [ArcadeModel.ground].
 class GroundWar {
+  // --- terrain: optional relief (visual and positional only).
+  GroundRelief? relief;
+
   final List<GroundUnit> units = [];
   final List<GroundAlly> allies = [];
   final List<GroundMissile> missiles = [];
@@ -813,6 +839,18 @@ extension GroundWarSimulation on ArcadeModel {
     _updateHomingSalvo(dt);
     _updatePressureMeter(dt);
     _updateHomingPity(dt);
+    _placeGroundOnTerrain();
+  }
+
+  // --- terrain: refresh every ground object's relief pose once per step.
+  void _placeGroundOnTerrain() {
+    final relief = ground.relief;
+    for (final u in ground.units) {
+      u.pose = relief?.place(u.side, u.across, u.width, u.z);
+    }
+    for (final a in ground.allies) {
+      a.pose = relief?.place(a.side, a.across, a.width, a.z, ally: true);
+    }
   }
 
   void _adjustStrength(double delta) =>
