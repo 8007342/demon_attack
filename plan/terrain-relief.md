@@ -10,6 +10,24 @@ breakthroughs and collisions are still decided by each ground unit's logical
 depth `z`, its side and its band position `across`. The relief only changes
 where a unit is *drawn* (and where homing missiles and tracers aim at it).
 
+> **Ground war v4 (coarse relief).** The numbers below were the v3 relief.
+> v4 has one feature per **520**-texel segment (was 300). Features are
+> about **2.2× higher** with twice the footprint: ridge 50–72 high,
+> 82–110 half-width; valley 38–50 deep, 235 half-length, 32 half-width;
+> canyon 52–68 deep; mesa 62–84 high; vegetation hummocks 10–15. They sit
+> 40–150 texels from the edge, so they reach into the lane. Rolling hills
+> use 125/390 and 55/160 texel wavelengths at amplitude 21–26. The lane
+> keeps **62%** of the relief, and the two edge frames are **blended**
+> across x 150–210 instead of zeroed on the centre line (no seam). A near
+> envelope (0.6 at `z0`, 1 from `2.6·z0`) keeps the closest hills from
+> walling off the ship. Shading is `1 + 4.2·(n·l − l_z) + 0.02·h`
+> (hidden ×0.5). A second, additive mesh pass (`TerrainView.gridGlow`:
+> lit slope + height + 0.42 on crest vertices, `BlendMode.plus`, gain 150,
+> tinted by the sector light) makes the relief read on the darkest
+> grounds. Ground units now choose their own full-width routes with
+> `GroundRelief.heightAt` and stand on the surface with `placeAt`. See
+> `openspec/changes/ground-war-v4/design.md`.
+
 ## Generator (`lib/game/terrain_field.dart`)
 
 `TerrainField(sector, route)` is a pure function of world position: `s`

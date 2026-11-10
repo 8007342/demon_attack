@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'flyover_atlas.dart';
+import 'ground_painter.dart';
 import 'model.dart';
 import 'terrain_field.dart';
 import 'vegetation_atlas.dart';
@@ -23,7 +24,7 @@ import 'vegetation_atlas.dart';
 /// any flight distance renders identically on every device.  Creatures react
 /// to explosions, the falling carrier wreck and the ship's shadow — visually
 /// only, reading model state.
-class FlyoverBackground {
+class FlyoverBackground implements GroundOccluders {
   /// `assets/images/flyover-<sector>.png`: rows mid (ridges) and wall,
   /// columns [left variants..., mirrored right variants...].
   final List<ui.Image?> strips = List.filled(5, null);
@@ -281,6 +282,12 @@ class FlyoverBackground {
   final _meshPos = Float32List(TerrainView.columns * TerrainView.rows * 2);
   final _meshTex = Float32List(TerrainView.columns * TerrainView.rows * 2);
   final _meshCol = Int32List(TerrainView.columns * TerrainView.rows);
+  final _glowCol = Int32List(TerrainView.columns * TerrainView.rows);
+
+  /// v4: strength of the additive slope and crest light (0-255 per unit
+  /// glow), tinted by the sector's sky light.
+  static const glowGain = 150.0;
+  final _glowPaint = Paint()..blendMode = BlendMode.plus;
 
   static Uint16List _buildIndices() {
     const cols = TerrainView.columns;
@@ -341,6 +348,12 @@ class FlyoverBackground {
         final g = (v * light.$2).round().clamp(0, 255);
         final b = (v * light.$3).round().clamp(0, 255);
         _meshCol[idx] = (alpha << 24) | (r << 16) | (g << 8) | b;
+        // --- ground war v4: additive light (relief reads on dark ground).
+        final gl = t.gridGlow[idx] * fog * glowGain * alpha / 255;
+        final gr = (gl * light.$1).round().clamp(0, 255);
+        final gg = (gl * light.$2).round().clamp(0, 255);
+        final gb = (gl * light.$3).round().clamp(0, 255);
+        _glowCol[idx] = (255 << 24) | (gr << 16) | (gg << 8) | gb;
       }
     }
     final vertices = ui.Vertices.raw(
@@ -356,6 +369,14 @@ class FlyoverBackground {
       _groundPaint(plane),
     );
     vertices.dispose();
+    final glow = ui.Vertices.raw(
+      VertexMode.triangles,
+      _meshPos,
+      colors: _glowCol,
+      indices: _meshIndices,
+    );
+    c.drawVertices(glow, BlendMode.dst, _glowPaint);
+    glow.dispose();
   }
 
   static const _groundGain = 1.8;
@@ -829,11 +850,11 @@ class FlyoverBackground {
     }
 
     for (final u in g.units) {
-      if (u.alive) contact(u.side, u.x, u.z, u.width);
+      if (u.alive) contact(u.x < 180 ? 0 : 1, u.x, u.z, u.width);
     }
     for (final a in g.allies) {
       if (!a.alive) continue;
-      contact(a.side, a.x, a.z, a.width, ally: true);
+      contact(a.x < 180 ? 0 : 1, a.x, a.z, a.width, ally: true);
       final pose = a.pose;
       if (playing && pose != null && a.z < GroundTuning.sightZ) {
         radio.ally(a.id, a.side, pose.climb, dt, a.x, a.y, sector);
@@ -882,6 +903,13 @@ class FlyoverBackground {
     final rects = <Rect>[];
     final colors = <Color>[];
     const cw = VegetationAtlas.cellW * 1.0, ch = VegetationAtlas.cellH * 1.0;
+    // --- ground war v4: the plants of the world on screen, kept for the
+    // ground painter's depth sort (a plant in front of a unit stays in front).
+    final record = sector == _sector;
+    if (record) {
+      _plantSheet = sheet;
+      _plants.clear();
+    }
     for (final v in plants) {
       final z = v.w - t.cam;
       final scale = 2 * _scaleOf(z) * v.size;
@@ -922,6 +950,17 @@ class FlyoverBackground {
       ));
       final f = (240 * _fog(z)).round();
       colors.add(Color.fromARGB(alpha, f, f, f));
+      if (record) {
+        // The visible body of the plant (its content box, not the cell).
+        final bw = v.species.w * scale, bh = v.species.h * scale;
+        _plants.add((
+          z,
+          Rect.fromLTWH(x - bw / 2, base - bh, bw, bh),
+          transforms.last,
+          rects.last,
+          colors.last,
+        ));
+      }
     }
     if (sector == _sector) {
       const ps = VegetationAtlas.particleSize * 1.0;
@@ -944,6 +983,23 @@ class FlyoverBackground {
     }
     if (rects.isEmpty) return;
     c.drawAtlas(sheet, transforms, rects, colors, BlendMode.modulate, null,
+        _pixelPaint);
+  }
+
+  // --- ground war v4: GroundOccluders.
+  ui.Image? _plantSheet;
+  final _plants = <(double, Rect, RSTransform, Rect, Color)>[];
+
+  @override
+  List<(double, Rect)> get groundPlants =>
+      [for (final p in _plants) (p.$1, p.$2)];
+
+  @override
+  void paintGroundPlant(Canvas c, int index) {
+    final sheet = _plantSheet;
+    if (sheet == null || index < 0 || index >= _plants.length) return;
+    final p = _plants[index];
+    c.drawAtlas(sheet, [p.$3], [p.$4], [p.$5], BlendMode.modulate, null,
         _pixelPaint);
   }
 

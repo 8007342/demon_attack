@@ -282,6 +282,53 @@ frames loop 0→3. The missile cell is meant to be drawn centred and scaled up
 with nearest-neighbour as it closes on the camera, trailed by puffs 2→4. The
 escape pod and smoke puffs (row 8, cols 10–11) are free sprites.
 
+## Ground troops (ground war v4)
+
+The mixed forces of ground war v4 share `assets/images/ground-troops.png`
+(12 × 6 cells of 32 × 24 texels, binary alpha), beside the ground-forces
+atlas. The driver is **Go, standard library only** (`tools/ground_troops/`),
+like the vegetation tool. **Silhouettes and every frame are authored on the
+texel grid** (`build.go`: discs, thick lines and triangles on a material
+code grid; upper-left light per material ramp; one-texel dark outline). The
+selected SDXL + pixel-art-xl + LayerDiffuse keyframe of each unit adds only
+a −1/0/+1 shading texture on the body ramp (high-pass luminance at
+±1.4 σ). Colours come from the reserved sets in
+`art/families/ground-forces.json`: demon steel (lifted one step so small
+troopers read on dark grounds), demon warm, ally hull and cyan, smoke iron,
+and an olive attire ramp.
+
+| Row | Content | Columns |
+| --- | --- | --- |
+| 0 | Demon grunt: horned gargoyle soldier, small iron helmet, vest and webbing, folded bat wing, barbed tail, rifle (side-on, facing right) | 0–3 march, 4 aim, 5 fire, 6 hit, 7 toppling, 8 cracked-stone rubble with glowing fissures |
+| 1 | Demon rocket brute: ram horns, skull cap, launcher tube over the shoulder | as row 0 (5: launch flash and backblast) |
+| 2 | Demon heavy tank: horned gargoyle prow, spiked treads, furnace vents, horned mantlet, long cannon | 0–3 move (links crawl, vents flicker), 4 fire, 5 recoil, 6–7 wreck |
+| 3 | Allied rifleman from behind (helmet visor glint, backpack light) | 0–3 walk, 4 kneel and aim, 5 fire, 6 hit, 7–8 running back |
+| 4 | Allied rocket trooper from behind | as row 3 |
+| 5 | Fx | 0–1 demon rocket, 2–3 allied rocket, 4 tank shell, 5–7 stone crumble dust |
+
+| Path | Role |
+| --- | --- |
+| `art/families/ground-troops.json` | Spec: prompts, seeds, `selected`, style and negative prompts, atlas grid |
+| `art/families/ground-troops-runs.json` | Provenance of every ingested run (workflow, prompt, seed, models, SHA-256) |
+| `art/sprites/sources/ground-troops/<unit>.png` | Selected keyframes cropped to their alpha, ≤ 64 px: the inputs of record |
+| `assets/images/ground-troops.png`, `lib/game/ground_troops_atlas.dart` | Atlas and its generated contract |
+| `art/contact/ground-troops-contact.png` | The atlas at 4× over a dark and a mid ground |
+
+```bash
+cd tools/ground_troops
+export TROOPS_WORK=$SCRATCH/troops-work TROOPS_RAW=$SCRATCH/troops-raw   # never the checkout
+go run . offline   # committed sources -> atlas, Dart, contact; no GPU, byte-identical
+go run . jobs      # 15 jobs: 5 units x 3 candidate seeds (740100-740502)
+go run . run       # ComfyUI HTTP (COMFY_URL, default http://studio:8188), one job in flight
+go run . ingest    # raws -> $TROOPS_RAW, provenance, refresh sources for `selected`
+go run . pack      # refresh sources from raws if present, then offline
+```
+
+Selected: grunt 740101, rocket brute 740201, tank 740302, rifleman
+740401, rocket trooper 740500. As with the v2 ground units, the keyframes
+came out front-on or side-on people and generic tanks rather than the
+needed poses, so only their texture is used.
+
 ## Flyover vegetation
 
 Plants and obstacles the ground fleet pushes through on the relief (see

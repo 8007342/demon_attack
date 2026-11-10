@@ -33,7 +33,7 @@ class DemonScene extends FlameGame {
   final creatures = CreaturePresentation();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- ground war (ground_painter.dart) ---
-  final groundForces = GroundPainter();
+  late final groundForces = GroundPainter()..occluders = sectors.flyover;
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;
@@ -87,6 +87,7 @@ class DemonScene extends FlameGame {
     // --- ground war art (tools/ground_forces_assets.py) ---
     try {
       groundForces.image = await images.load('ground-forces.png');
+      groundForces.troops = await images.load('ground-troops.png'); // --- ground war v4
     } catch (_) {}
   }
 

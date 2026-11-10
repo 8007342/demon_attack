@@ -63,6 +63,18 @@ abstract final class GroundPlacement {
       width: width,
     );
   }
+
+  // --- ground war v4: full-width placement at screen x [x] (the unit
+  // manoeuvres across the whole ground plane, not only its side band).
+  static GroundPlace placeAt(
+    double x,
+    double z,
+    double widthTexels, {
+    double scale = 1,
+  }) {
+    final s = GroundCamera.texel(z) * GroundTuning.unitScale * scale;
+    return (x: x, y: GroundCamera.yOf(z), scale: s, width: widthTexels * s);
+  }
 }
 
 /// Every ground-war tunable in one place (seconds, texels, arena units).
@@ -198,6 +210,7 @@ class GroundFront {
     required this.baseStrength,
     required this.basePressure,
     required this.shots,
+    this.skirmish = SkirmishFront.none,
   });
   static const none = GroundFront(
     presence: 0,
@@ -229,9 +242,29 @@ class GroundFront {
   /// Missiles a broken-through unit may fire.
   final int shots;
 
+  // --- ground war v4: the skirmish layer of this sector (ground_war_v4.dart).
+  final SkirmishFront skirmish;
+
   bool get active => presence > 0;
 
-  static GroundFront of(Difficulty d, {required int route, required int sector}) {
+  GroundFront withSkirmish(SkirmishFront s) => GroundFront(
+    presence: presence,
+    interval: interval,
+    firstDelay: firstDelay,
+    demonHp: demonHp,
+    breakthroughs: breakthroughs,
+    baseStrength: baseStrength,
+    basePressure: basePressure,
+    shots: shots,
+    skirmish: s,
+  );
+
+  static GroundFront of(Difficulty d, {required int route, required int sector}) =>
+      _threat(d, route: route, sector: sector).withSkirmish(
+        SkirmishFront.of(d, route: route, sector: sector),
+      );
+
+  static GroundFront _threat(Difficulty d, {required int route, required int sector}) {
     if (sector < 1 ||
         sector > 4 ||
         const bool.fromEnvironment('GROUND_WAR_DISABLED')) {
@@ -327,8 +360,32 @@ class GroundUnit {
   double wreckAge = 0;
   GroundAlly? ally;
 
-  GroundPlace get place =>
-      GroundPlacement.place(side, across, z, GroundTuning.unitWidthTexels);
+  // --- ground war v4: mixed forces, skirmishes, full-width manoeuvre.
+  GroundForce force = GroundForce.vehicle;
+
+  /// Ambient skirmish unit (ground_war_v4.dart): never fires at the player.
+  bool skirmish = false;
+
+  /// Screen x across the whole ground plane (null: legacy band placement),
+  /// lateral velocity, route goal and seconds to the next route choice.
+  double? lx;
+  double vx = 0, goalX = 180, retarget = 0;
+
+  /// Skirmish hold line (depth), seconds alive and seconds idle at it.
+  double holdZ = 0, life = 0, idle = 0;
+
+  /// +1 facing screen right, -1 left (the sprite mirrors).
+  int facing = 1;
+  int maxHp = 1;
+
+  /// Seconds since the last allied hit (a trooper falls), -1 never.
+  double lastHit = -1;
+
+  bool get mirrored => lx == null ? side == 1 : facing < 0;
+
+  GroundPlace get place => lx == null
+      ? GroundPlacement.place(side, across, z, GroundTuning.unitWidthTexels)
+      : GroundPlacement.placeAt(lx!, z, GroundV4Tuning.width(force));
   double get scale => place.scale;
   double get width => place.width;
   // --- terrain: the relief pose, when the flyover provides one.
@@ -353,8 +410,9 @@ class GroundUnit {
   /// Higher is more urgent for homing missiles: broken through, then
   /// threatening to, then about to fire, in range and reloaded soonest,
   /// then closest.
-  double get threat =>
-      (brokeThrough ? 8000 : 0) +
+  double get threat => skirmish
+      ? -10000 + (GroundTuning.spawnZ - z)
+      : (brokeThrough ? 8000 : 0) +
       (threatening ? 6000 : 0) +
       (telegraphing ? 4000 - telegraph * 100 : 0) +
       (inRange && shotsLeft > 0 ? 2000 - cooldown * 100 : 0) +
@@ -397,8 +455,20 @@ class GroundAlly {
 
   GroundUnit? attacker;
 
-  GroundPlace get place =>
-      GroundPlacement.place(side, across, z, GroundTuning.allyWidthTexels);
+  // --- ground war v4: mixed convoy, full-width escort, field repairs.
+  GroundForce force = GroundForce.vehicle;
+  double? lx;
+  double vx = 0;
+
+  /// Escort slot; a battered ally falls back to it and repairs.
+  int slot = 0;
+  bool fallingBack = false;
+  double repair = 0;
+
+  GroundPlace get place => lx == null
+      ? GroundPlacement.place(side, across, z, GroundTuning.allyWidthTexels)
+      : GroundPlacement.placeAt(lx!, z, GroundV4Tuning.width(force, ally: true),
+          scale: GroundV4Tuning.allyScale);
   double get scale => place.scale;
   double get width => place.width;
   // --- terrain: the relief pose, when the flyover provides one.
@@ -415,11 +485,22 @@ class GroundAlly {
 /// Short-lived skirmish fire between a demon unit and an ally (visual; the
 /// demon's tracer is what wears the ally down).
 class GroundTracer {
-  GroundTracer(this.fromX, this.fromY, this.toX, this.toY, {this.friendly = false});
+  GroundTracer(this.fromX, this.fromY, this.toX, this.toY,
+      {this.friendly = false, this.kind = bolt});
   final double fromX, fromY, toX, toY;
   final bool friendly;
   double age = 0;
   static const life = .22;
+
+  // --- ground war v4: weapon kinds (small arms, rockets, tank shells).
+  static const bolt = 0, smallArms = 1, rocket = 2, shell = 3;
+  final int kind;
+  double get duration => switch (kind) {
+    smallArms => .14,
+    rocket => .6,
+    shell => .3,
+    _ => life,
+  };
 }
 
 /// A ground-to-air missile on a fixed path toward the player's x sampled at
@@ -556,6 +637,12 @@ class GroundPose {
 abstract interface class GroundRelief {
   GroundPose place(int side, double across, double width, double z,
       {bool ally = false});
+
+  // --- ground war v4: full-width placement and route costs.
+  GroundPose placeAt(double x, double z);
+
+  /// Displayed terrain height (texels) at screen [x] and depth [z].
+  double heightAt(double x, double z);
 }
 // --- end terrain -------------------------------------------------------------
 
@@ -575,6 +662,12 @@ class GroundWar {
   final HomingSalvo salvo = HomingSalvo();
   final List<GameEvent> events = [];
   GroundFront front = GroundFront.none;
+
+  // --- ground war v4: the skirmish layer and its tallies.
+  final GroundSkirmish skirmish = GroundSkirmish();
+
+  /// Ally-foe engagements begun on screen (threat and skirmish), this run.
+  int engagements = 0;
   int nextId = 0, ordinal = 0;
   double spawnLeft = 0;
 
@@ -655,6 +748,14 @@ class GroundWar {
     alliesSaved = alliesRetreated = alliesEngaged = 0;
     alliesSavedThisLevel = alliesRetreatedThisLevel = alliesEngagedThisLevel = 0;
     wingmatesLost = wingmatesLostThisLevel = 0;
+    engagements = 0;
+    skirmish
+      ..reset()
+      ..spawned = 0
+      ..killedByAllies = 0
+      ..killedByHoming = 0
+      ..artillery = 0
+      ..fallBacks = 0;
   }
 }
 
@@ -674,7 +775,8 @@ extension GroundWarSimulation on ArcadeModel {
       .._pressureStep = -1;
     ground.alliesSavedThisLevel = ground.alliesRetreatedThisLevel = 0;
     ground.alliesEngagedThisLevel = ground.wingmatesLostThisLevel = 0;
-    if (front.active) {
+    _v4BeginLevel();
+    if (front.active || front.skirmish.active) {
       // The convoy: one ally per side already on station under our cover.
       for (final side in const [0, 1]) {
         _newConvoyAlly(side, rollIn: false);
@@ -684,6 +786,8 @@ extension GroundWarSimulation on ArcadeModel {
 
   /// A convoy ally on [side]: on station, or rolling in from below.
   GroundAlly _newConvoyAlly(int side, {bool rollIn = true}) {
+    // --- ground war v4: escort slots across the width around the ship.
+    if (ground.front.skirmish.active) return _v4NewConvoyAlly(rollIn: rollIn);
     final g = ground;
     final slot = g.allies.where((a) => a.alive && a.side == side).length;
     final hold = GroundTuning.allyHoldZ +
@@ -773,6 +877,7 @@ extension GroundWarSimulation on ArcadeModel {
         u.z -= speedNear; // the wreck rolls toward the camera with the ground
         continue;
       }
+      if (u.skirmish) continue; // --- ground war v4 (_v4Update)
       u.z -= u.z > GroundTuning.fireZ ? speedFar : speedNear;
       u.fireFlash = math.max(0, u.fireFlash - dt);
       if (!ground.front.breakthroughs &&
@@ -827,11 +932,12 @@ extension GroundWarSimulation on ArcadeModel {
       }
       _updateGroundFire(u, dt * rate);
     }
+    _v4Update(dt); // --- ground war v4: skirmishes and manoeuvre
     _updateAllies(dt);
     for (final t in ground.tracers) {
       t.age += dt;
     }
-    ground.tracers.removeWhere((t) => t.age > GroundTracer.life);
+    ground.tracers.removeWhere((t) => t.age > t.duration);
     ground.units.removeWhere(
       (u) => u.z < GroundTuning.leaveZ || (u.destroyed && u.wreckAge > 6),
     );
@@ -846,10 +952,16 @@ extension GroundWarSimulation on ArcadeModel {
   void _placeGroundOnTerrain() {
     final relief = ground.relief;
     for (final u in ground.units) {
-      u.pose = relief?.place(u.side, u.across, u.width, u.z);
+      final lx = u.lx;
+      u.pose = lx != null
+          ? relief?.placeAt(lx, u.z)
+          : relief?.place(u.side, u.across, u.width, u.z);
     }
     for (final a in ground.allies) {
-      a.pose = relief?.place(a.side, a.across, a.width, a.z, ally: true);
+      final lx = a.lx;
+      a.pose = lx != null
+          ? relief?.placeAt(lx, a.z)
+          : relief?.place(a.side, a.across, a.width, a.z, ally: true);
     }
   }
 
@@ -895,7 +1007,7 @@ extension GroundWarSimulation on ArcadeModel {
     if (!f.active) return;
     var live = 0, threat = 0, broken = 0;
     for (final u in g.units) {
-      if (!u.alive) continue;
+      if (!u.alive || u.skirmish) continue;
       live++;
       if (u.threatening) threat++;
       if (u.brokeThrough) broken++;
@@ -928,7 +1040,7 @@ extension GroundWarSimulation on ArcadeModel {
     g.spawnLeft -= dt;
     if (g.spawnLeft > 0) return;
     final cap = f.presence + (g.pressure > .75 ? 1 : 0);
-    if (g.liveUnits.length >= cap) return;
+    if (g.liveUnits.where((u) => !u.skirmish).length >= cap) return;
     // One breakthrough at a time: the front holds new arrivals while a
     // broken-through unit can still fire, so slower players aren't swamped.
     if (g.units.any((u) => u.alive && u.brokeThrough && u.shotsLeft > 0)) return;
@@ -946,6 +1058,16 @@ extension GroundWarSimulation on ArcadeModel {
       shotsLeft: f.shots,
       hp: f.demonHp,
     )..cooldown = .4;
+    // --- ground war v4: it enters at its band but manoeuvres across the
+    // whole plane (positional only: the rules read z).
+    if (f.skirmish.active) {
+      final x = GroundCamera.bandX(side, across, unit.width);
+      unit
+        ..lx = x
+        ..goalX = x
+        ..retarget = 1
+        ..facing = side == 0 ? 1 : -1;
+    }
     g.units.add(unit);
     // The level's guaranteed breakthrough (sectors 3-4): if nothing has
     // got through yet, this arrival is unescorted and out of homing lock
@@ -1055,7 +1177,11 @@ extension GroundWarSimulation on ArcadeModel {
       // Station keeping: hold in the near band beside the ship; advance up
       // the plane only to meet the foe, then fall back to escort position.
       final want = engaged
-          ? (foe.z - GroundTuning.allyStandoff).clamp(
+          ? (foe.z -
+                    (foe.skirmish
+                        ? GroundV4Tuning.standoff
+                        : GroundTuning.allyStandoff))
+                .clamp(
               a.holdZ,
               GroundTuning.allyMaxAdvanceZ,
             )
@@ -1068,10 +1194,15 @@ extension GroundWarSimulation on ArcadeModel {
       a.z += step;
       a.vz = dz.abs() < .5 ? 0 : step / math.max(dt, 1e-6);
       if (!engaged) continue;
+      if (foe.skirmish) {
+        _v4AllyFight(a, foe, dt); // --- ground war v4
+        continue;
+      }
       if (!a.announced && foe.z <= GroundTuning.sightZ) {
         a.announced = true;
         ground.alliesEngaged++;
         ground.alliesEngagedThisLevel++;
+        ground.engagements++;
       }
       foe.tracerLeft -= dt * rate;
       if (foe.tracerLeft <= 0 && a.announced) {
@@ -1124,6 +1255,7 @@ extension GroundWarSimulation on ArcadeModel {
 
   void _destroyGroundUnit(GroundUnit u, {bool byAllies = false}) {
     if (u.destroyed) return;
+    if (u.skirmish) return _v4Destroy(u, byAllies: byAllies);
     u.destroyed = true;
     u.destroyedByAllies = byAllies;
     u.telegraph = 0;
@@ -1192,6 +1324,10 @@ extension GroundWarSimulation on ArcadeModel {
       if (!u.alive || u.y > ArcadeModel.height - 8) continue;
       // The guaranteed breakthrough is out of lock until it gets through.
       if (u.guaranteed && !u.brokeThrough) continue;
+      // --- ground war v4: skirmish units never threaten the ship and are
+      // not homing targets: the salvo stays for threats and the air war
+      // (so the skirmish layer cannot change either).
+      if (u.skirmish) continue;
       if (bestGround == null || u.threat > bestGround.threat) bestGround = u;
     }
     if (bestGround != null) return (bestGround, HomingTargetKind.ground);
