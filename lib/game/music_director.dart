@@ -28,7 +28,7 @@ class MusicDirector {
   /// Minimum seconds between two tells of one kind (dive tells come often,
   /// the carrier's central hatch opens about every four seconds).
   static const tellSpacing = {
-    GameEventNames.diveTell: 2.0,
+    GameEventNames.diveTell: 0.75, // dive layers compose (audio round)
     GameEventNames.carrierHatchOpen: 7.5,
     GameEventNames.lastStandTell: 1.0,
     GameEventNames.reinforcementsArrived: 1.0,

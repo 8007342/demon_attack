@@ -35,7 +35,7 @@
   "loop": "whole file loops; length = beats exactly; the first crossfade_s blend the continuation into the start so the wrap is continuous",
   "tail": "plays `beats` once, then the appended copy of its last bar loops (loopStart..loopEnd) until the next cue",
   "oneshot": "plays `beats` once and ends with a fade over `fade_s`",
-  "sprite": "accent sprite: one slot of `slot_beats` per accent (dive, laststand, hatch, reinforce), played on demand"
+  "sprite": "accent sprite: one slot per accent (l<n>-accents: dive, laststand, hatch, reinforce, ...; l<n>-layers: the composable dive layers stab, swell, fill, gallop, lead, low), played on demand"
  },
  "tier_tags": {
   "1": "steady driving beat, chugging palm-muted rhythm guitars, heavy groove",
@@ -385,6 +385,22 @@
    "loudness_lufs": -19.0
   },
   {
+   "name": "l1-layers",
+   "group": "1",
+   "kind": "sprite",
+   "mode": "stems",
+   "slot_beats": 8,
+   "loudness_lufs": -20.0
+  },
+  {
+   "name": "l1-power",
+   "group": "1",
+   "kind": "loop",
+   "mode": "stems",
+   "beats": 32,
+   "loudness_lufs": -21.0
+  },
+  {
    "name": "l2-t1",
    "group": "2",
    "tier": 1,
@@ -456,6 +472,22 @@
    "loudness_lufs": -19.0
   },
   {
+   "name": "l2-layers",
+   "group": "2",
+   "kind": "sprite",
+   "mode": "stems",
+   "slot_beats": 8,
+   "loudness_lufs": -20.0
+  },
+  {
+   "name": "l2-power",
+   "group": "2",
+   "kind": "loop",
+   "mode": "stems",
+   "beats": 32,
+   "loudness_lufs": -21.0
+  },
+  {
    "name": "l3-t1",
    "group": "3",
    "tier": 1,
@@ -510,6 +542,22 @@
    "mode": "synth",
    "slot_seconds": 1.5,
    "loudness_lufs": -19.0
+  },
+  {
+   "name": "l3-layers",
+   "group": "3",
+   "kind": "sprite",
+   "mode": "stems",
+   "slot_beats": 8,
+   "loudness_lufs": -20.0
+  },
+  {
+   "name": "l3-power",
+   "group": "3",
+   "kind": "loop",
+   "mode": "stems",
+   "beats": 32,
+   "loudness_lufs": -21.0
   },
   {
    "name": "l4-t1",
@@ -583,6 +631,22 @@
    "loudness_lufs": -19.0
   },
   {
+   "name": "l4-layers",
+   "group": "4",
+   "kind": "sprite",
+   "mode": "stems",
+   "slot_beats": 8,
+   "loudness_lufs": -20.0
+  },
+  {
+   "name": "l4-power",
+   "group": "4",
+   "kind": "loop",
+   "mode": "stems",
+   "beats": 32,
+   "loudness_lufs": -21.0
+  },
+  {
    "name": "l5-t1",
    "group": "5",
    "tier": 1,
@@ -652,6 +716,22 @@
    "mode": "synth",
    "slot_seconds": 1.5,
    "loudness_lufs": -19.0
+  },
+  {
+   "name": "l5-layers",
+   "group": "5",
+   "kind": "sprite",
+   "mode": "stems",
+   "slot_beats": 8,
+   "loudness_lufs": -20.0
+  },
+  {
+   "name": "l5-power",
+   "group": "5",
+   "kind": "loop",
+   "mode": "stems",
+   "beats": 32,
+   "loudness_lufs": -21.0
   },
   {
    "name": "levelclear",
@@ -733,5 +813,6 @@
    "mode": "text",
    "beats": 32
   }
- ]
+ ],
+ "stems_note": "Audio round: l<n>-layers and l<n>-power (mode stems) are not generated. build_stems cuts them from the level's own tier masters (HPSS parts and zero-phase bands of l<n>-t2..t4), on beats chosen by onset strength and key-profile match, so tempo and key are the level's by construction. Nobody listened to them."
 }

@@ -58,7 +58,7 @@
     try { const value = storage()?.getItem(storageKeys[channel]); return levelNames.includes(value) ? value : 'full'; } catch { return 'full'; }
   }
   function writeLevel(channel, value) {
-    try { storage()?.setItem(storageKeys[channel], value); return true; } catch { return false; }  // private mode / denied storage
+    try { const store = storage(); if (!store) return false; store.setItem(storageKeys[channel], value); return true; } catch { return false; }  // private mode / denied storage
   }
   const levels = { music: readLevel('music'), speech: readLevel('speech') };
   const limiterSettings = { threshold: -1.5, knee: 0, ratio: 20, attack: .002, release: .12 };
@@ -70,12 +70,12 @@
   // is two bars and ends silent).
   const layerSlots = ['stab', 'swell', 'fill', 'gallop', 'lead', 'low'];
   const layerInfo = {
-    stab: { role: 'hit', quantum: .5, beats: 4 },     // a riff stab from tier 4, re-hit on the "and" of 2 and on 4
-    swell: { role: 'hit', quantum: 1, beats: 3 },     // reversed tier-4 chord into a hit one beat later
-    fill: { role: 'drums', quantum: 2, beats: 3 },    // tier-4 drums of the loop's last half-bar, landing on the crash
-    gallop: { role: 'drums', quantum: 2, beats: 4 },  // a bar of tier-2/3 drums (kick gallop, backbeat kept on 2 and 4)
-    lead: { role: 'tone', quantum: 4, beats: 8 },     // two bars of tier-3 lead band from the next bar line
-    low: { role: 'tone', quantum: 1, beats: 4 },      // low band of a tier-4 downbeat (bass and low brass weight)
+    stab: { role: 'hit', quantum: .5, beats: 7.5 },   // a tier-4 riff stab in a 3+3+2 figure over two bars
+    swell: { role: 'hit', quantum: 1, beats: 5 },     // reversed tier-4 chord into its downbeat one beat later, ringing
+    fill: { role: 'drums', quantum: 2, beats: 6 },    // the densest tier-4 drum half-bar, then the bar it lands on
+    gallop: { role: 'drums', quantum: 2, beats: 7.5 },// two bars of tier-2/3 drums (kick gallop; backbeat stays on 2 and 4)
+    lead: { role: 'tone', quantum: 4, beats: 7 },     // two bars of the tier-3 lead band from the next bar line
+    low: { role: 'tone', quantum: 1, beats: 7 },      // low band of a tier-4 downbeat's two bars (bass weight)
   };
   const layerSlotBeats = 8, layerCap = 4;
   const stackGain = [1, dB(-2), dB(-3.5), dB(-5)];  // later layers sit lower; the limiter holds the sum
@@ -437,7 +437,8 @@
   async function accent(name) {
     if (!context || paused || context.state !== 'running' || !accentSlots.includes(name) || !scene.level) return null;
     if (levels.music === 'mute' && !lifeLoss.includes(name)) return null;  // nothing to hear; the life-loss drop still applies
-    if ((lastAccent.get(name) ?? -9) > context.currentTime - 1) return null;  // at most one per second each
+    // At most one per second each; dive layers compose, so dives may come every half second.
+    if ((lastAccent.get(name) ?? -9) > context.currentTime - (name === 'dive' ? .5 : 1)) return null;
     if (name === 'dive') {
       const layered = diveLayer();
       if (layered !== undefined) { if (layered !== null) lastAccent.set(name, context.currentTime); return layered; }
