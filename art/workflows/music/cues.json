@@ -3,7 +3,8 @@
  "about": "ACE-Step 1.5 cue spec, round 3: battle metal at a tempo per level, symphonic-metal intros and outros. Each level keeps its original motif (tools/music_motifs.py); tools/music_guide.py renders each cue's arrangement at the level's exact tempo (an integer number of samples per bar) to a guide, and ACE-Step re-performs it audio-to-audio (acestep15-a2a.json) with a genre take of the same level and style as ReferenceTimbreAudio. Marches, the alien victory, the cackle and the menu are unchanged from round 2 (120 BPM). Prompts describe genre traits only; they never name a song, band, game or composer.",
  "workflows": {
   "text": "art/workflows/music/acestep15-cue.json",
-  "a2a": "art/workflows/music/acestep15-a2a.json"
+  "a2a": "art/workflows/music/acestep15-a2a.json",
+  "a2a_plain": "art/workflows/music/acestep15-a2a-plain.json"
  },
  "bpm": 120,
  "beats_per_bar": 4,
@@ -59,19 +60,20 @@
    "bpm": 170,
    "loudness_lufs": -18.0,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental fast battle punk metal, raw distorted power chords, fast downpicked riffs, skank and blast drum beats, double kick drums, gang shouts, rebellious, aggressive, energetic",
    "ref_seeds": [
     5101,
     5102,
     5103
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "s1": {
    "title": "L1 Krybor symphonic",
@@ -80,19 +82,20 @@
    "bpm": 170,
    "loudness_lufs": -18.5,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, bold, rebellious",
    "ref_seeds": [
     5601,
     5602,
     5603
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "2": {
    "title": "L2 Ringfall",
@@ -101,19 +104,20 @@
    "bpm": 160,
    "loudness_lufs": -18.0,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental melodic power metal, galloping double bass drums, soaring harmonized twin lead guitars, epic choir, crunchy rhythm guitars, triumphant, heroic, fast",
    "ref_seeds": [
     5201,
     5202,
     5203
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "s2": {
    "title": "L2 Ringfall symphonic",
@@ -122,19 +126,20 @@
    "bpm": 160,
    "loudness_lufs": -18.5,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, bright, heroic",
    "ref_seeds": [
     5701,
     5702,
     5703
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "3": {
    "title": "L3 Ember Moon",
@@ -143,19 +148,20 @@
    "bpm": 180,
    "loudness_lufs": -18.0,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental heavy galloping battle metal, galloping riffs, thundering double kick drums, war march toms, harmonized lead guitars, gang chants, epic, aggressive",
    "ref_seeds": [
     5301,
     5302,
     5303
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "s3": {
    "title": "L3 Ember Moon symphonic",
@@ -164,19 +170,20 @@
    "bpm": 180,
    "loudness_lufs": -18.5,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, fiery, epic",
    "ref_seeds": [
     5801,
     5802,
     5803
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "4": {
    "title": "L4 The Hollow",
@@ -185,19 +192,20 @@
    "bpm": 150,
    "loudness_lufs": -18.0,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental epic doom battle metal, crushing heavy riffs, war march drums, thunderous double kick, massive choir, orchestral strings, dark, mighty, warlike",
    "ref_seeds": [
     5401,
     5402,
     5403
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "s4": {
    "title": "L4 The Hollow symphonic",
@@ -206,19 +214,20 @@
    "bpm": 150,
    "loudness_lufs": -18.5,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, dark, solemn, mighty",
    "ref_seeds": [
     5901,
     5902,
     5903
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "5": {
    "title": "L5 The Carrier",
@@ -227,19 +236,20 @@
    "bpm": 190,
    "loudness_lufs": -18.0,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental blackened battle death metal, tremolo picked guitars, blast beats, double kick drums, dark choir, pipe organ, demonic chants, apocalyptic, extreme, ferocious",
    "ref_seeds": [
     5501,
     5502,
     5503
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "s5": {
    "title": "L5 The Carrier symphonic",
@@ -248,19 +258,20 @@
    "bpm": 190,
    "loudness_lufs": -18.5,
    "denoise": [
-    0.45
+    0.45,
+    0.55
    ],
    "seeds": [
-    51,
-    52,
-    53
+    61,
+    62
    ],
    "tags": "instrumental symphonic metal, epic orchestra, choir, orchestral strings, orchestral hits, soaring operatic female soprano vocalise without words, heavy guitars, cinematic, majestic, dark, demonic, apocalyptic",
    "ref_seeds": [
     6001,
     6002,
     6003
-   ]
+   ],
+   "workflow": "a2a_plain"
   },
   "march": {
    "title": "Fleet march",
@@ -639,5 +650,6 @@
   }
  ],
  "keep": "Cues marked keep=true are the round-2 recordings (120 BPM) and are not regenerated in round 3; `build` leaves their files and manifest entries in place.",
- "vocalise_note": "Intros and outros pass wordless vowel lyrics (no words) so ACE may voice the guide's soprano line as a vocalise; at denoise 0.45 the measured difference to [instrumental] is small (round-3 experiment)."
+ "vocalise_note": "Intros and outros pass wordless vowel lyrics (no words) so ACE may voice the guide's soprano line as a vocalise; at denoise 0.45 the measured difference to [instrumental] is small (round-3 experiment).",
+ "timbre_note": "Round 3 re-performs level cues without ReferenceTimbreAudio (workflow a2a_plain): at 150-190 BPM the timbre reference imposed a foreign ~0.4 s pulse on every take (tempo by onset autocorrelation: guide 180, VAE round trip 180.3, a2a without reference 180.5, with reference 150.0) and smeared the rhythm (onsets 10.8/s -> 4.4/s). The genre reference takes are still generated and used for the reference-closeness score."
 }
