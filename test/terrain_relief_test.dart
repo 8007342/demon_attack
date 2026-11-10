@@ -16,7 +16,9 @@ Future<ui.Image> _decode(String file) async {
   return frame.image;
 }
 
-/// Review frames land here (keep them off the checkout's small tmpfs).
+/// Review frames land here (ignored by version control; move them off the
+/// checkout's small tmpfs after a run). Tests may run in a separate
+/// toolchain container, so the path is relative to the checkout.
 final _out = Platform.environment['TERRAIN_REVIEW'] ?? '.cache/terrain';
 
 Future<void> _save(ui.Picture picture, int w, int h, String name) async {
