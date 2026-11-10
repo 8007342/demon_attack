@@ -26,6 +26,9 @@ const commsCast = <String, CommsCharacter>{
   'skritch': CommsCharacter(id: 'skritch', side: CommsSide.demon, name: 'SKRITCH', rank: 'SCOUT IMP', callsign: 'BROOD SCOUT', accent: 0xFF39DFCC),
   'grunnok': CommsCharacter(id: 'grunnok', side: CommsSide.demon, name: 'GRUNNOK', rank: 'TROOPER BRUTE', callsign: 'BROOD TROOPER', accent: 0xFFA888FF),
   'blatch': CommsCharacter(id: 'blatch', side: CommsSide.demon, name: 'BLATCH', rank: 'BROOD GUNNER', callsign: 'BROOD GUNNERY', accent: 0xFFFF786C),
+  'nibb': CommsCharacter(id: 'nibb', side: CommsSide.demon, name: 'NIBB', rank: 'BROOD SPRITELING', callsign: 'BROOD LITTER', accent: 0xFFEFBD57),
+  'krag': CommsCharacter(id: 'krag', side: CommsSide.demon, name: 'KRAG', rank: 'STONE HULK', callsign: 'BROOD BULWARK', accent: 0xFFE0405A),
+  'sliss': CommsCharacter(id: 'sliss', side: CommsSide.demon, name: 'SLISS', rank: 'VENOM SKULKER', callsign: 'BROOD SKULK', accent: 0xFFFF786C),
 };
 
 /// The constant anchor of every run (the Fleet Admiral).
@@ -36,7 +39,7 @@ const commsFleetPool = ['lindqvist', 'kestrel', 'nomad', 'anvil', 'sparrow', 'ro
 const commsGroundPool = ['march', 'kessler', 'voss', 'mensah'];
 
 /// Lower-ranked demon voices that chime in from every sector.
-const commsMinions = ['skritch', 'grunnok', 'blatch'];
+const commsMinions = ['skritch', 'grunnok', 'blatch', 'nibb', 'krag', 'sliss'];
 const commsLineupFleet = 5;
 const commsLineupGround = 2;
 
@@ -1027,6 +1030,9 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'waveStart.d4', speaker: 'ulgra', duration: 0.979, grunt: 'rally', gloss: 'RALLY', mouth: '333344477777444', open: '034476689998853'),
       CommsLine(id: 'waveStart.d5', speaker: 'grunnok', duration: 0.948, grunt: 'rally', gloss: 'RALLY', mouth: '444444477777733', open: '056476789998742'),
       CommsLine(id: 'waveStart.d6', speaker: 'skritch', duration: 0.946, grunt: 'rally', gloss: 'RALLY', mouth: '333444447744333', open: '023776789876432'),
+      CommsLine(id: 'waveStart.d7', speaker: 'nibb', duration: 1.1, grunt: 'rally', gloss: 'WAVE CHEER'),
+      CommsLine(id: 'waveStart.d8', speaker: 'krag', duration: 1.1, grunt: 'rally', gloss: 'WAVE CHEER'),
+      CommsLine(id: 'waveStart.d9', speaker: 'sliss', duration: 1.1, grunt: 'rally', gloss: 'WAVE CHEER'),
     ],
   ),
   'reinforcements': CommsTriggerSpec(
@@ -1035,6 +1041,7 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
     cooldown: 16.0,
     ttl: 2.0,
     delay: 0.7,
+    chain: 1,
     lines: [
       CommsLine(id: 'reinforcements.d0', speaker: 'gorrak', duration: 0.749, grunt: 'order', gloss: 'REINFORCE ORDER', mouth: '444447744433', open: '068778887532'),
       CommsLine(id: 'reinforcements.d1', speaker: 'vexxa', duration: 0.72, grunt: 'order', gloss: 'REINFORCE ORDER', mouth: '44444444333', open: '05668986432'),
@@ -1043,6 +1050,18 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'reinforcements.d4', speaker: 'grunnok', duration: 0.961, grunt: 'rally', gloss: 'REINFORCE', mouth: '333344447777733', open: '045476689998743'),
       CommsLine(id: 'reinforcements.d5', speaker: 'skritch', duration: 0.953, grunt: 'rally', gloss: 'REINFORCE', mouth: '333444477744333', open: '024686899976421'),
       CommsLine(id: 'reinforcements.d6', speaker: 'ulgra', duration: 0.721, grunt: 'order', gloss: 'REINFORCE ORDER', mouth: '44444444433', open: '06877888742'),
+      CommsLine(id: 'reinforcements.d7', speaker: 'skritch', duration: 1.1, grunt: 'cackle', gloss: 'GLEEFUL CACKLE'),
+      CommsLine(id: 'reinforcements.d8', speaker: 'grunnok', duration: 1.1, grunt: 'cackle', gloss: 'SLOW HAPPY HUFF'),
+      CommsLine(id: 'reinforcements.d9', speaker: 'blatch', duration: 1.1, grunt: 'cackle', gloss: 'GLEEFUL CACKLE'),
+      CommsLine(id: 'reinforcements.d10', speaker: 'nibb', duration: 1.1, grunt: 'cackle', gloss: 'GIDDY GIGGLE'),
+      CommsLine(id: 'reinforcements.d11', speaker: 'nibb', duration: 1.1, grunt: 'rally', gloss: 'MORE FRIENDS'),
+      CommsLine(id: 'reinforcements.d12', speaker: 'krag', duration: 1.1, grunt: 'cackle', gloss: 'RUMBLING CHUCKLE'),
+      CommsLine(id: 'reinforcements.d13', speaker: 'krag', duration: 1.1, grunt: 'rally', gloss: 'MORE STONE'),
+      CommsLine(id: 'reinforcements.d14', speaker: 'sliss', duration: 1.1, grunt: 'cackle', gloss: 'HISSING GIGGLE'),
+      CommsLine(id: 'reinforcements.d15', speaker: 'sliss', duration: 1.1, grunt: 'gloat', gloss: 'SMUG HISS'),
+      CommsLine(id: 'reinforcements.d16', speaker: 'grunnok', duration: 1.1, grunt: 'gloat', gloss: 'TROOPER BOAST'),
+      CommsLine(id: 'reinforcements.d17', speaker: 'blatch', duration: 1.1, grunt: 'rally', gloss: 'REINFORCE'),
+      CommsLine(id: 'reinforcements.d18', speaker: 'skritch', duration: 1.1, grunt: 'gloat', gloss: 'IMP CHATTER'),
     ],
   ),
   'sentinelIncoming': CommsTriggerSpec(
@@ -1270,6 +1289,9 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'demonRout.d5', speaker: 'skarn', duration: 1.068, grunt: 'alarm', gloss: 'FALL BACK', mouth: '44447777744444400', open: '05778989987765321'),
       CommsLine(id: 'demonRout.d6', speaker: 'morth', duration: 1.057, grunt: 'alarm', gloss: 'FALL BACK', mouth: '4444777777444333', open: '0578989788765321'),
       CommsLine(id: 'demonRout.d7', speaker: 'ulgra', duration: 1.04, grunt: 'alarm', gloss: 'HOLD THE LINE', mouth: '4444774477444433', open: '0687888898777632'),
+      CommsLine(id: 'demonRout.d8', speaker: 'nibb', duration: 1.1, grunt: 'alarm', gloss: 'SPRITELING PANIC'),
+      CommsLine(id: 'demonRout.d9', speaker: 'krag', duration: 1.1, grunt: 'snarl', gloss: 'HULK GRUMBLE'),
+      CommsLine(id: 'demonRout.d10', speaker: 'sliss', duration: 1.1, grunt: 'alarm', gloss: 'SKULKER PANIC'),
     ],
   ),
   'broodChatter': CommsTriggerSpec(
@@ -1296,6 +1318,15 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'broodChatter.d15', speaker: 'vexxa', duration: 0.724, grunt: 'snarl', gloss: 'IMPATIENCE', mouth: '33333444433', open: '03278877642'),
       CommsLine(id: 'broodChatter.d16', speaker: 'skarn', duration: 0.977, grunt: 'gloat', gloss: 'BOAST', mouth: '444444444774433', open: '066889887888742'),
       CommsLine(id: 'broodChatter.d17', speaker: 'morth', duration: 1.025, grunt: 'gloat', gloss: 'PROPHECY', mouth: '4444444444444333', open: '0548898777875421'),
+      CommsLine(id: 'broodChatter.d18', speaker: 'nibb', duration: 1.1, grunt: 'cackle', gloss: 'SPRITELING GIGGLE'),
+      CommsLine(id: 'broodChatter.d19', speaker: 'nibb', duration: 1.1, grunt: 'order', gloss: 'SPRITELING REPORT'),
+      CommsLine(id: 'broodChatter.d20', speaker: 'nibb', duration: 1.1, grunt: 'alarm', gloss: 'SPRITELING PANIC'),
+      CommsLine(id: 'broodChatter.d21', speaker: 'krag', duration: 1.1, grunt: 'snarl', gloss: 'HULK GRUMBLE'),
+      CommsLine(id: 'broodChatter.d22', speaker: 'krag', duration: 1.1, grunt: 'order', gloss: 'HULK ACK'),
+      CommsLine(id: 'broodChatter.d23', speaker: 'krag', duration: 1.1, grunt: 'gloat', gloss: 'HULK BOAST'),
+      CommsLine(id: 'broodChatter.d24', speaker: 'sliss', duration: 1.1, grunt: 'snarl', gloss: 'SKULKER HISS'),
+      CommsLine(id: 'broodChatter.d25', speaker: 'sliss', duration: 1.1, grunt: 'order', gloss: 'SKULKER REPORT'),
+      CommsLine(id: 'broodChatter.d26', speaker: 'sliss', duration: 1.1, grunt: 'cackle', gloss: 'SKULKER GIGGLE'),
     ],
   ),
   'regroupStart': CommsTriggerSpec(
@@ -1317,6 +1348,35 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'regroupStart.d8', speaker: 'skritch', duration: 0.87, grunt: 'rally', gloss: 'REGROUP', mouth: '00000444444333', open: '01378667875321'),
       CommsLine(id: 'regroupStart.d9', speaker: 'grunnok', duration: 0.872, grunt: 'rally', gloss: 'REGROUP', mouth: '33444447777444', open: '04577789999853'),
       CommsLine(id: 'regroupStart.d10', speaker: 'blatch', duration: 0.872, grunt: 'rally', gloss: 'REGROUP', mouth: '33344477744444', open: '03368899987532'),
+      CommsLine(id: 'regroupStart.d11', speaker: 'nibb', duration: 1.1, grunt: 'cackle', gloss: 'VICTORY CHEER'),
+      CommsLine(id: 'regroupStart.d12', speaker: 'krag', duration: 1.1, grunt: 'gloat', gloss: 'VICTORY CHEER'),
+      CommsLine(id: 'regroupStart.d13', speaker: 'sliss', duration: 1.1, grunt: 'cackle', gloss: 'VICTORY CHEER'),
+    ],
+  ),
+  'divePrep': CommsTriggerSpec(
+    name: 'divePrep',
+    priority: 4,
+    cooldown: 5.0,
+    ttl: 0.6,
+    chance: 0.6,
+    lines: [
+      CommsLine(id: 'divePrep.d0', speaker: 'skritch', duration: 1.1, grunt: 'warcry', gloss: 'DIVE CRY'),
+      CommsLine(id: 'divePrep.d1', speaker: 'skritch', duration: 1.1, grunt: 'cackle', gloss: 'GLEEFUL SHRIEK'),
+      CommsLine(id: 'divePrep.d2', speaker: 'grunnok', duration: 1.1, grunt: 'warcry', gloss: 'CHARGE BELLOW'),
+      CommsLine(id: 'divePrep.d3', speaker: 'grunnok', duration: 1.1, grunt: 'roar', gloss: 'CHARGE BELLOW'),
+      CommsLine(id: 'divePrep.d4', speaker: 'blatch', duration: 1.1, grunt: 'warcry', gloss: 'GUNNER CRY'),
+      CommsLine(id: 'divePrep.d5', speaker: 'blatch', duration: 1.1, grunt: 'snarl', gloss: 'TARGET LOCKED'),
+      CommsLine(id: 'divePrep.d6', speaker: 'nibb', duration: 1.1, grunt: 'warcry', gloss: 'TINY WAR CRY'),
+      CommsLine(id: 'divePrep.d7', speaker: 'nibb', duration: 1.1, grunt: 'cackle', gloss: 'GLEEFUL SHRIEK'),
+      CommsLine(id: 'divePrep.d8', speaker: 'krag', duration: 1.1, grunt: 'warcry', gloss: 'AVALANCHE ROAR'),
+      CommsLine(id: 'divePrep.d9', speaker: 'krag', duration: 1.1, grunt: 'roar', gloss: 'AVALANCHE ROAR'),
+      CommsLine(id: 'divePrep.d10', speaker: 'sliss', duration: 1.1, grunt: 'warcry', gloss: 'STRIKE HISS'),
+      CommsLine(id: 'divePrep.d11', speaker: 'sliss', duration: 1.1, grunt: 'snarl', gloss: 'STRIKE HISS'),
+      CommsLine(id: 'divePrep.d12', speaker: 'gorrak', duration: 1.1, grunt: 'warcry', gloss: 'ATTACK CRY'),
+      CommsLine(id: 'divePrep.d13', speaker: 'vexxa', duration: 1.1, grunt: 'warcry', gloss: 'ATTACK CRY'),
+      CommsLine(id: 'divePrep.d14', speaker: 'skarn', duration: 1.1, grunt: 'warcry', gloss: 'ATTACK CRY'),
+      CommsLine(id: 'divePrep.d15', speaker: 'morth', duration: 1.1, grunt: 'warcry', gloss: 'ATTACK CHANT'),
+      CommsLine(id: 'divePrep.d16', speaker: 'ulgra', duration: 1.1, grunt: 'warcry', gloss: 'ATTACK BELLOW'),
     ],
   ),
 };

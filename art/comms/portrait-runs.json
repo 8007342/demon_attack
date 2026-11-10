@@ -1080,5 +1080,154 @@
    "prompt": "pixel art, 16-bit video game background scene, empty interior with no people, wide view, soft depth, moody low-key lighting, rich detail, crisp cel shading, demonic foundry chamber, glowing lava channels, chains and anvils, rune-carved walls, smoke, red and orange glow",
    "sha256": "588286d0b78015b6c3cd19ab67938d75452a56e377d2a5ba69ccb62fbd83c3f6"
   }
+ },
+ "nibb": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 733403,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, tiny round lime green gremlin demon spriteling, huge bat ears, one small stubby horn, big glossy purple eyes, wide toothy grin with two buck fangs, oversized dented iron helmet tilted on its head",
+   "source": null,
+   "sha256": "81b2c9740ce0fad64cd723d2e19ac177613c218417fb425942cccd6655f60851"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "nibb-733403.png",
+   "sha256": "6713776d29983823ebf445bd0596f3f68c229c4f5fd8078b5be4f465adf8709b"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "nibb-733403.png",
+   "sha256": "476c369c6aa1aaa683f4a02a47e87ba15d1682ace1eec451959db70e47f7daca"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "nibb-733403.png",
+   "sha256": "2d72068604250868cdb3e6eeda8557fe373d12b1f12f878ad912b7c19da01992"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "nibb-733403.png",
+   "sha256": "46c2e54f0fffcc7a13736258478b717468bf3abff2b7d987dd567c14a28042d0"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "nibb-733403.png",
+   "sha256": "630137ef9f7f29eda6f737a8efb47137451e20c2d03a8652660a8fcf51c02a0b"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "krag": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 733502,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, massive grey stone gargoyle demon hulk, cracked granite skin with patches of moss, heavy brow, glowing amber eyes, broken stub horns, square jaw with blunt fangs, iron chain collar",
+   "source": null,
+   "sha256": "fbec6616eeee1bd814129b955a98796a7f4fe95f873542848d73fc2c53878501"
+  },
+  "base": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733009,
+   "prompt": "Keep exactly the same character design, pose, framing, pixel art style and flat grey background. Recolour the face and skin to cracked grey granite stone with darker grey shading and a few small moss patches; keep the glowing amber eyes and the iron chain.",
+   "source": "krag-733502.png",
+   "sha256": "81cd5f43e6f3abb51f282b67a9cb5f68f490bfcbe49d94e2e99604eab4a6310a"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "krag-733502-base.png",
+   "sha256": "fc9888774474977bfa3137e7f3d2817205e8cad12c4414afd534325df7bfecb2"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "krag-733502-base.png",
+   "sha256": "834ccdc6473c39311f538b2d75994e464d820fe10129b78244134c31b7a99295"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "krag-733502-base.png",
+   "sha256": "5ccd3a58b9ceb8af8529928e1e3e8f40d1589b8c24c40f6b5963f0523db8f113"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "krag-733502-base.png",
+   "sha256": "bbc8225de234fe5d51269d0332d2912450edefec96d9d7b1ce6ca6d061c2114c"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "krag-733502-base.png",
+   "sha256": "f1025636c5682a650fdd223ab0b14c26f74bbb564d294b2ca6714f112172915a"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
+ },
+ "sliss": {
+  "keyframe": {
+   "workflow": "art/workflows/comms/portrait-sdxl-pixel.json",
+   "seed": 733603,
+   "prompt": "pixel art, 16-bit video game dialogue portrait, head and shoulders bust, facing the viewer, centered in frame, bold dark outline, limited colour palette, crisp cel shading, flat solid light grey background, cartoon gargoyle monster character, playful but menacing, expressive face, bat wings folded behind the shoulders, lean amber orange serpentine gargoyle demon skulker, frilled spiky crest, narrow slit snake eyes glowing green, long thin fangs, scaled hood, leather bandolier",
+   "source": null,
+   "sha256": "a8f3ee3483806af067dc20602b9a2778c4966c29363290aca5d1d4de6e82a5a9"
+  },
+  "base": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733009,
+   "prompt": "Keep exactly the same character design, pose, framing, pixel art style and flat grey background. Recolour the skin and head to amber orange scales with darker rust shading; keep the glowing eyes green and the orange scaled hood.",
+   "source": "sliss-733603.png",
+   "sha256": "e1be38226be060295f7c747c5e9e716e300ed5bf7319f5a1d37d7e5d90015e2e"
+  },
+  "blink": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733000,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: eyes fully closed in a slow blink, glow hidden, everything else unchanged.",
+   "source": "sliss-733603-base.png",
+   "sha256": "80cf7fb97c64eacde504b19107ac6d734a3f7b6932d54c2c48078132ee891c1b"
+  },
+  "shout": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733001,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: mouth open barking an order, fangs showing, brow furrowed.",
+   "source": "sliss-733603-base.png",
+   "sha256": "0a242014005c86b1fed503d332777f87d21ac0c8f1a969ed817f094e0fd4d494"
+  },
+  "grunt": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733002,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: jaw opened very wide in a huge roar, all fangs bared, tongue visible, eyes glowing brighter.",
+   "source": "sliss-733603-base.png",
+   "sha256": "4515647284f5bac155e36da69dfcc63d112377aa639a468136d1d71dd283c1b1"
+  },
+  "happy": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733003,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: smug gloating toothy grin, one eyebrow raised, narrowed eyes.",
+   "source": "sliss-733603-base.png",
+   "sha256": "98bf0f373d86016d28e54d9edafbba3935431ea7340b5b88a267a1863a6c243c"
+  },
+  "worried": {
+   "workflow": "art/workflows/comms/portrait-qwen-edit.json",
+   "seed": 733004,
+   "prompt": "Keep exactly the same character, head position, pose, framing, clothing, colours, pixel art style and flat grey background. Change only the facial expression: alarmed angry snarl, eyes wide, teeth clenched, ears pinned back.",
+   "source": "sliss-733603-base.png",
+   "sha256": "847aa7f0d3360b4c932623855223ae4b8a3a0c264687341b6a6ea26a35243997"
+  },
+  "matte": "art/workflows/comms/matte-birefnet.json"
  }
 }

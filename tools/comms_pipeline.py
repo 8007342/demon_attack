@@ -539,6 +539,7 @@ def stage_expressive(args):
     cb = spec['chatterbox']
     refs = json.loads((WORK / 'refs.json').read_text())
     todo = []
+    emotion_of = {}
     for clip_id, _trigger, kind, line in clip_entries(lines):
         if kind != 'human':
             continue
@@ -558,6 +559,7 @@ def stage_expressive(args):
             continue
         rank = EXPRESSIVE_ORDER.index(emotion) if emotion in EXPRESSIVE_ORDER else len(EXPRESSIVE_ORDER)
         todo.append((rank, str(ref), clip_id, text, params, key))
+        emotion_of[clip_id] = emotion
     # Hottest first; within a group one reference after another, so each
     # reference's conditionals are prepared once.
     todo.sort()
@@ -581,18 +583,53 @@ def stage_expressive(args):
             if ref != current:
                 model.prepare_conditionals(ref, exaggeration=params['exaggeration'])
                 current = ref
-            audio = chatterbox_say(model, text, params, seed_of('cb:' + clip_id))
+            # A take that fails the accept rules (length, clipping, the hot
+            # emotions' pitch floor) is re-rolled with a new seed, up to
+            # `retries` times; the best take is kept.
+            best = None
+            for attempt in range(1 + cb['accept'].get('retries', 0)):
+                seed = seed_of('cb:' + clip_id + (f':{attempt}' if attempt else ''))
+                audio = chatterbox_say(model, text, params, seed)
+                verdict = take_verdict(audio, clip_id, emotion_of[clip_id], spec)
+                if best is None or verdict[0] > best[0]:
+                    best = (verdict[0], audio, attempt, verdict[1])
+                if verdict[1] is None:
+                    break
+            _score, audio, attempt, why = best
             write_wav(out, audio)
             out.with_suffix('.key').write_text(key)
+            retried = f' (take {attempt}{", still " + why if why else ""})' if attempt or why else ''
         except Exception as e:  # noqa: BLE001 - the Kokoro clip stays the fallback
             error = repr(e)
             failed += 1
         seconds = round(time.time() - t0, 2)
-        print(f'{clip_id} {seconds}s{" FAIL " + error if error else ""}', flush=True)
+        print(f'{clip_id} {seconds}s{" FAIL " + error if error else retried}', flush=True)
         record = json.loads(log.read_text()) if log.exists() else {}
         record[clip_id] = {'seconds': seconds, 'error': error, 'text': text}
         log.write_text(json.dumps(record, indent=1))
     print(f'expressive: {len(todo)} done, {failed} failed, {time.time() - t_start:.0f}s wall')
+
+
+def take_verdict(audio, clip_id, emotion, spec):
+    """(score, reason) of a fresh take against the accept rules; reason is
+    None when it passes. The score ranks failed takes (closest to passing)."""
+    import numpy as np
+    x = trim_silence(audio)
+    k = trim_silence(read_wav(WORK / 'raw' / f'{clip_id}.wav'))
+    rules = spec['chatterbox']['accept']
+    ratio = len(x) / max(1, len(k))
+    if len(x) < .3 * SR or np.sqrt(np.mean(x ** 2)) < 1e-3:
+        return -100.0, 'empty'
+    if np.mean(np.abs(x) > .995) > rules['max_clipped_fraction']:
+        return -50.0, 'clipped'
+    if not rules['min_length_ratio'] <= ratio <= rules['max_length_ratio']:
+        return -10 - abs(ratio - 1), f'length ratio {ratio:.2f}'
+    floor = rules.get('min_pitch_range_st', {}).get(emotion)
+    if floor:
+        r = prosody(x)['pitch_range_st']
+        if r < floor:
+            return r - floor, f'pitch range {r:.1f} st'
+    return 0.0, None
 
 
 def accept_expressive(clip_id, spec, line=None):
@@ -792,13 +829,13 @@ def synth_grunt(clip_id, officer, kind, spec, length='normal'):
         if cons in PLOSIVES or cons.endswith(('ɡ', 'k', 'b', 'd')):
             # Closure, then a short burst crossfading into the vowel.
             bump(close_env, at - .03, .045, .75, .015, .018)
-            bump(noise_env, at - .006, .03, .5, .01, .016)
+            bump(noise_env, at - .014, .036, .32, .016, .016)
         if cons in NASALS or cons.startswith('ŋ'):
             bump(close_env, at, c_dur, .55, .01, .02)
         if cons in FRICATIVES:
             bump(fric_env, at - .02, c_dur + .03, .7, .015, .02)
         if cons == 'h':
-            bump(noise_env, at - .02, .05, .9, .015, .02)
+            bump(noise_env, at - .03, .06, .45, .025, .02)
         if 'ɹ' in onset:
             bump(roll, at, min(.08, d * .5), 1, .01, .02)
         # Vowel envelope: rounded attack, kind-specific body, rounded release
@@ -815,7 +852,7 @@ def synth_grunt(clip_id, officer, kind, spec, length='normal'):
                 bump(roll, at + d * .6, d * .4, 1, .01, .02)
             if cc in PLOSIVES:
                 bump(close_env, at + d - .01, .04, .75, .015, .02)
-                bump(noise_env, at + d + .006, .03, .35, .01, .016)
+                bump(noise_env, at + d, .034, .25, .016, .016)
             elif cc in NASALS:
                 bump(close_env, at + d * .7, d * .3 + .03, .55, .015, .03)
             elif cc in FRICATIVES:
@@ -825,6 +862,9 @@ def synth_grunt(clip_id, officer, kind, spec, length='normal'):
             locus = fa * (.75 if cons in ('b', 'm') else 1.12 if cons in ('k', 'ɡ') and k == 1 else .9)
             formants[k] += [(at - .01, locus), (at + .04, fa), (at + d * .85, fb)]
         at += d + gap
+    # A low throat murmur under the whole phrase: between syllables the
+    # growl never drops to silence (no gaps to click into).
+    bump(voice_env, lead, at - lead, .07, .03, .08)
     f0_k.append((total, f0_k[-1][1] * .9))
     # ---- control tracks at 1 kHz, eased, then interpolated to audio rate
     rate = 1000
@@ -836,7 +876,7 @@ def synth_grunt(clip_id, officer, kind, spec, length='normal'):
     f0 *= 1 + .035 * np.sin(2 * np.pi * params['wobble'] * t + rng.uniform(0, 6.3))         # vibrato
     f0 *= 1 + signal.lfilter([.015], [1, -.985], rng.normal(0, 1, n)) * .6                # jitter
     f0 = np.clip(f0, 30, 900)
-    ftracks = [track(formants[k]) for k in range(4)]
+    ftracks = [np.minimum(track(formants[k]), 3800) for k in range(4)]
     # ---- glottal source: Rosenberg flow on a continuous phase, its derivative
     phase = np.cumsum(f0 / SR)
     frac = phase % 1.0
@@ -893,8 +933,8 @@ def discontinuities(x, sr=SR):
     """Clicks and splices in a synthesized growl: (spikes, steps). A spike
     is a sample whose second difference exceeds both 10x the local median
     level of second differences (30 ms around it) and 5 % of the clip's
-    peak, and is isolated (3x above every second difference 3-30 ms before
-    and after it, which a recurring glottal pulse never is): a waveform
+    peak, and is isolated (3x above every second difference 3-60 ms before
+    and after it, which a recurring glottal or false-fold pulse never is): a waveform
     corner or jump heard as a tick. A step is a jump of more
     than 24 dB between neighbouring 2.5 ms blocks from (near-)silence (at
     most -48 dB of the peak) to a loud block (above -30 dB) or back: a sound
@@ -908,9 +948,9 @@ def discontinuities(x, sr=SR):
     peak = np.abs(x).max() + 1e-12
     d2 = np.abs(np.diff(x, 2))
     local = ndimage.median_filter(d2, size=int(.03 * sr), mode='nearest') * 1.4826
-    # Isolation: a click stands out 3x above everything 3-30 ms before and
-    # after it; glottal excitations recur every pitch period and do not.
-    near, far = int(.003 * sr), int(.03 * sr)
+    # Isolation: a click stands out 3x above everything 3-60 ms before and
+    # after it; glottal and false-fold pulses recur (down to ~17 Hz) and do not.
+    near, far = int(.003 * sr), int(.06 * sr)
     half = (far - near) // 2
     centred = ndimage.maximum_filter1d(d2, size=2 * half + 1, mode='nearest')
     shift = near + half
@@ -955,9 +995,13 @@ def stage_grunts(args):
     log = WORK / 'grunts.json'
     old = json.loads(log.read_text()) if log.exists() else {}
     old.update(report)
+    ids = {clip_id for clip_id, _t, kind, _l in clip_entries(lines) if kind == 'demon'}
+    old = {k: v for k, v in old.items() if k in ids}
     log.write_text(json.dumps(old, indent=1, ensure_ascii=False))
-    bad = {k: v for k, v in report.items() if v['spikes'] or v['steps']}
-    print(f'grunts: rendered {done} demon clips, {len(bad)} with clicks or abrupt steps')
+    # The gate covers the whole set, cached clips included.
+    bad = {k: v for k, v in old.items() if v['spikes'] or v['steps']}
+    print(f'grunts: rendered {done} demon clips; {len(old)} checked, {len(bad)} with clicks or abrupt steps, '
+          f'{sum(v["spikes"] for v in old.values())} spikes, {sum(v["steps"] for v in old.values())} steps')
     for k, v in bad.items():
         print(f'  {k}: {v["spikes"]} spikes, {v["steps"]} steps')
     if bad:
@@ -1134,6 +1178,95 @@ def tone(freq, seconds, level):
     return np.sin(2 * np.pi * freq * t) * env * level
 
 
+def wsola(x, factor, frame=.03, search=.008):
+    """Time-stretch by `factor` (> 1 longer) keeping pitch: waveform-similarity
+    overlap-add of Hann frames at 50 % overlap, each placed where it best
+    continues the previous one (cross-correlation within +-search)."""
+    import numpy as np
+    if abs(factor - 1) < 1e-3:
+        return x
+    n = int(frame * SR)
+    hop_out = n // 2
+    hop_in = hop_out / factor
+    tol = int(search * SR)
+    win = np.hanning(n)
+    out_len = int(len(x) * factor) + n
+    out = np.zeros(out_len)
+    norm = np.zeros(out_len)
+    pad = np.concatenate([np.zeros(tol), x, np.zeros(n + tol)])
+    prev = None
+    k = 0
+    while True:
+        centre = int(k * hop_in) + tol
+        if centre + n + tol > len(pad) or k * hop_out + n > out_len:
+            break
+        if prev is None:
+            best = centre
+        else:
+            lo, hi = centre - tol, centre + tol
+            seg = pad[lo:hi + n]
+            target = prev[hop_out:hop_out + n // 2]
+            corr = np.correlate(seg[:2 * tol + n // 2], target, 'valid')
+            best = lo + int(np.argmax(corr))
+        grain = pad[best:best + n]
+        at = k * hop_out
+        out[at:at + n] += grain * win
+        norm[at:at + n] += win
+        prev = pad[best:best + n]
+        k += 1
+    y = out / np.maximum(norm, 1e-3)
+    return y[:int(len(x) * factor)]
+
+
+def deliver(x, post):
+    """Per-emotion post-processing of a clean take (audio.json ->
+    chatterbox.emotions.<e>.post): `expand` widens the intonation around
+    the clip's median pitch (1.25 = 25 % wider) and `shift` raises it in
+    semitones, by resampling the voice at a rate that follows its own f0
+    contour (pitch and the formants move together by at most +-3 st); then
+    WSOLA sets the overall tempo (`tempo` > 1 faster) without moving the
+    pitch; `dynamics` widens the level contour (stressed syllables louder,
+    the soft ones softer). Deterministic; a no-op without `post`."""
+    import numpy as np
+    from scipy import ndimage
+    if not post:
+        return x
+    expand, shift, tempo = post.get('expand', 1.0), post.get('shift', 0.0), post.get('tempo', 1.0)
+    f0 = f0_track(x)
+    y = x
+    if len(f0) > 5 and (f0 > 0).sum() > 5 and (abs(expand - 1) > 1e-3 or shift):
+        st = np.zeros(len(f0))
+        voiced = f0 > 0
+        st[voiced] = 12 * np.log2(f0[voiced] / np.median(f0[voiced]))
+        # Hold the contour through unvoiced frames, then smooth it (40 ms).
+        idx = np.nonzero(voiced)[0]
+        st = np.interp(np.arange(len(f0)), idx, st[idx])
+        st = ndimage.uniform_filter1d(st, 5)
+        semis = np.clip((expand - 1) * st + shift, -3, 3)
+        hop = 240
+        frame_t = (np.arange(len(f0)) * hop + 480) / SR
+        rate = 2 ** (np.interp(np.arange(len(x)) / SR, frame_t, semis) / 12)
+        pos = np.concatenate([[0], np.cumsum(rate)[:-1]])
+        pos = pos[pos < len(x) - 1]
+        y = np.interp(pos, np.arange(len(x)), x)
+    # Restore the clip's length, then apply the tempo.
+    y = wsola(y, len(x) / max(1, len(y)) / tempo)
+    dyn = post.get('dynamics', 1.0)
+    if abs(dyn - 1) > 1e-3 and len(y) > 2400:
+        # Stress: widen the level contour (30 ms RMS in dB, around its active
+        # median) by `dynamics`, at most +-6 dB, applied as a smooth gain.
+        win = int(.03 * SR)
+        rms = np.sqrt(ndimage.uniform_filter1d(y ** 2, win) + 1e-12)
+        db = 20 * np.log10(rms / rms.max())
+        active = db > -40
+        if active.sum() > win:
+            ref = np.median(db[active])
+            gain_db = np.clip((dyn - 1) * (db - ref), -6, 6) * active
+            gain_db = ndimage.uniform_filter1d(gain_db, win)
+            y = y * 10 ** (gain_db / 20)
+    return y
+
+
 def radio_chain(x, demon, rng, spec):
     import numpy as np
     from scipy import signal
@@ -1207,6 +1340,8 @@ def stage_radio(args):
                 engine = 'chatterbox'
         if raw is None:
             raw = read_wav(WORK / 'raw' / f'{clip_id}.wav')
+        if not demon:
+            raw = deliver(raw, spec['chatterbox']['emotions'].get(line.get('emotion', 'calm'), {}).get('post'))
         rng = np.random.default_rng(seed_of('radio:' + clip_id))
         out, clean, lead = radio_chain(raw, demon, rng, spec)
         target = spec['loudness']['demon_lufs' if demon else 'human_lufs']

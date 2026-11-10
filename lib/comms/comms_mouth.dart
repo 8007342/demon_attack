@@ -115,7 +115,8 @@ class CommsMouth {
     final level = <int>[];
     var target = 0, current = 0;
     for (final v in smooth) {
-      while (target < thresholds.length && v > thresholds[target] + hysteresis) {
+      while (target < thresholds.length &&
+          v > thresholds[target] + hysteresis) {
         target++;
       }
       while (target > 0 && v < thresholds[target - 1] - hysteresis) {
@@ -124,32 +125,25 @@ class CommsMouth {
       current += (target - current).sign;
       level.add(current);
     }
-    // The clip always ends on a closed mouth, closing step by step.
-    for (var i = level.length - 1, cap = 0; i >= 0; i--, cap++) {
-      if (level[i] <= cap) break;
-      level[i] = cap;
-    }
-    // 4. no blips: a run shorter than minHold that is not a step of a
-    // monotone ramp takes its predecessor's level.
+    // 4. no blips: a run shorter than minHold inside the clip that is not a
+    // step of a monotone ramp takes its predecessor's level.
     for (var pass = 0; pass < 8; pass++) {
       var changed = false;
-      for (final (i, j) in _runs(level)) {
-        if (j - i >= minHold || level.length <= minHold) continue;
-        final before = i > 0 ? level[i - 1] : null;
-        final after = j < level.length ? level[j] : null;
-        final ramp =
-            before != null &&
-            after != null &&
-            (before - level[i]).sign == (level[i] - after).sign &&
-            before != level[i];
-        if (ramp) continue;
-        final fill = before ?? after!;
+      for (final (i, j) in _runs(level).toList()) {
+        if (j - i >= minHold || i == 0 || j == level.length) continue;
+        final before = level[i - 1], after = level[j];
+        if ((before - level[i]).sign == (level[i] - after).sign) continue;
         for (var q = i; q < j; q++) {
-          level[q] = fill;
+          level[q] = before;
         }
         changed = true;
       }
       if (!changed) break;
+    }
+    // The clip always ends on a closed mouth, closing step by step.
+    for (var i = level.length - 1, cap = 0; i >= 0; i--, cap++) {
+      if (level[i] <= cap) break;
+      level[i] = cap;
     }
     // 5. shapes: a run of an open level is the rounded 'oo' or the spread
     // 'ee' when most of it was measured so (demons keep fangs: no 'oo',

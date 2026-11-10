@@ -210,7 +210,12 @@
     "march": {
       "seed": 732802,
       "base_edit": "Make her look like a woman in her fifties: add grey streaks through her dark hair and faint smile lines and crow's feet around the eyes.",
-      "keep": 1.0
+      "keep": 1.0,
+      "lips": [
+        51,
+        86,
+        72
+      ]
     },
     "mensah": {
       "seed": 732902,
@@ -241,7 +246,12 @@
     },
     "nibb": {
       "count": 4,
-      "seed": 733403
+      "seed": 733403,
+      "lips": [
+        48,
+        103,
+        77
+      ]
     },
     "krag": {
       "count": 4,
