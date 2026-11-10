@@ -66,13 +66,37 @@ def load_spec():
     return json.loads(SPEC.read_text())
 
 
+VAE_HOP = 3840  # pad guides to a multiple of this; ACE then returns the same length
+
+
+def cue_bpm(spec, cue):
+    """Exact tempo of a cue: a level cue (l<n>-*) runs at its level's grid
+    (tools/music_motifs.py: integer samples per bar); a reference take at its
+    group's tempo; everything else at the spec default (120)."""
+    import music_motifs
+    name = cue['name']
+    if name.startswith('l') and len(name) > 2 and name[1].isdigit() and name[2] == '-':
+        return music_motifs.bpm_of(name)
+    grp = spec['groups'].get(cue.get('group', ''), {})
+    return float(cue.get('bpm', grp.get('bpm', spec['bpm'])))
+
+
+def spb(bpm):
+    """Samples per beat at 48 kHz (may be fractional; bars are integers)."""
+    return SR * 60.0 / bpm
+
+
+def beats_samples(beats, bpm):
+    return int(round(beats * spb(bpm)))
+
+
 def mode_of(cue):
     return cue.get('mode', 'a2a' if 'group' in cue else 'text')
 
 
 def reference_cues(spec):
     """One virtual text-to-music cue per group: its genre reference take."""
-    return [{'name': f'ref-{g}', 'kind': 'reference', 'mode': 'text', 'group': g, 'gen_seconds': 30,
+    return [{'name': f'ref-{g}', 'kind': 'reference', 'mode': 'text', 'group': g, 'gen_seconds': 30, 'bpm': grp.get('bpm', spec['bpm']),
              'keyscale': grp['keyscale'], 'seeds': grp['ref_seeds'], 'pick': grp.get('ref_pick'),
              'tags': f"{grp['tags']}, {grp['genre']}"} for g, grp in spec['groups'].items()]
 
@@ -93,17 +117,22 @@ def selected(args, cue):
 
 
 def cue_tags(spec, cue):
+    tempo = f"{round(cue_bpm(spec, cue))} bpm"
     if mode_of(cue) == 'text':
-        tags = f"{cue['tags']}, {spec['common_tags']}"
+        tags = f"{cue['tags']}, {spec['common_tags']}, {tempo}"
         if cue['kind'] == 'reference':
             return tags + ', seamless loop'
         return tags
     grp = spec['groups'][cue['group']]
     extra = spec['tier_tags'].get(str(cue.get('tier', ''))) or spec['part_tags'].get(cue.get('part', '')) or ''
-    parts = [grp['tags'], extra, cue.get('extra_tags', ''), spec['common_tags']]
+    parts = [grp['tags'], extra, cue.get('extra_tags', ''), spec['common_tags'], tempo]
     if cue['kind'] != 'loop':
         parts.append('short cue with a clear ending')
-    return ', '.join(p for p in parts if p)
+    tags = ', '.join(p for p in parts if p)
+    if cue.get('lyrics', '[instrumental]') != '[instrumental]':
+        # Wordless vocalise cues: allow the voice, still no words.
+        tags = tags.replace('instrumental, no vocals, ', '').replace('instrumental ', '') + ', wordless female soprano vocalise'
+    return tags
 
 
 def loudness_of(spec, cue):
@@ -125,7 +154,7 @@ def cand_name(cue, seed, denoise=None):
 def overrides(spec, cue, seed, denoise=None, guide_seconds=None):
     n = spec['nodes']
     o = {'seed': seed, f"$node:{n['text_seed']}": seed, f"$node:{n['tags']}": cue_tags(spec, cue),
-         f"$node:{n['lyrics']}": spec['lyrics'], f"$node:{n['bpm']}": spec['bpm']}
+         f"$node:{n['lyrics']}": cue.get('lyrics', spec['lyrics']), f"$node:{n['bpm']}": int(round(cue_bpm(spec, cue)))}
     if mode_of(cue) == 'text':
         o.update({f"$node:{n['duration']}": float(cue['gen_seconds']), f"$node:{n['seconds']}": float(cue['gen_seconds']),
                   f"$node:{n['keyscale']}": cue['keyscale']})
@@ -151,7 +180,7 @@ def requests(spec, args, stage):
     """Yield (cue, seed, denoise, workflow, inputs{name: local path}, overrides)."""
     work = Path(args.work)
     for cue in all_cues(spec):
-        if not selected(args, cue):
+        if not selected(args, cue) or (cue.get('keep') and not args.cue):
             continue
         mode = mode_of(cue)
         if stage == 'refs' and cue['kind'] == 'reference':
@@ -163,9 +192,12 @@ def requests(spec, args, stage):
         elif stage == 'a2a' and mode == 'a2a':
             refs = chosen_refs(work)
             info = guide_info(work, cue['name'])
-            inputs = {'guide': str(work / 'guides' / f"{cue['name']}.flac"), 'reference': str(work / refs[cue['group']])}
+            workflow = spec['workflows'][spec['groups'][cue['group']].get('workflow', 'a2a')]
+            inputs = {'guide': str(work / 'guides' / f"{cue['name']}.flac")}
+            if 'plain' not in workflow:
+                inputs['reference'] = str(work / refs[cue['group']])
             for seed, d in a2a_grid(spec, cue):
-                yield cue, seed, d, spec['workflows']['a2a'], inputs, overrides(spec, cue, seed, d, info['seconds'])
+                yield cue, seed, d, workflow, inputs, overrides(spec, cue, seed, d, info['seconds'])
 
 
 def cmd_guides(args):
@@ -177,12 +209,19 @@ def cmd_guides(args):
     for cue in spec['cues']:
         if not selected(args, cue) or mode_of(cue) != 'a2a':
             continue
+        if cue.get('keep') and not args.cue:
+            continue
         audio, offset, beats = music_guide.guide(cue['name'])
+        bpm = cue_bpm(spec, cue)
+        # Pad to a multiple of the VAE hop so ACE returns exactly this length.
+        pad = (-len(audio)) % VAE_HOP
+        audio = np.concatenate([audio, np.zeros((pad, 2))])
         path = out / f"{cue['name']}.flac"
         write_audio(path, audio)
-        meta[cue['name']] = {'offset': offset, 'beats': beats, 'seconds': round(len(audio) / SR, 4),
+        meta[cue['name']] = {'offset': offset, 'offsetSamples': int(round(offset * SR)), 'beats': beats, 'bpm': bpm,
+                             'windowSamples': beats_samples(beats, bpm), 'samples': len(audio), 'seconds': len(audio) / SR,
                              'sha256': hashlib.sha256(audio.astype('<f4').tobytes()).hexdigest()[:16]}
-        print(f"guide {cue['name']:11} {len(audio) / SR:5.1f}s window at {offset:.1f}s")
+        print(f"guide {cue['name']:16} {bpm:8.3f} BPM {len(audio) / SR:6.3f}s window {beats_samples(beats, bpm)} samples at {offset:.3f}s")
     meta_path.write_text(json.dumps(dict(sorted(meta.items())), indent=1))
 
 
@@ -209,9 +248,13 @@ def comfy_upload(comfy, path, name):
     return f"{info['subfolder']}/{info['name']}"
 
 
-def comfy_run(comfy, graph, target):
+def comfy_submit(comfy, graph):
     req = urllib.request.Request(f'{comfy}/prompt', data=json.dumps({'prompt': graph}).encode(), headers={'Content-Type': 'application/json'})
-    pid = json.load(urllib.request.urlopen(req))['prompt_id']
+    return json.load(urllib.request.urlopen(req))['prompt_id']
+
+
+def comfy_run(comfy, graph, target, pid=None):
+    pid = pid or comfy_submit(comfy, graph)
     while True:
         hist = json.load(urllib.request.urlopen(f'{comfy}/history/{pid}'))
         status = hist.get(pid, {}).get('status', {}).get('status_str')
@@ -231,6 +274,15 @@ def cmd_generate(args):
     spec = load_spec()
     work = Path(args.work); work.mkdir(parents=True, exist_ok=True)
     uploaded = {}
+    batch = []  # queued together so they run back to back on one model load
+
+    def flush():
+        for pid, graph, target, cue, seed, d, workflow, o, inputs, t in batch:
+            comfy_run(args.comfy, graph, target, pid)
+            target.with_suffix('.flac.provenance.json').write_text(json.dumps({'cue': cue['name'], 'seed': seed, 'denoise': d, 'workflow': workflow, 'overrides': o, 'inputs': {k: Path(v).name for k, v in inputs.items()}}, indent=1))
+            print(f'generated {target.name} ({time.time() - t:.1f}s since queued)', flush=True)
+        batch.clear()
+
     for cue, seed, d, workflow, inputs, o in requests(spec, args, args.stage):
         target = work / f'{cand_name(cue, seed, d)}.flac'
         if target.exists():
@@ -250,10 +302,10 @@ def cmd_generate(args):
             node, field = key.split(':', 1)[1].split('.')
             if node in graph:
                 graph[node]['inputs'][field] = value
-        t = time.time()
-        comfy_run(args.comfy, graph, target)
-        target.with_suffix('.flac.provenance.json').write_text(json.dumps({'cue': cue['name'], 'seed': seed, 'denoise': d, 'workflow': workflow, 'overrides': o, 'inputs': {k: Path(v).name for k, v in inputs.items()}}, indent=1))
-        print(f'generated {target.name} ({time.time() - t:.1f}s)', flush=True)
+        batch.append((comfy_submit(args.comfy, graph), graph, target, cue, seed, d, workflow, o, inputs, time.time()))
+        if len(batch) >= args.batch:
+            flush()
+    flush()
 
 
 def cmd_ingest(args):
@@ -361,8 +413,9 @@ def best_phase(env, period, start=0, stop=None):
     return float(phases[i]), float(scores[i])
 
 
-def analyse(audio, fixed_bpm=None):
-    """Tempo, eighth-note grid, bar phase (downbeat) and drift of one candidate."""
+def analyse(audio, fixed_bpm=None, around=None):
+    """Tempo, eighth-note grid, bar phase (downbeat) and drift of one candidate.
+    `around`: search the tempo within +-12% of this BPM (default 104-136)."""
     feat = features(audio)
     env, fps = feat['env'], SR / HOP
     skip = int(1.0 * fps)  # the generator's first second is often a pickup
@@ -371,7 +424,8 @@ def analyse(audio, fixed_bpm=None):
         # Eighth-note lattice score: robust to on/off-beat accents.
         def tempo_score(bpm):
             return best_phase(body, 30 * fps / bpm, skip)[1]
-        coarse = np.arange(104, 136.01, 0.25)
+        lo, hi = (around * .88, around * 1.12) if around else (104, 136)
+        coarse = np.arange(lo, hi + .01, 0.25)
         b0 = coarse[int(np.argmax([tempo_score(b) for b in coarse]))]
         fine = np.arange(b0 - 0.3, b0 + 0.301, 0.02)
         bpm = float(fine[int(np.argmax([tempo_score(b) for b in fine]))])
@@ -413,8 +467,8 @@ def analyse(audio, fixed_bpm=None):
     }
 
 
-def motif_features(audio):
-    """Beat-synchronous chroma (one 12-bin column per eighth note at 120 BPM),
+def motif_features(audio, bpm=120.0):
+    """Beat-synchronous chroma (one 12-bin column per eighth note at `bpm`),
     a smoothed onset envelope and the log-mel texture, for motif comparison."""
     mono = audio.mean(axis=1)
     mag = stft_mag(mono, 4096)
@@ -424,16 +478,17 @@ def motif_features(audio):
     # Log-compressed chroma so loud low partials do not swamp the melody.
     power = np.log1p(mag[:, sel] * 4)
     chroma = np.stack([power[:, pc == k].sum(1) for k in range(12)], axis=1)
-    step = int(0.25 * SR / HOP)  # 25 frames per eighth note
-    cols = len(chroma) // step
-    beat = chroma[:cols * step].reshape(cols, step, 12).mean(axis=1)
+    step = 30.0 / bpm * SR / HOP  # frames per eighth note (fractional)
+    cols = int(len(chroma) // step)
+    edges = np.round(np.arange(cols + 1) * step).astype(int)
+    beat = np.stack([chroma[edges[k]:max(edges[k] + 1, edges[k + 1])].mean(axis=0) for k in range(cols)])
     beat /= np.linalg.norm(beat, axis=1, keepdims=True) + 1e-9
     # The progression: bass-register chroma (riff roots, 40-260 Hz) per bar.
     low = (freqs > 40) & (freqs < 260)
     lpc = np.round(12 * np.log2(freqs[low] / 440)).astype(int) % 12
     lpow = mag[:, low] ** 2
     lchroma = np.stack([lpow[:, lpc == k].sum(1) for k in range(12)], axis=1)
-    bar = int(2.0 * SR / HOP)
+    bar = int(round(4 * 60.0 / bpm * SR / HOP))
     bars = len(lchroma) // bar
     prog = lchroma[:bars * bar].reshape(bars, bar, 12).mean(axis=1)
     prog /= np.linalg.norm(prog, axis=1, keepdims=True) + 1e-9
@@ -460,12 +515,12 @@ def motif_similarity(a, b):
             'mel': _corr(a['mel'][:m], b['mel'][:m])}
 
 
-def genre_metrics(audio):
+def genre_metrics(audio, bpm=120.0):
     """Loudness-independent listening proxies: tempo, onset density, spectral
     centroid, flatness (noise-like/distorted spectra are flatter), crest
     factor (distortion and dense mixes lower it), high- and low-band share."""
     mono = audio.mean(axis=1)
-    info = analyse(audio)
+    info = analyse(audio, around=bpm)
     mag = stft_mag(mono)
     power = mag ** 2 + 1e-12
     freqs = np.linspace(0, SR / 2, mag.shape[1])
@@ -563,9 +618,9 @@ def k_weighted_loudness(audio):
 
 
 def render(audio, cue, start, spec):
-    beat = SR // 2
-    length = cue['beats'] * beat
-    bar = 4 * beat
+    bpm = cue.get('bpm', 120.0)
+    length = beats_samples(cue['beats'], bpm)
+    bar = beats_samples(4, bpm)
     xf = int(cue.get('crossfade_s', 0.12) * SR)
     if cue['kind'] == 'loop':
         out = audio[start:start + length].copy()
@@ -704,8 +759,8 @@ def parse_candidate(path):
 
 
 def rank(info, cue):
-    """Higher is better: on-grid, tempo near 120, no drift, strong downbeat."""
-    tempo_pen = abs(info['bpm'] - 120) * 0.6
+    """Higher is better: on-grid, tempo near the cue's, no drift, strong downbeat."""
+    tempo_pen = abs(info['bpm'] - cue.get('bpm', 120)) * 0.6
     drift_pen = (max(info['drift_ms']) - min(info['drift_ms'])) / 40
     return math.log(min(info['grid_contrast'], 20)) + 0.3 * min(info['downbeat_confidence'], 3) - tempo_pen - drift_pen
 
@@ -736,7 +791,7 @@ def cmd_refs(args):
         best = None
         for cand in candidate_files(work, cue):
             seed, _ = parse_candidate(cand)
-            info = analyse(read_audio(cand))
+            info = analyse(read_audio(cand), around=cue['bpm'])
             score = rank(info, cue) + 0.2 * info['onset_rate']
             print(f"{cand.stem:16} bpm={info['bpm']:.2f} contrast={info['grid_contrast']:.2f} onsets={info['onset_rate']:.1f}/s score={score:.2f}")
             if cue.get('pick') is not None and seed == cue['pick']:
@@ -757,23 +812,29 @@ def a2a_scores(spec, work, cue, path, refs, cache={}):
     if gkey not in cache:
         guide = read_audio(work / 'guides' / f"{cue['name']}.flac")
         ref = read_audio(work / refs[cue['group']])
-        cache[gkey] = (len(guide), motif_features(window_of(guide, info_g)), mel_profile(ref[SR * 2:]))
+        cache[gkey] = (len(guide), motif_features(window_of(guide, info_g), info_g.get('bpm', 120.0)), mel_profile(ref[SR * 2:]))
     n, gfeat, rprof = cache[gkey]
-    audio = fit_length(read_audio(path), n)
+    raw = read_audio(path)
+    length_ok = len(raw) == n
+    audio = fit_length(raw, n)
     win = window_of(audio, info_g)
-    feat = motif_features(win)
+    feat = motif_features(win, info_g.get('bpm', 120.0))
     sim = motif_similarity(gfeat, feat)
     lag, _ = guide_lag(feat['onset'], gfeat['onset'])
     prof = mel_profile(win)
     closeness = float(np.dot(prof, rprof) / (np.linalg.norm(prof) * np.linalg.norm(rprof) + 1e-9))
     seed, d = parse_candidate(path)
-    info = {'seed': seed, 'denoise': d, 'motif': sim, 'reference_closeness': closeness, 'guide_lag_ms': round(lag * 1000), 'metrics': genre_metrics(win)}
+    tempo, tempo_ok, tempo_target, tempo_top = tempo_check(win, info_g.get('bpm', 120.0))
+    info = {'seed': seed, 'denoise': d, 'motif': sim, 'reference_closeness': closeness, 'guide_lag_ms': round(lag * 1000),
+            'length_ok': length_ok, 'tempo': tempo, 'tempo_ok': tempo_ok, 'pulse_target': round(tempo_target, 3), 'pulse_top': round(tempo_top, 3), 'metrics': genre_metrics(win, info_g.get('bpm', 120.0))}
     # Keep the motif (harmony and rhythm) first, then sound like the genre take;
     # a small preference for the stronger re-performance (higher denoise).
     # A re-performance that moved its accents off the guide's sixteenths would
     # break the shared grid of the tiers: penalise it.
+    # A take whose pulse is not the target tempo cannot ship (it would fight
+    # the bar grid); the onset-lag penalty is gone (it measured transients).
     info['score'] = (sim['chroma'] + 0.5 * sim['onset'] + 2.0 * closeness + 0.5 * d
-                     - (1.0 if sim['chroma'] < 0.25 else 0.0) - (1.5 if abs(lag) > 0.03 else 0.0))
+                     - (1.0 if sim['chroma'] < 0.25 else 0.0) - (0.0 if tempo_ok else 3.0))
     return info
 
 
@@ -787,9 +848,75 @@ def guide_lag(onset, guide_onset):
     return lags[best] * HOP / SR, corr[best]
 
 
+def acf_tempo(audio, lo=100.0, hi=240.0):
+    """Tempo by onset autocorrelation of a (tiled) loop: score(bpm) sums the
+    ACF at 1..8 beats; returns the best BPM and a function score(bpm)."""
+    feat = features(audio)
+    k = np.exp(-0.5 * (np.arange(-9, 10) / 3.0) ** 2); k /= k.sum()
+    env = np.convolve(feat['env'], k, mode='same')
+    env = env - env.mean()
+    n = len(env)
+    spec = np.fft.rfft(env, 2 * n)
+    acf = np.fft.irfft(spec * np.conj(spec))[:n]
+    acf /= acf[0] + 1e-12
+    fps = SR / HOP
+
+    def value(lag):
+        i = int(lag); f = lag - i
+        return acf[i] * (1 - f) + acf[i + 1] * f if i + 1 < n else 0.0
+
+    def score(bpm):
+        b = 60.0 / bpm * fps
+        return sum(value(m * b) * (1.0 if m in (1, 2, 4, 8) else 0.5) for m in range(1, 9))
+    grid = np.arange(lo, hi, 0.1)
+    best = float(grid[int(np.argmax([score(x) for x in grid]))])
+    return best, score
+
+
+FOREIGN_PULSE = 0.8  # ACF score of a strong pulse (guides and clean takes: 1.1-2.5)
+
+
+def tempo_check(audio, bpm):
+    """Does a strong pulse other than the target tempo dominate the take?
+    That is the defect the timbre reference caused at these tempos (a 150 BPM
+    pulse scoring 2.0 against -0.5 at the 180 BPM target). Returns (best BPM,
+    ok, target score, top score). A take with no strong periodicity at all
+    (top < FOREIGN_PULSE: smeared drums) passes; its alignment is then judged
+    by the chroma check. The argmax of a weak ACF is noise: on the same take it
+    flips between 169.6 and 127 BPM after Opus coding (correlation 0.987)."""
+    best, score = acf_tempo(np.concatenate([audio, audio]))
+    ratio = min(abs(best / bpm - 1), abs(best * 2 / bpm - 1), abs(best / 2 / bpm - 1))
+    top = float(score(best))
+    at_target = float(max(score(bpm), score(bpm / 2) if bpm / 2 >= 100 else -9, score(bpm * 2) if bpm * 2 <= 240 else -9))
+    foreign = top >= FOREIGN_PULSE and ratio > 0.025 and at_target < 0.5 * top
+    return best, bool(not foreign), at_target, top
+
+
+def chroma_alignment(cue, guide, bpm):
+    """Best frame-level chroma correlation lag (s) within +-1 beat, its
+    correlation, and the correlation at lag 0."""
+    def chroma(audio):
+        mag = stft_mag(audio.mean(axis=1), 4096)
+        fr = np.linspace(0, SR / 2, mag.shape[1])
+        sel = (fr > 60) & (fr < 2100)
+        pc = np.round(12 * np.log2(fr[sel] / 440)).astype(int) % 12
+        pw = np.log1p(mag[:, sel] * 4)
+        return np.stack([pw[:, pc == k].sum(1) for k in range(12)], 1)
+    x, y = chroma(cue), chroma(guide)
+    n = min(len(x), len(y))
+    beat = int(round(60.0 / bpm * SR / HOP))
+    best, bl = -2.0, 0
+    for k in range(-beat, beat + 1):
+        c = _corr(x[max(0, k):n + min(0, k)], y[max(0, -k):n - max(0, k)])
+        if c > best:
+            best, bl = c, k
+    return bl * HOP / SR, best, _corr(x[:n], y[:n])
+
+
 def window_of(audio, info_g):
-    s = int(round(info_g['offset'] * SR))
-    return audio[s:s + info_g['beats'] * SR // 2]
+    s = info_g.get('offsetSamples', int(round(info_g['offset'] * SR)))
+    n = info_g.get('windowSamples', info_g['beats'] * SR // 2)
+    return audio[s:s + n]
 
 
 def cmd_analyze(args):
@@ -799,8 +926,9 @@ def cmd_analyze(args):
     report = json.loads(target.read_text()) if target.exists() else {}
     refs = None
     for cue in spec['cues']:
-        if not selected(args, cue) or mode_of(cue) == 'synth':
+        if not selected(args, cue) or mode_of(cue) == 'synth' or (cue.get('keep') and not args.cue):
             continue
+        cue = dict(cue, bpm=cue_bpm(spec, cue))
         for path in candidate_files(work, cue, spec):
             if mode_of(cue) == 'text':
                 info = analyse(read_audio(path))
@@ -810,13 +938,15 @@ def cmd_analyze(args):
                 refs = refs or chosen_refs(work)
                 info = a2a_scores(spec, work, cue, path, refs)
                 m = info['motif']
-                print(f"{path.stem:22} chroma={m['chroma']:.3f} onset={m['onset']:.3f} mel={m['mel']:.3f} ref={info['reference_closeness']:.3f} lag={info['guide_lag_ms']:+d}ms score={info['score']:.3f}")
+                print(f"{path.stem:22} chroma={m['chroma']:.3f} onset={m['onset']:.3f} mel={m['mel']:.3f} ref={info['reference_closeness']:.3f} tempo={info['tempo']:.1f}{'' if info['tempo_ok'] else '!'} score={info['score']:.3f}", flush=True)
             report[path.stem] = info
     target.write_text(json.dumps(dict(sorted(report.items())), indent=1))
 
 
 def build_record(cue, out, loop, ogg, m4a, extra):
-    rec = {'kind': cue['kind'], 'beats': cue.get('beats'), 'seconds': len(out) / SR,
+    import music_motifs
+    rec = {'kind': cue['kind'], 'beats': cue.get('beats'), 'bpm': round(cue.get('bpm', 120.0), 4),
+           'barSamples': beats_samples(4, cue.get('bpm', 120.0)), 'seconds': len(out) / SR,
            'loopStart': None if loop is None else loop[0] / SR, 'loopEnd': None if loop is None else loop[1] / SR}
     rec.update(extra)
     rec.update({'bytes': {'ogg': ogg.stat().st_size, 'm4a': m4a.stat().st_size},
@@ -838,7 +968,7 @@ def build_synth(spec, cue, work):
     import music_guide
     if cue['kind'] == 'sprite':
         out = music_guide.accents(int(cue['group']))
-        extra = {'slotSeconds': cue['slot_beats'] * 0.5, 'slots': list(music_guide.motifs.ACCENTS), 'source': 'synth'}
+        extra = {'slotSeconds': music_guide.SLOT_SECONDS, 'slots': list(music_guide.motifs.ACCENTS), 'source': 'synth'}
     else:
         laugh = music_guide.cackle()
         out = fit_length(laugh, cue['beats'] * SR // 2)
@@ -857,14 +987,16 @@ def cmd_build(args):
     OUT.mkdir(parents=True, exist_ok=True)
     manifest_path = OUT / 'manifest.json'
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {'cues': {}}
-    if manifest.get('schema') != 'demon-attack.music/v2':
+    if manifest.get('schema') not in ('demon-attack.music/v2', 'demon-attack.music/v3'):
         manifest = {'cues': {}}
-    manifest.update({'schema': 'demon-attack.music/v2', 'bpm': spec['bpm'], 'sampleRate': SR, 'formats': ['ogg', 'm4a']})
+    manifest.update({'schema': 'demon-attack.music/v3', 'bpm': spec['bpm'], 'sampleRate': SR, 'formats': ['ogg', 'm4a']})
     import music_motifs
-    manifest['motifs'] = {str(k): {'name': m['name'], 'genre': m['genre'], 'keyscale': m['keyscale'], 'summary': m['summary']} for k, m in music_motifs.MOTIFS.items()}
+    manifest['motifs'] = {str(k): {'name': m['name'], 'genre': spec['groups'][str(k)]['genre'], 'keyscale': m['keyscale'], 'summary': m['summary'],
+                                   'bpm': round(music_motifs.BPM[k], 4), 'barSamples': music_motifs.BAR_SAMPLES[k]} for k, m in music_motifs.MOTIFS.items()}
     for cue in spec['cues']:
-        if not selected(args, cue):
+        if not selected(args, cue) or (cue.get('keep') and not args.cue):
             continue
+        cue = dict(cue, bpm=cue_bpm(spec, cue))
         mode = mode_of(cue)
         cspec = dict(spec, loudness_lufs=loudness_of(spec, cue))
         if mode == 'synth':
@@ -897,9 +1029,17 @@ def cmd_build(args):
                 path = max(cands, key=lambda p: analysis[p.stem]['score'])
                 info = analysis[path.stem]
                 ginfo = guide_info(work, cue['name'])
-                audio = fit_length(read_audio(path), int(round(ginfo['seconds'] * SR)))
-                start = int(round(ginfo['offset'] * SR))
+                audio = fit_length(read_audio(path), ginfo.get('samples', int(round(ginfo['seconds'] * SR))))
+                start = ginfo.get('offsetSamples', int(round(ginfo['offset'] * SR)))
+                # The cut is the guide window itself: audio-to-audio keeps the
+                # guide's timing (latent frames are positional). An onset-envelope
+                # "lag" against the synth guide reflects ACE's softer transients,
+                # not a time shift (round 3: shifting by it moved the chroma and
+                # mel alignment off zero), so no shift is applied.
+                shift = 0
+                r = 0.0
                 extra = {'mode': 'a2a', 'group': cue['group'], 'seed': info['seed'], 'denoise': info['denoise'],
+                         'gridShiftMs': round(shift / SR * 1000, 1), 'guideLagR': round(r, 2),
                          'motifChroma': round(info['motif']['chroma'], 3), 'motifOnset': round(info['motif']['onset'], 3),
                          'referenceCloseness': round(info['reference_closeness'], 3), 'startSeconds': ginfo['offset']}
                 for key in ('tier', 'part'):
@@ -961,9 +1101,11 @@ def cmd_verify(args):
             if peak >= 0.999:
                 problems.append(f'peak {peak:.3f}')
             a = b = None
+            bpm = meta.get('bpm', 120.0)
+            bar_samples = meta.get('barSamples', 2 * SR)
             if meta['loopEnd'] is not None:
                 a, b = round(meta['loopStart'] * SR), round(meta['loopEnd'] * SR)
-                if (b - a) % (2 * SR) != 0:
+                if (b - a) % bar_samples != 0:
                     problems.append('loop is not a whole number of bars')
                 w = wrap_report(audio, a, b)
                 notes.append(f"wrap {w['wrap_step']:.4f}/{w['step_p999']:.4f} d2 {w['wrap_d2']:.4f}/{w['d2_p999']:.4f}")
@@ -979,6 +1121,12 @@ def cmd_verify(args):
                     (problems if fmt == 'ogg' else notes).append('wrap step exceeds the loop\'s 99.9th percentile step and the master wrap')
                 if w['wrap_d2'] > d2_limit:
                     (problems if fmt == 'ogg' else notes).append('click-like curvature at the wrap')
+            if meta['kind'] in ('loop', 'tail') and meta.get('beats'):
+                # Whole bars of the cue's integer bar length (bpm in the manifest is rounded).
+                ideal = meta['beats'] / 4 * bar_samples
+                start_ok = meta['kind'] == 'loop' or round(meta['loopStart'] * SR) == ideal
+                if meta['beats'] % 4 or (meta['kind'] == 'loop' and len(audio) != ideal) or not start_ok:
+                    problems.append(f'loop is not a sample-exact {meta["beats"]} beats at {bpm:g} BPM')
             if meta['kind'] == 'sprite':
                 slot = round(meta['slotSeconds'] * SR)
                 if len(audio) != slot * len(meta['slots']):
@@ -990,7 +1138,7 @@ def cmd_verify(args):
             if master is not None and len(master) == len(audio) and meta['kind'] in ('loop', 'tail'):
                 err = audio - master
                 rms = lambda s: float(np.sqrt(np.mean(err[s] ** 2)))
-                bar = 2 * SR
+                bar = bar_samples
                 inner = [rms(slice(i, i + 960)) for i in range(bar, len(audio) - bar, bar)]
                 inner_tail = [rms(slice(i - 960, i)) for i in range(bar, len(audio) - bar + 1, bar)]
                 head = rms(slice(0, 960)) / (np.median(inner) + 1e-9) if inner else 1.0
@@ -1000,23 +1148,37 @@ def cmd_verify(args):
                 if max(checked) > (2.5 if fmt == 'ogg' else 4.0):
                     (problems if fmt == 'ogg' else notes).append('codec edge artefact')
             guide = work / 'guides' / f'{name}.flac'
+            r = 0.0
             if fmt == 'ogg' and meta.get('mode') == 'a2a' and guide.exists():
                 # The guide fixes the grid: the cue's onsets must line up with
                 # the guide window's (lag of the best onset correlation).
                 ginfo = guide_info(work, name)
-                gw = motif_features(window_of(read_audio(guide), ginfo))['onset']
-                cw = motif_features(audio[:ginfo['beats'] * SR // 2])['onset']
+                gw = motif_features(window_of(read_audio(guide), ginfo), bpm)['onset']
+                cw = motif_features(audio[:ginfo.get('windowSamples', ginfo['beats'] * SR // 2)], bpm)['onset']
                 lag, r = guide_lag(cw, gw)
-                notes.append(f'guide lag {lag * 1000:+.0f}ms (r={r:.2f})')
-                if abs(lag) > 0.03:
-                    problems.append('onsets are off the guide grid')
-            elif fmt == 'ogg' and meta['kind'] in ('loop', 'tail'):
-                probe = np.concatenate([audio[:b], audio[a:b]])
-                info = analyse(probe, fixed_bpm=120.0)
-                offset = ((info['phase8_s'] + .125) % .25) - .125
+                # Grid alignment: frame-level chroma cross-correlation with the
+                # guide over +-1 beat (riff and chord changes survive the drum
+                # smearing that makes onset lags unreliable at these tempos).
+                clag, cbest, c0 = chroma_alignment(audio[:ginfo['windowSamples']], window_of(read_audio(guide), ginfo), bpm)
+                notes.append(f'onset lag {lag * 1000:+.0f}ms (r={r:.2f}) chroma lag {clag * 1000:+.0f}ms (r={cbest:.2f}, at 0 {c0:.2f})')
+                if cbest >= 0.3 and c0 < 0.85 * cbest:
+                    problems.append('the take is off the guide grid (chroma alignment)')
+                # Loops: the loop; tails (intros): the opening (the last-bar loop is too short).
+                loop_audio = audio[a:b] if meta['kind'] == 'loop' else audio[:ginfo['windowSamples']]
+                tempo, tempo_ok, at_target, top = tempo_check(loop_audio, bpm)
+                notes.append(f'pulse: target {at_target:.2f}, strongest {top:.2f} at {tempo:.1f}' + ('' if top >= FOREIGN_PULSE else ' (weak)'))
+                if not tempo_ok:
+                    problems.append(f'a foreign {tempo:.1f} BPM pulse dominates the {bpm:g} BPM grid')
+                r = 1.0  # the guide check stands in for the lattice check
+            if fmt == 'ogg' and meta['kind'] in ('loop', 'tail') and not (meta.get('mode') == 'a2a' and guide.exists()):
+                # No reliable guide correlation: check the eighth lattice at the cue's tempo.
+                probe = np.concatenate([audio[:b], audio[a:b]]) if b else audio
+                info = analyse(probe, fixed_bpm=bpm)
+                e8 = 30.0 / bpm
+                offset = ((info['phase8_s'] + e8 / 2) % e8) - e8 / 2
                 notes.append(f'grid {offset * 1000:+.1f}ms')
                 if abs(offset) > 0.03:
-                    problems.append('beats are off the 120 BPM eighth-note grid')
+                    problems.append(f'beats are off the {bpm:g} BPM eighth-note grid')
             status = 'ok' if not problems else 'FAIL ' + '; '.join(problems)
             if problems:
                 ok = False
@@ -1041,9 +1203,10 @@ def cmd_report(args):
         body = audio if meta['loopEnd'] is None else audio[round(meta['loopStart'] * SR):round(meta['loopEnd'] * SR)]
         if meta['kind'] == 'tail':
             body = audio[:round(meta['loopStart'] * SR)]
-        report['metrics'][name] = {k: round(v, 4) for k, v in genre_metrics(body).items()}
+        report['metrics'][name] = {k: round(v, 4) for k, v in genre_metrics(body, meta.get('bpm', 120.0)).items()}
         report['metrics'][name]['lufs'] = round(k_weighted_loudness(body), 2)
-        feats[name] = motif_features(body)
+        feats[name] = motif_features(body, meta.get('bpm', 120.0))
+        report['metrics'][name]['expected_bpm'] = meta.get('bpm', 120.0)
     print(f"{'cue':16} {'bpm':>6} {'onset/s':>7} {'fluxabs':>7} {'centroid':>8} {'flat':>6} {'crest':>6} {'hf':>6} {'low':>6}")
     for name, m in report['metrics'].items():
         print(f"{name:16} {m['bpm']:6.1f} {m['onsets']:7.2f} {m['flux_abs']:7.2f} {m['centroid']:8.0f} {m['flatness']:6.3f} {m['crest_db']:6.1f} {m['hf']:6.3f} {m['low']:6.3f}")
@@ -1107,6 +1270,7 @@ def main():
             p.add_argument('--stage', choices=['refs', 'a2a', 'text'], default='a2a')
         if name == 'generate':
             p.add_argument('--comfy', default='http://studio:8188')
+            p.add_argument('--batch', type=int, default=6, help='prompts queued at once (they then run back to back)')
         if name == 'ingest':
             p.add_argument('list')
     args = parser.parse_args()

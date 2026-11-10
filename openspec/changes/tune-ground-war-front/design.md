@@ -37,3 +37,21 @@ Forty kills is the cadence at which each module returns in the eight-kill rotati
 
 ## Calibration
 See `plan/difficulty-calibration.md`, "Ground war". With an attentive pilot, median wave times stay within 10% of the pre-ground-war baseline. Breakthroughs and would-be hits are zero in sectors 1–2 on every difficulty, and per-sector breakthroughs order Easy < Normal < Hard.
+
+## Art (v3, presentation only)
+
+The ground-forces atlas moved to v3 (16×16 cells of 40×32 texels; contract in
+`lib/game/ground_atlas.dart`, pipeline in plan/asset-pipeline.md). Allies are
+drawn as a convoy seen from behind and above, holding station in the near band
+and advancing on their foe: two variants per sector chosen by `(id ~/ 2) % 2`,
+a hull layer (treads, tyres or gait at a rate that follows `vz`, reversed when
+falling back) and a turret layer picked from five screen angles toward the
+attacker's screen position, kicked back by `recoil` with a cyan muzzle flash at
+the authored muzzle point; infantry squads walk, kneel when engaged and fire
+volleys. Totalled allies keep the limp-off and pod, under a retreat smoke
+column. Effects are derived from sim clocks only (`wreckAge`, `fireFlash`,
+tracer `age`, `retreatAge`, `flash`, visual clock): shock ring, ten-frame
+fireball, ballistic debris, a scorch decal for the wreck's life, flame tongues
+and a smoke column on the wreck, dust behind moving units, tracers with muzzle
+flashes and impacts. Everything scales with the depth of the thing it belongs
+to and fogs with `depthLight` (fire and flashes half as much).

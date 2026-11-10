@@ -2,11 +2,11 @@
 
 ## Direction and implemented asset contract
 
-Original pixel artwork honors early-console clarity with animated winged demons, cosmic scenery, and expressive damage states. Ordinary enemies are living creatures: horns, membrane wings, teeth, eyes, and tails. The carrier is a gargoyle war-ark: a flying fortress carved from the same stony hide, with fanged stone jaws over its core and clawed vents at its flanks. Preserve hard pixel edges and nearest-neighbor filtering. Keep threats readable against darker scenery; do not bake interface text into images.
+Original pixel artwork honors early-console clarity with animated winged demons, cosmic scenery, and expressive damage states. Ordinary enemies are living creatures: horns, membrane wings, teeth, eyes, and tails. The carrier is a gargoyle warship, a spaceship first: a hard-surface hull with engines, plating, a bridge tower, hangar bays and turrets, wearing gargoyle ornament like a figurehead, and a bigger, darker hull class every run. Preserve hard pixel edges and nearest-neighbor filtering. Keep threats readable against darker scenery; do not bake interface text into images.
 
 ### Creature direction: gargoyles, not birds
 
-Every ordinary creature and sentinel is a **demonic gargoyle**: stony, leathery hide; heavy shoulders and a hunched torso; curled or swept horns; a snarling fanged maw; glowing eyes; clawed hands and feet; a barbed tail; and **bat-like membrane wings** stretched between visible finger bones, with scalloped, torn edges. No feathers, beaks, fanned primaries or bird proportions, and no upright "standing, seen from the front, wings wide open" pose. They are cartoonish and friendly-scary, clearly a threat but never gory or truly frightening for a child: damage is cracked stone with glowing fissures and torn membranes, never blood or wounds. Species keep distinct silhouettes and roles: teal a lean imp with big ram horns, violet an armoured brute with massive shoulders and stubby wings, coral a sleek predatory hunter with long horns, jaws and a stinger tail, gold a crowned elder holding orbs. The sentinels are a horned violet warden and a crowned gold colossus. The carrier is grown and carved from the same hide: a broad stone-and-bone hull with a horned gargoyle head-fortress, masonry bastions with gothic buttresses and chimney pinnacles, folded bat-membrane wing sails with finger bones along its flanks and horned prows; glowing eyes and fissures are its only light sources. Never imitate an existing game's creatures, including the 1982 game this project shares a name with.
+Every ordinary creature and sentinel is a **demonic gargoyle**: stony, leathery hide; heavy shoulders and a hunched torso; curled or swept horns; a snarling fanged maw; glowing eyes; clawed hands and feet; a barbed tail; and **bat-like membrane wings** stretched between visible finger bones, with scalloped, torn edges. No feathers, beaks, fanned primaries or bird proportions, and no upright "standing, seen from the front, wings wide open" pose. They are cartoonish and friendly-scary, clearly a threat but never gory or truly frightening for a child: damage is cracked stone with glowing fissures and torn membranes, never blood or wounds. Species keep distinct silhouettes and roles: teal a lean imp with big ram horns, violet an armoured brute with massive shoulders and stubby wings, coral a sleek predatory hunter with long horns, jaws and a stinger tail, gold a crowned elder holding orbs. The sentinels are a horned violet warden and a crowned gold colossus. The carrier shares their ornament but not their anatomy: it is an engineered warship whose gargoyle figurehead, bat-wing solar sails, carved spires and buttresses are applied to a hard-surface hull (see [Boss armada](#boss-armada-gargoyle-warships-spaceship-first-gargoyle-second)). Never imitate an existing game's creatures, including the 1982 game this project shares a name with.
 
 ## Durable pixel-art and animation rules
 
@@ -71,7 +71,8 @@ Every sector is an endless oblique 3/4 flyover over the planet: a horizon line s
 | --- | --- | --- | --- |
 | Far | ~0.02× (slow sway) | The sector's painted sky (`sector-N.png` rows above its horizon) plus its painted horizon band and sparse stars, baked once per sector into an image | painting under a 44–50% veil |
 | Ridges | 0.2× | Ridge silhouettes (the mid strips, rotated) standing on the ground near the horizon, three bands handing over as they approach | 0.13 × 0.55 |
-| Ground plane | 1.0× (perspective) | A 2-D seamless ground tile per sector, macro-modulated so it never shows a regular grid, rows compressed toward the horizon and darkened by distance fog | 0.13, chroma ≤ 0.22 |
+| Ground plane | 1.0× (perspective) | A 2-D seamless ground tile per sector, macro-modulated so it never shows a regular grid, on a scrolling heightfield (hills, ridges, valleys, canyons, mesas) lit by the sector's sky, rows compressed toward the horizon and darkened by distance fog | 0.13, chroma ≤ 0.22 |
+| Vegetation | 1.0× (perspective) | Two plant or obstacle species per sector in the side bands (frost pines, crystals, cinder trees, thorn brush, fungal and brood stalks, scrap and rubble), pushed over by the ground units | 0.30 body, 0.40 accents |
 | Side walls | 1.0× (perspective) | Slim, broken cliff rims hugging both edges, at most ~20% of the width each at the bottom and tapering toward the horizon | 0.30, chroma ≤ 0.28 |
 | Landmarks / props | 1.0× (perspective) | Two landmarks per named route beside the walls; small sector props on the open ground | landmarks 0.40, props 0.34 |
 | Creatures | 1.0× (perspective) | Two species per sector on the open ground between each wall and the central lane, with a dark outline and a faint upper-left rim light | 0.42, chroma ≤ 0.34 |
@@ -82,13 +83,34 @@ Every sector is an endless oblique 3/4 flyover over the planet: a horizon line s
 - Creatures: frost hoppers and shell crawlers (Krybor), rock mites and dust grazers (Ringfall), cinder newts and ash borers (Ember), spore crawlers and bone skitters (Hollow), brood larvae and hive ticks (Carrier) — darker and more demonic deeper into the campaign. Discrete frames: four-frame walk/crawl, two duck, two burrow. They dash away from explosions and the falling carrier wreck (sideways inside their band and along the ground), burrowers sink into a mound, and all duck while the ship's shadow passes. Visual only: they read blast, wreck and ship state.
 - Travel accelerates flight (up to 10× mid-travel) while the destination world fades in over the current one, so its landmarks appear before arrival. Cinematic blackout and letterbox bars still cover the scenery.
 - Reduced motion (`disableAnimations`/`reduceMotion`) freezes flight, sky sway, particle drift and creature walking; scenery and warning cues stay visible.
-- Performance: per sector per frame there is one sky image draw, one ground rect with a perspective `ImageShader`, one partial fog gradient (110 px), one ridge `drawAtlas`, one wall `drawVertices` mesh, one landmark/prop `drawAtlas` and one creature `drawAtlas`. Travel crossfades draw the destination with per-draw opacity instead of a full-screen `saveLayer`. Everything samples with `FilterQuality.none` (the sky bake is resampled once at load).
+- Relief: the ground bends over an endless seeded heightfield per sector and route, gentle in the central lane (18%) and fading out toward the horizon; walls, landmarks, props, creatures, vegetation and ground units stand on one surface. Units wind along valley floors and around mesas, throw dust uphill and push the vegetation over (bend, topple, shatter, flatten, snap, shove; dust and debris particles). Design, API and the terrain radio events: [terrain-relief.md](terrain-relief.md).
+- Performance: per sector per frame there is one sky image draw, one ground `drawVertices` mesh (the ground tile as an `ImageShader`, light and fog in vertex colours), one vegetation `drawAtlas`, one ridge `drawAtlas`, one wall `drawVertices` mesh, one landmark/prop `drawAtlas` and one creature `drawAtlas`. Travel crossfades draw the destination with per-draw opacity instead of a full-screen `saveLayer`. Everything samples with `FilterQuality.none` (the sky bake is resampled once at load).
 
 The generator, prompts and seeds are in [asset-pipeline.md](asset-pipeline.md).
 
 Title centers an original horned demon emblem and the Demon Attack wordmark, with Start, Top 10, sound, and short controls guidance. The game HUD displays score, level/cycle, lives, and current power; carrier shield coverage and hull damage communicate boss condition during its encounter. Touch controls occupy a recessed futuristic laptop-style trackpad beneath the arena, with cyan corner lights, pixel circuit traces, and a visible drag indicator. Keep fingers away from combat. This one trackpad layout is used on every device, desktop browsers included; there is no separate desktop mode, and arrow keys or A/D steer alongside it. Real interface text remains legible and accessible; no fake labels baked into generated art.
 
 Top 10 uses aligned rank, three-character initials, and score columns. Initial entry offers three rotating wheels with A–Z and 0–9, clear upper/lower controls, a highlighted middle selection, and Submit. Avoid a freeform text field. Game-over and victory keep a darkened arena behind their overlays. Review phone portrait, narrow desktop, and wide desktop without horizontal overflow.
+
+### Wide-screen backdrops
+
+On landscape windows with at least 48 px beside the 500-px column (never on phone portrait), the margins hold scenery instead of plain ink (`lib/widgets/widescreen_backdrop.dart`; assets and pipeline in [asset-pipeline.md](asset-pipeline.md#wide-screen-backdrops)). The column itself is untouched.
+
+| Screen | Scene | Procedural layers |
+| --- | --- | --- |
+| Title | **Vista**: violet-navy night, teal nebula over the fleet side, ringed violet planet, an infernal glow on the swarm side, dark mountain horizon | Seen from the flagship bridge: a hull lintel, viewport struts leaning outward, a console bank with blinking mint, gold and steel pixel lights (quiet under the title content), a mint star-map hologram (fleet side) and a salmon threat-map hologram (swarm side); fighters patrolling on the left; the demon swarm wheeling in two-frame wingbeats over the horizon on the right |
+| Initials entry / post-run top 10 | **Hall of heroes**: pilasters and alcoves of gold medals with ribbons, an arched starfield window, a reflective floor | Medal glints; the entry overlay fades to 32 % toward the edges so the hall shows |
+| Game over | **Defeat**: crimson sky, blood moon, broken black spires, a horde of red-eyed silhouettes | Bridge frame with salmon and alarm-red lights, the swarm on both sides, rising embers, a red veil |
+| Boss victory / campaign complete | **Victory**: gold dawn on the horizon, fireworks, formation trails | Bridge frame with gold lights, pixel firework bursts in the outer sky, drifting gold dust |
+| Gameplay (and pause) | **Sector N**: the current sector's world extended sideways (from its own painting), dimmed under a 44 % ink veil (62 % while paused) | Starfield; the scenery leans up to 3 logical px against the ship's position; during travel the destination sector crossfades in with the same blend as the flyover; it fades out toward the column so the scene's centred painting has no hard edge |
+| Gameplay with side calls | — | **Command-centre wall**: a chamfered bulkhead per side, textured with the wall tile, with each call slot set into a dark recessed bezel, five status lights below each slot and a conduit with a travelling pulse between slots. A backdrop only: the comms panels draw on top and own their own background |
+
+- **Pixels.** Panoramas are 768 × 320 logical pixels drawn at a whole-number nearest-neighbour scale: sector extensions cover the height (`ceil(height / 320)`: 4 at 1080 p, 5 at 1440 p); menu scenes take the largest scale that fits (`floor`: 3 at 1080 p, 4 at 1440 p) so more of the composition shows, and fade into the bridge lintel and console. Procedural layers use a unit of `ceil(height / 160)` pixels or half of it. No smooth vector shapes, no blur.
+- **Focus.** Low contrast at the edges: an ink fade over the outer 22 % of the width, darker top and bottom, menu veils of 8–22 %, a 62 % edge shade. Luminance caps in the finish: 0.42 for sectors (the flyover creature cap), 0.5–0.6 for menus, 0.24 for the wall. Lights stay at 62 % alpha or less.
+- **Any aspect ratio.** The art is 2.4:1; wider screens (32:9) feather its ends into the starfield. Struts, holograms and fireworks appear only when the margin has room for them.
+- **Motion.** Slow sway (±3 logical px over ~2 minutes), twinkle, wingbeats, blinking lights, embers. With reduced motion (`MediaQuery.disableAnimations`) the time input is frozen: everything stays visible and still.
+- **Loading.** Images load on first use, only once a wide layout asks for that scene (two sector images during travel, the wall only when side calls show). Total shipped weight: about 575 KB (sectors about 76–102 KB each, menus 17–34 KB, the wall 1 KB); at most two sector images are in memory at once.
+- **No text.** Nothing in the art or the overlays spells words; holograms are dots and rings.
 
 ### Squad comms video call
 
@@ -112,21 +134,30 @@ The installed-app and tab icon is a dedicated emblem, never an enemy atlas frame
 
 ## Current music score and playback
 
-Musical direction: original music only, never imitating an existing song, band, game or soundtrack. Each sector has its own genre and motif, and the campaign gets heavier and more demonic as the swarm closes in: punk, melodic rock, heavy metal, doom, then doom with death-metal colour at the carrier. The fleet's successes are a military march, and the aliens' victory is a cackle followed by a twisted triumphal march. Every cue shares **120 BPM** in 4/4, so all changes land on a bar line. Tension grows through arrangement density (drums, distortion, lead lines, register) across four intensity tiers per level, never through tempo. Everything is fully instrumental. The demonic levels get choir and chant-like pads as texture; the prompt asks for growl texture, but no clear vocals were generated or wanted.
+Musical direction: original music only, never imitating an existing song, band, game or soundtrack, and no prompt names one. Round 3 makes the levels **battle music**, inspired by the traits of battle and power metal:
+- driving double kick, galloping riffs and war-march toms;
+- anthemic gang shouts ("hey!") as texture;
+- harmonised twin lead guitars;
+- choir, strings and organ where they fit.
 
-The recorded score is ACE-Step 1.5 re-performing a synthesized guide of each motif (audio-to-audio with the level's genre take as timbre reference). That keeps one motif across a level's cues. Method, commands and checks are in [audio-backend.md](audio-backend.md#recorded-cues-primary). Opus/OGG is the primary format and AAC/M4A the fallback. A level's set loads lazily when the level is cued.
+Each sector keeps its own motif and identity and has its own tempo. The campaign gets faster and more demonic as the swarm closes in. Arrivals, outros and travel are **symphonic metal**: choir, strings, orchestral hits and a wordless soprano vocalise. The fleet's successes stay a military march at 120 BPM, and the aliens' victory stays a cackle followed by a twisted triumphal march. Tension grows through arrangement density across four tiers per level; even tier 1 is battle music.
 
-### Motifs
+The recorded score is ACE-Step 1.5 re-performing a synthesized guide of each motif at the level's tempo (audio-to-audio from the guide; at these tempos the timbre reference imposed a foreign pulse, so round 3 does without it). Method, commands and checks are in [audio-backend.md](audio-backend.md#recorded-cues-primary). Opus/OGG is the primary format and AAC/M4A the fallback. A level's set loads lazily when the level is cued.
 
-| Level | Genre | Key | Motif (riff · progression · hook) | Drums by tier (1 → 4) |
-| --- | --- | --- | --- | --- |
-| L1 Krybor | punk rock | E minor | Downstroked E5 eighths with a **G–A push** into every second bar · E E C D E E A–G B · shouted hook **B-B-A-G-E**, answered G-A-B-D-B | straight beat → driving beat → punk "oom-pah" skank (kick every beat, snare every off-beat) → skank + 16th hats |
-| L2 Ringfall | melodic rock | D major | Syncopated open-chord pushes on 1, 2&, 3, 4& · **D F♯m G A Bm G Em A** · soaring hook **A–F♯–A, C♯–B**, rising to F♯5 in the second half | half-feel with arpeggiated clean guitar → rock beat → 16th hats → ride and double kicks |
-| L3 Ember Moon | heavy metal | E minor | **Gallop** (eighth + two sixteenths) on an E pedal with a Phrygian F · E E C–D E E E F–G A–B · twin-guitar hook **E-F♯-G-B** harmonised in thirds at tier 4 | rock beat → gallop kicks → + off-beat hats → double bass |
-| L4 The Hollow | doom metal | C minor | Drop-C crawl **C… E♭ \| G♭-F-C \| E♭-D♭ \| C… B**: the G♭ tritone is the dread · tolling bell/lead motif **C-G-A♭-G, E♭-D-C** | half time (kick 1, snare 3, toms) → half time with organ → full time with choir → 16th double kick with crash/china |
-| L5 Carrier | doom-death metal | F minor | **F-G♭-E crawl answered by a low B tritone stab**, D♭-C, a chromatic D♭-D-E♭-E climb, final F-B · tremolo picking from tier 3 · choir, organ and bell | half time → 8th double kick → 16th double kick → blast beat |
-| Fleet march | military march | C major | Fanfare **G-G-C-E-G \| C6…**: levelclear plays bars 1–2 and a cadence, victory bars 1–4, the finale all 8 with choir and timpani | bass drum on every beat, snare drags and rolls, crashes. Fleet-intact variants add a brass descant, a trombone counterline and a drum corps (16th snare line, flams, sextuplet flourishes, tenor drums) |
-| Alien victory | twisted march | E Phrygian dominant | **E-F-G♯…, B-C-B-G♯**, falling to F: triumph bent out of tune | pounding march with timpani, gated guitars, organ and choir |
+### Motifs and tempos
+
+| Level | Style (round 3) | Tempo | Key | Motif (riff · progression · hook) | Tiers 1 → 4 |
+| --- | --- | ---: | --- | --- | --- |
+| L1 Krybor | fast battle-punk metal | 170 BPM (169.9993: 67 765 samples/bar) | E minor | Downpicked E5 riff with a **G–A push** into every second bar · E E C D E E A–G B · hook **B-B-A-G-E**, answered G-A-B-D-B | skank beat → skank + double kick, gang shouts → 16th double kick, sixteenth downpicking, lead hook → blast beat, harmonised lead, choir |
+| L2 Ringfall | melodic power metal | 160 BPM (exact) | D major | Galloping chord pushes · **D F♯m G A Bm G Em A** · soaring hook **A–F♯–A, C♯–B**, rising to F♯5 | eighth double kick → 16th double kick, gallop chords, hook → twin leads in thirds, strings, choir → + gang shouts |
+| L3 Ember Moon | heavy galloping battle metal | 180 BPM (exact) | E minor | **Gallop** on an E pedal with a Phrygian F · E E C–D E E E F–G A–B · twin hook **E-F♯-G-B** | gallop kicks + war-march toms → crashes, hook → harmonised twin leads, strings → 16th double kick, choir |
+| L4 The Hollow | epic doom-battle | 150 BPM (exact) | C minor | Drop-C crawl **C… E♭ \| G♭-F-C \| E♭-D♭ \| C… B** (G♭ tritone) · bell/lead motif **C-G-A♭-G, E♭-D-C** | war march (floor-tom eighths, choir) → 16th double kick under half time → full time, lead, strings → crash/china eighths, gang shouts |
+| L5 Carrier | blackened battle and death metal | 190 BPM (189.9987: 60 632 samples/bar) | F minor | **F-G♭-E crawl answered by a low B tritone stab**, D♭-C, chromatic D♭-D-E♭-E climb, F-B · tremolo picking throughout | war-march toms + 16th kick, tremolo, choir → blast beat, organ → + double kick, lead hook → harmonised lead, gang shouts |
+| Intros, outros | symphonic metal | the level's | the level's | Orchestral hits on the progression; choir and strings; the vocalise sings the hook at half speed; the band enters in bar 3 and rolls into the battle (outro: half time, strings and vocalise) | — |
+| Fleet march | military march | 120 BPM | C major | Fanfare **G-G-C-E-G \| C6…** (levelclear bars 1–2, victory 1–4, finale all 8); fleet-intact variants add brass descant, trombone counterline and drum corps | unchanged from round 2 |
+| Alien victory | twisted march | 120 BPM | E Phrygian dominant | **E-F-G♯…, B-C-B-G♯**, falling to F | unchanged from round 2 |
+
+Tempo per level is defined by an integer number of samples per bar at 48 kHz, so every loop, intro and tail is a sample-exact number of bars and wraps on the same grid the player schedules.
 
 ### Cues
 
@@ -136,54 +167,52 @@ The recorded score is ACE-Step 1.5 re-performing a synthesized guide of each mot
 | `cackle` | oneshot | synth | 8 | 4 | — | 30 KB | 51 KB |
 | `finale` | tail | a2a s42 d0.45 | 36 | 20 | 18–20 s | 212 KB | 322 KB |
 | `finale-fleet` | tail | a2a s43 d0.45 | 36 | 20 | 18–20 s | 210 KB | 321 KB |
-| `l1-accents` | sprite | synth | — | 7.5 | — | 77 KB | 122 KB |
-| `l1-intro` | tail | a2a s43 d0.45 | 16 | 10 | 8–10 s | 101 KB | 163 KB |
-| `l1-outro` | loop | a2a s42 d0.45 | 16 | 8 | 0–8 s | 91 KB | 130 KB |
-| `l1-t1` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 157 KB | 257 KB |
-| `l1-t2` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 169 KB | 257 KB |
-| `l1-t3` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 170 KB | 256 KB |
-| `l1-t4` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 169 KB | 256 KB |
-| `l2-accents` | sprite | synth | — | 7.5 | — | 77 KB | 122 KB |
-| `l2-intro` | tail | a2a s42 d0.45 | 16 | 10 | 8–10 s | 104 KB | 163 KB |
-| `l2-outro` | loop | a2a s41 d0.45 | 16 | 8 | 0–8 s | 86 KB | 130 KB |
-| `l2-t1` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 172 KB | 257 KB |
-| `l2-t2` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 164 KB | 257 KB |
-| `l2-t3` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 167 KB | 256 KB |
-| `l2-t4` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 166 KB | 256 KB |
-| `l3-accents` | sprite | synth | — | 7.5 | — | 79 KB | 123 KB |
-| `l3-intro` | tail | a2a s42 d0.45 | 16 | 10 | 8–10 s | 105 KB | 162 KB |
-| `l3-outro` | loop | a2a s41 d0.45 | 16 | 8 | 0–8 s | 87 KB | 130 KB |
-| `l3-t1` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 157 KB | 257 KB |
-| `l3-t2` | loop | a2a s45 d0.35 | 32 | 16 | 0–16 s | 159 KB | 257 KB |
-| `l3-t3` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 172 KB | 257 KB |
-| `l3-t4` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 159 KB | 256 KB |
-| `l4-accents` | sprite | synth | — | 7.5 | — | 75 KB | 122 KB |
-| `l4-intro` | tail | a2a s43 d0.45 | 16 | 10 | 8–10 s | 103 KB | 162 KB |
-| `l4-outro` | loop | a2a s41 d0.45 | 16 | 8 | 0–8 s | 85 KB | 130 KB |
-| `l4-t1` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 163 KB | 257 KB |
-| `l4-t2` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 166 KB | 257 KB |
-| `l4-t3` | loop | a2a s41 d0.45 | 32 | 16 | 0–16 s | 166 KB | 256 KB |
-| `l4-t4` | loop | a2a s43 d0.45 | 32 | 16 | 0–16 s | 165 KB | 257 KB |
-| `l5-accents` | sprite | synth | — | 7.5 | — | 77 KB | 122 KB |
-| `l5-intro` | tail | a2a s42 d0.45 | 16 | 10 | 8–10 s | 112 KB | 162 KB |
-| `l5-outro` | loop | a2a s41 d0.45 | 16 | 8 | 0–8 s | 85 KB | 130 KB |
-| `l5-t1` | loop | a2a s44 d0.45 | 32 | 16 | 0–16 s | 173 KB | 257 KB |
-| `l5-t2` | loop | a2a s44 d0.45 | 32 | 16 | 0–16 s | 170 KB | 256 KB |
-| `l5-t3` | loop | a2a s44 d0.45 | 32 | 16 | 0–16 s | 166 KB | 256 KB |
-| `l5-t4` | loop | a2a s42 d0.45 | 32 | 16 | 0–16 s | 164 KB | 257 KB |
+| `l1-accents` | sprite | synth | — | 12 | — | 121 KB | 195 KB |
+| `l1-intro` | tail | a2a s62 d0.55 | 16 | 7.05885 | 5.64708–7.05885 s | 81 KB | 116 KB |
+| `l1-outro` | loop | a2a s62 d0.55 | 16 | 5.64708 | 0–5.64708 s | 67 KB | 93 KB |
+| `l1-t1` | loop | a2a s63 d0.45 | 32 | 11.2942 | 0–11.2942 s | 113 KB | 182 KB |
+| `l1-t2` | loop | a2a s62 d0.45 | 32 | 11.2942 | 0–11.2942 s | 128 KB | 182 KB |
+| `l1-t3` | loop | a2a s61 d0.45 | 32 | 11.2942 | 0–11.2942 s | 128 KB | 182 KB |
+| `l1-t4` | loop | a2a s62 d0.45 | 32 | 11.2942 | 0–11.2942 s | 126 KB | 182 KB |
+| `l2-accents` | sprite | synth | — | 12 | — | 120 KB | 194 KB |
+| `l2-intro` | tail | a2a s63 d0.35 | 16 | 7.5 | 6–7.5 s | 85 KB | 123 KB |
+| `l2-outro` | loop | a2a s62 d0.45 | 16 | 6 | 0–6 s | 68 KB | 98 KB |
+| `l2-t1` | loop | a2a s61 d0.45 | 32 | 12 | 0–12 s | 118 KB | 194 KB |
+| `l2-t2` | loop | a2a s61 d0.45 | 32 | 12 | 0–12 s | 133 KB | 193 KB |
+| `l2-t3` | loop | a2a s61 d0.45 | 32 | 12 | 0–12 s | 131 KB | 193 KB |
+| `l2-t4` | loop | a2a s61 d0.45 | 32 | 12 | 0–12 s | 130 KB | 193 KB |
+| `l3-accents` | sprite | synth | — | 12 | — | 124 KB | 194 KB |
+| `l3-intro` | tail | a2a s61 d0.45 | 16 | 6.66667 | 5.33333–6.66667 s | 74 KB | 110 KB |
+| `l3-outro` | loop | a2a s61 d0.55 | 16 | 5.33333 | 0–5.33333 s | 60 KB | 88 KB |
+| `l3-t1` | loop | a2a s63 d0.45 | 32 | 10.6667 | 0–10.6667 s | 113 KB | 172 KB |
+| `l3-t2` | loop | a2a s62 d0.45 | 32 | 10.6667 | 0–10.6667 s | 124 KB | 172 KB |
+| `l3-t3` | loop | a2a s61 d0.45 | 32 | 10.6667 | 0–10.6667 s | 124 KB | 172 KB |
+| `l3-t4` | loop | a2a s61 d0.45 | 32 | 10.6667 | 0–10.6667 s | 122 KB | 172 KB |
+| `l4-accents` | sprite | synth | — | 12 | — | 119 KB | 194 KB |
+| `l4-intro` | tail | a2a s64 d0.35 | 16 | 8 | 6.4–8 s | 84 KB | 131 KB |
+| `l4-outro` | loop | a2a s62 d0.45 | 16 | 6.4 | 0–6.4 s | 71 KB | 105 KB |
+| `l4-t1` | loop | a2a s62 d0.45 | 32 | 12.8 | 0–12.8 s | 132 KB | 206 KB |
+| `l4-t2` | loop | a2a s62 d0.45 | 32 | 12.8 | 0–12.8 s | 135 KB | 206 KB |
+| `l4-t3` | loop | a2a s64 d0.35 | 32 | 12.8 | 0–12.8 s | 138 KB | 206 KB |
+| `l4-t4` | loop | a2a s62 d0.45 | 32 | 12.8 | 0–12.8 s | 137 KB | 206 KB |
+| `l5-accents` | sprite | synth | — | 12 | — | 122 KB | 194 KB |
+| `l5-intro` | tail | a2a s61 d0.45 | 16 | 6.31583 | 5.05267–6.31583 s | 69 KB | 104 KB |
+| `l5-outro` | loop | a2a s62 d0.55 | 16 | 5.05267 | 0–5.05267 s | 56 KB | 83 KB |
+| `l5-t1` | loop | a2a s61 d0.45 | 32 | 10.1053 | 0–10.1053 s | 110 KB | 163 KB |
+| `l5-t2` | loop | a2a s63 d0.35 | 32 | 10.1053 | 0–10.1053 s | 109 KB | 163 KB |
+| `l5-t3` | loop | a2a s63 d0.35 | 32 | 10.1053 | 0–10.1053 s | 110 KB | 163 KB |
+| `l5-t4` | loop | a2a s62 d0.45 | 32 | 10.1053 | 0–10.1053 s | 113 KB | 163 KB |
 | `levelclear` | tail | a2a s41 d0.45 | 12 | 8 | 6–8 s | 89 KB | 131 KB |
 | `levelclear-fleet` | tail | a2a s41 d0.45 | 12 | 8 | 6–8 s | 85 KB | 130 KB |
 | `menu` | loop | text s1101 | 32 | 16 | 0–16 s | 183 KB | 257 KB |
 | `victory` | tail | a2a s44 d0.45 | 20 | 12 | 10–12 s | 132 KB | 195 KB |
-| **Total** | | | | | | **5.64 MB** | **8.66 MB** |
-
-The intensity tiers of a level are four arrangements of the same 8-bar motif: tier 1 is calm (palm-muted riff, sparse drums), tier 2 driving (full band), tier 3 intense (lead hook, busier drums) and tier 4 peril (double-time or blast, harmonised lead). They share bar 1, so the player switches between them on a bar line without losing the riff's place. The intro states the riff, brings the drums in with a fill and quotes the hook. Then its last bar loops until play begins. The outro is the riff at half energy with the hook in augmentation, for the travel after the level.
+| **Total** | | | | | | **4.79 MB** | **7.18 MB** |
 
 ### Game events to music
 
-| Game state (read by `MusicDirector`) | Music |
+| Game state (read by `MusicDirector`, or a shared-bridge event) | Music |
 | --- | --- |
-| Level arrival (`level`, carrier `boss` event) | `l<n>-intro`, on the next bar |
+| Level arrival (`level`, carrier `boss` event) | `l<n>-intro` (symphonic), on the next bar of the current cue; a cue at another tempo starts its own grid there |
 | Play begins | tier from wave progress: first third → 1, second → 2, last → 3 |
 | Elite present / sentinel present | at least tier 2 / tier 3 |
 | Reinforcements arrive (`reinforcements` event) | +1 tier for 6 s, and the **reinforce** accent |
@@ -192,28 +221,48 @@ The intensity tiers of a level are four arrangements of the same 8-bar motif: ti
 | Ground war: `groundBreakthrough` (L3–L4) | **breakthrough** accent |
 | A dive tell starts (telegraph) | **dive** accent (at most one per 2 s) |
 | Sentinel dive or last stand | tier 4; a new last stand plays the **laststand** accent |
+| `playerDestroyed` (or `lifeLost`) | **destroyed**: a low orchestral hit on the next sixteenth; the music drops to 15 % for two bars |
+| `regroupStart` | **gloat**: low choir sliding a tritone down over a dissonant organ cluster, on the beat |
+| `playerRespawn` | **respawn**: snare roll into a crash, the hook rising, tonic to fifth; the music returns on its downbeat |
 | One life left | +1 tier |
 | Carrier form *p* of *n* | tier 4 − (n − 1 − p), so the final form is tier 4; shield down +1 |
 | Carrier central hatch opens | **hatch** accent (at most one per 7.5 s) |
 | Calmer state | steps down only after 4 s of lower demand; up at once |
-| Wave cleared → salvage → `levelclear` | `levelclear` immediately (`levelclear-fleet` after `fleetIntact`) |
-| `travel` | the cleared level's `l<n>-outro` |
+| Wave cleared → salvage → `levelclear` | `levelclear` immediately, at 120 BPM (`levelclear-fleet` after `fleetIntact`) |
+| `travel` | the cleared level's symphonic `l<n>-outro`, at its tempo |
 | Carrier destroyed (`victory`) | `victory`; on the last route the campaign `finale` (`finale-fleet` after `fleetIntact`) |
 | `defeat` / `gameover` | `cackle` immediately, then `alienwin` on the bar 8 beats later |
 
-Accents keep one role and shape on every level: dive is the hook's first three notes rising over a root stab and snare; last stand is a tremolo on the tonic rising a semitone with a snare roll and crash; hatch is a low tritone stab with bell, choir and china; reinforcements is a two-chord riff hit with crash; breakthrough is an alarm of the tonic and its flat second, twice, then the hook's first note an octave up over a tom run. Each is played in the level's own pitches and instrumentation, and lands on the next half-beat (dive, reinforce) or beat (last stand, hatch, breakthrough).
+Accents keep one role and shape on every level, in the level's own pitches and instrumentation:
+- **dive:** the hook's first three notes rising over a root stab and snare;
+- **last stand:** a tremolo on the tonic rising a semitone, with a snare roll and crash;
+- **hatch:** a low tritone stab with bell, choir and china;
+- **reinforcements:** a two-chord riff hit with crash and a gang shout;
+- **breakthrough:** an alarm of the tonic and its flat second;
+- **life loss:** destroyed, gloat and respawn, as above.
+
+They land on the next half-beat (dive, reinforce), beat (last stand, hatch, breakthrough, gloat, respawn) or sixteenth (destroyed) of the **level's** grid. At most two accents play at once, except the life-loss three, which always play.
 
 ### MIDI fallback score
 
-`web/audio/generate-midi.py` writes Standard MIDI Format 0 files for every cue from the same motif events in `tools/music_motifs.py`: riff, bass, lead, kick and snare. When every recorded format of a cue fails, `web/audio/demon-audio.js` plays that cue's MIDI on the same grid, so a fallback tier still plays its level's motif. The MIDI voices use square lead, sawtooth riff and bass, sine pads and triangle percussion.
+`web/audio/generate-midi.py` writes Standard MIDI Format 0 files for every cue from the same motif events in `tools/music_motifs.py`, with each cue's tempo meta (the level's BPM; 120 for marches and menu). It keeps riff, bass, lead, gang shouts (as a percussion hit), kick and snare. When every recorded format of a cue fails, `web/audio/demon-audio.js` plays that cue's MIDI on the cue's own grid. The MIDI voices use square lead, sawtooth riff and bass, sine pads and triangle percussion.
 
 ### Playback rules
 
-A shared audio-clock scheduler runs with lookahead and asynchronous loading, and a request counter rejects stale loads. Cue changes land on the next bar, while tier changes land on the next bar *at the same loop position*: rising tiers cut on the downbeat, falling tiers fade over a beat. The intro hands over to play when its 16-beat opening has played. Clear, victory, the finale and the cackle start immediately with a 90 ms music-only fade. Tail cues hold their last bar, so a long cutscene is never silent, and the alien theme loops until the next cue. Accents never delay the game or replace the music. Effects stay short synth voices with unchanged timing and voice limits (shot 4, hit 4, explosion 5, 14 total). They play at 0.9 against recorded music at 0.7, and the rock and metal levels are mastered 1 dB below the marches so the effects stay audible.
+A shared audio-clock scheduler runs with lookahead and asynchronous loading, and a request counter rejects stale loads. **The grid follows the active cue's tempo:**
+- **Cue changes:** each lands on the current cue's next bar line; a cue at a different tempo then starts its own grid on that line, so the old bar is always finished. The symphonic intros and outros bridge each level's tempo change.
+- **Tier changes:** they land on the next bar of the level grid *at the same loop position*. Rising tiers cut on the downbeat; falling tiers fade over a beat.
+- **Immediate cues:** clear, victory, finale and the cackle start immediately at their own 120 BPM grid, with a 90 ms music-only fade.
+- **Tails:** tail cues hold their last bar, and the alien theme loops until the next cue.
 
-Visiting the page stays silent until a user gesture unlocks browser audio. Muting ramps the master gain, and pause suspends the audio context. Resume keeps the bar grid's phase, skipping only whole beats that fell behind. The bridge also pauses on visibility changes.
+Mixing:
+- **Buses:** recorded music runs at 0.7 through three gain stages: the life-loss **drop**, a short **sidechain** that dips the music 2 dB under explosions, hits and life loss, and the **music** bus that the comms layer ducks (`demonAudio.graph`). Each stage is its own node, so ducking, dropping and sidechain never fight.
+- **Accents:** they bypass the drop (the hit must sound over it) but stay on the ducked bus.
+- **Effects:** they play at 1.0 (round 2: 0.9). The battle tiers are mastered at −19.5 to −17.5 LUFS and the symphonic cues at −18.5 LUFS.
 
-Future refinements: true stems (the tiers are full mixes crossfaded on bars, not separately mixable layers), music/effects balance controls, and sound preference persistence.
+Visiting the page stays silent until a user gesture unlocks browser audio. Muting ramps the master gain, and pause suspends the audio context. Resume keeps the bar grid's phase, skipping only whole beats that fell behind.
+
+Future refinements: true stems (the tiers are full mixes crossfaded on bars), music/effects balance controls, and sound preference persistence.
 
 ## Review gates
 
@@ -239,24 +288,17 @@ To give the defender, demon swarms, and brood carrier convincing **2.5D arcade d
   - **Atmospheric Re-Entry Plasma Fire (Diving Demon & Sentinel Dive Envelopes)**: Diving creatures plunge through the sector atmosphere wrapped in a chaotic, strictly **thermal blackbody radiation gradient** with zero cool cyan or violet bands. From leading bow-shock stagnation point to trailing wake, the stepped pixel layers progress through: (1) **blinding white stagnation core** (`#FFFDF7` / `#FFF8DC`) at the compressed leading edge, (2) **incandescent solar yellow** (`#FFE042` / `#FFBF1F`), (3) **superheated ablation orange** (`#FF6B1A` / `#E8430C`), and (4) **deep crimson/charcoal smoke trail** (`#9E1B1B` / `#3B171D`) with turbulent frame-stepped pixel jitter and shedding incandescent embers. Small creatures (`diveShieldMax = 1`) form a compact thermal bow-shock crescent; not-so-small creatures (`diveShieldMax = 2..3`) form a wider double-layered ablative envelope; Sentinels (`diveShieldMax = 4 + floor(route/2)`) project a massive V-shaped aerothermal re-entry shockwave cone that sheds burning slag and shatters into a high-contrast thermal white/amber **Plasma Shatter** burst when broken by powered weapons.
   - **Technological Force Shields (Player Shield, Sentinel Hover Shield & Carrier Energy Egg)**: Engineered energy barriers use cool, structured, **geometric cyan/teal/violet (`#39DFCC` / `#70F5D5` / `#A888FF`) hex and segmented pixel barriers**. Their stepped-pixel silhouettes remain symmetrical and crystalline without smoke trails or thermal ember shedding, contrasting immediately against warm hostile shots and orange/yellow re-entry plasma fire.
 
-### Brood Dreadnought Carrier Boss Specification & Style Guide
+### Boss armada: gargoyle warships (spaceship first, gargoyle second)
 
-The Brood Dreadnought replaces flat, oversized single-cell boss scaling with a dedicated **high-resolution multi-part sprite hierarchy (`184 × 120` arena units, rasterised at its native `368 × 240` per cell)** rendered with crisp nearest-neighbor fidelity (`FilterQuality.none`):
-- **4 Evolution Forms of the gargoyle war-ark** (corruption and colour escalate; the horned brood sigil with its ruby and one rank pip per form stay on the forehead, and a rank carving matching the gargoyle insignia sits on both bastions):
-  1. **Carrier (Route 0)**: weathered violet-grey stone, amber eyes, a few pale ember fissures, small horned prows, ivory chevron.
-  2. **Brood Ark (Route 1)**: bruised plum stone, magenta fissures, dorsal spines between the lyre horns, longer prows, steel twin bars.
-  3. **Siege Ark (Route 2)**: ember-cracked crimson basalt with lava fissures, brow horns, ember trim on the chimney caps, fang slashes.
-  4. **Flagship (Routes 3–4)**: obsidian with a crown of gold spikes, gold wing bones and gold-veined fissures, white-gold eyes, star jewel.
-- **Articulated Sub-Components & Overlays** (positions and windows unchanged from the mechanical hull):
-  - **Talons**: stone hands with bone claws under the bastions, flexing closed, half, flared and clamped; soul-fire flickers from the four chimney pinnacles.
-  - **Spout-head turrets**: two small gargoyle heads under the jowls whose mouths breathe ember light; the tracking barrels pivot in their mouths before a volley.
-  - **Fanged jaws and clawed vents**: the centre core aperture (`|dx| < 24`) sits behind fanged stone jaws that part vertically; the side vents (`dx ≈ ±52`, width `±18`) are clenched by three bone-stone talon fingers that withdraw as they open. On the final form (`phase == formCount - 1`) the vents are petrified shut with rune-carved plugs and ember lock eyes, so the eye locks onto the maw.
-  - **Idle life**: four authored hull frames at 2 fps per form: the wing sails breathe, the eyes pulse and flare, a few spines twitch, the fissures flicker.
-  - **Progressive damage**: stone cracks, then split stone with chunks broken out over a glowing interior, then gaping fissures and torn sails, each in two flicker frames, with pixel smoke, sparks and flames anchored to the hull. No gore: damage is cracked stone and glowing fissures only.
-- **Arrival ("Coming-In") Choreography**:
-  - The dreadnought descends from high orbital shadow under a roaring **orbital retro-burn deceleration** with full chimney soul-fire, casting **gravitational dust ripples** and shockwave rings across the sector sky, followed by **talon deployment**, jaw and vent cycling, and pulsing red/amber **klaxon telemetry** before its force shield locks online at cruise altitude (`y = 205`).
-- **Destruction ("Going-Down") Choreography**:
-  - Defeating the core triggers a **sequential multi-part chain-reaction meltdown**: explosions detonate first across the outer **wing pylons**, propagate inward to rupture the **auxiliary side bays**, and culminate in a catastrophic **central brood core** breach. The petrified, charred hull (ash stone, charred sails, dead eyes, a snapped horn, ember craters) rolls into a **listing hull descent** (`±0.18 rad` roll tilt), shedding pixel hull plates, burning slag, and dense stepped smoke columns as it falls toward the planetary horizon.
+User feedback on the gargoyle war-ark: "far more gargoyle like, but now it doesn't look like a spaceship. The old ship looked fantastic but it was plain and flat; the new one is rich and full of texture, but doesn't look like a spaceship." The boss is therefore **unmistakably a spaceship first** and a demonic gargoyle warship second, keeping the clean graphic readability of the original flat carrier (strong outline, flat plate tones, lit window rows, clear functional openings) together with the gargoyle round's rich texture (AI-detailed plating, carved stone, leather sails). The contract is [sprite-atlas.md](sprite-atlas.md#boss-armada-atlases-boss-classpng).
+
+- **Hull logic (spaceship):** seen in a 35° 3/4 view with the **bow toward the player** and the stern up the screen. An armoured hammerhead ram-bow (dark vertical skirt, mid-tone sloped glacis, lit chamfered deck with armour plates, a ridged keel roof and gun rails), a narrower waist, and a broad **engine block** at the stern carrying the main engines, with **outboard engine pods** on pylons for the bigger classes. Every engine has a banded nacelle or housing and a flared nozzle with a hot rim; **plumes rise from the nozzles** (front, rear and propulsion read at a glance). A gothic **bridge tower** stands on the waist (stacked tiers with lit amber and teal windows, a glass bridge band, a sensor mast). **Hangar bays** with hazard sills and lit headers flank the maw; **gun turrets** sit under the chin; point-defence turrets dot the engine block; portholes run along skirt, waist and block; **running lights** blink (port red, starboard green, white strobes, amber bow markers).
+- **Ornament (gargoyle):** applied like a warship's figurehead. A horned **gargoyle figurehead** on the prow whose mouth is the core maw (fanged blast jaws), with glowing eyes, brows, jowls, swept horns and breathing ear-fins; **bat-wing solar sails** on finger bones with horn spines along the arm; gargoyle-head intakes on the pods; **carved stone spires and flying buttresses** on the tower; stern horns; ember **fissures** spreading over the plating. Turrets wear horned face plates.
+- **Hull classes escalate per run:** run 1 Gargoyle Frigate (2 main engines, one sail pair, a small three-tier tower), run 2 Brood Cruiser (+2 pods, ram spikes, three spires, deck turrets), run 3 Siege Battlecruiser (3 main + 4 pods, five spires, bow spurs and tusks, the wreck breaks in two), run 4 Cathedral Battleship (4 main + 4 pods, two sail pairs, seven spires), run 5 Abyssal Dreadnought (5 main + 6 pods, nine spires, a second horn crown, its stern beyond the top of the screen). Each class is darker and more corrupted (ramps eased toward the night, more fissures); the four **forms still escalate within one fight** (violet-grey gunmetal with amber eyes and a chevron, bruised plum with magenta fissures and twin bars, ember-cracked crimson with lava fissures and fang slashes, obsidian with a gold crown and star), each with one rank pip on the sigil.
+- **Visual-only scaling:** hitboxes, shield geometry, the maw, bays and turret pivots, HP, damage, fire patterns, scoring and timings are unchanged. The bright bow has the same footprint in every class and holds every functional part; the extra size is a **darker, lower-contrast superstructure** drawn before the creatures, partly behind the shield arc and beyond the screen edges, so shots passing beside the solid body fly over background hull. Functional parts stay the brightest and most saturated. The hull never reaches the player's or the creatures' band and stays inside the full shield egg below its waist.
+- **Idle life and response:** eyes pulse and flare, ear-fins breathe, spines flex and fissures flicker (2 fps); engine plumes flicker and lengthen with thrust, vectoring harder on the side away from the motion; lateral bow thrusters puff as it slides; on arrival the bow retro-thrusters brake the descent.
+- **Damage and destruction:** cracked plating, then torn plates over the glowing interior, then gaping breaches on the bow, with pixel smoke, sparks and flames; burning breaches open on the superstructure. No gore. The petrified, charred wreck rolls as it falls; bigger classes fall harder: more chain explosions racing along the engines and tower, more tumbling debris, and from the battlecruiser up the keel snaps and the two halves drift apart.
+- **Arrival ("Coming-In") Choreography:** the warship descends from orbital shadow on its bow retro-thrusters with gravitational dust ripples and shockwave rings across the sector sky, cycling jaws and bays, before its force shield locks online at cruise altitude (`y = 205`).
 
 ### Stylized Starfighter Cockpit Control Panel, Steering Yoke, Interim Gun Angles & Device Tilt
 
@@ -290,7 +332,7 @@ Powers occupy two offensive groups plus an independent shield: RAPID or POWERFUL
 
 ## Ground war presentation
 
-Ground units, allies, wrecks and tracers stand on the flyover ground with its own camera (texel scale × 1.25), depth-sorted and drawn nearest-neighbour from `ground-forces.png` (contract: `lib/game/ground_atlas.dart`; pipeline: asset-pipeline.md, "Ground forces"). Brightness rises from 38% at the horizon to full at the fire line, so units are subdued far away and threatening up close. Demon units have mid-value dark hulls with saturated warm lights, eyes and launcher glow. Allies have neutral grey-blue hulls with cyan/teal stripes, cyan muzzle flashes and a blinking cyan distress cross while under attack. Decorative creatures stay small, muted and unlit, with no launcher. Allies never show death imagery: a totalled ally sparks, smokes and limps off, or its crew ejects in a pod. Telegraphs combine authored frames (launcher raised, then glow) with a warm stepped bracket on the ground that blinks faster near launch. The ground missile is one high-detail nose-on cell scaled nearest-neighbour from 8 to 36 units, with an analytic smoke trail along its fixed path and a blinking warm marker at the ship plane. Homing missiles (ship-weapons row 7) carry a cyan exhaust trail; a mint reticle locks on the current target; loaded missiles hang on the wing pylons, and so also appear in the transition loadout glyph.
+Ground units, allies, wrecks and tracers stand on the flyover ground with its own camera (texel scale × 1.25), depth-sorted and drawn nearest-neighbour from `ground-forces.png` (contract: `lib/game/ground_atlas.dart`; pipeline: asset-pipeline.md, "Ground forces"). Brightness rises from 38% at the horizon to full at the fire line, so units are subdued far away and threatening up close. Demon units have mid-value dark hulls with saturated warm lights, eyes and launcher glow. Allies (v3) are a convoy seen from behind and above in the near band: rovers, APCs, half-tracks, tanks, howitzers, walkers and infantry squads, two variants per sector, with grey-blue hulls, sector camouflage (snow, patch plates, teal bands), cyan/teal stripes, lamps and an IFF chevron; turrets traverse toward their foe, kick back on each shot with a cyan muzzle flash, and tracks throw dust toward the camera. A blinking cyan distress cross shows while under attack. Ground effects are multi-frame and scaled by depth: a destroyed unit throws a perspective shock ring, a ten-frame fireball and ballistic debris, leaves a scorch decal on the ground and burns (flame-tongue loop, rising smoke column) for a few seconds; tracers have a muzzle flash at the shooter and impact sparks at the target (cyan friendly, warm demon). Flames and flashes fog only half as much as hulls. Decorative creatures stay small, muted and unlit, with no launcher. Allies never show death imagery: a totalled ally sparks, smokes and limps off, or its crew ejects in a pod. Telegraphs combine authored frames (launcher raised, then glow) with a warm stepped bracket on the ground that blinks faster near launch. The ground missile is one high-detail nose-on cell scaled nearest-neighbour from 8 to 36 units, with an analytic smoke trail along its fixed path and a blinking warm marker at the ship plane. Homing missiles (ship-weapons row 7) carry a cyan exhaust trail; a mint reticle locks on the current target; loaded missiles hang on the wing pylons, and so also appear in the transition loadout glyph.
 
 ## Illustrated arrival guidance
 

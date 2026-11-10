@@ -6,7 +6,7 @@ A small Go tool that stops heavy local jobs from stalling the shared forge.
 
 On 2026-11-10 four parallel Chatterbox (torch) workers stalled the forge for about 1.5 h:
 
-- **Sized from the host:** the job took its worker count from `nproc`, which reports the host's 20 CPUs. It started 4 workers × 5 threads, each loading its own model copy.
+- **One model copy per worker:** the job started 4 workers, and each loaded its own copy of Chatterbox. The forge really does have 20 CPUs (`nproc` is accurate and `cpu.max` is unlimited), so memory, not CPU, was the constraint.
 - **Soft limit, silent stall:** the forge cgroup's limit is a soft `memory.high` (about 10.2 GiB here). Crossing it kills nothing; the kernel reclaims forever (9 million `high` events), so every process slows to a crawl and no error ever shows up.
 - **Killed workers came back:** the Python multiprocessing pool respawned workers that were killed.
 - **Waits that never ended:** agents waited with `until ! pgrep -f <name>`, and the pattern matched the waiting shell's own command line, so the wait could never finish.
@@ -32,6 +32,7 @@ What `run` does:
 - **Queues heavy jobs:** it takes a forge-wide flock (`--lock heavy` by default), so heavy jobs from different agents run one at a time.
 - **Waits for headroom:** it starts the job only once `--need` GiB (default 3) is free under `memory.high`, counting anonymous memory plus shmem/tmpfs.
 - **Caps threads:** it limits OMP, MKL, OpenBLAS, numexpr, torch, rayon and GOMAXPROCS threads (`--threads`, default 4).
+- **Time limit:** `--timeout N` kills a job that runs longer than N seconds (exit 137, lock released). Jobs on the `flutter` lock default to 1800 s, because a flutter-lane client orphaned by a tray restart once sat idle for 43 min holding the queue.
 - **Fails loudly instead of stalling:** it kills the job's whole process group (TERM, then KILL, exit 137, reason printed) when pinned memory stays above `--kill-at` (default `memory.high` − 1.5 GiB), or the `memory.high` reclaim rate stays above `--max-events`/s, for `--grace` seconds (default 20).
 
 To wait for a background job, never `pgrep -f`; use:

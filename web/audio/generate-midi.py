@@ -17,10 +17,10 @@ PPQ = 96
 # The fallback synthesizer voices channel 9 as percussion, 1 as sawtooth,
 # 2 as sine and the rest as square waves.
 CHANNEL = {'bass': 1, 'gtr': 1, 'mute': 1, 'chord': 1, 'chordm': 1, 'trem': 1, 'clean': 2,
-           'lead': 0, 'lead2': 0, 'brass': 0, 'choir': 2, 'organ': 2, 'bell': 2, 'pad': 2}
-DRUMS = {'kick': 36, 'snare': 38, 'snareroll': 38, 'hat': 42, 'ohat': 46, 'crash': 49, 'ride': 51, 'china': 52, 'tom': 45, 'timp': 41}
+           'lead': 0, 'lead2': 0, 'brass': 0, 'choir': 2, 'organ': 2, 'bell': 2, 'pad': 2, 'strings': 2, 'vocalise': 0}
+DRUMS = {'kick': 36, 'snare': 38, 'snareroll': 38, 'hat': 42, 'ohat': 46, 'crash': 49, 'ride': 51, 'china': 52, 'tom': 45, 'timp': 41, 'hey': 39}
 # Keep the fallback light: only the parts that carry the motif and the pulse.
-SKIP = {'hat', 'ohat', 'ride', 'china', 'crash', 'choir', 'organ', 'pad', 'lead2'}
+SKIP = {'hat', 'ohat', 'ride', 'china', 'crash', 'choir', 'organ', 'pad', 'lead2', 'strings'}
 
 
 def vlq(number):
@@ -31,8 +31,12 @@ def vlq(number):
     return bytes(data)
 
 
-def write(name, notes, length=32):
-    events = [(0, bytes([0xff, 0x51, 3, 7, 0xa1, 0x20]))]  # 120 BPM: shared transition grid
+def write(name, notes, length=32, bpm=120.0):
+    # Tempo meta: microseconds per quarter note at the cue's own tempo (each
+    # level has its own; marches and menu 120). The browser fallback schedules
+    # by beats on the cue's grid; the meta keeps the files right elsewhere.
+    tempo = round(60_000_000 / bpm)
+    events = [(0, bytes([0xff, 0x51, 3]) + tempo.to_bytes(3, 'big'))]
     for beat, duration, pitch, velocity, channel in notes:
         events.extend([(round(beat * PPQ), bytes([0x90 | channel, pitch, velocity])), (round((beat + duration) * PPQ), bytes([0x80 | channel, pitch, 0]))])
     events.sort(key=lambda event: (event[0], event[1][0] & 0xf0 == 0x90))
@@ -60,7 +64,7 @@ names = [f'l{level}-{part}' for level in range(1, 6) for part in ('t1', 't2', 't
 names += ['levelclear', 'victory', 'finale', 'levelclear-fleet', 'finale-fleet', 'alienwin']
 for name in names:
     events, beats = motifs.cue_events(name)
-    write(name, convert(events), beats)
+    write(name, convert(events), beats, motifs.bpm_of(name))
 write('menu', [(beat, 1.6, 52 + [0, 7, 12, 15, 12, 7, 3, 7][i % 8], 36, 2) for i, beat in enumerate(range(0, 32, 2))])
 # The cackle's fallback: falling staccato "ha" figures.
 write('cackle', [(i * .4, .18, 76 - 2 * i, 90, 0) for i in range(9)] + [(3.6, 1.5, 58, 90, 0), (0, 3.5, 40, 70, 1)], 8)

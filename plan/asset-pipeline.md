@@ -115,9 +115,9 @@ Silhouettes, poses, armour, insignia, weapon mounts and effects are **authored d
 | `art/families/sprites/selections.json` | Chosen keyframe seed per species and why |
 | `art/sprites/sources/keyframes/*.png`, `molts/*.png` | Selected AI sources, kept as 256 px nearest copies (inputs of record) |
 | `art/families/sprites/detail/*.png` | Finished 64-grid luminance detail maps consumed by `generate_sprites.py` |
-| `art/sprites/review/*.png` | Contact sheets: every atlas block (`combat-<species>.png`, `combat-shared.png`), `combat-directions.png` (left / neutral / right flight sets, intact and molt 3, 3×), `sentinel-effects.png`, `boss-carrier.png` (all eleven rows), `ship-weapons.png`, `ai-sources-and-detail.png`, and the in-engine sheets `in-engine-motion-damage.png`, `in-engine-sectors.png`, `in-engine-carrier.png` (forms shielded / jaws open, jaw cycle, damage escalation) and `in-engine-carrier-world.png` (beside gargoyles and a sentinel over the Carrier sector, falling wrecks) |
-| `art/workflows/sprites/carrier-texture-sdxl.json`, `art/families/carrier/prompts.json`, `selections.json` | Carrier war-ark detail: SDXL + pixel-art-xl at 1536 × 1024, fixed seeds; `keyframes` queues the candidates and keeps the selected crops (box-sampled to 368 × 240) in `art/sprites/sources/carrier/`, `finish` high-passes and quantises them to four levels in `art/families/carrier/detail/{hide,masonry,membrane}.png` |
-| `tools/gargoyle_rig.py` | The 3-D creature rig and rasteriser shared by the combat and sentinel generators |
+| `art/sprites/review/*.png` | Contact sheets: every atlas block (`combat-<species>.png`, `combat-shared.png`), `combat-directions.png` (left / neutral / right flight sets, intact and molt 3, 3×), `sentinel-effects.png`, `boss-<class>.png` (each hull class: every form assembled, the wreck, the packed atlas) and `boss-armada.png` (the five classes side by side), `ship-weapons.png`, `ai-sources-and-detail.png`, and the in-engine sheets `in-engine-motion-damage.png`, `in-engine-sectors.png`, `in-engine-boss-<k>.png` per class (forms shielded / jaws open, jaw cycle, thrust left / still / right, damage escalation), `in-engine-boss-<k>-world.png` (beside gargoyles and a sentinel over the Carrier sector, the final form, the falling wreck) and `in-engine-armada.png` (all five classes in the same phone frame) |
+| `art/workflows/sprites/carrier-texture-sdxl.json`, `art/families/carrier/prompts.json`, `selections.json` | Boss armada detail: SDXL + pixel-art-xl at 1536 × 1024, fixed seeds (per-item negative prompts); `keyframes` queues the candidates and keeps the selected crops (box-sampled to 368 × 240) in `art/sprites/sources/carrier/`, `finish` high-passes and quantises them to four levels in `art/families/carrier/detail/{plating,hide,masonry,membrane}.png`, which the generator tiles over hull plating, carved stone and the sails |
+| `tools/gargoyle_rig.py` | The 3-D creature rig and rasteriser shared by the combat and sentinel generators, plus the hard-surface kit for the boss armada (`ShipCam` 3/4 bow-on camera, `Hull` lofts, plates, tubes and spires, `WindowRaster`) |
 | `tools/sprite_pipeline.py` | Driver for every stage |
 | `tools/generate_sprites.py`, `generate_ship_sprites.py`, `generate_sentinel_sprites.py`, `generate_boss_sprites.py` | Deterministic packers writing `assets/images/` |
 | `test/gargoyle_review_test.dart` | Atlas contract checks, motion-state checks, and the in-engine review frames (`.cache/gargoyle-review/`) |
@@ -131,7 +131,8 @@ A Python venv with Pillow, NumPy and SciPy (`python3 -m venv <dir> && <dir>/bin/
 python tools/sprite_pipeline.py offline     # finish -> atlases -> sheets; no GPU, byte-identical output (~45 s)
 python tools/sprite_pipeline.py all         # keyframes -> edits -> finish -> atlases -> sheets
 python tools/sprite_pipeline.py keyframes   # or any single stage: edits, finish, atlases, sheets
-flutter test test/gargoyle_review_test.dart test/carrier_review_test.dart && python tools/sprite_pipeline.py screens   # in-engine review sheets
+flutter test test/gargoyle_review_test.dart test/carrier_review_test.dart && python tools/sprite_pipeline.py screens   # (BOSS_REVIEW_DIR redirects the armada frames)
+flutter test test/boss_armada_test.dart   # in-engine review sheets
 ```
 
 GPU stages post the committed workflows to the project's ComfyUI studio over its HTTP API (`$COMFYUI_URL`, default `http://studio:8188`, the same server `studio.run_workflow` drives) with the seeds and prompts above, so the same models and seeds reproduce the candidates; raw outputs go to `$SPRITE_PIPELINE_CACHE` (default `~/.cache/demon-attack/sprite-pipeline`, never the repo). Agents can run the same workflows through `studio.run_workflow` / `studio.queue_workflow` (`$prompt`/`$seed` overrides, `inputs: {input: <keyframe>}` for edits) and drop the outputs into the cache as `<species>-<seed>.png`. `edits` skips molts that already exist under `art/sprites/sources/molts/`; delete them to regenerate. Finishing is CPU-only and deterministic: colour-key matte from the border, largest component, head/torso window (central 34 % of the width, top 80 % of the height), box-sampled onto the hide box `(20, 14)–(44, 52)` of the 64-grid and quantised to four levels at the 20/55/85 % luminance quantiles.
@@ -166,16 +167,35 @@ the wrong way, or as people instead of vehicles. None gave a 3/4 vehicle
 facing screen right with a launcher that can be lifted, at 20 texels, so AI
 silhouettes are not used.
 
-### Layout (v2: 12 columns × 10 rows of 32×24 texels, 384×240 px, binary alpha)
+### Layout (v3: 16 columns × 16 rows of 40×32 texels, 640×512 px, binary alpha)
+
+v3 rebuilt the allies and the ground effects. Allies are now seen **from
+behind and above**, driving up the plane with the player's convoy, authored
+by a small deterministic solid rasteriser in the driver (`View`: prisms,
+extrusions and rods projected with the flyover's forward foreshortening,
+back faces culled, faces lit from the upper left, a lit bevel where a deck
+meets the rear plate, sector camouflage: Krybor snow, Ringfall patch plates,
+Ember/Hollow teal bands). A vehicle is **two layers sharing the cell frame**:
+the hull (tread cleats crawl one row per frame, tyres turn) and a turret
+rendered at five screen angles, so the renderer traverses it toward its foe
+and mirrors it for the left. Demon units keep their v2 art, bottom-centred
+in the bigger cell.
 
 | Row | Content | Columns |
 | --- | --- | --- |
-| 0–3 | Demon unit per sector: Krybor captured rocket buggy with an imp driver; Ringfall salvage-hull missile crawler; Ember lava-forged artillery beast; Hollow walking gargoyle launch tower | 0–3 move cycle (wheels/treads turning, legs stepping, body bob, blinking lamps, pulsing vents/cracks/runes, exhaust puffs), 4 telegraph A (launcher raised, warhead lit), 5 telegraph B (bright warm muzzle glow), 6 fire (launch flash, recoil, smoke), 7 post-fire (smoking tube, launcher settling), 8–9 burning wreck (two flame flicker frames over the same torn hulk, scorch, embers), 10–11 empty |
-| 4–7 | Allied unit per sector: Krybor frontier snow rover; Ringfall militia rover; Ember foundry defense turret (its move cycle is a traverse, a sweeping running light and a turning radar mast); Hollow resistance walker | 0–3 move, 4–5 firing (cyan muzzle flash big/small, recoil), 6 hit (hull flash + cyan sparks), 7–8 totalled and limping (dents, dead lights, sparks, smoke, a blown tyre / missing wheel with the axle dragging / drooping barrel / dragging leg; intact and upright, never a wreck), 9 crew escape pod with cyan thruster, 10–11 empty |
-| 8 | Effects | 0–5 ground explosion (flash → fireball → big fireball → rolling smoke → smoke + flung debris → thinning smoke, settled debris), 6 scorch decal, 7 missile launch flash, 8 tracer impact spark, 9 small skirmish blast, 10–11 grey smoke puffs small / large |
-| 9 | Missile | 0–1 demon ground missile nose-on (22×22: shaded warhead, X fins, warm exhaust ring that flickers), 2–4 trail puffs dense → thin, 5–11 empty |
+| 0–3 | Demon unit per sector (as v2) | 0–3 move, 4–5 telegraph, 6 fire, 7 post-fire, 8–9 burning wreck |
+| 4–11 | Allies, two variants per sector (`allyRow(sector, variant)`): Krybor six-wheel scout rover / tracked snow APC; Ringfall salvage half-track with a gunner / militia infantry squad; Ember heavy battle tank / self-propelled howitzer; Hollow resistance walker / heavy infantry squad | 0–3 move (treads, tyres, gait; squads walk), 4 hit (hull flash, cyan sparks), 5–6 totalled (dents, dead lights, a thrown track or flat tyre; squads run), 7 escape pod, 8–12 turret / walker torso at screen angles 0, 22.5, 45, 67.5, 90° (squads: 8–9 kneeling volley with cyan flashes, 10 kneeling) |
+| 12 | Effects | 0–9 ground explosion (white flash → fireball → peak → fire stem under a rising smoke cap → thinning smoke, settled debris), 10–12 scorch decals (radial streaks, cooling embers), 13 missile launch flash, 14 warm impact star, 15 small blast |
+| 13 | Fx | 0–3 ground shock ring (flat perspective ellipse, white-hot → dust), 4–7 dust kicked up (ground anchored), 8–12 rising smoke puff life (centred), 13–15 hull sparks |
+| 14 | Flame / muzzle | 0–5 flame tongue loop (vertically periodic noise, seamless), 6–9 tumbling debris chunk, 10–12 cyan muzzle flash, 13–15 warm muzzle flash |
+| 15 | Missile / impact | 0–1 ground missile nose-on, 2–4 trail puffs, 5–7 cyan impact, 8–10 warm impact |
 
-Units stand bottom-centred on the cell's last row, facing screen right; the
+The generated contract also carries `allyKind` (0 vehicle, 1 squad, 2
+walker), `allyBob` (walker torso rise per move frame) and `allyMuzzle` (per
+row and turret angle, texels from the cell's bottom centre) so muzzle flashes
+and friendly tracers leave from the barrel.
+
+Demon units stand bottom-centred on the cell's last row, facing screen right; the
 renderer mirrors them for the right band. Every frame of a unit shares the
 move cycle's horizontal offset. `GroundAtlas.demonSize` / `allySize` in the
 generated `lib/game/ground_atlas.dart` are the measured content boxes: the
@@ -262,6 +282,45 @@ frames loop 0→3. The missile cell is meant to be drawn centred and scaled up
 with nearest-neighbour as it closes on the camera, trailed by puffs 2→4. The
 escape pod and smoke puffs (row 8, cols 10–11) are free sprites.
 
+## Flyover vegetation
+
+Plants and obstacles the ground fleet pushes through on the relief (see
+[terrain-relief.md](terrain-relief.md)). The driver is **Go, standard
+library only** (`tools/vegetation/`), per the forge tooling rule for new
+tools. Like the ground forces, **silhouettes and every frame are authored on
+the texel grid** (`build*` and `frames` in `tools/vegetation/build.go`); the
+selected SDXL + pixel-art-xl + LayerDiffuse keyframe of each species adds
+only a −1/0/+1 shading texture on the body ramp (high-pass luminance at
+±1.4 σ). Body ramps come from the sector palette
+(`art/palettes/flyover-<sector>.json`) at the `body_luma` targets under the
+chroma cap, pulled toward the species hint hue; accents use the species
+accent at the glow cap; the outline is the palette's darkest colour.
+
+| Path | Role |
+| --- | --- |
+| `art/families/flyover-vegetation.json` | Spec: species (sector, kind, row, prompt, seed, selected, hint, accent), style and negative prompts, caps, atlas layout. |
+| `art/families/flyover-vegetation-runs.json` | Provenance of every ingested run (workflow, prompt, seed, models, SHA-256). |
+| `art/sprites/sources/vegetation/<id>.png` | Selected keyframes cropped to their alpha, ≤64 px: the inputs of record for `offline`. |
+| `tools/vegetation/` | The driver (`go run . jobs|run|ingest|pack|offline`). |
+| `assets/images/flyover-vegetation.png`, `lib/game/vegetation_atlas.dart` | Atlas (16 × 11 cells of 48×32 texels) and its generated contract. |
+| `art/contact/flyover-vegetation-contact.png` | Every species' eight frames on its sector ground at 3×, and the particle row. |
+
+Layout: rows 0–9 one species each, columns 0–7 idle A, idle B, bend A,
+bend B, break A, break B, break C, settled (facing right: falling or
+shoved to the right), columns 8–15 the same mirrored. Row 10: six 8×8
+particles × two frames (dust, needles/leaves, shards, splinters, spores,
+ash). Plants stand bottom-centred at x = 24 on the last row.
+
+```bash
+cd tools/vegetation
+export VEG_WORK=$SCRATCH/veg-work VEG_RAW=$SCRATCH/veg-raw   # never the checkout
+go run . offline   # committed sources -> atlas, Dart, contact; no GPU, byte-identical
+go run . jobs      # 30 jobs: 10 species x 3 candidate seeds (723100-724002)
+go run . run       # ComfyUI HTTP (COMFY_URL, default http://studio:8188), one job in flight
+go run . ingest    # raws -> $VEG_RAW, provenance, refresh sources for `selected`
+go run . pack      # refresh sources from raws if present, then offline
+```
+
 ## Squad comms portraits
 
 The video-call portraits of the squad comms cast (22 rows: 14 fleet and ground humans, 5 gargoyle demon officers and 3 demon minions, in `art/comms/cast.json` order) live in two atlases. `assets/images/comms-portraits.png` holds **128 × 128 logical px** cells, drawn at an integer scale (2× on desktop side panels). `assets/images/comms-portraits-small.png` holds 48 px cells for the phone overlay at 1×. Each row has twelve frames in `CommsFrame` order (`lib/comms/comms_types.dart`): 0 idle, 1 blink, 2–4 talk A/B/C (mouth opening), 5 talk D ('oo'), 6 shout, 7 grunt (the demon roar, or human alarm), 8 happy (demon smug gloat), 9 worried (demon alarmed snarl), 10 tilt left and 11 tilt right. `lib/comms/comms_portraits.dart` is generated, with the image paths, cell sizes, the row of each character id and the backdrop map (below). Portrait alpha is binary and transparent around hair, helmets and horns; small enclosed matte holes are filled with the nearest opaque colour. The dark 1 px ring around each silhouette is the deliberate midnight-ink outline of the game's sprite style, not a matte fringe.
@@ -316,3 +375,42 @@ Each character's video tile has a dim interior behind the portrait, with no peop
 Judge the sheet at native size: 128 px at 2× for desktop panels and the 48 px atlas at 1× for phones. Check that eyes and mouth read at 48 px, that the face does not move outside the face box between frames, and that the shout, roar, happy and worried faces differ clearly.
 
 `check` (run by `offline`) verifies the compositing contract in both atlases. For every character, frames 2–6 must be byte-identical to frame 0 outside the face box, and frame 1 outside the eye box. In the 48 px atlas each box is mapped onto the small grid and grown by the area filter's one-pixel footprint.
+
+## Wide-screen backdrops
+
+The scenery beside the centred column on desktop (`lib/widgets/widescreen_backdrop.dart`, design in [style-guide.md](style-guide.md#wide-screen-backdrops)). Nine 2.4:1 panoramas (four menu scenes, five sectors) and one tileable command-wall texture, all original, from the project's ComfyUI studio and finished onto a small pixel grid.
+
+### Principle
+
+Composition is authored, texture is generated. Each menu scene starts from a seeded layout drawn with flat primitives (sky gradient, planet, ridges, capital-ship wedges, bat-winged gargoyle silhouettes, medal alcoves, fireworks). Each sector scene starts from its own sector painting: the rows below `crop_top`, mirrored out to 2.4:1, so the side scenery has the sector's palette, horizon and materials. SDXL + pixel-art-xl repaints the layout img2img at a fixed seed and denoise (0.38–0.45 for menus, which keeps the silhouettes; 0.35 for sectors, which keeps the painting's fine pixel detail while repainting the mirrored halves; 0.5 for the wall). The finish is CPU-only and deterministic: box sampling onto 768 × 320 logical pixels (96 × 96 for the wall), a luminance cap per scene, and quantisation to a bounded palette (the sector's flyover palette under `art/palettes/`, or a median-cut palette of at most 44 colours plus the UI ink for menus), written as indexed PNGs. The runtime adds every moving part procedurally on the same pixel grid (stars, swarm, fleet, bridge frame, holograms, embers, fireworks, glints, wall bezels and lights), so the images stay small and nothing bakes in text or UI.
+
+### Files
+
+| Path | Role |
+| --- | --- |
+| `art/families/widescreen-backdrops.json` | Style, negative prompt, per-scene layout, prompt, seed, strength, luminance cap, palette or colour count, sector painting and crop |
+| `art/workflows/widescreen/img2img-wide.json` | SDXL base + pixel-art-xl img2img: `$init_image` layout, `$prompt`, `$negative_prompt`, KSampler titled `$seed` (denoise via `$node:6.denoise`) |
+| `art/workflows/widescreen/txt2img-wide.json` | 1536 × 640 txt2img used while exploring; not part of the shipped run |
+| `art/families/widescreen-runs.json` | Generated by `ingest`: workflow, seed, strength, prompts, models and SHA-256 of every raw output in use |
+| `assets/images/widescreen/*.png` | Shipping indexed PNGs (`vista`, `hall`, `defeat`, `victory`, `sector-1..5`: 768 × 320; `wall`: 96 × 96 tile) |
+| `art/contact/widescreen-contact.png` | Review overview of every finished scene at half size (the wall tiled) |
+| `tools/widescreen_assets/` | The driver, Go standard library only (`go.mod`, `main.go`) |
+
+### Rerun
+
+```bash
+cd tools/widescreen_assets
+go run . layouts                 # seeded img2img inputs -> $WIDESCREEN_WORK/layouts (default /work/tmp/imagegen/widescreen)
+go run . jobs                    # the queue -> $WIDESCREEN_WORK/jobs.json
+go run . run [--only vista,hall] # GPU: posts each job to $COMFY_URL (default http://studio:8188) and ingests
+#   or run each job with studio.run_workflow (workflow, init_image, overrides from jobs.json),
+#   save {scene id: output path} as results.json, then:  go run . ingest results.json
+go run . process                 # raw cache ($WIDESCREEN_RAW, default ~/.cache/demon-attack/widescreen-raw) -> assets
+go run . contact                 # review sheet
+```
+
+Raw generations stay outside the checkout; `widescreen-runs.json` records their hashes, so the same seed and workflow can be verified, and `process` gives identical bytes for identical raw inputs. Wrap heavy runs in `forge-guard run --` inside the forge.
+
+### Verification
+
+`flutter test test/widescreen_backdrop_test.dart` checks layout at 1280 × 720, 1920 × 1080, 2560 × 1080 and 3440 × 1440 (no overflow, the 500-px column unchanged and centred, nothing on phone portrait). With `--dart-define=WIDESCREEN_RENDER=/abs/dir` (and optionally `WIDESCREEN_FONT=/abs/Roboto-Regular.ttf` for real glyphs) it also writes every screen (title, gameplay, travel crossfade, a later sector, pause, victory, game over, initials entry) as PNGs for review. Judge them at full size: the centre must stay the brightest, most contrasted region, and the side art must read as scenery, not as UI.

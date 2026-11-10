@@ -6,6 +6,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'boss_painter.dart';
 import 'ground_painter.dart';
 import 'model.dart';
 import 'music_director.dart'; // --- music event hook
@@ -24,8 +25,10 @@ class DemonScene extends FlameGame {
   DemonScene(this.model, this.onTick);
   final ArcadeModel model;
   final VoidCallback onTick;
-  ui.Image? atlas, effectsAtlas, sky, bossAtlas, cockpitAtlas;
+  ui.Image? atlas, effectsAtlas, sky, cockpitAtlas;
   final ship = ShipPainter();
+  // Boss armada: one hull class per run, its atlas loaded on approach.
+  final armada = BossPainter();
   final sectors = SectorBackground();
   final creatures = CreaturePresentation();
   final music = MusicDirector(); // --- music event hook (read-only)
@@ -51,9 +54,6 @@ class DemonScene extends FlameGame {
     } catch (e) {
       assetError = '$e';
     }
-    try {
-      bossAtlas = await images.load('boss-carrier.png');
-    } catch (_) {}
     try {
       cockpitAtlas = await images.load('cockpit-panel.png');
     } catch (_) {}
@@ -106,6 +106,7 @@ class DemonScene extends FlameGame {
       model.moveBy(keyboardDirection * dt * 280);
     }
     model.update(dt);
+    armada.sync(model, images.load, images.clear);
     music.observe(model, dt); // --- music event hook (reads model, before onTick takes events)
     creatures.update(model, dt);
     _notify += dt;
@@ -374,48 +375,6 @@ class DemonScene extends FlameGame {
   void _background(Canvas c) =>
       sectors.paint(c, environment, ambient, model.cycle, sky, wave: model.wave);
 
-  void bossSprite(
-    Canvas c,
-    int row,
-    int col,
-    Offset center,
-    double width, {
-    double? height,
-    Color? tint,
-    double opacity = 1,
-    bool flipX = false,
-  }) {
-    final image = bossAtlas;
-    if (image == null) return;
-    final paint = Paint()
-      ..isAntiAlias = false
-      ..color = Colors.white.withValues(alpha: opacity)
-      ..filterQuality = FilterQuality.none;
-    if (tint != null) {
-      paint.colorFilter = ColorFilter.mode(tint, BlendMode.srcATop);
-    }
-    final h = height ?? (width * 240.0 / 368.0);
-    if (flipX) {
-      c.save();
-      c.translate(center.dx, center.dy);
-      c.scale(-1, 1);
-      c.drawImageRect(
-        image,
-        Rect.fromLTWH(col * 368.0, row * 240.0, 368, 240),
-        Rect.fromCenter(center: Offset.zero, width: width, height: h),
-        paint,
-      );
-      c.restore();
-    } else {
-      c.drawImageRect(
-        image,
-        Rect.fromLTWH(col * 368.0, row * 240.0, 368, 240),
-        Rect.fromCenter(center: center, width: width, height: h),
-        paint,
-      );
-    }
-  }
-
   void sprite(
     Canvas c,
     int row,
@@ -500,6 +459,7 @@ class DemonScene extends FlameGame {
     for (final crate in model.supplyCrates) {
       _paintSupplyCrate(c, crate);
     }
+    _carrierBackdrop(c);
     for (final d in model.demons) {
       final warning = d.telegraph > 0;
       final pos = Offset(d.x, d.y);
@@ -604,65 +564,23 @@ class DemonScene extends FlameGame {
     final b = model.boss;
     if (b != null) {
       c.save();
-      if (model.presentationMode == RunMode.transition) {
-        final p = model.transitionProgress.clamp(0.0, 1.0);
-        final descent = 1 - Curves.easeOutCubic.transform(p);
-        c.translate(0, -180 * descent);
-        _bossOrbitalArrivalEffects(c, b, p, descent);
-      }
-      final carrierBank = model.defeatActive
-          ? (math.sin(model.visualClock * 2.5) * 0.45).clamp(-1.0, 1.0)
-          : (b.horizontalVelocity / 90).clamp(-1.0, 1.0);
+      _carrierArrival(c, b, effects: true);
+      final carrierBank = _carrierBank(b);
       final hullDamage = (1 - b.core / b.coreMax).clamp(0.0, 1.0);
-      if (bossAtlas != null) {
-        final mandibleFrame = model.presentationMode == RunMode.transition
-            ? (model.transitionProgress * 3.99).floor().clamp(0, 3)
-            : model.defeatActive
-            ? ((model.visualClock * 9.0).floor() % 4)
-            : b.sideHatchesLocked
-            ? 0
-            : ((model.visualClock * (3 + b.rage * 4) + b.door * 2).floor() % 4);
-        bossSprite(
-          c,
-          1,
-          mandibleFrame,
-          Offset(b.x, b.y),
-          184,
-          height: 120,
-        );
-        // Idle life: wing-sail breath, eye pulse, spine twitch and fissure
-        // flicker, four authored frames at 2 fps (row 0, then rows 7-9).
-        final idle = (model.visualClock * 2).floor() % 4;
-        bossSprite(
-          c,
-          idle == 0 ? 0 : 6 + idle,
-          b.phase.clamp(0, 3),
-          Offset(b.x, b.y),
-          184,
-          height: 120,
-        );
-        final damageCell = _carrierDamageCell(hullDamage);
-        if (damageCell != null) {
-          bossSprite(
-            c,
-            damageCell.$1,
-            damageCell.$2,
-            Offset(b.x, b.y),
-            184,
-            height: 120,
-          );
-        }
+      if (armada.ready) {
+        // Bright bow: idle life (eye pulse, ear-fin breath, spine flex and
+        // fissure flicker at 2 fps), damage and the turret heads.
         final turretFrame =
             ((model.visualClock * 6 + (model.shipX > b.x ? 1 : 0)).floor() % 4);
-        bossSprite(
+        armada.paintBow(
           c,
-          2,
-          turretFrame,
-          Offset(b.x, b.y),
-          184,
-          height: 120,
+          b,
+          clock: model.visualClock,
+          damageCell: _carrierDamageCell(hullDamage),
+          turretFrame: turretFrame,
         );
         _carrierTurretBarrels(c, b);
+        armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
       } else {
         sprite(
           c,
@@ -685,10 +603,9 @@ class DemonScene extends FlameGame {
         Rect.fromCenter(center: core, width: 24, height: 12),
         Paint()..color = b.shield > 0 ? violet : gold,
       );
-      if (bossAtlas != null) {
-        // Authored blast doors: leaves, pistons and hazard chevrons.
-        final doorFrame = (b.door.clamp(0.0, 1.0) * 3).round();
-        bossSprite(c, 4, doorFrame, Offset(b.x, b.y), 184, height: 120);
+      if (armada.ready) {
+        // Authored blast jaws: fanged armoured leaves.
+        armada.paintJaws(c, b);
       } else {
         final closed = 16 * (1 - b.door);
         for (final direction in [-1, 1]) {
@@ -822,9 +739,20 @@ class DemonScene extends FlameGame {
         model.presentationMode != RunMode.travel &&
         model.presentationMode != RunMode.victory &&
         model.presentationMode != RunMode.transition &&
+        !model.shipAway && // --- life-loss sequence: the ship is away
         (model.invulnerable == 0 || (model.clock * 12).floor() % 2 == 0)) {
-      _playerShip(c);
+      // --- life-loss sequence: the reserve ship flies in from below.
+      final rise = model.shipDrawY - ArcadeModel.shipY;
+      if (rise.abs() > .01) {
+        c.save();
+        c.translate(0, rise.roundToDouble());
+        _playerShip(c);
+        c.restore();
+      } else {
+        _playerShip(c);
+      }
     }
+    _lifeLossEffects(c); // --- life-loss sequence
     // Spent modules are debris outside the ship's own drawing, so they keep
     // falling through cutscenes and damage blinking instead of vanishing.
     _fallingParts(c);
@@ -927,15 +855,52 @@ class DemonScene extends FlameGame {
     }
   }
 
-  /// Carrier hull damage overlay (row, column) in boss-carrier.png: stone
-  /// cracks, then split stone with broken chunks, then gaping fissures and
-  /// torn sails; each stage alternates two authored flicker frames.
+  /// Bow damage overlay (stage 0-2, flicker frame) in the class atlas:
+  /// cracked plating, then torn plates over the glowing interior, then
+  /// gaping breaches; each stage alternates two authored flicker frames.
   (int, int)? _carrierDamageCell(double damage) {
     if (damage <= .15) return null;
-    final flick = (model.visualClock * 5).floor().isOdd;
-    if (damage > .75) return (10, flick ? 3 : 2);
-    if (damage > .45) return flick ? (10, 1) : (3, 1);
-    return flick ? (10, 0) : (3, 0);
+    final flick = (model.visualClock * 5).floor().isOdd ? 1 : 0;
+    if (damage > .75) return (2, flick);
+    if (damage > .45) return (1, flick);
+    return (0, flick);
+  }
+
+  double _carrierBank(Carrier b) => model.defeatActive
+      ? (math.sin(model.visualClock * 2.5) * 0.45).clamp(-1.0, 1.0)
+      : (b.horizontalVelocity / 90).clamp(-1.0, 1.0);
+
+  /// Arrival descent offset (and, once, its effects) shared by both layers.
+  void _carrierArrival(Canvas c, Carrier b, {bool effects = false}) {
+    if (model.presentationMode != RunMode.transition) return;
+    final p = model.transitionProgress.clamp(0.0, 1.0);
+    final descent = 1 - Curves.easeOutCubic.transform(p);
+    c.translate(0, -180 * descent);
+    if (effects) _bossOrbitalArrivalEffects(c, b, p, descent);
+  }
+
+  /// The armada's background layer (engine plumes, superstructure, its
+  /// breaches and running lights), drawn before the creatures so the
+  /// outer hull reads as non-solid background that shots pass over.
+  void _carrierBackdrop(Canvas c) {
+    final b = model.boss;
+    if (b == null || !armada.ready) return;
+    c.save();
+    _carrierArrival(c, b);
+    final arriving = model.presentationMode == RunMode.transition;
+    armada.paintBackdrop(
+      c,
+      b,
+      clock: model.visualClock,
+      bank: _carrierBank(b),
+      damage: (1 - b.core / b.coreMax).clamp(0.0, 1.0),
+      burn: arriving
+          ? .2
+          : model.defeatActive
+          ? (math.sin(model.visualClock * 9.2) > 0 ? 1.0 : .5)
+          : -1,
+    );
+    c.restore();
   }
 
   void _carrierEyes(Canvas c, Carrier carrier) {
@@ -1574,15 +1539,15 @@ class DemonScene extends FlameGame {
 
   void _carrierLighting(Canvas c, Offset center, double bank) {
     final paint = Paint()..isAntiAlias = false;
-    // Banking catches the key light on the leading bastion's carved ridge
-    // and drops the trailing one into shadow (war-ark hull geometry).
+    // Banking catches the key light on the leading deck plate's edge and
+    // drops the trailing one into shadow (bow armour geometry).
     final lead = bank >= 0 ? 1.0 : -1.0;
     paint.color = const Color(0x40FFE6C0);
     c.drawRect(
       Rect.fromLTWH(
-        (center.dx + lead * 40 - 8).roundToDouble(),
-        (center.dy - 20).roundToDouble(),
-        16,
+        (center.dx + lead * 54 - 10).roundToDouble(),
+        (center.dy - 33).roundToDouble(),
+        20,
         2,
       ),
       paint,
@@ -1590,9 +1555,9 @@ class DemonScene extends FlameGame {
     paint.color = const Color(0x55060A16);
     c.drawRect(
       Rect.fromLTWH(
-        (center.dx - lead * 40 - 10).roundToDouble(),
-        (center.dy - 14).roundToDouble(),
-        20,
+        (center.dx - lead * 54 - 12).roundToDouble(),
+        (center.dy - 28).roundToDouble(),
+        24,
         6,
       ),
       paint,
@@ -1601,9 +1566,9 @@ class DemonScene extends FlameGame {
 
   void _carrierSideHatches(Canvas c, Carrier b) {
     final paint = Paint()..isAntiAlias = false;
-    if (bossAtlas != null) {
-      // Interior glow first, then the authored shutter frame (mirrored for
-      // the right hatch); locked forms show cross-barred plates.
+    if (armada.ready) {
+      // Interior glow first, then the authored bay door (mirrored for the
+      // right bay); the final form seals both bays with rune-locked plates.
       for (final (dx, openness, flip) in [
         (-Carrier.sideHatchOffset, b.sideDoorLeft, false),
         (Carrier.sideHatchOffset, b.sideDoorRight, true),
@@ -1622,15 +1587,7 @@ class DemonScene extends FlameGame {
         final frame = b.sideHatchesLocked
             ? 3
             : (openness.clamp(0.0, 1.0) * 2).round();
-        bossSprite(
-          c,
-          5,
-          frame,
-          Offset(b.x, b.y),
-          184,
-          height: 120,
-          flipX: flip,
-        );
+        armada.paintBay(c, b, right: flip, frame: frame);
       }
       return;
     }
@@ -1821,15 +1778,19 @@ class DemonScene extends FlameGame {
     if (descent <= 0.01) return;
     final flamePaint = Paint()..isAntiAlias = false;
     final flicker = (model.visualClock * 24).floor() % 4;
-    // Roaring retro-thrusters braking the dreadnought from upper orbit.
-    for (final xOff in [-52.0, -24.0, 24.0, 52.0]) {
-      final bx = b.x + xOff;
-      final by = b.y - 38;
-      final plumeLen = (18.0 + descent * 34.0 + flicker * 3.0);
-      flamePaint.color = const Color(0xFFFFD54F).withValues(alpha: 0.9);
-      c.drawRect(Rect.fromLTWH(bx - 3, by - plumeLen * 0.5, 6, plumeLen * 0.5), flamePaint);
-      flamePaint.color = const Color(0xFFFF6D00).withValues(alpha: 0.75);
-      c.drawRect(Rect.fromLTWH(bx - 4, by - plumeLen, 8, plumeLen * 0.6), flamePaint);
+    // Bow retro-thrusters brake the warship out of its descent.
+    if (armada.ready) {
+      armada.paintRetro(c, Offset(b.x, b.y), descent, model.visualClock);
+    } else {
+      for (final xOff in [-52.0, -24.0, 24.0, 52.0]) {
+        final bx = b.x + xOff;
+        final by = b.y - 38;
+        final plumeLen = (18.0 + descent * 34.0 + flicker * 3.0);
+        flamePaint.color = const Color(0xFFFFD54F).withValues(alpha: 0.9);
+        c.drawRect(Rect.fromLTWH(bx - 3, by - plumeLen * 0.5, 6, plumeLen * 0.5), flamePaint);
+        flamePaint.color = const Color(0xFFFF6D00).withValues(alpha: 0.75);
+        c.drawRect(Rect.fromLTWH(bx - 4, by - plumeLen, 8, plumeLen * 0.6), flamePaint);
+      }
     }
     // Atmospheric / gravitational entry shockwaves.
     final rippleW = 220.0 * (1.0 - descent * 0.5);
@@ -2015,37 +1976,36 @@ class DemonScene extends FlameGame {
   }
 
   void _bossMeltdownWreckage(Canvas c, Carrier wreck, Offset pos, double p) {
+    if (armada.ready) {
+      // Charred hull of this run's class: chain explosions along engines
+      // and tower, bigger hulls snapping in two, debris tumbling free.
+      armada.paintWreck(
+        c,
+        wreck,
+        pos,
+        p,
+        blast: (at, frame, scale) =>
+            sprite(c, CombatAtlas.explosionRow, frame, at, 120 * scale, opacity: .8),
+      );
+      c.save();
+      c.translate(pos.dx, pos.dy);
+      c.rotate(p * (.22 + .06 * (armada.loadedClass ?? 0)));
+      _damage(c, Offset.zero, 1, p * 10);
+      c.restore();
+      return;
+    }
     c.save();
     c.translate(pos.dx, pos.dy);
     c.rotate(p * 0.22);
-    if (bossAtlas != null) {
-      // Charred wreck form: burnt hull, blast holes and glowing fissures.
-      bossSprite(c, 6, wreck.phase.clamp(0, 3), Offset.zero, 184, height: 120);
-      bossSprite(
-        c,
-        3,
-        1,
-        Offset.zero,
-        184,
-        height: 120,
-        opacity: (p * 1.2).clamp(0.4, 1.0),
-      );
-      // Detached tumbling wing debris
-      final debrisLeft = Offset(-70 - p * 60, p * p * 120);
-      bossSprite(c, 3, 2, debrisLeft, 92, height: 60);
-      final debrisRight = Offset(70 + p * 60, p * p * 140);
-      bossSprite(c, 3, 3, debrisRight, 92, height: 60);
-    } else {
-      sprite(
-        c,
-        CombatAtlas.fallbackRow,
-        4 + wreck.phase.clamp(0, 3),
-        Offset.zero,
-        184,
-        height: 118,
-        tint: const Color(0xFF8B665F),
-      );
-    }
+    sprite(
+      c,
+      CombatAtlas.fallbackRow,
+      4 + wreck.phase.clamp(0, 3),
+      Offset.zero,
+      184,
+      height: 118,
+      tint: const Color(0xFF8B665F),
+    );
     _damage(c, Offset.zero, 1, p * 10);
     c.restore();
   }
@@ -2320,5 +2280,209 @@ class DemonScene extends FlameGame {
       return;
     }
     sprite(c, CombatAtlas.fallbackRow, frame, center, width);
+  }
+
+  // =========================================================================
+  // --- life-loss sequence: ship explosion, debris, shot fizzles, regroup.
+  // Presentation only; state in lib/game/life_loss.dart.
+  // =========================================================================
+
+  static const _fireRamp = [
+    Color(0xFFFFFFFF),
+    Color(0xFFFFF5C9),
+    Color(0xFFFFD594),
+    Color(0xFFFFA85A),
+    Color(0xFFFF6A3D),
+    Color(0xFFC23B3B),
+    Color(0xFF5E2335),
+  ];
+  static const _smokeRamp = [
+    Color(0xFF7A7290),
+    Color(0xFF574F6E),
+    Color(0xFF3A3450),
+  ];
+  static const _hullTones = [
+    Color(0xFFD7E5EF),
+    Color(0xFF8FA3B8),
+    Color(0xFF4E6074),
+    Color(0xFF2A2230),
+  ];
+
+  /// Pixel block on the 2-unit explosion grid.
+  void _lp(Canvas c, double x, double y, double s, Color color) {
+    c.drawRect(
+      Rect.fromLTWH(x.roundToDouble(), y.roundToDouble(), s, s),
+      Paint()
+        ..color = color
+        ..isAntiAlias = false,
+    );
+  }
+
+  /// Deterministic hash noise in [0, 1).
+  static double _ln(int a, int b, int c) {
+    var h = a * 374761393 + b * 668265263 + c * 2147483647;
+    h = (h ^ (h >> 13)) * 1274126177;
+    return ((h ^ (h >> 16)) & 0xFFFF) / 65536.0;
+  }
+
+  void _lifeLossEffects(Canvas c) {
+    final m = model;
+    // Hostile shots fizzling out during the regroup: a pop of sparks.
+    for (final f in m.shotFizzles) {
+      final p = (f.age / ShotFizzle.life).clamp(0.0, 1.0);
+      final frame = (p * 4).floor();
+      final core = f.sentinel ? violet : const Color(0xFFFF8676);
+      if (frame == 0) {
+        _lp(c, f.x - 2, f.y - 2, 4, Colors.white);
+      }
+      final r = 2 + p * 7;
+      for (var k = 0; k < 6; k++) {
+        final a = k * math.pi / 3 + f.x * .1;
+        _lp(
+          c,
+          f.x + math.cos(a) * r - 1,
+          f.y + math.sin(a) * r - 1,
+          frame < 2 ? 2 : 1,
+          (k.isEven ? core : const Color(0xFFFFE3AF)).withValues(
+            alpha: 1 - p,
+          ),
+        );
+      }
+      if (frame >= 2) {
+        _lp(c, f.x - 1, f.y - 2 - p * 6, 2, _smokeRamp[0].withValues(alpha: .7 * (1 - p)));
+      }
+    }
+    if (m.lifeLossPhase == LifeLossPhase.none && m.shipDebris.isEmpty) return;
+    final t = m.lifeLossElapsed;
+    final cx = m.lifeLossX, cy = ArcadeModel.shipY;
+    if (m.lifeLossPhase != LifeLossPhase.none && t < 1.5) {
+      // 12 fps pixel animation: flash, fireball with noise holes, shock
+      // ring, then a rising smoke column with embers.
+      final f = (t * 12).floor();
+      final ft = f / 12;
+      if (ft < .17) {
+        final r = 8 + ft * 90;
+        for (var y = -r; y <= r; y += 2) {
+          for (var x = -r; x <= r; x += 2) {
+            if (x * x + y * y > r * r) continue;
+            _lp(c, cx + x, cy + y, 2, ft < .09 ? Colors.white : _fireRamp[1]);
+          }
+        }
+      }
+      if (ft >= .05 && ft < .9) {
+        final u = ((ft - .05) / .85).clamp(0.0, 1.0);
+        final r = 12 + 16 * math.sqrt(u);
+        for (var y = -r; y <= r; y += 2) {
+          for (var x = -r; x <= r; x += 2) {
+            final d = math.sqrt(x * x + y * y) / r;
+            if (d > 1) continue;
+            final n = _ln(x.round(), y.round(), f ~/ 2);
+            // Holes eat the fireball from the rim inward as it cools.
+            if (n < u * 1.1 - (1 - d) * .55) continue;
+            final heat = (d * .55 + u * .75 + n * .25).clamp(0.0, .999);
+            final col = _fireRamp[1 + (heat * 6).floor().clamp(0, 5)];
+            _lp(c, cx + x, cy + y - u * 10, 2, col);
+          }
+        }
+      }
+      if (ft >= .08 && ft < .6) {
+        final u = (ft - .08) / .52;
+        final r = 16 + u * 52;
+        final n = (r * 1.4).round();
+        for (var k = 0; k < n; k++) {
+          if (_ln(k, f, 7) < u * .7) continue;
+          final a = k / n * math.pi * 2;
+          _lp(
+            c,
+            cx + math.cos(a) * r - 1,
+            cy + math.sin(a) * r * .55 - 1,
+            2,
+            (u < .4 ? _fireRamp[2] : _fireRamp[4]).withValues(alpha: 1 - u),
+          );
+        }
+      }
+      if (ft >= .4) {
+        final u = ((ft - .4) / 1.1).clamp(0.0, 1.0);
+        for (var k = 0; k < 7; k++) {
+          final ox = (_ln(k, 3, 1) - .5) * 26 + math.sin(t * 2 + k) * 3;
+          final oy = -8 - u * (40 + k * 6) - _ln(k, 5, 2) * 8;
+          final rr = 4 + u * 7 + k % 3;
+          final col = _smokeRamp[k % 3].withValues(alpha: .75 * (1 - u));
+          for (var y = -rr; y <= rr; y += 2) {
+            for (var x = -rr; x <= rr; x += 2) {
+              if (x * x + y * y > rr * rr) continue;
+              _lp(c, cx + ox + x, cy + oy + y, 2, col);
+            }
+          }
+        }
+      }
+      // Embers drifting up out of the blast.
+      for (var k = 0; k < 14; k++) {
+        final life = (t * 1.6 + _ln(k, 9, 4)) % 1;
+        if (t > 1.2 && life > .6) continue;
+        final ex = cx + (_ln(k, 1, 8) - .5) * 50 + math.sin(t * 5 + k) * 4;
+        final ey = cy + 6 - life * 70;
+        _lp(c, ex, ey, 1, _fireRamp[2 + (life * 4).floor()].withValues(alpha: 1 - life));
+      }
+    }
+    // Hull shards and the fitted modules tumbling away.
+    for (final d in m.shipDebris) {
+      final fade = (1 - d.age / ShipDebris.life).clamp(0.0, 1.0);
+      if (d.power != null && ship.ready && ShipPainter.rows.containsKey(d.power)) {
+        c.save();
+        c.translate(d.x, d.y);
+        c.rotate(d.rotation);
+        ship.paintPart(
+          c,
+          FallingPart(0, 0, d.power!, vx: d.vx),
+        );
+        c.restore();
+      } else {
+        c.save();
+        c.translate(d.x.roundToDouble(), d.y.roundToDouble());
+        c.rotate((d.rotation / (math.pi / 4)).round() * (math.pi / 4));
+        final s = d.size;
+        c.drawRect(
+          Rect.fromLTWH(-s / 2, -s / 2, s, s),
+          Paint()
+            ..isAntiAlias = false
+            ..color = _hullTones[d.tone].withValues(alpha: fade),
+        );
+        c.drawRect(
+          Rect.fromLTWH(-s / 2, -s / 2, math.max(1, s / 2), 1),
+          Paint()
+            ..isAntiAlias = false
+            ..color = _fireRamp[3].withValues(alpha: fade),
+        );
+        c.restore();
+      }
+      // A short burning trail behind each piece.
+      final speed = math.max(1.0, math.sqrt(d.vx * d.vx + d.vy * d.vy));
+      for (var k = 1; k <= 3; k++) {
+        _lp(
+          c,
+          d.x - d.vx / speed * k * 3,
+          d.y - d.vy / speed * k * 3,
+          1,
+          _fireRamp[2 + k].withValues(alpha: fade * (1 - k * .25)),
+        );
+      }
+    }
+    // Fly-in exhaust: a tall mint thruster plume below the rising ship.
+    if (m.lifeLossPhase == LifeLossPhase.emerging) {
+      final y = m.shipDrawY;
+      final u = m.emergeProgress;
+      for (var k = 0; k < 10; k++) {
+        _lp(
+          c,
+          m.shipX - 2 + ((k * 7 + (m.clock * 30).floor()) % 3) - 1,
+          y + 18 + k * 4,
+          k < 3 ? 4 : 2,
+          (k < 2 ? const Color(0xFFFFEDBF) : mint).withValues(
+            alpha: (1 - k / 10) * (1 - u * .6),
+          ),
+        );
+      }
+    }
   }
 }

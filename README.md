@@ -23,6 +23,10 @@ Wrangler runs the pinned Flutter web build and serves the app, MIDI synth, asset
 
 The managed local preview is https://www.demon-attack.localhost:18443/. After Dart edits rebuild with `npm run build`; reload the preview runtime after Worker bindings or Wrangler config changes. Assets are watched. Local Durable Object scores are separate from production and reset when the managed sibling container is replaced.
 
+### /console
+
+`/console` (served by the SPA fallback) opens a start console: pick difficulty, run 1–5 and sector 1–5 and launch, or jump straight to the run's carrier (**BOSS**) or the first sentinel wave (**SENTINEL**, at least run 2). Runs start fresh at 0 points through `ArcadeModel.startAt` (earlier runs count as won, so medals = run − 1) and use normal scoring and the normal top-10 entry. Launching moves the address bar to `/`; browser back or **BACK TO CONSOLE** on the title returns to the console. The console also links the art gallery (`lib/gallery_main.dart`), which `scripts/build-web.sh` builds into `build/web/gallery` and serves at `/gallery/`. Code: `lib/widgets/dev_console.dart`, `// --- console route` sections in `lib/main.dart`.
+
 ## Validation
 
 ```sh

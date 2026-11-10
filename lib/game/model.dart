@@ -10,6 +10,9 @@ export 'swarm_policy.dart';
 // --- ground war (demon ground forces, allies, homing missiles) ---
 part 'ground_war.dart';
 
+// --- life-loss sequence (explosion, regroup, re-emergence) ---
+part 'life_loss.dart';
+
 enum RunMode {
   title,
   playing,
@@ -94,6 +97,10 @@ class Demon {
   final double seed;
   int hp;
   double dive = 0, targetX = 0, flash = 0, telegraph = 0;
+
+  /// Seconds left of the beat before a dive tell (`divePrep` fired).
+  double divePrep = 0;
+  bool _prepLead = false;
   bool get angry => hp == 1 && maxHp > 1;
 }
 
@@ -114,6 +121,9 @@ class Shot {
   final ShotKind kind;
   final int damage;
   final double blastRadius;
+
+  /// Regroup drain: seconds until this hostile shot fizzles (life loss).
+  double? fizzleIn;
 }
 
 class Pickup {
@@ -234,11 +244,89 @@ class ArcadeModel {
   // --- ground war state (see ground_war.dart) ---
   final GroundWar ground = GroundWar();
 
+  /// Structured events queued outside the ground war (life loss, dives).
+  final List<GameEvent> _gameEvents = [];
+
+  void _queueGameEvent(String name, [Map<String, Object?> data = const {}]) =>
+      _gameEvents.add(GameEvent(name, {'sector': level, ...data}));
+
   /// Drains the named gameplay events for music/comms hooks.
   List<GameEvent> takeGameEvents() {
-    final result = List<GameEvent>.of(ground.events);
+    final result = [..._gameEvents, ...ground.events];
+    _gameEvents.clear();
     ground.events.clear();
     return result;
+  }
+
+  // --- life-loss sequence state (see life_loss.dart) ---
+  LifeLossPhase lifeLossPhase = LifeLossPhase.none;
+  double lifeLossLeft = 0, lifeLossX = 180;
+  final List<ShipDebris> shipDebris = [];
+  final List<ShotFizzle> shotFizzles = [];
+
+  /// The ship is away: exploding or the swarm regrouping.
+  bool get shipAway => holdHostileFire;
+
+  /// Seconds since the ship was destroyed (while the sequence runs).
+  double get lifeLossElapsed => switch (lifeLossPhase) {
+    LifeLossPhase.none => 0,
+    LifeLossPhase.exploding => LifeLossTuning.explode - lifeLossLeft,
+    LifeLossPhase.regrouping =>
+      LifeLossTuning.away - lifeLossLeft,
+    LifeLossPhase.emerging =>
+      LifeLossTuning.away + LifeLossTuning.emerge - lifeLossLeft,
+  };
+
+  /// Regroup pause in progress (shots draining, the swarm reforming).
+  bool get regrouping => lifeLossPhase == LifeLossPhase.regrouping;
+
+  /// 0 at the start of the fly-in, 1 on the ship line.
+  double get emergeProgress => lifeLossPhase == LifeLossPhase.emerging
+      ? (1 - lifeLossLeft / LifeLossTuning.emerge).clamp(0.0, 1.0)
+      : 1.0;
+
+  /// Where the ship is drawn: below the edge while away, flying in after.
+  double get shipDrawY {
+    if (shipAway) return LifeLossTuning.emergeFromY;
+    final u = emergeProgress;
+    final ease = 1 - (1 - u) * (1 - u) * (1 - u);
+    return LifeLossTuning.emergeFromY +
+        (shipY - LifeLossTuning.emergeFromY) * ease;
+  }
+
+  void _resetLifeLoss() {
+    lifeLossPhase = LifeLossPhase.none;
+    lifeLossLeft = 0;
+    shipDebris.clear();
+    shotFizzles.clear();
+    _gameEvents.clear();
+  }
+
+  // --- divePrep: a beat of radio warning before every dive tell ---
+  static const divePrepBeat = .5;
+
+  void _prepDive(Demon d, {bool lead = false}) {
+    d.divePrep = divePrepBeat;
+    d._prepLead = lead;
+    _queueGameEvent(GameEventNames.divePrep, {
+      'x': d.x,
+      'y': d.y,
+      'lead': divePrepBeat,
+      'sentinel': d.isLarge,
+      'elite': d.elite,
+    });
+  }
+
+  void _startDiveTell(Demon d) {
+    d.divePrep = 0;
+    d.telegraph = d.isLarge
+        ? .9
+        : d.elite
+        ? .55
+        : .7;
+    d.targetX = d._prepLead
+        ? (shipX + shipVx * 0.22).clamp(24.0, width - 24.0)
+        : shipX;
   }
   Carrier? boss;
   Carrier? wreckBoss;
@@ -342,7 +430,7 @@ class ArcadeModel {
   double get speed => (1 + math.min(cycle, 4) * .04) * policy.hostileRate;
   bool get combat => mode == RunMode.playing;
   bool get canPilot =>
-      combat ||
+      (combat && !shipAway) ||
       mode == RunMode.salvage ||
       (mode == RunMode.transition && wave > 1);
   bool get isBoss => boss != null;
@@ -414,9 +502,68 @@ class ArcadeModel {
     invulnerable = 2;
     _accumulator = 0;
     events.clear();
+    _resetLifeLoss();
     ground.resetRun(); // --- ground war
     _beginLevel();
   }
+
+  // --- console start (the /console route) ---
+
+  /// The last wave of [sector] on [route] (zero-based), 1 for the carrier.
+  static int wavesFor({required int sector, required int route}) =>
+      sector == 5 ? 1 : 3 + ((sector - 1) ~/ 2) + math.min(route, 3);
+
+  /// First wave of [sector] on [route] where a sentinel can appear, or null
+  /// (route 0, or Easy sectors without one). Sentinels need a prior boss
+  /// victory: [startAt] grants the medals of every earlier route.
+  static int? sentinelWave({
+    required Difficulty difficulty,
+    required int sector,
+    required int route,
+  }) {
+    if (route < 1 || sector < 1 || sector > 4) return null;
+    final last = wavesFor(sector: sector, route: route);
+    for (var w = 1; w <= last; w++) {
+      final eligible =
+          (w == last &&
+              sector >= 2 &&
+              (difficulty != Difficulty.easy || sector.isEven)) ||
+          (difficulty != Difficulty.easy &&
+              w >= 3 &&
+              (w + sector + route).isEven);
+      if (eligible) return w;
+    }
+    return null;
+  }
+
+  /// A fresh run that begins at [sector] 1-5 of [route] 0-4 (optionally at
+  /// [wave]): 0 points, starting lives, normal scoring. Earlier routes count
+  /// as won (medals = route), which satisfies the sentinel prerequisite.
+  void startAt({
+    Difficulty difficulty = Difficulty.normal,
+    int sector = 1,
+    int route = 0,
+    int wave = 1,
+  }) {
+    start(difficulty: difficulty);
+    cycle = route.clamp(0, 4);
+    level = sector.clamp(1, 5);
+    medals = cycle;
+    score = 0;
+    kills = 0;
+    events.clear();
+    ground.resetRun();
+    _beginLevel();
+    final target = wave.clamp(1, wavesPerLevel);
+    if (target > 1) {
+      events.clear();
+      this.wave = target;
+      _spawnWave();
+      events.add(boss == null ? 'level' : 'boss');
+    }
+  }
+
+  // --- end console start
 
   /// Compact entrance snapshot. Call when consuming the `checkpoint` event.
   Map<String, dynamic> checkpoint() => {
@@ -530,6 +677,7 @@ class ArcadeModel {
     defeatTimer = cameraPanY = 0;
     clock = levelClock = _accumulator = 0;
     invulnerable = 2;
+    _resetLifeLoss();
     boss = level == 5 ? _newCarrier() : null;
     _groundBeginLevel(); // --- ground war
     _spawnWave(fromCheckpoint: true);
@@ -773,6 +921,14 @@ class ArcadeModel {
   }
 
   void _enterPhase(RunMode phase, double duration) {
+    // A wave, salvage or victory scene that starts mid-sequence (a shot
+    // already in flight finished the fight) ends it: the reserve is back.
+    if (lifeLossPhase != LifeLossPhase.none) {
+      lifeLossPhase = LifeLossPhase.none;
+      lifeLossLeft = 0;
+      invulnerable = LifeLossTuning.protection;
+      shipX = targetX = width / 2;
+    }
     mode = phase;
     transitionDuration = duration;
     transitionLeft = duration;
@@ -780,6 +936,9 @@ class ArcadeModel {
 
   void _completeWave() {
     shots.clear();
+    if (lifeLossPhase == LifeLossPhase.emerging) {
+      lifeLossPhase = LifeLossPhase.none;
+    }
     if (wave < wavesPerLevel) {
       wave++;
       _spawnWave();
@@ -983,8 +1142,10 @@ class ArcadeModel {
     if (!combat) return;
     _activeMilliseconds += dt * 1000;
     levelClock += dt;
+    _updateLifeLoss(dt); // --- life-loss sequence
     invulnerable = math.max(0, invulnerable - dt);
-    for (final value in Power.values) {
+    // Module timers freeze while the ship is away: the loadout survives.
+    for (final value in shipAway ? const <Power>[] : Power.values) {
       if (powerTimers.containsKey(value)) {
         powerTimers[value] = math.max(0, powerTimers[value]! - dt);
       }
@@ -1019,7 +1180,7 @@ class ArcadeModel {
       crate.hitFlash = math.max(0, crate.hitFlash - dt);
     }
     supplyCrates.removeWhere((c) => c.y > ArcadeModel.shipY + 30);
-    _fire -= dt;
+    if (!shipAway) _fire -= dt;
     wingRecoil[0] = math.max(0, wingRecoil[0] - dt);
     wingRecoil[1] = math.max(0, wingRecoil[1] - dt);
     noseFlash = math.max(0, noseFlash - dt);
@@ -1076,7 +1237,7 @@ class ArcadeModel {
       }
       events.add('shot');
     }
-    _updateReinforcements(dt);
+    if (!shipAway) _updateReinforcements(dt);
     _updateDemons(dt);
     _updateBoss(dt);
     _updateGround(dt); // --- ground war
@@ -1089,7 +1250,11 @@ class ArcadeModel {
     shots.removeWhere(
       (s) => s.y < -10 || s.y > height + 10 || s.x < -10 || s.x > width + 10,
     );
-    if (combat && demons.isEmpty && boss == null && flocksRemaining == 0) {
+    if (combat &&
+        !shipAway &&
+        demons.isEmpty &&
+        boss == null &&
+        flocksRemaining == 0) {
       _completeWave();
     }
   }
@@ -1126,6 +1291,7 @@ class ArcadeModel {
   }
 
   void _hostile(Shot shot) {
+    if (shipAway) return; // the regroup holds all hostile fire
     if (shots.where((s) => s.hostile).length < 120) shots.add(shot);
   }
 
@@ -1266,9 +1432,11 @@ class ArcadeModel {
             : (difficulty == Difficulty.hard ? 3 : 2));
 
   void _updateDemons(double dt) {
-    _dive -= dt * policy.hostileRate;
+    if (!shipAway) _dive -= dt * policy.hostileRate;
     var activeSmallDives = demons
-        .where((d) => !d.isLarge && (d.dive > 0 || d.telegraph > 0))
+        .where(
+          (d) => !d.isLarge && (d.dive > 0 || d.telegraph > 0 || d.divePrep > 0),
+        )
         .length;
     final maxSmallDives = _maxConcurrentSmallDives;
     final readyDivers = demons
@@ -1278,18 +1446,14 @@ class ArcadeModel {
               !d.lastStand &&
               d.dive == 0 &&
               d.telegraph <= 0 &&
+              d.divePrep <= 0 &&
               (d.isLarge || activeSmallDives < maxSmallDives),
         )
         .toList();
-    if (_dive <= 0 && readyDivers.isNotEmpty) {
+    if (!shipAway && _dive <= 0 && readyDivers.isNotEmpty) {
       final d = readyDivers[random.nextInt(readyDivers.length)];
       if (level >= 2 || cycle > 0) {
-        d.telegraph = d.isLarge
-            ? .9
-            : d.elite
-            ? .55
-            : .7;
-        d.targetX = shipX;
+        _prepDive(d);
         if (!d.isLarge) activeSmallDives++;
       }
       _dive = math.max(
@@ -1326,6 +1490,11 @@ class ArcadeModel {
         d.y = d.entranceStartY + (targetFormY - d.entranceStartY) * s;
         _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
+      }
+      if (_regroupDemon(d, prevX, prevY, dt)) continue; // --- life loss
+      if (d.divePrep > 0 && dt > 0) {
+        d.divePrep -= dt * policy.hostileRate;
+        if (d.divePrep <= 0) _startDiveTell(d);
       }
       if (d.lastStand) {
         if (!d.rushing) {
@@ -1382,9 +1551,9 @@ class ArcadeModel {
           }
           if (d.dive == 0 &&
               d.telegraph <= 0 &&
+              d.divePrep <= 0 &&
               (d.isLarge || activeSmallDives < maxSmallDives)) {
-            d.telegraph = d.isLarge ? .9 : .55;
-            d.targetX = shipX;
+            _prepDive(d);
             if (!d.isLarge) activeSmallDives++;
           }
           d.attackLeft = math.max(2.0, 4 - math.min(cycle, 5) * .3);
@@ -1513,7 +1682,10 @@ class ArcadeModel {
     if (d.evadeLeft <= 0) {
       d.evadeOffset += (-d.evadeOffset).clamp(-90 * dt, 90 * dt);
     }
-    if ((level < 2 && cycle == 0) || d.telegraph > 0 || d.evadeCooldown > 0) {
+    if ((level < 2 && cycle == 0) ||
+        d.telegraph > 0 ||
+        d.divePrep > 0 ||
+        d.evadeCooldown > 0) {
       return false;
     }
     if (demons.any((o) => !o.isLarge && !identical(o, d) && o.evadeLeft > 0)) {
@@ -1572,8 +1744,7 @@ class ArcadeModel {
       return false;
     }
     if (action == 'dive_commit' && activeSmallDives < maxSmallDives) {
-      d.telegraph = d.elite ? 0.55 : 0.7;
-      d.targetX = (shipX + shipVx * 0.22).clamp(24.0, width - 24.0);
+      _prepDive(d, lead: true);
       d.evadeCooldown = cooldown;
       return true;
     }
@@ -1924,6 +2095,7 @@ class ArcadeModel {
           !d.lastStand &&
           d.hp / d.maxHp <= .25) {
         d.lastStand = true;
+        d.divePrep = 0;
         d.telegraph = .9;
         d.dive = 0;
         d.diveShield = 0;
@@ -1932,22 +2104,21 @@ class ArcadeModel {
         d._lastStandX = d.x;
         d._lastStandY = d.y;
       } else if (!d.lastStand &&
+          !shipAway &&
           d.angry &&
           d.dive == 0 &&
           d.telegraph <= 0 &&
+          d.divePrep <= 0 &&
           (d.isLarge ||
               demons
                       .where(
-                        (o) => !o.isLarge && (o.dive > 0 || o.telegraph > 0),
+                        (o) =>
+                            !o.isLarge &&
+                            (o.dive > 0 || o.telegraph > 0 || o.divePrep > 0),
                       )
                       .length <
                   _maxConcurrentSmallDives)) {
-        d.telegraph = d.isLarge
-            ? .9
-            : d.elite
-            ? .55
-            : .7;
-        d.targetX = shipX;
+        _prepDive(d);
       }
     }
   }
@@ -2052,7 +2223,9 @@ class ArcadeModel {
   }
 
   void hitPlayer() {
-    if (!combat || invulnerable > 0) return;
+    if (!combat || invulnerable > 0 || lifeLossPhase != LifeLossPhase.none) {
+      return;
+    }
     if (hasPower(Power.shield)) {
       powerTimers.remove(Power.shield);
       invulnerable = 1;
@@ -2066,6 +2239,13 @@ class ArcadeModel {
     invulnerable = 2.5;
     blasts.add(Blast(shipX, shipY));
     events.add('life');
+    _queueGameEvent(GameEventNames.playerDestroyed, {
+      'x': shipX,
+      'y': shipY,
+      'lives': lives,
+      'final': lives <= 0,
+    });
+    if (lives > 0) _beginLifeLoss(); // --- life-loss sequence
     if (lives <= 0) {
       mode = RunMode.gameOver;
       defeatTimer = defeatDuration;

@@ -39,6 +39,32 @@ abstract final class GroundCamera {
   }
 }
 
+/// Where a ground object stands on screen. THE single projection from the
+/// logical ground position (band [side], [across] the band, depth [z],
+/// authored width in texels) to the screen: every unit, ally and wreck reads
+/// its `x`, `y`, `scale` and `width` through it, and nothing else computes
+/// ground screen positions. A visual terrain layer (heightfield, valleys)
+/// can wrap this one function; gameplay stays on logical depth and lane.
+typedef GroundPlace = ({double x, double y, double scale, double width});
+
+abstract final class GroundPlacement {
+  static GroundPlace place(
+    int side,
+    double across,
+    double z,
+    double widthTexels,
+  ) {
+    final scale = GroundCamera.texel(z) * GroundTuning.unitScale;
+    final width = widthTexels * scale;
+    return (
+      x: GroundCamera.bandX(side, across, width),
+      y: GroundCamera.yOf(z),
+      scale: scale,
+      width: width,
+    );
+  }
+}
+
 /// Every ground-war tunable in one place (seconds, texels, arena units).
 abstract final class GroundTuning {
   // Approach along the ground (texels of depth per second, x hostileRate).
@@ -53,7 +79,7 @@ abstract final class GroundTuning {
   /// Sprite scale relative to the landmarks' texel size.
   static const unitScale = 1.25;
   static const unitWidthTexels = 28.0;
-  static const allyWidthTexels = 20.0;
+  static const allyWidthTexels = 26.0;
 
   // Firing.
   static const telegraph = 1.1; // launcher raise (first half) + glow
@@ -73,9 +99,19 @@ abstract final class GroundTuning {
   static const missileHitRatio = .4;
   static const shipHalfWidth = 9.0, shipHalfHeight = 10.0;
 
-  // Allies.
+  // Allies: a convoy holding station in the near ground band (about the
+  // ship's depth, z 199), advancing up the plane only to attack.
   static const allyHp = 8;
-  static const allyLead = 110.0; // texels closer to the camera than its foe
+  static const allyLead = 110.0; // legacy pairing offset (tests, renders)
+  static const allyHoldZ = 250.0; // station of the first ally on a side
+  static const allyHoldStep = 38.0; // the second ally sits a little further
+  static const allyStandoff = 300.0; // engaged: this far short of its foe
+  static const allyMaxAdvanceZ = 620.0; // never further up the plane
+  static const allyAdvanceSpeed = 150.0; // texels/s toward the foe
+  static const allyFallBackSpeed = 90.0; // texels/s back to station
+  static const allyRollInZ = 150.0; // reinforcements roll in from below
+  static const alliesPerSide = 2;
+  static const allyRecoil = .14;
   static const demonTracerEvery = 1.3; // damages the ally (x hostileRate)
   static const allyTracerEvery = .9; // cosmetic
 
@@ -87,6 +123,34 @@ abstract final class GroundTuning {
   static const homingMaxAge = 3.0;
   static const homingTurnRate = 9.0; // rad/s
   static const homingBoost = .1; // straight climb before steering
+
+  /// Ground targets: a long ballistic arc that climbs away from the ship,
+  /// arcs out and dives into the perspective ground plane. Flight seconds
+  /// = base + perDepth x (target depth - ship depth) / 1000.
+  static const homingGroundBase = .95, homingGroundPerDepth = .55;
+  static const homingGroundMax = 1.75;
+  static const homingGroundClimb = 150.0; // climb above the launch point
+  static const homingGroundApex = 95.0; // apex above the ground contact
+
+  /// Depth of the ship's own plane on the ground (y = shipY).
+  static double get shipZ => GroundCamera.zOf(ArcadeModel.shipY);
+
+  static double homingGroundFlight(double z) =>
+      (homingGroundBase + homingGroundPerDepth * math.max(0, z - shipZ) / 1000)
+          .clamp(homingGroundBase, homingGroundMax);
+
+  // Breakthrough visibility.
+  /// Sector 2: units the allies stop only this close to the fire line.
+  static const nearMissMarginZ = 22.0;
+  static const nearMissChance = .55;
+
+  /// Sectors 3-4: if nothing has broken through this many combat seconds
+  /// into the level, the next arrival is unescorted and out of homing lock
+  /// until it reaches fire range (a guaranteed, telegraphed breakthrough).
+  static const guaranteeAfter = 9.0;
+
+  /// `groundBreakthroughWarning` this many seconds before fire range.
+  static const warningLead = 3.0;
 
   // Drops. Homing missiles matter when a breakthrough looms: a high chance
   // per kill while a demon unit threatens to (or did) reach fire range, a
@@ -251,17 +315,28 @@ class GroundUnit {
   /// It is predicted to reach fire range: its ally is out-gunned or absent.
   bool threatening = false, calledForHelp = false;
   bool destroyedByAllies = false;
+
+  /// Sector 2 drama: its ally stops it just short of fire range.
+  bool nearMiss = false;
+
+  /// Sectors 3-4: the level's guaranteed breakthrough (no ally; homing
+  /// cannot lock on until it reaches fire range).
+  bool guaranteed = false, warned = false;
   double telegraph = 0, cooldown = 0, fireFlash = 0, tracerLeft = .6;
   bool destroyed = false, sighted = false, announcedInRange = false;
   double wreckAge = 0;
   GroundAlly? ally;
 
-  double get scale => GroundCamera.texel(z) * GroundTuning.unitScale;
-  double get width => GroundTuning.unitWidthTexels * scale;
-  double get x => GroundCamera.bandX(side, across, width);
+  GroundPlace get place =>
+      GroundPlacement.place(side, across, z, GroundTuning.unitWidthTexels);
+  double get scale => place.scale;
+  double get width => place.width;
+  // --- terrain: the relief pose, when the flyover provides one.
+  GroundPose? pose;
+  double get x => pose?.x ?? place.x;
 
   /// Ground contact (the sprite's bottom row).
-  double get y => GroundCamera.yOf(z);
+  double get y => pose?.y ?? place.y;
 
   /// Where a homing missile aims and a launch leaves from.
   double get bodyY => y - 9 * scale;
@@ -301,6 +376,13 @@ class GroundAlly {
   double fireLeft = .3, flash = 0;
   bool totalled = false, saved = false, announced = false;
 
+  /// Depth velocity (texels/s): > 0 advancing toward the horizon, < 0
+  /// falling back, 0 holding station. Seconds of recoil after a shot.
+  double vz = 0, recoil = 0;
+
+  /// Its station in the near ground band (convoy slot).
+  double holdZ = GroundTuning.allyHoldZ;
+
   /// Seconds since it was totalled (limp / pod animation clock).
   double retreatAge = 0;
 
@@ -315,10 +397,14 @@ class GroundAlly {
 
   GroundUnit? attacker;
 
-  double get scale => GroundCamera.texel(z) * GroundTuning.unitScale;
-  double get width => GroundTuning.allyWidthTexels * scale;
-  double get x => GroundCamera.bandX(side, across, width);
-  double get y => GroundCamera.yOf(z);
+  GroundPlace get place =>
+      GroundPlacement.place(side, across, z, GroundTuning.allyWidthTexels);
+  double get scale => place.scale;
+  double get width => place.width;
+  // --- terrain: the relief pose, when the flyover provides one.
+  GroundPose? pose;
+  double get x => pose?.x ?? place.x;
+  double get y => pose?.y ?? place.y;
   double get bodyY => y - 6 * scale;
   bool get alive => !totalled;
 
@@ -385,7 +471,21 @@ class GroundMissile {
 
 enum HomingTargetKind { ground, sentinel, demon, carrierCore, carrierShield }
 
+/// A smoke puff left by a homing missile; [size] is the perspective scale
+/// where it was laid (1 at the ship's depth). Visual only.
+class HomingPuff {
+  HomingPuff(this.x, this.y, this.size);
+  final double x, y, size;
+  double age = 0;
+  static const life = .55;
+}
+
 /// One homing missile from the player's rack.
+///
+/// Air targets: fast, direct steering. Ground targets: a long ballistic
+/// arc ([groundFlight] seconds) that climbs away from the ship, arcs out and
+/// dives into the perspective ground plane, shrinking with distance
+/// ([depth], [perspective]) and impacting at the unit's ground position.
 class HomingMissile {
   HomingMissile(this.x, this.y, this.vx, this.vy, this.side);
   double x, y, vx, vy;
@@ -394,6 +494,32 @@ class HomingMissile {
   Object? target;
   HomingTargetKind? kind;
   double get heading => math.atan2(vx, -vy);
+
+  /// Ground flight: total seconds (null for air flight) and elapsed.
+  double? groundFlight;
+  double groundAge = 0;
+
+  /// Where the current ground arc started (screen).
+  double x0 = 0, y0 = 0;
+
+  /// Perceived depth on the ground plane (texels), for the size.
+  double depth = 0;
+  double _puffClock = 0;
+  final List<HomingPuff> trail = [];
+
+  bool get toGround => groundFlight != null;
+
+  /// 0 at launch, 1 at impact (ground flight only).
+  double get groundProgress => toGround
+      ? (groundAge / groundFlight!).clamp(0.0, 1.0)
+      : 0;
+
+  /// Drawn scale relative to the ship's depth: 1 at launch, smaller as the
+  /// missile flies into the distance.
+  double get perspective => toGround
+      ? (GroundCamera.texel(depth) / GroundCamera.texel(GroundTuning.shipZ))
+            .clamp(.18, 1.0)
+      : 1.0;
 }
 
 /// The homing power-up: three missiles fired in sequence, each launched
@@ -414,13 +540,38 @@ class HomingPickup {
   double x, y;
 }
 
+// --- terrain ---------------------------------------------------------------
+// The flyover's relief (lib/game/terrain_field.dart) may place ground objects
+// on its hills and valleys. Visual and positional only: the fire range gate,
+// breakthroughs and collisions read z, side and across, never a pose.
+
+/// Where the relief puts a ground object: screen ground contact, the slope
+/// along its travel (> 0 uphill toward the camera) and a visual pace.
+class GroundPose {
+  const GroundPose(this.x, this.y, {this.climb = 0, this.pace = 1});
+  final double x, y, climb, pace;
+}
+
+/// Installed by the scene as [GroundWar.relief]; null keeps flat ground.
+abstract interface class GroundRelief {
+  GroundPose place(int side, double across, double width, double z,
+      {bool ally = false});
+}
+// --- end terrain -------------------------------------------------------------
+
 /// All ground-war state, owned by [ArcadeModel.ground].
 class GroundWar {
+  // --- terrain: optional relief (visual and positional only).
+  GroundRelief? relief;
+
   final List<GroundUnit> units = [];
   final List<GroundAlly> allies = [];
   final List<GroundMissile> missiles = [];
   final List<GroundTracer> tracers = [];
   final List<HomingPickup> pickups = [];
+
+  /// Smoke left by finished homing missiles (fades out).
+  final List<HomingPuff> homingSmoke = [];
   final HomingSalvo salvo = HomingSalvo();
   final List<GameEvent> events = [];
   GroundFront front = GroundFront.none;
@@ -452,6 +603,10 @@ class GroundWar {
   /// (counted even while invulnerable: "would-be hits").
   final List<int> breakthroughsBySector = List.filled(5, 0);
   final List<int> impactsBySector = List.filled(5, 0);
+  /// Sector 2 near misses (per sector index) and this level's breakthrough
+  /// guarantee (sectors 3-4).
+  final List<int> nearMissesBySector = List.filled(5, 0);
+  bool levelBrokeThrough = false, guaranteeSpawned = false;
   int alliesSaved = 0, alliesRetreated = 0;
   int alliesSavedThisLevel = 0, alliesRetreatedThisLevel = 0;
 
@@ -478,11 +633,13 @@ class GroundWar {
     missiles.clear();
     tracers.clear();
     pickups.clear();
+    homingSmoke.clear();
     salvo
       ..remaining = 0
       ..active = null
       ..gap = 0;
     pityClock = 0;
+    levelBrokeThrough = guaranteeSpawned = false;
   }
 
   void resetRun() {
@@ -494,6 +651,7 @@ class GroundWar {
     unitsKilledByAllies = breakthroughs = 0;
     breakthroughsBySector.fillRange(0, 5, 0);
     impactsBySector.fillRange(0, 5, 0);
+    nearMissesBySector.fillRange(0, 5, 0);
     alliesSaved = alliesRetreated = alliesEngaged = 0;
     alliesSavedThisLevel = alliesRetreatedThisLevel = alliesEngagedThisLevel = 0;
     wingmatesLost = wingmatesLostThisLevel = 0;
@@ -516,6 +674,50 @@ extension GroundWarSimulation on ArcadeModel {
       .._pressureStep = -1;
     ground.alliesSavedThisLevel = ground.alliesRetreatedThisLevel = 0;
     ground.alliesEngagedThisLevel = ground.wingmatesLostThisLevel = 0;
+    if (front.active) {
+      // The convoy: one ally per side already on station under our cover.
+      for (final side in const [0, 1]) {
+        _newConvoyAlly(side, rollIn: false);
+      }
+    }
+  }
+
+  /// A convoy ally on [side]: on station, or rolling in from below.
+  GroundAlly _newConvoyAlly(int side, {bool rollIn = true}) {
+    final g = ground;
+    final slot = g.allies.where((a) => a.alive && a.side == side).length;
+    final hold = GroundTuning.allyHoldZ +
+        GroundTuning.allyHoldStep * math.min(slot, GroundTuning.alliesPerSide);
+    final ally = GroundAlly(
+      g.nextId++,
+      level - 1,
+      side,
+      slot.isEven ? .3 : .72,
+      rollIn ? GroundTuning.allyRollInZ : hold + (side == 0 ? 0 : 14),
+      GroundTuning.allyHp,
+    )..holdZ = hold + (side == 0 ? 0 : 14);
+    g.allies.add(ally);
+    return ally;
+  }
+
+  /// The ally that meets a new demon unit on [side]: an idle convoy ally,
+  /// or a reinforcement rolling in from below the screen.
+  GroundAlly _assignAlly(GroundUnit unit) {
+    GroundAlly? idle;
+    for (final a in ground.allies) {
+      if (!a.alive || a.side != unit.side) continue;
+      if (a.attacker?.alive ?? false) continue;
+      if (idle == null || a.holdZ < idle.holdZ) idle = a;
+    }
+    final ally = idle ?? _newConvoyAlly(unit.side);
+    ally
+      ..attacker = unit
+      ..hp = GroundTuning.allyHp // field repairs between skirmishes
+      ..announced = false
+      ..saved = false
+      ..fireLeft = .3;
+    unit.ally = ally;
+    return ally;
   }
 
   /// Wave entrance: in-flight hostile missiles never cross a wave boundary.
@@ -573,20 +775,48 @@ extension GroundWarSimulation on ArcadeModel {
       }
       u.z -= u.z > GroundTuning.fireZ ? speedFar : speedNear;
       u.fireFlash = math.max(0, u.fireFlash - dt);
-      if (!ground.front.breakthroughs && u.z <= GroundTuning.fireZ + 80) {
-        // Sectors 1-2: the allies always finish a unit before fire range.
+      if (!ground.front.breakthroughs &&
+          u.z <=
+              GroundTuning.fireZ +
+                  (u.nearMiss ? GroundTuning.nearMissMarginZ : 80)) {
+        // Sectors 1-2: the allies always finish a unit before fire range;
+        // in sector 2 some only just short of it (a near miss).
+        if (u.nearMiss) {
+          ground.nearMissesBySector[(level - 1).clamp(0, 4)]++;
+          _groundEvent(GameEventNames.groundNearMiss, {
+            'x': u.x,
+            'y': u.y,
+            'marginZ': double.parse(
+              (u.z - GroundTuning.fireZ).toStringAsFixed(1),
+            ),
+          });
+        }
         _destroyGroundUnit(u, byAllies: true);
         continue;
       }
       if (!u.brokeThrough && u.z <= GroundTuning.fireZ) {
         u.brokeThrough = true;
         u.threatening = false;
+        ground.levelBrokeThrough = true;
         ground.breakthroughs++;
         ground.breakthroughsBySector[(level - 1).clamp(0, 4)]++;
         _adjustStrength(-.02);
         _groundEvent(GameEventNames.groundBreakthrough, {'x': u.x, 'y': u.y});
       }
       _predictBreakthrough(u);
+      if (u.threatening && !u.warned) {
+        final toFire = (u.z - GroundTuning.fireZ) /
+            (GroundTuning.approachSpeed * rate);
+        if (toFire <= GroundTuning.warningLead) {
+          u.warned = true;
+          _groundEvent(GameEventNames.groundBreakthroughWarning, {
+            'x': u.x,
+            'y': u.y,
+            'secondsToBreakthrough': toFire,
+            'guaranteed': u.guaranteed,
+          });
+        }
+      }
       if (!u.sighted && u.z <= GroundTuning.sightZ) {
         u.sighted = true;
         _groundEvent(GameEventNames.groundForceSighted, {'x': u.x, 'y': u.y});
@@ -609,6 +839,18 @@ extension GroundWarSimulation on ArcadeModel {
     _updateHomingSalvo(dt);
     _updatePressureMeter(dt);
     _updateHomingPity(dt);
+    _placeGroundOnTerrain();
+  }
+
+  // --- terrain: refresh every ground object's relief pose once per step.
+  void _placeGroundOnTerrain() {
+    final relief = ground.relief;
+    for (final u in ground.units) {
+      u.pose = relief?.place(u.side, u.across, u.width, u.z);
+    }
+    for (final a in ground.allies) {
+      a.pose = relief?.place(a.side, a.across, a.width, a.z, ally: true);
+    }
   }
 
   void _adjustStrength(double delta) =>
@@ -705,23 +947,37 @@ extension GroundWarSimulation on ArcadeModel {
       hp: f.demonHp,
     )..cooldown = .4;
     g.units.add(unit);
+    // The level's guaranteed breakthrough (sectors 3-4): if nothing has
+    // got through yet, this arrival is unescorted and out of homing lock
+    // until it reaches fire range. Telegraphed by `allyUnderAttack`
+    // (unescorted) and `groundBreakthroughWarning`.
+    if (f.breakthroughs &&
+        !g.levelBrokeThrough &&
+        !g.guaranteeSpawned &&
+        levelClock >= GroundTuning.guaranteeAfter) {
+      g.guaranteeSpawned = true;
+      unit.guaranteed = true;
+      return;
+    }
+    // Sector 2: some skirmishes end only just short of the fire line.
+    if (!f.breakthroughs &&
+        level == 2 &&
+        random.nextDouble() < GroundTuning.nearMissChance) {
+      unit.nearMiss = true;
+    }
     // Without breakthroughs every unit meets an ally; later, the allies are
     // stretched as thin as their strength.
     if (!f.breakthroughs || random.nextDouble() < g.alliedStrength) {
-      final ally = GroundAlly(
-        g.nextId++,
-        level - 1,
-        side,
-        across < .5 ? across + .35 : across - .35,
-        unit.z - GroundTuning.allyLead,
-        GroundTuning.allyHp,
-      )..attacker = unit;
-      unit.ally = ally;
-      g.allies.add(ally);
+      _assignAlly(unit);
     }
   }
 
   void _updateGroundFire(GroundUnit u, double dt) {
+    if (shipAway) {
+      // The regroup holds ground fire too (life-loss sequence).
+      u.telegraph = 0;
+      return;
+    }
     if (u.telegraph > 0) {
       u.telegraph -= dt;
       if (u.telegraph <= 0) {
@@ -784,62 +1040,85 @@ extension GroundWarSimulation on ArcadeModel {
   void _updateAllies(double dt) {
     final rate = policy.hostileRate;
     for (final a in ground.allies) {
+      a.recoil = math.max(0, a.recoil - dt);
       if (a.totalled) {
-        // Limping off: drift to the outer edge while the ground rolls by.
+        // Limping off: drift to the outer edge and drop back down the plane.
         a.retreatAge += dt;
+        a.vz = -GroundTuning.creepSpeed * rate;
         a.across = math.max(-1.2, a.across - .45 * dt);
-        a.z -= GroundTuning.creepSpeed * rate * dt;
+        a.z += a.vz * dt;
         continue;
       }
       a.flash = math.max(0, a.flash - dt);
       final foe = a.attacker;
-      if (foe != null && foe.alive) {
-        // A running battle: the pair advances together.
-        a.z = foe.z - GroundTuning.allyLead;
-        if (!a.announced && foe.z <= GroundTuning.sightZ) {
-          a.announced = true;
-          ground.alliesEngaged++;
-          ground.alliesEngagedThisLevel++;
+      final engaged = foe != null && foe.alive;
+      // Station keeping: hold in the near band beside the ship; advance up
+      // the plane only to meet the foe, then fall back to escort position.
+      final want = engaged
+          ? (foe.z - GroundTuning.allyStandoff).clamp(
+              a.holdZ,
+              GroundTuning.allyMaxAdvanceZ,
+            )
+          : a.holdZ;
+      final dz = want - a.z;
+      final speed = dz > 0
+          ? GroundTuning.allyAdvanceSpeed
+          : GroundTuning.allyFallBackSpeed;
+      final step = dz.clamp(-speed * dt, speed * dt);
+      a.z += step;
+      a.vz = dz.abs() < .5 ? 0 : step / math.max(dt, 1e-6);
+      if (!engaged) continue;
+      if (!a.announced && foe.z <= GroundTuning.sightZ) {
+        a.announced = true;
+        ground.alliesEngaged++;
+        ground.alliesEngagedThisLevel++;
+      }
+      foe.tracerLeft -= dt * rate;
+      if (foe.tracerLeft <= 0 && a.announced) {
+        foe.tracerLeft = _demonFireEvery * rate;
+        ground.tracers.add(GroundTracer(foe.x, foe.bodyY, a.x, a.bodyY));
+        a.hp--;
+        a.flash = .15;
+        if (a.hp <= 0) {
+          a.totalled = true;
+          ground.alliesRetreated++;
+          ground.alliesRetreatedThisLevel++;
+          _adjustStrength(-.08);
+          _groundEvent(GameEventNames.allyRetreated, {
+            'x': a.x,
+            'y': a.y,
+            'ejected': a.ejects,
+          });
+          continue;
         }
-        foe.tracerLeft -= dt * rate;
-        if (foe.tracerLeft <= 0 && a.announced) {
-          foe.tracerLeft = _demonFireEvery * rate;
-          ground.tracers.add(GroundTracer(foe.x, foe.bodyY, a.x, a.bodyY));
-          a.hp--;
-          a.flash = .15;
-          if (a.hp <= 0) {
-            a.totalled = true;
-            ground.alliesRetreated++;
-            ground.alliesRetreatedThisLevel++;
-            _adjustStrength(-.08);
-            _groundEvent(GameEventNames.allyRetreated, {
-              'x': a.x,
-              'y': a.y,
-              'ejected': a.ejects,
-            });
-            continue;
-          }
-        }
-        a.fireLeft -= dt;
-        if (a.fireLeft <= 0 && a.announced) {
-          a.fireLeft = _allyFireEvery;
-          ground.tracers.add(
-            GroundTracer(a.x, a.bodyY, foe.x, foe.bodyY, friendly: true),
-          );
-          foe.hp--;
-          if (foe.hp <= 0) {
+      }
+      a.fireLeft -= dt;
+      if (a.fireLeft <= 0 && a.announced) {
+        a.fireLeft = _allyFireEvery;
+        a.recoil = GroundTuning.allyRecoil;
+        ground.tracers.add(
+          GroundTracer(a.x, a.bodyY, foe.x, foe.bodyY, friendly: true),
+        );
+        foe.hp--;
+        if (foe.hp <= 0) {
+          if (foe.nearMiss &&
+              foe.z > GroundTuning.fireZ + GroundTuning.nearMissMarginZ) {
+            // A near miss: it limps on, smoking, to just short of the line.
+            foe.hp = 1;
+          } else {
             // The allies win this skirmish on their own.
             _destroyGroundUnit(foe, byAllies: true);
           }
         }
-      } else {
-        a.z -= GroundTuning.approachSpeed * rate * dt;
       }
     }
     ground.allies.removeWhere(
       (a) =>
-          a.z < GroundTuning.leaveZ ||
-          (a.totalled && (a.retreatAge > 3.5 || a.x < -40 || a.x > ArcadeModel.width + 40)),
+          a.totalled &&
+          (a.retreatAge > 3.5 ||
+              a.z < GroundTuning.leaveZ ||
+              a.x < -40 ||
+              a.x > ArcadeModel.width + 40),
     );
   }
 
@@ -857,7 +1136,8 @@ extension GroundWarSimulation on ArcadeModel {
       score += ((400 + 100 * u.sector) * (cycle + 1) * policy.enemyPoints).round();
       _adjustStrength(.08); // the player's help pushes the allies ahead
     }
-    blasts.add(Blast(u.x, u.bodyY, big: !byAllies));
+    // The explosion, shock ring, debris and scorch are drawn on the ground
+    // plane by GroundPainter (perspective-scaled), not as an air blast.
     events.add('groundExplosion');
     _groundEvent(GameEventNames.groundUnitDestroyed, {
       'x': u.x,
@@ -910,6 +1190,8 @@ extension GroundWarSimulation on ArcadeModel {
     GroundUnit? bestGround;
     for (final u in ground.units) {
       if (!u.alive || u.y > ArcadeModel.height - 8) continue;
+      // The guaranteed breakthrough is out of lock until it gets through.
+      if (u.guaranteed && !u.brokeThrough) continue;
       if (bestGround == null || u.threat > bestGround.threat) bestGround = u;
     }
     if (bestGround != null) return (bestGround, HomingTargetKind.ground);
@@ -958,32 +1240,135 @@ extension GroundWarSimulation on ArcadeModel {
     _ => (h.x, -100),
   };
 
+  /// Points the missile's ground arc at its (ground) target from where it
+  /// is now: a long climb away from the ship, out and down into the plane.
+  void _beginGroundFlight(
+    HomingMissile h,
+    GroundUnit u, {
+    double fraction = 1,
+  }) {
+    h
+      ..x0 = h.x
+      ..y0 = h.y
+      ..groundAge = 0
+      ..groundFlight = GroundTuning.homingGroundFlight(u.z) * fraction
+      ..depth = h.depth == 0 ? GroundTuning.shipZ : h.depth;
+  }
+
+  /// Screen point and depth on the ground arc at progress [p] toward [u]:
+  /// a cubic curve from the launch point, up and away (climb), out over the
+  /// unit's band (apex) and down onto its ground contact.
+  (double, double, double) groundArcAt(
+    HomingMissile h,
+    GroundUnit u,
+    double p,
+  ) {
+    final tx = u.x, ty = u.y - 2 * u.scale;
+    final outward = u.side == 0 ? -1.0 : 1.0;
+    final p1x = h.x0 + h.side * 34;
+    final p1y = h.y0 - GroundTuning.homingGroundClimb;
+    final p2x = tx + outward * 26;
+    final p2y = math.min(ty - GroundTuning.homingGroundApex, p1y + 30);
+    final q = 1 - p;
+    final a = q * q * q, b = 3 * q * q * p, c = 3 * q * p * p, d = p * p * p;
+    final x = a * h.x0 + b * p1x + c * p2x + d * tx;
+    final y = a * h.y0 + b * p1y + c * p2y + d * ty;
+    final startZ = GroundTuning.shipZ;
+    final ease = p * p * (3 - 2 * p);
+    return (x, y, startZ + (u.z - startZ) * ease);
+  }
+
+  void _homingPuffs(HomingMissile h, double dt) {
+    for (final puff in h.trail) {
+      puff.age += dt;
+    }
+    h.trail.removeWhere((puff) => puff.age > HomingPuff.life);
+    h._puffClock -= dt;
+    if (h._puffClock <= 0) {
+      h._puffClock = .016;
+      h.trail.add(HomingPuff(h.x, h.y, h.perspective));
+    }
+  }
+
+  void _endHoming(HomingSalvo salvo) {
+    final h = salvo.active;
+    if (h != null && h.trail.isNotEmpty) {
+      ground.homingSmoke.addAll(h.trail);
+    }
+    salvo
+      ..active = null
+      ..gap = GroundTuning.homingGap;
+  }
+
   void _updateHomingSalvo(double dt) {
     final salvo = ground.salvo;
+    for (final puff in ground.homingSmoke) {
+      puff.age += dt;
+    }
+    ground.homingSmoke.removeWhere((puff) => puff.age > HomingPuff.life);
     var h = salvo.active;
     if (h == null) {
       if (salvo.remaining <= 0) return;
+      if (shipAway) return; // the rack waits for the reserve ship
       salvo.gap -= dt;
       if (salvo.gap > 0) return;
       final pick = pickHomingTarget();
       if (pick == null) return; // hold the salvo until something appears
       final side = salvo.launched.isEven ? -1 : 1;
-      h = HomingMissile(shipX + side * 11.0, ArcadeModel.shipY - 4, side * 50.0, -230, side)
+      h = HomingMissile(
+        shipX + side * 11.0,
+        ArcadeModel.shipY - 4,
+        side * 50.0,
+        -230,
+        side,
+      )
         ..target = pick.$1
         ..kind = pick.$2;
+      if (pick.$1 case final GroundUnit u) _beginGroundFlight(h, u);
       salvo
         ..active = h
         ..remaining -= 1
         ..launched += 1;
       events.add('homingLock');
-      _groundEvent(GameEventNames.homingLaunch, {'target': pick.$2.name});
+      _groundEvent(GameEventNames.homingLaunch, {
+        'target': pick.$2.name,
+        if (h.toGround) 'flight': h.groundFlight,
+      });
       return;
     }
     h.age += dt;
+    _homingPuffs(h, dt);
     if (!_homingTargetValid(h)) {
       final pick = pickHomingTarget();
       h.target = pick?.$1;
       h.kind = pick?.$2;
+      if (pick?.$1 case final GroundUnit u) {
+        // Re-aim the dive at the next ground unit from here.
+        _beginGroundFlight(h, u, fraction: .7);
+      } else if (h.toGround) {
+        h.groundFlight = null; // back to fast air steering
+      }
+    }
+    if (h.target case final GroundUnit u when h.toGround) {
+      h.groundAge += dt;
+      final p = h.groundProgress;
+      final (x, y, z) = groundArcAt(h, u, p);
+      final (nx, ny, _) = groundArcAt(h, u, math.min(1.0, p + .02));
+      final dx = nx - x, dy = ny - y;
+      final len = math.sqrt(dx * dx + dy * dy);
+      if (len > 1e-6) {
+        h.vx = dx / len * 300;
+        h.vy = dy / len * 300;
+      }
+      h
+        ..x = x
+        ..y = y
+        ..depth = z;
+      if (p >= 1) {
+        _homingImpact(h);
+        _endHoming(salvo);
+      }
+      return;
     }
     final speed = math.min(480.0, 230 + h.age * 700);
     if (h.target != null && h.age > GroundTuning.homingBoost) {
@@ -1010,7 +1395,6 @@ extension GroundWarSimulation on ArcadeModel {
     if (h.target != null) {
       final (tx, ty) = homingAim(h);
       final reach = switch (h.kind) {
-        HomingTargetKind.ground => 8 + (h.target as GroundUnit).width * .3,
         HomingTargetKind.carrierCore || HomingTargetKind.carrierShield => 22.0,
         HomingTargetKind.sentinel => 22.0,
         _ => 16.0,
@@ -1018,9 +1402,7 @@ extension GroundWarSimulation on ArcadeModel {
       final dx = tx - h.x, dy = ty - h.y;
       if (dx * dx + dy * dy <= reach * reach) {
         _homingImpact(h);
-        salvo
-          ..active = null
-          ..gap = GroundTuning.homingGap;
+        _endHoming(salvo);
         return;
       }
     }
@@ -1029,9 +1411,7 @@ extension GroundWarSimulation on ArcadeModel {
         h.y > ArcadeModel.height + 40 ||
         h.x < -40 ||
         h.x > ArcadeModel.width + 40) {
-      salvo
-        ..active = null
-        ..gap = GroundTuning.homingGap;
+      _endHoming(salvo);
     }
   }
 

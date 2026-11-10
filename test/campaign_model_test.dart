@@ -172,6 +172,10 @@ void main() {
         m.demons.add(d);
         d.attackLeft = .01;
         advance(m, 1 / 60);
+        // A beat of divePrep (radio warning) comes before the dive tell.
+        expect(d.divePrep, greaterThan(0));
+        expect(d.telegraph, 0);
+        advance(m, ArcadeModel.divePrepBeat + 1 / 60);
         expect(d.telegraph, greaterThan(.8));
         final target = d.targetX;
         m.moveTo(330);
@@ -245,13 +249,17 @@ void main() {
     m.resume();
     advance(m, 1.6);
     expect(sentinel.entranceProgress, 1);
-    expect(sentinel.telegraph, greaterThan(0));
+    expect(sentinel.telegraph + sentinel.divePrep, greaterThan(0));
     expect(sentinel.y + 32, lessThan(swarm.first.homeY - 28));
     expect(
       m.shots.where((s) => s.hostile && s.y < 90),
       isEmpty,
       reason: 'sentinel volleys follow the visible warning',
     );
+    // The tell (and its sampled target) follows the divePrep beat.
+    for (var i = 0; i < 60 && sentinel.telegraph <= 0; i++) {
+      m.update(1 / 60);
+    }
     final target = sentinel.targetX;
     m.moveTo(330);
     advance(m, 1);
@@ -570,7 +578,8 @@ void main() {
       m.demons.add(d);
       m.hitDemon(d);
       expect(d.lastStand, isFalse);
-      expect(d.telegraph, .9);
+      expect(d.divePrep, ArcadeModel.divePrepBeat);
+      d.divePrep = 0;
       d.telegraph = 0;
       d.dive = .1;
       d.y = ArcadeModel.height + 19;

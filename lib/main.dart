@@ -18,16 +18,42 @@ import 'services/run_storage.dart';
 import 'services/tilt_control.dart';
 import 'widgets/medal.dart';
 import 'widgets/heart_parts.dart';
+import 'widgets/widescreen_backdrop.dart'; // --- widescreen backdrop
 // --- squad comms
 import 'comms/comms_director.dart' show CommsMessage;
 import 'comms/comms_view.dart';
 import 'comms/squad_comms.dart';
+// --- console route
+import 'widgets/dev_console.dart';
+export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
+// --- end console route
 export 'game/scene.dart' show DemonScene;
 
 void main() => runApp(const DemonAttackApp());
 
+// --- console route: '/console' opens the dev console, any other path the
+// arcade. A console launch pushes '/' (the address bar returns to /) with a
+// ConsoleStart argument; browser back returns to the console.
+MaterialPageRoute<void> _appRoute(RouteSettings settings) => MaterialPageRoute(
+  settings: settings,
+  builder: (_) => isConsoleRoute(settings.name)
+      ? DevConsolePage(
+          galleryUrl: '/gallery/',
+          onStart: (context, start) =>
+              Navigator.of(context).pushNamed('/', arguments: start),
+        )
+      : ArcadePage(
+          consoleStart: settings.arguments is ConsoleStart
+              ? settings.arguments as ConsoleStart
+              : null,
+        ),
+);
+// --- end console route
+
 class DemonAttackApp extends StatelessWidget {
-  const DemonAttackApp({super.key});
+  const DemonAttackApp({super.key, this.initialRoute}); // --- console route
+  /// Overrides the browser path (tests); null uses the platform route.
+  final String? initialRoute; // --- console route
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Demon Attack',
@@ -72,7 +98,11 @@ class DemonAttackApp extends StatelessWidget {
         ),
       ),
     ),
-    home: const ArcadePage(),
+    // --- console route
+    initialRoute: initialRoute,
+    onGenerateInitialRoutes: (name) => [_appRoute(RouteSettings(name: name))],
+    onGenerateRoute: _appRoute,
+    // --- end console route
   );
 }
 
@@ -82,10 +112,14 @@ class ArcadePage extends StatefulWidget {
     this.scoreService,
     this.runStorage,
     this.squadComms,
+    this.consoleStart, // --- console route
   });
   final ScoreService? scoreService;
   final RunStorage? runStorage;
   final SquadComms? squadComms;
+
+  /// --- console route: begin a run here instead of on the title screen.
+  final ConsoleStart? consoleStart;
   @override
   State<ArcadePage> createState() => _ArcadePageState();
 }
@@ -174,7 +208,31 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
     _attachComms(); // --- squad comms
+    // --- console route: the run begins before the first frame (no title).
+    final consoleStart = widget.consoleStart;
+    if (consoleStart != null) {
+      _startConsole(consoleStart);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _tick();
+        if (mounted) focus.requestFocus();
+      });
+    }
+    // --- end console route
   }
+
+  // --- console route: mirrors _start() bookkeeping, via ArcadeModel.startAt.
+  void _startConsole(ConsoleStart start) {
+    audioUnlock();
+    audioResume();
+    screen = null;
+    submitted = false;
+    handledRunEnd = false;
+    showFinalResult = false;
+    heartNotice = null;
+    _resetComms();
+    start.applyTo(model);
+  }
+  // --- end console route
 
   @override
   void didChangeDependencies() {
@@ -569,23 +627,54 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
+                  // --- widescreen backdrop: scenery beside the column on
+                  // wide landscape screens; the comms panels stay on top.
+                  if (WidescreenBackdrop.shows(bounds.biggest))
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: WidescreenBackdrop(
+                          scene: _backdropScene(title),
+                          environment: scene.environment,
+                          time: scene.ambient,
+                          shipX: model.shipX,
+                          paused: model.mode == RunMode.paused,
+                          slots: commsLayout.side && !title
+                              ? commsLayout.tileRects(bounds.biggest)
+                              : const [],
+                        ),
+                      ),
+                    ),
+                  // --- end widescreen backdrop
                   if (title)
                     Positioned.fill(
                       child: Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [
-                              Color(0x33080D18),
-                              Color(0xAA080D18),
-                              Color(0xF5080D18),
-                            ],
+                            // --- widescreen backdrop: a lighter scrim keeps
+                            // the bridge console visible on wide screens.
+                            colors: WidescreenBackdrop.shows(bounds.biggest)
+                                ? const [
+                                    Color(0x00080D18),
+                                    Color(0x55080D18),
+                                    Color(0x66080D18),
+                                  ]
+                                : const [
+                                    Color(0x33080D18),
+                                    Color(0xAA080D18),
+                                    Color(0xF5080D18),
+                                  ],
                           ),
                         ),
                       ),
                     ),
-                  if (title) _titleScreen(bounds),
+                  // --- widescreen backdrop: under a score overlay the hall
+                  // shows in the margins, so the landing steps aside there.
+                  if (title &&
+                      !(screen != null &&
+                          WidescreenBackdrop.shows(bounds.biggest)))
+                    _titleScreen(bounds),
                   if (!title)
                     Center(
                       child: SizedBox(
@@ -629,12 +718,19 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     ),
                   if (screen != null)
                     Positioned.fill(
-                      child: screen == 'ranking'
-                          ? const ColoredBox(
-                              color: Color(0xEE080D18),
-                              child: Center(child: CircularProgressIndicator()),
-                            )
-                          : _scoreOverlay(),
+                      // --- widescreen backdrop: the hall shows through the
+                      // overlay's margins.
+                      child: _backdropMargins(
+                        bounds,
+                        screen == 'ranking'
+                            ? const ColoredBox(
+                                color: Color(0xEE080D18),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : _scoreOverlay(),
+                      ),
                     ),
                 ],
               );
@@ -644,6 +740,42 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       ),
     );
   }
+
+  // --- widescreen backdrop: which scene stands beside the column.
+  BackdropScene _backdropScene(bool title) {
+    if (title) {
+      return screen != null || showFinalResult
+          ? BackdropScene.hall
+          : BackdropScene.vista;
+    }
+    return switch (model.presentationMode) {
+      RunMode.gameOver => BackdropScene.defeat,
+      RunMode.victory || RunMode.completed => BackdropScene.victory,
+      _ => BackdropScene.sector,
+    };
+  }
+
+  /// Fades a full-screen overlay toward the screen edges on wide screens,
+  /// keeping the centre (and everything drawn there) fully opaque.
+  Widget _backdropMargins(BoxConstraints bounds, Widget overlay) {
+    if (!WidescreenBackdrop.shows(bounds.biggest)) return overlay;
+    final w = bounds.maxWidth;
+    final inner = (math.min(w, 600) / 2) / w;
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (rect) => LinearGradient(
+        colors: const [
+          Color(0x2EFFFFFF),
+          Color(0xFFFFFFFF),
+          Color(0xFFFFFFFF),
+          Color(0x2EFFFFFF),
+        ],
+        stops: [0, .5 - inner, .5 + inner, 1],
+      ).createShader(rect),
+      child: overlay,
+    );
+  }
+  // --- end widescreen backdrop
 
   Widget _titleScreen(BoxConstraints bounds) => Stack(
     children: [
@@ -778,6 +910,19 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           child: const Text('START GAME  →'),
         ),
       ),
+      // --- console route: a console run returns to the console from title.
+      if (widget.consoleStart != null) ...[
+        const SizedBox(height: 12),
+        SizedBox(
+          width: 280,
+          child: OutlinedButton(
+            key: const ValueKey('back-to-console'),
+            onPressed: () => Navigator.of(context).maybePop(),
+            child: const Text('◀  BACK TO CONSOLE'),
+          ),
+        ),
+      ],
+      // --- end console route
       if (savedCheckpoint != null) ...[
         const SizedBox(height: 12),
         SizedBox(

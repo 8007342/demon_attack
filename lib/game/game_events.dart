@@ -77,25 +77,66 @@ abstract final class GameEventNames {
   /// Data `scope`: 'level' (at sector clear) or 'campaign' (at victory).
   static const fleetIntact = 'fleetIntact';
 
-  // --- Losing a life (the gameplay branch's sequence).
+  // --- Life-loss sequence and dive warnings (queued by the model).
 
-  /// The player ship explodes; hostile shots drain.
+  /// The player ship explodes (data x, y, `lives` left, `final`: the last
+  /// life, which goes to the defeat celebration instead of a regroup).
   static const playerDestroyed = 'playerDestroyed';
 
-  /// The brood regroups before the next ship launches.
+  /// The explosion gives way to the regroup pause (data `duration`,
+  /// `shotsDrained`, `missilesDrained`, `lives`): hostile shots fizzle out,
+  /// the swarm reforms, nothing can hit the player. Demons celebrate on air.
   static const regroupStart = 'regroupStart';
 
-  /// The reserve ship re-emerges from the bottom with blinking protection.
+  /// The reserve ship starts flying in from the bottom edge (data x, y,
+  /// `lives`, `protection` seconds of blinking protection). Play resumes;
+  /// the squad's new-life chatter plays during it, without blocking.
   static const playerRespawn = 'playerRespawn';
 
-  // --- Terrain the ground convoy navigates (the terrain branch).
+  /// A demon is about to start a dive tell: fires [ArcadeModel.divePrepBeat]
+  /// seconds (data `lead`) before the telegraph, so the demons can radio
+  /// first (data x, y, `sentinel`, `elite`).
+  static const divePrep = 'divePrep';
 
-  /// Data `kind`: ridge | valley | canyon | forest | crystalField | ruins,
-  /// and `side`. [GameEvent.variant] reads `kind`.
+  /// Sectors 1-2 drama: the allies stop a demon unit just short of fire
+  /// range (data x, y, `marginZ`: texels short of the fire line). The unit
+  /// never fires. Commander hook: "That was close!".
+  static const groundNearMiss = 'groundNearMiss';
+
+  /// A breakthrough is guaranteed / imminent: the unit is past the allies'
+  /// reach and will reach fire range in `secondsToBreakthrough` (data x, y).
+  /// Fires once per breakthrough, about 3 s ahead, after `allyUnderAttack`.
+  static const groundBreakthroughWarning = 'groundBreakthroughWarning';
+
+  static const lifeLoss = [playerDestroyed, regroupStart, playerRespawn];
+
+  // --- terrain: what the convoy sees below (queued by the flyover's
+  // TerrainRadio, lib/game/terrain_field.dart; visual only, rate-limited).
+  // Data: `sector` (1-5), `side` ('left' | 'right' | 'both'), x, y.
+
+  /// A notable feature approaches (about 30 s out). Data `kind`: ridge,
+  /// valley, canyon, mesa, forest, crystalField or ruins. At most one per
+  /// 12 s and one per kind per 30 s. "Rough terrain ahead!"
   static const terrainAhead = 'terrainAhead';
+
+  /// An allied unit crawls up a steep slope. At most one per 15 s.
   static const convoyClimbing = 'convoyClimbing';
+
+  /// An allied unit pushes through vegetation or debris (data `kind`:
+  /// tree, crystal, brush, stalk, debris; `species`). At most one per 12 s.
+  /// "Clearing the tree line!"
   static const convoyClearingVegetation = 'convoyClearingVegetation';
+
+  /// Rare and short: an allied unit stalls on a very steep wall for a
+  /// second. At most one per 45 s.
   static const convoyStuck = 'convoyStuck';
+
+  static const terrain = [
+    terrainAhead,
+    convoyClimbing,
+    convoyClearingVegetation,
+    convoyStuck,
+  ];
 
   // --- music event hook: events derived read-only from the simulation by
   // MusicDirector (lib/game/music_director.dart) once per frame. Any
@@ -139,9 +180,12 @@ abstract final class GameEventNames {
     fleetIntact,
     groundBreakthrough,
     groundPressure,
+    groundNearMiss,
+    groundBreakthroughWarning,
     playerDestroyed,
     regroupStart,
     playerRespawn,
+    divePrep,
     terrainAhead,
     convoyClimbing,
     convoyClearingVegetation,
@@ -203,6 +247,10 @@ abstract final class GameEventNames {
 
   /// A player ship is totalled (the pilot ejects; the reserve launches).
   static const lifeLost = 'lifeLost';
+
+  // --- music event hook: the life-loss moment uses [playerDestroyed],
+  // [regroupStart] and [playerRespawn], declared with the life-loss sequence
+  // above (music: hit stinger + drop, demonic gloat, heroic re-entry accent).
   static const lowLives = 'lowLives';
   static const extraLife = 'extraLife';
   static const salvage = 'salvage';
