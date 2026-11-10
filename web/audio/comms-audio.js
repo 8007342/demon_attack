@@ -4,7 +4,10 @@
    suspend) apply to voices too. Ducks the music bus while a voice sounds and
    caps simultaneous voices (3; only an urgent line, priority >= 8, may cut
    one that is playing; anything else beyond the cap is dropped). Every call is a safe no-op before the first
-   gesture has created the context. */
+   gesture has created the context.
+   Speech level (audio round): the HUD's speech toggle (Mute / Low / Full,
+   remembered by demon-audio.js) scales the voice bus; Mute stops voices and
+   never ducks the music. setVolume (the squad-voice switch) multiplies with it. */
 (() => {
   'use strict';
   const root = new URL('./audio/comms/', document.baseURI);
@@ -15,10 +18,15 @@
   const duckRelease = .12;
   const releaseDelay = .3;       // hold the duck this long after the last voice
   const voiceGain = 1.26;        // +2 dB: clips are mastered to -18 LUFS with codec headroom
+  // Speech levels: Full is the round-3 voice level, Low 8 dB under it (a little
+  // less than music's 10 dB, so low speech still clears the ducked music).
+  const speechLevels = { mute: 0, low: 10 ** (-8 / 20), full: 1 };
   const bytesCache = new Map(), bufferCache = new Map();
   const live = [];               // { id, priority, demon, source, gain, startedAt, order }
   let bus, graphContext, volume = 1, played = 0, dropped = 0, maxConcurrent = 0, order = 0;
   let ducked = false, releaseTimer = null;
+  let level = speechLevels[window.demonAudio?.levels?.speech] !== undefined ? window.demonAudio.levels.speech : 'full';
+  const busGain = () => volume * speechLevels[level] * voiceGain;
   const probe = typeof Audio === 'function' ? new Audio() : null;
   const formats = probe?.canPlayType?.('audio/ogg; codecs="opus"') ? ['ogg', 'm4a'] : ['m4a', 'ogg'];
 
@@ -28,7 +36,7 @@
     if (graphContext !== g.context) {
       graphContext = g.context;
       bus = g.context.createGain();
-      bus.gain.value = volume * voiceGain;
+      bus.gain.value = busGain();
       bus.connect(g.master);
       bufferCache.clear();
     }
@@ -106,7 +114,7 @@
   // Returns true when the clip was accepted (it then starts as soon as it is decoded).
   function play(id, priority = 0, demon = false) {
     const g = graph();
-    if (!g || volume <= 0 || !id) return false;
+    if (!g || volume <= 0 || level === 'mute' || !id) return false;
     if (live.some(v => v.id === id)) return false;
     if (live.length >= cap) {
       // A playing voice is never cut, except by an urgent (priority >= 8)
@@ -141,16 +149,25 @@
   function setVolume(value) {
     volume = Math.min(1, Math.max(0, Number(value) || 0));
     const g = graph();
-    if (bus && g) bus.gain.setTargetAtTime(volume * voiceGain, g.context.currentTime, .03);
+    if (bus && g) bus.gain.setTargetAtTime(busGain(), g.context.currentTime, .03);
     if (volume <= 0) stopAll();
     return volume;
   }
+  // 'mute' | 'low' | 'full' (demonAudio.setLevel('speech', ...) forwards here).
+  function setLevel(value) {
+    if (speechLevels[value] === undefined) return level;
+    level = value;
+    const g = graph();
+    if (bus && g) bus.gain.setTargetAtTime(busGain(), g.context.currentTime, .03);
+    if (level === 'mute') stopAll();  // releases the duck too
+    return level;
+  }
 
-  window.commsAudio = Object.freeze({ prefetch, play, stop, stopAll, setVolume,
+  window.commsAudio = Object.freeze({ prefetch, play, stop, stopAll, setVolume, setLevel,
     // Read-only diagnostics for browser checks.
     get state() {
       const g = window.demonAudio?.graph;
       return { context: g?.context?.state ?? 'none', voices: live.map(v => ({ id: v.id, priority: v.priority, demon: v.demon, started: v.startedAt !== null })),
-        ducked, duckGain, musicGain: g?.music?.gain?.value ?? null, volume, loaded: [...bufferCache.keys()], played, dropped, maxConcurrent, cap, formats };
+        ducked, duckGain, musicGain: g?.music?.gain?.value ?? null, volume, level, busGain: bus?.gain?.value ?? null, loaded: [...bufferCache.keys()], played, dropped, maxConcurrent, cap, formats };
     } });
 })();
