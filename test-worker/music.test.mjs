@@ -239,6 +239,17 @@ test('every cue ships Opus and AAC files with whole-bar loops inside the downloa
     assert.equal(table[level], Math.round(BAR[level] * 48000));
     for (const part of ['t1', 'intro', 'outro']) assert.equal(manifest.cues[`l${level}-${part}`].barSamples, table[level]);
   }
+  // Metal-v2: the recorded cues are ACE's own band/orchestra takes, not
+  // re-performed synth guides (round 3 measured 0.09 flatness at 1-5 kHz).
+  for (const [name, cue] of Object.entries(manifest.cues)) {
+    if (cue.kind === 'sprite' || name === 'cackle') continue;
+    assert.ok(['text', 'a2a'].includes(cue.mode), `${name} is a recorded take`);
+    assert.ok(cue.flat15 >= 0.16, `${name} has distorted-band timbre (1-5 kHz flatness ${cue.flat15})`);
+    // Battle tiers must be far from the synth guide's long-term spectrum (round 3: 0.56 at best,
+    // yet tonal); orchestral cues share its broad balance, so only the tiers are held to it.
+    if (cue.tier) assert.ok(cue.guideDistance >= 0.3, `${name} is far from the synth guide (${cue.guideDistance})`);
+    if (cue.variantOf) assert.equal(manifest.cues[cue.variantOf].beats, cue.beats, `${name} is the same march bar for bar`);
+  }
   assert.ok(opus < 8 * 1024 * 1024, `Opus set stays under 8 MB (${opus} bytes)`);
   for (const [level, bytes] of Object.entries(perLevel)) assert.ok(bytes < 1.4 * 1024 * 1024, `level ${level} set loads lazily in a modest chunk (${bytes})`);
 });
