@@ -78,6 +78,10 @@ class SkirmishFront {
 
   bool get active => cap > 0;
 
+  /// Test and comparison hook: false plays the v3 ground war exactly (no
+  /// skirmish layer, no convoy slots, no manoeuvre).
+  static bool enabled = true;
+
   /// Variety arrives progressively: grunts beside the sector vehicles in
   /// Krybor, rocket troopers from Ringfall, heavy tanks from Ember.
   static SkirmishFront of(
@@ -85,7 +89,8 @@ class SkirmishFront {
     required int route,
     required int sector,
   }) {
-    if (sector < 1 ||
+    if (!enabled ||
+        sector < 1 ||
         sector > 5 ||
         const bool.fromEnvironment('GROUND_WAR_DISABLED')) {
       return none;
@@ -97,8 +102,8 @@ class SkirmishFront {
     final extra = math.min(route, 2);
     return switch (sector) {
       1 => SkirmishFront(
-        cap: 4 + (d == Difficulty.hard ? 1 : 0),
-        interval: 4.2,
+        cap: 5 + (d == Difficulty.hard ? 1 : 0),
+        interval: 3.8,
         firstDelay: 2.5,
         forces: const [v, i, i],
         allyForces: const [v, i, v, i],
@@ -154,10 +159,10 @@ abstract final class GroundV4Tuning {
 
   /// Depth-approach speed while advancing (texels/s, x hostileRate).
   static double approach(GroundForce f) => switch (f) {
-    GroundForce.vehicle => 82.0,
-    GroundForce.infantry => 40.0,
-    GroundForce.rockets => 34.0,
-    GroundForce.heavyTank => 58.0,
+    GroundForce.vehicle => 95.0,
+    GroundForce.infantry => 58.0,
+    GroundForce.rockets => 50.0,
+    GroundForce.heavyTank => 70.0,
   };
 
   /// Lateral speed at depth z (arena units/s) = this x texel(z).
@@ -168,9 +173,9 @@ abstract final class GroundV4Tuning {
     GroundForce.heavyTank => 44.0,
   };
 
-  /// Skirmish units hold at this depth or further (well short of
-  /// [GroundTuning.fireZ] + the sector 1-2 kill line at +80).
-  static const holdMin = 540.0, holdSpread = 160.0;
+  /// Skirmish units hold at this depth or further: always short of
+  /// [GroundTuning.fireZ] (and they never fire at the player anyway).
+  static const holdMin = 430.0, holdSpread = 130.0;
 
   /// A unit holding with nobody to fight is shelled by allied artillery.
   static const idleArtillery = 7.0;
@@ -178,10 +183,10 @@ abstract final class GroundV4Tuning {
 
   /// Hits a skirmish unit takes.
   static int hp(GroundForce f, int squad) => switch (f) {
-    GroundForce.vehicle => 3,
+    GroundForce.vehicle => 4,
     GroundForce.infantry => squad,
-    GroundForce.rockets => 2,
-    GroundForce.heavyTank => 5,
+    GroundForce.rockets => 3,
+    GroundForce.heavyTank => 6,
   };
 
   /// Demon fire at its ally: seconds between shots and damage.
@@ -205,7 +210,14 @@ abstract final class GroundV4Tuning {
   static const repairTime = 3.5;
 
   /// Engaged allies stand this far short of a skirmish foe.
-  static const standoff = 190.0;
+  static const standoff = 150.0;
+
+  /// Skirmishes are fought on the visible near ground: an ally is assigned
+  /// from [assignZ] and nobody fires before [fireStartZ] (screen y ~ 258).
+  static const assignZ = 900.0, fireStartZ = 700.0;
+
+  /// Skirmish arrivals enter a little nearer than the threat front.
+  static const spawnZ = 1260.0;
 
   /// Escort slots around the ship: lateral offsets and depths.
   static const slotX = [-64.0, 64.0, -128.0, 128.0, -22.0, 22.0, -156.0, 156.0];
@@ -379,7 +391,7 @@ extension GroundWarV4 on ArcadeModel {
         level - 1,
         x < 180 ? 0 : 1,
         .5,
-        GroundTuning.spawnZ - sk.rng.nextDouble() * 140,
+        GroundV4Tuning.spawnZ - sk.rng.nextDouble() * 120,
         shotsLeft: 0,
         hp: GroundV4Tuning.hp(force, f.squad),
       )
@@ -404,6 +416,7 @@ extension GroundWarV4 on ArcadeModel {
   /// A skirmish unit: approach to its hold line, find an ally, trade fire.
   void _v4Advance(GroundUnit u, double dt, double rate) {
     u.life += dt;
+    if (u.lastHit >= 0) u.lastHit += dt;
     u.fireFlash = math.max(0, u.fireFlash - dt);
     if (u.z > u.holdZ) {
       u.z = math.max(u.holdZ, u.z - GroundV4Tuning.approach(u.force) * rate * dt);
@@ -413,7 +426,7 @@ extension GroundWarV4 on ArcadeModel {
     final engaged = ally != null && ally.alive && identical(ally.attacker, u);
     if (!engaged) {
       u.ally = null;
-      if (u.z <= GroundTuning.sightZ) _v4FindAlly(u);
+      if (u.z <= GroundV4Tuning.assignZ) _v4FindAlly(u);
     }
     if (u.ally == null && u.z <= u.holdZ + 1) {
       u.idle += dt;
@@ -426,7 +439,7 @@ extension GroundWarV4 on ArcadeModel {
       return;
     }
     final a = u.ally;
-    if (a == null || !a.announced) return;
+    if (a == null || !a.announced || u.z > GroundV4Tuning.fireStartZ) return;
     u.tracerLeft -= dt * rate;
     if (u.tracerLeft <= 0) {
       final (every, damage) = GroundV4Tuning.demonFire(u.force);
@@ -527,6 +540,7 @@ extension GroundWarV4 on ArcadeModel {
 
   /// Allied fire on a skirmish foe (called from `_updateAllies`).
   void _v4AllyFight(GroundAlly a, GroundUnit foe, double dt) {
+    if (foe.z > GroundV4Tuning.fireStartZ) return;
     a.fireLeft -= dt;
     if (a.fireLeft > 0) return;
     final (every, damage) = GroundV4Tuning.allyFire(a.force);

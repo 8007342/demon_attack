@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'ground_atlas.dart';
+import 'ground_troops_atlas.dart';
 import 'model.dart';
 import 'ship_painter.dart';
 
@@ -15,8 +16,26 @@ import 'ship_painter.dart';
 /// combat (units, allies, tracers, wrecks: things standing on the ground);
 /// [paintAir] goes above the air combat (ground missiles coming at the
 /// camera, homing missiles, lock-on reticle, pickups).
+/// Things standing on the ground that a nearer unit must not paint over
+/// (the flyover's plants): ground war v4 depth-sorts them with the units.
+abstract interface class GroundOccluders {
+  /// Plants on the ground this frame: depth and screen box.
+  List<(double, Rect)> get groundPlants;
+
+  /// Paints plant [index] of [groundPlants] again (exactly as the
+  /// background drew it).
+  void paintGroundPlant(Canvas c, int index);
+}
+
 class GroundPainter {
   ui.Image? image;
+
+  // --- ground war v4: mixed forces (tools/ground_troops) and plant depth.
+  ui.Image? troops;
+  GroundOccluders? occluders;
+
+  /// Troopers draw a little smaller than vehicles (they are people).
+  static const troopScale = 1.0, allyTroopScale = .7;
 
   static const _warm = Color(0xFFFF8676), _hot = Color(0xFFFFD594);
   static const _mint = Color(0xFF70F5D5), _cyan = Color(0xFF6EDCFF);
@@ -45,20 +64,23 @@ class GroundPainter {
     bool mirror = false,
     double light = 1,
     double opacity = 1,
+    bool troop = false,
   }) {
-    final img = image;
+    final img = troop ? troops : image;
     if (img == null) return;
-    final w = GroundAtlas.cellW * scale, h = GroundAtlas.cellH * scale;
+    final cw = troop ? GroundTroopsAtlas.cellW : GroundAtlas.cellW;
+    final ch = troop ? GroundTroopsAtlas.cellH : GroundAtlas.cellH;
+    final w = cw * scale, h = ch * scale;
     final v = (255 * light).round().clamp(0, 255);
     _paint.color = Color.fromARGB((255 * opacity).round().clamp(0, 255), v, v, v);
     _paint.colorFilter = light < .999
         ? ColorFilter.mode(Color.fromARGB(255, v, v, v), BlendMode.modulate)
         : null;
     final src = Rect.fromLTWH(
-      col * GroundAtlas.cellW * 1.0,
-      row * GroundAtlas.cellH * 1.0,
-      GroundAtlas.cellW * 1.0,
-      GroundAtlas.cellH * 1.0,
+      col * cw * 1.0,
+      row * ch * 1.0,
+      cw * 1.0,
+      ch * 1.0,
     );
     final left = (cx - w / 2).roundToDouble(), top = (bottom - h).roundToDouble();
     if (mirror) {
@@ -82,9 +104,10 @@ class GroundPainter {
 
   /// A cell centred on (cx, cy) instead of bottom-centred.
   void _cellC(Canvas c, int row, int col, double cx, double cy, double scale,
-          {bool mirror = false, double light = 1, double opacity = 1}) =>
-      _cell(c, row, col, cx, cy + GroundAtlas.cellH * scale / 2, scale,
-          mirror: mirror, light: light, opacity: opacity);
+          {bool mirror = false, double light = 1, double opacity = 1, bool troop = false}) =>
+      _cell(c, row, col, cx,
+          cy + (troop ? GroundTroopsAtlas.cellH : GroundAtlas.cellH) * scale / 2, scale,
+          mirror: mirror, light: light, opacity: opacity, troop: troop);
 
   /// Fire, flashes and sparks glow through the haze: they fog only half as
   /// much as hulls do.
@@ -108,7 +131,26 @@ class GroundPainter {
     final items = <(double, void Function())>[
       for (final u in g.units) (u.z, () => _unit(c, u, clock)),
       for (final a in g.allies) (a.z, () => _ally(c, a, clock)),
-    ]..sort((a, b) => b.$1.compareTo(a.$1));
+    ];
+    // --- ground war v4: a plant nearer than a unit it overlaps is painted
+    // again after that unit, in depth order (the background drew it first).
+    final occ = occluders;
+    if (occ != null) {
+      final boxes = <(double, Rect)>[
+        for (final u in g.units)
+          (u.z, Rect.fromLTWH(u.x - u.width / 2, u.y - 26 * u.scale, u.width, 26 * u.scale)),
+        for (final a in g.allies)
+          (a.z, Rect.fromLTWH(a.x - a.width / 2, a.y - 26 * a.scale, a.width, 26 * a.scale)),
+      ];
+      final plants = occ.groundPlants;
+      for (var i = 0; i < plants.length; i++) {
+        final (pz, pr) = plants[i];
+        if (boxes.any((b) => b.$1 > pz && b.$2.overlaps(pr))) {
+          items.add((pz - .01, () => occ.paintGroundPlant(c, i)));
+        }
+      }
+    }
+    items.sort((a, b) => b.$1.compareTo(a.$1));
     for (final item in items) {
       item.$2();
     }
@@ -132,12 +174,22 @@ class GroundPainter {
 
   void _unit(Canvas c, GroundUnit u, double clock) {
     if (u.y < GroundCamera.horizon + 2) return;
+    switch (u.force) {
+      case GroundForce.infantry || GroundForce.rockets:
+        return _squad(c, u, clock);
+      case GroundForce.heavyTank:
+        return _tank(c, u, clock);
+      case GroundForce.vehicle:
+        break;
+    }
     final s = u.scale;
     final row = GroundAtlas.demonRow(u.sector);
-    final mirror = u.side == 1;
+    final mirror = u.mirrored;
     final light = depthLight(u.z);
     if (u.destroyed) {
-      _wreck(c, u, clock, row, mirror, light);
+      _wreck(c, u, clock, mirror, light, (opacity) => _cell(c, row,
+          GroundAtlas.wreckCol + ((clock * 8).floor() % 2), u.x, u.y, s,
+          mirror: mirror, light: light, opacity: opacity));
       return;
     }
     final int col;
@@ -184,7 +236,7 @@ class GroundPainter {
     }
     if (u.fireFlash > 0) {
       final k = 1 - u.fireFlash / GroundTuning.fireFlash;
-      final mx = u.x + (u.side == 0 ? 1 : -1) * u.width * .2;
+      final mx = u.x + (mirror ? -1 : 1) * u.width * .2;
       _cell(c, GroundAtlas.effectRow, GroundAtlas.launchFlashCol, mx,
           u.bodyY + 10 * s, s * 1.1,
           mirror: mirror, light: _glow(light));
@@ -197,8 +249,8 @@ class GroundPainter {
 
   /// Destroyed demon unit: shock ring, fireball, flying debris, then a
   /// burning hulk with flame tongues and a rising smoke column.
-  void _wreck(Canvas c, GroundUnit u, double clock, int row, bool mirror,
-      double light) {
+  void _wreck(Canvas c, GroundUnit u, double clock, bool mirror,
+      double light, void Function(double opacity) hulk) {
     final s = u.scale, t = u.wreckAge;
     final glow = _glow(light);
     final fade = (1 - (t - 5) / 1).clamp(0.0, 1.0);
@@ -208,10 +260,7 @@ class GroundPainter {
           u.x, u.y + 3 * s, s * 1.9,
           light: glow, opacity: 1 - t / .5);
     }
-    if (t > .12) {
-      _cell(c, row, GroundAtlas.wreckCol + ((clock * 8).floor() % 2), u.x, u.y, s,
-          mirror: mirror, light: light, opacity: fade);
-    }
+    if (t > .12) hulk(fade);
     // Flame tongues on the hulk: tall at first, dying down after ~3 s.
     final burn = t < .3 ? 0.0 : (1 - (t - 3) / 1.6).clamp(0.0, 1.0);
     if (burn > 0) {
@@ -269,10 +318,176 @@ class GroundPainter {
     }
   }
 
+  // ---------------------------------------------- ground war v4: new forces
+
+  /// Squad formation (texels at the unit's scale; dy > 0 nearer).
+  static const _formation = [
+    (0.0, 0.0), (-11.0, -3.0), (11.0, -2.0), (-5.0, 3.0), (6.0, 4.0),
+  ];
+
+  static int squadSize(GroundForce f, int maxHp) =>
+      f == GroundForce.rockets ? 2 : maxHp.clamp(1, _formation.length);
+
+  /// A demon squad: each trooper walks on its own phase, kneels to aim while
+  /// holding, fires in turn; the fallen topple and crack into stone rubble.
+  void _squad(Canvas c, GroundUnit u, double clock) {
+    final s = u.scale * troopScale;
+    final light = math.max(.62, depthLight(u.z)); // v4: threats read in haze
+    final row = u.force == GroundForce.rockets
+        ? GroundTroopsAtlas.demonRocketRow
+        : GroundTroopsAtlas.demonGruntRow;
+    final n = squadSize(u.force, u.maxHp);
+    final perMember = math.max(1, u.maxHp ~/ n);
+    final alive = u.destroyed ? 0 : (u.hp / perMember).ceil().clamp(0, n);
+    final moving = !u.destroyed && (u.z > u.holdZ + 1 || u.vx.abs() > 2);
+    final engaged = u.ally?.alive ?? false;
+    final dir = u.mirrored ? -1.0 : 1.0;
+    final order = List.generate(n, (k) => k)
+      ..sort((a, b) => _formation[a].$2.compareTo(_formation[b].$2));
+    for (final k in order) {
+      final (ox, oy) = _formation[k];
+      final x = u.x + ox * u.scale * dir, y = u.y + oy * u.scale * .5;
+      if (k >= alive) {
+        // Fallen: the last to fall topples, then everyone lies as rubble.
+        final t = u.destroyed ? u.wreckAge : (k == alive ? u.lastHit : 9.0);
+        if (t < 0) continue;
+        final fade = (1 - (t - 4) / 1.5).clamp(0.0, 1.0);
+        if (fade <= 0) continue;
+        _cell(c, row,
+            t < .35 ? GroundTroopsAtlas.fallCol : GroundTroopsAtlas.rubbleCol,
+            x, y, s, mirror: u.mirrored, light: light, opacity: fade, troop: true);
+        if (t < .5) {
+          _cell(c, GroundTroopsAtlas.fxRow,
+              GroundTroopsAtlas.crumbleCol +
+                  (t / .5 * GroundTroopsAtlas.crumbleFrames).floor().clamp(0, 2),
+              x, y + s, s, light: _glow(light), troop: true);
+        }
+        continue;
+      }
+      final int col;
+      if (u.fireFlash > 0 && k == u.id % math.max(1, alive)) {
+        col = GroundTroopsAtlas.fireCol;
+      } else if (engaged && !moving) {
+        col = GroundTroopsAtlas.aimCol;
+      } else if (moving) {
+        col = GroundTroopsAtlas.walkCol +
+            ((clock * 8 + k * .7 + u.id * .3).floor() % GroundTroopsAtlas.walkFrames);
+      } else {
+        col = GroundTroopsAtlas.walkCol;
+      }
+      if (moving && k == 0) {
+        final q = (clock * 1.8 + u.id * .13) % 1;
+        _cell(c, GroundAtlas.fxRow,
+            GroundAtlas.dustCol + (q * GroundAtlas.dustFrames).floor(),
+            x - dir * 6 * s, y - q * 2 * s, s * .4,
+            light: light * .8, opacity: (1 - q) * .45);
+      }
+      _cell(c, row, col, x, y, s, mirror: u.mirrored, light: light, troop: true);
+    }
+  }
+
+  /// The demon heavy tank: treads, furnace vents, a recoiling cannon.
+  void _tank(Canvas c, GroundUnit u, double clock) {
+    final s = u.scale;
+    final light = math.max(.62, depthLight(u.z));
+    const row = GroundTroopsAtlas.demonTankRow;
+    final mirror = u.mirrored;
+    if (u.destroyed) {
+      _wreck(c, u, clock, mirror, light, (opacity) => _cell(c, row,
+          GroundTroopsAtlas.tankWreckCol + ((clock * 8).floor() % 2), u.x, u.y,
+          s, mirror: mirror, light: light, opacity: opacity, troop: true));
+      return;
+    }
+    final moving = u.z > u.holdZ + 1 || u.vx.abs() > 2;
+    final int col;
+    if (u.fireFlash > .06) {
+      col = GroundTroopsAtlas.tankFireCol;
+    } else if (u.fireFlash > 0) {
+      col = GroundTroopsAtlas.tankRecoilCol;
+    } else {
+      col = GroundTroopsAtlas.tankMoveCol +
+          (moving ? (clock * 10 + u.id * .37).floor() % GroundTroopsAtlas.tankMoveFrames : 0);
+    }
+    if (moving) {
+      for (var k = 0; k < 2; k++) {
+        final q = (clock * 1.6 + k * .5 + u.id * .13) % 1;
+        _cell(c, GroundAtlas.fxRow,
+            GroundAtlas.dustCol + (q * GroundAtlas.dustFrames).floor(),
+            u.x + (mirror ? 1 : -1) * u.width * (.3 + .1 * k), u.y - q * 3 * s,
+            s * .6, light: light * .8, opacity: (1 - q) * .55);
+      }
+    }
+    _cell(c, row, col, u.x, u.y, s, mirror: mirror, light: light, troop: true);
+  }
+
+  /// An allied squad: rifle or rocket troopers from behind, walking with the
+  /// convoy, kneeling to fire, running back to the escort slot to repair.
+  void _allySquad(Canvas c, GroundAlly a, double clock) {
+    final s = a.scale * allyTroopScale;
+    final light = depthLight(a.z);
+    final row = a.force == GroundForce.rockets
+        ? GroundTroopsAtlas.allyRocketRow
+        : GroundTroopsAtlas.allyRifleRow;
+    final n = a.force == GroundForce.rockets ? 2 : 3;
+    final moving = a.vz != 0 || a.vx.abs() > 3;
+    final mirror = a.vx < -3;
+    final kick = (a.recoil / GroundTuning.allyRecoil).clamp(0.0, 1.0);
+    if (a.totalled || a.fallingBack) {
+      // Retreat smoke over a squad that is pulling back.
+      for (var k = 0; k < (a.totalled ? 4 : 2); k++) {
+        final q = (clock * .9 + k / 4 + a.id * .1) % 1;
+        _cellC(c, GroundAtlas.fxRow,
+            GroundAtlas.puffCol + (q * GroundAtlas.puffFrames).floor(),
+            a.x + math.sin(q * 6 + k) * 3 * s, a.y - 10 * s - q * 24 * s,
+            s * (.5 + q * .7), light: light, opacity: (1 - q * .8) * .5);
+      }
+    }
+    for (var k = 0; k < n; k++) {
+      final (ox, oy) = _formation[k];
+      final x = a.x + ox * a.scale * .9, y = a.y + oy * a.scale * .5;
+      final int col;
+      if (a.totalled || a.fallingBack) {
+        col = GroundTroopsAtlas.runCol +
+            ((clock * 10 + k).floor() % GroundTroopsAtlas.runFrames);
+      } else if (a.flash > 0 && k == a.id % n) {
+        col = GroundTroopsAtlas.hitCol;
+      } else if (kick > 0 && k == (a.id + (clock * 3).floor()) % n) {
+        col = GroundTroopsAtlas.fireCol;
+      } else if (a.underAttack && !moving) {
+        col = GroundTroopsAtlas.aimCol;
+      } else if (moving) {
+        col = GroundTroopsAtlas.walkCol +
+            ((clock * 8 + k * .9 + a.id * .3).floor() % GroundTroopsAtlas.walkFrames);
+      } else {
+        col = GroundTroopsAtlas.walkCol;
+      }
+      _cell(c, row, col, x, y, s, mirror: mirror, light: light, troop: true);
+    }
+  }
+
+  /// A small cyan IFF chevron over every allied unit (phone readability).
+  void _iff(Canvas c, GroundAlly a, double height) {
+    final unit = math.max(1.0, (a.scale * .75).roundToDouble());
+    final top = (a.y - height - 2 * unit).roundToDouble();
+    final color = _mint.withValues(alpha: .85);
+    _px(c, a.x - unit * 1.5, top, unit, color);
+    _px(c, a.x + unit * .5, top, unit, color);
+    _px(c, a.x - unit / 2, top + unit, unit, color);
+  }
+
   // ----------------------------------------------------------------- allies
 
   /// Presentation variant of an ally (two per sector), from its id.
-  static int allyVariant(GroundAlly a) => (a.id ~/ 2) % GroundAtlas.allyVariants;
+  static int allyVariant(GroundAlly a) {
+    final v = (a.id ~/ 2) % GroundAtlas.allyVariants;
+    // --- ground war v4: a convoy vehicle never draws a squad row (squads
+    // are their own force now).
+    if (a.lx != null && a.force == GroundForce.vehicle) {
+      final k = GroundAtlas.allyRow(a.sector, v) - 4;
+      if (GroundAtlas.allyKind[k] == 1) return (v + 1) % GroundAtlas.allyVariants;
+    }
+    return v;
+  }
 
   /// Turret frame (0 = straight up the plane .. 4 = side-on) and whether to
   /// mirror it (aiming left), toward the screen position of its foe.
@@ -298,6 +513,11 @@ class GroundPainter {
 
   void _ally(Canvas c, GroundAlly a, double clock) {
     if (a.y < GroundCamera.horizon + 2) return;
+    if (a.force != GroundForce.vehicle) {
+      _allySquad(c, a, clock);
+      if (!a.totalled) _iff(c, a, 18 * a.scale * allyTroopScale);
+      return;
+    }
     final s = a.scale;
     final variant = allyVariant(a);
     final row = GroundAtlas.allyRow(a.sector, variant);
@@ -309,6 +529,7 @@ class GroundPainter {
       _allyTotalled(c, a, clock, row, kind, light);
       return;
     }
+    if (a.lx != null) _iff(c, a, (GroundAtlas.allySize[k].$2 + 2) * s);
     // Treads and gait: the convoy always rolls with the player; faster while
     // advancing on a foe, backward while falling back to station.
     // --- terrain: slower treads uphill (the flyover's relief pose).
@@ -439,6 +660,7 @@ class GroundPainter {
   // ---------------------------------------------------------------- tracers
 
   void _tracer(Canvas c, GroundTracer t, List<GroundAlly> allies) {
+    if (t.kind != GroundTracer.bolt) return _weaponTracer(c, t);
     final p = (t.age / GroundTracer.life).clamp(0.0, 1.0);
     var from = Offset(t.fromX, t.fromY);
     final to = Offset(t.toX, t.toY);
@@ -485,6 +707,71 @@ class GroundPainter {
           (t.friendly ? GroundAtlas.impactCyanCol : GroundAtlas.impactWarmCol) +
               ((p - .6) / .4 * GroundAtlas.impactFrames).floor().clamp(0, 2),
           to.dx, to.dy, sTo * .9, light: lTo);
+    }
+  }
+
+  /// Ground war v4 weapons: small-arms streaks, arcing rockets with smoke,
+  /// fast tank shells; impact flashes at the target.
+  void _weaponTracer(Canvas c, GroundTracer t) {
+    final p = (t.age / t.duration).clamp(0.0, 1.0);
+    final sFrom = _scaleAtY(t.fromY), sTo = _scaleAtY(t.toY);
+    final hot = t.friendly ? _cyan : _hot;
+    final body = t.friendly ? _mint : _warm;
+    final lTo = _glow(depthLight(GroundCamera.zOf(math.max(t.toY, GroundCamera.horizon + 4))));
+    Offset at(double q, double arc) => Offset(
+          t.fromX + (t.toX - t.fromX) * q,
+          t.fromY + (t.toY - t.fromY) * q - arc * math.sin(math.pi * q),
+        );
+    switch (t.kind) {
+      case GroundTracer.smallArms:
+        for (var k = 0; k < 3; k++) {
+          final q = (p - k * .12).clamp(0.0, 1.0);
+          final o = at(q, 0);
+          final sc = sFrom + (sTo - sFrom) * q;
+          final w = math.max(1.0, (sc * .5).roundToDouble());
+          _px(c, o.dx - w / 2, o.dy - w / 2, w,
+              (k == 0 ? Colors.white : body).withValues(alpha: 1 - k * .3));
+        }
+        if (p < .4) {
+          _px(c, t.fromX - 1, t.fromY - 1, math.max(2.0, sFrom.roundToDouble()), hot);
+        }
+      case GroundTracer.rocket:
+        final arc = 10 * (sFrom + sTo) / 2;
+        for (var k = 5; k >= 1; k--) {
+          final q = p - k * .07;
+          if (q <= 0) continue;
+          final o = at(q, arc);
+          final sz = math.max(1.0, ((1.5 + k * .5) * (sFrom + (sTo - sFrom) * q) * .6).roundToDouble());
+          _px(c, o.dx - sz / 2, o.dy - sz / 2, sz,
+              const Color(0xFF7A808A).withValues(alpha: .7 - k * .1));
+        }
+        if (p < .92) {
+          final o = at(p, arc);
+          final sc = (sFrom + (sTo - sFrom) * p) * .55;
+          _cellC(c, GroundTroopsAtlas.fxRow,
+              (t.friendly ? GroundTroopsAtlas.rocketCyanCol : GroundTroopsAtlas.rocketWarmCol) +
+                  ((t.age * 20).floor() % GroundTroopsAtlas.rocketFrames),
+              o.dx, o.dy, sc, mirror: t.toX < t.fromX, troop: true);
+        }
+      case GroundTracer.shell:
+        final head = (p * 1.6).clamp(0.0, 1.0), tail = (head - .35).clamp(0.0, 1.0);
+        if (p < .7) {
+          for (var k = 0; k <= 6; k++) {
+            final q = tail + (head - tail) * k / 6;
+            final o = at(q, 0);
+            final sc = sFrom + (sTo - sFrom) * q;
+            final w = math.max(1.0, (sc * (k == 6 ? 1.3 : .8)).roundToDouble());
+            _px(c, o.dx - w / 2, o.dy - w / 2, w,
+                k >= 5 ? Colors.white : hot.withValues(alpha: .3 + .1 * k));
+          }
+        }
+    }
+    if (p > .72) {
+      _cellC(c, GroundAtlas.missileRow,
+          (t.friendly ? GroundAtlas.impactCyanCol : GroundAtlas.impactWarmCol) +
+              ((p - .72) / .28 * GroundAtlas.impactFrames).floor().clamp(0, 2),
+          t.toX, t.toY, sTo * (t.kind == GroundTracer.smallArms ? .5 : 1.0),
+          light: lTo);
     }
   }
 

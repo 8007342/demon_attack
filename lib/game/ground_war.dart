@@ -1324,8 +1324,10 @@ extension GroundWarSimulation on ArcadeModel {
       if (!u.alive || u.y > ArcadeModel.height - 8) continue;
       // The guaranteed breakthrough is out of lock until it gets through.
       if (u.guaranteed && !u.brokeThrough) continue;
-      // Skirmish units are fair game once they are out of the haze.
-      if (u.skirmish && u.z > GroundTuning.callZ) continue;
+      // --- ground war v4: skirmish units never threaten the ship and are
+      // not homing targets: the salvo stays for threats and the air war
+      // (so the skirmish layer cannot change either).
+      if (u.skirmish) continue;
       if (bestGround == null || u.threat > bestGround.threat) bestGround = u;
     }
     if (bestGround != null) return (bestGround, HomingTargetKind.ground);

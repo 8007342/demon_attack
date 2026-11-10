@@ -88,7 +88,9 @@ void main() {
     }
   });
 
-  test('the central lane stays gentle and relief fades at the horizon', () {
+  // Ground war v4: coarse relief reaches across the lane (units cross it),
+  // a little gentler there, with no seam on the centre line.
+  test('coarse relief crosses the lane, seamless, fading at the horizon', () {
     final view = TerrainView();
     for (var sector = 0; sector < 5; sector++) {
       view.configure(sector, 2);
@@ -105,8 +107,17 @@ void main() {
         }
         expect(view.rawHeight(30, TerrainView.fadeFar + 10), 0);
       }
-      expect(lane, lessThan(sides * .25), reason: 'sector $sector lane relief');
-      expect(sides, greaterThan(14), reason: 'sector $sector side relief');
+      expect(lane, lessThan(sides * .9), reason: 'sector $sector lane relief');
+      expect(lane, greaterThan(12), reason: 'sector $sector lane has hills');
+      expect(sides, greaterThan(34), reason: 'sector $sector coarse side relief');
+      // No seam on the centre line: neighbouring columns agree.
+      for (var cam = 0.0; cam < 4000; cam += 97) {
+        view.cam = cam;
+        for (final z in const [300.0, 600.0]) {
+          expect((view.rawHeight(179.5, z) - view.rawHeight(180.5, z)).abs(),
+              lessThan(1.5), reason: 'sector $sector seam at cam $cam');
+        }
+      }
     }
   });
 

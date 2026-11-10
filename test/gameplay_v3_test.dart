@@ -254,7 +254,8 @@ void main() {
         for (final a in m.ground.allies) {
           if (a.totalled) continue;
           n++;
-          if (a.z > GroundTuning.allyRollInZ + 20) {
+          // (v4: convoy reinforcements roll in from below to their slot.)
+          if (a.z > GroundTuning.allyRollInZ + 20 && !(a.vz > 0 && a.z < a.holdZ)) {
             minZ = a.z < minZ ? a.z : minZ;
           }
           maxZ = a.z > maxZ ? a.z : maxZ;
@@ -265,8 +266,9 @@ void main() {
       expect(minZ, greaterThanOrEqualTo(GroundTuning.allyHoldZ - 1));
       expect(maxZ, lessThanOrEqualTo(GroundTuning.allyMaxAdvanceZ + 1));
       expect(maxZ, greaterThan(GroundTuning.allyHoldZ + 60), reason: 'advances to attack');
+      // Ground war v4: the convoy escorts the ship across the whole width.
       for (final a in m.ground.allies) {
-        expect(a.x + a.width / 2 <= GroundCamera.laneLeft || a.x - a.width / 2 >= GroundCamera.laneRight, isTrue);
+        expect(a.x, inInclusiveRange(0, ArcadeModel.width));
       }
     });
 

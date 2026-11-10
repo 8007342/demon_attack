@@ -845,7 +845,9 @@ func palette(side string) map[int8]color.NRGBA {
 		set(W1, "#2AA59A", "#70F5D5", "#D2FFF4")
 		set(Line, "#0A0F16")
 	} else {
-		set(B1, "#2E2A33", "#463E4A", "#615664", "#827484", "#A898A6")
+		// Lifted one step over the vehicle hulls: small troopers must read
+		// against the darkest grounds.
+		set(B1, "#3A3440", "#564C5A", "#756878", "#998A9A", "#C2B2C0")
 		set(A1, "#22221A", "#3A3A2A", "#575640")
 		set(I1, "#262A32", "#3A3F48", "#555B65")
 		set(W1, "#B8260F", "#FF8A2A", "#FFC85A")
