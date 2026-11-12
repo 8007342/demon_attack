@@ -4,11 +4,11 @@
   "trigger": "diveWarning",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 30240,
-  "mouth": "2222<<<44444<<<5555",
-  "open": "0475888778768887432",
-  "vis": "-----------ee--oo--",
-  "lufs": -18.02,
+  "samples": 34430,
+  "mouth": "55555<<44======<<<<222",
+  "open": "0478688765477678876321",
+  "vis": "oo-------ee-----------",
+  "lufs": -18.08,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "diveWarning.h4",
   "text": "They're coming straight down!",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/diveWarning.h4/baseline.flac",
-      "sha256": "49f6aea7e4fb7f33aae64d56b814a4255add71054d4700dbb1bdfda494b65e05",
-      "float_source_sha256": "eee2655b87ba0fc5319be180893f66cb1dce5eec3e4167c4e8f3ed73d4eb7d94",
+      "sha256": "fdbba0223bf2b59b5b6668212cef01225eeddcc2463a326658375052c3568665",
+      "float_source_sha256": "21d29821ad89456ddf2be1278d854f13395d11a19a3742173548aeb6d88f5c03",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/diveWarning.h4/expressive.flac",
-      "sha256": "c648d92985f2fb4aa754822919f03895274a2f89e8823731455bfc26a7a1e40b",
-      "float_source_sha256": "0427930d650bf8a6b7d887d691d071bdd6ca95a56c97d768a96c0fa7183a5016",
+      "sha256": "d0c0efe3e2520808d35b8d9833779512fc60f13047cd4f5cbf5b4fe63eacbeec",
+      "float_source_sha256": "ec4ea7924899ed0a43c1dcfbdf3bf66df5a6a0cc952b7c1d4bd4e7693b934827",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/diveWarning.h4/voice.flac",
-      "sha256": "aa8c0b7d3e2184f875692849fb8465b98cc1456753e5b8124ad46fa05b76e590",
-      "float_source_sha256": "a7c0e9b8c7084dd9bb0cb71ba6e18480e2550c9ce78049fe29f1a79ae6df136d",
+      "sha256": "dbcd533a7f9291df20b1950cbfbb73f076d90b166e0d7d20045518730fc7d027",
+      "float_source_sha256": "bdba243f5d14f5a76826b0a7e5e267db9380bbe899e25f886a96f5fe44fd789a",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 7.36,
+    "seconds": 10.61,
     "error": null,
     "text": "They're coming straight down!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "634593210cb81c893016fbdac0225d6a5b89e79891d9952f45afd5847964463f"
+    "sha256": "405472db0582cbab3f4b12932f16efbf4446de690150f7b6cb2d9b9ba18acf00"
   }
 }
