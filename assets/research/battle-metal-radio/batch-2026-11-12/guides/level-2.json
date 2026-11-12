@@ -1,0 +1,38 @@
+{
+  "schema": "demon-attack.campaign-guide/v1",
+  "level": 2,
+  "bars": 96,
+  "bar_samples": 72000,
+  "samples": 6912000,
+  "sample_rate": 48000,
+  "bpm": 160.0,
+  "seconds": 144.0,
+  "sections": [
+    {
+      "id": "opening",
+      "bars": 8
+    },
+    {
+      "id": "theme-a",
+      "bars": 24
+    },
+    {
+      "id": "answer-b",
+      "bars": 16
+    },
+    {
+      "id": "contrast-c",
+      "bars": 16
+    },
+    {
+      "id": "developed-recap",
+      "bars": 24
+    },
+    {
+      "id": "outgoing",
+      "bars": 8
+    }
+  ],
+  "source": "tools/music_motifs.py and tools/campaign_guide.py",
+  "model": null
+}
