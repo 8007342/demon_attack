@@ -746,9 +746,9 @@ class CommsSidePanels extends StatelessWidget {
 }
 
 /// Phones and narrow windows: a compact, translucent call dock at the top
-/// of the arena, just below the HUD band. Up to two dialogue cards retain
-/// an exchange's opening line beside its answer, with portraits at the outer
-/// edges. It dims while the player is being hit ([dimmed]).
+/// of the arena, just below the HUD band. Isolated calls occupy half the dock;
+/// linked dialogue shares one full-width toast with portraits at either end.
+/// It dims while the player is being hit ([dimmed]).
 class CommsHudStack extends StatelessWidget {
   const CommsHudStack({
     super.key,
@@ -785,6 +785,7 @@ class CommsHudStack extends StatelessWidget {
         ? [opening, latest]
         : (shown.take(2).toList()
             ..sort((a, b) => a.startedAt.compareTo(b.startedAt)));
+    final conversation = opening != null && identical(panels.first, opening);
     final waiting = director.queue.where((m) => now >= m.readyAt).length;
     return IgnorePointer(
       child: AnimatedOpacity(
@@ -794,21 +795,51 @@ class CommsHudStack extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _strip(
-                    panels.first,
-                    reduce,
-                    retained: identical(panels.first, opening),
+            Container(
+              key: conversation ? const ValueKey('comms-conversation') : null,
+              decoration: conversation
+                  ? BoxDecoration(
+                      color: const Color(0xB30A1220),
+                      border: Border(
+                        left: BorderSide(
+                          color: Color(panels.first.character.accent),
+                          width: 2,
+                        ),
+                        right: BorderSide(
+                          color: Color(panels.last.character.accent),
+                          width: 2,
+                        ),
+                        bottom: const BorderSide(color: _line),
+                      ),
+                    )
+                  : null,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _strip(
+                      panels.first,
+                      reduce,
+                      retained: identical(panels.first, opening),
+                      conversation: conversation,
+                    ),
                   ),
-                ),
-                if (panels.length == 2) ...[
-                  const SizedBox(width: gap),
-                  Expanded(child: _strip(panels.last, reduce, right: true)),
+                  if (panels.length == 2) ...[
+                    SizedBox(width: conversation ? 0 : gap),
+                    Expanded(
+                      child: _strip(
+                        panels.last,
+                        reduce,
+                        right: true,
+                        conversation: conversation,
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(width: gap),
+                    const Spacer(),
+                  ],
                 ],
-              ],
+              ),
             ),
             if (opening != null || waiting > 0)
               SizedBox(
@@ -856,6 +887,7 @@ class CommsHudStack extends StatelessWidget {
     bool reduce, {
     bool right = false,
     bool retained = false,
+    bool conversation = false,
   }) {
     final c = m.character;
     final accent = Color(c.accent);
@@ -867,15 +899,17 @@ class CommsHudStack extends StatelessWidget {
       opacity: retained ? 1 : _fade(m, reduce),
       child: Container(
         height: stripHeight,
-        decoration: BoxDecoration(
-          color: const Color(0xB30A1220),
-          border: Border(
-            left: BorderSide(color: accent, width: 2),
-            bottom: BorderSide(
-              color: speaking ? accent.withValues(alpha: .5) : _line,
-            ),
-          ),
-        ),
+        decoration: conversation
+            ? null
+            : BoxDecoration(
+                color: const Color(0xB30A1220),
+                border: Border(
+                  left: BorderSide(color: accent, width: 2),
+                  bottom: BorderSide(
+                    color: speaking ? accent.withValues(alpha: .5) : _line,
+                  ),
+                ),
+              ),
         child: Row(
           textDirection: right ? TextDirection.rtl : TextDirection.ltr,
           children: [

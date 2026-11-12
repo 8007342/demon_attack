@@ -8,7 +8,7 @@ The game SHALL present an original long-form Battle Metal score connecting five 
 - **THEN** themes develop from a permitted slow opening toward the final boss crescendo, level bridges remain fluid, and repeated gameplay events vary the musical arrangement
 
 ### Requirement: Paired compact radio exchanges
-Compact layouts SHALL show up to two readable radio cards with portraits on the outer edges. An exchange SHALL retain its opening line beside the reply and identify their relationship without hiding the score, lives or touch controls.
+Compact layouts SHALL show isolated messages as half-width toasts, allowing up to two independent messages at once. A linked human-to-demon or demon-to-human exchange SHALL use a single full-width toast, with the opening portrait on the left, the reply portrait on the right, both texts and the demon script with translation. It SHALL retain the opening line through the comeback without hiding the score, lives or touch controls.
 
 #### Scenario: Phone comeback
 - **WHEN** a human or demon answers another caller on a 360px-wide phone

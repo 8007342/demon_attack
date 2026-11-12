@@ -4,7 +4,7 @@
 - [x] 2. Research the original Halo reverse/pitch technique and document source-supported decisions.
 - [x] 3a. Inspect kumbia-kombat credits and document the adaptation.
 - [ ] 3b. Verify Demon Attack contributor, dependency and model credits from its own records.
-- [x] 4. Implement and verify two compact radio cards, mirrored right portrait and retained comeback context across phone/landscape/reduced-motion layouts.
+- [ ] 4. Implement and verify one full-width toast for linked conversations, outer portraits and retained opening text including alien script/translation; isolated messages each use half width with up to two visible across phone/landscape/reduced-motion layouts.
 - [ ] 5. Audit model/hardware capacity, running jobs, licences, source masters, soundtrack structure and asset durability; record the migration inventory.
 - [ ] 6. Implement resumable Lua orchestration with hashes, atomic records, failure recovery and remote checkpoints; migrate suitable processing to Rust/Go while preserving necessary model adapters.
 - [ ] 7. Write the campaign harmonic/theme/section map, extended variations, outgoing/incoming bridges and synchronized stems/accents.
