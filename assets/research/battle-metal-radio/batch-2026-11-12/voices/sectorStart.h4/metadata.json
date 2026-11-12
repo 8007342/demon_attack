@@ -4,9 +4,9 @@
   "trigger": "sectorStart",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 75372,
-  "mouth": "000<<<<<<==00044<<<<<<<<<<<<22222<<<44444<<<<222",
-  "open": "016885885321157788888588787532127888676368875321",
+  "samples": 75391,
+  "mouth": "000000<<<==00333<<<<<<<<<<<<22222<<<<<<<<<<<<222",
+  "open": "006785885321166788888588787532127888665368875321",
   "vis": "---ee----ee-------------------------------------",
   "lufs": -18.11,
   "schema": "demon-attack.voice-candidate/v1",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h4/baseline.flac",
-      "sha256": "77c14730c4939d760f2044675b5268c61922c9aa5de5662c1abafc154bbe41ab",
-      "float_source_sha256": "7f4d37c04d1d85bb236bfe7c5fe6159b4b37aa7bf667cf79949b3206fc6f5a58",
+      "sha256": "f0049025bec3a06798f3881a1186346d2cff6c98528ee100e950575e1ddc3a7e",
+      "float_source_sha256": "13cb091fb46eb633779afb08fa81214532a7b398667cd25a922958d97d0fae5a",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h4/expressive.flac",
-      "sha256": "06c201f01aaf2f75d21c2e4393a9019cde0999e0b4d1da0a4029da3b3e0085d0",
-      "float_source_sha256": "2d38642f7a7151f614ff744a7077837b253d7642e911393e8c9cb111c8566525",
+      "sha256": "522d1e2265d2810400a66f6a4e0d3c76d4413ff84f14db315bc7833db1ceb39e",
+      "float_source_sha256": "b17c570245ad8cc373ecef9e5dd97e32fb6949b8a4ced4919c6453b4b35e51d0",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h4/voice.flac",
-      "sha256": "90df2c76df44f1d3d58b9a80b7e13a922be8c3a53a9a65cb03c5314852804e96",
-      "float_source_sha256": "cfc49fc4b0ad28c2848485672514b961f26b0eb9a8aaddea52bb2d323a1bc07c",
+      "sha256": "1e9cd91830a2284b7ff4db5c83a19986e24a8bcedc7a2cf853c91197f89b0258",
+      "float_source_sha256": "51ce954673a169d4d5442494084533ab2dbaa9efdede36e18fd14c912ea13aba",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 12.12,
+    "seconds": 25.55,
     "error": null,
     "text": "Cadet Pip, reporting for awesome! I mean, for duty!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "e511ac28e5d283713cbaef08c1ff8c06159178d9f2ca5b009a6f51be2418de2f"
+    "sha256": "a2c333918a63a0a371e60e4fb2f23d79afcd36511fba6418d0cf660bfe2e5cd2"
   }
 }
