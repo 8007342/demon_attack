@@ -4,11 +4,11 @@
   "trigger": "groundForceSighted",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 62285,
-  "mouth": "33355<<============<<<<33444<<<<<<<<<22",
-  "open": "068768854787421468689566677688999998632",
-  "vis": "--ooo--eeeeeee---oo----------------ee--",
-  "lufs": -18.04,
+  "samples": 66795,
+  "mouth": "3355<<===<<<==000444<<44444<<<<<<<<<<<====",
+  "open": "045588635886321137778976756878999988876432",
+  "vis": "--oo--eeee--ee-----oo-----------------ee--",
+  "lufs": -18.12,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "groundForceSighted.h3",
   "text": "Bulwark here. Brood walkers moving on our line!",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h3/baseline.flac",
-      "sha256": "5fc2d12543fd2c77029f15828dff9c5db2ae398b0c1290dabd5c867ee2f950ac",
-      "float_source_sha256": "eb18f0e965aa2ee8bbd717989c3f18f482f6f6d00abe0e130d6efe1470131345",
+      "sha256": "d55c8fbd11336520274d0dce8881fb7b75b94fe2a38d91a473ff49dbdc4953ee",
+      "float_source_sha256": "1f0a16769c73ebd6390bc956a03f59a32584f67b2259c052ccef2b7ad3a3dffc",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h3/expressive.flac",
-      "sha256": "d88a9d4428f9bd03ca9c872596067f6e6161b358c0b3ab7136dc4c6bae89ecf2",
-      "float_source_sha256": "9ffb4c494910124126486a4b297ff250573328d4c9db525d076e154384eba052",
+      "sha256": "4891a05d9b94a388f7755ac7a6dfa0865852da025d3b8b6ec13924b786a2769d",
+      "float_source_sha256": "627fb5456532b0d43ff534f841590f83bb0d8bdd30647453a11f05f8b6111579",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h3/voice.flac",
-      "sha256": "b34d11cd31127f44d368265df8c4fbd6ad2c3e6d4ad4cdfa19df3fc8a2298c87",
-      "float_source_sha256": "a49ab1c74f50dd6a4e2f6576722985d9b6cdd67ecd50fc7c551e16f832a110f2",
-      "gain": 1.0,
+      "sha256": "a9d37df23a923ed9383846185afe10960a695e15e1f578a2991a30dcbe39f838",
+      "float_source_sha256": "4189608d9ec77caf9b19ee7ae52878f74c0779f6fac8a57840bb5e42529fa420",
+      "gain": 0.9360905159873584,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 11.05,
+    "seconds": 11.34,
     "error": null,
     "text": "Bulwark here! Brood walkers moving on our line!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "72ed5e9ecfba21a5a8782b408cbe652dcd83524130719bbc8936248390de69a1"
+    "sha256": "7140ae1b199506bc04481d1b34cfd8142f49033f721f185a5596bd9bfd7443ed"
   }
 }
