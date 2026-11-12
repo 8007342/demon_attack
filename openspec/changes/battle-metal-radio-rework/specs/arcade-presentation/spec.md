@@ -27,3 +27,10 @@ After completion of all five levels, the game SHALL offer a brief cinematic reve
 #### Scenario: Final victory
 - **WHEN** the player defeats the fifth level
 - **THEN** the score resolves into the beach reveal and credits, and skipping preserves victory progression and score submission
+
+### Requirement: Modern compressed PWA media
+All runtime campaign media SHALL be served as PWA assets on the application's own origin. Recorded music and speech SHALL use high-quality compressed Opus delivery targeting current browsers; older-browser AAC fallback is not required. Lossless production masters SHALL remain separate from the deployed assets. Loading and caching SHALL bound decoded audio memory while preserving continuous phrase playback.
+
+#### Scenario: Extended music on a phone
+- **WHEN** extended campaign sections are played in the installed PWA
+- **THEN** compressed sections load from the application origin, needed upcoming phrases are prepared in time, and the entire lossless campaign is neither downloaded nor decoded into memory

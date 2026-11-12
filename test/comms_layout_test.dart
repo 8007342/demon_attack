@@ -345,6 +345,7 @@ void main() {
     tester,
   ) async {
     final director = CommsDirector();
+          if (renderDir.isNotEmpty) await tester.runAsync(_loadReviewFonts);
     const trigger = CommsTriggerSpec(
       name: 'exchange',
       priority: 1,
@@ -438,6 +439,91 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  for (final demonFirst in [true, false]) {
+    for (final size in [const Size(360, 640), const Size(740, 360)]) {
+      testWidgets('linked toast: demonFirst=$demonFirst at $size', (
+        tester,
+      ) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final director = CommsDirector();
+        final human = commsCast.values.firstWhere((c) => !c.isDemon);
+          if (renderDir.isNotEmpty) await tester.runAsync(_loadReviewFonts);
+        final demon = commsCast.values.firstWhere((c) => c.isDemon);
+        CommsMessage line(String id, CommsCharacter who, double start) =>
+            CommsMessage(
+              trigger: const CommsTriggerSpec(
+                name: 'exchange',
+                priority: 1,
+                cooldown: 1,
+                ttl: 10,
+                lines: [],
+              ),
+              line: CommsLine(
+                id: id,
+                speaker: who.id,
+                duration: 1,
+                text: who.isDemon ? null : 'Save a turn for me!',
+                grunt: who.isDemon ? 'gloat' : null,
+                gloss: who.isDemon ? 'Your next turn belongs to me!' : null,
+              ),
+              character: who,
+              priority: 1,
+              queuedAt: 0,
+              readyAt: 0,
+              expiresAt: 10,
+              sequence: 0,
+            )..startedAt = start;
+        final opener = line('first', demonFirst ? demon : human, 0);
+        final answer = line('second', demonFirst ? human : demon, 2)
+          ..inReplyTo = opener;
+        director.active.add(answer);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: MediaQueryData(
+                size: size,
+                disableAnimations: size.width > 360,
+              ),
+              child: Scaffold(
+                body: RepaintBoundary(
+                  key: const ValueKey('page'),
+                  child: CommsHudStack(director: director, now: 2.5),
+                ),
+              ),
+            ),
+          ),
+        );
+        final toast = find.byKey(const ValueKey('comms-conversation'));
+        expect(toast, findsOneWidget);
+        expect(tester.getSize(toast).width, size.width);
+        expect(
+          find.text('SIGINT · Your next turn belongs to me!'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('Save a turn for me!', findRichText: true),
+          findsOneWidget,
+        );
+        final first = tester.getRect(
+          find.byKey(const ValueKey('comms-portrait-first')),
+        );
+        final second = tester.getRect(
+          find.byKey(const ValueKey('comms-portrait-second')),
+        );
+        expect(first.left, lessThan(10));
+        expect(second.right, greaterThan(size.width - 10));
+        expect(tester.takeException(), isNull);
+        await _snap(
+          tester,
+          'conversation-${demonFirst ? 'demon' : 'human'}-${size.width.toInt()}',
+        );
+      });
+    }
+  }
 
   testWidgets('phone: a full transmission replaces the travel transition', (
     tester,

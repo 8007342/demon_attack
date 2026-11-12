@@ -539,7 +539,7 @@ class CommsSubtitle extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             'SIGINT · ${line.gloss ?? 'UNKNOWN'}',
-            maxLines: 1,
+            maxLines: maxLines,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: const Color(0xFFFFB0A8),
@@ -951,7 +951,7 @@ class CommsHudStack extends StatelessWidget {
                           message: m,
                           now: now,
                           fontSize: 10,
-                          maxLines: 1,
+                          maxLines: 3,
                           glyphHeight: 8,
                         ),
                       ],

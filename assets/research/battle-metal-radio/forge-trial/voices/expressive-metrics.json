@@ -1,0 +1,75 @@
+{
+ "dir": "/home/forge/.cache/demon-attack/voice-trial/work/expressive",
+ "medians": {
+  "calm": {
+   "n": 1,
+   "pitch_range_st": 9.1,
+   "pitch_sd_st": 2.83,
+   "energy_sd_db": 8.76,
+   "syll_per_s": 5.15,
+   "voiced": 0.33
+  },
+  "teasing": {
+   "n": 1,
+   "pitch_range_st": 14.81,
+   "pitch_sd_st": 5.0,
+   "energy_sd_db": 9.96,
+   "syll_per_s": 5.24,
+   "voiced": 0.35
+  },
+  "urgent": {
+   "n": 1,
+   "pitch_range_st": 10.11,
+   "pitch_sd_st": 3.13,
+   "energy_sd_db": 10.02,
+   "syll_per_s": 5.15,
+   "voiced": 0.51
+  },
+  "all": {
+   "n": 3,
+   "pitch_range_st": 10.11,
+   "pitch_sd_st": 3.13,
+   "energy_sd_db": 9.96,
+   "syll_per_s": 5.15,
+   "voiced": 0.35
+  }
+ },
+ "clips": {
+  "sectorStart.h4": {
+   "seconds": 3.054,
+   "pitch_range_st": 14.81,
+   "pitch_sd_st": 5.0,
+   "f0_median": 131.4,
+   "energy_sd_db": 9.96,
+   "voiced": 0.355,
+   "words_per_s": 2.95,
+   "syll_per_s": 5.24,
+   "emotion": "teasing",
+   "speaker": "pip"
+  },
+  "waveStart.h5": {
+   "seconds": 2.135,
+   "pitch_range_st": 9.1,
+   "pitch_sd_st": 2.83,
+   "f0_median": 112.4,
+   "energy_sd_db": 8.76,
+   "voiced": 0.327,
+   "words_per_s": 3.28,
+   "syll_per_s": 5.15,
+   "emotion": "calm",
+   "speaker": "pip"
+  },
+  "diveWarning.h4": {
+   "seconds": 1.165,
+   "pitch_range_st": 10.11,
+   "pitch_sd_st": 3.13,
+   "f0_median": 181.8,
+   "energy_sd_db": 10.02,
+   "voiced": 0.505,
+   "words_per_s": 3.43,
+   "syll_per_s": 5.15,
+   "emotion": "urgent",
+   "speaker": "pip"
+  }
+ }
+}
