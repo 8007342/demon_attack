@@ -1,0 +1,34 @@
+{
+  "schema": "demon-attack.production-run/v1",
+  "id": "battle-metal-radio-2026-11-12",
+  "branch": "work/battle-metal-radio-rework",
+  "change": "battle-metal-radio-rework",
+  "status": "blocked_backend_start",
+  "renders_submitted": 0,
+  "accepted_assets_replaced": false,
+  "backend": {
+    "kind": "local-host-comfyui",
+    "container": "tillandsias-demon_attack-studio",
+    "start_attempt": "2026-11-12",
+    "result": "failed",
+    "stage": "imagegen-studio",
+    "exit_status": 127,
+    "error": "Error: setting up CDI devices: failed to inject devices: failed to stat CDI host device \"/dev/nvidia-modeset\": no such file or directory",
+    "required_external_repair": "Host NVIDIA driver/device availability and Podman CDI configuration must agree. Retry studio.start after the operator confirms repair."
+  },
+  "recovery": {
+    "code_and_specs": "Remote work branch",
+    "model_files": "Host inventory reports ACE-Step XL turbo/base, text encoders and VAE already installed",
+    "render_output_durability": "Not yet verified; do not begin full multi-day batch until master storage and transfer are established",
+    "orchestration": "Resumable runner implementation remains pending; this is a startup ledger, not a running scheduler",
+    "next_steps": [
+      "Retry studio.start after host repair and inspect queue/system capacity",
+      "Establish durable output storage and verify a recoverable artifact transfer",
+      "Implement and exercise atomic resumable job records with input/output hashes",
+      "Complete campaign section, harmonic and bridge map before full-bank rendering",
+      "Submit production candidates serially on the GPU and record every backend job identifier",
+      "Checkpoint code and small ledgers to the remote work branch frequently",
+      "Audition candidate music and final transformed voices before accepting replacements"
+    ]
+  }
+}

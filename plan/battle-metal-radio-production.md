@@ -24,3 +24,9 @@ The current recorded tier loops use short bar windows and distinct level keys/te
 3. Compose the campaign section/bridge map before rendering a full bank; do not let the old eight-bar build stage erase extended arrangements.
 4. Build stable alien script/translation behavior and playful exchange text, then render voices and measure mouths against transformed audio.
 5. Sibling credits source inspection is now complete after public access was granted. Beach cinematic and our own generated credits remain unimplemented.
+
+## Production launch attempt — 2026-11-12
+
+The user authorized a multi-hour/multi-day orchestration run. `studio.start {}` failed before container startup: Podman NVIDIA CDI injection references `/dev/nvidia-modeset`, which does not exist on the host (exit 127). No GPU render was submitted, no scheduler is running, and no accepted asset was replaced. This is a host device/configuration blocker, not a model download or workflow quality failure. The operator was asked to check the host NVIDIA driver/device configuration. Do not repeatedly restart or bypass the GPU isolation configuration.
+
+Machine-readable recovery record: `plan/render-runs/battle-metal-radio-2026-11-12.json`. After host repair, retry studio.start, verify actual queue/capacity and durable master storage, then complete the resumable runner and composition map before starting full production. The existing OpenSpec tasks remain pending where their full acceptance criteria have not been met.
