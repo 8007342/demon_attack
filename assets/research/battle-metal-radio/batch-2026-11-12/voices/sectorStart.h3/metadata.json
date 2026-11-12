@@ -4,10 +4,10 @@
   "trigger": "sectorStart",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 52842,
-  "mouth": "55<<<<<<<<<44222===<<<<<<<<<<<====",
-  "open": "0689999868876421247889878999886321",
-  "vis": "oo--oo----------ee----ee---ooeee--",
+  "samples": 53247,
+  "mouth": "55<<<<<<<<<<<222===<<<<<<<<<<<==00",
+  "open": "0689999868875321347889878899754211",
+  "vis": "ooooo-----------ee----ee------ee--",
   "lufs": -18.02,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "sectorStart.h3",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h3/baseline.flac",
-      "sha256": "f7c641d5d964297891d03e6c886a4908d6c041586288af2654da2f92ccf8e63c",
-      "float_source_sha256": "54b39159429688cde237c8a238154e89f8dd38c9082600d4188e09bf0c128def",
+      "sha256": "e4c31947ce650ff31a2ad2b1f0c967f30cfd7bae8283fca32c81725e173df4fb",
+      "float_source_sha256": "30083555ea5264cec5e0d8b32db9f1e57f25806c79e036cd949d04c6c8a7b27e",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h3/expressive.flac",
-      "sha256": "1c970b0bfc7a5a63616e65e306a41e55084234f1a976a92ea4080dc4b4768df9",
-      "float_source_sha256": "0585ac5fbeecad4dc3d2ca550caf730f3effa1b0f565212b1614d5a6dcd09f90",
+      "sha256": "beffe3e7af615b46a95f227ec1f7a6b71da3e405ca3bacb7868eeccbdd50e612",
+      "float_source_sha256": "6d02e076a53bc39bf6459d42c3358034e9d2b78cc97c2a30f45d6e6a95ebd0b3",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h3/voice.flac",
-      "sha256": "14134bb3ecd584db15685ea9fddb6519c1bc11f87c11bce22a3f14eabb78c9cd",
-      "float_source_sha256": "7ff6056f53d61b83fc396a997e504fbeaaf53b1cb04a13dc1c5005ca56fc138c",
+      "sha256": "75be6938eb325270a2670039cb6f32a20a069931ac875b4e8c38f2294befb78f",
+      "float_source_sha256": "6fb3d0c0426c649ac698d65e5619d5d03c648eb2f09e11be5906f44d0d76ba62",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 10.5,
+    "seconds": 24.47,
     "error": null,
     "text": "Nomad here. Steady as she goes."
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "5cb1679df79d7cd82877b4f34e8a572005ea43a2148d950c4dea81c3932b9ddb"
+    "sha256": "d8697cd074ef13d938a2d808c78781c957a1d12de5579b7f31ff83e8cdec68f1"
   }
 }
