@@ -32,3 +32,11 @@ The ending interface's isolated widget checks pass, and integration checks
 exercise preserved score/lives/medals and frozen time while the route is open,
 first-tour continuation, and final-campaign score entry after closing it.
 Final music, visual review and complete media acceptance remain pending.
+
+The first 40-job group finished and pushed through job 258, then restart failed
+with `EADDRINUSE`: the HTTP server had not enabled socket reuse. The old worker
+was confirmed gone before recovery. `WorkerServer.allow_reuse_address = True`
+fixes subsequent immediate binds; `resume_radio.lua --smoke` started, health
+checked, terminated and immediately restarted the actual worker three times
+successfully without loading models. Production then resumed at job 259,
+`groundForceSighted-h10`. No completed clip was lost.

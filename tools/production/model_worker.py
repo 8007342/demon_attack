@@ -104,7 +104,11 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             traceback.print_exc();self.answer(500,{'ok':False,'error':str(exc)})
         finally: last=time.monotonic()
-server=HTTPServer(('127.0.0.1',18851),Handler);server.timeout=30
+class WorkerServer(HTTPServer):
+    # Recycled workers must bind immediately after the prior connection closes.
+    allow_reuse_address=True
+
+server=WorkerServer(('127.0.0.1',18851),Handler);server.timeout=30
 print(f'voice worker ready on localhost:18851; one process, {threads} threads',flush=True)
 while time.monotonic()-last<900:
     server.handle_request()

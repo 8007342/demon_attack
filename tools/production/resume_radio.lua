@@ -49,6 +49,11 @@ local function start()
  error('worker startup timed out')
 end
 local ok,err=xpcall(function()
+ if arg[2]=='--smoke' then
+  for _=1,3 do start();stop()end
+  print('three immediate worker restarts passed')
+  return
+ end
  local from=arg[2]
  if from then
   local found=false;for _,job in ipairs(spec.jobs)do if job.id==from then found=true end end
