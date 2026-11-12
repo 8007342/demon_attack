@@ -1,6 +1,6 @@
 # Handoff: Battle Metal score and radio bank
 
-Branch: `work/battle-metal-radio-rework`. Latest verified remote checkpoint at handoff refresh: `bf70c99` (`broodChatter-d4`); the controller had started `broodChatter-d5`. Checkpoints are serialized by `tools/production/checkpoint.lua` and pushed to this remote work branch. Forge-local caches and any uncheckpointed work are disposable.
+Branch: `work/battle-metal-radio-rework`. Latest verified remote checkpoint at handoff refresh: `fdb8d4b` (`broodChatter-d12`); the controller had started `broodChatter-d13`. Checkpoints are serialized by `tools/production/checkpoint.lua` and pushed to this remote work branch. Forge-local caches and any uncheckpointed work are disposable.
 
 ## Live radio production
 
@@ -13,7 +13,7 @@ lua tools/production/resume_radio.lua groundForceSighted-h10 \
 
 At handoff refresh, `groundUnitDestroyed-h2` had checkpointed and the supervisor was continuing. A transient `.git/index.lock` collision had stopped the controller while checkpointing the completed `allyRetreated-d2`; after confirming no Git process remained, its exact generated outputs and done ledger were checkpointed manually as `6355a15`, then the controller resumed. The failed job was not lost or rerendered. Check the controller/worker and latest log before restarting; never start a second controller. It recycles the model worker every 40 jobs and stops on a job failure. Observed forge limits: 20 CPUs exposed and the worker uses about 15 cores; cgroup memory.max is 12 GiB (current about 10.7 GiB), despite 62 GiB host memory being visible. Host GPU status reports 23.07 GiB VRAM free, but the Chatterbox torch build reports CUDA unavailable in this forge, so voice rendering is CPU-bound. Avoid parallel workers under the present cgroup limit. Each completed clip is pushed immediately through the checkpoint helper.
 
-Latest partial audio audit: 385/574 clips (255 human, 130 demon), 5.57 MB Opus; production is still running, so this is a moving count. Re-run the partial audit for current measured progress:
+Latest partial audio audit: 390/574 clips (255 human, 135 demon), 5.61 MB Opus; production is still running, so this is a moving count. Re-run the partial audit for current measured progress:
 
 ```sh
 /home/forge/.cache/tillandsias-project/bin/radio-bank --allow-partial \
