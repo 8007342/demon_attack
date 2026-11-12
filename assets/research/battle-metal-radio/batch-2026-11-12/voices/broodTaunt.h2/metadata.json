@@ -4,10 +4,10 @@
   "trigger": "broodTaunt",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 52860,
-  "mouth": "222<<<<<<33===00000044333332222000",
-  "open": "0379999875654321100576664553432110",
-  "vis": "-----ooo---eeee-------------------",
+  "samples": 52743,
+  "mouth": "222<<<<<<<<====000004444433222200",
+  "open": "047999987465432110057666455343211",
+  "vis": "----ooo----eeee------------------",
   "lufs": -18.01,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "broodTaunt.h2",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/broodTaunt.h2/baseline.flac",
-      "sha256": "9cfd351da10052bc22ab6b95b2bd43a8f275a3ae5cc78db95659ea4450a3b793",
-      "float_source_sha256": "b0a6b4a226b8d6489c519df88621a6af4963c0b84cc1d46fad646f4bd0db750c",
+      "sha256": "df19bce931ed77d0404a5ccf8abdec9ef13607c15b0d596624db0a117e2c5ad6",
+      "float_source_sha256": "ff87d59b9388026af37ce3249ff141da7a202a37ac588b96b888e576d08b0158",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/broodTaunt.h2/expressive.flac",
-      "sha256": "6ccf2ca09e5f7237eacf9fc23ae164d42fabcdf0305557a33757ed7cdb2ae2a5",
-      "float_source_sha256": "027e3e8ebb39d58d6a09dd89b72c0bb454186603420d96f142439536d3853792",
+      "sha256": "89d7fa172f24e9966cef762609c81bd78090018a2468c600d805b28e4c53b39c",
+      "float_source_sha256": "07140b6bd5830049b1f83e8a22e55b6c78e447d6c902824c4f9c8405fb5c5dd7",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/broodTaunt.h2/voice.flac",
-      "sha256": "f4573ed17216ea9a82047e2d9bac24d5294fc4852bbe24155e939c819858a9d3",
-      "float_source_sha256": "255130adb2a17e996c2adecbb0ea0903ade2248ada086cc79da71a303ba17481",
+      "sha256": "3721e51d64c4cbf565816a56b4b6c8c751fc644acd2b2ea506631b9308aaeaed",
+      "float_source_sha256": "6bacd5db00b62b1231ef1ea46dfd8ac4e82889d36b5ac436001be56a5e2a6a3f",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 11.17,
+    "seconds": 17.27,
     "error": null,
     "text": "Your move, then. Try to impress me."
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "9af79de8355ff52f510fe48ac363a06d43366115d111808b28903eec44b2b33c"
+    "sha256": "d2d1f08259e87d1a53f4828d5b2c8c0d355064fbef0b5fd671bd2473ab0db79c"
   }
 }
