@@ -4,11 +4,11 @@
   "trigger": "groundForceSighted",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 56118,
-  "mouth": "555555444===55<<<<======444<<<<===00",
-  "open": "047876777676678888746668777799864211",
-  "vis": "oo-------eeeoo----eeee--------eeee--",
-  "lufs": -18.01,
+  "samples": 56214,
+  "mouth": "55555544444455<<<<==3333444<<<<===00",
+  "open": "037776776676678878746658777899864211",
+  "vis": "oooooo------oo----ee-----------eee--",
+  "lufs": -18.02,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "groundForceSighted.h7",
   "text": "Lantern sees walkers coming over the rocks.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h7/baseline.flac",
-      "sha256": "f7d361e9d4d992b2697e61b635436989b77824f6c1c08b92ecaa59cb45e41f67",
-      "float_source_sha256": "84bb6de409cc6c2afd23c2716416df349ddcdd8fb74fb5717ad5bd68192d160a",
+      "sha256": "4efcb3bb43f7319fecd2c6954d08eca57ad2ea6887f09a58db06b4f87e3b7cd6",
+      "float_source_sha256": "f2552b1ec21e6d4379d29bf5f3284bbdde4ef6ec4d020184814997a41a30c559",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h7/expressive.flac",
-      "sha256": "2fa268176e9ecb15266e4fee1e7208987b7ab44043c82334793253e2f554e741",
-      "float_source_sha256": "b7d1d9ccdbc230d4b856fcd78e7a0c91e496d82fd512b8fef3cc94a694097c22",
+      "sha256": "a22edc8d46c7bfa639a7af4b963fba470977f414e91c5cee5f5534724a3b02b5",
+      "float_source_sha256": "cfe1e31f0c76ca9787b0eefe279d9c3e386c94265100951708a5f4c5a4b1989c",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h7/voice.flac",
-      "sha256": "79bcd6ebfe9be7c1788bd6561c133a7ad05eda64e912c9b29029f569ce7d6326",
-      "float_source_sha256": "e160cd60152fa51f10fe5cf71d6cbf14b055b32fc527e44bcac61d6b7fbfa6c7",
+      "sha256": "45a263cb4acf40a5028df5163a224b77b3009943c61bbdc588e4c4cf1c43c92b",
+      "float_source_sha256": "10a707180e964702cacb7c1fe6f72bd2c7fecc0971aaa1705303775e6d0050a3",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 10.87,
+    "seconds": 11.53,
     "error": null,
     "text": "Lantern sees walkers coming over the rocks!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "d0293aad8bb23dc018ab1dc5dd9598f1e7fd109039f64642d93821c11a220efe"
+    "sha256": "fab35ff6a71982204f41a84fe30bf7ff8dc5cebb3ee92c222aa9b07860c4fc6a"
   }
 }
