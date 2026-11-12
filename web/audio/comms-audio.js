@@ -21,7 +21,9 @@
   // Speech levels: Full is the round-3 voice level, Low 8 dB under it (a little
   // less than music's 10 dB, so low speech still clears the ducked music).
   const speechLevels = { mute: 0, low: 10 ** (-8 / 20), full: 1 };
-  const bytesCache = new Map(), bufferCache = new Map();
+  const bytesCache = new Map(), bufferCache = new Map(), decoded = new Map();
+  const decodedLimit = 12 * 1024 * 1024, decodedCountLimit = 96;
+  let decodedBytes = 0;
   const live = [];               // { id, priority, demon, source, gain, startedAt, order }
   let bus, graphContext, volume = 1, played = 0, dropped = 0, maxConcurrent = 0, order = 0;
   let ducked = false, releaseTimer = null;
@@ -39,6 +41,7 @@
       bus.gain.value = busGain();
       bus.connect(g.master);
       bufferCache.clear();
+      decoded.clear(); decodedBytes = 0;
     }
     return g;
   }
@@ -55,26 +58,47 @@
       } catch (error) { reject(error); }
     });
   }
+  function trimDecoded() {
+    for (const id of bufferCache.keys()) {
+      if (decodedBytes <= decodedLimit && decoded.size <= decodedCountLimit) break;
+      if (!decoded.has(id) || live.some(v => v.id === id)) continue;
+      decodedBytes -= decoded.get(id);
+      decoded.delete(id); bufferCache.delete(id);
+    }
+  }
   function loadBuffer(id) {
     const g = graph();
     if (!g?.context?.decodeAudioData) return Promise.resolve(null);
     if (!bufferCache.has(id)) {
-      bufferCache.set(id, (async () => {
+      const request = (async () => {
         for (const format of formats) {
           const bytes = await fetchBytes(id, format);
           if (!bytes) continue;
           try { const buffer = await decode(g.context, bytes); if (buffer?.duration > 0) return buffer; } catch { /* next format */ }
         }
         return null;
-      })().then(buffer => { if (!buffer) bufferCache.delete(id); return buffer; }));
+      })().then(buffer => {
+        if (bufferCache.get(id) !== request || graphContext !== g.context) return null;
+        if (!buffer) bufferCache.delete(id);
+        else {
+          const samples = buffer.length ?? Math.ceil(buffer.duration * (buffer.sampleRate || g.context.sampleRate || 48000));
+          const bytes = samples * (buffer.numberOfChannels || 1) * 4;
+          decoded.set(id, bytes); decodedBytes += bytes; trimDecoded();
+        }
+        return buffer;
+      });
+      bufferCache.set(id, request);
+    } else {
+      // Touch LRU order without decoding again.
+      const cached = bufferCache.get(id);
+      bufferCache.delete(id); bufferCache.set(id, cached);
     }
     return bufferCache.get(id);
   }
-  // Compressed bytes may be fetched before the gesture; decoding waits for the context.
+  // A sector may have hundreds of lines: prefetch compressed bytes, never
+  // eagerly expand the whole roster into PCM. Decode only imminent speech.
   function prefetch(ids) {
-    for (const id of ids || []) {
-      if (graph()) loadBuffer(id); else fetchBytes(id, formats[0]);
-    }
+    for (const id of ids || []) fetchBytes(id, formats[0]);
   }
 
   function duck(on) {
@@ -98,6 +122,7 @@
   function remove(entry) {
     const index = live.indexOf(entry);
     if (index >= 0) live.splice(index, 1);
+    trimDecoded();
     if (!live.length) duck(false);
   }
   function release(entry, seconds = .04) {
@@ -168,6 +193,6 @@
     get state() {
       const g = window.demonAudio?.graph;
       return { context: g?.context?.state ?? 'none', voices: live.map(v => ({ id: v.id, priority: v.priority, demon: v.demon, started: v.startedAt !== null })),
-        ducked, duckGain, musicGain: g?.music?.gain?.value ?? null, volume, level, busGain: bus?.gain?.value ?? null, loaded: [...bufferCache.keys()], played, dropped, maxConcurrent, cap, formats };
+        ducked, duckGain, musicGain: g?.music?.gain?.value ?? null, volume, level, busGain: bus?.gain?.value ?? null, loaded: [...bufferCache.keys()], decodedBytes, decodedLimit, played, dropped, maxConcurrent, cap, formats };
     } });
 })();

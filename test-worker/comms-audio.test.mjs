@@ -5,14 +5,14 @@ import vm from 'node:vm';
 
 async function harness() {
   let ctx;
-  const timers = [], sources = [], fetched = [];
+  const timers = [], sources = [], fetched = [], decoded = [];
   const parameter = (value = 1) => ({ value, targets: [], cancelScheduledValues() {}, setValueAtTime(v) { this.value = v; }, linearRampToValueAtTime(v) { this.value = v; }, exponentialRampToValueAtTime() {}, setTargetAtTime(v, at, k) { this.value = v; this.targets.push([v, at, k]); } });
   class AudioContext {
     constructor() { ctx = this; this.currentTime = 0; this.state = 'suspended'; this.sampleRate = 48000; this.destination = {}; }
     createGain() { return { gain: parameter(), connect(to) { this.to = to; }, disconnect() {} }; }
     createOscillator() { return { frequency: parameter(), connect() {}, disconnect() {}, start() {}, stop() {} }; }
     createBufferSource() { const s = { connect(to) { s.to = to; }, disconnect() {}, start(at) { s.at = at; sources.push(s); }, stop(at) { s.stoppedAt = at; } }; return s; }
-    decodeAudioData(bytes) { return Promise.resolve({ duration: 1.5, name: new TextDecoder().decode(new Uint8Array(bytes)) }); }
+    decodeAudioData(bytes) { const name = new TextDecoder().decode(new Uint8Array(bytes)); decoded.push(name); return Promise.resolve({ duration: 1.5, length: 72000, sampleRate: 48000, numberOfChannels: 1, name }); }
     async resume() { this.state = 'running'; }
     async suspend() { this.state = 'suspended'; }
   }
@@ -29,8 +29,31 @@ async function harness() {
   for (const file of ['demon-audio.js', 'comms-audio.js']) vm.runInContext(await readFile(new URL(`../web/audio/${file}`, import.meta.url), 'utf8'), sandbox);
   const settle = () => new Promise(resolve => setImmediate(resolve));
   const flushTimers = () => { while (timers.length) timers.shift().fn(); };
-  return { sandbox, window, get ctx() { return ctx; }, sources, fetched, timers, settle, flushTimers };
+  return { sandbox, window, get ctx() { return ctx; }, sources, fetched, decoded, timers, settle, flushTimers };
 }
+
+test('a full roster stays compressed; decoded speech is bounded without evicting a live conversation', async () => {
+  const h = await harness();
+  const comms = h.window.commsAudio;
+  await h.window.demonAudio.unlock();
+  comms.prefetch(Array.from({ length: 400 }, (_, i) => `roster-${i}`));
+  await h.settle();
+  assert.equal(h.decoded.filter(id => id.startsWith('roster-')).length, 0, 'sector prefetch never expands the bank into PCM');
+  comms.play('anchor', 4);
+  await h.settle();
+  for (let i = 0; i < 80; i++) {
+    const id = `line-${i}`;
+    assert.equal(comms.play(id, 4), true);
+    await h.settle();
+    h.sources.find(s => s.buffer?.name === id).onended();
+  }
+  assert.ok(comms.state.decodedBytes <= comms.state.decodedLimit, 'PCM is bounded over a long campaign');
+  assert.ok(comms.state.loaded.includes('anchor'), 'the opener still playing stays available');
+  assert.ok(!comms.state.loaded.includes('line-0'), 'old finished speech is evicted');
+  comms.play('line-0', 4);
+  await h.settle();
+  assert.equal(h.decoded.filter(id => id === 'line-0').length, 2, 'evicted speech can decode again from its compressed cache');
+});
 
 test('comms voices are silent before the gesture, then share the context and master', async () => {
   const h = await harness();
@@ -108,13 +131,13 @@ test('at most three voices: only an urgent line cuts a playing one, anything els
   assert.equal(comms.state.voices.length, 0, 'an unavailable clip frees its slot');
 });
 
-test('every bank clip ships Opus and AAC inside a modest budget', async () => {
+test('every bank clip ships Opus inside a modest budget; modern banks omit AAC', async () => {
   let manifest;
   try { manifest = JSON.parse(await readFile(new URL('../web/audio/comms/manifest.json', import.meta.url), 'utf8')); } catch { return; }
   const clips = Object.entries(manifest.clips);
   assert.ok(clips.length > 100);
   for (const [id, clip] of clips) {
-    for (const ext of ['ogg', 'm4a']) {
+    for (const ext of ['ogg']) {
       const info = await stat(new URL(`../web/audio/comms/${id}.${ext}`, import.meta.url));
       assert.equal(info.size, clip[`${ext}_bytes`], `${id}.${ext} size matches the manifest`);
     }
@@ -125,5 +148,11 @@ test('every bank clip ships Opus and AAC inside a modest budget', async () => {
     assert.equal(clip.vis.length, clip.mouth.length);
   }
   assert.ok(manifest.totals.ogg_bytes < 3.4e6, 'Opus budget (v4: 574 clips)');
-  assert.ok(manifest.totals.m4a_bytes < 5.4e6, 'AAC budget (v4: 574 clips)');
+  if (manifest.schema === 'demon-attack.comms-bank/v2') {
+    assert.equal(manifest.complete, true, 'a partial development bank must not ship');
+    assert.deepEqual(manifest.formats, ['ogg']);
+    const { readdir } = await import('node:fs/promises');
+    const files = await readdir(new URL('../web/audio/comms/', import.meta.url));
+    assert.ok(!files.some(name => name.endsWith('.m4a')), 'modern delivery removes duplicate legacy audio');
+  }
 });
