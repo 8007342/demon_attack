@@ -1,6 +1,6 @@
 # Handoff: Battle Metal score and radio bank
 
-Branch: `work/battle-metal-radio-rework`. Latest verified remote checkpoint at handoff refresh: `0deb1ab` (`groundPressureHigh-h4`); the controller had started `groundPressureHigh-d0`. Checkpoints are serialized by `tools/production/checkpoint.lua` and pushed to this remote work branch. Forge-local caches and any uncheckpointed work are disposable.
+Branch: `work/battle-metal-radio-rework`. Latest verified remote checkpoint at handoff refresh: `b3c7893` (`groundBreakthrough-d3`); the controller had started `groundBreakthrough-d4`. Checkpoints are serialized by `tools/production/checkpoint.lua` and pushed to this remote work branch. Forge-local caches and any uncheckpointed work are disposable.
 
 ## Live radio production
 
@@ -13,7 +13,7 @@ lua tools/production/resume_radio.lua groundForceSighted-h10 \
 
 At handoff refresh, `groundUnitDestroyed-h2` had checkpointed and the supervisor was continuing. A transient `.git/index.lock` collision had stopped the controller while checkpointing the completed `allyRetreated-d2`; after confirming no Git process remained, its exact generated outputs and done ledger were checkpointed manually as `6355a15`, then the controller resumed. The failed job was not lost or rerendered. Check the controller/worker and latest log before restarting; never start a second controller. It recycles the model worker every 40 jobs and stops on a job failure. Each completed clip is pushed immediately through the checkpoint helper.
 
-Latest partial audio audit: 332/574 clips (237 human, 95 demon), 4.89 MB Opus; production is still running, so this is a moving count. Re-run the partial audit for current measured progress:
+Latest partial audio audit: 349/574 clips (244 human, 105 demon), 5.11 MB Opus; production is still running, so this is a moving count. Re-run the partial audit for current measured progress:
 
 ```sh
 /home/forge/.cache/tillandsias-project/bin/radio-bank --allow-partial \
