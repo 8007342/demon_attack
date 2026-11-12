@@ -4,7 +4,7 @@ local dest='assets/research/battle-metal-radio/batch-2026-11-12/music/'..id
 local function q(s)return "'"..s:gsub("'","'\\''").."'"end
 local function cmd(a)local p={};for _,v in ipairs(a)do p[#p+1]=q(v)end;return table.concat(p,' ')end
 local function run(a)assert(os.execute(cmd(a)))end
-local function read(a)local p=assert(io.popen(cmd(a)));local s=p:read('a');assert(p:close());return s:gsub('%s+$','')end
+local function read(a)local p=assert(io.popen(cmd(a)));local s=p:read('a');assert(p:close());return (s:gsub('%s+$',''))end
 local path=read({'jq','-er','.outputs[0].path',result})
 local provenance=read({'jq','-er','.outputs[0].provenance_path',result})
 assert(path:match('^/work/tmp/imagegen/studio/'),'unexpected host output path')

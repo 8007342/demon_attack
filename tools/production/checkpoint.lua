@@ -4,7 +4,7 @@ local function cmd(argv)
  local parts={};for _,v in ipairs(argv) do parts[#parts+1]=q(v) end;return table.concat(parts,' ')
 end
 local function read(argv)
- local p=assert(io.popen(cmd(argv)));local s=p:read('a');assert(p:close());return s:gsub('%s+$','')
+ local p=assert(io.popen(cmd(argv)));local s=p:read('a');assert(p:close());return (s:gsub('%s+$',''))
 end
 if arg[1] ~= '--locked' then
  local lock=read({'git','rev-parse','--git-path','production-checkpoint.lock'})

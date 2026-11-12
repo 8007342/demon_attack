@@ -36,8 +36,16 @@ assert(spec.id:match('^[%w_-]+$'), 'invalid run id')
 local state_dir = 'plan/render-runs/' .. spec.id
 assert(os.execute(command({'mkdir','-p',state_dir})))
 if arg[2] ~= '--locked' then
-  local ok, _, code = os.execute(command({'flock','-n',state_dir .. '/runner.lock','lua',arg[0],spec_path,'--locked'}))
+  local argv = {'flock','-n',state_dir .. '/runner.lock','lua',arg[0],spec_path,'--locked'}
+  if arg[2] then argv[#argv+1] = arg[2] end
+  local ok, _, code = os.execute(command(argv))
   os.exit(ok and 0 or code or 1)
+end
+local wanted = arg[3]
+if wanted then
+  local found = false
+  for _,job in ipairs(spec.jobs) do if job.id == wanted then found = true end end
+  assert(found, 'unknown selected job ' .. wanted)
 end
 local fingerprint_inputs = {spec_path, arg[0]}
 for _,path in ipairs(spec.inputs or {}) do fingerprint_inputs[#fingerprint_inputs+1] = path end
@@ -53,10 +61,13 @@ local function checkpoint(job)
   assert(os.execute(command(argv)))
 end
 for _,job in ipairs(spec.jobs) do
+ if not wanted or wanted == job.id then
   assert(job.id:match('^[%w_-]+$'), 'invalid job id')
   local record_path = state_dir .. '/' .. job.id .. '.lua'
   local previous = lfs.attributes(record_path) and assert(loadfile(record_path,'t',{}))() or nil
-  local fingerprint = serialize({inputs=inputs, argv=job.argv, outputs=job.outputs})
+  local job_inputs = {}; for path,digest in pairs(inputs) do job_inputs[path] = digest end
+  for _,path in ipairs(job.inputs or {}) do job_inputs[path] = assert(hash(path), 'missing job input ' .. path) end
+  local fingerprint = serialize({inputs=job_inputs, argv=job.argv, outputs=job.outputs})
   local valid = previous and previous.status == 'done' and previous.fingerprint == fingerprint
   if valid then
     for _,path in ipairs(job.outputs) do if hash(path) ~= previous.outputs[path] then valid = false; break end end
@@ -66,7 +77,7 @@ for _,job in ipairs(spec.jobs) do
     -- Retry an interrupted remote push on resume, even when rendering is cached.
     checkpoint(job)
   else
-    local record = {schema='demon-attack.production-job/v1', fingerprint=fingerprint, inputs=inputs,
+    local record = {schema='demon-attack.production-job/v1', fingerprint=fingerprint, inputs=job_inputs,
       status='running', started=os.date('!%Y-%m-%dT%H:%M:%SZ'), outputs={}}
     write(record_path,record)
     print('starting ' .. job.id); io.stdout:flush()
@@ -81,4 +92,5 @@ for _,job in ipairs(spec.jobs) do
     if record.status ~= 'done' then error('job failed: ' .. job.id .. '; see ' .. record_path) end
     checkpoint(job)
   end
+ end
 end

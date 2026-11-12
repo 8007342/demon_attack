@@ -1,0 +1,67 @@
+{
+  "speaker": "gorrak",
+  "kind": "demon",
+  "trigger": "broodTaunt",
+  "engine": "chatterbox-reverse-pitch",
+  "emotion": "teasing",
+  "samples": 56047,
+  "mouth": "0000044<<<<3344777333333333333444222",
+  "open": "017897788886677897557764467876675321",
+  "vis": "eee---------ooo--oo--------ee-------",
+  "lufs": -18.72,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "broodTaunt.d0",
+  "text": "Your aim is brave. I will give you that!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/broodTaunt.d0/baseline.flac",
+      "sha256": "71dc15f724ee4dbd0aba1905bcf57951c52abfbd1326857e694ca2735d257fb0",
+      "float_source_sha256": "eae068e5dce0b0c7d2c9aea74124e47b3184276ec898e1139e8b503d89722b77",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/broodTaunt.d0/expressive.flac",
+      "sha256": "8d74565ddf07bde021f2970a213bb66e54e9c64b3079366886391bbae1244859",
+      "float_source_sha256": "7f31f3f579dc0b4ff9ae563b5ffe8534fcfa32276a3850d4297cb1f81239c377",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/broodTaunt.d0/voice.flac",
+      "sha256": "d083be0571cb0ec5cd455d82f3899f069cb7bd8eac161f3ce61fbfce06439364",
+      "float_source_sha256": "a97dd7a03ecaa88c1d13a223b1b00cc99d387207f8e17d06f21e5b7ad55c9d55",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 9.96,
+    "error": null,
+    "text": "Your aim is brave. I will give you that!"
+  },
+  "seed": 1534896309,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "68b3a1e71551fa360329dbd4a29e700cec8814b465e8611d749733686ac039fd",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "5ab767bd4054311320baa270b1381c3684e1cecd434f3fa75161e397e7aa59e2"
+  }
+}
