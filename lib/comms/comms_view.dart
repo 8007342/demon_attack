@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'comms_director.dart';
+import 'brood_script.dart';
 import 'comms_portraits.dart';
 import 'comms_types.dart';
 
@@ -292,15 +293,17 @@ void paintScanlines(Canvas canvas, Rect r, {double pitch = 3}) {
   }
 }
 
-/// Brood glyph script: original 5 x 7 pixel symbols seeded by the clip id.
+/// Brood glyph script: an original, stable 5 x 7 pixel alphabet.
 class AlienGlyphPainter extends CustomPainter {
-  AlienGlyphPainter(this.seed, this.count, this.reveal, this.color);
-  final int seed, count;
+  AlienGlyphPainter(this.symbols, this.reveal, this.color, {this.rows = 1});
+  final List<int> symbols;
+  final int rows;
   final double reveal;
   final Color color;
   static const _w = 5, _h = 7;
 
-  static List<List<bool>> glyph(int seed, int index) {
+  static List<List<bool>> glyph(int index) {
+    const seed = 0xB00D;
     final cells = List.generate(_h, (_) => List.filled(_w, false));
     for (var y = 0; y < _h; y++) {
       for (var x = 0; x < 3; x++) {
@@ -318,35 +321,43 @@ class AlienGlyphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final px = math.max(1.0, (size.height / (_h + 1)).floorToDouble());
+    final px = math.max(1.0, (size.height / (rows * (_h + 1))).floorToDouble());
     final advance = px * (_w + 2);
-    final shown = (count * reveal).ceil().clamp(0, count);
+    final shown = (symbols.length * reveal).ceil().clamp(0, symbols.length);
     final paint = Paint()..color = color;
     var x = 0.0;
-    for (var i = 0; i < shown && x + _w * px <= size.width; i++) {
-      final g = glyph(seed, i);
+    var row = 0;
+    for (var i = 0; i < shown; i++) {
+      if (x + _w * px > size.width) {
+        row++;
+        x = 0;
+      }
+      if (row >= rows) break;
+      if (symbols[i] < 0) {
+        x += px * 3;
+        continue;
+      }
+      final g = glyph(symbols[i]);
       for (var y = 0; y < _h; y++) {
         for (var gx = 0; gx < _w; gx++) {
           if (g[y][gx]) {
-            canvas.drawRect(Rect.fromLTWH(x + gx * px, y * px, px, px), paint);
+            canvas.drawRect(
+              Rect.fromLTWH(x + gx * px, (row * (_h + 1) + y) * px, px, px),
+              paint,
+            );
           }
         }
       }
-      x += advance + (i % 3 == 2 ? px * 3 : 0);
+      x += advance;
     }
   }
 
   @override
   bool shouldRepaint(AlienGlyphPainter old) =>
-      old.reveal != reveal || old.seed != seed || old.color != color;
-}
-
-int _seedOf(String text) {
-  var h = 7;
-  for (final c in text.codeUnits) {
-    h = (h * 31 + c) & 0x7fffffff;
-  }
-  return h;
+      old.reveal != reveal ||
+      old.symbols != symbols ||
+      old.rows != rows ||
+      old.color != color;
 }
 
 /// Video area of one call tile.
@@ -505,10 +516,12 @@ class CommsSubtitle extends StatelessWidget {
     this.fontSize = 11,
     this.maxLines = 3,
     this.glyphHeight = 9,
+    this.glyphRows = 1,
   });
   final CommsMessage message;
   final double now, fontSize, glyphHeight;
   final int maxLines;
+  final int glyphRows;
 
   @override
   Widget build(BuildContext context) {
@@ -516,39 +529,53 @@ class CommsSubtitle extends StatelessWidget {
     final accent = Color(c.accent);
     final line = message.line;
     if (line.isGrunt) {
+      final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+      final meaning = line.gloss ?? 'UNKNOWN';
       final reveal = (message.age(now) / math.max(.3, line.duration)).clamp(
-        .15,
+        0.0,
         1.0,
       );
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            height: glyphHeight,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: AlienGlyphPainter(
-                _seedOf(line.id),
-                3 + (line.duration * 5).round(),
-                reveal,
-                accent,
+      final translation = BroodScript.translation(
+        meaning,
+        message.age(now),
+        line.duration,
+        reduceMotion: reduce,
+      );
+      return Semantics(
+        label: '${c.name}. $meaning',
+        liveRegion: true,
+        child: ExcludeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: glyphHeight,
+                width: double.infinity,
+                child: CustomPaint(
+                  painter: AlienGlyphPainter(
+                    BroodScript.encode(meaning),
+                    reduce ? 1 : reveal,
+                    accent,
+                    rows: glyphRows,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 3),
+              Text(
+                'SIGINT · $translation',
+                maxLines: maxLines,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: const Color(0xFFFFB0A8),
+                  fontSize: fontSize * .8,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 3),
-          Text(
-            'SIGINT · ${line.gloss ?? 'UNKNOWN'}',
-            maxLines: maxLines,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: const Color(0xFFFFB0A8),
-              fontSize: fontSize * .8,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+        ),
       );
     }
     return Text(
@@ -952,7 +979,8 @@ class CommsHudStack extends StatelessWidget {
                           now: now,
                           fontSize: 10,
                           maxLines: 3,
-                          glyphHeight: 8,
+                          glyphHeight: 16,
+                          glyphRows: 2,
                         ),
                       ],
                     )

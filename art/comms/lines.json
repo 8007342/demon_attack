@@ -1962,8 +1962,8 @@
           {
             "speaker": "morth",
             "grunt": "gloat",
-            "gloss": "That was a warning tap! Keep up!",
-            "say": "That was a warning tap! Keep up!",
+            "gloss": "That was a warning nudge! Keep up!",
+            "say": "That was a warning nudge! Keep up!",
             "emotion": "teasing"
           },
           {
@@ -1990,8 +1990,8 @@
           {
             "speaker": "skarn",
             "grunt": "order",
-            "gloss": "That was a warning tap! Keep up!",
-            "say": "That was a warning tap! Keep up!",
+            "gloss": "That was a warning nudge! Keep up!",
+            "say": "That was a warning nudge! Keep up!",
             "emotion": "stern"
           },
           {

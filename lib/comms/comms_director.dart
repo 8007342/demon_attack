@@ -125,7 +125,7 @@ class CommsDirector {
     math.Random? random,
     this.maxQueued = 6,
     this.lineGap = .35,
-    this.demonShare = .3,
+    this.demonShare = .4,
     this.starveAfter = 20,
     this.overlapCap = 3,
     Map<String, CommsTriggerSpec>? human,

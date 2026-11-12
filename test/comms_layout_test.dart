@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:demon_attack/comms/comms_bank.dart';
+import 'package:demon_attack/comms/brood_script.dart';
 import 'package:demon_attack/comms/comms_director.dart';
 import 'package:demon_attack/comms/comms_mouth.dart';
 import 'package:demon_attack/comms/comms_portraits.dart';
@@ -501,8 +502,15 @@ void main() {
         final toast = find.byKey(const ValueKey('comms-conversation'));
         expect(toast, findsOneWidget);
         expect(tester.getSize(toast).width, size.width);
+        final translation = BroodScript.translation(
+          'Your next turn belongs to me!',
+          demonFirst ? 2.5 : .5,
+          1,
+          reduceMotion: size.width > 360,
+        );
+        expect(find.text('SIGINT · $translation'), findsOneWidget);
         expect(
-          find.text('SIGINT · Your next turn belongs to me!'),
+          find.bySemanticsLabel('${demon.name}. Your next turn belongs to me!'),
           findsOneWidget,
         );
         expect(
