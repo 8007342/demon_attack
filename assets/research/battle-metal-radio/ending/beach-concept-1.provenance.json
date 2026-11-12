@@ -1,0 +1,33 @@
+{
+  "schema": "tillandsias.provenance/v1",
+  "tool": "image.generate",
+  "parents": [],
+  "pipelineVersion": "56.11.10.1",
+  "engine": {
+    "name": "sd.cpp",
+    "ref": "master-1015-e41fbcf",
+    "sha": null,
+    "nodes": []
+  },
+  "workflow": null,
+  "models": [
+    {
+      "file": "sdxl_lightning_4step.safetensors",
+      "repo": "ByteDance/SDXL-Lightning",
+      "revision": "c9a24f48e1c025556787b0c58dd67a091ece2e44",
+      "sha256": "e0d996ee0013e79d9d3561f50fcafb9a17e3ff07b780358e3b66d67932c4d490",
+      "licence": "openrail++",
+      "consent": null
+    }
+  ],
+  "cli": null,
+  "inputs": [],
+  "seed": 261112510,
+  "prompt": "Original cinematic pixel art scene for a friendly science fiction arcade game's ending. Wide landscape composition. San Diego beach at golden sunset, calm Pacific ocean, distant small lifeguard tower and palms. In the foreground five teenage friends sit around a low picnic table playing an elaborate tiny space battle board game with little spaceship and gargoyle miniatures: two human teenagers and three friendly teenage fantasy gargoyle demons with small horns and folded wings. All wear casual colorful t-shirts and shorts, relaxed happy expressions, clearly friends rather than enemies. Paper-wrapped burgers, a carton of fries, and soda cups on the picnic table. Warm coral sun, teal ocean, sandy gold, dark violet pixel outlines, carefully clustered 16-bit pixel art, readable silhouettes, no text, no logos. Show the whole group and the board in the lower center, open sky in upper third. Wholesome nostalgic reveal, original characters, crisp flat colors and deliberate pixel clusters, attractive hand-painted game background.",
+  "negative_prompt": "photorealistic, 3d render, smooth gradients, text, letters, watermark, logo, gore, weapons aimed at people, horror, aggression, swimwear, nudity, extra fingers, malformed hands, distorted faces, duplicate people, blurry, cluttered composition",
+  "tier": "I1",
+  "placement": "unknown",
+  "family": null,
+  "output_sha256": "3ec4ac0d4b92e3ab0130a7557b1d0924fc450d329760211aea643d4d5a3e7395",
+  "at": "2026-11-12T16:57:02Z"
+}
