@@ -4,11 +4,11 @@
   "trigger": "reinforcements",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 44494,
-  "mouth": "==<<<<44<<<<<<<<======<<<<<<",
-  "open": "0689997788578688557757898743",
-  "vis": "ee------------ooeeeeeee-----",
-  "lufs": -18.02,
+  "samples": 46107,
+  "mouth": "==<<<<<<<<444444===<<<4444222",
+  "open": "06899978997797775358967775321",
+  "vis": "ee--------------ee-----------",
+  "lufs": -18.01,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "reinforcements.h0",
   "text": "Enemy reinforcements incoming!",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h0/baseline.flac",
-      "sha256": "0ac489fb5aa433f5bde5c85f4b69e6cc6f1ac7ea9825bbd960c2ffff86aacf75",
-      "float_source_sha256": "282c2f24224be4a4c27068d42d3d477e53f873cdd2780bd6432da2da368e63a4",
+      "sha256": "6cd7460de4f4aa5fdc96ed25f36e0fb6b06766400bcb5f28270f1c6863e43186",
+      "float_source_sha256": "37b2e18d6c72a279088442719bf4f2a2b3760d92675912d7e06cdc45e0f578de",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h0/expressive.flac",
-      "sha256": "bceb84d69bace4c93357de952783687bb57779b174484d29cb5b3fddba96d298",
-      "float_source_sha256": "cc07a018684f19d1f71d83728c19cdded95a002a1ea3d3073f6c3d04ff7360cc",
+      "sha256": "a1cdedb5d00175d4c52e6ae006ed7cf9b7d6da0deb5ef7c48bc9d67905d78900",
+      "float_source_sha256": "29af4b32a9cdc6627f31de206d25b61e2355a25c9135a4059086e08fd6edb418",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h0/voice.flac",
-      "sha256": "bb499b63b2298a032b976fbf2a187a7e7972b6769437438b6a8927201fa24eef",
-      "float_source_sha256": "694b041bfa13e0db6aaaa15f39fc33551b02c084da8ad63b4ead36a370f022d1",
+      "sha256": "773117376c691b9269e1272554fd64bdcb1d7e7112bc7cd47d251175b422a464",
+      "float_source_sha256": "972384901fd74a5fec9533dfc11388bb10c3e46684f527e6683018a9c87bc6e7",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 10.47,
+    "seconds": 25.54,
     "error": null,
     "text": "Enemy reinforcements incoming!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "fbf3e76bff3ccc640a2d09c8a0e703d2a68810c091b984631b0c51f81bb56a50"
+    "sha256": "f6a8c3ca8d44d01e4df99b3e199a5bd979275f108d28aa0edb15470620350e76"
   }
 }
