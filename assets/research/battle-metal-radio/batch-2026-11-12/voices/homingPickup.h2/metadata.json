@@ -4,11 +4,11 @@
   "trigger": "homingPickup",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 56185,
-  "mouth": "333<<<<<<222000000<<<<<<<<<<<<====00",
-  "open": "057888875442211006888999888688754211",
-  "vis": "--oo--------------ooooo-------eeee--",
-  "lufs": -18.03,
+  "samples": 56368,
+  "mouth": "33<<<<<33222000000<<<<<<<<<<<<====00",
+  "open": "058888765432110037889997897688754211",
+  "vis": "------------------oooooo-----eeeee--",
+  "lufs": -18.02,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "homingPickup.h2",
   "text": "Homing missiles! They really get attached.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/homingPickup.h2/baseline.flac",
-      "sha256": "f69a9ca142515cb63994006dcf9742e33e636076eb558e6a9b5abd91e94e2424",
-      "float_source_sha256": "09505efbace61f140c1d678c6957e7fcbbb4c281b0bd2645d982977435aa8f24",
+      "sha256": "27d7621ee6b54ee91534590ca99572ada28c79559d6da38aa45d8565fe09d003",
+      "float_source_sha256": "8bec69cea44779dedd84d134a26cea57b61baec928bfe89cc16afa0df4cef68b",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/homingPickup.h2/expressive.flac",
-      "sha256": "c1726023e11c3093dcf69d80458c7d2027ed12183aadf20d2e528f65b8bd0adc",
-      "float_source_sha256": "e50aac168a1e66e7c2ad62990c59b7b83e79b45c886f412add97410e4c12ddb6",
+      "sha256": "5bf8bb2a1cad1f085e75bdc91280c99c13247df683c79a672847af47e51ec4f3",
+      "float_source_sha256": "8b1b8edd4532c2ff505471cb115aca6fa2b78d077d5e6fa004818b085727806c",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/homingPickup.h2/voice.flac",
-      "sha256": "7c7cde523174b3f5ca2c3dbfaf6f4a6e0815196d7bee4969dcbb9418c554279c",
-      "float_source_sha256": "d2783d8bf4918074d48e7447def229ecc2be5b06cd1995d60c3dfff12cec7693",
+      "sha256": "1589535b665c57f4765814dd6a8ae4a54c2bdf222190d20143835e57ff6636fe",
+      "float_source_sha256": "d45db96cf5dcbccdc60e1e27605e0d672e633ac1797d9de2ea6639da218f4393",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 9.82,
+    "seconds": 10.56,
     "error": null,
     "text": "Homing missiles! They really get attached."
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "cf39da6bfa30fa78d36e4344fef57e369786551b98a799f80afd02c068715516"
+    "sha256": "2b22e7cbae1f228055bf59892e371608b16242cbbf9a30001fafce2c34a1d169"
   }
 }
