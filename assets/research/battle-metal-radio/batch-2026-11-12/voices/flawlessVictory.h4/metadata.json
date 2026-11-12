@@ -1,0 +1,67 @@
+{
+  "speaker": "pip",
+  "kind": "human",
+  "trigger": "flawlessVictory",
+  "engine": "chatterbox",
+  "emotion": "triumphant",
+  "samples": 65345,
+  "mouth": "==333444======004444<<<<<22222===<<<<<<<<",
+  "open": "04555766778742117787898863217874789999743",
+  "vis": "ee------eeeeee----------------eeee-------",
+  "lufs": -18.09,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "flawlessVictory.h4",
+  "text": "Everybody made it? Everybody? Best day ever!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/flawlessVictory.h4/baseline.flac",
+      "sha256": "d5ba70983a217b0a0076cc4aba8368a4c0ff7acec3ce4ecbe4f486e7f5db55ce",
+      "float_source_sha256": "0169fbd517d10677adb4a464f9103fb2463473d3540e6ab82d2ac9826ccb2810",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/flawlessVictory.h4/expressive.flac",
+      "sha256": "cebf38768cacdf3f9bfaa0304f55428d61c42479cd4aa6e07edd97310a5b1537",
+      "float_source_sha256": "7d111dd8a95d3b6e55c4444413d8e545af4e7a77df7b4fb9d5ad40f228f50356",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/flawlessVictory.h4/voice.flac",
+      "sha256": "3439eac9e289a35ebb7d5a5ec096f3d8118d4ca2d82aca8c477485666997d551",
+      "float_source_sha256": "df171b5dac649761ead63554cc5706f2a6e00976a78ce6edd58a95cb79cf4577",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 9.62,
+    "error": null,
+    "text": "Everybody made it? Everybody? Best day ever!"
+  },
+  "seed": 549019769,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "f27243d27c6bb43d6cf5ce7665bf45a30a99bb2b202ff6d99bc812109dcb7f3c"
+  }
+}
