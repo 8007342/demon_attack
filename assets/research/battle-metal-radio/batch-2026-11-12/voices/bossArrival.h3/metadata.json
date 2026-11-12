@@ -1,0 +1,67 @@
+{
+  "speaker": "wisp",
+  "kind": "human",
+  "trigger": "bossArrival",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 70569,
+  "mouth": "000<<<<<<<<<<<==0000<<<<<<<<555<<===555550000",
+  "open": "016887678768853211068978987467788778555432110",
+  "vis": "---ee---------ee------------oo--eeeoooooee---",
+  "lufs": -18.15,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "bossArrival.h3",
+  "text": "Carrier field is up. Wear it down before the hatch opens.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/bossArrival.h3/baseline.flac",
+      "sha256": "fd2d6d9ccf28814d0a54892fc2dd997eaa08bba0a3cf49f683fde2038079ef68",
+      "float_source_sha256": "2373602373ecf121854cc885344530819a114bd5b245644508fe4dacf1072443",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/bossArrival.h3/expressive.flac",
+      "sha256": "56918c006e275e2e29eab0623dea61869e17eb3742c34189d2d6c53c65bd5fa5",
+      "float_source_sha256": "7d7b1fa1309fbb6d2316b15c1927931e5e770ac2c6d4730c58fc8e8835e2d15b",
+      "gain": 0.932034691293765,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/bossArrival.h3/voice.flac",
+      "sha256": "ed370add8dfab215d8d837d7ed07ee663a6d028ac998bca1bb6de019294db1d3",
+      "float_source_sha256": "a3673b51e2fc062743bfdf758cd38cbe9f7fcf02418464ad79eeff9d613bd8e1",
+      "gain": 0.7796545495188208,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 10.73,
+    "error": null,
+    "text": "Carrier field is up! Wear it down before the hatch opens!"
+  },
+  "seed": 2071306706,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "2fe63929284b3b210d3b624dac62ed7c82ce88758d0f074d2a920d006cc0e589"
+  }
+}
