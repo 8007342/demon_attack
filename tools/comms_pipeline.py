@@ -314,6 +314,10 @@ def stage_voices(args):
     for clip_id, _trigger, kind, line in clip_entries(lines):
         if kind != 'human':
             continue
+        if args.only and not any(clip_id.startswith(p) for p in args.only.split(',')):
+            continue
+        if args.limit and done >= args.limit:
+            break
         voice = people[line['speaker']]['voice']
         key = json.dumps([voice['voice'], voice['speed'], line['text'], spec['kokoro']['revision'], spec['pronounce']], sort_keys=True)
         out = WORK / 'raw' / f'{clip_id}.wav'
@@ -574,6 +578,11 @@ def stage_expressive(args):
     print(f'expressive: {len(todo)} lines on 1 process x {args.threads} threads', flush=True)
     if not todo:
         return
+    # Fail before loading the model if an ephemeral forge lost prerequisites.
+    missing = [clip_id for _, _, clip_id, *_ in todo
+               if not (WORK / 'raw' / f'{clip_id}.wav').exists()]
+    if missing:
+        raise RuntimeError('Missing clean baseline clips; run voices first: ' + ', '.join(missing))
     model = load_chatterbox(spec, args.threads)
     log = WORK / 'expressive.json'
     current = None
@@ -1691,8 +1700,8 @@ def main(argv=None):
     parser.add_argument('stage', choices=sorted(STAGES))
     parser.add_argument('--force', action='store_true', help='re-render cached voices/grunts')
     parser.add_argument('--threads', type=int, default=6, help='expressive/hotrefs: torch threads')
-    parser.add_argument('--only', default='', help='expressive: clip id prefixes; refs: exact speaker ids (comma-separated)')
-    parser.add_argument('--limit', type=int, default=0, help='expressive/refs: render at most N lines/references')
+    parser.add_argument('--only', default='', help='voices/expressive: clip id prefixes; refs: exact speaker ids (comma-separated)')
+    parser.add_argument('--limit', type=int, default=0, help='voices/expressive/refs: render at most N lines/references')
     parser.add_argument('--kokoro-only', action='store_true', help='radio: ignore Chatterbox renders')
     parser.add_argument('--dir', default='', help='prosody: folder of clean <clip id>.wav renders')
     parser.add_argument('--out', default='', help='prosody: write per-clip numbers as JSON')
