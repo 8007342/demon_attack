@@ -4,10 +4,10 @@
   "trigger": "homingPickup",
   "engine": "chatterbox",
   "emotion": "excited",
-  "samples": 55530,
-  "mouth": "222======444<<<555======<<<<<<<<<22",
-  "open": "04664354576789956642158789999997532",
-  "vis": "---eeeee----ooooooee---------------",
+  "samples": 59238,
+  "mouth": "224444444444444555==000044<<<<<<<<==00",
+  "open": "04764443575877866643211576899988763211",
+  "vis": "-------------oooooeee-------------ee--",
   "lufs": -18.01,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "homingPickup.h4",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/homingPickup.h4/baseline.flac",
-      "sha256": "e4f4852f62f32de8d1b37a1e5ae95874455e640ac50ac3c2173ed5360f69616e",
-      "float_source_sha256": "e5d55eaa76305c8adc95a2a698354a5d1e88d0d27d07f27be38364bf8e3e7c75",
+      "sha256": "a05d1becca2df9031bb4ab5de234df3a64052350be1e9720f37bf283caf82e62",
+      "float_source_sha256": "0060ab130adecefb2b9216365a1e5f1986aff67e5a24fb40dbd3438d9e8c4afd",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/homingPickup.h4/expressive.flac",
-      "sha256": "fa70864eb89e7bbc43fb28072ac3e24a7745326dc389e84be3d3f80545ee9aca",
-      "float_source_sha256": "42e209721148e855b3ff49147eba2265c6f238e7e839e2a13f6a0ad9473cf121",
+      "sha256": "8701256862ee8f141e3d0bccbf6be9b39321e2d64a8c359a820410bce8b0e247",
+      "float_source_sha256": "084351244f3f26b18e9fae4109d099f598208670ac5ce9430c00673f20e2af57",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/homingPickup.h4/voice.flac",
-      "sha256": "3f5fb3e283168094ccba85c130598ff44ea6ed4ce84184be9fad9024fae3e5c3",
-      "float_source_sha256": "0488d2b7ff1fc91b4ccf9f147db82e8a5dd81c24c6a72fa26af23f9cb7278452",
+      "sha256": "4df11c4022a252f9e83f5bc32be524e179af3f4642e5c2a087a1b8bfa8d1aebe",
+      "float_source_sha256": "e3df07d961c2be6cdb81abfe7b3502b5d1c9bb228584ef9681bfe4f21d5e1316",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 10.02,
+    "seconds": 25.6,
     "error": null,
     "text": "Bastion sees your missiles! Send some our way!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "a0e60a4b651284742a7a351f6ebbfb400d0492cf5537de945af8e525248dde47"
+    "sha256": "fc11b8d421d0ea056ac6d3b66970be44c2942126202b9e4b862925efe1fd3c50"
   }
 }
