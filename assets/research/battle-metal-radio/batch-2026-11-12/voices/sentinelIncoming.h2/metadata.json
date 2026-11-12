@@ -1,0 +1,67 @@
+{
+  "speaker": "anvil",
+  "kind": "human",
+  "trigger": "sentinelIncoming",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 84788,
+  "mouth": "===<<<<<5555<<<<<<===00000<<<<<<<<<<===<<<<<<<<<=====",
+  "open": "04679788763788588654321137988789988763588868988754421",
+  "vis": "eee-----oooo------eeee--------------eeooooo-----eeeee",
+  "lufs": -18.06,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "sentinelIncoming.h2",
+  "text": "Sentinel on approach. Break its armor before it dives.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.h2/baseline.flac",
+      "sha256": "00c1dd3f91b5c99c5eb5cf5371fd5b623df88aa2b31ccb79ade041896b4ad4b9",
+      "float_source_sha256": "42eafd892f1257580e0fb1f24d3cc2ec7e1b7c2d3bd0c311b63372947d6831d1",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.h2/expressive.flac",
+      "sha256": "84c2bcfd2600f85a761f6b81e89baa54b02f52f1868d67295252abc589c0dbe9",
+      "float_source_sha256": "fdf1fa41875f2e22d5e73c2dc6263876db15590a695f59137a7c9ab1a9594021",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.h2/voice.flac",
+      "sha256": "d361174bdafbe958b1577d2a58d3a057cc6653fdd2b8f4f79e1d21c34b1f68ca",
+      "float_source_sha256": "8ce4d87baffd33d984ad5c41257672a6e342e0e0404a9e44cf11ad2b0d83833d",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 14.83,
+    "error": null,
+    "text": "Sentinel on approach! Break its armor before it dives!"
+  },
+  "seed": 1236546324,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "68b3a1e71551fa360329dbd4a29e700cec8814b465e8611d749733686ac039fd",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "ea68beffffc6cb510051681110f5c57bb73ed52f5d14c378a577bff68cc075d4"
+  }
+}
