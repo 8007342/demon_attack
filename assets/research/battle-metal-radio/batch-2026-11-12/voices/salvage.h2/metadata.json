@@ -4,11 +4,11 @@
   "trigger": "salvage",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 74549,
-  "mouth": "0000<<<<33==========000000000<<<<33444===<<5555",
-  "open": "01378987654376336542110000027899755667547886421",
-  "vis": "----------eeeeeeeee-------------------ee---oo--",
-  "lufs": -18.21,
+  "samples": 75866,
+  "mouth": "====<<<4433===========0000000000<<===========222",
+  "open": "024799867663347742454211000000068953657647876421",
+  "vis": "eee--------ee---eeeee-------------eee-----------",
+  "lufs": -18.1,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "salvage.h2",
   "text": "Salvage drifting. Collect what you can.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/salvage.h2/baseline.flac",
-      "sha256": "de56f125575302e6814834fb54e77a171432d64918e06d55879ead819d1c8e4c",
-      "float_source_sha256": "87b7d429d4fb62ff790ae27d2c36c2e52ccae602192fb035e809fc6349b9d4d5",
+      "sha256": "c3cb19769470a7f86e951d38c789ce4b77e3c7e36f01f5168a35978e9eea5771",
+      "float_source_sha256": "f4cd3cc2810577313e578d44b7e370015132b1014719861586e5f33b30ff721b",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/salvage.h2/expressive.flac",
-      "sha256": "bcc8a51d36b68340f4752a6d5d90fb42b0221bb3a0d4278cf18f02bdb9d6c184",
-      "float_source_sha256": "bbba80aa11d2f5d390a13790208a4bbcd5bd5372a973aadbbae39dafef367501",
+      "sha256": "45fd293d8768f45fa83ba91c7cba0d52d9414ecf7c774acc4b1699479a083795",
+      "float_source_sha256": "3388ef916c1e607f41ab7d8dc8ae2fbbaac5a50617ddd406328746263ab19ca8",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/salvage.h2/voice.flac",
-      "sha256": "40ead941cc2c0be2772ea595be4baa3195d44f3de6fc2611ecb8203e5d7b6e55",
-      "float_source_sha256": "df842c4994a91fb8de33493e0dc9942cf92ded55046405510810181d3c32444b",
+      "sha256": "ade6274dde11fafc3bf7c7d8ea159374d1fe989cd02a0e1ab60c83f63b27a329",
+      "float_source_sha256": "e6d06910adc7dd39ee864b09b64c33039ce07b457e95250027a16ffce6beb1ee",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 12.21,
+    "seconds": 19.17,
     "error": null,
     "text": "Salvage drifting. Collect what you can."
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "0b0aa2d2e676788d7259964d6796e36b00633065b83c1539379f5695d8e2eb8d"
+    "sha256": "47344b0746e1dfb358ee57ba20a6b34810c868e9330f6f42dcf6224b70c790cd"
   }
 }
