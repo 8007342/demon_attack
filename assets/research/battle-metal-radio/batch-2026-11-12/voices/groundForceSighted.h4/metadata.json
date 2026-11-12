@@ -4,11 +4,11 @@
   "trigger": "groundForceSighted",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 87960,
-  "mouth": "3333=======2222200000<<<<<<<443333330000<<<<<555444==00",
-  "open": "0566556444444433211068998888775666532137889997767754321",
-  "vis": "----eeeeee-----------oo----------------------ooo---eeee",
-  "lufs": -18.11,
+  "samples": 88138,
+  "mouth": "3333====2222222200000<<<<<<<443333330000<<<<<555444==000",
+  "open": "05665464444444321112789988887756655321378899977677543211",
+  "vis": "----eeee-------------------------------------ooo---eee--",
+  "lufs": -18.15,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "groundForceSighted.h4",
   "text": "Bastion to air wing. Enemy armor on the ground, your side of the ridge.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h4/baseline.flac",
-      "sha256": "333f4dfea282e5a22cc4f821e1dea8bdf95bbbbcf97fd768108e14ea51e1c246",
-      "float_source_sha256": "2e4cfa73c2074ef4e9d8190a196c91518f363488b6a00f60602afae0b1b1ab12",
+      "sha256": "79250b8c7f40041ba88dfd48fded87516659c8d03c4d7905d0b783bdac67ca90",
+      "float_source_sha256": "c34e3c96df062c3741ce09d8f7d303ebc325a2ab9ecd71097f75bc8224f22c0d",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h4/expressive.flac",
-      "sha256": "d65267698d3bab6ee0707d126f23149e4ef8263f11fd7813cdb33b39d61a6ae7",
-      "float_source_sha256": "2759dacbdac314fb710bfc5a48b6ac4e935acb4416b04da73db231cf141d1e30",
+      "sha256": "b3b6649ab64333c8747809e3161ba67169b7b75c328f247c4eff1ce2094b71c9",
+      "float_source_sha256": "5491214b39fe8e9fee13710a2d0451f1828880f9d011212ffea6337a7b2d1c49",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h4/voice.flac",
-      "sha256": "222fcffbf1dcdbb75140058810a29c42fa50f0a6c4d6c04ea392c24ccc370cd6",
-      "float_source_sha256": "a1fd4be940dbb9fd11176f4d8a8cb8c47dc9bb1d95fad583d68f3c301a13b16e",
+      "sha256": "8aaa3c43b57882df0bad743bdb5c6481b7f997d70a383a6caf9cc5ed9fd5d8de",
+      "float_source_sha256": "53ba9efd0c388a497b2952be0ad4286bc42f9d49c48752817c13354ebed3abd3",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 14.12,
+    "seconds": 31.8,
     "error": null,
     "text": "Bastion to air wing! Enemy armor on the ground, your side of the ridge!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "679fc1683205d68c5be7f1e8abf57b9a49d8413b5b6b6b028341927ea0b1903e"
+    "sha256": "ec162aa864b5b9764d0a27e6e7e5922f94f36cd1a74fc782b45b4d9e613bb6fb"
   }
 }
