@@ -4,11 +4,11 @@
   "trigger": "sectorStart",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 87126,
-  "mouth": "00055550000<<<<<<222222<<<44222222<<<<333333333<<44==00",
-  "open": "0146753211688888743278588676426875899865657876788764211",
-  "vis": "---oooee-------------------------------------------ee--",
-  "lufs": -18.22,
+  "samples": 92784,
+  "mouth": "00055550000<<<<<<<<<<<<<<<<<222244<<<<3333====4455<<<55500",
+  "open": "0146643211688888743278588575337867999754564378765788765321",
+  "vis": "---oooee----------------------------------ee----oo---ooeee",
+  "lufs": -18.26,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "sectorStart.h5",
   "text": "Sunny here. Forecast says clear skies, with a chance of demons.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h5/baseline.flac",
-      "sha256": "9ad9b0067c3be179581597e3fae870e56a445814155c04b526a0f27cd8151c35",
-      "float_source_sha256": "da357f8592b14380d9d9d53043e8fc2dd726c5152a4cd377fc8c2f5cf10babb3",
+      "sha256": "6e601812e2553f120f0286e141739969c10b8c1efcc784a1038e081f55995c78",
+      "float_source_sha256": "98e8e35272ec9ee298a03d2cb58394ee99c8857fb79fd7b6490027c4a61a80e5",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h5/expressive.flac",
-      "sha256": "e8d1f6464c1f02cc768cc6f0823341a5736896459e54afb2d9ced29c4226ed42",
-      "float_source_sha256": "48933be763e2166116e6eb7fd767528db21310fd77ec3ac96eb446cc71b17d91",
+      "sha256": "d0f0bd8172457595cddaa0e40487cc6171cb4f906f4c6bf62a38d27f9c4203d4",
+      "float_source_sha256": "61ee36f2ba476592f6f1e2d18f6cb94d773206f645d5ac531bcad3df68c7c840",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h5/voice.flac",
-      "sha256": "636c09807bfaef28597d3d1a7b7a9d76177e2c76407c796e7d8662f712c4526f",
-      "float_source_sha256": "10a434242f40cd21425878488429108f64da326cc713cdd605b9b35a13085e6c",
+      "sha256": "fe235f2c70f6021b85ff1add04037c7831e59ddac8f8d340246f6737f49edc92",
+      "float_source_sha256": "03ce8106bbee14ab62e96c43c0f8b94a4008806c8a1c57df89795aa9e39652a9",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 13.58,
+    "seconds": 25.87,
     "error": null,
     "text": "Sunny here. Forecast says clear skies, with a chance of demons."
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "1fa3677b74a7f0955b79b69a2e756e2e3420818b04a10c095bb7701e92be6267"
+    "sha256": "417d78f5b0f6dc66bdd2b2936075ca86e38c252d94fc166634cf85c8450431e8"
   }
 }
