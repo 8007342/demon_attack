@@ -64,6 +64,26 @@ export. Host refusal of the installed built-in AudioAdjustVolume node is
 node_not_pinned; the operator has been asked to refresh the node allowlist.
 No direct-API bypass is authorized or used. Radio continues independently.
 
+## Browser PCM preparation and mouth review
+
+Recorded music now serializes decode requests, evicts cached buffers using a
+64 MiB byte budget as well as its 14-entry limit, and decodes only the upcoming
+tier and reactive sprites during level preloading. Higher arrangements/outros
+remain compressed until requested. A five-level test with extended 35-second
+tier fixtures proves byte-driven eviction, retention of current playback and
+lazy alternatives. Music/comms audio checks pass (16 tests in the targeted run).
+This is a cache budget, not proof of total browser memory: active/pending
+players and transient overlapping sources can retain additional buffers.
+Final phrase segmentation and transition-memory checks remain task 9 work.
+
+The candidate-mouth renderer and Lua muxer retain 30 Hz previews using the actual
+runtime painter and newly encoded voices, without promoting a partial bank.
+Admiral Hale and Gorrak contact sheets were inspected at 128/48 px: stable face
+alignment, visible openings, and a closed/resting tail. Three existing all-cast
+mouth-alignment checks also pass. Videos, source hashes and scoped review notes
+are remotely retained under research/mouth-review-2026-11-12. Listening and
+broader contextual review remain required; task 12 is not complete.
+
 Stable original alphabet, progressive writing, delayed translation, immediate
 accessible meaning and full/half toast behavior are implemented. Demons target
 40% airtime. Opus-only fetch is implemented; old AAC files remain pending bank

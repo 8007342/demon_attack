@@ -18,7 +18,7 @@ function seconds(name) {
   return { ending: 100, menu: 16, levelclear: 8, victory: 12, finale: 20, 'levelclear-fleet': 8, 'finale-fleet': 20, cackle: 4, alienwin: 16 }[name];
 }
 
-async function player({ missing = new Set(), localStorage } = {}) {
+async function player({ missing = new Set(), localStorage, durationOf = seconds } = {}) {
   let callback, ctx;
   const fetched = [], sources = [], voices = [];
   const parameter = () => ({ value: 1, events: [], cancelScheduledValues() {}, setValueAtTime(v, t) { this.events.push(['set', v, t]); }, linearRampToValueAtTime(v, t) { this.value = v; this.events.push(['ramp', v, t]); }, exponentialRampToValueAtTime() {}, setTargetAtTime(value) { this.value = value; } });
@@ -27,7 +27,7 @@ async function player({ missing = new Set(), localStorage } = {}) {
     createGain() { return { gain: parameter(), connect() {}, disconnect() {} }; }
     createOscillator() { return { frequency: parameter(), connect() {}, disconnect() {}, start() { voices.push(this); }, stop() {} }; }
     createBufferSource() { const s = { connect(to) { s.to = to; }, disconnect() {}, start(at, offset, duration) { s.at = at; s.offset = offset; s.duration = duration; sources.push(s); }, stop(at) { s.stoppedAt = at; } }; return s; }
-    decodeAudioData(bytes) { const name = new TextDecoder().decode(new Uint8Array(bytes)); return Promise.resolve({ duration: seconds(name), name }); }
+    decodeAudioData(bytes) { const name = new TextDecoder().decode(new Uint8Array(bytes)); const duration = durationOf(name); return Promise.resolve({ duration, name, length: Math.round(duration * 48000), numberOfChannels: 2 }); }
     async resume() { this.state = 'running'; }
     async suspend() { this.state = 'suspended'; }
   }
@@ -53,6 +53,28 @@ async function player({ missing = new Set(), localStorage } = {}) {
 const onGrid = (t, origin, unit) => { const k = (t - origin) / unit; return Math.abs(k - Math.round(k)) < 1e-6; };
 const near = (a, b) => Math.abs(a - b) < 1e-9;
 const last = (sources, name) => sources.filter(s => s.buffer?.name === name).at(-1);
+
+test('extended cues evict old PCM by bytes while alternatives stay compressed until needed', async () => {
+  const { audio, step, settle } = await player({
+    durationOf: name => /^l\d-t\d$/.test(name) ? 35 : seconds(name),
+  });
+  await audio.unlock();
+  for (const level of [1, 2, 3, 4, 5]) {
+    await audio.cue('level', level);
+    await settle();
+    assert.ok(!audio.state.decoded.includes(`l${level}-t4`), 'prefetch does not eagerly decode distant arrangements');
+    await step(60);
+    for (const tier of [2, 3, 4]) {
+      await audio.intensity(tier);
+      await step(16);
+    }
+    assert.ok(audio.state.decodedBytes <= audio.state.decodedByteLimit,
+      `level ${level} retained ${audio.state.decodedBytes} decoded bytes`);
+    assert.ok(audio.state.decoded.includes(audio.state.asset), 'playing music remains cached');
+  }
+  assert.ok(audio.state.decoded.length < 14, 'the byte budget evicts before the count limit');
+  assert.ok(!audio.state.decoded.includes('l1-t4'), 'old extended arrangements are released');
+});
 
 test('the ending retains its full arrangement and warm tail at 96 BPM', async () => {
   const { audio, sources, settle } = await player();

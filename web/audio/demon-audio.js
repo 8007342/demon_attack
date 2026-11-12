@@ -33,6 +33,8 @@
   let beatSeconds = .5;
   const fileGain = .7;          // recorded cues are mastered to -18..-19 LUFS
   const bufferLimit = 14;       // decoded cues kept (a level is ~10: intro, 4 tiers, outro, accents, layers, power, clear)
+  const decodedByteLimit = 64 * 1024 * 1024;
+  let decodeQueue = Promise.resolve();
   const masterGain = .65, effectsGain = 1;  // effects sit above the battle-metal mixes
   const sidechainDip = .8, sidechainTags = ['explosion', 'life', 'hit'];  // -2 dB music dip under big effects
   // Cue table (mirrors web/audio/music/manifest.json; checked by test-worker).
@@ -145,18 +147,29 @@
     return bytesCache.get(key);
   }
   function decode(bytes) {
-    return new Promise((resolve, reject) => {
+    // Rapid scene changes may queue many cues. One decoder at a time bounds
+    // temporary PCM allocations while the cache is being populated.
+    const task = decodeQueue.then(() => new Promise((resolve, reject) => {
       try {
         // Copy: decodeAudioData detaches its input, and the bytes stay cached.
         const result = context.decodeAudioData(bytes.slice(0), resolve, reject);
         if (result?.then) result.then(resolve, reject);
       } catch (error) { reject(error); }
-    });
+    }));
+    decodeQueue = task.catch(() => {});
+    return task;
   }
+  const pcmBytes = buffer => buffer.length * buffer.numberOfChannels * 4;
+  const decodedBytes = () => [...ready.values()].reduce((sum, buffer) => sum + pcmBytes(buffer), 0);
   function inUse(key) {
-    if ([active?.name, pending?.name, 'levelclear'].includes(key)) return true;
-    const info = cueInfo(key);
-    return info.level === scene.level && scene.level > 0;  // the current level's set stays decoded
+    if ([active?.assetName ?? active?.name, pending?.assetName ?? pending?.name, power.player?.name].includes(key)) return true;
+    return ['accents', 'layers', 'power'].some(kind => key === `l${scene.level}-${kind}`);
+  }
+  function trimBuffers() {
+    for (const key of bufferCache.keys()) {
+      if (bufferCache.size <= bufferLimit && decodedBytes() <= decodedByteLimit) break;
+      if (!inUse(key)) { bufferCache.delete(key); ready.delete(key); }
+    }
   }
   async function loadBuffer(name) {
     if (!context?.decodeAudioData) return null;
@@ -168,12 +181,15 @@
           try { const buffer = await decode(bytes); if (buffer?.duration > 1) return buffer; } catch { /* try the next format */ }
         }
         return null;
-      })().then(buffer => { if (!buffer) bufferCache.delete(name); else if (bufferCache.has(name)) ready.set(name, buffer); return buffer; }));
-      // Evict the oldest decoded cue that is not in use.
-      for (const key of bufferCache.keys()) {
-        if (bufferCache.size <= bufferLimit) break;
-        if (key !== name && !inUse(key)) { bufferCache.delete(key); ready.delete(key); }
-      }
+      })().then(buffer => {
+        if (!buffer) bufferCache.delete(name);
+        else if (bufferCache.has(name)) ready.set(name, buffer);
+        trimBuffers();
+        return buffer;
+      }));
+    } else {
+      const cached = bufferCache.get(name);
+      bufferCache.delete(name); bufferCache.set(name, cached);
     }
     return bufferCache.get(name);
   }
@@ -329,7 +345,9 @@
     const names = [`l${level}-t1`, `l${level}-accents`, `l${level}-layers`, `l${level}-t2`, `l${level}-power`, `l${level}-t3`, `l${level}-t4`, `l${level}-outro`];
     names.forEach(prefetch);
     if (!context) return;
-    names.reduce((chain, name) => chain.then(() => loadBuffer(name)), Promise.resolve());
+    // Fetch compressed alternatives, but decode only the upcoming phrase and
+    // reactive sprites. Higher tiers/outros decode when actually requested.
+    names.slice(0, 3).reduce((chain, name) => chain.then(() => scene.level === level ? loadBuffer(name) : null), Promise.resolve());
   }
   async function queue(name, options = {}) {
     const ticket = requested;
@@ -675,6 +693,7 @@
     get graph() { return { context, master, music, effects }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.
     get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, asset: active?.assetName ?? active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, offset: active?.player?.offset ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length, decoded: [...bufferCache.keys()], formats, scene: { ...scene }, accents: accentLog.slice(), fleetIntact: fleetIntactFlag,
+      decodedBytes: decodedBytes(), decodedByteLimit,
       bpm: 60 / beatSeconds, beatSeconds, drop: dropState ? { ...dropState } : null,
       levels: { ...levels }, masterGain: master?.gain.value ?? null, musicLevel: musicLevel?.gain.value ?? null, limiter: !!limiter,
       layers: layersLive.filter(l => l.end > (context?.currentTime ?? 0)).map(l => ({ ...l })), layerLog: layerLog.slice(),
