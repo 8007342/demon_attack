@@ -4,11 +4,11 @@
   "trigger": "salvage",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 54068,
-  "mouth": "555<<<<<<<<222===<<<<<<==<<<<<====",
-  "open": "0278985688642126689785777888644421",
-  "vis": "oo------------eeeee----ee-----ee--",
-  "lufs": -18.06,
+  "samples": 53233,
+  "mouth": "555<<<<4444400=======44<<<<<===000",
+  "open": "0268885777532125587857789875432110",
+  "vis": "oo------------eee-----------eee---",
+  "lufs": -18.07,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "salvage.h0",
   "text": "Wave's clear. Sweep up the salvage.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/salvage.h0/baseline.flac",
-      "sha256": "a992d3ff6474b39b394383192657d22e8dac899f58813a0917025c83d5bba778",
-      "float_source_sha256": "f631ac0f3084bd80563dcbd52cd1c2f45dc6bf87683fbb5ec2b76c0fa315439f",
+      "sha256": "659cd9403b0989c45498fc939de1eefcba6418d71889800dfb35e304fbc0f0b2",
+      "float_source_sha256": "ae3479b7d5d1298d4718bc754b1894abc65b71fe1cce4bdbafe6059fe0a4ca23",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/salvage.h0/expressive.flac",
-      "sha256": "3e5595bb9ba8d8015d128304214ad6cedf79cc6474ff01e46c19480466a7b915",
-      "float_source_sha256": "21bb2f402bbe2312ae4bf3f9e95eb28e04a1e4186fd2af57b0e3db46b4ba91fb",
+      "sha256": "f2ff99629ccc58e88d1bb007cfeaed55da9a6ef861078e13cd7157e8328466bc",
+      "float_source_sha256": "ce5a3a7f45bcebcbfa2dbcabb0484b19ace469bef6f620f28b2e9595178cf07a",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/salvage.h0/voice.flac",
-      "sha256": "832aabffc3cad4c2f313b0b51690ecdb4fe1cc8a24bdd1c067e6de836bb007bf",
-      "float_source_sha256": "4e1eeb408e576f04619593418edf65b3651784c4b88dc5d435d037e9c810b756",
+      "sha256": "34619f97f5316aa7621c70f3d5ab05e619788ed0fb6f6b134a5474a03b1874a9",
+      "float_source_sha256": "afed3ff857a589882db6cf0b5d52797a638a86fa9155bd96cb06d8dbfe097fb1",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 10.9,
+    "seconds": 20.07,
     "error": null,
     "text": "Wave's clear. Sweep up the salvage."
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "536a2095b9c80b357a67e14fd08bab771a9c9aae333187e5ecf57707e09ac89f"
+    "sha256": "0efb67d9f6187a5d6b6968e4352a8d64606bfdda5fd05d2d49ebb1db6b700c79"
   }
 }
