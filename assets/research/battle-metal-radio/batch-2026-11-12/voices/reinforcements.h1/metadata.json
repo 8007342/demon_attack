@@ -4,11 +4,11 @@
   "trigger": "reinforcements",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 50148,
-  "mouth": "44<<<<<<<<<<<<<<<<<44<<<<<<<==00",
-  "open": "06899866666788788996788688864211",
-  "vis": "----------------------------ee--",
-  "lufs": -18.0,
+  "samples": 46607,
+  "mouth": "33<<<<<==<<<<<<<<<<<<<<<<<==00",
+  "open": "068998677887878899889888764211",
+  "vis": "-------eeooo--------------ee--",
+  "lufs": -18.01,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "reinforcements.h1",
   "text": "More of them dropping in from above!",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h1/baseline.flac",
-      "sha256": "4a77970d4be5eb82df06f7ac6e9a7b108820f1478251c3b3b24e2c3876805756",
-      "float_source_sha256": "bfefa9224645d634e110b9b61444fba05b6abdd7bc3eb8c58a3163e3943c5be8",
+      "sha256": "00b8c41c258dbd4f5e1dde94560f9aad128d541fd96c4f02dde2df56c682c346",
+      "float_source_sha256": "93a8152f9f09701962b13251f30c6712d065e0fe22a6b313e8386194db745383",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h1/expressive.flac",
-      "sha256": "e80a2ad0af17b8a17d24207a91e133a633f8a77ba242458e25a55a1e6bc35912",
-      "float_source_sha256": "c02f40fcc877077a370814b298d68569203ce71eaeb28d906fc921c904e11ba1",
+      "sha256": "0e3925d8690e074bcc2ad8560cf530a699670bc74424c5236de00c5b1abca152",
+      "float_source_sha256": "edf020fb5d7edb6af8118b19360b1008137e970c96eb9a35410060fa61a47ee6",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h1/voice.flac",
-      "sha256": "2569f5b1cc906a475e4e6c8c6088a354c3db43f23fd1e29e46a2c474312b8170",
-      "float_source_sha256": "32836a7a89ee64748f57d4ab901553c12c400a2f63141c5fdd0e44d60ac5e72e",
+      "sha256": "2006ccc3d4ba95113135f37986f18bfb56b847c73f51c38a61d3251c1f4bcec3",
+      "float_source_sha256": "c58698c0386430a4199b4ecf8fe1712a3ab25c93d9f78aa62562e42f4ed43053",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 11.05,
+    "seconds": 10.24,
     "error": null,
     "text": "More of them dropping in from above!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "311ff91203346c52bc9a38333c8be9a891033c6a5aa3ab0230a9e1c0c15dd579"
+    "sha256": "252b6ceebca10fe6d66a22081644a56e4a5227435e5a8d8791c8b4ac19b1dc6a"
   }
 }
