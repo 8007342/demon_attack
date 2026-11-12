@@ -4,9 +4,9 @@
   "trigger": "sentinelIncoming",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 74468,
-  "mouth": "00000000044444444<<<<==000004444<<<<44222222222",
-  "open": "01587787567646774898753211487657998567446787532",
+  "samples": 74396,
+  "mouth": "00000000044444444<<<<==00000444<<<==44224444422",
+  "open": "00587787567646774898753211587758997467446787532",
   "vis": "--eee------------ooooee----------eee-----------",
   "lufs": -18.11,
   "schema": "demon-attack.voice-candidate/v1",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.h4/baseline.flac",
-      "sha256": "82c7e96cc027eb08541cf456181e5ebef005e798149d7dc363b31d1d7a80eb3c",
-      "float_source_sha256": "d384b550950c0bcff074bd47565f6667e571be51dfcd0fb5ef2bb176468d81ba",
+      "sha256": "f8f1036f27e193d64626d1277837663e132c1002213ac8d2f3e874774db37cdf",
+      "float_source_sha256": "547ec4c77c2fc8b01aed8894cd2235c21d49864c1d2a977583fdaced04ac6287",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.h4/expressive.flac",
-      "sha256": "0a1d1bc1f1016acd371015d5b845242a4af32de64bbcea78a260a88c2abfeb97",
-      "float_source_sha256": "8fae086291e0e6e2df080181cf1e7563f5207832137b4bd8f5ed73299cb41650",
-      "gain": 0.9379145274806115,
+      "sha256": "92046fabb5d892baa915f9c6ded9b20b2ad168b5c55e6eddc269daad8e5cb724",
+      "float_source_sha256": "63af5c95e1843850e1722b0513d588f87dd40f71c6a5e8b43e121f2835fa62ea",
+      "gain": 0.9512199706262591,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.h4/voice.flac",
-      "sha256": "764575612f45614dd8d215f08c20b0b6c597b1999e3e73b69651df11ec068d18",
-      "float_source_sha256": "43bb85ab7070f30ea890cfaaeb4d128cd1792f0f5ded81bea83e8700187434ff",
-      "gain": 0.6753785341832489,
+      "sha256": "9644fb2986e8ff770d51e2ebe91e5a48803ee149f4fd9df26200a9d4bb65d6bc",
+      "float_source_sha256": "a392426e7ecd84a53d4d0d7a4f851238d53d5b995b4cdbefd6f699e017b766dd",
+      "gain": 0.6880457378351946,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 13.71,
+    "seconds": 25.62,
     "error": null,
     "text": "Sentinel class on the board! Watch its eyes for the tell!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "8aa40d24dea3934561bcb5b8fbb5fc5ff58e61faa0cac336c13ac50aea7b9546"
+    "sha256": "ce308393aa060da2813ccb9d10228a890b3b9854587b2792c1b0571e4151539c"
   }
 }
