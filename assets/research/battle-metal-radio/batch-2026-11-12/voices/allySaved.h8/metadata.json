@@ -4,11 +4,11 @@
   "trigger": "allySaved",
   "engine": "chatterbox",
   "emotion": "excited",
-  "samples": 42254,
-  "mouth": "222<<555<<55<<444444<<<====",
-  "open": "037887668976897786478886421",
-  "vis": "-----oooooooo-------eeeee--",
-  "lufs": -18.03,
+  "samples": 42616,
+  "mouth": "===<<<555<<555<<<<<<<<<<<<<",
+  "open": "037898666887478888747887432",
+  "vis": "eeeeeoooooooo--------ee----",
+  "lufs": -18.0,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "allySaved.h8",
   "text": "You're a lifesaver up there!",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allySaved.h8/baseline.flac",
-      "sha256": "437dff94e17921612a77df52b9614ff98eddb1e2ffc4561ebfdd89b29fed0b02",
-      "float_source_sha256": "951658ef422c3b3a7d1c341546edbdf0ff8d35832a8f4e9b85eb63f29bacad89",
+      "sha256": "a92b76f8faad60763c1844c43793a181ea74fcb89247d11b9b1b07d56d998463",
+      "float_source_sha256": "aceca3d3c4180ed84ed8865e11005664858c40c08da4c3510118e37937d57d69",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allySaved.h8/expressive.flac",
-      "sha256": "32052b59167132767822723977cb67fb1c518e0b27f8acabd86c84877a78ce38",
-      "float_source_sha256": "66810aeac9275ae7aeb5da4076861fbf8ed4c36b98c24797830d73ceee6624a1",
+      "sha256": "faa35d620ec1b4bf91b610f25dd51121dfed5ea5b2b5e15fc87505f3ea2269bf",
+      "float_source_sha256": "d15e683532bd2bfdc252bc1df728c9201481250849aea50373241fa56dd3ea02",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allySaved.h8/voice.flac",
-      "sha256": "3c2ba247f36e23708433276b711bf5eec59fa923cdba9760f69c337f71ae2fba",
-      "float_source_sha256": "a9889010701ee29ed522bcc82c5591f887bf400986026212216a50d89d092180",
+      "sha256": "62602427bec7fd03805841d3a7ea6e3aa3f8e34319d2ee9e2569f982dfe5acd7",
+      "float_source_sha256": "904dd150b640649486c8855281f07b6b3727f11f1014e5edea3e6088f9025389",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 9.13,
+    "seconds": 7.9,
     "error": null,
     "text": "You're a lifesaver up there!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "a31389bf0ffb1c72cd897617ec86571dd08e02749b2f46470f4a61ad5d283432"
+    "sha256": "24d58a8d51a64976588e52aa222916daa7b416db5ebc85bf9045a78b9d782f3f"
   }
 }
