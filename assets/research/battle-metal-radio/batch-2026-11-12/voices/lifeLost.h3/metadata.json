@@ -1,0 +1,67 @@
+{
+  "speaker": "rook",
+  "kind": "human",
+  "trigger": "lifeLost",
+  "engine": "chatterbox",
+  "emotion": "warm",
+  "samples": 43194,
+  "mouth": "33333=====<<<<<<<3344552200",
+  "open": "057643321588989976677544321",
+  "vis": "-----eeeeee----------oo----",
+  "lufs": -18.09,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "lifeLost.h3",
+  "text": "Ouch! Get them back for that one.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/lifeLost.h3/baseline.flac",
+      "sha256": "0d1113ec444df72c4067f3771398019bbf7cace6143d0a8bc214e8a01c64686c",
+      "float_source_sha256": "b094a587cdefe2eaff328619d3b7ab802aab973ff2ec49df35ac5a92d631db93",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/lifeLost.h3/expressive.flac",
+      "sha256": "fb569ed6b0a2973cc17d9567a0f06d14bcb659c4ef5e481492c942d71c06d826",
+      "float_source_sha256": "7c61f1c852c398a878af1a80590bbae3981935bc9534d433882b0830690319b5",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/lifeLost.h3/voice.flac",
+      "sha256": "f9b5892c5965c6d021cc0d410d8769b18edfa28e299927ddfb79e2d598adcab1",
+      "float_source_sha256": "f978825a03bae65dd1f9bf0b6d3b05f39a4349a6bb18ebe1e97e4ee2dec4f186",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 8.28,
+    "error": null,
+    "text": "Ouch! Get them back for that one."
+  },
+  "seed": 1912208372,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "094f464cb5587362d975de18f17832f5a185b0ea9b152fba971ee2a16cf9290b"
+  }
+}
