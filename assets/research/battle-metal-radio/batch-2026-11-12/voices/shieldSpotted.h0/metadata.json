@@ -2,13 +2,14 @@
   "speaker": "admiral",
   "kind": "human",
   "trigger": "shieldSpotted",
-  "engine": "chatterbox",
+  "engine": "kokoro",
   "emotion": "excited",
-  "samples": 28791,
-  "mouth": "55<<<<<<===<<<<<22",
-  "open": "058957887678998532",
-  "vis": "ooooo---eee-------",
-  "lufs": -18.01,
+  "samples": 26034,
+  "mouth": "55<<<<<444444==00",
+  "open": "06896887687763211",
+  "vis": "ooooo--------ee--",
+  "lufs": -18.17,
+  "fallback": "length ratio 0.31",
   "schema": "demon-attack.voice-candidate/v1",
   "id": "shieldSpotted.h0",
   "text": "Look for the shield!",
@@ -16,28 +17,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/shieldSpotted.h0/baseline.flac",
-      "sha256": "f8de78cea32d9a45a34bba0857e883dcd58f9448dbf0873de6127a395c77e396",
-      "float_source_sha256": "67593d73fff0885eae275a2af6ce771032a8fd37aab983ac2089ca36498db814",
+      "sha256": "bb5ee48cbc0c6b65e5842d866c1f698f78cccaf96c114937576aec44e6d0cee9",
+      "float_source_sha256": "09021022cf4c1bf4f994f49e0fa818639ff2dd6c3264bd2fe088555c4b7be898",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/shieldSpotted.h0/expressive.flac",
-      "sha256": "de64f29c5753113767ea4ca9d428ad777fdb1ccb2bc8d701d11718a876765285",
-      "float_source_sha256": "eab4d7d6d82eaa20fa44aada0c23c29b49e5bb068c7f901fe70b89fb634cfc2c",
+      "sha256": "a09f1e579c9b15534cbb0dac970b44de0eba17bcdb204f7a6c13df1831ffa75c",
+      "float_source_sha256": "75ab3eed4b16331edb7a2c881a3d8d04b677b0768bd1cd5bc5824a037dd87ec4",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/shieldSpotted.h0/voice.flac",
-      "sha256": "07b2a3387a2b7fcf2fc4716e1ae9be13f9541f1a1f663f24c114783ff98ee221",
-      "float_source_sha256": "9748333fc835408170c44dfb6fc7e8f6fb37165f9600180f19d8bf2b9db8606f",
+      "sha256": "6b5333749421e9c705f710eaa97cdff96b56d32d70ee3f047b731447ba89f153",
+      "float_source_sha256": "36314b53630a7422757e1bfeb67ba76d0e48642a97faea800d6eaaea905bce43",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 8.23,
+    "seconds": 24.97,
     "error": null,
     "text": "Look for the shield!"
   },
@@ -62,6 +63,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "98ae6987e43e62a0c961b709737ba612a23a90775f52ecf7952e2ecb4bc5aa9c"
+    "sha256": "61c3c66250fbda7c80fbcd505926d5203b864983a4a09e38b4d119e0d76c623e"
   }
 }
