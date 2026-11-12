@@ -4,11 +4,11 @@
   "trigger": "sentinelIncoming",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 84788,
-  "mouth": "===<<<<<5555<<<<<<===00000<<<<<<<<<<===<<<<<<<<<=====",
-  "open": "04679788763788588654321137988789988763588868988754421",
-  "vis": "eee-----oooo------eeee--------------eeooooo-----eeeee",
-  "lufs": -18.06,
+  "samples": 71165,
+  "mouth": "====333333332255==0000<<<<<<<<55<<<<<<<<<==00",
+  "open": "035766664555346633211788889888778858998644321",
+  "vis": "eee-----------ooeee----------oooooo------ee--",
+  "lufs": -18.16,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "sentinelIncoming.h2",
   "text": "Sentinel on approach. Break its armor before it dives.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.h2/baseline.flac",
-      "sha256": "00c1dd3f91b5c99c5eb5cf5371fd5b623df88aa2b31ccb79ade041896b4ad4b9",
-      "float_source_sha256": "42eafd892f1257580e0fb1f24d3cc2ec7e1b7c2d3bd0c311b63372947d6831d1",
+      "sha256": "47301ab407d97f1d22bab3078d469c4ade4561ef0f1ac2ef6a5104d39970fdbc",
+      "float_source_sha256": "5b5c02273f84baa156ed8cef7cf341773bc6fc70db1f2795b872243212974641",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.h2/expressive.flac",
-      "sha256": "84c2bcfd2600f85a761f6b81e89baa54b02f52f1868d67295252abc589c0dbe9",
-      "float_source_sha256": "fdf1fa41875f2e22d5e73c2dc6263876db15590a695f59137a7c9ab1a9594021",
+      "sha256": "bf6b42b6aca7a40b80de0409aac0bbe50529735372ac3e3c5636243baa7403ee",
+      "float_source_sha256": "b05d2b2b0e84c92ea4dc050b4906b86bbdb1df7302387d01908fe1f1d9392e0c",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.h2/voice.flac",
-      "sha256": "d361174bdafbe958b1577d2a58d3a057cc6653fdd2b8f4f79e1d21c34b1f68ca",
-      "float_source_sha256": "ed13d831082269f1994943f1104815a6f9b0f236e674d0f790812b21bde53358",
+      "sha256": "829ee8e01a5e2745794ab69ea39685fba227962d81b6642d40e19640e348ed12",
+      "float_source_sha256": "9e1c4e6115ce304c82547001db938c50354c55e9698790c43d3d6183bccc1ec4",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 14.83,
+    "seconds": 23.72,
     "error": null,
     "text": "Sentinel on approach! Break its armor before it dives!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "d0073c37a37548ad63338079d2588d297b8e4f67948559d4a4fe407416486fcc"
+    "sha256": "cd0d37172909b2044d3b6547e95a809be4e79a353e342bebbacfdfbef55af76c"
   }
 }
