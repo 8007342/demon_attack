@@ -4,11 +4,11 @@
   "trigger": "reinforcements",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 66844,
-  "mouth": "0000==<<<<<<<<<<<2200000<<<<<<===<<<<===00",
-  "open": "006876889999989864211005889987427899864321",
-  "vis": "----ee--oo--------------------eee----eee--",
-  "lufs": -18.06,
+  "samples": 61610,
+  "mouth": "000<<<<<<<<<<<<<<<==000<<<<<<<<<<<===00",
+  "open": "004887899999999875321168999853789864211",
+  "vis": "----eeeeoo--------ee---oo---------eee--",
+  "lufs": -18.01,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "reinforcements.h4",
   "text": "Fresh wing arriving. Thin them out fast.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h4/baseline.flac",
-      "sha256": "3411ca39e30b6b90833ef6771ee083951f7854e7640341ea997e9160a02b23c1",
-      "float_source_sha256": "1aca00e5ef818b9604c21033c86455daed3a491799862ec33c6556175d1848ff",
+      "sha256": "d0e3b5ff9b432b896213b2a4613d9021d57e8f68ccaf09ab488d4fbd9a0b88df",
+      "float_source_sha256": "ab67db29e256c9b1929eef7d04740f305180c94602d1d34b92c277a35d77dba9",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h4/expressive.flac",
-      "sha256": "2abd66dc972704f489cfec3b1feffc014b5a5e535a77a5280f8471bbc7867b62",
-      "float_source_sha256": "080f9d92085d25e6abcb1a88df837d85ec1d0e7589bf25e300b64147907c9a91",
+      "sha256": "73b7a1b3da3ba53468dd0bc4290e5bc694837464ec5df2cf4e3b03defa4d9127",
+      "float_source_sha256": "40e9b069edc9b74505477a53ef3b5152b07bbca976ca54905b4b8795fdb3370e",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h4/voice.flac",
-      "sha256": "484f334db3f85fc4d8fe82c9aad2743336545292d5194552d6685a861ac8acb6",
-      "float_source_sha256": "c50ca8d46623e058ae7f3a05f83a0b7352ed187aea697b486a09e09c60f662fd",
+      "sha256": "e3a41969b68d5b28e6ec7e124e78393d6a553030e97bcc383e85f5753045a6b7",
+      "float_source_sha256": "a075fdee1a1f916552b290af32aff47c7d9a3d3ab124c638614b6084add5df30",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 12.62,
+    "seconds": 19.33,
     "error": null,
     "text": "Fresh wing arriving! Thin them out fast!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "ab4212f04b95841a6067400e8f8d4980a747be877ac14c368b8849dc38442af4"
+    "sha256": "af5cb9ea34bb633edb3c502bb656d4c90982331d5d313a99bfe13ae50ce9cb07"
   }
 }
