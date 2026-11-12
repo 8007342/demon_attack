@@ -1,0 +1,26 @@
+# Production checkpoint — 2026-11-12
+
+## Current branch and recovery
+Work branch: `work/battle-metal-radio-rework`, based on `game`. First checkpoint bfd19c6 was relayed and accepted by upstream GitHub. Continue pushing this work branch; integrate into `game` when reviewed. Do not claim an unpushed render or local cache will survive forge loss.
+
+## Measured environment
+- Host reports 20 logical CPU cores, Intel Core Ultra 7 265KF and 62 GiB physical RAM. Container memory.max is 12 GiB, so use that effective memory ceiling rather than the host RAM figure. cpu.max is unrestricted.
+- No GPU, DRI or accelerator device nodes are exposed inside the forge. GPU work uses the host studio; no usable NPU was established.
+- Studio status: stopped. Existing model inventory reports ACE-Step XL turbo/base, 0.6B/4B encoders and VAE installed, all listed Apache-2.0. Image models are also installed. No download or render has been started by this change.
+- Checkout is a 1.5 GiB tmpfs, about 1.1 GiB available before further builds. Do not store long-form lossless takes here.
+- Project cache is on /dev/md127, about 88 GiB available at inspection. This is a capacity observation, not a durability guarantee: the operator explicitly says forge-local work is disposable. Establish remote storage/transfer for masters before multi-day production, with checksums and reconstructible small manifests in Git.
+
+## Existing pipeline constraints
+`tools/music_pipeline.py` orchestrates ACE workflows, analyzes takes with numpy/scipy and encodes via ffmpeg. `music_guide.py` and `music_motifs.py` support the synthesized fallback and accents. `tools/comms_pipeline.py` handles voices, processing, encoding and generated Dart bank; `art/comms/audio.json` pins Kokoro and Chatterbox. Python model dependencies are allowed to remain; Lua should replace orchestration without rewriting model internals unnecessarily.
+
+The current recorded tier loops use short bar windows and distinct level keys/tempos. Merely increasing generation duration without updating window selection, manifests and playback would still ship short loops. The score work must update those contracts together. Current cue metadata explicitly states some derived stems were never listened to. Automated timbre/tempo metrics cannot close listening acceptance tasks.
+
+## Verification at first checkpoint
+41 comms layout/director checks passed, including explicit mirror-position and retired-opener checks. Analyzer reported no issues for the changed director/view/layout test; including the existing director test surfaces two pre-existing brace-style informational findings in unrelated brood-voice cases. Existing landscape fixture emitted an offscreen START GAME tap warning. A targeted phone test passed, but its /tmp image output was not visible from the forge; do not claim visual screenshot review from that attempt.
+
+## Next independent work
+1. Finish paired-card verification and capture representative mobile review images.
+2. Inventory full existing render storage and model adapters; implement atomic resumable job records and durable master delivery.
+3. Compose the campaign section/bridge map before rendering a full bank; do not let the old eight-bar build stage erase extended arrangements.
+4. Build stable alien script/translation behavior and playful exchange text, then render voices and measure mouths against transformed audio.
+5. Sibling credits source inspection is now complete after public access was granted. Beach cinematic and our own generated credits remain unimplemented.

@@ -880,6 +880,7 @@ class CommsHudStack extends StatelessWidget {
           textDirection: right ? TextDirection.rtl : TextDirection.ltr,
           children: [
             SizedBox(
+              key: ValueKey('comms-portrait-${m.line.id}'),
               width: portrait,
               height: portrait,
               child: ClipRect(

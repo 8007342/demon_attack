@@ -5,6 +5,7 @@ import 'package:demon_attack/comms/comms_bank.dart';
 import 'package:demon_attack/comms/comms_director.dart';
 import 'package:demon_attack/comms/comms_mouth.dart';
 import 'package:demon_attack/comms/comms_portraits.dart';
+import 'package:demon_attack/comms/comms_types.dart';
 import 'package:demon_attack/comms/comms_view.dart';
 import 'package:demon_attack/comms/squad_comms.dart';
 import 'package:demon_attack/game/model.dart';
@@ -292,6 +293,16 @@ void main() {
       expect(rects[0].top, rects[1].top);
       expect(rects[0].overlaps(rects[1]), isFalse);
       expect(rects[0].width, closeTo(rects[1].width, .01));
+      final ordered = [...rects]..sort((a, b) => a.left.compareTo(b.left));
+      final faces = [
+        for (final m in rig.director.active)
+          ...find
+              .byKey(ValueKey('comms-portrait-${m.line.id}'))
+              .evaluate()
+              .map((e) => tester.getRect(find.byWidget(e.widget))),
+      ]..sort((a, b) => a.left.compareTo(b.left));
+      expect(faces.first.left - ordered.first.left, lessThan(4));
+      expect(ordered.last.right - faces.last.right, lessThan(4));
       expect(find.byKey(const ValueKey('hud-score')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-lives')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-hearts')), findsOneWidget);
@@ -329,6 +340,59 @@ void main() {
       }
     });
   }
+
+  testWidgets('compact reply keeps its retired opening line visible', (
+    tester,
+  ) async {
+    final director = CommsDirector();
+    const trigger = CommsTriggerSpec(
+      name: 'exchange',
+      priority: 1,
+      cooldown: 1,
+      ttl: 10,
+      lines: [],
+    );
+    CommsMessage message(String id, String text, double start) => CommsMessage(
+      trigger: trigger,
+      line: CommsLine(
+        id: id,
+        speaker: commsCast.values.first.id,
+        duration: 1,
+        text: text,
+      ),
+      character: commsCast.values.first,
+      priority: 1,
+      queuedAt: 0,
+      readyAt: 0,
+      expiresAt: 10,
+      sequence: 0,
+    )..startedAt = start;
+    final opening = message('opening', 'That sector is mine!', 0);
+    final answer = message('answer', 'Only until my next turn!', 2)
+      ..inReplyTo = opening;
+    director.active.add(answer); // Opener has already retired from audio.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            child: CommsHudStack(director: director, now: 2.5),
+          ),
+        ),
+      ),
+    );
+    expect(
+      find.textContaining('That sector is mine!', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Only until my next turn!', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('comms-strip-opening')), findsOneWidget);
+    expect(find.byKey(const ValueKey('comms-strip-answer')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('phone: a full transmission replaces the travel transition', (
     tester,

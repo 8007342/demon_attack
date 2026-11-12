@@ -289,6 +289,8 @@ void main() {
       c.handle(const GameEvent('win'), 0);
       c.update(0);
       expect(c.history, ['win.h0']);
+      final opening = c.active.single;
+      expect(identical(opening.reply!.inReplyTo, opening), isTrue);
       // Another call arrives mid-exchange: it must wait for the answer.
       c.handle(const GameEvent('help'), .5);
       _run(c, .5, 12);
