@@ -1,0 +1,17 @@
+{
+  "schema": "demon-attack.backend-blocker/v1",
+  "status": "waiting_for_host_node_admission",
+  "successful_music_candidates": 1,
+  "planned_music_candidates": 27,
+  "radio_queue": "radio-bank-2026-11-12",
+  "radio_planned_clips": 574,
+  "refused_workflow": "art/workflows/music/campaign-a2a-headroom.json",
+  "node": "AudioAdjustVolume",
+  "studio_reports_module": "comfy_extras.nodes_audio",
+  "host_error": "node_not_pinned: AudioAdjustVolume is not a ComfyUI core node nor one of a pinned custom-node package (images/imagegen-studio/node-classes.tsv); the studio runs only pinned nodes",
+  "observed_need": "Raw FLAC exports reach 0 dBFS. Leave headroom before integer export; later gain reduction cannot repair prior clipping.",
+  "requested_repair": "Refresh the host core-node allowlist to admit the installed built-in AudioAdjustVolume node. Retry admitted workflow after repair.",
+  "bypass_used": false,
+  "production_assets_replaced": false,
+  "source_reference": "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_audio.py"
+}

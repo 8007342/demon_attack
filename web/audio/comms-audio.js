@@ -27,8 +27,8 @@
   let ducked = false, releaseTimer = null;
   let level = speechLevels[window.demonAudio?.levels?.speech] !== undefined ? window.demonAudio.levels.speech : 'full';
   const busGain = () => volume * speechLevels[level] * voiceGain;
-  const probe = typeof Audio === 'function' ? new Audio() : null;
-  const formats = probe?.canPlayType?.('audio/ogg; codecs="opus"') ? ['ogg', 'm4a'] : ['m4a', 'ogg'];
+  // Current-browser PWA delivery: one high-quality Opus bank.
+  const formats = ['ogg'];
 
   function graph() {
     const g = window.demonAudio?.graph;

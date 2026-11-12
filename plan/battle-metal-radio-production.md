@@ -41,3 +41,32 @@ Lua runner: tools/production/run.lua. Each job records atomic state, hashes inpu
 Toast refinement: linked exchanges share one decorated full-width toast, first portrait left and reply right; isolated calls occupy half width, with two available slots. Translations can wrap. Both faction orders pass portrait/landscape tests, including reduced motion. Stable alien alphabet and delayed translation remain pending; task 4 remains open to track that full acceptance requirement.
 
 PWA clarification: operator has no bucket/NAS. Target modern browsers, final Opus media on the PWA origin, no older-browser AAC requirement. Keep lossless masters out of deployed assets and preserve bounded retained masters on remote work branches. Opus bitrate comparison is underway; the existing runtime/legacy codec bank has not yet been migrated. A full-bank run still needs the campaign map, source/output size budget, phrase-aware playback and listening decisions. No unattended scheduler or full-bank render is currently running.
+
+## Large batch launch — 2026-11-12
+Full radio queue launched: 385 human lines + 189 original demon performances
+across 25 synthetic identities. One guarded resident Kokoro/Chatterbox worker
+serves Lua clip jobs; completed masters, Opus files, metadata and atomic ledgers
+are pushed per clip with a repository-wide Git checkpoint lock. The first
+complete demon candidate (broodTaunt.d0) uses Chatterbox, reversal and down-pitch,
+measured -18.72 LUFS, and has no fallback. A vocabulary test caught “warning tap”;
+the scheduler was stopped/drained, the source changed to “warning nudge”, all
+47 comms/layout checks passed, and hash-verified production resumed. This source
+change invalidated old global line-bank hashes; unaffected model takes are
+reused only through their own content keys, while candidate metadata is rebuilt.
+
+Campaign map is composed in art/music/campaign.json and plan/campaign-composition.md.
+All five 96-bar guides rendered with original recurring theme and evolving
+arrangements; four outgoing/pivot/incoming guides also exist. Full music request
+set: 27 candidates (~45 minutes), including level variations, bridges, ending
+and menu. First level-1 candidate is remotely checkpointed; its raw export still
+reaches full scale. Remaining music renders are held to fix headroom before
+export. Host refusal of the installed built-in AudioAdjustVolume node is
+node_not_pinned; the operator has been asked to refresh the node allowlist.
+No direct-API bypass is authorized or used. Radio continues independently.
+
+Stable original alphabet, progressive writing, delayed translation, immediate
+accessible meaning and full/half toast behavior are implemented. Demons target
+40% airtime. Opus-only fetch is implemented; old AAC files remain pending bank
+promotion/removal. Flutter comms/layout 47 pass; director checks also pass after
+share adjustment; 19 web-audio tests pass and analysis is clean. Full-cast audio,
+final mouth review, score selection/bridges and playback integration remain open.

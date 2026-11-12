@@ -111,8 +111,8 @@
   // bar for bar, chosen by fleetIntact() before (or switched in place after) the cue.
   const fleetVariant = { levelclear: 'levelclear-fleet', finale: 'finale-fleet' };
   let fleetIntactFlag = false;
-  const probe = typeof Audio === 'function' ? new Audio() : null;
-  const formats = probe?.canPlayType?.('audio/ogg; codecs="opus"') ? ['ogg', 'm4a'] : ['m4a', 'ogg'];
+  // Current-browser PWA delivery: one high-quality Opus bank.
+  const formats = ['ogg'];
 
   function parseMidi(buffer) {
     const data = new Uint8Array(buffer);
