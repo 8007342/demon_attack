@@ -5,7 +5,7 @@ return {["exit"]=0,
 [\"inputs\"]={[\"art/comms/audio.json\"]=\"81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7\",\
 [\"art/comms/cast.json\"]=\"77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a\",\
 [\"art/comms/demon-delivery.json\"]=\"6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8\",\
-[\"art/comms/lines.json\"]=\"68b3a1e71551fa360329dbd4a29e700cec8814b465e8611d749733686ac039fd\",\
+[\"art/comms/lines.json\"]=\"7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab\",\
 [\"tools/comms_pipeline.py\"]=\"7e4b347ed2f1d54bc35e400b23f1de11957844cd209c538e41ba1f002a9e50eb\",\
 [\"tools/production/checkpoint.lua\"]=\"6322dbbdeba33de179696113090c138bfc8f6d62190329da9095f539f7c3de6f\",\
 [\"tools/production/model_worker.py\"]=\"8d8095249858d6f9958c1bc634931c1ff810e5720161515ca8a4336c788a4de3\",\
@@ -17,11 +17,11 @@ return {["exit"]=0,
 [3]=\"assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/voice.flac\",\
 [4]=\"assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/radio.ogg\",\
 [5]=\"assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/metadata.json\"}}",
-["finished"]="2026-11-12T16:29:31Z",
+["finished"]="2026-11-12T16:33:30Z",
 ["inputs"]={["art/comms/audio.json"]="81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
 ["art/comms/cast.json"]="77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
 ["art/comms/demon-delivery.json"]="6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8",
-["art/comms/lines.json"]="68b3a1e71551fa360329dbd4a29e700cec8814b465e8611d749733686ac039fd",
+["art/comms/lines.json"]="7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
 ["tools/comms_pipeline.py"]="7e4b347ed2f1d54bc35e400b23f1de11957844cd209c538e41ba1f002a9e50eb",
 ["tools/production/checkpoint.lua"]="6322dbbdeba33de179696113090c138bfc8f6d62190329da9095f539f7c3de6f",
 ["tools/production/model_worker.py"]="8d8095249858d6f9958c1bc634931c1ff810e5720161515ca8a4336c788a4de3",
@@ -30,10 +30,10 @@ return {["exit"]=0,
 ["tools/production/voice_bank_job.lua"]="3049e7a81c96c88badef052d67b5757fc87d50fde82df9b6be78f632734400a3"},
 ["outputs"]={["assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/baseline.flac"]="e4f4852f62f32de8d1b37a1e5ae95874455e640ac50ac3c2173ed5360f69616e",
 ["assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/expressive.flac"]="fa70864eb89e7bbc43fb28072ac3e24a7745326dc389e84be3d3f80545ee9aca",
-["assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/metadata.json"]="85ec3a3e1dce4838950055499c9aaa9e68d183880caee48cd0a71324e5b0779d",
-["assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/radio.ogg"]="6a8782c10f179e5783a50aba24b749e0dbfdda937c1903952ff316c1d856b499",
+["assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/metadata.json"]="ab147317b5b7a3c0f542a3f6e639c0d84adf587670f62b8a69036dd2cf146cbc",
+["assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/radio.ogg"]="a0e60a4b651284742a7a351f6ebbfb400d0492cf5537de945af8e525248dde47",
 ["assets/research/battle-metal-radio/batch-2026-11-12/voices/homingPickup.h4/voice.flac"]="3f5fb3e283168094ccba85c130598ff44ea6ed4ce84184be9fad9024fae3e5c3"},
 ["result"]="exit",
 ["schema"]="demon-attack.production-job/v1",
-["started"]="2026-11-12T16:29:20Z",
+["started"]="2026-11-12T16:33:30Z",
 ["status"]="done"}
