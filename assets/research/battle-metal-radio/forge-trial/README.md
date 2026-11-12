@@ -15,7 +15,7 @@ Small trial masters are committed here so a remote push preserves them. This doe
 `overture-90s.flac`: job `st-1794464067796-1`, seed 26111202, same pinned workflow/models, 90 seconds requested and decoded. Prompt requests a quiet opening, recurring guitar theme, contrasting bridge and climax. GPU run 16.27 seconds (17.827 seconds total). This is a longer backend trial, not the composed campaign map or an accepted replacement.
 
 Both raw music trials decode as 48 kHz stereo, mean volume -14.0 dB, maximum 0.0 dBFS. Full-scale samples require inspection before production acceptance; reducing volume alone cannot repair any clipping already in the master. No audition or structure assessment has been claimed.
-\n
+
 ## Completed voice and compression trials
 
 Three expressive Pip takes and their clean baselines are under voices/, with metrics, package versions and a labelled reverse/pitch experiment. Every successful job was pushed separately; actual resume skipped all finished jobs after verifying their hashes. See voices/README.md for listening instructions and limitations.
