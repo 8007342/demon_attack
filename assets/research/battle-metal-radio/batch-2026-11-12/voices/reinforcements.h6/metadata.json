@@ -4,11 +4,11 @@
   "trigger": "reinforcements",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 59371,
-  "mouth": "555<<<<<<<<<<3332222<<<<<4444<<<<==000",
-  "open": "03689998887566653214899867746888743211",
-  "vis": "ooooo----------------------------eee--",
-  "lufs": -18.01,
+  "samples": 52683,
+  "mouth": "55<<<<<<<<3344444444444<<<<<==000",
+  "open": "058989999856777532787868998643211",
+  "vis": "ooooo-----------------------eee--",
+  "lufs": -18.02,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "reinforcements.h6",
   "text": "New wing incoming, high and fast!",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h6/baseline.flac",
-      "sha256": "12154dc99c40c624f5e02ce3fee5c57f1ee58222bdb55d664ad1e1cd89e33902",
-      "float_source_sha256": "2f5a529c3c0a32577d6313f54c9e5ac0789dfc85cd99ec2b830bd5f124e0000d",
+      "sha256": "f2b4807848d6889a8d0a9d44eff55e2b5bb0a09e9a265be05c385a178bbeaab0",
+      "float_source_sha256": "6279e3014b88b788a23819279e6c7d3d9d38ea8947d9ad966471cb254ef0cee4",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h6/expressive.flac",
-      "sha256": "60cc905663e5c81e6c9533c79864f2dd6f7f40c431b820bd42150f37b0e17801",
-      "float_source_sha256": "612f638337b054547c29142e417a373f051f1beee6f5a0a82245fd416930ef35",
+      "sha256": "3f21aded2114629c176f26a28618019e315c04f907a4fbd506e66564216b3d75",
+      "float_source_sha256": "ba5f2f59b99a957855046c35489310a7d737bce77ca2d541c4ac3233bd8f05c4",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h6/voice.flac",
-      "sha256": "ba00b1c6e1e8d1e8492b806b562503bf84e95a3e3c1f16f3be8acda6b17adad1",
-      "float_source_sha256": "adb5a95f10a4c8a2ba98013305bff6ba14105f1dc64dd575dfef9c07f807a487",
+      "sha256": "71827580455805ea066c394ef4c0246ea82dc45e3e9fc8999f8b5dcffac9f231",
+      "float_source_sha256": "399ee27981ed32fbae2993698223e3a8832eb8115dd93af94b1a70af92b04a56",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 10.85,
+    "seconds": 24.1,
     "error": null,
     "text": "New wing incoming, high and fast!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "522aed6fdad9a272bed85f771e2ed06d7f28b38ed1767bb59f01b29a0b7610e0"
+    "sha256": "ae9a14039c7966f4d7097baa87afbbf349a34afbc6a7089d827e6633af1288d5"
   }
 }
