@@ -1,0 +1,67 @@
+{
+  "speaker": "nomad",
+  "kind": "human",
+  "trigger": "sectorStart.4",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 96250,
+  "mouth": "000<<<======33220000===<<<<<<<===000000<<<<<<<<<<<<<<<<<===00",
+  "open": "0068887675336532110144788689874421110068999889999998899853211",
+  "vis": "--oo--eeeeee--------ee--------ee------oo------ooooo-----eee--",
+  "lufs": -18.15,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "sectorStart.4.h2",
+  "text": "Hollow sector. Stay tight. Nobody wanders off.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h2/baseline.flac",
+      "sha256": "286745c954cd5f1a2e014e4069e3964ca1310eb86481291477935a3424d4423a",
+      "float_source_sha256": "549df416efabe551870fb43f1647b78cdb23388fef8858a0b77195fa971bb63b",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h2/expressive.flac",
+      "sha256": "a79123ef377f5f9e30af62baacef2173c2486857832d3cee965d3fb34ace9fb1",
+      "float_source_sha256": "40aa90ef67a4191b34f857eca20ef7e08e5be46afd2afc2949b0eda14753e87c",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h2/voice.flac",
+      "sha256": "d0bcd9877b963663504f1ae90c13d2f971e70f8018e883132bf92d11e553a644",
+      "float_source_sha256": "a3b89ff62414987b88866dbe55f6a1afbb3befcf1f8e694f2ffa6b801c2192db",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 15.09,
+    "error": null,
+    "text": "Hollow sector. Stay tight. Nobody wanders off."
+  },
+  "seed": 1418526443,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "99f4c5c9c60eb6ab9020e3d962a530a1d898784b675040db341d726ebf0ff32c"
+  }
+}
