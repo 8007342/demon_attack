@@ -5,8 +5,8 @@
   "engine": "chatterbox",
   "emotion": "urgent",
   "samples": 47466,
-  "mouth": "334444<<<<<<====<<<<<<<<<<<<22",
-  "open": "057767885786323788767854798642",
+  "mouth": "334444<<<<<<=====44444444<<<22",
+  "open": "057767885786323787767854798642",
   "vis": "------------eeeee-------------",
   "lufs": -18.03,
   "schema": "demon-attack.voice-candidate/v1",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h5/baseline.flac",
-      "sha256": "015119c53d75a963d98aba0f334383fb4cf936d7767cb19473433cc2d3c41ada",
-      "float_source_sha256": "6d225f9c8f947d55bf6186f34c15d493076aa6694d528aead2a956d09b7157df",
+      "sha256": "fc1d7b4f0696867601bc8d3ae7ac3402a3828a00ea7f65ae0d9af1ca02227adf",
+      "float_source_sha256": "66dff92f0c08692e2f9e57b4e749c1abce9f22c763248c4283bb4ad93936b64f",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h5/expressive.flac",
-      "sha256": "d03603fe2a87c91e9ff3f679c221a76e56b7fbeb3884ff8e8db92e4f01119073",
-      "float_source_sha256": "4a9b3892f67690a128363276cf93d2087195f2040107e3e09e56805124e61ac1",
+      "sha256": "7e63c7ab9e9f7fbc4d22add4190d5c82b264a40069ba76813594bcced7afb914",
+      "float_source_sha256": "b10849f0310e5980cfd260f22b24ca5708f4a52139dfb2ea0e771a0002e54841",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h5/voice.flac",
-      "sha256": "ca614f64bd84638257d6124b63c1e837818be7811b18b9ad7e0d2d412107ce54",
-      "float_source_sha256": "b5da1a2b3142c07a203dcf54c7c9a907c5e3ae55b5f8ee424bff0c2e8eb2a3b8",
+      "sha256": "b479b575092472c79298e12d5ea492a37cf0713ad5c90d3e254e56a620aea876",
+      "float_source_sha256": "e301424429502ee4ee3c137ab8791793a6cc9f5a07fba976a570b7c25cf4cdc6",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 10.33,
+    "seconds": 24.46,
     "error": null,
     "text": "Reinforcements! Party just got crowded!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "9a511f04f1497b131be4388b292eb54925539c572ebbb721ded518a012e61268"
+    "sha256": "d6ae30c4e99110183258093936a6bece904fd270a41290401ce21f0bcdcfeded"
   }
 }
