@@ -4,11 +4,11 @@
   "trigger": "allySaved",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 60604,
-  "mouth": "222<<<222<<<<<000<<<<<5555553330022200",
-  "open": "03788532589853217898765687435432233321",
-  "vis": "-------------ee-------oo------ee------",
-  "lufs": -18.06,
+  "samples": 66009,
+  "mouth": "333<<<<<<<<<<====<<<<<<<<<<<33=====4455500",
+  "open": "057885326788532178988878995356532457775321",
+  "vis": "---ooo-------ee---------------eee----ooo--",
+  "lufs": -18.31,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "allySaved.h3",
   "text": "Granite's clear! Solid as a rock, thanks to you.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allySaved.h3/baseline.flac",
-      "sha256": "aa9c4fe97df21ae670992dd8e2491048010818c9363898981f2efc9e366f63ff",
-      "float_source_sha256": "c845a87a714746d93612ad68c5329a5023d42f2d59259c3a5c9fc7ce310168c7",
+      "sha256": "a1512749e5742b3df1173f2da3b923a0629a11900bc298758277f9c6a24ca8d3",
+      "float_source_sha256": "453763e4add3cdc8ed3a59689c7c5ccc45cdc63e0822ec5c05d8234c8639f5a9",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allySaved.h3/expressive.flac",
-      "sha256": "6df376acf20fe295a6949429354b315846f62595c19510a4121d4377d75e8488",
-      "float_source_sha256": "32f03c7829ea10285ea1a8ce0920b68df6bc01d4268b4bdb9a1f4b1123ffcd04",
+      "sha256": "613bd73f1bae12e79a1a72b3ad07eaf1b596872886438c4bb17b7be52b25999a",
+      "float_source_sha256": "506b9b904e5d5fd4a2a510a3d2005d2c686962e9a034692129c0f1539c244b0a",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allySaved.h3/voice.flac",
-      "sha256": "88f5433cdbd0a6a7a4e9d30e4cbc9ef7d051fc4270003fef51b1050901d2d5ca",
-      "float_source_sha256": "86a6419cd88edcf1f40a1ef97344e9e1f8ddb3b7db6b71ab0d28a477eadbb4e7",
+      "sha256": "fec5fd8d781d2fd77473ebbbecc51df2ca70704fd2138027943dcc02ee8607be",
+      "float_source_sha256": "1280eb6663d1f4ce00ad1331e73e8ac845f61ac52f5c539c399ab7fbf7669b10",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 10.12,
+    "seconds": 17.62,
     "error": null,
     "text": "Granite's clear! Solid as a rock, thanks to you."
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "03879d3a50b2108b141d361eb68a87e86ee077bdc1ef4b117bcc8d5719af6259"
+    "sha256": "05a56718cf5e527ee0d61e6b8ab7c0debdde27434c71c772e026d32d6c6884c3"
   }
 }
