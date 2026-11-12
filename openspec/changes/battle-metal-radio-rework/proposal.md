@@ -10,6 +10,7 @@ The existing short music loops are conspicuous, especially across level transiti
 - Give demons more airtime, original reverse/pitch-treated performances, consistent alien writing and slightly delayed translations; playful human/demon comeback exchanges.
 - Use one full-width conversation toast for linked human/demon exchanges, with the first portrait on the left and the comeback portrait on the right, both texts and alien script/translation. Isolated messages each occupy half a toast, allowing two independent messages at once.
 - Scatter unobtrusive clues throughout battle chatter; after completing all five levels, reveal teenage humans and demons playing a board game at a San Diego beach, sharing burgers, fries and sodas. Follow a brief cinematic with credits.
+- Serve reviewed media entirely through the PWA using high-quality Opus for current browsers; preserve bounded lossless masters on remote work branches, without a bucket/NAS or older-browser AAC requirement.
 - Migrate orchestration to Lua and demanding processing to Rust or Go; retain Python for necessary model libraries. Keep resumable ledgers and frequent remote checkpoints.
 
 ## Capabilities

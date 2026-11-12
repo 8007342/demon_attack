@@ -9,7 +9,7 @@
 - [ ] 6. Implement resumable Lua orchestration with hashes, atomic records, failure recovery and remote checkpoints; migrate suitable processing to Rust/Go while preserving necessary model adapters.
 - [ ] 7. Write the campaign harmonic/theme/section map, extended variations, outgoing/incoming bridges and synchronized stems/accents.
 - [ ] 8. Render, audition and revise the complete score locally, preserving lossless masters and provenance in durable storage.
-- [ ] 9. Implement score playback/adaptation and test phase continuity, pause/resume, event density and all level bridges.
+- [ ] 9. Implement phrase-aware score playback/adaptation with bounded decoded memory and modern Opus-only PWA delivery; test compression quality, phase continuity, pause/resume, event density and all level bridges.
 - [ ] 10. Rewrite playful comms with subtle clues, more demon initiations and linked taunts; define a stable original alphabet and delayed accessible translation.
 - [ ] 11. Re-render human and demon voice banks; review clean/transformed/encoded audio and regenerate timing from final voices.
 - [ ] 12. Repair or regenerate mouth assets and review synchronized clips on phones.

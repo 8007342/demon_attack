@@ -345,7 +345,7 @@ void main() {
     tester,
   ) async {
     final director = CommsDirector();
-          if (renderDir.isNotEmpty) await tester.runAsync(_loadReviewFonts);
+    if (renderDir.isNotEmpty) await tester.runAsync(_loadReviewFonts);
     const trigger = CommsTriggerSpec(
       name: 'exchange',
       priority: 1,
@@ -451,7 +451,8 @@ void main() {
         addTearDown(tester.view.resetDevicePixelRatio);
         final director = CommsDirector();
         final human = commsCast.values.firstWhere((c) => !c.isDemon);
-          if (renderDir.isNotEmpty) await tester.runAsync(_loadReviewFonts);
+        await tester.runAsync(() => CommsPortraitAtlas.instance.load());
+        if (renderDir.isNotEmpty) await tester.runAsync(_loadReviewFonts);
         final demon = commsCast.values.firstWhere((c) => c.isDemon);
         CommsMessage line(String id, CommsCharacter who, double start) =>
             CommsMessage(
