@@ -4,11 +4,11 @@
   "trigger": "groundForceSighted",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 71131,
-  "mouth": "000333332200000044<<<===<<<<<<555555<<<443333",
-  "open": "013554212211100677888666889987642126895766532",
-  "vis": "------ee-----------eeeeooo----oo-------------",
-  "lufs": -18.09,
+  "samples": 73524,
+  "mouth": "00033333222000004444<<=====<<<<<22000<<<<<<222",
+  "open": "0035543223211002777788577778997642115895886421",
+  "vis": "--------------------eeeeeee-------------------",
+  "lufs": -18.14,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "groundForceSighted.h5",
   "text": "Granite here. They're massing below you. Lots of them.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h5/baseline.flac",
-      "sha256": "9b8e50f63253cf1429daad401b9a5d8dde781dedcbdd2d6ffeb45dbc48a49b12",
-      "float_source_sha256": "2f007ed43e0d8c3407e2789cb8ea0a55303e017fd7bbc2c0068c2f7bbd89cf4b",
+      "sha256": "674992799ab01d35e579493df4270343afac5667e56355b1be5fdf3159cbb9db",
+      "float_source_sha256": "1b9c6e83f6ac8331fac2fcc713f5c615696150ea8202d7932700c9729640f0a5",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h5/expressive.flac",
-      "sha256": "54221a3afd387eb04d67638f6b0683ee6d94a9485947df870106f3ebc45d9b16",
-      "float_source_sha256": "a3823828aec93b3927d4614dbbf1e1e255a73186a1de45ac3a75b7dd4eeffc7f",
-      "gain": 0.8787012960915876,
+      "sha256": "da18ce550e7277350f0cd3c5b7032557e4616669dc8abd570a575663e68c89d0",
+      "float_source_sha256": "8dc1564c167d9f42370b29b781f58d2b023bec1884b42d1c07ce0a6788c8ae83",
+      "gain": 0.974380527076787,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h5/voice.flac",
-      "sha256": "af49405fe2b88bd74e5e4a449ed5baf2d823e67ff5284d8bb4ddd13c1d03aa60",
-      "float_source_sha256": "78582416c37d28eda87448ae214951eaef4849dc9e4e488af87bc3fea811d30f",
-      "gain": 0.6773194816083202,
+      "sha256": "6b91240af123108f59d0e8ee994329c17af97a0b9f76dac3bae951be5ed802fe",
+      "float_source_sha256": "9dcbd57b44ba5686c46c11b85542bf1e257bfbcdd37640be6f65a63d5fe1f6a4",
+      "gain": 0.7250772402167742,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 11.47,
+    "seconds": 11.87,
     "error": null,
     "text": "Granite here! They're massing below you! Lots of them!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "7300a6582cb82b8a575bf0f6b0329db660e09b15eb744e81bb3e2cc9c7eed0d5"
+    "sha256": "81c8a0b210e2c0ff458da77d37fed9a891b3cacfb1916a3b4351d0b2883331a9"
   }
 }
