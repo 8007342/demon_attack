@@ -1,0 +1,67 @@
+{
+  "speaker": "vexxa",
+  "kind": "demon",
+  "trigger": "sentinelIncoming",
+  "engine": "chatterbox-reverse-pitch",
+  "emotion": "excited",
+  "samples": 53059,
+  "mouth": "00007777777222222277777733333<<<<<",
+  "open": "0158899999532246689986876687688532",
+  "vis": "--------------oooo---oooo----eee--",
+  "lufs": -18.5,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "sentinelIncoming.d1",
+  "text": "Here comes the brood!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.d1/baseline.flac",
+      "sha256": "2791ea007a76dbfcd47a0f757e6855025da59b63d5a6ded51607cfbb265228d5",
+      "float_source_sha256": "f754caa4c207f5008072030be16f5094bbc1e0654acf455917d02e43ee48a913",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.d1/expressive.flac",
+      "sha256": "f4350df0e76f2eaa34d7ee073fe67676cca42e7291ed570118789fc8b088067e",
+      "float_source_sha256": "abfe9653148b910c1ced2fde4eea2286f08aac9fb06b670087928c20d0cf52a4",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sentinelIncoming.d1/voice.flac",
+      "sha256": "a0be08c424c1e6264052ae386cf2a6d70ca2eee616b958e6494cefbd904fb99e",
+      "float_source_sha256": "f4fce8515f8131471bda1add87a053d42d87d23f1021df35de849de8d68b46d7",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 10.11,
+    "error": null,
+    "text": "Here comes the brood!"
+  },
+  "seed": 2080910754,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "c9f22a773b0e564a252fd87209fcb23b59d79c7aad970e3cba89000900e1e792"
+  }
+}
