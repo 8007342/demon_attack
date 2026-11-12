@@ -1,0 +1,67 @@
+{
+  "speaker": "voss",
+  "kind": "human",
+  "trigger": "groundForceSighted",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 56118,
+  "mouth": "555555444===55<<<<======444<<<<===00",
+  "open": "047876777676678888746668777799864211",
+  "vis": "oo-------eeeoo----eeee--------eeee--",
+  "lufs": -18.01,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "groundForceSighted.h7",
+  "text": "Lantern sees walkers coming over the rocks.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h7/baseline.flac",
+      "sha256": "f7d361e9d4d992b2697e61b635436989b77824f6c1c08b92ecaa59cb45e41f67",
+      "float_source_sha256": "84bb6de409cc6c2afd23c2716416df349ddcdd8fb74fb5717ad5bd68192d160a",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h7/expressive.flac",
+      "sha256": "2fa268176e9ecb15266e4fee1e7208987b7ab44043c82334793253e2f554e741",
+      "float_source_sha256": "b7d1d9ccdbc230d4b856fcd78e7a0c91e496d82fd512b8fef3cc94a694097c22",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h7/voice.flac",
+      "sha256": "79bcd6ebfe9be7c1788bd6561c133a7ad05eda64e912c9b29029f569ce7d6326",
+      "float_source_sha256": "db8c343a2ca9a3326554f279d54ecacf5bcb1dcc71faddd52901cf5eac466447",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 10.87,
+    "error": null,
+    "text": "Lantern sees walkers coming over the rocks!"
+  },
+  "seed": 783368953,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "68b3a1e71551fa360329dbd4a29e700cec8814b465e8611d749733686ac039fd",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "7a1cde222c15e18b271380dc91a18a6c4559f7de12f3ef8d9a5704d2f2ffba7e"
+  }
+}
