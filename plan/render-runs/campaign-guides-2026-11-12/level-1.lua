@@ -1,0 +1,25 @@
+return {["exit"]=0,
+["fingerprint"]="{[\"argv\"]={[1]=\"lua\",\
+[2]=\"tools/production/guide_job.lua\",\
+[3]=\"1\"},\
+[\"inputs\"]={[\"art/music/campaign.json\"]=\"b40054e2cee0927c3c7a024deadf146508ebd288fd8919f5ad92057922183138\",\
+[\"tools/campaign_guide.py\"]=\"3eb3f025eaa98a903a3ca52cc80624cb36184f2dd6ddf8d11fe859e4964c0b24\",\
+[\"tools/music_guide.py\"]=\"128b412806e4b42837c3dd3a5b6675f6efaf881a8c397efe3808de40c8cbe271\",\
+[\"tools/music_motifs.py\"]=\"c5de16b2f3a70b388c91413448a877b43c3bea1ffd11ffb04b081a0f59bfade9\",\
+[\"tools/production/campaign-guides.lua\"]=\"5a5214daac0c5175b4c99f5a67a9807b67e2ad1d27569096a056ccc97835d440\",\
+[\"tools/production/guide_job.lua\"]=\"008f74a86ce6d5cd54f99b72b98e06a9bdc6e789c5d3dd2555f2ce089848eba0\",\
+[\"tools/production/run.lua\"]=\"abf8440a6976e3e03e94534f31340120bb0f674cad0b6978b580aeeaf0eb8e00\"},\
+[\"outputs\"]={[1]=\"assets/research/battle-metal-radio/batch-2026-11-12/guides/level-1.json\"}}",
+["finished"]="2026-11-12T16:17:15Z",
+["inputs"]={["art/music/campaign.json"]="b40054e2cee0927c3c7a024deadf146508ebd288fd8919f5ad92057922183138",
+["tools/campaign_guide.py"]="3eb3f025eaa98a903a3ca52cc80624cb36184f2dd6ddf8d11fe859e4964c0b24",
+["tools/music_guide.py"]="128b412806e4b42837c3dd3a5b6675f6efaf881a8c397efe3808de40c8cbe271",
+["tools/music_motifs.py"]="c5de16b2f3a70b388c91413448a877b43c3bea1ffd11ffb04b081a0f59bfade9",
+["tools/production/campaign-guides.lua"]="5a5214daac0c5175b4c99f5a67a9807b67e2ad1d27569096a056ccc97835d440",
+["tools/production/guide_job.lua"]="008f74a86ce6d5cd54f99b72b98e06a9bdc6e789c5d3dd2555f2ce089848eba0",
+["tools/production/run.lua"]="abf8440a6976e3e03e94534f31340120bb0f674cad0b6978b580aeeaf0eb8e00"},
+["outputs"]={["assets/research/battle-metal-radio/batch-2026-11-12/guides/level-1.json"]="cf8e69dd7abbe271c676c1c066cc1fd3c4e0ad6e02cb7ed250903a0d4dba8f11"},
+["result"]="exit",
+["schema"]="demon-attack.production-job/v1",
+["started"]="2026-11-12T16:17:07Z",
+["status"]="done"}
