@@ -349,6 +349,10 @@ def stage_refs(args):
     for c in cast['cast']:
         if 'voice' not in c:
             continue
+        if args.only and c['id'] not in args.only.split(','):
+            continue
+        if args.limit and len(made) >= args.limit:
+            break
         voice = c['voice']
         out = WORK / 'refs' / f"{c['id']}.wav"
         key = json.dumps([voice['voice'], voice['speed'], sentence, spec['kokoro']['revision']])
@@ -364,7 +368,8 @@ def stage_refs(args):
         # Derived registers (hotrefs) stay valid while the neutral clip does.
         if old.get(cid, {}).get('sha256') == entry['sha256'] and 'registers' in old[cid]:
             entry['registers'] = old[cid]['registers']
-    (WORK / 'refs.json').write_text(json.dumps(made, indent=1))
+    old.update(made)
+    (WORK / 'refs.json').write_text(json.dumps(old, indent=1))
     print(f'refs: {len(made)} reference clips in {WORK / "refs"}')
 
 
@@ -1686,8 +1691,8 @@ def main(argv=None):
     parser.add_argument('stage', choices=sorted(STAGES))
     parser.add_argument('--force', action='store_true', help='re-render cached voices/grunts')
     parser.add_argument('--threads', type=int, default=6, help='expressive/hotrefs: torch threads')
-    parser.add_argument('--only', default='', help='expressive: comma-separated clip id prefixes')
-    parser.add_argument('--limit', type=int, default=0, help='expressive: render at most N lines')
+    parser.add_argument('--only', default='', help='expressive: clip id prefixes; refs: exact speaker ids (comma-separated)')
+    parser.add_argument('--limit', type=int, default=0, help='expressive/refs: render at most N lines/references')
     parser.add_argument('--kokoro-only', action='store_true', help='radio: ignore Chatterbox renders')
     parser.add_argument('--dir', default='', help='prosody: folder of clean <clip id>.wav renders')
     parser.add_argument('--out', default='', help='prosody: write per-clip numbers as JSON')

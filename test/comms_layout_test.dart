@@ -391,6 +391,51 @@ void main() {
     );
     expect(find.byKey(const ValueKey('comms-strip-opening')), findsOneWidget);
     expect(find.byKey(const ValueKey('comms-strip-answer')), findsOneWidget);
+    final toast = find.byKey(const ValueKey('comms-conversation'));
+    expect(toast, findsOneWidget);
+    expect(tester.getSize(toast).width, 360);
+    final firstPortrait = tester.getRect(
+      find.byKey(const ValueKey('comms-portrait-opening')),
+    );
+    final secondPortrait = tester.getRect(
+      find.byKey(const ValueKey('comms-portrait-answer')),
+    );
+    expect(firstPortrait.left, lessThan(10));
+    expect(secondPortrait.right, greaterThan(350));
+    expect(tester.takeException(), isNull);
+
+    // An isolated call reserves half the dock, even when no second call exists.
+    answer.inReplyTo = null;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            child: CommsHudStack(director: director, now: 2.5),
+          ),
+        ),
+      ),
+    );
+    expect(toast, findsNothing);
+    final isolated = find.byKey(const ValueKey('comms-strip-answer'));
+    expect(tester.getSize(isolated).width, 179);
+    director.active.add(message('unrelated', 'Hold the line!', 2.1));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            child: CommsHudStack(director: director, now: 2.5),
+          ),
+        ),
+      ),
+    );
+    final unrelated = find.byKey(const ValueKey('comms-strip-unrelated'));
+    expect(tester.getSize(unrelated).width, 179);
+    expect(
+      tester.getRect(isolated).overlaps(tester.getRect(unrelated)),
+      isFalse,
+    );
     expect(tester.takeException(), isNull);
   });
 
