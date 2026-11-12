@@ -90,6 +90,21 @@ def estimate_duration(kind, line):
     return round(0.55 + words * 0.34, 3)
 
 
+def selected_clip(args, clip_id):
+    if not args.only:
+        return True
+    ids = args.only.split(',')
+    return clip_id in ids if getattr(args, 'exact', False) else any(clip_id.startswith(p) for p in ids)
+
+
+def performance_line(kind, line):
+    """Demon translation is the original performance source before reversal."""
+    if kind == 'human':
+        return line
+    return {**line, 'text': line.get('say') or line['gloss'],
+            'emotion': line.get('emotion', 'teasing')}
+
+
 def dart_string(value):
     escaped = value.replace('\\', '\\\\').replace("'", "\\'").replace('$', '\\$')
     return f"'{escaped}'"
@@ -239,8 +254,11 @@ def read_wav(path):
 
 def write_wav(path, audio):
     import soundfile as sf
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(path), audio.astype('float32'), SR, subtype='FLOAT')
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix('.tmp.wav')
+    sf.write(str(temporary), audio.astype('float32'), SR, subtype='FLOAT')
+    os.replace(temporary, path)
 
 
 def cast_by_id(cast):
@@ -273,7 +291,12 @@ class Kokoro:
         torch.set_num_threads(int(os.environ.get('COMMS_THREADS', '6')))
         self.torch = torch
         self.revision = spec['kokoro']['revision']
-        self.model = KModel(repo_id=spec['kokoro']['repo']).eval()
+        from huggingface_hub import hf_hub_download
+        self.repo = spec['kokoro']['repo']
+        self.download = hf_hub_download
+        self.model = KModel(repo_id=self.repo,
+                            config=self.download(self.repo, 'config.json', revision=self.revision),
+                            model=self.download(self.repo, 'kokoro-v1_0.pth', revision=self.revision)).eval()
         self.pipelines = {}
         self.KPipeline = KPipeline
 
@@ -287,12 +310,13 @@ class Kokoro:
         import numpy as np
         p = self.pipeline(voice)
         with self.torch.no_grad():
-            parts = [r.audio.numpy() for r in p(text, voice=voice, speed=speed) if r.audio is not None]
+            pack = self.download(self.repo, f'voices/{voice}.pt', revision=self.revision)
+            parts = [r.audio.numpy() for r in p(text, voice=pack, speed=speed) if r.audio is not None]
         return np.concatenate(parts).astype('float64')
 
     def phonemes(self, ps, voice, speed):
         p = self.pipeline(voice)
-        pack = p.load_voice(voice)
+        pack = p.load_voice(self.download(self.repo, f'voices/{voice}.pt', revision=self.revision))
         with self.torch.no_grad():
             out = self.KPipeline.infer(self.model, ps, pack, speed)
         return out.audio.numpy().astype('float64')
@@ -312,10 +336,11 @@ def stage_voices(args):
     tts = None
     done = 0
     for clip_id, _trigger, kind, line in clip_entries(lines):
-        if kind != 'human':
+        if kind != 'human' and not getattr(args, 'performed_demons', False):
             continue
-        if args.only and not any(clip_id.startswith(p) for p in args.only.split(',')):
+        if not selected_clip(args, clip_id):
             continue
+        line = performance_line(kind, line)
         if args.limit and done >= args.limit:
             break
         voice = people[line['speaker']]['voice']
@@ -550,10 +575,11 @@ def stage_expressive(args):
     todo = []
     emotion_of = {}
     for clip_id, _trigger, kind, line in clip_entries(lines):
-        if kind != 'human':
+        if kind != 'human' and not getattr(args, 'performed_demons', False):
             continue
-        if args.only and not any(clip_id.startswith(p) for p in args.only.split(',')):
+        if not selected_clip(args, clip_id):
             continue
+        line = performance_line(kind, line)
         emotion = line.get('emotion', 'calm')
         register = cb['emotions'][emotion].get('ref', 'neutral')
         ref = reference_path(line['speaker'], register)
@@ -1343,11 +1369,15 @@ def stage_radio(args):
     meta = {}
     fallbacks = {}
     for clip_id, trigger, kind, line in clip_entries(lines):
+        if not selected_clip(args, clip_id):
+            continue
         demon = kind == 'demon'
+        performed = demon and getattr(args, 'performed_demons', False)
+        spoken = performance_line(kind, line)
         engine = 'grunt' if demon else 'kokoro'
         raw = None
-        if not demon and not args.kokoro_only:
-            raw, why = accept_expressive(clip_id, spec, line)
+        if (not demon or performed) and not args.kokoro_only:
+            raw, why = accept_expressive(clip_id, spec, spoken)
             if raw is None:
                 fallbacks[clip_id] = why
             else:
@@ -1356,6 +1386,15 @@ def stage_radio(args):
             raw = read_wav(WORK / 'raw' / f'{clip_id}.wav')
         if not demon:
             raw = deliver(raw, spec['chatterbox']['emotions'].get(line.get('emotion', 'calm'), {}).get('post'))
+        elif performed:
+            delivery = json.loads((ROOT / 'art/comms/demon-delivery.json').read_text())['characters'][line['speaker']]
+            if delivery['reverse']:
+                raw = raw[::-1].copy()
+            ratio = 2 ** (delivery['pitch_semitones'] / 12)
+            shifted = np.interp(np.arange(0, len(raw) - 1, ratio), np.arange(len(raw)), raw)
+            raw = wsola(shifted, len(raw) / max(1, len(shifted)))
+            engine += '-reverse-pitch'
+        write_wav(WORK / 'performed' / f'{clip_id}.wav', raw)
         rng = np.random.default_rng(seed_of('radio:' + clip_id))
         out, clean, lead = radio_chain(raw, demon, rng, spec)
         target = spec['loudness']['demon_lufs' if demon else 'human_lufs']
@@ -1381,7 +1420,12 @@ def stage_radio(args):
         }
         if clip_id in fallbacks:
             meta[clip_id]['fallback'] = fallbacks[clip_id]
-    (WORK / 'radio.json').write_text(json.dumps(meta, indent=1))
+    radio_path = WORK / 'radio.json'
+    previous = json.loads(radio_path.read_text()) if args.only and radio_path.exists() else {}
+    previous.update(meta)
+    temporary = radio_path.with_suffix('.tmp.json')
+    temporary.write_text(json.dumps(previous, indent=1))
+    os.replace(temporary, radio_path)
     from collections import Counter
     print(f'radio: processed {len(meta)} clips, engines {dict(Counter(m["engine"] for m in meta.values()))}')
     for clip_id, why in fallbacks.items():
@@ -1701,6 +1745,8 @@ def main(argv=None):
     parser.add_argument('--force', action='store_true', help='re-render cached voices/grunts')
     parser.add_argument('--threads', type=int, default=6, help='expressive/hotrefs: torch threads')
     parser.add_argument('--only', default='', help='voices/expressive: clip id prefixes; refs: exact speaker ids (comma-separated)')
+    parser.add_argument('--exact', action='store_true', help='match --only clip ids exactly')
+    parser.add_argument('--performed-demons', action='store_true', help='render original demon performances from their translations before reverse/pitch processing')
     parser.add_argument('--limit', type=int, default=0, help='voices/expressive/refs: render at most N lines/references')
     parser.add_argument('--kokoro-only', action='store_true', help='radio: ignore Chatterbox renders')
     parser.add_argument('--dir', default='', help='prosody: folder of clean <clip id>.wav renders')

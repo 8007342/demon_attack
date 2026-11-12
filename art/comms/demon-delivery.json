@@ -1,0 +1,72 @@
+{
+  "schema": "demon-attack.demon-delivery/v1",
+  "comment": "Original synthetic performances, then reverse and down-pitch. Character source voices are Kokoro identities, not real actors. Candidate settings require listening; no Halo samples.",
+  "characters": {
+    "gorrak": {
+      "source_voice": "am_onyx",
+      "speed": 0.92,
+      "pitch_semitones": -5,
+      "reverse": true
+    },
+    "vexxa": {
+      "source_voice": "af_sarah",
+      "speed": 1.02,
+      "pitch_semitones": -3,
+      "reverse": true
+    },
+    "skarn": {
+      "source_voice": "am_fenrir",
+      "speed": 1.06,
+      "pitch_semitones": -4,
+      "reverse": true
+    },
+    "morth": {
+      "source_voice": "bm_george",
+      "speed": 0.91,
+      "pitch_semitones": -6,
+      "reverse": true
+    },
+    "ulgra": {
+      "source_voice": "am_michael",
+      "speed": 0.96,
+      "pitch_semitones": -5,
+      "reverse": true
+    },
+    "skritch": {
+      "source_voice": "am_puck",
+      "speed": 1.12,
+      "pitch_semitones": -2,
+      "reverse": true
+    },
+    "grunnok": {
+      "source_voice": "am_echo",
+      "speed": 0.88,
+      "pitch_semitones": -7,
+      "reverse": true
+    },
+    "blatch": {
+      "source_voice": "am_liam",
+      "speed": 1.08,
+      "pitch_semitones": -3,
+      "reverse": true
+    },
+    "nibb": {
+      "source_voice": "af_bella",
+      "speed": 1.16,
+      "pitch_semitones": -2,
+      "reverse": true
+    },
+    "krag": {
+      "source_voice": "am_fenrir",
+      "speed": 0.9,
+      "pitch_semitones": -7,
+      "reverse": true
+    },
+    "sliss": {
+      "source_voice": "bf_emma",
+      "speed": 1.04,
+      "pitch_semitones": -3,
+      "reverse": true
+    }
+  }
+}

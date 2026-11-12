@@ -196,33 +196,33 @@
   "radio": {
     "comment": "v3 softer keying: levels are relative to the voice peak (1.0) before loudness normalisation. Click = rounded sine 'tock'; burst/tail = low-passed carrier noise (RMS-scaled); tone = quiet fleet key-up tone.",
     "human": {
-      "low_hz": 300,
-      "high_hz": 3400,
-      "drive": 1.9,
-      "hiss_db": -52,
+      "low_hz": 120,
+      "high_hz": 9000,
+      "drive": 1.12,
+      "hiss_db": -66,
       "presence_hz": 1800,
-      "presence_db": 3.0
+      "presence_db": 1.2
     },
     "demon": {
-      "low_hz": 200,
-      "high_hz": 3000,
-      "drive": 2.4,
-      "hiss_db": -48,
+      "low_hz": 100,
+      "high_hz": 8000,
+      "drive": 1.18,
+      "hiss_db": -64,
       "presence_hz": 1100,
-      "presence_db": 4.0,
+      "presence_db": 1.5,
       "hum_hz": 55,
-      "hum_db": -42
+      "hum_db": -60
     },
     "keying": {
       "click_hz": 820,
-      "click_level": 0.07,
+      "click_level": 0.035,
       "burst_s": 0.05,
-      "burst_level": 0.06,
-      "tail_level": 0.06,
+      "burst_level": 0.025,
+      "tail_level": 0.025,
       "noise_cutoff_hz": 1500,
       "tone_hz": 1050,
       "tone_s": 0.045,
-      "tone_level": 0.035
+      "tone_level": 0.02
     },
     "lead_s": 0.07,
     "squelch_tail_s": 0.08,
@@ -253,12 +253,12 @@
   "loudness": {
     "human_lufs": -18.0,
     "demon_lufs": -18.5,
-    "peak_dbfs": -4.0,
+    "peak_dbfs": -4,
     "decoded_peak_max_dbfs": 0.0,
     "playback_gain_db": 2.0
   },
   "codec": {
-    "opus_kbps": 16,
+    "opus_kbps": 48,
     "aac_kbps": 24,
     "aac_cutoff_hz": 4000,
     "sample_rate": 24000

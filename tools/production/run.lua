@@ -44,23 +44,13 @@ for _,path in ipairs(spec.inputs or {}) do fingerprint_inputs[#fingerprint_input
 local inputs = {}; for _,path in ipairs(fingerprint_inputs) do inputs[path] = assert(hash(path), 'missing input ' .. path) end
 local function checkpoint(job)
   if not spec.checkpoint then return end
-  local branch = read('git branch --show-current'):gsub('%s+$','')
-  assert(branch:match('^work/'), 'checkpoint requires a work branch')
-  local paths = {state_dir .. '/' .. job.id .. '.lua'}
+  local argv = {'lua','tools/production/checkpoint.lua','Checkpoint production ' .. spec.id .. '/' .. job.id,
+    state_dir .. '/' .. job.id .. '.lua'}
   for _,path in ipairs(job.outputs) do
     assert(path:match('^assets/research/'), 'checkpoint output must be a research asset')
-    paths[#paths+1] = path
+    argv[#argv+1] = path
   end
-  local argv = {'git','add','--'}; for _,p in ipairs(paths) do argv[#argv+1] = p end
   assert(os.execute(command(argv)))
-  local diff = {'git','diff','--cached','--quiet','--'}
-  for _,p in ipairs(paths) do diff[#diff+1] = p end
-  if not os.execute(command(diff)) then
-    local commit = {'git','commit','--only','-m','Checkpoint trial ' .. spec.id .. '/' .. job.id,'--'}
-    for _,p in ipairs(paths) do commit[#commit+1] = p end
-    assert(os.execute(command(commit)))
-  end
-  assert(os.execute(command({'git','push','origin','HEAD:refs/heads/' .. branch})))
 end
 for _,job in ipairs(spec.jobs) do
   assert(job.id:match('^[%w_-]+$'), 'invalid job id')

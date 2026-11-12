@@ -1,0 +1,221 @@
+{
+  "schema": "demon-attack.campaign-composition/v1",
+  "status": "composed-guide-candidate-map",
+  "source": "Original motifs in tools/music_motifs.py; no quoted melodies",
+  "theme": {
+    "degrees_minor": [
+      1,
+      3,
+      5,
+      4
+    ],
+    "durations_beats": [
+      1.5,
+      0.5,
+      1,
+      1
+    ],
+    "development": "Clean opening, call/answer, countermelody, dark reduction, final harmonized recap; major third in level 2"
+  },
+  "sections": [
+    {
+      "id": "opening",
+      "bars": 8
+    },
+    {
+      "id": "theme-a",
+      "bars": 24
+    },
+    {
+      "id": "answer-b",
+      "bars": 16
+    },
+    {
+      "id": "contrast-c",
+      "bars": 16
+    },
+    {
+      "id": "developed-recap",
+      "bars": 24
+    },
+    {
+      "id": "outgoing",
+      "bars": 8
+    }
+  ],
+  "levels": [
+    {
+      "id": 1,
+      "name": "Krybor",
+      "bpm": 170,
+      "key": "E minor",
+      "theme": [
+        "E4",
+        "G4",
+        "B4",
+        "A4"
+      ],
+      "harmony": [
+        "Em",
+        "Em",
+        "C",
+        "D",
+        "Em",
+        "Em",
+        "Am-G",
+        "B"
+      ],
+      "character": "rebellious galloping battle metal, palm-muted guitars, punchy fleet rhythm",
+      "bars": 96,
+      "expected_seconds": 135.52941176470588
+    },
+    {
+      "id": 2,
+      "name": "Ringfall",
+      "bpm": 160,
+      "key": "D major",
+      "theme": [
+        "D4",
+        "F#4",
+        "A4",
+        "G4"
+      ],
+      "harmony": [
+        "D",
+        "F#m",
+        "G",
+        "A",
+        "Bm",
+        "G",
+        "Em",
+        "A"
+      ],
+      "character": "heroic power metal, soaring twin guitar harmonies, vigorous double kick, bright brass",
+      "bars": 96,
+      "expected_seconds": 144
+    },
+    {
+      "id": 3,
+      "name": "Ember Moon",
+      "bpm": 180,
+      "key": "E minor",
+      "theme": [
+        "E4",
+        "G4",
+        "B4",
+        "A4"
+      ],
+      "harmony": [
+        "Em",
+        "Em",
+        "C-D",
+        "Em",
+        "Em",
+        "Em",
+        "F-G",
+        "Am-B"
+      ],
+      "character": "fiery battle metal, heavy galloping guitars, thundering war drums, blazing lead guitar",
+      "bars": 96,
+      "expected_seconds": 128
+    },
+    {
+      "id": 4,
+      "name": "The Hollow",
+      "bpm": 150,
+      "key": "C minor",
+      "theme": [
+        "C4",
+        "Eb4",
+        "G4",
+        "F4"
+      ],
+      "harmony": [
+        "Cm",
+        "Gb-F",
+        "Eb-Db",
+        "Cm-B",
+        "Cm",
+        "Gb-F-Eb-Db",
+        "Ab",
+        "G"
+      ],
+      "character": "ominous epic doom battle metal, crushing low riffs, tolling bells, war march drums",
+      "bars": 96,
+      "expected_seconds": 153.6
+    },
+    {
+      "id": 5,
+      "name": "The Carrier",
+      "bpm": 190,
+      "key": "F minor",
+      "theme": [
+        "F4",
+        "Ab4",
+        "C5",
+        "Bb4"
+      ],
+      "harmony": [
+        "Fm-Gb-E",
+        "Fm-B",
+        "Db-C",
+        "Gb-Fm",
+        "Fm-Gb-E",
+        "Fm-B",
+        "Db-D-Eb-E",
+        "Fm-B"
+      ],
+      "character": "apocalyptic blackened power metal, tremolo guitars, blast beats, pipe organ, strongest campaign climax",
+      "bars": 96,
+      "expected_seconds": 121.26315789473684
+    }
+  ],
+  "bridges": [
+    {
+      "from": 1,
+      "to": 2,
+      "pivot": "E sustained through Em -> G -> A7 -> D",
+      "seconds": 32
+    },
+    {
+      "from": 2,
+      "to": 3,
+      "pivot": "B sustained through Bm -> C -> B7 -> Em",
+      "seconds": 32
+    },
+    {
+      "from": 3,
+      "to": 4,
+      "pivot": "G sustained through Em -> G -> G7 -> Cm",
+      "seconds": 32
+    },
+    {
+      "from": 4,
+      "to": 5,
+      "pivot": "C sustained through Cm -> Db -> C7 -> Fm",
+      "seconds": 32
+    }
+  ],
+  "ending": {
+    "seconds": 96,
+    "arc": "F minor final cadence, F major warm resolution, slow original theme reprise for beach and credits",
+    "bpm": 96,
+    "key": "F major"
+  },
+  "batch": {
+    "id": "campaign-batch-2026-11-12",
+    "level_candidates_per_level": 3,
+    "denoise": [
+      0.45,
+      0.6,
+      0.75
+    ],
+    "bridge_candidates_each": 2,
+    "ending_candidates": 2,
+    "menu_candidates": 2,
+    "retained_lossless_estimate_mb": 260,
+    "delivery": "Opus 160 kb/s stereo, same origin PWA",
+    "review": "Metrics and guide alignment plus human listening; no automatic artistic acceptance",
+    "master_storage": "Remote work branch, per-job checkpoints, bounded FLAC files; source guides excluded from PWA bundle"
+  }
+}
