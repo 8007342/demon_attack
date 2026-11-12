@@ -11,7 +11,7 @@ lua tools/production/resume_radio.lua groundForceSighted-h10 \
   >> /home/forge/.cache/demon-attack/campaign-batch-2026-11-12/radio-supervised.log 2>&1
 ```
 
-At handoff refresh, it had just started `allyRetreated-h1` after `allyRetreated-h0` checkpointed. Check the controller/worker and latest log before restarting; never start a second controller. It recycles the model worker every 40 jobs and stops on a job failure. Each completed clip is pushed immediately through the checkpoint helper.
+At handoff refresh, it had just started `allyRetreated-h2` after `allyRetreated-h1` checkpointed. Check the controller/worker and latest log before restarting; never start a second controller. It recycles the model worker every 40 jobs and stops on a job failure. Each completed clip is pushed immediately through the checkpoint helper.
 
 The last full audio audit recorded 294/574 clips (208 human, 86 demon), 4.30 MB Opus; this predates recent completions and is not a current count. Re-run the partial audit for current measured progress:
 
