@@ -1,0 +1,67 @@
+{
+  "speaker": "voss",
+  "kind": "human",
+  "trigger": "groundForceInRange",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 68075,
+  "mouth": "555555<<<<<<<===<<55<<<<44<<<<55<<<<<<<2200",
+  "open": "0378778888886426897588887788743488588874211",
+  "vis": "oooooo---ee--ee---oo----------oo-----------",
+  "lufs": -18.05,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "groundForceInRange.h3",
+  "text": "Lantern here. They're right under you. Light them up!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceInRange.h3/baseline.flac",
+      "sha256": "5934ccba187482c3cea06dea0035b905f9d73cf8174b603f4766e4b86bc9a85a",
+      "float_source_sha256": "074a642441af977884c68006b5e92ed1dd80cc8d4fa72537e1b5f7d1b98a1325",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceInRange.h3/expressive.flac",
+      "sha256": "1523b080963550fb646dec0359afe5d70861662aff8c9fbeeeaccfb5152d0b02",
+      "float_source_sha256": "e3323d9c65d540e1f97bd0da73650eca8aa8168be5e7e54a1e2bdb4507b707a9",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceInRange.h3/voice.flac",
+      "sha256": "8f9e8378132af1d5028e59eaa4afedb1d912491023fbea8fc420736ac41a0283",
+      "float_source_sha256": "a9ac3b1a1be96bab80ceca0c00ca7578010c53fa7825d7eb8cf3a01c4ad6b224",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 11.15,
+    "error": null,
+    "text": "Lantern here! They're right under you! Light them up!"
+  },
+  "seed": 1169553210,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "fd3f0b67a550965527b07d32c404d3807ef8021f2072328df8561ee3f41bb889"
+  }
+}
