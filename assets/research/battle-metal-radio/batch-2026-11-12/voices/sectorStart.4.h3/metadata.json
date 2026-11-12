@@ -4,11 +4,11 @@
   "trigger": "sectorStart.4",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 76139,
-  "mouth": "00=====44444===<<<<444==0000<<<<<<<<44444<<<<<22",
-  "open": "005646877745436887877632110689999996778568898743",
-  "vis": "--eeeee-----ee--------ee--------oooo------------",
-  "lufs": -18.07,
+  "samples": 70782,
+  "mouth": "0000==3333222==444444222<<<<<<<<<555544<<<<22",
+  "open": "004653655644324776766436899999998677667888743",
+  "vis": "----ee-------ee--------------oooooooo--------",
+  "lufs": -18.15,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "sectorStart.4.h3",
   "text": "Kestrel has the high ground. Follow my lead through the towers.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h3/baseline.flac",
-      "sha256": "e409862df1f8e5b0dffd290545be43717be780113178f13f02b45ecefbf7f524",
-      "float_source_sha256": "f66a175076b85048d053f9dbaa40c1933b0d1c0a7b09ad7aeb8cc10181fb7783",
+      "sha256": "aa6f89db4156a56ad4233773e237dffd6c0bf8c8f8326f2d6872a980ae0999c1",
+      "float_source_sha256": "6d2df1e967759deeb74254abb36b79e5596814f696fb774937a77d8a30926cbb",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h3/expressive.flac",
-      "sha256": "2d2515da8d17c551948ce9fb4a64a13fb1f5497f38517e64d14236c0184932d0",
-      "float_source_sha256": "0019816889bbdac7620bda59488f1ead8d76ebdc98ea6e0636b3152ec1717202",
+      "sha256": "80a375dea02c465da33d5c1e0813a25c16b4b19e02f43c6222a5c35d9384e663",
+      "float_source_sha256": "6dcd4cac438b394ad29fde8bc422ab4413cf416649bc2b0abb131ac9449c0a0e",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h3/voice.flac",
-      "sha256": "dbd062789e42aaa0aabe04354b20663b217109c0344c3fc11b0a3c06f9bd113e",
-      "float_source_sha256": "48b0ba38f530be435c02e251465809515405a859b9b4e0ad5be2df9a4e4663dd",
+      "sha256": "5cab8dc6e54437d2ba31f1e103c21668db2de7fcf148db55fed51a7c3710b72a",
+      "float_source_sha256": "0489a51e904eefb1993ed63f2375c31310d35e06735d39ce64130961bf51de7f",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 12.94,
+    "seconds": 24.6,
     "error": null,
     "text": "Kestrel has the high ground. Follow my lead through the towers."
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "815274eb1c982d3730ad2d714aa5764acb2e2cdc0daf453fe29a0ca63947f414"
+    "sha256": "ff9acee0560c413e9be60541008c877194750650e950f35a56c09322173a2b2d"
   }
 }
