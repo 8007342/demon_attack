@@ -4,11 +4,11 @@
   "trigger": "groundUnitDestroyed",
   "engine": "chatterbox",
   "emotion": "teasing",
-  "samples": 51457,
-  "mouth": "33222<<<<=====<<<<44444<<<<<===00",
-  "open": "044358999657768998765478889974321",
-  "vis": "-----oo--eeeee--------------eee--",
-  "lufs": -18.01,
+  "samples": 53400,
+  "mouth": "222222<<<==<<44<<<<<===<<<<5555222",
+  "open": "0443378996588778889866788644775321",
+  "vis": "-----ooooee---------ee-----oo-----",
+  "lufs": -18.02,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "groundUnitDestroyed.h9",
   "text": "Bulwark's still standing and they aren't.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundUnitDestroyed.h9/baseline.flac",
-      "sha256": "c5a9ab025b74dd2f85697dc95b26b16e885d42b62ef1355e1fa0aa23755d261b",
-      "float_source_sha256": "d1e91e1c340d08ca653d52f66207fe5f3c323b6be4873d7aaf00d51f5d91973a",
+      "sha256": "3cb684ccecc15245e4a04523b5d1c76b1cc0e23517242cec2c7c2a8a59531e3b",
+      "float_source_sha256": "89193ce34dec1727430ec4e0c35a722de35be21e484ca9e9a365e7cbbe4e62a1",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundUnitDestroyed.h9/expressive.flac",
-      "sha256": "e58b5cdb0fa89c1a8398f6ff904999c22c527e2810e191b6809c73b120251379",
-      "float_source_sha256": "14fe2a2e308ae4da594eaa724f88efb8066dd367351bb0ac9d69bda1c40a6d2f",
+      "sha256": "81f7b151e831fe9706badb97d9f89dcaa722bc3047ebee3c492f51c4489348f8",
+      "float_source_sha256": "8d26cb57053c92d4ce07e867d378c60e2f69a8eadfc567144e6196f6674ad41b",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundUnitDestroyed.h9/voice.flac",
-      "sha256": "2451443c205d0237989d73d8ef0f9fe40ab0eaa26941df1b431a16aa7fbec9eb",
-      "float_source_sha256": "a20392e81848ab93b5667e841778bd71823e09faf285a135df43f4ca86477cd5",
+      "sha256": "5c7043af2bc6b78d47ebe6d9d2d9cca58e605156fac7f5e0474f0a1186e45180",
+      "float_source_sha256": "770c24bd064e753edfc97f3651dfc01b704e22364dfa7df279b767b55b6d9a8e",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 10.27,
+    "seconds": 27.05,
     "error": null,
     "text": "Bulwark's still standing and they aren't."
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "bb1cc6a9e7a1927f4d82e6be96a4e237c37eaac3d444d38cd8632bae4c4a2fed"
+    "sha256": "907bdd835186803280544865de72abe6c0bae1217d98fbe0e7807f52b748de03"
   }
 }
