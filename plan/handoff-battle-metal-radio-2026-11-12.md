@@ -1,6 +1,6 @@
 # Handoff: Battle Metal score and radio bank
 
-Branch: `work/battle-metal-radio-rework`. Latest verified remote checkpoint at handoff preparation: `d378499` (`allyRetreated-h0`). Checkpoints are serialized by `tools/production/checkpoint.lua` and pushed to this remote work branch. Forge-local caches and any uncheckpointed work are disposable.
+Branch: `work/battle-metal-radio-rework`. Latest verified remote checkpoint at handoff refresh: `06902fd` (`allyRetreated-h8`); the supervisor had started `allyRetreated-d0`. Checkpoints are serialized by `tools/production/checkpoint.lua` and pushed to this remote work branch. Forge-local caches and any uncheckpointed work are disposable.
 
 ## Live radio production
 
@@ -11,9 +11,9 @@ lua tools/production/resume_radio.lua groundForceSighted-h10 \
   >> /home/forge/.cache/demon-attack/campaign-batch-2026-11-12/radio-supervised.log 2>&1
 ```
 
-At handoff refresh, it had just started `allyRetreated-h2` after `allyRetreated-h1` checkpointed. Check the controller/worker and latest log before restarting; never start a second controller. It recycles the model worker every 40 jobs and stops on a job failure. Each completed clip is pushed immediately through the checkpoint helper.
+At handoff refresh, it had just started `allyRetreated-d0` after `allyRetreated-h8` checkpointed. Check the controller/worker and latest log before restarting; never start a second controller. It recycles the model worker every 40 jobs and stops on a job failure. Each completed clip is pushed immediately through the checkpoint helper.
 
-The last full audio audit recorded 294/574 clips (208 human, 86 demon), 4.30 MB Opus; this predates recent completions and is not a current count. Re-run the partial audit for current measured progress:
+Latest partial audio audit: 310/574 clips (219 human, 91 demon), 4.57 MB Opus; production is still running, so this is a moving count. Re-run the partial audit for current measured progress:
 
 ```sh
 /home/forge/.cache/tillandsias-project/bin/radio-bank --allow-partial \
