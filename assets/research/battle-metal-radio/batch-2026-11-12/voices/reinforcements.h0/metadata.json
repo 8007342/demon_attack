@@ -31,7 +31,7 @@
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h0/voice.flac",
       "sha256": "bb499b63b2298a032b976fbf2a187a7e7972b6769437438b6a8927201fa24eef",
-      "float_source_sha256": "77b3e6c0fce5f4ce1ec06c6309222ab66ce9e5200c1786cb55e3f3d215b45467",
+      "float_source_sha256": "694b041bfa13e0db6aaaa15f39fc33551b02c084da8ad63b4ead36a370f022d1",
       "gain": 1.0,
       "pcm_bits": 24
     }
@@ -44,7 +44,7 @@
   "seed": 1667772662,
   "input_hashes": {
     "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
-    "art/comms/lines.json": "68b3a1e71551fa360329dbd4a29e700cec8814b465e8611d749733686ac039fd",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
     "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
     "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "7d615574dd0e6790d532eec975870855154be7c68fa29b0919bfa3be7209e974"
+    "sha256": "fbf3e76bff3ccc640a2d09c8a0e703d2a68810c091b984631b0c51f81bb56a50"
   }
 }
