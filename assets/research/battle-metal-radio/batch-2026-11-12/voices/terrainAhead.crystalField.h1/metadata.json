@@ -1,0 +1,67 @@
+{
+  "speaker": "kessler",
+  "kind": "human",
+  "trigger": "terrainAhead.crystalField",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 58122,
+  "mouth": "555<<<<<44444==00000000<<<<<3333<<<22",
+  "open": "0378886477576421168687689688558788632",
+  "vis": "oo---oo------eee--------ee-----------",
+  "lufs": -18.19,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "terrainAhead.crystalField.h1",
+  "text": "Mind the crystals, they cut tracks like paper!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.crystalField.h1/baseline.flac",
+      "sha256": "144100ccbc842942598d6dc8424b2120524c11377a75b01b3f107ffb4440913c",
+      "float_source_sha256": "4b96e3d4dceb155e995e9b27ca8778be92aa8eb0c27bd0898e2fe8baaa7e4dfa",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.crystalField.h1/expressive.flac",
+      "sha256": "16f28bdf896e101a9b23561e7974edff78f33d030c752f3a2f5264791cd1356c",
+      "float_source_sha256": "8f2c3740b26c4aedc739db131a536748a81dbae3c89a5e4bdc3891373a882e72",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.crystalField.h1/voice.flac",
+      "sha256": "b73ed1eb51648aa67b0c88fcbe5c28975f3016fcab9700c70d85575f0c017807",
+      "float_source_sha256": "49805aefa5b460ebe2f5a82ec68ba040e289fdd540f155d9a258cf37705de264",
+      "gain": 0.8611112107375306,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 9.3,
+    "error": null,
+    "text": "Mind the crystals, they cut tracks like paper!"
+  },
+  "seed": 663372132,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "236cf1f88f86e222f26f723f3a03ea7bbcee9aac320976070a81946094bdc7fb"
+  }
+}
