@@ -4,11 +4,11 @@
   "trigger": "weaponPickup.powerful",
   "engine": "chatterbox",
   "emotion": "excited",
-  "samples": 50535,
-  "mouth": "222555<<<<==000000<<<44<<<<<==00",
-  "open": "04676688764211104788976898743211",
-  "vis": "---oo-----eee---------------ee--",
-  "lufs": -18.13,
+  "samples": 50545,
+  "mouth": "222222<<<<==000000<<<44<<<<<==00",
+  "open": "04676688764211104788977898853211",
+  "vis": "---oo-----ee----------------ee--",
+  "lufs": -18.11,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "weaponPickup.powerful.h3",
   "text": "Heavy cannons. Choose your targets.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/weaponPickup.powerful.h3/baseline.flac",
-      "sha256": "810822850259c29e7961de8def7434518d5357c1deb4daf42f4a71a3cfef0183",
-      "float_source_sha256": "6eace99e7d36c27e478ad6ff6f2a0b8bb4fee8a1b4712fa627095361e815d801",
+      "sha256": "d05c0c1a867c93a12942a77346e0d657c5c21915566c944c689a8a69aaaf2a1c",
+      "float_source_sha256": "b891587790e5acf069dbcfde8def1b6947dda15e892df6b77e42c4d3b859128f",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/weaponPickup.powerful.h3/expressive.flac",
-      "sha256": "d319dd959907005b954578fc84eb28ed041959b55099c0412c1239cd4690af55",
-      "float_source_sha256": "f6ac1b054d3f8930b02640276818779974505b95229832e855734faa9d5c22e2",
+      "sha256": "9f7061735071c69e796b034a239d009ed4cec4577dcbbe7c802ef1b7ae600afd",
+      "float_source_sha256": "70c2f625e40ea7c9d3992186a08773f576244a97bb779059856fedb78472fdf4",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/weaponPickup.powerful.h3/voice.flac",
-      "sha256": "18df4381755623fd3291554c73796e4e2f67bbbb777050ef71914287b1bea352",
-      "float_source_sha256": "143375ec999fa4e8edda65ca0c9277d315419a6980ae3240e18c4d77d7459dd1",
+      "sha256": "c73a7866eb932b32f773cb898985b8c7f88b06455546dc3a970f2b2bc332d068",
+      "float_source_sha256": "b5f3e14328c064c839c1b9c680c296cbbe122fdccd5dee4aa6d56914e99d7a6e",
       "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 9.72,
+    "seconds": 12.23,
     "error": null,
     "text": "Heavy cannons! Choose your targets!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "f85708652f9bfa1492ad4c1e8c96ae4c296306e0f3904b52b025f6de242c9b67"
+    "sha256": "6150be62d42d3fa91a55638ff9eb9f58d04f29bad6c38e5d1b38cfeee5e22b2e"
   }
 }
