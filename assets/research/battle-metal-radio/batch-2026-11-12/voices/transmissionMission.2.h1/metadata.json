@@ -1,0 +1,67 @@
+{
+  "speaker": "lindqvist",
+  "kind": "human",
+  "trigger": "transmissionMission.2",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 98966,
+  "mouth": "33<<<5555553333334455==00000000<<44<<<=====<<44<<444444455==00",
+  "open": "06897775433555445776433211000068976887532148967887777677764211",
+  "vis": "-----ooooo---------ooeee--------------eeee--------------ooee--",
+  "lufs": -18.13,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "transmissionMission.2.h1",
+  "text": "Ringfall patrols are dense. Fly fast, don't linger in the rings.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/transmissionMission.2.h1/baseline.flac",
+      "sha256": "9e177725ce6c7f6b65c51c932de909e4d3f098595e7b54a02c68edfd15349575",
+      "float_source_sha256": "12c992ed82933d0ae7eac548d538f17c91bec456e766a3633166327f653c5b46",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/transmissionMission.2.h1/expressive.flac",
+      "sha256": "a5d180bf74d5fe4255c71d3426c55ae5fc98504f56426168cfc29b75466535ea",
+      "float_source_sha256": "088e898d5d2308f6a19ada200b8f269e971ae064e522ab395ec96fefc84de053",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/transmissionMission.2.h1/voice.flac",
+      "sha256": "85d25089ed846147a08b5e0df0a2d6e0c8dac4778e1010f0f6f63943e64aebfb",
+      "float_source_sha256": "d4acf6aa600bce1f97d2bce23c15e07865992906c9c5757416786f1661426e82",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 13.35,
+    "error": null,
+    "text": "Ringfall patrols are dense. Fly fast, don't linger in the rings."
+  },
+  "seed": 1053371092,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "a2e1865075dea67adb642b4385ac2de59057be86d30fb87c8747ccb822bf4e31"
+  }
+}
