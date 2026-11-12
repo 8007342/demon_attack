@@ -1,0 +1,67 @@
+{
+  "speaker": "voss",
+  "kind": "human",
+  "trigger": "terrainAhead.canyon",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 74198,
+  "mouth": "55<<<<<44<<<44455==00000000<<3333<<<<<<<<<===00",
+  "open": "05898787788677776321105854798565688875378765321",
+  "vis": "ooo------------ooee-----------------------eee--",
+  "lufs": -18.15,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "terrainAhead.canyon.h2",
+  "text": "Lantern's lights on. It's dark between these cliffs.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.canyon.h2/baseline.flac",
+      "sha256": "a51e535ac58c6c80fe5979b4baf8d18642f28a368c2fc607919f2c367d17123e",
+      "float_source_sha256": "5e891d4e078f33a3b9806ba0a0c29211d7b37ba4c8719560424b02bad1a576ca",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.canyon.h2/expressive.flac",
+      "sha256": "7a76c78a3aab825d47b3d5c918f3098e1946591a4ddd43903f5592f799a2e5ba",
+      "float_source_sha256": "b094688ddd30709150113e87770818ecde5f4cbfd951ac8e4819e2dee924025e",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.canyon.h2/voice.flac",
+      "sha256": "61b3f38e7a4261c1acf49d3cbaa80efcae28acc24201c102ef133c872f9733e8",
+      "float_source_sha256": "838f48ad7df08745c6fe74e980dec69bb102cdead91715a3b514870142575844",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 11.36,
+    "error": null,
+    "text": "Lantern's lights on. It's dark between these cliffs."
+  },
+  "seed": 802949043,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "6cb23ff67f569d75d86264157ed5e68846eba59e4abbd7e2a997b67104b511a0"
+  }
+}
