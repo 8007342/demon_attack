@@ -23,6 +23,9 @@ pipeline=importlib.util.module_from_spec(spec);spec.loader.exec_module(pipeline)
 original_kokoro=pipeline.Kokoro
 original_chatterbox=pipeline.load_chatterbox
 models={}
+threads=int(os.environ.get('COMMS_THREADS','20'))
+if not 1 <= threads <= (os.cpu_count() or 1):
+    raise ValueError('COMMS_THREADS must fit the available CPU count')
 def kokoro(config):
     if 'kokoro' not in models: models['kokoro']=original_kokoro(config)
     return models['kokoro']
@@ -37,7 +40,7 @@ def produce(clip):
     cast, lines=pipeline.load_specs()
     entries={i:(trigger,kind,line) for i,trigger,kind,line in pipeline.clip_entries(lines)}
     trigger,kind,line=entries[clip]
-    common=['--exact','--limit','1','--threads','4','--performed-demons']
+    common=['--exact','--limit','1','--threads',str(threads),'--performed-demons']
     pipeline.main(['refs','--only',line['speaker'],*common])
     for stage in ('voices','expressive','radio'):
         pipeline.main([stage,'--only',clip,*common])
@@ -92,7 +95,7 @@ class Handler(BaseHTTPRequestHandler):
                     output=produce(clip)
                 else:
                     output=None
-                    pipeline.main([mode,'--only',clip,'--exact','--limit','1','--threads','4','--performed-demons'])
+                    pipeline.main([mode,'--only',clip,'--exact','--limit','1','--threads',str(threads),'--performed-demons'])
             if mode=='expressive':
                 record=json.loads((pipeline.WORK/'expressive.json').read_text())[clip]
                 if record['error']: raise RuntimeError(record['error'])
@@ -102,7 +105,7 @@ class Handler(BaseHTTPRequestHandler):
             traceback.print_exc();self.answer(500,{'ok':False,'error':str(exc)})
         finally: last=time.monotonic()
 server=HTTPServer(('127.0.0.1',18851),Handler);server.timeout=30
-print('voice worker ready on localhost:18851; one process, four threads',flush=True)
+print(f'voice worker ready on localhost:18851; one process, {threads} threads',flush=True)
 while time.monotonic()-last<900:
     server.handle_request()
 print('voice worker idle for 15 minutes; stopping',flush=True)

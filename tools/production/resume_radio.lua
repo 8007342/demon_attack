@@ -9,7 +9,9 @@ local specpath='tools/production/radio-bank-2026-11-12.lua'
 local spec=assert(loadfile(specpath,'t',{}))()
 assert(run({'mkdir','-p',cache}))
 if arg[1]~='--locked' then
- local ok,_,code=run({'flock','-n',cache..'/radio-supervisor.lock','lua',arg[0],'--locked'})
+ local argv={'flock','-n',cache..'/radio-supervisor.lock','lua',arg[0],'--locked'}
+ if arg[1]then argv[#argv+1]=arg[1]end
+ local ok,_,code=run(argv)
  os.exit(ok and 0 or code or 1)
 end
 local pid
@@ -35,7 +37,7 @@ local function start()
  local found=existing:read('a');existing:close()
  assert(found=='','voice worker already exists; inspect it before starting another')
  local argv={'env','HF_HOME=/home/forge/.cache/demon-attack/voice-trial/hf','HF_HUB_DISABLE_XET=1',
-  'COMMS_WORK=/home/forge/.cache/demon-attack/voice-trial/work','COMMS_THREADS=4',
+  'COMMS_WORK=/home/forge/.cache/demon-attack/voice-trial/work','COMMS_THREADS=20','OMP_NUM_THREADS=20','MKL_NUM_THREADS=20',
   '/home/forge/.cache/demon-attack/voice-trial/cb-venv/bin/python','-I','tools/production/model_worker.py'}
  pid=read({'sh','-c',command(argv)..' >> '..q(cache..'/model-worker-recycled.log')..' 2>&1 & echo $!'}):match('%d+')
  assert(pid)
@@ -47,9 +49,19 @@ local function start()
  error('worker startup timed out')
 end
 local ok,err=xpcall(function()
+ local from=arg[2]
+ if from then
+  local found=false;for _,job in ipairs(spec.jobs)do if job.id==from then found=true end end
+  assert(found,'unknown starting job '..from)
+ end
+ local count=0
  for i,job in ipairs(spec.jobs)do
-  if (i-1)%40==0 then stop();start()end
-  assert(run({'lua','tools/production/run.lua',specpath,job.id}),'job failed: '..job.id)
+  if not from or job.id==from then
+   from=nil
+   if count%40==0 then stop();start()end
+   assert(run({'lua','tools/production/run.lua',specpath,job.id}),'job failed: '..job.id)
+   count=count+1
+  end
  end
 end,debug.traceback)
 stop()
