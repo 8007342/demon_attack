@@ -1,0 +1,67 @@
+{
+  "speaker": "admiral",
+  "kind": "human",
+  "trigger": "transmissionMission",
+  "engine": "chatterbox",
+  "emotion": "warm",
+  "samples": 92077,
+  "mouth": "==========<<<<<444444<<<<<444<<<<<<<<<000000<<<<334444====",
+  "open": "0685775876878647777478878977788899864321100688785677775321",
+  "vis": "eeeeeee---------------------------oo------------------ee--",
+  "lufs": -18.1,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "transmissionMission.h2",
+  "text": "Every sector you clear brings our people home. Thank you, pilot.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/transmissionMission.h2/baseline.flac",
+      "sha256": "f4fec9ea8d9c3182a01ac383f61f3ed17c5837a366894b08879c9cab3de290c8",
+      "float_source_sha256": "344e674acb0ebf9c19f20ce73a925192df83eeb49b34629a091b45ec925966ee",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/transmissionMission.h2/expressive.flac",
+      "sha256": "19b91aa3d4dc5c576d53c3edf8b22970f4de9c40be0f5828f45e1958b083719a",
+      "float_source_sha256": "4c8e5e413bdcfbf753b8fa1798118457992a497ee198bc73cddd7ef7f679a4f5",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/transmissionMission.h2/voice.flac",
+      "sha256": "2839c40c4c28d52120fc8af29f541f3b6a5ee2c9d8bb8779d045ae4f1cf143aa",
+      "float_source_sha256": "6ab7ae988b5b3f668f1316d43a0d87ca8cfb4a9ea980bbeecece050383d26598",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 12.43,
+    "error": null,
+    "text": "Every sector you clear brings our people home. Thank you, pilot."
+  },
+  "seed": 1552772906,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "18e374384eb8c2c543a2897f1195aee6bcae270acedcba04f232aec8aefb783b"
+  }
+}
