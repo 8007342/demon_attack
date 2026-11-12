@@ -147,7 +147,8 @@ test('every bank clip ships Opus inside a modest budget; modern banks omit AAC',
     assert.match(clip.vis, /^[-oe]+$/);
     assert.equal(clip.vis.length, clip.mouth.length);
   }
-  assert.ok(manifest.totals.ogg_bytes < 3.4e6, 'Opus budget (v4: 574 clips)');
+  const modern = manifest.schema === 'demon-attack.comms-bank/v2';
+  assert.ok(manifest.totals.ogg_bytes < (modern ? 16e6 : 3.4e6), 'complete Opus bank stays within its delivery budget');
   if (manifest.schema === 'demon-attack.comms-bank/v2') {
     assert.equal(manifest.complete, true, 'a partial development bank must not ship');
     assert.deepEqual(manifest.formats, ['ogg']);

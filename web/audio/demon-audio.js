@@ -91,7 +91,7 @@
   const power = { active: 0, falling: false, player: null, brightOn: false };
   function cueInfo(name) {
     const info = levelCueInfo(name);
-    info.beatSeconds = info.level ? levelBeat(info.level) : .5;
+    info.beatSeconds = info.bpm ? 60 / info.bpm : info.level ? levelBeat(info.level) : .5;
     return info;
   }
   function levelCueInfo(name) {
@@ -101,12 +101,12 @@
     if (/^l[1-5]-accents$/.test(name)) return { kind: 'sprite', beats: 0, level: +name[1] };
     if (/^l[1-5]-layers$/.test(name)) return { kind: 'sprite', beats: 0, level: +name[1] };
     if (/^l[1-5]-power$/.test(name)) return { kind: 'loop', beats: 32, level: +name[1], layer: true };
-    return { menu: { kind: 'loop', beats: 32 }, alienwin: { kind: 'loop', beats: 32 },
+    return { ending: { kind: 'tail', beats: 152, bpm: 96 }, menu: { kind: 'loop', beats: 32 }, alienwin: { kind: 'loop', beats: 32 },
       levelclear: { kind: 'tail', beats: 12 }, victory: { kind: 'tail', beats: 20 }, finale: { kind: 'tail', beats: 36 },
       'levelclear-fleet': { kind: 'tail', beats: 12 }, 'finale-fleet': { kind: 'tail', beats: 36 },
       cackle: { kind: 'oneshot', beats: 8, next: 'alienwin' } }[name] || { kind: 'loop', beats: 32 };
   }
-  const immediate = ['levelclear', 'victory', 'finale', 'levelclear-fleet', 'finale-fleet', 'cackle'];
+  const immediate = ['ending', 'levelclear', 'victory', 'finale', 'levelclear-fleet', 'finale-fleet', 'cackle'];
   // The whole allied fleet survived: a bigger arrangement of the same march,
   // bar for bar, chosen by fleetIntact() before (or switched in place after) the cue.
   const fleetVariant = { levelclear: 'levelclear-fleet', finale: 'finale-fleet' };
@@ -178,6 +178,12 @@
     return bufferCache.get(name);
   }
   async function resolveCue(name) {
+    // Keep the existing original resolution available while the new ending
+    // score is being produced. Diagnostics retain the actual asset name.
+    if (name === 'ending' && !await loadBuffer(name)) {
+      const fallback = await resolveCue('finale');
+      return fallback ? { ...fallback, name, assetName: 'finale' } : null;
+    }
     const info = cueInfo(name);
     const buffer = await loadBuffer(name);
     if (buffer) {
@@ -357,6 +363,7 @@
       case 'travel': return `l${lvl}-outro`;
       case 'victory': return cycle >= 4 ? 'finale' : 'victory';
       case 'gameover': return 'cackle';
+      case 'ending': return 'ending';
       case 'levelclear': case 'menu': return mode;
       default: return 'menu';
     }
@@ -667,7 +674,7 @@
     get levels() { return { ...levels }; },
     get graph() { return { context, master, music, effects }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.
-    get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, offset: active?.player?.offset ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length, decoded: [...bufferCache.keys()], formats, scene: { ...scene }, accents: accentLog.slice(), fleetIntact: fleetIntactFlag,
+    get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, asset: active?.assetName ?? active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, offset: active?.player?.offset ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length, decoded: [...bufferCache.keys()], formats, scene: { ...scene }, accents: accentLog.slice(), fleetIntact: fleetIntactFlag,
       bpm: 60 / beatSeconds, beatSeconds, drop: dropState ? { ...dropState } : null,
       levels: { ...levels }, masterGain: master?.gain.value ?? null, musicLevel: musicLevel?.gain.value ?? null, limiter: !!limiter,
       layers: layersLive.filter(l => l.end > (context?.currentTime ?? 0)).map(l => ({ ...l })), layerLog: layerLog.slice(),

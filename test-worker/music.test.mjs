@@ -15,7 +15,7 @@ function seconds(name) {
   if (/-accents$/.test(name)) return 12;
   if (/-layers$/.test(name)) return 12 * BAR[level];  // six two-bar layer slots
   if (/-power$/.test(name)) return 8 * BAR[level];
-  return { menu: 16, levelclear: 8, victory: 12, finale: 20, 'levelclear-fleet': 8, 'finale-fleet': 20, cackle: 4, alienwin: 16 }[name];
+  return { ending: 100, menu: 16, levelclear: 8, victory: 12, finale: 20, 'levelclear-fleet': 8, 'finale-fleet': 20, cackle: 4, alienwin: 16 }[name];
 }
 
 async function player({ missing = new Set(), localStorage } = {}) {
@@ -53,6 +53,31 @@ async function player({ missing = new Set(), localStorage } = {}) {
 const onGrid = (t, origin, unit) => { const k = (t - origin) / unit; return Math.abs(k - Math.round(k)) < 1e-6; };
 const near = (a, b) => Math.abs(a - b) < 1e-9;
 const last = (sources, name) => sources.filter(s => s.buffer?.name === name).at(-1);
+
+test('the ending retains its full arrangement and warm tail at 96 BPM', async () => {
+  const { audio, sources, settle } = await player();
+  await audio.unlock();
+  await audio.cue('ending', 5);
+  await settle();
+  assert.equal(audio.state.active, 'ending');
+  assert.equal(audio.state.asset, 'ending');
+  assert.equal(audio.state.duration, 100);
+  assert.equal(audio.state.beatSeconds, 60 / 96);
+  const source = last(sources, 'ending');
+  assert.equal(source.loopStart, 95, 'the full 38-bar resolution plays before the final two bars loop');
+  assert.equal(source.loopEnd, 100);
+});
+
+test('unavailable new ending uses the existing resolution and identifies the actual asset', async () => {
+  const { audio, sources, settle } = await player({ missing: new Set(['ending']) });
+  await audio.unlock();
+  await audio.cue('ending', 5);
+  await settle();
+  assert.equal(audio.state.active, 'ending');
+  assert.equal(audio.state.asset, 'finale');
+  assert.equal(audio.state.duration, 20);
+  assert.ok(last(sources, 'finale'));
+});
 
 test('levels play intro then tiers of one motif at the level tempo: tier changes land on bars and keep the loop position', async () => {
   const { audio, ctx, sources, fetched, step, settle } = await player();

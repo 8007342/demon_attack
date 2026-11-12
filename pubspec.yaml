@@ -60,6 +60,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/credits.json
     - assets/images/
     - assets/images/widescreen/
 

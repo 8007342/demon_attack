@@ -16,6 +16,8 @@ import 'services/audio.dart';
 import 'services/scores.dart';
 import 'services/run_storage.dart';
 import 'services/tilt_control.dart';
+import 'services/comms_audio.dart' show commsStopAll;
+import 'ending/ending_page.dart';
 import 'widgets/medal.dart';
 import 'widgets/heart_parts.dart';
 import 'widgets/widescreen_backdrop.dart'; // --- widescreen backdrop
@@ -158,6 +160,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     squadComms.reset();
     squadComms.startRun(storage.store, resume: resume);
   }
+
   // The music bridge sees the derived events too (GameEvents.listen),
   // including flawlessVictory / flawlessRun for a fleet-intact cue.
   final _commsListeners = <void Function()>[];
@@ -173,6 +176,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     _commsListeners.clear();
     squadComms.detach();
   }
+
   /// Phones: the transmission on air, shown full size during a transition.
   CommsMessage? _commsTransmission(BoxConstraints bounds) =>
       !CommsLayout.of(bounds.biggest).side &&
@@ -188,6 +192,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Map<String, dynamic>? savedCheckpoint;
   Difficulty boardDifficulty = Difficulty.normal;
   bool handledRunEnd = false;
+  bool _endingShown = false, _endingOpen = false, _endingScheduled = false;
   final hintDeck = HintDeck();
   TacticalHint? arrivalHint;
   bool hintArtPrecached = false;
@@ -230,7 +235,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     voiceOn = speechLevel != AudioLevel.mute;
     if (!voiceOn) squadComms.setVoice(false);
     // --- music event hook: adaptive music listens on the shared event bridge
-    _music = [GameEvents.listen(MusicBridge().call), GameEvents.listen(scene.music.onGameEvent)];
+    _music = [
+      GameEvents.listen(MusicBridge().call),
+      GameEvents.listen(scene.music.onGameEvent),
+    ];
     scene.topScores = board;
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
@@ -249,6 +257,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   // --- console route: mirrors _start() bookkeeping, via ArcadeModel.startAt.
   void _startConsole(ConsoleStart start) {
+    _endingShown = false;
     audioUnlock();
     audioResume();
     screen = null;
@@ -272,7 +281,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    for (final remove in _music) { remove(); } // --- music event hook
+    for (final remove in _music) {
+      remove();
+    } // --- music event hook
     WidgetsBinding.instance.removeObserver(this);
     _detachComms(); // --- squad comms
     focus.dispose();
@@ -321,6 +332,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           audioCue('travel', model.level, 1, model.cycle);
         case 'victory':
           audioCue('victory', model.level, 1, model.cycle);
+          if (!_endingShown) {
+            precacheImage(
+              const AssetImage('assets/images/beach-ending.webp'),
+              context,
+            );
+          }
         case 'defeat':
           audioCue('gameover', model.level, 1, model.cycle);
         case 'heart':
@@ -353,7 +370,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           _finishRun(failed: false);
           audioCue('victory', model.level, 1, model.cycle);
         case 'pause':
-          audioPause();
+          if (!_endingOpen) audioPause();
         case 'resume':
           audioResume();
         default:
@@ -376,7 +393,52 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         (model.mode == RunMode.gameOver || model.mode == RunMode.completed)) {
       _finishRun(failed: model.mode == RunMode.gameOver);
     }
+    if (!_endingShown &&
+        !_endingOpen &&
+        !_endingScheduled &&
+        model.mode == RunMode.victory &&
+        model.transitionProgress >= .72) {
+      _endingScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _endingScheduled = false;
+        if (mounted && model.mode == RunMode.victory && !_endingOpen) {
+          _endingShown = true;
+          _showEnding();
+        }
+      });
+    }
     setState(() {});
+  }
+
+  Future<void> _showEnding({bool creditsOnly = false}) async {
+    if (_endingOpen) return;
+    _endingOpen = true;
+    final holdRun = model.mode == RunMode.playing || model.cinematic;
+    if (holdRun) model.pause();
+    commsStopAll();
+    audioUnlock();
+    audioResume();
+    audioCue('ending', 5, 1, model.cycle);
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) =>
+            EndingPage(creditsOnly: creditsOnly, onAudioResume: audioResume),
+      ),
+    );
+    if (!mounted) return;
+    if (holdRun && model.mode == RunMode.paused) model.resume();
+    // Consume the preserved pause/resume notifications while the ending still
+    // owns audio. Closing never advances the simulation or alters run results.
+    _tick();
+    _endingOpen = false;
+    audioResume();
+    audioCue(
+      model.mode == RunMode.title ? 'menu' : 'victory',
+      model.level,
+      1,
+      model.cycle,
+    );
+    focus.requestFocus();
   }
 
   void _finishRun({required bool failed}) {
@@ -445,6 +507,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       storage.clearCheckpoint();
       return;
     }
+    _endingShown = model.cycle > 0;
     setState(() {
       screen = null;
       submitted = false;
@@ -457,6 +520,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   }
 
   void _start([Difficulty difficulty = Difficulty.normal]) {
+    _endingShown = false;
     audioUnlock();
     audioResume();
     setState(() {
@@ -508,9 +572,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       } else {
         keys.add(key);
       }
-      final right = keys.contains(LogicalKeyboardKey.arrowRight) ||
+      final right =
+          keys.contains(LogicalKeyboardKey.arrowRight) ||
           keys.contains(LogicalKeyboardKey.keyD);
-      final left = keys.contains(LogicalKeyboardKey.arrowLeft) ||
+      final left =
+          keys.contains(LogicalKeyboardKey.arrowLeft) ||
           keys.contains(LogicalKeyboardKey.keyA);
       final dir = (right ? 1 : 0) - (left ? 1 : 0).toDouble();
       scene.keyboardDirection = dir;
@@ -880,17 +946,18 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: _label(
-                  'PIXELS. INSTINCT. SURVIVAL.',
-                  const Color(0xFF52677E),
-                  size: 8,
-                ),
-              ),
+            TextButton(
+              key: const ValueKey('menu-credits'),
+              onPressed: () => _showEnding(creditsOnly: true),
+              child: const Text('CREDITS', style: TextStyle(fontSize: 10)),
             ),
+            if (history.everBeatBoss)
+              IconButton(
+                key: const ValueKey('menu-ending-replay'),
+                tooltip: 'Replay beach ending',
+                onPressed: _showEnding,
+                icon: const Icon(Icons.replay, size: 18),
+              ),
           ],
         ),
       ),
@@ -1509,8 +1576,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     builder: (context, bounds) {
       final compact = bounds.maxHeight < 450;
       final fadeIn = Curves.easeOutCubic.transform((p / .10).clamp(0, 1));
-      final fadeOut =
-          Curves.easeInCubic.transform(((1 - p) / .10).clamp(0, 1));
+      final fadeOut = Curves.easeInCubic.transform(((1 - p) / .10).clamp(0, 1));
       final opacity = math.min(fadeIn, fadeOut);
       final pulse = (math.sin(model.visualClock * 8.0) * 0.5 + 0.5);
 
@@ -1693,8 +1759,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     builder: (context, bounds) {
       final compact = bounds.maxHeight < 500;
       final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));
-      final fadeOut =
-          Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
+      final fadeOut = Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
       final opacity = math.min(fadeIn, fadeOut);
 
       return IgnorePointer(
@@ -1739,20 +1804,22 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           children: [
                             for (var i = 1; i <= model.wavesPerLevel; i++)
                               Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
                                 child: Icon(
                                   i < model.wave
                                       ? Icons.check_circle_outline_rounded
                                       : (i == model.wave
-                                          ? Icons.radio_button_checked_rounded
-                                          : Icons.radio_button_unchecked_rounded),
+                                            ? Icons.radio_button_checked_rounded
+                                            : Icons
+                                                  .radio_button_unchecked_rounded),
                                   size: compact ? 12 : 14,
                                   color: i < model.wave
                                       ? const Color(0xFF70F5D5)
                                       : (i == model.wave
-                                          ? const Color(0xFFFFD54F)
-                                          : const Color(0xFF4B6584)),
+                                            ? const Color(0xFFFFD54F)
+                                            : const Color(0xFF4B6584)),
                                 ),
                               ),
                             const SizedBox(width: 8),
@@ -1793,8 +1860,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     builder: (context, bounds) {
       final compact = bounds.maxHeight < 500;
       final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));
-      final fadeOut =
-          Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
+      final fadeOut = Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
       final opacity = math.min(fadeIn, fadeOut);
 
       return IgnorePointer(
@@ -1898,8 +1964,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     final color = clear || bossVictory ? gold : mint;
     final heading = bossVictory
         ? recognition
-            ? 'THE FLEET RECOGNIZES YOUR SERVICE'
-            : 'THE CARRIER IS FALLING'
+              ? 'THE FLEET RECOGNIZES YOUR SERVICE'
+              : 'THE CARRIER IS FALLING'
         : clear
         ? 'SECTOR SECURED'
         : travel
@@ -1913,8 +1979,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         : CampaignStory.name(model.level, model.cycle);
     final story = bossVictory
         ? model.medals == 5
-            ? 'Five carriers fallen. Brood command is broken. The frontier is free.'
-            : 'A medal for your courage. A life for the journey. Keep flying, defender.'
+              ? 'Five carriers fallen. Brood command is broken. The frontier is free.'
+              : 'A medal for your courage. A life for the journey. Keep flying, defender.'
         : clear
         ? CampaignStory.departure(model.level, model.cycle)
         : travel
@@ -2109,7 +2175,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               ),
               child: PilotConsoleContent(
                 timers: Map.of(model.powerTimers),
-                homingMissiles: model.ground.salvo.busy // --- ground war HUD
+                homingMissiles:
+                    model
+                        .ground
+                        .salvo
+                        .busy // --- ground war HUD
                     ? model.ground.salvo.loaded +
                           (model.ground.salvo.active != null ? 1 : 0)
                     : 0,
@@ -2420,7 +2490,9 @@ class ConsolePainter extends CustomPainter {
     c.drawRect(
       Rect.fromLTWH(ledStartX + ledSpacing * 2, ledY, 3, 3),
       Paint()
-        ..color = tiltActive ? const Color(0xFF39DFCC) : const Color(0xFF223647),
+        ..color = tiltActive
+            ? const Color(0xFF39DFCC)
+            : const Color(0xFF223647),
     );
     // LED 4: SYS
     c.drawRect(
@@ -2461,16 +2533,14 @@ class ConsolePainter extends CustomPainter {
     // Active pilot reticle indicator
     final activeX = touch != null
         ? touch! * s.width
-        : (steering != 0.0 ? s.width * 0.5 + steering * (s.width * 0.26) : null);
+        : (steering != 0.0
+              ? s.width * 0.5 + steering * (s.width * 0.26)
+              : null);
 
     if (activeX != null) {
       // Glowing carriage indicator on rail
       c.drawRect(
-        Rect.fromCenter(
-          center: Offset(activeX, railY),
-          width: 14,
-          height: 4,
-        ),
+        Rect.fromCenter(center: Offset(activeX, railY), width: 14, height: 4),
         Paint()..color = mint,
       );
       // Soft tracking pillar
