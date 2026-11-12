@@ -1,0 +1,67 @@
+{
+  "speaker": "kessler",
+  "kind": "human",
+  "trigger": "broodTaunt",
+  "engine": "chatterbox",
+  "emotion": "teasing",
+  "samples": 48102,
+  "mouth": "222222===220033<<<<<<<33<<<<<22",
+  "open": "0453787653211558987887658898642",
+  "vis": "------ee-----------------------",
+  "lufs": -18.13,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "broodTaunt.h11",
+  "text": "Come closer. The ground crew has a comeback.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/broodTaunt.h11/baseline.flac",
+      "sha256": "cc1f6cfeebe65d27d727c7688adcf75def90e9dcefc71156e28e5474237658e5",
+      "float_source_sha256": "edba62843c0ea3cfc6e84bd1def06ac10a7303610fae863189567d920ce1106f",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/broodTaunt.h11/expressive.flac",
+      "sha256": "fed158b211732a4dd94bfa8ec946253905fc7087c09e634451266b432a05ae07",
+      "float_source_sha256": "579b0eef3dabc11172b5696fd53d074a48ae70bd7f71294fd706a3470b7cb8d3",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/broodTaunt.h11/voice.flac",
+      "sha256": "5ae6a28211d44020d1c0720cbc67a6f1a3537594946900fc6b3102479bbca3ec",
+      "float_source_sha256": "afbcd0cfea8af3763a3e02a45bdbee35492dde26db71c742f6cce6e983ed1be7",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 7.8,
+    "error": null,
+    "text": "Come closer. The ground crew has a comeback."
+  },
+  "seed": 680336441,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "42a66c362883fc1de88cbe7ffcde7660ae66d1686d184d3b14a7edec3abbd144"
+  }
+}
