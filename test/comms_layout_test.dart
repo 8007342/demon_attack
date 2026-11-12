@@ -275,7 +275,7 @@ void main() {
         greaterThanOrEqualTo(2),
         reason: '${rig.director.active}',
       );
-      // One strip, the second message collapsed into a chip.
+      // Both callers get readable cards in the same row.
       final rects = [
         for (final m in rig.director.active) ...[
           ...find
@@ -288,7 +288,10 @@ void main() {
               .map((e) => tester.getRect(find.byWidget(e.widget))),
         ],
       ];
-      expect(rects.length, inInclusiveRange(2, 3), reason: 'strip + chips');
+      expect(rects.length, 2, reason: 'two full dialogue cards');
+      expect(rects[0].top, rects[1].top);
+      expect(rects[0].overlaps(rects[1]), isFalse);
+      expect(rects[0].width, closeTo(rects[1].width, .01));
       expect(find.byKey(const ValueKey('hud-score')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-lives')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-hearts')), findsOneWidget);

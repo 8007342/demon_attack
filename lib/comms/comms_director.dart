@@ -42,6 +42,9 @@ class CommsMessage {
   /// The other side's answer in a two-party exchange.
   CommsMessage? reply;
 
+  /// Opening line retained beside this answer in the compact radio dock.
+  CommsMessage? inReplyTo;
+
   /// This message answers an exchange (it holds the reserved channel).
   bool isReply = false;
   bool get isDemon => character.isDemon;
@@ -564,6 +567,7 @@ class CommsDirector {
       // The answer follows right after this line; nothing else may start
       // in between.
       reply
+        ..inReplyTo = m
         ..readyAt = m.speechEndsAt + lineGap
         ..expiresAt = m.speechEndsAt + lineGap + reply.trigger.ttl;
       queue.add(reply);

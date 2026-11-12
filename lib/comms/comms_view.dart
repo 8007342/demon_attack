@@ -746,10 +746,9 @@ class CommsSidePanels extends StatelessWidget {
 }
 
 /// Phones and narrow windows: a compact, translucent call dock at the top
-/// of the arena, just below the HUD band (the HUD stays readable). One
-/// strip shows the most important active line; a second active line
-/// collapses into a chip, and waiting lines show as `+n`. It dims while the
-/// player is being hit ([dimmed]).
+/// of the arena, just below the HUD band. Up to two dialogue cards retain
+/// an exchange's opening line beside its answer, with portraits at the outer
+/// edges. It dims while the player is being hit ([dimmed]).
 class CommsHudStack extends StatelessWidget {
   const CommsHudStack({
     super.key,
@@ -765,32 +764,28 @@ class CommsHudStack extends StatelessWidget {
   /// A full-size transmission card is showing the transmission line.
   final bool hideTransmission;
 
-  static const stripHeight = 54.0, chipHeight = 22.0, gap = 2.0;
-  static const portrait = 48.0;
+  static const stripHeight = 76.0, chipHeight = 22.0, gap = 2.0;
+  static const portrait = 40.0;
 
-  /// Tallest the dock gets (strip + chip row).
+  /// Tallest the dock gets (dialogue cards plus exchange/queue label).
   static const maxHeight = stripHeight + gap + chipHeight;
 
   @override
   Widget build(BuildContext context) {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    // Whoever is speaking wins the strip (a line in its subtitle hold
-    // yields); when several speak at once, spoken lines beat grunts so the
-    // subtitle stays readable.
-    int rank(CommsMessage m) => (m.speaking(now) ? 2 : 0) + (m.isDemon ? 0 : 1);
-    final shown =
-        [
-          for (final m in director.active)
-            if (!(hideTransmission && m.transmission)) m,
-        ]..sort(
-          (a, b) => rank(a) != rank(b)
-              ? rank(b).compareTo(rank(a))
-              : b.startedAt.compareTo(a.startedAt),
-        );
+    final shown = [
+      for (final m in director.active)
+        if (!(hideTransmission && m.transmission)) m,
+    ]..sort((a, b) => b.startedAt.compareTo(a.startedAt));
     if (shown.isEmpty) return const SizedBox.shrink();
+    final latest = shown.first;
+    final opening = latest.inReplyTo;
+    final panels =
+        opening != null && !(hideTransmission && opening.transmission)
+        ? [opening, latest]
+        : (shown.take(2).toList()
+            ..sort((a, b) => a.startedAt.compareTo(b.startedAt)));
     final waiting = director.queue.where((m) => now >= m.readyAt).length;
-    final main = shown.first;
-    final rest = shown.skip(1).take(2).toList();
     return IgnorePointer(
       child: AnimatedOpacity(
         opacity: dimmed ? .3 : 1,
@@ -799,28 +794,35 @@ class CommsHudStack extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _strip(main, reduce),
-            if (rest.isNotEmpty || waiting > 0) ...[
-              const SizedBox(height: gap),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  for (final m in rest) Flexible(child: _chip(m, reduce)),
-                  if (waiting > 0)
-                    Container(
-                      height: chipHeight,
-                      margin: const EdgeInsets.only(left: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                      alignment: Alignment.center,
-                      color: const Color(0xA60A1220),
-                      child: Text(
-                        '+$waiting',
-                        style: const TextStyle(color: _muted, fontSize: 9),
-                      ),
-                    ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _strip(
+                    panels.first,
+                    reduce,
+                    retained: identical(panels.first, opening),
+                  ),
+                ),
+                if (panels.length == 2) ...[
+                  const SizedBox(width: gap),
+                  Expanded(child: _strip(panels.last, reduce, right: true)),
                 ],
+              ],
+            ),
+            if (opening != null || waiting > 0)
+              SizedBox(
+                height: chipHeight,
+                child: Text(
+                  opening != null
+                      ? '${opening.character.callsign} → ${latest.character.callsign}'
+                      : '+$waiting',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: _muted, fontSize: 9),
+                ),
               ),
-            ],
           ],
         ),
       ),
@@ -849,7 +851,12 @@ class CommsHudStack extends StatelessWidget {
       ? 1.0
       : (math.min(m.age(now), m.endsAt - now) / .18).clamp(0.0, 1.0);
 
-  Widget _strip(CommsMessage m, bool reduce) {
+  Widget _strip(
+    CommsMessage m,
+    bool reduce, {
+    bool right = false,
+    bool retained = false,
+  }) {
     final c = m.character;
     final accent = Color(c.accent);
     final speaking = m.speaking(now);
@@ -857,7 +864,7 @@ class CommsHudStack extends StatelessWidget {
     final celebrating = director.celebrating(now) && !c.isDemon;
     return Opacity(
       key: ValueKey('comms-strip-${m.line.id}'),
-      opacity: _fade(m, reduce),
+      opacity: retained ? 1 : _fade(m, reduce),
       child: Container(
         height: stripHeight,
         decoration: BoxDecoration(
@@ -870,6 +877,7 @@ class CommsHudStack extends StatelessWidget {
           ),
         ),
         child: Row(
+          textDirection: right ? TextDirection.rtl : TextDirection.ltr,
           children: [
             SizedBox(
               width: portrait,
@@ -932,7 +940,7 @@ class CommsHudStack extends StatelessWidget {
                             TextSpan(text: m.line.text ?? ''),
                           ],
                         ),
-                        maxLines: 2,
+                        maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: _text,
@@ -946,61 +954,6 @@ class CommsHudStack extends StatelessWidget {
                     ),
             ),
             const SizedBox(width: 4),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// A collapsed second line: tiny portrait and who is talking.
-  Widget _chip(CommsMessage m, bool reduce) {
-    final c = m.character;
-    final accent = Color(c.accent);
-    return Opacity(
-      key: ValueKey('comms-chip-${m.line.id}'),
-      opacity: _fade(m, reduce),
-      child: Container(
-        height: chipHeight,
-        margin: const EdgeInsets.only(left: 4),
-        padding: const EdgeInsets.only(right: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xA60A1220),
-          border: Border(left: BorderSide(color: accent, width: 2)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: chipHeight,
-              height: chipHeight,
-              child: ClipRect(
-                child: CustomPaint(
-                  painter: _MiniPortrait(
-                    c,
-                    _frame(m),
-                    _zoom(m, reduce),
-                    now,
-                    m,
-                    reduce,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                c.isDemon ? '${c.name} · ${m.line.gloss ?? ''}' : c.callsign,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
-                style: TextStyle(
-                  color: accent,
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: .8,
-                ),
-              ),
-            ),
           ],
         ),
       ),
