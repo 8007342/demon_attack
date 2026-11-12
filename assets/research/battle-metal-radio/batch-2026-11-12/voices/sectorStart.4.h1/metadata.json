@@ -1,0 +1,67 @@
+{
+  "speaker": "wisp",
+  "kind": "human",
+  "trigger": "sectorStart.4",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 92196,
+  "mouth": "===<<<<<<<<<<555<<<4444444444<<<55===0000000044<<<<<====22",
+  "open": "0258858878998665885766467777688766542111000057788788646532",
+  "vis": "eee--------oooooooo-------------ooeeee--------------eeee--",
+  "lufs": -18.12,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "sectorStart.4.h1",
+  "text": "Something old is watching from those ruins. I don't like it.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h1/baseline.flac",
+      "sha256": "9e4907444805de62c3c2789b59d66eaf2014ad93f7fc8058228487d70b97b131",
+      "float_source_sha256": "7f0569c6ee44aabdfd5557a81ccccfe64dbf253037e0272592fa289a0df767ff",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h1/expressive.flac",
+      "sha256": "82fdb88da79cbce41b63a068704b4d6c5db958c63b291a177b1264ef30b83877",
+      "float_source_sha256": "f6f0738e7ca10a139f87d2d2a28e9de0eb8ee367b02346528a29532f76b672b4",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h1/voice.flac",
+      "sha256": "87989d1d5efea61ff084f8d7ae16e3b749cc407e2670cca1cdecdfe007595b32",
+      "float_source_sha256": "00afe9d51fc92c8ce1976f04c398aa00c134e40bebe174905c82b7c49fe2a15a",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 14.44,
+    "error": null,
+    "text": "Something old is watching from those ruins. I don't like it."
+  },
+  "seed": 1300606801,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "20508d4cda5bcf481e0e92cecb7d2f4e0c708fc162ed46d5f960950209a7b2b2"
+  }
+}
