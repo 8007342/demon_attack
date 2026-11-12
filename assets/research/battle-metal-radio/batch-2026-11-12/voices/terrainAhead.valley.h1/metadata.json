@@ -1,0 +1,67 @@
+{
+  "speaker": "march",
+  "kind": "human",
+  "trigger": "terrainAhead.valley",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 70379,
+  "mouth": "555<<<<<<<==33300000444==<<444444==333220000",
+  "open": "04799788876554321378776758976777765565432110",
+  "vis": "ooooo-----ee-----------ee--------ee---------",
+  "lufs": -18.19,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "terrainAhead.valley.h1",
+  "text": "Low ground ahead. Watch the slopes on both sides.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.valley.h1/baseline.flac",
+      "sha256": "71836f9d6a205ef5522dcd1b41a31262659f314a98e6c69c5cf992f497242fdd",
+      "float_source_sha256": "520d8f50e9dd0af84bbfa1d241ce7a14c1e0756331bafcf43dd4efb706fe388a",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.valley.h1/expressive.flac",
+      "sha256": "31aa191cbb58dd63a71918c0e5a56d7127bd6050f1770fb21afc400787a0a3bf",
+      "float_source_sha256": "21727690212a68ec4f61e266d92cfb7baca4f87f749d12946f459a534cc3ffaf",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.valley.h1/voice.flac",
+      "sha256": "02c0ef6ac2b30a7c8a98a84611f95d9a62e91911814594a6cf3e547782c2f0da",
+      "float_source_sha256": "6f49628be2e7ffb1145ca2474d889b87c6a25e89e56d66bea0e5536bdaf3df7b",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 10.3,
+    "error": null,
+    "text": "Low ground ahead. Watch the slopes on both sides."
+  },
+  "seed": 326673585,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "b55fec87d8e0439ca1ee1408e06c355398c670f74eb0c5e71aeda13338d0b2e4"
+  }
+}
