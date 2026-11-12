@@ -4,11 +4,11 @@
   "trigger": "reinforcements",
   "engine": "chatterbox",
   "emotion": "urgent",
-  "samples": 47919,
-  "mouth": "33322222<<<<<<<<<==00000<<<<22",
-  "open": "045327878974789864321367898532",
-  "vis": "------oo---------eeeee--------",
-  "lufs": -18.08,
+  "samples": 48131,
+  "mouth": "000000<<<<<<<<<<<==0000<<<<5555",
+  "open": "0232278889747887542114788985321",
+  "vis": "------oo---------eeeee---oooo--",
+  "lufs": -18.1,
   "schema": "demon-attack.voice-candidate/v1",
   "id": "reinforcements.h2",
   "text": "They called their friends. Rude.",
@@ -16,28 +16,28 @@
   "masters": {
     "baseline": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h2/baseline.flac",
-      "sha256": "4b5c42115b92958ebcfd39ba7476031bd2746f448423a292d7c9292c779c03ba",
-      "float_source_sha256": "8f41140f741573c54d6927d26b03fb521d00c699cc4108fc01c4d18a28a7238c",
+      "sha256": "373589497b14e6f1dae1be2d6ebca2f291164383c237a6fa2575d92685a74463",
+      "float_source_sha256": "7bec095d105c897bfb2619ce2aa2dd96ca05e4b0cf55b49bd9043a6036e37c4e",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "expressive": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h2/expressive.flac",
-      "sha256": "aecaacfe8914a27849ee94cfe0013390c1a8d91cf78af8ed504e748fd34bda0b",
-      "float_source_sha256": "51f7cea0171adf15db27e3df2d631fbc34a2ad68a6c4a62de4fa72b3c2a4b684",
+      "sha256": "78844c19eb29e82ad6d867c26ad94eee4cf4446494337b138abca348eca1787c",
+      "float_source_sha256": "897250e689ab197c55b8b1d25c1ba665cbc65eadd826c4b7fed878ab9eab3e57",
       "gain": 1.0,
       "pcm_bits": 24
     },
     "voice": {
       "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/reinforcements.h2/voice.flac",
-      "sha256": "a1b5e125a9fc588ef93dafc8f87f865f6f26459ac64744e9add125885c78fadc",
-      "float_source_sha256": "cc8d5cd9a7da3c082e598e6323861e1312598e789217145f99ebf56cf8a3fc82",
-      "gain": 0.9864887391519771,
+      "sha256": "9c492e28a3df40a5ce8745b177eaea80b4de1331d5bf039329938f16dde45611",
+      "float_source_sha256": "0a1c01d3490014a7e03bb353443ff9fc15909ad74b5fe57f0ad5f267f530192a",
+      "gain": 1.0,
       "pcm_bits": 24
     }
   },
   "performance": {
-    "seconds": 9.18,
+    "seconds": 12.27,
     "error": null,
     "text": "They called their friends! Rude!"
   },
@@ -62,6 +62,6 @@
   "codec": {
     "name": "opus",
     "bitrate_kbps": 48,
-    "sha256": "3dfaa5a187380c6cfd19f3a4e107f207a871f3551670010ad3938c6588def2a3"
+    "sha256": "1b2b0cede66268900ab90ab74cc1743fbfc6dfabd88a94a8d640a5d4b0685cd0"
   }
 }
