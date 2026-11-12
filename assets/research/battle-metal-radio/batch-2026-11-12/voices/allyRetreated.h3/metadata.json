@@ -1,0 +1,67 @@
+{
+  "speaker": "mensah",
+  "kind": "human",
+  "trigger": "allyRetreated",
+  "engine": "chatterbox",
+  "emotion": "teasing",
+  "samples": 62138,
+  "mouth": "00033222244455555555<<3333<<33=========",
+  "open": "003553213776532147868955358856368768743",
+  "vis": "------------oo----------------ee-------",
+  "lufs": -18.26,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "allyRetreated.h3",
+  "text": "Granite's crumbled! Heading back to base to patch up!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyRetreated.h3/baseline.flac",
+      "sha256": "4ecb92e1bd3c9b3e323e6ca5741bc4328991fbb0c383be7fe917b9a14d037cb4",
+      "float_source_sha256": "3d504ff1295833fb83d110b467f1120ef1f4fb0012bc22fc79f395b0eb73841e",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyRetreated.h3/expressive.flac",
+      "sha256": "eeb98994af561e40f212ee8ab1236fd93a538a616f3563c7aa0257613c084897",
+      "float_source_sha256": "3f12cf992ad211a36de0f44582a9b14451f4ca310c17744cc6b4b68cf90ea5d1",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyRetreated.h3/voice.flac",
+      "sha256": "6a650ce7cbbd8f0d626cc2e1c429eb45816bc42f500cdf5bd8fa2c78e63c3703",
+      "float_source_sha256": "1aa1f0103c0b65f89256d8d7bdee19dded382a5f466398fb3a1102787269dd9e",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 9.73,
+    "error": null,
+    "text": "Granite's crumbled! Heading back to base to patch up!"
+  },
+  "seed": 1078230965,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "d397c3be6cf567f9d41b2f50d215e163fed9dd2fbe371036dded1d8721296031"
+  }
+}
