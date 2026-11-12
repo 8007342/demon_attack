@@ -1,0 +1,67 @@
+{
+  "speaker": "lindqvist",
+  "kind": "human",
+  "trigger": "sectorStart.3",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 91115,
+  "mouth": "44<<<<<<55555333330000000000000===<<<==<<=====<<<<444====",
+  "open": "068876866664464553211000000003776789976887677788887654421",
+  "vis": "----ee--oooo-------------------eeeeeeeeeeeeeeee------eeee",
+  "lufs": -18.29,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "sectorStart.3.h2",
+  "text": "Ash cover is heavy. Trust your instruments over your eyes.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.3.h2/baseline.flac",
+      "sha256": "1281077cd157debdaee8e5cd4e6b9f84063a8c45fc899061e6e186b1cac985b6",
+      "float_source_sha256": "4fd0c267fa69fdb2c9a93315c2f3041b628f604c7b42b106cf91307eefbe6e99",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.3.h2/expressive.flac",
+      "sha256": "78f94e090a83647fbb7573106d35c31faa6fc522fa118b9501f27555f9387c8f",
+      "float_source_sha256": "f0b73d3f5c20b1838cedc99a4bfe796102fb91a16c1f2f77a37b4b520b3f92a5",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.3.h2/voice.flac",
+      "sha256": "871bd53c6e14b907abd83ff01b48bf9412ddb0f14299d22412bea9a7328d1adf",
+      "float_source_sha256": "da5aa74f8b13e19ed18e67ef83aed04c11dc16ed944dab2c1439bc79022dba28",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 14.36,
+    "error": null,
+    "text": "Ash cover is heavy. Trust your instruments over your eyes."
+  },
+  "seed": 1230751314,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "8f7d23cef0d0e524f251e606b4cfb357ef67b7cea44020a468d310bb09d637fd"
+  }
+}
