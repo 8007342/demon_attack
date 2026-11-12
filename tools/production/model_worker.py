@@ -7,7 +7,10 @@ instances between requests instead of reloading gigabytes for every short line.
 import contextlib
 import importlib.util
 import json
+import hashlib
+import os
 import re
+import subprocess
 import sys
 import time
 import traceback
@@ -27,6 +30,45 @@ def chatterbox(config,threads):
     if 'chatterbox' not in models: models['chatterbox']=original_chatterbox(config,threads)
     return models['chatterbox']
 pipeline.Kokoro=kokoro;pipeline.load_chatterbox=chatterbox
+
+def produce(clip):
+    import numpy as np
+    import soundfile as sf
+    cast, lines=pipeline.load_specs()
+    entries={i:(trigger,kind,line) for i,trigger,kind,line in pipeline.clip_entries(lines)}
+    trigger,kind,line=entries[clip]
+    common=['--exact','--limit','1','--threads','4','--performed-demons']
+    pipeline.main(['refs','--only',line['speaker'],*common])
+    for stage in ('voices','expressive','radio'):
+        pipeline.main([stage,'--only',clip,*common])
+    record=json.loads((pipeline.WORK/'expressive.json').read_text())[clip]
+    if record['error']: raise RuntimeError(record['error'])
+    meta=json.loads((pipeline.WORK/'radio.json').read_text())[clip]
+    out=pipeline.WORK/'candidates'/clip;out.mkdir(parents=True,exist_ok=True)
+    masters={}
+    for name,folder in (('baseline','raw'),('expressive','expressive'),('voice','performed')):
+        source=pipeline.WORK/folder/f'{clip}.wav'
+        audio=pipeline.read_wav(source)
+        gain=min(1.,.98/max(1e-9,float(np.abs(audio).max())))
+        target=out/f'{name}.flac';temporary=out/f'{name}.tmp.flac'
+        sf.write(temporary,audio*gain,pipeline.SR,subtype='PCM_24');os.replace(temporary,target)
+        masters[name]={'path':str(target),'sha256':pipeline.sha256(target),
+            'float_source_sha256':pipeline.sha256(source),'gain':gain,'pcm_bits':24}
+    ogg=out/'radio.ogg'
+    subprocess.run(['/home/linuxbrew/.linuxbrew/bin/ffmpeg','-v','error','-y','-i',
+        str(pipeline.WORK/'radio'/f'{clip}.wav'),'-map_metadata','-1',
+        '-c:a','libopus','-b:a','48k','-vbr','on','-application','audio',str(ogg)],check=True)
+    meta.update({'schema':'demon-attack.voice-candidate/v1','id':clip,'text':line.get('text') or line['gloss'],
+        'review':'pending listening and contextual mouth review','masters':masters,
+        'performance':record,'seed':pipeline.seed_of('cb:'+clip),
+        'input_hashes':{str(path.relative_to(pipeline.ROOT)):pipeline.sha256(path)
+            for path in (pipeline.CAST,pipeline.LINES,pipeline.AUDIO,pipeline.ROOT/'art/comms/demon-delivery.json')},
+        'models':{'kokoro':pipeline.audio_spec()['kokoro'],
+            'chatterbox':{k:pipeline.audio_spec()['chatterbox'][k] for k in ('repo','revision')}},
+        'codec':{'name':'opus','bitrate_kbps':48,'sha256':pipeline.sha256(ogg)}})
+    temporary=out/'metadata.tmp.json';temporary.write_text(json.dumps(meta,indent=2)+'\n')
+    os.replace(temporary,out/'metadata.json')
+    return str(out)
 last=time.monotonic()
 class Handler(BaseHTTPRequestHandler):
     def answer(self,status,value):
@@ -42,16 +84,20 @@ class Handler(BaseHTTPRequestHandler):
             size=int(self.headers.get('Content-Length','0'))
             if not 0<size<4096: raise ValueError('invalid request size')
             body=json.loads(self.rfile.read(size));mode=body['mode'];clip=body['id']
-            if mode not in ('refs','voices','expressive'): raise ValueError('unsupported model stage')
+            if mode not in ('refs','voices','expressive','produce'): raise ValueError('unsupported model stage')
             if not re.fullmatch(r'[A-Za-z0-9_.-]+',clip): raise ValueError('invalid clip id')
             start=time.monotonic()
             with contextlib.redirect_stdout(sys.stderr):
-                pipeline.main([mode,'--only',clip,'--exact','--limit','1','--threads','4','--performed-demons'])
+                if mode=='produce':
+                    output=produce(clip)
+                else:
+                    output=None
+                    pipeline.main([mode,'--only',clip,'--exact','--limit','1','--threads','4','--performed-demons'])
             if mode=='expressive':
                 record=json.loads((pipeline.WORK/'expressive.json').read_text())[clip]
                 if record['error']: raise RuntimeError(record['error'])
                 if not (pipeline.WORK/'expressive'/f'{clip}.wav').exists(): raise RuntimeError('missing expressive output')
-            self.answer(200,{'ok':True,'mode':mode,'id':clip,'seconds':round(time.monotonic()-start,3)})
+            self.answer(200,{'ok':True,'mode':mode,'id':clip,'output':output,'seconds':round(time.monotonic()-start,3)})
         except Exception as exc:
             traceback.print_exc();self.answer(500,{'ok':False,'error':str(exc)})
         finally: last=time.monotonic()
