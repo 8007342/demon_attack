@@ -49,10 +49,14 @@ checkout; serialize any other Git write with `flock .git/production-checkpoint.l
       boxy hall with a straight molten trench and no round shapes (seed_offset 11). Rerolled through
       studio.run_workflow (job st-1794606171970-0, seeds 24221–24224). No spheres. Candidates and provenance are in
       `assets/research/flyover-reroll/landmark-ember-2-forge-channel/`. Seed 24221 is the spec-reproducible pick.
-- [ ] 3.1b Integrate the pick: needs the raw cache (`.cache/flyover-raw`), which isn't in this forge, so `process`
-      can't rebuild the atlases yet. Covered by 3.3. Python steps need `uv run --with numpy --with pillow`.
-- [ ] 3.3 Full flyover re-render: `flyover_assets.py jobs`, run every job through studio.run_workflow, `ingest`,
-      `process`, `pack`, `contact`; operator review of the contact sheet.
+- [x] 3.1b Integrate the pick : packed in the 3.3 run (flyover-props.png). Python steps need
+      `uv run --no-project --with numpy --with pillow python -I tools/flyover_assets.py ...`.
+- [x] 3.3 Full flyover re-render (90/90 jobs, 0 failures, 40 min on the A5000 at SDXL). Same seeds and workflow
+      reproduced every strip, plane and creature byte for byte, so only the forge-channel landmark changed.
+      This proves exact rebuilds; it is NOT the quality upgrade. Analyzer clean, flyover tests pass.
+- [ ] 3.4 Flyover refinement pass with the big models (Qwen-Image-Edit-2511 img2img from the current raws, or
+      FLUX.2-klein, plus a second high-res pass), after the sprite pilot is reviewed. Steps: `jobs`, every job through studio.run_workflow,
+      `ingest --results`, `process`, `pack`; operator review of `art/contact/flyover-*.png`.
 - [ ] 3.2 Operator review of the reroll; real-phone flyover frame rate and perspective check.
 
 ## 4. Sprites (host GPU studio)
@@ -75,6 +79,9 @@ current families instead.
 
 ## Log
 
+- 2026-11-13 23:00 UTC: cgroup uncapped by the operator; flyover 3.3 done and packed. Admitted big models (host register):
+  Qwen-Image-Edit-2511, FLUX.2-klein-4B, Wan2.2-VACE, BiRefNet matting, SDXL family. FLUX.1-dev and SD3.5 need licence
+  acceptance. 4x upscaler and GPU voice service coming upstream.
 - 2026-11-13 22:10 UTC: radio bank complete and strictly assembled; full flyover re-render (3.3) running on the studio, one job at a time.
 - 2026-11-13 21:58 UTC: radio at heavyArmorSighted-d4 done; Ember forge-channel rerolled (3.1).
 
