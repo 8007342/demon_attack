@@ -24,10 +24,13 @@ checkout; serialize any other Git write with `flock .git/production-checkpoint.l
 
 ## 1. Radio voices: `radio-bank-2026-11-12` (CPU, one guarded worker)
 
-- [ ] 1.1 Render the last 12 clips (562/574 done at 21:40 UTC):
-      heavyArmorSighted-d3, -d4; groundTide-surge-h0..h4, -d0..d4. Running since 21:47 UTC.
-- [ ] 1.2 Revalidate hashes across the whole spec; refresh stale records with content-keyed audio.
-- [ ] 1.3 Strict full-bank assembly; timing and mouth validation.
+- [x] 1.1 Render the last 12 clips (562/574 done at 21:40 UTC):
+      heavyArmorSighted-d3, -d4; groundTide-surge-h0..h4, -d0..d4. Done at about 22:05 UTC; 574/574 current, worker exited.
+- [x] 1.2 Revalidate hashes across the whole spec: status.lua reports 574/574 current and 0 stale, so no refresh needed.
+- [x] 1.3 Strict full-bank assembly: `radio-bank --out /home/forge/.cache/demon-attack/radio-bank-staging-full`
+      validated 574/574 (385 human, 189 demon), 8.29 MB Opus, complete=true. `stage_radio_bank.lua` wrote the
+      Dart bank (574 lines, all with measured clips) to `/home/forge/.cache/demon-attack/radio-bank-dart/`
+      (persistent cache, not the PWA). Mouth/context review videos: `tools/production/mux_mouth_review.lua`.
 - [ ] 1.4 Operator audition (clean, transformed, encoded). Promote only the complete accepted bank.
 
 ## 2. Campaign music: `art/music/batch-2026-11-12.json` (host GPU studio)
@@ -72,6 +75,7 @@ current families instead.
 
 ## Log
 
+- 2026-11-13 22:10 UTC: radio bank complete and strictly assembled; full flyover re-render (3.3) running on the studio, one job at a time.
 - 2026-11-13 21:58 UTC: radio at heavyArmorSighted-d4 done; Ember forge-channel rerolled (3.1).
 
 - 2026-11-13 21:40 UTC: forge restart had dropped the cache symlink. Bootstrap restored the runtime
