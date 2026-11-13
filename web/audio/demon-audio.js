@@ -14,9 +14,12 @@
   const midiRoot = new URL('./audio/midi/', document.baseURI);
   const musicRoot = new URL('./audio/music/', document.baseURI);
   const midiCache = new Map(), bytesCache = new Map(), bufferCache = new Map(), ready = new Map();  // ready: decoded buffers, synchronously
-  // music: the bus the comms layer ducks (demonAudio.graph); drop: the
-  // life-loss dip under it, so the two never fight over one gain.
-  // musicLevel: the player's music volume (Mute/Low/Full) after the duck;
+  // music: the music bus (demonAudio.graph). Its level is CONSTANT: speech
+  // never ducks it, effects never side-chain it and the life loss no longer
+  // dips it (operator ruling: the score is the star). drop and sidechain
+  // stay as fixed unity-gain stages of the music chain.
+  // musicLevel: the player's music volume (Mute/Low/Full), the only thing
+  // that changes the music's level;
   // bright: a high shelf that opens while a power-up pickup is falling;
   // limiter: a safety limiter on the master (Full music + stacked layers).
   let context, master, music, musicLevel, bright, limiter, drop, sidechain, effects, timer, pending, active, wanted, nextBeat = 0, beat = 0;
@@ -36,13 +39,11 @@
   const decodedByteLimit = 64 * 1024 * 1024;
   let decodeQueue = Promise.resolve();
   const masterGain = .65, effectsGain = 1;  // effects sit above the battle-metal mixes
-  const sidechainDip = .8, sidechainTags = ['explosion', 'life', 'hit'];  // -2 dB music dip under big effects
   // Cue table (mirrors web/audio/music/manifest.json; checked by test-worker).
   const accentSlots = ['dive', 'laststand', 'hatch', 'reinforce', 'breakthrough', 'destroyed', 'gloat', 'respawn'];
   // Quantum in beats of the level's own grid: half-beat, beat, or a sixteenth for the hit.
   const accentQuantum = { dive: .5, reinforce: .5, laststand: 1, hatch: 1, breakthrough: 1, destroyed: .25, gloat: 1, respawn: 1 };
   const lifeLoss = ['destroyed', 'gloat', 'respawn'];
-  const dropLevel = .15, dropBars = 2;  // life loss: music dips under the hit stinger for two bars
   const slotSeconds = 1.5;
   // --- audio round: player volume levels, composable dive layers, power layer.
   // Volume levels per channel, cycled Mute -> Low -> Full by the HUD
@@ -368,7 +369,7 @@
         stopPower(context.currentTime, .09);
       }
       pending = null;
-      if (context) { nextBeat = context.currentTime + .02; beat = 0; restoreMusic(context.currentTime); }
+      if (context) { nextBeat = context.currentTime + .02; beat = 0; }
       activate(entry, nextBeat);
       schedule();
     } else pending = entry;
@@ -461,7 +462,7 @@
   // beat of the music grid; never delays the caller.
   async function accent(name) {
     if (!context || paused || context.state !== 'running' || !accentSlots.includes(name) || !scene.level) return null;
-    if (levels.music === 'mute' && !lifeLoss.includes(name)) return null;  // nothing to hear; the life-loss drop still applies
+    if (levels.music === 'mute' && !lifeLoss.includes(name)) return null;  // nothing to hear
     // At most one per second each; dive layers compose, so dives may come every half second.
     if ((lastAccent.get(name) ?? -9) > context.currentTime - (name === 'dive' ? .5 : 1)) return null;
     if (name === 'dive') {
@@ -482,8 +483,7 @@
     const slot = accentSlots.indexOf(name);
     if (sprite) {
       const source = context.createBufferSource(), gain = context.createGain();
-      // Accents bypass the life-loss drop (the hit must sound over it) but
-      // stay on the ducked music bus.
+      // Accents sit on the music bus, after the fixed drop stage.
       source.buffer = sprite; gain.gain.value = fileGain;
       source.connect(gain); gain.connect(music);
       source.start(at, slot * slotSeconds, slotSeconds);
@@ -494,10 +494,6 @@
         destroyed: [28, 40], gloat: [46, 45, 40], respawn: [52, 59, 64, 71] }[name];
       pitches.forEach((pitch, i) => voice({ pitch, velocity: 100, channel: 1 }, at + i * .125, .2, music));
     }
-    // Life loss: the hit drops the music for two bars; the re-entry brings it
-    // back on the respawn accent's downbeat (its crash, one beat into the slot).
-    if (name === 'destroyed') dropMusic(at);
-    else if (name === 'respawn') restoreMusic(at + beatSeconds);
     accentsLive.push({ name, at, end: at + slotSeconds });
     accentLog.push({ name, at, requestedAt: now, level: scene.level, source: sprite ? 'file' : 'synth' });
     if (accentLog.length > 16) accentLog.shift();
@@ -586,20 +582,6 @@
     if (bright && brighten !== power.brightOn) bright.gain.setTargetAtTime(brighten ? brightDb : 0, at, .08);
     power.brightOn = brighten;
   }
-  function dropMusic(at) {
-    if (!drop) return;
-    drop.gain.cancelScheduledValues(at);
-    drop.gain.setTargetAtTime(dropLevel, at, .03);
-    drop.gain.setTargetAtTime(1, at + dropBars * 4 * beatSeconds, .2);  // restores itself if no respawn comes
-    dropState = { at, until: at + dropBars * 4 * beatSeconds };
-  }
-  function restoreMusic(at) {
-    if (!drop) return;
-    drop.gain.cancelScheduledValues(at);
-    drop.gain.setTargetAtTime(1, at, .05);
-    if (dropState) dropState.until = at;
-  }
-  let dropState = null;
   // Master: silent when muted, or when both music and speech are set to Mute.
   function masterLevel() { return muted || (levels.music === 'mute' && levels.speech === 'mute') ? 0 : masterGain; }
   function applyLevels() {
@@ -677,12 +659,6 @@
     const [pitch, duration, velocity] = shapes[name] || shapes.hit;
     const tag = shapes[name] ? name : 'hit';
     limitVoices(tag);
-    if (sidechainTags.includes(tag) && sidechain?.gain.setTargetAtTime) {
-      // Sidechain: the music bows briefly under explosions and hits.
-      sidechain.gain.cancelScheduledValues(now);
-      sidechain.gain.setTargetAtTime(sidechainDip, now, .01);
-      sidechain.gain.setTargetAtTime(1, now + .08, .06);
-    }
     voice({ pitch, velocity, channel: name==='explosion' ? 9 : 0, tag }, now, duration, effects);
     if (name === 'explosion') noiseBurst(now, .32, .12, 2400);
     else if (name === 'life') noiseBurst(now, .45, .08, 900);
@@ -694,7 +670,7 @@
     // Read-only diagnostics for browser checks.
     get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, nextBeat, beat, active: active?.name ?? null, asset: active?.assetName ?? active?.name ?? null, pending: pending?.name ?? null, source: active ? (active.buffer ? 'file' : 'midi') : null, startedAt: active?.player?.startedAt ?? null, offset: active?.player?.offset ?? null, duration: active?.buffer?.duration ?? null, loopStart: active?.loopStart ?? null, loopEnd: active?.loopEnd ?? null, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length, decoded: [...bufferCache.keys()], formats, scene: { ...scene }, accents: accentLog.slice(), fleetIntact: fleetIntactFlag,
       decodedBytes: decodedBytes(), decodedByteLimit,
-      bpm: 60 / beatSeconds, beatSeconds, drop: dropState ? { ...dropState } : null,
+      bpm: 60 / beatSeconds, beatSeconds, drop: null,
       levels: { ...levels }, masterGain: master?.gain.value ?? null, musicLevel: musicLevel?.gain.value ?? null, limiter: !!limiter,
       layers: layersLive.filter(l => l.end > (context?.currentTime ?? 0)).map(l => ({ ...l })), layerLog: layerLog.slice(),
       power: { active: power.active, falling: power.falling, playing: power.player ? { ...power.player, source: undefined, gain: undefined } : null, bright: power.brightOn } }; } });

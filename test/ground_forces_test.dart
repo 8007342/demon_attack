@@ -283,7 +283,8 @@ void main() {
       m.ground.alliedStrength = m.ground.front.baseStrength;
       m.invulnerable = 100;
       final u = unit(m, GroundTuning.spawnZ, hp: 7);
-      run(m, 12);
+      // Fire range, then the committed beat and the tell before the launch.
+      run(m, 12 + GroundTuning.firePrep);
       expect(u.brokeThrough, isTrue);
       final names = gameEvents(m);
       final call = names.indexOf(GameEventNames.allyUnderAttack);
@@ -346,7 +347,7 @@ void main() {
       expect(m.ground.missilesLaunched, greaterThan(0));
     });
 
-    test('a far unit never telegraphs; the launch follows the full tell', () {
+    test('a far unit never telegraphs; the launch follows the beat and the full tell', () {
       final m = arena();
       m.invulnerable = 100;
       final far = unit(m, 5000); // never reaches range in this test
@@ -355,6 +356,15 @@ void main() {
       expect(m.ground.missilesLaunched, 0);
       final near = unit(m, GroundTuning.fireZ - 1)..cooldown = 0;
       m.update(1 / 60);
+      // The committed beat first: the radio is told when the launch comes.
+      expect(near.firePrep, greaterThan(0));
+      expect(near.telegraphing, isFalse);
+      final prep = m
+          .takeGameEvents()
+          .where((e) => e.name == GameEventNames.groundFirePrep)
+          .single;
+      expect(prep.data['fireIn'], GroundTuning.fireLead);
+      run(m, GroundTuning.firePrep);
       expect(near.telegraphing, isTrue);
       run(m, GroundTuning.telegraph * .9);
       expect(m.ground.missiles, isEmpty, reason: 'still telegraphing');
@@ -383,7 +393,7 @@ void main() {
       m.invulnerable = 100;
       m.shipX = m.targetX = 120;
       unit(m, GroundTuning.fireZ - 1).cooldown = 0;
-      run(m, GroundTuning.telegraph + .05);
+      run(m, GroundTuning.fireLead + .05);
       final missile = m.ground.missiles.single;
       expect(missile.targetX, 120);
       m.moveTo(300);

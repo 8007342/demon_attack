@@ -327,13 +327,24 @@ class ArcadeModel {
   // --- divePrep: a beat of radio warning before every dive tell ---
   static const divePrepBeat = .5;
 
+  /// Seconds of dive tell (telegraph) before [d] leaves the formation.
+  static double diveTellFor(Demon d) => d.isLarge
+      ? .9
+      : d.elite
+      ? .55
+      : .7;
+
   void _prepDive(Demon d, {bool lead = false}) {
     d.divePrep = divePrepBeat;
     d._prepLead = lead;
+    final rate = policy.hostileRate;
     _queueGameEvent(GameEventNames.divePrep, {
       'x': d.x,
       'y': d.y,
       'lead': divePrepBeat,
+      // Seconds until the dive itself starts (the beat plus the tell, at
+      // this difficulty's pace): the radio ends its dive call on it.
+      'diveIn': (divePrepBeat + diveTellFor(d)) / (rate > 0 ? rate : 1),
       'sentinel': d.isLarge,
       'elite': d.elite,
     });
@@ -341,11 +352,7 @@ class ArcadeModel {
 
   void _startDiveTell(Demon d) {
     d.divePrep = 0;
-    d.telegraph = d.isLarge
-        ? .9
-        : d.elite
-        ? .55
-        : .7;
+    d.telegraph = diveTellFor(d);
     d.targetX = d._prepLead
         ? (shipX + shipVx * 0.22).clamp(24.0, width - 24.0)
         : shipX;

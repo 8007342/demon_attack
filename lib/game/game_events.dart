@@ -34,6 +34,11 @@ abstract final class GameEventNames {
   /// A demon ground unit launches a ground-to-air missile.
   static const groundMissileLaunch = 'groundMissileLaunch';
 
+  /// A demon ground unit commits to a shot at the player: it launches in
+  /// `fireIn` seconds ([GroundTuning.fireLead]: a beat, then the visible
+  /// tell). The radio's missile warning is end-aligned to the launch.
+  static const groundFirePrep = 'groundFirePrep';
+
   /// The player picks up the homing-missile power-up.
   /// Commander hook: "Homing missiles armed!".
   static const homingPickup = 'homingPickup';
@@ -213,6 +218,7 @@ abstract final class GameEventNames {
     groundForceSighted,
     groundForceInRange,
     groundMissileLaunch,
+    groundFirePrep,
     homingPickup,
     homingLaunch,
     homingHit,
@@ -278,6 +284,10 @@ abstract final class GameEventNames {
 
   /// A shield pickup is in the air.
   static const shieldSpotted = 'shieldSpotted';
+
+  /// A weapon power-up is falling while the ship has no weapon power
+  /// (variant: the power's name; data `hint` true): the squad recommends it.
+  static const powerupSpotted = 'powerupSpotted';
   static const shieldCollected = 'shieldCollected';
 
   /// The shield crosses [GameEventObserver.shieldWarningSeconds] left.
@@ -354,6 +364,13 @@ class GameEvent {
   @override
   String toString() => 'GameEvent($name, $data)';
 }
+
+typedef _Emit = void Function(
+  String name, {
+  String? variant,
+  String? payload,
+  Map<String, Object?> data,
+});
 
 typedef GameEventListener = void Function(GameEvent event);
 
@@ -437,9 +454,7 @@ class GameEventObserver {
   int? _kills;
   double _lastRout = -100;
 
-  void _observeKills(
-    void Function(String, {String? variant, String? payload}) emit,
-  ) {
+  void _observeKills(_Emit emit) {
     final kills = model.kills, clock = model.clock;
     final before = _kills;
     _kills = kills;
@@ -476,12 +491,17 @@ class GameEventObserver {
     _diveRunAnnounced = false;
   }
 
-  GameEvent _event(String name, {String? variant, String? payload}) =>
-      GameEvent(name, {
-        'clock': model.clock,
-        'variant': ?variant,
-        'payload': ?payload,
-      });
+  GameEvent _event(
+    String name, {
+    String? variant,
+    String? payload,
+    Map<String, Object?> data = const {},
+  }) => GameEvent(name, {
+    'clock': model.clock,
+    'variant': ?variant,
+    'payload': ?payload,
+    ...data,
+  });
 
   List<GameEvent> _publish(List<GameEvent> out) {
     if (dispatch) {
@@ -497,8 +517,12 @@ class GameEventObserver {
   /// them.
   List<GameEvent> observe(List<String> raw) {
     final out = <GameEvent>[];
-    void emit(String name, {String? variant, String? payload}) =>
-        out.add(_event(name, variant: variant, payload: payload));
+    void emit(
+      String name, {
+      String? variant,
+      String? payload,
+      Map<String, Object?> data = const {},
+    }) => out.add(_event(name, variant: variant, payload: payload, data: data));
     final shieldBefore = _powerLeft[Power.shield] ?? 0;
     for (final entry in raw) {
       final colon = entry.indexOf(':');
@@ -591,9 +615,7 @@ class GameEventObserver {
     return _publish(out);
   }
 
-  void _sectorStart(
-    void Function(String, {String? variant, String? payload}) emit,
-  ) {
+  void _sectorStart(_Emit emit) {
     // The model emits `level` (or `boss` in the carrier sector) exactly once
     // per sector entrance, including a restored checkpoint.
     _clearWave();
@@ -613,9 +635,7 @@ class GameEventObserver {
     _diveRunAnnounced = false;
   }
 
-  void _observeCombat(
-    void Function(String, {String? variant, String? payload}) emit,
-  ) {
+  void _observeCombat(_Emit emit) {
     final clock = model.clock;
     for (final d in model.demons) {
       if (d.isLarge) {
@@ -624,7 +644,13 @@ class GameEventObserver {
         }
         final telling = d.telegraph > 0 || d.rushing;
         if (telling && _telegraphing.add(d)) {
-          emit(GameEventNames.sentinelDive);
+          // Seconds until it leaves the formation: the radio ends its
+          // warning on the dive (0 once it is already rushing).
+          final rate = model.policy.hostileRate;
+          emit(
+            GameEventNames.sentinelDive,
+            data: {'diveIn': d.rushing ? 0.0 : d.telegraph / rate},
+          );
         }
         if (!telling && d.dive <= 0) _telegraphing.remove(d);
         continue;
@@ -641,7 +667,10 @@ class GameEventObserver {
     _diveStarts.removeWhere((t) => clock - t > diveWindow);
     if (_diveStarts.length >= 2 && !_diveRunAnnounced) {
       _diveRunAnnounced = true;
-      emit(GameEventNames.diveWarning);
+      // Observed as the dives start: too late for a call that should end
+      // on the dive, so the comms only use it when nothing announced the
+      // run from `divePrep` (diveIn 0 lets them drop it).
+      emit(GameEventNames.diveWarning, data: const {'diveIn': 0.0});
     } else if (_diveStarts.isEmpty) {
       _diveRunAnnounced = false;
     }
@@ -650,16 +679,26 @@ class GameEventObserver {
     _telegraphing.removeWhere((d) => !model.demons.contains(d));
     _diving.removeWhere((d) => !model.demons.contains(d));
     for (final p in model.pickups) {
-      if (_seenPickups.add(p) && p.power == Power.shield) {
-        emit(GameEventNames.shieldSpotted);
+      if (!_seenPickups.add(p)) continue;
+      // `hint`: the ship lacks what is falling, so the squad recommends it
+      // (these calls win over flavour chatter on the radio).
+      if (p.power == Power.shield) {
+        emit(
+          GameEventNames.shieldSpotted,
+          data: {'hint': !model.hasPower(Power.shield)},
+        );
+      } else if (!model.hasOffensivePower) {
+        emit(
+          GameEventNames.powerupSpotted,
+          variant: p.power.name,
+          data: const {'hint': true},
+        );
       }
     }
     _seenPickups.removeWhere((p) => !model.pickups.contains(p));
   }
 
-  void _observePowers(
-    void Function(String, {String? variant, String? payload}) emit,
-  ) {
+  void _observePowers(_Emit emit) {
     for (final power in Power.values) {
       final before = _powerLeft[power] ?? 0;
       final now = model.timeLeft(power);

@@ -189,6 +189,7 @@ extension LifeLossSequence on ArcadeModel {
     }
     for (final u in ground.units) {
       if (u.telegraph > 0) u.telegraph = 0;
+      u.firePrep = 0;
     }
     _queueGameEvent(GameEventNames.regroupStart, {
       'x': lifeLossX,
