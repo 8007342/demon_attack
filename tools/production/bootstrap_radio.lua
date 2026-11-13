@@ -46,7 +46,7 @@ local function download(repo, revision, files)
 end
 download(value('.kokoro.repo'), value('.kokoro.revision'),
  {'--include', 'config.json', 'kokoro-v1_0.pth', 'voices/*.pt'})
-local files = {}; for file in value('.chatterbox.files[]'):gmatch('[^\n]+') do files[#files+1] = file end
+local files = {'--include'}; for file in value('.chatterbox.files[]'):gmatch('[^\n]+') do files[#files+1] = file end
 download(value('.chatterbox.repo'), value('.chatterbox.revision'), files)
 local ffmpeg = '/home/linuxbrew/.linuxbrew/bin/ffmpeg'
 if not lfs.attributes(ffmpeg) then
