@@ -16,6 +16,9 @@ checkout; serialize any other Git write with `flock .git/production-checkpoint.l
 **Disk:** `/home/forge/src` (checkout and agent worktrees) is a 2.4 GB RAM-backed tmpfs. It filled up on 2026-11-14.
 Keep large raws and caches under `/home/forge/.cache/tillandsias-project/` (`.cache/flyover-raw` is a symlink there),
 remove finished agent worktrees, and push often: unpushed work in tmpfs may not survive a restart.
+It can't be resized live (a launcher change plus a restart is filed). Keep at least 300 MB free for git; put new worktrees and
+build outputs under `/home/forge/.cache/tillandsias-project/worktrees/`. That overlay survives a container restart, not a
+recreate, so it is only a cache: everything that matters must be pushed.
 
 **Do not restart the forge on purpose** until the host launcher fix (tillandsias #1092) is installed: a restart
 brings back the 12 GiB cgroup caps. New models and the music allowlist (#1091, #1093) arrive live through a host
