@@ -38,7 +38,7 @@ checking in every 20–30 min (ScheduleWakeup).
       (persistent cache, not the PWA). Mouth/context review videos: `tools/production/mux_mouth_review.lua`.
 - [ ] 1.4 Operator audition (clean, transformed, encoded). Promote only the complete accepted bank.
 
-## 2. Campaign music: `art/music/batch-2026-11-12.json` (host GPU studio)
+## 2. Campaign music (one epic composition that builds across waves and levels; radio must never duck it): `art/music/batch-2026-11-12.json` (host GPU studio)
 
 - [ ] 2.0 **Blocked:** wait for the host tray rebuild with tillandsias PR #1091
       (AudioAdjustVolume pinned). The host session will report when it's ready. Don't bypass admission.
@@ -92,6 +92,9 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 00:20 UTC: operator rule: music volume is constant; radio never ducks it. Radio airtime target cut to
+  about 15-25 percent so the score carries the game.
 
 - 2026-11-14 00:10 UTC: operator audition: most radio clips much better; some human clips flat, some demon clips
   lack growl or sound uncompressed. Tagging comes via the new /console notes; tagged clips re-render on CPU with
