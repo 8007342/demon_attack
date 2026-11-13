@@ -115,10 +115,7 @@ void main() {
       expect(g.breakthroughsBySector[0] + g.breakthroughsBySector[1], 0);
       expect(g.impactsBySector[0] + g.impactsBySector[1], 0);
       expect(g.breakthroughsBySector[2] + g.breakthroughsBySector[3], greaterThan(0));
-      // Floor of 3: the ground-fire radio beat (GroundTuning.firePrep) shifts
-      // launch timing, and this seeded autopilot run then takes one more hit
-      // out of ~17 launches on Hard (2 at the old timing).
-      expect(g.missileImpacts, lessThanOrEqualTo(math.max(3, g.missilesLaunched * .15)));
+      expect(g.missileImpacts, lessThanOrEqualTo(math.max(2, g.missilesLaunched * .15)));
       expect(g.homingCollected, greaterThan(30));
       expect(g.homingHits, greaterThan(g.homingCollected * 2));
     });

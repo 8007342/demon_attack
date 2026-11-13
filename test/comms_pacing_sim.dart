@@ -147,9 +147,9 @@ PacingStats simulate(
     }
   }
   // Ground fire at the player (GroundTuning): a unit that reaches fire
-  // range spends its two shots a reload apart (beat + tell + reload); now
-  // and then a second unit fires alongside. One beat at a time.
-  const reload = GroundTuning.fireLead + GroundTuning.cooldown;
+  // range spends its two shots a reload apart (tell + reload); now and
+  // then a second unit fires alongside. One tell at a time.
+  const reload = GroundTuning.telegraph + GroundTuning.cooldown;
   final preps = <double>[];
   t = 8;
   while (t < seconds) {
@@ -160,7 +160,7 @@ PacingStats simulate(
   }
   preps.sort();
   for (var k = 1; k < preps.length; k++) {
-    preps[k] = math.max(preps[k], preps[k - 1] + GroundTuning.firePrep);
+    preps[k] = math.max(preps[k], preps[k - 1] + GroundTuning.telegraph);
   }
   for (final prep in preps) {
     if (prep + GroundTuning.fireLead >= seconds) break;
