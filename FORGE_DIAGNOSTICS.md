@@ -139,3 +139,27 @@ The previous NVIDIA CDI `/dev/nvidia-modeset` studio-start failure has cleared:
 studio now starts. Immediate worker socket reuse and old strict-input-hash stale
 records were also addressed; current status at recovery showed zero stale.
 Reproduce before reopening these as active blockers.
+
+## 7. Local smoke-test findings — 02:12 UTC
+
+App and gallery release builds pass. 54 targeted Flutter checks, 30 Node audio/
+Worker tests, changed-runtime static analysis and strict validation of the active
+OpenSpec change pass. Existing landscape widget fixture still warns that its
+START GAME tap is offscreen; do not treat that fixture as a real landscape
+interaction check.
+
+Managed Wrangler preview starts and serves the Flutter UI and `/api/scores`
+(HTTP 200). Desktop and Galaxy S24 Chromium windows load. Phone screenshot shows
+the landing page, but arrow glyphs appear as missing-character boxes. Console
+reports failed `fonts.gstatic.com` fallback font fetches (Noto Sans Math/SC/TC).
+**Project remedy:** bundle a suitable licensed symbol font and configure local
+fallbacks (or replace simple arrows with drawn icons), then rebuild and test
+with outbound network disabled. **Maintainer check:** confirm this is expected
+project-only browser egress behavior; do not relax browser isolation just to
+fetch fallback fonts. This is a visual/offline-quality limitation of the current
+local candidate and should be fixed or explicitly accepted before production.
+
+Host browser `browser.cdp` Input.dispatchTouchEvent calls timed out for the phone
+window. **Maintainer check:** inspect the window/session CDP routing and timeout
+logs. Screenshots and browser.eval work. Loading and screenshot inspection are
+confirmed; these timed-out calls do not establish touch/gameplay success.
