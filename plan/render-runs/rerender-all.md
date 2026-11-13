@@ -54,8 +54,9 @@ checkout; serialize any other Git write with `flock .git/production-checkpoint.l
 - [x] 3.3 Full flyover re-render (90/90 jobs, 0 failures, 40 min on the A5000 at SDXL). Same seeds and workflow
       reproduced every strip, plane and creature byte for byte, so only the forge-channel landmark changed.
       This proves exact rebuilds; it is NOT the quality upgrade. Analyzer clean, flyover tests pass.
-- [ ] 3.4 Flyover refinement pass with the big models (Qwen-Image-Edit-2511 img2img from the current raws, or
-      FLUX.2-klein, plus a second high-res pass), after the sprite pilot is reviewed. Steps: `jobs`, every job through studio.run_workflow,
+- [ ] 3.4 Flyover quality upgrade (required; 3.3 only reproduced the old art): put all 90 flyover images through
+      the same Qwen-Image-Edit-2511 + BiRefNet refinement as the sprite pilot (5.1), after the operator reviews
+      the pilot. Steps: `jobs`, every job through studio.run_workflow,
       `ingest --results`, `process`, `pack`; operator review of `art/contact/flyover-*.png`.
 - [ ] 3.2 Operator review of the reroll; real-phone flyover frame rate and perspective check.
 
@@ -86,6 +87,10 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-13 23:45 UTC: FLUX.1-dev and SD3.5 are off (gated; needs an HF login). Qwen-Image text-to-image
+  (Apache-2.0) is being admitted as the big text-to-image model. The audition build's source is pushed as
+  `work/radio-bank-audition`.
 
 - 2026-11-13 23:30 UTC: refinement pilot committed; radio-bank preview served locally from an uncommitted worktree
   build (/home/forge/.cache/tillandsias-project/worktrees/radio-preview).
