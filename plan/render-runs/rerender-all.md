@@ -42,8 +42,14 @@ checkout; serialize any other Git write with `flock .git/production-checkpoint.l
 
 ## 3. Flyover and landmark rerolls (host GPU studio)
 
-- [ ] 3.1 Ember Forges `landmark/ember/2/forge-channel` came out as a sphere: revise the prompt in
-      `art/families/flyover-backgrounds.json`, then `tools/flyover_assets.py run --only landmark/ember/2/forge-channel`.
+- [x] 3.1 Ember Forges `landmark/ember/2/forge-channel` came out as a sphere. The prompt now asks for a long low
+      boxy hall with a straight molten trench and no round shapes (seed_offset 11). Rerolled through
+      studio.run_workflow (job st-1794606171970-0, seeds 24221–24224). No spheres. Candidates and provenance are in
+      `assets/research/flyover-reroll/landmark-ember-2-forge-channel/`. Seed 24221 is the spec-reproducible pick.
+- [ ] 3.1b Integrate the pick: needs the raw cache (`.cache/flyover-raw`), which isn't in this forge, so `process`
+      can't rebuild the atlases yet. Covered by 3.3. Python steps need `uv run --with numpy --with pillow`.
+- [ ] 3.3 Full flyover re-render: `flyover_assets.py jobs`, run every job through studio.run_workflow, `ingest`,
+      `process`, `pack`, `contact`; operator review of the contact sheet.
 - [ ] 3.2 Operator review of the reroll; real-phone flyover frame rate and perspective check.
 
 ## 4. Sprites (host GPU studio)
@@ -65,6 +71,8 @@ current families instead.
 - [ ] 4.2 Contact sheets and operator acceptance per family; repack atlases; run the gallery and tests.
 
 ## Log
+
+- 2026-11-13 21:58 UTC: radio at heavyArmorSighted-d4 done; Ember forge-channel rerolled (3.1).
 
 - 2026-11-13 21:40 UTC: forge restart had dropped the cache symlink. Bootstrap restored the runtime
   from the persistent cache, and the radio controller resumed at heavyArmorSighted-d3.
