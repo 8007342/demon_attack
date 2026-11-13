@@ -198,6 +198,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   bool hintArtPrecached = false;
   ScoreEntry? finalResult;
   bool showFinalResult = false;
+
+  /// False when [finalResult] came from a /console run (shown, never ranked).
+  bool finalRanked = true;
   String? heartNotice;
   double heartNoticeUntil = 0;
   bool loading = false, submitted = false;
@@ -332,7 +335,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           audioCue('travel', model.level, 1, model.cycle);
         case 'victory':
           audioCue('victory', model.level, 1, model.cycle);
-          if (!_endingShown) {
+          if (!_endingShown && model.finalBoss) {
             precacheImage(
               const AssetImage('assets/images/beach-ending.webp'),
               context,
@@ -356,11 +359,18 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               route: model.cycle,
             );
           }
-          savedCheckpoint = model.checkpoint();
-          storage.saveCheckpoint(savedCheckpoint!);
+          // A console run never replaces the player's saved run.
+          if (model.ranked) {
+            savedCheckpoint = model.checkpoint();
+            storage.saveCheckpoint(savedCheckpoint!);
+          }
         case 'bossDefeated':
-          history.recordBoss(model.difficulty);
-          storage.saveHistory(history);
+          // Console runs unlock nothing.
+          if (model.ranked) {
+            history.recordBoss(model.difficulty);
+            if (model.finalBoss) history.recordFinale();
+            storage.saveHistory(history);
+          }
         case 'gameover':
           if (!model.defeatActive) {
             _finishRun(failed: true);
@@ -393,15 +403,22 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         (model.mode == RunMode.gameOver || model.mode == RunMode.completed)) {
       _finishRun(failed: model.mode == RunMode.gameOver);
     }
+    // The beach ending belongs to the campaign's last carrier only (sector 5
+    // of the fifth route); the four earlier carriers keep their normal
+    // victory → travel flow into the next route.
     if (!_endingShown &&
         !_endingOpen &&
         !_endingScheduled &&
         model.mode == RunMode.victory &&
+        model.finalBoss &&
         model.transitionProgress >= .72) {
       _endingScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _endingScheduled = false;
-        if (mounted && model.mode == RunMode.victory && !_endingOpen) {
+        if (mounted &&
+            model.mode == RunMode.victory &&
+            model.finalBoss &&
+            !_endingOpen) {
           _endingShown = true;
           _showEnding();
         }
@@ -444,6 +461,26 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   void _finishRun({required bool failed}) {
     if (handledRunEnd) return;
     handledRunEnd = true;
+    // --- console route: a console run is never ranked. It shows its result
+    // beside the board, tagged, with no initials entry and no POST; the
+    // player's own saved run and unlock history are left untouched.
+    if (!model.ranked) {
+      finalResult = ScoreEntry(
+        'YOU',
+        model.score,
+        difficulty: model.difficulty,
+        medals: model.medals,
+        activeMilliseconds: model.activeMilliseconds,
+      );
+      finalRanked = false;
+      boardDifficulty = model.difficulty;
+      showFinalResult = true;
+      _title();
+      _refreshBoard();
+      return;
+    }
+    // --- end console route
+    finalRanked = true;
     if (failed) {
       history.recordFailure();
       storage.saveHistory(history);
@@ -507,7 +544,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       storage.clearCheckpoint();
       return;
     }
-    _endingShown = model.cycle > 0;
+    // Checkpoints sit at wave entrances, before any carrier falls, so a
+    // resumed run has never shown the ending (even on the fifth carrier).
+    _endingShown = false;
     setState(() {
       screen = null;
       submitted = false;
@@ -636,6 +675,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   }
 
   Future<void> _submit() async {
+    if (!model.ranked || !finalRanked) return; // console runs never POST
     setState(() {
       loading = true;
       error = null;
@@ -951,7 +991,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               onPressed: () => _showEnding(creditsOnly: true),
               child: const Text('CREDITS', style: TextStyle(fontSize: 10)),
             ),
-            if (history.everBeatBoss)
+            if (history.everFinished)
               IconButton(
                 key: const ValueKey('menu-ending-replay'),
                 tooltip: 'Replay beach ending',
@@ -1167,6 +1207,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           const SizedBox(height: 18),
           _label('YOUR FINAL SCORE', gold, size: 11),
           _scoreRow(-1, finalResult!),
+          if (!finalRanked) ...[
+            const SizedBox(height: 6),
+            _unrankedTag(key: const ValueKey('result-unranked')),
+          ],
         ],
         if (submitted)
           Padding(
@@ -1284,6 +1328,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
               const Color(0xFF9AAEC3),
               size: 9,
             ),
+            if (!model.ranked) ...[
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _unrankedTag(key: const ValueKey('hud-unranked')),
+              ),
+            ],
           ],
         ),
       ),
@@ -2244,6 +2295,19 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     height: size,
     child: CustomPaint(painter: _SpritePainter(scene, row, col)),
   );
+  // --- console route: the mark of a /console run (HUD and result).
+  Widget _unrankedTag({Key? key}) => Container(
+    key: key,
+    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+    decoration: BoxDecoration(
+      border: Border.all(color: const Color(0xFF6B5A33)),
+    ),
+    child: const Text(
+      'CONSOLE RUN · NOT RANKED',
+      style: TextStyle(fontSize: 7, letterSpacing: 1.2, color: gold),
+    ),
+  );
+
   Widget _label(String value, Color color, {double size = 10}) => Text(
     value,
     textAlign: TextAlign.center,
