@@ -95,8 +95,17 @@ abstract final class GroundTuning {
 
   // Firing.
   static const telegraph = 1.1; // launcher raise (first half) + glow
+
+  /// A committed, unseen beat before the tell (`groundFirePrep` fires), so
+  /// the radio's full missile warning ends on the launch. The reload
+  /// [cooldown] is shortened by the same beat: the cadence of a unit's
+  /// shots (reload + beat + tell = 4.3 s) is unchanged.
+  static const firePrep = 1.4;
+
+  /// Seconds from `groundFirePrep` to the launch.
+  static const fireLead = firePrep + telegraph;
   static const fireFlash = .28;
-  static const cooldown = 3.2;
+  static const cooldown = 3.2 - firePrep;
   static const maxMissilesInFlight = 3;
 
   // Ground-to-air missiles: a fixed path to the player's x sampled at launch.
@@ -356,6 +365,10 @@ class GroundUnit {
   /// cannot lock on until it reaches fire range).
   bool guaranteed = false, warned = false;
   double telegraph = 0, cooldown = 0, fireFlash = 0, tracerLeft = .6;
+
+  /// Seconds left of the committed beat before the tell
+  /// ([GroundTuning.firePrep]).
+  double firePrep = 0;
   bool destroyed = false, sighted = false, announcedInRange = false;
   double wreckAge = 0;
   GroundAlly? ally;
@@ -1098,6 +1111,15 @@ extension GroundWarSimulation on ArcadeModel {
     if (shipAway) {
       // The regroup holds ground fire too (life-loss sequence).
       u.telegraph = 0;
+      u.firePrep = 0;
+      return;
+    }
+    if (u.firePrep > 0) {
+      u.firePrep -= dt;
+      if (u.firePrep <= 0) {
+        u.firePrep = 0;
+        u.telegraph = GroundTuning.telegraph;
+      }
       return;
     }
     if (u.telegraph > 0) {
@@ -1114,9 +1136,16 @@ extension GroundWarSimulation on ArcadeModel {
         u.cooldown <= 0 &&
         ground.missiles.where((m) => !m.spent).length <
             GroundTuning.maxMissilesInFlight &&
-        // One tell at a time keeps every launch readable.
-        !ground.units.any((o) => o.telegraphing)) {
-      u.telegraph = GroundTuning.telegraph;
+        // One beat and one tell at a time keep every launch readable (the
+        // next unit's beat may run under this one's tell).
+        !ground.units.any((o) => o.firePrep > 0)) {
+      u.firePrep = GroundTuning.firePrep;
+      _groundEvent(GameEventNames.groundFirePrep, {
+        'x': u.x,
+        'y': u.y,
+        // Seconds until the launch: the warning ends on it.
+        'fireIn': GroundTuning.fireLead,
+      });
     }
   }
 
