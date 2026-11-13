@@ -35,3 +35,25 @@ Music has one rendered candidate out of 27. The studio is available, but admissi
 - Production PWA assets have not been replaced. No music candidate has passed human audition; no complete radio bank has passed strict validation.
 
 Read `plan/battle-metal-radio-production.md`, the active OpenSpec change, and `plan/render-runs/campaign-batch-2026-11-12/cpu-and-recovery.md` for the production record and requirements. Keep the goal open until music and radio are complete, reviewed, and remotely checkpointed.
+
+## Crash recovery — 2026-11-13 02:03 UTC
+
+Fetched all origin refs; newest remote tip was `4f282d83` on this branch.
+Recovered 505/574 current completed radio ledgers, zero stale, with 69 pending;
+first pending job is `convoyStuck-h0`. No controller/worker survived the crash.
+Restored the pinned runtime and ffmpeg. Fixed bootstrap Chatterbox download
+selection to use `hf download --include`; fix pushed as `1cdccf1f`.
+Restarted exactly one foreground-session guarded supervisor with:
+
+```
+forge-guard run --need-mb 3072 --threads 20 -- lua tools/production/resume_radio.lua convoyStuck-h0
+```
+
+Output appends to the existing radio-supervised.log in the project cache.
+Check live processes and current ledgers before any restart. Retained earlier
+log entries alone do not prove a worker is alive. Completed jobs still push via
+the checkpoint helper; final bank assembly and creative review remain pending.
+Studio started successfully. Retried the committed campaign-a2a-headroom
+workflow through the host tool; admission still refuses `AudioAdjustVolume`
+with `node_not_pinned`. No music render queued. Host node allowlist repair is
+still required; do not bypass admission.
