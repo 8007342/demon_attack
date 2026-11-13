@@ -81,8 +81,8 @@ When no player ship and no allied unit was lost, the observer SHALL emit `flawle
 - **THEN** the Admiral and other crew members celebrate in sequence, and the banner reads FLEET INTACT
 
 ### Requirement: Voice playback
-Voice clips SHALL play through the music engine's AudioContext and master gain, so they honor mute and pause. The music SHALL duck while anyone speaks, and at most two voices SHALL sound at once. A voice toggle next to the sound button SHALL silence the voices while keeping the subtitles.
+Voice clips SHALL play through the music engine's AudioContext and master gain, so they honor mute and pause. Speech SHALL never lower the music (superseded by comms-pacing: music volume is constant), and the director SHALL keep one voice on the channel. A voice toggle next to the sound button SHALL silence the voices while keeping the subtitles.
 
-#### Scenario: Ducking
+#### Scenario: No ducking
 - **WHEN** a callout plays during a level cue
-- **THEN** the music gain ramps down under the voice and recovers shortly after the voice ends
+- **THEN** the music gain stays exactly where it was, during and after the voice
