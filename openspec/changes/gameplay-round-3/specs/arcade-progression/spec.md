@@ -17,7 +17,7 @@
 - **THEN** the next arrival is unescorted and out of homing lock until it reaches fire range, and the warnings precede its breakthrough
 
 ### Requirement: Console starts
-A console start SHALL begin a fresh run at the chosen sector, route and difficulty, at 0 points with the starting lives, with earlier routes counted as won. Normal scoring and top-10 rules SHALL apply.
+A console start SHALL begin a fresh run at the chosen sector, route and difficulty, at 0 points, with earlier routes counted as won. Normal scoring SHALL apply; lives and ranking follow the `console-runs-final-ending` change (one life, never ranked).
 
 #### Scenario: Sentinel jump
 - **WHEN** the console starts a sentinel encounter
