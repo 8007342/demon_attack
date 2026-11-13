@@ -13,6 +13,11 @@ checkout; serialize any other Git write with `flock .git/production-checkpoint.l
 
 ## Restart procedure
 
+**Do not restart the forge on purpose** until the host launcher fix (tillandsias #1092) is installed: a restart
+brings back the 12 GiB cgroup caps. New models and the music allowlist (#1091, #1093) arrive live through a host
+tray rebuild. There is no persistent supervisor; long batches run from a retained session, with a babysitter
+checking in every 20–30 min (ScheduleWakeup).
+
 1. `pgrep -af 'model_worker|resume_radio'`. Never start a second controller or worker.
 2. `/home/forge/.cache/demon-attack` must be a symlink to
    `/home/forge/.cache/tillandsias-project/demon-attack`. If it is missing, run
@@ -87,6 +92,11 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 00:10 UTC: operator audition: most radio clips much better; some human clips flat, some demon clips
+  lack growl or sound uncompressed. Tagging comes via the new /console notes; tagged clips re-render on CPU with
+  several workers (no GPU voice service soon). Try a pitch, formant and saturation post-process for growl.
+  Agents on work/game-polish: comms pacing, ending after boss 5 plus unranked console runs, asset studio and notes.
 
 - 2026-11-13 23:45 UTC: FLUX.1-dev and SD3.5 are off (gated; needs an HF login). Qwen-Image text-to-image
   (Apache-2.0) is being admitted as the big text-to-image model. The audition build's source is pushed as
