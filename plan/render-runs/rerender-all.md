@@ -46,7 +46,6 @@ checking in every 20–30 min (ScheduleWakeup).
 - [x] 1.4 Operator audition: mostly much better; bank promoted into `game` (546e7874). Flat or growl-less clips are
       being tagged in /gallery/?page=studio. See 1.5.
 - [ ] 1.5 Re-render the tagged clips (CPU, several workers; growl via pitch, formant and saturation post-processing).
-- [ ] 1.4-old Operator audition (clean, transformed, encoded). Promote only the complete accepted bank.
 
 ## 2. Campaign music (one epic composition that builds across waves and levels; radio must never duck it): `art/music/batch-2026-11-12.json` (host GPU studio)
 
