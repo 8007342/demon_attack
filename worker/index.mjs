@@ -1,3 +1,6 @@
+import { handleNotes } from './notes.mjs';
+
+export { ReviewNotes } from './notes.mjs';
 const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' };
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const MAX_BODY = 512;
@@ -69,6 +72,7 @@ export default {
       const id = env.HIGH_SCORES.idFromName('global-top10-v1');
       return env.HIGH_SCORES.get(id).fetch(request);
     }
+    if (url.pathname === '/api/notes') return handleNotes(request, env);
     if (url.pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
     return env.ASSETS.fetch(request);
   },

@@ -8,3 +8,4 @@
 - [x] Expressive voices (Chatterbox with Kokoro references, Kokoro fallback), softer break-in and break-out, comms-audio.js cap and no-steal
 - [x] Portraits: minions, mouth compositing fix, backdrops
 - [x] Tests, review renders, headless-browser sequencing check
+- [x] Pacing superseded by comms-pacing: rate limiter with seeded jitter, timed dive and ground-fire calls, no music ducking

@@ -64,7 +64,7 @@ class CommsLayout {
     ];
   }
 
-  static const _subtitleHeight = 62.0, _tagHeight = 18.0;
+  static const _subtitleHeight = 76.0, _tagHeight = 18.0;
 }
 
 /// Loads the portrait atlases once and repaints listeners when ready.
@@ -513,7 +513,7 @@ class CommsSubtitle extends StatelessWidget {
     super.key,
     required this.message,
     required this.now,
-    this.fontSize = 11,
+    this.fontSize = 13,
     this.maxLines = 3,
     this.glyphHeight = 9,
     this.glyphRows = 1,
@@ -568,7 +568,7 @@ class CommsSubtitle extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: const Color(0xFFFFB0A8),
-                  fontSize: fontSize * .8,
+                  fontSize: fontSize * .85,
                   letterSpacing: 1.2,
                   fontWeight: FontWeight.bold,
                 ),
@@ -760,8 +760,8 @@ class CommsSidePanels extends StatelessWidget {
                     : CommsSubtitle(
                         message: m,
                         now: now,
-                        fontSize: 11 * math.min(scale, 1.2),
-                        glyphHeight: 9 * math.min(scale, 1.3),
+                        fontSize: 13.5 * math.min(scale, 1.2),
+                        glyphHeight: 11 * math.min(scale, 1.3),
                       ),
               ),
             ),
@@ -791,7 +791,12 @@ class CommsHudStack extends StatelessWidget {
   /// A full-size transmission card is showing the transmission line.
   final bool hideTransmission;
 
-  static const stripHeight = 76.0, chipHeight = 22.0, gap = 2.0;
+  /// Strips grew with the larger radio text; short landscape screens use
+  /// [compactStripHeight].
+  static const stripHeight = 90.0,
+      compactStripHeight = 76.0,
+      chipHeight = 22.0,
+      gap = 2.0;
   static const portrait = 40.0;
 
   /// Tallest the dock gets (dialogue cards plus exchange/queue label).
@@ -800,6 +805,10 @@ class CommsHudStack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    // Short landscape screens keep the compact strip clear of the ship.
+    final strip = MediaQuery.sizeOf(context).height < 520
+        ? compactStripHeight
+        : stripHeight;
     final shown = [
       for (final m in director.active)
         if (!(hideTransmission && m.transmission)) m,
@@ -849,6 +858,7 @@ class CommsHudStack extends StatelessWidget {
                       reduce,
                       retained: identical(panels.first, opening),
                       conversation: conversation,
+                      height: strip,
                     ),
                   ),
                   if (panels.length == 2) ...[
@@ -859,6 +869,7 @@ class CommsHudStack extends StatelessWidget {
                         reduce,
                         right: true,
                         conversation: conversation,
+                        height: strip,
                       ),
                     ),
                   ] else ...[
@@ -915,6 +926,7 @@ class CommsHudStack extends StatelessWidget {
     bool right = false,
     bool retained = false,
     bool conversation = false,
+    double height = stripHeight,
   }) {
     final c = m.character;
     final accent = Color(c.accent);
@@ -925,7 +937,7 @@ class CommsHudStack extends StatelessWidget {
       key: ValueKey('comms-strip-${m.line.id}'),
       opacity: retained ? 1 : _fade(m, reduce),
       child: Container(
-        height: stripHeight,
+        height: height,
         decoration: conversation
             ? null
             : BoxDecoration(
@@ -969,7 +981,7 @@ class CommsHudStack extends StatelessWidget {
                           maxLines: 1,
                           style: TextStyle(
                             color: accent,
-                            fontSize: 8,
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
                           ),
@@ -977,7 +989,7 @@ class CommsHudStack extends StatelessWidget {
                         CommsSubtitle(
                           message: m,
                           now: now,
-                          fontSize: 10,
+                          fontSize: 12.5,
                           maxLines: 3,
                           glyphHeight: 16,
                           glyphRows: 2,
@@ -995,7 +1007,7 @@ class CommsHudStack extends StatelessWidget {
                                 color: celebrating
                                     ? const Color(0xFFFFD86B)
                                     : accent,
-                                fontSize: 8.5,
+                                fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: .8,
                               ),
@@ -1007,7 +1019,7 @@ class CommsHudStack extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: _text,
-                          fontSize: 10.5,
+                          fontSize: 13,
                           height: 1.15,
                           shadows: [
                             Shadow(color: Color(0xFF000000), blurRadius: 2),
@@ -1150,7 +1162,7 @@ class CommsTransmission extends StatelessWidget {
                         m.line.text ?? '',
                         style: const TextStyle(
                           color: _text,
-                          fontSize: 14,
+                          fontSize: 17,
                           height: 1.3,
                         ),
                       ),

@@ -1,0 +1,67 @@
+{
+  "speaker": "march",
+  "kind": "human",
+  "trigger": "allyFallingBack",
+  "engine": "chatterbox",
+  "emotion": "stern",
+  "samples": 70367,
+  "mouth": "000<<<===<<5554444444==000<<<<<<<<4444443333",
+  "open": "00688876688746778777642117889999977746776432",
+  "vis": "------eeeoooo--------ee--------ooo----------",
+  "lufs": -18.12,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "allyFallingBack.h3",
+  "text": "Damaged unit falling back. Give them room to repair.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyFallingBack.h3/baseline.flac",
+      "sha256": "1a9527f4b5bddaf69ca5cd109356afe2fbf7e25646acb54edf0a867cb9a1151a",
+      "float_source_sha256": "cc031b55b68460490b0cbc18090b611f18aa83b75d2864feff987efb62226eab",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyFallingBack.h3/expressive.flac",
+      "sha256": "29362cee900270b3be03df177e7f4d3769ae2e63f1658ecf3559632d8c9160e5",
+      "float_source_sha256": "71d07a640982f042c57f78420fe2cfd56846a7eb2f407e2f71f14306952e7244",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyFallingBack.h3/voice.flac",
+      "sha256": "425f91bf13cffe69c558d41fc0ae0a54b13df12073b567c39f29d838a3d6184a",
+      "float_source_sha256": "659be5f8a89dbfa5bc2b6510596420acf06031fa4439e8a83b8b63bd8eb30e77",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 9.36,
+    "error": null,
+    "text": "Damaged unit falling back. Give them room to repair."
+  },
+  "seed": 140002687,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "7b334a3fce1e4723f599059d7a911af37c4e6d8335a38ed529e3415672017318"
+  }
+}

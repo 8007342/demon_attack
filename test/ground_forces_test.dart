@@ -346,6 +346,33 @@ void main() {
       expect(m.ground.missilesLaunched, greaterThan(0));
     });
 
+    test('the radio is warned ahead of each launch; firing timing unchanged', () {
+      final m = arena();
+      m.invulnerable = 100;
+      // Approaching: about 3 s from fire range.
+      final u = unit(m, GroundTuning.fireZ + GroundTuning.approachSpeed * 3)
+        ..cooldown = 0;
+      var t = 0.0, warnedAt = -1.0, fireIn = 0.0, launchedAt = -1.0;
+      const dt = 1 / 60;
+      while (t < 8 && launchedAt < 0) {
+        m.update(dt);
+        t += dt;
+        for (final e in m.takeGameEvents()) {
+          if (e.name == GameEventNames.groundFirePrep && warnedAt < 0) {
+            warnedAt = t;
+            fireIn = (e.data['fireIn'] as num).toDouble();
+          }
+        }
+        if (m.ground.missilesLaunched > 0) launchedAt = t;
+      }
+      expect(u.shotsLeft, lessThan(2));
+      expect(warnedAt, greaterThan(0), reason: 'warned before the launch');
+      expect(fireIn, lessThanOrEqualTo(GroundTuning.fireLead + 1e-9));
+      expect(fireIn, greaterThan(GroundTuning.fireLead - .1));
+      // The warning predicted the launch (within a couple of frames).
+      expect((warnedAt + fireIn - launchedAt).abs(), lessThan(.05));
+    });
+
     test('a far unit never telegraphs; the launch follows the full tell', () {
       final m = arena();
       m.invulnerable = 100;

@@ -1,7 +1,9 @@
 // The /console route: start a fresh run at any sector, route and difficulty.
 //
-// Runs launched here begin at 0 points with normal scoring and the normal
-// top-10 flow; they only skip the earlier sectors (ArcadeModel.startAt).
+// Runs launched here are review runs: one life, 0 points, and never ranked.
+// They skip no rule of play, but the top-10 board, the initials entry, the
+// saved checkpoint and the unlock history are all closed to them
+// (ArcadeModel.startAt with console: true; ArcadePage reads model.ranked).
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -84,6 +86,7 @@ class ConsoleStart {
     sector: sector,
     route: route,
     wave: wave,
+    console: true,
   );
 
   String get label =>
@@ -167,7 +170,7 @@ class _DevConsolePageState extends State<DevConsolePage> {
                   ),
                   const SizedBox(height: 10),
                   _label(
-                    'JUMP TO ANY SECTOR · RUNS START AT 0 POINTS',
+                    'JUMP TO ANY SECTOR · 1 LIFE · 0 POINTS · NOT RANKED',
                     _dim,
                     9,
                   ),
@@ -270,6 +273,8 @@ class _DevConsolePageState extends State<DevConsolePage> {
                       Expanded(child: _label(sentinel.label, _faint, 8)),
                     ],
                   ),
+                  // --- console links: review pages opened from here (the
+                  // art gallery; an asset viewer / notes link joins this row).
                   if (widget.galleryUrl != null) ...[
                     const SizedBox(height: 22),
                     TextButton.icon(
@@ -288,10 +293,27 @@ class _DevConsolePageState extends State<DevConsolePage> {
                         style: TextStyle(fontSize: 11, letterSpacing: 2),
                       ),
                     ),
+                    // Asset review studio (lib/review/) inside the gallery.
+                    TextButton.icon(
+                      key: const ValueKey('console-review'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: mint,
+                        shape: const RoundedRectangleBorder(),
+                      ),
+                      onPressed: () => launchUrl(
+                        Uri.base.resolve('${widget.galleryUrl!}?page=studio'),
+                        webOnlyWindowName: '_self',
+                      ),
+                      icon: const Icon(Icons.rate_review, size: 16),
+                      label: const Text(
+                        'ASSET REVIEW',
+                        style: TextStyle(fontSize: 11, letterSpacing: 2),
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 18),
                   _label(
-                    'EARLIER RUNS COUNT AS WON · NORMAL SCORING · TOP 10 OPEN',
+                    'EARLIER RUNS COUNT AS WON · NO TOP 10 · NO SAVED RUN',
                     _faint,
                     8,
                   ),

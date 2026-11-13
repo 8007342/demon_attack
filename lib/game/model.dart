@@ -327,13 +327,24 @@ class ArcadeModel {
   // --- divePrep: a beat of radio warning before every dive tell ---
   static const divePrepBeat = .5;
 
+  /// Seconds of dive tell (telegraph) before [d] leaves the formation.
+  static double diveTellFor(Demon d) => d.isLarge
+      ? .9
+      : d.elite
+      ? .55
+      : .7;
+
   void _prepDive(Demon d, {bool lead = false}) {
     d.divePrep = divePrepBeat;
     d._prepLead = lead;
+    final rate = policy.hostileRate;
     _queueGameEvent(GameEventNames.divePrep, {
       'x': d.x,
       'y': d.y,
       'lead': divePrepBeat,
+      // Seconds until the dive itself starts (the beat plus the tell, at
+      // this difficulty's pace): the radio ends its dive call on it.
+      'diveIn': (divePrepBeat + diveTellFor(d)) / (rate > 0 ? rate : 1),
       'sentinel': d.isLarge,
       'elite': d.elite,
     });
@@ -341,11 +352,7 @@ class ArcadeModel {
 
   void _startDiveTell(Demon d) {
     d.divePrep = 0;
-    d.telegraph = d.isLarge
-        ? .9
-        : d.elite
-        ? .55
-        : .7;
+    d.telegraph = diveTellFor(d);
     d.targetX = d._prepLead
         ? (shipX + shipVx * 0.22).clamp(24.0, width - 24.0)
         : shipX;
@@ -364,6 +371,17 @@ class ArcadeModel {
   final List<HeartPickup> heartPickups = [];
   int lives = 3, score = 0, level = 1, cycle = 0, kills = 0, wave = 1;
   int? clearedLevel;
+
+  /// The zero-based route of the campaign's last carrier (five in all).
+  static const finalRoute = 4;
+
+  /// Whether the carrier on screen (or just destroyed) is the campaign's
+  /// last: sector 5 of the fifth route. Only its victory earns the ending.
+  bool get finalBoss => level == 5 && cycle >= finalRoute;
+
+  /// False for a /console run: it starts with one life at 0 points and never
+  /// reaches the top-10 board, the saved checkpoint or the unlock history.
+  bool ranked = true;
   static const maxActiveDemons = 61;
 
   /// Pseudo-3D swarm depth (plan/perspective.md). False restores the flat
@@ -501,6 +519,7 @@ class ArcadeModel {
 
   void start({Difficulty difficulty = Difficulty.normal}) {
     this.difficulty = difficulty;
+    ranked = true;
     lives = policy.startingLives;
     medals = 0;
     _activeMilliseconds = 0;
@@ -563,15 +582,23 @@ class ArcadeModel {
   }
 
   /// A fresh run that begins at [sector] 1-5 of [route] 0-4 (optionally at
-  /// [wave]): 0 points, starting lives, normal scoring. Earlier routes count
-  /// as won (medals = route), which satisfies the sentinel prerequisite.
+  /// [wave]): 0 points, normal scoring. Earlier routes count as won
+  /// (medals = route), which satisfies the sentinel prerequisite.
+  ///
+  /// A [console] run starts with exactly one life and is not [ranked];
+  /// otherwise the difficulty's starting lives apply.
   void startAt({
     Difficulty difficulty = Difficulty.normal,
     int sector = 1,
     int route = 0,
     int wave = 1,
+    bool console = false,
   }) {
     start(difficulty: difficulty);
+    if (console) {
+      ranked = false;
+      lives = 1;
+    }
     cycle = route.clamp(0, 4);
     level = sector.clamp(1, 5);
     medals = cycle;
@@ -675,6 +702,7 @@ class ArcadeModel {
     // A recorded medal always belongs to an already completed route.
     if (restoredMedals > route) return false;
     difficulty = restoredDifficulty;
+    ranked = true;
     cycle = route;
     level = sector;
     wave = restoredWave;
@@ -1147,7 +1175,7 @@ class ArcadeModel {
           _groundLevelCleared(); // --- ground war
           _enterPhase(RunMode.levelClear, 4 + storyReadingTime);
           events.add('levelclear');
-        } else if (mode == RunMode.victory && cycle >= 4) {
+        } else if (mode == RunMode.victory && finalBoss) {
           mode = RunMode.completed;
           events.add('completed');
           _groundCampaignComplete(); // --- ground war

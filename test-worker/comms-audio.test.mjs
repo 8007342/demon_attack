@@ -74,24 +74,30 @@ test('comms voices are silent before the gesture, then share the context and mas
   assert.equal(comms.play('reinforcements.h0', 6, false), false, 'same clip does not double-play');
 });
 
-test('music ducks under speech and recovers after the last voice', async () => {
+test('music volume is constant: speech (human or demon, any priority) never ducks it', async () => {
   const h = await harness();
   const comms = h.window.commsAudio, audio = h.window.demonAudio;
   await audio.unlock();
   const music = audio.graph.music;
+  const before = { bus: music.gain.value, level: audio.state.musicLevel };
   comms.play('a', 5, false);
+  comms.play('grunt', 4, true);
+  comms.play('urgent', 9, false);
   for (let i = 0; i < 5; i++) await h.settle();
-  assert.equal(comms.state.ducked, true);
-  assert.equal(music.gain.targets.at(-1)[0], comms.state.duckGain, 'music bus ramps down to the duck level');
-  const source = h.sources.find(s => s.buffer?.name === 'a');
-  source.onended();
-  assert.equal(comms.state.voices.length, 0);
-  assert.equal(comms.state.ducked, true, 'duck holds briefly after the last voice');
+  assert.equal(comms.state.voices.length, 3, 'the clips are playing');
+  assert.equal(music.gain.value, before.bus, 'music bus unchanged while clips play');
+  assert.equal(music.gain.targets.length, 0, 'no gain ramp scheduled on the music bus');
+  assert.equal(audio.state.musicLevel, before.level, 'music level unchanged');
+  for (const s of h.sources.filter(s => s.buffer)) s.onended?.();
   h.flushTimers();
-  assert.equal(comms.state.ducked, false);
-  assert.equal(music.gain.targets.at(-1)[0], 1, 'music bus ramps back to unity');
+  assert.equal(music.gain.value, before.bus, 'and after the last voice');
+  assert.equal(music.gain.targets.length, 0);
+  assert.equal(comms.state.ducked, undefined, 'there is no duck state any more');
+  // Effects never side-chain the music either.
+  for (const name of ['explosion', 'hit', 'life']) audio.sfx(name);
+  assert.equal(music.gain.targets.length, 0);
   audio.mute(true);
-  assert.equal(audio.graph.master.gain.value, 0, 'mute stays on master, untouched by ducking');
+  assert.equal(audio.graph.master.gain.value, 0, 'mute stays on master');
 });
 
 test('at most three voices: only an urgent line cuts a playing one, anything else beyond the cap is dropped', async () => {

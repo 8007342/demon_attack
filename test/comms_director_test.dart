@@ -163,8 +163,11 @@ CommsDirector _director({
           _d('bc.d1', 'dC'),
         ], cooldown: 2),
       };
+  // Sequencing and casting are tested without the pacing's rests and
+  // budget (comms_pacing_test.dart measures those).
   return CommsDirector(
     random: math.Random(7),
+    pacing: CommsPacing.legacy,
     human: h,
     demon: d,
     cast: _cast,
@@ -399,11 +402,12 @@ void main() {
     test('a new sector hangs up idle tiles with a disconnect transition', () {
       final c = _director();
       c.handle(const GameEvent('chatter'), 0);
-      _run(c, 0, 4);
-      c.handle(const GameEvent('sectorStart', {'variant': '2'}), 5);
+      // Past the speech and the subtitles' reading hold.
+      _run(c, 0, 8);
+      c.handle(const GameEvent('sectorStart', {'variant': '2'}), 9);
       expect(c.slots.where((s) => s.occupant != null), isEmpty);
       expect(
-        c.slots.where((s) => s.state(5.1) == CommsSlotState.disconnecting),
+        c.slots.where((s) => s.state(9.1) == CommsSlotState.disconnecting),
         isNotEmpty,
       );
     });
@@ -547,7 +551,10 @@ void main() {
   });
   group('comms v4 brood voices', () {
     test('battle cries on divePrep: many voices, no immediate repeat, nothing cut', () {
-      final d = CommsDirector(random: math.Random(3));
+      final d = CommsDirector(
+        random: math.Random(3),
+        pacing: CommsPacing.legacy,
+      );
       d.setSector(3, 0);
       for (var t = 0.0; t < 600; t += .1) {
         final tick = (t * 10).round();
@@ -570,15 +577,51 @@ void main() {
       expect(d.interruptedLines, isEmpty);
     });
 
-    test('battle cries are short enough to land before the dive', () {
-      for (final line in commsDemonTriggers['divePrep']!.lines) {
-        expect(line.duration, lessThanOrEqualTo(.9), reason: line.id);
+    test('a dive call ends on the dive: started early from its measured length', () {
+      // divePrep carries `diveIn` (beat + tell); the call starts that long
+      // minus the clip's duration later, so both end together.
+      for (final (sentinel, diveIn) in [(false, 1.2), (false, 1.05), (true, 1.4)]) {
+        final started = <CommsMessage>[];
+        final d = CommsDirector(random: math.Random(3))
+          ..onStart = started.add;
+        d.setSector(3, 0);
+        d.handle(
+          GameEvent(GameEventNames.divePrep, {
+            'diveIn': diveIn,
+            'sentinel': sentinel,
+          }),
+          10,
+        );
+        for (var t = 10.0; t < 14; t += 1 / 60) {
+          d.update(t);
+        }
+        final call = started.single;
+        expect(
+          call.trigger.name,
+          sentinel ? GameEventNames.sentinelDive : GameEventNames.diveWarning,
+        );
+        expect(call.speechEndsAt, closeTo(10 + diveIn, .3), reason: '$call');
+        expect(call.startedAt, greaterThanOrEqualTo(10));
       }
-      expect(commsDemonTriggers['divePrep']!.overlap, isTrue);
+    });
+
+    test('a call observed only as the dive starts is dropped, not played late', () {
+      final d = CommsDirector(random: math.Random(3));
+      d.handle(
+        const GameEvent(GameEventNames.diveWarning, {'diveIn': 0.0}),
+        5,
+      );
+      for (var t = 5.0; t < 9; t += 1 / 60) {
+        d.update(t);
+      }
+      expect(d.history, isEmpty);
     });
 
     test('reinforcements: the brood cheers with two different voices', () {
-      final d = CommsDirector(random: math.Random(8));
+      final d = CommsDirector(
+        random: math.Random(8),
+        pacing: CommsPacing.legacy,
+      );
       d.setSector(2, 0);
       d.handle(const GameEvent(GameEventNames.reinforcements), 0);
       for (var t = 0.0; t < 15; t += .05) {

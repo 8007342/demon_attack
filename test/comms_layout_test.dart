@@ -195,14 +195,18 @@ void main() {
   ) async {
     final rig = await _launch(tester, const Size(1440, 900));
     await rig.run([], 7);
+    // The paced radio leaves real silence between lines: give each call
+    // time to get through.
     for (final raw in [
       'reinforcements',
       'allyUnderAttack:1,120',
       'groundForceSighted',
       'diveWarning',
+      'escort',
+      'wave',
     ]) {
       if (rig.director.slots.every((s) => s.occupant != null)) break;
-      await rig.run([raw], 6);
+      await rig.run([raw], 9);
     }
     await rig.until(() => rig.director.active.any((m) => !m.isDemon));
     final occupied = rig.director.slots.where((s) => s.occupant != null).length;

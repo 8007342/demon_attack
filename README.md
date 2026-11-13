@@ -27,6 +27,20 @@ The managed local preview is https://www.demon-attack.localhost:18443/. After Da
 
 `/console` (served by the SPA fallback) opens a start console: pick difficulty, run 1–5 and sector 1–5 and launch, or jump straight to the run's carrier (**BOSS**) or the first sentinel wave (**SENTINEL**, at least run 2). Runs start fresh at 0 points through `ArcadeModel.startAt` (earlier runs count as won, so medals = run − 1) and use normal scoring and the normal top-10 entry. Launching moves the address bar to `/`; browser back or **BACK TO CONSOLE** on the title returns to the console. The console also links the art gallery (`lib/gallery_main.dart`), which `scripts/build-web.sh` builds into `build/web/gallery` and serves at `/gallery/`. Code: `lib/widgets/dev_console.dart`, `// --- console route` sections in `lib/main.dart`.
 
+### Asset review studio and notes
+
+**ASSET REVIEW** on `/console` opens `/gallery/?page=studio` (`lib/review/`). It plays the sector flyovers live, every atlas animation frame by frame (speed, step, loop/ping-pong/once), the staged gallery scenes, the radio bank (filter by speaker, human/demon, emotion and event, with lip-sync and subtitles) and the music cues and stems (loop the whole cue, the seam, a bar range or a stem slot). Each item has a notes panel: quick tags (regenerate, refine, needs-growl, flat-emotion, uncompressed-sound, clipping, too-loud, too-quiet, timing, keep, …), free text and the playhead time. Notes record the asset reference, source file, content hash and build commit. Deep link: `?page=studio&tab=radio&item=<clip id>`.
+
+Notes are saved in the browser at once. **Export** downloads them as JSON (`demon-attack.notes/v1`); **Sync** sends them to the operator-only `/api/notes` (`worker/notes.mjs`, its own `REVIEW_NOTES` SQLite Durable Object, never the score board). The API needs a secret: `wrangler secret put NOTES_TOKEN` in production, `NOTES_TOKEN=...` in `.dev.vars` locally; enter the same value under the key icon in the studio. Without the secret the API answers 503.
+
+`tools/review_notes.lua` turns notes into a markdown worklist grouped by tag:
+
+```sh
+lua tools/review_notes.lua demon-attack-notes-2026-11-13T101500.json > worklist.md
+lua tools/review_notes.lua --tag needs-growl --kind radio notes.json
+curl -sH "authorization: Bearer $NOTES_TOKEN" https://demonattack.tlatoani.net/api/notes | lua tools/review_notes.lua -
+```
+
 ## Validation
 
 ```sh

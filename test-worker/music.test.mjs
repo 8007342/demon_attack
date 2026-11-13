@@ -159,21 +159,21 @@ test('levels play intro then tiers of one motif at the level tempo: tier changes
   const breakthrough = await audio.accent('breakthrough');
   assert.ok(onGrid(breakthrough, t1.at, BEAT(2)), 'ground breakthrough accent on the beat');
   assert.equal(sources.at(-1).offset, 6, 'breakthrough slot of the sprite');
-  // Life loss: the hit lands on the next sixteenth and drops the music for two
-  // bars; the gloat and the heroic re-entry follow on the beat, and the re-entry
-  // restores the music on its downbeat.
+  // Life loss: the hit lands on the next sixteenth; the gloat and the heroic
+  // re-entry follow on the beat. The music level stays constant throughout
+  // (no life-loss drop: the score is never dipped).
   ctx().currentTime += 1.6;
   const hit = await audio.accent('destroyed');
   assert.ok(onGrid(hit, t1.at, BEAT(2) / 4) && hit - ctx().currentTime <= BEAT(2) / 4 + .031, 'hit stinger on the next sixteenth');
   assert.equal(sources.at(-1).offset, 7.5, 'destroyed slot');
-  assert.ok(near(audio.state.drop.at, hit) && near(audio.state.drop.until, hit + 2 * BAR[2]), 'music drops for two bars');
+  assert.equal(audio.state.drop, null, 'the music is not dipped under the hit');
   ctx().currentTime += .4;
   const gloat = await audio.accent('gloat');
   assert.ok(onGrid(gloat, t1.at, BEAT(2)) && sources.at(-1).offset === 9, 'demonic gloat on the beat');
   ctx().currentTime += .4;
   const back = await audio.accent('respawn');
   assert.ok(onGrid(back, t1.at, BEAT(2)) && sources.at(-1).offset === 10.5, 'heroic re-entry on the beat');
-  assert.ok(near(audio.state.drop.until, back + BEAT(2)), 'the music returns on the re-entry downbeat');
+  assert.equal(audio.state.drop, null, 'nor restored: it never moved');
   assert.equal(audio.state.active, 'l2-t2', 'accents never replace the music');
   // Stale loads: only the latest request wins.
   await Promise.all([audio.cue('level', 1), audio.cue('travel', 2)]);
@@ -379,7 +379,7 @@ test('without a decoded layer sprite a dive falls back to the single dive accent
   assert.equal(sources.at(-1).offset, 0);
 });
 
-test('a muted music channel plays no dive layers; the life-loss drop still applies', async () => {
+test('a muted music channel plays no dive layers; the life-loss accents still play', async () => {
   const { audio } = await inTiers(3);
   audio.setLevel('music', 'mute');
   assert.equal(await audio.accent('dive'), null);

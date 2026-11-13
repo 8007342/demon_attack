@@ -140,6 +140,7 @@ void main() {
         'console-boss',
         'console-sentinel',
         'console-gallery',
+        'console-review',
       ]) {
         final button = find.byKey(ValueKey(key));
         expect(button, findsOneWidget, reason: key);

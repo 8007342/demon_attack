@@ -7,7 +7,7 @@
 - [x] Call UI: side tiles, the HUD-band stack, static transitions, glow, scanlines, idle motion, demon zoom, glyph subtitles and the banner.
 - [x] Voice toggle next to sound; small sectioned `main.dart` hooks.
 - [x] Kokoro voices, grunt synthesis, radio chain, Opus/AAC encode and manifest (`tools/comms_pipeline.py`).
-- [x] `web/audio/comms-audio.js`: shared context, ducking, cap; node test.
+- [x] `web/audio/comms-audio.js`: shared context, cap; node test. (Ducking removed by comms-pacing: music volume is constant.)
 - [x] Portrait pipeline and atlases (`tools/comms_portraits.py`, `art/workflows/comms/`).
 - [x] Tests: director, lineup, events, layout; review renders.
 - [x] Docs: audio backend, asset pipeline, provenance.
