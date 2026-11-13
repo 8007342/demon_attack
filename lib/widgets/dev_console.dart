@@ -293,6 +293,23 @@ class _DevConsolePageState extends State<DevConsolePage> {
                         style: TextStyle(fontSize: 11, letterSpacing: 2),
                       ),
                     ),
+                    // Asset review studio (lib/review/) inside the gallery.
+                    TextButton.icon(
+                      key: const ValueKey('console-review'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: mint,
+                        shape: const RoundedRectangleBorder(),
+                      ),
+                      onPressed: () => launchUrl(
+                        Uri.base.resolve('${widget.galleryUrl!}?page=studio'),
+                        webOnlyWindowName: '_self',
+                      ),
+                      icon: const Icon(Icons.rate_review, size: 16),
+                      label: const Text(
+                        'ASSET REVIEW',
+                        style: TextStyle(fontSize: 11, letterSpacing: 2),
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 18),
                   _label(
