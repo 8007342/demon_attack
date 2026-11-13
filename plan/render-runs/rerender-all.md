@@ -43,7 +43,10 @@ checking in every 20–30 min (ScheduleWakeup).
       validated 574/574 (385 human, 189 demon), 8.29 MB Opus, complete=true. `stage_radio_bank.lua` wrote the
       Dart bank (574 lines, all with measured clips) to `/home/forge/.cache/demon-attack/radio-bank-dart/`
       (persistent cache, not the PWA). Mouth/context review videos: `tools/production/mux_mouth_review.lua`.
-- [ ] 1.4 Operator audition (clean, transformed, encoded). Promote only the complete accepted bank.
+- [x] 1.4 Operator audition: mostly much better; bank promoted into `game` (546e7874). Flat or growl-less clips are
+      being tagged in /gallery/?page=studio. See 1.5.
+- [ ] 1.5 Re-render the tagged clips (CPU, several workers; growl via pitch, formant and saturation post-processing).
+- [ ] 1.4-old Operator audition (clean, transformed, encoded). Promote only the complete accepted bank.
 
 ## 2. Campaign music (one epic composition that builds across waves and levels; radio must never duck it): `art/music/batch-2026-11-12.json` (host GPU studio)
 
@@ -99,6 +102,11 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 01:30 UTC: work/game-polish merged to game (546e7874): radio bank, comms pacing (17-20% airtime, no
+  overlap), constant music, end-aligned dive and ground warnings (predicted; firing unchanged), final-boss-only
+  ending, unranked console runs, asset review studio and notes. 384 Flutter tests and 35 Worker tests pass.
+  Preview notes sync returns 503: the managed preview does not load .dev.vars; notes save in the browser and export.
 
 - 2026-11-14 00:20 UTC: operator rule: music volume is constant; radio never ducks it. Radio airtime target cut to
   about 15-25 percent so the score carries the game.
