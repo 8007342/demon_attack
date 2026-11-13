@@ -26,6 +26,20 @@ studio tools own admission and model licence validation for GPU workflows.
 
 ## Full cast / campaign batch
 
+After a cold forge start, restore the required external dependencies with
+`lua tools/production/bootstrap_radio.lua`. It restores the frozen installed
+package versions (including recorded dependency overrides), downloads the pinned
+Kokoro and Chatterbox models through their SDK CLI, and provisions ffmpeg through
+the forge shim. The actual cache lives under the persistent project volume;
+the original absolute path is a symlink so existing render fingerprints remain
+valid. This bootstrap never starts a render or marks a candidate accepted.
+
+Resume with `forge-guard run --need-mb 3072 --threads 20 -- lua
+tools/production/resume_radio.lua JOB-ID`. Find the first unfinished job from
+the ledgers; do not infer it from an old handoff. This controller starts the
+resident worker automatically. Calling `run.lua` alone requires a worker that
+is already running.
+
 `radio-bank-2026-11-12.lua` schedules all 574 lines. Start the single local
 `model_worker.py` adapter under forge-guard with HF_HOME/COMMS_WORK pointing to
 the restored model cache. It retains required Kokoro/Chatterbox instances,
