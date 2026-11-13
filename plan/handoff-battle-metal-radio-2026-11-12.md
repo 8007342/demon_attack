@@ -57,3 +57,18 @@ Studio started successfully. Retried the committed campaign-a2a-headroom
 workflow through the host tool; admission still refuses `AudioAdjustVolume`
 with `node_not_pinned`. No music render queued. Host node allowlist repair is
 still required; do not bypass admission.
+
+## Local integration — 2026-11-13 02:12 UTC
+
+Radio paused after a successful checkpoint to serialize model memory with
+Flutter verification. Reached 526/574 complete, zero stale/failed. Targeted
+Flutter tests (54), Node audio/Worker tests (30), changed-runtime analysis,
+strict active-change validation and release app/gallery builds passed.
+`game` fast-forwarded and remotely pushed to `5f9d1d06`, including the maintainer
+report `FORGE_DIAGNOSTICS.md`. Production main was not advanced. Research media
+remain outside the deployed PWA asset set. Managed Wrangler preview is live at
+https://www.demon-attack.localhost:18443; score API returns 200. Desktop/phone
+loaded; missing arrow glyphs and browser-control limitations are documented in
+the diagnostics report. This is a local smoke check, not full campaign approval.
+Radio supervisor resumed on the work branch at `groundSkirmish-h1` after builds.
+Check live state before restarting. Music admission remains blocked.
