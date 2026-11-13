@@ -77,7 +77,18 @@ current families instead.
   - [ ] widescreen backdrops (`art/families/widescreen-backdrops.json`)
 - [ ] 4.2 Contact sheets and operator acceptance per family; repack atlases; run the gallery and tests.
 
+## 5. Big-model refinement pilot
+
+- [x] 5.1 Pilot: gargoyle, ally turret, ally rifleman via Qwen-Image-Edit-2511 + BiRefNet
+      (`assets/research/refinement-pilot/`).
+- [ ] 5.2 Operator review of the pilot; then refine each sprite family and the flyover (3.4) the same way.
+- [ ] 5.3 New Undercroft Host units per `openspec/changes/gargoyle-ground-army`, and terrain poses per
+      `openspec/changes/ground-terrain-interaction`.
+
 ## Log
+
+- 2026-11-13 23:30 UTC: refinement pilot committed; radio-bank preview served locally from an uncommitted worktree
+  build (/home/forge/.cache/tillandsias-project/worktrees/radio-preview).
 
 - 2026-11-13 23:00 UTC: cgroup uncapped by the operator; flyover 3.3 done and packed. Admitted big models (host register):
   Qwen-Image-Edit-2511, FLUX.2-klein-4B, Wan2.2-VACE, BiRefNet matting, SDXL family. FLUX.1-dev and SD3.5 need licence
