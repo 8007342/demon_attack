@@ -27,6 +27,10 @@
       {
         "name": "HIGH_SCORES",
         "class_name": "HighScores"
+      },
+      {
+        "name": "REVIEW_NOTES",
+        "class_name": "ReviewNotes"
       }
     ]
   },
@@ -35,6 +39,12 @@
       "tag": "v1",
       "new_sqlite_classes": [
         "HighScores"
+      ]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": [
+        "ReviewNotes"
       ]
     }
   ]
