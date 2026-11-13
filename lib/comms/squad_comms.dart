@@ -76,7 +76,10 @@ class SquadComms {
   }
 
   void _start(CommsMessage m) {
-    if (playAudio && voiceOn) commsPlay(m.line.id, m.priority, m.isDemon);
+    if (!playAudio || !voiceOn) return;
+    // The director already keeps one voice on the channel; a must-play
+    // warning reaches the player even if a stray voice is still sounding.
+    commsPlay(m.line.id, m.mustPlay ? 10 : m.priority, m.isDemon);
   }
 
   void _stop(CommsMessage m) {
