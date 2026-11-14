@@ -53,11 +53,10 @@ checking in every 20–30 min (ScheduleWakeup).
         stale (runs 56.11.10.1; 56.11.14.3 installed), so the new allowlist is not loaded. Relaunch the forge, then
         retry. Record: plan/render-runs/campaign-batch-2026-11-12/level-1-take-2-refusal.json. No bypass, nothing rendered.
 - [x] 2.1 level-1-take-1 (first 96-bar candidate, retained).
-- [ ] 2.2 The other 26 requests through the headroom workflows, in batch order (20/26 done 2026-11-14, all peaks -7 to -14 dBFS;
-      receipts `*-host.json`, ingested by music-bank jobs). **Blocked: level-4 and level-5 takes (6)** output NaN
-      (all samples -32768) on their full-length guides; shorter cuts render. See `campaign-batch-2026-11-12/levels-4-5-nan.json`.
-      level-1 takes 2–3; level-2..5 takes 1–3; bridges 1-2, 2-3, 3-4, 4-5 (takes 1–2); ending takes 1–2; menu takes 1–2.
-      Keep every ticket and result receipt, then run the matching music-bank job.
+- [x] 2.2 The other 26 requests through the headroom workflows (done 2026-11-14; 27/27 candidates ingested, peaks -7 to
+      -14 dBFS, NaN/silence check passes on all 26 headroom takes; take 1 predates headroom and peaks at 0 dBFS). Level 4 and 5
+      needed workarounds for NaN output: level-4 guide cut by one 40 ms frame (3839 frames), level-5 duration set to the guide
+      length. Record: `campaign-batch-2026-11-12/levels-4-5-nan.json`; `art/music/batch-2026-11-12.json` shows what ran.
 - [ ] 2.3 Check clipping, guide alignment and continuity; operator selects accepted takes.
 
 ## 3. Flyover and landmark rerolls (host GPU studio)
@@ -104,6 +103,10 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 06:25 UTC: music batch complete, 27/27 candidates. Level 4/5 NaN traced with the host session to exactly
+  3840 latent frames (level 4) and a duration 40 samples shorter than the guide (level 5); worked around, studio-side
+  refusal requested from the host. Next: operator listening and take selection (2.3).
 
 - 2026-11-14 06:15 UTC: relaunch verified (lane 56.11.14.3 current). Guides re-rendered (bit-identical), studio started,
   20 music takes rendered with 8 dB headroom and checkpointed (level 1-3, all bridges, ending, menu). Level 4/5 guides

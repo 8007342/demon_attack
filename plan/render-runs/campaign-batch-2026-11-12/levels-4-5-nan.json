@@ -1,6 +1,6 @@
 {
   "schema": "demon-attack.backend-blocker/v1",
-  "status": "blocked_nan_output",
+  "status": "worked_around",
   "date": "2026-11-14",
   "lane": "56.11.14.3+6f716174847e4005",
   "workflow": "art/workflows/music/campaign-a2a-headroom.json",
@@ -111,5 +111,12 @@
     "level-4: trim guide by one 40 ms frame to 3839 frames (153.56 s), inaudible",
     "host: investigate why exactly 3840 latent frames NaN"
   ],
-  "bypass_used": false
+  "bypass_used": false,
+  "resolution": {
+    "date": "2026-11-14",
+    "level-4": "guide /work/tmp/imagegen/campaign-guides/level-4-3839f.flac (sha256 42f18bb5...), duration 153.56 s; jobs st-1794636929055-44, -45, -46",
+    "level-5": "full guide, duration 121.264 s; jobs st-1794636986905-47, -48, -49",
+    "checks": "every take: not NaN (min != max), peak between -60 and -0.5 dBFS; all six pass",
+    "host_followup": "studio should refuse exactly-3840-frame latents and duration shorter than the guide rather than return NaN audio (raised with the host session)"
+  }
 }
