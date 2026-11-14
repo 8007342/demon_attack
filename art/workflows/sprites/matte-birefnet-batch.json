@@ -1,0 +1,56 @@
+{
+  "1": {
+    "_meta": {
+      "title": "image"
+    },
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "$input"
+    }
+  },
+  "2": {
+    "_meta": {
+      "title": "birefnet"
+    },
+    "class_type": "LoadRembgByBiRefNetModel",
+    "inputs": {
+      "device": "AUTO",
+      "dtype": "float32",
+      "model": "model.safetensors",
+      "use_weight": false
+    }
+  },
+  "3": {
+    "_meta": {
+      "title": "mask"
+    },
+    "class_type": "GetMaskByBiRefNet",
+    "inputs": {
+      "height": 1024,
+      "images": ["1", 0],
+      "mask_threshold": 0,
+      "model": ["2", 0],
+      "upscale_method": "bilinear",
+      "width": 1024
+    }
+  },
+  "4": {
+    "_meta": {
+      "title": "mask image"
+    },
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": ["3", 0]
+    }
+  },
+  "5": {
+    "_meta": {
+      "title": "save matte"
+    },
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "sprites/matte",
+      "images": ["4", 0]
+    }
+  }
+}
