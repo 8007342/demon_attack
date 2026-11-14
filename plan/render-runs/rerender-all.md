@@ -34,6 +34,48 @@ checking in every 20–30 min (ScheduleWakeup).
    resume from the first job without a ledger:
    `forge-guard run --need-mb 3072 --threads 20 -- lua tools/production/resume_radio.lua JOB-ID`.
 
+## Session handoff (2026-11-14, resume here)
+
+**Music is PAUSED until the host's audio infra is built, admitted and loaded** (batch 1: real-instrument chain
+FluidSynth/Carla + SFZ kits + NAM + LSP + Pedalboard/Matchering + R128; analysis, Audiobox/CLAP; ACE-Step 1.5
+XL-SFT + 4B LM; VoxCPM2 48 kHz TTS; a ComfyUI audio node pack = the audio studio). The operator approved the
+permissive licences. Demucs (internal use only) still needs the operator's /accept-licence on the host. Every new
+model or node needs a tray rebuild AND a forge relaunch.
+
+Read first: `plan/audio-studio/music-requirements.md` (on `game`, f2bc29a1): use cases, the game's asset contract,
+generic host capabilities, first pilot (L3 Ember Moon via real instruments, auditioned before any adaptive cut).
+The operator rejected ALL current music (in-game score, 27 campaign takes, turbo/base A/B); do not promote any.
+
+On resume: `tillandsias_lane_version` current? `studio_models` lists the new audio nodes/models? Ask
+macuahuitl-fedora for the node class names + PR, then build the L3 pilot pipeline.
+
+Landed on `game` this session: /console path routing (24e71158); /studio route, NOTES on /studio, /gallery and
+/console with copy-for-agent markdown, drafts that survive reload, gallery music muted (7c2788cc); the music spec
+(f2bc29a1). Preview: `npm run build`, then preview.publish (reload after wrangler.jsonc edits).
+
+### Game backlog (operator, 2026-11-14), CPU work that can proceed without the music infra
+
+1. **Ground assets rework** (GPU art, start with design):
+   - Human ground vehicles: a style guide (futuristic tanks), plus rotation frames for turning, like the
+     player ship's banking frames.
+   - Alien ground forces: a richer appearance and animation set (an RTS-style swarm army: original designs,
+     genre inspiration only, no copying of any existing game's look). Builds on
+     `openspec/changes/gargoyle-ground-army` (0/28 tasks; research + style guide in
+     plan/gargoyle-army-*.md).
+   - Goal: the ground battle as exciting as the air war.
+2. **Radio chatter back to the middle:** duty is .16 now (comms-pacing cut it); raise it to about the midpoint.
+   Add lines for cutscenes and transitions, wave reinforcements and similar moments. No line may cut another
+   off: let each finish, plus a grace gap.
+3. **Readable comms:** dive calls, ground-attack calls and the demon–human taunt exchanges must stay on screen
+   long enough to read (per-line timeouts from text length).
+4. **Wave arrival pressure:** the very first wave keeps its dramatic arrival. Reinforcements and later waves
+   approach from a distance, and the next wave starts coming in before the current one ends (when the
+   remaining enemies drop below a threshold), so players feel pressure to finish.
+5. **Calmer transitions:** combine the overlapping transition tips and progress messages. Use transitions to
+   show, alternately, (a) a silent tip over a game screenshot with the music playing, or (b) a full-screen
+   radio message (desktop-style, centred in the play area) for the next mission: tips, banter, taunts, jokes.
+   Everything stays fluid with the music.
+
 ## 1. Radio voices: `radio-bank-2026-11-12` (CPU, one guarded worker)
 
 - [x] 1.1 Render the last 12 clips (562/574 done at 21:40 UTC):
