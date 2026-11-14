@@ -86,7 +86,7 @@ current families instead.
       committed workflow and family spec, validating with `studio.validate_family`:
   - [ ] creatures and sentinels (`art/families/sprites`)
   - [ ] carrier (`art/families/carrier`)
-  - [ ] ground forces (`art/families/ground-forces.json`)
+  - [x] ground forces (`art/families/ground-forces.json`)
   - [x] ground troops (`art/families/ground-troops.json`)
   - [ ] flyover vegetation (`art/families/flyover-vegetation.json`)
   - [ ] widescreen backdrops (`art/families/widescreen-backdrops.json`)
@@ -102,6 +102,8 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 01:13 UTC: refinement pass, ground forces: 10 refined (ally-ember reuses pilot seed 641200; demon-krybor/ringfall/ember/hollow 641210-641240, missile 641250, ally-krybor/ringfall/hollow 641260-641280, explosion 641290), 0 rerolls, 0 skipped. ally-ringfall came out grey-green; harmless because the pack keeps only the luminance high-pass and the reserved ally ramp. Sheet: art/contact/refine-ground-forces.png. Analyze clean, 384 tests pass.
 
 - 2026-11-14 01:05 UTC: refinement pass, ground troops: 4 refined (ally-rifle reuses pilot seed 641300; ally-rocket 641310, demon-grunt 641320, demon-rocketeer 641330), 0 rerolls, 0 failures. demon-tank skipped (waits for the gargoyle-army redesign). Sources of record are bbox-fitted area downscales of the matted masters; the atlas rebuilds through `go run . offline` (frames stay procedural, the refined source drives the shading texture). Sheet: art/contact/refine-ground-troops.png. Analyze clean, 384 tests pass.
 
