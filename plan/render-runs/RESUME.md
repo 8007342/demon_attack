@@ -20,6 +20,22 @@ the new audio studio. Read this file, then `plan/render-runs/rerender-all.md` on
 5. `/home/forge/.cache/demon-attack` must be a symlink to `/home/forge/.cache/tillandsias-project/demon-attack`;
    if missing, `lua tools/production/bootstrap_radio.lua` from a checkout (it restores it).
 
+## Update 2026-11-14 17:35 UTC (relaunched session)
+
+- Lane current (56.11.14.3). The audio studio batch 1 is draft PR **tillandsias#1103**, NOT live yet (operator
+  review → land → image + tray rebuild → forge relaunch). Node pack `tillandsias_audio`: TillandsiasLoadMIDI,
+  TillandsiasMIDITransform, TillandsiasSFZRender, TillandsiasAudioPan/MixBus/Crossfade/LoopSeam/EQ/Compressor/
+  Limiter/Saturate, TillandsiasAudioLoudness/NormalizeLoudness/Scope, TillandsiasBarGrid, TillandsiasSaveLoopWAV;
+  core PreviewAudio, SplitAudioChannels, JoinAudioChannels, AudioMerge, EmptyAudio, AudioEqualizer3Band; ACE-Step
+  1.5 XL-SFT. SFZ (CC0): Karoryfer big-rusty / swirly / unruly drums; black-and-blue, meatbass, growlybass basses;
+  black-and-green, shiny guitars; VCSL. Batch 2 (later): FluidSynth, NAM amp/cab, Pedalboard/LSP/Matchering,
+  scoring. Until then guitars = clean CC0 samples → Saturate + EQ.
+- **Step 1a is done:** `art/music/scores/l3-ember-moon/` (full.mid, parts/*.mid, score.json) from
+  `tools/score_l3.py`; form and parts in `art/music/scores/README.md`. Composition sketch (old synth, arrangement
+  only): `~/.cache/demon-attack/scores/l3-ember-moon-sketch.{flac,opus}` via `tools/score_sketch.py`. Awaiting the
+  operator's ear on the arrangement. Next: 1b (write the workflow JSON once the node input names can be read
+  from the live studio's object_info), 1c, 1d.
+
 ## 1. Music: next steps (the main job once the studio is loaded)
 
 Spec: `plan/audio-studio/music-requirements.md` (on `game`). The operator rejected ALL current music. Do not
