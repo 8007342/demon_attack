@@ -84,7 +84,7 @@ current families instead.
 
 - [ ] 4.1 Agree the target tier/model and order with the operator. Then re-render each family through its
       committed workflow and family spec, validating with `studio.validate_family`:
-  - [ ] creatures and sentinels (`art/families/sprites`)
+  - [x] creatures and sentinels (`art/families/sprites`)
   - [ ] carrier (`art/families/carrier`)
   - [x] ground forces (`art/families/ground-forces.json`)
   - [x] ground troops (`art/families/ground-troops.json`)
@@ -102,6 +102,8 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 01:19 UTC: refinement pass, creatures and sentinels: 4 gargoyle keyframes refined (violet reuses pilot seed 641101; teal 641110, coral 641120, gold 641130), 0 rerolls, 0 skipped. Keyframes are flattened on light grey for the colour-key finish; detail maps and combat.png rebuilt, ship-weapons, sentinel-effects and boss atlases byte-identical (fully procedural, no AI source to refine; ship-parts.png is not loaded by lib/). No molt sources exist (molts reuse the hide map). Every frame comes from one detail map, so no drift. Sheet: art/contact/refine-creatures.png. Analyze clean, 384 tests pass.
 
 - 2026-11-14 01:13 UTC: refinement pass, ground forces: 10 refined (ally-ember reuses pilot seed 641200; demon-krybor/ringfall/ember/hollow 641210-641240, missile 641250, ally-krybor/ringfall/hollow 641260-641280, explosion 641290), 0 rerolls, 0 skipped. ally-ringfall came out grey-green; harmless because the pack keeps only the luminance high-pass and the reserved ally ramp. Sheet: art/contact/refine-ground-forces.png. Analyze clean, 384 tests pass.
 
