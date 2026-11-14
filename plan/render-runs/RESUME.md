@@ -43,8 +43,8 @@ the new audio studio. Read this file, then `plan/render-runs/rerender-all.md` on
 - **Mixed pass drafted too:** the same script writes `l3-ember-moon-mix.json` (128 nodes): per-part EQ
   (one band per node), Saturate as amp stand-in, Compressor, Pan; bus chain; master Compressor →
   NormalizeLoudness −18.5 LUFS (ceiling −1.5) → Limiter −1 dB; BarGrid (180 BPM, 96 bars) into the mix's
-  SaveLoopWAV grid_json. Assumptions to verify on the first run: BarGrid start_bar/end_bar are 1-based
-  inclusive; combo inputs (bits, beat_unit) take integers. Run dry first, then mix; then 1c, 1d.
+  SaveLoopWAV grid_json. BarGrid regions are 0-based,
+  end-exclusive ([0, 96)); combo inputs (bits, beat_unit) are integers (both confirmed by the host). Run dry first, then mix; then 1c, 1d.
 
 ## 1. Music: next steps (the main job once the studio is loaded)
 

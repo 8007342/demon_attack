@@ -155,10 +155,10 @@ local function build(mode)
   local save = {audio = {mix, 0}, filename_prefix = prefix .. 'mix', loop_start_s = 0.0, loop_end_s = -1.0, bits = 24}
   if mode == 'mix' then
     for i, s in ipairs(MASTER) do mix = step(mix, s, 'master ' .. i) end
-    -- start_bar/end_bar assumed 1-based inclusive; check the grid_json of the first run.
+    -- BarGrid regions are 0-based and end-exclusive: [start_bar, end_bar) covers all 96 bars.
     local grid = node('TillandsiasBarGrid', ('grid: %g BPM, 4/4, %d bars'):format(bpm, bars), {
       bpm = bpm + 0.0, beats_per_bar = 4, beat_unit = 4, bars = bars, sample_rate = sr,
-      start_bar = 1, end_bar = bars, offset_s = 0.0})
+      start_bar = 0, end_bar = bars, offset_s = 0.0})
     save.audio = {mix, 0}
     save.grid_json = {grid, 2}
   end
