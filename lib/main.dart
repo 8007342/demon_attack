@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'game/model.dart';
 import 'game/hints.dart';
@@ -32,7 +33,12 @@ export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
 // --- end console route
 export 'game/scene.dart' show DemonScene;
 
-void main() => runApp(const DemonAttackApp());
+// Path URLs (not the default #/hash) so the browser path picks the route:
+// /console opens the console. The Worker serves index.html for any path.
+void main() {
+  usePathUrlStrategy();
+  runApp(const DemonAttackApp());
+}
 
 // --- console route: '/console' opens the dev console, any other path the
 // arcade. A console launch pushes '/' (the address bar returns to /) with a
