@@ -17,7 +17,7 @@ import '../game/interlude.dart';
 import '../game/model.dart';
 import '../game/scene.dart' show gold, mint;
 import '../game/ship_painter.dart';
-import '../services/comms_audio.dart' show commsPlay, commsStop;
+import '../services/comms_audio.dart' show commsStop;
 import 'interlude_card.dart';
 import 'medal.dart';
 import 'storyboard_banner.dart';
@@ -109,8 +109,10 @@ class TransitionPresenter {
       );
       _cardStart = 0;
       if (plan?.kind == InterludeKind.tip && voice) {
-        // Music only: the squad stays off the air while the tip is up.
-        comms.setVoice(false);
+        // Music only: the director holds chatter while the tip is up
+        // (urgent and must-play warnings still sound; held lines may play
+        // right after). comms-middle-ground `hush`.
+        comms.director.hush(left);
         _tipMuted = true;
       }
     }
@@ -123,7 +125,6 @@ class TransitionPresenter {
     final now = comms.now;
     final elapsed = _elapsed(model);
     final own = _own;
-    if (own != null && now < own.endsAt) return;
     final director = comms.director;
     final onAir = [
       for (final m in director.active)
@@ -152,32 +153,24 @@ class TransitionPresenter {
       return;
     }
     if (pick.needs > room) return;
-    final who = commsCast[pick.line.speaker];
-    if (who == null) return;
-    final message = CommsMessage(
-      trigger: pick.spec,
-      line: pick.line,
-      character: who,
-      priority: 5,
-      queuedAt: now,
-      readyAt: now,
-      expiresAt: now + room,
-      sequence: -1,
-    )..startedAt = now;
-    _own = shown = message;
-    _cardStart = elapsed;
-    if (comms.playAudio && comms.voiceOn && voice) {
-      commsPlay(pick.line.id, 5, who.isDemon);
-      played.add(pick.line.id);
-    }
+    if (commsCast[pick.line.speaker] == null) return;
+    // The card's own pick goes through the director's pacing (after the
+    // line on air and the grace gap), so it can never talk over the squad;
+    // once it starts, the on-air adoption above shows it as the card.
+    final message = director.offer(pick.line, spec: pick.spec, ttl: room);
+    if (message == null) return;
+    _own = message;
+    played.add(pick.line.id);
   }
 
   /// Ends the window's card and gives the radio back.
   void end(SquadComms comms, {required bool voice}) {
     if (_tipMuted) {
       _tipMuted = false;
-      comms.setVoice(voice);
+      comms.director.hush(0);
     }
+    final own = _own;
+    if (own != null && !own.started) comms.director.queue.remove(own);
     plan = null;
     _own = shown = null;
   }
@@ -187,7 +180,9 @@ class TransitionPresenter {
   bool skip(ArcadeModel model, SquadComms comms, {required bool voice}) {
     if (!showingCard) return false;
     final own = _own;
-    if (own != null && comms.playAudio) commsStop(own.line.id);
+    if (own != null && own.started && comms.playAudio) {
+      commsStop(own.line.id);
+    }
     _skipped = true;
     end(comms, voice: voice);
     if (model.presentationMode == RunMode.transition) model.transitionLeft = 0;

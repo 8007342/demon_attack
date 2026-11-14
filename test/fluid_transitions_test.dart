@@ -250,10 +250,18 @@ void main() {
       // The opening briefing is a silent tip.
       expect(find.text('TACTICAL BRIEFING'), findsOneWidget);
       expect(rig.primaries(), 1);
-      expect(rig.comms.voiceOn, isFalse, reason: 'music only under a tip');
+      // Music only: the director holds chatter (warnings still sound); the
+      // player's voice setting is untouched.
+      expect(
+        rig.comms.director.hushed,
+        isTrue,
+        reason: 'music only under a tip',
+      );
+      expect(rig.comms.voiceOn, isTrue);
       await rig.step(5);
       expect(rig.model.mode, RunMode.playing);
-      expect(rig.comms.voiceOn, isTrue, reason: 'the radio is back');
+      expect(rig.comms.director.hushed, isFalse, reason: 'the radio is back');
+      expect(rig.comms.voiceOn, isTrue);
       expect(rig.primaries(), 0);
 
       rig.clearSector();
