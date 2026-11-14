@@ -33,8 +33,14 @@ the new audio studio. Read this file, then `plan/render-runs/rerender-all.md` on
 - **Step 1a is done:** `art/music/scores/l3-ember-moon/` (full.mid, parts/*.mid, score.json) from
   `tools/score_l3.py`; form and parts in `art/music/scores/README.md`. Composition sketch (old synth, arrangement
   only): `~/.cache/demon-attack/scores/l3-ember-moon-sketch.{flac,opus}` via `tools/score_sketch.py`. Awaiting the
-  operator's ear on the arrangement. Next: 1b (write the workflow JSON once the node input names can be read
-  from the live studio's object_info), 1c, 1d.
+  operator's ear on the arrangement.
+- **Step 1b, dry pass drafted:** `art/workflows/music/l3-ember-moon-dry.json` from
+  `lua tools/production/l3_pilot_workflow.lua` (signatures from #1103 nodes.py, relayed by macuahuitl-fedora):
+  LoadMIDI($midi = full.mid copied under /work/tmp/imagegen/) → MIDITransform(channel = N) per part →
+  SFZRender → SaveLoopWAV stem + four-input MixBus chain → dry mix. SFZ instrument paths are `TBD:<lib>`
+  until `studio_models` lists them: fill the `SFZ` table, regenerate, then queue. Still to add once their
+  inputs are confirmed: Pan (guitars L/R), Saturate + EQ on guitars, bus Compressor, Limiter,
+  NormalizeLoudness (−18 to −19 LUFS), BarGrid → SaveLoopWAV grid_json. Then 1c, 1d.
 
 ## 1. Music: next steps (the main job once the studio is loaded)
 
