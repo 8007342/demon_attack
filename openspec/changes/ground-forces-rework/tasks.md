@@ -45,8 +45,9 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
       No lightx2v LoRA is admitted yet, so it runs 20 steps at cfg 3.5 (10 per expert). Not yet run: see 3.4.
       `tools/ground_blocks` has no verb that writes control strips yet.)
 - [x] 3.3 `art/workflows/sprites/matte-birefnet-batch.json` (single image or whatever batch its loader yields; clips are matted inside the VACE job)
-- [ ] 3.4 Dry-run each new workflow's graph in the studio without queuing (inputs resolve, models present); record model hashes for provenance
-      (2026-11-14 22:50: models all on disk per studio.models. BLOCKED: after the relaunch the host cannot see this forge's
+- [x] 3.4 Dry-run each new workflow's graph in the studio without queuing (inputs resolve, models present); record model hashes for provenance
+      (22:55: host fixed the mount; all three graphs ran: render plan §8 has the smoke ledger and the
+      heading-edit findings. Earlier, 22:50: models all on disk per studio.models. BLOCKED: after the relaunch the host cannot see this forge's
       /work/tmp/imagegen (inputs "do not exist", outputs "Permission denied (os error 13)"); host-side fix needed.
       studio.validate_family refuses every family in the repo, shipped ones too: the host contract 1935-k2ib/v1 wants
       contract/pipelineVersion/family/version/project/kind headers the project schema never had.)

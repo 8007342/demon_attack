@@ -377,3 +377,26 @@ func TestJobsPlan(t *testing.T) {
 		t.Fatalf("jobs %v", kinds)
 	}
 }
+
+// Every inbetween clip in the families resolves to key cells and builds a
+// strip of the right size (the VACE control input).
+func TestControlStrips(t *testing.T) {
+	p := loadProject()
+	for _, u := range p.units() {
+		for _, clip := range u.Spec.Inbetweens {
+			img, err := p.controlStrip(u, clip, 17)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if b := img.Bounds(); b.Dx() != 17*controlSize || b.Dy() != controlSize {
+				t.Fatalf("%s %s: strip %v", u.Spec.ID, clip, b)
+			}
+		}
+	}
+	if got := controlSequence(4, 17, true); got[0] != 0 || got[2] != 1 || got[8] != 0 || got[16] != 0 {
+		t.Fatalf("cyclic sequence %v", got)
+	}
+	if got := controlSequence(3, 17, false); got[0] != 0 || got[16] != 2 {
+		t.Fatalf("one-shot sequence %v", got)
+	}
+}

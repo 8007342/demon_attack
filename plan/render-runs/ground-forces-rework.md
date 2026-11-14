@@ -231,3 +231,27 @@ operator, highest first:
 | Lodestar, Skiff, Sextant, Cairn, Tether, Crocket, Tympanum, Reliquary, Hodcrawler, Buttress Strider, Scrapmason, Rubbling, Ashlar Guard, Corbel Brute, Knell-bearer, Prior | Generic words or original compounds; no near match recalled | None |
 
 These are recall checks, not a search; the operator confirms or asks for a proper search before any renames.
+
+## 8. Ledger: workflow smoke runs (2026-11-14 22:50–23:00 UTC)
+
+Graph checks only (task 3.4), on rig renders; none of this is pilot art. Raws kept under
+`~/.cache/demon-attack/ground-blocks/smoke/`.
+
+| Workflow | Job | Time | Result |
+| --- | --- | --- | --- |
+| `matte-birefnet-batch.json` | st-1794696590492-1 | 2.3 s | Clean silhouette matte of the Lodestar h045 rig render |
+| `inbetween-wan-vace.json` (17 frames, 20 steps, no LoRA) | st-1794696599521-2 | 135 s | 17 frames + 17 mattes; a static control strip gives a stable, on-model clip (Ashlar Guard). Faster than the 2–4 min estimate even without lightx2v |
+| `heading-qwen-edit.json` | st-1794696756635-3 … -6 | 29 s each | Runs. Findings below |
+
+Heading-edit findings for the pilot (CP1 to confirm):
+1. **At denoise 1.0 Qwen follows image 2's pose, not image 1's.** With a generic prompt, the h000 job came back at the
+   hero's 45°. Adding an explicit view phrase fixed the heading (the job prompts already carry `heading_phrases`), but it
+   then copied the hero's turret as a second barrel. At **denoise 0.7** (`"$node:11.denoise": 0.7`) the rig geometry
+   held exactly. Pilot plan: run each heading at 0.7 and 1.0 for the first unit, pick one setting before scaling. The
+   finish step masks to the rig silhouette either way, so stray parts outside it are clipped; interior ones are not.
+2. **Name the key colour.** "plain flat background" let the model draw a transparency checkerboard; "solid flat magenta
+   background (#FF00FF), no checkerboard" kept the key. Proposed for the three family `style_prompt`s at CP0.
+3. Avoid effect words in prompts ("smoke test" drew a smoke plume).
+
+Tooling: `go run . control [ids]` writes the VACE control strips (17 and 33 frames) for every `inbetweens` clip, from
+the block's own key cells, one scale and anchor per clip (`$BLOCKS_WORK/control/<id>/`).
