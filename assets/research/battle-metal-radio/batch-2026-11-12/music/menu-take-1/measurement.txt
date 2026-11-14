@@ -1,0 +1,29 @@
+Candidate menu-take-1
+Decoded source duration: 96.0 seconds
+Review: pending listening, guide alignment, continuity and source clipping review.
+Input #0, flac, from 'assets/research/battle-metal-radio/batch-2026-11-12/music/menu-take-1/master.flac':
+  Metadata:
+    prompt          : {"1": {"class_type": "UNETLoader", "_meta": {"title": "ACE-Step 1.5 XL turbo"}, "inputs": {"unet_name": "acestep_v1.5_xl_turbo_bf16.safetensors", "weight_dtype": "default"}}, "2": {"class_type": "DualCLIPLoader", "_meta": {"title": "ACE 1.5 text encoders"
+    encoder         : Lavf63.1.102
+  Duration: 00:01:36.00, start: 0.000000, bitrate: 705 kb/s
+  Stream #0:0: Audio: flac, 48000 Hz, stereo, s16
+[Parsed_volumedetect_0 @ 0x5590128df440] n_samples: 0
+Stream mapping:
+  Stream #0:0 -> #0:0 (flac (native) -> pcm_s16le (native))
+Press [q] to stop, [?] for help
+Output #0, null, to 'pipe:':
+  Metadata:
+    prompt          : {"1": {"class_type": "UNETLoader", "_meta": {"title": "ACE-Step 1.5 XL turbo"}, "inputs": {"unet_name": "acestep_v1.5_xl_turbo_bf16.safetensors", "weight_dtype": "default"}}, "2": {"class_type": "DualCLIPLoader", "_meta": {"title": "ACE 1.5 text encoders"
+    encoder         : Lavf63.1.102
+  Stream #0:0: Audio: pcm_s16le, 48000 Hz, stereo, s16, 1536 kb/s
+    Metadata:
+      encoder         : Lavc63.1.102 pcm_s16le
+[Parsed_volumedetect_0 @ 0x7f05e8002dc0] n_samples: 9216000
+[Parsed_volumedetect_0 @ 0x7f05e8002dc0] mean_volume: -22.0 dB
+[Parsed_volumedetect_0 @ 0x7f05e8002dc0] max_volume: -10.2 dB
+[Parsed_volumedetect_0 @ 0x7f05e8002dc0] histogram_10db: 9
+[Parsed_volumedetect_0 @ 0x7f05e8002dc0] histogram_11db: 159
+[Parsed_volumedetect_0 @ 0x7f05e8002dc0] histogram_12db: 2788
+[Parsed_volumedetect_0 @ 0x7f05e8002dc0] histogram_13db: 48785
+[out#0/null @ 0x5590128e1480] video:0KiB audio:18000KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+size=N/A time=00:01:36.00 bitrate=N/A speed=2.89e+03x elapsed=0:00:00.03    
