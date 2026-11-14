@@ -36,6 +36,8 @@ checking in every 20–30 min (ScheduleWakeup).
 
 ## Session handoff (2026-11-14, resume here)
 
+**Newer: read `plan/render-runs/RESUME.md` on branch `game` first** (90d2dad5, written after this section).
+
 **Music is PAUSED until the host's audio infra is built, admitted and loaded** (batch 1: real-instrument chain
 FluidSynth/Carla + SFZ kits + NAM + LSP + Pedalboard/Matchering + R128; analysis, Audiobox/CLAP; ACE-Step 1.5
 XL-SFT + 4B LM; VoxCPM2 48 kHz TTS; a ComfyUI audio node pack = the audio studio). The operator approved the
