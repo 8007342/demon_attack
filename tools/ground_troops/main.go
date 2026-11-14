@@ -31,7 +31,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/png"
 	"io"
 	"math"
 	"net/http"
@@ -41,6 +40,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"demonattack/tools/pixelgrid"
 )
 
 // ---------------------------------------------------------------------------
@@ -305,22 +306,9 @@ func cmdIngest() {
 	writeSources(s)
 }
 
-func readPNG(p string) (image.Image, error) {
-	f, err := os.Open(p)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	return png.Decode(f)
-}
+func readPNG(p string) (image.Image, error) { return pixelgrid.ReadPNG(p) }
 
-func writePNG(p string, im image.Image) {
-	must(os.MkdirAll(filepath.Dir(p), 0o755))
-	var buf bytes.Buffer
-	enc := png.Encoder{CompressionLevel: png.BestCompression}
-	must(enc.Encode(&buf, im))
-	must(os.WriteFile(p, buf.Bytes(), 0o644))
-}
+func writePNG(p string, im image.Image) { must(pixelgrid.WritePNG(p, im)) }
 
 // writeSources crops each selected keyframe to its LayerDiffuse alpha and
 // box-downscales it to at most source_px: the inputs of record for offline.
