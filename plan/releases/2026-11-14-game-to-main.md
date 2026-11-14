@@ -8,6 +8,14 @@ playtested this build on 2026-11-14 and approved it ("I approve of all this magn
   (Easy 2 / Normal 3 / Hard 4 enemies left) and joins after 10 / 8 / 6 s if the player lingers. The first wave
   keeps its dramatic arrival. Far creatures fade into the haze; shields, armour, halos and HP pips stay hidden
   until a creature comes out of the fog.
+- **Atmosphere and swarms** (new tonight): layered fog in depth (horizon band, far banks the creatures fly
+  between, ground fog, two thin drifting sky sheets that never cover bullets or the ship); creatures veiled by
+  distance with staged detail reveal; waves and reinforcements fly in from the fog as seeded flocks (squadrons,
+  individual speeds and wingbeats, parabolic altitude, smooth slot hand-off), with ground shadows leading them;
+  a sentinel's silhouette circles a figure-eight in the fog one or two waves ahead, then arrives with an escort
+  swarm. Fight timing is bit-identical with and without the flock. Fog shader (horizon and far banks) with a
+  tile fallback and a frame-time guard that drops to tiles on slow devices; ATMOSPHERE FULL/REDUCED in the
+  pause menu.
 - **Radio, middle ground:** livelier squad chatter (paced to roughly a quarter to a third of the time), no line
   cuts another (each finishes plus a grace gap), cards stay up long enough to read, air-cover and ground lines
   match the real ground battle. The full 574-clip radio bank ships (Opus only).
@@ -23,7 +31,8 @@ playtested this build on 2026-11-14 and approved it ("I approve of all this magn
 
 ## Under the hood
 - OpenSpec changes: wave-pressure, fluid-transitions, comms-middle-ground, comms-pacing, console-runs-final-
-  ending, ground-forces-rework (design approved, Phase 0 next), atmosphere-and-swarms (designed, in progress).
+  ending, ground-forces-rework (design approved, Phase 0 in progress), atmosphere-and-swarms (implemented; dedicated
+  silhouette sprites and a phone-GPU measurement still open).
 - Research: `plan/atmosphere-research.md`; music and voice requirements: `plan/audio-studio/music-requirements.md`.
 - Music pilot (not yet audible): L3 Ember Moon 96-bar multitrack score (`art/music/scores/`) and real-instrument
   render workflows for the audio studio (tillandsias#1103).
@@ -31,9 +40,10 @@ playtested this build on 2026-11-14 and approved it ("I approve of all this magn
 
 ## Gate (run on the release head)
 - `flutter analyze`: no issues.
-- `flutter test`: 425 passed, 1 skipped.
+- `flutter test`: 444 passed, 1 skipped (after merging atmosphere-and-swarms).
 - `npm run test:worker`: 39 passed.
-- `npm run build`: game and gallery built.
+- `npm run build`: game and gallery built. Live check in desktop Chromium: 59.7 fps, p95 16.8 ms with the
+  fog shader on; no console errors.
 
 ## Deploy notes
 - `main` auto-deploys to demonattack.tlatoani.net (Cloudflare). The deploy creates the `ReviewNotes` Durable
