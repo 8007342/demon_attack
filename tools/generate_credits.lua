@@ -48,6 +48,9 @@ for _,name in ipairs(lines(read({'git','log','--format=%aN','origin/game'})))do
  if not author_seen[name]then authors[#authors+1]={name=name};author_seen[name]=true end
 end
 table.sort(authors,function(a,b)return a.name<b.name end)
+-- Home pages linked from the credit line.
+local author_urls={['Tlatoāni']='https://tlatoani.net/'}
+for _,a in ipairs(authors)do a.url=author_urls[a.name]end
 local sdks={}
 for _,row in ipairs(lines(read({'jq','-r','.sdks[]|[.name,.version]|@tsv',graph})))do
  local name,version=row:match('^([^\t]+)\t(.+)$');sdks[#sdks+1]={name=name,version=version}
@@ -63,14 +66,18 @@ local models={
  {name='Qwen Image Edit Lightning / lightx2v',license='Apache-2.0',source='Beach refinement provenance'},
 }
 local result={schema='demon-attack.credits/v1',title='Demon Attack',platform='Tillandsias.org',
+ platform_url='https://tillandsias.org/',
  source_url='https://github.com/8007342/demon_attack',source_license='GPLv3 · see source LICENSE',
  sections={
-  {title='Created by',degree='creator',entries=authors},
+  -- The creator line reads "By <names>, with love"; then the art and the tools
+  -- that made it, then the code foundations.
+  {title='',degree='creator',lead='By ',tail=', with love',entries=authors,
+   alongside={lead='Made alongside ',name='Claude',url='https://claude.ai/',tail=' by Anthropic'}},
+  {title='Original art, score and voices',degree='models',entries=models},
+  {title='Production tools',degree='tools',entries={{name='ComfyUI studio'},{name='Lua orchestration · Go verification'},{name='Python model adapters · PyTorch · NumPy · SciPy · SoundFile'},{name='FFmpeg · Opus · WebP'}}},
   {title='Built with',degree='direct',entries=sdks},
   {title='Game and app packages',degree='direct',entries=direct_rows},
   {title='Their foundations',degree='indirect',entries=indirect_rows},
-  {title='Original art, score and voices',degree='models',entries=models},
-  {title='Production tools',degree='tools',entries={{name='ComfyUI studio'},{name='Lua orchestration · Go verification'},{name='Python model adapters · PyTorch · NumPy · SciPy · SoundFile'},{name='FFmpeg · Opus · WebP'}}},
  },
  sources={dependency_graph='flutter pub deps --json',lockfile='pubspec.lock',
   authors_ref='origin/game',authors_commit=read({'git','rev-parse','origin/game'}),

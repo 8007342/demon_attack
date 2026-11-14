@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// The battle pulls back into a board game among friends. This route owns no
 /// game state: its caller preserves the run while the reveal/credits are open.
@@ -285,13 +286,16 @@ class _EndingPageState extends State<EndingPage>
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            data['platform'] as String,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 30,
-                              color: Color(0xFF39DFCC),
-                              fontWeight: FontWeight.bold,
+                          Center(
+                            child: _CreditLink(
+                              key: const ValueKey('credits-link-platform'),
+                              label: data['platform'] as String,
+                              url: data['platform_url'] as String?,
+                              style: const TextStyle(
+                                fontSize: 30,
+                                color: Color(0xFF39DFCC),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 50),
@@ -343,6 +347,7 @@ class _EndingPageState extends State<EndingPage>
   );
 
   Widget _creditSection(Map<String, dynamic> section) {
+    if (section['degree'] == 'creator') return _creatorLine(section);
     final indirect = section['degree'] == 'indirect';
     return Padding(
       padding: const EdgeInsets.only(bottom: 34),
@@ -379,6 +384,112 @@ class _EndingPageState extends State<EndingPage>
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  /// The creator line: "By `names`, with love", each name a link when it has
+  /// a home page.
+  Widget _creatorLine(Map<String, dynamic> section) {
+    const style = TextStyle(
+      color: Color(0xFFE6EEF6),
+      fontSize: 22,
+      height: 1.35,
+    );
+    final entries = (section['entries'] as List).cast<Map<String, dynamic>>();
+    return Padding(
+      key: const ValueKey('credits-creator'),
+      padding: const EdgeInsets.only(bottom: 44),
+      child: Column(
+        children: [
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(section['lead'] as String? ?? '', style: style),
+              for (final (i, e) in entries.indexed) ...[
+                if (i > 0) const Text(' & ', style: style),
+                _CreditLink(
+                  key: ValueKey('credits-link-${e['name']}'),
+                  label: e['name'] as String,
+                  url: e['url'] as String?,
+                  style: style.copyWith(
+                    color: const Color(0xFFFFD477),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+              Text(section['tail'] as String? ?? '', style: style),
+            ],
+          ),
+          if (section['alongside'] case final Map<String, dynamic> alongside)
+            _alongsideLine(alongside),
+        ],
+      ),
+    );
+  }
+
+  /// A quieter line under the creator: the AI collaborator, linked.
+  Widget _alongsideLine(Map<String, dynamic> alongside) {
+    const style = TextStyle(
+      color: Color(0xFF9AADC0),
+      fontSize: 14,
+      height: 1.4,
+    );
+    return Padding(
+      key: const ValueKey('credits-alongside'),
+      padding: const EdgeInsets.only(top: 10),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(alongside['lead'] as String? ?? '', style: style),
+          _CreditLink(
+            key: const ValueKey('credits-link-alongside'),
+            label: alongside['name'] as String,
+            url: alongside['url'] as String?,
+            style: style.copyWith(color: const Color(0xFF39DFCC)),
+          ),
+          Text(alongside['tail'] as String? ?? '', style: style),
+        ],
+      ),
+    );
+  }
+}
+
+/// A credit that opens its page in a new tab; plain text without a [url].
+class _CreditLink extends StatelessWidget {
+  const _CreditLink({
+    super.key,
+    required this.label,
+    required this.url,
+    required this.style,
+  });
+  final String label;
+  final String? url;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final target = url == null ? null : Uri.tryParse(url!);
+    final text = Text(label, textAlign: TextAlign.center, style: style);
+    if (target == null) return text;
+    return Semantics(
+      link: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(6),
+        onTap: () => launchUrl(target, webOnlyWindowName: '_blank'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: style.copyWith(
+              decoration: TextDecoration.underline,
+              decorationColor: style.color?.withValues(alpha: .6),
+            ),
+          ),
+        ),
       ),
     );
   }

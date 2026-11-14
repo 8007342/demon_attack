@@ -55,6 +55,48 @@ Future<void> waitForCredits(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('credits open with "By Tlatoāni, with love", art and tools next, '
+      'and link the creator and the platform', (tester) async {
+    await openEnding(tester, reduced: true, credits: true);
+    await waitForCredits(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('By '), findsOneWidget);
+    expect(find.text(', with love'), findsOneWidget);
+    expect(find.byKey(const ValueKey('credits-link-Tlatoāni')), findsOneWidget);
+    expect(find.byKey(const ValueKey('credits-link-platform')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('credits-link-alongside')),
+      findsOneWidget,
+    );
+    expect(find.text('Made alongside '), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('credits-alongside'))).dy,
+      lessThan(
+        tester.getTopLeft(find.text('ORIGINAL ART, SCORE AND VOICES')).dy,
+      ),
+    );
+    double top(String text) => tester.getTopLeft(find.text(text)).dy;
+    final creator = tester
+        .getTopLeft(find.byKey(const ValueKey('credits-creator')))
+        .dy;
+    final art = top('ORIGINAL ART, SCORE AND VOICES');
+    final tools = top('PRODUCTION TOOLS');
+    final built = top('BUILT WITH');
+    expect(creator, lessThan(art));
+    expect(art, lessThan(tools));
+    expect(tools, lessThan(built));
+    final data = jsonDecode(
+      await tester.runAsync(
+            () => rootBundle.loadString('assets/credits.json'),
+          ) ??
+          '{}',
+    ) as Map<String, dynamic>;
+    expect(data['platform_url'], 'https://tillandsias.org/');
+    final creatorEntry =
+        ((data['sections'] as List).first as Map)['entries'][0];
+    expect(creatorEntry['url'], 'https://tlatoani.net/');
+  });
+
   test(
     'credits contain verified project names and only runtime dependencies',
     () {
