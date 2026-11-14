@@ -4,24 +4,77 @@
   "date": "2026-11-14",
   "lane": "56.11.14.3+6f716174847e4005",
   "workflow": "art/workflows/music/campaign-a2a-headroom.json",
-  "jobs": ["level-4-take-1","level-4-take-2","level-4-take-3","level-5-take-1","level-5-take-2","level-5-take-3"],
-  "symptom": "Each job completes but every output sample is -32768 (NaN cast to int); FLAC is about 30 KB, volumedetect mean = max = 0.0 dBFS. Not ingested.",
-  "guides": {"level-4": "55a4042d64d476c90a64addde9cb3b19eb41edc07f9e19020c854ee77009316b, 7372800 samples, 153.6 s",
-             "level-5": "40f2bc67fd313dab1e726d76acd4b74cae717bca30927bb950529a149120c431, 5820672 samples, 121.264 s"},
-  "diagnostics": [
-    {"guide": "level-4 full", "text": "level-3 tags/bpm/key", "result": "NaN"},
-    {"guide": "level-3 full", "text": "level-4 tags/bpm/key", "result": "ok"},
-    {"guide": "level-4 full at -6 dB", "result": "NaN"},
-    {"guide": "level-4 first 128 s", "result": "ok"},
-    {"guide": "level-4 first 144 s", "result": "ok"},
-    {"guide": "level-4 last 25.6 s alone", "result": "ok"},
-    {"guide": "level-5 first 96 s", "result": "ok"},
-    {"guide": "level-5 first 120 s", "result": "ok"},
-    {"guide": "level-2 take-1 rerun (control)", "result": "ok"}
+  "jobs": [
+    "level-4-take-1",
+    "level-4-take-2",
+    "level-4-take-3",
+    "level-5-take-1",
+    "level-5-take-2",
+    "level-5-take-3"
   ],
-  "findings": "Guide-dependent, not text, gain, studio state or a single bad passage. Full-length level-4 (153.6 s) and level-5 (121.264 s) guides fail; shorter cuts of the same audio succeed. Formats, peaks (-4.6 dBFS), DC and sub-bass match the working guides; no digital silence.",
-  "options": ["trim level-5 guide to whole seconds (120 s) and level-4 to 144 s, changing the composed form",
-              "ask the host to inspect ComfyUI logs for the NaN stage (VAE encode, sampler or decode)",
-              "render level-4/5 in two halves and join"],
+  "symptom": "Each job completes but every output sample is -32768 (NaN cast to int); FLAC is about 30 KB, volumedetect mean = max = 0.0 dBFS. Not ingested.",
+  "guides": {
+    "level-4": "55a4042d64d476c90a64addde9cb3b19eb41edc07f9e19020c854ee77009316b, 7372800 samples, 153.6 s",
+    "level-5": "40f2bc67fd313dab1e726d76acd4b74cae717bca30927bb950529a149120c431, 5820672 samples, 121.264 s"
+  },
+  "diagnostics": [
+    {
+      "guide": "level-4 full",
+      "text": "level-3 tags/bpm/key",
+      "result": "NaN"
+    },
+    {
+      "guide": "level-3 full",
+      "text": "level-4 tags/bpm/key",
+      "result": "ok"
+    },
+    {
+      "guide": "level-4 full at -6 dB",
+      "result": "NaN"
+    },
+    {
+      "guide": "level-4 first 128 s",
+      "result": "ok"
+    },
+    {
+      "guide": "level-4 first 144 s",
+      "result": "ok"
+    },
+    {
+      "guide": "level-4 last 25.6 s alone",
+      "result": "ok"
+    },
+    {
+      "guide": "level-5 first 96 s",
+      "result": "ok"
+    },
+    {
+      "guide": "level-5 first 120 s",
+      "result": "ok"
+    },
+    {
+      "guide": "level-2 take-1 rerun (control)",
+      "result": "ok"
+    },
+    {
+      "guide": "level-4 full, VAE encode->decode only (no sampler)",
+      "workflow": "art/workflows/music/diag-vae-roundtrip.json",
+      "ticket": "tk-1794636622666-617673-1",
+      "job": "st-1794636623719-35",
+      "result": "ok, 153.6 s, mean -14.4 dB"
+    },
+    {
+      "guide": "level-4 first 144 s, VAE round trip (control)",
+      "ticket": "tk-1794636623314-617673-2",
+      "job": "st-1794636624792-36",
+      "result": "ok, mean -14.4 dB"
+    }
+  ],
+  "findings": "Guide-dependent, not text, gain, studio state or a single bad passage. Full-length level-4 (153.6 s) and level-5 (121.264 s) guides fail; shorter cuts of the same audio succeed. Formats, peaks (-4.6 dBFS), DC and sub-bass match the working guides; no digital silence. Host note: the VAE loads in fp16, but the VAE-only round trip is clean at full length, so the NaN arises in the KSampler on the longer latent, not in the VAE.",
+  "options": [
+    "trim level-5 guide to whole seconds (120 s) and level-4 to 144 s, changing the composed form",
+    "ask the host to inspect ComfyUI logs for the NaN stage (VAE encode, sampler or decode)",
+    "render level-4/5 in two halves and join"
+  ],
   "bypass_used": false
 }

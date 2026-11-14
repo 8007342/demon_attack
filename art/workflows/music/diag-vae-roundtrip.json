@@ -1,0 +1,7 @@
+{
+  "3": {"class_type": "VAELoader", "_meta": {"title": "ACE 1.5 VAE"}, "inputs": {"vae_name": "ace_1.5_vae.safetensors"}},
+  "11": {"class_type": "LoadAudio", "_meta": {"title": "Guide under test"}, "inputs": {"audio": "$guide"}},
+  "12": {"class_type": "VAEEncodeAudio", "_meta": {"title": "Encode"}, "inputs": {"audio": ["11", 0], "vae": ["3", 0]}},
+  "9": {"class_type": "VAEDecodeAudio", "_meta": {"title": "Decode (no sampler)"}, "inputs": {"samples": ["12", 0], "vae": ["3", 0]}},
+  "10": {"class_type": "SaveAudio", "_meta": {"title": "Save FLAC"}, "inputs": {"audio": ["9", 0], "filename_prefix": "diag/vae-roundtrip"}}
+}
