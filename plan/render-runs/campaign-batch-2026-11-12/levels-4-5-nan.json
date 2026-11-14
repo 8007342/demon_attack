@@ -68,13 +68,48 @@
       "ticket": "tk-1794636623314-617673-2",
       "job": "st-1794636624792-36",
       "result": "ok, mean -14.4 dB"
+    },
+    {
+      "guide": "level-5 trimmed to 121.24 s (3031 frames), duration 121.24",
+      "job": "st-1794636686431-37",
+      "result": "ok"
+    },
+    {
+      "guide": "level-5 padded to 121.28 s (3032 frames), duration 121.28",
+      "job": "st-1794636710782-38",
+      "result": "ok"
+    },
+    {
+      "guide": "level-4 trimmed to 146.0 s (3650 frames)",
+      "job": "st-1794636729511-39",
+      "result": "ok"
+    },
+    {
+      "guide": "level-4 trimmed to 150.0 s (3750 frames)",
+      "job": "st-1794636756701-40",
+      "result": "ok"
+    },
+    {
+      "guide": "level-5 FULL guide, duration override 121.264 (= guide) instead of batch 121.26315789",
+      "job": "st-1794636800580-41",
+      "result": "ok"
+    },
+    {
+      "guide": "level-4 trimmed to 152.0 s (3800 frames)",
+      "job": "st-1794636825518-42",
+      "result": "ok"
+    },
+    {
+      "guide": "level-4 trimmed to 153.56 s (3839 frames)",
+      "job": "st-1794636860621-43",
+      "result": "ok"
     }
   ],
-  "findings": "Guide-dependent, not text, gain, studio state or a single bad passage. Full-length level-4 (153.6 s) and level-5 (121.264 s) guides fail; shorter cuts of the same audio succeed. Formats, peaks (-4.6 dBFS), DC and sub-bass match the working guides; no digital silence. Host note: the VAE loads in fp16, but the VAE-only round trip is clean at full length, so the NaN arises in the KSampler on the longer latent, not in the VAE.",
+  "findings": "Guide-dependent, not text, gain, studio state or a single bad passage. Full-length level-4 (153.6 s) and level-5 (121.264 s) guides fail; shorter cuts of the same audio succeed. Formats, peaks (-4.6 dBFS), DC and sub-bass match the working guides; no digital silence. Host note: the VAE loads in fp16, but the VAE-only round trip is clean at full length, so the NaN arises in the KSampler on the longer latent, not in the VAE. Frame tests: level-5 fails only when the duration override (121.26316 s) is ~40 samples shorter than the guide (121.264 s); matching them renders the full guide. Level-4 fails only at exactly 3840 frames (153.6 s, both original and re-encoded); 3839 frames renders. Neither the fractional-frame nor the ~3600-frame-cap hypothesis holds.",
   "options": [
-    "trim level-5 guide to whole seconds (120 s) and level-4 to 144 s, changing the composed form",
-    "ask the host to inspect ComfyUI logs for the NaN stage (VAE encode, sampler or decode)",
-    "render level-4/5 in two halves and join"
+    "level-5: set duration override to the guide length (121.264 s), full form kept",
+    "level-4: trim guide by one 40 ms frame to 3839 frames (153.56 s), inaudible",
+    "host: investigate why exactly 3840 latent frames NaN"
   ],
   "bypass_used": false
 }
