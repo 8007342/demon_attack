@@ -96,11 +96,15 @@ current families instead.
 
 - [x] 5.1 Pilot: gargoyle, ally turret, ally rifleman via Qwen-Image-Edit-2511 + BiRefNet
       (`assets/research/refinement-pilot/`).
-- [ ] 5.2 Operator review of the pilot; then refine each sprite family and the flyover (3.4) the same way.
+- [x] 5.2 Operator approved the pilot (2026-11-14). Refinement batch runs on `work/refinement-pass`: every sprite
+      family, then the flyover (3.4), one GPU job at a time, pushed per family. This also settles 4.1 (Qwen-Image-Edit-2511 + BiRefNet).
 - [ ] 5.3 New Undercroft Host units per `openspec/changes/gargoyle-ground-army`, and terrain poses per
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 01:50 UTC: operator approved the refinement pilot; batch started on work/refinement-pass with a babysitter.
+  Asked the host for ETAs on #1092/#1091/#1093 and which fixes can land without a relaunch.
 
 - 2026-11-14 01:30 UTC: work/game-polish merged to game (546e7874): radio bank, comms pacing (17-20% airtime, no
   overlap), constant music, end-aligned dive and ground warnings (predicted; firing unchanged), final-boss-only
