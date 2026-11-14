@@ -306,8 +306,9 @@ void main() {
               .evaluate()
               .map((e) => tester.getRect(find.byWidget(e.widget))),
       ]..sort((a, b) => a.left.compareTo(b.left));
-      expect(faces.first.left - ordered.first.left, lessThan(4));
-      expect(ordered.last.right - faces.last.right, lessThan(4));
+      // Portraits sit just inside the toast frame (border + accent bar + gap).
+      expect(faces.first.left - ordered.first.left, lessThan(8));
+      expect(ordered.last.right - faces.last.right, lessThan(8));
       expect(find.byKey(const ValueKey('hud-score')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-lives')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-hearts')), findsOneWidget);
@@ -424,7 +425,10 @@ void main() {
     );
     expect(toast, findsNothing);
     final isolated = find.byKey(const ValueKey('comms-strip-answer'));
-    expect(tester.getSize(isolated).width, 179);
+    expect(
+      tester.getSize(isolated).width,
+      (360 - 2 * CommsHudStack.gap) / 2, // half the dock, minus the gap
+    );
     director.active.add(message('unrelated', 'Hold the line!', 2.1));
     await tester.pumpWidget(
       MaterialApp(
@@ -437,7 +441,7 @@ void main() {
       ),
     );
     final unrelated = find.byKey(const ValueKey('comms-strip-unrelated'));
-    expect(tester.getSize(unrelated).width, 179);
+    expect(tester.getSize(unrelated).width, (360 - 2 * CommsHudStack.gap) / 2);
     expect(
       tester.getRect(isolated).overlaps(tester.getRect(unrelated)),
       isFalse,

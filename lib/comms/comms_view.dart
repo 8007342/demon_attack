@@ -829,24 +829,12 @@ class CommsHudStack extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
+            _maybeFramed(
               key: conversation ? const ValueKey('comms-conversation') : null,
-              decoration: conversation
-                  ? BoxDecoration(
-                      color: const Color(0xB30A1220),
-                      border: Border(
-                        left: BorderSide(
-                          color: Color(panels.first.character.accent),
-                          width: 2,
-                        ),
-                        right: BorderSide(
-                          color: Color(panels.last.character.accent),
-                          width: 2,
-                        ),
-                        bottom: const BorderSide(color: _line),
-                      ),
-                    )
-                  : null,
+              framed: conversation,
+              leading: Color(panels.first.character.accent),
+              trailing: Color(panels.last.character.accent),
+              lit: panels.any((m) => m.speaking(now)),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -856,22 +844,22 @@ class CommsHudStack extends StatelessWidget {
                       reduce,
                       retained: identical(panels.first, opening),
                       conversation: conversation,
-                      height: strip,
+                      height: conversation ? strip - _frameInset : strip,
                     ),
                   ),
                   if (panels.length == 2) ...[
-                    SizedBox(width: conversation ? 0 : gap),
+                    SizedBox(width: conversation ? 0 : gap * 2),
                     Expanded(
                       child: _strip(
                         panels.last,
                         reduce,
                         right: true,
                         conversation: conversation,
-                        height: strip,
+                        height: conversation ? strip - _frameInset : strip,
                       ),
                     ),
                   ] else ...[
-                    const SizedBox(width: gap),
+                    const SizedBox(width: gap * 2),
                     const Spacer(),
                   ],
                 ],
@@ -892,6 +880,80 @@ class CommsHudStack extends StatelessWidget {
                   style: const TextStyle(color: _muted, fontSize: 9),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Vertical room the toast frame takes (padding plus border, both edges).
+  static const _frameInset = 8.0;
+
+  /// A radio toast: rounded, fully bordered card with a soft drop shadow and
+  /// an accent bar on the speaker's side ([trailing]: a second bar on the
+  /// right for a two-speaker exchange). The border lights in the speaker's
+  /// colour while they talk. Unframed, it is a plain box of [height].
+  Widget _maybeFramed({
+    Key? key,
+    required bool framed,
+    required Color leading,
+    required Widget child,
+    Color? trailing,
+    bool barOnRight = false,
+    bool lit = false,
+    double? height,
+  }) {
+    if (!framed) return SizedBox(key: key, height: height, child: child);
+    const radius = 8.0, bar = 3.0;
+    final edge = lit
+        ? (trailing == null ? leading : Color.lerp(leading, trailing, .5)!)
+              .withValues(alpha: .7)
+        : const Color(0x6694A3B8);
+    Widget accentBar(Color color, {required bool right}) => Positioned(
+      top: 0,
+      bottom: 0,
+      left: right ? null : 0,
+      right: right ? 0 : null,
+      width: bar,
+      child: ColoredBox(color: color),
+    );
+    return Container(
+      key: key,
+      height: height,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xE6121D2E), Color(0xD90A1220)],
+        ),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: edge),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x8C000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius - 1),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                bar + 3,
+                _frameInset / 2 - 1,
+                bar + 3,
+                _frameInset / 2 - 1,
+              ),
+              child: child,
+            ),
+            if (trailing != null) ...[
+              accentBar(leading, right: false),
+              accentBar(trailing, right: true),
+            ] else
+              accentBar(leading, right: barOnRight),
           ],
         ),
       ),
@@ -958,9 +1020,11 @@ class CommsHudStack extends StatelessWidget {
       child: Container(
         height: chipHeight,
         padding: const EdgeInsets.symmetric(horizontal: 6),
+        margin: const EdgeInsets.only(top: gap),
         decoration: BoxDecoration(
-          color: const Color(0xB30A1220),
-          border: Border(left: BorderSide(color: accent, width: 2)),
+          color: const Color(0xCC0A1220),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: accent.withValues(alpha: .45)),
         ),
         alignment: Alignment.centerLeft,
         child: Text.rich(
@@ -1029,19 +1093,12 @@ class CommsHudStack extends StatelessWidget {
     return Opacity(
       key: ValueKey('comms-strip-${m.line.id}'),
       opacity: retained ? 1 : _fade(m, reduce),
-      child: Container(
+      child: _maybeFramed(
         height: height,
-        decoration: conversation
-            ? null
-            : BoxDecoration(
-                color: const Color(0xB30A1220),
-                border: Border(
-                  left: BorderSide(color: accent, width: 2),
-                  bottom: BorderSide(
-                    color: speaking ? accent.withValues(alpha: .5) : _line,
-                  ),
-                ),
-              ),
+        framed: !conversation,
+        leading: accent,
+        barOnRight: right,
+        lit: speaking,
         child: Row(
           textDirection: right ? TextDirection.rtl : TextDirection.ltr,
           children: [
@@ -1049,7 +1106,8 @@ class CommsHudStack extends StatelessWidget {
               key: ValueKey('comms-portrait-${m.line.id}'),
               width: portrait,
               height: portrait,
-              child: ClipRect(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(5),
                 child: CustomPaint(
                   painter: _MiniPortrait(
                     c,

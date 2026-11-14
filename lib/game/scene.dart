@@ -530,9 +530,13 @@ class DemonScene extends FlameGame {
         continue;
       }
       if (_parked(d)) continue;
+      // Shields, armour, rank halos and health pips belong to a creature
+      // that has come out of the weather; inside the fog only the body shows.
+      final holding = approaching.contains(d);
+      final reveal = _detailReveal(d, holding: holding);
       c.save();
       _scaleAbout(c, pos, d.scale); // sizes below are at scale 1
-      if (d.elite) {
+      if (d.elite && reveal > 0) {
         // Rank halo: a slow dotted ring of elite insignia pips.
         for (var i = 0; i < 12; i++) {
           if ((i + (model.clock * 2).floor()) % 4 == 0) continue;
@@ -544,7 +548,8 @@ class DemonScene extends FlameGame {
               2,
               2,
             ),
-            Paint()..color = d.angry ? gold : violet,
+            Paint()
+              ..color = (d.angry ? gold : violet).withValues(alpha: reveal),
           );
         }
       }
@@ -572,7 +577,6 @@ class DemonScene extends FlameGame {
       if (haze > 0) {
         // Distance haze: arrivals emerge veiled in the horizon's dusk; the
         // still-approaching next wave is fogged harder (wave pressure).
-        final holding = approaching.contains(d);
         sprite(
           c,
           cell.row,
@@ -584,7 +588,7 @@ class DemonScene extends FlameGame {
         );
         _mistWisps(c, pos, d, haze * (holding ? 1 : .55));
       }
-      if (d.elite) {
+      if (d.elite && reveal > 0) {
         // Authored elite armour for this direction/pose, shed one level per
         // hit, offset by the frame's whole-pixel body lift.
         sprite(
@@ -593,6 +597,7 @@ class DemonScene extends FlameGame {
           cell.eliteCol,
           pos + Offset(0, cell.lift * size / CombatAtlas.cell),
           size,
+          opacity: reveal,
         );
       }
       _creatureLighting(
@@ -616,14 +621,14 @@ class DemonScene extends FlameGame {
       if (warning) {
         _wingTellChevrons(c, pos);
       }
-      if (d.dive > 0 && d.diveShield > 0) {
+      if (d.dive > 0 && d.diveShield > 0 && reveal > 0) {
         _smallOrMediumDiveShield(c, pos, d);
       }
-      if (d.hp > 1) {
+      if (d.hp > 1 && reveal > 0) {
         for (var i = 0; i < d.hp; i++) {
           c.drawRect(
             Rect.fromLTWH(pos.dx - d.hp * 2 + i * 4, pos.dy - 22, 2, 2),
-            Paint()..color = violet,
+            Paint()..color = violet.withValues(alpha: reveal),
           );
         }
       }
@@ -1512,6 +1517,17 @@ class DemonScene extends FlameGame {
     }
   }
 
+  /// How much of a creature's gear (shields, armour, rank halo, health pips)
+  /// shows: none while it holds in the fog with the approaching wave, then
+  /// fading in over the last part of the haze so the details arrive only once
+  /// the body has come out of the weather.
+  double _detailReveal(Demon d, {bool holding = false}) {
+    if (holding) return 0;
+    // nearness 0 means not yet placed on the depth camera: nothing to veil.
+    if (!model.perspective || d.nearness <= 0) return 1;
+    return (1 - Perspective.haze(d.nearness) * 1.6).clamp(0.0, 1.0);
+  }
+
   /// Soft mist drifting across a distant creature: [amount] 0..1.
   void _mistWisps(Canvas c, Offset pos, Demon d, double amount) {
     if (amount <= .05) return;
@@ -1868,6 +1884,8 @@ class DemonScene extends FlameGame {
     );
     _creatureLighting(c, pos, bank, width: 92, diving: diving);
     c.restore();
+    final reveal = _detailReveal(demon);
+    if (reveal <= 0) return;
     if (demon.shield > 0 &&
         demon.shieldMax > 0 &&
         !(diving && demon.diveShield > 0)) {
@@ -1876,6 +1894,7 @@ class DemonScene extends FlameGame {
         2,
         ((1 - demon.shield / demon.shieldMax) * 4).floor().clamp(0, 3),
         pos,
+        opacity: reveal,
       );
     }
     if (demon.armor > 0 && demon.armorMax > 0) {
@@ -1887,6 +1906,7 @@ class DemonScene extends FlameGame {
           4 + layer,
           pos,
           tint: demon.flash > 0 ? Colors.white : null,
+          opacity: reveal,
         );
       }
     }
