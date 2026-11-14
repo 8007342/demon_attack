@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#100e2c">
+<title>Demon Attack · Scan to play</title>
+<meta name="description" content="Demon Attack: an original battle-metal arcade shooter. Scan to play in your browser.">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="preload" as="image" href="/qr/poster-portrait.jpg" media="(orientation: portrait)">
+<link rel="preload" as="image" href="/qr/poster-landscape.jpg" media="(orientation: landscape)">
+<style>
+  /* Palette: lib/game/scene.dart (ink, mint, violet, gold) and the emblem's midnight and rim. */
+  :root {
+    --midnight: #100e2c;
+    --ink: #080d18;
+    --mint: #70f5d5;
+    --cyan: #39dfcc;
+    --violet: #bda7ff;
+    --gold: #f4ca79;
+    --rim: #efbd57;
+    --ember: #ff6b1a;
+    --text: #e8f1ff;
+    --muted: #9aa6c4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--midnight); color: var(--text); }
+  body {
+    font-family: "Roboto", "Segoe UI", system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- the poster, full bleed, art per orientation ---- */
+  .poster {
+    position: fixed; inset: 0;
+    background: var(--ink) url("/qr/poster-portrait.jpg") center 30% / cover no-repeat;
+    animation: breathe 18s ease-in-out infinite alternate;
+  }
+  @media (orientation: landscape) {
+    .poster { background-image: url("/qr/poster-landscape.jpg"); background-position: 35% 40%; }
+  }
+  @keyframes breathe { from { transform: scale(1.02); } to { transform: scale(1.07); } }
+
+  /* Shade for legibility: top band for the title, bottom (or right) band for the code. */
+  .shade {
+    position: fixed; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(8,13,24,.82) 0%, rgba(8,13,24,0) 26%),
+      linear-gradient(0deg, rgba(8,13,24,.94) 0%, rgba(8,13,24,.55) 34%, rgba(8,13,24,0) 58%);
+  }
+  @media (orientation: landscape) {
+    .shade {
+      background:
+        linear-gradient(270deg, rgba(8,13,24,.94) 0%, rgba(8,13,24,.6) 36%, rgba(8,13,24,0) 62%),
+        linear-gradient(0deg, rgba(8,13,24,.6) 0%, rgba(8,13,24,0) 30%);
+    }
+  }
+
+  /* ---- drifting fog: two thin sheets, as in the game ---- */
+  .fog {
+    position: fixed; left: -50%; width: 200%; pointer-events: none;
+    background:
+      radial-gradient(ellipse 22% 40% at 18% 50%, rgba(140,128,190,.22), transparent 70%),
+      radial-gradient(ellipse 28% 46% at 47% 60%, rgba(107,112,150,.20), transparent 72%),
+      radial-gradient(ellipse 20% 36% at 74% 42%, rgba(160,140,210,.18), transparent 70%),
+      radial-gradient(ellipse 26% 44% at 96% 56%, rgba(107,112,150,.20), transparent 72%);
+    filter: blur(6px);
+  }
+  .fog.low { bottom: -8%; height: 46%; animation: drift 46s linear infinite; }
+  .fog.high { top: 8%; height: 36%; opacity: .55; animation: drift 70s linear infinite reverse; }
+  @keyframes drift { from { transform: translateX(0); } to { transform: translateX(25%); } }
+
+  /* ---- layout ---- */
+  main {
+    position: relative; z-index: 1;
+    min-height: 100%; height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    justify-items: center;
+    padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right))
+             max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+    text-align: center;
+  }
+  @media (orientation: landscape) {
+    main {
+      grid-template-rows: 1fr;
+      grid-template-columns: 1fr minmax(300px, 44vw);
+      align-items: center;
+      justify-items: stretch;
+    }
+    .masthead { grid-column: 2; grid-row: 1; align-self: start; }
+    .card { grid-column: 2; grid-row: 1; align-self: end; justify-self: center; }
+    .spacer { display: none; }
+  }
+
+  .kicker {
+    margin: 0; font-size: clamp(10px, 1.6vmin, 13px); letter-spacing: .32em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  h1 {
+    margin: .15em 0 0; line-height: .95;
+    font-size: clamp(38px, 11vmin, 104px); font-weight: 800; letter-spacing: .12em;
+    color: var(--mint);
+    text-shadow: 0 0 18px rgba(57,223,204,.55), 0 0 2px #0a0716, 0 3px 0 #0a0716;
+  }
+  h1 span { color: var(--gold); text-shadow: 0 0 18px rgba(255,107,26,.55), 0 0 2px #0a0716, 0 3px 0 #0a0716; }
+  .tagline {
+    margin: .7em 0 0; font-size: clamp(11px, 1.9vmin, 15px); letter-spacing: .22em;
+    color: var(--violet); text-transform: uppercase;
+  }
+
+  /* ---- the code card ---- */
+  .card {
+    --size: min(62vmin, 340px);
+    display: grid; justify-items: center; gap: 12px;
+    padding: 16px 16px 14px;
+    background: linear-gradient(180deg, rgba(18,29,46,.88), rgba(10,18,32,.92));
+    border: 1px solid rgba(239,189,87,.75);
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px rgba(10,7,22,.9), 0 0 28px rgba(57,223,204,.28), 0 16px 40px rgba(0,0,0,.6);
+    backdrop-filter: blur(3px);
+  }
+  @media (orientation: landscape) { .card { --size: min(52vh, 330px); } }
+  .scan {
+    margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .3em; color: var(--gold);
+  }
+  .qr {
+    width: var(--size); height: var(--size);
+    border-radius: 10px;
+    box-shadow: 0 0 0 3px #0a0716, 0 0 0 5px rgba(112,245,213,.55), 0 0 26px rgba(112,245,213,.35);
+  }
+  .qr svg { display: block; width: 100%; height: 100%; }
+  .play {
+    display: inline-block; margin-top: 2px;
+    padding: 11px 22px; border-radius: 8px;
+    background: var(--mint); color: #0a0716; text-decoration: none;
+    font-weight: 800; font-size: 14px; letter-spacing: .2em;
+    box-shadow: 0 0 18px rgba(112,245,213,.45);
+  }
+  .play:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+  .url { margin: 0; font-size: 12px; letter-spacing: .08em; color: var(--muted); }
+
+  /* Short landscape (phones on their side): tighten. */
+  @media (orientation: landscape) and (max-height: 480px) {
+    /* Title moves over the poster (left); the right column is the code alone. */
+    .masthead { grid-column: 1; justify-self: start; text-align: left; }
+    h1 { font-size: clamp(30px, 11vh, 56px); }
+    .tagline { display: none; }
+    .card { align-self: center; padding: 10px 12px; gap: 7px; --size: min(56vh, 240px); }
+    .scan { font-size: 10px; }
+    .play { padding: 7px 16px; font-size: 12px; }
+    .url { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .poster, .fog { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="poster" role="img" aria-label="Demon Attack poster: a horned demon eclipses an ember moon while a lone starfighter rises through the fog"></div>
+<div class="fog high" aria-hidden="true"></div>
+<div class="shade" aria-hidden="true"></div>
+<div class="fog low" aria-hidden="true"></div>
+<main>
+  <header class="masthead">
+    <p class="kicker">Krybor · Defense System</p>
+    <h1>DEMON<br><span>ATTACK</span></h1>
+    <p class="tagline">Battle metal in the fog</p>
+  </header>
+  <div class="spacer"></div>
+  <section class="card" aria-label="Scan to play">
+    <p class="scan">SCAN TO PLAY</p>
+    <div class="qr"><!--QR--><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 39 39" shape-rendering="crispEdges" role="img" aria-label="QR code: https://demonattack.tlatoani.net/"><rect width="39" height="39" rx="2.2" fill="#EAF7F2"/><path fill="#100E2C" d="M11 3h1v1h-1zM15 3h2v1h-2zM18 3h6v1h-6zM25 3h3v1h-3zM15 4h1v1h-1zM17 4h3v1h-3zM21 4h1v1h-1zM24 4h3v1h-3zM12 5h2v1h-2zM15 5h2v1h-2zM18 5h2v1h-2zM21 5h1v1h-1zM25 5h3v1h-3zM11 6h2v1h-2zM14 6h3v1h-3zM19 6h1v1h-1zM25 6h1v1h-1zM12 7h3v1h-3zM16 7h2v1h-2zM19 7h3v1h-3zM23 7h1v1h-1zM26 7h2v1h-2zM13 8h1v1h-1zM16 8h4v1h-4zM21 8h1v1h-1zM23 8h4v1h-4zM11 9h1v1h-1zM13 9h1v1h-1zM15 9h1v1h-1zM17 9h1v1h-1zM19 9h1v1h-1zM21 9h1v1h-1zM23 9h1v1h-1zM25 9h1v1h-1zM27 9h1v1h-1zM12 10h1v1h-1zM20 10h5v1h-5zM26 10h2v1h-2zM5 11h1v1h-1zM7 11h3v1h-3zM11 11h2v1h-2zM14 11h2v1h-2zM17 11h2v1h-2zM20 11h1v1h-1zM24 11h1v1h-1zM28 11h1v1h-1zM32 11h1v1h-1zM35 11h1v1h-1zM3 12h1v1h-1zM6 12h3v1h-3zM11 12h2v1h-2zM15 12h2v1h-2zM22 12h1v1h-1zM27 12h1v1h-1zM29 12h1v1h-1zM32 12h1v1h-1zM34 12h2v1h-2zM3 13h1v1h-1zM9 13h1v1h-1zM11 13h3v1h-3zM15 13h1v1h-1zM17 13h2v1h-2zM20 13h2v1h-2zM24 13h1v1h-1zM28 13h1v1h-1zM31 13h2v1h-2zM34 13h2v1h-2zM13 14h1v1h-1zM15 14h2v1h-2zM18 14h1v1h-1zM21 14h1v1h-1zM23 14h4v1h-4zM29 14h1v1h-1zM34 14h1v1h-1zM9 15h1v1h-1zM11 15h1v1h-1zM13 15h2v1h-2zM25 15h1v1h-1zM28 15h2v1h-2zM34 15h2v1h-2zM5 16h1v1h-1zM10 16h4v1h-4zM27 16h3v1h-3zM33 16h3v1h-3zM4 17h1v1h-1zM7 17h1v1h-1zM9 17h3v1h-3zM13 17h2v1h-2zM24 17h1v1h-1zM28 17h2v1h-2zM34 17h2v1h-2zM3 18h2v1h-2zM8 18h1v1h-1zM10 18h4v1h-4zM24 18h3v1h-3zM28 18h1v1h-1zM31 18h1v1h-1zM3 19h2v1h-2zM6 19h1v1h-1zM9 19h1v1h-1zM12 19h1v1h-1zM14 19h1v1h-1zM24 19h2v1h-2zM28 19h3v1h-3zM35 19h1v1h-1zM3 20h3v1h-3zM10 20h1v1h-1zM14 20h1v1h-1zM24 20h1v1h-1zM28 20h2v1h-2zM32 20h4v1h-4zM3 21h5v1h-5zM9 21h2v1h-2zM13 21h1v1h-1zM28 21h1v1h-1zM33 21h3v1h-3zM3 22h3v1h-3zM7 22h1v1h-1zM10 22h3v1h-3zM14 22h1v1h-1zM24 22h1v1h-1zM28 22h2v1h-2zM31 22h1v1h-1zM3 23h2v1h-2zM6 23h2v1h-2zM9 23h1v1h-1zM11 23h1v1h-1zM13 23h2v1h-2zM24 23h1v1h-1zM28 23h2v1h-2zM32 23h1v1h-1zM35 23h1v1h-1zM5 24h2v1h-2zM10 24h2v1h-2zM13 24h2v1h-2zM16 24h5v1h-5zM22 24h2v1h-2zM27 24h3v1h-3zM34 24h2v1h-2zM3 25h1v1h-1zM5 25h1v1h-1zM7 25h3v1h-3zM11 25h1v1h-1zM15 25h1v1h-1zM17 25h1v1h-1zM21 25h2v1h-2zM24 25h1v1h-1zM29 25h7v1h-7zM4 26h1v1h-1zM7 26h2v1h-2zM12 26h2v1h-2zM16 26h3v1h-3zM23 26h6v1h-6zM31 26h1v1h-1zM3 27h1v1h-1zM7 27h1v1h-1zM9 27h1v1h-1zM12 27h1v1h-1zM17 27h1v1h-1zM23 27h2v1h-2zM27 27h5v1h-5zM35 27h1v1h-1zM11 28h1v1h-1zM13 28h1v1h-1zM15 28h1v1h-1zM19 28h1v1h-1zM22 28h2v1h-2zM26 28h2v1h-2zM31 28h5v1h-5zM15 29h1v1h-1zM17 29h1v1h-1zM20 29h1v1h-1zM22 29h1v1h-1zM24 29h1v1h-1zM26 29h2v1h-2zM29 29h1v1h-1zM31 29h2v1h-2zM34 29h2v1h-2zM11 30h1v1h-1zM14 30h1v1h-1zM16 30h2v1h-2zM19 30h1v1h-1zM23 30h1v1h-1zM27 30h1v1h-1zM31 30h2v1h-2zM35 30h1v1h-1zM11 31h2v1h-2zM14 31h2v1h-2zM18 31h3v1h-3zM22 31h1v1h-1zM27 31h5v1h-5zM34 31h1v1h-1zM12 32h1v1h-1zM16 32h2v1h-2zM19 32h2v1h-2zM24 32h1v1h-1zM26 32h1v1h-1zM31 32h5v1h-5zM11 33h1v1h-1zM14 33h2v1h-2zM18 33h1v1h-1zM21 33h2v1h-2zM26 33h1v1h-1zM28 33h1v1h-1zM30 33h4v1h-4zM35 33h1v1h-1zM12 34h2v1h-2zM17 34h1v1h-1zM26 34h2v1h-2zM29 34h2v1h-2zM32 34h1v1h-1zM34 34h1v1h-1zM13 35h2v1h-2zM18 35h3v1h-3zM24 35h4v1h-4zM30 35h2v1h-2zM34 35h2v1h-2z"/><path fill="#100E2C" fill-rule="evenodd" d="M3 3h7v7h-7zM4 4v5h5v-5z"/><rect x="5" y="5" width="3" height="3" fill="#3A1F7A"/><path fill="#100E2C" fill-rule="evenodd" d="M29 3h7v7h-7zM30 4v5h5v-5z"/><rect x="31" y="5" width="3" height="3" fill="#3A1F7A"/><path fill="#100E2C" fill-rule="evenodd" d="M3 29h7v7h-7zM4 30v5h5v-5z"/><rect x="5" y="31" width="3" height="3" fill="#3A1F7A"/><rect x="15.5" y="15.5" width="8" height="8" rx="1.2" fill="#100E2C" stroke="#EFBD57" stroke-width=".45"/><image href="/icons/Icon-192.png" x="16" y="16" width="7" height="7" style="image-rendering:pixelated"/></svg><!--/QR--></div>
+    <a class="play" href="https://demonattack.tlatoani.net/">PLAY NOW</a>
+    <p class="url">demonattack.tlatoani.net</p>
+  </section>
+</main>
+</body>
+</html>

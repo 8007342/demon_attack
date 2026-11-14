@@ -67,6 +67,11 @@ export function isStudioPath(pathname) {
   return /^\/studio\/?$/i.test(pathname);
 }
 
+/** The poster and QR page: /qr, with or without a trailing slash. */
+export function isQrPath(pathname) {
+  return /^\/qr\/?$/i.test(pathname);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -82,6 +87,8 @@ export default {
     // /studio is the asset review studio: the gallery app (built with base
     // href /gallery/), which opens the studio when the path is /studio.
     if (isStudioPath(url.pathname)) return env.ASSETS.fetch(new Request(new URL('/gallery/', url), request));
+    // /qr is a static poster page (web/qr/index.html), served without the game.
+    if (isQrPath(url.pathname)) return env.ASSETS.fetch(new Request(new URL('/qr/', url), request));
     return env.ASSETS.fetch(request);
   },
 };
