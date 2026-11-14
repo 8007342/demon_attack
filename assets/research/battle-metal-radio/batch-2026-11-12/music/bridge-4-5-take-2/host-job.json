@@ -1,0 +1,31 @@
+{
+  "job": "st-1794636344466-30",
+  "outputs": [
+    {
+      "path": "/work/tmp/imagegen/studio/st-1794636344466-30/0000_00001.flac",
+      "seed": 261112241,
+      "provenance_path": "/work/tmp/imagegen/studio/st-1794636344466-30/0000_00001.flac.provenance.json",
+      "kind": "audio",
+      "bytes": 1532446
+    }
+  ],
+  "seed": 261112241,
+  "elapsed_s": 7.46,
+  "provenance": {
+    "schema": "tillandsias.provenance/v1",
+    "workflow": "art/workflows/music/campaign-a2a-headroom.json",
+    "models": [
+      "acestep_v1.5_xl_turbo_bf16.safetensors",
+      "qwen_0.6b_ace15.safetensors",
+      "qwen_4b_ace15.safetensors",
+      "ace_1.5_vae.safetensors"
+    ],
+    "placement": "cuda"
+  },
+  "placement": "cuda",
+  "degraded": null,
+  "count": 1,
+  "tier": null,
+  "ephemeral": true,
+  "lane_version": "56.11.14.3+6f716174847e4005"
+}
