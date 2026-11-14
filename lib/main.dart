@@ -6,10 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'game/model.dart';
-import 'game/hints.dart';
-import 'widgets/hint_art.dart';
 import 'widgets/pilot_console_content.dart';
-import 'widgets/storyboard_banner.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
 import 'game/music_director.dart'; // --- music event hook
@@ -23,11 +20,11 @@ import 'widgets/medal.dart';
 import 'widgets/heart_parts.dart';
 import 'widgets/widescreen_backdrop.dart'; // --- widescreen backdrop
 // --- squad comms
-import 'comms/comms_director.dart' show CommsMessage;
 import 'comms/comms_view.dart';
 import 'comms/squad_comms.dart';
 // --- console route
 import 'widgets/dev_console.dart';
+import 'widgets/transition_overlay.dart'; // --- fluid transitions
 import 'widgets/level_toggle.dart'; // --- audio round: music / speech toggles
 export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
 // --- end console route
@@ -122,6 +119,7 @@ class ArcadePage extends StatefulWidget {
     this.runStorage,
     this.squadComms,
     this.consoleStart, // --- console route
+    this.interludeSeed, // --- fluid transitions
   });
   final ScoreService? scoreService;
   final RunStorage? runStorage;
@@ -129,6 +127,9 @@ class ArcadePage extends StatefulWidget {
 
   /// --- console route: begin a run here instead of on the title screen.
   final ConsoleStart? consoleStart;
+
+  /// --- fluid transitions: fixed interlude seed (tests); null: per run.
+  final int? interludeSeed;
   @override
   State<ArcadePage> createState() => _ArcadePageState();
 }
@@ -162,6 +163,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   // --- end audio round
   void _resetComms({bool resume = false}) {
+    transitions.newRun(squadComms, voice: voiceOn); // --- fluid transitions
     gameEvents.reset(freshRun: !resume);
     squadComms.reset();
     squadComms.startRun(storage.store, resume: resume);
@@ -183,13 +185,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     squadComms.detach();
   }
 
-  /// Phones: the transmission on air, shown full size during a transition.
-  CommsMessage? _commsTransmission(BoxConstraints bounds) =>
-      !CommsLayout.of(bounds.biggest).side &&
-          model.cinematic &&
-          model.mode != RunMode.paused
-      ? squadComms.director.transmission
-      : null;
   // --- end squad comms
   final focus = FocusNode();
   late final scores = widget.scoreService ?? ScoreService();
@@ -199,8 +194,14 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Difficulty boardDifficulty = Difficulty.normal;
   bool handledRunEnd = false;
   bool _endingShown = false, _endingOpen = false, _endingScheduled = false;
-  final hintDeck = HintDeck();
-  TacticalHint? arrivalHint;
+  // --- fluid transitions: the one primary transition message and the slim
+  // progress strip (widgets/transition_overlay.dart).
+  late final transitions = TransitionPresenter(seed: widget.interludeSeed);
+  void _skipTransition() {
+    if (transitions.skip(model, squadComms, voice: voiceOn)) _tick();
+  }
+
+  // --- end fluid transitions
   bool hintArtPrecached = false;
   ScoreEntry? finalResult;
   bool showFinalResult = false;
@@ -358,13 +359,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           heartNoticeUntil = model.clock + 1.6;
           audioSfx('extraLife');
         case 'checkpoint':
-          if (model.wave == 1) {
-            arrivalHint = hintDeck.next(
-              difficulty: model.difficulty,
-              level: model.level,
-              route: model.cycle,
-            );
-          }
           // A console run never replaces the player's saved run.
           if (model.ranked) {
             savedCheckpoint = model.checkpoint();
@@ -404,6 +398,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       paused: model.mode == RunMode.paused || model.mode == RunMode.title,
       combat: model.combat,
     );
+    transitions.update(
+      model: model,
+      comms: squadComms,
+      voice: voiceOn,
+      flawless: gameEvents.tally.sectorShips == 0,
+    ); // --- fluid transitions
     if (!handledRunEnd &&
         !model.defeatActive &&
         (model.mode == RunMode.gameOver || model.mode == RunMode.completed)) {
@@ -585,6 +585,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     setState(() {
       if (!keepScreen) screen = null;
       squadComms.reset(); // --- squad comms
+      transitions.end(squadComms, voice: voiceOn); // --- fluid transitions
       model.mode = RunMode.title;
       model.events.clear();
       keys.clear();
@@ -634,10 +635,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       return KeyEventResult.handled;
     }
     if (event is KeyDownEvent &&
-        _showingArrivalHint &&
+        transitions.showingCard &&
+        model.mode != RunMode.paused &&
         (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.enter)) {
-      model.transitionLeft = 0;
-      _tick();
+      _skipTransition(); // --- fluid transitions
       return KeyEventResult.handled;
     }
     if (event is KeyDownEvent &&
@@ -826,10 +827,16 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                     Positioned.fill(
                       child: IgnorePointer(
                         child: CommsAtlasScope(
-                          child: CommsSidePanels(
-                            director: squadComms.director,
-                            now: squadComms.now,
-                            layout: commsLayout,
+                          // --- fluid transitions: a silent tip holds the
+                          // call quiet (dimmed) while the music plays.
+                          child: AnimatedOpacity(
+                            opacity: transitions.quiet ? .35 : 1,
+                            duration: const Duration(milliseconds: 500),
+                            child: CommsSidePanels(
+                              director: squadComms.director,
+                              now: squadComms.now,
+                              layout: commsLayout,
+                            ),
                           ),
                         ),
                       ),
@@ -1430,12 +1437,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 if (model.defeatActive) {
                   model.defeatTimer = 0;
                   _tick();
-                } else if (_showingArrivalHint &&
-                    model.level == 1 &&
-                    model.wave == 1 &&
-                    model.cycle == 0) {
-                  model.transitionLeft = 0;
-                  _tick();
+                } else if (transitions.showingCard &&
+                    model.mode != RunMode.paused) {
+                  _skipTransition(); // --- fluid transitions
                 }
               },
               child: Stack(
@@ -1450,7 +1454,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       model.clock < heartNoticeUntil &&
                       model.mode != RunMode.paused)
                     Positioned(
-                      top: 8,
+                      top: 8 + transitions.stripInset(model),
                       left: 8,
                       right: 8,
                       child: IgnorePointer(
@@ -1474,31 +1478,37 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                  if (model.cinematic &&
-                      (model.mode != RunMode.paused || _showingArrivalHint))
-                    Positioned.fill(child: _interlude()),
-                  // --- squad comms: compact dock at the top of the arena,
-                  // below the HUD band so score, lives and hearts stay
-                  // readable; it dims while the player is being hit.
-                  // A full-size transmission replaces the transition art.
-                  if (_commsTransmission(bounds) case final transmission?)
+                  // --- fluid transitions: one primary message (interlude
+                  // card, story card or carrier alert) and the slim strip.
+                  if (model.cinematic && model.mode != RunMode.paused)
                     Positioned.fill(
                       child: CommsAtlasScope(
-                        child: CommsTransmission(
-                          message: transmission,
-                          now: squadComms.now,
+                        child: transitions.build(
+                          context,
+                          model: model,
+                          comms: squadComms,
+                          ship: scene.ship,
+                          onSkip: _skipTransition,
                         ),
                       ),
                     ),
+                  // --- end fluid transitions
+                  // --- squad comms: compact dock at the top of the arena,
+                  // below the HUD band so score, lives and hearts stay
+                  // readable; it dims while the player is being hit.
+                  // The interlude card is the radio while it is up.
                   if (!CommsLayout.of(bounds.biggest).side &&
-                      model.mode != RunMode.paused)
+                      model.mode != RunMode.paused &&
+                      !transitions.showingCard)
                     Positioned(
                       key: const ValueKey('comms-hud-stack'),
                       left: 4,
                       right: 4,
-                      top: heartNotice != null && model.clock < heartNoticeUntil
-                          ? 44
-                          : 4,
+                      top:
+                          transitions.stripInset(model) +
+                          (heartNotice != null && model.clock < heartNoticeUntil
+                              ? 44
+                              : 4),
                       child: CommsAtlasScope(
                         child: CommsHudStack(
                           director: squadComms.director,
@@ -1507,11 +1517,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                               model.combat &&
                               model.invulnerable > .4 &&
                               model.levelClock > 2.5,
-                          hideTransmission: _commsTransmission(bounds) != null,
+                          hideTransmission: false,
                         ),
                       ),
                     ),
-                  if (model.mode == RunMode.paused && !_showingArrivalHint)
+                  if (model.mode == RunMode.paused)
                     Positioned.fill(
                       child: _gameOverlay('SIGNAL PAUSED', 'TAKE A BREATH.', [
                         FilledButton(
@@ -1537,649 +1547,6 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   // A render-only view avoids updating the simulation twice when the full-screen sky is mounted.
   late final _ArenaView _arenaProxy = _ArenaView(scene);
-  bool get _showingArrivalHint =>
-      arrivalHint != null &&
-      model.presentationMode == RunMode.transition &&
-      model.wave == 1 &&
-      !model.isBoss;
-
-  Widget _hintInterlude(TacticalHint hint) => LayoutBuilder(
-    builder: (context, bounds) {
-      final paused = model.mode == RunMode.paused;
-      final compact = bounds.maxHeight < 400;
-      final p = model.transitionProgress;
-
-      return Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: SizedBox(
-            width: math.min(460, bounds.maxWidth),
-            child: Container(
-              key: const ValueKey('arrival-hint'),
-              margin: const EdgeInsets.symmetric(horizontal: 12),
-              padding: EdgeInsets.all(compact ? 10 : 16),
-              decoration: BoxDecoration(
-                color: const Color(0xF2080D18),
-                border: Border.all(color: mint.withValues(alpha: 0.6)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: FittedBox(
-                          alignment: Alignment.centerLeft,
-                          fit: BoxFit.scaleDown,
-                          child: _label(
-                            paused ? 'SIGNAL PAUSED' : 'TACTICAL BRIEFING',
-                            mint,
-                            size: 11,
-                          ),
-                        ),
-                      ),
-                      _label(
-                        'SECTOR ${model.level} · WAVE ${model.wave}',
-                        const Color(0xFF8AA3BA),
-                        size: 9,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Illustrated Tactical Pixel Art
-                  HintArt(scene: hint.scene, height: compact ? 88 : 124),
-                  const SizedBox(height: 10),
-                  Text(
-                    hint.title,
-                    key: ValueKey('hint-${hint.id}'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: compact ? 17 : 21,
-                      fontWeight: FontWeight.bold,
-                      height: 1.15,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    hint.detail,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFFB0C4D8),
-                      fontSize: 11,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  LinearProgressIndicator(
-                    value: p,
-                    minHeight: 5,
-                    color: mint,
-                    backgroundColor: const Color(0xFF24374B),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    },
-  );
-
-  /// Unobstructed Boss Arrival Overlay: keeps the central viewport 100% open
-  /// so the Brood Dreadnought Carrier's orbital descent is seen in full glory!
-  Widget _bossArrivalInterlude(double p) => LayoutBuilder(
-    builder: (context, bounds) {
-      final compact = bounds.maxHeight < 450;
-      final fadeIn = Curves.easeOutCubic.transform((p / .10).clamp(0, 1));
-      final fadeOut = Curves.easeInCubic.transform(((1 - p) / .10).clamp(0, 1));
-      final opacity = math.min(fadeIn, fadeOut);
-      final pulse = (math.sin(model.visualClock * 8.0) * 0.5 + 0.5);
-
-      return IgnorePointer(
-        child: Opacity(
-          opacity: opacity,
-          child: Stack(
-            children: [
-              // Top warning banner: Dreadnought signature alert
-              Positioned(
-                top: compact ? 6 : 14,
-                left: 10,
-                right: 10,
-                child: Center(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: SizedBox(
-                      width: math.min(440, bounds.maxWidth - 20),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: compact ? 6 : 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xEB16050A),
-                          border: Border.all(
-                            color: Color.lerp(
-                              const Color(0xFFFF3D68),
-                              const Color(0xFFFF8A80),
-                              pulse,
-                            )!,
-                            width: 1.5,
-                          ),
-                          borderRadius: BorderRadius.circular(4),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFF3D68)
-                                  .withValues(alpha: 0.25 + pulse * 0.25),
-                              blurRadius: 12,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: const Color(0xFFFF5252),
-                                  size: compact ? 14 : 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    'WARNING: BROOD DREADNOUGHT SIGNATURE',
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: const Color(0xFFFF5252),
-                                      fontSize: compact ? 10 : 12,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.4,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: const Color(0xFFFF5252),
-                                  size: compact ? 14 : 16,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'KRYBOR CARRIER ENTERS ORBIT',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: compact ? 15 : 19,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.8,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Middle: ZERO obstruction! The Carrier descends in full glory!
-
-              // Bottom tactical objective dock, mounted right above the pilot console
-              Positioned(
-                bottom: compact ? 6 : 14,
-                left: 10,
-                right: 10,
-                child: Center(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: SizedBox(
-                      width: math.min(440, bounds.maxWidth - 20),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: compact ? 6 : 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xEB080D18),
-                          border: Border.all(
-                            color: mint.withValues(alpha: 0.65),
-                            width: 1.2,
-                          ),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'TACTICAL OBJECTIVE',
-                                  style: TextStyle(
-                                    color: mint,
-                                    fontSize: compact ? 9 : 10.5,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.1,
-                                  ),
-                                ),
-                                Text(
-                                  'INTERCEPT LOCK ${(p * 100).toInt()}%',
-                                  style: TextStyle(
-                                    color: const Color(0xFF8AA3BA),
-                                    fontSize: compact ? 9 : 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'BREAK DEFLECTOR SHIELD · FIRE DIRECTLY INTO OPEN VENT HATCH',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: const Color(0xFFD6E2EE),
-                                fontSize: compact ? 10.5 : 12,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            LinearProgressIndicator(
-                              value: p,
-                              minHeight: 4,
-                              color: const Color(0xFFFF5252),
-                              backgroundColor: const Color(0xFF24374B),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-
-  /// Sleek upper banner for wave transitions: keeps the playfield completely clear for piloting
-  Widget _waveTransitionInterlude(double p) => LayoutBuilder(
-    builder: (context, bounds) {
-      final compact = bounds.maxHeight < 500;
-      final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));
-      final fadeOut = Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
-      final opacity = math.min(fadeIn, fadeOut);
-
-      return IgnorePointer(
-        child: Align(
-          alignment: const Alignment(0, -0.68),
-          child: Opacity(
-            opacity: opacity,
-            child: Transform.translate(
-              offset: Offset(0, (1 - fadeIn) * 12),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: SizedBox(
-                  width: math.min(360, bounds.maxWidth - 20),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: compact ? 8 : 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xE6080D18),
-                      border: Border.all(
-                        color: mint.withValues(alpha: 0.5),
-                        width: 1.2,
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'SWARM REINFORCEMENTS',
-                          style: TextStyle(
-                            color: mint,
-                            fontSize: compact ? 12 : 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            for (var i = 1; i <= model.wavesPerLevel; i++)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 3,
-                                ),
-                                child: Icon(
-                                  i < model.wave
-                                      ? Icons.check_circle_outline_rounded
-                                      : (i == model.wave
-                                            ? Icons.radio_button_checked_rounded
-                                            : Icons
-                                                  .radio_button_unchecked_rounded),
-                                  size: compact ? 12 : 14,
-                                  color: i < model.wave
-                                      ? const Color(0xFF70F5D5)
-                                      : (i == model.wave
-                                            ? const Color(0xFFFFD54F)
-                                            : const Color(0xFF4B6584)),
-                                ),
-                              ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'WAVE ${model.wave} OF ${model.wavesPerLevel}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: compact ? 13 : 15,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'HOSTILE FORMATIONS INBOUND · STAY SHARP',
-                          style: TextStyle(
-                            color: const Color(0xFF9AAEC3),
-                            fontSize: compact ? 9.5 : 11,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    },
-  );
-
-  /// Salvage window interlude: docked at top to leave central playfield free to catch items
-  Widget _salvageInterlude(double p) => LayoutBuilder(
-    builder: (context, bounds) {
-      final compact = bounds.maxHeight < 500;
-      final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));
-      final fadeOut = Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
-      final opacity = math.min(fadeIn, fadeOut);
-
-      return IgnorePointer(
-        child: Align(
-          alignment: const Alignment(0, -0.74),
-          child: Opacity(
-            opacity: opacity,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: SizedBox(
-                width: math.min(360, bounds.maxWidth - 20),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: compact ? 8 : 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xE6080D18),
-                    border: Border.all(
-                      color: mint.withValues(alpha: 0.6),
-                      width: 1.2,
-                    ),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'RECOVERY WINDOW ACTIVE',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: mint,
-                                fontSize: compact ? 11 : 12.5,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.1,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${model.transitionLeft.ceil()}s LEFT',
-                            style: const TextStyle(
-                              color: Color(0xFFFFD54F),
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'PILOT SHIP TO COLLECT CARGO',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: const Color(0xFFD6E2EE),
-                          fontSize: compact ? 10 : 11,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      LinearProgressIndicator(
-                        value: p,
-                        minHeight: 3.5,
-                        color: mint,
-                        backgroundColor: const Color(0xFF24374B),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    },
-  );
-
-  Widget _interlude() {
-    if (_showingArrivalHint) return _hintInterlude(arrivalHint!);
-    final phase = model.presentationMode;
-    final p = model.transitionProgress;
-    if (phase == RunMode.transition && model.isBoss) {
-      return _bossArrivalInterlude(p);
-    }
-    if (model.waveTransition) {
-      return _waveTransitionInterlude(p);
-    }
-    if (phase == RunMode.salvage) {
-      return _salvageInterlude(p);
-    }
-
-    final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));
-    final fadeOut = Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
-    final bossVictory = phase == RunMode.victory;
-    final recognition = bossVictory && p >= .32;
-    final clear = phase == RunMode.levelClear;
-    final travel = phase == RunMode.travel;
-    final color = clear || bossVictory ? gold : mint;
-    final heading = bossVictory
-        ? recognition
-              ? 'THE FLEET RECOGNIZES YOUR SERVICE'
-              : 'THE CARRIER IS FALLING'
-        : clear
-        ? 'SECTOR SECURED'
-        : travel
-        ? 'JUMP DRIVE ACTIVE'
-        : 'INCOMING TRANSMISSION';
-    final destination = travel
-        ? CampaignStory.name(
-            model.nextLevel,
-            model.level == 5 ? model.cycle + 1 : model.cycle,
-          )
-        : CampaignStory.name(model.level, model.cycle);
-    final story = bossVictory
-        ? model.medals == 5
-              ? 'Five carriers fallen. Brood command is broken. The frontier is free.'
-              : 'A medal for your courage. A life for the journey. Keep flying, defender.'
-        : clear
-        ? CampaignStory.departure(model.level, model.cycle)
-        : travel
-        ? CampaignStory.travel(model.level, model.cycle)
-        : CampaignStory.briefing(model.level, model.cycle);
-    return IgnorePointer(
-      child: LayoutBuilder(
-        builder: (context, bounds) {
-          final compact = bounds.maxHeight < 500;
-          return Align(
-            alignment: const Alignment(0, 0.08),
-            child: Opacity(
-              opacity: math.min(fadeIn, fadeOut),
-              child: Transform.translate(
-                offset: Offset(0, (1 - fadeIn) * 20),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: SizedBox(
-                    width: math.min(460, bounds.maxWidth),
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 460),
-                      margin: const EdgeInsets.symmetric(horizontal: 14),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: compact ? 10 : 20,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xD9080D18),
-                        border: Border.symmetric(
-                          horizontal: BorderSide(
-                            color: color.withValues(alpha: .4),
-                          ),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            heading,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: color,
-                              fontSize: compact ? 16 : 19,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          SizedBox(height: compact ? 6 : 14),
-                          Text(
-                            destination.toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: compact ? 28 : 36,
-                              height: 1.15,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          SizedBox(height: compact ? 6 : 10),
-                          StoryboardBanner(
-                            level: model.level,
-                            cycle: model.cycle,
-                            phase: phase,
-                            progress: p,
-                            steering: model.steering,
-                            compact: compact,
-                            ship: scene.ship,
-                            pilot: model,
-                          ),
-                          if (recognition) ...[
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Transform.scale(
-                                  scale:
-                                      .8 +
-                                      .2 *
-                                          Curves.easeOutBack.transform(
-                                            ((p - .32) / .2).clamp(0, 1),
-                                          ),
-                                  child: Medal(
-                                    difficulty: model.difficulty,
-                                    ordinal: (model.medals - 1).clamp(0, 4),
-                                    size: compact ? 40 : 64,
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                const Text(
-                                  '♥ +1UP',
-                                  style: TextStyle(
-                                    color: Color(0xFFFF8C89),
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          if (!(bossVictory && !recognition)) ...[
-                            SizedBox(height: compact ? 8 : 18),
-                            Text(
-                              story,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: compact ? 18 : 22,
-                                height: 1.5,
-                                color: const Color(0xFFCCD9E6),
-                              ),
-                            ),
-                          ],
-                          SizedBox(height: compact ? 8 : 18),
-                          SizedBox(
-                            height: compact ? 6 : 10,
-                            width: double.infinity,
-                            child: LinearProgressIndicator(
-                              value: p,
-                              color: color,
-                              backgroundColor: const Color(0xFF24374B),
-                            ),
-                          ),
-                          if (travel && !compact) ...[
-                            const SizedBox(height: 10),
-                            _label(
-                              'DESTINATION LOCK ${(p * 100).floor()}%',
-                              const Color(0xFF9AAEC3),
-                              size: 11,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _controller() => LayoutBuilder(
     builder: (context, bounds) => Listener(
       onPointerDown: (e) {
