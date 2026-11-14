@@ -23,6 +23,9 @@ playtested this build on 2026-11-14 and approved it ("I approve of all this magn
   tip over a screenshot with a full-screen radio interlude; the director hushes for tips.
 - **Mobile radio toasts:** framed cards (rounded, bordered, shadowed, speaker accent).
 - **Campaign:** the ending plays only after the fifth carrier.
+- **Credits:** open with "By Tlatoāni, with love" (links to tlatoani.net) and "Made alongside Claude by
+  Anthropic", then original art, score and voices and the production tools; Tillandsias.org links to
+  tillandsias.org.
 - **Music level is constant:** no ducking under speech.
 - **/qr:** a poster page with a QR code to demonattack.tlatoani.net, laid out for portrait and landscape.
 - **/console:** start a fresh, unranked run at any sector, route and difficulty (path URL).
@@ -40,7 +43,7 @@ playtested this build on 2026-11-14 and approved it ("I approve of all this magn
 
 ## Gate (run on the release head)
 - `flutter analyze`: no issues.
-- `flutter test`: 444 passed, 1 skipped (after merging atmosphere-and-swarms).
+- `flutter test`: 445 passed, 1 skipped (after merging atmosphere-and-swarms and the credits update).
 - `npm run test:worker`: 39 passed.
 - `npm run build`: game and gallery built. Live check in desktop Chromium: 59.7 fps, p95 16.8 ms with the
   fog shader on; no console errors.
