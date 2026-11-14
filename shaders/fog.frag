@@ -45,6 +45,18 @@ float fbm(vec2 p) {
   return sum / 0.9375;
 }
 
+// Cheaper fBm (3 octaves) for the warp field.
+float fbm3(vec2 p) {
+  float sum = 0.0;
+  float amp = 0.5;
+  for (int o = 0; o < 3; o++) {
+    sum += amp * noise(p);
+    p = p * 2.03 + vec2(17.1, 9.2);
+    amp *= 0.5;
+  }
+  return sum / 0.875;
+}
+
 float profile(float y) {
   if (y <= uBand.x || y >= uBand.z) return 0.0;
   if (y < uBand.y) return smoothstep(uBand.x, uBand.y, y);
@@ -71,7 +83,7 @@ void main() {
   // Domain warp: f(p + w * q), q itself drifting slowly with time, so the
   // shapes evolve rather than translate.
   float slow = t * 0.035;
-  vec2 q = vec2(fbm(p + vec2(0.0, slow)), fbm(p + vec2(5.2, 1.3) - slow));
+  vec2 q = vec2(fbm3(p + vec2(0.0, slow)), fbm3(p + vec2(5.2, 1.3) - slow));
   float d = fbm(p + uMotion.w * 1.6 * (q - 0.5) + vec2(slow * 0.6, 0.0));
   // Value-noise fBm clusters near .5: stretch it before the wisp cut.
   d = (d - 0.5) * 2.2 + 0.5;

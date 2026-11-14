@@ -23,7 +23,14 @@ import 'perspective.dart';
 ///
 /// The ground-atmosphere art atlas (plan/ground-atmosphere.md §3) can later
 /// replace a slot's texture through [art] without touching the draw order.
-enum FogSlot { horizonBand, farBankA, farBankB, groundFog, skySheet1, skySheet2 }
+enum FogSlot {
+  horizonBand,
+  farBankA,
+  farBankB,
+  groundFog,
+  skySheet1,
+  skySheet2,
+}
 
 /// Atmosphere quality: full layers (shader where available) or the reduced
 /// low-end tier (horizon band and ground fog from tiles, no sky sheets).
@@ -119,9 +126,9 @@ class Atmosphere {
     // Lies on the terrain below the formation, scrolls with the ground.
     FogSlot.groundFog: FogLayer(
       top: 226,
-      peak: 262,
+      peak: 290,
       bottom: 540,
-      alpha: .30,
+      alpha: .36,
       scale: 150,
       drift: Offset(3, 1),
       parallax: 1,
@@ -393,10 +400,21 @@ class Atmosphere {
     1.25, 0, 0, 0, 10, //
     0, 1.2, 0, 0, 6,
     0, 0, 1.1, 0, 0,
-    3.4, 7.0, -6.6, 0, -1220,
+    3.4, 7.0, -6.6, 0, -1500,
   ]);
 
   // --- painting ------------------------------------------------------------
+  /// Slots the shader draws: the bands where the depth reads (horizon band
+  /// and far banks, about three quarters of a screen together). The ground
+  /// fog and the full-screen sky sheets stay on the tiles, which cost a
+  /// texture fetch per pixel instead of ~12 noise evaluations: the fog pass
+  /// keeps to its 2 ms budget on a phone without a half-resolution target.
+  static const shaderSlots = {
+    FogSlot.horizonBand,
+    FogSlot.farBankA,
+    FogSlot.farBankB,
+  };
+
   /// Whether [slot] is drawn at the current quality.
   bool shows(FogSlot slot) => switch (slot) {
     FogSlot.horizonBand || FogSlot.groundFog => true,
@@ -407,7 +425,9 @@ class Atmosphere {
   void paint(Canvas c, FogSlot slot) {
     if (!shows(slot)) return;
     final l = layers[slot]!;
-    if (usesShader && _paintShader(c, slot, l)) return;
+    if (usesShader && shaderSlots.contains(slot) && _paintShader(c, slot, l)) {
+      return;
+    }
     if (!ready) {
       _paintGradientOnly(c, slot, l);
       return;
@@ -416,20 +436,14 @@ class Atmosphere {
   }
 
   Color _colorOf(FogSlot slot, FogLayer l) {
-    final base = slot == FogSlot.groundFog
-        ? Color.lerp(air, veil, .35)!
-        : air;
+    final base = slot == FogSlot.groundFog ? Color.lerp(air, veil, .35)! : air;
     return l.lighten > 0
         ? Color.lerp(base, const Color(0xFFE6E8F4), l.lighten)!
         : base;
   }
 
-  Rect _bounds(FogLayer l) => Rect.fromLTRB(
-    0,
-    math.max(0, l.top),
-    360,
-    math.min(520, l.bottom),
-  );
+  Rect _bounds(FogLayer l) =>
+      Rect.fromLTRB(0, math.max(0, l.top), 360, math.min(520, l.bottom));
 
   /// Lateral offset of a layer for the ship's position (parallax).
   /// Nearer layers shift more; the ground fog stays locked to the ground.

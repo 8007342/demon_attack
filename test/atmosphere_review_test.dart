@@ -13,8 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// reduced tier, at phone portrait under .cache/atmosphere-review/ (or
 /// ATMOSPHERE_REVIEW_DIR). Set ATMOSPHERE_REVIEW_SHADER=0 to force tiles.
 final _outDir =
-    Platform.environment['ATMOSPHERE_REVIEW_DIR'] ??
-    '.cache/atmosphere-review';
+    Platform.environment['ATMOSPHERE_REVIEW_DIR'] ?? '.cache/atmosphere-review';
 final _shader = Platform.environment['ATMOSPHERE_REVIEW_SHADER'] != '0';
 
 Future<ui.Image> _decode(String file) async {
@@ -129,7 +128,19 @@ void main() {
       final s4 = await _scene(m4, 2);
       _run(m4, s4, 3.4);
       await _capture(s4, '8-sentinel-escort');
-      _run(m4, s4, 1.1);
+      for (var i = 0; i < 12; i++) {
+        _run(m4, s4, .25);
+        final sentinel = m4.demons.where((d) => d.isLarge).firstOrNull;
+        // ignore: avoid_print
+        print(
+          't ${(3.4 + i * .25).toStringAsFixed(2)} mode ${m4.mode} '
+          'fs ${m4.foreshadow?.growth.toStringAsFixed(2)} '
+          'sentinel ${sentinel?.entranceProgress.toStringAsFixed(2)} '
+          'wait ${sentinel?.waitingForEscort} '
+          '${sentinel?.x.toStringAsFixed(0)},${sentinel?.y.toStringAsFixed(0)} '
+          'n ${sentinel?.nearness.toStringAsFixed(2)} s ${sentinel?.scale}',
+        );
+      }
       await _capture(s4, '9-sentinel-arriving');
 
       // 4. Reduced atmosphere: horizon band and ground fog only.

@@ -128,7 +128,7 @@ class Demon {
 
   /// Where a distant arrival sets out from, if not the default horizon
   /// point (a foreshadowed sentinel leaves from its silhouette).
-  double? entryX, entryY, entryN;
+  double? entryX, entryY, entryN, entryScale;
 
   /// Shot hitbox half extents, set with [scale] by the depth pass; the
   /// flat legacy box until then.
@@ -165,12 +165,14 @@ class SentinelForeshadow {
     final tau = clock * 2 * math.pi / period;
     // Linger at the lobe ends.
     final tp = tau + .15 * math.sin(2 * tau);
-    final a = 92 + 28 * g;
+    final a = 96 + 24 * g;
     final nc = .08 + .2 * g;
     nearness = nc + .03 * math.sin(tp);
     x = 180 + a * math.cos(tp) - (shipX - 180) * .12;
-    y = 108 - 12 * g + a / 2 * math.sin(2 * tp) * .32;
-    final raw = (.45 + .3 * g) * (nearness / nc);
+    // Low in the sky, its lower half in the horizon band: a darker patch
+    // of the fog, partly cut by it (research §5).
+    y = 150 - 14 * g + a / 2 * math.sin(2 * tp) * .22;
+    final raw = (.7 + .25 * g) * (nearness / nc);
     scale = (raw * 16).round() / 16;
     // Bank by the lateral velocity (curvature sign).
     final dtp = 1 + .3 * math.cos(2 * tau);
@@ -1587,6 +1589,8 @@ class ArcadeModel {
     var sepX = 0.0, sepY = 0.0;
     var cohX = 0.0, cohY = 0.0;
     var cohCount = 0;
+    // An arrival's own slot track, not where the flock draws it.
+    final (selfX, selfY) = flock.slotTrack(d) ?? (d.x, d.y);
     for (final other in demons) {
       if (identical(other, d) ||
           other.isLarge ||
@@ -1595,8 +1599,8 @@ class ArcadeModel {
           other.lastStand) {
         continue;
       }
-      final dx = d.x - other.x;
-      final dy = d.y - other.y;
+      final dx = selfX - other.x;
+      final dy = selfY - other.y;
       final distSq = dx * dx + dy * dy;
       if (distSq <= 0.0001 || distSq >= 68 * 68) continue;
       final dist = math.sqrt(distSq);
@@ -1604,8 +1608,8 @@ class ArcadeModel {
         sepX += (dx / dist) * (36 - dist) * 0.35;
         sepY += (dy / dist) * (36 - dist) * 0.20;
       }
-      cohX += other.x - d.x;
-      cohY += other.y - d.y;
+      cohX += other.x - selfX;
+      cohY += other.y - selfY;
       cohCount++;
     }
     if (cohCount > 0) {
@@ -1790,6 +1794,13 @@ class ArcadeModel {
         stage = null;
       }
     }
+    if (demons.any(
+      (d) => d.isLarge && d.entryScale != null && d.entranceProgress > 0,
+    )) {
+      // Handed over: the sentinel itself carries the silhouette now.
+      foreshadow = null;
+      return;
+    }
     if (stage == null || kind == null) {
       if (f == null) return;
       f.opacity = math.max(0, f.opacity - dt / .8);
@@ -1812,7 +1823,8 @@ class ArcadeModel {
       waiting
         ..entryX = g.x
         ..entryY = g.y
-        ..entryN = g.nearness;
+        ..entryN = g.nearness
+        ..entryScale = g.scale;
     }
   }
 
@@ -1888,6 +1900,13 @@ class ArcadeModel {
         large: d.isLarge,
         angry: d.angry,
       );
+      final from = d.entryScale;
+      if (from != null && d.entering && d.isLarge) {
+        // A foreshadowed sentinel keeps its silhouette's size as it flies
+        // in, growing into its own (presentation: it cannot be hit yet).
+        final s = _smootherstep(d.entranceProgress);
+        d.scale = ((from + (d.scale - from) * s) * 16).round() / 16;
+      }
       final (halfW, halfH) = d.isLarge
           ? Perspective.largeHitHalf
           : Perspective.smallHitHalf;

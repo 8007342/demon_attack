@@ -67,8 +67,16 @@ class FlockAgent {
 }
 
 class FlockSquad {
-  FlockSquad(this.p0x, this.p0z, this.p1x, this.p1z, this.p2x, this.p2z,
-      this.p3x, this.p3z);
+  FlockSquad(
+    this.p0x,
+    this.p0z,
+    this.p1x,
+    this.p1z,
+    this.p2x,
+    this.p2z,
+    this.p3x,
+    this.p3z,
+  );
   final double p0x, p0z, p1x, p1z, p2x, p2z, p3x, p3z;
 
   /// Cubic Bezier point of the leader's path at [u].
@@ -257,6 +265,14 @@ class ArrivalFlock {
     }
     _batches.add(batch);
     return batch;
+  }
+
+  /// The model's own placement of [d] last frame (its slot track), while
+  /// the flock draws it elsewhere; null when the flock has not placed it.
+  (double, double)? slotTrack(Demon d) {
+    final a = _agents[d];
+    if (a == null || a.stamp < 0) return null;
+    return (a.refX, a.refY);
   }
 
   /// Records the model's own placement of [d] this frame (its slot track)
@@ -493,8 +509,10 @@ class ArrivalFlock {
       yBase = y0 + (d.homeY - y0) * k;
     } else {
       // Beyond the arrival depth: sinking toward the horizon line.
-      final k = ((Perspective.nearFar - n) / (Perspective.nearFar - .16))
-          .clamp(0.0, 1.0);
+      final k = ((Perspective.nearFar - n) / (Perspective.nearFar - .16)).clamp(
+        0.0,
+        1.0,
+      );
       yBase = y0 + (Perspective.horizonY - 3 - y0) * k;
     }
     // Parabolic altitude arc, as the ground missiles (research §7).
