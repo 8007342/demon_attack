@@ -134,8 +134,10 @@ void main() {
         }
 
         final fast = await loaded();
-        if (!fast.usesShader)
-          return; // no shader on this platform: nothing to guard
+        // No shader on this platform: nothing to guard.
+        if (!fast.usesShader) {
+          return;
+        }
         for (var i = 0; i < Atmosphere.guardFrames * 2; i++) {
           fast.advance(1 / 60, distance: 0);
         }
