@@ -88,7 +88,7 @@ current families instead.
   - [x] carrier (`art/families/carrier`)
   - [x] ground forces (`art/families/ground-forces.json`)
   - [x] ground troops (`art/families/ground-troops.json`)
-  - [ ] flyover vegetation (`art/families/flyover-vegetation.json`)
+  - [x] flyover vegetation (`art/families/flyover-vegetation.json`)
   - [ ] widescreen backdrops (`art/families/widescreen-backdrops.json`)
 - [ ] 4.2 Contact sheets and operator acceptance per family; repack atlases; run the gallery and tests.
 
@@ -102,6 +102,8 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 01:34 UTC: refinement pass, flyover vegetation: 10 species refined (seeds 641500-641590), 0 rerolls, 0 skipped. Prompts describe what each shipped source actually shows (several first-pass SDXL sources drifted from their spec prompts, e.g. ice-crystal-shrub and ruin-rubble hold two objects); only the luminance high-pass reaches the atlas. Atlas rebuilt with `go run . offline`; vegetation_atlas.dart unchanged. Sheet: art/contact/refine-flyover-vegetation.png. Analyze clean, 384 tests pass.
 
 - 2026-11-14 01:25 UTC: refinement pass, carrier and boss armada: 4 texture sources refined (hide 641400, masonry 641410, membrane 641420, plating 641430), 0 rerolls, 0 skipped. Full-frame surface textures, so no BiRefNet matte (nothing to cut out); masters kept opaque. Carrier detail maps and all five boss-*.png atlases rebuilt; geometry, anchors and palettes unchanged. Sheet: art/contact/refine-carrier.png. Analyze clean, 384 tests pass.
 
