@@ -339,3 +339,41 @@ func TestOverlayStates(t *testing.T) {
 		}
 	}
 }
+
+// finish puts an x8 image back on the grid inside the rig silhouette: the
+// rig's own reference image round-trips to the same silhouette.
+func TestFinishRoundTrip(t *testing.T) {
+	p := proj(t)
+	u := p.unit("lodestar")
+	var cell *Cell
+	cs := p.cellsOf(u)
+	for i := range cs {
+		if cs[i].Name == "lodestar.hull.move.h045.f0" {
+			cell = &cs[i]
+		}
+	}
+	key := pixelgrid.Hex("#FF00FF")
+	ref := p.refImage(u, cell, 8, key)
+	out := p.finish(u, cell, ref, key)
+	ink := p.Pals["fleet"].Ink
+	for y := 0; y < cell.F.H; y++ {
+		for x := 0; x < cell.F.W; x++ {
+			c := out.NRGBAAt(x, y)
+			if cell.F.filled(x, y) != (c.A != 0 && c != ink) {
+				t.Fatalf("texel %d,%d: rig %v, finished %v", x, y, cell.F.filled(x, y), c)
+			}
+		}
+	}
+}
+
+func TestJobsPlan(t *testing.T) {
+	p := proj(t)
+	kinds := map[string]int{}
+	for _, j := range p.jobs() {
+		kinds[j.Kind]++
+	}
+	// 26 units x 4 hero candidates; 2 candidates per other heading; layers
+	if kinds["hero"] != 26*4 || kinds["heading"] == 0 || kinds["layer"] == 0 {
+		t.Fatalf("jobs %v", kinds)
+	}
+}

@@ -97,6 +97,7 @@ current families instead.
 - [ ] 5.2 Operator review of the pilot; then refine each sprite family and the flyover (3.4) the same way.
 - [ ] 5.3 New Undercroft Host units per `openspec/changes/gargoyle-ground-army`, and terrain poses per
       `openspec/changes/ground-terrain-interaction`.
+      Plan, phases and GPU estimate: [ground-forces-rework.md](ground-forces-rework.md) (Phase 0, rigs and offline atlases, done 2026-11-14 on `work/ground-blocks`).
 
 ## Log
 

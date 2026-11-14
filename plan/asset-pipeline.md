@@ -329,6 +329,37 @@ Selected: grunt 740101, rocket brute 740201, tank 740302, rifleman
 came out front-on or side-on people and generic tanks rather than the
 needed poses, so only their texture is used.
 
+## Ground blocks (ground forces rework)
+
+The reworked ground war (`openspec/changes/ground-forces-rework/`) replaces fixed rows with **per-unit blocks** of
+headings, an articulated layer, generated overlays and states, packed **per sector** with the sector camouflage or stone
+kit baked in. The driver is Go (`tools/ground_blocks/`), sharing the 2-D rasteriser `tools/pixelgrid` with
+`tools/ground_troops`. Every cell is ray-cast from a **rig** (`art/families/rigs/<unit>.json`: convex primitives in texels
+with materials, pose tags, emissive lights, channel stages, debris pieces, soft edges, gait), so all headings and states
+stay aligned. Design and frame contract: [ground-unit-animation.md](ground-unit-animation.md); styles:
+[human-ground-forces-style-guide.md](human-ground-forces-style-guide.md) and
+[gargoyle-army-style-guide.md](gargoyle-army-style-guide.md); render plan, phases, measurements and the GPU estimate:
+[render-runs/ground-forces-rework.md](render-runs/ground-forces-rework.md).
+
+| Path | Role |
+| --- | --- |
+| `art/families/ground-fleet.json`, `ground-host.json`, `ground-infantry.json` (+ `-runs.json`) | Specs (schema `demon-attack.ground-blocks/v1`): atlas grid, camera, palettes and materials, sector rosters and kits, prompts, seeds, GPU plan per unit |
+| `art/families/rigs/<unit>.json` | Rigs (schema `demon-attack.ground-rig/v1`), the source of every silhouette |
+| `assets/images/ground-blocks/ground-{fleet,host,infantry}-<sector>.png` | Per-sector atlases (48 × 40 and 32 × 24 texel cells, 20 columns, binary alpha); not in `pubspec.yaml` until the runtime integrates them |
+| `lib/game/ground_blocks_atlas.dart` | Generated metadata: cell name → (atlas, row, column), pivots, muzzles, sizes, origin, bob, debris pieces |
+| `art/families/ground-blocks-pack.json` | Generated memory and draw-call report per sector |
+| `art/contact/ground-rig-turntables.png` | CP0: rig shading at every direction, black fills at ×1 and ×0.62, hero at ×3, turret × hull seating grids |
+
+```bash
+cd tools/ground_blocks
+go run . validate && go run . offline && go run . contact   # no GPU, byte-identical
+go test ./...
+```
+
+Phase 0 (2026-11-14) is rig-only. The GPU phases redraw each heading with Qwen-Image-Edit from its rig reference plus the
+unit's approved hero (`go run . rig`, `jobs`, `ingest`), then `finish` masks the result to the rig silhouette, quantises to
+the material ramps and inks it, and `pack` uses the finished cells.
+
 ## Flyover vegetation
 
 Plants and obstacles the ground fleet pushes through on the relief (see
