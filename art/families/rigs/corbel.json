@@ -1,0 +1,30 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "corbel", "name": "Corbel Brute", "faction": "host", "class": "infantry", "block": "I", "move": "stride", "seed": 760120,
+ "notes": "Anti-armour rockets (refresh of demon-rocketeer): a stocky brute with a stone yoke on its shoulders like a corbel bracket, ram horns and a launcher tube ending in a squat carved face.",
+ "gait": {"frames": 4, "stride": 1.6, "lift": 0.9, "bob": 0},
+ "hull": [
+  {"kind": "leg", "hip": [-1.8, 0, 7], "knee": [-1.8, 1.6, 4], "foot": [-1.8, 0, 0.4], "t": 2, "foot_size": [2, 3], "phase": 0, "mat": "hide"},
+  {"kind": "leg", "hip": [1.8, 0, 7], "knee": [1.8, 1.6, 4], "foot": [1.8, 0, 0.4], "t": 2, "foot_size": [2, 3], "phase": 0.5, "mat": "hide"},
+  {"kind": "ball", "at": [0, 0, 10.6], "size": [4.2, 3.8, 4.2], "mat": "hide"},
+  {"kind": "box", "at": [0, 0, 13.6], "size": [10, 3, 1.6], "mat": "stone_hi", "chamfer": {"bottom": 0.8}},
+  {"kind": "ball", "at": [0, 3.8, 12.4], "size": [2.2, 2.4, 2.2], "mat": "hide"},
+  {"kind": "bar", "a": [-1.6, 3, 13.8], "b": [-3.4, 1.8, 13.4], "t": 1.3, "mat": "stone_hi", "tags": ["ornament"]},
+  {"kind": "bar", "a": [-3.4, 1.8, 13.4], "b": [-3.4, 3, 11.4], "t": 1.1, "mat": "stone_hi", "tags": ["ornament"]},
+  {"kind": "bar", "a": [1.6, 3, 13.8], "b": [3.4, 1.8, 13.4], "t": 1.3, "mat": "stone_hi", "tags": ["ornament"]},
+  {"kind": "bar", "a": [3.4, 1.8, 13.4], "b": [3.4, 3, 11.4], "t": 1.1, "mat": "stone_hi", "tags": ["ornament"]},
+  {"kind": "box", "at": [-0.9, 5.9, 12.4], "size": [0.8, 0.5, 0.7], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [0.9, 5.9, 12.4], "size": [0.8, 0.5, 0.7], "mat": "eye", "tags": ["eye"]},
+  {"kind": "prism", "at": [3, -6, 16.2], "axis": "y", "n": 8, "r": 1.6, "h": 13, "mat": "iron", "tags": ["weapon"]},
+  {"kind": "box", "at": [3, 7, 14.6], "size": [3.2, 1.8, 3.2], "mat": "stone_hi", "tags": ["weapon", "mouth"]},
+  {"kind": "box", "at": [3, 8, 15.8], "size": [1.6, 0.4, 0.6], "mat": "eye", "tags": ["weapon", "eye"]},
+  {"kind": "ball", "at": [3, 9.6, 16.2], "size": [1.8, 1.4, 1.6], "mat": "muzzle", "tags": ["hidden", "muzzle", "weapon"]}
+ ],
+ "pieces": [],
+ "poses": {
+  "aim": [
+   [{"tag": "weapon", "move": [0, 0, 0.8]}],
+   [{"tag": "weapon", "axis": "x", "deg": 8, "pivot": [3, 0, 16.2]}, {"tag": "eye", "lit": true}]
+  ]
+ }
+}

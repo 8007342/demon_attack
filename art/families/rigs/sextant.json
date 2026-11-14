@@ -1,0 +1,39 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "sextant", "name": "Sextant", "faction": "fleet", "class": "heavy", "block": "V", "move": "tracks", "seed": 780210,
+ "notes": "Self-propelled long gun: the Lodestar hull with a tall boxy casemate at the rear (the articulated layer) and a very long barrel that elevates (base 8°, then two elevation steps, V row 1 columns 10-19). Two outrigger spades fold down at the back for the brace special (f0-f1), then fire with a long cyan flash (f2-f3).",
+ "hull": [
+  {"kind": "box", "at": [-9.5, 0, 0], "size": [4, 33, 3.4], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}},
+  {"kind": "box", "at": [9.5, 0, 0], "size": [4, 33, 3.4], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}},
+  {"kind": "box", "at": [0, 0, 1.2], "size": [17, 34, 5.2], "mat": "plate", "chamfer": {"front": 4, "back": 1.4, "sides": 1}},
+  {"kind": "box", "at": [-10.2, 0, 1.6], "size": [3, 31, 3], "mat": "dark", "chamfer": {"top": 0.8, "vfront": 1.2}, "tags": ["skirt"]},
+  {"kind": "box", "at": [10.2, 0, 1.6], "size": [3, 31, 3], "mat": "dark", "chamfer": {"top": 0.8, "vfront": 1.2}, "tags": ["skirt"]},
+  {"kind": "bar", "a": [-6.5, 15.3, 4.9], "b": [6.5, 15.3, 4.9], "t": 1.1, "mat": "light"},
+  {"kind": "bar", "a": [-6, -16, 5.6], "b": [-6, -11, 6.8], "t": 1.4, "mat": "barrel", "tags": ["spadeL"]},
+  {"kind": "bar", "a": [6, -16, 5.6], "b": [6, -11, 6.8], "t": 1.4, "mat": "barrel", "tags": ["spadeR"]},
+  {"kind": "prism", "at": [0, -5, 6.4], "n": 8, "r": 6, "h": 0.6, "mat": "dark"}
+ ],
+ "art": {
+  "kind": "casemate", "pivot": [0, -5, 7], "muzzle": [0, 19, 6.2], "seat": 0, "elevations": [12, 22],
+  "prims": [
+   {"kind": "box", "at": [0, 0, 0], "size": [11, 11, 6.4], "mat": "turret", "chamfer": {"top": 1, "front": 2}},
+   {"kind": "bar", "a": [0, 4, 4], "b": [0, 18, 6.4], "t": 2, "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 18, 5.2], "size": [2.6, 1.6, 2.4], "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 5.4, 4.6], "size": [6, 0.6, 0.8], "mat": "glass"},
+   {"kind": "bar", "a": [-3.5, -4, 6], "b": [-3.5, -4, 11], "t": 1.1, "mat": "barrel"},
+   {"kind": "box", "at": [-3.5, -4, 11], "size": [1.2, 1.2, 1], "mat": "light"},
+   {"kind": "ball", "at": [0, 20, 6.6], "size": [2.4, 2, 2.4], "mat": "muzzle", "tags": ["hidden", "muzzle", "barrel"]}
+  ]
+ },
+ "pieces": [],
+ "poses": {
+  "special": [
+   [{"tag": "spadeL", "axis": "x", "deg": 60, "pivot": [-6, -16, 5.6]}, {"tag": "spadeR", "axis": "x", "deg": 60, "pivot": [6, -16, 5.6]}],
+   [{"tag": "spadeL", "axis": "x", "deg": 120, "pivot": [-6, -16, 5.6]}, {"tag": "spadeR", "axis": "x", "deg": 120, "pivot": [6, -16, 5.6]}],
+   [{"tag": "spadeL", "axis": "x", "deg": 120, "pivot": [-6, -16, 5.6]}, {"tag": "spadeR", "axis": "x", "deg": 120, "pivot": [6, -16, 5.6]}, {"tag": "muzzle", "show": true, "lit": true}],
+   [{"tag": "spadeL", "axis": "x", "deg": 120, "pivot": [-6, -16, 5.6]}, {"tag": "spadeR", "axis": "x", "deg": 120, "pivot": [6, -16, 5.6]}],
+   [{"tag": "spadeL", "axis": "x", "deg": 60, "pivot": [-6, -16, 5.6]}, {"tag": "spadeR", "axis": "x", "deg": 60, "pivot": [6, -16, 5.6]}],
+   []
+  ]
+ }
+}

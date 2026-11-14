@@ -1,0 +1,38 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "strider", "name": "Buttress Strider", "faction": "host", "class": "walker", "block": "W", "move": "stride", "seed": 760500,
+ "notes": "Bipedal assault walker: two arched flying-buttress legs with pinnacles at the hips leave a clear gap of ground under the body (the walker cue); the articulated layer is the hunched torso with a low gargoyle head-cockpit, a gun hanging under the chin and folded wing-mantlets. 6-frame stepped stride, body lifts 1 texel on each push.",
+ "gait": {"frames": 6, "stride": 3.6, "lift": 2.2, "bob": 1.15},
+ "hull": [
+  {"kind": "leg", "hip": [-5, 0, 14.6], "knee": [-7.4, 2.4, 8.4], "foot": [-6, 0, 0.6], "t": 2.4, "foot_size": [3.4, 4.6], "phase": 0, "mat": "stone", "piece": "legL"},
+  {"kind": "leg", "hip": [5, 0, 14.6], "knee": [7.4, 2.4, 8.4], "foot": [6, 0, 0.6], "t": 2.4, "foot_size": [3.4, 4.6], "phase": 0.5, "mat": "stone", "piece": "legR"},
+  {"kind": "box", "at": [0, 0, 13.4], "size": [12, 6.4, 3], "mat": "stone_dark", "chamfer": {"top": 0.8}, "piece": "hips"},
+  {"kind": "box", "at": [-3, 3.3, 14], "size": [1.4, 0.5, 1], "mat": "vent"},
+  {"kind": "box", "at": [3, 3.3, 14], "size": [1.4, 0.5, 1], "mat": "vent"},
+  {"kind": "box", "at": [-3, -3.3, 14], "size": [1.4, 0.5, 1], "mat": "vent"},
+  {"kind": "box", "at": [3, -3.3, 14], "size": [1.4, 0.5, 1], "mat": "vent"},
+  {"kind": "prism", "at": [-6.4, 0, 15.6], "n": 4, "r": 1.4, "r2": -1, "h": 4, "rot": 45, "mat": "stone_hi", "tags": ["ornament"], "piece": "pinnacles"},
+  {"kind": "prism", "at": [6.4, 0, 15.6], "n": 4, "r": 1.4, "r2": -1, "h": 4, "rot": 45, "mat": "stone_hi", "tags": ["ornament"], "piece": "pinnacles"}
+ ],
+ "art": {
+  "kind": "gunner", "pivot": [0, 0, 16.4], "muzzle": [0, 12.6, 0.4], "seat": 0,
+  "prims": [
+   {"kind": "box", "at": [0, -0.6, 0], "size": [11.4, 9.6, 6.4], "mat": "stone", "chamfer": {"top": 2, "back": 2.4}, "piece": "torso"},
+   {"kind": "box", "at": [0, 5.6, 0.4], "size": [6, 4, 4.2], "mat": "stone_hi", "chamfer": {"top": 1}, "piece": "head"},
+   {"kind": "box", "at": [-1.4, 7.7, 3], "size": [1, 0.5, 0.8], "mat": "eye", "tags": ["eye"]},
+   {"kind": "box", "at": [1.4, 7.7, 3], "size": [1, 0.5, 0.8], "mat": "eye", "tags": ["eye"]},
+   {"kind": "bar", "a": [-2, 5.6, 4.4], "b": [-3, 3.6, 6.6], "t": 1, "mat": "stone_hi", "tags": ["ornament"]},
+   {"kind": "bar", "a": [2, 5.6, 4.4], "b": [3, 3.6, 6.6], "t": 1, "mat": "stone_hi", "tags": ["ornament"]},
+   {"kind": "bar", "a": [0, 6, 0], "b": [0, 11.6, 0.2], "t": 1.6, "mat": "iron", "tags": ["barrel"], "piece": "gun"},
+   {"kind": "box", "at": [0, 11.6, -0.6], "size": [2.2, 1.4, 1.8], "mat": "stone_hi", "tags": ["mouth", "barrel"]},
+   {"kind": "box", "at": [-6.4, -0.6, 1.4], "size": [1.6, 8.6, 5], "roll": -24, "mat": "membrane", "piece": "mantleL"},
+   {"kind": "box", "at": [6.4, -0.6, 1.4], "size": [1.6, 8.6, 5], "roll": 24, "mat": "membrane", "piece": "mantleR"},
+   {"kind": "bar", "a": [0, -5.7, 1], "b": [0, -5.7, 3.8], "t": 0.9, "mat": "channel", "stage": 1},
+   {"kind": "bar", "a": [0, -5.6, 4], "b": [0, -3, 6.7], "t": 0.9, "mat": "channel", "stage": 2},
+   {"kind": "bar", "a": [0, -3, 6.7], "b": [0, 2.4, 6.7], "t": 0.9, "mat": "channel", "stage": 3},
+   {"kind": "ball", "at": [0, 12.8, 0.2], "size": [1.8, 1.4, 1.6], "mat": "muzzle", "tags": ["hidden", "muzzle"]}
+  ]
+ },
+ "pieces": ["torso", "head", "gun", "mantleL", "mantleR", "legL", "legR", "pinnacles"],
+ "poses": {}
+}

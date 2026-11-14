@@ -6,6 +6,8 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
 - [ ] 1.1 Operator review of `plan/human-ground-forces-style-guide.md`: pillars, roster and names, palette, readability rules
 - [ ] 1.2 Operator decision on the heading count (5 per faction), the turn tracker numbers, and the block layouts in `plan/ground-unit-animation.md`
 - [ ] 1.3 Originality pass for the Fleet: every name and silhouette checked against well-known game, film and toy vehicles; rename or redesign near matches; no prompt names a franchise, studio or artist
+      (2026-11-14: written checklist from memory in `plan/render-runs/ground-forces-rework.md` §7.1, both armies; flags
+      Gutter-runner (name), Stilt, Sleet; no renames made. Awaiting the operator.)
 - [x] 1.4 Operator decisions on the open questions in `design.md` (2026-11-14): **five headings** per faction;
       pilot **Fleet and Host together**; the **full pipeline** (about 13 GPU hours); the **threat vehicles get
       headings too, with no flag** ("we fix forward"): respect the difficulty contract
@@ -13,16 +15,27 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
       operator objection: Carrier-sector human slot = the Skiff; egg rarities as proposed (1/3 dances, 1/8
       turret-pop jackpots, 2/5 tree flocks); allied squads dance on `allySaved`; a half-resolution far atlas only
       if the busiest sector measures over the phone memory budget (2.5).
-- [ ] 1.5 Link the new docs from `plan/style-guide.md` ("Ground war presentation") and `plan/asset-pipeline.md`; add a line to `plan/render-runs/rerender-all.md` Section 5.3
+- [x] 1.5 Link the new docs from `plan/style-guide.md` ("Ground war presentation") and `plan/asset-pipeline.md`; add a line to `plan/render-runs/rerender-all.md` Section 5.3
 
 ## 2. Rigs and tooling (no GPU)
-- [ ] 2.1 `tools/ground_blocks` (Go, standard library), sharing the `tools/ground_troops` rasteriser: verbs `rig`, `jobs`, `ingest`, `finish`, `pack`, `contact`, `offline` (supersedes the planned `tools/ground_host`, was gargoyle 3.1)
-- [ ] 2.2 Rig format and rigs under `art/families/rigs/` for every Fleet and Tier A Host unit: primitives, turret pivot, channel path, eye and light points, debris seam lines, soft-edge marks
-- [ ] 2.3 Family specs `ground-fleet.json`, `ground-host.json` (was gargoyle 2.2, now the block layout), `ground-infantry.json` (replaces the appended `ground-troops.json` rows, was gargoyle 2.4), each with a `-runs.json`; validate with `studio.validate_family`
-- [ ] 2.4 Overlay generators: channel `fill1–3`, `lights`, `dmg1–2` per heading or layer angle; pitch shears; ford bands; debris cuts (12 pieces per Host vehicle)
-- [ ] 2.5 Per-sector packing with baked sector stone and kit (settles gargoyle 2.3 as baked variants); memory and draw-call measurement for the busiest sector
-- [ ] 2.6 `offline` build of every block from the rig alone, plus the generated Dart metadata (cell names to atlas, row, column; pivots; muzzles; sizes), so the runtime can integrate first
+- [x] 2.1 `tools/ground_blocks` (Go, standard library), sharing the `tools/ground_troops` rasteriser: verbs `rig`, `jobs`, `ingest`, `finish`, `pack`, `contact`, `offline` (supersedes the planned `tools/ground_host`, was gargoyle 3.1)
+      (2026-11-14: the shared rasteriser moved to `tools/pixelgrid`; ground_troops output byte-identical. There is no
+      `run` verb: the queue goes through the studio tools one job at a time. Also `validate`, `block`.)
+- [x] 2.2 Rig format and rigs under `art/families/rigs/` for every Fleet and Tier A Host unit: primitives, turret pivot, channel path, eye and light points, debris seam lines, soft-edge marks
+      (26 rigs incl. the 4 threat vehicles with headings and the Host infantry; the Carillon cradle turns through five
+      angles for now, its three ranging tilts are left to the GPU pass)
+- [x] 2.3 Family specs `ground-fleet.json`, `ground-host.json` (was gargoyle 2.2, now the block layout), `ground-infantry.json` (replaces the appended `ground-troops.json` rows, was gargoyle 2.4), each with a `-runs.json`; validate with `studio.validate_family`
+      (validated by `go run . validate` and `go test`; `studio.validate_family` not run in Phase 0, no studio access)
+- [x] 2.4 Overlay generators: channel `fill1–3`, `lights`, `dmg1–2` per heading or layer angle; pitch shears; ford bands; debris cuts (12 pieces per Host vehicle)
+      (overlays empty at a heading are not stored or named; every state exists at some heading)
+- [x] 2.5 Per-sector packing with baked sector stone and kit (settles gargoyle 2.3 as baked variants); memory and draw-call measurement for the busiest sector
+      (Hollow 7.4 MB RGBA, 141 KB PNG, about 48 draw calls at the caps; under the proposed 8 MB budget, so no half-res far
+      atlas. Numbers in the render plan §7 and `art/families/ground-blocks-pack.json`)
+- [x] 2.6 `offline` build of every block from the rig alone, plus the generated Dart metadata (cell names to atlas, row, column; pivots; muzzles; sizes), so the runtime can integrate first
+      (`lib/game/ground_blocks_atlas.dart`, atlases in `assets/images/ground-blocks/`; not yet in `pubspec.yaml` or drawn by
+      the painter: wiring headings into gameplay is the runtime task)
 - [ ] 2.7 Checkpoint CP0: `art/contact/ground-rig-turntables.png` (black fills and rig shading at every heading, turret × hull seating grid) and operator review
+      (2026-11-14: sheet committed, 1720 × 4614, 330 KB; awaiting the operator)
 
 ## 3. Workflows
 - [ ] 3.1 `art/workflows/sprites/heading-qwen-edit.json` (two reference images: rig render and hero)

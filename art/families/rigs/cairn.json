@@ -1,0 +1,45 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "cairn", "name": "Cairn", "faction": "fleet", "class": "light", "block": "V", "move": "wheels", "seed": 780110,
+ "notes": "Armoured carrier: the tallest wheeled box, flat roof with a two-step rear, eight wheels, a small remote gun pod on the roof, rear ramp visible from behind. Special = deploy: the ramp drops, the cabin light spills cyan-white (f0-f3), squad out (f4-f5 hold the open ramp).",
+ "hull": [
+  {"kind": "prism", "at": [-8.4, -10.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [-8.4, -3.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [-8.4, 3.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [-8.4, 10.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [8.4, -10.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [8.4, -3.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [8.4, 3.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [8.4, 10.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "box", "at": [0, 1.5, 2], "size": [15, 26, 9], "mat": "plate", "chamfer": {"front": 3.2, "sides": 1, "vfront": 1}, "tags": ["body"]},
+  {"kind": "box", "at": [0, -13, 2], "size": [14, 3.2, 6.2], "mat": "plate", "chamfer": {"top": 0.8}, "tags": ["body"]},
+  {"kind": "box", "at": [0, -15.4, 2], "size": [13, 2, 3.6], "mat": "dark", "chamfer": {"top": 0.6}, "tags": ["body"]},
+  {"kind": "box", "at": [0, -11.4, 2.6], "size": [9, 0.9, 7.6], "mat": "dark", "tags": ["body", "ramp"]},
+  {"kind": "box", "at": [0, -10.2, 3], "size": [8, 0.6, 6.4], "mat": "light", "tags": ["body", "hidden", "cabin"]},
+  {"kind": "box", "at": [-4, 14.6, 7.4], "size": [2.2, 0.7, 1.4], "mat": "glass", "tags": ["body"]},
+  {"kind": "box", "at": [4, 14.6, 7.4], "size": [2.2, 0.7, 1.4], "mat": "glass", "tags": ["body"]},
+  {"kind": "bar", "a": [-7.9, -10, 9.6], "b": [-7.9, 12, 9.6], "t": 0.8, "tz": 0.7, "mat": "light", "tags": ["body"]},
+  {"kind": "bar", "a": [7.9, -10, 9.6], "b": [7.9, 12, 9.6], "t": 0.8, "tz": 0.7, "mat": "light", "tags": ["body"]},
+  {"kind": "prism", "at": [0, 4, 11], "n": 8, "r": 2.8, "h": 0.6, "mat": "dark", "tags": ["body"]}
+ ],
+ "art": {
+  "kind": "pod", "pivot": [0, 4, 11.6], "muzzle": [0, 7.6, 1], "seat": 0,
+  "prims": [
+   {"kind": "prism", "at": [0, -0.4, 0], "n": 8, "r": 2.8, "r2": 2.2, "h": 2, "mat": "turret"},
+   {"kind": "bar", "a": [0, 1.5, 1], "b": [0, 7, 1], "t": 1.2, "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 2.1, 0.8], "size": [2, 0.6, 0.7], "mat": "glass"},
+   {"kind": "ball", "at": [0, 7.8, 1], "size": [1.5, 1.1, 1.4], "mat": "muzzle", "tags": ["hidden", "muzzle"]}
+  ]
+ },
+ "pieces": [],
+ "poses": {
+  "special": [
+   [{"tag": "ramp", "axis": "x", "deg": 35, "pivot": [0, -11.4, 2.6]}],
+   [{"tag": "ramp", "axis": "x", "deg": 70, "pivot": [0, -11.4, 2.6]}, {"tag": "cabin", "show": true, "lit": true}],
+   [{"tag": "ramp", "axis": "x", "deg": 92, "pivot": [0, -11.4, 2.6]}, {"tag": "cabin", "show": true, "lit": true}],
+   [{"tag": "ramp", "axis": "x", "deg": 92, "pivot": [0, -11.4, 2.6]}, {"tag": "cabin", "show": true}],
+   [{"tag": "ramp", "axis": "x", "deg": 92, "pivot": [0, -11.4, 2.6]}, {"tag": "cabin", "show": true, "lit": true}],
+   [{"tag": "ramp", "axis": "x", "deg": 45, "pivot": [0, -11.4, 2.6]}]
+  ]
+ }
+}

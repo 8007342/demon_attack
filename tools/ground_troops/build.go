@@ -14,6 +14,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"demonattack/tools/pixelgrid"
 )
 
 const (
@@ -72,55 +74,17 @@ func group(c int8) int {
 	return 0
 }
 
-func (g *Grid) disc(cx, cy, rx, ry float64, c int8) {
-	for y := int(cy - ry - 1); y <= int(cy+ry+1); y++ {
-		for x := int(cx - rx - 1); x <= int(cx+rx+1); x++ {
-			dx, dy := (float64(x)+.5-cx)/rx, (float64(y)+.5-cy)/ry
-			if dx*dx+dy*dy <= 1 {
-				g.set(x, y, c)
-			}
-		}
-	}
-}
+func (g *Grid) Set(x, y int, c int8) { g.set(x, y, c) }
 
+// Primitives come from the shared rasteriser (tools/pixelgrid).
+func (g *Grid) disc(cx, cy, rx, ry float64, c int8) { pixelgrid.Disc(g, cx, cy, rx, ry, c) }
 func (g *Grid) line(x0, y0, x1, y1 float64, c int8, w float64) {
-	n := int(math.Max(math.Abs(x1-x0), math.Abs(y1-y0))*3) + 1
-	for i := 0; i <= n; i++ {
-		t := float64(i) / float64(n)
-		x, y := x0+(x1-x0)*t, y0+(y1-y0)*t
-		if w <= 1 {
-			g.set(int(math.Floor(x)), int(math.Floor(y)), c)
-		} else {
-			g.disc(x, y, w/2, w/2, c)
-		}
-	}
+	pixelgrid.Line(g, x0, y0, x1, y1, c, w)
 }
-
 func (g *Grid) tri(ax, ay, bx, by, cx, cy float64, c int8) {
-	minY, maxY := math.Min(ay, math.Min(by, cy)), math.Max(ay, math.Max(by, cy))
-	minX, maxX := math.Min(ax, math.Min(bx, cx)), math.Max(ax, math.Max(bx, cx))
-	for y := int(minY); y <= int(maxY); y++ {
-		for x := int(minX); x <= int(maxX); x++ {
-			px, py := float64(x)+.5, float64(y)+.5
-			d1 := (px-bx)*(ay-by) - (ax-bx)*(py-by)
-			d2 := (px-cx)*(by-cy) - (bx-cx)*(py-cy)
-			d3 := (px-ax)*(cy-ay) - (cx-ax)*(py-ay)
-			neg := d1 < 0 || d2 < 0 || d3 < 0
-			pos := d1 > 0 || d2 > 0 || d3 > 0
-			if !(neg && pos) {
-				g.set(x, y, c)
-			}
-		}
-	}
+	pixelgrid.Tri(g, ax, ay, bx, by, cx, cy, c)
 }
-
-func (g *Grid) rect(x0, y0, x1, y1 int, c int8) {
-	for y := y0; y <= y1; y++ {
-		for x := x0; x <= x1; x++ {
-			g.set(x, y, c)
-		}
-	}
-}
+func (g *Grid) rect(x0, y0, x1, y1 int, c int8) { pixelgrid.Rect(g, x0, y0, x1, y1, c) }
 
 // recolour replaces every pixel of group gr inside the box with c.
 func (g *Grid) recolour(x0, y0, x1, y1, gr int, c int8) {
@@ -133,20 +97,16 @@ func (g *Grid) recolour(x0, y0, x1, y1, gr int, c int8) {
 	}
 }
 
-type rng struct{ s uint64 }
+type rng = pixelgrid.Rng
 
-func newRng(seed int) *rng { return &rng{uint64(seed)*6364136223846793005 + 1442695040888963407} }
-func (r *rng) f() float64 {
-	r.s = r.s*6364136223846793005 + 1442695040888963407
-	return float64(r.s>>11) / float64(1<<53)
-}
+func newRng(seed int) *rng { return pixelgrid.NewRng(seed) }
 
 // ---------------------------------------------------------------------------
 // Poses
 // ---------------------------------------------------------------------------
 
 type pose struct {
-	walk   int  // 0-3 stride phase
+	walk   int // 0-3 stride phase
 	stride float64
 	aim    bool // weapon levelled (kneeling for allies)
 	fire   bool
@@ -244,9 +204,9 @@ func grunt(p pose, brute bool) Grid {
 	}
 	g.disc(headX, headY, 3.1, 2.7, B3)
 	g.rect(int(headX+2), int(headY-.4), int(headX+3.6), int(headY+1.4), B3) // snout
-	g.set(int(headX+3.6), int(headY-.2), B4)                                 // nostril ridge
-	g.line(headX+1, headY+1.6, headX+3.6, headY+1.6, B1, 1)                  // mouth
-	g.set(int(headX+3), int(headY+2.2), B5)                                  // fang
+	g.set(int(headX+3.6), int(headY-.2), B4)                                // nostril ridge
+	g.line(headX+1, headY+1.6, headX+3.6, headY+1.6, B1, 1)                 // mouth
+	g.set(int(headX+3), int(headY+2.2), B5)                                 // fang
 	ey := headY - .6
 	if !brute {
 		ey = headY + .4
@@ -341,7 +301,7 @@ func fallen(src Grid, r *rng) Grid {
 		}
 	}
 	for k := 0; k < 4; k++ {
-		x, y := 8+int(r.f()*16), 16+int(r.f()*7)
+		x, y := 8+int(r.F()*16), 16+int(r.F()*7)
 		if group(out.at(x, y)) == 1 {
 			out.set(x, y, W1)
 		}
@@ -359,17 +319,17 @@ func rubble(r *rng, brute bool) Grid {
 	}
 	g.disc(15, 22, w, 2.2, B2)
 	for k := 0; k < 9; k++ {
-		x, y := 15+(r.f()-.5)*2*w, 20.5+r.f()*2.5
+		x, y := 15+(r.F()-.5)*2*w, 20.5+r.F()*2.5
 		c := B3
 		if k%3 == 0 {
 			c = B4
 		}
-		g.disc(x, y, 1+r.f(), .9+r.f()*.6, c)
+		g.disc(x, y, 1+r.F(), .9+r.F()*.6, c)
 	}
 	g.disc(20.5, 21.5, 2.2, 1.3, I2)
 	g.line(9, 21, 7.5, 19.5, B5, 1)
 	for k := 0; k < 5; k++ {
-		x := int(10 + r.f()*10)
+		x := int(10 + r.F()*10)
 		g.set(x, 22, W1)
 		if k < 2 {
 			g.set(x, 21, W2)
@@ -458,12 +418,12 @@ func tank(f int, fire, recoil, wreck bool, r *rng) Grid {
 		}
 		// Torn deck and holes with embers.
 		for x := 6; x < 25; x++ {
-			if r.f() < .35 {
-				g.set(x, 12+int(r.f()*2), Empty)
+			if r.F() < .35 {
+				g.set(x, 12+int(r.F()*2), Empty)
 			}
 		}
 		for k := 0; k < 4; k++ {
-			x, y := 8+int(r.f()*16), 13+int(r.f()*4)
+			x, y := 8+int(r.F()*16), 13+int(r.F()*4)
 			g.set(x, y, W1)
 			if k%2 == f%2 {
 				g.set(x, y-1, W2)
@@ -607,53 +567,10 @@ func aiTexture(id string, g *Grid) [CH][CW]int8 {
 		return tex
 	}
 	w, h := x1-x0+1, y1-y0+1
-	b := src.Bounds()
-	lum := make([]float64, w*h)
+	hp := pixelgrid.KeyframeTexture(src, w, h)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			sx0 := b.Min.X + x*b.Dx()/w
-			sx1 := max(sx0+1, b.Min.X+(x+1)*b.Dx()/w)
-			sy0 := b.Min.Y + y*b.Dy()/h
-			sy1 := max(sy0+1, b.Min.Y+(y+1)*b.Dy()/h)
-			var s, n float64
-			for yy := sy0; yy < sy1; yy++ {
-				for xx := sx0; xx < sx1; xx++ {
-					r, gg, bb, _ := src.At(xx, yy).RGBA()
-					s += .2126*float64(r>>8) + .7152*float64(gg>>8) + .0722*float64(bb>>8)
-					n++
-				}
-			}
-			lum[y*w+x] = s / n
-		}
-	}
-	hp := make([]float64, w*h)
-	var sum, sq float64
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			var s, n float64
-			for dy := -1; dy <= 1; dy++ {
-				for dx := -1; dx <= 1; dx++ {
-					xx, yy := min(w-1, max(0, x+dx)), min(h-1, max(0, y+dy))
-					s += lum[yy*w+xx]
-					n++
-				}
-			}
-			v := lum[y*w+x] - s/n
-			hp[y*w+x] = v
-			sum += v
-			sq += v * v
-		}
-	}
-	n := float64(w * h)
-	sd := math.Sqrt(math.Max(1e-9, sq/n-(sum/n)*(sum/n)))
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			v := hp[y*w+x]
-			if v > 1.4*sd {
-				tex[y0+y][x0+x] = 1
-			} else if v < -1.4*sd {
-				tex[y0+y][x0+x] = -1
-			}
+			tex[y0+y][x0+x] = hp[y][x]
 		}
 	}
 	return tex
@@ -802,8 +719,8 @@ func fxFrames() []*Grid {
 		var d Grid
 		r := newRng(4100 + f)
 		for k := 0; k < 9; k++ {
-			a := r.f() * math.Pi
-			dist := 2 + float64(f)*2.4*r.f() + float64(f)
+			a := r.F() * math.Pi
+			dist := 2 + float64(f)*2.4*r.F() + float64(f)
 			x, y := 16+math.Cos(a)*dist*1.4, 21-math.Sin(a)*dist*.8
 			c := B3
 			if k%3 == 0 {
@@ -824,18 +741,12 @@ func fxFrames() []*Grid {
 // Colours
 // ---------------------------------------------------------------------------
 
-func hexC(h string) color.NRGBA {
-	var r, g, b uint8
-	fmt.Sscanf(strings.TrimPrefix(h, "#"), "%02x%02x%02x", &r, &g, &b)
-	return color.NRGBA{r, g, b, 255}
-}
-
 func palette(side string) map[int8]color.NRGBA {
 	// Reserved sets of art/families/ground-forces.json.
 	t := map[int8]color.NRGBA{}
 	set := func(c int8, hs ...string) {
 		for i, h := range hs {
-			t[c+int8(i)] = hexC(h)
+			t[c+int8(i)] = pixelgrid.Hex(h)
 		}
 	}
 	if side == "ally" {

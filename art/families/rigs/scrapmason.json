@@ -1,0 +1,40 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "scrapmason", "name": "Scrapmason Crawler", "faction": "host", "class": "heavy", "block": "V", "move": "tracks", "seed": 760240, "threat": true,
+ "notes": "Threat vehicle (Ringfall missile crawler): a low tracked hull of salvaged human plates mortared with stone, heavy iron tracks, a long missile launcher arm on top (the articulated layer). Telegraph: special f0 arm raised, f1 missile glow, f2 launch flash, f3 empty arm smoking; f4-f5 lowering.",
+ "hull": [
+  {"kind": "box", "at": [-8.2, 0, 0], "size": [3.6, 28, 3.6], "mat": "track", "chamfer": {"bfront": 1.4, "bback": 1.4}, "piece": "trackL"},
+  {"kind": "box", "at": [8.2, 0, 0], "size": [3.6, 28, 3.6], "mat": "track", "chamfer": {"bfront": 1.4, "bback": 1.4}, "piece": "trackR"},
+  {"kind": "box", "at": [0, 0, 1.4], "size": [15, 27, 4.4], "mat": "old_hull", "chamfer": {"front": 2.4, "sides": 0.8}, "piece": "plate"},
+  {"kind": "box", "at": [-3.6, -6, 5.6], "size": [6, 8, 1.2], "mat": "stone", "piece": "slabA"},
+  {"kind": "box", "at": [3.8, 5, 5.6], "size": [5.6, 7, 1.2], "mat": "stone", "piece": "slabB"},
+  {"kind": "box", "at": [0, 12.6, 2], "size": [7, 1.2, 2.6], "mat": "stone_hi"},
+  {"kind": "box", "at": [0, 13.3, 3.2], "size": [4, 0.4, 0.7], "mat": "eye", "tags": ["eye"]},
+  {"kind": "bar", "a": [-6.8, -10, 5.6], "b": [-6.8, 8, 5.6], "t": 0.6, "tz": 0.5, "mat": "vent"},
+  {"kind": "bar", "a": [6.8, -10, 5.6], "b": [6.8, 8, 5.6], "t": 0.6, "tz": 0.5, "mat": "vent"},
+  {"kind": "prism", "at": [0, -3, 5.8], "n": 6, "r": 3.4, "h": 0.8, "mat": "iron"}
+ ],
+ "art": {
+  "kind": "launcher", "pivot": [0, -3, 6.6], "muzzle": [0, 11, 3.4], "seat": 0,
+  "prims": [
+   {"kind": "prism", "at": [0, 0, 0], "n": 6, "r": 3.2, "h": 1.6, "mat": "iron", "piece": "arm"},
+   {"kind": "box", "at": [0, 3, 1.2], "size": [3.6, 12, 1.6], "mat": "iron", "tags": ["launcher"], "piece": "arm"},
+   {"kind": "prism", "at": [0, 3, 3.4], "axis": "y", "center": true, "n": 8, "r": 1.1, "h": 9, "mat": "stone_hi", "tags": ["launcher", "missile"], "piece": "missile"},
+   {"kind": "prism", "at": [0, 7.5, 3.4], "axis": "y", "n": 8, "r": 1.1, "r2": -1, "h": 2.4, "mat": "stone_hi", "tags": ["launcher", "missile"]},
+   {"kind": "box", "at": [0, -1.6, 2.6], "size": [1.6, 0.8, 1.6], "mat": "vent", "tags": ["launcher", "missile", "tube"]},
+   {"kind": "bar", "a": [-1.4, -2, 2.8], "b": [-1.4, 6, 2.8], "t": 0.7, "mat": "channel", "stage": 1, "tags": ["launcher"]},
+   {"kind": "ball", "at": [0, -3, 3.4], "size": [2, 2, 1.8], "mat": "muzzle", "tags": ["hidden", "muzzle", "launcher"]}
+  ]
+ },
+ "pieces": ["arm", "missile", "slabA", "slabB", "plate", "trackL", "trackR"],
+ "poses": {
+  "special": [
+   [{"tag": "launcher", "axis": "x", "deg": 20, "pivot": [0, -3, 1.2]}],
+   [{"tag": "launcher", "axis": "x", "deg": 20, "pivot": [0, -3, 1.2]}, {"tag": "tube", "lit": true}],
+   [{"tag": "launcher", "axis": "x", "deg": 20, "pivot": [0, -3, 1.2]}, {"tag": "muzzle", "show": true, "lit": true}],
+   [{"tag": "launcher", "axis": "x", "deg": 20, "pivot": [0, -3, 1.2]}, {"tag": "missile", "hide": true}],
+   [{"tag": "launcher", "axis": "x", "deg": 10, "pivot": [0, -3, 1.2]}, {"tag": "missile", "hide": true}],
+   []
+  ]
+ }
+}

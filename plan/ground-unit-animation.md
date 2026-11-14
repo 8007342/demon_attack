@@ -69,7 +69,7 @@ Units are packed in **blocks**: a fixed grid of rows × 20 columns per unit. A b
 
 **Per-sector packing.** Each sector loads only the blocks it uses. This bakes the Host's sector stone ramp and corruption kit into the sector's atlas, which resolves `gargoyle-ground-army` design decision 4 (sector tint) in favour of baked variants: there is no runtime ramp mapping, and memory stays bounded because no sector holds every unit. A unit that appears in several sectors is packed once per sector from one master (the ramp remap and the kit overlay are offline steps with no GPU).
 
-Memory check (RGBA, uncompressed in GPU memory): a 4-row vehicle block is 960 × 160 px (0.6 MB). The busiest sector (Hollow: 4 Fleet + 6 Host blocks plus fx) is about 960 × 1840 px (7.1 MB), against 1.3 MB for today's `ground-forces.png`. If a real phone shows pressure, the fallback is to drop headings h1 and h3 at far LOD (Section 6.5) into a half-resolution "far" atlas; this is an open question for review, not a default.
+Memory check (RGBA, uncompressed in GPU memory): a 4-row vehicle block is 960 × 160 px (0.6 MB). The busiest sector (Hollow: 4 Fleet + 6 Host blocks plus fx) is about 960 × 1840 px (7.1 MB), against 1.3 MB for today's `ground-forces.png`. Measured in Phase 0 (render plan §7): Hollow's three atlases hold 7.4 MB RGBA (Fleet 960 × 240, Host 960 × 1560, infantry 640 × 336). If a real phone shows pressure, the fallback is to drop headings h1 and h3 at far LOD (Section 6.5) into a half-resolution "far" atlas; this is an open question for review, not a default.
 
 ### 4.1 Vehicle block (V-block): 4 rows × 20 columns
 

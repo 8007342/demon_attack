@@ -143,3 +143,91 @@ Allow 15% for rerolls: **about 1,500 jobs and 15 hours**, run in phases with the
 ## 6. Ledger
 
 When a phase runs, log it here as the radio and flyover runs are logged in `rerender-all.md`: date, phase, job ids, failures, picks, and the commit of the packed atlases. Add a line to `rerender-all.md` Section 5.3 pointing at this file.
+
+## 7. Phase 0 results (2026-11-14, no GPU)
+
+Branch `work/ground-blocks`. Everything below is CPU only and regenerates byte-identically.
+
+**Tool.** `tools/ground_blocks` (Go, standard library plus the shared rasteriser `tools/pixelgrid`, which was split out of
+`tools/ground_troops`; the ground-troops atlas, Dart file and contact sheet are byte-identical before and after the split).
+A rig is a set of convex primitives in texels (box with chamfers and cuts, n-gon prism and frustum, square bar, ellipsoid,
+two-segment leg) plus marks: material, tags for poses, emissive lights, channel stages 1–3, debris pieces, soft edges, and
+a gait for legged units. Every cell is an orthographic ray cast (camera 30° down, light from the upper left, flat facet
+shading, rim light, ink outline), so headings, layer angles, pitch and arrivals all come from one geometry.
+
+```bash
+cd tools/ground_blocks
+go run . validate     # three family specs against the 26 rigs (stands in for studio.validate_family)
+go run . offline      # rig-only atlases per sector + lib/game/ground_blocks_atlas.dart + art/families/ground-blocks-pack.json
+go run . contact      # art/contact/ground-rig-turntables.png (CP0)
+go run . rig [ids]    # x8 rig references on the key colour for the GPU jobs ($BLOCKS_WORK/rig)
+go run . jobs         # the queue: 104 hero, 176 heading and 160 layer edits (440 jobs)
+go run . ingest       # raws -> $BLOCKS_RAW, provenance into the families' -runs.json
+go run . finish IN.png <cell>   # one AI image back on the grid (mask, quantise, ink)
+go run . pack         # like offline, but uses finished cells under art/sprites/sources/ground-blocks/
+go test ./...         # determinism, heading sets, cell contract, seating, leg gap, palettes, budget, finish round trip
+```
+
+**Families.** `art/families/ground-fleet.json`, `ground-host.json`, `ground-infantry.json` (schema
+`demon-attack.ground-blocks/v1`) and their empty `-runs.json`. Rigs: `art/families/rigs/<unit>.json`, 26 units: Fleet
+Sleet, Cairn, Tether, Lodestar, Sextant, Stilt, Skiff and the rifle and rocket troopers; Host Crocket, captured Crocket,
+Tympanum, Reliquary, Carillon, Hodcrawler, Buttress Strider, Chapterhouse, Rubbling, Ashlar Guard, Corbel Brute,
+Knell-bearer, Prior; and the four threat vehicles (Gutter-runner, Scrapmason Crawler, Kiln Ox, Belfry) with headings, per
+the operator's "no flag, fix forward". Their telegraph keeps the `ground-forces.png` contract as V-block specials (f0
+launcher raised, f1 glow, f2 launch flash, f3 smoking), so no timing moves.
+
+**Per-sector packing and memory** (task 2.5; `art/families/ground-blocks-pack.json`). RGBA is the uncompressed GPU
+footprint of the sector's three atlases; PNG is the download.
+
+| Sector | Fleet atlas | Host atlas | Infantry atlas | RGBA | PNG |
+| --- | --- | --- | --- | --- | --- |
+| Krybor | 960 × 360 (2 blocks) | 960 × 520 (3) | 640 × 192 (4) | 3.7 MB | 77 KB |
+| Ringfall | 960 × 200 (1) | 960 × 840 (5) | 640 × 240 (5) | 4.4 MB | 94 KB |
+| Ember | 960 × 360 (2) | 960 × 1040 (6) | 640 × 288 (6) | 5.8 MB | 120 KB |
+| **Hollow** (busiest) | 960 × 240 (1) | 960 × 1560 (8: 5 V, 2 W, 1 K) | 640 × 336 (7) | **7.4 MB** | 141 KB |
+| Carrier | 960 × 200 (1) | 960 × 1240 (6) | 640 × 288 (6) | 6.0 MB | 111 KB |
+
+Today's `ground-forces.png` plus `ground-troops.png` hold 1.5 MB RGBA. The design estimated about 7.1 MB for Hollow; the
+measurement is 7.4 MB. **Budget assumed here: 8 MB RGBA per sector and no atlas side over 4096 px** (the test enforces
+both). No phone budget was written down anywhere, so this is a proposal for the operator: at 8 MB the half-resolution far
+atlas (open question, decision 1.4) is **not** needed. Only one sector's set is resident at a time.
+
+**Draw calls.** The painter draws each sprite layer with one `drawImageRect`. A busy Hollow frame at the skirmish caps (6
+Host units, one threat, three allied vehicles, two squads of four) is about 48 calls: a vehicle is hull + articulated
+layer + up to two overlays (lights and a fill or damage state) at near LOD, infantry one each; today the same frame is
+about 28. Beyond z 900 the LOD rule (Section 6.5 of the animation doc) drops overlays but `lights`, so far units cost 2–3.
+Three textures per sector (plus the shared fx rows inside the Fleet and Host atlases). If the runtime batches per atlas
+with `drawAtlas`, the frame is 3 calls; that is a runtime choice, not an art one.
+
+**Metadata** (task 2.6): `lib/game/ground_blocks_atlas.dart` maps cell names to (atlas, row, column) per sector through 10
+shared layouts, with per-heading pivots, per-angle muzzles, sizes, the hull origin, the art pivot, walker bob, debris piece
+names and the turn tracker table. **Not wired into the game yet**: the painter still draws `ground-forces.png` and
+`ground-troops.png`, and the atlases live in `assets/images/ground-blocks/`, which is not in `pubspec.yaml` (so they do not
+ship until the runtime integration adds that directory). Integration of headings into gameplay is a later task.
+
+**Deviations and notes for review.**
+- Overlays that are empty at a heading or angle (the feature faces away from the camera) are not stored and have no name;
+  the runtime draws nothing for a missing name. Every overlay state exists at some heading (tested).
+- The Carillon's cradle turns through the five Host angles in Phase 0; the plan's three ranging tilts are left to the GPU
+  pass (they are a pose of the same layer).
+- Walker turntables change 44–58% of their silhouette between some headings (legs swing through), above the 40% "pop"
+  guide; vehicles and infantry stay under it. Logged by `TestHeadingSteps`, not failed. Worth a look at CP0.
+- Rig shading is a placeholder: the faces are flat facets. The GPU path (Phases 1–3) redraws materials on the same outlines.
+
+### 7.1 Originality checklist (task 1.3, from memory, no web search)
+
+Names and silhouettes were checked against well-known games, films and toys from memory only. No prompt in the three
+family specs names a franchise, studio or artist (the validator rejects a list of franchise words). Flags for the
+operator, highest first:
+
+| Unit | Concern | Suggestion |
+| --- | --- | --- |
+| **Gutter-runner** (Host threat) | Exact name match with a well-known tabletop fantasy rat-folk scout unit ("Gutter Runners") | Rename, for example **Spout-runner** or **Gutterhound** |
+| **Stilt** (Fleet walker) | A box cab with side gun pods on two legs is close to a famous film franchise's two-legged scout walker | Keep the straight telescoping legs (the film's are reverse-jointed); move the pods under the cab or onto one side only |
+| **Sleet** (Fleet scout) | A six-wheeled rover with outboard wheels and a small turret recalls a well-known sci-fi RPG's six-wheeled exploration tank | Four big wheels plus a rear skid, or a lower pod; the wedge body already differs |
+| **Carillon**, **Chapterhouse** | Gothic war machines with bells and spires sit near a well-known tabletop sci-fi faction's cathedral and organ tanks | The Host is gargoyle stone with no human crew, crosses or scripture; keep that line, avoid organ pipes and skull motifs |
+| **Chapterhouse**, **Belfry** | A building on legs recalls a famous animated film's walking castle and the folk hut on hen's legs | Low risk (folk motif); keep the buttress legs and the octagonal plan |
+| **Kiln Ox** | A four-legged beast carrying a war structure recalls a well-known fantasy RTS's drum-carrying beast | Low risk; the kiln-mortar and basalt keep it apart |
+| Lodestar, Skiff, Sextant, Cairn, Tether, Crocket, Tympanum, Reliquary, Hodcrawler, Buttress Strider, Scrapmason, Rubbling, Ashlar Guard, Corbel Brute, Knell-bearer, Prior | Generic words or original compounds; no near match recalled | None |
+
+These are recall checks, not a search; the operator confirms or asks for a proper search before any renames.

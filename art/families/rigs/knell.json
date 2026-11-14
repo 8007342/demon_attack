@@ -1,0 +1,27 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "knell", "name": "Knell-bearer", "faction": "host", "class": "infantry", "block": "I", "move": "stride", "seed": 760130,
+ "notes": "Rally support (Tracery caste): a tall hooded bell-ringer with a wooden yoke across the shoulders and a heavy iron bell with a gilt rim hanging at one end. The ring is aim A (swing out), fire (strike), aim B (return).",
+ "gait": {"frames": 4, "stride": 1.6, "lift": 0.9, "bob": 0},
+ "hull": [
+  {"kind": "leg", "hip": [-1.2, 0, 6.4], "knee": [-1.2, 1.2, 3.6], "foot": [-1.2, 0, 0.4], "t": 1.4, "foot_size": [1.4, 2.6], "phase": 0, "mat": "hide"},
+  {"kind": "leg", "hip": [1.2, 0, 6.4], "knee": [1.2, 1.2, 3.6], "foot": [1.2, 0, 0.4], "t": 1.4, "foot_size": [1.4, 2.6], "phase": 0.5, "mat": "hide"},
+  {"kind": "box", "at": [0, 0, 5.4], "size": [5, 4.4, 9.4], "mat": "cloth", "chamfer": {"top": 1.4, "vert": 1.2}},
+  {"kind": "prism", "at": [0, 0.6, 14.2], "n": 6, "r": 2.8, "r2": 1, "h": 5.6, "mat": "cloth"},
+  {"kind": "ball", "at": [0, 1.8, 15.6], "size": [1.6, 1.4, 1.6], "mat": "hide"},
+  {"kind": "box", "at": [-0.7, 3, 15.8], "size": [0.6, 0.5, 0.6], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [0.7, 3, 15.8], "size": [0.6, 0.5, 0.6], "mat": "eye", "tags": ["eye"]},
+  {"kind": "bar", "a": [-4.6, 0, 14.4], "b": [4.6, 0, 14.4], "t": 1, "mat": "iron"},
+  {"kind": "bar", "a": [4.4, 0, 14], "b": [4.4, 0, 12.4], "t": 0.6, "mat": "iron", "tags": ["weapon"]},
+  {"kind": "prism", "at": [4.4, 0, 8.6], "n": 8, "r": 2.6, "r2": 1.3, "h": 3.8, "mat": "iron", "tags": ["weapon"]},
+  {"kind": "prism", "at": [4.4, 0, 8.4], "n": 8, "r": 2.75, "h": 0.5, "mat": "gilt", "tags": ["weapon"]},
+  {"kind": "ball", "at": [4.4, 0, 7.6], "size": [2.4, 2.4, 1], "mat": "muzzle", "tags": ["hidden", "muzzle", "weapon"]}
+ ],
+ "pieces": [],
+ "poses": {
+  "aim": [
+   [{"tag": "weapon", "axis": "x", "deg": 28, "pivot": [4.4, 0, 14.2]}],
+   [{"tag": "weapon", "axis": "x", "deg": -22, "pivot": [4.4, 0, 14.2]}, {"tag": "eye", "lit": true}]
+  ]
+ }
+}
