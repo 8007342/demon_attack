@@ -89,7 +89,7 @@ current families instead.
   - [x] ground forces (`art/families/ground-forces.json`)
   - [x] ground troops (`art/families/ground-troops.json`)
   - [x] flyover vegetation (`art/families/flyover-vegetation.json`)
-  - [ ] widescreen backdrops (`art/families/widescreen-backdrops.json`)
+  - [x] widescreen backdrops (`art/families/widescreen-backdrops.json`)
 - [ ] 4.2 Contact sheets and operator acceptance per family; repack atlases; run the gallery and tests.
 
 ## 5. Big-model refinement pilot
@@ -102,6 +102,8 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 01:42 UTC: refinement pass, widescreen backdrops: 9 scenes refined at about 1 MP (1584 x 664; seeds 641600-641680), then finished by `WIDESCREEN_RAW=<refine-masters>/widescreen/raw go run . process` (box-sample, luminance cap, palette quantise). 0 rerolls; every scene held together. wall skipped (96 px tileable texture; an edit would break its seams). No matte (full scenes). The SDXL raws were not in the cache, so the shipped 768 x 320 PNGs were the inputs. Sheet: art/contact/refine-widescreen.png. Analyze clean, 384 tests pass.
 
 - 2026-11-14 01:34 UTC: refinement pass, flyover vegetation: 10 species refined (seeds 641500-641590), 0 rerolls, 0 skipped. Prompts describe what each shipped source actually shows (several first-pass SDXL sources drifted from their spec prompts, e.g. ice-crystal-shrub and ruin-rubble hold two objects); only the luminance high-pass reaches the atlas. Atlas rebuilt with `go run . offline`; vegetation_atlas.dart unchanged. Sheet: art/contact/refine-flyover-vegetation.png. Analyze clean, 384 tests pass.
 
