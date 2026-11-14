@@ -26,6 +26,28 @@ class DifficultyPolicy {
     Difficulty.hard => 0,
   };
 
+  // --- wave pressure: the next wave closes in out of the horizon fog once
+  // the current one is down to its last few, so the player feels the clock
+  // (plan/difficulty-calibration.md: timing beats, never extra HP).
+  // The threshold never exceeds the smallest reinforcement group, so
+  // stragglers + a fresh roster stay inside the calibrated occupancy bound.
+
+  /// At most this many live enemies (all reinforcements in) starts the
+  /// next wave's approach.
+  int get pressureThreshold => switch (difficulty) {
+    Difficulty.easy => 2,
+    Difficulty.normal => 3,
+    Difficulty.hard => 4,
+  };
+
+  /// Seconds (at hostile rate) the approaching wave takes to reach the
+  /// fight if the stragglers are not finished first.
+  double get incomingSeconds => switch (difficulty) {
+    Difficulty.easy => 10,
+    Difficulty.normal => 8,
+    Difficulty.hard => 6,
+  };
+
   int reinforcementFlocks({required int route, required int sector}) =>
       difficulty == Difficulty.easy ? (route == 0 ? 0 : 1) : 2;
 

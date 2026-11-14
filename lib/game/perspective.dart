@@ -104,4 +104,8 @@ abstract final class Perspective {
 
   /// Distance haze 0-1: arrivals emerge veiled, formation demons are clear.
   static double haze(double n) => ((.56 - n) / .26).clamp(0.0, 1.0);
+
+  /// Opacity of a creature at nearness [n]: the farthest arrivals are faint
+  /// shapes in the weather and gain substance as they close in.
+  static double fade(double n) => ((n - .24) / .2).clamp(.3, 1.0);
 }
