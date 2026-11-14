@@ -6,7 +6,7 @@ Run: uv run -q --no-project --with pillow python -I tools/refine_sprites.py <cmd
   stage  SRC DST                 copy a source of record to the studio input folder (RGBA PNG)
   master RENDER MATTE OUT        RGBA master: render RGB + BiRefNet matte as alpha
   opaque RENDER OUT              RGBA master without a matte (full scenes, textures)
-  game   MASTER WxH OUT [--rgb]  area downscale to the shipped size (alpha kept unless --rgb)
+  game   MASTER WxH OUT [--rgb]  area downscale to the shipped size (alpha kept; --rgb flattens on light grey)
   fit    MASTER WxH OUT          area downscale, cropped to the master's alpha bbox, fitted inside WxH
   strip  OUT IMG...              side-by-side strip (nearest upscale to a common height) for review
   sheet  OUT LABEL BEFORE AFTER [LABEL BEFORE AFTER ...]
@@ -79,7 +79,9 @@ def main(a):
     elif cmd == "game":
         out = premul_box(load_rgba(a[1]), size(a[2]))
         if "--rgb" in a:
-            out = out.convert("RGB")
+            # Flat light grey under the matte: the colour-key finish stages key on the border.
+            bg = Image.new("RGBA", out.size, (224, 224, 224, 255))
+            out = Image.alpha_composite(bg, out).convert("RGB")
         out.save(a[3])
     elif cmd == "fit":
         im = load_rgba(a[1])
