@@ -85,7 +85,7 @@ current families instead.
 - [ ] 4.1 Agree the target tier/model and order with the operator. Then re-render each family through its
       committed workflow and family spec, validating with `studio.validate_family`:
   - [x] creatures and sentinels (`art/families/sprites`)
-  - [ ] carrier (`art/families/carrier`)
+  - [x] carrier (`art/families/carrier`)
   - [x] ground forces (`art/families/ground-forces.json`)
   - [x] ground troops (`art/families/ground-troops.json`)
   - [ ] flyover vegetation (`art/families/flyover-vegetation.json`)
@@ -102,6 +102,8 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 01:25 UTC: refinement pass, carrier and boss armada: 4 texture sources refined (hide 641400, masonry 641410, membrane 641420, plating 641430), 0 rerolls, 0 skipped. Full-frame surface textures, so no BiRefNet matte (nothing to cut out); masters kept opaque. Carrier detail maps and all five boss-*.png atlases rebuilt; geometry, anchors and palettes unchanged. Sheet: art/contact/refine-carrier.png. Analyze clean, 384 tests pass.
 
 - 2026-11-14 01:19 UTC: refinement pass, creatures and sentinels: 4 gargoyle keyframes refined (violet reuses pilot seed 641101; teal 641110, coral 641120, gold 641130), 0 rerolls, 0 skipped. Keyframes are flattened on light grey for the colour-key finish; detail maps and combat.png rebuilt, ship-weapons, sentinel-effects and boss atlases byte-identical (fully procedural, no AI source to refine; ship-parts.png is not loaded by lib/). No molt sources exist (molts reuse the hide map). Every frame comes from one detail map, so no drift. Sheet: art/contact/refine-creatures.png. Analyze clean, 384 tests pass.
 
