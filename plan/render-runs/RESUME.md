@@ -46,6 +46,22 @@ the new audio studio. Read this file, then `plan/render-runs/rerender-all.md` on
   SaveLoopWAV grid_json. BarGrid regions are 0-based,
   end-exclusive ([0, 96)); combo inputs (bits, beat_unit) are integers (both confirmed by the host). Run dry first, then mix; then 1c, 1d.
 
+## Operator playtest 2026-11-14 (evening): approved all of section 2's game work
+
+Loved the fog; radio "much cleaner and fluid, a lot of the speech now has great emotion". Asked for:
+- **Atmosphere and swarms**: OpenSpec `atmosphere-and-swarms` (proposal, design, tasks, spec), research in
+  `plan/atmosphere-research.md` (fog layers incl. ground fog and thin sky sheets over the ship, creatures flying
+  through the layers, flock arrivals at varied speeds, shadows leading arrivals, a giant sentinel silhouette
+  flying a figure-eight 1–2 waves ahead, then arriving with its swarm). Interim done: gear (shields, armour,
+  halos, pips) hidden in the fog (f050241f). Next: tasks 1.1 → 2.x → 3.x.
+- **Mobile toasts framed** (f050241f): rounded, bordered, shadowed, accent bar; needs a phone look.
+- **Tips become radio with a picture**: voiced by a few command officers over the tip art, part of the random
+  transition chatter (needs recorded lines: VoxCPM2 batch).
+- **Demon voices much growlier** (keep the low-pitch reverse "language" trick): creature processing in the
+  voice re-render (UC8).
+- Music: still hears loops and clipping in the current score: the L3 real-instrument pilot is the fix.
+- Ground assets re-render: still waiting on the 8 questions in section 2.
+
 ## 1. Music: next steps (the main job once the studio is loaded)
 
 Spec: `plan/audio-studio/music-requirements.md` (on `game`). The operator rejected ALL current music. Do not
