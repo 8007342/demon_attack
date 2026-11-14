@@ -26,12 +26,12 @@
   },
   "3": {
     "_meta": {
-      "title": "drums: karoryfer-big-rusty-drums"
+      "title": "drums: big-rusty-drums"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-big-rusty-drums",
+      "instrument": "TBD:big-rusty-drums",
       "midi": ["2", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -69,12 +69,12 @@
   },
   "6": {
     "_meta": {
-      "title": "bass: karoryfer-meatbass"
+      "title": "bass: meatbass"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-meatbass",
+      "instrument": "TBD:meatbass",
       "midi": ["5", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -112,12 +112,12 @@
   },
   "9": {
     "_meta": {
-      "title": "gtrL: karoryfer-black-and-green"
+      "title": "gtrL: black-and-green-guitars"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-black-and-green",
+      "instrument": "TBD:black-and-green-guitars",
       "midi": ["8", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -155,12 +155,12 @@
   },
   "12": {
     "_meta": {
-      "title": "gtrL-pm: karoryfer-black-and-green"
+      "title": "gtrL-pm: black-and-green-guitars"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-black-and-green",
+      "instrument": "TBD:black-and-green-guitars",
       "midi": ["11", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -198,12 +198,12 @@
   },
   "15": {
     "_meta": {
-      "title": "gtrR: karoryfer-shiny"
+      "title": "gtrR: shinyguitar"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-shiny",
+      "instrument": "TBD:shinyguitar",
       "midi": ["14", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -241,12 +241,12 @@
   },
   "18": {
     "_meta": {
-      "title": "gtrR-pm: karoryfer-shiny"
+      "title": "gtrR-pm: shinyguitar"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-shiny",
+      "instrument": "TBD:shinyguitar",
       "midi": ["17", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -284,12 +284,12 @@
   },
   "21": {
     "_meta": {
-      "title": "lead: karoryfer-black-and-green"
+      "title": "lead: black-and-green-guitars"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-black-and-green",
+      "instrument": "TBD:black-and-green-guitars",
       "midi": ["20", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -327,12 +327,12 @@
   },
   "24": {
     "_meta": {
-      "title": "lead2: karoryfer-black-and-green"
+      "title": "lead2: black-and-green-guitars"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-black-and-green",
+      "instrument": "TBD:black-and-green-guitars",
       "midi": ["23", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -370,12 +370,12 @@
   },
   "27": {
     "_meta": {
-      "title": "lead-clean: karoryfer-shiny"
+      "title": "lead-clean: shinyguitar"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-shiny",
+      "instrument": "TBD:shinyguitar",
       "midi": ["26", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -413,12 +413,12 @@
   },
   "30": {
     "_meta": {
-      "title": "clean: karoryfer-shiny"
+      "title": "clean: shinyguitar"
     },
     "class_type": "TillandsiasSFZRender",
     "inputs": {
       "gain_db": 0.0,
-      "instrument": "TBD:karoryfer-shiny",
+      "instrument": "TBD:shinyguitar",
       "midi": ["29", 0],
       "sample_rate": 48000,
       "seed": 0,
@@ -733,7 +733,7 @@
   },
   "52": {
     "_meta": {
-      "title": "dry mix: 96 bars, 128.000 s + 2 s tail"
+      "title": "dry render: 96 bars, 128.000 s + 2 s tail"
     },
     "class_type": "TillandsiasSaveLoopWAV",
     "inputs": {
