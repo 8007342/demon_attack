@@ -74,11 +74,13 @@ abstract final class Perspective {
   /// linearly (z, i.e. 1/n), so the demon creeps out of the haze and rushes
   /// the last stretch. Returns the nearness and the screen-space fraction
   /// travelled (screen offset from the vanishing point grows with n).
-  static (double, double) approach(double s, double nearForm) {
-    final n = 1 / (1 / nearFar + (1 / nearForm - 1 / nearFar) * s);
-    final u = nearForm <= nearFar
+  /// [from] overrides the starting nearness (a foreshadowed sentinel).
+  static (double, double) approach(double s, double nearForm, {double? from}) {
+    final n0 = from ?? nearFar;
+    final n = 1 / (1 / n0 + (1 / nearForm - 1 / n0) * s);
+    final u = nearForm <= n0
         ? 1.0
-        : ((n - nearFar) / (nearForm - nearFar)).clamp(0.0, 1.0);
+        : ((n - n0) / (nearForm - n0)).clamp(0.0, 1.0);
     return (n, u);
   }
 
@@ -103,7 +105,46 @@ abstract final class Perspective {
   static double groundY(double n) => horizonY + groundSpan * n;
 
   /// Distance haze 0-1: arrivals emerge veiled, formation demons are clear.
+  /// Superseded by [transmittance] for drawing; kept for older callers.
   static double haze(double n) => ((.56 - n) / .26).clamp(0.0, 1.0);
+
+  // --- atmosphere (plan/atmosphere-research.md §1, design §1) -------------
+  /// Extinction of the air: t = exp(-k (1 - n)), remapped so the arrival
+  /// depth (n .30) is ~.05 and the formation (n >= .6) is fully clear.
+  static const fogK = 3.0;
+  static const _tFar = .27, _tClear = .6;
+  static double _rawT(double n) => math.exp(-fogK * (1 - n));
+
+  /// Transmittance 0-1 of the air between the camera and nearness [n]: one
+  /// number drives tint, saturation, contrast and the staged detail reveal,
+  /// so the depth cues never disagree. A wave [holding] in the fog with the
+  /// approaching roster is capped at [holdingCap] (silhouette only).
+  static double transmittance(double n, {bool holding = false}) {
+    final t0 = _rawT(_tFar), t1 = _rawT(_tClear);
+    final t = ((_rawT(n) - t0) / (t1 - t0)).clamp(0.0, 1.0);
+    return holding ? math.min(t, holdingCap) : t;
+  }
+
+  static const holdingCap = .25;
+
+  /// Hermite smoothstep of [x] between [e0] and [e1].
+  static double smoothstep(double e0, double e1, double x) {
+    final t = ((x - e0) / (e1 - e0)).clamp(0.0, 1.0);
+    return t * t * (3 - 2 * t);
+  }
+
+  /// Staged reveal from transmittance [t] (research §1): below .25 a
+  /// silhouette; the outline and muted colour by ~.4; shields, armour,
+  /// halos and pips over .45-.7 (readable before the creature can fire);
+  /// full colour above ~.85.
+  static double gearReveal(double t) => smoothstep(.45, .7, t);
+
+  /// Emissive points (eyes, glows) fade slower than the body: they punch
+  /// through the fog (INSIDE's clamped fog).
+  static double glowAlpha(double t) => math.max(t, .5);
+
+  /// Depth bucket (0-15) for cached tint paints.
+  static int tintBucket(double t) => (t.clamp(0.0, 1.0) * 15).round();
 
   /// Opacity of a creature at nearness [n]: the farthest arrivals are faint
   /// shapes in the weather and gain substance as they close in.

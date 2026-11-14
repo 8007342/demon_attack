@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
+import 'game/atmosphere.dart' show AtmosphereQuality;
 import 'game/model.dart';
 import 'widgets/pilot_console_content.dart';
 import 'game/campaign_story.dart';
@@ -162,6 +163,24 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   }
 
   // --- end audio round
+  // --- atmosphere: Full (every fog layer, shader where supported) or
+  // Reduced (horizon band and ground fog only; the low-end tier).
+  static const _atmosphereKey = 'demonAttack.atmosphere';
+  void _toggleAtmosphere() {
+    final next = scene.atmosphere.quality == AtmosphereQuality.full
+        ? AtmosphereQuality.reduced
+        : AtmosphereQuality.full;
+    setState(() => scene.atmosphere.quality = next);
+    try {
+      storage.store.write(_atmosphereKey, next.name);
+    } catch (_) {}
+  }
+
+  Widget _atmosphereToggle() => TextButton(
+    key: const ValueKey('atmosphere-quality'),
+    onPressed: _toggleAtmosphere,
+    child: Text('ATMOSPHERE: ${scene.atmosphere.quality.label}'),
+  );
   void _resetComms({bool resume = false}) {
     transitions.newRun(squadComms, voice: voiceOn); // --- fluid transitions
     gameEvents.reset(freshRun: !resume);
@@ -239,6 +258,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       }
     }
     scene = DemonScene(model, _tick);
+    // --- atmosphere: the remembered fog quality (full / reduced).
+    try {
+      scene.atmosphere.quality = AtmosphereQuality.parse(
+        storage.store.read(_atmosphereKey),
+      );
+    } catch (_) {}
     // --- audio round: the remembered levels
     musicLevel = AudioLevel.parse(audioLevel('music'));
     speechLevel = AudioLevel.parse(audioLevel('speech'));
@@ -1529,6 +1554,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           child: const Text('RESUME'),
                         ),
                         const SizedBox(height: 12),
+                        _atmosphereToggle(),
+                        const SizedBox(height: 4),
                         TextButton(
                           onPressed: _title,
                           child: const Text('RETURN TO TITLE'),

@@ -42,7 +42,8 @@ class CreatureMotion {
   /// folded upstroke.
   static const double climbShare = 0.62, levelShare = 0.5, sinkShare = 0.38;
 
-  void update(double x, double y, double dt) {
+  /// [rate]: the creature's own wingbeat factor (flock arrivals, ±10 %).
+  void update(double x, double y, double dt, {double rate = 1}) {
     if (dt <= 0) return;
     final lx = _lastX, ly = _lastY;
     _lastX = x;
@@ -83,8 +84,8 @@ class CreatureMotion {
     if (gliding) {
       glideClock += dt;
     } else {
-      final rate = vy < -30 ? strokeRate * 1.3 : strokeRate;
-      phase = (phase + rate * dt) % 1.0;
+      final stroke = (vy < -30 ? strokeRate * 1.3 : strokeRate) * rate;
+      phase = (phase + stroke * dt) % 1.0;
     }
   }
 
@@ -111,9 +112,9 @@ class CreatureMotionTracker {
   CreatureMotion track(Demon d) => _state[d] ??= CreatureMotion(d.seed);
 
   void update(ArcadeModel model, double dt) {
-    for (final d in model.demons) {
+    for (final d in [...model.demons, ...model.incoming]) {
       if (d.isLarge) continue;
-      track(d).update(d.x, d.y, dt);
+      track(d).update(d.x, d.y, dt, rate: d.wingRate);
     }
   }
 }

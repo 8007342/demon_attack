@@ -6,6 +6,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'atmosphere.dart';
 import 'boss_painter.dart';
 import 'ground_painter.dart';
 import 'model.dart';
@@ -31,6 +32,8 @@ class DemonScene extends FlameGame {
   final armada = BossPainter();
   final sectors = SectorBackground();
   final creatures = CreaturePresentation();
+  // --- atmosphere: fog layers and creature veils (atmosphere.dart).
+  final atmosphere = Atmosphere();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- ground war (ground_painter.dart) ---
   late final groundForces = GroundPainter()..occluders = sectors.flyover;
@@ -84,6 +87,7 @@ class DemonScene extends FlameGame {
     );
     // --- flyover parallax hook (background only) ---
     await sectors.loadFlyover(images.load);
+    await atmosphere.load(); // --- atmosphere: fog tiles and shader
     // --- ground war art (tools/ground_forces_assets.py) ---
     try {
       groundForces.image = await images.load('ground-forces.png');
@@ -104,6 +108,7 @@ class DemonScene extends FlameGame {
       environment += (destination - environment) * math.min(1, dt * .65);
       // --- flyover parallax hook (visual only; reads model state) ---
       sectors.advance(dt, model, environment);
+      syncAtmosphere(dt);
     }
     if (model.canPilot && keyboardDirection != 0) {
       model.moveBy(keyboardDirection * dt * 280);
@@ -120,6 +125,19 @@ class DemonScene extends FlameGame {
       _notify = 0;
       onTick();
     }
+  }
+
+  /// Feeds the fog its clock, the flight distance and the ship (visual only).
+  void syncAtmosphere(double dt) {
+    atmosphere
+      ..environment = environment
+      ..reducedMotion = sectors.flyover.reducedMotion
+      ..advance(
+        dt,
+        distance: sectors.flyover.distance,
+        x: model.shipX,
+        y: ArcadeModel.shipY,
+      );
   }
 
   @override
@@ -434,6 +452,7 @@ class DemonScene extends FlameGame {
     double width, {
     double? height,
     Color? tint,
+    ColorFilter? filter,
     double opacity = 1,
   }) {
     final a = atlas;
@@ -444,6 +463,8 @@ class DemonScene extends FlameGame {
       ..filterQuality = FilterQuality.none;
     if (tint != null) {
       paint.colorFilter = ColorFilter.mode(tint, BlendMode.srcATop);
+    } else if (filter != null) {
+      paint.colorFilter = filter;
     }
     c.drawImageRect(
       a,
@@ -462,6 +483,8 @@ class DemonScene extends FlameGame {
     Offset center, {
     double scale = 1,
     Color? tint,
+    ColorFilter? filter,
+    ui.ImageFilter? blur,
     double opacity = 1,
   }) {
     final image = effectsAtlas;
@@ -472,7 +495,10 @@ class DemonScene extends FlameGame {
       ..filterQuality = FilterQuality.none;
     if (tint != null) {
       paint.colorFilter = ColorFilter.mode(tint, BlendMode.srcATop);
+    } else if (filter != null) {
+      paint.colorFilter = filter;
     }
+    if (blur != null) paint.imageFilter = blur;
     c.drawImageRect(
       image,
       Rect.fromLTWH(col * 128.0, row * 64.0, 128, 64),
@@ -488,6 +514,9 @@ class DemonScene extends FlameGame {
 
   void _combat(Canvas c) {
     _swarmShadows(c); // --- perspective: on the ground, under everything
+    // --- atmosphere: ground fog lies on the terrain, over the shadows.
+    if (model.perspective) atmosphere.paint(c, FogSlot.groundFog);
+    _arrivalShadows(c); // --- atmosphere: incoming shadows lead the wave
     for (final p in model.heartPickups) {
       c.save();
       c.translate(p.x - 10, p.y - 10);
@@ -512,11 +541,29 @@ class DemonScene extends FlameGame {
       _paintSupplyCrate(c, crate);
     }
     _carrierBackdrop(c);
-    _horizonSmoke(c); // --- wave pressure: smoke and low cloud at the horizon
     // --- perspective: far to near, each drawn at its simulated scale. The
     // next wave, still approaching (model.incoming), is the farthest of all.
+    // The fog layers are drawn when the sort passes their nearness, so a
+    // creature at n .35 is behind bank B and in front of bank A.
     final approaching = model.incoming.where((d) => !d.isLarge).toList();
+    final fogSlots = model.perspective
+        ? const [FogSlot.horizonBand, FogSlot.farBankA, FogSlot.farBankB]
+        : const <FogSlot>[];
+    var nextFog = 0;
+    final tells = <Demon>[];
+    void fog() {
+      final slot = fogSlots[nextFog++];
+      atmosphere.paint(c, slot);
+      // The sentinel's silhouette circles in the murk: in front of the
+      // horizon band's glow (a darker shape in the fog), behind the banks.
+      if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c);
+    }
+
     for (final d in _byDepth([...approaching, ...model.demons])) {
+      while (nextFog < fogSlots.length &&
+          Atmosphere.layers[fogSlots[nextFog]]!.nearness <= d.nearness) {
+        fog();
+      }
       final warning = d.telegraph > 0;
       final pos = Offset(d.x, d.y);
       if (d.isLarge) {
@@ -530,10 +577,12 @@ class DemonScene extends FlameGame {
         continue;
       }
       if (_parked(d)) continue;
-      // Shields, armour, rank halos and health pips belong to a creature
-      // that has come out of the weather; inside the fog only the body shows.
+      // One transmittance per creature drives tint, saturation, contrast
+      // and the staged reveal: shields, armour, rank halos and health pips
+      // belong to a creature that has come out of the weather.
       final holding = approaching.contains(d);
-      final reveal = _detailReveal(d, holding: holding);
+      final t = _transmittance(d, holding: holding);
+      final reveal = Perspective.gearReveal(t);
       c.save();
       _scaleAbout(c, pos, d.scale); // sizes below are at scale 1
       if (d.elite && reveal > 0) {
@@ -563,7 +612,7 @@ class DemonScene extends FlameGame {
         motion: creatures.motion.of(d),
       );
       final size = d.angry ? 44.0 : 40.0;
-      final far = model.perspective ? Perspective.fade(d.nearness) : 1.0;
+      final far = model.perspective ? _bodyOpacity(d.nearness) : 1.0;
       sprite(
         c,
         cell.row,
@@ -571,22 +620,21 @@ class DemonScene extends FlameGame {
         pos,
         size,
         tint: cell.tintFlash ? Colors.white : null,
+        filter: cell.tintFlash ? null : atmosphere.tintFor(t),
         opacity: far,
       );
-      final haze = model.perspective ? Perspective.haze(d.nearness) : 0.0;
-      if (haze > 0) {
-        // Distance haze: arrivals emerge veiled in the horizon's dusk; the
-        // still-approaching next wave is fogged harder (wave pressure).
+      final glow = Perspective.glowAlpha(t) - t;
+      if (glow > .02 && !cell.tintFlash) {
+        // Eyes and cracks punch through the fog (research §1).
         sprite(
           c,
           cell.row,
           cell.col,
           pos,
           size,
-          tint: _hazeTone,
-          opacity: haze * (holding ? .85 : .6),
+          filter: Atmosphere.glowMatrix,
+          opacity: glow * far,
         );
-        _mistWisps(c, pos, d, haze * (holding ? 1 : .55));
       }
       if (d.elite && reveal > 0) {
         // Authored elite armour for this direction/pose, shed one level per
@@ -618,9 +666,7 @@ class DemonScene extends FlameGame {
           20,
         );
       }
-      if (warning) {
-        _wingTellChevrons(c, pos);
-      }
+      if (warning) tells.add(d); // drawn above the sky sheets
       if (d.dive > 0 && d.diveShield > 0 && reveal > 0) {
         _smallOrMediumDiveShield(c, pos, d);
       }
@@ -634,6 +680,10 @@ class DemonScene extends FlameGame {
       }
       c.restore();
     }
+    while (nextFog < fogSlots.length) {
+      fog();
+    }
+    if (fogSlots.isEmpty) _foreshadowSilhouette(c);
     for (final fx in creatures.deaths) {
       c.save();
       c.translate(fx.x, fx.y);
@@ -771,6 +821,20 @@ class DemonScene extends FlameGame {
         }
       }
       _damage(c, Offset(b.x, b.y), hullDamage, model.visualClock);
+      c.restore();
+    }
+    // --- atmosphere: one or two very thin sheets over the arena, creatures
+    // and carrier included. Bullets, the player, tells and the HUD are drawn
+    // after them: never fogged (research §11).
+    if (model.perspective) {
+      atmosphere.paint(c, FogSlot.skySheet1);
+      atmosphere.paint(c, FogSlot.skySheet2);
+    }
+    for (final d in tells) {
+      final pos = Offset(d.x, d.y);
+      c.save();
+      _scaleAbout(c, pos, d.scale);
+      _wingTellChevrons(c, pos);
       c.restore();
     }
     for (final s in model.shots) {
@@ -1485,67 +1549,101 @@ class DemonScene extends FlameGame {
   }
 
   // --- perspective (lib/game/perspective.dart, plan/perspective.md) ---
-  static const _hazeTone = Color(0xFF454A74);
+  // --- atmosphere (lib/game/atmosphere.dart, atmosphere-and-swarms) ---
 
-  /// Draw order by depth: far demons first, ties in simulation order.
-  // --- wave pressure: atmosphere. Placeholder procedural mist until the
-  // ground-forces-rework fog/smoke layers land (plan, ground-forces design).
-  static const _mistTone = Color(0xFF6B7096);
-
-  /// A drifting band of smoke and low cloud along the horizon, behind every
-  /// creature, so distant arrivals emerge out of weather, not a hard edge.
-  void _horizonSmoke(Canvas c) {
-    if (!model.perspective) return;
-    final t = model.visualClock;
-    final y = Perspective.horizonY;
-    final paint = Paint()
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7);
-    for (var i = 0; i < 9; i++) {
-      final drift = (t * (5 + i % 3 * 2.5) + i * 47) % 440 - 40;
-      final dy = math.sin(t * .4 + i * 1.3) * 4 + (i % 3 - 1) * 9;
-      paint.color = (i.isEven ? _mistTone : _hazeTone).withValues(
-        alpha: .16 + (i % 4) * .03,
-      );
-      c.drawOval(
-        Rect.fromCenter(
-          center: Offset(drift, y - 6 + dy),
-          width: 70.0 + (i % 4) * 22,
-          height: 14.0 + (i % 3) * 5,
-        ),
-        paint,
-      );
-    }
+  /// Transmittance of the air in front of [d]: 1 when depth is off or the
+  /// creature is not yet placed on the camera; capped while it holds in the
+  /// fog with the approaching wave.
+  double _transmittance(Demon d, {bool holding = false}) {
+    if (!model.perspective || d.nearness <= 0) return holding ? 0 : 1;
+    return Perspective.transmittance(d.nearness, holding: holding);
   }
 
-  /// How much of a creature's gear (shields, armour, rank halo, health pips)
-  /// shows: none while it holds in the fog with the approaching wave, then
-  /// fading in over the last part of the haze so the details arrive only once
-  /// the body has come out of the weather.
-  double _detailReveal(Demon d, {bool holding = false}) {
-    if (holding) return 0;
-    // nearness 0 means not yet placed on the depth camera: nothing to veil.
-    if (!model.perspective || d.nearness <= 0) return 1;
-    return (1 - Perspective.haze(d.nearness) * 1.6).clamp(0.0, 1.0);
+  /// Body opacity with depth: the farthest arrivals are thinner shapes in
+  /// the weather (the tint carries most of the veil).
+  static double _bodyOpacity(double n) =>
+      .55 + .45 * Perspective.smoothstep(.22, .42, n);
+
+  /// The coming sentinel's silhouette (design §5): a darker patch of the
+  /// fog in its shape, soft-edged, with a thin warm rim toward the sun and
+  /// eyes that ignore most of the fog. Placeholder art from the sentinel's
+  /// own flight frames until the studio's silhouette sheet (task 5.1).
+  void _foreshadowSilhouette(Canvas c) {
+    final f = model.foreshadow;
+    if (f == null || !f.visible || effectsAtlas == null) return;
+    final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
+    // A slow, heavy stroke: the giant's wings beat at about half the rate.
+    const strokes = [0, 1, 2, 3, 2, 1];
+    final frame = strokes[(f.clock / .55).floor() % strokes.length];
+    final pos = Offset(f.x.roundToDouble(), f.y.roundToDouble());
+    final o = f.opacity;
+    c.save();
+    c.translate(pos.dx, pos.dy);
+    c.rotate(f.bank * .1);
+    // Slow breathing: +-1 % over five seconds.
+    final breathe = 1 + .01 * math.sin(f.clock * 2 * math.pi / 5);
+    c.scale(f.scale * breathe * (1 - f.bank.abs() * .06), f.scale * breathe);
+    c.translate(-pos.dx, -pos.dy);
+    _silhouetteSprite(c, species, frame, pos, o);
+    c.restore();
   }
 
-  /// Soft mist drifting across a distant creature: [amount] 0..1.
-  void _mistWisps(Canvas c, Offset pos, Demon d, double amount) {
-    if (amount <= .05) return;
-    final t = model.visualClock + d.seed;
-    final paint = Paint()
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
-      ..color = _mistTone.withValues(alpha: (.42 * amount).clamp(0.0, .42));
-    for (var k = 0; k < 2; k++) {
-      final dx = math.sin(t * .9 + k * 2.1) * 9;
-      final dy = (k == 0 ? -4.0 : 5.0) + math.cos(t * .7 + k) * 2;
-      c.drawOval(
-        Rect.fromCenter(
-          center: pos.translate(dx, dy),
-          width: 30.0 * d.scale + 8,
-          height: 9.0 * d.scale + 3,
-        ),
-        paint,
-      );
+  /// The silhouette treatment of a sentinel frame at [pos], opacity [o].
+  void _silhouetteSprite(
+    Canvas c,
+    int species,
+    int frame,
+    Offset pos,
+    double o,
+  ) {
+    final veil = atmosphere.veil, air = atmosphere.air;
+    final body = Color.lerp(veil, const Color(0xFF06050B), .7)!;
+    // Warm rim: the body shifted toward the sun, under the body.
+    effectSprite(
+      c,
+      species,
+      frame,
+      pos.translate(-1.5, -1.5),
+      filter: const ColorFilter.mode(Color(0xFFE2A46E), BlendMode.srcIn),
+      opacity: .26 * o,
+    );
+    effectSprite(
+      c,
+      species,
+      frame,
+      pos,
+      filter: ColorFilter.mode(body, BlendMode.srcIn),
+      blur: ui.ImageFilter.blur(sigmaX: 1.6, sigmaY: 1.6),
+      opacity: .92 * o,
+    );
+    // A breath of the air over its far wing edge: depth inside the shape.
+    effectSprite(
+      c,
+      species,
+      frame,
+      pos.translate(0, 3),
+      filter: ColorFilter.mode(air, BlendMode.srcIn),
+      blur: ui.ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+      opacity: .05 * o,
+    );
+    _sentinelEyes(c, pos, .95 * o);
+  }
+
+  /// Emissive eyes for a fogged sentinel: the gold species' body is as warm
+  /// as its eyes, so an emissive mask cannot separate them; two embers at
+  /// the head (cell 128 x 64, eyes 6 px either side, 6 px above centre).
+  void _sentinelEyes(Canvas c, Offset pos, double o) {
+    if (o <= .02) return;
+    final halo = Paint()
+      ..color = const Color(0xFFFF9A3C).withValues(alpha: .35 * o)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    final core = Paint()
+      ..isAntiAlias = false
+      ..color = const Color(0xFFFFE7A8).withValues(alpha: o);
+    for (final side in [-1.0, 1.0]) {
+      final e = pos.translate(side * 5.5, -6);
+      c.drawCircle(e, 3.2, halo);
+      c.drawRect(Rect.fromCenter(center: e, width: 2, height: 2), core);
     }
   }
 
@@ -1574,7 +1672,10 @@ class DemonScene extends FlameGame {
 
   /// Faint stepped pixel shadows on the flyover ground beneath each demon's
   /// depth: they darken as a diver loses altitude and closes in, and stay
-  /// all but invisible under the high formation and distant arrivals.
+  /// all but invisible under the high formation (the shot lane stays clean).
+  /// Arrivals add an altitude shadow (design §4, research §3): offset along
+  /// the sun by height, softer and fainter when high, so an incoming wave's
+  /// shadows cross the terrain while the bodies are still in the fog.
   void _swarmShadows(Canvas c) {
     if (!model.perspective) return;
     final paint = Paint()..isAntiAlias = false;
@@ -1585,7 +1686,10 @@ class DemonScene extends FlameGame {
       if (gy > 524 || gy < d.y + 8) continue;
       final near = ((d.nearness - .5) / .2).clamp(0.0, 1.0);
       final low = (1 - (gy - d.y) / 320).clamp(.15, 1.0);
-      final alpha = .5 * near * low;
+      var alpha = .5 * near * low;
+      if (d.entering && d.arrivesFromDistance) {
+        alpha *= Perspective.smoothstep(.7, 1, d.entranceProgress);
+      }
       if (alpha < .02) continue;
       final w = ((d.isLarge ? 70.0 : 26.0) * d.nearness / 1.4).round() * 2.0;
       final x = d.x.roundToDouble(), y = gy.roundToDouble();
@@ -1595,6 +1699,98 @@ class DemonScene extends FlameGame {
       c.drawRect(Rect.fromLTWH(x - w / 2, y - 1, w, 2), paint);
       c.drawRect(Rect.fromLTWH(x - inner / 2, y + 1, inner, 2), paint);
     }
+  }
+
+  /// Arrival shadows, drawn over the ground fog they darken (the mist in
+  /// a shadow is unlit), at the opacity left through it.
+  void _arrivalShadows(Canvas c) {
+    if (!model.perspective) return;
+    for (final d in [...model.incoming, ...model.demons]) {
+      if (!d.entering || !d.arrivesFromDistance || _parked(d)) continue;
+      if (d.nearness <= 0 || (d.isLarge && d.entranceProgress <= 0)) continue;
+      _arrivalShadow(c, d);
+    }
+  }
+
+  static const _shadowHMax = 300.0;
+  static final _shadowTan = math.tan(32 * math.pi / 180);
+  static const _shadowInk = ColorFilter.mode(
+    Color(0xFF020309),
+    BlendMode.srcIn,
+  );
+
+  /// Three blur levels by altitude (research §3: soft when high), shared.
+  static final _shadowBlur = [
+    ui.ImageFilter.blur(sigmaX: .6, sigmaY: .4),
+    ui.ImageFilter.blur(sigmaX: 1.6, sigmaY: 1.0),
+    ui.ImageFilter.blur(sigmaX: 3.0, sigmaY: 1.8),
+  ];
+
+  /// The arrival's own silhouette laid on the ground: flattened by the
+  /// camera's tilt, offset along the sun by its height, softer, larger and
+  /// fainter the higher it flies, fading in with the arrival and handing
+  /// over to the formation's faint shadow as it settles.
+  void _arrivalShadow(Canvas c, Demon d) {
+    final n = d.nearness;
+    final gy = Perspective.groundY(n);
+    if (gy > 530) return;
+    final h = (gy - d.y).clamp(0.0, _shadowHMax);
+    final k = h / _shadowHMax;
+    final e = d.entranceProgress;
+    final hold = model.incoming.contains(d);
+    final present =
+        (hold ? 1.0 : Perspective.smoothstep(0, .12, e)) *
+        (1 - Perspective.smoothstep(.75, 1, e));
+    // Light left through the ground fog in front of the shadow.
+    const tGround = .85;
+    final alpha = .95 * (1 - .4 * k) * tGround * present;
+    if (alpha < .015) return;
+    final blur = _shadowBlur[k < .45 ? 0 : (k < .8 ? 1 : 2)];
+    // Offset along the sun's azimuth (behind-left of the camera): toward
+    // the camera and to the right, growing with height.
+    final off = h * _shadowTan * .22;
+    final center = Offset(d.x + off, gy + off * .25);
+    final grow = n * 1.8 * (1 + .3 * k); // ground scale, penumbra growth
+    c.save();
+    c.translate(center.dx, center.dy);
+    c.scale(1, .42); // the ground is seen at a slant
+    c.translate(-center.dx, -center.dy);
+    if (d.isLarge) {
+      final species = d.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
+      c.translate(center.dx, center.dy);
+      c.scale(grow / 1.8 * 1.6);
+      c.translate(-center.dx, -center.dy);
+      effectSprite(
+        c,
+        species,
+        (model.clock / .4 + d.seed).floor() % 8,
+        center,
+        filter: _shadowInk,
+        blur: blur,
+        opacity: alpha,
+      );
+    } else {
+      final cell = CombatAtlas.creature(
+        d,
+        model.clock,
+        motion: creatures.motion.of(d),
+      );
+      final size = 40 * grow;
+      final a = atlas;
+      if (a != null) {
+        c.drawImageRect(
+          a,
+          Rect.fromLTWH(cell.col * 64.0, cell.row * 64.0, 64, 64),
+          Rect.fromCenter(center: center, width: size, height: size),
+          Paint()
+            ..colorFilter = _shadowInk
+            ..imageFilter = blur
+            ..color = Color.fromRGBO(255, 255, 255, alpha.clamp(0.0, 1.0))
+            ..filterQuality = FilterQuality.none,
+        );
+      }
+    }
+    c.restore();
   }
 
   void _wingTellChevrons(Canvas c, Offset pos) {
@@ -1875,16 +2071,34 @@ class DemonScene extends FlameGame {
       c.scale(1.0 - bank.abs() * 0.08, 1.0);
       c.translate(-pos.dx, -pos.dy);
     }
+    final t = _transmittance(demon);
+    final whiteFlash = demon.flash > 0 && !flashFrame;
+    // A foreshadowed sentinel leaves its silhouette behind as it comes out
+    // of the fog: the dark shape crossfades into the veiled body.
+    final shade = demon.entering && demon.entryScale != null
+        ? 1 - Perspective.smoothstep(.05, .4, demon.entranceProgress)
+        : 0.0;
+    final bodyRow = firing ? 13 : (flashFrame ? 10 + species : row);
+    final bodyCol = firing
+        ? species * 4 + (fired / .07).floor().clamp(0, 3)
+        : frame;
     effectSprite(
       c,
-      firing ? 13 : (flashFrame ? 10 + species : row),
-      firing ? species * 4 + (fired / .07).floor().clamp(0, 3) : frame,
+      bodyRow,
+      bodyCol,
       pos,
-      tint: demon.flash > 0 && !flashFrame ? Colors.white : null,
+      tint: whiteFlash ? Colors.white : null,
+      filter: whiteFlash ? null : atmosphere.tintFor(t),
+      opacity: 1 - shade,
     );
+    if (shade > 0) {
+      _silhouetteSprite(c, species, bodyCol.clamp(0, 7), pos, shade);
+    }
+    final glow = (Perspective.glowAlpha(t) - t) * (1 - shade);
+    if (glow > .02 && !whiteFlash) _sentinelEyes(c, pos, glow);
     _creatureLighting(c, pos, bank, width: 92, diving: diving);
     c.restore();
-    final reveal = _detailReveal(demon);
+    final reveal = Perspective.gearReveal(t);
     if (reveal <= 0) return;
     if (demon.shield > 0 &&
         demon.shieldMax > 0 &&
