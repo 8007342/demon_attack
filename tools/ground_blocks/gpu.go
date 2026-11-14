@@ -124,7 +124,7 @@ func (p *Project) jobs() []Job {
 		for c := 0; c < s.Hero.Candidates; c++ {
 			seed := s.Seed + c
 			jobs = append(jobs, Job{ID: fmt.Sprintf("%s/hero/%d", s.ID, seed), Unit: s.ID, Family: fam.Name, Kind: "hero", Workflow: hw, Missing: hm,
-				Inputs:    map[string]any{"keyframe": ref("hull.ref.h" + hcode(s.Hero.Heading))},
+				Inputs:    map[string]any{"input": ref("hull.ref.h" + hcode(s.Hero.Heading))},
 				Overrides: map[string]any{"prompt": prompt(s.Hero.Heading), "negative_prompt": fam.NegativePrompt, "seed": seed}})
 		}
 		heroSel := "<hero selection pending>"
@@ -139,7 +139,7 @@ func (p *Project) jobs() []Job {
 			for c := 0; c < max(1, s.HeadingCandidates); c++ {
 				seed := s.Seed + 10 + i*4 + c
 				jobs = append(jobs, Job{ID: fmt.Sprintf("%s/heading/h%s/%d", s.ID, hcode(h), seed), Unit: s.ID, Family: fam.Name, Kind: "heading", Workflow: dw, Missing: dm,
-					Inputs:    map[string]any{"image1": ref("hull.ref.h" + hcode(h)), "image2": heroSel},
+					Inputs:    map[string]any{"input": ref("hull.ref.h" + hcode(h)), "hero": heroSel},
 					Overrides: map[string]any{"prompt": "Redraw image 1 with exactly the materials, colours and detail of image 2. Keep the outline, pose and viewing angle of image 1. " + prompt(h), "negative_prompt": fam.NegativePrompt, "seed": seed}})
 			}
 		}
@@ -149,7 +149,7 @@ func (p *Project) jobs() []Job {
 				for c := 0; c < max(1, s.HeadingCandidates); c++ {
 					seed := s.Seed + 40 + i*4 + c
 					jobs = append(jobs, Job{ID: fmt.Sprintf("%s/layer/a%s/%d", s.ID, hcode(a), seed), Unit: s.ID, Family: fam.Name, Kind: "layer", Workflow: dw, Missing: dm,
-						Inputs:    map[string]any{"image1": ref("art.ref.a" + hcode(a)), "image2": heroSel},
+						Inputs:    map[string]any{"input": ref("art.ref.a" + hcode(a)), "hero": heroSel},
 						Overrides: map[string]any{"prompt": "Redraw image 1 with exactly the materials, colours and detail of image 2. Keep the outline and angle of image 1. " + fam.StylePrompt + ", the " + s.Art.Kind + " of " + s.Subject, "negative_prompt": fam.NegativePrompt, "seed": seed}})
 				}
 			}
