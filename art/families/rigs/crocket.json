@@ -1,0 +1,32 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "crocket", "name": "Crocket", "faction": "host", "class": "light", "block": "V", "move": "tracks", "seed": 760200,
+ "notes": "Light raider tank: low, long, forward-raked stone slab with a row of hooked crockets along its spine, a snarling prow face and a short spout gun under it; the lowest vehicle. No articulated layer: the gun is fixed under the prow, so the channel-fill overlays are per hull heading (V row 1, columns 5-19). Channel: three stages along the spine to the prow; fill3 lights the eyes and the spout mouth. Debris: hooks, prow, gun, tracks, then chips.",
+ "hull": [
+  {"kind": "box", "at": [-6.6, 0, 0], "size": [3, 29, 3], "mat": "track", "chamfer": {"bfront": 1, "bback": 1}, "piece": "trackL"},
+  {"kind": "box", "at": [6.6, 0, 0], "size": [3, 29, 3], "mat": "track", "chamfer": {"bfront": 1, "bback": 1}, "piece": "trackR"},
+  {"kind": "box", "at": [0, -0.5, 1.4], "size": [12.5, 28, 4.4], "mat": "stone", "chamfer": {"front": 1.6, "sides": 1, "back": 1}, "cuts": [{"n": [0, 0.28, 1], "p": [0, 14, 4.4]}], "piece": "slab"},
+  {"kind": "box", "at": [0, 13.6, 1.2], "size": [7.6, 3.4, 3.8], "mat": "stone_hi", "chamfer": {"top": 1, "vfront": 1.2}, "piece": "prow"},
+  {"kind": "box", "at": [-1.9, 15.2, 3.4], "size": [1.2, 0.6, 0.9], "mat": "eye", "tags": ["eye"], "piece": "prow"},
+  {"kind": "box", "at": [1.9, 15.2, 3.4], "size": [1.2, 0.6, 0.9], "mat": "eye", "tags": ["eye"], "piece": "prow"},
+  {"kind": "bar", "a": [-1.2, 15.4, 2.2], "b": [1.2, 15.4, 2.2], "t": 0.7, "mat": "stone_dark", "piece": "prow"},
+  {"kind": "bar", "a": [0, 14, 1.6], "b": [0, 19, 1.4], "t": 1.8, "mat": "iron", "piece": "gun"},
+  {"kind": "box", "at": [0, 18.6, 0.4], "size": [2.6, 1.6, 2.2], "mat": "stone_hi", "tags": ["mouth"], "piece": "gun"},
+  {"kind": "bar", "a": [-2.2, -12, 6], "b": [-2.2, -4, 6], "t": 1, "tz": 0.6, "mat": "channel", "stage": 1},
+  {"kind": "bar", "a": [-2.2, -4, 6], "b": [-2.2, 4, 6], "t": 1, "tz": 0.6, "mat": "channel", "stage": 2},
+  {"kind": "bar", "a": [-2.2, 4, 6], "b": [-2.2, 11.5, 5.3], "t": 1, "tz": 0.6, "mat": "channel", "stage": 3},
+  {"kind": "bar", "a": [0, -10, 5.4], "b": [0, -11.8, 9.4], "t": 1.8, "mat": "stone_hi", "tags": ["ornament"], "piece": "hooks"},
+  {"kind": "bar", "a": [0, -11.8, 9.4], "b": [0, -9.4, 10.4], "t": 1.3, "mat": "stone_hi", "tags": ["ornament"], "piece": "hooks"},
+  {"kind": "bar", "a": [0, -4, 5.4], "b": [0, -5.8, 9.4], "t": 1.8, "mat": "stone_hi", "tags": ["ornament"], "piece": "hooks"},
+  {"kind": "bar", "a": [0, -5.8, 9.4], "b": [0, -3.4, 10.4], "t": 1.3, "mat": "stone_hi", "tags": ["ornament"], "piece": "hooks"},
+  {"kind": "bar", "a": [0, 2, 5.4], "b": [0, 0.2, 9.4], "t": 1.8, "mat": "stone_hi", "tags": ["ornament"], "piece": "hooks2"},
+  {"kind": "bar", "a": [0, 0.2, 9.4], "b": [0, 2.6, 10.4], "t": 1.3, "mat": "stone_hi", "tags": ["ornament"], "piece": "hooks2"},
+  {"kind": "bar", "a": [0, 8, 4.6], "b": [0, 6.2, 8.6], "t": 1.8, "mat": "stone_hi", "tags": ["ornament"], "piece": "hooks2"},
+  {"kind": "bar", "a": [0, 6.2, 8.6], "b": [0, 8.6, 9.6], "t": 1.3, "mat": "stone_hi", "tags": ["ornament"], "piece": "hooks2"},
+  {"kind": "box", "at": [-4.6, -8, 5.4], "size": [1, 1, 0.5], "mat": "vent"},
+  {"kind": "box", "at": [-4.6, -3, 5.3], "size": [1, 1, 0.5], "mat": "vent"},
+  {"kind": "box", "at": [-4.6, 2, 5], "size": [1, 1, 0.5], "mat": "vent"}
+ ],
+ "pieces": ["hooks", "hooks2", "prow", "gun", "trackL", "trackR"],
+ "poses": {}
+}

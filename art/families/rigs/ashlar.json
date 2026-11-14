@@ -1,0 +1,35 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "ashlar", "name": "Ashlar Guard", "faction": "host", "class": "infantry", "block": "I", "move": "stride", "seed": 760110,
+ "notes": "Line rifle infantry (refresh of demon-grunt): a gargoyle soldier with an iron helmet over curled horns, ember eyes, a vest, folded bat wings, a barbed tail, digitigrade legs and a long spout-mouthed musket. Seen side-on at 90 (primary), front three-quarter at 135, rear three-quarter at 45. Aim B lights the eyes (the back-channel wind-up).",
+ "gait": {"frames": 4, "stride": 2, "lift": 1, "bob": 0},
+ "hull": [
+  {"kind": "leg", "hip": [-1.4, 0, 8], "knee": [-1.4, 1.8, 4.6], "foot": [-1.4, 0, 0.4], "t": 1.6, "foot_size": [1.6, 3], "phase": 0, "mat": "hide"},
+  {"kind": "leg", "hip": [1.4, 0, 8], "knee": [1.4, 1.8, 4.6], "foot": [1.4, 0, 0.4], "t": 1.6, "foot_size": [1.6, 3], "phase": 0.5, "mat": "hide"},
+  {"kind": "bar", "a": [0, -2.4, 8.6], "b": [0, -6.6, 5], "t": 1.2, "mat": "hide"},
+  {"kind": "bar", "a": [0, -6.6, 5], "b": [0, -8, 3.6], "t": 1, "mat": "stone_hi"},
+  {"kind": "box", "at": [-2.6, -2.2, 11], "size": [1, 4, 6], "pitch": -20, "mat": "membrane"},
+  {"kind": "box", "at": [2.6, -2.2, 11], "size": [1, 4, 6], "pitch": -20, "mat": "membrane"},
+  {"kind": "ball", "at": [0, 0.6, 11.4], "size": [3.2, 3.4, 3.6], "mat": "hide"},
+  {"kind": "box", "at": [0, 0.8, 8.6], "size": [6.2, 6, 4.4], "mat": "cloth", "chamfer": {"top": 1, "vert": 1.2}},
+  {"kind": "ball", "at": [0, 3, 16.6], "size": [2.6, 3, 2.6], "mat": "hide"},
+  {"kind": "box", "at": [0, 5.6, 14.8], "size": [2.2, 1.8, 1.8], "mat": "hide"},
+  {"kind": "ball", "at": [0, 2.8, 18.4], "size": [2.9, 3.2, 1.4], "mat": "iron"},
+  {"kind": "bar", "a": [-1.8, 1.8, 18.4], "b": [-2.6, -1, 19.8], "t": 1.1, "mat": "stone_hi", "tags": ["ornament"]},
+  {"kind": "bar", "a": [1.8, 1.8, 18.4], "b": [2.6, -1, 19.8], "t": 1.1, "mat": "stone_hi", "tags": ["ornament"]},
+  {"kind": "box", "at": [-1, 5.5, 16.6], "size": [0.8, 0.5, 0.7], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [1, 5.5, 16.6], "size": [0.8, 0.5, 0.7], "mat": "eye", "tags": ["eye"]},
+  {"kind": "bar", "a": [-2.6, 1, 13.4], "b": [-2.2, 3.4, 10], "t": 1.2, "mat": "hide", "tags": ["swing"]},
+  {"kind": "bar", "a": [2.6, 1, 13.4], "b": [2.2, 3.6, 10.6], "t": 1.2, "mat": "hide", "tags": ["arm"]},
+  {"kind": "bar", "a": [2, -2, 10.4], "b": [2, 9, 12.4], "t": 1.1, "mat": "iron", "tags": ["weapon"]},
+  {"kind": "box", "at": [2, 9, 11.6], "size": [1.6, 1.2, 1.6], "mat": "stone_hi", "tags": ["weapon", "mouth"]},
+  {"kind": "ball", "at": [2, 10.6, 12.4], "size": [1.4, 1.1, 1.2], "mat": "muzzle", "tags": ["hidden", "muzzle", "weapon"]}
+ ],
+ "pieces": [],
+ "poses": {
+  "aim": [
+   [{"tag": "weapon", "move": [0, -0.6, 1.6]}, {"tag": "arm", "move": [0, 0, 1.2]}],
+   [{"tag": "weapon", "move": [0, -0.6, 2.4]}, {"tag": "arm", "move": [0, 0, 2]}, {"tag": "eye", "lit": true}]
+  ]
+ }
+}

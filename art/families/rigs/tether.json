@@ -1,0 +1,44 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "tether", "name": "Tether", "faction": "fleet", "class": "light", "block": "V", "move": "tracks", "seed": 780120,
+ "notes": "Half-track recovery vehicle: wheels at the front, skirted track at the rear, a short A-frame crane and cable drum at the back (the only ally with an A-frame triangle), twin autocannon on a ring mount over the cab. Special = tow: the A-frame lowers (f0-f1), a 1-texel cyan cable line (f2-f3). Move: the rear track crawls; the front wheels turn (spokes).",
+ "hull": [
+  {"kind": "prism", "at": [-7.8, 9.5, 3], "axis": "x", "center": true, "n": 10, "r": 3, "h": 2.6, "mat": "wheel"},
+  {"kind": "prism", "at": [7.8, 9.5, 3], "axis": "x", "center": true, "n": 10, "r": 3, "h": 2.6, "mat": "wheel"},
+  {"kind": "box", "at": [-8, -6, 0], "size": [3.4, 17, 3.4], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}},
+  {"kind": "box", "at": [8, -6, 0], "size": [3.4, 17, 3.4], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}},
+  {"kind": "box", "at": [-8.4, -6, 1.6], "size": [2.4, 16, 2.6], "mat": "dark", "chamfer": {"top": 0.6}, "tags": ["skirt"]},
+  {"kind": "box", "at": [8.4, -6, 1.6], "size": [2.4, 16, 2.6], "mat": "dark", "chamfer": {"top": 0.6}, "tags": ["skirt"]},
+  {"kind": "box", "at": [0, 7.5, 2], "size": [13, 13, 7.4], "mat": "plate", "chamfer": {"front": 2.6, "sides": 1}},
+  {"kind": "box", "at": [0, -6.5, 2], "size": [14, 15, 4], "mat": "plate", "chamfer": {"back": 1, "sides": 0.6}},
+  {"kind": "box", "at": [0, 13.9, 6.2], "size": [9, 0.7, 1.4], "mat": "glass"},
+  {"kind": "prism", "at": [0, -10.5, 7.4], "axis": "x", "center": true, "n": 8, "r": 1.6, "h": 7, "mat": "dark"},
+  {"kind": "bar", "a": [-5, -13.5, 6], "b": [0, -12, 14], "t": 1.3, "mat": "barrel", "tags": ["aframe"]},
+  {"kind": "bar", "a": [5, -13.5, 6], "b": [0, -12, 14], "t": 1.3, "mat": "barrel", "tags": ["aframe"]},
+  {"kind": "box", "at": [0, -12.2, 13.2], "size": [1.4, 1.4, 1], "mat": "light", "tags": ["aframe"]},
+  {"kind": "bar", "a": [0, -12.4, 13.4], "b": [0, -22, 1], "t": 0.9, "mat": "light", "tags": ["hidden", "cable"]},
+  {"kind": "bar", "a": [-6.4, -14, 6.2], "b": [6.4, -14, 6.2], "t": 0.9, "tz": 0.6, "mat": "light"},
+  {"kind": "prism", "at": [0, 7, 9.4], "n": 8, "r": 3.8, "h": 0.6, "mat": "dark"}
+ ],
+ "art": {
+  "kind": "turret", "pivot": [0, 7, 10], "muzzle": [0, 10.5, 1.1], "seat": 0,
+  "prims": [
+   {"kind": "prism", "at": [0, 0, 0], "n": 8, "r": 3.6, "r2": 3, "h": 1.8, "mat": "turret"},
+   {"kind": "bar", "a": [-1, 1.5, 1.1], "b": [-1, 10, 1.1], "t": 1.1, "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "bar", "a": [1, 1.5, 1.1], "b": [1, 10, 1.1], "t": 1.1, "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 2.8, 0.9], "size": [3.6, 0.6, 0.7], "mat": "glass"},
+   {"kind": "ball", "at": [0, 11, 1.1], "size": [1.8, 1.3, 1.6], "mat": "muzzle", "tags": ["hidden", "muzzle"]}
+  ]
+ },
+ "pieces": [],
+ "poses": {
+  "special": [
+   [{"tag": "aframe", "axis": "x", "deg": 18, "pivot": [0, -13.5, 6]}],
+   [{"tag": "aframe", "axis": "x", "deg": 34, "pivot": [0, -13.5, 6]}],
+   [{"tag": "aframe", "axis": "x", "deg": 34, "pivot": [0, -13.5, 6]}, {"tag": "cable", "show": true, "axis": "x", "deg": 34, "pivot": [0, -13.5, 6]}],
+   [{"tag": "aframe", "axis": "x", "deg": 34, "pivot": [0, -13.5, 6]}, {"tag": "cable", "show": true, "lit": true, "axis": "x", "deg": 34, "pivot": [0, -13.5, 6]}],
+   [{"tag": "aframe", "axis": "x", "deg": 34, "pivot": [0, -13.5, 6]}],
+   [{"tag": "aframe", "axis": "x", "deg": 18, "pivot": [0, -13.5, 6]}]
+  ]
+ }
+}

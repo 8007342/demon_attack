@@ -1,0 +1,27 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "skiff", "name": "Skiff", "faction": "fleet", "class": "heavy", "block": "V", "move": "hover", "seed": 780310,
+ "notes": "Hover tank, the Carrier sector's Fleet slot: a flat lozenge with chamfered corners and no wheels or tracks, four cyan hover pads underneath, floating 2 texels over its shadow; a low turret with a short wide barrel. Move = a 2-frame 1-texel hover bob (f0-f1, repeated); the hull never banks.",
+ "hull": [
+  {"kind": "box", "at": [0, 0, 0], "size": [17, 25, 0.2], "mat": "shadow", "chamfer": {"vert": 4}, "tags": ["shadow"]},
+  {"kind": "box", "at": [-6, -12.4, 1.2], "size": [3.4, 2.4, 1], "mat": "light"},
+  {"kind": "box", "at": [6, -12.4, 1.2], "size": [3.4, 2.4, 1], "mat": "light"},
+  {"kind": "box", "at": [-6, 12.4, 1.2], "size": [3.4, 2.4, 1], "mat": "light"},
+  {"kind": "box", "at": [6, 12.4, 1.2], "size": [3.4, 2.4, 1], "mat": "light"},
+  {"kind": "box", "at": [0, 0, 2.3], "size": [18, 27, 4], "mat": "plate", "chamfer": {"vert": 4.2, "top": 1, "bottom": 1}},
+  {"kind": "bar", "a": [-4.5, 12.9, 5.4], "b": [4.5, 12.9, 5.4], "t": 1, "tz": 0.7, "mat": "light"},
+  {"kind": "prism", "at": [0, 2, 6.3], "n": 8, "r": 4.6, "h": 0.6, "mat": "dark"}
+ ],
+ "art": {
+  "kind": "turret", "pivot": [0, 2, 6.9], "muzzle": [0, 11.4, 1.1], "seat": 0,
+  "prims": [
+   {"kind": "prism", "at": [0, 0, 0], "n": 8, "r": 4.6, "r2": 3.8, "h": 2.2, "mat": "turret"},
+   {"kind": "bar", "a": [0, 3, 1.1], "b": [0, 10, 1.1], "t": 2.8, "tz": 2, "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 10, 0], "size": [3.6, 1.4, 2.2], "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 3.6, 1.4], "size": [4, 0.6, 0.7], "mat": "glass"},
+   {"kind": "ball", "at": [0, 11.8, 1.1], "size": [2.4, 1.6, 2], "mat": "muzzle", "tags": ["hidden", "muzzle"]}
+  ]
+ },
+ "pieces": [],
+ "poses": {}
+}

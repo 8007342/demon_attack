@@ -1,0 +1,43 @@
+{
+ "schema": "demon-attack.ground-blocks/v1",
+ "name": "ground-infantry",
+ "faction": "mixed",
+ "notes": "Infantry of both armies (I-blocks, 32 x 24 cells, three authored headings mirrored): Ground Fleet rifle and rocket troopers seen from behind, and the Undercroft Host infantry side-on (Rubblings, Ashlar Guard, Corbel Brutes, Knell-bearers, Prior). Replaces the rows planned for ground-troops.json (gargoyle-ground-army 2.4); ground-troops.png keeps its rows for the v4 painter until the runtime switches. Palettes and materials come from ground-fleet.json and ground-host.json; the Host stone follows the sector. Every value is an input to tools/ground_blocks (Go).",
+ "atlas": {"file": "assets/images/ground-blocks/ground-infantry-{sector}.png", "cell": [32, 24], "columns": 20},
+ "camera": {"elevation_deg": 30, "light": [-0.55, 0.75, 0.35], "lmin": -0.3, "lmax": 0.95},
+ "headings": [],
+ "palettes": {"fleet": "ground-fleet.json", "host": "ground-host.json"},
+ "sectors": {
+  "krybor": {"units": ["trooper-rifle", "trooper-rocket", "rubbling", "ashlar"]},
+  "ringfall": {"units": ["trooper-rifle", "trooper-rocket", "rubbling", "ashlar", "corbel"]},
+  "ember": {"units": ["trooper-rifle", "trooper-rocket", "rubbling", "ashlar", "corbel", "knell"]},
+  "hollow": {"units": ["trooper-rifle", "trooper-rocket", "rubbling", "ashlar", "corbel", "knell", "prior"]},
+  "carrier": {"units": ["trooper-rifle", "trooper-rocket", "ashlar", "corbel", "knell", "prior"]}
+ },
+ "style_prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, plain flat background, night lighting",
+ "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+ "heading_phrases": {"000": "seen from behind walking away", "045": "seen from behind and to the side", "090": "seen from the side facing right", "135": "turned toward the viewer"},
+ "sprite": {
+  "workflows": {"hero": "art/workflows/sprites/variant-qwen-edit.json", "heading": "art/workflows/sprites/heading-qwen-edit.json", "matte": "art/workflows/sprites/matte-birefnet-batch.json", "inbetween": "art/workflows/sprites/inbetween-wan-vace.json"},
+  "reference": {"scale": 8, "key": "#FF00FF"},
+  "candidates": 4
+ },
+ "seed_range": [760000, 789999],
+ "runs": "art/families/ground-infantry-runs.json",
+ "units": [
+  {"id": "trooper-rifle", "name": "Rifle trooper", "faction": "fleet", "block": "I", "role": "Fleet rifle infantry", "rig": "rigs/trooper-rifle.json", "headings": [0, 45, 90],
+   "subject": "a soldier in a light exoskeleton frame seen from behind, squared helmet with a visor strip, flat shoulder plates, battery backpack, long straight rifle", "sectors": {}, "seed": 780400, "hero": {"heading": 0, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["walk.h000", "flourish"]},
+  {"id": "trooper-rocket", "name": "Rocket trooper", "faction": "fleet", "block": "I", "role": "Fleet rocket infantry", "rig": "rigs/trooper-rocket.json", "headings": [0, 45, 90],
+   "subject": "the same soldier carrying a box shaped rocket launcher on the shoulder", "sectors": {}, "seed": 780410, "hero": {"heading": 0, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["walk.h000"]},
+  {"id": "rubbling", "name": "Rubbling", "faction": "host", "block": "I", "role": "swarm screen infantry (pack)", "rig": "rigs/rubbling.json", "headings": [45, 90, 135],
+   "subject": "a tiny hunched gargoyle imp made of rough rubble stone, oversized curled ram horns, no helmet, stubby folded bat-wing nubs, holding a stone chisel spear low, glowing ember eyes", "sectors": {}, "seed": 760100, "hero": {"heading": 90, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["walk.h090", "arrive"]},
+  {"id": "ashlar", "name": "Ashlar Guard", "faction": "host", "block": "I", "role": "line rifle infantry (refresh of demon-grunt)", "rig": "rigs/ashlar.json", "headings": [45, 90, 135],
+   "subject": "a cartoon gargoyle demon soldier marching, stone hide, curled horns through a dented iron helmet, glowing ember eyes, webbing and an armour vest, folded bat wings, a long spout-mouthed musket", "sectors": {}, "seed": 760110, "hero": {"heading": 90, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["walk.h090", "aim"], "phase": 1},
+  {"id": "corbel", "name": "Corbel Brute", "faction": "host", "block": "I", "role": "anti-armour rockets (refresh of demon-rocketeer)", "rig": "rigs/corbel.json", "headings": [45, 90, 135],
+   "subject": "a stocky gargoyle demon brute with a stone yoke on its shoulders like a corbel bracket, ram horns, a launcher tube ending in a squat carved face", "sectors": {}, "seed": 760120, "hero": {"heading": 90, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["walk.h090"]},
+  {"id": "knell", "name": "Knell-bearer", "faction": "host", "block": "I", "role": "rally support", "rig": "rigs/knell.json", "headings": [45, 90, 135],
+   "subject": "a tall hooded gargoyle bell-ringer, dark cloth hood over stone face, wooden yoke across the shoulders with a heavy iron bell hanging at one end, thin gold rim on the bell, glowing ember eyes", "sectors": {}, "seed": 760130, "hero": {"heading": 90, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["walk.h090"]},
+  {"id": "prior", "name": "Prior", "faction": "host", "block": "I", "role": "field officer", "rig": "rigs/prior.json", "headings": [45, 90, 135],
+   "subject": "a gargoyle officer in a long iron-banded coat, crown of three small gilded stone pinnacles between curled horns, a tall banner pole rising from its back with a tattered bat-wing membrane pennant and a gilded pinnacle tip, holding a staff with a lantern mouth", "sectors": {}, "seed": 760140, "hero": {"heading": 90, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["walk.h090"]}
+ ]
+}

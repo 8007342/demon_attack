@@ -1,0 +1,33 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "lodestar", "name": "Lodestar", "faction": "fleet", "class": "heavy", "block": "V", "move": "tracks", "seed": 780200,
+ "notes": "Main battle tank, the hero. Low faceted wedge hull with a long chamfered glacis; skirts hide the tracks but a 2-texel sliver; flat hexagonal turret set forward; long rail barrel with two coil rings and a square muzzle brake; short sensor mast at the turret rear.",
+ "hull": [
+  {"kind": "box", "at": [-9.5, 0, 0], "size": [4, 33, 3.4], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}, "piece": "track"},
+  {"kind": "box", "at": [9.5, 0, 0], "size": [4, 33, 3.4], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}, "piece": "track"},
+  {"kind": "box", "at": [0, 0, 1.2], "size": [17, 34, 5.6], "mat": "plate", "chamfer": {"front": 4.2, "back": 1.6, "sides": 1}, "piece": "hull"},
+  {"kind": "box", "at": [-10.2, 0, 1.6], "size": [3, 31, 3], "mat": "dark", "chamfer": {"top": 0.8, "vfront": 1.2}, "tags": ["skirt"], "piece": "skirt"},
+  {"kind": "box", "at": [10.2, 0, 1.6], "size": [3, 31, 3], "mat": "dark", "chamfer": {"top": 0.8, "vfront": 1.2}, "tags": ["skirt"], "piece": "skirt"},
+  {"kind": "bar", "a": [-6.5, 15.3, 5.2], "b": [6.5, 15.3, 5.2], "t": 1.1, "mat": "light"},
+  {"kind": "box", "at": [0, -12.5, 6.8], "size": [11, 6, 0.9], "mat": "dark", "chamfer": {"top": 0.4}},
+  {"kind": "bar", "a": [-11.2, -14.5, 4.4], "b": [-11.2, 13.5, 4.4], "t": 0.9, "tz": 0.6, "mat": "light"},
+  {"kind": "bar", "a": [11.2, -14.5, 4.4], "b": [11.2, 13.5, 4.4], "t": 0.9, "tz": 0.6, "mat": "light"},
+  {"kind": "prism", "at": [0, 3, 6.8], "n": 8, "r": 5.6, "h": 1, "mat": "dark"}
+ ],
+ "art": {
+  "kind": "turret", "pivot": [0, 3, 7.8], "muzzle": [0, 19, 1.6], "seat": 0,
+  "prims": [
+   {"kind": "prism", "at": [0, -0.6, 0], "n": 6, "r": 6.6, "r2": 5.4, "h": 3, "rot": 0, "mat": "turret", "piece": "turret"},
+   {"kind": "bar", "a": [0, 4, 1.6], "b": [0, 16.5, 1.6], "t": 2, "mat": "barrel", "tags": ["barrel"], "piece": "turret"},
+   {"kind": "prism", "at": [0, 9, 1.6], "axis": "y", "center": true, "n": 6, "r": 1.6, "h": 1, "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "prism", "at": [0, 12.5, 1.6], "axis": "y", "center": true, "n": 6, "r": 1.6, "h": 1, "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 17, 0.4], "size": [3, 2, 2.4], "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 4.6, 1.5], "size": [5, 0.8, 0.9], "mat": "glass"},
+   {"kind": "bar", "a": [-2.4, -4, 2.8], "b": [-2.4, -4, 8], "t": 1.1, "mat": "barrel"},
+   {"kind": "box", "at": [-2.4, -4, 8], "size": [1.2, 1.2, 1], "mat": "light"},
+   {"kind": "ball", "at": [0, 19.5, 1.6], "size": [2.2, 1.6, 2.2], "mat": "muzzle", "tags": ["hidden", "muzzle"]}
+  ]
+ },
+ "pieces": [],
+ "poses": {}
+}
