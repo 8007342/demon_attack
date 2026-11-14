@@ -10,22 +10,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "9f41c375ebdbfecdbacf694d34d0efe9e7c51795c5d042d92a400cb6cc15f42b",
+    "sha256": "65a38f039cdbf53d991ad034a701e064baa79d5f5b106481c57d05ac536fd378",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "ce6c4d5e64e4535d7dd9bf82380107c51f97edae4700c0e2792107658102667b",
+    "sha256": "02221b90603d2c07e226f809f5d468cecf3cabbf78d3338b3c35f5e031e172d4",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -41,22 +38,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "a1bd06f0673d35048fcc710b97ce99d40a9a2436a871a4bfca85b3e4ad816487",
+    "sha256": "974eb7707ec7f5f1a54bbb56571259a801c6f783595449494f69ac98e696e010",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "1df4933926bc67335ee2dc898f5e0419d48ee773e32fd26ff8d89fbc45a9c8e8",
+    "sha256": "326e1447701b6897a6b51eda7553adcb4422c048e0ea576abdb49a9154a7d1b9",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -72,22 +66,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "b49259888a1c7e13b9ff5f65b5cbd86cd8520251023c8f701ae5ba9cbb18cbd4",
+    "sha256": "4b4e9c06661a409ec56b1819f3ab6678bfa46fd7b2cfc35076b0b292a66d1d55",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "533d653ed5b3e5effdf97b5d1fc9a657a018e1386804fed05a29543625f544a8",
+    "sha256": "9ac6ff43219ece4e42936cd2ae7f8619d8316777d8813525708d6619ee598a1e",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -103,22 +94,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "862103ec11700d68e78a065993e0c1c2106ba89a8573401a4978136a7259a49f",
+    "sha256": "1361c21ac79804c6e0949c80ee480ef55808e7f67975929dcdd69acb512a3dd7",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "44f1d402e42167b859a6b1bf0d3614bab06c49fea025b1a74d34046102a214f6",
+    "sha256": "21c0242f2990b1f9649fe2d0765fd2491c138bacdc155bbd8b62f96f8eff3c16",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -134,22 +122,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "c1b8dc5b75389fed74b542c1ffa207e7572ceab2f398da4e581a80f8f1e4dd0d",
+    "sha256": "8952debdbb30e56f57b0c8a61c02800c12e71be73d7873aa140d732de45fec18",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "f2366a67b8e4020ff0c7594cd42721504e4c3ab6b5287f4cab514fc637c73d89",
+    "sha256": "bbedec90da50bab5031424622cb94ff307700cf8491da66521c2deac77b3c228",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -165,22 +150,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "8b9a81565b411598980497a488f90e57a8ce006469d1999061930e748a351e5e",
+    "sha256": "38c3bc34bdad45774a7c2b75c26a7a06e0dfa116e84aa53341712de9c067d72d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "1b7257169e9b7cafe7b0d62074f25bec62b688c1ab954462b66b64c89e4efbcf",
+    "sha256": "c1ab3a0d0d9d6c9ad485030924c6692ece66ee202b54afbdb442bebfa190c538",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -196,22 +178,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "a70724835a83983645f10e152c61333a444822be3e4c2adbd4772677a4641eb8",
+    "sha256": "738a4563696de18433f09e8a3d2a7f66ca6660ba8b02e6f9a8aecb91e8e841a0",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "578e74ab59e9ff86a8173feac9c5917cdaaa16e19cf3b6b63f18f4d814e6ad8d",
+    "sha256": "f51091edb22c7cc6528b89126b093792d7addc671bd88789669306c19ee89b63",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -227,22 +206,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "45853a87a4ae110f0cac75145aaca4edd24779e7fda336fc524863afdcd87f24",
+    "sha256": "84a9291889ab7e387340d8ced5e4a9519278095969bcfec42527143537a1987e",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "e432ab4f9f0afd959fe76eab66e210a07c65f5206e14319bdf28f083fc466084",
+    "sha256": "07f020d55aff3aeb33e69651a5f2176f16b80a6c0021c40b1b6a4de387fbf5e0",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -258,22 +234,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "eeb87c135e26707836cd2bb9a3a9fa37aea1e65e1628b833ae9cabb604f6f90d",
+    "sha256": "86d2c8a43dba75a67a31e9127f680ff8e89d9a2bb8111ebd011d52f2efcb153d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "3015719875f1a1d6d049ddc6dbd453adbf007251bf106bd05c281f01324ab4ae",
+    "sha256": "296822c4c1818479ca5e079884aa5b1ce9fa275deb78d6bd40cf3b9ace2dc030",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -289,22 +262,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "4e0149cffae29949afdcee23f6f6fbdd338aa13dfae8b82d62c29d3b34bf809a",
+    "sha256": "10e38848a540eba8477786a2cba900a95d1b908a612c7512b8fe9a548f620c5d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "d0c13861b5640049b6a8d1509d2340bdb2f7d2dc9e7d43d7c92dca3b3f577313",
+    "sha256": "85d8446016de174ea04bbc02634ab68cb4f5d982db3f8f37043678a2265a0a95",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -320,22 +290,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "066aed096e9c5816281b7e2bcb64a59057fd7e25cf85394c5a6db7391f1105a2",
+    "sha256": "a0f2a7aca18278b55c032ba0b67b615661de9c2eb287085c8a68a4c97486e82c",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "6ef79ce3dc06f9965bbf554dc9ca5cda52d2315644370bed1b25075cbe40ff60",
+    "sha256": "602b000a4390a69accb36e6cd528677fba0ec4ed476c484cc6f74e3c3c490519",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -351,22 +318,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "4fe47dd86aa18f82a2b9ad9728e362b721a365154dbb19d621bc3cb3dec5a66d",
+    "sha256": "15171d7faaf202f191d411d052e44194474387e64a7ba7dc737bf209dac142f6",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "8b14dfc23dcfe4297752a9c9a23b724681ee57b6d2e6a6ba12979b84b41e5fc8",
+    "sha256": "b297c9d60955dc1f18b14de64f484ff6782be6722b9068ee521c5a34999ac2ab",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -382,22 +346,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "8f89083f51dcb46c3d8926ebf84832caecae55ce53076f2bc8872cee5422dff9",
+    "sha256": "c595f5c68c7bd90c45580c592c4d745ec842bf8500b9d3a3842335bb6a462ede",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "8106d3e7fbdf622af679923b046562c970e6cdd895dab9cee764bc765e85c5d5",
+    "sha256": "5ad0a059c97ec479386c8c67915eaf147a6ad6f5211e344a489a21d2b7b93c82",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -413,22 +374,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "959d3c613c600a43aef7dafd69123d7c21d1083a56713742a74ac7813b5d0972",
+    "sha256": "24731ec9d3dbfe87035705e94e149d313c766405ae78eab521cb9a6baf6a7fe7",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "72a666902c84c42f93f996096707d232067549dd8445e9578dea50ea082d1624",
+    "sha256": "b15a8c7c655b4e56ea443c355a337039eb2463ae5617198191813b34cbd95f8f",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -444,22 +402,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "db41e1a1a26e5d10b01ff61070420e7aa4187dd15d3511f28ac0db6399fdc67f",
+    "sha256": "59ff7faca420bc720e6a5c5dda5a12f5598e2f3adced8ec3b0edabb442174251",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "0104b475b3c2ea09ea8f85fd516358b2e2862bc6e92f4cacf45e072dde40ff1e",
+    "sha256": "d8d771d60554b3ff235200734c11dafedd1fc76e784c034d4e595ec49508fbd9",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -475,22 +430,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "ba597d7310d0d63842f2003b748fc60a8b49828502b6ed1feea083c7c8f78a7a",
+    "sha256": "ff9ab27daa9fd21539a9d4d3ef7e9bf5b5a229f700b465c1fd180300d3b8516d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "518375d7e74bb7fb36e8f5cde182c109340474dd7b01cd10bcb974f4e7f2011a",
+    "sha256": "339b0148e3f7d5cdec5c29bb5dedf00eec83d82d69ccef46f4e8f0dae3466252",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -506,22 +458,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "cf292d16328de3db07dd35222ff3319369448da39214af5d494facce3ec662da",
+    "sha256": "acf2a83a7ee8deb0ac93197654a4cb67411a140ecab52c514677cccfd6f86dfd",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "ad85d0d7fe31b46ca8e9763c41af63309e86ce1f763ddd2f1c08a9e78976e975",
+    "sha256": "5e7d158101263df027ed946fe98fbc35dc842b5eb01ca89e3debab6a368372ca",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -537,22 +486,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "aadc5babc3753047fc3fbbac893b5272543e4c344315a1a1055de0a02848f903",
+    "sha256": "1948e481e684525f8a953a75cc3abb65e60e25ee27f5d0d6e4df38359b72b5e2",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "3dd495c69958f593942c5f47cd28a81a43f9c6423ca0efba9c175d604c703385",
+    "sha256": "3e6ddee503ba676f884d252067cc5dfd27d82f99100c597dbf40d3f3f1104a69",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -568,22 +514,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "1d99f916ebd192f4d20825d8d856d39239c3ca114b2f378be00f73931233a30e",
+    "sha256": "0825eab95ff97853676c136dc6229ace26f2b66c8814f9b57faa62554b8f418e",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "6b47e501f3f5bd4947c1d66ebc94c675a49daaac06c90bbd6145e1431bd3cc8f",
+    "sha256": "bf23ad9638944bca485a5347b77c5930908b9d9084312222895aa81a42fcf7d6",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -599,22 +542,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "0afbfeb9754c46749c8de657b57e014ae985d7323f4040b22fe65a16efd211f8",
+    "sha256": "26f52464e5d8da1100aa9ea1baba3e4e4bc34f2a91ea8b65c10887ef1cc8e864",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "12cd827da6e00c8c907e9518c404718ac07729c2998ff28a4e5b8d01ed6e2d58",
+    "sha256": "40b0b53f136a9512d391ee5abe4971abae0568d97d7e726e7cbc087d73ab8eb6",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -630,22 +570,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "0d2683683b5e864967a8e4c305e39e5e3a39a7526ad4a1a2d6c879f0e090c046",
+    "sha256": "3cf9de490353037652f75968e843c5d8d0d0a5dbf65c750d36cc7a80a4924d22",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "55825131dbe8cebc58516c14d40e4cea87d40dd5167973cbd012e7d0d51e17c6",
+    "sha256": "a85d4b4f2fa2a37c311b06420e9daf66c4cba4cabe44eaab89a16bef5d285645",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -661,22 +598,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "79831c2fadaa5a59f12f3791905e4f18feb04dc71df88273c3255cc5ce03d4d3",
+    "sha256": "1b2cf216ca112194e77929fc075307c070778381800fbf337f15f04d516700da",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "639af7bc918082d65872de1765bf0548c599b1001c8a680d1b44c47132fe5450",
+    "sha256": "412b01e1033bc652b9ce5084d1ed6cfe45ee372c13c39881b21f60ed8f8ca3c4",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -692,22 +626,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "0060155b11c5bfc4a88774fdb8e036e90cdc08758f2a54769f65346f5d8c594c",
+    "sha256": "ae0429398cb9b2eed11907b03d1c155bacffb554d32446d073fd84875dded111",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "29dbcee941036175dc7c66d185180a6cc42030dd55fb75d8f578b4ba05252c8c",
+    "sha256": "d04b55903ac9a7072ecdfa01c7f28faf0e757e120f5e1b097f77249605f7b7d1",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -723,22 +654,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "0e6bb42a7e64a0cb3ece849ef1a6813f918925344967d1b7ca8806163411f66b",
+    "sha256": "6d6a9a18bae07fb74b52e95a4d8806b66508199b2b63d497a3bf26cad467a61e",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "35c5bb706af9422de7b16dcd931d7d98ff5d414d4d8243757b0fc537e45c9627",
+    "sha256": "47ecc0bf9aa92d1e455857af9e6fb1c9d2e7f5f07e0fbb42c89e231fbf7270a0",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -754,22 +682,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "635d725c65673a76961201065dbe2635c518f25a5e55dc348954178b548444af",
+    "sha256": "c0a3602305ea2d77e49da96916d4f4c49996af40d7056c3729a8601d23cb6c5c",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "ac45af82d5f4f08f8f0deb9ff1c66e6fc36e4cda505306d02d4eac2b086452b4",
+    "sha256": "e379af375b90e780b9615df1b25ff734c09a63291c3bb9c291fe5284d0524d8b",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -785,22 +710,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "e8fae8929f011d8c14dfa202c8a29e0636389d8c861589510cc01802fd76ee46",
+    "sha256": "2b20a578076c0a50fc06370fffdbeaefe5fcdc06a0e0f09ee9b8803d507bd050",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "202e9b43fe1f5470ae1cfbfca9ade38252ef7047ca6d84292644237f0808b48e",
+    "sha256": "9d06cafa2be235e69f59f6fd6513586d6d956c2498825f0c0454d78005fec471",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -816,22 +738,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "75af40f8a86a551efae97b3bd2df325a8d2cd0c1651d9a3ccf219909a98d872f",
+    "sha256": "16c3d24989a797efa40f9ab9a88d5b91278bd5494f517d3daae18c9119b0524e",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "9ecaa7a456ea0649d473d95edd96a3d24819c740684ec859797d976eea9c7d46",
+    "sha256": "b70284462fd018787bf586d594f63ea39bbc174d4f1aca5c5ebe9bfb241c1e2a",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -847,22 +766,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "8cd126ae2d54ad06e201118f5e578cb0037f922a6750f3aa4f4e848b88988908",
+    "sha256": "67bd60f25bedbff455b346bdd6f7d02cfc2fe6071a485126052f252e1df06269",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "6128b146e7f3d1892ba34c77c83e2caf192ec9609bf109598e0b205d258451ce",
+    "sha256": "079333302d3d9de81bca77ad0180102fbe2b0c26ef8ef2988161b6eae7151a61",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -878,22 +794,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "840e20687499405736dd33eb8046dc3f0d458180eab991b5f94cb212f9274f75",
+    "sha256": "092d3cc6ec661946b8c2ed63f38f7ba4d04876090b3eca1d37316dac223decf3",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "e58015caec5970a692677fd3bdfcd9c78e15fc552e2a1496e2f1955616949867",
+    "sha256": "26120dd16f610e0bf2eaea1279339fd4010ecfa48c165e29eebf3f5930bf5bb2",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -909,22 +822,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "1ec3b099564d2788a6472749fabb5e1f1e9d3221f0a74d6b6ee49d7e7f3a0a3a",
+    "sha256": "b545dd755e80ba5ba62b547c9c25c0534e9ba7043064d2fcfb100bca53476a23",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "69496dbc8b7f496fbb05b6b381dd124bc889b189a8475e44fa4ac961688ff351",
+    "sha256": "859b485eb506a71a65d178cabde11d1fba96221f8376208a4b5a9f533673c645",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -940,22 +850,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "226b8fdc17f27360c580d9f4bc1ebfaabee1095ab1a8b05f7db8704a781bee31",
+    "sha256": "3ef59773f6db6c9256adfd40a5e31a565cf4f916575909dfff1ec9aefe9816a0",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "77a7146bdd4269e5594a35807ed09934c35238e8f7edcc1939dad78d9f2b1903",
+    "sha256": "1609fc6bf45173768c177635c7d07ff021535bf49be075950f7194bd08b7510f",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -971,22 +878,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "1ff186af822b28b144fe3f965da83fa186630206317d786d6398b9b4771be70b",
+    "sha256": "d302b2c95fa0210d1957f98097eefc6285ccec9a6082c3b53a68286924bf0ca9",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "906d024aa730d6e795432ae8c7de0394de95e3178f9bcdef75fde4b18a57bf75",
+    "sha256": "f31542d8e4d901beb7fa298b3c6595ce0bd5c36a773c6f256bc85951089979c1",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1002,22 +906,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "d1de001244f8725500a5f740c05530b945eb5d37fe58d9b21e74b4e44e7076ba",
+    "sha256": "bcbfb8f47677ce25daf60e27ba62de305377f483f9311b05afff1f84e12efc1a",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "6a3840fff14c9b0b7c9a73c56f0e636c384a1151308854ba751d1bf91d322c63",
+    "sha256": "53a1da2abd8677b4a49b5ac446c59e626d54a95874f90c7da6686ba577d8e64c",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1033,22 +934,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "54b48cc97ce9cddc637d1c7422bc9fcaed1bf78a9a3c4562920a0c7d73efd013",
+    "sha256": "c2de6212456f3fe5f3334d1ee05f0128de18622a85f6ac4010cc6d5f1d4aecb4",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "9b39c9441f338f72385d454cc6c8fc4606e2e913b2212d8b20ccc5170b6193f0",
+    "sha256": "1ef7c72aef8f73caf291938c29e4107fa5e89c910e3158f42c89ba2df6f4b427",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1064,22 +962,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "1f6ef71c7ce7e5fea4511dcf08e2004bc2049c3355e78449c57416ea5e3fac36",
+    "sha256": "8a64cdd2c4d14c94c1bdd7772a20c26e8c29bdfceb2d580bc9024521506d55a0",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "c7ef5dfeb2691f0c7c0a9060d573482b948044d52e382108828454d5d543557b",
+    "sha256": "f70742dd5172e666532c76675af431c7cbc22a6099e19f3134665c2289fb0663",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1095,22 +990,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "63009af1f95836b158a0942ecab1c1a331f88095d8e89cd9742eb28707092a0d",
+    "sha256": "42209a4cb01063bb7b19815510260ee6a14566e86d62cb35ca7d66271886046c",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "2fc68ed93175c90860b0cc54a09efa8f87576521895b0d5581922f4f3e1b6403",
+    "sha256": "bb0c513226c8e6ade0abf6694784f05c7dc19ebe02e81f8ca79c1bdd03b63555",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1126,22 +1018,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "da883fe4fe8c59cff4fa600133f1026eec1d5853ee292d9d341d5bd301839e84",
+    "sha256": "abbe8a6d621ca21b873d15604c71d572503e32e9d99bbabcfe9555a3ddd3259b",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "9c2bc3f8d28edafb1a50f1bfe9c0c901b1f1c68450e51a35743a2e54a8974802",
+    "sha256": "62277b95856533cf3316c22b9e938b8bd24cc38b72ad45cade420bfe43cbeb58",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1157,22 +1046,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "08d887f002bed141b4ea8c5255f6b5ac9e4afc498d1ea73687067c1d90e4a5d9",
+    "sha256": "3db7e746c2ed03a52f25d8212e3f3ad34e98777b196e816b7c5ddb8a1a0e6389",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "37c07a62a5f0e1815ef55d4e007fae9f9dbe53c72c45844b4813b5de881e320e",
+    "sha256": "3ba1bf0b51e6e5be05707ee84b2f23787cf6f286d2cfaf330d15e40f4600e990",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1188,22 +1074,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "06fe23cd3f8ee60fa4235c8ad6edbd047a5d59d720b1dc39084c98b0c99f5b5f",
+    "sha256": "923b4457aab3ba9bc46077de1fcc56dbe92af2ceff4e037cccf98f60990fc55a",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "c6b621cc46ce33390686b556529afc553bec5a78edf67f4a3854598458bf091f",
+    "sha256": "51b21ba6b80b3fe7ab1df2267b198eb957821470ce95a96c0cfe7536f5fdfd5f",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1219,22 +1102,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "a170fc5969c217e50eda10274597f6cf2fd619e2e9e3b47713fafcd3eddce868",
+    "sha256": "1d55ac552747b1eb686688633ca7b373959d12274e49380d4c58a63fd6faf766",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "31e25d87188d9017d7a918d1d075a643dfc1df06d6c4fdf80eb92dc28d0f08ba",
+    "sha256": "b9ed9ec67742123b43d5b5f365d263854ab25e4a4c37957a03d188f4ffa6a49d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1250,22 +1130,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "6818feb9b416b978a9091978a0882330e16bd49e58ad132d27b1968282b8b6dd",
+    "sha256": "433d6a20522ffd48b96467fc01dab441711c87ce40516581d7dc4a10bc0b8c34",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "ebdf188eee202a147843d463013ae90c8ffba8b195d8a4c226150197e900e29c",
+    "sha256": "82cb77677c7c1363f9f4833f8a24e8de814d1cc8bfecd1161d6124aedcff963d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1281,22 +1158,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "0894c336a648d3537bbd5cf1dfacf7a683e720f1a8fecd0d38924985fd6bccb6",
+    "sha256": "99707e31a213c54da049ba3eb8606a8133d6500575e53167493059050d51178a",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "79ea46ceddcd33cab76a0462e2e441d8de2470093761e48570b26838f771adda",
+    "sha256": "78af759d3bc0a16e7f7645fe0e4300f3da81e3133e53f2305fffbbb13197bdbc",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1312,22 +1186,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "d1b3df28563e0e2c8152b27b32d25d5417a31a562c985464e7fbb94a7ecc3629",
+    "sha256": "6a88b3083a09e8e74f25a2d841a9c54ed8b731555442132dd8924f1afc2cbd89",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "8648d4e11928cb36057c6e80da93aee1f7c3fc81371f507976be10bac15e2d35",
+    "sha256": "fcf6a4456e928dc9b8ba8f8538b9d451bd2b93b93bbc5dff4992f8c9e4bcf026",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1343,22 +1214,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "d201a05e005b1a0cafef65a5fc97da07a153d7acdd1c0ee12e4695cdeda72001",
+    "sha256": "9068408971036047f65460eba37f8e02d991bbd43f9ba063968457ed7948593a",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "f2546fd5731e86376be564c67cef379a0b26e773df159165356e0d26c2213bd0",
+    "sha256": "01a1ca1cfac9669f7ecf701c5c56674da013a8e7bed23f308abc8d5f6167fd9e",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1374,22 +1242,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "74544a1c6c4f31efe37016e30afea41c65e5f59aab8edca1e6f342c9eb028150",
+    "sha256": "ceb4fa506911ffc4b30e38e8b7a46718af275bdb1f53e614b1cf8d69f2127c19",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "39f0dc935ff1d3e4476f7d15d06e5ece7ffea986fc22df9f0ebc93223bd30c98",
+    "sha256": "93de8e1d2a9d64461d291937569061585c9b50e831407672860389c09f29ee87",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1405,22 +1270,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "206c31e3888bafc9f0100e6978a5f523fe66d3bd8187c90e34463e4b85ff88ca",
+    "sha256": "b09f074177b171566f7daeabbd531aa6101546c9baf1a08d494fcd124b83d863",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "1668f181c6ad531cebdfbba9fdc12e76099130c13d6cd1347366c63b7ec1e280",
+    "sha256": "5bd070c48c7af9abb2d03bfb7a7aa899a2a3c3ad2822aea871447128fe555c95",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1436,22 +1298,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "2eb33ba31c6f51b4412b704e05480d43ef67a4a01ba7800f71b70823234920d7",
+    "sha256": "7aac4efa54a3140b99f40b9662fb814aef0994f08d360a2afceae633e64efeb2",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "1ac23749cb972e8fd08f75fde75bb5a1cca49f438b6150fb3965855d411aa83d",
+    "sha256": "8bae93004cecd3c7b67a97ec67789c0263aba982aa3d818c5d8ef493483a9f89",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1467,22 +1326,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "fd50b099238fc570b0cb8933bc0e1db71ea116320276a8795ecfe812d5ec5b84",
+    "sha256": "ab7064b1f9a838f12e9a1c01ff6f9e3770a70003fe115f04a646f29db17a698c",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "c3ba74aadd6b7483c137642fe121b0ec1adbf667320a029da81dc97b87daf03d",
+    "sha256": "f84db5cc5fa6bcad4db8f548b6a1360b02260f09108db8cf775c0385d48b9c88",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1498,22 +1354,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "0c0ca94c5ab3c0ac5c540fbcb67697f7c1bbfb7681d4646ee594d18b45484905",
+    "sha256": "0074f3a4e1d47973afd30acd54d2226efee4cfcbb3f441a26fa6ed5d53f3ffe7",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "de0a2a2425153c9951b07c3538159ad019f35f2faa88014f2ecad2ac839a758f",
+    "sha256": "a165d73e73445acceeda3fbde2ba9e762d951c29ed235d456ebc408f9610a6fe",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1529,22 +1382,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "ab29190648b3a843e75407a9d7fc88f7e0a8770237913dafc1155ecdd8618263",
+    "sha256": "ad40f7480bbf237bfa18074f59082fad9ae80ba20a4cb68cba6741246c7d9a25",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "49530dcb4a12b25355c10fe51ed6cd2465d4decdc7e4939968f3a69314c7060d",
+    "sha256": "ee820cddcad3350ed4af5a8c4d70bf4ef000465bc3c0412e5e4df61bab783424",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1560,22 +1410,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "895bf466d1d1bf226702801d24bc1fcf9fb96de6addbdbaf86bedb555e1196a9",
+    "sha256": "f9c7e24cbebd249b1db8445b77bc6ae6acf1ef0ca65505ce5dac240fe0710d90",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "650c1c53961386f34318b1982fe812318ffdd4b32ed17dd8a9b9a01dc4b0efa7",
+    "sha256": "eeb570f54bd431c0fddb4acbd71ff9157fe5d15409d0716137911f17968852c5",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1591,22 +1438,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "bb3cb1038c61b36ba27ce01b973d3cd5e1728af6212ae01dfb27006165a34a2d",
+    "sha256": "db4adbad111bdf10f8522e479017d03636acf79dbe080bbe500a843687941c9d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "5d4caba237ea7bc3421adc9164827248d0f466597da8ace0d14a3f57aaac0270",
+    "sha256": "f777d757a10eb3870e0c6638d8292625202a470d6e9014f0c7a9272202393d22",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1622,22 +1466,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "17d059f9f2f7b7a78ea314c9b2c95a34b60c90273d20b3c29fa56cca04503a8c",
+    "sha256": "26312454ce37443fe630726b018e34963a72269d34c1548c0d4b052c77aa068f",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "f07ac8ce75695eaa53d4c77724f39afa7894b1543ceaf17d479cd0226af3101d",
+    "sha256": "5a5326f73a3d3d161c0db8b9bd341720f6aa8e15fe542a6e41d7fcef85bf9a0e",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1653,22 +1494,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "545191cb05b21115ed657aad83547987003700a419361a8d4775c3bc4e79efc1",
+    "sha256": "ae39ac1f5949839f2cefab4fc0e29a60b21a549ac912c6e4c73559ea04cae4e4",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "53def0a5bcbb1f88b2b47c884bda4140f69504c738358f7ffbaf87295bfa8fa5",
+    "sha256": "bbd3f04c66c34ebbee676c2248e3de329a2b9f72b450e07db0edd1f1e47802e8",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1684,22 +1522,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "085ff466b5899bbb098c3603cd6cb65e8e63bab40b20fddb41ca92668ab08259",
+    "sha256": "1ec1e9789990c73ddb8a6dd21b7be5568f1c36dc269af79cee2bc818ee5a9843",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "e5d657978b269205f48249d9599e9edd2cf0ee5f523dab7bcc97aea8f2e7c5ad",
+    "sha256": "2d1dfbf09615d204a8f2b61b508c1fe04bff5a8e73473e7d4caaf76ec3c96b80",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1715,22 +1550,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "ca48d6cce2634d5134f10a94fa55ec340664d85c8148d79f7b918a429cbe5f74",
+    "sha256": "f4126c618a02104ed387c5567457224e3ad408394088bb3e6b1896da8db09ac1",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "c80cafafe3d19399b03cf91ccaeef563f69e2d3f4e99de31e1ffa4318af3d2fa",
+    "sha256": "37657899091d91601a6b225a91dfe3c61be84dcdcd8e86e90f8746f919592bd3",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1746,22 +1578,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "49decf949cda42a3bd08ffac062726323104d352b29e7ca0e2e26bd9b836e614",
+    "sha256": "6f46c3dfb6f34d864aa86e0a042378ec33bdfb704bbe4bc01401fe54bccf3711",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "5c14e7620b8635f7036ddbe498a0eb5e346ba58f56aaaded50f13742b71f3569",
+    "sha256": "51d00e7bf33d351fc7bc49b87cc8bef80199a63d5db416dcd60d925e0824c178",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1777,22 +1606,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "eccffac4e057c97247bac9d5104eb9be3845c823dafc3cc4ed2b3a6ca924a8cd",
+    "sha256": "26846bcd51bb3204a460154b5a0e237dc25d67e62a7c5b346af12203632cb200",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "23cf00bc2468f39aa4c0d69f49f6a01adef399b4db8e25000e67ed2f3beee2ea",
+    "sha256": "7a6b797268535261661a50acb412ae8691160af04c1ab4e0717de9216228e08d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1808,22 +1634,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "0db144f763651315e6d71e6d00930f8a76fde787fdb25c18c1f433bdbd6ea8d2",
+    "sha256": "315ac713f3420dc77449bd3e61553142bdf55d0dbc9a2d3499c941c87c89d172",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "1d9602d83a7dcd5bbb67d57f2f4c7276af89747889145d72c5697684981732ee",
+    "sha256": "c1c3eff0a8f032e748b55203796602859381e8d6245d2a5b09a5dbacf91899e6",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1839,22 +1662,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "34ffe5e697f59de43a93a2c8c9e70c54c659ab1537422430b06739456254bcb2",
+    "sha256": "a598061096a3116a67d3b9cd4c4188bf9f49cb09e0004736d3677e336fc16997",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "41af41cde53e025cf135d4ae8bdc3898dc195868ae274bbdcf540edf32666374",
+    "sha256": "2ce9ac0ad1831ceb1e22f03abe902277eb53a6d6fa1396a419e87687c5bb6e5d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -1874,10 +1694,12 @@
   "outputs": [
    {
     "file": "0000_00001_.png",
-    "sha256": "35dea78cac06aa897eabf8a18001b30a3a8cb02f87acc34ae1157109fb685d5d",
+    "sha256": "92cd29703af01722989632ce8f46886d6bd13cd5601618a5ec309a39db473c9e",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    }
   ]
@@ -1897,10 +1719,12 @@
   "outputs": [
    {
     "file": "0000_00001_.png",
-    "sha256": "9485686d16c6d13e35614ba1c3a046ace7f84e3f329515dcefab7bd2565cc53e",
+    "sha256": "7c5e526b2f72cb84b50e2723df67c0eade20c09b7fa8103621888c25380a8cd3",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    }
   ]
@@ -1920,10 +1744,12 @@
   "outputs": [
    {
     "file": "0000_00001_.png",
-    "sha256": "68504143f7e02a6e460a4025bccae0c29851f65d43fda51058fc7151357effcc",
+    "sha256": "22746435540e2cdc79db71a20d8cadf2d27f083a404be7c8d216548037405d02",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    }
   ]
@@ -1943,10 +1769,12 @@
   "outputs": [
    {
     "file": "0000_00001_.png",
-    "sha256": "9cc618b31b5d1d6134e195dbee2547f0be331484d81492f3dc40b94e7c9a1d2e",
+    "sha256": "dba923d4d46edfff6b75e41975c4924c7a7ad86f636707a6be22a83948dad8e0",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    }
   ]
@@ -1966,10 +1794,12 @@
   "outputs": [
    {
     "file": "0000_00001_.png",
-    "sha256": "6393294f2b654a6d311144414a2c5c4c9a91e03610c03790dbab7979de7ad19d",
+    "sha256": "3a088a162d4084419bae6405a9689b54d9c4dc41a47aa49f5a296bc94926a8e4",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    }
   ]
@@ -1985,22 +1815,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "4f2646431b01747799f24e087d78a14c17f63f2cfea6cb2cf025ef1f5e7e60e4",
+    "sha256": "065b734b08a7460751d9def3f0f88a13ae96b2c83bb8f5beccdc08db7df460a2",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "e4d2822e48f8b57e4c9d31713f529545d41db5ed66c8176c7fcbcb7242ec6c6a",
+    "sha256": "bc8573ddb80c7e8dd480625cb03542342aef3af6408bb1b7ab19a7cdc176e827",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2016,22 +1843,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "b6ab0c5fa2de7b37619335c04eeb5b37bdc4d2f6574dfae1f19abbefc265f254",
+    "sha256": "e27b0c19b469fc58332d041810a3e5d3aad627959b616d076c4fdac1dd6fe328",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "6dc4a5373e1e2649c2428fb03bf3787a9cf1c895d868eff0e3c0c0d43c3f5664",
+    "sha256": "1758164694860e85f69b4ccad04553dfa30a136e25e2b696044aa75e62e3ce15",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2047,22 +1871,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "7bc9cfd495e769fb18bb9cf4a6b6afae516380273ad5346746c8e65fb26b6fcb",
+    "sha256": "547063853d338eda766eadb0b25b5b58dc53e2b2a59b0596b1f0a2a61e11ddf9",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "1b2efec352f0b65b264038a40f22dc91599e5cd4fe7c138bc35f72e9ab8da81d",
+    "sha256": "d48b3ceacbd0b4094b9f60e9c779db36520bbc26b54b07cf612158b8dc258154",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2078,22 +1899,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "8802ea48f318b1e0ef69386d656aa4f967057bc8633494c90f434e796fdebc40",
+    "sha256": "b3a0b7468f4ac6cb94c213572728b5e12ef3e61eb8c3284328776925c23bcdbe",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "7151e94616f490a0b2a268f49e6cea47ab4c743403d1c01b53e62d25aa5990a5",
+    "sha256": "290d249ef4ca1787a8a7278c7d1ced69c2950db40328ff002d2d78e5cb75eb71",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2109,22 +1927,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "5d2439f72381b7fde51c3fb69b36aa71a05346a798ed0dae5a89961a86c4e189",
+    "sha256": "79a69e7ff34457a2eba2f8dbc4d734be47929b1a3f613dc351722925fbd54813",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "4dc9519cb2c3fea1f0cf68b1a8c063111540b32e63a175fb37dbfa141d2622fd",
+    "sha256": "c22a9167c293c1c1130377f99a682602da7990c019df6896affed0acf6222204",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2140,22 +1955,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "d948372d0c61bc84a67267bedf552446a08a92f462b71434848b208e97496949",
+    "sha256": "f43e82a69555ed5195e2d357b3b7844674ff3c39206c1f5ff86eef63cf0d7fcb",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "ad08faacdc0bbecc5dbb9f6df21f92070f2f790cf7c3ca042ac0d2c8dddec6b9",
+    "sha256": "c0e5316f2d2b7fbcc365601e20687feeb4bbcd116815deab3b1b6f929297ef90",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2171,22 +1983,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "200fd50a6c647296d701404e4b464e9457e6b7ed6d7c9400d1774a0db0f38b78",
+    "sha256": "838183490270699481bbb0a8476f239a62100aa092588fa263d57b4bd6402efa",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "abb77594a8f996561b37a075e04aa7170f464a7f59ca8d1594bac016c101a278",
+    "sha256": "dd7a380258c3b799eed5f01ad24bf23522ccb9e9a1c27236013e1aa76ead7bfa",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2202,22 +2011,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "587d7fe8bda9c70c0e93be82bc3a6ae93a3907e164d0bd09625a39a963947d46",
+    "sha256": "f0d2c1abecc57dd4feb66dc723959ef5cb056c9150340ea7c7820df5248be465",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "abdc5d0d87bf055154a66af560605da662ddbf50ba8c4a95dffefec514ea779c",
+    "sha256": "0bf8a80a8104cb846a79a3a5cfe4f1bf153b922862ae9e6a1747f25fe2c67c96",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2233,22 +2039,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "9065e2424980975a95dec783d8676a8c397a7418768f754e0870b26f3eab6873",
+    "sha256": "38dd668f0ec77060ec7ec47c265e6000b9cc740ab25c96de7be50e0a8e3e8929",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "8af1af1fd6095868757df48ae866abdbe8dc22c8293773420166cea5f4970f06",
+    "sha256": "7916d66cf64470a88accbe1f6f187f2859c7e8693445ffe88f511fd870dd47d4",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2264,22 +2067,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "d5654fb3fbe2e9cf5c904048cfec69ef263d51c9abd526542107cbdd52899095",
+    "sha256": "30f507b0213f92d02f2bcefc52a8a9ba7aaa87e1ef6945d55e19401ba59cca84",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "ef215721ef7585332e8a10ddd78f353203ac5838b7706ebbfb7dd63b36ae7d7f",
+    "sha256": "a1454b38d75fa7723338382178d669f387f5451be9492bb05b7810b315e66bba",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2295,22 +2095,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "b231f54fe70312316c782d601248a6909eeaa23b500b95f0e78ab8c97b41c97c",
+    "sha256": "4e2637a57031c65d23c34d418379e191c088dbb1a6baed027946a8b8fba27aab",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "6700a5f224219d1888b940ede65075a0b3d6c7ed11ea0fcfc8e9e9ae7424257a",
+    "sha256": "664d94edb3be10024f2afe7e5672a30b184627d58882bb738c506e6cbc050685",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2326,22 +2123,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "dc6de31c994e86bd30d89620b53c311437d4673f890bd084098c4cc8e69713aa",
+    "sha256": "3e7609b1976078e39f601a26ec6e0ee2304f493a803c31a60d9ccab190db34c5",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "fc5e9376a23312a0c3a6df742132e66262bb3da12f5d283941970114f33f7cb0",
+    "sha256": "200be651a32b71bf920917bf4c2fec85b4a96226f040b550a1c84ab1308d743d",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2357,22 +2151,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "dac58816010f2559ea33de25f5dd395a8c3f3d332803d100e403e7eac55ba06c",
+    "sha256": "0607d4b239c5b4cabc06fa6add75bc281d8e4ea56308acece54e59c344994ca8",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "400fd7e89ece810fefc472c9e7ace41aff4a5f642e5edb9451a5feb630c3de4d",
+    "sha256": "d8bd5973af9e1f9245c4f8acb0e6a6adac577b88df2dc9c4a98b59473f0b9938",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2388,22 +2179,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "5908f26a3b5ee1b145e553a7788da54a0f8bf1710ff7fdbd26d6ed27b041adcb",
+    "sha256": "b5b8274d472961604c947df4d1ef57169be7f4a929f2539f63d8e474ffb95881",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "f04d1568c30db8991c7a33a82a3d8b960378880eedd830acd135b8eea2819e97",
+    "sha256": "033cb8ae34d7c73383465f7aa03d35565a776c77edab63c96986b8afb6c1f3d4",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]
@@ -2419,22 +2207,19 @@
   "outputs": [
    {
     "file": "10_00001_.png",
-    "sha256": "e88df1fa20e5643f407f8332679fc6404e44d272d31d6a9f071bd458718d5ce7",
+    "sha256": "139e2b3c9d1649b81ae14b4fd4a9f791206a062b6b2e579cb752bd08b76d3d78",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "qwen_image_edit_2511_fp8mixed.safetensors",
+     "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "qwen_image_vae.safetensors",
+     "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"
     ]
    },
    {
     "file": "12_00001_.png",
-    "sha256": "82f7b2fec59bfc22fecd6a8e8e7ac8c1629b7ecf4c5adc6aab472db272fec622",
+    "sha256": "37edc69f4cee8d529965bb245bf330f79faf958f3305ded632a8aed10ed190c7",
     "models": [
-     "sd_xl_base_1.0.safetensors",
-     "pixel-art-xl.safetensors",
-     "layer_xl_transparent_conv.safetensors",
-     "vae_transparent_decoder.safetensors"
+     "model.safetensors"
     ]
    }
   ]

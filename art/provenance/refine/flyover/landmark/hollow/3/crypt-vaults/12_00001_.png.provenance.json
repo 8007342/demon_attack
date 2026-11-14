@@ -1,0 +1,61 @@
+{
+ "schema": "tillandsias.provenance/v1",
+ "tool": "studio.run_workflow",
+ "parents": [
+  "34be531007b8aac2d126b85b9f8e7790270b7573ec36010be3c86236fc494eaf"
+ ],
+ "pipelineVersion": "56.11.10.1",
+ "engine": {
+  "name": "comfyui",
+  "ref": "v0.40.0",
+  "sha": "3541246a9c997f4b8c32f9f88f3c985d02021c79",
+  "nodes": [
+   {
+    "name": "ComfyUI-GGUF",
+    "commit": "6ea2651e7df66d7585f6ffee804b20e92fb38b8a"
+   },
+   {
+    "name": "ComfyUI-layerdiffuse",
+    "commit": "b4f6a9e024064a4489f774a8b91049ce0b606ea3"
+   },
+   {
+    "name": "ComfyUI_BiRefNet_ll",
+    "commit": "5443a2aa16cfbd98bb2f7dcc8bdcb70439e08529"
+   },
+   {
+    "name": "ComfyUI_IPAdapter_plus",
+    "commit": "a0f451a5113cf9becb0847b92884cb10cbdec0ef"
+   }
+  ]
+ },
+ "workflow": {
+  "path": "art/workflows/comms/matte-birefnet.json",
+  "sha256": "a7af87294f9b51da57cb6b305a538bd655bb8d8b7945c7edc781a2bf3f386fba"
+ },
+ "models": [
+  {
+   "file": "model.safetensors",
+   "repo": "ZhengPeng7/BiRefNet",
+   "revision": "e2bf8e4460fc8fa32bba5ea4d94b3233d367b0e4",
+   "sha256": "9ab37426bf4de0567af6b5d21b16151357149139362e6e8992021b8ce356a154",
+   "licence": "mit",
+   "consent": null
+  }
+ ],
+ "cli": null,
+ "inputs": [
+  {
+   "name": "input",
+   "path": "/work/tmp/imagegen/studio/st-1794624411874-276/0000_00001_.png",
+   "sha256": "448518c3daec10d6899581c492d57beb8899349116f7d97da22c82180526bb7e"
+  }
+ ],
+ "seed": 1950332438,
+ "prompt": "",
+ "negative_prompt": "",
+ "tier": null,
+ "placement": "cuda",
+ "family": null,
+ "output_sha256": "2de9985e114373f91a86d0c563b7d1f2b637edbd0256d5f226385abd6ffa9eb7",
+ "at": "2026-11-14T02:47:18Z"
+}

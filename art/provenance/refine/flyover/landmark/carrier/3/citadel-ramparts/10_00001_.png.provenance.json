@@ -1,0 +1,83 @@
+{
+ "schema": "tillandsias.provenance/v1",
+ "tool": "studio.run_workflow",
+ "parents": [],
+ "pipelineVersion": "56.11.10.1",
+ "engine": {
+  "name": "comfyui",
+  "ref": "v0.40.0",
+  "sha": "3541246a9c997f4b8c32f9f88f3c985d02021c79",
+  "nodes": [
+   {
+    "name": "ComfyUI-GGUF",
+    "commit": "6ea2651e7df66d7585f6ffee804b20e92fb38b8a"
+   },
+   {
+    "name": "ComfyUI-layerdiffuse",
+    "commit": "b4f6a9e024064a4489f774a8b91049ce0b606ea3"
+   },
+   {
+    "name": "ComfyUI_BiRefNet_ll",
+    "commit": "5443a2aa16cfbd98bb2f7dcc8bdcb70439e08529"
+   },
+   {
+    "name": "ComfyUI_IPAdapter_plus",
+    "commit": "a0f451a5113cf9becb0847b92884cb10cbdec0ef"
+   }
+  ]
+ },
+ "workflow": {
+  "path": "art/workflows/sprites/variant-qwen-edit.json",
+  "sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5"
+ },
+ "models": [
+  {
+   "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+   "repo": "Comfy-Org/Qwen-Image-Edit",
+   "revision": "f68ace85e60b4a02a323e394253731947657b7d2",
+   "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+   "licence": "apache-2.0",
+   "consent": null
+  },
+  {
+   "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+   "repo": "Comfy-Org/Qwen-Image",
+   "revision": "1f12b17be14c89b026c51a91d67c32f84bb047bc",
+   "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+   "licence": "apache-2.0",
+   "consent": null
+  },
+  {
+   "file": "qwen_image_vae.safetensors",
+   "repo": "Comfy-Org/Qwen-Image",
+   "revision": "1f12b17be14c89b026c51a91d67c32f84bb047bc",
+   "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+   "licence": "apache-2.0",
+   "consent": null
+  },
+  {
+   "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+   "repo": "lightx2v/Qwen-Image-Edit-2511-Lightning",
+   "revision": "107d238d68b8387e32843d0b4a2e24ceb0d3ad86",
+   "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+   "licence": "apache-2.0",
+   "consent": null
+  }
+ ],
+ "cli": null,
+ "inputs": [
+  {
+   "name": "input",
+   "path": "/work/tmp/imagegen/refine/flyover/landmark__carrier__3__citadel-ramparts.png",
+   "sha256": "fd330f605f05e171a909582ea5e133f0e061b5be501737dc08c0b60e754f325f"
+  }
+ ],
+ "seed": 642084,
+ "prompt": "Refine this into a final high-resolution landmark structure: the same dense nested demonic citadel ramparts with many sharp spires and a dark gate, same oblique three-quarter top-down view, same framing, pose, proportions and same dark night palette. Crisp, detailed hand-painted pixel art, clean readable silhouette, sharp surface detail, small night-lit highlights. Plain flat light grey background, no shadow, no text.",
+ "negative_prompt": "blurry, smooth 3d render, photo, text, watermark, extra limbs, different pose, cropped, background scenery",
+ "tier": null,
+ "placement": "cuda",
+ "family": null,
+ "output_sha256": "e8a733f8897a384d7d1d6f1249f17272fb0f90344ec6af500dc62b84f7101055",
+ "at": "2026-11-14T02:55:43Z"
+}
