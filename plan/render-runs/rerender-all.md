@@ -87,7 +87,7 @@ current families instead.
   - [ ] creatures and sentinels (`art/families/sprites`)
   - [ ] carrier (`art/families/carrier`)
   - [ ] ground forces (`art/families/ground-forces.json`)
-  - [ ] ground troops (`art/families/ground-troops.json`)
+  - [x] ground troops (`art/families/ground-troops.json`)
   - [ ] flyover vegetation (`art/families/flyover-vegetation.json`)
   - [ ] widescreen backdrops (`art/families/widescreen-backdrops.json`)
 - [ ] 4.2 Contact sheets and operator acceptance per family; repack atlases; run the gallery and tests.
@@ -102,6 +102,8 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 01:05 UTC: refinement pass, ground troops: 4 refined (ally-rifle reuses pilot seed 641300; ally-rocket 641310, demon-grunt 641320, demon-rocketeer 641330), 0 rerolls, 0 failures. demon-tank skipped (waits for the gargoyle-army redesign). Sources of record are bbox-fitted area downscales of the matted masters; the atlas rebuilds through `go run . offline` (frames stay procedural, the refined source drives the shading texture). Sheet: art/contact/refine-ground-troops.png. Analyze clean, 384 tests pass.
 
 - 2026-11-14 01:50 UTC: operator approved the refinement pilot; batch started on work/refinement-pass with a babysitter.
   Asked the host for ETAs on #1092/#1091/#1093 and which fixes can land without a relaunch.
