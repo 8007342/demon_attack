@@ -47,14 +47,15 @@ checking in every 20–30 min (ScheduleWakeup).
 
 ## 2. Campaign music (one epic composition that builds across waves and levels; radio must never duck it): `art/music/batch-2026-11-12.json` (host GPU studio)
 
-- [ ] 2.0 **Blocked:** wait for the host tray rebuild with tillandsias PR #1091
-      (AudioAdjustVolume pinned). The host session will report when it's ready. Don't bypass admission.
+- [x] 2.0 Host tray 56.11.14.3 loaded after the forge relaunch (lane current); AudioAdjustVolume admitted.
       - Log 2026-11-14: guides re-rendered (level-1 sha matches take 1). First headroom job (level-1-take-2,
         ticket tk-1794632349091-428592-0) still refused `node_not_pinned: AudioAdjustVolume`. The forge lane is
         stale (runs 56.11.10.1; 56.11.14.3 installed), so the new allowlist is not loaded. Relaunch the forge, then
         retry. Record: plan/render-runs/campaign-batch-2026-11-12/level-1-take-2-refusal.json. No bypass, nothing rendered.
 - [x] 2.1 level-1-take-1 (first 96-bar candidate, retained).
-- [ ] 2.2 The other 26 requests through the headroom workflows, in batch order:
+- [ ] 2.2 The other 26 requests through the headroom workflows, in batch order (20/26 done 2026-11-14, all peaks -7 to -14 dBFS;
+      receipts `*-host.json`, ingested by music-bank jobs). **Blocked: level-4 and level-5 takes (6)** output NaN
+      (all samples -32768) on their full-length guides; shorter cuts render. See `campaign-batch-2026-11-12/levels-4-5-nan.json`.
       level-1 takes 2–3; level-2..5 takes 1–3; bridges 1-2, 2-3, 3-4, 4-5 (takes 1–2); ending takes 1–2; menu takes 1–2.
       Keep every ticket and result receipt, then run the matching music-bank job.
 - [ ] 2.3 Check clipping, guide alignment and continuity; operator selects accepted takes.
@@ -103,6 +104,10 @@ current families instead.
       `openspec/changes/ground-terrain-interaction`.
 
 ## Log
+
+- 2026-11-14 06:15 UTC: relaunch verified (lane 56.11.14.3 current). Guides re-rendered (bit-identical), studio started,
+  20 music takes rendered with 8 dB headroom and checkpointed (level 1-3, all bridges, ending, menu). Level 4/5 guides
+  give NaN audio at full length; diagnostics in levels-4-5-nan.json. Operator choice needed on the fix.
 
 - 2026-11-14 00:20 UTC: operator rule: music volume is constant; radio never ducks it. Radio airtime target cut to
   about 15-25 percent so the score carries the game.
