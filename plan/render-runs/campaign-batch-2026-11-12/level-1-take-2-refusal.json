@@ -1,0 +1,15 @@
+{
+  "schema": "demon-attack.backend-blocker/v1",
+  "id": "level-1-take-2",
+  "ticket": "tk-1794632349091-428592-0",
+  "status": "failed",
+  "workflow": "art/workflows/music/campaign-a2a-headroom.json",
+  "queued_at": 1794632349,
+  "finished_at": 1794632350,
+  "error": "node_not_pinned: AudioAdjustVolume is not a ComfyUI core node nor one of a pinned custom-node package (images/imagegen-studio/node-classes.tsv); the studio runs only pinned nodes",
+  "lane_version": {"status": "stale", "lane": "56.11.10.1+f77ee2962f00674c", "installed": "56.11.14.3+6f716174847e4005",
+    "why": "this lane runs 56.11.10.1 but 56.11.14.3 is installed; its tools keep the old code until the forge is relaunched"},
+  "guides": "Re-rendered to /work/tmp/imagegen/campaign-guides/ (ephemeral); level-1.flac sha256 135a3810... matches take 1's provenance",
+  "bypass_used": false,
+  "next": "Relaunch the forge so the lane loads 56.11.14.3, then retry level-1-take-2 and continue batch order"
+}

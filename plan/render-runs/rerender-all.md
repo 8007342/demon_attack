@@ -54,6 +54,10 @@ checking in every 20–30 min (ScheduleWakeup).
       level-1 takes 2–3; level-2..5 takes 1–3; bridges 1-2, 2-3, 3-4, 4-5 (takes 1–2); ending takes 1–2; menu takes 1–2.
       Keep every ticket and result receipt, then run the matching music-bank job.
 - [ ] 2.3 Check clipping, guide alignment and continuity; operator selects accepted takes.
+      - Log 2026-11-14: guides re-rendered (level-1 sha matches take 1). First headroom job (level-1-take-2,
+        ticket tk-1794632349091-428592-0) still refused `node_not_pinned: AudioAdjustVolume`. The forge lane is
+        stale (runs 56.11.10.1; 56.11.14.3 installed), so the new allowlist is not loaded. Relaunch the forge, then
+        retry. Record: plan/render-runs/campaign-batch-2026-11-12/level-1-take-2-refusal.json. No bypass, nothing rendered.
 
 ## 3. Flyover and landmark rerolls (host GPU studio)
 
