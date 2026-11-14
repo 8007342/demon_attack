@@ -66,6 +66,9 @@ flutter:
     - assets/credits.json
     - assets/images/
     - assets/images/widescreen/
+  # Fog layers (lib/game/atmosphere.dart); tiles take over without it.
+  shaders:
+    - shaders/fog.frag
 
   # To add assets to your application, add an assets section, like this:
   # assets:
