@@ -18,6 +18,8 @@
 /// ```
 library;
 
+import 'dart:math' as math;
+
 import 'model.dart';
 
 /// Stable event names.
@@ -269,11 +271,31 @@ abstract final class GameEventNames {
   static const groundPressureRising = 'groundPressureRising';
   static const groundPressureHigh = 'groundPressureHigh';
 
+  /// The fight below changed (comms-middle-ground): data `engaged` (live
+  /// demon ground units), `threats` (units predicted to break through or
+  /// through), `over` (the ship flies within [GameEventObserver.coverReach]
+  /// of a foe, with hysteresis) and `shipX`. Emitted only when one of
+  /// `engaged > 0`, `threats > 0` or `over` changes, so radio lines about
+  /// air cover and the ground battle can match the gameplay below.
+  static const groundPicture = 'groundPicture';
+
+  /// A ground unit is expected to fire at the player in `fireIn` seconds
+  /// (at most [GameEventObserver.fireForecast]; data x): the same
+  /// prediction the model uses for [groundFirePrep], read earlier and soft
+  /// (a launch may slip or never come). Once per shot. The radio keeps the
+  /// channel clear for the coming must-play warning (comms-middle-ground).
+  static const groundFireForecast = 'groundFireForecast';
+
   // --- Derived by GameEventObserver (data `variant`, `payload`, `clock`).
 
   /// A sector entrance (variant: sector 1-5).
   static const sectorStart = 'sectorStart';
   static const waveStart = 'waveStart';
+
+  /// The model's raw `incoming` (wave pressure), forwarded by name: the
+  /// next wave appears on the horizon while this one is down to its last
+  /// few.
+  static const incoming = 'incoming';
   static const reinforcements = 'reinforcements';
   static const sentinelIncoming = 'sentinelIncoming';
   static const sentinelDive = 'sentinelDive';
@@ -448,6 +470,15 @@ class GameEventObserver {
   static const pressureCalm = .3, pressureRising = .45, pressureHigh = .8;
   int _pressureBand = 0;
 
+  /// The ship counts as over the ground battle within this many arena units
+  /// of a live demon ground unit, and leaves it beyond [coverLeave].
+  static const coverReach = 64.0, coverLeave = 90.0;
+  bool _engaged = false, _threats = false, _over = false;
+
+  /// Seconds ahead a ground shot is forecast (`groundFireForecast`).
+  static const fireForecast = 5.0;
+  final _forecast = <(int, int)>{};
+
   /// [routKills] demon kills within [routWindow] seconds read as a rout.
   static const routWindow = 3.0, routKills = 5, routGap = 8.0;
   final _killTimes = <double>[];
@@ -480,6 +511,8 @@ class GameEventObserver {
     _kills = null;
     _lastRout = -100;
     _pressureBand = 0;
+    _engaged = _threats = _over = false;
+    _forecast.clear();
     _seenLarge.clear();
     _seenElite.clear();
     _seenPickups.clear();
@@ -572,6 +605,7 @@ class GameEventObserver {
     _observeKills(emit);
     if (model.combat) _observeCombat(emit);
     _observePowers(emit);
+    _observeGround(emit);
     return _publish(out);
   }
 
@@ -696,6 +730,63 @@ class GameEventObserver {
       }
     }
     _seenPickups.removeWhere((p) => !model.pickups.contains(p));
+  }
+
+  /// The `groundPicture` state: what is fighting below, and whether the
+  /// ship is over it. Read-only, emitted on change.
+  void _observeGround(_Emit emit) {
+    final foes = model.ground.liveUnits.toList();
+    final engaged = model.combat && foes.isNotEmpty;
+    if (engaged) _forecastFire(foes, emit);
+    final threats = engaged && foes.any((u) => u.threatening || u.brokeThrough);
+    var near = double.infinity;
+    for (final u in foes) {
+      final d = (u.x - model.shipX).abs();
+      if (d < near) near = d;
+    }
+    final over = engaged && (_over ? near <= coverLeave : near <= coverReach);
+    if (engaged == _engaged && threats == _threats && over == _over) return;
+    _engaged = engaged;
+    _threats = threats;
+    _over = over;
+    emit(
+      GameEventNames.groundPicture,
+      data: {
+        'engaged': engaged ? foes.length : 0,
+        'threats': foes.where((u) => u.threatening || u.brokeThrough).length,
+        'over': over,
+        'shipX': model.shipX,
+      },
+    );
+  }
+
+  /// The model's own launch prediction (see `_updateGroundFire`), read up
+  /// to [fireForecast] seconds ahead: once per unit and shot.
+  void _forecastFire(List<GroundUnit> foes, _Emit emit) {
+    final rate = model.policy.hostileRate;
+    _forecast.removeWhere((k) => !foes.any((u) => u.id == k.$1));
+    for (final u in foes) {
+      if (u.skirmish ||
+          u.shotsLeft <= 0 ||
+          u.telegraph > 0 ||
+          u.fireWarned ||
+          u.z < GroundTuning.lastFireZ) {
+        continue;
+      }
+      final key = (u.id, u.shotsLeft);
+      if (_forecast.contains(key)) continue;
+      final toRange = u.z > GroundTuning.fireZ
+          ? (u.z - GroundTuning.fireZ) / GroundTuning.approachSpeed
+          : 0.0;
+      final fireIn =
+          (math.max(u.cooldown, toRange) + GroundTuning.telegraph) / rate;
+      if (fireIn > fireForecast) continue;
+      _forecast.add(key);
+      emit(
+        GameEventNames.groundFireForecast,
+        data: {'fireIn': fireIn, 'x': u.x},
+      );
+    }
   }
 
   void _observePowers(_Emit emit) {

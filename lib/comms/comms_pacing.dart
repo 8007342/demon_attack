@@ -5,8 +5,9 @@
 /// [CommsPacing.duty] seconds of speech per second) and a jittered rest
 /// after every line pace ordinary chatter; useful calls may overdraw the
 /// budget a little and wait a shorter rest; the must-play ground-fire
-/// warnings are outside the budget altogether. See
-/// openspec/changes/comms-pacing.
+/// warnings are outside the budget altogether. No line ever cuts another:
+/// every line finishes, then the channel keeps a [CommsPacing.grace] gap.
+/// See openspec/changes/comms-pacing and openspec/changes/comms-middle-ground.
 library;
 
 import 'comms_bank.dart';
@@ -24,28 +25,33 @@ enum CommsClass {
   /// A shield or power-up recommendation while the ship lacks it.
   hint,
 
-  /// Gameplay-critical warnings ([CommsTriggerSpec.urgent]): may cut any
-  /// line except a must-play warning.
+  /// Gameplay-critical warnings ([CommsTriggerSpec.urgent]): first in the
+  /// queue after must-play; they wait for the line on air to finish.
   urgent,
 
-  /// Ground fire at the player: never dropped by the pacing, never cut,
-  /// end-aligned to the launch, outside the airtime budget.
+  /// Ground fire at the player: never dropped by the pacing, end-aligned to
+  /// the launch, outside the airtime budget. When the channel is still busy
+  /// it plays its shortest variant right after the grace gap, even late.
   mustPlay,
 }
 
 class CommsPacing {
   const CommsPacing({
-    this.duty = .16,
-    this.burst = 4,
+    this.duty = .40,
+    this.burst = 6,
     this.debt = 3,
-    this.rest = 3,
-    this.restJitter = 2.5,
-    this.usefulRest = 1,
-    this.usefulRestJitter = .8,
+    this.rest = 1.5,
+    this.restJitter = 1.5,
+    this.usefulRest = .6,
+    this.usefulRestJitter = .6,
+    this.grace = .4,
+    this.urgentTtl = 5,
+    this.fireReserve = 2.1,
+    this.tierDuty = const [1, .6, .85, 1, 1],
     this.flavourTtl = 2.5,
     this.flavourQueue = 2,
     this.hintCooldown = 12,
-    this.hintTtl = 4,
+    this.hintTtl = 9.5,
     this.diveGap = 16,
     this.diveTolerance = .3,
     this.warningWindow = .8,
@@ -58,6 +64,8 @@ class CommsPacing {
   /// sequencing and casting use it.
   static const legacy = CommsPacing(
     duty: double.infinity,
+    grace: .35,
+    fireReserve: 0,
     rest: 0,
     restJitter: 0,
     usefulRest: 0,
@@ -71,6 +79,26 @@ class CommsPacing {
   /// of paced lines in busy combat), the most it can bank, and how far a
   /// useful or hint line may overdraw it.
   final double duty, burst, debt;
+
+  /// Silence after every line before the next one may start (the grace gap
+  /// that lets a line finish cleanly). [CommsDirector.lineGap] defaults to
+  /// it.
+  final double grace;
+
+  /// An untimed urgent warning (shield expiring, breakthrough) waits at
+  /// least this long for the channel, since it no longer cuts in.
+  final double urgentTtl;
+
+  /// Lookahead for ground fire: once a shot is forecast
+  /// (`groundFireForecast`), nothing but a must-play warning may still be
+  /// speaking this many seconds before the expected launch, so the
+  /// warning's full clip fits.
+  final double fireReserve;
+
+  /// The GameFlow rhythm: [duty] scales with the music director's intensity
+  /// tier (`musicIntensity`, index 1 calm .. 4 peril; index 0 before any
+  /// tier is known). Release stretches talk less.
+  final List<double> tierDuty;
 
   /// Silence after a line before the next flavour line: [rest] plus up to
   /// [restJitter] of seeded noise. Useful lines wait [usefulRest] plus up to

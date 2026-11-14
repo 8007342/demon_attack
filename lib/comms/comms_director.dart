@@ -5,11 +5,13 @@
 /// One radio channel with real silence between transmissions
 /// ([CommsPacing]): an airtime budget and a jittered rest pace the chatter,
 /// useful calls and recommendations win over flavour, and a playing line is
-/// never cut, except by a truly gameplay-critical warning
-/// ([CommsTriggerSpec.urgent]) or a must-play ground-fire warning cutting
-/// flavour. Dive calls and ground-fire warnings are scheduled from their
-/// lead events so they END on the dive or the launch. Two-party exchanges
-/// reserve the channel for both turns. The brood gets a fair share of
+/// never cut: it finishes, then a grace gap ([CommsPacing.grace]) follows.
+/// Dive calls and ground-fire warnings are scheduled from their lead events
+/// so they END on the dive or the launch, and nothing starts that would
+/// still be speaking when a known timed call is due (lookahead). Lines
+/// about the fight below are gated by what is true there
+/// ([CommsGroundPicture]). Two-party exchanges reserve the channel for both
+/// turns. The brood gets a fair share of
 /// airtime (a share target and a starvation timer). The regroup
 /// celebration chorus may overlap itself, never another line.
 library;
@@ -18,7 +20,9 @@ import 'dart:math' as math;
 
 import '../game/game_events.dart';
 import 'comms_bank.dart';
+import 'comms_context.dart';
 import 'comms_lineup.dart';
+import 'comms_moments.dart';
 import 'comms_mouth.dart';
 import 'comms_pacing.dart';
 import 'comms_types.dart';
@@ -53,10 +57,19 @@ class CommsMessage {
   final double? endBy;
   double startedAt = double.nan;
   int slot = -1;
+
+  /// Always false since comms-middle-ground (no line cuts another); kept
+  /// for the views and the simulation, which still check it.
   bool interrupted = false;
 
-  /// A recommendation said again after a warning cut it.
-  bool retried = false;
+  /// A timed call that could not end on time because the channel was busy:
+  /// it plays its shortest variant right after the grace gap (must-play
+  /// warnings, and urgent dive calls that still start before the dive).
+  bool late = false;
+
+  /// A linked exchange's opening line stays on screen until its answer can
+  /// be read ([CommsDirector] sets it when the answer starts).
+  double keepUntil = double.negativeInfinity;
 
   /// The other side's answer in a two-party exchange.
   CommsMessage? reply;
@@ -82,7 +95,23 @@ class CommsMessage {
   /// the brood's translation trails its glyphs, so it stays a little longer.
   static const textHold = 2.6, demonTextHold = 3.2;
   double get hold => isDemon ? demonTextHold : textHold;
-  double get endsAt => startedAt + line.duration + hold;
+
+  /// Reading time of a subtitle from its start: [readBase] plus
+  /// [readPerChar] per character of the text (or the SIGINT gloss), at
+  /// most [readCap].
+  static const readBase = .9, readPerChar = .055, readCap = 7.0;
+  static double readingTime(CommsLine line) {
+    final text = line.isGrunt ? (line.gloss ?? '') : (line.text ?? '');
+    return math.min(readCap, readBase + readPerChar * text.length);
+  }
+
+  /// On screen from the start until the later of the clip's end plus its
+  /// [hold] and the reading time (and, for an exchange's opening line,
+  /// until its answer is readable).
+  double get endsAt => math.max(
+    startedAt + math.max(line.duration + hold, readingTime(line)),
+    keepUntil,
+  );
   double get speechEndsAt => startedAt + line.duration;
 
   /// Planned speech window (queued messages: from [readyAt]).
@@ -157,7 +186,7 @@ class CommsDirector {
     math.Random? jitter,
     this.pacing = const CommsPacing(),
     this.maxQueued = 6,
-    this.lineGap = .35,
+    double? lineGap,
     this.demonShare = .4,
     this.starveAfter = 20,
     this.overlapCap = 3,
@@ -172,8 +201,11 @@ class CommsDirector {
     this.onStop,
   }) : random = random ?? math.Random(1982),
        jitter = jitter ?? math.Random(1983),
-       human = human ?? {...commsHintTriggers, ...commsHumanTriggers},
-       demon = demon ?? commsDemonTriggers,
+       lineGap = lineGap ?? pacing.grace,
+       human =
+           human ??
+           commsHumanBank({...commsHintTriggers, ...commsHumanTriggers}),
+       demon = demon ?? commsDemonBank(commsDemonTriggers),
        cast = cast ?? commsCast,
        roster = roster ?? CommsLineup.pick(1982).roster,
        reserve = reserve ?? CommsLineup.pick(1982).members {
@@ -207,9 +239,15 @@ class CommsDirector {
   final CommsPacing pacing;
   final int maxQueued;
 
-  /// Natural pause between two lines on the channel (and an exchange's
-  /// turns).
+  /// The grace gap after every line before the next may start (and between
+  /// an exchange's turns); [CommsPacing.grace] unless given.
   final double lineGap;
+
+  /// What is true about the fight below (gates air-cover and ground lines).
+  final ground = CommsGroundPicture();
+
+  /// The event being handled (line gates read its data).
+  GameEvent? _event;
 
   /// Target share of airtime (seconds of speech) for the brood.
   final double demonShare;
@@ -269,6 +307,13 @@ class CommsDirector {
   /// When the last ordinary dive call was queued.
   double _lastDiveCall = -1e9;
 
+  /// Forecast ground launches (`groundFireForecast`) whose warning is not
+  /// queued yet: the channel stays clear for it ([CommsPacing.fireReserve]).
+  final List<double> expectedFire = [];
+
+  /// The music director's intensity tier (0 unknown, 1 calm .. 4 peril).
+  int tier = 0;
+
   /// The reply an exchange has reserved the channel for.
   CommsMessage? _reserved;
 
@@ -279,11 +324,17 @@ class CommsDirector {
   /// Lines started, for diagnostics and tests.
   final List<String> history = [];
 
-  /// Lines cut short (only by urgent or must-play warnings).
+  /// Lines cut short: always empty since comms-middle-ground (no line cuts
+  /// another); kept for tests and diagnostics.
   final List<String> interruptedLines = [];
 
   /// Ground launches whose warning was already on air (a salvo shares one).
   int coveredLaunches = 0;
+
+  /// Must-play warnings that could not end by their launch because the
+  /// channel was busy (they play their shortest variant after the grace
+  /// gap), and urgent dive calls started late for the same reason.
+  int lateWarnings = 0, lateDiveCalls = 0;
 
   double get demonShareNow {
     final total = humanAirtime + demonAirtime;
@@ -328,6 +379,10 @@ class CommsDirector {
     _budget = pacing.burst;
     _budgetAt = now;
     _lastDiveCall = -1e9;
+    expectedFire.clear();
+    hushUntil = double.negativeInfinity;
+    tier = 0;
+    ground.reset();
     humanAirtime = demonAirtime = 0;
     _lastDemon = now;
     for (final slot in slots) {
@@ -347,9 +402,12 @@ class CommsDirector {
     final dt = now - _budgetAt;
     _budgetAt = now;
     if (dt <= 0) return;
+    final scale = pacing.tierDuty.isEmpty
+        ? 1.0
+        : pacing.tierDuty[tier.clamp(0, pacing.tierDuty.length - 1)];
     _budget = pacing.duty.isInfinite
         ? pacing.burst
-        : math.min(pacing.burst, _budget + dt * pacing.duty);
+        : math.min(pacing.burst, _budget + dt * pacing.duty * scale);
   }
 
   double? _num(Object? v) => v is num ? v.toDouble() : null;
@@ -360,8 +418,93 @@ class CommsDirector {
     now = math.max(now, at);
     _refill();
     _retire();
+    note(event, at);
+    final alias = commsEventAliases[event.name];
+    if (alias != null) event = GameEvent(alias, event.data);
     if (event.name == GameEventNames.sectorStart && event.variant != null) {
       setSector(int.tryParse(event.variant!) ?? sector, at);
+    }
+    _event = event;
+    try {
+      _handle(event, at);
+    } finally {
+      _event = null;
+    }
+  }
+
+  /// Until when the radio is hushed (see [hush]).
+  double hushUntil = double.negativeInfinity;
+  bool get hushed => now < hushUntil;
+
+  /// Holds flavour, useful, recommendation and briefing lines for [seconds]
+  /// from [at] (default now), e.g. during a silent tip interlude: they stay
+  /// queued and may still start up to [CommsPacing.flavourTtl] after the
+  /// hush ends (or by their own expiry, if later). Must-play ground-fire
+  /// warnings and urgent warnings still play. A later hush extends an
+  /// earlier one; [seconds] 0 or less ends it.
+  void hush(double seconds, {double? at}) {
+    final from = at ?? now;
+    hushUntil = seconds <= 0
+        ? double.negativeInfinity
+        : math.max(hushUntil, from + seconds);
+  }
+
+  /// [hush] taking a [Duration].
+  void hushFor(Duration duration, {double? at}) =>
+      hush(duration.inMicroseconds / 1e6, at: at);
+
+  /// Queues one chosen bank [line] (e.g. the transition's radio card)
+  /// through the normal pacing: it plays once the channel is free, after
+  /// the grace gap, as a useful line that may wait up to [ttl] seconds.
+  /// [spec] is the trigger the line belongs to (looked up in the banks when
+  /// omitted). Cooldowns and chance do not apply. Returns the queued
+  /// message, or null when the speaker is not in the cast.
+  CommsMessage? offer(
+    CommsLine line, {
+    CommsTriggerSpec? spec,
+    double? at,
+    double ttl = 6,
+  }) {
+    final when = math.max(now, at ?? now);
+    now = when;
+    final trigger =
+        spec ??
+        [
+          ...human.values,
+          ...demon.values,
+        ].where((s) => s.lines.any((l) => l.id == line.id)).firstOrNull ??
+        CommsTriggerSpec(
+          name: 'offer',
+          priority: 5,
+          cooldown: 0,
+          ttl: ttl,
+          lines: [line],
+        );
+    final m = _build(
+      trigger,
+      line,
+      when,
+      0,
+      kind: CommsClass.useful,
+      ready: when,
+      expires: when + ttl,
+    );
+    if (m == null) return null;
+    queue.add(m);
+    _sortQueue();
+    _trimQueue();
+    return queue.contains(m) ? m : null;
+  }
+
+  /// Records what [event] says about the fight below without voicing it
+  /// (also called for events the glue filters out, such as homing kills).
+  void note(GameEvent event, double at) => ground.note(event, at);
+
+  void _handle(GameEvent event, double at) {
+    if (event.name == GameEventNames.musicIntensity) {
+      final t = event.data['tier'];
+      if (t is num) tier = t.toInt();
+      return;
     }
     if (pacing.timed && _handleTimed(event, at)) return;
     final hint = event.data['hint'] == true;
@@ -402,9 +545,19 @@ class CommsDirector {
   /// Returns true when [event] was handled here.
   bool _handleTimed(GameEvent event, double at) {
     switch (event.name) {
+      case GameEventNames.groundFireForecast:
+        final fireIn = _num(event.data['fireIn']);
+        if (fireIn != null && fireIn > 0) expectedFire.add(at + fireIn);
+        return true;
       case GameEventNames.groundFirePrep:
         final fireIn = _num(event.data['fireIn']);
         final spec = human[GameEventNames.groundMissileLaunch];
+        if (fireIn != null) {
+          // The forecast came true: the warning itself now holds the slot.
+          final launch = at + fireIn;
+          final i = expectedFire.indexWhere((l) => (l - launch).abs() < 1.2);
+          if (i >= 0) expectedFire.removeAt(i);
+        }
         if (fireIn != null && spec != null) {
           _offerWarning(spec, at, at + fireIn);
         }
@@ -456,6 +609,7 @@ class CommsDirector {
     if (hint) return CommsClass.hint;
     if (timed && !demon) return CommsClass.useful;
     if (spec.critical ||
+        commsMomentEvents.contains(spec.name.split('.').first) ||
         spec.name.startsWith(GameEventNames.transmissionMission) ||
         (line != null && commsIsClue(line))) {
       return CommsClass.useful;
@@ -493,6 +647,9 @@ class CommsDirector {
       return false;
     }
     _lastFired[key] = at;
+    // Moments that announce the same thing share a cooldown.
+    final shared = commsSharedCooldown[name];
+    if (shared != null) _lastFired[key.replaceFirst(name, shared)] = at;
     if (group != null && !demon && !hint) _groupFired[group] = at;
     return true;
   }
@@ -518,6 +675,10 @@ class CommsDirector {
         ready ?? at + spec.delay + i * (spec.overlap ? overlapStagger : .01);
     var ttl = spec.ttl;
     if (kind == CommsClass.hint) ttl = math.max(ttl, pacing.hintTtl);
+    // Urgent warnings no longer cut in; they wait for the line on air.
+    if (kind == CommsClass.urgent && endBy == null) {
+      ttl = math.max(ttl, pacing.urgentTtl);
+    }
     if (kind == CommsClass.flavour) ttl = math.min(ttl, pacing.flavourTtl);
     return CommsMessage(
       trigger: spec,
@@ -607,7 +768,8 @@ class CommsDirector {
   /// When a call queued at [at] may start: after everything committed to
   /// the channel that [blocks] it, plus the natural gap.
   double _earliest(double at, bool Function(CommsMessage) blocks) {
-    var earliest = at;
+    // The grace gap after the line that just finished.
+    var earliest = math.max(at, _speechEnd + lineGap);
     for (final m in _committed) {
       if (blocks(m)) earliest = math.max(earliest, m.plannedEnd + lineGap);
     }
@@ -616,8 +778,10 @@ class CommsDirector {
 
   /// A dive call (or brood battle cry) whose speech ends within
   /// [CommsPacing.diveTolerance] of [endBy]. Dropped when no line fits
-  /// before the dive or the channel is promised elsewhere. An urgent call
-  /// cuts a line in progress only when it cannot fit after it.
+  /// before the dive or the channel is promised elsewhere. Nothing is cut:
+  /// an urgent call (the sentinel's dive) that cannot end on time plays its
+  /// shortest variant right after the grace gap, as long as it still starts
+  /// before the dive.
   CommsMessage? _offerTimed(
     CommsTriggerSpec spec,
     double at,
@@ -626,12 +790,15 @@ class CommsDirector {
   }) {
     final kind = _classOf(spec, null, timed: true, demon: demon);
     final tol = pacing.diveTolerance;
-    var earliest = _earliest(at, (_) => true);
+    final earliest = _earliest(at, (_) => true);
     double startOf(CommsLine l) => math.max(earliest, endBy - l.duration);
     bool fits(CommsLine l) {
       final start = startOf(l);
       final end = start + l.duration;
       if (end > endBy + tol || end < endBy - tol) return false;
+      if (kind != CommsClass.urgent && _hitsFireReserve(start, end + lineGap)) {
+        return false;
+      }
       if (kind == CommsClass.flavour) {
         if (start < _quietUntil || _budget < l.duration) return false;
       } else if (kind != CommsClass.urgent &&
@@ -641,14 +808,22 @@ class CommsDirector {
       return true;
     }
 
-    if (!spec.lines.any(fits) && kind == CommsClass.urgent) {
-      earliest = _earliest(at, (m) => !_mayCut(kind, m));
+    var late = false;
+    if (!spec.lines.any(fits)) {
+      // Busy channel: an urgent call still goes out, shortest variant
+      // first, if it starts before the dive does.
+      if (kind != CommsClass.urgent || earliest > endBy + 1e-9) return null;
+      late = true;
     }
-    if (!spec.lines.any(fits)) return null;
     if (!_admit(spec.name, spec, at, demon)) return null;
-    final line = _pickLine(spec, demon: demon, fits: fits);
+    CommsLine? line;
+    if (late) {
+      line = _shortest(spec);
+    } else {
+      line = _pickLine(spec, demon: demon, fits: fits);
+    }
     if (line == null) return null;
-    final start = startOf(line);
+    final start = late ? earliest : startOf(line);
     final m = _build(
       spec,
       line,
@@ -657,20 +832,35 @@ class CommsDirector {
       kind: kind,
       endBy: endBy,
       ready: start,
-      expires: endBy + tol - line.duration,
+      expires: late ? endBy : endBy + tol - line.duration,
     );
     if (m == null) return null;
+    m.late = late;
+    if (late) lateDiveCalls++;
     queue.add(m);
     _sortQueue();
     return m;
   }
 
+  /// The shortest line of [spec] that the cast and the gates allow.
+  CommsLine? _shortest(CommsTriggerSpec spec) {
+    final allowed = [
+      for (final l in spec.lines)
+        if (cast.containsKey(l.speaker) && ground.allows(spec, l, _event, now))
+          l,
+    ]..sort((a, b) => a.duration.compareTo(b.duration));
+    return allowed.firstOrNull;
+  }
+
   /// A must-play ground-fire warning: its full clip ends at the launch
   /// [endBy] or at most [CommsPacing.warningWindow] before it. A warning
   /// already ending within [CommsPacing.warningCover] before the launch
-  /// covers it (a salvo shares one call). It waits for a line in progress
-  /// when it still fits after it; otherwise that line yields (only another
-  /// must-play warning holds the channel against it).
+  /// covers it (a salvo shares one call). Nothing is cut: it waits for the
+  /// line in progress plus the grace gap. Queued calls that have not started
+  /// (dive calls, an exchange's answer) wait behind it or drop. When the
+  /// line in progress ends too late, the shortest variant plays right after
+  /// the grace gap and ends late ([lateWarnings]); a warning is never
+  /// dropped.
   void _offerWarning(CommsTriggerSpec spec, double at, double endBy) {
     final warnings = [
       ...active.where((m) => m.mustPlay && !m.interrupted),
@@ -684,28 +874,32 @@ class CommsDirector {
       coveredLaunches++;
       return;
     }
-    var earliest = _earliest(at, (_) => true);
+    // Only speech already on air and earlier warnings hold the channel.
+    final earliest = _earliest(at, (m) => m.mustPlay || m.started);
     double startOf(CommsLine l) => math.max(earliest, endBy - l.duration);
     bool fits(CommsLine l) =>
         startOf(l) + l.duration <= endBy + 1e-6 &&
         startOf(l) + l.duration >= endBy - pacing.warningWindow;
-    if (!spec.lines.any(fits)) {
-      earliest = _earliest(at, (m) => m.mustPlay);
-    }
     var line = _pickLine(spec, demon: false, fits: fits);
-    // Never silent: with no line fitting the window, the longest one that
-    // still ends before the launch.
+    var late = false;
     if (line == null) {
-      final early =
-          spec.lines
-              .where((l) => startOf(l) + l.duration <= endBy + 1e-6)
-              .toList()
-            ..sort((a, b) => b.duration.compareTo(a.duration));
-      line = early.firstOrNull;
+      // The line on air ends too late: the shortest warning, right after
+      // the grace gap.
+      line = _shortest(spec);
+      late = true;
     }
     if (line == null) return;
     _lastFired['h:${spec.name}'] = at;
-    final start = startOf(line);
+    final start = late ? earliest : startOf(line);
+    final end = start + line.duration;
+    // Timed calls that have not started and would overlap it give way.
+    queue.removeWhere(
+      (o) =>
+          o.timed &&
+          !o.mustPlay &&
+          o.plannedStart < end + lineGap &&
+          o.plannedEnd + lineGap > start,
+    );
     final m = _build(
       spec,
       line,
@@ -715,9 +909,11 @@ class CommsDirector {
       endBy: endBy,
       // A frame early, so a 60 Hz tick never starts it after its deadline.
       ready: math.max(at, start - warningLead),
-      expires: endBy - line.duration,
+      expires: double.infinity,
     );
     if (m == null) return;
+    m.late = late;
+    if (late) lateWarnings++;
     queue.add(m);
     _sortQueue();
     _trimQueue();
@@ -737,6 +933,7 @@ class CommsDirector {
     bool allowed(CommsLine l) =>
         !exclude.contains(l.speaker) &&
         (fits == null || fits(l)) &&
+        ground.allows(spec, l, _event, now) &&
         (!l.signature ||
             (_signatures < signaturesPerRun &&
                 now - (_signatureAt[l.speaker] ?? -1e9) >= signatureGap));
@@ -812,8 +1009,13 @@ class CommsDirector {
         onStop?.call(m);
       }
     }
+    expectedFire.removeWhere((l) => l < now);
     queue.removeWhere((m) {
-      final stale = now > m.expiresAt + 1e-9;
+      // Lines held by a hush get a short wait after it ends.
+      final held = !m.timed && m.queuedAt < hushUntil
+          ? hushUntil + pacing.flavourTtl
+          : double.negativeInfinity;
+      final stale = now > math.max(m.expiresAt, held) + 1e-9;
       if (stale && identical(m, _reserved)) _reserved = null;
       return stale;
     });
@@ -823,55 +1025,83 @@ class CommsDirector {
   CommsMessage? get _onAir =>
       active.where((m) => !m.interrupted && now < m.speechEndsAt).firstOrNull;
 
-  /// [kind] may cut [current]: urgent warnings cut anything but urgent and
-  /// must-play lines; a must-play warning cuts anything but itself.
-  static bool _mayCut(CommsClass kind, CommsMessage current) {
-    if (current.mustPlay) return false;
-    if (kind == CommsClass.mustPlay) return true;
-    if (current.kind == CommsClass.hint && current.retried) return false;
-    return kind == CommsClass.urgent && !current.urgent;
-  }
-
-  /// The channel is silent: may [m] start now under the pacing?
+  /// The channel is silent: may [m] start now under the pacing? Every line
+  /// waits for the grace gap after the last one ends.
   bool _gateOpen(CommsMessage m) {
-    if (identical(m, _reserved)) return now >= _speechEnd + lineGap - 1e-9;
+    final grace = now >= _speechEnd + lineGap - 1e-9;
+    if (identical(m, _reserved)) return grace;
     final d = m.line.duration;
     switch (m.kind) {
-      case CommsClass.mustPlay || CommsClass.urgent:
-        return m.timed || now >= _speechEnd + lineGap - 1e-9;
+      case CommsClass.mustPlay:
+        // Ready a frame early so a 60 Hz tick never starts it late.
+        return now >= _speechEnd + lineGap - warningLead;
+      case CommsClass.urgent:
+        return grace;
       case CommsClass.hint:
         // Rare (one per [CommsPacing.hintCooldown]) and the point of the
-        // radio: the pickup is falling now, so only the natural gap, and
+        // radio: the pickup is falling now, so only the grace gap, and
         // never held back by the budget.
-        return now >= _speechEnd + lineGap - 1e-9;
+        return grace;
       case CommsClass.useful:
-        if (m.timed) return true; // its budget was checked when queued
-        return now >= math.max(_usefulQuietUntil, _speechEnd + lineGap) &&
-            _budget >= d - pacing.debt;
+        if (m.timed) return grace; // its budget was checked when queued
+        return grace && now >= _usefulQuietUntil && _budget >= d - pacing.debt;
       case CommsClass.flavour:
-        if (m.timed) return true;
-        return now >= math.max(_quietUntil, _speechEnd + lineGap) &&
-            _budget >= d;
+        if (m.timed) return grace;
+        return grace && now >= _quietUntil && _budget >= d;
     }
   }
 
-  /// [m] would end before every timed call still waiting for its slot.
+  /// Lookahead: [m] (and an exchange's answer after it) would end, plus the
+  /// grace gap, before every timed call still waiting for its slot.
   bool _clearOfTimed(CommsMessage m) {
     if (m.mustPlay) return true;
-    final end = now + m.line.duration + lineGap;
+    var end = now + m.line.duration + lineGap;
+    final reply = m.reply;
+    if (reply != null) end += reply.line.duration + lineGap;
     if (m.timed) {
       // A timed call only yields to a promised must-play warning.
       return !queue.any(
         (o) => o.mustPlay && !identical(o, m) && o.readyAt < end,
       );
     }
+    if (_hitsFireReserve(now, end)) return false;
     return !queue.any(
       (o) =>
           o.timed &&
           !identical(o, m) &&
           o.readyAt < end &&
-          (o.mustPlay || !m.urgent),
+          (o.mustPlay || o.urgent || !m.urgent),
     );
+  }
+
+  /// Speech from [start] to [end] would still be on air within
+  /// [CommsPacing.fireReserve] of a forecast ground launch.
+  bool _hitsFireReserve(double start, double end) =>
+      expectedFire.any((l) => end > l - pacing.fireReserve + 1e-9 && start < l);
+
+  /// Readable subtitles: flavour lines queue while a linked exchange is on
+  /// screen (until its answer has been read), and an exchange only opens
+  /// when the rest of the dock will be clear by the time its answer starts.
+  /// Useful and timed calls, warnings and recommendations never wait for
+  /// the screen; the views stack them below the exchange.
+  bool _screenFree(CommsMessage m) {
+    if (m.timed ||
+        m.urgent ||
+        m.kind == CommsClass.hint ||
+        m.isReply ||
+        identical(m, _reserved)) {
+      return true;
+    }
+    if (m.kind == CommsClass.flavour &&
+        (_reserved != null || active.any((a) => a.isReply && now < a.endsAt))) {
+      return false;
+    }
+    final reply = m.reply;
+    if (reply != null) {
+      final answerAt = now + m.line.duration + lineGap;
+      if (active.any((a) => a.endsAt > answerAt + 1e-9)) return false;
+    }
+    return true;
   }
 
   /// Advances to [at]: retires, sequences and starts messages. [combat]
@@ -881,6 +1111,7 @@ class CommsDirector {
     _refill();
     _retire();
     if (combat &&
+        !hushed &&
         now - _lastDemon > starveAfter &&
         !queue.any((m) => m.isDemon) &&
         _onAir == null) {
@@ -890,38 +1121,31 @@ class CommsDirector {
     // The regroup chorus: its voices start on their own stagger, up to the
     // voice cap, but only over each other.
     for (final m in [...queue]) {
-      if (!m.overlap || now < m.readyAt) continue;
+      if (!m.overlap || now < m.readyAt || hushed) continue;
       final air = active.where((a) => !a.interrupted && now < a.speechEndsAt);
       if (air.any((a) => a.trigger.name != m.trigger.name || !a.overlap)) {
         continue;
       }
       if (air.length >= overlapCap) break;
-      if (air.isEmpty && !_clearOfTimed(m)) continue;
+      if (air.isEmpty && (!_clearOfTimed(m) || !_graceOver)) continue;
       queue.remove(m);
       _start(m);
     }
     // The channel: one line at a time, by rank, after the pacing's rest.
-    for (final m in [...queue]) {
-      if (m.overlap || now < m.readyAt) continue;
-      if (_reserved != null && !identical(m, _reserved) && !m.urgent) {
-        continue;
-      }
-      final current = _onAir;
-      if (current != null) {
-        if (!_mayCut(m.kind, current)) continue;
-        if (!_clearOfTimed(m)) continue;
-        // Every voice on air yields (a chorus has several).
-        final air = active.where((a) => !a.interrupted && now < a.speechEndsAt);
-        if (air.any((a) => !_mayCut(m.kind, a))) continue;
-        for (final a in [...air]) {
-          _interrupt(a);
+    // Nothing is ever cut: a line waits for the one on air to finish.
+    if (_onAir == null) {
+      for (final m in [...queue]) {
+        if (m.overlap || now < m.readyAt) continue;
+        // A hush holds everything but the warnings.
+        if (hushed && !m.urgent) continue;
+        if (_reserved != null && !identical(m, _reserved) && !m.urgent) {
+          continue;
         }
-      } else {
-        if (!_gateOpen(m) || !_clearOfTimed(m)) continue;
+        if (!_gateOpen(m) || !_clearOfTimed(m) || !_screenFree(m)) continue;
+        queue.remove(m);
+        _start(m);
+        break;
       }
-      queue.remove(m);
-      _start(m);
-      break;
     }
     for (final slot in slots) {
       if (slot.leaving != null &&
@@ -930,6 +1154,8 @@ class CommsDirector {
       }
     }
   }
+
+  bool get _graceOver => now >= _speechEnd + lineGap - 1e-9;
 
   void _start(CommsMessage m) {
     m.startedAt = now;
@@ -958,6 +1184,11 @@ class CommsDirector {
       end + math.max(usefulRest, lineGap),
     );
     if (identical(m, _reserved)) _reserved = null;
+    // The opening line of an exchange stays up until its answer is read.
+    final opening = m.inReplyTo;
+    if (opening != null) {
+      opening.keepUntil = math.max(opening.keepUntil, m.endsAt);
+    }
     final reply = m.reply;
     if (reply != null) {
       // The answer follows right after this line; nothing else may start
@@ -970,36 +1201,6 @@ class CommsDirector {
       _reserved = reply;
     }
     onStart?.call(m);
-  }
-
-  void _interrupt(CommsMessage m) {
-    m.interrupted = true;
-    active.remove(m);
-    interruptedLines.add(m.line.id);
-    _speechEnd = now;
-    final reply = m.reply;
-    if (reply != null) {
-      queue.remove(reply);
-      if (identical(_reserved, reply)) _reserved = null;
-    }
-    onStop?.call(m);
-    // A recommendation cut by a warning is said again right after it, in
-    // its shortest form, and no urgent call cuts it twice.
-    if (m.kind == CommsClass.hint) {
-      final shortest = m.trigger.lines.reduce(
-        (a, b) => a.duration <= b.duration ? a : b,
-      );
-      final again = _build(
-        m.trigger,
-        shortest,
-        now,
-        0,
-        kind: CommsClass.hint,
-        ready: now,
-        expires: now + 2 * pacing.hintTtl,
-      );
-      if (again != null) queue.add(again..retried = true);
-    }
   }
 
   /// The air squad (Admiral, pilots) takes the left column; the right column

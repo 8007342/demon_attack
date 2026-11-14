@@ -1,0 +1,32 @@
+{
+  "comment": "Lines still to be recorded for the coming 48 kHz voice re-render (openspec/changes/comms-middle-ground). Not referenced at runtime: until they exist, these moments reuse recorded clips (lib/comms/comms_moments.dart) or stay quiet. Fields follow art/comms/lines.json: trigger is a GameEvent name, speaker a cast id, emotion the delivery. Demon lines are grunts (kind) with a SIGINT gloss. When rendered, append them to lines.json under their trigger (never reorder existing clips).",
+  "date": "2026-11-14",
+  "lines": [
+    {"trigger": "carrierHatchOpen", "speaker": "admiral", "emotion": "urgent", "text": "The hatch is open! Hit the core, now!", "why": "Only bossPhase.h2 (field down) and bossPhase.h0 fit today."},
+    {"trigger": "carrierHatchOpen", "speaker": "kestrel", "emotion": "excited", "text": "Core's exposed. Put everything into that hatch!"},
+    {"trigger": "carrierHatchOpen", "speaker": "rook", "emotion": "excited", "text": "It opened its mouth! Feed it!"},
+    {"trigger": "carrierHatchOpen", "speaker": "ulgra", "kind": "alarm", "gloss": "Close it! Close the hatch!", "emotion": "panicked"},
+
+    {"trigger": "lastStandTell", "speaker": "anvil", "emotion": "urgent", "text": "Sentinel's cornered. It's going all in, watch it!", "why": "No bank line describes a sentinel's last stand; lastStandTell stays silent."},
+    {"trigger": "lastStandTell", "speaker": "wisp", "emotion": "urgent", "text": "Last one standing is charging up. Get ready to move."},
+    {"trigger": "lastStandTell", "speaker": "sparrow", "emotion": "panicked", "text": "It's alone and it's angry. Dodge, then finish it!"},
+
+    {"trigger": "incoming", "speaker": "wisp", "emotion": "calm", "text": "Next wave on the horizon. Finish these stragglers.", "why": "incoming reuses waveStart.h0/h2/h4 today; a horizon call would fit better."},
+    {"trigger": "incoming", "speaker": "nomad", "emotion": "calm", "text": "More of them coming out of the haze. Clean up fast."},
+    {"trigger": "incoming", "speaker": "kestrel", "emotion": "urgent", "text": "Fresh wing in the fog, closing. Mop up and reset."},
+    {"trigger": "incoming", "speaker": "gorrak", "kind": "rally", "gloss": "The next wing is already here!", "emotion": "excited"},
+
+    {"trigger": "sentinelIncoming.escort", "speaker": "anvil", "emotion": "urgent", "text": "Escort wing forming around the sentinel. Thin them first.", "why": "The model's escort event reuses the generic sentinelIncoming lines."},
+    {"trigger": "sentinelIncoming.escort", "speaker": "lindqvist", "emotion": "calm", "text": "Bodyguards inbound. The big one won't come down until they're placed."},
+
+    {"trigger": "reinforcements.wave", "speaker": "sparrow", "emotion": "urgent", "text": "They're feeding this wave! More dropping in behind!", "why": "Mid-wave flocks reuse the reinforcements lines; a wave-specific call adds variety."},
+    {"trigger": "reinforcements.wave", "speaker": "pip", "emotion": "panicked", "text": "Wait, the wave isn't over? They brought backup!"},
+
+    {"trigger": "airCover", "speaker": "march", "emotion": "warm", "text": "Bastion sees you overhead. Keep that cover on us!", "why": "Air-cover lines exist only inside groundForceInRange; a dedicated call when the ship flies over the fight (groundPicture over) would be clearer."},
+    {"trigger": "airCover", "speaker": "kessler", "emotion": "excited", "text": "Flyer's right above us! Push forward, push!"},
+    {"trigger": "airCoverLost", "speaker": "voss", "emotion": "urgent", "text": "Air cover's drifted off. Pilot, swing back over the convoy!"},
+
+    {"trigger": "levelClear.transition", "speaker": "admiral", "emotion": "warm", "text": "Regroup on the carrier lane. Briefing in a moment.", "why": "Transition interludes reuse levelClear and transmissionMission."},
+    {"trigger": "salvage.transition", "speaker": "sunny", "emotion": "teasing", "text": "Shopping break! Grab the shiny stuff before the next wave."}
+  ]
+}

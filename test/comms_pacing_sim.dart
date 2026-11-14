@@ -36,6 +36,52 @@ class PacingStats {
   /// (time, kind) whenever a pickup fell while the ship lacked it.
   final hintChances = <double>[];
 
+  /// The fight below as the simulation staged it: (from, to) spans while
+  /// demon ground units were engaged, and while the ship flew over them,
+  /// and the times allies called for help.
+  final engagedSpans = <(double, double)>[];
+  final overSpans = <(double, double)>[];
+  final allyCalls = <double>[];
+
+  static bool _within(List<(double, double)> spans, double t) =>
+      spans.any((s) => t >= s.$1 - 1e-6 && t < s.$2 + 1e-6);
+  bool engagedAt(double t) => _within(engagedSpans, t);
+  bool overAt(double t) => _within(overSpans, t);
+  bool allyCalledBefore(double t, double window) =>
+      allyCalls.any((a) => a <= t + 1e-6 && t - a <= window);
+
+  /// Ground warnings that ended after their launch (the channel was busy).
+  List<HeardLine> get lateWarnings => [
+    for (final h in heard)
+      if (h.message.mustPlay && h.end > h.message.endBy! + 1e-6) h,
+  ];
+
+  /// Dive calls that ended within the tolerance of their dive, of all.
+  (int, int) diveAlignment(double tolerance) {
+    var aligned = 0, total = 0;
+    for (final h in heard) {
+      if (!const {
+        'diveWarning',
+        'sentinelDive',
+        'divePrep',
+      }.contains(h.trigger)) {
+        continue;
+      }
+      total++;
+      if ((h.end - h.message.endBy!).abs() <= tolerance + 1e-6) aligned++;
+    }
+    return (aligned, total);
+  }
+
+  /// Lines started per trigger.
+  Map<String, int> get byTrigger {
+    final out = <String, int>{};
+    for (final h in heard) {
+      out[h.trigger] = (out[h.trigger] ?? 0) + 1;
+    }
+    return out;
+  }
+
   /// Seconds of speech (union of voices) over [seconds].
   double duty({bool Function(HeardLine)? where}) {
     final spans = [
@@ -84,11 +130,15 @@ class PacingStats {
 ///
 /// [busy] raises the event rates of a heavy sector-3 fight (ground war,
 /// dives every couple of seconds, pickups, waves); otherwise a calm stretch.
+/// [forecast] adds the observer's `groundFireForecast` ahead of each shot,
+/// [intensity] the music director's tier (3 in busy combat, 1 when calm).
 PacingStats simulate(
   CommsDirector c, {
   int seed = 1,
   double seconds = 600,
   bool busy = true,
+  bool forecast = true,
+  bool intensity = true,
 }) {
   final stats = PacingStats(seconds);
   final byMessage = <CommsMessage, HeardLine>{};
@@ -151,12 +201,33 @@ PacingStats simulate(
   // then a second unit fires alongside. One tell at a time.
   const reload = GroundTuning.telegraph + GroundTuning.cooldown;
   final preps = <double>[];
+  // The observer's forecast of each shot (GameEventObserver.fireForecast
+  // ahead, or at the previous launch for a unit's second shot), planned
+  // before "one tell at a time" may push a launch a little later.
+  final forecasts = <(double, double)>[];
   t = 8;
   while (t < seconds) {
     for (final u in [t, if (rng.nextDouble() < .35) t + .5]) {
       preps.addAll([u, u + reload]);
+      final launch = u + GroundTuning.fireLead;
+      // (when, launch): the second shot is forecast at the first launch.
+      forecasts.addAll([
+        (launch - GameEventObserver.fireForecast, launch),
+        (launch, launch + reload),
+      ]);
     }
     t += busy ? 18 + next(10) : 45 + next(30);
+  }
+  if (forecast) {
+    for (final (forecastAt, launch) in forecasts) {
+      if (launch >= seconds) continue;
+      at(
+        forecastAt,
+        GameEvent(GameEventNames.groundFireForecast, {
+          'fireIn': launch - forecastAt,
+        }),
+      );
+    }
   }
   preps.sort();
   for (var k = 1; k < preps.length; k++) {
@@ -214,15 +285,76 @@ PacingStats simulate(
   stream(30, () => const GameEvent(GameEventNames.waveStart));
   stream(30, () => const GameEvent(GameEventNames.broodTaunt));
   stream(45, () => const GameEvent(GameEventNames.transmissionJunior));
-  stream(40, () => const GameEvent(GameEventNames.reinforcements));
+  // A reinforcement flock: the model's raw event and the music director's
+  // arrival tell, in the same frame.
+  var r = next(40 * rate);
+  while (r < seconds) {
+    at(r, const GameEvent(GameEventNames.reinforcements));
+    at(r, const GameEvent(GameEventNames.reinforcementsArrived));
+    r += next(40 * rate);
+  }
+  // A sentinel's escort wing (the model's `escort`, read as
+  // sentinelIncoming).
+  stream(60, () => const GameEvent(GameEventNames.sentinelIncoming));
+  // The fight below: engaged stretches (and quiet ones) and, while engaged,
+  // the ship flying over the battle or away from it. The observer reports
+  // each change as `groundPicture`.
+  var g = 4.0;
+  var engaged = true;
+  while (g < seconds) {
+    final span = engaged
+        ? (busy ? 14 : 8) + next(busy ? 14 : 8)
+        : (busy ? 6 : 25) + next(busy ? 6 : 20);
+    final end = math.min(seconds, g + span);
+    if (engaged) {
+      // Engaged from g to end; over in alternating stretches.
+      stats.engagedSpans.add((g, end));
+      var o = g;
+      var over = rng.nextDouble() < .6;
+      while (o < end) {
+        final to = math.min(end, o + 2 + next(5));
+        if (over) stats.overSpans.add((o, to));
+        at(
+          o,
+          GameEvent(GameEventNames.groundPicture, {
+            'engaged': 3,
+            'threats': 1,
+            'over': over,
+          }),
+        );
+        over = !over;
+        o = to;
+      }
+      at(
+        end,
+        const GameEvent(GameEventNames.groundPicture, {
+          'engaged': 0,
+          'threats': 0,
+          'over': false,
+        }),
+      );
+    }
+    engaged = !engaged;
+    g = end;
+  }
   stream(35, () => const GameEvent(GameEventNames.eliteSighted));
   stream(20, () => const GameEvent(GameEventNames.demonRout));
   stream(40, () => const GameEvent(GameEventNames.heavyArmorSighted));
   stream(60, () => const GameEvent(GameEventNames.groundPressureHigh));
   stream(120, () => const GameEvent(GameEventNames.lifeLost));
   scheduled.sort((a, b) => a.$1.compareTo(b.$1));
+  stats.allyCalls.addAll([
+    for (final (t, e) in scheduled)
+      if (e.name == GameEventNames.allyUnderAttack) t,
+  ]);
 
   c.handle(const GameEvent('sectorStart', {'variant': '3'}), 0);
+  if (intensity) {
+    c.handle(
+      GameEvent(GameEventNames.musicIntensity, {'tier': busy ? 3 : 1}),
+      0,
+    );
+  }
   var i = 0, p = 0;
   const dt = 1 / 60;
   for (var now = 0.0; now < seconds; now += dt) {

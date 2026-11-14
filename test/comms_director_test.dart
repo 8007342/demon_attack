@@ -94,7 +94,7 @@ CommsDirector _director({
           ttl: 1.5,
           urgent: true,
         ),
-        'big': _spec('big', 9, [_h('big.h0', 'cmd')], cooldown: 0),
+        'big': _spec('big', 9, [_h('big.h0', 'cmd')], cooldown: 0, ttl: 5),
         'brief': _spec(
           'brief',
           4,
@@ -205,20 +205,27 @@ void main() {
       expect(c.interruptedLines, isEmpty);
     });
 
-    test('higher priority waits its turn; only urgent warnings cut', () {
-      final stopped = <String>[];
-      final c = _director()..onStop = (m) => stopped.add(m.line.id);
+    test('higher priority waits its turn; nothing cuts, not even urgent', () {
+      final started = <String, CommsMessage>{};
+      final c = _director()..onStart = (m) => started[m.line.id] = m;
       c.handle(const GameEvent('brief'), 0);
       c.update(0);
+      final first = c.active.single;
       c.handle(const GameEvent('big'), .2); // priority 9, not urgent
       _run(c, .2, 1.2);
-      expect(c.interruptedLines, isEmpty, reason: 'non-urgent never cuts');
       c.handle(const GameEvent('warn'), 1.3); // urgent
       c.update(1.3);
-      expect(c.interruptedLines, hasLength(1));
-      expect(c.active.where((m) => m.speaking(1.3)).single.line.id, 'warn.h0');
-      _run(c, 1.3, 6);
-      expect(c.history.last, 'big.h0', reason: 'the queued line still plays');
+      expect(c.interruptedLines, isEmpty, reason: 'no line cuts another');
+      expect(c.active.where((m) => m.speaking(1.3)).single, first);
+      _run(c, 1.3, 8);
+      // The urgent warning goes first after the grace gap, then the rest.
+      expect(c.history, [first.line.id, 'warn.h0', 'big.h0']);
+      final warn = started['warn.h0']!;
+      expect(
+        warn.startedAt,
+        greaterThanOrEqualTo(first.speechEndsAt + c.lineGap - 1e-6),
+      );
+      expect(c.interruptedLines, isEmpty);
     });
 
     test('cooldowns, chance and variants', () {
@@ -309,14 +316,27 @@ void main() {
       expect(c.history.take(2), ['taunt.d0', 'taunt.h0']);
     });
 
-    test('an urgent warning cutting the first turn cancels the reply', () {
+    test('an urgent warning waits for the first turn; the answer follows', () {
       final c = _director();
       c.handle(const GameEvent('win'), 0);
       c.update(0);
       c.handle(const GameEvent('warn'), .3);
-      _run(c, .3, 8);
-      expect(c.interruptedLines, ['win.h0']);
-      expect(c.history, isNot(contains('win.d0')));
+      _run(c, .3, 10);
+      expect(c.interruptedLines, isEmpty);
+      expect(c.history, ['win.h0', 'warn.h0', 'win.d0']);
+    });
+
+    test('the opening line stays on screen until the answer is read', () {
+      final c = _director();
+      c.handle(const GameEvent('win'), 0);
+      c.update(0);
+      final opening = c.active.single;
+      _run(c, 0, 2.5);
+      final answer = c.active.firstWhere((m) => m.line.id == 'win.d0');
+      expect(identical(answer.inReplyTo, opening), isTrue);
+      expect(opening.endsAt, closeTo(answer.endsAt, 1e-9));
+      _run(c, 2.5, answer.endsAt - .05);
+      expect(c.active, contains(opening));
     });
   });
 
@@ -550,72 +570,96 @@ void main() {
     );
   });
   group('comms v4 brood voices', () {
-    test('battle cries on divePrep: many voices, no immediate repeat, nothing cut', () {
-      final d = CommsDirector(
-        random: math.Random(3),
-        pacing: CommsPacing.legacy,
-      );
-      d.setSector(3, 0);
-      for (var t = 0.0; t < 600; t += .1) {
-        final tick = (t * 10).round();
-        if (tick % 23 == 0) d.handle(const GameEvent(GameEventNames.divePrep), t);
-        if (tick % 170 == 5) d.handle(const GameEvent(GameEventNames.waveStart), t);
-        d.update(t, combat: true);
-      }
-      final cries = d.history.where((id) => id.startsWith('divePrep.d')).toList();
-      expect(cries.length, greaterThan(20));
-      expect(cries.toSet().length, greaterThanOrEqualTo(8));
-      for (var i = 1; i < cries.length; i++) {
-        expect(cries[i], isNot(cries[i - 1]), reason: 'repeat at $i');
-      }
-      final voices = {
-        for (final id in cries)
-          commsDemonTriggers['divePrep']!.lines.firstWhere((l) => l.id == id).speaker,
-      };
-      expect(voices.length, greaterThanOrEqualTo(5), reason: '$voices');
-      expect(voices.intersection(commsMinions.toSet()).length, greaterThanOrEqualTo(4));
-      expect(d.interruptedLines, isEmpty);
-    });
-
-    test('a dive call ends on the dive: started early from its measured length', () {
-      // divePrep carries `diveIn` (beat + tell); the call starts that long
-      // minus the clip's duration later, so both end together.
-      for (final (sentinel, diveIn) in [(false, 1.2), (false, 1.05), (true, 1.4)]) {
-        final started = <CommsMessage>[];
-        final d = CommsDirector(random: math.Random(3))
-          ..onStart = started.add;
-        d.setSector(3, 0);
-        d.handle(
-          GameEvent(GameEventNames.divePrep, {
-            'diveIn': diveIn,
-            'sentinel': sentinel,
-          }),
-          10,
+    test(
+      'battle cries on divePrep: many voices, no immediate repeat, nothing cut',
+      () {
+        final d = CommsDirector(
+          random: math.Random(3),
+          pacing: CommsPacing.legacy,
         );
-        for (var t = 10.0; t < 14; t += 1 / 60) {
+        d.setSector(3, 0);
+        for (var t = 0.0; t < 600; t += .1) {
+          final tick = (t * 10).round();
+          if (tick % 23 == 0) {
+            d.handle(const GameEvent(GameEventNames.divePrep), t);
+          }
+          if (tick % 170 == 5) {
+            d.handle(const GameEvent(GameEventNames.waveStart), t);
+          }
+          d.update(t, combat: true);
+        }
+        final cries = d.history
+            .where((id) => id.startsWith('divePrep.d'))
+            .toList();
+        expect(cries.length, greaterThan(20));
+        expect(cries.toSet().length, greaterThanOrEqualTo(8));
+        for (var i = 1; i < cries.length; i++) {
+          expect(cries[i], isNot(cries[i - 1]), reason: 'repeat at $i');
+        }
+        final voices = {
+          for (final id in cries)
+            commsDemonTriggers['divePrep']!.lines
+                .firstWhere((l) => l.id == id)
+                .speaker,
+        };
+        expect(voices.length, greaterThanOrEqualTo(5), reason: '$voices');
+        expect(
+          voices.intersection(commsMinions.toSet()).length,
+          greaterThanOrEqualTo(4),
+        );
+        expect(d.interruptedLines, isEmpty);
+      },
+    );
+
+    test(
+      'a dive call ends on the dive: started early from its measured length',
+      () {
+        // divePrep carries `diveIn` (beat + tell); the call starts that long
+        // minus the clip's duration later, so both end together.
+        for (final (sentinel, diveIn) in [
+          (false, 1.2),
+          (false, 1.05),
+          (true, 1.4),
+        ]) {
+          final started = <CommsMessage>[];
+          final d = CommsDirector(random: math.Random(3))
+            ..onStart = started.add;
+          d.setSector(3, 0);
+          d.handle(
+            GameEvent(GameEventNames.divePrep, {
+              'diveIn': diveIn,
+              'sentinel': sentinel,
+            }),
+            10,
+          );
+          for (var t = 10.0; t < 14; t += 1 / 60) {
+            d.update(t);
+          }
+          final call = started.single;
+          expect(
+            call.trigger.name,
+            sentinel ? GameEventNames.sentinelDive : GameEventNames.diveWarning,
+          );
+          expect(call.speechEndsAt, closeTo(10 + diveIn, .3), reason: '$call');
+          expect(call.startedAt, greaterThanOrEqualTo(10));
+        }
+      },
+    );
+
+    test(
+      'a call observed only as the dive starts is dropped, not played late',
+      () {
+        final d = CommsDirector(random: math.Random(3));
+        d.handle(
+          const GameEvent(GameEventNames.diveWarning, {'diveIn': 0.0}),
+          5,
+        );
+        for (var t = 5.0; t < 9; t += 1 / 60) {
           d.update(t);
         }
-        final call = started.single;
-        expect(
-          call.trigger.name,
-          sentinel ? GameEventNames.sentinelDive : GameEventNames.diveWarning,
-        );
-        expect(call.speechEndsAt, closeTo(10 + diveIn, .3), reason: '$call');
-        expect(call.startedAt, greaterThanOrEqualTo(10));
-      }
-    });
-
-    test('a call observed only as the dive starts is dropped, not played late', () {
-      final d = CommsDirector(random: math.Random(3));
-      d.handle(
-        const GameEvent(GameEventNames.diveWarning, {'diveIn': 0.0}),
-        5,
-      );
-      for (var t = 5.0; t < 9; t += 1 / 60) {
-        d.update(t);
-      }
-      expect(d.history, isEmpty);
-    });
+        expect(d.history, isEmpty);
+      },
+    );
 
     test('reinforcements: the brood cheers with two different voices', () {
       final d = CommsDirector(
@@ -628,8 +672,12 @@ void main() {
         d.update(t);
       }
       final cheers = [
-        for (final id in d.history.where((id) => id.startsWith('reinforcements.d')))
-          commsDemonTriggers['reinforcements']!.lines.firstWhere((l) => l.id == id).speaker,
+        for (final id in d.history.where(
+          (id) => id.startsWith('reinforcements.d'),
+        ))
+          commsDemonTriggers['reinforcements']!.lines
+              .firstWhere((l) => l.id == id)
+              .speaker,
       ];
       expect(cheers.length, 2, reason: '${d.history}');
       expect(cheers.toSet().length, 2);
@@ -645,7 +693,27 @@ void main() {
       expect(commsHumanTriggers[GameEventNames.groundTide], isNull);
       expect(commsDemonTriggers['heavyArmorSighted']?.lines, isNotEmpty);
       expect(commsDemonTriggers['groundTide.surge']?.lines, isNotEmpty);
+      final quiet = CommsDirector(random: math.Random(2));
+      for (var k = 0; k < 8; k++) {
+        quiet.handle(
+          const GameEvent(GameEventNames.groundTide, {'variant': 'surge'}),
+          k * 40.0,
+        );
+        quiet.update(k * 40.0);
+      }
+      expect(
+        quiet.history,
+        isEmpty,
+        reason: 'no surge call while nothing fights below',
+      );
       final d = CommsDirector(random: math.Random(2));
+      d.handle(
+        const GameEvent(GameEventNames.groundPicture, {
+          'engaged': 3,
+          'over': true,
+        }),
+        0,
+      );
       // The surge line has a chance below 1: a few tides, past its cooldown.
       for (var k = 0; k < 8 && d.history.isEmpty; k++) {
         d.handle(
@@ -658,7 +726,10 @@ void main() {
     });
 
     test('several distinct minion timbres', () {
-      expect(commsMinions.toSet(), containsAll(['skritch', 'grunnok', 'blatch', 'nibb', 'krag', 'sliss']));
+      expect(
+        commsMinions.toSet(),
+        containsAll(['skritch', 'grunnok', 'blatch', 'nibb', 'krag', 'sliss']),
+      );
     });
   });
   group('shipped line bank', () {

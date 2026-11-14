@@ -156,6 +156,9 @@ class SquadComms {
       // Kill reports are the allies' own chatter; homing kills stay quiet.
       if (event.name == GameEventNames.groundUnitDestroyed &&
           (event.data['by'] ?? 'allies') != 'allies') {
+        // Not voiced, but the player's help is remembered ("thanks to
+        // you" lines are gated on it).
+        director.note(event, clock);
         continue;
       }
       if (event.name == GameEventNames.sectorStart) _prefetch(event.variant);

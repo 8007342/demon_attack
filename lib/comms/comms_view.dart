@@ -809,19 +809,17 @@ class CommsHudStack extends StatelessWidget {
     final strip = MediaQuery.sizeOf(context).height < 520
         ? compactStripHeight
         : stripHeight;
-    final shown = [
-      for (final m in director.active)
-        if (!(hideTransmission && m.transmission)) m,
-    ]..sort((a, b) => b.startedAt.compareTo(a.startedAt));
-    if (shown.isEmpty) return const SizedBox.shrink();
-    final latest = shown.first;
-    final opening = latest.inReplyTo;
-    final panels =
-        opening != null && !(hideTransmission && opening.transmission)
-        ? [opening, latest]
-        : (shown.take(2).toList()
-            ..sort((a, b) => a.startedAt.compareTo(b.startedAt)));
-    final conversation = opening != null && identical(panels.first, opening);
+    final (:placed, :overflow) = dockEntries(
+      director.active,
+      hideTransmission: hideTransmission,
+    );
+    if (placed.isEmpty) return const SizedBox.shrink();
+    final pair = placed.where((e) => e.length == 2).firstOrNull;
+    final conversation = pair != null;
+    final opening = pair?.first;
+    final latest = pair?.last ?? placed.last.last;
+    final panels = pair ?? [for (final e in placed) e.single];
+    final ticker = overflow.isEmpty ? null : overflow.last.last;
     final waiting = director.queue.where((m) => now >= m.readyAt).length;
     return IgnorePointer(
       child: AnimatedOpacity(
@@ -879,7 +877,9 @@ class CommsHudStack extends StatelessWidget {
                 ],
               ),
             ),
-            if (opening != null || waiting > 0)
+            if (ticker != null)
+              _ticker(ticker, overflow.length - 1, reduce)
+            else if (opening != null || waiting > 0)
               SizedBox(
                 height: chipHeight,
                 child: Text(
@@ -893,6 +893,99 @@ class CommsHudStack extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// What the dock shows: up to two halves, oldest first, so a card keeps
+  /// its place until it has been read (a linked exchange takes both
+  /// halves). Cards that do not fit wait in [overflow] (shown as a one-line
+  /// ticker under the dock) and move up when a half frees; nothing on
+  /// screen is hidden by a newer line.
+  static ({List<List<CommsMessage>> placed, List<List<CommsMessage>> overflow})
+  dockEntries(Iterable<CommsMessage> active, {bool hideTransmission = false}) {
+    bool hidden(CommsMessage m) => hideTransmission && m.transmission;
+    final shown = [
+      for (final m in active)
+        if (!hidden(m)) m,
+    ]..sort((a, b) => a.startedAt.compareTo(b.startedAt));
+    final entries = <List<CommsMessage>>[];
+    final used = <CommsMessage>{};
+    for (final m in shown) {
+      if (used.contains(m)) continue;
+      used.add(m);
+      final reply = shown
+          .where((r) => identical(r.inReplyTo, m) && !used.contains(r))
+          .firstOrNull;
+      final opening = m.inReplyTo;
+      if (reply != null) {
+        used.add(reply);
+        entries.add([m, reply]);
+      } else if (opening != null &&
+          !used.contains(opening) &&
+          !hidden(opening)) {
+        // The opening already left the channel: keep it beside its answer.
+        entries.add([opening, m]);
+      } else {
+        entries.add([m]);
+      }
+    }
+    final placed = <List<CommsMessage>>[], overflow = <List<CommsMessage>>[];
+    var free = 2;
+    for (final e in entries) {
+      if (e.length <= free && overflow.isEmpty) {
+        placed.add(e);
+        free -= e.length;
+      } else {
+        overflow.add(e);
+      }
+    }
+    return (placed: placed, overflow: overflow);
+  }
+
+  /// One line under the dock for a card waiting for room: speaker and
+  /// text, readable at a glance.
+  Widget _ticker(CommsMessage m, int more, bool reduce) {
+    final c = m.character;
+    final accent = Color(c.accent);
+    final text = m.line.isGrunt
+        ? 'SIGINT · ${m.line.gloss ?? ''}'
+        : (m.line.text ?? '');
+    return Opacity(
+      key: ValueKey('comms-ticker-${m.line.id}'),
+      opacity: _fade(m, reduce),
+      child: Container(
+        height: chipHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xB30A1220),
+          border: Border(left: BorderSide(color: accent, width: 2)),
+        ),
+        alignment: Alignment.centerLeft,
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: '${c.isDemon ? c.name : c.callsign}  ',
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: .8,
+                ),
+              ),
+              TextSpan(text: text),
+              if (more > 0) TextSpan(text: '  +$more'),
+            ],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: m.line.isGrunt ? const Color(0xFFFFB0A8) : _text,
+            fontSize: 11.5,
+            height: 1.1,
+          ),
         ),
       ),
     );

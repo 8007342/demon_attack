@@ -126,6 +126,36 @@ class CommsTriggerSpec {
   final bool transmission;
   static const criticalPriority = 8;
   bool get critical => priority >= criticalPriority;
+
+  /// The same trigger with some fields replaced (comms tuning overrides of
+  /// the generated bank, see `comms_moments.dart`).
+  CommsTriggerSpec copyWith({
+    String? name,
+    int? priority,
+    double? cooldown,
+    double? ttl,
+    double? chance,
+    double? delay,
+    List<CommsLine>? lines,
+    CommsMood? mood,
+    String? group,
+    bool? urgent,
+  }) => CommsTriggerSpec(
+    name: name ?? this.name,
+    priority: priority ?? this.priority,
+    cooldown: cooldown ?? this.cooldown,
+    ttl: ttl ?? this.ttl,
+    chance: chance ?? this.chance,
+    delay: delay ?? this.delay,
+    lines: lines ?? this.lines,
+    mood: mood ?? this.mood,
+    chain: chain,
+    group: group ?? this.group,
+    urgent: urgent ?? this.urgent,
+    exchange: exchange,
+    overlap: overlap,
+    transmission: transmission,
+  );
 }
 
 /// Portrait frame indices in each atlas row.
