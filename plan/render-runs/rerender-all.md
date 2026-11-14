@@ -103,6 +103,11 @@ current families instead.
 
 ## Log
 
+- 2026-11-14: host relaunching the forge onto tray v56.11.14.3 (uncapped cgroup kept, AudioAdjustVolume pinned).
+  After restart: check tillandsias_lane_version reports current, then rerun the music batch on work/music-batch
+  (re-render the guides first; they live in ephemeral /work/tmp). Sprite refinement is done on work/refinement-pass and waits
+  for operator review (most families only gained shading texture; flyover came out darker, with ember tile seams).
+
 - 2026-11-14 01:50 UTC: operator approved the refinement pilot; batch started on work/refinement-pass with a babysitter.
   Asked the host for ETAs on #1092/#1091/#1093 and which fixes can land without a relaunch.
 
