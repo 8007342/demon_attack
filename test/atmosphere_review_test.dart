@@ -128,18 +128,11 @@ void main() {
       final s4 = await _scene(m4, 2);
       _run(m4, s4, 3.4);
       await _capture(s4, '8-sentinel-escort');
-      for (var i = 0; i < 12; i++) {
-        _run(m4, s4, .25);
+      // Run until the sentinel leaves its silhouette (the crossfade).
+      for (var i = 0; i < 40; i++) {
         final sentinel = m4.demons.where((d) => d.isLarge).firstOrNull;
-        // ignore: avoid_print
-        print(
-          't ${(3.4 + i * .25).toStringAsFixed(2)} mode ${m4.mode} '
-          'fs ${m4.foreshadow?.growth.toStringAsFixed(2)} '
-          'sentinel ${sentinel?.entranceProgress.toStringAsFixed(2)} '
-          'wait ${sentinel?.waitingForEscort} '
-          '${sentinel?.x.toStringAsFixed(0)},${sentinel?.y.toStringAsFixed(0)} '
-          'n ${sentinel?.nearness.toStringAsFixed(2)} s ${sentinel?.scale}',
-        );
+        if (sentinel != null && sentinel.entranceProgress > .15) break;
+        _run(m4, s4, .1);
       }
       await _capture(s4, '9-sentinel-arriving');
 
