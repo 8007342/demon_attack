@@ -1,0 +1,6 @@
+{
+  "id": "level-1-take-1",
+  "ticket": "tk-1794500447112-59669-0",
+  "status": "queued",
+  "note": "poll studio.job_status {ticket}; the ticket survives a lane restart"
+}

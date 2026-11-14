@@ -1,0 +1,67 @@
+{
+  "speaker": "mensah",
+  "kind": "human",
+  "trigger": "infantryEngaged",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 63230,
+  "mouth": "00002220033344433======44444<<<<<<<<<<22",
+  "open": "0002432115666776666432277764898745898632",
+  "vis": "-----------------ee-----------------oo--",
+  "lufs": -18.12,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "infantryEngaged.h2",
+  "text": "Our infantry is in it now. Covering fire, go!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/infantryEngaged.h2/baseline.flac",
+      "sha256": "454465ab36c4e14da779564329d87b22115b4a6ff5801d37cd3c5db14f849a2c",
+      "float_source_sha256": "ebf4e23f5e5295ba22773a8caabe0a4f55ec3c5c5a9fd5dba361603f880eae1c",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/infantryEngaged.h2/expressive.flac",
+      "sha256": "a313f02554cc602016cfb62203c8fa128801df0003fd7ef8f83aa1ff5086e2df",
+      "float_source_sha256": "ac17d9197817e3c52649d8af206f2e5e18ef7bd949c76d7a9d46ea139c813c24",
+      "gain": 0.8942081803027707,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/infantryEngaged.h2/voice.flac",
+      "sha256": "6523464ea13cd4bfff36ac16dfe63d0d25d8e5b60050a20fff9fa8a4a743c974",
+      "float_source_sha256": "98e171781ae52bd9425bfeec5ace560141591b1b718e01e10053666c12fdf7a1",
+      "gain": 0.7213514048294217,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 8.74,
+    "error": null,
+    "text": "Our infantry is in it now! Covering fire, go!"
+  },
+  "seed": 79249726,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "3a7cc48306953e3691e32b563ee51929f8686b9723f9f49476d56e39769220ab"
+  }
+}

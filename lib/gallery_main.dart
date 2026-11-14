@@ -5,6 +5,10 @@
 // Pages (?page=...): creatures, elites, actions, weapons, sentinels, carrier.
 // Every tile is the real DemonScene renderer drawing a staged ArcadeModel,
 // so screenshots show exactly what the game draws.
+//
+// ?page=studio opens the asset review studio (lib/review/): backgrounds,
+// atlas animations, these staged scenes, radio clips and music cues, each
+// with targeted review notes (&tab=radio&item=<clip id> deep-links one).
 import 'dart:math' as math;
 
 import 'package:flame/game.dart';
@@ -12,8 +16,27 @@ import 'package:flutter/material.dart';
 
 import 'game/model.dart';
 import 'game/scene.dart';
+import 'review/page_notes.dart';
+import 'review/review_catalog.dart';
+import 'review/review_studio.dart';
+import 'services/audio.dart';
 
-void main() => runApp(const GalleryApp());
+void main() {
+  // The gallery loads the game's audio script (web/index.html is shared);
+  // its menu music must not start here. The studio plays its own audio.
+  audioMute(true);
+  runApp(const GalleryApp());
+}
+
+/// Whether [path] is the studio's own address, /studio (the Worker serves
+/// this app there; /gallery/?page=studio still works).
+bool isStudioPath(String path) {
+  var p = path.toLowerCase();
+  while (p.length > 1 && p.endsWith('/')) {
+    p = p.substring(0, p.length - 1);
+  }
+  return p == '/studio';
+}
 
 typedef Stage = void Function(ArcadeModel model, double dt, double t);
 
@@ -49,8 +72,60 @@ class GalleryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final page = Uri.base.queryParameters['page'] ?? 'creatures';
-    final only = int.tryParse(Uri.base.queryParameters['tile'] ?? '');
+    final query = Uri.base.queryParameters;
+    final page =
+        query['page'] ?? (isStudioPath(Uri.base.path) ? 'studio' : 'creatures');
+    if (page == 'studio' || page == 'review') {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Demon Attack asset review',
+        home: ReviewStudio(
+          sceneBuilder: (page) => GalleryPage(page: page),
+          initialTab: StudioTab.values
+              .where((t) => t.name == query['tab'])
+              .firstOrNull,
+          initialItem: query['item'],
+        ),
+      );
+    }
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: const Color(0xFF0B0A1C),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: GalleryPage(
+                page: page,
+                only: int.tryParse(query['tile'] ?? ''),
+              ),
+            ),
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: PageNotesButton(
+                asset: sceneAsset(
+                  page,
+                  scenePages.where((p) => p.$1 == page).firstOrNull?.$2 ??
+                      'Gallery page: $page',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One staged gallery page: a grid of live DemonScene tiles.
+class GalleryPage extends StatelessWidget {
+  const GalleryPage({super.key, required this.page, this.only});
+  final String page;
+  final int? only;
+
+  @override
+  Widget build(BuildContext context) {
     var tiles = switch (page) {
       'elites' => [_tile('ELITES', _elites())],
       'actions' => [_tile('FIRE / DEATH', _actions())],
@@ -59,37 +134,32 @@ class GalleryApp extends StatelessWidget {
       'carrier' => _carriers(),
       _ => [_tile('CREATURES', _creatures())],
     };
+    final only = this.only;
     if (only != null && only < tiles.length) tiles = [tiles[only]];
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: const Color(0xFF0B0A1C),
-        body: LayoutBuilder(
-          builder: (context, box) {
-            final cols = tiles.length == 1
-                ? 1
-                : (box.maxWidth > 900 ? math.min(4, tiles.length) : 2);
-            final rows = (tiles.length / cols).ceil();
-            return Column(
-              children: [
-                for (var r = 0; r < rows; r++)
-                  Expanded(
-                    child: Row(
-                      children: [
-                        for (var c = 0; c < cols; c++)
-                          Expanded(
-                            child: r * cols + c < tiles.length
-                                ? tiles[r * cols + c]
-                                : const SizedBox(),
-                          ),
-                      ],
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, box) {
+        final cols = tiles.length == 1
+            ? 1
+            : (box.maxWidth > 900 ? math.min(4, tiles.length) : 2);
+        final rows = (tiles.length / cols).ceil();
+        return Column(
+          children: [
+            for (var r = 0; r < rows; r++)
+              Expanded(
+                child: Row(
+                  children: [
+                    for (var c = 0; c < cols; c++)
+                      Expanded(
+                        child: r * cols + c < tiles.length
+                            ? tiles[r * cols + c]
+                            : const SizedBox(),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -158,7 +228,14 @@ GalleryScene _elites() {
   final m = _staged();
   for (var k = 0; k < 4; k++) {
     for (var col = 0; col < 6; col++) {
-      final d = Demon(30.0 + col * 60, _speciesY[k], k, 5, 0.3 * col, elite: true);
+      final d = Demon(
+        30.0 + col * 60,
+        _speciesY[k],
+        k,
+        5,
+        0.3 * col,
+        elite: true,
+      );
       d.hp = col < 5 ? 5 - col : 2;
       m.demons.add(d);
     }

@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'comms_director.dart';
+import 'brood_script.dart';
 import 'comms_portraits.dart';
 import 'comms_types.dart';
 
@@ -63,7 +64,7 @@ class CommsLayout {
     ];
   }
 
-  static const _subtitleHeight = 62.0, _tagHeight = 18.0;
+  static const _subtitleHeight = 76.0, _tagHeight = 18.0;
 }
 
 /// Loads the portrait atlases once and repaints listeners when ready.
@@ -292,15 +293,17 @@ void paintScanlines(Canvas canvas, Rect r, {double pitch = 3}) {
   }
 }
 
-/// Brood glyph script: original 5 x 7 pixel symbols seeded by the clip id.
+/// Brood glyph script: an original, stable 5 x 7 pixel alphabet.
 class AlienGlyphPainter extends CustomPainter {
-  AlienGlyphPainter(this.seed, this.count, this.reveal, this.color);
-  final int seed, count;
+  AlienGlyphPainter(this.symbols, this.reveal, this.color, {this.rows = 1});
+  final List<int> symbols;
+  final int rows;
   final double reveal;
   final Color color;
   static const _w = 5, _h = 7;
 
-  static List<List<bool>> glyph(int seed, int index) {
+  static List<List<bool>> glyph(int index) {
+    const seed = 0xB00D;
     final cells = List.generate(_h, (_) => List.filled(_w, false));
     for (var y = 0; y < _h; y++) {
       for (var x = 0; x < 3; x++) {
@@ -318,35 +321,43 @@ class AlienGlyphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final px = math.max(1.0, (size.height / (_h + 1)).floorToDouble());
+    final px = math.max(1.0, (size.height / (rows * (_h + 1))).floorToDouble());
     final advance = px * (_w + 2);
-    final shown = (count * reveal).ceil().clamp(0, count);
+    final shown = (symbols.length * reveal).ceil().clamp(0, symbols.length);
     final paint = Paint()..color = color;
     var x = 0.0;
-    for (var i = 0; i < shown && x + _w * px <= size.width; i++) {
-      final g = glyph(seed, i);
+    var row = 0;
+    for (var i = 0; i < shown; i++) {
+      if (x + _w * px > size.width) {
+        row++;
+        x = 0;
+      }
+      if (row >= rows) break;
+      if (symbols[i] < 0) {
+        x += px * 3;
+        continue;
+      }
+      final g = glyph(symbols[i]);
       for (var y = 0; y < _h; y++) {
         for (var gx = 0; gx < _w; gx++) {
           if (g[y][gx]) {
-            canvas.drawRect(Rect.fromLTWH(x + gx * px, y * px, px, px), paint);
+            canvas.drawRect(
+              Rect.fromLTWH(x + gx * px, (row * (_h + 1) + y) * px, px, px),
+              paint,
+            );
           }
         }
       }
-      x += advance + (i % 3 == 2 ? px * 3 : 0);
+      x += advance;
     }
   }
 
   @override
   bool shouldRepaint(AlienGlyphPainter old) =>
-      old.reveal != reveal || old.seed != seed || old.color != color;
-}
-
-int _seedOf(String text) {
-  var h = 7;
-  for (final c in text.codeUnits) {
-    h = (h * 31 + c) & 0x7fffffff;
-  }
-  return h;
+      old.reveal != reveal ||
+      old.symbols != symbols ||
+      old.rows != rows ||
+      old.color != color;
 }
 
 /// Video area of one call tile.
@@ -502,13 +513,15 @@ class CommsSubtitle extends StatelessWidget {
     super.key,
     required this.message,
     required this.now,
-    this.fontSize = 11,
+    this.fontSize = 13,
     this.maxLines = 3,
     this.glyphHeight = 9,
+    this.glyphRows = 1,
   });
   final CommsMessage message;
   final double now, fontSize, glyphHeight;
   final int maxLines;
+  final int glyphRows;
 
   @override
   Widget build(BuildContext context) {
@@ -516,39 +529,53 @@ class CommsSubtitle extends StatelessWidget {
     final accent = Color(c.accent);
     final line = message.line;
     if (line.isGrunt) {
+      final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+      final meaning = line.gloss ?? 'UNKNOWN';
       final reveal = (message.age(now) / math.max(.3, line.duration)).clamp(
-        .15,
+        0.0,
         1.0,
       );
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            height: glyphHeight,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: AlienGlyphPainter(
-                _seedOf(line.id),
-                3 + (line.duration * 5).round(),
-                reveal,
-                accent,
+      final translation = BroodScript.translation(
+        meaning,
+        message.age(now),
+        line.duration,
+        reduceMotion: reduce,
+      );
+      return Semantics(
+        label: '${c.name}. $meaning',
+        liveRegion: true,
+        child: ExcludeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: glyphHeight,
+                width: double.infinity,
+                child: CustomPaint(
+                  painter: AlienGlyphPainter(
+                    BroodScript.encode(meaning),
+                    reduce ? 1 : reveal,
+                    accent,
+                    rows: glyphRows,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 3),
+              Text(
+                'SIGINT · $translation',
+                maxLines: maxLines,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: const Color(0xFFFFB0A8),
+                  fontSize: fontSize * .85,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 3),
-          Text(
-            'SIGINT · ${line.gloss ?? 'UNKNOWN'}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: const Color(0xFFFFB0A8),
-              fontSize: fontSize * .8,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+        ),
       );
     }
     return Text(
@@ -733,8 +760,8 @@ class CommsSidePanels extends StatelessWidget {
                     : CommsSubtitle(
                         message: m,
                         now: now,
-                        fontSize: 11 * math.min(scale, 1.2),
-                        glyphHeight: 9 * math.min(scale, 1.3),
+                        fontSize: 13.5 * math.min(scale, 1.2),
+                        glyphHeight: 11 * math.min(scale, 1.3),
                       ),
               ),
             ),
@@ -746,10 +773,9 @@ class CommsSidePanels extends StatelessWidget {
 }
 
 /// Phones and narrow windows: a compact, translucent call dock at the top
-/// of the arena, just below the HUD band (the HUD stays readable). One
-/// strip shows the most important active line; a second active line
-/// collapses into a chip, and waiting lines show as `+n`. It dims while the
-/// player is being hit ([dimmed]).
+/// of the arena, just below the HUD band. Isolated calls occupy half the dock;
+/// linked dialogue shares one full-width toast with portraits at either end.
+/// It dims while the player is being hit ([dimmed]).
 class CommsHudStack extends StatelessWidget {
   const CommsHudStack({
     super.key,
@@ -765,32 +791,36 @@ class CommsHudStack extends StatelessWidget {
   /// A full-size transmission card is showing the transmission line.
   final bool hideTransmission;
 
-  static const stripHeight = 54.0, chipHeight = 22.0, gap = 2.0;
-  static const portrait = 48.0;
+  /// Strips grew with the larger radio text; short landscape screens use
+  /// [compactStripHeight].
+  static const stripHeight = 90.0,
+      compactStripHeight = 76.0,
+      chipHeight = 22.0,
+      gap = 2.0;
+  static const portrait = 40.0;
 
-  /// Tallest the dock gets (strip + chip row).
+  /// Tallest the dock gets (dialogue cards plus exchange/queue label).
   static const maxHeight = stripHeight + gap + chipHeight;
 
   @override
   Widget build(BuildContext context) {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    // Whoever is speaking wins the strip (a line in its subtitle hold
-    // yields); when several speak at once, spoken lines beat grunts so the
-    // subtitle stays readable.
-    int rank(CommsMessage m) => (m.speaking(now) ? 2 : 0) + (m.isDemon ? 0 : 1);
-    final shown =
-        [
-          for (final m in director.active)
-            if (!(hideTransmission && m.transmission)) m,
-        ]..sort(
-          (a, b) => rank(a) != rank(b)
-              ? rank(b).compareTo(rank(a))
-              : b.startedAt.compareTo(a.startedAt),
-        );
-    if (shown.isEmpty) return const SizedBox.shrink();
+    // Short landscape screens keep the compact strip clear of the ship.
+    final strip = MediaQuery.sizeOf(context).height < 520
+        ? compactStripHeight
+        : stripHeight;
+    final (:placed, :overflow) = dockEntries(
+      director.active,
+      hideTransmission: hideTransmission,
+    );
+    if (placed.isEmpty) return const SizedBox.shrink();
+    final pair = placed.where((e) => e.length == 2).firstOrNull;
+    final conversation = pair != null;
+    final opening = pair?.first;
+    final latest = pair?.last ?? placed.last.last;
+    final panels = pair ?? [for (final e in placed) e.single];
+    final ticker = overflow.isEmpty ? null : overflow.last.last;
     final waiting = director.queue.where((m) => now >= m.readyAt).length;
-    final main = shown.first;
-    final rest = shown.skip(1).take(2).toList();
     return IgnorePointer(
       child: AnimatedOpacity(
         opacity: dimmed ? .3 : 1,
@@ -799,29 +829,227 @@ class CommsHudStack extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _strip(main, reduce),
-            if (rest.isNotEmpty || waiting > 0) ...[
-              const SizedBox(height: gap),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+            _maybeFramed(
+              key: conversation ? const ValueKey('comms-conversation') : null,
+              framed: conversation,
+              leading: Color(panels.first.character.accent),
+              trailing: Color(panels.last.character.accent),
+              lit: panels.any((m) => m.speaking(now)),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (final m in rest) Flexible(child: _chip(m, reduce)),
-                  if (waiting > 0)
-                    Container(
-                      height: chipHeight,
-                      margin: const EdgeInsets.only(left: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                      alignment: Alignment.center,
-                      color: const Color(0xA60A1220),
-                      child: Text(
-                        '+$waiting',
-                        style: const TextStyle(color: _muted, fontSize: 9),
+                  Expanded(
+                    child: _strip(
+                      panels.first,
+                      reduce,
+                      retained: identical(panels.first, opening),
+                      conversation: conversation,
+                      height: conversation ? strip - _frameInset : strip,
+                    ),
+                  ),
+                  if (panels.length == 2) ...[
+                    SizedBox(width: conversation ? 0 : gap * 2),
+                    Expanded(
+                      child: _strip(
+                        panels.last,
+                        reduce,
+                        right: true,
+                        conversation: conversation,
+                        height: conversation ? strip - _frameInset : strip,
                       ),
                     ),
+                  ] else ...[
+                    const SizedBox(width: gap * 2),
+                    const Spacer(),
+                  ],
                 ],
               ),
-            ],
+            ),
+            if (ticker != null)
+              _ticker(ticker, overflow.length - 1, reduce)
+            else if (opening != null || waiting > 0)
+              SizedBox(
+                height: chipHeight,
+                child: Text(
+                  opening != null
+                      ? '${opening.character.callsign} → ${latest.character.callsign}'
+                      : '+$waiting',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: _muted, fontSize: 9),
+                ),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Vertical room the toast frame takes (padding plus border, both edges).
+  static const _frameInset = 8.0;
+
+  /// A radio toast: rounded, fully bordered card with a soft drop shadow and
+  /// an accent bar on the speaker's side ([trailing]: a second bar on the
+  /// right for a two-speaker exchange). The border lights in the speaker's
+  /// colour while they talk. Unframed, it is a plain box of [height].
+  Widget _maybeFramed({
+    Key? key,
+    required bool framed,
+    required Color leading,
+    required Widget child,
+    Color? trailing,
+    bool barOnRight = false,
+    bool lit = false,
+    double? height,
+  }) {
+    if (!framed) return SizedBox(key: key, height: height, child: child);
+    const radius = 8.0, bar = 3.0;
+    final edge = lit
+        ? (trailing == null ? leading : Color.lerp(leading, trailing, .5)!)
+              .withValues(alpha: .7)
+        : const Color(0x6694A3B8);
+    Widget accentBar(Color color, {required bool right}) => Positioned(
+      top: 0,
+      bottom: 0,
+      left: right ? null : 0,
+      right: right ? 0 : null,
+      width: bar,
+      child: ColoredBox(color: color),
+    );
+    return Container(
+      key: key,
+      height: height,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xE6121D2E), Color(0xD90A1220)],
+        ),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: edge),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x8C000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius - 1),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                bar + 3,
+                _frameInset / 2 - 1,
+                bar + 3,
+                _frameInset / 2 - 1,
+              ),
+              child: child,
+            ),
+            if (trailing != null) ...[
+              accentBar(leading, right: false),
+              accentBar(trailing, right: true),
+            ] else
+              accentBar(leading, right: barOnRight),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// What the dock shows: up to two halves, oldest first, so a card keeps
+  /// its place until it has been read (a linked exchange takes both
+  /// halves). Cards that do not fit wait in [overflow] (shown as a one-line
+  /// ticker under the dock) and move up when a half frees; nothing on
+  /// screen is hidden by a newer line.
+  static ({List<List<CommsMessage>> placed, List<List<CommsMessage>> overflow})
+  dockEntries(Iterable<CommsMessage> active, {bool hideTransmission = false}) {
+    bool hidden(CommsMessage m) => hideTransmission && m.transmission;
+    final shown = [
+      for (final m in active)
+        if (!hidden(m)) m,
+    ]..sort((a, b) => a.startedAt.compareTo(b.startedAt));
+    final entries = <List<CommsMessage>>[];
+    final used = <CommsMessage>{};
+    for (final m in shown) {
+      if (used.contains(m)) continue;
+      used.add(m);
+      final reply = shown
+          .where((r) => identical(r.inReplyTo, m) && !used.contains(r))
+          .firstOrNull;
+      final opening = m.inReplyTo;
+      if (reply != null) {
+        used.add(reply);
+        entries.add([m, reply]);
+      } else if (opening != null &&
+          !used.contains(opening) &&
+          !hidden(opening)) {
+        // The opening already left the channel: keep it beside its answer.
+        entries.add([opening, m]);
+      } else {
+        entries.add([m]);
+      }
+    }
+    final placed = <List<CommsMessage>>[], overflow = <List<CommsMessage>>[];
+    var free = 2;
+    for (final e in entries) {
+      if (e.length <= free && overflow.isEmpty) {
+        placed.add(e);
+        free -= e.length;
+      } else {
+        overflow.add(e);
+      }
+    }
+    return (placed: placed, overflow: overflow);
+  }
+
+  /// One line under the dock for a card waiting for room: speaker and
+  /// text, readable at a glance.
+  Widget _ticker(CommsMessage m, int more, bool reduce) {
+    final c = m.character;
+    final accent = Color(c.accent);
+    final text = m.line.isGrunt
+        ? 'SIGINT · ${m.line.gloss ?? ''}'
+        : (m.line.text ?? '');
+    return Opacity(
+      key: ValueKey('comms-ticker-${m.line.id}'),
+      opacity: _fade(m, reduce),
+      child: Container(
+        height: chipHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        margin: const EdgeInsets.only(top: gap),
+        decoration: BoxDecoration(
+          color: const Color(0xCC0A1220),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: accent.withValues(alpha: .45)),
+        ),
+        alignment: Alignment.centerLeft,
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: '${c.isDemon ? c.name : c.callsign}  ',
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: .8,
+                ),
+              ),
+              TextSpan(text: text),
+              if (more > 0) TextSpan(text: '  +$more'),
+            ],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: m.line.isGrunt ? const Color(0xFFFFB0A8) : _text,
+            fontSize: 11.5,
+            height: 1.1,
+          ),
         ),
       ),
     );
@@ -849,7 +1077,14 @@ class CommsHudStack extends StatelessWidget {
       ? 1.0
       : (math.min(m.age(now), m.endsAt - now) / .18).clamp(0.0, 1.0);
 
-  Widget _strip(CommsMessage m, bool reduce) {
+  Widget _strip(
+    CommsMessage m,
+    bool reduce, {
+    bool right = false,
+    bool retained = false,
+    bool conversation = false,
+    double height = stripHeight,
+  }) {
     final c = m.character;
     final accent = Color(c.accent);
     final speaking = m.speaking(now);
@@ -857,24 +1092,22 @@ class CommsHudStack extends StatelessWidget {
     final celebrating = director.celebrating(now) && !c.isDemon;
     return Opacity(
       key: ValueKey('comms-strip-${m.line.id}'),
-      opacity: _fade(m, reduce),
-      child: Container(
-        height: stripHeight,
-        decoration: BoxDecoration(
-          color: const Color(0xB30A1220),
-          border: Border(
-            left: BorderSide(color: accent, width: 2),
-            bottom: BorderSide(
-              color: speaking ? accent.withValues(alpha: .5) : _line,
-            ),
-          ),
-        ),
+      opacity: retained ? 1 : _fade(m, reduce),
+      child: _maybeFramed(
+        height: height,
+        framed: !conversation,
+        leading: accent,
+        barOnRight: right,
+        lit: speaking,
         child: Row(
+          textDirection: right ? TextDirection.rtl : TextDirection.ltr,
           children: [
             SizedBox(
+              key: ValueKey('comms-portrait-${m.line.id}'),
               width: portrait,
               height: portrait,
-              child: ClipRect(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(5),
                 child: CustomPaint(
                   painter: _MiniPortrait(
                     c,
@@ -899,7 +1132,7 @@ class CommsHudStack extends StatelessWidget {
                           maxLines: 1,
                           style: TextStyle(
                             color: accent,
-                            fontSize: 8,
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
                           ),
@@ -907,9 +1140,10 @@ class CommsHudStack extends StatelessWidget {
                         CommsSubtitle(
                           message: m,
                           now: now,
-                          fontSize: 10,
-                          maxLines: 1,
-                          glyphHeight: 8,
+                          fontSize: 12.5,
+                          maxLines: 3,
+                          glyphHeight: 16,
+                          glyphRows: 2,
                         ),
                       ],
                     )
@@ -924,7 +1158,7 @@ class CommsHudStack extends StatelessWidget {
                                 color: celebrating
                                     ? const Color(0xFFFFD86B)
                                     : accent,
-                                fontSize: 8.5,
+                                fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: .8,
                               ),
@@ -932,11 +1166,11 @@ class CommsHudStack extends StatelessWidget {
                             TextSpan(text: m.line.text ?? ''),
                           ],
                         ),
-                        maxLines: 2,
+                        maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: _text,
-                          fontSize: 10.5,
+                          fontSize: 13,
                           height: 1.15,
                           shadows: [
                             Shadow(color: Color(0xFF000000), blurRadius: 2),
@@ -946,61 +1180,6 @@ class CommsHudStack extends StatelessWidget {
                     ),
             ),
             const SizedBox(width: 4),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// A collapsed second line: tiny portrait and who is talking.
-  Widget _chip(CommsMessage m, bool reduce) {
-    final c = m.character;
-    final accent = Color(c.accent);
-    return Opacity(
-      key: ValueKey('comms-chip-${m.line.id}'),
-      opacity: _fade(m, reduce),
-      child: Container(
-        height: chipHeight,
-        margin: const EdgeInsets.only(left: 4),
-        padding: const EdgeInsets.only(right: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xA60A1220),
-          border: Border(left: BorderSide(color: accent, width: 2)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: chipHeight,
-              height: chipHeight,
-              child: ClipRect(
-                child: CustomPaint(
-                  painter: _MiniPortrait(
-                    c,
-                    _frame(m),
-                    _zoom(m, reduce),
-                    now,
-                    m,
-                    reduce,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                c.isDemon ? '${c.name} · ${m.line.gloss ?? ''}' : c.callsign,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
-                style: TextStyle(
-                  color: accent,
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: .8,
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -1134,7 +1313,7 @@ class CommsTransmission extends StatelessWidget {
                         m.line.text ?? '',
                         style: const TextStyle(
                           color: _text,
-                          fontSize: 14,
+                          fontSize: 17,
                           height: 1.3,
                         ),
                       ),

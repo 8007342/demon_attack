@@ -15,10 +15,10 @@ function seconds(name) {
   if (/-accents$/.test(name)) return 12;
   if (/-layers$/.test(name)) return 12 * BAR[level];  // six two-bar layer slots
   if (/-power$/.test(name)) return 8 * BAR[level];
-  return { menu: 16, levelclear: 8, victory: 12, finale: 20, 'levelclear-fleet': 8, 'finale-fleet': 20, cackle: 4, alienwin: 16 }[name];
+  return { ending: 100, menu: 16, levelclear: 8, victory: 12, finale: 20, 'levelclear-fleet': 8, 'finale-fleet': 20, cackle: 4, alienwin: 16 }[name];
 }
 
-async function player({ missing = new Set(), localStorage } = {}) {
+async function player({ missing = new Set(), localStorage, durationOf = seconds } = {}) {
   let callback, ctx;
   const fetched = [], sources = [], voices = [];
   const parameter = () => ({ value: 1, events: [], cancelScheduledValues() {}, setValueAtTime(v, t) { this.events.push(['set', v, t]); }, linearRampToValueAtTime(v, t) { this.value = v; this.events.push(['ramp', v, t]); }, exponentialRampToValueAtTime() {}, setTargetAtTime(value) { this.value = value; } });
@@ -27,7 +27,7 @@ async function player({ missing = new Set(), localStorage } = {}) {
     createGain() { return { gain: parameter(), connect() {}, disconnect() {} }; }
     createOscillator() { return { frequency: parameter(), connect() {}, disconnect() {}, start() { voices.push(this); }, stop() {} }; }
     createBufferSource() { const s = { connect(to) { s.to = to; }, disconnect() {}, start(at, offset, duration) { s.at = at; s.offset = offset; s.duration = duration; sources.push(s); }, stop(at) { s.stoppedAt = at; } }; return s; }
-    decodeAudioData(bytes) { const name = new TextDecoder().decode(new Uint8Array(bytes)); return Promise.resolve({ duration: seconds(name), name }); }
+    decodeAudioData(bytes) { const name = new TextDecoder().decode(new Uint8Array(bytes)); const duration = durationOf(name); return Promise.resolve({ duration, name, length: Math.round(duration * 48000), numberOfChannels: 2 }); }
     async resume() { this.state = 'running'; }
     async suspend() { this.state = 'suspended'; }
   }
@@ -53,6 +53,53 @@ async function player({ missing = new Set(), localStorage } = {}) {
 const onGrid = (t, origin, unit) => { const k = (t - origin) / unit; return Math.abs(k - Math.round(k)) < 1e-6; };
 const near = (a, b) => Math.abs(a - b) < 1e-9;
 const last = (sources, name) => sources.filter(s => s.buffer?.name === name).at(-1);
+
+test('extended cues evict old PCM by bytes while alternatives stay compressed until needed', async () => {
+  const { audio, step, settle } = await player({
+    durationOf: name => /^l\d-t\d$/.test(name) ? 35 : seconds(name),
+  });
+  await audio.unlock();
+  for (const level of [1, 2, 3, 4, 5]) {
+    await audio.cue('level', level);
+    await settle();
+    assert.ok(!audio.state.decoded.includes(`l${level}-t4`), 'prefetch does not eagerly decode distant arrangements');
+    await step(60);
+    for (const tier of [2, 3, 4]) {
+      await audio.intensity(tier);
+      await step(16);
+    }
+    assert.ok(audio.state.decodedBytes <= audio.state.decodedByteLimit,
+      `level ${level} retained ${audio.state.decodedBytes} decoded bytes`);
+    assert.ok(audio.state.decoded.includes(audio.state.asset), 'playing music remains cached');
+  }
+  assert.ok(audio.state.decoded.length < 14, 'the byte budget evicts before the count limit');
+  assert.ok(!audio.state.decoded.includes('l1-t4'), 'old extended arrangements are released');
+});
+
+test('the ending retains its full arrangement and warm tail at 96 BPM', async () => {
+  const { audio, sources, settle } = await player();
+  await audio.unlock();
+  await audio.cue('ending', 5);
+  await settle();
+  assert.equal(audio.state.active, 'ending');
+  assert.equal(audio.state.asset, 'ending');
+  assert.equal(audio.state.duration, 100);
+  assert.equal(audio.state.beatSeconds, 60 / 96);
+  const source = last(sources, 'ending');
+  assert.equal(source.loopStart, 95, 'the full 38-bar resolution plays before the final two bars loop');
+  assert.equal(source.loopEnd, 100);
+});
+
+test('unavailable new ending uses the existing resolution and identifies the actual asset', async () => {
+  const { audio, sources, settle } = await player({ missing: new Set(['ending']) });
+  await audio.unlock();
+  await audio.cue('ending', 5);
+  await settle();
+  assert.equal(audio.state.active, 'ending');
+  assert.equal(audio.state.asset, 'finale');
+  assert.equal(audio.state.duration, 20);
+  assert.ok(last(sources, 'finale'));
+});
 
 test('levels play intro then tiers of one motif at the level tempo: tier changes land on bars and keep the loop position', async () => {
   const { audio, ctx, sources, fetched, step, settle } = await player();
@@ -112,21 +159,21 @@ test('levels play intro then tiers of one motif at the level tempo: tier changes
   const breakthrough = await audio.accent('breakthrough');
   assert.ok(onGrid(breakthrough, t1.at, BEAT(2)), 'ground breakthrough accent on the beat');
   assert.equal(sources.at(-1).offset, 6, 'breakthrough slot of the sprite');
-  // Life loss: the hit lands on the next sixteenth and drops the music for two
-  // bars; the gloat and the heroic re-entry follow on the beat, and the re-entry
-  // restores the music on its downbeat.
+  // Life loss: the hit lands on the next sixteenth; the gloat and the heroic
+  // re-entry follow on the beat. The music level stays constant throughout
+  // (no life-loss drop: the score is never dipped).
   ctx().currentTime += 1.6;
   const hit = await audio.accent('destroyed');
   assert.ok(onGrid(hit, t1.at, BEAT(2) / 4) && hit - ctx().currentTime <= BEAT(2) / 4 + .031, 'hit stinger on the next sixteenth');
   assert.equal(sources.at(-1).offset, 7.5, 'destroyed slot');
-  assert.ok(near(audio.state.drop.at, hit) && near(audio.state.drop.until, hit + 2 * BAR[2]), 'music drops for two bars');
+  assert.equal(audio.state.drop, null, 'the music is not dipped under the hit');
   ctx().currentTime += .4;
   const gloat = await audio.accent('gloat');
   assert.ok(onGrid(gloat, t1.at, BEAT(2)) && sources.at(-1).offset === 9, 'demonic gloat on the beat');
   ctx().currentTime += .4;
   const back = await audio.accent('respawn');
   assert.ok(onGrid(back, t1.at, BEAT(2)) && sources.at(-1).offset === 10.5, 'heroic re-entry on the beat');
-  assert.ok(near(audio.state.drop.until, back + BEAT(2)), 'the music returns on the re-entry downbeat');
+  assert.equal(audio.state.drop, null, 'nor restored: it never moved');
   assert.equal(audio.state.active, 'l2-t2', 'accents never replace the music');
   // Stale loads: only the latest request wins.
   await Promise.all([audio.cue('level', 1), audio.cue('travel', 2)]);
@@ -332,7 +379,7 @@ test('without a decoded layer sprite a dive falls back to the single dive accent
   assert.equal(sources.at(-1).offset, 0);
 });
 
-test('a muted music channel plays no dive layers; the life-loss drop still applies', async () => {
+test('a muted music channel plays no dive layers; the life-loss accents still play', async () => {
   const { audio } = await inTiers(3);
   audio.setLevel('music', 'mute');
   assert.equal(await audio.accent('dive'), null);

@@ -32,6 +32,6 @@
 - [x] 6.1 Add `tools/asset_pipeline/` (plan/ingest/process/review/accept/pack) with a `ship` family spec: hull plus combinable weapon modules on a shared 48×48 canvas.
 - [x] 6.2 Generate 24 I0 candidates sequentially, then ingest, process, and QA-grade them; publish the review gallery with loadout and wear sheets.
 - [x] 6.3 Pack a provisional `ship-parts.png` and draw it in-game as layered modules with wear states and jettisoned critical parts; keep the code-drawn fallback; analyzer clean, 131 tests pass.
-- [ ] 6.4 Human acceptance of each part (blocked on review).
+- [x] 6.4 Human acceptance of each part. Operator approved the upgraded sprites on 2026-11-13; the shipped ship art is now the 64-grid atlas from sprite-64-grid-overhaul, and these parts remain as research history.
 - [x] 6.5 Re-run the queue at I1 (24 more candidates in the same gallery; 5 of 6 provisional picks now I1); the shield gets a violet critical ramp per the style guide.
 - [x] 6.6 Re-run at I2/I3 once offered (operator pre-approved the ladder): 48 FLUX candidates on 2026-11-02; follow-up review work continues in `asset-review-progression`.

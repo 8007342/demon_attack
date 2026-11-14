@@ -95,6 +95,15 @@ abstract final class GroundTuning {
 
   // Firing.
   static const telegraph = 1.1; // launcher raise (first half) + glow
+
+  /// How far ahead of a launch the radio is warned (`groundFirePrep`), so
+  /// its full missile warning ends on the launch. The warning is predicted
+  /// from the reload and the approach to fire range; firing itself is
+  /// unchanged (reload 3.2 s + tell 1.1 s).
+  static const firePrep = 1.4;
+
+  /// Seconds of warning before the launch (prep + the visible tell).
+  static const fireLead = firePrep + telegraph;
   static const fireFlash = .28;
   static const cooldown = 3.2;
   static const maxMissilesInFlight = 3;
@@ -356,6 +365,9 @@ class GroundUnit {
   /// cannot lock on until it reaches fire range).
   bool guaranteed = false, warned = false;
   double telegraph = 0, cooldown = 0, fireFlash = 0, tracerLeft = .6;
+
+  /// Whether the radio has been warned of this unit's next launch.
+  bool fireWarned = false;
   bool destroyed = false, sighted = false, announcedInRange = false;
   double wreckAge = 0;
   GroundAlly? ally;
@@ -1098,6 +1110,7 @@ extension GroundWarSimulation on ArcadeModel {
     if (shipAway) {
       // The regroup holds ground fire too (life-loss sequence).
       u.telegraph = 0;
+      u.fireWarned = false;
       return;
     }
     if (u.telegraph > 0) {
@@ -1109,6 +1122,28 @@ extension GroundWarSimulation on ArcadeModel {
       return;
     }
     u.cooldown = math.max(0, u.cooldown - dt);
+    // Warn the radio ahead of the next launch so the full clip ends on it.
+    // Predicted from the reload and the approach (both in hostile-rate
+    // time, like dt here); a launch that slips (missile cap, another tell)
+    // just lands a little after its warning.
+    if (!u.fireWarned &&
+        u.alive &&
+        u.shotsLeft > 0 &&
+        u.z >= GroundTuning.lastFireZ) {
+      final toRange = u.z > GroundTuning.fireZ
+          ? (u.z - GroundTuning.fireZ) / GroundTuning.approachSpeed
+          : 0.0;
+      final fireIn = (math.max(u.cooldown, toRange) + GroundTuning.telegraph) /
+          policy.hostileRate;
+      if (fireIn <= GroundTuning.fireLead) {
+        u.fireWarned = true;
+        _groundEvent(GameEventNames.groundFirePrep, {
+          'x': u.x,
+          'y': u.y,
+          'fireIn': fireIn,
+        });
+      }
+    }
     if (u.inRange &&
         u.shotsLeft > 0 &&
         u.cooldown <= 0 &&
@@ -1132,6 +1167,7 @@ extension GroundWarSimulation on ArcadeModel {
     ground.missiles.add(m);
     ground.missilesLaunched++;
     u.shotsLeft--;
+    u.fireWarned = false;
     u.cooldown = GroundTuning.cooldown;
     u.fireFlash = GroundTuning.fireFlash;
     events.add('missileLaunch');

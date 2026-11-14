@@ -1,0 +1,67 @@
+{
+  "speaker": "kessler",
+  "kind": "human",
+  "trigger": "groundForceSighted",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 66795,
+  "mouth": "3355<<===<<<==000444<<44444<<<<<<<<<<<====",
+  "open": "045588635886321137778976756878999988876432",
+  "vis": "--oo--eeee--ee-----oo-----------------ee--",
+  "lufs": -18.12,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "groundForceSighted.h3",
+  "text": "Bulwark here. Brood walkers moving on our line!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h3/baseline.flac",
+      "sha256": "d55c8fbd11336520274d0dce8881fb7b75b94fe2a38d91a473ff49dbdc4953ee",
+      "float_source_sha256": "1f0a16769c73ebd6390bc956a03f59a32584f67b2259c052ccef2b7ad3a3dffc",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h3/expressive.flac",
+      "sha256": "4891a05d9b94a388f7755ac7a6dfa0865852da025d3b8b6ec13924b786a2769d",
+      "float_source_sha256": "627fb5456532b0d43ff534f841590f83bb0d8bdd30647453a11f05f8b6111579",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h3/voice.flac",
+      "sha256": "a9d37df23a923ed9383846185afe10960a695e15e1f578a2991a30dcbe39f838",
+      "float_source_sha256": "4189608d9ec77caf9b19ee7ae52878f74c0779f6fac8a57840bb5e42529fa420",
+      "gain": 0.9360905159873584,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 11.34,
+    "error": null,
+    "text": "Bulwark here! Brood walkers moving on our line!"
+  },
+  "seed": 702318304,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "7140ae1b199506bc04481d1b34cfd8142f49033f721f185a5596bd9bfd7443ed"
+  }
+}

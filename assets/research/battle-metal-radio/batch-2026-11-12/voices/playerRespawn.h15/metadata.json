@@ -1,0 +1,67 @@
+{
+  "speaker": "nomad",
+  "kind": "human",
+  "trigger": "playerRespawn",
+  "engine": "chatterbox",
+  "emotion": "warm",
+  "samples": 86553,
+  "mouth": "==<<<<<<<<33<<<<<<<<<<<<<==220000000055<<<<<<<<<<<<<<00",
+  "open": "0688898898568997899888878753211000068778988768858874321",
+  "vis": "ee-------------ooooo--eeeee----------ooooo----ee-------",
+  "lufs": -18.03,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "playerRespawn.h15",
+  "text": "Every great pilot loses a ship. Great ones get back up.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/playerRespawn.h15/baseline.flac",
+      "sha256": "a7046d6384772a18144b609f84109fb00c9753663de1e87b1caf9500f930edc7",
+      "float_source_sha256": "54ceea121063ca4c50eb25fce1469352d0f57d050096ea31fd34c0bbe867f780",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/playerRespawn.h15/expressive.flac",
+      "sha256": "ce0d49c855c01af4fb6c969dc8a6379da7fd6e2dc7899b31472a7763a1142242",
+      "float_source_sha256": "d8e10127c84c1ee36ffa9d5e8619121d8afe8a03f2e1612fac61d12031755e31",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/playerRespawn.h15/voice.flac",
+      "sha256": "b33b45f3ce8c7f305f25fbb4c1cf25898d8fc0813c4f925f0f61a8a34d3bf2a3",
+      "float_source_sha256": "07f1d8c8eaf80a7a3429ed2f443503afed15923cd63972bbc72d7b4bc069fc11",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 11.82,
+    "error": null,
+    "text": "Every great pilot loses a ship. Great ones get back up."
+  },
+  "seed": 384260213,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "12018df993cbe41f9263501e3a87fe8354d99d32cb8532c19235d29f515c1e80"
+  }
+}

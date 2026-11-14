@@ -1,0 +1,67 @@
+{
+  "speaker": "kestrel",
+  "kind": "human",
+  "trigger": "levelClear",
+  "engine": "chatterbox",
+  "emotion": "triumphant",
+  "samples": 70371,
+  "mouth": "0003322332222<<<<========222<<44422<<<<<<555",
+  "open": "00066436632168886421687974268877744799887532",
+  "vis": "-----------------eee--oo---oo------------ooo",
+  "lufs": -18.14,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "levelClear.h6",
+  "text": "Sector's clear. That was beautiful flying.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/levelClear.h6/baseline.flac",
+      "sha256": "8e1edade17a86b0affbe84071002dc520687f15f19ccfb70e18b780213050ee1",
+      "float_source_sha256": "7d7d1be2f0bfbe4d2c2bf505c31b4a069ad902a64c1ce44be7e1a621a6417bd6",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/levelClear.h6/expressive.flac",
+      "sha256": "d7652041a0e89d75008440473e18a7e3fecab00425897fbc373543cc1f80b1cc",
+      "float_source_sha256": "17e58d262b7c7717f2a3ba7f8e14fec003c1b1c7cb48040e7783a58ef95028c9",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/levelClear.h6/voice.flac",
+      "sha256": "4d908e0545921aa52d70c5205c580b1e1a80524f3cd90b5d1fff81d470811465",
+      "float_source_sha256": "bea4ef5b6c67303b515919cdfcbab42dc9323a0f0052e3854e8be947f2a18780",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 12.92,
+    "error": null,
+    "text": "Sector's clear! That was beautiful flying!"
+  },
+  "seed": 1456017844,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "def3649c5486f27392649c32dc79aa2ac56856f8e62897a08451572a78eef5a5"
+  }
+}

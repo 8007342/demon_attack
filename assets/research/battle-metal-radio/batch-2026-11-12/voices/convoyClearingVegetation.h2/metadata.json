@@ -1,0 +1,67 @@
+{
+  "speaker": "mensah",
+  "kind": "human",
+  "trigger": "convoyClearingVegetation",
+  "engine": "chatterbox",
+  "emotion": "teasing",
+  "samples": 50647,
+  "mouth": "3333<<<<<<<<<<<<<332222222200000",
+  "open": "05879996899988864544421244321100",
+  "vis": "--------ooooo--------eee--------",
+  "lufs": -18.05,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "convoyClearingVegetation.h2",
+  "text": "Making our own road through these trees.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/convoyClearingVegetation.h2/baseline.flac",
+      "sha256": "3b0fe6f72bb5ca1ff6702d06496daba88e8dfb519d984c0f6cc85f0a70f977e9",
+      "float_source_sha256": "6b61976e4cc74692976a6742453b9324ac498002a3225a5667c5bf492bfb3001",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/convoyClearingVegetation.h2/expressive.flac",
+      "sha256": "aaee4f767f58340d6c5a15460779800eb84c1a011a61087e2c59172f5ee026d0",
+      "float_source_sha256": "72449b0f947de4e5b90c9d771284eca9e55885d4f9f2d3b306fee4741b92df51",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/convoyClearingVegetation.h2/voice.flac",
+      "sha256": "2898f8361f8d7d32c3eba99ed6e40eb97d85fdd14aa95a6877f2ec1647fcfe17",
+      "float_source_sha256": "4f28156404a3fc655696a2a8af8e977878543a21b4c90bea75cf8db24a27d72b",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 10.38,
+    "error": null,
+    "text": "Making our own road through these trees."
+  },
+  "seed": 108728980,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "545ec197ffe7dbf472bbfbcf5c9daaa56239c14502b9630e151832072c897e11"
+  }
+}

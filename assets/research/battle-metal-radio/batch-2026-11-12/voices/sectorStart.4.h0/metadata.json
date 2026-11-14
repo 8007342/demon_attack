@@ -1,0 +1,67 @@
+{
+  "speaker": "admiral",
+  "kind": "human",
+  "trigger": "sectorStart.4",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 97393,
+  "mouth": "554444433330000000<<==<<<<<==<<<<<<<<<444433222000000000===00",
+  "open": "0376686655321100068876899986788788789967776543211001687543211",
+  "vis": "oo------------------ee----eeeeee------------------------ee---",
+  "lufs": -18.14,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "sectorStart.4.h0",
+  "text": "The Hollow. Those towers answer one command. Cut it.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h0/baseline.flac",
+      "sha256": "2dd9b72fce6a1cd3cfff806af6bf2e58f37545b4cce0bfd9b8249cea7f258e45",
+      "float_source_sha256": "2fc7b90e27a41317c1ffc886be4728f2cc9287e303661d4f0608127a08f4c7f0",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h0/expressive.flac",
+      "sha256": "e9b29027c8ab76a52eaf90e8ffc0845a6111e02a8aa65d400d25bb3bdb393e08",
+      "float_source_sha256": "635c0e576836d1f44fb35b1cdd8256b844f7ce20561f292f972bd0bdd653f200",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h0/voice.flac",
+      "sha256": "94d0d81e964855ddfe1afdc7469eac032b075debf4cac5285ccfa9402cbdddfa",
+      "float_source_sha256": "48b6c3045b87a835a3ad69fb4f0fa02f9d25104be472fe0dd61677597ebd98d2",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 15.25,
+    "error": null,
+    "text": "The Hollow. Those towers answer one command. Cut it."
+  },
+  "seed": 981639111,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "f248b25792ef6a45a80d0e7f6bebf0f899b190791dc64c303b0aff6737690a4f"
+  }
+}

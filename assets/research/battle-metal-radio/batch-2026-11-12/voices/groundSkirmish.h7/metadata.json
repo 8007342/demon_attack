@@ -1,0 +1,67 @@
+{
+  "speaker": "march",
+  "kind": "human",
+  "trigger": "groundSkirmish",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 73899,
+  "mouth": "000<<<<<<444<<<<<<===0000<<<<<<====444444433222",
+  "open": "01789888777788988764211278998854426777787766321",
+  "vis": "ee--ooo-----------eeee---------eeee------------",
+  "lufs": -18.21,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "groundSkirmish.h7",
+  "text": "Convoy is engaged. Overwatch, we are holding.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundSkirmish.h7/baseline.flac",
+      "sha256": "e20e87914bfb0ab32907ae7fbb2ba90516d1830b249cd1a58e13e5ff151f61b3",
+      "float_source_sha256": "9207248c934ddfe9f4803c3e840291f45c55ba6f401dccb2a06c63bd10424ba5",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundSkirmish.h7/expressive.flac",
+      "sha256": "e3ad6ead65e9deb9e457345d110d366a9aac8ceee81931287e48d5449e979afb",
+      "float_source_sha256": "4f70ad22306163ff4959e7ee0d93b9bf18b7af6995cccf2491c5bb30a4c206ec",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundSkirmish.h7/voice.flac",
+      "sha256": "83d073489ddd6f9460e2f60c1eb14cc679c243d73f1bdf5aeb66e9e7dd0c38d7",
+      "float_source_sha256": "2dd526122c878cadaa2677bd5f06e2933cfb42f6ffc8113e601018a2aac7c93f",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 10.03,
+    "error": null,
+    "text": "Convoy is engaged. Overwatch, we are holding."
+  },
+  "seed": 695468158,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "24266bb20a40b993d4d205498013ec704da170f3fc2b4a778339ebccc6c52198"
+  }
+}

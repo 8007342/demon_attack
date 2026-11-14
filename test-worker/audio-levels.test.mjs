@@ -60,7 +60,7 @@ test('both channels start at Full; Full music is 6 dB louder than the previous m
   h.audio.setLevel('music', 'mute');
   assert.equal(h.audio.state.musicLevel, 0);
   assert.equal(h.audio.state.masterGain, .65, 'muting music alone keeps effects and speech');
-  assert.equal(music.gain.value, 1, 'the comms duck bus is separate from the music level');
+  assert.equal(music.gain.value, 1, 'the music bus stays at unity: only the music level changes the music');
   // Full music runs into a safety limiter on the master.
   assert.equal(h.audio.state.limiter, true);
   assert.equal(master.to.threshold.value, -1.5);
@@ -118,7 +118,7 @@ test('unavailable or failing storage falls back to Full and still applies the ch
   }
 });
 
-test('speech levels scale the voice bus; Low still ducks the music, Mute plays nothing and never ducks', async () => {
+test('speech levels scale only the voice bus; the music level never moves with speech', async () => {
   const h = await harness();
   await h.audio.unlock();
   const music = h.audio.graph.music;
@@ -129,15 +129,14 @@ test('speech levels scale the voice bus; Low still ducks the music, Mute plays n
   h.audio.setLevel('speech', 'low');
   assert.equal(h.comms.state.level, 'low', 'demonAudio forwards the speech level');
   assert.ok(close(bus.gain.value, 1.26 * dB(-8)), 'Low: 8 dB under Full');
-  assert.equal(music.gain.value, .4, 'low speech still ducks the music');
+  assert.equal(music.gain.value, 1, 'speech at any level leaves the music bus alone');
+  const musicLevel = h.audio.state.musicLevel;
   h.audio.setLevel('speech', 'mute');
   assert.equal(h.comms.state.voices.length, 0, 'muting speech stops live voices');
   assert.equal(h.comms.play('b', 9, false), false, 'muted speech plays nothing');
-  assert.equal(h.comms.state.ducked, true, 'the duck releases after the last voice');
-  // The duck release runs on a timer; nothing new ducks while muted.
-  music.gain.value = 1;
-  h.comms.play('c', 5, false);
-  assert.equal(music.gain.value, 1, 'no ducking while speech is muted');
+  assert.equal(h.audio.state.musicLevel, musicLevel, 'the speech toggle never changes the music level');
+  h.flushTimers?.();
+  assert.equal(music.gain.value, 1);
   // The squad-voice switch (setVolume) multiplies with the level.
   h.audio.setLevel('speech', 'full');
   h.comms.setVolume(0);

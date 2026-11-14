@@ -1,3 +1,6 @@
+import { handleNotes } from './notes.mjs';
+
+export { ReviewNotes } from './notes.mjs';
 const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' };
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const MAX_BODY = 512;
@@ -59,6 +62,16 @@ export class HighScores {
   }
 }
 
+/** The studio's own address: /studio, with or without a trailing slash. */
+export function isStudioPath(pathname) {
+  return /^\/studio\/?$/i.test(pathname);
+}
+
+/** The poster and QR page: /qr, with or without a trailing slash. */
+export function isQrPath(pathname) {
+  return /^\/qr\/?$/i.test(pathname);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -69,7 +82,13 @@ export default {
       const id = env.HIGH_SCORES.idFromName('global-top10-v1');
       return env.HIGH_SCORES.get(id).fetch(request);
     }
+    if (url.pathname === '/api/notes') return handleNotes(request, env);
     if (url.pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
+    // /studio is the asset review studio: the gallery app (built with base
+    // href /gallery/), which opens the studio when the path is /studio.
+    if (isStudioPath(url.pathname)) return env.ASSETS.fetch(new Request(new URL('/gallery/', url), request));
+    // /qr is a static poster page (web/qr/index.html), served without the game.
+    if (isQrPath(url.pathname)) return env.ASSETS.fetch(new Request(new URL('/qr/', url), request));
     return env.ASSETS.fetch(request);
   },
 };

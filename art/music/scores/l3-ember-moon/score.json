@@ -1,0 +1,428 @@
+{
+  "schema": "demon-attack.score/v1",
+  "level": 3,
+  "name": "Ember Moon",
+  "key": "E minor",
+  "bpm": 180.0,
+  "time_signature": "4/4",
+  "bars": 96,
+  "bar_samples": 64000,
+  "sample_rate": 48000,
+  "samples": 6144000,
+  "seconds": 128.0,
+  "ppq": 480,
+  "ring_out_bars": 1,
+  "humanise_seed": "l3-ember-moon-v1",
+  "sections": [
+    {
+      "id": "opening",
+      "first_bar": 1,
+      "bars": 8
+    },
+    {
+      "id": "theme-a",
+      "first_bar": 9,
+      "bars": 24
+    },
+    {
+      "id": "answer-b",
+      "first_bar": 33,
+      "bars": 16
+    },
+    {
+      "id": "contrast-c",
+      "first_bar": 49,
+      "bars": 16
+    },
+    {
+      "id": "developed-recap",
+      "first_bar": 65,
+      "bars": 24
+    },
+    {
+      "id": "outgoing",
+      "first_bar": 89,
+      "bars": 8
+    }
+  ],
+  "rehearsal_marks": [
+    {
+      "bar": 1,
+      "text": "opening: organ, choir, clean theme; war drums from bar 5"
+    },
+    {
+      "bar": 9,
+      "text": "A1: gallop riff, campaign theme on lead"
+    },
+    {
+      "bar": 17,
+      "text": "A2: gallop riff, level hook"
+    },
+    {
+      "bar": 25,
+      "text": "A3: hook in twin thirds, choir, double kick"
+    },
+    {
+      "bar": 33,
+      "text": "B1: 3-3-2 push, theme call (lead) and answer (brass)"
+    },
+    {
+      "bar": 41,
+      "text": "B2: double kick, twin-lead development"
+    },
+    {
+      "bar": 49,
+      "text": "C1: half-time breakdown, choir sings the theme augmented"
+    },
+    {
+      "bar": 57,
+      "text": "C2: gallop returns, guitar solo"
+    },
+    {
+      "bar": 65,
+      "text": "R1: recap, hook in thirds over choir and organ"
+    },
+    {
+      "bar": 73,
+      "text": "R2: brass and choir anthem (augmented theme), lead answers"
+    },
+    {
+      "bar": 81,
+      "text": "R3: climax, everything, double kick"
+    },
+    {
+      "bar": 89,
+      "text": "outgoing: thins out, final Em hit, G held for the L3->L4 bridge"
+    }
+  ],
+  "chords_per_bar": [
+    "Em",
+    "Em",
+    "C D",
+    "Em",
+    "Em",
+    "Em",
+    "F G",
+    "Am B",
+    "Em",
+    "Em",
+    "C D",
+    "Em",
+    "Em",
+    "Em",
+    "F G",
+    "Am B",
+    "Em",
+    "Em",
+    "C D",
+    "Em",
+    "Em",
+    "Em",
+    "F G",
+    "Am B",
+    "Em",
+    "Em",
+    "C D",
+    "Em",
+    "Em",
+    "Em",
+    "F G",
+    "Am B",
+    "C",
+    "D",
+    "Em",
+    "Em",
+    "Am",
+    "C",
+    "B",
+    "B",
+    "C",
+    "D",
+    "Em",
+    "G",
+    "Am",
+    "F",
+    "B",
+    "B",
+    "Em",
+    "F",
+    "Em",
+    "F",
+    "Am",
+    "C",
+    "B",
+    "B",
+    "Em",
+    "Em",
+    "C D",
+    "Em",
+    "Em",
+    "Em",
+    "F G",
+    "Am B",
+    "Em",
+    "Em",
+    "C D",
+    "Em",
+    "Em",
+    "Em",
+    "F G",
+    "Am B",
+    "Em",
+    "Em",
+    "C D",
+    "Em",
+    "Em",
+    "Em",
+    "F G",
+    "Am B",
+    "Em",
+    "Em",
+    "C D",
+    "Em",
+    "Em",
+    "Em",
+    "F G",
+    "Am B",
+    "Em",
+    "Em",
+    "C D",
+    "Em",
+    "C",
+    "D",
+    "Em",
+    "Em"
+  ],
+  "parts": [
+    {
+      "part": "drums",
+      "channel": 10,
+      "gm_program": 1,
+      "role": "drum kit (GM map)",
+      "render_hint": "SFZ drum kit (Karoryfer big-rusty or unruly drums)",
+      "notes": 1740,
+      "pitch_range": [
+        36,
+        57
+      ],
+      "bars_playing": 91,
+      "file": "parts/drums.mid"
+    },
+    {
+      "part": "bass",
+      "channel": 1,
+      "gm_program": 34,
+      "role": "bass guitar, fingered/picked",
+      "render_hint": "SFZ bass (meatbass or growlybass) -> saturate",
+      "notes": 844,
+      "pitch_range": [
+        28,
+        38
+      ],
+      "bars_playing": 91,
+      "file": "parts/bass.mid"
+    },
+    {
+      "part": "gtrL",
+      "channel": 2,
+      "gm_program": 31,
+      "role": "rhythm guitar left, open power chords",
+      "render_hint": "DI guitar SFZ -> amp/cab (NAM in batch 2; saturate+EQ now), pan L",
+      "notes": 846,
+      "pitch_range": [
+        40,
+        62
+      ],
+      "bars_playing": 79,
+      "file": "parts/gtrL.mid"
+    },
+    {
+      "part": "gtrL-pm",
+      "channel": 3,
+      "gm_program": 29,
+      "role": "rhythm guitar left, palm mutes",
+      "render_hint": "same chain as gtrL, palm-mute articulation",
+      "notes": 1208,
+      "pitch_range": [
+        40,
+        57
+      ],
+      "bars_playing": 76,
+      "file": "parts/gtrL-pm.mid"
+    },
+    {
+      "part": "gtrR",
+      "channel": 4,
+      "gm_program": 31,
+      "role": "rhythm guitar right, open power chords",
+      "render_hint": "second take, pan R",
+      "notes": 846,
+      "pitch_range": [
+        40,
+        62
+      ],
+      "bars_playing": 79,
+      "file": "parts/gtrR.mid"
+    },
+    {
+      "part": "gtrR-pm",
+      "channel": 5,
+      "gm_program": 29,
+      "role": "rhythm guitar right, palm mutes",
+      "render_hint": "same chain as gtrR",
+      "notes": 1208,
+      "pitch_range": [
+        40,
+        57
+      ],
+      "bars_playing": 76,
+      "file": "parts/gtrR-pm.mid"
+    },
+    {
+      "part": "lead",
+      "channel": 6,
+      "gm_program": 30,
+      "role": "lead guitar",
+      "render_hint": "lead tone, delay + plate",
+      "notes": 290,
+      "pitch_range": [
+        71,
+        90
+      ],
+      "bars_playing": 69,
+      "file": "parts/lead.mid"
+    },
+    {
+      "part": "lead2",
+      "channel": 7,
+      "gm_program": 30,
+      "role": "harmony guitar (diatonic thirds below the lead)",
+      "render_hint": "lead tone, panned opposite",
+      "notes": 127,
+      "pitch_range": [
+        71,
+        83
+      ],
+      "bars_playing": 32,
+      "file": "parts/lead2.mid"
+    },
+    {
+      "part": "lead-clean",
+      "channel": 8,
+      "gm_program": 28,
+      "role": "clean lead (opening theme)",
+      "render_hint": "clean guitar, chorus + hall",
+      "notes": 23,
+      "pitch_range": [
+        72,
+        86
+      ],
+      "bars_playing": 8,
+      "file": "parts/lead-clean.mid"
+    },
+    {
+      "part": "clean",
+      "channel": 9,
+      "gm_program": 28,
+      "role": "clean arpeggios",
+      "render_hint": "clean guitar, chorus + hall",
+      "notes": 144,
+      "pitch_range": [
+        52,
+        81
+      ],
+      "bars_playing": 18,
+      "file": "parts/clean.mid"
+    },
+    {
+      "part": "choir",
+      "channel": 11,
+      "gm_program": 53,
+      "role": "choir aahs (SATB pad and augmented theme)",
+      "render_hint": "VCSL choir",
+      "notes": 217,
+      "pitch_range": [
+        60,
+        83
+      ],
+      "bars_playing": 52,
+      "file": "parts/choir.mid"
+    },
+    {
+      "part": "organ",
+      "channel": 12,
+      "gm_program": 20,
+      "role": "church organ",
+      "render_hint": "VCSL organ",
+      "notes": 217,
+      "pitch_range": [
+        52,
+        69
+      ],
+      "bars_playing": 56,
+      "file": "parts/organ.mid"
+    },
+    {
+      "part": "brass",
+      "channel": 13,
+      "gm_program": 62,
+      "role": "brass section (answers, anthem, stabs)",
+      "render_hint": "VCSL brass",
+      "notes": 60,
+      "pitch_range": [
+        52,
+        83
+      ],
+      "bars_playing": 24,
+      "file": "parts/brass.mid"
+    },
+    {
+      "part": "strings",
+      "channel": 14,
+      "gm_program": 49,
+      "role": "string ensemble pad",
+      "render_hint": "VCSL strings",
+      "notes": 151,
+      "pitch_range": [
+        64,
+        81
+      ],
+      "bars_playing": 40,
+      "file": "parts/strings.mid"
+    },
+    {
+      "part": "timpani",
+      "channel": 15,
+      "gm_program": 48,
+      "role": "timpani",
+      "render_hint": "VCSL timpani",
+      "notes": 106,
+      "pitch_range": [
+        40,
+        48
+      ],
+      "bars_playing": 15,
+      "file": "parts/timpani.mid"
+    }
+  ],
+  "files": {
+    "full.mid": "2128848e85fe830531742533f88eee00059d0ddb717b74fce5e33f5be3616def",
+    "parts/drums.mid": "40de2df045eedd84460ff236a4c373d7f49f9e8afdf6739cf4be79b8f1c6084f",
+    "parts/bass.mid": "32efff0af5ac8f966baff390226d2e363ce3c966a309a06ff3f8a39cb1adaaea",
+    "parts/gtrL.mid": "ae6ee7b77314f002f6b0be09ff7724657c731e83b90a6e64740e856b706773dc",
+    "parts/gtrL-pm.mid": "780a8ccad04beee1561367f7211832815c7a00c215e9ade931871a3cedaeb825",
+    "parts/gtrR.mid": "e26913366fc71c10150cc572a34dcb6b92bb3dcd0db7975524f4599979038b51",
+    "parts/gtrR-pm.mid": "cf43f1f0a44bf140fb3c6330b9384954c8159be0422f88d6dbc2ddbf4778a5fa",
+    "parts/lead.mid": "c5d311368163dd0d607946c33c4523c02bb5c5d22dbf52910e93565801b1f221",
+    "parts/lead2.mid": "30674494b5a8de8e506b00fc39a3e19f716c1a871be4211be04d0abe29ac2292",
+    "parts/lead-clean.mid": "d7d7e0c22b2c2ce2d7cd9b1488afd18b73a50a8d0dd596c2b140567496f23942",
+    "parts/clean.mid": "a24ac1241286742b002c208c20a4070b5ea6d83b6811d5e2e94c3eb427090d4c",
+    "parts/choir.mid": "479482d78ebf0a33ada2202a345cfc1d37dfd101e42ca09f642e6d4c67b3588d",
+    "parts/organ.mid": "9e9a4f2c2fafb35da5e8c9eafef4a0986e2da324a8ce798ba3b50e9aec38f319",
+    "parts/brass.mid": "e059bfba92a2df4e9eae3d77eb9d8595af2b05242dd8b443f10f92ee0163fba7",
+    "parts/strings.mid": "bb1936a45b24fd46045b9eb87f7d932a5d39ac6574f788b17417f0096c4b6c6d",
+    "parts/timpani.mid": "ef95f6d9923eee6744f438af58cc26fe251cf1bd66d4a5f508993e852430e3d4"
+  },
+  "source": "tools/music_motifs.py (L3 riff, hook), art/music/campaign.json (theme, sections), tools/score_l3.py (arrangement)",
+  "notes": "Power chords are written as notes (root, fifth, octave; palm mutes root+fifth on their own channel). Downbeats are not humanised so bars slice cleanly. Bar 96 holds G on top for the L3->L4 bridge pivot (Em -> G -> G7 -> Cm)."
+}

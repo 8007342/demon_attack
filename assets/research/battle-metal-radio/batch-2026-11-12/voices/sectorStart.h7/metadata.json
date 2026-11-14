@@ -1,0 +1,67 @@
+{
+  "speaker": "wisp",
+  "kind": "human",
+  "trigger": "sectorStart",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 66866,
+  "mouth": "==========<<<<<<22000000000333334444444000",
+  "open": "024378554689987642110000000554767778743211",
+  "vis": "eeee---eeoo---------------------------ee--",
+  "lufs": -18.33,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "sectorStart.h7",
+  "text": "Scopes warming up. I've got your back.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h7/baseline.flac",
+      "sha256": "927f9f86942e7bf62312d26c12651f493650bb4fc5126e1bc1223b614e6b88a5",
+      "float_source_sha256": "468f80b6de7195a8f1136197c69e0ceb460e9d4924cc52311f5520d8ac4fd464",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h7/expressive.flac",
+      "sha256": "bcabc1f858d1e41899c6354e6528dc758d35ee51250160598bb1346455ceb251",
+      "float_source_sha256": "3fa53fc3f1fd774f31c45588a04c269c09e379a22ca65cff0e97453f70e9f5ca",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.h7/voice.flac",
+      "sha256": "9c7173f2dc4901607f3105b98af4a9dbce5804134ad6c92da3cdc1537408c4d0",
+      "float_source_sha256": "6dcb6c48f89d58988fbc68e45dcbb29f956704e1104d9508199ad4acb80b2e8c",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 11.68,
+    "error": null,
+    "text": "Scopes warming up. I've got your back."
+  },
+  "seed": 1453730348,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "ab77919d820589feeb520dc690378ee8f1c70a785641f09f07b4e1f490053a38"
+  }
+}

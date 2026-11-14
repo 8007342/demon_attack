@@ -1,0 +1,67 @@
+{
+  "speaker": "mensah",
+  "kind": "human",
+  "trigger": "groundUnitDestroyed",
+  "engine": "chatterbox",
+  "emotion": "excited",
+  "samples": 62281,
+  "mouth": "555===2222200000000<<========55<<<<<<<<",
+  "open": "036775334332110068788632566877489998532",
+  "vis": "oooeee--------------eeeee----ooo-------",
+  "lufs": -18.04,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "groundUnitDestroyed.h3",
+  "text": "Granite here. One less demon on the ground.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundUnitDestroyed.h3/baseline.flac",
+      "sha256": "4edf23ada709d2bb40abd81f5f55ed96fe484c0a3dc60c3a72d23835e717ad3d",
+      "float_source_sha256": "5e901e5810b720f24eae25aec0b86b0117a0db01f7ee317a632370c2b160e2c2",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundUnitDestroyed.h3/expressive.flac",
+      "sha256": "d10101b29cf56bfdd798fcf7b713941daec54566d8fcde84d9ddb29bae5ba450",
+      "float_source_sha256": "84716fb4a2004709cdff8665ed6a19e5bd1757496b719b22f0968b8ea1db3c57",
+      "gain": 0.8888359649176867,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundUnitDestroyed.h3/voice.flac",
+      "sha256": "10cb73c767f827d66ae00f85aa2eb78acaeb32d704356bf3de1250fd98891f8d",
+      "float_source_sha256": "5aa1094fd39c8c2a571a4fafb9b5979b825a6b6da78217f44390fef883514eb1",
+      "gain": 0.6448280315739083,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 9.16,
+    "error": null,
+    "text": "Granite here! One less demon on the ground!"
+  },
+  "seed": 624360588,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "ed59afd40d8d445ae6ece2fe2577806d091e291923bb4907c6b221a9f395ef57"
+  }
+}

@@ -27,9 +27,13 @@ class RunHistory {
     this.everBeatBoss = false,
     this.easyUnlocked = false,
     this.hardUnlocked = false,
+    this.everFinished = false,
   });
   int failures;
   bool everBeatBoss, easyUnlocked, hardUnlocked;
+
+  /// The fifth carrier fell at least once: the beach ending may be replayed.
+  bool everFinished;
 
   bool unlocked(Difficulty difficulty) => switch (difficulty) {
     Difficulty.normal => true,
@@ -50,12 +54,15 @@ class RunHistory {
     }
   }
 
+  void recordFinale() => everFinished = true;
+
   Map<String, dynamic> toJson() => {
     'schemaVersion': 1,
     'failures': failures,
     'everBeatBoss': everBeatBoss,
     'easyUnlocked': easyUnlocked,
     'hardUnlocked': hardUnlocked,
+    'everFinished': everFinished,
   };
 
   factory RunHistory.fromJson(Map<String, dynamic> data) {
@@ -71,6 +78,7 @@ class RunHistory {
           data['hardUnlocked'] == true ||
           (!everBeatBoss && count >= 3),
       hardUnlocked: data['hardUnlocked'] == true,
+      everFinished: data['everFinished'] == true,
     );
   }
 }

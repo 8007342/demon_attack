@@ -1,0 +1,67 @@
+{
+  "speaker": "kestrel",
+  "kind": "human",
+  "trigger": "sectorStart.4",
+  "engine": "chatterbox",
+  "emotion": "teasing",
+  "samples": 70782,
+  "mouth": "0000==3333222==444444222<<<<<<<<<555544<<<<22",
+  "open": "004653655644324776766436899999998677667888743",
+  "vis": "----ee-------ee--------------oooooooo--------",
+  "lufs": -18.15,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "sectorStart.4.h3",
+  "text": "Kestrel has the high ground. Follow my lead through the towers.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h3/baseline.flac",
+      "sha256": "aa6f89db4156a56ad4233773e237dffd6c0bf8c8f8326f2d6872a980ae0999c1",
+      "float_source_sha256": "6d2df1e967759deeb74254abb36b79e5596814f696fb774937a77d8a30926cbb",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h3/expressive.flac",
+      "sha256": "80a375dea02c465da33d5c1e0813a25c16b4b19e02f43c6222a5c35d9384e663",
+      "float_source_sha256": "6dcd4cac438b394ad29fde8bc422ab4413cf416649bc2b0abb131ac9449c0a0e",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/sectorStart.4.h3/voice.flac",
+      "sha256": "5cab8dc6e54437d2ba31f1e103c21668db2de7fcf148db55fed51a7c3710b72a",
+      "float_source_sha256": "0489a51e904eefb1993ed63f2375c31310d35e06735d39ce64130961bf51de7f",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 24.6,
+    "error": null,
+    "text": "Kestrel has the high ground. Follow my lead through the towers."
+  },
+  "seed": 596364925,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "ff9acee0560c413e9be60541008c877194750650e950f35a56c09322173a2b2d"
+  }
+}

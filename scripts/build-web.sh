@@ -27,4 +27,6 @@ fi
 "$flutter_bin" pub get --enforce-lockfile
 "$flutter_bin" build web --release --base-href / --no-web-resources-cdn
 # Art gallery (lib/gallery_main.dart), linked from /console, served at /gallery/.
-"$flutter_bin" build web --release -t lib/gallery_main.dart --base-href /gallery/ --no-web-resources-cdn -o "$PWD/build/web/gallery"
+# Its asset review studio (?page=studio) stamps notes with the build commit.
+build_commit="$(git rev-parse --short HEAD 2>/dev/null || true)"
+"$flutter_bin" build web --release -t lib/gallery_main.dart --base-href /gallery/ --no-web-resources-cdn --dart-define=BUILD_COMMIT="$build_commit" -o "$PWD/build/web/gallery"

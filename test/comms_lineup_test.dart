@@ -145,6 +145,7 @@ void main() {
       );
       final c = CommsDirector(
         random: math.Random(1),
+        pacing: CommsPacing.legacy,
         human: {'joke': sig},
         demon: const {},
         roster: {

@@ -362,8 +362,9 @@
             {
               "id": "forge-channel",
               "h": 30,
-              "prompt": "large industrial foundry hall with a glowing molten metal sluice pouring into a channel, pipes and a crane",
-              "seed_offset": 9
+              "prompt": "long low rectangular industrial foundry hall with a flat sloped metal roof and square chimneys, a straight open trench channel of glowing molten metal running along its side, a gantry crane over the trench, pipes, angular boxy architecture",
+              "seed_offset": 11,
+              "negative_extra": "sphere, ball, orb, globe, planet, dome, round, circular"
             }
           ]
         },

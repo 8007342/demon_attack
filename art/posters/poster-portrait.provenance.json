@@ -1,0 +1,57 @@
+{
+  "schema": "tillandsias.provenance/v1",
+  "tool": "image.generate",
+  "parents": [],
+  "pipelineVersion": "56.11.14.3",
+  "engine": {
+    "name": "sd.cpp",
+    "ref": "master-1015-e41fbcf",
+    "sha": null,
+    "nodes": []
+  },
+  "workflow": null,
+  "models": [
+    {
+      "file": "flux1-schnell-Q8_0.gguf",
+      "repo": "second-state/FLUX.1-schnell-GGUF",
+      "revision": "8c45a2ba25e2d02bd34230989fb54983f39e44ec",
+      "sha256": "7ccdc568ef7d33f37943302c80450a94a59370b48d62440fc2e5a3bf8520bf35",
+      "licence": "apache-2.0",
+      "consent": null
+    },
+    {
+      "file": "ae.safetensors",
+      "repo": "second-state/FLUX.1-schnell-GGUF",
+      "revision": "8c45a2ba25e2d02bd34230989fb54983f39e44ec",
+      "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+      "licence": "apache-2.0",
+      "consent": null
+    },
+    {
+      "file": "clip_l-Q8_0.gguf",
+      "repo": "second-state/FLUX.1-schnell-GGUF",
+      "revision": "8c45a2ba25e2d02bd34230989fb54983f39e44ec",
+      "sha256": "59cbe002c3e75d2b89d38787e81d12fb4e512fd76176884c470737ad87a1d309",
+      "licence": "apache-2.0",
+      "consent": null
+    },
+    {
+      "file": "t5xxl-Q8_0.gguf",
+      "repo": "second-state/FLUX.1-schnell-GGUF",
+      "revision": "8c45a2ba25e2d02bd34230989fb54983f39e44ec",
+      "sha256": "fc07757bf7ad40eaf612acc7ed0c0a7ab71189979e0b8b4d14601017baca22de",
+      "licence": "apache-2.0",
+      "consent": null
+    }
+  ],
+  "cli": null,
+  "inputs": [],
+  "seed": 31338,
+  "prompt": "epic dark sci-fi video game poster key art, a colossal horned gargoyle demon silhouette with glowing yellow eyes looming out of layered violet fog high in a dusk sky, huge swarm of small winged gargoyle demons flying out of the mist, a single sleek teal starfighter rising from below with bright cyan engine glow, alien battlefield ground with distant fires far below, giant orange ember moon behind the clouds, midnight blue and deep violet palette, gold rim light, volumetric god rays, heavy metal album cover energy, dramatic composition, highly detailed digital painting, no text",
+  "negative_prompt": "text, letters, logo, watermark, signature, frame, border, blurry, lowres, deformed, cartoon, bright daylight, people, faces",
+  "tier": "I3",
+  "placement": "unknown",
+  "family": null,
+  "output_sha256": "a695ce5e299ef1fa4290f895b4be0a56eb9eb7f8b1be5548f77051974edb4cc6",
+  "at": "2026-11-14T19:48:13Z"
+}

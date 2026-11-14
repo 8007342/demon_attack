@@ -1,0 +1,67 @@
+{
+  "speaker": "voss",
+  "kind": "human",
+  "trigger": "terrainAhead.forest",
+  "engine": "chatterbox",
+  "emotion": "excited",
+  "samples": 50029,
+  "mouth": "00000<<<444<<<<<<000<<<<<<<55222",
+  "open": "02686888775799742117887689976421",
+  "vis": "eeeeeee---------eeeeee----ooo---",
+  "lufs": -18.07,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "terrainAhead.forest.h1",
+  "text": "Trees all over the trail. Cutting through!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.forest.h1/baseline.flac",
+      "sha256": "574a6794bcbafc92635d0905b16a7f08f850c1f4f08c7032dc7b85c3e55ef9de",
+      "float_source_sha256": "532f99f4ec3781c0b91716ac6887244006c68299efe5c1e7af247c5c92b459e6",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.forest.h1/expressive.flac",
+      "sha256": "c2e096e682b57fa5b9734255aa102f4adfe836079397657c1321f56e4dac28e9",
+      "float_source_sha256": "9f12dad50e3f2417f1672feea983c461d3170d10c5905d4dc5db03387918cee2",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.forest.h1/voice.flac",
+      "sha256": "79baea808a46ef05092a6e3d3e5492c4a0f6a0b057f67eab8ab4726697d2ea25",
+      "float_source_sha256": "c631996f445266bb107c7d24bf684c7097d093635e491736c28c80ad4cc2e5f9",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 27.89,
+    "error": null,
+    "text": "Trees all over the trail! Cutting through!"
+  },
+  "seed": 655816790,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "b8873a2c305aed1a05a6d4a6631a17c803816bf967eb9683e563af504b8d33d5"
+  }
+}

@@ -3,11 +3,11 @@
 ## ADDED Requirements
 
 ### Requirement: One sequenced radio channel
-Lines SHALL play one at a time with a short natural gap. A playing line SHALL never be cut, except by a trigger marked urgent: a sentinel's dive, the shield running out, or a ground breakthrough.
+Lines SHALL play one at a time, with the paced silence of the comms-pacing change between them (an exchange's two turns keep the short natural gap). A playing line SHALL never be cut, except by a trigger marked urgent (a sentinel's dive, the shield running out, a ground breakthrough) or a must-play ground-fire warning, and then only a line of a lower class.
 
 #### Scenario: Burst of calls
 - **WHEN** a briefing, an ally's plea and pilot chatter arrive in the same frame
-- **THEN** they play in priority order, one after another, and none is cut short
+- **THEN** the most useful plays first, at most two flavour lines wait (briefly), and none is cut short
 
 #### Scenario: Urgent warning
 - **WHEN** a sentinel's dive tell begins during a pilot's line
@@ -28,7 +28,7 @@ Demon lines SHALL rank higher in the queue while the brood's share of airtime is
 - **THEN** the brood holds more than 15 % of the airtime and no line is cut
 
 ### Requirement: Losing a life
-On a lost ship, several short demon celebration grunts SHALL play, overlapping for about a second (at most three voices). Once the next ship launches, the fleet SHALL talk about it without blocking play.
+On a lost ship, several short demon celebration grunts SHALL play, overlapping each other for about a second (at most three voices) but never another line. Once the next ship launches, the fleet SHALL talk about it without blocking play.
 
 #### Scenario: Regroup
 - **WHEN** `playerDestroyed` (or the lost ship) and then `regroupStart` arrive

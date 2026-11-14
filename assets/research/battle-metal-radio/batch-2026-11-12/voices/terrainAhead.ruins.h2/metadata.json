@@ -1,0 +1,67 @@
+{
+  "speaker": "kessler",
+  "kind": "human",
+  "trigger": "terrainAhead.ruins",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 72249,
+  "mouth": "2222222000000<<<<<<<<<<555=======<<<<<<<<==000",
+  "open": "0477742111027888987899853666654668889886432110",
+  "vis": "--ooo-----------------ooooee-------------ee---",
+  "lufs": -18.03,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "terrainAhead.ruins.h2",
+  "text": "Rubble on the road. Pushing through the ruins!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.ruins.h2/baseline.flac",
+      "sha256": "a0119e69802fd8c54dd251e70e90ac1163fef18a17da213bc9296bee6dde027d",
+      "float_source_sha256": "f6387651e86e498e8a99c9b4e118a3cee9c8fd71259fe354d6668e6b6ad9b59c",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.ruins.h2/expressive.flac",
+      "sha256": "72f7e2a763988c79079ba2b4d5d4b59075638c428c5c233c9184428659f59a00",
+      "float_source_sha256": "18713b464093a4412f6d45793b1bbc40a7266294e601df4f89f82340be7772b9",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/terrainAhead.ruins.h2/voice.flac",
+      "sha256": "17d715cb61014c4a4ab9607bb1f2373b73851a2985f06476fbf78c2f2f66c7be",
+      "float_source_sha256": "be1092909f23b3ecbe39f17d5194726e284f2021305dd9efcb7f421487846b48",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 11.56,
+    "error": null,
+    "text": "Rubble on the road! Pushing through the ruins!"
+  },
+  "seed": 1929070705,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "90edc1d08b44a3aa7171d78ee9dba3619b34559fc22aa8a845e7ca48968f6004"
+  }
+}

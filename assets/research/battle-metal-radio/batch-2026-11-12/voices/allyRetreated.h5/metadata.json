@@ -1,0 +1,67 @@
+{
+  "speaker": "kessler",
+  "kind": "human",
+  "trigger": "allyRetreated",
+  "engine": "chatterbox",
+  "emotion": "exhausted",
+  "samples": 82500,
+  "mouth": "000<<<<<===<<<3333===444===0000000<<<<<<<<<<<<<===00",
+  "open": "0148989876689865666557764321100047988889857677433211",
+  "vis": "--oooo--eee-------eee---ee---------------------eee--",
+  "lufs": -18.08,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "allyRetreated.h5",
+  "text": "Bulwark's rig is smoking. Limping back to base!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyRetreated.h5/baseline.flac",
+      "sha256": "99471f825ba166407cda4e69fdb9f1965937e5837023042a1d1ea0b0e425ec29",
+      "float_source_sha256": "341f877025e5ee348044334d1c73c25944f0a642b2bed6408b636a6ffcda8da9",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyRetreated.h5/expressive.flac",
+      "sha256": "e85799b41c0f50cf270d4818598795aec12e2dfe38dfe85ced40f9e75ed43f60",
+      "float_source_sha256": "dd0ee69d672637273290976dc4fcace5d4c5205f0ad82b33f4ccc915a2137b65",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyRetreated.h5/voice.flac",
+      "sha256": "f285fd0321c3d5407dfa24abba8caa6968fbdf007ef704a1a50a47df5c83e65c",
+      "float_source_sha256": "b7bd433ba27dfd8ad2f8621b423d424298907db9a16194b0849ed99e9e98520c",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 12.55,
+    "error": null,
+    "text": "Bulwark's rig is smoking. Limping back to base!"
+  },
+  "seed": 690477696,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "ec26bd46210e6149ff98b5ddc9f11b6ae7574a8f4bd189cd17a03a455ce40b90"
+  }
+}

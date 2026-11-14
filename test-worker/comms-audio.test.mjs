@@ -5,14 +5,14 @@ import vm from 'node:vm';
 
 async function harness() {
   let ctx;
-  const timers = [], sources = [], fetched = [];
+  const timers = [], sources = [], fetched = [], decoded = [];
   const parameter = (value = 1) => ({ value, targets: [], cancelScheduledValues() {}, setValueAtTime(v) { this.value = v; }, linearRampToValueAtTime(v) { this.value = v; }, exponentialRampToValueAtTime() {}, setTargetAtTime(v, at, k) { this.value = v; this.targets.push([v, at, k]); } });
   class AudioContext {
     constructor() { ctx = this; this.currentTime = 0; this.state = 'suspended'; this.sampleRate = 48000; this.destination = {}; }
     createGain() { return { gain: parameter(), connect(to) { this.to = to; }, disconnect() {} }; }
     createOscillator() { return { frequency: parameter(), connect() {}, disconnect() {}, start() {}, stop() {} }; }
     createBufferSource() { const s = { connect(to) { s.to = to; }, disconnect() {}, start(at) { s.at = at; sources.push(s); }, stop(at) { s.stoppedAt = at; } }; return s; }
-    decodeAudioData(bytes) { return Promise.resolve({ duration: 1.5, name: new TextDecoder().decode(new Uint8Array(bytes)) }); }
+    decodeAudioData(bytes) { const name = new TextDecoder().decode(new Uint8Array(bytes)); decoded.push(name); return Promise.resolve({ duration: 1.5, length: 72000, sampleRate: 48000, numberOfChannels: 1, name }); }
     async resume() { this.state = 'running'; }
     async suspend() { this.state = 'suspended'; }
   }
@@ -29,8 +29,31 @@ async function harness() {
   for (const file of ['demon-audio.js', 'comms-audio.js']) vm.runInContext(await readFile(new URL(`../web/audio/${file}`, import.meta.url), 'utf8'), sandbox);
   const settle = () => new Promise(resolve => setImmediate(resolve));
   const flushTimers = () => { while (timers.length) timers.shift().fn(); };
-  return { sandbox, window, get ctx() { return ctx; }, sources, fetched, timers, settle, flushTimers };
+  return { sandbox, window, get ctx() { return ctx; }, sources, fetched, decoded, timers, settle, flushTimers };
 }
+
+test('a full roster stays compressed; decoded speech is bounded without evicting a live conversation', async () => {
+  const h = await harness();
+  const comms = h.window.commsAudio;
+  await h.window.demonAudio.unlock();
+  comms.prefetch(Array.from({ length: 400 }, (_, i) => `roster-${i}`));
+  await h.settle();
+  assert.equal(h.decoded.filter(id => id.startsWith('roster-')).length, 0, 'sector prefetch never expands the bank into PCM');
+  comms.play('anchor', 4);
+  await h.settle();
+  for (let i = 0; i < 80; i++) {
+    const id = `line-${i}`;
+    assert.equal(comms.play(id, 4), true);
+    await h.settle();
+    h.sources.find(s => s.buffer?.name === id).onended();
+  }
+  assert.ok(comms.state.decodedBytes <= comms.state.decodedLimit, 'PCM is bounded over a long campaign');
+  assert.ok(comms.state.loaded.includes('anchor'), 'the opener still playing stays available');
+  assert.ok(!comms.state.loaded.includes('line-0'), 'old finished speech is evicted');
+  comms.play('line-0', 4);
+  await h.settle();
+  assert.equal(h.decoded.filter(id => id === 'line-0').length, 2, 'evicted speech can decode again from its compressed cache');
+});
 
 test('comms voices are silent before the gesture, then share the context and master', async () => {
   const h = await harness();
@@ -51,24 +74,30 @@ test('comms voices are silent before the gesture, then share the context and mas
   assert.equal(comms.play('reinforcements.h0', 6, false), false, 'same clip does not double-play');
 });
 
-test('music ducks under speech and recovers after the last voice', async () => {
+test('music volume is constant: speech (human or demon, any priority) never ducks it', async () => {
   const h = await harness();
   const comms = h.window.commsAudio, audio = h.window.demonAudio;
   await audio.unlock();
   const music = audio.graph.music;
+  const before = { bus: music.gain.value, level: audio.state.musicLevel };
   comms.play('a', 5, false);
+  comms.play('grunt', 4, true);
+  comms.play('urgent', 9, false);
   for (let i = 0; i < 5; i++) await h.settle();
-  assert.equal(comms.state.ducked, true);
-  assert.equal(music.gain.targets.at(-1)[0], comms.state.duckGain, 'music bus ramps down to the duck level');
-  const source = h.sources.find(s => s.buffer?.name === 'a');
-  source.onended();
-  assert.equal(comms.state.voices.length, 0);
-  assert.equal(comms.state.ducked, true, 'duck holds briefly after the last voice');
+  assert.equal(comms.state.voices.length, 3, 'the clips are playing');
+  assert.equal(music.gain.value, before.bus, 'music bus unchanged while clips play');
+  assert.equal(music.gain.targets.length, 0, 'no gain ramp scheduled on the music bus');
+  assert.equal(audio.state.musicLevel, before.level, 'music level unchanged');
+  for (const s of h.sources.filter(s => s.buffer)) s.onended?.();
   h.flushTimers();
-  assert.equal(comms.state.ducked, false);
-  assert.equal(music.gain.targets.at(-1)[0], 1, 'music bus ramps back to unity');
+  assert.equal(music.gain.value, before.bus, 'and after the last voice');
+  assert.equal(music.gain.targets.length, 0);
+  assert.equal(comms.state.ducked, undefined, 'there is no duck state any more');
+  // Effects never side-chain the music either.
+  for (const name of ['explosion', 'hit', 'life']) audio.sfx(name);
+  assert.equal(music.gain.targets.length, 0);
   audio.mute(true);
-  assert.equal(audio.graph.master.gain.value, 0, 'mute stays on master, untouched by ducking');
+  assert.equal(audio.graph.master.gain.value, 0, 'mute stays on master');
 });
 
 test('at most three voices: only an urgent line cuts a playing one, anything else beyond the cap is dropped', async () => {
@@ -108,13 +137,13 @@ test('at most three voices: only an urgent line cuts a playing one, anything els
   assert.equal(comms.state.voices.length, 0, 'an unavailable clip frees its slot');
 });
 
-test('every bank clip ships Opus and AAC inside a modest budget', async () => {
+test('every bank clip ships Opus inside a modest budget; modern banks omit AAC', async () => {
   let manifest;
   try { manifest = JSON.parse(await readFile(new URL('../web/audio/comms/manifest.json', import.meta.url), 'utf8')); } catch { return; }
   const clips = Object.entries(manifest.clips);
   assert.ok(clips.length > 100);
   for (const [id, clip] of clips) {
-    for (const ext of ['ogg', 'm4a']) {
+    for (const ext of ['ogg']) {
       const info = await stat(new URL(`../web/audio/comms/${id}.${ext}`, import.meta.url));
       assert.equal(info.size, clip[`${ext}_bytes`], `${id}.${ext} size matches the manifest`);
     }
@@ -124,6 +153,13 @@ test('every bank clip ships Opus and AAC inside a modest budget', async () => {
     assert.match(clip.vis, /^[-oe]+$/);
     assert.equal(clip.vis.length, clip.mouth.length);
   }
-  assert.ok(manifest.totals.ogg_bytes < 3.4e6, 'Opus budget (v4: 574 clips)');
-  assert.ok(manifest.totals.m4a_bytes < 5.4e6, 'AAC budget (v4: 574 clips)');
+  const modern = manifest.schema === 'demon-attack.comms-bank/v2';
+  assert.ok(manifest.totals.ogg_bytes < (modern ? 16e6 : 3.4e6), 'complete Opus bank stays within its delivery budget');
+  if (manifest.schema === 'demon-attack.comms-bank/v2') {
+    assert.equal(manifest.complete, true, 'a partial development bank must not ship');
+    assert.deepEqual(manifest.formats, ['ogg']);
+    const { readdir } = await import('node:fs/promises');
+    const files = await readdir(new URL('../web/audio/comms/', import.meta.url));
+    assert.ok(!files.some(name => name.endsWith('.m4a')), 'modern delivery removes duplicate legacy audio');
+  }
 });

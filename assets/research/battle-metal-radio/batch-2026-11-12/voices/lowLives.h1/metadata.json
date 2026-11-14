@@ -1,0 +1,67 @@
+{
+  "speaker": "sparrow",
+  "kind": "human",
+  "trigger": "lowLives",
+  "engine": "chatterbox",
+  "emotion": "warm",
+  "samples": 77884,
+  "mouth": "55<<=====220000000<<<<<<<<3322000044===========00",
+  "open": "0589647654211000278999878764421103775378765333211",
+  "vis": "oo--eee-----------------oo----------eeeeee--eee--",
+  "lufs": -18.48,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "lowLives.h1",
+  "text": "Last one. I believe in you. Let's finish this.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/lowLives.h1/baseline.flac",
+      "sha256": "3fc2e952c4966dfcd06996cbaba48c3c07b7066b91941ef457f6c16a1bfa69f3",
+      "float_source_sha256": "44cc4df77afbdb0435bf4e63a5a68f8933803a8e7d10dbbbb5383b769fda1864",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/lowLives.h1/expressive.flac",
+      "sha256": "318e17734e1367ac60c6543de53e956a6fd57c50e4f84847f1588ca2fe5a2c15",
+      "float_source_sha256": "f205cca961d0d46c8a19498de1a69a391d26e2a3f8e2326f7f31d67e35972cb3",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/lowLives.h1/voice.flac",
+      "sha256": "d873777bd2d9e8e393844819b2eeb1d7f7973fbba1ab6c268098e680878a640a",
+      "float_source_sha256": "8977fa4687d63f8e0b623bbf6494c41afcfbbecb9cebc281b18b50f668219fec",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 13.67,
+    "error": null,
+    "text": "Last one. I believe in you. Let's finish this."
+  },
+  "seed": 71359011,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "86192eca1f88a4017c0647f1fa67abd4f9c3f93d3dc49283f9b384e73ac8ab79"
+  }
+}

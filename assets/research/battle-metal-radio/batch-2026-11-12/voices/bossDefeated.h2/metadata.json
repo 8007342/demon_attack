@@ -1,0 +1,67 @@
+{
+  "speaker": "anvil",
+  "kind": "human",
+  "trigger": "bossDefeated",
+  "engine": "chatterbox",
+  "emotion": "triumphant",
+  "samples": 56233,
+  "mouth": "000<<4444===<<<<=========44444<<<<22",
+  "open": "026897745774798753378787876536888532",
+  "vis": "ee-------eeeooooeee---ooo-----------",
+  "lufs": -18.02,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "bossDefeated.h2",
+  "text": "Target destroyed. Hell of a run, pilot.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/bossDefeated.h2/baseline.flac",
+      "sha256": "8b0794e66a2c70bc7984467d50ecd0fa79e847c8730fc7c6e091d55ec719ee56",
+      "float_source_sha256": "d669ab147c51316cf85e0937135be8c1562fb4bb2d1e3322e5be0ccc6fda5787",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/bossDefeated.h2/expressive.flac",
+      "sha256": "47f991b6c8882ab38c8e1bf1ae124bde05b0ac5371a9561133916143faaeeaa7",
+      "float_source_sha256": "197cb31bc52ba6813c3beeae8061577e00f9d6ab7fe3156e9c5b8efea1cd9c36",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/bossDefeated.h2/voice.flac",
+      "sha256": "d2315e7deb39dc824ffff766f37a73e84dc4d98bbf54750688911bbd4ea8c45f",
+      "float_source_sha256": "c81309d44a6e4c01aae00f207bd75949e6be1335939948b02519dc85ec758eb2",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 14.46,
+    "error": null,
+    "text": "Target destroyed! Hell of a run, pilot!"
+  },
+  "seed": 1171707416,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "3ac3ea9afce40bd6bc131d741fcc64f059aa71e1c9c7ae38e5d4ee2d0a45d21c"
+  }
+}

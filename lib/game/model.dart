@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'difficulty.dart';
+import 'flock.dart';
 import 'game_events.dart';
 import 'perspective.dart';
 import 'swarm_policy.dart';
@@ -118,12 +119,65 @@ class Demon {
   /// arrivals) rather than dropping in from above (re-entry after a dive).
   bool arrivesFromDistance = false;
 
+  // --- atmosphere-and-swarms (flock.dart): presentation of the entrance.
+  /// Wingbeat rate factor (flock constant, ±10 %).
+  double wingRate = 1;
+
+  /// Height above its flight sheet while arriving (screen units, shadows).
+  double altitude = 0;
+
+  /// Where a distant arrival sets out from, if not the default horizon
+  /// point (a foreshadowed sentinel leaves from its silhouette).
+  double? entryX, entryY, entryN, entryScale;
+
   /// Shot hitbox half extents, set with [scale] by the depth pass; the
   /// flat legacy box until then.
   late double hitHalfWidth = isLarge ? 27.0 : 16.0;
   late double hitHalfHeight = isLarge ? 18.0 : 14.0;
   double get muzzleDy => (isLarge ? 14.0 : 12.0) * scale;
   double get contactHalf => 10 + 11 * scale; // ship 10 + demon body 11
+}
+
+/// The giant silhouette of a coming sentinel (design §5, research §10): a
+/// Gerono figure-eight with depth, far behind the fog, nearer and larger
+/// each wave. No hitbox, no fire, no effect on the encounter.
+class SentinelForeshadow {
+  SentinelForeshadow(this.archetype, this.stage) : growth = stage;
+  EnemyArchetype archetype;
+
+  /// Target growth (0 two waves ahead, .5 one wave ahead, 1 arriving) and
+  /// the eased value shown.
+  double stage, growth;
+  double clock = 0, opacity = 0;
+
+  /// Screen position, nearness, quantised size factor of the 128-unit
+  /// sentinel cell, and bank (-1..1).
+  double x = 180, y = 110, nearness = .08, scale = .45, bank = 0;
+
+  /// Period of one figure-eight (s).
+  static const period = 10.0;
+
+  bool get visible => opacity > 0;
+
+  /// Places the silhouette on its path at [clock] ([shipX]: parallax).
+  void place(double shipX) {
+    final g = growth.clamp(0.0, 1.0);
+    final tau = clock * 2 * math.pi / period;
+    // Linger at the lobe ends.
+    final tp = tau + .15 * math.sin(2 * tau);
+    final a = 96 + 24 * g;
+    final nc = .08 + .2 * g;
+    nearness = nc + .03 * math.sin(tp);
+    x = 180 + a * math.cos(tp) - (shipX - 180) * .12;
+    // Low in the sky, its lower half in the horizon band: a darker patch
+    // of the fog, partly cut by it (research §5).
+    y = 150 - 14 * g + a / 2 * math.sin(2 * tp) * .22;
+    final raw = (.7 + .25 * g) * (nearness / nc);
+    scale = (raw * 16).round() / 16;
+    // Bank by the lateral velocity (curvature sign).
+    final dtp = 1 + .3 * math.cos(2 * tau);
+    bank = (-math.sin(tp) * dtp).clamp(-1.0, 1.0);
+  }
 }
 
 class Shot {
@@ -249,7 +303,9 @@ class Carrier {
 
 /// Pure fixed-step simulation; renderers and input never change its clock.
 class ArcadeModel {
-  ArcadeModel({int seed = 1982}) : random = math.Random(seed);
+  ArcadeModel({int seed = 1982})
+    : random = math.Random(seed),
+      flock = ArrivalFlock(seed: seed);
   static const width = 360.0, height = 520.0, shipY = 477.0;
   final math.Random random;
   RunMode mode = RunMode.title;
@@ -293,8 +349,7 @@ class ArcadeModel {
   double get lifeLossElapsed => switch (lifeLossPhase) {
     LifeLossPhase.none => 0,
     LifeLossPhase.exploding => LifeLossTuning.explode - lifeLossLeft,
-    LifeLossPhase.regrouping =>
-      LifeLossTuning.away - lifeLossLeft,
+    LifeLossPhase.regrouping => LifeLossTuning.away - lifeLossLeft,
     LifeLossPhase.emerging =>
       LifeLossTuning.away + LifeLossTuning.emerge - lifeLossLeft,
   };
@@ -327,13 +382,24 @@ class ArcadeModel {
   // --- divePrep: a beat of radio warning before every dive tell ---
   static const divePrepBeat = .5;
 
+  /// Seconds of dive tell (telegraph) before [d] leaves the formation.
+  static double diveTellFor(Demon d) => d.isLarge
+      ? .9
+      : d.elite
+      ? .55
+      : .7;
+
   void _prepDive(Demon d, {bool lead = false}) {
     d.divePrep = divePrepBeat;
     d._prepLead = lead;
+    final rate = policy.hostileRate;
     _queueGameEvent(GameEventNames.divePrep, {
       'x': d.x,
       'y': d.y,
       'lead': divePrepBeat,
+      // Seconds until the dive itself starts (the beat plus the tell, at
+      // this difficulty's pace): the radio ends its dive call on it.
+      'diveIn': (divePrepBeat + diveTellFor(d)) / (rate > 0 ? rate : 1),
       'sentinel': d.isLarge,
       'elite': d.elite,
     });
@@ -341,15 +407,12 @@ class ArcadeModel {
 
   void _startDiveTell(Demon d) {
     d.divePrep = 0;
-    d.telegraph = d.isLarge
-        ? .9
-        : d.elite
-        ? .55
-        : .7;
+    d.telegraph = diveTellFor(d);
     d.targetX = d._prepLead
         ? (shipX + shipVx * 0.22).clamp(24.0, width - 24.0)
         : shipX;
   }
+
   Carrier? boss;
   Carrier? wreckBoss;
   Difficulty difficulty = Difficulty.normal;
@@ -364,6 +427,17 @@ class ArcadeModel {
   final List<HeartPickup> heartPickups = [];
   int lives = 3, score = 0, level = 1, cycle = 0, kills = 0, wave = 1;
   int? clearedLevel;
+
+  /// The zero-based route of the campaign's last carrier (five in all).
+  static const finalRoute = 4;
+
+  /// Whether the carrier on screen (or just destroyed) is the campaign's
+  /// last: sector 5 of the fifth route. Only its victory earns the ending.
+  bool get finalBoss => level == 5 && cycle >= finalRoute;
+
+  /// False for a /console run: it starts with one life at 0 points and never
+  /// reaches the top-10 board, the saved checkpoint or the unlock history.
+  bool ranked = true;
   static const maxActiveDemons = 61;
 
   /// Pseudo-3D swarm depth (plan/perspective.md). False restores the flat
@@ -501,6 +575,7 @@ class ArcadeModel {
 
   void start({Difficulty difficulty = Difficulty.normal}) {
     this.difficulty = difficulty;
+    ranked = true;
     lives = policy.startingLives;
     medals = 0;
     _activeMilliseconds = 0;
@@ -563,15 +638,23 @@ class ArcadeModel {
   }
 
   /// A fresh run that begins at [sector] 1-5 of [route] 0-4 (optionally at
-  /// [wave]): 0 points, starting lives, normal scoring. Earlier routes count
-  /// as won (medals = route), which satisfies the sentinel prerequisite.
+  /// [wave]): 0 points, normal scoring. Earlier routes count as won
+  /// (medals = route), which satisfies the sentinel prerequisite.
+  ///
+  /// A [console] run starts with exactly one life and is not [ranked];
+  /// otherwise the difficulty's starting lives apply.
   void startAt({
     Difficulty difficulty = Difficulty.normal,
     int sector = 1,
     int route = 0,
     int wave = 1,
+    bool console = false,
   }) {
     start(difficulty: difficulty);
+    if (console) {
+      ranked = false;
+      lives = 1;
+    }
     cycle = route.clamp(0, 4);
     level = sector.clamp(1, 5);
     medals = cycle;
@@ -675,6 +758,7 @@ class ArcadeModel {
     // A recorded medal always belongs to an already completed route.
     if (restoredMedals > route) return false;
     difficulty = restoredDifficulty;
+    ranked = true;
     cycle = route;
     level = sector;
     wave = restoredWave;
@@ -739,10 +823,34 @@ class ArcadeModel {
     _spawnedFromCheckpoint = fromCheckpoint;
     demons.clear();
     shots.clear();
+    incoming.clear(); // --- wave pressure
     _fire = 0;
     wingSide = -1;
     wingRecoil[0] = wingRecoil[1] = 0;
     noseFlash = 0;
+    _resetWaveEnemies();
+    _groundBeginWave(); // --- ground war
+    flock.clear(); // --- atmosphere-and-swarms
+    if (boss == null) {
+      final (roster, count) = _buildRoster(
+        wave,
+        fromCheckpoint: fromCheckpoint,
+      );
+      _waveRoster = count;
+      demons.addAll(roster);
+      _launchFlock(roster, wave);
+    }
+    if (boss == null) _updateDemons(0);
+    _enterPhase(
+      RunMode.transition,
+      wave > 1 ? 1.4 + storyReadingTime : arrivalHintDuration,
+    );
+    events.add('checkpoint');
+  }
+
+  /// Enemy-side per-wave state: fire and dive clocks, the finite
+  /// reinforcement plan, the wave-wide birth budget and the escort.
+  void _resetWaveEnemies() {
     _enemyFire = 1.7;
     _dive = 3;
     _flock = 2;
@@ -758,93 +866,210 @@ class ArcadeModel {
     _waveRoster = 0;
     _escortLeft = 2.6;
     escortSpawned = false;
-    _groundBeginWave(); // --- ground war
-    if (boss == null) {
-      final count = policy.rosterCount(sector: level, wave: wave, route: cycle);
-      _waveRoster = count;
-      final rows = (count / 6).ceil();
-      final spacing = rows <= 4 ? 48.0 : 160.0 / (rows - 1);
-      final specialEligible =
-          cycle >= 1 &&
-          ((wave == wavesPerLevel &&
-                  level >= 2 &&
-                  (difficulty != Difficulty.easy || level.isEven)) ||
-              (difficulty != Difficulty.easy &&
-                  wave >= 3 &&
-                  (wave + level + cycle).isEven));
-      for (var i = 0; i < count; i++) {
-        final archetype = specialEligible && i == count - 1
-            ? (cycle >= 2 && difficulty != Difficulty.easy
-                  ? EnemyArchetype.armoredSentinel
-                  : EnemyArchetype.shieldSentinel)
-            : EnemyArchetype.ordinary;
-        final large = archetype != EnemyArchetype.ordinary;
-        final profile = large ? null : _ordinaryProfile();
-        final kind = profile?.$1 ?? (i + wave + level) % 4;
-        final elite = profile?.$3 ?? false;
-        final hp =
-            profile?.$2 ??
-            (archetype == EnemyArchetype.armoredSentinel ? 12 : 9) +
-                math.min(cycle, 4) * 2;
-        final demon = Demon(
-          large ? width / 2 : 38 + (i % 6) * 56.0,
-          large
-              ? 44
-              : (specialEligible
-                    ? 124 + (i ~/ 6) * 32.0
-                    : 70 + (i ~/ 6) * spacing),
-          kind,
-          hp.toInt(),
-          i * 1.7 + wave * .6,
-          elite: elite,
-          archetype: archetype,
-          shieldMax: large ? 3 + cycle : 0,
-          armorMax: large
-              ? (archetype == EnemyArchetype.armoredSentinel ? 4 : 2) +
-                    cycle ~/ 2
-              : 0,
-          lastStandEligible:
-              large &&
-              random.nextDouble() < (difficulty == Difficulty.easy ? .15 : .25),
-        );
-        if (large) {
-          demon.entranceProgress = 0;
-          demon.waitingForEscort = true;
-          demon.y = -48;
-        } else if (wave == 1) {
-          // The arrival hint owns the whole introduction. The initial swarm
-          // glides down during the second half of the opening transition and
-          // settles into formation as combat begins.
-          demon.entranceProgress = 0;
-          demon.entranceDelay = (i % 6) * .045 + (i ~/ 6) * .08;
-          demon.entranceDuration = fromCheckpoint ? 1.0 : 1.25;
-          demon.entranceStartY = -48 - (i ~/ 6) * 20.0;
-          demon.arrivesFromDistance = true;
-          demon.y = demon.entranceStartY;
-        } else if (!fromCheckpoint) {
-          demon.entranceProgress = 0;
-          demon.entranceDelay = (i % 6) * .035 + (i ~/ 6) * .06;
-          demon.entranceDuration = .85;
-          demon.entranceStartY = -40 - (i ~/ 6) * 16.0;
-          demon.arrivesFromDistance = true;
-          demon.y = demon.entranceStartY;
-        }
-        demons.add(demon);
-      }
-    }
-    if (boss == null) _updateDemons(0);
-    _enterPhase(
-      RunMode.transition,
-      wave > 1 ? 1.4 + storyReadingTime : arrivalHintDuration,
-    );
-    events.add('checkpoint');
   }
 
-  (int, int, bool) _ordinaryProfile() {
+  /// The opening roster of wave [forWave] and its size. Births count
+  /// against the wave-wide ordinal and elite budget, so call it with those
+  /// counters belonging to [forWave].
+  (List<Demon>, int) _buildRoster(int forWave, {bool fromCheckpoint = false}) {
+    final roster = <Demon>[];
+    final count = policy.rosterCount(
+      sector: level,
+      wave: forWave,
+      route: cycle,
+    );
+    final rows = (count / 6).ceil();
+    final spacing = rows <= 4 ? 48.0 : 160.0 / (rows - 1);
+    final special = sentinelFor(forWave);
+    final specialEligible = special != null;
+    for (var i = 0; i < count; i++) {
+      final archetype = specialEligible && i == count - 1
+          ? special
+          : EnemyArchetype.ordinary;
+      final large = archetype != EnemyArchetype.ordinary;
+      final profile = large ? null : _ordinaryProfile(forWave);
+      final kind = profile?.$1 ?? (i + forWave + level) % 4;
+      final elite = profile?.$3 ?? false;
+      final hp =
+          profile?.$2 ??
+          (archetype == EnemyArchetype.armoredSentinel ? 12 : 9) +
+              math.min(cycle, 4) * 2;
+      final demon = Demon(
+        large ? width / 2 : 38 + (i % 6) * 56.0,
+        large
+            ? 44
+            : (specialEligible
+                  ? 124 + (i ~/ 6) * 32.0
+                  : 70 + (i ~/ 6) * spacing),
+        kind,
+        hp.toInt(),
+        i * 1.7 + forWave * .6,
+        elite: elite,
+        archetype: archetype,
+        shieldMax: large ? 3 + cycle : 0,
+        armorMax: large
+            ? (archetype == EnemyArchetype.armoredSentinel ? 4 : 2) + cycle ~/ 2
+            : 0,
+        lastStandEligible:
+            large &&
+            random.nextDouble() < (difficulty == Difficulty.easy ? .15 : .25),
+      );
+      if (large) {
+        demon.entranceProgress = 0;
+        demon.waitingForEscort = true;
+        demon.y = -48;
+        // Foreshadowed: it flies in out of the fog, from its silhouette.
+        demon.arrivesFromDistance = true;
+      } else if (forWave == 1) {
+        // The arrival hint owns the whole introduction. The initial swarm
+        // glides down during the second half of the opening transition and
+        // settles into formation as combat begins.
+        demon.entranceProgress = 0;
+        demon.entranceDelay = (i % 6) * .045 + (i ~/ 6) * .08;
+        demon.entranceDuration = fromCheckpoint ? 1.0 : 1.25;
+        demon.entranceStartY = -48 - (i ~/ 6) * 20.0;
+        demon.arrivesFromDistance = true;
+        demon.y = demon.entranceStartY;
+      } else if (!fromCheckpoint) {
+        demon.entranceProgress = 0;
+        demon.entranceDelay = (i % 6) * .035 + (i ~/ 6) * .06;
+        demon.entranceDuration = .85;
+        demon.entranceStartY = -40 - (i ~/ 6) * 16.0;
+        demon.arrivesFromDistance = true;
+        demon.y = demon.entranceStartY;
+      }
+      roster.add(demon);
+    }
+    return (roster, count);
+  }
+
+  // --- wave pressure -------------------------------------------------------
+  // When a wave is down to its last few (all reinforcements in, no sentinel
+  // waiting), the next wave's roster is born early and creeps out of the
+  // horizon fog: visible, not yet targetable, silent. Finishing the
+  // stragglers first lets it settle during the usual short release; a
+  // player who lingers meets it in the fight. Sizes, HP and the elite
+  // budget are exactly the next wave's own (plan/difficulty-calibration.md).
+
+  /// The next wave, holding in the distance.
+  final List<Demon> incoming = [];
+
+  /// Seconds (hostile rate) before [incoming] joins the fight, and the full
+  /// approach length.
+  double incomingLeft = 0, incomingTotal = 0;
+  int _incomingRoster = 0, _incomingOrdinal = 0, _incomingElites = 0;
+
+  /// How far (entrance progress) an approaching wave creeps while it holds.
+  static const incomingHold = .22;
+
+  /// Entrance length when the approaching wave finally closes in.
+  static const incomingCloseIn = .9;
+
+  /// 0 when the next wave appears, 1 when it arrives.
+  double get incomingProgress => incomingTotal <= 0
+      ? 0
+      : (1 - incomingLeft / incomingTotal).clamp(0.0, 1.0);
+
+  bool get _pressureEligible =>
+      combat &&
+      boss == null &&
+      wave < wavesPerLevel &&
+      incoming.isEmpty &&
+      flocksRemaining == 0 &&
+      lifeLossPhase == LifeLossPhase.none &&
+      // One sentinel at a time: the next wave (which may bring its own)
+      // waits until this wave's sentinel has fallen.
+      !demons.any((d) => d.isLarge);
+
+  void _updateIncoming(double dt) {
+    if (incoming.isEmpty) {
+      if (!_pressureEligible) return;
+      final live = demons.length;
+      if (live == 0 || live > policy.pressureThreshold) return;
+      _prepareIncoming();
+      return;
+    }
+    // A lost life pauses the clock: pressure, never an ambush on respawn.
+    if (lifeLossPhase == LifeLossPhase.none && combat) {
+      incomingLeft -= dt * policy.hostileRate;
+    }
+    final p = incomingHold * incomingProgress;
+    for (final d in incoming) {
+      if (d.isLarge) continue;
+      final (tx, ty) = _targetFormationPosition(d);
+      d.entranceProgress = p;
+      _placeEntering(d, _smootherstep(p), tx, ty, 0, holding: true);
+    }
+    if (incomingLeft <= 0) _mergeIncoming(forced: true);
+  }
+
+  void _prepareIncoming() {
+    final ordinal = _ordinaryBirthOrdinal, elites = _eliteBirths;
+    _ordinaryBirthOrdinal = 0;
+    _eliteBirths = 0;
+    final (roster, count) = _buildRoster(wave + 1);
+    _incomingRoster = count;
+    _incomingOrdinal = _ordinaryBirthOrdinal;
+    _incomingElites = _eliteBirths;
+    _ordinaryBirthOrdinal = ordinal;
+    _eliteBirths = elites;
+    for (final d in roster) {
+      if (d.isLarge) continue;
+      d.entranceProgress = 0;
+      d.entranceElapsed = 0;
+      d.arrivesFromDistance = true;
+    }
+    incoming.addAll(roster);
+    _launchFlock(roster, wave + 1);
+    incomingTotal = incomingLeft = policy.incomingSeconds;
+    events.add('incoming');
+  }
+
+  /// The approaching wave becomes the current one. [forced]: it reached the
+  /// fight before the stragglers fell, so combat simply goes on.
+  void _mergeIncoming({required bool forced}) {
+    final p = incomingHold * incomingProgress;
+    wave++;
+    _resetWaveEnemies();
+    _waveRoster = _incomingRoster;
+    _ordinaryBirthOrdinal = _incomingOrdinal;
+    _eliteBirths = _incomingElites;
+    for (final d in incoming) {
+      if (d.isLarge) {
+        demons.add(d);
+        continue;
+      }
+      // Keep the roster's own entrance (stagger and length) and resume it
+      // from where the approach held; a forced close-in is a touch slower.
+      if (forced) d.entranceDuration = incomingCloseIn;
+      d.entranceElapsed = d.entranceDelay + p * d.entranceDuration;
+      d.entranceProgress = p;
+      demons.add(d);
+    }
+    incoming.clear();
+    incomingLeft = incomingTotal = 0;
+    if (!forced) {
+      // Exactly a fresh wave's start (see _spawnWave), minus the roster.
+      shots.clear();
+      _fire = 0;
+      wingSide = -1;
+      wingRecoil[0] = wingRecoil[1] = 0;
+      noseFlash = 0;
+      _groundBeginWave(); // --- ground war
+      _updateDemons(0);
+      _enterPhase(RunMode.transition, 1.4 + storyReadingTime);
+    }
+    events.add('wave');
+    events.add('checkpoint');
+  }
+  // --- end wave pressure
+
+  (int, int, bool) _ordinaryProfile([int? forWave]) {
+    final w = forWave ?? wave;
     final index = _ordinaryBirthOrdinal++;
     final kind = cycle > 0
-        ? (index + wave + level) % 4
-        : wave > 1 && index % 4 == 0
+        ? (index + w + level) % 4
+        : w > 1 && index % 4 == 0
         ? math.max(0, level - 2)
         : level - 1;
     final elite =
@@ -926,6 +1151,7 @@ class ArcadeModel {
       }
     }
     if (slots.length < count) return false;
+    final group = <Demon>[];
     for (var i = 0; i < count; i++) {
       final profile = _ordinaryProfile();
       final d =
@@ -945,7 +1171,17 @@ class ArcadeModel {
             ..arrivesFromDistance = true;
       d.y = d.entranceStartY;
       demons.add(d);
+      group.add(d);
     }
+    // --- atmosphere-and-swarms: the group flies in as a flock; a sentinel's
+    // escort pours out of its silhouette as an insect swarm.
+    final f = foreshadow;
+    _launchFlock(
+      group,
+      wave,
+      style: escort ? FlockStyle.insect : FlockStyle.squadrons,
+      origin: escort && f != null && f.visible ? f : null,
+    );
     return true;
   }
 
@@ -968,7 +1204,9 @@ class ArcadeModel {
     if (lifeLossPhase == LifeLossPhase.emerging) {
       lifeLossPhase = LifeLossPhase.none;
     }
-    if (wave < wavesPerLevel) {
+    if (wave < wavesPerLevel && incoming.isNotEmpty) {
+      _mergeIncoming(forced: false); // --- wave pressure
+    } else if (wave < wavesPerLevel) {
       wave++;
       _spawnWave();
       events.add('wave');
@@ -1052,6 +1290,7 @@ class ArcadeModel {
       return;
     }
     clock += dt;
+    _updateForeshadow(dt); // --- atmosphere-and-swarms (presentation)
     for (final b in blasts) {
       b.age += dt;
     }
@@ -1089,9 +1328,7 @@ class ArcadeModel {
         if ((delta > 0 && nextX >= targetX) ||
             (delta < 0 && nextX <= targetX)) {
           shipX = targetX;
-          shipVx = dt > 0
-              ? ((shipX - oldShipX) / dt).clamp(-360.0, 360.0)
-              : 0;
+          shipVx = dt > 0 ? ((shipX - oldShipX) / dt).clamp(-360.0, 360.0) : 0;
         } else {
           shipX = nextX.clamp(18.0, width - 18.0);
           if (shipX <= 18.0 || shipX >= width - 18.0) {
@@ -1147,7 +1384,7 @@ class ArcadeModel {
           _groundLevelCleared(); // --- ground war
           _enterPhase(RunMode.levelClear, 4 + storyReadingTime);
           events.add('levelclear');
-        } else if (mode == RunMode.victory && cycle >= 4) {
+        } else if (mode == RunMode.victory && finalBoss) {
           mode = RunMode.completed;
           events.add('completed');
           _groundCampaignComplete(); // --- ground war
@@ -1182,8 +1419,9 @@ class ArcadeModel {
     powerTimers.removeWhere((power, remaining) {
       if (remaining <= 0) {
         if (power != Power.shield) {
-          final side =
-              power == Power.rapid ? (random.nextBool() ? 1.0 : -1.0) : 0.0;
+          final side = power == Power.rapid
+              ? (random.nextBool() ? 1.0 : -1.0)
+              : 0.0;
           fallingParts.add(
             FallingPart(
               shipX + side * 14.0,
@@ -1191,7 +1429,8 @@ class ArcadeModel {
               power,
               vx: (random.nextDouble() - 0.5) * 40.0 + side * 20.0,
               vy: -25.0 - random.nextDouble() * 15.0,
-              vRot: (random.nextBool() ? 1.0 : -1.0) *
+              vRot:
+                  (random.nextBool() ? 1.0 : -1.0) *
                   (3.0 + random.nextDouble() * 3.0),
             ),
           );
@@ -1268,6 +1507,8 @@ class ArcadeModel {
     }
     if (!shipAway) _updateReinforcements(dt);
     _updateDemons(dt);
+    _updateIncoming(dt); // --- wave pressure (after formation targets move)
+    _advanceFlock(dt); // --- atmosphere-and-swarms: arrivals drawn as a flock
     _updateBoss(dt);
     _updateGround(dt); // --- ground war
     if (!combat) return;
@@ -1348,6 +1589,8 @@ class ArcadeModel {
     var sepX = 0.0, sepY = 0.0;
     var cohX = 0.0, cohY = 0.0;
     var cohCount = 0;
+    // An arrival's own slot track, not where the flock draws it.
+    final (selfX, selfY) = flock.slotTrack(d) ?? (d.x, d.y);
     for (final other in demons) {
       if (identical(other, d) ||
           other.isLarge ||
@@ -1356,8 +1599,8 @@ class ArcadeModel {
           other.lastStand) {
         continue;
       }
-      final dx = d.x - other.x;
-      final dy = d.y - other.y;
+      final dx = selfX - other.x;
+      final dy = selfY - other.y;
       final distSq = dx * dx + dy * dy;
       if (distSq <= 0.0001 || distSq >= 68 * 68) continue;
       final dist = math.sqrt(distSq);
@@ -1365,8 +1608,8 @@ class ArcadeModel {
         sepX += (dx / dist) * (36 - dist) * 0.35;
         sepY += (dy / dist) * (36 - dist) * 0.20;
       }
-      cohX += other.x - d.x;
-      cohY += other.y - d.y;
+      cohX += other.x - selfX;
+      cohY += other.y - selfY;
       cohCount++;
     }
     if (cohCount > 0) {
@@ -1421,11 +1664,10 @@ class ArcadeModel {
     d.vy = (d.y - prevY) / dt;
     final refSpeed = d.isLarge ? 120.0 : (d.dive > 0 ? 180.0 : 95.0);
     final targetBank = (d.vx / refSpeed).clamp(-1.0, 1.0);
-    d.bank =
-        (d.bank + (targetBank - d.bank) * (1 - math.exp(-14 * dt))).clamp(
-          -1.0,
-          1.0,
-        );
+    d.bank = (d.bank + (targetBank - d.bank) * (1 - math.exp(-14 * dt))).clamp(
+      -1.0,
+      1.0,
+    );
   }
 
   void _advanceWaveEntrance(double dt) {
@@ -1448,21 +1690,177 @@ class ArcadeModel {
       _placeEntering(d, s, targetFormX, targetFormY, arcX);
       _updateDemonKinematics(d, prevX, prevY, dt);
     }
+    _advanceFlock(dt);
     _updatePerspective(dt);
+  }
+
+  // --- atmosphere-and-swarms: flock arrivals and sentinel foreshadowing ---
+
+  /// The arrival flock (flock.dart): where entering creatures are drawn.
+  final ArrivalFlock flock;
+
+  /// Arrivals fly in as a flock (presentation only; false = the plain
+  /// depth approach, for the parity test).
+  bool flockArrivals = true;
+
+  /// The sentinel wave [forWave] of this sector brings, if any (the roster
+  /// rule, deterministic: no random draws).
+  EnemyArchetype? sentinelFor(int forWave) {
+    if (boss != null || level == 5 || forWave < 1 || forWave > wavesPerLevel) {
+      return null;
+    }
+    final eligible =
+        cycle >= 1 &&
+        ((forWave == wavesPerLevel &&
+                level >= 2 &&
+                (difficulty != Difficulty.easy || level.isEven)) ||
+            (difficulty != Difficulty.easy &&
+                forWave >= 3 &&
+                (forWave + level + cycle).isEven));
+    if (!eligible) return null;
+    return cycle >= 2 && difficulty != Difficulty.easy
+        ? EnemyArchetype.armoredSentinel
+        : EnemyArchetype.shieldSentinel;
+  }
+
+  void _launchFlock(
+    List<Demon> group,
+    int forWave, {
+    FlockStyle style = FlockStyle.squadrons,
+    SentinelForeshadow? origin,
+  }) {
+    if (!perspective || !flockArrivals) return;
+    flock.launch(
+      [
+        for (final d in group)
+          if (d.arrivesFromDistance && !d.isLarge) d,
+      ],
+      sector: level,
+      route: cycle,
+      wave: forWave,
+      style: style,
+      originX: origin?.x,
+      originY: origin?.y,
+      originN: origin?.nearness,
+    );
+  }
+
+  /// Steps the flock on the entrance clock and draws its creatures there;
+  /// the drawn size follows the drawn depth.
+  void _advanceFlock(double dt) {
+    if (!perspective || !flockArrivals) return;
+    for (final a in flock.advance(dt)) {
+      final d = a.demon;
+      _updateDemonKinematics(d, a.prevX, a.prevY, dt);
+      d.scale = Perspective.scaleOf(d.nearness, angry: d.angry);
+    }
+  }
+
+  /// The sentinel's silhouette circling far behind the fog, one or two
+  /// waves ahead of it (pure presentation; null when none is due).
+  SentinelForeshadow? foreshadow;
+
+  void _updateForeshadow(double dt) {
+    final f = foreshadow;
+    // What is due: the sentinel of this wave still waiting for its escort
+    // (stage 1), or one coming next wave (.5) or the wave after (0).
+    double? stage;
+    EnemyArchetype? kind;
+    Demon? waiting;
+    if (perspective && boss == null && mode != RunMode.title) {
+      for (final d in demons) {
+        if (d.isLarge && d.entering && d.entranceProgress <= 0) waiting = d;
+      }
+      final present = demons.any(
+        (d) => d.isLarge && !(d.entering && d.entranceProgress <= 0),
+      );
+      if (waiting != null) {
+        stage = 1;
+        kind = waiting.archetype;
+      } else if (!present) {
+        final next = sentinelFor(wave + 1);
+        final after = sentinelFor(wave + 2);
+        if (next != null) {
+          stage = .5;
+          kind = next;
+        } else if (after != null) {
+          stage = 0;
+          kind = after;
+        }
+      }
+      if (mode == RunMode.salvage ||
+          mode == RunMode.levelClear ||
+          mode == RunMode.travel) {
+        stage = null;
+      }
+    }
+    if (demons.any(
+      (d) => d.isLarge && d.entryScale != null && d.entranceProgress > 0,
+    )) {
+      // Handed over: the sentinel itself carries the silhouette now.
+      foreshadow = null;
+      return;
+    }
+    if (stage == null || kind == null) {
+      if (f == null) return;
+      f.opacity = math.max(0, f.opacity - dt / .8);
+      f.clock += dt;
+      f.place(shipX);
+      if (f.opacity <= 0) foreshadow = null;
+      return;
+    }
+    final g = foreshadow ??= SentinelForeshadow(kind, stage);
+    g
+      ..archetype = kind
+      ..stage = stage
+      ..clock += dt
+      ..opacity = math.min(1, g.opacity + dt / 1.5);
+    final rate = stage >= 1 ? 1.2 : 2.5;
+    g.growth += (stage - g.growth) * (1 - math.exp(-dt / rate));
+    g.place(shipX);
+    if (waiting != null) {
+      // The sentinel sets out from where its silhouette is now.
+      waiting
+        ..entryX = g.x
+        ..entryY = g.y
+        ..entryN = g.nearness
+        ..entryScale = g.scale;
+    }
   }
 
   // --- perspective (lib/game/perspective.dart, plan/perspective.md) ---
   /// Entrance placement: the flat legacy drop from above, or, for arrivals
   /// with [Demon.arrivesFromDistance], a flight out of the horizon haze
   /// whose depth moves linearly so it grows as it approaches its slot.
-  void _placeEntering(Demon d, double s, double tx, double ty, double arcX) {
+  void _placeEntering(
+    Demon d,
+    double s,
+    double tx,
+    double ty,
+    double arcX, {
+    bool holding = false,
+  }) {
     if (perspective && d.arrivesFromDistance) {
-      final (n, u) = Perspective.approach(s, _targetNearness(d, ty));
-      final x0 = Perspective.arrivalX(d.homeX);
-      final y0 = Perspective.arrivalYFor(d.homeY);
+      final (n, u) = Perspective.approach(
+        s,
+        _targetNearness(d, ty),
+        from: d.entryN,
+      );
+      final x0 = d.entryX ?? Perspective.arrivalX(d.homeX);
+      final y0 = d.entryY ?? Perspective.arrivalYFor(d.homeY);
       d.nearness = n;
       d.x = (x0 + (tx - x0) * u + arcX * .6).clamp(18.0, width - 18.0);
       d.y = y0 + (ty - y0) * u;
+      // The flock decides where the creature is drawn until it settles.
+      if (flockArrivals && !d.isLarge) {
+        flock.reference(
+          d,
+          sector: level,
+          route: cycle,
+          wave: wave,
+          holding: holding,
+        );
+      }
       return;
     }
     d.x = (d.homeX + arcX + (tx - d.homeX) * s).clamp(18.0, width - 18.0);
@@ -1502,6 +1900,13 @@ class ArcadeModel {
         large: d.isLarge,
         angry: d.angry,
       );
+      final from = d.entryScale;
+      if (from != null && d.entering && d.isLarge) {
+        // A foreshadowed sentinel keeps its silhouette's size as it flies
+        // in, growing into its own (presentation: it cannot be hit yet).
+        final s = _smootherstep(d.entranceProgress);
+        d.scale = ((from + (d.scale - from) * s) * 16).round() / 16;
+      }
       final (halfW, halfH) = d.isLarge
           ? Perspective.largeHitHalf
           : Perspective.smallHitHalf;
@@ -1520,7 +1925,8 @@ class ArcadeModel {
     if (!shipAway) _dive -= dt * policy.hostileRate;
     var activeSmallDives = demons
         .where(
-          (d) => !d.isLarge && (d.dive > 0 || d.telegraph > 0 || d.divePrep > 0),
+          (d) =>
+              !d.isLarge && (d.dive > 0 || d.telegraph > 0 || d.divePrep > 0),
         )
         .length;
     final maxSmallDives = _maxConcurrentSmallDives;
@@ -1824,7 +2230,9 @@ class ArcadeModel {
       shipVx: shipVx,
       crowdBalance: ((rightNeighbors - leftNeighbors) / 4.0).clamp(-1.0, 1.0),
       healthRatio: d.hp / math.max(1, d.maxHp),
-      tierFactor: d.elite ? 1.0 : ((d.kind >= 2 || d.maxHp >= 3) ? 0.35 : -0.75),
+      tierFactor: d.elite
+          ? 1.0
+          : ((d.kind >= 2 || d.maxHp >= 3) ? 0.35 : -0.75),
     );
     final cooldown = difficulty == Difficulty.easy
         ? 3.2
@@ -1904,14 +2312,14 @@ class ArcadeModel {
       final sideRamp = ((levelClock - 0.65) / 0.35).clamp(0.0, 1.0);
       b.sideDoorLeft =
           (((math.sin(levelClock * (1.45 + b.phase * .2) + 1.9) + sideBonus) *
-                      2)
-                  .clamp(0.0, 1.0) *
-              sideRamp);
+                  2)
+              .clamp(0.0, 1.0) *
+          sideRamp);
       b.sideDoorRight =
           (((math.sin(levelClock * (1.45 + b.phase * .2) + 4.1) + sideBonus) *
-                      2)
-                  .clamp(0.0, 1.0) *
-              sideRamp);
+                  2)
+              .clamp(0.0, 1.0) *
+          sideRamp);
     }
     _flock -= dt * policy.hostileRate;
     final maxMinions = cycle == 0 ? 6 : (cycle == 1 ? 8 : 10);
@@ -1966,8 +2374,8 @@ class ArcadeModel {
         final power = roll < 0.70
             ? Power.large
             : (roll < 0.80
-                ? Power.powerful
-                : (roll < 0.90 ? Power.spread : Power.shield));
+                  ? Power.powerful
+                  : (roll < 0.90 ? Power.spread : Power.shield));
         final spawnX = 50.0 + random.nextDouble() * 260.0;
         supplyCrates.add(SupplyCrate(spawnX, -20.0, power));
       }
@@ -2422,13 +2830,11 @@ class ArcadeModel {
 
       final double anchorX, anchorY;
       if (b != null) {
-        final orbitAngle =
-            t * 2.2 + pairIndex * (math.pi * 2 / pairCount);
+        final orbitAngle = t * 2.2 + pairIndex * (math.pi * 2 / pairCount);
         anchorX = b.x + math.cos(orbitAngle) * 115.0;
         anchorY = b.y + math.sin(orbitAngle) * 58.0;
       } else {
-        final flockPhase =
-            t * 2.4 + pairIndex * (math.pi * 2 / pairCount);
+        final flockPhase = t * 2.4 + pairIndex * (math.pi * 2 / pairCount);
         anchorX = 180.0 + math.sin(flockPhase) * 105.0;
         anchorY = 220.0 + math.sin(flockPhase * 2) * 55.0;
       }
@@ -2438,7 +2844,8 @@ class ArcadeModel {
       final separation = (math.cos(clapPhase) * 0.5 + 0.5) * 26.0 + 4.0;
       final targetX =
           anchorX + (isSecond ? separation * 0.5 : -separation * 0.5);
-      final targetY = anchorY +
+      final targetY =
+          anchorY +
           (isSecond ? math.sin(t * 5.0) * 2.5 : -math.sin(t * 5.0) * 2.5);
 
       final prevX = d.x, prevY = d.y;

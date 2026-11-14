@@ -1,34 +1,32 @@
 /* Squad comms voice playback: radio clips from web/audio/comms/ (built by
    tools/comms_pipeline.py). Shares demon-audio.js's AudioContext and master
    gain through window.demonAudio.graph, so master mute and pause (context
-   suspend) apply to voices too. Ducks the music bus while a voice sounds and
-   caps simultaneous voices (3; only an urgent line, priority >= 8, may cut
-   one that is playing; anything else beyond the cap is dropped). Every call is a safe no-op before the first
-   gesture has created the context.
+   suspend) apply to voices too. Speech NEVER touches the music: no ducking,
+   no side-chain, the music bus keeps its level while voices play (the
+   score is the star; the director keeps the radio sparse instead). Caps
+   simultaneous voices (3; only an urgent line, priority >= 8, may cut one
+   that is playing; anything else beyond the cap is dropped). Every call is
+   a safe no-op before the first gesture has created the context.
    Speech level (audio round): the HUD's speech toggle (Mute / Low / Full,
-   remembered by demon-audio.js) scales the voice bus; Mute stops voices and
-   never ducks the music. setVolume (the squad-voice switch) multiplies with it. */
+   remembered by demon-audio.js) scales only the voice bus; Mute stops
+   voices. setVolume (the squad-voice switch) multiplies with it. */
 (() => {
   'use strict';
   const root = new URL('./audio/comms/', document.baseURI);
   const cap = 3;                 // voices sounding at once (a regroup chorus may overlap)
   const urgent = 8;              // only this priority may cut a playing voice
-  const duckGain = .4;           // music bus level under speech
-  const duckAttack = .06;        // setTargetAtTime constants (s)
-  const duckRelease = .12;
-  const releaseDelay = .3;       // hold the duck this long after the last voice
   const voiceGain = 1.26;        // +2 dB: clips are mastered to -18 LUFS with codec headroom
-  // Speech levels: Full is the round-3 voice level, Low 8 dB under it (a little
-  // less than music's 10 dB, so low speech still clears the ducked music).
+  // Speech levels: Full is the round-3 voice level, Low 8 dB under it.
   const speechLevels = { mute: 0, low: 10 ** (-8 / 20), full: 1 };
-  const bytesCache = new Map(), bufferCache = new Map();
+  const bytesCache = new Map(), bufferCache = new Map(), decoded = new Map();
+  const decodedLimit = 12 * 1024 * 1024, decodedCountLimit = 96;
+  let decodedBytes = 0;
   const live = [];               // { id, priority, demon, source, gain, startedAt, order }
   let bus, graphContext, volume = 1, played = 0, dropped = 0, maxConcurrent = 0, order = 0;
-  let ducked = false, releaseTimer = null;
   let level = speechLevels[window.demonAudio?.levels?.speech] !== undefined ? window.demonAudio.levels.speech : 'full';
   const busGain = () => volume * speechLevels[level] * voiceGain;
-  const probe = typeof Audio === 'function' ? new Audio() : null;
-  const formats = probe?.canPlayType?.('audio/ogg; codecs="opus"') ? ['ogg', 'm4a'] : ['m4a', 'ogg'];
+  // Current-browser PWA delivery: one high-quality Opus bank.
+  const formats = ['ogg'];
 
   function graph() {
     const g = window.demonAudio?.graph;
@@ -39,6 +37,7 @@
       bus.gain.value = busGain();
       bus.connect(g.master);
       bufferCache.clear();
+      decoded.clear(); decodedBytes = 0;
     }
     return g;
   }
@@ -55,50 +54,53 @@
       } catch (error) { reject(error); }
     });
   }
+  function trimDecoded() {
+    for (const id of bufferCache.keys()) {
+      if (decodedBytes <= decodedLimit && decoded.size <= decodedCountLimit) break;
+      if (!decoded.has(id) || live.some(v => v.id === id)) continue;
+      decodedBytes -= decoded.get(id);
+      decoded.delete(id); bufferCache.delete(id);
+    }
+  }
   function loadBuffer(id) {
     const g = graph();
     if (!g?.context?.decodeAudioData) return Promise.resolve(null);
     if (!bufferCache.has(id)) {
-      bufferCache.set(id, (async () => {
+      const request = (async () => {
         for (const format of formats) {
           const bytes = await fetchBytes(id, format);
           if (!bytes) continue;
           try { const buffer = await decode(g.context, bytes); if (buffer?.duration > 0) return buffer; } catch { /* next format */ }
         }
         return null;
-      })().then(buffer => { if (!buffer) bufferCache.delete(id); return buffer; }));
+      })().then(buffer => {
+        if (bufferCache.get(id) !== request || graphContext !== g.context) return null;
+        if (!buffer) bufferCache.delete(id);
+        else {
+          const samples = buffer.length ?? Math.ceil(buffer.duration * (buffer.sampleRate || g.context.sampleRate || 48000));
+          const bytes = samples * (buffer.numberOfChannels || 1) * 4;
+          decoded.set(id, bytes); decodedBytes += bytes; trimDecoded();
+        }
+        return buffer;
+      });
+      bufferCache.set(id, request);
+    } else {
+      // Touch LRU order without decoding again.
+      const cached = bufferCache.get(id);
+      bufferCache.delete(id); bufferCache.set(id, cached);
     }
     return bufferCache.get(id);
   }
-  // Compressed bytes may be fetched before the gesture; decoding waits for the context.
+  // A sector may have hundreds of lines: prefetch compressed bytes, never
+  // eagerly expand the whole roster into PCM. Decode only imminent speech.
   function prefetch(ids) {
-    for (const id of ids || []) {
-      if (graph()) loadBuffer(id); else fetchBytes(id, formats[0]);
-    }
+    for (const id of ids || []) fetchBytes(id, formats[0]);
   }
 
-  function duck(on) {
-    const g = graph();
-    if (!g?.music) return;
-    const now = g.context.currentTime;
-    if (on) {
-      if (releaseTimer) { clearTimeout(releaseTimer); releaseTimer = null; }
-      if (!ducked) { ducked = true; g.music.gain.cancelScheduledValues?.(now); g.music.gain.setTargetAtTime(duckGain, now, duckAttack); }
-    } else if (ducked && !releaseTimer) {
-      releaseTimer = setTimeout(() => {
-        releaseTimer = null;
-        if (live.length) return;
-        ducked = false;
-        const t = g.context.currentTime;
-        g.music.gain.cancelScheduledValues?.(t);
-        g.music.gain.setTargetAtTime(1, t, duckRelease);
-      }, releaseDelay * 1000);
-    }
-  }
   function remove(entry) {
     const index = live.indexOf(entry);
     if (index >= 0) live.splice(index, 1);
-    if (!live.length) duck(false);
+    trimDecoded();
   }
   function release(entry, seconds = .04) {
     const g = graph();
@@ -129,7 +131,6 @@
     entry.gain.connect(bus);
     live.push(entry);
     maxConcurrent = Math.max(maxConcurrent, live.length);
-    duck(true);
     loadBuffer(id).then(buffer => {
       if (!live.includes(entry)) return;
       if (!buffer) { remove(entry); return; }
@@ -159,7 +160,7 @@
     level = value;
     const g = graph();
     if (bus && g) bus.gain.setTargetAtTime(busGain(), g.context.currentTime, .03);
-    if (level === 'mute') stopAll();  // releases the duck too
+    if (level === 'mute') stopAll();
     return level;
   }
 
@@ -168,6 +169,6 @@
     get state() {
       const g = window.demonAudio?.graph;
       return { context: g?.context?.state ?? 'none', voices: live.map(v => ({ id: v.id, priority: v.priority, demon: v.demon, started: v.startedAt !== null })),
-        ducked, duckGain, musicGain: g?.music?.gain?.value ?? null, volume, level, busGain: bus?.gain?.value ?? null, loaded: [...bufferCache.keys()], played, dropped, maxConcurrent, cap, formats };
+        musicGain: g?.music?.gain?.value ?? null, volume, level, busGain: bus?.gain?.value ?? null, loaded: [...bufferCache.keys()], decodedBytes, decodedLimit, played, dropped, maxConcurrent, cap, formats };
     } });
 })();

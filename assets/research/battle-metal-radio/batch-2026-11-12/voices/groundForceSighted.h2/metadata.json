@@ -1,0 +1,67 @@
+{
+  "speaker": "anvil",
+  "kind": "human",
+  "trigger": "groundForceSighted",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 56615,
+  "mouth": "22222<<<<55<<<<<220000<<<<<<<=======",
+  "open": "037878887578998742111489999787776421",
+  "vis": "--ooo----oo------------------eeeee--",
+  "lufs": -18.05,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "groundForceSighted.h2",
+  "text": "Movement on the ground. Brood infantry.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h2/baseline.flac",
+      "sha256": "fbaa4e9654fb18535c17822c6eef2a4305e4f895f7d7ea061c589ead9e34a508",
+      "float_source_sha256": "2bc1ea7c4b70d372eaef0a58bdcf1d50db4c356aa927e44076a989e2a504385a",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h2/expressive.flac",
+      "sha256": "2a29f0c65c61a447486eba2a31e0006b82ca8dbe05b1ba209b4177cabb08e78d",
+      "float_source_sha256": "ac8eb2df903624a69bb3a5bd568be11e88c2769e3ce2a89ad60d0d0ca8af6117",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h2/voice.flac",
+      "sha256": "82efe114b4a6137f7b977139a49df9949808e5dc61109127de17a474fbfbeb6e",
+      "float_source_sha256": "3394e278d52df9cc84e4586071959e1534911fe5efe5348ff66555b7d09c85f6",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 9.61,
+    "error": null,
+    "text": "Movement on the ground! Brood infantry!"
+  },
+  "seed": 1591457398,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "840491939347f0242cd9420c57b30ba72a1deec455adf6059390422753f4c25e"
+  }
+}

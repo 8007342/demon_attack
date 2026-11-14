@@ -1,0 +1,67 @@
+{
+  "speaker": "mensah",
+  "kind": "human",
+  "trigger": "groundForceSighted",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 73524,
+  "mouth": "00033333222000004444<<=====<<<<<22000<<<<<<222",
+  "open": "0035543223211002777788577778997642115895886421",
+  "vis": "--------------------eeeeeee-------------------",
+  "lufs": -18.14,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "groundForceSighted.h5",
+  "text": "Granite here. They're massing below you. Lots of them.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h5/baseline.flac",
+      "sha256": "674992799ab01d35e579493df4270343afac5667e56355b1be5fdf3159cbb9db",
+      "float_source_sha256": "1b9c6e83f6ac8331fac2fcc713f5c615696150ea8202d7932700c9729640f0a5",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h5/expressive.flac",
+      "sha256": "da18ce550e7277350f0cd3c5b7032557e4616669dc8abd570a575663e68c89d0",
+      "float_source_sha256": "8dc1564c167d9f42370b29b781f58d2b023bec1884b42d1c07ce0a6788c8ae83",
+      "gain": 0.974380527076787,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundForceSighted.h5/voice.flac",
+      "sha256": "6b91240af123108f59d0e8ee994329c17af97a0b9f76dac3bae951be5ed802fe",
+      "float_source_sha256": "9dcbd57b44ba5686c46c11b85542bf1e257bfbcdd37640be6f65a63d5fe1f6a4",
+      "gain": 0.7250772402167742,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 11.87,
+    "error": null,
+    "text": "Granite here! They're massing below you! Lots of them!"
+  },
+  "seed": 1086268373,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "81c8a0b210e2c0ff458da77d37fed9a891b3cacfb1916a3b4351d0b2883331a9"
+  }
+}

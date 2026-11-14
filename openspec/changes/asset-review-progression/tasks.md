@@ -15,7 +15,7 @@
 - [x] 2.1 Show progression, collapsed accepted sections, a remembered hide switch, and status and tier filters.
 - [x] 2.2 Preview every candidate on the selected ship and show the selected ship on its own.
 - [x] 2.4 Show the single-shooter and wing-shooter ships, and preview nose candidates on both.
-- [ ] 2.3 Human acceptance of rapid, shield, spread and large (powerful accepted).
+- [x] 2.3 Human acceptance of rapid, shield, spread and large (powerful accepted). Operator approved the upgraded sprites on 2026-11-13; the FLUX parts are superseded on `game` by the 64-grid ship and weapons atlas (`ship-weapons.png`, sprite-64-grid-overhaul), which is what was accepted.
 
 ## 3. Alternating wing cannons
 

@@ -1,0 +1,67 @@
+{
+  "speaker": "rook",
+  "kind": "human",
+  "trigger": "bossDefeated",
+  "engine": "chatterbox",
+  "emotion": "triumphant",
+  "samples": 60055,
+  "mouth": "22000000<<<<<<22222<<==332222<<<<<<222",
+  "open": "03211006899986427668865554327899886321",
+  "vis": "------------------eeeee---------------",
+  "lufs": -18.02,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "bossDefeated.h1",
+  "text": "It's falling! It's actually falling!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/bossDefeated.h1/baseline.flac",
+      "sha256": "fe1f7bf51ba3bf7d83f1b04d43766efeede8b5d7e7aa0eea0619aa6f545ca5c1",
+      "float_source_sha256": "f0803240dbe73aaa4f6c5cac1a0629c77427536f11d1a707ba6a48f3995eb407",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/bossDefeated.h1/expressive.flac",
+      "sha256": "0afdca368f4134be92d654465b0425e21b30ef39145d39e767847fb238332a3c",
+      "float_source_sha256": "1d116b2e717869bee92b289004b139fd53305d5ade83235dc1bf3f39bc16b722",
+      "gain": 0.9304980522083103,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/bossDefeated.h1/voice.flac",
+      "sha256": "cf68da37508c959c06ad5aba83b83573885b53d785acd2de504c950146c7734d",
+      "float_source_sha256": "c76406dd50078ac6190460d6c086f674468a1f33279f48bc753cf36e3b09c7b6",
+      "gain": 0.7851980422475737,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 8.67,
+    "error": null,
+    "text": "It's falling! It's actually falling!"
+  },
+  "seed": 1558153122,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "f2a06228c7f91b4aa4d4db83211bb20cb901445b14b0fabc20a24c6b1681619b"
+  }
+}

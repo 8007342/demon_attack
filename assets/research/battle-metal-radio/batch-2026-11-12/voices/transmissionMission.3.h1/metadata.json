@@ -1,0 +1,67 @@
+{
+  "speaker": "nomad",
+  "kind": "human",
+  "trigger": "transmissionMission.3",
+  "engine": "chatterbox",
+  "emotion": "calm",
+  "samples": 88623,
+  "mouth": "333333====55<<<<<<<<<<<<<<<<<===000000<<===<<<========00",
+  "open": "06768544687589999999874788766542111004886578997577643321",
+  "vis": "------eeoooooooo--oo---oooo--ee--------eee----eee---ee--",
+  "lufs": -18.04,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "transmissionMission.3.h1",
+  "text": "It gets hot over the Ember forges. Trust your instruments.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/transmissionMission.3.h1/baseline.flac",
+      "sha256": "fc69a02b3047e77e983d48ae7129a54a0e47cdabb893d45b0dd2b9ecd980b867",
+      "float_source_sha256": "a1a7dae9bf7b779273941ac8bc53a1d17800cd17679a211c32c2e5f800fdb6e3",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/transmissionMission.3.h1/expressive.flac",
+      "sha256": "d76faf94683e13aa36bf56c479190539b1dfcfe3d4ab3301addb1c4f4f9eb07b",
+      "float_source_sha256": "15bc85f313f83c18e58322f63cbd59fd791ddb8032eae319899e8e0337f2a76f",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/transmissionMission.3.h1/voice.flac",
+      "sha256": "eae1aa57c4344f23addb73ac51f3817eaa5b8c401c1892cf3d58eb6f5884f87e",
+      "float_source_sha256": "6fa64586cf816be0c1e34803dcb2dc8e5c8d0042945d9fac0df4e68a11d9763e",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 13.05,
+    "error": null,
+    "text": "It gets hot over the Ember forges. Trust your instruments."
+  },
+  "seed": 108350897,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "daa4191afc46bc98da286eb8901bf33615f4cb1aa048cb0e0a6f8e908fdeeb8f"
+  }
+}

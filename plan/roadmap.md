@@ -16,3 +16,5 @@ Historical references and screenshots: `research-original.md`.
 
 Asset pipeline (branch `research/local-image-large-models`): see `asset-pipeline/README.md`.
 Left: stage-0 deterministic isolate/pixelize/QA scripts; consented I2/I3 ladder once Tillandsias #679 lands; ComfyUI workflow templates once studio lands; style LoRA; a vertical slice with one demon species' full frame set.
+
+Ground forces rework (branch `work/ground-forces-design`, design only): `openspec/changes/ground-forces-rework/`. Left — operator review of the Fleet style guide, the 5-heading spec and the open questions; then rigs and the `offline` build (CP0), the 90-job pilot (CP1), production per `render-runs/ground-forces-rework.md`.

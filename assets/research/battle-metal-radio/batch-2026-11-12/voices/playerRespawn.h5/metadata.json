@@ -1,0 +1,67 @@
+{
+  "speaker": "sparrow",
+  "kind": "human",
+  "trigger": "playerRespawn",
+  "engine": "chatterbox",
+  "emotion": "excited",
+  "samples": 55088,
+  "mouth": "0000<<<554444=========<<<<<<44=====",
+  "open": "00058877777764215874378998747754321",
+  "vis": "-------oo----eeeeeeee--oo-----eee--",
+  "lufs": -18.04,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "playerRespawn.h5",
+  "text": "There you are! Don't scare me like that.",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/playerRespawn.h5/baseline.flac",
+      "sha256": "f2124a291059cbbecabd8082d8713b32f1ca13d0835f331cfa6ee309a7cdc20a",
+      "float_source_sha256": "18653082eb52ee49aa4cea072ce1fee1f47bb7cec77303c6095ae005b8005a90",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/playerRespawn.h5/expressive.flac",
+      "sha256": "053952a4e6c9f25b01856ec728dda840b9ae3041326bc69a0ae6932f05285a9b",
+      "float_source_sha256": "8e18d13041fe1a900a9e6c113d8ff74e977e90914b7c3f77bc689883d54aa22b",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/playerRespawn.h5/voice.flac",
+      "sha256": "7db1d6fcb54a3a30a721f88805af4b5eb0cf3a7e0ec6b4783018fbcb4e2f4687",
+      "float_source_sha256": "1964854470d63803c38fab9936d1ad07ac4a12b088aa074067e6a6fd2f8ce9ba",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 8.86,
+    "error": null,
+    "text": "There you are! Don't scare me like that!"
+  },
+  "seed": 1727483712,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "b43ac1503d2162146e6bd0a503cf4c77cbfb97bc73493917848dd3d25f97d33c"
+  }
+}

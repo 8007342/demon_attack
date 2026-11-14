@@ -1,0 +1,67 @@
+{
+  "speaker": "kestrel",
+  "kind": "human",
+  "trigger": "groundBreakthrough",
+  "engine": "chatterbox",
+  "emotion": "panicked",
+  "samples": 65858,
+  "mouth": "333<<<<<33444222555====<<<<<44<<<<<<<55222",
+  "open": "057885895577632127865478887877888999975321",
+  "vis": "----------------oooeee---------------oo---",
+  "lufs": -18.04,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "groundBreakthrough.h3",
+  "text": "Ground breakthrough. Watch for missiles from below!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundBreakthrough.h3/baseline.flac",
+      "sha256": "96a738c2e3028a021ba6f2a5b8ba7ab8635fe7a0696822f4a05647b613cbdd7f",
+      "float_source_sha256": "d374a119b7eba256636e38f1224b1be78fe76b26df936fdd9537f82335b491d9",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundBreakthrough.h3/expressive.flac",
+      "sha256": "f16421628337879a4fdf8fefcae79ecf94c9e6d0ceebcc69c0bbfee5ca072688",
+      "float_source_sha256": "1604e2d76d48e567a5a06b0b486819fd0ebccda4f86151876314eca4a9cfcf3a",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/groundBreakthrough.h3/voice.flac",
+      "sha256": "bd1a5e34e5577301113cbccccac1a6cc94b5e169bf9b681eb2f55aed5fa91663",
+      "float_source_sha256": "3c2d73052d5c91250f3b3ccb8cf9f365d61a944dcd876d9095ae7c31273efce2",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 10.33,
+    "error": null,
+    "text": "Ground breakthrough! Watch for missiles from below!"
+  },
+  "seed": 899516665,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "47da9e3d1a733787be0180c7d815788cd20096156097724d82e8990fa11da256"
+  }
+}

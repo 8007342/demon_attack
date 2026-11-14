@@ -18,6 +18,8 @@
 /// ```
 library;
 
+import 'dart:math' as math;
+
 import 'model.dart';
 
 /// Stable event names.
@@ -33,6 +35,11 @@ abstract final class GameEventNames {
 
   /// A demon ground unit launches a ground-to-air missile.
   static const groundMissileLaunch = 'groundMissileLaunch';
+
+  /// A demon ground unit commits to a shot at the player: it launches in
+  /// `fireIn` seconds ([GroundTuning.fireLead]: a beat, then the visible
+  /// tell). The radio's missile warning is end-aligned to the launch.
+  static const groundFirePrep = 'groundFirePrep';
 
   /// The player picks up the homing-missile power-up.
   /// Commander hook: "Homing missiles armed!".
@@ -213,6 +220,7 @@ abstract final class GameEventNames {
     groundForceSighted,
     groundForceInRange,
     groundMissileLaunch,
+    groundFirePrep,
     homingPickup,
     homingLaunch,
     homingHit,
@@ -263,11 +271,31 @@ abstract final class GameEventNames {
   static const groundPressureRising = 'groundPressureRising';
   static const groundPressureHigh = 'groundPressureHigh';
 
+  /// The fight below changed (comms-middle-ground): data `engaged` (live
+  /// demon ground units), `threats` (units predicted to break through or
+  /// through), `over` (the ship flies within [GameEventObserver.coverReach]
+  /// of a foe, with hysteresis) and `shipX`. Emitted only when one of
+  /// `engaged > 0`, `threats > 0` or `over` changes, so radio lines about
+  /// air cover and the ground battle can match the gameplay below.
+  static const groundPicture = 'groundPicture';
+
+  /// A ground unit is expected to fire at the player in `fireIn` seconds
+  /// (at most [GameEventObserver.fireForecast]; data x): the same
+  /// prediction the model uses for [groundFirePrep], read earlier and soft
+  /// (a launch may slip or never come). Once per shot. The radio keeps the
+  /// channel clear for the coming must-play warning (comms-middle-ground).
+  static const groundFireForecast = 'groundFireForecast';
+
   // --- Derived by GameEventObserver (data `variant`, `payload`, `clock`).
 
   /// A sector entrance (variant: sector 1-5).
   static const sectorStart = 'sectorStart';
   static const waveStart = 'waveStart';
+
+  /// The model's raw `incoming` (wave pressure), forwarded by name: the
+  /// next wave appears on the horizon while this one is down to its last
+  /// few.
+  static const incoming = 'incoming';
   static const reinforcements = 'reinforcements';
   static const sentinelIncoming = 'sentinelIncoming';
   static const sentinelDive = 'sentinelDive';
@@ -278,6 +306,10 @@ abstract final class GameEventNames {
 
   /// A shield pickup is in the air.
   static const shieldSpotted = 'shieldSpotted';
+
+  /// A weapon power-up is falling while the ship has no weapon power
+  /// (variant: the power's name; data `hint` true): the squad recommends it.
+  static const powerupSpotted = 'powerupSpotted';
   static const shieldCollected = 'shieldCollected';
 
   /// The shield crosses [GameEventObserver.shieldWarningSeconds] left.
@@ -355,6 +387,13 @@ class GameEvent {
   String toString() => 'GameEvent($name, $data)';
 }
 
+typedef _Emit = void Function(
+  String name, {
+  String? variant,
+  String? payload,
+  Map<String, Object?> data,
+});
+
 typedef GameEventListener = void Function(GameEvent event);
 
 /// The single no-op-safe dispatcher.
@@ -431,15 +470,22 @@ class GameEventObserver {
   static const pressureCalm = .3, pressureRising = .45, pressureHigh = .8;
   int _pressureBand = 0;
 
+  /// The ship counts as over the ground battle within this many arena units
+  /// of a live demon ground unit, and leaves it beyond [coverLeave].
+  static const coverReach = 64.0, coverLeave = 90.0;
+  bool _engaged = false, _threats = false, _over = false;
+
+  /// Seconds ahead a ground shot is forecast (`groundFireForecast`).
+  static const fireForecast = 5.0;
+  final _forecast = <(int, int)>{};
+
   /// [routKills] demon kills within [routWindow] seconds read as a rout.
   static const routWindow = 3.0, routKills = 5, routGap = 8.0;
   final _killTimes = <double>[];
   int? _kills;
   double _lastRout = -100;
 
-  void _observeKills(
-    void Function(String, {String? variant, String? payload}) emit,
-  ) {
+  void _observeKills(_Emit emit) {
     final kills = model.kills, clock = model.clock;
     final before = _kills;
     _kills = kills;
@@ -465,6 +511,8 @@ class GameEventObserver {
     _kills = null;
     _lastRout = -100;
     _pressureBand = 0;
+    _engaged = _threats = _over = false;
+    _forecast.clear();
     _seenLarge.clear();
     _seenElite.clear();
     _seenPickups.clear();
@@ -476,12 +524,17 @@ class GameEventObserver {
     _diveRunAnnounced = false;
   }
 
-  GameEvent _event(String name, {String? variant, String? payload}) =>
-      GameEvent(name, {
-        'clock': model.clock,
-        'variant': ?variant,
-        'payload': ?payload,
-      });
+  GameEvent _event(
+    String name, {
+    String? variant,
+    String? payload,
+    Map<String, Object?> data = const {},
+  }) => GameEvent(name, {
+    'clock': model.clock,
+    'variant': ?variant,
+    'payload': ?payload,
+    ...data,
+  });
 
   List<GameEvent> _publish(List<GameEvent> out) {
     if (dispatch) {
@@ -497,8 +550,12 @@ class GameEventObserver {
   /// them.
   List<GameEvent> observe(List<String> raw) {
     final out = <GameEvent>[];
-    void emit(String name, {String? variant, String? payload}) =>
-        out.add(_event(name, variant: variant, payload: payload));
+    void emit(
+      String name, {
+      String? variant,
+      String? payload,
+      Map<String, Object?> data = const {},
+    }) => out.add(_event(name, variant: variant, payload: payload, data: data));
     final shieldBefore = _powerLeft[Power.shield] ?? 0;
     for (final entry in raw) {
       final colon = entry.indexOf(':');
@@ -548,6 +605,7 @@ class GameEventObserver {
     _observeKills(emit);
     if (model.combat) _observeCombat(emit);
     _observePowers(emit);
+    _observeGround(emit);
     return _publish(out);
   }
 
@@ -591,9 +649,7 @@ class GameEventObserver {
     return _publish(out);
   }
 
-  void _sectorStart(
-    void Function(String, {String? variant, String? payload}) emit,
-  ) {
+  void _sectorStart(_Emit emit) {
     // The model emits `level` (or `boss` in the carrier sector) exactly once
     // per sector entrance, including a restored checkpoint.
     _clearWave();
@@ -613,9 +669,7 @@ class GameEventObserver {
     _diveRunAnnounced = false;
   }
 
-  void _observeCombat(
-    void Function(String, {String? variant, String? payload}) emit,
-  ) {
+  void _observeCombat(_Emit emit) {
     final clock = model.clock;
     for (final d in model.demons) {
       if (d.isLarge) {
@@ -624,7 +678,13 @@ class GameEventObserver {
         }
         final telling = d.telegraph > 0 || d.rushing;
         if (telling && _telegraphing.add(d)) {
-          emit(GameEventNames.sentinelDive);
+          // Seconds until it leaves the formation: the radio ends its
+          // warning on the dive (0 once it is already rushing).
+          final rate = model.policy.hostileRate;
+          emit(
+            GameEventNames.sentinelDive,
+            data: {'diveIn': d.rushing ? 0.0 : d.telegraph / rate},
+          );
         }
         if (!telling && d.dive <= 0) _telegraphing.remove(d);
         continue;
@@ -641,7 +701,10 @@ class GameEventObserver {
     _diveStarts.removeWhere((t) => clock - t > diveWindow);
     if (_diveStarts.length >= 2 && !_diveRunAnnounced) {
       _diveRunAnnounced = true;
-      emit(GameEventNames.diveWarning);
+      // Observed as the dives start: too late for a call that should end
+      // on the dive, so the comms only use it when nothing announced the
+      // run from `divePrep` (diveIn 0 lets them drop it).
+      emit(GameEventNames.diveWarning, data: const {'diveIn': 0.0});
     } else if (_diveStarts.isEmpty) {
       _diveRunAnnounced = false;
     }
@@ -650,16 +713,83 @@ class GameEventObserver {
     _telegraphing.removeWhere((d) => !model.demons.contains(d));
     _diving.removeWhere((d) => !model.demons.contains(d));
     for (final p in model.pickups) {
-      if (_seenPickups.add(p) && p.power == Power.shield) {
-        emit(GameEventNames.shieldSpotted);
+      if (!_seenPickups.add(p)) continue;
+      // `hint`: the ship lacks what is falling, so the squad recommends it
+      // (these calls win over flavour chatter on the radio).
+      if (p.power == Power.shield) {
+        emit(
+          GameEventNames.shieldSpotted,
+          data: {'hint': !model.hasPower(Power.shield)},
+        );
+      } else if (!model.hasOffensivePower) {
+        emit(
+          GameEventNames.powerupSpotted,
+          variant: p.power.name,
+          data: const {'hint': true},
+        );
       }
     }
     _seenPickups.removeWhere((p) => !model.pickups.contains(p));
   }
 
-  void _observePowers(
-    void Function(String, {String? variant, String? payload}) emit,
-  ) {
+  /// The `groundPicture` state: what is fighting below, and whether the
+  /// ship is over it. Read-only, emitted on change.
+  void _observeGround(_Emit emit) {
+    final foes = model.ground.liveUnits.toList();
+    final engaged = model.combat && foes.isNotEmpty;
+    if (engaged) _forecastFire(foes, emit);
+    final threats = engaged && foes.any((u) => u.threatening || u.brokeThrough);
+    var near = double.infinity;
+    for (final u in foes) {
+      final d = (u.x - model.shipX).abs();
+      if (d < near) near = d;
+    }
+    final over = engaged && (_over ? near <= coverLeave : near <= coverReach);
+    if (engaged == _engaged && threats == _threats && over == _over) return;
+    _engaged = engaged;
+    _threats = threats;
+    _over = over;
+    emit(
+      GameEventNames.groundPicture,
+      data: {
+        'engaged': engaged ? foes.length : 0,
+        'threats': foes.where((u) => u.threatening || u.brokeThrough).length,
+        'over': over,
+        'shipX': model.shipX,
+      },
+    );
+  }
+
+  /// The model's own launch prediction (see `_updateGroundFire`), read up
+  /// to [fireForecast] seconds ahead: once per unit and shot.
+  void _forecastFire(List<GroundUnit> foes, _Emit emit) {
+    final rate = model.policy.hostileRate;
+    _forecast.removeWhere((k) => !foes.any((u) => u.id == k.$1));
+    for (final u in foes) {
+      if (u.skirmish ||
+          u.shotsLeft <= 0 ||
+          u.telegraph > 0 ||
+          u.fireWarned ||
+          u.z < GroundTuning.lastFireZ) {
+        continue;
+      }
+      final key = (u.id, u.shotsLeft);
+      if (_forecast.contains(key)) continue;
+      final toRange = u.z > GroundTuning.fireZ
+          ? (u.z - GroundTuning.fireZ) / GroundTuning.approachSpeed
+          : 0.0;
+      final fireIn =
+          (math.max(u.cooldown, toRange) + GroundTuning.telegraph) / rate;
+      if (fireIn > fireForecast) continue;
+      _forecast.add(key);
+      emit(
+        GameEventNames.groundFireForecast,
+        data: {'fireIn': fireIn, 'x': u.x},
+      );
+    }
+  }
+
+  void _observePowers(_Emit emit) {
     for (final power in Power.values) {
       final before = _powerLeft[power] ?? 0;
       final now = model.timeLeft(power);

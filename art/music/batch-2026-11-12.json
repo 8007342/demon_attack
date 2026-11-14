@@ -1,0 +1,508 @@
+{
+  "schema": "demon-attack.music-batch/v1",
+  "id": "campaign-batch-2026-11-12",
+  "source_map": "art/music/campaign.json",
+  "jobs": [
+    {
+      "id": "level-1-take-1",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-1.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112110,
+        "$node:5.tags": "original extended rebellious galloping battle metal, palm-muted guitars, punchy fleet rhythm, 170 bpm, E minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 170,
+        "$node:5.duration": 135.52941176470588,
+        "$node:5.keyscale": "E minor",
+        "$node:8.denoise": 0.45,
+        "$node:10.filename_prefix": "campaign-v1/level-1-take-1"
+      },
+      "expected_seconds": 135.52941176470588,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-1-take-2",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-1.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112111,
+        "$node:5.tags": "original extended rebellious galloping battle metal, palm-muted guitars, punchy fleet rhythm, 170 bpm, E minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 170,
+        "$node:5.duration": 135.52941176470588,
+        "$node:5.keyscale": "E minor",
+        "$node:8.denoise": 0.6,
+        "$node:10.filename_prefix": "campaign-v1/level-1-take-2"
+      },
+      "expected_seconds": 135.52941176470588,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-1-take-3",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-1.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112112,
+        "$node:5.tags": "original extended rebellious galloping battle metal, palm-muted guitars, punchy fleet rhythm, 170 bpm, E minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 170,
+        "$node:5.duration": 135.52941176470588,
+        "$node:5.keyscale": "E minor",
+        "$node:8.denoise": 0.75,
+        "$node:10.filename_prefix": "campaign-v1/level-1-take-3"
+      },
+      "expected_seconds": 135.52941176470588,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-2-take-1",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-2.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112120,
+        "$node:5.tags": "original extended heroic power metal, soaring twin guitar harmonies, vigorous double kick, bright brass, 160 bpm, D major, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 160,
+        "$node:5.duration": 144,
+        "$node:5.keyscale": "D major",
+        "$node:8.denoise": 0.45,
+        "$node:10.filename_prefix": "campaign-v1/level-2-take-1"
+      },
+      "expected_seconds": 144,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-2-take-2",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-2.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112121,
+        "$node:5.tags": "original extended heroic power metal, soaring twin guitar harmonies, vigorous double kick, bright brass, 160 bpm, D major, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 160,
+        "$node:5.duration": 144,
+        "$node:5.keyscale": "D major",
+        "$node:8.denoise": 0.6,
+        "$node:10.filename_prefix": "campaign-v1/level-2-take-2"
+      },
+      "expected_seconds": 144,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-2-take-3",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-2.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112122,
+        "$node:5.tags": "original extended heroic power metal, soaring twin guitar harmonies, vigorous double kick, bright brass, 160 bpm, D major, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 160,
+        "$node:5.duration": 144,
+        "$node:5.keyscale": "D major",
+        "$node:8.denoise": 0.75,
+        "$node:10.filename_prefix": "campaign-v1/level-2-take-3"
+      },
+      "expected_seconds": 144,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-3-take-1",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-3.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112130,
+        "$node:5.tags": "original extended fiery battle metal, heavy galloping guitars, thundering war drums, blazing lead guitar, 180 bpm, E minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 180,
+        "$node:5.duration": 128,
+        "$node:5.keyscale": "E minor",
+        "$node:8.denoise": 0.45,
+        "$node:10.filename_prefix": "campaign-v1/level-3-take-1"
+      },
+      "expected_seconds": 128,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-3-take-2",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-3.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112131,
+        "$node:5.tags": "original extended fiery battle metal, heavy galloping guitars, thundering war drums, blazing lead guitar, 180 bpm, E minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 180,
+        "$node:5.duration": 128,
+        "$node:5.keyscale": "E minor",
+        "$node:8.denoise": 0.6,
+        "$node:10.filename_prefix": "campaign-v1/level-3-take-2"
+      },
+      "expected_seconds": 128,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-3-take-3",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-3.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112132,
+        "$node:5.tags": "original extended fiery battle metal, heavy galloping guitars, thundering war drums, blazing lead guitar, 180 bpm, E minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 180,
+        "$node:5.duration": 128,
+        "$node:5.keyscale": "E minor",
+        "$node:8.denoise": 0.75,
+        "$node:10.filename_prefix": "campaign-v1/level-3-take-3"
+      },
+      "expected_seconds": 128,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-4-take-1",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-4.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112140,
+        "$node:5.tags": "original extended ominous epic doom battle metal, crushing low riffs, tolling bells, war march drums, 150 bpm, C minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 150,
+        "$node:5.duration": 153.6,
+        "$node:5.keyscale": "C minor",
+        "$node:8.denoise": 0.45,
+        "$node:10.filename_prefix": "campaign-v1/level-4-take-1"
+      },
+      "expected_seconds": 153.6,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-4-take-2",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-4.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112141,
+        "$node:5.tags": "original extended ominous epic doom battle metal, crushing low riffs, tolling bells, war march drums, 150 bpm, C minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 150,
+        "$node:5.duration": 153.6,
+        "$node:5.keyscale": "C minor",
+        "$node:8.denoise": 0.6,
+        "$node:10.filename_prefix": "campaign-v1/level-4-take-2"
+      },
+      "expected_seconds": 153.6,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-4-take-3",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-4.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112142,
+        "$node:5.tags": "original extended ominous epic doom battle metal, crushing low riffs, tolling bells, war march drums, 150 bpm, C minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 150,
+        "$node:5.duration": 153.6,
+        "$node:5.keyscale": "C minor",
+        "$node:8.denoise": 0.75,
+        "$node:10.filename_prefix": "campaign-v1/level-4-take-3"
+      },
+      "expected_seconds": 153.6,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-5-take-1",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-5.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112150,
+        "$node:5.tags": "original extended apocalyptic blackened power metal, tremolo guitars, blast beats, pipe organ, strongest campaign climax, 190 bpm, F minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 190,
+        "$node:5.duration": 121.26315789473684,
+        "$node:5.keyscale": "F minor",
+        "$node:8.denoise": 0.45,
+        "$node:10.filename_prefix": "campaign-v1/level-5-take-1"
+      },
+      "expected_seconds": 121.26315789473684,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-5-take-2",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-5.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112151,
+        "$node:5.tags": "original extended apocalyptic blackened power metal, tremolo guitars, blast beats, pipe organ, strongest campaign climax, 190 bpm, F minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 190,
+        "$node:5.duration": 121.26315789473684,
+        "$node:5.keyscale": "F minor",
+        "$node:8.denoise": 0.6,
+        "$node:10.filename_prefix": "campaign-v1/level-5-take-2"
+      },
+      "expected_seconds": 121.26315789473684,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "level-5-take-3",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/level-5.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112152,
+        "$node:5.tags": "original extended apocalyptic blackened power metal, tremolo guitars, blast beats, pipe organ, strongest campaign climax, 190 bpm, F minor, recurring shared melody, evolving 96 bar arrangement, quiet opening, instrumental call and response, contrasting middle section, developed harmonized recap, sparse outgoing passage, no lyrics",
+        "$node:5.bpm": 190,
+        "$node:5.duration": 121.26315789473684,
+        "$node:5.keyscale": "F minor",
+        "$node:8.denoise": 0.75,
+        "$node:10.filename_prefix": "campaign-v1/level-5-take-3"
+      },
+      "expected_seconds": 121.26315789473684,
+      "review": "pending guide-alignment, clipping, continuity and listening"
+    },
+    {
+      "id": "bridge-1-2-take-1",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/bridge-1-2.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112210,
+        "$node:5.tags": "original cinematic power metal transition, outgoing level 1 into level 2, E sustained through Em -> G -> A7 -> D, sparse sustained pivot, release percussion and introduce incoming tempo, instrumental, no lyrics",
+        "$node:5.duration": 32,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "D major",
+        "$node:8.denoise": 0.45,
+        "$node:10.filename_prefix": "campaign-v1/bridge-1-2-take-1"
+      },
+      "expected_seconds": 32,
+      "review": "pending outgoing and incoming audition"
+    },
+    {
+      "id": "bridge-1-2-take-2",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/bridge-1-2.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112211,
+        "$node:5.tags": "original cinematic power metal transition, outgoing level 1 into level 2, E sustained through Em -> G -> A7 -> D, sparse sustained pivot, release percussion and introduce incoming tempo, instrumental, no lyrics",
+        "$node:5.duration": 32,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "D major",
+        "$node:8.denoise": 0.6,
+        "$node:10.filename_prefix": "campaign-v1/bridge-1-2-take-2"
+      },
+      "expected_seconds": 32,
+      "review": "pending outgoing and incoming audition"
+    },
+    {
+      "id": "bridge-2-3-take-1",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/bridge-2-3.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112220,
+        "$node:5.tags": "original cinematic power metal transition, outgoing level 2 into level 3, B sustained through Bm -> C -> B7 -> Em, sparse sustained pivot, release percussion and introduce incoming tempo, instrumental, no lyrics",
+        "$node:5.duration": 32,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "E minor",
+        "$node:8.denoise": 0.45,
+        "$node:10.filename_prefix": "campaign-v1/bridge-2-3-take-1"
+      },
+      "expected_seconds": 32,
+      "review": "pending outgoing and incoming audition"
+    },
+    {
+      "id": "bridge-2-3-take-2",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/bridge-2-3.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112221,
+        "$node:5.tags": "original cinematic power metal transition, outgoing level 2 into level 3, B sustained through Bm -> C -> B7 -> Em, sparse sustained pivot, release percussion and introduce incoming tempo, instrumental, no lyrics",
+        "$node:5.duration": 32,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "E minor",
+        "$node:8.denoise": 0.6,
+        "$node:10.filename_prefix": "campaign-v1/bridge-2-3-take-2"
+      },
+      "expected_seconds": 32,
+      "review": "pending outgoing and incoming audition"
+    },
+    {
+      "id": "bridge-3-4-take-1",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/bridge-3-4.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112230,
+        "$node:5.tags": "original cinematic power metal transition, outgoing level 3 into level 4, G sustained through Em -> G -> G7 -> Cm, sparse sustained pivot, release percussion and introduce incoming tempo, instrumental, no lyrics",
+        "$node:5.duration": 32,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "C minor",
+        "$node:8.denoise": 0.45,
+        "$node:10.filename_prefix": "campaign-v1/bridge-3-4-take-1"
+      },
+      "expected_seconds": 32,
+      "review": "pending outgoing and incoming audition"
+    },
+    {
+      "id": "bridge-3-4-take-2",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/bridge-3-4.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112231,
+        "$node:5.tags": "original cinematic power metal transition, outgoing level 3 into level 4, G sustained through Em -> G -> G7 -> Cm, sparse sustained pivot, release percussion and introduce incoming tempo, instrumental, no lyrics",
+        "$node:5.duration": 32,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "C minor",
+        "$node:8.denoise": 0.6,
+        "$node:10.filename_prefix": "campaign-v1/bridge-3-4-take-2"
+      },
+      "expected_seconds": 32,
+      "review": "pending outgoing and incoming audition"
+    },
+    {
+      "id": "bridge-4-5-take-1",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/bridge-4-5.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112240,
+        "$node:5.tags": "original cinematic power metal transition, outgoing level 4 into level 5, C sustained through Cm -> Db -> C7 -> Fm, sparse sustained pivot, release percussion and introduce incoming tempo, instrumental, no lyrics",
+        "$node:5.duration": 32,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "F minor",
+        "$node:8.denoise": 0.45,
+        "$node:10.filename_prefix": "campaign-v1/bridge-4-5-take-1"
+      },
+      "expected_seconds": 32,
+      "review": "pending outgoing and incoming audition"
+    },
+    {
+      "id": "bridge-4-5-take-2",
+      "workflow": "art/workflows/music/acestep15-a2a-plain.json",
+      "inputs": {
+        "guide": "/work/tmp/imagegen/campaign-guides/bridge-4-5.flac"
+      },
+      "count": 1,
+      "overrides": {
+        "seed": 261112241,
+        "$node:5.tags": "original cinematic power metal transition, outgoing level 4 into level 5, C sustained through Cm -> Db -> C7 -> Fm, sparse sustained pivot, release percussion and introduce incoming tempo, instrumental, no lyrics",
+        "$node:5.duration": 32,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "F minor",
+        "$node:8.denoise": 0.6,
+        "$node:10.filename_prefix": "campaign-v1/bridge-4-5-take-2"
+      },
+      "expected_seconds": 32,
+      "review": "pending outgoing and incoming audition"
+    },
+    {
+      "id": "ending-take-1",
+      "workflow": "art/workflows/music/acestep15-cue.json",
+      "count": 1,
+      "overrides": {
+        "seed": 261112300,
+        "$node:5.tags": "original warm melodic power metal resolution in F major, 96 bpm, reprise of a four note tonic third fifth fourth theme, heroic guitar harmonies soften to clean acoustic guitars, friends together at a sunny beach, gentle wordless choir, instrumental, no lyrics",
+        "$node:5.duration": 100,
+        "$node:7.seconds": 100,
+        "$node:5.bpm": 96,
+        "$node:5.keyscale": "F major",
+        "$node:10.filename_prefix": "campaign-v1/ending-take-1"
+      },
+      "expected_seconds": 100,
+      "review": "pending credits/reveal listening"
+    },
+    {
+      "id": "ending-take-2",
+      "workflow": "art/workflows/music/acestep15-cue.json",
+      "count": 1,
+      "overrides": {
+        "seed": 261112301,
+        "$node:5.tags": "original warm melodic power metal resolution in F major, 96 bpm, reprise of a four note tonic third fifth fourth theme, heroic guitar harmonies soften to clean acoustic guitars, friends together at a sunny beach, gentle wordless choir, instrumental, no lyrics",
+        "$node:5.duration": 100,
+        "$node:7.seconds": 100,
+        "$node:5.bpm": 96,
+        "$node:5.keyscale": "F major",
+        "$node:10.filename_prefix": "campaign-v1/ending-take-2"
+      },
+      "expected_seconds": 100,
+      "review": "pending credits/reveal listening"
+    },
+    {
+      "id": "menu-take-1",
+      "workflow": "art/workflows/music/acestep15-cue.json",
+      "count": 1,
+      "overrides": {
+        "seed": 261112400,
+        "$node:5.tags": "original cinematic battle metal overture in E minor, 120 bpm, recurring four note tonic minor third fifth fourth theme, clean guitar mystery growing to melodic twin electric guitars, quiet wordless choir, fleet setting out, long evolving arrangement, instrumental, no lyrics",
+        "$node:5.duration": 96,
+        "$node:7.seconds": 96,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "E minor",
+        "$node:10.filename_prefix": "campaign-v1/menu-take-1"
+      },
+      "expected_seconds": 96,
+      "review": "pending menu listening"
+    },
+    {
+      "id": "menu-take-2",
+      "workflow": "art/workflows/music/acestep15-cue.json",
+      "count": 1,
+      "overrides": {
+        "seed": 261112401,
+        "$node:5.tags": "original cinematic battle metal overture in E minor, 120 bpm, recurring four note tonic minor third fifth fourth theme, clean guitar mystery growing to melodic twin electric guitars, quiet wordless choir, fleet setting out, long evolving arrangement, instrumental, no lyrics",
+        "$node:5.duration": 96,
+        "$node:7.seconds": 96,
+        "$node:5.bpm": 120,
+        "$node:5.keyscale": "E minor",
+        "$node:10.filename_prefix": "campaign-v1/menu-take-2"
+      },
+      "expected_seconds": 96,
+      "review": "pending menu listening"
+    }
+  ]
+}

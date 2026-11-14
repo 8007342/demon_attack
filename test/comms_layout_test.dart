@@ -2,9 +2,11 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:demon_attack/comms/comms_bank.dart';
+import 'package:demon_attack/comms/brood_script.dart';
 import 'package:demon_attack/comms/comms_director.dart';
 import 'package:demon_attack/comms/comms_mouth.dart';
 import 'package:demon_attack/comms/comms_portraits.dart';
+import 'package:demon_attack/comms/comms_types.dart';
 import 'package:demon_attack/comms/comms_view.dart';
 import 'package:demon_attack/comms/squad_comms.dart';
 import 'package:demon_attack/game/model.dart';
@@ -193,14 +195,18 @@ void main() {
   ) async {
     final rig = await _launch(tester, const Size(1440, 900));
     await rig.run([], 7);
+    // The paced radio leaves real silence between lines: give each call
+    // time to get through.
     for (final raw in [
       'reinforcements',
       'allyUnderAttack:1,120',
       'groundForceSighted',
       'diveWarning',
+      'escort',
+      'wave',
     ]) {
       if (rig.director.slots.every((s) => s.occupant != null)) break;
-      await rig.run([raw], 6);
+      await rig.run([raw], 9);
     }
     await rig.until(() => rig.director.active.any((m) => !m.isDemon));
     final occupied = rig.director.slots.where((s) => s.occupant != null).length;
@@ -275,7 +281,7 @@ void main() {
         greaterThanOrEqualTo(2),
         reason: '${rig.director.active}',
       );
-      // One strip, the second message collapsed into a chip.
+      // Both callers get readable cards in the same row.
       final rects = [
         for (final m in rig.director.active) ...[
           ...find
@@ -288,7 +294,21 @@ void main() {
               .map((e) => tester.getRect(find.byWidget(e.widget))),
         ],
       ];
-      expect(rects.length, inInclusiveRange(2, 3), reason: 'strip + chips');
+      expect(rects.length, 2, reason: 'two full dialogue cards');
+      expect(rects[0].top, rects[1].top);
+      expect(rects[0].overlaps(rects[1]), isFalse);
+      expect(rects[0].width, closeTo(rects[1].width, .01));
+      final ordered = [...rects]..sort((a, b) => a.left.compareTo(b.left));
+      final faces = [
+        for (final m in rig.director.active)
+          ...find
+              .byKey(ValueKey('comms-portrait-${m.line.id}'))
+              .evaluate()
+              .map((e) => tester.getRect(find.byWidget(e.widget))),
+      ]..sort((a, b) => a.left.compareTo(b.left));
+      // Portraits sit just inside the toast frame (border + accent bar + gap).
+      expect(faces.first.left - ordered.first.left, lessThan(8));
+      expect(ordered.last.right - faces.last.right, lessThan(8));
       expect(find.byKey(const ValueKey('hud-score')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-lives')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-hearts')), findsOneWidget);
@@ -325,6 +345,201 @@ void main() {
         await _snap(tester, 'phone-demon-zoom');
       }
     });
+  }
+
+  testWidgets('compact reply keeps its retired opening line visible', (
+    tester,
+  ) async {
+    final director = CommsDirector();
+    if (renderDir.isNotEmpty) await tester.runAsync(_loadReviewFonts);
+    const trigger = CommsTriggerSpec(
+      name: 'exchange',
+      priority: 1,
+      cooldown: 1,
+      ttl: 10,
+      lines: [],
+    );
+    CommsMessage message(String id, String text, double start) => CommsMessage(
+      trigger: trigger,
+      line: CommsLine(
+        id: id,
+        speaker: commsCast.values.first.id,
+        duration: 1,
+        text: text,
+      ),
+      character: commsCast.values.first,
+      priority: 1,
+      queuedAt: 0,
+      readyAt: 0,
+      expiresAt: 10,
+      sequence: 0,
+    )..startedAt = start;
+    final opening = message('opening', 'That sector is mine!', 0);
+    final answer = message('answer', 'Only until my next turn!', 2)
+      ..inReplyTo = opening;
+    director.active.add(answer); // Opener has already retired from audio.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            child: CommsHudStack(director: director, now: 2.5),
+          ),
+        ),
+      ),
+    );
+    expect(
+      find.textContaining('That sector is mine!', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Only until my next turn!', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('comms-strip-opening')), findsOneWidget);
+    expect(find.byKey(const ValueKey('comms-strip-answer')), findsOneWidget);
+    final toast = find.byKey(const ValueKey('comms-conversation'));
+    expect(toast, findsOneWidget);
+    expect(tester.getSize(toast).width, 360);
+    final firstPortrait = tester.getRect(
+      find.byKey(const ValueKey('comms-portrait-opening')),
+    );
+    final secondPortrait = tester.getRect(
+      find.byKey(const ValueKey('comms-portrait-answer')),
+    );
+    expect(firstPortrait.left, lessThan(10));
+    expect(secondPortrait.right, greaterThan(350));
+    expect(tester.takeException(), isNull);
+
+    // An isolated call reserves half the dock, even when no second call exists.
+    answer.inReplyTo = null;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            child: CommsHudStack(director: director, now: 2.5),
+          ),
+        ),
+      ),
+    );
+    expect(toast, findsNothing);
+    final isolated = find.byKey(const ValueKey('comms-strip-answer'));
+    expect(
+      tester.getSize(isolated).width,
+      (360 - 2 * CommsHudStack.gap) / 2, // half the dock, minus the gap
+    );
+    director.active.add(message('unrelated', 'Hold the line!', 2.1));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            child: CommsHudStack(director: director, now: 2.5),
+          ),
+        ),
+      ),
+    );
+    final unrelated = find.byKey(const ValueKey('comms-strip-unrelated'));
+    expect(tester.getSize(unrelated).width, (360 - 2 * CommsHudStack.gap) / 2);
+    expect(
+      tester.getRect(isolated).overlaps(tester.getRect(unrelated)),
+      isFalse,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final demonFirst in [true, false]) {
+    for (final size in [const Size(360, 640), const Size(740, 360)]) {
+      testWidgets('linked toast: demonFirst=$demonFirst at $size', (
+        tester,
+      ) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final director = CommsDirector();
+        final human = commsCast.values.firstWhere((c) => !c.isDemon);
+        await tester.runAsync(() => CommsPortraitAtlas.instance.load());
+        if (renderDir.isNotEmpty) await tester.runAsync(_loadReviewFonts);
+        final demon = commsCast.values.firstWhere((c) => c.isDemon);
+        CommsMessage line(String id, CommsCharacter who, double start) =>
+            CommsMessage(
+              trigger: const CommsTriggerSpec(
+                name: 'exchange',
+                priority: 1,
+                cooldown: 1,
+                ttl: 10,
+                lines: [],
+              ),
+              line: CommsLine(
+                id: id,
+                speaker: who.id,
+                duration: 1,
+                text: who.isDemon ? null : 'Save a turn for me!',
+                grunt: who.isDemon ? 'gloat' : null,
+                gloss: who.isDemon ? 'Your next turn belongs to me!' : null,
+              ),
+              character: who,
+              priority: 1,
+              queuedAt: 0,
+              readyAt: 0,
+              expiresAt: 10,
+              sequence: 0,
+            )..startedAt = start;
+        final opener = line('first', demonFirst ? demon : human, 0);
+        final answer = line('second', demonFirst ? human : demon, 2)
+          ..inReplyTo = opener;
+        director.active.add(answer);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: MediaQueryData(
+                size: size,
+                disableAnimations: size.width > 360,
+              ),
+              child: Scaffold(
+                body: RepaintBoundary(
+                  key: const ValueKey('page'),
+                  child: CommsHudStack(director: director, now: 2.5),
+                ),
+              ),
+            ),
+          ),
+        );
+        final toast = find.byKey(const ValueKey('comms-conversation'));
+        expect(toast, findsOneWidget);
+        expect(tester.getSize(toast).width, size.width);
+        final translation = BroodScript.translation(
+          'Your next turn belongs to me!',
+          demonFirst ? 2.5 : .5,
+          1,
+          reduceMotion: size.width > 360,
+        );
+        expect(find.text('SIGINT · $translation'), findsOneWidget);
+        expect(
+          find.bySemanticsLabel('${demon.name}. Your next turn belongs to me!'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('Save a turn for me!', findRichText: true),
+          findsOneWidget,
+        );
+        final first = tester.getRect(
+          find.byKey(const ValueKey('comms-portrait-first')),
+        );
+        final second = tester.getRect(
+          find.byKey(const ValueKey('comms-portrait-second')),
+        );
+        expect(first.left, lessThan(10));
+        expect(second.right, greaterThan(size.width - 10));
+        expect(tester.takeException(), isNull);
+        await _snap(
+          tester,
+          'conversation-${demonFirst ? 'demon' : 'human'}-${size.width.toInt()}',
+        );
+      });
+    }
   }
 
   testWidgets('phone: a full transmission replaces the travel transition', (

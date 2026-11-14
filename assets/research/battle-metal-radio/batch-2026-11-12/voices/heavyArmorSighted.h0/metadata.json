@@ -1,0 +1,67 @@
+{
+  "speaker": "march",
+  "kind": "human",
+  "trigger": "heavyArmorSighted",
+  "engine": "chatterbox",
+  "emotion": "urgent",
+  "samples": 67925,
+  "mouth": "====44<<<<<444<<<<44===<<<<<<<===44<<<<==00",
+  "open": "0478778888877788867742488999745587688865321",
+  "vis": "ee------------------eee--oooooee-------ee--",
+  "lufs": -18.05,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "heavyArmorSighted.h0",
+  "text": "Heavy armour on the horizon! Everyone, take note!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/heavyArmorSighted.h0/baseline.flac",
+      "sha256": "52f236c89626df0c59a1a2727341c3ab20ab015e048db36855a33f81a9220891",
+      "float_source_sha256": "8d6a7050dbd99c4cedd890d604ed4a10a1d050b920fbffabf841787c2e34c458",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/heavyArmorSighted.h0/expressive.flac",
+      "sha256": "0489bebbcd600fad0641d0f0d809d869408d671d60e4ae0c9b7cfec6df166f4f",
+      "float_source_sha256": "8ea41dce688e2e7d11d22b64f7ccd6da770966bc55f53c45c3f8a59f18aa3ef3",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/heavyArmorSighted.h0/voice.flac",
+      "sha256": "614863a236ce659d91cc7a3c64cbcf9f9d8bc889a0ef706558b2e655403e5ac4",
+      "float_source_sha256": "bc07dac17da06986e1f1afaa18f71c859959813462a09c056c1dff47f1c735a7",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 9.45,
+    "error": null,
+    "text": "Heavy armour on the horizon! Everyone, take note!"
+  },
+  "seed": 501579163,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "3bd641af618151e1682e51adcd853c6d26c3ea7aff73143ca528b2efc166fc0c"
+  }
+}

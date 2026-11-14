@@ -1,0 +1,67 @@
+{
+  "speaker": "march",
+  "kind": "human",
+  "trigger": "allyRetreated",
+  "engine": "chatterbox",
+  "emotion": "exhausted",
+  "samples": 121018,
+  "mouth": "33<<==<<===<<<<444444443333====00000000<<<<<<====33====000<<<<<<<<333322====",
+  "open": "0588768864688887678536666664323211000479999985666654432116889988885545433321",
+  "vis": "----eeooeee----------------eeeee-------------eee---eee---ooooo----------ee--",
+  "lufs": -18.1,
+  "schema": "demon-attack.voice-candidate/v1",
+  "id": "allyRetreated.h2",
+  "text": "Bastion's command track is wrecked. Pulling back to base. Hold the line for us!",
+  "review": "pending listening and contextual mouth review",
+  "masters": {
+    "baseline": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyRetreated.h2/baseline.flac",
+      "sha256": "b3cabf8808f18a6be9593760338ab4122b646cbc7f8f8b41c778be3653c9f31a",
+      "float_source_sha256": "d14d1676905d4024a52dbf6f2a2c8c3dfbbcb8dec44c72575124ab85c7749a9c",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "expressive": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyRetreated.h2/expressive.flac",
+      "sha256": "9e659daf6cabd4e25faa8b2713bc39fe40b0d89d1a11d91d5f3a16a62d7771b2",
+      "float_source_sha256": "730f6416a9016d0dd1ed0be9db7b188274052570c9e86c4aa7908991109c4ed6",
+      "gain": 1.0,
+      "pcm_bits": 24
+    },
+    "voice": {
+      "path": "/home/forge/.cache/demon-attack/voice-trial/work/candidates/allyRetreated.h2/voice.flac",
+      "sha256": "012aa8804468ba8c0572aad35b366fcfe5eb637432d77ce749d06453c1c4e534",
+      "float_source_sha256": "cf6a16e02c16b2025eb3d804f24c5788e9f838eb1405ebc82715ddafa47b94b1",
+      "gain": 1.0,
+      "pcm_bits": 24
+    }
+  },
+  "performance": {
+    "seconds": 15.15,
+    "error": null,
+    "text": "Bastion's command track is wrecked. Pulling back to base. Hold the line for us!"
+  },
+  "seed": 927158051,
+  "input_hashes": {
+    "art/comms/cast.json": "77511b32687b490dfa938cc3337d72f3c18b35ee6d1e7a5c9d8954a05d1e450a",
+    "art/comms/lines.json": "7d149dee369a341d8d6490bcc50b16b79fd144d0efffaa2b1aa3952d6119f4ab",
+    "art/comms/audio.json": "81a83a57c482ab0f7a7ad3db875b264b8081aa6e2f302ac5c4b006d0000460d7",
+    "art/comms/demon-delivery.json": "6c001556beb7e48ed7982f135e909d6ca297d091bbdb7f724def6d2b8eb7aca8"
+  },
+  "models": {
+    "kokoro": {
+      "repo": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "sample_rate": 24000
+    },
+    "chatterbox": {
+      "repo": "ResembleAI/chatterbox",
+      "revision": "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+    }
+  },
+  "codec": {
+    "name": "opus",
+    "bitrate_kbps": 48,
+    "sha256": "6510de3f99ec4bdf66462cb95a208081300e04e6662eafe2e718d893e62ee56f"
+  }
+}
