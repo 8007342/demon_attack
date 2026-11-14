@@ -123,6 +123,39 @@ void main() {
       expect(AtmosphereQuality.parse(null), AtmosphereQuality.full);
     });
 
+    testWidgets('slow frames turn the fog shader off; fast frames keep it', (
+      tester,
+    ) async {
+      await tester.runAsync(() async {
+        Future<Atmosphere> loaded() async {
+          final a = Atmosphere();
+          await a.load();
+          return a;
+        }
+
+        final fast = await loaded();
+        if (!fast.usesShader)
+          return; // no shader on this platform: nothing to guard
+        for (var i = 0; i < Atmosphere.guardFrames * 2; i++) {
+          fast.advance(1 / 60, distance: 0);
+        }
+        expect(fast.usesShader, isTrue);
+        final slow = await loaded();
+        for (var i = 0; i < Atmosphere.guardFrames; i++) {
+          slow.advance(1 / 30, distance: 0);
+        }
+        expect(slow.usesShader, isFalse);
+        expect(slow.shaderThrottled, isTrue);
+        // A long gap (hidden tab) alone does not count as slow.
+        final paused = await loaded();
+        paused.advance(5, distance: 0);
+        for (var i = 0; i < Atmosphere.guardFrames; i++) {
+          paused.advance(1 / 60, distance: 0);
+        }
+        expect(paused.usesShader, isTrue);
+      });
+    });
+
     test('reduced motion keeps the layers still', () {
       final a = Atmosphere()..reducedMotion = true;
       a.advance(1, distance: 10);

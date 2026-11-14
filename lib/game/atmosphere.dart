@@ -245,7 +245,34 @@ class Atmosphere {
       shaderEnabled && program != null && quality == AtmosphereQuality.full;
   bool get ready => tileA != null && tileB != null;
 
+  /// Frame-time guard for the shader: if frames average slower than
+  /// [slowFrame] over [guardFrames] frames while the shader draws, the fog
+  /// drops to the tile path for the rest of the session (phones whose GPU
+  /// compiles the shader but cannot afford it). Long gaps (a hidden tab, a
+  /// debugger pause) are ignored.
+  static const guardFrames = 120;
+  static const slowFrame = 1 / 45;
+  double _guardTime = 0;
+  int _guardCount = 0;
+
+  /// Whether the frame-time guard turned the shader off.
+  bool shaderThrottled = false;
+
+  void _guard(double dt) {
+    if (!usesShader || dt <= 0 || dt > .25) return;
+    _guardTime += dt;
+    _guardCount++;
+    if (_guardCount < guardFrames) return;
+    if (_guardTime / _guardCount > slowFrame) {
+      shaderEnabled = false;
+      shaderThrottled = true;
+    }
+    _guardTime = 0;
+    _guardCount = 0;
+  }
+
   void advance(double dt, {required double distance, double? x, double? y}) {
+    _guard(dt);
     if (!reducedMotion) time += dt;
     groundDistance = distance;
     if (x != null) shipX = x;
