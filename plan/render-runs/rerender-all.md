@@ -104,6 +104,14 @@ current families instead.
 
 ## Log
 
+- 2026-11-14 07:05 UTC: OPERATOR VERDICT: every campaign take and the l3 A/B (ACE-Step turbo vs base, 80 vs 256 kbps)
+  is "quite bad"; l3-campaign-take-3 is the richest but too simple and not the battle-metal theme. The in-game
+  adaptive music sounds "far worse than before" (runtime muxing regression to research). Radio voices sound
+  low-res: measured hard 12 kHz band limit (Chatterbox 24 kHz). Music top end above 8 kHz is a noise floor (turbo).
+  Do NOT promote any 2026-11-12 batch take. Asked the host session for: bigger music models (largest that fits the
+  24 GB A5000), stem separation, voice bandwidth extension or a 48 kHz GPU TTS, and an audio mixing studio.
+  Next: research plan (models, runtime muxing, audio studio) before any re-render.
+
 - 2026-11-14 06:25 UTC: music batch complete, 27/27 candidates. Level 4/5 NaN traced with the host session to exactly
   3840 latent frames (level 4) and a duration 40 samples shorter than the guide (level 5); worked around, studio-side
   refusal requested from the host. Next: operator listening and take selection (2.3).
