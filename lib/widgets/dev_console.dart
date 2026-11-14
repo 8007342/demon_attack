@@ -9,10 +9,23 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../game/model.dart';
 import '../game/scene.dart' show ink, mint, gold;
+import '../review/page_notes.dart';
+import '../review/review_notes.dart';
 import '../services/audio.dart';
 
 /// Path of the console page.
 const consoleRoute = '/console';
+
+/// Path of the asset review studio (the gallery app, served by the Worker).
+const studioRoute = '/studio';
+
+/// What console notes are attached to: the page as a whole.
+final consoleNotesAsset = ReviewAsset(
+  kind: ReviewKind.page,
+  id: 'console',
+  title: 'Console',
+  source: 'lib/widgets/dev_console.dart (/console)',
+);
 
 /// Whether [path] (a browser path or route name) names the console page.
 bool isConsoleRoute(String? path) {
@@ -144,6 +157,9 @@ class _DevConsolePageState extends State<DevConsolePage> {
     );
     return Scaffold(
       backgroundColor: ink,
+      // Notes on the console and the runs started from it, shared with the
+      // studio and the gallery (lib/review/page_notes.dart).
+      floatingActionButton: PageNotesButton(asset: consoleNotesAsset),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -293,7 +309,7 @@ class _DevConsolePageState extends State<DevConsolePage> {
                         style: TextStyle(fontSize: 11, letterSpacing: 2),
                       ),
                     ),
-                    // Asset review studio (lib/review/) inside the gallery.
+                    // Asset review studio (lib/review/), served at /studio.
                     TextButton.icon(
                       key: const ValueKey('console-review'),
                       style: TextButton.styleFrom(
@@ -301,7 +317,7 @@ class _DevConsolePageState extends State<DevConsolePage> {
                         shape: const RoundedRectangleBorder(),
                       ),
                       onPressed: () => launchUrl(
-                        Uri.base.resolve('${widget.galleryUrl!}?page=studio'),
+                        Uri.base.resolve(studioRoute),
                         webOnlyWindowName: '_self',
                       ),
                       icon: const Icon(Icons.rate_review, size: 16),

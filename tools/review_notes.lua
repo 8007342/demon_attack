@@ -14,7 +14,7 @@ local usage = [[
 usage: lua tools/review_notes.lua [--tag TAG]... [--kind KIND]... [FILE|-]
   FILE  notes JSON ({"notes": [...]} or a bare array); "-" or nothing reads stdin
   --tag   only these tags (repeatable)
-  --kind  only these asset kinds: background, atlas, radio, music, scene]]
+  --kind  only these asset kinds: background, atlas, radio, music, scene, page]]
 
 -- Worklist order: what to redo first, what to keep last.
 local tag_order = {

@@ -12,7 +12,7 @@
 // the studio's export format (schema below); see tools/review_notes.lua.
 
 export const NOTES_SCHEMA = 'demon-attack.notes/v1';
-export const NOTE_KINDS = ['background', 'atlas', 'radio', 'music', 'scene'];
+export const NOTE_KINDS = ['background', 'atlas', 'radio', 'music', 'scene', 'page'];
 export const MAX_NOTES_BODY = 256 * 1024;
 export const MAX_BATCH = 200;
 export const MAX_STORED = 5000;

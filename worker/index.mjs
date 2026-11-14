@@ -62,6 +62,11 @@ export class HighScores {
   }
 }
 
+/** The studio's own address: /studio, with or without a trailing slash. */
+export function isStudioPath(pathname) {
+  return /^\/studio\/?$/i.test(pathname);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -74,6 +79,9 @@ export default {
     }
     if (url.pathname === '/api/notes') return handleNotes(request, env);
     if (url.pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
+    // /studio is the asset review studio: the gallery app (built with base
+    // href /gallery/), which opens the studio when the path is /studio.
+    if (isStudioPath(url.pathname)) return env.ASSETS.fetch(new Request(new URL('/gallery/', url), request));
     return env.ASSETS.fetch(request);
   },
 };

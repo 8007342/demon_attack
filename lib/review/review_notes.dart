@@ -23,8 +23,9 @@ const notesSchema = 'demon-attack.notes/v1';
 /// set by scripts/build-web.sh); empty when unknown.
 const buildCommit = String.fromEnvironment('BUILD_COMMIT');
 
-/// Asset kinds, as the Worker accepts them.
-enum ReviewKind { background, atlas, radio, music, scene }
+/// Asset kinds, as the Worker accepts them. `page` is a whole page (the
+/// console, a gallery page): notes on what it shows or how it plays.
+enum ReviewKind { background, atlas, radio, music, scene, page }
 
 /// One reviewable item. [hash] is filled in once known (manifest sha256 for
 /// audio, hashed image bytes for atlases).
@@ -74,7 +75,23 @@ const reviewTags = <ReviewTag>[
   ReviewTag('jitter', 'jitter', _visual),
   ReviewTag('off-palette', 'off palette', _visual),
   ReviewTag('timing', 'timing'),
+  ReviewTag('bug', 'bug', {ReviewKind.page, ReviewKind.scene}),
+  ReviewTag('idea', 'idea', {ReviewKind.page, ReviewKind.scene}),
   ReviewTag('keep', 'good / keep'),
+];
+
+/// Worklist order: what to redo first (mirrors tools/review_notes.lua);
+/// other tags follow alphabetically, then keep, then untagged.
+const worklistTagOrder = [
+  'regenerate',
+  'refine',
+  'needs-growl',
+  'flat-emotion',
+  'uncompressed-sound',
+  'clipping',
+  'too-loud',
+  'too-quiet',
+  'timing',
 ];
 
 class ReviewNote {
@@ -196,6 +213,15 @@ class ReviewNotesStore extends ChangeNotifier {
   final _unsynced = <String>{};
   final _deleted = <String>{};
 
+  /// Re-reads browser storage before a change, so a page open in another
+  /// tab (studio, gallery, console share one store) is not overwritten.
+  void _reload() {
+    _notes.clear();
+    _unsynced.clear();
+    _deleted.clear();
+    _load();
+  }
+
   void _load() {
     final raw = platform.read(storageKey);
     if (raw == null) return;
@@ -273,6 +299,7 @@ class ReviewNotesStore extends ChangeNotifier {
     double? offset,
     String? section,
   }) {
+    _reload();
     final note = ReviewNote(
       id: _newId(),
       kind: asset.kind,
@@ -294,6 +321,7 @@ class ReviewNotesStore extends ChangeNotifier {
   }
 
   void edit(String id, {List<String>? tags, String? text}) {
+    _reload();
     final old = _notes[id];
     if (old == null) return;
     _notes[id] = old.copyWith(tags: tags, text: text?.trim(), updatedAt: _now);
@@ -302,6 +330,7 @@ class ReviewNotesStore extends ChangeNotifier {
   }
 
   void remove(String id) {
+    _reload();
     if (_notes.remove(id) == null) return;
     // A note the Worker never saw needs no server delete.
     if (!_unsynced.remove(id)) _deleted.add(id);
@@ -311,6 +340,7 @@ class ReviewNotesStore extends ChangeNotifier {
   /// Adds notes from an export or the Worker; for one id the newer
   /// `updatedAt` wins. Returns how many changed.
   int merge(Iterable<ReviewNote> incoming, {bool fromServer = false}) {
+    _reload();
     var changed = 0;
     for (final note in incoming) {
       if (_deleted.contains(note.id)) continue;
@@ -340,6 +370,111 @@ class ReviewNotesStore extends ChangeNotifier {
     if (list is! List) throw const FormatException('No notes array');
     return [for (final n in list) ?ReviewNote.fromJson(n)];
   }
+
+  static const draftKey = 'demon-attack.review.drafts.v1';
+
+  Map<String, Object?> _drafts() {
+    try {
+      final data = jsonDecode(platform.read(draftKey) ?? '{}');
+      return data is Map<String, Object?> ? data : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// The unsaved text and tags typed for [ref], kept in browser storage so a
+  /// reload does not lose them; null when there is none.
+  ({String text, List<String> tags})? draft(String ref) {
+    final d = _drafts()[ref];
+    if (d is! Map) return null;
+    final text = d['text'] is String ? d['text'] as String : '';
+    final tags = [
+      for (final t in d['tags'] is List ? d['tags'] as List : const [])
+        if (t is String) t,
+    ];
+    if (text.isEmpty && tags.isEmpty) return null;
+    return (text: text, tags: tags);
+  }
+
+  /// Remembers (or, when empty, forgets) the draft for [ref].
+  void saveDraft(String ref, String text, Iterable<String> tags) {
+    final drafts = _drafts();
+    if (text.trim().isEmpty && tags.isEmpty) {
+      if (drafts.remove(ref) == null) return;
+    } else {
+      drafts[ref] = {'text': text, 'tags': tags.toList()};
+    }
+    platform.write(draftKey, jsonEncode(drafts));
+  }
+
+  /// Picks up notes written in another tab since this page loaded.
+  void refresh() {
+    _reload();
+    notifyListeners();
+  }
+
+  /// Every note as a markdown worklist to paste to an agent: grouped by tag
+  /// in fix-first order (tools/review_notes.lua prints the same layout), each
+  /// line naming the asset, its source file, the playhead and the build.
+  String worklistMarkdown() {
+    final all = notes.reversed.toList(); // oldest first
+    final buffer = StringBuffer()
+      ..writeln('# Demon Attack review notes')
+      ..writeln()
+      ..writeln(
+        '${all.length} note${all.length == 1 ? '' : 's'}, copied $_now'
+        '${buildCommit.isEmpty ? '' : ' from build $buildCommit'}.',
+      )
+      ..writeln(
+        'Each line: asset ref, source file, playhead or section, then the '
+        'note. Hashes say which version of the asset was reviewed.',
+      );
+    if (all.isEmpty) return buffer.toString();
+    final groups = <String, List<ReviewNote>>{};
+    for (final n in all) {
+      for (final t in n.tags.isEmpty ? const ['untagged'] : n.tags) {
+        (groups[t] ??= []).add(n);
+      }
+    }
+    final order = [
+      for (final t in worklistTagOrder)
+        if (groups.containsKey(t)) t,
+      for (final t in groups.keys.toList()..sort())
+        if (!worklistTagOrder.contains(t) && t != 'keep' && t != 'untagged') t,
+      if (groups.containsKey('keep')) 'keep',
+      if (groups.containsKey('untagged')) 'untagged',
+    ];
+    for (final tag in order) {
+      final label = reviewTags.where((t) => t.id == tag).firstOrNull?.label;
+      buffer
+        ..writeln()
+        ..writeln('## ${label ?? tag} (${groups[tag]!.length})')
+        ..writeln();
+      for (final n in groups[tag]!) {
+        final where = [
+          if (n.offset != null) '@ ${n.offset!.toStringAsFixed(2)} s',
+          ?n.section,
+        ].join(', ');
+        final meta = [
+          ?n.source,
+          if (n.hash != null)
+            'sha ${n.hash!.substring(0, math.min(12, n.hash!.length))}',
+          if (n.build != null) 'build ${n.build}',
+          'noted ${n.createdAt.substring(0, math.min(16, n.createdAt.length))}',
+        ].join(' · ');
+        buffer.writeln(
+          '- **${n.ref}**${where.isEmpty ? '' : ' ($where)'}: '
+          '${n.text.isEmpty ? '(no text)' : n.text.replaceAll('\n', ' ')}',
+        );
+        buffer.writeln('  - $meta');
+      }
+    }
+    return buffer.toString();
+  }
+
+  /// The worklist download name.
+  String get worklistFilename =>
+      'demon-attack-notes-${_now.substring(0, 10)}.md';
 
   /// The export download: every note, oldest first.
   String exportJson() {

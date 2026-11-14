@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 
 import '../comms/comms_bank.dart';
 import 'notes_panel.dart';
+import 'page_notes.dart';
 import 'review_audio_views.dart';
 import 'review_catalog.dart';
 import 'review_notes.dart';
@@ -300,6 +301,7 @@ class _ReviewStudioState extends State<ReviewStudio> {
       ReviewKind.scene => StudioTab.scenes,
       ReviewKind.radio => StudioTab.radio,
       ReviewKind.music => StudioTab.music,
+      ReviewKind.page => StudioTab.notes,
     }, n.asset),
   );
 
@@ -469,6 +471,21 @@ class _ReviewStudioState extends State<ReviewStudio> {
                   ),
                 ),
               ),
+            IconButton(
+              key: const ValueKey('studio-copy'),
+              tooltip: 'Copy all notes as markdown, to paste to an agent',
+              onPressed: () async {
+                final s = await copyWorklist(store);
+                if (mounted) setState(() => status = s);
+              },
+              icon: const Icon(Icons.content_copy),
+            ),
+            IconButton(
+              key: const ValueKey('studio-save-md'),
+              tooltip: 'Save all notes as a markdown file',
+              onPressed: () => setState(() => status = saveWorklist(store)),
+              icon: const Icon(Icons.description),
+            ),
             IconButton(
               key: const ValueKey('studio-export'),
               tooltip: 'Export all notes as JSON',

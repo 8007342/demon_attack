@@ -16,9 +16,27 @@ import 'package:flutter/material.dart';
 
 import 'game/model.dart';
 import 'game/scene.dart';
+import 'review/page_notes.dart';
+import 'review/review_catalog.dart';
 import 'review/review_studio.dart';
+import 'services/audio.dart';
 
-void main() => runApp(const GalleryApp());
+void main() {
+  // The gallery loads the game's audio script (web/index.html is shared);
+  // its menu music must not start here. The studio plays its own audio.
+  audioMute(true);
+  runApp(const GalleryApp());
+}
+
+/// Whether [path] is the studio's own address, /studio (the Worker serves
+/// this app there; /gallery/?page=studio still works).
+bool isStudioPath(String path) {
+  var p = path.toLowerCase();
+  while (p.length > 1 && p.endsWith('/')) {
+    p = p.substring(0, p.length - 1);
+  }
+  return p == '/studio';
+}
 
 typedef Stage = void Function(ArcadeModel model, double dt, double t);
 
@@ -55,7 +73,8 @@ class GalleryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final query = Uri.base.queryParameters;
-    final page = query['page'] ?? 'creatures';
+    final page =
+        query['page'] ?? (isStudioPath(Uri.base.path) ? 'studio' : 'creatures');
     if (page == 'studio' || page == 'review') {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -73,7 +92,27 @@ class GalleryApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         backgroundColor: const Color(0xFF0B0A1C),
-        body: GalleryPage(page: page, only: int.tryParse(query['tile'] ?? '')),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: GalleryPage(
+                page: page,
+                only: int.tryParse(query['tile'] ?? ''),
+              ),
+            ),
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: PageNotesButton(
+                asset: sceneAsset(
+                  page,
+                  scenePages.where((p) => p.$1 == page).firstOrNull?.$2 ??
+                      'Gallery page: $page',
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

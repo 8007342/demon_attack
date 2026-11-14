@@ -64,9 +64,31 @@ class _NotesPanelState extends State<NotesPanel> {
   String? _editing;
 
   @override
+  void initState() {
+    super.initState();
+    _restoreDraft();
+  }
+
+  @override
   void didUpdateWidget(NotesPanel old) {
     super.didUpdateWidget(old);
-    if (old.asset.ref != widget.asset.ref) _reset();
+    if (old.asset.ref != widget.asset.ref) {
+      _reset();
+      _restoreDraft();
+    }
+  }
+
+  /// Unsaved text and tags survive a reload (browser storage).
+  void _restoreDraft() {
+    final d = widget.store.draft(widget.asset.ref);
+    if (d == null) return;
+    _text.text = d.text;
+    _tags.addAll(d.tags);
+  }
+
+  void _keepDraft() {
+    if (_editing != null) return;
+    widget.store.saveDraft(widget.asset.ref, _text.text, _tags);
   }
 
   @override
@@ -111,6 +133,7 @@ class _NotesPanelState extends State<NotesPanel> {
         offset: _attachTime ? _offset : null,
         section: _section,
       );
+      widget.store.saveDraft(widget.asset.ref, '', const []);
     }
     setState(_reset);
   }
@@ -165,6 +188,7 @@ class _NotesPanelState extends State<NotesPanel> {
                       onSelected: (on) => setState(() {
                         _mark();
                         on ? _tags.add(tag.id) : _tags.remove(tag.id);
+                        _keepDraft();
                       }),
                     ),
               ],
@@ -177,15 +201,20 @@ class _NotesPanelState extends State<NotesPanel> {
               maxLines: 6,
               maxLength: 4000,
               style: const TextStyle(color: Colors.white, fontSize: 13),
-              decoration: const InputDecoration(
-                hintText:
-                    'What is wrong, and where? e.g. "no growl on the '
-                    'second roar", "flat delivery"',
-                hintStyle: TextStyle(color: studioDim, fontSize: 12),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: asset.kind == ReviewKind.page
+                    ? 'What did you notice? e.g. "sector 3 dives feel '
+                          'too fast", "music cuts out after the boss"'
+                    : 'What is wrong, and where? e.g. "no growl on the '
+                          'second roar", "flat delivery"',
+                hintStyle: const TextStyle(color: studioDim, fontSize: 12),
+                border: const OutlineInputBorder(),
                 isDense: true,
               ),
-              onChanged: (_) => setState(_mark),
+              onChanged: (_) {
+                setState(_mark);
+                _keepDraft();
+              },
             ),
             Row(
               children: [
