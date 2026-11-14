@@ -104,6 +104,15 @@ current families instead.
 
 ## Log
 
+- 2026-11-14 07:40 UTC: host audio research (licence-checked). Music: no commercial-OK open model does good metal;
+  pilot ACE-Step 1.5 XL-SFT + 4B LM (MIT), fallback DiffRhythm (Apache). Real answer: symbolic route, MIDI rendered via
+  FluidSynth/Carla + LSP, CC0/CC-BY SFZ drums, Karoryfer CC0 bass, VCSL CC0 orchestra/choir/organ, CC0 clean DI
+  guitar through NAM (train our own captures). Stems: HTDemucs v4 (internal use only). Voices: VoxCPM2 (Apache,
+  48 kHz, cloning) replaces Chatterbox; RVC for conversion. Mix/master: Pedalboard/DawDreamer, Matchering, loudnorm.
+  Screening: Audiobox Aesthetics, CLAP. Avoid: CC-BY-SA / NC libraries, madmom models, Essentia (AGPL), FlashSR.
+  Batch 1 awaits operator licence sign-off, then one rebuild + relaunch. Operator also made the ComfyUI-style audio
+  studio top priority (asked of the host: ComfyUI + audio node pack).
+
 - 2026-11-14 07:05 UTC: OPERATOR VERDICT: every campaign take and the l3 A/B (ACE-Step turbo vs base, 80 vs 256 kbps)
   is "quite bad"; l3-campaign-take-3 is the richest but too simple and not the battle-metal theme. The in-game
   adaptive music sounds "far worse than before" (runtime muxing regression to research). Radio voices sound
