@@ -14,6 +14,7 @@ import 'dart:ui' as ui;
 import 'package:demon_attack/game/atmosphere.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
+import 'package:demon_attack/game/shadow_projector.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Future<ui.Image> _decode(String file) async {
@@ -98,6 +99,35 @@ void main() {
         if (raw[i] != want[i]) diff++;
       }
       expect(diff, 0, reason: 'reduced-tier shadow pass changed');
+    });
+  });
+  testWidgets('draped: <= 3 layers, <= 4 draw calls per layer, same casters', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final m = ArcadeModel(seed: 4)
+        ..startAt(difficulty: Difficulty.normal, sector: 2, route: 1);
+      final scene = await _scene(m);
+      var differs = 0;
+      for (var i = 0; i < 12; i++) {
+        _run(m, scene, .5);
+        scene.shadowModeOverride = ShadowMode.flat;
+        final flat = await _shadowPass(scene);
+        final flatCount = scene.shadowCount;
+        scene.shadowModeOverride = null;
+        final draped = await _shadowPass(scene);
+        expect(scene.shadowMode, ShadowMode.draped);
+        expect(scene.shadowLayers, lessThanOrEqualTo(3));
+        expect(scene.shadowDrawCallsPerBucket, lessThanOrEqualTo(4));
+        expect(scene.shadowCount, flatCount);
+        var d = 0;
+        for (var k = 0; k < flat.length; k += 4) {
+          if (flat[k + 3] != draped[k + 3]) d++;
+        }
+        if (d > 50) differs++;
+      }
+      // The relief moves shadows off the flat plane on most frames.
+      expect(differs, greaterThan(3));
     });
   });
 }

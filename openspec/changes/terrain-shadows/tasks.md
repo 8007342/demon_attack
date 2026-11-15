@@ -5,10 +5,10 @@
 - [x] 1.2 `test/shadow_projector_test.dart`: flat-ground equivalence to the legacy centre (≤ 0.01 u), ridge stretch, crest occlusion, morph continuity across `mix` 0 → 1 (≤ 2 u per 1/60 s)
 
 ## 2. Scene integration
-- [ ] 2.1 Turn `_shadowOf` into caster construction (creatures, divers, in-play sentinels with the rush-lock snap retargeted to the ship's projected hit point, ship); keep alpha, buckets and the death ghosts unchanged
-- [ ] 2.2 Draw each (image, bucket) batch with `drawVertices` + `ImageShader` inside the existing bucket `saveLayer`; keep `shadowLayers ≤ 3`, expose `shadowDrawCalls` for tests
-- [ ] 2.3 `ShadowMode.flat` fallback on `AtmosphereQuality.reduced` and the governor's low tier; keep today's path byte-identical there
-- [ ] 2.4 Softness from height above the hit surface (`k = (h − t) / 300`)
+- [x] 2.1 Turn `_shadowOf` into caster construction (creatures, divers, in-play sentinels with the rush-lock snap retargeted to the ship's projected hit point, ship); keep alpha, buckets and the death ghosts unchanged
+- [x] 2.2 Draw each (image, bucket) batch with `drawVertices` + `ImageShader` inside the existing bucket `saveLayer`; keep `shadowLayers ≤ 3`, expose `shadowDrawCalls` for tests
+- [x] 2.3 `ShadowMode.flat` fallback on `AtmosphereQuality.reduced` and the governor's low tier; keep today's path byte-identical there
+- [x] 2.4 Softness from height above the hit surface (`k = (h − t) / 300`)
 
 ## 3. Lurking shadow and boss shadow
 - [ ] 3.1 `SentinelForeshadow.lurk` track: far terrain → front depth, 10–16 u/s, meander (amplitude 30, period 9 s), own PRNG stream `seed ^ 0x5E57`; reduced motion drops the meander

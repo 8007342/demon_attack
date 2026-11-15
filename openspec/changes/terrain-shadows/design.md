@@ -76,6 +76,23 @@ bucket `saveLayer`.
 - "Rows spread on the slope facing away from the sun": with the sun behind the scene, shadows fall toward the camera,
   so that slope is the one facing the camera (the near side of a ridge). The ridge test checks exactly that.
 
+**As built (task 2).**
+- `DemonScene.shadowMode` is `ShadowMode.flat` on `AtmosphereQuality.reduced` and `draped` otherwise;
+  `shadowModeOverride` forces either (tests, review strips, the perf comparison). There is no frame-time governor in
+  the code base yet, so "the governor's low tier" is the reduced tier: a governor that drops the atmosphere to reduced
+  drops the shadows to flat with it.
+- The flat path is the legacy code verbatim (`drawAtlas` on a plane scaled by 0.42), and the legacy centre expression
+  is kept as written, so the reduced tier is byte-identical. `test/terrain_shadows_scene_test.dart` compares the pass
+  with `test/fixtures/shadow-flat-reduced.png`, rendered by the untouched pre-change pass.
+- The draped path draws one `drawVertices` per image per bucket (`shadowDrawCalls`, `shadowDrawCallsPerBucket`),
+  with a cached `ImageShader` per image (nearest sampling, as the atlas path) and vertex colours carrying each
+  shadow's alpha (`BlendMode.modulate`).
+- Softness `k = (h − t) / 300` drives the bucket, the alpha and the growth together, as the legacy `k` did, so a
+  creature low over a ridge casts a sharper, darker and slightly smaller shadow there.
+- Death ghosts keep their flat-ground point and are re-draped each frame while they fade.
+- Measured (`test/atmosphere_perf_test.dart`, 61 casters, phone size ×3): recording 0.03 ms flat, 0.10 ms draped;
+  CPU raster of the pass 64 ms flat, 68 ms draped (dominated by the blur layers, as before).
+
 ## 3. Casters
 | Caster | Altitude source | Footprint | Notes |
 |---|---|---|---|

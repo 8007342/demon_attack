@@ -5,6 +5,7 @@ import 'package:demon_attack/game/atmosphere.dart';
 import 'package:demon_attack/game/flock.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
+import 'package:demon_attack/game/shadow_projector.dart';
 import 'package:flame/game.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -165,6 +166,51 @@ void main() {
       expect(scene.shadowCount, greaterThanOrEqualTo(50));
       expect(scene.shadowLayers, lessThanOrEqualTo(3));
       expect(withShadows - without, lessThan(1500));
+
+      // terrain-shadows task 4.1: the draped pass (sun-ray march + 4 x 3
+      // drape per caster, drawVertices) against today's flat pass, Dart
+      // recording and CPU raster of the pass alone at phone size (3x).
+      Future<(double, double)> pass(ShadowMode mode) async {
+        scene.shadowModeOverride = mode;
+        void paint(ui.Canvas c) {
+          c.scale(3);
+          scene.paintShadowPass(c);
+        }
+
+        final sw = Stopwatch()..start();
+        for (var i = 0; i < 200; i++) {
+          final r = ui.PictureRecorder();
+          paint(ui.Canvas(r));
+          r.endRecording().dispose();
+        }
+        final record = sw.elapsedMicroseconds / 200;
+        final r = ui.PictureRecorder();
+        paint(ui.Canvas(r));
+        final pic = r.endRecording();
+        (await pic.toImage(1080, 1560)).dispose();
+        final raster = Stopwatch()..start();
+        for (var i = 0; i < 10; i++) {
+          (await pic.toImage(1080, 1560)).dispose();
+        }
+        pic.dispose();
+        return (record, raster.elapsedMicroseconds / 10);
+      }
+
+      await pass(ShadowMode.flat);
+      final flat = await pass(ShadowMode.flat);
+      await pass(ShadowMode.draped);
+      final draped = await pass(ShadowMode.draped);
+      scene.shadowModeOverride = null;
+      // ignore: avoid_print
+      print(
+        'shadow pass (${scene.shadowCount}): flat record '
+        '${(flat.$1 / 1000).toStringAsFixed(3)} ms, raster '
+        '${(flat.$2 / 1000).toStringAsFixed(2)} ms; draped record '
+        '${(draped.$1 / 1000).toStringAsFixed(3)} ms, raster '
+        '${(draped.$2 / 1000).toStringAsFixed(2)} ms (1080x1560 cpu)',
+      );
+      expect(draped.$1 - flat.$1, lessThan(500));
+      expect(draped.$2, lessThan(flat.$2 * 1.5 + 2000));
     });
   });
 }
