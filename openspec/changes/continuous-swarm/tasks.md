@@ -18,15 +18,15 @@ first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start
       is 1.0 at Normal. Record the fitted value in the design note.
 
 ## 2. The stream scheduler (pure Dart)
-- [ ] 2.1 `lib/game/swarm_stream.dart`:
+- [x] 2.1 `lib/game/swarm_stream.dart`:
       - `SwarmStream`, `Cohort`, `Skein`, `SwarmState` (reserve, approaching, present, diving, reentering);
       - splitting a roster into skeins by column band (3–6 each), groups into 1–2 skeins;
       - its own seeded PRNG;
       - the skein-gap formula, the q pacing formula, lull length;
       - `drain()`, `rout(dir)`, `preload(cohort)` as stubs returning plans (W5b fills them in).
-- [ ] 2.2 `difficulty.dart`: add `skeinGap`, `paceFloor`, `swarmTempo` (design §2.4) with doc comments that point
+- [x] 2.2 `difficulty.dart`: add `skeinGap`, `paceFloor`, `swarmTempo` (design §2.4) with doc comments that point
       to `plan/difficulty-calibration.md` ("timing, never HP").
-- [ ] 2.3 `test/swarm_stream_test.dart`:
+- [x] 2.3 `test/swarm_stream_test.dart`:
       - the split preserves members and order;
       - gaps shrink with low `live` and never go below 0.5 · g_base;
       - q is clamped to [paceFloor, 1];

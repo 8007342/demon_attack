@@ -48,6 +48,36 @@ class DifficultyPolicy {
     Difficulty.hard => 6,
   };
 
+  // --- continuous swarm (openspec/changes/continuous-swarm design §2.4):
+  // timing, never HP. None of these touch counts, HP or the elite budget
+  // (plan/difficulty-calibration.md); they only decide when a wave's
+  // skeins leave the fog and how fast its squads fly.
+
+  /// Base gap (s, hostile rate) between two roster skeins of a wave; it
+  /// shrinks to half while few of the wave are left alive.
+  double get skeinGap => switch (difficulty) {
+    Difficulty.easy => 1.3,
+    Difficulty.normal => 1.1,
+    Difficulty.hard => .95,
+  };
+
+  /// Floor of the next wave's approach factor q after a fast clear.
+  double get paceFloor => switch (difficulty) {
+    Difficulty.easy => .65,
+    Difficulty.normal => .55,
+    Difficulty.hard => .5,
+  };
+
+  /// Angular and lateral speed factor of the squads' fighting patterns,
+  /// times the route's movement growth 1 + 0.04 r.
+  double swarmTempo({required int route}) =>
+      switch (difficulty) {
+        Difficulty.easy => .85,
+        Difficulty.normal => 1.0,
+        Difficulty.hard => 1.1,
+      } *
+      (1 + .04 * route.clamp(0, 4));
+
   int reinforcementFlocks({required int route, required int sector}) =>
       difficulty == Difficulty.easy ? (route == 0 ? 0 : 1) : 2;
 
