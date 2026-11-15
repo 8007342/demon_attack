@@ -5,7 +5,7 @@ local job, ticket, hull, stage, sub, prefix = arg[1], arg[2], arg[3], arg[4], ar
 local C = os.getenv("HOME") .. "/.cache/tillandsias-project"
 local dir = "/work/tmp/imagegen/studio/" .. job
 local dst = ("%s/boss-raw/%s/%s"):format(C, hull, sub)
-os.execute("mkdir -p " .. dst)
+os.execute("mkdir -p " .. dst .. " " .. C .. "/b3")
 local p = io.popen("ls " .. dir .. "/*.png"); local files = {}
 for f in p:lines() do files[#files + 1] = f end; p:close()
 for _, f in ipairs(files) do
