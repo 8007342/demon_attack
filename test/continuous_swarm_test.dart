@@ -2,7 +2,9 @@
 // the model: groups wait in the reserve, roster skeins release by the
 // gap, the occupancy bound holds at every step, divers rejoin out of the
 // fog, and a sector replays identically from the same seed.
+import 'package:demon_attack/game/atmosphere.dart';
 import 'package:demon_attack/game/model.dart';
+import 'package:demon_attack/game/swarm_stream.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 ArcadeModel _combat(
@@ -188,5 +190,92 @@ void main() {
     for (var i = 0; i < a.length; i++) {
       if (a[i] != b[i]) fail('diverged at $i:\n${a[i]}\n${b[i]}');
     }
+  });
+  test('the swarm knows the fog bands the fog draws', () {
+    expect(swarmFogBands, Atmosphere.bandNearness);
+  });
+
+  test('the sentinel rises through every fog band, >= 0.6 s per band', () {
+    // Rise path alone (design §6.3): from a silhouette at n .2 to n .62.
+    final times = <double>[];
+    var prev = sentinelRiseNearness(0, .2, .62);
+    for (var f = 1; f <= (sentinelRiseSeconds * 60).round(); f++) {
+      final t = f / 60;
+      final n = sentinelRiseNearness(t / sentinelRiseSeconds, .2, .62);
+      for (final b in swarmFogBands) {
+        if (prev < b && n >= b) times.add(t);
+      }
+      expect(n, greaterThanOrEqualTo(prev - 1e-12), reason: 'monotone');
+      prev = n;
+    }
+    expect(times, hasLength(swarmFogBands.length));
+    for (var i = 1; i < times.length; i++) {
+      expect(times[i] - times[i - 1], greaterThanOrEqualTo(.6 - 1 / 60));
+    }
+    expect(prev, closeTo(.62, 1e-9));
+  });
+
+  test('in play: a foreshadowed sentinel rises with its eta announced', () {
+    // A sentinel wave: the escort pours out, the sentinel rises from its
+    // silhouette; the observer's sentinelIncoming carries the eta.
+    final m = ArcadeModel(seed: 7)
+      ..startAt(difficulty: Difficulty.normal, sector: 2, route: 1);
+    var w = 2;
+    while (m.sentinelFor(w) == null) {
+      w++;
+    }
+    final s = ArcadeModel(seed: 7)
+      ..startAt(difficulty: Difficulty.normal, sector: 2, route: 1, wave: w);
+    final observer = GameEventObserver(s, dispatch: false);
+    double? eta;
+    final crossings = <double>[];
+    double? prevN;
+    var t = 0.0;
+    for (var f = 0; f < 60 * 30; f++) {
+      s.invulnerable = 5;
+      s.shots.removeWhere((x) => !x.hostile);
+      s.update(1 / 60);
+      t += 1 / 60;
+      for (final e in observer.observe(s.takeEvents())) {
+        if (e.name == GameEventNames.sentinelIncoming &&
+            e.data['eta'] != null) {
+          eta ??= (e.data['eta'] as num).toDouble();
+        }
+      }
+      final sentinel = s.demons.where((d) => d.isLarge).firstOrNull;
+      if (sentinel == null || sentinel.entranceProgress <= 0) continue;
+      final n = sentinel.nearness;
+      if (prevN != null && sentinel.entering) {
+        for (final b in swarmFogBands) {
+          if (prevN < b && n >= b) crossings.add(t);
+        }
+      }
+      prevN = n;
+      if (!sentinel.entering) break;
+    }
+    expect(eta, isNotNull);
+    expect(eta!, greaterThan(sentinelRiseSeconds));
+    expect(crossings.length, greaterThanOrEqualTo(3));
+    for (var i = 1; i < crossings.length; i++) {
+      expect(crossings[i] - crossings[i - 1], greaterThanOrEqualTo(.55));
+    }
+  });
+
+  test('a reinforcement call carries its swoop eta', () {
+    final m = _combat(Difficulty.normal);
+    final observer = GameEventObserver(m, dispatch: false);
+    double? eta;
+    for (var f = 0; f < 60 * 30 && eta == null; f++) {
+      m.invulnerable = 2;
+      final target = m.demons.where((d) => !d.entering).firstOrNull;
+      if (target != null) m.hitDemon(target, damage: 99);
+      m.update(1 / 60);
+      for (final e in observer.observe(m.takeEvents())) {
+        if (e.name == GameEventNames.reinforcements) {
+          eta = (e.data['eta'] as num?)?.toDouble();
+        }
+      }
+    }
+    expect(eta, closeTo(ArcadeModel.swoopSeconds, .5));
   });
 }

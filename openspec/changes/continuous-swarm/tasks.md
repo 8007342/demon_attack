@@ -116,14 +116,14 @@ first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start
       baseline.
 
 ## 7. One swarm timeline and radio
-- [ ] 7.1 `game_events.dart`: `cohortSighted`, `cohortMerged`, `shotsFizzle`; an `eta` on `reinforcements` and
+- [x] 7.1 `game_events.dart`: `cohortSighted`, `cohortMerged`, `shotsFizzle`; an `eta` on `reinforcements` and
       `sentinelIncoming`.
-- [ ] 7.2 `comms_moments.dart`: map `cohortSighted` onto the `waveStart` trigger (reused clips). End calls on `eta`
+- [x] 7.2 `comms_moments.dart`: map `cohortSighted` onto the `waveStart` trigger (reused clips). End calls on `eta`
       like `divePrep`. `test/comms_pacing_test.dart` and `test/comms_director_test.dart` stay green. Add a case
       where a `cohortSighted` call ends within 0.3 s of the skein becoming targetable.
-- [ ] 7.3 Sentinel rise path (design §6.3): at least 0.6 s per fog band. Test the timing. Hand W2 a review frame
+- [x] 7.3 Sentinel rise path (design §6.3): at least 0.6 s per fog band. Test the timing. Hand W2 a review frame
       of the rise.
-- [ ] 7.4 Music: `music_director.dart` treats `cohortMerged` as the old `wave` stinger. `test/music_director_test.dart`
+- [x] 7.4 Music: `music_director.dart` treats `cohortMerged` as the old `wave` stinger. `test/music_director_test.dart`
       stays green.
 
 ## 8. Review frames and playtest

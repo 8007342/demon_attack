@@ -1753,6 +1753,11 @@ class ArcadeModel {
         escortSpawned = true;
         sentinel.waitingForEscort = false;
         sentinel.entranceDelay = 1.15;
+        // --- continuous swarm: a foreshadowed sentinel rises through every
+        // fog band from its silhouette (design §6.3).
+        if (sentinel.entryN != null) {
+          sentinel.entranceDuration = sentinelRiseSeconds;
+        }
         events.add('escort');
       }
     }
@@ -2559,11 +2564,18 @@ class ArcadeModel {
     bool holding = false,
   }) {
     if (perspective && d.arrivesFromDistance) {
-      final (n, u) = Perspective.approach(
+      var (n, u) = Perspective.approach(
         s,
         _targetNearness(d, ty),
         from: d.entryN,
       );
+      final from = d.entryN;
+      if (d.isLarge && from != null) {
+        // --- continuous swarm: the sentinel's rise path in depth.
+        final to = _targetNearness(d, ty);
+        n = sentinelRiseNearness(d.entranceProgress, from, to);
+        u = to <= from ? 1.0 : ((n - from) / (to - from)).clamp(0.0, 1.0);
+      }
       final x0 = d.entryX ?? Perspective.arrivalX(d.homeX);
       final y0 = d.entryY ?? Perspective.arrivalYFor(d.homeY);
       d.nearness = n;

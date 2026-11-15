@@ -399,7 +399,8 @@ void main() {
     advance(m, .8);
     expect(escorts.every((d) => !d.entering), isTrue);
     expect(sentinel.entranceProgress, 0);
-    advance(m, 2.2);
+    // continuous-swarm: the rise through the fog bands is longer.
+    advance(m, 2.2 + (sentinel.entranceDuration - 1.8));
     expect(sentinel.entering, isFalse);
     expect(sentinel.y, lessThan(50));
     expect(m.demons.where((d) => d.isLarge), hasLength(1));

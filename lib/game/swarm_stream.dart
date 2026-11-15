@@ -120,6 +120,53 @@ class LevyDrift {
   }
 }
 
+/// The fog's depth bands as the swarm knows them (continuous-swarm design
+/// §0): the nearness of every depth-sorted air layer, far to near. It
+/// mirrors `Atmosphere.bandNearness` (fog-restoration owns the layers; a
+/// test keeps the two equal) so this pure-Dart file needs no Flutter.
+const swarmFogBands = [.26, .335, .43, .5, .565];
+
+/// The sentinel's rise (design §6.3): from its foreshadow silhouette's
+/// nearness [from] to its station's [to] over the rise, crossing every
+/// fog band slowly (an equal share of the middle of the rise per band
+/// gap, at least 0.6 s each over 3.2 s), easing in and out at the ends.
+/// [p] is the rise progress 0-1.
+double sentinelRiseNearness(double p, double from, double to) {
+  final knots = <double>[
+    from,
+    for (final b in swarmFogBands)
+      if (b > from + 1e-3 && b < to - 1e-3) b,
+    to,
+  ];
+  final segments = knots.length - 1;
+  if (segments <= 0) return to;
+  // Ends take an eighth each (eased); the band gaps share the middle.
+  const end = .125;
+  final middle = segments <= 2 ? 0 : segments - 2;
+  final times = <double>[
+    for (var i = 0; i < segments; i++)
+      segments <= 2
+          ? 1 / segments
+          : (i == 0 || i == segments - 1)
+          ? end
+          : (1 - 2 * end) / middle,
+  ];
+  var t = p.clamp(0.0, 1.0);
+  for (var i = 0; i < segments; i++) {
+    if (t <= times[i] || i == segments - 1) {
+      var u = (t / times[i]).clamp(0.0, 1.0);
+      if (i == 0 && segments > 1) u = u * u; // ease in
+      if (i == segments - 1 && segments > 1) u = 1 - (1 - u) * (1 - u);
+      return knots[i] + (knots[i + 1] - knots[i]) * u;
+    }
+    t -= times[i];
+  }
+  return to;
+}
+
+/// Rise length of a foreshadowed sentinel (s).
+const sentinelRiseSeconds = 3.2;
+
 /// The scheduler state of one run, owned by the model.
 class SwarmStream {
   SwarmStream({this.seed = 0});

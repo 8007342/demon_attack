@@ -585,6 +585,20 @@ class CommsDirector {
         final cry = demon[GameEventNames.divePrep];
         if (cry != null) _offerTimed(cry, at, endBy, demon: true);
         return true;
+      case GameEventNames.incoming ||
+          GameEventNames.reinforcements ||
+          GameEventNames.sentinelIncoming:
+        // continuous-swarm: a swarm call ends on its eta when it can;
+        // otherwise (no eta, or no line fits) the usual path voices it.
+        final eta = _num(event.data['eta']);
+        if (eta == null || eta <= 0) return false;
+        final spec = _spec(human, event);
+        if (spec == null) return false;
+        final call = _offerTimed(spec, at, at + eta, demon: false);
+        if (call == null) return false;
+        final d = _spec(demon, event);
+        if (d != null) _offer(event.name, d, at, demon: true);
+        return true;
       case GameEventNames.diveWarning || GameEventNames.sentinelDive:
         final diveIn = _num(event.data['diveIn']);
         if (diveIn == null) return false;

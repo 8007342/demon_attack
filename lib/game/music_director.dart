@@ -243,6 +243,10 @@ class MusicBridge {
     final accent = accents[event.name];
     if (accent != null) {
       onAccent(accent);
+    } else if (event.name == GameEventNames.cohortMerged) {
+      // continuous-swarm: the merged next wave takes the old interwave
+      // stinger's place (no transition phase marks it any more).
+      onAccent('reinforce');
     } else if (event.name == GameEventNames.musicIntensity) {
       onIntensity((event.data['tier'] as int?) ?? 1);
     } else if (event.name == GameEventNames.fleetIntact) {

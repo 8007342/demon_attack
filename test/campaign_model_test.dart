@@ -247,7 +247,9 @@ void main() {
     advance(m, 1);
     expect(sentinel.entranceProgress, entrance);
     m.resume();
-    advance(m, 1.6);
+    // continuous-swarm: a foreshadowed sentinel rises through the fog
+    // bands over sentinelRiseSeconds instead of the old 1.8 s.
+    advance(m, 1.6 + (sentinel.entranceDuration - 1.8));
     expect(sentinel.entranceProgress, 1);
     expect(sentinel.telegraph + sentinel.divePrep, greaterThan(0));
     expect(sentinel.y + 32, lessThan(swarm.first.homeY - 28));
