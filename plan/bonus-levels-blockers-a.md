@@ -141,6 +141,11 @@ eye.
     (`_decode`, `_scene`, `_frame`, `_png`). I copied them again. A shared `test/support/review_scene.dart` would make
     a strip a 30-line test, which matters when every bonus level needs one.
 
+31. **"Rebase before finishing" and "push the interface note first" cannot both be done.** The git mirror rejects
+    non-fast-forward updates of a work branch, so a branch that was pushed early (as the parallel agent needed) cannot
+    be rebased and pushed again. I merged `origin/game` into the branch instead; the tree is identical to the
+    rebased one I tested.
+
 ## What I would change first
 
 1. Archive shipped changes and refresh `openspec/config.yaml`, so the specs describe the game (7, 8).
