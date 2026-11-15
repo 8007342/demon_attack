@@ -48,7 +48,7 @@ The table maps onto the existing ally slots (`GroundAtlas.allyRow(sector, varian
 
 | # | Unit | Role | Slot (sector, variant) | Today | Propulsion | Size h0 / h90 (texels) | Near z 276 / far z 620 (units, h0 width) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| F-1 | **Sleet** | Light scout rover | Krybor 0 | rover | 6 big wheels | 22 × 18 / 30 × 16 | 36 / 16 |
+| F-1 | **Sleet** | Light scout rover | Krybor 0 | rover | 4 big wheels + rear skid | 22 × 18 / 30 × 16 | 36 / 16 |
 | F-2 | **Cairn** | Armoured carrier (carries the rifle squad) | Krybor 1 | apc | 8 wheels | 24 × 22 / 34 × 18 | 39 / 17 |
 | F-3 | **Tether** | Half-track with recovery winch | Ringfall 0 | halftrack | front wheels, rear tracks | 24 × 20 / 34 × 17 | 39 / 17 |
 | F-4 | Militia squad | Rifle infantry (squad) | Ringfall 1 | militia | feet | see Section 4.3 | |
@@ -64,10 +64,10 @@ Every vehicle fits a **48 × 40 texel cell** at every heading (the diagonal head
 ### 4.1 Vehicles
 
 **F-1 Sleet: light scout rover.**
-- *Silhouette:* a short flat **wedge** that is lower at the front, on six big wheels that stick out past the body (the wheel row is the cue). A tiny pod turret with a short twin coil gun sits at the front third.
-- *Kit:* a whip antenna at the rear, a roof light bar (3-texel cyan strip), snow skids on the front wheels in Krybor.
+- *Silhouette:* a short flat **wedge** that is lower at the front, on four big wheels that stick out past the body (the wheels are the cue) and a flat sled skid under the tail (A6 originality: not a six-wheel row). A tiny pod turret with a short twin coil gun sits at the front third.
+- *Kit:* a whip antenna at the rear, a roof light bar (3-texel cyan strip), the tail skid reads as snow kit in Krybor.
 - *Motion:* the fastest ally; a 1-texel body bounce on alternate move frames.
-- *Phone read:* a small box with six dark dots around it and a cyan bar on top.
+- *Phone read:* a small box with four big dark wheels at its corners, a skid at the tail and a cyan bar on top.
 
 **F-2 Cairn: armoured carrier.**
 - *Silhouette:* the tallest wheeled box: a **flat roof with a stepped rear** (two steps, like a loading ramp) on eight wheels. A small remote gun pod on the roof. The rear ramp is visible from behind, which is the camera's usual view.
@@ -91,7 +91,7 @@ Every vehicle fits a **48 × 40 texel cell** at every heading (the diagonal head
 - *Phone read:* the barrel angled up. Artillery on both sides is "a thing that aims up", but the Fleet's is a single straight barrel and the Host's are open bells.
 
 **F-7 Stilt: two-legged walker.**
-- *Silhouette:* a **boxy cab** with a wide cyan visor strip, on **two straight telescoping legs** with flat square feet. Gun pods on both sides of the cab. Straight legs are the cue: the Host's walkers stand on arches.
+- *Silhouette:* a **boxy cab** with a wide cyan visor strip, on **two straight telescoping legs** with flat square feet. One twin-gun pod slung under the front of the cab; the cab sides stay plain (A6 originality: no side pods). Straight legs are the cue: the Host's walkers stand on arches.
 - *Motion:* a 6-frame stepped stride with a 1-texel cab bob; feet plant flat with a dust puff; stride-over (terrain guide) on ravine ends.
 - *Phone read:* a box held up by two sticks, cyan slit across the front.
 
@@ -235,12 +235,12 @@ red lights, orange lights, warm glow, gold, fire, horns, face, teeth, spikes, ho
 
 | Unit | Subject line |
 | --- | --- |
-| Sleet | a small fast six wheeled scout rover, low wedge shaped body lower at the front, big wheels sticking out past the body, tiny pod turret with a short twin barrel, whip antenna, roof light bar |
+| Sleet | a small fast four wheeled scout rover, low wedge shaped body lower at the front, four big wheels sticking out past the body, a flat sled skid under the tail, tiny pod turret with a short twin barrel, whip antenna, roof light bar |
 | Cairn | an eight wheeled armoured personnel carrier, tall flat roofed box with a stepped rear loading ramp, small remote gun pod on the roof, square vision blocks |
 | Tether | a half-track recovery vehicle, wheels at the front and a skirted track at the rear, short A-frame crane and cable drum at the back, twin autocannon on a ring mount over the cab |
 | Lodestar | a futuristic main battle tank, low faceted wedge hull with a long chamfered front, side skirts hiding the tracks, flat hexagonal turret set forward, very long thin rail cannon with two coil rings and a square muzzle brake, short sensor mast at the turret rear |
 | Sextant | a self-propelled long range gun on a low tracked wedge hull, tall boxy casemate at the rear, very long barrel angled up, folding spade outriggers at the back |
-| Stilt | a two legged walker, boxy armoured cab with a wide visor slit, two straight telescoping legs with flat square feet, gun pods on both sides of the cab |
+| Stilt | a two legged walker, boxy armoured cab with a wide visor slit, two straight telescoping legs with flat square feet, one twin gun pod slung under the front of the cab, plain flat cab sides |
 | Skiff | a hover tank, flat lozenge hull with chamfered corners, no wheels and no tracks, four hover pads glowing underneath, low turret with a short wide barrel, floating above its shadow |
 | Rifle trooper | a soldier in a light exoskeleton frame seen from behind, squared helmet with a visor strip, flat shoulder plates, battery backpack, long straight rifle |
 | Rocket trooper | the same soldier carrying a box shaped rocket launcher on the shoulder |

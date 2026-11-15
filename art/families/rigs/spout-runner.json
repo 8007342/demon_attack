@@ -1,7 +1,7 @@
 {
  "schema": "demon-attack.ground-rig/v1",
- "id": "gutter-runner", "name": "Gutter-runner", "faction": "host", "class": "light", "block": "V", "move": "wheels", "seed": 760230, "threat": true,
- "notes": "Threat vehicle (Krybor rocket buggy): a captured six-wheeled human buggy (old grey-blue plate) with a carved gargoyle hood and a gutter-fed twin rocket launcher at the back (the articulated layer). Telegraph keeps the ground-forces.png contract: special f0 launcher raised, f1 tubes glow, f2 launch flash, f3 smoking; f4-f5 settle.",
+ "id": "spout-runner", "name": "Spout-runner", "faction": "host", "class": "light", "block": "V", "move": "wheels", "seed": 760230, "threat": true,
+ "notes": "Threat vehicle (Krybor rocket buggy): a captured six-wheeled human buggy (old grey-blue plate) with a carved gargoyle hood and a channel-fed twin rocket launcher at the back (the articulated layer). Telegraph keeps the ground-forces.png contract: special f0 launcher raised, f1 tubes glow, f2 launch flash, f3 smoking; f4-f5 settle.",
  "hull": [
   {"kind": "prism", "at": [-7.8, -7.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel", "piece": "wheel"},
   {"kind": "prism", "at": [-7.8, 0, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},

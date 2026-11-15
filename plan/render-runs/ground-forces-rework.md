@@ -137,7 +137,7 @@ Allow 15% for rerolls: **about 1,500 jobs and 15 hours**, run in phases with the
 | 1 | Pilot: Lodestar, Crocket, Ashlar Guard (heroes, headings, turret, 2 VACE clips each) | about 90 | CP0 |
 | 2 | Fleet: remaining units | about 480 | CP1 |
 | 3 | Host: remaining Tier A and refresh | about 650 | CP2 (can run in parallel with Phase 2 if the operator prefers Host first) |
-| 4 | Threat vehicles (Gutter-runner, Scrapmason, Kiln Ox, Belfry) as V/W blocks, behind a flag | about 230 more | CP5 and a gameplay check of telegraph timing |
+| 4 | Threat vehicles (Spout-runner, Scrapmason, Kiln Ox, Belfry) as V/W blocks, behind a flag | about 230 more | CP5 and a gameplay check of telegraph timing |
 | 5 | Atmosphere and wildlife | about 80 | CP4 |
 
 ## 6. Ledger
@@ -172,7 +172,7 @@ go test ./...         # determinism, heading sets, cell contract, seating, leg g
 `demon-attack.ground-blocks/v1`) and their empty `-runs.json`. Rigs: `art/families/rigs/<unit>.json`, 26 units: Fleet
 Sleet, Cairn, Tether, Lodestar, Sextant, Stilt, Skiff and the rifle and rocket troopers; Host Crocket, captured Crocket,
 Tympanum, Reliquary, Carillon, Hodcrawler, Buttress Strider, Chapterhouse, Rubbling, Ashlar Guard, Corbel Brute,
-Knell-bearer, Prior; and the four threat vehicles (Gutter-runner, Scrapmason Crawler, Kiln Ox, Belfry) with headings, per
+Knell-bearer, Prior; and the four threat vehicles (Spout-runner, Scrapmason Crawler, Kiln Ox, Belfry) with headings, per
 the operator's "no flag, fix forward". Their telegraph keeps the `ground-forces.png` contract as V-block specials (f0
 launcher raised, f1 glow, f2 launch flash, f3 smoking), so no timing moves.
 
@@ -222,7 +222,7 @@ operator, highest first:
 
 | Unit | Concern | Suggestion |
 | --- | --- | --- |
-| **Gutter-runner** (Host threat) | Exact name match with a well-known tabletop fantasy rat-folk scout unit ("Gutter Runners") | Rename, for example **Spout-runner** or **Gutterhound** |
+| **Gutter-runner** (Host threat; renamed **Spout-runner**, A6) | Exact name match with a well-known tabletop fantasy rat-folk scout unit ("Gutter Runners") | Rename, for example **Spout-runner** or **Gutterhound** |
 | **Stilt** (Fleet walker) | A box cab with side gun pods on two legs is close to a famous film franchise's two-legged scout walker | Keep the straight telescoping legs (the film's are reverse-jointed); move the pods under the cab or onto one side only |
 | **Sleet** (Fleet scout) | A six-wheeled rover with outboard wheels and a small turret recalls a well-known sci-fi RPG's six-wheeled exploration tank | Four big wheels plus a rear skid, or a lower pod; the wedge body already differs |
 | **Carillon**, **Chapterhouse** | Gothic war machines with bells and spires sit near a well-known tabletop sci-fi faction's cathedral and organ tanks | The Host is gargoyle stone with no human crew, crosses or scripture; keep that line, avoid organ pipes and skull motifs |
@@ -288,7 +288,7 @@ The operator approved every open recommendation in this plan ("record all approv
 | A3 | Heading edits (§8 finding 1) | Run each heading at denoise 0.7 and 1.0 for the first unit (Lodestar), pick one setting before scaling | Pilot plan |
 | A4 | Name the key colour in prompts (§8 finding 2); no effect words (finding 3) | Yes | Already in the three family `style_prompt`s |
 | A5 | Atlas budget (§7) | 8 MB RGBA per sector, no atlas side over 4096 px; the half-resolution far atlas (decision 1.4) is not needed | Test already enforces it |
-| A6 | Originality (§7.1) | Apply the suggestions: rename **Gutter-runner → Spout-runner** (first suggestion; the operator can still pick Gutterhound); Stilt pods under the cab or on one side; Sleet four big wheels plus a rear skid; Carillon / Chapterhouse keep no crew, crosses, scripture, organ pipes or skulls; Chapterhouse, Belfry, Kiln Ox unchanged (low risk) | To implement before Phase 2 (Fleet/Host rigs, family, atlas names, specs) |
+| A6 | Originality (§7.1) | Apply the suggestions: rename **Gutter-runner → Spout-runner** (first suggestion; the operator can still pick Gutterhound); Stilt pods under the cab or on one side; Sleet four big wheels plus a rear skid; Carillon / Chapterhouse keep no crew, crosses, scripture, organ pipes or skulls; Chapterhouse, Belfry, Kiln Ox unchanged (low risk) | **Done** (branch `work/a6-originality`): id/name/rig `spout-runner`, atlas regenerated; Stilt has one twin-gun chin pod under the cab, no side pods; Sleet on four big wheels plus a tail sled skid (rig and subject); Host negative prompt adds crucifix, scripture, inscription, open book, organ pipes, skull(s), human crew; Carillon/Chapterhouse rigs and prompts carry none of these. validate, offline, contact and `go test` pass |
 
 ## 11. Ledger: A1 finish, pilot heroes re-rendered (2026-11-15, after the cache wipe)
 

@@ -1,7 +1,7 @@
 {
  "schema": "demon-attack.ground-rig/v1",
  "id": "stilt", "name": "Stilt", "faction": "fleet", "class": "walker", "block": "W", "move": "stride", "seed": 780300,
- "notes": "Two-legged walker: two straight telescoping legs with flat square feet (the hull; straight legs are the cue, the Host walks on arches) and a boxy cab with a wide cyan visor and gun pods on both sides (the articulated layer, which rises by the gait bob). 6-frame stepped stride; >= 3 texels of ground between the legs.",
+ "notes": "Two-legged walker: two straight telescoping legs with flat square feet (the hull; straight legs are the cue, the Host walks on arches) and a boxy cab with a wide cyan visor and one twin-gun pod slung under the cab front, between the hips (the articulated layer, which rises by the gait bob; no side pods, A6 originality). 6-frame stepped stride; >= 3 texels of ground between the legs.",
  "gait": {"frames": 6, "stride": 3.4, "lift": 2, "bob": 1.15},
  "hull": [
   {"kind": "leg", "hip": [-4.4, 0, 13.6], "knee": [-4.8, 1.2, 7.4], "foot": [-4.8, 0, 0.6], "t": 1.8, "foot_size": [3.2, 4.4], "phase": 0, "mat": "barrel"},
@@ -11,16 +11,17 @@
   {"kind": "bar", "a": [-4.4, 2.7, 13.6], "b": [4.4, 2.7, 13.6], "t": 0.8, "tz": 0.7, "mat": "light"}
  ],
  "art": {
-  "kind": "cab", "pivot": [0, 0, 15], "muzzle": [7.2, 6, 2.4], "seat": 0,
+  "kind": "cab", "pivot": [0, 0, 15], "muzzle": [0, 10.6, -1.4], "seat": 0,
   "prims": [
    {"kind": "box", "at": [0, 0, 0], "size": [11, 10, 7], "mat": "turret", "chamfer": {"front": 2, "top": 1, "vert": 1}},
    {"kind": "box", "at": [0, 4.4, 4], "size": [8, 0.8, 1.2], "mat": "light"},
-   {"kind": "box", "at": [-7, 1.4, 1.4], "size": [2.4, 7, 2.2], "mat": "barrel", "tags": ["barrel"]},
-   {"kind": "box", "at": [7, 1.4, 1.4], "size": [2.4, 7, 2.2], "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 3.6, -2.8], "size": [5.2, 4.4, 2.8], "mat": "dark", "chamfer": {"bfront": 1, "vert": 0.6}},
+   {"kind": "bar", "a": [-1.2, 5, -1.4], "b": [-1.2, 10.2, -1.4], "t": 1.1, "mat": "barrel", "tags": ["barrel"]},
+   {"kind": "bar", "a": [1.2, 5, -1.4], "b": [1.2, 10.2, -1.4], "t": 1.1, "mat": "barrel", "tags": ["barrel"]},
    {"kind": "bar", "a": [-3.6, -4, 7], "b": [-3.6, -4, 10.5], "t": 1, "mat": "barrel"},
    {"kind": "box", "at": [-3.6, -4, 10.5], "size": [1.2, 1.2, 1], "mat": "light"},
-   {"kind": "ball", "at": [7, 6, 2.5], "size": [1.6, 1.2, 1.4], "mat": "muzzle", "tags": ["hidden", "muzzle"]},
-   {"kind": "ball", "at": [-7, 6, 2.5], "size": [1.6, 1.2, 1.4], "mat": "muzzle", "tags": ["hidden", "muzzle"]}
+   {"kind": "ball", "at": [1.2, 10.6, -1.4], "size": [1.6, 1.2, 1.4], "mat": "muzzle", "tags": ["hidden", "muzzle"]},
+   {"kind": "ball", "at": [-1.2, 10.6, -1.4], "size": [1.6, 1.2, 1.4], "mat": "muzzle", "tags": ["hidden", "muzzle"]}
   ]
  },
  "pieces": [],

@@ -144,5 +144,5 @@ The music director adds nothing new: these events do not raise tiers, because th
 
 ## Open questions
 1. Should the Chapterhouse ever become a homing target, which would give the player a reason to pick a fight on the ground? Default: no (v4 rule). Revisit only with a balance proof.
-2. Should the threat-vehicle refresh (Gutter-runner, Scrapmason, Kiln Ox, Belfry) be its own change?
+2. Should the threat-vehicle refresh (Spout-runner, Scrapmason, Kiln Ox, Belfry) be its own change?
 3. Sector tint: runtime ramp mapping or baked variants (decision 4)?

@@ -5,9 +5,11 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
 ## 1. Design review
 - [ ] 1.1 Operator review of `plan/human-ground-forces-style-guide.md`: pillars, roster and names, palette, readability rules
 - [ ] 1.2 Operator decision on the heading count (5 per faction), the turn tracker numbers, and the block layouts in `plan/ground-unit-animation.md`
-- [ ] 1.3 Originality pass for the Fleet: every name and silhouette checked against well-known game, film and toy vehicles; rename or redesign near matches; no prompt names a franchise, studio or artist
+- [x] 1.3 Originality pass for the Fleet: every name and silhouette checked against well-known game, film and toy vehicles; rename or redesign near matches; no prompt names a franchise, studio or artist
       (2026-11-14: written checklist from memory in `plan/render-runs/ground-forces-rework.md` §7.1, both armies; flags
-      Gutter-runner (name), Stilt, Sleet; no renames made. Awaiting the operator.)
+      Gutter-runner (name), Stilt, Sleet. 2026-11-15, operator decision A6: renamed Spout-runner; Stilt
+      side pods moved to one chin pod under the cab; Sleet on four big wheels plus a tail skid; Host negative prompt
+      bans crosses, scripture, organ pipes, skulls and human crew.)
 - [x] 1.4 Operator decisions on the open questions in `design.md` (2026-11-14): **five headings** per faction;
       pilot **Fleet and Host together**; the **full pipeline** (about 13 GPU hours); the **threat vehicles get
       headings too, with no flag** ("we fix forward"): respect the difficulty contract
