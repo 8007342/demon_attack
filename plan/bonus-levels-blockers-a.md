@@ -64,6 +64,11 @@ eye.
     capped what a bonus level adds and kept modifiers rare (12 % of runs), and did not touch the score API. A board
     row does not record the run's modifier or seed.
 
+12a. **`openspec validate --all --strict` already fails on `game`.** The README lists it as a validation step, but 7
+    of 46 items fail before this change (main specs `arcade-combat`, `arcade-presentation` and
+    `third-party-licence-demucs-weights-unstated`; changes `comms-middle-ground`, `fog-restoration`,
+    `gameplay-round-3`, `ground-blocks-runtime`). `bonus-levels` itself validates; I left the others alone.
+
 ## C. Radio pipeline
 
 13. **Special lines cannot be heard yet (tillandsias#1103).** The placeholder mechanism plays the borrowed clip
