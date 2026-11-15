@@ -1,14 +1,28 @@
 import 'dart:math' as math;
 
+import 'demon_planner.dart';
 import 'difficulty.dart';
 import 'flock.dart';
+import 'flow_director.dart';
 import 'game_events.dart';
+import 'ground_blocks_atlas.dart';
+import 'ground_blocks_cast.dart';
 import 'perspective.dart';
+import 'pilot_model.dart';
+import 'skill_meter.dart';
+import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
+import 'swarm_stream.dart';
+export 'demon_planner.dart' show DemonTier, Manoeuvre;
 export 'difficulty.dart';
 export 'game_events.dart';
+export 'flow_director.dart';
 export 'perspective.dart';
+export 'pilot_model.dart';
+export 'skill_meter.dart';
 export 'swarm_policy.dart';
+export 'swarm_patterns.dart' show Squad, SquadState;
+export 'swarm_stream.dart' show SwarmState, SwarmGate, SwarmGateGeometry;
 
 // --- ground war (demon ground forces, allies, homing missiles) ---
 part 'ground_war.dart';
@@ -16,6 +30,12 @@ part 'ground_war_v4.dart'; // --- ground war v4
 
 // --- life-loss sequence (explosion, regroup, re-emergence) ---
 part 'life_loss.dart';
+
+// --- cinematic flow (one transition clock, the pursued flock, skip) ---
+part 'model_flow.dart';
+
+// --- the sentinel final rush (demon-intelligence design §6) ---
+part 'sentinel_rush.dart';
 
 enum RunMode {
   title,
@@ -62,6 +82,7 @@ class Demon {
     this.isEscort = false,
     this.archetype = EnemyArchetype.ordinary,
     this.lastStandEligible = false,
+    this.rushRoll = 1,
     this.shieldMax = 0,
     this.armorMax = 0,
   }) : hp = maxHp,
@@ -81,6 +102,19 @@ class Demon {
   int shield, armor;
   double attackLeft = 2.4, volleyLeft = 1.5;
   double evadeLeft = 0, evadeCooldown = 0, evadeOffset = 0;
+
+  /// demon-intelligence: a hunter's climb (negative: up), the model clock
+  /// of its next planner decision (-1: not yet staggered) and its last
+  /// planned manoeuvre (hysteresis).
+  double evadeLift = 0, planAt = -1;
+  Manoeuvre lastPlan = Manoeuvre.hold;
+
+  /// A hunter's thread dive (design §5): today's straight dive line x,
+  /// the weave offset from it, its lateral velocity and the chosen one.
+  double threadLine = 0, threadOffset = 0, threadVx = 0, threadTarget = 0;
+
+  /// Pincer side of the next tell (-1 left of the forecast, 1 right).
+  int pincer = 0;
   double get evadeTimer => evadeLeft;
   set evadeTimer(double value) => evadeLeft = value;
   double get defenseFraction =>
@@ -94,8 +128,32 @@ class Demon {
   double entranceDelay = .35, entranceDuration = 1.8, entranceStartY = -48;
   final bool lastStandEligible;
   bool lastStand = false, rushing = false;
-  double get lastStandTellProgress =>
-      lastStand ? (1 - telegraph / .9).clamp(0, 1) : 0;
+
+  /// Progress (0..1) through the rush tell: rally then lock.
+  double get lastStandTellProgress {
+    if (!lastStand) return 0;
+    final double p = switch (rushPhase) {
+      RushPhase.rally => rushClock / rushTell,
+      RushPhase.lock => (RushTuning.rally + rushClock) / rushTell,
+      RushPhase.rush => 1,
+      _ => 0,
+    };
+    return p.clamp(0.0, 1.0);
+  }
+
+  // --- the sentinel final rush (sentinel_rush.dart) ---
+  /// The birth roll (one draw of the run's random): eligible when under
+  /// the difficulty's rush chance (+ up to 0.10 with skill).
+  double rushRoll;
+  RushPhase rushPhase = RushPhase.none;
+
+  /// Pass (1-based), rush shield, phase clock (hostile-rate s), the tell
+  /// length (rally + lock), stagger left, heading (rad from straight
+  /// down) and whether this pass touched the ship.
+  int rushPass = 0, rushShield = 0, rushShieldMax = 0;
+  double rushClock = 0, rushTell = 1.1, rushStagger = 0, rushHeading = 0;
+  double rushHeading0 = 0;
+  bool rushContact = false;
   double rushVx = 0, rushVy = 0;
   double _lastStandX = 0, _lastStandY = 0;
   final double seed;
@@ -130,6 +188,23 @@ class Demon {
   /// point (a foreshadowed sentinel leaves from its silhouette).
   double? entryX, entryY, entryN, entryScale;
 
+  // --- continuous swarm (swarm_stream.dart, swarm_patterns.dart) ---
+  /// Where this creature is in the swarm's life, published with [nearness]
+  /// and [altitude] for the fog (fog-restoration decides how to veil it).
+  SwarmState swarmState = SwarmState.present;
+
+  /// Its skein (-1: none, a stray such as a hand-built fixture) and the
+  /// gate its swoop leaves from.
+  int skein = -1;
+  SwarmGate? gate;
+
+  /// Reserve point (world X, Z, lift) and its Lévy drift in the deep fog.
+  double reserveX = 0, reserveZ = 0, reserveLift = 0;
+  LevyDrift? drift;
+
+  /// Seconds its entrance holds where it is (a cohort's lull at the front).
+  double entranceHold = 0;
+
   /// Shot hitbox half extents, set with [scale] by the depth pass; the
   /// flat legacy box until then.
   late double hitHalfWidth = isLarge ? 27.0 : 16.0;
@@ -159,8 +234,12 @@ class SentinelForeshadow {
 
   bool get visible => opacity > 0;
 
-  /// Places the silhouette on its path at [clock] ([shipX]: parallax).
-  void place(double shipX) {
+  /// Seconds the silhouette takes to fade in through the fog.
+  static const fadeIn = 3.0;
+
+  /// Places the silhouette on its path at [clock]. World-anchored
+  /// (fog-restoration): the ship's position plays no part.
+  void place() {
     final g = growth.clamp(0.0, 1.0);
     final tau = clock * 2 * math.pi / period;
     // Linger at the lobe ends.
@@ -168,7 +247,7 @@ class SentinelForeshadow {
     final a = 96 + 24 * g;
     final nc = .08 + .2 * g;
     nearness = nc + .03 * math.sin(tp);
-    x = 180 + a * math.cos(tp) - (shipX - 180) * .12;
+    x = 180 + a * math.cos(tp);
     // Low in the sky, its lower half in the horizon band: a darker patch
     // of the fog, partly cut by it (research §5).
     y = 150 - 14 * g + a / 2 * math.sin(2 * tp) * .22;
@@ -200,6 +279,10 @@ class Shot {
 
   /// Regroup drain: seconds until this hostile shot fizzles (life loss).
   double? fizzleIn;
+
+  /// Seconds since it was fired (demon-intelligence: the planner's
+  /// perception delay ignores younger shots).
+  double age = 0;
 }
 
 class Pickup {
@@ -303,9 +386,14 @@ class Carrier {
 
 /// Pure fixed-step simulation; renderers and input never change its clock.
 class ArcadeModel {
-  ArcadeModel({int seed = 1982})
+  ArcadeModel({this.seed = 1982})
     : random = math.Random(seed),
-      flock = ArrivalFlock(seed: seed);
+      flock = SwarmFlock(seed: seed),
+      stream = SwarmStream(seed: seed);
+
+  /// The run seed (presentation streams such as the easter eggs derive
+  /// from it; the simulation uses [random]).
+  final int seed;
   static const width = 360.0, height = 520.0, shipY = 477.0;
   final math.Random random;
   RunMode mode = RunMode.title;
@@ -318,6 +406,70 @@ class ArcadeModel {
   final List<FallingPart> fallingParts = [];
   double crateSpawnTimer = 0.0;
   final List<String> events = [];
+
+  // --- demon intelligence (demon-intelligence design §2): the forecast
+  // of the player that hunters and the sentinel rush aim at.
+  final PilotModel pilot = PilotModel();
+
+  /// The tiers' brains (design §3-§4); false restores the pre-W4 swarm
+  /// (a fixture and calibration flag). Route 0 is unchanged either way.
+  bool intelligence = true;
+  bool get _intel => intelligence && cycle >= 1;
+
+  /// The energy planner (its own PRNG: never draws from [random]).
+  late final DemonPlanner planner = DemonPlanner(seed);
+  final PlanState _plan = PlanState();
+
+  /// Planner decisions are 10 Hz per creature, staggered by seed, at most
+  /// [maxPlanDecisions] per frame (the rest wait their turn).
+  static const planRate = 10.0, maxPlanDecisions = 6;
+  int planDecisionsThisFrame = 0;
+
+  static DemonTier tierOf(Demon d) => d.isLarge
+      ? DemonTier.sentinel
+      : d.elite
+      ? DemonTier.hunter
+      : (d.kind >= 2 || d.maxHp >= 3)
+      ? DemonTier.skirmisher
+      : DemonTier.drone;
+
+  /// The skill level hunters react to (design §7): derived from these
+  /// counters only (never score, power-ups or time survived).
+  final SkillMeter skill = SkillMeter();
+  double get skillLevel => _intel ? skill.level : 0;
+  int shotsFired = 0, shotsHit = 0, nearMisses = 0;
+
+  /// The brood remarks once per sector when the skill level rises through
+  /// [adaptingAt].
+  static const adaptingAt = .65;
+  bool _adaptedThisSector = false;
+  double _lastSkill = SkillMeter.initial;
+
+  void _resetSkill() {
+    skill
+      ..cap = policy.skillCap
+      ..reset();
+    shotsFired = shotsHit = nearMisses = 0;
+    _lastSkill = skill.level;
+  }
+
+  void _observeSkill(double dt) {
+    skill.observe(
+      dt,
+      shotsFired: shotsFired,
+      shotsHit: shotsHit,
+      nearMisses: nearMisses,
+    );
+    final s = skill.level;
+    if (_intel &&
+        !_adaptedThisSector &&
+        _lastSkill < adaptingAt &&
+        s >= adaptingAt) {
+      _adaptedThisSector = true;
+      _queueGameEvent(GameEventNames.broodAdapting, {'skill': s});
+    }
+    _lastSkill = s;
+  }
 
   // --- ground war state (see ground_war.dart) ---
   final GroundWar ground = GroundWar();
@@ -411,7 +563,76 @@ class ArcadeModel {
     d.targetX = d._prepLead
         ? (shipX + shipVx * 0.22).clamp(24.0, width - 24.0)
         : shipX;
+    // --- demon intelligence: a hunter aims at the forecast from skill
+    // 0.4 (and always in a pincer, either side of it). Fixed from here.
+    if (_intel &&
+        d.elite &&
+        !d.isLarge &&
+        (d.pincer != 0 || skillLevel >= .4)) {
+      final rate = policy.hostileRate > 0 ? policy.hostileRate : 1;
+      final tau = _diveEta(d) - divePrepBeat / rate;
+      d.targetX = (pilot.aim(tau) + d.pincer * pincerSpread).clamp(
+        24.0,
+        width - 24.0,
+      );
+    }
+    d.pincer = 0;
   }
+
+  /// Pincer aims sit this far either side of the forecast (design §5).
+  static const pincerSpread = 34.0;
+
+  /// At skill ≥ 0.5, with probability 0.35 (s − 0.5) / 0.5 (the planner's
+  /// PRNG), a second ready hunter joins [d]'s dive.
+  Demon? _pincerPartner(Demon d, List<Demon> ready) {
+    if (!_intel || !d.elite || d.isLarge) return null;
+    final s = skillLevel;
+    if (s < .5) return null;
+    final partner = ready
+        .where((o) => o.elite && !o.isLarge && !identical(o, d))
+        .firstOrNull;
+    if (partner == null) return null;
+    return planner.roll() < .35 * (s - .5) / .5 ? partner : null;
+  }
+
+  /// The thread dive (design §5): today's straight line toward the fixed
+  /// aim, plus a weave from it chosen at 10 Hz from {−110, 0, +110} ·
+  /// tempo against the player's shots, |offset| ≤ 60, ≤ 900 u/s².
+  void _threadDive(Demon d, double dt, double fall) {
+    final k = policy.hostileRate * 2.1;
+    d.threadLine += (d.targetX - d.threadLine) * dt * k;
+    if (_planDue(d)) {
+      final cfg = PlannerConfig.hunter(skillLevel);
+      d.threadTarget = DemonPlanner.threadLateral(
+        x: d.x,
+        y: d.y,
+        vy: fall,
+        lineAhead:
+            d.threadLine + (d.targetX - d.threadLine) * (1 - math.exp(-k * .3)),
+        lateral: threadLateral * policy.swarmTempo(route: cycle),
+        radius: d.hitHalfWidth + 3,
+        delay: cfg.delay,
+        foresight: cfg.foresight,
+        shots: shots,
+        current: d.threadTarget,
+      );
+    }
+    d.threadVx += (d.threadTarget - d.threadVx).clamp(
+      -threadAccel * dt,
+      threadAccel * dt,
+    );
+    var off = d.threadOffset + d.threadVx * dt;
+    if (off.abs() > threadReach) {
+      off = off.sign * threadReach;
+      d.threadVx = 0;
+    }
+    d.threadOffset = off;
+    d.x = (d.threadLine + off).clamp(18.0, width - 18.0);
+  }
+
+  /// Thread-dive bounds: lateral speed (u/s, × tempo), acceleration
+  /// (u/s²) and the reach from the straight line (u).
+  static const threadLateral = 110.0, threadAccel = 900.0, threadReach = 60.0;
 
   Carrier? boss;
   Carrier? wreckBoss;
@@ -485,6 +706,43 @@ class ArcadeModel {
       defeatActive ? clock + (defeatDuration - defeatTimer) : clock;
   double invulnerable = 0, transitionLeft = 0;
   static const storyReadingTime = 1 / 3;
+
+  // --- cinematic flow (model_flow.dart, flow_director.dart) ---
+  /// The transition's one clock; presentation reads its envelopes.
+  final flow = FlowDirector();
+
+  /// Reduced motion (accessibility): the same beats, shorter, no tilt.
+  bool reducedMotion = false;
+
+  /// Seconds a scheduled message slot asks Pursuit to grow (0-2; set by the
+  /// presenter before travel starts, rounded up to whole beats).
+  double slotExtra = 0;
+
+  /// Screen direction the pursued flock flies (-1 left, 1 right).
+  int flowDirection = 1;
+
+  /// The cosmetic flock of the transition (never in [demons]).
+  final List<FlowMember> flowFlock = [];
+  double _flowBase = 0;
+  bool _skipPending = false;
+
+  /// Skip a sector transition (tap, Space, Enter): the Descent starts on
+  /// the next frame, or when the pickup grace ends. False: nothing to skip.
+  bool skipTransition() => _skipTransition();
+
+  /// A skip is waiting for the end of the Rout.
+  bool get skipPending => _skipPending;
+
+  /// Ends the current (non-carrier) sector at once, as its last kill would:
+  /// the Rout, Pursuit and Descent follow (console and tests).
+  void endSector() {
+    if (boss != null || !combat) return;
+    wave = wavesPerLevel;
+    demons.clear();
+    incoming.clear();
+    _completeWave();
+  }
+  // --- end cinematic flow
   static const arrivalHintDuration = 4.5;
   double transitionDuration = arrivalHintDuration;
   static const powerDuration = 9.0;
@@ -548,33 +806,9 @@ class ArcadeModel {
   bool get waveTransition => presentationMode == RunMode.transition && wave > 1;
   double get transitionProgress =>
       (1 - transitionLeft / transitionDuration).clamp(0, 1);
-  String get nextLevelName => const [
-    'KRYBOR',
-    'RINGFALL',
-    'EMBER MOON',
-    'THE HOLLOW',
-    'THE CARRIER',
-  ][nextLevel - 1];
-  String get levelName => const [
-    'KRYBOR',
-    'RINGFALL',
-    'EMBER MOON',
-    'THE HOLLOW',
-    'THE CARRIER',
-  ][level - 1];
-  String get banner => switch (presentationMode) {
-    RunMode.victory => 'CARRIER DESTROYED',
-    RunMode.salvage => 'COLLECT SALVAGE',
-    RunMode.levelClear => '$levelName SECURED',
-    RunMode.travel => 'APPROACHING $nextLevelName',
-    _ =>
-      waveTransition
-          ? 'WAVE $wave / $wavesPerLevel'
-          : 'LEVEL ${level.toString().padLeft(2, '0')} · $levelName',
-  };
-
   void start({Difficulty difficulty = Difficulty.normal}) {
     this.difficulty = difficulty;
+    _resetSkill(); // --- demon intelligence
     ranked = true;
     lives = policy.startingLives;
     medals = 0;
@@ -604,6 +838,7 @@ class ArcadeModel {
     _accumulator = 0;
     events.clear();
     _resetLifeLoss();
+    _flowEnd(); // --- cinematic flow
     ground.resetRun(); // --- ground war
     _beginLevel();
   }
@@ -758,6 +993,7 @@ class ArcadeModel {
     // A recorded medal always belongs to an already completed route.
     if (restoredMedals > route) return false;
     difficulty = restoredDifficulty;
+    _resetSkill(); // --- demon intelligence: a restored run starts at 0.3
     ranked = true;
     cycle = route;
     level = sector;
@@ -804,6 +1040,8 @@ class ArcadeModel {
 
   void _beginLevel() {
     wave = 1;
+    pilot.reset(shipX); // --- demon intelligence
+    _adaptedThisSector = false;
     clearedLevel = null;
     wreckBoss = null;
     boss = level == 5 ? _newCarrier() : null;
@@ -819,18 +1057,29 @@ class ArcadeModel {
     events.add(boss == null ? 'level' : 'boss');
   }
 
-  void _spawnWave({bool fromCheckpoint = false}) {
+  /// Starts wave [wave]. [continuous]: the next wave of a sector whose
+  /// stragglers fell before any of it was sighted; it streams in from the
+  /// fog while combat goes on (no transition phase, continuous-swarm).
+  void _spawnWave({bool fromCheckpoint = false, bool continuous = false}) {
     _spawnedFromCheckpoint = fromCheckpoint;
     demons.clear();
-    shots.clear();
-    incoming.clear(); // --- wave pressure
-    _fire = 0;
-    wingSide = -1;
-    wingRecoil[0] = wingRecoil[1] = 0;
-    noseFlash = 0;
+    if (continuous) {
+      _fizzleHostileShots();
+    } else {
+      shots.clear();
+      _fire = 0;
+      wingSide = -1;
+      wingRecoil[0] = wingRecoil[1] = 0;
+      noseFlash = 0;
+    }
+    incoming.clear(); // --- continuous swarm
+    _pendingSkeins.clear();
+    _squads.clear();
+    _squadMembers.clear();
     _resetWaveEnemies();
     _groundBeginWave(); // --- ground war
     flock.clear(); // --- atmosphere-and-swarms
+    stream.startCohort();
     if (boss == null) {
       final (roster, count) = _buildRoster(
         wave,
@@ -838,13 +1087,18 @@ class ArcadeModel {
       );
       _waveRoster = count;
       demons.addAll(roster);
-      _launchFlock(roster, wave);
+      _releaseRoster(roster, wave, streamed: continuous);
+      _bornGroupsIntoReserve();
+    } else {
+      _reserveGroups.clear();
     }
     if (boss == null) _updateDemons(0);
-    _enterPhase(
-      RunMode.transition,
-      wave > 1 ? 1.4 + storyReadingTime : arrivalHintDuration,
-    );
+    if (!continuous) {
+      _enterPhase(
+        RunMode.transition,
+        wave > 1 ? 1.4 + storyReadingTime : arrivalHintDuration,
+      );
+    }
     events.add('checkpoint');
   }
 
@@ -910,9 +1164,9 @@ class ArcadeModel {
         armorMax: large
             ? (archetype == EnemyArchetype.armoredSentinel ? 4 : 2) + cycle ~/ 2
             : 0,
-        lastStandEligible:
-            large &&
-            random.nextDouble() < (difficulty == Difficulty.easy ? .15 : .25),
+        // One draw, as before (the random sequence is unchanged): the
+        // rush chance is decided against it when the rush would trigger.
+        rushRoll: large ? random.nextDouble() : 1,
       );
       if (large) {
         demon.entranceProgress = 0;
@@ -943,32 +1197,137 @@ class ArcadeModel {
     return (roster, count);
   }
 
-  // --- wave pressure -------------------------------------------------------
-  // When a wave is down to its last few (all reinforcements in, no sentinel
-  // waiting), the next wave's roster is born early and creeps out of the
-  // horizon fog: visible, not yet targetable, silent. Finishing the
-  // stragglers first lets it settle during the usual short release; a
-  // player who lingers meets it in the fight. Sizes, HP and the elite
-  // budget are exactly the next wave's own (plan/difficulty-calibration.md).
+  // --- continuous swarm ----------------------------------------------------
+  // (openspec/changes/continuous-swarm design §1-§2; generalises the old
+  // wave pressure.) A wave stays the accounting unit: its roster, finite
+  // groups, escort and elite budget are exactly as calibrated
+  // (plan/difficulty-calibration.md). It reaches the screen as a stream of
+  // skeins out of the fog, and when it is down to its last few (all
+  // reinforcements in, no sentinel), the next wave's first skeins rise out
+  // of the fog while the stragglers still fight. There is no transition
+  // phase between the waves of a sector: an early finish holds the next
+  // wave at the fog front for a short lull (the release beat), a lingering
+  // player meets it in the fight. Timing accelerates with a fast clear
+  // (q, capped per difficulty, relaxed after a lost life), content never.
 
-  /// The next wave, holding in the distance.
+  /// The skein scheduler (own PRNG: never draws from [random]).
+  final SwarmStream stream;
+
+  /// The next wave (cohort c + 1) while it approaches: a read-only view
+  /// for the scene. Its first skeins fly a slow hold path toward the fog
+  /// front; the rest wait in reserve until it merges.
   final List<Demon> incoming = [];
 
   /// Seconds (hostile rate) before [incoming] joins the fight, and the full
-  /// approach length.
+  /// approach length A = incomingSeconds · q.
   double incomingLeft = 0, incomingTotal = 0;
   int _incomingRoster = 0, _incomingOrdinal = 0, _incomingElites = 0;
 
   /// How far (entrance progress) an approaching wave creeps while it holds.
-  static const incomingHold = .22;
+  static const incomingHold = .6;
+
+  /// Approach order of the incoming cohort's approaching skeins (skein id
+  /// to index) and their count: their approaches start staggered over the
+  /// first half of the clock, so the cohort rises out of the fog skein by
+  /// skein instead of as one block.
+  final Map<int, int> _incomingOrder = {};
+  int _incomingApproach = 1;
+
+  /// How far [d] of the incoming cohort has crept toward the fog front.
+  double _holdOf(Demon d) {
+    final i = _incomingOrder[d.skein] ?? 0;
+    final start = .5 * i / math.max(1, _incomingApproach);
+    final local = ((incomingProgress - start) / (1 - start)).clamp(0.0, 1.0);
+    return incomingHold * _smootherstep(local);
+  }
+
+  /// Screen position and nearness of [d]'s reserve point with its drift.
+  (double, double, double) _reservePoint(Demon d) {
+    final drift = d.drift;
+    final z = d.reserveZ + (drift?.z ?? 0);
+    final n = SwarmFlock.nearOf(z).clamp(.08, .22);
+    final x = d.reserveX + (drift?.x ?? 0);
+    return (
+      (180 + x * n).clamp(24.0, width - 24.0),
+      Perspective.horizonY - d.reserveLift * (n / .2),
+      n,
+    );
+  }
 
   /// Entrance length when the approaching wave finally closes in.
-  static const incomingCloseIn = .9;
+  static const incomingCloseIn = 1.1;
+
+  /// A released skein's swoop out of the fog (s, hostile clock).
+  static const swoopSeconds = 1.6;
+
+  /// A diver's swoop back from a deep gate (s at hostile rate 1).
+  static const reentrySeconds = 1.1;
+
+  /// At most this many reserve members are drawn (further skeins show
+  /// their leaders only; design §2.1).
+  static const reserveDrawn = 18;
 
   /// 0 when the next wave appears, 1 when it arrives.
   double get incomingProgress => incomingTotal <= 0
       ? 0
       : (1 - incomingLeft / incomingTotal).clamp(0.0, 1.0);
+
+  /// Reinforcement groups of the current wave, born at its start and
+  /// waiting as veiled shapes in the deep fog until admitted (in order).
+  final List<List<Demon>> _reserveGroups = [];
+
+  /// Roster skeins of the current wave not yet released: in [demons]
+  /// (counted as today's whole roster is), parked in the reserve.
+  final List<List<Demon>> _pendingSkeins = [];
+  int _skeinIds = 0;
+
+  /// Total ordinary HP of the current wave (roster + groups), for q.
+  int _cohortHp = 0;
+  int _streamLives = -1;
+
+  /// Everything waiting in the deep fog: untargetable, silent, no gear.
+  Iterable<Demon> get swarmReserve sync* {
+    for (final g in _reserveGroups) {
+      yield* g;
+    }
+    for (final s in _pendingSkeins) {
+      yield* s;
+    }
+    for (final d in incoming) {
+      if (d.swarmState == SwarmState.reserve) yield d;
+    }
+  }
+
+  /// The sector's final wave (or its carrier) is under way: no cohort will
+  /// be sighted after it, so the fog stages nothing (playtest-fixes). What
+  /// this wave still holds back (its later roster skeins, its reinforcement
+  /// groups) waits unseen and leaves the fog only when it is admitted.
+  bool get finalWave => boss != null || level == 5 || wave >= wavesPerLevel;
+
+  /// What the fog shows waiting: the drawn reserve plus the incoming
+  /// cohort's approaching skeins (both empty during [finalWave]).
+  Iterable<Demon> get fogStaged sync* {
+    yield* drawnReserve;
+    for (final d in incoming) {
+      if (d.swarmState != SwarmState.reserve) yield d;
+    }
+  }
+
+  /// The reserve members the scene draws: whole skeins up to
+  /// [reserveDrawn] members, then one leader per further skein. None during
+  /// the [finalWave]: nothing more comes out of the fog after it.
+  List<Demon> get drawnReserve {
+    if (finalWave) return const [];
+    final out = <Demon>[];
+    final seen = <int>{};
+    for (final d in swarmReserve) {
+      if (out.length < reserveDrawn || seen.add(d.skein)) {
+        seen.add(d.skein);
+        out.add(d);
+      }
+    }
+    return out;
+  }
 
   bool get _pressureEligible =>
       combat &&
@@ -980,6 +1339,319 @@ class ArcadeModel {
       // One sentinel at a time: the next wave (which may bring its own)
       // waits until this wave's sentinel has fallen.
       !demons.any((d) => d.isLarge);
+
+  /// Splits the ordinary members of [roster] into skeins (column bands of
+  /// 3-6) with seeded gates on alternating sides.
+  List<List<Demon>> _skeinsOf(List<Demon> roster, int forWave, {int salt = 0}) {
+    final members = [
+      for (final d in roster)
+        if (!d.isLarge) d,
+    ];
+    final split = SwarmStream.splitRoster([for (final d in members) d.homeX]);
+    final rng = stream.rngFor(
+      sector: level,
+      route: cycle,
+      wave: forWave,
+      salt: salt,
+    );
+    final gates = SwarmStream.gates(split.length, rng);
+    final out = <List<Demon>>[];
+    for (var s = 0; s < split.length; s++) {
+      final id = _skeinIds++;
+      final skein = [for (final i in split[s]) members[i]];
+      for (final d in skein) {
+        d
+          ..skein = id
+          ..gate = gates[s];
+      }
+      _placeReserve(skein, gates[s], s, rng);
+      out.add(skein);
+    }
+    return out;
+  }
+
+  /// Gives [skein] its reserve point in the deep fog (under the far banks,
+  /// n 0.10-0.20, on its gate's side) and each member a Lévy drift.
+  void _placeReserve(
+    List<Demon> skein,
+    SwarmGate gate,
+    int index,
+    math.Random rng,
+  ) {
+    final n = .1 + .1 * rng.nextDouble();
+    final cx =
+        gate.side * (40 + 70 * rng.nextDouble()) + 30 * (rng.nextDouble() - .5);
+    final cz = SwarmFlock.worldZ(n);
+    final lift = 6 + 26 * rng.nextDouble();
+    for (var i = 0; i < skein.length; i++) {
+      final d = skein[i];
+      d
+        ..reserveX = cx / n * .5 + (i - skein.length / 2) * 34
+        ..reserveZ = cz + (i.isEven ? -1 : 1) * 40.0 * (i ~/ 2)
+        ..reserveLift = lift + (i % 3) * 5
+        ..drift = LevyDrift(math.Random(rng.nextInt(1 << 30)));
+    }
+  }
+
+  /// Draws the reserve where it waits (presentation for the fog: nearness,
+  /// a little altitude, position); stepped at the model rate.
+  void _updateReserve(double dt) {
+    for (final d in swarmReserve) {
+      d.drift?.update(dt);
+      final (x, y, n) = _reservePoint(d);
+      d
+        ..nearness = n
+        ..x = x
+        ..y = y
+        ..altitude = 0
+        ..scale = Perspective.scaleOf(n, angry: d.angry);
+    }
+  }
+
+  /// The roster of a fresh wave: wave 1, a checkpoint or a sector start
+  /// keeps its entrance (every skein released, its own stagger); a
+  /// [streamed] wave releases its first skein now, the rest by the gap.
+  void _releaseRoster(
+    List<Demon> roster,
+    int forWave, {
+    required bool streamed,
+  }) {
+    final skeins = _skeinsOf(roster, forWave);
+    for (var s = 0; s < skeins.length; s++) {
+      final skein = skeins[s];
+      if (!streamed) {
+        for (final d in skein) {
+          d.swarmState = d.entering
+              ? SwarmState.approaching
+              : SwarmState.present;
+        }
+        _formSquad(skein);
+        _launchFlock(skein, forWave, gate: skein.first.gate);
+      } else if (s == 0) {
+        _releaseSkein(skein, forWave);
+      } else {
+        _park(skein);
+        _pendingSkeins.add(skein);
+      }
+    }
+    stream.releaseLeft = policy.skeinGap;
+  }
+
+  void _park(List<Demon> skein) {
+    for (final d in skein) {
+      d
+        ..swarmState = SwarmState.reserve
+        ..entranceProgress = 0
+        ..entranceElapsed = 0
+        ..entranceHold = 0
+        ..arrivesFromDistance = true;
+    }
+  }
+
+  /// A skein leaves the reserve and swoops into the fight from where it
+  /// waited; untargetable until it lands.
+  void _releaseSkein(
+    List<Demon> skein,
+    int forWave, {
+    double duration = swoopSeconds,
+  }) {
+    _updateReserve(0);
+    for (var i = 0; i < skein.length; i++) {
+      final d = skein[i];
+      final n = d.nearness > 0 ? d.nearness : (d.gate?.nearness ?? .2);
+      d
+        ..swarmState = SwarmState.approaching
+        ..arrivesFromDistance = true
+        ..entranceProgress = 0
+        ..entranceElapsed = 0
+        ..entranceHold = 0
+        ..entranceDelay = i * .07
+        ..entranceDuration = duration
+        ..entryX = d.x
+        ..entryY = d.y
+        ..entryN = n
+        ..drift = null;
+    }
+    _formSquad(skein);
+    _launchFlock(skein, forWave, gate: skein.first.gate);
+  }
+
+  /// Reinforcement groups of the current wave are born into the reserve at
+  /// its start, in admission order, so they are visible in the fog. Their
+  /// births use the wave's ordinal and elite budget (after the roster).
+  void _bornGroupsIntoReserve() {
+    _reserveGroups.clear();
+    var hp = 0;
+    for (final d in demons) {
+      if (!d.isLarge) hp += d.maxHp;
+    }
+    if (boss == null) {
+      final rng = stream.rngFor(
+        sector: level,
+        route: cycle,
+        wave: wave,
+        salt: 101,
+      );
+      for (var f = 0; f < flocksPlanned; f++) {
+        final count = policy.reinforcementSize(route: cycle, flock: f);
+        final group = <Demon>[];
+        for (var i = 0; i < count; i++) {
+          final profile = _ordinaryProfile();
+          group.add(
+            Demon(
+              width / 2,
+              Perspective.horizonY,
+              profile.$1,
+              profile.$2,
+              rng.nextDouble() * 8,
+              elite: profile.$3,
+            ),
+          );
+          hp += profile.$2;
+        }
+        // One or two skeins per group, each with its own reserve point.
+        final parts = SwarmStream.splitGroup(count);
+        final gates = SwarmStream.gates(parts.length, rng);
+        for (var p = 0; p < parts.length; p++) {
+          final skein = [for (final i in parts[p]) group[i]];
+          final id = _skeinIds++;
+          for (final d in skein) {
+            d
+              ..skein = id
+              ..gate = gates[p];
+          }
+          _park(skein);
+          _placeReserve(skein, gates[p], f * 2 + p, rng);
+        }
+        _reserveGroups.add(group);
+      }
+    }
+    _cohortHp = hp;
+    _updateReserve(0);
+  }
+
+  /// Leftover hostile shots dissolve at a merge (0.25 s), never cleared
+  /// silently; pickups keep falling.
+  void _fizzleHostileShots() {
+    final hostile = [
+      for (final s in shots)
+        if (s.hostile && s.fizzleIn == null) s,
+    ];
+    for (var i = 0; i < hostile.length; i++) {
+      hostile[i].fizzleIn = .25 * (i + 1) / hostile.length;
+    }
+    if (hostile.isNotEmpty) {
+      events.add('shotsFizzle');
+      _queueGameEvent(GameEventNames.shotsFizzle, {'count': hostile.length});
+    }
+  }
+
+  void _updateFizzles(double dt) {
+    if (lifeLossPhase != LifeLossPhase.none) return; // its own drain
+    for (final s in shots) {
+      final f = s.fizzleIn;
+      if (!s.hostile || f == null) continue;
+      s.fizzleIn = f - dt;
+      if (s.fizzleIn! <= 0) {
+        shotFizzles.add(
+          ShotFizzle(s.x, s.y, sentinel: s.kind == ShotKind.sentinel),
+        );
+        s.y = height + 40;
+      }
+    }
+  }
+
+  /// The stream inside a wave: releases roster skeins by the gap, keeps the
+  /// rubber band's clock and the reserve drifting.
+  void _updateStream(double dt) {
+    stream.cohortClock += dt;
+    _updateSquads(dt);
+    if (_streamLives >= 0 && lives < _streamLives) stream.lifeLost();
+    _streamLives = lives;
+    _updateFizzles(dt);
+    if (_pendingSkeins.isNotEmpty &&
+        !stream.drained &&
+        lifeLossPhase == LifeLossPhase.none) {
+      stream.releaseLeft -= dt * policy.hostileRate;
+      var live = 0;
+      var flying = false;
+      for (final d in demons) {
+        if (d.isLarge) continue;
+        if (!d.entering) {
+          live++;
+        } else if (d.swarmState == SwarmState.approaching) {
+          flying = true;
+        }
+      }
+      if (stream.releaseLeft <= 0 || (live == 0 && !flying)) {
+        _releaseSkein(_pendingSkeins.removeAt(0), wave);
+        stream.releaseLeft = SwarmStream.skeinGap(
+          policy.skeinGap,
+          live: live,
+          roster: _waveRoster,
+        );
+      }
+    }
+    _updateReserve(dt);
+  }
+
+  /// Publishes each creature's swarm state from the simulation (the fog and
+  /// the shadows read it; W4 and W5b build on it).
+  void _publishSwarmStates() {
+    for (final d in demons) {
+      if (d.isLarge) {
+        d.swarmState = d.waitingForEscort
+            ? SwarmState.reserve
+            : d.entering
+            ? SwarmState.approaching
+            : (d.dive > 0 || d.rushing)
+            ? SwarmState.diving
+            : SwarmState.present;
+        continue;
+      }
+      if (d.swarmState == SwarmState.reserve) continue;
+      if (d.entering) {
+        if (d.swarmState != SwarmState.reentering) {
+          d.swarmState = SwarmState.approaching;
+        }
+      } else if (d.dive > 0 || d.rushing) {
+        d
+          ..swarmState = SwarmState.diving
+          ..altitude = _altitudeOf(d);
+      } else {
+        d.altitude = _altitudeOf(d);
+        if (d.swarmState != SwarmState.present) {
+          d
+            ..entryX = null
+            ..entryY = null
+            ..entryN = null;
+        }
+        d.swarmState = SwarmState.present;
+      }
+    }
+  }
+
+  /// Occupancy guard (design §2.3): flying and present ordinary members
+  /// never exceed the wave's roster plus its largest group (or escort).
+  int get swarmOccupancy =>
+      demons
+          .where((d) => !d.isLarge && d.swarmState != SwarmState.reserve)
+          .length +
+      incoming
+          .where((d) => !d.isLarge && d.swarmState == SwarmState.approaching)
+          .length;
+
+  int get swarmOccupancyBound {
+    if (boss != null) return maxActiveDemons; // the carrier's own minion cap
+    final group = policy.reinforcementSize(
+      route: cycle,
+      flock: math.max(0, flocksPlanned - 1),
+    );
+    final escort = demons.any((d) => d.isEscort || d.isLarge)
+        ? plannedEscortSize
+        : 0;
+    return math.max(_waveRoster, _incomingRoster) + math.max(group, escort);
+  }
 
   void _updateIncoming(double dt) {
     if (incoming.isEmpty) {
@@ -993,16 +1665,19 @@ class ArcadeModel {
     if (lifeLossPhase == LifeLossPhase.none && combat) {
       incomingLeft -= dt * policy.hostileRate;
     }
-    final p = incomingHold * incomingProgress;
     for (final d in incoming) {
-      if (d.isLarge) continue;
+      if (d.isLarge || d.swarmState == SwarmState.reserve) continue;
+      final p = _holdOf(d);
       final (tx, ty) = _targetFormationPosition(d);
       d.entranceProgress = p;
       _placeEntering(d, _smootherstep(p), tx, ty, 0, holding: true);
     }
-    if (incomingLeft <= 0) _mergeIncoming(forced: true);
+    if (incomingLeft <= 0) _mergeCohort(forced: true);
   }
 
+  /// The next cohort is sighted: its roster is born (with exactly its own
+  /// ordinal and elite budget), its first half of skeins start a slow
+  /// approach, the rest wait in reserve; the approach takes A = T · q.
   void _prepareIncoming() {
     final ordinal = _ordinaryBirthOrdinal, elites = _eliteBirths;
     _ordinaryBirthOrdinal = 0;
@@ -1013,56 +1688,302 @@ class ArcadeModel {
     _incomingElites = _eliteBirths;
     _ordinaryBirthOrdinal = ordinal;
     _eliteBirths = elites;
-    for (final d in roster) {
-      if (d.isLarge) continue;
-      d.entranceProgress = 0;
-      d.entranceElapsed = 0;
-      d.arrivesFromDistance = true;
+    final skeins = _skeinsOf(roster, wave + 1);
+    final approach = (skeins.length / 2).ceil();
+    _incomingOrder.clear();
+    _incomingApproach = approach;
+    for (var s = 0; s < skeins.length; s++) {
+      if (s < approach) {
+        _incomingOrder[skeins[s].first.skein] = s;
+        for (final d in skeins[s]) {
+          final (x, y, n) = _reservePoint(d);
+          d
+            ..entryX = x
+            ..entryY = y
+            ..entryN = n
+            ..swarmState = SwarmState.approaching
+            ..entranceProgress = 0
+            ..entranceElapsed = 0
+            ..arrivesFromDistance = true;
+        }
+        _formSquad(skeins[s]);
+        _launchFlock(skeins[s], wave + 1, gate: skeins[s].first.gate);
+      } else {
+        _park(skeins[s]);
+      }
     }
     incoming.addAll(roster);
-    _launchFlock(roster, wave + 1);
-    incomingTotal = incomingLeft = policy.incomingSeconds;
+    skill.cohortCleared(
+      expected: SwarmStream.expectedClear(_cohortHp),
+      actual: stream.cohortClock,
+    ); // --- demon intelligence
+    final q = stream.paceNext(cohortHp: _cohortHp, floor: policy.paceFloor);
+    incomingTotal = incomingLeft = policy.incomingSeconds * q;
     events.add('incoming');
+    _queueGameEvent(GameEventNames.cohortSighted, {
+      'wave': wave + 1,
+      'eta': incomingTotal / policy.hostileRate,
+      'q': q,
+      'skeins': skeins.length,
+    });
   }
 
-  /// The approaching wave becomes the current one. [forced]: it reached the
-  /// fight before the stragglers fell, so combat simply goes on.
-  void _mergeIncoming({required bool forced}) {
-    final p = incomingHold * incomingProgress;
+  /// The approaching cohort becomes the current wave. [forced]: it reached
+  /// the fight before the stragglers fell, so it simply closes in beside
+  /// them. Otherwise it holds a lull at the fog front, then closes in:
+  /// no transition phase; leftover hostile shots dissolve.
+  void _mergeCohort({required bool forced}) {
+    final lull = forced ? 0.0 : SwarmStream.lull(stream.q);
     wave++;
     _resetWaveEnemies();
     _waveRoster = _incomingRoster;
     _ordinaryBirthOrdinal = _incomingOrdinal;
     _eliteBirths = _incomingElites;
+    stream.startCohort();
+    final pending = <int, List<Demon>>{};
     for (final d in incoming) {
-      if (d.isLarge) {
-        demons.add(d);
+      demons.add(d);
+      if (d.isLarge) continue;
+      if (d.swarmState == SwarmState.reserve) {
+        (pending[d.skein] ??= []).add(d);
         continue;
       }
-      // Keep the roster's own entrance (stagger and length) and resume it
-      // from where the approach held; a forced close-in is a touch slower.
-      if (forced) d.entranceDuration = incomingCloseIn;
+      // Resume the approach from where it held, over the close-in.
+      final p = _holdOf(d);
+      // The rest of the approach takes the close-in (from the fog front).
+      d.entranceDuration = incomingCloseIn / math.max(.3, 1 - p);
       d.entranceElapsed = d.entranceDelay + p * d.entranceDuration;
       d.entranceProgress = p;
-      demons.add(d);
+      d.entranceHold = lull;
     }
+    _pendingSkeins
+      ..clear()
+      ..addAll(pending.values);
+    stream.releaseLeft = lull + policy.skeinGap;
     incoming.clear();
     incomingLeft = incomingTotal = 0;
     if (!forced) {
-      // Exactly a fresh wave's start (see _spawnWave), minus the roster.
-      shots.clear();
-      _fire = 0;
-      wingSide = -1;
-      wingRecoil[0] = wingRecoil[1] = 0;
-      noseFlash = 0;
+      _fizzleHostileShots();
       _groundBeginWave(); // --- ground war
-      _updateDemons(0);
-      _enterPhase(RunMode.transition, 1.4 + storyReadingTime);
     }
+    _bornGroupsIntoReserve();
     events.add('wave');
     events.add('checkpoint');
+    _queueGameEvent(GameEventNames.cohortMerged, {
+      'wave': wave,
+      'forced': forced,
+      'lull': lull,
+    });
   }
-  // --- end wave pressure
+
+  /// A diver that left the bottom of the arena rejoins the swarm out of the
+  /// fog (design §6.2): from the deep gate on its side, a short swoop back
+  /// to its squad; untargetable and silent until it lands.
+  void _beginReentry(Demon d) {
+    final gate = d.x < width / 2 ? SwarmGate.deepLeft : SwarmGate.deepRight;
+    final y = Perspective.horizonY - 6;
+    d
+      ..swarmState = SwarmState.reentering
+      ..gate = gate
+      ..arrivesFromDistance = true
+      ..entryX = gate.screenX
+      ..entryY = y
+      ..entryN = gate.nearness
+      ..entranceProgress = 0
+      ..entranceDuration = reentrySeconds / policy.hostileRate
+      ..entranceDelay = 0
+      ..entranceElapsed = 0
+      ..entranceHold = 0
+      ..x = gate.screenX
+      ..y = y
+      ..nearness = gate.nearness;
+    _launchFlock([d], wave, gate: gate);
+  }
+  // --- fighting patterns (swarm_patterns.dart, design §4) ------------------
+
+  /// Squads fly collective swarm states while they fight. False keeps the
+  /// legacy hover for every creature (a debug and fixture flag).
+  bool swarmPatterns = true;
+  final Map<int, Squad> _squads = {};
+  final Map<int, List<Demon>> _squadMembers = {};
+
+  /// Present ordinary members this frame (separation) and each squad's
+  /// mean velocity (alignment).
+  final List<Demon> _present = [];
+  final Map<int, (double, double)> _squadVelocity = {};
+
+  /// Onboarding keeps the old hover: Easy, route 0, sector 1, waves 1-2.
+  bool get _onboarding =>
+      difficulty == Difficulty.easy && cycle == 0 && level == 1 && wave <= 2;
+
+  Squad? squadOf(Demon d) => _squads[d.skein];
+  Iterable<Squad> get squads => _squads.values;
+
+  /// Whether [d] flies a squad pattern (else the legacy hover).
+  bool patterned(Demon d) {
+    if (!swarmPatterns || d.isLarge) return false;
+    final s = _squads[d.skein];
+    return s != null && s.patterned;
+  }
+
+  /// The squad's lateral velocity (u/s) for [d], for the creature motion's
+  /// squad heading rule (design §7); 0 without a pattern.
+  double squadVx(Demon d) {
+    if (!patterned(d)) return 0;
+    return _squadVelocity[d.skein]?.$1 ?? 0;
+  }
+
+  /// A skein becomes a squad as it is released: station = the mean of its
+  /// members' home slots; a seeded first state (cloud for an escort, hover
+  /// during onboarding).
+  void _formSquad(List<Demon> skein) {
+    if (skein.isEmpty) return;
+    final id = skein.first.skein;
+    if (id < 0 || _squads.containsKey(id)) return;
+    var sx = 0.0, sy = 0.0;
+    for (final d in skein) {
+      sx += d.homeX;
+      sy += d.homeY;
+    }
+    final rng = stream.rngFor(
+      sector: level,
+      route: cycle,
+      wave: wave,
+      salt: 5000 + id,
+    );
+    final first = SquadState.values[rng.nextInt(3)];
+    final sq = Squad(
+      id,
+      rng,
+      stationX: sx / skein.length,
+      stationY: sy / skein.length,
+      state: _onboarding
+          ? SquadState.hover
+          : skein.first.isEscort
+          ? SquadState.cloud
+          : first,
+    );
+    for (var i = 0; i < skein.length; i++) {
+      sq.add(skein[i], i);
+    }
+    _squads[id] = sq;
+    _squadMembers[id] = List.of(skein);
+  }
+
+  void _updateSquads(double dt) {
+    final alive = {...demons, ...incoming};
+    final tempo = policy.swarmTempo(route: cycle);
+    _present
+      ..clear()
+      ..addAll(
+        demons.where(
+          (d) => !d.isLarge && !d.entering && d.dive == 0 && !d.rushing,
+        ),
+      );
+    _squadVelocity.clear();
+    final gone = <int>[];
+    _squads.forEach((id, sq) {
+      final members = _squadMembers[id]!
+        ..removeWhere((d) => !alive.contains(d));
+      if (members.isEmpty) {
+        gone.add(id);
+        return;
+      }
+      sq.slots.removeWhere((m, _) => !alive.contains(m));
+      sq.update(
+        dt,
+        tempo: tempo,
+        flying: members.where(
+          (d) =>
+              d.dive == 0 && !d.rushing && d.swarmState != SwarmState.reserve,
+        ),
+      );
+      var vx = 0.0, vy = 0.0, k = 0;
+      for (final d in members) {
+        if (d.entering || d.dive > 0) continue;
+        vx += d.vx;
+        vy += d.vy;
+        k++;
+      }
+      _squadVelocity[id] = k == 0 ? (sq.anchorVx, 0.0) : (vx / k, vy / k);
+    });
+    for (final id in gone) {
+      _squads.remove(id);
+      _squadMembers.remove(id);
+    }
+  }
+
+  (double, double)? _patternTarget(Demon d) {
+    if (!patterned(d)) return null;
+    final sq = _squads[d.skein]!;
+    Demon? sentinel;
+    if (sq.state == SquadState.cloud || sq.previous == SquadState.cloud) {
+      sentinel = demons.where((o) => o.isLarge && !o.entering).firstOrNull;
+    }
+    final t = sq.target(
+      d,
+      centreX: sentinel?.x,
+      centreY: sentinel == null ? null : sentinel.y + 34,
+    );
+    final slot = sq.slots[d];
+    if (t == null || slot == null) return null;
+    // A tell holds its place so it reads cleanly.
+    if (d.divePrep > 0 || d.telegraph > 0) return slot.held ??= t;
+    slot.held = null;
+    return t;
+  }
+
+  /// Critically damped spring to the pattern target (omega 6 / s), k = 7
+  /// separation against every present ordinary member (radius 30),
+  /// alignment within the squad (0.6), speed cap 140 · tempo.
+  void _steerToPattern(Demon d, double tx, double ty, double dt) {
+    const w = 6.0, sepR = 34.0, sepK = 1500.0;
+    var ax = w * w * (tx - d.x) - 2 * w * d.vx;
+    var ay = w * w * (ty - d.y) - 2 * w * d.vy;
+    final near = <(double, double, double)>[];
+    for (final o in _present) {
+      if (identical(o, d)) continue;
+      final dx = d.x - o.x, dy = d.y - o.y;
+      final d2 = dx * dx + dy * dy;
+      if (d2 >= sepR * sepR || d2 < 1e-6) continue;
+      near.add((d2, dx, dy));
+    }
+    if (near.length > 7) {
+      near.sort((a, b) => a.$1.compareTo(b.$1));
+      near.removeRange(7, near.length);
+    }
+    for (final (d2, dx, dy) in near) {
+      final dist = math.sqrt(d2);
+      final push = (sepR - dist) / sepR * sepK;
+      ax += dx / dist * push;
+      ay += dy / dist * push * .6;
+    }
+    final mean = _squadVelocity[d.skein];
+    if (mean != null) {
+      ax += .6 * w * (mean.$1 - d.vx);
+      ay += .6 * w * (mean.$2 - d.vy);
+    }
+    var vx = d.vx + ax * dt, vy = d.vy + ay * dt;
+    final cap = 140 * policy.swarmTempo(route: cycle);
+    final sp = math.sqrt(vx * vx + vy * vy);
+    if (sp > cap) {
+      vx *= cap / sp;
+      vy *= cap / sp;
+    }
+    d.x = (d.x + vx * dt).clamp(18.0, width - 18.0);
+    d.y += vy * dt;
+  }
+
+  /// The published altitude of a fighting or diving creature (shadows).
+  double _altitudeOf(Demon d) {
+    final fight = SwarmFlock.fightAltitude(d.homeY);
+    if (d.dive > 0 || d.rushing) {
+      final span = math.max(40.0, shipY - d.homeY);
+      return fight * ((shipY - d.y) / span).clamp(0.0, 1.0);
+    }
+    return squadOf(d)?.altitude(d, fight) ?? fight;
+  }
+  // --- end continuous swarm
 
   (int, int, bool) _ordinaryProfile([int? forWave]) {
     final w = forWave ?? wave;
@@ -1094,6 +2015,11 @@ class ArcadeModel {
         escortSpawned = true;
         sentinel.waitingForEscort = false;
         sentinel.entranceDelay = 1.15;
+        // --- continuous swarm: a foreshadowed sentinel rises through every
+        // fog band from its silhouette (design §6.3).
+        if (sentinel.entryN != null) {
+          sentinel.entranceDuration = sentinelRiseSeconds;
+        }
         events.add('escort');
       }
     }
@@ -1151,6 +2077,25 @@ class ArcadeModel {
       }
     }
     if (slots.length < count) return false;
+    // --- continuous swarm: an ordinary group was born into the reserve at
+    // the wave's start; admission flips it from waiting to swooping in.
+    final waiting = escort ? null : _reserveGroups.firstOrNull;
+    if (waiting != null && waiting.length == count) {
+      _reserveGroups.removeAt(0);
+      _updateReserve(0);
+      final bySkein = <int, List<Demon>>{};
+      for (var i = 0; i < count; i++) {
+        final d = waiting[i]
+          ..homeX = slots[i].$1
+          ..homeY = slots[i].$2;
+        (bySkein[d.skein] ??= []).add(d);
+        demons.add(d);
+      }
+      for (final skein in bySkein.values) {
+        _releaseSkein(skein, wave);
+      }
+      return true;
+    }
     final group = <Demon>[];
     for (var i = 0; i < count; i++) {
       final profile = _ordinaryProfile();
@@ -1176,6 +2121,13 @@ class ArcadeModel {
     // --- atmosphere-and-swarms: the group flies in as a flock; a sentinel's
     // escort pours out of its silhouette as an insect swarm.
     final f = foreshadow;
+    final id = _skeinIds++;
+    for (final d in group) {
+      d
+        ..skein = id
+        ..swarmState = SwarmState.approaching;
+    }
+    _formSquad(group);
     _launchFlock(
       group,
       wave,
@@ -1200,20 +2152,28 @@ class ArcadeModel {
   }
 
   void _completeWave() {
-    shots.clear();
     if (lifeLossPhase == LifeLossPhase.emerging) {
       lifeLossPhase = LifeLossPhase.none;
     }
+    // --- continuous swarm: no transition phase between waves of a sector.
     if (wave < wavesPerLevel && incoming.isNotEmpty) {
-      _mergeIncoming(forced: false); // --- wave pressure
+      _mergeCohort(forced: false);
     } else if (wave < wavesPerLevel) {
       wave++;
-      _spawnWave();
+      _spawnWave(continuous: true);
       events.add('wave');
+      _queueGameEvent(GameEventNames.cohortMerged, {
+        'wave': wave,
+        'forced': false,
+        'lull': 0.0,
+      });
     } else {
+      shots.clear();
       clearedLevel = level;
       _groundEndLevel(); // --- ground war
-      _enterPhase(RunMode.salvage, 2);
+      _enterPhase(RunMode.salvage, FlowPlan.routSeconds);
+      _flowBegin(victory: false); // --- cinematic flow
+      _flowRout(const []); // every fighter fell: the fog stays empty
       events.add('salvage');
     }
   }
@@ -1283,8 +2243,10 @@ class ArcadeModel {
         b.age += dt;
       }
       blasts.removeWhere((b) => b.age > (b.isLarge ? 1.4 : .75));
+      _flowStep(); // --- cinematic flow
       _updateDefeatCelebration(dt);
       if (defeatTimer <= 0) {
+        _flowEnd();
         events.add('gameover');
       }
       return;
@@ -1369,6 +2331,8 @@ class ArcadeModel {
       // Spent modules are debris, not loot: they keep tumbling off screen
       // through salvage, level clear and travel instead of freezing.
       _updateFallingParts(dt);
+      _updateReserve(dt); // --- continuous swarm: the reserve keeps drifting
+      if (mode == RunMode.transition) _updateSquads(dt);
       if (mode == RunMode.transition) {
         if (wave > 1) {
           _advanceWaveEntrance(dt);
@@ -1377,30 +2341,44 @@ class ArcadeModel {
         }
       }
       transitionLeft = math.max(0, transitionLeft - dt);
+      // --- cinematic flow: the ship eases to the centre while it climbs
+      // (never a pop at the level change), and the director reads the
+      // phase clock.
+      if (mode == RunMode.levelClear ||
+          mode == RunMode.travel ||
+          mode == RunMode.victory) {
+        shipX += (width / 2 - shipX) * (1 - math.exp(-1.5 * dt));
+        targetX = shipX;
+      }
+      _flowStep();
       if (transitionLeft <= 0) {
         if (mode == RunMode.salvage) {
           pickups.clear();
           heartPickups.clear();
           _groundLevelCleared(); // --- ground war
-          _enterPhase(RunMode.levelClear, 4 + storyReadingTime);
+          final clear = FlowPlan.clearFor(flow.plan.reduced);
+          _enterPhase(RunMode.levelClear, clear);
+          _flowBase = FlowPlan.routSeconds;
           events.add('levelclear');
+          if (_skipPending) _finishTravel();
         } else if (mode == RunMode.victory && finalBoss) {
           mode = RunMode.completed;
           events.add('completed');
           _groundCampaignComplete(); // --- ground war
+          _flowEnd();
         } else if (mode == RunMode.levelClear || mode == RunMode.victory) {
-          _enterPhase(RunMode.travel, 4 + storyReadingTime);
+          _flowBase += transitionDuration;
+          _flowReplan();
+          _enterPhase(
+            RunMode.travel,
+            FlowPlan.travelFor(flow.plan.reduced, extra: slotExtra),
+          );
           events.add('travel');
         } else if (mode == RunMode.travel) {
-          if (level == 5) cycle++;
-          level = nextLevel;
-          shipX = targetX = 180;
-          shipVx = shipBank = shipThrust = 0;
-          steering = aimAngle = 0;
-          _steeringActive = false;
-          _beginLevel();
+          _finishTravel();
         } else {
           mode = RunMode.playing;
+          if (flow.active) _flowEnd();
         }
       }
       return;
@@ -1409,6 +2387,10 @@ class ArcadeModel {
     _activeMilliseconds += dt * 1000;
     levelClock += dt;
     _updateLifeLoss(dt); // --- life-loss sequence
+    if (!shipAway) {
+      pilot.observe(shipX, shipVx, dt); // --- demon intelligence
+      _observeSkill(dt);
+    }
     invulnerable = math.max(0, invulnerable - dt);
     // Module timers freeze while the ship is away: the loadout survives.
     for (final value in shipAway ? const <Power>[] : Power.values) {
@@ -1453,6 +2435,7 @@ class ArcadeModel {
     wingRecoil[1] = math.max(0, wingRecoil[1] - dt);
     noseFlash = math.max(0, noseFlash - dt);
     if (_fire <= 0) {
+      final fired = shots.length;
       _fire += hasPower(Power.rapid) ? .105 : .23;
       final powerful = hasPower(Power.powerful), large = hasPower(Power.large);
       final double slingVx;
@@ -1503,18 +2486,26 @@ class ArcadeModel {
           playerShot(shipX + 5, shipY - 8, 90 + slingVx * 0.85, -370),
         ]);
       }
+      shotsFired += shots.length - fired; // --- demon intelligence
       events.add('shot');
     }
     if (!shipAway) _updateReinforcements(dt);
+    _updateStream(dt); // --- continuous swarm: skein releases, reserve
     _updateDemons(dt);
-    _updateIncoming(dt); // --- wave pressure (after formation targets move)
+    _updateIncoming(dt); // --- continuous swarm (after formation targets move)
     _advanceFlock(dt); // --- atmosphere-and-swarms: arrivals drawn as a flock
+    _publishSwarmStates(); // --- continuous swarm
+    assert(
+      swarmOccupancy <= swarmOccupancyBound,
+      'continuous swarm occupancy $swarmOccupancy > $swarmOccupancyBound',
+    );
     _updateBoss(dt);
     _updateGround(dt); // --- ground war
     if (!combat) return;
     for (final s in shots) {
       s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1);
       s.y += s.vy * dt;
+      s.age += dt;
     }
     _collisions();
     shots.removeWhere(
@@ -1635,8 +2626,25 @@ class ArcadeModel {
       final nextY = d.homeY + math.sin(levelClock * .65 * speed + d.seed) * 5;
       return (nextX, nextY);
     }
-    final (boidsX, boidsY) = _boidsOffset(d);
     final evadeX = d.evadeOffset * (d.evadeLeft / 0.32).clamp(0.0, 1.0);
+    final evadeY = d.evadeLift == 0
+        ? 0.0
+        : d.evadeLift * (d.evadeLeft / 0.32).clamp(0.0, 1.0);
+    // --- continuous swarm: squad members fly their pattern target, plus
+    // the gated evade and the telegraph crest; strays and onboarding hover.
+    final pattern = _patternTarget(d);
+    if (pattern != null) {
+      var (px, py) = pattern;
+      px += evadeX;
+      py += evadeY;
+      if (d.telegraph > 0) {
+        final totalTell = d.elite ? 0.55 : 0.7;
+        final progress = (d.telegraph / totalTell).clamp(0.0, 1.0);
+        py -= 8.0 * math.sin((1 - progress) * math.pi);
+      }
+      return (px.clamp(20.0, width - 20.0), py);
+    }
+    final (boidsX, boidsY) = _boidsOffset(d);
     final targetFormX =
         (d.homeX +
                 math.sin(levelClock * (.9 + d.kind * .12) * speed + d.seed) *
@@ -1646,7 +2654,10 @@ class ArcadeModel {
                 evadeX)
             .clamp(20.0, width - 20.0);
     var targetFormY =
-        d.homeY + math.sin(levelClock * 1.7 * speed + d.seed) * 14 + boidsY;
+        d.homeY +
+        math.sin(levelClock * 1.7 * speed + d.seed) * 14 +
+        boidsY +
+        evadeY;
     if (d.telegraph > 0) {
       final totalTell = d.elite ? 0.55 : 0.7;
       final progress = (d.telegraph / totalTell).clamp(0.0, 1.0);
@@ -1672,7 +2683,11 @@ class ArcadeModel {
 
   void _advanceWaveEntrance(double dt) {
     for (final d in demons) {
-      if (!d.entering || d.waitingForEscort) continue;
+      if (!d.entering ||
+          d.waitingForEscort ||
+          d.swarmState == SwarmState.reserve) {
+        continue;
+      }
       final prevX = d.x, prevY = d.y;
       d.entranceElapsed += dt;
       d.entranceProgress =
@@ -1697,7 +2712,7 @@ class ArcadeModel {
   // --- atmosphere-and-swarms: flock arrivals and sentinel foreshadowing ---
 
   /// The arrival flock (flock.dart): where entering creatures are drawn.
-  final ArrivalFlock flock;
+  final SwarmFlock flock;
 
   /// Arrivals fly in as a flock (presentation only; false = the plain
   /// depth approach, for the parity test).
@@ -1728,6 +2743,7 @@ class ArcadeModel {
     int forWave, {
     FlockStyle style = FlockStyle.squadrons,
     SentinelForeshadow? origin,
+    SwarmGate? gate,
   }) {
     if (!perspective || !flockArrivals) return;
     flock.launch(
@@ -1742,6 +2758,7 @@ class ArcadeModel {
       originX: origin?.x,
       originY: origin?.y,
       originN: origin?.nearness,
+      gate: gate,
     );
   }
 
@@ -1805,7 +2822,7 @@ class ArcadeModel {
       if (f == null) return;
       f.opacity = math.max(0, f.opacity - dt / .8);
       f.clock += dt;
-      f.place(shipX);
+      f.place();
       if (f.opacity <= 0) foreshadow = null;
       return;
     }
@@ -1814,10 +2831,10 @@ class ArcadeModel {
       ..archetype = kind
       ..stage = stage
       ..clock += dt
-      ..opacity = math.min(1, g.opacity + dt / 1.5);
+      ..opacity = math.min(1, g.opacity + dt / SentinelForeshadow.fadeIn);
     final rate = stage >= 1 ? 1.2 : 2.5;
     g.growth += (stage - g.growth) * (1 - math.exp(-dt / rate));
-    g.place(shipX);
+    g.place();
     if (waiting != null) {
       // The sentinel sets out from where its silhouette is now.
       waiting
@@ -1841,11 +2858,18 @@ class ArcadeModel {
     bool holding = false,
   }) {
     if (perspective && d.arrivesFromDistance) {
-      final (n, u) = Perspective.approach(
+      var (n, u) = Perspective.approach(
         s,
         _targetNearness(d, ty),
         from: d.entryN,
       );
+      final from = d.entryN;
+      if (d.isLarge && from != null) {
+        // --- continuous swarm: the sentinel's rise path in depth.
+        final to = _targetNearness(d, ty);
+        n = sentinelRiseNearness(d.entranceProgress, from, to);
+        u = to <= from ? 1.0 : ((n - from) / (to - from)).clamp(0.0, 1.0);
+      }
       final x0 = d.entryX ?? Perspective.arrivalX(d.homeX);
       final y0 = d.entryY ?? Perspective.arrivalYFor(d.homeY);
       d.nearness = n;
@@ -1888,7 +2912,16 @@ class ArcadeModel {
       }
       final placed = d.entering && d.arrivesFromDistance;
       if (!placed) {
-        final target = _targetNearness(d, d.y);
+        var target = _targetNearness(d, d.y);
+        if (d.lastStand && !d.rushing) {
+          // --- sentinel rush: the rally pulls back in depth.
+          target -=
+              RushTuning.pullBack *
+              (d.lastStandTellProgress * d.rushTell / RushTuning.rally).clamp(
+                0.0,
+                1.0,
+              );
+        }
         d.nearness = dt <= 0 || d.nearness == 0
             ? target
             : d.nearness +
@@ -1900,6 +2933,14 @@ class ArcadeModel {
         large: d.isLarge,
         angry: d.angry,
       );
+      if (d.rushing) {
+        // --- sentinel rush: it grows to the 1.25 cap as it closes in.
+        final k = ((d.y - d._lastStandY) / (shipY - d._lastStandY)).clamp(
+          0.0,
+          1.0,
+        );
+        d.scale = ((d.scale + (1.25 - d.scale) * k) * 16).round() / 16;
+      }
       final from = d.entryScale;
       if (from != null && d.entering && d.isLarge) {
         // A foreshadowed sentinel keeps its silhouette's size as it flies
@@ -1922,6 +2963,7 @@ class ArcadeModel {
             : (difficulty == Difficulty.hard ? 3 : 2));
 
   void _updateDemons(double dt) {
+    planDecisionsThisFrame = 0; // --- demon intelligence
     if (!shipAway) _dive -= dt * policy.hostileRate;
     var activeSmallDives = demons
         .where(
@@ -1946,6 +2988,14 @@ class ArcadeModel {
       if (level >= 2 || cycle > 0) {
         _prepDive(d);
         if (!d.isLarge) activeSmallDives++;
+        // --- demon intelligence: a pincer by a second ready hunter.
+        final partner = _pincerPartner(d, readyDivers);
+        if (partner != null && activeSmallDives < maxSmallDives) {
+          d.pincer = -1;
+          partner.pincer = 1;
+          _prepDive(partner);
+          activeSmallDives++;
+        }
       }
       _dive = math.max(
         .8,
@@ -1961,7 +3011,13 @@ class ArcadeModel {
           d.vx = d.vy = d.bank = 0;
           continue;
         }
-        d.entranceElapsed += dt;
+        if (d.swarmState == SwarmState.reserve) continue; // in the fog
+        if (d.entranceHold > 0) {
+          // The lull: the cohort holds at the fog front (continuous swarm).
+          d.entranceHold = math.max(0, d.entranceHold - dt);
+        } else {
+          d.entranceElapsed += dt;
+        }
         d.entranceProgress =
             ((d.entranceElapsed - d.entranceDelay) / d.entranceDuration).clamp(
               0.0,
@@ -1974,7 +3030,14 @@ class ArcadeModel {
             32 *
             (d.seed.floor().isEven ? 1 : -1) *
             (1 - s);
-        _placeEntering(d, s, targetFormX, targetFormY, arcX);
+        _placeEntering(
+          d,
+          s,
+          targetFormX,
+          targetFormY,
+          arcX,
+          holding: d.entranceHold > 0,
+        );
         _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
       }
@@ -1983,28 +3046,10 @@ class ArcadeModel {
         d.divePrep -= dt * policy.hostileRate;
         if (d.divePrep <= 0) _startDiveTell(d);
       }
+      if (d.isLarge && !d.lastStand && dt > 0) _maybeRush(d); // alone
       if (d.lastStand) {
-        if (!d.rushing) {
-          d.telegraph = math.max(0, d.telegraph - dt * policy.hostileRate);
-          final progress = d.lastStandTellProgress;
-          d.x = d._lastStandX;
-          d.y = d._lastStandY - 22 * progress * progress;
-          if (d.telegraph <= 0) {
-            d.rushing = true;
-            final dx = d.targetX - d.x;
-            final dy = shipY - d.y;
-            final distance = math.max(.001, math.sqrt(dx * dx + dy * dy));
-            d.rushVx = dx / distance * 600 * policy.hostileRate;
-            d.rushVy = dy / distance * 600 * policy.hostileRate;
-          }
-        } else {
-          d.x += d.rushVx * dt;
-          d.y += d.rushVy * dt;
-          if (d.x < -56 || d.x > width + 56 || d.y < -32 || d.y > height + 32) {
-            _sacrifice(d);
-            continue;
-          }
-        }
+        // --- the sentinel final rush (sentinel_rush.dart)
+        if (dt > 0 && !_updateRush(d, dt)) continue;
         _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
       }
@@ -2056,6 +3101,8 @@ class ArcadeModel {
         d.telegraph -= dt * policy.hostileRate;
         if (d.telegraph <= 0) {
           d.dive = .001;
+          d.threadLine = d.x; // --- demon intelligence (thread dive)
+          d.threadOffset = d.threadVx = d.threadTarget = 0;
           _igniteDiveShield(d);
           if (d.isLarge) {
             final aim = ((d.targetX - d.x) * .3).clamp(-70.0, 70.0);
@@ -2086,11 +3133,23 @@ class ArcadeModel {
             (d.angry ? 1.3 : 1) *
             (d.elite ? 1.15 : 1) *
             shatteredSlow;
-        d.x +=
-            (d.targetX - d.x) *
-            dt *
-            policy.hostileRate *
-            (d.isLarge ? 3.4 : (d.elite ? 2.1 : 1.8));
+        if (_intel && d.elite && !d.isLarge) {
+          _threadDive(
+            d,
+            dt,
+            (115 + d.kind * 16) *
+                speed *
+                (d.angry ? 1.3 : 1) *
+                1.15 *
+                shatteredSlow,
+          );
+        } else {
+          d.x +=
+              (d.targetX - d.x) *
+              dt *
+              policy.hostileRate *
+              (d.isLarge ? 3.4 : (d.elite ? 2.1 : 1.8));
+        }
         d.y +=
             (d.isLarge ? 300 : (115 + d.kind * 16)) *
             dt *
@@ -2106,6 +3165,8 @@ class ArcadeModel {
           if (d.isLarge) {
             d.y = d.homeY;
             d.x = d.homeX;
+          } else if (perspective) {
+            _beginReentry(d); // --- continuous swarm: back out of the fog
           } else {
             d.entranceStartY = -36;
             d.arrivesFromDistance = false; // loops back in from above
@@ -2140,6 +3201,10 @@ class ArcadeModel {
           d.x = targetFormX;
           d.y = targetFormY;
           d.vx = d.vy = d.bank = 0;
+        } else if (patterned(d)) {
+          // --- continuous swarm: the squad's pattern, flown (design §4).
+          _steerToPattern(d, targetFormX, targetFormY, dt);
+          _updateDemonKinematics(d, prevX, prevY, dt);
         } else if (d.evadeLeft > 0 ||
             d.evadeOffset.abs() > 0.5 ||
             d.telegraph > 0) {
@@ -2182,6 +3247,9 @@ class ArcadeModel {
     d.evadeLeft = math.max(0, d.evadeLeft - dt);
     if (d.evadeLeft <= 0) {
       d.evadeOffset += (-d.evadeOffset).clamp(-90 * dt, 90 * dt);
+      if (d.evadeLift != 0) {
+        d.evadeLift += (-d.evadeLift).clamp(-90 * dt, 90 * dt);
+      }
     }
     if ((level < 2 && cycle == 0) ||
         d.telegraph > 0 ||
@@ -2189,11 +3257,21 @@ class ArcadeModel {
         d.evadeCooldown > 0) {
       return false;
     }
-    if (demons.any((o) => !o.isLarge && !identical(o, d) && o.evadeLeft > 0)) {
+    // One drone/skirmisher evader at a time; hunters have their own slot.
+    if (demons.any(
+      (o) =>
+          !o.isLarge &&
+          !identical(o, d) &&
+          o.evadeLeft > 0 &&
+          (!_intel || o.elite == d.elite),
+    )) {
       return false;
     }
     if (demons.any((o) => o.isLarge && o.waitingForEscort)) {
       return false;
+    }
+    if (_intel && d.elite) {
+      return _evadeHunter(d, activeSmallDives, maxSmallDives);
     }
     Shot? nearestShot;
     var bestArrival = 999.0;
@@ -2241,6 +3319,7 @@ class ArcadeModel {
       var dir = action == 'evade_left' ? -1.0 : 1.0;
       if (d.x < 44) dir = 1.0;
       if (d.x > width - 44) dir = -1.0;
+      if (_vetoed(d, dir)) return false; // --- demon intelligence (T1)
       d.evadeOffset = dir * 24.0;
       d.evadeLeft = 0.32;
       d.evadeCooldown = cooldown;
@@ -2257,6 +3336,7 @@ class ArcadeModel {
       var dir = projectedX <= d.x ? 1.0 : -1.0;
       if (d.x < 44) dir = 1.0;
       if (d.x > width - 44) dir = -1.0;
+      if (_vetoed(d, dir)) return false; // --- demon intelligence (T1)
       d.evadeOffset = dir * 22.0 * d.scale;
       d.evadeLeft = 0.32;
       d.evadeCooldown = cooldown;
@@ -2272,6 +3352,10 @@ class ArcadeModel {
       d.evadeOffset += (-d.evadeOffset).clamp(-65 * dt, 65 * dt);
     }
     if (d.evadeCooldown > 0) return;
+    if (_intel) {
+      _evadeSentinel(d);
+      return;
+    }
     for (final shot in shots) {
       if (shot.hostile || shot.vy >= 0) continue;
       final arrival = (d.y - shot.y) / shot.vy;
@@ -2290,6 +3374,154 @@ class ArcadeModel {
       break;
     }
   }
+
+  // --- demon intelligence: tiers (openspec/changes/demon-intelligence
+  // design §3-§4). T0 drones keep the SwarmPolicy evade above unchanged;
+  // T1 skirmishers add the planner veto; T2 hunters and T3 sentinels run
+  // the planner at 10 Hz. Route 0 never gets here (`_intel`).
+
+  /// Whether [d]'s 10 Hz decision is due and the frame still has room:
+  /// staggered by its seed; a due creature over the cap waits a frame.
+  bool _planDue(Demon d) {
+    if (d.planAt < 0) {
+      d.planAt = clock + (d.seed * .618 % 1).abs() / planRate;
+    }
+    if (clock + 1e-9 < d.planAt) return false;
+    if (planDecisionsThisFrame >= maxPlanDecisions) return false;
+    planDecisionsThisFrame++;
+    d.planAt = math.max(d.planAt + 1 / planRate, clock + .5 / planRate);
+    return true;
+  }
+
+  PlanState _planFor(Demon d) {
+    var left = 0, right = 0;
+    for (final o in demons) {
+      if (identical(o, d) || o.isLarge || o.entering) continue;
+      final dx = o.x - d.x, dy = o.y - d.y;
+      if (dx * dx + dy * dy <= 72 * 72) {
+        if (dx < 0) {
+          left++;
+        } else {
+          right++;
+        }
+      }
+    }
+    final evadeX = d.evadeOffset * (d.evadeLeft / .32).clamp(0.0, 1.0);
+    return _plan
+      ..x = d.x
+      ..y = d.y
+      ..vx = d.vx
+      ..vy = d.vy
+      ..scale = d.scale
+      ..halfWidth = d.hitHalfWidth
+      ..crowd = ((right - left) / 4.0).clamp(-1.0, 1.0)
+      ..leashX = d.isLarge ? d.x : _targetFormationPosition(d).$1 - evadeX
+      ..last = d.lastPlan;
+  }
+
+  /// T1: the SwarmPolicy proposal (a sidestep toward [dir]) is vetoed
+  /// when it runs into more danger than holding (another shot).
+  bool _vetoed(Demon d, double dir) {
+    if (!_intel || tierOf(d) != DemonTier.skirmisher) return false;
+    const cfg = PlannerConfig.skirmisher;
+    final s = _planFor(d);
+    final hold = DemonPlanner.dangerOf(Manoeuvre.hold, s, cfg, shots);
+    final side = DemonPlanner.dangerOf(
+      dir < 0 ? Manoeuvre.sideL : Manoeuvre.sideR,
+      s,
+      cfg,
+      shots,
+    );
+    return side > hold;
+  }
+
+  /// T2: the full planner (the thread candidate is a dive commit while a
+  /// dive slot is free). Returns true when it commits a dive.
+  bool _evadeHunter(Demon d, int activeSmallDives, int maxSmallDives) {
+    if (!_planDue(d)) return false;
+    final skill = skillLevel;
+    final s = _planFor(d);
+    if (DemonPlanner.dangerOf(
+          Manoeuvre.hold,
+          s,
+          PlannerConfig.hunter(skill),
+          shots,
+        ) <=
+        0) {
+      d.lastPlan = Manoeuvre.hold;
+      return false;
+    }
+    final threat = DemonPlanner.lastContact;
+    // The dive commit is a candidate only while a slot is free and the
+    // ship is likely under the dive (teacher: interceptErr < 68).
+    s.aimX = (shipX + shipVx * .22).clamp(24.0, width - 24.0);
+    final (threadDx, _) = DemonPlanner.displacement(
+      Manoeuvre.thread,
+      s,
+      PlannerConfig.hunter(skill),
+    );
+    s.aimP = pilot.pHit(d.x + threadDx, _diveEta(d), d.contactHalf + 36);
+    final cfg = PlannerConfig.hunter(
+      skill,
+      dive: activeSmallDives < maxSmallDives && !shipAway && s.aimP >= .25,
+    );
+    final a = planner.choose(s, cfg, shots);
+    d.lastPlan = a;
+    switch (a) {
+      case Manoeuvre.hold:
+        return false;
+      case Manoeuvre.thread:
+        _prepDive(d, lead: true);
+        d.evadeCooldown = PlannerConfig.hunterCooldown(skill);
+        return true;
+      default:
+        final (dx, dy) = DemonPlanner.displacement(a, s, cfg);
+        d.evadeOffset = dx;
+        d.evadeLift = dy;
+        // Held out of the shot's path until it has passed, then eased back
+        // (the planner plans the move and the stay; today's jink fades
+        // over 0.32 s at once).
+        d.evadeLeft = .32 + threat.clamp(.1, 1.2) + hunterHold;
+        d.evadeCooldown = PlannerConfig.hunterCooldown(skill);
+        return false;
+    }
+  }
+
+  /// Seconds a hunter holds its sidestep after the threat's contact time.
+  static const hunterHold = .15;
+
+  /// Seconds (real) from a dive tell starting now until [d] reaches the
+  /// ship row on today's dive.
+  double _diveEta(Demon d) {
+    final rate = policy.hostileRate > 0 ? policy.hostileRate : 1;
+    final vy =
+        (d.isLarge ? 300 : (115 + d.kind * 16)) *
+        speed *
+        (d.angry ? 1.3 : 1) *
+        (d.elite ? 1.15 : 1);
+    return (divePrepBeat + diveTellFor(d)) / rate +
+        math.max(0, shipY - d.y) / vy;
+  }
+
+  /// T3: planner-backed sentinel sidestep with today's 54-u span, 0.6 s
+  /// and 1.4 s cooldown.
+  void _evadeSentinel(Demon d) {
+    if (!_planDue(d)) return;
+    const cfg = PlannerConfig.sentinel;
+    final s = _planFor(d);
+    if (DemonPlanner.dangerOf(Manoeuvre.hold, s, cfg, shots) <= 0) {
+      d.lastPlan = Manoeuvre.hold;
+      return;
+    }
+    final a = planner.choose(s, cfg, shots);
+    d.lastPlan = a;
+    if (a == Manoeuvre.hold) return;
+    final (dx, _) = DemonPlanner.displacement(a, s, cfg);
+    d.evadeOffset = dx;
+    d.evadeLeft = .6;
+    d.evadeCooldown = 1.4;
+  }
+  // --- end demon intelligence tiers
 
   void _updateBoss(double dt) {
     final b = boss;
@@ -2390,6 +3622,12 @@ class ArcadeModel {
         if ((s.x - shipX).abs() < 10 && (s.y - shipY).abs() < 12) {
           hitPlayer();
           s.y = height + 20;
+        } else if (!shipAway &&
+            s.vy > 0 &&
+            s.y >= shipY &&
+            s.y - s.vy / 60 < shipY &&
+            (s.x - shipX).abs() < 26) {
+          nearMisses++; // --- demon intelligence: a dodge (skill meter)
         }
         continue;
       }
@@ -2406,6 +3644,7 @@ class ArcadeModel {
           if (s.blastRadius > 0) _explodeShot(s, hitCarrier: false);
           hitBoss(s.x, damage: s.damage);
           s.y = height + 20;
+          shotsHit++;
           continue;
         }
       }
@@ -2421,6 +3660,7 @@ class ArcadeModel {
           }
           s.y = height + 20;
           hit = true;
+          shotsHit++;
           if (crate.destroyed) {
             supplyCrates.remove(crate);
             blasts.add(Blast(crate.x, crate.y, big: true));
@@ -2458,14 +3698,20 @@ class ArcadeModel {
         }
         hit = true;
       }
-      if (hit) s.y = height + 20;
+      if (hit) {
+        s.y = height + 20;
+        shotsHit++;
+      }
     }
     for (final d in List<Demon>.of(demons)) {
       if (!d.entering &&
           (d.x - shipX).abs() < d.contactHalf &&
           (d.y - shipY).abs() < d.contactHalf) {
-        hitPlayer();
-        if (d.rushing) _sacrifice(d);
+        if (d.rushing) {
+          _rushContact(d); // --- sentinel rush
+        } else {
+          hitPlayer();
+        }
       }
     }
   }
@@ -2507,6 +3753,7 @@ class ArcadeModel {
   void hitDemon(Demon d, {int damage = 1, bool homing = false}) {
     if (!combat || damage <= 0 || d.entering || !demons.contains(d)) return;
     d.flash = .12;
+    if (_rushShieldHit(d, damage)) return; // --- sentinel rush shield
     if (d.dive > 0 && d.diveShieldMax == 0) {
       _igniteDiveShield(d);
     }
@@ -2596,19 +3843,9 @@ class ArcadeModel {
       _groundDropOnKill(d); // --- ground war
     } else {
       events.add('hit');
-      if (d.isLarge &&
-          d.lastStandEligible &&
-          !d.lastStand &&
-          d.hp / d.maxHp <= .25) {
-        d.lastStand = true;
-        d.divePrep = 0;
-        d.telegraph = .9;
-        d.dive = 0;
-        d.diveShield = 0;
-        d.diveShieldMax = 0;
-        d.targetX = shipX;
-        d._lastStandX = d.x;
-        d._lastStandY = d.y;
+      if (d.isLarge && !d.lastStand) _maybeRush(d); // --- sentinel rush
+      if (d.lastStand) {
+        // The rush has begun: nothing else interrupts it.
       } else if (!d.lastStand &&
           !shipAway &&
           d.angry &&
@@ -2673,13 +3910,20 @@ class ArcadeModel {
       boss = null;
       medals = cycle + 1;
       lives++;
+      // --- cinematic flow: only the minions that were fighting scatter.
+      final fighters = [
+        for (final d in demons)
+          if (d.swarmState != SwarmState.reserve) d,
+      ];
       demons.clear();
       shots.clear();
       pickups.clear();
       heartPickups.clear();
       ground.clearField(); // --- ground war
       clearedLevel = level;
-      _enterPhase(RunMode.victory, 5.5 + storyReadingTime);
+      _enterPhase(RunMode.victory, FlowPlan.victorySeconds);
+      _flowBegin(victory: true); // --- cinematic flow: the remnant scatters
+      _flowRout(fighters);
       events.add('victory');
       events.add('bossDefeated');
     }
@@ -2739,6 +3983,9 @@ class ArcadeModel {
       return;
     }
     lives--;
+    pilot.reset(shipX); // --- demon intelligence
+    skill.lifeLost();
+    _lastSkill = skill.level;
     shipVx = shipBank = shipThrust = 0;
     steering = aimAngle = 0;
     _steeringActive = false;
@@ -2756,6 +4003,8 @@ class ArcadeModel {
       mode = RunMode.gameOver;
       defeatTimer = defeatDuration;
       cameraPanY = 0;
+      // --- cinematic flow: the swarm wins and mills over the wreck.
+      flow.start(FlowPlan.gameOverOutro(reduced: reducedMotion));
       blasts.addAll([
         Blast(shipX, shipY, big: true),
         Blast(shipX - 14, shipY - 8)..age = -0.08,
@@ -2842,11 +4091,24 @@ class ArcadeModel {
       // High-five clap oscillation: pairs approach to touch wingtips then bounce apart
       final clapPhase = (t * 4.0 + pairIndex * 1.4) % (math.pi * 2);
       final separation = (math.cos(clapPhase) * 0.5 + 0.5) * 26.0 + 4.0;
-      final targetX =
-          anchorX + (isSecond ? separation * 0.5 : -separation * 0.5);
-      final targetY =
+      var targetX = anchorX + (isSecond ? separation * 0.5 : -separation * 0.5);
+      var targetY =
           anchorY +
           (isSecond ? math.sin(t * 5.0) * 2.5 : -math.sin(t * 5.0) * 2.5);
+      // --- cinematic flow (design §4.2): the celebration gathers into a
+      // slow torus over the wreck (omega 0.5), then breaks upward with the
+      // pan. Reduced motion: a still ring.
+      final mill = flow.env('mill');
+      if (mill > 0 || flow.env('break') > 0) {
+        final a =
+            i / smalls.length * 2 * math.pi + flow.env('spin') * elapsed * .5;
+        final r = 64 + (i % 3) * 10.0;
+        final mx = shipX.clamp(90.0, width - 90) + math.cos(a) * r;
+        final my = shipY - 120 + math.sin(a) * r * .38;
+        targetX += (mx - targetX) * mill;
+        targetY += (my - targetY) * mill;
+        targetY -= 260 * flow.env('break') * (1 + (i % 4) * .15);
+      }
 
       final prevX = d.x, prevY = d.y;
       final blend = (dt * 5.0).clamp(0.0, 1.0);
@@ -2864,6 +4126,7 @@ class ArcadeModel {
       d.diveShield = 0;
       d.lastStand = false;
       d.rushing = false;
+      d.rushPhase = RushPhase.none;
       d.telegraph = 0.5;
       final spread = (i - (larges.length - 1) / 2.0) * 90.0;
       final ax = 180.0 + spread + math.sin(t * 2.4 + i) * 18.0;

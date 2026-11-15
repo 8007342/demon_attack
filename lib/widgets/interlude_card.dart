@@ -1,24 +1,19 @@
-/// The transition presentation: one primary interlude card centred in the
-/// play area (a silent illustrated tip or a full-size radio transmission),
-/// and the slim progress strip at the top of the arena.
-/// See openspec/changes/fluid-transitions.
+/// The run's opening interlude: one illustrated tip card centred in the play
+/// area (openspec/changes/fluid-transitions). cinematic-flow moved the radio
+/// card to the comms dock (later transitions speak only by radio there);
+/// ux-declutter removed the progress strip that lived here.
 library;
 
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../comms/comms_director.dart';
-import '../comms/comms_portraits.dart';
-import '../comms/comms_types.dart';
-import '../comms/comms_view.dart';
 import '../game/hints.dart';
 import '../game/interlude.dart';
 import 'hint_art.dart';
 
 const _ink = Color(0xF2080D18);
 const _mint = Color(0xFF70F5D5);
-const _gold = Color(0xFFFFD594);
 const _muted = Color(0xFF8AA3BA);
 const _body = Color(0xFFCCD9E6);
 
@@ -207,237 +202,6 @@ class TipInterludeCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    ),
-  );
-}
-
-/// Full-size radio transmission: portrait, speaker and the line as it plays.
-class RadioInterludeCard extends StatelessWidget {
-  const RadioInterludeCard({
-    super.key,
-    required this.message,
-    required this.now,
-    required this.destination,
-    this.compact = false,
-  });
-
-  final CommsMessage message;
-  final double now;
-  final String destination;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final m = message;
-    final c = m.character;
-    final accent = Color(c.accent);
-    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    final mission = m.trigger.name.startsWith('transmissionMission');
-    final heading = c.isDemon
-        ? '◆ BROOD SIGNAL'
-        : mission
-        ? '◉ FLEET COMMAND'
-        : '◌ SQUAD CHANNEL';
-    final tag = c.isDemon
-        ? '${c.rank} ${c.name}'
-        : '${c.rank} ${c.name} · ${c.callsign}';
-    return LayoutBuilder(
-      builder: (context, box) {
-        // Whole-number scale of the portrait cell that fits the card.
-        final room = math.min(box.maxWidth, compact ? 128.0 : 256.0);
-        final scale = math.max(1, (room / commsPortraitCell).floor());
-        final side = (commsPortraitCell * scale).toDouble();
-        return Column(
-          key: ValueKey('comms-transmission-${m.line.id}'),
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _header(heading, destination, c.isDemon ? accent : _gold),
-            const SizedBox(height: 10),
-            Center(
-              child: SizedBox(
-                width: side,
-                height: side,
-                child: CustomPaint(painter: _RadioPortrait(m, now, reduce)),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              tag,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: accent,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 6),
-            CommsSubtitle(
-              message: m,
-              now: now,
-              fontSize: compact ? 16 : 18,
-              maxLines: 4,
-              glyphHeight: 12,
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _RadioPortrait extends CustomPainter {
-  _RadioPortrait(this.m, this.now, this.reduce);
-  final CommsMessage m;
-  final double now;
-  final bool reduce;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final r = Offset.zero & size;
-    final who = m.character;
-    canvas.save();
-    canvas.clipRect(r);
-    paintBackdrop(canvas, r, who, now, reduceMotion: reduce);
-    final scale = size.width / commsPortraitCell;
-    final talking = m.speaking(now);
-    final frame = talking ? m.frame(now) : restFrame(now, who.id.length);
-    final (from, _, amount) = talking
-        ? m.mouthBlend(now)
-        : (CommsFrame.idle, CommsFrame.idle, 1.0);
-    paintPortrait(
-      canvas,
-      r.translate(0, idleBob(now, who.id.length, reduceMotion: reduce) * scale),
-      who.id,
-      frame,
-      accent: Color(who.accent),
-      from: reduce ? null : from,
-      amount: amount,
-    );
-    final age = m.age(now);
-    if (age < .35 && !reduce) {
-      paintStatic(canvas, r, now, (1 - age / .35) * .8, who.id.length);
-    }
-    paintScanlines(canvas, r, pitch: math.max(2, scale).toDouble() + 1);
-    canvas.restore();
-    canvas.drawRect(
-      r.deflate(.5),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..color = talking ? Color(who.accent) : const Color(0xFF26394C),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_RadioPortrait old) => true;
-}
-
-/// The slim progress element: sector pips, one line of where the run is, and
-/// a hairline of the phase's progress. It replaces the per-card progress bars
-/// and the wave-change banner.
-class TransitionStrip extends StatelessWidget {
-  const TransitionStrip({
-    super.key,
-    required this.label,
-    required this.sector,
-    required this.progress,
-    this.wave,
-    this.waves,
-    this.opacity = 1,
-    this.accent = _mint,
-  });
-
-  final String label;
-
-  /// Current sector 1-5 (pips).
-  final int sector;
-  final double progress, opacity;
-  final int? wave, waves;
-  final Color accent;
-
-  static const height = 26.0;
-
-  @override
-  Widget build(BuildContext context) => IgnorePointer(
-    child: Opacity(
-      opacity: opacity.clamp(0.0, 1.0),
-      child: Center(
-        child: Container(
-          key: const ValueKey('transition-strip'),
-          height: height,
-          constraints: const BoxConstraints(maxWidth: 460),
-          margin: const EdgeInsets.symmetric(horizontal: 12),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xCC080D18),
-            border: Border(
-              bottom: BorderSide(color: accent.withValues(alpha: .5)),
-            ),
-          ),
-          child: Stack(
-            children: [
-              Row(
-                children: [
-                  for (var i = 1; i <= 5; i++)
-                    Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.only(right: 3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: i < sector
-                            ? _mint
-                            : i == sector
-                            ? _gold
-                            : const Color(0xFF34485B),
-                      ),
-                    ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        letterSpacing: 1.1,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (wave != null && waves != null) ...[
-                    const SizedBox(width: 6),
-                    for (var i = 1; i <= waves!; i++)
-                      Container(
-                        width: 8,
-                        height: 3,
-                        margin: const EdgeInsets.only(left: 2),
-                        color: i < wave!
-                            ? _mint
-                            : i == wave!
-                            ? _gold
-                            : const Color(0xFF34485B),
-                      ),
-                  ],
-                ],
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: progress.clamp(0.0, 1.0),
-                  child: Container(height: 2, color: accent),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     ),
   );

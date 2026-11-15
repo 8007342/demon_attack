@@ -2,35 +2,99 @@ import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('wave entrance transitions smoothly into formation without position snap', () {
-    final model = ArcadeModel(seed: 42)..start();
-    // Advance past Wave 1 arrival hint into RunMode.playing.
-    for (var i = 0; i < 300 && model.mode != RunMode.playing; i++) {
-      model.update(1 / 60);
-    }
-    expect(model.mode, RunMode.playing);
-    final tracked = model.demons.first;
-    expect(tracked.entering, isTrue);
-
-    var prevX = tracked.x;
-    var prevY = tracked.y;
-    var sawHandoff = false;
-    for (var step = 0; step < 180; step++) {
-      final wasEntering = tracked.entering;
-      model.update(1 / 60);
-      final dx = (tracked.x - prevX).abs();
-      final dy = (tracked.y - prevY).abs();
-      if (wasEntering && !tracked.entering) {
-        sawHandoff = true;
-        // Previously snapped by up to 42px in a single tick; now C1/C2 continuous.
-        expect(dx, lessThan(4.5));
-        expect(dy, lessThan(4.5));
+  // continuous-swarm task 4.3: a streamed skein's swoop hands over to its
+  // squad's fighting pattern with no position or velocity snap.
+  test('swoop hands over to the squad pattern without a snap', () {
+    for (final seed in [3, 42, 77]) {
+      final model = ArcadeModel(seed: seed)
+        ..startAt(difficulty: Difficulty.normal, sector: 2, route: 1);
+      for (var i = 0; i < 600 && model.mode != RunMode.playing; i++) {
+        model.update(1 / 60);
       }
-      prevX = tracked.x;
-      prevY = tracked.y;
+      // Clear wave 1 at once: wave 2 streams in skein by skein.
+      model.flocksSpawned = model.flocksPlanned;
+      for (final d in List.of(model.demons)) {
+        model.hitDemon(d, damage: 99);
+      }
+      final last = <Demon, (double, double)>{};
+      final step = <Demon, (double, double)>{};
+      final entering = <Demon, bool>{};
+      var handoffs = 0;
+      var maxJerk = 0.0;
+      for (var f = 0; f < 60 * 8; f++) {
+        model.invulnerable = 5;
+        model.shots.removeWhere((s) => !s.hostile);
+        model.update(1 / 60);
+        for (final d in model.demons) {
+          if (d.isLarge ||
+              d.dive > 0 ||
+              d.telegraph > 0 ||
+              d.divePrep > 0 ||
+              d.evadeLeft > 0 ||
+              d.swarmState == SwarmState.reserve) {
+            last.remove(d);
+            step.remove(d);
+            entering.remove(d);
+            continue;
+          }
+          final p = last[d];
+          if (p != null) {
+            final v = (d.x - p.$1, d.y - p.$2);
+            final q = step[d];
+            final wasEntering = entering[d] ?? false;
+            if (q != null && wasEntering != d.entering) {
+              handoffs++;
+              final dv = (v.$1 - q.$1).abs() + (v.$2 - q.$2).abs();
+              if (dv > maxJerk) maxJerk = dv;
+              expect(
+                (v.$1.abs() + v.$2.abs()),
+                lessThan(6),
+                reason: 'position snap at the hand-off',
+              );
+            }
+            step[d] = v;
+          }
+          last[d] = (d.x, d.y);
+          entering[d] = d.entering;
+        }
+      }
+      expect(handoffs, greaterThan(5), reason: 'seed $seed');
+      expect(maxJerk, lessThan(1.5), reason: 'velocity snap, seed $seed');
     }
-    expect(sawHandoff, isTrue);
   });
+
+  test(
+    'wave entrance transitions smoothly into formation without position snap',
+    () {
+      final model = ArcadeModel(seed: 42)..start();
+      // Advance past Wave 1 arrival hint into RunMode.playing.
+      for (var i = 0; i < 300 && model.mode != RunMode.playing; i++) {
+        model.update(1 / 60);
+      }
+      expect(model.mode, RunMode.playing);
+      final tracked = model.demons.first;
+      expect(tracked.entering, isTrue);
+
+      var prevX = tracked.x;
+      var prevY = tracked.y;
+      var sawHandoff = false;
+      for (var step = 0; step < 180; step++) {
+        final wasEntering = tracked.entering;
+        model.update(1 / 60);
+        final dx = (tracked.x - prevX).abs();
+        final dy = (tracked.y - prevY).abs();
+        if (wasEntering && !tracked.entering) {
+          sawHandoff = true;
+          // Previously snapped by up to 42px in a single tick; now C1/C2 continuous.
+          expect(dx, lessThan(4.5));
+          expect(dy, lessThan(4.5));
+        }
+        prevX = tracked.x;
+        prevY = tracked.y;
+      }
+      expect(sawHandoff, isTrue);
+    },
+  );
 
   test('ship banking inertia bends sling shots while stationary shots stay straight', () {
     final model = ArcadeModel(seed: 7)..start();
@@ -74,19 +138,20 @@ void main() {
       ..entranceProgress = 1
       ..telegraph = 0.01;
     // Tier 3: Large Sentinel (4+ HP re-entry diving shield, breakable only with powerups).
-    final large = Demon(
-      240,
-      80,
-      3,
-      10,
-      0.3,
-      archetype: EnemyArchetype.shieldSentinel,
-      shieldMax: 4,
-      armorMax: 2,
-    )
-      ..entranceProgress = 1
-      ..waitingForEscort = false
-      ..telegraph = 0.01;
+    final large =
+        Demon(
+            240,
+            80,
+            3,
+            10,
+            0.3,
+            archetype: EnemyArchetype.shieldSentinel,
+            shieldMax: 4,
+            armorMax: 2,
+          )
+          ..entranceProgress = 1
+          ..waitingForEscort = false
+          ..telegraph = 0.01;
 
     model.demons.addAll([small, medium, large]);
     model.update(1 / 60);

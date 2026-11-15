@@ -145,7 +145,7 @@ function dataset(seed, n) {
     const sorted = [...utilities].sort((a, b) => b - a);
     if (sorted[0] - sorted[1] < 1.5) continue;
     const y = utilities.indexOf(sorted[0]);
-    out.push({x: encode(s), y});
+    out.push({x: encode(s), y, s});
   }
   return out;
 }
@@ -160,8 +160,30 @@ const config = {
   learningRate: 0.024,
 };
 
-const train = dataset(config.trainSeed, config.trainCount);
 const test = dataset(config.testSeed, config.testCount);
+
+// demon-intelligence task 2.2: `node scripts/train-policy.mjs --fixtures`
+// exports the held-out set (raw states, teacher labels and utilities) for
+// the Dart planner's parity test, then exits without training.
+if (process.argv.includes('--fixtures')) {
+  const round = (v) => Math.round(v * 1e4) / 1e4;
+  const rows = test.map(({s, y}) => [
+    ...['demonX', 'demonY', 'shotX', 'shotY', 'shotVx', 'shipX', 'shipVx',
+      'crowdBalance', 'healthRatio', 'tierFactor'].map((k) => round(s[k])),
+    y,
+  ]);
+  mkdirSync(root + 'test/fixtures', {recursive: true});
+  writeFileSync(root + 'test/fixtures/policy_heldout.json', JSON.stringify({
+    source: 'scripts/train-policy.mjs --fixtures (testSeed ' + config.testSeed + ')',
+    columns: ['demonX', 'demonY', 'shotX', 'shotY', 'shotVx', 'shipX', 'shipVx',
+      'crowdBalance', 'healthRatio', 'tierFactor', 'label'],
+    actions,
+    rows,
+  }) + '\n');
+  console.log('wrote test/fixtures/policy_heldout.json: ' + rows.length + ' rows');
+  process.exit(0);
+}
+const train = dataset(config.trainSeed, config.trainCount);
 const r = rng(config.weightSeed);
 
 const w = Array.from({length: IN * H}, () => (r() * 2 - 1) * 0.25);

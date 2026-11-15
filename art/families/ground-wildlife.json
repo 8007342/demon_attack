@@ -1,0 +1,36 @@
+{
+ "schema": "demon-attack.ground-wildlife/v1",
+ "name": "ground-wildlife",
+ "notes": "Ground war easter-egg wildlife (plan/ground-easter-eggs.md sections 4-5): five flock species that burst from falling trees and fly off into the fog, and leap frames for the ten flyover critters that flee the troops. Every value is an input to tools/ground_wildlife (Go, standard library only). Flock flyers: one selected SDXL + pixel-art-xl + LayerDiffuse transparent keyframe per species (top-down, wings spread) is finished on the CPU into flap A (spread) and flap B (wings raised: span folded toward the body), each rotated to the up-left heading and mirrored for up-right, and quantised to a 4-step ramp from the sector palette pulled toward the species hint (luma <= 0.34, no warm or cyan signal colours). Critter leaps: derived on the CPU from each critter's own walk frame in assets/images/flyover-creatures.png (crouch: squash; leap: stretch), darkened to the 0.34 luma cap, so they stay pixel-identical in design to the critters they extend. Deviation from the render plan (Qwen pose edits for the leaps): the critters are 11-24 px wide and the pose edits proved binary at sprite scale (render plan section 12), so the CPU derivation is the robust choice.",
+ "atlas": {
+  "file": "assets/images/ground-wildlife.png",
+  "width": 112,
+  "flock_cell": [16, 12],
+  "flock_frames": ["left-a", "left-b", "right-a", "right-b"],
+  "critter_cell": [28, 24],
+  "critter_frames": ["crouch", "leap", "crouch-mirrored", "leap-mirrored"]
+ },
+ "style_prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated",
+ "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+ "sprite": {"workflow": "art/workflows/backgrounds/sprite-transparent.json", "candidates": 4, "source_px": 64},
+ "caps": {"body_luma": [0.04, 0.11, 0.2, 0.32], "max_luma": 0.34, "chroma": 0.22, "hint_weight": 0.6},
+ "flock": {"heading_deg": -12, "flap_fold": 0.45, "flap_lift": 0.18, "body_frac": 0.22},
+ "species": [
+  {"id": "rime-moth", "row": 0, "sector": "krybor", "seed": 760100, "selected": 760102, "hint": "#9A92B0",
+   "prompt": "a pale grey-lilac alien moth with broad soft rounded wings speckled with frosted white dots, a small furry body"},
+  {"id": "dust-kite", "row": 1, "sector": "ringfall", "seed": 760200, "selected": 760201, "hint": "#8C7E9C",
+   "prompt": "a flat diamond-shaped alien glider creature, a thin dusty grey-violet membrane stretched between four fine struts, kite shaped, a short thin tail"},
+  {"id": "ash-flit", "row": 2, "sector": "ember", "seed": 760300, "selected": 760301, "hint": "#6E6660",
+   "prompt": "a small soot-grey alien swift bird with narrow pointed swept-back wings, a pale tan belly and a forked tail"},
+  {"id": "puffwing", "row": 3, "sector": "hollow", "seed": 760400, "selected": 760403, "hint": "#6F8270",
+   "prompt": "a round fluffy grey-green spore-like puffball creature with two small stubby rounded wings"},
+  {"id": "hull-gnat", "row": 4, "sector": "carrier", "seed": 760500, "selected": 760501, "hint": "#5E4458",
+   "prompt": "a tiny dark plum alien gnat insect with two clear veined wings, a slim segmented body and thin legs"}
+ ],
+ "critters": {
+  "source": "assets/images/flyover-creatures.png",
+  "crouch": {"ky": 0.72, "kx": 1.14},
+  "leap": {"ky": 1.12, "kx": 0.86, "lift": 2}, "warm_luma": 0.2,
+  "ids": ["frost-hopper", "shell-crawler", "rock-mite", "dust-grazer", "cinder-newt", "ash-borer", "spore-crawler", "bone-skitter", "brood-larva", "hive-tick"]
+ }
+}

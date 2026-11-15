@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
 import 'package:flame/game.dart';
@@ -18,9 +19,9 @@ Future<Uint8List> capture(DemonScene scene, {String? output}) async {
   scene.paintArena(ui.Canvas(recorder), Vector2(360, 520));
   final picture = recorder.endRecording();
   final image = await picture.toImage(360, 520);
-  final pixels = (await image.toByteData(
-    format: ui.ImageByteFormat.rawRgba,
-  ))!.buffer.asUint8List();
+  final pixels = (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!
+      .buffer
+      .asUint8List();
   if (output != null) {
     final png = await image.toByteData(format: ui.ImageByteFormat.png);
     final file = File(output);
@@ -32,64 +33,108 @@ Future<Uint8List> capture(DemonScene scene, {String? output}) async {
   return pixels;
 }
 
+/// Share of pixels that change by more than 48 levels in any channel.
+double changed(Uint8List a, Uint8List b) {
+  var n = 0;
+  for (var i = 0; i < a.length; i += 4) {
+    if ((a[i] - b[i]).abs() > 48 ||
+        (a[i + 1] - b[i + 1]).abs() > 48 ||
+        (a[i + 2] - b[i + 2]).abs() > 48) {
+      n++;
+    }
+  }
+  return n / (a.length / 4);
+}
+
 void main() {
+  // cinematic-flow: the cutscene is one clock (lib/game/flow_director.dart).
+  // Frames animate, pause keeps the exact frame, and the phase handoffs are
+  // continuous: no black fade hides a camera cut any more.
   testWidgets(
     'cutscene frames animate and pause retains exact rendered composition',
     (tester) async {
-      final model = ArcadeModel()..start();
-      model.demons.clear();
-      model.mode = RunMode.levelClear;
-      model.transitionDuration = 4;
-      model.transitionLeft = 3.4;
+      final model = ArcadeModel(seed: 3)..start();
+      for (var i = 0; i < 600 && model.mode != RunMode.playing; i++) {
+        model.update(1 / 60);
+      }
+      model.endSector();
       final scene = DemonScene(model, () {});
+      void step() {
+        scene.advancePresentation(1 / 60);
+        model.update(1 / 60);
+      }
+
+      void until(RunMode mode) {
+        for (var i = 0; i < 900 && model.mode != mode; i++) {
+          step();
+        }
+        expect(model.mode, mode);
+      }
+
       await tester.runAsync(() async {
         scene.atlas = await decode('assets/images/combat.png');
         scene.sky = await decode('assets/images/cosmic-sky.png');
+        await scene.atmosphere.load();
+        until(RunMode.levelClear);
         final early = await capture(
           scene,
           output: '.cache/cinematics/demon-clear-early.png',
         );
-        model.transitionLeft = 1.4;
+        for (var i = 0; i < 70; i++) {
+          step();
+        }
         final late = await capture(
           scene,
           output: '.cache/cinematics/demon-clear-late.png',
         );
         expect(early, isNot(orderedEquals(late)));
-        model.mode = RunMode.travel;
-        model.transitionLeft = 1.8;
+        // The last frame of level clear and the first of travel.
+        for (var i = 0; i < 900 && model.transitionLeft > .05; i++) {
+          step();
+        }
+        var departureEnd = await capture(scene);
+        while (model.mode == RunMode.levelClear) {
+          departureEnd = await capture(scene);
+          step();
+        }
+        expect(model.mode, RunMode.travel);
+        final travelStart = await capture(scene);
+        expect(
+          changed(departureEnd, travelStart),
+          lessThan(.05),
+          reason: 'level clear flows into travel without a cut',
+        );
+        for (var i = 0; i < 100; i++) {
+          step();
+        }
         final travel = await capture(
           scene,
           output: '.cache/cinematics/demon-travel-mid.png',
         );
-        expect(travel, isNot(orderedEquals(late)));
         model.pause();
         scene.update(.1);
         final paused = await capture(scene);
         expect(paused, orderedEquals(travel));
         model.resume();
-        model.mode = RunMode.levelClear;
-        model.transitionLeft = 0;
-        final departureEnd = await capture(scene);
-        model.mode = RunMode.travel;
-        model.transitionDuration = 4;
-        model.transitionLeft = 4;
-        final travelStart = await capture(scene);
+        // Travel into the next sector's arrival happens inside the cloud.
+        for (var i = 0; i < 900 && model.transitionLeft > .05; i++) {
+          step();
+        }
+        var travelEnd = await capture(scene);
+        while (model.mode == RunMode.travel) {
+          travelEnd = await capture(scene);
+          step();
+        }
+        expect(model.mode, RunMode.transition);
+        expect(model.level, 2);
         expect(
-          travelStart,
-          orderedEquals(departureEnd),
-          reason: 'The black fade must hide the camera handoff',
+          changed(travelEnd, await capture(scene)),
+          lessThan(.05),
+          reason: 'travel flows into the arrival under the cloud',
         );
-        model.transitionLeft = 0;
-        final travelEnd = await capture(scene);
-        model.mode = RunMode.transition;
-        model.transitionDuration = 2.3;
-        model.transitionLeft = 2.3;
-        expect(
-          await capture(scene),
-          orderedEquals(travelEnd),
-          reason: 'Travel fades continuously into arrival',
-        );
-        model.transitionLeft = 1.1;
+        for (var i = 0; i < 120; i++) {
+          step();
+        }
         await capture(scene, output: '.cache/cinematics/demon-arrival.png');
         scene.atlas!.dispose();
         scene.sky!.dispose();

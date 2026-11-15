@@ -169,6 +169,34 @@ class InterludePlanner {
     return result;
   }
 
+  /// A sector transition's slot (playtest-fixes): always a radio line on
+  /// the comms dock, never a caption. The seeded category draw first; then
+  /// any category with a line not shown lately; then the shortest recorded
+  /// line of all, so every transition with a slot window has a line. Null
+  /// only when the bank has no line at all.
+  InterludePlan? planRadio(InterludeContext c) {
+    var result = _radio(c);
+    if (result == null) {
+      RadioPick? best;
+      for (final category in RadioCategory.values) {
+        for (final pick in radioPool(category, level: c.level, crew: c.crew)) {
+          final fresh = !_recent.contains(pick.line.id);
+          final bestFresh = best != null && !_recent.contains(best.line.id);
+          if (best == null ||
+              (fresh && !bestFresh) ||
+              (fresh == bestFresh && pick.needs < best.needs)) {
+            best = pick;
+          }
+        }
+      }
+      if (best != null) result = InterludePlan.radio(best, window: c.window);
+    }
+    if (result == null) return null;
+    count++;
+    shown(result.id);
+    return result;
+  }
+
   InterludePlan? _tip(InterludeContext c) {
     // The deck already avoids repeats within a round; it is asked again
     // only in the rare case it hands back the card just shown.

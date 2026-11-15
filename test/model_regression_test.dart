@@ -43,8 +43,13 @@ void main() {
       model.update(1 / 60);
       expect(model.level, 1);
       expect(model.wave, 2);
-      expect(model.mode, RunMode.transition);
-      expect(model.shots, isEmpty);
+      // Continuous swarm: no transition; leftover hostile shots dissolve.
+      expect(model.mode, RunMode.playing);
+      expect(model.shots.where((s) => s.hostile).single.fizzleIn, isNotNull);
+      for (var i = 0; i < 20; i++) {
+        model.update(1 / 60);
+      }
+      expect(model.shots.where((s) => s.hostile), isEmpty);
       expect(model.pickups.single.power, Power.spread);
     },
   );

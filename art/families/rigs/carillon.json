@@ -1,0 +1,47 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "carillon", "name": "Carillon", "faction": "host", "class": "heavy", "block": "V", "move": "tracks", "seed": 760400,
+ "notes": "Bell-mortar battery: a low carriage with a gargoyle face at the front and a slag hopper at the rear; the articulated layer is the cradle of three iron bells mouth-up with gilt rims (open mouths pointing up are the artillery cue). Phase 0 turns the cradle through the five Host angles; the plan's three ranging tilts (a0-a2) are deferred to the GPU pass (see tasks.md 2.2 note). Channel: one stage per bell; fill3 lights all three mouths. Special = ripple fire, one bell per frame (f0-f2), settle (f3).",
+ "hull": [
+  {"kind": "box", "at": [-7.6, 0, 0], "size": [3.2, 24, 3.2], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}, "piece": "trackL"},
+  {"kind": "box", "at": [7.6, 0, 0], "size": [3.2, 24, 3.2], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}, "piece": "trackR"},
+  {"kind": "box", "at": [0, 0, 1.4], "size": [15, 24, 4.2], "mat": "stone", "chamfer": {"top": 1, "front": 1.6}, "piece": "carriage"},
+  {"kind": "box", "at": [0, 11.6, 1.6], "size": [7, 1.6, 4.4], "mat": "stone_hi", "chamfer": {"top": 0.8}, "piece": "prow"},
+  {"kind": "box", "at": [-1.6, 12.5, 4.2], "size": [1, 0.6, 0.8], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [1.6, 12.5, 4.2], "size": [1, 0.6, 0.8], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [0, -9.6, 5.4], "size": [7, 4.4, 4.2], "mat": "iron", "chamfer": {"top": 0.8}, "piece": "hopper"},
+  {"kind": "bar", "a": [0, -7.4, 8.6], "b": [0, -4, 6.4], "t": 1, "tz": 0.7, "mat": "channel", "stage": 1},
+  {"kind": "prism", "at": [0, 1, 5.4], "n": 8, "r": 5, "h": 0.6, "mat": "iron"}
+ ],
+ "art": {
+  "kind": "cradle", "pivot": [0, 1, 6], "muzzle": [0, 0, 6.6], "seat": 0,
+  "prims": [
+   {"kind": "box", "at": [0, 0, 0], "size": [13, 5, 1.8], "mat": "stone", "chamfer": {"top": 0.5}, "piece": "frame"},
+   {"kind": "box", "at": [-6.6, 0, 0], "size": [1.2, 4, 4.6], "mat": "stone_hi", "tags": ["ornament"]},
+   {"kind": "box", "at": [6.6, 0, 0], "size": [1.2, 4, 4.6], "mat": "stone_hi", "tags": ["ornament"]},
+   {"kind": "prism", "at": [-4, 0, 1.6], "n": 8, "r": 1.6, "r2": 2.5, "h": 3.4, "mat": "iron", "piece": "bell1"},
+   {"kind": "prism", "at": [0, 0, 1.6], "n": 8, "r": 1.6, "r2": 2.5, "h": 3.4, "mat": "iron", "piece": "bell2"},
+   {"kind": "prism", "at": [4, 0, 1.6], "n": 8, "r": 1.6, "r2": 2.5, "h": 3.4, "mat": "iron", "piece": "bell3"},
+   {"kind": "prism", "at": [-4, 0, 4.9], "n": 8, "r": 2.7, "h": 0.5, "mat": "gilt"},
+   {"kind": "prism", "at": [0, 0, 4.9], "n": 8, "r": 2.7, "h": 0.5, "mat": "gilt"},
+   {"kind": "prism", "at": [4, 0, 4.9], "n": 8, "r": 2.7, "h": 0.5, "mat": "gilt"},
+   {"kind": "prism", "at": [-4, 0, 5.1], "n": 8, "r": 1.7, "h": 0.4, "mat": "channel", "stage": 1, "tags": ["mouth"]},
+   {"kind": "prism", "at": [0, 0, 5.1], "n": 8, "r": 1.7, "h": 0.4, "mat": "channel", "stage": 2, "tags": ["mouth"]},
+   {"kind": "prism", "at": [4, 0, 5.1], "n": 8, "r": 1.7, "h": 0.4, "mat": "channel", "stage": 3, "tags": ["mouth"]},
+   {"kind": "ball", "at": [-4, 0, 6.6], "size": [2.4, 2.4, 1.6], "mat": "muzzle", "tags": ["hidden", "muzzle1"]},
+   {"kind": "ball", "at": [0, 0, 6.6], "size": [2.4, 2.4, 1.6], "mat": "muzzle", "tags": ["hidden", "muzzle2", "muzzle"]},
+   {"kind": "ball", "at": [4, 0, 6.6], "size": [2.4, 2.4, 1.6], "mat": "muzzle", "tags": ["hidden", "muzzle3"]}
+  ]
+ },
+ "pieces": ["bell1", "bell2", "bell3", "prow", "hopper", "trackL", "trackR"],
+ "poses": {
+  "special": [
+   [{"tag": "muzzle1", "show": true, "lit": true}],
+   [{"tag": "muzzle2", "show": true, "lit": true}],
+   [{"tag": "muzzle3", "show": true, "lit": true}],
+   [],
+   [],
+   []
+  ]
+ }
+}

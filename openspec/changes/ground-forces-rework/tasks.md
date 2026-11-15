@@ -3,9 +3,13 @@
 Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approval, black-fill sheet, originality pass). The tasks marked "(was gargoyle X.Y)" moved here from that change.
 
 ## 1. Design review
-- [ ] 1.1 Operator review of `plan/human-ground-forces-style-guide.md`: pillars, roster and names, palette, readability rules
-- [ ] 1.2 Operator decision on the heading count (5 per faction), the turn tracker numbers, and the block layouts in `plan/ground-unit-animation.md`
-- [ ] 1.3 Originality pass for the Fleet: every name and silhouette checked against well-known game, film and toy vehicles; rename or redesign near matches; no prompt names a franchise, studio or artist
+- [x] 1.1 Operator review of `plan/human-ground-forces-style-guide.md`: pillars, roster and names, palette, readability rules — approved with the CP0/§10 approvals (2026-11-15)
+- [x] 1.2 Operator decision on the heading count (5 per faction), the turn tracker numbers, and the block layouts in `plan/ground-unit-animation.md` — five headings approved (task 1.4, CP0)
+- [x] 1.3 Originality pass for the Fleet: every name and silhouette checked against well-known game, film and toy vehicles; rename or redesign near matches; no prompt names a franchise, studio or artist
+      (2026-11-14: written checklist from memory in `plan/render-runs/ground-forces-rework.md` §7.1, both armies; flags
+      Gutter-runner (name), Stilt, Sleet. 2026-11-15, operator decision A6: renamed Spout-runner; Stilt
+      side pods moved to one chin pod under the cab; Sleet on four big wheels plus a tail skid; Host negative prompt
+      bans crosses, scripture, organ pipes, skulls and human crew.)
 - [x] 1.4 Operator decisions on the open questions in `design.md` (2026-11-14): **five headings** per faction;
       pilot **Fleet and Host together**; the **full pipeline** (about 13 GPU hours); the **threat vehicles get
       headings too, with no flag** ("we fix forward"): respect the difficulty contract
@@ -13,46 +17,103 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
       operator objection: Carrier-sector human slot = the Skiff; egg rarities as proposed (1/3 dances, 1/8
       turret-pop jackpots, 2/5 tree flocks); allied squads dance on `allySaved`; a half-resolution far atlas only
       if the busiest sector measures over the phone memory budget (2.5).
-- [ ] 1.5 Link the new docs from `plan/style-guide.md` ("Ground war presentation") and `plan/asset-pipeline.md`; add a line to `plan/render-runs/rerender-all.md` Section 5.3
+- [x] 1.5 Link the new docs from `plan/style-guide.md` ("Ground war presentation") and `plan/asset-pipeline.md`; add a line to `plan/render-runs/rerender-all.md` Section 5.3
 
 ## 2. Rigs and tooling (no GPU)
-- [ ] 2.1 `tools/ground_blocks` (Go, standard library), sharing the `tools/ground_troops` rasteriser: verbs `rig`, `jobs`, `ingest`, `finish`, `pack`, `contact`, `offline` (supersedes the planned `tools/ground_host`, was gargoyle 3.1)
-- [ ] 2.2 Rig format and rigs under `art/families/rigs/` for every Fleet and Tier A Host unit: primitives, turret pivot, channel path, eye and light points, debris seam lines, soft-edge marks
-- [ ] 2.3 Family specs `ground-fleet.json`, `ground-host.json` (was gargoyle 2.2, now the block layout), `ground-infantry.json` (replaces the appended `ground-troops.json` rows, was gargoyle 2.4), each with a `-runs.json`; validate with `studio.validate_family`
-- [ ] 2.4 Overlay generators: channel `fill1–3`, `lights`, `dmg1–2` per heading or layer angle; pitch shears; ford bands; debris cuts (12 pieces per Host vehicle)
-- [ ] 2.5 Per-sector packing with baked sector stone and kit (settles gargoyle 2.3 as baked variants); memory and draw-call measurement for the busiest sector
-- [ ] 2.6 `offline` build of every block from the rig alone, plus the generated Dart metadata (cell names to atlas, row, column; pivots; muzzles; sizes), so the runtime can integrate first
-- [ ] 2.7 Checkpoint CP0: `art/contact/ground-rig-turntables.png` (black fills and rig shading at every heading, turret × hull seating grid) and operator review
+- [x] 2.1 `tools/ground_blocks` (Go, standard library), sharing the `tools/ground_troops` rasteriser: verbs `rig`, `jobs`, `ingest`, `finish`, `pack`, `contact`, `offline` (supersedes the planned `tools/ground_host`, was gargoyle 3.1)
+      (2026-11-14: the shared rasteriser moved to `tools/pixelgrid`; ground_troops output byte-identical. There is no
+      `run` verb: the queue goes through the studio tools one job at a time. Also `validate`, `block`.)
+- [x] 2.2 Rig format and rigs under `art/families/rigs/` for every Fleet and Tier A Host unit: primitives, turret pivot, channel path, eye and light points, debris seam lines, soft-edge marks
+      (26 rigs incl. the 4 threat vehicles with headings and the Host infantry; the Carillon cradle turns through five
+      angles for now, its three ranging tilts are left to the GPU pass)
+- [x] 2.3 Family specs `ground-fleet.json`, `ground-host.json` (was gargoyle 2.2, now the block layout), `ground-infantry.json` (replaces the appended `ground-troops.json` rows, was gargoyle 2.4), each with a `-runs.json`; validate with `studio.validate_family`
+      (validated by `go run . validate` and `go test`; `studio.validate_family` not run in Phase 0, no studio access)
+- [x] 2.4 Overlay generators: channel `fill1–3`, `lights`, `dmg1–2` per heading or layer angle; pitch shears; ford bands; debris cuts (12 pieces per Host vehicle)
+      (overlays empty at a heading are not stored or named; every state exists at some heading)
+- [x] 2.5 Per-sector packing with baked sector stone and kit (settles gargoyle 2.3 as baked variants); memory and draw-call measurement for the busiest sector
+      (Hollow 7.4 MB RGBA, 141 KB PNG, about 48 draw calls at the caps; under the proposed 8 MB budget, so no half-res far
+      atlas. Numbers in the render plan §7 and `art/families/ground-blocks-pack.json`)
+- [x] 2.6 `offline` build of every block from the rig alone, plus the generated Dart metadata (cell names to atlas, row, column; pivots; muzzles; sizes), so the runtime can integrate first
+      (`lib/game/ground_blocks_atlas.dart`, atlases in `assets/images/ground-blocks/`; not yet in `pubspec.yaml` or drawn by
+      the painter: wiring headings into gameplay is the runtime task)
+- [x] 2.7 Checkpoint CP0: `art/contact/ground-rig-turntables.png` (black fills and rig shading at every heading, turret × hull seating grid) and operator review — CP0 approved by the operator 2026-11-15 (render plan §9)
+      (2026-11-14: sheet committed, 1720 × 4614, 330 KB; awaiting the operator)
 
 ## 3. Workflows
-- [ ] 3.1 `art/workflows/sprites/heading-qwen-edit.json` (two reference images: rig render and hero)
-- [ ] 3.2 `art/workflows/sprites/inbetween-wan-vace.json` (Wan2.2 VACE 14B, lightx2v 4-step, reference image plus rig control clip)
-- [ ] 3.3 `art/workflows/sprites/matte-birefnet-batch.json`
-- [ ] 3.4 Dry-run each new workflow's graph in the studio without queuing (inputs resolve, models present); record model hashes for provenance
+- [x] 3.1 `art/workflows/sprites/heading-qwen-edit.json` (two reference images: rig render and hero) (d41a247e)
+- [x] 3.2 `art/workflows/sprites/inbetween-wan-vace.json` (Wan2.2 VACE 14B, lightx2v 4-step, reference image plus rig control clip)
+      (2026-11-14: generated by `tools/production/inbetween_vace_workflow.lua`, 17 and 33 frames; the control clip is one
+      horizontal strip of 480 x 480 frames (`$control`) split by core ImageCrop/ImageBatch, mattes saved in the same job.
+      No lightx2v LoRA is admitted yet, so it runs 20 steps at cfg 3.5 (10 per expert). Not yet run: see 3.4.
+      `tools/ground_blocks` has no verb that writes control strips yet.)
+- [x] 3.3 `art/workflows/sprites/matte-birefnet-batch.json` (single image or whatever batch its loader yields; clips are matted inside the VACE job)
+- [x] 3.4 Dry-run each new workflow's graph in the studio without queuing (inputs resolve, models present); record model hashes for provenance
+      (22:55: host fixed the mount; all three graphs ran: render plan §8 has the smoke ledger and the
+      heading-edit findings. Earlier, 22:50: models all on disk per studio.models. BLOCKED: after the relaunch the host cannot see this forge's
+      /work/tmp/imagegen (inputs "do not exist", outputs "Permission denied (os error 13)"); host-side fix needed.
+      studio.validate_family refuses every family in the repo, shipped ones too: the host contract 1935-k2ib/v1 wants
+      contract/pipelineVersion/family/version/project/kind headers the project schema never had.)
 
 ## 4. Pilot (GPU, about 90 jobs; after CP0)
-- [ ] 4.1 Lodestar: hero (4 candidates), 4 other headings and 5 turret angles (2 each), mattes, finish
-- [ ] 4.2 Crocket: hero, 4 headings, an `arrive` clip; finish with overlays and debris
-- [ ] 4.3 Ashlar Guard: 3 headings, a walk clip and a wind-up and fire clip
-- [ ] 4.4 Checkpoint CP1: `art/contact/ground-pilot.png` over Ember and Hollow at phone size; operator picks the full or lean pipeline, or the no-AI fallback
+- [x] 4.1 Lodestar: hero (4 candidates), 4 other headings and 5 turret angles (2 each), mattes, finish — lean hybrid (§12): hero + bake; headings/layers baked, no heading edits
+- [x] 4.2 Crocket: hero, 4 headings, an `arrive` clip; finish with overlays and debris — hero + bake; arrive keys from the rig (no VACE, §12)
+- [x] 4.3 Ashlar Guard: 3 headings, a walk clip and a wind-up and fire clip — hero + bake; walk/aim keys from the rig (VACE tried, §12)
+- [x] 4.4 Checkpoint CP1: `art/contact/ground-pilot.png` over Ember and Hollow at phone size; operator picks the full or lean pipeline, or the no-AI fallback — CP1 decided by the delegated call: lean hybrid (§12)
 
 ## 5. Production (GPU, after CP1)
-- [ ] 5.1 Fleet heroes; checkpoint CP2
-- [ ] 5.2 Host heroes and sector remaps; checkpoint CP3 (was gargoyle 3.3)
-- [ ] 5.3 All headings and articulated layers for both factions; checkpoint CP4 (turntables)
-- [ ] 5.4 Infantry keyframes and terrain poses for both factions (folds in the terrain change's art tasks 3.1 and 3.3 for these units)
-- [ ] 5.5 In-betweens: infantry walks and actions, walker strides, specials and arrivals; wreck and totalled keyframes; checkpoint CP5 (was gargoyle 3.4)
-- [ ] 5.6 Pack every per-sector atlas and the metadata; contact sheets with greyscale and black-fill strips (was gargoyle 3.5, 3.6)
-- [ ] 5.7 (Flagged, Phase 4) Threat vehicles as V/W blocks, only after a gameplay check of their telegraph frames
+- [x] 5.1 Fleet heroes; checkpoint CP2 — all heroes picked (§13)
+- [x] 5.2 Host heroes and sector remaps; checkpoint CP3 (was gargoyle 3.3) — Host heroes picked and baked; per-sector remaps in pack (§13, §14)
+- [x] 5.3 All headings and articulated layers for both factions; checkpoint CP4 (turntables) — headings and layers via bake (§14), no AI edits
+- [x] 5.4 Infantry keyframes and terrain poses for both factions (folds in the terrain change's art tasks 3.1 and 3.3 for these units) — keyframes and terrain poses come from the rig and are baked from each hero (§12, §14)
+- [x] 5.5 In-betweens: infantry walks and actions, walker strides, specials and arrivals; wreck and totalled keyframes; checkpoint CP5 (was gargoyle 3.4) — decided against VACE at CP1 (§12): rig key frames carry the motion; wreck/totalled keyframes baked (§14)
+- [x] 5.6 Pack every per-sector atlas and the metadata; contact sheets with greyscale and black-fill strips (was gargoyle 3.5, 3.6) — packed with bake v2 (§14)
+- [x] 5.7 (Flagged, Phase 4) Threat vehicles as V/W blocks, only after a gameplay check of their telegraph frames — threat vehicles baked as V/W blocks; runtime keeps the telegraph timing contract (ground-blocks-runtime, sim parity tested)
 
 ## 6. Atmosphere and wildlife
-- [ ] 6.1 `art/families/ground-atmosphere.json`: procedural bands and sprites (seeded noise, stepped alpha), sector tints sampled from each horizon and clamped
-- [ ] 6.2 Optional low-cloud strips through `strip-sheet.json`; pack `assets/images/ground-atmosphere.png` and `lib/game/ground_atmosphere_atlas.dart` (generated) per the interface note
-- [ ] 6.3 `art/families/ground-wildlife.json`: 5 flock species (transparent sprite workflow) and 10 critter leap pairs (pose edits); pack `assets/images/ground-wildlife.png`
-- [ ] 6.4 Checkpoints CP6 (atmosphere over every sector with units at four depths) and CP7 (easter egg assets)
+- [x] 6.1 `art/families/ground-atmosphere.json`: procedural bands and sprites (seeded noise, stepped alpha), sector tints sampled from each horizon and clamped
+      (2026-11-15: `tools/ground_atmosphere` (Go + pixelgrid), seeds 7900xx; tints = horizon sample blended with the
+      plan's starting tint, clamped to luma .10–.22 / chroma ≤ .12 and kept off the signal hues. Ledger §15.)
+- [x] 6.2 Optional low-cloud strips through `strip-sheet.json`; pack `assets/images/ground-atmosphere.png` and `lib/game/ground_atmosphere_atlas.dart` (generated) per the interface note
+      (2026-11-15: packed per §6 (512 × 872); the optional SDXL low-cloud strips were not run (CPU only, procedural
+      first). Wired through `Atmosphere.groundArt`: the art takes the horizon band and far banks, the mists join the
+      ground depth sort; fBm tiles and the shader stay the fallback. Smoke sprites are packed; drawn since render plan §17.)
+- [x] 6.3 `art/families/ground-wildlife.json`: 5 flock species (transparent sprite workflow) and 10 critter leap pairs (pose edits); pack `assets/images/ground-wildlife.png`
+      (2026-11-15: flock = 5 jobs × 4 LayerDiffuse candidates, picks finished on the CPU (flap B and headings
+      derived); leaps derived on the CPU from each critter's own walk frame instead of pose edits (deviation,
+      render plan §16); `tools/ground_wildlife`, metadata `lib/game/ground_wildlife_atlas.dart`.)
+- [x] 6.4 Checkpoints CP6 (atmosphere over every sector with units at four depths) and CP7 (easter egg assets)
+      (2026-11-15: CP6 and CP7 decided under the operator's delegated call (render plan §17). Sheets:
+      `art/contact/ground-atmosphere-contact.png` (CP6, refreshed with fogged units), `ground-wildlife.png`,
+      `sentinel-silhouettes.png` and `ground-baked-all.png` (debris pieces and `flourish` cells are in the baked
+      blocks; the egg tests check every cell an egg draws in every sector).)
 
 ## 7. Handoff and proof
-- [ ] 7.1 Send the atmosphere interface note (`plan/ground-atmosphere.md`, Section 6) and the block metadata contract to the runtime work; agree the names before packing
-- [ ] 7.2 Atlas contract tests (for the consuming code change): cell presence, binary alpha (stepped for atmosphere), palette membership per faction, gilt stillness, leg gaps, heading step size, turret seating (art half of gargoyle 5.3)
-- [ ] 7.3 Checkpoint CP8: in-game review frames at 360 × 780 and 1280 × 720 in every sector; operator acceptance
-- [ ] 7.4 Fold the accepted decisions into `plan/style-guide.md`, `plan/asset-pipeline.md` and the main specs
+- [x] 7.1 Send the atmosphere interface note (`plan/ground-atmosphere.md`, Section 6) and the block metadata contract to the runtime work; agree the names before packing
+      (2026-11-15: block metadata consumed as generated by `openspec/changes/ground-blocks-runtime` (no renames).
+      Atmosphere note consumed by the runtime under its own names: `Atmosphere.groundArt` / `groundLayers` and
+      `GroundAtmosphereArt` (`lib/game/atmosphere.dart`, `lib/game/ground_atmosphere.dart`) draw the bands in the
+      depth sort; `GroundFog` (unit tint by `fogMix(z)`, emissive half rate, threat and lane caps) and `GroundSmoke`
+      (`ground_atmosphere.dart`) with `GroundPainter` / `GroundBlocksLayer` tint units and draw `smokeDrift` /
+      `smokeWall` (render plan §17).)
+- [x] 7.2 Atlas contract tests (for the consuming code change): cell presence, binary alpha (stepped for atmosphere), palette membership per faction, gilt stillness, leg gaps, heading step size, turret seating (art half of gargoyle 5.3)
+      (2026-11-15: runtime half in `test/ground_blocks_runtime_test.dart` (change `ground-blocks-runtime`): every
+      cell the painter can request exists for every cast unit in every sector, `GroundHeading` determinism, one-step
+      turns, minimum hold, 90° heavy turn timing and no flicker, turret seating through the painter's placement for
+      every heading × angle × mirror pair, painter requests in a simulated run of each sector, and gameplay parity
+      with the old atlases. Binary alpha, palettes, gilt stillness and leg gaps stay in `go test` on the art side;
+      atmosphere alpha waits for its atlas.)
+      (Closed 2026-11-15. Flutter side: `test/ground_blocks_atlas_test.dart`, `test/ground_blocks_runtime_test.dart`,
+      `test/ground_atmosphere_test.dart` (stepped alpha, seams, mist gaps, tint caps, density curve, lane cap,
+      unit fog and smoke caps), `test/wildlife_silhouette_assets_test.dart` (binary alpha, luma and signal caps),
+      `test/ground_easter_eggs_test.dart` (every egg cell in every sector). Art side: `go test` in
+      `tools/ground_blocks` and `tools/ground_atmosphere`.)
+- [x] 7.3 Checkpoint CP8: in-game review frames at 360 × 780 and 1280 × 720 in every sector; operator acceptance
+      (2026-11-15, decided under the delegated call: review frames from the test harness
+      (`test/ground_blocks_runtime_test.dart`: portrait 360 × 780, wide 1280 × 720 and 2x ground-only frames per sector;
+      `test/ground_atmosphere_test.dart`: fog-and-smoke frames; `test/ground_easter_eggs_test.dart`: the flock), plus
+      `art/contact/ground-cp8-ember-phone.jpg`, an in-browser frame at iPhone 12 Pro Max. The operator's own
+      playtest is still recommended: checklist in render plan §17.)
+- [x] 7.4 Fold the accepted decisions into `plan/style-guide.md`, `plan/asset-pipeline.md` and the main specs
+      (2026-11-15: style guide "Ground war presentation: accepted decisions"; asset pipeline "Ground blocks" →
+      "Pipeline (lean hybrid)", dropped workflows and the durability rule. Main specs: the change's delta specs
+      merge into `openspec/specs/` when it is archived.)

@@ -68,9 +68,10 @@ void main() {
     expect(demons(3), contains(GroundForce.heavyTank));
     expect(demons(4).length, 4);
     expect(SkirmishFront.of(Difficulty.normal, route: 0, sector: 5).active, isTrue);
-    // A live level fields them all.
+    // A live level fields them all (within 100 s: the ground travel pace
+    // reshuffled the skirmish draws, and rockets came after 80 s).
     final seen = <GroundForce>{}, allySeen = <GroundForce>{};
-    fly(4, 80, each: (m) {
+    fly(4, 100, each: (m) {
       for (final u in m.ground.units) {
         if (u.alive) seen.add(u.force);
       }

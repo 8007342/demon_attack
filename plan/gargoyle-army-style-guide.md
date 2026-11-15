@@ -93,7 +93,7 @@ Sizes are the visible content box in **texels** (the ground atlases have 1 texel
 | K-1 | **Chapterhouse** | Spire | Mobile command walker | A | Hollow (rare), Carrier | 44 × 40 | 27 × 25 → 48 × 44 |
 
 The existing threat vehicles get Host names and an art direction, with the same rows and frame contract (`lib/game/ground_atlas.dart`):
-- **Gutter-runner**: the Krybor rocket buggy, a captured human buggy with a carved gargoyle hood and a gutter-fed launcher;
+- **Spout-runner**: the Krybor rocket buggy, a captured human buggy with a carved gargoyle hood and a channel-fed launcher;
 - **Scrapmason Crawler**: the Ringfall missile crawler, salvage hull plates mortared with stone;
 - **Kiln Ox**: the Ember artillery beast, four-legged basalt with a kiln-mouth mortar;
 - **Belfry**: the Hollow walking siege tower.

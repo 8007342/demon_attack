@@ -173,6 +173,24 @@ abstract final class GroundV4Tuning {
     GroundForce.heavyTank => 44.0,
   };
 
+  /// Skirmish travel pace (openspec change ground-travel-pace): the
+  /// ground reads as distant, slow events, so skirmish units and the v4
+  /// convoy travel at this fraction of [approach], [lateral] and the
+  /// convoy speeds; walkers (units drawn as W- or K-block legged units)
+  /// slower still. The threat front keeps full speed (telegraph and
+  /// launch clocks are a contract).
+  static const skirmishPace = .6, walkerPace = .45;
+
+  /// Whether skirmish unit [id] of [force] in [sector] (0-4) is drawn as
+  /// a legged walker. Reads only the cast metadata (deterministic).
+  static bool walks(GroundForce force, int sector, int id) {
+    if (force != GroundForce.vehicle) return false;
+    final unit = GroundBlocks.units[GroundBlocksCast.unitFor(
+        GroundCastRole.skirmishVehicle, sector,
+        id: id)];
+    return unit != null && (unit.block == 'W' || unit.block == 'K');
+  }
+
   /// Skirmish units hold at this depth or further: always short of
   /// [GroundTuning.fireZ] (and they never fire at the player anyway).
   static const holdMin = 430.0, holdSpread = 130.0;
@@ -212,9 +230,13 @@ abstract final class GroundV4Tuning {
   /// Engaged allies stand this far short of a skirmish foe.
   static const standoff = 150.0;
 
-  /// Skirmishes are fought on the visible near ground: an ally is assigned
-  /// from [assignZ] and nobody fires before [fireStartZ] (screen y ~ 258).
-  static const assignZ = 900.0, fireStartZ = 700.0;
+  /// Skirmishes are fought on the visible ground: an ally is assigned from
+  /// [assignZ] (screen y ~ 230) and nobody fires before [fireStartZ]
+  /// (y ~ 241). Ground travel pace: moved out from 900 / 700 so that, at
+  /// [skirmishPace], the first shots come about as many seconds after
+  /// arrival as before and the engagements per minute hold (fights read
+  /// further off, which suits the distant war).
+  static const assignZ = 1050.0, fireStartZ = 880.0;
 
   /// Skirmish arrivals enter a little nearer than the threat front.
   static const spawnZ = 1260.0;
@@ -404,6 +426,9 @@ extension GroundWarV4 on ArcadeModel {
             sk.rng.nextDouble() * GroundV4Tuning.holdSpread
         ..tracerLeft = .4 + sk.rng.nextDouble() * .6;
       u.maxHp = u.hp;
+      u.travelPace = GroundV4Tuning.walks(force, u.sector, u.id)
+          ? GroundV4Tuning.walkerPace
+          : GroundV4Tuning.skirmishPace;
       u.facing = x < 180 ? 1 : -1;
       ground.units.add(u);
       sk.spawned++;
@@ -419,7 +444,10 @@ extension GroundWarV4 on ArcadeModel {
     if (u.lastHit >= 0) u.lastHit += dt;
     u.fireFlash = math.max(0, u.fireFlash - dt);
     if (u.z > u.holdZ) {
-      u.z = math.max(u.holdZ, u.z - GroundV4Tuning.approach(u.force) * rate * dt);
+      u.z = math.max(
+        u.holdZ,
+        u.z - GroundV4Tuning.approach(u.force) * u.travelPace * rate * dt,
+      );
     }
     if (!u.sighted && u.z <= GroundTuning.sightZ) u.sighted = true;
     final ally = u.ally;
@@ -665,7 +693,9 @@ extension GroundWarV4 on ArcadeModel {
       u.retarget = 1.8 + _sk.rng.nextDouble() * 2.6;
       u.goalX = _v4Route(u);
     }
-    final maxV = GroundV4Tuning.lateral(u.force) * GroundCamera.texel(u.z);
+    final maxV = GroundV4Tuning.lateral(u.force) *
+        u.travelPace *
+        GroundCamera.texel(u.z);
     final want = ((u.goalX - u.lx!) * 1.4).clamp(-maxV, maxV);
     u.vx += (want - u.vx) * math.min(1.0, dt * 2.5);
     final (lo, hi) = _v4Range(u);
@@ -719,6 +749,7 @@ extension GroundWarV4 on ArcadeModel {
         if (d.abs() < 30) goal += (d >= 0 ? 1 : -1) * (30 - d.abs()) * 1.5;
       }
       final maxV = (a.force == GroundForce.vehicle ? 70.0 : 44.0) *
+          GroundV4Tuning.skirmishPace *
           GroundCamera.texel(a.z);
       final want = ((goal - lx) * 1.5).clamp(-maxV, maxV);
       a.vx += (want - a.vx) * math.min(1.0, dt * 3);

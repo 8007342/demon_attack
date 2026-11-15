@@ -26,6 +26,9 @@ import 'comms/squad_comms.dart';
 // --- console route
 import 'widgets/dev_console.dart';
 import 'widgets/transition_overlay.dart'; // --- fluid transitions
+import 'widgets/interlude_card.dart'
+    show TipInterludeCard; // --- cinematic flow
+import 'game/hints.dart' show tacticalHints; // --- cinematic flow: pause tips
 import 'widgets/level_toggle.dart'; // --- audio round: music / speech toggles
 export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
 // --- end console route
@@ -213,8 +216,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Difficulty boardDifficulty = Difficulty.normal;
   bool handledRunEnd = false;
   bool _endingShown = false, _endingOpen = false, _endingScheduled = false;
-  // --- fluid transitions: the one primary transition message and the slim
-  // progress strip (widgets/transition_overlay.dart).
+
+  /// The pause menu's tips pane is open (cinematic-flow: illustrated hints
+  /// live at the opening and here).
+  bool _pauseTips = false;
+  // --- fluid transitions: the one primary transition message
+  // (widgets/transition_overlay.dart); ux-declutter removed its progress strip.
   late final transitions = TransitionPresenter(seed: widget.interludeSeed);
   void _skipTransition() {
     if (transitions.skip(model, squadComms, voice: voiceOn)) _tick();
@@ -467,10 +474,20 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     audioUnlock();
     audioResume();
     audioCue('ending', 5, 1, model.cycle);
+    // --- cinematic flow (design §4.1): the ending fades up from the cloud
+    // tops over the climbing ship: a crossfade between two lit scenes,
+    // never through black (a cut with reduced motion).
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) =>
+      PageRouteBuilder<void>(
+        transitionDuration: Duration(milliseconds: reduce ? 0 : 900),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (_, _, _) =>
             EndingPage(creditsOnly: creditsOnly, onAudioResume: audioResume),
+        transitionsBuilder: (_, animation, _, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+          child: child,
+        ),
       ),
     );
     if (!mounted) return;
@@ -625,6 +642,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     setState(() {
       if (model.mode == RunMode.paused) {
         model.resume();
+        _pauseTips = false;
       } else {
         model.pause();
       }
@@ -660,7 +678,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       return KeyEventResult.handled;
     }
     if (event is KeyDownEvent &&
-        transitions.showingCard &&
+        transitions.canSkip(model) &&
         model.mode != RunMode.paused &&
         (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.enter)) {
       _skipTransition(); // --- fluid transitions
@@ -855,7 +873,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           // --- fluid transitions: a silent tip holds the
                           // call quiet (dimmed) while the music plays.
                           child: AnimatedOpacity(
-                            opacity: transitions.quiet ? .35 : 1,
+                            opacity: transitions.quiet(model) ? .35 : 1,
                             duration: const Duration(milliseconds: 500),
                             child: CommsSidePanels(
                               director: squadComms.director,
@@ -897,7 +915,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                             ? const ColoredBox(
                                 color: Color(0xEE080D18),
                                 child: Center(
-                                  child: CircularProgressIndicator(),
+                                  // A word, not a spinner (ux-declutter).
+                                  child: Text(
+                                    'RANKING…',
+                                    style: TextStyle(
+                                      color: Color(0xFF8AA3BA),
+                                      fontSize: 11,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
                                 ),
                               )
                             : _scoreOverlay(),
@@ -1216,10 +1242,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         if (boardLoading)
           const Padding(
             padding: EdgeInsets.all(24),
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+            // A word, not a spinner (ux-declutter).
+            child: Text(
+              'LOADING SCORES…',
+              key: ValueKey('scores-loading'),
+              style: TextStyle(
+                color: Color(0xFF8AA3BA),
+                fontSize: 11,
+                letterSpacing: 1.2,
+              ),
             ),
           ),
         if (!boardLoading && boardError != null) ...[
@@ -1462,9 +1493,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 if (model.defeatActive) {
                   model.defeatTimer = 0;
                   _tick();
-                } else if (transitions.showingCard &&
+                } else if (transitions.canSkip(model) &&
                     model.mode != RunMode.paused) {
-                  _skipTransition(); // --- fluid transitions
+                  _skipTransition(); // --- cinematic flow: skip to Descent
                 }
               },
               child: Stack(
@@ -1479,7 +1510,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       model.clock < heartNoticeUntil &&
                       model.mode != RunMode.paused)
                     Positioned(
-                      top: 8 + transitions.stripInset(model),
+                      top: 8,
                       left: 8,
                       right: 8,
                       child: IgnorePointer(
@@ -1503,16 +1534,18 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                  // --- fluid transitions: one primary message (interlude
-                  // card, story card or carrier alert) and the slim strip.
-                  if (model.cinematic && model.mode != RunMode.paused)
+                  // --- cinematic flow: the opening tip card, the carrier
+                  // alert, or a sector transition's medal flourish (no
+                  // cards, no strips, no floating text; the radio line on
+                  // the dock is the only transition message).
+                  if ((model.cinematic || model.flow.active) &&
+                      model.mode != RunMode.paused)
                     Positioned.fill(
                       child: CommsAtlasScope(
                         child: transitions.build(
                           context,
                           model: model,
                           comms: squadComms,
-                          ship: scene.ship,
                           onSkip: _skipTransition,
                         ),
                       ),
@@ -1529,11 +1562,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       key: const ValueKey('comms-hud-stack'),
                       left: 4,
                       right: 4,
-                      top:
-                          transitions.stripInset(model) +
-                          (heartNotice != null && model.clock < heartNoticeUntil
-                              ? 44
-                              : 4),
+                      top: heartNotice != null && model.clock < heartNoticeUntil
+                          ? 44
+                          : 4,
                       child: CommsAtlasScope(
                         child: CommsHudStack(
                           director: squadComms.director,
@@ -1554,6 +1585,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           child: const Text('RESUME'),
                         ),
                         const SizedBox(height: 12),
+                        // --- cinematic flow: the illustrated tips pane.
+                        TextButton(
+                          key: const ValueKey('pause-tips'),
+                          onPressed: () =>
+                              setState(() => _pauseTips = !_pauseTips),
+                          child: Text(_pauseTips ? 'HIDE TIPS' : 'TIPS'),
+                        ),
+                        if (_pauseTips) _tipsPane(),
+                        const SizedBox(height: 4),
                         _atmosphereToggle(),
                         const SizedBox(height: 4),
                         TextButton(
@@ -1645,6 +1685,35 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       ),
     ),
   );
+
+  /// Every tip this difficulty can show, illustrated, in a column (the
+  /// overlay scrolls). No advance control: it is a reference pane.
+  Widget _tipsPane() => Padding(
+    key: const ValueKey('pause-tips-pane'),
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final tip in tacticalHints)
+          if (tip.isEligible(model.difficulty))
+            Container(
+              width: 340,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xF2080D18),
+                border: Border.all(color: const Color(0xFF26394C)),
+              ),
+              child: TipInterludeCard(
+                tip: tip,
+                destination: 'SECTOR ${model.level}',
+                compact: true,
+              ),
+            ),
+      ],
+    ),
+  );
+
   Widget _gameOverlay(String heading, String sub, List<Widget> actions) =>
       ColoredBox(
         color: const Color(0xEC080D18),
@@ -1964,36 +2033,6 @@ class ConsolePainter extends CustomPainter {
       Paint()..color = const Color(0xFF70F5D5).withValues(alpha: 0.6),
     );
 
-    // Recessed sliding track rail
-    final railStartX = s.width * 0.22;
-    final railEndX = s.width * 0.78;
-    final railY = s.height - 10;
-    c.drawLine(
-      Offset(railStartX, railY),
-      Offset(railEndX, railY),
-      Paint()
-        ..color = const Color(0xFF243B4E)
-        ..strokeWidth = 2,
-    );
-    // Center notch
-    c.drawLine(
-      Offset(s.width * 0.5, railY - 3),
-      Offset(s.width * 0.5, railY + 3),
-      Paint()
-        ..color = const Color(0xFF4C6B82)
-        ..strokeWidth = 1.5,
-    );
-    // Quarter ticks
-    for (final frac in [0.36, 0.64]) {
-      c.drawLine(
-        Offset(s.width * frac, railY - 2),
-        Offset(s.width * frac, railY + 2),
-        Paint()
-          ..color = const Color(0xFF334F66)
-          ..strokeWidth = 1,
-      );
-    }
-
     // Active pilot reticle indicator
     final activeX = touch != null
         ? touch! * s.width
@@ -2002,12 +2041,7 @@ class ConsolePainter extends CustomPainter {
               : null);
 
     if (activeX != null) {
-      // Glowing carriage indicator on rail
-      c.drawRect(
-        Rect.fromCenter(center: Offset(activeX, railY), width: 14, height: 4),
-        Paint()..color = mint,
-      );
-      // Soft tracking pillar
+      // Soft tracking pillar under the finger (no rail: ux-declutter).
       c.drawRect(
         Rect.fromCenter(
           center: Offset(activeX, s.height * 0.5),

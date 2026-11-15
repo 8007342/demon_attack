@@ -57,7 +57,7 @@
   function trimDecoded() {
     for (const id of bufferCache.keys()) {
       if (decodedBytes <= decodedLimit && decoded.size <= decodedCountLimit) break;
-      if (!decoded.has(id) || live.some(v => v.id === id)) continue;
+      if (!decoded.has(id) || live.some(v => v.clip === id)) continue;
       decodedBytes -= decoded.get(id);
       decoded.delete(id); bufferCache.delete(id);
     }
@@ -114,7 +114,9 @@
     } catch { /* already stopped */ }
   }
   // Returns true when the clip was accepted (it then starts as soon as it is decoded).
-  function play(id, priority = 0, demon = false) {
+  // [clip]: the file stem to load when it differs from the line id (an
+  // unrecorded line borrowing a recorded one); voices are tracked by id.
+  function play(id, priority = 0, demon = false, clip = id) {
     const g = graph();
     if (!g || volume <= 0 || level === 'mute' || !id) return false;
     if (live.some(v => v.id === id)) return false;
@@ -125,13 +127,13 @@
       if (priority < urgent || victim.priority > priority) { dropped++; return false; }
       release(victim);
     }
-    const entry = { id, priority, demon: !!demon, order: ++order, source: null, gain: null, startedAt: null, cancelled: false };
+    const entry = { id, clip: clip || id, priority, demon: !!demon, order: ++order, source: null, gain: null, startedAt: null, cancelled: false };
     entry.gain = g.context.createGain();
     entry.gain.gain.value = 1;
     entry.gain.connect(bus);
     live.push(entry);
     maxConcurrent = Math.max(maxConcurrent, live.length);
-    loadBuffer(id).then(buffer => {
+    loadBuffer(entry.clip).then(buffer => {
       if (!live.includes(entry)) return;
       if (!buffer) { remove(entry); return; }
       const source = g.context.createBufferSource();

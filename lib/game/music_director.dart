@@ -147,7 +147,15 @@ class MusicDirector {
     _telling
       ..clear()
       ..addAll(telling);
-    final stands = model.demons.where((d) => d.lastStand).toSet();
+    // Every rush pass's rally is a last-stand tell (demon-intelligence).
+    final stands = model.demons
+        .where(
+          (d) =>
+              d.lastStand &&
+              (d.rushPhase == RushPhase.rally ||
+                  d.rushPhase == RushPhase.none),
+        )
+        .toSet();
     if (stands.difference(_lastStands).isNotEmpty) {
       _tell(GameEventNames.lastStandTell);
     }
@@ -243,6 +251,10 @@ class MusicBridge {
     final accent = accents[event.name];
     if (accent != null) {
       onAccent(accent);
+    } else if (event.name == GameEventNames.cohortMerged) {
+      // continuous-swarm: the merged next wave takes the old interwave
+      // stinger's place (no transition phase marks it any more).
+      onAccent('reinforce');
     } else if (event.name == GameEventNames.musicIntensity) {
       onIntensity((event.data['tier'] as int?) ?? 1);
     } else if (event.name == GameEventNames.fleetIntact) {

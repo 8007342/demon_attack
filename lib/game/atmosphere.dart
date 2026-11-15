@@ -5,14 +5,24 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 
+import 'ground_atmosphere.dart';
+import 'ground_atmosphere_atlas.dart';
 import 'perspective.dart';
 
 /// Layered atmosphere in depth (openspec/changes/atmosphere-and-swarms,
-/// plan/atmosphere-research.md §1-§2): a horizon band where waves hold, two
-/// distant fog banks interleaved with the arriving creatures by nearness,
-/// ground fog lying on the lower terrain and one or two very thin sky sheets
-/// drifting over the whole arena, ship included. Presentation only: it reads
-/// the clock, the flight distance and the ship's position, never the model.
+/// openspec/changes/fog-restoration, plan/atmosphere-research.md §1-§2):
+/// fog over the whole depth of the field, built from soft layers that add
+/// up. Back to front: a horizon band where waves hold, two far banks, an
+/// upper veil and a mid veil, all interleaved with the air creatures by
+/// nearness (an arrival rises up through them one by one); ground fog lying
+/// on the terrain; one or two very thin sky sheets over the whole arena.
+/// Presentation only: it reads the clock and the flight distance, never the
+/// model.
+///
+/// World-anchored (fog-restoration): no layer reads the ship's position or
+/// the controls. Layers drift with the wind and the ground fog scrolls with
+/// the terrain; the camera does not follow the ship, so there is no lateral
+/// parallax to apply.
 ///
 /// Two renderers share the same slots and numbers:
 /// - the fog fragment shader (`shaders/fog.frag`): domain-warped fBm per
@@ -21,12 +31,18 @@ import 'perspective.dart';
 ///   tileable fBm textures ([bakeTile]) scrolled at two scales in different
 ///   directions, so the shapes interfere and evolve instead of sliding.
 ///
-/// The ground-atmosphere art atlas (plan/ground-atmosphere.md §3) can later
-/// replace a slot's texture through [art] without touching the draw order.
+/// The ground-atmosphere art atlas (plan/ground-atmosphere.md §3), once
+/// installed in [Atmosphere.groundArt], adds to these layers instead of
+/// replacing them: its horizon fog, mist banks, cloud shadows and dust veil
+/// are drawn in the ground depth sort ([Atmosphere.groundLayers]) so ground
+/// units emerge through them, and its low cloud deck sits under the soft
+/// horizon band. [Atmosphere.art] still lets a single slot swap its tile.
 enum FogSlot {
   horizonBand,
   farBankA,
   farBankB,
+  upperVeil,
+  midVeil,
   groundFog,
   skySheet1,
   skySheet2,
@@ -52,23 +68,21 @@ class FogLayer {
     required this.alpha,
     required this.scale,
     required this.drift,
-    required this.parallax,
     this.nearness = 0,
     this.lighten = 0,
     this.threshold = 0,
     this.warp = 1,
+    this.clearsLane = false,
   });
 
   /// Vertical profile: 0 at [top], [alpha] at [peak], 0 at [bottom].
   final double top, peak, bottom, alpha;
 
   /// Texture scale (arena units per tile) and drift (units/s) of the main
-  /// pass; the second pass runs at a smaller scale against the wind.
+  /// pass; the second pass runs at a smaller scale against the wind. The
+  /// drift is the wind: the only lateral motion a layer has.
   final double scale;
   final Offset drift;
-
-  /// Lateral parallax against the ship's offset from the centre.
-  final double parallax;
 
   /// Depth of the layer on the creatures' nearness scale: creatures nearer
   /// than this are drawn in front of it (0: not depth-sorted).
@@ -82,59 +96,91 @@ class FogLayer {
 
   /// Domain-warp strength in the shader.
   final double warp;
+
+  /// Whether the layer reaches the near lane and thins over it
+  /// ([Atmosphere.laneClear]), so the lane and the ship stay readable.
+  final bool clearsLane;
 }
 
 class Atmosphere {
   Atmosphere();
 
+  /// Every layer is wide and soft: each profile spans well over a hundred
+  /// rows and overlaps its neighbours, so together they read as one deep
+  /// body of fog instead of a band (fog-restoration design §2). The five
+  /// air layers are spaced on the nearness scale between the arrival depth
+  /// (.30) and the formation (>= .62): an arrival crosses them one at a
+  /// time as it rises toward its slot.
   static const layers = <FogSlot, FogLayer>{
     // Waves hold here; peaks just above the horizon line (y 172).
     FogSlot.horizonBand: FogLayer(
-      top: 112,
-      peak: 168,
-      bottom: 236,
-      alpha: .62,
+      top: 92,
+      peak: 172,
+      bottom: 258,
+      alpha: .7,
       scale: 300,
       drift: Offset(1.5, 0),
-      parallax: .08,
       nearness: .26,
       warp: 1.2,
     ),
-    // Bottom edges at the ground-atmosphere mid-mist lines (y ~230/243).
     FogSlot.farBankA: FogLayer(
-      top: 120,
+      top: 84,
       peak: 176,
-      bottom: 238,
-      alpha: .40,
-      scale: 200,
+      bottom: 262,
+      alpha: .48,
+      scale: 210,
       drift: Offset(3, 0),
-      parallax: .2,
       nearness: .335,
       threshold: .12,
     ),
     FogSlot.farBankB: FogLayer(
-      top: 130,
-      peak: 194,
-      bottom: 252,
-      alpha: .30,
+      top: 96,
+      peak: 198,
+      bottom: 286,
+      alpha: .4,
       scale: 170,
       drift: Offset(-2, 0),
-      parallax: .3,
       nearness: .43,
-      threshold: .2,
+      threshold: .16,
+      warp: .8,
     ),
-    // Lies on the terrain below the formation, scrolls with the ground.
+    // High cloud the arrivals climb through toward the upper rows.
+    FogSlot.upperVeil: FogLayer(
+      top: -40,
+      peak: 92,
+      bottom: 214,
+      alpha: .3,
+      scale: 340,
+      drift: Offset(-2.6, .4),
+      nearness: .5,
+      threshold: .16,
+      warp: .9,
+    ),
+    // Low cloud over the mid field: the last layer before the formation.
+    FogSlot.midVeil: FogLayer(
+      top: 112,
+      peak: 226,
+      bottom: 350,
+      alpha: .3,
+      scale: 260,
+      drift: Offset(2.2, -.3),
+      nearness: .565,
+      threshold: .18,
+      clearsLane: true,
+    ),
+    // Lies on the terrain from the far ground down to the ship's row,
+    // scrolls with the ground.
     FogSlot.groundFog: FogLayer(
-      top: 226,
-      peak: 290,
+      top: 180,
+      peak: 262,
       bottom: 540,
-      alpha: .36,
+      alpha: .38,
       scale: 150,
       drift: Offset(3, 1),
-      parallax: 1,
       nearness: .55,
       threshold: .18,
       warp: .9,
+      clearsLane: true,
     ),
     // Very thin, over everything (bullets, player, tells and HUD excepted).
     FogSlot.skySheet1: FogLayer(
@@ -144,7 +190,6 @@ class Atmosphere {
       alpha: .08,
       scale: 420,
       drift: Offset(6, 2.2),
-      parallax: 1.2,
       lighten: .35,
       threshold: .05,
     ),
@@ -155,11 +200,31 @@ class Atmosphere {
       alpha: .06,
       scale: 300,
       drift: Offset(-4.5, 3.2),
-      parallax: 1.35,
       lighten: .25,
       threshold: .1,
     ),
   };
+
+  /// The air layers drawn in the creatures' depth sort, far to near.
+  static const depthSlots = [
+    FogSlot.horizonBand,
+    FogSlot.farBankA,
+    FogSlot.farBankB,
+    FogSlot.upperVeil,
+    FogSlot.midVeil,
+  ];
+
+  // --- continuous-swarm depth contract (its design §0, fog-restoration
+  // §2): the swarm reads the fog only through these accessors.
+
+  /// Nearness of every depth-sorted air layer, far to near (sorted). The
+  /// swarm's reserve waits below the first; arrival paths cross them all.
+  static List<double> get bandNearness =>
+      [for (final s in depthSlots) layers[s]!.nearness]..sort();
+
+  /// Light left through the ground fog for a ground shadow (t_ground);
+  /// fog-restoration may refine it per row. 0.85 is the swarm's fallback.
+  static double groundLight([double y = 400]) => .85;
 
   /// Sky sheets fade near the ship's row so the two together stay at or
   /// under 12 % over the player (research §11).
@@ -179,6 +244,45 @@ class Atmosphere {
       1 -
       (1 - sheetAlphaAt(FogSlot.skySheet1, y)) *
           (1 - sheetAlphaAt(FogSlot.skySheet2, y));
+
+  // --- the near lane (plan/ground-atmosphere.md §5.2) ----------------------
+  /// Share of a lane-clearing layer removed over the lane: full inside x
+  /// [laneLeft]-[laneRight] below [laneTop], ramping in over [laneRamp]
+  /// units sideways and above.
+  static const laneLeft = GroundAtmosphereAtlas.laneLeft;
+  static const laneRight = GroundAtmosphereAtlas.laneRight;
+  static const laneTop = GroundAtmosphereAtlas.laneTop;
+  static const laneRamp = 36.0, laneClear = .62;
+
+  /// The lane mask at ([x], [y]): 0 outside, 1 inside.
+  static double laneMask(double x, double y) {
+    final h = math.min(
+      Perspective.smoothstep(laneLeft - laneRamp, laneLeft, x),
+      1 - Perspective.smoothstep(laneRight, laneRight + laneRamp, x),
+    );
+    return h * Perspective.smoothstep(laneTop - laneRamp, laneTop, y);
+  }
+
+  /// Peak opacity layer [slot] can apply at ([x], [y]): its profile, the
+  /// ship-zone cap of the sky sheets and the lane clearing. The noise only
+  /// thins it, so this is an upper bound for every pixel.
+  static double peakAlphaAt(FogSlot slot, double x, double y) {
+    final l = layers[slot]!;
+    if (slot == FogSlot.skySheet1 || slot == FogSlot.skySheet2) {
+      return sheetAlphaAt(slot, y);
+    }
+    final a = _profile(l, y) * l.alpha;
+    return l.clearsLane ? a * (1 - laneClear * laneMask(x, y)) : a;
+  }
+
+  /// Combined peak opacity of the full tier's fog layers at ([x], [y]).
+  static double combinedAlphaAt(double x, double y) {
+    var clear = 1.0;
+    for (final slot in FogSlot.values) {
+      clear *= 1 - peakAlphaAt(slot, x, y);
+    }
+    return 1 - clear;
+  }
 
   static double _profile(FogLayer l, double y) {
     if (y <= l.top || y >= l.bottom) return 0;
@@ -226,14 +330,164 @@ class Atmosphere {
 
   /// Flight distance (arena units at the bottom row; flyover `distance`).
   double groundDistance = 0;
-  double shipX = 180, shipY = 477;
   double environment = 0;
 
   Color get air => _lerpTable(airFog, environment);
+
+  // --- cinematic flow (openspec/changes/cinematic-flow design §6) ---------
+  // Thin pass-throughs added by W5b, flagged for fog-restoration (W2) to
+  // review: the transition drives them, W2 owns how the layers look.
+
+  /// 0-1: every layer thickens toward a bright, soft full-frame cover (a
+  /// Pursuit's cloud). At 1 the cover sums to at most [maxCloud] opacity over
+  /// a bright cloud colour: never black, never an opaque wipe.
+  double cloudCover = 0;
+
+  /// 0-1: the layers recede (the campaign outro).
+  double fogThin = 0;
+
+  /// Vertical scroll of the cover (arena units; the camera tilting up).
+  double cloudScroll = 0;
+
+  static const maxCloud = .92;
+  static const cloudLight = Color(0xFFE2E7F2);
+
+  /// The cover's colour: the sector's air lifted toward sunlit cloud.
+  Color get cloud => Color.lerp(air, cloudLight, .62)!;
+
+  /// Paints the cloud cover over the whole arena (call after the scene).
+  /// [below]: the cloud lies under the camera (the outro climbs above the
+  /// cloud tops), thick at the bottom, thin at the top; [warmth] 0-1 warms
+  /// the light above it.
+  void paintCloudCover(Canvas c, {bool below = false, double warmth = 0}) {
+    final k = cloudCover.clamp(0.0, 1.0);
+    const r = Rect.fromLTWH(0, 0, 360, 520);
+    if (warmth > .003) {
+      // The light warms as the fog thins (the campaign's last dawn).
+      c.drawRect(
+        r,
+        Paint()
+          ..shader = ui.Gradient.linear(r.topCenter, r.bottomCenter, [
+            const Color(0xFFFFC98A).withValues(alpha: .3 * warmth),
+            const Color(0xFFFFC98A).withValues(alpha: 0),
+          ]),
+      );
+    }
+    if (k <= .003) return;
+    final color = cloud;
+    // A soft wash: thicker toward the cloud the ship climbs into (or the
+    // cloud tops below it).
+    final (top, bottom) = below ? (.12, .8) : (.8, .64);
+    c.drawRect(
+      r,
+      Paint()
+        ..shader = ui.Gradient.linear(r.topCenter, r.bottomCenter, [
+          color.withValues(alpha: top * k),
+          color.withValues(alpha: bottom * k),
+        ]),
+    );
+    final a = tileA, b = tileB;
+    if (a == null || b == null) return;
+    // Two broad billow layers drifting down past the climbing camera (up,
+    // under an outro); their coverage keeps the total under [maxCloud].
+    final light = Color.lerp(color, cloudLight, .6)!;
+    for (final (img, scale, speed, alpha, tint) in [
+      (a, 620.0, 1.0, .34, light),
+      (b, 400.0, 1.6, .26, color),
+    ]) {
+      final s = scale / img.width;
+      final dy = (below ? -1 : 1) * (cloudScroll * speed + time * 5 * speed);
+      final paint = Paint()
+        ..colorFilter = ColorFilter.mode(tint, BlendMode.srcIn)
+        ..color = Color.fromRGBO(255, 255, 255, alpha * k)
+        ..filterQuality = FilterQuality.low
+        ..shader = ImageShader(
+          img,
+          TileMode.repeated,
+          TileMode.repeated,
+          _matrix(s, .55, time * 2.5 * speed, dy),
+          filterQuality: FilterQuality.low,
+        );
+      if (below) {
+        // Cloud tops: the billows fade out upward (a soft mask, no edge).
+        c.saveLayer(r, Paint());
+        c.drawRect(r, paint);
+        c.drawRect(
+          r,
+          Paint()
+            ..blendMode = BlendMode.dstIn
+            ..shader = ui.Gradient.linear(
+              const Offset(0, 180),
+              const Offset(0, 380),
+              [const Color(0x00000000), const Color(0xFF000000)],
+            ),
+        );
+        c.restore();
+      } else {
+        c.drawRect(r, paint);
+      }
+    }
+  }
+
+  /// Peak opacity of the cover at [k] (tests: never more than [maxCloud]).
+  static double coverOpacity(double k) {
+    final c = k.clamp(0.0, 1.0);
+    final layers = [.8 * c, .34 * c, .26 * c];
+    return 1 - layers.fold(1.0, (p, a) => p * (1 - a));
+  }
+
   Color get veil => _lerpTable(veilFog, environment);
 
-  /// Optional authored texture per slot (ground-atmosphere art atlas).
+  /// Optional authored tile texture per slot (replaces tile A).
   final art = <FogSlot, ui.Image>{};
+
+  // --- ground-atmosphere art (ground_atmosphere.dart) ----------------------
+  /// The ground-atmosphere atlas, when loaded.
+  GroundAtmosphereArt? groundArt;
+
+  /// The skirmish tide (0 lull .. 1 surge): raises the dust veil.
+  double tide = .5;
+
+  /// Opacity factor of the art's low cloud deck, drawn under the soft
+  /// horizon band: the band blurs the deck's stepped edges.
+  static const lowCloudUnderBand = .45;
+
+  bool _artLayerShown(GroundAtmosphereLayer l) =>
+      quality == AtmosphereQuality.full || l.reduced;
+
+  /// Art layers drawn in the ground depth sort at the current quality, back
+  /// to front: (depth, layer); a layer with no depth goes after every
+  /// ground object (depth -infinity). Empty without the atlas.
+  List<(double, GroundAtmosphereLayer)> get groundLayers {
+    if (groundArt == null) return const [];
+    return [
+      for (final l in GroundAtmosphereAtlas.layers)
+        if (l.pass == 'ground' && _artLayerShown(l))
+          (l.sortZ ?? double.negativeInfinity, l),
+    ];
+  }
+
+  /// Dust veil opacity: none in a lull, full in a surge.
+  double get dustOpacity => Perspective.smoothstep(.55, .95, tide);
+
+  /// Paints art layer [l] (ground pass or air pass).
+  void paintGroundLayer(Canvas c, GroundAtmosphereLayer l) {
+    final g = groundArt;
+    if (g == null || !_artLayerShown(l)) return;
+    if (l.id == 'cloudShadow') {
+      g.paintShadows(c, l, time: time);
+      return;
+    }
+    g.paintBand(
+      c,
+      l,
+      time: time,
+      environment: environment,
+      opacity: l.id == 'dustVeil'
+          ? dustOpacity
+          : (l.pass == 'air' ? lowCloudUnderBand : 1),
+    );
+  }
 
   ui.Image? tileA, tileB;
   ui.FragmentProgram? program;
@@ -271,12 +525,12 @@ class Atmosphere {
     _guardCount = 0;
   }
 
-  void advance(double dt, {required double distance, double? x, double? y}) {
+  /// Advances the fog clock and the ground under it. The fog takes no ship
+  /// position: it is world-anchored (fog-restoration).
+  void advance(double dt, {required double distance}) {
     _guard(dt);
     if (!reducedMotion) time += dt;
     groundDistance = distance;
-    if (x != null) shipX = x;
-    if (y != null) shipY = y;
   }
 
   /// Bakes the fallback tiles and, where supported, loads the fog shader.
@@ -442,7 +696,8 @@ class Atmosphere {
     FogSlot.farBankB,
   };
 
-  /// Whether [slot] is drawn at the current quality.
+  /// Whether [slot] is drawn at the current quality (reduced: the horizon
+  /// band and the ground fog).
   bool shows(FogSlot slot) => switch (slot) {
     FogSlot.horizonBand || FogSlot.groundFog => true,
     _ => quality == AtmosphereQuality.full,
@@ -451,6 +706,26 @@ class Atmosphere {
   /// Paints [slot] over the arena (360 x 520 arena units on [c]).
   void paint(Canvas c, FogSlot slot) {
     if (!shows(slot)) return;
+    // --- cinematic flow: the outro thins every layer.
+    if (fogThin > .003) {
+      c.saveLayer(
+        null,
+        Paint()..color = Color.fromRGBO(0, 0, 0, 1 - .85 * fogThin),
+      );
+      _paintSlot(c, slot);
+      c.restore();
+      return;
+    }
+    _paintSlot(c, slot);
+  }
+
+  void _paintSlot(Canvas c, FogSlot slot) {
+    if (slot == FogSlot.horizonBand && groundArt != null) {
+      // The art's low cloud deck lies under the soft horizon band.
+      for (final l in GroundAtmosphereAtlas.layers) {
+        if (l.pass == 'air') paintGroundLayer(c, l);
+      }
+    }
     final l = layers[slot]!;
     if (usesShader && shaderSlots.contains(slot) && _paintShader(c, slot, l)) {
       return;
@@ -472,14 +747,83 @@ class Atmosphere {
   Rect _bounds(FogLayer l) =>
       Rect.fromLTRB(0, math.max(0, l.top), 360, math.min(520, l.bottom));
 
-  /// Lateral offset of a layer for the ship's position (parallax).
-  /// Nearer layers shift more; the ground fog stays locked to the ground.
-  double _shift(FogLayer l) => -(shipX - 180) * l.parallax * .1;
-
   void _paintGradientOnly(Canvas c, FogSlot slot, FogLayer l) {
     final r = _bounds(l);
     final color = _colorOf(slot, l);
+    if (!l.clearsLane) {
+      c.drawRect(r, Paint()..shader = _profileGradient(l, color, .55, r));
+      return;
+    }
+    c.saveLayer(r, Paint());
     c.drawRect(r, Paint()..shader = _profileGradient(l, color, .55, r));
+    _clearLane(c, r);
+    c.restore();
+  }
+
+  /// Thins the layer being composited over the near lane by [laneClear]
+  /// (a soft-edged rectangle: horizontal ramp times vertical ramp, the
+  /// same mask as [laneMask]).
+  void _clearLane(Canvas c, Rect r) {
+    final lane = Rect.fromLTRB(
+      laneLeft - laneRamp,
+      math.max(r.top, laneTop - laneRamp),
+      laneRight + laneRamp,
+      r.bottom,
+    );
+    if (lane.isEmpty) return;
+    c.saveLayer(lane, Paint()..blendMode = BlendMode.dstOut);
+    final k = Color.fromRGBO(0, 0, 0, laneClear);
+    const z = Color(0x00000000);
+    final hs = <double>[], hc = <Color>[];
+    for (var i = 0; i <= 8; i++) {
+      final x = lane.left + lane.width * i / 8;
+      hs.add(i / 8);
+      hc.add(
+        Color.lerp(
+          z,
+          k,
+          math.min(
+            Perspective.smoothstep(laneLeft - laneRamp, laneLeft, x),
+            1 - Perspective.smoothstep(laneRight, laneRight + laneRamp, x),
+          ),
+        )!,
+      );
+    }
+    c.drawRect(
+      lane,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(lane.left, 0),
+          Offset(lane.right, 0),
+          hc,
+          hs,
+        ),
+    );
+    const w = Color(0xFFFFFFFF), o = Color(0x00FFFFFF);
+    final vs = <double>[], vc = <Color>[];
+    for (var i = 0; i <= 6; i++) {
+      final y = laneTop - laneRamp + laneRamp * i / 6;
+      vs.add(i / 6);
+      vc.add(
+        Color.lerp(
+          o,
+          w,
+          Perspective.smoothstep(laneTop - laneRamp, laneTop, y),
+        )!,
+      );
+    }
+    c.drawRect(
+      lane,
+      Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = ui.Gradient.linear(
+          const Offset(0, laneTop - laneRamp),
+          const Offset(0, laneTop),
+          vc,
+          vs,
+        ),
+    );
+    c.restore();
   }
 
   ui.Gradient _profileGradient(FogLayer l, Color color, double k, Rect r) {
@@ -518,7 +862,6 @@ class Atmosphere {
     final color = _colorOf(slot, l);
     final a = art[slot] ?? tileA!, b = tileB!;
     final t = time;
-    final shift = _shift(l);
     final ground = slot == FogSlot.groundFog;
     c.saveLayer(r, Paint());
     final tint = ColorFilter.mode(color, BlendMode.srcIn);
@@ -540,7 +883,7 @@ class Atmosphere {
             a,
             TileMode.repeated,
             TileMode.repeated,
-            _matrix(s1, sy, l.drift.dx * t + shift, l.drift.dy * t),
+            _matrix(s1, sy, l.drift.dx * t, l.drift.dy * t),
             filterQuality: FilterQuality.low,
           ),
       );
@@ -560,7 +903,7 @@ class Atmosphere {
             _matrix(
               s2,
               sy,
-              -l.drift.dx * .7 * t + shift * 1.3 + 37,
+              -l.drift.dx * .7 * t + 37,
               -l.drift.dy * .5 * t + 11 + math.sin(t * .05) * 20,
             ),
             filterQuality: FilterQuality.low,
@@ -574,6 +917,7 @@ class Atmosphere {
         ..blendMode = BlendMode.dstIn
         ..shader = _profileGradient(l, const Color(0xFFFFFFFF), l.alpha, r),
     );
+    if (l.clearsLane) _clearLane(c, r);
     c.restore();
   }
 
@@ -675,11 +1019,11 @@ class Atmosphere {
     f(l.drift.dx);
     f(l.drift.dy);
     f(l.warp);
-    // uLook: scale, flatten, ground (0/1), lateral shift
+    // uLook: scale, flatten, ground (0/1), lateral offset (world-anchored)
     f(l.scale);
     f(sheet ? .7 : .45);
     f(ground ? 1 : 0);
-    f(_shift(l));
+    f(0);
     // uShip: ship-zone top, factor (sheets only), ground cam, seed
     f(sheet ? shipZoneTop : 9999);
     f(shipZoneFactor);

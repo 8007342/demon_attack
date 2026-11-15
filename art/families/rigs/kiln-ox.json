@@ -1,0 +1,43 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "kiln-ox", "name": "Kiln Ox", "faction": "host", "class": "walker", "block": "W", "move": "stride", "seed": 760410, "threat": true,
+ "notes": "Threat walker (Ember artillery beast): a four-legged basalt beast with a horned head and a squat kiln on its back whose mouth is a stubby mortar (the articulated layer). Telegraph: special f0 mortar raised, f1 kiln glow, f2 flash, f3 smoking; f4-f5 settle.",
+ "gait": {"frames": 6, "stride": 2.6, "lift": 1.6, "bob": 0.6},
+ "hull": [
+  {"kind": "leg", "hip": [-4, 7, 8], "knee": [-4.4, 8.4, 4.2], "foot": [-4.4, 7, 0.6], "t": 2.2, "foot_size": [2.6, 3], "phase": 0, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [4, 7, 8], "knee": [4.4, 8.4, 4.2], "foot": [4.4, 7, 0.6], "t": 2.2, "foot_size": [2.6, 3], "phase": 0.5, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [-4, -7, 8], "knee": [-4.4, -5.6, 4.2], "foot": [-4.4, -7, 0.6], "t": 2.2, "foot_size": [2.6, 3], "phase": 0.5, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [4, -7, 8], "knee": [4.4, -5.6, 4.2], "foot": [4.4, -7, 0.6], "t": 2.2, "foot_size": [2.6, 3], "phase": 0, "mat": "stone_dark"},
+  {"kind": "box", "at": [0, 0, 6.6], "size": [10.5, 20, 7], "mat": "stone", "chamfer": {"top": 2.2, "vert": 2, "bottom": 1.4}, "piece": "body"},
+  {"kind": "box", "at": [0, 11.4, 7.6], "size": [6, 5, 5], "mat": "stone_hi", "chamfer": {"top": 1.4, "vfront": 1.2}, "piece": "head"},
+  {"kind": "box", "at": [-1.5, 13.95, 10], "size": [1, 0.5, 0.8], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [1.5, 13.95, 10], "size": [1, 0.5, 0.8], "mat": "eye", "tags": ["eye"]},
+  {"kind": "bar", "a": [-2.6, 11.6, 12], "b": [-5, 10, 14.6], "t": 1.2, "mat": "stone_hi", "tags": ["ornament"], "piece": "horns"},
+  {"kind": "bar", "a": [2.6, 11.6, 12], "b": [5, 10, 14.6], "t": 1.2, "mat": "stone_hi", "tags": ["ornament"], "piece": "horns"},
+  {"kind": "bar", "a": [-5.4, -6, 10], "b": [-5.4, 6, 10], "t": 0.6, "tz": 0.6, "mat": "iron"},
+  {"kind": "bar", "a": [5.4, -6, 10], "b": [5.4, 6, 10], "t": 0.6, "tz": 0.6, "mat": "iron"}
+ ],
+ "art": {
+  "kind": "launcher", "pivot": [0, -2, 13.4], "muzzle": [0, 6.2, 7.6], "seat": 0,
+  "prims": [
+   {"kind": "box", "at": [0, -0.6, 0], "size": [7.6, 7.6, 5.4], "mat": "stone_dark", "chamfer": {"top": 1.2}, "piece": "kiln"},
+   {"kind": "box", "at": [0, 3.2, 1], "size": [3, 0.6, 2.6], "mat": "vent", "tags": ["door"]},
+   {"kind": "prism", "at": [0, 1.6, 4.4], "pitch": 38, "n": 8, "r": 1.8, "r2": 2.3, "h": 4.4, "mat": "iron", "tags": ["mortar"], "piece": "mortar"},
+   {"kind": "prism", "at": [0, 4.4, 7.8], "pitch": 38, "n": 8, "r": 1.5, "h": 0.4, "mat": "channel", "stage": 3, "tags": ["mortar", "mouth"]},
+   {"kind": "bar", "a": [0, -4.2, 2], "b": [0, -4.2, 4.6], "t": 0.8, "mat": "channel", "stage": 1},
+   {"kind": "bar", "a": [0, -4.2, 4.6], "b": [0, -1, 5.4], "t": 0.8, "mat": "channel", "stage": 2},
+   {"kind": "ball", "at": [0, 6, 8.4], "size": [2.4, 2, 2], "mat": "muzzle", "tags": ["hidden", "muzzle", "mortar"]}
+  ]
+ },
+ "pieces": ["kiln", "mortar", "head", "horns", "body"],
+ "poses": {
+  "special": [
+   [{"tag": "mortar", "axis": "x", "deg": 14, "pivot": [0, 1.6, 4.4]}],
+   [{"tag": "mortar", "axis": "x", "deg": 14, "pivot": [0, 1.6, 4.4]}, {"tag": "door", "lit": true}],
+   [{"tag": "mortar", "axis": "x", "deg": 14, "pivot": [0, 1.6, 4.4]}, {"tag": "door", "lit": true}, {"tag": "muzzle", "show": true, "lit": true}],
+   [{"tag": "mortar", "axis": "x", "deg": 6, "pivot": [0, 1.6, 4.4]}],
+   [],
+   []
+  ]
+ }
+}

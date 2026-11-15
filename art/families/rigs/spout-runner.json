@@ -1,0 +1,47 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "spout-runner", "name": "Spout-runner", "faction": "host", "class": "light", "block": "V", "move": "wheels", "seed": 760230, "threat": true,
+ "notes": "Threat vehicle (Krybor rocket buggy): a captured six-wheeled human buggy (old grey-blue plate) with a carved gargoyle hood and a channel-fed twin rocket launcher at the back (the articulated layer). Telegraph keeps the ground-forces.png contract: special f0 launcher raised, f1 tubes glow, f2 launch flash, f3 smoking; f4-f5 settle.",
+ "hull": [
+  {"kind": "prism", "at": [-7.8, -7.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel", "piece": "wheel"},
+  {"kind": "prism", "at": [-7.8, 0, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [-7.8, 7.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [7.8, -7.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [7.8, 0, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [7.8, 7.5, 2.8], "axis": "x", "center": true, "n": 10, "r": 2.8, "h": 2.4, "mat": "wheel", "piece": "wheel2"},
+  {"kind": "box", "at": [0, 0, 2.2], "size": [13, 23, 3.6], "mat": "old_hull", "chamfer": {"sides": 0.8, "back": 1}, "tags": ["body"], "piece": "plate"},
+  {"kind": "box", "at": [0, 8.8, 5.8], "size": [9, 6, 2.6], "mat": "stone_hi", "chamfer": {"top": 1, "front": 2}, "tags": ["body"], "piece": "hood"},
+  {"kind": "box", "at": [-2, 11.7, 6.6], "size": [1.2, 0.6, 0.9], "mat": "eye", "tags": ["eye", "body"]},
+  {"kind": "box", "at": [2, 11.7, 6.6], "size": [1.2, 0.6, 0.9], "mat": "eye", "tags": ["eye", "body"]},
+  {"kind": "bar", "a": [-3, 9, 8.2], "b": [-4.4, 6.4, 10.4], "t": 1, "mat": "stone_hi", "tags": ["ornament", "body"]},
+  {"kind": "bar", "a": [3, 9, 8.2], "b": [4.4, 6.4, 10.4], "t": 1, "mat": "stone_hi", "tags": ["ornament", "body"]},
+  {"kind": "bar", "a": [0, 6, 6.2], "b": [0, 0, 6.2], "t": 1, "tz": 0.6, "mat": "channel", "tags": ["body"]},
+  {"kind": "bar", "a": [0, 0, 6.2], "b": [0, -4, 6.2], "t": 1, "tz": 0.6, "mat": "channel", "tags": ["body"]},
+  {"kind": "prism", "at": [0, -6, 5.8], "n": 6, "r": 3, "h": 0.6, "mat": "iron", "tags": ["body"]}
+ ],
+ "art": {
+  "kind": "launcher", "pivot": [0, -6, 6.4], "muzzle": [0, 5, 2.4], "seat": 0,
+  "prims": [
+   {"kind": "box", "at": [0, 0, 0], "size": [5, 4, 1.6], "mat": "iron", "piece": "rack"},
+   {"kind": "prism", "at": [-1.4, 0.4, 2.2], "axis": "y", "center": true, "n": 6, "r": 1.2, "h": 8, "mat": "iron", "tags": ["launcher"], "piece": "rack"},
+   {"kind": "prism", "at": [1.4, 0.4, 2.2], "axis": "y", "center": true, "n": 6, "r": 1.2, "h": 8, "mat": "iron", "tags": ["launcher"], "piece": "rack"},
+   {"kind": "box", "at": [-1.4, 4.4, 1.6], "size": [1.4, 0.5, 1.2], "mat": "vent", "tags": ["launcher", "tube"]},
+   {"kind": "box", "at": [1.4, 4.4, 1.6], "size": [1.4, 0.5, 1.2], "mat": "vent", "tags": ["launcher", "tube"]},
+   {"kind": "bar", "a": [0, -2.4, 1.8], "b": [0, -2.4, 3.2], "t": 0.8, "mat": "channel", "stage": 1, "tags": ["launcher"]},
+   {"kind": "bar", "a": [0, -2.4, 3.2], "b": [0, -0.4, 3.6], "t": 0.8, "mat": "channel", "stage": 2, "tags": ["launcher"]},
+   {"kind": "bar", "a": [0, -0.4, 3.6], "b": [0, 2.6, 3.6], "t": 0.8, "mat": "channel", "stage": 3, "tags": ["launcher"]},
+   {"kind": "ball", "at": [0, 5.6, 2.2], "size": [2.6, 1.6, 2], "mat": "muzzle", "tags": ["hidden", "muzzle", "launcher"]}
+  ]
+ },
+ "pieces": ["hood", "rack", "plate", "wheel", "wheel2"],
+ "poses": {
+  "special": [
+   [{"tag": "launcher", "axis": "x", "deg": 24, "pivot": [0, -1.5, 1.6]}],
+   [{"tag": "launcher", "axis": "x", "deg": 24, "pivot": [0, -1.5, 1.6]}, {"tag": "tube", "lit": true}],
+   [{"tag": "launcher", "axis": "x", "deg": 24, "pivot": [0, -1.5, 1.6]}, {"tag": "muzzle", "show": true, "lit": true}],
+   [{"tag": "launcher", "axis": "x", "deg": 14, "pivot": [0, -1.5, 1.6]}],
+   [{"tag": "launcher", "axis": "x", "deg": 6, "pivot": [0, -1.5, 1.6]}],
+   []
+  ]
+ }
+}

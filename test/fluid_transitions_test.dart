@@ -9,7 +9,6 @@ import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/main.dart';
 import 'package:demon_attack/services/run_storage.dart';
 import 'package:demon_attack/services/scores.dart';
-import 'package:demon_attack/widgets/interlude_card.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -73,6 +72,16 @@ Future<void> snap(WidgetTester tester, String name) async {
   });
 }
 
+/// playtest-fixes: no bare transition text over the play area (the old
+/// caption and sector/tour title keys, the reward text, the tip sentence).
+void _noFloatingText() {
+  expect(find.byKey(const ValueKey('flow-caption')), findsNothing);
+  expect(find.byKey(const ValueKey('flow-title')), findsNothing);
+  expect(find.textContaining('+1UP'), findsNothing);
+  expect(find.textContaining('TOUR '), findsNothing);
+  expect(find.textContaining('SECTOR '), findsNothing);
+}
+
 class Rig {
   Rig(this.tester, this.comms, this.scene, this.state);
   final WidgetTester tester;
@@ -92,15 +101,12 @@ class Rig {
     await tester.pump();
   }
 
-  /// Ends the current sector so the release (clear, travel, arrival) runs.
-  void clearSector() {
-    model.demons.clear();
-    model.mode = RunMode.levelClear;
-    model.transitionDuration = 4 + ArcadeModel.storyReadingTime;
-    model.transitionLeft = model.transitionDuration;
-    model.events.add('levelclear');
-  }
+  /// Ends the current sector as its last kill would: the Rout, Pursuit and
+  /// Descent run (cinematic-flow).
+  void clearSector() => model.endSector();
 
+  /// Cards and panels over the play area (cinematic-flow: only the opening
+  /// tip card and the carrier alert remain; story cards are gone).
   int primaries() =>
       find.byKey(const ValueKey('interlude-card')).evaluate().length +
       find.byKey(const ValueKey('story-card')).evaluate().length +
@@ -243,11 +249,11 @@ void main() {
   });
 
   group('arcade page', () {
-    testWidgets('one primary message at a time through a whole release', (
+    testWidgets('one message at a time through a whole sector change', (
       tester,
     ) async {
       final rig = await launch(tester, const Size(390, 844));
-      // The opening briefing is a silent tip.
+      // The opening briefing is a silent illustrated tip.
       expect(find.text('TACTICAL BRIEFING'), findsOneWidget);
       expect(rig.primaries(), 1);
       // Music only: the director holds chatter (warnings still sound); the
@@ -261,7 +267,6 @@ void main() {
       await rig.step(5);
       expect(rig.model.mode, RunMode.playing);
       expect(rig.comms.director.hushed, isFalse, reason: 'the radio is back');
-      expect(rig.comms.voiceOn, isTrue);
       expect(rig.primaries(), 0);
 
       rig.clearSector();
@@ -270,42 +275,28 @@ void main() {
       while (rig.model.mode != RunMode.playing && frames < 600) {
         await rig.step(1 / 10, dt: 1 / 30);
         frames++;
-        expect(
-          rig.primaries(),
-          lessThanOrEqualTo(1),
-          reason: '${rig.model.mode}',
-        );
-        // The full-size comms overlay never doubles the card.
-        expect(
-          find.byKey(const ValueKey('comms-hud-stack')).evaluate().isEmpty ||
-              find.byKey(const ValueKey('interlude-card')).evaluate().isEmpty,
-          isTrue,
-        );
-        if (rig.model.cinematic) {
-          expect(
-            find.byKey(const ValueKey('transition-strip')),
-            findsOneWidget,
-          );
+        // cinematic-flow: no card, story card or storyboard in a sector
+        // transition; playtest-fixes: no floating caption or title text.
+        expect(rig.primaries(), 0, reason: '${rig.model.mode}');
+        _noFloatingText();
+        // ux-declutter: no progress strip or bar at any moment.
+        expect(find.byType(LinearProgressIndicator), findsNothing);
+        if (rig.transitions.slot != null) {
+          seen.add('slot-${(rig.transitions.slot as InterludePlan).kind.name}');
         }
-        if (find.byKey(const ValueKey('story-card')).evaluate().isNotEmpty) {
-          seen.add('story-${rig.model.mode.name}');
-        }
-        if (find
-            .byKey(const ValueKey('interlude-card'))
-            .evaluate()
-            .isNotEmpty) {
-          seen.add('card-${rig.model.mode.name}');
-        }
+        if (rig.transitions.shown != null) seen.add('radio-shown');
       }
       expect(rig.model.mode, RunMode.playing);
-      expect(seen, containsAll(['story-levelClear', 'card-travel']));
-      // The second interlude of the run is the radio card.
+      expect(rig.model.level, 2);
+      // The transition speaks only by radio, on the dock.
+      expect(seen, containsAll(['slot-radio', 'radio-shown']));
+      expect(seen, isNot(contains('slot-tip')));
       expect(find.text('TACTICAL BRIEFING'), findsNothing);
       expect(tester.takeException(), isNull);
       await dispose(tester);
     });
 
-    testWidgets('a wave change shows only the slim strip', (tester) async {
+    testWidgets('a wave change shows no card and no strip', (tester) async {
       final rig = await launch(tester, const Size(390, 844));
       await rig.step(5);
       rig.model.wave = 2;
@@ -314,38 +305,36 @@ void main() {
       rig.model.transitionLeft = rig.model.transitionDuration;
       await rig.step(.5);
       expect(rig.primaries(), 0);
-      expect(find.byKey(const ValueKey('transition-strip')), findsOneWidget);
-      expect(find.textContaining('WAVE 2/'), findsOneWidget);
+      // ux-declutter: the HUD alone names the wave.
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.textContaining('WAVE 2/'), findsNothing);
+      expect(find.textContaining('WAVE 2 / '), findsOneWidget);
       await dispose(tester);
     });
 
-    testWidgets('the radio card stays up until its line is read', (
+    testWidgets('the radio slot plays its line on the dock, not a card', (
       tester,
     ) async {
       final rig = await launch(tester, const Size(1440, 900));
       await rig.step(5);
       rig.clearSector();
-      while (rig.model.mode != RunMode.travel) {
-        await rig.step(.1);
-      }
-      double? shownFor, needs;
+      String? line;
       var t = 0.0;
       while (rig.model.mode != RunMode.playing && t < 20) {
         await rig.step(.1);
         t += .1;
-        if (rig.transitions.showingCard as bool) {
-          final message = rig.transitions.shown;
-          final text = (message.line.text ?? message.line.gloss) as String;
-          needs = [
-            message.line.duration + InterludeTiming.hold,
-            readSeconds(text),
-          ].reduce((a, b) => a > b ? a : b) as double;
-          final (elapsed, _) = rig.transitions.cardTime(rig.model);
-          shownFor = elapsed as double;
-        }
+        final shown = rig.transitions.shown;
+        if (shown != null) line ??= shown.line.id as String;
+        expect(find.byKey(const ValueKey('flow-caption')), findsNothing);
+        expect(rig.primaries(), 0);
       }
-      expect(needs, isNotNull, reason: 'a radio card was shown');
-      expect(shownFor! + .2, greaterThanOrEqualTo(needs!));
+      final slot = rig.transitions.slot;
+      expect(
+        slot == null || (slot as InterludePlan).kind == InterludeKind.radio,
+        isTrue,
+      );
+      expect(line, isNotNull, reason: 'a radio line played in the slot');
+      expect(_bankIds, contains(line));
       expect(tester.takeException(), isNull);
       await dispose(tester);
     });
@@ -368,7 +357,7 @@ void main() {
       await dispose(tester);
     });
 
-    testWidgets('a skipped travel card keeps the flow and does not return', (
+    testWidgets('a tap in the pursuit starts the descent on the next frame', (
       tester,
     ) async {
       final rig = await launch(tester, const Size(390, 844));
@@ -377,18 +366,17 @@ void main() {
       while (rig.model.mode != RunMode.travel) {
         await rig.step(.1);
       }
-      await rig.step(1.6);
-      final card = find.byKey(const ValueKey('interlude-card'));
-      expect(card, findsOneWidget);
-      final left = rig.model.transitionLeft;
-      await tester.tap(card);
+      await rig.step(.5);
+      await tester.tapAt(const Offset(195, 400));
       await tester.pump();
-      expect(card, findsNothing);
-      expect(rig.model.mode, RunMode.travel);
-      expect(rig.model.transitionLeft, closeTo(left, 1e-9));
-      await rig.step(2);
-      expect(card, findsNothing);
-      expect(rig.primaries(), 0);
+      expect(rig.model.mode, RunMode.transition);
+      expect(rig.model.level, 2);
+      expect(
+        rig.model.flow.seconds,
+        closeTo(rig.model.flow.plan.descentAt, .1),
+      );
+      await rig.step(1);
+      expect(rig.primaries(), 0, reason: 'the descent carries no card');
       await dispose(tester);
     });
 
@@ -397,42 +385,47 @@ void main() {
       Size(900, 900),
       Size(1440, 900),
     ]) {
-      testWidgets('tip and radio cards fit at ${size.width.toInt()} px', (
+      testWidgets('tip card fits, radio only after, at ${size.width.toInt()} px', (
         tester,
       ) async {
         final rig = await launch(tester, size);
-        Future<void> check(String kind) async {
-          final card = find.byKey(const ValueKey('interlude-card'));
-          expect(card, findsOneWidget, reason: kind);
-          final rect = tester.getRect(card);
-          expect(rect.left, greaterThanOrEqualTo(0));
-          expect(rect.right, lessThanOrEqualTo(size.width));
-          expect(rect.width, lessThanOrEqualTo(460.01));
-          // Desktop-sized in the cabinet; full width on a phone.
-          expect(
-            rect.width,
-            greaterThanOrEqualTo(size.width < 500 ? 360 : 440),
-          );
-          final hud = tester.getRect(find.byKey(const ValueKey('hud-score')));
-          expect(rect.overlaps(hud), isFalse, reason: kind);
-          expect(tester.takeException(), isNull, reason: kind);
-          await snap(tester, '$kind-${size.width.toInt()}');
-        }
-
         await rig.step(1);
-        await check('tip');
+        final card = find.byKey(const ValueKey('interlude-card'));
+        expect(card, findsOneWidget);
+        final rect = tester.getRect(card);
+        expect(rect.left, greaterThanOrEqualTo(0));
+        expect(rect.right, lessThanOrEqualTo(size.width));
+        expect(rect.width, lessThanOrEqualTo(460.01));
+        // Desktop-sized in the cabinet; full width on a phone.
+        expect(rect.width, greaterThanOrEqualTo(size.width < 500 ? 360 : 440));
+        final hud = tester.getRect(find.byKey(const ValueKey('hud-score')));
+        expect(rect.overlaps(hud), isFalse);
+        await snap(tester, 'tip-${size.width.toInt()}');
         await rig.step(4.5);
-        rig.clearSector();
-        while (!(rig.transitions.showingCard as bool) &&
-            rig.model.mode != RunMode.playing) {
-          await rig.step(.1);
+        // Three sector changes in a row: every slot is a radio line that
+        // plays on the dock (playtest-fixes: captions and titles are gone).
+        for (var sector = 0; sector < 3; sector++) {
+          rig.clearSector();
+          var t = 0.0;
+          String? line;
+          InterludeKind? kind;
+          while (rig.model.mode != RunMode.playing && t < 20) {
+            await rig.step(.1);
+            t += .1;
+            _noFloatingText();
+            final slot = rig.transitions.slot as InterludePlan?;
+            if (slot != null) kind = slot.kind;
+            final shown = rig.transitions.shown;
+            if (shown != null) line ??= shown.line.id as String;
+            if (t > 3 && t < 3.15) {
+              await snap(tester, 'radio-${size.width.toInt()}-$sector');
+            }
+          }
+          expect(kind, InterludeKind.radio, reason: 'sector change $sector');
+          expect(line, isNotNull, reason: 'sector change $sector line');
+          await rig.step(1);
         }
-        await rig.step(1);
-        expect(
-          find.byWidgetPredicate((w) => w is RadioInterludeCard),
-          findsOneWidget,
-        );
-        await check('radio');
+        expect(tester.takeException(), isNull);
         await dispose(tester);
       });
     }

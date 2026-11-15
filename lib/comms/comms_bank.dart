@@ -1113,6 +1113,34 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'groundTide.surge.h4', speaker: 'admiral', duration: 3.742, text: 'The ground attack is surging. Pilot, support the convoy when you can.', mouth: '555<<<<33======<<<<<==0000<<<<=====44444<<<<<<<<<<<<<<<<<', open: '065899866536546886653211047896425437775787998899557887532', vis: 'oo-------eeeeee-----ee--------eeee---------oooooo--------', emotion: 'urgent'),
     ],
   ),
+  'sentinelRushTell': CommsTriggerSpec(
+    name: 'sentinelRushTell',
+    priority: 10,
+    cooldown: 6.0,
+    ttl: 1.2,
+    mood: CommsMood.worried,
+    urgent: true,
+    lines: [
+      CommsLine(id: 'sentinelRushTell.h0', speaker: 'admiral', duration: 1.758, text: 'It\'s diving! Move!', mouth: '2222000003322000555<<<<==00', open: '034211787664321136689874321', vis: '----------------ooo--ooee--', emotion: 'panicked', clip: 'sentinelDive.h0'),
+      CommsLine(id: 'sentinelRushTell.h1', speaker: 'kestrel', duration: 2.68, text: 'Dive! Break left or right, now!', mouth: '3344444220000000000000<<===55<<<<<<<<<222', open: '04677653211068678767678853247899899986421', vis: '------------------------eeeoooooeee------', emotion: 'panicked', clip: 'sentinelDive.h4'),
+      CommsLine(id: 'sentinelRushTell.h2', speaker: 'anvil', duration: 1.988, text: 'Big one\'s committing. Sidestep now!', mouth: '55<<<====4422====<<<<<<3333322', open: '068887678774335778988895687532', vis: 'oooooeee-----eeee-------------', emotion: 'panicked', clip: 'sentinelDive.h2'),
+      CommsLine(id: 'sentinelRushTell.h3', speaker: 'sparrow', duration: 2.376, text: 'Sentinel dive! Get clear!', mouth: '0000055555555<<<<<<<000000===4444444', open: '000575677643789987421110685367777532', vis: '-----ooooooo-------ee-----ee--------', emotion: 'panicked', clip: 'sentinelDive.h1'),
+      CommsLine(id: 'sentinelRushTell.h4', speaker: 'rook', duration: 1.461, text: 'Incoming! Dodge, dodge, dodge!', mouth: '555<<<<<<<<<<==444==00', open: '0458998998788547763211', vis: 'ooo----------ee---ee--', emotion: 'panicked', clip: 'sentinelDive.h3'),
+    ],
+  ),
+  'sentinelRushAgain': CommsTriggerSpec(
+    name: 'sentinelRushAgain',
+    priority: 9,
+    cooldown: 4.0,
+    ttl: 1.5,
+    mood: CommsMood.worried,
+    urgent: true,
+    lines: [
+      CommsLine(id: 'sentinelRushAgain.h0', speaker: 'kestrel', duration: 2.68, text: 'Dive! Break left or right, now!', mouth: '3344444220000000000000<<===55<<<<<<<<<222', open: '04677653211068678767678853247899899986421', vis: '------------------------eeeoooooeee------', emotion: 'panicked', clip: 'sentinelDive.h4'),
+      CommsLine(id: 'sentinelRushAgain.h1', speaker: 'rook', duration: 1.461, text: 'Incoming! Dodge, dodge, dodge!', mouth: '555<<<<<<<<<<==444==00', open: '0458998998788547763211', vis: 'ooo----------ee---ee--', emotion: 'panicked', clip: 'sentinelDive.h3'),
+      CommsLine(id: 'sentinelRushAgain.h2', speaker: 'admiral', duration: 1.758, text: 'It\'s diving! Move!', mouth: '2222000003322000555<<<<==00', open: '034211787664321136689874321', vis: '----------------ooo--ooee--', emotion: 'panicked', clip: 'sentinelDive.h0'),
+    ],
+  ),
 };
 
 const commsDemonTriggers = <String, CommsTriggerSpec>{
@@ -1507,6 +1535,39 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'groundTide.surge.d2', speaker: 'nibb', duration: 1.455, grunt: 'cackle', gloss: 'You nearly had me!', mouth: '0000044443333444777777', open: '0002576775677778999853', vis: '---------ee-----ooo---', emotion: 'excited'),
       CommsLine(id: 'groundTide.surge.d3', speaker: 'vexxa', duration: 0.877, grunt: 'order', gloss: 'Keep them guessing!', mouth: '22244447777222', open: '02466689995321', vis: '--------------', emotion: 'stern'),
       CommsLine(id: 'groundTide.surge.d4', speaker: 'morth', duration: 1.555, grunt: 'rally', gloss: 'Our turn to fly!', mouth: '000000777777777777<<<<<<', open: '013578997686889997889853', vis: '--------eeee------oo----', emotion: 'excited'),
+    ],
+  ),
+  'sentinelRush': CommsTriggerSpec(
+    name: 'sentinelRush',
+    priority: 9,
+    cooldown: 4.0,
+    ttl: 2.5,
+    lines: [
+      CommsLine(id: 'sentinelRush.d0', speaker: 'gorrak', duration: 0.791, grunt: 'warcry', gloss: 'Wings in!', mouth: '000000077777', open: '001576899743', vis: '------------', emotion: 'teasing', clip: 'divePrep.d12'),
+      CommsLine(id: 'sentinelRush.d1', speaker: 'vexxa', duration: 1.006, grunt: 'warcry', gloss: 'Down we go!', mouth: '2222222444777722', open: '0257898778997642', vis: 'ooo-------eeee--', emotion: 'teasing', clip: 'divePrep.d13'),
+      CommsLine(id: 'sentinelRush.d2', speaker: 'skarn', duration: 0.619, grunt: 'warcry', gloss: 'Watch this!', mouth: '2222777722', open: '0467998642', vis: 'oo----ee--', emotion: 'teasing', clip: 'divePrep.d14'),
+      CommsLine(id: 'sentinelRush.d3', speaker: 'morth', duration: 0.962, grunt: 'warcry', gloss: 'My turn!', mouth: '000000044477777', open: '012468977889953', vis: '-------eeeeoo--', emotion: 'teasing', clip: 'divePrep.d15'),
+    ],
+  ),
+  'sentinelRushMissed': CommsTriggerSpec(
+    name: 'sentinelRushMissed',
+    priority: 4,
+    cooldown: 6.0,
+    ttl: 2.0,
+    delay: 0.3,
+    lines: [
+      CommsLine(id: 'sentinelRushMissed.d0', speaker: 'grunnok', duration: 1.242, grunt: 'alarm', gloss: 'Hold on, hold on!', mouth: '0000007772222333322', open: '0058989953213666632', vis: '--eeeeee------ooo--', emotion: 'panicked', clip: 'demonRout.d1'),
+      CommsLine(id: 'sentinelRushMissed.d1', speaker: 'blatch', duration: 1.242, grunt: 'alarm', gloss: 'Not part of the plan!', mouth: '0000004444444444444', open: '0025786677885789853', vis: '--eeeeee--oo-------', emotion: 'panicked', clip: 'demonRout.d2'),
+    ],
+  ),
+  'broodAdapting': CommsTriggerSpec(
+    name: 'broodAdapting',
+    priority: 4,
+    cooldown: 60.0,
+    ttl: 4.0,
+    lines: [
+      CommsLine(id: 'broodAdapting.d0', speaker: 'gorrak', duration: 2.335, grunt: 'gloat', gloss: 'Your aim is brave. I will give you that!', mouth: '0000044<<<<3344777333333333333444222', open: '017897788886677897557764467876675321', vis: 'eee---------ooo--oo--------ee-------', emotion: 'teasing', clip: 'broodTaunt.d0'),
+      CommsLine(id: 'broodAdapting.d1', speaker: 'skarn', duration: 2.423, grunt: 'gloat', gloss: 'Come on, pilot. Show me your clever move!', mouth: '000000000003344<<<<<<2222222222277722', open: '0001478989855778898753226778645898632', vis: '----oo------------eeeeee-------------', emotion: 'teasing', clip: 'broodTaunt.d2'),
     ],
   ),
 };

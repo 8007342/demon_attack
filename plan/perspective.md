@@ -51,6 +51,13 @@ Ordinary scale = 1.8 · n (× 1.1 when angry), rounded to 0.1 (4-unit sprite ste
 - **Distance haze:** a second draw of the frame tinted dusk violet (#454A74) at up to 60%, fading out between n 0.30 and 0.56: arrivals emerge from the horizon's murk, formation demons are clear.
 - **Ground shadow:** a three-row stepped pixel ellipse on the flyover ground at y = 172 + 348 · n, width ∝ n, opacity rising with nearness and falling with altitude. It stays nearly invisible under the high formation (the ground is very dark, luminance ≤ 0.13, and a row of blobs would clutter the shot lane) and darkens under a diver as it closes in. Shadows meet the ship plane only for the nearest divers, which is the altitude cue that matters.
 - **Waiting arrivals** are parked, undrawn, at their far start point until their entrance begins, so the opening hint still has an empty sky.
+- **Continuous swarm (2026-11-15, openspec/changes/continuous-swarm).** Within a sector, arrivals are a stream of
+  skeins (3–6) rather than a wave block. Waiting skeins (reinforcement groups, a wave's later skeins, the next wave's
+  reserve) are *drawn*, veiled, in the deep fog at n 0.10–0.20 on Lévy drifts (`SwarmState.reserve`). A released
+  skein flies a swoop from its reserve point or gate: a quadratic Bézier ground track that swings to the side
+  opposite its gate, and an altitude parabola out of the fog. The next wave's first skeins creep to the fog front
+  (entrance 0.6) while the stragglers still fight. A diver that leaves the bottom re-enters from a deep gate (n 0.12)
+  instead of dropping in from the top edge. A foreshadowed sentinel rises through every fog band (≥ 0.6 s each).
 
 ## 5. Pixel-art scaling pitfalls and the choice
 

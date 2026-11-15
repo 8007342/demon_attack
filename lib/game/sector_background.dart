@@ -35,6 +35,7 @@ class SectorBackground {
       attempt('flyover-props.png'),
       attempt('flyover-creatures.png'),
       attempt('flyover-vegetation.png'),
+      attempt('ground-wildlife.png'),
     ]);
     for (var i = 0; i < 5; i++) {
       flyover.strips[i] = loaded[i];
@@ -43,6 +44,7 @@ class SectorBackground {
     flyover.props = loaded[10];
     flyover.creatures = loaded[11];
     flyover.vegetationSheet = loaded[12];
+    flyover.wildlife = loaded[13];
   }
 
   /// Scene hook: advance flight distance and creature reactions (visual only).

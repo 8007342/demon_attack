@@ -770,7 +770,10 @@ void main() {
       expect(gameEvents(m), contains(GameEventNames.allySaved));
       expect(m.score, greaterThan(score));
       final lives = m.lives;
-      run(m, 10);
+      // continuous-swarm: the next air wave (paced faster after this
+      // empty arena's instant clear) may reach the fight in these 10 s;
+      // its fire is not what this ground test is about.
+      run(m, 10, each: () => m.shots.removeWhere((s) => s.hostile));
       expect(a.totalled, isFalse);
       expect(m.lives, lives);
     });

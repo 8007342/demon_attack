@@ -1,0 +1,46 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "hodcrawler", "name": "Hodcrawler", "faction": "host", "class": "heavy", "block": "V", "move": "tracks", "seed": 760600,
+ "notes": "Field repair: a squat crawler carrying a hod of fresh stone blocks, a folded wing mantlet, and a long iron jib ending in a hooked gargoyle hand (the articulated layer; the only vehicle with a long diagonal arm). Channel = mortar lines along the jib; fill3 lights the hand's eyes. Special = mend: the jib dips (f0-f1), sets a block with a warm mortar line (f2-f3).",
+ "hull": [
+  {"kind": "box", "at": [-7.2, 0, 0], "size": [3.4, 20, 3.4], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}, "piece": "trackL"},
+  {"kind": "box", "at": [7.2, 0, 0], "size": [3.4, 20, 3.4], "mat": "track", "chamfer": {"bfront": 1.2, "bback": 1.2}, "piece": "trackR"},
+  {"kind": "box", "at": [0, 0, 1.4], "size": [13.5, 20, 5], "mat": "stone", "chamfer": {"top": 1.2, "front": 2}, "piece": "body"},
+  {"kind": "box", "at": [-1.5, -5, 6.4], "size": [8, 7, 2.6], "mat": "iron", "piece": "hod"},
+  {"kind": "box", "at": [-3.5, -6.5, 9], "size": [2.6, 2.6, 2], "mat": "stone_hi", "piece": "block1"},
+  {"kind": "box", "at": [0, -4, 9], "size": [2.6, 2.6, 2], "mat": "stone_hi", "piece": "block2"},
+  {"kind": "box", "at": [-0.5, -7, 9], "size": [2.4, 2, 1.8], "mat": "stone"},
+  {"kind": "box", "at": [-7.2, -1, 4], "size": [1.2, 12, 4.4], "roll": -18, "mat": "membrane", "piece": "mantlet"},
+  {"kind": "box", "at": [0, 9.6, 2], "size": [6, 1, 3], "mat": "stone_hi"},
+  {"kind": "box", "at": [-1.4, 10.2, 3.6], "size": [1, 0.5, 0.8], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [1.4, 10.2, 3.6], "size": [1, 0.5, 0.8], "mat": "eye", "tags": ["eye"]},
+  {"kind": "prism", "at": [3.6, 4, 6.4], "n": 6, "r": 2.6, "h": 0.6, "mat": "iron"}
+ ],
+ "art": {
+  "kind": "jib", "pivot": [3.6, 4, 7], "muzzle": [0, 14.4, 5.8], "seat": 0,
+  "prims": [
+   {"kind": "prism", "at": [0, 0, 0], "n": 6, "r": 2.6, "h": 1.8, "mat": "iron", "piece": "jibbase"},
+   {"kind": "bar", "a": [0, 0, 1.4], "b": [0, 13, 7], "t": 1.4, "mat": "iron", "tags": ["jib"], "piece": "jib"},
+   {"kind": "box", "at": [0, 13.8, 4.6], "size": [2.6, 2.2, 2.6], "mat": "stone_hi", "tags": ["jib"], "piece": "hand"},
+   {"kind": "bar", "a": [0, 14.6, 4.8], "b": [0, 15.6, 3], "t": 0.9, "mat": "stone_hi", "tags": ["jib", "ornament"]},
+   {"kind": "box", "at": [-0.7, 15, 6.4], "size": [0.6, 0.4, 0.6], "mat": "eye", "tags": ["jib", "eye"]},
+   {"kind": "box", "at": [0.7, 15, 6.4], "size": [0.6, 0.4, 0.6], "mat": "eye", "tags": ["jib", "eye"]},
+   {"kind": "bar", "a": [0, 1, 2.4], "b": [0, 5, 4.1], "t": 0.7, "mat": "channel", "stage": 1, "tags": ["jib"]},
+   {"kind": "bar", "a": [0, 5, 4.1], "b": [0, 9, 5.8], "t": 0.7, "mat": "channel", "stage": 2, "tags": ["jib"]},
+   {"kind": "bar", "a": [0, 9, 5.8], "b": [0, 12.8, 7.6], "t": 0.7, "mat": "channel", "stage": 3, "tags": ["jib"]},
+   {"kind": "box", "at": [0, 14, 2.6], "size": [2.2, 2.2, 1.8], "mat": "stone_hi", "tags": ["jib", "hidden", "carry"]},
+   {"kind": "bar", "a": [-1.2, 14, 2.6], "b": [1.2, 14, 2.6], "t": 0.6, "mat": "vent", "tags": ["jib", "hidden", "mortar"]}
+  ]
+ },
+ "pieces": ["jib", "hand", "hod", "block1", "block2", "mantlet", "trackL"],
+ "poses": {
+  "special": [
+   [{"tag": "jib", "axis": "x", "deg": -10, "pivot": [0, 0, 1.4]}, {"tag": "carry", "show": true}],
+   [{"tag": "jib", "axis": "x", "deg": -22, "pivot": [0, 0, 1.4]}, {"tag": "carry", "show": true}],
+   [{"tag": "jib", "axis": "x", "deg": -22, "pivot": [0, 0, 1.4]}, {"tag": "mortar", "show": true, "lit": true}],
+   [{"tag": "jib", "axis": "x", "deg": -10, "pivot": [0, 0, 1.4]}, {"tag": "mortar", "show": true}],
+   [{"tag": "jib", "axis": "z", "deg": -12, "pivot": [0, 0, 0]}],
+   [{"tag": "jib", "axis": "z", "deg": 12, "pivot": [0, 0, 0]}]
+  ]
+ }
+}

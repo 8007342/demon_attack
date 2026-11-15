@@ -1,8 +1,14 @@
-/// Transition presentation for the arcade page: decides the one primary
-/// message a transition shows (an interlude card, a story card or the boss
-/// alert) and the slim progress strip, and runs the interlude's radio line.
+/// Transition presentation for the arcade page (openspec/changes/
+/// cinematic-flow §2.2, built on fluid-transitions and ux-declutter).
+///
+/// - The run's opening arrival keeps its illustrated tip card (it teaches).
+/// - A sector transition shows no card and no floating text: it schedules
+///   one message *slot* on the flow clock, always a radio line on the comms
+///   dock (playtest-fixes: no caption, no sector or tour title); the medal
+///   glyph as a flourish beside the ship. Nothing here is a bar or a strip.
+/// - Skip (tap, Space, Enter) closes the opening card, or sends a sector
+///   transition to its Descent (the radio line finishes on the dock).
 /// main.dart only feeds it the run state and mounts its overlay.
-/// See openspec/changes/fluid-transitions.
 library;
 
 import 'dart:math' as math;
@@ -15,12 +21,8 @@ import '../comms/squad_comms.dart';
 import '../game/campaign_story.dart';
 import '../game/interlude.dart';
 import '../game/model.dart';
-import '../game/scene.dart' show gold, mint;
-import '../game/ship_painter.dart';
-import '../services/comms_audio.dart' show commsStop;
 import 'interlude_card.dart';
 import 'medal.dart';
-import 'storyboard_banner.dart';
 
 class TransitionPresenter {
   TransitionPresenter({this.seed});
@@ -30,14 +32,19 @@ class TransitionPresenter {
   int _runs = 0;
   late InterludePlanner planner = InterludePlanner(seed: seed);
 
-  /// The interlude of the current window, if one was planned.
+  // --- the opening card ----------------------------------------------------
+  /// The opening card's plan, if one is up.
   InterludePlan? plan;
   double _window = 0;
   bool _open = false, _skipped = false, _tipMuted = false;
 
-  /// The radio card's line: its own pick, or the squad channel's line.
+  // --- the sector slot -------------------------------------------------------
+  /// The message slot of the current sector transition, if one was planned.
+  InterludePlan? slot;
+  bool _slotPlanned = false;
+
+  /// The radio slot's line: its own pick, or the squad channel's line.
   CommsMessage? _own, shown;
-  double _cardStart = 0;
 
   /// Bank lines this presenter started on the speech player.
   final played = <String>[];
@@ -45,21 +52,19 @@ class TransitionPresenter {
   /// A new run: fresh seeded planner (the opening card is a tip again).
   void newRun(SquadComms comms, {required bool voice}) {
     end(comms, voice: voice);
+    _endSlot(comms);
     _open = false;
     planner = InterludePlanner(seed: seed == null ? null : seed! + _runs++);
   }
 
-  /// Seconds left of the interlude window, or null outside one: the travel
-  /// leg plus the arrival that follows it, or an arrival alone (the opening,
-  /// a resumed run, a new route). A travel leg into a new route keeps its
-  /// story card; the carrier's arrival keeps its alert.
+  /// Seconds left of the opening card's window, or null: the run's opening
+  /// arrival (a new run, a resumed run, a console start). Arrivals reached
+  /// through a sector transition are its Descent and carry no card.
   static double? windowLeft(ArcadeModel m) {
-    final phase = m.presentationMode;
-    if (phase == RunMode.travel && m.level != 5) {
-      return m.transitionLeft +
-          (m.nextLevel == 5 ? 0 : ArcadeModel.arrivalHintDuration);
-    }
-    if (phase == RunMode.transition && m.wave == 1 && !m.isBoss) {
+    if (m.presentationMode == RunMode.transition &&
+        m.wave == 1 &&
+        !m.isBoss &&
+        !m.flow.active) {
       return m.transitionLeft;
     }
     return null;
@@ -67,14 +72,34 @@ class TransitionPresenter {
 
   double _elapsed(ArcadeModel m) => _window - (windowLeft(m) ?? _window);
 
-  /// The interlude card is up.
+  /// The opening card is up.
   bool get showingCard =>
-      plan != null &&
-      !_skipped &&
-      (plan!.kind == InterludeKind.tip || shown != null);
+      plan != null && !_skipped && plan!.kind == InterludeKind.tip;
 
-  /// A silent tip holds the radio quiet.
-  bool get quiet => showingCard && plan!.kind == InterludeKind.tip;
+  /// A sector transition's slot plays (a flow with Pursuit).
+  static bool slotted(ArcadeModel m) =>
+      m.flow.active &&
+      const [
+        FlowKind.sectorChange,
+        FlowKind.bossArrival,
+        FlowKind.bossVictory,
+      ].contains(m.flow.kind);
+
+  /// The silent opening tip card holds the radio quiet.
+  bool quiet(ArcadeModel m) => showingCard;
+
+  /// Tap, Space or Enter has something to skip.
+  bool canSkip(ArcadeModel m) =>
+      showingCard ||
+      (slotted(m) &&
+          const [
+            RunMode.salvage,
+            RunMode.levelClear,
+            RunMode.travel,
+            RunMode.victory,
+          ].contains(m.mode) &&
+          !(m.mode == RunMode.victory && m.finalBoss) &&
+          !m.skipPending);
 
   /// Called every frame after the comms tick.
   void update({
@@ -83,47 +108,93 @@ class TransitionPresenter {
     required bool voice,
     bool flawless = false,
   }) {
+    _updateOpening(model, comms, voice);
+    if (model.mode != RunMode.title && slotted(model)) {
+      if (!_slotPlanned) _planSlot(model, comms, flawless: flawless);
+      _updateSlot(model, comms, voice);
+    } else if (_slotPlanned) {
+      _endSlot(comms);
+    }
+  }
+
+  void _updateOpening(ArcadeModel model, SquadComms comms, bool voice) {
     final left = model.mode == RunMode.title ? null : windowLeft(model);
     if (left == null) {
       if (_open) end(comms, voice: voice);
       _open = false;
       return;
     }
-    if (!_open) {
-      _open = true;
-      _skipped = false;
-      _window = left;
-      final travel = model.presentationMode == RunMode.travel;
-      final level = travel ? model.nextLevel : model.level;
-      plan = planner.plan(
-        InterludeContext(
-          difficulty: model.difficulty,
-          level: level,
-          route: model.cycle,
-          window: left,
-          crew: comms.lineup?.members ?? const {},
-          flawless: travel && flawless,
-          struggling: model.lives <= 1,
-          nextIsCarrier: level == 5,
-        ),
-      );
-      _cardStart = 0;
-      if (plan?.kind == InterludeKind.tip && voice) {
-        // Music only: the director holds chatter while the tip is up
-        // (urgent and must-play warnings still sound; held lines may play
-        // right after). comms-middle-ground `hush`.
-        comms.director.hush(left);
-        _tipMuted = true;
-      }
+    if (_open) return;
+    _open = true;
+    _skipped = false;
+    _window = left;
+    plan = planner.plan(
+      InterludeContext(
+        difficulty: model.difficulty,
+        level: model.level,
+        route: model.cycle,
+        window: left,
+        crew: comms.lineup?.members ?? const {},
+        struggling: model.lives <= 1,
+      ),
+    );
+    if (plan != null && plan!.kind != InterludeKind.tip) {
+      // A resumed run's arrival between alternations: no card, the radio
+      // carries on as usual.
+      plan = null;
     }
-    if (plan?.kind == InterludeKind.radio && !_skipped) {
-      _updateRadio(model, comms, voice);
+    if (plan?.kind == InterludeKind.tip && voice) {
+      // Music only: the director holds chatter while the tip is up
+      // (urgent and must-play warnings still sound; held lines may play
+      // right after). comms-middle-ground `hush`.
+      comms.director.hush(left);
+      _tipMuted = true;
     }
   }
 
-  void _updateRadio(ArcadeModel model, SquadComms comms, bool voice) {
+  /// Plan seconds the slot may start, and how long it has without growing
+  /// Pursuit.
+  static (double, double) slotWindow(FlowPlan p) {
+    final s = p.beat('slot')!;
+    return (s.a, p.descentAt - s.a);
+  }
+
+  void _planSlot(ArcadeModel model, SquadComms comms, {bool flawless = false}) {
+    _slotPlanned = true;
+    final (_, room) = slotWindow(model.flow.plan);
+    final victory = model.flow.kind == FlowKind.bossVictory;
+    final level = model.nextLevel;
+    slot = planner.planRadio(
+      InterludeContext(
+        difficulty: model.difficulty,
+        level: level,
+        route: victory ? model.cycle + 1 : model.cycle,
+        window: room + FlowPlan.maxExtra,
+        crew: comms.lineup?.members ?? const {},
+        flawless: flawless,
+        struggling: model.lives <= 1,
+        nextIsCarrier: level == 5,
+      ),
+    );
+    final s = slot;
+    if (s == null) return;
+    final needs =
+        s.radio!.needs + InterludeTiming.adoptWait + 2 * InterludeTiming.fade;
+    // The model rounds it up to whole beats before travel starts.
+    model.slotExtra = math.max(0, needs - room);
+  }
+
+  void _updateSlot(ArcadeModel model, SquadComms comms, bool voice) {
+    final s = slot;
+    if (s == null) return;
+    final (start, _) = slotWindow(model.flow.plan);
+    final elapsed = model.flow.seconds - start;
+    if (elapsed < 0) return;
+    _updateRadio(model, comms, elapsed);
+  }
+
+  void _updateRadio(ArcadeModel model, SquadComms comms, double elapsed) {
     final now = comms.now;
-    final elapsed = _elapsed(model);
     final own = _own;
     final director = comms.director;
     final onAir = [
@@ -131,7 +202,7 @@ class TransitionPresenter {
         if (m.started && now < m.endsAt) m,
     ];
     // The squad's own transition line (the next-mission briefing) is the
-    // card: never a second voice over it.
+    // slot: never a second voice over it.
     final current = shown;
     if (current == null || now >= current.endsAt) {
       final next =
@@ -139,188 +210,121 @@ class TransitionPresenter {
           onAir.where((m) => !m.isDemon).firstOrNull ??
           onAir.firstOrNull;
       if (next != null && !identical(next, current)) {
-        if (current == null) _cardStart = elapsed;
         shown = next;
         planner.shown(next.line.id);
         return;
       }
     }
     if (current != null || own != null) return;
-    final pick = plan!.radio!;
+    final pick = slot!.radio!;
     final waiting = director.queue.any((m) => m.transmission);
-    final room = _window - elapsed - InterludeTiming.fade;
+    final room =
+        model.flow.plan.descentAt - model.flow.seconds - InterludeTiming.fade;
     if (onAir.isNotEmpty || waiting || elapsed < InterludeTiming.adoptWait) {
       return;
     }
     if (pick.needs > room) return;
     if (commsCast[pick.line.speaker] == null) return;
-    // The card's own pick goes through the director's pacing (after the
+    // The slot's own pick goes through the director's pacing (after the
     // line on air and the grace gap), so it can never talk over the squad;
-    // once it starts, the on-air adoption above shows it as the card.
+    // once it starts, the adoption above records it as shown.
     final message = director.offer(pick.line, spec: pick.spec, ttl: room);
     if (message == null) return;
     _own = message;
     played.add(pick.line.id);
   }
 
-  /// Ends the window's card and gives the radio back.
-  void end(SquadComms comms, {required bool voice}) {
-    if (_tipMuted) {
+  void _endSlot(SquadComms comms) {
+    if (_tipMuted && !showingCard) {
       _tipMuted = false;
       comms.director.hush(0);
     }
     final own = _own;
     if (own != null && !own.started) comms.director.queue.remove(own);
-    plan = null;
+    slot = null;
     _own = shown = null;
+    _slotPlanned = false;
   }
 
-  /// Skips the card (tap, Space or Enter). An arrival also starts the fight,
-  /// as the opening briefing always did. Returns false when nothing was up.
-  bool skip(ArcadeModel model, SquadComms comms, {required bool voice}) {
-    if (!showingCard) return false;
-    final own = _own;
-    if (own != null && own.started && comms.playAudio) {
-      commsStop(own.line.id);
+  /// Ends the opening card and gives the radio back.
+  void end(SquadComms comms, {required bool voice}) {
+    if (_tipMuted) {
+      _tipMuted = false;
+      comms.director.hush(0);
     }
-    _skipped = true;
-    end(comms, voice: voice);
-    if (model.presentationMode == RunMode.transition) model.transitionLeft = 0;
+    plan = null;
+  }
+
+  /// Skip (tap, Space or Enter). The opening card closes and the fight
+  /// starts; a sector transition goes to its Descent on the next frame (or
+  /// when the pickup grace ends) and a radio line finishes on the dock. Returns false when nothing was skipped.
+  bool skip(ArcadeModel model, SquadComms comms, {required bool voice}) {
+    if (showingCard) {
+      _skipped = true;
+      end(comms, voice: voice);
+      if (model.presentationMode == RunMode.transition) {
+        model.transitionLeft = 0;
+      }
+      return true;
+    }
+    if (!canSkip(model) || !model.skipTransition()) return false;
+    if (_tipMuted) {
+      _tipMuted = false;
+      comms.director.hush(0);
+    }
     return true;
   }
 
-  /// Seconds the card has been readable so far and its whole window (tests).
-  (double, double) cardTime(ArcadeModel model) =>
-      (_elapsed(model) - _cardStart, _window - _cardStart);
-
-  /// Height the strip takes at the top of the arena, 0 when hidden.
-  double stripInset(ArcadeModel model) =>
-      model.cinematic && _stripLabel(model) != null
-      ? TransitionStrip.height + 8
-      : 0;
-
-  static String _roman(int cycle) =>
-      const ['I', 'II', 'III', 'IV', 'V'][cycle.clamp(0, 4)];
-
-  String? _stripLabel(ArcadeModel m) {
-    final phase = m.presentationMode;
-    return switch (phase) {
-      RunMode.salvage =>
-        'RECOVERY WINDOW · COLLECT CARGO · ${m.transitionLeft.ceil()}s',
-      RunMode.levelClear =>
-        'SECTOR ${m.level}/5 CLEAR · ROUTE ${_roman(m.cycle)}',
-      RunMode.travel =>
-        'JUMP → ${CampaignStory.name(m.nextLevel, m.level == 5 ? m.cycle + 1 : m.cycle).toUpperCase()} · ${(m.transitionProgress * 100).floor()}%',
-      RunMode.transition when !m.isBoss =>
-        m.wave > 1
-            ? 'WAVE ${m.wave}/${m.wavesPerLevel} · REINFORCEMENTS'
-            : '${CampaignStory.name(m.level, m.cycle).toUpperCase()} · WAVE 1/${m.wavesPerLevel}',
-      _ => null,
-    };
-  }
+  /// Seconds the opening card has been readable so far and its whole
+  /// window (tests).
+  (double, double) cardTime(ArcadeModel model) => (_elapsed(model), _window);
 
   /// The overlay over the arena during a cinematic phase.
   Widget build(
     BuildContext context, {
     required ArcadeModel model,
     required SquadComms comms,
-    ShipPainter? ship,
     VoidCallback? onSkip,
   }) {
     final phase = model.presentationMode;
-    final p = model.transitionProgress;
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final children = <Widget>[];
     if (phase == RunMode.transition && model.isBoss) {
-      return _bossAlert(model, p);
+      children.add(_bossAlert(model, model.transitionProgress));
     }
-    final label = _stripLabel(model);
-    final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));
-    final fadeOut = Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
-    final stripOpacity = reduce
-        ? 1.0
-        : switch (phase) {
-            RunMode.salvage => fadeIn,
-            RunMode.transition =>
-              model.wave > 1 ? math.min(fadeIn, fadeOut) : fadeOut,
-            _ => 1.0,
-          };
-    Widget? primary;
     if (showingCard) {
-      primary = _card(context, model, comms, onSkip, reduce);
-    } else if (phase == RunMode.levelClear ||
-        phase == RunMode.victory ||
-        (phase == RunMode.travel &&
-            (model.level == 5 || plan == null) &&
-            !_skipped)) {
-      primary = _storyCard(model, ship);
+      children.add(_card(context, model, onSkip, reduce));
     }
-    return LayoutBuilder(
-      builder: (context, bounds) {
-        final inset = label == null ? 0.0 : TransitionStrip.height + 8;
-        return Stack(
-          children: [
-            if (primary != null) Positioned.fill(top: inset, child: primary),
-            if (label != null)
-              Positioned(
-                top: 6,
-                left: 0,
-                right: 0,
-                child: TransitionStrip(
-                  label: label,
-                  sector: model.level,
-                  progress: p,
-                  wave: phase == RunMode.transition ? model.wave : null,
-                  waves: phase == RunMode.transition
-                      ? model.wavesPerLevel
-                      : null,
-                  opacity: stripOpacity,
-                  accent: phase == RunMode.levelClear ? gold : mint,
-                ),
-              ),
-          ],
-        );
-      },
+    final flourish = _flourish(model);
+    if (flourish != null) children.add(flourish);
+    if (children.isEmpty) return const SizedBox.shrink();
+    return Stack(
+      children: [for (final c in children) Positioned.fill(child: c)],
     );
   }
 
   Widget _card(
     BuildContext context,
     ArcadeModel model,
-    SquadComms comms,
     VoidCallback? onSkip,
     bool reduce,
   ) {
     final (elapsed, window) = cardTime(model);
     final opacity = interludeOpacity(elapsed, window, reduce: reduce);
-    final travel = model.presentationMode == RunMode.travel;
-    final level = travel ? model.nextLevel : model.level;
+    final level = model.level;
     final destination =
         'SECTOR $level · ${CampaignStory.name(level, model.cycle).toUpperCase()}';
     return LayoutBuilder(
       builder: (context, bounds) {
         final compact = bounds.maxHeight < 520;
         final current = plan!;
-        if (current.kind == InterludeKind.tip) {
-          return InterludeFrame(
-            opacity: opacity,
-            onSkip: onSkip,
-            child: TipInterludeCard(
-              tip: current.tip!,
-              destination: destination,
-              showDetail: current.showDetail,
-              compact: compact,
-            ),
-          );
-        }
-        final message = shown!;
         return InterludeFrame(
           opacity: opacity,
           onSkip: onSkip,
-          accent: Color(message.character.accent),
-          child: RadioInterludeCard(
-            message: message,
-            now: comms.now,
+          child: TipInterludeCard(
+            tip: current.tip!,
             destination: destination,
+            showDetail: current.showDetail,
             compact: compact,
           ),
         );
@@ -328,151 +332,55 @@ class TransitionPresenter {
     );
   }
 
-  /// Level clear, carrier victory and the jump into a new route: the story
-  /// beat with its storyboard (and the medal on a carrier victory).
-  Widget _storyCard(ArcadeModel model, ShipPainter? ship) {
-    final phase = model.presentationMode;
-    final p = model.transitionProgress;
-    final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));
-    final fadeOut = Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
-    final bossVictory = phase == RunMode.victory;
-    final recognition = bossVictory && p >= .32;
-    final clear = phase == RunMode.levelClear;
-    final travel = phase == RunMode.travel;
-    final color = clear || bossVictory ? gold : mint;
-    final heading = bossVictory
-        ? recognition
-              ? 'THE FLEET RECOGNIZES YOUR SERVICE'
-              : 'THE CARRIER IS FALLING'
-        : clear
-        ? 'SECTOR SECURED'
-        : 'JUMP DRIVE ACTIVE';
-    final destination = travel
-        ? CampaignStory.name(
-            model.nextLevel,
-            model.level == 5 ? model.cycle + 1 : model.cycle,
-          )
-        : CampaignStory.name(model.level, model.cycle);
-    // The clear card carries the next leg's briefing: the travel leg that
-    // follows belongs to the interlude.
-    final story = bossVictory
-        ? model.medals == 5
-              ? 'Five carriers fallen. Brood command is broken. The frontier is free.'
-              : 'A medal for your courage. A life for the journey. Keep flying, defender.'
-        : CampaignStory.travel(model.level, model.cycle);
+  /// The medal of a carrier's fall: a short flourish beside the ship (the
+  /// existing medal glyph, no panel and no text: the HUD counts the extra
+  /// life, the radio says it), from the fall's first third to the climb.
+  Widget? _flourish(ArcadeModel model) {
+    final flow = model.flow;
+    if (flow.kind != FlowKind.bossVictory &&
+        flow.kind != FlowKind.campaignOutro) {
+      return null;
+    }
+    final s = flow.seconds;
+    final a = Curves.easeOutBack.transform(((s - 1.8) / .5).clamp(0.0, 1.0));
+    final end = math.min(flow.plan.descentAt - .4, 9.0);
+    final b = ((end - s) / .5).clamp(0.0, 1.0);
+    final o = math.min(((s - 1.8) / .3).clamp(0.0, 1.0), b);
+    if (o <= 0) return null;
+    final shipY = ArcadeModel.shipY - flow.plan.climb * flow.env('climb');
     return IgnorePointer(
       child: LayoutBuilder(
         builder: (context, bounds) {
-          final compact = bounds.maxHeight < 500;
-          return Align(
-            alignment: const Alignment(0, 0.08),
-            child: Opacity(
-              key: const ValueKey('story-card'),
-              opacity: math.min(fadeIn, fadeOut),
-              child: Transform.translate(
-                offset: Offset(0, (1 - fadeIn) * 20),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: SizedBox(
-                    width: math.min(460, bounds.maxWidth),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 14),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: compact ? 10 : 18,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xD9080D18),
-                        border: Border.symmetric(
-                          horizontal: BorderSide(
-                            color: color.withValues(alpha: .4),
-                          ),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            heading,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: color,
-                              fontSize: compact ? 16 : 19,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          SizedBox(height: compact ? 6 : 12),
-                          Text(
-                            destination.toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: compact ? 26 : 34,
-                              height: 1.15,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          SizedBox(height: compact ? 6 : 10),
-                          StoryboardBanner(
-                            level: model.level,
-                            cycle: model.cycle,
-                            phase: phase,
-                            progress: p,
-                            steering: model.steering,
-                            compact: compact,
-                            ship: ship,
-                            pilot: model,
-                          ),
-                          if (recognition) ...[
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Transform.scale(
-                                  scale:
-                                      .8 +
-                                      .2 *
-                                          Curves.easeOutBack.transform(
-                                            ((p - .32) / .2).clamp(0, 1),
-                                          ),
-                                  child: Medal(
-                                    difficulty: model.difficulty,
-                                    ordinal: (model.medals - 1).clamp(0, 4),
-                                    size: compact ? 40 : 64,
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                const Text(
-                                  '♥ +1UP',
-                                  style: TextStyle(
-                                    color: Color(0xFFFF8C89),
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          if (!(bossVictory && !recognition)) ...[
-                            SizedBox(height: compact ? 8 : 16),
-                            Text(
-                              story,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: compact ? 16 : 19,
-                                height: 1.45,
-                                color: const Color(0xFFCCD9E6),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+          final scale = math.min(
+            bounds.maxWidth / ArcadeModel.width,
+            bounds.maxHeight / ArcadeModel.height,
+          );
+          final ox = (bounds.maxWidth - ArcadeModel.width * scale) / 2;
+          final oy = (bounds.maxHeight - ArcadeModel.height * scale) / 2;
+          final right = model.shipX < ArcadeModel.width / 2;
+          final x = ox + (model.shipX + (right ? 30 : -30)) * scale;
+          final y = oy + (shipY - 34) * scale;
+          final medal = Medal(
+            difficulty: model.difficulty,
+            ordinal: (model.medals - 1).clamp(0, 4),
+            size: 34,
+          );
+          return Stack(
+            children: [
+              Positioned(
+                key: const ValueKey('flow-flourish'),
+                left: right ? x : null,
+                right: right ? null : bounds.maxWidth - x,
+                top: y,
+                child: Opacity(
+                  opacity: o,
+                  child: Transform.scale(
+                    scale: .8 + .2 * a,
+                    child: medal,
                   ),
                 ),
               ),
-            ),
+            ],
           );
         },
       ),
@@ -550,13 +458,6 @@ class TransitionPresenter {
                           fontWeight: FontWeight.w600,
                           letterSpacing: .5,
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      LinearProgressIndicator(
-                        value: p,
-                        minHeight: 3,
-                        color: red,
-                        backgroundColor: const Color(0xFF24374B),
                       ),
                     ],
                   ),

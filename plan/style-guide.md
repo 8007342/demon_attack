@@ -346,6 +346,35 @@ Powers occupy two offensive groups plus an independent shield: RAPID or POWERFUL
 
 Ground units, allies, wrecks and tracers stand on the flyover ground with its own camera (texel scale × 1.25), depth-sorted and drawn nearest-neighbour from `ground-forces.png` (contract: `lib/game/ground_atlas.dart`; pipeline: asset-pipeline.md, "Ground forces"). Brightness rises from 38% at the horizon to full at the fire line, so units are subdued far away and threatening up close. Demon units have mid-value dark hulls with saturated warm lights, eyes and launcher glow. Allies (v3) are a convoy seen from behind and above in the near band: rovers, APCs, half-tracks, tanks, howitzers, walkers and infantry squads, two variants per sector, with grey-blue hulls, sector camouflage (snow, patch plates, teal bands), cyan/teal stripes, lamps and an IFF chevron; turrets traverse toward their foe, kick back on each shot with a cyan muzzle flash, and tracks throw dust toward the camera. A blinking cyan distress cross shows while under attack. Ground effects are multi-frame and scaled by depth: a destroyed unit throws a perspective shock ring, a ten-frame fireball and ballistic debris, leaves a scorch decal on the ground and burns (flame-tongue loop, rising smoke column) for a few seconds; tracers have a muzzle flash at the shooter and impact sparks at the target (cyan friendly, warm demon). Flames and flashes fog only half as much as hulls. Decorative creatures stay small, muted and unlit, with no launcher. Allies never show death imagery: a totalled ally sparks, smokes and limps off, or its crew ejects in a pod. Telegraphs combine authored frames (launcher raised, then glow) with a warm stepped bracket on the ground that blinks faster near launch. The ground missile is one high-detail nose-on cell scaled nearest-neighbour from 8 to 36 units, with an analytic smoke trail along its fixed path and a blinking warm marker at the ship plane. Homing missiles (ship-weapons row 7) carry a cyan exhaust trail; a mint reticle locks on the current target; loaded missiles hang on the wing pylons, and so also appear in the transition loadout glyph.
 
+The ground forces rework (`openspec/changes/ground-forces-rework/`) sets the next look: the Ground Fleet in [human-ground-forces-style-guide.md](human-ground-forces-style-guide.md), the Undercroft Host in [gargoyle-army-style-guide.md](gargoyle-army-style-guide.md), headings, turrets and animation sets in [ground-unit-animation.md](ground-unit-animation.md), fog and smoke in [ground-atmosphere.md](ground-atmosphere.md), easter eggs in [ground-easter-eggs.md](ground-easter-eggs.md), and the render plan in [render-runs/ground-forces-rework.md](render-runs/ground-forces-rework.md).
+
+### Ground war presentation: accepted decisions (ground forces rework, 2026-11-15)
+
+Decided by the operator or under the operator's delegated checkpoint calls. The evidence is in the render-plan ledgers ([§10–§16](render-runs/ground-forces-rework.md#10-operator-approvals-2026-11-15)), and the close-out is in §17.
+
+- **Five headings per faction**, in 22.5° steps and mirrored (9 directions). A unit turns one step at a time with hysteresis and a minimum hold, so a heavy's 90° turn shows all five over about 1.2 s. The articulated layer (turret, pod, cab) turns on its own pivot. Beyond z 1200 only every other heading is shown, and beyond z 900 no overlays are drawn. Threat vehicles keep the old telegraph timing exactly.
+- **Lean hybrid art: rig, then one AI hero, then bake.** A Go rig ray-casts every heading, state, overlay and debris piece, and owns every silhouette. One Qwen-edited hero per unit supplies only materials and accents, which `bake` carries onto the rig shading by region. There are no per-heading AI edits, layer edits or VACE in-betweens. The edits come back either as the rig or as a fresh drawing of the hero, never as a blend of the two, and the clips barely move ([§12](render-runs/ground-forces-rework.md#12-cp1-decision-2026-11-15-the-operator-delegated-the-call)).
+- **Binary alpha** for every unit, effect and wildlife cell, drawn nearest-neighbour on whole arena units. The ground-atmosphere atlas is the one exception: it uses stepped alpha with four levels (0.2/0.4/0.6/0.8) and never a smooth gradient.
+- **Palettes.** The Fleet is grey-blue `ally_hull` with `ally_cyan` strips and visors, never warm and never gilt; its body luma tops out around 0.65. The Host is dark sector stone with `demon_warm` eyes, slag and channel fill; its hull caps at luma 0.40 and its rim at 0.56. Warm means a shot or a threat, and cyan means a friend. Each sector's Host stone and Fleet camouflage are baked into per-sector atlases. Some Host bakes come out darker than their rigs (crocket-captured, knell, scrapmason): see the playtest list in §17.
+- **Atmosphere caps** ([ground-atmosphere.md](ground-atmosphere.md)):
+  - Units mix toward the sector fog tint by `fogMix(z)`, which is 0 at z ≤ 700 and 0.82 at z ≥ 1350, on top of the depth light.
+  - Threat units cap at 0.45.
+  - Emissive pixels (eyes, lights, flames) fog at half rate, so the murk shows a unit's light pattern before its shape.
+  - Telegraph tells, launch flashes and hit flashes are never tinted.
+  - Inside the lane (x 96–264, y ≥ 300) the combined atmosphere alpha is at most 0.30. Smoke walls and cloud shadows never enter it.
+  - Fog and smoke stay at luma ≤ 0.22 (≤ 0.40 for lit smoke tops), with no signal colours.
+  - Reduced atmosphere keeps the horizon fog and the mists. Reduced motion freezes drift and holds smoke still.
+  - No atmosphere layer is drawn over the air war. Flock flyers are the one ground thing drawn above the ground fog: they are in the air.
+- **Easter-egg rules** ([ground-easter-eggs.md](ground-easter-eggs.md) §1):
+  - Eggs are presentation only and use their own random stream.
+  - Nothing enters the lane below y 300.
+  - Bodies stay at luma ≤ 0.34 and never show signal colours.
+  - Eggs are quiet while a telegraph, a boss, the last life or a recent hit is on.
+  - Budget: one egg per side band and two on screen. Debris is limited to 8 pieces per breakup and 16 on screen, flocks to 9 flyers, critter groups to 8.
+  - Each egg lasts at most 2.5 s.
+  - Reduced motion turns them off.
+  - Eggs are skipped beyond z 900, except flocks.
+
 ## Illustrated arrival guidance
 
 Before each sector's first wave, replace repeated arrival-story prose with one contextual five-to-nine-word action sentence and a matching original pixel illustration. Travel and rewards retain the destination narrative. Detailed original pixel paintings can illustrate these tactics separately from low-resolution combat sprites; preserve hard edges and reuse exact heart-quarter and weapon glyphs. Keep destination identification concise, words as real UI text, and an equivalent semantic description for meaningful visual information.

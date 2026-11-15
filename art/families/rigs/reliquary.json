@@ -1,0 +1,53 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "reliquary", "name": "Reliquary", "faction": "host", "class": "heavy", "block": "V", "move": "wheels", "seed": 760300,
+ "notes": "Armoured personnel carrier: a stone casket with a steep pitched lead roof (the house shape no other unit uses), bat-wing membranes folded down the roof slopes like shingles, pointed-arch side doors, gilt ridge studs, a small gargoyle gunner head on the ridge (the articulated layer, channel along its back). Special = unload: the wings lift (f0-f1), the doors open with warm light (f1-f3), squad drops (f4-f5).",
+ "hull": [
+  {"kind": "prism", "at": [-8.2, -8.5, 3], "axis": "x", "center": true, "n": 10, "r": 3, "h": 2.4, "mat": "wheel", "piece": "wheel"},
+  {"kind": "prism", "at": [-8.2, 0, 3], "axis": "x", "center": true, "n": 10, "r": 3, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [-8.2, 8.5, 3], "axis": "x", "center": true, "n": 10, "r": 3, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [8.2, -8.5, 3], "axis": "x", "center": true, "n": 10, "r": 3, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [8.2, 0, 3], "axis": "x", "center": true, "n": 10, "r": 3, "h": 2.4, "mat": "wheel"},
+  {"kind": "prism", "at": [8.2, 8.5, 3], "axis": "x", "center": true, "n": 10, "r": 3, "h": 2.4, "mat": "wheel", "piece": "wheel2"},
+  {"kind": "box", "at": [0, 0, 2.4], "size": [15, 26, 6.6], "mat": "stone", "chamfer": {"vert": 1, "bottom": 0.6}, "piece": "casket"},
+  {"kind": "box", "at": [0, 0, 8.8], "size": [16.4, 27, 7.4], "mat": "lead", "cuts": [{"n": [1, 0, 1.15], "p": [0, 0, 16]}, {"n": [-1, 0, 1.15], "p": [0, 0, 16]}], "piece": "roof"},
+  {"kind": "box", "at": [-4.6, 0, 11.6], "size": [6.4, 23, 0.9], "roll": -41, "mat": "membrane", "tags": ["wingL"], "piece": "wingL"},
+  {"kind": "box", "at": [4.6, 0, 11.6], "size": [6.4, 23, 0.9], "roll": 41, "mat": "membrane", "tags": ["wingR"], "piece": "wingR"},
+  {"kind": "box", "at": [0, -9, 15.6], "size": [1.2, 1.2, 0.9], "mat": "gilt"},
+  {"kind": "box", "at": [0, 9, 15.6], "size": [1.2, 1.2, 0.9], "mat": "gilt"},
+  {"kind": "box", "at": [-7.8, 2, 3.2], "size": [0.9, 5, 4.6], "mat": "iron", "cuts": [{"n": [0, 1, 0.8], "p": [-7.8, 2, 8.6]}, {"n": [0, -1, 0.8], "p": [-7.8, 2, 8.6]}], "tags": ["doorL"]},
+  {"kind": "box", "at": [7.8, 2, 3.2], "size": [0.9, 5, 4.6], "mat": "iron", "cuts": [{"n": [0, 1, 0.8], "p": [7.8, 2, 8.6]}, {"n": [0, -1, 0.8], "p": [7.8, 2, 8.6]}], "tags": ["doorR"]},
+  {"kind": "box", "at": [-7.6, 2, 3.4], "size": [0.6, 4, 4], "mat": "vent", "tags": ["hidden", "spill"]},
+  {"kind": "box", "at": [7.6, 2, 3.4], "size": [0.6, 4, 4], "mat": "vent", "tags": ["hidden", "spill"]},
+  {"kind": "box", "at": [0, 13.2, 4.4], "size": [6, 0.8, 3], "mat": "stone_hi", "piece": "prow"},
+  {"kind": "box", "at": [-1.4, 13.7, 5.6], "size": [1, 0.5, 0.8], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [1.4, 13.7, 5.6], "size": [1, 0.5, 0.8], "mat": "eye", "tags": ["eye"]}
+ ],
+ "art": {
+  "kind": "gunner", "pivot": [0, 2, 15.6], "muzzle": [0, 6.6, 1.4], "seat": 0,
+  "prims": [
+   {"kind": "ball", "at": [0, 0, 1.8], "size": [2.4, 2.8, 2], "mat": "stone_hi", "piece": "head"},
+   {"kind": "bar", "a": [-1.6, -0.6, 3], "b": [-2.6, -2.6, 5], "t": 0.9, "mat": "stone_hi", "tags": ["ornament"]},
+   {"kind": "bar", "a": [1.6, -0.6, 3], "b": [2.6, -2.6, 5], "t": 0.9, "mat": "stone_hi", "tags": ["ornament"]},
+   {"kind": "box", "at": [-0.9, 2.3, 2], "size": [0.8, 0.5, 0.7], "mat": "eye", "tags": ["eye"]},
+   {"kind": "box", "at": [0.9, 2.3, 2], "size": [0.8, 0.5, 0.7], "mat": "eye", "tags": ["eye"]},
+   {"kind": "bar", "a": [0, 1.6, 1.2], "b": [0, 5.6, 1.2], "t": 1.2, "mat": "iron", "tags": ["barrel"]},
+   {"kind": "box", "at": [0, 5.6, 0.5], "size": [1.6, 1, 1.4], "mat": "stone_hi", "tags": ["mouth", "barrel"]},
+   {"kind": "bar", "a": [0, -3.1, 1.6], "b": [0, -2.4, 3.4], "t": 1, "mat": "channel", "stage": 1},
+   {"kind": "bar", "a": [0, -1.6, 3.5], "b": [0, 0, 3.9], "t": 0.8, "mat": "channel", "stage": 2},
+   {"kind": "bar", "a": [0, 0, 3.9], "b": [0, 1.4, 3.6], "t": 0.8, "mat": "channel", "stage": 3},
+   {"kind": "ball", "at": [0, 7, 1.2], "size": [1.6, 1.2, 1.4], "mat": "muzzle", "tags": ["hidden", "muzzle"]}
+  ]
+ },
+ "pieces": ["roof", "wingL", "wingR", "head", "prow", "wheel", "wheel2"],
+ "poses": {
+  "special": [
+   [{"tag": "wingL", "axis": "y", "deg": 20, "pivot": [0, 0, 15.6]}, {"tag": "wingR", "axis": "y", "deg": -20, "pivot": [0, 0, 15.6]}],
+   [{"tag": "wingL", "axis": "y", "deg": 38, "pivot": [0, 0, 15.6]}, {"tag": "wingR", "axis": "y", "deg": -38, "pivot": [0, 0, 15.6]}, {"tag": "doorL", "hide": true}, {"tag": "doorR", "hide": true}, {"tag": "spill", "show": true, "lit": true}],
+   [{"tag": "wingL", "axis": "y", "deg": 38, "pivot": [0, 0, 15.6]}, {"tag": "wingR", "axis": "y", "deg": -38, "pivot": [0, 0, 15.6]}, {"tag": "doorL", "hide": true}, {"tag": "doorR", "hide": true}, {"tag": "spill", "show": true, "lit": true}],
+   [{"tag": "wingL", "axis": "y", "deg": 38, "pivot": [0, 0, 15.6]}, {"tag": "wingR", "axis": "y", "deg": -38, "pivot": [0, 0, 15.6]}, {"tag": "doorL", "hide": true}, {"tag": "doorR", "hide": true}, {"tag": "spill", "show": true}],
+   [{"tag": "wingL", "axis": "y", "deg": 20, "pivot": [0, 0, 15.6]}, {"tag": "wingR", "axis": "y", "deg": -20, "pivot": [0, 0, 15.6]}, {"tag": "doorL", "hide": true}, {"tag": "doorR", "hide": true}, {"tag": "spill", "show": true}],
+   [{"tag": "wingL", "axis": "y", "deg": 8, "pivot": [0, 0, 15.6]}, {"tag": "wingR", "axis": "y", "deg": -8, "pivot": [0, 0, 15.6]}]
+  ]
+ }
+}

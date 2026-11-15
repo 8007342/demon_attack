@@ -40,7 +40,7 @@ Contract kept from v4: **same threat.** Every new unit lives in the skirmish lay
   Tier B, the stretch set: Narthex (super-heavy), Rosegun (rotary rocket artillery), Thurible (smoke) and Cistern (slag tanker).
 
   The existing units take Host names and a refresh direction, keeping their atlas rows:
-  - Gutter-runner, Scrapmason Crawler, Kiln Ox and Belfry (the threat vehicles);
+  - Spout-runner, Scrapmason Crawler, Kiln Ox and Belfry (the threat vehicles);
   - Ashlar Guard, Corbel Brutes and Tympanum (the existing troops and heavy tank).
 - **Palette.** The sector stone ramps sit at the existing `demon_ramp` lumas. `demon_warm` stays the only blinking accent: eyes, mouths, channels and telegraphs. A new non-blinking **`demon_gilt`** ramp marks rank. Ally cyan and teal stay forbidden on Host hulls.
 - **Art families and atlases.**

@@ -48,6 +48,73 @@ class DifficultyPolicy {
     Difficulty.hard => 6,
   };
 
+  // --- continuous swarm (openspec/changes/continuous-swarm design §2.4):
+  // timing, never HP. None of these touch counts, HP or the elite budget
+  // (plan/difficulty-calibration.md); they only decide when a wave's
+  // skeins leave the fog and how fast its squads fly.
+
+  /// Base gap (s, hostile rate) between two roster skeins of a wave; it
+  /// shrinks to half while few of the wave are left alive.
+  double get skeinGap => switch (difficulty) {
+    Difficulty.easy => 1.3,
+    Difficulty.normal => 1.1,
+    Difficulty.hard => .95,
+  };
+
+  /// Floor of the next wave's approach factor q after a fast clear.
+  double get paceFloor => switch (difficulty) {
+    Difficulty.easy => .65,
+    Difficulty.normal => .55,
+    Difficulty.hard => .5,
+  };
+
+  /// Angular and lateral speed factor of the squads' fighting patterns,
+  /// times the route's movement growth 1 + 0.04 r.
+  // --- demon intelligence (openspec/changes/demon-intelligence §7):
+  // the skill level's cap; skill only sharpens decisions, never content.
+  double get skillCap => switch (difficulty) {
+    Difficulty.easy => .5,
+    Difficulty.normal => .8,
+    Difficulty.hard => 1.0,
+  };
+
+  /// The sentinel final rush (design §6): birth chance (+ up to 0.10
+  /// with skill), rush shield, top speed (u/s at hostile rate), homing
+  /// turn rate (°/s) and passes.
+  double get rushChance => switch (difficulty) {
+    Difficulty.easy => .20,
+    Difficulty.normal => .35,
+    Difficulty.hard => .45,
+  };
+  int rushShieldFor(int route) => switch (difficulty) {
+    Difficulty.easy => 3,
+    Difficulty.normal => 4 + route ~/ 2,
+    Difficulty.hard => 5 + route ~/ 2,
+  };
+  double get rushSpeed => switch (difficulty) {
+    Difficulty.easy => 640,
+    Difficulty.normal => 780,
+    Difficulty.hard => 880,
+  };
+  double get rushTurnRate => switch (difficulty) {
+    Difficulty.easy => 0,
+    Difficulty.normal => 50,
+    Difficulty.hard => 75,
+  };
+  int get rushPasses => switch (difficulty) {
+    Difficulty.easy => 1,
+    Difficulty.normal => 2,
+    Difficulty.hard => 3,
+  };
+
+  double swarmTempo({required int route}) =>
+      switch (difficulty) {
+        Difficulty.easy => .85,
+        Difficulty.normal => 1.0,
+        Difficulty.hard => 1.1,
+      } *
+      (1 + .04 * route.clamp(0, 4));
+
   int reinforcementFlocks({required int route, required int sector}) =>
       difficulty == Difficulty.easy ? (route == 0 ? 0 : 1) : 2;
 

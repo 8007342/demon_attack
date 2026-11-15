@@ -253,7 +253,7 @@ class _EndingPageState extends State<EndingPage>
         return const Center(child: Text('Credits could not be loaded.'));
       }
       if (!snapshot.hasData) {
-        return const Center(child: CircularProgressIndicator());
+        return const Center(child: Text('LOADING CREDITS…'));
       }
       final data = snapshot.data!;
       final sections = data['sections'] as List;

@@ -64,8 +64,38 @@ void main() {
       });
     },
   );
+  test('a power in its last seconds blinks its glyph layer', () async {
+    expect(PowerStatus.blinkedOff({Power.spread: 9}), isEmpty);
+    expect(PowerStatus.blinkedOff({Power.spread: 2.6}), isEmpty);
+    expect(PowerStatus.blinkedOff({Power.spread: 2.4}), {Power.spread});
+    expect(PowerStatus.blinkedOff({Power.spread: 2.4, Power.shield: 8.4}), {
+      Power.spread,
+    });
+    final recorder = ui.PictureRecorder();
+    PowerGlyphPainter(
+      {Power.spread, Power.shield},
+      blinkedOff: {Power.spread},
+    ).paint(ui.Canvas(recorder), const Size(64, 64));
+    final image = await recorder.endRecording().toImage(64, 64);
+    final data = (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!;
+    int count(Color color) {
+      var n = 0;
+      for (var i = 0; i < data.lengthInBytes; i += 4) {
+        if (data.getUint8(i) == ((color.toARGB32() >> 16) & 255) &&
+            data.getUint8(i + 1) == ((color.toARGB32() >> 8) & 255) &&
+            data.getUint8(i + 2) == (color.toARGB32() & 255) &&
+            data.getUint8(i + 3) > 200) {
+          n++;
+        }
+      }
+      return n;
+    }
+
+    expect(count(powerColors[Power.spread]!), 0);
+    expect(count(powerColors[Power.shield]!), greaterThan(20));
+  });
   testWidgets(
-    'controller displays independent timers and still accepts drags on badge',
+    'controller glyph tracks each power without timer bars and accepts drags',
     (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
@@ -99,12 +129,35 @@ void main() {
       scene.onTick();
       await tester.pump();
       final status = find.byType(PowerStatus);
-      for (final name in ['SPREAD', 'RAPID', 'SHIELD', '9s', '7s', '5s']) {
-        expect(
-          find.descendant(of: status, matching: find.text(name)),
-          findsOneWidget,
-        );
+      Set<Power> layers() =>
+          (tester
+                      .widget<CustomPaint>(
+                        find.byKey(const ValueKey('combined-power-glyph')),
+                      )
+                      .painter!
+                  as PowerGlyphPainter)
+              .active;
+      // ux-declutter: no timer rows or duration bars, only the glyph; the
+      // seconds stay in the semantics label.
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(
+        find.descendant(of: status, matching: find.byType(Text)),
+        findsNothing,
+      );
+      final label = tester
+          .widget<Semantics>(
+            find.descendant(of: status, matching: find.byType(Semantics)).first,
+          )
+          .properties
+          .label!;
+      for (final part in [
+        'SPREAD 9 seconds',
+        'RAPID 7 seconds',
+        'SHIELD 5 seconds',
+      ]) {
+        expect(label, contains(part));
       }
+      expect(layers(), {Power.spread, Power.rapid, Power.shield});
       expect(
         find.byKey(const ValueKey('combined-power-glyph')),
         findsOneWidget,
@@ -118,27 +171,15 @@ void main() {
       scene.model.collect(Power.powerful);
       scene.onTick();
       await tester.pump();
-      expect(
-        find.descendant(of: status, matching: find.text('RAPID')),
-        findsNothing,
-      );
-      expect(
-        find.descendant(of: status, matching: find.text('POWERFUL')),
-        findsOneWidget,
-      );
+      expect(layers().contains(Power.rapid), isFalse);
+      expect(layers().contains(Power.powerful), isTrue);
       expect(scene.model.powerTimers[Power.spread], 9);
       expect(scene.model.powerTimers[Power.shield], 5);
       scene.model.collect(Power.large);
       scene.onTick();
       await tester.pump();
-      expect(
-        find.descendant(of: status, matching: find.text('SPREAD')),
-        findsNothing,
-      );
-      expect(
-        find.descendant(of: status, matching: find.text('LARGE')),
-        findsOneWidget,
-      );
+      expect(layers().contains(Power.spread), isFalse);
+      expect(layers().contains(Power.large), isTrue);
       expect(
         tester
             .widget<CustomPaint>(
@@ -160,38 +201,17 @@ void main() {
       scene.model.hitPlayer();
       scene.onTick();
       await tester.pump();
-      expect(
-        find.descendant(of: status, matching: find.text('SHIELD')),
-        findsNothing,
-      );
-      expect(
-        find.descendant(of: status, matching: find.text('LARGE')),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: status, matching: find.text('POWERFUL')),
-        findsOneWidget,
-      );
+      expect(layers().contains(Power.shield), isFalse);
+      expect(layers().contains(Power.large), isTrue);
+      expect(layers().contains(Power.powerful), isTrue);
       scene.model.collect(Power.rapid);
       scene.model.collect(Power.spread);
       scene.onTick();
       await tester.pump();
-      expect(
-        find.descendant(of: status, matching: find.text('POWERFUL')),
-        findsNothing,
-      );
-      expect(
-        find.descendant(of: status, matching: find.text('LARGE')),
-        findsNothing,
-      );
-      expect(
-        find.descendant(of: status, matching: find.text('RAPID')),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: status, matching: find.text('SPREAD')),
-        findsOneWidget,
-      );
+      expect(layers().contains(Power.powerful), isFalse);
+      expect(layers().contains(Power.large), isFalse);
+      expect(layers().contains(Power.rapid), isTrue);
+      expect(layers().contains(Power.spread), isTrue);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       await tester.pump();

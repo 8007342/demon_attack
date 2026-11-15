@@ -30,7 +30,8 @@ void clearWave(ArcadeModel model) {
     }
     model.update(1 / 60);
   }
-  expect(model.combat, isFalse);
+  // Continuous swarm: the next wave of a sector streams in during combat.
+  expect(!model.combat || model.wave != wave, isTrue);
 }
 
 void main() {
@@ -59,13 +60,10 @@ void main() {
       );
       tick(model, ArcadeModel.arrivalHintDuration - .2);
       expect(model.mode, RunMode.transition);
-      expect(
-        [
-          for (final d in initial)
-            if (d.entranceProgress == 0) d.y,
-        ],
-        parked,
-      );
+      expect([
+        for (final d in initial)
+          if (d.entranceProgress == 0) d.y,
+      ], parked);
       model.pause();
       tick(model, 2);
       expect(initial.every((d) => d.entranceProgress == 0), isTrue);
@@ -95,12 +93,14 @@ void main() {
     expect(carrier.mode, RunMode.transition);
   });
 
+  // cinematic-flow: Pursuit is level clear 2.0 + travel 4.0 (whole beats;
+  // a message slot may add up to 2 s), the carrier victory 5.5.
   test('story phases add reading time and salvage stays two seconds', () {
     final m = ArcadeModel()..start();
     expect(m.transitionDuration, ArcadeModel.arrivalHintDuration);
     reach(m, RunMode.playing);
     clearWave(m);
-    expect(m.transitionDuration, closeTo(1.4 + 1 / 3, .0001));
+    expect(m.mode, RunMode.playing, reason: 'no interwave transition');
     while (m.wave < m.wavesPerLevel) {
       reach(m, RunMode.playing);
       clearWave(m);
@@ -110,9 +110,9 @@ void main() {
     expect(m.mode, RunMode.salvage);
     expect(m.transitionDuration, 2);
     reach(m, RunMode.levelClear);
-    expect(m.transitionDuration, closeTo(4 + 1 / 3, .0001));
+    expect(m.transitionDuration, closeTo(2, .0001));
     reach(m, RunMode.travel);
-    expect(m.transitionDuration, closeTo(4 + 1 / 3, .0001));
+    expect(m.transitionDuration, closeTo(4, .0001));
     m.restoreCheckpoint({'sector': 5});
     reach(m, RunMode.playing);
     final boss = m.boss!..shield = 0;
@@ -120,7 +120,7 @@ void main() {
       ..core = 1
       ..door = 1;
     m.hitBoss(boss.x);
-    expect(m.transitionDuration, closeTo(5.5 + 1 / 3, .0001));
+    expect(m.transitionDuration, closeTo(5.5, .0001));
   });
 
   test('only the last wave advances each level through clear and travel', () {
@@ -139,7 +139,7 @@ void main() {
         clearWave(model);
         expect(model.level, level);
         if (wave < waveCount) {
-          expect(model.mode, RunMode.transition);
+          expect(model.mode, RunMode.playing); // continuous swarm
           expect(model.wave, wave + 1);
           final events = model.takeEvents();
           expect(events, contains('wave'));
@@ -147,7 +147,7 @@ void main() {
         } else {
           expect(model.mode, RunMode.salvage);
           reach(model, RunMode.levelClear);
-          tick(model, 3.8);
+          tick(model, 1.8); // cinematic-flow: level clear is 2.0 s
           expect(model.mode, RunMode.levelClear);
           expect(model.level, level);
           reach(model, RunMode.travel);

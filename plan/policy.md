@@ -46,3 +46,28 @@ The teacher evaluates all four candidate maneuvers (`hold` `dx=0`, `evade_left` 
 | `evade_left` | 2 | 1154 | 29 | 2 |
 | `evade_right` | 3 | 35 | 1103 | 4 |
 | `dive_commit` | 7 | 3 | 4 | 846 |
+
+## Intelligence tiers and the planner as teacher (demon-intelligence, 2026-11-15)
+
+`SwarmPolicy` stays the brain of the drones (T0) and proposes the skirmishers' (T1) sidesteps, which a
+three-candidate check of the energy planner (`lib/game/demon_planner.dart`) vetoes when they run into more danger
+than holding. Hunters (T2, elites) and sentinels (T3) run the planner itself: candidate manoeuvres over a short
+duration, scored by time-to-collision danger against every visible player shot, walls, crowding, a leash to the
+squad's pattern target, a dive-commit reward and hysteresis; a softmin choice from the planner's own seeded PRNG.
+Tiers only exist from route 1; route 0 is bit-identical to the policy-only swarm. Design:
+`openspec/changes/demon-intelligence/design.md` §3-§4.
+
+The planner is the **teacher of record** for any future retraining (the atrapa workflow, design §1). No training is
+run in this change; when the MLP is retrained:
+
+1. **Teacher.** Generate labels with the Dart planner (T1 config, one shot, the teacher's geometry — see
+   `test/demon_planner_test.dart` `parityConfig`) instead of the JS copy of the old teacher in
+   `scripts/train-policy.mjs`. The planner agrees with that old teacher on 98.2 % of the held-out states some action
+   escapes (`node scripts/train-policy.mjs --fixtures` exports them to `test/fixtures/policy_heldout.json`); where no
+   action escapes, the old teacher minimises penetration and the planner maximises time to contact.
+2. **Fixtures.** Write the planner-labelled train and held-out sets as fixtures, so the JS trainer reads exactly
+   what the Dart planner decided (no second implementation of the teacher).
+3. **Manifest.** Keep `assets/policy/manifest.json` checksummed with its parity cases; `test/swarm_policy_test.dart`
+   checks the compiled weights against them.
+4. **Selection.** Select checkpoints on held-out seeds only (never on the states trained on), and re-run the
+   swarm calibration (`test/swarm_calibration_test.dart`) before shipping new weights.

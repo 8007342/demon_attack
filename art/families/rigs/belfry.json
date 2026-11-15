@@ -1,0 +1,44 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "belfry", "name": "Belfry", "faction": "host", "class": "walker", "block": "W", "move": "stride", "seed": 760510, "threat": true,
+ "notes": "Threat walker (Hollow siege-launch tower): a walking gothic bell tower on four short stone legs with horned heads at the corners and a louvred bell chamber holding a missile launch tube (the articulated layer, under a pointed lead roof). Telegraph: special f0 tube raised, f1 louvres flare, f2 launch flash, f3 smoking; f4-f5 settle.",
+ "gait": {"frames": 6, "stride": 2, "lift": 1.4, "bob": 0.6},
+ "hull": [
+  {"kind": "leg", "hip": [-4, 4, 7], "knee": [-4.6, 5.2, 3.6], "foot": [-4.6, 4, 0.6], "t": 2.4, "foot_size": [2.8, 3.2], "phase": 0, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [4, 4, 7], "knee": [4.6, 5.2, 3.6], "foot": [4.6, 4, 0.6], "t": 2.4, "foot_size": [2.8, 3.2], "phase": 0.5, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [-4, -4, 7], "knee": [-4.6, -2.8, 3.6], "foot": [-4.6, -4, 0.6], "t": 2.4, "foot_size": [2.8, 3.2], "phase": 0.5, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [4, -4, 7], "knee": [4.6, -2.8, 3.6], "foot": [4.6, -4, 0.6], "t": 2.4, "foot_size": [2.8, 3.2], "phase": 0, "mat": "stone_dark"},
+  {"kind": "box", "at": [0, 0, 6.4], "size": [12, 12, 16], "mat": "stone", "chamfer": {"vert": 1.2}, "piece": "tower"},
+  {"kind": "box", "at": [0, 6.1, 15], "size": [6, 0.6, 5], "mat": "iron", "cuts": [{"n": [1, 0, 0.7], "p": [0, 6.1, 21]}, {"n": [-1, 0, 0.7], "p": [0, 6.1, 21]}]},
+  {"kind": "bar", "a": [-2, 6.5, 16], "b": [2, 6.5, 16], "t": 0.6, "mat": "vent", "tags": ["louvre"]},
+  {"kind": "bar", "a": [-2, 6.5, 17.6], "b": [2, 6.5, 17.6], "t": 0.6, "mat": "vent", "tags": ["louvre"]},
+  {"kind": "box", "at": [-5.8, 5.8, 21.8], "size": [2.2, 2.2, 2.2], "mat": "stone_hi", "piece": "heads"},
+  {"kind": "box", "at": [5.8, 5.8, 21.8], "size": [2.2, 2.2, 2.2], "mat": "stone_hi", "piece": "heads"},
+  {"kind": "box", "at": [-5.8, 7, 22.8], "size": [0.6, 0.4, 0.6], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [5.8, 7, 22.8], "size": [0.6, 0.4, 0.6], "mat": "eye", "tags": ["eye"]},
+  {"kind": "bar", "a": [-6.2, 6.2, 8], "b": [-6.2, 6.2, 21], "t": 0.6, "tz": 0.6, "mat": "channel"},
+  {"kind": "bar", "a": [6.2, 6.2, 8], "b": [6.2, 6.2, 21], "t": 0.6, "tz": 0.6, "mat": "channel"}
+ ],
+ "art": {
+  "kind": "launcher", "pivot": [0, 0, 22.4], "muzzle": [0, 7.6, 5.6], "seat": 0,
+  "prims": [
+   {"kind": "prism", "at": [0, 0, 0], "n": 4, "r": 8, "r2": 1, "h": 6.6, "rot": 45, "mat": "lead", "piece": "roof"},
+   {"kind": "bar", "a": [0, -1, 2], "b": [0, 6.4, 4.8], "t": 2.6, "mat": "iron", "tags": ["tubeup", "barrel"], "piece": "tube"},
+   {"kind": "bar", "a": [0, 3.6, 4.8], "b": [0, 4.8, 5.3], "t": 0.8, "mat": "channel", "stage": 1, "tags": ["tubeup"]},
+   {"kind": "bar", "a": [0, 4.8, 5.3], "b": [0, 6, 5.8], "t": 0.8, "mat": "channel", "stage": 2, "tags": ["tubeup"]},
+   {"kind": "box", "at": [0, 6.4, 3.8], "size": [2, 0.6, 2], "mat": "channel", "stage": 3, "tags": ["tubeup", "mouth"]},
+   {"kind": "ball", "at": [0, 7.8, 5.4], "size": [2.4, 1.8, 2], "mat": "muzzle", "tags": ["hidden", "muzzle", "tubeup"]}
+  ]
+ },
+ "pieces": ["roof", "tube", "heads", "tower"],
+ "poses": {
+  "special": [
+   [{"tag": "tubeup", "axis": "x", "deg": 16, "pivot": [0, -1, 2]}],
+   [{"tag": "tubeup", "axis": "x", "deg": 16, "pivot": [0, -1, 2]}, {"tag": "louvre", "lit": true}],
+   [{"tag": "tubeup", "axis": "x", "deg": 16, "pivot": [0, -1, 2]}, {"tag": "louvre", "lit": true}, {"tag": "muzzle", "show": true, "lit": true}],
+   [{"tag": "tubeup", "axis": "x", "deg": 8, "pivot": [0, -1, 2]}],
+   [],
+   []
+  ]
+ }
+}

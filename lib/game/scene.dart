@@ -7,11 +7,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'atmosphere.dart';
+import 'attract.dart';
+import 'ground_atmosphere.dart';
+import 'ground_atmosphere_atlas.dart';
 import 'boss_painter.dart';
 import 'ground_painter.dart';
 import 'model.dart';
 import 'music_director.dart'; // --- music event hook
 import 'sector_background.dart';
+import 'sentinel_silhouette_atlas.dart';
 import 'ship_painter.dart';
 import 'sprite_atlas.dart';
 import '../services/scores.dart';
@@ -27,6 +31,10 @@ class DemonScene extends FlameGame {
   final ArcadeModel model;
   final VoidCallback onTick;
   ui.Image? atlas, effectsAtlas, sky, cockpitAtlas;
+
+  /// The foreshadow silhouette sheet (tools/sentinel_silhouettes); the
+  /// placeholder from the flight frames is drawn while it is missing.
+  ui.Image? silhouetteAtlas;
   final ship = ShipPainter();
   // Boss armada: one hull class per run, its atlas loaded on approach.
   final armada = BossPainter();
@@ -36,7 +44,11 @@ class DemonScene extends FlameGame {
   final atmosphere = Atmosphere();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- ground war (ground_painter.dart) ---
-  late final groundForces = GroundPainter()..occluders = sectors.flyover;
+  late final groundForces = GroundPainter()
+    ..occluders = (sectors.flyover..deferFlyers = true)
+    ..atmosphere =
+        atmosphere // --- ground atmosphere art in the depth sort
+    ..eggs = sectors.flyover.eggs;
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;
@@ -59,6 +71,9 @@ class DemonScene extends FlameGame {
     }
     try {
       cockpitAtlas = await images.load('cockpit-panel.png');
+    } catch (_) {}
+    try {
+      silhouetteAtlas = await images.load(SentinelSilhouetteAtlas.file);
     } catch (_) {}
     try {
       // Ship, cannons, muzzle flashes and shots (tools/generate_ship_sprites.py).
@@ -88,6 +103,13 @@ class DemonScene extends FlameGame {
     // --- flyover parallax hook (background only) ---
     await sectors.loadFlyover(images.load);
     await atmosphere.load(); // --- atmosphere: fog tiles and shader
+    try {
+      // --- ground atmosphere art (tools/ground_atmosphere); without it the
+      // fBm tiles and the shader keep every slot.
+      atmosphere.groundArt = GroundAtmosphereArt(
+        await images.load(GroundAtmosphereAtlas.file),
+      );
+    } catch (_) {}
     // --- ground war art (tools/ground_forces_assets.py) ---
     try {
       groundForces.image = await images.load('ground-forces.png');
@@ -100,21 +122,18 @@ class DemonScene extends FlameGame {
   @override
   void update(double dt) {
     super.update(dt);
-    if (model.mode != RunMode.paused) {
-      ambient += dt;
-      final destination = model.presentationMode == RunMode.travel
-          ? model.nextLevel - 1
-          : model.level - 1;
-      environment += (destination - environment) * math.min(1, dt * .65);
-      // --- flyover parallax hook (visual only; reads model state) ---
-      sectors.advance(dt, model, environment);
-      syncAtmosphere(dt);
-    }
+    if (model.mode != RunMode.paused) advancePresentation(dt);
     if (model.canPilot && keyboardDirection != 0) {
       model.moveBy(keyboardDirection * dt * 280);
     }
+    // --- cinematic flow: the accessibility setting picks the plan.
+    model.reducedMotion = sectors.flyover.reducedMotion;
     model.update(dt);
     armada.sync(model, images.load, images.clear);
+    // --- ground blocks runtime: the current sector's block atlases.
+    if (GroundPainter.useBlocks) {
+      groundForces.blocks.sync(model, images.load, images.clear);
+    }
     music.observe(
       model,
       dt,
@@ -127,17 +146,69 @@ class DemonScene extends FlameGame {
     }
   }
 
-  /// Feeds the fog its clock, the flight distance and the ship (visual only).
+  /// One presentation step (unpaused): the backdrop's sector blend, the
+  /// flyover and the fog. Review harnesses call it with the model step.
+  /// The title's attract swarm (cinematic-flow task 6.1).
+  final attract = AttractSwarm();
+
+  void advancePresentation(double dt) {
+    if (model.mode == RunMode.title) {
+      attract
+        ..reduced = sectors.flyover.reducedMotion
+        ..prepare(environment.round().clamp(0, 4))
+        ..update(dt);
+    }
+    // --- cinematic flow: a 60 ms hit-stop on the last kill freezes the
+    // presentation clocks only (the model runs on).
+    final flow = model.flow;
+    final hitStop =
+        flow.active && flow.plan.beat('hit') != null && flow.seconds < .06;
+    if (!hitStop) {
+      ambient += dt;
+      final swap = flow.plan.beat('swap');
+      final pursuing =
+          swap != null &&
+          const [
+            RunMode.salvage,
+            RunMode.levelClear,
+            RunMode.travel,
+            RunMode.victory,
+          ].contains(model.presentationMode);
+      if (pursuing) {
+        // The palette and backdrop change only inside the cloud's peak.
+        final from = (model.level - 1).toDouble();
+        final to = (model.nextLevel - 1).toDouble();
+        final k = flow.env('swap');
+        environment = (to - from).abs() <= 1
+            ? from + (to - from) * k
+            : (k < .5 ? from : to);
+      } else if (flow.active && swap != null) {
+        environment = (model.level - 1).toDouble();
+      } else {
+        final destination = model.presentationMode == RunMode.travel
+            ? model.nextLevel - 1
+            : model.level - 1;
+        environment += (destination - environment) * math.min(1, dt * .65);
+      }
+      // --- flyover parallax hook (visual only; reads model state) ---
+      sectors.advance(dt, model, environment);
+      syncAtmosphere(dt);
+    }
+  }
+
+  /// Feeds the fog its clock and the flight distance (visual only). The fog
+  /// is world-anchored: it is never given the ship's position.
   void syncAtmosphere(double dt) {
+    groundForces.blocks.reducedMotion = sectors.flyover.reducedMotion;
     atmosphere
       ..environment = environment
       ..reducedMotion = sectors.flyover.reducedMotion
-      ..advance(
-        dt,
-        distance: sectors.flyover.distance,
-        x: model.shipX,
-        y: ArcadeModel.shipY,
-      );
+      ..tide = model.ground.units.isEmpty ? .5 : model.ground.skirmish.tide
+      // --- cinematic flow: the Pursuit's cloud and the outro's thinning.
+      ..cloudCover = model.flow.env('cloud')
+      ..fogThin = model.flow.env('thin')
+      ..cloudScroll = model.reducedMotion ? 0 : model.flow.seconds * 28
+      ..advance(dt, distance: sectors.flyover.distance);
   }
 
   @override
@@ -158,6 +229,8 @@ class DemonScene extends FlameGame {
     );
     canvas.scale(scale);
     canvas.clipRect(const Rect.fromLTWH(0, 0, 360, 520));
+    final (shakeX, shakeY) = rushShake(); // --- sentinel rush (≤ 2 px)
+    if (shakeX != 0 || shakeY != 0) canvas.translate(shakeX, shakeY);
     final panY = model.mode == RunMode.gameOver ? model.cameraPanY : 0.0;
     if (panY > 0.5) {
       _deepStarfieldPan(canvas, panY);
@@ -177,9 +250,24 @@ class DemonScene extends FlameGame {
           ship,
         ); // --- ground war: in the air
         _cinematic(canvas);
+      } else {
+        sectors.flyover.paintFlyers(canvas); // --- easter eggs: flocks
       }
       canvas.restore();
     } else {
+      // --- cinematic flow: the camera tilts up through the layers (the
+      // world slides down) and shakes on the last kill (never in reduced
+      // motion); the band the tilt uncovers is already cloud.
+      final tilt = model.flow.env('tilt') * flowTilt;
+      final shake = _flowShake();
+      if (tilt > .01) {
+        canvas.drawRect(
+          Rect.fromLTWH(0, 0, 360, tilt + 2),
+          Paint()..color = atmosphere.cloud,
+        );
+      }
+      canvas.save();
+      canvas.translate(shake.dx, tilt + shake.dy);
       _background(canvas);
       final active = model.mode != RunMode.title;
       if (active && combat) {
@@ -194,9 +282,149 @@ class DemonScene extends FlameGame {
           ship,
         ); // --- ground war: in the air
         _cinematic(canvas);
+      } else {
+        sectors.flyover.paintFlyers(canvas); // --- easter eggs: flocks
+        if (!active) _attractPass(canvas); // --- cinematic flow: attract
+      }
+      canvas.restore();
+      if (active && combat) {
+        // --- cinematic flow: the cover, the pursued flock (sprites that
+        // turn to dark silhouettes in the cloud) and the climbing ship.
+        if (tilt > .01) {
+          // Feather the band the tilt uncovered into the scene below it.
+          canvas.drawRect(
+            Rect.fromLTWH(0, 0, 360, tilt + 36),
+            Paint()
+              ..shader = ui.Gradient.linear(
+                Offset.zero,
+                Offset(0, tilt + 36),
+                [atmosphere.cloud, atmosphere.cloud.withValues(alpha: 0)],
+                [tilt / (tilt + 36), 1],
+              ),
+          );
+        }
+        atmosphere.paintCloudCover(
+          canvas,
+          below: model.flow.kind == FlowKind.campaignOutro,
+          warmth: model.flow.env('thin'),
+        );
+        _flowFlockPass(canvas, tilt);
+        _cinematicFlowShip(canvas);
       }
     }
     canvas.restore();
+  }
+
+  /// The transition's flock: in clear air the creature itself (veiled by
+  /// depth), in the cloud a dark silhouette ahead of the ship (design §3.1:
+  /// pattern sweep, silhouette tint).
+  void _flowFlockPass(Canvas c, double tilt) {
+    if (model.flowFlock.isEmpty) return;
+    // Under an outro the cloud is below the flock: no silhouettes.
+    final cloud = model.flow.kind == FlowKind.campaignOutro
+        ? 0.0
+        : model.flow.env('cloud');
+    // The rout's flash expansion: a white flash as the brood breaks.
+    final flash = model.flow.on('rout') && model.flow.seconds < .2;
+    final ink = Color.lerp(atmosphere.veil, const Color(0xFF0B0E18), .55)!;
+    final silhouette = ColorFilter.mode(ink, BlendMode.srcIn);
+    final members = [...model.flowFlock]
+      ..sort((a, b) => a.demon.nearness.compareTo(b.demon.nearness));
+    for (final m in members) {
+      final o = model.flowOpacity(m);
+      if (o <= .01) continue;
+      final d = m.demon;
+      final pos = Offset(
+        d.x.roundToDouble(),
+        (d.y + tilt * .4).roundToDouble(),
+      );
+      final cell = CombatAtlas.creature(d, model.clock);
+      // Fleeing in clear air it stays readable: a creature in the haze.
+      final t = math.max(.55, Perspective.transmittance(d.nearness));
+      c.save();
+      _scaleAbout(c, pos, d.scale);
+      final body = o * (1 - .8 * cloud) * _bodyOpacity(d.nearness);
+      if (body > .01) {
+        sprite(
+          c,
+          cell.row,
+          cell.col,
+          pos,
+          40,
+          tint: flash ? Colors.white : null,
+          filter: flash ? null : atmosphere.tintFor(t),
+          opacity: body,
+        );
+      }
+      final shade = o * .82 * cloud;
+      if (shade > .01) {
+        sprite(
+          c,
+          cell.row,
+          cell.col,
+          pos,
+          40,
+          filter: silhouette,
+          opacity: shade,
+        );
+      }
+      c.restore();
+    }
+  }
+
+  /// The title's attract swarm (design §5): shadows on the ground, the
+  /// squads drawn far to near between the fog layers, the sentinel's
+  /// silhouette in the horizon band.
+  void _attractPass(Canvas c) {
+    final a = attract;
+    if (a.members.isEmpty || atlas == null) return;
+    final presence = a.presence;
+    _creatureShadows(c, also: presence > .3 ? a.members : const []);
+    final fogSlots = Atmosphere.depthSlots;
+    var next = 0;
+    void fog() {
+      final slot = fogSlots[next++];
+      atmosphere.paint(c, slot);
+      if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c, a.sentinel);
+    }
+
+    final sorted = [...a.members]
+      ..sort((x, y) => x.nearness.compareTo(y.nearness));
+    for (final d in sorted) {
+      while (next < fogSlots.length &&
+          Atmosphere.layers[fogSlots[next]]!.nearness <= d.nearness) {
+        fog();
+      }
+      final pos = Offset(d.x.roundToDouble(), d.y.roundToDouble());
+      final cell = CombatAtlas.creature(d, ambient);
+      final t = Perspective.transmittance(d.nearness);
+      c.save();
+      _scaleAbout(c, pos, d.scale);
+      sprite(
+        c,
+        cell.row,
+        cell.col,
+        pos,
+        40,
+        filter: atmosphere.tintFor(t),
+        opacity: presence * _bodyOpacity(d.nearness),
+      );
+      c.restore();
+    }
+    while (next < fogSlots.length) {
+      fog();
+    }
+  }
+
+  /// Shake on the last kill: at most 2 units, none with reduced motion.
+  Offset _flowShake() {
+    final hit = model.flow.env('hit');
+    if (hit <= 0 || model.reducedMotion) return Offset.zero;
+    final t = model.flow.seconds;
+    return Offset(
+      (math.sin(t * 91) * 2 * hit).roundToDouble(),
+      (math.cos(t * 73) * 2 * hit).roundToDouble(),
+    );
   }
 
   void _deepStarfieldPan(Canvas c, double panY) {
@@ -513,10 +741,11 @@ class DemonScene extends FlameGame {
   }
 
   void _combat(Canvas c) {
-    _swarmShadows(c); // --- perspective: on the ground, under everything
     // --- atmosphere: ground fog lies on the terrain, over the shadows.
     if (model.perspective) atmosphere.paint(c, FogSlot.groundFog);
-    _arrivalShadows(c); // --- atmosphere: incoming shadows lead the wave
+    // --- easter eggs: flock flyers over the ground fog (in the air).
+    sectors.flyover.paintFlyers(c);
+    _creatureShadows(c); // --- continuous swarm: every flyer, the ship
     for (final p in model.heartPickups) {
       c.save();
       c.translate(p.x - 10, p.y - 10);
@@ -544,10 +773,18 @@ class DemonScene extends FlameGame {
     // --- perspective: far to near, each drawn at its simulated scale. The
     // next wave, still approaching (model.incoming), is the farthest of all.
     // The fog layers are drawn when the sort passes their nearness, so a
-    // creature at n .35 is behind bank B and in front of bank A.
-    final approaching = model.incoming.where((d) => !d.isLarge).toList();
+    // creature at n .35 is behind bank B and in front of bank A, and an
+    // arrival rises up through the layers one by one (fog-restoration).
+    // --- continuous swarm: the reserve (groups and later skeins waiting in
+    // the deep fog) is drawn veiled with the approaching cohort; neither
+    // shows gear (swarmState is the contract with the fog layers).
+    final approaching = <Demon>{
+      for (final d in model.incoming)
+        if (!d.isLarge && d.swarmState != SwarmState.reserve) d,
+      if (model.perspective) ...model.drawnReserve,
+    };
     final fogSlots = model.perspective
-        ? const [FogSlot.horizonBand, FogSlot.farBankA, FogSlot.farBankB]
+        ? Atmosphere.depthSlots
         : const <FogSlot>[];
     var nextFog = 0;
     final tells = <Demon>[];
@@ -555,30 +792,53 @@ class DemonScene extends FlameGame {
       final slot = fogSlots[nextFog++];
       atmosphere.paint(c, slot);
       // The sentinel's silhouette circles in the murk: in front of the
-      // horizon band's glow (a darker shape in the fog), behind the banks.
+      // horizon band's glow (a darker shape in the fog), behind the far
+      // banks and both veils, which drift across it at their own winds.
       if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c);
     }
 
-    for (final d in _byDepth([...approaching, ...model.demons])) {
+    for (final d in _byDepth([
+      ...approaching,
+      for (final d in model.demons)
+        if (d.isLarge || d.swarmState != SwarmState.reserve) d,
+    ])) {
       while (nextFog < fogSlots.length &&
           Atmosphere.layers[fogSlots[nextFog]]!.nearness <= d.nearness) {
         fog();
       }
       final warning = d.telegraph > 0;
-      final pos = Offset(d.x, d.y);
+      // continuous-swarm: visible evasion moves the drawing only (a third
+      // of the hitbox at most), never the creature.
+      final (lx, ly) = d.isLarge ? (0.0, 0.0) : creatures.look.offset(d);
+      final pos = Offset(d.x + lx, d.y + ly);
       if (d.isLarge) {
         // Large creatures have their own delayed entrance in simulation.
         if (d.entranceProgress > 0) {
+          // --- sentinel rush: the lock shudders it in place (±2 px).
+          final shudder =
+              d.lastStand &&
+                  d.rushPhase == RushPhase.lock &&
+                  !sectors.flyover.reducedMotion
+              ? Offset(
+                  (math.sin(model.clock * 71) * 2).roundToDouble(),
+                  (math.cos(model.clock * 53) * 1).roundToDouble(),
+                )
+              : Offset.zero;
+          final at = pos + shudder;
+          if (d.lastStand) _sentinelBerserkTrail(c, at, d);
           c.save();
-          _scaleAbout(c, pos, d.scale);
-          _sentinel(c, pos, d);
+          _scaleAbout(c, at, d.scale);
+          _sentinel(c, at, d);
+          if (d.lastStand) _sentinelBerserk(c, at, d);
           c.restore();
+          if (d.lastStand) _rushShieldRing(c, at, d);
         }
         continue;
       }
       if (_parked(d)) continue;
       // One transmittance per creature drives tint, saturation, contrast
-      // and the staged reveal: shields, armour, rank halos and health pips
+      // and the staged reveal: shields, armour and rank halos (no health pips:
+      // ux-declutter; hits read from the flash and the shed armour)
       // belong to a creature that has come out of the weather.
       final holding = approaching.contains(d);
       final t = _transmittance(d, holding: holding);
@@ -605,6 +865,13 @@ class DemonScene extends FlameGame {
       // Gargoyle frames carry their own banking (3/4 left/neutral/right
       // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
+      final tilt = creatures.look.of(d)?.tilt ?? 0;
+      if (tilt.abs() > .02) {
+        // Wing tilt of the agitation wave: a small roll about the body.
+        c.translate(pos.dx, pos.dy);
+        c.rotate(tilt * .14);
+        c.translate(-pos.dx, -pos.dy);
+      }
       final cell = CombatAtlas.creature(
         d,
         model.clock,
@@ -669,14 +936,6 @@ class DemonScene extends FlameGame {
       if (warning) tells.add(d); // drawn above the sky sheets
       if (d.dive > 0 && d.diveShield > 0 && reveal > 0) {
         _smallOrMediumDiveShield(c, pos, d);
-      }
-      if (d.hp > 1 && reveal > 0) {
-        for (var i = 0; i < d.hp; i++) {
-          c.drawRect(
-            Rect.fromLTWH(pos.dx - d.hp * 2 + i * 4, pos.dy - 22, 2, 2),
-            Paint()..color = violet.withValues(alpha: reveal),
-          );
-        }
       }
       c.restore();
     }
@@ -1149,7 +1408,22 @@ class DemonScene extends FlameGame {
     c.scale(1.0 - bank.abs() * 0.14, 1.0);
     c.translate(-center.dx, -center.dy);
     if (ship.ready) {
+      // continuous-swarm: a creature's shadow over the ship dims it a
+      // little (capped at 15 %, so the outline stays readable).
+      final dim = shipShadowDim;
+      if (dim > .005) {
+        final g = (255 * (1 - dim)).round();
+        c.saveLayer(
+          null,
+          Paint()
+            ..colorFilter = ColorFilter.mode(
+              Color.fromARGB(255, g, g, g),
+              BlendMode.modulate,
+            ),
+        );
+      }
       ship.paintShip(c, model, center);
+      if (dim > .005) c.restore();
     } else {
       sprite(
         c,
@@ -1480,15 +1754,7 @@ class DemonScene extends FlameGame {
       22,
     );
 
-    // Health pips (dots showing durability)
-    for (var i = 0; i < crate.maxHp; i++) {
-      final pipX = cx - (crate.maxHp - 1) * 3.0 + i * 6.0;
-      final active = i < crate.hp;
-      c.drawRect(
-        Rect.fromLTWH(pipX - 1.5, cy + 12, 3, 2),
-        Paint()..color = active ? mint : const Color(0xFF40556B),
-      );
-    }
+    // No durability pips (ux-declutter): each hit flashes the crate.
   }
 
   void _creatureLighting(
@@ -1566,12 +1832,18 @@ class DemonScene extends FlameGame {
 
   /// The coming sentinel's silhouette (design §5): a darker patch of the
   /// fog in its shape, soft-edged, with a thin warm rim toward the sun and
-  /// eyes that ignore most of the fog. Placeholder art from the sentinel's
-  /// own flight frames until the studio's silhouette sheet (task 5.1).
-  void _foreshadowSilhouette(Canvas c) {
-    final f = model.foreshadow;
-    if (f == null || !f.visible || effectsAtlas == null) return;
+  /// eyes that ignore most of the fog. The silhouette sheet (task 5.1)
+  /// carries the bank and the softness; the sentinel's own flight frames are
+  /// the fallback while it is missing.
+  void _foreshadowSilhouette(Canvas c, [SentinelForeshadow? override]) {
+    final f = override ?? model.foreshadow;
+    if (f == null || !f.visible) return;
     final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
+    if (silhouetteAtlas != null) {
+      _bankedSilhouette(c, f, species);
+      return;
+    }
+    if (effectsAtlas == null) return;
     // A slow, heavy stroke: the giant's wings beat at about half the rate.
     const strokes = [0, 1, 2, 3, 2, 1];
     final frame = strokes[(f.clock / .55).floor() % strokes.length];
@@ -1586,6 +1858,54 @@ class DemonScene extends FlameGame {
     c.translate(-pos.dx, -pos.dy);
     _silhouetteSprite(c, species, frame, pos, o);
     c.restore();
+  }
+
+  /// The foreshadow from the silhouette sheet: the banking frame for the
+  /// path's bank, far blur cross-fading to near blur as it comes closer.
+  void _bankedSilhouette(Canvas c, SentinelForeshadow f, int species) {
+    final sheet = silhouetteAtlas!;
+    final frame = SentinelSilhouetteAtlas.frameFor(f.bank);
+    final pos = Offset(f.x.roundToDouble(), f.y.roundToDouble());
+    final o = f.opacity;
+    final near = Perspective.smoothstep(.12, .26, f.nearness);
+    final breathe = 1 + .01 * math.sin(f.clock * 2 * math.pi / 5);
+    final k = f.scale * breathe;
+    const w = SentinelSilhouetteAtlas.cellW * 1.0;
+    const h = SentinelSilhouetteAtlas.cellH * 1.0;
+    final dst = Rect.fromLTWH(
+      (pos.dx - w / 2 * k).roundToDouble(),
+      (pos.dy - h / 2 * k).roundToDouble(),
+      w * k,
+      h * k,
+    );
+    void draw(
+      int blur,
+      Color colour,
+      double alpha, {
+      Offset shift = Offset.zero,
+    }) {
+      if (alpha <= .01) return;
+      c.drawImageRect(
+        sheet,
+        SentinelSilhouetteAtlas.cell(species, frame, blur),
+        dst.shift(shift),
+        Paint()
+          ..isAntiAlias = false
+          ..filterQuality = FilterQuality.none
+          ..color = Colors.white.withValues(alpha: alpha.clamp(0.0, 1.0))
+          ..colorFilter = ColorFilter.mode(colour, BlendMode.srcIn),
+      );
+    }
+
+    final veil = atmosphere.veil, air = atmosphere.air;
+    final body = Color.lerp(veil, const Color(0xFF06050B), .7)!;
+    // Warm rim toward the sun, the body (far and near blur), a breath of air.
+    draw(0, const Color(0xFFE2A46E), .26 * o, shift: const Offset(-1.5, -1.5));
+    draw(1, body, .92 * o * (1 - near));
+    draw(0, body, .92 * o * near);
+    draw(1, air, .05 * o, shift: const Offset(0, 3));
+    final a = SentinelSilhouetteAtlas.bankDeg[frame] * math.pi / 180;
+    _sentinelEyes(c, pos, .95 * o, angle: a, scale: k);
   }
 
   /// The silhouette treatment of a sentinel frame at [pos], opacity [o].
@@ -1632,7 +1952,13 @@ class DemonScene extends FlameGame {
   /// Emissive eyes for a fogged sentinel: the gold species' body is as warm
   /// as its eyes, so an emissive mask cannot separate them; two embers at
   /// the head (cell 128 x 64, eyes 6 px either side, 6 px above centre).
-  void _sentinelEyes(Canvas c, Offset pos, double o) {
+  void _sentinelEyes(
+    Canvas c,
+    Offset pos,
+    double o, {
+    double angle = 0,
+    double scale = 1,
+  }) {
     if (o <= .02) return;
     final halo = Paint()
       ..color = const Color(0xFFFF9A3C).withValues(alpha: .35 * o)
@@ -1641,7 +1967,11 @@ class DemonScene extends FlameGame {
       ..isAntiAlias = false
       ..color = const Color(0xFFFFE7A8).withValues(alpha: o);
     for (final side in [-1.0, 1.0]) {
-      final e = pos.translate(side * 5.5, -6);
+      final ex = side * 5.5 * scale, ey = -6.0 * scale;
+      final e = pos.translate(
+        ex * math.cos(angle) - ey * math.sin(angle),
+        ex * math.sin(angle) + ey * math.cos(angle),
+      );
       c.drawCircle(e, 3.2, halo);
       c.drawRect(Rect.fromCenter(center: e, width: 2, height: 2), core);
     }
@@ -1661,55 +1991,14 @@ class DemonScene extends FlameGame {
       model.perspective &&
       d.entering &&
       d.arrivesFromDistance &&
-      d.entranceProgress <= 0;
+      d.entranceProgress <= 0 &&
+      d.swarmState != SwarmState.reserve;
 
   void _scaleAbout(Canvas c, Offset pos, double scale) {
     if (scale == 1) return;
     c.translate(pos.dx, pos.dy);
     c.scale(scale);
     c.translate(-pos.dx, -pos.dy);
-  }
-
-  /// Faint stepped pixel shadows on the flyover ground beneath each demon's
-  /// depth: they darken as a diver loses altitude and closes in, and stay
-  /// all but invisible under the high formation (the shot lane stays clean).
-  /// Arrivals add an altitude shadow (design §4, research §3): offset along
-  /// the sun by height, softer and fainter when high, so an incoming wave's
-  /// shadows cross the terrain while the bodies are still in the fog.
-  void _swarmShadows(Canvas c) {
-    if (!model.perspective) return;
-    final paint = Paint()..isAntiAlias = false;
-    for (final d in model.demons) {
-      if (d.nearness <= 0 || _parked(d)) continue;
-      if (d.isLarge && d.entranceProgress <= 0) continue;
-      final gy = Perspective.groundY(d.nearness);
-      if (gy > 524 || gy < d.y + 8) continue;
-      final near = ((d.nearness - .5) / .2).clamp(0.0, 1.0);
-      final low = (1 - (gy - d.y) / 320).clamp(.15, 1.0);
-      var alpha = .5 * near * low;
-      if (d.entering && d.arrivesFromDistance) {
-        alpha *= Perspective.smoothstep(.7, 1, d.entranceProgress);
-      }
-      if (alpha < .02) continue;
-      final w = ((d.isLarge ? 70.0 : 26.0) * d.nearness / 1.4).round() * 2.0;
-      final x = d.x.roundToDouble(), y = gy.roundToDouble();
-      paint.color = Color.fromRGBO(2, 4, 12, alpha);
-      final inner = (w * .62 / 2).round() * 2.0;
-      c.drawRect(Rect.fromLTWH(x - inner / 2, y - 3, inner, 2), paint);
-      c.drawRect(Rect.fromLTWH(x - w / 2, y - 1, w, 2), paint);
-      c.drawRect(Rect.fromLTWH(x - inner / 2, y + 1, inner, 2), paint);
-    }
-  }
-
-  /// Arrival shadows, drawn over the ground fog they darken (the mist in
-  /// a shadow is unlit), at the opacity left through it.
-  void _arrivalShadows(Canvas c) {
-    if (!model.perspective) return;
-    for (final d in [...model.incoming, ...model.demons]) {
-      if (!d.entering || !d.arrivesFromDistance || _parked(d)) continue;
-      if (d.nearness <= 0 || (d.isLarge && d.entranceProgress <= 0)) continue;
-      _arrivalShadow(c, d);
-    }
   }
 
   static const _shadowHMax = 300.0;
@@ -1726,71 +2015,257 @@ class DemonScene extends FlameGame {
     ui.ImageFilter.blur(sigmaX: 3.0, sigmaY: 1.8),
   ];
 
-  /// The arrival's own silhouette laid on the ground: flattened by the
-  /// camera's tilt, offset along the sun by its height, softer, larger and
-  /// fainter the higher it flies, fading in with the arrival and handing
-  /// over to the formation's faint shadow as it settles.
-  void _arrivalShadow(Canvas c, Demon d) {
+  // --- continuous swarm: shadows (openspec/changes/continuous-swarm §8) ---
+  // Every flying creature casts its silhouette on the ground from its
+  // published altitude: arriving, fighting, diving, re-entering. Shadows
+  // stay in the front row and move with the swarm; they fade only on death.
+  // The ship casts its own on the same sun; a creature's shadow over the
+  // ship dims it slightly. Batched: one save-layer per blur bucket (at most
+  // three) holding drawAtlas calls; the reduced tier uses one sharp layer.
+
+  /// Save-layers the last shadow pass used (tests: at most three).
+  int shadowLayers = 0;
+
+  /// False skips the pass (the perf test's baseline frame).
+  bool creatureShadows = true;
+
+  /// Shadows drawn by the last pass, and whose (tests and review).
+  int shadowCount = 0;
+  final List<Demon> shadowed = [];
+
+  /// Multiply dim of the ship from creature shadows over it (cap 0.15).
+  double shipShadowDim = 0;
+  static const shipDimCap = .15;
+
+  final Map<Demon, _ShadowSpec> _lastShadows = {};
+  final List<(_ShadowSpec, double)> _shadowGhosts = [];
+  double _ghostClock = 0;
+
+  /// The sun's azimuth drifts ±4° over 40 s, seeded per sector.
+  double get _sunDrift =>
+      4 *
+      math.pi /
+      180 *
+      math.sin(2 * math.pi * model.clock / 40 + model.level * 1.7);
+
+  _ShadowSpec? _shadowOf(Demon d) {
     final n = d.nearness;
+    final h = d.altitude;
+    if (n <= 0 || h <= 0) return null;
     final gy = Perspective.groundY(n);
-    if (gy > 530) return;
-    final h = (gy - d.y).clamp(0.0, _shadowHMax);
-    final k = h / _shadowHMax;
-    final e = d.entranceProgress;
-    final hold = model.incoming.contains(d);
-    final present =
-        (hold ? 1.0 : Perspective.smoothstep(0, .12, e)) *
-        (1 - Perspective.smoothstep(.75, 1, e));
-    // Light left through the ground fog in front of the shadow.
-    const tGround = .85;
-    final alpha = .95 * (1 - .4 * k) * tGround * present;
-    if (alpha < .015) return;
-    final blur = _shadowBlur[k < .45 ? 0 : (k < .8 ? 1 : 2)];
-    // Offset along the sun's azimuth (behind-left of the camera): toward
-    // the camera and to the right, growing with height.
+    if (gy > 530) return null;
+    final k = (h / _shadowHMax).clamp(0.0, 1.0);
+    // 0.95, not the design's 0.55: on the dark sector grounds 0.55 read as
+    // nothing (review frames); 0.95 is the old arrival shadow the operator
+    // praised.
+    var alpha = .95 * (1 - .4 * k) * Atmosphere.groundLight(gy);
+    if (d.dive > 0 || d.rushing) alpha *= 1.25;
+    if (d.entering && d.swarmState != SwarmState.reentering) {
+      alpha *= Perspective.smoothstep(0, .12, d.entranceProgress);
+    }
+    if (alpha < .015) return null;
     final off = h * _shadowTan * .22;
-    final center = Offset(d.x + off, gy + off * .25);
-    final grow = n * 1.8 * (1 + .3 * k); // ground scale, penumbra growth
-    c.save();
-    c.translate(center.dx, center.dy);
-    c.scale(1, .42); // the ground is seen at a slant
-    c.translate(-center.dx, -center.dy);
+    final az = _sunDrift;
+    final center = Offset(
+      d.x + off * math.cos(az),
+      gy + off * .25 + off * math.sin(az),
+    );
+    final grow = n * 1.8 * (1 + .3 * k);
+    final bucket = k < .45 ? 0 : (k < .8 ? 1 : 2);
     if (d.isLarge) {
+      var at = center;
+      var size = grow / 1.8 * 1.6;
+      if (d.lastStand &&
+          (d.rushPhase == RushPhase.lock || d.rushPhase == RushPhase.rush)) {
+        // --- sentinel rush: on lock its shadow snaps over the ship's
+        // (W3 shadows), at its largest.
+        final ship = Offset(
+          model.shipX + 6 + 40 * _shadowTan * .22,
+          ArcadeModel.shipY + 24,
+        );
+        final snap = d.rushPhase == RushPhase.rush
+            ? 1.0
+            : Perspective.smoothstep(0, .12, d.rushClock);
+        at = Offset.lerp(center, ship, snap)!;
+        size = math.max(size, 1.6 * 1.25);
+      }
+      final img = effectsAtlas;
+      if (img == null) return null;
       final species = d.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
-      c.translate(center.dx, center.dy);
-      c.scale(grow / 1.8 * 1.6);
-      c.translate(-center.dx, -center.dy);
-      effectSprite(
-        c,
-        species,
-        (model.clock / .4 + d.seed).floor() % 8,
-        center,
-        filter: _shadowInk,
-        blur: blur,
-        opacity: alpha,
+      final frame = (model.clock / .4 + d.seed).floor() % 8;
+      return _ShadowSpec(
+        img,
+        Rect.fromLTWH(frame * 128.0, species * 64.0, 128, 64),
+        at,
+        size,
+        alpha.clamp(0.0, .9),
+        bucket,
       );
-    } else {
-      final cell = CombatAtlas.creature(
-        d,
-        model.clock,
-        motion: creatures.motion.of(d),
+    }
+    final img = atlas;
+    if (img == null) return null;
+    final cell = CombatAtlas.creature(
+      d,
+      model.clock,
+      motion: creatures.motion.of(d),
+    );
+    return _ShadowSpec(
+      img,
+      Rect.fromLTWH(cell.col * 64.0, cell.row * 64.0, 64, 64),
+      center,
+      40 * grow / 64,
+      alpha.clamp(0.0, .9),
+      bucket,
+    );
+  }
+
+  void _creatureShadows(Canvas c, {Iterable<Demon> also = const []}) {
+    shadowLayers = 0;
+    shadowCount = 0;
+    shipShadowDim = 0;
+    shadowed.clear();
+    if (!model.perspective || !creatureShadows) return;
+    final reduced = atmosphere.quality == AtmosphereQuality.reduced;
+    final buckets = [<_ShadowSpec>[], <_ShadowSpec>[], <_ShadowSpec>[]];
+    final now = <Demon, _ShadowSpec>{};
+    final flying = <Demon>{
+      for (final d in model.incoming)
+        if (d.swarmState != SwarmState.reserve) d,
+      ...model.demons,
+      for (final m in model.flowFlock)
+        if (model.flowOpacity(m) > .3) m.demon, // --- cinematic flow
+      ...also, // --- cinematic flow: the title's attract swarm
+    };
+    for (final d in flying) {
+      if (d.swarmState == SwarmState.reserve || _parked(d)) continue;
+      if (d.isLarge && d.entranceProgress <= 0) continue;
+      final s = _shadowOf(d);
+      if (s == null) continue;
+      now[d] = s;
+      shadowed.add(d);
+      buckets[reduced ? 0 : s.bucket].add(s);
+    }
+    // Death: the shadow fades with the creature (0.3 s).
+    _ghostClock = model.clock;
+    for (final e in _lastShadows.entries) {
+      if (!now.containsKey(e.key) && e.key.hp <= 0) {
+        _shadowGhosts.add((e.value, _ghostClock));
+      }
+    }
+    _lastShadows
+      ..clear()
+      ..addAll(now);
+    _shadowGhosts.removeWhere((g) => _ghostClock - g.$2 > .3);
+    for (final (s, born) in _shadowGhosts) {
+      final left = 1 - (_ghostClock - born) / .3;
+      buckets[reduced ? 0 : s.bucket].add(s.faded(left));
+    }
+    // The ship's silhouette, on the same sun at its fixed altitude.
+    final shipImg = ship.image;
+    final flyover = sectors.flyover;
+    flyover.shipShadowByScene = shipImg != null;
+    if (shipImg != null && flyover.shipShadowVisible) {
+      const h = 40.0;
+      final off = h * _shadowTan * .22;
+      buckets[reduced ? 0 : 1].add(
+        _ShadowSpec(
+          shipImg,
+          const Rect.fromLTWH(0, 0, ShipPainter.cell, ShipPainter.cell),
+          Offset(model.shipX + 6 + off, ArcadeModel.shipY + 24),
+          ShipPainter.size / ShipPainter.cell * 1.05,
+          .5,
+          1,
+        ),
       );
-      final size = 40 * grow;
-      final a = atlas;
-      if (a != null) {
-        c.drawImageRect(
-          a,
-          Rect.fromLTWH(cell.col * 64.0, cell.row * 64.0, 64, 64),
-          Rect.fromCenter(center: center, width: size, height: size),
-          Paint()
-            ..colorFilter = _shadowInk
-            ..imageFilter = blur
-            ..color = Color.fromRGBO(255, 255, 255, alpha.clamp(0.0, 1.0))
-            ..filterQuality = FilterQuality.none,
+    }
+    // A coming sentinel sweeps the far terrain while it circles in the fog.
+    final f = model.foreshadow;
+    final fx = effectsAtlas;
+    if (f != null && f.visible && fx != null) {
+      final gy = Perspective.groundY(f.nearness.clamp(.08, .4));
+      final alpha = (.2 * f.opacity * Atmosphere.groundLight(gy) - .02).clamp(
+        0.0,
+        .2,
+      );
+      if (alpha > .01) {
+        final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
+        buckets[reduced ? 0 : 2].add(
+          _ShadowSpec(
+            fx,
+            Rect.fromLTWH(
+              ((f.clock / .55).floor() % 4) * 128.0,
+              species * 64.0,
+              128,
+              64,
+            ),
+            Offset(f.x + 30, gy + 8),
+            f.scale * 2.2,
+            alpha,
+            2,
+          ),
         );
       }
     }
-    c.restore();
+    // Shadow over the ship: a multiply dim by overlap, capped.
+    final hull = Rect.fromCenter(
+      center: Offset(model.shipX, ArcadeModel.shipY),
+      width: 36,
+      height: 28,
+    );
+    for (final s in now.values) {
+      final w = s.src.width * s.scale, hgt = s.src.height * s.scale * .42;
+      final quad = Rect.fromCenter(center: s.center, width: w, height: hgt);
+      final o = quad.intersect(hull);
+      if (o.width <= 0 || o.height <= 0) continue;
+      final share = o.width * o.height / (hull.width * hull.height);
+      shipShadowDim += shipDimCap * share * (s.alpha / .55).clamp(0.0, 1.0);
+    }
+    shipShadowDim = shipShadowDim.clamp(0.0, shipDimCap);
+    // Draw: one layer per bucket, the ground seen at a slant.
+    for (var b = 0; b < 3; b++) {
+      final specs = buckets[b];
+      if (specs.isEmpty) continue;
+      shadowLayers++;
+      shadowCount += specs.length;
+      c.saveLayer(
+        null,
+        Paint()
+          ..colorFilter = _shadowInk
+          ..imageFilter = reduced ? null : _shadowBlur[b]
+          // --- cinematic flow: the campaign outro lifts every shadow.
+          ..color = Color.fromRGBO(0, 0, 0, 1 - model.flow.env('lift')),
+      );
+      c.scale(1, .42);
+      final byImage = <ui.Image, List<_ShadowSpec>>{};
+      for (final s in specs) {
+        (byImage[s.image] ??= []).add(s);
+      }
+      for (final e in byImage.entries) {
+        c.drawAtlas(
+          e.key,
+          [
+            for (final s in e.value)
+              RSTransform.fromComponents(
+                rotation: 0,
+                scale: s.scale,
+                anchorX: s.src.width / 2,
+                anchorY: s.src.height / 2,
+                translateX: s.center.dx,
+                translateY: s.center.dy / .42,
+              ),
+          ],
+          [for (final s in e.value) s.src],
+          [
+            for (final s in e.value)
+              Color.fromRGBO(255, 255, 255, s.alpha.clamp(0.0, 1.0)),
+          ],
+          BlendMode.modulate,
+          null,
+          Paint()..filterQuality = FilterQuality.none,
+        );
+      }
+      c.restore();
+    }
   }
 
   void _wingTellChevrons(Canvas c, Offset pos) {
@@ -2048,7 +2523,10 @@ class DemonScene extends FlameGame {
         : species;
     final frame = demon.lastStand
         ? demon.rushing
-              ? 4 + (model.clock * 12).floor() % 4
+              ? (demon.rushStagger > 0
+                    // Reeling from its broken shield: it tumbles.
+                    ? (model.clock * 20).floor() % 8
+                    : 4 + (model.clock * 12).floor() % 4)
               : (demon.lastStandTellProgress * 4).floor().clamp(0, 3)
         : diving
         ? 4 + (model.clock * 8).floor() % 4
@@ -2128,6 +2606,138 @@ class DemonScene extends FlameGame {
       _sentinelDiveShield(c, pos, demon);
     }
   }
+
+  // --- sentinel rush presentation (demon-intelligence design §6.5) ------
+
+  /// Screen shake of a sentinel rush (arena units, at most 2 px): a
+  /// tremor on the lock, a rumble growing with the rush's speed; none with
+  /// reduced motion.
+  (double, double) rushShake() {
+    if (sectors.flyover.reducedMotion) return (0, 0);
+    var amp = 0.0;
+    for (final d in model.demons) {
+      if (!d.lastStand || d.entering) continue;
+      if (d.rushPhase == RushPhase.lock) amp = math.max(amp, 1);
+      if (d.rushPhase == RushPhase.rush) {
+        final v = math.sqrt(d.rushVx * d.rushVx + d.rushVy * d.rushVy);
+        final top = model.policy.rushSpeed * model.policy.hostileRate;
+        amp = math.max(amp, 2 * (v / top).clamp(0.0, 1.0));
+      }
+    }
+    if (amp <= 0) return (0, 0);
+    final t = model.clock;
+    return (
+      (amp * math.sin(t * 83)).roundToDouble().clamp(-2.0, 2.0),
+      (amp * math.cos(t * 67) * .6).roundToDouble().clamp(-2.0, 2.0),
+    );
+  }
+
+  /// The smoke trail behind a rushing sentinel (unscaled, behind it).
+  void _sentinelBerserkTrail(Canvas c, Offset pos, Demon d) {
+    if (d.rushPhase != RushPhase.rush) return;
+    final v = math.sqrt(d.rushVx * d.rushVx + d.rushVy * d.rushVy);
+    if (v < 1) return;
+    final ux = -d.rushVx / v, uy = -d.rushVy / v;
+    final paint = Paint()..isAntiAlias = false;
+    for (var i = 1; i <= 9; i++) {
+      final k = i / 9;
+      final wobble = math.sin(model.clock * 19 + i * 1.7) * 4 * k;
+      final p = pos.translate(
+        ux * (22 + i * 13) * d.scale - uy * wobble,
+        uy * (22 + i * 13) * d.scale + ux * wobble,
+      );
+      final r = (4 + 7 * k) * d.scale;
+      paint.color = Color.lerp(
+        const Color(0xFF8E1020),
+        const Color(0xFF120608),
+        k,
+      )!.withValues(alpha: .62 * (1 - k * .7));
+      c.drawRect(
+        Rect.fromCenter(
+          center: Offset(p.dx.roundToDouble(), p.dy.roundToDouble()),
+          width: r * 2,
+          height: r * 2,
+        ),
+        paint,
+      );
+    }
+  }
+
+  /// The berserk aura (drawn scaled with the sentinel): flaring eyes in the
+  /// rally and lock, a crimson-to-black thermal bow (≈ 128 px) in the
+  /// rush, and the rush-shield ring that shrinks as the shield wears.
+  void _sentinelBerserk(Canvas c, Offset pos, Demon d) {
+    final paint = Paint()..isAntiAlias = false;
+    final phase = d.rushPhase;
+    if (phase == RushPhase.rally || phase == RushPhase.lock) {
+      final flare = phase == RushPhase.lock
+          ? 1.0
+          : (d.rushClock / RushTuning.rally).clamp(0.0, 1.0);
+      _sentinelEyes(c, pos, .6 + .4 * flare, scale: 1 + .25 * flare);
+    }
+    if (phase == RushPhase.rush) {
+      const halfSpan = 64.0;
+      final reel = d.rushStagger > 0 ? .5 : 1.0;
+      for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
+        final norm = dx / halfSpan, absNorm = norm.abs();
+        final bow = (1 - norm * norm) * 18.0;
+        final jitter = math.sin(model.clock * 41 + dx * .8) * 1.5;
+        final sx = (pos.dx + dx - 1).roundToDouble();
+        final sy = (pos.dy + 18 + bow).roundToDouble();
+        final tongue =
+            ((1 - absNorm * .6) * 6 +
+                    math.sin(model.clock * 31 + dx * 1.3).abs() * 6)
+                .roundToDouble();
+        paint.color = const Color(0xFF1A0508)
+            .withValues(alpha: .7 * (1 - absNorm * .4) * reel);
+        c.drawRect(Rect.fromLTWH(sx, sy - 8 - tongue, 3, 3 + tongue), paint);
+        paint.color = const Color(0xFF8E1020)
+            .withValues(alpha: (.75 + .2 * (1 - absNorm)) * reel);
+        c.drawRect(
+          Rect.fromLTWH(sx, (sy - 5 + jitter).roundToDouble(), 3, 3),
+          paint,
+        );
+        paint.color =
+            (absNorm < .45 ? const Color(0xFFFF3B3B) : const Color(0xFFC2182B))
+                .withValues(alpha: .9 * reel);
+        c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 3), paint);
+        if (absNorm < .3) {
+          paint.color = const Color(0xFFFFC2B0).withValues(alpha: reel);
+          c.drawRect(Rect.fromLTWH(sx, sy, 3, 2), paint);
+        }
+      }
+    }
+  }
+
+  /// The rush-shield ring (unscaled, so it reads at any depth): a broken
+  /// crimson ellipse that shrinks and thins as the shield wears.
+  void _rushShieldRing(Canvas c, Offset pos, Demon d) {
+    if (d.rushShield <= 0 || d.rushShieldMax <= 0 || d.entering) return;
+    final paint = Paint()..isAntiAlias = false;
+    final ratio = d.rushShield / d.rushShieldMax;
+    final size = math.max(d.scale, .8);
+    final r = (34 + 18 * ratio) * size;
+    final pulse = .6 + .3 * math.sin(model.clock * 9);
+    const dots = 36;
+    for (var i = 0; i < dots; i++) {
+      // The worn share of the ring breaks up into gaps.
+      if (i / dots > ratio && i % 3 != 0) continue;
+      final a = i / dots * 2 * math.pi + model.clock * 1.4;
+      paint.color =
+          (i.isEven ? const Color(0xFFFF4D5E) : const Color(0xFFB0102A))
+              .withValues(alpha: pulse);
+      c.drawRect(
+        Rect.fromLTWH(
+          (pos.dx + math.cos(a) * r - 1.5).roundToDouble(),
+          (pos.dy + math.sin(a) * r * .62 - 1.5).roundToDouble(),
+          3,
+          3,
+        ),
+        paint,
+      );
+    }
+  }
+  // --- end sentinel rush presentation
 
   void _sentinelDiveShield(Canvas c, Offset pos, Demon demon) {
     // Tier 3: Massive roaring spacecraft atmospheric re-entry plasma bow shock (~104 px).
@@ -2499,10 +3109,7 @@ class DemonScene extends FlameGame {
     final travel = mode == RunMode.travel;
     if (!intro && !clear && !triumph && !travel) return;
     final p = model.transitionProgress.clamp(0.0, 1.0);
-    final ease = Curves.easeInOutCubic.transform(p);
-    final wave = intro && model.wave > 1;
-    final envelope = math.sin(math.pi * p);
-    final bar = (wave ? 9.0 : 24.0) * math.min(1.0, envelope * 4);
+    final flow = model.flow;
 
     if (triumph && model.wreckBoss != null) {
       final wreck = model.wreckBoss!;
@@ -2515,14 +3122,17 @@ class DemonScene extends FlameGame {
       );
     }
     if (clear || triumph) {
+      // Fireworks over the rescued sector: on the Rout's last kill for a
+      // sector, through the carrier's whole fall.
       final random = math.Random(triumph ? 1982 : 8200 + model.level);
       final count = triumph ? 10 : 5;
+      final clock = triumph ? p * 3.2 : p * 1.4 + .2;
       for (var burst = 0; burst < count; burst++) {
         final origin = Offset(
           45 + random.nextDouble() * 270,
           70 + random.nextDouble() * 210,
         );
-        final age = p * (triumph ? 3.2 : 2.3) - burst * .16;
+        final age = clock - burst * .16;
         if (age < 0 || age > 1.15) continue;
         final fade = (1 - age / 1.15).clamp(0.0, 1.0);
         final color = [mint, gold, violet, const Color(0xFFFF8676)][burst % 4];
@@ -2552,183 +3162,55 @@ class DemonScene extends FlameGame {
           opacity: .65,
         );
       }
-      // The rescued sector glows once before the ship accelerates away.
+    }
+    // The last kill's flash (the hit beat): a translucent glow, never a wipe.
+    final hit = flow.env('hit');
+    if (hit > 0) {
       c.drawRect(
         const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()
-          ..color = (triumph ? gold : mint).withValues(
-            alpha: math.pow(math.max(0, 1 - p * 6), 2).toDouble() * .24,
-          ),
-      );
-      final departure = Curves.easeInCubic.transform(
-        ((p - .35) / .65).clamp(0.0, 1.0),
-      );
-      _cinematicShip(
-        c,
-        Offset(
-          model.shipX + (180 - model.shipX) * ease,
-          ArcadeModel.shipY - departure * 650,
-        ),
-        42 - departure * 12,
-        1 + departure * 3,
+        Paint()..color = (triumph ? gold : mint).withValues(alpha: hit * .18),
       );
     }
+  }
 
-    if (travel) {
-      c.drawRect(
-        const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()..color = ink.withValues(alpha: envelope * .72),
-      );
-      final random = math.Random(1701);
-      final velocity = math.sin(math.pi * p).clamp(0.0, 1.0);
-      for (var i = 0; i < 88; i++) {
-        final angle = random.nextDouble() * math.pi * 2;
-        final radius = 15 + ((random.nextDouble() + p * 1.7) % 1) * 420;
-        final length = (8 + random.nextDouble() * 90) * velocity;
-        final near = Offset(
-          180 + math.cos(angle) * radius,
-          210 + math.sin(angle) * radius,
-        );
-        final far =
-            near + Offset(math.cos(angle) * length, math.sin(angle) * length);
-        c.drawLine(
-          near,
-          far,
-          Paint()
-            ..color = (i % 4 == 0 ? violet : mint).withValues(
-              alpha: velocity * .6,
-            )
-            ..strokeWidth = i % 7 == 0 ? 2 : 1,
-        );
-      }
-      // A ringed destination crosses the viewport as the jump resolves.
-      final arrival = Curves.easeOutCubic.transform(
-        ((p - .42) / .58).clamp(0.0, 1.0),
-      );
-      if (arrival > 0) {
-        final center = Offset(330 - arrival * 125, -120 + arrival * 240);
-        c.save();
-        c.translate(center.dx, center.dy);
-        c.rotate(-.35);
-        final radius = 30 + arrival * 60;
-        final color = [
-          mint,
-          violet,
-          const Color(0xFFEF9A7D),
-          gold,
-          const Color(0xFF8B9ACB),
-        ][(model.nextLevel - 1).clamp(0, 4)];
-        final ring = Rect.fromCenter(
-          center: Offset.zero,
-          width: radius * 3.7,
-          height: radius * .7,
-        );
-        c.drawOval(
-          ring,
-          Paint()
-            ..color = color.withValues(alpha: arrival * .28)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 6,
-        );
-        c.drawCircle(
-          Offset.zero,
-          radius,
-          Paint()..color = const Color(0xFF242A48),
-        );
-        c.save();
-        c.clipPath(
-          Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: radius)),
-        );
-        for (var band = -8; band <= 8; band++) {
-          c.drawRect(
-            Rect.fromLTWH(-radius, band * radius / 8, radius * 2, 4),
-            Paint()..color = color.withValues(alpha: .08 + (band % 3) * .025),
-          );
-        }
-        c.drawCircle(
-          Offset(-radius * .6, -radius * .1),
-          radius,
-          Paint()..color = ink.withValues(alpha: .55),
-        );
-        c.restore();
-        c.drawArc(
-          ring,
-          0,
-          math.pi,
-          false,
-          Paint()
-            ..color = color.withValues(alpha: arrival * .5)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 4,
-        );
-        c.restore();
-        c.drawCircle(
-          Offset(55 + arrival * 25, 160 + arrival * 100),
-          13,
-          Paint()..color = color.withValues(alpha: arrival * .4),
-        );
-      }
-      _cinematicShip(
-        c,
-        Offset(
-          180 + math.sin(p * math.pi * 2) * 10,
-          340 + math.sin(p * math.pi) * 22,
-        ),
-        30,
-        2 + velocity * 2,
-      );
+  /// The ship during a transition (drawn over the cloud cover): it climbs
+  /// nose-up into the cloud on the climb beat and drops back to its row in
+  /// the Descent; at the run's opening it rises in from below.
+  void _cinematicFlowShip(Canvas c) {
+    final mode = model.presentationMode;
+    final intro = mode == RunMode.transition;
+    if (!intro &&
+        mode != RunMode.levelClear &&
+        mode != RunMode.travel &&
+        mode != RunMode.victory) {
+      return;
     }
-
-    if (intro) {
+    final flow = model.flow;
+    final p = model.transitionProgress.clamp(0.0, 1.0);
+    if (intro && !flow.active) {
+      final wave = model.wave > 1;
       final arrival = Curves.easeOutCubic.transform((p / .8).clamp(0.0, 1.0));
       final y = wave
           ? ArcadeModel.shipY
           : ArcadeModel.shipY + (1 - arrival) * 130;
       _cinematicShip(c, Offset(model.shipX, y), 42, 1 + (1 - arrival) * 2);
-      // The scan sweeps toward the horizon while the approaching flock unfolds.
-      final scanY = 40 + p * 460;
-      c.drawRect(
-        Rect.fromLTWH(0, scanY, 360, 2),
-        Paint()..color = mint.withValues(alpha: envelope * .18),
-      );
-      if (model.boss != null) {
-        for (final x in [20.0, 340.0]) {
-          c.drawRect(
-            Rect.fromLTWH(x, 40, 2, 440),
-            Paint()
-              ..color = const Color(0xFFFF8676).withValues(
-                alpha: envelope * (.15 + .1 * math.sin(p * math.pi * 12).abs()),
-              ),
-          );
-        }
-      }
+      return;
     }
-    c.drawRect(Rect.fromLTWH(0, 0, 360, bar), Paint()..color = ink);
-    c.drawRect(Rect.fromLTWH(0, 520 - bar, 360, bar), Paint()..color = ink);
-    c.drawLine(
-      Offset(0, bar),
-      Offset(360, bar),
-      Paint()
-        ..color = (triumph ? gold : mint).withValues(alpha: envelope * .35),
+    final climb = flow.env('climb');
+    final cloud = flow.env('cloud');
+    final y = ArcadeModel.shipY - flow.plan.climb * climb;
+    // In the cloud the ship is a little veiled, never lost.
+    final veil = (1 - .35 * cloud).clamp(0.0, 1.0);
+    c.saveLayer(
+      const Rect.fromLTWH(0, 0, 360, 520),
+      Paint()..color = Color.fromRGBO(0, 0, 0, veil),
     );
-    // Fade across cuts so departure, transit, and arrival can use distinct
-    // compositions without exposing a discontinuous ship or planet position.
-    var blackout = 0.0;
-    if (clear || triumph || travel) {
-      blackout = ((p - .85) / .15).clamp(0.0, 1.0);
-    }
-    if (travel) {
-      blackout = math.max(blackout, (1 - p / .12).clamp(0.0, 1.0));
-    } else if (intro && !wave) {
-      blackout = (1 - p / .15).clamp(0.0, 1.0);
-    }
-    if (blackout > 0) {
-      c.drawRect(
-        const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()..color = Colors.black.withValues(alpha: blackout),
-      );
-    }
+    _cinematicShip(c, Offset(model.shipX, y), 42, 1 + climb * 2.5);
+    c.restore();
   }
+
+  /// Camera tilt in a Pursuit: the world below slides down this far.
+  static const flowTilt = 46.0;
 
   void _cinematicShip(Canvas c, Offset center, double width, double thrust) {
     if (center.dy < -70 || center.dy > 590) return;
@@ -2978,4 +3460,24 @@ class DemonScene extends FlameGame {
       }
     }
   }
+}
+
+/// One ground shadow of the batched pass (continuous swarm).
+class _ShadowSpec {
+  const _ShadowSpec(
+    this.image,
+    this.src,
+    this.center,
+    this.scale,
+    this.alpha,
+    this.bucket,
+  );
+  final ui.Image image;
+  final Rect src;
+  final Offset center;
+  final double scale, alpha;
+  final int bucket;
+
+  _ShadowSpec faded(double k) =>
+      _ShadowSpec(image, src, center, scale, alpha * k.clamp(0.0, 1.0), bucket);
 }

@@ -49,8 +49,13 @@
       the darkest sectors — tune in the playtest.
 
 ## 5. Sentinel foreshadowing
-- [ ] 5.1 Studio: silhouette sheet per sentinel species (8 banking frames × 2 blur levels), contact sheet for the
+- [x] 5.1 Studio: silhouette sheet per sentinel species (8 banking frames × 2 blur levels), contact sheet for the
       operator. (Not in this run: a placeholder from the sentinel's flight frames is used.)
+      Note (2026-11-15): derived on the CPU from the flight frames (`tools/sentinel_silhouettes`, no GPU: a shape,
+      not a texture, and no committed workflow renders banked rig poses): `assets/images/sentinel-silhouettes.png`,
+      `lib/game/sentinel_silhouette_atlas.dart`, `art/contact/sentinel-silhouettes.png`. The foreshadow draws it
+      (far→near blur cross-fade, eyes follow the bank); the flight-frame placeholder stays as the fallback and
+      still serves the arrival cross-fade, which must match the body frame.
 - [x] 5.2 Foreshadow state from wave w − 2: Gerono path with depth, growth per wave, breathing, behind the far
       banks; pure presentation.
       Note: shown only while no other sentinel is in the fight (one at a time).
@@ -64,3 +69,5 @@
       Measured in `test/atmosphere_perf_test.dart` (CPU tester): flock 40 agents .03 ms per frame; fog
       recording .1–.2 ms; CPU raster is not a GPU number. A phone GPU measurement is still to do.
 - [ ] 6.2 Operator playtest: fog layers, swarm feel, shadows, sentinel foreshadowing; tune.
+      (Open 2026-11-15: folded into the ground close-out playtest checklist, render plan
+      `plan/render-runs/ground-forces-rework.md` §17 (fog darkness vs the old haze).)

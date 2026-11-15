@@ -190,6 +190,7 @@ List<Set<String>> _run(CommsDirector c, double from, double until) {
 }
 
 void main() {
+  rushRadio();
   group('one channel: sequencing, no cutoffs', () {
     test('a human line and the demon reaction play one after the other', () {
       final c = _director();
@@ -647,6 +648,46 @@ void main() {
     );
 
     test(
+      'swarm calls end within 0.3 s of the creatures becoming targetable',
+      () {
+        // continuous-swarm task 7.2: cohortSighted (voiced with the
+        // next-wave sighting lines), reinforcements and the sentinel's rise
+        // carry an eta; the call ends on it, like a dive call.
+        for (final (name, eta) in [
+          (GameEventNames.cohortSighted, 4.4),
+          (GameEventNames.reinforcements, 1.6),
+          (GameEventNames.sentinelIncoming, 4.35),
+        ]) {
+          var voiced = 0;
+          for (var seed = 0; seed < 12; seed++) {
+            final started = <CommsMessage>[];
+            final d = CommsDirector(random: math.Random(seed))
+              ..onStart = started.add;
+            d.setSector(2, 0);
+            d.handle(GameEvent(name, {'eta': eta}), 10);
+            for (var t = 10.0; t < 16; t += 1 / 60) {
+              d.update(t);
+            }
+            final human = started.where((m) => m.line.grunt == null).toList();
+            if (human.isEmpty) continue;
+            voiced++;
+            final call = human.first;
+            expect(
+              call.speechEndsAt,
+              closeTo(10 + eta, .3),
+              reason: '$name seed $seed: $call',
+            );
+            if (name == GameEventNames.cohortSighted) {
+              expect(call.trigger.name, GameEventNames.incoming);
+              expect(call.line.id, startsWith('waveStart.'));
+            }
+          }
+          expect(voiced, greaterThan(0), reason: name);
+        }
+      },
+    );
+
+    test(
       'a call observed only as the dive starts is dropped, not played late',
       () {
         final d = CommsDirector(random: math.Random(3));
@@ -794,7 +835,14 @@ void main() {
         ])
           if (s.urgent) s.name,
       };
-      expect(urgent, {'sentinelDive', 'shieldExpiring', 'groundBreakthrough'});
+      expect(urgent, {
+        'sentinelDive',
+        'shieldExpiring',
+        'groundBreakthrough',
+        // demon-intelligence: the sentinel rush's warnings.
+        'sentinelRushTell',
+        'sentinelRushAgain',
+      });
     });
 
     test('shield and loot chatter no longer dominate', () {
@@ -900,6 +948,102 @@ void main() {
       expect(commsDemonTriggers['regroupStart']!.overlap, isTrue);
       expect(commsHumanTriggers['levelClear']!.exchange, CommsSide.fleet);
       expect(commsHumanTriggers['broodTaunt']!.exchange, CommsSide.demon);
+    });
+  });
+}
+
+// demon-intelligence task 6.4: the sentinel rush radio (design §8).
+void rushRadio() {
+  group('sentinel rush radio', () {
+    test('the rush warning ends within 0.3 s of the charge', () {
+      for (final rushIn in [1.3 / .9, 1.3, 1.25 / 1.05]) {
+        var voiced = 0;
+        for (var seed = 0; seed < 8; seed++) {
+          final started = <CommsMessage>[];
+          final d = CommsDirector(random: math.Random(seed))
+            ..onStart = started.add;
+          d.setSector(2, 1);
+          for (var t = 0.0; t < 14; t += 1 / 60) {
+            if ((t - 10).abs() < 1 / 120) {
+              d.handle(
+                GameEvent(GameEventNames.sentinelRushTell, {'rushIn': rushIn}),
+                t,
+              );
+            }
+            d.update(t);
+          }
+          final tell = started
+              .where((m) => m.trigger.name == GameEventNames.sentinelRushTell)
+              .toList();
+          if (tell.isEmpty) continue;
+          voiced++;
+          expect(
+            tell.single.speechEndsAt,
+            closeTo(10 + rushIn, .3),
+            reason: 'rushIn $rushIn seed $seed: ${tell.single}',
+          );
+          expect(tell.single.line.clip, startsWith('sentinelDive.'));
+        }
+        expect(voiced, greaterThanOrEqualTo(6), reason: 'rushIn $rushIn');
+      }
+    });
+
+    test('a placeholder line shows the borrowed line\'s own subtitle', () {
+      final all = {
+        for (final bank in [commsHumanTriggers, commsDemonTriggers])
+          for (final spec in bank.values)
+            for (final line in spec.lines) line.id: line,
+      };
+      var borrowed = 0;
+      for (final line in all.values) {
+        if (line.clip == line.id) continue;
+        borrowed++;
+        final source = all[line.clip]!;
+        expect(source.clip, source.id, reason: 'a recorded line');
+        expect(line.text, source.text, reason: line.id);
+        expect(line.gloss, source.gloss, reason: line.id);
+        expect(line.grunt, source.grunt, reason: line.id);
+        expect(line.speaker, source.speaker, reason: 'its voice: ${line.id}');
+        expect(line.duration, source.duration);
+        expect(line.mouth, source.mouth);
+      }
+      expect(borrowed, 16);
+    });
+
+    test('triggers without a truthful placeholder stay silent', () {
+      for (final name in [
+        GameEventNames.rushShieldBroken,
+        GameEventNames.rushSurvived,
+      ]) {
+        expect(commsHumanTriggers.containsKey(name), isFalse);
+        final started = <CommsMessage>[];
+        final d = CommsDirector(random: math.Random(1))..onStart = started.add;
+        d.setSector(2, 1);
+        for (var t = 0.0; t < 8; t += 1 / 60) {
+          if ((t - 4).abs() < 1 / 120) d.handle(GameEvent(name), t);
+          d.update(t);
+        }
+        expect(started, isEmpty, reason: name);
+      }
+    });
+
+    test('the brood cries on the lock and remarks when it adapts', () {
+      expect(
+        commsDemonTriggers[GameEventNames.sentinelRush]!.lines,
+        hasLength(4),
+      );
+      expect(
+        commsDemonTriggers[GameEventNames.sentinelRushMissed]!.lines,
+        hasLength(2),
+      );
+      expect(
+        commsDemonTriggers[GameEventNames.broodAdapting]!.lines,
+        hasLength(2),
+      );
+      expect(
+        commsHumanTriggers[GameEventNames.sentinelRushAgain]!.urgent,
+        isTrue,
+      );
     });
   });
 }

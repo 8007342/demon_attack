@@ -1,0 +1,33 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "prior", "name": "Prior", "faction": "host", "class": "infantry", "block": "I", "move": "stride", "seed": 760140,
+ "notes": "Field officer (Spire caste): a long iron-banded coat, a crown of three small gilt pinnacles between curled horns, a tall banner pole rising from its back with a membrane pennant and a gilt tip (the tallest small figure), a staff with a lantern mouth. The point is aim A; the spire topple is fall A/B.",
+ "gait": {"frames": 4, "stride": 1.4, "lift": 0.8, "bob": 0},
+ "hull": [
+  {"kind": "leg", "hip": [-1.1, 0, 6], "knee": [-1.1, 1, 3.4], "foot": [-1.1, 0, 0.4], "t": 1.3, "foot_size": [1.4, 2.4], "phase": 0, "mat": "hide"},
+  {"kind": "leg", "hip": [1.1, 0, 6], "knee": [1.1, 1, 3.4], "foot": [1.1, 0, 0.4], "t": 1.3, "foot_size": [1.4, 2.4], "phase": 0.5, "mat": "hide"},
+  {"kind": "box", "at": [0, 0, 4.6], "size": [4.6, 4, 9], "mat": "cloth", "chamfer": {"top": 1, "vert": 1}},
+  {"kind": "bar", "a": [-2.4, 0, 7.6], "b": [2.4, 0, 7.6], "t": 4.2, "tz": 0.7, "mat": "iron"},
+  {"kind": "ball", "at": [0, 1.2, 15.2], "size": [2.2, 2.4, 2.2], "mat": "hide"},
+  {"kind": "box", "at": [-0.8, 3.4, 15.4], "size": [0.6, 0.5, 0.6], "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [0.8, 3.4, 15.4], "size": [0.6, 0.5, 0.6], "mat": "eye", "tags": ["eye"]},
+  {"kind": "bar", "a": [-1.6, 0.6, 16.4], "b": [-2.6, -1, 17.8], "t": 0.9, "mat": "stone_hi", "tags": ["ornament"]},
+  {"kind": "bar", "a": [1.6, 0.6, 16.4], "b": [2.6, -1, 17.8], "t": 0.9, "mat": "stone_hi", "tags": ["ornament"]},
+  {"kind": "prism", "at": [-0.9, 1, 16.8], "n": 4, "r": 0.7, "r2": -1, "h": 1.8, "mat": "gilt", "tags": ["ornament"]},
+  {"kind": "prism", "at": [0, 1.2, 17], "n": 4, "r": 0.7, "r2": -1, "h": 2.2, "mat": "gilt", "tags": ["ornament"]},
+  {"kind": "prism", "at": [0.9, 1, 16.8], "n": 4, "r": 0.7, "r2": -1, "h": 1.8, "mat": "gilt", "tags": ["ornament"]},
+  {"kind": "bar", "a": [0, -2.4, 8], "b": [0, -2.4, 19.6], "t": 0.9, "mat": "iron"},
+  {"kind": "prism", "at": [0, -2.4, 19.4], "n": 4, "r": 0.8, "r2": -1, "h": 2, "mat": "gilt"},
+  {"kind": "box", "at": [0, -4.6, 15.6], "size": [0.6, 4, 3.4], "mat": "membrane", "tags": ["flag"]},
+  {"kind": "bar", "a": [2.2, 3, 0.8], "b": [2.2, 4.4, 15], "t": 0.9, "mat": "iron", "tags": ["weapon"]},
+  {"kind": "box", "at": [2.2, 4.4, 14.6], "size": [1.4, 1.4, 1.4], "mat": "vent", "tags": ["weapon"]},
+  {"kind": "ball", "at": [2.2, 5.8, 15.4], "size": [1, 1, 1], "mat": "muzzle", "tags": ["hidden", "muzzle", "weapon"]}
+ ],
+ "pieces": [],
+ "poses": {
+  "aim": [
+   [{"tag": "weapon", "axis": "x", "deg": 30, "pivot": [2.2, 3, 8]}],
+   [{"tag": "weapon", "axis": "x", "deg": 40, "pivot": [2.2, 3, 8]}, {"tag": "eye", "lit": true}]
+  ]
+ }
+}

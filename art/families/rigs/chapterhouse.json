@@ -1,0 +1,53 @@
+{
+ "schema": "demon-attack.ground-rig/v1",
+ "id": "chapterhouse", "name": "Chapterhouse", "faction": "host", "class": "command", "block": "K", "move": "stride", "seed": 760700,
+ "notes": "Mobile command walker, the tallest unit: an octagonal stone chamber on six short buttress legs, a lead roof, a tall spire with a gilt crown and horned finial, a rose-window eye below it, lit tracery windows, two tattered membrane banners on poles at the rear corners (drawn only by the banner overlay, so they flutter out of step with the stride). Special = command pulse (eye flare, windows, a stepped ring). Fall: the spire topples first.",
+ "gait": {"frames": 6, "stride": 2.2, "lift": 1.4, "bob": 0.6},
+ "hull": [
+  {"kind": "leg", "hip": [0, 7, 7.4], "knee": [0, 10.4, 4], "foot": [0, 9.4, 0.6], "t": 2, "foot_size": [2.6, 3], "phase": 0, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [6.1, 3.5, 7.4], "knee": [9, 5.2, 4], "foot": [8.1, 4.7, 0.6], "t": 2, "foot_size": [2.6, 3], "phase": 0.5, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [6.1, -3.5, 7.4], "knee": [9, -5.2, 4], "foot": [8.1, -4.7, 0.6], "t": 2, "foot_size": [2.6, 3], "phase": 0, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [0, -7, 7.4], "knee": [0, -10.4, 4], "foot": [0, -9.4, 0.6], "t": 2, "foot_size": [2.6, 3], "phase": 0.5, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [-6.1, -3.5, 7.4], "knee": [-9, -5.2, 4], "foot": [-8.1, -4.7, 0.6], "t": 2, "foot_size": [2.6, 3], "phase": 0, "mat": "stone_dark"},
+  {"kind": "leg", "hip": [-6.1, 3.5, 7.4], "knee": [-9, 5.2, 4], "foot": [-8.1, 4.7, 0.6], "t": 2, "foot_size": [2.6, 3], "phase": 0.5, "mat": "stone_dark"},
+  {"kind": "prism", "at": [0, 0, 6.6], "n": 8, "r": 9.4, "h": 14, "rot": 22.5, "mat": "stone_hi", "piece": "chamber"},
+  {"kind": "prism", "at": [0, 0, 20.6], "n": 8, "r": 10.2, "r2": 5.4, "h": 4, "rot": 22.5, "mat": "lead", "piece": "roof"},
+  {"kind": "prism", "at": [0, 0, 24.4], "n": 8, "r": 3, "r2": 1.4, "h": 14, "rot": 22.5, "mat": "stone_hi", "tags": ["spire"], "piece": "spire"},
+  {"kind": "prism", "at": [0, 0, 30], "n": 8, "r": 2.6, "h": 1, "rot": 22.5, "mat": "gilt", "tags": ["spire"], "piece": "spire"},
+  {"kind": "prism", "at": [0, 0, 38.2], "n": 4, "r": 1.4, "r2": -1, "h": 5.6, "rot": 45, "mat": "gilt", "tags": ["spire"], "piece": "finial"},
+  {"kind": "bar", "a": [-0.8, 0, 38.8], "b": [-2.4, 0, 41.4], "t": 0.8, "mat": "gilt", "tags": ["spire"], "piece": "finial"},
+  {"kind": "bar", "a": [0.8, 0, 38.8], "b": [2.4, 0, 41.4], "t": 0.8, "mat": "gilt", "tags": ["spire"], "piece": "finial"},
+  {"kind": "prism", "at": [0, 8.9, 16.6], "axis": "y", "center": true, "n": 8, "r": 2.2, "h": 0.8, "mat": "eye", "tags": ["eye"]},
+  {"kind": "box", "at": [5.6, 6.6, 9.6], "size": [1.2, 0.6, 5], "yaw": 45, "mat": "vent", "tags": ["window"]},
+  {"kind": "box", "at": [-5.6, 6.6, 9.6], "size": [1.2, 0.6, 5], "yaw": -45, "mat": "vent", "tags": ["window"]},
+  {"kind": "box", "at": [8.6, 0, 9.6], "size": [0.6, 1.2, 5], "mat": "vent", "tags": ["window"]},
+  {"kind": "box", "at": [-8.6, 0, 9.6], "size": [0.6, 1.2, 5], "mat": "vent", "tags": ["window"]},
+  {"kind": "box", "at": [5.6, -6.6, 9.6], "size": [1.2, 0.6, 5], "yaw": -45, "mat": "vent", "tags": ["window"]},
+  {"kind": "box", "at": [-5.6, -6.6, 9.6], "size": [1.2, 0.6, 5], "yaw": 45, "mat": "vent", "tags": ["window"]},
+  {"kind": "bar", "a": [-6, -6, 22], "b": [-6, -6, 33], "t": 0.9, "mat": "iron", "tags": ["banner"]},
+  {"kind": "bar", "a": [6, -6, 22], "b": [6, -6, 33], "t": 0.9, "mat": "iron", "tags": ["banner"]},
+  {"kind": "box", "at": [-6, -8.6, 27], "size": [0.7, 5, 5.6], "mat": "membrane", "tags": ["banner", "flagL"]},
+  {"kind": "box", "at": [6, -8.6, 27], "size": [0.7, 5, 5.6], "mat": "membrane", "tags": ["banner", "flagR"]}
+ ],
+ "pieces": ["finial", "spire", "roof"],
+ "poses": {
+  "banner": [
+   [{"tag": "flagL", "axis": "z", "deg": -14, "pivot": [-6, -6, 0]}, {"tag": "flagR", "axis": "z", "deg": 8, "pivot": [6, -6, 0]}],
+   [],
+   [{"tag": "flagL", "axis": "z", "deg": 12, "pivot": [-6, -6, 0]}, {"tag": "flagR", "axis": "z", "deg": -14, "pivot": [6, -6, 0]}]
+  ],
+  "special": [
+   [{"tag": "eye", "lit": true}],
+   [{"tag": "eye", "lit": true}, {"tag": "window", "lit": true}],
+   [{"tag": "eye", "lit": true}, {"tag": "window", "lit": true}],
+   [{"tag": "window", "lit": true}]
+  ],
+  "fall": [
+   [{"tag": "spire", "axis": "y", "deg": 18, "pivot": [0, 0, 24.4]}],
+   [{"tag": "spire", "axis": "y", "deg": 48, "pivot": [0, 0, 24.4]}],
+   [{"tag": "spire", "axis": "y", "deg": 80, "pivot": [0, 0, 24.4]}],
+   [{"tag": "spire", "axis": "y", "deg": 95, "pivot": [0, 0, 24.4]}],
+   [{"tag": "spire", "axis": "y", "deg": 95, "pivot": [0, 0, 24.4]}]
+  ]
+ }
+}
