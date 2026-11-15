@@ -279,7 +279,7 @@
                                 "broodSac", "tower2"]}
  },
  "selected": {
-  "notes": "Picked raws (committed under art/sprites/sources/boss-selected/<hull>/); hero = S0 look, S1-S3 = stage looks. sym = the hero half mirrored onto the other (the atlas draws yaw -12 as mirrored +12). Ledger: plan/render-runs/boss-hero-assets.md.",
+  "notes": "Picked raws (committed under art/sprites/sources/boss-selected/<hull>/); hero = S0 look, S1-S3 = stage looks. sym = the hero half mirrored onto the other (the atlas draws yaw -12 as mirrored +12). Ledger: plan/render-runs/boss-hero-assets.md. SUPERSEDED (operator R8, plan/operator-feedback-2026-11-15b.md): every pick below is the rejected gargoyle-face, riveted-metal direction; kept as provenance only, do not pack.",
   "frigate": {"S0": "hero/921000.png", "S1": "stage/S1-923101.png", "S2": "stage/S2-923200.png", "S3": "stage/S3-923400.png", "sym": "left"},
   "cruiser": {"S0": "hero/931000.png", "S1": "stage/S1-933100.png", "S2": "stage/S2-933200.png", "S3": "stage/S3-933401.png", "sym": "left"},
   "battlecruiser": {"S0": "hero/941001.png", "S1": "stage/S1-943100.png", "S2": "stage/S2-943210.png", "S3": "stage/S3-943400.png", "sym": "left"}

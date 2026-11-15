@@ -192,7 +192,7 @@ with views, modules, stages and anchors). It changes the generated Dart contract
 it should land together with `boss-grandeur` 4.3 (the assembly painter). Task 4.3 (optional seam heal) is skipped:
 the projected views need no healing at this spread.
 
-## 4. B3: the four remaining hulls (2026-11-15)
+## 4. B3: the four remaining hulls (2026-11-15) — STOPPED, direction superseded by R8
 
 Branch `work/boss-hulls-b3` (worktree `~/.cache/tillandsias-project/worktrees/boss-hulls-b3`), off `game`. Same
 pipeline as the frigate, one commit per hull. Rebuild any hull without GPU: `lua tools/boss_rig/bake_hull.lua <hull>
@@ -215,7 +215,7 @@ picked seed for hulls other than the frigate; the B1/B3 hero sheet's CSS-size co
 texel density (it assumed the frigate's 2 px/unit, which misplaced the sim windows on bigger hulls);
 `bakebudget` prints the decided total (stage patches at half density).
 
-### 4.1 Cruiser (tour 2, Brood Cruiser, 8 modules, 1.9 px/unit)
+### 4.1 Cruiser (tour 2, Brood Cruiser, 8 modules, 1.9 px/unit) — SUPERSEDED (R8)
 
 | Job | Graph | Seeds | GPU | Result |
 | --- | --- | --- | --- | --- |
@@ -247,7 +247,7 @@ before the wreck-pair decision of §4.2).
 
 Sheets: `art/contact/boss-b3-cruiser-heroes.png`, `-views.png` (+ `-views.gif`), `-stages.png`.
 
-### 4.2 Battlecruiser (tour 3, Siege Battlecruiser, 11 modules, 1.7 px/unit)
+### 4.2 Battlecruiser (tour 3, Siege Battlecruiser, 11 modules, 1.7 px/unit) — SUPERSEDED (R8)
 
 | Job | Graph | Seeds | GPU | Result |
 | --- | --- | --- | --- | --- |
@@ -285,3 +285,56 @@ should store only the L wreck of each pair. Frigate 13.0 → 12.80 MB, cruiser 1
 15.80 MB** (S0 7.93 + stage patches 5.09 + wrecks 2.79).
 
 Sheets: `art/contact/boss-b3-battlecruiser-heroes.png`, `-views.png` (+ `.gif`), `-stages.png`.
+
+### 4.3 Stopped: the operator rejected the direction (R8)
+
+The operator rejected the whole boss art direction (`plan/operator-feedback-2026-11-15b.md` R8): the gargoyle **face**
+on riveted metal plates. The new direction is alien (organic or exotic materials, no face, no rivets), a GIANORMOUS
+carrier that spills off-screen, scary, extendable per run, decaying, and built from composable module sets. B3 stopped
+mid-run on the coordinator's order. Every pick in §2–§4 (frigate, cruiser, battlecruiser) is **superseded**: the raws
+stay committed as provenance only (`boss-hulls.json` `selected.notes` says "do not pack"). The battleship and
+dreadnought had heroes and stage looks picked (battleship 951003 / S1 953101 / S2 953210 / S3 953400; dreadnought
+961003 / S1 963101 / S2 963211 / S3 963401). Their bake was killed mid-render, and their raws were **not** committed.
+Their 20 runs are logged in `boss-hulls-runs.json` with a "superseded before bake" verdict. No GPU job was left
+queued.
+
+**Reusable for the new direction** (all hull-agnostic, all committed):
+- `tools/boss_rig/build.py` (rig, 9 views, clay/hint/depth/normal/id/z passes, anchor gate) and `project_bake.py`
+  (camera projection of one hero across the view grid, module layers, wrecks). Both are driven by the grammar JSON:
+  a new module catalogue (alien prims, no face) drops in without code changes as long as the same prim types serve.
+  The face frame and the gargoyle `bow` are grammar data, not code.
+- `tools/boss_rig/bake_hull.lua <hull> --sheets`: the whole no-GPU rebuild from committed picks; per-hull sheet
+  names.
+- `tools/boss_sheet`: `heroes` (candidate sheet with a CSS-size column now correct for any texel density),
+  `views`/`stages` (B3 titles, picked seed from the spec), `bakebudget` (prints the decided total), and the new
+  **`lineup BAKE RIG OUT.png HULL...`**: the tour-progression sheet (hero view at x1, S0 and S3 at CSS size with the
+  simulation windows, bottom-aligned).
+- `boss-hulls.json` `prompts.hero_qwen_<hull>`: the per-hull escalation pattern (one prompt per tier that names the
+  family reference and adds the tier's material and danger words) carries over; the words themselves do not.
+- Helper scripts used in this run (not committed, in `~/.cache/tillandsias-project/b3/`): `collect.lua` (copies studio
+  outputs to `boss-raw/` and logs a run record from each provenance sidecar) and `merge.sh` (appends the records,
+  with verdicts by seed, to `boss-hulls-runs.json`). Worth promoting into `tools/boss_rig/` for the next agent.
+
+**Lessons**
+1. **One-image Qwen edits only.** Re-tested with the picked frigate hero as image 2, which already has the new pose:
+   Qwen still copies image 2's wings and stone and drops the bigger rig's extra parts. Identity must come from the
+   prompt and palette. The reference image belongs on the review sheet, not in the graph.
+2. **Escalation lives in the prompt, the rig carries the size.** Four seeds of one tier prompt gave 2–3 usable heroes
+   per hull. Failures are specific: invented emblems or second faces on round turret domes (a dome reads as a head,
+   so avoid dome prims near the core), near-black renders that vanish at CSS size, and cast shadows painted onto the
+   key.
+3. **Stage edits must keep the functional windows dark.** Plain S2/S3 damage prompts filled the maw and bays with fire
+   in about half the seeds. The clause "The fanged maw and the two hangar bays stay dark and empty, no fire inside
+   them." fixed every later seed. The new direction needs the same clause for its core and bay windows.
+4. **S3 must be chained from S2 and checked for regressions:** one of two chained seeds per hull came back *less*
+   damaged than its input.
+5. **Budget.** At 16 MB with stage patches at half density, the 8- and 11-module hulls sat at 15.2–15.8 MB only
+   after the mirrored-wreck-pair rule (`<m>R` draws `<m>L` flipped). The 14- and 17-module hulls would not have fit
+   without another lever (half-density wrecks, or S1 as a runtime tint). A carrier that spills off-screen is much
+   bigger, so its budget needs a different unit: tiles or a streamed page per visible region, not whole-hull views.
+6. **Mirror check** grows with thin geometry (frigate 3.6 %, cruiser 14.5 %, battlecruiser 8.9 % of texels).
+   That is edge anti-aliasing on spikes, not swapped details.
+
+**Spent in B3:** GPU ≈ 12.5 min (752 s over 22 studio jobs, no failures). CPU (Blender, 8 threads, < 1 GB) ≈ 19 min:
+4 rigs 86 s, cruiser bake 280 s, battlecruiser bake 387 s, the killed battleship bake ≈ 4.5 min, plus 3 grammar
+checks.
