@@ -55,30 +55,30 @@ first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start
       - `test/difficulty_calibration_test.dart` unchanged and green;
       - fix fixtures in other tests only where they asserted the old interwave `RunMode.transition`, and list
         each one in the commit message.
-- [ ] 3.6 Campaign pilot: all modes complete. Compare metrics with 1.1 (budgets identical, clear times reported).
+- [x] 3.6 Campaign pilot: all modes complete. Compare metrics with 1.1 (budgets identical, clear times reported).
 
 ## 4. Swoops and model-owned flock
-- [ ] 4.1 `flock.dart`: `ArrivalFlock` → `SwarmFlock`.
+- [x] 4.1 `flock.dart`: `ArrivalFlock` → `SwarmFlock`.
       - agents live for the creature's whole flight;
       - stepped at 60 Hz from `_step` (drop the 30 Hz accumulator and interpolation);
       - emitters (left, right, centre, two deep gates);
       - a quadratic Bézier ground track with an opposite-side swing;
       - the altitude parabola (design §3);
       - β blend to the pattern target.
-- [ ] 4.2 Retire the flock parity test. Add a determinism test (`test/continuous_swarm_test.dart`): a full sector
+- [x] 4.2 Retire the flock parity test. Add a determinism test (`test/continuous_swarm_test.dart`): a full sector
       twice with the same seed gives identical positions, events and score.
-- [ ] 4.3 Quintic hand-off guard: extend `test/combat_balance_test.dart` "wave entrance transitions smoothly" to
+- [x] 4.3 Quintic hand-off guard: extend `test/combat_balance_test.dart` "wave entrance transitions smoothly" to
       cover swoop → pattern (no position or velocity snap above 1.5 units per frame).
 
 ## 5. Fighting patterns
-- [ ] 5.1 `lib/game/swarm_patterns.dart`:
+- [x] 5.1 `lib/game/swarm_patterns.dart`:
       - `Squad`, `SquadState` (mill, ribbon, sweep, cloud, hover), the φ dial, dwell and neighbour switching;
       - anchors and offsets per design §4, with clamps;
       - the altitude channel (design §8.1).
-- [ ] 5.2 `model.dart` `_targetFormationPosition`: ordinary members of a squad use the pattern target plus
+- [x] 5.2 `model.dart` `_targetFormationPosition`: ordinary members of a squad use the pattern target plus
       `evadeOffset` and the telegraph crest. Strays, onboarding and `swarmPatterns == false` use today's hover
       verbatim. Spring + k = 7 separation + squad alignment + speed cap.
-- [ ] 5.3 `test/swarm_patterns_test.dart`:
+- [x] 5.3 `test/swarm_patterns_test.dart`:
       - clamps (x, and y ≤ shipY − 130);
       - each state's lateral speed is within its design band;
       - switching only between neighbours;
@@ -86,10 +86,10 @@ first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start
       - the vacuole closes in ≤ 0.6 s;
       - hover fallback positions equal today's formula;
       - 61 members run a step in < 0.2 ms (VM, median of 200).
-- [ ] 5.4 Calibration loop: run the 1.1 recorder. Accept per design §9 (+25 % clear time, −15 % hit ratio,
+- [x] 5.4 Calibration loop: run the 1.1 recorder. Accept per design §9 (+25 % clear time, −15 % hit ratio,
       bounds). If it is out, tune `swarmTempo` and the mill radius first and record each iteration in
       `plan/calibration-current.md`. Do not touch budgets.
-- [ ] 5.5 Add `AveragePilot` (design §9) and record lives lost per sector as the W4 baseline (report only).
+- [x] 5.5 Add `AveragePilot` (design §9) and record lives lost per sector as the W4 baseline (report only).
 
 ## 6. Presentation: facing, visible evasion, shadows
 - [ ] 6.1 `creature_motion.dart`: new thresholds and hold. Add a `squadVx` argument to `update` and use the squad

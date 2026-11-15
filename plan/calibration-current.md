@@ -60,3 +60,60 @@ seconds from a wave's start to the next wave's pressure trigger): Easy 0.822, **
 Facing (`test/swarm_facing_test.dart`, Normal sector 2, 60 s of combat, simulation only): **13.3 %** of drawn
 ordinary-creature flight frames banked (`CreatureMotion.dir != 0`; telegraph, dive and dive-prep frames
 excluded); shortest held direction 0.15 s.
+
+### Calibration loop (tasks 3.6, 5.4)
+
+Eight seeds (1982, 7, 21, 42, 99, 314, 2718, 5150) per mode, full campaigns, `test/swarm_calibration_test.dart`
+(`flutter test --dart-define=SWARM_CALIBRATION=<tag> test/swarm_calibration_test.dart`). The pre-W3 side runs the
+same harness on `lib/` from e3911089. Wall = all non-paused seconds while a wave number is current (the old
+interwave transition included); clear = combat seconds only. Aimed hit = hits of shots fired while something could
+be hit (the auto-fire also spends shots during arrivals and lulls). Change in % against pre-W3, per sector:
+
+1. After group 3 (stream, no patterns), oracle pilot: wall −4 … +9 %, clear ≤ +15 %, hit −3 … −17 % (Easy).
+2. After group 5 (patterns, sweep span 130–180 / period 4.5–6), oracle pilot: wall −9 … +2 %, clear ≤ +7 %,
+   hit −23 % (Easy sector 1) … −3 %, aimed −16 … 0 %.
+3. Tempo iteration: Easy `swarmTempo` 0.85 → 0.7 changed nothing outside the noise (Easy sector 1 aimed −17 %);
+   reverted to 0.85. The cause was the pilot, not the swarm: the historical pilot predicts a hovering creature
+   with the model's own hover formula (an oracle no player has), while it can only lead a pattern by velocity.
+4. Calibration pilot without the oracle (`steer(oracle: false)`: every formation creature led by its velocity),
+   on both sides — **accepted**:
+
+| Sector | Wall | Clear | Hit | Aimed hit | Aimed (post) |
+|---|---:|---:|---:|---:|---:|
+| easy1 | -3.6% | +4.4% | -14.8% | -7.0% | 50.3 % |
+| easy2 | -1.0% | +5.4% | -10.8% | -4.5% | 59.2 % |
+| easy3 | -0.1% | +8.5% | -12.8% | -6.4% | 54.1 % |
+| easy4 | -1.5% | +4.8% | -10.7% | -4.6% | 60.5 % |
+| easy5 | -4.5% | -5.7% | -0.1% | -0.1% | 99.2 % |
+| normal1 | -4.1% | -0.4% | -4.9% | -0.6% | 67.4 % |
+| normal2 | -4.7% | -1.5% | -4.7% | -1.0% | 68.8 % |
+| normal3 | -1.6% | +2.3% | -2.3% | +1.9% | 71.2 % |
+| normal4 | -3.6% | +0.2% | -5.3% | -1.3% | 68.8 % |
+| normal5 | -5.3% | -6.4% | +0.4% | +0.4% | 98.9 % |
+| hard1 | -10.0% | -8.2% | -3.9% | -0.9% | 68.9 % |
+| hard2 | -8.5% | -6.5% | -4.5% | -1.4% | 70.5 % |
+| hard3 | +0.2% | +3.9% | -4.3% | -1.3% | 70.8 % |
+| hard4 | -5.1% | -2.4% | -1.7% | +1.2% | 73.0 % |
+| hard5 | -0.8% | -0.9% | +0.5% | +0.5% | 98.0 % |
+
+All ordinary sectors: clear time within +8.5 % (limit +25 %), hit ratio within −14.8 % (limit −15 %); peak active
+and peak hostile bullets unchanged or lower (≤ 45 and ≤ 16; bound ≤ 120). Budgets: `test/difficulty_calibration_test.dart`
+unchanged and green (318 waves).
+
+### Average pilot (task 5.5, W4 baseline; report only)
+
+`AveragePilot` (`test/support/average_pilot.dart`): not invulnerable, 0.25 s reaction, 70 % aim, dodges the nearest
+shot; 99 lives, one sector from wave 1, four seeds. Mean lives lost per sector (pre-W3 → post-W3). The pilot is
+weak and noisy; the numbers are a baseline for `demon-intelligence`, not a verdict.
+
+| Mode | Route | S1 | S2 | S3 | S4 |
+|---|---:|---:|---:|---:|---:|
+| easy | 0 | 0.00 → 0.25 | 1.00 → 0.25 | 5.00 → 2.75 | 8.00 → 5.25 |
+| easy | 1 | 3.50 → 2.50 | 13.00 → 8.00 | 10.50 → 8.50 | 14.75 → 13.50 |
+| easy | 2 | 13.75 → 8.25 | 26.00 → 20.75 | 21.75 → 17.50 | 41.50 → 30.50 |
+| normal | 0 | 1.00 → 2.00 | 2.25 → 2.75 | 10.50 → 8.75 | 13.00 → 11.25 |
+| normal | 1 | 22.25 → 9.75 | 31.75 → 24.00 | 43.50 → 14.25 | 47.50 → 22.50 |
+| normal | 2 | 51.75 → 48.75 | 46.25 → 50.00 | 56.00 → 75.50 | 43.50 → 68.25 |
+| hard | 0 | 0.50 → 1.50 | 3.50 → 3.50 | 11.00 → 9.25 | 16.75 → 12.00 |
+| hard | 1 | 28.25 → 12.75 | 21.75 → 23.75 | 22.25 → 34.25 | 26.25 → 40.75 |
+| hard | 2 | 51.75 → 44.25 | 61.00 → 52.50 | 62.00 → 91.75 | 78.75 → 77.00 |
