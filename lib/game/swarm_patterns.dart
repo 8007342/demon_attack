@@ -124,7 +124,11 @@ class Squad {
 
   /// Advances the squad clock, its dwell and state switching, and eases
   /// every flying member's fraction toward its index among [flying].
-  void update(double dt, {required double tempo, required Iterable<Object> flying}) {
+  void update(
+    double dt, {
+    required double tempo,
+    required Iterable<Object> flying,
+  }) {
     if (dt <= 0) return;
     final x0 = _anchor(state, clock).$1;
     clock += dt * tempo;
@@ -243,7 +247,13 @@ class Squad {
     }
   }
 
-  (double, double) _targetIn(SquadState s, SquadSlot slot, double t, {double? cx, double? cy}) {
+  (double, double) _targetIn(
+    SquadState s,
+    SquadSlot slot,
+    double t, {
+    double? cx,
+    double? cy,
+  }) {
     final (ax, ay) = s == SquadState.cloud && cx != null && cy != null
         ? (cx, cy)
         : _anchor(s, t);

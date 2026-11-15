@@ -49,6 +49,9 @@ void steer(ArcadeModel model, {bool react = true}) {
         ? d.x
         : d.dive > 0
         ? d.targetX + (d.x - d.targetX) * math.exp(-1.8 * flight)
+        // A squad flying its pattern: lead it by its own velocity.
+        : model.patterned(d)
+        ? d.x + d.vx * flight
         : d.homeX +
               math.sin(time * (.9 + d.kind * .12) * model.speed + d.seed) * 29 +
               math.sin(time * .44 * model.policy.hostileRate) * 13;

@@ -866,6 +866,8 @@ class ArcadeModel {
     }
     incoming.clear(); // --- continuous swarm
     _pendingSkeins.clear();
+    _squads.clear();
+    _squadMembers.clear();
     _resetWaveEnemies();
     _groundBeginWave(); // --- ground war
     flock.clear(); // --- atmosphere-and-swarms
@@ -1173,6 +1175,7 @@ class ArcadeModel {
               ? SwarmState.approaching
               : SwarmState.present;
         }
+        _formSquad(skein);
         _launchFlock(skein, forWave, gate: skein.first.gate);
       } else if (s == 0) {
         _releaseSkein(skein, forWave);
@@ -1219,6 +1222,7 @@ class ArcadeModel {
         ..entryN = n
         ..drift = null;
     }
+    _formSquad(skein);
     _launchFlock(skein, forWave, gate: skein.first.gate);
   }
 
@@ -1311,6 +1315,7 @@ class ArcadeModel {
   /// rubber band's clock and the reserve drifting.
   void _updateStream(double dt) {
     stream.cohortClock += dt;
+    _updateSquads(dt);
     if (_streamLives >= 0 && lives < _streamLives) stream.lifeLost();
     _streamLives = lives;
     _updateFizzles(dt);
@@ -1360,8 +1365,11 @@ class ArcadeModel {
           d.swarmState = SwarmState.approaching;
         }
       } else if (d.dive > 0 || d.rushing) {
-        d.swarmState = SwarmState.diving;
+        d
+          ..swarmState = SwarmState.diving
+          ..altitude = _altitudeOf(d);
       } else {
+        d.altitude = _altitudeOf(d);
         if (d.swarmState != SwarmState.present) {
           d
             ..entryX = null
@@ -1441,6 +1449,7 @@ class ArcadeModel {
             ..entranceElapsed = 0
             ..arrivesFromDistance = true;
         }
+        _formSquad(skeins[s]);
         _launchFlock(skeins[s], wave + 1, gate: skeins[s].first.gate);
       } else {
         _park(skeins[s]);
@@ -1612,7 +1621,8 @@ class ArcadeModel {
     _squadVelocity.clear();
     final gone = <int>[];
     _squads.forEach((id, sq) {
-      final members = _squadMembers[id]!..removeWhere((d) => !alive.contains(d));
+      final members = _squadMembers[id]!
+        ..removeWhere((d) => !alive.contains(d));
       if (members.isEmpty) {
         gone.add(id);
         return;
@@ -1622,7 +1632,8 @@ class ArcadeModel {
         dt,
         tempo: tempo,
         flying: members.where(
-          (d) => d.dive == 0 && !d.rushing && d.swarmState != SwarmState.reserve,
+          (d) =>
+              d.dive == 0 && !d.rushing && d.swarmState != SwarmState.reserve,
         ),
       );
       var vx = 0.0, vy = 0.0, k = 0;
@@ -1849,6 +1860,7 @@ class ArcadeModel {
         ..skein = id
         ..swarmState = SwarmState.approaching;
     }
+    _formSquad(group);
     _launchFlock(
       group,
       wave,
@@ -2049,6 +2061,7 @@ class ArcadeModel {
       // through salvage, level clear and travel instead of freezing.
       _updateFallingParts(dt);
       _updateReserve(dt); // --- continuous swarm: the reserve keeps drifting
+      if (mode == RunMode.transition) _updateSquads(dt);
       if (mode == RunMode.transition) {
         if (wave > 1) {
           _advanceWaveEntrance(dt);
