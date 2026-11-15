@@ -145,5 +145,5 @@ Groups 2–4 can land before group 5. The rush (5) is independent of the hunters
       is the operator's.)*
 
 ## 9. Docs and specs
-- [ ] 9.1 `plan/game-design.md` (dodging, dives, last stand), `plan/policy.md` (tiers, planner as teacher).
-- [ ] 9.2 `openspec validate demon-intelligence`; sync at archive.
+- [x] 9.1 `plan/game-design.md` (dodging, dives, last stand), `plan/policy.md` (tiers, planner as teacher).
+- [x] 9.2 `openspec validate demon-intelligence`; sync at archive. *(Valid; the sync happens at archive.)*

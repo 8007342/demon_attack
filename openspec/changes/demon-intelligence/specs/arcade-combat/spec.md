@@ -62,7 +62,7 @@ A sentinel SHALL be eligible for a final rush with probability 0.20 / 0.35 / 0.4
 - **THEN** it begins its final rush
 
 ### Requirement: Rush passes are fast but escapable
-Each rush pass SHALL rally and lock on for at least 1.0 s of real time, then rush at 640 / 780 / 880 units per second at the forecast of the player's position. It SHALL home at no more than 0 / 50 / 75 degrees per second until it nears the ship's row, then commit. A missed rush SHALL come around through the fog for up to 1 / 2 / 3 passes in total, then sacrifice itself off screen without reward.
+Each rush pass SHALL rally and lock on for at least 1.0 s of real time, then rush at 640 / 780 / 880 units per second at the forecast of the player's position. It SHALL home at no more than 0 / 50 / 75 degrees per second, and never more than 0 / 14 / 16 degrees from its locked aim, until it nears the ship's row, then commit. A missed rush SHALL come around through the fog for up to 1 / 2 / 3 passes in total, then sacrifice itself off screen without reward.
 
 #### Scenario: A dodging pilot escapes
 - **WHEN** the ship starts moving away from the locked aim as the rush begins
