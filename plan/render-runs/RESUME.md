@@ -218,3 +218,16 @@ On resume:
 - **Music L3 pilot: BLOCKED on tillandsias#1103** (audio studio batch 1 is a draft awaiting operator review; tray
   56.11.15.5 has no SFZ/audio nodes). Don't work around it or build the nodes in-forge (host, 2026-11-15).
 - Voices (VoxCPM2 batch, tips-as-radio, growlier demons, pending lines): blocked on the same audio batch.
+
+## Status 2026-11-15 ~10:30 UTC: ground forces closed out (autonomous run)
+
+Everything on `game`, `flutter analyze` clean, `flutter test` 500 passed / 1 skipped. Read
+`plan/render-runs/ground-forces-rework.md` §12–§17 (decisions, ledgers, close-out with deferred lists and the
+operator's playtest checklist).
+- Art: 26 heroes picked and committed (`art/sprites/sources/ground-blocks-selected/`), all blocks baked (bake v2) and
+  packed per sector; atmosphere atlas (procedural); wildlife flock + critter leaps; sentinel silhouettes.
+- Runtime: OpenSpec `ground-blocks-runtime` (headings, turrets, overlays, LOD; legacy behind
+  `GroundPainter.useBlocks`), `ground-easter-eggs` (budget, dances, breakups, jackpot, flocks, scatter), atmosphere
+  atlas in the depth sort, unit fog tint, battlefield smoke.
+- Not archived: the OpenSpec changes await the operator's playtest before `openspec archive`.
+- Still blocked: music L3 pilot and every voice task on tillandsias#1103 (audio studio batch 1, draft).
