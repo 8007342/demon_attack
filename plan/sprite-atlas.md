@@ -100,8 +100,12 @@ Species `k` owns rows `9k … 9k+8` (`CombatAtlas.base(k)`):
 
 | State | Enter | Leave | Hold |
 | --- | --- | --- | --- |
-| Banking left / right | `vx ≤ −55` / `vx ≥ 55` units/s (also flips directly when the other side's enter threshold is crossed) | `|vx| < 24` | ≥ 0.14 s |
-| Glide | `vy > 70` (sinking) | `vy ≤ 32` | ≥ 0.28 s |
+| Banking left / right | `vx ≤ −38` / `vx ≥ 38` units/s (also flips directly when the other side's enter threshold is crossed); or the squad's lateral velocity `|squadVx| ≥ 30` when the creature's own `vx` does not oppose it beyond 38 | `|vx| < 16` | ≥ 0.28 s |
+| Glide | `vy > 70` (sinking) | `vy ≤ 32` | ≥ 0.56 s |
+
+continuous-swarm (2026-11-15) lowered the banking thresholds from 55 / 24 and doubled the hold from 0.14 s, and
+added the squad heading rule, so that whole squads bank together while they sweep, mill and swoop: over 60 s of
+Normal sector 2, banked frames went from 13.3 % to 55 % of drawn flight frames (`test/swarm_facing_test.dart`).
 
 The stroke phase advances at 2 strokes/s (1.3× while climbing, `vy < −30`) and is offset per creature by its seed. The downstroke takes 62 % of the stroke while climbing, 50 % in level flight and 38 % while sinking (`vy > 25`), so rising creatures visibly drive their wings down and sinking ones linger in the folded upstroke. Jumps over 60 units in one update (respawns, formation resets) are ignored. Without tracker state (a single painted frame), the direction falls back to the simulation's smoothed `bank` (±0.45) and the stroke to the clock. The scene no longer rotates or squashes ordinary creatures for banking: the authored frames carry it.
 

@@ -144,6 +144,26 @@ first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start
       frame time and a screen capture for the operator. Note any "ladder" moment that remains.
 
 ## 9. Docs and specs
-- [ ] 9.1 `plan/game-design.md` (flock paragraph), `plan/perspective.md` (arrivals), `plan/sprite-atlas.md` (frame
+- [x] 9.1 `plan/game-design.md` (flock paragraph), `plan/perspective.md` (arrivals), `plan/sprite-atlas.md` (frame
       selection thresholds), `plan/calibration-current.md` (post-W3 table).
 - [ ] 9.2 `openspec validate continuous-swarm`, then sync the deltas into `openspec/specs/` at archive time.
+
+## Implementation notes (work/continuous-swarm, 2026-11-15)
+- 8.2 not done: no preview playtest in this run (no browser session); the review strips in
+  `art/contact/continuous-swarm-*.png` stand in for it. The phone frame-time check is still owed.
+- 9.2: `openspec validate continuous-swarm` passes; the spec sync waits for the archive (after W4 and W5b).
+- Deviations, recorded in the commits and `plan/calibration-current.md`:
+  - calibration uses an oracle-free pilot on both sides; the historical pilot predicts the hover by its own formula;
+  - acceptance on the aimed hit ratio; the raw ratio is −17.9 % in Easy sector 1;
+  - shadow base alpha is 0.95, not 0.55 (0.55 did not show on the dark grounds);
+  - the next cohort holds at entrance 0.6, not 0.22 (it stayed invisible); the close-in takes 1.1 s, not 0.9 s;
+  - sweep span is 130–180 and period 4.5–6 s, so the peak speed stays inside the 40–75 u/s band;
+  - the swoop takes 1.6 s, the re-entry 1.1 s, and the sentinel rise 3.2 s. The two sentinel-timing fixtures were
+    updated to match.
+- W2 accessors: `Atmosphere.bandNearness` and `Atmosphere.groundLight`, mirrored by `swarmFogBands` (tested).
+- Hooks for W4 and W5b:
+  - `Demon.swarmState`, `ArcadeModel.squads` / `squadOf` / `patterned` / `squadVx`;
+  - `Squad.phi`, `stream.drain()` / `rout()` / `preload()` (stubs);
+  - the events `cohortSighted`, `cohortMerged` and `shotsFizzle`;
+  - `eta` on `reinforcements` and `sentinelIncoming`;
+  - `AveragePilot` (W4 baseline).

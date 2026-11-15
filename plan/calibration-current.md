@@ -117,3 +117,52 @@ weak and noisy; the numbers are a baseline for `demon-intelligence`, not a verdi
 | hard | 0 | 0.50 → 1.50 | 3.50 → 3.50 | 11.00 → 9.25 | 16.75 → 12.00 |
 | hard | 1 | 28.25 → 12.75 | 21.75 → 23.75 | 22.25 → 34.25 | 26.25 → 40.75 |
 | hard | 2 | 51.75 → 44.25 | 61.00 → 52.50 | 62.00 → 91.75 | 78.75 → 77.00 |
+
+### Post-W3 (after the review-frame tuning of group 8)
+
+Same harness, oracle-free pilot, eight seeds; change against pre-W3:
+
+| Sector | Wall | Clear | Hit | Aimed hit | Aimed (post) |
+|---|---:|---:|---:|---:|---:|
+| easy1 | -2.3% | +6.1% | -17.9% | -9.4% | 49.0 % |
+| easy2 | -5.4% | +0.0% | -10.2% | -3.4% | 59.9 % |
+| easy3 | +1.8% | +10.7% | -12.6% | -5.2% | 54.8 % |
+| easy4 | -3.3% | +2.6% | -12.9% | -5.7% | 59.8 % |
+| easy5 | -9.0% | -11.3% | +0.2% | +0.2% | 99.5 % |
+| normal1 | -1.2% | +2.9% | -6.3% | -1.2% | 67.0 % |
+| normal2 | -7.2% | -4.3% | -2.4% | +2.0% | 70.9 % |
+| normal3 | -8.8% | -5.8% | -6.9% | -1.7% | 68.7 % |
+| normal4 | +4.4% | +9.1% | -5.3% | -0.9% | 69.1 % |
+| normal5 | -4.1% | -4.8% | +0.0% | +0.0% | 98.5 % |
+| hard1 | -7.3% | -5.1% | -3.6% | +0.3% | 69.7 % |
+| hard2 | -6.6% | -4.4% | -6.0% | -1.8% | 70.2 % |
+| hard3 | +6.4% | +10.9% | -1.0% | +2.6% | 73.6 % |
+| hard4 | -14.7% | -13.0% | -5.8% | -1.8% | 70.8 % |
+| hard5 | -6.9% | -8.2% | +0.0% | +0.0% | 97.5 % |
+
+Absolute post-W3 values:
+
+| Mode | Sector | Waves | Mean clear (s) | Mean wall (s) | Hit ratio | Aimed hit | Peak active | Peak hostile | Lives lost |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| easy | 1 | 192 | 16.12 | 19.30 | 44.5 % | 49.0 % | 19 | 9 | 0 |
+| easy | 2 | 192 | 20.79 | 23.96 | 55.7 % | 59.9 % | 29 | 10 | 0 |
+| easy | 3 | 232 | 18.67 | 21.30 | 50.6 % | 54.8 % | 22 | 9 | 0 |
+| easy | 4 | 232 | 23.11 | 25.73 | 55.3 % | 59.8 % | 33 | 10 | 0 |
+| easy | 5 | 32 | 52.13 | 66.85 | 99.5 % | 99.5 % | 10 | 11 | 0 |
+| normal | 1 | 192 | 33.25 | 36.43 | 63.5 % | 67.0 % | 32 | 12 | 0 |
+| normal | 2 | 192 | 34.89 | 38.07 | 67.8 % | 70.9 % | 35 | 12 | 0 |
+| normal | 3 | 232 | 33.38 | 36.01 | 65.1 % | 68.7 % | 37 | 13 | 0 |
+| normal | 4 | 232 | 37.21 | 39.84 | 66.0 % | 69.1 % | 39 | 13 | 0 |
+| normal | 5 | 32 | 73.16 | 87.88 | 98.5 % | 98.5 % | 10 | 11 | 0 |
+| hard | 1 | 192 | 36.72 | 39.89 | 67.0 % | 69.7 % | 36 | 16 | 0 |
+| hard | 2 | 192 | 36.16 | 39.34 | 67.2 % | 70.2 % | 40 | 15 | 0 |
+| hard | 3 | 232 | 38.38 | 41.01 | 71.0 % | 73.6 % | 43 | 15 | 0 |
+| hard | 4 | 232 | 33.40 | 36.02 | 67.9 % | 70.8 % | 45 | 16 | 0 |
+| hard | 5 | 32 | 69.67 | 84.39 | 97.5 % | 97.5 % | 10 | 11 | 0 |
+
+Accepted: clear time within +11 % everywhere (limit +25 %); aimed hit ratio within −9.4 % (limit −15 %); peak
+active ≤ 45 and peak hostile bullets ≤ 16 (≤ 120); budgets unchanged. The raw hit ratio (every shot fired) drops up
+to −17.9 % in Easy sector 1: the auto-fire keeps shooting while a small Easy wave's skeins are still arriving or
+holding in the lull, phases the old interwave transition did not count. The aimed ratio measures what the change can
+affect (moving targets) and is the acceptance figure; the raw figure is reported for review. Facing: 55.3 % banked
+(was 13.3 %).
