@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"image"
+	"image/color"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -463,4 +465,64 @@ func TestFinishKeepsAIColourInRing(t *testing.T) {
 	if got := p.finish(u, cell, ref2, key).NRGBAAt(cx, cy); got != paint {
 		t.Fatalf("interior: got %v, want %v", got, paint)
 	}
+}
+
+// bake: every baked base cell keeps the rig silhouette (ink only around it),
+// uses only master-sector palette colours, and is deterministic.
+func TestBake(t *testing.T) {
+	p := proj(t)
+	u := p.unit("lodestar")
+	keys := p.selectedKeys(u)
+	if len(keys) == 0 {
+		t.Skip("no committed lodestar keyframes")
+	}
+	bk := p.newBaker(u)
+	for _, name := range sortedKeys(keys) {
+		src, err := pixelgrid.ReadPNG(keys[name])
+		if err != nil {
+			t.Fatal(err)
+		}
+		bk.addKey(p.findCell(u, name), src)
+	}
+	bk2 := p.newBaker(u)
+	for _, name := range sortedKeys(keys) {
+		src, _ := pixelgrid.ReadPNG(keys[name])
+		bk2.addKey(p.findCell(u, name), src)
+	}
+	pal := p.Pals[u.faction()]
+	allowed := map[color.NRGBA]bool{pal.Ink: true}
+	for _, c := range pal.finishColours(p.masterSector(u)) {
+		allowed[c] = true
+	}
+	cs := p.cellsOf(u)
+	for i := range cs {
+		c := &cs[i]
+		if c.Overlay {
+			continue
+		}
+		a, b := bk.bakeCell(c), bk2.bakeCell(c)
+		for y := 0; y < c.F.H; y++ {
+			for x := 0; x < c.F.W; x++ {
+				col := a.NRGBAAt(x, y)
+				if col != b.NRGBAAt(x, y) {
+					t.Fatalf("%s %d,%d: not deterministic", c.Name, x, y)
+				}
+				if fl := c.F.filled(x, y); (fl && col.A == 0) || (!fl && col.A != 0 && col != pal.Ink) {
+					t.Fatalf("%s %d,%d: silhouette differs from the rig", c.Name, x, y)
+				}
+				if col.A != 0 && !allowed[col] {
+					t.Fatalf("%s %d,%d: %v not in the palette", c.Name, x, y, col)
+				}
+			}
+		}
+	}
+}
+
+func sortedKeys(m map[string]string) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
