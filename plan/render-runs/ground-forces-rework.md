@@ -435,3 +435,59 @@ skipped, on the merged tree.
 Notes for the in-game review (CP8): some Host units bake darker than their rigs (crocket-captured, knell,
 scrapmason at h135); side-on vehicles draw larger than the legacy sprites (authored size); stilt, strider, sextant
 and chapterhouse heroes disagree with their rig's body plan, so only tone and accents transfer.
+
+## 16. Wildlife and sentinel silhouettes (2026-11-15)
+
+**Flock flyers (task 6.3).** `art/families/ground-wildlife.json`, tool `tools/ground_wildlife` (Go, stdlib):
+`ingest` (raws in `~/.cache/demon-attack/ground-wildlife/raw/<species>/<seed>/` → provenance in
+`art/families/ground-wildlife-runs.json`, sources of record in `art/sprites/sources/ground-wildlife/`:
+`<id>-raw.png` the full-resolution alpha crop of the pick, `<id>.png` at 64 px), `review OUT`, `offline`.
+Five studio jobs, `sprite-transparent.json` (SDXL + pixel-art-xl + LayerDiffuse), `count` 4, ~44 s each:
+
+| Species (sector) | Job | Seeds | Pick | Why |
+| --- | --- | --- | --- | --- |
+| rime-moth (Krybor) | st-1794734638268-53 | 760100–103 | 760102 | broad rounded pale wings: the widest, clearest shape at 16 × 12 |
+| dust-kite (Ringfall) | st-1794734687908-54 | 760200–203 | 760201 | a clean delta/kite membrane; 760202 (ray-like) collapses to a blob |
+| ash-flit (Ember) | st-1794734732566-55 | 760300–303 | 760301 | grey swift, swept wings, no face detail to read as eyes |
+| puffwing (Hollow) | st-1794734777111-56 | 760400–403 | 760403 | round spore body with two stubby wings, as specified |
+| hull-gnat (Carrier) | st-1794734821588-57 | 760500–503 | 760501 | slim gnat, long wings; 760503 has a cartoon face |
+
+Finish (CPU, byte-identical): one top-down keyframe per species → flap A (spread) and flap B (span folded to
+45% outside the body column, tips lifted, wings one step darker), rotated −12° for up-left and mirrored for
+up-right, 4 × 4 supersampled coverage, rank-quantised to a 4-step ramp from the sector palette pulled toward
+the species hint (luma .04–.32, chroma ≤ .22). Flap and heading from prompts would have given unrelated
+designs per pose; deriving them keeps one creature. Tried and dropped: −35° heading (wings became a diagonal
+line), outline-darkening of every edge texel (thin wings went all-outline, invisible on the fog).
+
+**Critter leaps — deviation from the plan.** The plan called for 10 × 2 Qwen pose edits. The critters are
+11–24 px wide and §12 showed Qwen edits are binary at sprite scale, so each crouch / leap is derived from the
+critter's own walk frame 0 in `flyover-creatures.png` (crouch: ×1.14 wide, ×0.72 tall, 10% darker; leap:
+×0.86 wide, ×1.12 tall, lifted 2 texels), both facings, luma capped at .34 (warm and saturated-cyan texels
+at .20, easter-egg rule 3). No GPU.
+
+**Atlas** `assets/images/ground-wildlife.png` 112 × 300: rows 0–4 flock (16 × 12 cells: left-a, left-b,
+right-a, right-b), rows from y 60 critters (28 × 24 cells: crouch, leap, mirrored crouch, mirrored leap; feet
+on the bottom row, anchor bottom-centre). Metadata `lib/game/ground_wildlife_atlas.dart`. CP7 sheet
+`art/contact/ground-wildlife.png` (per species: the four cells ×8 on the sector fog tint, the source, a loose
+flock at 1× and ×2; per critter: walk | crouch | leap ×5 and a 1× strip). Verdict: flyers read as small dark
+birds/moths over the fog, never as targets (no warm, no violet glow, no eyes); species differ mostly in shape
+(moth blob, kite delta, swift V, puff, gnat cross), which is what survives at 6–8 texels.
+
+**Wired:** fleeing flyover critters now crouch-leap-land on every other stride (8-tick cycle at 14 fps,
+phase by critter, off under reduced motion; drawn in a second `drawAtlas` after the walkers). **Not wired**
+(no code exists yet): the flock burst from falling trees, `EasterEggBudget`, and the troop-proximity critter
+groups of easter-eggs §4–5; `GroundWildlifeAtlas.flock(sector, flap, right:)` is ready for them.
+
+**Sentinel silhouettes (atmosphere-and-swarms 5.1).** CPU, `tools/sentinel_silhouettes`: flight column 2 (level,
+full span) of each species banked through 8 frames (±22°, the dipping wing foreshortened 24%, the rising one
+5% long), 4 × 4 supersampled, Gaussian σ 1.0 (near) and 2.1 (far), alpha stepped to 8 levels, one near-black
+body. Sheet `assets/images/sentinel-silhouettes.png` (160 × 96 cells, 8 × 4), metadata
+`lib/game/sentinel_silhouette_atlas.dart`, contact `art/contact/sentinel-silhouettes.png` (rows: per species
+near/far on four fog tints; last two rows the in-game look with warm rim and eyes). GPU rejected: the sheet is
+a shape, it must match the body it cross-fades into, and no committed workflow renders a banked rig pose. The
+foreshadow now draws it (frame from the path's bank, far→near blur by nearness, eyes rotate with the bank);
+the old flight-frame treatment is the fallback and still serves the arrival cross-fade. Trade-off: the
+silhouette glides (no wing stroke) — at its size a slow-banking glide reads as the giant soaring.
+
+Tests: `test/wildlife_silhouette_assets_test.dart` (metadata, every cell drawn, binary alpha, luma and signal
+colour caps, 8 × 2 frames per species, blur ordering); `flutter analyze` clean, `flutter test` passing.

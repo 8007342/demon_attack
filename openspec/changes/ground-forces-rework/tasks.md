@@ -72,8 +72,13 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
 ## 6. Atmosphere and wildlife
 - [ ] 6.1 `art/families/ground-atmosphere.json`: procedural bands and sprites (seeded noise, stepped alpha), sector tints sampled from each horizon and clamped
 - [ ] 6.2 Optional low-cloud strips through `strip-sheet.json`; pack `assets/images/ground-atmosphere.png` and `lib/game/ground_atmosphere_atlas.dart` (generated) per the interface note
-- [ ] 6.3 `art/families/ground-wildlife.json`: 5 flock species (transparent sprite workflow) and 10 critter leap pairs (pose edits); pack `assets/images/ground-wildlife.png`
+- [x] 6.3 `art/families/ground-wildlife.json`: 5 flock species (transparent sprite workflow) and 10 critter leap pairs (pose edits); pack `assets/images/ground-wildlife.png`
+      (2026-11-15: flock = 5 jobs × 4 LayerDiffuse candidates, picks finished on the CPU (flap B and headings
+      derived); leaps derived on the CPU from each critter's own walk frame instead of pose edits (deviation,
+      render plan §16); `tools/ground_wildlife`, metadata `lib/game/ground_wildlife_atlas.dart`.)
 - [ ] 6.4 Checkpoints CP6 (atmosphere over every sector with units at four depths) and CP7 (easter egg assets)
+      (2026-11-15: CP7 done for the wildlife half: `art/contact/ground-wildlife.png`, picks delegated and recorded
+      in render plan §16; debris sheets and the infantry `flourish` are separate; CP6 still open.)
 
 ## 7. Handoff and proof
 - [ ] 7.1 Send the atmosphere interface note (`plan/ground-atmosphere.md`, Section 6) and the block metadata contract to the runtime work; agree the names before packing

@@ -12,6 +12,7 @@ import 'ground_painter.dart';
 import 'model.dart';
 import 'music_director.dart'; // --- music event hook
 import 'sector_background.dart';
+import 'sentinel_silhouette_atlas.dart';
 import 'ship_painter.dart';
 import 'sprite_atlas.dart';
 import '../services/scores.dart';
@@ -27,6 +28,10 @@ class DemonScene extends FlameGame {
   final ArcadeModel model;
   final VoidCallback onTick;
   ui.Image? atlas, effectsAtlas, sky, cockpitAtlas;
+
+  /// The foreshadow silhouette sheet (tools/sentinel_silhouettes); the
+  /// placeholder from the flight frames is drawn while it is missing.
+  ui.Image? silhouetteAtlas;
   final ship = ShipPainter();
   // Boss armada: one hull class per run, its atlas loaded on approach.
   final armada = BossPainter();
@@ -59,6 +64,9 @@ class DemonScene extends FlameGame {
     }
     try {
       cockpitAtlas = await images.load('cockpit-panel.png');
+    } catch (_) {}
+    try {
+      silhouetteAtlas = await images.load(SentinelSilhouetteAtlas.file);
     } catch (_) {}
     try {
       // Ship, cannons, muzzle flashes and shots (tools/generate_ship_sprites.py).
@@ -1571,12 +1579,18 @@ class DemonScene extends FlameGame {
 
   /// The coming sentinel's silhouette (design §5): a darker patch of the
   /// fog in its shape, soft-edged, with a thin warm rim toward the sun and
-  /// eyes that ignore most of the fog. Placeholder art from the sentinel's
-  /// own flight frames until the studio's silhouette sheet (task 5.1).
+  /// eyes that ignore most of the fog. The silhouette sheet (task 5.1)
+  /// carries the bank and the softness; the sentinel's own flight frames are
+  /// the fallback while it is missing.
   void _foreshadowSilhouette(Canvas c) {
     final f = model.foreshadow;
-    if (f == null || !f.visible || effectsAtlas == null) return;
+    if (f == null || !f.visible) return;
     final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
+    if (silhouetteAtlas != null) {
+      _bankedSilhouette(c, f, species);
+      return;
+    }
+    if (effectsAtlas == null) return;
     // A slow, heavy stroke: the giant's wings beat at about half the rate.
     const strokes = [0, 1, 2, 3, 2, 1];
     final frame = strokes[(f.clock / .55).floor() % strokes.length];
@@ -1591,6 +1605,54 @@ class DemonScene extends FlameGame {
     c.translate(-pos.dx, -pos.dy);
     _silhouetteSprite(c, species, frame, pos, o);
     c.restore();
+  }
+
+  /// The foreshadow from the silhouette sheet: the banking frame for the
+  /// path's bank, far blur cross-fading to near blur as it comes closer.
+  void _bankedSilhouette(Canvas c, SentinelForeshadow f, int species) {
+    final sheet = silhouetteAtlas!;
+    final frame = SentinelSilhouetteAtlas.frameFor(f.bank);
+    final pos = Offset(f.x.roundToDouble(), f.y.roundToDouble());
+    final o = f.opacity;
+    final near = Perspective.smoothstep(.12, .26, f.nearness);
+    final breathe = 1 + .01 * math.sin(f.clock * 2 * math.pi / 5);
+    final k = f.scale * breathe;
+    const w = SentinelSilhouetteAtlas.cellW * 1.0;
+    const h = SentinelSilhouetteAtlas.cellH * 1.0;
+    final dst = Rect.fromLTWH(
+      (pos.dx - w / 2 * k).roundToDouble(),
+      (pos.dy - h / 2 * k).roundToDouble(),
+      w * k,
+      h * k,
+    );
+    void draw(
+      int blur,
+      Color colour,
+      double alpha, {
+      Offset shift = Offset.zero,
+    }) {
+      if (alpha <= .01) return;
+      c.drawImageRect(
+        sheet,
+        SentinelSilhouetteAtlas.cell(species, frame, blur),
+        dst.shift(shift),
+        Paint()
+          ..isAntiAlias = false
+          ..filterQuality = FilterQuality.none
+          ..color = Colors.white.withValues(alpha: alpha.clamp(0.0, 1.0))
+          ..colorFilter = ColorFilter.mode(colour, BlendMode.srcIn),
+      );
+    }
+
+    final veil = atmosphere.veil, air = atmosphere.air;
+    final body = Color.lerp(veil, const Color(0xFF06050B), .7)!;
+    // Warm rim toward the sun, the body (far and near blur), a breath of air.
+    draw(0, const Color(0xFFE2A46E), .26 * o, shift: const Offset(-1.5, -1.5));
+    draw(1, body, .92 * o * (1 - near));
+    draw(0, body, .92 * o * near);
+    draw(1, air, .05 * o, shift: const Offset(0, 3));
+    final a = SentinelSilhouetteAtlas.bankDeg[frame] * math.pi / 180;
+    _sentinelEyes(c, pos, .95 * o, angle: a, scale: k);
   }
 
   /// The silhouette treatment of a sentinel frame at [pos], opacity [o].
@@ -1637,7 +1699,13 @@ class DemonScene extends FlameGame {
   /// Emissive eyes for a fogged sentinel: the gold species' body is as warm
   /// as its eyes, so an emissive mask cannot separate them; two embers at
   /// the head (cell 128 x 64, eyes 6 px either side, 6 px above centre).
-  void _sentinelEyes(Canvas c, Offset pos, double o) {
+  void _sentinelEyes(
+    Canvas c,
+    Offset pos,
+    double o, {
+    double angle = 0,
+    double scale = 1,
+  }) {
     if (o <= .02) return;
     final halo = Paint()
       ..color = const Color(0xFFFF9A3C).withValues(alpha: .35 * o)
@@ -1646,7 +1714,11 @@ class DemonScene extends FlameGame {
       ..isAntiAlias = false
       ..color = const Color(0xFFFFE7A8).withValues(alpha: o);
     for (final side in [-1.0, 1.0]) {
-      final e = pos.translate(side * 5.5, -6);
+      final ex = side * 5.5 * scale, ey = -6.0 * scale;
+      final e = pos.translate(
+        ex * math.cos(angle) - ey * math.sin(angle),
+        ex * math.sin(angle) + ey * math.cos(angle),
+      );
       c.drawCircle(e, 3.2, halo);
       c.drawRect(Rect.fromCenter(center: e, width: 2, height: 2), core);
     }

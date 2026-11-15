@@ -1,0 +1,502 @@
+{
+ "ash-flit/760300": {
+  "job": "st-1794734732566-55",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "908a85ba7dd7d89a0f36324ca389ebed8dbdd715d0829bdfc34bab4a1b243151"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "0882928bc6b51026a382b56a6064200a5c6b131d9abb30209a0e6a1b7b7a5e5c"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small soot-grey alien swift bird with narrow pointed swept-back wings, a pale tan belly and a forked tail, transparent background",
+  "seed": 760300,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ash-flit/760301": {
+  "job": "st-1794734732566-55",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "b7e6e89ffd8e8489af35eb5141c0c42a1a7bea8abb00034166ecb443461b85fc"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "08b6152553b0ba31b1c153f1b834030326fd81a6526267b6c82c847e36b57e52"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small soot-grey alien swift bird with narrow pointed swept-back wings, a pale tan belly and a forked tail, transparent background",
+  "seed": 760301,
+  "selected": true,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ash-flit/760302": {
+  "job": "st-1794734732566-55",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "67ab38aa76108d052c3448af084a30eca50cc7292afd4f66ec99ac0f28b6121c"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "b4d29808b11f1f857bb2d6e87ab8658adc6ff2adadd07f9c0b0017b74d0b885b"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small soot-grey alien swift bird with narrow pointed swept-back wings, a pale tan belly and a forked tail, transparent background",
+  "seed": 760302,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ash-flit/760303": {
+  "job": "st-1794734732566-55",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "c64c210b523040b9626db2770665c31e7a94b2811d36975e0df8d86044ed000d"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "0251d5a2c35b51821906a50d69202047414011d2acdefbeb53077cf7a18fcae9"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a small soot-grey alien swift bird with narrow pointed swept-back wings, a pale tan belly and a forked tail, transparent background",
+  "seed": 760303,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "dust-kite/760200": {
+  "job": "st-1794734687908-54",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "b442b96d361ea1ca87117be5bc8da888aaa4c757ebc13b4bbaadba6b5b154302"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "9dff39a6dd9707a4deca66fc1249682ffb2ae463c1709b88a7a53737cf402ce4"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a flat diamond-shaped alien glider creature, a thin dusty grey-violet membrane stretched between four fine struts, kite shaped, a short thin tail, transparent background",
+  "seed": 760200,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "dust-kite/760201": {
+  "job": "st-1794734687908-54",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "255e8db429e3a75a52d1f3aca0a3c3c5b0fd38eb29cb16fa47b3b10cf645d497"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "e3194096ec4c114d6920c04b120141bb20ef642b0b80849fdbf07c04308a8843"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a flat diamond-shaped alien glider creature, a thin dusty grey-violet membrane stretched between four fine struts, kite shaped, a short thin tail, transparent background",
+  "seed": 760201,
+  "selected": true,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "dust-kite/760202": {
+  "job": "st-1794734687908-54",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "f9b3b98cb40c4a6f37afa5991db1c0fbce385db9de4f478858d713259d69ef5b"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "a04ae9db6faa1b6b08b5e6372f7c38900d9008e5beb28efb6bc222c0c74f5f0f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a flat diamond-shaped alien glider creature, a thin dusty grey-violet membrane stretched between four fine struts, kite shaped, a short thin tail, transparent background",
+  "seed": 760202,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "dust-kite/760203": {
+  "job": "st-1794734687908-54",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "e1927e34ff623c403f65f431fc46cee7778b39257d05af9685b858b80eedbfbf"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "8104bfb87fbf4e6ed33f05cd21bfe637db4760e0c90cc23200d0321e4a08286e"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a flat diamond-shaped alien glider creature, a thin dusty grey-violet membrane stretched between four fine struts, kite shaped, a short thin tail, transparent background",
+  "seed": 760203,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "hull-gnat/760500": {
+  "job": "st-1794734821588-57",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "9d9020f9db511ca5b2e2b469627e0f852b2186cafa13c715b91a6d48046e2106"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "e252cc9c010845d526340fb0681dbb014e8ca779c1d0e03287348eafedc8a943"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a tiny dark plum alien gnat insect with two clear veined wings, a slim segmented body and thin legs, transparent background",
+  "seed": 760500,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "hull-gnat/760501": {
+  "job": "st-1794734821588-57",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "fe2c23042fa4e5c1c2334687a02eccff99191e20b8540983ae4cb40f1e2686e7"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "8a74dac7cf0ed7fd575f71771faff30a6bc0a66f3cd47c89169de7de846556f5"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a tiny dark plum alien gnat insect with two clear veined wings, a slim segmented body and thin legs, transparent background",
+  "seed": 760501,
+  "selected": true,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "hull-gnat/760502": {
+  "job": "st-1794734821588-57",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "c9fb261b90fa1a060a41e61bfab4b89fb54450b4572e87cef27630bf40d08268"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "6f6e5644ae16a3c35997548def6d7376b59a2a2e97a4322997227ff7ad25095e"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a tiny dark plum alien gnat insect with two clear veined wings, a slim segmented body and thin legs, transparent background",
+  "seed": 760502,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "hull-gnat/760503": {
+  "job": "st-1794734821588-57",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "8f25be79a95558d2806f72139796c5f97b31b7a84a438b0dab99c5d267c47fcc"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "2ef43ee7a1d6f2425c9f77251f6995df9b9fea0b7cb67e38c13caf0df0046dfe"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a tiny dark plum alien gnat insect with two clear veined wings, a slim segmented body and thin legs, transparent background",
+  "seed": 760503,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "puffwing/760400": {
+  "job": "st-1794734777111-56",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "d94a1cb2e85d7e70eb8578e108afa69b2af6b5f620f7dbbbc39f0cf66c6e9b0f"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "6a1c8205eba89eb21147a94fe7ac9fd138cca4ec2ef9ee65ec63de1e140b468a"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a round fluffy grey-green spore-like puffball creature with two small stubby rounded wings, transparent background",
+  "seed": 760400,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "puffwing/760401": {
+  "job": "st-1794734777111-56",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "e8ee31368e16b0a714616a648e6aeab8b6b630ac5fce078aa2f7dc231ef2e259"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "094af1ca16108e084f425812961ee9317c36bfdd382208ebdcbe967483206215"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a round fluffy grey-green spore-like puffball creature with two small stubby rounded wings, transparent background",
+  "seed": 760401,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "puffwing/760402": {
+  "job": "st-1794734777111-56",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "ee327bc47285b0245dcfb93123a973442dca919b8f43d7524fc32418b135b277"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "eeac2d5aa264c298b3f3ee6f0b3bba5cc79ed39cf52316293e77d8041808995a"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a round fluffy grey-green spore-like puffball creature with two small stubby rounded wings, transparent background",
+  "seed": 760402,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "puffwing/760403": {
+  "job": "st-1794734777111-56",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "d7d372994b171ccdb74780017cca413178534fbc4412a9875b28c2febff7b666"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "0f40804641a266f55cbf9d44f5d15f4e51a64704c10d46cdbc1464c7a099f83e"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a round fluffy grey-green spore-like puffball creature with two small stubby rounded wings, transparent background",
+  "seed": 760403,
+  "selected": true,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "rime-moth/760100": {
+  "job": "st-1794734638268-53",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "a2c0c9dc149f346eb355e3a44a8a4a70812819fe94f129148df47cc6b24334f1"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "30c63f64055a153b052ec7c9e18791d135a7fd47ea3afb7d0a594ecd38e1cbd2"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a pale grey-lilac alien moth with broad soft rounded wings speckled with frosted white dots, a small furry body, transparent background",
+  "seed": 760100,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "rime-moth/760101": {
+  "job": "st-1794734638268-53",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "21377e3c0f11eff0f9c51212aeef4f30fe8688ef27815e8d17eeb59ca55f52a4"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "1064ef3bb51bc77432cd8b2dde43ab068e63c190ac6aeea54a447a5566d2cacb"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a pale grey-lilac alien moth with broad soft rounded wings speckled with frosted white dots, a small furry body, transparent background",
+  "seed": 760101,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "rime-moth/760102": {
+  "job": "st-1794734638268-53",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "34ff3ee8ddf771a5d3966d660c0b2c38e33b51083d3af167c4aa4ab51543dbf1"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "89ad7ac170ab42a7e7820bf267a8650cd43dcbc574c873ed27442376feee4e11"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a pale grey-lilac alien moth with broad soft rounded wings speckled with frosted white dots, a small furry body, transparent background",
+  "seed": 760102,
+  "selected": true,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "rime-moth/760103": {
+  "job": "st-1794734638268-53",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, glowing eyes, red eyes, orange, fire, embers, horns, demon, gargoyle, dragon, skull, weapon, many creatures, flock, swarm, side view, cute, cartoon, bright colours",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "bb3fdc5eb3e574206d59faa17b89d212fd68b7e93898eefdba359594d0810440"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "ab01d55e939ab58792643a8e97bd78f949bffa9d4c82cb22862a2da5e9ade5a4"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small night flying creature seen from directly above, top-down view, wings spread wide, symmetrical, dark muted colours, crisp square pixels, original artwork, centered, isolated, a pale grey-lilac alien moth with broad soft rounded wings speckled with frosted white dots, a small furry body, transparent background",
+  "seed": 760103,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ }
+}

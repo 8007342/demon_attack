@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'flyover_atlas.dart';
 import 'ground_painter.dart';
+import 'ground_wildlife_atlas.dart';
 import 'model.dart';
 import 'terrain_field.dart';
 import 'vegetation_atlas.dart';
@@ -36,6 +37,10 @@ class FlyoverBackground implements GroundOccluders {
   /// `assets/images/flyover-vegetation.png` (optional): plants and debris
   /// the ground fleet pushes through.
   ui.Image? vegetationSheet;
+
+  /// `assets/images/ground-wildlife.png` (optional): leap frames for the
+  /// fleeing critters (and the easter-egg flock flyers).
+  ui.Image? wildlife;
 
   /// The relief under the camera (surface, navigation, vegetation queries),
   /// shared with the ground war as its [GroundRelief].
@@ -748,8 +753,47 @@ class FlyoverBackground implements GroundOccluders {
     final transforms = <RSTransform>[];
     final rects = <Rect>[];
     final colors = <Color>[];
+    final leapSheet = reducedMotion ? null : wildlife;
+    final leapTransforms = <RSTransform>[];
+    final leapRects = <Rect>[];
+    final leapColors = <Color>[];
     for (final v in views) {
       final s = _critters[v.id];
+      final f = (235 * _fog(v.z)).round();
+      final colour = Color.fromARGB(alpha, f, f, f);
+      // Fleeing: every other stride is a crouch-leap-land from the wildlife
+      // sheet (plan/ground-easter-eggs.md section 5), phase by critter.
+      final leapRow = leapSheet == null
+          ? -1
+          : GroundWildlifeAtlas.critterIds.indexOf(v.kind.id);
+      if (s != null &&
+          s.fleeT > 0 &&
+          s.burrowT <= 0 &&
+          s.duckT <= 0 &&
+          leapRow >= 0) {
+        final tick = ((_clock * 14).floor() + v.id) % 8;
+        if (tick >= 4) {
+          leapRects.add(GroundWildlifeAtlas.leap(
+            leapRow,
+            leaping: tick == 5 || tick == 6,
+            mirrored: !v.facing,
+          ));
+          leapTransforms.add(RSTransform.fromComponents(
+            rotation: 0,
+            scale: v.scale,
+            anchorX: 0,
+            anchorY: 0,
+            translateX: (v.x +
+                    (v.kind.w / 2 - GroundWildlifeAtlas.critterW / 2) *
+                        v.scale)
+                .roundToDouble(),
+            translateY:
+                (v.y - GroundWildlifeAtlas.critterH * v.scale).roundToDouble(),
+          ));
+          leapColors.add(colour);
+          continue;
+        }
+      }
       int frame;
       if (s != null && s.burrowT > 0) {
         // Sink (6), hide (7), then re-emerge through the same frames.
@@ -775,11 +819,14 @@ class FlyoverBackground implements GroundOccluders {
         translateX: v.x.roundToDouble(),
         translateY: (v.y - v.kind.h * v.scale).roundToDouble(),
       ));
-      final f = (235 * _fog(v.z)).round();
-      colors.add(Color.fromARGB(alpha, f, f, f));
+      colors.add(colour);
     }
     c.drawAtlas(sheet, transforms, rects, colors, BlendMode.modulate, null,
         _pixelPaint);
+    if (leapSheet != null && leapRects.isNotEmpty) {
+      c.drawAtlas(leapSheet, leapTransforms, leapRects, leapColors,
+          BlendMode.modulate, null, _pixelPaint);
+    }
   }
 
   // ---------------------------------------------------------------------
