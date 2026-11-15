@@ -133,14 +133,16 @@ Groups 2–4 can land before group 5. The rush (5) is independent of the hunters
       any future retraining. No training is run in this change.
 
 ## 8. Review frames and playtest
-- [ ] 8.1 `test/demon_intelligence_review_test.dart` writes to `.cache/demon-intelligence-review/`:
+- [x] 8.1 `test/demon_intelligence_review_test.dart` writes to `.cache/demon-intelligence-review/`:
       - a hunter threading two shots;
       - a pincer tell;
       - rush rally, lock (with the shadow snapped onto the ship's), mid-rush with the aura, the shield broken with
         the stagger, the second pass coming out of the fog;
       - the reduced-motion rush.
 - [ ] 8.2 Preview playtest at phone portrait: a route-1 Normal sentinel wave, captured for the operator. Note the
-      "properly scary and fast" verdict as an open item for the operator.
+      "properly scary and fast" verdict as an open item for the operator. *(Open: not run in this change; the
+      review strips in `art/contact/demon-intelligence-*.png` stand in until the operator plays it. The verdict
+      is the operator's.)*
 
 ## 9. Docs and specs
 - [ ] 9.1 `plan/game-design.md` (dodging, dives, last stand), `plan/policy.md` (tiers, planner as teacher).
