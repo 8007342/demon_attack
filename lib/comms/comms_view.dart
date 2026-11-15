@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -782,13 +783,14 @@ class CommsHudStack extends StatelessWidget {
   /// A full-size transmission card is showing the transmission line.
   final bool hideTransmission;
 
-  /// Strips grew with the larger radio text; short landscape screens use
-  /// [compactStripHeight].
-  static const stripHeight = 90.0,
-      compactStripHeight = 76.0,
-      chipHeight = 22.0,
-      gap = 2.0;
-  static const portrait = 40.0;
+  /// Cards are sized to their text (mobile-top-trim): [stripHeight] is the
+  /// tallest a card gets (four lines of radio text, or a brood grunt's
+  /// glyphs and three SIGINT lines, plus the frame).
+  static const stripHeight = 76.0, chipHeight = 18.0, gap = 2.0;
+
+  /// The portrait is never taller than the text beside it, between
+  /// [minPortrait] (the half-scale face) and [portrait].
+  static const portrait = 40.0, minPortrait = 26.0;
 
   /// Tallest the dock gets (dialogue cards plus exchange/queue label).
   static const maxHeight = stripHeight + gap + chipHeight;
@@ -796,10 +798,6 @@ class CommsHudStack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    // Short landscape screens keep the compact strip clear of the ship.
-    final strip = MediaQuery.sizeOf(context).height < 520
-        ? compactStripHeight
-        : stripHeight;
     final (:placed, :overflow) = dockEntries(
       director.active,
       hideTransmission: hideTransmission,
@@ -826,34 +824,35 @@ class CommsHudStack extends StatelessWidget {
               leading: Color(panels.first.character.accent),
               trailing: Color(panels.last.character.accent),
               lit: panels.any((m) => m.speaking(now)),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _strip(
-                      panels.first,
-                      reduce,
-                      retained: identical(panels.first, opening),
-                      conversation: conversation,
-                      height: conversation ? strip - _frameInset : strip,
-                    ),
-                  ),
-                  if (panels.length == 2) ...[
-                    SizedBox(width: conversation ? 0 : gap * 2),
+              // Both cards of a row share the taller card's height.
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                     Expanded(
                       child: _strip(
-                        panels.last,
+                        panels.first,
                         reduce,
-                        right: true,
+                        retained: identical(panels.first, opening),
                         conversation: conversation,
-                        height: conversation ? strip - _frameInset : strip,
                       ),
                     ),
-                  ] else ...[
-                    const SizedBox(width: gap * 2),
-                    const Spacer(),
+                    if (panels.length == 2) ...[
+                      SizedBox(width: conversation ? 0 : gap * 2),
+                      Expanded(
+                        child: _strip(
+                          panels.last,
+                          reduce,
+                          right: true,
+                          conversation: conversation,
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(width: gap * 2),
+                      const Spacer(),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
             if (ticker != null)
@@ -877,8 +876,9 @@ class CommsHudStack extends StatelessWidget {
     );
   }
 
-  /// Vertical room the toast frame takes (padding plus border, both edges).
-  static const _frameInset = 8.0;
+  /// Vertical room the toast frame takes (padding plus border, both edges):
+  /// just enough to keep the text off the rounded border.
+  static const _frameInset = 4.0;
 
   /// A radio toast: rounded, fully bordered card with a soft drop shadow and
   /// an accent bar on the speaker's side ([trailing]: a second bar on the
@@ -930,6 +930,8 @@ class CommsHudStack extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius - 1),
         child: Stack(
+          // A card stretched to its taller neighbour centres its content.
+          alignment: Alignment.centerLeft,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -1074,7 +1076,6 @@ class CommsHudStack extends StatelessWidget {
     bool right = false,
     bool retained = false,
     bool conversation = false,
-    double height = stripHeight,
   }) {
     final c = m.character;
     final accent = Color(c.accent);
@@ -1085,18 +1086,17 @@ class CommsHudStack extends StatelessWidget {
       key: ValueKey('comms-strip-${m.line.id}'),
       opacity: retained ? 1 : _fade(m, reduce),
       child: _maybeFramed(
-        height: height,
         framed: !conversation,
         leading: accent,
         barOnRight: right,
         lit: speaking,
-        child: Row(
-          textDirection: right ? TextDirection.rtl : TextDirection.ltr,
+        child: _PortraitRow(
+          portraitOnRight: right,
+          maxSide: portrait,
+          minSide: minPortrait,
           children: [
-            SizedBox(
+            KeyedSubtree(
               key: ValueKey('comms-portrait-${m.line.id}'),
-              width: portrait,
-              height: portrait,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(5),
                 child: CustomPaint(
@@ -1111,66 +1111,62 @@ class CommsHudStack extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: m.line.isGrunt
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tag,
-                          maxLines: 1,
-                          style: TextStyle(
-                            color: accent,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        CommsSubtitle(
-                          message: m,
-                          now: now,
-                          fontSize: 12.5,
-                          maxLines: 3,
-                          glyphHeight: 16,
-                          glyphRows: 2,
-                        ),
-                      ],
-                    )
-                  : Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: '${celebrating ? '★ ' : ''}$tag  ',
-                              style: TextStyle(
-                                color: celebrating
-                                    ? const Color(0xFFFFD86B)
-                                    : accent,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: .8,
-                              ),
-                            ),
-                            TextSpan(text: m.line.text ?? ''),
-                          ],
-                        ),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: _text,
-                          fontSize: 13,
-                          height: 1.15,
-                          shadows: [
-                            Shadow(color: Color(0xFF000000), blurRadius: 2),
-                          ],
+            m.line.isGrunt
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tag,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
                         ),
                       ),
+                      CommsSubtitle(
+                        message: m,
+                        now: now,
+                        fontSize: 12.5,
+                        maxLines: 3,
+                        glyphHeight: 16,
+                        glyphRows: 2,
+                      ),
+                    ],
+                  )
+                : Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${celebrating ? '★ ' : ''}$tag  ',
+                            style: TextStyle(
+                              color: celebrating
+                                  ? const Color(0xFFFFD86B)
+                                  : accent,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: .8,
+                            ),
+                          ),
+                          TextSpan(text: m.line.text ?? ''),
+                        ],
+                      ),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _text,
+                        fontSize: 13,
+                        height: 1.15,
+                        shadows: [
+                          Shadow(color: Color(0xFF000000), blurRadius: 2),
+                        ],
+                      ),
                     ),
-            ),
-            const SizedBox(width: 4),
+                  ),
           ],
         ),
       ),
@@ -1406,3 +1402,145 @@ class _CommsAtlasScopeState extends State<CommsAtlasScope> {
 
 /// Unawaited helper for callers that only want to start the load.
 void preloadCommsPortraits() => unawaited(CommsPortraitAtlas.instance.load());
+
+/// A toast's portrait beside its text (mobile-top-trim): the row is as tall
+/// as the text, and the square portrait follows the text's height between
+/// [minSide] and [maxSide], so it never adds empty space above or below
+/// the words. The portrait is the first child, the text the second.
+class _PortraitRow extends MultiChildRenderObjectWidget {
+  const _PortraitRow({
+    required this.portraitOnRight,
+    required this.maxSide,
+    required this.minSide,
+    required super.children,
+  });
+  final bool portraitOnRight;
+  final double maxSide, minSide;
+
+  @override
+  _RenderPortraitRow createRenderObject(BuildContext context) =>
+      _RenderPortraitRow(portraitOnRight, maxSide, minSide);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderPortraitRow renderObject,
+  ) {
+    renderObject
+      ..portraitOnRight = portraitOnRight
+      ..maxSide = maxSide
+      ..minSide = minSide;
+  }
+}
+
+class _PortraitRowData extends ContainerBoxParentData<RenderBox> {}
+
+class _RenderPortraitRow extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, _PortraitRowData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, _PortraitRowData> {
+  _RenderPortraitRow(this._right, this._maxSide, this._minSide);
+
+  /// Gap between portrait and text, and the margin after the text.
+  static const _gap = 6.0, _end = 4.0;
+
+  bool _right;
+  set portraitOnRight(bool v) {
+    if (v == _right) return;
+    _right = v;
+    markNeedsLayout();
+  }
+
+  double _maxSide, _minSide;
+  set maxSide(double v) {
+    if (v == _maxSide) return;
+    _maxSide = v;
+    markNeedsLayout();
+  }
+
+  set minSide(double v) {
+    if (v == _minSide) return;
+    _minSide = v;
+    markNeedsLayout();
+  }
+
+  @override
+  void setupParentData(RenderBox child) {
+    if (child.parentData is! _PortraitRowData) {
+      child.parentData = _PortraitRowData();
+    }
+  }
+
+  RenderBox get _face => firstChild!;
+  RenderBox get _words => lastChild!;
+
+  /// The portrait side and the text's height for a row [width] wide: the
+  /// text is measured beside the largest portrait, then once more beside
+  /// the portrait its height allows (narrower portrait, wider text).
+  (double, double) _measure(double width, double Function(double) textHeight) {
+    var side = _maxSide;
+    var h = textHeight(math.max(0, width - side - _gap - _end));
+    for (var i = 0; i < 2 && h < side; i++) {
+      side = h.clamp(_minSide, _maxSide).floorToDouble();
+      h = textHeight(math.max(0, width - side - _gap - _end));
+    }
+    return (side, h);
+  }
+
+  @override
+  double computeMinIntrinsicWidth(double height) =>
+      _minSide + _gap + _end + _words.getMinIntrinsicWidth(height);
+
+  @override
+  double computeMaxIntrinsicWidth(double height) =>
+      _maxSide + _gap + _end + _words.getMaxIntrinsicWidth(height);
+
+  @override
+  double computeMinIntrinsicHeight(double width) =>
+      computeMaxIntrinsicHeight(width);
+
+  @override
+  double computeMaxIntrinsicHeight(double width) {
+    final (side, h) = _measure(width, _words.getMaxIntrinsicHeight);
+    return math.max(side, h);
+  }
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) {
+    final (side, h) = _measure(
+      constraints.maxWidth,
+      (w) => _words.getDryLayout(BoxConstraints(maxWidth: w)).height,
+    );
+    return constraints.constrain(Size(constraints.maxWidth, math.max(side, h)));
+  }
+
+  @override
+  void performLayout() {
+    final width = constraints.maxWidth;
+    final (side, _) = _measure(width, (w) {
+      _words.layout(BoxConstraints(maxWidth: w), parentUsesSize: true);
+      return _words.size.height;
+    });
+    _face.layout(BoxConstraints.tight(Size.square(side)));
+    final h = math.max(side, _words.size.height);
+    size = constraints.constrain(Size(width, h));
+    final faceX = _right ? width - side : 0.0;
+    final textX = _right ? _end : side + _gap;
+    (_face.parentData! as _PortraitRowData).offset = Offset(
+      faceX,
+      (size.height - side) / 2,
+    );
+    (_words.parentData! as _PortraitRowData).offset = Offset(
+      textX,
+      (size.height - _words.size.height) / 2,
+    );
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
+      defaultHitTestChildren(result, position: position);
+
+  @override
+  void paint(PaintingContext context, Offset offset) =>
+      defaultPaint(context, offset);
+}

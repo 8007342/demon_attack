@@ -226,7 +226,15 @@ class DemonScene extends FlameGame {
     paintArena(canvas, size, combat: false);
   }
 
-  void paintArena(Canvas canvas, Vector2 dimensions, {bool combat = true}) {
+  /// Paints the 360 × 520 arena scaled to fit [dimensions]: centred
+  /// across, and at [alignY] down the spare height (0 top, .5 centred,
+  /// 1 bottom; the cabinet arena is bottom-aligned on the pilot dock).
+  void paintArena(
+    Canvas canvas,
+    Vector2 dimensions, {
+    bool combat = true,
+    double alignY = .5,
+  }) {
     final scale = math.min(
       dimensions.x / ArcadeModel.width,
       dimensions.y / ArcadeModel.height,
@@ -234,7 +242,7 @@ class DemonScene extends FlameGame {
     canvas.save();
     canvas.translate(
       (dimensions.x - ArcadeModel.width * scale) / 2,
-      (dimensions.y - ArcadeModel.height * scale) / 2,
+      (dimensions.y - ArcadeModel.height * scale) * alignY,
     );
     canvas.scale(scale);
     canvas.clipRect(const Rect.fromLTWH(0, 0, 360, 520));

@@ -1474,11 +1474,27 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   Widget _cabinet(BoxConstraints bounds) {
     // Flame is rendered once behind this transparent arena; overlays stay in logical alignment.
+    // --- mobile-top-trim: on phones and narrow windows (the comms dock
+    // layout) the HUD band is only as tall as its content (never under the
+    // 48 px touch target), and the toasts over the arena hug their text.
+    final compact = !CommsLayout.of(bounds.biggest).side;
+    final heartUp =
+        heartNotice != null &&
+        model.clock < heartNoticeUntil &&
+        model.mode != RunMode.paused;
+    final noticeTop = compact ? 2.0 : 8.0;
     return Column(
       children: [
         Container(
-          height: 94,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          key: const ValueKey('hud-band'),
+          height: compact ? null : 94,
+          constraints: compact
+              ? const BoxConstraints(minHeight: kMinInteractiveDimension)
+              : null,
+          padding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: compact ? 2 : 0,
+          ),
           decoration: const BoxDecoration(
             color: Color(0xF0080D18),
             border: Border(bottom: BorderSide(color: Color(0xFF26394C))),
@@ -1506,19 +1522,20 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       child: GameWidget(game: _arenaProxy, autofocus: false),
                     ),
                   ),
-                  if (heartNotice != null &&
-                      model.clock < heartNoticeUntil &&
-                      model.mode != RunMode.paused)
+                  if (heartUp)
                     Positioned(
-                      top: 8,
+                      top: noticeTop,
                       left: 8,
                       right: 8,
                       child: IgnorePointer(
                         child: Center(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
+                            key: const ValueKey('heart-notice'),
+                            height: compact ? _heartNoticeHeight : null,
+                            alignment: compact ? Alignment.center : null,
+                            padding: EdgeInsets.symmetric(
                               horizontal: 12,
-                              vertical: 8,
+                              vertical: compact ? 0 : 8,
                             ),
                             color: const Color(0xE8080D18),
                             child: Text(
@@ -1562,9 +1579,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       key: const ValueKey('comms-hud-stack'),
                       left: 4,
                       right: 4,
-                      top: heartNotice != null && model.clock < heartNoticeUntil
-                          ? 44
-                          : 4,
+                      top: heartUp ? noticeTop + _heartNoticeHeight + 2 : 2,
                       child: CommsAtlasScope(
                         child: CommsHudStack(
                           director: squadComms.director,
@@ -1611,6 +1626,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       ],
     );
   }
+
+  /// The heart-piece toast on phones: one line of 14 px text, no padding
+  /// above or below it (mobile-top-trim).
+  static const _heartNoticeHeight = 20.0;
 
   // A render-only view avoids updating the simulation twice when the full-screen sky is mounted.
   late final _ArenaView _arenaProxy = _ArenaView(scene);
@@ -1921,7 +1940,9 @@ class _ArenaView extends FlameGame {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    scene.paintArena(canvas, size);
+    // --- mobile-top-trim: the arena sits on the pilot dock; any spare
+    // height is one band at the top, under the HUD and the toasts.
+    scene.paintArena(canvas, size, alignY: 1);
   }
 }
 
