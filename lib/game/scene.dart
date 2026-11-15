@@ -574,7 +574,14 @@ class DemonScene extends FlameGame {
     // The fog layers are drawn when the sort passes their nearness, so a
     // creature at n .35 is behind bank B and in front of bank A, and an
     // arrival rises up through the layers one by one (fog-restoration).
-    final approaching = model.incoming.where((d) => !d.isLarge).toList();
+    // --- continuous swarm: the reserve (groups and later skeins waiting in
+    // the deep fog) is drawn veiled with the approaching cohort; neither
+    // shows gear (swarmState is the contract with the fog layers).
+    final approaching = <Demon>{
+      for (final d in model.incoming)
+        if (!d.isLarge && d.swarmState != SwarmState.reserve) d,
+      if (model.perspective) ...model.drawnReserve,
+    };
     final fogSlots = model.perspective
         ? Atmosphere.depthSlots
         : const <FogSlot>[];
@@ -589,7 +596,11 @@ class DemonScene extends FlameGame {
       if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c);
     }
 
-    for (final d in _byDepth([...approaching, ...model.demons])) {
+    for (final d in _byDepth([
+      ...approaching,
+      for (final d in model.demons)
+        if (d.isLarge || d.swarmState != SwarmState.reserve) d,
+    ])) {
       while (nextFog < fogSlots.length &&
           Atmosphere.layers[fogSlots[nextFog]]!.nearness <= d.nearness) {
         fog();
@@ -1740,7 +1751,8 @@ class DemonScene extends FlameGame {
       model.perspective &&
       d.entering &&
       d.arrivesFromDistance &&
-      d.entranceProgress <= 0;
+      d.entranceProgress <= 0 &&
+      d.swarmState != SwarmState.reserve;
 
   void _scaleAbout(Canvas c, Offset pos, double scale) {
     if (scale == 1) return;

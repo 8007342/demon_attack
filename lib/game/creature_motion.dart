@@ -112,7 +112,11 @@ class CreatureMotionTracker {
   CreatureMotion track(Demon d) => _state[d] ??= CreatureMotion(d.seed);
 
   void update(ArcadeModel model, double dt) {
-    for (final d in [...model.demons, ...model.incoming]) {
+    for (final d in <Demon>{
+      ...model.demons,
+      ...model.incoming,
+      ...model.drawnReserve,
+    }) {
       if (d.isLarge) continue;
       track(d).update(d.x, d.y, dt, rate: d.wingRate);
     }
