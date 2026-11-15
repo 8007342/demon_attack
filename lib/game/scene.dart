@@ -2348,6 +2348,10 @@ class DemonScene extends FlameGame {
     );
   }
 
+  /// The shadow pass alone (tests: the reduced-tier identity fixture).
+  @visibleForTesting
+  void paintShadowPass(Canvas c) => _creatureShadows(c);
+
   void _creatureShadows(Canvas c, {Iterable<Demon> also = const []}) {
     shadowLayers = 0;
     shadowCount = 0;

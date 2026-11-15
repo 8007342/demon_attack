@@ -62,6 +62,20 @@ bucket `saveLayer`.
 - when the frame-time governor already dropped the atmosphere tier;
 - in the perf test's baseline.
 
+**As built (task 1).**
+- The projector works against a small `ShadowSurface` interface (`shadowLift`, `shadowDrape`) rather than
+  `GroundRelief`; `TerrainView` implements both. `FlatShadowSurface` is today's plane, and the tests use synthetic
+  surfaces (a ridge, a mesa) through the same interface.
+- Positions are screen x and *flat-ground y* (`GroundCamera.yOf(z)`), not (x, z). An offset along flat-ground y is
+  exactly the legacy screen offset, so `zStretch` is the identity in that frame and drops out.
+- The terrain height `t` is measured in arena units, as the visible lift of the surface above flat ground (texel height
+  × `GroundCamera.texel(z)`), so that `h − t` subtracts like units. Both lookups read the cached mesh grids
+  (`gridHeight`, `gridY`), never the relief functions.
+- The ship keeps its own legacy offset direction (lateral only, `ShadowProjector.shipDir`); flyers use
+  `(cos φ, 0.25 + sin φ)`.
+- "Rows spread on the slope facing away from the sun": with the sun behind the scene, shadows fall toward the camera,
+  so that slope is the one facing the camera (the near side of a ridge). The ridge test checks exactly that.
+
 ## 3. Casters
 | Caster | Altitude source | Footprint | Notes |
 |---|---|---|---|

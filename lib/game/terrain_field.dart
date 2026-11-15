@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'model.dart';
+import 'shadow_projector.dart';
 import 'vegetation_atlas.dart';
 
 /// Notable terrain features; the names are the `kind` of the
@@ -364,7 +365,7 @@ class VegetationParticle {
 ///
 /// All of it is visual and positional. Gameplay (fire range, breakthroughs,
 /// collisions) is decided by logical depth and lane, never by these poses.
-class TerrainView implements GroundRelief {
+class TerrainView implements GroundRelief, ShadowSurface {
   TerrainView();
 
   static const horizon = GroundCamera.horizon;
@@ -633,6 +634,44 @@ class TerrainView implements GroundRelief {
     final cx = (x / columnStep).clamp(0.0, columns - 1.0001);
     final j = cx.floor();
     return _interp(gridHeight, i, j, cx - j, t);
+  }
+
+  // ---------------------------------------------------------------------
+  // Shadows (terrain-shadows design §2: ShadowSurface)
+  // ---------------------------------------------------------------------
+
+  /// Interpolation of grid [g] at screen [x] and flat-ground y [flatY]
+  /// (clamped into the mesh).
+  double _gridAt(Float64List g, double x, double flatY) {
+    final f = flatY.clamp(rowFlatY[rows - 1], rowFlatY[0]);
+    final i = _rowOf(f);
+    final t = ((rowFlatY[i] - f) / (rowFlatY[i] - rowFlatY[i + 1]))
+        .clamp(0.0, 1.0);
+    final cx = (x / columnStep).clamp(0.0, columns - 1.0001);
+    final j = cx.floor();
+    return _interp(g, i, j, cx - j, t);
+  }
+
+  /// Visible lift (arena units) of the relief above flat ground at screen
+  /// [x], flat-ground y [flatY], before occlusion: the mesh height times
+  /// the texel scale there. Reads the cached grid only.
+  @override
+  double shadowLift(double x, double flatY) {
+    _ensure();
+    final f = math.max(flatY, rowFlatY[rows - 1]);
+    return _gridAt(gridHeight, x, f) * (f - horizon) / _z0;
+  }
+
+  /// Where the mesh draws the ground point ([x], [flatY]) and whether a
+  /// nearer crest hides it (the rule units use: then y is the crest line).
+  @override
+  (double, bool) shadowDrape(double x, double flatY) {
+    _ensure();
+    final f = math.max(flatY, rowFlatY[rows - 1]);
+    final lift = _gridAt(gridHeight, x, f) * (f - horizon) / _z0;
+    if (f >= rowFlatY[0]) return (f - lift, false);
+    final y = _gridAt(gridY, x, f);
+    return (y, y < f - lift - .5);
   }
 
   // ---------------------------------------------------------------------

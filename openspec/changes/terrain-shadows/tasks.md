@@ -1,8 +1,8 @@
 # Tasks
 
 ## 1. Projector
-- [ ] 1.1 Add `lib/game/shadow_projector.dart`: caster record `(x, z, h, footprint, kind)`, sun state (θ = 32°, drift), the three-iteration hit-point march against a `GroundRelief`, and the 4 × 3 drape vertices via `TerrainView.yOf` / `surfaceAt(..).hidden` (design §2)
-- [ ] 1.2 `test/shadow_projector_test.dart`: flat-ground equivalence to the legacy centre (≤ 0.01 u), ridge stretch, crest occlusion, morph continuity across `mix` 0 → 1 (≤ 2 u per 1/60 s)
+- [x] 1.1 Add `lib/game/shadow_projector.dart`: caster record `(x, z, h, footprint, kind)`, sun state (θ = 32°, drift), the three-iteration hit-point march against a `GroundRelief`, and the 4 × 3 drape vertices via `TerrainView.yOf` / `surfaceAt(..).hidden` (design §2)
+- [x] 1.2 `test/shadow_projector_test.dart`: flat-ground equivalence to the legacy centre (≤ 0.01 u), ridge stretch, crest occlusion, morph continuity across `mix` 0 → 1 (≤ 2 u per 1/60 s)
 
 ## 2. Scene integration
 - [ ] 2.1 Turn `_shadowOf` into caster construction (creatures, divers, in-play sentinels with the rush-lock snap retargeted to the ship's projected hit point, ship); keep alpha, buckets and the death ghosts unchanged
