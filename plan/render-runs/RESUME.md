@@ -196,3 +196,16 @@ On resume:
    VACE clips (Lightning graphs, A2), one job at a time; push after each checkpoint (CP1 sheet `ground-pilot.png`).
 4. A6 renames and silhouette tweaks before Phase 2; Gutter-runner → Spout-runner touches `art/families/rigs/gutter-runner.json`,
    `ground-host.json`, `lib/game/ground_blocks_atlas.dart`, the openspec changes and the plan docs.
+
+## Relaunch 2026-11-15 ~07:15 UTC (tray 56.11.15.5): the cache volume was wiped
+
+- **The host's guest reset plus podman reset wiped every volume**, `~/.cache/tillandsias-project` included. No snapshot
+  exists. Lost: `ground-blocks/{work,raw,pilot,smoke}`, the voice-trial venv, the music/score caches.
+  **Rule: anything that must survive a host reset goes in git, or in a rebuild script plus its recorded seeds, never only
+  in the cache.**
+- Rebuilt from the repo: `cd tools/ground_blocks && go run . rig && go run . control && go run . jobs` (CPU, seconds).
+  The hero raws are re-rendered from the seeds in `art/families/ground-*-runs.json` (one count-4 run per unit).
+- `bootstrap_radio.lua` restores the symlink, then fails creating the voice venv (`uv` has no Python 3.11 and
+  downloads are manual). The render work doesn't need it; fix with `uv python install 3.11` when the voices are next needed.
+- **A1 done** (a7aed0b0): `finish` keeps the AI colour (see §10). `go run . sheet OUT CELL=RAW.png ...` draws the review rows
+  rig | raw | finished.
