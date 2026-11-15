@@ -25,11 +25,16 @@ On flat ground a shadow SHALL appear exactly where, how large, how soft and how 
 - **THEN** its position, size, softness and darkness match the shadow before this change
 
 ### Requirement: Sentinel lurking shadow
-While a sentinel approaches from the fog, before it takes its place in the fight, a broad, very soft shadow SHALL creep slowly along the ground from the far terrain toward the ground-war front, growing darker as the sentinel nears and fading in thick ground fog. Ground units it passes over SHALL visibly hesitate. When the sentinel emerges, the lurking shadow SHALL merge smoothly into the sentinel's own shadow so that only one sentinel shadow is ever visible.
+While a sentinel approaches from the fog, before it takes its place in the fight, a broad, very soft and clearly visible shadow SHALL creep slowly along the ground from the far terrain toward the ground-war front, growing darker as the sentinel nears and fading in thick ground fog. Ground units it passes over SHALL visibly hesitate. When the sentinel emerges, the lurking shadow SHALL merge smoothly into the sentinel's own shadow so that only one sentinel shadow is ever visible.
 
 #### Scenario: Approach
 - **WHEN** a sentinel is foreshadowed in the fog
 - **THEN** a large soft shadow moves slowly across the terrain toward the front lines, and ground units beneath it hesitate
+
+#### Scenario: Readable on dark ground
+- **WHEN** the lurking shadow crosses the ground of the darkest sectors at phone size
+- **THEN** a player can see it within one to two seconds of it appearing: the ground, its lit relief and the fog
+  above it dim and cool under the shape, while the ground's texture stays visible through it
 
 #### Scenario: Emergence
 - **WHEN** the sentinel rises out of the fog

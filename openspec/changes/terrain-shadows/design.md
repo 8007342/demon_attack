@@ -183,6 +183,44 @@ ranges and fronts are unchanged.
   grounds the shadows are subtle by design, so the second row is what shows the relief interaction. The relief and
   morph sheets also pose a row of far casters over the relief band in that second row.
 
+**Lurk visibility (follow-up after the first merge).** In real frames the ink shadow at 0.5 was still invisible on
+the dark grounds, for two reasons:
+- darkening already-dark ground by half changes little;
+- the depth fog banks are painted after the shadow pass and veil the far ground the lurk crosses.
+
+The lurk is now drawn as an occluder of the ground's light, outside the blur layers:
+- **Mask.** The sentinel strip's frames are baked once into soft white masks (blur σ 3.2 × 2.4 source pixels, padded
+  12), so the lurk is soft without a blur layer, and the layer cap and the per-bucket draw counts are unchanged.
+- **Two draws on the draped mesh.** A `BlendMode.saturation` draw with grey at 0.6 × strength desaturates the
+  ground under it. A `BlendMode.multiply` draw toward a cool tint (`#323C64`) at strength `a` follows. The result is
+  `ground × (1 − a·(1 − tint))`: lit slopes, crest rims and the ground fog's glow all dim and turn cool, and the
+  texture stays visible, so it is never a black blob.
+- **The fog above it.** After the last depth fog bank, the multiply is repeated at 0.65 × strength
+  (`DemonScene.lurkFogPass`), so the banks drawn over the far ground dim over it too: the great shape blocks their
+  light.
+- **Strength.** `a = 0.9 · rise · (0.7 + 0.3 · (1 − groundFog))`, where `rise` reaches full 1.5 s after the
+  silhouette appears (it was 3 s). The ground fog only softens it now, and `groundLight` no longer scales it.
+- **Size.** It never shrinks below a ground nearness of 0.2, so it is a broad patch from the moment it appears near
+  the fog (about 100 units wide), not a sliver.
+- **Hand-off.** One shape glides and contracts as before. Its occluder fades out (`1 − k`) while the sentinel's ink
+  shadow fades in (`k`) at the same position and size.
+
+Measured in real phone frames (`test/lurk_visibility_review_test.dart`: core of the footprint, mean luma with vs
+without):
+
+| Time after appearing | Hollow | Ember | Krybor | Ringfall |
+|---|---|---|---|---|
+| 1 s | 27 % | 22 % | 29 % | 23 % |
+| 1.5 s | 35 % | 37 % | 41 % | 38 % |
+| 2–10 s | 46–52 % | 41–59 % | 39–42 % | 45–61 % |
+
+Single frames dip (7–19 %) where creatures fly over the core or a nearer crest hides it. The test asserts that the
+per-sector mean from 1.5 s on is above 30 %. Sheet: `art/contact/terrain-shadows-lurk-visibility.png`, one row per
+sector at 0.5 / 1 / 1.5 / 2 / 4 / 7 / 10 s, plus the last frame without the lurk (grey tick).
+
+Not done: a cool rim where the edge crosses lit relief, and ground units' lights or eyes reacting. The multiply
+already cools and dims the lit relief under it. Units under it hesitate (gait × 0.7), and critters duck.
+
 ## 6. Risks
 - **Mesh cost.** `yOf` interpolates the cached grid, so there is no relief evaluation per vertex. Twelve vertex
   lookups per caster are cheap. Measured in the perf test.

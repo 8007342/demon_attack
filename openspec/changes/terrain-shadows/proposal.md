@@ -27,7 +27,8 @@ The swarm shadows from `continuous-swarm` §8 were praised ("terrific"). Today e
 - **The sentinel's lurking shadow.** From the first foreshadow until the sentinel takes its place in the fight:
   - a broad, very soft shadow (about 2.5 × the sentinel's own) creeps along the ground from the far terrain toward the
     ground-war front at walking pace, meandering;
-  - it grows darker as the sentinel nears (alpha up to 0.5 after review; 0.30 read as nothing on dark ground);
+  - it grows darker as the sentinel nears, drawn as an occluder of the ground's light (a desaturating, cool multiply that
+    also dims the fog banks above it), so it reads clearly on the darkest grounds without becoming a black blob;
   - ground units it passes over hesitate, using the existing duck reaction;
   - when the sentinel rises out of the fog, the lurking shadow contracts into its normal combat shadow, so there is
     never a second shadow and never a pop.

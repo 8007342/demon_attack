@@ -21,5 +21,11 @@
 - [x] 4.2 `test/terrain_shadows_review_test.dart` → `art/contact/terrain-shadows-relief.png`, `-lurk.png`, `-boss.png` at 360 × 780 and 1280 × 720 (design §5)
 - [x] 4.3 Update `continuous-swarm` design §8 cross-reference and `plan/atmosphere-research.md` §11 readability note
 
+## 5. Lurk visibility (follow-up)
+- [x] 5.1 Draw the lurk as an occluder of the ground's light: baked soft mask, desaturate + cool multiply on the draped mesh, no blur layer
+- [x] 5.2 Dim the depth fog banks over it (`lurkFogPass` after the last bank); faster rise (1.5 s), size floor (n ≥ 0.2), fog only softens it
+- [x] 5.3 Cross-fade the occluder into the sentinel's ink shadow through the hand-off
+- [x] 5.4 `test/lurk_visibility_review_test.dart`: real phone frames on Hollow, Ember, Krybor and Ringfall, the measured core darkening asserted, and `art/contact/terrain-shadows-lurk-visibility.png`
+
 ## Workflow follow-up
 - Operator playtest on phone; archive with `openspec archive terrain-shadows` after acceptance.
