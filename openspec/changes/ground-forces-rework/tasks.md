@@ -77,6 +77,14 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
 
 ## 7. Handoff and proof
 - [ ] 7.1 Send the atmosphere interface note (`plan/ground-atmosphere.md`, Section 6) and the block metadata contract to the runtime work; agree the names before packing
+      (2026-11-15: block metadata half done: `openspec/changes/ground-blocks-runtime` consumes the generated
+      names as they are (no renames needed); the atmosphere note is still to hand over.)
 - [ ] 7.2 Atlas contract tests (for the consuming code change): cell presence, binary alpha (stepped for atmosphere), palette membership per faction, gilt stillness, leg gaps, heading step size, turret seating (art half of gargoyle 5.3)
+      (2026-11-15: runtime half in `test/ground_blocks_runtime_test.dart` (change `ground-blocks-runtime`): every
+      cell the painter can request exists for every cast unit in every sector, `GroundHeading` determinism, one-step
+      turns, minimum hold, 90° heavy turn timing and no flicker, turret seating through the painter's placement for
+      every heading × angle × mirror pair, painter requests in a simulated run of each sector, and gameplay parity
+      with the old atlases. Binary alpha, palettes, gilt stillness and leg gaps stay in `go test` on the art side;
+      atmosphere alpha waits for its atlas.)
 - [ ] 7.3 Checkpoint CP8: in-game review frames at 360 × 780 and 1280 × 720 in every sector; operator acceptance
 - [ ] 7.4 Fold the accepted decisions into `plan/style-guide.md`, `plan/asset-pipeline.md` and the main specs
