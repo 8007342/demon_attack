@@ -1,0 +1,292 @@
+{
+ "schema": "demon-attack.boss-hulls/v1",
+ "name": "boss-hulls",
+ "notes": "The composable boss grammar (openspec/changes/boss-grandeur design 7, boss-hero-assets design 4). Every value is an input to tools/boss_rig/build.py (bpy). Units are arena units. Ship frame: x = screen right, y = aft (the bow points -y, toward the player and the camera), z = up. Face frame [ax, ay, n]: the plane through the carrier centre that faces the hero camera (pitch 45, yaw 0); ax, ay are arena units on screen in the hero view and n is the distance toward the camera. Functional features (core maw, bays, turrets, eyes) sit on that plane, so they stay on the simulation windows at every pitch (to second order) and every swerve (the swerve turns the hull about the hero view's screen-up axis: a banked turn of ~8.5 deg heading plus ~8.5 deg roll at 12 deg). Prims: box {size, taper:[tx,ty], skew:[dx,dy]}, loft {axis y|z, sections [at, w, d, c, ox, oz]}, cyl {r, r2, len, seg}, ell {radii, seg}, horn {pts, radii}, prism {poly, n0, n1} (face frame: extruded along n; ship frame: poly in (y,z) extruded along x by n0..n1), web {pts} (membrane surface). Every prim has at, rot (deg, XYZ, applied in its frame), tag (material class) and optional mirror (adds the x-mirrored copy). Module-level mirror: the hull places the module and its x-mirror as two modules (L, R).",
+ "views": {"pitch": [38, 45, 52], "yaw": [-12, 0, 12], "hero": [45, 0],
+           "swerve_axis": "hero screen-up, ship frame (0, 0.7071, 0.7071)"},
+ "anchors": {
+  "source": "lib/game/boss_atlas.dart BossAtlas (simulation geometry); gate +-3 units in every view",
+  "core": [0, 25, 32, 22], "bay": [46, 21, 22, 16], "turret": [28, 36],
+  "solid_body": {"half_width": 78, "top": -25, "bottom": 43, "inset": 3},
+  "tolerance": 3.0
+ },
+ "materials": {
+  "hull":     {"clay": 0.55, "id_note": "armoured stone hull"},
+  "plate":    {"clay": 0.66, "stage_off": 2, "id_note": "armour plates: torn away from S2"},
+  "rib":      {"clay": 0.40, "id_note": "ribs under the plates, exposed from S2"},
+  "bone":     {"clay": 0.86},
+  "membrane": {"clay": 0.36},
+  "metal":    {"clay": 0.48},
+  "dark":     {"clay": 0.0, "hint": "dark", "id_note": "maw and bay mouths: hint, near black in clay, far in depth"},
+  "eye":      {"clay": 1.00, "hint": "bright", "id_note": "eyes: hint, white in clay and depth"},
+  "light":    {"clay": 1.00, "hint": "bright", "id_note": "lit windows and nozzle glow"}
+ },
+ "palettes": {
+  "notes": "Hull-family ramps: the Host stone and violet slag of the ground army, darkened; bone; the Brood's ember lights; the cyan force-shield language shared with alien-insignia (shield overlays only, never baked into the hull).",
+  "ramps": {
+   "stone":   ["#14111A", "#221D2A", "#322A3C", "#463C52", "#5E526B", "#7A6C86"],
+   "slag":    ["#1C0E28", "#311845", "#4A2766", "#683C88", "#8C5EAC"],
+   "bone":    ["#4A3A2E", "#9A8466", "#D8C69A", "#FFF3D6"],
+   "ember":   ["#3A0A0C", "#7A1410", "#B8260F", "#E8501A", "#FF8A2A", "#FFC85A", "#FFF0B8"],
+   "shield":  ["#0B3A4A", "#1C7C90", "#3CC8D8", "#A8F4FF"],
+   "ink":     ["#0A0716"]
+  },
+  "per_hull": {
+   "frigate":       {"lead": "stone", "accent": "slag"},
+   "cruiser":       {"lead": "slag", "accent": "stone"},
+   "battlecruiser": {"lead": "stone", "accent": "ember"},
+   "battleship":    {"lead": "stone", "accent": "slag"},
+   "dreadnought":   {"lead": "stone", "accent": "ember"}
+  }
+ },
+ "originality": {
+  "notes": "Enforced by build.py --check on names, titles and prompts (as for ground forces, plan/gargoyle-army-style-guide.md).",
+  "forbidden_words": ["skull", "skulls", "cross", "crucifix", "scripture", "inscription", "bible", "pentagram",
+                      "star destroyer", "imperial", "warhammer", "xenomorph", "borg", "klingon", "dalek", "zerg", "tyranid",
+                      "galactica", "halo", "covenant", "reaper", "sauron", "nazgul"]
+ },
+ "prompts": {
+  "hero_qwen": "Redraw image 1 as a finished, detailed painted game sprite of a monstrous demonic gargoyle warship seen from above and in front, with exactly the materials, colours and style of image 2: dark violet-grey carved stone armour plating with panel lines and rivets, ivory bone horns, tusks and fangs, two glowing ember-orange eyes, a dark fanged maw in the middle, two dark rectangular hangar bays, dark bat-wing membranes on bone fingers, a gothic stone tower with lit slit windows, small red and amber running lights. Keep the outline, every shape, the pose and the viewing angle of image 1 exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+  "hero_qwen_single": "Repaint this grey clay model as a finished, detailed painted game sprite of a monstrous demonic gargoyle warship seen from above and in front: dark violet-grey carved stone armour plating with panel lines and rivets, ivory bone horns, tusks and fangs, the two white shapes become glowing ember-orange eyes, the black rectangles become a dark fanged maw and two dark hangar bays, dark bat-wing membranes stretched on the bone fingers, a gothic stone tower with lit slit windows, small red and amber running lights. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+  "hero_sdxl": "game sprite of a monstrous demonic gargoyle warship, seen from above and in front, dark violet-grey carved stone armour plating, ivory bone horns and fangs, glowing ember-orange eyes, dark fanged maw, dark hangar bays, bat-wing membranes on bone fingers, gothic tower with lit windows, hard surface, intricate, menacing, flat green background",
+  "negative": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon"
+ },
+ "modules": {
+  "bow": {
+   "slot": "bow", "mount": "bow", "size": "L", "fixed": true, "gameplay": "turret", "stages": 4,
+   "detach": null, "wreck": false, "id": "#E0402A",
+   "notes": "The gargoyle head on the face plane: holds the core maw, the bays, the turret pivots and the eyes. Never detaches (it carries the simulation windows); it breaks in S4 only.",
+   "lights": [[-90, 0, -13, 3], [90, 0, -13, 3]],
+   "fires": [[-60, -20, 2], [60, -20, 2], [0, -40, 2], [-64, 30, 2], [64, 30, 2]],
+   "anchors": {"core": "maw", "bayL": "bayL", "bayR": "bayR", "turretL": "turretL", "turretR": "turretR"},
+   "frame": "face",
+   "prims": [
+    {"name": "mask", "type": "prism", "tag": "hull", "at": [0, 0, 0], "n0": -30, "n1": 0,
+     "poly": [[-60, -50], [-40, -60], [0, -68], [40, -60], [60, -50], [60, 54], [38, 62], [14, 70], [0, 76], [-14, 70], [-38, 62], [-60, 54]]},
+    {"name": "cheek", "type": "prism", "tag": "hull", "at": [60, 0, 0], "rot": [0, 25, 0], "n0": -26, "n1": 0, "mirror": true,
+     "poly": [[-2, -50], [14, -47], [28, -32], [35, -6], [35, 22], [30, 44], [16, 55], [-2, 58]]},
+    {"name": "brow", "type": "box", "tag": "hull", "at": [15, -11, 3.5], "size": [32, 10, 9], "rot": [0, 0, -24], "taper": [0.85, 0.55], "mirror": true},
+    {"name": "eye", "type": "ell", "tag": "eye", "at": [14, -3.5, 1.5], "radii": [9.0, 2.6, 2.2], "rot": [0, 0, -26], "mirror": true},
+    {"name": "snout", "type": "box", "tag": "hull", "at": [0, 2, 3], "size": [11, 18, 7], "taper": [0.6, 0.8]},
+    {"name": "maw", "type": "box", "tag": "dark", "at": [0, 25, 0.5], "size": [32, 22, 1.0]},
+    {"name": "lip_top", "type": "box", "tag": "hull", "at": [0, 12, 2.5], "size": [42, 4, 5], "taper": [0.9, 0.7]},
+    {"name": "lip_bot", "type": "box", "tag": "hull", "at": [0, 38, 2.5], "size": [36, 4, 5], "taper": [0.9, 0.7]},
+    {"name": "lip_side", "type": "box", "tag": "hull", "at": [18.5, 25, 2.5], "size": [4, 28, 5], "mirror": true},
+    {"name": "fang_top_out", "type": "horn", "tag": "bone", "pts": [[11.5, 14.5, 3], [11, 24, 2.5]], "radii": [2.4, 0.3], "mirror": true},
+    {"name": "fang_top_in", "type": "horn", "tag": "bone", "pts": [[4, 14.5, 3], [4, 21, 2.5]], "radii": [1.8, 0.3], "mirror": true},
+    {"name": "fang_bot", "type": "horn", "tag": "bone", "pts": [[8, 35.5, 3], [8, 29, 2.5]], "radii": [1.8, 0.3], "mirror": true},
+    {"name": "fang_bot_mid", "type": "horn", "tag": "bone", "pts": [[0, 35.5, 3], [0, 30.5, 2.5]], "radii": [1.5, 0.3]},
+    {"name": "bayR", "type": "box", "tag": "dark", "at": [46, 21, 0.5], "size": [22, 16, 1.0]},
+    {"name": "bayL", "type": "box", "tag": "dark", "at": [-46, 21, 0.5], "size": [22, 16, 1.0]},
+    {"name": "bay_hood", "type": "box", "tag": "hull", "at": [46, 11, 3], "size": [28, 4, 6], "taper": [0.9, 0.6], "mirror": true},
+    {"name": "bay_sill", "type": "box", "tag": "hull", "at": [46, 31, 2], "size": [26, 3, 4], "mirror": true},
+    {"name": "bay_jamb_out", "type": "box", "tag": "hull", "at": [58.5, 21, 2], "size": [3, 22, 4], "mirror": true},
+    {"name": "bay_jamb_in", "type": "box", "tag": "hull", "at": [33.5, 21, 2], "size": [3, 22, 4], "mirror": true},
+    {"name": "turretR", "type": "ell", "tag": "metal", "at": [28, 36, 3.5], "radii": [6.5, 5.5, 5.0]},
+    {"name": "turretL", "type": "ell", "tag": "metal", "at": [-28, 36, 3.5], "radii": [6.5, 5.5, 5.0]},
+    {"name": "barrel_a", "type": "horn", "tag": "metal", "pts": [[25.5, 37, 6], [25.5, 47, 15]], "radii": [1.5, 1.3], "mirror": true},
+    {"name": "barrel_b", "type": "horn", "tag": "metal", "pts": [[30.5, 37, 6], [30.5, 47, 15]], "radii": [1.5, 1.3], "mirror": true},
+    {"name": "plate_forehead", "type": "box", "tag": "plate", "at": [0, -38, 2], "size": [56, 15, 3.5], "taper": [0.9, 0.9]},
+    {"name": "plate_temple", "type": "box", "tag": "plate", "at": [46, -32, 1.5], "size": [22, 18, 3.5], "rot": [0, 0, 14], "mirror": true},
+    {"name": "plate_cheek_hi", "type": "box", "tag": "plate", "at": [75.1, -22, -5.4], "size": [24, 22, 3.5], "rot": [0, 25, 10], "mirror": true},
+    {"name": "plate_cheek_lo", "type": "box", "tag": "plate", "at": [78.8, 10, -7.1], "size": [18, 28, 3.5], "rot": [0, 25, 0], "mirror": true},
+    {"name": "plate_jowl", "type": "box", "tag": "plate", "at": [46, 48, 1.5], "size": [24, 10, 3.5], "rot": [0, 0, -18], "mirror": true},
+    {"name": "plate_chin", "type": "box", "tag": "plate", "at": [0, 53, 2], "size": [34, 11, 3.5], "taper": [0.85, 0.9]},
+    {"name": "rib_forehead", "type": "box", "tag": "rib", "at": [8, -38, 0.6], "size": [2.5, 13, 1.6], "mirror": true},
+    {"name": "rib_forehead2", "type": "box", "tag": "rib", "at": [22, -37, 0.6], "size": [2.5, 12, 1.6], "mirror": true},
+    {"name": "rib_temple", "type": "box", "tag": "rib", "at": [46, -32, 0.6], "size": [20, 2.5, 1.6], "rot": [0, 0, 14], "mirror": true},
+    {"name": "rib_cheek", "type": "box", "tag": "rib", "at": [74.5, -22, -6.8], "size": [22, 2.5, 1.6], "rot": [0, 25, 10], "mirror": true},
+    {"name": "rib_cheek2", "type": "box", "tag": "rib", "at": [78.1, 10, -8.5], "size": [2.5, 24, 1.6], "rot": [0, 25, 0], "mirror": true},
+    {"name": "horn_main", "type": "horn", "tag": "bone", "mirror": true,
+     "pts": [[30, -50, 2], [43, -72, -1], [49, -98, -12], [43, -122, -28]], "radii": [7.5, 5.2, 3.0, 0.4]},
+    {"name": "horn_ear", "type": "horn", "tag": "bone", "mirror": true,
+     "pts": [[68, -40, -4], [88, -56, -10], [104, -66, -20]], "radii": [4.2, 2.4, 0.3]},
+    {"name": "horn_brow", "type": "horn", "tag": "bone", "mirror": true,
+     "pts": [[24, -16, 6], [32, -24, 12], [36, -32, 14]], "radii": [2.2, 1.3, 0.2]},
+    {"name": "tusk", "type": "horn", "tag": "bone", "mirror": true,
+     "pts": [[22, 50, 4], [28, 63, 9], [19, 78, 15]], "radii": [4.0, 2.6, 0.4]},
+    {"name": "cheek_spike", "type": "horn", "tag": "bone", "mirror": true,
+     "pts": [[88, 16, -12], [102, 24, -18], [110, 34, -24]], "radii": [2.8, 1.5, 0.2]}
+   ]
+  },
+  "spine": {
+   "slot": "spine", "mount": "dorsal", "size": "L", "gameplay": "none", "stages": 4, "detach": null, "wreck": true, "id": "#4A6CE0",
+   "notes": "Hull core behind the head: a lofted armoured body, dorsal bone ridge, flank plates. Goes last in S4.",
+   "lights": [[-20, 150, 20, 2], [20, 150, 20, 2], [0, 130, 30, 2]],
+   "fires": [[-30, 80, 34], [30, 80, 34], [0, 120, 28]],
+   "prims": [
+    {"name": "hull", "type": "loft", "tag": "hull", "axis": "y",
+     "sections": [[22, 66, 15, 0.45, 0, -16], [55, 66, 29, 0.35, 0, 5], [95, 56, 25, 0.35, 0, 11], [135, 40, 16, 0.4, 0, 12], [162, 20, 8, 0.4, 0, 12]]},
+    {"name": "keelson", "type": "loft", "tag": "hull", "axis": "y",
+     "sections": [[40, 30, 6, 0.5, 0, 36], [80, 26, 8, 0.5, 0, 38], [120, 16, 6, 0.5, 0, 33]]},
+    {"name": "ridge1", "type": "horn", "tag": "bone", "pts": [[0, 62, 42], [0, 72, 62]], "radii": [4.0, 0.3]},
+    {"name": "ridge2", "type": "horn", "tag": "bone", "pts": [[0, 100, 40], [0, 110, 56]], "radii": [3.6, 0.3]},
+    {"name": "ridge3", "type": "horn", "tag": "bone", "pts": [[0, 124, 36], [0, 134, 48]], "radii": [3.0, 0.3]},
+    {"name": "ridge4", "type": "horn", "tag": "bone", "pts": [[0, 146, 28], [0, 156, 38]], "radii": [2.4, 0.3]},
+    {"name": "flank_plate1", "type": "box", "tag": "plate", "at": [52, 60, 22], "size": [6, 30, 22], "rot": [0, 28, 0], "mirror": true},
+    {"name": "flank_plate2", "type": "box", "tag": "plate", "at": [46, 95, 26], "size": [6, 32, 18], "rot": [0, 30, 0], "mirror": true},
+    {"name": "deck_plate1", "type": "box", "tag": "plate", "at": [22, 62, 34.5], "size": [26, 26, 3], "mirror": true},
+    {"name": "deck_plate2", "type": "box", "tag": "plate", "at": [20, 100, 36], "size": [22, 30, 3], "mirror": true},
+    {"name": "deck_rib", "type": "box", "tag": "rib", "at": [22, 80, 33], "size": [40, 2.5, 3], "mirror": true},
+    {"name": "deck_rib2", "type": "box", "tag": "rib", "at": [20, 118, 31], "size": [34, 2.5, 3], "mirror": true},
+    {"name": "vent", "type": "box", "tag": "light", "at": [30, 128, 27], "size": [10, 3, 1.5], "rot": [-15, 0, 0], "mirror": true}
+   ]
+  },
+  "tower": {
+   "slot": "tower", "mount": "dorsal", "size": "M", "gameplay": "none", "stages": 4, "detach": 1, "wreck": true, "id": "#E0C02A",
+   "notes": "The bridge citadel: a tapering gothic tower with lit slit windows and two swept spire horns.",
+   "lights": [[0, 76, 96, 2]],
+   "fires": [[0, 80, 66], [-10, 86, 50], [10, 86, 50]],
+   "prims": [
+    {"name": "tower", "type": "loft", "tag": "hull", "axis": "z",
+     "sections": [[30, 22, 18, 0.35, 0, 88], [58, 16, 13, 0.35, 0, 86], [80, 10, 9, 0.4, 0, 86], [92, 3, 3, 0.4, 0, 86]]},
+    {"name": "buttress", "type": "prism", "tag": "hull", "at": [14, 0, 0], "n0": -2.5, "n1": 2.5, "mirror": true,
+     "poly": [[60, 34], [76, 34], [80, 62], [77, 64]]},
+    {"name": "window1", "type": "box", "tag": "light", "at": [0, 74.3, 68], "size": [14, 1.2, 2.4]},
+    {"name": "window2", "type": "box", "tag": "light", "at": [0, 72.3, 56], "size": [18, 1.2, 2.0]},
+    {"name": "window3", "type": "box", "tag": "light", "at": [0, 70.2, 44], "size": [22, 1.2, 2.0]},
+    {"name": "spire_horn", "type": "horn", "tag": "bone", "mirror": true,
+     "pts": [[8, 84, 80], [17, 92, 98], [16, 104, 112]], "radii": [3.2, 1.8, 0.3]},
+    {"name": "tower_plate", "type": "box", "tag": "plate", "at": [0, 70.5, 36], "size": [30, 3, 10], "rot": [-12, 0, 0]}
+   ]
+  },
+  "engine": {
+   "slot": "engine", "mount": "stern", "size": "M", "mirror": true, "gameplay": "none", "stages": 4, "detach": 2, "wreck": true, "id": "#2AE07A",
+   "notes": "Engine nacelle on a bone outrigger with a bat-wing finger and membrane (the frigate keeps today's bat-wing silhouette).",
+   "lights": [[124, 62, 98, 1]],
+   "fires": [[64, 110, 14], [90, 84, 36]],
+   "nozzles": [[64, 148, 8, 0]],
+   "prims": [
+    {"name": "nacelle", "type": "cyl", "tag": "metal", "at": [64, 122, 8], "rot": [-90, 0, 0], "r": 12, "r2": 10, "len": 52, "seg": 14},
+    {"name": "cowl", "type": "cyl", "tag": "hull", "at": [64, 104, 9], "rot": [-90, 0, 0], "r": 9, "r2": 14.5, "len": 14, "seg": 14},
+    {"name": "nozzle", "type": "cyl", "tag": "light", "at": [64, 149, 8], "rot": [-90, 0, 0], "r": 8, "r2": 8, "len": 2, "seg": 14},
+    {"name": "strut", "type": "horn", "tag": "bone", "pts": [[40, 84, 18], [54, 98, 14]], "radii": [4.5, 3.5]},
+    {"name": "finger", "type": "horn", "tag": "bone", "pts": [[66, 98, 16], [96, 80, 56], [124, 62, 98]], "radii": [4.2, 2.6, 0.4]},
+    {"name": "finger2", "type": "horn", "tag": "bone", "pts": [[70, 104, 16], [106, 100, 46], [128, 102, 64]], "radii": [3.4, 2.0, 0.3]},
+    {"name": "finger3", "type": "horn", "tag": "bone", "pts": [[72, 114, 14], [102, 124, 28], [118, 136, 34]], "radii": [3.0, 1.8, 0.3]},
+    {"name": "web", "type": "web", "tag": "membrane", "pts": [[44, 62, 28], [66, 98, 16], [96, 80, 56], [124, 62, 98], [112, 88, 66], [128, 102, 64], [112, 116, 44], [118, 136, 34], [84, 130, 14], [70, 112, 14], [48, 110, 20]]},
+    {"name": "nacelle_plate", "type": "box", "tag": "plate", "at": [64, 120, 19.5], "size": [12, 30, 3]}
+   ]
+  },
+  "pylon": {
+   "slot": "pylon", "mount": "lateral", "size": "L", "mirror": true, "gameplay": "none", "stages": 4, "detach": 3, "wreck": true, "id": "#C02AE0",
+   "notes": "Great bat wing on a bone arm: three fingers and a scalloped membrane; launcher pods hang from the wrist.",
+   "lights": [[150, 18, 74, 0]],
+   "fires": [[96, 50, 40], [120, 60, 46]],
+   "prims": [
+    {"name": "arm", "type": "horn", "tag": "bone", "pts": [[54, 52, 24], [80, 46, 36], [100, 48, 46]], "radii": [6.0, 4.6, 4.0]},
+    {"name": "f1", "type": "horn", "tag": "bone", "pts": [[100, 48, 46], [128, 30, 64], [150, 18, 74]], "radii": [3.6, 2.2, 0.4]},
+    {"name": "f2", "type": "horn", "tag": "bone", "pts": [[100, 48, 46], [134, 60, 56], [158, 72, 56]], "radii": [3.2, 2.0, 0.4]},
+    {"name": "f3", "type": "horn", "tag": "bone", "pts": [[100, 48, 46], [124, 88, 38], [138, 116, 30]], "radii": [3.0, 1.8, 0.4]},
+    {"name": "web", "type": "web", "tag": "membrane", "pts": [[54, 40, 28], [100, 48, 46], [150, 18, 74], [140, 46, 62], [158, 72, 56], [136, 90, 42], [138, 116, 30], [96, 106, 30], [56, 96, 26]]},
+    {"name": "pod", "type": "cyl", "tag": "metal", "at": [100, 40, 36], "rot": [-90, 0, 0], "r": 5, "r2": 4, "len": 24, "seg": 10},
+    {"name": "pod_mouth", "type": "cyl", "tag": "dark", "at": [100, 27.5, 36], "rot": [-90, 0, 0], "r": 3.6, "r2": 3.6, "len": 1, "seg": 10},
+    {"name": "arm_plate", "type": "box", "tag": "plate", "at": [78, 46, 41], "size": [26, 12, 3], "rot": [0, -24, 0]}
+   ]
+  },
+  "turret": {
+   "slot": "turret", "mount": "dorsal", "size": "S", "gameplay": "none", "stages": 4, "detach": 4, "wreck": true, "id": "#2AD0E0",
+   "notes": "Dorsal gun blister with twin barrels pointing at the player. Visual only: gameplay turrets stay the bow's two pivots.",
+   "lights": [[0, 40, 46, 3]],
+   "fires": [[0, 50, 44]],
+   "prims": [
+    {"name": "base", "type": "cyl", "tag": "hull", "at": [0, 50, 37], "r": 13, "r2": 11, "len": 5, "seg": 16},
+    {"name": "blister", "type": "ell", "tag": "metal", "at": [0, 50, 41], "radii": [10, 10, 7], "seg": 16},
+    {"name": "barrel", "type": "horn", "tag": "metal", "pts": [[3.5, 44, 43], [3.5, 26, 46]], "radii": [1.8, 1.5], "mirror": true},
+    {"name": "mantlet", "type": "box", "tag": "plate", "at": [0, 42, 43], "size": [14, 3, 6]}
+   ]
+  },
+  "bayPod": {
+   "slot": "bayPod", "mount": "lateral", "size": "M", "mirror": true, "gameplay": "none", "stages": 4, "detach": 5, "wreck": true, "id": "#E07A2A",
+   "notes": "Brood launch pod on the flank of the head: an armoured gourd with a dark launch mouth toward the player (visual only).",
+   "lights": [[104, -14, 10, 3]],
+   "fires": [[106, 10, 10]],
+   "prims": [
+    {"name": "pod", "type": "ell", "tag": "hull", "at": [106, 14, 2], "radii": [16, 30, 15], "rot": [-20, 0, 0], "seg": 16},
+    {"name": "mouth", "type": "ell", "tag": "dark", "at": [106, -12, -6], "radii": [9, 3, 7], "rot": [-20, 0, 0], "seg": 12},
+    {"name": "pod_plate", "type": "box", "tag": "plate", "at": [106, 18, 17], "size": [22, 30, 3], "rot": [-20, 0, 0]},
+    {"name": "pod_spike", "type": "horn", "tag": "bone", "pts": [[118, 4, 8], [134, -4, 4]], "radii": [3, 0.3]},
+    {"name": "pod_strut", "type": "horn", "tag": "bone", "pts": [[80, 30, 0], [96, 26, 2]], "radii": [4, 3.5]}
+   ]
+  },
+  "sail": {
+   "slot": "sail", "mount": "dorsal", "size": "L", "gameplay": "none", "stages": 4, "detach": 6, "wreck": true, "id": "#7A2AE0",
+   "notes": "Twin dorsal sail fins on bone spars, splayed in a V behind the tower.",
+   "lights": [[22, 128, 92, 2], [-22, 128, 92, 2]],
+   "fires": [[10, 120, 50], [-10, 120, 50]],
+   "prims": [
+    {"name": "spar1", "type": "horn", "tag": "bone", "mirror": true, "pts": [[10, 104, 34], [18, 112, 70], [22, 128, 92]], "radii": [3.5, 2.2, 0.4]},
+    {"name": "spar2", "type": "horn", "tag": "bone", "mirror": true, "pts": [[10, 140, 26], [20, 150, 58], [26, 164, 74]], "radii": [3, 1.8, 0.3]},
+    {"name": "fin", "type": "web", "tag": "membrane", "mirror": true, "pts": [[10, 104, 34], [22, 128, 92], [22, 140, 70], [26, 164, 74], [10, 140, 26]]}
+   ]
+  },
+  "keel": {
+   "slot": "keel", "mount": "ventral", "size": "M", "gameplay": "none", "stages": 4, "detach": 7, "wreck": true, "id": "#E02A9A",
+   "notes": "Ventral ram blade hanging below the jaw.",
+   "lights": [[0, -26, -78, 0]],
+   "fires": [[0, -10, -56]],
+   "prims": [
+    {"name": "blade", "type": "prism", "tag": "hull", "at": [0, 0, 0], "n0": -8, "n1": 8,
+     "poly": [[-30, -48], [-42, -84], [-20, -70], [6, -54], [22, -40]]},
+    {"name": "blade_edge", "type": "horn", "tag": "bone", "pts": [[0, -30, -50], [0, -42, -84]], "radii": [4.0, 0.4]},
+    {"name": "blade_plate", "type": "box", "tag": "plate", "at": [0, -16, -54], "size": [10, 20, 10]}
+   ]
+  },
+  "broodSac": {
+   "slot": "broodSac", "mount": "ventral", "size": "M", "mirror": true, "gameplay": "none", "stages": 4, "detach": 8, "wreck": true, "id": "#9AE02A",
+   "notes": "Clustered brood sacs slung under the wing roots, lit from inside.",
+   "lights": [[92, 60, 6, 3]],
+   "fires": [[86, 72, 0]],
+   "prims": [
+    {"name": "sac1", "type": "ell", "tag": "membrane", "at": [88, 66, 0], "radii": [13, 17, 15], "seg": 14},
+    {"name": "sac2", "type": "ell", "tag": "membrane", "at": [104, 82, -4], "radii": [9, 12, 11], "seg": 12},
+    {"name": "sac3", "type": "ell", "tag": "membrane", "at": [74, 88, -2], "radii": [8, 10, 9], "seg": 12},
+    {"name": "glow", "type": "ell", "tag": "light", "at": [88, 53.5, 2], "radii": [5, 2, 6], "seg": 10},
+    {"name": "tether", "type": "horn", "tag": "bone", "pts": [[62, 70, 18], [86, 68, 14]], "radii": [3, 2]}
+   ]
+  },
+  "tower2": {
+   "slot": "tower", "mount": "dorsal", "size": "M", "gameplay": "none", "stages": 4, "detach": 9, "wreck": true, "id": "#2A9AE0",
+   "notes": "Aft spire: a second, slimmer tower behind the bridge.",
+   "lights": [[0, 132, 102, 2]],
+   "fires": [[0, 132, 64]],
+   "prims": [
+    {"name": "spire", "type": "loft", "tag": "hull", "axis": "z",
+     "sections": [[24, 14, 12, 0.4, 0, 136], [60, 9, 8, 0.4, 0, 134], [88, 5, 5, 0.4, 0, 133], [104, 1.5, 1.5, 0.4, 0, 133]]},
+    {"name": "spire_window", "type": "box", "tag": "light", "at": [0, 125.4, 60], "size": [8, 1.2, 2]},
+    {"name": "spire_horn", "type": "horn", "tag": "bone", "mirror": true, "pts": [[6, 134, 76], [14, 140, 92]], "radii": [2.4, 0.3]}
+   ]
+  }
+ },
+ "hulls": {
+  "frigate":       {"tour": 1, "title": "Gargoyle Frigate", "extent": 1.00, "texel": 2.0, "forms": 2,
+                    "modules": ["spine", "bow", "tower", "engine"]},
+  "cruiser":       {"tour": 2, "title": "Brood Cruiser", "extent": 1.15, "texel": 1.9, "forms": 3,
+                    "modules": ["spine", "bow", "tower", "engine", "pylon", "turret"]},
+  "battlecruiser": {"tour": 3, "title": "Siege Battlecruiser", "extent": 1.30, "texel": 1.7, "forms": 4,
+                    "modules": ["spine", "bow", "tower", "engine", "pylon", "turret", "bayPod", "sail"]},
+  "battleship":    {"tour": 4, "title": "Cathedral Battleship", "extent": 1.45, "texel": 1.55, "forms": 4,
+                    "modules": ["spine", "bow", "tower", "engine", "pylon", "turret", "bayPod", "sail",
+                                {"module": "turret", "suffix": "aft", "offset": [30, 52, -6], "mirror": true}, "keel"]},
+  "dreadnought":   {"tour": 5, "title": "Dreadnought", "extent": 1.60, "texel": 1.42, "forms": 5,
+                    "modules": ["spine", "bow", "tower", "engine", "pylon", "turret", "bayPod", "sail",
+                                {"module": "turret", "suffix": "aft", "offset": [30, 52, -6], "mirror": true}, "keel",
+                                "broodSac", "tower2"]}
+ },
+ "selected": {
+  "notes": "Picked raws (committed under art/sprites/sources/boss-selected/<hull>/); hero = S0 look, S1-S3 = stage looks. sym = the hero half mirrored onto the other (the atlas draws yaw -12 as mirrored +12). Ledger: plan/render-runs/boss-hero-assets.md.",
+  "frigate": {"S0": "hero/921000.png", "S1": "stage/S1-923101.png", "S2": "stage/S2-923200.png", "S3": "stage/S3-923400.png", "sym": "left"}
+ },
+ "module_counts": {"frigate": 5, "cruiser": 8, "battlecruiser": 11, "battleship": 14, "dreadnought": 17},
+ "seeded_assembly": {
+  "notes": "Beyond tour 5 (boss-grandeur design 7): start from the dreadnought set; swap or add catalogue modules under these limits. Mirrored here so build.py --check can hold the art budget before any render.",
+  "max_modules": 19, "max_extent": 1.7, "symmetric": true, "functional_windows_unobstructed": true,
+  "budget_mb": 16.0, "page": [4096, 2048]
+ },
+ "stages": {
+  "S0": {"geometry": "intact", "notes": "shielded: hex cells are an overlay"},
+  "S1": {"geometry": "intact", "notes": "scorched: texture only (same rig renders as S0)"},
+  "S2": {"geometry": "plates off", "notes": "exposed: every plate prim removed, ribs show"},
+  "S3": {"geometry": "plates off, first detach module gone", "notes": "breaking"}
+ }
+}
