@@ -58,7 +58,7 @@
  "units": [
   {"id": "crocket", "name": "Crocket", "block": "V", "role": "light raider tank", "rig": "rigs/crocket.json", "headings": [90, 112.5, 135, 157.5, 180],
    "subject": "a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks",
-   "sectors": {"ringfall": "salvaged violet hull plates mortared with stone", "ember": "basalt, faint kiln cracks", "hollow": "dark weathered verdigris stone, cathedral masonry"}, "seed": 760200, "hero": {"heading": 135, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["arrive"], "phase": 1},
+   "sectors": {"ringfall": "salvaged violet hull plates mortared with stone", "ember": "basalt, faint kiln cracks", "hollow": "dark weathered verdigris stone, cathedral masonry"}, "seed": 760200, "hero": {"heading": 135, "candidates": 4, "selected": 760201}, "headings_candidates": 2, "inbetweens": ["arrive"], "phase": 1},
   {"id": "crocket-captured", "name": "Crocket (captured)", "block": "V", "role": "light raider tank on a captured human hull", "rig": "rigs/crocket-captured.json", "headings": [90, 112.5, 135, 157.5, 180],
    "subject": "a captured small human scout hull with curled hooked stone crockets bolted along its spine, carved gargoyle face fixed to the front, short gun ending in a carved mouth, scratched ember glyphs",
    "sectors": {"krybor": "captured human vehicle defaced with carved stone, scratched ember glyphs, frost slate"}, "seed": 760210, "hero": {"heading": 135, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": []},

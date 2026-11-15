@@ -306,3 +306,8 @@ finished. Known limit (by design): the rig silhouette ±1 still owns the shape, 
 
 **Waiting on the operator:** pick one hero per unit (`hero.selected` in the family), then the Lodestar heading jobs at
 denoise 0.7 vs 1.0 (A3).
+
+**Heroes selected by the operator (2026-11-15):** Lodestar 780200, Crocket 760201, Ashlar Guard 760113 (`hero.selected`).
+Their raws are committed in `art/sprites/sources/ground-blocks-selected/<unit>/hero/<seed>.png`, so they survive a host
+reset. Before the heading jobs, copy them to the studio inputs:
+`cp -r art/sprites/sources/ground-blocks-selected/. /work/tmp/imagegen/in/ground-blocks/selected/`.

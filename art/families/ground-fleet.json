@@ -66,7 +66,7 @@
   {"id": "lodestar", "name": "Lodestar", "block": "V", "role": "main battle tank", "slot": {"sector": "ember", "variant": 0}, "rig": "rigs/lodestar.json",
    "headings": [0, 22.5, 45, 67.5, 90], "art": {"kind": "turret", "angles": [0, 22.5, 45, 67.5, 90]},
    "subject": "a futuristic main battle tank, low faceted wedge hull with a long chamfered front, side skirts hiding the tracks, flat hexagonal turret set forward, very long thin rail cannon with two coil rings and a square muzzle brake, short sensor mast at the turret rear",
-   "sectors": {"ember": "soot dark lower hull, square heat-shield tiles"}, "seed": 780200, "hero": {"heading": 45, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": [], "phase": 1},
+   "sectors": {"ember": "soot dark lower hull, square heat-shield tiles"}, "seed": 780200, "hero": {"heading": 45, "candidates": 4, "selected": 780200}, "headings_candidates": 2, "inbetweens": [], "phase": 1},
   {"id": "sextant", "name": "Sextant", "block": "V", "role": "self-propelled long gun", "slot": {"sector": "ember", "variant": 1}, "rig": "rigs/sextant.json",
    "headings": [0, 22.5, 45, 67.5, 90], "art": {"kind": "casemate", "angles": [0, 22.5, 45, 67.5, 90]},
    "subject": "a self-propelled long range gun on a low tracked wedge hull, tall boxy casemate at the rear, very long barrel angled up, folding spade outriggers at the back",
