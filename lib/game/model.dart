@@ -159,8 +159,12 @@ class SentinelForeshadow {
 
   bool get visible => opacity > 0;
 
-  /// Places the silhouette on its path at [clock] ([shipX]: parallax).
-  void place(double shipX) {
+  /// Seconds the silhouette takes to fade in through the fog.
+  static const fadeIn = 3.0;
+
+  /// Places the silhouette on its path at [clock]. World-anchored
+  /// (fog-restoration): the ship's position plays no part.
+  void place() {
     final g = growth.clamp(0.0, 1.0);
     final tau = clock * 2 * math.pi / period;
     // Linger at the lobe ends.
@@ -168,7 +172,7 @@ class SentinelForeshadow {
     final a = 96 + 24 * g;
     final nc = .08 + .2 * g;
     nearness = nc + .03 * math.sin(tp);
-    x = 180 + a * math.cos(tp) - (shipX - 180) * .12;
+    x = 180 + a * math.cos(tp);
     // Low in the sky, its lower half in the horizon band: a darker patch
     // of the fog, partly cut by it (research §5).
     y = 150 - 14 * g + a / 2 * math.sin(2 * tp) * .22;
@@ -1809,7 +1813,7 @@ class ArcadeModel {
       if (f == null) return;
       f.opacity = math.max(0, f.opacity - dt / .8);
       f.clock += dt;
-      f.place(shipX);
+      f.place();
       if (f.opacity <= 0) foreshadow = null;
       return;
     }
@@ -1818,10 +1822,10 @@ class ArcadeModel {
       ..archetype = kind
       ..stage = stage
       ..clock += dt
-      ..opacity = math.min(1, g.opacity + dt / 1.5);
+      ..opacity = math.min(1, g.opacity + dt / SentinelForeshadow.fadeIn);
     final rate = stage >= 1 ? 1.2 : 2.5;
     g.growth += (stage - g.growth) * (1 - math.exp(-dt / rate));
-    g.place(shipX);
+    g.place();
     if (waiting != null) {
       // The sentinel sets out from where its silhouette is now.
       waiting

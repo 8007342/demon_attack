@@ -151,19 +151,15 @@ class DemonScene extends FlameGame {
     }
   }
 
-  /// Feeds the fog its clock, the flight distance and the ship (visual only).
+  /// Feeds the fog its clock and the flight distance (visual only). The fog
+  /// is world-anchored: it is never given the ship's position.
   void syncAtmosphere(double dt) {
     groundForces.blocks.reducedMotion = sectors.flyover.reducedMotion;
     atmosphere
       ..environment = environment
       ..reducedMotion = sectors.flyover.reducedMotion
       ..tide = model.ground.units.isEmpty ? .5 : model.ground.skirmish.tide
-      ..advance(
-        dt,
-        distance: sectors.flyover.distance,
-        x: model.shipX,
-        y: ArcadeModel.shipY,
-      );
+      ..advance(dt, distance: sectors.flyover.distance);
   }
 
   @override
@@ -576,10 +572,11 @@ class DemonScene extends FlameGame {
     // --- perspective: far to near, each drawn at its simulated scale. The
     // next wave, still approaching (model.incoming), is the farthest of all.
     // The fog layers are drawn when the sort passes their nearness, so a
-    // creature at n .35 is behind bank B and in front of bank A.
+    // creature at n .35 is behind bank B and in front of bank A, and an
+    // arrival rises up through the layers one by one (fog-restoration).
     final approaching = model.incoming.where((d) => !d.isLarge).toList();
     final fogSlots = model.perspective
-        ? const [FogSlot.horizonBand, FogSlot.farBankA, FogSlot.farBankB]
+        ? Atmosphere.depthSlots
         : const <FogSlot>[];
     var nextFog = 0;
     final tells = <Demon>[];
@@ -587,7 +584,8 @@ class DemonScene extends FlameGame {
       final slot = fogSlots[nextFog++];
       atmosphere.paint(c, slot);
       // The sentinel's silhouette circles in the murk: in front of the
-      // horizon band's glow (a darker shape in the fog), behind the banks.
+      // horizon band's glow (a darker shape in the fog), behind the far
+      // banks and both veils, which drift across it at their own winds.
       if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c);
     }
 

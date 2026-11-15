@@ -251,18 +251,20 @@ void main() {
       for (final (_, l) in a.groundLayers) {
         a.paintGroundLayer(c, l);
       }
-      for (final slot in FogSlot.values.where(Atmosphere.artSlots.contains)) {
-        a.paint(c, slot);
-      }
+      // The art's low cloud deck is drawn with the horizon band.
+      a.paintGroundLayer(c, GroundAtmosphereAtlas.layer('lowCloud'));
     }
 
-    test('the art takes the horizon band and far banks; fallback without it', () async {
+    test('the art adds to the soft layers instead of replacing them', () async {
+      // fog-restoration: with the art installed the fBm horizon band and far
+      // banks still draw (pervasive fog, not a band of pixel strips).
       final a = atmo();
       final bankA = await _render((c) => a.paint(c, FogSlot.farBankA));
-      expect(_covered(bankA), 0, reason: 'bank A is drawn in the ground sort');
-      final horizon = await _render((c) => a.paint(c, FogSlot.horizonBand));
-      expect(_covered(horizon), greaterThan(0));
-      expect(_covered(horizon, y1: 140) + _covered(horizon, y0: 180), 0,
+      expect(_covered(bankA), greaterThan(1000), reason: 'bank A still drawn');
+      final deck = await _render(
+          (c) => a.paintGroundLayer(c, GroundAtmosphereAtlas.layer('lowCloud')));
+      expect(_covered(deck), greaterThan(0));
+      expect(_covered(deck, y1: 140) + _covered(deck, y0: 180), 0,
           reason: 'the low cloud deck sits in rows 140-180');
       final plain = Atmosphere()..environment = 2;
       final fallback = await _render((c) => plain.paint(c, FogSlot.farBankA));
@@ -285,8 +287,7 @@ void main() {
       for (final env in [0.0, 2.5, 4.0]) {
         final a = atmo()
           ..environment = env
-          ..time = 37
-          ..shipX = 40;
+          ..time = 37;
         final p = await _render((c) => paintAll(a, c));
         expect(_covered(p, y0: 260), 0, reason: 'nothing below the mid ground');
         var worst = 0;
@@ -304,23 +305,26 @@ void main() {
       final a = atmo(q: AtmosphereQuality.reduced);
       expect({for (final (_, l) in a.groundLayers) l.id},
           {'horizonFog', 'midMistA', 'midMistB'});
-      final horizon = await _render((c) => a.paint(c, FogSlot.horizonBand));
-      expect(_covered(horizon), 0, reason: 'no low cloud in the reduced tier');
+      final deck = await _render(
+          (c) => a.paintGroundLayer(c, GroundAtmosphereAtlas.layer('lowCloud')));
+      expect(_covered(deck), 0, reason: 'no low cloud in the reduced tier');
     });
 
-    test('reduced motion stops the drift; parallax still follows the ship', () async {
+    test('reduced motion stops the drift; the art never follows the ship', () async {
       Future<Uint8List> frame(Atmosphere a) async => (await _render((c) => paintAll(a, c))).rgba;
       final still = atmo()..reducedMotion = true;
-      still.advance(.5, distance: 0, x: 180);
+      still.advance(.5, distance: 0);
       final f1 = await frame(still);
-      still.advance(3, distance: 100, x: 180);
+      still.advance(3, distance: 100);
       expect(await frame(still), f1, reason: 'reduced motion: layers stay');
-      still.advance(0, distance: 100, x: 60);
-      expect(await frame(still), isNot(f1), reason: 'parallax follows the ship');
-      final moving = atmo()..advance(.5, distance: 0, x: 180);
+      final moving = atmo()..advance(.5, distance: 0);
       final m1 = await frame(moving);
-      moving.advance(3, distance: 100, x: 180);
+      moving.advance(3, distance: 100);
       expect(await frame(moving), isNot(m1), reason: 'drift');
+      // World-anchored (fog-restoration): the offset is the wind alone.
+      for (final l in GroundAtmosphereAtlas.layers) {
+        expect(GroundAtmosphereArt.offset(l, 10), (l.drift * 10).round());
+      }
     });
 
     test('dust veil rises with the tide', () {
