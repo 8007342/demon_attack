@@ -39,10 +39,20 @@ class CommsLine {
     this.vis = '',
     this.signature = false,
     this.emotion,
-  });
+    String? clip,
+    // A named parameter cannot be a private initializing formal.
+    // ignore: prefer_initializing_formals
+  }) : _clip = clip;
 
-  /// Clip id, also the audio file stem under web/audio/comms/.
+  /// Line id (`<trigger>.h<n>` / `.d<n>`), also its own audio file stem
+  /// under web/audio/comms/ once recorded.
   final String id;
+
+  /// The audio file stem actually played: [id], or the recorded line an
+  /// unrecorded one borrows as a truthful placeholder (demon-intelligence
+  /// §8; the subtitle, mouth and duration are then the borrowed line's).
+  String get clip => _clip ?? id;
+  final String? _clip;
   final String speaker;
 
   /// Spoken subtitle (human lines).

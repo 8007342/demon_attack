@@ -43,6 +43,7 @@ const dt = 1 / 60;
       m.moveTo(x);
       m.update(dt);
       m.shots.clear(); // nothing but the rush
+      m.demons.removeWhere((o) => !identical(o, d)); // nor reinforcements
     }
     m.hitDemon(d);
     var lives = m.lives;
@@ -67,6 +68,7 @@ const dt = 1 / 60;
       m.moveTo(x);
       m.update(dt);
       m.shots.clear(); // nothing but the rush
+      m.demons.removeWhere((o) => !identical(o, d)); // nor reinforcements
       if (m.lives < lives) {
         hit++;
         lives = m.lives;

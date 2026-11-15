@@ -599,6 +599,14 @@ class CommsDirector {
         final d = _spec(demon, event);
         if (d != null) _offer(event.name, d, at, demon: true);
         return true;
+      case GameEventNames.sentinelRushTell || GameEventNames.sentinelRushAgain:
+        // demon-intelligence §8: the urgent rush warning ends on the
+        // charge (rushIn); "again" ends on the next pass's charge.
+        final rushIn = _num(event.data['rushIn']);
+        final spec = _spec(human, event);
+        if (rushIn == null || spec == null) return false;
+        _offerTimed(spec, at, at + rushIn, demon: false);
+        return true;
       case GameEventNames.diveWarning || GameEventNames.sentinelDive:
         final diveIn = _num(event.data['diveIn']);
         if (diveIn == null) return false;

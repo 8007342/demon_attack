@@ -163,3 +163,17 @@ test('every bank clip ships Opus inside a modest budget; modern banks omit AAC',
     assert.ok(!files.some(name => name.endsWith('.m4a')), 'modern delivery removes duplicate legacy audio');
   }
 });
+
+test('an unrecorded line plays its borrowed placeholder clip, tracked by its own id', async () => {
+  const h = await harness();
+  const comms = h.window.commsAudio;
+  await h.window.demonAudio.unlock();
+  assert.equal(comms.play('sentinelRushTell.h0', 10, false, 'sentinelDive.h0'), true);
+  for (let i = 0; i < 5; i++) await h.settle();
+  assert.ok(h.fetched.includes('/audio/comms/sentinelDive.h0.ogg'), 'the borrowed clip is loaded');
+  assert.ok(!h.fetched.some(p => p.includes('sentinelRushTell')), 'its own missing clip is never requested');
+  assert.ok(h.sources.find(s => s.buffer?.name === 'sentinelDive.h0'), 'and played');
+  assert.equal(comms.state.voices[0].id, 'sentinelRushTell.h0');
+  comms.stop('sentinelRushTell.h0');
+  assert.equal(comms.state.voices.length, 0, 'stopped by its own id');
+});

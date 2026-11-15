@@ -106,19 +106,19 @@ Groups 2–4 can land before group 5. The rush (5) is independent of the hunters
       (group 8).
 
 ## 6. Radio chatter with placeholders
-- [ ] 6.1 `lib/comms/comms_types.dart`: `CommsLine.clip` (default `id`). `web/audio/comms-audio.js`: load by `clip`.
+- [x] 6.1 `lib/comms/comms_types.dart`: `CommsLine.clip` (default `id`). `web/audio/comms-audio.js`: load by `clip`.
       `test-worker` audio tests stay green.
-- [ ] 6.2 `tools/comms_pipeline.py`:
+- [x] 6.2 `tools/comms_pipeline.py`:
       - the `placeholder` field;
       - emit borrowed clip, text, mouth and duration when the line's own clip is missing;
       - leave out lines with neither;
       - write `plan/audio-studio/voice-batch-pending.md`.
 
       This is an existing Python tool; keep the change inside it rather than adding a new language.
-- [ ] 6.3 `art/comms/lines.json`: append the triggers and lines of design §8 (append only), then regenerate
+- [x] 6.3 `art/comms/lines.json`: append the triggers and lines of design §8 (append only), then regenerate
       `lib/comms/comms_bank.dart`. `comms_moments.dart`: map the new events, with the urgent tell end-aligned to
       `rushIn`.
-- [ ] 6.4 Tests:
+- [x] 6.4 Tests:
       - `test/comms_director_test.dart`: the rush tell ends within 0.3 s of the rush start; a placeholder line's
         subtitle equals the borrowed line's text; silent triggers produce nothing.
       - `test/comms_pacing_test.dart` and `test/comms_lineup_test.dart` stay green.

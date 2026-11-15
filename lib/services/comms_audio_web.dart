@@ -12,8 +12,15 @@ void commsPrefetch(List<String> ids) => _comms?.callMethod<JSAny?>(
   'prefetch'.toJS,
   ids.map((id) => id.toJS).toList().toJS,
 );
-void commsPlay(String id, int priority, bool demon) =>
-    _comms?.callMethod<JSAny?>('play'.toJS, id.toJS, priority.toJS, demon.toJS);
+/// [clip]: the audio file stem when it differs from the line [id] (a
+/// placeholder borrowing a recorded line); playback is tracked by [id].
+void commsPlay(String id, int priority, bool demon, [String? clip]) =>
+    _comms?.callMethodVarArgs<JSAny?>('play'.toJS, [
+      id.toJS,
+      priority.toJS,
+      demon.toJS,
+      (clip ?? id).toJS,
+    ]);
 void commsStop(String id) => _comms?.callMethod<JSAny?>('stop'.toJS, id.toJS);
 void commsStopAll() => _comms?.callMethod<JSAny?>('stopAll'.toJS);
 void commsVolume(double volume) =>

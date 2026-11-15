@@ -416,18 +416,21 @@ void main() {
     advance(m, .3);
     expect(d.y, lessThan(90));
     expect(d.x, 90);
-    expect(d.lastStandTellProgress, closeTo(.3 / 1.1, .02));
+    expect(
+      d.lastStandTellProgress,
+      closeTo(.3 / RushTuning.tell(Difficulty.normal), .02),
+    );
     final clock = d.rushClock;
     m.pause();
     advance(m, 1);
     expect(d.rushClock, clock);
     m.resume();
-    advance(m, .4);
+    advance(m, RushTuning.rally - .3 + .05);
     expect(d.rushPhase, RushPhase.lock);
     final aim = d.targetX;
     advance(m, .3);
     expect(d.targetX, aim, reason: 'the aim is sampled once, at the lock');
-    advance(m, .15);
+    advance(m, RushTuning.lock(Difficulty.normal) - .3);
     expect(d.rushing, isTrue);
     advance(m, .25);
     final speed = math.sqrt(d.rushVx * d.rushVx + d.rushVy * d.rushVy);

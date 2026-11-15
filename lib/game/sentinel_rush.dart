@@ -17,7 +17,10 @@ enum RushPhase { none, rally, lock, rush, recover }
 
 /// Rush timing and geometry (seconds at hostile rate, arena units).
 abstract final class RushTuning {
-  static const rally = .6, recover = 1.2, ramp = .22, stagger = .45;
+  /// Rally 0.8 s, not the design's 0.6: the radio warning borrows recorded
+  /// sentinel-dive clips (shortest 1.46 s) and must end within 0.3 s of the
+  /// charge at every difficulty (design.md §6.3, as built).
+  static const rally = .8, recover = 1.2, ramp = .22, stagger = .45;
 
   /// Rally rise (u) and pull-back in depth (nearness).
   static const rise = 28.0, pullBack = .05;
