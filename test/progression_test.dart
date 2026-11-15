@@ -30,7 +30,8 @@ void clearWave(ArcadeModel model) {
     }
     model.update(1 / 60);
   }
-  expect(model.combat, isFalse);
+  // Continuous swarm: the next wave of a sector streams in during combat.
+  expect(!model.combat || model.wave != wave, isTrue);
 }
 
 void main() {
@@ -59,13 +60,10 @@ void main() {
       );
       tick(model, ArcadeModel.arrivalHintDuration - .2);
       expect(model.mode, RunMode.transition);
-      expect(
-        [
-          for (final d in initial)
-            if (d.entranceProgress == 0) d.y,
-        ],
-        parked,
-      );
+      expect([
+        for (final d in initial)
+          if (d.entranceProgress == 0) d.y,
+      ], parked);
       model.pause();
       tick(model, 2);
       expect(initial.every((d) => d.entranceProgress == 0), isTrue);
@@ -100,7 +98,7 @@ void main() {
     expect(m.transitionDuration, ArcadeModel.arrivalHintDuration);
     reach(m, RunMode.playing);
     clearWave(m);
-    expect(m.transitionDuration, closeTo(1.4 + 1 / 3, .0001));
+    expect(m.mode, RunMode.playing, reason: 'no interwave transition');
     while (m.wave < m.wavesPerLevel) {
       reach(m, RunMode.playing);
       clearWave(m);
@@ -139,7 +137,7 @@ void main() {
         clearWave(model);
         expect(model.level, level);
         if (wave < waveCount) {
-          expect(model.mode, RunMode.transition);
+          expect(model.mode, RunMode.playing); // continuous swarm
           expect(model.wave, wave + 1);
           final events = model.takeEvents();
           expect(events, contains('wave'));

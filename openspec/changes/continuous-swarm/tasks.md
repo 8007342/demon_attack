@@ -35,21 +35,21 @@ first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start
       - no draw from `model.random`.
 
 ## 3. Model integration
-- [ ] 3.1 `model.dart`: replace the `--- wave pressure` block with `--- continuous swarm`.
+- [x] 3.1 `model.dart`: replace the `--- wave pressure` block with `--- continuous swarm`.
       - `_spawnWave` builds cohort c and releases roster skeins. Wave 1 and checkpoint keep their entrance
         lengths.
       - `_completeWave` / `_mergeCohort` replace `_mergeIncoming`: lull or forced merge, no
         `RunMode.transition` for wave > 1, hostile shots fizzle (`events.add('shotsFizzle')`).
       - Keep `incoming` as a read-only view of approaching members of cohort c+1. `scene.dart` reads it until
         group 6 switches to `swarmReserve`.
-- [ ] 3.2 `_updateReinforcements` / `_spawnReinforcementGroup`: groups are born into the reserve at cohort start.
+- [x] 3.2 `_updateReinforcements` / `_spawnReinforcementGroup`: groups are born into the reserve at cohort start.
       Admission keeps every existing inequality and timer verbatim and flips the skein to approaching.
       `flocksSpawned` counts admissions.
-- [ ] 3.3 Occupancy guard: assert (debug) and test that present + approaching ordinary ≤ initial roster + largest
+- [x] 3.3 Occupancy guard: assert (debug) and test that present + approaching ordinary ≤ initial roster + largest
       group at every step.
-- [ ] 3.4 Dive re-entry from the fog (design §6.2): replace the top re-entry in `_updateDemons` (the
+- [x] 3.4 Dive re-entry from the fog (design §6.2): replace the top re-entry in `_updateDemons` (the
       `d.y > height + 20` branch) with `reentering` via a deep gate.
-- [ ] 3.5 Tests:
+- [x] 3.5 Tests:
       - rewrite `test/wave_pressure_test.dart` per design §9;
       - `test/reinforcement_pressure_test.dart` unchanged and green;
       - `test/difficulty_calibration_test.dart` unchanged and green;

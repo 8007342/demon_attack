@@ -117,6 +117,25 @@ abstract final class GameEventNames {
 
   static const lifeLoss = [playerDestroyed, regroupStart, playerRespawn];
 
+  // --- continuous swarm (openspec/changes/continuous-swarm design §6.1).
+  // Swarm calls carry `eta`: seconds (wall clock) until the creatures they
+  // announce become targetable, so the radio can end its call on it.
+
+  /// The next wave's first skeins rise out of the fog while this wave's
+  /// stragglers still fight (data `wave`, `eta` = the approach length,
+  /// `q` its pacing factor, `skeins`). Comms reuses the next-wave lines.
+  static const cohortSighted = 'cohortSighted';
+
+  /// The approaching wave became the current one (data `wave`, `forced`:
+  /// it closed in beside the stragglers, `lull`: seconds it held at the
+  /// fog front). Replaces the old interwave transition's banner moment.
+  static const cohortMerged = 'cohortMerged';
+
+  /// Leftover hostile shots dissolve at a merge (data `count`).
+  static const shotsFizzle = 'shotsFizzle';
+
+  static const swarm = [cohortSighted, cohortMerged, shotsFizzle];
+
   // --- terrain: what the convoy sees below (queued by the flyover's
   // TerrainRadio, lib/game/terrain_field.dart; visual only, rate-limited).
   // Data: `sector` (1-5), `side` ('left' | 'right' | 'both'), x, y.
@@ -242,6 +261,7 @@ abstract final class GameEventNames {
     convoyClearingVegetation,
     convoyStuck,
     ...groundWarV4, // --- ground war v4
+    ...swarm, // --- continuous swarm
   ];
 
   // --- Comms-specific derived events.

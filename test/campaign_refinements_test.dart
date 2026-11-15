@@ -341,7 +341,7 @@ void main() {
       m.invulnerable = 1000;
       m.takeEvents();
       var arrivals = 0;
-      for (var frame = 0; frame < 2400 && m.combat; frame++) {
+      for (var frame = 0; frame < 2400 && m.combat && m.wave == 1; frame++) {
         expect(m.demons.length, lessThanOrEqualTo(ArcadeModel.maxActiveDemons));
         for (final d in List<Demon>.of(m.demons)) {
           if (!d.entering) m.hitDemon(d, damage: 1000);
@@ -349,7 +349,7 @@ void main() {
         m.update(1 / 60);
         arrivals += m.takeEvents().where((e) => e == 'reinforcements').length;
       }
-      expect(m.mode, RunMode.transition);
+      expect(m.mode, RunMode.playing); // continuous swarm: no transition
       expect(m.wave, 2);
       expect(arrivals, planned);
       m.restoreCheckpoint(saved);
