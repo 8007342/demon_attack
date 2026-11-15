@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' show Rect;
 
 import 'model.dart';
+import 'shadow_projector.dart';
 import 'vegetation_atlas.dart';
 
 /// Notable terrain features; the names are the `kind` of the
@@ -364,7 +366,7 @@ class VegetationParticle {
 ///
 /// All of it is visual and positional. Gameplay (fire range, breakthroughs,
 /// collisions) is decided by logical depth and lane, never by these poses.
-class TerrainView implements GroundRelief {
+class TerrainView implements GroundRelief, ShadowSurface {
   TerrainView();
 
   static const horizon = GroundCamera.horizon;
@@ -636,6 +638,57 @@ class TerrainView implements GroundRelief {
   }
 
   // ---------------------------------------------------------------------
+  // Shadows (terrain-shadows design §2: ShadowSurface)
+  // ---------------------------------------------------------------------
+
+  /// Interpolation of grid [g] at screen [x] and flat-ground y [flatY]
+  /// (clamped into the mesh).
+  double _gridAt(Float64List g, double x, double flatY) {
+    final f = flatY.clamp(rowFlatY[rows - 1], rowFlatY[0]);
+    final i = _rowOf(f);
+    final t = ((rowFlatY[i] - f) / (rowFlatY[i] - rowFlatY[i + 1]))
+        .clamp(0.0, 1.0);
+    final cx = (x / columnStep).clamp(0.0, columns - 1.0001);
+    final j = cx.floor();
+    return _interp(g, i, j, cx - j, t);
+  }
+
+  /// Visible lift (arena units) of the relief above flat ground at screen
+  /// [x], flat-ground y [flatY], before occlusion: the mesh height times
+  /// the texel scale there. Reads the cached grid only.
+  @override
+  double shadowLift(double x, double flatY) {
+    _ensure();
+    final f = math.max(flatY, rowFlatY[rows - 1]);
+    return _gridAt(gridHeight, x, f) * (f - horizon) / _z0;
+  }
+
+  /// Where the mesh draws the ground point ([x], [flatY]) and whether a
+  /// nearer crest hides it (the rule units use: then y is the crest line).
+  @override
+  (double, bool) shadowDrape(double x, double flatY) {
+    _ensure();
+    final f = math.max(flatY, rowFlatY[rows - 1]);
+    final lift = _gridAt(gridHeight, x, f) * (f - horizon) / _z0;
+    if (f >= rowFlatY[0]) return (f - lift, false);
+    final y = _gridAt(gridY, x, f);
+    return (y, y < f - lift - .5);
+  }
+
+  // --- terrain-shadows §4: ground units under the sentinel's lurking
+  // shadow hesitate (presentation only). The scene publishes the visible
+  // footprint each frame; poses inside it report `hesitate` .7.
+  Rect? lurkCover;
+
+  double _hesitation(double x, double y) {
+    final r = lurkCover;
+    if (r == null) return 1;
+    final dx = (x - r.center.dx) / (r.width / 2);
+    final dy = (y - r.center.dy) / (r.height / 2);
+    return dx * dx + dy * dy <= 1 ? .7 : 1;
+  }
+
+  // ---------------------------------------------------------------------
   // Navigation (GroundRelief)
   // ---------------------------------------------------------------------
 
@@ -683,7 +736,8 @@ class TerrainView implements GroundRelief {
     final behind = _heightFast(px, z + dz);
     final climb = (ahead - behind) / (2 * dz);
     final pace = (1 - 2.4 * climb).clamp(.5, 1.25);
-    return GroundPose(x, y, climb: climb, pace: pace);
+    return GroundPose(x, y,
+        climb: climb, pace: pace, hesitate: _hesitation(px, y));
   }
 
   // --- ground war v4: full-width units choose their own routes (by
@@ -698,7 +752,8 @@ class TerrainView implements GroundRelief {
     final behind = _heightFast(px, z + dz);
     final climb = (ahead - behind) / (2 * dz);
     final pace = (1 - 2.4 * climb).clamp(.5, 1.25);
-    return GroundPose(x, y, climb: climb, pace: pace);
+    return GroundPose(x, y,
+        climb: climb, pace: pace, hesitate: _hesitation(px, y));
   }
 
   @override

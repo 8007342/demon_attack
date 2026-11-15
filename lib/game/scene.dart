@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flame/game.dart';
@@ -16,7 +17,10 @@ import 'insignia_atlas.dart';
 import 'insignia_painter.dart';
 import 'model.dart';
 import 'music_director.dart'; // --- music event hook
+import 'flock.dart' show SwarmFlock;
+import 'flyover_background.dart';
 import 'sector_background.dart';
+import 'shadow_projector.dart';
 import 'sentinel_silhouette_atlas.dart';
 import 'ship_painter.dart';
 import 'sprite_atlas.dart';
@@ -2277,45 +2281,134 @@ class DemonScene extends FlameGame {
       180 *
       math.sin(2 * math.pi * model.clock / 40 + model.level * 1.7);
 
-  _ShadowSpec? _shadowOf(Demon d) {
+  /// How shadows are placed (terrain-shadows design §2): draped on the
+  /// relief, or today's flat plane on the reduced atmosphere tier. There is
+  /// no separate frame-time governor yet: one that drops the atmosphere to
+  /// reduced drops the shadows with it. [shadowModeOverride] forces a mode
+  /// (tests, review strips, the perf baseline).
+  ShadowMode? shadowModeOverride;
+  ShadowMode get shadowMode => atmosphere.quality == AtmosphereQuality.reduced
+      ? ShadowMode.flat
+      : shadowModeOverride ?? ShadowMode.draped;
+
+  /// Draw calls of the last pass, total and the most in one bucket (tests:
+  /// at most four per bucket, one per image).
+  int shadowDrawCalls = 0, shadowDrawCallsPerBucket = 0;
+
+  /// The surface shadows fall on this frame.
+  ShadowSurface get _shadowSurface => shadowMode == ShadowMode.draped
+      ? sectors.flyover.relief
+      : const FlatShadowSurface();
+
+  final _shadowShaders = Expando<ImageShader>('shadow shader');
+  static final _identity4 = Float64List.fromList(const [
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+  ]);
+
+  /// Where the ship's own shadow falls: its legacy point on flat ground,
+  /// the sun-ray hit on the relief otherwise.
+  ShadowHit _shipShadowHit(ShadowSurface surface) {
+    if (shadowMode == ShadowMode.flat) {
+      final p = Offset(
+        model.shipX + 6 + 40 * _shadowTan * .22,
+        ArcadeModel.shipY + 24,
+      );
+      return ShadowHit(p, p, 0);
+    }
+    return ShadowProjector.hit(
+      surface,
+      Offset(model.shipX + 6, ArcadeModel.shipY + 24),
+      40,
+      ShadowProjector.shipDir,
+    );
+  }
+
+  _ShadowSpec? _shadowOf(
+    Demon d,
+    ShadowSurface surface, {
+    bool handoff = false,
+  }) {
     final n = d.nearness;
-    final h = d.altitude;
+    var h = d.altitude;
+    if (h <= 0 && d.isLarge && d.entering && d.entranceProgress > 0) {
+      // terrain-shadows §4: a sentinel rising out of the fog has no
+      // published altitude yet; its shadow eases from the lurking shadow's
+      // low pass down to its fight altitude (presentation only).
+      h =
+          LurkTrack.nearAltitude +
+          (SwarmFlock.fightAltitude(d.homeY) - LurkTrack.nearAltitude) *
+              Perspective.smoothstep(0, 1, d.entranceProgress);
+    }
     if (n <= 0 || h <= 0) return null;
     final gy = Perspective.groundY(n);
     if (gy > 530) return null;
-    final k = (h / _shadowHMax).clamp(0.0, 1.0);
+    final az = _sunDrift;
+    // The caster's ground hit (flat: the legacy centre, kept verbatim so the
+    // reduced tier stays byte-identical).
+    final Offset flat, center;
+    var lift = 0.0;
+    if (shadowMode == ShadowMode.flat) {
+      final off = h * _shadowTan * .22;
+      flat = center = Offset(
+        d.x + off * math.cos(az),
+        gy + off * .25 + off * math.sin(az),
+      );
+    } else {
+      final hit = ShadowProjector.hit(
+        surface,
+        Offset(d.x, gy),
+        h,
+        ShadowProjector.flyerDir(az),
+      );
+      flat = hit.flat;
+      center = hit.center;
+      lift = hit.lift;
+    }
+    // Softness from the height above the surface it falls on (task 2.4):
+    // a creature low over a ridge casts a sharper, darker shadow there.
+    final k = lift == 0
+        ? (h / _shadowHMax).clamp(0.0, 1.0)
+        : ShadowProjector.softness(h, lift);
     // 0.95, not the design's 0.55: on the dark sector grounds 0.55 read as
     // nothing (review frames); 0.95 is the old arrival shadow the operator
     // praised.
-    var alpha = .95 * (1 - .4 * k) * Atmosphere.groundLight(gy);
+    var alpha = .95 * (1 - .4 * k) * Atmosphere.groundLight(center.dy);
     if (d.dive > 0 || d.rushing) alpha *= 1.25;
-    if (d.entering && d.swarmState != SwarmState.reentering) {
+    if (d.entering && d.swarmState != SwarmState.reentering && !handoff) {
       alpha *= Perspective.smoothstep(0, .12, d.entranceProgress);
     }
-    if (alpha < .015) return null;
-    final off = h * _shadowTan * .22;
-    final az = _sunDrift;
-    final center = Offset(
-      d.x + off * math.cos(az),
-      gy + off * .25 + off * math.sin(az),
-    );
+    if (alpha < .015 && !handoff) return null;
     final grow = n * 1.8 * (1 + .3 * k);
-    final bucket = k < .45 ? 0 : (k < .8 ? 1 : 2);
+    final bucket = ShadowProjector.bucketOf(k);
     if (d.isLarge) {
-      var at = center;
+      var at = center, atFlat = flat;
       var size = grow / 1.8 * 1.6;
       if (d.lastStand &&
           (d.rushPhase == RushPhase.lock || d.rushPhase == RushPhase.rush)) {
         // --- sentinel rush: on lock its shadow snaps over the ship's
-        // (W3 shadows), at its largest.
-        final ship = Offset(
-          model.shipX + 6 + 40 * _shadowTan * .22,
-          ArcadeModel.shipY + 24,
-        );
+        // (W3 shadows), at its largest; on the relief, onto the ship's
+        // projected hit point.
+        final ship = _shipShadowHit(surface);
         final snap = d.rushPhase == RushPhase.rush
             ? 1.0
             : Perspective.smoothstep(0, .12, d.rushClock);
-        at = Offset.lerp(center, ship, snap)!;
+        at = Offset.lerp(center, ship.center, snap)!;
+        atFlat = Offset.lerp(flat, ship.flat, snap)!;
         size = math.max(size, 1.6 * 1.25);
       }
       final img = effectsAtlas;
@@ -2329,6 +2422,7 @@ class DemonScene extends FlameGame {
         size,
         alpha.clamp(0.0, .9),
         bucket,
+        atFlat,
       );
     }
     final img = atlas;
@@ -2345,25 +2439,252 @@ class DemonScene extends FlameGame {
       40 * grow / 64,
       alpha.clamp(0.0, .9),
       bucket,
+      flat,
     );
   }
+
+  // --- terrain-shadows §4: the sentinel's lurking shadow ---
+
+  /// The lurking shadow drawn last (its hand-off source), the sentinel it
+  /// hands off to and since when.
+  _ShadowSpec? _lurkLast, _handoffFrom;
+  Demon? _handoffTo;
+  double _handoffAt = 0;
+  static const lurkHandoff = .8, lurkAlpha = .5;
+
+  /// The lurking shadow's visible footprint this frame (ground units and
+  /// critters under it hesitate), or null.
+  Rect? lurkCover;
+
+  /// The visible centre of [d]'s shadow in the last pass (tests, review).
+  Offset? shadowCenterOf(Demon d) => _lastShadows[d]?.center;
+
+  /// The last lurking shadow (tests and review), null when none is drawn.
+  Offset? get lurkCenter => _lurkLast?.center;
+
+  /// The flat-ground point and visible centre of a caster over [base] at
+  /// [h] on the sun of this frame (flyers' direction).
+  ShadowHit _flyerHit(ShadowSurface surface, Offset base, double h) =>
+      shadowMode == ShadowMode.flat
+      ? (() {
+          final p = ShadowProjector.flatCenter(
+            base,
+            h,
+            ShadowProjector.flyerDir(_sunDrift),
+          );
+          return ShadowHit(p, p, 0);
+        })()
+      : ShadowProjector.hit(
+          surface,
+          base,
+          h,
+          ShadowProjector.flyerDir(_sunDrift),
+        );
+
+  _ShadowSpec? _lurkSpec(
+    SentinelForeshadow f,
+    ui.Image fx,
+    ShadowSurface surface,
+  ) {
+    final l = f.lurk;
+    final base = Offset(l.x(meander: !sectors.flyover.reducedMotion), l.flatY);
+    final hit = _flyerHit(surface, base, l.altitude);
+    // Size by the ground's nearness there: about 2.5 x the sentinel's own,
+    // growing 1.0 -> 1.3 as it nears (and its virtual altitude falls).
+    final n = ((hit.flat.dy - Perspective.horizonY) / Perspective.groundSpan)
+        .clamp(0.0, 1.0);
+    final rise = Perspective.smoothstep(0, 1, f.opacity);
+    // In thick ground fog it is a darkening, not a shape.
+    final clear = 1 - FlyoverBackground.groundFogAt(hit.flat.dy);
+    // 0.5, not the design's 0.30: at 0.30 it read as nothing on the dark
+    // sector grounds (review strips), as the swarm shadows did at 0.55.
+    final alpha =
+        lurkAlpha * rise * Atmosphere.groundLight(hit.center.dy) * clear;
+    if (alpha < .01) return null;
+    final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
+    return _ShadowSpec(
+      fx,
+      Rect.fromLTWH(
+        ((f.clock / .55).floor() % 4) * 128.0,
+        species * 64.0,
+        128,
+        64,
+      ),
+      hit.center,
+      2.5 * 1.6 * n * (1 + .3 * l.progress),
+      alpha.clamp(0.0, lurkAlpha),
+      2,
+      hit.flat,
+    );
+  }
+
+  /// Blends the lurking shadow into the rising sentinel's own over
+  /// [lurkHandoff] s: position, size and darkness; the in-play shadow is
+  /// this blend until then.
+  _ShadowSpec? _handOff(_ShadowSpec? to) {
+    final from = _handoffFrom;
+    final u = (model.clock - _handoffAt) / lurkHandoff;
+    if (from == null || to == null || u >= 1) {
+      _handoffTo = null;
+      _handoffFrom = null;
+      return to;
+    }
+    final k = Perspective.smoothstep(0, 1, u.clamp(0.0, 1.0));
+    double mix(double a, double b) => a + (b - a) * k;
+    return _ShadowSpec(
+      to.image,
+      k < .5 ? from.src : to.src,
+      Offset.lerp(from.center, to.center, k)!,
+      mix(from.scale, to.scale),
+      mix(from.alpha, to.alpha),
+      k < .5 ? from.bucket : to.bucket,
+      Offset.lerp(from.flat, to.flat, k)!,
+    );
+  }
+
+  // --- terrain-shadows §3: the boss shadow ---
+
+  /// The boss's altitude above the terrain (arena units) for its shadow.
+  /// `boss-grandeur` owns it: the shadow shrinks and fades as it climbs.
+  double bossShadowAltitude = defaultBossShadowAltitude;
+  static const defaultBossShadowAltitude = 160.0;
+
+  /// The boss shadow cell (the hull's alpha, area-downscaled to one pixel
+  /// per arena unit, inked), baked once per hull load, and where the
+  /// boss's centre sits in it.
+  ui.Image? _bossShadowCell;
+  Object? _bossShadowFor;
+  Offset _bossShadowAnchor = Offset.zero;
+
+  /// The last boss shadow (tests and review): visible centre, size, alpha.
+  ({Offset center, double scale, double alpha})? bossShadow;
+
+  ui.Image? _bossShadowImage() {
+    final img = armada.image;
+    if (!armada.ready || img == null) return null;
+    final key = (img, armada.loadedClass);
+    if (_bossShadowFor == key) return _bossShadowCell;
+    final h = armada.hull;
+    final parts = [h.superstructure[0], h.hull[0][0]];
+    Rect? bounds;
+    for (final p in parts) {
+      final r = Rect.fromLTWH(p.dx, p.dy, p.w / 2, p.h / 2);
+      bounds = bounds?.expandToInclude(r) ?? r;
+    }
+    final b = bounds!;
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec)..translate(-b.left, -b.top);
+    final paint = Paint()
+      ..filterQuality = FilterQuality.medium
+      ..colorFilter = _shadowInk;
+    for (final p in parts) {
+      c.drawImageRect(
+        img,
+        Rect.fromLTWH(
+          p.x.toDouble(),
+          p.y.toDouble(),
+          p.w.toDouble(),
+          p.h.toDouble(),
+        ),
+        Rect.fromLTWH(p.dx, p.dy, p.w / 2, p.h / 2),
+        paint,
+      );
+    }
+    final pic = rec.endRecording();
+    _bossShadowCell?.dispose();
+    _bossShadowCell = pic.toImageSync(b.width.ceil(), b.height.ceil());
+    pic.dispose();
+    _bossShadowAnchor = -b.topLeft;
+    _bossShadowFor = key;
+    return _bossShadowCell;
+  }
+
+  _ShadowSpec? _bossShadow(ShadowSurface surface) {
+    bossShadow = null;
+    final b = model.boss;
+    if (b == null || model.mode == RunMode.title) return null;
+    final cell = _bossShadowImage();
+    if (cell == null) return null;
+    final h = math.max(1.0, bossShadowAltitude);
+    var alpha = .35 * (defaultBossShadowAltitude / h).clamp(0.0, 1.0) * .85;
+    if (model.presentationMode == RunMode.transition) {
+      // It firms up as the carrier settles out of its descent.
+      alpha *= Curves.easeOutCubic.transform(
+        model.transitionProgress.clamp(0.0, 1.0),
+      );
+    }
+    if (alpha < .01) return null;
+    final scale = .9 * math.sqrt(defaultBossShadowAltitude / h).clamp(.4, 1.2);
+    final gy = Perspective.groundY(Perspective.nearnessAtY(b.y));
+    // The cell's centre relative to the carrier's centre, on the ground.
+    final mid = Offset(cell.width / 2, cell.height / 2) - _bossShadowAnchor;
+    final base = Offset(
+      b.x + mid.dx * scale,
+      gy + mid.dy * scale * ShadowProjector.squash,
+    );
+    final hit = _flyerHit(surface, base, h);
+    bossShadow = (center: hit.center, scale: scale, alpha: alpha);
+    return _ShadowSpec(
+      cell,
+      Rect.fromLTWH(0, 0, cell.width.toDouble(), cell.height.toDouble()),
+      hit.center,
+      scale,
+      alpha.clamp(0.0, .35),
+      2,
+      hit.flat,
+    );
+  }
+
+  /// The shadow pass alone (tests: the reduced-tier identity fixture).
+  @visibleForTesting
+  void paintShadowPass(Canvas c) => _creatureShadows(c);
 
   void _creatureShadows(Canvas c, {Iterable<Demon> also = const []}) {
     shadowLayers = 0;
     shadowCount = 0;
+    lurkCover = null;
+    shadowDrawCalls = 0;
+    shadowDrawCallsPerBucket = 0;
     shipShadowDim = 0;
     shadowed.clear();
-    if (!model.perspective || !creatureShadows) return;
+    if (!model.perspective || !creatureShadows) {
+      sectors.flyover.terrain.lurkCover = null;
+      return;
+    }
     final reduced = atmosphere.quality == AtmosphereQuality.reduced;
+    final draped = shadowMode == ShadowMode.draped;
+    final surface = _shadowSurface;
     final buckets = [<_ShadowSpec>[], <_ShadowSpec>[], <_ShadowSpec>[]];
     final now = <Demon, _ShadowSpec>{};
     final flying = <Demon>{
       ...airCensus().shadows,
       ...also, // --- cinematic flow: the title's attract swarm
     };
+    // terrain-shadows §4: the lurking shadow hands off to the sentinel that
+    // rises out of the fog (one sentinel shadow at all times).
+    final lastLurk = _lurkLast;
+    if (lastLurk != null && !(model.foreshadow?.visible ?? false)) {
+      final heir = model.demons
+          .where(
+            (d) =>
+                d.isLarge &&
+                d.entryScale != null &&
+                d.entering &&
+                d.entranceProgress > 0,
+          )
+          .firstOrNull;
+      if (heir != null) {
+        _handoffTo = heir;
+        _handoffFrom = lastLurk;
+        _handoffAt = model.clock;
+      }
+      _lurkLast = null;
+    }
     for (final d in flying) {
       if (!_casts(d)) continue;
-      final s = _shadowOf(d);
+      final heir = identical(d, _handoffTo);
+      var s = _shadowOf(d, surface, handoff: heir);
+      if (heir) s = _handOff(s);
       if (s == null) continue;
       now[d] = s;
       shadowed.add(d);
@@ -2389,47 +2710,41 @@ class DemonScene extends FlameGame {
     final flyover = sectors.flyover;
     flyover.shipShadowByScene = shipImg != null;
     if (shipImg != null && flyover.shipShadowVisible) {
-      const h = 40.0;
-      final off = h * _shadowTan * .22;
+      final hit = _shipShadowHit(surface);
       buckets[reduced ? 0 : 1].add(
         _ShadowSpec(
           shipImg,
           const Rect.fromLTWH(0, 0, ShipPainter.cell, ShipPainter.cell),
-          Offset(model.shipX + 6 + off, ArcadeModel.shipY + 24),
+          hit.center,
           ShipPainter.size / ShipPainter.cell * 1.05,
           .5,
           1,
+          hit.flat,
         ),
       );
     }
-    // A coming sentinel sweeps the far terrain while it circles in the fog.
+    // terrain-shadows §4: a coming sentinel's lurking shadow creeps from the
+    // far terrain toward the front while it circles in the fog.
     final f = model.foreshadow;
     final fx = effectsAtlas;
-    if (f != null && f.visible && fx != null) {
-      final gy = Perspective.groundY(f.nearness.clamp(.08, .4));
-      final alpha = (.2 * f.opacity * Atmosphere.groundLight(gy) - .02).clamp(
-        0.0,
-        .2,
-      );
-      if (alpha > .01) {
-        final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
-        buckets[reduced ? 0 : 2].add(
-          _ShadowSpec(
-            fx,
-            Rect.fromLTWH(
-              ((f.clock / .55).floor() % 4) * 128.0,
-              species * 64.0,
-              128,
-              64,
-            ),
-            Offset(f.x + 30, gy + 8),
-            f.scale * 2.2,
-            alpha,
-            2,
-          ),
+    final lurk = f != null && f.visible && fx != null
+        ? _lurkSpec(f, fx, surface)
+        : null;
+    if (lurk != null) {
+      buckets[reduced ? 0 : 2].add(lurk);
+      _lurkLast = lurk;
+      if (lurk.alpha > .06) {
+        lurkCover = Rect.fromCenter(
+          center: lurk.center,
+          width: lurk.src.width * lurk.scale * .8,
+          height: lurk.src.height * lurk.scale * ShadowProjector.squash * .8,
         );
       }
     }
+    flyover.terrain.lurkCover = lurkCover;
+    // terrain-shadows §3: the boss's large, soft, low shadow.
+    final boss = _bossShadow(surface);
+    if (boss != null) buckets[reduced ? 0 : 2].add(boss);
     // Shadow over the ship: a multiply dim by overlap, capped.
     final hull = Rect.fromCenter(
       center: Offset(model.shipX, ArcadeModel.shipY),
@@ -2459,37 +2774,112 @@ class DemonScene extends FlameGame {
           // --- cinematic flow: the campaign outro lifts every shadow.
           ..color = Color.fromRGBO(0, 0, 0, 1 - model.flow.env('lift')),
       );
-      c.scale(1, .42);
       final byImage = <ui.Image, List<_ShadowSpec>>{};
       for (final s in specs) {
         (byImage[s.image] ??= []).add(s);
       }
-      for (final e in byImage.entries) {
-        c.drawAtlas(
-          e.key,
-          [
-            for (final s in e.value)
-              RSTransform.fromComponents(
-                rotation: 0,
-                scale: s.scale,
-                anchorX: s.src.width / 2,
-                anchorY: s.src.height / 2,
-                translateX: s.center.dx,
-                translateY: s.center.dy / .42,
-              ),
-          ],
-          [for (final s in e.value) s.src],
-          [
-            for (final s in e.value)
-              Color.fromRGBO(255, 255, 255, s.alpha.clamp(0.0, 1.0)),
-          ],
-          BlendMode.modulate,
-          null,
-          Paint()..filterQuality = FilterQuality.none,
-        );
-      }
+      final calls = draped
+          ? _drapedBatches(c, surface, byImage)
+          : _flatBatches(c, byImage);
+      shadowDrawCalls += calls;
+      shadowDrawCallsPerBucket = math.max(shadowDrawCallsPerBucket, calls);
       c.restore();
     }
+  }
+
+  /// Today's path (ShadowMode.flat): one drawAtlas per image on a plane
+  /// squashed to the slant.
+  int _flatBatches(Canvas c, Map<ui.Image, List<_ShadowSpec>> byImage) {
+    c.save();
+    c.scale(1, .42);
+    for (final e in byImage.entries) {
+      c.drawAtlas(
+        e.key,
+        [
+          for (final s in e.value)
+            RSTransform.fromComponents(
+              rotation: 0,
+              scale: s.scale,
+              anchorX: s.src.width / 2,
+              anchorY: s.src.height / 2,
+              translateX: s.center.dx,
+              translateY: s.center.dy / .42,
+            ),
+        ],
+        [for (final s in e.value) s.src],
+        [
+          for (final s in e.value)
+            Color.fromRGBO(255, 255, 255, s.alpha.clamp(0.0, 1.0)),
+        ],
+        BlendMode.modulate,
+        null,
+        Paint()..filterQuality = FilterQuality.none,
+      );
+    }
+    c.restore();
+    return byImage.length;
+  }
+
+  /// Draped (design §2): every silhouette a 4 x 3 vertex mesh on the
+  /// visible surface, one drawVertices per image.
+  int _drapedBatches(
+    Canvas c,
+    ShadowSurface surface,
+    Map<ui.Image, List<_ShadowSpec>> byImage,
+  ) {
+    var calls = 0;
+    const nv = ShadowProjector.vertices;
+    for (final e in byImage.entries) {
+      final specs = e.value;
+      final pos = Float32List(specs.length * nv * 2);
+      final tex = Float32List(specs.length * nv * 2);
+      final col = Int32List(specs.length * nv);
+      final idx = Uint16List(specs.length * ShadowProjector.cells * 6);
+      var v = 0, n = 0;
+      for (final s in specs) {
+        n += ShadowProjector.drape(
+          surface,
+          s.flat,
+          s.src.width * s.scale,
+          s.src.height * s.scale * ShadowProjector.squash,
+          s.src,
+          pos,
+          tex,
+          idx,
+          v,
+          n,
+        );
+        final argb = Color.fromRGBO(
+          255,
+          255,
+          255,
+          s.alpha.clamp(0.0, 1.0),
+        ).toARGB32();
+        col.fillRange(v, v + nv, argb);
+        v += nv;
+      }
+      if (n == 0) continue;
+      final shader = _shadowShaders[e.key] ??= ImageShader(
+        e.key,
+        TileMode.clamp,
+        TileMode.clamp,
+        _identity4,
+        filterQuality: FilterQuality.none,
+      );
+      c.drawVertices(
+        ui.Vertices.raw(
+          ui.VertexMode.triangles,
+          pos,
+          textureCoordinates: tex,
+          colors: col,
+          indices: Uint16List.sublistView(idx, 0, n),
+        ),
+        BlendMode.modulate,
+        Paint()..shader = shader,
+      );
+      calls++;
+    }
+    return calls;
   }
 
   void _wingTellChevrons(Canvas c, Offset pos) {
@@ -3867,15 +4257,26 @@ class _ShadowSpec {
     this.scale,
     this.alpha,
     this.bucket,
+    this.flat,
   );
   final ui.Image image;
   final Rect src;
-  final Offset center;
+
+  /// Visible centre (on the surface) and the flat-ground point the drape is
+  /// built around (terrain-shadows; equal on flat ground).
+  final Offset center, flat;
   final double scale, alpha;
   final int bucket;
 
-  _ShadowSpec faded(double k) =>
-      _ShadowSpec(image, src, center, scale, alpha * k.clamp(0.0, 1.0), bucket);
+  _ShadowSpec faded(double k) => _ShadowSpec(
+    image,
+    src,
+    center,
+    scale,
+    alpha * k.clamp(0.0, 1.0),
+    bucket,
+    flat,
+  );
 }
 
 /// One frame's census of the air (DemonScene.airCensus): every creature body,

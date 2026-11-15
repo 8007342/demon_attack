@@ -646,8 +646,18 @@ class HomingPickup {
 /// Where the relief puts a ground object: screen ground contact, the slope
 /// along its travel (> 0 uphill toward the camera) and a visual pace.
 class GroundPose {
-  const GroundPose(this.x, this.y, {this.climb = 0, this.pace = 1});
+  const GroundPose(
+    this.x,
+    this.y, {
+    this.climb = 0,
+    this.pace = 1,
+    this.hesitate = 1,
+  });
   final double x, y, climb, pace;
+
+  /// terrain-shadows: gait factor under the sentinel's lurking shadow (.7
+  /// while covered; presentation only).
+  final double hesitate;
 }
 
 /// Installed by the scene as [GroundWar.relief]; null keeps flat ground.
