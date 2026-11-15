@@ -333,6 +333,109 @@ class Atmosphere {
   double environment = 0;
 
   Color get air => _lerpTable(airFog, environment);
+
+  // --- cinematic flow (openspec/changes/cinematic-flow design §6) ---------
+  // Thin pass-throughs added by W5b, flagged for fog-restoration (W2) to
+  // review: the transition drives them, W2 owns how the layers look.
+
+  /// 0-1: every layer thickens toward a bright, soft full-frame cover (a
+  /// Pursuit's cloud). At 1 the cover sums to at most [maxCloud] opacity over
+  /// a bright cloud colour: never black, never an opaque wipe.
+  double cloudCover = 0;
+
+  /// 0-1: the layers recede (the campaign outro).
+  double fogThin = 0;
+
+  /// Vertical scroll of the cover (arena units; the camera tilting up).
+  double cloudScroll = 0;
+
+  static const maxCloud = .92;
+  static const cloudLight = Color(0xFFE2E7F2);
+
+  /// The cover's colour: the sector's air lifted toward sunlit cloud.
+  Color get cloud => Color.lerp(air, cloudLight, .62)!;
+
+  /// Paints the cloud cover over the whole arena (call after the scene).
+  /// [below]: the cloud lies under the camera (the outro climbs above the
+  /// cloud tops), thick at the bottom, thin at the top; [warmth] 0-1 warms
+  /// the light above it.
+  void paintCloudCover(Canvas c, {bool below = false, double warmth = 0}) {
+    final k = cloudCover.clamp(0.0, 1.0);
+    const r = Rect.fromLTWH(0, 0, 360, 520);
+    if (warmth > .003) {
+      // The light warms as the fog thins (the campaign's last dawn).
+      c.drawRect(
+        r,
+        Paint()
+          ..shader = ui.Gradient.linear(r.topCenter, r.bottomCenter, [
+            const Color(0xFFFFC98A).withValues(alpha: .3 * warmth),
+            const Color(0xFFFFC98A).withValues(alpha: 0),
+          ]),
+      );
+    }
+    if (k <= .003) return;
+    final color = cloud;
+    // A soft wash: thicker toward the cloud the ship climbs into (or the
+    // cloud tops below it).
+    final (top, bottom) = below ? (.12, .8) : (.8, .64);
+    c.drawRect(
+      r,
+      Paint()
+        ..shader = ui.Gradient.linear(r.topCenter, r.bottomCenter, [
+          color.withValues(alpha: top * k),
+          color.withValues(alpha: bottom * k),
+        ]),
+    );
+    final a = tileA, b = tileB;
+    if (a == null || b == null) return;
+    // Two broad billow layers drifting down past the climbing camera (up,
+    // under an outro); their coverage keeps the total under [maxCloud].
+    final light = Color.lerp(color, cloudLight, .6)!;
+    for (final (img, scale, speed, alpha, tint) in [
+      (a, 620.0, 1.0, .34, light),
+      (b, 400.0, 1.6, .26, color),
+    ]) {
+      final s = scale / img.width;
+      final dy = (below ? -1 : 1) * (cloudScroll * speed + time * 5 * speed);
+      final paint = Paint()
+        ..colorFilter = ColorFilter.mode(tint, BlendMode.srcIn)
+        ..color = Color.fromRGBO(255, 255, 255, alpha * k)
+        ..filterQuality = FilterQuality.low
+        ..shader = ImageShader(
+          img,
+          TileMode.repeated,
+          TileMode.repeated,
+          _matrix(s, .55, time * 2.5 * speed, dy),
+          filterQuality: FilterQuality.low,
+        );
+      if (below) {
+        // Cloud tops: the billows fade out upward (a soft mask, no edge).
+        c.saveLayer(r, Paint());
+        c.drawRect(r, paint);
+        c.drawRect(
+          r,
+          Paint()
+            ..blendMode = BlendMode.dstIn
+            ..shader = ui.Gradient.linear(
+              const Offset(0, 180),
+              const Offset(0, 380),
+              [const Color(0x00000000), const Color(0xFF000000)],
+            ),
+        );
+        c.restore();
+      } else {
+        c.drawRect(r, paint);
+      }
+    }
+  }
+
+  /// Peak opacity of the cover at [k] (tests: never more than [maxCloud]).
+  static double coverOpacity(double k) {
+    final c = k.clamp(0.0, 1.0);
+    final layers = [.8 * c, .34 * c, .26 * c];
+    return 1 - layers.fold(1.0, (p, a) => p * (1 - a));
+  }
+
   Color get veil => _lerpTable(veilFog, environment);
 
   /// Optional authored tile texture per slot (replaces tile A).
@@ -603,6 +706,20 @@ class Atmosphere {
   /// Paints [slot] over the arena (360 x 520 arena units on [c]).
   void paint(Canvas c, FogSlot slot) {
     if (!shows(slot)) return;
+    // --- cinematic flow: the outro thins every layer.
+    if (fogThin > .003) {
+      c.saveLayer(
+        null,
+        Paint()..color = Color.fromRGBO(0, 0, 0, 1 - .85 * fogThin),
+      );
+      _paintSlot(c, slot);
+      c.restore();
+      return;
+    }
+    _paintSlot(c, slot);
+  }
+
+  void _paintSlot(Canvas c, FogSlot slot) {
     if (slot == FogSlot.horizonBand && groundArt != null) {
       // The art's low cloud deck lies under the soft horizon band.
       for (final l in GroundAtmosphereAtlas.layers) {
@@ -661,10 +778,16 @@ class Atmosphere {
     for (var i = 0; i <= 8; i++) {
       final x = lane.left + lane.width * i / 8;
       hs.add(i / 8);
-      hc.add(Color.lerp(z, k, math.min(
-        Perspective.smoothstep(laneLeft - laneRamp, laneLeft, x),
-        1 - Perspective.smoothstep(laneRight, laneRight + laneRamp, x),
-      ))!);
+      hc.add(
+        Color.lerp(
+          z,
+          k,
+          math.min(
+            Perspective.smoothstep(laneLeft - laneRamp, laneLeft, x),
+            1 - Perspective.smoothstep(laneRight, laneRight + laneRamp, x),
+          ),
+        )!,
+      );
     }
     c.drawRect(
       lane,
@@ -681,8 +804,13 @@ class Atmosphere {
     for (var i = 0; i <= 6; i++) {
       final y = laneTop - laneRamp + laneRamp * i / 6;
       vs.add(i / 6);
-      vc.add(Color.lerp(o, w,
-          Perspective.smoothstep(laneTop - laneRamp, laneTop, y))!);
+      vc.add(
+        Color.lerp(
+          o,
+          w,
+          Perspective.smoothstep(laneTop - laneRamp, laneTop, y),
+        )!,
+      );
     }
     c.drawRect(
       lane,

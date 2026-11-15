@@ -93,6 +93,8 @@ void main() {
     expect(carrier.mode, RunMode.transition);
   });
 
+  // cinematic-flow: Pursuit is level clear 2.0 + travel 4.0 (whole beats;
+  // a message slot may add up to 2 s), the carrier victory 5.5.
   test('story phases add reading time and salvage stays two seconds', () {
     final m = ArcadeModel()..start();
     expect(m.transitionDuration, ArcadeModel.arrivalHintDuration);
@@ -108,9 +110,9 @@ void main() {
     expect(m.mode, RunMode.salvage);
     expect(m.transitionDuration, 2);
     reach(m, RunMode.levelClear);
-    expect(m.transitionDuration, closeTo(4 + 1 / 3, .0001));
+    expect(m.transitionDuration, closeTo(2, .0001));
     reach(m, RunMode.travel);
-    expect(m.transitionDuration, closeTo(4 + 1 / 3, .0001));
+    expect(m.transitionDuration, closeTo(4, .0001));
     m.restoreCheckpoint({'sector': 5});
     reach(m, RunMode.playing);
     final boss = m.boss!..shield = 0;
@@ -118,7 +120,7 @@ void main() {
       ..core = 1
       ..door = 1;
     m.hitBoss(boss.x);
-    expect(m.transitionDuration, closeTo(5.5 + 1 / 3, .0001));
+    expect(m.transitionDuration, closeTo(5.5, .0001));
   });
 
   test('only the last wave advances each level through clear and travel', () {
@@ -145,7 +147,7 @@ void main() {
         } else {
           expect(model.mode, RunMode.salvage);
           reach(model, RunMode.levelClear);
-          tick(model, 3.8);
+          tick(model, 1.8); // cinematic-flow: level clear is 2.0 s
           expect(model.mode, RunMode.levelClear);
           expect(model.level, level);
           reach(model, RunMode.travel);

@@ -136,25 +136,39 @@ void main() {
           model.mode = RunMode.levelClear;
           model.transitionDuration = 4;
           model.transitionLeft = 0;
+          // cinematic-flow: phase boundaries are continuous and lit (no
+          // black cut; the sector swap happens inside the Pursuit's cloud).
+          double changed(List<int> a, List<int> b) {
+            var n = 0;
+            for (var i = 0; i < a.length; i += 4) {
+              if ((a[i] - b[i]).abs() > 48 ||
+                  (a[i + 1] - b[i + 1]).abs() > 48 ||
+                  (a[i + 2] - b[i + 2]).abs() > 48) {
+                n++;
+              }
+            }
+            return n / (a.length / 4);
+          }
+
           final clearEnd = await _capture(scene);
           model.mode = RunMode.travel;
           model.transitionLeft = 4;
-          expect(await _capture(scene), orderedEquals(clearEnd));
+          expect(changed(await _capture(scene), clearEnd), lessThan(.05));
           model.transitionLeft = 0;
           final travelEnd = await _capture(scene);
           model.mode = RunMode.transition;
           model.wave = 1;
           model.transitionDuration = 2.3;
           model.transitionLeft = 2.3;
-          expect(await _capture(scene), orderedEquals(travelEnd));
+          expect(changed(await _capture(scene), travelEnd), lessThan(.05));
           var boundaryLight = 0;
           for (var i = 0; i < clearEnd.length; i += 4) {
             boundaryLight += clearEnd[i] + clearEnd[i + 1] + clearEnd[i + 2];
           }
           expect(
-            boundaryLight,
-            0,
-            reason: 'Boundary cuts remain fully black over all new scenery',
+            boundaryLight / (clearEnd.length / 4),
+            greaterThan(30),
+            reason: 'Boundaries show the lit scenery, never a black frame',
           );
         } finally {
           scene.atlas!.dispose();

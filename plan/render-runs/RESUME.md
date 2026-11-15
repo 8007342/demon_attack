@@ -241,3 +241,8 @@ W5a `ux-declutter`, W3 `continuous-swarm` (33/35 tasks; open: 8.2 phone playtest
 tests green; calibration in `plan/calibration-current.md`; strips `art/contact/continuous-swarm-*.png`).
 In progress: W4 `demon-intelligence` on `work/demon-intelligence` and W5b `cinematic-flow` on `work/cinematic-flow`
 (this one archives `fluid-transitions` first), in parallel. After both merge: rebuild web, then publish the preview.
+W5b `cinematic-flow` (2026-11-15, branch `work/cinematic-flow`, awaiting review): `fluid-transitions` archived; sector
+changes are three swarm beats on one clock (Rout, Pursuit into bright cloud, Descent), no cards between sectors, skip
+to Descent, carrier arrival through the swarm, outros, title attract swarm (6.1). Open: 6.2 demo pilot (optional),
+7.2 phone preview capture (after W4 and W5b merge), 8.2 spec sync at archive. Sheets `art/contact/cinematic-flow-*.png`;
+deviations and the progress-bar audit in `openspec/changes/cinematic-flow/design.md` §9.

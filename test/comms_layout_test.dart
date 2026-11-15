@@ -542,7 +542,9 @@ void main() {
     }
   }
 
-  testWidgets('phone: a full transmission replaces the travel transition', (
+  // cinematic-flow: a transition's radio line plays on the comms dock (no
+  // full-size card over the pursuit); the dock keeps it clear of the HUD.
+  testWidgets('phone: the travel transmission plays on the dock', (
     tester,
   ) async {
     final rig = await _launch(tester, const Size(390, 844));
@@ -558,9 +560,10 @@ void main() {
       limit: 20,
     );
     expect(on, isTrue, reason: '${rig.director.history}');
-    final card = find.byKey(
-      ValueKey('comms-transmission-${rig.director.transmission!.line.id}'),
-    );
+    final id = rig.director.transmission!.line.id;
+    expect(find.byKey(ValueKey('comms-transmission-$id')), findsNothing);
+    expect(find.byKey(const ValueKey('interlude-card')), findsNothing);
+    final card = find.byKey(ValueKey('comms-strip-$id'));
     expect(card, findsOneWidget);
     final hud = tester.getRect(find.byKey(const ValueKey('hud-score')));
     expect(tester.getRect(card).overlaps(hud), isFalse);

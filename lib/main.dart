@@ -26,6 +26,9 @@ import 'comms/squad_comms.dart';
 // --- console route
 import 'widgets/dev_console.dart';
 import 'widgets/transition_overlay.dart'; // --- fluid transitions
+import 'widgets/interlude_card.dart'
+    show TipInterludeCard; // --- cinematic flow
+import 'game/hints.dart' show tacticalHints; // --- cinematic flow: pause tips
 import 'widgets/level_toggle.dart'; // --- audio round: music / speech toggles
 export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
 // --- end console route
@@ -213,6 +216,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Difficulty boardDifficulty = Difficulty.normal;
   bool handledRunEnd = false;
   bool _endingShown = false, _endingOpen = false, _endingScheduled = false;
+
+  /// The pause menu's tips pane is open (cinematic-flow: illustrated hints
+  /// live at the opening and here).
+  bool _pauseTips = false;
   // --- fluid transitions: the one primary transition message
   // (widgets/transition_overlay.dart); ux-declutter removed its progress strip.
   late final transitions = TransitionPresenter(seed: widget.interludeSeed);
@@ -467,10 +474,20 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     audioUnlock();
     audioResume();
     audioCue('ending', 5, 1, model.cycle);
+    // --- cinematic flow (design §4.1): the ending fades up from the cloud
+    // tops over the climbing ship: a crossfade between two lit scenes,
+    // never through black (a cut with reduced motion).
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) =>
+      PageRouteBuilder<void>(
+        transitionDuration: Duration(milliseconds: reduce ? 0 : 900),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (_, _, _) =>
             EndingPage(creditsOnly: creditsOnly, onAudioResume: audioResume),
+        transitionsBuilder: (_, animation, _, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+          child: child,
+        ),
       ),
     );
     if (!mounted) return;
@@ -625,6 +642,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     setState(() {
       if (model.mode == RunMode.paused) {
         model.resume();
+        _pauseTips = false;
       } else {
         model.pause();
       }
@@ -660,7 +678,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       return KeyEventResult.handled;
     }
     if (event is KeyDownEvent &&
-        transitions.showingCard &&
+        transitions.canSkip(model) &&
         model.mode != RunMode.paused &&
         (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.enter)) {
       _skipTransition(); // --- fluid transitions
@@ -855,7 +873,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           // --- fluid transitions: a silent tip holds the
                           // call quiet (dimmed) while the music plays.
                           child: AnimatedOpacity(
-                            opacity: transitions.quiet ? .35 : 1,
+                            opacity: transitions.quiet(model) ? .35 : 1,
                             duration: const Duration(milliseconds: 500),
                             child: CommsSidePanels(
                               director: squadComms.director,
@@ -1475,9 +1493,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 if (model.defeatActive) {
                   model.defeatTimer = 0;
                   _tick();
-                } else if (transitions.showingCard &&
+                } else if (transitions.canSkip(model) &&
                     model.mode != RunMode.paused) {
-                  _skipTransition(); // --- fluid transitions
+                  _skipTransition(); // --- cinematic flow: skip to Descent
                 }
               },
               child: Stack(
@@ -1516,16 +1534,17 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                  // --- fluid transitions: one primary message (interlude
-                  // card, story card or carrier alert); no progress strip (ux-declutter).
-                  if (model.cinematic && model.mode != RunMode.paused)
+                  // --- cinematic flow: the opening tip card, or a sector
+                  // transition's caption, title and medal flourish (no
+                  // cards, no strips; the radio line is on the dock).
+                  if ((model.cinematic || model.flow.active) &&
+                      model.mode != RunMode.paused)
                     Positioned.fill(
                       child: CommsAtlasScope(
                         child: transitions.build(
                           context,
                           model: model,
                           comms: squadComms,
-                          ship: scene.ship,
                           onSkip: _skipTransition,
                         ),
                       ),
@@ -1565,6 +1584,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           child: const Text('RESUME'),
                         ),
                         const SizedBox(height: 12),
+                        // --- cinematic flow: the illustrated tips pane.
+                        TextButton(
+                          key: const ValueKey('pause-tips'),
+                          onPressed: () =>
+                              setState(() => _pauseTips = !_pauseTips),
+                          child: Text(_pauseTips ? 'HIDE TIPS' : 'TIPS'),
+                        ),
+                        if (_pauseTips) _tipsPane(),
+                        const SizedBox(height: 4),
                         _atmosphereToggle(),
                         const SizedBox(height: 4),
                         TextButton(
@@ -1656,6 +1684,35 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       ),
     ),
   );
+
+  /// Every tip this difficulty can show, illustrated, in a column (the
+  /// overlay scrolls). No advance control: it is a reference pane.
+  Widget _tipsPane() => Padding(
+    key: const ValueKey('pause-tips-pane'),
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final tip in tacticalHints)
+          if (tip.isEligible(model.difficulty))
+            Container(
+              width: 340,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xF2080D18),
+                border: Border.all(color: const Color(0xFF26394C)),
+              ),
+              child: TipInterludeCard(
+                tip: tip,
+                destination: 'SECTOR ${model.level}',
+                compact: true,
+              ),
+            ),
+      ],
+    ),
+  );
+
   Widget _gameOverlay(String heading, String sub, List<Widget> actions) =>
       ColoredBox(
         color: const Color(0xEC080D18),
