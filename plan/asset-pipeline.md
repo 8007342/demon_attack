@@ -345,7 +345,7 @@ stay aligned. Design and frame contract: [ground-unit-animation.md](ground-unit-
 | --- | --- |
 | `art/families/ground-fleet.json`, `ground-host.json`, `ground-infantry.json` (+ `-runs.json`) | Specs (schema `demon-attack.ground-blocks/v1`): atlas grid, camera, palettes and materials, sector rosters and kits, prompts, seeds, GPU plan per unit |
 | `art/families/rigs/<unit>.json` | Rigs (schema `demon-attack.ground-rig/v1`), the source of every silhouette |
-| `assets/images/ground-blocks/ground-{fleet,host,infantry}-<sector>.png` | Per-sector atlases (48 × 40 and 32 × 24 texel cells, 20 columns, binary alpha); not in `pubspec.yaml` until the runtime integrates them |
+| `assets/images/ground-blocks/ground-{fleet,host,infantry}-<sector>.png` | Per-sector atlases (48 × 40 and 32 × 24 texel cells, 20 columns, binary alpha), loaded per sector by `GroundBlocksLayer` |
 | `lib/game/ground_blocks_atlas.dart` | Generated metadata: cell name → (atlas, row, column), pivots, muzzles, sizes, origin, bob, debris pieces |
 | `art/families/ground-blocks-pack.json` | Generated memory and draw-call report per sector |
 | `art/contact/ground-rig-turntables.png` | CP0: rig shading at every direction, black fills at ×1 and ×0.62, hero at ×3, turret × hull seating grids |
@@ -356,9 +356,33 @@ go run . validate && go run . offline && go run . contact   # no GPU, byte-ident
 go test ./...
 ```
 
-Phase 0 (2026-11-14) is rig-only. The GPU phases redraw each heading with Qwen-Image-Edit from its rig reference plus the
-unit's approved hero (`go run . rig`, `jobs`, `ingest`), then `finish` masks the result to the rig silhouette, quantises to
-the material ramps and inks it, and `pack` uses the finished cells.
+### Pipeline (lean hybrid, accepted at CP1 on 2026-11-15)
+
+1. **Rig.** `go run . rig [UNIT]` renders the rig reference at the hero heading. The rig owns every silhouette,
+   heading, state, overlay and debris piece.
+2. **Hero.** One studio job per unit with `variant-qwen-edit.json`, `count` 4 (consecutive seeds from the unit's `seed`),
+   using the rig `hull.ref` as input and the prompts and negatives from `jobs.json`. `go run . ingest` records
+   provenance in the family's `-runs.json`.
+3. **Pick.** Choose one candidate per unit and set `hero.selected` in the family. **Commit the picked raw** to
+   `art/sprites/sources/ground-blocks-selected/<unit>/hero/<seed>.png`.
+4. **Bake.** `go run . bake --all` (bake v2, hero only). The hero's region materials and accents go onto the rig shading,
+   then a despeckle pass runs. `--with-picks` is off by default. Review with `bakereview OUT UNIT:subs..`.
+5. **Pack.** `go run . pack` writes the per-sector atlases and `lib/game/ground_blocks_atlas.dart`. Check that each sector
+   stays under the 8 MB RGBA budget.
+
+**Dropped: heading edits and VACE.** Both workflows stay committed, but the pipeline no longer uses them
+([render-runs/ground-forces-rework.md §12](render-runs/ground-forces-rework.md#12-cp1-decision-2026-11-15-the-operator-delegated-the-call)).
+Two-image Qwen heading edits gave binary results: at denoise ≤ 0.85 they returned the rig unchanged, and at 0.9 or
+more they redrew the hero's own pose. No setting blended the two. Single-image redraws drifted from the rig and mottled
+at sprite size. VACE in-betweens stayed on-model but barely moved, and the rig keys already carry the motion. They can
+come back per unit if a pose-locked graph appears.
+
+**Durability rule.** The raw cache (`~/.cache/demon-attack/ground-blocks/raw/`, `BLOCKS_RAW`) and the studio work
+folders can be wiped by a host reset; this happened once (§11). Everything needed to rebuild is committed: the
+family specs, rigs, `-runs.json` provenance, and the picked raws under `ground-blocks-selected/`. Copy those raws back
+to the studio inputs before any job that needs them. Ledgers: render plan §11–§14 (heroes, picks, bake, pack). The
+atmosphere and wildlife atlases are built by `tools/ground_atmosphere` (procedural, no GPU) and `tools/ground_wildlife`
+(§15–§16).
 
 ## Flyover vegetation
 

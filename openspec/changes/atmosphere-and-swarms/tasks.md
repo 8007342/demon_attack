@@ -69,3 +69,5 @@
       Measured in `test/atmosphere_perf_test.dart` (CPU tester): flock 40 agents .03 ms per frame; fog
       recording .1–.2 ms; CPU raster is not a GPU number. A phone GPU measurement is still to do.
 - [ ] 6.2 Operator playtest: fog layers, swarm feel, shadows, sentinel foreshadowing; tune.
+      (Open 2026-11-15: folded into the ground close-out playtest checklist, render plan
+      `plan/render-runs/ground-forces-rework.md` §17 (fog darkness vs the old haze).)

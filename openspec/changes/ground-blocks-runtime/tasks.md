@@ -44,4 +44,8 @@ Prerequisite: `ground-forces-rework` task 2.6 (offline atlases and generated met
 - [ ] 5.2 Specials other than the threat telegraph (Cairn deploy, Tether tow, Reliquary unload, Hodcrawler mend,
       Carillon ripple, Sextant brace), banner overlays and the Chapterhouse command pulse
 - [ ] 5.3 Ford, crest hop and unearthing once the simulation or the arrival work exposes them
-- [ ] 5.4 Operator review of the in-game frames (part of `ground-forces-rework` CP8)
+      (still deferred 2026-11-15: `fording`, `airborne` and `arrivalAge` remain hooks returning false/null; the
+      atmosphere follow-up tints units and draws smoke but adds no arrival state.)
+- [x] 5.4 Operator review of the in-game frames (part of `ground-forces-rework` CP8)
+      (2026-11-15: CP8 decided under the operator's delegated call; review frames and
+      `art/contact/ground-cp8-ember-phone.jpg`. A hands-on playtest is still recommended (render plan §17).)

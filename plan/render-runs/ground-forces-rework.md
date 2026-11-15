@@ -536,3 +536,65 @@ silhouette glides (no wing stroke) — at its size a slow-banking glide reads as
 
 Tests: `test/wildlife_silhouette_assets_test.dart` (metadata, every cell drawn, binary alpha, luma and signal
 colour caps, 8 × 2 frames per species, blur ordering); `flutter analyze` clean, `flutter test` passing.
+
+## 17. Close-out (2026-11-15)
+
+The operator delegated the checkpoint calls for this run. CP6 (atmosphere), CP7 (egg assets) and CP8 (in-game frames)
+are decided on the sheets and frames below. OpenSpec `ground-forces-rework` tasks 6.4 and 7.1–7.4 are ticked.
+
+**What shipped** (branch `game`, plus `work/ground-finish`):
+- **Blocks for all 26 units.** Each unit is a rig plus one hero, baked and packed per sector (§13–§14). The runtime
+  (`ground-blocks-runtime`) draws them with five headings, articulated layers, overlays, LOD and the telegraph contract.
+  `GroundPainter.useBlocks` keeps the legacy atlases available.
+- **The atmosphere atlas, wired into the game** (§15): low cloud, horizon fog, cloud shadows and both mists in the
+  depth sort, plus the dust veil on the tide.
+- **Runtime follow-ups in this close-out** (`lib/game/ground_atmosphere.dart`, `ground_painter.dart`,
+  `ground_blocks_painter.dart`):
+  - **Unit fog by depth.** `GroundFog` mixes each body toward the sector fog tint by `fogMix(z)` (cross-faded while
+    travelling, stepped in 1/32). Threats cap at 0.45. Near units and units in the lane stay clear. Emissive overlays
+    (lights, flames, sparks) fog at half rate, and an emissive-mask pass (`Atmosphere.glowMatrix`) lets eyes baked into a
+    Host body show through the murk, as the air creatures' staged reveal does. Telegraph fills, the bracket, launch
+    flashes and hit flashes are never tinted. Without the atlas nothing changes.
+  - **Battlefield smoke from the packed sprites** (`GroundSmoke`). `smokeDrift` puffs carry each wreck's smoke column on
+    into a drifting haze (3 puffs, or 1 in reduced atmosphere). A `smokeWall` stands over a burning wreck line (two
+    hulks close together on one side; full atmosphere only; never in the lane). Skirmish units trading fire leave thin
+    gun smoke (at most 4). Puffs stay at or under 0.30 inside the lane, and the total is capped at 14 sprites per
+    frame. Reduced motion holds the densest frame, still.
+  - **Flock flyers draw above the ground fog** (`FlyoverBackground.deferFlyers`, drawn by the scene right after the
+    ground fog slot), with a small value lift (grey only, no warm, no eyes). The Krybor rime-moths now read as small
+    dark moths over the fog.
+- **Eggs:** the budget, dances, the jig, the breakup and jackpot, tree flocks and critter scatter (`ground-easter-eggs`).
+  **Wildlife and sentinel silhouettes:** §16.
+- **Docs:** the accepted decisions are in `plan/style-guide.md` ("Ground war presentation: accepted decisions") and in
+  `plan/asset-pipeline.md` ("Ground blocks" → "Pipeline (lean hybrid)", with the durability rule).
+- **Tests:** `flutter analyze` clean; `flutter test` 500 passed, 1 skipped. New in `test/ground_atmosphere_test.dart`:
+  fog mix and caps, tint blending, far units taking the fog with the telegraph bracket untinted, wreck, wall and gun
+  smoke with lane caps, reduced tiers, and the fog-and-smoke review frames (`l1/l3-fog-smoke-{art,plain}.png`). The
+  flock frame now asserts the flyers read over the in-game fog. Simulation parity still holds with the art on and off.
+  The CP6 sheet `art/contact/ground-atmosphere-contact.png` was refreshed, and its middle row shows the fogged units.
+
+**Deferred:**
+- *ground-blocks-runtime:* walker heading steps landing on a stride plant; specials other than the telegraph (Cairn
+  deploy, Tether tow, Reliquary unload, Hodcrawler mend, Carillon ripple, Sextant brace), banner overlays and the
+  Chapterhouse pulse; ford, crest hop and unearthing (the hooks still return false/null).
+- *ground-easter-eggs:* shell-felled trees releasing flocks; Ringfall flocks (dust kites are ready); critter groups
+  placed by terrain feature; warm seams cooling on stone pieces and the captured Krybor hull's human plate; dance
+  variants by squad index; "no dance within 1.5 s of a nearby shot" and quiet on dense radio traffic; a phone-size
+  review clip per egg.
+- *atmosphere-and-swarms:* the radio line when the sentinel silhouette is first seen (pending the voice batch); a GPU
+  frame-time measurement on a phone (the CPU numbers are in `test/atmosphere_perf_test.dart`); the operator playtest
+  (6.2).
+- *This change:* the Thurible's smoke wall
+  (Tier B); a re-roll of the Chapterhouse hero if its spire reads as misplaced; the optional SDXL low-cloud strips.
+
+**Suggested operator playtest** (one sector of each kind, on a phone):
+1. **Side-on vehicles.** They draw larger than the legacy sprites (authored size). Check that they do not crowd the
+   side bands or read as threats.
+2. **Darker Host bakes.** Crocket-captured, Knell and Scrapmason at h135 come out darker than their rigs. Check that they
+   still read against Ember and Hollow ground and that their eyes show through the fog.
+3. **Fog darkness vs the old haze.** The new murk is darker and thinner than the fBm haze, as the luma caps require, and
+   far units now take the fog colour. Decide whether the far ground reads as weather or just as dark. Also covers
+   atmosphere-and-swarms 6.2.
+4. **Egg frequency.** Dances (1 in 3 skirmish wins), jig (1 in 4), jackpot (1 in 8 breakups), flocks (2 in 5 tree
+   falls) and critter scatter. Too rare to notice, or too busy?
+5. **Smoke.** Check that wreck haze and smoke walls add depth without hiding a telegraph or crowding the lane edge.
