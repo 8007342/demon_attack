@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'easter_eggs.dart';
 import 'flyover_atlas.dart';
 import 'ground_painter.dart';
+import 'ground_presentation.dart';
 import 'ground_wildlife_atlas.dart';
 import 'model.dart';
 import 'terrain_field.dart';
@@ -751,7 +752,7 @@ class FlyoverBackground implements GroundOccluders {
           final n = d < 1 ? const Offset(1, 0) : away / d;
           s.fvx = n.dx.abs() < .2 ? (_rand(v.id, 29) < .5 ? -1 : 1) : n.dx.sign;
           s.fvy = n.dy.abs() < .3 ? (_rand(v.id, 30) < .5 ? -1 : 1) : n.dy.sign;
-          s.fleeT = 1.2 + (1 - d / radius) * .6;
+          s.fleeT = (1.2 + (1 - d / radius) * .6) / GroundPace.fx;
         }
       }
       final ds = center - shadow;
@@ -766,7 +767,7 @@ class FlyoverBackground implements GroundOccluders {
       }
       if (s.egg && s.fleeT > 0 && !reducedMotion) {
         // A tiny dust puff where each leap lands.
-        final tick = ((_clock * 14).floor() + v.id) % 8;
+        final tick = ((_clock * 14 * GroundPace.fx).floor() + v.id) % 8;
         if (tick == 7 && s.lastTick != 7) {
           _particles.add(VegetationParticle(
               0,
@@ -783,7 +784,8 @@ class FlyoverBackground implements GroundOccluders {
       if (s.fleeT > 0) {
         s.fleeT -= dt;
         if (s.fleeT <= 0) s.egg = false;
-        final fast = v.kind.gait == 'crawl' ? .55 : 1.0;
+        // Leaps at half speed (openspec change ground-presentation-tuning).
+        final fast = (v.kind.gait == 'crawl' ? .55 : 1.0) * GroundPace.fx;
         // Sideways within the open band (screen fraction) and along the
         // ground (world texels): toward the camera when fleeing downward.
         final outward = v.x < 180 ? -1.0 : 1.0;
@@ -823,7 +825,7 @@ class FlyoverBackground implements GroundOccluders {
           s.burrowT <= 0 &&
           s.duckT <= 0 &&
           leapRow >= 0) {
-        final tick = ((_clock * 14).floor() + v.id) % 8;
+        final tick = ((_clock * 14 * GroundPace.fx).floor() + v.id) % 8;
         if (tick >= 4) {
           leapRects.add(GroundWildlifeAtlas.leap(
             leapRow,
@@ -854,7 +856,7 @@ class FlyoverBackground implements GroundOccluders {
       } else if (s != null && s.duckT > 0) {
         frame = s.duckT > .3 ? 4 : 5;
       } else if (s != null && s.fleeT > 0) {
-        frame = (_clock * 14).floor() % 4;
+        frame = (_clock * 14 * GroundPace.fx).floor() % 4;
       } else if (v.moving) {
         frame = (_clock * (v.kind.gait == 'crawl' ? 5 : 8)).floor() % 4;
       } else {
@@ -1252,10 +1254,12 @@ class FlyoverBackground implements GroundOccluders {
         s
           ..fvx = band == 0 ? -1 : 1
           ..fvy = v.y >= at.dy ? 1 : -1
-          ..fleeT = 1.6 + _rand(v.id, 32) * .6
+          ..fleeT = (1.6 + _rand(v.id, 32) * .6) / GroundPace.fx
           ..egg = true
           ..lastTick = -1
-          ..burrowIn = _rand(v.id, 31) < .5 ? 1 + _rand(v.id, 33) * .5 : 0;
+          ..burrowIn = _rand(v.id, 31) < .5
+              ? (1 + _rand(v.id, 33) * .5) / GroundPace.fx
+              : 0;
       }
     }
   }

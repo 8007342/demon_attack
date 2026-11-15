@@ -598,3 +598,23 @@ are decided on the sheets and frames below. OpenSpec `ground-forces-rework` task
 4. **Egg frequency.** Dances (1 in 3 skirmish wins), jig (1 in 4), jackpot (1 in 8 breakups), flocks (2 in 5 tree
    falls) and critter scatter. Too rare to notice, or too busy?
 5. **Smoke.** Check that wreck haze and smoke walls add depth without hiding a telegraph or crowding the lane edge.
+
+## 18. Operator tuning (W1) (2026-11-15, no GPU)
+
+OpenSpec `ground-presentation-tuning`, from the operator's playtest
+([plan/operator-feedback-2026-11-15.md](../operator-feedback-2026-11-15.md) W1). Presentation only. The simulation
+fingerprint of all five sectors is identical before and after.
+- **Pace** (`lib/game/ground_presentation.dart`, `GroundPace`): every ground cycle, slew, overlay, visual effect,
+  easter-egg motion and critter leap runs at 0.5x. Walkers (Stilt, Kiln Ox, Buttress Strider, Belfry, Chapterhouse)
+  stride at 0.3x. The telegraph, fire, recoil, hit and tracer timing is unchanged. The atmosphere's smoke drift and
+  walls are left to W2.
+- **Sizes** (`GroundSize`): Fleet vehicles 0.5x, Host vehicles and the Tympanum 1.3x, troopers 0.9x, scaled at runtime
+  with nearest-neighbour filtering. **No atlas regeneration:** the units were already drawn at a continuous scale
+  with `FilterQuality.none`, so they stay as crisp as before, and half-size sources would lose one-texel outlines.
+- **Squads** (`GroundSquadLook`): each squad is drawn as 1–5 troopers (weights 1:3:4:3:1; rocket teams 1–3), separate
+  from the simulation's squad hp, and falls in proportion to its hp. Each trooper has its own spacing, drift,
+  lead or lag, gait cadence and phase, and its own heading tracker.
+- **Not slowed:** unit travel. It is gameplay, so design §3 proposes a skirmish-only travel multiplier that would
+  need calibration.
+- Before/after sheet: `art/contact/ground-tuning.png` (left: before; right: after; rows are sectors 1–5, ground layer
+  at 2x on flat grey).
