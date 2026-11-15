@@ -45,8 +45,13 @@ class ConsoleStart {
     this.sector = 1,
     this.route = 0,
     this.wave = 1,
+    this.bonus,
   });
   final Difficulty difficulty;
+
+  /// --- bonus levels: the id of a bonus level this sector becomes
+  /// (sectors 1-4 only); null: the regular sector.
+  final String? bonus;
 
   /// Sector 1-5 (5 is the carrier).
   final int sector;
@@ -100,6 +105,7 @@ class ConsoleStart {
     route: route,
     wave: wave,
     console: true,
+    bonus: bonus,
   );
 
   String get label =>
@@ -122,6 +128,11 @@ class _DevConsolePageState extends State<DevConsolePage> {
   Difficulty difficulty = Difficulty.normal;
   int sector = 1;
   int route = 0;
+
+  /// --- bonus levels: 0 = the regular sector, n = bonusLevels[n - 1].
+  int bonus = 0;
+  String? get _bonusId =>
+      bonus == 0 || sector == 5 ? null : bonusLevels[bonus - 1].id;
 
   static const _dim = Color(0xFF8D9EB3);
   static const _faint = Color(0xFF52677E);
@@ -224,6 +235,15 @@ class _DevConsolePageState extends State<DevConsolePage> {
                       _dim,
                       8,
                     ),
+                    // --- bonus levels: play this sector as a bonus level.
+                    const SizedBox(height: 18),
+                    _heading('BONUS LEVEL'),
+                    _choices(
+                      'bonus',
+                      ['NONE', for (final b in bonusLevels) b.label],
+                      sector == 5 ? 0 : bonus,
+                      (i) => setState(() => bonus = i),
+                    ),
                   ]),
                   const SizedBox(height: 16),
                   FilledButton(
@@ -233,6 +253,7 @@ class _DevConsolePageState extends State<DevConsolePage> {
                         difficulty: difficulty,
                         sector: sector,
                         route: route,
+                        bonus: _bonusId,
                       ),
                     ),
                     child: Text(

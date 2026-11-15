@@ -1,5 +1,8 @@
 import 'dart:math' as math;
 
+import 'bonus/bonus_catalog.dart';
+import 'bonus/bonus_plan.dart';
+import 'bonus/bonus_types.dart';
 import 'demon_planner.dart';
 import 'difficulty.dart';
 import 'flock.dart';
@@ -13,6 +16,9 @@ import 'skill_meter.dart';
 import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
+export 'bonus/bonus_catalog.dart';
+export 'bonus/bonus_plan.dart';
+export 'bonus/bonus_types.dart';
 export 'demon_planner.dart' show DemonTier, Manoeuvre;
 export 'difficulty.dart';
 export 'game_events.dart';
@@ -33,6 +39,9 @@ part 'life_loss.dart';
 
 // --- cinematic flow (one transition clock, the pursued flock, skip) ---
 part 'model_flow.dart';
+
+// --- bonus levels, bonus-only powerups and run modifiers ---
+part 'model_bonus.dart';
 
 // --- the sentinel final rush (demon-intelligence design §6) ---
 part 'sentinel_rush.dart';
@@ -344,9 +353,12 @@ class Shot {
 }
 
 class Pickup {
-  Pickup(this.x, this.y, this.power);
+  Pickup(this.x, this.y, this.power, {this.bonus});
   double x, y;
   final Power power;
+
+  /// --- bonus levels: a bonus-only powerup (then [power] is unused).
+  final BonusPowerDef? bonus;
 }
 
 class Blast {
@@ -366,9 +378,13 @@ class Blast {
 }
 
 class SupplyCrate {
-  SupplyCrate(this.x, this.y, this.power, {this.maxHp = 3}) : hp = maxHp;
+  SupplyCrate(this.x, this.y, this.power, {this.maxHp = 3, this.bonus})
+    : hp = maxHp;
   double x, y;
   final Power power;
+
+  /// --- bonus levels: a bonus-only powerup (then [power] is unused).
+  final BonusPowerDef? bonus;
   final int maxHp;
   int hp;
   double vy = 28.0;
@@ -473,6 +489,13 @@ class ArcadeModel {
   /// (a fixture and calibration flag). Route 0 is unchanged either way.
   bool intelligence = true;
   bool get _intel => intelligence && cycle >= 1;
+
+  // --- bonus levels (model_bonus.dart): the run's plan, the level being
+  // played and the bonus powers. Empty unless the run has a run seed.
+  final BonusRun bonusRun = BonusRun();
+
+  /// The odds a seeded run's plan is drawn with.
+  BonusTuning bonusTuning = BonusTuning.standard;
 
   /// The energy planner (its own PRNG: never draws from [random]).
   late final DemonPlanner planner = DemonPlanner(seed);
@@ -857,7 +880,8 @@ class ArcadeModel {
       (mode == RunMode.transition && wave > 1);
   bool get isBoss => boss != null;
   int get wavesPerLevel =>
-      level == 5 ? 1 : 3 + ((level - 1) ~/ 2) + math.min(cycle, 3);
+      bonusRun.level?.waves.count ??
+      (level == 5 ? 1 : 3 + ((level - 1) ~/ 2) + math.min(cycle, 3));
   int get nextLevel => level == 5 ? 1 : level + 1;
   RunMode get presentationMode => mode == RunMode.paused ? _beforePause : mode;
   bool get cinematic => [
@@ -870,8 +894,12 @@ class ArcadeModel {
   bool get waveTransition => presentationMode == RunMode.transition && wave > 1;
   double get transitionProgress =>
       (1 - transitionLeft / transitionDuration).clamp(0, 1);
-  void start({Difficulty difficulty = Difficulty.normal}) {
+
+  /// [runSeed] draws the run's bonus plan (a bonus level, a run modifier);
+  /// without one the run is the calibrated campaign.
+  void start({Difficulty difficulty = Difficulty.normal, int? runSeed}) {
     this.difficulty = difficulty;
+    _bonusStartRun(runSeed); // --- bonus levels
     visitedSectors.clear(); // --- transition ascent
     _resetSkill(); // --- demon intelligence
     ranked = true;
@@ -949,8 +977,11 @@ class ArcadeModel {
     int route = 0,
     int wave = 1,
     bool console = false,
+    int? runSeed,
+    String? bonus,
+    String? modifier,
   }) {
-    start(difficulty: difficulty);
+    start(difficulty: difficulty, runSeed: runSeed);
     if (console) {
       ranked = false;
       lives = 1;
@@ -962,6 +993,13 @@ class ArcadeModel {
     kills = 0;
     events.clear();
     ground.resetRun();
+    // --- bonus levels: the console may make this sector a bonus level.
+    // [modifier] likewise puts the run under a run modifier.
+    final forced = bonus == null ? null : bonusLevelById(bonus);
+    final rule = modifier == null ? null : runModifierById(modifier);
+    if ((forced != null && level != 5) || rule != null) {
+      _bonusForce(level == 5 ? null : forced, modifier: rule);
+    }
     _beginLevel();
     final target = wave.clamp(1, wavesPerLevel);
     if (target > 1) {
@@ -988,6 +1026,7 @@ class ArcadeModel {
     'kills': kills,
     'heartSlots': List<int>.of(heartSlots),
     'activeMilliseconds': activeMilliseconds,
+    if (bonusRun.seed != null) 'runSeed': bonusRun.seed, // --- bonus levels
   };
 
   /// Restores a fresh wave, validating before changing this model.
@@ -1011,9 +1050,16 @@ class ArcadeModel {
     );
     final sector = integer(data['sector'] ?? data['level'], 1, 1, 5);
     if (route == null || sector == null) return false;
+    // --- bonus levels: the plan is a pure function of the saved run seed.
+    final rawSeed = data['runSeed'];
+    final restoredSeed = rawSeed is int ? rawSeed : null;
+    final restoredPlan = restoredSeed == null
+        ? BonusPlan.none
+        : BonusPlan.forRun(restoredSeed, tuning: bonusTuning);
     final maxWave = sector == 5
         ? 1
-        : 3 + ((sector - 1) ~/ 2) + math.min(route, 3);
+        : restoredPlan.at(route, sector)?.waves.count ??
+              3 + ((sector - 1) ~/ 2) + math.min(route, 3);
     final restoredWave = integer(data['wave'], 1, 1, maxWave.toInt());
     final restoredLives = integer(
       data['lives'],
@@ -1090,6 +1136,8 @@ class ArcadeModel {
     invulnerable = 2;
     _resetLifeLoss();
     boss = level == 5 ? _newCarrier() : null;
+    _bonusStartRun(restoredSeed); // --- bonus levels
+    _bonusBeginLevel();
     _groundBeginLevel(); // --- ground war
     _spawnWave(fromCheckpoint: true);
     events.add(boss == null ? 'level' : 'boss');
@@ -1111,6 +1159,7 @@ class ArcadeModel {
     clearedLevel = null;
     wreckBoss = null;
     boss = level == 5 ? _newCarrier() : null;
+    _bonusBeginLevel(); // --- bonus levels
     levelClock = 0;
     pickups.clear();
     heartPickups.clear();
@@ -1176,7 +1225,9 @@ class ArcadeModel {
     _flock = 2;
     flocksSpawned = 0;
     flocksPlanned = boss == null
-        ? policy.reinforcementFlocks(route: cycle, sector: level)
+        ? _bonusReinforcements(
+            policy.reinforcementFlocks(route: cycle, sector: level),
+          )
         : 0;
     _reinforcementLeft = 4.5;
     _reinforcementCooldown = .6;
@@ -1193,10 +1244,8 @@ class ArcadeModel {
   /// counters belonging to [forWave].
   (List<Demon>, int) _buildRoster(int forWave, {bool fromCheckpoint = false}) {
     final roster = <Demon>[];
-    final count = policy.rosterCount(
-      sector: level,
-      wave: forWave,
-      route: cycle,
+    final count = _bonusRoster(
+      policy.rosterCount(sector: level, wave: forWave, route: cycle),
     );
     final rows = (count / 6).ceil();
     final spacing = rows <= 4 ? 48.0 : 160.0 / (rows - 1);
@@ -2057,13 +2106,16 @@ class ArcadeModel {
   (int, int, bool) _ordinaryProfile([int? forWave]) {
     final w = forWave ?? wave;
     final index = _ordinaryBirthOrdinal++;
-    final kind = cycle > 0
-        ? (index + w + level) % 4
-        : w > 1 && index % 4 == 0
-        ? math.max(0, level - 2)
-        : level - 1;
+    final kind = _bonusKind(
+      cycle > 0
+          ? (index + w + level) % 4
+          : w > 1 && index % 4 == 0
+          ? math.max(0, level - 2)
+          : level - 1,
+    );
     final elite =
         (index + 1) % 10 == 0 &&
+        !_bonusNoElites &&
         _eliteBirths < policy.eliteBudget(route: cycle);
     if (elite) _eliteBirths++;
     return (
@@ -2239,6 +2291,7 @@ class ArcadeModel {
     } else {
       shots.clear();
       clearedLevel = level;
+      _bonusClear(); // --- bonus levels: the clear award
       _groundEndLevel(); // --- ground war
       _enterPhase(RunMode.salvage, FlowPlan.routSeconds);
       _flowBegin(victory: false); // --- cinematic flow
@@ -2492,6 +2545,7 @@ class ArcadeModel {
     });
 
     _updateFallingParts(dt);
+    _bonusStep(dt); // --- bonus levels: crates, bonus power timers
 
     for (final crate in supplyCrates) {
       crate.y += crate.vy * dt;
@@ -2505,7 +2559,7 @@ class ArcadeModel {
     noseFlash = math.max(0, noseFlash - dt);
     if (_fire <= 0) {
       final fired = shots.length;
-      _fire += hasPower(Power.rapid) ? .105 : .23;
+      _fire += (hasPower(Power.rapid) ? .105 : .23) * _bonusFireScale;
       final powerful = hasPower(Power.powerful), large = hasPower(Power.large);
       final double slingVx;
       if (shipVx.abs() <= 15 && steering.abs() < 0.05) {
@@ -2604,7 +2658,8 @@ class ArcadeModel {
     for (final p in pickups) {
       p.y += fallSpeed * dt;
       if ((p.x - shipX).abs() < 22 && (p.y - shipY).abs() < 23) {
-        collect(p.power);
+        final special = p.bonus; // --- bonus levels
+        special != null ? collectBonus(special) : collect(p.power);
         p.y = height + 20;
       }
     }
@@ -2793,6 +2848,7 @@ class ArcadeModel {
     if (boss != null || level == 5 || forWave < 1 || forWave > wavesPerLevel) {
       return null;
     }
+    if (_bonusNoSentinels) return null; // --- bonus levels
     final eligible =
         cycle >= 1 &&
         ((forWave == wavesPerLevel &&
@@ -3695,7 +3751,11 @@ class ArcadeModel {
                   ? Power.powerful
                   : (roll < 0.90 ? Power.spread : Power.shield));
         final spawnX = 50.0 + random.nextDouble() * 260.0;
-        supplyCrates.add(SupplyCrate(spawnX, -20.0, power));
+        // --- bonus levels: a run modifier may change or withhold it.
+        final allowed = _bonusDrop(power, crate: true);
+        if (allowed != null) {
+          supplyCrates.add(SupplyCrate(spawnX, -20.0, allowed));
+        }
       }
     }
   }
@@ -3750,7 +3810,10 @@ class ArcadeModel {
           if (crate.destroyed) {
             supplyCrates.remove(crate);
             blasts.add(Blast(crate.x, crate.y, big: true));
-            pickups.add(Pickup(crate.x, crate.y, crate.power));
+            pickups.add(
+              Pickup(crate.x, crate.y, crate.power, bonus: crate.bonus),
+            );
+            _bonusCrateOpened(crate); // --- bonus levels
             events.add('salvage');
           }
           break;
@@ -3904,7 +3967,7 @@ class ArcadeModel {
           (100 + d.kind * 75 + (d.maxHp - 1) * 50) *
           (cycle + 1) *
           policy.enemyPoints;
-      score += (basePoints * (wasDiving ? 1.5 : 1.0)).round();
+      score += _bonusKillPoints((basePoints * (wasDiving ? 1.5 : 1.0)).round());
       blasts.add(Blast(d.x, d.y, archetype: d.archetype));
       events.add('explosion');
       if (policy.heartDropChance > 0 &&
@@ -3918,13 +3981,11 @@ class ArcadeModel {
         );
       }
       if (kills % 8 == 0 || (d.isLarge && wasDiving)) {
-        pickups.add(
-          Pickup(
-            d.x,
-            d.y,
-            Power.values[(math.max(1, kills ~/ 8) - 1) % Power.values.length],
-          ),
+        // --- bonus levels: the rules in force may change or withhold it.
+        final power = _bonusDrop(
+          Power.values[(math.max(1, kills ~/ 8) - 1) % Power.values.length],
         );
+        if (power != null) pickups.add(Pickup(d.x, d.y, power));
       }
       _groundDropOnKill(d); // --- ground war
     } else {
@@ -4073,6 +4134,7 @@ class ArcadeModel {
       return;
     }
     lives--;
+    bonusRun.shipsLost++; // --- bonus levels
     pilot.reset(shipX); // --- demon intelligence
     skill.lifeLost();
     _lastSkill = skill.level;

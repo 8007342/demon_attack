@@ -1199,6 +1199,118 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'frontCall.4.h1', speaker: 'mensah', duration: 1.56, text: 'Granite\'s taking a beating! Help!', mouth: '2222222444444=========22', open: '037874277774677753278742', vis: '-------------eeeeee-----', emotion: 'panicked', clip: 'allyUnderAttack.h7'),
     ],
   ),
+  'bonusEntry': CommsTriggerSpec(
+    name: 'bonusEntry',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 3.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusEntry.h0', speaker: 'admiral', duration: 5.079, text: 'Overwatch to squadron. New sector, same promise. Keep them off the fleet.', mouth: '000000<<<<<<333333<<<<5550000<<<<<==3333===<<<<<<<====000005555<<<<<22333==00', open: '00068788899765555788665532116898685466533378868877653211001764799856446533211', vis: '-------oo-------------oo----oooeeeee----ee--------eee------oo------------ee--', emotion: 'calm', clip: 'sectorStart.h0'),
+      CommsLine(id: 'bonusEntry.h1', speaker: 'lindqvist', duration: 3.837, text: 'Beacon on the line. Formation is yours, pilot. Lead us in.', mouth: '333222<<<<<443322000<<<<<<<==<<<====3333==00000000==444222', open: '0574478988876653211789987886688754235565421110487876776421', vis: '-------------------oo--eeeeeeoooeee-----eee-------ee------', emotion: 'calm', clip: 'sectorStart.h1'),
+    ],
+  ),
+  'bonusEntry.supplyRun': CommsTriggerSpec(
+    name: 'bonusEntry.supplyRun',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 3.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusEntry.supplyRun.h0', speaker: 'kestrel', duration: 2.65, text: 'Salvage on the field. Quick pass, then regroup.', mouth: '0004444<<<<<<<<<==000222=====<<<<44<<<<<', open: '0156675888568985321174467655688887788532', vis: '----------------ee------eeee--oo--------', emotion: 'teasing', clip: 'salvage.h3'),
+      CommsLine(id: 'bonusEntry.supplyRun.h1', speaker: 'wisp', duration: 3.161, text: 'Salvage drifting. Collect what you can.', mouth: '====<<<4433===========0000000000<<===========222', open: '024799867663347742454211000000068953657647876421', vis: 'eee--------ee---eeeee-------------eee-----------', emotion: 'teasing', clip: 'salvage.h2'),
+      CommsLine(id: 'bonusEntry.supplyRun.h2', speaker: 'rook', duration: 1.749, text: 'Loot time! Grab everything.', mouth: '555555<<442222<<<<<<<<===00', open: '047757887642158988874554211', vis: 'ooooo-----------------eee--', emotion: 'teasing', clip: 'salvage.h1'),
+    ],
+  ),
+  'bonusStart.supplyRun': CommsTriggerSpec(
+    name: 'bonusStart.supplyRun',
+    priority: 5,
+    cooldown: 20.0,
+    ttl: 4.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusStart.supplyRun.h0', speaker: 'wisp', duration: 3.161, text: 'Salvage drifting. Collect what you can.', mouth: '====<<<4433===========0000000000<<===========222', open: '024799867663347742454211000000068953657647876421', vis: 'eee--------ee---eeeee-------------eee-----------', emotion: 'teasing', clip: 'salvage.h2'),
+      CommsLine(id: 'bonusStart.supplyRun.h1', speaker: 'kestrel', duration: 2.65, text: 'Salvage on the field. Quick pass, then regroup.', mouth: '0004444<<<<<<<<<==000222=====<<<<44<<<<<', open: '0156675888568985321174467655688887788532', vis: '----------------ee------eeee--oo--------', emotion: 'teasing', clip: 'salvage.h3'),
+    ],
+  ),
+  'bonusCrate.supplyRun': CommsTriggerSpec(
+    name: 'bonusCrate.supplyRun',
+    priority: 3,
+    cooldown: 12.0,
+    ttl: 2.0,
+    chance: 0.4,
+    mood: CommsMood.happy,
+    group: 'loot',
+    lines: [
+      CommsLine(id: 'bonusCrate.supplyRun.h0', speaker: 'rook', duration: 0.995, text: 'New toy! Try it out.', mouth: '5555<<<<<444422', open: '047589678776532', vis: 'oooo-----------', emotion: 'excited', clip: 'weaponPickup.h0'),
+      CommsLine(id: 'bonusCrate.supplyRun.h1', speaker: 'rook', duration: 1.749, text: 'Loot time! Grab everything.', mouth: '555555<<442222<<<<<<<<===00', open: '047757887642158988874554211', vis: 'ooooo-----------------eee--', emotion: 'teasing', clip: 'salvage.h1'),
+      CommsLine(id: 'bonusCrate.supplyRun.h2', speaker: 'pip', duration: 1.583, text: 'Ooh, can I have one of those next?', mouth: '55<<<<<<<<<<<<<<<<<=====', open: '068864789989898899865321', vis: 'ooooo-----------eeeeee--', emotion: 'excited', clip: 'weaponPickup.h4'),
+    ],
+  ),
+  'bonusPickup.salvageMagnet': CommsTriggerSpec(
+    name: 'bonusPickup.salvageMagnet',
+    priority: 5,
+    cooldown: 20.0,
+    ttl: 4.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusPickup.salvageMagnet.h0', speaker: 'rook', duration: 1.749, text: 'Loot time! Grab everything.', mouth: '555555<<442222<<<<<<<<===00', open: '047757887642158988874554211', vis: 'ooooo-----------------eee--', emotion: 'teasing', clip: 'salvage.h1'),
+      CommsLine(id: 'bonusPickup.salvageMagnet.h1', speaker: 'rook', duration: 0.995, text: 'New toy! Try it out.', mouth: '5555<<<<<444422', open: '047589678776532', vis: 'oooo-----------', emotion: 'excited', clip: 'weaponPickup.h0'),
+    ],
+  ),
+  'bonusPickup.doubleScore': CommsTriggerSpec(
+    name: 'bonusPickup.doubleScore',
+    priority: 5,
+    cooldown: 20.0,
+    ttl: 4.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusPickup.doubleScore.h0', speaker: 'anvil', duration: 2.418, text: 'Good pickup. Make it count.', mouth: '0000<<<<<<<<<<<222000000==3333<<<<<00', open: '0005877532587454321101587465378974321', vis: '---oooo-----------------ee-----------', emotion: 'excited', clip: 'weaponPickup.h2'),
+      CommsLine(id: 'bonusPickup.doubleScore.h1', speaker: 'rook', duration: 0.995, text: 'New toy! Try it out.', mouth: '5555<<<<<444422', open: '047589678776532', vis: 'oooo-----------', emotion: 'excited', clip: 'weaponPickup.h0'),
+    ],
+  ),
+  'bonusCleared.supplyRun': CommsTriggerSpec(
+    name: 'bonusCleared.supplyRun',
+    priority: 5,
+    cooldown: 20.0,
+    ttl: 4.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusCleared.supplyRun.h0', speaker: 'admiral', duration: 2.828, text: 'Sector secure. Outstanding flying.', mouth: '0000000======<<<<<<<<=====<<<<===<<<<<<<222', open: '0006646566346898532785325788874258999875421', vis: '-------eeeeeoo---ee--eee------eee----------', emotion: 'triumphant', clip: 'levelClear.h0'),
+      CommsLine(id: 'bonusCleared.supplyRun.h1', speaker: 'nomad', duration: 2.494, text: 'Clean sweep. Proud to fly with you.', mouth: '33<<<<<==<<<====<<<======<<<<<<<<<<222', open: '06899985689853278886787468888889875321', vis: '------eeeeeeeeeeeeeeeeeee-------------', emotion: 'triumphant', clip: 'levelClear.h4'),
+      CommsLine(id: 'bonusCleared.supplyRun.h2', speaker: 'rook', duration: 2.196, text: 'Ha! Did you see that? Textbook.', mouth: '5555220005544333<<<<<<==<<<<<<<<<', open: '058642110567756689853225886488753', vis: 'oo-------oo-----------eeeeeoo----', emotion: 'triumphant', clip: 'levelClear.h2'),
+    ],
+  ),
+  'runModifier.noShield': CommsTriggerSpec(
+    name: 'runModifier.noShield',
+    priority: 5,
+    cooldown: 60.0,
+    ttl: 8.0,
+    lines: [
+      CommsLine(id: 'runModifier.noShield.h0', speaker: 'admiral', duration: 2.378, text: 'Shield spent. Fly careful now.', mouth: '====<<<<====<<<==00000<<<<<<<<<44444', open: '035688885436887532110687788788877532', vis: 'eee-----ee-----eee----------oo------', emotion: 'urgent', clip: 'shieldBroken.h2'),
+      CommsLine(id: 'runModifier.noShield.h1', speaker: 'nomad', duration: 1.725, text: 'Shield\'s gone. Easy does it.', mouth: '===<<<<<<<<<222<<<<<<<<<00', open: '03688877888743688999874321', vis: 'eeeeooo-------------------', emotion: 'urgent', clip: 'shieldBroken.h3'),
+    ],
+  ),
+  'runModifier.spreadOnly': CommsTriggerSpec(
+    name: 'runModifier.spreadOnly',
+    priority: 5,
+    cooldown: 60.0,
+    ttl: 8.0,
+    lines: [
+      CommsLine(id: 'runModifier.spreadOnly.h0', speaker: 'wisp', duration: 3.427, text: 'Spread module fitted. Wide coverage.', mouth: '000000444333333333====<<==0000000<<<<<===<<<<<<===00', open: '0000037776578656642645885321100258999854788987554321', vis: '------------------eeeeeeee-----oo-----ee-------eee--', emotion: 'excited', clip: 'weaponPickup.spread.h1'),
+      CommsLine(id: 'runModifier.spreadOnly.h1', speaker: 'rook', duration: 2.253, text: 'Spread shot! Paint the whole sky.', mouth: '0000044===<<<220000000<<===<<<<222', open: '0000677544886421146477897478886321', vis: '-------eee-----------oooeee-------', emotion: 'excited', clip: 'weaponPickup.spread.h0'),
+    ],
+  ),
+  'runModifier.heavyOrdnance': CommsTriggerSpec(
+    name: 'runModifier.heavyOrdnance',
+    priority: 5,
+    cooldown: 60.0,
+    ttl: 8.0,
+    lines: [
+      CommsLine(id: 'runModifier.heavyOrdnance.h0', speaker: 'sparrow', duration: 2.608, text: 'Blast rounds loaded. Boom!', mouth: '00000======444445555<<<<==00000<<<<<2200', open: '0125764213677775544788764211005899964211', vis: '-----eeeee------ooo-----ee--------------', emotion: 'excited', clip: 'weaponPickup.large.h2'),
+      CommsLine(id: 'runModifier.heavyOrdnance.h1', speaker: 'kestrel', duration: 2.258, text: 'Blast rounds. Aim into the crowd.', mouth: '55<<<<===<<<<==000<<<<<<2224444222', open: '0589986578888532168998774367765421', vis: 'oo----eeee---eee--ooooo-----------', emotion: 'excited', clip: 'weaponPickup.large.h3'),
+    ],
+  ),
 };
 
 const commsDemonTriggers = <String, CommsTriggerSpec>{

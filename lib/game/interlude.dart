@@ -22,7 +22,11 @@ enum RadioCategory {
   banter,
   joke,
   taunt,
-  frontCall;
+  frontCall,
+
+  /// bonus-levels: the call that sends the squadron into a bonus level
+  /// (`bonusEntry.<id>`, then `bonusEntry`). Never in the seeded draw.
+  bonusEntry;
 
   /// The categories of the seeded draw and of its fallbacks.
   static const drawn = [briefing, banter, joke, taunt];
@@ -114,6 +118,7 @@ class InterludeContext {
     this.struggling = false,
     this.nextIsCarrier = false,
     this.revisit = false,
+    this.bonus,
   });
 
   final Difficulty difficulty;
@@ -137,6 +142,10 @@ class InterludeContext {
   /// The transition returns to a sector already visited in this run (a
   /// plain sector change only): its slot is a front-line call from [level].
   final bool revisit;
+
+  /// bonus-levels: the id of the bonus level the transition flies into
+  /// (null: a regular sector). Its slot is that level's entry call.
+  final String? bonus;
 }
 
 /// Plans the interludes of one run: the opening is a tip (the first tactical
@@ -197,7 +206,9 @@ class InterludePlanner {
   /// keeping the lineup, recency and window rules; when none fits, today's
   /// order follows.
   InterludePlan? planRadio(InterludeContext c) {
-    var result = c.revisit && !c.nextIsCarrier ? _frontCall(c) : null;
+    // bonus-levels: a bonus level ahead is announced before anything else.
+    var result = c.bonus != null && !c.nextIsCarrier ? _bonusEntry(c) : null;
+    result ??= c.revisit && !c.nextIsCarrier ? _frontCall(c) : null;
     result ??= _radio(c);
     if (result == null) {
       RadioPick? best;
@@ -236,6 +247,32 @@ class InterludePlanner {
     final own = [
       for (final p in pool)
         if (p.spec.name == 'frontCall.${c.level}') p,
+    ];
+    final from = own.isEmpty ? pool : own;
+    return InterludePlan.radio(
+      from[_random.nextInt(from.length)],
+      window: c.window,
+    );
+  }
+
+  /// bonus-levels: the entry call of the bonus level ahead; the level's
+  /// own lines win over the general ones. Recency is ignored (a bonus
+  /// level comes once per run) but the line must fit the window.
+  InterludePlan? _bonusEntry(InterludeContext c) {
+    final room = _room(c);
+    final pool = [
+      for (final pick in radioPool(
+        RadioCategory.bonusEntry,
+        level: c.level,
+        crew: c.crew,
+        bonus: c.bonus,
+      ))
+        if (pick.needs <= room) pick,
+    ];
+    if (pool.isEmpty) return null;
+    final own = [
+      for (final p in pool)
+        if (p.spec.name == 'bonusEntry.${c.bonus}') p,
     ];
     final from = own.isEmpty ? pool : own;
     return InterludePlan.radio(
@@ -337,6 +374,7 @@ List<RadioPick> radioPool(
   RadioCategory category, {
   required int level,
   Set<String> crew = const {},
+  String? bonus,
 }) {
   final picks = <RadioPick>[];
   void add(
@@ -372,6 +410,9 @@ List<RadioPick> radioPool(
     case RadioCategory.frontCall:
       add(commsHumanTriggers, 'frontCall.$level');
       add(commsHumanTriggers, 'frontCall');
+    case RadioCategory.bonusEntry:
+      if (bonus != null) add(commsHumanTriggers, 'bonusEntry.$bonus');
+      add(commsHumanTriggers, 'bonusEntry');
   }
   final officers = commsDemonSectors[level.clamp(1, 5)] ?? const [];
   final cast = [

@@ -314,6 +314,34 @@ abstract final class GameEventNames {
     broodAdapting,
   ];
 
+  // --- bonus levels (openspec/changes/bonus-levels design §5). Each
+  // carries `variant`: the bonus level's id (the power's for bonusPickup,
+  // the modifier's for runModifier), so `bonusStart.supplyRun` wins over
+  // `bonusStart` in the line bank.
+
+  /// The run has a run modifier (once, on the run's first combat frame).
+  static const runModifier = 'runModifier';
+
+  /// A bonus level's first wave begins combat.
+  static const bonusStart = 'bonusStart';
+
+  /// A bonus level's supply crate is shot open (data `points`, `opened`).
+  static const bonusCrate = 'bonusCrate';
+
+  /// A bonus-only powerup is collected.
+  static const bonusPickup = 'bonusPickup';
+
+  /// A bonus level's last kill (data `award`, `flawless`, `crates`).
+  static const bonusCleared = 'bonusCleared';
+
+  static const bonus = [
+    runModifier,
+    bonusStart,
+    bonusCrate,
+    bonusPickup,
+    bonusCleared,
+  ];
+
   /// A full-size transmission: the fleet's mission briefing on travel
   /// (variant: the next sector) or a junior-pilot moment on a new wave.
   static const transmissionMission = 'transmissionMission';

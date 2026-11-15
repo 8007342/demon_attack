@@ -43,3 +43,26 @@ batch is blocked on the audio studio (tillandsias#1103).
 | `frontCall.3.h1` | human | voss | panicked | The Ember line is overrun! We need you back! | groundPressureHigh.h1 |
 | `frontCall.4.h0` | human | admiral | urgent | Ground support needed in the Hollow! | groundTide.surge.h4 |
 | `frontCall.4.h1` | human | mensah | panicked | Granite's surrounded in the Hollow! Help! | allyUnderAttack.h7 |
+| `bonusEntry.h0` | human | admiral | urgent | Overwatch to squadron. Special orders for the next sector. | sectorStart.h0 |
+| `bonusEntry.h1` | human | lindqvist | excited | Beacon here. Unusual readings ahead. This one is off the charts. | sectorStart.h1 |
+| `bonusEntry.supplyRun.h0` | human | admiral | urgent | A supply convoy went down ahead. Recover those crates, pilot. | salvage.h3 |
+| `bonusEntry.supplyRun.h1` | human | wisp | excited | Supply crates are falling through the fog ahead. Shoot them open and catch what drops. | salvage.h2 |
+| `bonusEntry.supplyRun.h2` | human | rook | teasing | Free cargo in the next sector! Finders keepers. | salvage.h1 |
+| `bonusStart.supplyRun.h0` | human | anvil | calm | Crates on parachutes. Three hits open one. | salvage.h2 |
+| `bonusStart.supplyRun.h1` | human | kestrel | urgent | Scavengers are after our cargo. Beat them to it. | salvage.h3 |
+| `bonusCrate.supplyRun.h0` | human | rook | excited | Crate is open! Catch it! | weaponPickup.h0 |
+| `bonusCrate.supplyRun.h1` | human | sparrow | excited | Cargo is loose. Grab it! | salvage.h1 |
+| `bonusCrate.supplyRun.h2` | human | pip | excited | Ooh, what was in that one? | weaponPickup.h4 |
+| `bonusPickup.salvageMagnet.h0` | human | wisp | excited | Salvage magnet online. It all comes to you now. | salvage.h1 |
+| `bonusPickup.salvageMagnet.h1` | human | rook | teasing | A magnet! Everything is attracted to you. Cannot blame it. | weaponPickup.h0 |
+| `bonusPickup.doubleScore.h0` | human | sparrow | excited | Double points! Make every shot count. | weaponPickup.h2 |
+| `bonusPickup.doubleScore.h1` | human | sunny | teasing | Double score! Twice the sunshine. | weaponPickup.h0 |
+| `bonusCleared.supplyRun.h0` | human | admiral | warm | Convoy cargo recovered. The fleet thanks you, pilot. | levelClear.h0 |
+| `bonusCleared.supplyRun.h1` | human | nomad | warm | Every crate accounted for. Clean work. | levelClear.h4 |
+| `bonusCleared.supplyRun.h2` | human | rook | teasing | Best shopping trip ever. | levelClear.h2 |
+| `runModifier.noShield.h0` | human | admiral | stern | Shield modules are out of stock this sortie. Fly careful. | shieldBroken.h2 |
+| `runModifier.noShield.h1` | human | nomad | calm | No shields on this run. Easy does it. | shieldBroken.h3 |
+| `runModifier.spreadOnly.h0` | human | wisp | calm | Supply only has spread modules today. Wide coverage it is. | weaponPickup.spread.h1 |
+| `runModifier.spreadOnly.h1` | human | rook | excited | Spread shot or nothing this run. Paint the whole sky! | weaponPickup.spread.h0 |
+| `runModifier.heavyOrdnance.h0` | human | sparrow | excited | Extra blast rounds in the supply chain this run. Boom! | weaponPickup.large.h2 |
+| `runModifier.heavyOrdnance.h1` | human | kestrel | calm | Plenty of blast rounds this sortie. Aim into the crowd. | weaponPickup.large.h3 |
