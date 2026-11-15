@@ -60,11 +60,17 @@ class ConsoleStart {
   final int route;
   final int wave;
 
-  /// The carrier of [route].
+  /// The carrier of [route]: its own wave, after the loom waves
+  /// (boss-grandeur; sector 5 wave 1 is the loom).
   factory ConsoleStart.boss({
     Difficulty difficulty = Difficulty.normal,
     int route = 0,
-  }) => ConsoleStart(difficulty: difficulty, sector: 5, route: route);
+  }) => ConsoleStart(
+    difficulty: difficulty,
+    sector: 5,
+    route: route,
+    wave: ArcadeModel.wavesFor(sector: 5, route: route),
+  );
 
   /// The first sentinel wave on [route] (at least route 1), preferring
   /// [sector] when it has one.
@@ -103,7 +109,8 @@ class ConsoleStart {
     difficulty: difficulty,
     sector: sector,
     route: route,
-    wave: wave,
+    // Sector 5 is the carrier (its own wave, after the loom).
+    wave: sector == 5 ? null : wave,
     console: true,
     bonus: bonus,
   );

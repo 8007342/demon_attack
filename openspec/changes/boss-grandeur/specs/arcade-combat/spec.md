@@ -15,3 +15,10 @@ Each tour SHALL field a larger and more complex boss assembled from a spine and 
 #### Scenario: Later tour
 - **WHEN** the fourth tour reaches its boss
 - **THEN** the boss is visibly larger and carries more modules than the third tour's, while its hit areas and endurance follow the same rules
+
+### Requirement: Boss decay events
+Every step of the boss's decay SHALL be emitted into the game event queue as a named event: its rise out of the fog, each shield cell going dark, the shield's depletion, each armour plate lost, each module lost at a form change, and the collapse.
+
+#### Scenario: Shield worn down
+- **WHEN** the player's shots wear the boss's shield from full to nothing
+- **THEN** twelve shield-cell events and one shield-depleted event are queued, in order

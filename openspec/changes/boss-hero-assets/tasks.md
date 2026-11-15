@@ -23,7 +23,7 @@
 - [x] 4.1 `tools/boss_rig/project_bake.py`: camera-project the hero onto the mesh from the hero view; render 9 views × modules with clay-tint fill for unseen faces
 - [x] 4.2 Stage heroes S1–S3 by Qwen edit of the picked hero (2 candidates each), projected the same way; wrecks from geometry
 - [ ] 4.3 Optional seam heal (SDXL-CN depth, denoise ≤ 0.3) gated by interior difference ≤ 12 % against the projection
-- [ ] 4.4 Finish and pack in `tools/ground_blocks` (hull mode): palette quantise, mask ±1 texel, outline, rig lights / fires / breaches, module layers from ID masks, pages ≤ 4096 × 2048, generated `lib/game/boss_atlas.dart` with views, modules, stages, anchors
+- [x] 4.4 Finish and pack in `tools/boss_sheet pack` (deviation: the finish already ran in `boss_sheet bakefinish`; the pack lives beside it, not in `tools/ground_blocks`): palette quantise, mask ±1 texel, outline, rig lights / fires / breaches, module layers from ID masks, pages ≤ 4096 × 2048, generated `lib/game/boss_atlas.dart` with views, modules, stages, anchors
 - [x] 4.5 B2 sheets `art/contact/boss-pilot-views.png`, `-stages.png`; budget check (≤ 16 MB RGBA)
 
 ## 5. All hulls and B3

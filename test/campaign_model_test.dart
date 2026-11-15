@@ -696,7 +696,7 @@ void main() {
         {'routeIndex': 5},
         {'routeIndex': 'unknown'},
         {'sector': 0},
-        {'sector': 5, 'wave': 2},
+        {'sector': 5, 'wave': 3}, // route 1: loom 1, carrier 2
         {'wave': -1},
         {'lives': 0},
         {'medals': 5},
@@ -710,7 +710,11 @@ void main() {
         expect(m.restoreCheckpoint(invalid), isFalse, reason: '$invalid');
         expect(m.checkpoint(), before);
       }
-      expect(m.restoreCheckpoint({'cycle': 1, 'level': 5}), isTrue);
+      // boss-grandeur: tour 2's carrier is wave 3, after two loom waves.
+      expect(
+        m.restoreCheckpoint({'cycle': 1, 'level': 5, 'wave': 3}),
+        isTrue,
+      );
       expect(m.boss, isNotNull);
       expect(m.medals, 0);
     },
@@ -723,6 +727,7 @@ void main() {
       m.restoreCheckpoint({
         'routeIndex': 3,
         'sector': 5,
+        'wave': ArcadeModel.wavesFor(sector: 5, route: 3),
         'medals': 3,
         'lives': 2,
       });

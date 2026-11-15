@@ -193,20 +193,23 @@ void main() {
     },
   );
 
-  test('boss arrival: the mill beat plays over an empty fog', () {
+  test('boss arrival: the carrier overflies and sinks into the far fog', () {
     final m = routed(sector: 4);
     expect(m.flow.kind, FlowKind.bossArrival);
     reach(m, RunMode.transition);
-    expect(m.isBoss, isTrue);
+    // boss-grandeur: the level opens with its loom wave; the carrier is a
+    // presentation overflight, then looms under the fog (no carrier yet).
+    expect(m.isBoss, isFalse);
+    expect(m.looming, isTrue);
     expect(m.flowFlock, isEmpty, reason: 'nobody was left fighting');
-    var milled = false;
+    var overflown = false;
     while (m.mode == RunMode.transition) {
-      if (m.flow.env('mill') > .9) milled = true;
+      if (m.flow.env('overflight') > .9) overflown = true;
       m.update(1 / 60);
     }
-    expect(milled, isTrue);
+    expect(overflown, isTrue);
     expect(m.mode, RunMode.playing);
-    expect(m.flowFlock, isEmpty, reason: 'removed before carrier combat');
+    expect(m.flowFlock, isEmpty, reason: 'gone into the fog with it');
     expect(m.flow.active, isFalse);
   });
 
