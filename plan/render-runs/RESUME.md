@@ -209,3 +209,12 @@ On resume:
   downloads are manual). The render work doesn't need it; fix with `uv python install 3.11` when the voices are next needed.
 - **A1 done** (a7aed0b0, majority-vote follow-up; ledger §11): `finish` keeps the AI colour (see §10). `go run . sheet OUT CELL=RAW.png ...` draws the review rows
   rig | raw | finished.
+
+## Status 2026-11-15 ~08:40 UTC (autonomous run; the operator delegated picks and checkpoint calls)
+
+- Ground forces: CP1 decided (lean hybrid, ledger §12). In flight: the 23 remaining heroes (runner agent, on `game`),
+  `bake` smoothing (branch `work/bake-smooth`), runtime integration of the block atlases (OpenSpec
+  `ground-blocks-runtime`, branch `work/ground-blocks-runtime`). A6 done (Spout-runner, Stilt chin pod, Sleet).
+- **Music L3 pilot: BLOCKED on tillandsias#1103** (audio studio batch 1 is a draft awaiting operator review; tray
+  56.11.15.5 has no SFZ/audio nodes). Don't work around it or build the nodes in-forge (host, 2026-11-15).
+- Voices (VoxCPM2 batch, tips-as-radio, growlier demons, pending lines): blocked on the same audio batch.
