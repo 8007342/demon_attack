@@ -75,6 +75,33 @@ them.
 **Rate and budget.** Each creature decides at 10 Hz, staggered by seed: about 6 decisions per frame at most. Per
 decision the cost is 7 candidates × ≤ 24 shots × 1 quadratic, under 2 µs in the VM. Total < 0.3 ms per frame.
 
+**Implementation notes (as built).**
+- The candidate path is piecewise: constant velocity Δ/D for D, then at rest at the end point (exact kinematics
+  of the manoeuvre, two quadratics per shot). The end point is clamped to the formation's arena (x 20–340).
+- The time-to-collision floor is 0.01 s (0.05 s made every candidate equal when a shot was already close).
+- Walls charge only a move toward the edge (as the teacher, which never charges *hold* for where it is).
+- The planner decides only when *hold* is threatened (some shot contacts it within H). With no threat the
+  creature holds without a draw, so the softmin never makes a safe hunter twitch.
+- Measured cost (test/demon_planner_test.dart): 6 decisions × 24 shots × 7 candidates ≈ 17 µs (VM median).
+
+**Teacher parity (task 2.2).** `node scripts/train-policy.mjs --fixtures` exports the 4 000 held-out states
+(`test/fixtures/policy_heldout.json`, raw state + teacher label; training is untouched and still reproduces the
+committed weights byte for byte). With one shot, the T1 candidates and the teacher's geometry (no perception
+delay, its 24-u clearance = 16 + 8, its 26-u evade span, its 0.85 vertical distance scale), the planner's
+argmin agrees with the teacher on **98.2 %** of the 2 082 states that some action escapes, and on 94.7 % of all
+3 140 non-dive states. The systematic disagreement is the other 1 058 states, where *no* action escapes: the
+teacher then minimises penetration depth, the planner maximises the time to contact. Both are hit; the planner is
+the exact version. (`dive_commit` labels are left out: T1 has no thread candidate.)
+
+**Weight tuning (task 2.4).** `test/planner_sweep_test.dart` (`--dart-define=PLANNER_SWEEP=true`) scores 90
+weight sets on teacher parity (escapable states), survival of 2 000 seeded synthetic multi-shot states (1–6 shots,
+a third angled; survival = the chosen T2 manoeuvre meets no shot, among the states some manoeuvre escapes) and calm
+(holds when hold is safe). The danger weight is the only strong lever: survival 53 % at 1, 85 % at 3, 89 % at 8,
+90 % at 12; parity rises with it (95.7 → 98.2 %). Leash 0.5 beats 1 (the hunter may leave its slot a little
+further); crowd and wall barely matter. A near-miss clearance term was tried and lost everywhere, so it was
+removed. **Chosen: danger 8, wall 1, crowd 0.4, leash 0.5, attack 0.8, change 1** (8 rather than 12: the same
+survival within 1.7 points, and smaller energies keep the hunter softmin meaningful between safe moves).
+
 ## 4. Tiers
 
 | | T0 drone | T1 skirmisher | T2 hunter | T3 sentinel |

@@ -16,24 +16,24 @@ Groups 2–4 can land before group 5. The rush (5) is independent of the hunters
       - no allocation per query (ring buffer reuse).
 
 ## 2. Planner
-- [ ] 2.1 `lib/game/demon_planner.dart`:
+- [x] 2.1 `lib/game/demon_planner.dart`:
       - candidates (design §3 table);
       - closed-form time-to-collision of a constant-velocity path against a shot;
       - the energy terms with named weights;
       - softmin with its own seeded PRNG;
       - perception delay (ignore shots younger than δ, back-project the rest);
       - a `PlannerConfig` per tier.
-- [ ] 2.2 Teacher parity: export the held-out fixtures of `assets/policy/manifest.json`, and with a single shot and
+- [x] 2.2 Teacher parity: export the held-out fixtures of `assets/policy/manifest.json`, and with a single shot and
       the T1 config check that the planner's argmin agrees with the recorded teacher label on ≥ 95 %. Document
       any systematic disagreement: the planner is the exact version.
-- [ ] 2.3 `test/demon_planner_test.dart`:
+- [x] 2.3 `test/demon_planner_test.dart`:
       - a shot dead ahead is dodged away from the wall side;
       - two shots bracketing the creature → hold;
       - walls respected;
       - T → 0 is argmin;
       - same seed gives the same choice;
       - 6 decisions × 24 shots run in < 0.3 ms in total (VM median).
-- [ ] 2.4 Weight tuning sweep (a test-only harness over 2 000 synthetic states). Record the chosen weights and why
+- [x] 2.4 Weight tuning sweep (a test-only harness over 2 000 synthetic states). Record the chosen weights and why
       in the design note.
 
 ## 3. Tiers
