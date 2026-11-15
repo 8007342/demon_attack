@@ -311,9 +311,9 @@ queued.
   simulation windows, bottom-aligned).
 - `boss-hulls.json` `prompts.hero_qwen_<hull>`: the per-hull escalation pattern (one prompt per tier that names the
   family reference and adds the tier's material and danger words) carries over; the words themselves do not.
-- Helper scripts used in this run (not committed, in `~/.cache/tillandsias-project/b3/`): `collect.lua` (copies studio
-  outputs to `boss-raw/` and logs a run record from each provenance sidecar) and `merge.sh` (appends the records,
-  with verdicts by seed, to `boss-hulls-runs.json`). Worth promoting into `tools/boss_rig/` for the next agent.
+- Helper scripts used in this run, now committed: `tools/boss_rig/studio_collect.lua` (copies studio
+  outputs to `boss-raw/` and logs a run record from each provenance sidecar) and `tools/boss_rig/runs_merge.sh` (appends the records,
+  with verdicts by seed, to `boss-hulls-runs.json`).
 
 **Lessons**
 1. **One-image Qwen edits only.** Re-tested with the picked frigate hero as image 2, which already has the new pose:
