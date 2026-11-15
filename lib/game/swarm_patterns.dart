@@ -236,9 +236,12 @@ class Squad {
       case SquadState.sweep:
         final (ax, ay) = _anchor(s, t - sweepLag * slot.rank);
         final (bx, by) = _anchor(s, t);
-        // A stretched line, staggered a little in depth (y).
-        final stagger = (slot.order.isEven ? 1 : -1) * 9.0;
-        return (ax - bx, ay - by + stagger);
+        // A stretched line along the anchor's track, staggered in depth
+        // (y) and spread a little about its centre, so it never bunches
+        // into one point at the turns.
+        final stagger = (slot.order.isEven ? 1 : -1) * 12.0;
+        final spread = (slot.rank - (_count - 1) / 2) * 16;
+        return (ax - bx + spread, ay - by + stagger);
       case SquadState.cloud:
         final w = t * (2.2 + slot.jitter) + slot.order * 1.7;
         final r = 40 + 30 * (slot.jitter + .5);

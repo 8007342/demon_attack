@@ -1840,9 +1840,10 @@ class DemonScene extends FlameGame {
     final gy = Perspective.groundY(n);
     if (gy > 530) return null;
     final k = (h / _shadowHMax).clamp(0.0, 1.0);
-    // 0.75, not the design's 0.55: on the dark sector grounds 0.55 read as
-    // nothing (review frames); the old arrival shadow used 0.95.
-    var alpha = .75 * (1 - .4 * k) * Atmosphere.groundLight(gy);
+    // 0.95, not the design's 0.55: on the dark sector grounds 0.55 read as
+    // nothing (review frames); 0.95 is the old arrival shadow the operator
+    // praised.
+    var alpha = .95 * (1 - .4 * k) * Atmosphere.groundLight(gy);
     if (d.dive > 0 || d.rushing) alpha *= 1.25;
     if (d.entering && d.swarmState != SwarmState.reentering) {
       alpha *= Perspective.smoothstep(0, .12, d.entranceProgress);

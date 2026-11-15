@@ -127,7 +127,7 @@ first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start
       stays green.
 
 ## 8. Review frames and playtest
-- [ ] 8.1 `test/continuous_swarm_review_test.dart` (pattern of `test/atmosphere_review_test.dart`). It writes
+- [x] 8.1 `test/continuous_swarm_review_test.dart` (pattern of `test/atmosphere_review_test.dart`). It writes
       PNGs at phone portrait to `.cache/continuous-swarm-review/` (override `CONTINUOUS_SWARM_REVIEW_DIR`):
       - a reserve in the fog;
       - a skein mid-swoop (shadow ahead on the ground);

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:demon_attack/game/atmosphere.dart';
 import 'package:demon_attack/game/ground_atlas.dart';
 import 'package:demon_attack/game/ground_atmosphere.dart';
 import 'package:demon_attack/game/ground_atmosphere_atlas.dart';
@@ -29,6 +30,21 @@ const _dir = String.fromEnvironment(
 );
 const _contact = bool.fromEnvironment('CONTINUOUS_SWARM_CONTACT');
 const _w = 360.0, _h = 780.0;
+
+/// The strips kept as tracked review evidence in art/contact.
+const _onSheet = {
+  'arrival',
+  'swoop',
+  'inflow-zoom',
+  'lull-merge',
+  'fight',
+  'pattern-mill',
+  'pattern-ribbon',
+  'pattern-sweep',
+  'diver-shadow',
+  'shadows-s4',
+  'sentinel-rise',
+};
 
 Future<ui.Image> _decode(String file) async {
   final codec = await ui.instantiateImageCodec(await File(file).readAsBytes());
@@ -167,7 +183,9 @@ Future<void> _strip(
   final pic = rec.endRecording();
   final sheet = await pic.toImage(sw.round(), sh.round());
   await _png(sheet, '$_dir/strip-$name.png');
-  if (_contact) await _png(sheet, 'art/contact/continuous-swarm-$name.png');
+  if (_contact && _onSheet.contains(name)) {
+    await _png(sheet, 'art/contact/continuous-swarm-$name.png');
+  }
   sheet.dispose();
   for (final f in frames) {
     f.dispose();
@@ -188,8 +206,11 @@ ArcadeModel _combat(int sector, {int route = 1, int wave = 1, int seed = 7}) {
 void main() {
   testWidgets('continuous swarm review frames', (tester) async {
     await tester.runAsync(() async {
-      // An arrival stream: wave 1 cleared at once, wave 2 streams in skein
-      // by skein out of the fog (12 frames over 3 s).
+      // Arena rows only (the frame letterboxes the 360 x 520 arena at y 130).
+      const top = 130.0, bottom = 650.0;
+      // (1) An arrival stream: wave 1 cleared at once, wave 2 streams in
+      // skein by skein out of the fog: 12 frames over 3 s, then 12 over
+      // 6 s, then a close-up of the upper arena for one skein's swoop.
       {
         final m = _combat(2);
         final scene = await _scene(m, 2);
@@ -205,46 +226,258 @@ void main() {
           m,
           scene,
           'arrival',
-          count: 12,
-          interval: .25,
           cols: 4,
           scale: .6,
-          top: 130,
-          bottom: 650,
+          top: top,
+          bottom: bottom,
         );
         await _single(scene, 'skein-mid-swoop');
       }
-      // The fight: squads milling, ribboning and sweeping (12 frames over
-      // 6 s), and a longer look (12 frames over 24 s) for state changes.
       {
-        final m = _combat(2, wave: 2);
+        final m = _combat(2);
+        final scene = await _scene(m, 2);
+        _run(m, scene, 6);
+        m.flocksSpawned = m.flocksPlanned;
+        for (final d in List.of(m.demons)) {
+          m.hitDemon(d, damage: 99);
+        }
+        _run(m, scene, .1);
+        await _strip(
+          m,
+          scene,
+          'swoop',
+          cols: 4,
+          interval: .15,
+          scale: 1,
+          top: top + 20,
+          bottom: top + 240,
+        );
+      }
+      // (2) Continuous inflow: the next wave's first skeins rise out of the
+      // fog while the last stragglers still fight (12 frames over 6 s).
+      {
+        var m = _combat(2, wave: 2);
+        var scene = await _scene(m, 2);
+        _run(m, scene, 6);
+        m.flocksSpawned = m.flocksPlanned;
+        while (m.demons.where((d) => !d.isLarge).length > 3) {
+          m.hitDemon(m.demons.firstWhere((d) => !d.isLarge), damage: 99);
+        }
+        m.shipX = m.targetX = 180;
+        _run(m, scene, .2);
+        final mm = _combat(2, wave: 2);
+        final ms = await _scene(mm, 2);
+        _run(mm, ms, 6);
+        mm.flocksSpawned = mm.flocksPlanned;
+        while (mm.demons.where((d) => !d.isLarge).length > 3) {
+          mm.hitDemon(mm.demons.firstWhere((d) => !d.isLarge), damage: 99);
+        }
+        _run(mm, ms, .2);
+        await _strip(
+          mm,
+          ms,
+          'inflow-zoom',
+          count: 8,
+          interval: .5,
+          cols: 4,
+          scale: 1,
+          top: top + 20,
+          bottom: top + 260,
+        );
+        await _strip(
+          m,
+          scene,
+          'inflow',
+          interval: .35,
+          cols: 4,
+          scale: .6,
+          top: top,
+          bottom: bottom,
+        );
+        // (3) A cohort merge in the lull: the stragglers fall; the cohort
+        // holds at the fog front, then closes in (8 frames over 2.8 s).
+        m = _combat(2, wave: 2);
+        scene = await _scene(m, 2);
+        _run(m, scene, 6);
+        m.flocksSpawned = m.flocksPlanned;
+        while (m.demons.where((d) => !d.isLarge).length > 3) {
+          m.hitDemon(m.demons.firstWhere((d) => !d.isLarge), damage: 99);
+        }
+        _run(m, scene, 2);
+        for (final d in List.of(m.demons)) {
+          if (!d.entering) m.hitDemon(d, damage: 99);
+        }
+        _run(m, scene, 1 / 60);
+        await _strip(
+          m,
+          scene,
+          'lull-merge',
+          count: 8,
+          interval: .4,
+          cols: 4,
+          scale: .6,
+          top: top,
+          bottom: bottom,
+        );
+      }
+      // (4) The fight: each squad pattern held for a moment (rows: mill,
+      // ribbon, sweep; 4 frames 0.5 s apart), then the swarm as it plays
+      // (12 frames over 6 s) and a long look at its state changes.
+      {
+        final m = _combat(2, wave: 2, seed: 11);
         final scene = await _scene(m, 2);
         _run(m, scene, 8);
         m.shipX = m.targetX = 200;
+        for (final state in [
+          SquadState.mill,
+          SquadState.ribbon,
+          SquadState.sweep,
+        ]) {
+          for (final s in m.squads) {
+            if (s.state == SquadState.cloud || s.state == SquadState.hover) {
+              continue;
+            }
+            s
+              ..switchTo(state)
+              ..fade = 1
+              ..dwellLeft = 1e9;
+          }
+          _run(m, scene, 2);
+          await _strip(
+            m,
+            scene,
+            'pattern-${state.name}',
+            count: 4,
+            interval: .5,
+            cols: 4,
+            scale: .6,
+            top: top,
+            bottom: top + 300,
+          );
+        }
+        for (final s in m.squads) {
+          s.dwellLeft = 1;
+        }
+        _run(m, scene, 2);
         await _strip(
           m,
           scene,
           'fight',
-          count: 12,
           interval: .5,
           cols: 4,
           scale: .6,
-          top: 130,
-          bottom: 650,
+          top: top,
+          bottom: bottom,
         );
         await _strip(
           m,
           scene,
           'fight-long',
-          count: 12,
           interval: 2,
           cols: 4,
           scale: .6,
-          top: 130,
-          bottom: 650,
+          top: top,
+          bottom: bottom,
         );
         await _single(scene, 'fight');
-
+        // (5) An agitation wave: the ship's shots through a squad (8 frames
+        // over 0.56 s, the shots kept).
+        m.shipX = m.targetX = m.demons
+            .firstWhere((d) => !d.isLarge && !d.entering)
+            .x;
+        await _strip(
+          m,
+          scene,
+          'agitation',
+          count: 8,
+          interval: .07,
+          cols: 4,
+          scale: 1,
+          top: top + 20,
+          bottom: top + 260,
+          fire: true,
+        );
+        // (6) Shadows: a diver's shadow converging on the ship's (8 frames
+        // over 1.4 s), the ground rows only, at full size.
+        final diver = m.demons.firstWhere(
+          (d) => !d.isLarge && !d.entering && d.dive == 0 && d.telegraph <= 0,
+        );
+        m.shipX = m.targetX = diver.x + 10;
+        diver
+          ..dive = .001
+          ..targetX = m.shipX;
+        await _strip(
+          m,
+          scene,
+          'diver-shadow',
+          count: 8,
+          interval: .18,
+          cols: 4,
+          scale: 1,
+          top: top + 180,
+          bottom: top + 520,
+        );
+        // (7) The diver re-enters from a deep gate (8 frames over 1.6 s).
+        await _strip(
+          m,
+          scene,
+          'reentry',
+          count: 8,
+          interval: .2,
+          cols: 4,
+          scale: .6,
+          top: top,
+          bottom: bottom,
+        );
+        // (8) The reduced atmosphere tier.
+        scene.atmosphere.quality = AtmosphereQuality.reduced;
+        await _single(scene, 'reduced');
+      }
+      // (8b) The front-row shadows: a fighting swarm's silhouettes on the
+      // ground, swaying with the patterns, the ship's beside them (8 frames
+      // over 2 s, the ground rows at 1.5x).
+      for (final sector in [3, 4]) {
+        final m = _combat(sector, wave: 2, seed: 5);
+        final scene = await _scene(m, sector);
+        _run(m, scene, 9);
+        m.shipX = m.targetX = 170;
+        await _strip(
+          m,
+          scene,
+          'shadows-s$sector',
+          count: 8,
+          interval: .25,
+          cols: 4,
+          scale: 1.5,
+          top: top + 300,
+          bottom: top + 500,
+        );
+      }
+      // (9) The sentinel rising through the fog with its escort cloud
+      // (12 frames over 4.8 s): the rise frame handed to fog-restoration.
+      {
+        var w = 2;
+        final probe = _combat(3);
+        while (probe.sentinelFor(w) == null) {
+          w++;
+        }
+        final m = _combat(3, wave: w);
+        final scene = await _scene(m, 3);
+        for (var i = 0; i < 200; i++) {
+          final s = m.demons.where((d) => d.isLarge).firstOrNull;
+          if (s != null && !s.waitingForEscort) break;
+          _run(m, scene, .1);
+        }
+        await _strip(
+          m,
+          scene,
+          'sentinel-rise',
+          interval: .4,
+          cols: 4,
+          scale: .6,
+          top: top,
+          bottom: bottom,
+        );
       }
     });
   });

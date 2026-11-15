@@ -1016,10 +1016,38 @@ class ArcadeModel {
   int _incomingRoster = 0, _incomingOrdinal = 0, _incomingElites = 0;
 
   /// How far (entrance progress) an approaching wave creeps while it holds.
-  static const incomingHold = .22;
+  static const incomingHold = .6;
+
+  /// Approach order of the incoming cohort's approaching skeins (skein id
+  /// to index) and their count: their approaches start staggered over the
+  /// first half of the clock, so the cohort rises out of the fog skein by
+  /// skein instead of as one block.
+  final Map<int, int> _incomingOrder = {};
+  int _incomingApproach = 1;
+
+  /// How far [d] of the incoming cohort has crept toward the fog front.
+  double _holdOf(Demon d) {
+    final i = _incomingOrder[d.skein] ?? 0;
+    final start = .5 * i / math.max(1, _incomingApproach);
+    final local = ((incomingProgress - start) / (1 - start)).clamp(0.0, 1.0);
+    return incomingHold * _smootherstep(local);
+  }
+
+  /// Screen position and nearness of [d]'s reserve point with its drift.
+  (double, double, double) _reservePoint(Demon d) {
+    final drift = d.drift;
+    final z = d.reserveZ + (drift?.z ?? 0);
+    final n = SwarmFlock.nearOf(z).clamp(.08, .22);
+    final x = d.reserveX + (drift?.x ?? 0);
+    return (
+      (180 + x * n).clamp(24.0, width - 24.0),
+      Perspective.horizonY - d.reserveLift * (n / .2),
+      n,
+    );
+  }
 
   /// Entrance length when the approaching wave finally closes in.
-  static const incomingCloseIn = .9;
+  static const incomingCloseIn = 1.1;
 
   /// A released skein's swoop out of the fog (s, hostile clock).
   static const swoopSeconds = 1.6;
@@ -1144,15 +1172,12 @@ class ArcadeModel {
   /// a little altitude, position); stepped at the model rate.
   void _updateReserve(double dt) {
     for (final d in swarmReserve) {
-      final drift = d.drift;
-      drift?.update(dt);
-      final z = d.reserveZ + (drift?.z ?? 0);
-      final n = SwarmFlock.nearOf(z).clamp(.08, .22);
-      final x = d.reserveX + (drift?.x ?? 0);
+      d.drift?.update(dt);
+      final (x, y, n) = _reservePoint(d);
       d
         ..nearness = n
-        ..x = (180 + x * n).clamp(24.0, width - 24.0)
-        ..y = Perspective.horizonY - d.reserveLift * (n / .2)
+        ..x = x
+        ..y = y
         ..altitude = 0
         ..scale = Perspective.scaleOf(n, angry: d.angry);
     }
@@ -1415,9 +1440,9 @@ class ArcadeModel {
     if (lifeLossPhase == LifeLossPhase.none && combat) {
       incomingLeft -= dt * policy.hostileRate;
     }
-    final p = incomingHold * incomingProgress;
     for (final d in incoming) {
       if (d.isLarge || d.swarmState == SwarmState.reserve) continue;
+      final p = _holdOf(d);
       final (tx, ty) = _targetFormationPosition(d);
       d.entranceProgress = p;
       _placeEntering(d, _smootherstep(p), tx, ty, 0, holding: true);
@@ -1440,10 +1465,17 @@ class ArcadeModel {
     _eliteBirths = elites;
     final skeins = _skeinsOf(roster, wave + 1);
     final approach = (skeins.length / 2).ceil();
+    _incomingOrder.clear();
+    _incomingApproach = approach;
     for (var s = 0; s < skeins.length; s++) {
       if (s < approach) {
+        _incomingOrder[skeins[s].first.skein] = s;
         for (final d in skeins[s]) {
+          final (x, y, n) = _reservePoint(d);
           d
+            ..entryX = x
+            ..entryY = y
+            ..entryN = n
             ..swarmState = SwarmState.approaching
             ..entranceProgress = 0
             ..entranceElapsed = 0
@@ -1472,7 +1504,6 @@ class ArcadeModel {
   /// them. Otherwise it holds a lull at the fog front, then closes in:
   /// no transition phase; leftover hostile shots dissolve.
   void _mergeCohort({required bool forced}) {
-    final p = incomingHold * incomingProgress;
     final lull = forced ? 0.0 : SwarmStream.lull(stream.q);
     wave++;
     _resetWaveEnemies();
@@ -1489,7 +1520,9 @@ class ArcadeModel {
         continue;
       }
       // Resume the approach from where it held, over the close-in.
-      d.entranceDuration = incomingCloseIn;
+      final p = _holdOf(d);
+      // The rest of the approach takes the close-in (from the fog front).
+      d.entranceDuration = incomingCloseIn / math.max(.3, 1 - p);
       d.entranceElapsed = d.entranceDelay + p * d.entranceDuration;
       d.entranceProgress = p;
       d.entranceHold = lull;
@@ -1675,7 +1708,7 @@ class ArcadeModel {
   /// separation against every present ordinary member (radius 30),
   /// alignment within the squad (0.6), speed cap 140 · tempo.
   void _steerToPattern(Demon d, double tx, double ty, double dt) {
-    const w = 6.0, sepR = 30.0, sepK = 900.0;
+    const w = 6.0, sepR = 34.0, sepK = 1500.0;
     var ax = w * w * (tx - d.x) - 2 * w * d.vx;
     var ay = w * w * (ty - d.y) - 2 * w * d.vy;
     final near = <(double, double, double)>[];
