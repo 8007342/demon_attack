@@ -4353,6 +4353,81 @@
         {"speaker": "sparrow", "text": "Extra blast rounds in the supply chain this run. Boom!", "emotion": "excited", "placeholder": "weaponPickup.large.h2"},
         {"speaker": "kestrel", "text": "Plenty of blast rounds this sortie. Aim into the crowd.", "emotion": "calm", "placeholder": "weaponPickup.large.h3"}
       ]
+    },
+    "bonusEntry.stormfront": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "sunny", "text": "Sunny here. Forecast update: thunderstorm ahead, with a chance of fried demons.", "signature": true, "emotion": "teasing", "placeholder": "sectorStart.h5"},
+        {"speaker": "sunny", "text": "Storm cell ahead. Whatever comes down from above, do not be under it!", "emotion": "urgent", "placeholder": "diveWarning.h6"},
+        {"speaker": "admiral", "text": "Overwatch to squadron. The brood ran into a thunderstorm. Lightning does not take sides. Use it.", "emotion": "calm", "placeholder": "sectorStart.h0"}
+      ]
+    },
+    "bonusStart.stormfront": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "wisp", "text": "Static is off my scopes. When the air hums over you, move.", "emotion": "urgent", "placeholder": "diveWarning.h2"},
+        {"speaker": "mensah", "text": "Get right under them, then slide out. Let the storm bring the rain!", "emotion": "urgent", "placeholder": "groundForceInRange.h4"}
+      ]
+    },
+    "stormStrike": {
+      "priority": 7,
+      "cooldown": 11,
+      "ttl": 1.2,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "rook", "text": "Lightning on you! Dodge, dodge, dodge!", "emotion": "panicked", "placeholder": "sentinelDive.h3"},
+        {"speaker": "sunny", "text": "Bolt building right above you, look sharp!", "emotion": "urgent", "placeholder": "diveWarning.h6"}
+      ]
+    },
+    "stormBait": {
+      "priority": 4,
+      "cooldown": 14,
+      "ttl": 2.5,
+      "chance": 0.75,
+      "mood": "happy",
+      "lines": [
+        {"speaker": "kessler", "text": "The storm did that one for us! Thanks for the thunder!", "emotion": "teasing", "placeholder": "skirmishWon.h4"},
+        {"speaker": "nomad", "text": "Easy, friend. Leave some thunder for the storm.", "emotion": "calm", "placeholder": "broodTaunt.h7"},
+        {"speaker": "voss", "text": "Fried, the lot of them. Beautiful flying!", "emotion": "warm", "placeholder": "allySaved.h4"}
+      ],
+      "demon": {
+        "priority": 4,
+        "cooldown": 14,
+        "ttl": 2.5,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "The sky bites its own!", "say": "The sky bites its own!", "emotion": "stern", "placeholder": "broodTaunt.d6"},
+          {"speaker": "sliss", "grunt": "snarl", "gloss": "Not my sky! This is not my sky!", "say": "Not my sky! This is not my sky!", "emotion": "stern", "placeholder": "broodChatter.d24"},
+          {"speaker": "gorrak", "grunt": "alarm", "gloss": "Scatter! The storm fights for it!", "say": "Scatter! The storm fights for it!", "emotion": "panicked", "placeholder": "levelClear.d0"}
+        ]
+      }
+    },
+    "bonusPickup.lightningRod": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "lines": [
+        {"speaker": "sunny", "text": "Lightning rod! You are grounded. Now that's a bright idea.", "signature": true, "emotion": "teasing", "placeholder": "shieldCollected.h3"},
+        {"speaker": "anvil", "text": "Rod's live. Sit under them and let it hit you.", "emotion": "warm", "placeholder": "shieldCollected.h0"}
+      ]
+    },
+    "bonusCleared.stormfront": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "lines": [
+        {"speaker": "sunny", "text": "Storm's behind us. Clean skies ahead! That's the forecast I like.", "signature": true, "emotion": "teasing", "placeholder": "levelClear.h7"},
+        {"speaker": "sparrow", "text": "We flew through a thunderstorm and won! Sky's ours.", "emotion": "triumphant", "placeholder": "levelClear.h1"},
+        {"speaker": "kestrel", "text": "Out of the weather. That was beautiful flying.", "emotion": "triumphant", "placeholder": "levelClear.h6"}
+      ]
     }
   }
 }

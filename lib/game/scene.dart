@@ -12,6 +12,7 @@ import 'attract.dart';
 import 'ground_atmosphere.dart';
 import 'ground_atmosphere_atlas.dart';
 import 'bonus/bonus_look.dart'; // --- bonus levels
+import 'bonus/bonus_painters.dart'; // --- bonus levels: mechanics
 import 'boss_painter.dart';
 import 'ground_painter.dart';
 import 'insignia_atlas.dart';
@@ -362,6 +363,8 @@ class DemonScene extends FlameGame {
       }
       bonusLook.paint(canvas); // --- bonus levels: the level's grade
       if (active && combat) {
+        // --- bonus levels: a level's mechanic, under the fight.
+        BonusPainters.under(canvas, model, model.visualClock);
         groundForces.paintGround(
           canvas,
           model,
@@ -372,6 +375,8 @@ class DemonScene extends FlameGame {
           model,
           ship,
         ); // --- ground war: in the air
+        // --- bonus levels: a level's mechanic, over the fight.
+        BonusPainters.over(canvas, model, model.visualClock);
         _cinematic(canvas);
       } else {
         sectors.flyover.paintFlyers(canvas); // --- easter eggs: flocks

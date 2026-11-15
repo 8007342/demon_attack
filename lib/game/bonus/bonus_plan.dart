@@ -128,7 +128,12 @@ class BonusPlan {
 
   /// The stream of in-level draws (crates, chance rules) for a sector.
   static math.Random levelRng(int runSeed, int route, int sector) =>
-      math.Random(runSeed ^ salt ^ (route * 64 + sector) * 7919);
+      math.Random(levelSeed(runSeed, route, sector));
+
+  /// The seed of that stream; a level's mechanic derives its own PRNG
+  /// from it (bonus_mechanic.dart), so it never shares draws with crates.
+  static int levelSeed(int runSeed, int route, int sector) =>
+      runSeed ^ salt ^ (route * 64 + sector) * 7919;
 
   @override
   String toString() =>

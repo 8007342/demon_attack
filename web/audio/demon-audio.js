@@ -640,6 +640,9 @@
     if (name === 'missileLaunch') { limitVoices('explosion'); noiseBurst(now, .55, .1, 3200); sweep(now, .5, 90, 340, .05); return true; }
     if (name === 'missileIncoming') { sweep(now, .7, 1900, 700, .035, 'sine'); return true; }
     if (name === 'homingLock') { limitVoices('hit'); voice({ pitch: 96, velocity: 55, channel: 0, tag: 'hit' }, now, .05, effects); voice({ pitch: 101, velocity: 55, channel: 0, tag: 'hit' }, now + .07, .06, effects); noiseBurst(now + .05, .3, .05, 5000); return true; }
+    // --- bonus levels: Stormfront (a rising static crackle, then thunder)
+    if (name === 'stormTell') { sweep(now, 1.05, 240, 2600, .022, 'square'); noiseBurst(now + .6, .45, .035, 6200); return true; }
+    if (name === 'stormBolt') { limitVoices('explosion'); noiseBurst(now, .12, .2, 7000); voice({ pitch: 28, velocity: 110, channel: 9, tag: 'explosion' }, now + .03, .5, effects); noiseBurst(now + .05, .5, .13, 420); noiseBurst(now + .45, .5, .08, 260); return true; }
     if (name === 'groundExplosion') { limitVoices('explosion'); voice({ pitch: 31, velocity: 100, channel: 9, tag: 'explosion' }, now, .3, effects); noiseBurst(now, .7, .16, 1500); return true; }
     return false;
   }

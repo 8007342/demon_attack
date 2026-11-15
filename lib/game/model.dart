@@ -2473,6 +2473,7 @@ class ArcadeModel {
         targetX = shipX;
       }
       _flowStep();
+      _bonusIdle(dt); // --- bonus levels: a mechanic winds down
       if (transitionLeft <= 0) {
         if (mode == RunMode.salvage) {
           pickups.clear();

@@ -66,3 +66,21 @@ batch is blocked on the audio studio (tillandsias#1103).
 | `runModifier.spreadOnly.h1` | human | rook | excited | Spread shot or nothing this run. Paint the whole sky! | weaponPickup.spread.h0 |
 | `runModifier.heavyOrdnance.h0` | human | sparrow | excited | Extra blast rounds in the supply chain this run. Boom! | weaponPickup.large.h2 |
 | `runModifier.heavyOrdnance.h1` | human | kestrel | calm | Plenty of blast rounds this sortie. Aim into the crowd. | weaponPickup.large.h3 |
+| `bonusEntry.stormfront.h0` | human | sunny | teasing | Sunny here. Forecast update: thunderstorm ahead, with a chance of fried demons. | sectorStart.h5 |
+| `bonusEntry.stormfront.h1` | human | sunny | urgent | Storm cell ahead. Whatever comes down from above, do not be under it! | diveWarning.h6 |
+| `bonusEntry.stormfront.h2` | human | admiral | calm | Overwatch to squadron. The brood ran into a thunderstorm. Lightning does not take sides. Use it. | sectorStart.h0 |
+| `bonusStart.stormfront.h0` | human | wisp | urgent | Static is off my scopes. When the air hums over you, move. | diveWarning.h2 |
+| `bonusStart.stormfront.h1` | human | mensah | urgent | Get right under them, then slide out. Let the storm bring the rain! | groundForceInRange.h4 |
+| `stormStrike.h0` | human | rook | panicked | Lightning on you! Dodge, dodge, dodge! | sentinelDive.h3 |
+| `stormStrike.h1` | human | sunny | urgent | Bolt building right above you, look sharp! | diveWarning.h6 |
+| `stormBait.h0` | human | kessler | teasing | The storm did that one for us! Thanks for the thunder! | skirmishWon.h4 |
+| `stormBait.h1` | human | nomad | calm | Easy, friend. Leave some thunder for the storm. | broodTaunt.h7 |
+| `stormBait.h2` | human | voss | warm | Fried, the lot of them. Beautiful flying! | allySaved.h4 |
+| `stormBait.d0` | demon | vexxa | stern | [snarl] The sky bites its own! | broodTaunt.d6 |
+| `stormBait.d1` | demon | sliss | stern | [snarl] Not my sky! This is not my sky! | broodChatter.d24 |
+| `stormBait.d2` | demon | gorrak | panicked | [alarm] Scatter! The storm fights for it! | levelClear.d0 |
+| `bonusPickup.lightningRod.h0` | human | sunny | teasing | Lightning rod! You are grounded. Now that's a bright idea. | shieldCollected.h3 |
+| `bonusPickup.lightningRod.h1` | human | anvil | warm | Rod's live. Sit under them and let it hit you. | shieldCollected.h0 |
+| `bonusCleared.stormfront.h0` | human | sunny | teasing | Storm's behind us. Clean skies ahead! That's the forecast I like. | levelClear.h7 |
+| `bonusCleared.stormfront.h1` | human | sparrow | triumphant | We flew through a thunderstorm and won! Sky's ours. | levelClear.h1 |
+| `bonusCleared.stormfront.h2` | human | kestrel | triumphant | Out of the weather. That was beautiful flying. | levelClear.h6 |

@@ -1311,6 +1311,76 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'runModifier.heavyOrdnance.h1', speaker: 'kestrel', duration: 2.258, text: 'Blast rounds. Aim into the crowd.', mouth: '55<<<<===<<<<==000<<<<<<2224444222', open: '0589986578888532168998774367765421', vis: 'oo----eeee---eee--ooooo-----------', emotion: 'excited', clip: 'weaponPickup.large.h3'),
     ],
   ),
+  'bonusEntry.stormfront': CommsTriggerSpec(
+    name: 'bonusEntry.stormfront',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 3.0,
+    mood: CommsMood.worried,
+    lines: [
+      CommsLine(id: 'bonusEntry.stormfront.h0', speaker: 'sunny', duration: 3.866, text: 'Sunny here. Forecast says clear skies, with a chance of demons.', mouth: '00055550000<<<<<<<<<<<<<<<<<222244<<<<3333====4455<<<55500', open: '0146643211688888743278588575337867999754564378765788765321', vis: '---oooee----------------------------------ee----oo---ooeee', signature: true, emotion: 'teasing', clip: 'sectorStart.h5'),
+      CommsLine(id: 'bonusEntry.stormfront.h1', speaker: 'sunny', duration: 1.729, text: 'Incoming from above, look sharp!', mouth: '3333334444<<<<22222==<<<<<', open: '05767877778995321786798532', vis: '-------------------ee-----', emotion: 'urgent', clip: 'diveWarning.h6'),
+      CommsLine(id: 'bonusEntry.stormfront.h2', speaker: 'admiral', duration: 5.079, text: 'Overwatch to squadron. New sector, same promise. Keep them off the fleet.', mouth: '000000<<<<<<333333<<<<5550000<<<<<==3333===<<<<<<<====000005555<<<<<22333==00', open: '00068788899765555788665532116898685466533378868877653211001764799856446533211', vis: '-------oo-------------oo----oooeeeee----ee--------eee------oo------------ee--', emotion: 'calm', clip: 'sectorStart.h0'),
+    ],
+  ),
+  'bonusStart.stormfront': CommsTriggerSpec(
+    name: 'bonusStart.stormfront',
+    priority: 5,
+    cooldown: 20.0,
+    ttl: 4.0,
+    mood: CommsMood.worried,
+    lines: [
+      CommsLine(id: 'bonusStart.stormfront.h0', speaker: 'wisp', duration: 2.106, text: 'Attack run. Watch your flanks.', mouth: '222244444433300004444433<<<<==00', open: '03247645776432113777785688643211', vis: '----------------------------ee--', emotion: 'urgent', clip: 'diveWarning.h2'),
+      CommsLine(id: 'bonusStart.stormfront.h1', speaker: 'mensah', duration: 1.87, text: 'You\'re right over them. Bring the rain!', mouth: '00000<<<<5533300000000<<<====', open: '00005789877653211587878987432', vis: '--------ooo------------eeee--', emotion: 'urgent', clip: 'groundForceInRange.h4'),
+    ],
+  ),
+  'stormStrike': CommsTriggerSpec(
+    name: 'stormStrike',
+    priority: 7,
+    cooldown: 11.0,
+    ttl: 1.2,
+    mood: CommsMood.worried,
+    lines: [
+      CommsLine(id: 'stormStrike.h0', speaker: 'rook', duration: 1.461, text: 'Incoming! Dodge, dodge, dodge!', mouth: '555<<<<<<<<<<==444==00', open: '0458998998788547763211', vis: 'ooo----------ee---ee--', emotion: 'panicked', clip: 'sentinelDive.h3'),
+      CommsLine(id: 'stormStrike.h1', speaker: 'sunny', duration: 1.729, text: 'Incoming from above, look sharp!', mouth: '3333334444<<<<22222==<<<<<', open: '05767877778995321786798532', vis: '-------------------ee-----', emotion: 'urgent', clip: 'diveWarning.h6'),
+    ],
+  ),
+  'stormBait': CommsTriggerSpec(
+    name: 'stormBait',
+    priority: 4,
+    cooldown: 14.0,
+    ttl: 2.5,
+    chance: 0.75,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'stormBait.h0', speaker: 'kessler', duration: 2.822, text: 'Artillery made that easy! Thanks for the thunder!', mouth: '222===<<<<44<<<<<<44444220000000000<<<<<<<<', open: '0333478988778889987767642110687578789999743', vis: '---eeee------------------------------------', emotion: 'teasing', clip: 'skirmishWon.h4'),
+      CommsLine(id: 'stormBait.h1', speaker: 'nomad', duration: 3.483, text: 'Easy, friend. Save some thunder for the next round.', mouth: '44<<<<<<4444440000000<<==<<<<<<<<<44<<<==<<<<<===0000', open: '06898985777753211004788778857899857799766899886421110', vis: '-----------------------eeoooooo--------ee-----eeee---', emotion: 'calm', clip: 'broodTaunt.h7'),
+      CommsLine(id: 'stormBait.h2', speaker: 'voss', duration: 2.457, text: 'Lantern is clear. Beautiful shooting!', mouth: '55<<<<<<<<===444==000000<<<<<<<<===22', open: '0589888888547766321100058888987776532', vis: 'ooeeeeeeeeeee---ee--------------eee--', emotion: 'warm', clip: 'allySaved.h4'),
+    ],
+  ),
+  'bonusPickup.lightningRod': CommsTriggerSpec(
+    name: 'bonusPickup.lightningRod',
+    priority: 5,
+    cooldown: 20.0,
+    ttl: 4.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusPickup.lightningRod.h0', speaker: 'sunny', duration: 1.98, text: 'Shield up! Now that\'s a bright idea.', mouth: '000<<<<<=====<<<555<<<<3333300', open: '004889853237789766788886665321', vis: '--------eeee----oo------------', signature: true, emotion: 'teasing', clip: 'shieldCollected.h3'),
+      CommsLine(id: 'bonusPickup.lightningRod.h1', speaker: 'anvil', duration: 1.499, text: 'Shield\'s up. Use it.', mouth: '===<<<<<<220000<<<<<222', open: '04688887642114789874321', vis: 'eeeeeee--------ooo-----', emotion: 'warm', clip: 'shieldCollected.h0'),
+    ],
+  ),
+  'bonusCleared.stormfront': CommsTriggerSpec(
+    name: 'bonusCleared.stormfront',
+    priority: 5,
+    cooldown: 20.0,
+    ttl: 4.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusCleared.stormfront.h0', speaker: 'sunny', duration: 2.564, text: 'Clean skies! That\'s the forecast I like.', mouth: '000<<<==<<<<<<<<000000333344<<<<<<<<<<<', open: '006898568998654211006856687788788898532', vis: '--ooooee-------ee----------------------', signature: true, emotion: 'teasing', clip: 'levelClear.h7'),
+      CommsLine(id: 'bonusCleared.stormfront.h1', speaker: 'sparrow', duration: 2.105, text: 'We did it! Sky\'s ours.', mouth: '55555555<<<<==00000<<<<<<<<<==00', open: '02787636888542111068987999753211', vis: 'ooooooo-----eee-------------ee--', emotion: 'triumphant', clip: 'levelClear.h1'),
+      CommsLine(id: 'bonusCleared.stormfront.h2', speaker: 'kestrel', duration: 2.932, text: 'Sector\'s clear. That was beautiful flying.', mouth: '0003322332222<<<<========222<<44422<<<<<<555', open: '00066436632168886421687974268877744799887532', vis: '-----------------eee--oo---oo------------ooo', emotion: 'triumphant', clip: 'levelClear.h6'),
+    ],
+  ),
 };
 
 const commsDemonTriggers = <String, CommsTriggerSpec>{
@@ -1738,6 +1808,18 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
     lines: [
       CommsLine(id: 'broodAdapting.d0', speaker: 'gorrak', duration: 2.335, grunt: 'gloat', gloss: 'Your aim is brave. I will give you that!', mouth: '0000044<<<<3344777333333333333444222', open: '017897788886677897557764467876675321', vis: 'eee---------ooo--oo--------ee-------', emotion: 'teasing', clip: 'broodTaunt.d0'),
       CommsLine(id: 'broodAdapting.d1', speaker: 'skarn', duration: 2.423, grunt: 'gloat', gloss: 'Come on, pilot. Show me your clever move!', mouth: '000000000003344<<<<<<2222222222277722', open: '0001478989855778898753226778645898632', vis: '----oo------------eeeeee-------------', emotion: 'teasing', clip: 'broodTaunt.d2'),
+    ],
+  ),
+  'stormBait': CommsTriggerSpec(
+    name: 'stormBait',
+    priority: 4,
+    cooldown: 14.0,
+    ttl: 2.5,
+    delay: 0.4,
+    lines: [
+      CommsLine(id: 'stormBait.d0', speaker: 'vexxa', duration: 1.943, grunt: 'snarl', gloss: 'I was saving that patch of sky!', mouth: '2222224444<<<<<<<<774444777777', open: '035788767688568888997678899853', vis: 'eee---eeee-----oo---eeoo------', emotion: 'stern', clip: 'broodTaunt.d6'),
+      CommsLine(id: 'stormBait.d1', speaker: 'sliss', duration: 1.287, grunt: 'snarl', gloss: 'Not through my sky!', mouth: '0000033333<<<3333333', open: '01457557888875589853', vis: '----------eeeeoooo--', emotion: 'stern', clip: 'broodChatter.d24'),
+      CommsLine(id: 'stormBait.d2', speaker: 'gorrak', duration: 1.989, grunt: 'alarm', gloss: 'Fine! Take this patch of sky!', mouth: '000000000000000004422000000000', open: '003689645468746747742114689853', vis: '------eeee----------------oo--', emotion: 'panicked', clip: 'levelClear.d0'),
     ],
   ),
 };

@@ -37,11 +37,15 @@ class BonusRun {
   double crateLeft = 0;
   bool startAnnounced = false, modifierAnnounced = false;
 
+  /// The level's own rule of play (bonus_mechanic.dart), one per visit.
+  BonusMechanic? mechanic;
+
   void resetLevel() {
     cratesDropped = cratesOpened = shipsLost = 0;
     extra = award = 0;
     crateLeft = 0;
     startAnnounced = false;
+    mechanic = null;
   }
 }
 
@@ -104,6 +108,15 @@ extension ArcadeBonus on ArcadeModel {
       run.rng = BonusPlan.levelRng(run.seed ?? seed, cycle, level);
     }
     run.crateLeft = run.level?.crates.first ?? 0;
+    // --- bonus mechanic: a fresh one per visit, on the level's own seed.
+    run.mechanic = run.level?.mechanic?.call(
+      BonusMechanicContext(
+        seed: BonusPlan.levelSeed(run.seed ?? seed, cycle, level),
+        route: cycle,
+        sector: level,
+        difficulty: difficulty,
+      ),
+    );
     // A bonus power never leaves its level.
     if (run.level == null) run.timers.clear();
   }
@@ -251,6 +264,28 @@ extension ArcadeBonus on ArcadeModel {
     });
   }
 
+  // --- bonus mechanic (bonus_mechanic.dart): what a level's own rule of
+  // play may do beyond the model's public surface.
+
+  /// The live mechanic of the bonus level being played (its painter and
+  /// the tests read it); null in a regular sector or a data-only level.
+  BonusMechanic? get bonusMechanic => bonusRun.mechanic;
+
+  /// Queues a structured game event for the radio and the music.
+  void bonusEvent(String name, [Map<String, Object?> data = const {}]) =>
+      _queueGameEvent(name, data);
+
+  /// Adds [points] of bonus score as far as the level's cap allows;
+  /// returns what was granted.
+  int bonusAward(int points) {
+    final granted = _bonusCapped(points);
+    score += granted;
+    return granted;
+  }
+
+  /// A step outside combat: the mechanic finishes what is on screen.
+  void _bonusIdle(double dt) => bonusRun.mechanic?.idle(this, dt);
+
   // --- per-step (combat only)
 
   void _bonusStep(double dt) {
@@ -267,6 +302,7 @@ extension ArcadeBonus on ArcadeModel {
       run.startAnnounced = true;
       _queueGameEvent(GameEventNames.bonusStart, {'variant': def.id});
     }
+    run.mechanic?.step(this, dt); // --- bonus mechanic
     if (shipAway) return;
     run.timers.updateAll((_, left) => math.max(0, left - dt));
     run.timers.removeWhere((_, left) => left <= 0);
