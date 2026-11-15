@@ -1285,10 +1285,18 @@ class FlyoverBackground implements GroundOccluders {
         _pixelPaint);
   }
 
+  /// The ship's shadow is shown (also drives the critters' duck reaction).
+  bool get shipShadowVisible => _shadow;
+
+  /// continuous-swarm: the scene draws the ship's silhouette shadow on the
+  /// creatures' sun (design §8.2); the stepped fallback below stays for a
+  /// scene without the ship atlas.
+  bool shipShadowByScene = false;
+
   /// Ship shadow cast on the ground, stepped in coarse pixels.  Creatures
   /// duck as it passes.
   void paintShadow(Canvas c) {
-    if (!_shadow) return;
+    if (!_shadow || shipShadowByScene) return;
     final x = (_shipX + 12).roundToDouble();
     const y = ArcadeModel.shipY + 24;
     final p = Paint()

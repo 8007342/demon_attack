@@ -25,23 +25,6 @@ void _fly(ArcadeModel m, double seconds, void Function(int frame) each) {
   }
 }
 
-/// Everything the fight depends on, exactly: entering creatures by their
-/// entrance clock only (they cannot be hit, do not fire or collide), every
-/// other creature by its exact position.
-String _signature(ArcadeModel m) {
-  final b = StringBuffer()
-    ..write('${m.mode} ${m.level} ${m.wave} ${m.score} ${m.lives} ')
-    ..write('${m.kills} ${m.shots.length} ${m.incoming.length}|');
-  for (final d in m.demons) {
-    if (d.entering) {
-      b.write('E${d.entranceProgress} ${d.waitingForEscort};');
-    } else {
-      b.write('${d.x},${d.y},${d.hp},${d.scale},${d.dive};');
-    }
-  }
-  return b.toString();
-}
-
 void main() {
   group('transmittance and reveal', () {
     test('veils the arrival depth and clears the formation', () {
@@ -250,7 +233,8 @@ void main() {
       expect(agents.length, greaterThanOrEqualTo(6));
       expect(agents.map((a) => a.launch).toSet().length, agents.length);
       expect(agents.map((a) => a.ease).toSet().length, agents.length);
-      expect(agents.map((a) => a.squad).toSet().length, greaterThan(1));
+      // continuous-swarm: one squadron per skein, several skeins.
+      expect(agents.map((a) => a.batch).toSet().length, greaterThan(1));
     });
 
     test('settles into the slot without a jump', () {
@@ -306,30 +290,10 @@ void main() {
       });
     });
 
-    test('parity: the fight is identical with and without the flock', () {
-      for (final (sector, route) in [(1, 0), (3, 0), (2, 1), (4, 2)]) {
-        final a = ArcadeModel(seed: 21 + sector)..flockArrivals = true;
-        final b = ArcadeModel(seed: 21 + sector)..flockArrivals = false;
-        a.startAt(sector: sector, route: route);
-        b.startAt(sector: sector, route: route);
-        final sa = <String>[], sb = <String>[];
-        var flocked = 0;
-        _fly(a, 150, (f) {
-          sa.add(_signature(a));
-          if (a.demons.any((d) => a.flock.of(d) != null)) flocked++;
-        });
-        _fly(b, 150, (f) => sb.add(_signature(b)));
-        for (var i = 0; i < sa.length; i++) {
-          if (sa[i] != sb[i]) {
-            fail(
-              'sector $sector route $route diverged at frame $i:\n'
-              '${sa[i]}\n${sb[i]}',
-            );
-          }
-        }
-        expect(flocked, greaterThan(60), reason: 'the flock was in play');
-      }
-    });
+    // The parity test (the fight identical with and without the flock) is
+    // retired on purpose by continuous-swarm: the swarm now decides where
+    // hitboxes are. Its guards are test/continuous_swarm_test.dart
+    // (determinism) and the campaign pilot metrics (calibration).
   });
 
   group('sentinel foreshadowing', () {

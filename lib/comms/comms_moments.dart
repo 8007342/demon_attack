@@ -40,6 +40,18 @@ const commsSharedCooldown = {
 /// trigger that is already waiting or on air.
 const commsEventAliases = {
   GameEventNames.reinforcementsArrived: GameEventNames.reinforcements,
+  // continuous-swarm: a sighted cohort is voiced with the next-wave
+  // sighting lines (waveStart clips; no new recordings), ending on its eta.
+  GameEventNames.cohortSighted: GameEventNames.incoming,
+};
+
+/// Swarm calls that carry an `eta` (continuous-swarm design §6.1): the
+/// director ends them close to the moment the creatures become targetable,
+/// as it does a dive call on `diveIn`.
+const commsSwarmTimed = {
+  GameEventNames.incoming,
+  GameEventNames.reinforcements,
+  GameEventNames.sentinelIncoming,
 };
 
 CommsLine _line(

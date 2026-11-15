@@ -647,6 +647,46 @@ void main() {
     );
 
     test(
+      'swarm calls end within 0.3 s of the creatures becoming targetable',
+      () {
+        // continuous-swarm task 7.2: cohortSighted (voiced with the
+        // next-wave sighting lines), reinforcements and the sentinel's rise
+        // carry an eta; the call ends on it, like a dive call.
+        for (final (name, eta) in [
+          (GameEventNames.cohortSighted, 4.4),
+          (GameEventNames.reinforcements, 1.6),
+          (GameEventNames.sentinelIncoming, 4.35),
+        ]) {
+          var voiced = 0;
+          for (var seed = 0; seed < 12; seed++) {
+            final started = <CommsMessage>[];
+            final d = CommsDirector(random: math.Random(seed))
+              ..onStart = started.add;
+            d.setSector(2, 0);
+            d.handle(GameEvent(name, {'eta': eta}), 10);
+            for (var t = 10.0; t < 16; t += 1 / 60) {
+              d.update(t);
+            }
+            final human = started.where((m) => m.line.grunt == null).toList();
+            if (human.isEmpty) continue;
+            voiced++;
+            final call = human.first;
+            expect(
+              call.speechEndsAt,
+              closeTo(10 + eta, .3),
+              reason: '$name seed $seed: $call',
+            );
+            if (name == GameEventNames.cohortSighted) {
+              expect(call.trigger.name, GameEventNames.incoming);
+              expect(call.line.id, startsWith('waveStart.'));
+            }
+          }
+          expect(voiced, greaterThan(0), reason: name);
+        }
+      },
+    );
+
+    test(
       'a call observed only as the dive starts is dropped, not played late',
       () {
         final d = CommsDirector(random: math.Random(3));

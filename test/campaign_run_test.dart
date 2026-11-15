@@ -25,7 +25,13 @@ void defeatRoster(ArcadeModel m) {
     }
     m.update(1 / 60);
   }
-  expect(m.combat, isFalse, reason: 'all finite flocks must clear the wave');
+  // Continuous swarm: the next wave of a sector streams in while combat
+  // goes on; the last wave of a sector still ends combat (salvage).
+  expect(
+    !m.combat || m.wave != wave,
+    isTrue,
+    reason: 'all finite flocks must clear the wave',
+  );
 }
 
 void main() {
@@ -119,7 +125,8 @@ void main() {
     final m = ArcadeModel()..start();
     until(m, RunMode.playing);
     defeatRoster(m);
-    expect(m.mode, RunMode.transition);
+    // Continuous swarm: the next wave streams in, combat goes on.
+    expect(m.mode, RunMode.playing);
     expect(m.canPilot, isTrue);
     m.pickups.clear();
     m.pickups.add(Pickup(250, 445, Power.spread));
@@ -129,7 +136,7 @@ void main() {
     expect(m.hasPower(Power.spread), isTrue);
     final duration = m.timeLeft(Power.spread);
     advance(m, .3);
-    expect(m.timeLeft(Power.spread), duration);
+    expect(m.timeLeft(Power.spread), lessThan(duration)); // combat goes on
     until(m, RunMode.playing);
     while (m.wave < m.wavesPerLevel) {
       defeatRoster(m);
@@ -167,12 +174,27 @@ void main() {
       until(m, RunMode.playing);
       defeatRoster(m);
       until(m, RunMode.playing);
+      // Continuous swarm: wave 2 streams in; let its skeins land.
+      m.invulnerable = 100;
+      for (var i = 0; i < 60 * 20 && m.demons.any((d) => d.entering); i++) {
+        m.update(1 / 60);
+        m.shots.removeWhere((s) => !s.hostile); // nobody shoots meanwhile
+      }
       expect(m.wavesPerLevel, 6);
       expect(m.demons.length, lessThanOrEqualTo(30));
       expect(m.speed, 1.16);
       expect(m.demons.every((d) => d.maxHp <= 5), isTrue);
       expect(m.demons.any((d) => d.maxHp == 4), isTrue);
       final elite = m.demons.firstWhere((d) => d.elite);
+      bool busy() =>
+          elite.divePrep > 0 ||
+          elite.telegraph > 0 ||
+          elite.dive > 0 ||
+          elite.entering;
+      for (var i = 0; i < 60 * 20 && busy(); i++) {
+        m.update(1 / 60);
+        m.shots.removeWhere((s) => !s.hostile);
+      }
       elite.attackLeft = .01;
       m.shots.clear();
       m.update(1 / 60);

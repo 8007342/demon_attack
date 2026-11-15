@@ -45,7 +45,8 @@ class DemonScene extends FlameGame {
   // --- ground war (ground_painter.dart) ---
   late final groundForces = GroundPainter()
     ..occluders = (sectors.flyover..deferFlyers = true)
-    ..atmosphere = atmosphere // --- ground atmosphere art in the depth sort
+    ..atmosphere =
+        atmosphere // --- ground atmosphere art in the depth sort
     ..eggs = sectors.flyover.eggs;
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
@@ -539,12 +540,11 @@ class DemonScene extends FlameGame {
   }
 
   void _combat(Canvas c) {
-    _swarmShadows(c); // --- perspective: on the ground, under everything
     // --- atmosphere: ground fog lies on the terrain, over the shadows.
     if (model.perspective) atmosphere.paint(c, FogSlot.groundFog);
     // --- easter eggs: flock flyers over the ground fog (in the air).
     sectors.flyover.paintFlyers(c);
-    _arrivalShadows(c); // --- atmosphere: incoming shadows lead the wave
+    _creatureShadows(c); // --- continuous swarm: every flyer, the ship
     for (final p in model.heartPickups) {
       c.save();
       c.translate(p.x - 10, p.y - 10);
@@ -574,7 +574,14 @@ class DemonScene extends FlameGame {
     // The fog layers are drawn when the sort passes their nearness, so a
     // creature at n .35 is behind bank B and in front of bank A, and an
     // arrival rises up through the layers one by one (fog-restoration).
-    final approaching = model.incoming.where((d) => !d.isLarge).toList();
+    // --- continuous swarm: the reserve (groups and later skeins waiting in
+    // the deep fog) is drawn veiled with the approaching cohort; neither
+    // shows gear (swarmState is the contract with the fog layers).
+    final approaching = <Demon>{
+      for (final d in model.incoming)
+        if (!d.isLarge && d.swarmState != SwarmState.reserve) d,
+      if (model.perspective) ...model.drawnReserve,
+    };
     final fogSlots = model.perspective
         ? Atmosphere.depthSlots
         : const <FogSlot>[];
@@ -589,13 +596,20 @@ class DemonScene extends FlameGame {
       if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c);
     }
 
-    for (final d in _byDepth([...approaching, ...model.demons])) {
+    for (final d in _byDepth([
+      ...approaching,
+      for (final d in model.demons)
+        if (d.isLarge || d.swarmState != SwarmState.reserve) d,
+    ])) {
       while (nextFog < fogSlots.length &&
           Atmosphere.layers[fogSlots[nextFog]]!.nearness <= d.nearness) {
         fog();
       }
       final warning = d.telegraph > 0;
-      final pos = Offset(d.x, d.y);
+      // continuous-swarm: visible evasion moves the drawing only (a third
+      // of the hitbox at most), never the creature.
+      final (lx, ly) = d.isLarge ? (0.0, 0.0) : creatures.look.offset(d);
+      final pos = Offset(d.x + lx, d.y + ly);
       if (d.isLarge) {
         // Large creatures have their own delayed entrance in simulation.
         if (d.entranceProgress > 0) {
@@ -636,6 +650,13 @@ class DemonScene extends FlameGame {
       // Gargoyle frames carry their own banking (3/4 left/neutral/right
       // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
+      final tilt = creatures.look.of(d)?.tilt ?? 0;
+      if (tilt.abs() > .02) {
+        // Wing tilt of the agitation wave: a small roll about the body.
+        c.translate(pos.dx, pos.dy);
+        c.rotate(tilt * .14);
+        c.translate(-pos.dx, -pos.dy);
+      }
       final cell = CombatAtlas.creature(
         d,
         model.clock,
@@ -1172,7 +1193,22 @@ class DemonScene extends FlameGame {
     c.scale(1.0 - bank.abs() * 0.14, 1.0);
     c.translate(-center.dx, -center.dy);
     if (ship.ready) {
+      // continuous-swarm: a creature's shadow over the ship dims it a
+      // little (capped at 15 %, so the outline stays readable).
+      final dim = shipShadowDim;
+      if (dim > .005) {
+        final g = (255 * (1 - dim)).round();
+        c.saveLayer(
+          null,
+          Paint()
+            ..colorFilter = ColorFilter.mode(
+              Color.fromARGB(255, g, g, g),
+              BlendMode.modulate,
+            ),
+        );
+      }
       ship.paintShip(c, model, center);
+      if (dim > .005) c.restore();
     } else {
       sprite(
         c,
@@ -1740,55 +1776,14 @@ class DemonScene extends FlameGame {
       model.perspective &&
       d.entering &&
       d.arrivesFromDistance &&
-      d.entranceProgress <= 0;
+      d.entranceProgress <= 0 &&
+      d.swarmState != SwarmState.reserve;
 
   void _scaleAbout(Canvas c, Offset pos, double scale) {
     if (scale == 1) return;
     c.translate(pos.dx, pos.dy);
     c.scale(scale);
     c.translate(-pos.dx, -pos.dy);
-  }
-
-  /// Faint stepped pixel shadows on the flyover ground beneath each demon's
-  /// depth: they darken as a diver loses altitude and closes in, and stay
-  /// all but invisible under the high formation (the shot lane stays clean).
-  /// Arrivals add an altitude shadow (design §4, research §3): offset along
-  /// the sun by height, softer and fainter when high, so an incoming wave's
-  /// shadows cross the terrain while the bodies are still in the fog.
-  void _swarmShadows(Canvas c) {
-    if (!model.perspective) return;
-    final paint = Paint()..isAntiAlias = false;
-    for (final d in model.demons) {
-      if (d.nearness <= 0 || _parked(d)) continue;
-      if (d.isLarge && d.entranceProgress <= 0) continue;
-      final gy = Perspective.groundY(d.nearness);
-      if (gy > 524 || gy < d.y + 8) continue;
-      final near = ((d.nearness - .5) / .2).clamp(0.0, 1.0);
-      final low = (1 - (gy - d.y) / 320).clamp(.15, 1.0);
-      var alpha = .5 * near * low;
-      if (d.entering && d.arrivesFromDistance) {
-        alpha *= Perspective.smoothstep(.7, 1, d.entranceProgress);
-      }
-      if (alpha < .02) continue;
-      final w = ((d.isLarge ? 70.0 : 26.0) * d.nearness / 1.4).round() * 2.0;
-      final x = d.x.roundToDouble(), y = gy.roundToDouble();
-      paint.color = Color.fromRGBO(2, 4, 12, alpha);
-      final inner = (w * .62 / 2).round() * 2.0;
-      c.drawRect(Rect.fromLTWH(x - inner / 2, y - 3, inner, 2), paint);
-      c.drawRect(Rect.fromLTWH(x - w / 2, y - 1, w, 2), paint);
-      c.drawRect(Rect.fromLTWH(x - inner / 2, y + 1, inner, 2), paint);
-    }
-  }
-
-  /// Arrival shadows, drawn over the ground fog they darken (the mist in
-  /// a shadow is unlit), at the opacity left through it.
-  void _arrivalShadows(Canvas c) {
-    if (!model.perspective) return;
-    for (final d in [...model.incoming, ...model.demons]) {
-      if (!d.entering || !d.arrivesFromDistance || _parked(d)) continue;
-      if (d.nearness <= 0 || (d.isLarge && d.entranceProgress <= 0)) continue;
-      _arrivalShadow(c, d);
-    }
   }
 
   static const _shadowHMax = 300.0;
@@ -1805,71 +1800,234 @@ class DemonScene extends FlameGame {
     ui.ImageFilter.blur(sigmaX: 3.0, sigmaY: 1.8),
   ];
 
-  /// The arrival's own silhouette laid on the ground: flattened by the
-  /// camera's tilt, offset along the sun by its height, softer, larger and
-  /// fainter the higher it flies, fading in with the arrival and handing
-  /// over to the formation's faint shadow as it settles.
-  void _arrivalShadow(Canvas c, Demon d) {
+  // --- continuous swarm: shadows (openspec/changes/continuous-swarm §8) ---
+  // Every flying creature casts its silhouette on the ground from its
+  // published altitude: arriving, fighting, diving, re-entering. Shadows
+  // stay in the front row and move with the swarm; they fade only on death.
+  // The ship casts its own on the same sun; a creature's shadow over the
+  // ship dims it slightly. Batched: one save-layer per blur bucket (at most
+  // three) holding drawAtlas calls; the reduced tier uses one sharp layer.
+
+  /// Save-layers the last shadow pass used (tests: at most three).
+  int shadowLayers = 0;
+
+  /// False skips the pass (the perf test's baseline frame).
+  bool creatureShadows = true;
+
+  /// Shadows drawn by the last pass, and whose (tests and review).
+  int shadowCount = 0;
+  final List<Demon> shadowed = [];
+
+  /// Multiply dim of the ship from creature shadows over it (cap 0.15).
+  double shipShadowDim = 0;
+  static const shipDimCap = .15;
+
+  final Map<Demon, _ShadowSpec> _lastShadows = {};
+  final List<(_ShadowSpec, double)> _shadowGhosts = [];
+  double _ghostClock = 0;
+
+  /// The sun's azimuth drifts ±4° over 40 s, seeded per sector.
+  double get _sunDrift =>
+      4 *
+      math.pi /
+      180 *
+      math.sin(2 * math.pi * model.clock / 40 + model.level * 1.7);
+
+  _ShadowSpec? _shadowOf(Demon d) {
     final n = d.nearness;
+    final h = d.altitude;
+    if (n <= 0 || h <= 0) return null;
     final gy = Perspective.groundY(n);
-    if (gy > 530) return;
-    final h = (gy - d.y).clamp(0.0, _shadowHMax);
-    final k = h / _shadowHMax;
-    final e = d.entranceProgress;
-    final hold = model.incoming.contains(d);
-    final present =
-        (hold ? 1.0 : Perspective.smoothstep(0, .12, e)) *
-        (1 - Perspective.smoothstep(.75, 1, e));
-    // Light left through the ground fog in front of the shadow.
-    const tGround = .85;
-    final alpha = .95 * (1 - .4 * k) * tGround * present;
-    if (alpha < .015) return;
-    final blur = _shadowBlur[k < .45 ? 0 : (k < .8 ? 1 : 2)];
-    // Offset along the sun's azimuth (behind-left of the camera): toward
-    // the camera and to the right, growing with height.
+    if (gy > 530) return null;
+    final k = (h / _shadowHMax).clamp(0.0, 1.0);
+    // 0.95, not the design's 0.55: on the dark sector grounds 0.55 read as
+    // nothing (review frames); 0.95 is the old arrival shadow the operator
+    // praised.
+    var alpha = .95 * (1 - .4 * k) * Atmosphere.groundLight(gy);
+    if (d.dive > 0 || d.rushing) alpha *= 1.25;
+    if (d.entering && d.swarmState != SwarmState.reentering) {
+      alpha *= Perspective.smoothstep(0, .12, d.entranceProgress);
+    }
+    if (alpha < .015) return null;
     final off = h * _shadowTan * .22;
-    final center = Offset(d.x + off, gy + off * .25);
-    final grow = n * 1.8 * (1 + .3 * k); // ground scale, penumbra growth
-    c.save();
-    c.translate(center.dx, center.dy);
-    c.scale(1, .42); // the ground is seen at a slant
-    c.translate(-center.dx, -center.dy);
+    final az = _sunDrift;
+    final center = Offset(
+      d.x + off * math.cos(az),
+      gy + off * .25 + off * math.sin(az),
+    );
+    final grow = n * 1.8 * (1 + .3 * k);
+    final bucket = k < .45 ? 0 : (k < .8 ? 1 : 2);
     if (d.isLarge) {
+      final img = effectsAtlas;
+      if (img == null) return null;
       final species = d.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
-      c.translate(center.dx, center.dy);
-      c.scale(grow / 1.8 * 1.6);
-      c.translate(-center.dx, -center.dy);
-      effectSprite(
-        c,
-        species,
-        (model.clock / .4 + d.seed).floor() % 8,
+      final frame = (model.clock / .4 + d.seed).floor() % 8;
+      return _ShadowSpec(
+        img,
+        Rect.fromLTWH(frame * 128.0, species * 64.0, 128, 64),
         center,
-        filter: _shadowInk,
-        blur: blur,
-        opacity: alpha,
+        grow / 1.8 * 1.6,
+        alpha.clamp(0.0, .9),
+        bucket,
       );
-    } else {
-      final cell = CombatAtlas.creature(
-        d,
-        model.clock,
-        motion: creatures.motion.of(d),
+    }
+    final img = atlas;
+    if (img == null) return null;
+    final cell = CombatAtlas.creature(
+      d,
+      model.clock,
+      motion: creatures.motion.of(d),
+    );
+    return _ShadowSpec(
+      img,
+      Rect.fromLTWH(cell.col * 64.0, cell.row * 64.0, 64, 64),
+      center,
+      40 * grow / 64,
+      alpha.clamp(0.0, .9),
+      bucket,
+    );
+  }
+
+  void _creatureShadows(Canvas c) {
+    shadowLayers = 0;
+    shadowCount = 0;
+    shipShadowDim = 0;
+    shadowed.clear();
+    if (!model.perspective || !creatureShadows) return;
+    final reduced = atmosphere.quality == AtmosphereQuality.reduced;
+    final buckets = [<_ShadowSpec>[], <_ShadowSpec>[], <_ShadowSpec>[]];
+    final now = <Demon, _ShadowSpec>{};
+    final flying = <Demon>{
+      for (final d in model.incoming)
+        if (d.swarmState != SwarmState.reserve) d,
+      ...model.demons,
+    };
+    for (final d in flying) {
+      if (d.swarmState == SwarmState.reserve || _parked(d)) continue;
+      if (d.isLarge && d.entranceProgress <= 0) continue;
+      final s = _shadowOf(d);
+      if (s == null) continue;
+      now[d] = s;
+      shadowed.add(d);
+      buckets[reduced ? 0 : s.bucket].add(s);
+    }
+    // Death: the shadow fades with the creature (0.3 s).
+    _ghostClock = model.clock;
+    for (final e in _lastShadows.entries) {
+      if (!now.containsKey(e.key) && e.key.hp <= 0) {
+        _shadowGhosts.add((e.value, _ghostClock));
+      }
+    }
+    _lastShadows
+      ..clear()
+      ..addAll(now);
+    _shadowGhosts.removeWhere((g) => _ghostClock - g.$2 > .3);
+    for (final (s, born) in _shadowGhosts) {
+      final left = 1 - (_ghostClock - born) / .3;
+      buckets[reduced ? 0 : s.bucket].add(s.faded(left));
+    }
+    // The ship's silhouette, on the same sun at its fixed altitude.
+    final shipImg = ship.image;
+    final flyover = sectors.flyover;
+    flyover.shipShadowByScene = shipImg != null;
+    if (shipImg != null && flyover.shipShadowVisible) {
+      const h = 40.0;
+      final off = h * _shadowTan * .22;
+      buckets[reduced ? 0 : 1].add(
+        _ShadowSpec(
+          shipImg,
+          const Rect.fromLTWH(0, 0, ShipPainter.cell, ShipPainter.cell),
+          Offset(model.shipX + 6 + off, ArcadeModel.shipY + 24),
+          ShipPainter.size / ShipPainter.cell * 1.05,
+          .5,
+          1,
+        ),
       );
-      final size = 40 * grow;
-      final a = atlas;
-      if (a != null) {
-        c.drawImageRect(
-          a,
-          Rect.fromLTWH(cell.col * 64.0, cell.row * 64.0, 64, 64),
-          Rect.fromCenter(center: center, width: size, height: size),
-          Paint()
-            ..colorFilter = _shadowInk
-            ..imageFilter = blur
-            ..color = Color.fromRGBO(255, 255, 255, alpha.clamp(0.0, 1.0))
-            ..filterQuality = FilterQuality.none,
+    }
+    // A coming sentinel sweeps the far terrain while it circles in the fog.
+    final f = model.foreshadow;
+    final fx = effectsAtlas;
+    if (f != null && f.visible && fx != null) {
+      final gy = Perspective.groundY(f.nearness.clamp(.08, .4));
+      final alpha =
+          (.2 * f.opacity * Atmosphere.groundLight(gy) - .02).clamp(0.0, .2);
+      if (alpha > .01) {
+        final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
+        buckets[reduced ? 0 : 2].add(
+          _ShadowSpec(
+            fx,
+            Rect.fromLTWH(
+              ((f.clock / .55).floor() % 4) * 128.0,
+              species * 64.0,
+              128,
+              64,
+            ),
+            Offset(f.x + 30, gy + 8),
+            f.scale * 2.2,
+            alpha,
+            2,
+          ),
         );
       }
     }
-    c.restore();
+    // Shadow over the ship: a multiply dim by overlap, capped.
+    final hull = Rect.fromCenter(
+      center: Offset(model.shipX, ArcadeModel.shipY),
+      width: 36,
+      height: 28,
+    );
+    for (final s in now.values) {
+      final w = s.src.width * s.scale, hgt = s.src.height * s.scale * .42;
+      final quad = Rect.fromCenter(center: s.center, width: w, height: hgt);
+      final o = quad.intersect(hull);
+      if (o.width <= 0 || o.height <= 0) continue;
+      final share = o.width * o.height / (hull.width * hull.height);
+      shipShadowDim += shipDimCap * share * (s.alpha / .55).clamp(0.0, 1.0);
+    }
+    shipShadowDim = shipShadowDim.clamp(0.0, shipDimCap);
+    // Draw: one layer per bucket, the ground seen at a slant.
+    for (var b = 0; b < 3; b++) {
+      final specs = buckets[b];
+      if (specs.isEmpty) continue;
+      shadowLayers++;
+      shadowCount += specs.length;
+      c.saveLayer(
+        null,
+        Paint()
+          ..colorFilter = _shadowInk
+          ..imageFilter = reduced ? null : _shadowBlur[b],
+      );
+      c.scale(1, .42);
+      final byImage = <ui.Image, List<_ShadowSpec>>{};
+      for (final s in specs) {
+        (byImage[s.image] ??= []).add(s);
+      }
+      for (final e in byImage.entries) {
+        c.drawAtlas(
+          e.key,
+          [
+            for (final s in e.value)
+              RSTransform.fromComponents(
+                rotation: 0,
+                scale: s.scale,
+                anchorX: s.src.width / 2,
+                anchorY: s.src.height / 2,
+                translateX: s.center.dx,
+                translateY: s.center.dy / .42,
+              ),
+          ],
+          [for (final s in e.value) s.src],
+          [
+            for (final s in e.value)
+              Color.fromRGBO(255, 255, 255, s.alpha.clamp(0.0, 1.0)),
+          ],
+          BlendMode.modulate,
+          null,
+          Paint()..filterQuality = FilterQuality.none,
+        );
+      }
+      c.restore();
+    }
   }
 
   void _wingTellChevrons(Canvas c, Offset pos) {
@@ -3057,4 +3215,24 @@ class DemonScene extends FlameGame {
       }
     }
   }
+}
+
+/// One ground shadow of the batched pass (continuous swarm).
+class _ShadowSpec {
+  const _ShadowSpec(
+    this.image,
+    this.src,
+    this.center,
+    this.scale,
+    this.alpha,
+    this.bucket,
+  );
+  final ui.Image image;
+  final Rect src;
+  final Offset center;
+  final double scale, alpha;
+  final int bucket;
+
+  _ShadowSpec faded(double k) =>
+      _ShadowSpec(image, src, center, scale, alpha * k.clamp(0.0, 1.0), bucket);
 }

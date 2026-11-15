@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:demon_attack/game/atmosphere.dart';
 import 'package:demon_attack/game/flock.dart';
 import 'package:demon_attack/game/model.dart';
+import 'package:demon_attack/game/scene.dart';
+import 'package:flame/game.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Timing harness for the atmosphere (design §6: fog <= 2 ms per frame,
@@ -87,6 +90,81 @@ void main() {
       );
       expect(perFrame, lessThan(2000));
       expect(model.demons, isNotEmpty);
+    });
+  });
+  // continuous-swarm task 6.7: a 61-creature combat frame with every
+  // shadow costs at most 1.5 ms more to record than without them.
+  testWidgets('61-creature combat frame with shadows', (tester) async {
+    await tester.runAsync(() async {
+      Future<ui.Image> decode(String file) async {
+        final codec = await ui.instantiateImageCodec(
+          await File(file).readAsBytes(),
+        );
+        final frame = await codec.getNextFrame();
+        codec.dispose();
+        return frame.image;
+      }
+
+      final m = ArcadeModel(seed: 6)
+        ..startAt(difficulty: Difficulty.hard, sector: 4, route: 4);
+      final scene = DemonScene(m, () {});
+      for (var i = 0; i < 5; i++) {
+        scene.sectors.images[i] = await decode(
+          'assets/images/sector-${i + 1}.png',
+        );
+      }
+      scene.atlas = await decode('assets/images/combat.png');
+      scene.effectsAtlas = await decode('assets/images/sentinel-effects.png');
+      scene.ship.image = await decode('assets/images/ship-weapons.png');
+      await scene.atmosphere.load();
+      for (var i = 0; i < 60 * 8; i++) {
+        m.invulnerable = 5;
+        m.update(1 / 60);
+        scene.creatures.update(m, 1 / 60);
+        m.shots.removeWhere((s) => !s.hostile);
+      }
+      // Fill to the active cap with fighting creatures.
+      final template = m.demons.firstWhere((d) => !d.isLarge);
+      while (m.demons.length < ArcadeModel.maxActiveDemons) {
+        final i = m.demons.length;
+        m.demons.add(
+          Demon(
+              30 + (i % 10) * 30.0,
+              70 + (i ~/ 10) * 34.0,
+              template.kind,
+              1,
+              i * .7,
+            )
+            ..nearness = .62 + (i ~/ 10) * .03
+            ..altitude = 80
+            ..scale = 1.2,
+        );
+      }
+      double cost() {
+        final sw = Stopwatch()..start();
+        for (var i = 0; i < 120; i++) {
+          final r = ui.PictureRecorder();
+          scene.paintArena(ui.Canvas(r), Vector2(360, 780));
+          r.endRecording().dispose();
+        }
+        return sw.elapsedMicroseconds / 120;
+      }
+
+      scene.creatureShadows = false;
+      cost();
+      final without = cost();
+      scene.creatureShadows = true;
+      cost();
+      final withShadows = cost();
+      // ignore: avoid_print
+      print(
+        'combat frame (61): ${(without / 1000).toStringAsFixed(3)} ms, '
+        'with shadows ${(withShadows / 1000).toStringAsFixed(3)} ms '
+        '(${scene.shadowCount} shadows, ${scene.shadowLayers} layers)',
+      );
+      expect(scene.shadowCount, greaterThanOrEqualTo(50));
+      expect(scene.shadowLayers, lessThanOrEqualTo(3));
+      expect(withShadows - without, lessThan(1500));
     });
   });
 }

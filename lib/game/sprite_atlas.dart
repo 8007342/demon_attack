@@ -1,5 +1,6 @@
 import 'creature_motion.dart';
 import 'model.dart';
+import 'swarm_look.dart';
 
 /// One creature draw: the atlas cell, whether to tint it white (action
 /// frames without an authored flash), and the elite armour overlay cell with
@@ -183,6 +184,9 @@ class CreaturePresentation {
   final _suppressedBlast = Expando<bool>('suppressedBlast');
   final List<DeathFx> deaths = [];
   final motion = CreatureMotionTracker();
+
+  /// continuous-swarm: visible evasion (cosmetic offsets, never gameplay).
+  final look = SwarmLook();
   List<Demon> _previous = const [];
 
   double? fireAge(Demon d) => _fireAge[d];
@@ -192,6 +196,7 @@ class CreaturePresentation {
     final live = dt > 0 && model.mode != RunMode.paused;
     if (live) {
       motion.update(model, dt);
+      look.update(model, dt);
       for (final d in model.demons) {
         final age = _fireAge[d];
         if (age != null) _fireAge[d] = age + dt;

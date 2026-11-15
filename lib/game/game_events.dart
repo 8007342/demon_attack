@@ -117,6 +117,25 @@ abstract final class GameEventNames {
 
   static const lifeLoss = [playerDestroyed, regroupStart, playerRespawn];
 
+  // --- continuous swarm (openspec/changes/continuous-swarm design §6.1).
+  // Swarm calls carry `eta`: seconds (wall clock) until the creatures they
+  // announce become targetable, so the radio can end its call on it.
+
+  /// The next wave's first skeins rise out of the fog while this wave's
+  /// stragglers still fight (data `wave`, `eta` = the approach length,
+  /// `q` its pacing factor, `skeins`). Comms reuses the next-wave lines.
+  static const cohortSighted = 'cohortSighted';
+
+  /// The approaching wave became the current one (data `wave`, `forced`:
+  /// it closed in beside the stragglers, `lull`: seconds it held at the
+  /// fog front). Replaces the old interwave transition's banner moment.
+  static const cohortMerged = 'cohortMerged';
+
+  /// Leftover hostile shots dissolve at a merge (data `count`).
+  static const shotsFizzle = 'shotsFizzle';
+
+  static const swarm = [cohortSighted, cohortMerged, shotsFizzle];
+
   // --- terrain: what the convoy sees below (queued by the flyover's
   // TerrainRadio, lib/game/terrain_field.dart; visual only, rate-limited).
   // Data: `sector` (1-5), `side` ('left' | 'right' | 'both'), x, y.
@@ -242,6 +261,7 @@ abstract final class GameEventNames {
     convoyClearingVegetation,
     convoyStuck,
     ...groundWarV4, // --- ground war v4
+    ...swarm, // --- continuous swarm
   ];
 
   // --- Comms-specific derived events.
@@ -561,8 +581,15 @@ class GameEventObserver {
       final colon = entry.indexOf(':');
       final name = colon < 0 ? entry : entry.substring(0, colon);
       final payload = colon < 0 ? null : entry.substring(colon + 1);
-      if (!GameEventNames.unforwarded.contains(name)) {
-        emit(GameEventNames.aliases[name] ?? name, payload: payload);
+      // continuous-swarm: the raw `incoming` is voiced through the model's
+      // queued `cohortSighted` (it carries the eta), so it is not forwarded.
+      if (!GameEventNames.unforwarded.contains(name) && name != 'incoming') {
+        final eta = _etaOf(name);
+        emit(
+          GameEventNames.aliases[name] ?? name,
+          payload: payload,
+          data: eta == null ? const {} : {'eta': eta},
+        );
       }
       switch (name) {
         case 'level':
@@ -647,6 +674,31 @@ class GameEventObserver {
         }
     }
     return _publish(out);
+  }
+
+  /// Seconds (wall clock) until the creatures a swarm call announces
+  /// become targetable (continuous-swarm design §6.1): a reinforcement
+  /// skein's swoop, a sentinel's delay and rise; null for other events.
+  double? _etaOf(String raw) {
+    double left(Demon d) =>
+        d.entranceDelay + d.entranceDuration - d.entranceElapsed;
+    switch (raw) {
+      case 'reinforcements':
+        var eta = 0.0;
+        for (final d in model.demons) {
+          if (d.isLarge || d.isEscort || !d.entering) continue;
+          if (d.swarmState != SwarmState.approaching) continue;
+          if (d.entranceElapsed > 2 / 60) continue; // admitted just now
+          eta = eta < left(d) ? left(d) : eta;
+        }
+        return eta > 0 ? eta : null;
+      case 'escort':
+        for (final d in model.demons) {
+          if (d.isLarge && d.entering && !d.waitingForEscort) return left(d);
+        }
+        return null;
+    }
+    return null;
   }
 
   void _sectorStart(_Emit emit) {

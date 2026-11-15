@@ -100,8 +100,9 @@ This generalises the `--- wave pressure` block and replaces it.
   - q_min = 0.65 / 0.55 / 0.5 (Easy / Normal / Hard);
   - `T_actual` = seconds from cohort c's start to its trigger;
   - `T_expected = 2 + ΣHP_c / (4.35 · 0.4)`, where ΣHP is the cohort's total ordinary HP (roster + groups) and
-    4.35 hits/s is the baseline sustained damage (`plan/difficulty-calibration.md`). The 0.4 efficiency is
-    recalibrated in task 1.3 from the pilot baseline.
+    4.35 hits/s is the baseline sustained damage (`plan/difficulty-calibration.md`). The efficiency was
+    fitted in task 1.3 from the pilot baseline: **0.763** at Normal (Easy 0.822, Hard 0.920; one constant, the
+    Normal value, is used for every mode; `plan/calibration-current.md`).
   - A lost life pauses the clock (unchanged) and sets q = 1 for the next cohort, the ALC relaxation.
 - **Merge** (`_mergeCohort`, replacing `_mergeIncoming`):
   - **Stragglers die first.** The approaching skeins hold a **lull** of `max(0.8, 1.4 · q)` s at the fog front.
