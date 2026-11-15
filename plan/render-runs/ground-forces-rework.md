@@ -283,9 +283,26 @@ The operator approved every open recommendation in this plan ("record all approv
 
 | # | Decision | Approved | Status |
 | --- | --- | --- | --- |
-| A1 | How `tools/ground_blocks finish` treats AI art (§9) | **Option 1:** keep the AI image's colour, quantised to the faction palette, inside the rig silhouette dilated by ±1 texel (wings, horns, a longer musket survive at the edge; nothing further out). Not chosen: AI outline wins on soft parts (2), rig shading only (3, stays the CP1 fallback) | To implement next |
+| A1 | How `tools/ground_blocks finish` treats AI art (§9) | **Option 1:** keep the AI image's colour, quantised to the faction palette, inside the rig silhouette dilated by ±1 texel (wings, horns, a longer musket survive at the edge; nothing further out). Not chosen: AI outline wins on soft parts (2), rig shading only (3, stays the CP1 fallback) | Done, §11 |
 | A2 | VACE in-betweens use the Wan2.2-Lightning LoRA (Seko-V1.1, 4 steps, cfg 1, split 2/2) | Yes, as the default schedule | Done, commit 60860c05 |
 | A3 | Heading edits (§8 finding 1) | Run each heading at denoise 0.7 and 1.0 for the first unit (Lodestar), pick one setting before scaling | Pilot plan |
 | A4 | Name the key colour in prompts (§8 finding 2); no effect words (finding 3) | Yes | Already in the three family `style_prompt`s |
 | A5 | Atlas budget (§7) | 8 MB RGBA per sector, no atlas side over 4096 px; the half-resolution far atlas (decision 1.4) is not needed | Test already enforces it |
 | A6 | Originality (§7.1) | Apply the suggestions: rename **Gutter-runner → Spout-runner** (first suggestion; the operator can still pick Gutterhound); Stilt pods under the cab or on one side; Sleet four big wheels plus a rear skid; Carillon / Chapterhouse keep no crew, crosses, scripture, organ pipes or skulls; Chapterhouse, Belfry, Kiln Ox unchanged (low risk) | To implement before Phase 2 (Fleet/Host rigs, family, atlas names, specs) |
+
+## 11. Ledger: A1 finish, pilot heroes re-rendered (2026-11-15, after the cache wipe)
+
+The host reset wiped the raws, so the 12 heroes were re-rendered from their recorded seeds, same workflow and prompts
+(Crocket now with the green-key prompt): Lodestar st-1794727438235-0, Crocket st-1794727507536-1, Ashlar Guard
+st-1794727575553-2, 4 seeds each, ~59 s per unit. Outputs are not byte-identical to the first run (GPU
+nondeterminism); `-runs.json` holds the new hashes. Raws in `~/.cache/demon-attack/ground-blocks/raw/` only: commit
+the selected hero's raw once it is picked.
+
+`finish` now implements A1 (commits a7aed0b0 and the next one). A first version took the mean colour per texel and
+mottled; the majority vote of palette-snapped source pixels gives flat panels, discrete cyan strips, the slag glow
+as a line, and Ashlar's horns and musket. Sheet: `art/contact/ground-pilot-heroes-a1.png`, one row per raw: rig | raw |
+finished. Known limit (by design): the rig silhouette ±1 still owns the shape, so where the AI drew a different body
+(Crocket's turret, Ashlar's wings) the extra parts are clipped.
+
+**Waiting on the operator:** pick one hero per unit (`hero.selected` in the family), then the Lodestar heading jobs at
+denoise 0.7 vs 1.0 (A3).

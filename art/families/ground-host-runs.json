@@ -8,10 +8,10 @@
   "outputs": [
    {
     "file": "0000_00001_.png",
-    "sha256": "7060d133125c03fbf9b90e8d7b1d390317a850606985c1a6331806872ba1c193"
+    "sha256": "4c26b85eccd0ec0e6f74dd9ec5ee228c94d78f1c0517ca1e3ece4a4eb5233d34"
    }
   ],
-  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat green background (#00FF00), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
   "seed": 760200,
   "workflow": "art/workflows/sprites/variant-qwen-edit.json"
  },
@@ -24,10 +24,10 @@
   "outputs": [
    {
     "file": "0001_00001_.png",
-    "sha256": "e4f146a6bf1f5e69849066414773c174d9efdfe75cdb172ef5f62c8d0f94d5f6"
+    "sha256": "a5d54a8196224212aa1f4b8a20117a5e158994de53ce03e774e01572c12e9917"
    }
   ],
-  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat green background (#00FF00), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
   "seed": 760201,
   "workflow": "art/workflows/sprites/variant-qwen-edit.json"
  },
@@ -40,10 +40,10 @@
   "outputs": [
    {
     "file": "0002_00001_.png",
-    "sha256": "f15765d6191cb44856d526a2fe82c34ec2b3590811b0fb6bef49e8aad6b75314"
+    "sha256": "9e63a265f168b5afc3e7328f007e38019a697997e7e6138bdaa1fad18725755a"
    }
   ],
-  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat green background (#00FF00), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
   "seed": 760202,
   "workflow": "art/workflows/sprites/variant-qwen-edit.json"
  },
@@ -56,10 +56,10 @@
   "outputs": [
    {
     "file": "0003_00001_.png",
-    "sha256": "d44ab5ee13d915763d31d41bf43f99e4a8a990f7dc092c509f882fd092bc296d"
+    "sha256": "60c73210fa7b9866c7091875e1d610cfc3ab8c6e82f6fc1fdccce0865f3eed40"
    }
   ],
-  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat green background (#00FF00), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
   "seed": 760203,
   "workflow": "art/workflows/sprites/variant-qwen-edit.json"
  }

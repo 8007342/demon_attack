@@ -207,5 +207,5 @@ On resume:
   The hero raws are re-rendered from the seeds in `art/families/ground-*-runs.json` (one count-4 run per unit).
 - `bootstrap_radio.lua` restores the symlink, then fails creating the voice venv (`uv` has no Python 3.11 and
   downloads are manual). The render work doesn't need it; fix with `uv python install 3.11` when the voices are next needed.
-- **A1 done** (a7aed0b0): `finish` keeps the AI colour (see §10). `go run . sheet OUT CELL=RAW.png ...` draws the review rows
+- **A1 done** (a7aed0b0, majority-vote follow-up; ledger §11): `finish` keeps the AI colour (see §10). `go run . sheet OUT CELL=RAW.png ...` draws the review rows
   rig | raw | finished.

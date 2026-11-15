@@ -251,9 +251,12 @@ func cmdFinish(args []string) {
 // finish (decision A1, plan/render-runs/ground-forces-rework.md §10): keep
 // the AI image's colour, quantised to the faction palette of the unit's
 // master sector, inside the rig silhouette dilated by one texel (8-way).
-// Each texel takes the mean non-key colour of its region of the AI frame
-// (the edit workflows keep the reference's framing; an image of another
-// aspect is fitted subject box to rig box instead). Inside the rig the
+// Each texel takes the majority palette colour (ink included) of its region
+// of the AI frame, each source pixel snapped to the nearest; FINISH_MEAN=1
+// takes the region's mean colour instead (mottled; kept for comparison).
+// The frame maps texel for texel (the edit workflows keep the reference's
+// framing); an image of another aspect is fitted subject box to rig box.
+// Inside the rig the
 // nearest palette colour wins; in the one-texel ring the texel is kept only
 // where the AI covered most of it and its colour is not nearer the ink
 // than the palette (the AI's own outline stays outline). Hard rig texels
@@ -301,6 +304,10 @@ func (p *Project) finish(u unitRef, c *Cell, src image.Image, key color.NRGBA) *
 		fx0, fy0, fw, fh = float64(x0), float64(y0), float64(x1-x0+1), float64(y1-y0+1)
 		gx0, gy0, gw, gh = float64(cx0), float64(cy0), float64(cx1-cx0+1), float64(cy1-cy0+1)
 	}
+	colours := pal.finishColours(master)
+	vote := os.Getenv("FINISH_MEAN") == ""
+	cands := append(append([]color.NRGBA{}, colours...), pal.Ink)
+	snap := map[color.NRGBA]color.NRGBA{}
 	mean := make([]color.NRGBA, W*H)
 	cov := make([]float64, W*H)
 	for y := 0; y < H; y++ {
@@ -310,6 +317,7 @@ func (p *Project) finish(u unitRef, c *Cell, src image.Image, key color.NRGBA) *
 			ay0 := int(fy0 + (float64(y)-gy0)*fh/gh)
 			ay1 := max(int(fy0+(float64(y+1)-gy0)*fh/gh), ay0+1)
 			var r, g, bl, n, k float64
+			votes := map[color.NRGBA]int{}
 			for yy := max(ay0, sb.Min.Y); yy < min(ay1, sb.Max.Y); yy++ {
 				for xx := max(ax0, sb.Min.X); xx < min(ax1, sb.Max.X); xx++ {
 					col := at(xx, yy)
@@ -317,16 +325,32 @@ func (p *Project) finish(u unitRef, c *Cell, src image.Image, key color.NRGBA) *
 					if !isBg(col) {
 						r, g, bl = r+float64(col.R), g+float64(col.G), bl+float64(col.B)
 						k++
+						if vote {
+							col.A = 255
+							q, ok := snap[col]
+							if !ok {
+								q = nearest(cands, col)
+								snap[col] = q
+							}
+							votes[q]++
+						}
 					}
 				}
 			}
 			if k > 0 {
 				mean[y*W+x] = color.NRGBA{uint8(r/k + .5), uint8(g/k + .5), uint8(bl/k + .5), 255}
 				cov[y*W+x] = k / n
+				if vote {
+					best := -1
+					for _, cand := range cands {
+						if votes[cand] > best {
+							mean[y*W+x], best = cand, votes[cand]
+						}
+					}
+				}
 			}
 		}
 	}
-	colours := pal.finishColours(master)
 	keep := make([]bool, W*H)
 	for y := 0; y < H; y++ {
 		for x := 0; x < W; x++ {
