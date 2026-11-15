@@ -46,3 +46,6 @@ silhouette hovering in the back ("fantastic"), the walking robot tanks ("super c
   swarm").
 
 Sibling clones (read-only reference data): `~/.cache/tillandsias-project/siblings/{atrapa,cannonball,macron.dev}`.
+
+Research for W3, W4 and W5b: `plan/swarm-research.md`. Order: `continuous-swarm` (W3) lands first; `demon-intelligence`
+(W4) and `cinematic-flow` (W5b) build on it independently.
