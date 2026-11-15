@@ -145,7 +145,8 @@ void main() {
 
   test('the level\'s extra score is capped', () {
     final m = _supplyRun();
-    final cap = m.bonus!.scoring.cap;
+    final cap = (m.bonus!.scoring.capPar * m.sectorPar).round();
+    expect(cap, greaterThan(0));
     m.collectBonus(doubleScore);
     for (var i = 0; i < 60; i++) {
       final c = SupplyCrate(100, 100, Power.spread);
@@ -181,8 +182,8 @@ void main() {
     expect(m.mode, RunMode.salvage);
     expect(events.first, 'bonusStart.supplyRun');
     expect(events.last, 'bonusCleared.supplyRun');
-    // No ship lost: clear + flawless, × route 1.
-    expect(m.bonusRun.award, 2000);
+    // No ship lost: the clear and flawless shares of the sector's par.
+    expect(m.bonusRun.award, (1.3 * m.sectorPar).round());
     expect(m.supplyCrates, isEmpty, reason: 'leftover crates burst open');
     // The ordinary sector change follows: Rout, Pursuit, Descent.
     expect(m.flow.kind, FlowKind.sectorChange);
@@ -219,7 +220,7 @@ void main() {
       }
     }
     expect(m.mode, RunMode.salvage);
-    expect(m.bonusRun.award, 1000);
+    expect(m.bonusRun.award, m.sectorPar);
   });
 
   test('the transition before it knows a bonus level is ahead', () {

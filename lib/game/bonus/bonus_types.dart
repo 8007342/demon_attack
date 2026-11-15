@@ -215,6 +215,9 @@ class BonusScoring {
     this.clearBonus = 0,
     this.flawlessBonus = 0,
     this.cap = 0,
+    this.clearPar = 0,
+    this.flawlessPar = 0,
+    this.capPar = 0,
   });
 
   /// Kill points × this inside the level.
@@ -226,9 +229,16 @@ class BonusScoring {
   /// Added to it when no ship was lost in the level, × (route + 1).
   final int flawlessBonus;
 
-  /// The most the level may add beyond ordinary kill points, × (route + 1);
-  /// 0: no cap.
+  /// The most the level may add beyond ordinary kill points, × (route + 1).
+  /// The cap in force is this plus [capPar] of the sector's par; both 0:
+  /// no cap.
   final int cap;
+
+  /// The same three as shares of the replaced sector's par score
+  /// (`ArcadeModel.sectorPar`: what its rosters pay in kill points on this
+  /// route and difficulty). Prefer these: a bonus level then stays worth
+  /// about the sector it replaces wherever the plan puts it.
+  final double clearPar, flawlessPar, capPar;
 }
 
 /// Presentation only: a colour grade over the sector's own backdrop.

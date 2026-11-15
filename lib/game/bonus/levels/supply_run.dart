@@ -55,11 +55,14 @@ const supplyRun = BonusLevelDef(
     bonusPowers: ['salvageMagnet', 'doubleScore'],
     bonusPowerChance: .3,
   ),
-  scoring: BonusScoring(clearBonus: 1000, flawlessBonus: 1000, cap: 4000),
+  // Kills here pay a fraction of the replaced sector's; the awards
+  // make a clean Supply Run worth about that sector (measured in
+  // openspec/changes/bonus-levels/design.md §6).
+  scoring: BonusScoring(clearPar: 1, flawlessPar: .3, capPar: 1.5),
   look: BonusLook(
     tint: 0xFFFFD79A, // a warm dawn over the sector's own backdrop
     strength: .22,
-    glow: 0xB0FFE9B0,
-    fog: .12,
+    glow: 0x66FFE2A0,
+    fog: .06,
   ),
 );

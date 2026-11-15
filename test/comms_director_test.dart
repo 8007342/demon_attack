@@ -1007,7 +1007,9 @@ void rushRadio() {
         expect(line.duration, source.duration);
         expect(line.mouth, source.mouth);
       }
-      expect(borrowed, 29); // 16 sentinel-rush + 13 transition-ascent front-line calls
+      // 16 sentinel-rush + 13 transition-ascent front-line calls + 23
+      // bonus-levels lines (framework and Supply Run).
+      expect(borrowed, 52);
     });
 
     test('triggers without a truthful placeholder stay silent', () {

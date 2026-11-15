@@ -44,17 +44,17 @@ class BonusLookLayer {
           ..blendMode = BlendMode.softLight
           ..color = wash.withValues(alpha: math.min(1, a * 2.2)),
       );
-      c.drawRect(all, Paint()..color = wash.withValues(alpha: a * .4));
+      c.drawRect(all, Paint()..color = wash.withValues(alpha: a * .25));
     }
     const h = Perspective.horizonY;
     final glow = Color(look.glow);
     if (glow.a > 0) {
       c.drawRect(
-        const Rect.fromLTRB(-200, h - 150, 560, h + 110),
+        const Rect.fromLTRB(-200, h - 120, 560, h + 80),
         Paint()
           ..shader = Gradient.linear(
-            const Offset(0, h - 150),
-            const Offset(0, h + 110),
+            const Offset(0, h - 120),
+            const Offset(0, h + 80),
             [
               glow.withValues(alpha: 0),
               glow.withValues(alpha: glow.a * amount),

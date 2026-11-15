@@ -172,11 +172,33 @@ extension ArcadeBonus on ArcadeModel {
     return scaled <= points ? scaled : points + _bonusCapped(scaled - points);
   }
 
+  /// What the roster of the regular sector at this place would pay in kill
+  /// points (its opening rosters at face value; reinforcements, sentinels
+  /// and dive bonuses are left out, so a real clear pays somewhat more).
+  /// A bonus level's awards and cap are shares of it, so the level is
+  /// worth about the sector it replaces on every route and difficulty.
+  int get sectorPar {
+    if (level == 5) return 0;
+    final kinds = cycle > 0 ? const [0, 1, 2, 3] : [level - 1];
+    var mean = 0.0;
+    for (final k in kinds) {
+      final hp = policy.ordinaryHealth(route: cycle, kind: k, elite: false);
+      mean += (100 + k * 75 + (hp - 1) * 50) / kinds.length;
+    }
+    var creatures = 0;
+    final waves = ArcadeModel.wavesFor(sector: level, route: cycle);
+    for (var w = 1; w <= waves; w++) {
+      creatures += policy.rosterCount(sector: level, wave: w, route: cycle);
+    }
+    return (creatures * mean * (cycle + 1) * policy.enemyPoints).round();
+  }
+
   /// [points] of bonus score, as far as the level's cap still allows.
   int _bonusCapped(int points) {
     final def = bonus;
     if (def == null || points <= 0) return 0;
-    final cap = def.scoring.cap * (cycle + 1);
+    final s = def.scoring;
+    final cap = s.cap * (cycle + 1) + (s.capPar * sectorPar).round();
     final granted = cap <= 0
         ? points
         : math.min(points, math.max(0, cap - bonusRun.extra));
@@ -207,9 +229,10 @@ extension ArcadeBonus on ArcadeModel {
     final def = bonus;
     if (def == null) return;
     final flawless = bonusRun.shipsLost == 0;
+    final s = def.scoring;
     final award = _bonusCapped(
-      (def.scoring.clearBonus + (flawless ? def.scoring.flawlessBonus : 0)) *
-          (cycle + 1),
+      (s.clearBonus + (flawless ? s.flawlessBonus : 0)) * (cycle + 1) +
+          ((s.clearPar + (flawless ? s.flawlessPar : 0)) * sectorPar).round(),
     );
     score += award;
     bonusRun.award = award;
