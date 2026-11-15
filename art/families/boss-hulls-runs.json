@@ -661,6 +661,484 @@
       "output_sha256": "13466c00f9922232f9b2ac1432210bd529fbc51c34db6706500c3bff219d112e",
       "at": "2026-11-15T21:55:37Z",
       "verdict": "reject (S3): bluish colour drift and a stray hammer-like part"
+    },
+    {
+      "job": "st-1794780837344-65",
+      "hull": "cruiser",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-clay-key.png",
+          "sha256": "56474fefc4d4490a3b9338dd23c44ace7fd6da71fb0dc998b3fd3c5116163659"
+        }
+      ],
+      "seed": 931000,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a larger, meaner demonic gargoyle brood cruiser seen from above and in front, the same family as a violet stone gargoyle frigate: deep violet slag-glass armour over dark violet-grey carved stone, plates with panel lines and rivets, longer ivory bone horns, tusks and spikes, the two white shapes become angry glowing ember-orange eyes, the black rectangles become a dark fanged maw and two dark hangar bays, wide dark bat-wing membranes with torn edges stretched on bone fingers, two cannon turrets on bone pylons, a gothic stone tower with lit slit windows, rows of small red and amber running lights. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "1e15b8dcb7a7a0d9ac6091861ef0e71efd43df25c63e575b9021d612ae1b9c66",
+      "at": "2026-11-15T22:14:57Z",
+      "verdict": "PICK (B3 cruiser hero): on-rig; violet slag-glass over stone, torn wing membranes, lit gun pylons, clean maw and bays; meaner than the frigate yet the same family"
+    },
+    {
+      "job": "st-1794780837344-65",
+      "hull": "cruiser",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-clay-key.png",
+          "sha256": "56474fefc4d4490a3b9338dd23c44ace7fd6da71fb0dc998b3fd3c5116163659"
+        }
+      ],
+      "seed": 931001,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a larger, meaner demonic gargoyle brood cruiser seen from above and in front, the same family as a violet stone gargoyle frigate: deep violet slag-glass armour over dark violet-grey carved stone, plates with panel lines and rivets, longer ivory bone horns, tusks and spikes, the two white shapes become angry glowing ember-orange eyes, the black rectangles become a dark fanged maw and two dark hangar bays, wide dark bat-wing membranes with torn edges stretched on bone fingers, two cannon turrets on bone pylons, a gothic stone tower with lit slit windows, rows of small red and amber running lights. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "cf158db50c37f88d4735e1d26fb5eb064d34fe0ee3dd9f44af9b3494224f7f89",
+      "at": "2026-11-15T22:14:57Z",
+      "verdict": "reject: a round bone ornament at the tower foot reads as a head emblem; busy at phone size"
+    },
+    {
+      "job": "st-1794780837344-65",
+      "hull": "cruiser",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-clay-key.png",
+          "sha256": "56474fefc4d4490a3b9338dd23c44ace7fd6da71fb0dc998b3fd3c5116163659"
+        }
+      ],
+      "seed": 931002,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a larger, meaner demonic gargoyle brood cruiser seen from above and in front, the same family as a violet stone gargoyle frigate: deep violet slag-glass armour over dark violet-grey carved stone, plates with panel lines and rivets, longer ivory bone horns, tusks and spikes, the two white shapes become angry glowing ember-orange eyes, the black rectangles become a dark fanged maw and two dark hangar bays, wide dark bat-wing membranes with torn edges stretched on bone fingers, two cannon turrets on bone pylons, a gothic stone tower with lit slit windows, rows of small red and amber running lights. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "f1747900324f1d74451c00794fc951fbd52f2cb9e5264df62e24b5c8496305b3",
+      "at": "2026-11-15T22:14:57Z",
+      "verdict": "reject: same bone ornament; bays shrink to slits"
+    },
+    {
+      "job": "st-1794780837344-65",
+      "hull": "cruiser",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-clay-key.png",
+          "sha256": "56474fefc4d4490a3b9338dd23c44ace7fd6da71fb0dc998b3fd3c5116163659"
+        }
+      ],
+      "seed": 931003,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a larger, meaner demonic gargoyle brood cruiser seen from above and in front, the same family as a violet stone gargoyle frigate: deep violet slag-glass armour over dark violet-grey carved stone, plates with panel lines and rivets, longer ivory bone horns, tusks and spikes, the two white shapes become angry glowing ember-orange eyes, the black rectangles become a dark fanged maw and two dark hangar bays, wide dark bat-wing membranes with torn edges stretched on bone fingers, two cannon turrets on bone pylons, a gothic stone tower with lit slit windows, rows of small red and amber running lights. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "c47fa34538c4bb7b41343f5528c20d7acf9bd46f18f33f79683073c5a581003f",
+      "at": "2026-11-15T22:14:57Z",
+      "verdict": "runner-up (committed): long tusks across the maw, angrier, but muddier at CSS size"
+    },
+    {
+      "job": "st-1794780903888-66",
+      "hull": "cruiser",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/heading-qwen-edit.json",
+      "workflow_sha256": "43d0acb1d0eeedf4d3ba9aaadd0afadd51b05c822148bcca881a260fe5207aa0",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "hero",
+          "path": "/work/tmp/imagegen/in/boss/frigate-hero-921000.png",
+          "sha256": "a0eefeddf5e40ca92e29407f59e5182bb00d1698c5574e9a3ba7f116c851ba45"
+        },
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-clay-key.png",
+          "sha256": "56474fefc4d4490a3b9338dd23c44ace7fd6da71fb0dc998b3fd3c5116163659"
+        }
+      ],
+      "seed": 930000,
+      "prompt": "Repaint image 1, a grey clay model, as a finished, detailed painted game sprite in exactly the materials, colours and painting style of image 2, the smaller ship of the same fleet: dark violet-grey carved stone armour plating with panel lines and rivets, ivory bone horns, tusks and spikes, the two white shapes become glowing ember-orange eyes, the black rectangles become a dark fanged maw and two dark hangar bays, dark bat-wing membranes on bone fingers, cannon turrets, a gothic stone tower with lit slit windows, small red and amber running lights. Image 1 is a bigger, meaner ship: keep the outline, every shape, the pose and the viewing angle of image 1 exactly, with all of its extra wings, turrets and pods. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "a725e6ccdd3b1043f696f9481174b7360d329ebbe31cd75747eefc7ee21b2e4d",
+      "at": "2026-11-15T22:15:53Z",
+      "verdict": "reject (2-image test, frigate hero 921000 as image 2): copies the frigate's short wings, drops the cruiser's wide sails and pylons - two-image edits still pull toward image 2"
+    },
+    {
+      "job": "st-1794780903888-66",
+      "hull": "cruiser",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/heading-qwen-edit.json",
+      "workflow_sha256": "43d0acb1d0eeedf4d3ba9aaadd0afadd51b05c822148bcca881a260fe5207aa0",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "hero",
+          "path": "/work/tmp/imagegen/in/boss/frigate-hero-921000.png",
+          "sha256": "a0eefeddf5e40ca92e29407f59e5182bb00d1698c5574e9a3ba7f116c851ba45"
+        },
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-clay-key.png",
+          "sha256": "56474fefc4d4490a3b9338dd23c44ace7fd6da71fb0dc998b3fd3c5116163659"
+        }
+      ],
+      "seed": 930001,
+      "prompt": "Repaint image 1, a grey clay model, as a finished, detailed painted game sprite in exactly the materials, colours and painting style of image 2, the smaller ship of the same fleet: dark violet-grey carved stone armour plating with panel lines and rivets, ivory bone horns, tusks and spikes, the two white shapes become glowing ember-orange eyes, the black rectangles become a dark fanged maw and two dark hangar bays, dark bat-wing membranes on bone fingers, cannon turrets, a gothic stone tower with lit slit windows, small red and amber running lights. Image 1 is a bigger, meaner ship: keep the outline, every shape, the pose and the viewing angle of image 1 exactly, with all of its extra wings, turrets and pods. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "8b26ab4bc548487f268e75b12ea3dc56e6409a2a78738548abeb607403a25e9c",
+      "at": "2026-11-15T22:15:53Z",
+      "verdict": "reject (2-image test): same, frigate wings and grey frigate stone; no escalation"
+    },
+    {
+      "job": "st-1794781019479-67",
+      "hull": "cruiser",
+      "stage": "S1",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-hero-931000.png",
+          "sha256": "1e15b8dcb7a7a0d9ac6091861ef0e71efd43df25c63e575b9021d612ae1b9c66"
+        }
+      ],
+      "seed": 933100,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. It has taken its first hits: black scorch marks and soot burns across the armour plates, a few thin cracks glowing faint ember orange, several small running lights gone dark. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "47bf12b1aa7d2862d138ee1601931fd8c010b71a4cd3020563f6e15e73bca9c8",
+      "at": "2026-11-15T22:17:32Z",
+      "verdict": "PICK (S1 scorched): soot and glowing hairline cracks, plates and lights still read"
+    },
+    {
+      "job": "st-1794781019479-67",
+      "hull": "cruiser",
+      "stage": "S1",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-hero-931000.png",
+          "sha256": "1e15b8dcb7a7a0d9ac6091861ef0e71efd43df25c63e575b9021d612ae1b9c66"
+        }
+      ],
+      "seed": 933101,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. It has taken its first hits: black scorch marks and soot burns across the armour plates, a few thin cracks glowing faint ember orange, several small running lights gone dark. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "4b50c462e491619b1d302c3116bfd0da8d236f07b5e6677458b0d89f587d49d8",
+      "at": "2026-11-15T22:17:32Z",
+      "verdict": "reject (S1): black splotches read as paint drips"
+    },
+    {
+      "job": "st-1794781053640-68",
+      "hull": "cruiser",
+      "stage": "S2",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-hero-931000.png",
+          "sha256": "1e15b8dcb7a7a0d9ac6091861ef0e71efd43df25c63e575b9021d612ae1b9c66"
+        }
+      ],
+      "seed": 933200,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. Its armour plating has been torn away in many places, exposing dark iron ribs and girders that glow molten ember orange from inside, with burning fires in the gaps, heavy scorch marks and cracked stone. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "585d81cd3d954ff7cbb312bae387292cce7fa6c6f61f74b9d6025498ee3531d0",
+      "at": "2026-11-15T22:18:06Z",
+      "verdict": "PICK (S2 exposed): plates torn over a burning ribcage, maw and bays kept dark"
+    },
+    {
+      "job": "st-1794781053640-68",
+      "hull": "cruiser",
+      "stage": "S2",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-hero-931000.png",
+          "sha256": "1e15b8dcb7a7a0d9ac6091861ef0e71efd43df25c63e575b9021d612ae1b9c66"
+        }
+      ],
+      "seed": 933201,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. Its armour plating has been torn away in many places, exposing dark iron ribs and girders that glow molten ember orange from inside, with burning fires in the gaps, heavy scorch marks and cracked stone. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "08e8bc592875bea35c3a0f39da2f2e5fe2cd7ed94c87ab57fe919ba5819fa73a",
+      "at": "2026-11-15T22:18:06Z",
+      "verdict": "reject (S2): flames fill the maw and bays, smoke plume outside the silhouette"
+    },
+    {
+      "job": "st-1794781108709-69",
+      "hull": "cruiser",
+      "stage": "S3",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-S2-933200.png",
+          "sha256": "585d81cd3d954ff7cbb312bae387292cce7fa6c6f61f74b9d6025498ee3531d0"
+        }
+      ],
+      "seed": 933400,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours, even more damaged: the exposed ribs are bent and broken, deep breaches burn bright orange with fire inside, cracks split the stone face, some ribs snapped off, one horn chipped. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "97d1d44f66244b76b08c16cea97f291666d1fb9091fe91fac71fac9e5b8919a8",
+      "at": "2026-11-15T22:19:03Z",
+      "verdict": "reject (S3, chained from S2 933200): flames fill the maw (the core window must stay dark)"
+    },
+    {
+      "job": "st-1794781108709-69",
+      "hull": "cruiser",
+      "stage": "S3",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/cruiser-S2-933200.png",
+          "sha256": "585d81cd3d954ff7cbb312bae387292cce7fa6c6f61f74b9d6025498ee3531d0"
+        }
+      ],
+      "seed": 933401,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours, even more damaged: the exposed ribs are bent and broken, deep breaches burn bright orange with fire inside, cracks split the stone face, some ribs snapped off, one horn chipped. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, checkerboard, shadow, cyan, teal, blue lights, skull, skulls, cross, crucifix, religious symbol, scripture, inscription, human crew, real military vehicle, cute, cartoon",
+      "output_sha256": "39db78e40fbb55eddc2efefbe34181fa84e4656ed594e9836bb5b8862ed4d63b",
+      "at": "2026-11-15T22:19:03Z",
+      "verdict": "PICK (S3 breaking, chained from S2 933200): cracked face, snapped horn, breaches; maw kept dark (debris outside the silhouette is masked off)"
     }
   ]
 }

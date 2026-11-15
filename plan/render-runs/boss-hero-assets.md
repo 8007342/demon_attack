@@ -191,3 +191,57 @@ still draws the core window there).
 with views, modules, stages and anchors). It changes the generated Dart contract that `BossPainter` reads today, so
 it should land together with `boss-grandeur` 4.3 (the assembly painter). Task 4.3 (optional seam heal) is skipped:
 the projected views need no healing at this spread.
+
+## 4. B3: the four remaining hulls (2026-11-15)
+
+Branch `work/boss-hulls-b3` (worktree `~/.cache/tillandsias-project/worktrees/boss-hulls-b3`), off `game`. Same
+pipeline as the frigate, one commit per hull. Rebuild any hull without GPU: `lua tools/boss_rig/bake_hull.lua <hull>
+--sheets` (sheets go to `art/contact/boss-b3-<hull>-{views,stages}.png`; the frigate keeps its `boss-pilot-*` names).
+The finished outputs land in `~/.cache/tillandsias-project/boss-bake/<hull>/` in the frigate's layout (`S0..S3/fin_beauty_*`,
+`fin_layer_*`, `fin_wreck_*`), so the `boss-grandeur` pack drops them in.
+
+**Brief.** The operator wants later tours to bring larger, scarier, more complex ships of the same family; the
+frigate hero 921000 is the identity reference. The rig already grows the hull tour by tour (5 → 17 modules, extent
+×1.00 → ×1.60, B0). The hero prompts escalate the *look* with it: each hull has its own prompt in
+`boss-hulls.json` `prompts.hero_qwen_<hull>` (all keep the frigate's stone, bone, ember and clay-mapping
+sentences, and name "the same family as a violet stone gargoyle frigate"):
+- cruiser: violet slag-glass over the stone (its palette lead), longer horns, torn wing membranes, gun pylons;
+- battlecruiser: blackened stone in thick layered plates with glowing ember seams and vents, heavy pods;
+- battleship: gothic arches, buttresses and spires, arched ember windows, the keel blade;
+- dreadnought: the darkest, scarred stone with molten seams, crowns of spikes, twin towers, brood sacs.
+
+**Tool changes** (no change to the frigate's outputs): `boss_sheet` sheet titles say `BOSS HULL … (B3)` and the
+picked seed for hulls other than the frigate; the B1/B3 hero sheet's CSS-size column now scales by the hull's own
+texel density (it assumed the frigate's 2 px/unit, which misplaced the sim windows on bigger hulls);
+`bakebudget` prints the decided total (stage patches at half density).
+
+### 4.1 Cruiser (tour 2, Brood Cruiser, 8 modules, 1.9 px/unit)
+
+| Job | Graph | Seeds | GPU | Result |
+| --- | --- | --- | --- | --- |
+| st-1794780837344-65 | `variant-qwen-edit.json`, clay + hints, `hero_qwen_cruiser` | 931000–931003 | 60 s | all four on the rig |
+| st-1794780903888-66 | `heading-qwen-edit.json`, image 2 = **frigate hero 921000** (the B1 follow-up test), `hero_qwen_ref` | 930000–930001 | 49 s | **Rejected.** Both copy the frigate's short wings and grey stone and drop the cruiser's wide sails and pylons: two-image edits pull toward image 2 even when it already has the new pose. Settles the B1 question: 1-image prompts for every hull |
+| st-1794781019479-67 | S1 edit of 931000 | 933100–933101 | 33 s | |
+| st-1794781053640-68 | S2 edit of 931000 | 933200–933201 | 33 s | |
+| st-1794781108709-69 | S3 edit **chained from S2 933200** | 933400–933401 | 35 s | |
+
+**Picks**
+- **Hero 931000.** On the rig (maw and bays on the sim windows at CSS size); deep violet slag-glass panels over the
+  frigate's stone, longer horns and spikes, torn wing membranes on bone fingers, lit gun pylons and a lit tower slit.
+  It reads as the frigate's bigger, meaner sibling. Runner-up 931003 (committed): tusks across the maw, angrier,
+  but muddier at CSS size. Rejected: 931001 and 931002, whose round bone ornament at the tower foot reads as a head
+  emblem.
+- **S1 933100:** soot and glowing hairline cracks, plates and lights still read (933101: black drips).
+- **S2 933200:** plates torn over a burning ribcage, maw and bays kept dark (933201: flames fill the maw and bays,
+  smoke outside the silhouette).
+- **S3 933401** (chained): cracked face, snapped horn, breaches, maw still dark; the debris it paints outside the
+  hull is masked off by the rig silhouette. 933400 fills the maw with flames, which would hide the core window.
+
+**Bake.** Rig 21 s; projection bake 331 renders in 189 s (8 threads); whole `bake_hull.lua` 280 s. Anchor gate ok
+in all 27 stage × view renders. Mirror check: the mirrored +12° view differs from a rendered −12° view in 14.5 % of
+texels (frigate 3.6 %): the cruiser's many thin wing spikes add anti-aliased edge texels; no detail swaps sides on
+the sheet.
+
+**Budget:** S0 layers 7.36 MB + stage patches at half density 5.14 MB + wrecks 3.32 MB = **15.82 MB** (≤ 16).
+
+Sheets: `art/contact/boss-b3-cruiser-heroes.png`, `-views.png` (+ `-views.gif`), `-stages.png`.

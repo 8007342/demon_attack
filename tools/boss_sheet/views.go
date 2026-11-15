@@ -119,7 +119,7 @@ func cmdViews(a []string) {
 	W := pad + cols*(nw+pad) + 20 + 2*(nw+pad)
 	H := 50 + 3*(nh+pad+20) + 20
 	sheet := newCanvas(W, H, bgDark)
-	text(sheet, pad, 12, 3, strings.ToUpper(fmt.Sprintf("BOSS PILOT VIEWS (B2) - %s: HERO 921000 PROJECTED ONTO THE RIG, FINISHED X1; CYAN = SIM WINDOWS", rig.Title)), ink)
+	text(sheet, pad, 12, 3, strings.ToUpper(fmt.Sprintf("%s - %s: HERO %s PROJECTED ONTO THE RIG, FINISHED X1; CYAN = SIM WINDOWS", sheetHead(hull, "VIEWS", "B2"), rig.Title, heroSeed(hull))), ink)
 	y0 := 50
 	for i, p := range pitches {
 		for j, yw := range yaws {
@@ -322,7 +322,7 @@ func cmdStages(a []string) {
 	stages := []string{"S0", "S1", "S2", "S3"}
 	H := 50 + (len(stages)+1)*(nh+pad+22) + nh/2
 	sheet := newCanvas(W, H, bgDark)
-	text(sheet, pad, 12, 3, strings.ToUpper(fmt.Sprintf("BOSS PILOT STAGES (B2) - %s: S0-S3 PROJECTED, FINISHED X1; S4 = MODULE WRECKS", rig.Title)), ink)
+	text(sheet, pad, 12, 3, strings.ToUpper(fmt.Sprintf("%s - %s: S0-S3 PROJECTED, FINISHED X1; S4 = MODULE WRECKS", sheetHead(hull, "STAGES", "B2"), rig.Title)), ink)
 	label := map[string]string{"S0": "S0 INTACT (SHIELD CELLS ARE AN OVERLAY)", "S1": "S1 SCORCHED", "S2": "S2 EXPOSED: PLATES OFF, RIBS",
 		"S3": "S3 BREAKING: FIRST MODULE (TOWER) GONE"}
 	y := 50
@@ -494,6 +494,6 @@ func cmdBakeBudget(a []string) {
 	}
 	mb := func(a float64) float64 { return a * 4 / (1 << 20) }
 	total = s0Area + patchArea + wreckArea
-	fmt.Printf("%s: %.2f MB RGBA resident (finished layers, 6 stored views): S0 layers %.2f, stage patch rects %.2f (as 16-px tiles %.2f, at half density %.2f), wrecks %.2f\n",
-		hull, mb(total), mb(s0Area), mb(patchArea), mb(tileArea), mb(patchArea/4), mb(wreckArea))
+	fmt.Printf("%s: %.2f MB RGBA resident (finished layers, 6 stored views): S0 layers %.2f, stage patch rects %.2f (as 16-px tiles %.2f, at half density %.2f), wrecks %.2f; DECIDED (stage patches at half density) %.2f MB\n",
+		hull, mb(total), mb(s0Area), mb(patchArea), mb(tileArea), mb(patchArea/4), mb(wreckArea), mb(s0Area+patchArea/4+wreckArea))
 }

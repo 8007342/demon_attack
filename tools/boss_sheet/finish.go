@@ -17,6 +17,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type grammar struct {
@@ -180,4 +181,30 @@ func cmdFinish(a []string) {
 	fin, fit := finishHero(load(raw), rig, rigDir, stage, t, quant)
 	save(out, fin)
 	save(out[:len(out)-4]+"-fit.png", fit)
+}
+
+// sheetHead: the frigate keeps its pilot (B1/B2) titles; later hulls are B3.
+// The hero seed comes from selected.<hull>.S0 in the family spec.
+func sheetHead(hull, kind, pilotCP string) string {
+	if hull == "frigate" {
+		return "BOSS PILOT " + kind + " (" + pilotCP + ")"
+	}
+	return "BOSS HULL " + kind + " (B3)"
+}
+
+func heroSeed(hull string) string {
+	b, err := os.ReadFile(filepath.Join(repoRoot(), "art/families/boss-hulls.json"))
+	if err != nil {
+		fail("%v", err)
+	}
+	var g struct {
+		Selected map[string]json.RawMessage `json:"selected"`
+	}
+	if err := json.Unmarshal(b, &g); err != nil {
+		fail("%v", err)
+	}
+	var s struct{ S0 string }
+	_ = json.Unmarshal(g.Selected[hull], &s)
+	base := filepath.Base(s.S0)
+	return strings.TrimSuffix(base, filepath.Ext(base))
 }
