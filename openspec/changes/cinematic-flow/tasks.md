@@ -5,7 +5,7 @@ Prerequisites: `continuous-swarm` merged; `ux-declutter` merged (progress bars g
 commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) is optional.
 
 ## 0. Archive order
-- [ ] 0.1 If `fluid-transitions` is still unarchived, archive it first, then rebase this change's spec deltas onto
+- [x] 0.1 If `fluid-transitions` is still unarchived, archive it first, then rebase this change's spec deltas onto
       the resulting `arcade-presentation` text. Its "Alternating transition interludes", "Silent tips and radio
       cards" and "Readable, skippable, fluid cards" requirements become slot-based here. Add MODIFIED deltas for
       them at that point.

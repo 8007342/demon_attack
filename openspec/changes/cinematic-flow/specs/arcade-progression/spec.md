@@ -9,6 +9,17 @@ Level completion SHALL play as swarm beats on one transition clock: a rout of ab
 - **WHEN** a level ends
 - **THEN** the brood flees into the fog, the ship chases it up into the clouds, and the same flock comes out of the clouds in the next sector as its first wave
 
+### Requirement: Opening cockpit zoom-out, pictorial storyboards, and defeat pan
+New campaign runs SHALL start with a 3-beat Cockpit Control Panel zoom-out sequence into the live arena without fading to black. The run's opening arrival SHALL present an illustrated pixel-art tip; later sector transitions SHALL play as swarm beats without storyboard cards. Boss encounters SHALL stage an orbital retro-burn arrival and sequential chain-reaction destruction. Losing the final life SHALL stage an enemy victory celebration, a swarm mill over the wreck and a skyward pan to High Scores.
+
+#### Scenario: 3-beat New Game Cockpit Panel zoom-out and pictorial storyboards
+- **WHEN** a new campaign run begins
+- **THEN** the opening camera zooms out continuously from the igniting Cockpit Control Panel into the live arena without a fade-to-black cut, and the opening arrival shows one illustrated tip
+
+#### Scenario: Boss arrival/destruction and last-life-lost skyward High Score pan
+- **WHEN** a carrier arrives or is destroyed, or the player loses their final life
+- **THEN** the Dreadnought arrives via orbital retro-burn and detonates sequentially from wing pylons to auxiliary bays to central core, and losing the last life triggers an enemy victory celebration followed by a skyward camera pan to High Scores
+
 ## ADDED Requirements
 
 ### Requirement: Transitions never cut to black
