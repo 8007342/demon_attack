@@ -66,8 +66,9 @@ class Squad {
        turn = id.isEven ? 1 : -1,
        ribbonA = 60 + 30 * rng.nextDouble(),
        ribbonPeriod = 9 + 3 * rng.nextDouble(),
-       sweepSpan = 90 + 90 * rng.nextDouble(),
-       sweepPeriod = 4.5 + 2.5 * rng.nextDouble(),
+       // Peak sweep speed 1.875 · span / period stays in 40-75 u/s.
+       sweepSpan = 130 + 50 * rng.nextDouble(),
+       sweepPeriod = 4.5 + 1.5 * rng.nextDouble(),
        phase = rng.nextDouble() * 2 * math.pi,
        _rng = rng {
     dwellLeft = _dwell();

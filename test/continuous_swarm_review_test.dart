@@ -58,9 +58,7 @@ Future<DemonScene> _scene(ArcadeModel m, int sector) async {
     ..troops = await _decode('assets/images/${GroundTroopsAtlas.file}')
     ..blocks.install(sector - 1, {
       for (final f in GroundBlocksLayer.files(sector - 1))
-        f.substring('ground-blocks/'.length): await _decode(
-          'assets/images/$f',
-        ),
+        f.substring('ground-blocks/'.length): await _decode('assets/images/$f'),
     });
   await scene.atmosphere.load();
   scene.atmosphere.groundArt = GroundAtmosphereArt(
@@ -177,7 +175,12 @@ Future<void> _strip(
 
 ArcadeModel _combat(int sector, {int route = 1, int wave = 1, int seed = 7}) {
   final m = ArcadeModel(seed: seed)
-    ..startAt(difficulty: Difficulty.normal, sector: sector, route: route, wave: wave);
+    ..startAt(
+      difficulty: Difficulty.normal,
+      sector: sector,
+      route: route,
+      wave: wave,
+    );
   return m;
 }
 
@@ -197,7 +200,17 @@ void main() {
         m.shipX = m.targetX = 150;
         _run(m, scene, .2);
         await _single(scene, 'reserve-in-fog');
-        await _strip(m, scene, 'arrival', count: 12, interval: .25, cols: 4, scale: .6, top: 130, bottom: 650);
+        await _strip(
+          m,
+          scene,
+          'arrival',
+          count: 12,
+          interval: .25,
+          cols: 4,
+          scale: .6,
+          top: 130,
+          bottom: 650,
+        );
         await _single(scene, 'skein-mid-swoop');
       }
       // The fight: squads milling, ribboning and sweeping (12 frames over
@@ -207,8 +220,28 @@ void main() {
         final scene = await _scene(m, 2);
         _run(m, scene, 8);
         m.shipX = m.targetX = 200;
-        await _strip(m, scene, 'fight', count: 12, interval: .5, cols: 4, scale: .6, top: 130, bottom: 650);
-        await _strip(m, scene, 'fight-long', count: 12, interval: 2, cols: 4, scale: .6, top: 130, bottom: 650);
+        await _strip(
+          m,
+          scene,
+          'fight',
+          count: 12,
+          interval: .5,
+          cols: 4,
+          scale: .6,
+          top: 130,
+          bottom: 650,
+        );
+        await _strip(
+          m,
+          scene,
+          'fight-long',
+          count: 12,
+          interval: 2,
+          cols: 4,
+          scale: .6,
+          top: 130,
+          bottom: 650,
+        );
         await _single(scene, 'fight');
       }
     });

@@ -32,7 +32,11 @@ double groundAwareX(ArcadeModel model, double x) {
   return x;
 }
 
-void steer(ArcadeModel model, {bool react = true}) {
+/// [oracle]: predict a hovering creature by the model's own hover formula
+/// (the historical pilot); false leads every formation creature by its
+/// velocity, as a player without that knowledge would (the calibration
+/// pilot of continuous-swarm, design §9).
+void steer(ArcadeModel model, {bool react = true, bool oracle = true}) {
   var x = model.shipX;
   final boss = model.boss;
   if (boss != null) {
@@ -50,7 +54,8 @@ void steer(ArcadeModel model, {bool react = true}) {
         : d.dive > 0
         ? d.targetX + (d.x - d.targetX) * math.exp(-1.8 * flight)
         // A squad flying its pattern: lead it by its own velocity.
-        : model.patterned(d)
+        // (dynamic: the calibration also runs this pilot on the pre-W3 model)
+        : !oracle || ((model as dynamic).patterned(d) as bool)
         ? d.x + d.vx * flight
         : d.homeX +
               math.sin(time * (.9 + d.kind * .12) * model.speed + d.seed) * 29 +

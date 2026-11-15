@@ -33,7 +33,7 @@ void main() {
         ) {
           if (model.combat) {
             model.invulnerable = 2;
-            steer(model);
+            steer(model, oracle: false);
           }
           model.update(1 / 60);
           metrics.observe(model, 1 / 60, model.takeEvents());
