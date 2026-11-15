@@ -5,10 +5,10 @@ Prerequisite: `continuous-swarm` merged into `game`, including its Post-W3 metri
 Groups 2–4 can land before group 5. The rush (5) is independent of the hunters (3–4) apart from `PilotModel`.
 
 ## 1. Forecast
-- [ ] 1.1 `lib/game/pilot_model.dart`: a 10 Hz ring buffer (30 samples), lane-mean EWMA, jitter, μ(τ), σ(τ),
+- [x] 1.1 `lib/game/pilot_model.dart`: a 10 Hz ring buffer (30 samples), lane-mean EWMA, jitter, μ(τ), σ(τ),
       `pHit(x, τ, halfWidth)` (design §2). `ArcadeModel` owns one (`pilot`), fed in `_step` while combat runs and
       reset on a life loss and on `_beginLevel`.
-- [ ] 1.2 `test/pilot_model_test.dart`:
+- [x] 1.2 `test/pilot_model_test.dart`:
       - constant velocity is predicted within 2 u at τ 0.3;
       - a player oscillating around a lane is predicted toward the lane mean at τ 1.5;
       - σ grows with |v| and τ;

@@ -7,6 +7,7 @@ import 'game_events.dart';
 import 'ground_blocks_atlas.dart';
 import 'ground_blocks_cast.dart';
 import 'perspective.dart';
+import 'pilot_model.dart';
 import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
@@ -14,6 +15,7 @@ export 'difficulty.dart';
 export 'game_events.dart';
 export 'flow_director.dart';
 export 'perspective.dart';
+export 'pilot_model.dart';
 export 'swarm_policy.dart';
 export 'swarm_patterns.dart' show Squad, SquadState;
 export 'swarm_stream.dart' show SwarmState, SwarmGate, SwarmGateGeometry;
@@ -232,6 +234,10 @@ class Shot {
 
   /// Regroup drain: seconds until this hostile shot fizzles (life loss).
   double? fizzleIn;
+
+  /// Seconds since it was fired (demon-intelligence: the planner's
+  /// perception delay ignores younger shots).
+  double age = 0;
 }
 
 class Pickup {
@@ -355,6 +361,10 @@ class ArcadeModel {
   final List<FallingPart> fallingParts = [];
   double crateSpawnTimer = 0.0;
   final List<String> events = [];
+
+  // --- demon intelligence (demon-intelligence design §2): the forecast
+  // of the player that hunters and the sentinel rush aim at.
+  final PilotModel pilot = PilotModel();
 
   // --- ground war state (see ground_war.dart) ---
   final GroundWar ground = GroundWar();
@@ -879,6 +889,7 @@ class ArcadeModel {
 
   void _beginLevel() {
     wave = 1;
+    pilot.reset(shipX); // --- demon intelligence
     clearedLevel = null;
     wreckBoss = null;
     boss = level == 5 ? _newCarrier() : null;
@@ -2203,6 +2214,7 @@ class ArcadeModel {
     _activeMilliseconds += dt * 1000;
     levelClock += dt;
     _updateLifeLoss(dt); // --- life-loss sequence
+    if (!shipAway) pilot.observe(shipX, shipVx, dt); // --- demon intelligence
     invulnerable = math.max(0, invulnerable - dt);
     // Module timers freeze while the ship is away: the loadout survives.
     for (final value in shipAway ? const <Power>[] : Power.values) {
@@ -2315,6 +2327,7 @@ class ArcadeModel {
     for (final s in shots) {
       s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1);
       s.y += s.vy * dt;
+      s.age += dt;
     }
     _collisions();
     shots.removeWhere(
@@ -3586,6 +3599,7 @@ class ArcadeModel {
       return;
     }
     lives--;
+    pilot.reset(shipX); // --- demon intelligence
     shipVx = shipBank = shipThrust = 0;
     steering = aimAngle = 0;
     _steeringActive = false;
