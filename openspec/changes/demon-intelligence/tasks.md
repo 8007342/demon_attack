@@ -51,19 +51,19 @@ Groups 2–4 can land before group 5. The rush (5) is independent of the hunters
       - one hunter evader at a time.
 
 ## 4. Hunters: thread dives, skill and pincers
-- [ ] 4.1 Thread dive in the dive branch of `_updateDemons`: a 10 Hz lateral choice {−110, 0, +110} · tempo, the
+- [x] 4.1 Thread dive in the dive branch of `_updateDemons`: a 10 Hz lateral choice {−110, 0, +110} · tempo, the
       |x − x*_line| ≤ 60 clamp, lateral acceleration ≤ 900. The vertical speed, dive shield and exit are
       unchanged. The aim x* stays fixed from the tell (`_startDiveTell`).
-- [ ] 4.2 `lib/game/skill_meter.dart` (design §7):
+- [x] 4.2 `lib/game/skill_meter.dart` (design §7):
       - inputs from model counters: add `shotsFired`, `shotsHit` and `nearMisses` to `ArcadeModel`, counting
         near misses in `_collisions`;
       - per-difficulty caps;
       - the lost-life drop and freeze;
       - a checkpoint reset to 0.3.
-- [ ] 4.3 Skill effects: T2 δ, τ0, T and cooldown interpolation; `PilotModel` aim at s ≥ 0.4 in
+- [x] 4.3 Skill effects: T2 δ, τ0, T and cooldown interpolation; `PilotModel` aim at s ≥ 0.4 in
       `_startDiveTell` for hunters; pincers at s ≥ 0.5 in the dive clock branch, inside
       `_maxConcurrentSmallDives`.
-- [ ] 4.4 Tests:
+- [x] 4.4 Tests:
       - `test/skill_meter_test.dart`: bounded by the cap; a lost life drops it ≥ 0.35; score and power-ups do not
         move it; deterministic.
       - `test/demon_intelligence_test.dart`:

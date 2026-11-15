@@ -280,6 +280,12 @@ abstract final class GameEventNames {
   /// been quiet too long.
   static const broodChatter = 'broodChatter';
 
+  // --- demon intelligence (openspec/changes/demon-intelligence §7-§8).
+
+  /// The skill level rose through ArcadeModel.adaptingAt (once per
+  /// sector): the brood remarks that it adapts. Data .
+  static const broodAdapting = 'broodAdapting';
+
   /// A full-size transmission: the fleet's mission briefing on travel
   /// (variant: the next sector) or a junior-pilot moment on a new wave.
   static const transmissionMission = 'transmissionMission';

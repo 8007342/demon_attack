@@ -1,5 +1,6 @@
 // demon-intelligence tasks 3.3 and 4.4: intelligence tiers, planner
 // scheduling, thread dives and pincers (design §4-§5).
+import 'package:demon_attack/game/demon_planner.dart' show PlannerConfig;
 import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -30,6 +31,7 @@ Demon settled(
   ..evadeCooldown = 0;
 
 void main() {
+  skillEffects();
   test('tier classification', () {
     expect(ArcadeModel.tierOf(Demon(0, 0, 0, 1, 0)), DemonTier.drone);
     expect(ArcadeModel.tierOf(Demon(0, 0, 1, 2, 0)), DemonTier.drone);
@@ -89,11 +91,12 @@ void main() {
     expect(run(true), run(false));
   });
 
-  test('a hunter survives a straight shot column that kills a drone at the same spot', () {
-    // A straight column of shots: a drone jinks one and meets the next.
-    int survivors(bool elite) {
+  test('a hunter dodges what a drone cannot: a second shot 1.4 s on', () {
+    // Two straight shots at the creature 1.4 s apart. A drone jinks the
+    // first and is back in the column on its 2.4 s cooldown for the
+    // second; a hunter plans both, at any skill.
+    int survivors(bool elite, {double skill = .3}) {
       var alive = 0;
-      var frames = 0;
       for (var seed = 0; seed < 10; seed++) {
         final m = ArcadeModel(seed: seed)..startAt(sector: 2, route: 1);
         m
@@ -103,25 +106,31 @@ void main() {
           ..swarmPatterns = false;
         m.demons.clear();
         m.shots.clear();
+        m.shipX = m.targetX = 340; // its own fire stays clear
         final d = settled(180, 140, kind: 0, hp: 1, elite: elite);
-        m.demons.addAll([d, settled(20, 40, hp: 999)..attackLeft = 1000]);
-        // The ship tracks it: its auto-fire is a column of straight shots,
-        // one every 0.23 s (88 u apart).
-        m.shipX = m.targetX = 180;
+        m.demons.addAll([d, settled(20, 40, hp: 999)]);
         for (var f = 0; f < 150 && m.demons.contains(d); f++) {
-          m.moveTo(d.x);
+          if (f == 0 || f == 84) {
+            m.shots.add(Shot(d.x, ArcadeModel.shipY - 13, 0, -390));
+          }
+          m.moveTo(340);
+          m.skill.level = skill;
           m.update(dt);
-          frames++;
+          m.shots.removeWhere((s) => !s.hostile && s.x > 300);
         }
         if (m.demons.contains(d)) alive++;
       }
-      // ignore: avoid_print
-      print('${elite ? 'hunter' : 'drone'}: $alive / 10 alive, $frames frames');
-      return frames;
+      return alive;
     }
 
-    final hunters = survivors(true), drones = survivors(false);
-    expect(hunters, greaterThan(drones * 1.2));
+    final drones = survivors(false);
+    final novice = survivors(true, skill: 0),
+        sharp = survivors(true, skill: .8);
+    // ignore: avoid_print
+    print('alive of 10: drones $drones, hunters s0 $novice, s0.8 $sharp');
+    expect(sharp, greaterThanOrEqualTo(8));
+    expect(novice, greaterThanOrEqualTo(8));
+    expect(drones, lessThanOrEqualTo(3));
   });
 
   test('one drone/skirmisher and one hunter evade at a time', () {
@@ -173,4 +182,126 @@ void main() {
       expect(m.planner.decisions, lessThanOrEqualTo(12 * 10 * 3 + 12));
     },
   );
+
+  test('a thread dive passes between two shots 88 u apart', () {
+    // Shot pairs a fire interval apart (0.23 s at 385 u/s ≈ 88 u) dead on
+    // a hunter's straight dive line: the straight diver meets them.
+    (int, double) dive(bool thread) {
+      final m = arena()..intelligence = thread;
+      m.shipX = m.targetX = 340; // its own auto-fire stays clear
+      final d = settled(180, 150, kind: 1, hp: 3, elite: true)
+        ..dive = .001
+        ..threadLine = 180
+        ..targetX = 180;
+      m.demons.addAll([d, settled(20, 40, hp: 999)]);
+      m.shots.addAll([
+        Shot(180, 430, 0, -385)..age = .5,
+        Shot(180, 518, 0, -385)..age = .27,
+      ]);
+      final hits = m.shotsHit;
+      var arrival = double.nan;
+      for (var f = 0; f < 120 && m.demons.contains(d); f++) {
+        m.moveTo(340);
+        m.update(dt);
+        if (arrival.isNaN && d.y >= ArcadeModel.shipY - 30) arrival = d.x;
+        if (d.dive == 0) break;
+      }
+      return (m.shotsHit - hits, arrival);
+    }
+
+    final (straightHits, _) = dive(false);
+    final (threadHits, arrival) = dive(true);
+    expect(straightHits, 2);
+    expect(threadHits, 0);
+    expect(arrival, closeTo(180, 12), reason: 'it still arrives at its aim');
+  });
+
+  test(
+    'a dive aim never moves after the tell; the dive cap holds (Hard, 10 min)',
+    () {
+      final m = ArcadeModel(seed: 314)
+        ..startAt(difficulty: Difficulty.hard, sector: 3, route: 2);
+      final aims = <Demon, double>{};
+      var dives = 0;
+      for (var f = 0; f < 60 * 600; f++) {
+        if (m.combat) {
+          m.invulnerable = 2;
+          m.skill.level = 1; // the sharpest hunters, pincers included
+          final d = m.demons.where((d) => !d.entering).firstOrNull;
+          if (d != null) m.moveTo(d.x + (f % 120 < 60 ? 30 : -30));
+        }
+        m.update(dt);
+        m.takeEvents();
+        m.takeGameEvents();
+        final active = m.demons
+            .where(
+              (d) =>
+                  !d.isLarge &&
+                  (d.dive > 0 || d.telegraph > 0 || d.divePrep > 0),
+            )
+            .length;
+        final cap = m.level <= 2 && m.cycle == 0 ? 1 : 3;
+        expect(active, lessThanOrEqualTo(cap), reason: 'frame $f');
+        for (final d in m.demons) {
+          if (!d.elite) continue;
+          if (d.telegraph > 0 || d.dive > 0) {
+            final aim = aims.putIfAbsent(d, () {
+              dives++;
+              return d.targetX;
+            });
+            expect(d.targetX, aim, reason: 'the aim is fixed from the tell');
+          } else if (d.divePrep <= 0) {
+            aims.remove(d);
+          }
+        }
+      }
+      expect(dives, greaterThan(10));
+    },
+  );
+
+  test('pincer: two tells either side of the forecast', () {
+    final m = arena(route: 2, sector: 3);
+    m.shipX = m.targetX = 180;
+    final a = settled(120, 140, kind: 1, hp: 3, elite: true);
+    final b = settled(240, 140, kind: 1, hp: 3, elite: true);
+    m.demons.addAll([a, b]);
+    List<double>? pair;
+    for (var f = 0; f < 60 * 120 && pair == null; f++) {
+      m.skill.level = 1;
+      m.moveTo(180);
+      m.update(dt);
+      m.shots.removeWhere((s) => !s.hostile);
+      if (a.telegraph > 0 && b.telegraph > 0) pair = [a.targetX, b.targetX];
+      if (a.dive > 0 || b.dive > 0) {
+        // Not a pincer: reset both and wait for the next pick.
+        for (final d in [a, b]) {
+          d
+            ..dive = 0
+            ..telegraph = 0
+            ..divePrep = 0
+            ..x = d.homeX
+            ..y = d.homeY;
+        }
+      }
+    }
+    expect(pair, isNotNull, reason: 'a pincer within two minutes at s 1');
+    final mu = m.pilot.aim(1);
+    pair!.sort();
+    expect(pair[0], closeTo(mu - 34, 1));
+    expect(pair[1], closeTo(mu + 34, 1));
+  });
+}
+
+void skillEffects() {
+  test('skill sharpens hunters: delay, foresight, temperature, cooldown', () {
+    final novice = PlannerConfig.hunter(0), sharp = PlannerConfig.hunter(1);
+    expect(novice.delay, closeTo(.30, 1e-9));
+    expect(sharp.delay, closeTo(.12, 1e-9));
+    expect(sharp.foresight, greaterThan(novice.foresight));
+    expect(sharp.temperature, lessThan(novice.temperature));
+    expect(
+      PlannerConfig.hunterCooldown(1),
+      lessThan(PlannerConfig.hunterCooldown(0)),
+    );
+  });
 }

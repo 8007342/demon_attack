@@ -153,6 +153,9 @@ class DemonPlanner {
   /// Decisions taken (instrumentation).
   int decisions = 0;
 
+  /// A draw from the planner's own PRNG (pincer rolls).
+  double roll() => _rng.nextDouble();
+
   /// Displacement of [a] for [s] under [cfg].
   static (double, double) displacement(
     Manoeuvre a,
@@ -211,17 +214,21 @@ class DemonPlanner {
     double bx = 0,
     double by = 0,
     double? horizon,
+    bool extrapolate = false,
   }) {
     final h = horizon ?? horizonFactor * foresight;
     final k = yScale;
+    lastContact = double.infinity;
     final split = math.min(stopAfter, h);
     vx += bx;
     vy += by;
     var e = 0.0;
     for (final s in shots) {
       if (s.hostile || s.vy >= 0 || s.age < delay) continue;
-      // Seen where it was δ ago.
-      final sx = s.x - s.vx * delay, sy = s.y - s.vy * delay;
+      // Seen where it was δ ago, or (a diver closing at 500 u/s, for
+      // which δ of lag is a body length) extrapolated along its line.
+      final lag = extrapolate ? 0.0 : delay;
+      final sx = s.x - s.vx * lag, sy = s.y - s.vy * lag;
       var tau = _contact(
         sx - px,
         (sy - py) * k,
@@ -244,6 +251,7 @@ class DemonPlanner {
         );
       }
       if (tau == null) continue;
+      if (tau < lastContact) lastContact = tau;
       final t = math.max(tau, .01);
       e += math.exp(-t / foresight) / (t * t);
     }
@@ -255,6 +263,9 @@ class DemonPlanner {
   /// pushed just past H) look perfectly safe. 2.5 τ0 keeps the energy's
   /// own e^(−τ/τ0) fall-off doing the work (design.md §3, as built).
   static const horizonFactor = 2.5;
+
+  /// The earliest contact (s) the last [danger] call found (∞: none).
+  static double lastContact = double.infinity;
 
   /// The x range the formation keeps a creature in.
   static const arenaLo = 20.0, arenaHi = 340.0;
@@ -311,11 +322,10 @@ class DemonPlanner {
           Manoeuvre.sideR || Manoeuvre.wideR => math.max(0, s.crowd),
           _ => 0,
         };
-    if (a == Manoeuvre.thread) {
-      e -= w.attack * s.aimP;
-    } else {
-      e += w.leash * .002 * (endX - s.leashX) * (endX - s.leashX);
-    }
+    // The thread leaves the formation too: it pays the leash, and the
+    // attack reward makes it worth it only when the dive is well aimed.
+    if (a == Manoeuvre.thread) e -= w.attack * s.aimP;
+    e += w.leash * .002 * (endX - s.leashX) * (endX - s.leashX);
     if (a != s.last) e += w.change * .3;
     return e;
   }
@@ -349,9 +359,11 @@ class DemonPlanner {
   }
 
   /// Thread dive (design §5): the lateral velocity (u/s) from
-  /// {−[lateral], 0, +[lateral]} minimising E_danger + 0.004 (x(t + 0.3) −
-  /// x*_line(t + 0.3))² for a diver at (x, y) falling at [vy], with the
-  /// straight line expected at [lineAhead] in 0.3 s.
+  /// {−[lateral], 0, +[lateral]} minimising w_danger E_danger + 0.004
+  /// (x(t + 0.3) − x*_line(t + 0.3))² (+ hysteresis against leaving
+  /// [current]) for a diver at (x, y) falling at [vy], with the straight
+  /// line expected at [lineAhead] in 0.3 s. Shots younger than [delay]
+  /// are unseen; the rest are extrapolated (a shot flies straight).
   static double threadLateral({
     required double x,
     required double y,
@@ -362,6 +374,8 @@ class DemonPlanner {
     required double delay,
     required double foresight,
     required Iterable<Shot> shots,
+    double current = 0,
+    PlannerWeights weights = const PlannerWeights(),
   }) {
     var best = 0.0, low = double.infinity;
     for (var i = 0; i < 3; i++) {
@@ -369,17 +383,20 @@ class DemonPlanner {
       final ahead = x + v * .3 - lineAhead;
       final e =
           danger(
-            x,
-            y,
-            v,
-            vy,
-            double.infinity,
-            shots,
-            radius: radius,
-            delay: delay,
-            foresight: foresight,
-          ) +
-          .004 * ahead * ahead;
+                x,
+                y,
+                v,
+                vy,
+                double.infinity,
+                shots,
+                radius: radius,
+                delay: delay,
+                foresight: foresight,
+                extrapolate: true,
+              ) *
+              weights.danger +
+          .004 * ahead * ahead +
+          (v == current ? 0 : weights.change * .3);
       if (e < low - 1e-9) {
         low = e;
         best = v;

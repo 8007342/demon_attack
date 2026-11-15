@@ -70,6 +70,14 @@ class DifficultyPolicy {
 
   /// Angular and lateral speed factor of the squads' fighting patterns,
   /// times the route's movement growth 1 + 0.04 r.
+  // --- demon intelligence (openspec/changes/demon-intelligence §7):
+  // the skill level's cap; skill only sharpens decisions, never content.
+  double get skillCap => switch (difficulty) {
+    Difficulty.easy => .5,
+    Difficulty.normal => .8,
+    Difficulty.hard => 1.0,
+  };
+
   double swarmTempo({required int route}) =>
       switch (difficulty) {
         Difficulty.easy => .85,
