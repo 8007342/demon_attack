@@ -1,0 +1,434 @@
+{
+ "ground-atmosphere/procedural": {
+  "atlas": "assets/images/ground-atmosphere.png",
+  "atlas_sha256": "e518db87a927fe936c9a21c2cd06ce8445cab586d5e84b9dc6ec741d7c739038",
+  "generator": "tools/ground_atmosphere (go run . pack)",
+  "gpu_jobs": [],
+  "layers": {
+   "cloudShadow/0": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     760,
+     128,
+     40
+    ],
+    "seed": 790060
+   },
+   "cloudShadow/1": {
+    "kind": "procedural",
+    "rect": [
+     128,
+     760,
+     128,
+     40
+    ],
+    "seed": 790061
+   },
+   "cloudShadow/2": {
+    "kind": "procedural",
+    "rect": [
+     256,
+     760,
+     128,
+     40
+    ],
+    "seed": 790062
+   },
+   "cloudShadow/3": {
+    "kind": "procedural",
+    "rect": [
+     384,
+     760,
+     128,
+     40
+    ],
+    "seed": 790063
+   },
+   "dustVeil/carrier": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     744,
+     512,
+     16
+    ],
+    "seed": 790054
+   },
+   "dustVeil/ember": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     440,
+     512,
+     16
+    ],
+    "seed": 790052
+   },
+   "dustVeil/hollow": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     592,
+     512,
+     16
+    ],
+    "seed": 790053
+   },
+   "dustVeil/krybor": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     136,
+     512,
+     16
+    ],
+    "seed": 790050
+   },
+   "dustVeil/ringfall": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     288,
+     512,
+     16
+    ],
+    "seed": 790051
+   },
+   "horizonFog/carrier": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     608,
+     512,
+     48
+    ],
+    "seed": 790014
+   },
+   "horizonFog/ember": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     304,
+     512,
+     48
+    ],
+    "seed": 790012
+   },
+   "horizonFog/hollow": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     456,
+     512,
+     48
+    ],
+    "seed": 790013
+   },
+   "horizonFog/krybor": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     0,
+     512,
+     48
+    ],
+    "seed": 790010
+   },
+   "horizonFog/ringfall": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     152,
+     512,
+     48
+    ],
+    "seed": 790011
+   },
+   "lowCloud/carrier": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     656,
+     512,
+     40
+    ],
+    "seed": 790024
+   },
+   "lowCloud/ember": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     352,
+     512,
+     40
+    ],
+    "seed": 790022
+   },
+   "lowCloud/hollow": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     504,
+     512,
+     40
+    ],
+    "seed": 790023
+   },
+   "lowCloud/krybor": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     48,
+     512,
+     40
+    ],
+    "seed": 790020
+   },
+   "lowCloud/ringfall": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     200,
+     512,
+     40
+    ],
+    "seed": 790021
+   },
+   "midMistA/carrier": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     696,
+     512,
+     24
+    ],
+    "seed": 790034
+   },
+   "midMistA/ember": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     392,
+     512,
+     24
+    ],
+    "seed": 790032
+   },
+   "midMistA/hollow": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     544,
+     512,
+     24
+    ],
+    "seed": 790033
+   },
+   "midMistA/krybor": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     88,
+     512,
+     24
+    ],
+    "seed": 790030
+   },
+   "midMistA/ringfall": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     240,
+     512,
+     24
+    ],
+    "seed": 790031
+   },
+   "midMistB/carrier": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     720,
+     512,
+     24
+    ],
+    "seed": 790044
+   },
+   "midMistB/ember": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     416,
+     512,
+     24
+    ],
+    "seed": 790042
+   },
+   "midMistB/hollow": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     568,
+     512,
+     24
+    ],
+    "seed": 790043
+   },
+   "midMistB/krybor": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     112,
+     512,
+     24
+    ],
+    "seed": 790040
+   },
+   "midMistB/ringfall": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     264,
+     512,
+     24
+    ],
+    "seed": 790041
+   },
+   "smokeDrift/0": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     800,
+     48,
+     32
+    ],
+    "seed": 790070
+   },
+   "smokeDrift/1": {
+    "kind": "procedural",
+    "rect": [
+     48,
+     800,
+     48,
+     32
+    ],
+    "seed": 790070
+   },
+   "smokeDrift/2": {
+    "kind": "procedural",
+    "rect": [
+     96,
+     800,
+     48,
+     32
+    ],
+    "seed": 790070
+   },
+   "smokeDrift/3": {
+    "kind": "procedural",
+    "rect": [
+     144,
+     800,
+     48,
+     32
+    ],
+    "seed": 790070
+   },
+   "smokeDrift/4": {
+    "kind": "procedural",
+    "rect": [
+     192,
+     800,
+     48,
+     32
+    ],
+    "seed": 790070
+   },
+   "smokeDrift/5": {
+    "kind": "procedural",
+    "rect": [
+     240,
+     800,
+     48,
+     32
+    ],
+    "seed": 790070
+   },
+   "smokeWall/0": {
+    "kind": "procedural",
+    "rect": [
+     0,
+     832,
+     96,
+     40
+    ],
+    "seed": 790080
+   },
+   "smokeWall/1": {
+    "kind": "procedural",
+    "rect": [
+     96,
+     832,
+     96,
+     40
+    ],
+    "seed": 790080
+   },
+   "smokeWall/2": {
+    "kind": "procedural",
+    "rect": [
+     192,
+     832,
+     96,
+     40
+    ],
+    "seed": 790080
+   }
+  },
+  "low_cloud_strips": "not run: the optional SDXL strip pass (art/workflows/backgrounds/strip-sheet.json) was skipped; procedural first is the plan's default (render-runs §5)",
+  "models": [],
+  "tints": {
+   "carrier": {
+    "dark": "#2F1E31",
+    "fog": "#3C273F",
+    "horizon_sample": "#0F0812",
+    "lit": "#4A344D",
+    "smoke": "#3F3F4A",
+    "start": "#3A2836"
+   },
+   "ember": {
+    "dark": "#35252F",
+    "fog": "#442F3C",
+    "horizon_sample": "#0E0A13",
+    "lit": "#513C49",
+    "smoke": "#262A32",
+    "start": "#46302C"
+   },
+   "hollow": {
+    "dark": "#252D2F",
+    "fog": "#2F3A3C",
+    "horizon_sample": "#050F16",
+    "lit": "#3C4749",
+    "smoke": "#535C63",
+    "start": "#2E3A35"
+   },
+   "krybor": {
+    "dark": "#252C3C",
+    "fog": "#30384D",
+    "horizon_sample": "#050814",
+    "lit": "#3D455A",
+    "smoke": "#555B65",
+    "start": "#3A4458"
+   },
+   "ringfall": {
+    "dark": "#292A41",
+    "fog": "#353653",
+    "horizon_sample": "#050713",
+    "lit": "#424360",
+    "smoke": "#3F4050",
+    "start": "#3D3550"
+   }
+  }
+ }
+}
