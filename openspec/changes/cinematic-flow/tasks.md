@@ -71,7 +71,7 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
       `test/transition_loadout_test.dart`, `test/hints_test.dart` and `test/cinematic_scene_test.dart`.
 
 ## 5. Music
-- [ ] 5.1 `music_director.dart` / event timing: the `level` cue is requested on the beat boundary that ends
+- [x] 5.1 `music_director.dart` / event timing: the `level` cue is requested on the beat boundary that ends
       Pursuit. Verify that `npm run test:worker` audio tests still pass (`levelclear` immediate, `travel` on a
       4-beat boundary, `level` on the grid).
 

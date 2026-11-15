@@ -77,6 +77,41 @@ void main() {
     }
   });
 
+  test('music cues land on the 120 BPM grid (task 5.1)', () {
+    for (final (reduced, extra) in [(false, 0.0), (false, 1.2), (true, 0.0)]) {
+      final m = routed(reduced: reduced)..takeEvents();
+      final at = <String, double>{};
+      var t = 0.0;
+      for (var f = 0; f < 60 * 20 && m.mode != RunMode.playing; f++) {
+        if (m.mode == RunMode.levelClear) m.slotExtra = extra;
+        m.update(1 / 60);
+        t += 1 / 60;
+        for (final e in m.takeEvents()) {
+          if (const ['levelclear', 'travel', 'level'].contains(e)) {
+            at.putIfAbsent(e, () => t);
+          }
+        }
+      }
+      // The stinger is immediate at the Pursuit's start (it starts its own
+      // grid); travel 4 beats later; the next sector's cue whole beats later.
+      final travel = at['travel']! - at['levelclear']!;
+      final level = at['level']! - at['levelclear']!;
+      expect(travel, closeTo(FlowPlan.clearFor(reduced), 1 / 20));
+      final beats = level / flowBeat;
+      // Within three 60 Hz frames (phase boundaries step on frames; the
+      // worklet snaps the cue to its bar grid).
+      expect((beats - beats.round()).abs() * flowBeat, lessThan(1 / 20));
+      expect(
+        level,
+        closeTo(
+          FlowPlan.clearFor(reduced) +
+              FlowPlan.travelFor(reduced, extra: extra),
+          1 / 20,
+        ),
+      );
+    }
+  });
+
   test('the director runs on the model clock and pause freezes it', () {
     final m = routed();
     tick(m, 1);
