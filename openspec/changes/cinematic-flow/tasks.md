@@ -43,20 +43,20 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
       phase-length assertions and list each one.
 
 ## 3. Presentation
-- [ ] 3.1 `scene.dart` cinematic drawing (the block around `mode == RunMode.levelClear / victory / travel`):
+- [x] 3.1 `scene.dart` cinematic drawing (the block around `mode == RunMode.levelClear / victory / travel`):
       - ship climb and camera tilt from envelopes;
       - the pursued flock (pattern `sweep`, silhouette tint) ahead of the ship;
       - the palette and backdrop swap under cloud ≥ 0.85;
       - the Descent placing the flock;
       - `Atmosphere.cloudCover` and `fogThin` driven from `env('cloud')` and `env('thin')`.
-- [ ] 3.2 Boss vacuole and the hangar pour, the victory remnant scatter, the game-over torus (design §3, §4.2).
-- [ ] 3.3 Campaign outro: fog thins, shadows lift, the climb above the clouds, a crossfade *up* into
+- [x] 3.2 Boss vacuole and the hangar pour, the victory remnant scatter, the game-over torus (design §3, §4.2).
+- [x] 3.3 Campaign outro: fog thins, shadows lift, the climb above the clouds, a crossfade *up* into
       `lib/ending/ending_page.dart`. Update `test/ending_progression_test.dart`.
-- [ ] 3.4 Juice on the last kill: a 60 ms hit-stop (presentation clock only; the model is not paused) and shake
+- [x] 3.4 Juice on the last kill: a 60 ms hit-stop (presentation clock only; the model is not paused) and shake
       ≤ 2 px gated by reduced motion.
 
 ## 4. Messages without cards
-- [ ] 4.1 `lib/widgets/transition_overlay.dart`, `lib/game/interlude.dart`, `lib/widgets/interlude_card.dart`,
+- [x] 4.1 `lib/widgets/transition_overlay.dart`, `lib/game/interlude.dart`, `lib/widgets/interlude_card.dart`,
       `lib/widgets/storyboard_banner.dart`:
       - sector transitions schedule a radio *slot* (a comms dock line with its subtitle) or a caption *slot*;
       - remove the interlude card, storyboard banner and sector pips from sector transitions;
@@ -64,10 +64,10 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
       - add a tips pane to the pause menu.
 
       Coordinate with whatever `ux-declutter` left in these files.
-- [ ] 4.2 `lib/widgets/flow_caption.dart`: one line at the bottom edge, 0.5 s fades, `readSeconds` timing, the
+- [x] 4.2 `lib/widgets/flow_caption.dart`: one line at the bottom edge, 0.5 s fades, `readSeconds` timing, the
       sector title variant at the top edge (1.5 s).
-- [ ] 4.3 Medal and +1UP flourish beside the ship during Pursuit (the existing glyphs).
-- [ ] 4.4 Update `test/fluid_transitions_test.dart` (slots, not cards; alternation kept),
+- [x] 4.3 Medal and +1UP flourish beside the ship during Pursuit (the existing glyphs).
+- [x] 4.4 Update `test/fluid_transitions_test.dart` (slots, not cards; alternation kept),
       `test/transition_loadout_test.dart`, `test/hints_test.dart` and `test/cinematic_scene_test.dart`.
 
 ## 5. Music

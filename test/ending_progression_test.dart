@@ -139,6 +139,15 @@ void main() {
       findsOneWidget,
       reason: 'mode=${model.mode} progress=${model.transitionProgress}',
     );
+    // cinematic-flow §4.1: the ending fades up over the arena (a crossfade
+    // between two lit scenes), never a cut through black.
+    expect(
+      find.ancestor(
+        of: find.byType(EndingPage),
+        matching: find.byType(FadeTransition),
+      ),
+      findsWidgets,
+    );
     expect(model.mode, RunMode.paused);
     final left = model.transitionLeft;
     final active = model.activeMilliseconds;

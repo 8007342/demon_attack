@@ -121,16 +121,7 @@ class DemonScene extends FlameGame {
   @override
   void update(double dt) {
     super.update(dt);
-    if (model.mode != RunMode.paused) {
-      ambient += dt;
-      final destination = model.presentationMode == RunMode.travel
-          ? model.nextLevel - 1
-          : model.level - 1;
-      environment += (destination - environment) * math.min(1, dt * .65);
-      // --- flyover parallax hook (visual only; reads model state) ---
-      sectors.advance(dt, model, environment);
-      syncAtmosphere(dt);
-    }
+    if (model.mode != RunMode.paused) advancePresentation(dt);
     if (model.canPilot && keyboardDirection != 0) {
       model.moveBy(keyboardDirection * dt * 280);
     }
@@ -154,6 +145,47 @@ class DemonScene extends FlameGame {
     }
   }
 
+  /// One presentation step (unpaused): the backdrop's sector blend, the
+  /// flyover and the fog. Review harnesses call it with the model step.
+  void advancePresentation(double dt) {
+    // --- cinematic flow: a 60 ms hit-stop on the last kill freezes the
+    // presentation clocks only (the model runs on).
+    final flow = model.flow;
+    final hitStop =
+        flow.active && flow.plan.beat('hit') != null && flow.seconds < .06;
+    if (!hitStop) {
+      ambient += dt;
+      final swap = flow.plan.beat('swap');
+      final pursuing =
+          swap != null &&
+          const [
+            RunMode.salvage,
+            RunMode.levelClear,
+            RunMode.travel,
+            RunMode.victory,
+          ].contains(model.presentationMode);
+      if (pursuing) {
+        // The palette and backdrop change only inside the cloud's peak.
+        final from = (model.level - 1).toDouble();
+        final to = (model.nextLevel - 1).toDouble();
+        final k = flow.env('swap');
+        environment = (to - from).abs() <= 1
+            ? from + (to - from) * k
+            : (k < .5 ? from : to);
+      } else if (flow.active && swap != null) {
+        environment = (model.level - 1).toDouble();
+      } else {
+        final destination = model.presentationMode == RunMode.travel
+            ? model.nextLevel - 1
+            : model.level - 1;
+        environment += (destination - environment) * math.min(1, dt * .65);
+      }
+      // --- flyover parallax hook (visual only; reads model state) ---
+      sectors.advance(dt, model, environment);
+      syncAtmosphere(dt);
+    }
+  }
+
   /// Feeds the fog its clock and the flight distance (visual only). The fog
   /// is world-anchored: it is never given the ship's position.
   void syncAtmosphere(double dt) {
@@ -162,6 +194,10 @@ class DemonScene extends FlameGame {
       ..environment = environment
       ..reducedMotion = sectors.flyover.reducedMotion
       ..tide = model.ground.units.isEmpty ? .5 : model.ground.skirmish.tide
+      // --- cinematic flow: the Pursuit's cloud and the outro's thinning.
+      ..cloudCover = model.flow.env('cloud')
+      ..fogThin = model.flow.env('thin')
+      ..cloudScroll = model.reducedMotion ? 0 : model.flow.seconds * 28
       ..advance(dt, distance: sectors.flyover.distance);
   }
 
@@ -207,6 +243,19 @@ class DemonScene extends FlameGame {
       }
       canvas.restore();
     } else {
+      // --- cinematic flow: the camera tilts up through the layers (the
+      // world slides down) and shakes on the last kill (never in reduced
+      // motion); the band the tilt uncovers is already cloud.
+      final tilt = model.flow.env('tilt') * flowTilt;
+      final shake = _flowShake();
+      if (tilt > .01) {
+        canvas.drawRect(
+          Rect.fromLTWH(0, 0, 360, tilt + 2),
+          Paint()..color = atmosphere.cloud,
+        );
+      }
+      canvas.save();
+      canvas.translate(shake.dx, tilt + shake.dy);
       _background(canvas);
       final active = model.mode != RunMode.title;
       if (active && combat) {
@@ -224,8 +273,101 @@ class DemonScene extends FlameGame {
       } else {
         sectors.flyover.paintFlyers(canvas); // --- easter eggs: flocks
       }
+      canvas.restore();
+      if (active && combat) {
+        // --- cinematic flow: the cover, the pursued flock (sprites that
+        // turn to dark silhouettes in the cloud) and the climbing ship.
+        if (tilt > .01) {
+          // Feather the band the tilt uncovered into the scene below it.
+          canvas.drawRect(
+            Rect.fromLTWH(0, 0, 360, tilt + 36),
+            Paint()
+              ..shader = ui.Gradient.linear(
+                Offset.zero,
+                Offset(0, tilt + 36),
+                [atmosphere.cloud, atmosphere.cloud.withValues(alpha: 0)],
+                [tilt / (tilt + 36), 1],
+              ),
+          );
+        }
+        atmosphere.paintCloudCover(
+          canvas,
+          below: model.flow.kind == FlowKind.campaignOutro,
+          warmth: model.flow.env('thin'),
+        );
+        _flowFlockPass(canvas, tilt);
+        _cinematicFlowShip(canvas);
+      }
     }
     canvas.restore();
+  }
+
+  /// The transition's flock: in clear air the creature itself (veiled by
+  /// depth), in the cloud a dark silhouette ahead of the ship (design §3.1:
+  /// pattern sweep, silhouette tint).
+  void _flowFlockPass(Canvas c, double tilt) {
+    if (model.flowFlock.isEmpty) return;
+    // Under an outro the cloud is below the flock: no silhouettes.
+    final cloud = model.flow.kind == FlowKind.campaignOutro
+        ? 0.0
+        : model.flow.env('cloud');
+    // The rout's flash expansion: a white flash as the brood breaks.
+    final flash = model.flow.on('rout') && model.flow.seconds < .2;
+    final ink = Color.lerp(atmosphere.veil, const Color(0xFF0B0E18), .55)!;
+    final silhouette = ColorFilter.mode(ink, BlendMode.srcIn);
+    final members = [...model.flowFlock]
+      ..sort((a, b) => a.demon.nearness.compareTo(b.demon.nearness));
+    for (final m in members) {
+      final o = model.flowOpacity(m);
+      if (o <= .01) continue;
+      final d = m.demon;
+      final pos = Offset(
+        d.x.roundToDouble(),
+        (d.y + tilt * .4).roundToDouble(),
+      );
+      final cell = CombatAtlas.creature(d, model.clock);
+      // Fleeing in clear air it stays readable: a creature in the haze.
+      final t = math.max(.55, Perspective.transmittance(d.nearness));
+      c.save();
+      _scaleAbout(c, pos, d.scale);
+      final body = o * (1 - .8 * cloud) * _bodyOpacity(d.nearness);
+      if (body > .01) {
+        sprite(
+          c,
+          cell.row,
+          cell.col,
+          pos,
+          40,
+          tint: flash ? Colors.white : null,
+          filter: flash ? null : atmosphere.tintFor(t),
+          opacity: body,
+        );
+      }
+      final shade = o * .82 * cloud;
+      if (shade > .01) {
+        sprite(
+          c,
+          cell.row,
+          cell.col,
+          pos,
+          40,
+          filter: silhouette,
+          opacity: shade,
+        );
+      }
+      c.restore();
+    }
+  }
+
+  /// Shake on the last kill: at most 2 units, none with reduced motion.
+  Offset _flowShake() {
+    final hit = model.flow.env('hit');
+    if (hit <= 0 || model.reducedMotion) return Offset.zero;
+    final t = model.flow.seconds;
+    return Offset(
+      (math.sin(t * 91) * 2 * hit).roundToDouble(),
+      (math.cos(t * 73) * 2 * hit).roundToDouble(),
+    );
   }
 
   void _deepStarfieldPan(Canvas c, double panY) {
@@ -1903,6 +2045,8 @@ class DemonScene extends FlameGame {
       for (final d in model.incoming)
         if (d.swarmState != SwarmState.reserve) d,
       ...model.demons,
+      for (final m in model.flowFlock)
+        if (model.flowOpacity(m) > .3) m.demon, // --- cinematic flow
     };
     for (final d in flying) {
       if (d.swarmState == SwarmState.reserve || _parked(d)) continue;
@@ -1999,7 +2143,9 @@ class DemonScene extends FlameGame {
         null,
         Paint()
           ..colorFilter = _shadowInk
-          ..imageFilter = reduced ? null : _shadowBlur[b],
+          ..imageFilter = reduced ? null : _shadowBlur[b]
+          // --- cinematic flow: the campaign outro lifts every shadow.
+          ..color = Color.fromRGBO(0, 0, 0, 1 - model.flow.env('lift')),
       );
       c.scale(1, .42);
       final byImage = <ui.Image, List<_ShadowSpec>>{};
@@ -2740,10 +2886,7 @@ class DemonScene extends FlameGame {
     final travel = mode == RunMode.travel;
     if (!intro && !clear && !triumph && !travel) return;
     final p = model.transitionProgress.clamp(0.0, 1.0);
-    final ease = Curves.easeInOutCubic.transform(p);
-    final wave = intro && model.wave > 1;
-    final envelope = math.sin(math.pi * p);
-    final bar = (wave ? 9.0 : 24.0) * math.min(1.0, envelope * 4);
+    final flow = model.flow;
 
     if (triumph && model.wreckBoss != null) {
       final wreck = model.wreckBoss!;
@@ -2756,14 +2899,17 @@ class DemonScene extends FlameGame {
       );
     }
     if (clear || triumph) {
+      // Fireworks over the rescued sector: on the Rout's last kill for a
+      // sector, through the carrier's whole fall.
       final random = math.Random(triumph ? 1982 : 8200 + model.level);
       final count = triumph ? 10 : 5;
+      final clock = triumph ? p * 3.2 : p * 1.4 + .2;
       for (var burst = 0; burst < count; burst++) {
         final origin = Offset(
           45 + random.nextDouble() * 270,
           70 + random.nextDouble() * 210,
         );
-        final age = p * (triumph ? 3.2 : 2.3) - burst * .16;
+        final age = clock - burst * .16;
         if (age < 0 || age > 1.15) continue;
         final fade = (1 - age / 1.15).clamp(0.0, 1.0);
         final color = [mint, gold, violet, const Color(0xFFFF8676)][burst % 4];
@@ -2793,183 +2939,55 @@ class DemonScene extends FlameGame {
           opacity: .65,
         );
       }
-      // The rescued sector glows once before the ship accelerates away.
+    }
+    // The last kill's flash (the hit beat): a translucent glow, never a wipe.
+    final hit = flow.env('hit');
+    if (hit > 0) {
       c.drawRect(
         const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()
-          ..color = (triumph ? gold : mint).withValues(
-            alpha: math.pow(math.max(0, 1 - p * 6), 2).toDouble() * .24,
-          ),
-      );
-      final departure = Curves.easeInCubic.transform(
-        ((p - .35) / .65).clamp(0.0, 1.0),
-      );
-      _cinematicShip(
-        c,
-        Offset(
-          model.shipX + (180 - model.shipX) * ease,
-          ArcadeModel.shipY - departure * 650,
-        ),
-        42 - departure * 12,
-        1 + departure * 3,
+        Paint()..color = (triumph ? gold : mint).withValues(alpha: hit * .18),
       );
     }
+  }
 
-    if (travel) {
-      c.drawRect(
-        const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()..color = ink.withValues(alpha: envelope * .72),
-      );
-      final random = math.Random(1701);
-      final velocity = math.sin(math.pi * p).clamp(0.0, 1.0);
-      for (var i = 0; i < 88; i++) {
-        final angle = random.nextDouble() * math.pi * 2;
-        final radius = 15 + ((random.nextDouble() + p * 1.7) % 1) * 420;
-        final length = (8 + random.nextDouble() * 90) * velocity;
-        final near = Offset(
-          180 + math.cos(angle) * radius,
-          210 + math.sin(angle) * radius,
-        );
-        final far =
-            near + Offset(math.cos(angle) * length, math.sin(angle) * length);
-        c.drawLine(
-          near,
-          far,
-          Paint()
-            ..color = (i % 4 == 0 ? violet : mint).withValues(
-              alpha: velocity * .6,
-            )
-            ..strokeWidth = i % 7 == 0 ? 2 : 1,
-        );
-      }
-      // A ringed destination crosses the viewport as the jump resolves.
-      final arrival = Curves.easeOutCubic.transform(
-        ((p - .42) / .58).clamp(0.0, 1.0),
-      );
-      if (arrival > 0) {
-        final center = Offset(330 - arrival * 125, -120 + arrival * 240);
-        c.save();
-        c.translate(center.dx, center.dy);
-        c.rotate(-.35);
-        final radius = 30 + arrival * 60;
-        final color = [
-          mint,
-          violet,
-          const Color(0xFFEF9A7D),
-          gold,
-          const Color(0xFF8B9ACB),
-        ][(model.nextLevel - 1).clamp(0, 4)];
-        final ring = Rect.fromCenter(
-          center: Offset.zero,
-          width: radius * 3.7,
-          height: radius * .7,
-        );
-        c.drawOval(
-          ring,
-          Paint()
-            ..color = color.withValues(alpha: arrival * .28)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 6,
-        );
-        c.drawCircle(
-          Offset.zero,
-          radius,
-          Paint()..color = const Color(0xFF242A48),
-        );
-        c.save();
-        c.clipPath(
-          Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: radius)),
-        );
-        for (var band = -8; band <= 8; band++) {
-          c.drawRect(
-            Rect.fromLTWH(-radius, band * radius / 8, radius * 2, 4),
-            Paint()..color = color.withValues(alpha: .08 + (band % 3) * .025),
-          );
-        }
-        c.drawCircle(
-          Offset(-radius * .6, -radius * .1),
-          radius,
-          Paint()..color = ink.withValues(alpha: .55),
-        );
-        c.restore();
-        c.drawArc(
-          ring,
-          0,
-          math.pi,
-          false,
-          Paint()
-            ..color = color.withValues(alpha: arrival * .5)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 4,
-        );
-        c.restore();
-        c.drawCircle(
-          Offset(55 + arrival * 25, 160 + arrival * 100),
-          13,
-          Paint()..color = color.withValues(alpha: arrival * .4),
-        );
-      }
-      _cinematicShip(
-        c,
-        Offset(
-          180 + math.sin(p * math.pi * 2) * 10,
-          340 + math.sin(p * math.pi) * 22,
-        ),
-        30,
-        2 + velocity * 2,
-      );
+  /// The ship during a transition (drawn over the cloud cover): it climbs
+  /// nose-up into the cloud on the climb beat and drops back to its row in
+  /// the Descent; at the run's opening it rises in from below.
+  void _cinematicFlowShip(Canvas c) {
+    final mode = model.presentationMode;
+    final intro = mode == RunMode.transition;
+    if (!intro &&
+        mode != RunMode.levelClear &&
+        mode != RunMode.travel &&
+        mode != RunMode.victory) {
+      return;
     }
-
-    if (intro) {
+    final flow = model.flow;
+    final p = model.transitionProgress.clamp(0.0, 1.0);
+    if (intro && !flow.active) {
+      final wave = model.wave > 1;
       final arrival = Curves.easeOutCubic.transform((p / .8).clamp(0.0, 1.0));
       final y = wave
           ? ArcadeModel.shipY
           : ArcadeModel.shipY + (1 - arrival) * 130;
       _cinematicShip(c, Offset(model.shipX, y), 42, 1 + (1 - arrival) * 2);
-      // The scan sweeps toward the horizon while the approaching flock unfolds.
-      final scanY = 40 + p * 460;
-      c.drawRect(
-        Rect.fromLTWH(0, scanY, 360, 2),
-        Paint()..color = mint.withValues(alpha: envelope * .18),
-      );
-      if (model.boss != null) {
-        for (final x in [20.0, 340.0]) {
-          c.drawRect(
-            Rect.fromLTWH(x, 40, 2, 440),
-            Paint()
-              ..color = const Color(0xFFFF8676).withValues(
-                alpha: envelope * (.15 + .1 * math.sin(p * math.pi * 12).abs()),
-              ),
-          );
-        }
-      }
+      return;
     }
-    c.drawRect(Rect.fromLTWH(0, 0, 360, bar), Paint()..color = ink);
-    c.drawRect(Rect.fromLTWH(0, 520 - bar, 360, bar), Paint()..color = ink);
-    c.drawLine(
-      Offset(0, bar),
-      Offset(360, bar),
-      Paint()
-        ..color = (triumph ? gold : mint).withValues(alpha: envelope * .35),
+    final climb = flow.env('climb');
+    final cloud = flow.env('cloud');
+    final y = ArcadeModel.shipY - flow.plan.climb * climb;
+    // In the cloud the ship is a little veiled, never lost.
+    final veil = (1 - .35 * cloud).clamp(0.0, 1.0);
+    c.saveLayer(
+      const Rect.fromLTWH(0, 0, 360, 520),
+      Paint()..color = Color.fromRGBO(0, 0, 0, veil),
     );
-    // Fade across cuts so departure, transit, and arrival can use distinct
-    // compositions without exposing a discontinuous ship or planet position.
-    var blackout = 0.0;
-    if (clear || triumph || travel) {
-      blackout = ((p - .85) / .15).clamp(0.0, 1.0);
-    }
-    if (travel) {
-      blackout = math.max(blackout, (1 - p / .12).clamp(0.0, 1.0));
-    } else if (intro && !wave) {
-      blackout = (1 - p / .15).clamp(0.0, 1.0);
-    }
-    if (blackout > 0) {
-      c.drawRect(
-        const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()..color = Colors.black.withValues(alpha: blackout),
-      );
-    }
+    _cinematicShip(c, Offset(model.shipX, y), 42, 1 + climb * 2.5);
+    c.restore();
   }
+
+  /// Camera tilt in a Pursuit: the world below slides down this far.
+  static const flowTilt = 46.0;
 
   void _cinematicShip(Canvas c, Offset center, double width, double thrust) {
     if (center.dy < -70 || center.dy > 590) return;

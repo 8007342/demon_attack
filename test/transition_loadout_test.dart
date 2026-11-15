@@ -4,8 +4,6 @@ import 'dart:ui' as ui;
 
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
-import 'package:demon_attack/game/ship_painter.dart';
-import 'package:demon_attack/widgets/storyboard_banner.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -145,11 +143,13 @@ void main() {
             height: 52,
           ),
         ),
+        // cinematic-flow: the ship stays at its row in a Pursuit (it
+        // climbs on the flow's climb beat; no flow runs here).
         'travel': (
           RunMode.travel,
           2,
           Rect.fromCenter(
-            center: const Offset(180, 362),
+            center: Offset(model.shipX, ArcadeModel.shipY),
             width: 52,
             height: 52,
           ),
@@ -209,133 +209,7 @@ void main() {
       expect(diffIn(falling, later, box), greaterThan(20));
     });
   });
-
-  testWidgets('route glyph is the real ship with the current loadout', (
-    tester,
-  ) async {
-    final model = ArcadeModel()..start();
-    model.level = 2;
-    final ship = ShipPainter();
-    await tester.runAsync(() async {
-      ship.image = await decode('assets/images/ship-weapons.png');
-    });
-    final key = GlobalKey();
-    // The test font is wider than the shipped one, so the sector-name row
-    // under the chart overflows here; only that is tolerated.
-    final previous = FlutterError.onError;
-    final unexpected = <FlutterErrorDetails>[];
-    FlutterError.onError = (details) {
-      if (!details.toString().contains('overflowed')) unexpected.add(details);
-    };
-    addTearDown(() => FlutterError.onError = previous);
-    Future<Uint8List> banner(
-      String name,
-      RunMode phase,
-      List<Power> powers, {
-      double progress = .45,
-      double ratio = 2,
-    }) async {
-      loadout(model, powers);
-      await tester.pumpWidget(
-        MediaQuery(
-          data: MediaQueryData(devicePixelRatio: ratio),
-          child: Directionality(
-            textDirection: TextDirection.ltr,
-            child: Center(
-              child: RepaintBoundary(
-                key: key,
-                child: SizedBox(
-                  width: 360,
-                  child: StoryboardBanner(
-                    level: model.level,
-                    cycle: model.cycle,
-                    phase: phase,
-                    progress: progress,
-                    ship: ship,
-                    pilot: model,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-      final boundary =
-          key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-      late Uint8List pixels;
-      await tester.runAsync(() async {
-        final image = await boundary.toImage(pixelRatio: ratio);
-        pixels = await pixelsOf(image, 'glyph-$name');
-        if (renderDir != null) {
-          // Nearest-neighbour close-up of the ship for review.
-          final src = phase == RunMode.travel
-              ? Rect.fromLTWH(70 * ratio, 0, 150 * ratio, 70 * ratio)
-              : Rect.fromLTWH(40 * ratio, 20 * ratio, 140 * ratio, 90 * ratio);
-          final zoom = 6 / ratio;
-          final recorder = ui.PictureRecorder();
-          ui.Canvas(recorder).drawImageRect(
-            image,
-            src,
-            Offset.zero & (src.size * zoom),
-            Paint()..filterQuality = FilterQuality.none,
-          );
-          final picture = recorder.endRecording();
-          final big = await picture.toImage(
-            (src.width * zoom).round(),
-            (src.height * zoom).round(),
-          );
-          await pixelsOf(big, 'zoom-$name');
-          big.dispose();
-          picture.dispose();
-        }
-        image.dispose();
-      });
-      return pixels;
-    }
-
-    final none = await banner('route-none', RunMode.travel, []);
-    final wings = await banner('route-rapid-wings', RunMode.travel, [
-      Power.rapid,
-    ]);
-    final heavy = await banner('route-powerful-shield', RunMode.travel, [
-      Power.powerful,
-      Power.shield,
-    ]);
-    final full = await banner('route-spread-rapid-shield', RunMode.travel, [
-      Power.spread,
-      Power.rapid,
-      Power.shield,
-    ]);
-    int diff(Uint8List a, Uint8List b) {
-      var n = 0;
-      for (var i = 0; i < a.length; i += 4) {
-        if (a[i] != b[i] || a[i + 1] != b[i + 1] || a[i + 2] != b[i + 2]) n++;
-      }
-      return n;
-    }
-
-    expect(diff(none, wings), greaterThan(60));
-    expect(diff(wings, heavy), greaterThan(60));
-    expect(diff(heavy, full), greaterThan(60));
-    // The glyph moves along the route with progress.
-    final later = await banner(
-      'route-none-late',
-      RunMode.travel,
-      [],
-      progress: .9,
-    );
-    expect(diff(none, later), greaterThan(60));
-    // Other storyboards show the same live ship.
-    await banner('arrival-powerful-shield', RunMode.transition, [
-      Power.powerful,
-      Power.shield,
-    ]);
-    await banner('route-large-1x', RunMode.travel, [Power.large], ratio: 1);
-    await banner('route-powerful-shield-3x', RunMode.travel, [
-      Power.powerful,
-      Power.shield,
-    ], ratio: 3);
-    FlutterError.onError = previous;
-    expect(unexpected, isEmpty);
-  });
+  // cinematic-flow: the storyboard banner and its route glyph left the
+  // sector transitions (no cards, no strips); the cutscene ship above is the
+  // one the transition draws.
 }

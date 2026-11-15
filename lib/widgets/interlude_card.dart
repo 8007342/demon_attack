@@ -1,24 +1,19 @@
-/// The transition presentation: one primary interlude card centred in the
-/// play area (a silent illustrated tip or a full-size radio transmission).
-/// See openspec/changes/fluid-transitions; the progress strip that lived here
-/// was removed by openspec/changes/ux-declutter.
+/// The run's opening interlude: one illustrated tip card centred in the play
+/// area (openspec/changes/fluid-transitions). cinematic-flow moved the radio
+/// card to the comms dock and later tips to a caption (flow_caption.dart);
+/// ux-declutter removed the progress strip that lived here.
 library;
 
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../comms/comms_director.dart';
-import '../comms/comms_portraits.dart';
-import '../comms/comms_types.dart';
-import '../comms/comms_view.dart';
 import '../game/hints.dart';
 import '../game/interlude.dart';
 import 'hint_art.dart';
 
 const _ink = Color(0xF2080D18);
 const _mint = Color(0xFF70F5D5);
-const _gold = Color(0xFFFFD594);
 const _muted = Color(0xFF8AA3BA);
 const _body = Color(0xFFCCD9E6);
 
@@ -210,127 +205,4 @@ class TipInterludeCard extends StatelessWidget {
       ),
     ),
   );
-}
-
-/// Full-size radio transmission: portrait, speaker and the line as it plays.
-class RadioInterludeCard extends StatelessWidget {
-  const RadioInterludeCard({
-    super.key,
-    required this.message,
-    required this.now,
-    required this.destination,
-    this.compact = false,
-  });
-
-  final CommsMessage message;
-  final double now;
-  final String destination;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final m = message;
-    final c = m.character;
-    final accent = Color(c.accent);
-    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    final mission = m.trigger.name.startsWith('transmissionMission');
-    final heading = c.isDemon
-        ? '◆ BROOD SIGNAL'
-        : mission
-        ? '◉ FLEET COMMAND'
-        : '◌ SQUAD CHANNEL';
-    final tag = c.isDemon
-        ? '${c.rank} ${c.name}'
-        : '${c.rank} ${c.name} · ${c.callsign}';
-    return LayoutBuilder(
-      builder: (context, box) {
-        // Whole-number scale of the portrait cell that fits the card.
-        final room = math.min(box.maxWidth, compact ? 128.0 : 256.0);
-        final scale = math.max(1, (room / commsPortraitCell).floor());
-        final side = (commsPortraitCell * scale).toDouble();
-        return Column(
-          key: ValueKey('comms-transmission-${m.line.id}'),
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _header(heading, destination, c.isDemon ? accent : _gold),
-            const SizedBox(height: 10),
-            Center(
-              child: SizedBox(
-                width: side,
-                height: side,
-                child: CustomPaint(painter: _RadioPortrait(m, now, reduce)),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              tag,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: accent,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 6),
-            CommsSubtitle(
-              message: m,
-              now: now,
-              fontSize: compact ? 16 : 18,
-              maxLines: 4,
-              glyphHeight: 12,
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _RadioPortrait extends CustomPainter {
-  _RadioPortrait(this.m, this.now, this.reduce);
-  final CommsMessage m;
-  final double now;
-  final bool reduce;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final r = Offset.zero & size;
-    final who = m.character;
-    canvas.save();
-    canvas.clipRect(r);
-    paintBackdrop(canvas, r, who, now, reduceMotion: reduce);
-    final scale = size.width / commsPortraitCell;
-    final talking = m.speaking(now);
-    final frame = talking ? m.frame(now) : restFrame(now, who.id.length);
-    final (from, _, amount) = talking
-        ? m.mouthBlend(now)
-        : (CommsFrame.idle, CommsFrame.idle, 1.0);
-    paintPortrait(
-      canvas,
-      r.translate(0, idleBob(now, who.id.length, reduceMotion: reduce) * scale),
-      who.id,
-      frame,
-      accent: Color(who.accent),
-      from: reduce ? null : from,
-      amount: amount,
-    );
-    final age = m.age(now);
-    if (age < .35 && !reduce) {
-      paintStatic(canvas, r, now, (1 - age / .35) * .8, who.id.length);
-    }
-    paintScanlines(canvas, r, pitch: math.max(2, scale).toDouble() + 1);
-    canvas.restore();
-    canvas.drawRect(
-      r.deflate(.5),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..color = talking ? Color(who.accent) : const Color(0xFF26394C),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_RadioPortrait old) => true;
 }

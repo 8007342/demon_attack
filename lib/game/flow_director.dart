@@ -71,6 +71,7 @@ class FlowPlan {
     this.descentAt = 0,
     this.swapAt,
     this.pursuitSeconds = 0,
+    this.climb = 40,
   });
 
   final FlowKind kind;
@@ -86,6 +87,10 @@ class FlowPlan {
 
   /// Seconds of Pursuit (whole beats).
   final double pursuitSeconds;
+
+  /// Screen units the ship climbs at the climb beat's peak (design §2: 40;
+  /// the outro climbs above the clouds).
+  final double climb;
 
   static const idle = FlowPlan(FlowKind.idle, 1, []);
 
@@ -185,7 +190,8 @@ class FlowPlan {
         FlowBeat('rout', 0, .3, p0 - .4, p0 + .6),
         // The ship climbs nose-up and drops back to its row in the Descent.
         FlowBeat('climb', p0, p0 + 1.5, p1 - .5, p1 + 1.6, gain: m),
-        FlowBeat('tilt', p0 + .2, p0 + 2.0, p1 - .3, p1 + 1.8, gain: m),
+        // The camera tilts up as the cloud comes in (its seam is in cloud).
+        FlowBeat('tilt', cloudUp, cloudFull, p1 - .3, p1 + 1.8, gain: m),
         FlowBeat('cloud', cloudUp, cloudFull, cloudOut, cloudClear),
         // The palette and backdrop change inside the cloud's peak.
         FlowBeat('swap', swap, swap + (reduced ? .5 : 1.0), end, end),
@@ -233,13 +239,16 @@ class FlowPlan {
         const FlowBeat('thin', 1.5, 4.0, end, end),
         const FlowBeat('lift', 1.5, 3.5, end, end),
         FlowBeat('climb', 2.5, 5.0, end, end, gain: m),
-        FlowBeat('tilt', 2.6, 5.0, end, end, gain: m),
+        // The camera stays with the cloud tops; the ship rises out of frame
+        // toward the light (no tilt band over a thinning sky).
+        const FlowBeat('tilt', 2.6, 5.0, end, end, gain: 0),
         // Bright cloud tops below the ship; never more than a soft veil.
         const FlowBeat('cloud', 2.8, 4.6, end, end, gain: .7),
         FlowBeat('ending', endingAt, endingAt + .8, end, end),
       ],
       reduced: reduced,
       descentAt: total,
+      climb: 150,
     );
   }
 

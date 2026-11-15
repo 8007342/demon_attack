@@ -548,6 +548,16 @@ class ArcadeModel {
 
   /// A skip is waiting for the end of the Rout.
   bool get skipPending => _skipPending;
+
+  /// Ends the current (non-carrier) sector at once, as its last kill would:
+  /// the Rout, Pursuit and Descent follow (console and tests).
+  void endSector() {
+    if (boss != null || !combat) return;
+    wave = wavesPerLevel;
+    demons.clear();
+    incoming.clear();
+    _completeWave();
+  }
   // --- end cinematic flow
   static const arrivalHintDuration = 4.5;
   double transitionDuration = arrivalHintDuration;
