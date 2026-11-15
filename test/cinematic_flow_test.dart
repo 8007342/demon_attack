@@ -154,32 +154,20 @@ void main() {
     expect(m.level, 2);
   });
 
-  test('the rout leaves a pursued flock that keeps its direction', () {
+  test('the last kill leaves no flock: nothing flees through the fog', () {
+    // playtest-fixes: the rout scatters only creatures that were fighting,
+    // and a sector ends when every one of them fell.
     final m = routed();
-    expect(m.flowFlock.length, inInclusiveRange(12, 18));
+    expect(m.flowFlock, isEmpty);
     expect(m.demons, isEmpty);
-    for (final f in m.flowFlock) {
-      expect(m.demons, isNot(contains(f.demon)), reason: 'cosmetic only');
-    }
-    final dir = m.flowDirection;
-    double centre() =>
-        m.flowFlock.fold(0.0, (a, f) => a + f.demon.x) / m.flowFlock.length;
-    final swap = m.flow.plan.swapAt!;
-    // Centroid velocity before and after the swap.
-    while (m.flow.seconds < swap - .5) {
+    expect(m.fogStaged, isEmpty);
+    expect(m.flowDirection.abs(), 1, reason: 'the cohort side is still set');
+    while (m.flow.active && m.mode != RunMode.transition) {
       m.update(1 / 60);
+      expect(m.flowFlock, isEmpty);
+      if (m.level != 1) break; // the next sector's own reserve
+      expect(m.fogStaged, isEmpty);
     }
-    final a0 = centre();
-    tick(m, .25);
-    final before = centre() - a0;
-    while (m.flow.seconds < swap + 1.2) {
-      m.update(1 / 60);
-    }
-    final b0 = centre();
-    tick(m, .25);
-    final after = centre() - b0;
-    expect(before.sign, dir);
-    expect(after.sign, dir);
   });
 
   test(
@@ -205,12 +193,12 @@ void main() {
     },
   );
 
-  test('boss arrival: the flock mills, pours into the bays, then is gone', () {
+  test('boss arrival: the mill beat plays over an empty fog', () {
     final m = routed(sector: 4);
     expect(m.flow.kind, FlowKind.bossArrival);
     reach(m, RunMode.transition);
     expect(m.isBoss, isTrue);
-    expect(m.flowFlock, isNotEmpty, reason: 'the flock arrives with it');
+    expect(m.flowFlock, isEmpty, reason: 'nobody was left fighting');
     var milled = false;
     while (m.mode == RunMode.transition) {
       if (m.flow.env('mill') > .9) milled = true;
@@ -222,9 +210,12 @@ void main() {
     expect(m.flow.active, isFalse);
   });
 
-  test('boss victory: the remnant scatters, then the route jump', () {
+  test('boss victory: the fighting minions scatter, then the route jump', () {
     final m = ArcadeModel(seed: 3)..startAt(sector: 5);
     reach(m, RunMode.playing);
+    final fighting = m.demons
+        .where((d) => d.swarmState != SwarmState.reserve)
+        .length;
     final b = m.boss!
       ..shield = 0
       ..core = 1
@@ -233,7 +224,7 @@ void main() {
     expect(m.mode, RunMode.victory);
     expect(m.transitionDuration, 5.5);
     expect(m.flow.kind, FlowKind.bossVictory);
-    expect(m.flowFlock.length, inInclusiveRange(12, 18));
+    expect(m.flowFlock.length, fighting.clamp(0, 18));
     final medals = m.medals, lives = m.lives;
     final c = chain(m);
     expect(

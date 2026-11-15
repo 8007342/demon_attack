@@ -219,3 +219,19 @@ Recorded during implementation on `work/cinematic-flow`. Each is the reversible 
   the storyboard banner's 5-stage route chart (sector pips joined by a line that fills with progress), and the arrival's
   scan line sweeping down the arena with the transition's progress. The letterbox bars and their accent line went with
   them. `ux_declutter_test` and `fluid_transitions_test` assert no bar or strip through a whole sector change.
+
+## 10. Playtest revisions (work/playtest-fixes, 2026-11-15)
+
+Operator playtest: the very last wave still showed demons waiting in the fog, which then flew away at the level's end;
+and bare caption and title texts still floated over the play area.
+
+1. **The final wave leaves the fog empty** (`ArcadeModel.finalWave`, `fogStaged`). During a sector's last wave (and
+   the carrier) the drawn reserve is empty: the wave's later roster skeins and reinforcement groups are still born at
+   its start with the same seeded draws (determinism and calibration are untouched, nothing is born or timed
+   differently), but they wait unseen and appear only when admitted, swooping out of their deep-fog point. No cohort is
+   sighted after the last wave (unchanged). The wave's own sentinel keeps its foreshadow silhouette; it is admitted.
+2. **The rout scatters only fighters.** `_flowRout` no longer tops the flock up to 12 stand-ins "out of the fog"
+   around the last kill and no longer pulls in reserve silhouettes. A sector ends when every fighter fell, so a sector
+   change has no pursued flock: §2's pursuit, §3.1's mill and pour and the direction-continuity rule now apply only when
+   a flock exists (a carrier's live minions at its fall, §3.2). The next cohort's lead side (`_preloadSide`) is still
+   computed, so the first wave leaves the cloud where `flowDirection` points.
