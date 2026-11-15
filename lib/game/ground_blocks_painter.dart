@@ -3,8 +3,10 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'atmosphere.dart';
 import 'ground_blocks_atlas.dart';
 import 'ground_blocks_cast.dart';
+import 'ground_atmosphere.dart';
 import 'ground_heading.dart';
 import 'model.dart';
 
@@ -86,6 +88,11 @@ class GroundBlocksLayer {
   int _frame = 0;
 
   static const _flashTint = Color(0xB8FFFFFF);
+
+  // --- depth fog (plan/ground-atmosphere.md §2): set by [GroundPainter]
+  // per unit. [fogTint] null: no tint (no atmosphere art).
+  Color? fogTint;
+  double fogMix = 0;
   final Paint _paint = Paint()
     ..isAntiAlias = false
     ..filterQuality = FilterQuality.none;
@@ -312,17 +319,46 @@ class GroundBlocksLayer {
     });
   }
 
+  /// Opacity of the emissive-mask pass for a body at fog [mix]: none in
+  /// clear air, rising to one half in the murk (so a warm pixel fogs at
+  /// half the body's rate: plan/ground-atmosphere.md §2).
+  static double revealAlpha(double mix) =>
+      mix <= .1 ? 0 : .5 * ((mix - .1) / .2).clamp(0.0, 1.0);
+
   void _blit(Canvas c, ui.Image img, Rect src, double left, double top,
-      double s, bool mirror, double light, double opacity, bool flash) {
+      double s, bool mirror, double light, double opacity, bool flash,
+      {bool emissive = false, bool tell = false, bool reveal = false}) {
     final w = src.width * s, h = src.height * s;
     final v = (255 * light).round().clamp(0, 255);
     _paint.color =
         Color.fromARGB((255 * opacity).round().clamp(0, 255), v, v, v);
+    if (reveal) {
+      // The emissive mask (warm eyes, cracks) drawn again over the fogged
+      // body: the half-rate rule for pixels baked into the body cell.
+      _paint
+        ..color = Color.fromRGBO(255, 255, 255, opacity.clamp(0.0, 1.0))
+        ..colorFilter = Atmosphere.glowMatrix;
+      _draw(c, img, src, left, top, w, h, mirror);
+      return;
+    }
+    final tint = fogTint;
+    final mix = tint == null || tell || flash
+        ? 0.0
+        : emissive
+            ? GroundFog.emissive(fogMix)
+            : fogMix;
     _paint.colorFilter = flash
         ? const ColorFilter.mode(_flashTint, BlendMode.srcATop)
-        : light < .999
-            ? ColorFilter.mode(Color.fromARGB(255, v, v, v), BlendMode.modulate)
-            : null;
+        : mix > 0
+            ? GroundFog.filter(light, mix, tint!)
+            : light < .999
+                ? ColorFilter.mode(Color.fromARGB(255, v, v, v), BlendMode.modulate)
+                : null;
+    _draw(c, img, src, left, top, w, h, mirror);
+  }
+
+  void _draw(Canvas c, ui.Image img, Rect src, double left, double top,
+      double w, double h, bool mirror) {
     final l = left.roundToDouble(), t = top.roundToDouble();
     if (mirror) {
       c.save();
@@ -345,12 +381,21 @@ class GroundBlocksLayer {
       double opacity = 1,
       bool flash = false,
       bool overlay = false,
+      bool emissive = false,
+      bool tell = false,
+      bool reveal = false,
       (double, double)? at}) {
     (overlay ? requestedOverlays : requested)?.add(name);
     final src = _resolve(name);
     if (src == null || opacity <= 0) return false;
     final tl = topLeft(src.$2.width, at ?? u.origin, mirror, ax, ay, s);
-    _blit(c, src.$1, src.$2, tl.dx, tl.dy, s, mirror, light, opacity, flash);
+    _blit(c, src.$1, src.$2, tl.dx, tl.dy, s, mirror, light, opacity, flash,
+        emissive: emissive, tell: tell);
+    final r = revealAlpha(fogTint == null || flash ? 0 : fogMix);
+    if (reveal && r > 0) {
+      _blit(c, src.$1, src.$2, tl.dx, tl.dy, s, mirror, light, opacity * r,
+          false, reveal: true);
+    }
     return true;
   }
 
@@ -365,7 +410,10 @@ class GroundBlocksLayer {
   /// One fx-row cell of [faction] (0-3 skid dust, 4-7 dust ring, 8-10
   /// muzzle ring, 11-13 shards), centred on ([cx], [cy]).
   void fx(Canvas c, String faction, int col, double cx, double cy, double s,
-      {double light = 1, double opacity = 1, bool mirror = false}) {
+      {double light = 1,
+      double opacity = 1,
+      bool mirror = false,
+      bool emissive = false}) {
     final sec = sector;
     if (sec == null) return;
     final row = GroundBlocks.fxRow[GroundBlocksCast.sectorName(sec)]?[faction];
@@ -373,14 +421,14 @@ class GroundBlocksLayer {
     if (row == null || img == null) return;
     final src = Rect.fromLTWH(col * 48.0, row.$2 * 40.0, 48, 40);
     _blit(c, img, src, cx - 24 * s, cy - 20 * s, s, mirror, light, opacity,
-        false);
+        false, emissive: emissive);
   }
 
   /// A debris piece [j] of [t]'s unit (16 x 20 sub-cells, 6 per sheet),
   /// centred on ([cx], [cy]) and turned by [quarter] quarter turns.
   bool piece(Canvas c, GroundBlockTrack t, int j, double cx, double cy,
       double s, int quarter,
-      {double light = 1, double opacity = 1}) {
+      {double light = 1, double opacity = 1, bool emissive = false}) {
     final pieces = t.cells.unit.pieces;
     if (pieces.isEmpty) return false;
     final k = j % pieces.length;
@@ -399,7 +447,7 @@ class GroundBlocksLayer {
     c.translate(cx.roundToDouble(), cy.roundToDouble());
     if (quarter % 4 != 0) c.rotate((quarter % 4) * math.pi / 2);
     _blit(c, src.$1, r, -r.width / 2 * s, -r.height / 2 * s, s, false, light,
-        opacity, false);
+        opacity, false, emissive: emissive);
     c.restore();
     return true;
   }
@@ -509,7 +557,8 @@ class GroundBlocksLayer {
       name = _hullCell(t, u, k, unit.headings[k] * (mirror ? -1 : 1), u.pose,
           phase, moving);
     }
-    cell(c, unit, name, u.x, u.y, s, mirror: mirror, light: light, flash: flash);
+    cell(c, unit, name, u.x, u.y, s,
+        mirror: mirror, light: light, flash: flash, reveal: true);
     _hullOverlays(c, t, k, mirror, u.x, u.y, s, light, glow, clock,
         near: near, hp: u.hp, seed: u.id, fill: t.cells.hasArt ? 0 : fill, flare: fill > 1);
     if (!t.cells.hasArt) return;
@@ -535,7 +584,8 @@ class GroundBlocksLayer {
       final o = t.cells.artOverlay('fill$fill', a);
       if (o != null) {
         cell(c, unit, o, pv.dx, pv.dy, s,
-            mirror: am, light: glow, overlay: true, at: unit.artPivot);
+            mirror: am, light: glow, overlay: true, tell: true,
+            at: unit.artPivot);
       }
     }
   }
@@ -583,7 +633,8 @@ class GroundBlocksLayer {
           ? .6 + .4 * (.5 + .5 * math.sin(clock * 3 + seed * 1.3))
           : 1.0;
       cell(c, u, lights, x, y, s,
-          mirror: mirror, light: glow, opacity: pulse, overlay: true);
+          mirror: mirror, light: glow, opacity: pulse, overlay: true,
+          emissive: true);
     }
     if (!near) return;
     final frac = hp / math.max(1, t.maxHp);
@@ -597,7 +648,8 @@ class GroundBlocksLayer {
     if (fill > 0) {
       final o = t.cells.hullOverlay('fill$fill', k);
       if (o != null) {
-        cell(c, u, o, x, y, s, mirror: mirror, light: glow, overlay: true);
+        cell(c, u, o, x, y, s,
+            mirror: mirror, light: glow, overlay: true, tell: true);
       }
     }
   }
@@ -668,7 +720,8 @@ class GroundBlocksLayer {
         near: near, hp: a.hp);
     if (flash) {
       final f = ((1 - a.flash / .15) * 3).floor().clamp(0, 2);
-      fx(c, 'fleet', 11 + f, a.x, a.y - 9 * s, s * .8, light: glow);
+      fx(c, 'fleet', 11 + f, a.x, a.y - 9 * s, s * .8,
+          light: glow, emissive: true);
     }
     if (!t.cells.hasArt) return;
     final pv = _pivot(unit, k, mirror, a.x, a.y, s, phase, moving);
@@ -779,7 +832,7 @@ class GroundBlocksLayer {
       name = cells.state('idle', h, (clock * 2.5 + k * .5).floor()).$1;
     }
     cell(c, cells.unit, name, x, y, s,
-        mirror: mirror, light: light, opacity: opacity);
+        mirror: mirror, light: light, opacity: opacity, reveal: fallen == null);
   }
 
   /// Allied trooper [k] of a squad.

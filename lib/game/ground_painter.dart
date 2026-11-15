@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'atmosphere.dart';
 import 'easter_eggs.dart';
 import 'ground_atlas.dart';
+import 'ground_atmosphere.dart';
+import 'ground_atmosphere_atlas.dart';
 import 'ground_blocks_painter.dart';
 import 'ground_troops_atlas.dart';
 import 'model.dart';
@@ -53,6 +55,44 @@ class GroundPainter {
   ArcadeModel? _model;
   int _debrisDrawn = 0;
 
+  // --- depth fog on units (plan/ground-atmosphere.md §2): the sector's fog
+  // tint while the atmosphere art is installed (null: no tint, exactly the
+  // pre-art look) and the mix of the unit being drawn.
+  Color? _fogTint;
+  double _fogMix = 0;
+
+  /// The fog mix of the unit or ally drawn now (tests/tools).
+  double get debugFogMix => _fogMix;
+
+  void _setFog(double z, {bool threat = false, double? x, double? y}) {
+    _fogMix = _fogTint == null
+        ? 0
+        : GroundFog.unitMix(z, threat: threat, x: x, y: y);
+    blocks.fogMix = _fogMix;
+  }
+
+  /// Whether a demon unit can fire at the player (the fog caps it).
+  static bool isThreat(GroundUnit u) => !u.skirmish;
+
+  // --- battlefield smoke (plan/ground-atmosphere.md §3): the packed
+  // smokeDrift / smokeWall sprites, while the atmosphere art is installed.
+  GroundAtmosphereArt? _smoke;
+  Color _smokeTint = const Color(0xFF555B65);
+  bool _smokeFull = true, _smokeStill = false;
+  int _smokeDrawn = 0;
+
+  /// Smoke sprites at most per frame (the plan's draw-call budget).
+  static const maxSmoke = 14;
+
+  /// Smoke sprites drawn by the last paint (tests/tools).
+  int get debugSmokeDrawn => _smokeDrawn;
+
+  /// Screen rects of the smoke walls the last paint drew (tests/tools).
+  final List<Rect> debugSmokeWalls = [];
+
+  /// Screen rects and opacities of the drift puffs the last paint drew.
+  final List<(Rect, double)> debugSmokePuffs = [];
+
   /// Troopers draw a little smaller than vehicles (they are people).
   static const troopScale = 1.0, allyTroopScale = .7;
 
@@ -84,6 +124,9 @@ class GroundPainter {
     double light = 1,
     double opacity = 1,
     bool troop = false,
+    bool emissive = false,
+    bool tell = false,
+    bool reveal = false,
   }) {
     final img = troop ? troops : image;
     if (img == null) return;
@@ -92,9 +135,17 @@ class GroundPainter {
     final w = cw * scale, h = ch * scale;
     final v = (255 * light).round().clamp(0, 255);
     _paint.color = Color.fromARGB((255 * opacity).round().clamp(0, 255), v, v, v);
-    _paint.colorFilter = light < .999
-        ? ColorFilter.mode(Color.fromARGB(255, v, v, v), BlendMode.modulate)
-        : null;
+    final tint = _fogTint;
+    final mix = tint == null || tell
+        ? 0.0
+        : emissive
+            ? GroundFog.emissive(_fogMix)
+            : _fogMix;
+    _paint.colorFilter = mix > 0
+        ? GroundFog.filter(light, mix, tint!)
+        : light < .999
+            ? ColorFilter.mode(Color.fromARGB(255, v, v, v), BlendMode.modulate)
+            : null;
     final src = Rect.fromLTWH(
       col * cw * 1.0,
       row * ch * 1.0,
@@ -102,14 +153,26 @@ class GroundPainter {
       ch * 1.0,
     );
     final left = (cx - w / 2).roundToDouble(), top = (bottom - h).roundToDouble();
-    if (mirror) {
-      c.save();
-      c.translate(left + w, top);
-      c.scale(-1, 1);
-      c.drawImageRect(img, src, Rect.fromLTWH(0, 0, w, h), _paint);
-      c.restore();
-    } else {
-      c.drawImageRect(img, src, Rect.fromLTWH(left, top, w, h), _paint);
+    void draw() {
+      if (mirror) {
+        c.save();
+        c.translate(left + w, top);
+        c.scale(-1, 1);
+        c.drawImageRect(img, src, Rect.fromLTWH(0, 0, w, h), _paint);
+        c.restore();
+      } else {
+        c.drawImageRect(img, src, Rect.fromLTWH(left, top, w, h), _paint);
+      }
+    }
+
+    draw();
+    // Eyes and cracks baked into a fogged body show through at half rate.
+    final r = reveal ? GroundBlocksLayer.revealAlpha(mix) : 0.0;
+    if (r > 0) {
+      _paint
+        ..color = Color.fromRGBO(255, 255, 255, (opacity * r).clamp(0.0, 1.0))
+        ..colorFilter = Atmosphere.glowMatrix;
+      draw();
     }
   }
 
@@ -123,10 +186,16 @@ class GroundPainter {
 
   /// A cell centred on (cx, cy) instead of bottom-centred.
   void _cellC(Canvas c, int row, int col, double cx, double cy, double scale,
-          {bool mirror = false, double light = 1, double opacity = 1, bool troop = false}) =>
+          {bool mirror = false,
+          double light = 1,
+          double opacity = 1,
+          bool troop = false,
+          bool emissive = false,
+          bool tell = false}) =>
       _cell(c, row, col, cx,
           cy + (troop ? GroundTroopsAtlas.cellH : GroundAtlas.cellH) * scale / 2, scale,
-          mirror: mirror, light: light, opacity: opacity, troop: troop);
+          mirror: mirror, light: light, opacity: opacity, troop: troop,
+          emissive: emissive, tell: tell);
 
   /// Fire, flashes and sparks glow through the haze: they fog only half as
   /// much as hulls do.
@@ -153,6 +222,18 @@ class GroundPainter {
     final g = m.ground;
     final atmo = m.perspective ? atmosphere : null;
     final air = atmo?.groundLayers ?? const [];
+    _fogTint = atmo?.groundArt == null ? null : GroundFog.tintFor(atmo!.environment);
+    blocks.fogTint = _fogTint;
+    _setFog(0);
+    _smoke = atmo?.groundArt;
+    _smokeDrawn = 0;
+    debugSmokeWalls.clear();
+    debugSmokePuffs.clear();
+    if (atmo != null) {
+      _smokeTint = GroundFog.smokeFor(atmo.environment);
+      _smokeFull = atmo.quality == AtmosphereQuality.full;
+      _smokeStill = atmo.reducedMotion;
+    }
     if (g.units.isEmpty && g.allies.isEmpty && g.tracers.isEmpty) {
       for (final (_, l) in air) {
         atmo!.paintGroundLayer(c, l);
@@ -161,12 +242,16 @@ class GroundPainter {
     }
     final clock = m.visualClock;
     for (final u in g.units) {
-      if (u.destroyed && u.y >= GroundCamera.horizon + 2) _scorch(c, u);
+      if (u.destroyed && u.y >= GroundCamera.horizon + 2) {
+        _setFog(u.z, x: u.x, y: u.y);
+        _scorch(c, u);
+      }
     }
     final items = <(double, void Function())>[
       for (final u in g.units) (u.z, () => _unit(c, u, clock, m)),
       for (final a in g.allies) (a.z, () => _ally(c, a, clock)),
       for (final (z, l) in air) (z, () => atmo!.paintGroundLayer(c, l)),
+      if (_smoke != null) ..._smokeItems(c, g.units, clock),
     ];
     // --- ground war v4: a plant nearer than a unit it overlaps is painted
     // again after that unit, in depth order (the background drew it first).
@@ -190,6 +275,8 @@ class GroundPainter {
     for (final item in items) {
       item.$2();
     }
+    // Tracers, shots and everything after the ground sort: never fogged.
+    _setFog(0);
     for (final t in g.tracers) {
       _tracer(c, t, g.allies);
     }
@@ -210,6 +297,7 @@ class GroundPainter {
 
   void _unit(Canvas c, GroundUnit u, double clock, ArcadeModel m) {
     if (u.y < GroundCamera.horizon + 2) return;
+    _setFog(u.z, threat: isThreat(u), x: u.x, y: u.y);
     switch (u.force) {
       case GroundForce.infantry || GroundForce.rockets:
         return _squad(c, u, clock);
@@ -265,7 +353,7 @@ class GroundPainter {
     if (bt != null) {
       blocks.demonVehicle(c, u, bt, clock, light, _glow(light), m);
     } else {
-      _cell(c, row, col, u.x, u.y, s, mirror: mirror, light: light);
+      _cell(c, row, col, u.x, u.y, s, mirror: mirror, light: light, reveal: true);
     }
     if (u.telegraphing) {
       // A warm warning bracket under the launcher: readable at phone size.
@@ -286,11 +374,11 @@ class GroundPainter {
       final mx = u.x + (mirror ? -1 : 1) * u.width * .2;
       _cell(c, GroundAtlas.effectRow, GroundAtlas.launchFlashCol, mx,
           u.bodyY + 10 * s, s * 1.1,
-          mirror: mirror, light: _glow(light));
+          mirror: mirror, light: _glow(light), tell: true);
       _cellC(c, GroundAtlas.flameRow,
           GroundAtlas.muzzleWarmCol +
               (k * GroundAtlas.muzzleFrames).floor().clamp(0, 2),
-          mx, u.bodyY - 6 * s, s, light: _glow(light));
+          mx, u.bodyY - 6 * s, s, light: _glow(light), tell: true);
     }
   }
 
@@ -306,7 +394,7 @@ class GroundPainter {
       _cell(c, GroundAtlas.fxRow,
           GroundAtlas.shockCol + (t / .36 * GroundAtlas.shockFrames).floor(),
           u.x, u.y + 3 * s, s * 1.9,
-          light: glow, opacity: 1 - t / .5);
+          light: glow, emissive: true, opacity: 1 - t / .5);
     }
     if (t > .12) hulk(fade);
     // Flame tongues on the hulk: tall at first, dying down after ~3 s.
@@ -319,11 +407,13 @@ class GroundPainter {
         _cell(c, GroundAtlas.flameRow, GroundAtlas.flameCol + f,
             u.x + fx * u.width * (mirror ? -1 : 1), u.y - 4 * s,
             s * .62 * size * (.55 + .45 * burn),
-            light: glow, opacity: math.min(1, burn * 1.6) * fade);
+            light: glow, emissive: true, opacity: math.min(1, burn * 1.6) * fade);
       }
     }
     // Smoke column: puffs born dense and dark at the hulk, rising, growing
-    // and thinning, drifting with the wind.
+    // and thinning, drifting with the wind; with the atmosphere art, its
+    // smokeDrift puffs carry the column on into a drifting battlefield haze.
+    if (t > .5 && _smoke != null) _wreckSmoke(c, u, t);
     if (t > .5) {
       final strength = (1 - (t - 4) / 2).clamp(0.0, 1.0);
       for (var k = 0; k < 5; k++) {
@@ -341,7 +431,7 @@ class GroundPainter {
           .floor()
           .clamp(0, GroundAtlas.explosionFrames - 1);
       _cell(c, GroundAtlas.effectRow, GroundAtlas.explosionCol + f, u.x,
-          u.y + 3 * s, s * 2.0, light: glow);
+          u.y + 3 * s, s * 2.0, light: glow, emissive: true);
     }
     // --- ground easter eggs: the breakup (5-8 pieces for a light Host
     // vehicle, 3-4 for a heavier one, at most 16 on screen, clipped at the
@@ -388,17 +478,140 @@ class GroundPainter {
         if (bt != null &&
             blocks.piece(c, bt, k, x, y, s,
                 flying ? (t * 14 + spin).floor() : spin,
-                light: flying ? glow : light * .85, opacity: fade)) {
+                light: flying ? glow : light * .85, opacity: fade, emissive: flying)) {
           continue;
         }
         _cellC(c, GroundAtlas.flameRow,
             GroundAtlas.debrisCol +
                 (flying ? (t * 14 + spin).floor() % GroundAtlas.debrisFrames : spin),
             x, y, s * .8,
-            light: flying ? glow : light * .85, opacity: fade);
+            light: flying ? glow : light * .85, opacity: fade, emissive: flying);
       }
     }
     if (jackpot) blocks.jackpot(c, u, bt!, clock, light, glow);
+  }
+
+  // ---------------------------------------------- battlefield smoke
+
+  /// One smokeDrift puff, frame [frame], bottom-centred on ([x], [bottom])
+  /// at sprite scale [s]: the lane cap applies to its screen rect.
+  void _puff(Canvas c, double x, double bottom, double s, int frame,
+      double opacity, {bool mirror = false}) {
+    final art = _smoke;
+    if (art == null || _smokeDrawn >= maxSmoke || opacity <= 0) return;
+    final src = GroundAtmosphereAtlas.smokeDrift(
+        frame.clamp(0, GroundAtmosphereAtlas.smokeDriftFrames - 1));
+    final w = src.width * s, h = src.height * s;
+    final dst = Rect.fromLTWH(x - w / 2, bottom - h, w, h);
+    final o = GroundSmoke.driftOpacity(dst, opacity);
+    art.paintSmoke(c, src, dst, opacity: o, tint: _smokeTint, mirror: mirror);
+    _smokeDrawn++;
+    debugSmokePuffs.add((dst, o));
+  }
+
+  /// Smoke over a wreck: puffs born dense at the hulk, rising 4 units a
+  /// second and swaying ±2 while they thin through the six frames. Reduced
+  /// atmosphere keeps one puff; reduced motion holds the densest frame and
+  /// fades it out.
+  void _wreckSmoke(Canvas c, GroundUnit u, double t) {
+    final strength = (1 - (t - 4) / 2).clamp(0.0, 1.0);
+    final s = u.scale;
+    final base = u.y - 24 * u.scale; // over the column's dense puffs
+    if (_smokeStill) {
+      _puff(c, u.x, base, s, 0, .7 * strength);
+      return;
+    }
+    final n = _smokeFull ? 3 : 1;
+    const life = GroundSmoke.puffLife;
+    for (var k = 0; k < n; k++) {
+      final q = ((t - .5) + k * life / n) % life;
+      // Born only after the wreck is: no puff older than the smoke.
+      if (q > t - .5) continue;
+      final p = q / life;
+      final sway = GroundSmoke.sway * math.sin(t * 2.1 + k * 2 + u.id);
+      _puff(
+        c,
+        u.x + (sway + q * 4) * u.scale,
+        base - GroundSmoke.rise * q * u.scale * 3.5,
+        s * (.85 + .6 * p),
+        (p * GroundAtmosphereAtlas.smokeDriftFrames).floor(),
+        (.7 - .4 * p) * strength,
+        mirror: (u.id + k).isOdd,
+      );
+    }
+  }
+
+  /// Smoke that is not part of one wreck, as depth-sort entries: a smoke
+  /// wall along a burning wreck line (two hulks burning close together on
+  /// one side; never inside the lane; full atmosphere only) and gun smoke
+  /// over skirmish units trading fire.
+  List<(double, void Function())> _smokeItems(
+      Canvas c, List<GroundUnit> units, double clock) {
+    final out = <(double, void Function())>[];
+    final burning = [
+      for (final u in units)
+        if (u.destroyed && u.wreckAge > .8 && u.wreckAge < 5 &&
+            u.y >= GroundCamera.horizon + 2)
+          u,
+    ];
+    var walls = 0;
+    for (var i = 0; i < burning.length && _smokeFull && walls < 2; i++) {
+      for (var j = i + 1; j < burning.length && walls < 2; j++) {
+        final a = burning[i], b = burning[j];
+        if (a.side != b.side || (a.z - b.z).abs() > 220) continue;
+        if ((a.x - b.x).abs() > 80) continue;
+        final z = math.max(a.z, b.z);
+        final s = GroundCamera.texel(z) * GroundTuning.unitScale * .7;
+        const life = 5.0;
+        final age = math.min(a.wreckAge, b.wreckAge);
+        final strength = ((age - .8) / .8).clamp(0.0, 1.0) *
+            (1 - (math.max(a.wreckAge, b.wreckAge) - 4) / 1).clamp(0.0, 1.0);
+        final src = GroundAtmosphereAtlas.smokeWall(_smokeStill
+            ? 0
+            : ((clock * 1 / 1.6).floor() + a.id) %
+                GroundAtmosphereAtlas.smokeWallFrames);
+        final w = src.width * s, h = src.height * s;
+        final drift = _smokeStill ? 0.0 : ((clock + a.id) % life) * 1 * s;
+        final cx = (a.x + b.x) / 2 + drift - .5 * s;
+        final bottom = math.min(a.y, b.y) - 4 * s;
+        final dst = Rect.fromLTWH(cx - w / 2, bottom - h, w, h);
+        if (GroundSmoke.inLane(dst)) continue;
+        walls++;
+        final o = GroundAtmosphereAtlas.smokeWallMin +
+            (GroundAtmosphereAtlas.smokeWallMax -
+                    GroundAtmosphereAtlas.smokeWallMin) *
+                strength;
+        out.add((z + .5, () {
+          final art = _smoke;
+          if (art == null || _smokeDrawn >= maxSmoke || strength <= 0) return;
+          art.paintSmoke(c, src, dst,
+              opacity: o, tint: _smokeTint, mirror: a.side == 1);
+          _smokeDrawn++;
+          debugSmokeWalls.add(dst);
+        }));
+      }
+    }
+    // Gun smoke: a thin puff lingers over a skirmish unit while it trades
+    // fire (one every 3 s per unit, at most four on screen).
+    var gun = 0;
+    for (final u in units) {
+      if (gun >= 4 || !_smokeFull) break;
+      if (!u.skirmish || !u.alive || !(u.ally?.alive ?? false)) continue;
+      if (u.z > 1150 || u.y < GroundCamera.horizon + 2) continue;
+      final q = _smokeStill ? 0.0 : (clock + u.id * .7) % 3.0;
+      if (q > GroundSmoke.puffLife) continue;
+      gun++;
+      final p = q / GroundSmoke.puffLife;
+      out.add((u.z + .5, () => _puff(
+            c,
+            u.x + (u.mirrored ? -1 : 1) * u.width * .3 + q * 2 * u.scale,
+            u.bodyY - 2 * u.scale - GroundSmoke.rise * q * u.scale,
+            u.scale * .45 * (.8 + .4 * p),
+            _smokeStill ? 0 : 2 + (p * 4).floor(),
+            GroundAtmosphereAtlas.smokeDriftMin * (1 - p * .6),
+            mirror: u.id.isOdd)));
+    }
+    return out;
   }
 
   // ---------------------------------------------- ground easter eggs
@@ -534,7 +747,7 @@ class GroundPainter {
           _cell(c, GroundTroopsAtlas.fxRow,
               GroundTroopsAtlas.crumbleCol +
                   (t / .5 * GroundTroopsAtlas.crumbleFrames).floor().clamp(0, 2),
-              x, y + s, s, light: _glow(light), troop: true);
+              x, y + s, s, light: _glow(light), emissive: true, troop: true);
         }
         continue;
       }
@@ -561,7 +774,8 @@ class GroundPainter {
             fires: u.fireFlash > 0 && k == u.id % math.max(1, alive),
             moving: moving, engaged: engaged);
       } else {
-        _cell(c, row, col, x, y, s, mirror: u.mirrored, light: light, troop: true);
+        _cell(c, row, col, x, y, s,
+            mirror: u.mirrored, light: light, troop: true, reveal: true);
       }
     }
   }
@@ -607,7 +821,8 @@ class GroundPainter {
       blocks.demonVehicle(c, u, bt, clock, light, _glow(light), m);
       return;
     }
-    _cell(c, row, col, u.x, u.y, s, mirror: mirror, light: light, troop: true);
+    _cell(c, row, col, u.x, u.y, s,
+        mirror: mirror, light: light, troop: true, reveal: true);
   }
 
   /// An allied squad: rifle or rocket troopers from behind, walking with the
@@ -721,6 +936,7 @@ class GroundPainter {
 
   void _ally(Canvas c, GroundAlly a, double clock) {
     if (a.y < GroundCamera.horizon + 2) return;
+    _setFog(a.z, x: a.x, y: a.y);
     if (a.force != GroundForce.vehicle) {
       _allySquad(c, a, clock);
       if (!a.totalled) _iff(c, a, 18 * a.scale * allyTroopScale);
@@ -791,7 +1007,7 @@ class GroundPainter {
             GroundAtlas.muzzleCyanCol +
                 ((1 - kick) * GroundAtlas.muzzleFrames).floor().clamp(0, 2),
             mz.dx, mz.dy, s * (kind == 2 ? .7 : .9),
-            light: _glow(light));
+            light: _glow(light), emissive: true);
       }
     } else if (kind == 1) {
       // Infantry: walk; kneel when engaged and holding; a volley on a shot.
@@ -825,13 +1041,13 @@ class GroundPainter {
             GroundAtlas.muzzleCyanCol +
                 ((1 - kick) * GroundAtlas.muzzleFrames).floor().clamp(0, 2),
             mz.dx + ox, mz.dy + oy, s * (kind == 2 ? .7 : .9),
-            light: _glow(light));
+            light: _glow(light), emissive: true);
       }
     }
     if (a.flash > 0) {
       final f = ((1 - a.flash / .15) * GroundAtlas.sparkFrames).floor().clamp(0, 2);
       _cellC(c, GroundAtlas.fxRow, GroundAtlas.sparkCol + f,
-          a.x + ((a.id % 3) - 1) * 4 * s, a.y - 9 * s, s * .9, light: _glow(light));
+          a.x + ((a.id % 3) - 1) * 4 * s, a.y - 9 * s, s * .9, light: _glow(light), emissive: true);
     }
     if (a.underAttack && (a.attacker?.calledForHelp ?? false)) {
       // Distress beacon while calling for help (a breakthrough looms): a
@@ -880,13 +1096,13 @@ class GroundPainter {
         _cell(c, GroundAtlas.flameRow,
             GroundAtlas.flameCol + (clock * 12).floor() % GroundAtlas.flameFrames,
             a.x + out * 3 * s, a.y - 9 * s, s * .4 * (1 - t / 1.4) + s * .1,
-            light: _glow(light));
+            light: _glow(light), emissive: true);
       }
       if ((clock * 11).floor() % 3 == 0) {
         _cellC(c, GroundAtlas.fxRow,
             GroundAtlas.sparkCol + (clock * 20).floor() % GroundAtlas.sparkFrames,
             a.x + ((clock * 37).floor() % 5 - 2) * 2 * s, a.y - 10 * s, s * .8,
-            light: _glow(light));
+            light: _glow(light), emissive: true);
       }
     }
     if (a.ejects && t < 2.5 && kind != 1) {

@@ -289,7 +289,22 @@ class FlyoverBackground implements GroundOccluders {
     final veg = vegetationSheet;
     if (veg != null) _paintVegetation(c, veg, sector, route, alpha);
     _paintCritters(c, critterSheet, sector, alpha);
-    if (sector == _sector) _paintFlocks(c, alpha);
+    if (sector == _sector) {
+      _flyerAlpha = alpha;
+      if (!deferFlyers) _paintFlocks(c, alpha);
+    }
+  }
+
+  /// When true, [paintWorld] leaves the flock flyers to [paintFlyers]: the
+  /// scene draws them above the ground fog, so a flock leaving a tree is not
+  /// lost under the fog layers that lie on the ground.
+  bool deferFlyers = false;
+  int _flyerAlpha = 255;
+
+  /// Paints the flock flyers (when [deferFlyers]) at the current sector's
+  /// opacity.
+  void paintFlyers(Canvas c) {
+    if (deferFlyers) _paintFlocks(c, _flyerAlpha);
   }
 
   // Ground mesh buffers, reused every frame.
@@ -1178,7 +1193,8 @@ class FlyoverBackground implements GroundOccluders {
         translateX: f.x.roundToDouble(),
         translateY: f.y.roundToDouble(),
       ));
-      final v = (235 * (.35 + .65 * _fog(f.z))).round();
+      // A slight lift over the far fog; grey only (never warm, no eyes).
+      final v = (235 * (.55 + .45 * _fog(f.z))).round();
       colors.add(Color.fromARGB((alpha * o).round(), v, v, v));
     }
     if (rects.isEmpty) return;

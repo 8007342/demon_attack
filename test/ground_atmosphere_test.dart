@@ -7,6 +7,7 @@ import 'package:demon_attack/game/ground_atlas.dart';
 import 'package:demon_attack/game/ground_atmosphere.dart';
 import 'package:demon_attack/game/ground_atmosphere_atlas.dart';
 import 'package:demon_attack/game/ground_blocks_painter.dart';
+import 'package:demon_attack/game/ground_painter.dart';
 import 'package:demon_attack/game/ground_troops_atlas.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
@@ -357,6 +358,222 @@ void main() {
     });
   });
 
+  group('units and smoke (runtime follow-ups)', () {
+    test('fog mix: clear near and in the lane, threats capped, emissive at half', () {
+      expect(GroundFog.unitMix(650), 0);
+      expect(GroundFog.unitMix(700), 0);
+      expect(GroundFog.unitMix(1400), closeTo(.82, 1 / GroundFog.steps));
+      expect(GroundFog.unitMix(1400), lessThanOrEqualTo(.82));
+      expect(GroundFog.unitMix(1400, threat: true),
+          lessThanOrEqualTo(GroundAtmosphereAtlas.threatCap));
+      expect(GroundFog.unitMix(1400, threat: true),
+          greaterThan(GroundAtmosphereAtlas.threatCap - 1 / GroundFog.steps));
+      // Inside the lane below its top row the cap holds at any depth.
+      expect(GroundFog.unitMix(1400, x: 180, y: 320),
+          lessThanOrEqualTo(GroundAtmosphereAtlas.laneCap));
+      expect(GroundFog.unitMix(1400, x: 40, y: 320), greaterThan(.7));
+      expect(GroundFog.emissive(.8), closeTo(.4, 1 / GroundFog.steps));
+      expect(GroundBlocksLayer.revealAlpha(0), 0);
+      expect(GroundBlocksLayer.revealAlpha(.1), 0);
+      expect(GroundBlocksLayer.revealAlpha(.82), .5);
+    });
+
+    test('the tint is the sector fog colour, cross-faded while travelling', () {
+      for (var s = 0; s < 5; s++) {
+        expect(GroundFog.tintFor(s * 1.0).toARGB32(),
+            GroundAtmosphereAtlas.fogTint[s]);
+        expect(GroundFog.smokeFor(s * 1.0).toARGB32(),
+            GroundAtmosphereAtlas.smokeTint[s]);
+      }
+      final mid = GroundFog.tintFor(2.5);
+      final a = Color(GroundAtmosphereAtlas.fogTint[2]);
+      final b = Color(GroundAtmosphereAtlas.fogTint[3]);
+      expect(mid.r, closeTo((a.r + b.r) / 2, .01));
+      // A white body at full light, half fogged: halfway to the tint.
+      final m = GroundFog.matrix(1, .5, a);
+      expect(m[0] * 255 + m[4], closeTo((255 + a.r * 255) / 2, .5));
+      expect(m.sublist(15), [0, 0, 0, 1, 0], reason: 'alpha untouched');
+    });
+
+    test('far units take the fog colour; tells stay untinted', () async {
+      final scene = await _sectorScene(1, atlas, seconds: 0);
+      final m = scene.model;
+      final far = GroundUnit(900, 1, 0, .5, 1300)
+        ..telegraph = GroundTuning.telegraph * .5;
+      m.ground.units
+        ..clear()
+        ..add(far);
+      m.ground.allies.clear();
+      m.ground.tracers.clear();
+      Future<_Px> frame(bool art) async {
+        scene.atmosphere.groundArt = art ? GroundAtmosphereArt(atlas) : null;
+        return _render((c) => scene.groundForces.paintGround(c, m));
+      }
+
+      final plain = await frame(false);
+      final fogged = await frame(true);
+      // Body pixels move toward the Krybor fog tint.
+      final tint = Color(GroundAtmosphereAtlas.fogTint[0]);
+      double dist(_Px p, int x, int y) {
+        final i = (y * p.width + x) * 4;
+        return ((p.rgba[i] - tint.r * 255).abs() +
+                (p.rgba[i + 1] - tint.g * 255).abs() +
+                (p.rgba[i + 2] - tint.b * 255).abs())
+            .toDouble();
+      }
+
+      var closer = 0, body = 0;
+      final box = Rect.fromLTWH(far.x - far.width, far.y - 30 * far.scale,
+          far.width * 2, 30 * far.scale + 8);
+      final hot = <int>{};
+      for (var y = box.top.floor(); y < box.bottom.ceil(); y++) {
+        for (var x = box.left.floor().clamp(0, 359); x < box.right.ceil().clamp(0, 360); x++) {
+          final i = (y * 360 + x) * 4;
+          if (plain.rgba[i + 3] < 250 || fogged.rgba[i + 3] < 250) continue;
+          final c = (fogged.rgba[i] << 16) | (fogged.rgba[i + 1] << 8) | fogged.rgba[i + 2];
+          if (c == 0xFFD594 || c == 0xFF8676) hot.add(c);
+          body++;
+          if (dist(fogged, x, y) < dist(plain, x, y)) closer++;
+        }
+      }
+      expect(body, greaterThan(20));
+      expect(closer / body, greaterThan(.5), reason: 'the body takes the fog');
+      expect(hot, isNotEmpty, reason: 'the telegraph bracket keeps its colour');
+    });
+
+    test('wreck smoke: puffs over wrecks, walls on a burning line, lane caps', () async {
+      final scene = await _sectorScene(3, atlas, seconds: 0);
+      final m = scene.model;
+      final g = scene.groundForces;
+      GroundUnit wreck(int id, int side, double across, double z, double age) =>
+          GroundUnit(id, 3, side, across, z)
+            ..destroyed = true
+            ..wreckAge = age;
+      m.ground.units
+        ..clear()
+        ..addAll([
+          wreck(1, 0, .3, 900, 2),
+          wreck(2, 0, .6, 1000, 2.4),
+          // A wreck at the lane edge, near: its puffs reach into the lane.
+          wreck(3, 1, 1, 340, 1.5)..lx = 262,
+        ]);
+      m.ground.allies.clear();
+      m.ground.tracers.clear();
+      void paint() {
+        final r = ui.PictureRecorder();
+        g.paintGround(ui.Canvas(r), m);
+        r.endRecording().dispose();
+      }
+
+      paint();
+      expect(g.debugSmokePuffs, isNotEmpty);
+      expect(g.debugSmokeWalls, isNotEmpty, reason: 'two hulks burning close');
+      for (final w in g.debugSmokeWalls) {
+        expect(GroundSmoke.inLane(w), isFalse, reason: 'walls never in the lane');
+      }
+      var inLane = 0;
+      for (final (r, o) in g.debugSmokePuffs) {
+        expect(o, lessThanOrEqualTo(GroundAtmosphereAtlas.smokeDriftMax));
+        if (GroundSmoke.inLane(r)) {
+          inLane++;
+          expect(o, lessThanOrEqualTo(GroundAtmosphereAtlas.smokeLaneMax));
+        }
+      }
+      expect(inLane, greaterThan(0), reason: 'the lane-edge wreck tests the cap');
+      expect(g.debugSmokeDrawn, lessThanOrEqualTo(GroundPainter.maxSmoke));
+      // Reduced atmosphere: one puff per wreck, no walls.
+      scene.atmosphere.quality = AtmosphereQuality.reduced;
+      paint();
+      expect(g.debugSmokeWalls, isEmpty);
+      expect(g.debugSmokePuffs.length, lessThanOrEqualTo(3));
+      // Reduced motion: the densest frame, still; the same rects later.
+      scene.atmosphere
+        ..quality = AtmosphereQuality.full
+        ..reducedMotion = true;
+      paint();
+      final still = [for (final (r, _) in g.debugSmokePuffs) r];
+      for (final u in m.ground.units) {
+        u.wreckAge += .7;
+      }
+      paint();
+      expect([for (final (r, _) in g.debugSmokePuffs) r], still);
+      // Without the art: the old puff column, no atlas smoke.
+      scene.atmosphere
+        ..reducedMotion = false
+        ..groundArt = null;
+      paint();
+      expect(g.debugSmokeDrawn, 0);
+    });
+
+    test('gun smoke over skirmish units trading fire', () async {
+      final scene = await _sectorScene(2, atlas, seconds: 0);
+      final m = scene.model;
+      final g = scene.groundForces;
+      final ally = GroundAlly(50, 2, 0, .5, 800, 3);
+      m.ground.allies
+        ..clear()
+        ..add(ally);
+      m.ground.units
+        ..clear()
+        ..add(GroundUnit(51, 2, 0, .4, 950)
+          ..skirmish = true
+          ..ally = ally);
+      m.ground.tracers.clear();
+      final r = ui.PictureRecorder();
+      m.clock = 1.0;
+      g.paintGround(ui.Canvas(r), m);
+      r.endRecording().dispose();
+      expect(g.debugSmokePuffs, isNotEmpty);
+      for (final (_, o) in g.debugSmokePuffs) {
+        expect(o, lessThanOrEqualTo(GroundAtmosphereAtlas.smokeDriftMin));
+      }
+    });
+  });
+
+  testWidgets('review frames: fogged units and battlefield smoke', (tester) async {
+    await tester.runAsync(() async {
+      for (final sector in [1, 3]) {
+        final scene = await _sectorScene(sector, atlas);
+        final m = scene.model;
+        final ally = m.ground.allies.isEmpty ? null : m.ground.allies.first;
+        m.ground.units
+          ..clear()
+          ..addAll([
+            for (final (i, z) in [1400.0, 1250.0, 1100.0, 950.0, 800.0, 650.0].indexed)
+              GroundUnit(200 + i, sector, i % 2, .3 + .1 * (i % 3), z),
+            GroundUnit(220, sector, 0, .2, 900)
+              ..destroyed = true
+              ..wreckAge = 2,
+            GroundUnit(221, sector, 0, .7, 1000)
+              ..destroyed = true
+              ..wreckAge = 2.6,
+            GroundUnit(222, sector, 1, .5, 520)
+              ..destroyed = true
+              ..wreckAge = 1.4,
+            if (ally != null)
+              GroundUnit(223, sector, 1, .6, 900)
+                ..skirmish = true
+                ..ally = ally,
+          ]);
+        for (final (tag, art) in [('art', true), ('plain', false)]) {
+          scene.atmosphere.groundArt = art ? GroundAtmosphereArt(atlas) : null;
+          final r = ui.PictureRecorder();
+          final c = ui.Canvas(r);
+          c.drawRect(const Rect.fromLTWH(0, 0, 360, 780), Paint()..color = const Color(0xFF000000));
+          scene.paintArena(c, Vector2(360, 780));
+          final pic = r.endRecording();
+          final img = await pic.toImage(360, 780);
+          final bytes = (await img.toByteData(format: ui.ImageByteFormat.png))!;
+          final file = File('$_review/l$sector-fog-smoke-$tag.png');
+          await file.parent.create(recursive: true);
+          await file.writeAsBytes(bytes.buffer.asUint8List());
+          img.dispose();
+          pic.dispose();
+        }
+      }
+    });
+  });
+
   testWidgets('CP6 review sheet: every layer per sector, then over each sector', (tester) async {
     await tester.runAsync(() async {
       final paintings = [
@@ -450,8 +667,8 @@ void main() {
   });
 }
 
-/// One sector in play at 360 x 780 with ground units at the CP6 depths.
-Future<ui.Image> _sectorFrame(int sector, ui.Image? art) async {
+/// A scene in [sector] with every ground atlas loaded, run for [seconds].
+Future<DemonScene> _sectorScene(int sector, ui.Image? art, {int seconds = 14}) async {
   final m = ArcadeModel(seed: 1982)..startAt(sector: sector);
   final scene = DemonScene(m, () {});
   for (var i = 0; i < 5; i++) {
@@ -472,12 +689,19 @@ Future<ui.Image> _sectorFrame(int sector, ui.Image? art) async {
   await scene.atmosphere.load(shader: false);
   if (art != null) scene.atmosphere.groundArt = GroundAtmosphereArt(art);
   scene.environment = sector - 1.0;
-  for (var f = 0; f < 60 * 14; f++) {
+  for (var f = 0; f < 60 * seconds; f++) {
     if (m.combat) m.invulnerable = 2;
     scene.sectors.advance(1 / 60, m, scene.environment);
     scene.syncAtmosphere(1 / 60);
     m.update(1 / 60);
   }
+  return scene;
+}
+
+/// One sector in play at 360 x 780 with ground units at the CP6 depths.
+Future<ui.Image> _sectorFrame(int sector, ui.Image? art) async {
+  final scene = await _sectorScene(sector, art);
+  final m = scene.model;
   // The CP6 cast: a pair of demon vehicles (one each side) at each depth,
   // squads at 850; the convoy's allies stay where the run put them.
   m.ground.units

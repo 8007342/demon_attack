@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:demon_attack/game/easter_eggs.dart';
 import 'package:demon_attack/game/flyover_background.dart';
 import 'package:demon_attack/game/ground_atlas.dart';
+import 'package:demon_attack/game/ground_atmosphere.dart';
+import 'package:demon_attack/game/ground_atmosphere_atlas.dart';
 import 'package:demon_attack/game/ground_blocks_atlas.dart';
 import 'package:demon_attack/game/ground_blocks_cast.dart';
 import 'package:demon_attack/game/ground_blocks_painter.dart';
@@ -459,9 +461,15 @@ void main() {
         ..image = await _decode('assets/images/${GroundAtlas.file}')
         ..troops = await _decode('assets/images/${GroundTroopsAtlas.file}')
         ..blocks.install(sector - 1, await _atlases(sector - 1));
+      // The in-game atmosphere: fog tiles and the ground-atmosphere art.
+      await scene.atmosphere.load(shader: false);
+      scene.atmosphere.groundArt = GroundAtmosphereArt(
+        await _decode('assets/images/${GroundAtmosphereAtlas.file}'),
+      );
       scene.environment = sector - 1.0;
       for (var f = 0; f < 60 * 6; f++) {
         scene.sectors.advance(1 / 60, m, scene.environment);
+        scene.syncAtmosphere(1 / 60);
         m.update(1 / 60);
       }
       // Bursts from the nearest side-band tree crown on screen (or a fixed
@@ -483,8 +491,47 @@ void main() {
       fly.spawnFlock(0, 7, 0, at.dx, at.dy + 4, 260);
       for (var f = 0; f < 60 * .7; f++) {
         scene.sectors.advance(1 / 60, m, scene.environment);
+        scene.syncAtmosphere(1 / 60);
         m.update(1 / 60);
       }
+      // The flyers draw over the ground fog (not under it): with the
+      // flock sheet removed, the pixels around them change visibly.
+      expect(fly.deferFlyers, isTrue);
+      Future<List<int>> lumas() async {
+        final r = ui.PictureRecorder();
+        scene.paintArena(ui.Canvas(r), Vector2(360, 520));
+        final pic = r.endRecording();
+        final img = await pic.toImage(360, 520);
+        final b = (await img.toByteData(
+          format: ui.ImageByteFormat.rawStraightRgba,
+        ))!.buffer.asUint8List();
+        img.dispose();
+        pic.dispose();
+        return [
+          for (var i = 0; i < b.length; i += 4)
+            (2126 * b[i] + 7152 * b[i + 1] + 722 * b[i + 2]) ~/ 10000,
+        ];
+      }
+
+      final withFlock = await lumas();
+      final sheet = fly.wildlife;
+      fly.wildlife = null;
+      final without = await lumas();
+      fly.wildlife = sheet;
+      var visible = 0;
+      for (final p in fly.debugFlyers) {
+        if (FlyoverBackground.flyerOpacity(p) <= 0) continue;
+        for (var dy = -5; dy <= 5; dy++) {
+          for (var dx = -6; dx <= 6; dx++) {
+            final x = p.x.round() + dx, y = p.y.round() + dy;
+            if (x < 0 || x >= 360 || y < 0 || y >= 520) continue;
+            if ((withFlock[y * 360 + x] - without[y * 360 + x]).abs() >= 12) {
+              visible++;
+            }
+          }
+        }
+      }
+      expect(visible, greaterThan(40), reason: 'the flock reads over the fog');
       expect(
         fly.debugFlyers.where((p) => FlyoverBackground.flyerOpacity(p) > 0),
         isNotEmpty,

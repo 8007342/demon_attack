@@ -44,7 +44,7 @@ class DemonScene extends FlameGame {
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- ground war (ground_painter.dart) ---
   late final groundForces = GroundPainter()
-    ..occluders = sectors.flyover
+    ..occluders = (sectors.flyover..deferFlyers = true)
     ..atmosphere = atmosphere // --- ground atmosphere art in the depth sort
     ..eggs = sectors.flyover.eggs;
   List<ScoreEntry> topScores = const [];
@@ -203,6 +203,8 @@ class DemonScene extends FlameGame {
           ship,
         ); // --- ground war: in the air
         _cinematic(canvas);
+      } else {
+        sectors.flyover.paintFlyers(canvas); // --- easter eggs: flocks
       }
       canvas.restore();
     } else {
@@ -220,6 +222,8 @@ class DemonScene extends FlameGame {
           ship,
         ); // --- ground war: in the air
         _cinematic(canvas);
+      } else {
+        sectors.flyover.paintFlyers(canvas); // --- easter eggs: flocks
       }
     }
     canvas.restore();
@@ -542,6 +546,8 @@ class DemonScene extends FlameGame {
     _swarmShadows(c); // --- perspective: on the ground, under everything
     // --- atmosphere: ground fog lies on the terrain, over the shadows.
     if (model.perspective) atmosphere.paint(c, FogSlot.groundFog);
+    // --- easter eggs: flock flyers over the ground fog (in the air).
+    sectors.flyover.paintFlyers(c);
     _arrivalShadows(c); // --- atmosphere: incoming shadows lead the wave
     for (final p in model.heartPickups) {
       c.save();

@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:demon_attack/game/ground_atlas.dart';
+import 'package:demon_attack/game/ground_atmosphere.dart';
+import 'package:demon_attack/game/ground_atmosphere_atlas.dart';
 import 'package:demon_attack/game/ground_blocks_atlas.dart';
 import 'package:demon_attack/game/ground_blocks_cast.dart';
 import 'package:demon_attack/game/ground_blocks_painter.dart';
@@ -435,6 +437,12 @@ void main() {
           ..image = await _decode('assets/images/${GroundAtlas.file}')
           ..troops = await _decode('assets/images/${GroundTroopsAtlas.file}')
           ..blocks.install(sector - 1, await _atlases(sector - 1));
+        // The in-game atmosphere: units fog by depth, wrecks smoke.
+        await scene.atmosphere.load(shader: false);
+        final fog = GroundAtmosphereArt(
+          await _decode('assets/images/${GroundAtmosphereAtlas.file}'),
+        );
+        scene.atmosphere.groundArt = fog;
         scene.environment = sector - 1.0;
         var next = 0.0;
         for (var f = 0; f < 60 * 40; f++) {
@@ -449,6 +457,7 @@ void main() {
                 (((f / 600) % 1) - .5).abs();
           }
           scene.sectors.advance(1 / 60, m, scene.environment);
+          scene.syncAtmosphere(1 / 60);
           m.update(1 / 60);
           final r = ui.PictureRecorder();
           scene.groundForces.paintGround(ui.Canvas(r), m);
@@ -470,7 +479,9 @@ void main() {
             canvas.drawRect(ui.Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()),
                 ui.Paint()..color = const ui.Color(0xFF5A6070));
             canvas.scale(2);
+            scene.atmosphere.groundArt = null;
             scene.groundForces.paintGround(canvas, m);
+            scene.atmosphere.groundArt = fog;
             GroundPainter.useBlocks = true;
           } else {
             scene.paintArena(canvas, Vector2(w.toDouble(), h.toDouble()));
