@@ -134,6 +134,8 @@ class DemonScene extends FlameGame {
     if (model.canPilot && keyboardDirection != 0) {
       model.moveBy(keyboardDirection * dt * 280);
     }
+    // --- cinematic flow: the accessibility setting picks the plan.
+    model.reducedMotion = sectors.flyover.reducedMotion;
     model.update(dt);
     armada.sync(model, images.load, images.clear);
     // --- ground blocks runtime: the current sector's block atlases.
@@ -1949,8 +1951,10 @@ class DemonScene extends FlameGame {
     final fx = effectsAtlas;
     if (f != null && f.visible && fx != null) {
       final gy = Perspective.groundY(f.nearness.clamp(.08, .4));
-      final alpha =
-          (.2 * f.opacity * Atmosphere.groundLight(gy) - .02).clamp(0.0, .2);
+      final alpha = (.2 * f.opacity * Atmosphere.groundLight(gy) - .02).clamp(
+        0.0,
+        .2,
+      );
       if (alpha > .01) {
         final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
         buckets[reduced ? 0 : 2].add(

@@ -25,20 +25,20 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
       - Pursuit is a whole number of beats.
 
 ## 2. Model phases
-- [ ] 2.1 `model.dart` cinematic branch of `_step` (the `if (cinematic)` block):
+- [x] 2.1 `model.dart` cinematic branch of `_step` (the `if (cinematic)` block):
       - `levelClear` lasts 2.0 s, `travel` 4.0 s, plus reading time only when a slot is scheduled;
       - skip input (`ArcadeModel.skipTransition()`) jumps to the end of `travel`, never cutting the salvage grace;
       - the director is fed `transitionProgress`;
       - pause freezes it (already true of phase clocks).
-- [ ] 2.2 `swarm_stream.dart`:
+- [x] 2.2 `swarm_stream.dart`:
       - `drain()` at the level's last wave;
       - `rout(dir)` on the last kill or the carrier's first chain blast (cosmetic reserve silhouettes, ≤ 18);
       - `preload(cohort)` in `_beginLevel`, placing the new sector's first cohort as reserve in the pursued
         flock's screen direction.
-- [ ] 2.3 Boss arrival (`_beginLevel` for level 5): the flock mills, opens the vacuole and pours into the bays when
+- [x] 2.3 Boss arrival (`_beginLevel` for level 5): the flock mills, opens the vacuole and pours into the bays when
       the carrier settles. It is cosmetic and removed before carrier combat. Boss victory: rout from the chain
       detonation.
-- [ ] 2.4 `test/cinematic_flow_test.dart` (design §7, model-level list).
+- [x] 2.4 `test/cinematic_flow_test.dart` (design §7, model-level list).
       `test/campaign_run_test.dart` and `test/campaign_playtest_test.dart` must stay green; update only the
       phase-length assertions and list each one.
 

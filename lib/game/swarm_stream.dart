@@ -69,7 +69,9 @@ class Skein {
 }
 
 /// Plans returned to the transitions of `cinematic-flow` (W5b, design §6.4).
-/// W3 ships them as stubs that describe what would happen; W5b drives them.
+/// The model runs them (lib/game/model_flow.dart): drain stops releases at a
+/// sector's end, rout turns what is left into the fleeing flock, preload
+/// places the next sector's first cohort on the side that flock flew.
 class DrainPlan {
   const DrainPlan(this.pendingSkeins);
 
@@ -297,6 +299,7 @@ class SwarmStream {
     cohortClock = 0;
     releaseLeft = 0;
     relaxed = false;
+    drained = false; // a new cohort releases again after a sector's rout
   }
 
   void lifeLost() {
@@ -313,16 +316,43 @@ class SwarmStream {
   }
 
   /// All present and reserve members switch to a parallel flee into the
-  /// fog toward [direction]; W5b runs it.
-  RoutPlan rout(int direction) =>
-      RoutPlan(direction.sign == 0 ? 1 : direction.sign, 2.4);
+  /// fog toward [direction] (the model turns them into its cosmetic flow
+  /// flock, at most 18 silhouettes, and clears the reserve). Also drains.
+  RoutPlan rout(int direction) {
+    drained = true;
+    return RoutPlan(direction.sign == 0 ? 1 : direction.sign, 2.4);
+  }
 
-  /// The next sector's first cohort as reserve silhouettes.
-  PreloadPlan preload(List<double> homeX, math.Random rng) {
+  /// The next sector's first cohort as reserve skeins, split and gated as a
+  /// roster (same draws from [rng] as [gates]). When the lead side skein is
+  /// not on [direction]'s side (-1 left, 1 right, 0 unchanged) the whole
+  /// alternation is mirrored: the lead comes out of the cloud where the
+  /// pursued flock went (Cianciolo: keep direction), and the cohort keeps
+  /// its left/right balance (a mirror is gameplay-neutral).
+  PreloadPlan preload(
+    List<double> homeX,
+    math.Random rng, {
+    int direction = 0,
+  }) {
+    drained = false;
     final split = splitRoster(homeX);
     final g = gates(split.length, rng);
+    final lead = g.where((x) => x.side != 0).firstOrNull;
+    final mirror =
+        direction != 0 && lead != null && lead.side != direction.sign;
+    SwarmGate turn(SwarmGate gate) {
+      if (!mirror) return gate;
+      return switch (gate) {
+        SwarmGate.left => SwarmGate.right,
+        SwarmGate.right => SwarmGate.left,
+        SwarmGate.deepLeft => SwarmGate.deepRight,
+        SwarmGate.deepRight => SwarmGate.deepLeft,
+        SwarmGate.centre => SwarmGate.centre,
+      };
+    }
+
     return PreloadPlan([
-      for (var i = 0; i < split.length; i++) Skein(i, split[i], g[i]),
+      for (var i = 0; i < split.length; i++) Skein(i, split[i], turn(g[i])),
     ]);
   }
 }

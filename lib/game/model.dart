@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'difficulty.dart';
 import 'flock.dart';
+import 'flow_director.dart';
 import 'game_events.dart';
 import 'ground_blocks_atlas.dart';
 import 'ground_blocks_cast.dart';
@@ -11,6 +12,7 @@ import 'swarm_policy.dart';
 import 'swarm_stream.dart';
 export 'difficulty.dart';
 export 'game_events.dart';
+export 'flow_director.dart';
 export 'perspective.dart';
 export 'swarm_policy.dart';
 export 'swarm_patterns.dart' show Squad, SquadState;
@@ -22,6 +24,9 @@ part 'ground_war_v4.dart'; // --- ground war v4
 
 // --- life-loss sequence (explosion, regroup, re-emergence) ---
 part 'life_loss.dart';
+
+// --- cinematic flow (one transition clock, the pursued flock, skip) ---
+part 'model_flow.dart';
 
 enum RunMode {
   title,
@@ -517,6 +522,33 @@ class ArcadeModel {
       defeatActive ? clock + (defeatDuration - defeatTimer) : clock;
   double invulnerable = 0, transitionLeft = 0;
   static const storyReadingTime = 1 / 3;
+
+  // --- cinematic flow (model_flow.dart, flow_director.dart) ---
+  /// The transition's one clock; presentation reads its envelopes.
+  final flow = FlowDirector();
+
+  /// Reduced motion (accessibility): the same beats, shorter, no tilt.
+  bool reducedMotion = false;
+
+  /// Seconds a scheduled message slot asks Pursuit to grow (0-2; set by the
+  /// presenter before travel starts, rounded up to whole beats).
+  double slotExtra = 0;
+
+  /// Screen direction the pursued flock flies (-1 left, 1 right).
+  int flowDirection = 1;
+
+  /// The cosmetic flock of the transition (never in [demons]).
+  final List<FlowMember> flowFlock = [];
+  double _flowBase = 0;
+  bool _skipPending = false;
+
+  /// Skip a sector transition (tap, Space, Enter): the Descent starts on
+  /// the next frame, or when the pickup grace ends. False: nothing to skip.
+  bool skipTransition() => _skipTransition();
+
+  /// A skip is waiting for the end of the Rout.
+  bool get skipPending => _skipPending;
+  // --- end cinematic flow
   static const arrivalHintDuration = 4.5;
   double transitionDuration = arrivalHintDuration;
   static const powerDuration = 9.0;
@@ -636,6 +668,7 @@ class ArcadeModel {
     _accumulator = 0;
     events.clear();
     _resetLifeLoss();
+    _flowEnd(); // --- cinematic flow
     ground.resetRun(); // --- ground war
     _beginLevel();
   }
@@ -1944,7 +1977,9 @@ class ArcadeModel {
       shots.clear();
       clearedLevel = level;
       _groundEndLevel(); // --- ground war
-      _enterPhase(RunMode.salvage, 2);
+      _enterPhase(RunMode.salvage, FlowPlan.routSeconds);
+      _flowBegin(victory: false); // --- cinematic flow
+      _flowRout(x: 180, y: 150);
       events.add('salvage');
     }
   }
@@ -2014,8 +2049,10 @@ class ArcadeModel {
         b.age += dt;
       }
       blasts.removeWhere((b) => b.age > (b.isLarge ? 1.4 : .75));
+      _flowStep(); // --- cinematic flow
       _updateDefeatCelebration(dt);
       if (defeatTimer <= 0) {
+        _flowEnd();
         events.add('gameover');
       }
       return;
@@ -2110,30 +2147,44 @@ class ArcadeModel {
         }
       }
       transitionLeft = math.max(0, transitionLeft - dt);
+      // --- cinematic flow: the ship eases to the centre while it climbs
+      // (never a pop at the level change), and the director reads the
+      // phase clock.
+      if (mode == RunMode.levelClear ||
+          mode == RunMode.travel ||
+          mode == RunMode.victory) {
+        shipX += (width / 2 - shipX) * (1 - math.exp(-1.5 * dt));
+        targetX = shipX;
+      }
+      _flowStep();
       if (transitionLeft <= 0) {
         if (mode == RunMode.salvage) {
           pickups.clear();
           heartPickups.clear();
           _groundLevelCleared(); // --- ground war
-          _enterPhase(RunMode.levelClear, 4 + storyReadingTime);
+          final clear = FlowPlan.clearFor(flow.plan.reduced);
+          _enterPhase(RunMode.levelClear, clear);
+          _flowBase = FlowPlan.routSeconds;
           events.add('levelclear');
+          if (_skipPending) _finishTravel();
         } else if (mode == RunMode.victory && finalBoss) {
           mode = RunMode.completed;
           events.add('completed');
           _groundCampaignComplete(); // --- ground war
+          _flowEnd();
         } else if (mode == RunMode.levelClear || mode == RunMode.victory) {
-          _enterPhase(RunMode.travel, 4 + storyReadingTime);
+          _flowBase += transitionDuration;
+          _flowReplan();
+          _enterPhase(
+            RunMode.travel,
+            FlowPlan.travelFor(flow.plan.reduced, extra: slotExtra),
+          );
           events.add('travel');
         } else if (mode == RunMode.travel) {
-          if (level == 5) cycle++;
-          level = nextLevel;
-          shipX = targetX = 180;
-          shipVx = shipBank = shipThrust = 0;
-          steering = aimAngle = 0;
-          _steeringActive = false;
-          _beginLevel();
+          _finishTravel();
         } else {
           mode = RunMode.playing;
+          if (flow.active) _flowEnd();
         }
       }
       return;
@@ -3463,7 +3514,9 @@ class ArcadeModel {
       heartPickups.clear();
       ground.clearField(); // --- ground war
       clearedLevel = level;
-      _enterPhase(RunMode.victory, 5.5 + storyReadingTime);
+      _enterPhase(RunMode.victory, FlowPlan.victorySeconds);
+      _flowBegin(victory: true); // --- cinematic flow: the remnant scatters
+      _flowRout(x: b.x, y: b.y);
       events.add('victory');
       events.add('bossDefeated');
     }
@@ -3540,6 +3593,8 @@ class ArcadeModel {
       mode = RunMode.gameOver;
       defeatTimer = defeatDuration;
       cameraPanY = 0;
+      // --- cinematic flow: the swarm wins and mills over the wreck.
+      flow.start(FlowPlan.gameOverOutro(reduced: reducedMotion));
       blasts.addAll([
         Blast(shipX, shipY, big: true),
         Blast(shipX - 14, shipY - 8)..age = -0.08,
@@ -3626,11 +3681,24 @@ class ArcadeModel {
       // High-five clap oscillation: pairs approach to touch wingtips then bounce apart
       final clapPhase = (t * 4.0 + pairIndex * 1.4) % (math.pi * 2);
       final separation = (math.cos(clapPhase) * 0.5 + 0.5) * 26.0 + 4.0;
-      final targetX =
-          anchorX + (isSecond ? separation * 0.5 : -separation * 0.5);
-      final targetY =
+      var targetX = anchorX + (isSecond ? separation * 0.5 : -separation * 0.5);
+      var targetY =
           anchorY +
           (isSecond ? math.sin(t * 5.0) * 2.5 : -math.sin(t * 5.0) * 2.5);
+      // --- cinematic flow (design §4.2): the celebration gathers into a
+      // slow torus over the wreck (omega 0.5), then breaks upward with the
+      // pan. Reduced motion: a still ring.
+      final mill = flow.env('mill');
+      if (mill > 0 || flow.env('break') > 0) {
+        final a =
+            i / smalls.length * 2 * math.pi + flow.env('spin') * elapsed * .5;
+        final r = 64 + (i % 3) * 10.0;
+        final mx = shipX.clamp(90.0, width - 90) + math.cos(a) * r;
+        final my = shipY - 120 + math.sin(a) * r * .38;
+        targetX += (mx - targetX) * mill;
+        targetY += (my - targetY) * mill;
+        targetY -= 260 * flow.env('break') * (1 + (i % 4) * .15);
+      }
 
       final prevX = d.x, prevY = d.y;
       final blend = (dt * 5.0).clamp(0.0, 1.0);
