@@ -147,3 +147,22 @@ Notes from all three pages share one browser store; "Copy for an agent" gives a 
 - Smoke runs of all three new graphs passed (render plan §8, with the heading-edit findings: rig pose holds at
   denoise 0.7, not at 1.0; name the magenta key in the prompts). `go run . control [ids]` writes the VACE control
   strips. Next, on the operator's CP0 go: `go run . rig` + `jobs`, then the Phase 1 pilot one job at a time.
+
+## Update 2026-11-15 (before the relaunch for the Wan2.2-Lightning LoRA)
+
+- **Done:** CP0 approved by the operator. Pilot heroes rendered and ingested (12 candidates; ledger in
+  `plan/render-runs/ground-forces-rework.md` §9; raws in `~/.cache/demon-attack/ground-blocks/{raw,pilot}/`). No GPU
+  jobs in flight; the last ones were st-1794721235621-7, -8, -9 and st-1794721555014-10, all done.
+- **Waiting on the operator:** how `tools/ground_blocks finish` should treat AI art. Today it keeps only luminance inside
+  the rig and recolours from rig ramps, which flattens the heroes (`art/contact/ground-pilot-heroes-finished.png`).
+  Options put to the operator: (1, recommended) keep AI colour quantised to the faction palette inside the rig
+  silhouette ±1 texel; (2) as 1 but let the AI outline win on soft parts; (3) no-AI fallback (rig shading only).
+  Do not run headings, turret angles or VACE clips before that answer.
+- **Next after the answer:** implement it in `finish`, re-finish the 12 heroes into a before/after sheet, the
+  operator picks a hero per unit (`hero.selected` in the family), then `go run . jobs` and the heading jobs
+  (try denoise 0.7 vs 1.0 on Lodestar first, §8).
+- **New after relaunch:** the Wan2.2-Lightning LoRA (lightx2v/Wan2.2-Lightning rev 18bccf88, Seko-V1.1 high- and
+  low-noise) via LoraLoaderModelOnly. Add it to `tools/production/inbetween_vace_workflow.lua` (one loader per
+  expert, before ModelSamplingSD3), set steps 4, cfg 1, split 2/2; check exact file names with `studio.models`.
+- Inputs for studio jobs go under `/work/tmp/imagegen/in/` (that folder is wiped on relaunch: re-copy the rig refs
+  with `cp -r ~/.cache/demon-attack/ground-blocks/work/rig /work/tmp/imagegen/in/ground-blocks/`).
