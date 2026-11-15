@@ -78,6 +78,35 @@ class DifficultyPolicy {
     Difficulty.hard => 1.0,
   };
 
+  /// The sentinel final rush (design §6): birth chance (+ up to 0.10
+  /// with skill), rush shield, top speed (u/s at hostile rate), homing
+  /// turn rate (°/s) and passes.
+  double get rushChance => switch (difficulty) {
+    Difficulty.easy => .20,
+    Difficulty.normal => .35,
+    Difficulty.hard => .45,
+  };
+  int rushShieldFor(int route) => switch (difficulty) {
+    Difficulty.easy => 3,
+    Difficulty.normal => 4 + route ~/ 2,
+    Difficulty.hard => 5 + route ~/ 2,
+  };
+  double get rushSpeed => switch (difficulty) {
+    Difficulty.easy => 640,
+    Difficulty.normal => 780,
+    Difficulty.hard => 880,
+  };
+  double get rushTurnRate => switch (difficulty) {
+    Difficulty.easy => 0,
+    Difficulty.normal => 50,
+    Difficulty.hard => 75,
+  };
+  int get rushPasses => switch (difficulty) {
+    Difficulty.easy => 1,
+    Difficulty.normal => 2,
+    Difficulty.hard => 3,
+  };
+
   double swarmTempo({required int route}) =>
       switch (difficulty) {
         Difficulty.easy => .85,

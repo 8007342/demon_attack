@@ -73,36 +73,36 @@ Groups 2–4 can land before group 5. The rush (5) is independent of the hunters
         - the dive cap is never exceeded over a 10-minute Hard sim.
 
 ## 5. Sentinel final rush
-- [ ] 5.1 `lib/game/sentinel_rush.dart`: a phase machine (rally, lock, rush, recover), passes, rush shield, stagger
+- [x] 5.1 `lib/game/sentinel_rush.dart`: a phase machine (rally, lock, rush, recover), passes, rush shield, stagger
       (design §6). The `Demon` fields `lastStand`, `rushing`, `rushVx` and `rushVy` are reused. Add `rushPhase`,
       `rushPass`, `rushShield`, `rushShieldMax`, `rushRoll`.
-- [ ] 5.2 `model.dart`:
+- [x] 5.2 `model.dart`:
       - In `_buildRoster`, store `rushRoll = random.nextDouble()` in place of the boolean draw. It is the same
         single draw, so the random sequence is unchanged; a test asserts it.
       - In `hitDemon`, the trigger (threshold or alone), the rush-shield absorption and the breaker damage.
       - The `_updateDemons` `lastStand` branch delegates to `SentinelRush.update`.
       - `difficulty.dart` gets `rushChance`, `rushShieldBase`, `rushSpeed`, `rushTurnRate`, `rushPasses` and
         `skillCap`.
-- [ ] 5.3 Events: `sentinelRushTell` (with `rushIn`), `sentinelRush`, `sentinelRushAgain`, `rushShieldBroken`,
+- [x] 5.3 Events: `sentinelRushTell` (with `rushIn`), `sentinelRush`, `sentinelRushAgain`, `rushShieldBroken`,
       `rushSurvived`, `sentinelRushMissed`, `broodAdapting` in `game_events.dart`. Music: `music_director.dart`
       maps the rally to `lastStandTell` and the rush to peril intensity 4. `test/music_director_test.dart` stays
       green.
-- [ ] 5.4 Presentation in `scene.dart`:
+- [x] 5.4 Presentation in `scene.dart`:
       - berserk aura, smoke trail and the shrinking shield ring;
       - rush frames;
       - lock shudder;
       - shake ≤ 2 px, gated by reduced motion;
       - the shadow snap on lock (uses W3 `_creatureShadows`).
-- [ ] 5.5 `test/sentinel_rush_test.dart`:
+- [x] 5.5 `test/sentinel_rush_test.dart`:
       - rates by difficulty over 2 000 births;
       - the alone-trigger;
       - the shield absorbs hull damage, base-gun hits break it, the stagger and bonus apply;
       - passes per difficulty, then the sacrifice;
       - the tell is ≥ 1.0 s real;
       - a reduced-motion run has no shake.
-- [ ] 5.6 `test/sentinel_rush_fairness_test.dart`: the escape guard (≥ 99 %), the threat guard (≥ 90 %) and the
+- [x] 5.6 `test/sentinel_rush_fairness_test.dart`: the escape guard (≥ 99 %), the threat guard (≥ 90 %) and the
       corridor inequality, over 200 seeds × difficulty × route ≥ 1 (design §6.4).
-- [ ] 5.7 Update `test/sentinel_last_stand_visual_test.dart` for the new phases. Add frames to the review set
+- [x] 5.7 Update `test/sentinel_last_stand_visual_test.dart` for the new phases. Add frames to the review set
       (group 8).
 
 ## 6. Radio chatter with placeholders

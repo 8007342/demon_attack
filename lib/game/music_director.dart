@@ -147,7 +147,15 @@ class MusicDirector {
     _telling
       ..clear()
       ..addAll(telling);
-    final stands = model.demons.where((d) => d.lastStand).toSet();
+    // Every rush pass's rally is a last-stand tell (demon-intelligence).
+    final stands = model.demons
+        .where(
+          (d) =>
+              d.lastStand &&
+              (d.rushPhase == RushPhase.rally ||
+                  d.rushPhase == RushPhase.none),
+        )
+        .toSet();
     if (stands.difference(_lastStands).isNotEmpty) {
       _tell(GameEventNames.lastStandTell);
     }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -345,7 +347,10 @@ void main() {
     },
   );
 
-  test('last-stand eligibility is seeded, rare, and limited to sentinels', () {
+  // demon-intelligence (design §6) replaced the 0.9 s tell and the
+  // straight 600 u/s line with the rally-lock-rush sentinel rush; these
+  // fixtures follow it (test/sentinel_rush_test.dart covers the rest).
+  test('rush eligibility is one seeded birth draw, limited to sentinels', () {
     final counts = <int>[];
     for (final difficulty in Difficulty.values) {
       var eligible = 0;
@@ -359,24 +364,24 @@ void main() {
         final m = ArcadeModel(seed: seed)..restoreCheckpoint(snapshot);
         final repeat = ArcadeModel(seed: seed)..restoreCheckpoint(snapshot);
         final d = m.demons.singleWhere((d) => d.isLarge);
+        expect(d.rushRoll, repeat.demons.singleWhere((d) => d.isLarge).rushRoll);
+        if (m.rushEligible(d)) eligible++;
         expect(
-          d.lastStandEligible,
-          repeat.demons.singleWhere((d) => d.isLarge).lastStandEligible,
-        );
-        if (d.lastStandEligible) eligible++;
-        expect(
-          m.demons.where((d) => !d.isLarge).any((d) => d.lastStandEligible),
+          m.demons.where((d) => !d.isLarge).any(m.rushEligible),
           isFalse,
         );
       }
       counts.add(eligible);
-      expect(eligible, inInclusiveRange(10, 80));
     }
+    // 0.20 / 0.35 / 0.45 (+ skill 0.3 x 0.10) of 200.
+    expect(counts[0], inInclusiveRange(30, 75));
+    expect(counts[1], inInclusiveRange(55, 105));
+    expect(counts[2], inInclusiveRange(75, 125));
     expect(counts[0], lessThan(counts[1]));
-    expect(counts[1], counts[2]);
+    expect(counts[1], lessThan(counts[2]));
   });
 
-  test('low-health last stand samples aim once, climbs, pauses and rushes straight', () {
+  test('the rush rallies, locks its aim once, then charges at the forecast', () {
     final m = ArcadeModel()..start();
     m.mode = RunMode.playing;
     m.invulnerable = 0;
@@ -402,47 +407,43 @@ void main() {
     m.hitDemon(d);
     expect(d.hp, 4);
     expect(d.lastStand, isTrue);
-    expect(d.telegraph, .9);
+    expect(d.rushPhase, RushPhase.rally);
+    expect(d.rushShield, 4, reason: 'Normal route 0: 4 + 0');
     expect(d.rushing, isFalse);
-    expect(d.targetX, 180);
-    m.moveTo(330);
+    m.hitDemon(d);
+    expect(d.hp, 4, reason: 'the rush shield holds the hull');
+    expect(d.rushShield, 3);
     advance(m, .3);
     expect(d.y, lessThan(90));
     expect(d.x, 90);
-    expect(d.lastStandTellProgress, closeTo(1 / 3, .0001));
-    final tell = d.telegraph;
-    m.hitDemon(d);
-    expect(d.telegraph, tell, reason: 'another hit must not restart the tell');
-    expect(d.targetX, 180);
+    expect(d.lastStandTellProgress, closeTo(.3 / 1.1, .02));
+    final clock = d.rushClock;
     m.pause();
     advance(m, 1);
-    expect(d.telegraph, tell);
+    expect(d.rushClock, clock);
     m.resume();
-    advance(m, .6);
+    advance(m, .4);
+    expect(d.rushPhase, RushPhase.lock);
+    final aim = d.targetX;
+    advance(m, .3);
+    expect(d.targetX, aim, reason: 'the aim is sampled once, at the lock');
+    advance(m, .15);
     expect(d.rushing, isTrue);
-    expect(d.rushVx * d.rushVx + d.rushVy * d.rushVy, closeTo(600 * 600, .001));
-    final vx = d.rushVx, vy = d.rushVy;
+    advance(m, .25);
+    final speed = math.sqrt(d.rushVx * d.rushVx + d.rushVy * d.rushVy);
+    expect(speed, closeTo(780, 1), reason: 'Normal top speed');
     final x = d.x, y = d.y;
     m.pause();
     advance(m, .5);
-    expect(d.x, x);
-    expect(d.y, y);
+    expect((d.x, d.y), (x, y));
     m.resume();
-    advance(m, .1);
-    expect(d.x, closeTo(x + vx * .1, .0001));
-    expect(d.y, closeTo(y + vy * .1, .0001));
-    m.hitDemon(d);
-    expect(d.rushVx, vx);
-    expect(d.rushVy, vy);
-    expect(d.targetX, 180);
-    final lives = m.lives;
-    advance(m, 1);
+    // Two passes on Normal, then the sacrifice: no reward either time.
+    m.moveTo(330);
+    for (var i = 0; i < 300 && m.demons.contains(d); i++) {
+      m.update(1 / 60);
+      m.shots.removeWhere((s) => !s.hostile); // nothing shoots it down
+    }
     expect(m.demons, isNot(contains(d)));
-    expect(
-      m.lives,
-      lives,
-      reason: 'moving after the tell dodges the sampled line',
-    );
     expect(m.kills, 0);
     expect(m.score, 0);
     expect(m.pickups, isEmpty);
@@ -452,7 +453,7 @@ void main() {
     expect(m.kills, 0);
   });
 
-  test('Easy slows the last-stand tell and fixed rush by ten percent', () {
+  test('Easy slows the rush tell by ten percent and never homes', () {
     for (final difficulty in Difficulty.values) {
       final m = ArcadeModel()..start(difficulty: difficulty);
       m.mode = RunMode.playing;
@@ -466,32 +467,28 @@ void main() {
         archetype: EnemyArchetype.shieldSentinel,
         lastStandEligible: true,
       )..hp = 3;
-      m.demons.add(d);
+      m.demons.addAll([d, Demon(20, 70, 0, 1000, 0)]);
       m.hitDemon(d);
-      m.moveTo(330);
-      advance(m, .5);
-      expect(d.telegraph, closeTo(.9 - .5 * m.policy.hostileRate, .0001));
-      advance(m, .4);
-      if (difficulty == Difficulty.easy) {
-        expect(d.rushing, isFalse);
-        expect(d.telegraph, closeTo(.09, .0001));
-        advance(m, .1);
-      }
+      expect(d.lastStand, isTrue);
+      final rate = m.policy.hostileRate;
+      final tell = RushTuning.tell(difficulty) / rate;
+      expect(tell, greaterThanOrEqualTo(1 - 1e-9), reason: 'at least 1 s');
+      advance(m, tell - 2 / 60);
+      expect(d.rushing, isFalse, reason: '$difficulty');
+      advance(m, 3 / 60);
       expect(d.rushing, isTrue);
-      final expectedSpeed = 600 * m.policy.hostileRate;
-      expect(
-        d.rushVx * d.rushVx + d.rushVy * d.rushVy,
-        closeTo(expectedSpeed * expectedSpeed, .001),
-      );
-      final vx = d.rushVx, vy = d.rushVy;
-      m.moveTo(18);
-      advance(m, .1);
-      expect(d.rushVx, vx);
-      expect(d.rushVy, vy);
+      final heading = d.rushHeading;
+      m.moveTo(difficulty == Difficulty.easy ? 18 : 342);
+      advance(m, .3);
+      if (difficulty == Difficulty.easy) {
+        expect(d.rushHeading, heading, reason: 'Easy: no homing');
+      }
+      final speed = math.sqrt(d.rushVx * d.rushVx + d.rushVy * d.rushVy);
+      expect(speed, closeTo(m.policy.rushSpeed * rate, 1));
     }
   });
 
-  test('last-stand impact respects lives, invulnerability and shield without rewards', () {
+  test('rush impact respects lives, invulnerability and shield without rewards', () {
     for (final protection in ['none', 'invulnerable', 'shield', 'lastLife']) {
       final m = ArcadeModel()..start();
       m.mode = RunMode.playing;
@@ -511,10 +508,16 @@ void main() {
               lastStandEligible: true,
             )
             ..lastStand = true
+            ..rushPhase = RushPhase.rush
+            ..rushPass = 1
             ..rushing = true;
       m.demons.addAll([d, Demon(20, 70, 0, 1000, 0)]);
       m.update(1 / 60);
-      expect(m.demons, isNot(contains(d)));
+      final lifeLost = protection == 'none' || protection == 'lastLife';
+      // A lost life ends the rush (the sacrifice); a shield or protection
+      // ends only this pass's contact.
+      expect(m.demons.contains(d), !lifeLost);
+      if (!lifeLost) expect(d.rushContact, isTrue);
       expect(
         m.lives,
         protection == 'lastLife'
@@ -529,46 +532,54 @@ void main() {
       expect(m.score, 0);
       expect(m.pickups, isEmpty);
       expect(m.heartPickups, isEmpty);
-      expect(m.blasts.where((b) => b.isLarge), hasLength(1));
-      m.hitDemon(d);
-      expect(m.kills, 7);
+      expect(m.blasts.where((b) => b.isLarge), hasLength(lifeLost ? 1 : 0));
+      if (lifeLost) {
+        m.hitDemon(d);
+        expect(m.kills, 7);
+      }
     }
   });
 
-  test(
-    'shooting interrupts last-stand tell or rush and awards one normal kill',
-    () {
-      for (final rushing in [false, true]) {
-        final m = ArcadeModel()..start(difficulty: Difficulty.hard);
-        m.mode = RunMode.playing;
-        m.kills = 7;
-        final d = Demon(
-          90,
-          90,
-          2,
-          8,
-          0,
-          archetype: EnemyArchetype.shieldSentinel,
-          lastStandEligible: true,
-        )..hp = 3;
-        m.demons.clear();
-        m.demons.addAll([d, Demon(20, 70, 0, 1000, 0)]);
+  test('base-gun hits break the rush shield, then one more kills normally', () {
+    for (final rushing in [false, true]) {
+      final m = ArcadeModel()..start(difficulty: Difficulty.hard);
+      m.mode = RunMode.playing;
+      m.kills = 7;
+      final d = Demon(
+        90,
+        90,
+        2,
+        8,
+        0,
+        archetype: EnemyArchetype.shieldSentinel,
+        lastStandEligible: true,
+      )..hp = 3;
+      m.demons.clear();
+      m.demons.addAll([d, Demon(20, 70, 0, 1000, 0)]);
+      m.hitDemon(d);
+      expect(d.lastStand, isTrue);
+      expect(d.hp, 2);
+      if (rushing) d.rushPhase = RushPhase.rush;
+      final shield = d.rushShield;
+      expect(shield, 5, reason: 'Hard route 0: 5 + 0');
+      for (var i = 0; i < shield; i++) {
         m.hitDemon(d);
-        m.hitDemon(d);
-        d.rushing = rushing;
-        m.shots.add(Shot(d.x, d.y, 0, 0));
-        m.update(1 / 60);
-        expect(m.demons, isNot(contains(d)));
-        expect(m.kills, 8);
-        expect(m.score, 600);
-        expect(m.pickups, hasLength(1));
-        expect(m.blasts.where((b) => b.isLarge), hasLength(1));
-        m.hitDemon(d);
-        expect(m.kills, 8);
-        expect(m.score, 600);
       }
-    },
-  );
+      expect(d.rushShield, 0);
+      expect(d.hp, 2);
+      // The bonus and the stagger only when it breaks mid-rush.
+      expect(m.score, rushing ? 400 : 0);
+      expect(d.rushStagger, rushing ? RushTuning.stagger : 0);
+      m.hitDemon(d);
+      m.shots.add(Shot(d.x, d.y, 0, 0));
+      m.update(1 / 60);
+      expect(m.demons, isNot(contains(d)));
+      expect(m.kills, 8);
+      expect(m.score, (rushing ? 400 : 0) + 600);
+      expect(m.pickups, hasLength(1));
+      expect(m.blasts.where((b) => b.isLarge), hasLength(1));
+    }
+  });
 
   test(
     'ineligible low-health sentinels keep their ordinary reusable dives',

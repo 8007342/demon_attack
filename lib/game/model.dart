@@ -34,6 +34,9 @@ part 'life_loss.dart';
 // --- cinematic flow (one transition clock, the pursued flock, skip) ---
 part 'model_flow.dart';
 
+// --- the sentinel final rush (demon-intelligence design §6) ---
+part 'sentinel_rush.dart';
+
 enum RunMode {
   title,
   playing,
@@ -79,6 +82,7 @@ class Demon {
     this.isEscort = false,
     this.archetype = EnemyArchetype.ordinary,
     this.lastStandEligible = false,
+    this.rushRoll = 1,
     this.shieldMax = 0,
     this.armorMax = 0,
   }) : hp = maxHp,
@@ -124,8 +128,32 @@ class Demon {
   double entranceDelay = .35, entranceDuration = 1.8, entranceStartY = -48;
   final bool lastStandEligible;
   bool lastStand = false, rushing = false;
-  double get lastStandTellProgress =>
-      lastStand ? (1 - telegraph / .9).clamp(0, 1) : 0;
+
+  /// Progress (0..1) through the rush tell: rally then lock.
+  double get lastStandTellProgress {
+    if (!lastStand) return 0;
+    final double p = switch (rushPhase) {
+      RushPhase.rally => rushClock / rushTell,
+      RushPhase.lock => (RushTuning.rally + rushClock) / rushTell,
+      RushPhase.rush => 1,
+      _ => 0,
+    };
+    return p.clamp(0.0, 1.0);
+  }
+
+  // --- the sentinel final rush (sentinel_rush.dart) ---
+  /// The birth roll (one draw of the run's random): eligible when under
+  /// the difficulty's rush chance (+ up to 0.10 with skill).
+  double rushRoll;
+  RushPhase rushPhase = RushPhase.none;
+
+  /// Pass (1-based), rush shield, phase clock (hostile-rate s), the tell
+  /// length (rally + lock), stagger left, heading (rad from straight
+  /// down) and whether this pass touched the ship.
+  int rushPass = 0, rushShield = 0, rushShieldMax = 0;
+  double rushClock = 0, rushTell = 1.1, rushStagger = 0, rushHeading = 0;
+  double rushHeading0 = 0;
+  bool rushContact = false;
   double rushVx = 0, rushVy = 0;
   double _lastStandX = 0, _lastStandY = 0;
   final double seed;
@@ -1161,9 +1189,9 @@ class ArcadeModel {
         armorMax: large
             ? (archetype == EnemyArchetype.armoredSentinel ? 4 : 2) + cycle ~/ 2
             : 0,
-        lastStandEligible:
-            large &&
-            random.nextDouble() < (difficulty == Difficulty.easy ? .15 : .25),
+        // One draw, as before (the random sequence is unchanged): the
+        // rush chance is decided against it when the rush would trigger.
+        rushRoll: large ? random.nextDouble() : 1,
       );
       if (large) {
         demon.entranceProgress = 0;
@@ -2892,7 +2920,16 @@ class ArcadeModel {
       }
       final placed = d.entering && d.arrivesFromDistance;
       if (!placed) {
-        final target = _targetNearness(d, d.y);
+        var target = _targetNearness(d, d.y);
+        if (d.lastStand && !d.rushing) {
+          // --- sentinel rush: the rally pulls back in depth.
+          target -=
+              RushTuning.pullBack *
+              (d.lastStandTellProgress * d.rushTell / RushTuning.rally).clamp(
+                0.0,
+                1.0,
+              );
+        }
         d.nearness = dt <= 0 || d.nearness == 0
             ? target
             : d.nearness +
@@ -3009,28 +3046,10 @@ class ArcadeModel {
         d.divePrep -= dt * policy.hostileRate;
         if (d.divePrep <= 0) _startDiveTell(d);
       }
+      if (d.isLarge && !d.lastStand && dt > 0) _maybeRush(d); // alone
       if (d.lastStand) {
-        if (!d.rushing) {
-          d.telegraph = math.max(0, d.telegraph - dt * policy.hostileRate);
-          final progress = d.lastStandTellProgress;
-          d.x = d._lastStandX;
-          d.y = d._lastStandY - 22 * progress * progress;
-          if (d.telegraph <= 0) {
-            d.rushing = true;
-            final dx = d.targetX - d.x;
-            final dy = shipY - d.y;
-            final distance = math.max(.001, math.sqrt(dx * dx + dy * dy));
-            d.rushVx = dx / distance * 600 * policy.hostileRate;
-            d.rushVy = dy / distance * 600 * policy.hostileRate;
-          }
-        } else {
-          d.x += d.rushVx * dt;
-          d.y += d.rushVy * dt;
-          if (d.x < -56 || d.x > width + 56 || d.y < -32 || d.y > height + 32) {
-            _sacrifice(d);
-            continue;
-          }
-        }
+        // --- the sentinel final rush (sentinel_rush.dart)
+        if (dt > 0 && !_updateRush(d, dt)) continue;
         _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
       }
@@ -3688,8 +3707,11 @@ class ArcadeModel {
       if (!d.entering &&
           (d.x - shipX).abs() < d.contactHalf &&
           (d.y - shipY).abs() < d.contactHalf) {
-        hitPlayer();
-        if (d.rushing) _sacrifice(d);
+        if (d.rushing) {
+          _rushContact(d); // --- sentinel rush
+        } else {
+          hitPlayer();
+        }
       }
     }
   }
@@ -3731,6 +3753,7 @@ class ArcadeModel {
   void hitDemon(Demon d, {int damage = 1, bool homing = false}) {
     if (!combat || damage <= 0 || d.entering || !demons.contains(d)) return;
     d.flash = .12;
+    if (_rushShieldHit(d, damage)) return; // --- sentinel rush shield
     if (d.dive > 0 && d.diveShieldMax == 0) {
       _igniteDiveShield(d);
     }
@@ -3820,19 +3843,9 @@ class ArcadeModel {
       _groundDropOnKill(d); // --- ground war
     } else {
       events.add('hit');
-      if (d.isLarge &&
-          d.lastStandEligible &&
-          !d.lastStand &&
-          d.hp / d.maxHp <= .25) {
-        d.lastStand = true;
-        d.divePrep = 0;
-        d.telegraph = .9;
-        d.dive = 0;
-        d.diveShield = 0;
-        d.diveShieldMax = 0;
-        d.targetX = shipX;
-        d._lastStandX = d.x;
-        d._lastStandY = d.y;
+      if (d.isLarge && !d.lastStand) _maybeRush(d); // --- sentinel rush
+      if (d.lastStand) {
+        // The rush has begun: nothing else interrupts it.
       } else if (!d.lastStand &&
           !shipAway &&
           d.angry &&
@@ -4108,6 +4121,7 @@ class ArcadeModel {
       d.diveShield = 0;
       d.lastStand = false;
       d.rushing = false;
+      d.rushPhase = RushPhase.none;
       d.telegraph = 0.5;
       final spread = (i - (larges.length - 1) / 2.0) * 90.0;
       final ax = 180.0 + spread + math.sin(t * 2.4 + i) * 18.0;
