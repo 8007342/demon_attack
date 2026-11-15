@@ -231,3 +231,7 @@ operator's playtest checklist).
   atlas in the depth sort, unit fog tint, battlefield smoke.
 - Not archived: the OpenSpec changes await the operator's playtest before `openspec archive`.
 - Still blocked: music L3 pilot and every voice task on tillandsias#1103 (audio studio batch 1, draft).
+
+## Operator playtest 2026-11-15 (after the close-out): see `plan/operator-feedback-2026-11-15.md`
+Five workstreams W1–W5 (ground tuning, fog restoration, continuous swarm, demon intelligence, UX cleanup + cinematic
+flow), each with an OpenSpec change, delegated to agents on `work/*` branches.
