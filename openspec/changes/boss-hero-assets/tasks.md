@@ -5,15 +5,15 @@
 - [x] 0.2 Prove Blender in this forge: `bpy==5.3.0` on Python 3.13 via uv; `tools/boss_rig/bpy_smoke.py` renders 3 × 3 views (clay, depth) in 47 s; sheet `art/contact/boss-hero-bpy-smoke.png`
 
 ## 1. Setup and grammar
-- [ ] 1.1 `tools/boss_rig/setup_bpy.lua`: idempotent uv Python 3.13 + venv + `bpy==5.3.0` in `~/.cache/tillandsias-project/bpy-venv` (preflight of every run)
-- [ ] 1.2 `art/families/boss-hulls.json` (schema `demon-attack.boss-hulls/v1`): module catalogue as bpy primitive recipes, five tour assemblies, seeded-assembly rules, palettes, originality word list (design §4)
-- [ ] 1.3 `tools/boss_rig/build.py --check`: grammar validation (symmetry, budgets, anchors unobstructed)
+- [x] 1.1 `tools/boss_rig/setup_bpy.lua`: idempotent uv Python 3.13 + venv + `bpy==5.3.0` in `~/.cache/tillandsias-project/bpy-venv` (preflight of every run)
+- [x] 1.2 `art/families/boss-hulls.json` (schema `demon-attack.boss-hulls/v1`): module catalogue as bpy primitive recipes, five tour assemblies, seeded-assembly rules, palettes, originality word list (design §4)
+- [x] 1.3 `tools/boss_rig/build.py --check`: grammar validation (symmetry, budgets, anchors unobstructed)
 
 ## 2. Rig (CPU) and B0
-- [ ] 2.1 `tools/boss_rig/build.py`: per hull, 9 views × S0–S3 clay / depth / normal / module-ID passes and `anchors.json`; one process, `-t 8`
-- [ ] 2.2 Anchor gate: functional anchors within ±3 units of `BossAtlas` in every view (fails the build otherwise)
+- [x] 2.1 `tools/boss_rig/build.py`: per hull, 9 views × S0–S3 clay / depth / normal / module-ID passes and `anchors.json`; one process, `-t 8`
+- [x] 2.2 Anchor gate: functional anchors within ±3 units of `BossAtlas` in every view (fails the build otherwise)
 - [ ] 2.3 Fallback: `tools/ground_blocks boss` verb producing the same passes and anchors by ray casting (Go), with a parity test on the frigate
-- [ ] 2.4 B0 sheet `art/contact/boss-rig-turntables.png`; operator review
+- [x] 2.4 B0 sheet `art/contact/boss-rig-turntables.png`; operator review
 
 ## 3. Heroes (GPU) and B1
 - [ ] 3.1 Commit `art/workflows/sprites/boss-hero-sdxl-cn.json` (SDXL + ControlNet-union depth + IP-Adapter plus) before its first run; the Qwen path reuses `heading-qwen-edit.json` (image 1 clay, image 2 today's atlas frame)
