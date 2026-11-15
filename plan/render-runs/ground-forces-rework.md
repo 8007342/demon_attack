@@ -366,6 +366,19 @@ noise. No heading edits, no layer edits, no VACE clips. GPU: the remaining ~23 u
 Reversible: the heading and VACE workflows stay committed; a later pass can add them per unit if a better graph
 (e.g. ControlNet-guided or a pose-locked LoRA) appears.
 
+### 12.1 Bake v2 (hero-only, region materials)
+
+`go run . bake [--with-picks] (--all | UNIT)` now carries only the selected hero by default. The rig's shading is the
+base; the hero decides, per region (rig primitive × layer × binned facet normal), one material: the median AI step
+offset against the rig (clamped ±1), or another ramp when ≥60% of the region's samples fall in it. Accents
+(ramps of emissive materials: `ally_cyan`, `demon_warm`) transfer point by point only in clusters of ≥3 samples within
+1.5 texels. Unseen regions borrow the nearest-normal seen region of the same primitive, else the rig. A despeckle then
+replaces any AI-changed texel whose colour none of its same-primitive 8-neighbours shares. Emissive and flat rig
+materials keep the rig colour; the rig owns silhouettes; overlays stay rig; colours stay in the master sector.
+Sheet: `art/contact/ground-pilot-baked-v2.png` (rig | baked at ×4, plus a 1× strip per unit). The mottling of v1 is
+gone; Lodestar keeps cyan strips and dark panel zones, Crocket its violet stone, ember eyes and slag line, Ashlar a dark
+vest and the gilt musket. `--with-picks` (heading and layer picks too) was worse on Lodestar: stray cyan blobs on hull
+fronts and diluted panel zones, so it is off by default. `bakereview OUT UNIT:substr,..` draws review sheets.
 ## 13. Ledger: hero candidates for the remaining 23 units (2026-11-15)
 
 `variant-qwen-edit.json`, count 4 (consecutive seeds from the unit's `seed`), prompts and negatives exactly as in

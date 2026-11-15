@@ -24,13 +24,13 @@
      "blocks": 4,
      "file": "assets/images/ground-blocks/ground-infantry-krybor.png",
      "h": 192,
-     "png_bytes": 15032,
+     "png_bytes": 15125,
      "rgba_bytes": 491520,
      "w": 640
     }
    ],
    "rgba_bytes": 3870720,
-   "png_bytes": 79112,
+   "png_bytes": 79205,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 20,
@@ -55,7 +55,7 @@
      "blocks": 5,
      "file": "assets/images/ground-blocks/ground-host-ringfall.png",
      "h": 840,
-     "png_bytes": 66588,
+     "png_bytes": 67500,
      "rgba_bytes": 3225600,
      "w": 960
     },
@@ -63,13 +63,13 @@
      "blocks": 5,
      "file": "assets/images/ground-blocks/ground-infantry-ringfall.png",
      "h": 240,
-     "png_bytes": 19858,
+     "png_bytes": 19801,
      "rgba_bytes": 614400,
      "w": 640
     }
    ],
    "rgba_bytes": 4608000,
-   "png_bytes": 96736,
+   "png_bytes": 97591,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 20,
@@ -86,7 +86,7 @@
      "blocks": 2,
      "file": "assets/images/ground-blocks/ground-fleet-ember.png",
      "h": 360,
-     "png_bytes": 21238,
+     "png_bytes": 19777,
      "rgba_bytes": 1382400,
      "w": 960
     },
@@ -94,7 +94,7 @@
      "blocks": 6,
      "file": "assets/images/ground-blocks/ground-host-ember.png",
      "h": 1040,
-     "png_bytes": 79573,
+     "png_bytes": 80526,
      "rgba_bytes": 3993600,
      "w": 960
     },
@@ -102,13 +102,13 @@
      "blocks": 6,
      "file": "assets/images/ground-blocks/ground-infantry-ember.png",
      "h": 288,
-     "png_bytes": 23537,
+     "png_bytes": 23358,
      "rgba_bytes": 737280,
      "w": 640
     }
    ],
    "rgba_bytes": 6113280,
-   "png_bytes": 124348,
+   "png_bytes": 123661,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 20,
@@ -133,7 +133,7 @@
      "blocks": 8,
      "file": "assets/images/ground-blocks/ground-host-hollow.png",
      "h": 1560,
-     "png_bytes": 105432,
+     "png_bytes": 106404,
      "rgba_bytes": 5990400,
      "w": 960
     },
@@ -141,13 +141,13 @@
      "blocks": 7,
      "file": "assets/images/ground-blocks/ground-infantry-hollow.png",
      "h": 336,
-     "png_bytes": 28896,
+     "png_bytes": 28838,
      "rgba_bytes": 860160,
      "w": 640
     }
    ],
    "rgba_bytes": 7772160,
-   "png_bytes": 143615,
+   "png_bytes": 144529,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 24,
@@ -180,13 +180,13 @@
      "blocks": 6,
      "file": "assets/images/ground-blocks/ground-infantry-carrier.png",
      "h": 288,
-     "png_bytes": 24411,
+     "png_bytes": 24476,
      "rgba_bytes": 737280,
      "w": 640
     }
    ],
    "rgba_bytes": 6266880,
-   "png_bytes": 113519,
+   "png_bytes": 113584,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 12,
