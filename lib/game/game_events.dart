@@ -314,6 +314,49 @@ abstract final class GameEventNames {
     broodAdapting,
   ];
 
+  // --- bonus levels (openspec/changes/bonus-levels design §5). Each
+  // carries `variant`: the bonus level's id (the power's for bonusPickup,
+  // the modifier's for runModifier), so `bonusStart.supplyRun` wins over
+  // `bonusStart` in the line bank.
+
+  /// The run has a run modifier (once, on the run's first combat frame).
+  static const runModifier = 'runModifier';
+
+  /// A bonus level's first wave begins combat.
+  static const bonusStart = 'bonusStart';
+
+  /// A bonus level's supply crate is shot open (data `points`, `opened`).
+  static const bonusCrate = 'bonusCrate';
+
+  /// A bonus-only powerup is collected.
+  static const bonusPickup = 'bonusPickup';
+
+  /// A bonus level's last kill (data `award`, `flawless`, `crates`).
+  static const bonusCleared = 'bonusCleared';
+
+  // --- bonus level #2, Stormfront (specs/bonus-level-stormfront). The raw
+  // string events `stormTell` and `stormBolt` (every tell, every bolt) are
+  // forwarded under the same names with no data, for the sound and the
+  // music.
+
+  /// A lightning tell began on the unprotected ship (data `x`, `endIn`:
+  /// real seconds until the bolt; the squad's warning ends on it).
+  static const stormStrike = 'stormStrike';
+
+  /// A bolt that was drawn to the ship destroyed creatures and missed it
+  /// (data `x`, `kills`, `award`).
+  static const stormBait = 'stormBait';
+
+  static const bonus = [
+    runModifier,
+    bonusStart,
+    bonusCrate,
+    bonusPickup,
+    bonusCleared,
+    stormStrike,
+    stormBait,
+  ];
+
   /// A full-size transmission: the fleet's mission briefing on travel
   /// (variant: the next sector) or a junior-pilot moment on a new wave.
   static const transmissionMission = 'transmissionMission';
@@ -390,6 +433,32 @@ abstract final class GameEventNames {
   /// A carrier form change or its field breaking (variant: phase).
   static const bossPhase = 'bossPhase';
   static const bossDefeated = 'bossDefeated';
+
+  // --- boss-grandeur (operator R8.5): the carrier's decay, one event per
+  // step, for the dynamic music engine and comms. Data: `route`, `variant`
+  // (the run's module set), plus the step's own field.
+
+  /// The carrier flies in over the ship (the boss arrival's Descent;
+  /// published by the music director).
+  static const bossOverflight = 'bossOverflight';
+
+  /// The carrier finished its loom and rises out of the fog.
+  static const bossRise = 'bossRise';
+
+  /// One hex shield cell went dark (data `cellsLeft`, 11 … 0).
+  static const bossShieldCellLost = 'bossShieldCellLost';
+
+  /// The force field is gone (after the last cell).
+  static const bossShieldDepleted = 'bossShieldDepleted';
+
+  /// An armour plate fell off the hull (data `plate`).
+  static const bossArmourLost = 'bossArmourLost';
+
+  /// A module broke away at a form change (data `form`, `detachOrder`).
+  static const bossModuleLost = 'bossModuleLost';
+
+  /// Core 0: the hull breaks into module wrecks.
+  static const bossCollapse = 'bossCollapse';
   static const defeat = 'defeat';
 
   /// Celebrations: [fleetIntact] with no player ship lost either, per
@@ -632,7 +701,8 @@ class GameEventObserver {
           final boss = model.boss;
           if (boss != null && !identical(boss, _boss)) {
             _boss = boss;
-            _sectorStart(emit);
+            // boss-grandeur: after the loom waves the sector has started.
+            if (model.wave == 1) _sectorStart(emit);
             emit(GameEventNames.bossArrival);
           } else if (boss != null) {
             emit(GameEventNames.bossPhase, variant: '${boss.phase}');
@@ -803,6 +873,9 @@ class GameEventObserver {
     _diving.removeWhere((d) => !model.demons.contains(d));
     for (final p in model.pickups) {
       if (!_seenPickups.add(p)) continue;
+      // --- bonus levels: a bonus-only powerup is not the regular power
+      // its `power` field holds (its own `bonusPickup` call speaks).
+      if (p.bonus != null) continue;
       // `hint`: the ship lacks what is falling, so the squad recommends it
       // (these calls win over flavour chatter on the radio).
       if (p.power == Power.shield) {

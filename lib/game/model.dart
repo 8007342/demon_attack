@@ -1,5 +1,8 @@
 import 'dart:math' as math;
 
+import 'bonus/bonus_catalog.dart';
+import 'bonus/bonus_plan.dart';
+import 'bonus/bonus_types.dart';
 import 'demon_planner.dart';
 import 'difficulty.dart';
 import 'flock.dart';
@@ -13,6 +16,9 @@ import 'skill_meter.dart';
 import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
+export 'bonus/bonus_catalog.dart';
+export 'bonus/bonus_plan.dart';
+export 'bonus/bonus_types.dart';
 export 'demon_planner.dart' show DemonTier, Manoeuvre;
 export 'difficulty.dart';
 export 'game_events.dart';
@@ -33,6 +39,9 @@ part 'life_loss.dart';
 
 // --- cinematic flow (one transition clock, the pursued flock, skip) ---
 part 'model_flow.dart';
+
+// --- bonus levels, bonus-only powerups and run modifiers ---
+part 'model_bonus.dart';
 
 // --- the sentinel final rush (demon-intelligence design §6) ---
 part 'sentinel_rush.dart';
@@ -344,9 +353,12 @@ class Shot {
 }
 
 class Pickup {
-  Pickup(this.x, this.y, this.power);
+  Pickup(this.x, this.y, this.power, {this.bonus});
   double x, y;
   final Power power;
+
+  /// --- bonus levels: a bonus-only powerup (then [power] is unused).
+  final BonusPowerDef? bonus;
 }
 
 class Blast {
@@ -366,9 +378,13 @@ class Blast {
 }
 
 class SupplyCrate {
-  SupplyCrate(this.x, this.y, this.power, {this.maxHp = 3}) : hp = maxHp;
+  SupplyCrate(this.x, this.y, this.power, {this.maxHp = 3, this.bonus})
+    : hp = maxHp;
   double x, y;
   final Power power;
+
+  /// --- bonus levels: a bonus-only powerup (then [power] is unused).
+  final BonusPowerDef? bonus;
   final int maxHp;
   int hp;
   double vy = 28.0;
@@ -412,6 +428,39 @@ class Carrier {
   final int startingDirection;
   final double startingPhase;
   double motionPhase = 0, horizontalVelocity = 0;
+  // --- boss-grandeur: the Rise (design §1) and the glide (§5) ---
+  /// Rise progress 0..1: the carrier emerges from under the fog over
+  /// [riseSeconds]; it has no hitbox and fires nothing until it is fully
+  /// out (the fight-ready rule).
+  double emerge = 1;
+  static const riseSeconds = 5.0;
+  bool get fightReady => emerge >= 1;
+
+  /// The level clock when it became fight-ready: door and fan cycles run
+  /// on the seconds since (as they ran on the level clock when the carrier
+  /// arrived ready).
+  double readyAt = 0;
+
+  /// The vertical glide phase φ (gameplay hook b): y = 205 + 16·sin φ.
+  double glidePhase = 0;
+  static const fightRow = 205.0, glideAmplitude = 16.0, glideRate = .35;
+  double get glide => math.sin(glidePhase);
+
+  /// Seeded pick of this carrier's visual module set (operator R8.6:
+  /// per-run variety; presentation only, never read by the simulation).
+  int variant = 0;
+
+  /// Lit hex shield cells (alien-insignia: 12 on the carrier).
+  static int shieldCells(int shield, int shieldMax) =>
+      shieldMax <= 0 ? 0 : (12 * shield / shieldMax).ceil().clamp(0, 12);
+
+  /// Armour steps: two per form (a plate lost, then the form's module),
+  /// counted from core damage; [armourSteps] is the collapse.
+  int get armourSteps => 2 * formCount;
+  int get armourStep =>
+      ((1 - core / coreMax) * armourSteps).floor().clamp(0, armourSteps);
+  // --- end boss-grandeur
+
   double get forceFieldHalfWidth => 110;
   double get forceFieldDepth => 43 + 32 * shield / shieldMax;
   double forceFieldSurfaceY(double worldX) {
@@ -473,6 +522,13 @@ class ArcadeModel {
   /// (a fixture and calibration flag). Route 0 is unchanged either way.
   bool intelligence = true;
   bool get _intel => intelligence && cycle >= 1;
+
+  // --- bonus levels (model_bonus.dart): the run's plan, the level being
+  // played and the bonus powers. Empty unless the run has a run seed.
+  final BonusRun bonusRun = BonusRun();
+
+  /// The odds a seeded run's plan is drawn with.
+  BonusTuning bonusTuning = BonusTuning.standard;
 
   /// The energy planner (its own PRNG: never draws from [random]).
   late final DemonPlanner planner = DemonPlanner(seed);
@@ -694,6 +750,39 @@ class ArcadeModel {
 
   Carrier? boss;
   Carrier? wreckBoss;
+
+  // --- boss-grandeur: the loom (design §1, gameplay hook a) ---
+  /// The boss level's own PRNG stream (`seed ^ 0xB055`): the glide phase.
+  late final math.Random bossRandom = math.Random(seed ^ 0xB055);
+
+  /// Ordinary waves that open the boss level while the carrier looms under
+  /// the fog: one on the first tour, two from the second.
+  static int loomWavesFor(int route) => route == 0 ? 1 : 2;
+  int get loomWaves => loomWavesFor(cycle);
+
+  /// The loom's cap: after it the carrier rises regardless.
+  static const loomCap = 75.0;
+
+  /// Combat seconds of the current loom (0 outside it).
+  double loomClock = 0;
+
+  /// The boss level's ordinary loom waves are under way (no carrier yet).
+  bool get looming =>
+      level == 5 && boss == null && wave < wavesPerLevel && clearedLevel == null;
+
+  /// The wave that brings the carrier: the boss level's last.
+  bool get _bossWave => level == 5 && wave >= wavesPerLevel;
+
+  /// The carrier rises out of the fog (presentation reads it).
+  bool get bossRising => boss != null && !boss!.fightReady;
+
+  /// The carrier when it can be hit and targeted (fully emerged).
+  Carrier? get hittableBoss {
+    final b = boss;
+    return b != null && b.fightReady ? b : null;
+  }
+  // --- end boss-grandeur
+
   Difficulty difficulty = Difficulty.normal;
   DifficultyPolicy get policy => DifficultyPolicy(difficulty);
   int medals = 0;
@@ -857,7 +946,7 @@ class ArcadeModel {
       (mode == RunMode.transition && wave > 1);
   bool get isBoss => boss != null;
   int get wavesPerLevel =>
-      level == 5 ? 1 : 3 + ((level - 1) ~/ 2) + math.min(cycle, 3);
+      bonusRun.level?.waves.count ?? wavesFor(sector: level, route: cycle);
   int get nextLevel => level == 5 ? 1 : level + 1;
   RunMode get presentationMode => mode == RunMode.paused ? _beforePause : mode;
   bool get cinematic => [
@@ -870,8 +959,12 @@ class ArcadeModel {
   bool get waveTransition => presentationMode == RunMode.transition && wave > 1;
   double get transitionProgress =>
       (1 - transitionLeft / transitionDuration).clamp(0, 1);
-  void start({Difficulty difficulty = Difficulty.normal}) {
+
+  /// [runSeed] draws the run's bonus plan (a bonus level, a run modifier);
+  /// without one the run is the calibrated campaign.
+  void start({Difficulty difficulty = Difficulty.normal, int? runSeed}) {
     this.difficulty = difficulty;
+    _bonusStartRun(runSeed); // --- bonus levels
     visitedSectors.clear(); // --- transition ascent
     _resetSkill(); // --- demon intelligence
     ranked = true;
@@ -910,9 +1003,12 @@ class ArcadeModel {
 
   // --- console start (the /console route) ---
 
-  /// The last wave of [sector] on [route] (zero-based), 1 for the carrier.
+  /// The last wave of [sector] on [route] (zero-based). The carrier's
+  /// sector: its loom waves, then the carrier's own wave (boss-grandeur).
   static int wavesFor({required int sector, required int route}) =>
-      sector == 5 ? 1 : 3 + ((sector - 1) ~/ 2) + math.min(route, 3);
+      sector == 5
+      ? loomWavesFor(route) + 1
+      : 3 + ((sector - 1) ~/ 2) + math.min(route, 3);
 
   /// First wave of [sector] on [route] where a sentinel can appear, or null
   /// (route 0, or Easy sectors without one). Sentinels need a prior boss
@@ -938,7 +1034,8 @@ class ArcadeModel {
   }
 
   /// A fresh run that begins at [sector] 1-5 of [route] 0-4 (optionally at
-  /// [wave]): 0 points, normal scoring. Earlier routes count as won
+  /// [wave]; sector 5 defaults to the carrier's own wave, after its loom
+  /// waves, so a jump to sector 5 meets the carrier): 0 points, normal scoring. Earlier routes count as won
   /// (medals = route), which satisfies the sentinel prerequisite.
   ///
   /// A [console] run starts with exactly one life and is not [ranked];
@@ -947,10 +1044,13 @@ class ArcadeModel {
     Difficulty difficulty = Difficulty.normal,
     int sector = 1,
     int route = 0,
-    int wave = 1,
+    int? wave,
     bool console = false,
+    int? runSeed,
+    String? bonus,
+    String? modifier,
   }) {
-    start(difficulty: difficulty);
+    start(difficulty: difficulty, runSeed: runSeed);
     if (console) {
       ranked = false;
       lives = 1;
@@ -962,11 +1062,22 @@ class ArcadeModel {
     kills = 0;
     events.clear();
     ground.resetRun();
+    // --- bonus levels: the console may make this sector a bonus level.
+    // [modifier] likewise puts the run under a run modifier.
+    final forced = bonus == null ? null : bonusLevelById(bonus);
+    final rule = modifier == null ? null : runModifierById(modifier);
+    if ((forced != null && level != 5) || rule != null) {
+      _bonusForce(level == 5 ? null : forced, modifier: rule);
+    }
     _beginLevel();
-    final target = wave.clamp(1, wavesPerLevel);
+    final target = (wave ?? (level == 5 ? wavesPerLevel : 1)).clamp(
+      1,
+      wavesPerLevel,
+    );
     if (target > 1) {
       events.clear();
       this.wave = target;
+      boss = _bossWave ? _newCarrier() : null; // boss-grandeur: after the loom
       _spawnWave();
       events.add(boss == null ? 'level' : 'boss');
     }
@@ -988,6 +1099,7 @@ class ArcadeModel {
     'kills': kills,
     'heartSlots': List<int>.of(heartSlots),
     'activeMilliseconds': activeMilliseconds,
+    if (bonusRun.seed != null) 'runSeed': bonusRun.seed, // --- bonus levels
   };
 
   /// Restores a fresh wave, validating before changing this model.
@@ -1011,10 +1123,25 @@ class ArcadeModel {
     );
     final sector = integer(data['sector'] ?? data['level'], 1, 1, 5);
     if (route == null || sector == null) return false;
+    // --- bonus levels: the plan is a pure function of the saved run seed.
+    final rawSeed = data['runSeed'];
+    final restoredSeed = rawSeed is int ? rawSeed : null;
+    final restoredPlan = restoredSeed == null
+        ? BonusPlan.none
+        : BonusPlan.forRun(restoredSeed, tuning: bonusTuning);
+    // boss-grandeur: the carrier's sector has its loom waves before it.
     final maxWave = sector == 5
-        ? 1
-        : 3 + ((sector - 1) ~/ 2) + math.min(route, 3);
-    final restoredWave = integer(data['wave'], 1, 1, maxWave.toInt());
+        ? wavesFor(sector: sector, route: route)
+        : restoredPlan.at(route, sector)?.waves.count ??
+              wavesFor(sector: sector, route: route);
+    // A sector-5 checkpoint without a wave is the carrier (boss-grandeur:
+    // after its loom waves), as before the loom existed.
+    final restoredWave = integer(
+      data['wave'],
+      sector == 5 ? maxWave : 1,
+      1,
+      maxWave.toInt(),
+    );
     final restoredLives = integer(
       data['lives'],
       DifficultyPolicy(restoredDifficulty).startingLives,
@@ -1089,11 +1216,56 @@ class ArcadeModel {
     clock = levelClock = _accumulator = 0;
     invulnerable = 2;
     _resetLifeLoss();
-    boss = level == 5 ? _newCarrier() : null;
+    loomClock = 0;
+    boss = _bossWave ? _newCarrier() : null;
+    _bonusStartRun(restoredSeed); // --- bonus levels
+    _bonusBeginLevel();
     _groundBeginLevel(); // --- ground war
     _spawnWave(fromCheckpoint: true);
     events.add(boss == null ? 'level' : 'boss');
     return true;
+  }
+
+  /// boss-grandeur (operator R8.5): every step of the carrier's decay goes
+  /// into the game event queue (music and comms read it): each hex shield
+  /// cell going dark, the field's collapse, each armour plate lost, each
+  /// module breaking away at a form change, and the collapse at core 0.
+  void _bossDecayEvents(
+    Carrier b, {
+    int? cellsBefore,
+    int? armourBefore,
+    int? formBefore,
+  }) {
+    final data = {'route': cycle, 'variant': b.variant};
+    if (cellsBefore != null) {
+      final cells = Carrier.shieldCells(b.shield, b.shieldMax);
+      for (var c = cellsBefore - 1; c >= cells; c--) {
+        _queueGameEvent(GameEventNames.bossShieldCellLost, {
+          ...data,
+          'cellsLeft': c,
+        });
+      }
+      if (b.shield == 0) {
+        _queueGameEvent(GameEventNames.bossShieldDepleted, data);
+      }
+    }
+    if (armourBefore != null && b.armourStep > armourBefore) {
+      for (var a = armourBefore + 1; a <= b.armourStep; a++) {
+        if (a >= b.armourSteps) break; // the last step is the collapse
+        if (a.isEven) continue; // even steps are form changes (modules)
+        _queueGameEvent(GameEventNames.bossArmourLost, {...data, 'plate': a});
+      }
+    }
+    if (formBefore != null && b.phase > formBefore) {
+      for (var f = formBefore + 1; f <= b.phase; f++) {
+        _queueGameEvent(GameEventNames.bossModuleLost, {
+          ...data,
+          'form': f,
+          'detachOrder': f,
+        });
+      }
+    }
+    if (b.core <= 0) _queueGameEvent(GameEventNames.bossCollapse, data);
   }
 
   Carrier _newCarrier() => Carrier(
@@ -1101,7 +1273,36 @@ class ArcadeModel {
     difficulty: difficulty,
     startingDirection: random.nextBool() ? 1 : -1,
     startingPhase: random.nextDouble() * math.pi * 2,
-  );
+  )
+    ..glidePhase = bossRandom.nextDouble() * math.pi * 2
+    // The run's module set (visual only; boss_grammar.dart picks from it).
+    ..variant = bossRandom.nextInt(1 << 16);
+
+  /// boss-grandeur: the last loom wave is cleared (or the loom's cap ran
+  /// out): the carrier's wave starts and it rises from under the fog. What
+  /// is left of the loom wave falls where it is (the R1 rule: nothing stays
+  /// in the fog), and nothing waits in the reserve.
+  void _beginRise() {
+    for (final d in demons) {
+      if (d.swarmState != SwarmState.reserve &&
+          !(d.entering && d.entranceProgress <= 0)) {
+        d.hp = 0;
+        blasts.add(Blast(d.x, d.y));
+      }
+    }
+    demons.clear();
+    incoming.clear();
+    _pendingSkeins.clear();
+    _reserveGroups.clear();
+    stream.drain();
+    wave = wavesPerLevel;
+    loomClock = 0;
+    levelClock = 0; // the carrier's wave is timed from its own start
+    boss = _newCarrier()..emerge = 0;
+    _spawnWave(continuous: true);
+    events.add('boss');
+    _queueGameEvent(GameEventNames.bossRise, {'route': cycle});
+  }
 
   void _beginLevel() {
     visitedSectors.add(level); // --- transition ascent
@@ -1110,7 +1311,9 @@ class ArcadeModel {
     _adaptedThisSector = false;
     clearedLevel = null;
     wreckBoss = null;
-    boss = level == 5 ? _newCarrier() : null;
+    loomClock = 0;
+    boss = _bossWave ? _newCarrier() : null;
+    _bonusBeginLevel(); // --- bonus levels
     levelClock = 0;
     pickups.clear();
     heartPickups.clear();
@@ -1176,7 +1379,9 @@ class ArcadeModel {
     _flock = 2;
     flocksSpawned = 0;
     flocksPlanned = boss == null
-        ? policy.reinforcementFlocks(route: cycle, sector: level)
+        ? _bonusReinforcements(
+            policy.reinforcementFlocks(route: cycle, sector: level),
+          )
         : 0;
     _reinforcementLeft = 4.5;
     _reinforcementCooldown = .6;
@@ -1193,10 +1398,8 @@ class ArcadeModel {
   /// counters belonging to [forWave].
   (List<Demon>, int) _buildRoster(int forWave, {bool fromCheckpoint = false}) {
     final roster = <Demon>[];
-    final count = policy.rosterCount(
-      sector: level,
-      wave: forWave,
-      route: cycle,
+    final count = _bonusRoster(
+      policy.rosterCount(sector: level, wave: forWave, route: cycle),
     );
     final rows = (count / 6).ceil();
     final spacing = rows <= 4 ? 48.0 : 160.0 / (rows - 1);
@@ -1368,7 +1571,11 @@ class ArcadeModel {
   /// be sighted after it, so the fog stages nothing (playtest-fixes). What
   /// this wave still holds back (its later roster skeins, its reinforcement
   /// groups) waits unseen and leaves the fog only when it is admitted.
-  bool get finalWave => boss != null || level == 5 || wave >= wavesPerLevel;
+  bool get finalWave =>
+      boss != null ||
+      // boss-grandeur: nothing comes out of the fog after the last loom wave.
+      (level == 5 && wave >= wavesPerLevel - 1) ||
+      wave >= wavesPerLevel;
 
   /// What the fog shows waiting: the drawn reserve plus the incoming
   /// cohort's approaching skeins (both empty during [finalWave]).
@@ -1402,6 +1609,7 @@ class ArcadeModel {
       combat &&
       boss == null &&
       wave < wavesPerLevel &&
+      !(level == 5 && wave >= wavesPerLevel - 1) && // boss-grandeur: Rise
       incoming.isEmpty &&
       flocksRemaining == 0 &&
       lifeLossPhase == LifeLossPhase.none &&
@@ -2057,13 +2265,16 @@ class ArcadeModel {
   (int, int, bool) _ordinaryProfile([int? forWave]) {
     final w = forWave ?? wave;
     final index = _ordinaryBirthOrdinal++;
-    final kind = cycle > 0
-        ? (index + w + level) % 4
-        : w > 1 && index % 4 == 0
-        ? math.max(0, level - 2)
-        : level - 1;
+    final kind = _bonusKind(
+      cycle > 0
+          ? (index + w + level) % 4
+          : w > 1 && index % 4 == 0
+          ? math.max(0, level - 2)
+          : level - 1,
+    );
     final elite =
         (index + 1) % 10 == 0 &&
+        !_bonusNoElites &&
         _eliteBirths < policy.eliteBudget(route: cycle);
     if (elite) _eliteBirths++;
     return (
@@ -2225,7 +2436,9 @@ class ArcadeModel {
       lifeLossPhase = LifeLossPhase.none;
     }
     // --- continuous swarm: no transition phase between waves of a sector.
-    if (wave < wavesPerLevel && incoming.isNotEmpty) {
+    if (level == 5 && boss == null && wave == wavesPerLevel - 1) {
+      _beginRise(); // --- boss-grandeur: the last loom wave is cleared
+    } else if (wave < wavesPerLevel && incoming.isNotEmpty) {
       _mergeCohort(forced: false);
     } else if (wave < wavesPerLevel) {
       wave++;
@@ -2239,6 +2452,7 @@ class ArcadeModel {
     } else {
       shots.clear();
       clearedLevel = level;
+      _bonusClear(); // --- bonus levels: the clear award
       _groundEndLevel(); // --- ground war
       _enterPhase(RunMode.salvage, FlowPlan.routSeconds);
       _flowBegin(victory: false); // --- cinematic flow
@@ -2420,6 +2634,7 @@ class ArcadeModel {
         targetX = shipX;
       }
       _flowStep();
+      _bonusIdle(dt); // --- bonus levels: a mechanic winds down
       if (transitionLeft <= 0) {
         if (mode == RunMode.salvage) {
           pickups.clear();
@@ -2462,7 +2677,9 @@ class ArcadeModel {
     }
     invulnerable = math.max(0, invulnerable - dt);
     // Module timers freeze while the ship is away: the loadout survives.
-    for (final value in shipAway ? const <Power>[] : Power.values) {
+    // boss-grandeur: and while the carrier rises (a held beat, as the
+    // transition into a carrier sector held them before the loom).
+    for (final value in shipAway || bossRising ? const <Power>[] : Power.values) {
       if (powerTimers.containsKey(value)) {
         powerTimers[value] = math.max(0, powerTimers[value]! - dt);
       }
@@ -2492,6 +2709,7 @@ class ArcadeModel {
     });
 
     _updateFallingParts(dt);
+    _bonusStep(dt); // --- bonus levels: crates, bonus power timers
 
     for (final crate in supplyCrates) {
       crate.y += crate.vy * dt;
@@ -2505,7 +2723,7 @@ class ArcadeModel {
     noseFlash = math.max(0, noseFlash - dt);
     if (_fire <= 0) {
       final fired = shots.length;
-      _fire += hasPower(Power.rapid) ? .105 : .23;
+      _fire += (hasPower(Power.rapid) ? .105 : .23) * _bonusFireScale;
       final powerful = hasPower(Power.powerful), large = hasPower(Power.large);
       final double slingVx;
       if (shipVx.abs() <= 15 && steering.abs() < 0.05) {
@@ -2571,6 +2789,11 @@ class ArcadeModel {
     _updateBoss(dt);
     _updateGround(dt); // --- ground war
     if (!combat) return;
+    // --- boss-grandeur: the loom's cap.
+    if (looming) {
+      loomClock += dt;
+      if (loomClock >= loomCap && !shipAway) _beginRise();
+    }
     for (final s in shots) {
       s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1);
       s.y += s.vy * dt;
@@ -2604,7 +2827,8 @@ class ArcadeModel {
     for (final p in pickups) {
       p.y += fallSpeed * dt;
       if ((p.x - shipX).abs() < 22 && (p.y - shipY).abs() < 23) {
-        collect(p.power);
+        final special = p.bonus; // --- bonus levels
+        special != null ? collectBonus(special) : collect(p.power);
         p.y = height + 20;
       }
     }
@@ -2793,6 +3017,7 @@ class ArcadeModel {
     if (boss != null || level == 5 || forWave < 1 || forWave > wavesPerLevel) {
       return null;
     }
+    if (_bonusNoSentinels) return null; // --- bonus levels
     final eligible =
         cycle >= 1 &&
         ((forWave == wavesPerLevel &&
@@ -3612,13 +3837,26 @@ class ArcadeModel {
   void _updateBoss(double dt) {
     final b = boss;
     if (b == null) return;
+    if (!b.fightReady) {
+      // --- boss-grandeur: the Rise. It holds its station under the fog;
+      // no motion, doors, minions or fire until it is fully out.
+      if (combat) {
+        b.emerge = math.min(1.0, b.emerge + dt / Carrier.riseSeconds);
+        if (b.fightReady) b.readyAt = levelClock;
+      }
+      b.y = Carrier.fightRow + Carrier.glideAmplitude * b.glide;
+      return;
+    }
+    final clock = levelClock - b.readyAt;
     final oldX = b.x;
     b.motionPhase += dt * .7 * speed * b.movementRate * b.startingDirection;
     b.x = b.forecastX(0, speed);
     b.horizontalVelocity = dt > 0 ? (b.x - oldX) / dt : b.horizontalVelocity;
-    b.y = 205 + math.sin(b.motionPhase * 1.28) * (12 + b.rage * 6);
+    // --- boss-grandeur (hook b): the bounded vertical glide.
+    b.glidePhase += dt * Carrier.glideRate * b.movementRate;
+    b.y = Carrier.fightRow + Carrier.glideAmplitude * b.glide;
     b.door =
-        ((math.sin(levelClock * (1.55 + b.phase * .22)) -
+        ((math.sin(clock * (1.55 + b.phase * .22)) -
                     (cycle == 0 ? 0.0 : .1)) *
                 2)
             .clamp(0, 1);
@@ -3627,14 +3865,14 @@ class ArcadeModel {
       b.sideDoorRight = 0;
     } else {
       final sideBonus = cycle <= 1 ? 0.15 : 0.0;
-      final sideRamp = ((levelClock - 0.65) / 0.35).clamp(0.0, 1.0);
+      final sideRamp = ((clock - 0.65) / 0.35).clamp(0.0, 1.0);
       b.sideDoorLeft =
-          (((math.sin(levelClock * (1.45 + b.phase * .2) + 1.9) + sideBonus) *
+          (((math.sin(clock * (1.45 + b.phase * .2) + 1.9) + sideBonus) *
                   2)
               .clamp(0.0, 1.0) *
           sideRamp);
       b.sideDoorRight =
-          (((math.sin(levelClock * (1.45 + b.phase * .2) + 4.1) + sideBonus) *
+          (((math.sin(clock * (1.45 + b.phase * .2) + 4.1) + sideBonus) *
                   2)
               .clamp(0.0, 1.0) *
           sideRamp);
@@ -3666,8 +3904,7 @@ class ArcadeModel {
     }
     // Fan attacks force positioning without tracking a player after launch.
     final fanRate = (0.85 + math.min(cycle, 3) * 0.08) * policy.hostileRate;
-    if ((levelClock * fanRate).floor() !=
-        ((levelClock - dt) * fanRate).floor()) {
+    if ((clock * fanRate).floor() != ((clock - dt) * fanRate).floor()) {
       for (var i = -1; i <= 1; i++) {
         _hostile(
           Shot(
@@ -3695,7 +3932,11 @@ class ArcadeModel {
                   ? Power.powerful
                   : (roll < 0.90 ? Power.spread : Power.shield));
         final spawnX = 50.0 + random.nextDouble() * 260.0;
-        supplyCrates.add(SupplyCrate(spawnX, -20.0, power));
+        // --- bonus levels: a run modifier may change or withhold it.
+        final allowed = _bonusDrop(power, crate: true);
+        if (allowed != null) {
+          supplyCrates.add(SupplyCrate(spawnX, -20.0, allowed));
+        }
       }
     }
   }
@@ -3717,7 +3958,7 @@ class ArcadeModel {
         }
         continue;
       }
-      final shieldedCarrier = boss;
+      final shieldedCarrier = hittableBoss;
       if (shieldedCarrier != null &&
           shieldedCarrier.shield > 0 &&
           (s.x - shieldedCarrier.x).abs() <=
@@ -3750,7 +3991,10 @@ class ArcadeModel {
           if (crate.destroyed) {
             supplyCrates.remove(crate);
             blasts.add(Blast(crate.x, crate.y, big: true));
-            pickups.add(Pickup(crate.x, crate.y, crate.power));
+            pickups.add(
+              Pickup(crate.x, crate.y, crate.power, bonus: crate.bonus),
+            );
+            _bonusCrateOpened(crate); // --- bonus levels
             events.add('salvage');
           }
           break;
@@ -3770,7 +4014,7 @@ class ArcadeModel {
           break;
         }
       }
-      final b = boss;
+      final b = hittableBoss;
       if (!hit &&
           b != null &&
           b.shield == 0 &&
@@ -3811,7 +4055,7 @@ class ArcadeModel {
         hitDemon(d, damage: shot.damage);
       }
     }
-    final b = boss;
+    final b = hittableBoss;
     if (b == null || !hitCarrier) return;
     final touchesField =
         b.shield > 0 &&
@@ -3904,7 +4148,7 @@ class ArcadeModel {
           (100 + d.kind * 75 + (d.maxHp - 1) * 50) *
           (cycle + 1) *
           policy.enemyPoints;
-      score += (basePoints * (wasDiving ? 1.5 : 1.0)).round();
+      score += _bonusKillPoints((basePoints * (wasDiving ? 1.5 : 1.0)).round());
       blasts.add(Blast(d.x, d.y, archetype: d.archetype));
       events.add('explosion');
       if (policy.heartDropChance > 0 &&
@@ -3918,13 +4162,11 @@ class ArcadeModel {
         );
       }
       if (kills % 8 == 0 || (d.isLarge && wasDiving)) {
-        pickups.add(
-          Pickup(
-            d.x,
-            d.y,
-            Power.values[(math.max(1, kills ~/ 8) - 1) % Power.values.length],
-          ),
+        // --- bonus levels: the rules in force may change or withhold it.
+        final power = _bonusDrop(
+          Power.values[(math.max(1, kills ~/ 8) - 1) % Power.values.length],
         );
+        if (power != null) pickups.add(Pickup(d.x, d.y, power));
       }
       _groundDropOnKill(d); // --- ground war
     } else {
@@ -3954,13 +4196,15 @@ class ArcadeModel {
 
   /// Shield can be hit across its width. Core needs an exposed central or side hatch.
   bool hitBoss(double shotX, {int damage = 1, double blastRadius = 0}) {
-    final b = boss;
+    final b = hittableBoss;
     if (b == null || !combat || damage <= 0) return false;
     if (b.shield > 0) {
       final impactY = b.forceFieldSurfaceY(shotX);
+      final cellsBefore = Carrier.shieldCells(b.shield, b.shieldMax);
       b.shield = math.max(0, b.shield - damage);
       events.add('hit');
       blasts.add(Blast(shotX, impactY));
+      _bossDecayEvents(b, cellsBefore: cellsBefore);
       if (b.shield == 0) events.add('boss');
       return true;
     }
@@ -3980,8 +4224,10 @@ class ArcadeModel {
       return false;
     }
     final old = b.phase;
+    final armourBefore = b.armourStep;
     b.core = math.max(0, b.core - damage);
     events.add('hit');
+    _bossDecayEvents(b, armourBefore: armourBefore, formBefore: old);
     final hitX = centerHit
         ? b.x
         : (leftHit
@@ -4073,6 +4319,7 @@ class ArcadeModel {
       return;
     }
     lives--;
+    bonusRun.shipsLost++; // --- bonus levels
     pilot.reset(shipX); // --- demon intelligence
     skill.lifeLost();
     _lastSkill = skill.level;

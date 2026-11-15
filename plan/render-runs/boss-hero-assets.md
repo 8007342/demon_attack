@@ -338,3 +338,27 @@ queued.
 **Spent in B3:** GPU ≈ 12.5 min (752 s over 22 studio jobs, no failures). CPU (Blender, 8 threads, < 1 GB) ≈ 19 min:
 4 rigs 86 s, cruiser bake 280 s, battlecruiser bake 387 s, the killed battleship bake ≈ 4.5 min, plus 3 grammar
 checks.
+## 5. Pack (task 4.4, in `boss-grandeur`, 2026-11-15)
+
+`tools/boss_sheet pack BAKE RIG HULL...` (Go, `tools/boss_sheet/pack.go`) packs the finished bake of every listed
+hull and regenerates the hero section of `lib/game/boss_atlas.dart` (after the marker
+`// ---- BEGIN boss hero atlases (tools/boss_sheet pack) ----`; the frontal section above it from
+`tools/generate_boss_sprites.py` is kept verbatim, so the tools that parse it still work).
+
+```sh
+(cd tools/boss_sheet && go build -o ~/.cache/tillandsias-project/boss_sheet .)
+~/.cache/tillandsias-project/boss_sheet pack ~/.cache/tillandsias-project/boss-bake ~/.cache/tillandsias-project/boss-rig frigate
+```
+
+**What is packed, per hull:** for each of the 6 stored views (pitch 38/45/52 × yaw 0/+12; −12 drawn mirrored), each
+module's S0 layer at 2 px/unit and its S1–S3 layers at 1 px/unit (drawn ×2, the B2 budget decision), all cropped to
+alpha; at yaw 0 a mirrored pair's left module is not stored (drawn as the right one flipped); two wreck frames per
+module; the per-view lights, fire points, nozzles (S0 and S3) and functional anchors from `rig.json`; and the small
+functional parts of the frontal atlas (jaw leaves, bay vents, plumes, breaches, debris), so one hull needs no second
+atlas resident. Shelf packing at 2048 wide, pages ≤ 2048 high, trimmed; the pack fails above 16 MB.
+
+**Frigate:** 132 sprites on one page `assets/images/boss-frigate-hero-0.png`, 2048 × 1980, **15.47 MB RGBA
+resident** (1.66 MB PNG; the engine wreck pair stored once, §4). The runtime (`BossPainter`) loads a hull's hero pages when `BossHeroAtlas.hulls` has it,
+else its frontal atlas: the cruiser and bigger hulls keep today's art until they are packed (rerun the pack with
+every baked hull listed). Operator R8 (2026-11-15) redirects the art (alien, faceless, giant); the frigate pack is a
+placeholder for the plumbing, which is generic (any hull, modules, stages, sets).
