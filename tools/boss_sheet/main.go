@@ -367,6 +367,18 @@ func main() {
 		cmdBudget(a)
 	case "heroes":
 		cmdHeroes(a)
+	case "sym":
+		cmdSym(a)
+	case "bakefinish":
+		cmdBakeFinish(a)
+	case "views":
+		cmdViews(a)
+	case "stages":
+		cmdStages(a)
+	case "maskdiff":
+		cmdMaskDiff(a)
+	case "bakebudget":
+		cmdBakeBudget(a)
 	case "view":
 		cmdView(a)
 	case "finish":

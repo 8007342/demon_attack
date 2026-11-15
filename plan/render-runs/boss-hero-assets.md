@@ -128,3 +128,66 @@ is the rig silhouette dilated by one atlas texel minus key pixels (BiRefNet is n
 silhouette), green is despilled, the image is area-downscaled to the atlas density and quantised to the family ramps,
 with an ink outline. Sheet: **`art/contact/boss-pilot-heroes.png`** (header: clay control, depth control, today's
 frame; one row per candidate: raw, finished ×1, CSS size with the simulation windows, verdict).
+
+## 3. B2: frigate view set, stages and wrecks (2026-11-15)
+
+**Projection bake** (`tools/boss_rig/project_bake.py`, task 4.1). The picked hero, fitted to the rig frame, is
+camera-projected from the hero view onto the hull mesh in object (rest) coordinates. A surface point takes the hero
+texel when it faces the hero camera and its hero-view depth matches the rig's 16-bit z pass within 1.5 units;
+otherwise it takes a clay-tinted fill (the family colour of its material under a fixed key light). Every view,
+module layer (other modules held out, so the layers recompose the beauty exactly) and wreck (module alone at the
+hero view, rest and tumbled 24°/−10°/18°) is rendered with that texture, on Cycles CPU, 9 samples. Then
+`boss_sheet bakefinish` finishes each image to the atlas density (beauty masked to the view's rig silhouette ±1
+texel; palette quantise to the family ramps; ink outline).
+
+**Symmetry (decision).** The atlas stores yaw +12° and draws −12° mirrored (§1, decision 3), so an asymmetric hero
+would swap details from side to side mid-swerve. Each projected image is therefore symmetrised about the hull's
+centre axis (exact at yaw 0) with `boss_sheet sym`, keeping the **left** half of 921000 (the better-lit half; the
+right half reads darker at phone size). Check on the sheet: the mirrored +12° view differs from a rendered −12° view
+in 3.6 % of texels (edge anti-aliasing only).
+
+**Stage heroes** (task 4.2), `variant-qwen-edit.json` on the picked hero, 2 seeds each, ≈ 34 s per job:
+
+| Stage | Job | Seeds | Pick | Why |
+| --- | --- | --- | --- | --- |
+| S1 scorched | st-1794779563530-61 | 923100–923101 | **923101** | soot and glowing hairline cracks, plates still read; 923100's black drips read as oil |
+| S2 exposed | st-1794779567292-62 | 923200–923201 | **923200** | plates torn off over a glowing ribcage, maw and bays kept; 923201 is a lava-crack skin with a smoke plume |
+| S3 breaking | st-1794779569923-63 | 923300–923301 | — | both put the plates back: an independent edit from S0 breaks the S2 → S3 progression |
+| S3 breaking (chained) | st-1794779704501-64 | 923400–923401 | **923400** | edited from the S2 pick: broken ribs, cracked face, chipped horn, burning breaches; 923401 drifts blue and grows a stray hammer |
+
+Rule note: ground forces forbids chaining edits (drift). For damage the drift *is* the point (damage accumulates),
+so S3 chains from S2. The S3 geometry has no tower (first in the detach order); `boss_sheet maskdiff` drops the
+hero texels where the S3 clay differs from S2 (25 k texels), so the deck behind the lost tower takes the fill
+instead of a painted tower. The breach and fire overlays from the rig cover it at runtime.
+
+Picks committed under `art/sprites/sources/boss-selected/frigate/stage/`; picks recorded in `boss-hulls.json`
+`selected.frigate`; all 16 runs in `boss-hulls-runs.json`. Rebuild without GPU: `lua tools/boss_rig/bake_hull.lua
+frigate --sheets` (rig, fits, maskdiff, sym, bake, finish, budget, sheets).
+
+**Sheets**
+- **`art/contact/boss-pilot-views.png`**: the 9 finished views ×1 with the simulation windows; the mirror check; the
+  5 module layers recomposed and spread out. **`art/contact/boss-pilot-views.gif`**: a 72-frame strafe at atlas
+  density with yaw chosen from the horizontal velocity (±12° above 40 % of max) and pitch from the vertical glide
+  (±16 units: 38° above, 52° below), as `boss-grandeur` §5 selects them. The ship reads as one object turning and
+  gliding; no material or detail changes between views (by construction).
+- **`art/contact/boss-pilot-stages.png`**: S0–S3 at yaw −12/0/+12 and the S4 wrecks (bow, engines, spine, tower;
+  rest and tumbled, from the S2 look).
+
+**Budget (task 4.5), measured on the finished layers** (`boss_sheet bakebudget`): S0 module layers 6.07 MB, wrecks
+2.58 MB, stage patches 17.45 MB as full module rects → 26.1 MB, **over the 16 MB budget**. The rig-based estimate of
+§1 (13.4 MB) assumed patches only where geometry changes; the AI stage looks restyle the whole surface, so every
+patch covers its whole module. **Decision (reversible): stage patches S1–S3 are stored at half atlas density and
+drawn ×2** (damage textures are blotchy and survive it): 4.36 MB → **13.0 MB total for the frigate**. Bigger hulls
+scale like the rig estimate (≤ ×1.15), so ≈ 15 MB for the dreadnought; re-measure at B3. Alternatives on file:
+16-px tile patches (13.6 MB of patches, still too much at full density), or S1 as a runtime tint overlay.
+
+**Verdict (delegated): B2 accepted** for the frigate: no drift between views, anchors on the simulation windows in
+every view, stages read in order at phone size (S1 is dark; the eyes stay lit). Known limits: faint light rims along
+some inner silhouette edges where the hero's anti-aliased edge projects onto geometry; fill areas (nacelle sides,
+membrane undersides, the S3 deck) are flat family colour; S2/S3 redraw the face as a ribcage over the maw (the scene
+still draws the core window there).
+
+**Not done (next run):** task 4.4, pack (atlas pages ≤ 4096 × 2048 per hull, generated `lib/game/boss_atlas.dart`
+with views, modules, stages and anchors). It changes the generated Dart contract that `BossPainter` reads today, so
+it should land together with `boss-grandeur` 4.3 (the assembly painter). Task 4.3 (optional seam heal) is skipped:
+the projected views need no healing at this spread.

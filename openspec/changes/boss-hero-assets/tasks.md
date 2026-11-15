@@ -20,11 +20,11 @@
 - [x] 3.2 Frigate pilot: 4 Qwen + 2 SDXL-CN candidates at 45°/0°, mattes, finish; B1 sheet `art/contact/boss-pilot-heroes.png`; log jobs in `boss-hulls-runs.json` and `plan/render-runs/boss-hero-assets.md`
 
 ## 4. Projection bake, stages and B2
-- [ ] 4.1 `tools/boss_rig/project_bake.py`: camera-project the hero onto the mesh from the hero view; render 9 views × modules with clay-tint fill for unseen faces
-- [ ] 4.2 Stage heroes S1–S3 by Qwen edit of the picked hero (2 candidates each), projected the same way; wrecks from geometry
+- [x] 4.1 `tools/boss_rig/project_bake.py`: camera-project the hero onto the mesh from the hero view; render 9 views × modules with clay-tint fill for unseen faces
+- [x] 4.2 Stage heroes S1–S3 by Qwen edit of the picked hero (2 candidates each), projected the same way; wrecks from geometry
 - [ ] 4.3 Optional seam heal (SDXL-CN depth, denoise ≤ 0.3) gated by interior difference ≤ 12 % against the projection
 - [ ] 4.4 Finish and pack in `tools/ground_blocks` (hull mode): palette quantise, mask ±1 texel, outline, rig lights / fires / breaches, module layers from ID masks, pages ≤ 4096 × 2048, generated `lib/game/boss_atlas.dart` with views, modules, stages, anchors
-- [ ] 4.5 B2 sheets `art/contact/boss-pilot-views.png`, `-stages.png`; budget check (≤ 16 MB RGBA)
+- [x] 4.5 B2 sheets `art/contact/boss-pilot-views.png`, `-stages.png`; budget check (≤ 16 MB RGBA)
 
 ## 5. All hulls and B3
 - [ ] 5.1 Cruiser, battlecruiser, battleship, dreadnought through §3–§4 (one GPU job at a time; push after every checkpoint; selected raws committed under `art/sprites/sources/boss-selected/`)

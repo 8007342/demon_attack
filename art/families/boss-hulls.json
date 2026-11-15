@@ -273,6 +273,10 @@
                                 {"module": "turret", "suffix": "aft", "offset": [30, 52, -6], "mirror": true}, "keel",
                                 "broodSac", "tower2"]}
  },
+ "selected": {
+  "notes": "Picked raws (committed under art/sprites/sources/boss-selected/<hull>/); hero = S0 look, S1-S3 = stage looks. sym = the hero half mirrored onto the other (the atlas draws yaw -12 as mirrored +12). Ledger: plan/render-runs/boss-hero-assets.md.",
+  "frigate": {"S0": "hero/921000.png", "S1": "stage/S1-923101.png", "S2": "stage/S2-923200.png", "S3": "stage/S3-923400.png", "sym": "left"}
+ },
  "module_counts": {"frigate": 5, "cruiser": 8, "battlecruiser": 11, "battleship": 14, "dreadnought": 17},
  "seeded_assembly": {
   "notes": "Beyond tour 5 (boss-grandeur design 7): start from the dreadnought set; swap or add catalogue modules under these limits. Mirrored here so build.py --check can hold the art budget before any render.",

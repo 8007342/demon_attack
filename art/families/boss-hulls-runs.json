@@ -341,6 +341,326 @@
       "output_sha256": "9541785ace4fcee8372c935accc29453563eb2ee98c3d6f48436c8a31eb3c11e",
       "at": "2026-11-15T21:43:01Z",
       "verdict": "reject: on-rig, pale beige plates, least menacing"
+    },
+    {
+      "job": "st-1794779563530-61",
+      "ticket": "tk-1794779562137-96206-17",
+      "hull": "frigate",
+      "stage": "S1",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/frigate-hero-921000.png",
+          "sha256": "a0eefeddf5e40ca92e29407f59e5182bb00d1698c5574e9a3ba7f116c851ba45"
+        }
+      ],
+      "seed": 923100,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. It has taken its first hits: black scorch marks and soot burns across the armour plates, a few thin cracks glowing faint ember orange, several small running lights gone dark. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, watermark, smoke cloud, explosion, fire plume, flames outside the ship, new parts, different pose, background scenery, checkerboard",
+      "output_sha256": "256735de8e063a283f0a476557a6c769432c3cb267085c51a7c7061e6b2e60e4",
+      "at": "2026-11-15T21:53:16Z",
+      "verdict": "reject (S1): heavy black drips read as oil, not scorch"
+    },
+    {
+      "job": "st-1794779563530-61",
+      "ticket": "tk-1794779562137-96206-17",
+      "hull": "frigate",
+      "stage": "S1",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/frigate-hero-921000.png",
+          "sha256": "a0eefeddf5e40ca92e29407f59e5182bb00d1698c5574e9a3ba7f116c851ba45"
+        }
+      ],
+      "seed": 923101,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. It has taken its first hits: black scorch marks and soot burns across the armour plates, a few thin cracks glowing faint ember orange, several small running lights gone dark. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, watermark, smoke cloud, explosion, fire plume, flames outside the ship, new parts, different pose, background scenery, checkerboard",
+      "output_sha256": "bbdc2e847960dc6a3811f3ce3d31fafa3d605869cc4da6752b23f521de70c9b5",
+      "at": "2026-11-15T21:53:16Z",
+      "verdict": "PICK (S1 scorched): soot and glowing hairline cracks, plates still read"
+    },
+    {
+      "job": "st-1794779567292-62",
+      "ticket": "tk-1794779565620-96206-18",
+      "hull": "frigate",
+      "stage": "S2",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/frigate-hero-921000.png",
+          "sha256": "a0eefeddf5e40ca92e29407f59e5182bb00d1698c5574e9a3ba7f116c851ba45"
+        }
+      ],
+      "seed": 923200,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. Its armour plating has been torn away in many places, exposing dark iron ribs and girders that glow molten ember orange from inside, with burning fires in the gaps, heavy scorch marks and cracked stone. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, watermark, smoke cloud, explosion outside the ship, fire plume above the ship, new parts, different pose, background scenery, checkerboard",
+      "output_sha256": "98eaecd8edf669309b7596b7b36ae538dfb4dd380d8282e9ab5eefb2be13857b",
+      "at": "2026-11-15T21:53:50Z",
+      "verdict": "PICK (S2 exposed): plates torn off, glowing ribcage, maw and bays kept"
+    },
+    {
+      "job": "st-1794779567292-62",
+      "ticket": "tk-1794779565620-96206-18",
+      "hull": "frigate",
+      "stage": "S2",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/frigate-hero-921000.png",
+          "sha256": "a0eefeddf5e40ca92e29407f59e5182bb00d1698c5574e9a3ba7f116c851ba45"
+        }
+      ],
+      "seed": 923201,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. Its armour plating has been torn away in many places, exposing dark iron ribs and girders that glow molten ember orange from inside, with burning fires in the gaps, heavy scorch marks and cracked stone. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, watermark, smoke cloud, explosion outside the ship, fire plume above the ship, new parts, different pose, background scenery, checkerboard",
+      "output_sha256": "4a5bc15f2ba43c859ba09f77ca87d213229ee2317198b80e41e31d25cb1eea1b",
+      "at": "2026-11-15T21:53:50Z",
+      "verdict": "reject (S2): lava-crack skin, plates kept; smoke plume outside the ship"
+    },
+    {
+      "job": "st-1794779569923-63",
+      "ticket": "tk-1794779568319-96206-19",
+      "hull": "frigate",
+      "stage": "S3",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/frigate-hero-921000.png",
+          "sha256": "a0eefeddf5e40ca92e29407f59e5182bb00d1698c5574e9a3ba7f116c851ba45"
+        }
+      ],
+      "seed": 923300,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. It is breaking apart: deep glowing breaches torn through the hull showing molten orange interior, armour plates gone, iron ribs bent and broken, fires burning inside the cracks, horns chipped, one eye flickering dim. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, watermark, smoke cloud, explosion outside the ship, fire plume above the ship, debris flying away, new parts, different pose, background scenery, checkerboard",
+      "output_sha256": "e84f030680bdd15b451410ec55be2479bfbc37015c4e1ebc1a7c075bde5dbc1a",
+      "at": "2026-11-15T21:54:26Z",
+      "verdict": "reject (S3): plates restored (independent edit from S0 breaks the S2->S3 progression)"
+    },
+    {
+      "job": "st-1794779569923-63",
+      "ticket": "tk-1794779568319-96206-19",
+      "hull": "frigate",
+      "stage": "S3",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/frigate-hero-921000.png",
+          "sha256": "a0eefeddf5e40ca92e29407f59e5182bb00d1698c5574e9a3ba7f116c851ba45"
+        }
+      ],
+      "seed": 923301,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours. It is breaking apart: deep glowing breaches torn through the hull showing molten orange interior, armour plates gone, iron ribs bent and broken, fires burning inside the cracks, horns chipped, one eye flickering dim. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, watermark, smoke cloud, explosion outside the ship, fire plume above the ship, debris flying away, new parts, different pose, background scenery, checkerboard",
+      "output_sha256": "06af9b5ca5c50a5512726b0ca46548b434e0d77cd42c30ca90416fad50cdebb4",
+      "at": "2026-11-15T21:54:26Z",
+      "verdict": "reject (S3): plates restored, flames in maw and bays"
+    },
+    {
+      "job": "st-1794779704501-64",
+      "ticket": "tk-1794779703054-96206-20",
+      "hull": "frigate",
+      "stage": "S3",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/frigate-S2-923200.png",
+          "sha256": "98eaecd8edf669309b7596b7b36ae538dfb4dd380d8282e9ab5eefb2be13857b"
+        }
+      ],
+      "seed": 923400,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours, even more damaged: the exposed ribs are bent and broken, deep breaches burn bright orange with fire inside, cracks split the stone face, some ribs snapped off, one horn chipped. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, watermark, smoke cloud, explosion outside the ship, fire plume above the ship, debris flying away, new parts, armour plates restored, different pose, background scenery, checkerboard",
+      "output_sha256": "e4135feb7c32df6c271df677233cfebb30ef0ef6b82981930ca4b11b120af862",
+      "at": "2026-11-15T21:55:37Z",
+      "verdict": "PICK (S3 breaking, chained from S2 923200): broken ribs, cracked face, chipped horn, burning breaches"
+    },
+    {
+      "job": "st-1794779704501-64",
+      "ticket": "tk-1794779703054-96206-20",
+      "hull": "frigate",
+      "stage": "S3",
+      "view": "p45_y+00",
+      "workflow": "art/workflows/sprites/variant-qwen-edit.json",
+      "workflow_sha256": "1f8d74242671b81c394ae94d237a5b6e09c4d9d11843f24b4c0927be946e19c5",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/in/boss/frigate-S2-923200.png",
+          "sha256": "98eaecd8edf669309b7596b7b36ae538dfb4dd380d8282e9ab5eefb2be13857b"
+        }
+      ],
+      "seed": 923401,
+      "prompt": "Same warship, exactly the same pose, outline, shapes and colours, even more damaged: the exposed ribs are bent and broken, deep breaches burn bright orange with fire inside, cracks split the stone face, some ribs snapped off, one horn chipped. The eyes still glow. Keep the solid flat green background (#00FF00).",
+      "negative_prompt": "text, watermark, smoke cloud, explosion outside the ship, fire plume above the ship, debris flying away, new parts, armour plates restored, different pose, background scenery, checkerboard",
+      "output_sha256": "13466c00f9922232f9b2ac1432210bd529fbc51c34db6706500c3bff219d112e",
+      "at": "2026-11-15T21:55:37Z",
+      "verdict": "reject (S3): bluish colour drift and a stray hammer-like part"
     }
   ]
 }
