@@ -88,3 +88,43 @@ bay pods' launch mouths read as dark blobs under the pods in clay.
 
 **Not done in B0:** task 2.3, the Go ray-cast fallback rig (`tools/ground_blocks boss`). The bpy route works and is
 now light (< 1 GB), so the fallback stays a documented contingency; it is needed only if the wheel stops installing.
+
+## 2. B1: frigate pilot heroes (2026-11-15, GPU)
+
+Input: the rig's hero view (pitch 45°, yaw 0°) as clay with hints on a flat green key
+(`art/sprites/sources/boss-selected/frigate/hero/frigate-clay-key.png`), the hero depth with hints, and today's atlas
+frame of the frigate (`boss_sheet atlasframe frigate`: superstructure form 0 behind the bow idle frame, maw and bay
+holes filled with ink) on green (`today-frigate-key.png`). Green, not magenta: the hull family is violet.
+Provenance of every run: `art/families/boss-hulls-runs.json` (workflow and model hashes, inputs, seeds, prompts,
+output hashes, verdicts).
+
+| Job (ticket) | Graph | Seeds | GPU | Result |
+| --- | --- | --- | --- | --- |
+| st-1794778348780-58 (tk-…-13) | `heading-qwen-edit.json`, image 1 = clay, image 2 = today's frame, denoise 1.0, prompt `hero_qwen` | 920000–920001 | ≈ 51 s | **Rejected.** Both redraw image 2 — today's frigate, its pose and silhouette — and ignore the rig. Exactly the CP1 finding (two-image edits are binary). Beautiful, but not projectable |
+| st-1794778445464-59 (tk-…-14) | `variant-qwen-edit.json`, clay only, prompt `hero_qwen_single` (identity in words: violet-grey carved stone, bone horns, ember eyes, fanged maw, bat membranes, gothic tower) | 921000–921003 | ≈ 68 s | **On the rig.** All four keep the outline, the maw, bays, turrets, horns and tower where the rig put them, and read as the same family as today's boss |
+| st-1794778941032-60 (tk-…-16) | `boss-hero-sdxl-cn.json` (new, task 3.1): SDXL base + ControlNet-union promax (depth, 0.85) + IP-Adapter plus (today's frame, 0.6) | 922000–922001 | ≈ 44 s | On the rig but flat, pale lavender or beige plating, noisy key; least menacing. **Not the scaling graph** |
+
+GPU for B1: ≈ 2.7 min (3 jobs, 8 images), no rerolls, no failures (one SDXL-CN queue attempt was refused before
+running because the studio reads workflows only from the main checkout; it ran from a byte-identical copy in the
+ignored `.build/` folder there).
+
+**Pick (delegated): Qwen single-image seed 921000** — `art/sprites/sources/boss-selected/frigate/hero/921000.png`.
+- *Scary:* red-hot eyes under a heavy brow, a wide fanged maw, bone horns and spikes, rivets and plates; the dark
+  violet stone keeps it ominous without going black.
+- *Readable at phone size:* at CSS size (1 px per unit) the eyes, maw, bays and horns still separate; the bays and
+  maw land on the simulation windows (sheet, right column).
+- *Family resemblance:* the same violet-grey carved stone, ivory horns, ember eyes and ember-lit windows as today's
+  frigate; the gargoyle face is now the whole bow.
+- Runner-up 921002 (also committed): just as faithful but darker and flatter. Rejected: 921001 (paints bat
+  membranes over the turrets), 921003 (bays turned into tusks, too dark), both 2-image runs, both SDXL-CN runs.
+- **Graph decision:** Qwen-Image-Edit single image (clay + hints in, identity carried by the prompt and palette)
+  scales to the other hulls. macron.dev's "identity from a reference image" did not work here: with today's frame
+  as image 2 Qwen copies the old ship, and IP-Adapter on SDXL dilutes the look. The identity reference still matters
+  — at B3 the picked frigate hero (not today's frame) is a candidate image 2 for the bigger hulls, to test whether a
+  reference that already has the new pose fares better.
+
+Finish (`boss_sheet finish`, colour-preserving like ground-forces A1): the raw is fitted to the rig frame, its alpha
+is the rig silhouette dilated by one atlas texel minus key pixels (BiRefNet is not needed: the rig owns the
+silhouette), green is despilled, the image is area-downscaled to the atlas density and quantised to the family ramps,
+with an ink outline. Sheet: **`art/contact/boss-pilot-heroes.png`** (header: clay control, depth control, today's
+frame; one row per candidate: raw, finished ×1, CSS size with the simulation windows, verdict).

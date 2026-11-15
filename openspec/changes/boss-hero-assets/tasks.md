@@ -16,8 +16,8 @@
 - [x] 2.4 B0 sheet `art/contact/boss-rig-turntables.png`; operator review
 
 ## 3. Heroes (GPU) and B1
-- [ ] 3.1 Commit `art/workflows/sprites/boss-hero-sdxl-cn.json` (SDXL + ControlNet-union depth + IP-Adapter plus) before its first run; the Qwen path reuses `heading-qwen-edit.json` (image 1 clay, image 2 today's atlas frame)
-- [ ] 3.2 Frigate pilot: 4 Qwen + 2 SDXL-CN candidates at 45°/0°, mattes, finish; B1 sheet `art/contact/boss-pilot-heroes.png`; log jobs in `boss-hulls-runs.json` and `plan/render-runs/boss-hero-assets.md`
+- [x] 3.1 Commit `art/workflows/sprites/boss-hero-sdxl-cn.json` (SDXL + ControlNet-union depth + IP-Adapter plus) before its first run; the Qwen path reuses `heading-qwen-edit.json` (image 1 clay, image 2 today's atlas frame)
+- [x] 3.2 Frigate pilot: 4 Qwen + 2 SDXL-CN candidates at 45°/0°, mattes, finish; B1 sheet `art/contact/boss-pilot-heroes.png`; log jobs in `boss-hulls-runs.json` and `plan/render-runs/boss-hero-assets.md`
 
 ## 4. Projection bake, stages and B2
 - [ ] 4.1 `tools/boss_rig/project_bake.py`: camera-project the hero onto the mesh from the hero view; render 9 views × modules with clay-tint fill for unseen faces
