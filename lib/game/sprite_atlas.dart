@@ -1,3 +1,6 @@
+import 'dart:ui' show Offset;
+
+import 'combat_anchors.dart';
 import 'creature_motion.dart';
 import 'model.dart';
 import 'swarm_look.dart';
@@ -13,6 +16,25 @@ typedef CreatureCell = ({
   int eliteCol,
   int lift,
 });
+
+/// The brood's rank ladder (docs/styleguide/alien-troops.md §4): what the
+/// insignia above a creature's head says about how it will behave.
+enum AlienRank {
+  /// Small creatures (intelligence tier T0): no mark.
+  drone,
+
+  /// Not-so-small creatures (T1): one talon.
+  skirmisher,
+
+  /// Route-hardened T1 creatures (`maxHp >= 4`): two talons.
+  veteran,
+
+  /// Elites (T2): the ocellus, a rayed eye with an ember core.
+  hunter,
+
+  /// Sentinels (T3): a crown of tines over an ocellus.
+  sentinel,
+}
 
 /// Cell coordinates of `assets/images/combat.png`, the 64x64-logical-grid
 /// gargoyle combat atlas (stored 1x, 32 columns). The authoritative contract
@@ -155,6 +177,43 @@ abstract final class CombatAtlas {
       eliteCol: elite,
       lift: flightLift[frame],
     );
+  }
+
+  // --- alien-insignia (design §1, §3) ------------------------------------
+
+  /// The creature's rank, a pure function of existing fields (it stores
+  /// and changes nothing). Mirrors the demon-intelligence tiers and the
+  /// medium dive-shield rule, so the glyph says how it will behave.
+  static AlienRank rankOf(Demon d) {
+    if (d.isLarge) return AlienRank.sentinel;
+    if (d.elite) return AlienRank.hunter;
+    if (d.kind >= 2 || d.maxHp >= 3) {
+      return d.maxHp >= 4 ? AlienRank.veteran : AlienRank.skirmisher;
+    }
+    return AlienRank.drone;
+  }
+
+  /// Skull top of each species in its neutral glide (art y in the 64 cell):
+  /// the fallback anchor when a cell has none (see [headAnchor]).
+  static const List<int> neutralHeadTop = [21, 20, 21, 21];
+
+  static final List<int> _anchors = [
+    for (final v in combatHeadAnchors.split(','))
+      if (v.isNotEmpty) int.parse(v),
+  ];
+
+  /// The skull top of a creature cell, in art px from the cell centre
+  /// (tools/generate_sprites.py projects it from the rig for every species,
+  /// variant, direction and pose). Cells without one (death, overlays) fall
+  /// back to the species' neutral head top raised by [lift].
+  static Offset headAnchor(int row, int col, {int lift = 0}) {
+    final i = (row * columns + col) * 2;
+    if (row >= 0 && i + 1 < _anchors.length && col >= 0 && col < columns) {
+      final x = _anchors[i], y = _anchors[i + 1];
+      if (x != combatAnchorHole) return Offset(x.toDouble(), y.toDouble());
+    }
+    final kind = (row ~/ speciesRows).clamp(0, 3);
+    return Offset(0, neutralHeadTop[kind] - cell / 2 + lift);
   }
 
   static const double firePoseSeconds = 0.28;

@@ -17,6 +17,11 @@ otherwise                                → R0
 - `tools/alien_insignia atlas` writes `assets/images/insignia.png`. It holds the glyphs (talon, double talon, ocellus,
   crown, cell, socket) in bone, angry gold, tell white and cyan variants, at 2 device px per glyph pixel. It is under
   4 KB.
+  - As built: 813 bytes, plus the generated rects `lib/game/insignia_atlas.dart`.
+  - The double talon shares one glyph row (7 × 9).
+  - The sentinel's crown is one glyph: the band seated on the ocellus, whose top ray sinks into it (9 × 11, not
+    9 × 13).
+  - The cells are lit (cyan), spent (socket), flash (white) and rush (`#FFA88C`, cyan pushed to ember, see §4).
 - `InsigniaPainter` draws after the arena camera transform (`boss-grandeur` §3), in screen space:
   - position = `camera.toScreen(creatureCentre + headAnchor(cell) · scale)`;
   - size is fixed in CSS px (1 glyph px = 1.35 CSS px), regardless of creature scale or zoom.
@@ -35,6 +40,17 @@ otherwise                                → R0
   frame's `lift`.
 - Sentinels take their anchor from the sentinel effects sheet's head point, and the carrier from the brood sigil
   anchor.
+
+**As built (2.2).**
+- The anchor is the screen top of the posed skull ellipsoid (wings omitted, so it needs no raster), for flight rows
+  0–4, flash rows 5–6 and the action row (anticipation, fire, angry fire, dive, dive flash).
+- The ellipsoid lacks the outline, brow and horn bases, so each species is calibrated once: its neutral glide is
+  matched to the topmost opaque pixel over the skull in the shipped `combat.png`. The measured values are art y
+  21 / 20 / 21 / 21 (the styleguide's 22 / 21 / 22 / 20 were read by eye from a probe). They are the fallback,
+  `CombatAtlas.neutralHeadTop`.
+- The table goes to a generated `lib/game/combat_anchors.dart` (one string per species row, so `dart format` leaves
+  it alone), not into the hand-written `sprite_atlas.dart`. `python tools/generate_sprites.py --anchors` rewrites it
+  from the shipped atlas without a re-render.
 
 ## 4. Shields
 **Force shields** (sentinel `shield`, rush shield, boss shield):

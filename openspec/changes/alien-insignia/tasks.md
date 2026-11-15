@@ -6,9 +6,9 @@
 - [x] 1.3 Mockups `art/contact/alien-insignia-{ranks,shields,phone,glyphs}.png` on the real `combat.png` cells
 
 ## 2. Data
-- [ ] 2.1 `CombatAtlas.rankOf(Demon)` (design §1) with a table test
-- [ ] 2.2 Head anchors: `tools/generate_sprites.py` emits per-cell skull-top points; `CombatAtlas.headAnchor`; fallback per-species values plus `lift`; update `plan/sprite-atlas.md`
-- [ ] 2.3 `tools/alien_insignia atlas` → `assets/images/insignia.png` (< 4 KB) and its Dart rects
+- [x] 2.1 `CombatAtlas.rankOf(Demon)` (design §1) with a table test
+- [x] 2.2 Head anchors: `tools/generate_sprites.py` emits per-cell skull-top points; `CombatAtlas.headAnchor`; fallback per-species values plus `lift`; update `plan/sprite-atlas.md`
+- [x] 2.3 `tools/alien_insignia atlas` → `assets/images/insignia.png` (< 4 KB) and its Dart rects
 
 ## 3. Runtime
 - [ ] 3.1 `lib/game/insignia_painter.dart`: one `drawAtlas` after the camera transform, fixed CSS size, reveal gate, overlap rule (design §2)

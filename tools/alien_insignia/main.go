@@ -9,6 +9,7 @@
 // tools/sentinel_silhouettes) are Go.
 //
 //	go run . sheets -root ../..          # writes art/contact/alien-insignia-*.png
+//	go run . atlas  -root ../..          # assets/images/insignia.png + lib/game/insignia_atlas.dart
 //	go run . probe  -root ../.. -kind 1  # gridded 8x enlargement of one cell
 //	go run . montage -out x.png -cols 3 -scale 1 a.png b.png ...
 package main
@@ -25,7 +26,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: alien_insignia sheets|probe|montage [flags]")
+		fmt.Fprintln(os.Stderr, "usage: alien_insignia sheets|atlas|probe|montage [flags]")
 		os.Exit(2)
 	}
 	verb, args := os.Args[1], os.Args[2:]
@@ -44,6 +45,8 @@ func main() {
 		mustSave(filepath.Join(dir, "alien-insignia-shields.png"), shieldsSheet(atlas))
 		mustSave(filepath.Join(dir, "alien-insignia-phone.png"), phoneSheet(atlas))
 		mustSave(filepath.Join(dir, "alien-insignia-glyphs.png"), glyphSheet())
+	case "atlas":
+		writeAtlas(*root)
 	case "probe":
 		atlas := mustLoad(filepath.Join(*root, "assets/images/combat.png"))
 		c := cell(atlas, *kind, 0, glideCol)

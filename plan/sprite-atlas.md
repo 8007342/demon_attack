@@ -87,6 +87,24 @@ Species `k` owns rows `9k … 9k+8` (`CombatAtlas.base(k)`):
 
 **Elites** add authored armour from the same rig, kept as the pixels the armour adds over the unarmoured body (wings omitted, so plates never paint over a wing): level 4 a steel gorget and gold-studded pauldrons, level 3 three gold crest spikes, level 2 side helm plates, level 1 the gold double-chevron rank mark on the brow, which every elite keeps. Each hit sheds one level (`level = (4 − hp).clamp(0, 3)`). The overlay is drawn at the creature's position offset by the frame's body lift (`lift × size / 64` arena units: a whole logical pixel, so it stays on the pixel grid). The dotted rank halo stays a scene effect.
 
+### Head anchors
+
+The rank insignia overlay (`alien-insignia`, `docs/styleguide/alien-troops.md`) sits just above the skull, so every
+creature cell carries a **head anchor**: the skull top (centre x, top y) in art px from the cell centre. The
+generator projects it from the rig (the top of the posed skull ellipsoid, wings omitted) for every species, damage
+variant, direction and pose: flight rows 0–4, flash rows 5–6, and action row 7 (anticipation, fire, angry fire,
+dive, dive flash). Each species is calibrated once so its neutral glide (column 18) matches the topmost opaque pixel
+over the skull in the shipped atlas (art y 21 / 20 / 21 / 21 for teal, violet, coral and gold), which adds the
+outline, brow and horn bases that the ellipsoid lacks. Death cells, the elite overlay row and unused columns have no
+anchor (127).
+
+- `python tools/generate_sprites.py --anchors` (numpy + Pillow) writes `lib/game/combat_anchors.dart` from the
+  shipped `combat.png` without re-rendering it. A full run writes it after the atlas.
+- `CombatAtlas.headAnchor(row, col, lift:)` reads it. A cell without an anchor falls back to the species' neutral
+  head top (`CombatAtlas.neutralHeadTop`) plus the frame's lift.
+- Banking moves the head about 4 art px toward the turn, the flap lift moves it −2…+1 px, and the dive pose lowers
+  it to about art y 24.
+
 ### Frame selection
 
 `CombatAtlas.creature(d, clock, fireAge:, motion:)` returns the cell, the tint flag, the elite overlay cell and the lift. Presentation only: it reads the model and never changes it. Priority:
