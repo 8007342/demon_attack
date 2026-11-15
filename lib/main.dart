@@ -1691,7 +1691,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         final steerNorm = ((touchPosition - 0.5) * 2.0).clamp(-1.0, 1.0);
         model.setSteering(steerNorm);
         if (model.canPilot) {
-          model.moveBy(e.delta.dx / bounds.maxWidth * 360 * 1.3);
+          // boss-grandeur: the drag maps through the arena camera's zoom,
+          // so the ship moves the same on screen at every zoom.
+          model.moveBy(
+            scene.bossDirector.camera.deltaToArena(
+              e.delta.dx / bounds.maxWidth * 360 * 1.3,
+            ),
+          );
         }
         setState(() {});
       },

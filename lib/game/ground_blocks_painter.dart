@@ -464,6 +464,13 @@ class GroundBlocksLayer {
 
   void _draw(Canvas c, ui.Image img, Rect src, double left, double top,
       double w, double h, bool mirror) {
+    // boss-grandeur: under the altitude stretch a block keeps its size,
+    // standing on the same ground point.
+    final a = GroundCamera.spriteAltitude;
+    if (a != 1) {
+      top += h - h / a;
+      h /= a;
+    }
     final l = left.roundToDouble(), t = top.roundToDouble();
     if (mirror) {
       c.save();
