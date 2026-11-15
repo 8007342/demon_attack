@@ -35,7 +35,7 @@ const stormfront = BonusLevelDef(
     tint: 0xFF0B1030, // a storm-dark blue over the sector's own backdrop
     strength: .46,
     glow: 0x50CFC4FF,
-    fog: .22,
+    fog: .14,
   ),
   mechanic: StormfrontMechanic.new,
 );

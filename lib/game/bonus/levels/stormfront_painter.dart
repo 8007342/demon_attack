@@ -59,9 +59,18 @@ class StormPainter {
       if (!s.landed) continue;
       final k = (s.glowLeft / cell.tuning.glow).clamp(0.0, 1.0);
       // A soft glow high in the cloud where the bolt came from.
+      final glow = Rect.fromCenter(
+        center: Offset(s.x, 24),
+        width: 260,
+        height: 130,
+      );
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(s.x, 40), width: 220, height: 90),
-        Paint()..color = _halo.withValues(alpha: .16 * k * k),
+        glow,
+        Paint()
+          ..shader = Gradient.radial(glow.center, 130, [
+            _halo.withValues(alpha: .34 * k * k),
+            _halo.withValues(alpha: 0),
+          ]),
       );
     }
   }

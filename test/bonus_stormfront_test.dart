@@ -43,14 +43,6 @@ StormStrike _untilTell(ArcadeModel m, {bool Function(StormStrike)? where}) {
   fail('no tell within a minute');
 }
 
-/// Steps until [s] lands, fizzles or leaves the screen.
-void _untilBolt(ArcadeModel m, StormStrike s, {bool protect = false}) {
-  for (var f = 0; f < 60 * 5 && s.telling; f++) {
-    m.invulnerable = protect ? 5 : 0;
-    m.update(1 / 60);
-  }
-}
-
 /// Parks the ship at [x] at once (as a pilot who was already there).
 void _park(ArcadeModel m, double x) {
   m
