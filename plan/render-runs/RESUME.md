@@ -178,4 +178,21 @@ Notes from all three pages share one browser store; "Copy for an agent" gives a 
   first use (88 s, now on disk). Raws in `~/.cache/demon-attack/ground-blocks/smoke/vace-lightning-st-1794722605549-0/`.
 - After a relaunch: `lua tools/production/bootstrap_radio.lua` first (the `~/.cache/demon-attack` symlink was gone
   again), then re-copy `work/rig` and `work/control` into `/work/tmp/imagegen/in/ground-blocks/`.
-- Unchanged: pilot hero work stays paused until the operator answers how `finish` treats AI art (previous update).
+
+## Handoff 2026-11-15 (before the next restart)
+
+State: `game` pushed, studio idle (no jobs in flight; last st-1794722605549-0), qwen2.5:14b unloaded by us (it reloads
+itself). The operator approved every open recommendation: the table is `ground-forces-rework.md` §10 (A1–A6).
+
+On resume:
+1. `lua tools/production/bootstrap_radio.lua` (restores the `~/.cache/demon-attack` symlink), `studio.start {}`, then
+   `mkdir -p /work/tmp/imagegen/in/ground-blocks && cp -r ~/.cache/demon-attack/ground-blocks/work/{rig,control} /work/tmp/imagegen/in/ground-blocks/`.
+   Free GPU memory with `gpu.unload_model`; never `studio.restart`.
+2. **A1, next job:** change `tools/ground_blocks finish` to keep AI colour quantised to the faction palette inside the
+   rig silhouette dilated ±1 texel (today it keeps luminance only and recolours from rig ramps). Re-finish the 12 pilot
+   heroes into a before/after sheet (`art/contact/ground-pilot-heroes-finished.png` is the "before"); the operator
+   picks one hero per unit (`hero.selected` in the family).
+3. Then `go run . jobs` and the heading jobs, Lodestar first at denoise 0.7 vs 1.0 (A3), then turret angles and the
+   VACE clips (Lightning graphs, A2), one job at a time; push after each checkpoint (CP1 sheet `ground-pilot.png`).
+4. A6 renames and silhouette tweaks before Phase 2; Gutter-runner → Spout-runner touches `art/families/rigs/gutter-runner.json`,
+   `ground-host.json`, `lib/game/ground_blocks_atlas.dart`, the openspec changes and the plan docs.

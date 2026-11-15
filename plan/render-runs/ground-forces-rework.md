@@ -275,5 +275,17 @@ Ingested into the `-runs.json` files; raws in `~/.cache/demon-attack/ground-bloc
   but the finish still flattens it: the bottleneck is the finish, not the model.
 - Fixed: the Host family's key is green (#00FF00); its prompt now names green, not magenta (the magenta Crocket raws
   were finished against the wrong key).
-- **Operator decision needed before the remaining pilot jobs** (headings, turret angles, VACE clips): see the options
-  in the session report (colour-preserving finish, rig-faithful denoise, or the no-AI fallback).
+- ~~Operator decision needed~~ **Decided 2026-11-15, see §10: colour-preserving finish (option 1).**
+
+## 10. Operator approvals (2026-11-15)
+
+The operator approved every open recommendation in this plan ("record all approvals to your recommendations"):
+
+| # | Decision | Approved | Status |
+| --- | --- | --- | --- |
+| A1 | How `tools/ground_blocks finish` treats AI art (§9) | **Option 1:** keep the AI image's colour, quantised to the faction palette, inside the rig silhouette dilated by ±1 texel (wings, horns, a longer musket survive at the edge; nothing further out). Not chosen: AI outline wins on soft parts (2), rig shading only (3, stays the CP1 fallback) | To implement next |
+| A2 | VACE in-betweens use the Wan2.2-Lightning LoRA (Seko-V1.1, 4 steps, cfg 1, split 2/2) | Yes, as the default schedule | Done, commit 60860c05 |
+| A3 | Heading edits (§8 finding 1) | Run each heading at denoise 0.7 and 1.0 for the first unit (Lodestar), pick one setting before scaling | Pilot plan |
+| A4 | Name the key colour in prompts (§8 finding 2); no effect words (finding 3) | Yes | Already in the three family `style_prompt`s |
+| A5 | Atlas budget (§7) | 8 MB RGBA per sector, no atlas side over 4096 px; the half-resolution far atlas (decision 1.4) is not needed | Test already enforces it |
+| A6 | Originality (§7.1) | Apply the suggestions: rename **Gutter-runner → Spout-runner** (first suggestion; the operator can still pick Gutterhound); Stilt pods under the cab or on one side; Sleet four big wheels plus a rear skid; Carillon / Chapterhouse keep no crew, crosses, scripture, organ pipes or skulls; Chapterhouse, Belfry, Kiln Ox unchanged (low risk) | To implement before Phase 2 (Fleet/Host rigs, family, atlas names, specs) |
