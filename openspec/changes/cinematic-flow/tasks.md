@@ -11,13 +11,13 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
       them at that point.
 
 ## 1. Director
-- [ ] 1.1 `lib/game/flow_director.dart`:
+- [x] 1.1 `lib/game/flow_director.dart`:
       - `bump`, `FlowBeat`, `FlowPlan`, `FlowDirector` (design §1);
       - plans for sectorChange, bossArrival, bossVictory, campaignOutro, gameOverOutro and attract, each in full
         and reduced motion;
       - whole-beat rounding of Pursuit;
       - `skipToDescent()`.
-- [ ] 1.2 `test/flow_director_test.dart`:
+- [x] 1.2 `test/flow_director_test.dart`:
       - envelopes in [0, 1] and continuous;
       - every plan's swap beat lies inside cloud ≥ 0.85;
       - the radio and caption slots never overlap each other or the swap ± 0.5 s;
