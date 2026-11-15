@@ -175,6 +175,7 @@ class TransitionPresenter {
         flawless: flawless,
         struggling: model.lives <= 1,
         nextIsCarrier: level == 5,
+        revisit: model.flowRevisit, // --- transition ascent
       ),
     );
     final s = slot;

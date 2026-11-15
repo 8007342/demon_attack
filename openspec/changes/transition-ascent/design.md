@@ -139,3 +139,10 @@ only by the sector-change slot above, never by the seeded category draw, so ordi
   (no `speed` beat) keeps the old ramp.
 - **Streaks (§3).** 12 streaks (the 10–14 range), seeded from the run seed, sector and route rather than a plan seed
   (plans carry no seed); they scroll at `150·factor` units a second.
+- **Front-call wiring (§4).** `ArcadeModel.visitedSectors` (reset by `start`, filled by `_beginLevel`) and
+  `ArcadeFlow.flowRevisit` (model_flow.dart) decide a revisit: a plain `FlowKind.sectorChange` whose destination
+  (`flowDestination`, 1–4) is on a route > 0 or already in the visited set. The carrier's arrival (destination 5) and a
+  carrier's fall (`bossVictory`, which also lands on a later route's sector 1) are never revisits, so they keep their
+  picks. The transition overlay passes it as `InterludeContext.revisit`. `RadioCategory.drawn` lists the four seeded
+  categories; the fallback "any fresh line, then the shortest" walks only those, so a front call can only come from
+  the revisit path.

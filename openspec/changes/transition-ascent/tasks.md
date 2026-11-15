@@ -15,9 +15,9 @@
 - [x] 3.4 Fog streaks (10–14, seeded from the plan, cloud pass), zero in reduced motion
 
 ## 4. Front calls
-- [ ] 4.1 Track visited sectors and the destination in `model_flow.dart`
-- [ ] 4.2 `RadioCategory.frontCall` reading `frontCall*`; `InterludePlanner.planRadio` prefers `frontCall.<dest>` then `frontCall` on revisits, falling back to today's order; `bossArrival` untouched
-- [ ] 4.3 `test/interlude_test.dart`: revisit / first visit / boss arrival / short window
+- [x] 4.1 Track visited sectors and the destination in `model_flow.dart`
+- [x] 4.2 `RadioCategory.frontCall` reading `frontCall*`; `InterludePlanner.planRadio` prefers `frontCall.<dest>` then `frontCall` on revisits, falling back to today's order; `bossArrival` untouched
+- [x] 4.3 `test/interlude_test.dart`: revisit / first visit / boss arrival / short window
 
 ## 5. Review
 - [ ] 5.1 `test/transition_ascent_review_test.dart` → `art/contact/transition-ascent-full.png`, `-reduced.png` (12 frames, 360 × 780 and 1280 × 720)
