@@ -435,3 +435,48 @@ skipped, on the merged tree.
 Notes for the in-game review (CP8): some Host units bake darker than their rigs (crocket-captured, knell,
 scrapmason at h135); side-on vehicles draw larger than the legacy sprites (authored size); stilt, strider, sextant
 and chapterhouse heroes disagree with their rig's body plan, so only tone and accents transfer.
+
+## 15. Atmosphere atlas (2026-11-15, no GPU)
+
+Tasks 6.1 and 6.2, and the CP6 sheet of 6.4. Everything is procedural; no GPU job ran. The optional SDXL low-cloud strips
+(`strip-sheet.json`, 20 jobs in §5) were skipped, since the plan defaults to procedural first.
+
+- **Tool:** `tools/ground_atmosphere` (Go, standard library + `tools/pixelgrid`), verbs `pack`, `check`, `preview`.
+  It is Go, not Lua, so it can share the rasteriser, hashing and deterministic PNG encoder of `ground_blocks` and
+  `ground_troops` (the same call §3 made). It is a separate module rather than a `ground_blocks` verb because the
+  family has its own schema (`demon-attack.ground-atmosphere/v1`) and is the one family exempt from binary alpha, so
+  `ground_blocks`' binary-alpha contract tests stay untouched.
+- **Family:** `art/families/ground-atmosphere.json`. Provenance: `ground-atmosphere-runs.json` (procedural: seeds,
+  rects, sampled and clamped tints, atlas sha256; no models, no jobs). Seeds: horizonFog 790010+s, lowCloud
+  790020+s, midMistA 790030+s, midMistB 790040+s, dustVeil 790050+s, cloudShadow 790060+i, smokeDrift 790070,
+  smokeWall 790080.
+- **Atlas:** `assets/images/ground-atmosphere.png`, 512 × 872, laid out as in the interface note. Alpha is
+  {0, .2, .4, .6, .8}, despeckled. The tiled bands use noise that is periodic over 512, so they wrap seamlessly.
+  Mist banks keep 40% or more of their columns clear. Metadata: `lib/game/ground_atmosphere_atlas.dart` (generated),
+  which holds the rects, fog/lit/dark/smoke tints per sector, the layer placement table (rows, sort depth, parallax,
+  drift, opacity range and default, reduced tier), `fogMix(z)` and the lane cap.
+- **Tints** (horizon rows .62–.72 of `sector-N.png`, darkened as the flyover bake does, value from the plan's tint,
+  35% of the sampled hue, clamped): Krybor #30384D, Ringfall #353653, Ember #442F3C, Hollow #2F3A3C (teal pulled
+  back to grey chroma, 30° guard around ally cyan and demon warm), Carrier #3C273F.
+- **Runtime:** `lib/game/ground_atmosphere.dart` (`GroundAtmosphereArt`) is installed in `Atmosphere.groundArt` by
+  `DemonScene.onLoad`. While installed, the horizon slot draws the low cloud deck (air pass) and the far banks are
+  skipped. Horizon fog (z 1150), cloud shadows (1149), mist A (1050) and mist B (850) join `GroundPainter`'s depth
+  sort; the dust veil goes after every ground object and rises with the skirmish tide. Sectors cross-fade with
+  `environment`. Offsets are whole arena units and sampling is nearest. Reduced atmosphere keeps horizon fog and both
+  mists. Reduced motion freezes the drift (the fog clock) while parallax still follows the ship. Without the atlas,
+  everything is exactly as before (fBm tiles and shader).
+- **Tests:** `test/ground_atmosphere_test.dart` (14): atlas size and every slot × sector, stepped alpha and per-band
+  caps, seams, mist gaps, tint caps and palette membership, density curve, slot takeover and fallback, depth slots,
+  lane cap, reduced tier, reduced motion, dust and tide, and simulation parity with and without the art. Plus the
+  CP6 sheet. `go test` in the tool (7): determinism, committed files match the generator, layout, steps, seams, mist
+  gaps, tints.
+- **CP6:** `art/contact/ground-atmosphere-contact.png` (refresh: `flutter test test/ground_atmosphere_test.dart
+  --dart-define=GROUND_ATMOSPHERE_CONTACT=art/contact/ground-atmosphere-contact.png`). Top: per sector, the five
+  bands at ×2 over the sector's painted horizon, with cloud shadows, smoke puffs, smoke walls and tint swatches
+  (lit, fog, dark, smoke) on grey. Middle: each sector at 360 × 780 with demon vehicles at z 1400/1100/850/600 on
+  both sides (squads at 850) on the art. Bottom: the same frames on the old fBm fallback, for comparison.
+
+Open for the operator and the runtime work: the art is darker and thinner than the fBm haze it replaces, as the
+plan's luma caps require, so the far ground reads as dark murk rather than pale haze. Units are not yet tinted by
+`fogMix(z)` (runtime-owned; the constants are in the metadata), so far units are hidden mostly by the horizon fog
+rows. `smokeDrift`/`smokeWall` are packed but no painter draws them yet.

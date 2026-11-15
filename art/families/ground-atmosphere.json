@@ -1,0 +1,45 @@
+{
+ "schema": "demon-attack.ground-atmosphere/v1",
+ "name": "ground-atmosphere",
+ "notes": "Ground atmosphere (openspec change ground-forces-rework, tasks 6.1/6.2; design plan/ground-atmosphere.md). Every layer is procedural: seeded periodic noise on the texel grid, quantised to stepped alpha (4 levels plus transparent; the one family exempt from binary alpha). Tiled bands wrap seamlessly at 512 texels. Per-sector fog tints are sampled from each sector painting's horizon band (as the flyover sky bake places it), blended with the plan's starting tint and clamped to luma 0.10-0.22 (Rec. 709 on sRGB) and chroma (max-min) <= 0.12. No GPU job: the optional SDXL low-cloud strips (strip-sheet.json) were not run; procedural is the plan's default. Every value here is an input to tools/ground_atmosphere (go run . pack), which writes the atlas, lib/game/ground_atmosphere_atlas.dart and ground-atmosphere-runs.json.",
+ "atlas": {
+  "file": "assets/images/ground-atmosphere.png",
+  "dart": "lib/game/ground_atmosphere_atlas.dart",
+  "runs": "art/families/ground-atmosphere-runs.json",
+  "width": 512
+ },
+ "alpha_steps": [0.2, 0.4, 0.6, 0.8],
+ "tint": {
+  "sample_rows": [0.62, 0.72],
+  "darken": "#060914",
+  "darken_mix": 0.5,
+  "sample_weight": 0.35,
+  "luma": [0.10, 0.22],
+  "chroma_max": 0.12,
+  "lit_luma_max": 0.30,
+  "dark_scale": 0.78
+ },
+ "smoke_ramp": ["#16181E", "#262A32", "#3A3F48", "#555B65", "#7A808A"],
+ "sectors": [
+  {"id": "krybor", "painting": "assets/images/sector-1.png", "fog_start": "#3A4458", "smoke": "#555B65", "smoke_mix": null, "smoke_mix_amount": 0},
+  {"id": "ringfall", "painting": "assets/images/sector-2.png", "fog_start": "#3D3550", "smoke": "#3A3F48", "smoke_mix": "#6A4C9C", "smoke_mix_amount": 0.10},
+  {"id": "ember", "painting": "assets/images/sector-3.png", "fog_start": "#46302C", "smoke": "#262A32", "smoke_mix": null, "smoke_mix_amount": 0},
+  {"id": "hollow", "painting": "assets/images/sector-4.png", "fog_start": "#2E3A35", "smoke": "#555B65", "smoke_mix": "#3C6A48", "smoke_mix_amount": 0.08},
+  {"id": "carrier", "painting": "assets/images/sector-5.png", "fog_start": "#3A2836", "smoke": "#3A3F48", "smoke_mix": "#6A3A5C", "smoke_mix_amount": 0.10}
+ ],
+ "bands": [
+  {"id": "horizonFog", "h": 48, "seed": 790010, "alpha_max": 0.8, "top_y": 178, "pass": "ground", "sort_z": 1150, "parallax": 0.08, "drift": 1.5, "opacity": [0.7, 1.0], "runtime_opacity": 0.8, "reduced": true},
+  {"id": "lowCloud", "h": 40, "seed": 790020, "alpha_max": 0.8, "top_y": 140, "pass": "air", "sort_z": null, "parallax": 0.04, "drift": 4, "opacity": [0.5, 0.9], "runtime_opacity": 0.7, "reduced": false},
+  {"id": "midMistA", "h": 24, "seed": 790030, "alpha_max": 0.6, "top_y": 206, "pass": "ground", "sort_z": 1050, "parallax": 0.2, "drift": 3, "opacity": [0.6, 1.0], "runtime_opacity": 1.0, "reduced": true},
+  {"id": "midMistB", "h": 24, "seed": 790040, "alpha_max": 0.6, "top_y": 219, "pass": "ground", "sort_z": 850, "parallax": 0.3, "drift": -2, "opacity": [0.4, 0.8], "runtime_opacity": 0.8, "reduced": true},
+  {"id": "dustVeil", "h": 16, "seed": 790050, "alpha_max": 0.4, "top_y": 216, "pass": "ground", "sort_z": null, "parallax": 0.25, "drift": 2.5, "opacity": [0.0, 0.8], "runtime_opacity": 0.8, "reduced": false}
+ ],
+ "sprites": [
+  {"id": "cloudShadow", "w": 128, "h": 40, "frames": 4, "seed": 790060, "alpha_max": 0.8, "color": "#0A0716", "pass": "ground", "sort_z": 1149, "parallax": 0.25, "drift": 6, "opacity": [0.10, 0.22], "runtime_opacity": 0.16, "ground_squash": 0.5, "rows": [222, 236], "reduced": false},
+  {"id": "smokeDrift", "w": 48, "h": 32, "frames": 6, "seed": 790070, "alpha_max": 0.8, "ramp_steps": [1, 2, 3], "opacity": [0.3, 0.7], "lane_opacity_max": 0.30},
+  {"id": "smokeWall", "w": 96, "h": 40, "frames": 3, "seed": 790080, "alpha_max": 0.6, "ramp_steps": [1, 2, 3], "opacity": [0.3, 0.6], "lane": false}
+ ],
+ "density": {"fog_mix_near_z": 700, "fog_mix_far_z": 1350, "fog_mix_max": 0.82, "emissive_rate": 0.5, "threat_cap": 0.45},
+ "lane": {"left": 96, "right": 264, "top": 300, "alpha_cap": 0.30},
+ "mist_empty_min": 0.40
+}

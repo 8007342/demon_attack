@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'atmosphere.dart';
+import 'ground_atmosphere.dart';
+import 'ground_atmosphere_atlas.dart';
 import 'boss_painter.dart';
 import 'ground_painter.dart';
 import 'model.dart';
@@ -36,7 +38,9 @@ class DemonScene extends FlameGame {
   final atmosphere = Atmosphere();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- ground war (ground_painter.dart) ---
-  late final groundForces = GroundPainter()..occluders = sectors.flyover;
+  late final groundForces = GroundPainter()
+    ..occluders = sectors.flyover
+    ..atmosphere = atmosphere; // --- ground atmosphere art in the depth sort
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;
@@ -88,6 +92,13 @@ class DemonScene extends FlameGame {
     // --- flyover parallax hook (background only) ---
     await sectors.loadFlyover(images.load);
     await atmosphere.load(); // --- atmosphere: fog tiles and shader
+    try {
+      // --- ground atmosphere art (tools/ground_atmosphere); without it the
+      // fBm tiles and the shader keep every slot.
+      atmosphere.groundArt = GroundAtmosphereArt(
+        await images.load(GroundAtmosphereAtlas.file),
+      );
+    } catch (_) {}
     // --- ground war art (tools/ground_forces_assets.py) ---
     try {
       groundForces.image = await images.load('ground-forces.png');
@@ -137,6 +148,7 @@ class DemonScene extends FlameGame {
     atmosphere
       ..environment = environment
       ..reducedMotion = sectors.flyover.reducedMotion
+      ..tide = model.ground.units.isEmpty ? .5 : model.ground.skirmish.tide
       ..advance(
         dt,
         distance: sectors.flyover.distance,

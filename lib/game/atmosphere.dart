@@ -5,6 +5,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 
+import 'ground_atmosphere.dart';
+import 'ground_atmosphere_atlas.dart';
 import 'perspective.dart';
 
 /// Layered atmosphere in depth (openspec/changes/atmosphere-and-swarms,
@@ -21,8 +23,14 @@ import 'perspective.dart';
 ///   tileable fBm textures ([bakeTile]) scrolled at two scales in different
 ///   directions, so the shapes interfere and evolve instead of sliding.
 ///
-/// The ground-atmosphere art atlas (plan/ground-atmosphere.md §3) can later
-/// replace a slot's texture through [art] without touching the draw order.
+/// The ground-atmosphere art atlas (plan/ground-atmosphere.md §3) replaces
+/// the horizon band and the two far banks once it is installed in
+/// [Atmosphere.groundArt]: the low cloud deck takes the horizon slot in the
+/// air pass, and the horizon fog, mist banks, cloud shadows and dust veil
+/// are drawn in the ground depth sort ([Atmosphere.groundLayers]) so ground
+/// units emerge through them. Without the atlas the fBm tiles and the
+/// shader draw every slot as before; [Atmosphere.art] still lets a single
+/// slot swap its tile texture.
 enum FogSlot {
   horizonBand,
   farBankA,
@@ -232,8 +240,58 @@ class Atmosphere {
   Color get air => _lerpTable(airFog, environment);
   Color get veil => _lerpTable(veilFog, environment);
 
-  /// Optional authored texture per slot (ground-atmosphere art atlas).
+  /// Optional authored tile texture per slot (replaces tile A).
   final art = <FogSlot, ui.Image>{};
+
+  // --- ground-atmosphere art (ground_atmosphere.dart) ----------------------
+  /// The ground-atmosphere atlas, when loaded.
+  GroundAtmosphereArt? groundArt;
+
+  /// The skirmish tide (0 lull .. 1 surge): raises the dust veil.
+  double tide = .5;
+
+  /// Slots the art takes over from the fBm tiles and the shader.
+  static const artSlots = {
+    FogSlot.horizonBand,
+    FogSlot.farBankA,
+    FogSlot.farBankB,
+  };
+
+  bool _artLayerShown(GroundAtmosphereLayer l) =>
+      quality == AtmosphereQuality.full || l.reduced;
+
+  /// Art layers drawn in the ground depth sort at the current quality, back
+  /// to front: (depth, layer); a layer with no depth goes after every
+  /// ground object (depth -infinity). Empty without the atlas.
+  List<(double, GroundAtmosphereLayer)> get groundLayers {
+    if (groundArt == null) return const [];
+    return [
+      for (final l in GroundAtmosphereAtlas.layers)
+        if (l.pass == 'ground' && _artLayerShown(l))
+          (l.sortZ ?? double.negativeInfinity, l),
+    ];
+  }
+
+  /// Dust veil opacity: none in a lull, full in a surge.
+  double get dustOpacity => Perspective.smoothstep(.55, .95, tide);
+
+  /// Paints art layer [l] (ground pass or air pass).
+  void paintGroundLayer(Canvas c, GroundAtmosphereLayer l) {
+    final g = groundArt;
+    if (g == null || !_artLayerShown(l)) return;
+    if (l.id == 'cloudShadow') {
+      g.paintShadows(c, l, time: time, shipX: shipX);
+      return;
+    }
+    g.paintBand(
+      c,
+      l,
+      time: time,
+      shipX: shipX,
+      environment: environment,
+      opacity: l.id == 'dustVeil' ? dustOpacity : 1,
+    );
+  }
 
   ui.Image? tileA, tileB;
   ui.FragmentProgram? program;
@@ -451,6 +509,16 @@ class Atmosphere {
   /// Paints [slot] over the arena (360 x 520 arena units on [c]).
   void paint(Canvas c, FogSlot slot) {
     if (!shows(slot)) return;
+    if (groundArt != null && artSlots.contains(slot)) {
+      // The art's low cloud deck stands in the horizon slot; the far banks
+      // are the mist banks, already drawn in the ground depth sort.
+      if (slot == FogSlot.horizonBand) {
+        for (final l in GroundAtmosphereAtlas.layers) {
+          if (l.pass == 'air') paintGroundLayer(c, l);
+        }
+      }
+      return;
+    }
     final l = layers[slot]!;
     if (usesShader && shaderSlots.contains(slot) && _paintShader(c, slot, l)) {
       return;

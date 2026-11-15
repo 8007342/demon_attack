@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'atmosphere.dart';
 import 'ground_atlas.dart';
 import 'ground_blocks_painter.dart';
 import 'ground_troops_atlas.dart';
@@ -40,6 +41,11 @@ class GroundPainter {
   /// Feature switch: false draws every unit from the old atlases.
   static bool useBlocks = true;
   final GroundBlocksLayer blocks = GroundBlocksLayer();
+
+  // --- ground atmosphere art: horizon fog, cloud shadows, the two mist
+  // banks and the dust veil take part in the depth sort (draw order of
+  // plan/ground-atmosphere.md §4). Nothing is drawn without the atlas.
+  Atmosphere? atmosphere;
 
   /// Troopers draw a little smaller than vehicles (they are people).
   static const troopScale = 1.0, allyTroopScale = .7;
@@ -137,7 +143,14 @@ class GroundPainter {
 
   void _paintGround(Canvas c, ArcadeModel m) {
     final g = m.ground;
-    if (g.units.isEmpty && g.allies.isEmpty && g.tracers.isEmpty) return;
+    final atmo = m.perspective ? atmosphere : null;
+    final air = atmo?.groundLayers ?? const [];
+    if (g.units.isEmpty && g.allies.isEmpty && g.tracers.isEmpty) {
+      for (final (_, l) in air) {
+        atmo!.paintGroundLayer(c, l);
+      }
+      return;
+    }
     final clock = m.visualClock;
     for (final u in g.units) {
       if (u.destroyed && u.y >= GroundCamera.horizon + 2) _scorch(c, u);
@@ -145,6 +158,7 @@ class GroundPainter {
     final items = <(double, void Function())>[
       for (final u in g.units) (u.z, () => _unit(c, u, clock, m)),
       for (final a in g.allies) (a.z, () => _ally(c, a, clock)),
+      for (final (z, l) in air) (z, () => atmo!.paintGroundLayer(c, l)),
     ];
     // --- ground war v4: a plant nearer than a unit it overlaps is painted
     // again after that unit, in depth order (the background drew it first).
