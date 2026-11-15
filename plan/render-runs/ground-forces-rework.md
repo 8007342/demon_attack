@@ -323,3 +323,6 @@ st-1794728150189-4; h022 -216103-5 / -266322-6; h067 -316754-7 / -368709-8; h090
   It adds less surface detail than the hero, and some raws grow stray barrel fragments outside the rig (h067 780222,
   h090 780227), which the finish clips.
 - Recommendation: **0.7 as the heading default** (operator to confirm before scaling to the other units).
+- **Decided (operator delegated the picks, 2026-11-15): denoise 0.7 for every heading and layer edit.** Lodestar picks,
+  the cleanest of each pair: h000 780211, h022 780214, h067 780223, h090 780226 (h067 780222 and h090 780227 grew stray
+  barrels). Raws committed in `art/sprites/sources/ground-blocks-selected/lodestar/heading/`.
