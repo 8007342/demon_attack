@@ -400,3 +400,67 @@ func TestControlStrips(t *testing.T) {
 		t.Fatalf("one-shot sequence %v", got)
 	}
 }
+
+// A1: AI colour outside the rig survives one texel out (wings, horns), not
+// two; inside the rig the AI's colour wins over the rig's shading.
+func TestFinishKeepsAIColourInRing(t *testing.T) {
+	p := proj(t)
+	u := p.unit("lodestar")
+	var cell *Cell
+	cs := p.cellsOf(u)
+	for i := range cs {
+		if cs[i].Name == "lodestar.hull.move.h045.f0" {
+			cell = &cs[i]
+		}
+	}
+	key := pixelgrid.Hex("#FF00FF")
+	const s = 8
+	ref := p.refImage(u, cell, s, key)
+	pal := p.Pals["fleet"]
+	cyan := pal.ramp("ally_cyan", p.masterSector(u))
+	paint := cyan[len(cyan)-1]
+	// a blob of AI paint over every texel within two texels of the rig's
+	// top-left-most filled texel's row, outside the silhouette
+	_, y0, _, _ := cell.F.bbox()
+	ty := y0
+	tx := -1
+	for x := 0; x < cell.F.W; x++ {
+		if cell.F.filled(x, ty) {
+			tx = x
+			break
+		}
+	}
+	for y := (ty - 2) * s; y < (ty+1)*s; y++ {
+		for x := (tx - 1) * s; x < (tx+2)*s; x++ {
+			if y >= 0 && !cell.F.filled(x/s, y/s) {
+				ref.SetNRGBA(x, y, paint)
+			}
+		}
+	}
+	out := p.finish(u, cell, ref, key)
+	if got := out.NRGBAAt(tx, ty-1); got != paint {
+		t.Fatalf("one texel out: got %v, want the AI colour %v", got, paint)
+	}
+	if got := out.NRGBAAt(tx, ty-2); got != pal.Ink {
+		t.Fatalf("two texels out: got %v, want ink", got)
+	}
+	// inside: a hard texel painted by the AI takes the AI colour
+	ref2 := p.refImage(u, cell, s, key)
+	cx, cy := -1, -1
+	for y := 0; y < cell.F.H && cx < 0; y++ {
+		for x := 0; x < cell.F.W; x++ {
+			if cell.F.filled(x, y) && cell.F.filled(x-1, y) && cell.F.filled(x+1, y) && cell.F.filled(x, y-1) && cell.F.filled(x, y+1) {
+				cx, cy = x, y
+				break
+			}
+		}
+	}
+	for y := cy * s; y < (cy+1)*s; y++ {
+		for x := cx * s; x < (cx+1)*s; x++ {
+			ref2.SetNRGBA(x, y, paint)
+		}
+	}
+	if got := p.finish(u, cell, ref2, key).NRGBAAt(cx, cy); got != paint {
+		t.Fatalf("interior: got %v, want %v", got, paint)
+	}
+}

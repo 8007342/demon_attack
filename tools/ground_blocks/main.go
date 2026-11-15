@@ -80,7 +80,7 @@ func rawDir() string {
 func main() {
 	root = findRoot()
 	if len(os.Args) < 2 {
-		fmt.Println("usage: go run . validate|rig [id]|control [id]|jobs|ingest|finish IN CELL OUT|pack|offline|contact")
+		fmt.Println("usage: go run . validate|rig [id]|control [id]|sheet OUT CELL=RAW..|jobs|ingest|finish IN CELL OUT|pack|offline|contact")
 		os.Exit(2)
 	}
 	args := os.Args[2:]
@@ -103,6 +103,8 @@ func main() {
 		cmdContact()
 	case "block":
 		cmdBlock(args)
+	case "sheet":
+		cmdSheet(args)
 	case "control":
 		cmdControl(args)
 	default:

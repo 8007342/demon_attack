@@ -232,13 +232,7 @@ func cmdFinish(args []string) {
 	p := loadProject()
 	id := strings.SplitN(args[1], ".", 2)[0]
 	u := p.unit(id)
-	var cell *Cell
-	cs := p.cellsOf(u)
-	for i := range cs {
-		if cs[i].Name == args[1] {
-			cell = &cs[i]
-		}
-	}
+	cell := p.findCell(u, args[1])
 	if cell == nil {
 		fail(fmt.Errorf("no cell %s", args[1]))
 	}
@@ -254,11 +248,17 @@ func cmdFinish(args []string) {
 	fmt.Println("finished", args[1], "->", dst)
 }
 
-// finish: crop the AI image to its subject, area-downscale onto the rig
-// cell's content box, quantise each texel to the ramp of the rig's
-// material there (nearest luma within the material's steps), keep the rig
-// silhouette (soft prims may grow or shrink by one texel), binary alpha,
-// ink outline.
+// finish (decision A1, plan/render-runs/ground-forces-rework.md §10): keep
+// the AI image's colour, quantised to the faction palette of the unit's
+// master sector, inside the rig silhouette dilated by one texel (8-way).
+// Each texel takes the mean non-key colour of its region of the AI frame
+// (the edit workflows keep the reference's framing; an image of another
+// aspect is fitted subject box to rig box instead). Inside the rig the
+// nearest palette colour wins; in the one-texel ring the texel is kept only
+// where the AI covered most of it and its colour is not nearer the ink
+// than the palette (the AI's own outline stays outline). Hard rig texels
+// the AI left empty keep the rig's shading; soft ones may vanish at the
+// edge. Binary alpha, ink around the result.
 func (p *Project) finish(u unitRef, c *Cell, src image.Image, key color.NRGBA) *image.NRGBA {
 	b := p.builder(u)
 	pal := p.Pals[u.faction()]
@@ -271,91 +271,164 @@ func (p *Project) finish(u unitRef, c *Cell, src image.Image, key color.NRGBA) *
 		return d < 90
 	}
 	sb := src.Bounds()
-	x0, y0, x1, y1 := sb.Max.X, sb.Max.Y, -1, -1
 	at := func(x, y int) color.NRGBA {
 		r, g, bb, a := src.At(x, y).RGBA()
 		return color.NRGBA{uint8(r >> 8), uint8(g >> 8), uint8(bb >> 8), uint8(a >> 8)}
 	}
-	for y := sb.Min.Y; y < sb.Max.Y; y++ {
-		for x := sb.Min.X; x < sb.Max.X; x++ {
-			if !isBg(at(x, y)) {
-				x0, y0, x1, y1 = min(x0, x), min(y0, y), max(x1, x), max(y1, y)
-			}
-		}
-	}
+	W, H := c.F.W, c.F.H
+	out := image.NewNRGBA(image.Rect(0, 0, W, H))
 	cx0, cy0, cx1, cy1 := c.F.bbox()
-	out := image.NewNRGBA(image.Rect(0, 0, c.F.W, c.F.H))
-	if x1 < 0 || cx1 < 0 {
+	if cx1 < 0 {
 		return out
 	}
-	cw, ch := cx1-cx0+1, cy1-cy0+1
-	sw, sh := x1-x0+1, y1-y0+1
-	lum := make([]float64, cw*ch)
-	cov := make([]float64, cw*ch)
-	for y := 0; y < ch; y++ {
-		for x := 0; x < cw; x++ {
-			ax0, ax1 := x0+x*sw/cw, x0+max((x+1)*sw/cw, x*sw/cw+1)
-			ay0, ay1 := y0+y*sh/ch, y0+max((y+1)*sh/ch, y*sh/ch+1)
-			var s, n, k float64
-			for yy := ay0; yy < ay1; yy++ {
-				for xx := ax0; xx < ax1; xx++ {
+	// texel (x, y) of the cell reads source rect [fx0+x*fw/W', ...) where
+	// the frame is the whole image (same aspect) or the subject box fitted
+	// to the rig box (other aspect).
+	fx0, fy0, fw, fh := float64(sb.Min.X), float64(sb.Min.Y), float64(sb.Dx()), float64(sb.Dy())
+	gx0, gy0, gw, gh := 0.0, 0.0, float64(W), float64(H)
+	if a := fw / fh / (float64(W) / float64(H)); a < .97 || a > 1.03 {
+		x0, y0, x1, y1 := sb.Max.X, sb.Max.Y, -1, -1
+		for y := sb.Min.Y; y < sb.Max.Y; y++ {
+			for x := sb.Min.X; x < sb.Max.X; x++ {
+				if !isBg(at(x, y)) {
+					x0, y0, x1, y1 = min(x0, x), min(y0, y), max(x1, x), max(y1, y)
+				}
+			}
+		}
+		if x1 < 0 {
+			return out
+		}
+		fx0, fy0, fw, fh = float64(x0), float64(y0), float64(x1-x0+1), float64(y1-y0+1)
+		gx0, gy0, gw, gh = float64(cx0), float64(cy0), float64(cx1-cx0+1), float64(cy1-cy0+1)
+	}
+	mean := make([]color.NRGBA, W*H)
+	cov := make([]float64, W*H)
+	for y := 0; y < H; y++ {
+		for x := 0; x < W; x++ {
+			ax0 := int(fx0 + (float64(x)-gx0)*fw/gw)
+			ax1 := max(int(fx0+(float64(x+1)-gx0)*fw/gw), ax0+1)
+			ay0 := int(fy0 + (float64(y)-gy0)*fh/gh)
+			ay1 := max(int(fy0+(float64(y+1)-gy0)*fh/gh), ay0+1)
+			var r, g, bl, n, k float64
+			for yy := max(ay0, sb.Min.Y); yy < min(ay1, sb.Max.Y); yy++ {
+				for xx := max(ax0, sb.Min.X); xx < min(ax1, sb.Max.X); xx++ {
 					col := at(xx, yy)
 					n++
 					if !isBg(col) {
-						s += pixelgrid.Luma(col)
+						r, g, bl = r+float64(col.R), g+float64(col.G), bl+float64(col.B)
 						k++
 					}
 				}
 			}
 			if k > 0 {
-				lum[y*cw+x] = s / k
+				mean[y*W+x] = color.NRGBA{uint8(r/k + .5), uint8(g/k + .5), uint8(bl/k + .5), 255}
+				cov[y*W+x] = k / n
 			}
-			cov[y*cw+x] = k / math.Max(1, n)
 		}
 	}
-	grid := c.F.clone()
-	for y := 0; y < c.F.H; y++ {
-		for x := 0; x < c.F.W; x++ {
+	colours := pal.finishColours(master)
+	keep := make([]bool, W*H)
+	for y := 0; y < H; y++ {
+		for x := 0; x < W; x++ {
+			i := y*W + x
 			px := c.F.at(x, y)
-			lx, ly := x-cx0, y-cy0
-			inBox := lx >= 0 && ly >= 0 && lx < cw && ly < ch
-			soft := false
-			if pr := b.prim(px.Prim); pr != nil && pr.Soft {
-				soft = true
+			if px.Mat != 0 {
+				soft := false
+				if pr := b.prim(px.Prim); pr != nil && pr.Soft {
+					soft = true
+				}
+				interior := c.F.filled(x-1, y) && c.F.filled(x+1, y) && c.F.filled(x, y-1) && c.F.filled(x, y+1)
+				switch {
+				case cov[i] >= .2:
+					out.SetNRGBA(x, y, nearest(colours, mean[i]))
+				case soft && !interior:
+					continue
+				default:
+					out.SetNRGBA(x, y, pal.colour(*px, master, b.Rig.Seed))
+				}
+				keep[i] = true
+				continue
 			}
-			if px.Mat == 0 {
-				// a soft neighbour may grow by one texel where the AI drew
-				for _, d := range [4][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
-					if q := c.F.at(x+d[0], y+d[1]); q != nil && q.Mat != 0 {
-						if pr := b.prim(q.Prim); pr != nil && pr.Soft && inBox && cov[ly*cw+lx] > .6 {
-							*grid.at(x, y) = *q
-						}
+			ring := false
+			for dy := -1; dy <= 1 && !ring; dy++ {
+				for dx := -1; dx <= 1; dx++ {
+					if c.F.filled(x+dx, y+dy) {
+						ring = true
+						break
 					}
 				}
+			}
+			if !ring || cov[i] < .5 {
 				continue
 			}
-			if !inBox {
+			q := nearest(colours, mean[i])
+			if colDist(mean[i], pal.Ink) <= colDist(mean[i], q) {
 				continue
 			}
-			if soft && cov[ly*cw+lx] < .2 && !(c.F.filled(x-1, y) && c.F.filled(x+1, y) && c.F.filled(x, y-1) && c.F.filled(x, y+1)) {
-				*grid.at(x, y) = Px{}
-				continue
-			}
-			m := pal.Mats.List[px.Mat]
-			if m.Emissive || m.Flat || cov[ly*cw+lx] == 0 {
-				continue
-			}
-			ramp := pal.ramp(m.Ramp, master)
-			best, bs := 9.0, int(px.Step)
-			for s := m.Lo; s <= m.Hi; s++ {
-				if d := math.Abs(pixelgrid.Luma(ramp[s]) - lum[ly*cw+lx]); d < best {
-					best, bs = d, s
-				}
-			}
-			grid.at(x, y).Step = int8(bs)
+			out.SetNRGBA(x, y, q)
+			keep[i] = true
 		}
 	}
-	fc := &Cell{Name: c.Name, F: grid, Overlay: c.Overlay}
-	pal.paintCell(out, fc, 0, 0, master, b.Rig.Seed)
+	if !c.Overlay {
+		for y := 0; y < H; y++ {
+			for x := 0; x < W; x++ {
+				if keep[y*W+x] {
+					continue
+				}
+				for _, d := range [4][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
+					if xx, yy := x+d[0], y+d[1]; xx >= 0 && yy >= 0 && xx < W && yy < H && keep[yy*W+xx] {
+						out.SetNRGBA(x, y, pal.Ink)
+						break
+					}
+				}
+			}
+		}
+	}
 	return out
+}
+
+// finishNames: the ramps a finished cell may use, in a fixed order (the
+// first ramp holding a colour owns it when the pack remaps sectors).
+func (pal *Palette) finishNames() []string {
+	names := make([]string, 0, len(pal.Ramps)+2)
+	for k := range pal.Ramps {
+		names = append(names, k)
+	}
+	if pal.Faction == "host" {
+		names = append(names, "stone", "membrane")
+	}
+	sort.Strings(names)
+	return names
+}
+
+// finishColours: every distinct colour of the faction's ramps in a sector.
+func (pal *Palette) finishColours(sector string) []color.NRGBA {
+	seen := map[color.NRGBA]bool{}
+	var out []color.NRGBA
+	for _, n := range pal.finishNames() {
+		for _, col := range pal.ramp(n, sector) {
+			if !seen[col] {
+				seen[col] = true
+				out = append(out, col)
+			}
+		}
+	}
+	return out
+}
+
+// colDist: squared "redmean" RGB distance, a cheap perceptual weighting.
+func colDist(a, b color.NRGBA) float64 {
+	rm := (float64(a.R) + float64(b.R)) / 2
+	dr, dg, db := float64(a.R)-float64(b.R), float64(a.G)-float64(b.G), float64(a.B)-float64(b.B)
+	return (2+rm/256)*dr*dr + 4*dg*dg + (2+(255-rm)/256)*db*db
+}
+
+func nearest(pal []color.NRGBA, c color.NRGBA) color.NRGBA {
+	best, bd := pal[0], math.Inf(1)
+	for _, p := range pal {
+		if d := colDist(p, c); d < bd {
+			best, bd = p, d
+		}
+	}
+	return best
 }

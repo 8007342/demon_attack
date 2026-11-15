@@ -11,7 +11,6 @@ import (
 	"image/color"
 	"os"
 	"path/filepath"
-	"sort"
 
 	"demonattack/tools/pixelgrid"
 )
@@ -163,43 +162,59 @@ func finishedCell(unit, name string) image.Image {
 	return im
 }
 
-// paintFinished: a finished (AI-refined) cell quantised in the master
-// sector's colours, remapped ramp-for-ramp to the target sector, kept
-// inside the rig silhouette.
+// paintFinished: a finished (AI-refined) cell, its colours from the master
+// sector's ramps remapped ramp-for-ramp to the target sector. The finished
+// image owns the silhouette within the rig's one-texel ring (A1); texels
+// it does not cover fall back to the rig colour, and the ink goes around
+// the result.
 func paintFinished(dst *image.NRGBA, c *Cell, fin image.Image, pal *Palette, ox, oy int, sector, master string) {
 	type rs struct {
 		ramp string
 		step int
 	}
 	rev := map[color.NRGBA]rs{}
-	names := make([]string, 0, len(pal.Ramps)+2)
-	for k := range pal.Ramps {
-		names = append(names, k)
-	}
-	names = append(names, "stone", "membrane")
-	sort.Strings(names)
-	for _, n := range names {
+	for _, n := range pal.finishNames() {
 		for i, col := range pal.ramp(n, master) {
 			if _, ok := rev[col]; !ok {
 				rev[col] = rs{n, i}
 			}
 		}
 	}
-	pal.paintCell(dst, c, ox, oy, sector, 0) // ink and fallback colours
+	f := c.F
 	b := fin.Bounds()
-	for y := 0; y < c.F.H && y < b.Dy(); y++ {
-		for x := 0; x < c.F.W && x < b.Dx(); x++ {
-			if !c.F.filled(x, y) {
+	keep := make([]bool, f.W*f.H)
+	for y := 0; y < f.H; y++ {
+		for x := 0; x < f.W; x++ {
+			inFin := x < b.Dx() && y < b.Dy()
+			if inFin {
+				r, g, bb, a := fin.At(b.Min.X+x, b.Min.Y+y).RGBA()
+				k := color.NRGBA{uint8(r >> 8), uint8(g >> 8), uint8(bb >> 8), 255}
+				if q, ok := rev[k]; ok && a >= 0x8000 {
+					rr := pal.ramp(q.ramp, sector)
+					dst.SetNRGBA(ox+x, oy+y, rr[min(q.step, len(rr)-1)])
+					keep[y*f.W+x] = true
+					continue
+				}
+			}
+			if f.filled(x, y) && !inFin {
+				dst.SetNRGBA(ox+x, oy+y, pal.colour(*f.at(x, y), sector, 0))
+				keep[y*f.W+x] = true
+			}
+		}
+	}
+	if c.Overlay {
+		return
+	}
+	for y := 0; y < f.H; y++ {
+		for x := 0; x < f.W; x++ {
+			if keep[y*f.W+x] {
 				continue
 			}
-			r, g, bb, a := fin.At(b.Min.X+x, b.Min.Y+y).RGBA()
-			if a < 0x8000 {
-				continue
-			}
-			k := color.NRGBA{uint8(r >> 8), uint8(g >> 8), uint8(bb >> 8), 255}
-			if q, ok := rev[k]; ok {
-				rr := pal.ramp(q.ramp, sector)
-				dst.SetNRGBA(ox+x, oy+y, rr[min(q.step, len(rr)-1)])
+			for _, d := range [4][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
+				if xx, yy := x+d[0], y+d[1]; xx >= 0 && yy >= 0 && xx < f.W && yy < f.H && keep[yy*f.W+xx] {
+					dst.SetNRGBA(ox+x, oy+y, pal.Ink)
+					break
+				}
 			}
 		}
 	}
