@@ -241,6 +241,34 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     if (transitions.skip(model, squadComms, voice: voiceOn)) _tick();
   }
 
+  // --- bonus briefing: the urgent-mission card of a bonus level.
+  void _dismissBriefing() {
+    if (transitions.dismissBriefing(squadComms)) setState(() {});
+  }
+
+  /// The arena's top edge to the ship row's, for a card of [area] that
+  /// must end above the ship (the 360 x 520 arena is bottom-aligned).
+  static double shipRowTop(Size area) {
+    final scale = math.min(
+      area.width / ArcadeModel.width,
+      area.height / ArcadeModel.height,
+    );
+    return area.height -
+        ArcadeModel.height * scale +
+        (ArcadeModel.shipY - shipRowHalf) * scale;
+  }
+
+  /// Half the ship row's height in arena units (the ship and its modules).
+  static const shipRowHalf = 26.0;
+
+  Widget _briefingCard(double maxHeight) => BonusBriefingCard(
+    key: const ValueKey('bonus-briefing'),
+    briefing: transitions.briefing!,
+    now: squadComms.now,
+    maxHeight: maxHeight,
+    onDismiss: _dismissBriefing,
+  );
+
   // --- end fluid transitions
   bool hintArtPrecached = false;
   ScoreEntry? finalResult;
@@ -708,6 +736,14 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       _skipTransition(); // --- fluid transitions
       return KeyEventResult.handled;
     }
+    // --- bonus briefing: with nothing else to skip, the keys close the card.
+    if (event is KeyDownEvent &&
+        transitions.briefingOpen(squadComms) &&
+        model.mode != RunMode.paused &&
+        (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.enter)) {
+      _dismissBriefing();
+      return KeyEventResult.handled;
+    }
     if (event is KeyDownEvent &&
         (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.keyP)) {
       _pause();
@@ -903,6 +939,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                               director: squadComms.director,
                               now: squadComms.now,
                               layout: commsLayout,
+                              // --- bonus briefing
+                              hide: transitions.briefingHidden(squadComms),
                             ),
                           ),
                         ),
@@ -1552,6 +1590,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 } else if (transitions.canSkip(model) &&
                     model.mode != RunMode.paused) {
                   _skipTransition(); // --- cinematic flow: skip to Descent
+                } else if (model.mode != RunMode.paused) {
+                  _dismissBriefing(); // --- bonus briefing
                 }
               },
               child: Stack(
@@ -1629,7 +1669,32 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                               model.invulnerable > .4 &&
                               model.levelClock > 2.5,
                           hideTransmission: false,
+                          // --- bonus briefing: the urgent-mission card
+                          // heads the dock and ends above the ship row.
+                          hide: transitions.briefingHidden(squadComms),
+                          banner: transitions.briefingVisible(squadComms)
+                              ? _briefingCard(
+                                  shipRowTop(area.biggest) -
+                                      (heartUp
+                                          ? noticeTop + _heartNoticeHeight + 2
+                                          : 2) -
+                                      6,
+                                )
+                              : null,
                         ),
+                      ),
+                    ),
+                  // --- bonus briefing: wide screens put the card at the
+                  // top of the arena (the call tiles sit in the margins).
+                  if (CommsLayout.of(bounds.biggest).side &&
+                      model.mode != RunMode.paused &&
+                      transitions.briefingVisible(squadComms))
+                    Positioned(
+                      left: 8,
+                      right: 8,
+                      top: 8,
+                      child: CommsAtlasScope(
+                        child: _briefingCard(shipRowTop(area.biggest) - 14),
                       ),
                     ),
                   if (model.mode == RunMode.paused)

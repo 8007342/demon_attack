@@ -10,10 +10,14 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import 'comms_bank.dart';
+import 'comms_briefing.dart';
 import 'comms_director.dart';
 import 'brood_script.dart';
 import 'comms_portraits.dart';
 import 'comms_types.dart';
+
+part 'comms_briefing_view.dart';
 
 const _ink = Color(0xFF080D18);
 const _line = Color(0xFF26394C);
@@ -586,10 +590,14 @@ class CommsSidePanels extends StatelessWidget {
     required this.director,
     required this.now,
     required this.layout,
+    this.hide = const {},
   });
   final CommsDirector director;
   final double now;
   final CommsLayout layout;
+
+  /// Messages another view is showing (the urgent-mission card's turns).
+  final Set<CommsMessage> hide;
 
   @override
   Widget build(BuildContext context) {
@@ -601,7 +609,8 @@ class CommsSidePanels extends StatelessWidget {
         final tiles = <(double, Widget)>[];
         for (final slot in director.slots) {
           final rect = rects[slot.index];
-          final m = director.messageOn(slot.index);
+          final on = director.messageOn(slot.index);
+          final m = on != null && hide.contains(on) ? null : on;
           var zoom = 1.0;
           if (m != null && m.isDemon && m.speaking(now)) {
             final t = m.age(now), out = m.line.duration - t;
@@ -775,6 +784,8 @@ class CommsHudStack extends StatelessWidget {
     required this.now,
     this.dimmed = false,
     this.hideTransmission = false,
+    this.hide = const {},
+    this.banner,
   });
   final CommsDirector director;
   final double now;
@@ -782,6 +793,15 @@ class CommsHudStack extends StatelessWidget {
 
   /// A full-size transmission card is showing the transmission line.
   final bool hideTransmission;
+
+  /// bonus-briefing: messages another card shows (the urgent-mission
+  /// card's turns), left out of the dock.
+  final Set<CommsMessage> hide;
+
+  /// bonus-briefing: a card at the top of the dock (the urgent-mission
+  /// card); the dock's toasts stack under it. It takes taps; the toasts
+  /// never do.
+  final Widget? banner;
 
   /// Cards are sized to their text (mobile-top-trim): [stripHeight] is the
   /// tallest a card gets (four lines of radio text, or a brood grunt's
@@ -801,8 +821,28 @@ class CommsHudStack extends StatelessWidget {
     final (:placed, :overflow) = dockEntries(
       director.active,
       hideTransmission: hideTransmission,
+      hide: hide,
     );
-    if (placed.isEmpty) return const SizedBox.shrink();
+    final top = banner;
+    if (placed.isEmpty) return top ?? const SizedBox.shrink();
+    final dock = _dock(placed, overflow, reduce);
+    if (top == null) return dock;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        top,
+        const SizedBox(height: gap * 2),
+        dock,
+      ],
+    );
+  }
+
+  Widget _dock(
+    List<List<CommsMessage>> placed,
+    List<List<CommsMessage>> overflow,
+    bool reduce,
+  ) {
     final pair = placed.where((e) => e.length == 2).firstOrNull;
     final conversation = pair != null;
     final opening = pair?.first;
@@ -959,8 +999,13 @@ class CommsHudStack extends StatelessWidget {
   /// ticker under the dock) and move up when a half frees; nothing on
   /// screen is hidden by a newer line.
   static ({List<List<CommsMessage>> placed, List<List<CommsMessage>> overflow})
-  dockEntries(Iterable<CommsMessage> active, {bool hideTransmission = false}) {
-    bool hidden(CommsMessage m) => hideTransmission && m.transmission;
+  dockEntries(
+    Iterable<CommsMessage> active, {
+    bool hideTransmission = false,
+    Set<CommsMessage> hide = const {},
+  }) {
+    bool hidden(CommsMessage m) =>
+        (hideTransmission && m.transmission) || hide.contains(m);
     final shown = [
       for (final m in active)
         if (!hidden(m)) m,

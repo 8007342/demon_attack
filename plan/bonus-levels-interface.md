@@ -14,8 +14,9 @@ needs a rule the framework does not have, add a field with a neutral default to 
 - It **replaces one regular sector** (sector 2, 3 or 4 of a route; never sector 1 of route 0, never the carrier,
   sector 5). The sector index, the route, the sector's backdrop, ground war and music stay; the *content* is the
   bonus level's: its waves, its powerup rules, its bonus powerups, its crates, its scoring, its radio, its look.
-- The run reaches it and leaves it through the ordinary sector change (Rout, Pursuit, Descent in the fog). No card,
-  no title, no floating text: the bonus is announced by radio only.
+- The run reaches it and leaves it through the ordinary sector change (Rout, Pursuit, Descent in the fog). No title,
+  no floating text: the bonus is announced by radio, through its "URGENT MISSION!" radio card on the comms dock (see
+  "Urgent-mission card" at the end).
 - About once per run: the run's plan is drawn at `start(runSeed: …)` from the plan's own PRNG. **A run started
   without a run seed has no bonus level and no run modifier**: that is the calibrated campaign every existing test
   and tool measures.
@@ -280,3 +281,21 @@ unchanged. Why and what else was missing: `plan/bonus-levels-blockers-b.md`.
 - **Level #2, so the next one does not collide:** `stormfront` ("Stormfront"): a thunderstorm; lightning strikes
   telegraphed columns and hits both sides; bonus power `lightningRod`; half the kill drops are shields; storm-dark
   grade. Events `stormStrike`, `stormBait`; raw `stormTell`, `stormBolt`.
+
+## Urgent-mission card (`work/bonus-briefing`)
+
+The operator decided blocker A11: the transition into a bonus level opens an "URGENT MISSION!" radio card heading the
+comms dock (design section "Urgent-mission card and banter"). What a new level adds for it:
+
+- `brief:` on its `BonusLevelDef`: the twist in one or two short lines (under about 110 characters).
+- Radio, appended to `art/comms/lines.json` with `"pending": "text"` (written lines: shown with their own words and
+  no audio until recorded, never a borrowed clip):
+  - `bonusEntry.<id>`: invites, at most about 11 words each (the slot's window);
+  - `bonusDare.<id>`: squad dares and a `demon` part with the brood's retorts (cover the officers of the sectors the
+    level may replace, plus a minion or two);
+  - `bonusMidway.<id>` with `"exchange": "human"`: the second wave's squad tease and brood answer.
+  Without its own `bonusDare` / `bonusEntry` lines a level gets the general ones.
+- A `RunModifierDef` gets `brief:` too (the card's run rule).
+- Nothing else: the card, its timing, the dismiss and the layout are the framework's (`lib/comms/comms_briefing.dart`).
+- `test/comms_director_test.dart`'s borrowed count does not change for written lines (they borrow nothing).
+

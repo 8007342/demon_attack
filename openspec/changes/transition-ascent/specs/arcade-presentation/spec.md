@@ -30,3 +30,10 @@ When a sector transition returns the squadron to a sector it has already visited
 #### Scenario: First visit
 - **WHEN** the squadron enters a sector for the first time in the run
 - **THEN** the transition keeps its mission or banter line
+
+### Requirement: A bonus level ahead wins the slot
+When the destination is the run's bonus level, its urgent-mission card (change `bonus-levels`) SHALL take the transition's radio slot instead of a front-line call: the one radio card a sector transition may show.
+
+#### Scenario: Revisiting into a bonus level
+- **WHEN** a later tour heads back into a sector the run's bonus level replaces
+- **THEN** the transition carries the bonus level's urgent-mission card, not a front-line call

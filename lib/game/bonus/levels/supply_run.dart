@@ -31,6 +31,9 @@ const doubleScore = BonusPowerDef(
 const supplyRun = BonusLevelDef(
   id: 'supplyRun',
   label: 'SUPPLY RUN',
+  brief:
+      'Crack the falling crates: three hits each. Kills drop nothing; '
+      'the cargo drops everything.',
   weight: 1,
   waves: BonusWaves(
     count: 2,

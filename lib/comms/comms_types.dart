@@ -39,6 +39,7 @@ class CommsLine {
     this.vis = '',
     this.signature = false,
     this.emotion,
+    this.silent = false,
     String? clip,
     // A named parameter cannot be a private initializing formal.
     // ignore: prefer_initializing_formals
@@ -85,6 +86,15 @@ class CommsLine {
 
   /// A catchphrase or pun: the director rations these so they stay fun.
   final bool signature;
+
+  /// bonus-briefing: a written line with no recording yet, from a trigger
+  /// marked `"pending": "text"` in lines.json (the urgent-mission card's
+  /// chatter). It is shown with its own words and speaker, plays no audio
+  /// and keeps the portrait's mouth closed, so text and sound never
+  /// disagree; once its clip is recorded it is an ordinary voiced line.
+  /// [duration] is then the estimated speech length: the channel is busy
+  /// for it, as if spoken.
+  final bool silent;
   bool get isGrunt => grunt != null;
 }
 

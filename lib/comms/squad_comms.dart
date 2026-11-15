@@ -77,6 +77,9 @@ class SquadComms {
 
   void _start(CommsMessage m) {
     if (!playAudio || !voiceOn) return;
+    // bonus-briefing: a written line not yet recorded plays no audio (its
+    // words are on the card; no borrowed voice says something else).
+    if (m.line.silent) return;
     // The director already keeps one voice on the channel; a must-play
     // warning reaches the player even if a stray voice is still sounding.
     commsPlay(m.line.id, m.mustPlay ? 10 : m.priority, m.isDemon, m.line.clip);

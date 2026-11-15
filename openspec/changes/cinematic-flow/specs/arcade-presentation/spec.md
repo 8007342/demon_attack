@@ -6,7 +6,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Illustrated gameplay instruction
-Gameplay hints SHALL pair one brief actionable sentence with one original pixel illustration and equivalent semantics where an illustration is shown. Illustrated hints SHALL appear during the run's opening arrival and in the pause menu's tips. Later sector transitions SHALL NOT show hints or any other floating text: they speak only through a radio line on the comms dock. Hints SHALL advance automatically without guide, Hold, Menu or manual-advance controls; a tap, Space or Enter MAY skip the opening card early. Normal pause SHALL hold the opening card and resume it where it was. Advice SHALL describe actual game rules without promising protection the simulation does not grant.
+Gameplay hints SHALL pair one brief actionable sentence with one original pixel illustration and equivalent semantics where an illustration is shown. Illustrated hints SHALL appear during the run's opening arrival and in the pause menu's tips. Later sector transitions SHALL NOT show hints or any other floating text: they speak only through a radio line on the comms dock (or, flying into a bonus level, its urgent-mission radio card on the dock; see bonus-levels). Hints SHALL advance automatically without guide, Hold, Menu or manual-advance controls; a tap, Space or Enter MAY skip the opening card early. Normal pause SHALL hold the opening card and resume it where it was. Advice SHALL describe actual game rules without promising protection the simulation does not grant.
 
 #### Scenario: One tactic at a glance
 - **WHEN** an illustrated hint is shown at phone size
@@ -29,11 +29,15 @@ Gameplay hints SHALL pair one brief actionable sentence with one original pixel 
 - **THEN** it associates the grace period with absorbing a hit and never claims that unused shield expiry grants invulnerability
 
 ### Requirement: One primary transition message
-During any transition the play area SHALL show at most one primary message. Transitions SHALL communicate level passing only through radio chatter: in a sector transition that message SHALL be a radio line on the comms dock. No text SHALL be drawn over the play area without a window or toast: no caption, tip sentence, sector or tour title, reward text, story card, storyboard banner, interlude card or sector pips. The opening arrival MAY show its illustrated tip card (a window), and the carrier arrival MAY show its alert (a window). The medal SHALL show as a brief glyph flourish beside the ship without text; the extra life is counted by the HUD. The tour escalation SHALL be carried by the radio line. The title screen, pause and ending pages are unaffected.
+During any transition the play area SHALL show at most one primary message. Transitions SHALL communicate level passing only through radio chatter: in a sector transition that message SHALL be a radio line on the comms dock. No text SHALL be drawn over the play area without a window or toast: no caption, tip sentence, sector or tour title, reward text, story card, storyboard banner, interlude card or sector pips. The opening arrival MAY show its illustrated tip card (a window), and the carrier arrival MAY show its alert (a window). The one sanctioned exception for a sector transition is a bonus level's urgent-mission card (change `bonus-levels`): a radio comm in the dock's toast style with a speaker portrait and the scripted chatter, not floating text. The medal SHALL show as a brief glyph flourish beside the ship without text; the extra life is counted by the HUD. The tour escalation SHALL be carried by the radio line. The title screen, pause and ending pages are unaffected.
 
 #### Scenario: Sector change
 - **WHEN** a sector is cleared and the run travels to the next
 - **THEN** a radio line plays on the comms dock, no floating text is drawn over the play area, and no card covers it
+
+#### Scenario: Flying into a bonus level
+- **WHEN** the next sector is the run's bonus level
+- **THEN** the transition's radio is the urgent-mission card heading the comms dock (a radio comm, not floating text), it never covers the ship row, and nothing else is drawn over the play area
 
 #### Scenario: Story beats kept
 - **WHEN** a sector is secured, a carrier falls or the run jumps into a new route

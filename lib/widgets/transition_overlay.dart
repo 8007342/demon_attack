@@ -16,6 +16,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../comms/comms_bank.dart';
+import '../comms/comms_briefing.dart';
 import '../comms/comms_director.dart';
 import '../comms/comms_view.dart' show CommsLayout;
 import '../comms/squad_comms.dart';
@@ -50,10 +51,56 @@ class TransitionPresenter {
   /// Bank lines this presenter started on the speech player.
   final played = <String>[];
 
+  // --- bonus briefing: the urgent-mission card of a bonus level ahead.
+  /// The card of the current (or just finished) transition into a bonus
+  /// level; null on every other transition.
+  BonusBriefing? briefing;
+
+  /// The urgent-mission card is up (it can be dismissed).
+  bool briefingOpen(SquadComms comms) => briefing?.open ?? false;
+
+  /// The card is drawn at the comms clock's now.
+  bool briefingVisible(SquadComms comms) =>
+      briefing?.visible(comms.now) ?? false;
+
+  /// The radio turns the dock leaves to the card.
+  Set<CommsMessage> briefingHidden(SquadComms comms) =>
+      briefing?.hiddenAt(comms.now) ?? const {};
+
+  /// Tap on the card, or Space / Enter with nothing else to skip.
+  bool dismissBriefing(SquadComms comms) {
+    final b = briefing;
+    if (b == null || !b.open) return false;
+    b.dismiss(comms.director, comms.now);
+    return true;
+  }
+
+  void _updateBriefing(ArcadeModel model, SquadComms comms) {
+    final b = briefing;
+    if (b == null) return;
+    final flying = slotted(model) && model.flow.active;
+    b.update(
+      comms.director,
+      comms.now,
+      flying: flying,
+      flightLeft: flying ? model.flow.plan.seconds - model.flow.seconds : 0,
+      combat: model.combat,
+    );
+    if (b.closedAt != null && !b.visible(comms.now)) {
+      // Closed and faded: forget it (nothing of it is drawn any more).
+      briefing = null;
+    } else if (!b.offered && !slotted(model)) {
+      // Its transition ended before the slot could offer it.
+      briefing = null;
+    }
+  }
+
   /// A new run: fresh seeded planner (the opening card is a tip again).
   void newRun(SquadComms comms, {required bool voice}) {
     end(comms, voice: voice);
     _endSlot(comms);
+    briefing?.close(comms.director, comms.now);
+    briefing = null;
     _open = false;
     planner = InterludePlanner(seed: seed == null ? null : seed! + _runs++);
   }
@@ -116,6 +163,11 @@ class TransitionPresenter {
     } else if (_slotPlanned) {
       _endSlot(comms);
     }
+    if (model.mode == RunMode.title) {
+      briefing?.close(comms.director, comms.now);
+      briefing = null;
+    }
+    _updateBriefing(model, comms);
   }
 
   void _updateOpening(ArcadeModel model, SquadComms comms, bool voice) {
@@ -181,8 +233,27 @@ class TransitionPresenter {
     );
     final s = slot;
     if (s == null) return;
-    final needs =
-        s.radio!.needs + InterludeTiming.adoptWait + 2 * InterludeTiming.fade;
+    // --- bonus briefing: the entry call opens the urgent-mission card.
+    final ahead = model.bonusAhead;
+    final pick = s.radio!;
+    briefing?.close(comms.director, comms.now);
+    briefing = null;
+    if (ahead != null && pick.category == RadioCategory.bonusEntry) {
+      briefing = BonusBriefing(
+        level: ahead,
+        sector: level,
+        invite: pick.line,
+        inviteSpec: pick.spec,
+        modifier: model.bonusPlan.modifier,
+        crew: comms.lineup?.members ?? const {},
+        seed: (seed ?? 0) * 31 + level * 7 + model.cycle,
+      );
+    }
+    final b = briefing;
+    final needs = b != null
+        // The card's whole script (it starts at the slot, no adoption wait).
+        ? b.needs(gap: comms.director.lineGap) + InterludeTiming.fade
+        : s.radio!.needs + InterludeTiming.adoptWait + 2 * InterludeTiming.fade;
     // The model rounds it up to whole beats before travel starts.
     model.slotExtra = math.max(0, needs - room);
   }
@@ -193,6 +264,22 @@ class TransitionPresenter {
     final (start, _) = slotWindow(model.flow.plan);
     final elapsed = model.flow.seconds - start;
     if (elapsed < 0) return;
+    final b = briefing;
+    if (b != null && !b.offered) {
+      // The card's script goes on the channel at the slot's start (no
+      // adoption of a line already on air: the director queues the first
+      // turn behind it, and the card is the slot).
+      final room =
+          model.flow.plan.descentAt - model.flow.seconds + FlowPlan.maxExtra;
+      if (b.offer(comms.director, now: comms.now, ttl: room)) {
+        played.add(b.invite.id);
+        planner.shown(b.invite.id);
+        return;
+      }
+      // Nothing could queue: the ordinary slot carries on.
+      briefing = null;
+    }
+    if (b != null && b.offered) return;
     _updateRadio(model, comms, elapsed);
   }
 
