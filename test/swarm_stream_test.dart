@@ -2,7 +2,6 @@
 // openspec/changes/continuous-swarm design §2).
 import 'dart:math' as math;
 
-import 'package:demon_attack/game/difficulty.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/swarm_stream.dart';
 import 'package:flutter_test/flutter_test.dart';
