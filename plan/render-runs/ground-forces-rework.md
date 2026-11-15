@@ -618,3 +618,13 @@ fingerprint of all five sectors is identical before and after.
   need calibration.
 - Before/after sheet: `art/contact/ground-tuning.png` (left: before; right: after; rows are sectors 1–5, ground layer
   at 2x on flat grey).
+- **Follow-up: travel pace (gameplay, 2026-11-15, no GPU).** The operator delegated the design §3 decision; done on
+  `work/ground-travel` (design §3a, tasks §5). Skirmish units travel at 0.6x (approach and lateral; infantry 58 → 34.8
+  and 38 → 22.8 texels/s), skirmish walkers (Buttress Strider, Chapterhouse) at 0.45x, the v4 convoy at 0.6x
+  (advance 150 → 90, fall-back 90 → 54). The threat front (travel, telegraph and launch clocks, warning bracket) is
+  unchanged: its clocks are identical with the skirmish layer on and off. Re-balance: `assignZ` 900 → 1050,
+  `fireStartZ` 700 → 880; v4 sim engagements/min L1–L5 25.5 / 26.4 / 26.3 / 29.2 / 12.2 (were 25.4 / 27.0 / 26.2 /
+  29.3 / 11.6). **Feet plant** (`GroundStride`): a marching trooper's or walker's walk cycle now follows the ground it
+  covers on screen (8 cell texels per cycle for troopers, 14 for W walkers, 22 for the Chapterhouse); in L3 marching
+  demon troopers slid over 58 % of their ground with the clock gait and 2 % now. Holding and turning keep the
+  clock-driven `GroundPace` cadence. No atlases changed.

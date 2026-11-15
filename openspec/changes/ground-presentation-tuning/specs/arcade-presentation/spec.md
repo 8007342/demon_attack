@@ -15,8 +15,17 @@ play at no more than half its authored rate, and legged units SHALL stride slowe
 - **THEN** it shows every heading on the way and completes the swing in 2.0–2.8 s
 
 #### Scenario: Walkers walk slower
-- **WHEN** a Kiln Ox and a rifle squad advance side by side
-- **THEN** the Kiln Ox's stride cycle runs at 0.3 of its authored cadence and the troopers' walk at 0.5
+- **WHEN** a Kiln Ox and a rifle squad hold their ground, idling or turning on the spot
+- **THEN** the Kiln Ox's stride cycle runs at 0.3 of its authored cadence and the troopers' at 0.5
+
+### Requirement: Feet plant
+While a trooper or a legged walker marches, its walk cycle SHALL advance with the ground it covers on screen (one
+cycle per stride: 8 cell texels for troopers, 14 for W-block walkers, 22 for the Chapterhouse), never faster than
+1.25 times the authored cadence for troopers and the authored cadence for walkers, and backward while it backs up.
+
+#### Scenario: A squad marches
+- **WHEN** a demon rifle squad marches toward the convoy
+- **THEN** its walk frames advance one cycle per 8 cell texels of screen travel and its feet do not slide
 
 ### Requirement: Gameplay timing is not slowed
 The threat telegraph's timing, fire flashes, recoil, hit flashes, tracers and every simulation timer SHALL be

@@ -41,6 +41,30 @@ level stays within the calibration tolerance (`test/ground_war_v4_sim_test.dart`
 `test/difficulty_calibration_test.dart`, `test/comms_pacing_test.dart`). The threat front (telegraph timing contract,
 launch clocks, `fireLead`) stays as it is. That change would also remove the gait slide.
 
+### 3a. Follow-up (operator delegated the decision; done on `work/ground-travel`)
+Implemented as a gameplay change. In the simulation:
+- `GroundV4Tuning.skirmishPace = 0.6` and `walkerPace = 0.45`, stored per unit at spawn as `GroundUnit.travelPace`
+  (threat units keep 1). A skirmish vehicle is a walker when the cast draws it as a W or K block
+  (`GroundV4Tuning.walks`: Buttress Strider, Chapterhouse in Hollow; deterministic metadata only). It scales
+  `approach` and `lateral`: vehicle 95 → 57 / 62 → 37.2, infantry 58 → 34.8 / 38 → 22.8, rockets 50 → 30 / 32 → 19.2,
+  heavy tank 70 → 42 / 44 → 26.4, skirmish walkers 95 → 42.75 / 62 → 27.9 (texels/s, × hostileRate for depth).
+- The v4 convoy (allies with a full-width `lx`) advances 150 → 90, falls back 90 → 54 texels/s, and slews 70 → 42
+  (vehicles) / 44 → 26.4 (squads) × texel(z), except when engaged with a threat-front foe (unchanged).
+- Re-balance: the hand-over moved out, `assignZ` 900 → 1050 and `fireStartZ` 700 → 880 (screen y 239 / 258 →
+  230 / 241), so the first shots come about as long after arrival as before. `cap`, `interval`, `holdMin`,
+  `maxLife`, hp and fire rates are unchanged. `test/ground_war_v4_sim_test.dart` engagements per minute L1–L5:
+  25.4 / 27.0 / 26.2 / 29.3 / 11.6 before, 20.3 / 20.7 / 20.1 / 22.6 / 8.0 with the pace alone (L1 below its 3×
+  floor), 25.5 / 26.4 / 26.3 / 29.2 / 12.2 after the re-balance. Threat front identical (breakthroughs 24 / 22 and
+  ground shots 39 / 29 in L3 / L4, zero in L1, L2, L5); `difficulty_calibration_test` and `comms_pacing_test`
+  outputs identical.
+
+In the presentation, the walk cycle of a legged unit follows the ground it covers (`GroundStride`): the track's
+odometer is the screen distance in texels at the unit's depth; a cycle is 8 cell texels for troopers (feet part about
+4 per step on the h090 walk cells), 14 for W-block walkers and 22 for the Chapterhouse; cadence capped at 2.5
+cycles/s for troopers (1.25× authored, reached only in a full sideways scurry) and the authored 10 fps over 6
+frames for walkers; signed (a backing Stilt strides backward). Holding units keep the clock-driven `GroundPace`
+idle. Marching demon troopers in L3: 58 % of the ground slid with the W1 clock gait, 2 % distance-locked.
+
 ## 4. Squads: visual group decoupled from the gameplay squad
 The simulation's squad strength is `SkirmishFront.squad` (3 or 4 by sector) and is the squad's **hp**
 (`GroundV4Tuning.hp`); rocket teams have 3 hp; allied squads have the ally hp. Varying it per spawn would change hp,

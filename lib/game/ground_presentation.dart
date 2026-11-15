@@ -14,7 +14,8 @@ import 'ground_blocks_atlas.dart';
 /// walk, idle, lights, flames, dust), turn rates and one-shot visual
 /// timelines. Never applied to the threat telegraph (its blink is the
 /// timing contract), to simulation timers (fire flash, recoil, hit flash)
-/// or to unit travel (positions are the simulation's).
+/// or to unit travel (positions are the simulation's). While a legged unit
+/// marches, its walk cycle follows the ground covered ([GroundStride]).
 abstract final class GroundPace {
   /// Every ground animation cycle (vehicles, infantry, overlays, dances).
   static const anim = .5;
@@ -39,6 +40,42 @@ abstract final class GroundPace {
 
   /// The stride or tread cadence factor of [u].
   static double of(GroundBlockUnit u) => isWalker(u) ? walker : anim;
+}
+
+/// Feet that plant (openspec change ground-travel-pace): a legged unit's
+/// walk cycle advances with the ground it covers on screen, not with the
+/// clock, so its feet do not slide. Strides are cell texels per full cycle,
+/// measured on the side-on (h090) walk cells: a trooper's feet part about
+/// 4 texels per step (two steps a cycle), a W-block walker's about 7, the
+/// Chapterhouse's about 11. While holding or turning on the spot the
+/// clock-driven [GroundPace] cadences still apply.
+abstract final class GroundStride {
+  /// Cell texels per walk cycle.
+  static const trooper = 8.0, walker = 14.0, command = 22.0;
+
+  /// Most walk cycles per second. Walkers: the authored cadence (10 fps
+  /// over 6 frames). Troopers: 1.25x the authored 8 fps over 4 frames,
+  /// reached only in a full sideways scurry at the skirmish pace (about
+  /// 20 cell texels a second); a typical march runs about 1.6 cycles/s.
+  static const maxTrooper = 2.5, maxWalker = 10 / 6;
+
+  /// Stride of a legged block unit (troopers, W walkers, the K block).
+  static double of(GroundBlockUnit u) => switch (u.block) {
+        'W' => walker,
+        'K' => command,
+        _ => trooper,
+      };
+
+  static double maxOf(GroundBlockUnit u) =>
+      u.block == 'I' ? maxTrooper : maxWalker;
+
+  /// Walk cycles for [travel] cell texels of ground, capped at [max]
+  /// cycles per second over [dt] seconds (signed: backing up runs the
+  /// cycle backward).
+  static double cycles(double travel, double stride, double max, double dt) {
+    final c = travel / stride, cap = max * dt;
+    return c.clamp(-cap, cap);
+  }
 }
 
 /// Draw-size multipliers on top of the perspective scale (the simulation's
