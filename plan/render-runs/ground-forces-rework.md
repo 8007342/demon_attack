@@ -326,3 +326,23 @@ st-1794728150189-4; h022 -216103-5 / -266322-6; h067 -316754-7 / -368709-8; h090
 - **Decided (operator delegated the picks, 2026-11-15): denoise 0.7 for every heading and layer edit.** Lodestar picks,
   the cleanest of each pair: h000 780211, h022 780214, h067 780223, h090 780226 (h067 780222 and h090 780227 grew stray
   barrels). Raws committed in `art/sprites/sources/ground-blocks-selected/lodestar/heading/`.
+
+### 11.1 `bake`: keyframes onto the whole block (2026-11-15)
+
+The AI gives one image per heading (and per layer angle); a block has 50-odd base cells (move frames, pitch, ford,
+special, pod, wreck, totalled, art aim and fire). `go run . bake <unit>` carries the keyframes' AI colour onto every base
+cell through the rig: each rig texel knows its surface point (`Px.P`, unit-local for the hull, art-local before the aim
+for the layer), so a keyframe texel is a sample at that point. A sample stores what the AI changed: on the rig's own ramp,
+the **step offset** (re-applied over the target's rig step, so every cell keeps its own heading's lighting); on another
+ramp, the **colour** (accents: cyan strips, ember eyes). A target texel takes the sample from the keyframe nearest its
+heading or angle that saw the point within 1.6 rig units, else the rig colour. Hull samples within 2 texels of the
+turret in a composed keyframe are dropped (the AI's turret spills over the hull). The rig owns every silhouette; overlays
+stay rig; colours stay in the master sector's ramps, so `pack` remaps them per sector. Inputs default to the committed
+picks in `art/sprites/sources/ground-blocks-selected/<unit>/{hero,heading,layer}/`; outputs go to
+`art/sprites/sources/ground-blocks/<unit>/<cell>.png`, which `pack` uses. About 1.5 s per unit.
+
+Lodestar baked from the hero and 4 headings (no layer-angle raws yet: art cells take the turret samples of the
+composed keyframes). Sheet: `art/contact/ground-pilot-lodestar-baked.png` (rig | baked). Known limits: an AI accent
+drawn outside the rig's matching part still lands on the nearest rig surface (a cyan blob on the h022 hull front);
+sector kits (snow, patches) stay those of the master sector on baked cells; surfaces no keyframe saw (hull under the
+turret, undersides in wreck rolls) keep rig shading.

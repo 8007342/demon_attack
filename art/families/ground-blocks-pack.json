@@ -86,7 +86,7 @@
      "blocks": 2,
      "file": "assets/images/ground-blocks/ground-fleet-ember.png",
      "h": 360,
-     "png_bytes": 19357,
+     "png_bytes": 21238,
      "rgba_bytes": 1382400,
      "w": 960
     },
@@ -108,7 +108,7 @@
     }
    ],
    "rgba_bytes": 6113280,
-   "png_bytes": 122467,
+   "png_bytes": 124348,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 20,

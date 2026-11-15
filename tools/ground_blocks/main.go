@@ -16,6 +16,12 @@
 //	go run . finish IN CELL OUT   put one AI image on the grid: area
 //	                    downscale, palette quantise, mask to the rig
 //	                    silhouette (soft edges +-1), binary alpha, ink
+//	go run . bake UNIT [CELL=IMG ..]  carry the AI colour of the unit's
+//	                    keyframes (hull.ref.hNNN / art.ref.aNNN raws; by default
+//	                    the committed ones in art/sprites/sources/
+//	                    ground-blocks-selected/UNIT/) onto every base cell of
+//	                    its block, by rig surface point; writes finished cells
+//	go run . bakesheet OUT UNIT [substr ..]  rig | baked review pairs
 //	go run . pack       pack every sector atlas from finished cells where
 //	                    they exist, else from the rig; write the metadata
 //	go run . offline    pack from the rig alone (no GPU, byte-identical)
@@ -80,7 +86,7 @@ func rawDir() string {
 func main() {
 	root = findRoot()
 	if len(os.Args) < 2 {
-		fmt.Println("usage: go run . validate|rig [id]|control [id]|sheet OUT CELL=RAW..|jobs|ingest|finish IN CELL OUT|pack|offline|contact")
+		fmt.Println("usage: go run . validate|rig [id]|control [id]|sheet OUT CELL=RAW..|bake UNIT|bakesheet OUT UNIT|jobs|ingest|finish IN CELL OUT|pack|offline|contact")
 		os.Exit(2)
 	}
 	args := os.Args[2:]
@@ -105,6 +111,10 @@ func main() {
 		cmdBlock(args)
 	case "keyref":
 		cmdKeyref(args)
+	case "bakesheet":
+		cmdBakeSheet(args)
+	case "bake":
+		cmdBake(args)
 	case "sheet":
 		cmdSheet(args)
 	case "control":
