@@ -4198,6 +4198,59 @@
           {"speaker": "morth", "grunt": "gloat", "gloss": "It learns. So do we.", "say": "It learns. So do we.", "emotion": "teasing", "placeholder": "broodTaunt.d2"}
         ]
       }
+    },
+    "frontCall": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "march", "text": "We're getting overwhelmed here!", "emotion": "panicked", "placeholder": "groundPressureHigh.h2"},
+        {"speaker": "kessler", "text": "They're everywhere down here! We need you back!", "emotion": "panicked", "placeholder": "groundPressureHigh.h0"},
+        {"speaker": "voss", "text": "Lantern's being overrun! Anyone up there?", "emotion": "panicked", "placeholder": "groundPressureHigh.h1"},
+        {"speaker": "admiral", "text": "A ground team is calling for air. Turn around, pilot.", "emotion": "urgent", "placeholder": "groundPressureHigh.h4"},
+        {"speaker": "mensah", "text": "Granite to air wing. They're back, and there are more of them!", "emotion": "urgent", "placeholder": "allyUnderAttack.h7"}
+      ]
+    },
+    "frontCall.1": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "admiral", "text": "Ground support needed in Krybor!", "emotion": "urgent", "placeholder": "groundTide.surge.h4"},
+        {"speaker": "march", "text": "Bastion to air wing. Krybor's outpost is under attack again!", "emotion": "panicked", "placeholder": "allyUnderAttack.h3"}
+      ]
+    },
+    "frontCall.2": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "admiral", "text": "Ground support needed in Ringfall!", "emotion": "urgent", "placeholder": "groundTide.surge.h4"},
+        {"speaker": "kessler", "text": "Ringfall's line is buckling! Come back!", "emotion": "panicked", "placeholder": "groundPressureHigh.h0"}
+      ]
+    },
+    "frontCall.3": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "admiral", "text": "Ground support needed on Ember Moon!", "emotion": "urgent", "placeholder": "groundTide.surge.h4"},
+        {"speaker": "voss", "text": "The Ember line is overrun! We need you back!", "emotion": "panicked", "placeholder": "groundPressureHigh.h1"}
+      ]
+    },
+    "frontCall.4": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "admiral", "text": "Ground support needed in the Hollow!", "emotion": "urgent", "placeholder": "groundTide.surge.h4"},
+        {"speaker": "mensah", "text": "Granite's surrounded in the Hollow! Help!", "emotion": "panicked", "placeholder": "allyUnderAttack.h7"}
+      ]
     }
   }
 }

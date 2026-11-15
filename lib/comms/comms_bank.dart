@@ -1141,6 +1141,64 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'sentinelRushAgain.h2', speaker: 'admiral', duration: 1.758, text: 'It\'s diving! Move!', mouth: '2222000003322000555<<<<==00', open: '034211787664321136689874321', vis: '----------------ooo--ooee--', emotion: 'panicked', clip: 'sentinelDive.h0'),
     ],
   ),
+  'frontCall': CommsTriggerSpec(
+    name: 'frontCall',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 3.0,
+    mood: CommsMood.worried,
+    lines: [
+      CommsLine(id: 'frontCall.h0', speaker: 'march', duration: 3.02, text: 'All air units, the ground line is about to break!', mouth: '222442244445555555555<<<<<<222222<<<<<<<<<==00', open: '0467744677666532135368999874368748978747885321', vis: '-----------oooo-------------------------eeee--', emotion: 'panicked', clip: 'groundPressureHigh.h2'),
+      CommsLine(id: 'frontCall.h1', speaker: 'kessler', duration: 2.991, text: 'We can\'t hold much longer! Need air support now!', mouth: '000000444444==<<<<<<===44=====555555<<<<<5555', open: '003535777878658987863247777755468767899997532', vis: '------------ee------eee--eeeeeooooooo----oo--', emotion: 'panicked', clip: 'groundPressureHigh.h0'),
+      CommsLine(id: 'frontCall.h2', speaker: 'voss', duration: 2.356, text: 'Lantern\'s line is buckling! Help us!', mouth: '224433333344455555555552222<<<<<==00', open: '047756657877754268578764216889974321', vis: '-------------oo-----------------ee--', emotion: 'panicked', clip: 'groundPressureHigh.h1'),
+      CommsLine(id: 'frontCall.h3', speaker: 'admiral', duration: 3.049, text: 'The ground line is failing. Give them cover, pilot.', mouth: '33333<<<<<55====<<<<<<<==========<<<33<<<<<222', open: '0654788888774326899887532158787458885588885421', vis: '----------ooeee--------ee------ee-------------', emotion: 'panicked', clip: 'groundPressureHigh.h4'),
+      CommsLine(id: 'frontCall.h4', speaker: 'mensah', duration: 1.56, text: 'Granite\'s taking a beating! Help!', mouth: '2222222444444=========22', open: '037874277774677753278742', vis: '-------------eeeeee-----', emotion: 'panicked', clip: 'allyUnderAttack.h7'),
+    ],
+  ),
+  'frontCall.1': CommsTriggerSpec(
+    name: 'frontCall.1',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 3.0,
+    mood: CommsMood.worried,
+    lines: [
+      CommsLine(id: 'frontCall.1.h0', speaker: 'admiral', duration: 3.742, text: 'The ground attack is surging. Pilot, support the convoy when you can.', mouth: '555<<<<33======<<<<<==0000<<<<=====44444<<<<<<<<<<<<<<<<<', open: '065899866536546886653211047896425437775787998899557887532', vis: 'oo-------eeeeee-----ee--------eeee---------oooooo--------', emotion: 'urgent', clip: 'groundTide.surge.h4'),
+      CommsLine(id: 'frontCall.1.h1', speaker: 'march', duration: 5.132, text: 'Bastion to air wing, my teams are taking fire. Requesting support!', mouth: '33<<<<====<<======4444<<552222<<3344555555544444<<<<<22222222244======<<<<===', open: '05898632378856656567778975322688557776776686764798886421664785666685678985321', vis: '------ee---eeee------ooooo----------oo--------------------------eeeeeoooooeee', emotion: 'panicked', clip: 'allyUnderAttack.h3'),
+    ],
+  ),
+  'frontCall.2': CommsTriggerSpec(
+    name: 'frontCall.2',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 3.0,
+    mood: CommsMood.worried,
+    lines: [
+      CommsLine(id: 'frontCall.2.h0', speaker: 'admiral', duration: 3.742, text: 'The ground attack is surging. Pilot, support the convoy when you can.', mouth: '555<<<<33======<<<<<==0000<<<<=====44444<<<<<<<<<<<<<<<<<', open: '065899866536546886653211047896425437775787998899557887532', vis: 'oo-------eeeeee-----ee--------eeee---------oooooo--------', emotion: 'urgent', clip: 'groundTide.surge.h4'),
+      CommsLine(id: 'frontCall.2.h1', speaker: 'kessler', duration: 2.991, text: 'We can\'t hold much longer! Need air support now!', mouth: '000000444444==<<<<<<===44=====555555<<<<<5555', open: '003535777878658987863247777755468767899997532', vis: '------------ee------eee--eeeeeooooooo----oo--', emotion: 'panicked', clip: 'groundPressureHigh.h0'),
+    ],
+  ),
+  'frontCall.3': CommsTriggerSpec(
+    name: 'frontCall.3',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 3.0,
+    mood: CommsMood.worried,
+    lines: [
+      CommsLine(id: 'frontCall.3.h0', speaker: 'admiral', duration: 3.742, text: 'The ground attack is surging. Pilot, support the convoy when you can.', mouth: '555<<<<33======<<<<<==0000<<<<=====44444<<<<<<<<<<<<<<<<<', open: '065899866536546886653211047896425437775787998899557887532', vis: 'oo-------eeeeee-----ee--------eeee---------oooooo--------', emotion: 'urgent', clip: 'groundTide.surge.h4'),
+      CommsLine(id: 'frontCall.3.h1', speaker: 'voss', duration: 2.356, text: 'Lantern\'s line is buckling! Help us!', mouth: '224433333344455555555552222<<<<<==00', open: '047756657877754268578764216889974321', vis: '-------------oo-----------------ee--', emotion: 'panicked', clip: 'groundPressureHigh.h1'),
+    ],
+  ),
+  'frontCall.4': CommsTriggerSpec(
+    name: 'frontCall.4',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 3.0,
+    mood: CommsMood.worried,
+    lines: [
+      CommsLine(id: 'frontCall.4.h0', speaker: 'admiral', duration: 3.742, text: 'The ground attack is surging. Pilot, support the convoy when you can.', mouth: '555<<<<33======<<<<<==0000<<<<=====44444<<<<<<<<<<<<<<<<<', open: '065899866536546886653211047896425437775787998899557887532', vis: 'oo-------eeeeee-----ee--------eeee---------oooooo--------', emotion: 'urgent', clip: 'groundTide.surge.h4'),
+      CommsLine(id: 'frontCall.4.h1', speaker: 'mensah', duration: 1.56, text: 'Granite\'s taking a beating! Help!', mouth: '2222222444444=========22', open: '037874277774677753278742', vis: '-------------eeeeee-----', emotion: 'panicked', clip: 'allyUnderAttack.h7'),
+    ],
+  ),
 };
 
 const commsDemonTriggers = <String, CommsTriggerSpec>{

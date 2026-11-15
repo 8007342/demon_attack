@@ -30,3 +30,16 @@ batch is blocked on the audio studio (tillandsias#1103).
 | `sentinelRushMissed.d1` | demon | vexxa | panicked | [alarm] Slippery little ship! | demonRout.d2 |
 | `broodAdapting.d0` | demon | gorrak | stern | [order] This one bites. Send the hunters. | broodTaunt.d0 |
 | `broodAdapting.d1` | demon | morth | teasing | [gloat] It learns. So do we. | broodTaunt.d2 |
+| `frontCall.h0` | human | march | panicked | We're getting overwhelmed here! | groundPressureHigh.h2 |
+| `frontCall.h1` | human | kessler | panicked | They're everywhere down here! We need you back! | groundPressureHigh.h0 |
+| `frontCall.h2` | human | voss | panicked | Lantern's being overrun! Anyone up there? | groundPressureHigh.h1 |
+| `frontCall.h3` | human | admiral | urgent | A ground team is calling for air. Turn around, pilot. | groundPressureHigh.h4 |
+| `frontCall.h4` | human | mensah | urgent | Granite to air wing. They're back, and there are more of them! | allyUnderAttack.h7 |
+| `frontCall.1.h0` | human | admiral | urgent | Ground support needed in Krybor! | groundTide.surge.h4 |
+| `frontCall.1.h1` | human | march | panicked | Bastion to air wing. Krybor's outpost is under attack again! | allyUnderAttack.h3 |
+| `frontCall.2.h0` | human | admiral | urgent | Ground support needed in Ringfall! | groundTide.surge.h4 |
+| `frontCall.2.h1` | human | kessler | panicked | Ringfall's line is buckling! Come back! | groundPressureHigh.h0 |
+| `frontCall.3.h0` | human | admiral | urgent | Ground support needed on Ember Moon! | groundTide.surge.h4 |
+| `frontCall.3.h1` | human | voss | panicked | The Ember line is overrun! We need you back! | groundPressureHigh.h1 |
+| `frontCall.4.h0` | human | admiral | urgent | Ground support needed in the Hollow! | groundTide.surge.h4 |
+| `frontCall.4.h1` | human | mensah | panicked | Granite's surrounded in the Hollow! Help! | allyUnderAttack.h7 |
