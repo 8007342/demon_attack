@@ -30,16 +30,7 @@ During any transition the play area SHALL show at most one primary message: an i
 - **WHEN** a sector is secured, a carrier falls or the run jumps into a new route
 - **THEN** the story card shows its storyboard and the next leg's briefing, the medal and life reward, or the tour escalation respectively
 
-### Requirement: Slim transition progress
-Transition progress SHALL be one slim strip at the top of the arena naming the sector and wave (or the salvage window), with sector pips and one hairline of phase progress, in place of per-card progress bars. A wave change within a sector SHALL show only the strip.
-
-#### Scenario: Wave change
-- **WHEN** a new wave begins inside a sector
-- **THEN** no card appears; the strip shows the wave number for the length of the wave entrance
-
-#### Scenario: Travel
-- **WHEN** the run travels between sectors
-- **THEN** the strip names the destination and the share of the jump completed
+<!-- "Slim transition progress" was removed: openspec/changes/ux-declutter forbids progress strips and bars. -->
 
 ### Requirement: Alternating transition interludes
 Level and mission transitions SHALL present one interlude card centred in the play area, spanning the travel leg and the arrival after it, or the arrival alone at the opening, on resume and on a new route. After an opening tip, cards SHALL alternate between a silent tip and a radio card. The choice SHALL be seeded and SHALL never show the same item twice in a row.

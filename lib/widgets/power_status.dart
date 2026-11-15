@@ -17,6 +17,10 @@ const powerNames = <Power, String>{
   Power.large: 'LARGE',
 };
 
+/// The active power-ups as one composite glyph, with no timer rows or
+/// duration bars (openspec/changes/ux-declutter): a layer blinks during its
+/// last [PowerStatus.expiringSeconds], and the exact seconds stay in the
+/// semantics label.
 class PowerStatus extends StatelessWidget {
   const PowerStatus({
     super.key,
@@ -26,9 +30,21 @@ class PowerStatus extends StatelessWidget {
   });
   final Map<Power, double> timers;
 
-  /// Homing missiles still to fire; shown as a HOMING row with pips.
+  /// Homing missiles still to fire; drawn as pylon missiles on the glyph.
   final int homingMissiles;
   final bool compact;
+
+  /// A power this close to running out blinks its glyph layer.
+  static const expiringSeconds = 3.0;
+
+  /// Layers hidden this frame by the expiry blink (4 Hz, off on odd quarter
+  /// seconds of the remaining time, so it is deterministic and pauses with
+  /// the game).
+  static Set<Power> blinkedOff(Map<Power, double> timers) => {
+    for (final MapEntry(key: p, value: t) in timers.entries)
+      if (t > 0 && t < expiringSeconds && (t * 4).floor().isOdd) p,
+  };
+
   @override
   Widget build(BuildContext context) {
     final active = Power.values.where((p) => (timers[p] ?? 0) > 0).toList();
@@ -37,114 +53,25 @@ class PowerStatus extends StatelessWidget {
       label:
           'Active power-ups: ${[for (final p in active) '${powerNames[p]} ${timers[p]!.ceil()} seconds', if (homingMissiles > 0) 'HOMING $homingMissiles missiles'].join(', ')}',
       child: ExcludeSemantics(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(compact ? 2 : 5),
-              decoration: BoxDecoration(
-                color: const Color(0xEF0A1421),
-                border: Border.all(color: const Color(0xFF46617A)),
-              ),
-              child: CustomPaint(
-                key: const ValueKey('combined-power-glyph'),
-                size: Size.square(compact ? 32 : 40),
-                painter: PowerGlyphPainter(
-                  active.toSet(),
-                  homingMissiles: homingMissiles,
-                ),
-              ),
+        child: Container(
+          padding: EdgeInsets.all(compact ? 2 : 5),
+          decoration: BoxDecoration(
+            color: const Color(0xEF0A1421),
+            border: Border.all(color: const Color(0xFF46617A)),
+          ),
+          child: CustomPaint(
+            key: const ValueKey('combined-power-glyph'),
+            size: Size.square(compact ? 32 : 40),
+            painter: PowerGlyphPainter(
+              active.toSet(),
+              homingMissiles: homingMissiles,
+              blinkedOff: blinkedOff(timers),
             ),
-            SizedBox(width: compact ? 4 : 7),
-            SizedBox(
-              width: compact ? 86 : 92,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: active
-                    .map<Widget>(
-                      (p) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 3),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  powerNames[p]!,
-                                  style: TextStyle(
-                                    color: powerColors[p],
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: .5,
-                                  ),
-                                ),
-                                Text(
-                                  '${timers[p]!.ceil()}s',
-                                  key: ValueKey('power-time-${p.name}'),
-                                  style: const TextStyle(
-                                    color: Color(0xFFE1EBF4),
-                                    fontSize: 8,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            SizedBox(
-                              height: 2,
-                              child: LinearProgressIndicator(
-                                value: (timers[p]! / ArcadeModel.powerDuration)
-                                    .clamp(0, 1),
-                                color: powerColors[p],
-                                backgroundColor: const Color(0xFF25384D),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                    .toList()
-                  ..addAll([
-                    if (homingMissiles > 0) _homingRow(homingMissiles),
-                  ]),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-
-  Widget _homingRow(int count) => Padding(
-    key: const ValueKey('power-homing'),
-    padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          homingName,
-          style: TextStyle(
-            color: homingColor,
-            fontSize: 8,
-            fontWeight: FontWeight.bold,
-            letterSpacing: .5,
-          ),
-        ),
-        Row(
-          key: ValueKey('power-homing-$count'),
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var i = 0; i < 3; i++)
-              Container(
-                width: 4,
-                height: 7,
-                margin: const EdgeInsets.only(left: 2),
-                color: i < count ? homingColor : const Color(0xFF25384D),
-              ),
-          ],
-        ),
-      ],
-    ),
-  );
 }
 
 /// Homing missiles: a salvo, not a timer (see ground_war.dart).
@@ -154,8 +81,16 @@ const homingName = 'HOMING';
 /// Side weapon layers leave room for a central bolt/heavy cannon and the outer
 /// shield. Each mark uses the original logical pixel grid over a cockpit ship schematic.
 class PowerGlyphPainter extends CustomPainter {
-  const PowerGlyphPainter(this.active, {this.homingMissiles = 0});
+  const PowerGlyphPainter(
+    this.active, {
+    this.homingMissiles = 0,
+    this.blinkedOff = const {},
+  });
   final Set<Power> active;
+
+  /// Active layers skipped this frame by the expiry blink.
+  final Set<Power> blinkedOff;
+  bool _on(Power p) => active.contains(p) && !blinkedOff.contains(p);
 
   /// Missiles left on the wing pylons (0-3), drawn under the wings.
   final int homingMissiles;
@@ -187,7 +122,7 @@ class PowerGlyphPainter extends CustomPainter {
     canvas.drawRect(const Rect.fromLTWH(14, 9, 4, 15), paint);
     canvas.drawRect(const Rect.fromLTWH(7, 19, 18, 4), paint);
 
-    if (active.contains(Power.shield)) {
+    if (_on(Power.shield)) {
       paint
         ..color = powerColors[Power.shield]!
         ..style = PaintingStyle.stroke
@@ -205,7 +140,7 @@ class PowerGlyphPainter extends CustomPainter {
       );
     }
     paint.style = PaintingStyle.fill;
-    if (active.contains(Power.spread)) {
+    if (_on(Power.spread)) {
       paint.color = powerColors[Power.spread]!;
       // Twin side barrels leave the central modifier unobstructed.
       for (final x in [8.0, 24.0]) {
@@ -226,7 +161,7 @@ class PowerGlyphPainter extends CustomPainter {
         canvas.drawRect(Rect.fromLTWH(x - 1, 3, 2, 3), paint);
       }
     }
-    if (active.contains(Power.large)) {
+    if (_on(Power.large)) {
       paint.color = powerColors[Power.large]!;
       // Wide explosive shells and their stepped bursts occupy the side lanes.
       for (final x in [8.0, 24.0]) {
@@ -242,7 +177,7 @@ class PowerGlyphPainter extends CustomPainter {
         );
       }
     }
-    if (active.contains(Power.powerful)) {
+    if (_on(Power.powerful)) {
       paint.color = powerColors[Power.powerful]!;
       // A chunky central double-shell cannon, with an open muzzle.
       canvas.drawRect(const Rect.fromLTWH(13, 11, 6, 15), paint);
@@ -258,7 +193,7 @@ class PowerGlyphPainter extends CustomPainter {
         Paint()..color = const Color(0xFFFFD6A4),
       );
     }
-    if (active.contains(Power.rapid)) {
+    if (_on(Power.rapid)) {
       final bolt = Path()
         ..moveTo(17, 4)
         ..lineTo(11, 18)
@@ -284,9 +219,18 @@ class PowerGlyphPainter extends CustomPainter {
       for (var i = 0; i < 3; i++) {
         if (i < 3 - homingMissiles.clamp(0, 3)) continue;
         final (x, y) = slots[i];
-        canvas.drawRect(Rect.fromLTWH(x, y, 2, 7), paint..color = const Color(0xFFD8E2FF));
-        canvas.drawRect(Rect.fromLTWH(x, y - 1, 2, 1), paint..color = const Color(0xFF70F5D5));
-        canvas.drawRect(Rect.fromLTWH(x, y + 7, 2, 2), paint..color = homingColor);
+        canvas.drawRect(
+          Rect.fromLTWH(x, y, 2, 7),
+          paint..color = const Color(0xFFD8E2FF),
+        );
+        canvas.drawRect(
+          Rect.fromLTWH(x, y - 1, 2, 1),
+          paint..color = const Color(0xFF70F5D5),
+        );
+        canvas.drawRect(
+          Rect.fromLTWH(x, y + 7, 2, 2),
+          paint..color = homingColor,
+        );
       }
     }
     canvas.restore();
@@ -296,5 +240,7 @@ class PowerGlyphPainter extends CustomPainter {
   bool shouldRepaint(PowerGlyphPainter oldDelegate) =>
       homingMissiles != oldDelegate.homingMissiles ||
       active.length != oldDelegate.active.length ||
-      !active.containsAll(oldDelegate.active);
+      !active.containsAll(oldDelegate.active) ||
+      blinkedOff.length != oldDelegate.blinkedOff.length ||
+      !blinkedOff.containsAll(oldDelegate.blinkedOff);
 }

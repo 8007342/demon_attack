@@ -281,12 +281,8 @@ void main() {
               find.byKey(const ValueKey('interlude-card')).evaluate().isEmpty,
           isTrue,
         );
-        if (rig.model.cinematic) {
-          expect(
-            find.byKey(const ValueKey('transition-strip')),
-            findsOneWidget,
-          );
-        }
+        // ux-declutter: no progress strip or bar at any moment.
+        expect(find.byType(LinearProgressIndicator), findsNothing);
         if (find.byKey(const ValueKey('story-card')).evaluate().isNotEmpty) {
           seen.add('story-${rig.model.mode.name}');
         }
@@ -305,7 +301,7 @@ void main() {
       await dispose(tester);
     });
 
-    testWidgets('a wave change shows only the slim strip', (tester) async {
+    testWidgets('a wave change shows no card and no strip', (tester) async {
       final rig = await launch(tester, const Size(390, 844));
       await rig.step(5);
       rig.model.wave = 2;
@@ -314,8 +310,10 @@ void main() {
       rig.model.transitionLeft = rig.model.transitionDuration;
       await rig.step(.5);
       expect(rig.primaries(), 0);
-      expect(find.byKey(const ValueKey('transition-strip')), findsOneWidget);
-      expect(find.textContaining('WAVE 2/'), findsOneWidget);
+      // ux-declutter: the HUD alone names the wave.
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.textContaining('WAVE 2/'), findsNothing);
+      expect(find.textContaining('WAVE 2 / '), findsOneWidget);
       await dispose(tester);
     });
 

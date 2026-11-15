@@ -1,7 +1,7 @@
 /// The transition presentation: one primary interlude card centred in the
-/// play area (a silent illustrated tip or a full-size radio transmission),
-/// and the slim progress strip at the top of the arena.
-/// See openspec/changes/fluid-transitions.
+/// play area (a silent illustrated tip or a full-size radio transmission).
+/// See openspec/changes/fluid-transitions; the progress strip that lived here
+/// was removed by openspec/changes/ux-declutter.
 library;
 
 import 'dart:math' as math;
@@ -333,112 +333,4 @@ class _RadioPortrait extends CustomPainter {
 
   @override
   bool shouldRepaint(_RadioPortrait old) => true;
-}
-
-/// The slim progress element: sector pips, one line of where the run is, and
-/// a hairline of the phase's progress. It replaces the per-card progress bars
-/// and the wave-change banner.
-class TransitionStrip extends StatelessWidget {
-  const TransitionStrip({
-    super.key,
-    required this.label,
-    required this.sector,
-    required this.progress,
-    this.wave,
-    this.waves,
-    this.opacity = 1,
-    this.accent = _mint,
-  });
-
-  final String label;
-
-  /// Current sector 1-5 (pips).
-  final int sector;
-  final double progress, opacity;
-  final int? wave, waves;
-  final Color accent;
-
-  static const height = 26.0;
-
-  @override
-  Widget build(BuildContext context) => IgnorePointer(
-    child: Opacity(
-      opacity: opacity.clamp(0.0, 1.0),
-      child: Center(
-        child: Container(
-          key: const ValueKey('transition-strip'),
-          height: height,
-          constraints: const BoxConstraints(maxWidth: 460),
-          margin: const EdgeInsets.symmetric(horizontal: 12),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xCC080D18),
-            border: Border(
-              bottom: BorderSide(color: accent.withValues(alpha: .5)),
-            ),
-          ),
-          child: Stack(
-            children: [
-              Row(
-                children: [
-                  for (var i = 1; i <= 5; i++)
-                    Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.only(right: 3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: i < sector
-                            ? _mint
-                            : i == sector
-                            ? _gold
-                            : const Color(0xFF34485B),
-                      ),
-                    ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        letterSpacing: 1.1,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (wave != null && waves != null) ...[
-                    const SizedBox(width: 6),
-                    for (var i = 1; i <= waves!; i++)
-                      Container(
-                        width: 8,
-                        height: 3,
-                        margin: const EdgeInsets.only(left: 2),
-                        color: i < wave!
-                            ? _mint
-                            : i == wave!
-                            ? _gold
-                            : const Color(0xFF34485B),
-                      ),
-                  ],
-                ],
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: progress.clamp(0.0, 1.0),
-                  child: Container(height: 2, color: accent),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
 }

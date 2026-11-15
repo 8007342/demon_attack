@@ -213,8 +213,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   Difficulty boardDifficulty = Difficulty.normal;
   bool handledRunEnd = false;
   bool _endingShown = false, _endingOpen = false, _endingScheduled = false;
-  // --- fluid transitions: the one primary transition message and the slim
-  // progress strip (widgets/transition_overlay.dart).
+  // --- fluid transitions: the one primary transition message
+  // (widgets/transition_overlay.dart); ux-declutter removed its progress strip.
   late final transitions = TransitionPresenter(seed: widget.interludeSeed);
   void _skipTransition() {
     if (transitions.skip(model, squadComms, voice: voiceOn)) _tick();
@@ -897,7 +897,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                             ? const ColoredBox(
                                 color: Color(0xEE080D18),
                                 child: Center(
-                                  child: CircularProgressIndicator(),
+                                  // A word, not a spinner (ux-declutter).
+                                  child: Text(
+                                    'RANKING…',
+                                    style: TextStyle(
+                                      color: Color(0xFF8AA3BA),
+                                      fontSize: 11,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
                                 ),
                               )
                             : _scoreOverlay(),
@@ -1216,10 +1224,15 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         if (boardLoading)
           const Padding(
             padding: EdgeInsets.all(24),
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+            // A word, not a spinner (ux-declutter).
+            child: Text(
+              'LOADING SCORES…',
+              key: ValueKey('scores-loading'),
+              style: TextStyle(
+                color: Color(0xFF8AA3BA),
+                fontSize: 11,
+                letterSpacing: 1.2,
+              ),
             ),
           ),
         if (!boardLoading && boardError != null) ...[
@@ -1479,7 +1492,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       model.clock < heartNoticeUntil &&
                       model.mode != RunMode.paused)
                     Positioned(
-                      top: 8 + transitions.stripInset(model),
+                      top: 8,
                       left: 8,
                       right: 8,
                       child: IgnorePointer(
@@ -1504,7 +1517,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       ),
                     ),
                   // --- fluid transitions: one primary message (interlude
-                  // card, story card or carrier alert) and the slim strip.
+                  // card, story card or carrier alert); no progress strip (ux-declutter).
                   if (model.cinematic && model.mode != RunMode.paused)
                     Positioned.fill(
                       child: CommsAtlasScope(
@@ -1529,11 +1542,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       key: const ValueKey('comms-hud-stack'),
                       left: 4,
                       right: 4,
-                      top:
-                          transitions.stripInset(model) +
-                          (heartNotice != null && model.clock < heartNoticeUntil
-                              ? 44
-                              : 4),
+                      top: heartNotice != null && model.clock < heartNoticeUntil
+                          ? 44
+                          : 4,
                       child: CommsAtlasScope(
                         child: CommsHudStack(
                           director: squadComms.director,
@@ -1964,36 +1975,6 @@ class ConsolePainter extends CustomPainter {
       Paint()..color = const Color(0xFF70F5D5).withValues(alpha: 0.6),
     );
 
-    // Recessed sliding track rail
-    final railStartX = s.width * 0.22;
-    final railEndX = s.width * 0.78;
-    final railY = s.height - 10;
-    c.drawLine(
-      Offset(railStartX, railY),
-      Offset(railEndX, railY),
-      Paint()
-        ..color = const Color(0xFF243B4E)
-        ..strokeWidth = 2,
-    );
-    // Center notch
-    c.drawLine(
-      Offset(s.width * 0.5, railY - 3),
-      Offset(s.width * 0.5, railY + 3),
-      Paint()
-        ..color = const Color(0xFF4C6B82)
-        ..strokeWidth = 1.5,
-    );
-    // Quarter ticks
-    for (final frac in [0.36, 0.64]) {
-      c.drawLine(
-        Offset(s.width * frac, railY - 2),
-        Offset(s.width * frac, railY + 2),
-        Paint()
-          ..color = const Color(0xFF334F66)
-          ..strokeWidth = 1,
-      );
-    }
-
     // Active pilot reticle indicator
     final activeX = touch != null
         ? touch! * s.width
@@ -2002,12 +1983,7 @@ class ConsolePainter extends CustomPainter {
               : null);
 
     if (activeX != null) {
-      // Glowing carriage indicator on rail
-      c.drawRect(
-        Rect.fromCenter(center: Offset(activeX, railY), width: 14, height: 4),
-        Paint()..color = mint,
-      );
-      // Soft tracking pillar
+      // Soft tracking pillar under the finger (no rail: ux-declutter).
       c.drawRect(
         Rect.fromCenter(
           center: Offset(activeX, s.height * 0.5),

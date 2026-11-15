@@ -610,7 +610,8 @@ class DemonScene extends FlameGame {
       }
       if (_parked(d)) continue;
       // One transmittance per creature drives tint, saturation, contrast
-      // and the staged reveal: shields, armour, rank halos and health pips
+      // and the staged reveal: shields, armour and rank halos (no health pips:
+      // ux-declutter; hits read from the flash and the shed armour)
       // belong to a creature that has come out of the weather.
       final holding = approaching.contains(d);
       final t = _transmittance(d, holding: holding);
@@ -701,14 +702,6 @@ class DemonScene extends FlameGame {
       if (warning) tells.add(d); // drawn above the sky sheets
       if (d.dive > 0 && d.diveShield > 0 && reveal > 0) {
         _smallOrMediumDiveShield(c, pos, d);
-      }
-      if (d.hp > 1 && reveal > 0) {
-        for (var i = 0; i < d.hp; i++) {
-          c.drawRect(
-            Rect.fromLTWH(pos.dx - d.hp * 2 + i * 4, pos.dy - 22, 2, 2),
-            Paint()..color = violet.withValues(alpha: reveal),
-          );
-        }
       }
       c.restore();
     }
@@ -1512,15 +1505,7 @@ class DemonScene extends FlameGame {
       22,
     );
 
-    // Health pips (dots showing durability)
-    for (var i = 0; i < crate.maxHp; i++) {
-      final pipX = cx - (crate.maxHp - 1) * 3.0 + i * 6.0;
-      final active = i < crate.hp;
-      c.drawRect(
-        Rect.fromLTWH(pipX - 1.5, cy + 12, 3, 2),
-        Paint()..color = active ? mint : const Color(0xFF40556B),
-      );
-    }
+    // No durability pips (ux-declutter): each hit flashes the crate.
   }
 
   void _creatureLighting(

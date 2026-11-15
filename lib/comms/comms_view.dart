@@ -483,20 +483,11 @@ class CommsTilePainter extends CustomPainter {
         );
       }
     }
-    // Live indicator and signal bars.
+    // Live indicator (no signal-strength bars: ux-declutter).
     if (who != null && state == CommsSlotState.live) {
       final dot = Paint()
         ..color = speaking ? const Color(0xFFFF5A5A) : const Color(0xFF3E8E6E);
       canvas.drawRect(Rect.fromLTWH(5, 5, 4, 4), dot);
-      final bars = Paint()..color = accent.withValues(alpha: .8);
-      for (var i = 0; i < 4; i++) {
-        final h = 3.0 + i * 2;
-        if (who.isDemon && i == 3 && (now * 3).floor().isEven) continue;
-        canvas.drawRect(
-          Rect.fromLTWH(size.width - 22 + i * 4, 13 - h, 3, h),
-          bars,
-        );
-      }
     }
   }
 

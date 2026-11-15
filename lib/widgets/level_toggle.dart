@@ -28,8 +28,8 @@ enum AudioLevel {
   );
 }
 
-/// One small HUD toggle: the channel icon (struck through when muted), a
-/// two-segment level meter and the level word. 38 logical pixels wide, so two
+/// One small HUD toggle: the channel icon (struck through when muted) and
+/// the level word, with no segment meter (ux-declutter). 38 logical pixels wide, so two
 /// fit beside the pause button in the 360 px portrait HUD.
 class LevelToggle extends StatelessWidget {
   const LevelToggle({
@@ -48,13 +48,13 @@ class LevelToggle extends StatelessWidget {
   final ValueChanged<AudioLevel> onChanged;
 
   static const width = 38.0;
-  static const _on = Color(0xFF7FE0C2), _dim = Color(0xFF34485C);
+  static const _on = Color(0xFF7FE0C2);
   static const _off = Color(0xFFFF8C89), _text = Color(0xFF95A9BB);
 
   @override
   Widget build(BuildContext context) {
     final muted = level == AudioLevel.mute;
-    final lit = level.index; // 0, 1 or 2 segments
+    final lit = level.index; // 0 mute, 1 low, 2 full
     return Semantics(
       button: true,
       label: '$channel volume ${level.spoken}',
@@ -76,21 +76,7 @@ class LevelToggle extends StatelessWidget {
                   size: 18,
                   color: muted ? _off : _text,
                 ),
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    for (var i = 0; i < 2; i++)
-                      Container(
-                        width: 8,
-                        height: 3 + 2.0 * i,
-                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                        color: i < lit ? _on : _dim,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   level.label,
                   style: TextStyle(

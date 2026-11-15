@@ -1,8 +1,9 @@
 /// Transition presentation for the arcade page: decides the one primary
 /// message a transition shows (an interlude card, a story card or the boss
-/// alert) and the slim progress strip, and runs the interlude's radio line.
+/// alert) and runs the interlude's radio line.
 /// main.dart only feeds it the run state and mounts its overlay.
-/// See openspec/changes/fluid-transitions.
+/// See openspec/changes/fluid-transitions and openspec/changes/ux-declutter
+/// (no progress strip or bars).
 library;
 
 import 'dart:math' as math;
@@ -193,32 +194,6 @@ class TransitionPresenter {
   (double, double) cardTime(ArcadeModel model) =>
       (_elapsed(model) - _cardStart, _window - _cardStart);
 
-  /// Height the strip takes at the top of the arena, 0 when hidden.
-  double stripInset(ArcadeModel model) =>
-      model.cinematic && _stripLabel(model) != null
-      ? TransitionStrip.height + 8
-      : 0;
-
-  static String _roman(int cycle) =>
-      const ['I', 'II', 'III', 'IV', 'V'][cycle.clamp(0, 4)];
-
-  String? _stripLabel(ArcadeModel m) {
-    final phase = m.presentationMode;
-    return switch (phase) {
-      RunMode.salvage =>
-        'RECOVERY WINDOW · COLLECT CARGO · ${m.transitionLeft.ceil()}s',
-      RunMode.levelClear =>
-        'SECTOR ${m.level}/5 CLEAR · ROUTE ${_roman(m.cycle)}',
-      RunMode.travel =>
-        'JUMP → ${CampaignStory.name(m.nextLevel, m.level == 5 ? m.cycle + 1 : m.cycle).toUpperCase()} · ${(m.transitionProgress * 100).floor()}%',
-      RunMode.transition when !m.isBoss =>
-        m.wave > 1
-            ? 'WAVE ${m.wave}/${m.wavesPerLevel} · REINFORCEMENTS'
-            : '${CampaignStory.name(m.level, m.cycle).toUpperCase()} · WAVE 1/${m.wavesPerLevel}',
-      _ => null,
-    };
-  }
-
   /// The overlay over the arena during a cinematic phase.
   Widget build(
     BuildContext context, {
@@ -233,17 +208,6 @@ class TransitionPresenter {
     if (phase == RunMode.transition && model.isBoss) {
       return _bossAlert(model, p);
     }
-    final label = _stripLabel(model);
-    final fadeIn = Curves.easeOutCubic.transform((p / .12).clamp(0, 1));
-    final fadeOut = Curves.easeInCubic.transform(((1 - p) / .12).clamp(0, 1));
-    final stripOpacity = reduce
-        ? 1.0
-        : switch (phase) {
-            RunMode.salvage => fadeIn,
-            RunMode.transition =>
-              model.wave > 1 ? math.min(fadeIn, fadeOut) : fadeOut,
-            _ => 1.0,
-          };
     Widget? primary;
     if (showingCard) {
       primary = _card(context, model, comms, onSkip, reduce);
@@ -254,33 +218,7 @@ class TransitionPresenter {
             !_skipped)) {
       primary = _storyCard(model, ship);
     }
-    return LayoutBuilder(
-      builder: (context, bounds) {
-        final inset = label == null ? 0.0 : TransitionStrip.height + 8;
-        return Stack(
-          children: [
-            if (primary != null) Positioned.fill(top: inset, child: primary),
-            if (label != null)
-              Positioned(
-                top: 6,
-                left: 0,
-                right: 0,
-                child: TransitionStrip(
-                  label: label,
-                  sector: model.level,
-                  progress: p,
-                  wave: phase == RunMode.transition ? model.wave : null,
-                  waves: phase == RunMode.transition
-                      ? model.wavesPerLevel
-                      : null,
-                  opacity: stripOpacity,
-                  accent: phase == RunMode.levelClear ? gold : mint,
-                ),
-              ),
-          ],
-        );
-      },
-    );
+    return primary ?? const SizedBox.shrink();
   }
 
   Widget _card(
@@ -550,13 +488,6 @@ class TransitionPresenter {
                           fontWeight: FontWeight.w600,
                           letterSpacing: .5,
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      LinearProgressIndicator(
-                        value: p,
-                        minHeight: 3,
-                        color: red,
-                        backgroundColor: const Color(0xFF24374B),
                       ),
                     ],
                   ),

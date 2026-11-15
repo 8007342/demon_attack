@@ -59,14 +59,15 @@ void main() {
         expect(status.right, lessThan(guidance.left));
         expect(guidance.right, lessThanOrEqualTo(bounds.right));
         expect(guidance, guidanceBefore);
-        for (final power in pair.keys) {
-          final timer = tester.getRect(
-            find.byKey(ValueKey('power-time-${power.name}')),
-          );
-          expect(timer.left, greaterThanOrEqualTo(bounds.left));
-          expect(timer.right, lessThan(guidance.left));
-          expect(timer.bottom, lessThanOrEqualTo(bounds.bottom));
-        }
+        // ux-declutter: the glyph alone, no timer rows or duration bars.
+        expect(find.byType(LinearProgressIndicator), findsNothing);
+        expect(
+          find.descendant(
+            of: find.byType(PowerStatus),
+            matching: find.byType(Text),
+          ),
+          findsNothing,
+        );
         await tester.dragFrom(
           tester.getCenter(find.byKey(const ValueKey('combined-power-glyph'))),
           const Offset(25, 0),
