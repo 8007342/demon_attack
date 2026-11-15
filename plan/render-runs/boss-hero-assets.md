@@ -242,6 +242,46 @@ in all 27 stage × view renders. Mirror check: the mirrored +12° view differs f
 texels (frigate 3.6 %): the cruiser's many thin wing spikes add anti-aliased edge texels; no detail swaps sides on
 the sheet.
 
-**Budget:** S0 layers 7.36 MB + stage patches at half density 5.14 MB + wrecks 3.32 MB = **15.82 MB** (≤ 16).
+**Budget:** S0 layers 7.36 MB + stage patches at half density 5.14 MB + wrecks 2.74 MB = **15.23 MB** (≤ 16; 15.82 MB
+before the wreck-pair decision of §4.2).
 
 Sheets: `art/contact/boss-b3-cruiser-heroes.png`, `-views.png` (+ `-views.gif`), `-stages.png`.
+
+### 4.2 Battlecruiser (tour 3, Siege Battlecruiser, 11 modules, 1.7 px/unit)
+
+| Job | Graph | Seeds | GPU | Result |
+| --- | --- | --- | --- | --- |
+| st-1794781364001-70 | `variant-qwen-edit.json`, `hero_qwen_battlecruiser` | 941000–941003 | 60 s | all on the rig |
+| st-1794781569207-71 | S1 edit of 941001 | 943100–943101 | 35 s | |
+| st-1794781605550-72 | S2 edit of 941001 | 943200–943201 | 36 s | both fill the maw with fire and light the bay frames |
+| st-1794781661198-73 | S2 reroll, prompt + "The fanged maw and the two hangar bays stay dark and empty, no fire inside them." | 943210–943211 | 35 s | maw and bays dark |
+| st-1794781712508-74 | S3 chained from S2 943210 (same clause) | 943400–943401 | 35 s | |
+
+**Prompt change (all later stage edits):** S2 and S3 add "The fanged maw and the two hangar bays stay dark and empty,
+no fire inside them." On the cruiser one of two S2 seeds and one of two S3 seeds lit the maw; on the battlecruiser
+both S2 seeds did. The core window and the bays must stay dark: the scene draws the core glow and the launch light
+there itself.
+
+**Picks**
+- **Hero 941001.** On the rig. The family's biggest, angriest snarl sits exactly over the core window, with ember
+  seams across the brow, an arched ember window in the tower, and heavy hanging pods with glowing mouths. It is
+  more brutal than the cruiser without going black. Runner-up 941000 (committed) has the strongest ember seams, but a
+  round bone knob on the turret dome reads as an emblem. Rejected: 941002 (bright purple; the bays stretch into tall
+  doors past the bay windows) and 941003 (near-black: at CSS size only the eyes and pod mouths read, the same
+  failure as frigate 921003).
+- **S1 943100** (soot splotches and glowing cracks; 943101 is too subtle).
+- **S2 943210** (broken plates and fires, maw and bays dark; 943211 keeps most plates).
+- **S3 943400** (chained: wider molten cracks, shattered wing edges; 943401 reads *less* damaged than its S2
+  input).
+
+**Bake.** Rig 27 s; projection bake 445 renders in 276 s; whole `bake_hull.lua` 387 s. Anchor gate ok. Mirror
+check 8.9 % of texels.
+
+**Budget decision: mirrored wreck pairs are stored once.** Measured first at 16.52 MB (S0 7.93 + stage patches at
+half density 5.09 + wrecks 3.50), over the 16 MB budget. The atlas already stores yaw −12° as mirrored +12°, and a
+mirrored module pair once at yaw 0. The same rule now covers the S4 wrecks: `<m>L` is stored and `<m>R` draws it
+flipped, which reads as the mirrored tumble. This loses no hull texel. `bakebudget` counts it this way, and the pack
+should store only the L wreck of each pair. Frigate 13.0 → 12.80 MB, cruiser 15.82 → 15.23 MB, **battlecruiser
+15.80 MB** (S0 7.93 + stage patches 5.09 + wrecks 2.79).
+
+Sheets: `art/contact/boss-b3-battlecruiser-heroes.png`, `-views.png` (+ `.gif`), `-stages.png`.

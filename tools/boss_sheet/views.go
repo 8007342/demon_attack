@@ -400,7 +400,7 @@ func cmdMaskDiff(a []string) {
 // measured on the baked layers: per stored view (pitch x yaw {0, +12}; a
 // mirrored pair once at yaw 0) each module layer's S0 alpha rect, plus stage
 // patches S1, S2, S3: the rect of the module's texels that differ from the
-// previous stage's layer (S1 vs S0, S2 vs S0, S3 vs S2), plus the wrecks.
+// previous stage's layer (S1 vs S0, S2 vs S0, S3 vs S2), plus the wrecks (a mirrored pair once: R draws L flipped).
 func cmdBakeBudget(a []string) {
 	bake, rigDir, hull := a[0], a[1], a[2]
 	rig := readRig(rigDir, hull)
@@ -489,6 +489,11 @@ func cmdBakeBudget(a []string) {
 	ents, _ := os.ReadDir(filepath.Join(bake, hull))
 	for _, e := range ents {
 		if strings.HasPrefix(e.Name(), "fin_wreck_") {
+			// a mirrored pair stores the L wreck once; R draws it flipped (a mirrored tumble)
+			id := strings.SplitN(strings.TrimPrefix(e.Name(), "fin_wreck_"), "_", 2)[0]
+			if strings.HasSuffix(id, "R") && ids[strings.TrimSuffix(id, "R")+"L"] {
+				continue
+			}
 			wreckArea += rectArea(alphaBounds(load(filepath.Join(bake, hull, e.Name()))))
 		}
 	}
