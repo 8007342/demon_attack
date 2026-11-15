@@ -742,6 +742,7 @@ class ArcadeModel {
     incoming.clear();
     _completeWave();
   }
+
   // --- end cinematic flow
   static const arrivalHintDuration = 4.5;
   double transitionDuration = arrivalHintDuration;
@@ -1315,9 +1316,12 @@ class ArcadeModel {
 
   /// The reserve members the scene draws: whole skeins up to
   /// [reserveDrawn] members, then one leader per further skein. None during
-  /// the [finalWave]: nothing more comes out of the fog after it.
+  /// the [finalWave]: nothing more comes out of the fog after it. None while
+  /// a transition plays either (playtest R1): the Descent shows the new
+  /// sector's first cohort coming out of the cloud and nothing waiting
+  /// behind it; the reserve is sighted once the fight is on.
   List<Demon> get drawnReserve {
-    if (finalWave) return const [];
+    if (finalWave || flow.active) return const [];
     final out = <Demon>[];
     final seen = <int>{};
     for (final d in swarmReserve) {
@@ -2805,9 +2809,13 @@ class ArcadeModel {
           kind = after;
         }
       }
+      // No silhouette through a level's end or a transition (playtest
+      // R1): the Descent shows the new sector's first cohort only; a
+      // sentinel due later fades in once the fight is on.
       if (mode == RunMode.salvage ||
           mode == RunMode.levelClear ||
-          mode == RunMode.travel) {
+          mode == RunMode.travel ||
+          flow.active) {
         stage = null;
       }
     }
@@ -3910,11 +3918,15 @@ class ArcadeModel {
       boss = null;
       medals = cycle + 1;
       lives++;
-      // --- cinematic flow: only the minions that were fighting scatter.
-      final fighters = [
-        for (final d in demons)
-          if (d.swarmState != SwarmState.reserve) d,
-      ];
+      // --- cinematic flow (playtest R1): the minions that were fighting
+      // die with the carrier, where they are (the scene bursts them); none
+      // flees into the fog, so nothing is left in it after a boss fight.
+      for (final d in demons) {
+        if (d.swarmState != SwarmState.reserve &&
+            !(d.entering && d.entranceProgress <= 0)) {
+          d.hp = 0;
+        }
+      }
       demons.clear();
       shots.clear();
       pickups.clear();
@@ -3922,8 +3934,8 @@ class ArcadeModel {
       ground.clearField(); // --- ground war
       clearedLevel = level;
       _enterPhase(RunMode.victory, FlowPlan.victorySeconds);
-      _flowBegin(victory: true); // --- cinematic flow: the remnant scatters
-      _flowRout(fighters);
+      _flowBegin(victory: true); // --- cinematic flow
+      _flowRout(const []); // its minions fell with it: the fog stays empty
       events.add('victory');
       events.add('bossDefeated');
     }
