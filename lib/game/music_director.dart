@@ -99,6 +99,10 @@ class MusicDirector {
       _scene = scene;
       _reset();
     }
+    // boss-grandeur: the Overflight's stinger (the boss arrival's Descent).
+    final over = model.flow.active && model.flow.on('overflight');
+    if (over && !_overflight) emit(const GameEvent(GameEventNames.bossOverflight));
+    _overflight = over;
     if (model.mode != RunMode.playing) {
       // Wave transitions keep the current tier; any other phase belongs to
       // the cue events (clear, travel, victory, defeat) and resets the director.
@@ -184,6 +188,8 @@ class MusicDirector {
     );
   }
 
+  bool _overflight = false;
+
   void _tell(String name) {
     final last = _lastTell[name];
     if (last != null && _clock - last < (tellSpacing[name] ?? 1)) return;
@@ -245,6 +251,12 @@ class MusicBridge {
     GameEventNames.lifeLost: 'destroyed',
     GameEventNames.regroupStart: 'gloat',
     GameEventNames.playerRespawn: 'respawn',
+    // boss-grandeur §5.2, existing cues only: the demonic gloat as the
+    // carrier overflies, the last-stand tell as it rises out of the fog,
+    // the heroic accent as it collapses.
+    GameEventNames.bossOverflight: 'gloat',
+    GameEventNames.bossRise: 'laststand',
+    GameEventNames.bossCollapse: 'respawn',
   };
 
   void call(GameEvent event) {

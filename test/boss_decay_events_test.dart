@@ -1,4 +1,5 @@
 import 'package:demon_attack/game/model.dart';
+import 'package:demon_attack/game/music_director.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// boss-grandeur (operator R8.5): every step of the carrier's decay goes
@@ -72,5 +73,39 @@ void main() {
     m.takeGameEvents();
     expect(m.hitBoss(b.x), isFalse);
     expect(m.takeGameEvents().where((e) => e.name.startsWith('boss')), isEmpty);
+  });
+
+  test('music stingers: overflight, rise and collapse use existing accents', () {
+    final accents = <String>[];
+    final bridge = MusicBridge(
+      onIntensity: (_) {},
+      onAccent: accents.add,
+      onFleetIntact: () {},
+    );
+    for (final name in [
+      GameEventNames.bossOverflight,
+      GameEventNames.bossRise,
+      GameEventNames.bossCollapse,
+    ]) {
+      bridge(GameEvent(name));
+    }
+    expect(accents, ['gloat', 'laststand', 'respawn']);
+    // The director publishes the overflight once, on the boss arrival.
+    final events = <GameEvent>[];
+    final director = MusicDirector(emit: events.add);
+    final m = ArcadeModel(seed: 3)
+      ..startAt(sector: 4, route: 0, wave: ArcadeModel.wavesFor(sector: 4, route: 0));
+    for (var i = 0; i < 60 * 5; i++) {
+      m.update(1 / 60);
+    }
+    m.endSector();
+    for (var i = 0; i < 60 * 25 && !m.combat; i++) {
+      m.update(1 / 60);
+      director.observe(m, 1 / 60);
+    }
+    expect(
+      events.where((e) => e.name == GameEventNames.bossOverflight),
+      hasLength(1),
+    );
   });
 }

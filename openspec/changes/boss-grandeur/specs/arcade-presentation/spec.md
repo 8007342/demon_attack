@@ -58,3 +58,24 @@ The boss SHALL show its decay in stages: shield cells going dark one by one, sco
 #### Scenario: Collapse
 - **WHEN** the boss's core is destroyed
 - **THEN** its modules detonate in order and their wrecks fall into the fog before the victory pursuit
+
+### Requirement: Giant boss hull beyond the screen
+The boss art MAY be larger than the screen and spill off its edges; its hit areas and weak points SHALL stay on the shared on-screen geometry at every zoom.
+
+#### Scenario: A hull wider than the arena
+- **WHEN** a packed hull's layers extend beyond the arena
+- **THEN** they are drawn partly off-screen while the core, bays and turrets stay where they can be hit
+
+### Requirement: Faster fog and fog-bank shadows in the boss fight
+As the boss fight climbs, the fog SHALL flow faster past it while the ground below slows, and the fighting boss SHALL throw its shadow onto the intermediate fog layers. Reduced motion SHALL keep the fog's normal speed.
+
+#### Scenario: Climbing fight in the fog
+- **WHEN** the boss fight has climbed
+- **THEN** the fog banks stream faster and darken under the boss's shadow
+
+### Requirement: Per-run boss module sets
+Each run's boss SHALL draw its modules from a module set picked from the run's seed, and each tour SHALL add more guns, spikes and barriers. These choices SHALL be visual only.
+
+#### Scenario: Two runs, same tour
+- **WHEN** two runs with different seeds reach the same tour's boss
+- **THEN** their bosses may use different module sets while their hit areas and endurance follow the same rules

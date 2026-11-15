@@ -205,6 +205,10 @@ void main() {
         'destroyed',
         'gloat',
         'respawn',
+        // boss-grandeur stingers: overflight, rise, collapse.
+        'gloat',
+        'laststand',
+        'respawn',
       ]);
       expect(fleet, 1);
     },
