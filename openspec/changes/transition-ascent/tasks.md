@@ -9,10 +9,10 @@
 - [x] 2.2 `test/flow_director_test.dart`: `speed` monotonic to the swap, reduced plan has zero pitch/roll/streaks, swap still inside the cloud peak
 
 ## 3. Presentation
-- [ ] 3.1 `scene.dart`: replace the flat tilt translate with the pitch transform (horizon drop 96·q, ground scale 1 + 0.35q about the horizon; sky translate only) and the world-only roll about the ship
-- [ ] 3.2 Cinematic ship: rise ≤ 24, thrust `1 + 2.5·climb + 1.5·speed`, scale nudge `1 − 0.04·speed`
-- [ ] 3.3 `flyover_background.dart` and `atmosphere.dart`: speed factor `1 + 7·env('speed')` (reduced `1 + env`), dropping the travel sin bump
-- [ ] 3.4 Fog streaks (10–14, seeded from the plan, cloud pass), zero in reduced motion
+- [x] 3.1 `scene.dart`: replace the flat tilt translate with the pitch transform (horizon drop 96·q, ground scale 1 + 0.35q about the horizon; sky translate only) and the world-only roll about the ship
+- [x] 3.2 Cinematic ship: rise ≤ 24, thrust `1 + 2.5·climb + 1.5·speed`, scale nudge `1 − 0.04·speed`
+- [x] 3.3 `flyover_background.dart` and `atmosphere.dart`: speed factor `1 + 7·env('speed')` (reduced `1 + env`), dropping the travel sin bump
+- [x] 3.4 Fog streaks (10–14, seeded from the plan, cloud pass), zero in reduced motion
 
 ## 4. Front calls
 - [ ] 4.1 Track visited sectors and the destination in `model_flow.dart`

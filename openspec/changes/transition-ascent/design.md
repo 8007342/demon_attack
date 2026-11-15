@@ -117,3 +117,25 @@ only by the sector-change slot above, never by the seeded category draw, so ordi
   agree" guarantee, so no line ever shows the new text over an old voice.
 - **Speed peak ×8 inside the cloud.** It is slightly lower than today's ×10 instant, but held for longer. Reversible
   by one constant.
+
+## 7. Deviations (recorded during implementation)
+- **Roll pivot (§2).** The world banks about the arena's centre (180, 260), not about the ship, with a uniform overscan
+  of `1 + 0.09·roll`. A 3° bank about the ship's low row (y ≈ 453–477) uncovers the frame's top corners by ~24 units
+  and its bottom corners by ~10, which needs a 14 % overscan and still shows a wedge; about the centre 9 % covers every
+  edge. The ship, bullets, HUD and comms dock are still never rolled (the flow ship and the cover are drawn after the
+  world). Constants: `DemonScene.rollOverscan`, `FlowPlan.maxRollDegrees`.
+- **Sky / ground split (§2).** The flyover is drawn twice while `pitch > 0`: once clipped above the dropped horizon and
+  translated only, once clipped below it with the ground transform; the sky clip overlaps the ground by 2 units so the
+  seam has no hairline. Ground units, creatures and the rest of the world are drawn once, under the ground transform
+  (unclipped, so nothing in the air above the horizon is cut). At `pitch == 0` the single pass is unchanged.
+- **Atmosphere (§3, task 3.3).** `atmosphere.dart` needs no change: the fog layers and ground units are anchored to
+  the flyover's `distance`, which now advances at the `speed` factor. The Pursuit cloud's billow scroll (`cloudScroll`,
+  previously `flow.seconds · 28`) is integrated in the scene at the same factor (`DemonScene.cloudRun`).
+- **Reduced motion speed (§3).** The flyover, the fog and the cloud billows are already frozen in reduced motion, and
+  they stay frozen: the reduced `speed` factor (`1 + env`, ≤ ×2) is exposed by `FlowPlan.speedFactor` but has nothing
+  scrolling to apply to. Reduced motion therefore plays the transition as pure crossfades; the hull nudge is also off.
+- **Victory Rout.** In a carrier's fall the flow now owns the flyover speed, so the celebration's own
+  `1 + 2.5 p²` ramp gives way to ×1 during the 5.5 s Rout, and the Pursuit's ramp starts after it. The campaign outro
+  (no `speed` beat) keeps the old ramp.
+- **Streaks (§3).** 12 streaks (the 10–14 range), seeded from the run seed, sector and route rather than a plan seed
+  (plans carry no seed); they scroll at `150·factor` units a second.

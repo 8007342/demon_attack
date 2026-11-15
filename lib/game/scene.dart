@@ -199,6 +199,17 @@ class DemonScene extends FlameGame {
             : model.level - 1;
         environment += (destination - environment) * math.min(1, dt * .65);
       }
+      // --- transition ascent: the streaks and the cloud billows scroll at
+      // the world's speed (design §3).
+      if (flow.active && !model.reducedMotion) {
+        final factor = flow.plan.beat('speed') == null
+            ? 1.0
+            : flow.plan.speedFactor(flow.env('speed'));
+        streakRun += dt * streakSpeed * factor;
+        cloudRun += dt * 28 * factor;
+      } else {
+        streakRun = cloudRun = 0;
+      }
       // --- flyover parallax hook (visual only; reads model state) ---
       sectors.advance(dt, model, environment);
       syncAtmosphere(dt);
@@ -216,7 +227,7 @@ class DemonScene extends FlameGame {
       // --- cinematic flow: the Pursuit's cloud and the outro's thinning.
       ..cloudCover = model.flow.env('cloud')
       ..fogThin = model.flow.env('thin')
-      ..cloudScroll = model.reducedMotion ? 0 : model.flow.seconds * 28
+      ..cloudScroll = model.reducedMotion ? 0 : cloudRun
       ..advance(dt, distance: sectors.flyover.distance);
   }
 
@@ -272,21 +283,67 @@ class DemonScene extends FlameGame {
       }
       canvas.restore();
     } else {
-      // --- cinematic flow: the camera tilts up through the layers (the
-      // world slides down) and shakes on the last kill (never in reduced
-      // motion); the band the tilt uncovers is already cloud.
+      // --- cinematic flow: the outro's flat tilt (the world slides down)
+      // and the shake on the last kill (never in reduced motion).
+      // --- transition ascent (design §2): in a sector change the camera
+      // pitches up instead: the horizon drops by [pitchDrop]·q and the
+      // ground foreshortens about it, and the world banks toward the
+      // pursuit about the ship. The band the drop uncovers is already
+      // cloud. HUD, comms dock, ship and bullets are never pitched or
+      // rolled (the flow ship and the cover are drawn after the world).
       final tilt = model.flow.env('tilt') * flowTilt;
+      final q = model.flow.env('pitch');
+      final drop = pitchDrop * q;
+      final band = tilt + drop;
+      final roll = model.flow.env('roll');
       final shake = _flowShake();
-      if (tilt > .01) {
+      if (roll > .001) {
+        // Under a banked world the corners show the cloud, never black.
         canvas.drawRect(
-          Rect.fromLTWH(0, 0, 360, tilt + 2),
+          const Rect.fromLTWH(0, 0, 360, 520),
+          Paint()..color = atmosphere.cloud,
+        );
+      } else if (band > .01) {
+        canvas.drawRect(
+          Rect.fromLTWH(0, 0, 360, band + 2),
           Paint()..color = atmosphere.cloud,
         );
       }
       canvas.save();
       canvas.translate(shake.dx, tilt + shake.dy);
-      _background(canvas);
+      if (roll > .001) {
+        // About the arena's centre, with just enough overscan that the
+        // banked world still covers every edge and corner (a bank about
+        // the ship's low row would uncover the frame; design §2,
+        // deviations).
+        const pivot = Offset(180, 260);
+        final k = 1 + rollOverscan * roll;
+        canvas
+          ..translate(pivot.dx, pivot.dy)
+          ..rotate(worldRoll(roll, model.flowDirection))
+          ..scale(k, k)
+          ..translate(-pivot.dx, -pivot.dy);
+      }
       final active = model.mode != RunMode.title;
+      if (q > .001) {
+        // The sky translates with the horizon; the ground plane turns
+        // about it (near rows leave the bottom first).
+        final h = Perspective.horizonY + drop;
+        canvas.save();
+        // Overlaps the ground pass by 2 units: no hairline at the seam.
+        canvas.clipRect(Rect.fromLTRB(-40, -40, 400, h + 2));
+        canvas.translate(0, drop);
+        _background(canvas);
+        canvas.restore();
+        canvas.save();
+        canvas.clipRect(Rect.fromLTRB(-40, h, 400, 760));
+        _groundPitch(canvas, q);
+        _background(canvas);
+        canvas.restore();
+        _groundPitch(canvas, q);
+      } else {
+        _background(canvas);
+      }
       if (active && combat) {
         groundForces.paintGround(
           canvas,
@@ -307,16 +364,17 @@ class DemonScene extends FlameGame {
       if (active && combat) {
         // --- cinematic flow: the cover, the pursued flock (sprites that
         // turn to dark silhouettes in the cloud) and the climbing ship.
-        if (tilt > .01) {
-          // Feather the band the tilt uncovered into the scene below it.
+        if (band > .01) {
+          // Feather the band the tilt or pitch uncovered into the scene
+          // below it.
           canvas.drawRect(
-            Rect.fromLTWH(0, 0, 360, tilt + 36),
+            Rect.fromLTWH(0, 0, 360, band + 36),
             Paint()
               ..shader = ui.Gradient.linear(
                 Offset.zero,
-                Offset(0, tilt + 36),
+                Offset(0, band + 36),
                 [atmosphere.cloud, atmosphere.cloud.withValues(alpha: 0)],
-                [tilt / (tilt + 36), 1],
+                [band / (band + 36), 1],
               ),
           );
         }
@@ -325,7 +383,8 @@ class DemonScene extends FlameGame {
           below: model.flow.kind == FlowKind.campaignOutro,
           warmth: model.flow.env('thin'),
         );
-        _flowFlockPass(canvas, tilt);
+        _fogStreaks(canvas); // --- transition ascent: speed past the ship
+        _flowFlockPass(canvas, band);
         _cinematicFlowShip(canvas);
       }
     }
@@ -3256,19 +3315,105 @@ class DemonScene extends FlameGame {
     }
     final climb = flow.env('climb');
     final cloud = flow.env('cloud');
-    final y = ArcadeModel.shipY - flow.plan.climb * climb;
+    final speed = flow.env('speed');
     // In the cloud the ship is a little veiled, never lost.
     final veil = (1 - .35 * cloud).clamp(0.0, 1.0);
     c.saveLayer(
       const Rect.fromLTWH(0, 0, 360, 520),
       Paint()..color = Color.fromRGBO(0, 0, 0, veil),
     );
-    _cinematicShip(c, Offset(model.shipX, y), 42, 1 + climb * 2.5);
+    // transition ascent (design §2): the plume grows with the speed and the
+    // hull pulls away (a 4 % scale-down, none in reduced motion).
+    final nudge = model.reducedMotion ? 0.0 : shipNudge * speed;
+    _cinematicShip(
+      c,
+      flowShipAt(),
+      42 * (1 - nudge),
+      1 + climb * 2.5 + speed * 1.5,
+    );
     c.restore();
   }
 
-  /// Camera tilt in a Pursuit: the world below slides down this far.
+  /// Where the transition ship is drawn: its row, raised by the climb beat
+  /// (at most [FlowPlan.climb] units: 24 in a sector change).
+  Offset flowShipAt() => Offset(
+    model.shipX,
+    ArcadeModel.shipY - model.flow.plan.climb * model.flow.env('climb'),
+  );
+
+  /// The camera pitch's ground transform at pitch [q] (design §2): a row
+  /// at y moves to horizon + drop + (y - horizon)(1 + [pitchStretch]·q).
+  void _groundPitch(Canvas c, double q) {
+    const h = Perspective.horizonY;
+    c
+      ..translate(0, h + pitchDrop * q)
+      ..scale(1, 1 + pitchStretch * q)
+      ..translate(0, -h);
+  }
+
+  /// Where a ground row at [y] is drawn at pitch [q] (tests, review).
+  static double pitchedRow(double y, double q) {
+    const h = Perspective.horizonY;
+    return y < h
+        ? y + pitchDrop * q
+        : h + pitchDrop * q + (y - h) * (1 + pitchStretch * q);
+  }
+
+  /// The world's bank at roll envelope [roll] toward [dir] (radians).
+  static double worldRoll(double roll, int dir) =>
+      roll * FlowPlan.maxRollDegrees * math.pi / 180 * dir.sign;
+
+  /// Fog streaks rushing down past both sides of the ship (design §3):
+  /// 12 thin cloud-tinted strokes seeded from the run and the sector, at a
+  /// speed proportional to the world's. None in reduced motion (the beat's
+  /// gain is 0).
+  void _fogStreaks(Canvas c) {
+    final k = model.flow.env('streaks');
+    if (k <= .01 || model.reducedMotion) return;
+    final ship = flowShipAt();
+    final seed = model.seed * 31 + model.level * 7 + model.cycle;
+    final colour = Color.lerp(atmosphere.cloud, Atmosphere.cloudLight, .7)!;
+    for (var i = 0; i < streakCount; i++) {
+      double r(int salt) {
+        final v = math.sin((seed + i * 17 + salt * 131) * 12.9898) * 43758.5;
+        return v - v.floorToDouble();
+      }
+
+      final side = i.isEven ? -1 : 1;
+      final x = ship.dx + side * (26 + r(1) * 110);
+      final length = 18 + r(2) * 22;
+      final span = 520 + length;
+      final y = (r(3) * span + streakRun * (.8 + .4 * r(4))) % span - length;
+      final a = k * streakAlpha * (.5 + .5 * r(5));
+      c.drawRect(
+        Rect.fromLTWH(x.roundToDouble(), y.roundToDouble(), 2, length),
+        Paint()..color = colour.withValues(alpha: a),
+      );
+    }
+  }
+
+  /// Camera tilt in the campaign outro (still zero gain): the world below
+  /// slides down this far.
   static const flowTilt = 46.0;
+
+  /// transition ascent (design §2): the horizon drops this far at full
+  /// pitch, and the ground below it stretches by this much.
+  static const pitchDrop = 96.0, pitchStretch = .35;
+
+  /// The banked world's overscan at full roll: a 3° bank about the arena
+  /// centre needs 260·sin 3° / 180 ≈ 7.6 % to keep the corners covered.
+  static const rollOverscan = .09;
+
+  /// The hull's pull-away at full speed (a scale-down).
+  static const shipNudge = .04;
+
+  /// Fog streaks: how many, their peak alpha and their speed per unit of
+  /// world speed (arena units a second).
+  static const streakCount = 12, streakAlpha = .35, streakSpeed = 150.0;
+
+  /// The streaks' and the cloud billows' scroll, integrated from the
+  /// world's speed (reset when no flow is playing).
+  double streakRun = 0, cloudRun = 0;
 
   void _cinematicShip(Canvas c, Offset center, double width, double thrust) {
     if (center.dy < -70 || center.dy > 590) return;

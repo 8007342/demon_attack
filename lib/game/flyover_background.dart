@@ -136,12 +136,17 @@ class FlyoverBackground implements GroundOccluders {
     _pushVegetation(dt, model);
     if (reducedMotion) return;
     final p = model.transitionProgress;
-    final factor = switch (mode) {
-      RunMode.travel => 1 + 9 * math.sin(math.pi * p),
-      RunMode.levelClear || RunMode.victory => 1 + 2.5 * p * p,
-      RunMode.gameOver => .5,
-      _ => 1.0,
-    };
+    // transition ascent (design §3): a sector change's world speed is the
+    // flow's monotonic `speed` ramp (×8 inside the cloud), in place of the
+    // old symmetric travel bump; the fog and the cloud take the same factor.
+    final flow = model.flow;
+    final factor = flow.active && flow.plan.beat('speed') != null
+        ? flow.plan.speedFactor(flow.env('speed'))
+        : switch (mode) {
+            RunMode.levelClear || RunMode.victory => 1 + 2.5 * p * p,
+            RunMode.gameOver => .5,
+            _ => 1.0,
+          };
     distance += dt * baseSpeed * factor;
     _clock += dt;
     _react(dt, model);
