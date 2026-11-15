@@ -201,3 +201,104 @@ Measured with a weaving, auto-firing, invulnerable pilot (Normal; regular sector
   API and the Durable Object's schema.
 - **Open:** should a resumed run tell the player again which modifier it has? Today the announcement repeats on
   resume, because the announcement flag is not saved.
+
+## Bonus level #2: Stormfront (agent B)
+
+Requirements: `specs/bonus-level-stormfront/spec.md`. Code: `lib/game/bonus/levels/storm_cell.dart` (the seeded
+schedule, pure), `stormfront.dart` (the level, the rod, the mechanic), `stormfront_painter.dart` (drawing);
+`lib/game/bonus/bonus_mechanic.dart` and `bonus_painters.dart` (the two framework additions it needed). Blockers:
+`plan/bonus-levels-blockers-b.md`.
+
+### Fantasy and contrast
+The brood runs into a thunderstorm and the squadron follows. Where the Supply Run is bright, greedy and safe (crates,
+a magnet, double score, a dawn grade), Stormfront is dark, loud and dangerous: the sky itself is a weapon and it does
+not take sides. The Supply Run changes what drops; Stormfront adds a rule of play.
+
+### The mechanic: bait the lightning
+- **A strike** is a tell (1.15 s of real time, never scaled, never under 1 s), a bolt (one step) and an afterglow
+  (0.42 s, drawing only). The column is fixed when the tell begins.
+- **Aim.** 68 % of tells take the ship's x at that moment (clamped to 18-342); the rest take the swarm's densest
+  column (the creature with the most neighbours within 34 units). With no creature present every tell takes the ship.
+- **The bolt** hits every targetable creature within 34 units of the column for 3 (a homing missile's heavy hit,
+  through `hitDemon(homing: true)`, so it breaks a dive shield), and the ship when it is within 13 units: an ordinary
+  `hitPlayer()` (the shield absorbs it, protection ignores it). Creatures still entering are not hit.
+- **So the player baits it:** wait under a group, let the tell begin, slide out. From a standstill the ship clears the
+  13-unit core in well under half the tell, so a ship that moves always escapes; one that sits still is hit.
+- **Forks** (Normal 20 %, Hard 35 %, +5 % per route, at most 50 %; never on Easy): a second column 64-104 units toward
+  the roomier side, struck at the same instant. One side of the dodge is always open.
+- **Pace.** The next tell begins 2.5-3.7 s after the bolt (Hard 2.2-3.2, Easy 3-4.2), divided by the hostile rate; the
+  first after 3.2 s of combat (Easy 4). One tell group at a time, so bolts land at most once a second.
+- **Safety.** No tell begins and a running tell ends without a bolt while the ship is away, in the life-loss regroup
+  and in every cinematic phase (`BonusMechanic.idle`).
+- **Score.** Storm kills are ordinary kills. A bolt drawn to the ship that destroys creatures and misses the ship adds
+  100 × (route + 1) per creature through `bonusAward`. Awards are shares of the sector's par (§6.1): clear 0.8,
+  flawless +0.4, cap 1.6 (bait bonus included).
+
+Measured like §6.1 (Normal; a weaving, auto-firing, protected pilot that does not bait on purpose; regular sector
+against a flawless Stormfront):
+
+| Route, sector | Regular: time, score | Stormfront: time, score | Bolts / storm kills / baited | Share |
+|---|---|---|---|---|
+| 1, 2 | 38 s, 11 515 | 24 s, 11 531 | 5 / 4 / 1 | 100 % |
+| 1, 3 | 88 s, 28 326 | 33 s, 30 303 | 9 / 8 / 6 | 107 % |
+| 1, 4 | 100 s, 38 877 | 41 s, 42 263 | 10 / 7 / 6 | 109 % |
+| 2, 2 | 166 s, 59 725 | 22 s, 43 575 | 6 / 8 / 7 | 73 % |
+| 2, 3 | 136 s, 83 550 | 18 s, 60 125 | 5 / 5 / 5 | 72 % |
+| 2, 4 | 87 s, 92 375 | 27 s, 68 500 | 8 / 15 / 11 | 74 % |
+
+A flawless storm is worth about the sector it replaces on the first tour and three quarters of it on the second, in
+a third of the time; a lost ship costs the 0.4 share. A first version with flat awards (800 + 1200, cap 4000, ×
+route) paid 20-65 % of the sector, as §6.1 found for level #1.
+
+### The lightning rod (bonus-only powerup)
+The first baited kill of each wave drops one where the creature fell (two per level at most; none while one is
+falling or carried). For 9 s every tell is drawn to the ship, its column widens from 34 to 52 units, there is no
+fork, and the bolt is grounded: it ends on the ship and does no harm. The inversion is the reward: now the pilot
+parks under the swarm and stays. The framework runs the timer, the pickup, the badge (the rapid-fire bolt in
+lavender) and `bonusPickup.lightningRod`; the effect lives in the mechanic, because no power primitive describes it.
+
+### Waves, drops, look
+`BonusWaves(count: 2, rosterScale: .85, reinforcementScale: .5)`, no sentinel, no elite.
+`PowerRules(chances: [PowerChance(Power.shield, .5)])`: half the kill drops are shields ("a certain percentage of a
+chance"), which makes a mistimed bait forgivable. `BonusLook`: storm-dark blue wash (0xFF0B1030 at .46), a pale
+violet horizon glow, haze .14. Drawing is procedural, no atlas: rain (44 streaks), the tell (a faint amber band over
+the column, a leader that reaches down and re-forks twelve times a second, a stepped amber bracket on the ship's row
+as wide as the core, closing ticks), the bolt (stepped zigzag, white core, violet-white halo, two branches, impact
+glow) and a whole-screen flash of at most 10 % white for 0.12 s. Reduced motion: no rain, no flicker, no branches, no
+flash; a steady leader and a straight bolt.
+
+### Determinism
+`StormCell` has its own `Random(levelSeed ^ 0x570f)`, where `levelSeed` is `BonusPlan.levelSeed(runSeed, route,
+sector)`. Every tell draws exactly four numbers (aim, fork, fork offset, shape) and the gap one, whatever they decide,
+so the times of a seed's tells do not depend on the player; the columns do, by design (they sample the ship). Nothing
+draws from `ArcadeModel.random` (`test/bonus_stormfront_test.dart`, "the storm never draws from the simulation
+stream").
+
+### Radio and sound
+| Moment | Trigger | Borrowed clip until #1103 |
+|---|---|---|
+| Transition slot into the storm | `bonusEntry.stormfront` (3) | `sectorStart.h5`, `diveWarning.h6`, `sectorStart.h0` |
+| Combat begins | `bonusStart.stormfront` (2) | `diveWarning.h2`, `groundForceInRange.h4` |
+| A tell on the unprotected ship | `stormStrike` (2), ends on the bolt (`endIn`) | `sentinelDive.h3`, `diveWarning.h6` |
+| A baited bolt | `stormBait` (3 squad, 3 brood) | `skirmishWon.h4`, `broodTaunt.h7`, `allySaved.h4`; `broodTaunt.d6`, `broodChatter.d24`, `levelClear.d0` |
+| The rod is collected | `bonusPickup.lightningRod` (2) | `shieldCollected.h3`, `shieldCollected.h0` |
+| Last kill | `bonusCleared.stormfront` (3) | `levelClear.h7`, `levelClear.h1`, `levelClear.h6` |
+
+Eighteen lines, all pending the voice batch. Raw events `stormTell` and `stormBolt` play two synthesised effects
+(`web/audio/demon-audio.js`: a rising crackle, a crack with a low roll) and reach the event queue for the music.
+
+### Framework additions (neutral defaults; a data-only level is unchanged)
+- `BonusLevelDef.mechanic` → `BonusMechanic` (`step`, `idle`), one per visit, from `BonusMechanicContext` (level
+  seed, route, sector, difficulty). `ArcadeBonus.bonusMechanic`, `bonusEvent`, `bonusAward`; `BonusPlan.levelSeed`.
+- `BonusPainters` (scene side, by level id): `under` after the grade, `over` after the fight.
+- `CommsDirector`: any event with `endIn` gets its squad line end-aligned (was a fixed list of event names).
+- `GameEventObserver`: a bonus pickup is not announced as the regular power in its `power` field.
+
+### Review
+`test/bonus_stormfront_review_test.dart` → `art/contact/bonus-level-b-stormfront.png` (twelve phone frames: Pursuit,
+Descent into the storm, arrival, early and late tell, a baited bolt, the rod falling, a fork, the rod's tell, a
+grounded bolt, a swarm bolt, the way out) and `bonus-level-b-reduced.png` (four frames with reduced motion).
+
+### Open
+- Balance is uncalibrated: no tool measures a bonus level (blocker log §6).
+- The storm has no music cue and no art of its own; both can be added without touching the mechanic.

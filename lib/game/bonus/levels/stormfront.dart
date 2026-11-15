@@ -30,7 +30,10 @@ const stormfront = BonusLevelDef(
   waves: BonusWaves(count: 2, rosterScale: .85, reinforcementScale: .5),
   // "A certain percentage of a chance": half the kill drops are shields.
   rules: PowerRules(chances: [PowerChance(Power.shield, .5)]),
-  scoring: BonusScoring(clearBonus: 800, flawlessBonus: 1200, cap: 4000),
+  // Shares of the replaced sector's par (measured in the change's design,
+  // "Bonus level #2"): a clean storm is worth about the sector on the
+  // first tour. The bait bonus lives inside the same cap.
+  scoring: BonusScoring(clearPar: .8, flawlessPar: .4, capPar: 1.6),
   look: BonusLook(
     tint: 0xFF0B1030, // a storm-dark blue over the sector's own backdrop
     strength: .46,

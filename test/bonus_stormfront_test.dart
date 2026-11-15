@@ -82,7 +82,7 @@ void main() {
     expect(bonusPowerById('lightningRod'), same(lightningRod));
     expect(stormfront.mechanic, isNotNull);
     expect(stormfront.sectors, {2, 3, 4});
-    expect(stormfront.scoring.cap, greaterThan(0));
+    expect(stormfront.scoring.capPar, greaterThan(0));
   });
 
   test('a seeded run can draw it, and the draw is stable', () {
@@ -291,7 +291,8 @@ void main() {
 
   test('bait bonuses stay inside the level cap', () {
     final m = _storm();
-    final cap = stormfront.scoring.cap * (m.cycle + 1);
+    final cap = (stormfront.scoring.capPar * m.sectorPar).round();
+    expect(cap, greaterThan(1000));
     expect(m.bonusAward(cap - 150), cap - 150);
     expect(m.bonusAward(500), 150);
     expect(m.bonusAward(500), 0);
