@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'easter_eggs.dart';
 import 'flyover_atlas.dart';
 import 'ground_painter.dart';
 import 'ground_wildlife_atlas.dart';
@@ -41,6 +42,10 @@ class FlyoverBackground implements GroundOccluders {
   /// `assets/images/ground-wildlife.png` (optional): leap frames for the
   /// fleeing critters (and the easter-egg flock flyers).
   ui.Image? wildlife;
+
+  /// The easter-egg budget (plan/ground-easter-eggs.md section 1), shared
+  /// with the ground painter; advanced with the flyover.
+  final EasterEggBudget eggs = EasterEggBudget();
 
   /// The relief under the camera (surface, navigation, vegetation queries),
   /// shared with the ground war as its [GroundRelief].
@@ -112,6 +117,10 @@ class FlyoverBackground implements GroundOccluders {
   /// while unpaused; reads [model] but never writes to it.
   void advance(double dt, ArcadeModel model, double environment) {
     _sector = environment.round().clamp(0, 4);
+    eggs
+      ..seed = model.seed
+      ..reducedMotion = reducedMotion
+      ..update(dt, model);
     final near = environment.floor().clamp(0, 4);
     prepare(near, model.cycle.clamp(0, 4),
         far: math.min(4, near + 1), blend: environment - near);
@@ -280,6 +289,7 @@ class FlyoverBackground implements GroundOccluders {
     final veg = vegetationSheet;
     if (veg != null) _paintVegetation(c, veg, sector, route, alpha);
     _paintCritters(c, critterSheet, sector, alpha);
+    if (sector == _sector) _paintFlocks(c, alpha);
   }
 
   // Ground mesh buffers, reused every frame.
@@ -710,7 +720,9 @@ class FlyoverBackground implements GroundOccluders {
     }
     final shadow = Offset(_shipX + 12, ArcadeModel.shipY + 24);
     final live = <int>{};
-    for (final v in _visibleCritters(_sector)) {
+    final views = _visibleCritters(_sector).toList();
+    _scatterFromTroops(views, model);
+    for (final v in views) {
       live.add(v.id);
       final s = _critters.putIfAbsent(v.id, _Critter.new);
       final center = Offset(v.x + v.kind.w * v.scale / 2, v.y - v.kind.h * v.scale / 2);
@@ -729,8 +741,33 @@ class FlyoverBackground implements GroundOccluders {
       }
       final ds = center - shadow;
       if (_shadow && ds.dx.abs() < 40 && ds.dy.abs() < 30) s.duckT = .5;
+      if (s.burrowIn > 0) {
+        // Easter-egg scatter: half the group burrows after 1-1.5 s.
+        s.burrowIn -= dt;
+        if (s.burrowIn <= 0) {
+          s.fleeT = 0;
+          s.burrowT = 2.6;
+        }
+      }
+      if (s.egg && s.fleeT > 0 && !reducedMotion) {
+        // A tiny dust puff where each leap lands.
+        final tick = ((_clock * 14).floor() + v.id) % 8;
+        if (tick == 7 && s.lastTick != 7) {
+          _particles.add(VegetationParticle(
+              0,
+              v.x + v.kind.w * v.scale / 2,
+              v.y - v.scale,
+              -s.fvx * 6 * v.scale,
+              -8 * v.scale,
+              v.scale * .7,
+              .35,
+              0));
+        }
+        s.lastTick = tick;
+      }
       if (s.fleeT > 0) {
         s.fleeT -= dt;
+        if (s.fleeT <= 0) s.egg = false;
         final fast = v.kind.gait == 'crawl' ? .55 : 1.0;
         // Sideways within the open band (screen fraction) and along the
         // ground (world texels): toward the camera when fleeing downward.
@@ -878,6 +915,7 @@ class FlyoverBackground implements GroundOccluders {
         final vy = t.yOf(vx, vz);
         if (ally && playing) radio.cleared(v, vx, vy, sector);
         if (reducedMotion) continue;
+        _maybeFlock(v, vx, vy, scale, vz);
         final pk = _particleKind(v.species.kind);
         for (var k = 0; k < 7; k++) {
           final r1 = _rand(v.id, k, 61), r2 = _rand(v.id, k, 62);
@@ -911,6 +949,7 @@ class FlyoverBackground implements GroundOccluders {
   }
 
   void _moveParticles(double dt) {
+    _moveFlocks(dt);
     for (final p in _particles) {
       p.age += dt;
       p.x += p.vx * dt;
@@ -1033,6 +1072,182 @@ class FlyoverBackground implements GroundOccluders {
         _pixelPaint);
   }
 
+  // ---------------------------------------------------------------------
+  // Easter eggs (plan/ground-easter-eggs.md sections 4-5): flocks from
+  // falling trees, critters scattering from the troops. Presentation only.
+  // ---------------------------------------------------------------------
+
+  final _flyers = <EggFlyer>[];
+
+  /// Plants whose fall releases a flock (crystals shatter, debris slides).
+  static const flockKinds = {'tree', 'stalk'};
+
+  /// Flyers climb out of the swarm's way: gone above this screen row.
+  static const flockCeiling = 200.0;
+
+  /// The live flock flyers (tests/tools).
+  List<EggFlyer> get debugFlyers => List.unmodifiable(_flyers);
+
+  void _maybeFlock(VegetationInstance v, double x, double base, double scale,
+      double z) {
+    if (!flockKinds.contains(v.species.kind)) return;
+    final crown = base - v.species.h * scale * .8;
+    // A crown too near the horizon would put the flock in the swarm band.
+    if (crown < flockCeiling + 30) return;
+    if (!eggs.request(EasterEgg.flock, key: v.id, band: v.side)) return;
+    spawnFlock(v.species.sector, v.id, v.side, x, crown, z);
+  }
+
+  /// Bursts a flock of sector [species]'s flyers from a crown at ([x],
+  /// [y]) and depth [z] on [side]: 5-9 flyers over 0.3 s, starting as the
+  /// tree passes its second break frame.
+  void spawnFlock(int species, int key, int side, double x, double y,
+      double z) {
+    final n = math.min(EasterEggBudget.maxFlock,
+        eggs.pick(EasterEgg.flock, key, 1, 5, 9));
+    final out = side == 0 ? -1.0 : 1.0;
+    final near = _scaleOf(z).clamp(0.0, 1.0);
+    for (var i = 0; i < n; i++) {
+      double r(int salt) => _rand(key, i, 70 + salt);
+      _flyers.add(EggFlyer(
+        species.clamp(0, GroundWildlifeAtlas.flockSpecies.length - 1),
+        side == 1,
+        x + (r(0) - .5) * 10 * (.4 + near),
+        y + (r(1) - .5) * 5,
+        out * (14 + 26 * r(2)),
+        -(52 + 30 * r(3)),
+        (.26 + .3 * near) * (.85 + .3 * r(4)),
+        z,
+        _pushSteps[3] + .3 * i / n,
+        10 + 4 * r(5),
+        r(6),
+      ));
+    }
+  }
+
+  void _moveFlocks(double dt) {
+    if (_flyers.isEmpty) return;
+    final k = 1 - math.exp(-1.6 * dt);
+    for (final f in _flyers) {
+      f.age += dt;
+      if (f.age < f.delay) continue;
+      // Climb steeply, then level off toward the horizon and outward; the
+      // flock loosens and shrinks into the distance.
+      f.vy += (-16 - f.vy) * k;
+      f.vx *= 1 + .3 * dt;
+      f.x += f.vx * dt;
+      f.y += f.vy * dt;
+      f.scale *= math.exp(-.3 * dt);
+      f.z *= 1 + .9 * dt;
+      // Never into the lane below the swarm band (rule 2).
+      if (f.y > 300) {
+        f.x = f.right
+            ? math.max(f.x, laneRight + 2)
+            : math.min(f.x, laneLeft - 2);
+      }
+    }
+    _flyers.removeWhere((f) =>
+        f.age > 2.5 || f.y < flockCeiling || f.x < -24 || f.x > 384);
+  }
+
+  /// Opacity of a flyer: fades out at the end of its 2.5 s and into the
+  /// fog as it nears the ceiling.
+  static double flyerOpacity(EggFlyer f) {
+    if (f.age < f.delay) return 0;
+    return (math.min(1.0, (2.5 - f.age) / .7) *
+            ((f.y - flockCeiling) / 40).clamp(0.0, 1.0))
+        .clamp(0.0, 1.0);
+  }
+
+  void _paintFlocks(Canvas c, int alpha) {
+    final sheet = wildlife;
+    if (sheet == null || _flyers.isEmpty || reducedMotion) return;
+    final transforms = <RSTransform>[];
+    final rects = <Rect>[];
+    final colors = <Color>[];
+    for (final f in _flyers) {
+      final o = flyerOpacity(f);
+      if (o <= 0) continue;
+      final flap = ((_clock * f.fps + f.phase * 2).floor()) & 1;
+      rects.add(GroundWildlifeAtlas.flock(f.species, flap, right: f.right));
+      transforms.add(RSTransform.fromComponents(
+        rotation: 0,
+        scale: f.scale,
+        anchorX: GroundWildlifeAtlas.flockW / 2,
+        anchorY: GroundWildlifeAtlas.flockH / 2,
+        translateX: f.x.roundToDouble(),
+        translateY: f.y.roundToDouble(),
+      ));
+      final v = (235 * (.35 + .65 * _fog(f.z))).round();
+      colors.add(Color.fromARGB((alpha * o).round(), v, v, v));
+    }
+    if (rects.isEmpty) return;
+    c.drawAtlas(sheet, transforms, rects, colors, BlendMode.modulate, null,
+        _pixelPaint);
+  }
+
+  /// Critters within 50 texels of a ground unit scatter toward the outer
+  /// edge, up to 8 per group, when the budget allows (one group per band,
+  /// cooldown 8 s per band); half of them burrow after 1-1.5 s.
+  void _scatterFromTroops(List<_CritterView> views, ArcadeModel model) {
+    if (reducedMotion || eggs.quiet != null || views.isEmpty) return;
+    final g = model.ground;
+    final troops = <(Offset, double, int)>[
+      for (final u in g.units)
+        if (u.alive && u.z < EasterEggBudget.farZ)
+          (Offset(u.x, u.y), 50 * GroundCamera.texel(math.max(u.z, 1)), u.id),
+      for (final a in g.allies)
+        if (a.alive && a.z < EasterEggBudget.farZ)
+          (Offset(a.x, a.y), 50 * GroundCamera.texel(math.max(a.z, 1)),
+              100000 + a.id),
+    ];
+    for (final (at, radius, id) in troops) {
+      _CritterView? first;
+      for (final v in views) {
+        final s = _critters[v.id];
+        if (s != null && (s.fleeT > 0 || s.burrowT > 0)) continue;
+        final center = Offset(v.x + v.kind.w * v.scale / 2, v.y);
+        if ((center - at).distance <= radius) {
+          first = v;
+          break;
+        }
+      }
+      if (first == null) continue;
+      final band = EasterEggBudget.bandOf(first.x);
+      if (!eggs.request(EasterEgg.critters,
+          key: first.id * 7 + id, band: band)) {
+        continue;
+      }
+      final group = [
+        for (final v in views)
+          if (EasterEggBudget.bandOf(v.x) == band &&
+              (Offset(v.x + v.kind.w * v.scale / 2, v.y) - at).distance <=
+                  radius * 1.4)
+            v,
+      ]..sort((a, b) => (Offset(a.x, a.y) - at)
+          .distance
+          .compareTo((Offset(b.x, b.y) - at).distance));
+      for (final v in group.take(EasterEggBudget.maxCritters)) {
+        final s = _critters.putIfAbsent(v.id, _Critter.new);
+        if (v.kind.gait == 'burrow') {
+          s.burrowT = math.max(s.burrowT, 2.6);
+          continue;
+        }
+        s
+          ..fvx = band == 0 ? -1 : 1
+          ..fvy = v.y >= at.dy ? 1 : -1
+          ..fleeT = 1.6 + _rand(v.id, 32) * .6
+          ..egg = true
+          ..lastTick = -1
+          ..burrowIn = _rand(v.id, 31) < .5 ? 1 + _rand(v.id, 33) * .5 : 0;
+      }
+    }
+  }
+
+  /// Critters running in an easter-egg scatter (tests/tools).
+  int get scatteringCritters =>
+      _critters.values.where((s) => s.egg && s.fleeT > 0).length;
+
   // --- ground war v4: GroundOccluders.
   ui.Image? _plantSheet;
   final _plants = <(double, Rect, RSTransform, Rect, Color)>[];
@@ -1087,6 +1302,25 @@ class FlyoverBackground implements GroundOccluders {
 class _Critter {
   double du = 0, dw = 0, fvx = 0, fvy = 0;
   double fleeT = 0, duckT = 0, burrowT = 0;
+
+  /// Easter-egg scatter: seconds until this critter burrows (0: never),
+  /// whether it is part of a scatter, and the last leap tick (dust puffs).
+  double burrowIn = 0;
+  bool egg = false;
+  int lastTick = -1;
+}
+
+/// One flyer of an easter-egg flock (presentation only).
+class EggFlyer {
+  EggFlyer(this.species, this.right, this.x, this.y, this.vx, this.vy,
+      this.scale, this.z, this.delay, this.fps, this.phase);
+  final int species;
+  final bool right;
+  double x, y, vx, vy, scale, z;
+
+  /// Seconds since the burst; the flyer leaves the crown at [delay].
+  double age = 0;
+  final double delay, fps, phase;
 }
 
 class _CritterView {

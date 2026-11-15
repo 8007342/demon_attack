@@ -45,7 +45,8 @@ class DemonScene extends FlameGame {
   // --- ground war (ground_painter.dart) ---
   late final groundForces = GroundPainter()
     ..occluders = sectors.flyover
-    ..atmosphere = atmosphere; // --- ground atmosphere art in the depth sort
+    ..atmosphere = atmosphere // --- ground atmosphere art in the depth sort
+    ..eggs = sectors.flyover.eggs;
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;
