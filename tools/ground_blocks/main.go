@@ -103,6 +103,8 @@ func main() {
 		cmdContact()
 	case "block":
 		cmdBlock(args)
+	case "keyref":
+		cmdKeyref(args)
 	case "sheet":
 		cmdSheet(args)
 	case "control":

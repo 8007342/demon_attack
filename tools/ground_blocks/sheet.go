@@ -87,3 +87,48 @@ func (p *Project) findCell(u unitRef, name string) *Cell {
 	}
 	return nil
 }
+
+// cmdKeyref IN CELL OUT: the finished cell of an AI image framed like a
+// control frame (controlSize square, on the family key colour), the reference keyframe for the VACE in-betweens.
+func cmdKeyref(args []string) {
+	if len(args) < 3 {
+		fail(fmt.Errorf("usage: keyref IN.png <unit>.<cell> OUT.png"))
+	}
+	p := loadProject()
+	u := p.unit(strings.SplitN(args[1], ".", 2)[0])
+	cell := p.findCell(u, args[1])
+	if cell == nil {
+		fail(fmt.Errorf("no cell %s", args[1]))
+	}
+	src, err := pixelgrid.ReadPNG(args[0])
+	must(err)
+	key := pixelgrid.Hex(orStr(u.Fam.Sprite.Reference.Key, "#FF00FF"))
+	fin := p.finish(u, cell, src, key)
+	// framed like a control strip frame: the subject's box scaled to 4/5
+	// of controlSize, centred on the key
+	x0, y0, x1, y1 := fin.Bounds().Dx(), fin.Bounds().Dy(), -1, -1
+	for y := 0; y < fin.Bounds().Dy(); y++ {
+		for x := 0; x < fin.Bounds().Dx(); x++ {
+			if fin.NRGBAAt(x, y).A != 0 {
+				x0, y0, x1, y1 = min(x0, x), min(y0, y), max(x1, x), max(y1, y)
+			}
+		}
+	}
+	if x1 < 0 {
+		fail(fmt.Errorf("%s: empty finish", args[1]))
+	}
+	bw, bh := x1-x0+1, y1-y0+1
+	k := max(1, controlSize*4/5/max(bw, bh))
+	ox, oy := (controlSize-bw*k)/2, (controlSize-bh*k)/2
+	out := image.NewNRGBA(image.Rect(0, 0, controlSize, controlSize))
+	fill(out, out.Bounds(), key)
+	for y := y0; y <= y1; y++ {
+		for x := x0; x <= x1; x++ {
+			if c := fin.NRGBAAt(x, y); c.A != 0 {
+				fill(out, image.Rect(ox+(x-x0)*k, oy+(y-y0)*k, ox+(x-x0+1)*k, oy+(y-y0+1)*k), c)
+			}
+		}
+	}
+	must(pixelgrid.WritePNG(args[2], out))
+	fmt.Println("keyref", args[1], "->", args[2])
+}
