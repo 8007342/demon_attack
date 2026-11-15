@@ -149,7 +149,8 @@ scenery. Applied [inference]:
 Shadows on the relief (`terrain-shadows`): a shadow draped over a bright slope reads darker, but the
 `groundLight` factor and the 0.9 alpha cap still apply, and bullets are never dimmed. The sentinel's lurking
 shadow is atmosphere, not a telegraph: it never announces a gameplay event the player must react to, so it carries
-no fairness rule of its own. It peaks at alpha 0.5 under the widest blur, because 0.30 read as nothing on the dark
+no fairness rule of its own. It is drawn as an occluder of the ground's light (desaturate plus a cool
+multiply that also dims the fog banks above it): an ink shadow, even at alpha 0.5, read as nothing on the dark
 sector grounds.
 
 ## Sources

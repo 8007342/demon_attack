@@ -881,6 +881,7 @@ class DemonScene extends FlameGame {
       // horizon band's glow (a darker shape in the fog), behind the far
       // banks and both veils, which drift across it at their own winds.
       if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c);
+      if (nextFog == fogSlots.length) lurkFogPass(c);
     }
 
     for (final d in _byDepth(census.bodies)) {
@@ -2450,7 +2451,24 @@ class DemonScene extends FlameGame {
   _ShadowSpec? _lurkLast, _handoffFrom;
   Demon? _handoffTo;
   double _handoffAt = 0;
-  static const lurkHandoff = .8, lurkAlpha = .5;
+  static const lurkHandoff = .8;
+
+  /// lurk-visibility: the occluder's strength at its core (multiply
+  /// darkening toward [lurkTint], plus [lurkDesaturate] of the colour
+  /// under it), and the smallest ground nearness its size uses.
+  static const lurkAlpha = .9, lurkDesaturate = .6, lurkMinNearness = .2;
+
+  /// Share of the occluder repeated over the depth fog banks above it.
+  static const lurkFog = .65;
+  static const lurkTint = Color(0xFF323C64);
+
+  /// Tests and review: false leaves the lurking shadow undrawn (it is
+  /// still tracked, so hesitation and the hand-off are unchanged).
+  bool drawLurk = true;
+
+  /// What the lurk pass draws this frame (the lurk, or its fading half
+  /// during the hand-off).
+  _ShadowSpec? _lurkDraw;
 
   /// The lurking shadow's visible footprint this frame (ground units and
   /// critters under it hesitate), or null.
@@ -2491,15 +2509,16 @@ class DemonScene extends FlameGame {
     final hit = _flyerHit(surface, base, l.altitude);
     // Size by the ground's nearness there: about 2.5 x the sentinel's own,
     // growing 1.0 -> 1.3 as it nears (and its virtual altitude falls).
+    // lurk-visibility: never smaller than a broad patch near the fog, so it
+    // is seen as soon as it appears.
     final n = ((hit.flat.dy - Perspective.horizonY) / Perspective.groundSpan)
-        .clamp(0.0, 1.0);
-    final rise = Perspective.smoothstep(0, 1, f.opacity);
-    // In thick ground fog it is a darkening, not a shape.
-    final clear = 1 - FlyoverBackground.groundFogAt(hit.flat.dy);
-    // 0.5, not the design's 0.30: at 0.30 it read as nothing on the dark
-    // sector grounds (review strips), as the swarm shadows did at 0.55.
-    final alpha =
-        lurkAlpha * rise * Atmosphere.groundLight(hit.center.dy) * clear;
+        .clamp(lurkMinNearness, 1.0);
+    // Full within 1.5 s of the silhouette appearing.
+    final rise = Perspective.smoothstep(0, .5, f.opacity);
+    // In thick ground fog it is a little softer, never nothing (the fog
+    // over it dims too: [lurkFogPass]).
+    final clear = .7 + .3 * (1 - FlyoverBackground.groundFogAt(hit.flat.dy));
+    final alpha = lurkAlpha * rise * clear;
     if (alpha < .01) return null;
     final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
     return _ShadowSpec(
@@ -2531,15 +2550,146 @@ class DemonScene extends FlameGame {
     }
     final k = Perspective.smoothstep(0, 1, u.clamp(0.0, 1.0));
     double mix(double a, double b) => a + (b - a) * k;
+    final center = Offset.lerp(from.center, to.center, k)!;
+    final flat = Offset.lerp(from.flat, to.flat, k)!;
+    final scale = mix(from.scale, to.scale);
+    // lurk-visibility: one shape gliding and contracting, cross-fading
+    // from the lurk's occluder to the sentinel's ink shadow.
+    _lurkDraw = _ShadowSpec(
+      from.image,
+      from.src,
+      center,
+      scale,
+      from.alpha * (1 - k),
+      2,
+      flat,
+    );
     return _ShadowSpec(
       to.image,
-      k < .5 ? from.src : to.src,
-      Offset.lerp(from.center, to.center, k)!,
-      mix(from.scale, to.scale),
-      mix(from.alpha, to.alpha),
-      k < .5 ? from.bucket : to.bucket,
-      Offset.lerp(from.flat, to.flat, k)!,
+      to.src,
+      center,
+      scale,
+      to.alpha * k,
+      to.bucket,
+      flat,
     );
+  }
+
+  // --- lurk-visibility: the lurk as an occluder of the ground's light ---
+
+  /// The effects strip's sentinel frames as soft white masks (blurred once,
+  /// padded by [_lurkPad]), so the lurk is soft without a blur layer.
+  ui.Image? _lurkMask;
+  ui.Image? _lurkMaskFor;
+  ImageShader? _lurkMaskShader;
+  static const _lurkPad = 12.0;
+
+  ui.Image _lurkMaskImage(ui.Image fx) {
+    final cached = _lurkMask;
+    if (cached != null && identical(_lurkMaskFor, fx)) return cached;
+    const cw = 128 + 2 * _lurkPad, ch = 64 + 2 * _lurkPad;
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec);
+    final paint = Paint()
+      ..filterQuality = FilterQuality.medium
+      ..colorFilter = const ColorFilter.mode(Color(0xFFFFFFFF), BlendMode.srcIn)
+      ..imageFilter = ui.ImageFilter.blur(sigmaX: 3.2, sigmaY: 2.4);
+    for (var row = 0; row < 2; row++) {
+      for (var col = 0; col < 4; col++) {
+        c.drawImageRect(
+          fx,
+          Rect.fromLTWH(col * 128.0, row * 64.0, 128, 64),
+          Rect.fromLTWH(col * cw + _lurkPad, row * ch + _lurkPad, 128, 64),
+          paint,
+        );
+      }
+    }
+    final pic = rec.endRecording();
+    _lurkMask?.dispose();
+    final mask = pic.toImageSync((4 * cw).round(), (2 * ch).round());
+    pic.dispose();
+    _lurkMask = mask;
+    _lurkMaskFor = fx;
+    _lurkMaskShader = ImageShader(
+      mask,
+      TileMode.clamp,
+      TileMode.clamp,
+      _identity4,
+      filterQuality: FilterQuality.medium,
+    );
+    return mask;
+  }
+
+  /// Draws [s] (a strip frame of the effects atlas) as the lurking
+  /// shadow: its soft mask draped on the surface, first desaturating the
+  /// ground under it, then multiplying it toward [lurkTint]. Lit slopes,
+  /// crest rims and the ground fog's glow dim with it, so it reads as a
+  /// great shape passing over the light, never as a black blob.
+  int _paintLurk(
+    Canvas c,
+    ShadowSurface surface,
+    _ShadowSpec s, {
+    double strength = 1,
+    bool desaturate = true,
+  }) {
+    final fx = s.image;
+    _lurkMaskImage(fx);
+    final shader = _lurkMaskShader!;
+    final lift = 1 - model.flow.env('lift');
+    final a = (s.alpha * lift * strength).clamp(0.0, 1.0);
+    if (a < .01) return 0;
+    const cw = 128 + 2 * _lurkPad, ch = 64 + 2 * _lurkPad;
+    final col = (s.src.left / 128).round(), row = (s.src.top / 64).round();
+    final src = Rect.fromLTWH(col * cw, row * ch, cw, ch);
+    const nv = ShadowProjector.vertices;
+    final pos = Float32List(nv * 2), tex = Float32List(nv * 2);
+    final idx = Uint16List(ShadowProjector.cells * 6);
+    final n = ShadowProjector.drape(
+      surface,
+      s.flat,
+      cw * s.scale,
+      ch * s.scale * ShadowProjector.squash,
+      src,
+      pos,
+      tex,
+      idx,
+      0,
+      0,
+    );
+    if (n == 0) return 0;
+    final indices = Uint16List.sublistView(idx, 0, n);
+    ui.Vertices mesh(Color color) => ui.Vertices.raw(
+      ui.VertexMode.triangles,
+      pos,
+      textureCoordinates: tex,
+      colors: Int32List(nv)..fillRange(0, nv, color.toARGB32()),
+      indices: indices,
+    );
+    if (desaturate) {
+      c.drawVertices(
+        mesh(Color.fromRGBO(128, 128, 128, lurkDesaturate * a)),
+        BlendMode.modulate,
+        Paint()
+          ..shader = shader
+          ..blendMode = BlendMode.saturation,
+      );
+    }
+    c.drawVertices(
+      mesh(lurkTint.withValues(alpha: a)),
+      BlendMode.modulate,
+      Paint()
+        ..shader = shader
+        ..blendMode = BlendMode.multiply,
+    );
+    return desaturate ? 2 : 1;
+  }
+
+  /// The fog banks drawn over the far ground dim over the lurk too, as the
+  /// great shape above blocks their light (after the last depth bank).
+  void lurkFogPass(Canvas c) {
+    final s = _lurkDraw;
+    if (s == null || !drawLurk || !model.perspective) return;
+    _paintLurk(c, _shadowSurface, s, strength: lurkFog, desaturate: false);
   }
 
   // --- terrain-shadows §3: the boss shadow ---
@@ -2643,6 +2793,7 @@ class DemonScene extends FlameGame {
     shadowLayers = 0;
     shadowCount = 0;
     lurkCover = null;
+    _lurkDraw = null;
     shadowDrawCalls = 0;
     shadowDrawCallsPerBucket = 0;
     shipShadowDim = 0;
@@ -2731,7 +2882,7 @@ class DemonScene extends FlameGame {
         ? _lurkSpec(f, fx, surface)
         : null;
     if (lurk != null) {
-      buckets[reduced ? 0 : 2].add(lurk);
+      _lurkDraw = lurk;
       _lurkLast = lurk;
       if (lurk.alpha > .06) {
         lurkCover = Rect.fromCenter(
@@ -2760,6 +2911,12 @@ class DemonScene extends FlameGame {
       shipShadowDim += shipDimCap * share * (s.alpha / .55).clamp(0.0, 1.0);
     }
     shipShadowDim = shipShadowDim.clamp(0.0, shipDimCap);
+    // lurk-visibility: the lurking shadow first, as a passing occluder of
+    // the ground's light (no layer of its own).
+    final lurkNow = _lurkDraw;
+    if (lurkNow != null && drawLurk) {
+      shadowDrawCalls += _paintLurk(c, surface, lurkNow);
+    }
     // Draw: one layer per bucket, the ground seen at a slant.
     for (var b = 0; b < 3; b++) {
       final specs = buckets[b];
