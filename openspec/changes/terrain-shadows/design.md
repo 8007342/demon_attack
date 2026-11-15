@@ -168,6 +168,21 @@ ranges and fronts are unchanged.
   - the boss shadow at two altitudes;
   - 360 × 780 and 1280 × 720.
 
+**As built (task 4).**
+- The lurking shadow's peak alpha is 0.5, not 0.30 (`DemonScene.lurkAlpha`). At 0.30 the review strips showed nothing
+  on the dark sector grounds, the same finding that raised the swarm shadows to 0.95. The widest blur keeps it soft.
+- The review test writes, with `--dart-define=TERRAIN_SHADOWS_CONTACT=true`:
+  - `art/contact/terrain-shadows-relief.png`: Hollow and Ringfall, alternating flat and draped columns;
+  - `-morph.png`: Ringfall blending into Ember;
+  - `-diver.png`;
+  - `-lurk.png`: the track at 0 / 25 / 50 / 75 / 100 %;
+  - `-lurk-handoff.png`;
+  - `-boss.png`: altitudes 160 / 240 / 320;
+  - `-relief-wide.png`, `-lurk-wide.png` and `-boss-wide.png` at 1280 × 720.
+- Every sheet has two rows: the real frame, then the shadow pass alone over the terrain mesh on grey. On the dark
+  grounds the shadows are subtle by design, so the second row is what shows the relief interaction. The relief and
+  morph sheets also pose a row of far casters over the relief band in that second row.
+
 ## 6. Risks
 - **Mesh cost.** `yOf` interpolates the cached grid, so there is no relief evaluation per vertex. Twelve vertex
   lookups per caster are cheap. Measured in the perf test.

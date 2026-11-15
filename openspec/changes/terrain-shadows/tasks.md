@@ -17,9 +17,9 @@
 - [x] 3.4 Boss shadow cell baked once per hull load (alpha, ×0.5 area downscale, inked) and a boss caster at a default altitude of 160, exposing `bossShadowAltitude` for `boss-grandeur`
 
 ## 4. Validation
-- [ ] 4.1 Scene tests: layer count, draw calls per bucket, reduced-tier byte identity, the perf test within its existing budget
-- [ ] 4.2 `test/terrain_shadows_review_test.dart` → `art/contact/terrain-shadows-relief.png`, `-lurk.png`, `-boss.png` at 360 × 780 and 1280 × 720 (design §5)
-- [ ] 4.3 Update `continuous-swarm` design §8 cross-reference and `plan/atmosphere-research.md` §11 readability note
+- [x] 4.1 Scene tests: layer count, draw calls per bucket, reduced-tier byte identity, the perf test within its existing budget
+- [x] 4.2 `test/terrain_shadows_review_test.dart` → `art/contact/terrain-shadows-relief.png`, `-lurk.png`, `-boss.png` at 360 × 780 and 1280 × 720 (design §5)
+- [x] 4.3 Update `continuous-swarm` design §8 cross-reference and `plan/atmosphere-research.md` §11 readability note
 
 ## Workflow follow-up
 - Operator playtest on phone; archive with `openspec archive terrain-shadows` after acceptance.

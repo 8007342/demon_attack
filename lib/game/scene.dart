@@ -2450,7 +2450,7 @@ class DemonScene extends FlameGame {
   _ShadowSpec? _lurkLast, _handoffFrom;
   Demon? _handoffTo;
   double _handoffAt = 0;
-  static const lurkHandoff = .8;
+  static const lurkHandoff = .8, lurkAlpha = .5;
 
   /// The lurking shadow's visible footprint this frame (ground units and
   /// critters under it hesitate), or null.
@@ -2496,7 +2496,10 @@ class DemonScene extends FlameGame {
     final rise = Perspective.smoothstep(0, 1, f.opacity);
     // In thick ground fog it is a darkening, not a shape.
     final clear = 1 - FlyoverBackground.groundFogAt(hit.flat.dy);
-    final alpha = .30 * rise * Atmosphere.groundLight(hit.center.dy) * clear;
+    // 0.5, not the design's 0.30: at 0.30 it read as nothing on the dark
+    // sector grounds (review strips), as the swarm shadows did at 0.55.
+    final alpha =
+        lurkAlpha * rise * Atmosphere.groundLight(hit.center.dy) * clear;
     if (alpha < .01) return null;
     final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
     return _ShadowSpec(
@@ -2509,7 +2512,7 @@ class DemonScene extends FlameGame {
       ),
       hit.center,
       2.5 * 1.6 * n * (1 + .3 * l.progress),
-      alpha.clamp(0.0, .3),
+      alpha.clamp(0.0, lurkAlpha),
       2,
       hit.flat,
     );

@@ -146,6 +146,12 @@ scenery. Applied [inference]:
 - never settle a slot within ~.25 field widths of the player; at most ~12 in flight at once;
 - wander ~0 once in formation; a "reduced atmosphere" option doubles as the low-end tier.
 
+Shadows on the relief (`terrain-shadows`): a shadow draped over a bright slope reads darker, but the
+`groundLight` factor and the 0.9 alpha cap still apply, and bullets are never dimmed. The sentinel's lurking
+shadow is atmosphere, not a telegraph: it never announces a gameplay event the player must react to, so it carries
+no fairness rule of its own. It peaks at alpha 0.5 under the widest blur, because 0.30 read as nothing on the dark
+sector grounds.
+
 ## Sources
 
 Atmosphere: Quilez, "Better fog" (https://iquilezles.org/articles/fog/, snippets only) and "Domain warping"
