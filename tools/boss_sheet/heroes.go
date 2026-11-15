@@ -32,7 +32,7 @@ func cmdHeroes(a []string) {
 	sheetW = max(sheetW, 3*(W/2+pad)+pad)
 	entries := a[4:]
 	sheet := newCanvas(sheetW, 50+(rowH+pad)*(len(entries)+1), bgDark)
-	text(sheet, pad, 12, 3, strings.ToUpper(fmt.Sprintf("BOSS PILOT HEROES (B1) - %s, HERO VIEW PITCH 45 YAW 0", rig.Title)), ink)
+	text(sheet, pad, 12, 3, strings.ToUpper(fmt.Sprintf("%s - %s, HERO VIEW PITCH 45 YAW 0", sheetHead(hull, "HEROES", "B1"), rig.Title)), ink)
 	y := 50
 	head := []struct {
 		l  string
@@ -67,12 +67,14 @@ func cmdHeroes(a []string) {
 		text(sheet, x, y+nh+6, 2, "FINISHED X1 (ATLAS, DPR-2 PHONE)", dim)
 		x += nw + pad
 		// CSS-size phone strip: 180 units of a 360-wide arena at 1 px/unit
-		sky := image.Rect(x, y, x+nw/2+40, y+nh/2+60)
+		css := 2 / rig.PPU // finished texels -> 1 px per unit (0.5 for the frigate)
+		cw, ch := int(float64(nw)*css), int(float64(nh)*css)
+		sky := image.Rect(x, y, x+cw+40, y+ch+60)
 		fill(sheet, sky, hex("#0B0F1E"))
 		bx := x + 20
-		blit(sheet, fin, bx, y+30, 0.5)
+		blit(sheet, fin, bx, y+30, css)
 		simOverlay(sheet, rig, sim, bx, y+30, 1)
-		text(sheet, x, y+nh/2+66, 2, "CSS SIZE + SIM WINDOWS", dim)
+		text(sheet, x, y+ch+66, 2, "CSS SIZE + SIM WINDOWS", dim)
 		if len(p) > 2 {
 			text(sheet, pad, y+H/2+22, 2, strings.ToUpper(p[2]), dim)
 		}

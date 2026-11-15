@@ -191,3 +191,150 @@ still draws the core window there).
 with views, modules, stages and anchors). It changes the generated Dart contract that `BossPainter` reads today, so
 it should land together with `boss-grandeur` 4.3 (the assembly painter). Task 4.3 (optional seam heal) is skipped:
 the projected views need no healing at this spread.
+
+## 4. B3: the four remaining hulls (2026-11-15) — STOPPED, direction superseded by R8
+
+Branch `work/boss-hulls-b3` (worktree `~/.cache/tillandsias-project/worktrees/boss-hulls-b3`), off `game`. Same
+pipeline as the frigate, one commit per hull. Rebuild any hull without GPU: `lua tools/boss_rig/bake_hull.lua <hull>
+--sheets` (sheets go to `art/contact/boss-b3-<hull>-{views,stages}.png`; the frigate keeps its `boss-pilot-*` names).
+The finished outputs land in `~/.cache/tillandsias-project/boss-bake/<hull>/` in the frigate's layout (`S0..S3/fin_beauty_*`,
+`fin_layer_*`, `fin_wreck_*`), so the `boss-grandeur` pack drops them in.
+
+**Brief.** The operator wants later tours to bring larger, scarier, more complex ships of the same family; the
+frigate hero 921000 is the identity reference. The rig already grows the hull tour by tour (5 → 17 modules, extent
+×1.00 → ×1.60, B0). The hero prompts escalate the *look* with it: each hull has its own prompt in
+`boss-hulls.json` `prompts.hero_qwen_<hull>` (all keep the frigate's stone, bone, ember and clay-mapping
+sentences, and name "the same family as a violet stone gargoyle frigate"):
+- cruiser: violet slag-glass over the stone (its palette lead), longer horns, torn wing membranes, gun pylons;
+- battlecruiser: blackened stone in thick layered plates with glowing ember seams and vents, heavy pods;
+- battleship: gothic arches, buttresses and spires, arched ember windows, the keel blade;
+- dreadnought: the darkest, scarred stone with molten seams, crowns of spikes, twin towers, brood sacs.
+
+**Tool changes** (no change to the frigate's outputs): `boss_sheet` sheet titles say `BOSS HULL … (B3)` and the
+picked seed for hulls other than the frigate; the B1/B3 hero sheet's CSS-size column now scales by the hull's own
+texel density (it assumed the frigate's 2 px/unit, which misplaced the sim windows on bigger hulls);
+`bakebudget` prints the decided total (stage patches at half density).
+
+### 4.1 Cruiser (tour 2, Brood Cruiser, 8 modules, 1.9 px/unit) — SUPERSEDED (R8)
+
+| Job | Graph | Seeds | GPU | Result |
+| --- | --- | --- | --- | --- |
+| st-1794780837344-65 | `variant-qwen-edit.json`, clay + hints, `hero_qwen_cruiser` | 931000–931003 | 60 s | all four on the rig |
+| st-1794780903888-66 | `heading-qwen-edit.json`, image 2 = **frigate hero 921000** (the B1 follow-up test), `hero_qwen_ref` | 930000–930001 | 49 s | **Rejected.** Both copy the frigate's short wings and grey stone and drop the cruiser's wide sails and pylons: two-image edits pull toward image 2 even when it already has the new pose. Settles the B1 question: 1-image prompts for every hull |
+| st-1794781019479-67 | S1 edit of 931000 | 933100–933101 | 33 s | |
+| st-1794781053640-68 | S2 edit of 931000 | 933200–933201 | 33 s | |
+| st-1794781108709-69 | S3 edit **chained from S2 933200** | 933400–933401 | 35 s | |
+
+**Picks**
+- **Hero 931000.** On the rig (maw and bays on the sim windows at CSS size); deep violet slag-glass panels over the
+  frigate's stone, longer horns and spikes, torn wing membranes on bone fingers, lit gun pylons and a lit tower slit.
+  It reads as the frigate's bigger, meaner sibling. Runner-up 931003 (committed): tusks across the maw, angrier,
+  but muddier at CSS size. Rejected: 931001 and 931002, whose round bone ornament at the tower foot reads as a head
+  emblem.
+- **S1 933100:** soot and glowing hairline cracks, plates and lights still read (933101: black drips).
+- **S2 933200:** plates torn over a burning ribcage, maw and bays kept dark (933201: flames fill the maw and bays,
+  smoke outside the silhouette).
+- **S3 933401** (chained): cracked face, snapped horn, breaches, maw still dark; the debris it paints outside the
+  hull is masked off by the rig silhouette. 933400 fills the maw with flames, which would hide the core window.
+
+**Bake.** Rig 21 s; projection bake 331 renders in 189 s (8 threads); whole `bake_hull.lua` 280 s. Anchor gate ok
+in all 27 stage × view renders. Mirror check: the mirrored +12° view differs from a rendered −12° view in 14.5 % of
+texels (frigate 3.6 %): the cruiser's many thin wing spikes add anti-aliased edge texels; no detail swaps sides on
+the sheet.
+
+**Budget:** S0 layers 7.36 MB + stage patches at half density 5.14 MB + wrecks 2.74 MB = **15.23 MB** (≤ 16; 15.82 MB
+before the wreck-pair decision of §4.2).
+
+Sheets: `art/contact/boss-b3-cruiser-heroes.png`, `-views.png` (+ `-views.gif`), `-stages.png`.
+
+### 4.2 Battlecruiser (tour 3, Siege Battlecruiser, 11 modules, 1.7 px/unit) — SUPERSEDED (R8)
+
+| Job | Graph | Seeds | GPU | Result |
+| --- | --- | --- | --- | --- |
+| st-1794781364001-70 | `variant-qwen-edit.json`, `hero_qwen_battlecruiser` | 941000–941003 | 60 s | all on the rig |
+| st-1794781569207-71 | S1 edit of 941001 | 943100–943101 | 35 s | |
+| st-1794781605550-72 | S2 edit of 941001 | 943200–943201 | 36 s | both fill the maw with fire and light the bay frames |
+| st-1794781661198-73 | S2 reroll, prompt + "The fanged maw and the two hangar bays stay dark and empty, no fire inside them." | 943210–943211 | 35 s | maw and bays dark |
+| st-1794781712508-74 | S3 chained from S2 943210 (same clause) | 943400–943401 | 35 s | |
+
+**Prompt change (all later stage edits):** S2 and S3 add "The fanged maw and the two hangar bays stay dark and empty,
+no fire inside them." On the cruiser one of two S2 seeds and one of two S3 seeds lit the maw; on the battlecruiser
+both S2 seeds did. The core window and the bays must stay dark: the scene draws the core glow and the launch light
+there itself.
+
+**Picks**
+- **Hero 941001.** On the rig. The family's biggest, angriest snarl sits exactly over the core window, with ember
+  seams across the brow, an arched ember window in the tower, and heavy hanging pods with glowing mouths. It is
+  more brutal than the cruiser without going black. Runner-up 941000 (committed) has the strongest ember seams, but a
+  round bone knob on the turret dome reads as an emblem. Rejected: 941002 (bright purple; the bays stretch into tall
+  doors past the bay windows) and 941003 (near-black: at CSS size only the eyes and pod mouths read, the same
+  failure as frigate 921003).
+- **S1 943100** (soot splotches and glowing cracks; 943101 is too subtle).
+- **S2 943210** (broken plates and fires, maw and bays dark; 943211 keeps most plates).
+- **S3 943400** (chained: wider molten cracks, shattered wing edges; 943401 reads *less* damaged than its S2
+  input).
+
+**Bake.** Rig 27 s; projection bake 445 renders in 276 s; whole `bake_hull.lua` 387 s. Anchor gate ok. Mirror
+check 8.9 % of texels.
+
+**Budget decision: mirrored wreck pairs are stored once.** Measured first at 16.52 MB (S0 7.93 + stage patches at
+half density 5.09 + wrecks 3.50), over the 16 MB budget. The atlas already stores yaw −12° as mirrored +12°, and a
+mirrored module pair once at yaw 0. The same rule now covers the S4 wrecks: `<m>L` is stored and `<m>R` draws it
+flipped, which reads as the mirrored tumble. This loses no hull texel. `bakebudget` counts it this way, and the pack
+should store only the L wreck of each pair. Frigate 13.0 → 12.80 MB, cruiser 15.82 → 15.23 MB, **battlecruiser
+15.80 MB** (S0 7.93 + stage patches 5.09 + wrecks 2.79).
+
+Sheets: `art/contact/boss-b3-battlecruiser-heroes.png`, `-views.png` (+ `.gif`), `-stages.png`.
+
+### 4.3 Stopped: the operator rejected the direction (R8)
+
+The operator rejected the whole boss art direction (`plan/operator-feedback-2026-11-15b.md` R8): the gargoyle **face**
+on riveted metal plates. The new direction is alien (organic or exotic materials, no face, no rivets), a GIANORMOUS
+carrier that spills off-screen, scary, extendable per run, decaying, and built from composable module sets. B3 stopped
+mid-run on the coordinator's order. Every pick in §2–§4 (frigate, cruiser, battlecruiser) is **superseded**: the raws
+stay committed as provenance only (`boss-hulls.json` `selected.notes` says "do not pack"). The battleship and
+dreadnought had heroes and stage looks picked (battleship 951003 / S1 953101 / S2 953210 / S3 953400; dreadnought
+961003 / S1 963101 / S2 963211 / S3 963401). Their bake was killed mid-render, and their raws were **not** committed.
+Their 20 runs are logged in `boss-hulls-runs.json` with a "superseded before bake" verdict. No GPU job was left
+queued.
+
+**Reusable for the new direction** (all hull-agnostic, all committed):
+- `tools/boss_rig/build.py` (rig, 9 views, clay/hint/depth/normal/id/z passes, anchor gate) and `project_bake.py`
+  (camera projection of one hero across the view grid, module layers, wrecks). Both are driven by the grammar JSON:
+  a new module catalogue (alien prims, no face) drops in without code changes as long as the same prim types serve.
+  The face frame and the gargoyle `bow` are grammar data, not code.
+- `tools/boss_rig/bake_hull.lua <hull> --sheets`: the whole no-GPU rebuild from committed picks; per-hull sheet
+  names.
+- `tools/boss_sheet`: `heroes` (candidate sheet with a CSS-size column now correct for any texel density),
+  `views`/`stages` (B3 titles, picked seed from the spec), `bakebudget` (prints the decided total), and the new
+  **`lineup BAKE RIG OUT.png HULL...`**: the tour-progression sheet (hero view at x1, S0 and S3 at CSS size with the
+  simulation windows, bottom-aligned).
+- `boss-hulls.json` `prompts.hero_qwen_<hull>`: the per-hull escalation pattern (one prompt per tier that names the
+  family reference and adds the tier's material and danger words) carries over; the words themselves do not.
+- Helper scripts used in this run, now committed: `tools/boss_rig/studio_collect.lua` (copies studio
+  outputs to `boss-raw/` and logs a run record from each provenance sidecar) and `tools/boss_rig/runs_merge.sh` (appends the records,
+  with verdicts by seed, to `boss-hulls-runs.json`).
+
+**Lessons**
+1. **One-image Qwen edits only.** Re-tested with the picked frigate hero as image 2, which already has the new pose:
+   Qwen still copies image 2's wings and stone and drops the bigger rig's extra parts. Identity must come from the
+   prompt and palette. The reference image belongs on the review sheet, not in the graph.
+2. **Escalation lives in the prompt, the rig carries the size.** Four seeds of one tier prompt gave 2–3 usable heroes
+   per hull. Failures are specific: invented emblems or second faces on round turret domes (a dome reads as a head,
+   so avoid dome prims near the core), near-black renders that vanish at CSS size, and cast shadows painted onto the
+   key.
+3. **Stage edits must keep the functional windows dark.** Plain S2/S3 damage prompts filled the maw and bays with fire
+   in about half the seeds. The clause "The fanged maw and the two hangar bays stay dark and empty, no fire inside
+   them." fixed every later seed. The new direction needs the same clause for its core and bay windows.
+4. **S3 must be chained from S2 and checked for regressions:** one of two chained seeds per hull came back *less*
+   damaged than its input.
+5. **Budget.** At 16 MB with stage patches at half density, the 8- and 11-module hulls sat at 15.2–15.8 MB only
+   after the mirrored-wreck-pair rule (`<m>R` draws `<m>L` flipped). The 14- and 17-module hulls would not have fit
+   without another lever (half-density wrecks, or S1 as a runtime tint). A carrier that spills off-screen is much
+   bigger, so its budget needs a different unit: tiles or a streamed page per visible region, not whole-hull views.
+6. **Mirror check** grows with thin geometry (frigate 3.6 %, cruiser 14.5 %, battlecruiser 8.9 % of texels).
+   That is edge anti-aliasing on spikes, not swapped details.
+
+**Spent in B3:** GPU ≈ 12.5 min (752 s over 22 studio jobs, no failures). CPU (Blender, 8 threads, < 1 GB) ≈ 19 min:
+4 rigs 86 s, cruiser bake 280 s, battlecruiser bake 387 s, the killed battleship bake ≈ 4.5 min, plus 3 grammar
+checks.
