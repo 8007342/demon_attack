@@ -36,6 +36,13 @@ export 'game/scene.dart' show DemonScene;
 
 // Path URLs (not the default #/hash) so the browser path picks the route:
 // /console opens the console. The Worker serves index.html for any path.
+// --- bonus levels: where a new run's seed comes from. A seeded run draws
+// its bonus plan (lib/game/bonus/bonus_plan.dart); null starts the
+// calibrated campaign with no bonus level and no run modifier, which is
+// what every test gets (test/flutter_test_config.dart).
+int? Function() arcadeRunSeed = clockRunSeed;
+int clockRunSeed() => DateTime.now().microsecondsSinceEpoch & 0x3fffffff;
+
 void main() {
   usePathUrlStrategy();
   runApp(const DemonAttackApp());
@@ -617,7 +624,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       showFinalResult = false;
       heartNotice = null;
       _resetComms();
-      model.start(difficulty: difficulty);
+      model.start(difficulty: difficulty, runSeed: arcadeRunSeed());
     });
     _tick();
     focus.requestFocus();

@@ -176,6 +176,7 @@ class TransitionPresenter {
         struggling: model.lives <= 1,
         nextIsCarrier: level == 5,
         revisit: model.flowRevisit, // --- transition ascent
+        bonus: model.bonusAhead?.id, // --- bonus levels
       ),
     );
     final s = slot;

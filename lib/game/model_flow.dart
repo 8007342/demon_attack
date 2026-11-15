@@ -120,7 +120,9 @@ extension ArcadeFlow on ArcadeModel {
     final next = nextLevel;
     if (next == 5) return null;
     final route = level == 5 ? cycle + 1 : cycle;
-    final count = policy.rosterCount(sector: next, wave: 1, route: route);
+    final calibrated = policy.rosterCount(sector: next, wave: 1, route: route);
+    // --- bonus levels: a bonus level ahead has its own first roster.
+    final count = bonusAhead?.waves.roster(calibrated) ?? calibrated;
     final rng = stream.rngFor(sector: next, route: route, wave: 1);
     final plan = stream.preload(List<double>.filled(count, 180), rng);
     for (final s in plan.skeins) {

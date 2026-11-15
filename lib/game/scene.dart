@@ -11,6 +11,7 @@ import 'atmosphere.dart';
 import 'attract.dart';
 import 'ground_atmosphere.dart';
 import 'ground_atmosphere_atlas.dart';
+import 'bonus/bonus_look.dart'; // --- bonus levels
 import 'boss_painter.dart';
 import 'ground_painter.dart';
 import 'insignia_atlas.dart';
@@ -60,6 +61,9 @@ class DemonScene extends FlameGame {
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;
+
+  /// --- bonus levels: the grade over a bonus level's backdrop.
+  final bonusLook = BonusLookLayer();
   double keyboardDirection = 0;
   String? assetError;
   @override
@@ -169,6 +173,7 @@ class DemonScene extends FlameGame {
   static const reserveFade = 1.2;
 
   void advancePresentation(double dt) {
+    bonusLook.advance(model, dt); // --- bonus levels
     reserveIn = model.flow.active
         ? 0
         : math.min(1.0, reserveIn + dt / reserveFade);
@@ -355,6 +360,7 @@ class DemonScene extends FlameGame {
       } else {
         _background(canvas);
       }
+      bonusLook.paint(canvas); // --- bonus levels: the level's grade
       if (active && combat) {
         groundForces.paintGround(
           canvas,
@@ -842,6 +848,11 @@ class DemonScene extends FlameGame {
       c.restore();
     }
     for (final p in model.pickups) {
+      final special = p.bonus; // --- bonus levels
+      if (special != null) {
+        _bonusBadge(c, special, Offset(p.x, p.y), 36, aura: true);
+        continue;
+      }
       c.drawCircle(
         Offset(p.x, p.y),
         13,
@@ -858,6 +869,7 @@ class DemonScene extends FlameGame {
     for (final crate in model.supplyCrates) {
       _paintSupplyCrate(c, crate);
     }
+    _bonusPowerStatus(c); // --- bonus levels
     _carrierBackdrop(c);
     // --- perspective: far to near, each drawn at its simulated scale. The
     // next wave, still approaching (model.incoming), is the farthest of all.
@@ -1869,6 +1881,79 @@ class DemonScene extends FlameGame {
     }
   }
 
+  // --- bonus levels: a bonus-only powerup is a regular badge from the
+  // combat atlas, recoloured (and paired when `twin`), so it never reads
+  // as the regular power. No new art.
+  void _bonusBadge(
+    Canvas c,
+    BonusPowerDef def,
+    Offset at,
+    double size, {
+    bool aura = false,
+    double opacity = 1,
+  }) {
+    final tint = Color(def.tint);
+    if (aura) {
+      final pulse = .5 + .5 * math.sin(model.clock * 7);
+      c.drawCircle(
+        at,
+        15 + 2 * pulse,
+        Paint()..color = tint.withValues(alpha: .16 + .10 * pulse),
+      );
+    }
+    final filter = ColorFilter.mode(tint, BlendMode.modulate);
+    final shift = def.twin ? size * .14 : 0.0;
+    if (def.twin) {
+      sprite(
+        c,
+        CombatAtlas.pickupRow,
+        def.badge,
+        at + Offset(-shift, -shift * .6),
+        size,
+        filter: filter,
+        opacity: opacity * .8,
+      );
+    }
+    sprite(
+      c,
+      CombatAtlas.pickupRow,
+      def.badge,
+      at + Offset(shift, shift * .6),
+      size,
+      filter: filter,
+      opacity: opacity,
+    );
+  }
+
+  /// Active bonus powers ride beside the ship: the badge and a ring that
+  /// runs down with its timer (no text over the play area).
+  void _bonusPowerStatus(Canvas c) {
+    if (model.shipAway) return;
+    var i = 0;
+    for (final def in model.activeBonusPowers) {
+      final left = model.bonusPowerTimers[def.id] ?? 0;
+      final side = i.isEven ? -1.0 : 1.0;
+      final at = Offset(
+        model.shipX + side * (30 + 4 * (i ~/ 2)),
+        model.shipDrawY + 8 - 16.0 * (i ~/ 2),
+      );
+      final ending = left < 2 && (model.clock * 8).floor().isEven;
+      final tint = Color(def.tint);
+      c.drawArc(
+        Rect.fromCircle(center: at, radius: 11),
+        -math.pi / 2,
+        2 * math.pi * (left / def.seconds).clamp(0.0, 1.0),
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = tint.withValues(alpha: ending ? .35 : .9),
+      );
+      _bonusBadge(c, def, at, 20, opacity: ending ? .5 : 1);
+      i++;
+    }
+  }
+
   void _paintSupplyCrate(Canvas c, SupplyCrate crate) {
     final cx = crate.x;
     final cy = crate.y;
@@ -1889,7 +1974,8 @@ class DemonScene extends FlameGame {
       math.pi,
       math.pi,
       true,
-      Paint()..color = mint,
+      // --- bonus levels: a bonus power's crate flies its colour.
+      Paint()..color = crate.bonus == null ? mint : Color(crate.bonus!.tint),
     );
 
     // 2. Parachute Rigging Lines
@@ -1929,6 +2015,11 @@ class DemonScene extends FlameGame {
     );
 
     // Powerup Icon preview inside crate
+    final special = crate.bonus; // --- bonus levels
+    if (special != null) {
+      _bonusBadge(c, special, Offset(cx, cy), 22);
+      return;
+    }
     sprite(
       c,
       CombatAtlas.pickupRow,
