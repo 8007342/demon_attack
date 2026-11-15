@@ -151,7 +151,16 @@ class DemonScene extends FlameGame {
   /// The title's attract swarm (cinematic-flow task 6.1).
   final attract = AttractSwarm();
 
+  /// The drawn reserve's opacity: hidden through a transition (playtest
+  /// R1), it fades back into the deep fog over [reserveFade] seconds once
+  /// the fight is on, instead of popping in.
+  double reserveIn = 1;
+  static const reserveFade = 1.2;
+
   void advancePresentation(double dt) {
+    reserveIn = model.flow.active
+        ? 0
+        : math.min(1.0, reserveIn + dt / reserveFade);
     if (model.mode == RunMode.title) {
       attract
         ..reduced = sectors.flyover.reducedMotion
@@ -332,7 +341,7 @@ class DemonScene extends FlameGame {
       ..sort((a, b) => a.demon.nearness.compareTo(b.demon.nearness));
     for (final m in members) {
       final o = model.flowOpacity(m);
-      if (o <= .01) continue;
+      if (o <= AirCensus.flockDrawn) continue;
       final d = m.demon;
       final pos = Offset(
         d.x.roundToDouble(),
@@ -778,11 +787,8 @@ class DemonScene extends FlameGame {
     // --- continuous swarm: the reserve (groups and later skeins waiting in
     // the deep fog) is drawn veiled with the approaching cohort; neither
     // shows gear (swarmState is the contract with the fog layers).
-    final approaching = <Demon>{
-      for (final d in model.incoming)
-        if (!d.isLarge && d.swarmState != SwarmState.reserve) d,
-      if (model.perspective) ...model.drawnReserve,
-    };
+    final census = airCensus();
+    final approaching = census.approaching;
     final fogSlots = model.perspective
         ? Atmosphere.depthSlots
         : const <FogSlot>[];
@@ -797,11 +803,7 @@ class DemonScene extends FlameGame {
       if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c);
     }
 
-    for (final d in _byDepth([
-      ...approaching,
-      for (final d in model.demons)
-        if (d.isLarge || d.swarmState != SwarmState.reserve) d,
-    ])) {
+    for (final d in _byDepth(census.bodies)) {
       while (nextFog < fogSlots.length &&
           Atmosphere.layers[fogSlots[nextFog]]!.nearness <= d.nearness) {
         fog();
@@ -812,8 +814,9 @@ class DemonScene extends FlameGame {
       final (lx, ly) = d.isLarge ? (0.0, 0.0) : creatures.look.offset(d);
       final pos = Offset(d.x + lx, d.y + ly);
       if (d.isLarge) {
-        // Large creatures have their own delayed entrance in simulation.
-        if (d.entranceProgress > 0) {
+        // Large creatures have their own delayed entrance in simulation
+        // (the census leaves one that has not set out undrawn).
+        {
           // --- sentinel rush: the lock shudders it in place (±2 px).
           final shudder =
               d.lastStand &&
@@ -835,7 +838,6 @@ class DemonScene extends FlameGame {
         }
         continue;
       }
-      if (_parked(d)) continue;
       // One transmittance per creature drives tint, saturation, contrast
       // and the staged reveal: shields, armour and rank halos (no health pips:
       // ux-declutter; hits read from the flash and the shed armour)
@@ -879,7 +881,9 @@ class DemonScene extends FlameGame {
         motion: creatures.motion.of(d),
       );
       final size = d.angry ? 44.0 : 40.0;
-      final far = model.perspective ? _bodyOpacity(d.nearness) : 1.0;
+      final far =
+          (model.perspective ? _bodyOpacity(d.nearness) : 1.0) *
+          (census.reserve.contains(d) ? reserveIn : 1.0);
       sprite(
         c,
         cell.row,
@@ -1994,6 +1998,57 @@ class DemonScene extends FlameGame {
       d.entranceProgress <= 0 &&
       d.swarmState != SwarmState.reserve;
 
+  /// Whether [d] casts a shadow on the terrain: a body that is drawn.
+  bool _casts(Demon d) =>
+      d.swarmState != SwarmState.reserve &&
+      !_parked(d) &&
+      !(d.isLarge && d.entranceProgress <= 0);
+
+  /// What the air passes draw this frame (playtest R1: the one list the
+  /// combat pass, the flock pass and the shadow pass all read, so a test
+  /// can prove what is in or behind the fog without painting).
+  AirCensus airCensus() {
+    final reserve = <Demon>{if (model.perspective) ...model.drawnReserve};
+    final approaching = <Demon>{
+      for (final d in model.incoming)
+        if (!d.isLarge && d.swarmState != SwarmState.reserve) d,
+      ...reserve,
+    };
+    final bodies = <Demon>[
+      for (final d in approaching)
+        if (!_parked(d)) d,
+      for (final d in model.demons)
+        if (!approaching.contains(d) &&
+            (d.isLarge
+                ? d.entranceProgress > 0
+                : d.swarmState != SwarmState.reserve && !_parked(d)))
+          d,
+    ];
+    final flock = [
+      for (final m in model.flowFlock)
+        if (model.flowOpacity(m) > AirCensus.flockDrawn) m,
+    ];
+    final shadows = <Demon>[
+      if (model.perspective && creatureShadows) ...{
+        for (final d in model.incoming)
+          if (_casts(d)) d,
+        for (final d in model.demons)
+          if (_casts(d)) d,
+        for (final m in model.flowFlock)
+          if (model.flowOpacity(m) > AirCensus.flockShadow) m.demon,
+      },
+    ];
+    final f = model.foreshadow;
+    return AirCensus(
+      approaching: approaching,
+      reserve: reserve,
+      bodies: bodies,
+      flock: flock,
+      shadows: shadows,
+      silhouette: f != null && f.visible,
+    );
+  }
+
   void _scaleAbout(Canvas c, Offset pos, double scale) {
     if (scale == 1) return;
     c.translate(pos.dx, pos.dy);
@@ -2129,16 +2184,11 @@ class DemonScene extends FlameGame {
     final buckets = [<_ShadowSpec>[], <_ShadowSpec>[], <_ShadowSpec>[]];
     final now = <Demon, _ShadowSpec>{};
     final flying = <Demon>{
-      for (final d in model.incoming)
-        if (d.swarmState != SwarmState.reserve) d,
-      ...model.demons,
-      for (final m in model.flowFlock)
-        if (model.flowOpacity(m) > .3) m.demon, // --- cinematic flow
+      ...airCensus().shadows,
       ...also, // --- cinematic flow: the title's attract swarm
     };
     for (final d in flying) {
-      if (d.swarmState == SwarmState.reserve || _parked(d)) continue;
-      if (d.isLarge && d.entranceProgress <= 0) continue;
+      if (!_casts(d)) continue;
       final s = _shadowOf(d);
       if (s == null) continue;
       now[d] = s;
@@ -3480,4 +3530,44 @@ class _ShadowSpec {
 
   _ShadowSpec faded(double k) =>
       _ShadowSpec(image, src, center, scale, alpha * k.clamp(0.0, 1.0), bucket);
+}
+
+/// One frame's census of the air (DemonScene.airCensus): every creature body,
+/// fog-veiled arrival, transition-flock member and shadow caster the passes
+/// draw, and whether the sentinel's foreshadow silhouette is up.
+class AirCensus {
+  AirCensus({
+    required this.approaching,
+    required this.reserve,
+    required this.bodies,
+    required this.flock,
+    required this.shadows,
+    required this.silhouette,
+  });
+
+  /// A flock member is drawn above this opacity, casts a shadow above
+  /// [flockShadow].
+  static const flockDrawn = .01, flockShadow = .3;
+
+  /// The veiled cohort and drawn reserve (in the fog, no gear).
+  final Set<Demon> approaching;
+
+  /// The drawn reserve alone (a subset of [approaching]).
+  final Set<Demon> reserve;
+
+  /// Every creature the depth sort draws (approaching included).
+  final List<Demon> bodies;
+  final List<FlowMember> flock;
+  final List<Demon> shadows;
+  final bool silhouette;
+
+  /// Nothing alive is drawn in the air, in the fog or on the ground below.
+  bool get empty =>
+      bodies.isEmpty && flock.isEmpty && shadows.isEmpty && !silhouette;
+
+  @override
+  String toString() =>
+      'bodies ${bodies.length} (veiled ${approaching.length}), '
+      'flock ${flock.length}, shadows ${shadows.length}, '
+      'silhouette $silhouette';
 }

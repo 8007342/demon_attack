@@ -33,40 +33,48 @@ const _dir = String.fromEnvironment(
 const _contact = bool.fromEnvironment('PLAYTEST_FIXES_CONTACT');
 const _fonts = String.fromEnvironment('PLAYTEST_FIXES_FONTS');
 
-Future<ui.Image> _decode(String file) async {
+/// Decodes an image file for a review harness.
+Future<ui.Image> decodeReviewImage(String file) async {
   final codec = await ui.instantiateImageCodec(await File(file).readAsBytes());
   final frame = await codec.getNextFrame();
   codec.dispose();
   return frame.image;
 }
 
-Future<void> _loadArt(Rig rig) async {
+/// Loads the real art into [rig]'s scene (shared by review strips).
+Future<void> loadReviewArt(Rig rig) async {
   final scene = rig.scene;
   for (var i = 0; i < 5; i++) {
-    scene.sectors.images[i] = await _decode(
+    scene.sectors.images[i] = await decodeReviewImage(
       'assets/images/sector-${i + 1}.png',
     );
   }
-  await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
-  scene.atlas = await _decode('assets/images/combat.png');
-  scene.effectsAtlas = await _decode('assets/images/sentinel-effects.png');
-  scene.sky = await _decode('assets/images/cosmic-sky.png');
-  scene.silhouetteAtlas = await _decode(
+  await scene.sectors.loadFlyover((f) => decodeReviewImage('assets/images/$f'));
+  scene.atlas = await decodeReviewImage('assets/images/combat.png');
+  scene.effectsAtlas = await decodeReviewImage(
+    'assets/images/sentinel-effects.png',
+  );
+  scene.sky = await decodeReviewImage('assets/images/cosmic-sky.png');
+  scene.silhouetteAtlas = await decodeReviewImage(
     'assets/images/${SentinelSilhouetteAtlas.file}',
   );
-  scene.ship.image = await _decode('assets/images/ship-weapons.png');
+  scene.ship.image = await decodeReviewImage('assets/images/ship-weapons.png');
   scene.groundForces
-    ..image = await _decode('assets/images/${GroundAtlas.file}')
-    ..troops = await _decode('assets/images/${GroundTroopsAtlas.file}');
+    ..image = await decodeReviewImage('assets/images/${GroundAtlas.file}')
+    ..troops = await decodeReviewImage(
+      'assets/images/${GroundTroopsAtlas.file}',
+    );
   for (var s = 0; s < 5; s++) {
     scene.groundForces.blocks.install(s, {
       for (final f in GroundBlocksLayer.files(s))
-        f.substring('ground-blocks/'.length): await _decode('assets/images/$f'),
+        f.substring('ground-blocks/'.length): await decodeReviewImage(
+          'assets/images/$f',
+        ),
     });
   }
   await scene.atmosphere.load();
   scene.atmosphere.groundArt = GroundAtmosphereArt(
-    await _decode('assets/images/${GroundAtmosphereAtlas.file}'),
+    await decodeReviewImage('assets/images/${GroundAtmosphereAtlas.file}'),
   );
 }
 
@@ -86,7 +94,7 @@ void main() {
     }
     const size = Size(390, 844);
     final rig = await launch(tester, size);
-    await tester.runAsync(() => _loadArt(rig));
+    await tester.runAsync(() => loadReviewArt(rig));
     await rig.step(5);
     final m = rig.model;
     final waves = ArcadeModel.wavesFor(sector: 2, route: 1);
@@ -96,9 +104,9 @@ void main() {
     final labels = <String>[];
     Future<void> grab(String label) async {
       await tester.pump();
-      final boundary =
-          tester.renderObject(find.byKey(const ValueKey('page')))
-              as RenderRepaintBoundary;
+      final boundary = tester.renderObject(
+        find.byKey(const ValueKey('page')),
+      ) as RenderRepaintBoundary;
       await tester.runAsync(() async {
         frames.add(await boundary.toImage());
       });
@@ -185,9 +193,9 @@ void main() {
       }
       final pic = rec.endRecording();
       final sheet = await pic.toImage(sw.round(), sh.round());
-      final png = (await sheet.toByteData(
-        format: ui.ImageByteFormat.png,
-      ))!.buffer.asUint8List();
+      final png = (await sheet.toByteData(format: ui.ImageByteFormat.png))!
+          .buffer
+          .asUint8List();
       for (final path in [
         '$_dir/playtest-fixes-final-wave.png',
         if (_contact) 'art/contact/playtest-fixes-final-wave.png',

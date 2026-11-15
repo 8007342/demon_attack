@@ -97,7 +97,7 @@ void main() {
     expect(m.fogStaged, isNotEmpty);
   });
 
-  test('a carrier fall scatters only the minions that were fighting', () {
+  test('a carrier fall takes its fighting minions with it', () {
     final m = ArcadeModel(seed: 3)..startAt(sector: 5, route: 1);
     reach(m, RunMode.playing);
     for (var i = 0; i < 60 * 12; i++) {
@@ -105,15 +105,20 @@ void main() {
       m.update(1 / 60);
     }
     final fighting = m.demons
-        .where((d) => d.swarmState != SwarmState.reserve)
-        .length;
+        .where((d) => d.swarmState != SwarmState.reserve && !d.entering)
+        .toList();
+    expect(fighting, isNotEmpty);
     final b = m.boss!
       ..shield = 0
       ..core = 1
       ..door = 1;
     m.hitBoss(b.x);
     expect(m.mode, RunMode.victory);
-    expect(m.flowFlock.length, fighting.clamp(0, 18));
+    // playtest R1: none flees into the fog; they die where they are (the
+    // scene bursts them) and nothing is left after the boss fight.
+    expect(m.flowFlock, isEmpty);
+    expect(m.demons, isEmpty);
+    expect(fighting.every((d) => d.hp <= 0), isTrue);
     expect(m.fogStaged, isEmpty);
   });
 }
