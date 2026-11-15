@@ -19,9 +19,9 @@
 - [x] 3.6 Remove the elite dotted ring and the carrier sigil pips (the pips are baked into the hull art, not code: handed to `boss-hero-assets`, design §9)
 
 ## 4. Validation
-- [ ] 4.1 `test/insignia_test.dart`: rank table, contrast ≥ 0.35, fixed size under zoom, overlap, reveal
-- [ ] 4.2 Review strips `art/contact/alien-insignia-ingame-{formation,shields,states}.png` at 360 × 780 and 1280 × 720
-- [ ] 4.3 Pointer from `plan/style-guide.md` to `docs/styleguide/alien-troops.md`
+- [x] 4.1 `test/insignia_test.dart`: rank table, contrast ≥ 0.35, fixed size under zoom, overlap, reveal (plus the shield scenario, the rim budget and the one-`drawAtlas` cost check, kept here rather than in `atmosphere_perf_test.dart`, which `terrain-shadows` owns)
+- [x] 4.2 Review strips `art/contact/alien-insignia-ingame-{formation,shields,states}.png` at 360 × 780 and 1280 × 720 (plus `-shields-break` and `-shields-carrier`; `test/alien_insignia_review_test.dart`)
+- [x] 4.3 Pointer from `plan/style-guide.md` to `docs/styleguide/alien-troops.md`
 
 ## Workflow follow-up
 - Hero art: crest zone and coarse elite plates in the next creature render pass (styleguide §8).

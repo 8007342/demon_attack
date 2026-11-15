@@ -7,6 +7,18 @@ Mockups (CPU, regenerate with `cd tools/alien_insignia && go run . sheets -root 
 - `art/contact/alien-insignia-phone.png`: one formation today and as proposed, 360 × 640 CSS at DPR 2;
 - `art/contact/alien-insignia-glyphs.png`: the glyph set and palette.
 
+In-game review strips (the real scene, phone 360 × 780 at 1:1, a 2× close-up, and 1280 × 720), made by
+`test/alien_insignia_review_test.dart` with `--dart-define=ALIEN_INSIGNIA_CONTACT=true`:
+- `art/contact/alien-insignia-ingame-formation.png`: every rank, a dense pair where the lower rank yields, and a
+  sentinel;
+- `art/contact/alien-insignia-ingame-shields-break.png` and `-shields.png`: sentinel shields 5/5 and 3/5 at the
+  moment of the break (white cells), then with sockets and shards; rush cells; segmented dive shields;
+- `art/contact/alien-insignia-ingame-shields-carrier.png`: the carrier's 12 hull cells (8 lit) and its form glyph;
+- `art/contact/alien-insignia-ingame-states.png`: per species, intact, molt 1 and molt 2, angry, and the tell.
+
+The runtime glyph atlas is `assets/images/insignia.png` (`go run . atlas`). As-built deviations are in the change's
+`design.md` §9.
+
 This guide extends `plan/style-guide.md` (air creatures) and sits beside `plan/gargoyle-army-style-guide.md` (the
 ground Host). Where they disagree on *rank and status readouts* for fliers, this guide wins.
 
@@ -62,6 +74,7 @@ up.**
 | `shield.spent` | `#1C6F86` | Force-shield socket, spent |
 | `shield.rim` | `#62F0FF` @ 0.6 | 1 art px silhouette rim while any force shield is up |
 | `tell.white` | `#FFFFFF` | Glyph and rim during a dive tell |
+| `shield.rush` | `#FFA88C` | Rush-shield cell: cyan pushed to ember, so it never reads as the sentinel's own shield |
 
 The cyan family is the force-shield language of the main spec ("geometric cyan/teal/violet"). The thermal dive
 shields keep their blackbody palette (§5.2) and never use cyan.
@@ -77,7 +90,8 @@ shields keep their blackbody palette (§5.2) and never use cyan.
 | Carrier forms | Boss forms 1–4 | the same ladder on the brood sigil: talon, two talons, ocellus, crown | at the hull's scale |
 
 **Placement.** Bottom-centre one art px above the head's top, at the per-cell head anchor (species head tops in the
-neutral glide pose are at art y 22 / 21 / 22 / 20). The glyph never overlaps the eyes. The crest region above the
+neutral glide pose are at art y 21 / 20 / 21 / 21, measured on the shipped atlas by `tools/generate_sprites.py`).
+The sentinel's crown sits 17 units above its centre × its scale. The carrier's glyph is drawn at 2× on the brow. The glyph never overlaps the eyes. The crest region above the
 head is kept free of horns wider than 6 art px in future hero art (§8).
 
 **Replaces:**
