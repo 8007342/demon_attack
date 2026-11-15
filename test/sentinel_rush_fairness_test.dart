@@ -107,7 +107,7 @@ void main() {
       final p = DifficultyPolicy(difficulty);
       final rate = p.hostileRate;
       final (window, total, seconds) = RushKinematics.worstCase(
-        y0: 44 - RushTuning.rise,
+        y0: 44 - RushTuning.riseFrom(44),
         vmax: p.rushSpeed * rate,
         turnRate: p.rushTurnRate * math.pi / 180 * rate,
         rate: rate,

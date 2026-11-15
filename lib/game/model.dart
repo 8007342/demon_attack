@@ -2941,6 +2941,14 @@ class ArcadeModel {
         large: d.isLarge,
         angry: d.angry,
       );
+      if (d.rushing) {
+        // --- sentinel rush: it grows to the 1.25 cap as it closes in.
+        final k = ((d.y - d._lastStandY) / (shipY - d._lastStandY)).clamp(
+          0.0,
+          1.0,
+        );
+        d.scale = ((d.scale + (1.25 - d.scale) * k) * 16).round() / 16;
+      }
       final from = d.entryScale;
       if (from != null && d.entering && d.isLarge) {
         // A foreshadowed sentinel keeps its silhouette's size as it flies

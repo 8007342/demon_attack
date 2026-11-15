@@ -831,6 +831,7 @@ class DemonScene extends FlameGame {
           _sentinel(c, at, d);
           if (d.lastStand) _sentinelBerserk(c, at, d);
           c.restore();
+          if (d.lastStand) _rushShieldRing(c, at, d);
         }
         continue;
       }
@@ -2706,27 +2707,34 @@ class DemonScene extends FlameGame {
         }
       }
     }
-    if (d.rushShield > 0 && d.rushShieldMax > 0) {
-      final ratio = d.rushShield / d.rushShieldMax;
-      final r = 38 + 26 * ratio;
-      final pulse = .55 + .25 * math.sin(model.clock * 9);
-      const dots = 40;
-      for (var i = 0; i < dots; i++) {
-        if (i / dots > ratio && i.isOdd) continue; // the worn arc breaks up
-        final a = i / dots * 2 * math.pi + model.clock * .8;
-        paint.color =
-            (i.isEven ? const Color(0xFFFF4D5E) : const Color(0xFF5C0A14))
-                .withValues(alpha: pulse);
-        c.drawRect(
-          Rect.fromLTWH(
-            (pos.dx + math.cos(a) * r - 1).roundToDouble(),
-            (pos.dy + math.sin(a) * r * .72 - 1).roundToDouble(),
-            2,
-            2,
-          ),
-          paint,
-        );
-      }
+  }
+
+  /// The rush-shield ring (unscaled, so it reads at any depth): a broken
+  /// crimson ellipse that shrinks and thins as the shield wears.
+  void _rushShieldRing(Canvas c, Offset pos, Demon d) {
+    if (d.rushShield <= 0 || d.rushShieldMax <= 0 || d.entering) return;
+    final paint = Paint()..isAntiAlias = false;
+    final ratio = d.rushShield / d.rushShieldMax;
+    final size = math.max(d.scale, .8);
+    final r = (34 + 18 * ratio) * size;
+    final pulse = .6 + .3 * math.sin(model.clock * 9);
+    const dots = 36;
+    for (var i = 0; i < dots; i++) {
+      // The worn share of the ring breaks up into gaps.
+      if (i / dots > ratio && i % 3 != 0) continue;
+      final a = i / dots * 2 * math.pi + model.clock * 1.4;
+      paint.color =
+          (i.isEven ? const Color(0xFFFF4D5E) : const Color(0xFFB0102A))
+              .withValues(alpha: pulse);
+      c.drawRect(
+        Rect.fromLTWH(
+          (pos.dx + math.cos(a) * r - 1.5).roundToDouble(),
+          (pos.dy + math.sin(a) * r * .62 - 1.5).roundToDouble(),
+          3,
+          3,
+        ),
+        paint,
+      );
     }
   }
   // --- end sentinel rush presentation

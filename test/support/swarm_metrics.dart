@@ -256,3 +256,182 @@ class SectorSummary {
   final int sector, waves, peakActive, peakHostile, livesLost;
   final double meanClear, meanWall, hitRatio, aimedRatio;
 }
+
+// --- demon-intelligence task 7.1 (design §9): per-tier hit ratio and
+// evasions, dive and rush outcomes, the skill trajectory. Written so the
+// same recorder also runs on the pre-W4 model (new fields read through
+// `dynamic`, absent ones count as nothing), for the before/after table.
+
+/// The tier of [d] by what it is (demon-intelligence design §4).
+String tierName(Demon d) => d.isLarge
+    ? 'T3'
+    : d.elite
+    ? 'T2'
+    : (d.kind >= 2 || d.maxHp >= 3)
+    ? 'T1'
+    : 'T0';
+
+class TierStats {
+  int fired = 0, hit = 0, evasions = 0;
+  int dives = 0, diveHitShip = 0, diveDodged = 0, diveShotDown = 0;
+  double get hitRatio => fired == 0 ? 0 : hit / fired;
+}
+
+class IntelMetrics {
+  /// Per (mode, route ≥ 1?) bucket, then tier.
+  final tiers = <String, Map<String, TierStats>>{};
+  final rush = <String, Map<String, int>>{};
+  final skill = <String, List<double>>{};
+  final combatSeconds = <String, double>{};
+  final _target = Expando<String>('tier');
+  final _evading = Expando<bool>('evading');
+  final _diving = Expando<bool>('diving');
+  final _touched = Expando<bool>('touched');
+  final _rushing = Expando<bool>('rushing');
+  final _contact = Expando<bool>('contact');
+  final _live = <Shot>{};
+  final _demons = <Demon>{};
+  int _wave = -1, _kills = 0;
+
+  static String bucket(ArcadeModel m) =>
+      '${m.difficulty.name}/${m.cycle == 0 ? 'r0' : 'r1+'}';
+
+  TierStats _t(String b, String tier) =>
+      (tiers[b] ??= {})[tier] ??= TierStats();
+  void _r(String b, String k) => (rush[b] ??= {})[k] = (rush[b]?[k] ?? 0) + 1;
+
+  void observe(ArcadeModel m, double dt) {
+    final b = bucket(m);
+    if (m.combat) combatSeconds[b] = (combatSeconds[b] ?? 0) + dt;
+    // Shots: attributed to the tier the pilot aims at when fired.
+    final aim = m.demons.where((d) => !d.entering).firstOrNull;
+    final now = <Shot>{
+      for (final s in m.shots)
+        if (!s.hostile) s,
+    };
+    for (final s in now) {
+      if (_live.contains(s) || aim == null) continue;
+      _target[s] = tierName(aim);
+      _t(b, tierName(aim)).fired++;
+    }
+    for (final s in _live) {
+      if (now.contains(s)) continue;
+      final tier = _target[s];
+      if (tier == null) continue;
+      final hit =
+          s.y > ArcadeModel.height ||
+          (s.y >= -10 && s.x >= -10 && s.x <= ArcadeModel.width + 10);
+      if (hit) _t(b, tier).hit++;
+    }
+    _live
+      ..clear()
+      ..addAll(now);
+    // Evasions, dives and rushes.
+    final killed = m.kills > _kills;
+    _kills = m.kills;
+    for (final d in _demons) {
+      if (m.demons.contains(d)) continue;
+      final tier = tierName(d);
+      if (_diving[d] == true) {
+        if (_touched[d] == true) {
+          _t(b, tier).diveHitShip++;
+        } else {
+          _t(b, tier).diveShotDown++;
+        }
+      }
+      if (_rushing[d] == true) {
+        _r(b, _contact[d] == true ? 'passHit' : 'passEnded');
+      }
+      if (d.isLarge && _lastStand(d)) _r(b, killed ? 'shotDown' : 'sacrificed');
+    }
+    _demons
+      ..clear()
+      ..addAll(m.demons);
+    for (final d in m.demons) {
+      final tier = tierName(d);
+      final evading = d.evadeLeft > 0;
+      if (evading && _evading[d] != true) _t(b, tier).evasions++;
+      _evading[d] = evading;
+      final contact =
+          (d.x - m.shipX).abs() < d.contactHalf &&
+          (d.y - ArcadeModel.shipY).abs() < d.contactHalf;
+      if (!d.isLarge) {
+        final diving = d.dive > 0;
+        if (diving && _diving[d] != true) {
+          _t(b, tier).dives++;
+          _touched[d] = false;
+        }
+        if (diving && contact) _touched[d] = true;
+        if (!diving && _diving[d] == true) {
+          _touched[d] == true
+              ? _t(b, tier).diveHitShip++
+              : _t(b, tier).diveDodged++;
+        }
+        _diving[d] = diving;
+      } else {
+        final rushing = d.rushing;
+        if (rushing && _rushing[d] != true) {
+          _r(b, 'passes');
+          _contact[d] = false;
+        }
+        if (rushing && contact) _contact[d] = true;
+        if (!rushing && _rushing[d] == true) {
+          _r(b, _contact[d] == true ? 'passHit' : 'passDodged');
+        }
+        _rushing[d] = rushing;
+      }
+    }
+    // Skill: sampled once per wave.
+    final key = m.cycle * 100 + m.level * 10 + m.wave;
+    if (key != _wave) {
+      _wave = key;
+      final s = _skill(m);
+      if (s != null) (skill[b] ??= []).add(s);
+    }
+  }
+
+  void observeEvents(List<GameEvent> events, ArcadeModel m) {
+    for (final e in events) {
+      if (e.name == 'rushShieldBroken') _r(bucket(m), 'shieldBroken');
+      if (e.name == 'sentinelRushTell') _r(bucket(m), 'tells');
+    }
+  }
+
+  static bool _lastStand(Demon d) => d.lastStand;
+  static double? _skill(ArcadeModel m) {
+    try {
+      return ((m as dynamic).skill.level as num).toDouble();
+    } on NoSuchMethodError {
+      return null;
+    }
+  }
+
+  Map<String, Object?> toJson() => {
+    for (final b in tiers.keys.toList()..sort())
+      b: {
+        'combatMinutes': (combatSeconds[b] ?? 0) / 60,
+        'tiers': {
+          for (final e in tiers[b]!.entries)
+            e.key: {
+              'fired': e.value.fired,
+              'hit': e.value.hit,
+              'hitRatio': e.value.hitRatio,
+              'evasionsPerMin':
+                  e.value.evasions /
+                  math.max(1e-9, (combatSeconds[b] ?? 0) / 60),
+              'dives': e.value.dives,
+              'diveHitShip': e.value.diveHitShip,
+              'diveDodged': e.value.diveDodged,
+              'diveShotDown': e.value.diveShotDown,
+            },
+        },
+        'rush': rush[b] ?? const {},
+        'skillMean': (skill[b]?.isEmpty ?? true)
+            ? null
+            : skill[b]!.reduce((a, c) => a + c) / skill[b]!.length,
+        'skillMax': (skill[b]?.isEmpty ?? true)
+            ? null
+            : skill[b]!.reduce(math.max),
+      },
+  };
+}

@@ -124,12 +124,12 @@ Groups 2–4 can land before group 5. The rush (5) is independent of the hunters
       - `test/comms_pacing_test.dart` and `test/comms_lineup_test.dart` stay green.
 
 ## 7. Calibration
-- [ ] 7.1 Extend `test/support/swarm_metrics.dart` with tier, dive and rush outcomes and the s trajectory (design
+- [x] 7.1 Extend `test/support/swarm_metrics.dart` with tier, dive and rush outcomes and the s trajectory (design
       §9).
-- [ ] 7.2 Run all modes. Check the acceptance list in design §9 and record the Post-W4 table in
+- [x] 7.2 Run all modes. Check the acceptance list in design §9 and record the Post-W4 table in
       `plan/calibration-current.md`. If it is out, tune in this order: T2 τ0 and δ, then the thread lateral speed,
       then rush homing and speed. Never touch HP or budgets.
-- [ ] 7.3 Record the atrapa-workflow note (teacher of record, fixtures, held-out selection) in `plan/policy.md` for
+- [x] 7.3 Record the atrapa-workflow note (teacher of record, fixtures, held-out selection) in `plan/policy.md` for
       any future retraining. No training is run in this change.
 
 ## 8. Review frames and playtest

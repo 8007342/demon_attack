@@ -25,6 +25,10 @@ abstract final class RushTuning {
   /// Rally rise (u) and pull-back in depth (nearness).
   static const rise = 28.0, pullBack = .05;
 
+  /// The rise from [y], never above y 32: a sentinel hovering at the top
+  /// (y 44) would otherwise rear half out of the arena (review frames).
+  static double riseFrom(double y) => math.max(0, math.min(rise, y - 32));
+
   /// Homing stops this far above the ship row; then it flies straight.
   static const commitAbove = 150.0;
 
@@ -191,7 +195,7 @@ extension SentinelRush on ArcadeModel {
         final u = (d.rushClock / RushTuning.rally).clamp(0.0, 1.0);
         final ease = u * u * (3 - 2 * u);
         d.x = d._lastStandX;
-        d.y = d._lastStandY - RushTuning.rise * ease;
+        d.y = d._lastStandY - RushTuning.riseFrom(d._lastStandY) * ease;
         if (d.rushClock >= RushTuning.rally) {
           d
             ..rushPhase = RushPhase.lock
@@ -207,7 +211,7 @@ extension SentinelRush on ArcadeModel {
         }
       case RushPhase.lock:
         d.x = d._lastStandX;
-        d.y = d._lastStandY - RushTuning.rise;
+        d.y = d._lastStandY - RushTuning.riseFrom(d._lastStandY);
         if (d.rushClock >= RushTuning.lock(difficulty)) {
           d
             ..rushPhase = RushPhase.rush
