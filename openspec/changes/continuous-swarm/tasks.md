@@ -5,16 +5,16 @@ Order matters. Each numbered group lands as its own commit on a `work/continuous
 first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start only after group 7.
 
 ## 1. Baselines (no behaviour change)
-- [ ] 1.1 `test/support/swarm_metrics.dart`: a recorder for the real-shot campaign pilot
+- [x] 1.1 `test/support/swarm_metrics.dart`: a recorder for the real-shot campaign pilot
       (`test/campaign_playtest_test.dart`). Per (mode, route, sector, wave) it records: clear time, shots fired,
       shots hit, peak active, peak hostile bullets, lives lost.
       - Write the results to `.cache/swarm-metrics.json`.
       - Run it on `game` before any change and commit the summary table to `plan/calibration-current.md` under
         "Pre-W3 baseline".
-- [ ] 1.2 Facing baseline: drive `CreatureMotion` from a 60 s Normal sector-2 simulation (no rendering) and
+- [x] 1.2 Facing baseline: drive `CreatureMotion` from a 60 s Normal sector-2 simulation (no rendering) and
       record the share of frames with `dir != 0` (telegraph, dive and fire poses excluded). Add it to the same
       table.
-- [ ] 1.3 Fit the efficiency constant of `T_expected` (design §2.3) so the baseline's median `T_actual / T_expected`
+- [x] 1.3 Fit the efficiency constant of `T_expected` (design §2.3) so the baseline's median `T_actual / T_expected`
       is 1.0 at Normal. Record the fitted value in the design note.
 
 ## 2. The stream scheduler (pure Dart)

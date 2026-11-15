@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/swarm_metrics.dart';
+
 /// A deterministic pilot that uses the real movement, automatic fire, collision,
 /// shield and door rules. Protection guarantees coverage of the complete campaign;
 /// this checks sustained simulation pressure, not a human player's survival rate.
@@ -61,6 +63,7 @@ void main() {
       var maxHostileShots = 0;
       var maxLarge = 0;
       final visitedRoutes = <int>{};
+      final metrics = SwarmMetrics();
       for (
         var frame = 0;
         frame < 900000 && model.mode != RunMode.completed;
@@ -72,7 +75,9 @@ void main() {
           visitedRoutes.add(model.cycle);
         }
         model.update(1 / 60);
-        for (final event in model.takeEvents()) {
+        final events = model.takeEvents();
+        metrics.observe(model, 1 / 60, events);
+        for (final event in events) {
           if (event == 'checkpoint') entrances++;
           if (event == 'bossDefeated') bossVictories++;
           if (event == 'completed') completions++;
@@ -86,6 +91,7 @@ void main() {
           model.demons.where((d) => d.isLarge).length,
         );
       }
+      metrics.write(difficulty.name);
       expect(
         model.mode,
         RunMode.completed,
@@ -114,8 +120,14 @@ void main() {
       expect(g.unitsDestroyed, greaterThan(g.unitsSpawned * .8));
       expect(g.breakthroughsBySector[0] + g.breakthroughsBySector[1], 0);
       expect(g.impactsBySector[0] + g.impactsBySector[1], 0);
-      expect(g.breakthroughsBySector[2] + g.breakthroughsBySector[3], greaterThan(0));
-      expect(g.missileImpacts, lessThanOrEqualTo(math.max(2, g.missilesLaunched * .15)));
+      expect(
+        g.breakthroughsBySector[2] + g.breakthroughsBySector[3],
+        greaterThan(0),
+      );
+      expect(
+        g.missileImpacts,
+        lessThanOrEqualTo(math.max(2, g.missilesLaunched * .15)),
+      );
       expect(g.homingCollected, greaterThan(30));
       expect(g.homingHits, greaterThan(g.homingCollected * 2));
     });
