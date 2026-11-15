@@ -76,11 +76,15 @@ class GroundHeadingRing {
 /// time with hysteresis and a minimum hold. Deterministic for a given input
 /// sequence; never touches simulation state or random streams.
 class GroundHeading {
+  /// [pace] scales the turn rate and stretches the minimum hold by its
+  /// inverse (openspec change ground-presentation-tuning: the game turns
+  /// at half the authored rate); [hold] stretches the hold further (one
+  /// trooper of a squad turning a little after another).
   GroundHeading(List<double> authored, GroundTurnClass turn,
-      {bool layer = false, double? initial})
+      {bool layer = false, double? initial, double pace = 1, double hold = 1})
       : ring = GroundHeadingRing(authored),
-        omega = layer ? turn.omegaArt : turn.omegaHull,
-        minHold = turn.minHold {
+        omega = (layer ? turn.omegaArt : turn.omegaHull) * pace,
+        minHold = turn.minHold / pace * hold {
     angle = ring.clampArc(ring.unwrap(initial ?? authored.last));
     step = ring.nearest(angle);
   }

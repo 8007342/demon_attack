@@ -8,6 +8,7 @@ import 'ground_blocks_atlas.dart';
 import 'ground_blocks_cast.dart';
 import 'ground_atmosphere.dart';
 import 'ground_heading.dart';
+import 'ground_presentation.dart';
 import 'model.dart';
 
 /// Per-unit presentation state of a block-drawn ground unit: its cells, its
@@ -16,10 +17,11 @@ import 'model.dart';
 class GroundBlockTrack {
   GroundBlockTrack(this.owner, this.cells)
       : hull = GroundHeading(cells.unit.headings, _turn(cells.unit),
-            initial: _rest(cells.unit)),
+            initial: _rest(cells.unit), pace: GroundPace.turn),
         art = cells.hasArt
             ? GroundHeading(cells.unit.angles, _turn(cells.unit),
-                layer: true, initial: _rest(cells.unit))
+                layer: true, initial: _rest(cells.unit),
+                pace: GroundPace.turn)
             : null;
 
   static GroundTurnClass _turn(GroundBlockUnit u) =>
@@ -66,6 +68,28 @@ class GroundBlockTrack {
 
   /// Screen muzzle of the layer as last drawn (friendly tracer origin).
   Offset? muzzle;
+
+  /// Last observed velocity (texels/s, lateral and depth; squads' troopers
+  /// turn after it) and the eased marching amount (0 holding .. 1).
+  double vl = 0, vz = 0, march = 0;
+  int marchSeen = -1;
+
+  /// A squad's troopers, each turning on its own (presentation only), and
+  /// where each fallen one lies (offset from the squad, texels).
+  final List<GroundSquadMember> members = [];
+  final Map<int, (double, double)> lying = {};
+}
+
+/// One trooper of a block-drawn squad: its own heading tracker, fed the
+/// squad's march through its own lag (it turns a little after another).
+class GroundSquadMember {
+  GroundSquadMember(this.heading, this.follow);
+  final GroundHeading heading;
+
+  /// How quickly it follows the squad's velocity (1/s).
+  final double follow;
+  double vl = 0, vz = 0;
+  int seen = -1;
 }
 
 /// Draws ground units from the per-sector ground-block atlases (openspec
@@ -227,6 +251,9 @@ class GroundBlocksLayer {
     t.stepAge += dt;
     if (px == null || pz == null || dt <= 0) return;
     var vl = (lx - px) / dt, vz = (z - pz) / dt;
+    t
+      ..vl = vl
+      ..vz = vz;
     final speed = math.sqrt(vl * vl + vz * vz);
     if (reversible && speed >= GroundHeading.vMin) {
       final a = GroundHeading.angleOf(vl, vz);
@@ -248,6 +275,50 @@ class GroundBlocksLayer {
       t.stepAge = 0;
       t.stepDir = step;
     }
+  }
+
+  /// Eases [t]'s marching amount toward [moving] (once per paint) and
+  /// returns it: troopers lead and lag only while the squad marches.
+  double marchOf(GroundBlockTrack t, bool moving) {
+    if (t.marchSeen != _frame) {
+      t.marchSeen = _frame;
+      final q = 1 - math.exp(-2.5 * dt);
+      t.march += ((moving ? 1.0 : 0.0) - t.march) * q;
+    }
+    return t.march;
+  }
+
+  /// Trooper [k]'s own heading in squad [t] (squad [seed]): it follows the
+  /// squad's march through its own lag and holds each heading a little
+  /// longer or shorter than the others, so the group turns one by one.
+  GroundHeading memberHeading(GroundBlockTrack t, int k, int seed) {
+    final u = t.cells.unit;
+    while (t.members.length <= k) {
+      final (follow, hold) = GroundSquadLook.turn(seed, t.members.length);
+      t.members.add(GroundSquadMember(
+          GroundHeading(u.headings, GroundBlockTrack._turn(u),
+              initial: t.hull.signedAngle, pace: GroundPace.turn, hold: hold),
+          follow));
+    }
+    final m = t.members[k];
+    if (m.seen != _frame) {
+      m.seen = _frame;
+      if (!m.heading.seeded) {
+        if (t.hull.seeded) {
+          m.heading.seed(t.hull.signedAngle);
+          m
+            ..vl = t.vl
+            ..vz = t.vz;
+        }
+      } else if (dt > 0) {
+        final q = 1 - math.exp(-m.follow * dt);
+        m
+          ..vl += (t.vl - m.vl) * q
+          ..vz += (t.vz - m.vz) * q;
+        m.heading.update(dt, lateral: m.vl, depth: m.vz);
+      }
+    }
+    return m.heading;
   }
 
   /// Advances the layer tracker toward [target] (signed degrees), or the
@@ -484,7 +555,7 @@ class GroundBlocksLayer {
       return cells.hull('pitchDown', k, 0);
     }
     if (!moving && cells.frames('idle', k) > 0) {
-      return cells.hull('idle', k, (_clock * 2.5).floor());
+      return cells.hull('idle', k, (_clock * 2.5 * GroundPace.of(t.cells.unit)).floor());
     }
     return cells.hull('move', k, moving ? phase : 0);
   }
@@ -492,8 +563,9 @@ class GroundBlocksLayer {
   /// Skid dust on the outside of a turn, for a short while after a step.
   void _skid(Canvas c, GroundBlockTrack t, double x, double y, double s,
       double light, int k) {
-    if (reducedMotion || t.stepAge > .32 || t.stepDir == 0) return;
-    final q = t.stepAge / .32;
+    const life = .32 / GroundPace.fx;
+    if (reducedMotion || t.stepAge > life || t.stepDir == 0) return;
+    final q = t.stepAge / life;
     final w = t.cells.unit.size[k].$1 / 2;
     final side = t.stepDir * (t.hull.mirror ? 1 : -1);
     fx(c, t.cells.unit.faction, (q * 4).floor().clamp(0, 3),
@@ -504,7 +576,7 @@ class GroundBlocksLayer {
   /// Draws a living demon vehicle (threat, skirmish or heavy tank).
   void demonVehicle(Canvas c, GroundUnit u, GroundBlockTrack t, double clock,
       double light, double glow, ArcadeModel m) {
-    final s = u.scale;
+    final s = u.scale * GroundSize.hostVehicle;
     final unit = t.cells.unit;
     t.maxHp = math.max(t.maxHp, math.max(u.hp, u.maxHp));
     final foe = u.ally;
@@ -515,7 +587,9 @@ class GroundBlocksLayer {
     var (k, mirror) = hull;
     final moving = u.z > u.holdZ + 1 || u.vx.abs() > 2 || !u.skirmish;
     final rate = unit.unitClass == 'heavy' ? 8.0 : 10.0;
-    var phase = (clock * rate * (moving ? 1 : .6) + u.id * .37).floor();
+    var phase =
+        (clock * rate * GroundPace.of(unit) * (moving ? 1 : .6) + u.id * .37)
+            .floor();
     // The telegraph contract (old columns 4-7): same clock arithmetic.
     int? special;
     var fill = 0;
@@ -628,9 +702,10 @@ class GroundBlocksLayer {
       bool flicker = false}) {
     final u = t.cells.unit;
     final lights = t.cells.hullOverlay('lights', k);
-    if (lights != null && !(flicker && (clock * 9).floor() % 3 == 0)) {
+    final ac = clock * GroundPace.anim;
+    if (lights != null && !(flicker && (ac * 9).floor() % 3 == 0)) {
       final pulse = u.faction == 'host' && !flare
-          ? .6 + .4 * (.5 + .5 * math.sin(clock * 3 + seed * 1.3))
+          ? .6 + .4 * (.5 + .5 * math.sin(ac * 3 + seed * 1.3))
           : 1.0;
       cell(c, u, lights, x, y, s,
           mirror: mirror, light: glow, opacity: pulse, overlay: true,
@@ -660,21 +735,24 @@ class GroundBlocksLayer {
       double light, double opacity) {
     final unit = t.cells.unit;
     final tt = u.wreckAge;
+    final fc = clock * GroundPace.fx;
     final (k, mirror) = (t.hull.index, t.hull.mirror);
     String name;
     if (t.cells.headingOf('fall') != null && unit.block == 'K') {
-      name = tt < 1
-          ? t.cells.state('fall', k, (tt / .2).floor().clamp(0, 4)).$1
-          : t.cells.state('rubble', k, (clock * 3).floor()).$1;
+      // The fall at half speed: 2 s of the wreck's 6.
+      final ft = tt * GroundPace.fx;
+      name = ft < 1
+          ? t.cells.state('fall', k, (ft / .2).floor().clamp(0, 4)).$1
+          : t.cells.state('rubble', k, (fc * 3).floor()).$1;
     } else if (t.cells.headingOf('wreck') != null) {
       name = tt < 2.5
-          ? t.cells.state('wreck', k, (clock * 8).floor()).$1
+          ? t.cells.state('wreck', k, (fc * 8).floor()).$1
           : t.cells.state('rubble', k, tt < 3.8 ? 0 : 1).$1;
     } else {
       name = t.cells.hull('move', k, 0);
     }
     t.seen = _frame;
-    cell(c, unit, name, u.x, u.y, u.scale,
+    cell(c, unit, name, u.x, u.y, u.scale * GroundSize.hostVehicle,
         mirror: mirror, light: light, opacity: opacity);
   }
 
@@ -683,7 +761,7 @@ class GroundBlocksLayer {
   /// A convoy vehicle (or walker) of the Fleet.
   void convoy(Canvas c, GroundAlly a, GroundBlockTrack t, double clock,
       double light, double glow) {
-    final s = a.scale;
+    final s = a.scale * GroundSize.fleetVehicle;
     final unit = t.cells.unit;
     t.maxHp = math.max(t.maxHp, math.max(a.hp, GroundTuning.allyHp));
     final foe = a.attacker;
@@ -700,6 +778,7 @@ class GroundBlocksLayer {
     final turning = t.hull.hold > 0;
     final rate = (7 + math.min(10.0, a.vz.abs() * .05)) *
         (a.pose?.pace ?? 1) *
+        GroundPace.of(unit) *
         (moving ? 1 : (turning ? .6 : 0));
     final dir = t.reverse ? -1 : 1;
     final n = math.max(1, t.cells.moveFrames(k));
@@ -711,7 +790,9 @@ class GroundBlocksLayer {
     final name = _hullCell(t, a, k, unit.headings[k] * (mirror ? -1 : 1),
         a.pose, phase, moving || turning);
     // Easter egg: a one-texel hull hop on beat 3 of the twirl.
-    final hop = t.flourishing && t.flourish >= .36 && t.flourish < .48
+    final hop = t.flourishing &&
+            t.flourish >= .36 / GroundPace.egg &&
+            t.flourish < .48 / GroundPace.egg
         ? s.roundToDouble()
         : 0.0;
     cell(c, unit, name, a.x, a.y + (kick > .5 ? s * .5 : 0) - hop, s,
@@ -733,7 +814,7 @@ class GroundBlocksLayer {
       elevation = gap > 500 ? 2 : (gap > 300 ? 1 : 0);
     } else {
       // Idle scan: a slow look outward and back, relative to the hull.
-      final scan = math.sin(clock * .7 + a.id * 1.7);
+      final scan = math.sin(clock * .7 * GroundPace.anim + a.id * 1.7);
       target = t.hull.signedAngle +
           (scan > .55 ? (a.side == 0 ? -22.5 : 22.5) : 0);
     }
@@ -743,7 +824,7 @@ class GroundBlocksLayer {
       // Easter egg: a turret twirl a0 -> a4 -> a0 (no new art).
       final n = unit.angles.length;
       final cyc = math.max(1, 2 * (n - 1));
-      final p = (t.flourish / .08).floor() % cyc;
+      final p = (t.flourish * GroundPace.egg / .08).floor() % cyc;
       ai = p < n ? p : cyc - p;
       am = mirror;
     }
@@ -765,13 +846,14 @@ class GroundBlocksLayer {
   /// askew; every other crew in a pod.
   void totalled(Canvas c, GroundAlly a, GroundBlockTrack t, double clock,
       double light, double glow) {
-    final s = a.scale, tt = a.retreatAge;
+    final s = a.scale * GroundSize.fleetVehicle, tt = a.retreatAge;
     final unit = t.cells.unit;
     t.seen = _frame;
     t.muzzle = null;
-    final hop = ((clock * 9).floor().isEven ? 0.0 : -s).roundToDouble();
+    final ac = clock * GroundPace.of(unit);
+    final hop = ((ac * 9).floor().isEven ? 0.0 : -s).roundToDouble();
     final mirror = a.side == 1;
-    final f = (clock * 7).floor() % 2 + (tt < .5 ? 0 : 2);
+    final f = (ac * 7).floor() % 2 + (tt < .5 ? 0 : 2);
     final (name, k) = t.cells.state('totalled', 0, f);
     cell(c, unit, name, a.x, a.y + hop, s, mirror: mirror, light: light);
     _hullOverlays(c, t, k, mirror, a.x, a.y + hop, s, light, glow, clock,
@@ -787,18 +869,21 @@ class GroundBlocksLayer {
   /// The crew's escape pod (lit and dark alternately).
   void pod(Canvas c, GroundAlly a, GroundBlockTrack t, double x, double y,
       double clock) {
-    final (name, _) = t.cells.state('pod', 0, (clock * 6).floor());
-    cell(c, t.cells.unit, name, x, y, a.scale, mirror: a.side == 1);
+    final (name, _) =
+        t.cells.state('pod', 0, (clock * 6 * GroundPace.anim).floor());
+    cell(c, t.cells.unit, name, x, y, a.scale * GroundSize.fleetVehicle,
+        mirror: a.side == 1);
   }
 
   // ------------------------------------------------------------- infantry
 
   /// Demon trooper [k] of a squad (member 0 may be a different unit: the
-  /// leader). [fallen] is seconds since it fell (null: standing).
+  /// leader). [fallen] is seconds since it fell (null: standing). [seed]
+  /// keys the trooper's own gait and turn.
   void demonTrooper(Canvas c, GroundUnit u, GroundBlockTrack squad, int k,
       int members, double x, double y, double s, double clock, double light,
       {double? fallen, required bool fires, required bool moving,
-      required bool engaged, double opacity = 1}) {
+      required bool engaged, double opacity = 1, int seed = 0}) {
     final id = GroundBlocksCast.unitFor(
             u.force == GroundForce.rockets
                 ? GroundCastRole.demonRocket
@@ -809,11 +894,14 @@ class GroundBlocksLayer {
             members: members) ??
         squad.cells.id;
     final cells = id == squad.cells.id ? squad.cells : _cells(id);
-    final (h, mirror) = hullShown(squad.hull, u.z);
+    final (h, mirror) = hullShown(memberHeading(squad, k, seed), u.z);
+    final ac = clock * GroundPace.anim;
     String name;
     if (fallen != null) {
-      name = fallen < .35
-          ? cells.state('fall', h, fallen < .17 ? 0 : 1).$1
+      // The topple at half speed.
+      final ft = fallen * GroundPace.anim;
+      name = ft < .35
+          ? cells.state('fall', h, ft < .17 ? 0 : 1).$1
           : (cells.headingOf('rubble') != null
               ? cells.state('rubble', h, 0).$1
               : cells.state('fall', h, 1).$1);
@@ -822,41 +910,47 @@ class GroundBlocksLayer {
     } else if (squad.flourishing && !moving && !engaged &&
         cells.headingOf('flourish') != null) {
       // Easter egg: the taunt jig, one frame of ripple per trooper.
-      name = cells.state('flourish', h, (squad.flourish / .12).floor() + k).$1;
+      name = cells.state('flourish', h,
+              (squad.flourish * GroundPace.egg / .12).floor() + k)
+          .$1;
     } else if (engaged && !moving) {
       name = cells.state('aim', h, u.tracerLeft < .25 ? 1 : 0).$1;
     } else if (moving) {
-      name = cells.hull('walk', h,
-          (clock * 8 + k * .7 + u.id * .3).floor());
+      final (rate, phase) = GroundSquadLook.gait(seed, k);
+      name = cells.hull('walk', h, (ac * 8 * rate + phase).floor());
     } else {
-      name = cells.state('idle', h, (clock * 2.5 + k * .5).floor()).$1;
+      name = cells.state('idle', h, (ac * 2.5 + k * .5).floor()).$1;
     }
     cell(c, cells.unit, name, x, y, s,
         mirror: mirror, light: light, opacity: opacity, reveal: fallen == null);
   }
 
-  /// Allied trooper [k] of a squad.
+  /// Allied trooper [k] of a squad of [n] ([seed]: its gait and turn).
   void allyTrooper(Canvas c, GroundAlly a, GroundBlockTrack squad, int k,
       int n, double x, double y, double s, double clock, double light,
-      {required bool moving, required double kick}) {
+      {required bool moving, required double kick, int seed = 0}) {
     final cells = squad.cells;
-    final (h, mirror) = hullShown(squad.hull, a.z);
+    final (h, mirror) = hullShown(memberHeading(squad, k, seed), a.z);
+    final ac = clock * GroundPace.anim;
+    final (rate, phase) = GroundSquadLook.gait(seed, k);
     String name;
     if (a.totalled || a.fallingBack) {
-      name = cells.state('run', h, (clock * 10 + k).floor()).$1;
+      name = cells.state('run', h, (ac * 10 * rate + phase).floor()).$1;
     } else if (a.flash > 0 && k == a.id % n) {
       name = cells.state('hit', h, 0).$1;
-    } else if (kick > 0 && k == (a.id + (clock * 3).floor()) % n) {
+    } else if (kick > 0 && k == (a.id + (ac * 3).floor()) % n) {
       name = cells.state('fire', h, 0).$1;
     } else if (a.underAttack && !moving) {
       name = cells.state('aim', h, kick > 0 ? 1 : 0).$1;
     } else if (squad.flourishing && !moving) {
-      // 4 frames at 0.12 s, each trooper a frame behind the one before.
-      name = cells.state('flourish', h, (squad.flourish / .12).floor() + k).$1;
+      // 4 frames at 0.24 s, each trooper a frame behind the one before.
+      name = cells.state('flourish', h,
+              (squad.flourish * GroundPace.egg / .12).floor() + k)
+          .$1;
     } else if (moving) {
-      name = cells.hull('walk', h, (clock * 8 + k * .9 + a.id * .3).floor());
+      name = cells.hull('walk', h, (ac * 8 * rate + phase).floor());
     } else {
-      name = cells.state('idle', h, (clock * 2.5 + k * .5).floor()).$1;
+      name = cells.state('idle', h, (ac * 2.5 + k * .5).floor()).$1;
     }
     cell(c, cells.unit, name, x, y, s, mirror: mirror, light: light);
   }
@@ -870,8 +964,9 @@ class GroundBlocksLayer {
     t.wasSaved = saved;
   }
 
-  /// Starts a flourish (dance, jig or turret twirl) of [len] seconds.
-  void startFlourish(GroundBlockTrack t, [double len = 1.6]) {
+  /// Starts a flourish (dance, jig or turret twirl) of [len] seconds (the
+  /// authored 1.6 s dance played at [GroundPace.egg]).
+  void startFlourish(GroundBlockTrack t, [double len = 1.6 / GroundPace.egg]) {
     t
       ..flourish = 0
       ..flourishLen = len;
@@ -939,9 +1034,10 @@ class GroundBlocksLayer {
   /// crew of two climbs out, looks at it and scampers off outward.
   void jackpot(Canvas c, GroundUnit u, GroundBlockTrack t, double clock,
       double light, double glow) {
-    final tt = u.wreckAge;
+    // The whole breakup at half speed (5.2 s of the wreck's 6).
+    final tt = u.wreckAge * GroundPace.egg;
     if (tt > 2.6) return;
-    final s = u.scale;
+    final s = u.scale * GroundSize.hostVehicle;
     final out = u.x < 180 ? -1.0 : 1.0;
     double clip(double x, double y) => y <= 300
         ? x
@@ -966,7 +1062,7 @@ class GroundBlocksLayer {
       }
     }
     final crew = _cells(crewUnit(u.sector));
-    final cs = s * .9;
+    final cs = u.scale * .9 * GroundSize.trooper;
     final turretX = u.x + out * jackpotArc(9).$1 * s;
     for (var i = 0; i < 2; i++) {
       final e = tt - 1.1 - .15 * i;
@@ -984,7 +1080,7 @@ class GroundBlocksLayer {
         mirror = turretX < x;
       } else {
         x += out * 30 * (e - .8) * cs;
-        name = crew.state('run', 0, (clock * 10 + i).floor()).$1;
+        name = crew.state('run', 0, (clock * 10 * GroundPace.anim + i).floor()).$1;
       }
       final fade = ((2.6 - tt) / .35).clamp(0.0, 1.0);
       cell(c, crew.unit, name, clip(x, y), y, cs,

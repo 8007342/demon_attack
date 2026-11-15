@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'ground_presentation.dart';
 import 'model.dart';
 
 /// The ground war's easter eggs (plan/ground-easter-eggs.md; openspec
@@ -69,14 +70,17 @@ class EasterEggBudget {
   /// Depth beyond which eggs are not seen (flocks excepted).
   static const farZ = 900.0;
 
-  /// The operator's defaults (plan sections 2-5).
+  /// The operator's defaults (plan sections 2-5). Running times of the
+  /// one-shot eggs are doubled (openspec change ground-presentation-tuning:
+  /// ground motion at half speed): dance 3.2 s, jig 2 s, jackpot 5 s,
+  /// critter scatter 5 s. The sector-clear dance loops, so it keeps 3 s.
   static const Map<EasterEgg, EasterEggRule> rules = {
     EasterEgg.dance: (
       num: 1,
       den: 3,
       cooldown: 40,
       perBand: false,
-      duration: 1.6,
+      duration: 1.6 / GroundPace.egg,
     ),
     EasterEgg.sectorDance: (
       num: 1,
@@ -90,14 +94,14 @@ class EasterEggBudget {
       den: 4,
       cooldown: 60,
       perBand: false,
-      duration: 1.0,
+      duration: 1.0 / GroundPace.egg,
     ),
     EasterEgg.jackpot: (
       num: 1,
       den: 8,
       cooldown: 20,
       perBand: false,
-      duration: 2.5,
+      duration: 2.5 / GroundPace.egg,
     ),
     EasterEgg.flock: (
       num: 2,
@@ -111,7 +115,7 @@ class EasterEggBudget {
       den: 1,
       cooldown: 8,
       perBand: true,
-      duration: 2.5,
+      duration: 2.5 / GroundPace.fx,
     ),
   };
 

@@ -10,6 +10,7 @@ import 'package:demon_attack/game/ground_blocks_atlas.dart';
 import 'package:demon_attack/game/ground_blocks_cast.dart';
 import 'package:demon_attack/game/ground_blocks_painter.dart';
 import 'package:demon_attack/game/ground_painter.dart';
+import 'package:demon_attack/game/ground_presentation.dart';
 import 'package:demon_attack/game/ground_troops_atlas.dart';
 import 'package:demon_attack/game/ground_wildlife_atlas.dart';
 import 'package:demon_attack/game/model.dart';
@@ -102,12 +103,22 @@ void main() {
       expect(EasterEggBudget.rules[EasterEgg.flock]!.cooldown, 12);
       expect(EasterEggBudget.rules[EasterEgg.jig]!.cooldown, 60);
       expect(EasterEggBudget.rules[EasterEgg.critters]!.cooldown, 8);
+      // Running times: the authored ones (sector dance 3 s, others at most
+      // 2.5 s) stretched by the half-speed ground motion
+      // (ground-presentation-tuning), the flock (air) unchanged.
       for (final r in EasterEggBudget.rules.entries) {
         expect(
           r.value.duration,
-          lessThanOrEqualTo(r.key == EasterEgg.sectorDance ? 3 : 2.5),
+          lessThanOrEqualTo(r.key == EasterEgg.sectorDance
+              ? 3
+              : r.key == EasterEgg.flock
+                  ? 2.5
+                  : 2.5 / GroundPace.egg),
+          reason: '${r.key}',
         );
       }
+      expect(EasterEggBudget.rules[EasterEgg.dance]!.duration, 3.2);
+      expect(EasterEggBudget.rules[EasterEgg.jig]!.duration, 2);
     });
 
     test('one per band, two on screen, cooldowns', () {
@@ -125,7 +136,8 @@ void main() {
         isFalse,
         reason: 'two on screen',
       );
-      b.tick(2.6);
+      // The critter scatter runs 5 s (leaps at half speed).
+      b.tick(5.1);
       expect(b.running, 0);
       expect(
         b.request(EasterEgg.flock, key: 5, band: 1),
@@ -141,7 +153,7 @@ void main() {
       expect(
         b.request(EasterEgg.critters, key: 7, band: 1),
         isFalse,
-        reason: 'band 1 critters cooled down 5.2 s of 8',
+        reason: 'band 1 critters cooled down 7.7 s of 8',
       );
       b.tick(3);
       expect(b.request(EasterEgg.critters, key: 8, band: 1), isTrue);
