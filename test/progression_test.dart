@@ -160,9 +160,17 @@ void main() {
       }
     }
     expect(model.level, 5);
-    expect(model.boss, isNotNull);
+    // boss-grandeur: the carrier looms under the fog while its loom wave is
+    // fought, then rises (no hitbox until it is out).
+    expect(model.boss, isNull);
+    expect(model.looming, isTrue);
     reach(model, RunMode.playing);
+    clearWave(model);
+    expect(model.wave, ArcadeModel.wavesFor(sector: 5, route: 0));
     expect(model.isBoss, isTrue);
+    expect(model.boss!.fightReady, isFalse);
+    tick(model, Carrier.riseSeconds + .1);
+    expect(model.boss!.fightReady, isTrue);
   });
 
   test(

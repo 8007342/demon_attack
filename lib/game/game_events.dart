@@ -433,6 +433,32 @@ abstract final class GameEventNames {
   /// A carrier form change or its field breaking (variant: phase).
   static const bossPhase = 'bossPhase';
   static const bossDefeated = 'bossDefeated';
+
+  // --- boss-grandeur (operator R8.5): the carrier's decay, one event per
+  // step, for the dynamic music engine and comms. Data: `route`, `variant`
+  // (the run's module set), plus the step's own field.
+
+  /// The carrier flies in over the ship (the boss arrival's Descent;
+  /// published by the music director).
+  static const bossOverflight = 'bossOverflight';
+
+  /// The carrier finished its loom and rises out of the fog.
+  static const bossRise = 'bossRise';
+
+  /// One hex shield cell went dark (data `cellsLeft`, 11 … 0).
+  static const bossShieldCellLost = 'bossShieldCellLost';
+
+  /// The force field is gone (after the last cell).
+  static const bossShieldDepleted = 'bossShieldDepleted';
+
+  /// An armour plate fell off the hull (data `plate`).
+  static const bossArmourLost = 'bossArmourLost';
+
+  /// A module broke away at a form change (data `form`, `detachOrder`).
+  static const bossModuleLost = 'bossModuleLost';
+
+  /// Core 0: the hull breaks into module wrecks.
+  static const bossCollapse = 'bossCollapse';
   static const defeat = 'defeat';
 
   /// Celebrations: [fleetIntact] with no player ship lost either, per
@@ -675,7 +701,8 @@ class GameEventObserver {
           final boss = model.boss;
           if (boss != null && !identical(boss, _boss)) {
             _boss = boss;
-            _sectorStart(emit);
+            // boss-grandeur: after the loom waves the sector has started.
+            if (model.wave == 1) _sectorStart(emit);
             emit(GameEventNames.bossArrival);
           } else if (boss != null) {
             emit(GameEventNames.bossPhase, variant: '${boss.phase}');

@@ -304,3 +304,25 @@ a gentler life drop (against the spec) or a stronger reference pilot.
 
 Lives-lost noise: per-sector values move by several lives between seeds (the pre-W4 standard error of a sector mean
 is 2–8 lives), so the route means above are the meaningful figure.
+
+## Boss grandeur (2026-11-15): carrier endurance
+
+`test/boss_endurance_test.dart`: the protected real-shot pilot of `campaign_playtest_test.dart` plays full campaigns
+on 16 seeds per difficulty; carrier endurance is the combat seconds from the carrier being fight-ready to its fall
+(sum of the five carriers), and the hits taken while it is ready. One seed's sum varies by ±10 % (a single carrier
+by ±50 %), so the gate is on means: the three difficulties pooled within 5 % of the baseline, each within 10 %.
+Baseline: `game` at bac1f458 with the same harness (the carrier was fight-ready on arrival).
+
+| Mode | Baseline s | After s | Δ | Baseline hits | After hits | Δ |
+|---|---:|---:|---:|---:|---:|---:|
+| easy | 333.07 | 345.77 | +3.8 % | 914.3 | 936.6 | +2.4 % |
+| normal | 431.69 | 436.46 | +1.1 % | 1252.1 | 1265.0 | +1.0 % |
+| hard | 428.92 | 469.45 | +9.4 % | 1325.3 | 1362.9 | +2.8 % |
+| **pooled** | 1193.7 | 1251.7 | **+4.9 %** | 3491.7 | 3564.5 | **+2.1 %** |
+
+The gate holds with little margin (pooled +4.9 % of 5 %; Hard +9.4 % of 10 %): a seed-to-seed spread of ±10 %
+makes the 16-seed mean move by ±2.5 % between equivalent builds (an earlier build of the same rules measured
+Easy +8.3 %, Normal +0.7 %, Hard +5.4 %, pooled +4.5 %). Ablations on the way (same harness): the glide alone (no loom) +1.5 / +4.0 / +3.2 %; the loom as first built
++10 / +7 / +13 %, of which the power timers running out during the 5 s Rise were the cause (shield phase +25 %
+with 0.15 vs 0.23 powers active); the timers now hold while the carrier rises. Resetting the level clock, the
+ground war or the pilot model at the Rise changed nothing measurable.

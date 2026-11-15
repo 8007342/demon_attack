@@ -64,7 +64,14 @@ void main() {
             defeatRoster(m);
           }
           until(m, RunMode.playing);
+          // boss-grandeur: the loom waves first, then the carrier rises.
+          while (m.boss == null && m.combat) {
+            m.invulnerable = 100;
+            defeatRoster(m);
+          }
           final boss = m.boss!;
+          advance(m, Carrier.riseSeconds + .1);
+          expect(boss.fightReady, isTrue);
           expect(boss.shieldMax, m.policy.bossShieldForRoute(route));
           expect(boss.coreMax, m.policy.bossCoreForRoute(route));
           m.invulnerable = 100;
