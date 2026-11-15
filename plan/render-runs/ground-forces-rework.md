@@ -346,3 +346,22 @@ composed keyframes). Sheet: `art/contact/ground-pilot-lodestar-baked.png` (rig |
 drawn outside the rig's matching part still lands on the nearest rig surface (a cyan blob on the h022 hull front);
 sector kits (snow, patches) stay those of the master sector on baked cells; surfaces no keyframe saw (hull under the
 turret, undersides in wreck rolls) keep rig shading.
+
+## 12. CP1 decision (2026-11-15; the operator delegated the call)
+
+Phase 1 evidence (sheets in `art/contact/ground-pilot-*.png`):
+- **Heading edits (two-image Qwen) are binary.** Crocket h112 at denoise 0.7 / 0.8 / 0.85 (4 and 8 steps) returns the
+  rig almost unchanged; at 0.9 it redraws the hero's own pose (a turreted tank) whatever the heading. No setting blends
+  the hero's materials onto the rig pose (`ground-pilot-crocket-denoise.png`, `-steps8.png`). Lodestar showed the same
+  (§11 A3). Jobs st-…-11 to -21, -24 to -28.
+- **Single-image redraws per heading** (the hero workflow with the heading prompt, st-…-29) are rich but drift from
+  the rig pose, and at sprite scale the detail averages into dark mottling (`ground-pilot-crocket-variant.png`); the
+  Crocket and Ashlar heroes finish the same way.
+- **VACE in-betweens** (Ashlar walk and aim, st-…-22/-23, 2 × 17 frames each, ~35 s per clip) stay on-model (wings,
+  horns, musket) but barely move; the rig's key frames already carry the motion (`ground-pilot-ashlar-vace-*.png`).
+
+**Decision: lean hybrid.** Rig-shaded blocks (the plan's fallback) plus ONE AI hero per unit, carried to every cell
+by `bake` with smoothing so only material and accent colours (eyes, glow, light strips, plate tints) transfer, not
+noise. No heading edits, no layer edits, no VACE clips. GPU: the remaining ~23 units × 4 hero candidates (~25 min).
+Reversible: the heading and VACE workflows stay committed; a later pass can add them per unit if a better graph
+(e.g. ControlNet-guided or a pose-locked LoRA) appears.
