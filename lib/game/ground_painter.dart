@@ -150,7 +150,8 @@ class GroundPainter {
     if (img == null) return;
     final cw = troop ? GroundTroopsAtlas.cellW : GroundAtlas.cellW;
     final ch = troop ? GroundTroopsAtlas.cellH : GroundAtlas.cellH;
-    final w = cw * scale, h = ch * scale;
+    // boss-grandeur: under the altitude stretch a unit keeps its size.
+    final w = cw * scale, h = ch * scale / GroundCamera.spriteAltitude;
     final v = (255 * light).round().clamp(0, 255);
     _paint.color = Color.fromARGB((255 * opacity).round().clamp(0, 255), v, v, v);
     final tint = _fogTint;

@@ -214,3 +214,57 @@ The seed is the run seed and the cycle.
 - **Glide amplitude ±16 units** in simulation. It is the only gameplay-visible motion change, bounded and calibrated.
 - **View set 3 × 3.** The operator's 38/45/52° are the pitches, and ±12° yaw covers the swerve. More yaw steps are a
   budget call in R5.
+
+## 11. Operator R8: the art redirection (2026-11-15)
+`plan/operator-feedback-2026-11-15b.md` R8 supersedes the frigate face as a direction: the carrier becomes an alien,
+faceless, GIANORMOUS ship that often spills off-screen, from a new art agent. This change keeps the frigate B2 art as
+a placeholder and does not tune the look to it. What R8 changed here:
+- **Generic plumbing.** `tools/boss_sheet pack` packs any hull that has a bake (any number of modules, stages and
+  views) and regenerates the hero section of `lib/game/boss_atlas.dart` (`BossHeroAtlas.hulls`). `BossPainter`
+  loads a hull's hero pages when it is packed and its frontal atlas otherwise, so hulls drop in as they are packed.
+  A hull may be larger than the screen: layers are drawn wherever their offsets put them (the canvas clips), while
+  hitboxes and weak points stay on the shared simulation geometry (core window, bays, turret pivots, solid body at
+  the fight row, on screen at every zoom).
+- **Fight rules.** The fight climbs higher: A reaches 1.6 (tours 1–3) and 1.75 (tours 4–5), in steps with the form
+  changes. The fog flows faster with the climb (up to ×2.2, none under reduced motion), while the ground's parallax
+  slows by the altitude. The fighting carrier's shadow falls on the intermediate fog banks (a soft multiply of its
+  shadow cell on each band after the horizon band, darker as it climbs), beside the terrain-shadows ground shadow
+  (`DemonScene.bossShadowAltitude` = 160 · A).
+- **Decay events** (game event queue, read by the music director and comms; data `route`, `variant`):
+  `bossRise`; `bossShieldCellLost` (data `cellsLeft`, 11 … 0: the 12 alien-insignia cells); `bossShieldDepleted`;
+  `bossArmourLost` (data `plate`: one per form, at the odd armour steps of `2 · formCount`); `bossModuleLost` (data
+  `form`, `detachOrder`: one per form change); `bossCollapse`. The music director publishes `bossOverflight`.
+- **Variety.** Each carrier draws a seeded `variant` from the boss stream (`seed ^ 0xB055`); `BossGrammar.forRun`
+  picks the run's module set from it among the sets a hull's art provides, and each tour adds more guns, spikes and
+  barriers (`BossAssembly.ornaments`: 2 + 3 per tour). All visual; the simulation never reads them.
+
+## 12. Implementation notes and deviations
+- **Loom in the model.** The boss sector has `loomWaves + 1` waves (`ArcadeModel.wavesFor(sector: 5)` = 2 on tour 1,
+  3 from tour 2). The loom waves are ordinary waves with no carrier; nothing is staged in the fog during the last one
+  (`finalWave`), and its clear (or the 75 s cap, which bursts what is left where it is) starts the carrier's wave
+  continuously: the carrier rises over `Carrier.riseSeconds` = 5 s with no hitbox, no motion, no minions and no fire,
+  and the power timers hold while it rises. Door and fan cycles run on the seconds since it became fight-ready
+  (`levelClock − readyAt`), as they ran from the level start before. `startAt(sector: 5)` and a sector-5 checkpoint
+  without a wave land on the carrier's wave (the console's boss jump); wave 1 is the loom.
+- **Overflight in the flow.** The boss arrival's Descent replaces mill/vacuole/pour with one `overflight` beat
+  (3.2 s, 2.0 s reduced); the pursued flock streams after the carrier into the far fog and is gone with it.
+- **Altitude as a background transform.** Instead of threading A through every ground projection, the background
+  (sky, flyover terrain, ground units, ground fog) is drawn through one affine `ArenaCamera.backgroundMatrix`: a
+  vertical stretch by A about the horizon (exactly the flat ground's projection with the camera height × A: at any
+  row the ground is 1/A the size and scrolls at 1/A the speed), the follow skew (weights 0.3 at the horizon to 1.0 at
+  the near ground) and a horizontal overscan (×1.16 at full follow). Ground unit and block sprites divide their drawn
+  height by `GroundCamera.spriteAltitude` so they keep their size. Gameplay positions are untouched (the simulation
+  never reads the transform).
+- **Zoom on the gameplay layer only.** The zoom (`gameplayMatrix`, pivot (180, 477)) applies to creatures, the
+  carrier, bullets, the ship and air effects; fog layers are drawn unzoomed (weather fills the frame, no fog
+  rectangle at the zoomed arena's edge); insignia are drawn after undoing the zoom at their fixed size
+  (`toScreen`). A 12 % vignette marks the arena's edge. The pad's drags map through `deltaToArena`.
+- **Reduced motion.** The static framing (0.94) and the altitude change as 1 s ramps, not crossfades of two cached
+  renders; no follow; no fog boost.
+- **Stages and wrecks.** S1–S3 come from the packed stage layers (half density, drawn ×2). The S3 hull list (4°) rolls
+  the outer hull only, so the functional face stays on its windows. Plates (S2) use the frontal debris sprites
+  carried into the hero page. Module wrecks have no terrain shadow (they fall down-screen into the fog tint).
+- **Calibration** (`test/boss_endurance_test.dart`, 16 seeds × 3 difficulties, protected real-shot pilot): carrier
+  seconds pooled +4.9 % (gate 5 %), hits +2.1 %; Easy +3.8 %, Normal +1.1 %, Hard +9.4 % (gate 10 % each). The
+  ablations are in `plan/calibration-current.md`.
+- **Review strips** also include `boss-grandeur-phone.png` (1:1) and `boss-grandeur-wide.png` (1280 × 720).

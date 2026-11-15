@@ -168,6 +168,16 @@ class FlowPlan {
   static double clearFor(bool reduced) =>
       reduced ? clearSecondsReduced : clearSeconds;
 
+  /// boss-grandeur: the Overflight's length in the boss arrival's Descent.
+  static double overflightSeconds(bool reduced) => reduced ? 2.0 : 3.2;
+
+  /// The Overflight's progress 0..1 (linear) at plan second [s].
+  double overflightAt(double s) {
+    final b = beat('overflight');
+    if (b == null) return 0;
+    return ((s - b.a) / (b.d - b.a)).clamp(0.0, 1.0);
+  }
+
   /// Travel's length at a motion setting with a slot's [extra] seconds
   /// (clamped to [maxExtra] and rounded up so Pursuit stays whole beats).
   static double travelFor(bool reduced, {double extra = 0}) =>
@@ -239,13 +249,18 @@ class FlowPlan {
         FlowBeat('slot', slot, slot + .5, p1 - .5, p1),
         // The flock comes out of the cloud as the new sector's swarm.
         FlowBeat('wheel', p1 + .3, p1 + 1.5, end, end),
-        if (boss) ...[
-          // The flock rings the arrival point, parts for the carrier and
-          // pours into its bays when it settles (design §3.1).
-          FlowBeat('mill', p1 + .3, p1 + 1.2, p1 + 3.2, p1 + 3.8),
-          FlowBeat('vacuole', p1 + 1.0, p1 + 2.0, end, end),
-          FlowBeat('pour', p1 + 2.8, total - .6, end, end),
-        ],
+        if (boss)
+          // boss-grandeur §1: the Overflight. The carrier flies in from
+          // behind the camera, sweeps up the screen over the ship, shrinks
+          // toward the horizon and sinks into the far fog; the pursued flock
+          // streams after it. Its linear clock is [overflightSeconds].
+          FlowBeat(
+            'overflight',
+            p1,
+            p1 + .25,
+            p1 + overflightSeconds(reduced) - .3,
+            p1 + overflightSeconds(reduced),
+          ),
       ],
       reduced: reduced,
       descentAt: p1,

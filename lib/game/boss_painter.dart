@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'boss_atlas.dart';
+import 'boss_director.dart';
+import 'boss_grammar.dart';
 import 'model.dart';
 
 /// Draws the boss armada from `assets/images/boss-<class>.png`
@@ -29,13 +31,52 @@ class BossPainter {
       cycle.clamp(0, BossAtlas.classes.length - 1);
 
   BossHull get hull => BossAtlas.classes[loadedClass ?? 0];
+
+  /// The frontal atlas is resident (the fallback for a hull whose view set
+  /// is not packed yet).
   bool get ready => image != null && loadedClass != null;
+
+  // --- boss-grandeur / boss-hero-assets 4.4: the packed view set ---
+  /// The hero hull of [loadedClass], when its view set is packed
+  /// ([BossHeroAtlas]); null while a hull falls back to its frontal atlas.
+  BossHeroHull? hero;
+  List<ui.Image>? heroPages;
+  bool get heroReady => hero != null && heroPages != null;
+
+  /// Either art is resident.
+  bool get anyReady => ready || heroReady;
+
+  /// The drawn hull's modules and detach orders (for the director).
+  List<(String, int?)> get modules => [
+    if (heroReady)
+      for (final m in hero!.modules) (m.id, m.detach)
+    else if (ready)
+      ('spine', null),
+  ];
 
   /// Installs an already decoded atlas (tests and the gallery).
   void setAtlas(int cls, ui.Image atlas) {
     image = atlas;
     loadedClass = cls;
+    hero = null;
+    heroPages = null;
   }
+
+  /// Installs a decoded hero view set (tests, review).
+  void setHero(int cls, BossHeroHull hull, List<ui.Image> pages) {
+    image = null;
+    loadedClass = cls;
+    hero = hull;
+    heroPages = pages;
+  }
+
+  /// The packed hero hull of class [cls], if any.
+  static BossHeroHull? heroFor(int cls) =>
+      BossHeroAtlas.hulls[BossAtlas.classes[cls].key];
+
+  /// Every asset of class [cls]: its hero pages, else its frontal atlas.
+  static List<String> assetsFor(int cls) =>
+      heroFor(cls)?.pages ?? [BossAtlas.classes[cls].asset];
 
   /// Keeps exactly the atlas the model needs resident: the current run's
   /// class from the sector before the carrier until its wreck has fallen,
@@ -50,22 +91,38 @@ class BossPainter {
         model.boss != null || model.wreckBoss != null || model.level >= 4;
     final want = classFor(model.cycle);
     if (!needed) {
-      if (image != null && loadedClass != null) {
-        evict(BossAtlas.classes[loadedClass!].asset);
+      if (anyReady && loadedClass != null) {
+        assetsFor(loadedClass!).forEach(evict);
         image = null;
+        hero = null;
+        heroPages = null;
         loadedClass = null;
       }
       return;
     }
     if (loadedClass == want || _loading == want) return;
     _loading = want;
-    load(BossAtlas.classes[want].asset).then((img) {
+    final heroHull = heroFor(want);
+    // One hull resident at a time: its hero pages (≤ 16 MB), or its
+    // frontal atlas while its view set is not packed yet.
+    final pending = heroHull != null
+        ? Future.wait(heroHull.pages.map(load))
+        : load(BossAtlas.classes[want].asset).then((i) => [i]);
+    pending.then((imgs) {
       if (_loading != want) return;
       final old = loadedClass;
-      image = img;
+      if (heroHull != null) {
+        hero = heroHull;
+        heroPages = imgs;
+        image = null;
+      } else {
+        image = imgs.single;
+        hero = null;
+        heroPages = null;
+      }
       loadedClass = want;
       _loading = null;
-      if (old != null && old != want) evict(BossAtlas.classes[old].asset);
+      if (old != null && old != want) assetsFor(old).forEach(evict);
     }).catchError((Object _) {
       _loading = null;
     });
@@ -116,6 +173,268 @@ class BossPainter {
   }
 
   static int formOf(Carrier b, BossHull h) => b.phase.clamp(0, h.forms - 1);
+
+  // --- boss-grandeur: drawing the hero view set ---
+
+  /// Draws hero sprite [s] with its anchor at [anchor] (arena units).
+  void heroSprite(
+    Canvas c,
+    BossHeroSprite s,
+    Offset anchor, {
+    double opacity = 1,
+    bool flipX = false,
+    bool flipY = false,
+  }) {
+    final pages = heroPages;
+    if (pages == null) return;
+    _paint.color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0));
+    final src = Rect.fromLTWH(
+      s.x.toDouble(),
+      s.y.toDouble(),
+      s.w.toDouble(),
+      s.h.toDouble(),
+    );
+    final k = s.ppu.toDouble();
+    if (!flipX && !flipY) {
+      c.drawImageRect(
+        pages[s.page],
+        src,
+        Rect.fromLTWH(anchor.dx + s.dx, anchor.dy + s.dy, s.w / k, s.h / k),
+        _paint,
+      );
+      return;
+    }
+    c.save();
+    c.translate(anchor.dx, anchor.dy);
+    c.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+    c.drawImageRect(pages[s.page], src,
+        Rect.fromLTWH(s.dx, s.dy, s.w / k, s.h / k), _paint);
+    c.restore();
+  }
+
+  /// The stored view, whether it is drawn mirrored, for [view].
+  BossHeroView? storedView(BossView view) => hero?.views[view.storedTag];
+
+  /// The run's assembly (boss_grammar): which of the hull's modules are
+  /// drawn and from which art set. Null draws every packed module.
+  BossAssembly? assembly;
+
+  /// Picks the run's assembly for carrier [b] (its seeded module set,
+  /// R8.6; visual only). A hull whose packed modules share no id with the
+  /// assembly (art not in yet) draws everything packed.
+  void assemble(Carrier b, int route) {
+    final h = hero;
+    if (h == null) {
+      assembly = null;
+      return;
+    }
+    final a = BossGrammar.forRun(route: route, variant: b.variant);
+    final ids = {for (final m in a.modules) m.id};
+    final packed = {for (final m in h.modules) m.id};
+    assembly = ids.intersection(packed).isEmpty ? null : a;
+  }
+
+  bool _assembled(String id) =>
+      assembly == null || assembly!.modules.any((m) => m.id == id);
+
+  /// Whether any module has a layer at [stage] (a hull baked without a
+  /// stage falls back to S0).
+  int _drawnStage(BossHeroView v, int stage) {
+    for (var s = stage; s > 0; s--) {
+      if (v.layers.values.any((l) => l[s] != null)) return s;
+    }
+    return 0;
+  }
+
+  /// One view of the hull's module layers at [stage]. [front]: only the
+  /// bow (the functional face, drawn after the creatures); otherwise every
+  /// other module. Modules whose detach order is in [detached] are gone.
+  void _paintHeroView(
+    Canvas c,
+    Offset center,
+    BossView view, {
+    required int stage,
+    required bool front,
+    Set<int> detached = const {},
+    double opacity = 1,
+  }) {
+    final h = hero!;
+    final v = h.views[view.storedTag];
+    if (v == null) return;
+    final st = _drawnStage(v, stage);
+    c.save();
+    if (view.mirrored) {
+      c.translate(center.dx * 2, 0);
+      c.scale(-1, 1);
+    }
+    for (final m in h.modules) {
+      if ((m.id == 'bow') != front) continue;
+      if (!_assembled(m.id)) continue;
+      if (m.detach != null && detached.contains(m.detach)) continue;
+      var layers = v.layers[m.id];
+      var flip = false;
+      if (layers == null && m.id.endsWith('L')) {
+        layers = v.layers['${m.id.substring(0, m.id.length - 1)}R'];
+        flip = true;
+      }
+      final sprite = layers?[st];
+      if (sprite == null) continue;
+      heroSprite(c, sprite, center, opacity: opacity, flipX: flip);
+    }
+    c.restore();
+  }
+
+  /// The hull's layers in [view], crossfading from [previous] by [blend]
+  /// (both views share the simulation anchors, so the blend never pops).
+  void paintHero(
+    Canvas c,
+    Offset center, {
+    required BossView view,
+    BossView? previous,
+    double blend = 1,
+    required int stage,
+    required bool front,
+    Set<int> detached = const {},
+    double opacity = 1,
+  }) {
+    if (!heroReady) return;
+    if (previous != null && previous != view && blend < 1) {
+      _paintHeroView(c, center, previous,
+          stage: stage, front: front, detached: detached, opacity: opacity);
+      _paintHeroView(c, center, view,
+          stage: stage, front: front, detached: detached,
+          opacity: opacity * blend);
+      return;
+    }
+    _paintHeroView(c, center, view,
+        stage: stage, front: front, detached: detached, opacity: opacity);
+  }
+
+  /// Points of [view] (mirrored for yaw −12) at [stage].
+  List<BossHeroPoint> heroPoints(
+    BossView view,
+    int stage, {
+    required String kind,
+  }) {
+    final v = storedView(view);
+    if (v == null) return const [];
+    final broken = stage >= 3;
+    final list = switch (kind) {
+      'lights' => broken ? v.lightsBroken : v.lights,
+      'fires' => broken ? v.firesBroken : v.fires,
+      _ => broken ? v.nozzlesBroken : v.nozzles,
+    };
+    if (!view.mirrored) return list;
+    return [
+      for (final p in list) BossHeroPoint(-p.x, p.y, p.kind, p.module),
+    ];
+  }
+
+  /// Background layer of the hero hull: plumes at its nozzles, every module
+  /// but the bow, breaches at its fire points, running lights (S1 flickers).
+  void paintHeroBackdrop(
+    Canvas c,
+    Carrier b, {
+    required BossDirector director,
+    required double clock,
+    required double bank,
+    required double damage,
+    double burn = -1,
+    Offset? center,
+    double opacity = 1,
+  }) {
+    if (!heroReady) return;
+    final h = hero!;
+    final at = center ?? Offset(b.x, b.y);
+    final flick = (clock * 12).floor() % 2;
+    final stage = director.stage;
+    for (final (i, n) in heroPoints(director.view, stage, kind: 'nozzles').indexed) {
+      if (h.plumes.isEmpty) break;
+      final t = burn >= 0 ? burn : thrust(n.x, bank, b.rage);
+      final level = t < .42 ? 0 : (t < .72 ? 1 : 2);
+      final size = n.kind.clamp(0, h.plumes.length - 1);
+      heroSprite(c, h.plumes[size][level][(flick + i) % 2], at + Offset(n.x, n.y),
+          opacity: opacity);
+    }
+    paintHero(
+      c,
+      at,
+      view: director.view,
+      previous: director.previous,
+      blend: director.blend,
+      stage: stage,
+      front: false,
+      detached: director.detached,
+      opacity: opacity,
+    );
+    if (damage > .45 && h.breach.isNotEmpty) {
+      final fires = heroPoints(director.view, stage, kind: 'fires');
+      final count = fires.isEmpty
+          ? 0
+          : (fires.length * ((damage - .45) / .45)).ceil().clamp(1, fires.length);
+      final sev = damage > .8 ? 2 : (damage > .62 ? 1 : 0);
+      for (var i = 0; i < count; i++) {
+        final f = fires[(i * 5) % fires.length];
+        final pick = (sev * 2 + (flick + i) % 2).clamp(0, h.breach.length - 1);
+        heroSprite(c, h.breach[pick], at + Offset(f.x, f.y), opacity: opacity);
+      }
+    }
+    // S1 scorched: the running lights flicker.
+    if (stage == 1 && (clock * 7).floor() % 3 == 0) return;
+    final strobe = (clock * 8).floor() % 10 == 0;
+    final pulse = (clock * 2).floor().isEven;
+    for (final l in heroPoints(director.view, stage, kind: 'lights')) {
+      final Color color = switch (l.kind) {
+        0 => const Color(0xFFFF3048),
+        1 => const Color(0xFF40FF90),
+        2 => strobe ? const Color(0xFFFFFFFF) : const Color(0x00000000),
+        _ => pulse ? const Color(0xFFFFC45A) : const Color(0xFFB0702A),
+      };
+      if (color.a == 0) continue;
+      final p = at + Offset(l.x, l.y);
+      _block.color = color.withValues(alpha: .3 * opacity);
+      c.drawRect(Rect.fromLTWH(p.dx - 2, p.dy - 2, 4, 4), _block);
+      _block.color = color.withValues(alpha: opacity);
+      c.drawRect(Rect.fromLTWH(p.dx - 1, p.dy - 1, 2, 2), _block);
+    }
+  }
+
+  /// A cosmetic wreck of the director: a module's wreck sprite (rest, then
+  /// tumbled) or an armour plate (a frontal debris piece), sinking into the
+  /// fog. [fog] tints it as it goes.
+  void paintHeroWreck(Canvas c, BossWreck w, {Color fog = const Color(0xFF2A2436)}) {
+    if (!heroReady || !w.started) return;
+    final h = hero!;
+    final BossHeroSprite? s;
+    var flip = false;
+    if (w.plate) {
+      s = h.debris.isEmpty ? null : h.debris[w.module.hashCode.abs() % h.debris.length];
+    } else {
+      var frames = h.wrecks[w.module];
+      if (frames == null && w.module.length > 1) {
+        // A mirrored pair's wreck is stored once: the other side flips it.
+        final base = w.module.substring(0, w.module.length - 1);
+        final other = w.module.endsWith('R') ? '${base}L' : '${base}R';
+        frames = h.wrecks[other];
+        flip = frames != null;
+      }
+      s = frames == null ? null : frames[w.progress > .35 ? 1 : 0] ?? frames[0];
+    }
+    if (s == null) return;
+    c.save();
+    c.translate(w.x, w.y);
+    c.rotate(w.rotation);
+    c.scale(w.scale * (w.plate ? .5 : 1));
+    final layer = Paint()
+      ..colorFilter = ColorFilter.mode(
+        fog.withValues(alpha: (w.progress * .85).clamp(0.0, .85)),
+        BlendMode.srcATop,
+      );
+    c.saveLayer(null, layer);
+    heroSprite(c, s, Offset.zero, opacity: w.opacity, flipX: flip);
+    c.restore();
+    c.restore();
+  }
 
   /// Engine thrust 0..1 per nozzle: idle burn, rage, and vectoring (the
   /// engines on the side away from the motion push harder).
@@ -227,12 +546,28 @@ class BossPainter {
   }
 
   void paintJaws(Canvas c, Carrier b) {
+    if (heroReady) {
+      final j = hero!.jaws;
+      if (j.isNotEmpty) {
+        heroSprite(c, j[(b.door.clamp(0.0, 1.0) * (j.length - 1)).round()],
+            Offset(b.x, b.y));
+      }
+      return;
+    }
     if (!ready) return;
     sprite(c, hull.jaws[(b.door.clamp(0.0, 1.0) * 3).round()], Offset(b.x, b.y));
   }
 
   /// Bay door frame for one side (the atlas holds the left bay).
   void paintBay(Canvas c, Carrier b, {required bool right, required int frame}) {
+    if (heroReady) {
+      final v = hero!.vents;
+      if (v.isNotEmpty) {
+        heroSprite(c, v[frame.clamp(0, v.length - 1)], Offset(b.x, b.y),
+            flipX: right);
+      }
+      return;
+    }
     if (!ready) return;
     sprite(c, hull.vents[frame], Offset(b.x, b.y), flipX: right);
   }
@@ -240,10 +575,19 @@ class BossPainter {
   /// Bow retro-thrusters braking the arrival: plumes pointing down from the
   /// bow corners, longest at the start of the descent.
   void paintRetro(Canvas c, Offset center, double descent, double clock) {
-    if (!ready || descent <= .05) return;
-    final h = hull;
+    if (descent <= .05) return;
     final level = descent > .6 ? 2 : (descent > .3 ? 1 : 0);
     final f = (clock * 12).floor() % 2;
+    if (heroReady) {
+      if (hero!.plumes.isEmpty) return;
+      for (final x in const [-70.0, 70.0]) {
+        heroSprite(c, hero!.plumes[0][level][f], center + Offset(x, 30),
+            flipY: true);
+      }
+      return;
+    }
+    if (!ready) return;
+    final h = hull;
     for (final x in const [-70.0, 70.0]) {
       sprite(c, h.plumes[0][level][f], center + Offset(x, 30), flipY: true);
     }
