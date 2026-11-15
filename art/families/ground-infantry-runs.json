@@ -1,1 +1,66 @@
-{}
+{
+ "runs/ashlar/hero/760110": {
+  "inputs": {
+   "input": "rig/ashlar/ashlar.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0000_00001_.png",
+    "sha256": "b4a8b66cd5a9386ac83a003a610220e375f3762628f2131aa6a52747fab16dae"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a cartoon gargoyle demon soldier marching, stone hide, curled horns through a dented iron helmet, glowing ember eyes, webbing and an armour vest, folded bat wings, a long spout-mouthed musket",
+  "seed": 760110,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/ashlar/hero/760111": {
+  "inputs": {
+   "input": "rig/ashlar/ashlar.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0001_00001_.png",
+    "sha256": "006242822a50e416aee12546519747d3ace20eac7b2382e50f8014c6430fbf77"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a cartoon gargoyle demon soldier marching, stone hide, curled horns through a dented iron helmet, glowing ember eyes, webbing and an armour vest, folded bat wings, a long spout-mouthed musket",
+  "seed": 760111,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/ashlar/hero/760112": {
+  "inputs": {
+   "input": "rig/ashlar/ashlar.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0002_00001_.png",
+    "sha256": "91a382e362f8f3828b6d51f3d3ff7ef86a22cbaa2af29480fbd6e02df7c2a7f1"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a cartoon gargoyle demon soldier marching, stone hide, curled horns through a dented iron helmet, glowing ember eyes, webbing and an armour vest, folded bat wings, a long spout-mouthed musket",
+  "seed": 760112,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/ashlar/hero/760113": {
+  "inputs": {
+   "input": "rig/ashlar/ashlar.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0003_00001_.png",
+    "sha256": "0654ac1da914196c441fd3c3a8bb88ea9450cd48da9ca1be886bfdfb1e3ebdfe"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a cartoon gargoyle demon soldier marching, stone hide, curled horns through a dented iron helmet, glowing ember eyes, webbing and an armour vest, folded bat wings, a long spout-mouthed musket",
+  "seed": 760113,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ }
+}

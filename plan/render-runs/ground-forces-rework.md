@@ -255,3 +255,24 @@ Heading-edit findings for the pilot (CP1 to confirm):
 
 Tooling: `go run . control [ids]` writes the VACE control strips (17 and 33 frames) for every `inbetweens` clip, from
 the block's own key cells, one scale and anchor per clip (`$BLOCKS_WORK/control/<id>/`).
+
+## 9. Ledger: Phase 1 pilot, heroes (2026-11-15)
+
+**CP0 approved by the operator** (2026-11-15): "quite pretty"; angles consistent and mostly correct, cannons on top,
+combined sprites smooth; Chapterhouse and Belfry "a little weird but in a good way".
+
+Hero candidates, `variant-qwen-edit.json`, 4 seeds each, about 14 s per image: Lodestar st-1794721235621-7
+(780200–780203), Crocket st-1794721311538-8 (760200–760203), Ashlar Guard st-1794721379253-9 (760110–760113).
+Ingested into the `-runs.json` files; raws in `~/.cache/demon-attack/ground-blocks/{raw,pilot}/`.
+
+- Raw quality is high: a clean key, the faction looks read at once (cyan-lit grey-blue Fleet; violet stone Host with
+  gargoyle faces and a glowing slag channel; a horned, winged musketeer). Lodestar seed +3 grew a second barrel.
+- **Finished on the grid they collapse** (`art/contact/ground-pilot-heroes-finished.png`): `finish` keeps only the AI
+  image's luminance inside the rig silhouette and recolours it from the rig's material ramps, so AI colour (eyes,
+  horns, glow), and anything outside the rig shape (wings, a longer musket), is lost; the four seeds become nearly identical
+  rig-shaded texture. At denoise 0.7 (st-1794721555014-10) the raw hero follows the rig closely and keeps the detail,
+  but the finish still flattens it: the bottleneck is the finish, not the model.
+- Fixed: the Host family's key is green (#00FF00); its prompt now names green, not magenta (the magenta Crocket raws
+  were finished against the wrong key).
+- **Operator decision needed before the remaining pilot jobs** (headings, turret angles, VACE clips): see the options
+  in the session report (colour-preserving finish, rig-faithful denoise, or the no-AI fallback).

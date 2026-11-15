@@ -14,7 +14,7 @@
   "hollow": {"units": ["trooper-rifle", "trooper-rocket", "rubbling", "ashlar", "corbel", "knell", "prior"]},
   "carrier": {"units": ["trooper-rifle", "trooper-rocket", "ashlar", "corbel", "knell", "prior"]}
  },
- "style_prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, plain flat background, night lighting",
+ "style_prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting",
  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
  "heading_phrases": {"000": "seen from behind walking away", "045": "seen from behind and to the side", "090": "seen from the side facing right", "135": "turned toward the viewer"},
  "sprite": {

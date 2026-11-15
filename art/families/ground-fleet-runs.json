@@ -1,1 +1,66 @@
-{}
+{
+ "runs/lodestar/hero/780200": {
+  "inputs": {
+   "input": "rig/lodestar/lodestar.hull.ref.h045.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, many objects, red lights, orange lights, warm glow, gold, fire, horns, face, teeth, spikes, hooks, pointed arch, stone, organic, insect, camouflage pattern, flags, national insignia, real military vehicle",
+  "outputs": [
+   {
+    "file": "0000_00001_.png",
+    "sha256": "568f97b29fc1789dce60316e373aa4ac30b22eab9bcd882571f05235361d723a"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single vehicle seen from behind and above, three-quarter top view, night lighting, rim light from upper left, flat faceted grey-blue armour plates with chamfered corners, panel seams, rivet rows, side skirts, thin glowing cyan light strips along the edges, cyan visor slit, no warm lights, clean frontier military engineering, chunky readable silhouette, turned diagonally to the right, a futuristic main battle tank, low faceted wedge hull with a long chamfered front, side skirts hiding the tracks, flat hexagonal turret set forward, very long thin rail cannon with two coil rings and a square muzzle brake, short sensor mast at the turret rear, soot dark lower hull, square heat-shield tiles",
+  "seed": 780200,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/lodestar/hero/780201": {
+  "inputs": {
+   "input": "rig/lodestar/lodestar.hull.ref.h045.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, many objects, red lights, orange lights, warm glow, gold, fire, horns, face, teeth, spikes, hooks, pointed arch, stone, organic, insect, camouflage pattern, flags, national insignia, real military vehicle",
+  "outputs": [
+   {
+    "file": "0001_00001_.png",
+    "sha256": "56ed05df8b1d1d066511e754fe0031bb7bd35edc93f5841ef91389c093b1d2de"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single vehicle seen from behind and above, three-quarter top view, night lighting, rim light from upper left, flat faceted grey-blue armour plates with chamfered corners, panel seams, rivet rows, side skirts, thin glowing cyan light strips along the edges, cyan visor slit, no warm lights, clean frontier military engineering, chunky readable silhouette, turned diagonally to the right, a futuristic main battle tank, low faceted wedge hull with a long chamfered front, side skirts hiding the tracks, flat hexagonal turret set forward, very long thin rail cannon with two coil rings and a square muzzle brake, short sensor mast at the turret rear, soot dark lower hull, square heat-shield tiles",
+  "seed": 780201,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/lodestar/hero/780202": {
+  "inputs": {
+   "input": "rig/lodestar/lodestar.hull.ref.h045.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, many objects, red lights, orange lights, warm glow, gold, fire, horns, face, teeth, spikes, hooks, pointed arch, stone, organic, insect, camouflage pattern, flags, national insignia, real military vehicle",
+  "outputs": [
+   {
+    "file": "0002_00001_.png",
+    "sha256": "82288bb11ca1cab392bdd85bc0c789c4d3ea25462991931f162225f9964e4174"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single vehicle seen from behind and above, three-quarter top view, night lighting, rim light from upper left, flat faceted grey-blue armour plates with chamfered corners, panel seams, rivet rows, side skirts, thin glowing cyan light strips along the edges, cyan visor slit, no warm lights, clean frontier military engineering, chunky readable silhouette, turned diagonally to the right, a futuristic main battle tank, low faceted wedge hull with a long chamfered front, side skirts hiding the tracks, flat hexagonal turret set forward, very long thin rail cannon with two coil rings and a square muzzle brake, short sensor mast at the turret rear, soot dark lower hull, square heat-shield tiles",
+  "seed": 780202,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/lodestar/hero/780203": {
+  "inputs": {
+   "input": "rig/lodestar/lodestar.hull.ref.h045.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, many objects, red lights, orange lights, warm glow, gold, fire, horns, face, teeth, spikes, hooks, pointed arch, stone, organic, insect, camouflage pattern, flags, national insignia, real military vehicle",
+  "outputs": [
+   {
+    "file": "0003_00001_.png",
+    "sha256": "88bf4912d77dc85877bbbefd605257973a6b10327bee5ff09b2bd6290a6233ea"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single vehicle seen from behind and above, three-quarter top view, night lighting, rim light from upper left, flat faceted grey-blue armour plates with chamfered corners, panel seams, rivet rows, side skirts, thin glowing cyan light strips along the edges, cyan visor slit, no warm lights, clean frontier military engineering, chunky readable silhouette, turned diagonally to the right, a futuristic main battle tank, low faceted wedge hull with a long chamfered front, side skirts hiding the tracks, flat hexagonal turret set forward, very long thin rail cannon with two coil rings and a square muzzle brake, short sensor mast at the turret rear, soot dark lower hull, square heat-shield tiles",
+  "seed": 780203,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ }
+}

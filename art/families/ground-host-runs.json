@@ -1,1 +1,66 @@
-{}
+{
+ "runs/crocket/hero/760200": {
+  "inputs": {
+   "input": "rig/crocket/crocket.hull.ref.h135.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, many objects, cyan, teal, blue lights, insect, chitin, tentacles, slime, flesh, blood, gore, cross, religious symbol, real military vehicle",
+  "outputs": [
+   {
+    "file": "0000_00001_.png",
+    "sha256": "7060d133125c03fbf9b90e8d7b1d390317a850606985c1a6331806872ba1c193"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
+  "seed": 760200,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/crocket/hero/760201": {
+  "inputs": {
+   "input": "rig/crocket/crocket.hull.ref.h135.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, many objects, cyan, teal, blue lights, insect, chitin, tentacles, slime, flesh, blood, gore, cross, religious symbol, real military vehicle",
+  "outputs": [
+   {
+    "file": "0001_00001_.png",
+    "sha256": "e4f146a6bf1f5e69849066414773c174d9efdfe75cdb172ef5f62c8d0f94d5f6"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
+  "seed": 760201,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/crocket/hero/760202": {
+  "inputs": {
+   "input": "rig/crocket/crocket.hull.ref.h135.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, many objects, cyan, teal, blue lights, insect, chitin, tentacles, slime, flesh, blood, gore, cross, religious symbol, real military vehicle",
+  "outputs": [
+   {
+    "file": "0002_00001_.png",
+    "sha256": "f15765d6191cb44856d526a2fe82c34ec2b3590811b0fb6bef49e8aad6b75314"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
+  "seed": 760202,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/crocket/hero/760203": {
+  "inputs": {
+   "input": "rig/crocket/crocket.hull.ref.h135.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, many objects, cyan, teal, blue lights, insect, chitin, tentacles, slime, flesh, blood, gore, cross, religious symbol, real military vehicle",
+  "outputs": [
+   {
+    "file": "0003_00001_.png",
+    "sha256": "d44ab5ee13d915763d31d41bf43f99e4a8a990f7dc092c509f882fd092bc296d"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, single war machine seen from a high three-quarter view, night lighting, carved dark stone with chisel facets, cast iron bands, lead roof plates, chains, dark low-contrast stone, glowing ember-orange eyes and carved spout mouth, a glowing slag channel along its back, friendly-scary gothic cathedral masonry, turned diagonally toward the viewer, a low fast light tank, long flat stone slab hull with a row of curled hooked stone crockets along its spine, snarling gargoyle face on the front corner, short gun barrel ending in a carved mouth, iron tracks, salvaged violet hull plates mortared with stone",
+  "seed": 760203,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ }
+}
