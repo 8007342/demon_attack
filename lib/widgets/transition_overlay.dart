@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 
 import '../comms/comms_bank.dart';
 import '../comms/comms_director.dart';
+import '../comms/comms_view.dart' show CommsLayout;
 import '../comms/squad_comms.dart';
 import '../game/campaign_story.dart';
 import '../game/interlude.dart';
@@ -356,7 +357,8 @@ class TransitionPresenter {
             bounds.maxHeight / ArcadeModel.height,
           );
           final ox = (bounds.maxWidth - ArcadeModel.width * scale) / 2;
-          final oy = (bounds.maxHeight - ArcadeModel.height * scale) / 2;
+          // The cabinet arena is bottom-aligned (mobile-top-trim).
+          final oy = bounds.maxHeight - ArcadeModel.height * scale;
           final right = model.shipX < ArcadeModel.width / 2;
           final x = ox + (model.shipX + (right ? 30 : -30)) * scale;
           final y = oy + (shipY - 34) * scale;
@@ -392,6 +394,9 @@ class TransitionPresenter {
   Widget _bossAlert(ArcadeModel model, double p) => LayoutBuilder(
     builder: (context, bounds) {
       final compact = bounds.maxHeight < 450;
+      // Phones and narrow windows (the comms dock layout): the alert hugs
+      // its text at the very top of the arena (mobile-top-trim).
+      final tight = !CommsLayout.of(MediaQuery.sizeOf(context)).side;
       final fadeIn = Curves.easeOutCubic.transform((p / .10).clamp(0, 1));
       final fadeOut = Curves.easeInCubic.transform(((1 - p) / .10).clamp(0, 1));
       final pulse = math.sin(model.visualClock * 8.0) * 0.5 + 0.5;
@@ -402,7 +407,13 @@ class TransitionPresenter {
           child: Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: EdgeInsets.only(top: compact ? 6 : 14),
+              padding: EdgeInsets.only(
+                top: tight
+                    ? 2
+                    : compact
+                    ? 6
+                    : 14,
+              ),
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Container(
@@ -410,7 +421,11 @@ class TransitionPresenter {
                   width: math.min(440, bounds.maxWidth - 20),
                   padding: EdgeInsets.symmetric(
                     horizontal: 14,
-                    vertical: compact ? 6 : 10,
+                    vertical: tight
+                        ? 3
+                        : compact
+                        ? 6
+                        : 10,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xEB16050A),
@@ -437,7 +452,7 @@ class TransitionPresenter {
                           letterSpacing: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      SizedBox(height: tight ? 1 : 3),
                       Text(
                         '${CampaignStory.name(5, model.cycle).toUpperCase()} ENTERS ORBIT',
                         textAlign: TextAlign.center,
@@ -448,7 +463,7 @@ class TransitionPresenter {
                           letterSpacing: 1.8,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: tight ? 2 : 4),
                       Text(
                         'BREAK THE SHIELD · FIRE INTO THE OPEN HATCH',
                         textAlign: TextAlign.center,
