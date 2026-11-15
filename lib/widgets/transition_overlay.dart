@@ -2,11 +2,10 @@
 /// cinematic-flow §2.2, built on fluid-transitions and ux-declutter).
 ///
 /// - The run's opening arrival keeps its illustrated tip card (it teaches).
-/// - A sector transition shows no card: it schedules one message *slot* on
-///   the flow clock, a radio line on the comms dock or a caption line at the
-///   bottom edge, alternating (seeded), never both; a sector title at the
-///   top edge in the Descent; the medal and +1UP as a flourish beside the
-///   ship. Nothing here is a bar or a strip.
+/// - A sector transition shows no card and no floating text: it schedules
+///   one message *slot* on the flow clock, always a radio line on the comms
+///   dock (playtest-fixes: no caption, no sector or tour title); the medal
+///   glyph as a flourish beside the ship. Nothing here is a bar or a strip.
 /// - Skip (tap, Space, Enter) closes the opening card, or sends a sector
 ///   transition to its Descent (the radio line finishes on the dock).
 /// main.dart only feeds it the run state and mounts its overlay.
@@ -22,7 +21,6 @@ import '../comms/squad_comms.dart';
 import '../game/campaign_story.dart';
 import '../game/interlude.dart';
 import '../game/model.dart';
-import 'flow_caption.dart';
 import 'interlude_card.dart';
 import 'medal.dart';
 
@@ -43,7 +41,7 @@ class TransitionPresenter {
   // --- the sector slot -------------------------------------------------------
   /// The message slot of the current sector transition, if one was planned.
   InterludePlan? slot;
-  bool _slotPlanned = false, _captionSkipped = false;
+  bool _slotPlanned = false;
 
   /// The radio slot's line: its own pick, or the squad channel's line.
   CommsMessage? _own, shown;
@@ -87,12 +85,8 @@ class TransitionPresenter {
         FlowKind.bossVictory,
       ].contains(m.flow.kind);
 
-  /// The caption is on screen now.
-  bool captionOn(ArcadeModel m) => captionOpacityOf(m) > 0;
-
-  /// A silent tip (card or caption) holds the radio quiet.
-  bool quiet(ArcadeModel m) =>
-      showingCard || (slot?.kind == InterludeKind.tip && captionOn(m));
+  /// The silent opening tip card holds the radio quiet.
+  bool quiet(ArcadeModel m) => showingCard;
 
   /// Tap, Space or Enter has something to skip.
   bool canSkip(ArcadeModel m) =>
@@ -167,11 +161,10 @@ class TransitionPresenter {
 
   void _planSlot(ArcadeModel model, SquadComms comms, {bool flawless = false}) {
     _slotPlanned = true;
-    _captionSkipped = false;
     final (_, room) = slotWindow(model.flow.plan);
     final victory = model.flow.kind == FlowKind.bossVictory;
     final level = model.nextLevel;
-    slot = planner.plan(
+    slot = planner.planRadio(
       InterludeContext(
         difficulty: model.difficulty,
         level: level,
@@ -185,15 +178,11 @@ class TransitionPresenter {
     );
     final s = slot;
     if (s == null) return;
-    final needs = s.kind == InterludeKind.tip
-        ? captionSeconds(captionText(s))
-        : s.radio!.needs + InterludeTiming.adoptWait + 2 * InterludeTiming.fade;
+    final needs =
+        s.radio!.needs + InterludeTiming.adoptWait + 2 * InterludeTiming.fade;
     // The model rounds it up to whole beats before travel starts.
     model.slotExtra = math.max(0, needs - room);
   }
-
-  /// A caption is the tip's one sentence (no illustration, no detail).
-  static String captionText(InterludePlan p) => p.tip!.title;
 
   void _updateSlot(ArcadeModel model, SquadComms comms, bool voice) {
     final s = slot;
@@ -201,31 +190,7 @@ class TransitionPresenter {
     final (start, _) = slotWindow(model.flow.plan);
     final elapsed = model.flow.seconds - start;
     if (elapsed < 0) return;
-    if (s.kind == InterludeKind.tip) {
-      final on = captionOn(model);
-      if (on && !_tipMuted && voice) {
-        comms.director.hush(captionSeconds(captionText(s)) - elapsed);
-        _tipMuted = true;
-      } else if (!on && _tipMuted && !showingCard) {
-        _tipMuted = false;
-        comms.director.hush(0);
-      }
-      return;
-    }
     _updateRadio(model, comms, elapsed);
-  }
-
-  /// The caption's opacity now (0 when none).
-  double captionOpacityOf(ArcadeModel m, {bool reduce = false}) {
-    final s = slot;
-    if (s == null || s.kind != InterludeKind.tip || _captionSkipped) return 0;
-    if (!slotted(m)) return 0;
-    final (start, _) = slotWindow(m.flow.plan);
-    return captionOpacity(
-      m.flow.seconds - start,
-      captionSeconds(captionText(s)),
-      reduce: reduce,
-    );
   }
 
   void _updateRadio(ArcadeModel model, SquadComms comms, double elapsed) {
@@ -279,7 +244,6 @@ class TransitionPresenter {
     slot = null;
     _own = shown = null;
     _slotPlanned = false;
-    _captionSkipped = false;
   }
 
   /// Ends the opening card and gives the radio back.
@@ -293,8 +257,7 @@ class TransitionPresenter {
 
   /// Skip (tap, Space or Enter). The opening card closes and the fight
   /// starts; a sector transition goes to its Descent on the next frame (or
-  /// when the pickup grace ends), the caption closes and a radio line
-  /// finishes on the dock. Returns false when nothing was skipped.
+  /// when the pickup grace ends) and a radio line finishes on the dock. Returns false when nothing was skipped.
   bool skip(ArcadeModel model, SquadComms comms, {required bool voice}) {
     if (showingCard) {
       _skipped = true;
@@ -305,7 +268,6 @@ class TransitionPresenter {
       return true;
     }
     if (!canSkip(model) || !model.skipTransition()) return false;
-    _captionSkipped = true;
     if (_tipMuted) {
       _tipMuted = false;
       comms.director.hush(0);
@@ -332,22 +294,6 @@ class TransitionPresenter {
     }
     if (showingCard) {
       children.add(_card(context, model, onSkip, reduce));
-    }
-    final caption = captionOpacityOf(model, reduce: reduce);
-    if (caption > 0) {
-      children.add(FlowCaption(text: captionText(slot!), opacity: caption));
-    }
-    final title = model.flow.env('title');
-    if (title > 0 && phase == RunMode.transition) {
-      final tour = model.wave == 1 && model.level == 1 && model.cycle > 0;
-      children.add(
-        FlowCaption.title(
-          text:
-              'SECTOR ${model.level} · ${CampaignStory.name(model.level, model.cycle).toUpperCase()}',
-          subtitle: tour ? 'TOUR ${model.cycle + 1}' : null,
-          opacity: reduce ? (title > .5 ? 1 : 0) : title,
-        ),
-      );
     }
     final flourish = _flourish(model);
     if (flourish != null) children.add(flourish);
@@ -386,9 +332,9 @@ class TransitionPresenter {
     );
   }
 
-  /// The medal and +1UP of a carrier's fall: a short flourish beside the
-  /// ship (the existing glyphs, no panel), from the fall's first third to
-  /// the climb into the cloud.
+  /// The medal of a carrier's fall: a short flourish beside the ship (the
+  /// existing medal glyph, no panel and no text: the HUD counts the extra
+  /// life, the radio says it), from the fall's first third to the climb.
   Widget? _flourish(ArcadeModel model) {
     final flow = model.flow;
     if (flow.kind != FlowKind.bossVictory &&
@@ -419,15 +365,6 @@ class TransitionPresenter {
             ordinal: (model.medals - 1).clamp(0, 4),
             size: 34,
           );
-          const up = Text(
-            '♥ +1UP',
-            style: TextStyle(
-              color: Color(0xFFFF8C89),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              shadows: [Shadow(color: Color(0xCC050811), blurRadius: 4)],
-            ),
-          );
           return Stack(
             children: [
               Positioned(
@@ -439,12 +376,7 @@ class TransitionPresenter {
                   opacity: o,
                   child: Transform.scale(
                     scale: .8 + .2 * a,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: right
-                          ? [medal, const SizedBox(width: 4), up]
-                          : [up, const SizedBox(width: 4), medal],
-                    ),
+                    child: medal,
                   ),
                 ),
               ),

@@ -102,3 +102,7 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
 ## 9. Playtest fixes (work/playtest-fixes, design §10)
 - [x] 9.1 The final wave leaves the fog empty: `finalWave` / `fogStaged`, no drawn reserve during a sector's last wave
       or the carrier; the rout scatters only fighters (no stand-in flock). `test/final_wave_fog_test.dart`.
+- [x] 9.2 Transitions communicate only via radio: no caption, no sector/tour title, no `+1UP` text, no unused banner
+      strings; every slot is a radio line (`InterludePlanner.planRadio`). `test/fluid_transitions_test.dart`,
+      `test/flow_director_test.dart`.
+- [x] 9.3 Review strip `art/contact/playtest-fixes-final-wave.png` (final wave into a sector change).

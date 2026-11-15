@@ -806,31 +806,6 @@ class ArcadeModel {
   bool get waveTransition => presentationMode == RunMode.transition && wave > 1;
   double get transitionProgress =>
       (1 - transitionLeft / transitionDuration).clamp(0, 1);
-  String get nextLevelName => const [
-    'KRYBOR',
-    'RINGFALL',
-    'EMBER MOON',
-    'THE HOLLOW',
-    'THE CARRIER',
-  ][nextLevel - 1];
-  String get levelName => const [
-    'KRYBOR',
-    'RINGFALL',
-    'EMBER MOON',
-    'THE HOLLOW',
-    'THE CARRIER',
-  ][level - 1];
-  String get banner => switch (presentationMode) {
-    RunMode.victory => 'CARRIER DESTROYED',
-    RunMode.salvage => 'COLLECT SALVAGE',
-    RunMode.levelClear => '$levelName SECURED',
-    RunMode.travel => 'APPROACHING $nextLevelName',
-    _ =>
-      waveTransition
-          ? 'WAVE $wave / $wavesPerLevel'
-          : 'LEVEL ${level.toString().padLeft(2, '0')} · $levelName',
-  };
-
   void start({Difficulty difficulty = Difficulty.normal}) {
     this.difficulty = difficulty;
     _resetSkill(); // --- demon intelligence

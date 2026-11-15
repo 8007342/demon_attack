@@ -70,22 +70,19 @@ void main() {
     }
   });
 
-  test('message slot and title never overlap, nor start by the swap', () {
+  test('the radio slot never starts by the swap; no title beat', () {
     for (final reduced in [false, true]) {
       for (final plan in _plans(reduced: reduced)) {
-        final slot = plan.beat('slot'), title = plan.beat('title');
+        // playtest-fixes: transitions speak only by radio, no title text.
+        expect(plan.beat('title'), isNull, reason: '${plan.kind}');
+        final slot = plan.beat('slot');
         if (slot == null) continue;
-        expect(title, isNotNull);
-        // The slot ends before the title begins.
-        expect(slot.d, lessThanOrEqualTo(title!.a));
-        final swap = plan.swapAt!;
-        for (final start in [slot.a, title.a]) {
-          expect(
-            (start - swap).abs(),
-            greaterThanOrEqualTo(FlowPlan.seamGuard),
-            reason: '${plan.kind} reduced=$reduced',
-          );
-        }
+        expect(
+          (slot.a - plan.swapAt!).abs(),
+          greaterThanOrEqualTo(FlowPlan.seamGuard),
+          reason: '${plan.kind} reduced=$reduced',
+        );
+        expect(slot.d, lessThanOrEqualTo(plan.descentAt));
       }
     }
   });
