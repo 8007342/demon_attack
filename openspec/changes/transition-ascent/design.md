@@ -146,3 +146,13 @@ only by the sector-change slot above, never by the seeded category draw, so ordi
   picks. The transition overlay passes it as `InterludeContext.revisit`. `RadioCategory.drawn` lists the four seeded
   categories; the fallback "any fresh line, then the shortest" walks only those, so a front call can only come from
   the revisit path.
+- **Review strips (§5).** `test/transition_ascent_review_test.dart` renders a 2 → 3 sector change on route 1 (a
+  revisit), 12 frames evenly across the plan, at 360 × 780 and 1280 × 720. Each sheet crops the letterbox: the top
+  two rows are the phone frames' arena, the bottom two the landscape frames' arena (same 360:520 aspect, higher
+  source resolution). The sheets are written to `art/contact/` only with
+  `--dart-define=TRANSITION_ASCENT_CONTACT=true` (as cinematic-flow's), otherwise to `.cache/transition-ascent-review`.
+  The test checks the envelopes the frames were drawn with (pitch, roll and streaks reach 1 in full motion and stay 0
+  in reduced, speed ×8 / ×2, rise ≤ 24) and the pitch geometry (`DemonScene.pitchedRow`: horizon drop, near rows move
+  further than far rows, the sky only translates); the look is judged on the sheets.
+- **Reduced motion spec wording.** The scenario now reads "the world never scrolls faster than twice its speed (a
+  still world stays still)" in place of "a gentle speed change", matching the frozen reduced-motion flyover.

@@ -20,8 +20,8 @@
 - [x] 4.3 `test/interlude_test.dart`: revisit / first visit / boss arrival / short window
 
 ## 5. Review
-- [ ] 5.1 `test/transition_ascent_review_test.dart` → `art/contact/transition-ascent-full.png`, `-reduced.png` (12 frames, 360 × 780 and 1280 × 720)
-- [ ] 5.2 Update `cinematic-flow` design §2 cross-reference
+- [x] 5.1 `test/transition_ascent_review_test.dart` → `art/contact/transition-ascent-full.png`, `-reduced.png` (12 frames, 360 × 780 and 1280 × 720)
+- [x] 5.2 Update `cinematic-flow` design §2 cross-reference
 
 ## Workflow follow-up
 - Voice batch: record the 13 `frontCall*` lines when tillandsias#1103 unblocks; the placeholders fall away with no code change.
