@@ -246,3 +246,8 @@ changes are three swarm beats on one clock (Rout, Pursuit into bright cloud, Des
 to Descent, carrier arrival through the swarm, outros, title attract swarm (6.1). Open: 6.2 demo pilot (optional),
 7.2 phone preview capture (after W4 and W5b merge), 8.2 spec sync at archive. Sheets `art/contact/cinematic-flow-*.png`;
 deviations and the progress-bar audit in `openspec/changes/cinematic-flow/design.md` §9.
+Update (2026-11-15, later): W4 `demon-intelligence` (647 tests; calibration "Post-W4" in `plan/calibration-current.md`;
+known miss: AveragePilot skill 0.07 vs band 0.25–0.55, because of the lost-life penalty) and W5b `cinematic-flow` (`fluid-transitions`
+archived) merged into `game`; web rebuilt and preview reloaded. Open: phone playtests (continuous-swarm 8.2,
+cinematic-flow 7.2, demon-intelligence 8.2), the spec syncs at archive, and the 22 voice lines in
+`plan/audio-studio/voice-batch-pending.md` (blocked on tillandsias#1103).
