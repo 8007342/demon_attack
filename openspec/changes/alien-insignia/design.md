@@ -94,3 +94,43 @@ segment with a white flash. The palette is unchanged.
 - **No HP pips.** ux-declutter removed them on purpose, and the whole-hide warm-up carries "hurt" without clutter.
 - **Mockups by composition, not AI.** The sheets compose the shipped atlas with exact glyphs, so the operator judges
   the real proposal. Hero-art changes (crest zone, coarse elite plates) wait for the next creature render pass.
+
+## 9. As built: runtime deviations (tasks 3.1–3.6)
+- **No arena camera yet.** `boss-grandeur`'s `arena_camera.dart` has not landed, so there is no zoom transform to draw
+  "after". `InsigniaPainter.paint` takes a `toScreen` mapping (identity for now) and keeps sizes fixed whatever it
+  does. The overlay is drawn in the arena canvas after the sky sheets and the tell chevrons, so it still follows the
+  arena scale, the rush shake and the flow tilt. When the camera lands, it passes `camera.toScreen` and draws the
+  overlay outside the zoom.
+- **Rims without a layer.** Each rim is the body cell drawn four times at ±1 glyph px (1.35 units, fixed under
+  perspective scale), tinted, under the body, in the depth pass. No `saveLayer` is needed because the body covers
+  the inside. Where two offsets overlap at a corner, the cyan rim's 0.6 alpha stacks to about 0.84. The budget is
+  8 rims per frame, first come in depth order (`DemonScene.rimCount`).
+- **Which rims.** Fliers have no force shields, so they rim only when angry (ember) or telling (white). Sentinels
+  rim cyan while their shield holds, or white in a tell. The carrier has no silhouette rim: its force-field egg is
+  the rim, recoloured from mint and jade to the cyan family (`#62F0FF`, then `#3FC4DC`, then a flicker toward
+  `#1C6F86`).
+- **Tell flash.** 5 Hz white (`InsigniaPainter.tellOn`); steady white under reduced motion.
+- **Wound warm-up.** A colour matrix cannot threshold on luma. Each channel lerps toward `#FF6E3C` by
+  0.12 × molt, weighted by the pixel's own luma (gain 2.2): mid hide reaches full ember, and the dark outline moves
+  by less than 10/255. It is composed with the veil matrix into the body's existing filter slot (cached per tint
+  bucket and molt).
+- **Sentinel crown.** The sentinel sheet has no head-point data, so the crown sits at a fixed 17 units above the
+  centre × the sentinel's scale (measured on the sheet).
+- **Sentinel cells.** The arc is 34 × 24 units × scale about centre + 4 units, and replaces the shield wear frames
+  as the readout. Armour layers are unchanged. Spent sockets stay while any point remains. Once the last cell has
+  flashed and shed, the arc is gone.
+- **Rush shield.** The crimson dotted ring is replaced by an arc of rush cells (`#FFA88C`) 11 units below the
+  shield arc.
+- **Breaks.** A struck cell is white for 2/60 s. On the first painted frame after that, it sheds 2–3 shards: 2.7
+  unit squares that are white for 4/60 s, then cyan (or rush pink), with gravity 420 units/s², living 0.7 s. At
+  most 12 shards are alive, and the oldest is dropped first. Spent points go from the outside in, the left end
+  first.
+- **Carrier.** The 12 hull cells sit at 1.5× size on the force field's lower surface, across ±75 % of its half
+  width, and are hidden once the shield is gone. The form glyph (talon, two talons, ocellus, crown by `phase`) is
+  drawn at 2× on the brow, 16 units above the centre.
+- **Carrier sigil pips (3.6).** They are not drawn by code: they are baked into the AI-rendered hull art. There is
+  nothing to remove in `scene.dart`. Removing them from the art is a note for `boss-hero-assets`' next hull pass.
+- **Dive segments.** The bow's columns are cut into N equal segments with 6-unit gaps. A burnt segment is not
+  drawn, and one that has just burnt flashes white for 0.12 s. A 1-point shield stays whole.
+- **Overlap.** It is tested on the glyph fills (outlines may touch). A skipped glyph stays skipped for 0.3 s,
+  measured on `model.visualClock`.

@@ -85,7 +85,7 @@ Species `k` owns rows `9k … 9k+8` (`CombatAtlas.base(k)`):
 
 **Death** (0.56 s, 8 frames): flash; glowing seams; then the stone body breaks into 5 × 5 px chunks that tumble outward and fall, glowing then cooling to grey, around a core burst, with dust puffs at the end. The scene plays it where an ordinary demon leaves the simulation with `hp <= 0` (`CreaturePresentation`).
 
-**Elites** add authored armour from the same rig, kept as the pixels the armour adds over the unarmoured body (wings omitted, so plates never paint over a wing): level 4 a steel gorget and gold-studded pauldrons, level 3 three gold crest spikes, level 2 side helm plates, level 1 the gold double-chevron rank mark on the brow, which every elite keeps. Each hit sheds one level (`level = (4 − hp).clamp(0, 3)`). The overlay is drawn at the creature's position offset by the frame's body lift (`lift × size / 64` arena units: a whole logical pixel, so it stays on the pixel grid). The dotted rank halo stays a scene effect.
+**Elites** add authored armour from the same rig, kept as the pixels the armour adds over the unarmoured body (wings omitted, so plates never paint over a wing): level 4 a steel gorget and gold-studded pauldrons, level 3 three gold crest spikes, level 2 side helm plates, level 1 the gold double-chevron rank mark on the brow, which every elite keeps. Each hit sheds one level (`level = (4 − hp).clamp(0, 3)`). The overlay is drawn at the creature's position offset by the frame's body lift (`lift × size / 64` arena units: a whole logical pixel, so it stays on the pixel grid). The elite's dotted rank halo is gone (alien-insignia): rank is the ocellus glyph over the head, drawn by `InsigniaPainter` at the head anchor.
 
 ### Head anchors
 

@@ -200,11 +200,26 @@ void main() {
         _crop(unshielded, 40, 70, 280, 15),
         isNot(_crop(flap, 40, 70, 280, 15)),
       );
-      expect(
-        _crop(unshielded, 40, 20, 280, 30),
-        _crop(flap, 40, 20, 280, 30),
-        reason: 'Absorbing shield removal preserves the armored creature',
-      );
+      // alien-insignia: only the cyan shield rim around the silhouette
+      // goes with the shield; the armoured creature itself is unchanged.
+      final before = _crop(flap, 40, 20, 280, 30);
+      final after = _crop(unshielded, 40, 20, 280, 30);
+      var changed = 0;
+      for (var i = 0; i < before.length; i += 4) {
+        if (before[i] == after[i] &&
+            before[i + 1] == after[i + 1] &&
+            before[i + 2] == after[i + 2]) {
+          continue;
+        }
+        changed++;
+        expect(
+          before[i + 2] > before[i] && before[i + 1] > before[i],
+          isTrue,
+          reason: 'Absorbing shield removal preserves the armored creature '
+              '(only cyan rim pixels change)',
+        );
+      }
+      expect(changed, greaterThan(0), reason: 'the cyan rim was there');
       sentinel.hp = heavy.hp = 2;
       sentinel.armor = heavy.armor = 0;
       final damaged = await _capture(scene, 'sentinels-shed-armor');

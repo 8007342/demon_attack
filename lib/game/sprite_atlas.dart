@@ -2,6 +2,7 @@ import 'dart:ui' show Offset;
 
 import 'combat_anchors.dart';
 import 'creature_motion.dart';
+import 'insignia_painter.dart';
 import 'model.dart';
 import 'swarm_look.dart';
 
@@ -246,6 +247,9 @@ class CreaturePresentation {
 
   /// continuous-swarm: visible evasion (cosmetic offsets, never gameplay).
   final look = SwarmLook();
+
+  /// alien-insignia: shield cell breaks, flashes and shards.
+  final shields = ShieldFx();
   List<Demon> _previous = const [];
 
   double? fireAge(Demon d) => _fireAge[d];
@@ -256,6 +260,7 @@ class CreaturePresentation {
     if (live) {
       motion.update(model, dt);
       look.update(model, dt);
+      shields.update(model, dt);
       for (final d in model.demons) {
         final age = _fireAge[d];
         if (age != null) _fireAge[d] = age + dt;

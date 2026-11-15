@@ -12,6 +12,8 @@ import 'ground_atmosphere.dart';
 import 'ground_atmosphere_atlas.dart';
 import 'boss_painter.dart';
 import 'ground_painter.dart';
+import 'insignia_atlas.dart';
+import 'insignia_painter.dart';
 import 'model.dart';
 import 'music_director.dart'; // --- music event hook
 import 'sector_background.dart';
@@ -40,6 +42,8 @@ class DemonScene extends FlameGame {
   final armada = BossPainter();
   final sectors = SectorBackground();
   final creatures = CreaturePresentation();
+  // --- alien-insignia: rank glyphs and shield cells over the arena.
+  final insignia = InsigniaPainter();
   // --- atmosphere: fog layers and creature veils (atmosphere.dart).
   final atmosphere = Atmosphere();
   final music = MusicDirector(); // --- music event hook (read-only)
@@ -71,6 +75,9 @@ class DemonScene extends FlameGame {
     }
     try {
       cockpitAtlas = await images.load('cockpit-panel.png');
+    } catch (_) {}
+    try {
+      insignia.image = await images.load(InsigniaAtlas.file);
     } catch (_) {}
     try {
       silhouetteAtlas = await images.load(SentinelSilhouetteAtlas.file);
@@ -817,6 +824,8 @@ class DemonScene extends FlameGame {
   }
 
   void _combat(Canvas c) {
+    insignia.begin(); // --- alien-insignia: this frame's marks
+    _rims = 0;
     // --- atmosphere: ground fog lies on the terrain, over the shadows.
     if (model.perspective) atmosphere.paint(c, FogSlot.groundFog);
     // --- easter eggs: flock flyers over the ground fog (in the air).
@@ -914,23 +923,8 @@ class DemonScene extends FlameGame {
       final reveal = Perspective.gearReveal(t);
       c.save();
       _scaleAbout(c, pos, d.scale); // sizes below are at scale 1
-      if (d.elite && reveal > 0) {
-        // Rank halo: a slow dotted ring of elite insignia pips.
-        for (var i = 0; i < 12; i++) {
-          if ((i + (model.clock * 2).floor()) % 4 == 0) continue;
-          final angle = i * math.pi / 6;
-          c.drawRect(
-            Rect.fromLTWH(
-              (pos.dx + math.cos(angle) * 24).roundToDouble(),
-              (pos.dy + math.sin(angle) * 24).roundToDouble(),
-              2,
-              2,
-            ),
-            Paint()
-              ..color = (d.angry ? gold : violet).withValues(alpha: reveal),
-          );
-        }
-      }
+      // --- alien-insignia: the elite's dotted ring is gone; its ocellus
+      // (and every rank's glyph) is drawn over the arena after the fog.
       // Gargoyle frames carry their own banking (3/4 left/neutral/right
       // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
@@ -951,6 +945,37 @@ class DemonScene extends FlameGame {
       final far =
           (model.perspective ? _bodyOpacity(d.nearness) : 1.0) *
           (census.reserve.contains(d) ? reserveIn : 1.0);
+      // --- alien-insignia: state rim under the body, wound warm-up in the
+      // body's colour filter, the rank glyph queued at the head anchor.
+      final mark = InsigniaPainter.revealAlpha(t) * far;
+      final telling = d.telegraph > 0 && _tellOn;
+      final rim = mark <= 0
+          ? null
+          : telling
+          ? const Color(0xFFFFFFFF)
+          : d.angry
+          ? InsigniaPainter.rimEmber
+          : null;
+      if (rim != null && _rims < InsigniaPainter.maxRims) {
+        _rims++;
+        final w = InsigniaPainter.unitsPerGlyphPx / d.scale;
+        for (final o in [
+          Offset(w, 0),
+          Offset(-w, 0),
+          Offset(0, w),
+          Offset(0, -w),
+        ]) {
+          sprite(
+            c,
+            cell.row,
+            cell.col,
+            pos + o,
+            size,
+            tint: rim,
+            opacity: mark,
+          );
+        }
+      }
       sprite(
         c,
         cell.row,
@@ -958,9 +983,28 @@ class DemonScene extends FlameGame {
         pos,
         size,
         tint: cell.tintFlash ? Colors.white : null,
-        filter: cell.tintFlash ? null : atmosphere.tintFor(t),
+        filter: cell.tintFlash ? null : _bodyFilter(t, d.moltStage.clamp(0, 3)),
         opacity: far,
       );
+      if (mark > 0) {
+        final head = CombatAtlas.headAnchor(
+          cell.row,
+          cell.col,
+          lift: cell.lift,
+        );
+        final k = size / CombatAtlas.cell * d.scale;
+        insignia.rank(
+          d,
+          CombatAtlas.rankOf(d),
+          pos + Offset(head.dx * k, (head.dy - 1) * k),
+          tone: telling
+              ? InsigniaTone.tell
+              : d.angry
+              ? InsigniaTone.angry
+              : InsigniaTone.bone,
+          alpha: mark,
+        );
+      }
       final glow = Perspective.glowAlpha(t) - t;
       if (glow > .02 && !cell.tintFlash) {
         // Eyes and cracks punch through the fog (research §1).
@@ -1091,18 +1135,20 @@ class DemonScene extends FlameGame {
         // inward vertically, so incoming fire visibly reaches nearer the ship.
         final strength = b.shield / b.shieldMax;
         final paint = Paint()..isAntiAlias = false;
+        // alien-insignia: the force-shield cyan family (styleguide §3),
+        // dimming toward the spent-socket teal as it wears.
         final Color shieldColor;
         if (strength > 0.6) {
-          shieldColor = mint;
+          shieldColor = InsigniaPainter.rimCyan;
         } else if (strength > 0.25) {
-          // Stressed force field shifts to electric jade/lime with fracture flicker
-          shieldColor = const Color(0xFF45E898);
+          // Stressed force field dims with fracture flicker.
+          shieldColor = const Color(0xFF3FC4DC);
         } else {
           // Critical force field flickers rapidly with warning energy
           final flicker = (math.sin(model.visualClock * 24) + 1.0) * 0.5;
           shieldColor = Color.lerp(
-            const Color(0xFF50E070),
-            const Color(0xFF70F050),
+            const Color(0xFF1C6F86),
+            InsigniaPainter.rimCyan,
             flicker,
           )!;
         }
@@ -1152,6 +1198,7 @@ class DemonScene extends FlameGame {
       }
       _damage(c, Offset(b.x, b.y), hullDamage, model.visualClock);
       c.restore();
+      _carrierInsignia(b);
     }
     // --- atmosphere: one or two very thin sheets over the arena, creatures
     // and carrier included. Bullets, the player, tells and the HUD are drawn
@@ -1167,6 +1214,11 @@ class DemonScene extends FlameGame {
       _wingTellChevrons(c, pos);
       c.restore();
     }
+    // --- alien-insignia: rank glyphs, shield cells and shards, drawn after
+    // the arena camera at a fixed size (identity until boss-grandeur's
+    // camera lands: pass its toScreen here).
+    creatures.shields.paintShards(c);
+    insignia.paint(c, now: model.visualClock);
     for (final s in model.shots) {
       final x = s.x.roundToDouble(), y = s.y.roundToDouble();
       final p = Paint()..isAntiAlias = false;
@@ -1271,6 +1323,61 @@ class DemonScene extends FlameGame {
         opacity: b.blastRadius > 0 ? .5 : .65,
       );
     }
+  }
+
+  /// alien-insignia: the carrier's form glyph on the brood sigil (the
+  /// rank ladder: talon, two talons, ocellus, crown) and its 12 hull cells
+  /// on the force field's lower arc, `ceil(12 · shield / shieldMax)` lit.
+  void _carrierInsignia(Carrier b) {
+    insignia.rank(
+      b,
+      InsigniaPainter.carrierRank(b.phase),
+      Offset(b.x, b.y + carrierSigilY),
+      size: 2,
+    );
+    final fx = creatures.shields;
+    if (b.shieldMax <= 0 || (b.shield <= 0 && fx.bossFlashes.isEmpty)) return;
+    final lit = ShieldFx.bossCells(b.shield, b.shieldMax);
+    final on = InsigniaPainter.litCells(12, lit);
+    for (var i = 0; i < 12; i++) {
+      final x = b.x + (i / 11 - .5) * 1.5 * b.forceFieldHalfWidth;
+      final at = Offset(x, b.forceFieldSurfaceY(x));
+      insignia.cell(at, fx.bossCellState(i, on[i], at), size: 1.5);
+    }
+  }
+
+  /// Where the carrier's sigil glyph sits (units below its centre).
+  static const double carrierSigilY = -16;
+
+  // --- alien-insignia: per-frame rim budget, the tell flash and the
+  // wound warm-up composed into the body's veil filter (design §5).
+  int _rims = 0;
+
+  /// Rims drawn in the last frame (at most InsigniaPainter.maxRims).
+  int get rimCount => _rims;
+  bool get _tellOn => InsigniaPainter.tellOn(
+    model.visualClock,
+    reducedMotion: sectors.flyover.reducedMotion,
+  );
+  final Map<int, ColorFilter?> _warmFilters = {};
+  int _warmVeil = 0;
+
+  ColorFilter? _bodyFilter(double t, int molt) {
+    if (molt <= 0) return atmosphere.tintFor(t);
+    final bucket = Perspective.tintBucket(t);
+    final veil = atmosphere.veil;
+    if (veil.toARGB32() != _warmVeil) {
+      _warmFilters.clear();
+      _warmVeil = veil.toARGB32();
+    }
+    return _warmFilters[bucket * 4 + molt] ??= ColorFilter.matrix(
+      bucket >= 15
+          ? InsigniaPainter.warmMatrix(molt)
+          : InsigniaPainter.compose(
+              Atmosphere.veilMatrix(bucket / 15, veil),
+              InsigniaPainter.warmMatrix(molt),
+            ),
+    );
   }
 
   /// Jettisoned overheated or replaced components tumbling off the ship.
@@ -2398,6 +2505,32 @@ class DemonScene extends FlameGame {
     }
   }
 
+  /// alien-insignia: the thermal bow is cut into one segment per
+  /// dive-shield point (palette unchanged). Returns true when the column at
+  /// [dx] is not drawn as plasma: a gap between segments, a burnt-off
+  /// segment, or one burning off this instant (a white flash).
+  bool _diveSegmentGap(
+    Canvas c,
+    Demon d,
+    double dx,
+    double halfSpan,
+    double sx,
+    double sy,
+    Paint paint,
+  ) {
+    final n = d.diveShieldMax;
+    if (n <= 1) return false;
+    final width = 2 * halfSpan / n;
+    final seg = ((dx + halfSpan) / width).floor().clamp(0, n - 1);
+    if (seg > 0 && dx + halfSpan - seg * width < 6) return true;
+    if (InsigniaPainter.litCells(n, d.diveShield)[seg]) return false;
+    if (creatures.shields.flashAge(d, 'dive', seg) != null) {
+      paint.color = const Color(0xFFFFFFFF);
+      c.drawRect(Rect.fromLTWH(sx, sy - 4, 3, 6), paint);
+    }
+    return true;
+  }
+
   void _smallOrMediumDiveShield(Canvas c, Offset pos, Demon d) {
     final paint = Paint()..isAntiAlias = false;
     final notSoSmall =
@@ -2416,6 +2549,7 @@ class DemonScene extends FlameGame {
         final jitter = math.sin(model.clock * 38 + dx * 0.9) > 0.15 ? 1.0 : 0.0;
         final sx = (pos.dx + dx - 1).roundToDouble();
         final sy = (pos.dy + 11 + curve).roundToDouble();
+        if (_diveSegmentGap(c, d, dx, halfSpan, sx, sy, paint)) continue;
 
         // Turbulent ablation envelope (superheated flame orange to deep crimson).
         final tongueHeight =
@@ -2486,6 +2620,7 @@ class DemonScene extends FlameGame {
         final jitter = math.sin(model.clock * 38 + dx * 0.9) > 0.2 ? 1.0 : 0.0;
         final sx = (pos.dx + dx - 1).roundToDouble();
         final sy = (pos.dy + 11 + curve).roundToDouble();
+        if (_diveSegmentGap(c, d, dx, halfSpan, sx, sy, paint)) continue;
 
         // Turbulent orange-crimson ablation wisps.
         paint.color = const Color(0xFFDD2C00).withValues(alpha: 0.65);
@@ -2677,6 +2812,29 @@ class DemonScene extends FlameGame {
     final bodyCol = firing
         ? species * 4 + (fired / .07).floor().clamp(0, 3)
         : frame;
+    // --- alien-insignia: a white rim in the tell, cyan while shielded.
+    final mark = InsigniaPainter.revealAlpha(t) * (1 - shade);
+    final telling = warning && _tellOn;
+    final shielded = demon.shield > 0 && demon.shieldMax > 0;
+    if (mark > 0 && (telling || shielded) && _rims < InsigniaPainter.maxRims) {
+      _rims++;
+      final w = InsigniaPainter.unitsPerGlyphPx / demon.scale;
+      for (final o in [
+        Offset(w, 0),
+        Offset(-w, 0),
+        Offset(0, w),
+        Offset(0, -w),
+      ]) {
+        effectSprite(
+          c,
+          bodyRow,
+          bodyCol,
+          pos + o,
+          tint: telling ? const Color(0xFFFFFFFF) : InsigniaPainter.rimCyan,
+          opacity: mark * (telling ? 1 : InsigniaPainter.shieldRimAlpha),
+        );
+      }
+    }
     effectSprite(
       c,
       bodyRow,
@@ -2694,18 +2852,34 @@ class DemonScene extends FlameGame {
     _creatureLighting(c, pos, bank, width: 92, diving: diving);
     c.restore();
     final reveal = Perspective.gearReveal(t);
-    if (reveal <= 0) return;
-    if (demon.shield > 0 &&
-        demon.shieldMax > 0 &&
-        !(diving && demon.diveShield > 0)) {
-      effectSprite(
-        c,
-        2,
-        ((1 - demon.shield / demon.shieldMax) * 4).floor().clamp(0, 3),
-        pos,
-        opacity: reveal,
+    if (mark > 0) {
+      // --- alien-insignia: the crown over the head, and one cyan cell per
+      // shield point in front of the body (spent points stay as sockets).
+      // Overlays are queued in arena units (the canvas here is scaled).
+      insignia.rank(
+        demon,
+        AlienRank.sentinel,
+        pos + Offset(0, sentinelHeadTop * demon.scale),
+        tone: telling ? InsigniaTone.tell : InsigniaTone.bone,
+        alpha: mark,
       );
+      final shieldUp =
+          demon.shield > 0 || creatures.shields.breaking(demon, 'shield');
+      if (demon.shieldMax > 0 &&
+          shieldUp &&
+          !(diving && demon.diveShield > 0)) {
+        _shieldCells(
+          demon,
+          'shield',
+          demon.shield,
+          demon.shieldMax,
+          pos + Offset(0, 4 * demon.scale),
+          demon.scale,
+          mark,
+        );
+      }
     }
+    if (reveal <= 0) return;
     if (demon.armor > 0 && demon.armorMax > 0) {
       final layers = (demon.armor / demon.armorMax * 4).ceil();
       for (var layer = 0; layer < layers; layer++) {
@@ -2826,31 +3000,49 @@ class DemonScene extends FlameGame {
     }
   }
 
-  /// The rush-shield ring (unscaled, so it reads at any depth): a broken
-  /// crimson ellipse that shrinks and thins as the shield wears.
+  /// The rush shield (alien-insignia): the force-shield cell arc one row
+  /// below the sentinel's own, in ember-tinted cells, one per point, spent
+  /// points kept as sockets. Fixed size, so it reads at any depth.
   void _rushShieldRing(Canvas c, Offset pos, Demon d) {
-    if (d.rushShield <= 0 || d.rushShieldMax <= 0 || d.entering) return;
-    final paint = Paint()..isAntiAlias = false;
-    final ratio = d.rushShield / d.rushShieldMax;
-    final size = math.max(d.scale, .8);
-    final r = (34 + 18 * ratio) * size;
-    final pulse = .6 + .3 * math.sin(model.clock * 9);
-    const dots = 36;
-    for (var i = 0; i < dots; i++) {
-      // The worn share of the ring breaks up into gaps.
-      if (i / dots > ratio && i % 3 != 0) continue;
-      final a = i / dots * 2 * math.pi + model.clock * 1.4;
-      paint.color =
-          (i.isEven ? const Color(0xFFFF4D5E) : const Color(0xFFB0102A))
-              .withValues(alpha: pulse);
-      c.drawRect(
-        Rect.fromLTWH(
-          (pos.dx + math.cos(a) * r - 1.5).roundToDouble(),
-          (pos.dy + math.sin(a) * r * .62 - 1.5).roundToDouble(),
-          3,
-          3,
-        ),
-        paint,
+    if (d.rushShieldMax <= 0 || d.entering) return;
+    if (d.rushShield <= 0 && !creatures.shields.breaking(d, 'rush')) return;
+    final scale = math.max(d.scale, .8);
+    _shieldCells(
+      d,
+      'rush',
+      d.rushShield,
+      d.rushShieldMax,
+      pos + Offset(0, 4 * scale + 11),
+      scale,
+      InsigniaPainter.revealAlpha(_transmittance(d)),
+      litAs: ShieldCell.rush,
+    );
+  }
+
+  /// Head top of the sentinel sheet's creature (units above the centre at
+  /// scale 1): where its crown sits.
+  static const double sentinelHeadTop = -17;
+
+  /// Queues a force-shield arc: [max] cells about [centre] (arena units)
+  /// for a body at [scale], [lit] of them lit, breaks flashing white and
+  /// then shedding shards.
+  void _shieldCells(
+    Demon d,
+    String kind,
+    int lit,
+    int max,
+    Offset centre,
+    double scale,
+    double alpha, {
+    ShieldCell litAs = ShieldCell.lit,
+  }) {
+    final on = InsigniaPainter.litCells(max, lit);
+    final at = InsigniaPainter.arc(max, centre, 34 * scale, 24 * scale);
+    for (var i = 0; i < max; i++) {
+      insignia.cell(
+        at[i],
+        creatures.shields.cellState(d, kind, i, on[i], at[i], litAs: litAs),
+        alpha: alpha,
       );
     }
   }
@@ -2871,6 +3063,7 @@ class DemonScene extends FlameGame {
       final jitter = math.sin(model.clock * 38 + dx * 0.9) * 1.5;
       final sx = (pos.dx + dx - 1).roundToDouble();
       final sy = (pos.dy + 16 + bow).roundToDouble();
+      if (_diveSegmentGap(c, demon, dx, halfSpan, sx, sy, paint)) continue;
 
       // Jagged trailing flame tongues licking backward along the flanks.
       final tongueHeight =

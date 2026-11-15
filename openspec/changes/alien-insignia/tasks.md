@@ -11,12 +11,12 @@
 - [x] 2.3 `tools/alien_insignia atlas` → `assets/images/insignia.png` (< 4 KB) and its Dart rects
 
 ## 3. Runtime
-- [ ] 3.1 `lib/game/insignia_painter.dart`: one `drawAtlas` after the camera transform, fixed CSS size, reveal gate, overlap rule (design §2)
-- [ ] 3.2 Rims (shield, angry, tell) in one layer for at most ~8 creatures
-- [ ] 3.3 Force-shield cells for sentinel shield, rush shield and boss shield; shards (≤ 12 alive)
-- [ ] 3.4 Dive-shield arc segments (thermal palette unchanged)
-- [ ] 3.5 Wound warm-up colour matrix in the body draw; angry glyph variant; tell flash (steady under reduced motion)
-- [ ] 3.6 Remove the elite dotted ring and the carrier sigil pips
+- [x] 3.1 `lib/game/insignia_painter.dart`: one `drawAtlas` after the camera transform, fixed CSS size, reveal gate, overlap rule (design §2)
+- [x] 3.2 Rims (shield, angry, tell) in one layer for at most ~8 creatures
+- [x] 3.3 Force-shield cells for sentinel shield, rush shield and boss shield; shards (≤ 12 alive)
+- [x] 3.4 Dive-shield arc segments (thermal palette unchanged)
+- [x] 3.5 Wound warm-up colour matrix in the body draw; angry glyph variant; tell flash (steady under reduced motion)
+- [x] 3.6 Remove the elite dotted ring and the carrier sigil pips (the pips are baked into the hull art, not code: handed to `boss-hero-assets`, design §9)
 
 ## 4. Validation
 - [ ] 4.1 `test/insignia_test.dart`: rank table, contrast ≥ 0.35, fixed size under zoom, overlap, reveal
