@@ -11,6 +11,7 @@ import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'campaign_playtest_test.dart' show steer;
+import 'support/average_pilot.dart';
 import 'support/swarm_metrics.dart';
 
 const seeds = [1982, 7, 21, 42, 99, 314, 2718, 5150];
@@ -66,5 +67,44 @@ void main() {
           .convert({'seeds': seeds, 'summary': summary, 'efficiency': fits}),
     );
     File('.cache/swarm-calibration-$tag.md').writeAsStringSync(all.markdown());
+  }, skip: tag == null ? 'set SWARM_CALIBRATION=<tag> to run' : null);
+
+  // Task 5.5: the Average pilot (not invulnerable) per sector; lives lost
+  // are reported, never asserted (the W4 baseline).
+  test('average pilot: lives lost per sector', () {
+    final b = StringBuffer()
+      ..writeln(
+        '| Mode | Route | Sector | Lives lost (mean of seeds) | Cleared |',
+      )
+      ..writeln('|---|---:|---:|---:|---:|');
+    for (final difficulty in Difficulty.values) {
+      for (final route in [0, 1, 2]) {
+        for (var sector = 1; sector <= 4; sector++) {
+          var lost = 0, cleared = 0;
+          for (final seed in seeds.take(4)) {
+            final m = ArcadeModel(seed: seed)
+              ..startAt(difficulty: difficulty, sector: sector, route: route);
+            m.lives = 99;
+            final pilot = AveragePilot(seed: seed);
+            for (var f = 0; f < 60 * 900 && m.level == sector; f++) {
+              if (m.mode == RunMode.salvage) {
+                cleared++;
+                break;
+              }
+              if (m.combat) pilot.steer(m, 1 / 60);
+              m.update(1 / 60);
+              m.takeEvents();
+            }
+            lost += 99 - m.lives;
+          }
+          b.writeln(
+            '| ${difficulty.name} | $route | $sector | '
+            '${(lost / 4).toStringAsFixed(2)} | $cleared/4 |',
+          );
+        }
+      }
+    }
+    Directory('.cache').createSync(recursive: true);
+    File('.cache/swarm-average-$tag.md').writeAsStringSync(b.toString());
   }, skip: tag == null ? 'set SWARM_CALIBRATION=<tag> to run' : null);
 }

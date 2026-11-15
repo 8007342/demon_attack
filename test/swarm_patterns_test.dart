@@ -3,7 +3,6 @@
 import 'dart:math' as math;
 
 import 'package:demon_attack/game/model.dart';
-import 'package:demon_attack/game/swarm_patterns.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Squad _squad(
