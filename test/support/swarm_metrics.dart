@@ -130,6 +130,7 @@ class SwarmMetrics {
             sector,
             waves.length,
             waves.fold<double>(0, (a, r) => a + r.combatSeconds) / waves.length,
+            waves.fold<double>(0, (a, r) => a + r.wallSeconds) / waves.length,
             fired == 0 ? 0 : hit / fired,
             waves.map((r) => r.peakActive).reduce(math.max),
             waves.map((r) => r.peakHostile).reduce(math.max),
@@ -173,13 +174,13 @@ class SwarmMetrics {
   String markdown() {
     final b = StringBuffer()
       ..writeln(
-        '| Mode | Sector | Waves | Mean clear (s) | Hit ratio | Peak active | Peak hostile | Lives lost |',
+        '| Mode | Sector | Waves | Mean clear (s) | Mean wall (s) | Hit ratio | Peak active | Peak hostile | Lives lost |',
       )
-      ..writeln('|---|---:|---:|---:|---:|---:|---:|---:|');
+      ..writeln('|---|---:|---:|---:|---:|---:|---:|---:|---:|');
     for (final s in summary()) {
       b.writeln(
         '| ${s.mode} | ${s.sector} | ${s.waves} | '
-        '${s.meanClear.toStringAsFixed(2)} | '
+        '${s.meanClear.toStringAsFixed(2)} | ${s.meanWall.toStringAsFixed(2)} | '
         '${(s.hitRatio * 100).toStringAsFixed(1)} % | ${s.peakActive} | '
         '${s.peakHostile} | ${s.livesLost} |',
       );
@@ -227,6 +228,7 @@ class SectorSummary {
     this.sector,
     this.waves,
     this.meanClear,
+    this.meanWall,
     this.hitRatio,
     this.peakActive,
     this.peakHostile,
@@ -234,5 +236,5 @@ class SectorSummary {
   );
   final String mode;
   final int sector, waves, peakActive, peakHostile, livesLost;
-  final double meanClear, hitRatio;
+  final double meanClear, meanWall, hitRatio;
 }
