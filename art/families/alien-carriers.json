@@ -1,0 +1,622 @@
+{
+ "schema": "demon-attack.rig-family/v1",
+ "name": "alien-carriers",
+ "notes": "The Thornwake carriers: the boss art direction v2 (R8, plan/operator-feedback-2026-11-15b.md; styleguide docs/styleguide/alien-capital-ships.md; openspec/changes/boss-hero-assets/design.md section 10). Input of tools/rigkit (rig.py, bake.py) and tools/rigsheet. Units are arena units. Ship frame: x = screen right, y = aft (the prow points -y, toward the player), z = up. Plane frame ('face' in v1 files): [ax, ay, n] on the plane through the carrier centre that faces the hero camera (pitch 45, yaw 0): ax, ay are hero-view screen units and n is the distance toward the camera; the functional windows live on it, so they hold at every pitch and swerve. A module is a slot (shared fields and common prims) plus one of its sets (set prims). A hull lists its slots and picks a set per slot; one bake per hull (= per set combination). Prims and generators: see tools/rigkit/rigkit.py prim_geometry and array_geometry.",
+ "symmetric": true,
+ "views": {"pitch": [38, 45, 52], "yaw": [-12, 0, 12], "hero": [45, 0], "stored_yaw": [0, 12],
+           "swerve_axis": [0.0, 0.70710678, 0.70710678]},
+ "render": {
+  "scale": 1.5, "margin": 6,
+  "envelope": [-360, -430, 360, 240],
+  "envelope_notes": "Carrier-relative arena rect that can ever reach the screen: carrier x in [82, 278], y in [189, 221] (glide), camera zoom down to Z = 0.70 about (180, 477) shows arena x in [-77, 437] and y from -204. Geometry outside is never rendered or stored (the budget-by-visible-region rule, boss-hero-assets ledger 4.3 lesson 5)."
+ },
+ "anchors": {
+  "tolerance": 3.0,
+  "points": [
+   {"name": "core", "module": "prow", "prim": "core", "at": [0, 25]},
+   {"name": "bayL", "module": "prow", "prim": "bayL", "at": [-46, 21]},
+   {"name": "bayR", "module": "prow", "prim": "bayR", "at": [46, 21]},
+   {"name": "turretL", "module": "prow", "prim": "turretL", "at": [-28, 36]},
+   {"name": "turretR", "module": "prow", "prim": "turretR", "at": [28, 36]}
+  ],
+  "coverage": {"rect": [-78, -25, 78, 43], "inset": 3, "grid": [9, 5]},
+  "verify_dart": {"file": "lib/game/boss_atlas.dart", "points": {
+   "core": ["coreWindow", "x", "y", 1], "bayR": ["bayWindow", "x", "y", 1], "bayL": ["bayWindow", "x", "y", -1],
+   "turretR": ["turretPivot", "x", "y", 1], "turretL": ["turretPivot", "x", "y", -1]}},
+  "overlay": [
+   {"rect": [0, 25, 32, 22], "color": "sim"}, {"rect": [46, 21, 22, 16], "color": "sim"}, {"rect": [-46, 21, 22, 16], "color": "sim"},
+   {"cross": [28, 36], "color": "sim"}, {"cross": [-28, 36], "color": "sim"},
+   {"rect": [0, 9, 156, 68], "color": "body"}
+  ]
+ },
+ "materials": {
+  "chitin":   {"clay": 0.50, "fill": "#2A2236", "notes": "lacquered carapace: the hull mass"},
+  "plate":    {"clay": 0.64, "fill": "#3E3150", "notes": "armour scales: shed at S2"},
+  "sinew":    {"clay": 0.36, "fill": "#5A1E2A", "notes": "living tissue between and under the scales; glows ember once exposed"},
+  "bone":     {"clay": 0.86, "fill": "#CDBB92", "notes": "spines, ribs, thorns, gun thorns"},
+  "membrane": {"clay": 0.30, "fill": "#2E1220", "notes": "sails between ribs"},
+  "crystal":  {"clay": 0.95, "hint": "#A868F0", "fill": "#A868F0", "notes": "psionic crystal growths (permanent)"},
+  "shard":    {"clay": 0.95, "hint": "#A868F0", "fill": "#A868F0", "notes": "shield-emitter crystals: shatter at S2"},
+  "ember":    {"clay": 1.00, "hint": "#FF8A2A", "fill": "#FF8A2A", "notes": "weak points and gun ports"},
+  "dark":     {"clay": 0.00, "hint": "#000000", "fill": "#07050C", "notes": "core maw, bays, hangar maws: the scene draws their glow"}
+ },
+ "palettes": {
+  "notes": "Value bands per material, so each reads at phone size: chitin dark mid, bone light, crystal violet glow, ember hot orange, membrane wine. Cyan is the force-shield overlay language (alien-insignia) and is never baked into a hull.",
+  "overlay_only": ["shield"],
+  "ramps": {
+   "chitin":   ["#0E0B14", "#1A1422", "#2A2236", "#3E3150", "#56456C", "#72608A", "#9484A8"],
+   "bone":     ["#3E3228", "#8A7658", "#CDBB92", "#F4E8C8"],
+   "crystal":  ["#2A0E4A", "#4E1E86", "#7A38C8", "#A868F0", "#D8B0FF", "#F4E6FF"],
+   "membrane": ["#1A0A12", "#2E1220", "#4A1C30", "#6E2A44"],
+   "sinew":    ["#3A0E16", "#5A1E2A", "#8A2E30"],
+   "ember":    ["#3A0A0C", "#7A1410", "#B8260F", "#E8501A", "#FF8A2A", "#FFC85A", "#FFF0B8"],
+   "shield":   ["#0B3A4A", "#1C7C90", "#3CC8D8", "#A8F4FF"],
+   "ink":      ["#07050C"]
+  }
+ },
+ "originality": {
+  "notes": "Checked by rig.py --check on titles, slot and set names, notes and prompts. References (StarCraft, Star Wars, Star Trek capital ships) inform scale, silhouette language and detail density only.",
+  "forbidden_words": ["protoss", "zerg", "terran", "overlord", "leviathan", "star destroyer", "imperial", "borg", "cube",
+                      "klingon", "romulan", "warbird", "xenomorph", "tyranid", "reaper", "covenant", "halo", "dalek",
+                      "skull", "skulls", "face", "eyes", "eye", "rivet", "rivets", "cross", "crucifix", "scripture",
+                      "galactica", "sauron", "nazgul", "gargoyle"]
+ },
+ "prompts": {
+  "hero": "Repaint this grey clay model as a finished, highly detailed painted game sprite of a colossal alien bio-organic carrier warship seen from above and in front, in the style of a high-resolution sci-fi capital ship concept painting. Materials: dark lacquered violet-black chitin carapace in large overlapping organic scales, satin and weathered, never glossy, ivory bone spines, ribs and thorns, dark wine-red membranes stretched between ribs, glowing violet psionic crystal growths where the clay is violet, small hot ember-orange glowing organic gun ports where the clay is orange. The weapons are grown bone thorns and glowing pores, not machinery. The black shapes stay deep black empty hangar openings. Organic, alien, ancient and menacing, enormous scale with dense fine detail, no metal panels, no windows. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+  "hero_set_thorn": "The armour is jagged and thorny, bristling with racks of bone thorn blades and long armour strakes.",
+  "hero_set_lattice": "Violet crystal lattices grow through the carapace in columns and veins, glowing softly.",
+  "hero_set_shroud": "The carapace is smooth and layered like overlapping beetle wing cases, heavy and armoured.",
+  "stage_S1": "Same ship, same pose, framing and colours. The violet crystals flicker dim and cracked; scorched soot streaks and fine glowing ember hairline cracks spread across the chitin scales. The black hangar openings stay black and empty, no fire inside them. Keep the green background.",
+  "stage_S2": "Same ship, same pose and framing. The armour scales are torn away in many places, exposing glowing ember-red sinew and bone ribs underneath; the violet crystal pylons are shattered stumps; small fires and sparks along the torn edges. The black hangar openings stay black and empty, no fire inside them. Keep the green background.",
+  "stage_S3": "Same ship, same pose and framing, now breaking apart: deep molten cracks through the carapace, broken spines and snapped ribs, burning breaches, black smoke wisps inside the hull outline. The black hangar openings stay black and empty, no fire inside them. Keep the green background.",
+  "refine": "Same image, same composition, same colours and lighting. Add fine surface detail: chitin scale edges, tiny bone thorns, membrane veins, crystal facets. Keep every shape, edge and dark opening exactly where it is. Keep the green background.",
+  "negative": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, multiple views, grid, sky, ground, landscape, checkerboard, shadow, face, eyes, mouth, teeth, skull, rivets, metal panels, windows, machinery, pipes, metal cannon barrels, studs, buttons, glossy plastic, toy, cyan, teal, blue glow, human, cartoon, cute"
+ },
+ "slots": {
+  "prow": {
+   "mount": "bow", "fixed": true, "frame": "face", "gameplay": "turret", "detach": null, "wreck": true,
+   "texel": "core", "id": "#E0402A",
+   "notes": "The launch gallery in the throat between the forward prongs, on the hero plane: the core maw and both bays as one hangar deck behind solid bulkheads, the two gun blisters on the sill below. Never detaches (it carries the simulation windows); it breaks only in S4. Head-reading guard: no thin repeated vertical bars, no rows of beads, no arcs over the openings, no paired bright features above them.",
+   "common_lights": [[-140, 6, 4, 3], [140, 6, 4, 3]],
+   "common_fires": [[-90, -30, 4], [90, -30, 4], [0, -40, 4], [-100, 50, 4], [100, 50, 4]],
+   "common": [
+    {"name": "deck", "type": "prism", "tag": "chitin", "n0": -70, "n1": 0, "subsurf": 1,
+     "poly": [[-176, -20], [-150, -52], [-80, -74], [0, -80], [80, -74], [150, -52], [176, -20], [176, 24], [150, 48], [90, 62], [0, 68], [-90, 62], [-150, 48], [-176, 24]]},
+    {"name": "gallery", "type": "box", "tag": "dark", "at": [0, 22, 0.3], "size": [128, 26, 0.6]},
+    {"name": "core", "type": "box", "tag": "dark", "at": [0, 25, 0.6], "size": [32, 22, 1.0]},
+    {"name": "bayL", "type": "box", "tag": "dark", "at": [-46, 21, 0.6], "size": [22, 16, 1.0]},
+    {"name": "bayR", "type": "box", "tag": "dark", "at": [46, 21, 0.6], "size": [22, 16, 1.0]},
+    {"name": "bulkhead", "type": "box", "tag": "chitin", "mirror": true, "at": [25.5, 22, 3], "size": [9, 30, 6], "taper": [0.75, 0.95], "subsurf": 1},
+    {"name": "jamb", "type": "box", "tag": "chitin", "mirror": true, "at": [64, 22, 3.5], "size": [12, 34, 7], "taper": [0.8, 0.95], "subsurf": 1},
+    {"name": "lintel", "type": "box", "tag": "chitin", "at": [0, 5, 4], "size": [154, 11, 8], "taper": [0.92, 0.7], "subsurf": 1},
+    {"name": "sill", "type": "box", "tag": "chitin", "at": [0, 39.5, 2.5], "size": [150, 7, 5], "taper": [0.95, 0.8], "subsurf": 1},
+    {"name": "turretL", "type": "lathe", "tag": "chitin", "at": [-28, 36, -2], "seg": 16, "subsurf": 1,
+     "profile": [[10, 0], [9.6, 3], [7.6, 6.5], [4.2, 9], [0, 9.8]]},
+    {"name": "turretR", "type": "lathe", "tag": "chitin", "at": [28, 36, -2], "seg": 16, "subsurf": 1,
+     "profile": [[10, 0], [9.6, 3], [7.6, 6.5], [4.2, 9], [0, 9.8]]},
+    {"name": "port", "type": "ell", "tag": "ember", "mirror": true, "at": [28, 39.5, 6.8], "radii": [3.2, 2.0, 1.2], "seg": 10},
+    {"name": "gunthorn", "type": "horn", "tag": "bone", "mirror": true, "seg": 6,
+     "pts": [[24.5, 39, 4], [23.5, 48, 9], [22.5, 58, 11]], "radii": [1.9, 1.4, 0.2]},
+    {"name": "gunthorn2", "type": "horn", "tag": "bone", "mirror": true, "seg": 6,
+     "pts": [[31.5, 39, 4], [32.5, 48, 9], [33.5, 58, 11]], "radii": [1.9, 1.4, 0.2]},
+    {"name": "decks", "type": "array", "tag": "plate", "count": 5, "subsurf": 1,
+     "path": [[-104, 52, 0], [104, 52, 0]],
+     "child": {"type": "box", "size": [40, 9, 3.5], "taper": [0.9, 0.8], "at": [0, 0, 1.6]}},
+    {"name": "decks2", "type": "array", "tag": "plate", "count": 4, "subsurf": 1,
+     "path": [[-138, -26, 0], [138, -26, 0]],
+     "child": {"type": "box", "size": [60, 16, 4], "taper": [0.9, 0.8], "at": [0, 0, 1.8]}},
+    {"name": "seam", "type": "array", "tag": "sinew", "count": 4,
+     "path": [[-120, -15, 0], [120, -15, 0]],
+     "child": {"type": "box", "size": [52, 2.5, 1.2], "at": [0, 0, 0.5]}}
+   ],
+   "sets": {
+    "thorn": {
+     "notes": "Racks of flat bone thorn blades jut sideways from both ends of the deck, like a ram.",
+     "prims": [
+      {"name": "thorns", "type": "array", "tag": "bone", "count": 4, "subsurf": 1, "mirror": true,
+       "path": [[168, -54, 0], [172, 34, 0]], "seed": 41, "jitter": {"scale": 0.2},
+       "rot": [[0, 0, -18], [0, 0, 14]],
+       "child": {"type": "horn", "seg": 8, "aspect": [1, 0.45], "up": [0, 0, 1],
+                 "pts": [[-6, 0, 0], [22, 0, 4], [46, -4, 2], [66, -10, -4]], "radii": [7, 5, 2.6, 0.3]}},
+      {"name": "decks3", "type": "array", "tag": "plate", "count": 4, "subsurf": 1,
+       "path": [[-120, -48, 0], [120, -48, 0]],
+       "child": {"type": "box", "size": [64, 18, 4], "taper": [0.9, 0.8], "at": [0, 0, 1.8]}},
+      {"name": "corner_thorn", "type": "horn", "tag": "bone", "mirror": true, "seg": 8, "subsurf": 1, "aspect": [1, 0.5], "up": [0, 0, 1],
+       "pts": [[148, 0, 0], [170, -12, -4], [190, -30, -10], [204, -52, -18]], "radii": [8, 6, 3, 0.4]}
+     ]
+    },
+    "lattice": {
+     "notes": "A row of violet crystal columns grows up out of the deck between bone struts.",
+     "prims": [
+      {"name": "crystals", "type": "array", "tag": "crystal", "count": 7,
+       "path": [[-108, -58, 4], [108, -58, 4]], "seed": 11, "jitter": {"scale": 0.25},
+       "child": {"type": "shard", "r": 7, "h": 46, "foot": 6, "sides": 6, "rot": [-70, 0, 0]}},
+      {"name": "struts", "type": "array", "tag": "bone", "count": 8,
+       "path": [[-140, -44, 3], [140, -44, 3]],
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, -26, 6], [0, -52, 2]], "radii": [3.4, 2.4, 0.4]}},
+      {"name": "side_crystal", "type": "shard", "tag": "crystal", "mirror": true, "at": [136, 22, 2], "r": 9, "h": 40, "foot": 8, "sides": 6, "rot": [0, 70, 0]}
+     ]
+    },
+    "shroud": {
+     "notes": "Three straight, overlapping armour cases layered over the top of the deck.",
+     "prims": [
+      {"name": "case1", "type": "horn", "tag": "plate", "seg": 12, "subsurf": 1, "aspect": [1, 0.35], "up": [0, 0, 1],
+       "pts": [[-160, -24, 2], [0, -32, 7], [160, -24, 2]], "radii": [8, 12, 8]},
+      {"name": "case2", "type": "horn", "tag": "plate", "seg": 12, "subsurf": 1, "aspect": [1, 0.35], "up": [0, 0, 1],
+       "pts": [[-150, -46, 0], [0, -54, 5], [150, -46, 0]], "radii": [8, 12, 8]},
+      {"name": "case3", "type": "horn", "tag": "plate", "seg": 12, "subsurf": 1, "aspect": [1, 0.35], "up": [0, 0, 1],
+       "pts": [[-130, -64, -2], [0, -72, 3], [130, -64, -2]], "radii": [7, 10, 7]},
+      {"name": "case_edge", "type": "array", "tag": "bone", "count": 9,
+       "path": [[-120, -2, 4], [120, -2, 4]],
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, -4, 8], [0, -10, 12]], "radii": [2.6, 1.6, 0.3]}}
+     ]
+    }
+   }
+  },
+  "carapace": {
+   "mount": "dorsal", "gameplay": "none", "detach": null, "wreck": "layer", "texel": "mass", "id": "#4A6CE0",
+   "notes": "The hull mass: a flat, wide-fronted wedge slab stepping up in terraces, with two forward prongs that embrace the arena. Linear fore-and-aft plating carries the scale (a ship's detail language in grown materials). Goes last in S4 (its wreck is its own S3 layer sinking into the fog).",
+   "common_lights": [[-260, 120, 30, 0], [260, 120, 30, 1]],
+   "common_fires": [[-150, 160, 60], [150, 160, 60], [0, 260, 100], [-220, 340, 40], [220, 340, 40], [-190, -40, 20], [190, -40, 20]],
+   "common": [
+    {"name": "hull", "type": "shell", "tag": "chitin", "axis": "y", "seg": 32, "subsurf": 1,
+     "displace": {"amp": 1.5, "freq": 0.02, "seed": 3},
+     "sections": [[40, 300, 20, 6, 0, 0], [140, 298, 34, 6, 0, 10], [280, 272, 42, 5, 0, 14], [440, 222, 40, 5, 0, 12],
+                  [600, 152, 30, 4, 0, 8], [740, 70, 16, 3, 0, 4], [820, 10, 4, 2, 0, 0]]},
+    {"name": "tier1", "type": "shell", "tag": "chitin", "axis": "y", "seg": 24, "subsurf": 1,
+     "sections": [[70, 190, 12, 6, 0, 34], [200, 196, 22, 6, 0, 46], [380, 168, 24, 5, 0, 48], [560, 110, 18, 4, 0, 36], [680, 40, 8, 3, 0, 24]]},
+    {"name": "tier2", "type": "shell", "tag": "chitin", "axis": "y", "seg": 24, "subsurf": 1,
+     "sections": [[120, 96, 10, 6, 0, 62], [240, 112, 20, 6, 0, 76], [400, 96, 22, 5, 0, 76], [540, 50, 14, 4, 0, 62], [620, 12, 5, 3, 0, 52]]},
+    {"name": "prong", "type": "horn", "tag": "chitin", "mirror": true, "seg": 16, "subsurf": 1, "aspect": [1, 0.3], "up": [0, 0, 1],
+     "displace": {"amp": 1.5, "freq": 0.03, "seed": 5},
+     "pts": [[200, 170, 6], [216, 50, 2], [222, -50, -4], [228, -150, -10], [234, -226, -16]], "radii": [92, 74, 58, 38, 4]},
+    {"name": "prong_ridge", "type": "horn", "tag": "chitin", "mirror": true, "seg": 10, "subsurf": 1, "aspect": [1, 0.5], "up": [0, 0, 1],
+     "pts": [[214, 160, 26], [222, 40, 20], [228, -60, 12], [232, -160, 2]], "radii": [30, 26, 18, 6]},
+    {"name": "sinew", "type": "array", "tag": "sinew", "surface": false, "mirror": true,
+     "grid": {"x": [60, 140, 220], "y": [110, 190, 270, 350, 430, 510]},
+     "drop": {"onto": "self", "offset": 0.4},
+     "child": {"type": "box", "size": [60, 5, 1.6]}},
+    {"name": "prong_plating", "type": "array", "tag": "plate", "surface": false, "mirror": true,
+     "grid": {"x": [180, 204, 228, 252, 276], "y": [-170, -120, -70, -20, 30, 80]},
+     "drop": {"onto": "self", "offset": 1.0, "tilt": 0.9},
+     "child": {"type": "box", "size": [18, 46, 3], "taper": [0.7, 1]}},
+    {"name": "prong_sinew", "type": "array", "tag": "sinew", "surface": false, "mirror": true,
+     "grid": {"x": [192, 240, 264], "y": [-145, -95, -45, 5, 55]},
+     "drop": {"onto": "self", "offset": 0.3},
+     "child": {"type": "box", "size": [16, 4, 1.4]}}
+   ],
+   "sets": {
+    "ridged": {
+     "notes": "A bone keel along the top terrace and long fore-and-aft armour strakes on every terrace.",
+     "prims": [
+      {"name": "keel", "type": "horn", "tag": "bone", "seg": 10, "subsurf": 1, "aspect": [0.6, 1],
+       "pts": [[0, 130, 74], [0, 240, 98], [0, 400, 98], [0, 540, 76], [0, 640, 50]], "radii": [7, 11, 11, 8, 3]},
+      {"name": "strakes", "type": "array", "tag": "plate", "surface": false, "mirror": true,
+       "grid": {"x": [24, 64, 104, 144, 184, 224, 264], "y": [90, 140, 190, 240, 290, 340, 390, 440, 490, 540, 590]},
+       "drop": {"onto": "self", "offset": 1.2, "tilt": 0.95},
+       "child": {"type": "box", "size": [30, 46, 4], "taper": [0.8, 1], "skew": [0, 4]}},
+      {"name": "ribs", "type": "array", "tag": "bone", "surface": false, "mirror": true,
+       "grid": {"x": [330], "y": [160, 240, 320, 400, 480]},
+       "drop": {"onto": "self", "offset": 0, "dir": [-1, 0, 0], "tilt": 0},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, 4, 22], [0, -2, 44]], "radii": [6, 4, 0.5]}}
+     ]
+    },
+    "lobed": {
+     "notes": "Long low armoured bulges ride the terraces, veined with violet crystal.",
+     "prims": [
+      {"name": "bulge", "type": "ell", "tag": "plate", "mirror": true, "at": [130, 300, 50], "radii": [56, 200, 18], "seg": 20, "subsurf": 1,
+       "displace": {"amp": 2, "freq": 0.03, "seed": 9}},
+      {"name": "bulge_mid", "type": "ell", "tag": "plate", "at": [0, 330, 88], "radii": [70, 200, 16], "seg": 20, "subsurf": 1,
+       "displace": {"amp": 2, "freq": 0.03, "seed": 10}},
+      {"name": "bulge_out", "type": "ell", "tag": "plate", "mirror": true, "at": [240, 260, 24], "radii": [40, 150, 14], "seg": 18, "subsurf": 1,
+       "displace": {"amp": 2, "freq": 0.03, "seed": 12}},
+      {"name": "veins", "type": "array", "tag": "crystal", "surface": false, "mirror": true,
+       "grid": {"x": [130, 240], "y": [180, 300, 420]},
+       "drop": {"onto": "self", "offset": -1},
+       "child": {"type": "box", "size": [5, 70, 4]}},
+      {"name": "strakes", "type": "array", "tag": "bone", "surface": false, "mirror": true,
+       "grid": {"x": [70, 190], "y": [140, 220, 300, 380, 460]},
+       "drop": {"onto": "self", "offset": 0.5, "tilt": 1},
+       "child": {"type": "box", "size": [5, 60, 3]}}
+     ]
+    },
+    "shroud": {
+     "notes": "Long overlapping wing-case plates run fore and aft over the terraces, edged in small bone thorns.",
+     "prims": [
+      {"name": "cases", "type": "array", "tag": "plate", "surface": false, "mirror": true, "subsurf": 1,
+       "grid": {"x": [40, 110, 180, 250], "y": [150, 290, 430]},
+       "drop": {"onto": "self", "offset": 2, "tilt": 0.95},
+       "child": {"type": "box", "size": [56, 130, 6], "taper": [0.55, 0.9], "skew": [0, 10]}},
+      {"name": "thorns", "type": "array", "tag": "bone", "surface": false, "mirror": true,
+       "grid": {"x": [75, 145, 215, 285], "y": [110, 200, 290, 380, 470]},
+       "drop": {"onto": "self", "offset": 0},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, 6, 14], [0, 16, 26]], "radii": [4, 2.4, 0.3]}},
+      {"name": "spine_case", "type": "horn", "tag": "plate", "seg": 12, "subsurf": 1, "aspect": [1, 0.35],
+       "pts": [[0, 130, 76], [0, 240, 100], [0, 400, 100], [0, 540, 78], [0, 640, 52]], "radii": [28, 36, 36, 26, 8]}
+     ]
+    }
+   }
+  },
+  "wing": {
+   "mount": "lateral", "mirror": true, "gameplay": "none", "detach": 3, "wreck": true, "texel": "mass", "id": "#C02AE0",
+   "notes": "Outer arms beyond the prongs: they spill off the screen edges and hook forward around the arena.",
+   "common_fires": [[340, 160, 20], [430, 20, 0]],
+   "sets": {
+    "scythe": {
+     "notes": "A flat swept scythe arm, thorned on its outer edge, scaled on top.",
+     "lights": [[372, -220, -36, 3]],
+     "prims": [
+      {"name": "arm", "type": "horn", "tag": "chitin", "seg": 14, "subsurf": 1, "aspect": [1, 0.42], "up": [0, 0, 1],
+       "displace": {"amp": 2.5, "freq": 0.03, "seed": 21},
+       "pts": [[250, 230, 16], [360, 176, 8], [430, 84, -2], [446, -30, -14], [420, -140, -26], [372, -222, -36]],
+       "radii": [56, 46, 34, 24, 12, 1.5]},
+      {"name": "edge_thorns", "type": "array", "tag": "bone", "count": 9,
+       "path": [[390, 186, 10], [462, 84, -2], [472, -30, -14], [444, -140, -26]],
+       "rot": [[0, 0, 20], [0, 0, -40]], "seed": 4, "jitter": {"scale": 0.2},
+       "child": {"type": "horn", "seg": 6, "aspect": [1, 0.5], "up": [0, 0, 1], "pts": [[-6, 0, 0], [24, 0, 4], [46, -8, 2]], "radii": [6, 3.5, 0.3]}},
+      {"name": "arm_scales", "type": "array", "tag": "plate", "surface": false, "subsurf": 1,
+       "grid": {"x": [300, 350, 400, 438], "y": [-130, -80, -30, 20, 70, 120, 170]},
+       "drop": {"onto": "self", "offset": 1.5, "tilt": 0.8},
+       "child": {"type": "box", "size": [34, 30, 4], "taper": [0.6, 0.9], "skew": [0, 5]}},
+      {"name": "arm_sinew", "type": "horn", "tag": "sinew", "seg": 8, "aspect": [1, 0.5], "up": [0, 0, 1],
+       "pts": [[260, 230, 4], [360, 178, -4], [425, 84, -14], [436, -30, -24]], "radii": [20, 16, 12, 8]}
+     ]
+    },
+    "fan": {
+     "notes": "Five bone ribs fan out from the flank with dark membranes stretched between.",
+     "lights": [[470, 150, 18, 3]],
+     "prims": [
+      {"name": "root", "type": "ell", "tag": "chitin", "at": [276, 220, 30], "radii": [46, 50, 30], "seg": 16, "subsurf": 1},
+      {"name": "rib1", "type": "horn", "tag": "bone", "seg": 8, "subsurf": 1, "pts": [[276, 226, 34], [360, 260, 36], [440, 284, 38]], "radii": [13, 8, 1]},
+      {"name": "rib2", "type": "horn", "tag": "bone", "seg": 8, "subsurf": 1, "pts": [[280, 216, 34], [370, 190, 26], [470, 150, 18]], "radii": [14, 9, 1]},
+      {"name": "rib3", "type": "horn", "tag": "bone", "seg": 8, "subsurf": 1, "pts": [[280, 206, 30], [370, 120, 16], [462, 20, 0]], "radii": [14, 9, 1]},
+      {"name": "rib4", "type": "horn", "tag": "bone", "seg": 8, "subsurf": 1, "pts": [[276, 198, 26], [350, 60, 6], [426, -110, -18]], "radii": [13, 8, 1]},
+      {"name": "rib5", "type": "horn", "tag": "bone", "seg": 8, "subsurf": 1, "pts": [[268, 192, 24], [320, 20, 0], [360, -200, -32]], "radii": [12, 7, 1]},
+      {"name": "web1", "type": "web", "tag": "membrane", "pts": [[276, 222, 32], [360, 260, 34], [440, 284, 36], [470, 150, 16], [370, 190, 24]]},
+      {"name": "web2", "type": "web", "tag": "membrane", "pts": [[280, 212, 31], [370, 190, 24], [470, 150, 16], [462, 20, -2], [370, 120, 14]]},
+      {"name": "web3", "type": "web", "tag": "membrane", "pts": [[278, 203, 28], [370, 120, 14], [462, 20, -2], [426, -110, -20], [350, 60, 4]]},
+      {"name": "web4", "type": "web", "tag": "membrane", "pts": [[272, 195, 25], [350, 60, 4], [426, -110, -20], [360, -200, -34], [320, 20, -2]]},
+      {"name": "nodes", "type": "array", "tag": "crystal", "count": 5,
+       "path": [[360, 260, 38], [370, 190, 28], [370, 120, 18], [350, 60, 8], [320, 20, 2]],
+       "child": {"type": "shard", "r": 5, "h": 14, "foot": 4, "sides": 6}}
+     ]
+    },
+    "lobe": {
+     "notes": "A chain of three armoured lobes, each crested with thorns, ending in a hooked claw.",
+     "lights": [[396, -196, -36, 3]],
+     "prims": [
+      {"name": "lobe1", "type": "ell", "tag": "chitin", "at": [330, 170, 10], "radii": [80, 70, 36], "rot": [0, 0, -20], "seg": 18, "subsurf": 1,
+       "displace": {"amp": 3, "freq": 0.035, "seed": 31}},
+      {"name": "lobe2", "type": "ell", "tag": "chitin", "at": [410, 60, -4], "radii": [62, 58, 30], "rot": [0, 0, -40], "seg": 18, "subsurf": 1,
+       "displace": {"amp": 3, "freq": 0.035, "seed": 32}},
+      {"name": "lobe3", "type": "ell", "tag": "chitin", "at": [430, -60, -16], "radii": [46, 50, 24], "rot": [0, 0, -60], "seg": 16, "subsurf": 1,
+       "displace": {"amp": 3, "freq": 0.035, "seed": 33}},
+      {"name": "claw", "type": "horn", "tag": "bone", "seg": 10, "subsurf": 1,
+       "pts": [[436, -96, -20], [426, -150, -28], [396, -196, -36], [360, -214, -40]], "radii": [14, 10, 6, 0.6]},
+      {"name": "crest", "type": "array", "tag": "bone", "surface": false,
+       "grid": {"x": [300, 340, 380, 410, 430], "y": [180, 120, 60, 0, -60]},
+       "drop": {"onto": "self", "offset": 0, "tilt": 0.6},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, 4, 20], [0, 12, 38]], "radii": [6, 3.6, 0.4]}},
+      {"name": "lobe_plates", "type": "array", "tag": "plate", "surface": false, "subsurf": 1,
+       "grid": {"x": [290, 340, 390, 425], "y": [200, 140, 80, 20, -40, -100]},
+       "drop": {"onto": "self", "offset": 1.2, "tilt": 0.9},
+       "child": {"type": "ell", "radii": [22, 18, 3.5], "seg": 10}}
+     ]
+    }
+   }
+  },
+  "spines": {
+   "mount": "dorsal", "gameplay": "none", "detach": 1, "wreck": true, "texel": "mass", "id": "#E0C02A",
+   "notes": "The dorsal growths above the citadel: the first thing to break off (S3).",
+   "common_fires": [[0, 260, 130]],
+   "sets": {
+    "ridge": {
+     "notes": "Great bone spines down the keel, swept aft, and two smaller rows.",
+     "prims": [
+      {"name": "great", "type": "array", "tag": "bone", "count": 7, "subsurf": 1,
+       "path": [[0, 130, 300], [0, 540, 300]], "drop": {"onto": "carapace", "offset": -4, "tilt": 0},
+       "scale": [1.25, 0.7],
+       "child": {"type": "horn", "seg": 8, "aspect": [0.55, 1], "pts": [[0, 0, 0], [0, 12, 44], [0, 34, 92], [0, 60, 124]], "radii": [14, 10, 5, 0.5]}},
+      {"name": "row", "type": "array", "tag": "bone", "count": 8, "mirror": true,
+       "path": [[110, 140, 300], [110, 540, 300]], "drop": {"onto": "carapace", "offset": -2, "tilt": 0.4},
+       "scale": [1.0, 0.6], "seed": 2, "jitter": {"rot": 6},
+       "rot": [[0, 18, 0], [0, 18, 0]],
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, 8, 28], [0, 22, 54]], "radii": [7, 4.5, 0.4]}}
+     ]
+    },
+    "crown": {
+     "notes": "A crown of psionic crystal pillars erupting from the citadel.",
+     "lights": [[0, 300, 230, 3]],
+     "prims": [
+      {"name": "shards", "type": "array", "tag": "crystal", "mirror": true,
+       "grid": {"x": [16, 56, 96], "y": [230, 280, 330, 380]},
+       "drop": {"onto": "carapace", "offset": -6, "tilt": 0.3},
+       "seed": 17, "jitter": {"rot": 14, "scale": 0.3},
+       "child": {"type": "shard", "r": 13, "h": 84, "foot": 10, "sides": 6}},
+      {"name": "collar", "type": "array", "tag": "bone", "count": 7,
+       "arc": {"c": [0, 305, 0], "r": 150, "a0": -90, "a1": 90, "plane": "xy"},
+       "drop": {"onto": "carapace", "offset": -2, "tilt": 0.6},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, 0, 26], [0, 10, 48]], "radii": [8, 5, 0.4]}},
+      {"name": "collar2", "type": "array", "tag": "bone", "count": 7,
+       "arc": {"c": [0, 305, 0], "r": 150, "a0": 90, "a1": 270, "plane": "xy"},
+       "drop": {"onto": "carapace", "offset": -2, "tilt": 0.6},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, 0, 26], [0, 10, 48]], "radii": [8, 5, 0.4]}}
+     ]
+    },
+    "forest": {
+     "notes": "A dense field of short bone thorns over the whole slab.",
+     "prims": [
+      {"name": "thorns", "type": "array", "tag": "bone", "mirror": true,
+       "grid": {"x": [20, 65, 110, 155, 200, 245], "y": [120, 175, 230, 285, 340, 395, 450, 505, 560]},
+       "drop": {"onto": "carapace", "offset": -2, "tilt": 0.5},
+       "seed": 23, "jitter": {"rot": 12, "scale": 0.35, "pos": 10},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, 6, 24], [0, 18, 46]], "radii": [6.5, 4, 0.3]}}
+     ]
+    }
+   }
+  },
+  "emitter": {
+   "mount": "dorsal", "mirror": true, "gameplay": "none", "detach": 4, "wreck": true, "texel": "mass", "id": "#2AE07A",
+   "notes": "Shield emitters in a row of three along each flank: their crystals are the shield's source and shatter when it falls (S2). A row, never a single pair: a lone pair of glows reads as a head.",
+   "common_lights": [[220, 290, 60, 3]],
+   "common": [
+    {"name": "base", "type": "array", "tag": "chitin", "count": 3, "subsurf": 1, "path": [[252, 150, 400], [196, 430, 400]],
+     "drop": {"onto": "carapace", "offset": -3, "tilt": 0.6},
+     "child": {"type": "lathe", "seg": 14, "profile": [[20, 0], [19, 5], [13, 10], [8, 13], [0, 14]]}}
+   ],
+   "sets": {
+    "spire": {
+     "notes": "A tall crystal spire on each base.",
+     "prims": [
+      {"name": "spire", "type": "array", "tag": "shard", "count": 3, "path": [[252, 150, 400], [196, 430, 400]],
+       "drop": {"onto": "carapace", "offset": -8, "tilt": 0.4},
+       "child": {"type": "shard", "r": 8, "h": 70, "foot": 5, "sides": 6, "rot": [-18, 0, 0]}},
+      {"name": "claws", "type": "array", "tag": "bone", "count": 3, "path": [[262, 150, 400], [206, 430, 400]],
+       "drop": {"onto": "carapace", "offset": -4, "tilt": 0.3},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [6, 0, 18], [0, 4, 32]], "radii": [3.5, 2.4, 0.3]}}
+     ]
+    },
+    "lattice": {
+     "notes": "A splayed pair of crystals on each base.",
+     "prims": [
+      {"name": "crystalA", "type": "array", "tag": "shard", "count": 3, "path": [[246, 150, 400], [190, 430, 400]],
+       "drop": {"onto": "carapace", "offset": -8, "tilt": 0.3}, "rot": [[-10, -22, 0], [-10, -22, 0]],
+       "child": {"type": "shard", "r": 7, "h": 54, "foot": 5, "sides": 6}},
+      {"name": "crystalB", "type": "array", "tag": "shard", "count": 3, "path": [[258, 156, 400], [202, 436, 400]],
+       "drop": {"onto": "carapace", "offset": -8, "tilt": 0.3}, "rot": [[-30, 18, 0], [-30, 18, 0]],
+       "child": {"type": "shard", "r": 6, "h": 44, "foot": 5, "sides": 6}}
+     ]
+    },
+    "veil": {
+     "notes": "A long crystal blade lying swept aft on each base, cupped by a bone finger.",
+     "prims": [
+      {"name": "blade", "type": "array", "tag": "shard", "count": 3, "path": [[252, 150, 400], [196, 430, 400]],
+       "drop": {"onto": "carapace", "offset": -6, "tilt": 0.4}, "rot": [[-64, 0, 0], [-64, 0, 0]],
+       "child": {"type": "shard", "r": 6, "h": 80, "foot": 4, "sides": 6}},
+      {"name": "finger", "type": "array", "tag": "bone", "count": 3, "path": [[252, 146, 400], [196, 426, 400]],
+       "drop": {"onto": "carapace", "offset": -4, "tilt": 0.4},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [8, 6, 14], [6, 20, 22]], "radii": [3.4, 2.6, 0.4]}}
+     ]
+    }
+   }
+  },
+  "blister": {
+   "mount": "dorsal", "mirror": true, "gameplay": "none", "detach": 2, "wreck": true, "texel": "mass", "id": "#2AD0E0",
+   "notes": "A battery of visual gun blisters along each prong (gameplay turrets stay the prow's two pivots). Later tours add more batteries.",
+   "common_lights": [[200, 60, 30, 3]],
+   "common": [
+    {"name": "dome", "type": "array", "tag": "chitin", "count": 2, "subsurf": 1, "path": [[206, 60, 400], [214, -30, 400]],
+     "drop": {"onto": "carapace", "offset": -4, "tilt": 0.6},
+     "child": {"type": "lathe", "seg": 16, "profile": [[18, 0], [17, 6], [13, 11], [7, 15], [0, 16]]}},
+    {"name": "muzzle", "type": "array", "tag": "ember", "count": 2, "path": [[206, 46, 400], [214, -44, 400]],
+     "drop": {"onto": "carapace", "offset": 8, "tilt": 0.6},
+     "child": {"type": "ell", "radii": [4.5, 2.6, 2.6], "seg": 10}}
+   ],
+   "sets": {
+    "thorn": {
+     "notes": "Twin bone gun-thorns per blister, pointing at the player.",
+     "prims": [
+      {"name": "gunA", "type": "array", "tag": "bone", "count": 2, "path": [[199, 48, 400], [207, -42, 400]],
+       "drop": {"onto": "carapace", "offset": 7, "tilt": 0},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, -20, -3], [0, -40, -8]], "radii": [2.8, 2.0, 0.3]}},
+      {"name": "gunB", "type": "array", "tag": "bone", "count": 2, "path": [[213, 48, 400], [221, -42, 400]],
+       "drop": {"onto": "carapace", "offset": 7, "tilt": 0},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, -20, -3], [0, -40, -8]], "radii": [2.8, 2.0, 0.3]}}
+     ]
+    },
+    "crystal": {
+     "notes": "A crystal lens crowns each blister.",
+     "prims": [
+      {"name": "lens", "type": "array", "tag": "crystal", "count": 2, "path": [[206, 62, 400], [214, -28, 400]],
+       "drop": {"onto": "carapace", "offset": 13, "tilt": 0.5},
+       "child": {"type": "shard", "r": 8, "h": 16, "foot": 4, "sides": 6}}
+     ]
+    },
+    "hive": {
+     "notes": "Each blister is a ribbed hive mound with twin ember ports.",
+     "prims": [
+      {"name": "portA", "type": "array", "tag": "ember", "count": 2, "path": [[198, 52, 400], [206, -38, 400]],
+       "drop": {"onto": "carapace", "offset": 8, "tilt": 0.6},
+       "child": {"type": "ell", "radii": [2.6, 2.6, 2], "seg": 8}},
+      {"name": "portB", "type": "array", "tag": "ember", "count": 2, "path": [[214, 52, 400], [222, -38, 400]],
+       "drop": {"onto": "carapace", "offset": 8, "tilt": 0.6},
+       "child": {"type": "ell", "radii": [2.6, 2.6, 2], "seg": 8}},
+      {"name": "ribs", "type": "array", "tag": "bone", "count": 2, "path": [[206, 60, 400], [214, -30, 400]],
+       "drop": {"onto": "carapace", "offset": -4, "tilt": 0.6},
+       "child": {"type": "lathe", "seg": 8, "profile": [[19, 3], [15, 10], [8, 15.5], [0, 17]]}}
+     ]
+    }
+   }
+  },
+  "maw": {
+   "mount": "lateral", "mirror": true, "gameplay": "none", "detach": 5, "wreck": true, "texel": "mass", "id": "#E07A2A",
+   "notes": "Flank launch maws (tour 2+): dark hangar mouths on the slab's flanks, lit from inside (visual only: the gameplay bays stay in the prow).",
+   "common_lights": [[300, 250, 40, 3]],
+   "common": [
+    {"name": "rim", "type": "array", "tag": "chitin", "count": 1, "subsurf": 1, "path": [[420, 250, 30]],
+     "drop": {"onto": "carapace", "offset": -6, "dir": [-1, 0, 0], "tilt": 1},
+     "child": {"type": "lathe", "seg": 16, "profile": [[30, 0], [30, 6], [24, 12], [18, 12.5]], "scale": 1}}
+   ],
+   "sets": {
+    "slit": {
+     "notes": "A long slit maw between two bone lips.",
+     "prims": [
+      {"name": "mouth", "type": "array", "tag": "dark", "count": 1, "path": [[420, 250, 30]],
+       "drop": {"onto": "carapace", "offset": 6, "dir": [-1, 0, 0], "tilt": 1},
+       "child": {"type": "ell", "radii": [8, 26, 3], "seg": 12}},
+      {"name": "lips", "type": "array", "tag": "bone", "count": 2, "path": [[420, 250, 44], [420, 250, 16]],
+       "drop": {"onto": "carapace", "offset": 8, "dir": [-1, 0, 0], "tilt": 1},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, -26, 0], [0, 0, 3], [0, 26, 0]], "radii": [1, 3.5, 1]}},
+      {"name": "glow", "type": "array", "tag": "ember", "count": 3, "path": [[420, 232, 30], [420, 268, 30]],
+       "drop": {"onto": "carapace", "offset": 7, "dir": [-1, 0, 0], "tilt": 1},
+       "child": {"type": "ell", "radii": [2.5, 2.5, 1.5], "seg": 8}}
+     ]
+    },
+    "iris": {
+     "notes": "A round maw ringed by crystal petals.",
+     "prims": [
+      {"name": "mouth", "type": "array", "tag": "dark", "count": 1, "path": [[420, 250, 30]],
+       "drop": {"onto": "carapace", "offset": 6, "dir": [-1, 0, 0], "tilt": 1},
+       "child": {"type": "ell", "radii": [17, 17, 3], "seg": 14}},
+      {"name": "petals", "type": "array", "tag": "crystal", "count": 1, "path": [[420, 250, 30]],
+       "drop": {"onto": "carapace", "offset": 4, "dir": [-1, 0, 0], "tilt": 1},
+       "child": {"type": "lathe", "seg": 8, "profile": [[26, 0], [22, 6], [19, 7]]}}
+     ]
+    }
+   }
+  },
+  "barrier": {
+   "mount": "bow", "mirror": true, "gameplay": "none", "detach": 6, "wreck": true, "texel": "mass", "id": "#E02A9A",
+   "notes": "Spiked armour barriers on the prongs (tour 3+), walling the throat around the prow.",
+   "common_fires": [[200, -60, 40]],
+   "sets": {
+    "wall": {
+     "notes": "Stacked armour plates standing on the prong, crested with thorns.",
+     "prims": [
+      {"name": "plates", "type": "array", "tag": "plate", "count": 3, "subsurf": 1, "path": [[196, -10, 400], [206, -130, 400]],
+       "drop": {"onto": "carapace", "offset": -10, "tilt": 0.3}, "rot": [[0, -20, 0], [0, -20, 0]],
+       "child": {"type": "box", "size": [12, 50, 46], "taper": [0.6, 0.85]}},
+      {"name": "crest", "type": "array", "tag": "bone", "count": 7, "path": [[196, 10, 400], [206, -150, 400]],
+       "drop": {"onto": "carapace", "offset": 26, "tilt": 0},
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [-4, 0, 18], [-6, 4, 34]], "radii": [4, 2.5, 0.3]}}
+     ]
+    },
+    "palisade": {
+     "notes": "A palisade of tall bone stakes leaning inward over the throat.",
+     "prims": [
+      {"name": "stakes", "type": "array", "tag": "bone", "count": 9, "subsurf": 1, "path": [[184, 20, 400], [204, -160, 400]],
+       "drop": {"onto": "carapace", "offset": -4, "tilt": 0}, "seed": 31, "jitter": {"scale": 0.2},
+       "child": {"type": "horn", "seg": 8, "pts": [[0, 0, 0], [-6, 0, 30], [-16, 4, 62]], "radii": [6, 4, 0.4]}},
+      {"name": "binding", "type": "array", "tag": "sinew", "count": 1, "path": [[194, -70, 400]],
+       "drop": {"onto": "carapace", "offset": -18, "tilt": 0},
+       "child": {"type": "horn", "seg": 8, "pts": [[-12, 90, 0], [-4, 0, 4], [8, -90, 0]], "radii": [3, 4, 3]}}
+     ]
+    }
+   }
+  },
+  "tendril": {
+   "mount": "ventral", "mirror": true, "gameplay": "none", "detach": 7, "wreck": true, "texel": "mass", "id": "#9AE02A",
+   "notes": "Tendrils curling out from under the prong tips (tour 3+), mostly beyond the screen edge.",
+   "sets": {
+    "barbed": {
+     "notes": "Barbed tendrils, ember-tipped.",
+     "prims": [
+      {"name": "tendril", "type": "horn", "tag": "sinew", "seg": 10, "subsurf": 1,
+       "pts": [[230, -150, -16], [282, -196, -40], [326, -214, -66], [352, -206, -92]], "radii": [12, 9, 6, 1]},
+      {"name": "barbs", "type": "array", "tag": "bone", "count": 5, "path": [[262, -180, -26], [340, -212, -78]],
+       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [6, -10, 8], [8, -20, 12]], "radii": [3, 1.8, 0.2]}},
+      {"name": "tip", "type": "ell", "tag": "ember", "at": [352, -206, -92], "radii": [4, 4, 4], "seg": 8}
+     ]
+    }
+   }
+  },
+  "sac": {
+   "mount": "dorsal", "mirror": true, "gameplay": "none", "detach": 8, "wreck": true, "texel": "mass", "id": "#2A9AE0",
+   "notes": "Brood sacs (tour 4+) clustered on the slab between prong and arm, lit from inside.",
+   "common_lights": [[300, 150, 40, 3]],
+   "sets": {
+    "cluster": {
+     "notes": "Three membrane sacs with ember hearts.",
+     "prims": [
+      {"name": "sacs", "type": "array", "tag": "membrane", "count": 3, "subsurf": 1, "path": [[284, 110, 400], [306, 190, 400]],
+       "drop": {"onto": "carapace", "offset": -10, "tilt": 0.5}, "scale": [1.0, 0.75],
+       "child": {"type": "ell", "radii": [26, 30, 24], "seg": 14}},
+      {"name": "hearts", "type": "array", "tag": "ember", "count": 3, "path": [[284, 100, 400], [306, 182, 400]],
+       "drop": {"onto": "carapace", "offset": 12, "tilt": 0.5}, "scale": [1.0, 0.75],
+       "child": {"type": "ell", "radii": [6, 5, 5], "seg": 10}}
+     ]
+    }
+   }
+  },
+  "crown": {
+   "mount": "dorsal", "gameplay": "none", "detach": 9, "wreck": true, "texel": "mass", "id": "#7A2AE0",
+   "notes": "The psionic crown on the citadel (tour 5): a ring of great crystal blades around a central spire.",
+   "common_lights": [[0, 310, 260, 3]],
+   "sets": {
+    "blaze": {
+     "notes": "Nine leaning crystal blades and a central spire.",
+     "prims": [
+      {"name": "spire", "type": "array", "tag": "crystal", "count": 1, "path": [[0, 310, 400]],
+       "drop": {"onto": "carapace", "offset": -10, "tilt": 0},
+       "child": {"type": "shard", "r": 18, "h": 150, "foot": 12, "sides": 6}},
+      {"name": "blades", "type": "array", "tag": "crystal", "count": 9, "surface": false,
+       "arc": {"c": [0, 310, 0], "r": 70, "a0": 10, "a1": 170, "plane": "xy"},
+       "drop": {"onto": "carapace", "offset": -8, "tilt": 0.8},
+       "child": {"type": "shard", "r": 10, "h": 90, "foot": 8, "sides": 6}},
+      {"name": "blades_aft", "type": "array", "tag": "crystal", "count": 9, "surface": false,
+       "arc": {"c": [0, 310, 0], "r": 70, "a0": 190, "a1": 350, "plane": "xy"},
+       "drop": {"onto": "carapace", "offset": -8, "tilt": 0.8},
+       "child": {"type": "shard", "r": 10, "h": 90, "foot": 8, "sides": 6}}
+     ]
+    }
+   }
+  }
+ },
+ "hulls": {
+  "carrier2-thorn":   {"tour": 2, "title": "Thornwake Broodmother (thorn set)", "replaces": "cruiser", "extent": 1.08, "forms": 3,
+                       "texel": {"core": 2.0, "mass": 0.9}, "set": "thorn",
+                       "sets": {"carapace": "ridged", "wing": "scythe", "spines": "ridge", "emitter": "spire", "blister": "thorn", "maw": "slit"},
+                       "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister",
+                                 {"slot": "blister", "suffix": "aft", "offset": [70, 230, 0]}, "maw"]},
+  "carrier3-lattice": {"tour": 3, "title": "Thornwake Siege-Ark (lattice set)", "replaces": "battlecruiser", "extent": 1.16, "forms": 4,
+                       "texel": {"core": 2.0, "mass": 0.85}, "set": "lattice",
+                       "sets": {"carapace": "lobed", "wing": "fan", "spines": "crown", "emitter": "lattice", "blister": "crystal", "maw": "iris", "barrier": "palisade", "tendril": "barbed"},
+                       "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister",
+                                 {"slot": "blister", "suffix": "aft", "offset": [70, 230, 0]}, "maw", "barrier", "tendril"]},
+  "carrier4-shroud":  {"tour": 4, "title": "Thornwake Bastion (shroud set)", "replaces": "battleship", "extent": 1.24, "forms": 4,
+                       "texel": {"core": 2.0, "mass": 0.8}, "set": "shroud",
+                       "sets": {"carapace": "shroud", "wing": "lobe", "spines": "forest", "emitter": "veil", "blister": "hive", "maw": "slit", "barrier": "wall", "tendril": "barbed", "sac": "cluster"},
+                       "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister",
+                                 {"slot": "blister", "suffix": "aft", "offset": [70, 230, 0]},
+                                 {"slot": "blister", "suffix": "far", "offset": [40, 360, 0]}, "maw", "barrier", "tendril", "sac"]},
+  "carrier5-thorn":   {"tour": 5, "title": "Thornwake Hive-Crown (thorn set)", "replaces": "dreadnought", "extent": 1.32, "forms": 4,
+                       "texel": {"core": 2.0, "mass": 0.75}, "set": "thorn",
+                       "sets": {"carapace": "ridged", "wing": "scythe", "spines": "forest", "emitter": "spire", "blister": "thorn", "maw": "iris", "barrier": "wall", "tendril": "barbed", "sac": "cluster", "crown": "blaze"},
+                       "slots": ["carapace", "prow", "wing", "spines", "emitter",
+                                 {"slot": "emitter", "suffix": "fore", "offset": [-50, -170, 0]}, "blister",
+                                 {"slot": "blister", "suffix": "aft", "offset": [70, 230, 0]},
+                                 {"slot": "blister", "suffix": "far", "offset": [40, 360, 0]}, "maw", "barrier", "tendril", "sac", "crown"]},
+  "carrier1-thorn":   {"tour": 1, "title": "Thornwake Carrier (thorn set)", "replaces": "frigate", "extent": 1.0, "forms": 2,
+                       "texel": {"core": 2.0, "mass": 1.0}, "set": "thorn",
+                       "sets": {"carapace": "ridged", "wing": "scythe", "spines": "ridge", "emitter": "spire", "blister": "thorn"},
+                       "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister"]},
+  "carrier1-lattice": {"tour": 1, "title": "Thornwake Carrier (lattice set)", "replaces": "frigate", "extent": 1.0, "forms": 2,
+                       "texel": {"core": 2.0, "mass": 1.0}, "set": "lattice",
+                       "sets": {"carapace": "lobed", "wing": "fan", "spines": "crown", "emitter": "lattice", "blister": "crystal"},
+                       "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister"]},
+  "carrier1-shroud":  {"tour": 1, "title": "Thornwake Carrier (shroud set)", "replaces": "frigate", "extent": 1.0, "forms": 2,
+                       "texel": {"core": 2.0, "mass": 1.0}, "set": "shroud",
+                       "sets": {"carapace": "shroud", "wing": "lobe", "spines": "forest", "emitter": "veil", "blister": "hive"},
+                       "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister"]}
+ },
+ "stages": {
+  "S0": {"notes": "shielded: intact; cyan hex cells are a runtime overlay"},
+  "S1": {"notes": "shield failing: texture only (S0 geometry), crystals flicker, scorch"},
+  "S2": {"shed": ["plate", "shard"], "notes": "armour shedding: every scale and emitter crystal gone, sinew exposed"},
+  "S3": {"shed": ["plate", "shard"], "detach": 1, "notes": "module loss: the first detach group breaks off"}
+ },
+ "budget": {"mb": 16.0, "page": [4096, 2048], "stage_scale": 0.5,
+            "notes": "Resident RGBA of one hull (one set combination) <= 16 MB: S0 layers at their texel class (core 2.0 px/unit: the prow; mass 1.0: everything else), S1-S3 layers at x stage_scale, wrecks at their class, mirrored pairs once, everything clipped to render.envelope. Measured by rigsheet budget from the manifest."},
+ "selected": {"notes": "Picked raws (paths under root); ledger plan/render-runs/boss-carrier-v2.md. sym = the hero half mirrored onto the other (yaw -12 draws +12 mirrored).",
+              "root": "art/sprites/sources/boss-carrier-v2/"}
+}
