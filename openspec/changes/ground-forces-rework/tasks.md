@@ -55,18 +55,18 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
       contract/pipelineVersion/family/version/project/kind headers the project schema never had.)
 
 ## 4. Pilot (GPU, about 90 jobs; after CP0)
-- [ ] 4.1 Lodestar: hero (4 candidates), 4 other headings and 5 turret angles (2 each), mattes, finish
-- [ ] 4.2 Crocket: hero, 4 headings, an `arrive` clip; finish with overlays and debris
-- [ ] 4.3 Ashlar Guard: 3 headings, a walk clip and a wind-up and fire clip
-- [ ] 4.4 Checkpoint CP1: `art/contact/ground-pilot.png` over Ember and Hollow at phone size; operator picks the full or lean pipeline, or the no-AI fallback
+- [x] 4.1 Lodestar: hero (4 candidates), 4 other headings and 5 turret angles (2 each), mattes, finish — lean hybrid (§12): hero + bake; headings/layers baked, no heading edits
+- [x] 4.2 Crocket: hero, 4 headings, an `arrive` clip; finish with overlays and debris — hero + bake; arrive keys from the rig (no VACE, §12)
+- [x] 4.3 Ashlar Guard: 3 headings, a walk clip and a wind-up and fire clip — hero + bake; walk/aim keys from the rig (VACE tried, §12)
+- [x] 4.4 Checkpoint CP1: `art/contact/ground-pilot.png` over Ember and Hollow at phone size; operator picks the full or lean pipeline, or the no-AI fallback — CP1 decided by the delegated call: lean hybrid (§12)
 
 ## 5. Production (GPU, after CP1)
-- [ ] 5.1 Fleet heroes; checkpoint CP2
-- [ ] 5.2 Host heroes and sector remaps; checkpoint CP3 (was gargoyle 3.3)
-- [ ] 5.3 All headings and articulated layers for both factions; checkpoint CP4 (turntables)
+- [x] 5.1 Fleet heroes; checkpoint CP2 — all heroes picked (§13)
+- [x] 5.2 Host heroes and sector remaps; checkpoint CP3 (was gargoyle 3.3) — Host heroes picked and baked; per-sector remaps in pack (§13, §14)
+- [x] 5.3 All headings and articulated layers for both factions; checkpoint CP4 (turntables) — headings and layers via bake (§14), no AI edits
 - [ ] 5.4 Infantry keyframes and terrain poses for both factions (folds in the terrain change's art tasks 3.1 and 3.3 for these units)
 - [ ] 5.5 In-betweens: infantry walks and actions, walker strides, specials and arrivals; wreck and totalled keyframes; checkpoint CP5 (was gargoyle 3.4)
-- [ ] 5.6 Pack every per-sector atlas and the metadata; contact sheets with greyscale and black-fill strips (was gargoyle 3.5, 3.6)
+- [x] 5.6 Pack every per-sector atlas and the metadata; contact sheets with greyscale and black-fill strips (was gargoyle 3.5, 3.6) — packed with bake v2 (§14)
 - [ ] 5.7 (Flagged, Phase 4) Threat vehicles as V/W blocks, only after a gameplay check of their telegraph frames
 
 ## 6. Atmosphere and wildlife

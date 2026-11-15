@@ -422,3 +422,16 @@ Off-nominal: the Host finishes are dark overall (low-contrast stone by prompt), 
 smoothing should decide whether that needs a brighter prompt. `ingest` re-records every `work/http/` folder from the
 current `jobs.json`, which would have overwritten the pilot Crocket runs with the newer Host negative prompt; the pilot
 folders were moved to `work/http-pilot/` so their committed records stay accurate.
+
+## 14. All units baked and packed (2026-11-15)
+
+`go run . bake --all` (bake v2, hero only) over the 26 selected heroes, then `go run . pack`: every unit's block now
+carries its hero's region materials and accents on rig shading. Per-sector RGBA unchanged (Hollow 7.41 MB, the
+busiest; all under the 8 MB budget). Review: `art/contact/ground-baked-all.png` (rig | baked at the main headings),
+`art/contact/ground-heroes-all.png` (the 26 heroes). Runtime: OpenSpec `ground-blocks-runtime` merged (painter draws
+the blocks, `GroundPainter.useBlocks` keeps the legacy path); `flutter analyze` clean, `flutter test` 462 passed, 1
+skipped, on the merged tree.
+
+Notes for the in-game review (CP8): some Host units bake darker than their rigs (crocket-captured, knell,
+scrapmason at h135); side-on vehicles draw larger than the legacy sprites (authored size); stilt, strider, sextant
+and chapterhouse heroes disagree with their rig's body plan, so only tone and accents transfer.

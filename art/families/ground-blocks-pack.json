@@ -8,7 +8,7 @@
      "blocks": 2,
      "file": "assets/images/ground-blocks/ground-fleet-krybor.png",
      "h": 360,
-     "png_bytes": 20530,
+     "png_bytes": 21406,
      "rgba_bytes": 1382400,
      "w": 960
     },
@@ -16,7 +16,7 @@
      "blocks": 3,
      "file": "assets/images/ground-blocks/ground-host-krybor.png",
      "h": 520,
-     "png_bytes": 43550,
+     "png_bytes": 41105,
      "rgba_bytes": 1996800,
      "w": 960
     },
@@ -24,13 +24,13 @@
      "blocks": 4,
      "file": "assets/images/ground-blocks/ground-infantry-krybor.png",
      "h": 192,
-     "png_bytes": 15125,
+     "png_bytes": 15863,
      "rgba_bytes": 491520,
      "w": 640
     }
    ],
    "rgba_bytes": 3870720,
-   "png_bytes": 79205,
+   "png_bytes": 78374,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 20,
@@ -47,7 +47,7 @@
      "blocks": 1,
      "file": "assets/images/ground-blocks/ground-fleet-ringfall.png",
      "h": 200,
-     "png_bytes": 10290,
+     "png_bytes": 10904,
      "rgba_bytes": 768000,
      "w": 960
     },
@@ -55,7 +55,7 @@
      "blocks": 5,
      "file": "assets/images/ground-blocks/ground-host-ringfall.png",
      "h": 840,
-     "png_bytes": 67500,
+     "png_bytes": 67618,
      "rgba_bytes": 3225600,
      "w": 960
     },
@@ -63,13 +63,13 @@
      "blocks": 5,
      "file": "assets/images/ground-blocks/ground-infantry-ringfall.png",
      "h": 240,
-     "png_bytes": 19801,
+     "png_bytes": 20871,
      "rgba_bytes": 614400,
      "w": 640
     }
    ],
    "rgba_bytes": 4608000,
-   "png_bytes": 97591,
+   "png_bytes": 99393,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 20,
@@ -86,7 +86,7 @@
      "blocks": 2,
      "file": "assets/images/ground-blocks/ground-fleet-ember.png",
      "h": 360,
-     "png_bytes": 19777,
+     "png_bytes": 19987,
      "rgba_bytes": 1382400,
      "w": 960
     },
@@ -94,7 +94,7 @@
      "blocks": 6,
      "file": "assets/images/ground-blocks/ground-host-ember.png",
      "h": 1040,
-     "png_bytes": 80526,
+     "png_bytes": 82492,
      "rgba_bytes": 3993600,
      "w": 960
     },
@@ -102,13 +102,13 @@
      "blocks": 6,
      "file": "assets/images/ground-blocks/ground-infantry-ember.png",
      "h": 288,
-     "png_bytes": 23358,
+     "png_bytes": 24355,
      "rgba_bytes": 737280,
      "w": 640
     }
    ],
    "rgba_bytes": 6113280,
-   "png_bytes": 123661,
+   "png_bytes": 126834,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 20,
@@ -125,7 +125,7 @@
      "blocks": 1,
      "file": "assets/images/ground-blocks/ground-fleet-hollow.png",
      "h": 240,
-     "png_bytes": 9287,
+     "png_bytes": 9238,
      "rgba_bytes": 921600,
      "w": 960
     },
@@ -133,7 +133,7 @@
      "blocks": 8,
      "file": "assets/images/ground-blocks/ground-host-hollow.png",
      "h": 1560,
-     "png_bytes": 106404,
+     "png_bytes": 110368,
      "rgba_bytes": 5990400,
      "w": 960
     },
@@ -141,13 +141,13 @@
      "blocks": 7,
      "file": "assets/images/ground-blocks/ground-infantry-hollow.png",
      "h": 336,
-     "png_bytes": 28838,
+     "png_bytes": 29204,
      "rgba_bytes": 860160,
      "w": 640
     }
    ],
    "rgba_bytes": 7772160,
-   "png_bytes": 144529,
+   "png_bytes": 148810,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 24,
@@ -164,7 +164,7 @@
      "blocks": 1,
      "file": "assets/images/ground-blocks/ground-fleet-carrier.png",
      "h": 200,
-     "png_bytes": 8180,
+     "png_bytes": 9416,
      "rgba_bytes": 768000,
      "w": 960
     },
@@ -172,7 +172,7 @@
      "blocks": 6,
      "file": "assets/images/ground-blocks/ground-host-carrier.png",
      "h": 1240,
-     "png_bytes": 80928,
+     "png_bytes": 84672,
      "rgba_bytes": 4761600,
      "w": 960
     },
@@ -180,13 +180,13 @@
      "blocks": 6,
      "file": "assets/images/ground-blocks/ground-infantry-carrier.png",
      "h": 288,
-     "png_bytes": 24476,
+     "png_bytes": 25761,
      "rgba_bytes": 737280,
      "w": 640
     }
    ],
    "rgba_bytes": 6266880,
-   "png_bytes": 113584,
+   "png_bytes": 119849,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 12,
