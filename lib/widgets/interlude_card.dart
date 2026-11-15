@@ -1,6 +1,6 @@
 /// The run's opening interlude: one illustrated tip card centred in the play
 /// area (openspec/changes/fluid-transitions). cinematic-flow moved the radio
-/// card to the comms dock and later tips to a caption (flow_caption.dart);
+/// card to the comms dock (later transitions speak only by radio there);
 /// ux-declutter removed the progress strip that lived here.
 library;
 

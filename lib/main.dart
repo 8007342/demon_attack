@@ -1534,9 +1534,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                  // --- cinematic flow: the opening tip card, or a sector
-                  // transition's caption, title and medal flourish (no
-                  // cards, no strips; the radio line is on the dock).
+                  // --- cinematic flow: the opening tip card, the carrier
+                  // alert, or a sector transition's medal flourish (no
+                  // cards, no strips, no floating text; the radio line on
+                  // the dock is the only transition message).
                   if ((model.cinematic || model.flow.active) &&
                       model.mode != RunMode.paused)
                     Positioned.fill(

@@ -98,3 +98,11 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
       flow).
 - [ ] 8.2 `openspec validate cinematic-flow`; sync at archive (after `fluid-transitions`, see 0.1). Validate passes
       (`--strict`, 2026-11-15); the sync waits for the archive after the operator's playtest.
+
+## 9. Playtest fixes (work/playtest-fixes, design §10)
+- [x] 9.1 The final wave leaves the fog empty: `finalWave` / `fogStaged`, no drawn reserve during a sector's last wave
+      or the carrier; the rout scatters only fighters (no stand-in flock). `test/final_wave_fog_test.dart`.
+- [x] 9.2 Transitions communicate only via radio: no caption, no sector/tour title, no `+1UP` text, no unused banner
+      strings; every slot is a radio line (`InterludePlanner.planRadio`). `test/fluid_transitions_test.dart`,
+      `test/flow_director_test.dart`.
+- [x] 9.3 Review strip `art/contact/playtest-fixes-final-wave.png` (final wave into a sector change).

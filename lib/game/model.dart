@@ -806,31 +806,6 @@ class ArcadeModel {
   bool get waveTransition => presentationMode == RunMode.transition && wave > 1;
   double get transitionProgress =>
       (1 - transitionLeft / transitionDuration).clamp(0, 1);
-  String get nextLevelName => const [
-    'KRYBOR',
-    'RINGFALL',
-    'EMBER MOON',
-    'THE HOLLOW',
-    'THE CARRIER',
-  ][nextLevel - 1];
-  String get levelName => const [
-    'KRYBOR',
-    'RINGFALL',
-    'EMBER MOON',
-    'THE HOLLOW',
-    'THE CARRIER',
-  ][level - 1];
-  String get banner => switch (presentationMode) {
-    RunMode.victory => 'CARRIER DESTROYED',
-    RunMode.salvage => 'COLLECT SALVAGE',
-    RunMode.levelClear => '$levelName SECURED',
-    RunMode.travel => 'APPROACHING $nextLevelName',
-    _ =>
-      waveTransition
-          ? 'WAVE $wave / $wavesPerLevel'
-          : 'LEVEL ${level.toString().padLeft(2, '0')} · $levelName',
-  };
-
   void start({Difficulty difficulty = Difficulty.normal}) {
     this.difficulty = difficulty;
     _resetSkill(); // --- demon intelligence
@@ -1323,9 +1298,26 @@ class ArcadeModel {
     }
   }
 
+  /// The sector's final wave (or its carrier) is under way: no cohort will
+  /// be sighted after it, so the fog stages nothing (playtest-fixes). What
+  /// this wave still holds back (its later roster skeins, its reinforcement
+  /// groups) waits unseen and leaves the fog only when it is admitted.
+  bool get finalWave => boss != null || level == 5 || wave >= wavesPerLevel;
+
+  /// What the fog shows waiting: the drawn reserve plus the incoming
+  /// cohort's approaching skeins (both empty during [finalWave]).
+  Iterable<Demon> get fogStaged sync* {
+    yield* drawnReserve;
+    for (final d in incoming) {
+      if (d.swarmState != SwarmState.reserve) yield d;
+    }
+  }
+
   /// The reserve members the scene draws: whole skeins up to
-  /// [reserveDrawn] members, then one leader per further skein.
+  /// [reserveDrawn] members, then one leader per further skein. None during
+  /// the [finalWave]: nothing more comes out of the fog after it.
   List<Demon> get drawnReserve {
+    if (finalWave) return const [];
     final out = <Demon>[];
     final seen = <int>{};
     for (final d in swarmReserve) {
@@ -2181,7 +2173,7 @@ class ArcadeModel {
       _groundEndLevel(); // --- ground war
       _enterPhase(RunMode.salvage, FlowPlan.routSeconds);
       _flowBegin(victory: false); // --- cinematic flow
-      _flowRout(x: 180, y: 150);
+      _flowRout(const []); // every fighter fell: the fog stays empty
       events.add('salvage');
     }
   }
@@ -3918,6 +3910,11 @@ class ArcadeModel {
       boss = null;
       medals = cycle + 1;
       lives++;
+      // --- cinematic flow: only the minions that were fighting scatter.
+      final fighters = [
+        for (final d in demons)
+          if (d.swarmState != SwarmState.reserve) d,
+      ];
       demons.clear();
       shots.clear();
       pickups.clear();
@@ -3926,7 +3923,7 @@ class ArcadeModel {
       clearedLevel = level;
       _enterPhase(RunMode.victory, FlowPlan.victorySeconds);
       _flowBegin(victory: true); // --- cinematic flow: the remnant scatters
-      _flowRout(x: b.x, y: b.y);
+      _flowRout(fighters);
       events.add('victory');
       events.add('bossDefeated');
     }

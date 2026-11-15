@@ -4,7 +4,7 @@
 /// The macron.dev pattern in game form: a transition is one normalized clock
 /// u in [0, 1], its beats are overlapping `bump` envelopes on that clock, and
 /// every actor (ship pose, camera tilt, cloud cover, palette swap, the
-/// pursued flock, the message slot, the sector title) is a pure function of
+/// pursued flock, the radio slot) is a pure function of
 /// the envelopes plus its own phase offset. Nothing keeps its own timer.
 ///
 /// The director owns presentation only. Gameplay timing (phase lengths,
@@ -130,9 +130,6 @@ class FlowPlan {
   /// an art beat and an instruction at the same instant).
   static const seamGuard = .5;
 
-  /// Sector title at the top edge during the Descent.
-  static const titleSeconds = 1.5;
-
   /// The game-over mill over the wreck.
   static const millSeconds = 2.0;
 
@@ -174,7 +171,6 @@ class FlowPlan {
     final cloudOut = p1 + (reduced ? .2 : .4);
     final cloudClear = p1 + (reduced ? 1.2 : 2.2);
     final slot = p0 + (reduced ? .4 : .5);
-    final title = p1 + (reduced ? .6 : 1.0);
     final kind = victory
         ? FlowKind.bossVictory
         : boss
@@ -197,17 +193,11 @@ class FlowPlan {
         FlowBeat('swap', swap, swap + (reduced ? .5 : 1.0), end, end),
         // The fleeing flock streams ahead; the ship chases it.
         FlowBeat('pursue', rout - .4, p0 + 1.0, p1, p1 + 1.0),
-        // One message slot: a radio line on the dock or a caption.
+        // One message slot: a radio line on the comms dock (the only way a
+        // transition speaks to the player; no floating text).
         FlowBeat('slot', slot, slot + .5, p1 - .5, p1),
         // The flock comes out of the cloud as the new sector's swarm.
         FlowBeat('wheel', p1 + .3, p1 + 1.5, end, end),
-        FlowBeat(
-          'title',
-          title,
-          title + .3,
-          title + titleSeconds - .3,
-          title + titleSeconds,
-        ),
         if (boss) ...[
           // The flock rings the arrival point, parts for the carrier and
           // pours into its bays when it settles (design §3.1).

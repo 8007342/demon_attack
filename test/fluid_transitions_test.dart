@@ -72,6 +72,16 @@ Future<void> snap(WidgetTester tester, String name) async {
   });
 }
 
+/// playtest-fixes: no bare transition text over the play area (the old
+/// caption and sector/tour title keys, the reward text, the tip sentence).
+void _noFloatingText() {
+  expect(find.byKey(const ValueKey('flow-caption')), findsNothing);
+  expect(find.byKey(const ValueKey('flow-title')), findsNothing);
+  expect(find.textContaining('+1UP'), findsNothing);
+  expect(find.textContaining('TOUR '), findsNothing);
+  expect(find.textContaining('SECTOR '), findsNothing);
+}
+
 class Rig {
   Rig(this.tester, this.comms, this.scene, this.state);
   final WidgetTester tester;
@@ -266,22 +276,21 @@ void main() {
         await rig.step(1 / 10, dt: 1 / 30);
         frames++;
         // cinematic-flow: no card, story card or storyboard in a sector
-        // transition; at most one of the caption and the title.
+        // transition; playtest-fixes: no floating caption or title text.
         expect(rig.primaries(), 0, reason: '${rig.model.mode}');
-        final caption = find.byKey(const ValueKey('flow-caption'));
-        final title = find.byKey(const ValueKey('flow-title'));
-        expect(caption.evaluate().isEmpty || title.evaluate().isEmpty, isTrue);
+        _noFloatingText();
         // ux-declutter: no progress strip or bar at any moment.
         expect(find.byType(LinearProgressIndicator), findsNothing);
-        if (title.evaluate().isNotEmpty) seen.add('title');
         if (rig.transitions.slot != null) {
           seen.add('slot-${(rig.transitions.slot as InterludePlan).kind.name}');
         }
+        if (rig.transitions.shown != null) seen.add('radio-shown');
       }
       expect(rig.model.mode, RunMode.playing);
       expect(rig.model.level, 2);
-      // The second interlude of the run is the radio slot, then the title.
-      expect(seen, containsAll(['slot-radio', 'title']));
+      // The transition speaks only by radio, on the dock.
+      expect(seen, containsAll(['slot-radio', 'radio-shown']));
+      expect(seen, isNot(contains('slot-tip')));
       expect(find.text('TACTICAL BRIEFING'), findsNothing);
       expect(tester.takeException(), isNull);
       await dispose(tester);
@@ -376,7 +385,7 @@ void main() {
       Size(900, 900),
       Size(1440, 900),
     ]) {
-      testWidgets('tip card and caption fit at ${size.width.toInt()} px', (
+      testWidgets('tip card fits, radio only after, at ${size.width.toInt()} px', (
         tester,
       ) async {
         final rig = await launch(tester, size);
@@ -393,28 +402,29 @@ void main() {
         expect(rect.overlaps(hud), isFalse);
         await snap(tester, 'tip-${size.width.toInt()}');
         await rig.step(4.5);
-        // Two sector changes: the radio slot, then the caption slot.
-        Rect? caption;
-        for (var sector = 0; sector < 2; sector++) {
+        // Three sector changes in a row: every slot is a radio line that
+        // plays on the dock (playtest-fixes: captions and titles are gone).
+        for (var sector = 0; sector < 3; sector++) {
           rig.clearSector();
           var t = 0.0;
+          String? line;
+          InterludeKind? kind;
           while (rig.model.mode != RunMode.playing && t < 20) {
             await rig.step(.1);
             t += .1;
-            final c = find.byKey(const ValueKey('flow-caption'));
-            if (c.evaluate().isNotEmpty && caption == null) {
-              caption = tester.getRect(c);
-              await snap(tester, 'caption-${size.width.toInt()}');
+            _noFloatingText();
+            final slot = rig.transitions.slot as InterludePlan?;
+            if (slot != null) kind = slot.kind;
+            final shown = rig.transitions.shown;
+            if (shown != null) line ??= shown.line.id as String;
+            if (t > 3 && t < 3.15) {
+              await snap(tester, 'radio-${size.width.toInt()}-$sector');
             }
           }
+          expect(kind, InterludeKind.radio, reason: 'sector change $sector');
+          expect(line, isNotNull, reason: 'sector change $sector line');
           await rig.step(1);
         }
-        expect(caption, isNotNull, reason: 'the second slot is a caption');
-        expect(caption!.left, greaterThanOrEqualTo(0));
-        expect(caption.right, lessThanOrEqualTo(size.width));
-        // One line at the bottom edge.
-        expect(caption.height, lessThan(40));
-        expect(caption.bottom, greaterThan(size.height * .55));
         expect(tester.takeException(), isNull);
         await dispose(tester);
       });

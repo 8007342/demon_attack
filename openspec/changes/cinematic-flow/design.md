@@ -64,6 +64,10 @@ class FlowDirector {
   0.5 s of the swap (cannonball: never an art beat and an instruction at the same instant).
 
 ### 2.2 Messages: one at a time, no cards
+
+> **Superseded in part by §10.3 (playtest-fixes):** transitions now speak only by radio. The caption slot, the
+> Descent's sector/tour title and the "+1UP" text are gone; every slot is a radio line.
+
 - The fluid-transitions interlude alternation (tip ↔ radio, seeded) is kept, but **as slots, not cards**.
   - **Radio slot:** the line plays on the comms dock (the existing in-play transmission, not a full-size card),
     with its normal subtitle.
@@ -219,3 +223,31 @@ Recorded during implementation on `work/cinematic-flow`. Each is the reversible 
   the storyboard banner's 5-stage route chart (sector pips joined by a line that fills with progress), and the arrival's
   scan line sweeping down the arena with the transition's progress. The letterbox bars and their accent line went with
   them. `ux_declutter_test` and `fluid_transitions_test` assert no bar or strip through a whole sector change.
+
+## 10. Playtest revisions (work/playtest-fixes, 2026-11-15)
+
+Operator playtest: the very last wave still showed demons waiting in the fog, which then flew away at the level's end;
+and bare caption and title texts still floated over the play area.
+
+1. **The final wave leaves the fog empty** (`ArcadeModel.finalWave`, `fogStaged`). During a sector's last wave (and
+   the carrier) the drawn reserve is empty: the wave's later roster skeins and reinforcement groups are still born at
+   its start with the same seeded draws (determinism and calibration are untouched, nothing is born or timed
+   differently), but they wait unseen and appear only when admitted, swooping out of their deep-fog point. No cohort is
+   sighted after the last wave (unchanged). The wave's own sentinel keeps its foreshadow silhouette; it is admitted.
+2. **The rout scatters only fighters.** `_flowRout` no longer tops the flock up to 12 stand-ins "out of the fog"
+   around the last kill and no longer pulls in reserve silhouettes. A sector ends when every fighter fell, so a sector
+   change has no pursued flock: §2's pursuit, §3.1's mill and pour and the direction-continuity rule now apply only when
+   a flock exists (a carrier's live minions at its fall, §3.2). The next cohort's lead side (`_preloadSide`) is still
+   computed, so the first wave leaves the cloud where `flowDirection` points.
+3. **Transitions communicate only via radio.** The operator: the cards' leftover texts "still show up just floating
+   randomly without windows or toasts". Removed from in-game and transition presentation: the caption slot (the tip
+   sentence at the bottom edge, `lib/widgets/flow_caption.dart`, deleted), the Descent's sector title
+   (`SECTOR n · <NAME>`) with its `TOUR n` subtitle and the plan's `title` beat, the `♥ +1UP` text of the carrier-fall
+   flourish (the medal glyph stays, the HUD counts the life), and the model's unused `banner` strings (`COLLECT
+   SALVAGE`, `<NAME> SECURED`, `APPROACHING <NAME>`, `CARRIER DESTROYED`, `WAVE n / m`, `LEVEL nn · <NAME>`).
+   `InterludePlanner.planRadio` gives every transition slot a recorded line (seeded category, then any fresh line,
+   then the shortest one), so no transition is silent; the tip ↔ radio alternation now applies only to the opening.
+   Kept (in a window or a real UI): the opening tip card, the carrier alert, the heart notice toast, the HUD band, the
+   comms dock (its subtitles and `NO SIGNAL` inside the portrait frame), the game-over leaderboard card, the title,
+   pause and ending pages. The tour escalation rides on the radio briefing. No audio was generated
+   (tillandsias#1103).

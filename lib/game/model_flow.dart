@@ -25,10 +25,6 @@ extension ArcadeFlow on ArcadeModel {
   /// The remnant fleeing in a rout is at most this many silhouettes.
   static const remnant = 18;
 
-  /// A rout with fewer reserve members is topped up to this many, so there
-  /// is always a flock to pursue.
-  static const pursued = 12;
-
   /// Starts the plan of a sector change (the last kill) or a carrier's fall.
   void _flowBegin({required bool victory}) {
     final reduced = reducedMotion;
@@ -63,10 +59,12 @@ extension ArcadeFlow on ArcadeModel {
     );
   }
 
-  /// The remaining brood flash-expands and flees toward [direction]
-  /// (`stream.rout`): the reserve and stragglers, else a remnant out of the
-  /// fog around ([x], [y]). Cosmetic; at most [remnant] silhouettes.
-  void _flowRout({required double x, required double y, int? direction}) {
+  /// The creatures that were fighting ([fighters]: a carrier's minions at
+  /// its fall) flash-expand and flee toward [direction] (`stream.rout`).
+  /// Cosmetic; at most [remnant] silhouettes. Nothing is topped up and
+  /// nothing comes out of the fog for it (playtest-fixes): a sector's last
+  /// kill leaves no flock at all, the fog stays empty.
+  void _flowRout(Iterable<Demon> fighters, {int? direction}) {
     final dir =
         direction ??
         _preloadSide() ??
@@ -74,36 +72,18 @@ extension ArcadeFlow on ArcadeModel {
     final plan = stream.rout(dir);
     flowDirection = plan.direction;
     flowFlock.clear();
-    final sources = <Demon>[
-      ...swarmReserve,
-      for (final d in incoming)
-        if (d.swarmState != SwarmState.reserve) d,
-    ];
     final rng = stream.rngFor(sector: level, route: cycle, wave: 99, salt: 7);
     var i = 0;
-    void add(double x0, double y0, double n0, int kind) {
-      final d = Demon(x0, y0, kind, 1, rng.nextDouble() * 10)
+    for (final f in fighters.take(remnant)) {
+      final n0 = f.nearness > 0 ? f.nearness : .2;
+      final d = Demon(f.x, f.y, f.kind, 1, rng.nextDouble() * 10)
         ..swarmState = SwarmState.approaching
         ..arrivesFromDistance = true
         ..entranceProgress = 1
         ..nearness = n0
         ..scale = Perspective.scaleOf(n0);
-      flowFlock.add(FlowMember(d, x0, y0, n0, i, rng.nextDouble() * 6.28));
+      flowFlock.add(FlowMember(d, f.x, f.y, n0, i, rng.nextDouble() * 6.28));
       i++;
-    }
-
-    for (final d in sources.take(remnant)) {
-      add(d.x, d.y, d.nearness > 0 ? d.nearness : .2, d.kind);
-    }
-    while (flowFlock.length < pursued) {
-      final a = rng.nextDouble() * 2 * math.pi;
-      final r = 20 + 50 * rng.nextDouble();
-      add(
-        (x + math.cos(a) * r).clamp(30.0, ArcadeModel.width - 30),
-        (y + math.sin(a) * r * .5).clamp(70.0, 260.0),
-        .22 + .12 * rng.nextDouble(),
-        (level - 1 + i) % 4,
-      );
     }
     // The reserve itself is gone: what remains is the cosmetic flock.
     _reserveGroups.clear();

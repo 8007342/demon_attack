@@ -69,7 +69,7 @@ Each of the five levels SHALL have a distinct original pixel-art environment wit
 
 #### Scenario: Territory story
 - **WHEN** the player travels toward the carrier or begins a harder cycle
-- **THEN** cinematic captions, pictorial pixel-art storyboard interludes, and environmental occupation details communicate the deeper threat
+- **THEN** radio chatter on the comms dock and environmental occupation details communicate the deeper threat, with no floating captions or storyboard interludes
 
 ### Requirement: Arcade screens
 The app SHALL provide title, play, pause, victory and game-over screens, inline Top10 on the title, three-wheel score entry, a score/lives/level/wave HUD, and a futuristic pixel controller panel.
