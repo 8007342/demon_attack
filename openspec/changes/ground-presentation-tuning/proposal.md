@@ -36,9 +36,16 @@ threat-vehicle launch clocks, fire flashes, recoil, hit flashes, tracers, wreck 
 `GroundUnit.scale` / `width` / `bodyY` (placement, launch point, homing aim). The simulation fingerprint of every
 sector is identical before and after. Slowing unit *travel* needs a gameplay change; design §3 proposes one.
 
+## Follow-up: ground travel pace (gameplay; design §3a)
+The operator delegated the travel decision. Skirmish units travel at **0.6×** (walkers **0.45×**), the v4 convoy at
+0.6×; the skirmish hand-over moves out (`assignZ` 1050, `fireStartZ` 880) so engagements per minute hold; the
+threat front (travel, telegraph and launch clocks, warning bracket) is unchanged. While marching, a legged unit's
+walk cycle follows the ground it covers (`GroundStride`), so feet plant instead of sliding.
+
 ## Capabilities
 ### Modified Capabilities
-- `arcade-presentation`: ground animation pace, ground unit draw sizes, squad groups of individuals.
+- `arcade-presentation`: ground animation pace, ground unit draw sizes, squad groups of individuals; planted feet.
+- `arcade-combat`: skirmish and convoy travel pace (follow-up).
 
 ## Impact
 - **New code:** `lib/game/ground_presentation.dart`.

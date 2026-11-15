@@ -386,6 +386,11 @@ class GroundUnit {
   /// Skirmish hold line (depth), seconds alive and seconds idle at it.
   double holdZ = 0, life = 0, idle = 0;
 
+  /// Travel multiplier on depth approach and lateral speed (set at spawn:
+  /// [GroundV4Tuning.skirmishPace] or [GroundV4Tuning.walkerPace] for a
+  /// skirmish unit; 1 for the threat front, whose timing is a contract).
+  double travelPace = 1;
+
   /// +1 facing screen right, -1 left (the sprite mirrors).
   int facing = 1;
   int maxHp = 1;
@@ -1223,9 +1228,15 @@ extension GroundWarSimulation on ArcadeModel {
             )
           : a.holdZ;
       final dz = want - a.z;
-      final speed = dz > 0
-          ? GroundTuning.allyAdvanceSpeed
-          : GroundTuning.allyFallBackSpeed;
+      // --- ground travel pace: the v4 convoy advances and falls back at
+      // the skirmish pace, except against a threat-front foe.
+      final pace = a.lx != null && !(engaged && !foe.skirmish)
+          ? GroundV4Tuning.skirmishPace
+          : 1.0;
+      final speed = pace *
+          (dz > 0
+              ? GroundTuning.allyAdvanceSpeed
+              : GroundTuning.allyFallBackSpeed);
       final step = dz.clamp(-speed * dt, speed * dt);
       a.z += step;
       a.vz = dz.abs() < .5 ? 0 : step / math.max(dt, 1e-6);

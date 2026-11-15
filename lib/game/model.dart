@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'difficulty.dart';
 import 'flock.dart';
 import 'game_events.dart';
+import 'ground_blocks_atlas.dart';
+import 'ground_blocks_cast.dart';
 import 'perspective.dart';
 import 'swarm_policy.dart';
 export 'difficulty.dart';

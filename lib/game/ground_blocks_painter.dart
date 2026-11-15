@@ -74,6 +74,13 @@ class GroundBlockTrack {
   double vl = 0, vz = 0, march = 0;
   int marchSeen = -1;
 
+  /// Ground covered on screen (texels at the perspective texel, signed:
+  /// negative while backing up), the last screen point, and the walk cycle
+  /// it has advanced ([GroundStride]; once per paint).
+  double odo = 0, odoUsed = 0, gait = 0;
+  double? lastSX, lastSY;
+  int gaitSeen = -1;
+
   /// A squad's troopers, each turning on its own (presentation only), and
   /// where each fallen one lies (offset from the squad, texels).
   final List<GroundSquadMember> members = [];
@@ -246,6 +253,17 @@ class GroundBlocksLayer {
     if (t.flourish >= 0) t.flourish += dt;
     final lx = _lateral(x, z);
     final px = t.lastX, pz = t.lastZ;
+    // Odometer: screen distance in texels at this depth (feet plant).
+    final sy = GroundCamera.yOf(math.max(z, 1));
+    final sx0 = t.lastSX, sy0 = t.lastSY;
+    t
+      ..lastSX = x
+      ..lastSY = sy;
+    if (sx0 != null && sy0 != null) {
+      final d = math.sqrt((x - sx0) * (x - sx0) + (sy - sy0) * (sy - sy0)) /
+          GroundCamera.texel(math.max(z, 1));
+      t.odo += t.reverse ? -d : d;
+    }
     t.lastX = lx;
     t.lastZ = z;
     t.stepAge += dt;
@@ -275,6 +293,22 @@ class GroundBlocksLayer {
       t.stepAge = 0;
       t.stepDir = step;
     }
+  }
+
+  /// Walk cycles [t] has advanced, locked to the ground it covered: [s] is
+  /// the unit's draw scale at depth [z] (screen pixels per cell texel).
+  /// Updated once per paint; every trooper of a squad reads the same clock.
+  double gaitOf(GroundBlockTrack t, double s, double z) {
+    if (t.gaitSeen != _frame) {
+      t.gaitSeen = _frame;
+      final u = t.cells.unit;
+      final k = s / GroundCamera.texel(math.max(z, 1));
+      final travel = k > 0 ? (t.odo - t.odoUsed) / k : 0.0;
+      t.odoUsed = t.odo;
+      t.gait += GroundStride.cycles(
+          travel, GroundStride.of(u), GroundStride.maxOf(u), dt);
+    }
+    return t.gait;
   }
 
   /// Eases [t]'s marching amount toward [moving] (once per paint) and
@@ -587,8 +621,10 @@ class GroundBlocksLayer {
     var (k, mirror) = hull;
     final moving = u.z > u.holdZ + 1 || u.vx.abs() > 2 || !u.skirmish;
     final rate = unit.unitClass == 'heavy' ? 8.0 : 10.0;
-    var phase =
-        (clock * rate * GroundPace.of(unit) * (moving ? 1 : .6) + u.id * .37)
+    var phase = GroundPace.isWalker(unit) && moving
+        // Feet plant: the stride follows the ground covered.
+        ? (gaitOf(t, s, u.z) * t.cells.moveFrames(k) + u.id * .37).floor()
+        : (clock * rate * GroundPace.of(unit) * (moving ? 1 : .6) + u.id * .37)
             .floor();
     // The telegraph contract (old columns 4-7): same clock arithmetic.
     int? special;
@@ -782,7 +818,11 @@ class GroundBlocksLayer {
         (moving ? 1 : (turning ? .6 : 0));
     final dir = t.reverse ? -1 : 1;
     final n = math.max(1, t.cells.moveFrames(k));
-    final phase = (((clock * rate * dir + a.id * .37).floor()) % n + n) % n;
+    // Feet plant: a walker's stride follows the ground covered (signed).
+    final step = GroundPace.isWalker(unit) && moving
+        ? gaitOf(t, s, a.z) * n
+        : clock * rate * dir;
+    final phase = (((step + a.id * .37).floor()) % n + n) % n;
     final kick = (a.recoil / .14).clamp(0.0, 1.0);
     final near = nearDetail(a.z);
     final flash = a.flash > 0;
@@ -916,8 +956,11 @@ class GroundBlocksLayer {
     } else if (engaged && !moving) {
       name = cells.state('aim', h, u.tracerLeft < .25 ? 1 : 0).$1;
     } else if (moving) {
+      // Feet plant: the walk follows the ground the squad covers.
       final (rate, phase) = GroundSquadLook.gait(seed, k);
-      name = cells.hull('walk', h, (ac * 8 * rate + phase).floor());
+      final n = math.max(1, cells.moveFrames(h));
+      name = cells.hull(
+          'walk', h, (gaitOf(squad, s, u.z) * n * rate + phase).floor());
     } else {
       name = cells.state('idle', h, (ac * 2.5 + k * .5).floor()).$1;
     }
@@ -948,7 +991,10 @@ class GroundBlocksLayer {
               (squad.flourish * GroundPace.egg / .12).floor() + k)
           .$1;
     } else if (moving) {
-      name = cells.hull('walk', h, (ac * 8 * rate + phase).floor());
+      // Feet plant: the walk follows the ground the squad covers.
+      final n = math.max(1, cells.moveFrames(h));
+      name = cells.hull(
+          'walk', h, (gaitOf(squad, s, a.z) * n * rate + phase).floor());
     } else {
       name = cells.state('idle', h, (ac * 2.5 + k * .5).floor()).$1;
     }

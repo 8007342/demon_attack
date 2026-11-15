@@ -28,4 +28,16 @@ Prerequisite: `ground-blocks-runtime`, `ground-easter-eggs`.
 - [x] 4.2 Review frames before/after; contact sheet `art/contact/ground-tuning.png`
 - [x] 4.3 Render ledger §18
 - [ ] 4.4 Operator playtest on a phone (pace, sizes, squads)
-- [ ] 4.5 Decide on the gameplay-side travel slowdown (design §3)
+- [x] 4.5 Decide on the gameplay-side travel slowdown (design §3): operator delegated it; implemented (§5)
+
+## 5. Ground travel pace (gameplay follow-up, design §3a)
+- [x] 5.1 `GroundV4Tuning.skirmishPace` 0.6 / `walkerPace` 0.45 as `GroundUnit.travelPace` on skirmish approach and
+      lateral speed; walkers = skirmish vehicles cast as W/K blocks (`GroundV4Tuning.walks`)
+- [x] 5.2 v4 convoy advance, fall-back and lateral at the skirmish pace (not against a threat-front foe)
+- [x] 5.3 Threat front untouched: travel, telegraph, launch clocks, warning bracket (test: identical threat clocks
+      with the skirmish layer on and off)
+- [x] 5.4 Re-balance: `assignZ` 900 → 1050, `fireStartZ` 700 → 880; v4 sim engagements within their floors;
+      calibration and comms pacing outputs identical; variety test window 80 → 100 s (reshuffled draws)
+- [x] 5.5 `GroundStride`: walk cycles of troopers and W/K walkers follow the ground covered (feet plant)
+- [x] 5.6 `test/ground_travel_pace_test.dart`; render ledger §18 note
+- [ ] 5.7 Operator playtest on a phone (travel pace, planted feet)
