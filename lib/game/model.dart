@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'demon_planner.dart';
 import 'difficulty.dart';
 import 'flock.dart';
 import 'flow_director.dart';
@@ -11,6 +12,7 @@ import 'pilot_model.dart';
 import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
+export 'demon_planner.dart' show DemonTier, Manoeuvre;
 export 'difficulty.dart';
 export 'game_events.dart';
 export 'flow_director.dart';
@@ -94,6 +96,12 @@ class Demon {
   int shield, armor;
   double attackLeft = 2.4, volleyLeft = 1.5;
   double evadeLeft = 0, evadeCooldown = 0, evadeOffset = 0;
+
+  /// demon-intelligence: a hunter's climb (negative: up), the model clock
+  /// of its next planner decision (-1: not yet staggered) and its last
+  /// planned manoeuvre (hysteresis).
+  double evadeLift = 0, planAt = -1;
+  Manoeuvre lastPlan = Manoeuvre.hold;
   double get evadeTimer => evadeLeft;
   set evadeTimer(double value) => evadeLeft = value;
   double get defenseFraction =>
@@ -365,6 +373,31 @@ class ArcadeModel {
   // --- demon intelligence (demon-intelligence design §2): the forecast
   // of the player that hunters and the sentinel rush aim at.
   final PilotModel pilot = PilotModel();
+
+  /// The tiers' brains (design §3-§4); false restores the pre-W4 swarm
+  /// (a fixture and calibration flag). Route 0 is unchanged either way.
+  bool intelligence = true;
+  bool get _intel => intelligence && cycle >= 1;
+
+  /// The energy planner (its own PRNG: never draws from [random]).
+  late final DemonPlanner planner = DemonPlanner(seed);
+  final PlanState _plan = PlanState();
+
+  /// Planner decisions are 10 Hz per creature, staggered by seed, at most
+  /// [maxPlanDecisions] per frame (the rest wait their turn).
+  static const planRate = 10.0, maxPlanDecisions = 6;
+  int planDecisionsThisFrame = 0;
+
+  static DemonTier tierOf(Demon d) => d.isLarge
+      ? DemonTier.sentinel
+      : d.elite
+      ? DemonTier.hunter
+      : (d.kind >= 2 || d.maxHp >= 3)
+      ? DemonTier.skirmisher
+      : DemonTier.drone;
+
+  /// The skill level hunters react to (design §7).
+  double get skillLevel => 0;
 
   // --- ground war state (see ground_war.dart) ---
   final GroundWar ground = GroundWar();
@@ -2449,12 +2482,16 @@ class ArcadeModel {
       return (nextX, nextY);
     }
     final evadeX = d.evadeOffset * (d.evadeLeft / 0.32).clamp(0.0, 1.0);
+    final evadeY = d.evadeLift == 0
+        ? 0.0
+        : d.evadeLift * (d.evadeLeft / 0.32).clamp(0.0, 1.0);
     // --- continuous swarm: squad members fly their pattern target, plus
     // the gated evade and the telegraph crest; strays and onboarding hover.
     final pattern = _patternTarget(d);
     if (pattern != null) {
       var (px, py) = pattern;
       px += evadeX;
+      py += evadeY;
       if (d.telegraph > 0) {
         final totalTell = d.elite ? 0.55 : 0.7;
         final progress = (d.telegraph / totalTell).clamp(0.0, 1.0);
@@ -2472,7 +2509,10 @@ class ArcadeModel {
                 evadeX)
             .clamp(20.0, width - 20.0);
     var targetFormY =
-        d.homeY + math.sin(levelClock * 1.7 * speed + d.seed) * 14 + boidsY;
+        d.homeY +
+        math.sin(levelClock * 1.7 * speed + d.seed) * 14 +
+        boidsY +
+        evadeY;
     if (d.telegraph > 0) {
       final totalTell = d.elite ? 0.55 : 0.7;
       final progress = (d.telegraph / totalTell).clamp(0.0, 1.0);
@@ -2761,6 +2801,7 @@ class ArcadeModel {
             : (difficulty == Difficulty.hard ? 3 : 2));
 
   void _updateDemons(double dt) {
+    planDecisionsThisFrame = 0; // --- demon intelligence
     if (!shipAway) _dive -= dt * policy.hostileRate;
     var activeSmallDives = demons
         .where(
@@ -3040,6 +3081,9 @@ class ArcadeModel {
     d.evadeLeft = math.max(0, d.evadeLeft - dt);
     if (d.evadeLeft <= 0) {
       d.evadeOffset += (-d.evadeOffset).clamp(-90 * dt, 90 * dt);
+      if (d.evadeLift != 0) {
+        d.evadeLift += (-d.evadeLift).clamp(-90 * dt, 90 * dt);
+      }
     }
     if ((level < 2 && cycle == 0) ||
         d.telegraph > 0 ||
@@ -3047,11 +3091,21 @@ class ArcadeModel {
         d.evadeCooldown > 0) {
       return false;
     }
-    if (demons.any((o) => !o.isLarge && !identical(o, d) && o.evadeLeft > 0)) {
+    // One drone/skirmisher evader at a time; hunters have their own slot.
+    if (demons.any(
+      (o) =>
+          !o.isLarge &&
+          !identical(o, d) &&
+          o.evadeLeft > 0 &&
+          (!_intel || o.elite == d.elite),
+    )) {
       return false;
     }
     if (demons.any((o) => o.isLarge && o.waitingForEscort)) {
       return false;
+    }
+    if (_intel && d.elite) {
+      return _evadeHunter(d, activeSmallDives, maxSmallDives);
     }
     Shot? nearestShot;
     var bestArrival = 999.0;
@@ -3099,6 +3153,7 @@ class ArcadeModel {
       var dir = action == 'evade_left' ? -1.0 : 1.0;
       if (d.x < 44) dir = 1.0;
       if (d.x > width - 44) dir = -1.0;
+      if (_vetoed(d, dir)) return false; // --- demon intelligence (T1)
       d.evadeOffset = dir * 24.0;
       d.evadeLeft = 0.32;
       d.evadeCooldown = cooldown;
@@ -3115,6 +3170,7 @@ class ArcadeModel {
       var dir = projectedX <= d.x ? 1.0 : -1.0;
       if (d.x < 44) dir = 1.0;
       if (d.x > width - 44) dir = -1.0;
+      if (_vetoed(d, dir)) return false; // --- demon intelligence (T1)
       d.evadeOffset = dir * 22.0 * d.scale;
       d.evadeLeft = 0.32;
       d.evadeCooldown = cooldown;
@@ -3130,6 +3186,10 @@ class ArcadeModel {
       d.evadeOffset += (-d.evadeOffset).clamp(-65 * dt, 65 * dt);
     }
     if (d.evadeCooldown > 0) return;
+    if (_intel) {
+      _evadeSentinel(d);
+      return;
+    }
     for (final shot in shots) {
       if (shot.hostile || shot.vy >= 0) continue;
       final arrival = (d.y - shot.y) / shot.vy;
@@ -3148,6 +3208,140 @@ class ArcadeModel {
       break;
     }
   }
+
+  // --- demon intelligence: tiers (openspec/changes/demon-intelligence
+  // design §3-§4). T0 drones keep the SwarmPolicy evade above unchanged;
+  // T1 skirmishers add the planner veto; T2 hunters and T3 sentinels run
+  // the planner at 10 Hz. Route 0 never gets here (`_intel`).
+
+  /// Whether [d]'s 10 Hz decision is due and the frame still has room:
+  /// staggered by its seed; a due creature over the cap waits a frame.
+  bool _planDue(Demon d) {
+    if (d.planAt < 0) {
+      d.planAt = clock + (d.seed * .618 % 1).abs() / planRate;
+    }
+    if (clock + 1e-9 < d.planAt) return false;
+    if (planDecisionsThisFrame >= maxPlanDecisions) return false;
+    planDecisionsThisFrame++;
+    d.planAt = math.max(d.planAt + 1 / planRate, clock + .5 / planRate);
+    return true;
+  }
+
+  PlanState _planFor(Demon d) {
+    var left = 0, right = 0;
+    for (final o in demons) {
+      if (identical(o, d) || o.isLarge || o.entering) continue;
+      final dx = o.x - d.x, dy = o.y - d.y;
+      if (dx * dx + dy * dy <= 72 * 72) {
+        if (dx < 0) {
+          left++;
+        } else {
+          right++;
+        }
+      }
+    }
+    final evadeX = d.evadeOffset * (d.evadeLeft / .32).clamp(0.0, 1.0);
+    return _plan
+      ..x = d.x
+      ..y = d.y
+      ..vx = d.vx
+      ..vy = d.vy
+      ..scale = d.scale
+      ..halfWidth = d.hitHalfWidth
+      ..crowd = ((right - left) / 4.0).clamp(-1.0, 1.0)
+      ..leashX = d.isLarge ? d.x : _targetFormationPosition(d).$1 - evadeX
+      ..last = d.lastPlan;
+  }
+
+  /// T1: the SwarmPolicy proposal (a sidestep toward [dir]) is vetoed
+  /// when it runs into more danger than holding (another shot).
+  bool _vetoed(Demon d, double dir) {
+    if (!_intel || tierOf(d) != DemonTier.skirmisher) return false;
+    const cfg = PlannerConfig.skirmisher;
+    final s = _planFor(d);
+    final hold = DemonPlanner.dangerOf(Manoeuvre.hold, s, cfg, shots);
+    final side = DemonPlanner.dangerOf(
+      dir < 0 ? Manoeuvre.sideL : Manoeuvre.sideR,
+      s,
+      cfg,
+      shots,
+    );
+    return side > hold;
+  }
+
+  /// T2: the full planner (the thread candidate is a dive commit while a
+  /// dive slot is free). Returns true when it commits a dive.
+  bool _evadeHunter(Demon d, int activeSmallDives, int maxSmallDives) {
+    if (!_planDue(d)) return false;
+    final skill = skillLevel;
+    final cfg = PlannerConfig.hunter(
+      skill,
+      dive: activeSmallDives < maxSmallDives && !shipAway,
+    );
+    final s = _planFor(d);
+    if (DemonPlanner.dangerOf(Manoeuvre.hold, s, cfg, shots) <= 0) {
+      d.lastPlan = Manoeuvre.hold;
+      return false;
+    }
+    s.aimX = (shipX + shipVx * .22).clamp(24.0, width - 24.0);
+    final (threadDx, _) = DemonPlanner.displacement(Manoeuvre.thread, s, cfg);
+    s.aimP = pilot.pHit(d.x + threadDx, _diveEta(d), d.contactHalf + 36);
+    final a = planner.choose(s, cfg, shots);
+    d.lastPlan = a;
+    switch (a) {
+      case Manoeuvre.hold:
+        return false;
+      case Manoeuvre.thread:
+        _prepDive(d, lead: true);
+        d.evadeCooldown = PlannerConfig.hunterCooldown(skill);
+        return true;
+      default:
+        final (dx, dy) = DemonPlanner.displacement(a, s, cfg);
+        d.evadeOffset = dx;
+        d.evadeLift = dy;
+        // Held out of the shot's path, then eased back (the planner plans
+        // the move and the stay; today's jink fades over 0.32 s at once).
+        d.evadeLeft = .32 + hunterHold;
+        d.evadeCooldown = PlannerConfig.hunterCooldown(skill);
+        return false;
+    }
+  }
+
+  /// Seconds a hunter holds its sidestep before easing back.
+  static const hunterHold = .4;
+
+  /// Seconds (real) from a dive tell starting now until [d] reaches the
+  /// ship row on today's dive.
+  double _diveEta(Demon d) {
+    final rate = policy.hostileRate > 0 ? policy.hostileRate : 1;
+    final vy =
+        (d.isLarge ? 300 : (115 + d.kind * 16)) *
+        speed *
+        (d.angry ? 1.3 : 1) *
+        (d.elite ? 1.15 : 1);
+    return (divePrepBeat + diveTellFor(d)) / rate +
+        math.max(0, shipY - d.y) / vy;
+  }
+
+  /// T3: planner-backed sentinel sidestep with today's 54-u span, 0.6 s
+  /// and 1.4 s cooldown.
+  void _evadeSentinel(Demon d) {
+    if (!_planDue(d)) return;
+    const cfg = PlannerConfig.sentinel;
+    final s = _planFor(d);
+    if (DemonPlanner.dangerOf(Manoeuvre.hold, s, cfg, shots) <= 0) {
+      d.lastPlan = Manoeuvre.hold;
+      return;
+    }
+    final a = planner.choose(s, cfg, shots);
+    d.lastPlan = a;
+    if (a == Manoeuvre.hold) return;
+    final (dx, _) = DemonPlanner.displacement(a, s, cfg);
+    d.evadeOffset = dx;
+    d.evadeLeft = .6;
+    d.evadeCooldown = 1.4;
+  }
+  // --- end demon intelligence tiers
 
   void _updateBoss(double dt) {
     final b = boss;

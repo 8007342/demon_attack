@@ -12,6 +12,10 @@ import 'dart:typed_data';
 
 import 'model.dart' show Shot;
 
+/// Intelligence tiers (design §4): what a creature already is decides
+/// how it thinks; bodies, HP, budgets and fire rates are unchanged.
+enum DemonTier { drone, skirmisher, hunter, sentinel }
+
 /// Candidate manoeuvres (design §3 table).
 enum Manoeuvre { hold, sideL, sideR, wideL, wideR, climb, thread }
 
@@ -67,8 +71,8 @@ class PlannerConfig {
   final double yScale;
   final PlannerWeights weights;
 
-  /// Danger horizon H = 1.5 τ0.
-  double get horizon => 1.5 * foresight;
+  /// Danger horizon H = [DemonPlanner.horizonFactor] τ0.
+  double get horizon => DemonPlanner.horizonFactor * foresight;
 
   /// T1 skirmisher: the veto check.
   static const skirmisher = PlannerConfig(
@@ -121,6 +125,9 @@ class PlannerConfig {
 /// What the planner sees of one creature.
 class PlanState {
   double x = 0, y = 0;
+
+  /// Its current drift (formation or pattern velocity), u/s.
+  double vx = 0, vy = 0;
 
   /// Size factor (spans scale with it) and hit half width.
   double scale = 1, halfWidth = 16;
@@ -185,9 +192,11 @@ class DemonPlanner {
     return t0 + t <= h ? t0 + t : null;
   }
 
-  /// Danger of the path from (px, py) at (vx, vy) that stops after
-  /// [stopAfter] s (∞: keeps going), against the player shots in [shots]
-  /// as perceived with [delay]: Σ 1/τ² e^(−τ/τ0) over contacts τ ≤ H.
+  /// Danger of the path from (px, py) at (vx, vy) + the drift (bx, by)
+  /// that stops manoeuvring after [stopAfter] s (∞: keeps going) and then
+  /// only drifts, against the player shots in [shots] as perceived with
+  /// [delay]: Σ 1/τ² e^(−τ/τ0) over contacts τ ≤ H ([horizon], default
+  /// [horizonFactor] τ0).
   static double danger(
     double px,
     double py,
@@ -199,10 +208,15 @@ class DemonPlanner {
     required double delay,
     required double foresight,
     double yScale = 1,
+    double bx = 0,
+    double by = 0,
+    double? horizon,
   }) {
-    final h = 1.5 * foresight;
+    final h = horizon ?? horizonFactor * foresight;
     final k = yScale;
     final split = math.min(stopAfter, h);
+    vx += bx;
+    vy += by;
     var e = 0.0;
     for (final s in shots) {
       if (s.hostile || s.vy >= 0 || s.age < delay) continue;
@@ -222,8 +236,8 @@ class DemonPlanner {
         tau = _contact(
           sx + s.vx * split - ex,
           (sy + s.vy * split - ey) * k,
-          s.vx,
-          s.vy * k,
+          s.vx - bx,
+          (s.vy - by) * k,
           radius,
           split,
           h,
@@ -235,6 +249,12 @@ class DemonPlanner {
     }
     return e;
   }
+
+  /// H / τ0. Karamouzas et al. use 1.5; with a perception delay the
+  /// demons see shots late, and a 1.5 τ0 cut made a small climb (contact
+  /// pushed just past H) look perfectly safe. 2.5 τ0 keeps the energy's
+  /// own e^(−τ/τ0) fall-off doing the work (design.md §3, as built).
+  static const horizonFactor = 2.5;
 
   /// The x range the formation keeps a creature in.
   static const arenaLo = 20.0, arenaHi = 340.0;
@@ -260,6 +280,8 @@ class DemonPlanner {
       delay: cfg.delay,
       foresight: cfg.foresight,
       yScale: cfg.yScale,
+      bx: s.vx,
+      by: s.vy,
     );
   }
 

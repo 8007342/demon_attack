@@ -37,13 +37,13 @@ Groups 2–4 can land before group 5. The rush (5) is independent of the hunters
       in the design note.
 
 ## 3. Tiers
-- [ ] 3.1 `model.dart`: `tierOf(Demon)`.
+- [x] 3.1 `model.dart`: `tierOf(Demon)`.
       - `_evadeSmall` runs T0 unchanged; T1 adds the planner veto; T2 uses the planner with its own concurrency
         slot.
       - `_evade` (T3) is planner-backed with today's spans and cooldown.
       - Gating (sector 1 route 0, a waiting sentinel) is unchanged.
-- [ ] 3.2 Planner scheduling: 10 Hz per creature, staggered by `seed`, at most 6 decisions per frame (a queue).
-- [ ] 3.3 Tests in `test/demon_intelligence_test.dart`:
+- [x] 3.2 Planner scheduling: 10 Hz per creature, staggered by `seed`, at most 6 decisions per frame (a queue).
+- [x] 3.3 Tests in `test/demon_intelligence_test.dart`:
       - tier classification;
       - T0 behaviour bit-identical to today on the existing `test/swarm_policy_test.dart` fixtures;
       - a T2 elite survives a straight shot that kills a T0 at the same spot;
