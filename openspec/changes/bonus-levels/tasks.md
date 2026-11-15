@@ -46,7 +46,17 @@
 - [x] 8.8 `flutter analyze` clean, `flutter test` green, `openspec validate bonus-levels --strict`
 - [x] 8.9 `plan/bonus-levels-blockers-b.md`
 
+## 9. Urgent-mission card and banter (`work/bonus-briefing`)
+- [x] 9.1 Design section "Urgent-mission card and banter"; spec deltas: `arcade-presentation` (the card, its close and reduced motion; entry by radio card), `squad-comms` (the script, the banter, written lines); the sanctioned exception written into `cinematic-flow` and `transition-ascent`
+- [x] 9.2 `CommsLine.silent` and the `"pending": "text"` mode in `tools/comms_pipeline.py` (own words, no audio, reading-time duration); `SquadComms` plays no audio for a silent line; closed mouth
+- [x] 9.3 `CommsDirector.offerScript` / `withdraw`, scripted turns pass the hush and the gate like an exchange's answer; an exchange's answer is never held by a hush
+- [x] 9.4 `lib/comms/comms_briefing.dart` (`BonusBriefing`), `lib/comms/comms_briefing_view.dart` (`BonusBriefingCard`), `TransitionPresenter` wiring, `CommsHudStack.banner` / `hide`, `CommsSidePanels.hide`, `main.dart` (dock banner, wide-screen card, tap and Space / Enter dismiss, `shipRowTop`)
+- [x] 9.5 `BonusLevelDef.brief`, `RunModifierDef.brief`; `bonusMidway` event (`model_bonus.dart`, `game_events.dart`)
+- [x] 9.6 Radio: `bonusEntry*` rewritten as written invites; `bonusDare`, `bonusDare.supplyRun`, `bonusDare.stormfront`, `bonusMidway.supplyRun`, `bonusMidway.stormfront` (squad and brood); two clear lines; bank and pending list regenerated; borrowed-line count 70 → 64
+- [x] 9.7 `test/bonus_briefing_test.dart`, `test/bonus_briefing_card_test.dart`; `test/bonus_briefing_review_test.dart` → `art/contact/bonus-briefing-<level>-<w>x<h>.png`, checked by eye
+- [x] 9.8 `plan/story-hooks.md`: the hints placed and the open story questions
+
 ## Workflow follow-up
 - Integrate bonus level #2 (`work/bonus-levels-b`): one catalogue line, its `lines.json` block, regenerate the bank, add its lines to the borrowed-line count.
-- Voice batch: record the 23 lines (and Stormfront's 18) when tillandsias#1103 unblocks; the placeholders fall away with no code change.
+- Voice batch: record the 23 lines (and Stormfront's 18, and the briefing's written lines) when tillandsias#1103 unblocks; the placeholders and the silent text fall away with no code change.
 - Operator phone playtest through `/console` → BONUS LEVEL, then a calibration pass of the bonus level and the modifier chances, then `openspec archive bonus-levels`.

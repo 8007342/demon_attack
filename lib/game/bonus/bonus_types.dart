@@ -84,10 +84,15 @@ class RunModifierDef {
     required this.id,
     required this.chance,
     required this.rules,
+    this.brief = '',
   });
 
   /// camelCase; the radio trigger is `runModifier.<id>`.
   final String id;
+
+  /// bonus-briefing: the rule in a few words, shown on a bonus level's
+  /// urgent-mission card while the modifier is in play ('': not shown).
+  final String brief;
 
   /// Probability per run. At most one modifier fires per run: the first
   /// hit in catalogue order.
@@ -285,13 +290,19 @@ class BonusLevelDef {
     this.scoring = const BonusScoring(),
     this.look = const BonusLook(),
     this.mechanic,
+    this.brief = '',
   });
 
   /// camelCase; the radio triggers key on it.
   final String id;
 
-  /// Name for the console and the review studio (never drawn in play).
+  /// Name for the console, the review studio and the title line of the
+  /// urgent-mission card (bonus-briefing); never drawn over the play area.
   final String label;
+
+  /// bonus-briefing: the level's twist or rule in one or two short lines,
+  /// shown on its urgent-mission card ('': the card shows none).
+  final String brief;
 
   /// Relative odds among the levels eligible for the drawn slot.
   final double weight;

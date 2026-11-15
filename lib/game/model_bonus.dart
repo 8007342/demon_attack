@@ -37,6 +37,9 @@ class BonusRun {
   double crateLeft = 0;
   bool startAnnounced = false, modifierAnnounced = false;
 
+  /// bonus-briefing: the mid-level banter (`bonusMidway`) was asked for.
+  bool midwayAnnounced = false;
+
   /// The level's own rule of play (bonus_mechanic.dart), one per visit.
   BonusMechanic? mechanic;
 
@@ -45,6 +48,7 @@ class BonusRun {
     extra = award = 0;
     crateLeft = 0;
     startAnnounced = false;
+    midwayAnnounced = false;
     mechanic = null;
   }
 }
@@ -301,6 +305,12 @@ extension ArcadeBonus on ArcadeModel {
     if (!run.startAnnounced) {
       run.startAnnounced = true;
       _queueGameEvent(GameEventNames.bonusStart, {'variant': def.id});
+    }
+    // --- bonus briefing: the second wave's first combat frame asks for
+    // the level's mid-level banter (once per visit).
+    if (!run.midwayAnnounced && wave >= 2) {
+      run.midwayAnnounced = true;
+      _queueGameEvent(GameEventNames.bonusMidway, {'variant': def.id});
     }
     run.mechanic?.step(this, dt); // --- bonus mechanic
     if (shipAway) return;

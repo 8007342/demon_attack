@@ -32,18 +32,21 @@ const runModifiers = <RunModifierDef>[
     id: 'noShield',
     chance: .05,
     rules: PowerRules(banned: {Power.shield}),
+    brief: 'No shield modules this run.',
   ),
   // "Or a certain powerup only."
   RunModifierDef(
     id: 'spreadOnly',
     chance: .03,
     rules: PowerRules(only: Power.spread),
+    brief: 'Spread modules only this run.',
   ),
   // "A certain percentage of a chance to happen."
   RunModifierDef(
     id: 'heavyOrdnance',
     chance: .05,
     rules: PowerRules(chances: [PowerChance(Power.large, .35)]),
+    brief: 'Extra blast rounds in the drops this run.',
   ),
 ];
 

@@ -334,6 +334,10 @@ abstract final class GameEventNames {
   /// A bonus level's last kill (data `award`, `flawless`, `crates`).
   static const bonusCleared = 'bonusCleared';
 
+  /// bonus-briefing: a bonus level's second wave begins combat (the
+  /// squad's mid-level banter and the brood's retort).
+  static const bonusMidway = 'bonusMidway';
+
   // --- bonus level #2, Stormfront (specs/bonus-level-stormfront). The raw
   // string events `stormTell` and `stormBolt` (every tell, every bolt) are
   // forwarded under the same names with no data, for the sound and the
@@ -353,6 +357,7 @@ abstract final class GameEventNames {
     bonusCrate,
     bonusPickup,
     bonusCleared,
+    bonusMidway,
     stormStrike,
     stormBait,
   ];

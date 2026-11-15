@@ -152,7 +152,8 @@ Measured with a weaving, auto-firing, invulnerable pilot (Normal; regular sector
 - **Entry and exit.** Nothing new. `_completeWave` starts the Rout as for any sector; `bonusAhead` (the plan at the
   flow's destination) only tells the transition's radio slot which line to ask for. `_finishTravel` → `_beginLevel`
   sets `model.bonus` at the Descent's first frame.
-- **Radio only.** No title, caption, card or toast. The entry call fills the transition's one slot
+- **Radio only** (superseded in part by "Urgent-mission card" below: the entry call now opens that card). No title,
+  caption, card or toast. The entry call fills the transition's one slot
   (`RadioCategory.bonusEntry`: `bonusEntry.<id>`, then `bonusEntry`; it must fit the slot's window like any line).
   The award is not shown as text: the HUD's score counts it and the `bonusCleared` line says it.
 - **Look.** `BonusLookLayer` follows `model.bonus?.look` with a 0.35 s crossfade. `model.bonus` only changes at the
@@ -302,3 +303,85 @@ grounded bolt, a swarm bolt, the way out) and `bonus-level-b-reduced.png` (four 
 ### Open
 - Balance is uncalibrated: no tool measures a bonus level (blocker log §6).
 - The storm has no music cue and no art of its own; both can be added without touching the mechanic.
+
+## Urgent-mission card and banter (`work/bonus-briefing`)
+
+Operator decision (2026-11-15, blocker A11): a bonus level announced by one transition line falls flat. "Toast and
+radio comms: a full-size radio comm with an exceptional 'Urgent mission!' title, a short description of the modified
+level and its radio chatter. Keep the chatter playful, with banter, a playful invite to beat the challenging level;
+remember the hidden story to reveal later."
+
+### The card
+
+- **What it is.** The one radio card a sector transition may show (the sanctioned exception to "transitions speak
+  only by radio, no floating text"): it is a radio comm, not floating text. It heads the comms dock in the toast
+  style (rounded frame, accent bars, portrait, callsign tags), in an alert amber no squad accent uses, with a slow
+  frame glow. Content, top to bottom: the alert mark and **URGENT MISSION!**, the level's label and a dismiss cross;
+  the current speaker's portrait beside the level's rule (`BonusLevelDef.brief`, one or two lines) and the run rule
+  in play (`RunModifierDef.brief`); then the chatter, each turn as it starts (older turns dimmed).
+- **Script.** `BonusBriefing` (`lib/comms/comms_briefing.dart`, pure Dart) composes three turns: the invite (the
+  slot's own `bonusEntry.<id>` pick), a squadmate's dare (`bonusDare.<id>`, another speaker, this run's crew first)
+  and the brood's retort (`bonusDare.<id>`'s demon part: an officer of the destination sector, then a minion).
+  `CommsDirector.offerScript` queues them as a chain of replies, so the channel is reserved from turn to turn: one
+  voice at a time, each after the grace gap, none cut. Scripted turns pass the gate like an exchange's answer (grace
+  only, no budget, no screen wait).
+- **Timing.** The script is offered at the slot's start (no adoption of a line on air: the director queues the
+  first turn behind it). While the card is up it hushes the rest of the channel (an exchange already on screen still
+  gets its answer). The slot's extra Pursuit time is sized from the whole script, capped at the usual
+  `FlowPlan.maxExtra` (2 s), so the transition's length rule is unchanged. The card closes when the script has been
+  read, when dismissed, or at the latest 1.2 s into the level's first combat (`BonusBriefing.combatGrace`, the swarm
+  is still settling); closing withdraws every turn not yet started and ends the hush. A turn on air is never cut: it
+  finishes as an ordinary dock toast.
+- **Layout.** Phones: the card is the dock's `banner`; the dock's other toasts stack under it. Wide screens: the card
+  sits at the top of the arena (the call tiles stay in the margins and leave out the card's turns). The caller gives
+  it a maximum height that ends 6 px above the ship row (`shipRowTop`: the bottom-aligned 360 × 520 arena, ship row
+  at `shipY - 26`). Below 200 px it shows the last two turns, below 150 px the last one, a 40 px portrait and a
+  two-line rule; the chatter scrolls the oldest turn off the top rather than overflow.
+- **Dismiss.** A tap on the card (or its cross) closes it and nothing else: the tap never reaches the arena's skip.
+  Space or Enter skip the transition as before; when there is nothing to skip (the Descent), they close the card.
+- **Reduced motion.** No fade in or out (the card is up or gone), no frame glow, no connect static (a plain fade from
+  ink on the portrait), no mouth animation; the rest is the same.
+- **Where it does not appear.** A run that starts inside its bonus level (a `/console` start, a resumed checkpoint)
+  has no transition into it: the level is announced by its `bonusStart` lines as before.
+
+### Honest audio and subtitles: written lines
+
+Placeholder clips play **with their own subtitle** (demon-intelligence §8), so a borrowed clip can never show the
+new written text. The card's words are the point, so its triggers use a second pending mode instead of borrowing:
+
+- A trigger marked `"pending": "text"` in `art/comms/lines.json` puts its unrecorded lines in the bank with their
+  **own** words and speaker and `silent: true` (`CommsLine.silent`). A silent line plays no audio (`SquadComms`
+  skips the player), keeps the portrait's mouth closed (the frame lights while it is "on air"), and holds the
+  channel for its reading time (0.5 s + 0.27 s a word; a brood line 1.1 s, its glyph reveal) instead of a guessed
+  voice length. `plan/audio-studio/voice-batch-pending.md` lists them as "(text card)".
+- Once a line is recorded it is an ordinary voiced line, with no code change.
+- Used by `bonusEntry`, `bonusEntry.<id>`, `bonusDare`, `bonusDare.<id>` (the card) and `bonusMidway.<id>` (the
+  mid-level banter, whose words carry the story hints). Every other bonus trigger keeps its borrowed clip, chosen by
+  meaning: in a fight a voice matters more than new words (warnings, pickups, clears).
+- Rejected: showing the new text over a borrowed clip (audio and text disagree); a borrowed "grunt" under the text
+  (the human cast has no wordless clips, and any word heard would contradict the card).
+
+### Banter
+
+- **Card:** invite, dare, retort, e.g. Supply Run: WISP "Crates falling through the fog! Three hits cracks one open."
+  → SPARROW "Ten credits says you drop more than you catch." → VEXXA "Those crates are ours. Wait your turn!".
+  Stormfront: SUNNY "Forecast: thunderstorm, ninety percent chance of fried demons." → ROOK "Bet you flinch first.
+  Loser carries the cooler." → NIBB "Rain? Nobody said rain was in the rules!".
+- **Mid-level:** a new event, `bonusMidway` (the second wave's first combat frame, once per visit, variant = level
+  id, emitted in `model_bonus.dart`), voices `bonusMidway.<id>` as a two-party exchange (squad first, brood answers).
+- **Story hints** follow the `battle-metal-radio-rework` direction (the campaign is a board game among teenage
+  human and demon friends on a San Diego beach, revealed after the fifth carrier): sparse, ambiguous references to
+  turns, rules, dice, snacks, sand, salt air, the cooler and the umbrella, never explained. The hooks and the open
+  questions for the operator are in `plan/story-hooks.md`.
+
+### Review and tests
+
+- `test/bonus_briefing_test.dart`: the script (speakers, sides, written lines), the slot fit, one voice at a time
+  with squad chatter around it, hush exemption, closed mouth, dismiss (turn on air finishes, rest withdrawn, channel
+  free), close on read and before the fight, reduced-motion opacity, `bonusMidway` in the model and on the radio.
+- `test/bonus_briefing_card_test.dart`: the whole page at 360 × 780, 390 × 844, 412 × 915 and 740 × 360 for both
+  levels (card above the ship row on every frame, turns never twice, gone 1.2 s into combat), a wide screen, tap and
+  Space dismiss, reduced motion.
+- `test/bonus_briefing_review_test.dart` (`--dart-define=BONUS_BRIEFING_CONTACT=true`) →
+  `art/contact/bonus-briefing-<level>-<w>x<h>.png`, three frames each (invite, dare, retort); checked by eye.
+

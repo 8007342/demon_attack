@@ -419,8 +419,13 @@ void main() {
           for (final spec in bank.values)
             for (final line in spec.lines) line.id: line,
       };
+      // bonus-briefing: the entry call is the urgent-mission card's
+      // written line (silent until recorded, its own words on the card).
+      for (final line in commsHumanTriggers['bonusEntry.stormfront']!.lines) {
+        expect(line.silent, isTrue, reason: line.id);
+        expect(line.clip, line.id, reason: 'nothing borrowed');
+      }
       for (final name in [
-        'bonusEntry.stormfront',
         'bonusStart.stormfront',
         GameEventNames.stormStrike,
         GameEventNames.stormBait,

@@ -323,7 +323,7 @@ void main() {
       expect(RadioCategory.drawn, isNot(contains(RadioCategory.bonusEntry)));
     });
 
-    test('every bonus line plays a recorded clip with that clip\'s text', () {
+    test('every bonus line borrows a recorded clip or is a written line', () {
       final bonus = [
         for (final e in commsHumanTriggers.entries)
           if (e.key.startsWith('bonus') || e.key.startsWith('runModifier'))
@@ -332,8 +332,13 @@ void main() {
       expect(bonus.length, greaterThanOrEqualTo(10));
       for (final spec in bonus) {
         for (final line in spec.lines) {
-          // Pending the voice batch (tillandsias#1103): a borrowed clip.
-          expect(line.clip, isNotNull, reason: line.id);
+          // Pending the voice batch (tillandsias#1103): a borrowed clip,
+          // or (bonus-briefing) a silent written line with its own words.
+          if (line.silent) {
+            expect(line.clip, line.id, reason: line.id);
+          } else {
+            expect(line.clip, isNot(line.id), reason: line.id);
+          }
           expect(line.text, isNotEmpty, reason: line.id);
         }
       }

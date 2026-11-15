@@ -1008,8 +1008,10 @@ void rushRadio() {
         expect(line.mouth, source.mouth);
       }
       // 16 sentinel-rush + 13 transition-ascent front-line calls + 23
-      // bonus-levels (framework and Supply Run) + 18 Stormfront.
-      expect(borrowed, 70);
+      // bonus-levels (framework and Supply Run) + 18 Stormfront, less the
+      // 8 entry calls that became the urgent-mission card's silent written
+      // lines, plus 2 bonus-briefing clear lines (bonus-briefing).
+      expect(borrowed, 64);
     });
 
     test('triggers without a truthful placeholder stay silent', () {

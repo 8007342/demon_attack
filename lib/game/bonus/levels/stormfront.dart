@@ -26,6 +26,9 @@ const lightningRod = BonusPowerDef(
 const stormfront = BonusLevelDef(
   id: 'stormfront',
   label: 'STORMFRONT',
+  brief:
+      'Lure the lightning onto the swarm. When the air hums over you, '
+      'slide out.',
   weight: 1,
   waves: BonusWaves(count: 2, rosterScale: .85, reinforcementScale: .5),
   // "A certain percentage of a chance": half the kill drops are shields.
