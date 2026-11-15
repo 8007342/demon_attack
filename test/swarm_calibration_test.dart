@@ -1,7 +1,8 @@
 // Calibration loop of continuous-swarm (tasks 3.6, 5.4): the protected
 // real-shot campaign pilot over several seeds, so a per-sector comparison
 // is not one seed's noise. Off by default (about 40 s); run with
-//   SWARM_CALIBRATION=<tag> flutter test test/swarm_calibration_test.dart
+//   flutter test --dart-define=SWARM_CALIBRATION=<tag> \
+//     test/swarm_calibration_test.dart
 // It writes .cache/swarm-calibration-<tag>.json and a Markdown table.
 import 'dart:convert';
 import 'dart:io';
@@ -15,7 +16,10 @@ import 'support/swarm_metrics.dart';
 const seeds = [1982, 7, 21, 42, 99, 314, 2718, 5150];
 
 void main() {
-  final tag = Platform.environment['SWARM_CALIBRATION'];
+  const define = String.fromEnvironment('SWARM_CALIBRATION');
+  final tag = define.isNotEmpty
+      ? define
+      : Platform.environment['SWARM_CALIBRATION'];
   test('campaign pilot over ${seeds.length} seeds', () {
     final rows = <WaveMetrics>[];
     for (final difficulty in Difficulty.values) {
