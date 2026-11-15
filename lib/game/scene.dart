@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'atmosphere.dart';
+import 'attract.dart';
 import 'ground_atmosphere.dart';
 import 'ground_atmosphere_atlas.dart';
 import 'boss_painter.dart';
@@ -147,7 +148,16 @@ class DemonScene extends FlameGame {
 
   /// One presentation step (unpaused): the backdrop's sector blend, the
   /// flyover and the fog. Review harnesses call it with the model step.
+  /// The title's attract swarm (cinematic-flow task 6.1).
+  final attract = AttractSwarm();
+
   void advancePresentation(double dt) {
+    if (model.mode == RunMode.title) {
+      attract
+        ..reduced = sectors.flyover.reducedMotion
+        ..prepare(environment.round().clamp(0, 4))
+        ..update(dt);
+    }
     // --- cinematic flow: a 60 ms hit-stop on the last kill freezes the
     // presentation clocks only (the model runs on).
     final flow = model.flow;
@@ -272,6 +282,7 @@ class DemonScene extends FlameGame {
         _cinematic(canvas);
       } else {
         sectors.flyover.paintFlyers(canvas); // --- easter eggs: flocks
+        if (!active) _attractPass(canvas); // --- cinematic flow: attract
       }
       canvas.restore();
       if (active && combat) {
@@ -356,6 +367,50 @@ class DemonScene extends FlameGame {
         );
       }
       c.restore();
+    }
+  }
+
+  /// The title's attract swarm (design §5): shadows on the ground, the
+  /// squads drawn far to near between the fog layers, the sentinel's
+  /// silhouette in the horizon band.
+  void _attractPass(Canvas c) {
+    final a = attract;
+    if (a.members.isEmpty || atlas == null) return;
+    final presence = a.presence;
+    _creatureShadows(c, also: presence > .3 ? a.members : const []);
+    final fogSlots = Atmosphere.depthSlots;
+    var next = 0;
+    void fog() {
+      final slot = fogSlots[next++];
+      atmosphere.paint(c, slot);
+      if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c, a.sentinel);
+    }
+
+    final sorted = [...a.members]
+      ..sort((x, y) => x.nearness.compareTo(y.nearness));
+    for (final d in sorted) {
+      while (next < fogSlots.length &&
+          Atmosphere.layers[fogSlots[next]]!.nearness <= d.nearness) {
+        fog();
+      }
+      final pos = Offset(d.x.roundToDouble(), d.y.roundToDouble());
+      final cell = CombatAtlas.creature(d, ambient);
+      final t = Perspective.transmittance(d.nearness);
+      c.save();
+      _scaleAbout(c, pos, d.scale);
+      sprite(
+        c,
+        cell.row,
+        cell.col,
+        pos,
+        40,
+        filter: atmosphere.tintFor(t),
+        opacity: presence * _bodyOpacity(d.nearness),
+      );
+      c.restore();
+    }
+    while (next < fogSlots.length) {
+      fog();
     }
   }
 
@@ -1764,8 +1819,8 @@ class DemonScene extends FlameGame {
   /// eyes that ignore most of the fog. The silhouette sheet (task 5.1)
   /// carries the bank and the softness; the sentinel's own flight frames are
   /// the fallback while it is missing.
-  void _foreshadowSilhouette(Canvas c) {
-    final f = model.foreshadow;
+  void _foreshadowSilhouette(Canvas c, [SentinelForeshadow? override]) {
+    final f = override ?? model.foreshadow;
     if (f == null || !f.visible) return;
     final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
     if (silhouetteAtlas != null) {
@@ -2032,7 +2087,7 @@ class DemonScene extends FlameGame {
     );
   }
 
-  void _creatureShadows(Canvas c) {
+  void _creatureShadows(Canvas c, {Iterable<Demon> also = const []}) {
     shadowLayers = 0;
     shadowCount = 0;
     shipShadowDim = 0;
@@ -2047,6 +2102,7 @@ class DemonScene extends FlameGame {
       ...model.demons,
       for (final m in model.flowFlock)
         if (model.flowOpacity(m) > .3) m.demon, // --- cinematic flow
+      ...also, // --- cinematic flow: the title's attract swarm
     };
     for (final d in flying) {
       if (d.swarmState == SwarmState.reserve || _parked(d)) continue;

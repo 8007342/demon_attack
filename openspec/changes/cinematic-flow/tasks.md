@@ -76,7 +76,7 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
       4-beat boundary, `level` on the grid).
 
 ## 6. Attract mode (optional)
-- [ ] 6.1 The title backdrop: squads milling with `swarm_patterns.dart` (no model run), the sentinel silhouette,
+- [x] 6.1 The title backdrop: squads milling with `swarm_patterns.dart` (no model run), the sentinel silhouette,
       shadows. Frame-time check on the preview.
 - [ ] 6.2 (Optional) `lib/game/demo_pilot.dart`: move the real-shot pilot out of
       `test/campaign_playtest_test.dart` (the test imports it from there). A 30 s idle starts a sector-1 demo run,
