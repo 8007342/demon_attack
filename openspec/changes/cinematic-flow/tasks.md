@@ -94,6 +94,7 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
       game over, and the title attract. Hand them to the operator with the open questions.
 
 ## 8. Docs and specs
-- [ ] 8.1 `plan/transition-research.md` (append "Swarm-event transitions"), `plan/game-design.md` (transition
+- [x] 8.1 `plan/transition-research.md` (append "Swarm-event transitions"), `plan/game-design.md` (transition
       flow).
-- [ ] 8.2 `openspec validate cinematic-flow`; sync at archive (after `fluid-transitions`, see 0.1).
+- [ ] 8.2 `openspec validate cinematic-flow`; sync at archive (after `fluid-transitions`, see 0.1). Validate passes
+      (`--strict`, 2026-11-15); the sync waits for the archive after the operator's playtest.

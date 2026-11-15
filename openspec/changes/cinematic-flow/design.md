@@ -173,3 +173,49 @@ for W2's review. This change does not decide how the layers look.
 3. **Shorter sector changes** (about 12.5 s instead of 15.2 s), with the brood on screen throughout.
 4. **The demo pilot is optional,** behind the attract task group. It is not needed for the operator's ask.
 5. **The cloud cover is bright, never black.** This is cannonball's hard rule, adopted as a test.
+
+## 9. Implementation notes and deviations (2026-11-15)
+
+Recorded during implementation on `work/cinematic-flow`. Each is the reversible option; the operator can override.
+
+1. **Archive order.** `fluid-transitions` was archived first (`archive/2026-11-15-fluid-transitions`; its task 4.3,
+   the by-ear playtest, is still open, blocked on audio). This change's deltas were rebased onto the synced text and
+   also MODIFY "One primary transition message", "Alternating transition interludes", "Silent tips and radio
+   cards", "Readable, skippable, fluid cards" and the storyboard requirement in `arcade-progression`.
+2. **Night floor.** §2.1's 0.06 linear luminance is above these sectors' own combat frames (about 0.03; about 0.02
+   in the Rout, when the lit swarm is gone). The review test's floor is half the darker sector's own combat frame, and
+   never under 0.010. Every plan passes it; the cloud frames sit at 0.3-0.35.
+3. **Preload direction.** Turning the next cohort's gates toward the flock (even a gameplay-neutral mirror of the
+   alternation) changed the deterministic hard campaign's ground-missile tally past its bound. So the model does
+   the inverse: at the rout, `stream.preload` predicts the next sector's lead gate from the same seeded draws, and the
+   pursued flock flies to that side. The cohort's gates (gameplay) are untouched; the continuity holds (tested over
+   18 sector changes in `cinematic_flow_test`).
+4. **Descent length with reduced motion** stays 4.5 s in the model (the arrival's entrance timing is gameplay); the
+   reduced plan's beats fit in its first 3.0 s.
+5. **The stinger** stays on `levelclear` at the Pursuit's start (immediate); the last kill itself gets the existing
+   `salvage` SFX, the 60 ms presentation hit-stop and the hit flash. The music grid then needs no change in
+   `music_director.dart` or `web/audio/demon-audio.js`.
+6. **Victory skip.** A carrier's fall (not the final one) is skippable from its first frame; the medal and +1UP are
+   already granted. The campaign's final victory is not skippable here (the ending page has its own skip).
+7. **Outro tilt.** The campaign outro does not tilt the camera (a flat band over the thinning sky read badly in the
+   sheets); the ship climbs 150 u instead of 40 and the cloud lies below it, with warm light above.
+8. **Tour name.** The route jump names the new tour in the Descent's sector title (`TOUR n`), not in a caption, so the
+   one slot stays free for the radio line or tip.
+9. **Removed widgets.** `lib/widgets/storyboard_banner.dart` (with its route-progress pips) and the radio interlude card
+   had no other users and were deleted; `test/transition_loadout_test.dart` lost its storyboard-glyph test.
+10. **Commits.** Groups 3 and 4 share `main.dart`, the overlay and their tests, so they landed as one commit.
+11. **Attract (6.1)** is done; the demo pilot (6.2) is left open.
+12. **Preview (7.2)** is left for the operator: the repo's notes publish the preview after W4 and W5b both merge. The
+    contact sheets stand in for it until then.
+13. **Fog-restoration pass-throughs.** `Atmosphere.cloudCover`, `fogThin` and `cloudScroll` (and `paintCloudCover`)
+    are flagged for W2's review (§6).
+
+### Progress-bar audit (operator W5)
+
+- The thin green line growing across the top of `art/contact/continuous-swarm-*.png` is the **review harness**, not
+  the game: `test/continuous_swarm_review_test.dart` `_strip()` draws a "progress tick: frame i of count" on each tile.
+  This change's sheets have no tick.
+- In the game, two progress-like elements remained after `ux-declutter`, both in sector transitions, and both are gone:
+  the storyboard banner's 5-stage route chart (sector pips joined by a line that fills with progress), and the arrival's
+  scan line sweeping down the arena with the transition's progress. The letterbox bars and their accent line went with
+  them. `ux_declutter_test` and `fluid_transitions_test` assert no bar or strip through a whole sector change.

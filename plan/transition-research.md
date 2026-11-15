@@ -29,3 +29,32 @@ The model/UI should emit `levelclear` after the last wave, `travel` when the jou
 ## Validation
 
 `npm run test:worker` passes. The audio test loads the actual generated MIDI files and verifies immediate level-clear note scheduling, continuing cadence beyond the opening, audible travel scheduling, three wave-stinger notes, and return to the next level. Existing boss-phase, victory, mute, and pause/resume checks remain. `node --check web/audio/demon-audio.js` passes. Subjective balance and animation/music pacing still require browser listening/playtesting.
+
+## Swarm-event transitions (cinematic-flow, 2026-11-15)
+
+OpenSpec `cinematic-flow` (W5b) replaced the card chain of a sector change with three swarm beats on one clock
+(`lib/game/flow_director.dart`, the macron.dev `bump` pattern; research in `plan/swarm-research.md` §2.2-§2.3):
+
+| Beat | Model phase (event) | Full / reduced motion | What plays |
+|---|---|---|---|
+| Rout | `salvage` (`salvage`) | 2.0 / 2.0 s | the last kill flashes (60 ms hit-stop, ≤ 2 px shake); the remaining brood (or a remnant of 12-18) flash-expands and flees into the fog; the pickup grace is unchanged |
+| Pursuit | `levelClear` (`levelclear`) + `travel` (`travel`) | 2.0 + 4.0 / 1.0 + 2.5 s, + up to 2 s for a message slot, whole beats | the ship climbs nose-up, the camera tilts up, a bright cloud covers the frame (never black, ≤ 0.92 opacity); the fleeing flock is a silhouette ahead; the palette and backdrop swap inside cloud ≥ 0.85 |
+| Descent | next sector's wave-1 `transition` (`level`) | 4.5 s | the cloud clears, the ship drops to its row, the flock leaves the cloud where the next cohort comes out, the sector title shows at the top for 1.5 s |
+
+- About 12.5 s against the old 15.2 s; the ship's mean frame-to-frame motion is 0.11 u (max 0.67) where the old chain
+  had a 513 u cut hidden by a black fade (`test/cinematic_flow_review_test.dart`).
+- Music: the `levelclear` stinger stays immediate and restarts the grid; `travel` lands 4 beats later and `level`
+  whole beats after that, because Pursuit is a whole number of 120 BPM beats. `web/audio/demon-audio.js` is unchanged
+  (`npm run test:worker` 39/39).
+- Messages: no cards in sector transitions. One slot per Pursuit, alternating (seeded): a radio line on the comms
+  dock or a one-line caption at the bottom edge; never within 0.5 s of the swap. The illustrated tip card stays at the
+  run's opening; the pause menu has a tips pane. Medal and +1UP are a flourish beside the ship.
+- Skip: tap, Space or Enter sends a sector transition to its Descent on the next frame (during the Rout, when the
+  grace ends); a radio line finishes on the dock.
+- Carrier: the pursued flock rings the arrival point, opens a vacuole for the retro-burn descent and pours into the
+  hangar bays (cosmetic, gone before combat). Its fall scatters a remnant (the Rout of the victory), then the Pursuit
+  into the next tour.
+- Outros: the campaign's end thins the fog, lifts the shadows, warms the light and climbs the ship over the cloud
+  tops; the ending page fades up over it. Game over: the swarm mills in a torus over the wreck for 2 s, then breaks
+  upward with the skyward pan.
+- Contact sheets: `art/contact/cinematic-flow-*.png`.
