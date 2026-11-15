@@ -235,3 +235,9 @@ operator's playtest checklist).
 ## Operator playtest 2026-11-15 (after the close-out): see `plan/operator-feedback-2026-11-15.md`
 Five workstreams W1–W5 (ground tuning, fog restoration, continuous swarm, demon intelligence, UX cleanup + cinematic
 flow), each with an OpenSpec change, delegated to agents on `work/*` branches.
+
+Status (2026-11-15): merged into `game`: W1 `ground-presentation-tuning` and ground travel, W2 `fog-restoration`,
+W5a `ux-declutter`, W3 `continuous-swarm` (33/35 tasks; open: 8.2 phone playtest, 9.2 spec sync at archive; 573
+tests green; calibration in `plan/calibration-current.md`; strips `art/contact/continuous-swarm-*.png`).
+In progress: W4 `demon-intelligence` on `work/demon-intelligence` and W5b `cinematic-flow` on `work/cinematic-flow`
+(this one archives `fluid-transitions` first), in parallel. After both merge: rebuild web, then publish the preview.
