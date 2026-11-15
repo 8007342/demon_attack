@@ -5,13 +5,16 @@
 // earlier entries' slots (bonus_plan.dart).
 import '../model.dart' show Power;
 import 'bonus_types.dart';
+import 'levels/stormfront.dart';
 import 'levels/supply_run.dart';
 
+export 'levels/stormfront.dart';
 export 'levels/supply_run.dart';
 
 const bonusLevels = <BonusLevelDef>[
   supplyRun,
   // --- bonus level B: add yours below this line
+  stormfront,
 ];
 
 /// Every bonus-only powerup, by id (crates name them by id).
@@ -19,6 +22,7 @@ const bonusPowers = <BonusPowerDef>[
   salvageMagnet,
   doubleScore,
   // --- bonus level B: add yours below this line
+  lightningRod,
 ];
 
 /// Run-wide rules; at most one fires per run, the first hit in this order.

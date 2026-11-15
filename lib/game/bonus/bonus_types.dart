@@ -6,6 +6,9 @@
 import 'dart:math' as math;
 
 import '../model.dart' show Power;
+import 'bonus_mechanic.dart';
+
+export 'bonus_mechanic.dart';
 
 /// With probability [chance] a power drop becomes [power].
 class PowerChance {
@@ -281,6 +284,7 @@ class BonusLevelDef {
     this.crates = const BonusCrates(),
     this.scoring = const BonusScoring(),
     this.look = const BonusLook(),
+    this.mechanic,
   });
 
   /// camelCase; the radio triggers key on it.
@@ -300,6 +304,10 @@ class BonusLevelDef {
   final BonusCrates crates;
   final BonusScoring scoring;
   final BonusLook look;
+
+  /// The level's own rule of play, when data is not enough (a constructor
+  /// tear-off); null: none. See `bonus_mechanic.dart`.
+  final BonusMechanicFactory? mechanic;
 
   bool fits(int route, int sector) =>
       sectors.contains(sector) && route >= minRoute && route <= maxRoute;

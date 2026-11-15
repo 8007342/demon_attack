@@ -615,8 +615,18 @@ class CommsDirector {
           _offerTimed(spec, at, at + diveIn, demon: false);
         }
         return true;
+      default:
+        // --- bonus levels: any other event may carry `endIn` (seconds
+        // until the moment it warns of): its squad line then ends on that
+        // moment, or is dropped when it cannot (a late warning is worse
+        // than none). First user: Stormfront's `stormStrike`.
+        final endIn = _num(event.data['endIn']);
+        if (endIn == null || endIn <= 0) return false;
+        final spec = _spec(human, event);
+        if (spec == null) return false;
+        _offerTimed(spec, at, at + endIn, demon: false);
+        return true;
     }
-    return false;
   }
 
   /// The class of a line from [spec].

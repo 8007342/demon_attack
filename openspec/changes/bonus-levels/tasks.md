@@ -35,7 +35,18 @@
 - [x] 7.1 `plan/bonus-levels-blockers-a.md`: what the docs, specs and tools did not cover
 - [x] 7.2 `plan/roadmap.md`: what is left
 
+## 8. Bonus level #2: Stormfront (agent B, `work/bonus-levels-b`)
+- [x] 8.1 `specs/bonus-level-stormfront/spec.md` and the design section "Bonus level #2: Stormfront"
+- [x] 8.2 Framework additions with neutral defaults: `BonusLevelDef.mechanic`, `lib/game/bonus/bonus_mechanic.dart`, `bonusMechanic` / `bonusEvent` / `bonusAward` / `_bonusIdle` in `model_bonus.dart` (one call in `model.dart`), `BonusPlan.levelSeed`, `lib/game/bonus/bonus_painters.dart` (two calls in `scene.dart`)
+- [x] 8.3 `lib/game/bonus/levels/storm_cell.dart` (seeded schedule), `stormfront.dart` (level, `lightningRod`, mechanic), `stormfront_painter.dart`; catalogue lines
+- [x] 8.4 Radio: `bonusEntry.stormfront`, `bonusStart.stormfront`, `stormStrike`, `stormBait` (squad and brood), `bonusPickup.lightningRod`, `bonusCleared.stormfront` (18 lines with recorded placeholders); bank and pending list regenerated; `CommsDirector` end-aligns any event carrying `endIn`; a bonus pickup is no longer announced as a shield
+- [x] 8.5 Sound: `stormTell`, `stormBolt` in `web/audio/demon-audio.js`
+- [x] 8.6 `test/bonus_storm_cell_test.dart`, `test/bonus_stormfront_test.dart`; borrowed-line count 52 → 70
+- [x] 8.7 `test/bonus_stormfront_review_test.dart` → `art/contact/bonus-level-b-stormfront.png`, `bonus-level-b-reduced.png`; checked by eye at phone size
+- [x] 8.8 `flutter analyze` clean, `flutter test` green, `openspec validate bonus-levels --strict`
+- [x] 8.9 `plan/bonus-levels-blockers-b.md`
+
 ## Workflow follow-up
 - Integrate bonus level #2 (`work/bonus-levels-b`): one catalogue line, its `lines.json` block, regenerate the bank, add its lines to the borrowed-line count.
-- Voice batch: record the 23 lines when tillandsias#1103 unblocks; the placeholders fall away with no code change.
+- Voice batch: record the 23 lines (and Stormfront's 18) when tillandsias#1103 unblocks; the placeholders fall away with no code change.
 - Operator phone playtest through `/console` → BONUS LEVEL, then a calibration pass of the bonus level and the modifier chances, then `openspec archive bonus-levels`.

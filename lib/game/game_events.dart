@@ -334,12 +334,27 @@ abstract final class GameEventNames {
   /// A bonus level's last kill (data `award`, `flawless`, `crates`).
   static const bonusCleared = 'bonusCleared';
 
+  // --- bonus level #2, Stormfront (specs/bonus-level-stormfront). The raw
+  // string events `stormTell` and `stormBolt` (every tell, every bolt) are
+  // forwarded under the same names with no data, for the sound and the
+  // music.
+
+  /// A lightning tell began on the unprotected ship (data `x`, `endIn`:
+  /// real seconds until the bolt; the squad's warning ends on it).
+  static const stormStrike = 'stormStrike';
+
+  /// A bolt that was drawn to the ship destroyed creatures and missed it
+  /// (data `x`, `kills`, `award`).
+  static const stormBait = 'stormBait';
+
   static const bonus = [
     runModifier,
     bonusStart,
     bonusCrate,
     bonusPickup,
     bonusCleared,
+    stormStrike,
+    stormBait,
   ];
 
   /// A full-size transmission: the fleet's mission briefing on travel
@@ -831,6 +846,9 @@ class GameEventObserver {
     _diving.removeWhere((d) => !model.demons.contains(d));
     for (final p in model.pickups) {
       if (!_seenPickups.add(p)) continue;
+      // --- bonus levels: a bonus-only powerup is not the regular power
+      // its `power` field holds (its own `bonusPickup` call speaks).
+      if (p.bonus != null) continue;
       // `hint`: the ship lacks what is falling, so the squad recommends it
       // (these calls win over flavour chatter on the radio).
       if (p.power == Power.shield) {

@@ -255,3 +255,28 @@ Second commit (`d83fe73f`, the framework) and later:
   window.
 - Review strip to copy: `test/bonus_supply_run_review_test.dart` (`--dart-define=BONUS_CONTACT=true` writes
   `art/contact/`; rename the output prefix to `bonus-level-b-`).
+
+## Additions by bonus level #2 (agent B, `work/bonus-levels-b`)
+
+Stormfront needed a rule of play that data could not say. All of it has neutral defaults; a data-only level is
+unchanged. Why and what else was missing: `plan/bonus-levels-blockers-b.md`.
+
+- **A level's own mechanic.** `BonusLevelDef.mechanic` (a constructor tear-off, default null) makes one
+  `BonusMechanic` per visit from a `BonusMechanicContext` (level seed, route, sector, difficulty). The model calls
+  `step(model, dt)` every combat step and `idle(model, dt)` in every cinematic phase. Rules a mechanic keeps are in
+  the header of `lib/game/bonus/bonus_mechanic.dart` (own PRNG, public model surface only, capped awards, tells of
+  at least a second, pure Dart).
+- **Model surface for a mechanic:** `model.bonusMechanic`, `model.bonusEvent(name, data)` (queues a `GameEvent`),
+  `model.bonusAward(points)` (adds score inside the level's cap, returns what was granted),
+  `BonusPlan.levelSeed(runSeed, route, sector)`.
+- **Drawing a mechanic:** `lib/game/bonus/bonus_painters.dart`, `BonusPainters.byLevel[<id>]` with `under` (after
+  the grade) and `over` (after the fight). Painters stay out of the model's imports: `dart run` tools load the model
+  without `dart:ui`.
+- **Timed radio warnings:** any event whose data carries `endIn` (seconds) gets its squad line end-aligned by
+  `CommsDirector`, or dropped when it cannot fit.
+- **Sound:** a raw string event (`model.events.add('<name>')`) reaches `audioSfx(name)` and is forwarded as a plain
+  `GameEvent` of the same name. Do not also queue a structured event under that name.
+- **Fixed:** a bonus pickup is no longer announced as the regular power in its `power` field (`shieldSpotted`).
+- **Level #2, so the next one does not collide:** `stormfront` ("Stormfront"): a thunderstorm; lightning strikes
+  telegraphed columns and hits both sides; bonus power `lightningRod`; half the kill drops are shields; storm-dark
+  grade. Events `stormStrike`, `stormBait`; raw `stormTell`, `stormBolt`.

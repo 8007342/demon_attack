@@ -42,10 +42,15 @@ What the game has today:
 - **Bonus level #1, Supply Run.** A shot-down convoy's crates parachute through a thin screen of scavengers. Kills
   drop nothing; crates carry every power and two bonus-only ones (a salvage magnet, double score).
 - **Console.** `/console` can launch any sector 1-4 as a bonus level.
+- **Bonus level #2, Stormfront.** A thunderstorm replaces the sector. Lightning strikes telegraphed columns and does
+  not take sides: the player baits a bolt under the swarm and slides away. A bonus-only lightning rod grounds the
+  ship and draws the bolts to it. It adds the one thing data could not say: a level's own rule of play
+  (`BonusMechanic`) and its painter.
 
 ## Capabilities
 ### New Capabilities
-(none)
+- `bonus-level-stormfront`: bonus level #2 (agent B): a thunderstorm whose lightning strikes telegraphed columns and
+  hits both sides, the lightning rod, storm shielding, its radio and its limits on flashes.
 
 ### Modified Capabilities
 - `arcade-progression`: ADDED requirements for the seeded run plan, the replaced sector, scoring and persistence, and
