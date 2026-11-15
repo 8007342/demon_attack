@@ -311,3 +311,15 @@ denoise 0.7 vs 1.0 (A3).
 Their raws are committed in `art/sprites/sources/ground-blocks-selected/<unit>/hero/<seed>.png`, so they survive a host
 reset. Before the heading jobs, copy them to the studio inputs:
 `cp -r art/sprites/sources/ground-blocks-selected/. /work/tmp/imagegen/in/ground-blocks/selected/`.
+
+**A3, Lodestar heading edits (2026-11-15):** `heading-qwen-edit.json` with the selected hero 780200, 2 seeds per heading,
+at denoise 0.7 and 1.0 (`$node:11.denoise`), ~50 s per pair. Jobs (0.7 / 1.0): h000 st-1794728100810-3 /
+st-1794728150189-4; h022 -216103-5 / -266322-6; h067 -316754-7 / -368709-8; h090 -419618-9 / -470593-10. Raws in
+`~/.cache/demon-attack/ground-blocks/pilot/lodestar-headings/<h>-<d07|d10>-<seed>.png`. Sheet:
+`art/contact/ground-pilot-lodestar-headings.png`.
+- **1.0 fails at every heading:** Qwen redraws the hero's 45° pose whatever the rig or the heading phrase says; once
+  finished, the rig silhouette cuts it into a broken shape. Not usable.
+- **0.7 holds the pose at all four:** rig geometry exact, plus the hero's turret hatch, cyan visor and strip accents.
+  It adds less surface detail than the hero, and some raws grow stray barrel fragments outside the rig (h067 780222,
+  h090 780227), which the finish clips.
+- Recommendation: **0.7 as the heading default** (operator to confirm before scaling to the other units).
