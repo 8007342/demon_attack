@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'ground_atlas.dart';
+import 'ground_blocks_painter.dart';
 import 'ground_troops_atlas.dart';
 import 'model.dart';
 import 'ship_painter.dart';
@@ -33,6 +34,12 @@ class GroundPainter {
   // --- ground war v4: mixed forces (tools/ground_troops) and plant depth.
   ui.Image? troops;
   GroundOccluders? occluders;
+
+  // --- ground blocks runtime: per-sector block atlases (headings, layers,
+  // overlays). The old atlases stay loaded: every effect still uses them.
+  /// Feature switch: false draws every unit from the old atlases.
+  static bool useBlocks = true;
+  final GroundBlocksLayer blocks = GroundBlocksLayer();
 
   /// Troopers draw a little smaller than vehicles (they are people).
   static const troopScale = 1.0, allyTroopScale = .7;
@@ -122,6 +129,13 @@ class GroundPainter {
   /// on the ground under everything), then units and allies depth-sorted,
   /// then tracers with their muzzle flashes and impacts.
   void paintGround(Canvas c, ArcadeModel m) {
+    final on = useBlocks;
+    if (on) blocks.begin(m.visualClock);
+    _paintGround(c, m);
+    if (on) blocks.end();
+  }
+
+  void _paintGround(Canvas c, ArcadeModel m) {
     final g = m.ground;
     if (g.units.isEmpty && g.allies.isEmpty && g.tracers.isEmpty) return;
     final clock = m.visualClock;
@@ -129,7 +143,7 @@ class GroundPainter {
       if (u.destroyed && u.y >= GroundCamera.horizon + 2) _scorch(c, u);
     }
     final items = <(double, void Function())>[
-      for (final u in g.units) (u.z, () => _unit(c, u, clock)),
+      for (final u in g.units) (u.z, () => _unit(c, u, clock, m)),
       for (final a in g.allies) (a.z, () => _ally(c, a, clock)),
     ];
     // --- ground war v4: a plant nearer than a unit it overlaps is painted
@@ -172,13 +186,13 @@ class GroundPainter {
         light: depthLight(u.z), opacity: fade * .95);
   }
 
-  void _unit(Canvas c, GroundUnit u, double clock) {
+  void _unit(Canvas c, GroundUnit u, double clock, ArcadeModel m) {
     if (u.y < GroundCamera.horizon + 2) return;
     switch (u.force) {
       case GroundForce.infantry || GroundForce.rockets:
         return _squad(c, u, clock);
       case GroundForce.heavyTank:
-        return _tank(c, u, clock);
+        return _tank(c, u, clock, m);
       case GroundForce.vehicle:
         break;
     }
@@ -186,7 +200,14 @@ class GroundPainter {
     final row = GroundAtlas.demonRow(u.sector);
     final mirror = u.mirrored;
     final light = depthLight(u.z);
+    final bt = useBlocks ? blocks.unitTrack(u) : null;
     if (u.destroyed) {
+      if (bt != null) {
+        _wreck(c, u, clock, mirror, light,
+            (opacity) => blocks.hulk(c, u, bt, clock, light, opacity),
+            bt);
+        return;
+      }
       _wreck(c, u, clock, mirror, light, (opacity) => _cell(c, row,
           GroundAtlas.wreckCol + ((clock * 8).floor() % 2), u.x, u.y, s,
           mirror: mirror, light: light, opacity: opacity));
@@ -219,7 +240,11 @@ class GroundPainter {
             light: light * .8, opacity: (1 - q) * .55);
       }
     }
-    _cell(c, row, col, u.x, u.y, s, mirror: mirror, light: light);
+    if (bt != null) {
+      blocks.demonVehicle(c, u, bt, clock, light, _glow(light), m);
+    } else {
+      _cell(c, row, col, u.x, u.y, s, mirror: mirror, light: light);
+    }
     if (u.telegraphing) {
       // A warm warning bracket under the launcher: readable at phone size.
       final p = u.telegraphProgress;
@@ -250,7 +275,8 @@ class GroundPainter {
   /// Destroyed demon unit: shock ring, fireball, flying debris, then a
   /// burning hulk with flame tongues and a rising smoke column.
   void _wreck(Canvas c, GroundUnit u, double clock, bool mirror,
-      double light, void Function(double opacity) hulk) {
+      double light, void Function(double opacity) hulk,
+      [GroundBlockTrack? bt]) {
     final s = u.scale, t = u.wreckAge;
     final glow = _glow(light);
     final fade = (1 - (t - 5) / 1).clamp(0.0, 1.0);
@@ -309,6 +335,13 @@ class GroundPainter {
         final x = u.x + vx * tt * s * .7;
         final y = u.y + (rnd.nextDouble() * 4 - 1) * s * (tt / land) - h * s;
         final flying = t < land;
+        // --- ground blocks runtime: the unit's authored pieces.
+        if (bt != null &&
+            blocks.piece(c, bt, k, x, y, s,
+                flying ? (t * 14 + spin).floor() : spin,
+                light: flying ? glow : light * .85, opacity: fade)) {
+          continue;
+        }
         _cellC(c, GroundAtlas.flameRow,
             GroundAtlas.debrisCol +
                 (flying ? (t * 14 + spin).floor() % GroundAtlas.debrisFrames : spin),
@@ -344,6 +377,8 @@ class GroundPainter {
     final dir = u.mirrored ? -1.0 : 1.0;
     final order = List.generate(n, (k) => k)
       ..sort((a, b) => _formation[a].$2.compareTo(_formation[b].$2));
+    final bt = useBlocks ? blocks.unitTrack(u) : null;
+    if (bt != null) blocks.observe(bt, u.x, u.z);
     for (final k in order) {
       final (ox, oy) = _formation[k];
       final x = u.x + ox * u.scale * dir, y = u.y + oy * u.scale * .5;
@@ -353,9 +388,15 @@ class GroundPainter {
         if (t < 0) continue;
         final fade = (1 - (t - 4) / 1.5).clamp(0.0, 1.0);
         if (fade <= 0) continue;
-        _cell(c, row,
-            t < .35 ? GroundTroopsAtlas.fallCol : GroundTroopsAtlas.rubbleCol,
-            x, y, s, mirror: u.mirrored, light: light, opacity: fade, troop: true);
+        if (bt != null) {
+          blocks.demonTrooper(c, u, bt, k, n, x, y, s, clock, light,
+              fallen: t, fires: false, moving: false, engaged: false,
+              opacity: fade);
+        } else {
+          _cell(c, row,
+              t < .35 ? GroundTroopsAtlas.fallCol : GroundTroopsAtlas.rubbleCol,
+              x, y, s, mirror: u.mirrored, light: light, opacity: fade, troop: true);
+        }
         if (t < .5) {
           _cell(c, GroundTroopsAtlas.fxRow,
               GroundTroopsAtlas.crumbleCol +
@@ -382,16 +423,28 @@ class GroundPainter {
             x - dir * 6 * s, y - q * 2 * s, s * .4,
             light: light * .8, opacity: (1 - q) * .45);
       }
-      _cell(c, row, col, x, y, s, mirror: u.mirrored, light: light, troop: true);
+      if (bt != null) {
+        blocks.demonTrooper(c, u, bt, k, n, x, y, s, clock, light,
+            fires: u.fireFlash > 0 && k == u.id % math.max(1, alive),
+            moving: moving, engaged: engaged);
+      } else {
+        _cell(c, row, col, x, y, s, mirror: u.mirrored, light: light, troop: true);
+      }
     }
   }
 
   /// The demon heavy tank: treads, furnace vents, a recoiling cannon.
-  void _tank(Canvas c, GroundUnit u, double clock) {
+  void _tank(Canvas c, GroundUnit u, double clock, ArcadeModel m) {
     final s = u.scale;
     final light = math.max(.62, depthLight(u.z));
     const row = GroundTroopsAtlas.demonTankRow;
     final mirror = u.mirrored;
+    final bt = useBlocks ? blocks.unitTrack(u) : null;
+    if (u.destroyed && bt != null) {
+      _wreck(c, u, clock, mirror, light,
+          (opacity) => blocks.hulk(c, u, bt, clock, light, opacity), bt);
+      return;
+    }
     if (u.destroyed) {
       _wreck(c, u, clock, mirror, light, (opacity) => _cell(c, row,
           GroundTroopsAtlas.tankWreckCol + ((clock * 8).floor() % 2), u.x, u.y,
@@ -417,6 +470,10 @@ class GroundPainter {
             s * .6, light: light * .8, opacity: (1 - q) * .55);
       }
     }
+    if (bt != null) {
+      blocks.demonVehicle(c, u, bt, clock, light, _glow(light), m);
+      return;
+    }
     _cell(c, row, col, u.x, u.y, s, mirror: mirror, light: light, troop: true);
   }
 
@@ -432,6 +489,10 @@ class GroundPainter {
     final moving = a.vz != 0 || a.vx.abs() > 3;
     final mirror = a.vx < -3;
     final kick = (a.recoil / GroundTuning.allyRecoil).clamp(0.0, 1.0);
+    final bt = useBlocks ? blocks.allyTrack(a, 0) : null;
+    if (bt != null) {
+      blocks.observeSquad(bt, a.x, a.z, saved: a.saved, dances: a.id % 3 == 0);
+    }
     if (a.totalled || a.fallingBack) {
       // Retreat smoke over a squad that is pulling back.
       for (var k = 0; k < (a.totalled ? 4 : 2); k++) {
@@ -445,6 +506,11 @@ class GroundPainter {
     for (var k = 0; k < n; k++) {
       final (ox, oy) = _formation[k];
       final x = a.x + ox * a.scale * .9, y = a.y + oy * a.scale * .5;
+      if (bt != null) {
+        blocks.allyTrooper(c, a, bt, k, n, x, y, s, clock, light,
+            moving: moving, kick: kick);
+        continue;
+      }
       final int col;
       if (a.totalled || a.fallingBack) {
         col = GroundTroopsAtlas.runCol +
@@ -525,11 +591,17 @@ class GroundPainter {
     final kind = GroundAtlas.allyKind[k];
     final light = depthLight(a.z);
     final hullMirror = a.side == 1;
+    final bt = useBlocks && kind != 1 ? blocks.allyTrack(a, variant) : null;
     if (a.totalled) {
-      _allyTotalled(c, a, clock, row, kind, light);
+      _allyTotalled(c, a, clock, row, kind, light, bt);
       return;
     }
-    if (a.lx != null) _iff(c, a, (GroundAtlas.allySize[k].$2 + 2) * s);
+    if (a.lx != null) {
+      _iff(c, a, ((bt?.cells.unit.size[bt.hull.index].$2 ??
+                  GroundAtlas.allySize[k].$2) +
+              2) *
+          s);
+    }
     // Treads and gait: the convoy always rolls with the player; faster while
     // advancing on a foe, backward while falling back to station.
     // --- terrain: slower treads uphill (the flyover's relief pose).
@@ -559,7 +631,17 @@ class GroundPainter {
       }
     }
     final kick = (a.recoil / .14).clamp(0.0, 1.0);
-    if (kind == 1) {
+    if (bt != null) {
+      blocks.convoy(c, a, bt, clock, light, _glow(light));
+      final mz = blocks.muzzleOf(a);
+      if (kick > 0 && mz != null) {
+        _cellC(c, GroundAtlas.flameRow,
+            GroundAtlas.muzzleCyanCol +
+                ((1 - kick) * GroundAtlas.muzzleFrames).floor().clamp(0, 2),
+            mz.dx, mz.dy, s * (kind == 2 ? .7 : .9),
+            light: _glow(light));
+      }
+    } else if (kind == 1) {
       // Infantry: walk; kneel when engaged and holding; a volley on a shot.
       final int col;
       if (a.flash > 0) {
@@ -618,7 +700,7 @@ class GroundPainter {
   /// Totalled, never killed: dented and sparking, a track thrown, it limps
   /// off under a column of retreat smoke; every other crew ejects in a pod.
   void _allyTotalled(Canvas c, GroundAlly a, double clock, int row, int kind,
-      double light) {
+      double light, [GroundBlockTrack? bt]) {
     final s = a.scale, t = a.retreatAge;
     final hop = ((clock * 9).floor().isEven ? 0.0 : -s).roundToDouble();
     final out = a.side == 0 ? -1.0 : 1.0; // it limps toward its screen edge
@@ -631,11 +713,17 @@ class GroundPainter {
           a.y - 11 * s - q * 30 * s, s * (.7 + q * .9),
           light: light, opacity: (1 - q * .8) * (kind == 1 ? .55 : .95));
     }
-    _cell(c, row, GroundAtlas.allyLimpCol + ((clock * 7).floor() % 2), a.x,
-        a.y + hop, s, mirror: a.side == 1, light: light);
+    if (bt != null) {
+      blocks.totalled(c, a, bt, clock, light, _glow(light));
+    } else {
+      _cell(c, row, GroundAtlas.allyLimpCol + ((clock * 7).floor() % 2), a.x,
+          a.y + hop, s, mirror: a.side == 1, light: light);
+    }
     if (kind != 1) {
-      _cell(c, row, GroundAtlas.allyTurretCol + 1, a.x, a.y + hop + s, s,
-          mirror: a.side == 0, light: light * .75);
+      if (bt == null) {
+        _cell(c, row, GroundAtlas.allyTurretCol + 1, a.x, a.y + hop + s, s,
+            mirror: a.side == 0, light: light * .75);
+      }
       if (t < 1.4) {
         _cell(c, GroundAtlas.flameRow,
             GroundAtlas.flameCol + (clock * 12).floor() % GroundAtlas.flameFrames,
@@ -651,8 +739,12 @@ class GroundPainter {
     }
     if (a.ejects && t < 2.5 && kind != 1) {
       final (dx, dy) = a.podOffset;
-      _cell(c, row, GroundAtlas.allyPodCol, a.x + dx, a.bodyY + dy, s,
-          mirror: a.side == 1);
+      if (bt != null) {
+        blocks.pod(c, a, bt, a.x + dx, a.bodyY + dy, clock);
+      } else {
+        _cell(c, row, GroundAtlas.allyPodCol, a.x + dx, a.bodyY + dy, s,
+            mirror: a.side == 1);
+      }
       _px(c, a.x + dx - 1, a.bodyY + dy + 1, 2, _cyan);
     }
   }
@@ -669,6 +761,12 @@ class GroundPainter {
       for (final a in allies) {
         if (a.totalled || (a.x - t.fromX).abs() > 14 || (a.bodyY - t.fromY).abs() > 14) continue;
         if (GroundAtlas.allyKind[GroundAtlas.allyRow(a.sector, allyVariant(a)) - 4] == 1) break;
+        // --- ground blocks runtime: the shown layer angle's muzzle.
+        final bm = useBlocks ? blocks.muzzleOf(a) : null;
+        if (bm != null) {
+          from = bm;
+          break;
+        }
         final (frame, mirror) = _aim(a, 0);
         final k = GroundAtlas.allyRow(a.sector, allyVariant(a)) - 4;
         from = _muzzle(a, frame, mirror,

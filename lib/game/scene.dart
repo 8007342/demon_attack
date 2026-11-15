@@ -115,6 +115,10 @@ class DemonScene extends FlameGame {
     }
     model.update(dt);
     armada.sync(model, images.load, images.clear);
+    // --- ground blocks runtime: the current sector's block atlases.
+    if (GroundPainter.useBlocks) {
+      groundForces.blocks.sync(model, images.load, images.clear);
+    }
     music.observe(
       model,
       dt,
@@ -129,6 +133,7 @@ class DemonScene extends FlameGame {
 
   /// Feeds the fog its clock, the flight distance and the ship (visual only).
   void syncAtmosphere(double dt) {
+    groundForces.blocks.reducedMotion = sectors.flyover.reducedMotion;
     atmosphere
       ..environment = environment
       ..reducedMotion = sectors.flyover.reducedMotion

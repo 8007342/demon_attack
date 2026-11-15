@@ -40,9 +40,10 @@ func writeDart(p *Project, outs []*AtlasOut) {
 // nearest-neighbour, never rotated or smooth-scaled. Mirrored headings and
 // angles are not stored: draw the authored cell mirrored.
 //
-// Not yet drawn by the game: the painter still uses ground-forces.png and
-// ground-troops.png. The offline atlases live in assets/images/ground-blocks/,
-// which is not in pubspec.yaml until the runtime integration adds it.
+// Drawn by lib/game/ground_blocks_painter.dart (openspec change
+// ground-blocks-runtime), one sector's atlases at a time from
+// assets/images/ground-blocks/; the old ground-forces.png and
+// ground-troops.png remain the fallback and the source of every effect.
 //
 // Coordinates: (dx, dy) in texels, dx to screen right, dy UP the screen.
 // A unit's origin is its ground centre; a hull cell is placed so the

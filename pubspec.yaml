@@ -66,6 +66,8 @@ flutter:
     - assets/credits.json
     - assets/images/
     - assets/images/widescreen/
+    # Per-sector ground-block atlases (lib/game/ground_blocks_atlas.dart).
+    - assets/images/ground-blocks/
   # Fog layers (lib/game/atmosphere.dart); tiles take over without it.
   shaders:
     - shaders/fog.frag
