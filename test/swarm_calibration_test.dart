@@ -52,6 +52,7 @@ void main() {
           'clear': s.meanClear,
           'wall': s.meanWall,
           'hit': s.hitRatio,
+          'aimed': s.aimedRatio,
           'peakActive': s.peakActive,
           'peakHostile': s.peakHostile,
         },
@@ -61,11 +62,8 @@ void main() {
     };
     Directory('.cache').createSync(recursive: true);
     File('.cache/swarm-calibration-$tag.json').writeAsStringSync(
-      const JsonEncoder.withIndent(' ').convert({
-        'seeds': seeds,
-        'summary': summary,
-        'efficiency': fits,
-      }),
+      const JsonEncoder.withIndent(' ')
+          .convert({'seeds': seeds, 'summary': summary, 'efficiency': fits}),
     );
     File('.cache/swarm-calibration-$tag.md').writeAsStringSync(all.markdown());
   }, skip: tag == null ? 'set SWARM_CALIBRATION=<tag> to run' : null);

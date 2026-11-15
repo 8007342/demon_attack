@@ -19,6 +19,7 @@ class WaveMetrics {
   /// while this wave was the current one.
   double combatSeconds = 0, wallSeconds = 0;
   int shotsFired = 0, shotsHit = 0, peakActive = 0, peakHostile = 0;
+  int shotsAimed = 0, aimedHit = 0;
   int livesLost = 0;
   bool cleared = false;
 
@@ -40,6 +41,8 @@ class WaveMetrics {
     'wall': double.parse(wallSeconds.toStringAsFixed(3)),
     'fired': shotsFired,
     'hit': shotsHit,
+    'aimed': shotsAimed,
+    'aimedHit': aimedHit,
     'peakActive': peakActive,
     'peakHostile': peakHostile,
     'livesLost': livesLost,
@@ -54,6 +57,7 @@ class SwarmMetrics {
   final rows = <WaveMetrics>[];
   WaveMetrics? _current;
   final _live = <Shot>{};
+  final _aimed = Expando<bool>('aimed');
   final _born = Expando<bool>('born');
   int _lives = -1;
 
@@ -79,8 +83,16 @@ class SwarmMetrics {
       for (final s in m.shots)
         if (!s.hostile) s,
     };
+    final targets = m.boss != null || m.demons.any((d) => !d.entering);
     for (final s in now) {
-      if (!_live.contains(s)) w.shotsFired++;
+      if (_live.contains(s)) continue;
+      w.shotsFired++;
+      // Aimed: fired while something could be hit (the stream's arrivals
+      // and lulls are dead time the auto-fire spends either way).
+      if (targets) {
+        _aimed[s] = true;
+        w.shotsAimed++;
+      }
     }
     for (final s in _live) {
       if (now.contains(s)) continue;
@@ -90,6 +102,7 @@ class SwarmMetrics {
           s.y > ArcadeModel.height ||
           (s.y >= -10 && s.x >= -10 && s.x <= ArcadeModel.width + 10);
       if (hit) w.shotsHit++;
+      if (hit && _aimed[s] != null) w.aimedHit++;
     }
     _live
       ..clear()
@@ -124,6 +137,8 @@ class SwarmMetrics {
         if (waves.isEmpty) continue;
         final fired = waves.fold<int>(0, (a, r) => a + r.shotsFired);
         final hit = waves.fold<int>(0, (a, r) => a + r.shotsHit);
+        final aimed = waves.fold<int>(0, (a, r) => a + r.shotsAimed);
+        final aimedHit = waves.fold<int>(0, (a, r) => a + r.aimedHit);
         out.add(
           SectorSummary(
             mode,
@@ -132,6 +147,7 @@ class SwarmMetrics {
             waves.fold<double>(0, (a, r) => a + r.combatSeconds) / waves.length,
             waves.fold<double>(0, (a, r) => a + r.wallSeconds) / waves.length,
             fired == 0 ? 0 : hit / fired,
+            aimed == 0 ? 0 : aimedHit / aimed,
             waves.map((r) => r.peakActive).reduce(math.max),
             waves.map((r) => r.peakHostile).reduce(math.max),
             waves.fold<int>(0, (a, r) => a + r.livesLost),
@@ -174,14 +190,15 @@ class SwarmMetrics {
   String markdown() {
     final b = StringBuffer()
       ..writeln(
-        '| Mode | Sector | Waves | Mean clear (s) | Mean wall (s) | Hit ratio | Peak active | Peak hostile | Lives lost |',
+        '| Mode | Sector | Waves | Mean clear (s) | Mean wall (s) | Hit ratio | Aimed hit | Peak active | Peak hostile | Lives lost |',
       )
-      ..writeln('|---|---:|---:|---:|---:|---:|---:|---:|---:|');
+      ..writeln('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
     for (final s in summary()) {
       b.writeln(
         '| ${s.mode} | ${s.sector} | ${s.waves} | '
         '${s.meanClear.toStringAsFixed(2)} | ${s.meanWall.toStringAsFixed(2)} | '
-        '${(s.hitRatio * 100).toStringAsFixed(1)} % | ${s.peakActive} | '
+        '${(s.hitRatio * 100).toStringAsFixed(1)} % | '
+        '${(s.aimedRatio * 100).toStringAsFixed(1)} % | ${s.peakActive} | '
         '${s.peakHostile} | ${s.livesLost} |',
       );
     }
@@ -230,11 +247,12 @@ class SectorSummary {
     this.meanClear,
     this.meanWall,
     this.hitRatio,
+    this.aimedRatio,
     this.peakActive,
     this.peakHostile,
     this.livesLost,
   );
   final String mode;
   final int sector, waves, peakActive, peakHostile, livesLost;
-  final double meanClear, meanWall, hitRatio;
+  final double meanClear, meanWall, hitRatio, aimedRatio;
 }
