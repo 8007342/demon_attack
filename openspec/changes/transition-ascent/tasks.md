@@ -5,8 +5,8 @@
 - [x] 1.2 Regenerate `lib/comms/comms_bank.dart` and `plan/audio-studio/voice-batch-pending.md` with `python3 tools/comms_pipeline.py dart`; comms tests green
 
 ## 2. Flow beats
-- [ ] 2.1 `FlowPlan.sectorChange`: add `speed`, `pitch`, `roll`, `streaks` beats with reduced-motion gains (design §1); `climb` amplitude 24; `tilt` kept only for outro and game over
-- [ ] 2.2 `test/flow_director_test.dart`: `speed` monotonic to the swap, reduced plan has zero pitch/roll/streaks, swap still inside the cloud peak
+- [x] 2.1 `FlowPlan.sectorChange`: add `speed`, `pitch`, `roll`, `streaks` beats with reduced-motion gains (design §1); `climb` amplitude 24; `tilt` kept only for outro and game over
+- [x] 2.2 `test/flow_director_test.dart`: `speed` monotonic to the swap, reduced plan has zero pitch/roll/streaks, swap still inside the cloud peak
 
 ## 3. Presentation
 - [ ] 3.1 `scene.dart`: replace the flat tilt translate with the pitch transform (horizon drop 96·q, ground scale 1 + 0.35q about the horizon; sky translate only) and the world-only roll about the ship

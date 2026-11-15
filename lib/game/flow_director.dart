@@ -40,11 +40,30 @@ double wholeBeats(double seconds) =>
 /// stays at its [gain]. [gain] scales the envelope (reduced motion zeroes the
 /// motion beats but keeps their ids).
 class FlowBeat {
-  const FlowBeat(this.id, this.a, this.b, this.c, this.d, {this.gain = 1});
+  const FlowBeat(
+    this.id,
+    this.a,
+    this.b,
+    this.c,
+    this.d, {
+    this.gain = 1,
+    this.cubicRise = false,
+  });
   final String id;
   final double a, b, c, d, gain;
 
-  double at(double s) => gain * bump(a, b, c, d, s);
+  /// The rise over [a, b] is an ease-in cubic (a steady acceleration that
+  /// is fastest as it arrives) in place of the smoothstep (transition-ascent
+  /// design §1: the Pursuit's `speed`).
+  final bool cubicRise;
+
+  double at(double s) {
+    if (!cubicRise) return gain * bump(a, b, c, d, s);
+    final t = b <= a
+        ? (s < a ? 0.0 : 1.0)
+        : ((s - a) / (b - a)).clamp(0.0, 1.0);
+    return gain * t * t * t * (1 - flowSmoothstep(c, d, s));
+  }
 
   /// Seconds this beat starts to be felt.
   double get start => a;
@@ -88,9 +107,21 @@ class FlowPlan {
   /// Seconds of Pursuit (whole beats).
   final double pursuitSeconds;
 
-  /// Screen units the ship climbs at the climb beat's peak (design §2: 40;
-  /// the outro climbs above the clouds).
+  /// Screen units the ship climbs at the climb beat's peak (cinematic-flow
+  /// design §2: 40; transition-ascent: a sector change rises only
+  /// [ascentClimb], the world pitches instead; the outro climbs above the
+  /// clouds).
   final double climb;
+
+  /// A sector change's own on-screen rise (transition-ascent design §2).
+  static const ascentClimb = 24.0;
+
+  /// The world's speed factor at `speed` envelope [env]: ×8 at the peak in
+  /// full motion, ×2 at most in reduced motion (transition-ascent §3).
+  double speedFactor(double env) => 1 + (reduced ? 1 : 7) * env;
+
+  /// The largest roll of the world toward the pursuit (degrees).
+  static const maxRollDegrees = 3.0;
 
   static const idle = FlowPlan(FlowKind.idle, 1, []);
 
@@ -184,10 +215,20 @@ class FlowPlan {
         const FlowBeat('hit', 0, 0, .06, .3),
         // The remaining brood flash-expands and flees into the fog.
         FlowBeat('rout', 0, .3, p0 - .4, p0 + .6),
-        // The ship climbs nose-up and drops back to its row in the Descent.
+        // The ship climbs nose-up (a little: the world pitches instead) and
+        // drops back to its row in the Descent.
         FlowBeat('climb', p0, p0 + 1.5, p1 - .5, p1 + 1.6, gain: m),
-        // The camera tilts up as the cloud comes in (its seam is in cloud).
-        FlowBeat('tilt', cloudUp, cloudFull, p1 - .3, p1 + 1.8, gain: m),
+        // transition-ascent: the world accelerates from the Rout to its peak
+        // inside the cloud at the swap, holds, and eases back through the
+        // Descent. Reduced motion keeps the beat (a gentle ×2 at most).
+        FlowBeat('speed', p0, swap, p1, p1 + 2.0, cubicRise: true),
+        // The camera pitches up as the cloud comes in: the horizon drops and
+        // the ground foreshortens (its seam is in cloud).
+        FlowBeat('pitch', cloudUp, cloudFull, p1 - .3, p1 + 1.8, gain: m),
+        // A small bank toward the pursuit.
+        FlowBeat('roll', p0 + .3, p0 + 1.5, p1, p1 + 1.2, gain: m),
+        // Fog streaks rush past the ship.
+        FlowBeat('streaks', p0 + .5, swap, p1, p1 + 1.0, gain: m),
         FlowBeat('cloud', cloudUp, cloudFull, cloudOut, cloudClear),
         // The palette and backdrop change inside the cloud's peak.
         FlowBeat('swap', swap, swap + (reduced ? .5 : 1.0), end, end),
@@ -210,6 +251,7 @@ class FlowPlan {
       descentAt: p1,
       swapAt: swap,
       pursuitSeconds: pursuit,
+      climb: ascentClimb,
     );
   }
 

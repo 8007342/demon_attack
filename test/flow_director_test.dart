@@ -91,7 +91,15 @@ void main() {
     final full = _plans(reduced: false), reduced = _plans(reduced: true);
     for (var i = 0; i < full.length; i++) {
       expect(reduced[i].ids, full[i].ids, reason: '${full[i].kind}');
-      for (final id in const ['climb', 'tilt', 'spin', 'drift']) {
+      for (final id in const [
+        'climb',
+        'tilt',
+        'pitch',
+        'roll',
+        'streaks',
+        'spin',
+        'drift',
+      ]) {
         final b = reduced[i].beat(id);
         if (b != null) expect(b.gain, 0, reason: '${full[i].kind} $id');
       }
@@ -99,6 +107,69 @@ void main() {
     // Reduced Pursuit is at most 3.5 s (without a slot's extension).
     expect(FlowPlan.sectorChange(reduced: true).pursuitSeconds, 3.5);
     expect(FlowPlan.sectorChange().pursuitSeconds, 6.0);
+  });
+
+  // transition-ascent task 2.2.
+  test('speed rises monotonically to the swap, peaks in the cloud', () {
+    for (final reduced in [false, true]) {
+      for (final extra in const [0.0, .7, 2.0]) {
+        for (final kind in const ['plain', 'boss', 'victory']) {
+          final plan = FlowPlan.sectorChange(
+            reduced: reduced,
+            extra: extra,
+            boss: kind == 'boss',
+            victory: kind == 'victory',
+          );
+          final speed = plan.beat('speed')!;
+          final swap = plan.swapAt!;
+          final why = '$kind reduced=$reduced extra=$extra';
+          var last = -1.0;
+          for (var s = 0.0; s <= swap; s += 1 / 240) {
+            final v = plan.envAt('speed', s);
+            expect(v, greaterThanOrEqualTo(last), reason: '$why at $s');
+            last = v;
+          }
+          expect(plan.envAt('speed', swap), closeTo(1, 1e-9), reason: why);
+          // It holds through the level change and is gone by the end.
+          expect(plan.envAt('speed', plan.descentAt), closeTo(1, 1e-9));
+          expect(plan.envAt('speed', plan.seconds), lessThan(.01));
+          // Never falls before the cloud is full, never rises after p1.
+          expect(speed.c, plan.descentAt, reason: why);
+          final peak = plan.speedFactor(1);
+          expect(peak, reduced ? 2 : 8, reason: why);
+        }
+      }
+    }
+  });
+
+  test('a sector change rises only 24 units and has no flat tilt', () {
+    for (final reduced in [false, true]) {
+      for (final boss in [false, true]) {
+        final plan = FlowPlan.sectorChange(reduced: reduced, boss: boss);
+        expect(plan.climb, lessThanOrEqualTo(24));
+        expect(plan.beat('tilt'), isNull);
+        for (final id in const ['pitch', 'roll', 'streaks']) {
+          expect(plan.beat(id), isNotNull, reason: id);
+          var peak = 0.0;
+          for (var s = 0.0; s <= plan.seconds; s += 1 / 60) {
+            peak = peak < plan.envAt(id, s) ? plan.envAt(id, s) : peak;
+          }
+          // Reduced motion: no pitch, no roll, no streaks at any time.
+          expect(peak, reduced ? 0 : closeTo(1, .01), reason: '$id $reduced');
+        }
+      }
+    }
+    // The campaign outro keeps its own climb and its (still) tilt.
+    expect(FlowPlan.campaignOutro().climb, 150);
+    expect(FlowPlan.campaignOutro().beat('tilt'), isNotNull);
+  });
+
+  test('the pitch is full while the palette swaps', () {
+    final plan = FlowPlan.sectorChange();
+    final swap = plan.beat('swap')!;
+    for (var s = swap.a; s <= swap.b; s += 1 / 60) {
+      expect(plan.envAt('pitch', s), closeTo(1, 1e-9));
+    }
   });
 
   test('Pursuit is a whole number of beats', () {
