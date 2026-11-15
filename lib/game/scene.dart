@@ -229,6 +229,8 @@ class DemonScene extends FlameGame {
     );
     canvas.scale(scale);
     canvas.clipRect(const Rect.fromLTWH(0, 0, 360, 520));
+    final (shakeX, shakeY) = rushShake(); // --- sentinel rush (≤ 2 px)
+    if (shakeX != 0 || shakeY != 0) canvas.translate(shakeX, shakeY);
     final panY = model.mode == RunMode.gameOver ? model.cameraPanY : 0.0;
     if (panY > 0.5) {
       _deepStarfieldPan(canvas, panY);
@@ -812,10 +814,24 @@ class DemonScene extends FlameGame {
       if (d.isLarge) {
         // Large creatures have their own delayed entrance in simulation.
         if (d.entranceProgress > 0) {
+          // --- sentinel rush: the lock shudders it in place (±2 px).
+          final shudder =
+              d.lastStand &&
+                  d.rushPhase == RushPhase.lock &&
+                  !sectors.flyover.reducedMotion
+              ? Offset(
+                  (math.sin(model.clock * 71) * 2).roundToDouble(),
+                  (math.cos(model.clock * 53) * 1).roundToDouble(),
+                )
+              : Offset.zero;
+          final at = pos + shudder;
+          if (d.lastStand) _sentinelBerserkTrail(c, at, d);
           c.save();
-          _scaleAbout(c, pos, d.scale);
-          _sentinel(c, pos, d);
+          _scaleAbout(c, at, d.scale);
+          _sentinel(c, at, d);
+          if (d.lastStand) _sentinelBerserk(c, at, d);
           c.restore();
+          if (d.lastStand) _rushShieldRing(c, at, d);
         }
         continue;
       }
@@ -2057,6 +2073,22 @@ class DemonScene extends FlameGame {
     final grow = n * 1.8 * (1 + .3 * k);
     final bucket = k < .45 ? 0 : (k < .8 ? 1 : 2);
     if (d.isLarge) {
+      var at = center;
+      var size = grow / 1.8 * 1.6;
+      if (d.lastStand &&
+          (d.rushPhase == RushPhase.lock || d.rushPhase == RushPhase.rush)) {
+        // --- sentinel rush: on lock its shadow snaps over the ship's
+        // (W3 shadows), at its largest.
+        final ship = Offset(
+          model.shipX + 6 + 40 * _shadowTan * .22,
+          ArcadeModel.shipY + 24,
+        );
+        final snap = d.rushPhase == RushPhase.rush
+            ? 1.0
+            : Perspective.smoothstep(0, .12, d.rushClock);
+        at = Offset.lerp(center, ship, snap)!;
+        size = math.max(size, 1.6 * 1.25);
+      }
       final img = effectsAtlas;
       if (img == null) return null;
       final species = d.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
@@ -2064,8 +2096,8 @@ class DemonScene extends FlameGame {
       return _ShadowSpec(
         img,
         Rect.fromLTWH(frame * 128.0, species * 64.0, 128, 64),
-        center,
-        grow / 1.8 * 1.6,
+        at,
+        size,
         alpha.clamp(0.0, .9),
         bucket,
       );
@@ -2491,7 +2523,10 @@ class DemonScene extends FlameGame {
         : species;
     final frame = demon.lastStand
         ? demon.rushing
-              ? 4 + (model.clock * 12).floor() % 4
+              ? (demon.rushStagger > 0
+                    // Reeling from its broken shield: it tumbles.
+                    ? (model.clock * 20).floor() % 8
+                    : 4 + (model.clock * 12).floor() % 4)
               : (demon.lastStandTellProgress * 4).floor().clamp(0, 3)
         : diving
         ? 4 + (model.clock * 8).floor() % 4
@@ -2571,6 +2606,138 @@ class DemonScene extends FlameGame {
       _sentinelDiveShield(c, pos, demon);
     }
   }
+
+  // --- sentinel rush presentation (demon-intelligence design §6.5) ------
+
+  /// Screen shake of a sentinel rush (arena units, at most 2 px): a
+  /// tremor on the lock, a rumble growing with the rush's speed; none with
+  /// reduced motion.
+  (double, double) rushShake() {
+    if (sectors.flyover.reducedMotion) return (0, 0);
+    var amp = 0.0;
+    for (final d in model.demons) {
+      if (!d.lastStand || d.entering) continue;
+      if (d.rushPhase == RushPhase.lock) amp = math.max(amp, 1);
+      if (d.rushPhase == RushPhase.rush) {
+        final v = math.sqrt(d.rushVx * d.rushVx + d.rushVy * d.rushVy);
+        final top = model.policy.rushSpeed * model.policy.hostileRate;
+        amp = math.max(amp, 2 * (v / top).clamp(0.0, 1.0));
+      }
+    }
+    if (amp <= 0) return (0, 0);
+    final t = model.clock;
+    return (
+      (amp * math.sin(t * 83)).roundToDouble().clamp(-2.0, 2.0),
+      (amp * math.cos(t * 67) * .6).roundToDouble().clamp(-2.0, 2.0),
+    );
+  }
+
+  /// The smoke trail behind a rushing sentinel (unscaled, behind it).
+  void _sentinelBerserkTrail(Canvas c, Offset pos, Demon d) {
+    if (d.rushPhase != RushPhase.rush) return;
+    final v = math.sqrt(d.rushVx * d.rushVx + d.rushVy * d.rushVy);
+    if (v < 1) return;
+    final ux = -d.rushVx / v, uy = -d.rushVy / v;
+    final paint = Paint()..isAntiAlias = false;
+    for (var i = 1; i <= 9; i++) {
+      final k = i / 9;
+      final wobble = math.sin(model.clock * 19 + i * 1.7) * 4 * k;
+      final p = pos.translate(
+        ux * (22 + i * 13) * d.scale - uy * wobble,
+        uy * (22 + i * 13) * d.scale + ux * wobble,
+      );
+      final r = (4 + 7 * k) * d.scale;
+      paint.color = Color.lerp(
+        const Color(0xFF8E1020),
+        const Color(0xFF120608),
+        k,
+      )!.withValues(alpha: .62 * (1 - k * .7));
+      c.drawRect(
+        Rect.fromCenter(
+          center: Offset(p.dx.roundToDouble(), p.dy.roundToDouble()),
+          width: r * 2,
+          height: r * 2,
+        ),
+        paint,
+      );
+    }
+  }
+
+  /// The berserk aura (drawn scaled with the sentinel): flaring eyes in the
+  /// rally and lock, a crimson-to-black thermal bow (≈ 128 px) in the
+  /// rush, and the rush-shield ring that shrinks as the shield wears.
+  void _sentinelBerserk(Canvas c, Offset pos, Demon d) {
+    final paint = Paint()..isAntiAlias = false;
+    final phase = d.rushPhase;
+    if (phase == RushPhase.rally || phase == RushPhase.lock) {
+      final flare = phase == RushPhase.lock
+          ? 1.0
+          : (d.rushClock / RushTuning.rally).clamp(0.0, 1.0);
+      _sentinelEyes(c, pos, .6 + .4 * flare, scale: 1 + .25 * flare);
+    }
+    if (phase == RushPhase.rush) {
+      const halfSpan = 64.0;
+      final reel = d.rushStagger > 0 ? .5 : 1.0;
+      for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
+        final norm = dx / halfSpan, absNorm = norm.abs();
+        final bow = (1 - norm * norm) * 18.0;
+        final jitter = math.sin(model.clock * 41 + dx * .8) * 1.5;
+        final sx = (pos.dx + dx - 1).roundToDouble();
+        final sy = (pos.dy + 18 + bow).roundToDouble();
+        final tongue =
+            ((1 - absNorm * .6) * 6 +
+                    math.sin(model.clock * 31 + dx * 1.3).abs() * 6)
+                .roundToDouble();
+        paint.color = const Color(0xFF1A0508)
+            .withValues(alpha: .7 * (1 - absNorm * .4) * reel);
+        c.drawRect(Rect.fromLTWH(sx, sy - 8 - tongue, 3, 3 + tongue), paint);
+        paint.color = const Color(0xFF8E1020)
+            .withValues(alpha: (.75 + .2 * (1 - absNorm)) * reel);
+        c.drawRect(
+          Rect.fromLTWH(sx, (sy - 5 + jitter).roundToDouble(), 3, 3),
+          paint,
+        );
+        paint.color =
+            (absNorm < .45 ? const Color(0xFFFF3B3B) : const Color(0xFFC2182B))
+                .withValues(alpha: .9 * reel);
+        c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 3), paint);
+        if (absNorm < .3) {
+          paint.color = const Color(0xFFFFC2B0).withValues(alpha: reel);
+          c.drawRect(Rect.fromLTWH(sx, sy, 3, 2), paint);
+        }
+      }
+    }
+  }
+
+  /// The rush-shield ring (unscaled, so it reads at any depth): a broken
+  /// crimson ellipse that shrinks and thins as the shield wears.
+  void _rushShieldRing(Canvas c, Offset pos, Demon d) {
+    if (d.rushShield <= 0 || d.rushShieldMax <= 0 || d.entering) return;
+    final paint = Paint()..isAntiAlias = false;
+    final ratio = d.rushShield / d.rushShieldMax;
+    final size = math.max(d.scale, .8);
+    final r = (34 + 18 * ratio) * size;
+    final pulse = .6 + .3 * math.sin(model.clock * 9);
+    const dots = 36;
+    for (var i = 0; i < dots; i++) {
+      // The worn share of the ring breaks up into gaps.
+      if (i / dots > ratio && i % 3 != 0) continue;
+      final a = i / dots * 2 * math.pi + model.clock * 1.4;
+      paint.color =
+          (i.isEven ? const Color(0xFFFF4D5E) : const Color(0xFFB0102A))
+              .withValues(alpha: pulse);
+      c.drawRect(
+        Rect.fromLTWH(
+          (pos.dx + math.cos(a) * r - 1.5).roundToDouble(),
+          (pos.dy + math.sin(a) * r * .62 - 1.5).roundToDouble(),
+          3,
+          3,
+        ),
+        paint,
+      );
+    }
+  }
+  // --- end sentinel rush presentation
 
   void _sentinelDiveShield(Canvas c, Offset pos, Demon demon) {
     // Tier 3: Massive roaring spacecraft atmospheric re-entry plasma bow shock (~104 px).

@@ -4099,6 +4099,105 @@
           }
         ]
       }
+    },
+    "sentinelRushTell": {
+      "priority": 10,
+      "cooldown": 6,
+      "ttl": 1.2,
+      "mood": "worried",
+      "urgent": true,
+      "lines": [
+        {"speaker": "admiral", "text": "It's going berserk! Get out from under it!", "emotion": "urgent", "placeholder": "sentinelDive.h0"},
+        {"speaker": "kestrel", "text": "Sentinel's locked on you. Break hard, now!", "emotion": "panicked", "placeholder": "sentinelDive.h4"},
+        {"speaker": "anvil", "text": "That shield won't crack in time. Dodge it!", "emotion": "urgent", "placeholder": "sentinelDive.h2"},
+        {"speaker": "sparrow", "text": "It's charging! Move, move, move!", "emotion": "panicked", "placeholder": "sentinelDive.h1"},
+        {"speaker": "lindqvist", "text": "Eyes are locked. Sidestep on the flash!", "emotion": "urgent", "placeholder": "sentinelDive.h3"}
+      ]
+    },
+    "sentinelRush": {
+      "priority": 9,
+      "cooldown": 4,
+      "ttl": 2.5,
+      "lines": [],
+      "demon": {
+        "priority": 9,
+        "cooldown": 4,
+        "ttl": 2.5,
+        "delay": 0,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "warcry", "gloss": "For the brood!", "say": "For the brood!", "emotion": "excited", "placeholder": "divePrep.d12"},
+          {"speaker": "vexxa", "grunt": "warcry", "gloss": "Wings to the throat!", "say": "Wings to the throat!", "emotion": "excited", "placeholder": "divePrep.d13"},
+          {"speaker": "skarn", "grunt": "warcry", "gloss": "Burn with me!", "say": "Burn with me!", "emotion": "excited", "placeholder": "divePrep.d14"},
+          {"speaker": "morth", "grunt": "roar", "gloss": "The hollow takes you!", "say": "The hollow takes you!", "emotion": "triumphant", "placeholder": "divePrep.d15"}
+        ]
+      }
+    },
+    "sentinelRushAgain": {
+      "priority": 9,
+      "cooldown": 4,
+      "ttl": 1.5,
+      "mood": "worried",
+      "urgent": true,
+      "lines": [
+        {"speaker": "kestrel", "text": "It's coming around again!", "emotion": "urgent", "placeholder": "sentinelDive.h4"},
+        {"speaker": "rook", "text": "Second pass! Watch the fog!", "emotion": "panicked", "placeholder": "sentinelDive.h3"},
+        {"speaker": "admiral", "text": "It's not done. Here it comes again!", "emotion": "stern", "placeholder": "sentinelDive.h0"}
+      ]
+    },
+    "rushShieldBroken": {
+      "priority": 8,
+      "cooldown": 8,
+      "ttl": 2,
+      "mood": "happy",
+      "lines": [
+        {"speaker": "anvil", "text": "Its shield's down! Pour it on!", "emotion": "excited", "placeholder": null},
+        {"speaker": "sparrow", "text": "Cracked it! Hit it while it reels!", "emotion": "triumphant", "placeholder": null},
+        {"speaker": "lindqvist", "text": "Shield's gone. Finish it!", "emotion": "urgent", "placeholder": null}
+      ]
+    },
+    "rushSurvived": {
+      "priority": 5,
+      "cooldown": 10,
+      "ttl": 2.5,
+      "chance": 0.6,
+      "mood": "happy",
+      "lines": [
+        {"speaker": "sparrow", "text": "Whoa. Still in one piece?", "emotion": "excited", "placeholder": null},
+        {"speaker": "rook", "text": "That was way too close!", "emotion": "teasing", "placeholder": null},
+        {"speaker": "admiral", "text": "It missed. Now make it pay.", "emotion": "calm", "placeholder": null}
+      ]
+    },
+    "sentinelRushMissed": {
+      "priority": 4,
+      "cooldown": 6,
+      "ttl": 2,
+      "lines": [],
+      "demon": {
+        "priority": 4,
+        "cooldown": 6,
+        "ttl": 2,
+        "delay": 0.3,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "snarl", "gloss": "Again! AGAIN!", "say": "Again! AGAIN!", "emotion": "stern", "placeholder": "demonRout.d1"},
+          {"speaker": "vexxa", "grunt": "alarm", "gloss": "Slippery little ship!", "say": "Slippery little ship!", "emotion": "panicked", "placeholder": "demonRout.d2"}
+        ]
+      }
+    },
+    "broodAdapting": {
+      "priority": 4,
+      "cooldown": 60,
+      "ttl": 4,
+      "lines": [],
+      "demon": {
+        "priority": 4,
+        "cooldown": 60,
+        "ttl": 4,
+        "delay": 0,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "order", "gloss": "This one bites. Send the hunters.", "say": "This one bites. Send the hunters.", "emotion": "stern", "placeholder": "broodTaunt.d0"},
+          {"speaker": "morth", "grunt": "gloat", "gloss": "It learns. So do we.", "say": "It learns. So do we.", "emotion": "teasing", "placeholder": "broodTaunt.d2"}
+        ]
+      }
     }
   }
 }

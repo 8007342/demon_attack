@@ -75,6 +75,33 @@ them.
 **Rate and budget.** Each creature decides at 10 Hz, staggered by seed: about 6 decisions per frame at most. Per
 decision the cost is 7 candidates × ≤ 24 shots × 1 quadratic, under 2 µs in the VM. Total < 0.3 ms per frame.
 
+**Implementation notes (as built).**
+- The candidate path is piecewise: constant velocity Δ/D for D, then at rest at the end point (exact kinematics
+  of the manoeuvre, two quadratics per shot). The end point is clamped to the formation's arena (x 20–340).
+- The time-to-collision floor is 0.01 s (0.05 s made every candidate equal when a shot was already close).
+- Walls charge only a move toward the edge (as the teacher, which never charges *hold* for where it is).
+- The planner decides only when *hold* is threatened (some shot contacts it within H). With no threat the
+  creature holds without a draw, so the softmin never makes a safe hunter twitch.
+- Measured cost (test/demon_planner_test.dart): 6 decisions × 24 shots × 7 candidates ≈ 17 µs (VM median).
+
+**Teacher parity (task 2.2).** `node scripts/train-policy.mjs --fixtures` exports the 4 000 held-out states
+(`test/fixtures/policy_heldout.json`, raw state + teacher label; training is untouched and still reproduces the
+committed weights byte for byte). With one shot, the T1 candidates and the teacher's geometry (no perception
+delay, its 24-u clearance = 16 + 8, its 26-u evade span, its 0.85 vertical distance scale), the planner's
+argmin agrees with the teacher on **98.2 %** of the 2 082 states that some action escapes, and on 94.7 % of all
+3 140 non-dive states. The systematic disagreement is the other 1 058 states, where *no* action escapes: the
+teacher then minimises penetration depth, the planner maximises the time to contact. Both are hit; the planner is
+the exact version. (`dive_commit` labels are left out: T1 has no thread candidate.)
+
+**Weight tuning (task 2.4).** `test/planner_sweep_test.dart` (`--dart-define=PLANNER_SWEEP=true`) scores 90
+weight sets on teacher parity (escapable states), survival of 2 000 seeded synthetic multi-shot states (1–6 shots,
+a third angled; survival = the chosen T2 manoeuvre meets no shot, among the states some manoeuvre escapes) and calm
+(holds when hold is safe). The danger weight is the only strong lever: survival 53 % at 1, 85 % at 3, 89 % at 8,
+90 % at 12; parity rises with it (95.7 → 98.2 %). Leash 0.5 beats 1 (the hunter may leave its slot a little
+further); crowd and wall barely matter. A near-miss clearance term was tried and lost everywhere, so it was
+removed. **Chosen: danger 8, wall 1, crowd 0.4, leash 0.5, attack 0.8, change 1** (8 rather than 12: the same
+survival within 1.7 points, and smaller energies keep the hunter softmin meaningful between safe moves).
+
 ## 4. Tiers
 
 | | T0 drone | T1 skirmisher | T2 hunter | T3 sentinel |
@@ -246,3 +273,44 @@ Append only. Clip ids follow the bank rule `<trigger>.h<n>` / `.d<n>`, and exist
 6. **"A little more often"** = +0.05 / +0.10 / +0.20 base, plus up to +0.10 with skill, plus the alone-trigger.
 7. **Placeholder voice lines show their own (borrowed) subtitle.** Lines with no truthful placeholder stay silent
    until recorded.
+
+## 11. As built: deviations and judgment calls
+
+Each is reversible (a constant or a gate) and recorded in the code next to it.
+
+1. **Route 0 is untouched.** The skirmisher veto, like the hunters and sentinels, runs only from route 1
+   (`ArcadeModel._intel`; `intelligence = false` turns the tiers off as a fixture and calibration flag). The design
+   applied the veto everywhere, but also required "no change on route 0"; route 0 is now bit-identical (tested).
+2. **PilotModel persistence.** μ(τ) scales its velocity decay and mean reversion by (1 − p), where p is the
+   persistence of the last second's velocity (1 for a steady glide or standstill, 0 when weaving). The design
+   formula is the p = 0 case; without p, the "constant velocity within 2 u at τ 0.3" check is impossible
+   (e^(−0.6) alone loses 45 % of the glide).
+3. **Planner (§3) as built:** piecewise exact paths (move for D, then hold) plus the creature's own drift; contact
+   floor 0.01 s; walls charge moves only; arena clamp 20–340; horizon 2.5 τ0 instead of 1.5 τ0 (with the perception
+   delay a 1.5 τ0 cut made an 18-u climb look perfectly safe); decisions only when *hold* is threatened (no softmin
+   twitching when safe). Tuned weights: danger 8, leash 0.5 (sweep in §3).
+4. **Hunters hold their sidestep** until the threat's contact time + 0.15 s, then ease back (today's jink fades over
+   0.32 s and walked hunters straight back into the shot). The dive commit (thread candidate) also pays the leash and
+   is offered only when the ship is likely under the dive (P_hit ≥ 0.25), as the teacher's `interceptErr < 68`.
+5. **Thread dives see shots extrapolated.** Shots younger than δ stay unseen, but the rest are not back-projected:
+   at a closing speed of ~540 u/s, δ of lag is a body length and no weave was possible. Danger weight 8 and a 0.3
+   hysteresis apply as in the planner.
+6. **Rush rally 0.8 s** (not 0.6): the squad warning borrows recorded sentinel-dive clips (shortest 1.46 s) and must
+   end within 0.3 s of the charge; tell = 1.3 s Normal, 1.19 s Hard, 1.44 s Easy (all ≥ 1.0 s). The rise is capped
+   so the apex stays at y ≥ 32 (a sentinel at y 44 reared half out of the arena in the review frames).
+7. **Homing limit.** Turn rates 0 / 50 / 75 °/s as designed, plus a cap on how far the heading strays from the
+   lock's aim: 0 / 14 / 16°. Without it the forecast-led homing caught 20 % (Normal) and 63 % (Hard) of dodging
+   ships; with it the whole worst-case homing reach (Normal 104 u, Hard 124 u) stays inside the smallest dodge room
+   (162 u) less the widest contact (24 u), and the escape guard holds (≥ 99.8 % of passes on Hard).
+8. **Rush contact.** A contact that costs a life ends the rush (the old sacrifice); a shield or protection ends only
+   that pass's contact, and the pass flies on (and comes around if passes remain).
+9. **Rush scale.** The rushing sentinel grows from its rally size to the 1.25 cap by the ship row (it read too
+   small in the review frames); its hitbox and contact grow with it, inside the fairness margins.
+10. **Radio.** cinematic-flow (merged meanwhile) added no comms `clip` field and its message slots are for transitions,
+    so the rush uses this change's `CommsLine.clip`. A placeholder line takes the borrowed line's speaker too (the
+    portrait must match the voice). The single-voice channel cannot fit the brood war cry before a 1.46 s warning in
+    a 1.2–1.4 s tell: the warning (urgent) keeps the slot and the war cry follows on the charge (ttl 2.5 s). Shorter
+    recorded warnings in the voice batch will let both land before it. `rushShieldBroken` and `rushSurvived` stay
+    silent until recorded (no truthful placeholder).
+11. **Calibration harness.** The Average pilot runs all eight seeds (four were too noisy for a +0.3 lives bound), and
+    the recorder attributes each shot to the tier of the creature the pilot aims at when it fires.

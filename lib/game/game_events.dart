@@ -262,6 +262,7 @@ abstract final class GameEventNames {
     convoyStuck,
     ...groundWarV4, // --- ground war v4
     ...swarm, // --- continuous swarm
+    ...rush, // --- demon intelligence: the sentinel rush
   ];
 
   // --- Comms-specific derived events.
@@ -279,6 +280,39 @@ abstract final class GameEventNames {
   /// Ambient brood radio the comms director raises when the demons have
   /// been quiet too long.
   static const broodChatter = 'broodChatter';
+
+  // --- demon intelligence (openspec/changes/demon-intelligence §7-§8).
+
+  /// The skill level rose through ArcadeModel.adaptingAt (once per
+  /// sector): the brood remarks that it adapts. Data .
+  static const broodAdapting = 'broodAdapting';
+
+  /// A sentinel's rush rally begins (data `rushIn`: real seconds until it
+  /// charges, `pass`): the squad's urgent warning ends on it.
+  static const sentinelRushTell = 'sentinelRushTell';
+
+  /// It locks on (data `aim`, `rushIn`): the brood's war cry.
+  static const sentinelRush = 'sentinelRush';
+
+  /// A missed pass comes around through the fog (data `pass`, `rushIn`).
+  static const sentinelRushAgain = 'sentinelRushAgain';
+
+  /// Its rush shield broke (data `midRush`: the bonus and stagger).
+  static const rushShieldBroken = 'rushShieldBroken';
+
+  /// A pass missed the ship: squad relief, brood frustration.
+  static const rushSurvived = 'rushSurvived';
+  static const sentinelRushMissed = 'sentinelRushMissed';
+
+  static const rush = [
+    sentinelRushTell,
+    sentinelRush,
+    sentinelRushAgain,
+    rushShieldBroken,
+    rushSurvived,
+    sentinelRushMissed,
+    broodAdapting,
+  ];
 
   /// A full-size transmission: the fleet's mission briefing on travel
   /// (variant: the next sector) or a junior-pilot moment on a new wave.
@@ -728,6 +762,9 @@ class GameEventObserver {
         if (_seenLarge.add(d) && !d.waitingForEscort) {
           emit(GameEventNames.sentinelIncoming);
         }
+        // The final rush has its own radio (sentinelRushTell, queued by
+        // the model with its rushIn), so it is not a sentinel dive here.
+        if (d.lastStand) continue;
         final telling = d.telegraph > 0 || d.rushing;
         if (telling && _telegraphing.add(d)) {
           // Seconds until it leaves the formation: the radio ends its

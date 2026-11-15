@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'demon_planner.dart';
 import 'difficulty.dart';
 import 'flock.dart';
 import 'flow_director.dart';
@@ -7,13 +8,18 @@ import 'game_events.dart';
 import 'ground_blocks_atlas.dart';
 import 'ground_blocks_cast.dart';
 import 'perspective.dart';
+import 'pilot_model.dart';
+import 'skill_meter.dart';
 import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
+export 'demon_planner.dart' show DemonTier, Manoeuvre;
 export 'difficulty.dart';
 export 'game_events.dart';
 export 'flow_director.dart';
 export 'perspective.dart';
+export 'pilot_model.dart';
+export 'skill_meter.dart';
 export 'swarm_policy.dart';
 export 'swarm_patterns.dart' show Squad, SquadState;
 export 'swarm_stream.dart' show SwarmState, SwarmGate, SwarmGateGeometry;
@@ -27,6 +33,9 @@ part 'life_loss.dart';
 
 // --- cinematic flow (one transition clock, the pursued flock, skip) ---
 part 'model_flow.dart';
+
+// --- the sentinel final rush (demon-intelligence design §6) ---
+part 'sentinel_rush.dart';
 
 enum RunMode {
   title,
@@ -73,6 +82,7 @@ class Demon {
     this.isEscort = false,
     this.archetype = EnemyArchetype.ordinary,
     this.lastStandEligible = false,
+    this.rushRoll = 1,
     this.shieldMax = 0,
     this.armorMax = 0,
   }) : hp = maxHp,
@@ -92,6 +102,19 @@ class Demon {
   int shield, armor;
   double attackLeft = 2.4, volleyLeft = 1.5;
   double evadeLeft = 0, evadeCooldown = 0, evadeOffset = 0;
+
+  /// demon-intelligence: a hunter's climb (negative: up), the model clock
+  /// of its next planner decision (-1: not yet staggered) and its last
+  /// planned manoeuvre (hysteresis).
+  double evadeLift = 0, planAt = -1;
+  Manoeuvre lastPlan = Manoeuvre.hold;
+
+  /// A hunter's thread dive (design §5): today's straight dive line x,
+  /// the weave offset from it, its lateral velocity and the chosen one.
+  double threadLine = 0, threadOffset = 0, threadVx = 0, threadTarget = 0;
+
+  /// Pincer side of the next tell (-1 left of the forecast, 1 right).
+  int pincer = 0;
   double get evadeTimer => evadeLeft;
   set evadeTimer(double value) => evadeLeft = value;
   double get defenseFraction =>
@@ -105,8 +128,32 @@ class Demon {
   double entranceDelay = .35, entranceDuration = 1.8, entranceStartY = -48;
   final bool lastStandEligible;
   bool lastStand = false, rushing = false;
-  double get lastStandTellProgress =>
-      lastStand ? (1 - telegraph / .9).clamp(0, 1) : 0;
+
+  /// Progress (0..1) through the rush tell: rally then lock.
+  double get lastStandTellProgress {
+    if (!lastStand) return 0;
+    final double p = switch (rushPhase) {
+      RushPhase.rally => rushClock / rushTell,
+      RushPhase.lock => (RushTuning.rally + rushClock) / rushTell,
+      RushPhase.rush => 1,
+      _ => 0,
+    };
+    return p.clamp(0.0, 1.0);
+  }
+
+  // --- the sentinel final rush (sentinel_rush.dart) ---
+  /// The birth roll (one draw of the run's random): eligible when under
+  /// the difficulty's rush chance (+ up to 0.10 with skill).
+  double rushRoll;
+  RushPhase rushPhase = RushPhase.none;
+
+  /// Pass (1-based), rush shield, phase clock (hostile-rate s), the tell
+  /// length (rally + lock), stagger left, heading (rad from straight
+  /// down) and whether this pass touched the ship.
+  int rushPass = 0, rushShield = 0, rushShieldMax = 0;
+  double rushClock = 0, rushTell = 1.1, rushStagger = 0, rushHeading = 0;
+  double rushHeading0 = 0;
+  bool rushContact = false;
   double rushVx = 0, rushVy = 0;
   double _lastStandX = 0, _lastStandY = 0;
   final double seed;
@@ -232,6 +279,10 @@ class Shot {
 
   /// Regroup drain: seconds until this hostile shot fizzles (life loss).
   double? fizzleIn;
+
+  /// Seconds since it was fired (demon-intelligence: the planner's
+  /// perception delay ignores younger shots).
+  double age = 0;
 }
 
 class Pickup {
@@ -356,6 +407,70 @@ class ArcadeModel {
   double crateSpawnTimer = 0.0;
   final List<String> events = [];
 
+  // --- demon intelligence (demon-intelligence design §2): the forecast
+  // of the player that hunters and the sentinel rush aim at.
+  final PilotModel pilot = PilotModel();
+
+  /// The tiers' brains (design §3-§4); false restores the pre-W4 swarm
+  /// (a fixture and calibration flag). Route 0 is unchanged either way.
+  bool intelligence = true;
+  bool get _intel => intelligence && cycle >= 1;
+
+  /// The energy planner (its own PRNG: never draws from [random]).
+  late final DemonPlanner planner = DemonPlanner(seed);
+  final PlanState _plan = PlanState();
+
+  /// Planner decisions are 10 Hz per creature, staggered by seed, at most
+  /// [maxPlanDecisions] per frame (the rest wait their turn).
+  static const planRate = 10.0, maxPlanDecisions = 6;
+  int planDecisionsThisFrame = 0;
+
+  static DemonTier tierOf(Demon d) => d.isLarge
+      ? DemonTier.sentinel
+      : d.elite
+      ? DemonTier.hunter
+      : (d.kind >= 2 || d.maxHp >= 3)
+      ? DemonTier.skirmisher
+      : DemonTier.drone;
+
+  /// The skill level hunters react to (design §7): derived from these
+  /// counters only (never score, power-ups or time survived).
+  final SkillMeter skill = SkillMeter();
+  double get skillLevel => _intel ? skill.level : 0;
+  int shotsFired = 0, shotsHit = 0, nearMisses = 0;
+
+  /// The brood remarks once per sector when the skill level rises through
+  /// [adaptingAt].
+  static const adaptingAt = .65;
+  bool _adaptedThisSector = false;
+  double _lastSkill = SkillMeter.initial;
+
+  void _resetSkill() {
+    skill
+      ..cap = policy.skillCap
+      ..reset();
+    shotsFired = shotsHit = nearMisses = 0;
+    _lastSkill = skill.level;
+  }
+
+  void _observeSkill(double dt) {
+    skill.observe(
+      dt,
+      shotsFired: shotsFired,
+      shotsHit: shotsHit,
+      nearMisses: nearMisses,
+    );
+    final s = skill.level;
+    if (_intel &&
+        !_adaptedThisSector &&
+        _lastSkill < adaptingAt &&
+        s >= adaptingAt) {
+      _adaptedThisSector = true;
+      _queueGameEvent(GameEventNames.broodAdapting, {'skill': s});
+    }
+    _lastSkill = s;
+  }
+
   // --- ground war state (see ground_war.dart) ---
   final GroundWar ground = GroundWar();
 
@@ -448,7 +563,76 @@ class ArcadeModel {
     d.targetX = d._prepLead
         ? (shipX + shipVx * 0.22).clamp(24.0, width - 24.0)
         : shipX;
+    // --- demon intelligence: a hunter aims at the forecast from skill
+    // 0.4 (and always in a pincer, either side of it). Fixed from here.
+    if (_intel &&
+        d.elite &&
+        !d.isLarge &&
+        (d.pincer != 0 || skillLevel >= .4)) {
+      final rate = policy.hostileRate > 0 ? policy.hostileRate : 1;
+      final tau = _diveEta(d) - divePrepBeat / rate;
+      d.targetX = (pilot.aim(tau) + d.pincer * pincerSpread).clamp(
+        24.0,
+        width - 24.0,
+      );
+    }
+    d.pincer = 0;
   }
+
+  /// Pincer aims sit this far either side of the forecast (design §5).
+  static const pincerSpread = 34.0;
+
+  /// At skill ≥ 0.5, with probability 0.35 (s − 0.5) / 0.5 (the planner's
+  /// PRNG), a second ready hunter joins [d]'s dive.
+  Demon? _pincerPartner(Demon d, List<Demon> ready) {
+    if (!_intel || !d.elite || d.isLarge) return null;
+    final s = skillLevel;
+    if (s < .5) return null;
+    final partner = ready
+        .where((o) => o.elite && !o.isLarge && !identical(o, d))
+        .firstOrNull;
+    if (partner == null) return null;
+    return planner.roll() < .35 * (s - .5) / .5 ? partner : null;
+  }
+
+  /// The thread dive (design §5): today's straight line toward the fixed
+  /// aim, plus a weave from it chosen at 10 Hz from {−110, 0, +110} ·
+  /// tempo against the player's shots, |offset| ≤ 60, ≤ 900 u/s².
+  void _threadDive(Demon d, double dt, double fall) {
+    final k = policy.hostileRate * 2.1;
+    d.threadLine += (d.targetX - d.threadLine) * dt * k;
+    if (_planDue(d)) {
+      final cfg = PlannerConfig.hunter(skillLevel);
+      d.threadTarget = DemonPlanner.threadLateral(
+        x: d.x,
+        y: d.y,
+        vy: fall,
+        lineAhead:
+            d.threadLine + (d.targetX - d.threadLine) * (1 - math.exp(-k * .3)),
+        lateral: threadLateral * policy.swarmTempo(route: cycle),
+        radius: d.hitHalfWidth + 3,
+        delay: cfg.delay,
+        foresight: cfg.foresight,
+        shots: shots,
+        current: d.threadTarget,
+      );
+    }
+    d.threadVx += (d.threadTarget - d.threadVx).clamp(
+      -threadAccel * dt,
+      threadAccel * dt,
+    );
+    var off = d.threadOffset + d.threadVx * dt;
+    if (off.abs() > threadReach) {
+      off = off.sign * threadReach;
+      d.threadVx = 0;
+    }
+    d.threadOffset = off;
+    d.x = (d.threadLine + off).clamp(18.0, width - 18.0);
+  }
+
+  /// Thread-dive bounds: lateral speed (u/s, × tempo), acceleration
+  /// (u/s²) and the reach from the straight line (u).
+  static const threadLateral = 110.0, threadAccel = 900.0, threadReach = 60.0;
 
   Carrier? boss;
   Carrier? wreckBoss;
@@ -649,6 +833,7 @@ class ArcadeModel {
 
   void start({Difficulty difficulty = Difficulty.normal}) {
     this.difficulty = difficulty;
+    _resetSkill(); // --- demon intelligence
     ranked = true;
     lives = policy.startingLives;
     medals = 0;
@@ -833,6 +1018,7 @@ class ArcadeModel {
     // A recorded medal always belongs to an already completed route.
     if (restoredMedals > route) return false;
     difficulty = restoredDifficulty;
+    _resetSkill(); // --- demon intelligence: a restored run starts at 0.3
     ranked = true;
     cycle = route;
     level = sector;
@@ -879,6 +1065,8 @@ class ArcadeModel {
 
   void _beginLevel() {
     wave = 1;
+    pilot.reset(shipX); // --- demon intelligence
+    _adaptedThisSector = false;
     clearedLevel = null;
     wreckBoss = null;
     boss = level == 5 ? _newCarrier() : null;
@@ -1001,9 +1189,9 @@ class ArcadeModel {
         armorMax: large
             ? (archetype == EnemyArchetype.armoredSentinel ? 4 : 2) + cycle ~/ 2
             : 0,
-        lastStandEligible:
-            large &&
-            random.nextDouble() < (difficulty == Difficulty.easy ? .15 : .25),
+        // One draw, as before (the random sequence is unchanged): the
+        // rush chance is decided against it when the rush would trigger.
+        rushRoll: large ? random.nextDouble() : 1,
       );
       if (large) {
         demon.entranceProgress = 0;
@@ -1533,6 +1721,10 @@ class ArcadeModel {
       }
     }
     incoming.addAll(roster);
+    skill.cohortCleared(
+      expected: SwarmStream.expectedClear(_cohortHp),
+      actual: stream.cohortClock,
+    ); // --- demon intelligence
     final q = stream.paceNext(cohortHp: _cohortHp, floor: policy.paceFloor);
     incomingTotal = incomingLeft = policy.incomingSeconds * q;
     events.add('incoming');
@@ -2203,6 +2395,10 @@ class ArcadeModel {
     _activeMilliseconds += dt * 1000;
     levelClock += dt;
     _updateLifeLoss(dt); // --- life-loss sequence
+    if (!shipAway) {
+      pilot.observe(shipX, shipVx, dt); // --- demon intelligence
+      _observeSkill(dt);
+    }
     invulnerable = math.max(0, invulnerable - dt);
     // Module timers freeze while the ship is away: the loadout survives.
     for (final value in shipAway ? const <Power>[] : Power.values) {
@@ -2247,6 +2443,7 @@ class ArcadeModel {
     wingRecoil[1] = math.max(0, wingRecoil[1] - dt);
     noseFlash = math.max(0, noseFlash - dt);
     if (_fire <= 0) {
+      final fired = shots.length;
       _fire += hasPower(Power.rapid) ? .105 : .23;
       final powerful = hasPower(Power.powerful), large = hasPower(Power.large);
       final double slingVx;
@@ -2297,6 +2494,7 @@ class ArcadeModel {
           playerShot(shipX + 5, shipY - 8, 90 + slingVx * 0.85, -370),
         ]);
       }
+      shotsFired += shots.length - fired; // --- demon intelligence
       events.add('shot');
     }
     if (!shipAway) _updateReinforcements(dt);
@@ -2315,6 +2513,7 @@ class ArcadeModel {
     for (final s in shots) {
       s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1);
       s.y += s.vy * dt;
+      s.age += dt;
     }
     _collisions();
     shots.removeWhere(
@@ -2436,12 +2635,16 @@ class ArcadeModel {
       return (nextX, nextY);
     }
     final evadeX = d.evadeOffset * (d.evadeLeft / 0.32).clamp(0.0, 1.0);
+    final evadeY = d.evadeLift == 0
+        ? 0.0
+        : d.evadeLift * (d.evadeLeft / 0.32).clamp(0.0, 1.0);
     // --- continuous swarm: squad members fly their pattern target, plus
     // the gated evade and the telegraph crest; strays and onboarding hover.
     final pattern = _patternTarget(d);
     if (pattern != null) {
       var (px, py) = pattern;
       px += evadeX;
+      py += evadeY;
       if (d.telegraph > 0) {
         final totalTell = d.elite ? 0.55 : 0.7;
         final progress = (d.telegraph / totalTell).clamp(0.0, 1.0);
@@ -2459,7 +2662,10 @@ class ArcadeModel {
                 evadeX)
             .clamp(20.0, width - 20.0);
     var targetFormY =
-        d.homeY + math.sin(levelClock * 1.7 * speed + d.seed) * 14 + boidsY;
+        d.homeY +
+        math.sin(levelClock * 1.7 * speed + d.seed) * 14 +
+        boidsY +
+        evadeY;
     if (d.telegraph > 0) {
       final totalTell = d.elite ? 0.55 : 0.7;
       final progress = (d.telegraph / totalTell).clamp(0.0, 1.0);
@@ -2714,7 +2920,16 @@ class ArcadeModel {
       }
       final placed = d.entering && d.arrivesFromDistance;
       if (!placed) {
-        final target = _targetNearness(d, d.y);
+        var target = _targetNearness(d, d.y);
+        if (d.lastStand && !d.rushing) {
+          // --- sentinel rush: the rally pulls back in depth.
+          target -=
+              RushTuning.pullBack *
+              (d.lastStandTellProgress * d.rushTell / RushTuning.rally).clamp(
+                0.0,
+                1.0,
+              );
+        }
         d.nearness = dt <= 0 || d.nearness == 0
             ? target
             : d.nearness +
@@ -2726,6 +2941,14 @@ class ArcadeModel {
         large: d.isLarge,
         angry: d.angry,
       );
+      if (d.rushing) {
+        // --- sentinel rush: it grows to the 1.25 cap as it closes in.
+        final k = ((d.y - d._lastStandY) / (shipY - d._lastStandY)).clamp(
+          0.0,
+          1.0,
+        );
+        d.scale = ((d.scale + (1.25 - d.scale) * k) * 16).round() / 16;
+      }
       final from = d.entryScale;
       if (from != null && d.entering && d.isLarge) {
         // A foreshadowed sentinel keeps its silhouette's size as it flies
@@ -2748,6 +2971,7 @@ class ArcadeModel {
             : (difficulty == Difficulty.hard ? 3 : 2));
 
   void _updateDemons(double dt) {
+    planDecisionsThisFrame = 0; // --- demon intelligence
     if (!shipAway) _dive -= dt * policy.hostileRate;
     var activeSmallDives = demons
         .where(
@@ -2772,6 +2996,14 @@ class ArcadeModel {
       if (level >= 2 || cycle > 0) {
         _prepDive(d);
         if (!d.isLarge) activeSmallDives++;
+        // --- demon intelligence: a pincer by a second ready hunter.
+        final partner = _pincerPartner(d, readyDivers);
+        if (partner != null && activeSmallDives < maxSmallDives) {
+          d.pincer = -1;
+          partner.pincer = 1;
+          _prepDive(partner);
+          activeSmallDives++;
+        }
       }
       _dive = math.max(
         .8,
@@ -2822,28 +3054,10 @@ class ArcadeModel {
         d.divePrep -= dt * policy.hostileRate;
         if (d.divePrep <= 0) _startDiveTell(d);
       }
+      if (d.isLarge && !d.lastStand && dt > 0) _maybeRush(d); // alone
       if (d.lastStand) {
-        if (!d.rushing) {
-          d.telegraph = math.max(0, d.telegraph - dt * policy.hostileRate);
-          final progress = d.lastStandTellProgress;
-          d.x = d._lastStandX;
-          d.y = d._lastStandY - 22 * progress * progress;
-          if (d.telegraph <= 0) {
-            d.rushing = true;
-            final dx = d.targetX - d.x;
-            final dy = shipY - d.y;
-            final distance = math.max(.001, math.sqrt(dx * dx + dy * dy));
-            d.rushVx = dx / distance * 600 * policy.hostileRate;
-            d.rushVy = dy / distance * 600 * policy.hostileRate;
-          }
-        } else {
-          d.x += d.rushVx * dt;
-          d.y += d.rushVy * dt;
-          if (d.x < -56 || d.x > width + 56 || d.y < -32 || d.y > height + 32) {
-            _sacrifice(d);
-            continue;
-          }
-        }
+        // --- the sentinel final rush (sentinel_rush.dart)
+        if (dt > 0 && !_updateRush(d, dt)) continue;
         _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
       }
@@ -2895,6 +3109,8 @@ class ArcadeModel {
         d.telegraph -= dt * policy.hostileRate;
         if (d.telegraph <= 0) {
           d.dive = .001;
+          d.threadLine = d.x; // --- demon intelligence (thread dive)
+          d.threadOffset = d.threadVx = d.threadTarget = 0;
           _igniteDiveShield(d);
           if (d.isLarge) {
             final aim = ((d.targetX - d.x) * .3).clamp(-70.0, 70.0);
@@ -2925,11 +3141,23 @@ class ArcadeModel {
             (d.angry ? 1.3 : 1) *
             (d.elite ? 1.15 : 1) *
             shatteredSlow;
-        d.x +=
-            (d.targetX - d.x) *
-            dt *
-            policy.hostileRate *
-            (d.isLarge ? 3.4 : (d.elite ? 2.1 : 1.8));
+        if (_intel && d.elite && !d.isLarge) {
+          _threadDive(
+            d,
+            dt,
+            (115 + d.kind * 16) *
+                speed *
+                (d.angry ? 1.3 : 1) *
+                1.15 *
+                shatteredSlow,
+          );
+        } else {
+          d.x +=
+              (d.targetX - d.x) *
+              dt *
+              policy.hostileRate *
+              (d.isLarge ? 3.4 : (d.elite ? 2.1 : 1.8));
+        }
         d.y +=
             (d.isLarge ? 300 : (115 + d.kind * 16)) *
             dt *
@@ -3027,6 +3255,9 @@ class ArcadeModel {
     d.evadeLeft = math.max(0, d.evadeLeft - dt);
     if (d.evadeLeft <= 0) {
       d.evadeOffset += (-d.evadeOffset).clamp(-90 * dt, 90 * dt);
+      if (d.evadeLift != 0) {
+        d.evadeLift += (-d.evadeLift).clamp(-90 * dt, 90 * dt);
+      }
     }
     if ((level < 2 && cycle == 0) ||
         d.telegraph > 0 ||
@@ -3034,11 +3265,21 @@ class ArcadeModel {
         d.evadeCooldown > 0) {
       return false;
     }
-    if (demons.any((o) => !o.isLarge && !identical(o, d) && o.evadeLeft > 0)) {
+    // One drone/skirmisher evader at a time; hunters have their own slot.
+    if (demons.any(
+      (o) =>
+          !o.isLarge &&
+          !identical(o, d) &&
+          o.evadeLeft > 0 &&
+          (!_intel || o.elite == d.elite),
+    )) {
       return false;
     }
     if (demons.any((o) => o.isLarge && o.waitingForEscort)) {
       return false;
+    }
+    if (_intel && d.elite) {
+      return _evadeHunter(d, activeSmallDives, maxSmallDives);
     }
     Shot? nearestShot;
     var bestArrival = 999.0;
@@ -3086,6 +3327,7 @@ class ArcadeModel {
       var dir = action == 'evade_left' ? -1.0 : 1.0;
       if (d.x < 44) dir = 1.0;
       if (d.x > width - 44) dir = -1.0;
+      if (_vetoed(d, dir)) return false; // --- demon intelligence (T1)
       d.evadeOffset = dir * 24.0;
       d.evadeLeft = 0.32;
       d.evadeCooldown = cooldown;
@@ -3102,6 +3344,7 @@ class ArcadeModel {
       var dir = projectedX <= d.x ? 1.0 : -1.0;
       if (d.x < 44) dir = 1.0;
       if (d.x > width - 44) dir = -1.0;
+      if (_vetoed(d, dir)) return false; // --- demon intelligence (T1)
       d.evadeOffset = dir * 22.0 * d.scale;
       d.evadeLeft = 0.32;
       d.evadeCooldown = cooldown;
@@ -3117,6 +3360,10 @@ class ArcadeModel {
       d.evadeOffset += (-d.evadeOffset).clamp(-65 * dt, 65 * dt);
     }
     if (d.evadeCooldown > 0) return;
+    if (_intel) {
+      _evadeSentinel(d);
+      return;
+    }
     for (final shot in shots) {
       if (shot.hostile || shot.vy >= 0) continue;
       final arrival = (d.y - shot.y) / shot.vy;
@@ -3135,6 +3382,154 @@ class ArcadeModel {
       break;
     }
   }
+
+  // --- demon intelligence: tiers (openspec/changes/demon-intelligence
+  // design §3-§4). T0 drones keep the SwarmPolicy evade above unchanged;
+  // T1 skirmishers add the planner veto; T2 hunters and T3 sentinels run
+  // the planner at 10 Hz. Route 0 never gets here (`_intel`).
+
+  /// Whether [d]'s 10 Hz decision is due and the frame still has room:
+  /// staggered by its seed; a due creature over the cap waits a frame.
+  bool _planDue(Demon d) {
+    if (d.planAt < 0) {
+      d.planAt = clock + (d.seed * .618 % 1).abs() / planRate;
+    }
+    if (clock + 1e-9 < d.planAt) return false;
+    if (planDecisionsThisFrame >= maxPlanDecisions) return false;
+    planDecisionsThisFrame++;
+    d.planAt = math.max(d.planAt + 1 / planRate, clock + .5 / planRate);
+    return true;
+  }
+
+  PlanState _planFor(Demon d) {
+    var left = 0, right = 0;
+    for (final o in demons) {
+      if (identical(o, d) || o.isLarge || o.entering) continue;
+      final dx = o.x - d.x, dy = o.y - d.y;
+      if (dx * dx + dy * dy <= 72 * 72) {
+        if (dx < 0) {
+          left++;
+        } else {
+          right++;
+        }
+      }
+    }
+    final evadeX = d.evadeOffset * (d.evadeLeft / .32).clamp(0.0, 1.0);
+    return _plan
+      ..x = d.x
+      ..y = d.y
+      ..vx = d.vx
+      ..vy = d.vy
+      ..scale = d.scale
+      ..halfWidth = d.hitHalfWidth
+      ..crowd = ((right - left) / 4.0).clamp(-1.0, 1.0)
+      ..leashX = d.isLarge ? d.x : _targetFormationPosition(d).$1 - evadeX
+      ..last = d.lastPlan;
+  }
+
+  /// T1: the SwarmPolicy proposal (a sidestep toward [dir]) is vetoed
+  /// when it runs into more danger than holding (another shot).
+  bool _vetoed(Demon d, double dir) {
+    if (!_intel || tierOf(d) != DemonTier.skirmisher) return false;
+    const cfg = PlannerConfig.skirmisher;
+    final s = _planFor(d);
+    final hold = DemonPlanner.dangerOf(Manoeuvre.hold, s, cfg, shots);
+    final side = DemonPlanner.dangerOf(
+      dir < 0 ? Manoeuvre.sideL : Manoeuvre.sideR,
+      s,
+      cfg,
+      shots,
+    );
+    return side > hold;
+  }
+
+  /// T2: the full planner (the thread candidate is a dive commit while a
+  /// dive slot is free). Returns true when it commits a dive.
+  bool _evadeHunter(Demon d, int activeSmallDives, int maxSmallDives) {
+    if (!_planDue(d)) return false;
+    final skill = skillLevel;
+    final s = _planFor(d);
+    if (DemonPlanner.dangerOf(
+          Manoeuvre.hold,
+          s,
+          PlannerConfig.hunter(skill),
+          shots,
+        ) <=
+        0) {
+      d.lastPlan = Manoeuvre.hold;
+      return false;
+    }
+    final threat = DemonPlanner.lastContact;
+    // The dive commit is a candidate only while a slot is free and the
+    // ship is likely under the dive (teacher: interceptErr < 68).
+    s.aimX = (shipX + shipVx * .22).clamp(24.0, width - 24.0);
+    final (threadDx, _) = DemonPlanner.displacement(
+      Manoeuvre.thread,
+      s,
+      PlannerConfig.hunter(skill),
+    );
+    s.aimP = pilot.pHit(d.x + threadDx, _diveEta(d), d.contactHalf + 36);
+    final cfg = PlannerConfig.hunter(
+      skill,
+      dive: activeSmallDives < maxSmallDives && !shipAway && s.aimP >= .25,
+    );
+    final a = planner.choose(s, cfg, shots);
+    d.lastPlan = a;
+    switch (a) {
+      case Manoeuvre.hold:
+        return false;
+      case Manoeuvre.thread:
+        _prepDive(d, lead: true);
+        d.evadeCooldown = PlannerConfig.hunterCooldown(skill);
+        return true;
+      default:
+        final (dx, dy) = DemonPlanner.displacement(a, s, cfg);
+        d.evadeOffset = dx;
+        d.evadeLift = dy;
+        // Held out of the shot's path until it has passed, then eased back
+        // (the planner plans the move and the stay; today's jink fades
+        // over 0.32 s at once).
+        d.evadeLeft = .32 + threat.clamp(.1, 1.2) + hunterHold;
+        d.evadeCooldown = PlannerConfig.hunterCooldown(skill);
+        return false;
+    }
+  }
+
+  /// Seconds a hunter holds its sidestep after the threat's contact time.
+  static const hunterHold = .15;
+
+  /// Seconds (real) from a dive tell starting now until [d] reaches the
+  /// ship row on today's dive.
+  double _diveEta(Demon d) {
+    final rate = policy.hostileRate > 0 ? policy.hostileRate : 1;
+    final vy =
+        (d.isLarge ? 300 : (115 + d.kind * 16)) *
+        speed *
+        (d.angry ? 1.3 : 1) *
+        (d.elite ? 1.15 : 1);
+    return (divePrepBeat + diveTellFor(d)) / rate +
+        math.max(0, shipY - d.y) / vy;
+  }
+
+  /// T3: planner-backed sentinel sidestep with today's 54-u span, 0.6 s
+  /// and 1.4 s cooldown.
+  void _evadeSentinel(Demon d) {
+    if (!_planDue(d)) return;
+    const cfg = PlannerConfig.sentinel;
+    final s = _planFor(d);
+    if (DemonPlanner.dangerOf(Manoeuvre.hold, s, cfg, shots) <= 0) {
+      d.lastPlan = Manoeuvre.hold;
+      return;
+    }
+    final a = planner.choose(s, cfg, shots);
+    d.lastPlan = a;
+    if (a == Manoeuvre.hold) return;
+    final (dx, _) = DemonPlanner.displacement(a, s, cfg);
+    d.evadeOffset = dx;
+    d.evadeLeft = .6;
+    d.evadeCooldown = 1.4;
+  }
+  // --- end demon intelligence tiers
 
   void _updateBoss(double dt) {
     final b = boss;
@@ -3235,6 +3630,12 @@ class ArcadeModel {
         if ((s.x - shipX).abs() < 10 && (s.y - shipY).abs() < 12) {
           hitPlayer();
           s.y = height + 20;
+        } else if (!shipAway &&
+            s.vy > 0 &&
+            s.y >= shipY &&
+            s.y - s.vy / 60 < shipY &&
+            (s.x - shipX).abs() < 26) {
+          nearMisses++; // --- demon intelligence: a dodge (skill meter)
         }
         continue;
       }
@@ -3251,6 +3652,7 @@ class ArcadeModel {
           if (s.blastRadius > 0) _explodeShot(s, hitCarrier: false);
           hitBoss(s.x, damage: s.damage);
           s.y = height + 20;
+          shotsHit++;
           continue;
         }
       }
@@ -3266,6 +3668,7 @@ class ArcadeModel {
           }
           s.y = height + 20;
           hit = true;
+          shotsHit++;
           if (crate.destroyed) {
             supplyCrates.remove(crate);
             blasts.add(Blast(crate.x, crate.y, big: true));
@@ -3303,14 +3706,20 @@ class ArcadeModel {
         }
         hit = true;
       }
-      if (hit) s.y = height + 20;
+      if (hit) {
+        s.y = height + 20;
+        shotsHit++;
+      }
     }
     for (final d in List<Demon>.of(demons)) {
       if (!d.entering &&
           (d.x - shipX).abs() < d.contactHalf &&
           (d.y - shipY).abs() < d.contactHalf) {
-        hitPlayer();
-        if (d.rushing) _sacrifice(d);
+        if (d.rushing) {
+          _rushContact(d); // --- sentinel rush
+        } else {
+          hitPlayer();
+        }
       }
     }
   }
@@ -3352,6 +3761,7 @@ class ArcadeModel {
   void hitDemon(Demon d, {int damage = 1, bool homing = false}) {
     if (!combat || damage <= 0 || d.entering || !demons.contains(d)) return;
     d.flash = .12;
+    if (_rushShieldHit(d, damage)) return; // --- sentinel rush shield
     if (d.dive > 0 && d.diveShieldMax == 0) {
       _igniteDiveShield(d);
     }
@@ -3441,19 +3851,9 @@ class ArcadeModel {
       _groundDropOnKill(d); // --- ground war
     } else {
       events.add('hit');
-      if (d.isLarge &&
-          d.lastStandEligible &&
-          !d.lastStand &&
-          d.hp / d.maxHp <= .25) {
-        d.lastStand = true;
-        d.divePrep = 0;
-        d.telegraph = .9;
-        d.dive = 0;
-        d.diveShield = 0;
-        d.diveShieldMax = 0;
-        d.targetX = shipX;
-        d._lastStandX = d.x;
-        d._lastStandY = d.y;
+      if (d.isLarge && !d.lastStand) _maybeRush(d); // --- sentinel rush
+      if (d.lastStand) {
+        // The rush has begun: nothing else interrupts it.
       } else if (!d.lastStand &&
           !shipAway &&
           d.angry &&
@@ -3586,6 +3986,9 @@ class ArcadeModel {
       return;
     }
     lives--;
+    pilot.reset(shipX); // --- demon intelligence
+    skill.lifeLost();
+    _lastSkill = skill.level;
     shipVx = shipBank = shipThrust = 0;
     steering = aimAngle = 0;
     _steeringActive = false;
@@ -3726,6 +4129,7 @@ class ArcadeModel {
       d.diveShield = 0;
       d.lastStand = false;
       d.rushing = false;
+      d.rushPhase = RushPhase.none;
       d.telegraph = 0.5;
       final spread = (i - (larges.length - 1) / 2.0) * 90.0;
       final ax = 180.0 + spread + math.sin(t * 2.4 + i) * 18.0;

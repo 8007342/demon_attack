@@ -71,11 +71,22 @@ void main() {
               lessThan(58),
               reason: 'Tell movement lifts the creature before commitment',
             );
+            // demon-intelligence: the lock (eyes flared, shield ring)
+            // and the rush (berserk aura) read differently from the tell.
+            while (demon.rushPhase != RushPhase.lock) {
+              model.update(1 / 60);
+            }
+            final lock = await capture(scene, 'last-stand-$heavy-lock');
+            expect(lock, isNot(orderedEquals(tell)));
             while (!demon.rushing) {
+              model.update(1 / 60);
+            }
+            for (var i = 0; i < 6; i++) {
               model.update(1 / 60);
             }
             final rush = await capture(scene, 'last-stand-$heavy-rush');
             expect(rush, isNot(orderedEquals(tell)));
+            expect(rush, isNot(orderedEquals(lock)));
             model.pause();
             scene.update(.1);
             expect(

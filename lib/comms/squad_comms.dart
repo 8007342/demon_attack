@@ -79,7 +79,7 @@ class SquadComms {
     if (!playAudio || !voiceOn) return;
     // The director already keeps one voice on the channel; a must-play
     // warning reaches the player even if a stray voice is still sounding.
-    commsPlay(m.line.id, m.mustPlay ? 10 : m.priority, m.isDemon);
+    commsPlay(m.line.id, m.mustPlay ? 10 : m.priority, m.isDemon, m.line.clip);
   }
 
   void _stop(CommsMessage m) {
@@ -193,7 +193,7 @@ class SquadComms {
       for (final bank in [commsHumanTriggers, commsDemonTriggers])
         for (final CommsTriggerSpec spec in bank.values)
           for (final line in spec.lines)
-            if (crew.contains(line.speaker)) line.id,
+            if (crew.contains(line.speaker)) line.clip,
     ];
     commsPrefetch(ids);
   }
