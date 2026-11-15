@@ -18,7 +18,7 @@ During the Pursuit the world below SHALL tilt and slide down, with its horizon l
 
 #### Scenario: Reduced motion
 - **WHEN** reduced motion is enabled
-- **THEN** the transition plays without tilt, roll or streaks, as crossfades with a gentle speed change
+- **THEN** the transition plays without tilt, roll or streaks, as crossfades, and the world never scrolls faster than twice its speed (a still world stays still)
 
 ### Requirement: Front-line radio call
 When a sector transition returns the squadron to a sector it has already visited in the run, the transition's radio line SHALL be a front-line call from that destination sector, such as "Ground support needed in <sector>!" or "We're getting overwhelmed here!". Until its own recording exists, a call SHALL play a recorded ground-distress line with that line's own subtitle, so audio and text always agree.

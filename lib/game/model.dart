@@ -721,6 +721,11 @@ class ArcadeModel {
   /// Screen direction the pursued flock flies (-1 left, 1 right).
   int flowDirection = 1;
 
+  /// Sectors this run has entered (transition-ascent: a sector change into
+  /// one of them is a revisit, answered by a front-line call). Presentation
+  /// only; a resumed or later-route run counts every sector as visited.
+  final Set<int> visitedSectors = {};
+
   /// The cosmetic flock of the transition (never in [demons]).
   final List<FlowMember> flowFlock = [];
   double _flowBase = 0;
@@ -809,6 +814,7 @@ class ArcadeModel {
       (1 - transitionLeft / transitionDuration).clamp(0, 1);
   void start({Difficulty difficulty = Difficulty.normal}) {
     this.difficulty = difficulty;
+    visitedSectors.clear(); // --- transition ascent
     _resetSkill(); // --- demon intelligence
     ranked = true;
     lives = policy.startingLives;
@@ -1040,6 +1046,7 @@ class ArcadeModel {
   );
 
   void _beginLevel() {
+    visitedSectors.add(level); // --- transition ascent
     wave = 1;
     pilot.reset(shipX); // --- demon intelligence
     _adaptedThisSector = false;

@@ -117,3 +117,42 @@ only by the sector-change slot above, never by the seeded category draw, so ordi
   agree" guarantee, so no line ever shows the new text over an old voice.
 - **Speed peak ×8 inside the cloud.** It is slightly lower than today's ×10 instant, but held for longer. Reversible
   by one constant.
+
+## 7. Deviations (recorded during implementation)
+- **Roll pivot (§2).** The world banks about the arena's centre (180, 260), not about the ship, with a uniform overscan
+  of `1 + 0.09·roll`. A 3° bank about the ship's low row (y ≈ 453–477) uncovers the frame's top corners by ~24 units
+  and its bottom corners by ~10, which needs a 14 % overscan and still shows a wedge; about the centre 9 % covers every
+  edge. The ship, bullets, HUD and comms dock are still never rolled (the flow ship and the cover are drawn after the
+  world). Constants: `DemonScene.rollOverscan`, `FlowPlan.maxRollDegrees`.
+- **Sky / ground split (§2).** The flyover is drawn twice while `pitch > 0`: once clipped above the dropped horizon and
+  translated only, once clipped below it with the ground transform; the sky clip overlaps the ground by 2 units so the
+  seam has no hairline. Ground units, creatures and the rest of the world are drawn once, under the ground transform
+  (unclipped, so nothing in the air above the horizon is cut). At `pitch == 0` the single pass is unchanged.
+- **Atmosphere (§3, task 3.3).** `atmosphere.dart` needs no change: the fog layers and ground units are anchored to
+  the flyover's `distance`, which now advances at the `speed` factor. The Pursuit cloud's billow scroll (`cloudScroll`,
+  previously `flow.seconds · 28`) is integrated in the scene at the same factor (`DemonScene.cloudRun`).
+- **Reduced motion speed (§3).** The flyover, the fog and the cloud billows are already frozen in reduced motion, and
+  they stay frozen: the reduced `speed` factor (`1 + env`, ≤ ×2) is exposed by `FlowPlan.speedFactor` but has nothing
+  scrolling to apply to. Reduced motion therefore plays the transition as pure crossfades; the hull nudge is also off.
+- **Victory Rout.** In a carrier's fall the flow now owns the flyover speed, so the celebration's own
+  `1 + 2.5 p²` ramp gives way to ×1 during the 5.5 s Rout, and the Pursuit's ramp starts after it. The campaign outro
+  (no `speed` beat) keeps the old ramp.
+- **Streaks (§3).** 12 streaks (the 10–14 range), seeded from the run seed, sector and route rather than a plan seed
+  (plans carry no seed); they scroll at `150·factor` units a second.
+- **Front-call wiring (§4).** `ArcadeModel.visitedSectors` (reset by `start`, filled by `_beginLevel`) and
+  `ArcadeFlow.flowRevisit` (model_flow.dart) decide a revisit: a plain `FlowKind.sectorChange` whose destination
+  (`flowDestination`, 1–4) is on a route > 0 or already in the visited set. The carrier's arrival (destination 5) and a
+  carrier's fall (`bossVictory`, which also lands on a later route's sector 1) are never revisits, so they keep their
+  picks. The transition overlay passes it as `InterludeContext.revisit`. `RadioCategory.drawn` lists the four seeded
+  categories; the fallback "any fresh line, then the shortest" walks only those, so a front call can only come from
+  the revisit path.
+- **Review strips (§5).** `test/transition_ascent_review_test.dart` renders a 2 → 3 sector change on route 1 (a
+  revisit), 12 frames evenly across the plan, at 360 × 780 and 1280 × 720. Each sheet crops the letterbox: the top
+  two rows are the phone frames' arena, the bottom two the landscape frames' arena (same 360:520 aspect, higher
+  source resolution). The sheets are written to `art/contact/` only with
+  `--dart-define=TRANSITION_ASCENT_CONTACT=true` (as cinematic-flow's), otherwise to `.cache/transition-ascent-review`.
+  The test checks the envelopes the frames were drawn with (pitch, roll and streaks reach 1 in full motion and stay 0
+  in reduced, speed ×8 / ×2, rise ≤ 24) and the pitch geometry (`DemonScene.pitchedRow`: horizon drop, near rows move
+  further than far rows, the sky only translates); the look is judged on the sheets.
+- **Reduced motion spec wording.** The scenario now reads "the world never scrolls faster than twice its speed (a
+  still world stays still)" in place of "a gentle speed change", matching the frozen reduced-motion flyover.

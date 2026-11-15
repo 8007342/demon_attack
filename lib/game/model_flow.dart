@@ -25,6 +25,24 @@ extension ArcadeFlow on ArcadeModel {
   /// The remnant fleeing in a rout is at most this many silhouettes.
   static const remnant = 18;
 
+  /// The sector a transition flies to (transition-ascent design §4).
+  int get flowDestination => nextLevel;
+
+  /// The route the destination belongs to.
+  int get flowDestinationRoute => level == 5 ? cycle + 1 : cycle;
+
+  /// A plain sector change returning to a sector the squadron has already
+  /// fought over in this run (a later tour, or a sector entered before):
+  /// its radio slot is a front-line call from [flowDestination]. Boss
+  /// arrivals and a carrier's fall are never revisits here (they keep their
+  /// own calls).
+  bool get flowRevisit {
+    if (flow.kind != FlowKind.sectorChange) return false;
+    final dest = flowDestination;
+    if (dest == 5) return false;
+    return flowDestinationRoute > 0 || visitedSectors.contains(dest);
+  }
+
   /// Starts the plan of a sector change (the last kill) or a carrier's fall.
   void _flowBegin({required bool victory}) {
     final reduced = reducedMotion;
