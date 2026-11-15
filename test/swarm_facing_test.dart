@@ -82,5 +82,9 @@ void main() {
       '${s.frames} frames, shortest hold ${s.shortestHold}',
     );
     expect(s.frames, greaterThan(1000));
+    // Task 6.2 (baseline 13.3 %, plan/calibration-current.md): banked
+    // renders are the common case, and no direction flickers.
+    expect(s.share, greaterThanOrEqualTo(.5));
+    expect(s.shortestHold, greaterThanOrEqualTo(CreatureMotion.minHold - 1e-9));
   });
 }

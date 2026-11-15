@@ -45,7 +45,8 @@ class DemonScene extends FlameGame {
   // --- ground war (ground_painter.dart) ---
   late final groundForces = GroundPainter()
     ..occluders = (sectors.flyover..deferFlyers = true)
-    ..atmosphere = atmosphere // --- ground atmosphere art in the depth sort
+    ..atmosphere =
+        atmosphere // --- ground atmosphere art in the depth sort
     ..eggs = sectors.flyover.eggs;
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
@@ -606,7 +607,10 @@ class DemonScene extends FlameGame {
         fog();
       }
       final warning = d.telegraph > 0;
-      final pos = Offset(d.x, d.y);
+      // continuous-swarm: visible evasion moves the drawing only (a third
+      // of the hitbox at most), never the creature.
+      final (lx, ly) = d.isLarge ? (0.0, 0.0) : creatures.look.offset(d);
+      final pos = Offset(d.x + lx, d.y + ly);
       if (d.isLarge) {
         // Large creatures have their own delayed entrance in simulation.
         if (d.entranceProgress > 0) {
@@ -647,6 +651,13 @@ class DemonScene extends FlameGame {
       // Gargoyle frames carry their own banking (3/4 left/neutral/right
       // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
+      final tilt = creatures.look.of(d)?.tilt ?? 0;
+      if (tilt.abs() > .02) {
+        // Wing tilt of the agitation wave: a small roll about the body.
+        c.translate(pos.dx, pos.dy);
+        c.rotate(tilt * .14);
+        c.translate(-pos.dx, -pos.dy);
+      }
       final cell = CombatAtlas.creature(
         d,
         model.clock,

@@ -29,9 +29,13 @@ class CreatureMotion {
   double _dirHold = 0, _glideHold = 0;
 
   /// Thresholds (arena units / s) and minimum hold times (s).
-  static const double turnEnter = 55, turnExit = 24;
+  // continuous-swarm design §7: banked renders become the common case.
+  static const double turnEnter = 38, turnExit = 16;
+
+  /// A squad moving sideways at least this fast banks its members with it.
+  static const double squadTurn = 30;
   static const double glideEnter = 70, glideExit = 32;
-  static const double minHold = 0.14;
+  static const double minHold = 0.28;
   static const double smoothing = 12;
 
   /// Strokes per second at rest: one full stroke every 0.5 s.
@@ -43,7 +47,17 @@ class CreatureMotion {
   static const double climbShare = 0.62, levelShare = 0.5, sinkShare = 0.38;
 
   /// [rate]: the creature's own wingbeat factor (flock arrivals, ±10 %).
-  void update(double x, double y, double dt, {double rate = 1}) {
+  /// [squadVx]: its squad's lateral velocity (u/s): when the squad moves
+  /// sideways with purpose (|v| >= [squadTurn]) and the creature's own
+  /// motion does not oppose it beyond [turnEnter], it banks with the squad
+  /// (whole squads bank together, as real flocks do; design §7).
+  void update(
+    double x,
+    double y,
+    double dt, {
+    double rate = 1,
+    double squadVx = 0,
+  }) {
     if (dt <= 0) return;
     final lx = _lastX, ly = _lastY;
     _lastX = x;
@@ -57,15 +71,20 @@ class CreatureMotion {
 
     _dirHold = math.max(0, _dirHold - dt);
     if (_dirHold == 0) {
-      final next = switch (dir) {
-        0 when vx <= -turnEnter => -1,
-        0 when vx >= turnEnter => 1,
-        -1 when vx >= turnEnter => 1,
-        1 when vx <= -turnEnter => -1,
-        -1 when vx > -turnExit => 0,
-        1 when vx < turnExit => 0,
-        _ => dir,
-      };
+      final squad = squadVx.abs() >= squadTurn && vx * squadVx.sign > -turnEnter
+          ? squadVx.sign.toInt()
+          : 0;
+      final next = squad != 0
+          ? squad
+          : switch (dir) {
+              0 when vx <= -turnEnter => -1,
+              0 when vx >= turnEnter => 1,
+              -1 when vx >= turnEnter => 1,
+              1 when vx <= -turnEnter => -1,
+              -1 when vx > -turnExit => 0,
+              1 when vx < turnExit => 0,
+              _ => dir,
+            };
       if (next != dir) {
         dir = next;
         _dirHold = minHold;
@@ -118,7 +137,8 @@ class CreatureMotionTracker {
       ...model.drawnReserve,
     }) {
       if (d.isLarge) continue;
-      track(d).update(d.x, d.y, dt, rate: d.wingRate);
+      track(d)
+          .update(d.x, d.y, dt, rate: d.wingRate, squadVx: model.squadVx(d));
     }
   }
 }

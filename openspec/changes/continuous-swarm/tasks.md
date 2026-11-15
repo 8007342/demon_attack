@@ -92,11 +92,11 @@ first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start
 - [x] 5.5 Add `AveragePilot` (design §9) and record lives lost per sector as the W4 baseline (report only).
 
 ## 6. Presentation: facing, visible evasion, shadows
-- [ ] 6.1 `creature_motion.dart`: new thresholds and hold. Add a `squadVx` argument to `update` and use the squad
+- [x] 6.1 `creature_motion.dart`: new thresholds and hold. Add a `squadVx` argument to `update` and use the squad
       heading rule. `scene.dart` passes the squad velocity.
-- [ ] 6.2 `test/swarm_facing_test.dart`: the 1.2 measurement after the change, target `dir != 0` ≥ 50 %, and no
+- [x] 6.2 `test/swarm_facing_test.dart`: the 1.2 measurement after the change, target `dir != 0` ≥ 50 %, and no
       flicker (no direction held < 0.28 s).
-- [ ] 6.3 Visible evasion in `scene.dart` (or a new `lib/game/swarm_look.dart`): the agitation wave (40 ms per hop,
+- [x] 6.3 Visible evasion in `scene.dart` (or a new `lib/game/swarm_look.dart`): the agitation wave (40 ms per hop,
       0.7 decay), flash expansion on kill, wing tilt.
       - Clamp |δ| ≤ hitHalfWidth / 3.
       - Test that the model's `x, y` are unchanged by it.
