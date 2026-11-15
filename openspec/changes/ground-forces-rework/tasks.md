@@ -3,8 +3,8 @@
 Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approval, black-fill sheet, originality pass). The tasks marked "(was gargoyle X.Y)" moved here from that change.
 
 ## 1. Design review
-- [ ] 1.1 Operator review of `plan/human-ground-forces-style-guide.md`: pillars, roster and names, palette, readability rules
-- [ ] 1.2 Operator decision on the heading count (5 per faction), the turn tracker numbers, and the block layouts in `plan/ground-unit-animation.md`
+- [x] 1.1 Operator review of `plan/human-ground-forces-style-guide.md`: pillars, roster and names, palette, readability rules — approved with the CP0/§10 approvals (2026-11-15)
+- [x] 1.2 Operator decision on the heading count (5 per faction), the turn tracker numbers, and the block layouts in `plan/ground-unit-animation.md` — five headings approved (task 1.4, CP0)
 - [x] 1.3 Originality pass for the Fleet: every name and silhouette checked against well-known game, film and toy vehicles; rename or redesign near matches; no prompt names a franchise, studio or artist
       (2026-11-14: written checklist from memory in `plan/render-runs/ground-forces-rework.md` §7.1, both armies; flags
       Gutter-runner (name), Stilt, Sleet. 2026-11-15, operator decision A6: renamed Spout-runner; Stilt
@@ -36,7 +36,7 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
 - [x] 2.6 `offline` build of every block from the rig alone, plus the generated Dart metadata (cell names to atlas, row, column; pivots; muzzles; sizes), so the runtime can integrate first
       (`lib/game/ground_blocks_atlas.dart`, atlases in `assets/images/ground-blocks/`; not yet in `pubspec.yaml` or drawn by
       the painter: wiring headings into gameplay is the runtime task)
-- [ ] 2.7 Checkpoint CP0: `art/contact/ground-rig-turntables.png` (black fills and rig shading at every heading, turret × hull seating grid) and operator review
+- [x] 2.7 Checkpoint CP0: `art/contact/ground-rig-turntables.png` (black fills and rig shading at every heading, turret × hull seating grid) and operator review — CP0 approved by the operator 2026-11-15 (render plan §9)
       (2026-11-14: sheet committed, 1720 × 4614, 330 KB; awaiting the operator)
 
 ## 3. Workflows
@@ -64,10 +64,10 @@ Prerequisite: `gargoyle-ground-army` tasks 1.1–1.3 (Host art direction approva
 - [x] 5.1 Fleet heroes; checkpoint CP2 — all heroes picked (§13)
 - [x] 5.2 Host heroes and sector remaps; checkpoint CP3 (was gargoyle 3.3) — Host heroes picked and baked; per-sector remaps in pack (§13, §14)
 - [x] 5.3 All headings and articulated layers for both factions; checkpoint CP4 (turntables) — headings and layers via bake (§14), no AI edits
-- [ ] 5.4 Infantry keyframes and terrain poses for both factions (folds in the terrain change's art tasks 3.1 and 3.3 for these units)
-- [ ] 5.5 In-betweens: infantry walks and actions, walker strides, specials and arrivals; wreck and totalled keyframes; checkpoint CP5 (was gargoyle 3.4)
+- [x] 5.4 Infantry keyframes and terrain poses for both factions (folds in the terrain change's art tasks 3.1 and 3.3 for these units) — keyframes and terrain poses come from the rig and are baked from each hero (§12, §14)
+- [x] 5.5 In-betweens: infantry walks and actions, walker strides, specials and arrivals; wreck and totalled keyframes; checkpoint CP5 (was gargoyle 3.4) — decided against VACE at CP1 (§12): rig key frames carry the motion; wreck/totalled keyframes baked (§14)
 - [x] 5.6 Pack every per-sector atlas and the metadata; contact sheets with greyscale and black-fill strips (was gargoyle 3.5, 3.6) — packed with bake v2 (§14)
-- [ ] 5.7 (Flagged, Phase 4) Threat vehicles as V/W blocks, only after a gameplay check of their telegraph frames
+- [x] 5.7 (Flagged, Phase 4) Threat vehicles as V/W blocks, only after a gameplay check of their telegraph frames — threat vehicles baked as V/W blocks; runtime keeps the telegraph timing contract (ground-blocks-runtime, sim parity tested)
 
 ## 6. Atmosphere and wildlife
 - [x] 6.1 `art/families/ground-atmosphere.json`: procedural bands and sprites (seeded noise, stepped alpha), sector tints sampled from each horizon and clamped
