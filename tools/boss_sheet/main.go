@@ -8,6 +8,7 @@
 //	go run ./tools/boss_sheet turntables RIG OUT.png HULL...     the B0 sheet
 //	go run ./tools/boss_sheet budget RIG HULL...                 measured RGBA budget from the id masks
 //	go run ./tools/boss_sheet atlasframe HULL OUT.png            today's atlas frame (superstructure + bow) of a hull
+//	go run ./tools/boss_sheet lineup BAKE RIG OUT.png HULL...     the B3 tour-progression sheet
 package main
 
 import (
@@ -383,6 +384,8 @@ func main() {
 		cmdView(a)
 	case "finish":
 		cmdFinish(a)
+	case "lineup":
+		cmdLineup(a)
 	case "atlasframe":
 		cmdAtlasFrame(a)
 	default:

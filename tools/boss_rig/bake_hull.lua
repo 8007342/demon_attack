@@ -49,6 +49,8 @@ for _, s in ipairs({"S0", "S1", "S2", "S3", "wrecks"}) do
 end
 sh(("%s bakebudget %s %s %s"):format(sheet, bake, rig, hull))
 if arg[2] == "--sheets" then
-  sh(("%s views %s %s %s art/contact/boss-pilot-views.png"):format(sheet, bake, rig, hull))
-  sh(("%s stages %s %s %s art/contact/boss-pilot-stages.png"):format(sheet, bake, rig, hull))
+  -- the frigate pilot keeps its B2 sheet names; the other hulls are B3
+  local pre = hull == "frigate" and "art/contact/boss-pilot-" or ("art/contact/boss-b3-" .. hull .. "-")
+  sh(("%s views %s %s %s %sviews.png"):format(sheet, bake, rig, hull, pre))
+  sh(("%s stages %s %s %s %sstages.png"):format(sheet, bake, rig, hull, pre))
 end

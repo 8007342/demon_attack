@@ -15,6 +15,7 @@ import 'services/audio.dart';
 import 'services/scores.dart';
 import 'services/run_storage.dart';
 import 'services/tilt_control.dart';
+import 'services/install_prompt.dart'; // --- pwa-install
 import 'services/comms_audio.dart' show commsStopAll;
 import 'ending/ending_page.dart';
 import 'widgets/medal.dart';
@@ -30,6 +31,7 @@ import 'widgets/interlude_card.dart'
     show TipInterludeCard; // --- cinematic flow
 import 'game/hints.dart' show tacticalHints; // --- cinematic flow: pause tips
 import 'widgets/level_toggle.dart'; // --- audio round: music / speech toggles
+import 'widgets/install_toast.dart'; // --- pwa-install
 export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
 // --- end console route
 export 'game/scene.dart' show DemonScene;
@@ -131,6 +133,7 @@ class ArcadePage extends StatefulWidget {
     this.squadComms,
     this.consoleStart, // --- console route
     this.interludeSeed, // --- fluid transitions
+    this.installPrompt, // --- pwa-install
   });
   final ScoreService? scoreService;
   final RunStorage? runStorage;
@@ -141,6 +144,10 @@ class ArcadePage extends StatefulWidget {
 
   /// --- fluid transitions: fixed interlude seed (tests); null: per run.
   final int? interludeSeed;
+
+  /// --- pwa-install: the browser's one-click install offer (tests inject a
+  /// fake); null reads web/install_bridge.js on the web, nothing elsewhere.
+  final InstallPrompt? installPrompt;
   @override
   State<ArcadePage> createState() => _ArcadePageState();
 }
@@ -256,6 +263,14 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   final alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   final keys = <LogicalKeyboardKey>{};
   final tilt = TiltController();
+  // --- pwa-install: the title page's install toast (never during a run).
+  late final installPrompt = widget.installPrompt ?? createInstallPrompt();
+  late final installPolicy = InstallToastPolicy(storage.store);
+  void _installChanged() {
+    if (mounted) setState(() {});
+  }
+
+  // --- end pwa-install
   int? touch;
   double touchPosition = .5;
   List<void Function()> _music = const []; // --- music event hook
@@ -289,6 +304,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       GameEvents.listen(scene.music.onGameEvent),
     ];
     scene.topScores = board;
+    installPrompt.addListener(_installChanged); // --- pwa-install
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
     _attachComms(); // --- squad comms
@@ -335,6 +351,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     } // --- music event hook
     WidgetsBinding.instance.removeObserver(this);
     _detachComms(); // --- squad comms
+    installPrompt.removeListener(_installChanged); // --- pwa-install
     focus.dispose();
     scores.close();
     tilt.disable();
@@ -986,7 +1003,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       Center(
         child: SingleChildScrollView(
           key: const ValueKey('landing-scroll'),
-          padding: const EdgeInsets.fromLTRB(24, 84, 24, 70),
+          // --- pwa-install: room under the landing for the install toast.
+          padding: EdgeInsets.fromLTRB(
+            24,
+            84,
+            24,
+            installPolicy.shows(installPrompt) ? 122 : 70,
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 960),
             child: bounds.maxWidth > 820
@@ -1039,6 +1062,16 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           ],
         ),
       ),
+      // --- pwa-install: one-click install, only where the browser offers it.
+      Positioned(
+        bottom: 64,
+        left: 16,
+        right: 16,
+        child: Center(
+          child: InstallToast(prompt: installPrompt, policy: installPolicy),
+        ),
+      ),
+      // --- end pwa-install
       Positioned(
         bottom: 18,
         left: 24,
