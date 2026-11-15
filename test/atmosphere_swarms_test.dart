@@ -233,7 +233,8 @@ void main() {
       expect(agents.length, greaterThanOrEqualTo(6));
       expect(agents.map((a) => a.launch).toSet().length, agents.length);
       expect(agents.map((a) => a.ease).toSet().length, agents.length);
-      expect(agents.map((a) => a.squad).toSet().length, greaterThan(1));
+      // continuous-swarm: one squadron per skein, several skeins.
+      expect(agents.map((a) => a.batch).toSet().length, greaterThan(1));
     });
 
     test('settles into the slot without a jump', () {

@@ -4,12 +4,14 @@ import 'difficulty.dart';
 import 'flock.dart';
 import 'game_events.dart';
 import 'perspective.dart';
+import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
 export 'difficulty.dart';
 export 'game_events.dart';
 export 'perspective.dart';
 export 'swarm_policy.dart';
+export 'swarm_patterns.dart' show Squad, SquadState;
 export 'swarm_stream.dart' show SwarmState, SwarmGate, SwarmGateGeometry;
 
 // --- ground war (demon ground forces, allies, homing missiles) ---
@@ -328,7 +330,7 @@ class Carrier {
 class ArcadeModel {
   ArcadeModel({this.seed = 1982})
     : random = math.Random(seed),
-      flock = ArrivalFlock(seed: seed),
+      flock = SwarmFlock(seed: seed),
       stream = SwarmStream(seed: seed);
 
   /// The run seed (presentation streams such as the easter eggs derive
@@ -1124,7 +1126,7 @@ class ArcadeModel {
     final n = .1 + .1 * rng.nextDouble();
     final cx =
         gate.side * (40 + 70 * rng.nextDouble()) + 30 * (rng.nextDouble() - .5);
-    final cz = ArrivalFlock.worldZ(n);
+    final cz = SwarmFlock.worldZ(n);
     final lift = 6 + 26 * rng.nextDouble();
     for (var i = 0; i < skein.length; i++) {
       final d = skein[i];
@@ -1143,7 +1145,7 @@ class ArcadeModel {
       final drift = d.drift;
       drift?.update(dt);
       final z = d.reserveZ + (drift?.z ?? 0);
-      final n = ArrivalFlock.nearOf(z).clamp(.08, .22);
+      final n = SwarmFlock.nearOf(z).clamp(.08, .22);
       final x = d.reserveX + (drift?.x ?? 0);
       d
         ..nearness = n
@@ -1525,6 +1527,188 @@ class ArcadeModel {
       ..y = y
       ..nearness = gate.nearness;
     _launchFlock([d], wave, gate: gate);
+  }
+  // --- fighting patterns (swarm_patterns.dart, design §4) ------------------
+
+  /// Squads fly collective swarm states while they fight. False keeps the
+  /// legacy hover for every creature (a debug and fixture flag).
+  bool swarmPatterns = true;
+  final Map<int, Squad> _squads = {};
+  final Map<int, List<Demon>> _squadMembers = {};
+
+  /// Present ordinary members this frame (separation) and each squad's
+  /// mean velocity (alignment).
+  final List<Demon> _present = [];
+  final Map<int, (double, double)> _squadVelocity = {};
+
+  /// Onboarding keeps the old hover: Easy, route 0, sector 1, waves 1-2.
+  bool get _onboarding =>
+      difficulty == Difficulty.easy && cycle == 0 && level == 1 && wave <= 2;
+
+  Squad? squadOf(Demon d) => _squads[d.skein];
+  Iterable<Squad> get squads => _squads.values;
+
+  /// Whether [d] flies a squad pattern (else the legacy hover).
+  bool patterned(Demon d) {
+    if (!swarmPatterns || d.isLarge) return false;
+    final s = _squads[d.skein];
+    return s != null && s.patterned;
+  }
+
+  /// The squad's lateral velocity (u/s) for [d], for the creature motion's
+  /// squad heading rule (design §7); 0 without a pattern.
+  double squadVx(Demon d) {
+    if (!patterned(d)) return 0;
+    return _squadVelocity[d.skein]?.$1 ?? 0;
+  }
+
+  /// A skein becomes a squad as it is released: station = the mean of its
+  /// members' home slots; a seeded first state (cloud for an escort, hover
+  /// during onboarding).
+  void _formSquad(List<Demon> skein) {
+    if (skein.isEmpty) return;
+    final id = skein.first.skein;
+    if (id < 0 || _squads.containsKey(id)) return;
+    var sx = 0.0, sy = 0.0;
+    for (final d in skein) {
+      sx += d.homeX;
+      sy += d.homeY;
+    }
+    final rng = stream.rngFor(
+      sector: level,
+      route: cycle,
+      wave: wave,
+      salt: 5000 + id,
+    );
+    final first = SquadState.values[rng.nextInt(3)];
+    final sq = Squad(
+      id,
+      rng,
+      stationX: sx / skein.length,
+      stationY: sy / skein.length,
+      state: _onboarding
+          ? SquadState.hover
+          : skein.first.isEscort
+          ? SquadState.cloud
+          : first,
+    );
+    for (var i = 0; i < skein.length; i++) {
+      sq.add(skein[i], i);
+    }
+    _squads[id] = sq;
+    _squadMembers[id] = List.of(skein);
+  }
+
+  void _updateSquads(double dt) {
+    final alive = {...demons, ...incoming};
+    final tempo = policy.swarmTempo(route: cycle);
+    _present
+      ..clear()
+      ..addAll(
+        demons.where(
+          (d) => !d.isLarge && !d.entering && d.dive == 0 && !d.rushing,
+        ),
+      );
+    _squadVelocity.clear();
+    final gone = <int>[];
+    _squads.forEach((id, sq) {
+      final members = _squadMembers[id]!..removeWhere((d) => !alive.contains(d));
+      if (members.isEmpty) {
+        gone.add(id);
+        return;
+      }
+      sq.slots.removeWhere((m, _) => !alive.contains(m));
+      sq.update(
+        dt,
+        tempo: tempo,
+        flying: members.where(
+          (d) => d.dive == 0 && !d.rushing && d.swarmState != SwarmState.reserve,
+        ),
+      );
+      var vx = 0.0, vy = 0.0, k = 0;
+      for (final d in members) {
+        if (d.entering || d.dive > 0) continue;
+        vx += d.vx;
+        vy += d.vy;
+        k++;
+      }
+      _squadVelocity[id] = k == 0 ? (sq.anchorVx, 0.0) : (vx / k, vy / k);
+    });
+    for (final id in gone) {
+      _squads.remove(id);
+      _squadMembers.remove(id);
+    }
+  }
+
+  (double, double)? _patternTarget(Demon d) {
+    if (!patterned(d)) return null;
+    final sq = _squads[d.skein]!;
+    Demon? sentinel;
+    if (sq.state == SquadState.cloud || sq.previous == SquadState.cloud) {
+      sentinel = demons.where((o) => o.isLarge && !o.entering).firstOrNull;
+    }
+    final t = sq.target(
+      d,
+      centreX: sentinel?.x,
+      centreY: sentinel == null ? null : sentinel.y + 34,
+    );
+    final slot = sq.slots[d];
+    if (t == null || slot == null) return null;
+    // A tell holds its place so it reads cleanly.
+    if (d.divePrep > 0 || d.telegraph > 0) return slot.held ??= t;
+    slot.held = null;
+    return t;
+  }
+
+  /// Critically damped spring to the pattern target (omega 6 / s), k = 7
+  /// separation against every present ordinary member (radius 30),
+  /// alignment within the squad (0.6), speed cap 140 · tempo.
+  void _steerToPattern(Demon d, double tx, double ty, double dt) {
+    const w = 6.0, sepR = 30.0, sepK = 900.0;
+    var ax = w * w * (tx - d.x) - 2 * w * d.vx;
+    var ay = w * w * (ty - d.y) - 2 * w * d.vy;
+    final near = <(double, double, double)>[];
+    for (final o in _present) {
+      if (identical(o, d)) continue;
+      final dx = d.x - o.x, dy = d.y - o.y;
+      final d2 = dx * dx + dy * dy;
+      if (d2 >= sepR * sepR || d2 < 1e-6) continue;
+      near.add((d2, dx, dy));
+    }
+    if (near.length > 7) {
+      near.sort((a, b) => a.$1.compareTo(b.$1));
+      near.removeRange(7, near.length);
+    }
+    for (final (d2, dx, dy) in near) {
+      final dist = math.sqrt(d2);
+      final push = (sepR - dist) / sepR * sepK;
+      ax += dx / dist * push;
+      ay += dy / dist * push * .6;
+    }
+    final mean = _squadVelocity[d.skein];
+    if (mean != null) {
+      ax += .6 * w * (mean.$1 - d.vx);
+      ay += .6 * w * (mean.$2 - d.vy);
+    }
+    var vx = d.vx + ax * dt, vy = d.vy + ay * dt;
+    final cap = 140 * policy.swarmTempo(route: cycle);
+    final sp = math.sqrt(vx * vx + vy * vy);
+    if (sp > cap) {
+      vx *= cap / sp;
+      vy *= cap / sp;
+    }
+    d.x = (d.x + vx * dt).clamp(18.0, width - 18.0);
+    d.y += vy * dt;
+  }
+
+  /// The published altitude of a fighting or diving creature (shadows).
+  double _altitudeOf(Demon d) {
+    final fight = SwarmFlock.fightAltitude(d.homeY);
+    if (d.dive > 0 || d.rushing) {
+      final span = math.max(40.0, shipY - d.homeY);
+      return fight * ((shipY - d.y) / span).clamp(0.0, 1.0);
+    }
+    return squadOf(d)?.altitude(d, fight) ?? fight;
   }
   // --- end continuous swarm
 
@@ -2137,8 +2321,21 @@ class ArcadeModel {
       final nextY = d.homeY + math.sin(levelClock * .65 * speed + d.seed) * 5;
       return (nextX, nextY);
     }
-    final (boidsX, boidsY) = _boidsOffset(d);
     final evadeX = d.evadeOffset * (d.evadeLeft / 0.32).clamp(0.0, 1.0);
+    // --- continuous swarm: squad members fly their pattern target, plus
+    // the gated evade and the telegraph crest; strays and onboarding hover.
+    final pattern = _patternTarget(d);
+    if (pattern != null) {
+      var (px, py) = pattern;
+      px += evadeX;
+      if (d.telegraph > 0) {
+        final totalTell = d.elite ? 0.55 : 0.7;
+        final progress = (d.telegraph / totalTell).clamp(0.0, 1.0);
+        py -= 8.0 * math.sin((1 - progress) * math.pi);
+      }
+      return (px.clamp(20.0, width - 20.0), py);
+    }
+    final (boidsX, boidsY) = _boidsOffset(d);
     final targetFormX =
         (d.homeX +
                 math.sin(levelClock * (.9 + d.kind * .12) * speed + d.seed) *
@@ -2203,7 +2400,7 @@ class ArcadeModel {
   // --- atmosphere-and-swarms: flock arrivals and sentinel foreshadowing ---
 
   /// The arrival flock (flock.dart): where entering creatures are drawn.
-  final ArrivalFlock flock;
+  final SwarmFlock flock;
 
   /// Arrivals fly in as a flock (presentation only; false = the plain
   /// depth approach, for the parity test).
@@ -2249,6 +2446,7 @@ class ArcadeModel {
       originX: origin?.x,
       originY: origin?.y,
       originN: origin?.nearness,
+      gate: gate,
     );
   }
 
@@ -2662,6 +2860,10 @@ class ArcadeModel {
           d.x = targetFormX;
           d.y = targetFormY;
           d.vx = d.vy = d.bank = 0;
+        } else if (patterned(d)) {
+          // --- continuous swarm: the squad's pattern, flown (design §4).
+          _steerToPattern(d, targetFormX, targetFormY, dt);
+          _updateDemonKinematics(d, prevX, prevY, dt);
         } else if (d.evadeLeft > 0 ||
             d.evadeOffset.abs() > 0.5 ||
             d.telegraph > 0) {

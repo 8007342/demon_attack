@@ -2,9 +2,24 @@ import 'dart:math' as math;
 
 import 'model.dart' show Demon;
 import 'perspective.dart';
+import 'swarm_stream.dart' show SwarmGate, SwarmGateGeometry;
 
-/// Flock arrivals (openspec/changes/atmosphere-and-swarms design §3,
+/// The swarm's flight (openspec/changes/continuous-swarm design §3, built on
+/// openspec/changes/atmosphere-and-swarms design §3 and
 /// plan/atmosphere-research.md §6-§9).
+///
+/// continuous-swarm: the flock is model-owned. It is stepped from
+/// `ArcadeModel._step` at the model's fixed 60 Hz (one step per frame, no
+/// interpolation), keeps an agent for a creature's whole flight, and flies
+/// each skein a **parabolic swoop** out of the fog: a quadratic Bezier
+/// ground track from its gate (or its reserve point) to its station that
+/// swings out to the side opposite the gate, so the stream crosses the
+/// arena (banked renders), and an altitude parabola that rises out of the
+/// fog, crests and settles. The hand-off blends into the squad's pattern
+/// target (the model's `_targetFormationPosition`), which decides where
+/// hitboxes are; the parity rule below is retired (design §0).
+///
+/// Historical notes (atmosphere-and-swarms):
 ///
 /// Every wave and reinforcement group flies in from inside the fog as a
 /// flock: 2-4 squadrons, each led along a curved path from a point on the
@@ -39,6 +54,9 @@ class FlockAgent {
   // Seeded constants.
   double launch = 0, ease = 2, gain = 1, hPeak = 20;
   double wanderPhase = 0, wanderRate = 1, wingRate = 1;
+
+  /// Crest of the published altitude parabola, times the fighting altitude.
+  double altPeak = 1.7;
   double millPhase = 0;
 
   /// Home offset from the squadron anchor (world units).
@@ -104,8 +122,11 @@ class FlockBatch {
   double? originX, originY, originN;
 }
 
-class ArrivalFlock {
-  ArrivalFlock({this.seed = 0});
+/// Deprecated name of [SwarmFlock].
+typedef ArrivalFlock = SwarmFlock;
+
+class SwarmFlock {
+  SwarmFlock({this.seed = 0});
   int seed;
 
   /// World units per screen unit at n = 1 (depth Z = depthUnit / n).
@@ -117,8 +138,16 @@ class ArrivalFlock {
   /// Nearness of the horizon points the squadrons set out from.
   static const startNear = .24;
 
-  /// Fixed simulation step.
-  static const step = 1 / 30;
+  /// Fixed simulation step: the model's own.
+  static const step = 1 / 60;
+
+  /// Published altitude (screen units above the ground, for the shadows)
+  /// of a creature fighting at home row [homeY]: 70 + 30 per row band.
+  static double fightAltitude(double homeY) =>
+      70 + 30 * ((homeY - 70) / 96).clamp(0.0, 3.0).floorToDouble();
+
+  /// Altitude in the fog where a swoop sets out.
+  static const fogAltitude = 14.0;
 
   /// Topological neighbours.
   static const neighbours = 7;
@@ -126,7 +155,7 @@ class ArrivalFlock {
   final _agents = <Demon, FlockAgent>{};
   final _batches = <FlockBatch>[];
   int _batchCount = 0, _frame = 0;
-  double _acc = 0, _time = 0;
+  double _time = 0;
 
   Iterable<FlockAgent> get agents => _agents.values;
   FlockAgent? of(Demon d) => _agents[d];
@@ -135,7 +164,6 @@ class ArrivalFlock {
   void clear() {
     _agents.clear();
     _batches.clear();
-    _acc = 0;
   }
 
   static double _u(math.Random r, double a, double b) =>
@@ -156,6 +184,7 @@ class ArrivalFlock {
     double? originX,
     double? originY,
     double? originN,
+    SwarmGate? gate,
   }) {
     final id = _batchCount++;
     final rng = math.Random(
@@ -169,13 +198,21 @@ class ArrivalFlock {
       ..originX = originX
       ..originY = originY
       ..originN = originN;
+    // A gate means one skein (continuous swarm): one squadron, flown on a
+    // swoop; a creature already flying is relaunched (a diver's re-entry).
     final members = [
       for (final d in demons)
-        if (!d.isLarge && !_agents.containsKey(d)) d,
+        if (!d.isLarge && (gate != null || !_agents.containsKey(d))) d,
     ];
+    for (final d in members) {
+      final old = _agents.remove(d);
+      old?.batch.agents.remove(old);
+    }
     if (members.isEmpty) return batch;
     // Squadrons by formation column band: 2 (small groups) to 4.
-    final count = members.length <= 6
+    final count = gate != null
+        ? 1
+        : members.length <= 6
         ? 2
         : members.length <= 14
         ? 3
@@ -218,15 +255,53 @@ class ArrivalFlock {
       // Horizon point spread around the vanishing point, toward its side.
       final side = squads == 1 ? 0.0 : (s / (squads - 1)) * 2 - 1;
       final double hx, hz;
+      // Where the skein waited (its reserve point or the gate it was put
+      // at), as the mean of its members' entry points.
+      var ex = 0.0, en = 0.0, ek = 0;
+      for (final d in members) {
+        final x = d.entryX, n = d.entryN;
+        if (x == null || n == null || n <= 0) continue;
+        ex += worldX(x, n);
+        en += worldZ(n);
+        ek++;
+      }
       if (style == FlockStyle.insect && originX != null) {
         final on = originN ?? startNear;
         hx = worldX(originX, on);
         hz = worldZ(on);
+      } else if (gate != null && ek > 0) {
+        hx = ex / ek;
+        hz = en / ek;
+      } else if (gate != null) {
+        hx = worldX(gate.screenX, gate.nearness);
+        hz = worldZ(gate.nearness);
       } else {
         hx = worldX(180 + side * _u(rng, 40, 95) + _u(rng, -18, 18), startNear);
         hz = z0 * _u(rng, .96, 1.08);
       }
       final swing = _u(rng, 160, 320) * (rng.nextBool() ? 1 : -1);
+      if (gate != null && style == FlockStyle.squadrons) {
+        // The swoop's ground track: a quadratic Bezier whose control point
+        // swings out toward the side opposite the gate (design §3), as a
+        // cubic with the same curve.
+        final side = gate.side != 0 ? gate.side : (swing > 0 ? -1 : 1);
+        final cx = (hx + ax) / 2 - side * swing.abs();
+        final cz = hz * .6 + az * .4;
+        batch.squads.add(
+          FlockSquad(
+            hx,
+            hz,
+            hx + (cx - hx) * 2 / 3,
+            hz + (cz - hz) * 2 / 3,
+            ax + (cx - ax) * 2 / 3,
+            az + (cz - az) * 2 / 3,
+            ax,
+            az,
+          ),
+        );
+        squadLaunch.add(0);
+        continue;
+      }
       batch.squads.add(
         FlockSquad(
           hx,
@@ -250,7 +325,10 @@ class ArrivalFlock {
         ..launch = (squadLaunch[s] + _u(rng, .0, .06)).clamp(0.0, .4)
         ..ease = _u(rng, 1.7, 2.6)
         ..gain = _u(rng, .85, 1.15)
-        ..hPeak = _u(rng, 16, 26) * _u(rng, .8, 1.2)
+        ..hPeak =
+            (gate != null ? _u(rng, 26, 40) : _u(rng, 16, 26)) *
+            _u(rng, .8, 1.2)
+        ..altPeak = _u(rng, 1.4, 2.0)
         ..wanderPhase = _u(rng, 0, 2 * math.pi)
         ..wanderRate = _u(rng, .8, 1.6)
         ..wingRate = _u(rng, .9, 1.1)
@@ -343,19 +421,15 @@ class ArrivalFlock {
       for (final a in _agents.values)
         if (a.stamp == _frame && a.demon.entering) a,
     ];
-    // Finished entrances leave; so do creatures no longer placed at all
-    // (removed from play) after a grace of ten seconds of frames.
-    _agents.removeWhere(
-      (d, a) => !d.entering || (a.stamp >= 0 && _frame - a.stamp > 600),
-    );
+    // Agents live for the creature's whole flight (continuous swarm);
+    // creatures no longer placed at all (removed from play) leave after a
+    // grace of ten seconds of frames.
+    _agents.removeWhere((d, a) => a.stamp >= 0 && _frame - a.stamp > 600);
     _batches.removeWhere(
       (b) => b.agents.every((a) => !_agents.containsKey(a.demon)),
     );
     _frame++;
-    if (live.isEmpty) {
-      _acc = 0;
-      return live;
-    }
+    if (live.isEmpty) return live;
     for (final a in live) {
       if (!a._started) {
         final u = pathU(a, a.e);
@@ -368,15 +442,18 @@ class ArrivalFlock {
           .._started = true;
       }
     }
-    _acc += dt;
-    while (_acc >= step) {
-      _acc -= step;
-      _time += step;
-      _step(live, step);
+    // One step per model frame (the model is already fixed-step): no
+    // accumulator, no interpolation between gameplay positions.
+    if (dt <= 0) {
+      for (final a in live) {
+        _place(a, 1, dt);
+      }
+      return live;
     }
-    final alpha = _acc / step;
+    _time += dt;
+    _step(live, dt);
     for (final a in live) {
-      _place(a, alpha, dt);
+      _place(a, 1, dt);
     }
     return live;
   }
@@ -534,13 +611,18 @@ class ArrivalFlock {
     if (a.e >= 1) beta = 1;
     a.beta = math.max(a.beta, beta);
     final b = a.beta;
+    // Published altitude (shadows): out of the fog, a crest, the fight's
+    // height (design §3): h0 + (h_peak - h0) 4u(1 - u) + (h_fight - h0) u².
+    final hf = fightAltitude(d.homeY);
+    const h0 = fogAltitude;
+    final hu = h0 + (a.altPeak * hf - h0) * 4 * u * (1 - u) + (hf - h0) * u * u;
     a
       ..prevX = a.drawnX.isNaN ? a.refX : a.drawnX
       ..prevY = a.drawnY.isNaN ? a.refY : a.drawnY;
     d.x = (sx + (a.refX - sx) * b).clamp(-40.0, 400.0);
     d.y = sy + (a.refY - sy) * b;
     d.nearness = n + (a.refN - n) * b;
-    a.altitude = h * (1 - b);
+    a.altitude = hu + (hf - hu) * b;
     d.altitude = a.altitude;
     a
       ..drawnX = d.x
