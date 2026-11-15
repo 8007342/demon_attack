@@ -241,6 +241,7 @@ Graph checks only (task 3.4), on rig renders; none of this is pilot art. Raws ke
 | --- | --- | --- | --- |
 | `matte-birefnet-batch.json` | st-1794696590492-1 | 2.3 s | Clean silhouette matte of the Lodestar h045 rig render |
 | `inbetween-wan-vace.json` (17 frames, 20 steps, no LoRA) | st-1794696599521-2 | 135 s | 17 frames + 17 mattes; a static control strip gives a stable, on-model clip (Ashlar Guard). Faster than the 2–4 min estimate even without lightx2v |
+| `inbetween-wan-vace.json` (17 frames, **Wan2.2-Lightning Seko-V1.1**, 4 steps, cfg 1, split 2/2) | st-1794722605549-0 | 34 s (+88 s one-time LoRA fetch) | Ashlar h090 walk strip: 17 frames + 17 mattes, on-model, clean mattes; faint key-colour haze under the feet in a few frames (the matte drops it). About 4× faster than 20 steps. Sheet: `art/contact/ground-vace-lightning-smoke.png` |
 | `heading-qwen-edit.json` | st-1794696756635-3 … -6 | 29 s each | Runs. Findings below |
 
 Heading-edit findings for the pilot (CP1 to confirm):

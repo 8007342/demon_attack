@@ -12,15 +12,20 @@
 -- Outputs: the decoded frames (sprites/inbetween) and their BiRefNet mattes
 -- (sprites/inbetween-matte), so one job yields the clip and its alpha.
 --
--- No lightx2v 4-step LoRA is admitted on the studio yet (studio.models,
--- 2026-11-14), so this runs the plain schedule: 20 steps, cfg 3.5, split
--- 10/10 between the experts. With the LoRA: steps 4, cfg 1, split 2/2
--- (set by $node overrides, no graph change).
+-- Speed: the Wan2.2-Lightning LoRA (lightx2v/Wan2.2-Lightning rev 18bccf88,
+-- Seko-V1.1 high-noise and low-noise), pinned on the studio as
+-- lora/high_noise_model.safetensors and lora/low_noise_model.safetensors.
+-- One LoraLoaderModelOnly per expert, before ModelSamplingSD3; schedule
+-- steps 4, cfg 1, split 2/2. The plain schedule (20 steps, cfg 3.5, split
+-- 10/10, smoke-tested 2026-11-14) is reachable without a graph change by
+-- $node overrides: strength_model 0 on both loaders, steps 20, cfg 3.5,
+-- end_at_step/start_at_step 10.
 --
 -- Usage: lua tools/production/inbetween_vace_workflow.lua [repo root]
 
 local root = arg[1] or "."
 local SIZE = 480
+local STEPS, CFG, SPLIT = 4, 1.0, 2
 
 local function enc(v, ind)
   ind = ind or ""
@@ -67,8 +72,10 @@ local function graph(frames)
   local low = node("UNETLoader", "wan2.2-fun-vace-low", {unet_name = "wan2.2_fun_vace_low_noise_14B_fp8_scaled.safetensors", weight_dtype = "default"})
   local te = node("CLIPLoader", "umt5-xxl", {clip_name = "umt5_xxl_fp8_e4m3fn_scaled.safetensors", type = "wan"})
   local vae = node("VAELoader", "wan-vae", {vae_name = "wan_2.1_vae.safetensors"})
-  local highS = node("ModelSamplingSD3", "shift high", {model = o(high), shift = 8.0})
-  local lowS = node("ModelSamplingSD3", "shift low", {model = o(low), shift = 8.0})
+  local highL = node("LoraLoaderModelOnly", "lightning high (Seko-V1.1)", {model = o(high), lora_name = "high_noise_model.safetensors", strength_model = 1.0})
+  local lowL = node("LoraLoaderModelOnly", "lightning low (Seko-V1.1)", {model = o(low), lora_name = "low_noise_model.safetensors", strength_model = 1.0})
+  local highS = node("ModelSamplingSD3", "shift high", {model = o(highL), shift = 8.0})
+  local lowS = node("ModelSamplingSD3", "shift low", {model = o(lowL), shift = 8.0})
   local pos = node("CLIPTextEncode", "$prompt", {clip = o(te), text = "a small game sprite unit moving in place, flat key colour background, consistent materials and colours"})
   local neg = node("CLIPTextEncode", "$negative_prompt", {clip = o(te), text = "blurry, text, watermark, camera motion, background scenery, extra limbs, morphing"})
   local ref = node("LoadImage", "reference keyframe", {image = "$input"})
@@ -86,11 +93,11 @@ local function graph(frames)
   local vace = node("WanVaceToVideo", "vace", {positive = o(pos), negative = o(neg), vae = o(vae), width = SIZE, height = SIZE,
     length = frames, batch_size = 1, strength = 1.0, control_video = o(batch), reference_image = o(refS)})
   local s1 = node("KSamplerAdvanced", "$seed", {model = o(highS), positive = o(vace, 0), negative = o(vace, 1), latent_image = o(vace, 2),
-    add_noise = "enable", noise_seed = 790000, steps = 20, cfg = 3.5, sampler_name = "euler", scheduler = "simple",
-    start_at_step = 0, end_at_step = 10, return_with_leftover_noise = "enable"})
+    add_noise = "enable", noise_seed = 790000, steps = STEPS, cfg = CFG, sampler_name = "euler", scheduler = "simple",
+    start_at_step = 0, end_at_step = SPLIT, return_with_leftover_noise = "enable"})
   local s2 = node("KSamplerAdvanced", "low-noise expert", {model = o(lowS), positive = o(vace, 0), negative = o(vace, 1), latent_image = o(s1),
-    add_noise = "disable", noise_seed = 790000, steps = 20, cfg = 3.5, sampler_name = "euler", scheduler = "simple",
-    start_at_step = 10, end_at_step = 10000, return_with_leftover_noise = "disable"})
+    add_noise = "disable", noise_seed = 790000, steps = STEPS, cfg = CFG, sampler_name = "euler", scheduler = "simple",
+    start_at_step = SPLIT, end_at_step = 10000, return_with_leftover_noise = "disable"})
   local trim = node("TrimVideoLatent", "drop reference frame", {samples = o(s2), trim_amount = o(vace, 3)})
   local dec = node("VAEDecode", "decode", {samples = o(trim), vae = o(vae)})
   node("SaveImage", "save frames", {images = o(dec), filename_prefix = "sprites/inbetween"})

@@ -166,3 +166,16 @@ Notes from all three pages share one browser store; "Copy for an agent" gives a 
   expert, before ModelSamplingSD3), set steps 4, cfg 1, split 2/2; check exact file names with `studio.models`.
 - Inputs for studio jobs go under `/work/tmp/imagegen/in/` (that folder is wiped on relaunch: re-copy the rig refs
   with `cp -r ~/.cache/demon-attack/ground-blocks/work/rig /work/tmp/imagegen/in/ground-blocks/`).
+
+## Update 2026-11-15 (after the relaunch, tray 56.11.15.3)
+
+- **Done: Wan2.2-Lightning wired.** `tools/production/inbetween_vace_workflow.lua` now loads
+  `lora/high_noise_model.safetensors` and `lora/low_noise_model.safetensors` (lightx2v/Wan2.2-Lightning rev 18bccf88,
+  Seko-V1.1; sha256 698321cb… / ec95216e…) via LoraLoaderModelOnly, one per expert, before ModelSamplingSD3; schedule
+  steps 4, cfg 1, split 2/2. Both VACE graphs regenerated. The 20-step schedule is still reachable by `$node` overrides
+  (comment at the top of the script).
+- Smoke st-1794722605549-0 (Ashlar h090 walk, 17 frames): 34 s run against 135 s before; the host fetched the LoRA on
+  first use (88 s, now on disk). Raws in `~/.cache/demon-attack/ground-blocks/smoke/vace-lightning-st-1794722605549-0/`.
+- After a relaunch: `lua tools/production/bootstrap_radio.lua` first (the `~/.cache/demon-attack` symlink was gone
+  again), then re-copy `work/rig` and `work/control` into `/work/tmp/imagegen/in/ground-blocks/`.
+- Unchanged: pilot hero work stays paused until the operator answers how `finish` treats AI art (previous update).

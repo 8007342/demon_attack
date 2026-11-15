@@ -40,25 +40,47 @@
   },
   "5": {
     "_meta": {
+      "title": "lightning high (Seko-V1.1)"
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "lora_name": "high_noise_model.safetensors",
+      "model": ["1", 0],
+      "strength_model": 1
+    }
+  },
+  "6": {
+    "_meta": {
+      "title": "lightning low (Seko-V1.1)"
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "lora_name": "low_noise_model.safetensors",
+      "model": ["2", 0],
+      "strength_model": 1
+    }
+  },
+  "7": {
+    "_meta": {
       "title": "shift high"
     },
     "class_type": "ModelSamplingSD3",
     "inputs": {
-      "model": ["1", 0],
+      "model": ["5", 0],
       "shift": 8
     }
   },
-  "6": {
+  "8": {
     "_meta": {
       "title": "shift low"
     },
     "class_type": "ModelSamplingSD3",
     "inputs": {
-      "model": ["2", 0],
+      "model": ["6", 0],
       "shift": 8
     }
   },
-  "7": {
+  "9": {
     "_meta": {
       "title": "$prompt"
     },
@@ -68,7 +90,7 @@
       "text": "a small game sprite unit moving in place, flat key colour background, consistent materials and colours"
     }
   },
-  "8": {
+  "10": {
     "_meta": {
       "title": "$negative_prompt"
     },
@@ -78,7 +100,7 @@
       "text": "blurry, text, watermark, camera motion, background scenery, extra limbs, morphing"
     }
   },
-  "9": {
+  "11": {
     "_meta": {
       "title": "reference keyframe"
     },
@@ -87,7 +109,7 @@
       "image": "$input"
     }
   },
-  "10": {
+  "12": {
     "_meta": {
       "title": "reference 480"
     },
@@ -95,12 +117,12 @@
     "inputs": {
       "crop": "center",
       "height": 480,
-      "image": ["9", 0],
+      "image": ["11", 0],
       "upscale_method": "nearest-exact",
       "width": 480
     }
   },
-  "11": {
+  "13": {
     "_meta": {
       "title": "control strip (N x 480 frames)"
     },
@@ -109,58 +131,35 @@
       "image": "$control"
     }
   },
-  "12": {
+  "14": {
     "_meta": {
       "title": "control frame 0"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
       "x": 0,
       "y": 0
     }
   },
-  "13": {
+  "15": {
     "_meta": {
       "title": "control frame 1"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
       "x": 480,
       "y": 0
     }
   },
-  "14": {
-    "_meta": {
-      "title": "control batch 1"
-    },
-    "class_type": "ImageBatch",
-    "inputs": {
-      "image1": ["12", 0],
-      "image2": ["13", 0]
-    }
-  },
-  "15": {
-    "_meta": {
-      "title": "control frame 2"
-    },
-    "class_type": "ImageCrop",
-    "inputs": {
-      "height": 480,
-      "image": ["11", 0],
-      "width": 480,
-      "x": 960,
-      "y": 0
-    }
-  },
   "16": {
     "_meta": {
-      "title": "control batch 2"
+      "title": "control batch 1"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -170,20 +169,20 @@
   },
   "17": {
     "_meta": {
-      "title": "control frame 3"
+      "title": "control frame 2"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 1440,
+      "x": 960,
       "y": 0
     }
   },
   "18": {
     "_meta": {
-      "title": "control batch 3"
+      "title": "control batch 2"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -193,20 +192,20 @@
   },
   "19": {
     "_meta": {
-      "title": "control frame 4"
+      "title": "control frame 3"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 1920,
+      "x": 1440,
       "y": 0
     }
   },
   "20": {
     "_meta": {
-      "title": "control batch 4"
+      "title": "control batch 3"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -216,20 +215,20 @@
   },
   "21": {
     "_meta": {
-      "title": "control frame 5"
+      "title": "control frame 4"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 2400,
+      "x": 1920,
       "y": 0
     }
   },
   "22": {
     "_meta": {
-      "title": "control batch 5"
+      "title": "control batch 4"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -239,20 +238,20 @@
   },
   "23": {
     "_meta": {
-      "title": "control frame 6"
+      "title": "control frame 5"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 2880,
+      "x": 2400,
       "y": 0
     }
   },
   "24": {
     "_meta": {
-      "title": "control batch 6"
+      "title": "control batch 5"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -262,20 +261,20 @@
   },
   "25": {
     "_meta": {
-      "title": "control frame 7"
+      "title": "control frame 6"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 3360,
+      "x": 2880,
       "y": 0
     }
   },
   "26": {
     "_meta": {
-      "title": "control batch 7"
+      "title": "control batch 6"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -285,20 +284,20 @@
   },
   "27": {
     "_meta": {
-      "title": "control frame 8"
+      "title": "control frame 7"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 3840,
+      "x": 3360,
       "y": 0
     }
   },
   "28": {
     "_meta": {
-      "title": "control batch 8"
+      "title": "control batch 7"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -308,20 +307,20 @@
   },
   "29": {
     "_meta": {
-      "title": "control frame 9"
+      "title": "control frame 8"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 4320,
+      "x": 3840,
       "y": 0
     }
   },
   "30": {
     "_meta": {
-      "title": "control batch 9"
+      "title": "control batch 8"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -331,20 +330,20 @@
   },
   "31": {
     "_meta": {
-      "title": "control frame 10"
+      "title": "control frame 9"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 4800,
+      "x": 4320,
       "y": 0
     }
   },
   "32": {
     "_meta": {
-      "title": "control batch 10"
+      "title": "control batch 9"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -354,20 +353,20 @@
   },
   "33": {
     "_meta": {
-      "title": "control frame 11"
+      "title": "control frame 10"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 5280,
+      "x": 4800,
       "y": 0
     }
   },
   "34": {
     "_meta": {
-      "title": "control batch 11"
+      "title": "control batch 10"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -377,20 +376,20 @@
   },
   "35": {
     "_meta": {
-      "title": "control frame 12"
+      "title": "control frame 11"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 5760,
+      "x": 5280,
       "y": 0
     }
   },
   "36": {
     "_meta": {
-      "title": "control batch 12"
+      "title": "control batch 11"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -400,20 +399,20 @@
   },
   "37": {
     "_meta": {
-      "title": "control frame 13"
+      "title": "control frame 12"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 6240,
+      "x": 5760,
       "y": 0
     }
   },
   "38": {
     "_meta": {
-      "title": "control batch 13"
+      "title": "control batch 12"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -423,20 +422,20 @@
   },
   "39": {
     "_meta": {
-      "title": "control frame 14"
+      "title": "control frame 13"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 6720,
+      "x": 6240,
       "y": 0
     }
   },
   "40": {
     "_meta": {
-      "title": "control batch 14"
+      "title": "control batch 13"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -446,20 +445,20 @@
   },
   "41": {
     "_meta": {
-      "title": "control frame 15"
+      "title": "control frame 14"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 7200,
+      "x": 6720,
       "y": 0
     }
   },
   "42": {
     "_meta": {
-      "title": "control batch 15"
+      "title": "control batch 14"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -469,20 +468,20 @@
   },
   "43": {
     "_meta": {
-      "title": "control frame 16"
+      "title": "control frame 15"
     },
     "class_type": "ImageCrop",
     "inputs": {
       "height": 480,
-      "image": ["11", 0],
+      "image": ["13", 0],
       "width": 480,
-      "x": 7680,
+      "x": 7200,
       "y": 0
     }
   },
   "44": {
     "_meta": {
-      "title": "control batch 16"
+      "title": "control batch 15"
     },
     "class_type": "ImageBatch",
     "inputs": {
@@ -492,95 +491,118 @@
   },
   "45": {
     "_meta": {
+      "title": "control frame 16"
+    },
+    "class_type": "ImageCrop",
+    "inputs": {
+      "height": 480,
+      "image": ["13", 0],
+      "width": 480,
+      "x": 7680,
+      "y": 0
+    }
+  },
+  "46": {
+    "_meta": {
+      "title": "control batch 16"
+    },
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": ["44", 0],
+      "image2": ["45", 0]
+    }
+  },
+  "47": {
+    "_meta": {
       "title": "vace"
     },
     "class_type": "WanVaceToVideo",
     "inputs": {
       "batch_size": 1,
-      "control_video": ["44", 0],
+      "control_video": ["46", 0],
       "height": 480,
       "length": 17,
-      "negative": ["8", 0],
-      "positive": ["7", 0],
-      "reference_image": ["10", 0],
+      "negative": ["10", 0],
+      "positive": ["9", 0],
+      "reference_image": ["12", 0],
       "strength": 1,
       "vae": ["4", 0],
       "width": 480
     }
   },
-  "46": {
+  "48": {
     "_meta": {
       "title": "$seed"
     },
     "class_type": "KSamplerAdvanced",
     "inputs": {
       "add_noise": "enable",
-      "cfg": 3.5,
-      "end_at_step": 10,
-      "latent_image": ["45", 2],
-      "model": ["5", 0],
-      "negative": ["45", 1],
+      "cfg": 1,
+      "end_at_step": 2,
+      "latent_image": ["47", 2],
+      "model": ["7", 0],
+      "negative": ["47", 1],
       "noise_seed": 790000,
-      "positive": ["45", 0],
+      "positive": ["47", 0],
       "return_with_leftover_noise": "enable",
       "sampler_name": "euler",
       "scheduler": "simple",
       "start_at_step": 0,
-      "steps": 20
+      "steps": 4
     }
   },
-  "47": {
+  "49": {
     "_meta": {
       "title": "low-noise expert"
     },
     "class_type": "KSamplerAdvanced",
     "inputs": {
       "add_noise": "disable",
-      "cfg": 3.5,
+      "cfg": 1,
       "end_at_step": 10000,
-      "latent_image": ["46", 0],
-      "model": ["6", 0],
-      "negative": ["45", 1],
+      "latent_image": ["48", 0],
+      "model": ["8", 0],
+      "negative": ["47", 1],
       "noise_seed": 790000,
-      "positive": ["45", 0],
+      "positive": ["47", 0],
       "return_with_leftover_noise": "disable",
       "sampler_name": "euler",
       "scheduler": "simple",
-      "start_at_step": 10,
-      "steps": 20
+      "start_at_step": 2,
+      "steps": 4
     }
   },
-  "48": {
+  "50": {
     "_meta": {
       "title": "drop reference frame"
     },
     "class_type": "TrimVideoLatent",
     "inputs": {
-      "samples": ["47", 0],
-      "trim_amount": ["45", 3]
+      "samples": ["49", 0],
+      "trim_amount": ["47", 3]
     }
   },
-  "49": {
+  "51": {
     "_meta": {
       "title": "decode"
     },
     "class_type": "VAEDecode",
     "inputs": {
-      "samples": ["48", 0],
+      "samples": ["50", 0],
       "vae": ["4", 0]
     }
   },
-  "50": {
+  "52": {
     "_meta": {
       "title": "save frames"
     },
     "class_type": "SaveImage",
     "inputs": {
       "filename_prefix": "sprites/inbetween",
-      "images": ["49", 0]
+      "images": ["51", 0]
     }
   },
-  "51": {
+  "53": {
     "_meta": {
       "title": "birefnet"
     },
@@ -592,37 +614,37 @@
       "use_weight": false
     }
   },
-  "52": {
+  "54": {
     "_meta": {
       "title": "mattes"
     },
     "class_type": "GetMaskByBiRefNet",
     "inputs": {
       "height": 1024,
-      "images": ["49", 0],
+      "images": ["51", 0],
       "mask_threshold": 0,
-      "model": ["51", 0],
+      "model": ["53", 0],
       "upscale_method": "bilinear",
       "width": 1024
     }
   },
-  "53": {
+  "55": {
     "_meta": {
       "title": "matte images"
     },
     "class_type": "MaskToImage",
     "inputs": {
-      "mask": ["52", 0]
+      "mask": ["54", 0]
     }
   },
-  "54": {
+  "56": {
     "_meta": {
       "title": "save mattes"
     },
     "class_type": "SaveImage",
     "inputs": {
       "filename_prefix": "sprites/inbetween-matte",
-      "images": ["53", 0]
+      "images": ["55", 0]
     }
   }
 }
