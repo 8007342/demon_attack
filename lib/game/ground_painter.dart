@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'easter_eggs.dart';
 import 'ground_atlas.dart';
 import 'ground_blocks_painter.dart';
 import 'ground_troops_atlas.dart';
@@ -40,6 +41,12 @@ class GroundPainter {
   /// Feature switch: false draws every unit from the old atlases.
   static bool useBlocks = true;
   final GroundBlocksLayer blocks = GroundBlocksLayer();
+
+  // --- ground easter eggs (plan/ground-easter-eggs.md): the shared budget
+  // (the flyover's; null keeps the pre-egg behaviour) and per-paint state.
+  EasterEggBudget? eggs;
+  ArcadeModel? _model;
+  int _debrisDrawn = 0;
 
   /// Troopers draw a little smaller than vehicles (they are people).
   static const troopScale = 1.0, allyTroopScale = .7;
@@ -130,6 +137,8 @@ class GroundPainter {
   /// then tracers with their muzzle flashes and impacts.
   void paintGround(Canvas c, ArcadeModel m) {
     final on = useBlocks;
+    _model = m;
+    _debrisDrawn = 0;
     if (on) blocks.begin(m.visualClock);
     _paintGround(c, m);
     if (on) blocks.end();
@@ -321,10 +330,31 @@ class GroundPainter {
       _cell(c, GroundAtlas.effectRow, GroundAtlas.explosionCol + f, u.x,
           u.y + 3 * s, s * 2.0, light: glow);
     }
+    // --- ground easter eggs: the breakup (5-8 pieces for a light Host
+    // vehicle, 3-4 for a heavier one, at most 16 on screen, clipped at the
+    // lane edge), the plain wreck with reduced motion, and the jackpot.
+    final e = bt == null ? null : eggs;
+    var pieces = 7;
+    var jackpot = false;
+    var head = -1;
+    if (e != null) {
+      final unit = bt!.cells.unit;
+      final small = unit.faction == 'host' && unit.unitClass == 'light';
+      pieces = e.reducedMotion && small
+          ? 0
+          : e.debrisPieces(u.id, light: small);
+      if (small && u.z < EasterEggBudget.farZ &&
+          (t < .2 || e.decided(u, EasterEgg.jackpot) != null)) {
+        jackpot = e.decide(u, EasterEgg.jackpot,
+            key: u.id * 97 + (_model?.level ?? 0),
+            band: EasterEggBudget.bandOf(u.x));
+      }
+      if (jackpot) head = GroundBlocksLayer.jackpotHead(bt.cells).$2;
+    }
     // Debris: chunks thrown out on ballistic arcs; they lie where they land.
     if (t < 5.5) {
       final rnd = math.Random(u.id * 7919 + 17);
-      for (var k = 0; k < 7; k++) {
+      for (var k = 0; k < pieces; k++) {
         final vx = (rnd.nextDouble() * 2 - 1) * 34;
         final vy = 26 + rnd.nextDouble() * 34;
         final spin = rnd.nextInt(4);
@@ -332,9 +362,15 @@ class GroundPainter {
         final land = 2 * vy / grav + .05;
         final tt = math.min(t, land);
         final h = math.max(0.0, 7 + vy * tt - .5 * grav * tt * tt);
-        final x = u.x + vx * tt * s * .7;
+        var x = u.x + vx * tt * s * .7;
         final y = u.y + (rnd.nextDouble() * 4 - 1) * s * (tt / land) - h * s;
         final flying = t < land;
+        if (e != null) {
+          if (jackpot && k == head) continue; // it pops instead
+          if (_debrisDrawn >= EasterEggBudget.maxDebrisOnScreen) break;
+          _debrisDrawn++;
+          x = _laneClip(u.x, x, y);
+        }
         // --- ground blocks runtime: the unit's authored pieces.
         if (bt != null &&
             blocks.piece(c, bt, k, x, y, s,
@@ -347,6 +383,87 @@ class GroundPainter {
                 (flying ? (t * 14 + spin).floor() % GroundAtlas.debrisFrames : spin),
             x, y, s * .8,
             light: flying ? glow : light * .85, opacity: fade);
+      }
+    }
+    if (jackpot) blocks.jackpot(c, u, bt!, clock, light, glow);
+  }
+
+  // ---------------------------------------------- ground easter eggs
+
+  /// A piece thrown from a unit outside the lane lands short of the lane
+  /// edge below the swarm band (plan rule 2).
+  static double _laneClip(double from, double x, double y) {
+    if (y <= 300) return x;
+    if (from < GroundCamera.laneLeft) return math.min(x, GroundCamera.laneLeft - 2);
+    if (from > GroundCamera.laneRight) return math.max(x, GroundCamera.laneRight + 2);
+    return x;
+  }
+
+  /// Rough ground distance in texels between two units.
+  static double _texelDistance(double x1, double z1, double x2, double z2) {
+    final l1 = (x1 - 180) / GroundCamera.texel(math.max(z1, 1));
+    final l2 = (x2 - 180) / GroundCamera.texel(math.max(z2, 1));
+    final dl = l1 - l2, dz = z1 - z2;
+    return math.sqrt(dl * dl + dz * dz);
+  }
+
+  /// A Fleet dance may play: near enough to see, no Host unit within 200
+  /// texels, no totalled ally smoking within 100 (plan section 2).
+  bool _danceOk(GroundAlly a) {
+    final m = _model;
+    if (m == null || a.z >= EasterEggBudget.farZ || !a.alive) return false;
+    for (final u in m.ground.units) {
+      if (u.alive && _texelDistance(a.x, a.z, u.x, u.z) < 200) return false;
+    }
+    for (final o in m.ground.allies) {
+      if (!identical(o, a) && o.totalled &&
+          _texelDistance(a.x, a.z, o.x, o.z) < 100) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Dance triggers of a Fleet squad or vehicle: a skirmish it fought was
+  /// won by the allies, it was saved, or the sector is clear.
+  void _danceTriggers(GroundAlly a, GroundBlockTrack bt) {
+    final e = eggs;
+    final m = _model;
+    if (e == null || m == null) return;
+    final band = EasterEggBudget.bandOf(a.x);
+    final foe = a.attacker;
+    if (foe != null) bt.lastFoe = foe;
+    final last = bt.lastFoe;
+    if (last is GroundUnit && last.destroyed) {
+      bt.lastFoe = null;
+      if (last.destroyedByAllies && !bt.flourishing && _danceOk(a) &&
+          e.request(EasterEgg.dance, key: a.id * 1009 + last.id, band: band)) {
+        blocks.startFlourish(bt);
+      }
+    }
+    if (m.presentationMode == RunMode.levelClear && !bt.clearDanced) {
+      bt.clearDanced = true;
+      if (a.alive && a.z < EasterEggBudget.farZ &&
+          e.request(EasterEgg.sectorDance,
+              key: a.id, band: band, guaranteed: true)) {
+        blocks.startFlourish(bt, 3);
+      }
+    }
+  }
+
+  /// A Host squad jigs when the ally it fought falls back.
+  void _jigTrigger(GroundUnit u, GroundBlockTrack bt) {
+    final e = eggs;
+    if (e == null) return;
+    final foe = u.ally;
+    if (foe != null) bt.lastFoe = foe;
+    final last = bt.lastFoe;
+    if (last is GroundAlly && (last.fallingBack || last.totalled)) {
+      bt.lastFoe = null;
+      if (last.fallingBack && u.alive && u.z < EasterEggBudget.farZ &&
+          e.request(EasterEgg.jig,
+              key: u.id * 1013 + last.id, band: EasterEggBudget.bandOf(u.x))) {
+        blocks.startFlourish(bt, 1);
       }
     }
   }
@@ -378,7 +495,10 @@ class GroundPainter {
     final order = List.generate(n, (k) => k)
       ..sort((a, b) => _formation[a].$2.compareTo(_formation[b].$2));
     final bt = useBlocks ? blocks.unitTrack(u) : null;
-    if (bt != null) blocks.observe(bt, u.x, u.z);
+    if (bt != null) {
+      blocks.observe(bt, u.x, u.z);
+      _jigTrigger(u, bt);
+    }
     for (final k in order) {
       final (ox, oy) = _formation[k];
       final x = u.x + ox * u.scale * dir, y = u.y + oy * u.scale * .5;
@@ -491,7 +611,16 @@ class GroundPainter {
     final kick = (a.recoil / GroundTuning.allyRecoil).clamp(0.0, 1.0);
     final bt = useBlocks ? blocks.allyTrack(a, 0) : null;
     if (bt != null) {
-      blocks.observeSquad(bt, a.x, a.z, saved: a.saved, dances: a.id % 3 == 0);
+      final e = eggs;
+      // A short dance for one in three saved squads (through the budget).
+      blocks.observeSquad(bt, a.x, a.z,
+          saved: a.saved,
+          dances: () => e == null
+              ? a.id % 3 == 0
+              : _danceOk(a) &&
+                  e.request(EasterEgg.dance,
+                      key: a.id, band: EasterEggBudget.bandOf(a.x)));
+      _danceTriggers(a, bt);
     }
     if (a.totalled || a.fallingBack) {
       // Retreat smoke over a squad that is pulling back.
@@ -632,6 +761,16 @@ class GroundPainter {
     }
     final kick = (a.recoil / .14).clamp(0.0, 1.0);
     if (bt != null) {
+      if (bt.cells.hasArt) {
+        if (a.saved && !bt.wasSaved && _danceOk(a) &&
+            (eggs?.request(EasterEgg.dance,
+                    key: a.id, band: EasterEggBudget.bandOf(a.x)) ??
+                false)) {
+          blocks.startFlourish(bt, 1.2);
+        }
+        bt.wasSaved = a.saved;
+        _danceTriggers(a, bt);
+      }
       blocks.convoy(c, a, bt, clock, light, _glow(light));
       final mz = blocks.muzzleOf(a);
       if (kick > 0 && mz != null) {

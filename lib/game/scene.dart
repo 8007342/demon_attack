@@ -41,7 +41,9 @@ class DemonScene extends FlameGame {
   final atmosphere = Atmosphere();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- ground war (ground_painter.dart) ---
-  late final groundForces = GroundPainter()..occluders = sectors.flyover;
+  late final groundForces = GroundPainter()
+    ..occluders = sectors.flyover
+    ..eggs = sectors.flyover.eggs;
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;

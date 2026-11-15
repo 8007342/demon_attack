@@ -303,9 +303,13 @@ class Carrier {
 
 /// Pure fixed-step simulation; renderers and input never change its clock.
 class ArcadeModel {
-  ArcadeModel({int seed = 1982})
+  ArcadeModel({this.seed = 1982})
     : random = math.Random(seed),
       flock = ArrivalFlock(seed: seed);
+
+  /// The run seed (presentation streams such as the easter eggs derive
+  /// from it; the simulation uses [random]).
+  final int seed;
   static const width = 360.0, height = 520.0, shipY = 477.0;
   final math.Random random;
   RunMode mode = RunMode.title;

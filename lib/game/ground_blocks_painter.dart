@@ -49,9 +49,18 @@ class GroundBlockTrack {
   /// Driving backward (convoy falling back).
   bool reverse = false;
 
-  /// Seconds since a saved squad began its flourish (< 0: none).
-  double flourish = -1;
+  /// Seconds since a saved squad began its flourish (< 0: none), and how
+  /// long it lasts (easter eggs: dance, sector-clear dance, Host jig,
+  /// convoy turret twirl).
+  double flourish = -1, flourishLen = 1.6;
   bool wasSaved = false;
+
+  /// Easter eggs: the foe last engaged (a won skirmish, an ally falling
+  /// back) and whether the sector-clear dance has played.
+  Object? lastFoe;
+  bool clearDanced = false;
+
+  bool get flourishing => flourish >= 0 && flourish < flourishLen;
 
   /// Screen muzzle of the layer as last drawn (friendly tracer origin).
   Offset? muzzle;
@@ -203,6 +212,7 @@ class GroundBlocksLayer {
       {double? face, bool reversible = false}) {
     if (t.seen == _frame) return;
     t.seen = _frame;
+    if (t.flourish >= 0) t.flourish += dt;
     final lx = _lateral(x, z);
     final px = t.lastX, pz = t.lastZ;
     t.lastX = lx;
@@ -648,7 +658,11 @@ class GroundBlocksLayer {
     if (moving || turning) _skid(c, t, a.x, a.y, s, light, k);
     final name = _hullCell(t, a, k, unit.headings[k] * (mirror ? -1 : 1),
         a.pose, phase, moving || turning);
-    cell(c, unit, name, a.x, a.y + (kick > .5 ? s * .5 : 0), s,
+    // Easter egg: a one-texel hull hop on beat 3 of the twirl.
+    final hop = t.flourishing && t.flourish >= .36 && t.flourish < .48
+        ? s.roundToDouble()
+        : 0.0;
+    cell(c, unit, name, a.x, a.y + (kick > .5 ? s * .5 : 0) - hop, s,
         mirror: mirror, light: light, flash: flash);
     _hullOverlays(c, t, k, mirror, a.x, a.y, s, light, glow, clock,
         near: near, hp: a.hp);
@@ -671,7 +685,15 @@ class GroundBlocksLayer {
           (scan > .55 ? (a.side == 0 ? -22.5 : 22.5) : 0);
     }
     aim(t, target);
-    final (ai, am) = artShown(t.art!, hull, a.z, unit.headings, unit.angles);
+    var (ai, am) = artShown(t.art!, hull, a.z, unit.headings, unit.angles);
+    if (t.flourishing) {
+      // Easter egg: a turret twirl a0 -> a4 -> a0 (no new art).
+      final n = unit.angles.length;
+      final cyc = math.max(1, 2 * (n - 1));
+      final p = (t.flourish / .08).floor() % cyc;
+      ai = p < n ? p : cyc - p;
+      am = mirror;
+    }
     _art(c, t, ai, am, pv, s, light,
         flash: flash,
         recoil: kick * 2,
@@ -744,6 +766,10 @@ class GroundBlocksLayer {
               : cells.state('fall', h, 1).$1);
     } else if (fires) {
       name = cells.state('fire', h, 0).$1;
+    } else if (squad.flourishing && !moving && !engaged &&
+        cells.headingOf('flourish') != null) {
+      // Easter egg: the taunt jig, one frame of ripple per trooper.
+      name = cells.state('flourish', h, (squad.flourish / .12).floor() + k).$1;
     } else if (engaged && !moving) {
       name = cells.state('aim', h, u.tracerLeft < .25 ? 1 : 0).$1;
     } else if (moving) {
@@ -771,8 +797,9 @@ class GroundBlocksLayer {
       name = cells.state('fire', h, 0).$1;
     } else if (a.underAttack && !moving) {
       name = cells.state('aim', h, kick > 0 ? 1 : 0).$1;
-    } else if (squad.flourish >= 0 && squad.flourish < 1.6 && !moving) {
-      name = cells.state('flourish', h, (clock * 6 + k).floor()).$1;
+    } else if (squad.flourishing && !moving) {
+      // 4 frames at 0.12 s, each trooper a frame behind the one before.
+      name = cells.state('flourish', h, (squad.flourish / .12).floor() + k).$1;
     } else if (moving) {
       name = cells.hull('walk', h, (clock * 8 + k * .9 + a.id * .3).floor());
     } else {
@@ -781,13 +808,135 @@ class GroundBlocksLayer {
     cell(c, cells.unit, name, x, y, s, mirror: mirror, light: light);
   }
 
-  /// Squad trackers: heading from the squad's motion; the saved flourish.
+  /// Squad trackers: heading from the squad's motion; the saved flourish
+  /// ([dances] is asked once, when the squad is saved).
   void observeSquad(GroundBlockTrack t, double x, double z,
-      {bool saved = false, bool dances = false}) {
+      {bool saved = false, bool Function()? dances}) {
     observe(t, x, z);
-    if (t.flourish >= 0) t.flourish += dt;
-    if (saved && !t.wasSaved && dances) t.flourish = 0;
+    if (saved && !t.wasSaved && (dances?.call() ?? false)) startFlourish(t);
     t.wasSaved = saved;
+  }
+
+  /// Starts a flourish (dance, jig or turret twirl) of [len] seconds.
+  void startFlourish(GroundBlockTrack t, [double len = 1.6]) {
+    t
+      ..flourish = 0
+      ..flourishLen = len;
+  }
+
+  // ------------------------------------------------------------- jackpot
+
+  /// Pieces that can serve as the popped head of a vehicle with no layer.
+  static const headPieces = ['turret', 'gun', 'head', 'hood', 'heads'];
+
+  /// The cell drawn as a popped turret: the layer at its middle angle, else
+  /// the first head-like debris piece (index into the unit's pieces).
+  static (String?, int) jackpotHead(GroundBlockCells cells) {
+    final u = cells.unit;
+    if (cells.hasArt) return (cells.art(u.angles.length ~/ 2), -1);
+    for (final p in headPieces) {
+      final i = u.pieces.indexOf(p);
+      if (i >= 0) return (null, i);
+    }
+    return (null, u.pieces.isEmpty ? -1 : 0);
+  }
+
+  /// The crew unit of a light Host vehicle in [sector]: Rubblings.
+  static String crewUnit(int sector) {
+    final s = GroundBlocksCast.sectorName(sector);
+    return GroundBlocks.placement[s]!.containsKey('rubbling')
+        ? 'rubbling'
+        : GroundBlocksCast.unitFor(GroundCastRole.demonRifle, sector)!;
+  }
+
+  /// A whole cell centred on ([cx], [cy]) turned by [quarter] quarter turns.
+  bool spinCell(Canvas c, GroundBlockUnit u, String name, double cx,
+      double cy, double s, int quarter, {double light = 1, double opacity = 1}) {
+    requested?.add(name);
+    final src = _resolve(name);
+    if (src == null || opacity <= 0) return false;
+    final r = src.$2;
+    c.save();
+    c.translate(cx.roundToDouble(), cy.roundToDouble());
+    if (quarter % 4 != 0) c.rotate((quarter % 4) * math.pi / 2);
+    _blit(c, src.$1, r, -r.width / 2 * s, -r.height / 2 * s, s, false, light,
+        opacity, false);
+    c.restore();
+    return true;
+  }
+
+  /// Screen point of the popped turret [tt] seconds into the wreck, and
+  /// whether it is still in the air (two arcs: 40% restitution).
+  static (double dx, double h, bool flying) jackpotArc(double tt) {
+    const g = 150.0, v0 = 72.0, start = .12;
+    const land1 = 2 * v0 / g, v1 = v0 * .4, land2 = 2 * v1 / g;
+    final p = tt - start;
+    if (p <= 0) return (0, 0, true);
+    final travel = math.min(p, land1 + land2);
+    if (p < land1) return (travel * 10, v0 * p - .5 * g * p * p, true);
+    if (p < land1 + land2) {
+      final q = p - land1;
+      return (travel * 10, v1 * q - .5 * g * q * q, true);
+    }
+    return (travel * 10, 0, false);
+  }
+
+  /// The jackpot breakup of a light Host vehicle: its turret (or head)
+  /// pops high, spins in quarter turns, bounces once and lands upright; a
+  /// crew of two climbs out, looks at it and scampers off outward.
+  void jackpot(Canvas c, GroundUnit u, GroundBlockTrack t, double clock,
+      double light, double glow) {
+    final tt = u.wreckAge;
+    if (tt > 2.6) return;
+    final s = u.scale;
+    final out = u.x < 180 ? -1.0 : 1.0;
+    double clip(double x, double y) => y <= 300
+        ? x
+        : (u.x < GroundCamera.laneLeft
+            ? math.min(x, GroundCamera.laneLeft - 2)
+            : (u.x > GroundCamera.laneRight
+                ? math.max(x, GroundCamera.laneRight + 2)
+                : x));
+    final (dx, h, flying) = jackpotArc(tt);
+    if (tt > .12) {
+      final y = u.y - 6 * s - h * s;
+      final x = clip(u.x + out * dx * s, y);
+      final quarter = flying ? (tt * 10).floor() : 0;
+      final fade = ((2.6 - tt) / .4).clamp(0.0, 1.0);
+      final (art, piece) = jackpotHead(t.cells);
+      if (art != null) {
+        spinCell(c, t.cells.unit, art, x, y, s, quarter,
+            light: flying ? glow : light, opacity: fade);
+      } else if (piece >= 0) {
+        this.piece(c, t, piece, x, y, s, quarter,
+            light: flying ? glow : light, opacity: fade);
+      }
+    }
+    final crew = _cells(crewUnit(u.sector));
+    final cs = s * .9;
+    final turretX = u.x + out * jackpotArc(9).$1 * s;
+    for (var i = 0; i < 2; i++) {
+      final e = tt - 1.1 - .15 * i;
+      if (e < 0) continue;
+      final side = i == 0 ? -1.0 : 1.0;
+      var x = u.x + side * 4 * s;
+      final y = u.y + (i == 0 ? 1 : 2) * s;
+      String name;
+      var mirror = out < 0;
+      if (e < .45) {
+        name = crew.state('arrive', 0, (e / .15).floor().clamp(0, 2)).$1;
+      } else if (e < .8) {
+        // Looks at the turret.
+        name = crew.state('idle', 0, 0).$1;
+        mirror = turretX < x;
+      } else {
+        x += out * 30 * (e - .8) * cs;
+        name = crew.state('run', 0, (clock * 10 + i).floor()).$1;
+      }
+      final fade = ((2.6 - tt) / .35).clamp(0.0, 1.0);
+      cell(c, crew.unit, name, clip(x, y), y, cs,
+          mirror: mirror, light: light, opacity: fade);
+    }
   }
 
   final Map<String, GroundBlockCells> _cellCache = {};
