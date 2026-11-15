@@ -194,8 +194,8 @@ On resume:
    picks one hero per unit (`hero.selected` in the family).
 3. Then `go run . jobs` and the heading jobs, Lodestar first at denoise 0.7 vs 1.0 (A3), then turret angles and the
    VACE clips (Lightning graphs, A2), one job at a time; push after each checkpoint (CP1 sheet `ground-pilot.png`).
-4. A6 renames and silhouette tweaks before Phase 2; Gutter-runner → Spout-runner touches `art/families/rigs/gutter-runner.json`,
-   `ground-host.json`, `lib/game/ground_blocks_atlas.dart`, the openspec changes and the plan docs.
+4. ~~A6 renames and silhouette tweaks before Phase 2~~ Done on `work/a6-originality`: Gutter-runner → Spout-runner
+   (`art/families/rigs/spout-runner.json`), Stilt chin pod, Sleet four wheels plus a tail skid (§10 A6).
 
 ## Relaunch 2026-11-15 ~07:15 UTC (tray 56.11.15.5): the cache volume was wiped
 

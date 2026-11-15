@@ -8,7 +8,7 @@
      "blocks": 2,
      "file": "assets/images/ground-blocks/ground-fleet-krybor.png",
      "h": 360,
-     "png_bytes": 20068,
+     "png_bytes": 20530,
      "rgba_bytes": 1382400,
      "w": 960
     },
@@ -30,7 +30,7 @@
     }
    ],
    "rgba_bytes": 3870720,
-   "png_bytes": 78650,
+   "png_bytes": 79112,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 20,
@@ -125,7 +125,7 @@
      "blocks": 1,
      "file": "assets/images/ground-blocks/ground-fleet-hollow.png",
      "h": 240,
-     "png_bytes": 9841,
+     "png_bytes": 9287,
      "rgba_bytes": 921600,
      "w": 960
     },
@@ -147,7 +147,7 @@
     }
    ],
    "rgba_bytes": 7772160,
-   "png_bytes": 144169,
+   "png_bytes": 143615,
    "draw_calls_busy_frame": {
     "fleet": 12,
     "host": 24,

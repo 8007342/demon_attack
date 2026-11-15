@@ -53,7 +53,7 @@
  "units": [
   {"id": "sleet", "name": "Sleet", "block": "V", "role": "light scout rover", "slot": {"sector": "krybor", "variant": 0}, "rig": "rigs/sleet.json",
    "headings": [0, 22.5, 45, 67.5, 90], "art": {"kind": "pod", "angles": [0, 22.5, 45, 67.5, 90]},
-   "subject": "a small fast six wheeled scout rover, low wedge shaped body lower at the front, big wheels sticking out past the body, tiny pod turret with a short twin barrel, whip antenna, roof light bar",
+   "subject": "a small fast four wheeled scout rover, low wedge shaped body lower at the front, four big wheels sticking out past the body, a flat sled skid under the tail, tiny pod turret with a short twin barrel, whip antenna, roof light bar",
    "sectors": {"krybor": "snow camouflage, ski skids"}, "seed": 780100, "hero": {"heading": 45, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": []},
   {"id": "cairn", "name": "Cairn", "block": "V", "role": "armoured carrier", "slot": {"sector": "krybor", "variant": 1}, "rig": "rigs/cairn.json",
    "headings": [0, 22.5, 45, 67.5, 90], "art": {"kind": "pod", "angles": [0, 22.5, 45, 67.5, 90]},
@@ -73,7 +73,7 @@
    "sectors": {"ember": "soot dark lower hull, square heat-shield tiles"}, "seed": 780210, "hero": {"heading": 45, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["special.brace"]},
   {"id": "stilt", "name": "Stilt", "block": "W", "role": "two-legged walker", "slot": {"sector": "hollow", "variant": 0}, "rig": "rigs/stilt.json",
    "headings": [0, 22.5, 45, 67.5, 90], "art": {"kind": "cab", "angles": [0, 22.5, 45, 67.5, 90]},
-   "subject": "a two legged walker, boxy armoured cab with a wide visor slit, two straight telescoping legs with flat square feet, gun pods on both sides of the cab",
+   "subject": "a two legged walker, boxy armoured cab with a wide visor slit, two straight telescoping legs with flat square feet, one twin gun pod slung under the front of the cab, plain flat cab sides",
    "sectors": {"hollow": "one dark teal band, snorkel, mud flaps"}, "seed": 780300, "hero": {"heading": 45, "candidates": 4, "selected": null}, "headings_candidates": 2, "inbetweens": ["move.h000", "move.h045", "strideOver"]},
   {"id": "skiff", "name": "Skiff", "block": "V", "role": "hover tank", "slot": {"sector": "carrier", "variant": 0}, "rig": "rigs/skiff.json",
    "headings": [0, 22.5, 45, 67.5, 90], "art": {"kind": "turret", "angles": [0, 22.5, 45, 67.5, 90]},

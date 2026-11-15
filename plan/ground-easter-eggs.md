@@ -31,7 +31,7 @@ Every easter egg obeys all of these. The runtime enforces them in one place (an 
 
 | | |
 | --- | --- |
-| **Who** | Host light vehicles: Crocket, the captured Krybor hulls, the Gutter-runner (once it has a V-block). Heavier Host units crumble (rubble) and drop 3–4 pieces |
+| **Who** | Host light vehicles: Crocket, the captured Krybor hulls, the Spout-runner (once it has a V-block). Heavier Host units crumble (rubble) and drop 3–4 pieces |
 | **Trigger** | Destroyed at z < 900 |
 | **Rarity** | The **breakup** is the standard death for light Host vehicles (always). The **jackpot** variant, 1 in 8 breakups (cooldown 20 s): the turret or ridge head pops high, spins in quarter turns, bounces once and lands upright; a tiny Rubbling crew of two climbs out of the hull, looks at it, and scampers off into the rubble |
 | **What plays** | Frame 0: the existing shock ring and the first 3 explosion frames. Then 5–8 **debris pieces** fly on ballistic arcs (screen space, scaled by depth), each tumbling in quarter turns (0°, 90°, 180°, 270°, mirrored: lossless, no new art) at 8–12 steps/s. Pieces bounce once (40% restitution), slide 2–4 texels and stop; warm seams on stone pieces cool from `demon_warm[2]` to stone over 1.5 s; pieces fade at 2.5 s. The hull itself shows `wreck` then `rubble` |

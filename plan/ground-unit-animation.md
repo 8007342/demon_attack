@@ -180,7 +180,7 @@ on update(x, z, dt):
 | Class | ωMax (hull) | minHold | ωMax (articulated layer) |
 | --- | --- | --- | --- |
 | Infantry | 360°/s | 0.10 s | — |
-| Light vehicle (Sleet, Cairn, Tether, Crocket, Gutter-runner) | 180°/s | 0.12 s | 270°/s |
+| Light vehicle (Sleet, Cairn, Tether, Crocket, Spout-runner) | 180°/s | 0.12 s | 270°/s |
 | Heavy (Lodestar, Sextant, Skiff, Tympanum, Reliquary, Carillon, Hodcrawler) | 75°/s | 0.20 s | 120°/s |
 | Walker (Stilt, Buttress Strider) | 90°/s | 0.18 s (a step lands on a stride plant when one is within 0.1 s) | 150°/s |
 | Chapterhouse | 30°/s | 0.40 s | — |
@@ -250,7 +250,7 @@ Frames are per authored heading unless marked "at hT" (one heading only). "Ov" m
 | Buttress Strider | W | stance 2 × 2 h | stride 6 × 5 h | `fill1–3` Ov × 5 h | bloom + 1 texel rock | flash | dmg × 5 h (knee pinnacles snap) | collapse 3 + rubble 2 + pieces | 4 | strideOver 3 | 100 |
 | Chapterhouse | K | idle 2 + banners 3 Ov | stride 6 × 3 h | pulse 4 | — | flash | dmg × 3 h | fall 5 + rubble 2 + pieces | 4 (doors of the undercroft) | command pulse | 60 double cells |
 
-Threat vehicles (Gutter-runner, Scrapmason Crawler, Kiln Ox, Belfry) keep their rows and frame contract in `ground-forces.png`. Giving them V/W blocks is Phase 4 of the render plan, behind a flag, because their launch and telegraph timing is a gameplay contract.
+Threat vehicles (Spout-runner, Scrapmason Crawler, Kiln Ox, Belfry) keep their rows and frame contract in `ground-forces.png`. Giving them V/W blocks is Phase 4 of the render plan, behind a flag, because their launch and telegraph timing is a gameplay contract.
 
 ### 7.2 Host arrival (unearthing), frame by frame
 
@@ -273,7 +273,7 @@ The other agent's arrival code decides **when** a unit unearths and when it walk
 | Lodestar | V | lights Ov | 4 × 5 h | 5 a (barrel slide, muzzle ring) | shards | × 5 h | as above | — | 80 |
 | Sextant | V | lights Ov | 4 × 5 h | 5 a + 2 elevations | shards | × 5 h | as above | brace 2 (spades) | 80 |
 | Skiff | V | hover bob is the idle | 2 × 5 h | 5 a | shards | × 5 h | as above (drops onto its belly) | — | 80 |
-| Stilt | W | stance 2 × 2 h | stride 6 × 5 h | cab pods 5 a | shards | × 5 h | as above (kneels) | strideOver 3 | 100 |
+| Stilt | W | stance 2 × 2 h | stride 6 × 5 h | chin pod 5 a | shards | × 5 h | as above (kneels) | strideOver 3 | 100 |
 | Rifle trooper | I | 2 | 4 × 3 h | `aim` 2 + `fire` 1 | 1 | — | stumble 2, `kneel` | `flourish` 4 (dance), `run` 2 | 40 |
 | Rocket trooper | I | 2 | 4 × 3 h | 2 + 1 (backblast fx) | 1 | — | 2, kneel | `flourish` 4, `run` 2 | 40 |
 
