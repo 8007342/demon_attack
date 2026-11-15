@@ -62,5 +62,389 @@
   "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a cartoon gargoyle demon soldier marching, stone hide, curled horns through a dented iron helmet, glowing ember eyes, webbing and an armour vest, folded bat wings, a long spout-mouthed musket",
   "seed": 760113,
   "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/corbel/hero/760120": {
+  "inputs": {
+   "input": "rig/corbel/corbel.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0000_00001_.png",
+    "sha256": "8b6cad4e2be07910b80c73b3fd681e8e39bb70e4442931c9d6f2eeede637b6d1"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a stocky gargoyle demon brute with a stone yoke on its shoulders like a corbel bracket, ram horns, a launcher tube ending in a squat carved face",
+  "seed": 760120,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/corbel/hero/760121": {
+  "inputs": {
+   "input": "rig/corbel/corbel.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0001_00001_.png",
+    "sha256": "f58a097b1aba85d9ad6f5cdecb187ffece177f44eaa9a9a13f6fcfb5cbe6647f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a stocky gargoyle demon brute with a stone yoke on its shoulders like a corbel bracket, ram horns, a launcher tube ending in a squat carved face",
+  "seed": 760121,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/corbel/hero/760122": {
+  "inputs": {
+   "input": "rig/corbel/corbel.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0002_00001_.png",
+    "sha256": "33ae78d14877f54c9f2a358910667656fc23b4640cc9bf65d71c807f85df36b6"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a stocky gargoyle demon brute with a stone yoke on its shoulders like a corbel bracket, ram horns, a launcher tube ending in a squat carved face",
+  "seed": 760122,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/corbel/hero/760123": {
+  "inputs": {
+   "input": "rig/corbel/corbel.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0003_00001_.png",
+    "sha256": "007ebac03a66a87f2a37ca10520c52a95dca3e8a67f40de7f6137453108d91a1"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a stocky gargoyle demon brute with a stone yoke on its shoulders like a corbel bracket, ram horns, a launcher tube ending in a squat carved face",
+  "seed": 760123,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/knell/hero/760130": {
+  "inputs": {
+   "input": "rig/knell/knell.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0000_00001_.png",
+    "sha256": "0cc429b2453dab29925ae70aee56ade3518d5fb0244f88b655831728d9bbfe4e"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a tall hooded gargoyle bell-ringer, dark cloth hood over stone face, wooden yoke across the shoulders with a heavy iron bell hanging at one end, thin gold rim on the bell, glowing ember eyes",
+  "seed": 760130,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/knell/hero/760131": {
+  "inputs": {
+   "input": "rig/knell/knell.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0001_00001_.png",
+    "sha256": "e7348e838a8b76262bb632dcd349e19c85a9f4ed09351441c9174b65dc521b8d"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a tall hooded gargoyle bell-ringer, dark cloth hood over stone face, wooden yoke across the shoulders with a heavy iron bell hanging at one end, thin gold rim on the bell, glowing ember eyes",
+  "seed": 760131,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/knell/hero/760132": {
+  "inputs": {
+   "input": "rig/knell/knell.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0002_00001_.png",
+    "sha256": "9491a59df95c6ef2360396858a18f12bdcbd9e0d76e2c038b6e5bec82ca39759"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a tall hooded gargoyle bell-ringer, dark cloth hood over stone face, wooden yoke across the shoulders with a heavy iron bell hanging at one end, thin gold rim on the bell, glowing ember eyes",
+  "seed": 760132,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/knell/hero/760133": {
+  "inputs": {
+   "input": "rig/knell/knell.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0003_00001_.png",
+    "sha256": "fdb16d0e312cf749586c276f65f86c2aa8391a89cc38b759234ef40f234d46c3"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a tall hooded gargoyle bell-ringer, dark cloth hood over stone face, wooden yoke across the shoulders with a heavy iron bell hanging at one end, thin gold rim on the bell, glowing ember eyes",
+  "seed": 760133,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/prior/hero/760140": {
+  "inputs": {
+   "input": "rig/prior/prior.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0000_00001_.png",
+    "sha256": "13467fbca3a6c678f285c95ecd71c8429b46fd41acfbb75a5cc586f4043a997f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a gargoyle officer in a long iron-banded coat, crown of three small gilded stone pinnacles between curled horns, a tall banner pole rising from its back with a tattered bat-wing membrane pennant and a gilded pinnacle tip, holding a staff with a lantern mouth",
+  "seed": 760140,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/prior/hero/760141": {
+  "inputs": {
+   "input": "rig/prior/prior.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0001_00001_.png",
+    "sha256": "7a862d660d6d2cb8592d373f13db609ebb7a393fe681fe19db42ee04c8fb707f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a gargoyle officer in a long iron-banded coat, crown of three small gilded stone pinnacles between curled horns, a tall banner pole rising from its back with a tattered bat-wing membrane pennant and a gilded pinnacle tip, holding a staff with a lantern mouth",
+  "seed": 760141,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/prior/hero/760142": {
+  "inputs": {
+   "input": "rig/prior/prior.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0002_00001_.png",
+    "sha256": "8547d601a198d5dc7a1048adb0f4551c1c18361dd2b008b28ee0c25fbdd12a57"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a gargoyle officer in a long iron-banded coat, crown of three small gilded stone pinnacles between curled horns, a tall banner pole rising from its back with a tattered bat-wing membrane pennant and a gilded pinnacle tip, holding a staff with a lantern mouth",
+  "seed": 760142,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/prior/hero/760143": {
+  "inputs": {
+   "input": "rig/prior/prior.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0003_00001_.png",
+    "sha256": "2424cdd2894c41f18ee0c19791be5104cfe7a43d1e006027ce754f5494a62c0f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a gargoyle officer in a long iron-banded coat, crown of three small gilded stone pinnacles between curled horns, a tall banner pole rising from its back with a tattered bat-wing membrane pennant and a gilded pinnacle tip, holding a staff with a lantern mouth",
+  "seed": 760143,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/rubbling/hero/760100": {
+  "inputs": {
+   "input": "rig/rubbling/rubbling.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0000_00001_.png",
+    "sha256": "189e26b58f5f45010f601d3c5ac195fcd6690305c44cc8a7f3093516514411c8"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a tiny hunched gargoyle imp made of rough rubble stone, oversized curled ram horns, no helmet, stubby folded bat-wing nubs, holding a stone chisel spear low, glowing ember eyes",
+  "seed": 760100,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/rubbling/hero/760101": {
+  "inputs": {
+   "input": "rig/rubbling/rubbling.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0001_00001_.png",
+    "sha256": "0e542b1543a5ca3ea327ea94a73068e6636d5aacfd36e61b8c3eed2a51504c8c"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a tiny hunched gargoyle imp made of rough rubble stone, oversized curled ram horns, no helmet, stubby folded bat-wing nubs, holding a stone chisel spear low, glowing ember eyes",
+  "seed": 760101,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/rubbling/hero/760102": {
+  "inputs": {
+   "input": "rig/rubbling/rubbling.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0002_00001_.png",
+    "sha256": "34056651f85df167ec3e776fa30ccf5a3dd0f03de2a5f16b87ad5611bcffd3df"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a tiny hunched gargoyle imp made of rough rubble stone, oversized curled ram horns, no helmet, stubby folded bat-wing nubs, holding a stone chisel spear low, glowing ember eyes",
+  "seed": 760102,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/rubbling/hero/760103": {
+  "inputs": {
+   "input": "rig/rubbling/rubbling.hull.ref.h090.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0003_00001_.png",
+    "sha256": "34dbc09c7b4305bb94fc20bcc94ebce7033c0256cad7984dfbe6ab63a5f5978a"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from the side facing right, a tiny hunched gargoyle imp made of rough rubble stone, oversized curled ram horns, no helmet, stubby folded bat-wing nubs, holding a stone chisel spear low, glowing ember eyes",
+  "seed": 760103,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/trooper-rifle/hero/780400": {
+  "inputs": {
+   "input": "rig/trooper-rifle/trooper-rifle.hull.ref.h000.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0000_00001_.png",
+    "sha256": "e4769567795fbcac42afdd0ad92c701a912c34fed09c58bc311c5dd20d0e1f18"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from behind walking away, a soldier in a light exoskeleton frame seen from behind, squared helmet with a visor strip, flat shoulder plates, battery backpack, long straight rifle",
+  "seed": 780400,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/trooper-rifle/hero/780401": {
+  "inputs": {
+   "input": "rig/trooper-rifle/trooper-rifle.hull.ref.h000.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0001_00001_.png",
+    "sha256": "8dbfe3d89b3b4a5bde7398f33d5aeceb1891ccdd0aa74c2c66685a65d6423b53"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from behind walking away, a soldier in a light exoskeleton frame seen from behind, squared helmet with a visor strip, flat shoulder plates, battery backpack, long straight rifle",
+  "seed": 780401,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/trooper-rifle/hero/780402": {
+  "inputs": {
+   "input": "rig/trooper-rifle/trooper-rifle.hull.ref.h000.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0002_00001_.png",
+    "sha256": "5d855e291738b3b4071f589097d1b65959b8bd4a0145e90f8d30db62f26d2579"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from behind walking away, a soldier in a light exoskeleton frame seen from behind, squared helmet with a visor strip, flat shoulder plates, battery backpack, long straight rifle",
+  "seed": 780402,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/trooper-rifle/hero/780403": {
+  "inputs": {
+   "input": "rig/trooper-rifle/trooper-rifle.hull.ref.h000.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0003_00001_.png",
+    "sha256": "f13443ad4707c2946a53fd191d3aded30715ab3e07aca92cff2be1caca9604ec"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from behind walking away, a soldier in a light exoskeleton frame seen from behind, squared helmet with a visor strip, flat shoulder plates, battery backpack, long straight rifle",
+  "seed": 780403,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/trooper-rocket/hero/780410": {
+  "inputs": {
+   "input": "rig/trooper-rocket/trooper-rocket.hull.ref.h000.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0000_00001_.png",
+    "sha256": "0d4ee3577671b881d27d20ed07e79d2cfe54b395c679881797bd893c1a4053e5"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from behind walking away, the same soldier carrying a box shaped rocket launcher on the shoulder",
+  "seed": 780410,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/trooper-rocket/hero/780411": {
+  "inputs": {
+   "input": "rig/trooper-rocket/trooper-rocket.hull.ref.h000.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0001_00001_.png",
+    "sha256": "91a94219c6d63fe88049fc07aa93b607a56ee0db39ceee93e1cff30c7effd47c"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from behind walking away, the same soldier carrying a box shaped rocket launcher on the shoulder",
+  "seed": 780411,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/trooper-rocket/hero/780412": {
+  "inputs": {
+   "input": "rig/trooper-rocket/trooper-rocket.hull.ref.h000.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0002_00001_.png",
+    "sha256": "95efe608f6943f60121c78096b5185984b077b03dc48b6d49e70de55547be29f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from behind walking away, the same soldier carrying a box shaped rocket launcher on the shoulder",
+  "seed": 780412,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
+ },
+ "runs/trooper-rocket/hero/780413": {
+  "inputs": {
+   "input": "rig/trooper-rocket/trooper-rocket.hull.ref.h000.png"
+  },
+  "kind": "hero",
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, smooth gradient, multiple views, character sheet, grid, sky, horizon, ground, landscape, scenery, crowd, blood, gore, wounds, insect, chitin, tentacles, slime, real military insignia, religious symbol",
+  "outputs": [
+   {
+    "file": "0003_00001_.png",
+    "sha256": "4584b3a8b5a985d3ccc311dc775d0bf77fd21572017bfcd1ec76ee773ce6506a"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, single full body figure, crisp square pixels, limited palette, original artwork, centered, isolated, solid flat magenta background (#FF00FF), no checkerboard, night lighting, seen from behind walking away, the same soldier carrying a box shaped rocket launcher on the shoulder",
+  "seed": 780413,
+  "workflow": "art/workflows/sprites/variant-qwen-edit.json"
  }
 }

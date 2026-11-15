@@ -365,3 +365,47 @@ by `bake` with smoothing so only material and accent colours (eyes, glow, light 
 noise. No heading edits, no layer edits, no VACE clips. GPU: the remaining ~23 units × 4 hero candidates (~25 min).
 Reversible: the heading and VACE workflows stay committed; a later pass can add them per unit if a better graph
 (e.g. ControlNet-guided or a pose-locked LoRA) appears.
+
+## 13. Ledger: hero candidates for the remaining 23 units (2026-11-15)
+
+`variant-qwen-edit.json`, count 4 (consecutive seeds from the unit's `seed`), prompts and negatives exactly as in
+`jobs.json`, input the rig `hull.ref` at the hero heading. ~58 s per unit, one job at a time, no evictions, no
+failures, **no rerolls**. Job ids `st-17947…`: sleet -32456566-30, cairn -32528116-31, tether -32599302-32, sextant
+-32669091-33, stilt -32737755-34, skiff -32807147-35, crocket-captured -32964222-36, tympanum -33030267-37,
+spout-runner -33096160-38, scrapmason -33161978-39, reliquary -33228118-40, carillon -33294365-41, kiln-ox
+-33359815-42, strider -33426418-43, belfry -33493340-44, hodcrawler -33561701-45, chapterhouse -33628683-46,
+trooper-rifle -33759219-47, trooper-rocket -33824110-48, rubbling -33889866-49, corbel -33955551-50, knell
+-34020477-51, prior -34085483-52. Provenance in the `*-runs.json` files; picked raws committed in
+`art/sprites/sources/ground-blocks-selected/<unit>/hero/<seed>.png`. Sheet of all 26 picks (incl. the 3 pilot heroes):
+`art/contact/ground-heroes-all.png` (rig | raw | finished). Picks (operator delegated):
+
+- **sleet 780101**: big cyan visor and strips survive the finish; all four add long twin skis the rig lacks (clipped).
+- **cairn 780110**: the only eight-wheeled one, matches the rig; clean plates and cyan strips.
+- **tether 780120**: tracked rear, crane and drum at the back; least mottled finish.
+- **sextant 780211**: clean cyan track strip and single visor; all four centre the gun on a turret instead of a rear casemate (rig owns the shape).
+- **stilt 780300**: the AI draws four legs (AT-AT style) in every candidate; this one's legs line up best with the rig's two and the cab reads.
+- **skiff 780310**: flat lozenge with cyan edge strip and pads, cleanest finish.
+- **crocket-captured 760212**: lowest hull without a big turret (closest to the rig), slag channel along the spine.
+- **tympanum 760220**: horned turret, face plate, few stray glows; least mottled of four similar tanks.
+- **spout-runner 760233**: one of two with wheels instead of tracks, twin launcher; ember accents survive.
+- **scrapmason 760242**: gargoyle face and slag line read at sprite size; others go flat black.
+- **reliquary 760302**: casket roof with the slag ridge; strongest accent in the finish.
+- **carillon 760403**: bells on top and a slag line; 760400 throws loose sparks outside the body.
+- **kiln-ox 760413**: keeps the rig's brown basalt tones with glowing seams; cleanest four-legged read.
+- **strider 760503**: slag stripe on the back reads; every candidate draws four legs instead of two (clipped by the rig).
+- **belfry 760512**: gargoyle corner heads with ember eyes, louvred chamber, launch tube; clean finish.
+- **hodcrawler 760601**: keeps the violet salvaged plates; crane hand clipped by the rig.
+- **chapterhouse 760701**: Qwen returned a portrait frame (792×1320) with the spire centred while the rig's spire is
+  offset; the finish fits subject box to rig box. Picked for the cleanest silhouette and rose-window glow. Weakest fit
+  of the Host set; a candidate for a later re-roll if bake shows a misplaced spire.
+- **trooper-rifle 780400**: cyan visor and back light, clean exoskeleton plates.
+- **trooper-rocket 780413**: launcher across the shoulders reads without a big flat box (780410/-12 turn into a grey slab).
+- **rubbling 760100**: ram horns, ember eye, spear; 760101 has a shadow ellipse under the feet.
+- **corbel 760121**: violet stone, the face-ended launcher tube, ember eye; 760120 is grey.
+- **knell 760133**: the only one with ember eyes; every candidate hangs the bell behind the waist, not low as in the rig, so the finish is mostly dark cloth.
+- **prior 760140**: lantern glow lands where the rig's accent is; pennant and crown read.
+
+Off-nominal: the Host finishes are dark overall (low-contrast stone by prompt), as the pilot Crocket was; `bake`'s
+smoothing should decide whether that needs a brighter prompt. `ingest` re-records every `work/http/` folder from the
+current `jobs.json`, which would have overwritten the pilot Crocket runs with the newer Host negative prompt; the pilot
+folders were moved to `work/http-pilot/` so their committed records stay accurate.
