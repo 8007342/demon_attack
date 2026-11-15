@@ -347,6 +347,8 @@ class FlyoverBackground implements GroundOccluders {
 
   /// Distance fog on the ground (the old 110 px gradient): 0 clear, toward
   /// 0.85 at the horizon.
+  static double groundFogAt(double flatY) => _groundFog(flatY);
+
   static double _groundFog(double flatY) {
     final t = (flatY - horizon) / 110;
     if (t >= 1) return 0;
@@ -762,6 +764,8 @@ class FlyoverBackground implements GroundOccluders {
       }
       final ds = center - shadow;
       if (_shadow && ds.dx.abs() < 40 && ds.dy.abs() < 30) s.duckT = .5;
+      // terrain-shadows §4: critters duck under the lurking shadow too.
+      if (_underLurk(center)) s.duckT = .5;
       if (s.burrowIn > 0) {
         // Easter-egg scatter: half the group burrows after 1-1.5 s.
         s.burrowIn -= dt;
@@ -1288,6 +1292,14 @@ class FlyoverBackground implements GroundOccluders {
     final p = _plants[index];
     c.drawAtlas(sheet, [p.$3], [p.$4], [p.$5], BlendMode.modulate, null,
         _pixelPaint);
+  }
+
+  bool _underLurk(Offset p) {
+    final r = terrain.lurkCover;
+    if (r == null) return false;
+    final dx = (p.dx - r.center.dx) / (r.width / 2);
+    final dy = (p.dy - r.center.dy) / (r.height / 2);
+    return dx * dx + dy * dy <= 1;
   }
 
   /// The ship's shadow is shown (also drives the critters' duck reaction).

@@ -126,6 +126,32 @@ ranges and fronts are unchanged.
 
 **Reduced motion.** The track still moves (it is slow), but without meander.
 
+**As built (task 3).**
+- **Stream.** Each sentinel's track draws from `Random(seed ^ 0x5E57 ^ (level · 64 + wave))`, so two sentinels in
+  one run do not repeat the same path; the simulation's `random` is never touched (tested).
+- **Front.** There is no `GroundTuning.frontZ`; the track ends at `GroundTuning.fireZ` (the ground war's fire line,
+  y ≈ 323) when the sector has a ground front, and at 2 z0 otherwise.
+- **Size.** The footprint is `2.5 × 1.6 × n × (1 + 0.3 · progress)` of the 128 × 64 strip, where `n` is the ground's
+  nearness under the shadow. The sentinel's own shadow is `1.6 × n`, so the lurking one stays 2.5 times as broad at
+  every depth: small near the fog, broad at the front.
+- **Fog.** Alpha is `0.30 · rise · groundLight · (1 − groundFog(y))`, with `rise` the eased foreshadow opacity (which
+  itself fades in over 3 s) and `FlyoverBackground.groundFogAt` the ground's distance fog.
+- **The rising sentinel.** The legacy code gave a sentinel no altitude during its 3.2 s rise out of the fog, so it cast
+  no shadow until it arrived. Its shadow altitude now eases from the lurk's 120 to its fight altitude over the rise
+  (presentation only), and the hand-off blends the lurking shadow into it over 0.8 s (position, size and alpha; image
+  and bucket switch at the midpoint). Measured: at most 3.3 units of movement per frame through the hand-off.
+- **Hesitation.** The scene publishes the footprint as `TerrainView.lurkCover`; `GroundPose.hesitate` is 0.7 for poses
+  inside it, and the painters multiply the gait and tread animation rate of demon units and allies by it. A walker's
+  stride follows the ground it covers, which is gameplay motion, so walkers are unchanged. Critters duck under the
+  footprint with the existing ship-shadow duck.
+- **Reduced tier.** The lurking and boss shadows are drawn there too, flat and sharp. The byte-identity fixture
+  therefore covers frames without them (the legacy casters).
+- **Boss.** The shadow cell is the class's superstructure (form 0) and bow (frame 0), drawn at one pixel per arena
+  unit with medium filtering and the ink filter, and baked with `toImageSync` once per (image, class). The ground
+  point is under the carrier's flight-sheet nearness (`Perspective.nearnessAtY(b.y)`). Alpha is
+  `0.35 · 0.85 · min(1, 160 / h)` and the scale is `0.9 · √(160 / h)` (clamped to 0.4–1.2). It fades in with the arrival
+  descent. `DemonScene.bossShadowAltitude` (default 160) is the hook for `boss-grandeur`.
+
 ## 5. Determinism and tests
 - **Pure projector tests** on synthetic `GroundRelief` fields:
   - flat equivalence;

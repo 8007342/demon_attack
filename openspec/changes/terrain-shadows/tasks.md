@@ -11,10 +11,10 @@
 - [x] 2.4 Softness from height above the hit surface (`k = (h − t) / 300`)
 
 ## 3. Lurking shadow and boss shadow
-- [ ] 3.1 `SentinelForeshadow.lurk` track: far terrain → front depth, 10–16 u/s, meander (amplitude 30, period 9 s), own PRNG stream `seed ^ 0x5E57`; reduced motion drops the meander
-- [ ] 3.2 Lurking caster: alpha `0.30 · rise · groundLight`, footprint ×2.5 → ×1.3 growth, bucket 2; 0.8 s hand-off into the in-play sentinel shadow (one shadow at all times)
-- [ ] 3.3 Ground hesitation under the lurking footprint (critter duck; ground unit pace × 0.7), presentation only
-- [ ] 3.4 Boss shadow cell baked once per hull load (alpha, ×0.5 area downscale, inked) and a boss caster at a default altitude of 160, exposing `bossShadowAltitude` for `boss-grandeur`
+- [x] 3.1 `SentinelForeshadow.lurk` track: far terrain → front depth, 10–16 u/s, meander (amplitude 30, period 9 s), own PRNG stream `seed ^ 0x5E57`; reduced motion drops the meander
+- [x] 3.2 Lurking caster: alpha `0.30 · rise · groundLight`, footprint ×2.5 → ×1.3 growth, bucket 2; 0.8 s hand-off into the in-play sentinel shadow (one shadow at all times)
+- [x] 3.3 Ground hesitation under the lurking footprint (critter duck; ground unit pace × 0.7), presentation only
+- [x] 3.4 Boss shadow cell baked once per hull load (alpha, ×0.5 area downscale, inked) and a boss caster at a default altitude of 160, exposing `bossShadowAltitude` for `boss-grandeur`
 
 ## 4. Validation
 - [ ] 4.1 Scene tests: layer count, draw calls per bucket, reduced-tier byte identity, the perf test within its existing budget

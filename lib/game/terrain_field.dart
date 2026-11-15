@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' show Rect;
 
 import 'model.dart';
 import 'shadow_projector.dart';
@@ -674,6 +675,19 @@ class TerrainView implements GroundRelief, ShadowSurface {
     return (y, y < f - lift - .5);
   }
 
+  // --- terrain-shadows §4: ground units under the sentinel's lurking
+  // shadow hesitate (presentation only). The scene publishes the visible
+  // footprint each frame; poses inside it report `hesitate` .7.
+  Rect? lurkCover;
+
+  double _hesitation(double x, double y) {
+    final r = lurkCover;
+    if (r == null) return 1;
+    final dx = (x - r.center.dx) / (r.width / 2);
+    final dy = (y - r.center.dy) / (r.height / 2);
+    return dx * dx + dy * dy <= 1 ? .7 : 1;
+  }
+
   // ---------------------------------------------------------------------
   // Navigation (GroundRelief)
   // ---------------------------------------------------------------------
@@ -722,7 +736,8 @@ class TerrainView implements GroundRelief, ShadowSurface {
     final behind = _heightFast(px, z + dz);
     final climb = (ahead - behind) / (2 * dz);
     final pace = (1 - 2.4 * climb).clamp(.5, 1.25);
-    return GroundPose(x, y, climb: climb, pace: pace);
+    return GroundPose(x, y,
+        climb: climb, pace: pace, hesitate: _hesitation(px, y));
   }
 
   // --- ground war v4: full-width units choose their own routes (by
@@ -737,7 +752,8 @@ class TerrainView implements GroundRelief, ShadowSurface {
     final behind = _heightFast(px, z + dz);
     final climb = (ahead - behind) / (2 * dz);
     final pace = (1 - 2.4 * climb).clamp(.5, 1.25);
-    return GroundPose(x, y, climb: climb, pace: pace);
+    return GroundPose(x, y,
+        climb: climb, pace: pace, hesitate: _hesitation(px, y));
   }
 
   @override
