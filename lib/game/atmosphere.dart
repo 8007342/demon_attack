@@ -214,6 +214,18 @@ class Atmosphere {
     FogSlot.midVeil,
   ];
 
+  // --- continuous-swarm depth contract (its design §0, fog-restoration
+  // §2): the swarm reads the fog only through these accessors.
+
+  /// Nearness of every depth-sorted air layer, far to near (sorted). The
+  /// swarm's reserve waits below the first; arrival paths cross them all.
+  static List<double> get bandNearness =>
+      [for (final s in depthSlots) layers[s]!.nearness]..sort();
+
+  /// Light left through the ground fog for a ground shadow (t_ground);
+  /// fog-restoration may refine it per row. 0.85 is the swarm's fallback.
+  static double groundLight([double y = 400]) => .85;
+
   /// Sky sheets fade near the ship's row so the two together stay at or
   /// under 12 % over the player (research §11).
   static const shipZoneTop = 410.0, shipZoneFactor = .7;

@@ -100,19 +100,19 @@ first (see design §0 and §10). `demon-intelligence` and `cinematic-flow` start
       0.7 decay), flash expansion on kill, wing tilt.
       - Clamp |δ| ≤ hitHalfWidth / 3.
       - Test that the model's `x, y` are unchanged by it.
-- [ ] 6.4 `_creatureShadows`: unified, batched (≤ 3 `saveLayer`s + `drawAtlas`), persistent, with altitude
+- [x] 6.4 `_creatureShadows`: unified, batched (≤ 3 `saveLayer`s + `drawAtlas`), persistent, with altitude
       channel, sun drift, divers × 1.25, no fade on settling.
       - Read `t_ground` through the W2 accessor, falling back to 0.85.
       - Remove `_swarmShadows` and `_arrivalShadows`.
-- [ ] 6.5 Ship silhouette shadow in `flyover_background.dart` `paintShadow`. Shadow-over-ship dim (cap 15 %).
+- [x] 6.5 Ship silhouette shadow in `flyover_background.dart` `paintShadow`. Shadow-over-ship dim (cap 15 %).
       Sentinel foreshadow ground shadow.
-- [ ] 6.6 `test/swarm_shadows_test.dart`:
+- [x] 6.6 `test/swarm_shadows_test.dart`:
       - every present airborne creature casts one;
       - none in the reserve;
       - at most 3 layers per frame (a recording canvas counts `saveLayer`);
       - bullets are drawn after shadows;
       - the dim never exceeds the cap.
-- [ ] 6.7 Perf: `test/atmosphere_perf_test.dart` with a 61-creature combat frame plus shadows, ≤ +1.5 ms against
+- [x] 6.7 Perf: `test/atmosphere_perf_test.dart` with a 61-creature combat frame plus shadows, ≤ +1.5 ms against
       baseline.
 
 ## 7. One swarm timeline and radio

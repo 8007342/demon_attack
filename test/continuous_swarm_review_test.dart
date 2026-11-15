@@ -90,6 +90,7 @@ void _run(
 }
 
 Future<ui.Image> _frame(DemonScene scene) async {
+  scene.model.invulnerable = 0; // no protection blink on review frames
   final recorder = ui.PictureRecorder();
   final canvas = ui.Canvas(recorder);
   canvas.drawRect(
@@ -243,6 +244,7 @@ void main() {
           bottom: 650,
         );
         await _single(scene, 'fight');
+
       }
     });
   });
