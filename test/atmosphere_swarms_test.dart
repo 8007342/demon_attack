@@ -364,7 +364,7 @@ void main() {
         for (var i = 0; i < 100; i++) {
           m.foreshadow!
             ..clock = i / 10
-            ..place(180);
+            ..place();
           s += m.foreshadow!.scale;
         }
         return s / 100;

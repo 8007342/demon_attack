@@ -12,8 +12,10 @@ import 'ground_atmosphere_atlas.dart';
 /// installed into [Atmosphere.groundArt]; without it the atmosphere keeps
 /// its baked fBm tiles and fog shader.
 ///
-/// Presentation only: it reads the fog clock, the ship's x, the scene's
-/// environment and the skirmish tide, never writes the model.
+/// Presentation only: it reads the fog clock, the scene's environment and
+/// the skirmish tide, never writes the model. World-anchored
+/// (fog-restoration): the bands drift with the wind and never follow the
+/// ship; the atlas' generated `parallax` numbers are not used at runtime.
 class GroundAtmosphereArt {
   GroundAtmosphereArt(this.image);
 
@@ -46,24 +48,22 @@ class GroundAtmosphereArt {
     ];
   }
 
-  /// Lateral offset in whole arena units: drift with the fog clock plus
-  /// parallax against the ship's offset from the centre.
-  static int offset(GroundAtmosphereLayer l, double time, double shipX) =>
-      (l.drift * time - (shipX - 180) * l.parallax).round();
+  /// Lateral offset in whole arena units: the drift with the fog clock.
+  static int offset(GroundAtmosphereLayer l, double time) =>
+      (l.drift * time).round();
 
   /// Paints tiled band [l] across the 360-unit arena column at its row.
   void paintBand(
     Canvas c,
     GroundAtmosphereLayer l, {
     required double time,
-    required double shipX,
     required double environment,
     double opacity = 1,
   }) {
     final a = (l.opacity * opacity).clamp(0.0, 1.0);
     if (a <= 0) return;
     const w = GroundAtmosphereAtlas.width;
-    final u0 = (-offset(l, time, shipX)) % w;
+    final u0 = (-offset(l, time)) % w;
     for (final (s, weight) in sectorWeights(environment)) {
       final src = bandRect(l.id, s);
       _paint.color = Color.fromRGBO(255, 255, 255, a * weight);
@@ -96,13 +96,12 @@ class GroundAtmosphereArt {
     Canvas c,
     GroundAtmosphereLayer l, {
     required double time,
-    required double shipX,
     double opacity = 1,
   }) {
     final a = (l.opacity * opacity).clamp(0.0, 1.0);
     if (a <= 0) return;
     _paint.color = Color.fromRGBO(255, 255, 255, a);
-    final o = offset(l, time, shipX);
+    final o = offset(l, time);
     const n = GroundAtmosphereAtlas.cloudShadowFrames;
     const top = GroundAtmosphereAtlas.shadowRowTop;
     const span =

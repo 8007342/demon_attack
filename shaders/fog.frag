@@ -12,7 +12,7 @@ uniform vec4 uXform;  // local = arena * scale (xy) + offset (zw)
 uniform vec4 uBand;   // top, peak, bottom, alpha
 uniform vec4 uColor;  // rgb, wisp threshold
 uniform vec4 uMotion; // time, drift x, drift y, warp
-uniform vec4 uLook;   // scale, flatten, ground (0/1), lateral shift
+uniform vec4 uLook;   // scale, flatten, ground (0/1), lateral offset (0: world-anchored)
 uniform vec4 uShip;   // ship-zone top, ship-zone factor, ground cam, seed
 
 out vec4 fragColor;
@@ -85,9 +85,12 @@ void main() {
   float slow = t * 0.035;
   vec2 q = vec2(fbm3(p + vec2(0.0, slow)), fbm3(p + vec2(5.2, 1.3) - slow));
   float d = fbm(p + uMotion.w * 1.6 * (q - 0.5) + vec2(slow * 0.6, 0.0));
-  // Value-noise fBm clusters near .5: stretch it before the wisp cut.
-  d = (d - 0.5) * 2.2 + 0.5;
-  float density = smoothstep(0.22 + uColor.w, 0.72, d);
+  // Value-noise fBm clusters near .5: stretch it before the wisp cut. A
+  // wide cut keeps the billows' edges soft where the warp folds them
+  // (fog-restoration: no hard-edged sheets).
+  d = (d - 0.5) * 1.8 + 0.5;
+  float density = smoothstep(0.18 + uColor.w, 0.86, d);
+  density *= density * (3.0 - 2.0 * density);
   float a = density * profile(arena.y) * uBand.w;
   if (arena.y > uShip.x - 30.0) {
     float zone = smoothstep(uShip.x - 30.0, uShip.x, arena.y);
