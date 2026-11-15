@@ -84,7 +84,7 @@ commit with `flutter analyze` and `flutter test` green. Group 6 (attract demo) i
       never writes scores.
 
 ## 7. Review frames and playtest
-- [ ] 7.1 `test/cinematic_flow_review_test.dart` (design §7):
+- [x] 7.1 `test/cinematic_flow_review_test.dart` (design §7):
       - 30 frames per kind;
       - the luminance, ship-displacement, direction and smoothness metrics as assertions where they are rules
         (no black, ≤ 6 u per frame, direction kept) and as a recorded table otherwise;
