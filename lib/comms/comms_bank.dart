@@ -1229,8 +1229,10 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     ttl: 4.0,
     mood: CommsMood.happy,
     lines: [
-      CommsLine(id: 'bonusStart.supplyRun.h0', speaker: 'wisp', duration: 3.161, text: 'Salvage drifting. Collect what you can.', mouth: '====<<<4433===========0000000000<<===========222', open: '024799867663347742454211000000068953657647876421', vis: 'eee--------ee---eeeee-------------eee-----------', emotion: 'teasing', clip: 'salvage.h2'),
-      CommsLine(id: 'bonusStart.supplyRun.h1', speaker: 'kestrel', duration: 2.65, text: 'Salvage on the field. Quick pass, then regroup.', mouth: '0004444<<<<<<<<<==000222=====<<<<44<<<<<', open: '0156675888568985321174467655688887788532', vis: '----------------ee------eeee--oo--------', emotion: 'teasing', clip: 'salvage.h3'),
+      CommsLine(id: 'bonusStart.supplyRun.h0', speaker: 'anvil', duration: 3.47, text: 'Crates on parachutes. Three hits opens one. Show off a little.', emotion: 'calm', silent: true),
+      CommsLine(id: 'bonusStart.supplyRun.h1', speaker: 'kestrel', duration: 3.2, text: 'Scavengers want our cargo. Shoot the crates, catch what falls.', emotion: 'urgent', silent: true),
+      CommsLine(id: 'bonusStart.supplyRun.h2', speaker: 'wisp', duration: 3.47, text: 'Gold brackets mark the crates. Crack one, then slide under it.', emotion: 'calm', silent: true),
+      CommsLine(id: 'bonusStart.supplyRun.h3', speaker: 'sunny', duration: 3.74, text: 'Crates up top! Pop them open and catch the goodies. Finders keepers.', emotion: 'teasing', silent: true),
     ],
   ),
   'bonusCrate.supplyRun': CommsTriggerSpec(
@@ -1238,13 +1240,16 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     priority: 3,
     cooldown: 12.0,
     ttl: 2.0,
-    chance: 0.4,
+    chance: 0.75,
     mood: CommsMood.happy,
     group: 'loot',
     lines: [
-      CommsLine(id: 'bonusCrate.supplyRun.h0', speaker: 'rook', duration: 0.995, text: 'New toy! Try it out.', mouth: '5555<<<<<444422', open: '047589678776532', vis: 'oooo-----------', emotion: 'excited', clip: 'weaponPickup.h0'),
-      CommsLine(id: 'bonusCrate.supplyRun.h1', speaker: 'rook', duration: 1.749, text: 'Loot time! Grab everything.', mouth: '555555<<442222<<<<<<<<===00', open: '047757887642158988874554211', vis: 'ooooo-----------------eee--', emotion: 'teasing', clip: 'salvage.h1'),
-      CommsLine(id: 'bonusCrate.supplyRun.h2', speaker: 'pip', duration: 1.583, text: 'Ooh, can I have one of those next?', mouth: '55<<<<<<<<<<<<<<<<<=====', open: '068864789989898899865321', vis: 'ooooo-----------eeeeee--', emotion: 'excited', clip: 'weaponPickup.h4'),
+      CommsLine(id: 'bonusCrate.supplyRun.h0', speaker: 'rook', duration: 1.85, text: 'Crate is open! Catch it!', emotion: 'excited', silent: true),
+      CommsLine(id: 'bonusCrate.supplyRun.h1', speaker: 'sparrow', duration: 1.85, text: 'Cargo is loose. Grab it!', emotion: 'excited', silent: true),
+      CommsLine(id: 'bonusCrate.supplyRun.h2', speaker: 'pip', duration: 2.12, text: 'Ooh, what was in that one?', emotion: 'excited', silent: true),
+      CommsLine(id: 'bonusCrate.supplyRun.h3', speaker: 'sunny', duration: 2.66, text: 'Cracked it! Tell me it\'s snacks this time.', emotion: 'teasing', silent: true),
+      CommsLine(id: 'bonusCrate.supplyRun.h4', speaker: 'nomad', duration: 2.93, text: 'One down. Catch it before it hits the sand.', emotion: 'calm', silent: true),
+      CommsLine(id: 'bonusCrate.supplyRun.h5', speaker: 'anvil', duration: 2.12, text: 'Clean break. Get under the cargo.', emotion: 'calm', silent: true),
     ],
   ),
   'bonusPickup.salvageMagnet': CommsTriggerSpec(
@@ -1254,8 +1259,8 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     ttl: 4.0,
     mood: CommsMood.happy,
     lines: [
-      CommsLine(id: 'bonusPickup.salvageMagnet.h0', speaker: 'rook', duration: 1.749, text: 'Loot time! Grab everything.', mouth: '555555<<442222<<<<<<<<===00', open: '047757887642158988874554211', vis: 'ooooo-----------------eee--', emotion: 'teasing', clip: 'salvage.h1'),
-      CommsLine(id: 'bonusPickup.salvageMagnet.h1', speaker: 'rook', duration: 0.995, text: 'New toy! Try it out.', mouth: '5555<<<<<444422', open: '047589678776532', vis: 'oooo-----------', emotion: 'excited', clip: 'weaponPickup.h0'),
+      CommsLine(id: 'bonusPickup.salvageMagnet.h0', speaker: 'wisp', duration: 2.93, text: 'Salvage magnet online. Loose cargo flies to you now.', emotion: 'excited', silent: true),
+      CommsLine(id: 'bonusPickup.salvageMagnet.h1', speaker: 'rook', duration: 3.2, text: 'A magnet! Everything is attracted to you. Cannot blame it.', emotion: 'teasing', silent: true),
     ],
   ),
   'bonusPickup.doubleScore': CommsTriggerSpec(
@@ -1265,8 +1270,8 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     ttl: 4.0,
     mood: CommsMood.happy,
     lines: [
-      CommsLine(id: 'bonusPickup.doubleScore.h0', speaker: 'anvil', duration: 2.418, text: 'Good pickup. Make it count.', mouth: '0000<<<<<<<<<<<222000000==3333<<<<<00', open: '0005877532587454321101587465378974321', vis: '---oooo-----------------ee-----------', emotion: 'excited', clip: 'weaponPickup.h2'),
-      CommsLine(id: 'bonusPickup.doubleScore.h1', speaker: 'rook', duration: 0.995, text: 'New toy! Try it out.', mouth: '5555<<<<<444422', open: '047589678776532', vis: 'oooo-----------', emotion: 'excited', clip: 'weaponPickup.h0'),
+      CommsLine(id: 'bonusPickup.doubleScore.h0', speaker: 'sparrow', duration: 3.47, text: 'Gold coins! Every kill and crate pays double for a bit.', emotion: 'excited', silent: true),
+      CommsLine(id: 'bonusPickup.doubleScore.h1', speaker: 'sunny', duration: 1.85, text: 'Double score! Twice the sunshine.', emotion: 'teasing', silent: true),
     ],
   ),
   'bonusCleared.supplyRun': CommsTriggerSpec(
@@ -1444,6 +1449,21 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'bonusMidway.stormfront.h0', speaker: 'sunny', duration: 2.39, text: 'Halftime weather report: still stormy, still winning.', emotion: 'teasing', silent: true),
       CommsLine(id: 'bonusMidway.stormfront.h1', speaker: 'nomad', duration: 2.66, text: 'Funny. That thunder sounded like someone shaking dice.', emotion: 'calm', silent: true),
       CommsLine(id: 'bonusMidway.stormfront.h2', speaker: 'wisp', duration: 2.66, text: 'Pressure\'s dropping again. Keep them under the clouds!', emotion: 'urgent', silent: true),
+    ],
+  ),
+  'bonusCrateMissed.supplyRun': CommsTriggerSpec(
+    name: 'bonusCrateMissed.supplyRun',
+    priority: 3,
+    cooldown: 25.0,
+    ttl: 2.5,
+    chance: 0.6,
+    mood: CommsMood.happy,
+    group: 'loot',
+    lines: [
+      CommsLine(id: 'bonusCrateMissed.supplyRun.h0', speaker: 'rook', duration: 3.47, text: 'That crate\'s going to the fish. Shoot the next one open!', emotion: 'teasing', silent: true),
+      CommsLine(id: 'bonusCrateMissed.supplyRun.h1', speaker: 'sparrow', duration: 2.66, text: 'Missed one! Three hits and it pops, remember?', emotion: 'teasing', silent: true),
+      CommsLine(id: 'bonusCrateMissed.supplyRun.h2', speaker: 'pip', duration: 2.93, text: 'Noooo, the snack crate! Crack the next one, quick!', emotion: 'panicked', silent: true),
+      CommsLine(id: 'bonusCrateMissed.supplyRun.h3', speaker: 'anvil', duration: 3.47, text: 'Unopened crates are just litter. Pop them on the way down.', emotion: 'calm', silent: true),
     ],
   ),
 };
@@ -1943,6 +1963,17 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'bonusMidway.stormfront.d0', speaker: 'skarn', duration: 1.1, grunt: 'snarl', gloss: 'Who keeps calling the lightning?!', emotion: 'stern', silent: true),
       CommsLine(id: 'bonusMidway.stormfront.d1', speaker: 'morth', duration: 1.1, grunt: 'gloat', gloss: 'Storms pass. Turns pass. The brood remains.', emotion: 'teasing', silent: true),
       CommsLine(id: 'bonusMidway.stormfront.d2', speaker: 'sliss', duration: 1.1, grunt: 'alarm', gloss: 'Wet scales! Somebody move the umbrella!', emotion: 'panicked', silent: true),
+    ],
+  ),
+  'bonusCrateMissed.supplyRun': CommsTriggerSpec(
+    name: 'bonusCrateMissed.supplyRun',
+    priority: 3,
+    cooldown: 25.0,
+    ttl: 2.5,
+    delay: 0.4,
+    lines: [
+      CommsLine(id: 'bonusCrateMissed.supplyRun.d0', speaker: 'skritch', duration: 1.1, grunt: 'cackle', gloss: 'Dropped it! Finders keepers!', emotion: 'excited', silent: true),
+      CommsLine(id: 'bonusCrateMissed.supplyRun.d1', speaker: 'nibb', duration: 1.1, grunt: 'cackle', gloss: 'Mine now. Does it have the crunchy ones?', emotion: 'excited', silent: true),
     ],
   ),
 };

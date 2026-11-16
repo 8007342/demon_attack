@@ -4385,7 +4385,9 @@ class ArcadeModel {
               Pickup(crate.x, crate.y, crate.power, bonus: crate.bonus),
             );
             _bonusCrateOpened(crate); // --- bonus levels
-            events.add('salvage');
+            // --- mission-medals: a bonus crate pops with its own sound
+            // (the 'salvage' jingle and radio meant "wave clear").
+            events.add(bonus == null ? 'salvage' : 'crateOpen');
           }
           break;
         }

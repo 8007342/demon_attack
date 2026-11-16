@@ -91,11 +91,17 @@ class Rig {
   ArcadeModel get model => scene.model;
   dynamic get transitions => state.transitions;
 
-  /// Advances the simulation and the comms clock together.
-  Future<void> step(double seconds, {double dt = 1 / 30}) async {
+  /// Advances the simulation and the comms clock together. [hold]: honour
+  /// the scene's hold (mission-medals: the urgent-mission card holds a
+  /// bonus level's start), as the scene's own update does.
+  Future<void> step(
+    double seconds, {
+    double dt = 1 / 30,
+    bool hold = false,
+  }) async {
     for (var t = 0.0; t < seconds - 1e-9; t += dt) {
       _wall += dt;
-      model.update(dt);
+      if (!hold || !scene.holdModel()) model.update(dt);
       scene.onTick();
     }
     await tester.pump();
