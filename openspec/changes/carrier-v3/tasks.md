@@ -18,7 +18,7 @@
 - [x] 2.2 `model.dart`: launch waves (the loom waves' rosters) enter from gate positions projected through D; `Carrier.emerge` becomes the Close progress; `_beginRise` becomes the Close; the cap is 90 s
 - [x] 2.3 Fight minion flocks out of on-screen gates (round-robin over gates with `|x| ≤ 150` arena units at the carrier's x) — spawn moments unchanged; the gate telegraphs and opens 1.7 s ahead of the flock timer and holds open until it fires
 - [x] 2.4 Shield intercept unchanged; `test/carrier_field_equivalence_test.dart` (shield hit log identical)
-- [x] 2.5 Calibration: boss endurance (`test/boss_endurance_test.dart`) and campaign playtest within the boss-grandeur gates (pooled 5 %, per difficulty 10 %), plus the boss level's clear time within 10 %; log in `plan/calibration-current.md` — see `plan/calibration-current.md`, "Carrier v3 runtime": endurance pooled −4.2 % after holding power timers while volleys wait in gates; boss-level clear time pooled +3.4 %, Easy +12.6 % (open for the operator)
+- [x] 2.5 Calibration: boss endurance (`test/boss_endurance_test.dart`) and campaign playtest within the boss-grandeur gates (pooled 5 %, per difficulty 10 %), plus the boss level's clear time within 10 %; log in `plan/calibration-current.md` — see `plan/calibration-current.md`, "Carrier v3 runtime": endurance pooled +0.1 % after running power timers at half rate while volleys wait in gates; boss-level clear time pooled +3.4 %, Easy +12.6 % (open for the operator)
 
 ## 3. Bend (works on today's art)
 - [x] 3.1 `lib/game/carrier_bend.dart`: the analytic bend (design §2.2), springs, limits, wing lag, buffet; anchor invariance test (±3 units at the limits)

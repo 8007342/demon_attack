@@ -919,7 +919,12 @@ class ArcadeModel {
 
   Map<String, Object?> get _carrierEventData {
     final a = BossGrammar.forRun(route: cycle, variant: bossVariant);
-    return {'route': cycle, 'tour': cycle + 1, 'set': a.setName};
+    return {
+      'route': cycle,
+      'tour': cycle + 1,
+      'set': a.setName,
+      'variant': bossVariant,
+    };
   }
 
   void _queueGateEvent(GateEvent e) {
@@ -975,6 +980,9 @@ class ArcadeModel {
 
   /// The approach's live creatures are all parked in gates (the power
   /// timers hold, as they do while the carrier closes).
+  /// The power timers' rate while [_gateHeld].
+  static const gateHoldRate = .5;
+
   bool get _gateHeld {
     if (!looming || launches == null) return false;
     var parked = false;
@@ -3014,13 +3022,13 @@ class ArcadeModel {
     // Module timers freeze while the ship is away: the loadout survives.
     // boss-grandeur: and while the carrier rises (a held beat, as the
     // transition into a carrier sector held them before the loom).
-    // carrier-v3: and while everything the approach has in play waits
-    // inside the carrier's gates (nothing to shoot; calibration §2.5).
-    for (final value in shipAway || bossRising || _gateHeld
-        ? const <Power>[]
-        : Power.values) {
+    // carrier-v3: and at half rate while everything the approach has in
+    // play waits inside the carrier's gates (nothing to shoot; tuned on the
+    // boss endurance gate, plan/calibration-current.md "Carrier v3").
+    final powerDt = _gateHeld ? dt * gateHoldRate : dt;
+    for (final value in shipAway || bossRising ? const <Power>[] : Power.values) {
       if (powerTimers.containsKey(value)) {
-        powerTimers[value] = math.max(0, powerTimers[value]! - dt);
+        powerTimers[value] = math.max(0, powerTimers[value]! - powerDt);
       }
     }
     powerTimers.removeWhere((power, remaining) {

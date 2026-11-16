@@ -341,13 +341,16 @@ the last entry.
 | ablation: old launch-wave counts (1 / 2) | 366.50 | 444.20 | 480.67 | +8.2 % | +4.0 % |
 | ablation: old flock entrance points | 346.59 | 464.05 | 468.86 | +7.2 % | +4.3 % |
 | ablation: no gate launches in the approach | 347.63 | 444.79 | 441.68 | +3.4 % | +1.4 % |
-| **accepted:** power timers hold while all of the approach's live creatures wait in gates | 318.66 | 393.24 | 432.20 | **−4.2 %** | **−4.2 %** |
+| power timers hold while all of the approach's live creatures wait in gates | 318.66 | 393.24 | 432.20 | −4.2 % | −4.2 % |
+| the same after merging `game` at the playtest-fixes-3 merge | 304.93 | 410.39 | 416.95 | −5.1 % (fails) | −5.2 % |
+| **accepted:** the timers run at half rate (`ArcadeModel.gateHoldRate` 0.5) while they wait | 341.09 | 417.29 | 436.03 | **+0.1 %** | **−1.0 %** |
 
 - **Cause.** Members of a volley wait inside their gate for its 1.7 s lead plus 0.12 s per creature. That stretches
   the launch waves, so the pilot's powers ran out before the fight (the Rise's power-timer effect again).
-- **Tune.** The power timers hold while every live ordinary creature of the approach is parked in a gate. That is
-  a held beat with nothing to shoot, the same rule as the carrier's Close.
-- **Result.** Per difficulty: easy −4.3 %, normal −8.9 %, hard +0.8 % against the baseline. All are within 10 %,
+- **Tune.** While every live ordinary creature of the approach is parked in a gate, the power timers run at half
+  rate. That is a held beat with nothing to shoot, a softer form of the Close's rule. A full hold overshot to −5 %
+  once `game` moved.
+- **Result.** Per difficulty: easy +2.4 %, normal −3.3 %, hard +1.7 % against the baseline. All are within 10 %,
   and pooled is within 5 %.
 
 **The boss level's clear time.** This is a temporary probe, not committed: combat seconds while sector 5 is current,

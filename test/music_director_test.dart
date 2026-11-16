@@ -209,6 +209,10 @@ void main() {
         'gloat',
         'laststand',
         'respawn',
+        // carrier-v3 stand-ins: approach, in range, take-off.
+        'reinforce',
+        'hatch',
+        'respawn',
       ]);
       expect(fleet, 1);
     },
