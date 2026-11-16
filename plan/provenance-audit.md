@@ -197,3 +197,11 @@ where one is named.
 | ID | File:line | Conclusion | Status | Source or note |
 |---|---|---|---|---|
 | <a id="W-01"></a>W-01 | plan/dynamic-weather-research.md, conclusion 3 | Rain drawn under the play (and its dimming) keeps bullets and creatures readable | UNSOURCED | No read source measures rain density against gameplay readability. PC Gamer, 80.lv and Tatarchuk 2006 were unreachable (unread: snippet only). Checked instead on `art/contact/dynamic-weather-tiers.png` |
+
+## Part V: voice-stack (added 2026-11-16)
+
+| ID | File:line | Conclusion | Status | Source or note |
+|---|---|---|---|---|
+| <a id="V-01"></a>V-01 | plan/voice-stack-research.md §4, finding 2 | Rendering a short non-verbal inside a carrier phrase or a multi-cue reel, then cutting it, avoids Dia's unnatural short clips | UNSOURCED | A working assumption from Dia's own note that clips under about 5 s sound unnatural; to be tested in the voice-stack pilot (task 6.1) |
+| <a id="V-02"></a>V-02 | plan/voice-stack-research.md §5; openspec/changes/voice-stack/design.md §5 | Integrated loudness is gated over 400 ms blocks, so a very short stinger has few or no complete blocks | UNSOURCED | ITU-R BS.1770 (itu.int) and EBU Tech 3341 (tech.ebu.ch) reset the connection. The 400 ms momentary meter is sourced from libebur128 |
+| <a id="V-03"></a>V-03 | plan/voice-stack-research.md §5 | Game loudness targets of about −18 LUFS / −1 dBTP for mobile and −24 LUFS for console | UNSOURCED | Audiokinetic and GANG IESD pages seen as search snippets only (audiokinetic.com, audiogang.org, aes.org blocked) |
