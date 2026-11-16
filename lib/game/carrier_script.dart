@@ -51,6 +51,11 @@ class CarrierScript {
   /// Whether a run seed varied this script.
   final bool seeded;
 
+  /// Easy's second launch wave keeps this share of its roster (every tour
+  /// keeps two launch waves; the boss level's clear time stays within its
+  /// 10 % gate on Easy). One constant.
+  static const easySecondWave = .5;
+
   /// The authored tours: routes 0–4; later routes clamp to tour 5.
   static CarrierScript authored(int route) {
     final r = route.clamp(0, 4);

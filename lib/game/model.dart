@@ -994,6 +994,41 @@ class ArcadeModel {
     return parked;
   }
 
+  // --- console boss launcher (operator C2, round 3b): debug only.
+  /// A /console run fast-forwards the carrier's decay: every
+  /// [consoleDecaySeconds] of its fight, one step (shield to half, shield
+  /// down, then each armour step and form change, then the collapse),
+  /// through the real hit path so every decay event is queued. Only a
+  /// console run (never ranked) sets it; [start] clears it.
+  bool consoleDecay = false;
+  static const consoleDecaySeconds = 2.5;
+  double _consoleDecayLeft = consoleDecaySeconds;
+
+  void _consoleDecayStep(double dt) {
+    final b = hittableBoss;
+    if (b == null) return;
+    _consoleDecayLeft -= dt;
+    if (_consoleDecayLeft > 0) return;
+    _consoleDecayLeft = consoleDecaySeconds;
+    consoleDecayNow();
+  }
+
+  /// One decay step now (the console's fast-forward; tests).
+  void consoleDecayNow() {
+    final b = hittableBoss;
+    if (b == null || ranked) return;
+    if (b.shield * 2 > b.shieldMax) {
+      hitBoss(b.x, damage: b.shield - b.shieldMax ~/ 2);
+    } else if (b.shield > 0) {
+      hitBoss(b.x, damage: b.shield);
+    } else {
+      final next = b.armourStep + 1;
+      final target = (b.coreMax * (1 - next / b.armourSteps)).floor();
+      b.door = 1; // the core is open for the step
+      hitBoss(b.x, damage: math.max(1, b.core - target));
+    }
+  }
+
   /// The fight's flock gate (design §4.4): chosen and telegraphing ahead
   /// of the flock timer, so the spawn moments do not move.
   GateRun? _fightGate;
@@ -1208,6 +1243,7 @@ class ArcadeModel {
   /// without one the run is the calibrated campaign.
   void start({Difficulty difficulty = Difficulty.normal, int? runSeed}) {
     this.difficulty = difficulty;
+    consoleDecay = false; // --- console boss launcher (C2)
     _bonusStartRun(runSeed); // --- bonus levels
     visitedSectors.clear(); // --- transition ascent
     _resetSkill(); // --- demon intelligence
@@ -1713,6 +1749,9 @@ class ArcadeModel {
             policy.reinforcementFlocks(route: cycle, sector: level),
           )
         : 0;
+    if (_easySecondLaunch(wave)) {
+      flocksPlanned = (flocksPlanned * CarrierScript.easySecondWave).floor();
+    }
     _reinforcementLeft = 4.5;
     _reinforcementCooldown = .6;
     _reinforcementCasualties = 0;
@@ -1726,11 +1765,24 @@ class ArcadeModel {
   /// The opening roster of wave [forWave] and its size. Births count
   /// against the wave-wide ordinal and elite budget, so call it with those
   /// counters belonging to [forWave].
+  /// carrier-v3 tune: [forWave] is Easy's second launch wave (shorter
+  /// roster and fewer reinforcement flocks, [CarrierScript.easySecondWave]).
+  bool _easySecondLaunch(int forWave) =>
+      level == 5 &&
+      forWave == 2 &&
+      forWave <= loomWaves &&
+      difficulty == Difficulty.easy;
+
   (List<Demon>, int) _buildRoster(int forWave, {bool fromCheckpoint = false}) {
     final roster = <Demon>[];
-    final count = _bonusRoster(
+    var count = _bonusRoster(
       policy.rosterCount(sector: level, wave: forWave, route: cycle),
     );
+    // carrier-v3 tune: Easy's second launch wave is shorter (the boss
+    // level's clear-time gate; plan/calibration-current.md).
+    if (_easySecondLaunch(forWave)) {
+      count = math.max(4, (count * CarrierScript.easySecondWave).round());
+    }
     final rows = (count / 6).ceil();
     final spacing = rows <= 4 ? 48.0 : 160.0 / (rows - 1);
     final special = sentinelFor(forWave);
@@ -2303,7 +2355,11 @@ class ArcadeModel {
     _ordinaryBirthOrdinal = ordinal;
     _eliteBirths = elites;
     final skeins = _skeinsOf(roster, wave + 1);
-    final approach = (skeins.length / 2).ceil();
+    // carrier-v3 tune: Easy's second launch wave leaves in one go (fewer
+    // volleys): every skein sets out from the gates now, none waits.
+    final approach = _easySecondLaunch(wave + 1)
+        ? skeins.length
+        : (skeins.length / 2).ceil();
     _incomingOrder.clear();
     _incomingApproach = approach;
     for (var s = 0; s < skeins.length; s++) {
@@ -3134,6 +3190,7 @@ class ArcadeModel {
       'continuous swarm occupancy $swarmOccupancy > $swarmOccupancyBound',
     );
     _updateBoss(dt);
+    if (consoleDecay && !ranked && combat) _consoleDecayStep(dt); // --- C2
     _updateGround(dt); // --- ground war
     if (!combat) return;
     // --- boss-grandeur: the loom's cap.
