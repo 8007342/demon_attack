@@ -994,6 +994,41 @@ class ArcadeModel {
     return parked;
   }
 
+  // --- console boss launcher (operator C2, round 3b): debug only.
+  /// A /console run fast-forwards the carrier's decay: every
+  /// [consoleDecaySeconds] of its fight, one step (shield to half, shield
+  /// down, then each armour step and form change, then the collapse),
+  /// through the real hit path so every decay event is queued. Only a
+  /// console run (never ranked) sets it; [start] clears it.
+  bool consoleDecay = false;
+  static const consoleDecaySeconds = 2.5;
+  double _consoleDecayLeft = consoleDecaySeconds;
+
+  void _consoleDecayStep(double dt) {
+    final b = hittableBoss;
+    if (b == null) return;
+    _consoleDecayLeft -= dt;
+    if (_consoleDecayLeft > 0) return;
+    _consoleDecayLeft = consoleDecaySeconds;
+    consoleDecayNow();
+  }
+
+  /// One decay step now (the console's fast-forward; tests).
+  void consoleDecayNow() {
+    final b = hittableBoss;
+    if (b == null || ranked) return;
+    if (b.shield * 2 > b.shieldMax) {
+      hitBoss(b.x, damage: b.shield - b.shieldMax ~/ 2);
+    } else if (b.shield > 0) {
+      hitBoss(b.x, damage: b.shield);
+    } else {
+      final next = b.armourStep + 1;
+      final target = (b.coreMax * (1 - next / b.armourSteps)).floor();
+      b.door = 1; // the core is open for the step
+      hitBoss(b.x, damage: math.max(1, b.core - target));
+    }
+  }
+
   /// The fight's flock gate (design §4.4): chosen and telegraphing ahead
   /// of the flock timer, so the spawn moments do not move.
   GateRun? _fightGate;
@@ -1208,6 +1243,7 @@ class ArcadeModel {
   /// without one the run is the calibrated campaign.
   void start({Difficulty difficulty = Difficulty.normal, int? runSeed}) {
     this.difficulty = difficulty;
+    consoleDecay = false; // --- console boss launcher (C2)
     _bonusStartRun(runSeed); // --- bonus levels
     visitedSectors.clear(); // --- transition ascent
     _resetSkill(); // --- demon intelligence
@@ -3154,6 +3190,7 @@ class ArcadeModel {
       'continuous swarm occupancy $swarmOccupancy > $swarmOccupancyBound',
     );
     _updateBoss(dt);
+    if (consoleDecay && !ranked && combat) _consoleDecayStep(dt); // --- C2
     _updateGround(dt); // --- ground war
     if (!combat) return;
     // --- boss-grandeur: the loom's cap.
