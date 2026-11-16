@@ -130,7 +130,7 @@ func fitRaw(raw *image.NRGBA, r *Rig, stage, t string) *image.NRGBA {
 // fitRawOpt: fitRaw, optionally registered to the clay silhouette box first (registerBBox).
 func fitRawOpt(raw *image.NRGBA, r *Rig, stage, t string, register bool) *image.NRGBA {
 	W, H := r.Size[0], r.Size[1]
-	fit := resize(raw, W, H)
+	fit := placeRaw(raw, r)
 	clay := load(r.path(stage, "clay", t))
 	if register {
 		fit = registerBBox(fit, clay)

@@ -97,6 +97,82 @@ def set_border(sc, rect, size):
     sc.render.border_min_y = max(0.0, 1 - y1 / H); sc.render.border_max_y = min(1.0, 1 - y0 / H)
 
 
+def render_layers(sc, objs, ids, basis, frame, ppu, size, d, prefix, tag, under):
+    """Per instance: PREFIX_<id>_<tag>.png with every other instance held out (the visible part),
+    and with under, under_PREFIX_<id>_<tag>.png: the instance alone (its whole silhouette, one
+    sample), so rigsheet can under-paint the texels its neighbours cover (carrier-v3 §2.5)."""
+    n = 0; W, H = size; samples = sc.cycles.samples
+    for iid in ids:
+        rect = K.module_rect_px(objs[iid], basis, frame, ppu)
+        if rect is None or rect[0] >= W - 2 or rect[1] >= H - 2 or rect[2] <= 2 or rect[3] <= 2:
+            continue  # the module is outside the visible envelope in this view
+        set_border(sc, rect, size)
+        for jid, lst in objs.items():
+            for ob in lst: ob.is_holdout = jid != iid
+        sc.render.filepath = os.path.join(d, '%s_%s_%s.png' % (prefix, iid, tag))
+        bpy.ops.render.render(write_still=True); n += 1
+        if under:
+            for jid, lst in objs.items():
+                for ob in lst: ob.is_holdout = False; ob.hide_render = jid != iid
+            sc.cycles.samples = 1
+            sc.render.filepath = os.path.join(d, 'under_%s_%s_%s.png' % (prefix, iid, tag))
+            bpy.ops.render.render(write_still=True); n += 1
+            sc.cycles.samples = samples
+            for lst in objs.values():
+                for ob in lst: ob.hide_render = False
+    for lst in objs.values():
+        for ob in lst: ob.is_holdout = False
+    set_border(sc, None, size)
+    return n
+
+
+def heights(g, objs, basis, path, frame, step=20.0):
+    """carrier-v3 §2.2: each instance's height grid at the hero view: the ship-frame z (height above
+    the hull's reference plane, units) of its own first surface along the view ray, at the nodes of
+    the hull-local STEP lattice over its projected rect (+ 12 units of under-paint). A miss next to
+    a hit takes their mean (one ring: the under-paint margin); other misses are -32768, "not
+    covered", so a merge of the grids (topmost = largest z) never takes a module's height where
+    the module is not."""
+    from mathutils.bvhtree import BVHTree
+    right, up, back = basis; out = {'step': step, 'layers': {}}
+    for iid, lst in objs.items():
+        vs, fs = [], []
+        for ob in lst:
+            b = len(vs); vs += [ob.matrix_world @ v.co for v in ob.data.vertices]
+            fs += [tuple(b + k for k in pl.vertices) for pl in ob.data.polygons]
+        if not vs:
+            continue
+        bvh = BVHTree.FromPolygons([tuple(v) for v in vs], fs)
+        xs = [v.dot(right) for v in vs]; ys = [-v.dot(up) for v in vs]
+        x0 = math.floor((max(min(xs), frame[0]) - 12) / step) * step; x1 = math.ceil((min(max(xs), frame[2]) + 12) / step) * step
+        y0 = math.floor((max(min(ys), frame[1]) - 12) / step) * step; y1 = math.ceil((min(max(ys), frame[3]) + 12) / step) * step
+        nx, ny = int(round((x1 - x0) / step)) + 1, int(round((y1 - y0) / step)) + 1
+        grid = [None] * (nx * ny)
+        for j in range(ny):
+            for i in range(nx):
+                sx, sy = x0 + i * step, y0 + j * step
+                o = right * sx - up * sy + back * K.DIST
+                hit = bvh.ray_cast(o, -back, K.DIST * 3)
+                if hit[0] is not None:
+                    grid[j * nx + i] = hit[0].z
+        known = [k for k, v in enumerate(grid) if v is not None]
+        if not known:
+            continue
+        nxt = list(grid)
+        for k, v in enumerate(grid):
+            if v is not None:
+                continue
+            i, j = k % nx, k // nx
+            nb = [grid[jj * nx + ii] for ii, jj in ((i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1))
+                  if 0 <= ii < nx and 0 <= jj < ny and grid[jj * nx + ii] is not None]
+            if nb:
+                nxt[k] = sum(nb) / len(nb)
+        out['layers'][iid] = {'x0': x0, 'y0': y0, 'w': nx, 'h': ny,
+                              'z': [-32768 if v is None else int(round(v)) for v in nxt]}
+    with open(path, 'w') as fh:
+        json.dump(out, fh)
+
+
 def main(argv):
     args, opt = opts(argv)
     g = K.load_family(args[0])
@@ -118,6 +194,7 @@ def main(argv):
     stages = [s for s in ('S0', 'S1', 'S2', 'S3') if s in heroes]
     wreck_stage = 'S2' if 'S2' in heroes else 'S0'
     insts = {i['id']: i for i in K.instances(g, hull)}
+    under = opt.get('under', '1') == '1'
     n = 0
     for stage in stages:
         geo = 'S0' if stage == 'S1' else stage
@@ -139,18 +216,16 @@ def main(argv):
             sc.render.filepath = os.path.join(d, 'beauty_%s.png' % tag)
             bpy.ops.render.render(write_still=True); n += 1
             if opt.get('layers', '1') == '1' and (p, y) not in extra:
-                for iid in objs:
-                    if y == 0 and iid.endswith('L') and iid[:-1] + 'R' in objs:
-                        continue  # a mirrored pair is stored once at yaw 0
-                    for jid, lst in objs.items():
-                        for ob in lst: ob.is_holdout = jid != iid
-                    rect = K.module_rect_px(objs[iid], basis, frame, ppu)
-                    W, H = rig['size']
-                    if rect is None or rect[0] >= W - 2 or rect[1] >= H - 2 or rect[2] <= 2 or rect[3] <= 2:
-                        continue  # the module is outside the visible envelope in this view
-                    set_border(sc, rect, rig['size'])
-                    sc.render.filepath = os.path.join(d, 'layer_%s_%s.png' % (iid, tag))
-                    bpy.ops.render.render(write_still=True); n += 1
+                ids = [iid for iid in objs if not (y == 0 and iid.endswith('L') and iid[:-1] + 'R' in objs)]
+                n += render_layers(sc, objs, ids, basis, frame, ppu, rig['size'], d, 'layer', tag, under)
+            if stage != 'S1' and (p, y) == hero and K.door_insts(objs):
+                # carrier-v3 gates: the open state of every door instance (the runtime blends the two)
+                K.set_doors(objs, 'open')
+                ids = [iid for iid in K.door_insts(objs) if not (iid.endswith('L') and iid[:-1] + 'R' in objs)]
+                n += render_layers(sc, objs, ids, basis, frame, ppu, rig['size'], d, 'door', tag, under)
+                K.set_doors(objs, 'closed')
+            if stage == 'S0' and (p, y) == hero:
+                heights(g, objs, basis, os.path.join(out, hull, 'heights.json'), frame)
         for lst in objs.values():
             for ob in lst: ob.is_holdout = False
         if opt.get('poses') == '1' and stage == 'S0' and g.get('articulation'):
@@ -162,10 +237,18 @@ def main(argv):
             K.apply_pose(g, objs, hull, K.poses(g)[0])
         if opt.get('wrecks', '1') == '1' and stage == wreck_stage:
             basis = K.view_basis(g, *hero); K.place_camera(cam, basis, frame)
+            # carrier-render-engine §3: the collapse breaks one composite of the hull, so a wreck
+            # frame is only needed for a module torn away during the fight (the form changes:
+            # the first forms - 1 detach ranks present)
+            forms = g['hulls'][hull].get('forms')
+            ranks = sorted({i['def'].get('detach') for i in insts.values() if i['def'].get('detach') is not None})
+            fight = set(ranks[:forms - 1]) if forms else set(ranks)
             for iid, lst in objs.items():
                 w = insts[iid]['def'].get('wreck', True)
                 if w is not True:
                     continue  # 'layer': the runtime sinks the module's own S3 layer
+                if insts[iid]['def'].get('detach') not in fight:
+                    continue  # breaks only in the collapse: no frame of its own
                 if iid.endswith('R') and iid[:-1] + 'L' in objs:
                     continue  # a mirrored pair stores the L wreck; R draws it flipped
                 c = K.obj_centre(lst)
@@ -177,13 +260,19 @@ def main(argv):
                           Matrix.Translation(-c))
                     for ob in lst: ob.matrix_world = Rm
                     bpy.context.view_layer.update()
-                    rect = K.module_rect_px(lst, basis, frame, ppu, pad=8)
-                    W, H = rig['size']
-                    if rect is None or rect[0] >= W - 2 or rect[1] >= H - 2 or rect[2] <= 2 or rect[3] <= 2:
-                        continue  # wreck outside the frame
-                    set_border(sc, rect, rig['size'])
+                    # its own frame, never clipped by the envelope (the wreck tumbles into view)
+                    xs = [(ob.matrix_world @ v.co).dot(basis[0]) for ob in lst for v in ob.data.vertices]
+                    ys = [-(ob.matrix_world @ v.co).dot(basis[1]) for ob in lst for v in ob.data.vertices]
+                    m = g.get('render', {}).get('margin', 6)
+                    wf = (math.floor(min(xs) - m), math.floor(min(ys) - m), math.ceil(max(xs) + m), math.ceil(max(ys) + m))
+                    sc.render.resolution_x = round((wf[2] - wf[0]) * ppu); sc.render.resolution_y = round((wf[3] - wf[1]) * ppu)
+                    wf = (wf[0], wf[1], wf[0] + sc.render.resolution_x / ppu, wf[1] + sc.render.resolution_y / ppu)
+                    K.place_camera(cam, basis, wf); set_border(sc, None, rig['size'])
                     sc.render.filepath = os.path.join(out, hull, 'wreck_%s_f%d.png' % (iid, f))
                     bpy.ops.render.render(write_still=True); n += 1
+                    with open(os.path.join(out, hull, 'wreck_%s_f%d.json' % (iid, f)), 'w') as fh:
+                        json.dump({'frame': wf}, fh)
+                    sc.render.resolution_x, sc.render.resolution_y = rig['size']; K.place_camera(cam, basis, frame)
                 for ob in lst: ob.matrix_world = Matrix.Identity(4)
             for l2 in objs.values():
                 for ob in l2: ob.hide_render = False

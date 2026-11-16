@@ -1294,6 +1294,8 @@ class DemonScene extends FlameGame {
           front: true,
           clock: model.visualClock,
           bend: armada.bent,
+          armada: armada,
+          stage: armada.lastStage,
         );
       } else {
         _carrierLighting(c, Offset(b.x, b.y), carrierBank);
@@ -1800,6 +1802,8 @@ class DemonScene extends FlameGame {
           front: false,
           clock: model.visualClock,
           bend: armada.bent,
+          armada: armada,
+          stage: armada.lastStage,
         );
         if (b.fightReady) {
           final reduced = sectors.flyover.reducedMotion;
@@ -5237,6 +5241,7 @@ extension _BossGrandeur on DemonScene {
         scale: k,
         clock: model.visualClock,
         opacity: .9,
+        armada: armada,
       );
       carrierV3.paintGates(
         c,
@@ -5246,6 +5251,7 @@ extension _BossGrandeur on DemonScene {
         scale: k,
         clock: model.visualClock,
         opacity: .9,
+        armada: armada,
       );
     }
     if ((ambient * 1.4).floor().isOdd) return;

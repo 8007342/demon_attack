@@ -61,7 +61,8 @@ words in titles, slot and set names, notes and prompts (`originality.forbidden_w
    - no arcs over the openings (brows) and no radiating crowns around them (manes);
    - no paired bright or round features above or beside the gallery (eyes): the gun blisters sit in **batteries** along
      the prongs, never as a single pair near the prow;
-   - no paired hooks beside the gallery (mandibles);
+   - no paired hooks beside the gallery (mandibles), **except the signature tusk-prongs** (item 8): those are
+     approved, and they stay ivory, long and tapering, never short curved hooks;
    - no pair of elongated light shapes above the gallery, even as armour (they paint as brows or closed eyes). Armour
      there is a staggered *field* of small scales: texture, never a pair of shapes;
    - no V of two thorns or plates on the centre line (an angry brow);
@@ -73,6 +74,17 @@ words in titles, slot and set names, notes and prompts (`originality.forbidden_w
    hull mass carries a coarser rhythm of scales, and the far aft is quiet and mostly off-screen.
 7. **Spikes point away from the player's lane or straight at it.** Bone thorns sweep aft (danger, speed). Gun-thorns
    point down-screen at the player (threat). Nothing points sideways into the flier band.
+8. **The lead motif: the tusk-prongs and the narrowing bay** (operator, 2026-11-16, on `art/contact/carrier-v3-render-ingame.png`:
+   "The dark bay between the two tusk-like prongs feels great, narrowing and demon-like, it's a great addition, those
+   tusk-like prongs should lead the design of the rest of the ship"). From now on:
+   - The pair of long ivory tusk-prongs flanking a dark, narrowing bay is the carrier's signature. Every tour keeps it,
+     and it grows per tour.
+   - The rest of the hull echoes it: hatches are tusk-framed (two short ivory tusks closing over a dark slot that narrows
+     inward), gun batteries and spines taper like tusks, and terraces narrow toward the prow as the bay does.
+   - Damage speaks the same language. Break-up pieces (`carrier-hatches` C5) are tusk and prong shards and ivory
+     splinters, not generic plates. The transformation's shutter opens like the bay: tusks part, and the dark slot
+     widens to show the core door.
+   - It is still a ship, not a head: the head-reading guard (item 4) holds, so no eyes, no rows of teeth, and no brows.
 
 ## 4. Module grammar
 A hull is a list of **slots**. Each slot has several interchangeable **sets** (visual variants), and each set is a
