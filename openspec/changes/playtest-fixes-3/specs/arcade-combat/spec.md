@@ -28,7 +28,7 @@ Every rush pass the sentinel finishes without touching the ship SHALL award 300 
 - **THEN** the score rises by the dodge award per pass plus the sentinel's kill value, at least as much as breaking its shield and shooting it down would have paid
 
 ### Requirement: Final rushes are more frequent
-A sentinel SHALL be eligible for a final rush with probability 0.28 / 0.45 / 0.55 (Easy / Normal / Hard), plus up to 0.10 with skill, superseding 0.20 / 0.35 / 0.45. The triggers, passes, speeds and homing limits are unchanged.
+A sentinel SHALL be eligible for a final rush with probability 0.28 / 0.45 / 0.50 (Easy / Normal / Hard), plus up to 0.10 with skill, superseding 0.20 / 0.35 / 0.45. The triggers, passes, speeds and homing limits are unchanged.
 
 #### Scenario: Normal sentinel births
 - **WHEN** many sentinels are born on Normal at skill 0

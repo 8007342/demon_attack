@@ -9,7 +9,7 @@
 - [x] 2.1 Invulnerable in the transformation (rally, lock): `berserkTransforming`, `Deflect` records, no hit flash
 - [x] 2.2 Rush shield as the super diving shield: bare gun deflects; powers and homing break it
 - [x] 2.3 Deflect sparks in the scene
-- [x] 2.4 Tuning: rush chance 0.28 / 0.45 / 0.55, rush shield 6 / 8 + c÷2 / 10 + c÷2, dodge 300, break 150, burn-out pays the kill value
+- [x] 2.4 Tuning: rush chance 0.28 / 0.45 / 0.50, rush shield 6 / 8 + c÷2 / 10 + c÷2, dodge 300, break 150, burn-out pays the kill value
 - [x] 2.5 Calibration harness re-run and recorded in `plan/calibration-current.md`
 
 ## 3. Sentinel shadow

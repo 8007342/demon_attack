@@ -373,10 +373,10 @@ void main() {
       }
       counts.add(eligible);
     }
-    // 0.28 / 0.45 / 0.55 (+ skill 0.3 x 0.10) of 200 (playtest-fixes-3).
+    // 0.28 / 0.45 / 0.50 (+ skill 0.3 x 0.10) of 200 (playtest-fixes-3).
     expect(counts[0], inInclusiveRange(40, 85));
     expect(counts[1], inInclusiveRange(70, 120));
-    expect(counts[2], inInclusiveRange(90, 140));
+    expect(counts[2], inInclusiveRange(80, 135));
     expect(counts[0], lessThan(counts[1]));
     expect(counts[1], lessThan(counts[2]));
   });

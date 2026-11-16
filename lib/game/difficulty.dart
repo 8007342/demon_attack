@@ -82,14 +82,15 @@ class DifficultyPolicy {
   /// with skill), rush shield, top speed (u/s at hostile rate), homing
   /// turn rate (°/s) and passes.
   ///
-  /// playtest-fixes-3: rushes a little more often (was .20 / .35 / .45),
+  /// playtest-fixes-3: rushes a little more often (was .20 / .35 / .45;
+  /// Hard .55 cost the Average pilot +3.4 lives on route 1, so .50),
   /// and the rush shield is the super-powerful diving shield: only
   /// offensive powers and homing hits wear it (breaker damage), so it
   /// is about twice the old points (was 3 / 4 + route ÷ 2 / 5 + route ÷ 2).
   double get rushChance => switch (difficulty) {
     Difficulty.easy => .28,
     Difficulty.normal => .45,
-    Difficulty.hard => .55,
+    Difficulty.hard => .50,
   };
   int rushShieldFor(int route) => switch (difficulty) {
     Difficulty.easy => 6,

@@ -33,7 +33,7 @@ the crimson palette.
 
 | | Easy | Normal | Hard |
 |---|---:|---:|---:|
-| Rush chance (was) | 0.28 (0.20) | 0.45 (0.35) | 0.55 (0.45) |
+| Rush chance (was) | 0.28 (0.20) | 0.45 (0.35) | 0.50 (0.45) |
 | Rush shield (was) | 6 (3) | 8 + cycle÷2 (4 + cycle÷2) | 10 + cycle÷2 (5 + cycle÷2) |
 
   Per (cycle + 1) × enemy points: a dodged pass 300 (new), a break 150 (was 400), and a burn-out after a dodged last
@@ -94,3 +94,16 @@ side for the whole Pursuit (plus a 70-unit sideways rout). Changes:
 - `test/playtest_fixes_3_review_test.dart` writes `art/contact/playtest-fixes-3-{shields-before,shields-after,rush,
   band,band-wide,ascent}.png` with `--dart-define=PF3_CONTACT=true`.
 - Calibration: §7.
+
+## 7. Calibration (as run)
+`test/swarm_calibration_test.dart`, eight seeds, expert and Average pilots, against `game` at 1c670982; full tables in
+`plan/calibration-current.md` § Playtest fixes 3.
+- Ordinary-wave clear time −5.0 … +4.2 % per sector (carrier sectors −4.3 … +6.1 %), aimed hit ratio −3.1 % worst,
+  tier hit ratios within ±1.2 points, peak hostile bullets 18: all within the W3/W4 bounds.
+- Average pilot, Normal (the acceptance mode): lives lost per sector route 1 −1.75, route 2 −0.40, route 0 ±0.
+- **Re-tune:** Hard rush chance 0.55 cost the Average pilot +3.37 lives per sector on Hard route 1; at 0.50 it is
+  +2.44 (Hard S3 moves 21.1 → 28.8 in both runs, a seed path within a sector mean's 2–8-life standard error). Hard
+  is 0.50.
+- Rushes now run their passes: the expert's Normal passes 91 → 262 and shield breaks 111 → 81; the Average pilot
+  meets 1.5–2.1× the passes and breaks a third as many shields. Dodging, not shooting, ends a rush well.
+- Rush fairness (`test/sentinel_rush_fairness_test.dart`) is unchanged and green: the kinematics did not change.

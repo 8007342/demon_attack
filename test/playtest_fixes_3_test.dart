@@ -96,6 +96,11 @@ void main() {
       expect(d.rushShield, rush);
       expect(m.deflects, isNotEmpty);
       expect(d.flash, 0, reason: 'no hit flash: the hit did not land');
+      // Repeated hits on the invincible sentinel never grow the list.
+      for (var i = 0; i < 500; i++) {
+        m.hitDemon(d, atX: d.x, atY: d.y + 20);
+      }
+      expect(m.deflects.length, lessThanOrEqualTo(24));
     });
 
     test('the rush shield wears only under offensive powers or homing', () {
@@ -123,7 +128,7 @@ void main() {
       final (h, _) = _arena(Difficulty.hard);
       expect(e.policy.rushChance, .28);
       expect(n.policy.rushChance, .45);
-      expect(h.policy.rushChance, .55);
+      expect(h.policy.rushChance, .50);
       expect(e.policy.rushShieldFor(3), 6);
       expect(n.policy.rushShieldFor(3), 9);
       expect(h.policy.rushShieldFor(4), 12);

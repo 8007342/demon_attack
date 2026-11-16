@@ -48,7 +48,7 @@ void main() {
       // playtest-fixes-3: a little more often (was .20 / .35 / .45).
       (Difficulty.easy, .28),
       (Difficulty.normal, .45),
-      (Difficulty.hard, .55),
+      (Difficulty.hard, .50),
     ]) {
       var eligible = 0;
       for (var seed = 0; seed < 2000; seed++) {

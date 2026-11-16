@@ -18,7 +18,7 @@ landed in `game`:
 - **Sentinel rush:** invulnerable through the rally and lock (deflect sparks, no hit flash); the rush shield becomes a
   super-powerful diving shield (base gun deflects, offensive powers and homing break it; 6 / 8 + cycle÷2 /
   10 + cycle÷2 points); each dodged pass pays 300 × (cycle + 1), a break 150 × (cycle + 1), and a sentinel that burns
-  out after a dodged last pass pays its kill value; rush chance 0.28 / 0.45 / 0.55.
+  out after a dodged last pass pays its kill value; rush chance 0.28 / 0.45 / 0.50.
 - **Sentinel shadow:** one occluder-style shadow, sized by one rule from lurk to rush; the in-play sentinel, which
   published no altitude, now always casts.
 - **Band above the arena:** the sky (baked with headroom), sector parallax, high fog and cloud cover reach the top of
