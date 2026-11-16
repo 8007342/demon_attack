@@ -129,8 +129,10 @@ def render_layers(sc, objs, ids, basis, frame, ppu, size, d, prefix, tag, under)
 def heights(g, objs, basis, path, frame, step=20.0):
     """carrier-v3 §2.2: each instance's height grid at the hero view: the ship-frame z (height above
     the hull's reference plane, units) of its own first surface along the view ray, at the nodes of
-    the hull-local STEP lattice over its projected rect (+ 12 units of under-paint); misses take
-    the nearest hit (rings), so the bend never tears inside the sprite."""
+    the hull-local STEP lattice over its projected rect (+ 12 units of under-paint). A miss next to
+    a hit takes their mean (one ring: the under-paint margin); other misses are -32768, "not
+    covered", so a merge of the grids (topmost = largest z) never takes a module's height where
+    the module is not."""
     from mathutils.bvhtree import BVHTree
     right, up, back = basis; out = {'step': step, 'layers': {}}
     for iid, lst in objs.items():
@@ -156,18 +158,17 @@ def heights(g, objs, basis, path, frame, step=20.0):
         known = [k for k, v in enumerate(grid) if v is not None]
         if not known:
             continue
-        while any(v is None for v in grid):
-            nxt = list(grid)
-            for k, v in enumerate(grid):
-                if v is not None:
-                    continue
-                i, j = k % nx, k // nx
-                nb = [grid[jj * nx + ii] for ii, jj in ((i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1))
-                      if 0 <= ii < nx and 0 <= jj < ny and grid[jj * nx + ii] is not None]
-                if nb:
-                    nxt[k] = sum(nb) / len(nb)
-            grid = nxt
-        out['layers'][iid] = {'x0': x0, 'y0': y0, 'w': nx, 'h': ny, 'z': [int(round(v)) for v in grid]}
+        nxt = list(grid)
+        for k, v in enumerate(grid):
+            if v is not None:
+                continue
+            i, j = k % nx, k // nx
+            nb = [grid[jj * nx + ii] for ii, jj in ((i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1))
+                  if 0 <= ii < nx and 0 <= jj < ny and grid[jj * nx + ii] is not None]
+            if nb:
+                nxt[k] = sum(nb) / len(nb)
+        out['layers'][iid] = {'x0': x0, 'y0': y0, 'w': nx, 'h': ny,
+                              'z': [-32768 if v is None else int(round(v)) for v in nxt]}
     with open(path, 'w') as fh:
         json.dump(out, fh)
 
@@ -236,10 +237,18 @@ def main(argv):
             K.apply_pose(g, objs, hull, K.poses(g)[0])
         if opt.get('wrecks', '1') == '1' and stage == wreck_stage:
             basis = K.view_basis(g, *hero); K.place_camera(cam, basis, frame)
+            # carrier-render-engine §3: the collapse breaks one composite of the hull, so a wreck
+            # frame is only needed for a module torn away during the fight (the form changes:
+            # the first forms - 1 detach ranks present)
+            forms = g['hulls'][hull].get('forms')
+            ranks = sorted({i['def'].get('detach') for i in insts.values() if i['def'].get('detach') is not None})
+            fight = set(ranks[:forms - 1]) if forms else set(ranks)
             for iid, lst in objs.items():
                 w = insts[iid]['def'].get('wreck', True)
                 if w is not True:
                     continue  # 'layer': the runtime sinks the module's own S3 layer
+                if insts[iid]['def'].get('detach') not in fight:
+                    continue  # breaks only in the collapse: no frame of its own
                 if iid.endswith('R') and iid[:-1] + 'L' in objs:
                     continue  # a mirrored pair stores the L wreck; R draws it flipped
                 c = K.obj_centre(lst)

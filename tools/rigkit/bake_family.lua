@@ -13,7 +13,8 @@ local name = family:match("([^/]+)%.json$")
 -- RIGKIT_BASE overrides the output root (carrier-v3 keeps its bakes beside the v2 ones)
 local base = os.getenv("RIGKIT_BASE") or (home .. "/.cache/tillandsias-project/rigkit/" .. name)
 local rig, bake, inp = base .. "/rig", base .. "/bake", base .. "/in"
-local sheet = home .. "/.cache/tillandsias-project/rigsheet"
+-- RIGSHEET overrides the binary path (agents in other worktrees share the default one)
+local sheet = os.getenv("RIGSHEET") or (home .. "/.cache/tillandsias-project/rigsheet")
 local threads = os.getenv("RIGKIT_THREADS") or "8"
 
 local function sh(cmd)
