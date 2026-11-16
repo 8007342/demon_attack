@@ -577,3 +577,11 @@ These are the picks the runtime made where the art or the phone was missing. Eac
 - Vortex trails use the outer-lower extreme of each wing, emitter and tendril layer until the rig's `vortex`
   points exist.
 - Under reduced motion the approach steps keep their 3 s ease: D is simulation state.
+
+**Easy's second launch wave (calibration, after the runtime).**
+- Every tour keeps two launch waves on every difficulty: the operator asked for "the first couple of waves".
+- On Easy, the second launch wave leaves the gates in one go: all its skeins at once, none held in reserve, so
+  there are fewer volley leads. It keeps half its roster and half its reinforcement flocks
+  (`CarrierScript.easySecondWave`).
+- With this, Easy's boss-level clear time is +5.7 % (the gate is 10 %) and Normal and Hard are unchanged
+  (`plan/calibration-current.md`, "Carrier v3 tune").

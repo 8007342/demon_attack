@@ -1713,6 +1713,9 @@ class ArcadeModel {
             policy.reinforcementFlocks(route: cycle, sector: level),
           )
         : 0;
+    if (_easySecondLaunch(wave)) {
+      flocksPlanned = (flocksPlanned * CarrierScript.easySecondWave).floor();
+    }
     _reinforcementLeft = 4.5;
     _reinforcementCooldown = .6;
     _reinforcementCasualties = 0;
@@ -1726,11 +1729,24 @@ class ArcadeModel {
   /// The opening roster of wave [forWave] and its size. Births count
   /// against the wave-wide ordinal and elite budget, so call it with those
   /// counters belonging to [forWave].
+  /// carrier-v3 tune: [forWave] is Easy's second launch wave (shorter
+  /// roster and fewer reinforcement flocks, [CarrierScript.easySecondWave]).
+  bool _easySecondLaunch(int forWave) =>
+      level == 5 &&
+      forWave == 2 &&
+      forWave <= loomWaves &&
+      difficulty == Difficulty.easy;
+
   (List<Demon>, int) _buildRoster(int forWave, {bool fromCheckpoint = false}) {
     final roster = <Demon>[];
-    final count = _bonusRoster(
+    var count = _bonusRoster(
       policy.rosterCount(sector: level, wave: forWave, route: cycle),
     );
+    // carrier-v3 tune: Easy's second launch wave is shorter (the boss
+    // level's clear-time gate; plan/calibration-current.md).
+    if (_easySecondLaunch(forWave)) {
+      count = math.max(4, (count * CarrierScript.easySecondWave).round());
+    }
     final rows = (count / 6).ceil();
     final spacing = rows <= 4 ? 48.0 : 160.0 / (rows - 1);
     final special = sentinelFor(forWave);
@@ -2303,7 +2319,11 @@ class ArcadeModel {
     _ordinaryBirthOrdinal = ordinal;
     _eliteBirths = elites;
     final skeins = _skeinsOf(roster, wave + 1);
-    final approach = (skeins.length / 2).ceil();
+    // carrier-v3 tune: Easy's second launch wave leaves in one go (fewer
+    // volleys): every skein sets out from the gates now, none waits.
+    final approach = _easySecondLaunch(wave + 1)
+        ? skeins.length
+        : (skeins.length / 2).ceil();
     _incomingOrder.clear();
     _incomingApproach = approach;
     for (var s = 0; s < skeins.length; s++) {
