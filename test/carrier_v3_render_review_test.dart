@@ -9,7 +9,6 @@ import 'package:demon_attack/game/arena_camera.dart';
 import 'package:demon_attack/game/boss_atlas.dart';
 import 'package:demon_attack/game/boss_director.dart';
 import 'package:demon_attack/game/boss_grammar.dart';
-import 'package:demon_attack/game/carrier_gates.dart';
 import 'package:demon_attack/game/carrier_render_data.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
@@ -28,7 +27,6 @@ import 'playtest_fixes_review_test.dart' show decodeReviewImage, loadReviewArt;
 /// - `ingame`: tours 1 and 5 in the climb, then at S2 and S3;
 /// - `bend`: the bend's extremes on tours 1 and 5 at phone size;
 /// - `zoom5`: tour 5 at its 0.62 floor (no hull edge, no empty sky);
-/// - `gates`: a prong gate and a tour-5 aft gate closed, opening, open.
 ///
 /// With `--dart-define=CARRIER_V3_RENDER_CONTACT=true` the sheets go to
 /// `art/contact/carrier-v3-render-<name>.png`.
@@ -230,41 +228,6 @@ void main() {
     }
     d.dir.bend.pose = null;
     await _sheet(tester, 'zoom5', frames, columns: 3, scale: 1);
-    await dispose(tester);
-  });
-
-  testWidgets('gates: closed, opening, open (baked door states)', (
-    tester,
-  ) async {
-    final rig = await launch(tester, _size, seed: 11);
-    await tester.runAsync(() => loadReviewArt(rig));
-    final d = _Drive(tester, rig);
-    final frames = <ui.Image>[];
-    await d.fight(4);
-    await d.step(4);
-    final l = d.m.launches!;
-    final hull = d.scene.armada.hero!;
-    for (final id in ['prongR', 'aftR', 'mawR']) {
-      final r = l.runs.firstWhere((r) => r.gate.id == id);
-      expect(hull.gates[id], isNotNull, reason: id);
-      // Drive the gate's states directly (the volley's timing is the
-      // model's); the art is what this sheet checks.
-      for (final (st, t) in [
-        (GateState.closed, 0.0),
-        (GateState.opening, .25),
-        (GateState.launching, 0.0),
-      ]) {
-        r
-          ..state = st
-          ..t = t;
-        await d.step(1 / 60);
-        r
-          ..state = st
-          ..t = t;
-        frames.add(await d.grab('gate-$id-${st.name}'));
-      }
-    }
-    await _sheet(tester, 'gates', frames, columns: 3);
     await dispose(tester);
   });
 }

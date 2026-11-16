@@ -190,7 +190,7 @@ hull's PNG page, about 1 MB today.
 
 # Run ledger (work/carrier-v3-render, 2026-11-16)
 
-**Status: running.** The operator approved the long GPU jobs ("the boss fights shall be the most memorable part of this
+**Status: done (K0–K5); the operator phone playtest (task 7.5) is open.** The operator approved the long GPU jobs ("the boss fights shall be the most memorable part of this
 game"). Picks are delegated (project memory "autonomy"); each pick and rejection is logged here with its reason.
 Branch `work/carrier-v3-render` (worktree `~/.cache/tillandsias-project/worktrees/carrier-v3-render`), off `game`.
 
@@ -337,7 +337,7 @@ layer); a two-column or shelf-by-height packer would reclaim most of it if the b
   (the visible envelope dashed in gold, the overscan outside it), then every gate closed and open at 2×
   (`rigsheet v3sheet`).
 - `art/contact/carrier-v3-render-bellies.png`: the seven bellies as packed.
-- `art/contact/carrier-v3-render-{ingame,bend,zoom5,gates}.png`: real in-game frames at 360 × 640 with the data pages
+- `art/contact/carrier-v3-render-{ingame,bend,zoom5}.png`: real in-game frames at 360 × 640 with the data pages
   loaded (`test/carrier_v3_render_review_test.dart`, `--dart-define=CARRIER_V3_RENDER_CONTACT=true`).
 
 **Spent.** GPU: 168 images in 47 jobs, ≈ 138 min from the output timestamps (5 Lightning hero batches of 8, 4
