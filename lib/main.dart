@@ -1045,44 +1045,57 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   }
   // --- end widescreen backdrop
 
+  /// The landing's fixed bars: the scroll viewport stops at them, so the
+  /// hall of fame never scrolls under the top label and toggles or the
+  /// credits row (carrier-v3 tune: the board screen's overlap).
+  static const landingTopBar = 56.0, landingBottomBar = 52.0;
+
   Widget _titleScreen(BoxConstraints bounds) => Stack(
     children: [
-      Center(
-        child: SingleChildScrollView(
-          key: const ValueKey('landing-scroll'),
-          // --- pwa-install: room under the landing for the install toast.
-          padding: EdgeInsets.fromLTRB(
-            24,
-            84,
-            24,
-            installPolicy.shows(installPrompt) ? 122 : 70,
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 960),
-            child: bounds.maxWidth > 820
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(child: _titleHero()),
-                      const SizedBox(width: 64),
-                      Expanded(child: _landingScores()),
-                    ],
-                  )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 420),
-                        child: _titleHero(),
+      Positioned.fill(
+        top: landingTopBar,
+        bottom: landingBottomBar,
+        child: ClipRect(
+          child: Center(
+            child: SingleChildScrollView(
+              key: const ValueKey('landing-scroll'),
+              // --- pwa-install: room under the landing for the install toast.
+              // (The same places as before: the bars' heights come off.)
+              padding: EdgeInsets.fromLTRB(
+                24,
+                84 - landingTopBar,
+                24,
+                (installPolicy.shows(installPrompt) ? 122 : 70) -
+                    landingBottomBar,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 960),
+                child: bounds.maxWidth > 820
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: _titleHero()),
+                          const SizedBox(width: 64),
+                          Expanded(child: _landingScores()),
+                        ],
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 420),
+                            child: _titleHero(),
+                          ),
+                          const SizedBox(height: 36),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 380),
+                            child: _landingScores(),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 36),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 380),
-                        child: _landingScores(),
-                      ),
-                    ],
-                  ),
+              ),
+            ),
           ),
         ),
       ),
