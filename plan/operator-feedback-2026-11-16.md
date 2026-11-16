@@ -90,3 +90,42 @@ Decisions, in brief (each is one constant or flag; see the design §13):
    gate and compartment modules, and the leftover face/teeth readings.
 7. **Soundtrack (future, blocked on tillandsias#1103):** doom and epic-metal undertones over the battle-metal score.
    Decay events already feed the event queue.
+
+# Round 3b (same day, after the carrier-v3 runtime, bonus-balance and playtest-fixes-3 merges)
+
+The operator's verdicts:
+- "Much improvement."
+- "The big boss fight is fantastic."
+- Stormfront, the lightning bonus level: "SUPER AWESOME!!"
+- "The big ship has great progress."
+
+Requests:
+
+## B2. Clear bonus missions and mission medals (change `mission-medals`)
+- **Supply Run was not understood.** "Was that like a magnet? Some powerups were different but they were just
+  holding." The instructions were unclear, or went by too fast, if there were any. The goal and the mechanic must read
+  at a glance:
+  - a readable briefing that stays long enough;
+  - an in-level cue for the mechanic (what to do with the crates or pickups);
+  - feedback when the player does it right.
+- **Final scores use no text for modifiers.** Replace the modifier text with badges: special mission medals with
+  little ribbons or accents per mission, shown instead of (or beside) the regular medals. Hero art goes through the
+  shared asset pipeline.
+
+## C2. /console boss launcher (folded into `carrier-v3-tune`)
+The boss now has intro waves, so /console needs an easy way to launch the carrier fight straight away and to defeat
+it quickly: skip the intro and launch waves, and offer a defeat or "fast-forward the decay" control for testing.
+
+## W1. Dynamic weather (change `dynamic-weather`)
+Random levels of dynamic rain on regular levels, from a drizzle to heavy rain. The thunderstorm, with lightning, stays
+exclusive to the Stormfront bonus level.
+
+## C3. Carrier rendering engine (change `carrier-render-engine`): research and spec first, then tune
+- **The collapse:** the components fall apart as separate random assets, each moving linearly, instead of as one
+  cohesive unit. The off-screen sections also "fall off", which shows they were only partial assets. The breakup must
+  read as one giant structure failing: cohesive, with continuity off-screen.
+- **The bend:** it currently warps a few separate layers individually and looks worse. Research it properly, spec it
+  and tune it, e.g. compose the hull to one texture and then warp that. The operator lets us drive the rendering engine
+  research and fixes.
+- **The force field:** it should thin out (thickness or opacity wearing down) instead of narrowing inward. It took a
+  while to understand that the fields were wearing down.
