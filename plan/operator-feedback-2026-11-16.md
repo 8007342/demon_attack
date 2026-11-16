@@ -216,3 +216,10 @@ implementation follows the merge of `work/carrier-v3-render`.
   - This supersedes the lead's earlier "upper hatches not directly shootable".
 - Radio hints, one line each: "Destroy the hatches!", "Time the open hatch!", "Fire ahead of its position!". Radio
   subtitles stay on one line so the font can grow a little.
+
+## Round 3d, V1 addendum: status (2026-11-16, change `voice-stack`)
+Licences re-read for a free GPL-3.0 game in [`plan/voice-stack-research.md`](voice-stack-research.md) §10, with an
+"OK for this repo?" column (§9.1): Fish S2-Pro and Higgs v2 now compete with VoxCPM2 in the pilot (outputs
+unrestricted apart from a credit line); Higgs v3, XTTS-v2 and Echo-TTS stay out because their licences restrict the
+audio. The two-layer, themed pseudo-swear list is in the change's design §3.2; hint lines are flagged for the
+`carrier-hatches` one-line test (§3.3).
