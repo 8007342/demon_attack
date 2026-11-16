@@ -87,6 +87,7 @@ after the merge instead of resolving its text.
 | `lib/comms/comms_bank.dart`, `plan/audio-studio/voice-batch-pending.md` | `python3 -I tools/comms_pipeline.py dart` (pure Python, no venv; inputs `art/comms/*.json`, `web/audio/comms/manifest.json`) | reproduces byte-identical |
 | `lib/game/boss_atlas.dart` frontal section | `tools/generate_boss_sprites.py` (needs Pillow) | not run (no venv) |
 | `lib/game/boss_atlas.dart` hero section (after `// ---- BEGIN boss hero atlases`) | `boss_sheet pack BAKE RIG HULL[=CLASS]…`; build it with `cd tools/boss_sheet && go build -o ~/.cache/tillandsias-project/bin/boss_sheet .`, run from the repo root; BAKE/RIG are rigkit outputs | builds, prints usage; pack not run (rewrites `lib/`) |
+| `lib/widgets/mission_medal_atlas.dart`, `assets/images/mission-medals.png` | `lua tools/rigkit/bake_layers.lua art/families/mission-medals.json --cols 6 --atlas assets/images/mission-medals.png --dart lib/widgets/mission_medal_atlas.dart MissionMedalAtlas` (bpy venv + Go; no GPU, picks committed; `plan/render-runs/mission-medals.md`) | byte-identical |
 | `lib/game/insignia_atlas.dart` | `cd tools/alien_insignia && go run . atlas -root ../..` | byte-identical |
 | `lib/game/ground_troops_atlas.dart` | `cd tools/ground_troops && go run . offline` | byte-identical |
 | `lib/game/vegetation_atlas.dart` | `cd tools/vegetation && go run . offline` | byte-identical |
