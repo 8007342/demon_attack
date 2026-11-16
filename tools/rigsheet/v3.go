@@ -12,7 +12,7 @@ package main
 //   - fielddata: the hull's field data texture (R the signed distance to the
 //     S0 silhouette, closed by a 30-unit disc so the membrane rounds the
 //     throat corners; G the Voronoi region of the family's 12 seeds; B the
-//     baked height), at the family's field ppu over the envelope.
+//     fracture chunk of chunkMap), at the family's field ppu over the envelope.
 
 import (
 	"encoding/json"
@@ -22,6 +22,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // underMargin: the under-paint reaches this far (units) beyond a layer's
@@ -483,4 +484,191 @@ func chunkMap(lum []float64, in []bool, w, h int, ppu, spacing float64, seed uin
 		}
 	}
 	return lab, cent
+}
+
+// composeV3: the stored view (45, 0) composed from the finished layers at out px
+// per unit, with every door instance in its open state when open (a stage
+// without its own layer falls back to the next lower stage, as the runtime does).
+func composeV3(bake string, r *Rig, stage string, open bool, out float64) *image.NRGBA {
+	b, err := os.ReadFile(filepath.Join(bake, r.Hull, "manifest.json"))
+	if err != nil {
+		return nil
+	}
+	var m Manifest
+	if json.Unmarshal(b, &m) != nil {
+		return nil
+	}
+	t := tag(45, 0)
+	find := func(kind, inst, st string) *Entry {
+		for i := range m.Entries {
+			e := &m.Entries[i]
+			if e.Kind == kind && e.View == t && e.Inst == inst && e.Stage == st {
+				return e
+			}
+		}
+		return nil
+	}
+	removed := map[string]bool{}
+	if s, ok := r.Stages[stage]; ok {
+		for _, id := range s.Removed {
+			removed[id] = true
+		}
+	}
+	W := int(math.Round((r.Frame[2] - r.Frame[0]) * out))
+	H := int(math.Round((r.Frame[3] - r.Frame[1]) * out))
+	canvas := image.NewNRGBA(image.Rect(0, 0, W, H))
+	order := []string{"S3", "S2", "S1", "S0"}
+	for _, in := range r.Insts {
+		if removed[in.ID] {
+			continue
+		}
+		id, flip := in.ID, false
+		if strings.HasSuffix(id, "L") && r.inst(strings.TrimSuffix(id, "L")+"R") != nil {
+			id, flip = strings.TrimSuffix(id, "L")+"R", true
+		}
+		var e *Entry
+		started := false
+		for _, st := range order {
+			if st == stage {
+				started = true
+			}
+			if !started {
+				continue
+			}
+			if open {
+				if e = find("door", id, st); e != nil {
+					break
+				}
+			}
+			if e = find("layer", id, st); e != nil {
+				break
+			}
+		}
+		if e == nil {
+			continue
+		}
+		src := load(filepath.Join(bake, r.Hull, e.File))
+		k := out / e.Texel
+		for y := 0; y < int(float64(e.Crop[3])*k); y++ {
+			for x := 0; x < int(float64(e.Crop[2])*k); x++ {
+				c := src.NRGBAAt(e.Crop[0]+int(float64(x)/k), e.Crop[1]+int(float64(y)/k))
+				if c.A == 0 {
+					continue
+				}
+				dx := int(math.Round((e.DXY[0]-r.Frame[0])*out)) + x
+				if flip {
+					dx = int(math.Round(-r.Frame[0]*out*2)) - dx - 1
+				}
+				over(canvas, dx, int(math.Round((e.DXY[1]-r.Frame[1])*out))+y, c)
+			}
+		}
+	}
+	return canvas
+}
+
+// v3sheet BAKE RIG OUT.png HULL...: per hull, S0 / S2 / S3 composed from the stored
+// layers (the visible envelope dashed, the overscan outside it), then each gate
+// closed and open at 2x.
+func cmdV3Sheet(a []string) {
+	bake, rigDir, out, hulls := a[0], a[1], a[2], a[3:]
+	k := .55
+	pad := 12
+	type row struct {
+		r     *Rig
+		imgs  []*image.NRGBA
+		gates [][2]*image.NRGBA
+		names []string
+	}
+	var rows []row
+	W, H := 0, 40
+	for _, h := range hulls {
+		r := readRig(rigDir, h)
+		rw := row{r: r}
+		for _, s := range []string{"S0", "S2", "S3"} {
+			rw.imgs = append(rw.imgs, composeV3(bake, r, s, false, k))
+		}
+		var fam struct {
+			Anchors struct {
+				Points []struct {
+					Name   string     `json:"name"`
+					Module string     `json:"module"`
+					At     [2]float64 `json:"at"`
+				} `json:"points"`
+			} `json:"anchors"`
+			Hulls map[string]struct {
+				Visible []float64 `json:"visible"`
+			} `json:"hulls"`
+		}
+		b, _ := os.ReadFile(filepath.Join(repoRoot(), r.Family))
+		json.Unmarshal(b, &fam)
+		zk := 2.0
+		closed, opened := composeV3(bake, r, "S0", false, zk), composeV3(bake, r, "S0", true, zk)
+		for _, p := range fam.Anchors.Points {
+			if !strings.HasPrefix(p.Name, "gate_") || p.At[0] < 0 {
+				continue
+			}
+			inst := p.Module
+			if inst == "prow" {
+				inst = "gate_" + strings.TrimPrefix(p.Name, "gate_")
+			}
+			if r.inst(inst) == nil {
+				continue
+			}
+			cx, cy := int((p.At[0]-r.Frame[0])*zk), int((p.At[1]-r.Frame[1])*zk)
+			box := image.Rect(cx-40*int(zk), cy-36*int(zk), cx+40*int(zk), cy+36*int(zk))
+			sub := func(im *image.NRGBA) *image.NRGBA {
+				o := newCanvas(box.Dx(), box.Dy(), hex("#2B3A55"))
+				for y := box.Min.Y; y < box.Max.Y; y++ {
+					for x := box.Min.X; x < box.Max.X; x++ {
+						if image.Pt(x, y).In(im.Bounds()) {
+							over(o, x-box.Min.X, y-box.Min.Y, im.NRGBAAt(x, y))
+						}
+					}
+				}
+				return o
+			}
+			rw.gates = append(rw.gates, [2]*image.NRGBA{sub(closed), sub(opened)})
+			rw.names = append(rw.names, strings.TrimPrefix(p.Name, "gate_"))
+		}
+		cw := rw.imgs[0].Bounds().Dx()
+		W = max(W, pad+3*(cw+pad), pad+len(rw.gates)*(2*160+3*pad))
+		H += 30 + rw.imgs[0].Bounds().Dy() + 20 + 144 + 20 + pad
+		rows = append(rows, rw)
+		if v := fam.Hulls[h].Visible; len(v) == 4 {
+			for _, im := range rw.imgs {
+				x0, y0 := int((v[0]-r.Frame[0])*k), int((v[1]-r.Frame[1])*k)
+				x1, y1 := int((v[2]-r.Frame[0])*k), int((v[3]-r.Frame[1])*k)
+				for x := x0; x < x1; x += 6 {
+					over(im, x, max(y0, 0), hex("#FFD36A"))
+				}
+				for y := max(y0, 0); y < y1; y += 6 {
+					over(im, max(x0, 0), y, hex("#FFD36A"))
+					over(im, min(x1, im.Bounds().Dx()-1), y, hex("#FFD36A"))
+				}
+			}
+		}
+	}
+	sheet := newCanvas(W, H, bgDark)
+	text(sheet, pad, 12, 3, "CARRIER V3 RE-RENDER - STORED VIEW (45, 0): INTACT, S2, S3 (GOLD DASH = VISIBLE ENVELOPE, OUTSIDE = OVERSCAN); GATES CLOSED / OPEN", ink)
+	y := 40
+	for _, rw := range rows {
+		text(sheet, pad, y+4, 2, strings.ToUpper(rw.r.Hull+"  "+rw.r.Title), ink)
+		y += 26
+		for i, im := range rw.imgs {
+			x := pad + i*(im.Bounds().Dx()+pad)
+			fill(sheet, image.Rect(x, y, x+im.Bounds().Dx(), y+im.Bounds().Dy()), hex("#2B3A55"))
+			blit(sheet, im, x, y, 1)
+			text(sheet, x, y+im.Bounds().Dy()+4, 2, []string{"S0 INTACT", "S2 ARMOUR SHED", "S3 MODULE LOSS"}[i], dim)
+		}
+		y += rw.imgs[0].Bounds().Dy() + 22
+		for i, g := range rw.gates {
+			x := pad + i*(2*160+3*pad)
+			blit(sheet, g[0], x, y, 1)
+			blit(sheet, g[1], x+160+pad, y, 1)
+			text(sheet, x, y+146, 2, strings.ToUpper(rw.names[i])+" CLOSED / OPEN", dim)
+		}
+		y += 144 + 20 + pad
+	}
+	save(out, sheet)
+	fmt.Println(out)
 }

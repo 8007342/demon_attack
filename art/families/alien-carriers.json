@@ -4718,7 +4718,7 @@
                 "seg": 14,
                 "at": [
                   3.499999999994409,
-                  6.256168142204643e-06,
+                  0.000006256168142204643,
                   0
                 ]
               },
@@ -4774,7 +4774,7 @@
                 "seg": 14,
                 "at": [
                   -3.499999999994409,
-                  -6.256168142204643e-06,
+                  -0.000006256168142204643,
                   0
                 ]
               },
@@ -7221,41 +7221,41 @@
     "notes": "Resident RGBA of one hull (one set combination) <= 16 MB: S0 layers at their texel class (core 2.0 px/unit: the prow; mass 1.0: everything else), S1-S3 layers at x stage_scale, wrecks at their class, mirrored pairs once, everything clipped to render.envelope. Measured by rigsheet budget from the manifest."
   },
   "selected": {
-    "notes": "Picked raws (paths under root); ledger plan/render-runs/boss-carrier-v2.md. sym = the hero half mirrored onto the other (yaw -12 draws +12 mirrored).",
-    "root": "art/sprites/sources/boss-carrier-v2/",
+    "notes": "Picked raws (paths under root); ledger plan/render-runs/boss-carrier-v2.md. sym = the hero half mirrored onto the other (yaw -12 draws +12 mirrored). carrier-v3: picks under art/sprites/sources/carrier-v3/ (ledger plan/render-runs/carrier-v3.md).",
+    "root": "art/sprites/sources/",
     "carrier1-thorn": {
-      "S0": "carrier1-thorn/hero/1016000-refined.png",
-      "S2": "carrier1-thorn/stage/S2-1017201.png",
-      "S3": "carrier1-thorn/stage/S3-1017300.png",
+      "S0": "boss-carrier-v2/carrier1-thorn/hero/1016000-refined.png",
+      "S2": "boss-carrier-v2/carrier1-thorn/stage/S2-1017201.png",
+      "S3": "boss-carrier-v2/carrier1-thorn/stage/S3-1017300.png",
       "sym": "left",
-      "belly": "carrier1-thorn/belly/1019000.png"
+      "belly": "boss-carrier-v2/carrier1-thorn/belly/1019000.png"
     },
     "carrier1-lattice": {
-      "S0": "carrier1-lattice/hero/1025000.png",
-      "S2": "carrier1-lattice/stage/S2-1027202.png",
-      "S3": "carrier1-lattice/stage/S3-1027303.png",
+      "S0": "boss-carrier-v2/carrier1-lattice/hero/1025000.png",
+      "S2": "boss-carrier-v2/carrier1-lattice/stage/S2-1027202.png",
+      "S3": "boss-carrier-v2/carrier1-lattice/stage/S3-1027303.png",
       "sym": "left"
     },
     "carrier1-shroud": {
-      "S0": "carrier1-shroud/hero/1036001.png",
-      "S2": "carrier1-shroud/stage/S2-1037200.png",
-      "S3": "carrier1-shroud/stage/S3-1037301.png",
+      "S0": "boss-carrier-v2/carrier1-shroud/hero/1036001.png",
+      "S2": "boss-carrier-v2/carrier1-shroud/stage/S2-1037200.png",
+      "S3": "boss-carrier-v2/carrier1-shroud/stage/S3-1037301.png",
       "sym": "left"
     },
     "carrier2-thorn": {
-      "S0": "carrier2-thorn/hero/2014000.png",
+      "S0": "carrier-v3/carrier2-thorn/hero/2017001.png",
       "sym": "left"
     },
     "carrier3-lattice": {
-      "S0": "carrier3-lattice/hero/3024003.png",
+      "S0": "carrier-v3/carrier3-lattice/hero/3028000.png",
       "sym": "left"
     },
     "carrier4-shroud": {
-      "S0": "carrier4-shroud/hero/4034003.png",
+      "S0": "boss-carrier-v2/carrier4-shroud/hero/4034003.png",
       "sym": "left"
     },
     "carrier5-thorn": {
-      "S0": "carrier5-thorn/hero/5014001.png",
+      "S0": "boss-carrier-v2/carrier5-thorn/hero/5014001.png",
       "sym": "left"
     }
   },

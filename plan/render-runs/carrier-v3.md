@@ -185,3 +185,71 @@ hull's PNG page, about 1 MB today.
 - No Wan VACE and no animation frames. Doors open by blending their two states, and the bend does the turning.
 - No new pitch or yaw views.
 - No change to the tour-1 set combinations or their picks, beyond the regional edits.
+
+---
+
+# Run ledger (work/carrier-v3-render, 2026-11-16)
+
+**Status: running.** The operator approved the long GPU jobs ("the boss fights shall be the most memorable part of this
+game"). Picks are delegated (project memory "autonomy"); each pick and rejection is logged here with its reason.
+Branch `work/carrier-v3-render` (worktree `~/.cache/tillandsias-project/worktrees/carrier-v3-render`), off `game`.
+
+**Scope change during the run (coordinator, operator round 3b C3).** A separate agent re-specs the carrier rendering
+engine (bend, collapse, field). This run therefore keeps its outputs engine-agnostic and does **not** change the runtime
+bend, collapse or field code. It delivers data for them instead (§K0 "Interfaces") and wires only the art side (packs,
+door layers, vortex points).
+
+## K0. Kit and tools (CPU)
+**Kit** (`art/families/alien-carriers.json`, checked by `rig.py --check`: originality, mirror symmetry, the anchor gate
+at the stored view, and the gate anchors against `lib/game/carrier_gates.dart`):
+- `views.stored = [[45, 0]]`; `rig.py --views review` renders the 3 × 3 clay for sheets only.
+- **Gates** at the `CarrierGate` positions, in the plane frame, dropped onto the hull along the hero view and never
+  scaled with it (a drop now casts in the target surface's own scale, so a fixed module lands on a scaled hull):
+  - `gate.bay` (the deck bays, two leaves over the bay), `gate.pod` (the prong gates at ±150, 52: the hull had no
+    surface there, so a chitin sponson arm reaches from the deck corner to the prong at every extent), `gate.leaf`
+    (tour-5 aft gates);
+  - `hatch.slab` / `hatch.petal` (tour 3+ dorsal compartments), `maw.slit` / `maw.iris` (tour 2+, elongated along the
+    flank: a round dark pair reads as a head), `sac.cluster` (tour 4+, splits in two);
+  - every door part has an `open` matrix (move, rotation about a pivot, scale): only `matrix_world` moves, so the
+    bake's object coordinates carry the closed state's paint onto the open state;
+  - **clearings**: array decor whose element falls within a gate's radius is not generated (prong plating, blister
+    guns, spine thorns and the fore emitter base had covered gates).
+- **Envelopes per hull** (design §6.2), tours 2–5 with **40 units of overscan** (`hulls.<h>.visible` keeps the visible
+  envelope), so a collapse or a bend never shows a cut edge (operator round 3b C3). Tour 1 keeps its frame, because its
+  heroes are kept.
+- Texel classes: mass 1.2 px/unit on tours 1–3, 1.1 on tours 4–5; core 2.0.
+- **Fixes in the clay:**
+  - thorn deck: the two rows of four big plates (painted as paired dark eye ports) became a staggered field of 9 + 8
+    small sinew pores and a row of low shingles;
+  - thorn keel: the blunt front bulb (the skull-like tip) is a blade tapering to 0.4 units;
+  - tour-3 prow (`prow.spire`): no bone strut row and no crystal column row (see K3);
+  - tour-4 prow (`prow.bastion`): long chitin wing cases instead of the scale pebbles; `tag_map plate → scale`
+    (clay 0.40); thorn blisters instead of the hive blisters (two lit ports per dome read as eyes);
+  - the prow's gun thorns are chitin, not bone (pale pegs under the gallery read as fangs).
+- Hinges and vortex points: `wing.*` and `tendril.barbed` carry `hinge {root, tip}` and `vortex` points; the carapace
+  carries the prong tips. `field.regions` holds the 12 region seeds.
+
+**Tools**
+- `bake.py`: every layer is rendered twice (held out, and alone at one sample) for the under-paint; door instances
+  get their open state (`door_<id>`); `heights.json` holds each instance's ship-frame z at the 20-unit lattice (BVH
+  casts along the view, misses filled from neighbours); wrecks render in their own frame (sidecar JSON), never
+  clipped by the envelope.
+- `rigsheet`: `underPaint` (own silhouette within 12 units of the visible texels, filled by `pullPush` and darkened
+  15 %), a 4-texel transparent crop margin, `fielddata` (below), `regional` / `regionmerge` (K2).
+- `boss_sheet pack`: one view, `doors`, `vortex`, `gates`, `hinges` and a per-hull data page.
+
+**Interfaces delivered for the rendering engine** (engine-agnostic; the runtime bend, collapse and field code is not
+changed here):
+- **Layers that compose into one image:** all layers share the rig frame registration (`dxy` + `texel` in the
+  manifest, `BossHeroSprite.dx/dy/ppu` in Dart) and are under-painted 12 units beneath their occluders, so composing
+  them back to front reproduces the S0 beauty and a composed texture can be warped as one image.
+- **Height grids** per instance (`BossHeroData.heights`: 20-unit nodes, z + 32768 in R/G of the data page), mergeable
+  into one hull grid by taking the topmost (largest z) value per node.
+- **Field data texture** (`BossHeroData.field`, 0.5 px/unit over the envelope + 32): R the signed distance to the S0
+  silhouette closed by a 30-unit disc (no cusp where the lip meets the prongs), G the region of the 12 seeds.
+- **Fracture chunks** (`BossHeroData.chunks` = the field texture's B channel; `chunkCentres`): a marker watershed on
+  the S0 beauty's luminance edges with mirror-symmetric markers about 110 units apart, so cracks follow the painted
+  strakes, terraces and seams, not the module borders. 30–40 chunks per hull.
+- **Tip points** (`BossHeroView.vortex`) and **hinges** (`BossHeroHull.hinges`).
+- **Gate map** (`BossHeroHull.gates`: `CarrierGate` id → art instance) and **door states** (`BossHeroView.doors`).
+- **Overscan** on tours 2–5 (above): the art continues 40 units past every visible edge.

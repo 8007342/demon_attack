@@ -13,6 +13,8 @@ package main
 //	rigsheet heroes RIG HULL OUT.png TITLE RAW...    hero candidate sheet (raw, finished, phone scale)
 //	rigsheet bakefinish BAKE RIG HULL                finish every baked layer at its class density + manifest.json
 //	rigsheet budget BAKE RIG HULL...                 measured resident RGBA of the finished outputs (+ the field page)
+//	rigsheet regional OLDRAW OLDCTL NEWCTL INPUT.png MASK.png [GROW] / regionmerge OLDRAW EDIT MASK OUT.png (tour-1 regional edits)
+//	rigsheet v3sheet BAKE RIG OUT.png HULL...         carrier-v3 review: S0/S2/S3 at the stored view, gates closed/open
 //	rigsheet fielddata BAKE RIG HULL                 carrier-v3 field data texture: R distance, G region, B height
 //	                                                 (bakefinish also under-paints layers, finishes door_ states and wreck frames)
 //	rigsheet views BAKE RIG HULL OUT.png             finished views x stages with the overlay (+ OUT.gif swerve)
@@ -67,6 +69,12 @@ func main() {
 		cmdHeroes(a)
 	case "bakefinish":
 		cmdBakeFinish(a)
+	case "regional":
+		cmdRegional(a)
+	case "regionmerge":
+		cmdRegionMerge(a)
+	case "v3sheet":
+		cmdV3Sheet(a)
 	case "fielddata":
 		cmdFieldData(a)
 	case "budget":
