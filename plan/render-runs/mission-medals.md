@@ -180,3 +180,9 @@ Every verdict is also in the run log.
   (and a smaller canopy) would take one geometry change and one more job.
 - The ribbons carry a little painted glare (heavyOrdnance, generic). It is harmless at display sizes.
 - No in-game mock yet. The runtime widget, and the medal card and scoreboard placement, belong to the parent task.
+
+## Gates (2026-11-16, work/mission-medals after merging origin/game at d6369896)
+- `flutter analyze`: clean. Full suite through the lock: +936 ~33, "All tests passed!" (the 33 skipped are `review`-tagged).
+- `test/mission_medals_review_test.dart` ran alone (`--concurrency=1 --run-skipped --tags review`): passed; it writes
+  `art/contact/mission-medals-screens.png` and `art/contact/mission-medals-supply-run.png`.
+- `npm run test:worker`: 51 pass, 0 fail. `npm run build`: ok. `openspec validate mission-medals --strict`: valid.

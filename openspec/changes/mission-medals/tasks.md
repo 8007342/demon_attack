@@ -19,4 +19,4 @@
 
 ## 3. Sheets and gates
 - [x] 3.1 `art/contact/mission-medals-supply-run.png`, `mission-medals-screens.png`, `mission-medals-variants.png`, reviewed
-- [ ] 3.2 `flutter analyze`, the full suite through the lock, `npm run test:worker`, `npm run build`, `openspec validate mission-medals --strict`
+- [x] 3.2 `flutter analyze`, the full suite through the lock, `npm run test:worker`, `npm run build`, `openspec validate mission-medals --strict`
