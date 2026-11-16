@@ -165,7 +165,11 @@ void main() {
     expect(model.boss, isNull);
     expect(model.looming, isTrue);
     reach(model, RunMode.playing);
-    clearWave(model);
+    // carrier-v3: two launch waves on tour 1.
+    for (var i = 0; i < 4 && model.boss == null; i++) {
+      clearWave(model);
+      tick(model, .5);
+    }
     expect(model.wave, ArcadeModel.wavesFor(sector: 5, route: 0));
     expect(model.isBoss, isTrue);
     expect(model.boss!.fightReady, isFalse);

@@ -704,7 +704,7 @@ void main() {
         {'routeIndex': 5},
         {'routeIndex': 'unknown'},
         {'sector': 0},
-        {'sector': 5, 'wave': 3}, // route 1: loom 1, carrier 2
+        {'sector': 5, 'wave': 4}, // route 1: 2 launch waves, carrier 3
         {'wave': -1},
         {'lives': 0},
         {'medals': 5},

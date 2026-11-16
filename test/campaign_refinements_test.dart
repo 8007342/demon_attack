@@ -449,11 +449,11 @@ void main() {
   test('carrier encounters seed varied directions and damage accelerates bounded motion', () {
     final directions = <int>{}, phases = <double>{};
     for (var seed = 0; seed < 20; seed++) {
-      // boss-grandeur: the carrier is wave 2 on tour 1 (after the loom).
+      // carrier-v3: the carrier is wave 3 on tour 1 (after 2 launch waves).
       final a = ArcadeModel(seed: seed)
-        ..restoreCheckpoint({'sector': 5, 'wave': 2});
+        ..restoreCheckpoint({'sector': 5, 'wave': 3});
       final b = ArcadeModel(seed: seed)
-        ..restoreCheckpoint({'sector': 5, 'wave': 2});
+        ..restoreCheckpoint({'sector': 5, 'wave': 3});
       expect(a.boss!.startingDirection, b.boss!.startingDirection);
       expect(a.boss!.startingPhase, b.boss!.startingPhase);
       directions.add(a.boss!.startingDirection);
@@ -461,7 +461,7 @@ void main() {
     }
     expect(directions, {-1, 1});
     expect(phases.length, greaterThan(10));
-    final m = ArcadeModel()..restoreCheckpoint({'sector': 5, 'wave': 2});
+    final m = ArcadeModel()..restoreCheckpoint({'sector': 5, 'wave': 3});
     m.mode = RunMode.playing;
     m.invulnerable = 1000;
     final b = m.boss!;

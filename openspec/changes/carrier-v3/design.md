@@ -527,3 +527,53 @@ events below. Every event carries `route`, `tour` and `set`. The score itself wa
 - Should the Overflight stay before the approach, now that the approach itself shows the ship coming?
 - Should a gate be **destructible** in the fight (a Gradius-style open hatch as an opportunity, `[L5]`)? This change
   keeps the gates indestructible, so balance stays put.
+
+## 14. Runtime notes (the runtime on today's art, `work/carrier-v3-runtime`)
+These are the picks the runtime made where the art or the phone was missing. Each one is a constant or a flag.
+
+**Bend mesh cost (task 3.2).**
+- Tour 1 (`carrier1-thorn`): 1,858 vertices and 3,288 triangles per frame, on one page, in two `drawVertices`
+  calls (back and front). `carrier1-lattice` has 1,983 and 3,496; tour 5 (`carrier5-thorn`) has 3,045 and 5,324.
+- Rewriting the positions takes about 70 µs on the desktop Dart VM (`test/carrier_bend_test.dart`). It runs only
+  when the bend has moved more than 0.02°, and the `Vertices` object is reused until then. There are no vertex
+  colours.
+- Frame-time reasoning:
+  - this is below the terrain mesh already drawn every frame on phones (about 4,800 × 2, `[R2]`);
+  - the cells off-screen are not culled. They cost vertex work only, and the clip discards them before
+    rasterisation;
+  - the raster cost is the hull's own fill, which the old `drawImageRect` layers paid too;
+  - so the carrier should stay well inside the 2 ms target at DPR 2.
+- Task 3.5 (the phone measurement) is still open.
+
+**Force field (tasks 4.1–4.2).**
+- The distance map is an exact EDT of the S0 alpha at 0.5 px/unit (about 400 × 360 px for tour 1), built once
+  when the hull is installed.
+- The membrane is the map's iso-contour at the shield's offset, quantised to 2 units, as line segments per region,
+  bent per point. It is drawn with `drawRawPoints`, one call per lit region and pass (glow, then core).
+- About 360 segments are drawn per frame on tour 1. There is no full-screen fragment pass, so the shader is
+  deferred.
+- The lip is drawn unbent on `Carrier.forceFieldSurfaceY` and blended into the contour over 70 units (smoothstep).
+  The lip (`|x| ≤ 110`) is drawn over the prow; the rest is drawn after the hull's back pass.
+
+**Gates.**
+- The authored round-robin crosses sides and rings (bayL, prongR, bayR, prongL, …), so the two deck bays never
+  glow as a pair under the dome: no eye reading.
+- Until the door layers exist, each gate is runtime-drawn: a dark slit with a rim, an ember-to-amber interior and
+  halo, doors (two leaves, an iris, a lifting hatch, or a split sac), and a four-light rail.
+- Launch-wave members wait in their gate (`Demon.gateWait`: parked, undrawn and untargetable) until their slot in
+  the volley. The approach's reserve is not drawn in the fog: it is inside the carrier.
+
+**Approach.**
+- The hull is drawn one fog bank nearer than §5.2 (between the far banks at D ≥ 3, between the veils at
+  1.8 ≤ D < 3). Behind every bank it read as a pale ghost on the review strip.
+- The haze mixes 0.85 × `fogMix(D)` toward the carrier's shade lightened by 30 % toward the fog.
+
+**Take-off.**
+- The world pitch drops the background's horizon (60 units × q, so 36 at the peak) through the arena camera.
+- The transition's uncovered cloud band and its feather were drawn over the hull, so they are not used here.
+
+**Not drawn yet.**
+- The light sweep (§2.2) needs a `saveLayer` over the hull, so it waits for the phone profile.
+- Vortex trails use the outer-lower extreme of each wing, emitter and tendril layer until the rig's `vortex`
+  points exist.
+- Under reduced motion the approach steps keep their 3 s ease: D is simulation state.

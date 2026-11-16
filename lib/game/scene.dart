@@ -16,6 +16,8 @@ import 'ground_atmosphere_atlas.dart';
 import 'bonus/bonus_look.dart'; // --- bonus levels
 import 'bonus/bonus_painters.dart'; // --- bonus levels: mechanics
 import 'boss_painter.dart';
+import 'carrier_presentation.dart';
+import 'carrier_script.dart' show CarrierApproachScript;
 import 'ground_painter.dart';
 import 'insignia_atlas.dart';
 import 'insignia_painter.dart';
@@ -51,6 +53,9 @@ class DemonScene extends FlameGame {
 
   /// boss-grandeur: the boss level's phases, altitude, camera and views.
   late final bossDirector = BossDirector(seed: model.seed);
+
+  /// carrier-v3: the field, the gates and the speed cues.
+  final carrierV3 = CarrierPresentation();
 
   /// The gameplay layer is drawn under the arena camera's zoom this frame.
   bool _zoomApplied = false;
@@ -257,6 +262,7 @@ class DemonScene extends FlameGame {
   void advanceBoss(double dt) {
     final b = model.boss;
     if (b != null && armada.heroReady) armada.assemble(b, model.cycle);
+    armada.beginFrame(); // carrier-v3: the mesh counters, per frame
     bossDirector.update(
       model,
       dt,
@@ -266,6 +272,12 @@ class DemonScene extends FlameGame {
     );
     bossShadowAltitude = defaultBossShadowAltitude * bossDirector.altitude;
     GroundCamera.spriteAltitude = bossDirector.camera.altitude;
+    // carrier-v3 §2: the carrier is drawn bent (rigid under reduced motion);
+    // its field's distance map is derived once per hull at load.
+    final reduced = sectors.flyover.reducedMotion;
+    armada.bend = armada.carrier && !reduced ? bossDirector.bend : null;
+    if (armada.carrier && model.level >= 4) carrierV3.ensureField(armada);
+    carrierV3.update(dt, model, bossDirector, reduced: reduced);
   }
 
   /// Feeds the fog its clock and the flight distance (visual only). The fog
@@ -282,10 +294,9 @@ class DemonScene extends FlameGame {
       ..cloudScroll = model.reducedMotion ? 0 : cloudRun
       // boss-grandeur (R8): the fight plays higher and faster: the fog
       // flows faster past it (the ground below slows by the altitude).
-      ..advance(
-        dt * bossDirector.flowBoost,
-        distance: sectors.flyover.distance,
-      );
+      // carrier-v3 §7: and each layer at its own rate, the near faster.
+      ..flowBoost = bossDirector.flowBoost
+      ..advance(dt, distance: sectors.flyover.distance);
   }
 
   @override
@@ -352,11 +363,14 @@ class DemonScene extends FlameGame {
       // cloud. HUD, comms dock, ship and bullets are never pitched or
       // rolled (the flow ship and the cover are drawn after the world).
       final tilt = model.flow.env('tilt') * flowTilt;
+      // carrier-v3 §7: the carrier's trauma shake joins the flow's (four
+      // beats only). Its take-off pitch goes through the arena camera's
+      // background transform (no uncovered band over the hull).
       final q = model.flow.env('pitch');
       final drop = pitchDrop * q;
       final band = tilt + drop;
       final roll = model.flow.env('roll');
-      final shake = _flowShake();
+      final shake = _flowShake() + bossDirector.shake;
       // playtest-fixes-3: the band the pitch uncovers is the deep sky above
       // the painted one in clear air, and cloud once the cloud is in (the
       // pitch now starts with the climb, before the cloud).
@@ -1250,6 +1264,16 @@ class DemonScene extends FlameGame {
         // boss-carrier-wire: the v2 prow's hangar deck carries its own
         // doors (no fanged jaws, no lit windows: styleguide §3.4).
         _carrierDeck(c, b);
+        // carrier-v3 §4: the prow's gates (deck bays, prong gates), over
+        // the deck's furniture.
+        carrierV3.paintGates(
+          c,
+          model.launches,
+          Offset(b.x, b.y),
+          front: true,
+          clock: model.visualClock,
+          bend: armada.bent,
+        );
       } else {
         _carrierLighting(c, Offset(b.x, b.y), carrierBank);
         if (!hero) _carrierEyes(c, b); // the view set's eyes are its own
@@ -1281,7 +1305,21 @@ class DemonScene extends FlameGame {
           }
         }
       }
-      if (b.shield > 0) {
+      // carrier-v3 §3: a v2 carrier's field is the hull-conforming
+      // membrane; its front lip (where shots stop) is drawn here, over the
+      // prow. Without a distance map, today's arc.
+      final membrane =
+          armada.carrier &&
+          b.fightReady &&
+          carrierV3.paintField(
+            c,
+            b,
+            armada,
+            bossDirector,
+            lip: true,
+            reduced: sectors.flyover.reducedMotion,
+          );
+      if (b.shield > 0 && !membrane) {
         // A fixed-width egg encases the hull; depletion brings its surface
         // inward vertically, so incoming fire visibly reaches nearer the ship.
         final strength = b.shield / b.shieldMax;
@@ -1683,6 +1721,44 @@ class DemonScene extends FlameGame {
             ? (math.sin(model.visualClock * 9.2) > 0 ? 1.0 : .5)
             : -1,
       );
+      if (armada.carrier) {
+        // carrier-v3: the hull's own gates, the field's membrane, then the
+        // speed cues over the hull and under the creatures.
+        carrierV3.paintGates(
+          c,
+          model.launches,
+          Offset(b.x, b.y),
+          front: false,
+          clock: model.visualClock,
+          bend: armada.bent,
+        );
+        if (b.fightReady) {
+          final reduced = sectors.flyover.reducedMotion;
+          carrierV3.paintField(
+            c,
+            b,
+            armada,
+            bossDirector,
+            lip: false,
+            reduced: reduced,
+          );
+          carrierV3.paintTrails(
+            c,
+            b,
+            armada,
+            bossDirector,
+            bossDirector.camera,
+          );
+          carrierV3.paintCues(
+            c,
+            bossDirector,
+            bossDirector.camera,
+            cloud: atmosphere.cloud,
+            cloudLight: Atmosphere.cloudLight,
+            seed: model.seed * 31 + model.cycle,
+          );
+        }
+      }
       if (rising) c.restore();
       c.restore();
       return;
@@ -5012,35 +5088,71 @@ extension _BossGrandeur on DemonScene {
 
   /// The fog layer after which the loom is drawn: it starts behind all
   /// but the horizon band and rises one layer per ~8 s.
-  int _loomLayer(int layers) =>
-      layers == 0 ? 0 : math.min(layers - 1, (model.loomClock / 8).floor());
+  ///
+  /// carrier-v3 §5.2: by the approach distance D: between the far banks
+  /// for D ≥ 3, between the veils for 1.8 ≤ D < 3, under the near sheets
+  /// below (one bank nearer than the design: behind every far bank the
+  /// hull read as a pale ghost on the review strip).
+  int _loomLayer(int layers) {
+    if (layers == 0) return 0;
+    final d = bossDirector.distance;
+    if (d >= 3) return math.min(layers - 1, 1);
+    if (d >= 1.8) return math.min(layers - 1, 3);
+    return layers - 1;
+  }
 
   /// The carrier looming under the fog: a dark mass between the far banks.
   void _bossLoom(Canvas c) {
-    if (bossDirector.phase != BossPhase.loom || !armada.anyReady) return;
+    if (bossDirector.phase != BossPhase.approach || !armada.anyReady) return;
     final at = bossDirector.loomAt;
     final k = bossDirector.loomScale;
     c.save();
     c
       ..translate(at.dx, at.dy)
       ..scale(k, k);
+    // carrier-v3 §5.2: aerial perspective, toward the fog's colour (value
+    // and contrast, never blur) by 1 − e^(−0.55 (D − 1)).
     c.saveLayer(
       null,
       Paint()
-        ..colorFilter = fogFilter(_bossShade, .66)
-        ..color = const Color.fromRGBO(255, 255, 255, .9),
+        ..colorFilter = fogFilter(_approachFog, .85 * bossDirector.fog)
+        ..color = const Color.fromRGBO(255, 255, 255, .94),
     );
     paintBossBody(c, Offset.zero);
     c.restore();
     c.restore();
   }
 
-  /// Its running lights blink through the fog (drawn after the banks).
+  /// The approach's haze colour: the fog's, a little into its shade.
+  Color get _approachFog => Color.lerp(_bossShade, atmosphere.cloud, .3)!;
+
+  /// Its running lights blink through the fog (drawn after the banks), and
+  /// its gates telegraph and launch through it (carrier-v3 §4.3).
   void _bossLoomLights(Canvas c) {
-    if (bossDirector.phase != BossPhase.loom || !armada.heroReady) return;
-    if ((ambient * 1.4).floor().isOdd) return;
+    if (bossDirector.phase != BossPhase.approach || !armada.heroReady) return;
     final at = bossDirector.loomAt;
     final k = bossDirector.loomScale;
+    if (armada.carrier) {
+      carrierV3.paintGates(
+        c,
+        model.launches,
+        at,
+        front: false,
+        scale: k,
+        clock: model.visualClock,
+        opacity: .9,
+      );
+      carrierV3.paintGates(
+        c,
+        model.launches,
+        at,
+        front: true,
+        scale: k,
+        clock: model.visualClock,
+        opacity: .9,
+      );
+    }
+    if ((ambient * 1.4).floor().isOdd) return;
     final paint = Paint()..isAntiAlias = false;
     for (final l in armada.heroPoints(BossView.hero, 0, kind: 'lights')) {
       final p = at + Offset(l.x, l.y) * k;
@@ -5069,14 +5181,15 @@ extension _BossGrandeur on DemonScene {
       ..translate(x, y)
       ..scale(k, k)
       ..translate(-b.x, -b.y);
+    // carrier-v3 §5.2: the Close sheds the haze of distance D.
     c.saveLayer(
       null,
       Paint()
         ..colorFilter = fogFilter(
-          Color.lerp(_bossShade, atmosphere.cloud, e)!,
-          .66 * (1 - e),
+          _approachFog,
+          .85 * CarrierApproachScript.fogMix(bossDirector.distance),
         )
-        ..color = Color.fromRGBO(255, 255, 255, .82 + .18 * e),
+        ..color = Color.fromRGBO(255, 255, 255, .9 + .1 * e),
     );
     return true;
   }
@@ -5327,7 +5440,7 @@ extension _BossGrandeur on DemonScene {
     final b = model.boss;
     if (b != null) return (b.x, b.y, b.fightReady ? 1 : b.emerge);
     final d = bossDirector;
-    if (d.phase == BossPhase.loom) {
+    if (d.phase == BossPhase.approach) {
       // The lurking shadow crawls from the far terrain toward the front.
       return (d.loomAt.dx, -60 + 210 * d.loom, .7);
     }

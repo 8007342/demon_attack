@@ -194,4 +194,50 @@ void main() {
     expect(a.where((e) => e.contains(':hit:')), isNotEmpty);
     expect(b, a);
   });
+
+  // --- carrier-v3 §6.2: the per-tour band, down to 0.62.
+  test('per-tour carrier floors: 0.70, 0.68, 0.66, 0.64, 0.62', () {
+    final want = [.70, .68, .66, .64, .62];
+    for (var r = 0; r < 5; r++) {
+      expect(ArenaCamera.carrierMinZoomFor(r), closeTo(want[r], 1e-9));
+    }
+    expect(ArenaCamera.carrierMinZoomFor(9), closeTo(.62, 1e-9));
+    for (var r = 0; r < 5; r++) {
+      final floor = ArenaCamera.carrierMinZoomFor(r);
+      final cam = ArenaCamera();
+      for (var i = 0; i < 60 * 30; i++) {
+        cam.stepZoom(1 / 60, 0, carrier: true, carrierFloor: floor);
+      }
+      expect(cam.zoom, closeTo(floor, 1e-6));
+      expect(ArenaCamera.targetZoom(
+              range: 1, swerve: 1, altitude: 2, carrier: true, carrierFloor: floor),
+          closeTo(floor, 1e-9));
+      // Later tours frame wider.
+      if (r > 0) {
+        expect(floor, lessThan(ArenaCamera.carrierMinZoomFor(r - 1)));
+      }
+    }
+  });
+
+  test('tour 5 floors at 0.62: creature 34, ship 36, bullet 3 CSS px', () {
+    final cam = ArenaCamera()
+      ..carrier = true
+      ..carrierFloor = .62
+      ..zoom = .62;
+    final far = 44 * Perspective.scaleOf(Perspective.nearTop);
+    expect(far * cam.zoom * cam.floorScale(far, ArenaCamera.creatureFloor),
+        greaterThanOrEqualTo(ArenaCamera.creatureFloor - 1e-9));
+    expect(
+        ShipPainter.size * cam.zoom *
+            cam.floorScale(ShipPainter.size, ArenaCamera.shipFloor),
+        greaterThanOrEqualTo(ArenaCamera.shipFloor - 1e-9));
+    expect(5 * cam.zoom, greaterThanOrEqualTo(ArenaCamera.bulletFloor));
+  });
+
+  test('the horizon drop sinks the background only', () {
+    final cam = ArenaCamera()..horizonDrop = 18;
+    expect(cam.identity, isFalse);
+    expect(cam.backgroundPoint(const Offset(100, 300)).dy, closeTo(318, 1e-9));
+    expect(cam.gameplayMatrix[13], 0);
+  });
 }
