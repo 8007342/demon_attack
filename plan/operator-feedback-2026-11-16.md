@@ -52,6 +52,21 @@ Workstreams. Each gets its own OpenSpec change; agents implement on `work/*` bra
 - Looking at it should make it obvious to touch and drag there.
 
 ## C1. The Carrier, redesigned (change `carrier-v3`). Research and spec first, re-render last.
+
+**Steps 1–6 are planned, awaiting the operator's review** (branch `work/carrier-v3`). Nothing runs in the game or on
+the GPU until that review:
+- Research, with a source beside every conclusion: [`plan/carrier-v3-research.md`](carrier-v3-research.md).
+- Spec: [`openspec/changes/carrier-v3/`](../openspec/changes/carrier-v3/) ([proposal](../openspec/changes/carrier-v3/proposal.md),
+  [design](../openspec/changes/carrier-v3/design.md), [tasks](../openspec/changes/carrier-v3/tasks.md), delta specs).
+- Re-render plan: [`plan/render-runs/carrier-v3.md`](render-runs/carrier-v3.md).
+
+Decisions, in brief (each is one constant or flag; see the design §13):
+- one stored view, plus a runtime bend (≤ 3° lean, ≤ 2.5° bank, ≤ 2° pitch);
+- a hull-conforming field in 12 regions that go dark from the arms inward, on an unchanged gameplay surface;
+- 4–12 hull gates per tour, each telegraphing for 1.2 s;
+- the intro runs Overflight → Approach (D 4 → 1, two or three launch waves) → Close → Take-off → Climb;
+- the minimum zoom runs 0.70, 0.68, 0.66, 0.64 and 0.62 by tour;
+- the hull moves heavily while the world rushes past it.
 1. **Research, with provenance:** how to make a giant ship read as enormous and ultra fast. Authorities on animation,
    storytelling, games and motion, for example:
    - the animation principles (Thomas & Johnston);
