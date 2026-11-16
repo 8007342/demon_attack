@@ -189,7 +189,7 @@ void main() {
         expect(d.dive, 0);
         expect(d.hp, 8);
         final kills = m.kills;
-        while (m.demons.contains(d)) {
+        for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
           m.hitDemon(d);
         }
         final score = m.score;

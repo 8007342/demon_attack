@@ -63,7 +63,7 @@ _End _play(
               .where((d) => !d.entering && d.swarmState != SwarmState.reserve)
               .firstOrNull;
           if (target != null) {
-            while (m.demons.contains(target)) {
+            for (var guard = 0; guard < 1000 && m.demons.contains(target); guard++) {
               m.hitDemon(target);
             }
             cool = every;
