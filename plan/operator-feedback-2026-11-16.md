@@ -139,3 +139,37 @@ exclusive to the Stormfront bonus level.
 - Spec: [`openspec/changes/carrier-render-engine/`](../openspec/changes/carrier-render-engine/) (design §1 has the
   causes; §5 has the interfaces the re-render on `work/carrier-v3-render` is expected to provide).
 - Sheets and clips: `art/contact/carrier-render-engine-{bend,collapse,field}.png`, `-collapse.gif`, `-bend-sweep.gif`.
+
+# Round 3c (same day, after the carrier-render-engine landed): C4 and C5
+
+The operator's verdict: "The current huge boss fight is great, it does feel enormous." The boss fights are the heart of
+the run, and with the planned dynamic soundtrack "one whole run of the game should feel like one smooth play of a long
+song with a game to match".
+
+Both workstreams are in one change, [`openspec/changes/carrier-hatches/`](../openspec/changes/carrier-hatches/)
+([proposal](../openspec/changes/carrier-hatches/proposal.md), [design](../openspec/changes/carrier-hatches/design.md),
+[tasks](../openspec/changes/carrier-hatches/tasks.md)). Research, with a source beside every conclusion:
+[`plan/carrier-hatches-research.md`](carrier-hatches-research.md). **Spec only (branch `work/carrier-hatches`).** The
+implementation follows the merge of `work/carrier-v3-render`.
+
+## C4. Hatch cascade (design Part A)
+- **The request:** "the demons fly under it so we cannot see them anymore." The hatches open from the top and the
+  demons emerge from them. Hitting the carrier drops the top hatches, so the demons come from lower and lower
+  hatches, until they come out of the hatch we can shoot. "This is just the beginning of the boss fight."
+- **The spec:**
+  - dorsal hatch tiers, 4, 4, 5, 5 and 6 per tour, with the topmost intact tier launching;
+  - the upper tiers drop on shield-cell thresholds;
+  - then the deck bays (the core's side hatches) and finally the core door, both shootable, launch on their own door
+    cycles;
+  - creatures are drawn over the hull, and each arrives at the same moment as today;
+  - new events: `bossHatchDrop` and `bossHatchTier` (the song's sections).
+
+## C5. Component break-up (design Part B)
+- **The request:** "the spikes layer fell off as a whole layer instead of individual spikes … make sure components
+  fall off and break apart instead of as whole layers."
+- **The spec:**
+  - every spike, plate, crystal or door leaf leaves on its own, staggered (at most a quarter of a transition per
+    0.25 s), tearing at its root, spinning and fragmenting;
+  - the final collapse stays cohesive;
+  - the bake has no per-component data yet. The rigkit needs a `comp` id pass, a component manifest (pivots, axes,
+    cracks) and stump sockets, and the runtime derives the components from the layer art until it has them.

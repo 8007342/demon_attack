@@ -197,3 +197,18 @@ where one is named.
 | ID | File:line | Conclusion | Status | Source or note |
 |---|---|---|---|---|
 | <a id="W-01"></a>W-01 | plan/dynamic-weather-research.md, conclusion 3 | Rain drawn under the play (and its dimming) keeps bullets and creatures readable | UNSOURCED | No read source measures rain density against gameplay readability. PC Gamer, 80.lv and Tatarchuk 2006 were unreachable (unread: snippet only). Checked instead on `art/contact/dynamic-weather-tiers.png` |
+
+## Part CH: the carrier hatch cascade and component break-up (`carrier-hatches`, 2026-11-16)
+Our own engineering choices in `plan/carrier-hatches-research.md` and `openspec/changes/carrier-hatches/design.md`.
+No source states them; each is checked by the test or sheet named once the change is implemented.
+
+| ID | Where | Claim | Status | Check |
+|---|---|---|---|---|
+| <a id="CH-1"></a>CH-1 | design §A2 | Tier counts per tour (2/2/3/3/4 upper, plus the deck and maw tiers), the hatch positions, and their visibility at zoom 0.86 | UNSOURCED | `test/carrier_hatches_test.dart` (counts, visibility); `art/contact/carrier-hatches-cascade.png` |
+| <a id="CH-2"></a>CH-2 | design §A3 | Upper tiers drop at shield-cell thresholds (6, 0 / 9, 6, 0 / 9, 6, 3, 0); the deck tier at shield 0, the maw tier at the last form | UNSOURCED | `test/carrier_hatches_test.dart` (thresholds); calibration gates |
+| <a id="CH-3"></a>CH-3 | design §A10 | The cascade chase and the ember arming as the telegraph of the next tier; the 1.0 s drop | UNSOURCED | `art/contact/carrier-hatches-cascade.{png,gif}` |
+| <a id="CH-4"></a>CH-4 | design §A4–§A6, §A11 | Arrival invariance (the lead `transit − 0.55`), the transit line at y + 40, the deck and maw hold of at most one door period, and the order of the calibration levers | UNSOURCED | arrival-invariance test; `test/boss_endurance_test.dart`, `test/campaign_playtest_test.dart`; `plan/calibration-current.md` |
+| <a id="CH-5"></a>CH-5 | design §B3 | Transition composites: the before-texture stays resident for +4–7 MB during a transition; at most 15 composes per fight | UNSOURCED | `compositeBytes` and the `composites` counter in the review test |
+| <a id="CH-6"></a>CH-6 | design §B4 | The release schedule: at most a quarter of a transition's components (≥ 2) per 0.25 s, ≥ 1.2 s per transition, outer first, 35 % at the armour shed, shield thresholds for the shed, impact-triggered early releases | UNSOURCED | `test/carrier_breakup_test.dart` (rate rule); `art/contact/carrier-hatches-breakup.{png,gif}` |
+| <a id="CH-7"></a>CH-7 | design §B9 | The component-id page and manifest add ≤ 1.5 MB per hull | UNSOURCED | `rigsheet budget` after the component pass |
+| <a id="CH-8"></a>CH-8 | design §B5 | Body constants per size class (kick, spin, gravity, life, shrink 0.45, the root tear of 8–20° over 0.15–0.35 s, fragments at 0.25–0.7 s) | UNSOURCED | `test/carrier_breakup_test.dart` (continuity, bounds); the break-up sheet |
