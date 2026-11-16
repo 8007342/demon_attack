@@ -44,14 +44,29 @@ for _, s in ipairs({"S0", "S1", "S2", "S3"}) do
   if p ~= "" then
     local out = ("%s/%s-%s-fit.png"):format(inp, hull, s)
     sh(("%s fit %s %s %s %s p45_y+00 %s %s"):format(sheet, root .. p, rig, hull, geo[s], out, side))
-    if s == "S3" then
-      sh(("%s maskdiff %s %s %s S2 S3 %s"):format(sheet, out, rig, hull, out))
+    -- drop texels whose geometry left (S2: scales and emitter crystals shed; S3: the first
+    -- detach group), so the bake fills them from the geometry instead of painting ghosts
+    if s == "S2" then
+      sh(("%s maskdiff %s %s %s S0 S2 %s"):format(sheet, out, rig, hull, out))
+    elseif s == "S3" then
+      sh(("%s maskdiff %s %s %s S0 S3 %s"):format(sheet, out, rig, hull, out))
     end
     args[#args + 1] = s .. "=" .. out
   end
 end
 assert(#args > 0, "no picks for " .. hull .. " in " .. family)
 sh(("%s -I tools/rigkit/bake.py %s %s %s %s %s --threads %s"):format(py, family, rig, bake, hull, table.concat(args, ","), threads))
+-- the belly (boss-grandeur Overflight): one finished underside image, its own rig frame, never in the
+-- resident hull budget (it is drawn before the fight, at <= 0.55 opacity, so 0.5 px per unit)
+local belly = pick("belly")
+if belly ~= "" then
+  local rb = base .. "/rig-belly"
+  if not (os.getenv("RIGKIT_REUSE_RIG") == "1" and io.open(rb .. "/" .. hull .. "/rig.json")) then
+    sh(("%s -I tools/rigkit/rig.py %s %s --hulls %s --views belly --envelope off --stages S0 --passes clay,hint --threads %s"):format(py, family, rb, hull, threads))
+  end
+  local bt = ("p%02d_y+00"):format(tonumber(capture(("jq -r \x27.views.belly[0]\x27 %s"):format(family))))
+  sh(("%s finish %s %s %s S0 %s 0.5 %s/%s/fin_belly.png"):format(sheet, root .. belly, rb, hull, bt, bake, hull))
+end
 sh(("%s bakefinish %s %s %s"):format(sheet, bake, rig, hull))
 sh(("%s budget %s %s %s"):format(sheet, bake, rig, hull))
 if arg[3] == "--sheets" then

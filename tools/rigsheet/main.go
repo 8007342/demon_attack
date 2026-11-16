@@ -7,6 +7,7 @@ package main
 //	rigsheet fit RAW RIG HULL STAGE TAG OUT.png [left|right|none]
 //	                                                 raw -> rig frame, silhouette mask, despill (+ symmetrise)
 //	rigsheet maskdiff FIT RIG HULL A B OUT.png       drop texels whose geometry left between stages A and B
+//	rigsheet finish RAW RIG HULL STAGE TAG TEXEL OUT.png  one finished image at TEXEL px per unit (the belly)
 //	rigsheet kit RIG OUT.png HULL...                 kit turntables: 3x3 clay views + passes per hull
 //	rigsheet heroes RIG HULL OUT.png TITLE RAW...    hero candidate sheet (raw, finished, phone scale)
 //	rigsheet bakefinish BAKE RIG HULL                finish every baked layer at its class density + manifest.json
@@ -42,6 +43,12 @@ func main() {
 			fit = symmetrise(fit, r, a[6] == "left")
 		}
 		save(a[5], fit)
+	case "finish": // RAW RIG HULL STAGE TAG TEXEL OUT.png: one finished image (e.g. the belly) at TEXEL px per unit
+		r := readRig(a[1], a[2])
+		var tx float64
+		fmt.Sscan(a[5], &tx)
+		fit := fitRaw(load(a[0]), r, a[3], a[4])
+		save(a[6], finishAt(fit, r, tx, readFamily(r.Family).palette(), true))
 	case "maskdiff":
 		r := readRig(a[1], a[2])
 		out, n := maskDiff(load(a[0]), r, a[3], a[4], tag(45, 0))

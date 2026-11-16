@@ -147,6 +147,12 @@ func cmdBakeFinish(a []string) {
 		}
 		add(d, nm, "wreck", id, "S4", tag(45, 0), in.Texel, finishAt(load(filepath.Join(d, nm)), r, in.Texel, pal, true))
 	}
+	if b := filepath.Join(d, "fin_belly.png"); mustStat(b) { // the Overflight underside: its own asset, not resident with the hull
+		im := load(b)
+		cr := alphaBounds(im)
+		m.Entries = append(m.Entries, Entry{File: "fin_belly.png", Kind: "belly", Stage: "overflight", Texel: 0.5,
+			Crop: [4]int{cr.Min.X, cr.Min.Y, cr.Dx(), cr.Dy()}, Bytes: (cr.Dx() + 2) * (cr.Dy() + 2) * 4})
+	}
 	sort.Slice(m.Entries, func(i, j int) bool { return m.Entries[i].File < m.Entries[j].File })
 	b, _ := json.MarshalIndent(m, "", " ")
 	os.WriteFile(filepath.Join(d, "manifest.json"), b, 0o644)
@@ -167,7 +173,7 @@ func cmdBudget(a []string) {
 		by := map[string]int{}
 		total := 0
 		for _, e := range m.Entries {
-			if e.Kind == "beauty" {
+			if e.Kind == "beauty" || e.Kind == "belly" {
 				continue
 			}
 			in := r.inst(e.Inst)

@@ -73,6 +73,10 @@
   "stage_S1": "Same ship, same pose, framing and colours. The violet crystals flicker dim and cracked; scorched soot streaks and fine glowing ember hairline cracks spread across the chitin scales. The black hangar openings stay black and empty, no fire inside them. Keep the green background.",
   "stage_S2": "Same ship, same pose and framing. The armour scales are torn away in many places, exposing glowing ember-red sinew and bone ribs underneath; the violet crystal pylons are shattered stumps; small fires and sparks along the torn edges. The black hangar openings stay black and empty, no fire inside them. Keep the green background.",
   "stage_S3": "Same ship, same pose and framing, now breaking apart: deep molten cracks through the carapace, broken spines and snapped ribs, burning breaches, black smoke wisps inside the hull outline. The black hangar openings stay black and empty, no fire inside them. Keep the green background.",
+  "hero_tour_2": "Bigger and more armed: hot brood light glows deep inside the flank hangar maws, and a second battery of gun blisters lines each prong.",
+  "hero_tour_3": "Heavier still: thick layered armour with glowing ember seams, palisades of bone stakes walling the hangar deck, barbed tendrils trailing from the prong tips.",
+  "hero_tour_4": "Scarred, thicker plating, crowns of spikes on every terrace, translucent brood sacs glowing from within, three batteries of gun blisters.",
+  "hero_tour_5": "The darkest chitin with molten seams, a blazing crown of great violet crystal blades on the citadel, every surface bristling with thorns and gun ports.",
   "refine": "Same image, same composition, same colours and lighting. Add fine surface detail: chitin scale edges, tiny bone thorns, membrane veins, crystal facets. Keep every shape, edge and dark opening exactly where it is. Keep the green background.",
   "negative": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, multiple views, grid, sky, ground, landscape, checkerboard, shadow, face, eyes, mouth, teeth, skull, rivets, metal panels, windows, machinery, pipes, metal cannon barrels, studs, buttons, glossy plastic, toy, cyan, teal, blue glow, human, cartoon, cute"
  },
@@ -627,5 +631,12 @@
  "budget": {"mb": 16.0, "page": [4096, 2048], "stage_scale": 0.5,
             "notes": "Resident RGBA of one hull (one set combination) <= 16 MB: S0 layers at their texel class (core 2.0 px/unit: the prow; mass 1.0: everything else), S1-S3 layers at x stage_scale, wrecks at their class, mirrored pairs once, everything clipped to render.envelope. Measured by rigsheet budget from the manifest."},
  "selected": {"notes": "Picked raws (paths under root); ledger plan/render-runs/boss-carrier-v2.md. sym = the hero half mirrored onto the other (yaw -12 draws +12 mirrored).",
-              "root": "art/sprites/sources/boss-carrier-v2/"}
+              "root": "art/sprites/sources/boss-carrier-v2/",
+              "carrier1-thorn": {"S0": "carrier1-thorn/hero/1016000-refined.png", "S2": "carrier1-thorn/stage/S2-1017201.png", "S3": "carrier1-thorn/stage/S3-1017300.png", "sym": "left", "belly": "carrier1-thorn/belly/1019000.png"},
+              "carrier1-lattice": {"S0": "carrier1-lattice/hero/1025000.png", "S2": "carrier1-lattice/stage/S2-1027202.png", "S3": "carrier1-lattice/stage/S3-1027303.png", "sym": "left"},
+              "carrier1-shroud": {"S0": "carrier1-shroud/hero/1036001.png", "S2": "carrier1-shroud/stage/S2-1037200.png", "S3": "carrier1-shroud/stage/S3-1037301.png", "sym": "left"},
+              "carrier2-thorn": {"S0": "carrier2-thorn/hero/2014000.png", "sym": "left"},
+              "carrier3-lattice": {"S0": "carrier3-lattice/hero/3024003.png", "sym": "left"},
+              "carrier4-shroud": {"S0": "carrier4-shroud/hero/4034003.png", "sym": "left"},
+              "carrier5-thorn": {"S0": "carrier5-thorn/hero/5014001.png", "sym": "left"}}
 }

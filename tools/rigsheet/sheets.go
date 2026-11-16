@@ -4,6 +4,7 @@ package main
 // phone-scale in-context mock and the tour lineup.
 
 import (
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
@@ -177,10 +178,18 @@ func cmdStages(a []string) {
 			x := pad + j*(cw+pad)
 			y := 50 + i*(ch+pad+18)
 			fill(sheet, image.Rect(x, y, x+cw, y+ch), hex("#2B3A55"))
-			if im := beautyAt(bake, r, s, 45, yw); im != nil {
+			im := beautyAt(bake, r, s, 45, yw)
+			lbl := fmt.Sprintf("%s YAW %+d", names[s], yw)
+			if im == nil && s == "S1" { // not baked: the runtime scorch overlay on S0, approximated
+				if im = beautyAt(bake, r, "S0", 45, yw); im != nil {
+					im = scorch(im)
+					lbl += "  (RUNTIME OVERLAY, APPROX.)"
+				}
+			}
+			if im != nil {
 				blit(sheet, im, x, y, k/r.maxTexel())
 			}
-			text(sheet, x, y+ch+4, 2, fmt.Sprintf("%s YAW %+d", names[s], yw), dim)
+			text(sheet, x, y+ch+4, 2, lbl, dim)
 		}
 	}
 	// wrecks
@@ -310,7 +319,11 @@ func cmdMock(a []string) {
 		S := func(ax, ay float64) (float64, float64) {
 			return (180 + p.z*(ax-180)) * dpr, (477 + p.z*(ay-477)) * dpr
 		}
-		im := beautyAt(bake, r, p.stage, p.pitch, p.yaw)
+		// the stored layers at their stored densities, upscaled the way the runtime draws them
+		im := composeLayers(bake, r, p.stage, p.pitch, p.yaw, r.maxTexel())
+		if im == nil {
+			im = beautyAt(bake, r, p.stage, p.pitch, p.yaw)
+		}
 		if im == nil {
 			im = clayHint(r, p.stage, tag(p.pitch, p.yaw))
 			im = areaScale(im, r.maxTexel()/r.PPU)
@@ -420,4 +433,122 @@ func cmdLineup(a []string) {
 	}
 	save(out, sheet)
 	fmt.Println(out)
+}
+
+// scorch approximates the S1 runtime overlay for review: crystals dimmed toward slate, the hull
+// darkened and warmed, a sparse speckle of ember hairline glints (deterministic).
+func scorch(src *image.NRGBA) *image.NRGBA {
+	out := image.NewNRGBA(src.Bounds())
+	copy(out.Pix, src.Pix)
+	w := src.Bounds().Dx()
+	for i := 0; i < len(out.Pix); i += 4 {
+		if out.Pix[i+3] == 0 {
+			continue
+		}
+		r, g, b := float64(out.Pix[i]), float64(out.Pix[i+1]), float64(out.Pix[i+2])
+		if b > r*1.3 && b > 120 { // violet crystal: flicker dim
+			r, g, b = r*0.55, g*0.5, b*0.55
+		}
+		r, g, b = r*0.78+6, g*0.7, b*0.68
+		p := i / 4
+		x, y := p%w, p/w
+		if (x*7919+y*104729)%97 == 0 {
+			r, g, b = 255, 120, 40
+		}
+		out.Pix[i], out.Pix[i+1], out.Pix[i+2] = uint8(math.Min(255, r)), uint8(math.Min(255, g)), uint8(math.Min(255, b))
+	}
+	return out
+}
+
+// composeLayers rebuilds a view from the stored sprites of the manifest, as the runtime does:
+// per instance (rig order) its stage layer, falling back to lower stages, at its stored texel
+// density scaled (nearest) to out px per unit; an unstored view draws pitch 45; yaw -12 mirrors +12;
+// the left of a mirrored pair at yaw 0 draws the right one flipped; detached groups (S3) are gone.
+func composeLayers(bake string, r *Rig, stage string, p, yw int, out float64) *image.NRGBA {
+	b, err := os.ReadFile(filepath.Join(bake, r.Hull, "manifest.json"))
+	if err != nil {
+		return nil
+	}
+	var m Manifest
+	if json.Unmarshal(b, &m) != nil {
+		return nil
+	}
+	ay := yw
+	if ay < 0 {
+		ay = -ay
+	}
+	t := tag(p, ay)
+	has := func(t string) bool {
+		for _, e := range m.Entries {
+			if e.Kind == "layer" && e.View == t {
+				return true
+			}
+		}
+		return false
+	}
+	if !has(t) {
+		t = tag(45, ay)
+	}
+	find := func(inst, st string) *Entry {
+		for i := range m.Entries {
+			e := &m.Entries[i]
+			if e.Kind == "layer" && e.View == t && e.Inst == inst && e.Stage == st {
+				return e
+			}
+		}
+		return nil
+	}
+	removed := map[string]bool{}
+	if s, ok := r.Stages[stage]; ok {
+		for _, id := range s.Removed {
+			removed[id] = true
+		}
+	}
+	W := int(math.Round((r.Frame[2] - r.Frame[0]) * out))
+	H := int(math.Round((r.Frame[3] - r.Frame[1]) * out))
+	canvas := image.NewNRGBA(image.Rect(0, 0, W, H))
+	order := []string{"S3", "S2", "S1", "S0"}
+	for _, in := range r.Insts {
+		if removed[in.ID] {
+			continue
+		}
+		id, flip := in.ID, false
+		if ay == 0 && strings.HasSuffix(id, "L") && r.inst(strings.TrimSuffix(id, "L")+"R") != nil {
+			id, flip = strings.TrimSuffix(id, "L")+"R", true
+		}
+		var e *Entry
+		started := false
+		for _, st := range order {
+			if st == stage {
+				started = true
+			}
+			if started {
+				if e = find(id, st); e != nil {
+					break
+				}
+			}
+		}
+		if e == nil {
+			continue
+		}
+		src := load(filepath.Join(bake, r.Hull, e.File))
+		k := out / e.Texel
+		for y := 0; y < int(float64(e.Crop[3])*k); y++ {
+			for x := 0; x < int(float64(e.Crop[2])*k); x++ {
+				c := src.NRGBAAt(e.Crop[0]+int(float64(x)/k), e.Crop[1]+int(float64(y)/k))
+				if c.A == 0 {
+					continue
+				}
+				dx := int(math.Round((e.DXY[0]-r.Frame[0])*out)) + x
+				if flip { // mirror about the hull's centre axis
+					dx = int(math.Round(-r.Frame[0]*out*2)) - dx - 1
+				}
+				over(canvas, dx, int(math.Round((e.DXY[1]-r.Frame[1])*out))+y, c)
+			}
+		}
+	}
+	if yw < 0 {
+		canvas = mirrorAbout(canvas, -r.Frame[0]*out)
+	}
+	return canvas
 }

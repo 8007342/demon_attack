@@ -173,17 +173,20 @@ review (the lineup) only.
 
 ### 8.4 Texel classes and the budget
 - **Classes.** Each slot names a texel class: `core` (the prow: 2.0 px/unit, the old frigate density, where the player
-  aims) or `mass` (everything else: 1.0 px/unit on tour 1, down to 0.75 on tour 5). The rig renders at
-  `max(class) × render.scale` (1.5) = 3 px/unit, so every class is an area downscale.
+  aims) or `mass` (everything else: 0.8 px/unit on tour 1, then 0.9 / 0.85 / 0.8 / 0.75 as the hull grows on tours
+  2–5). The rig renders at `max(class) × render.scale` (1.5) = 3 px/unit, so every class is an area downscale.
 - **Stages.** S1–S3 layers are stored at `budget.stage_scale` (0.5) × the class density, which is B2's half-density
   decision.
-- **Stored views.** Pitch 38/45/52 × yaw 0/+12; yaw −12 is +12 mirrored, and at yaw 0 and in the wrecks a mirrored pair is
-  stored once.
+- **Stored views.** (38, 0), (45, 0), (45, +12), (52, 0) (`views.stored`). A (38|52, ±12) request draws (45, ±12); yaw −12
+  is +12 mirrored; at yaw 0 and in the wrecks a mirrored pair is stored once.
+- **S1** is a runtime overlay on S0 (scorch, crystal flicker), as `boss-grandeur` §6 already specified; it is not baked.
 - **Carapace wreck.** The carapace has no wreck frames (`wreck: "layer"`): in S4 the runtime sinks its own S3 layer into
   the fog.
 - **Gate.** ≤ 16 MB of RGBA per hull (one set combination), measured on the finished layers (`rigsheet budget`). The
-  measured numbers are in the ledger. **The budget is unchanged at 16 MB.** The envelope clip and the mass class are the
-  levers that keep a hull 4–6 × the frigate's area inside it.
+  measured numbers are in the ledger: tour 1 is 13.1–13.6 MB (15.53 MB as one packed 4096 × 994 page with the frontal
+  parts). **The budget is unchanged at 16 MB.** The levers that keep a hull 4–6 × the frigate's area inside it: the
+  envelope clip, the mass class, S1 as an overlay, swerve views at the middle pitch only, and no wreck frames for the
+  prow and the carapace (ledger C3).
 
 ### 8.5 The shared libraries (R10)
 **`tools/rigkit/rigkit.py`** (bpy; Python only because bpy forces it) is a data-driven module kit:
@@ -241,7 +244,17 @@ fires and nozzles per view and stage. Differences from the frigate layout that t
 - densities come from the manifest, not a fixed 2 px/unit;
 - a hull key is `carrier<tour>-<set>` with `replaces` naming the v1 tour key, so there is no frontal atlas
   (`assets/images/boss-<hull>.png`) for the jaw, vent, plume and breach parts;
-- the carapace has no wreck frames.
+- the carapace has no wreck frames;
+- `fin_belly.png` (manifest kind `belly`): the Overflight underside at 0.5 px/unit in its own frame (`rig-belly`), outside
+  the resident budget.
+
+**Packing.** `tools/boss_sheet pack BAKE RIG carrier1-thorn=frigate` reads the manifest (`pack_v2.go`: stored
+densities as-is, `BossHeroSprite.ppu` is a double, unstored views alias pitch 45, one 4096-wide skyline-packed
+page) and writes the hull under the tour key it replaces. It is **not committed packed**: `test/boss_grammar_test.dart`
+asserts that `BossGrammar.tour(0)` (v1 ids: spine, bow, tower, engines) equals the packed hull's module ids, and the v2 ids
+are `carapace, prow, wingL/R, spines, emitterL/R, blisterL/R`. The runtime owner switches the grammar to the v2 slots,
+treats the `prow` (mount bow) as the front pass (today `BossPainter` hard-codes `bow`), picks a set combination per run
+among the baked hulls of a tour, then packs.
 
 ### 8.7 GPU recipe
 | Pass | Workflow | Settings | Use |
