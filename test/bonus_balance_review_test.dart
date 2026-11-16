@@ -1,5 +1,9 @@
+@Tags(['review'])
+library;
+
 // bonus-balance review sheets. Off by default;
-// `--dart-define=BONUS_BALANCE_CONTACT=true` writes
+// tagged `review`: `flutter test --concurrency=1 --run-skipped --tags review
+// test/bonus_balance_review_test.dart` (through the test lock) writes
 // - art/contact/bonus-balance-medal-screen.png: the arcade page at 360 x 780
 //   at the end of a bonus run under a run rule: the initials entry with the
 //   run record card, and the board (records with their date-and-modifiers
@@ -13,6 +17,7 @@
 // Roboto-Bold.ttf for real glyphs.
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:demon_attack/game/model.dart';
@@ -31,7 +36,6 @@ import 'progression_test.dart' show clearWave;
 import 'run_record_test.dart' show seedWithLevelAndModifier;
 import 'support/bonus_balance.dart' show chaseCrate;
 
-const _contact = bool.fromEnvironment('BONUS_BALANCE_CONTACT');
 const _fonts = String.fromEnvironment(
   'BONUS_BALANCE_FONTS',
   defaultValue: '/home/forge/.cache/tillandsias-project/tmp/fonts',
@@ -188,7 +192,7 @@ void _panel(Canvas c, Rect r, String title, List<_Trace> traces) {
   final plot = Rect.fromLTRB(
     r.left + 56,
     r.top + 48,
-    r.right - 150,
+    r.right - 250,
     r.bottom - 44,
   );
   var maxT = 10.0, maxK = 10.0;
@@ -230,6 +234,19 @@ void _panel(Canvas c, Rect r, String title, List<_Trace> traces) {
     Offset(plot.left, r.bottom - 22),
     size: 11,
   );
+  // End labels, pushed apart so none overlaps (at least 16 px between).
+  final order = [for (var i = 0; i < traces.length; i++) i]
+    ..sort(
+      (a, b) =>
+          at(traces[a].points.last).dy.compareTo(at(traces[b].points.last).dy),
+    );
+  final labelY = <int, double>{};
+  var floor = -1e9;
+  for (final i in order) {
+    final y = math.max(at(traces[i].points.last).dy - 8, floor);
+    labelY[i] = y;
+    floor = y + 16;
+  }
   for (var i = 0; i < traces.length; i++) {
     final t = traces[i];
     final color = colors[i % colors.length];
@@ -266,8 +283,8 @@ void _panel(Canvas c, Rect r, String title, List<_Trace> traces) {
     final last = t.points.last;
     _text(
       c,
-      '${t.name}: ${last.dx.toStringAsFixed(0)} s, ${last.dy.round()} kills',
-      Offset(plot.right + 10, end.dy - 8 + i * 0.0),
+      '${last.dx.toStringAsFixed(0)} s · ${last.dy.round()} kills · ${t.name}',
+      Offset(plot.right + 10, labelY[i]!),
       size: 11,
       color: const Color(0xFFE4E8EE),
     );
@@ -373,6 +390,7 @@ void main() {
       scene.onTick();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(seconds: 1)); // overlays faded in
       expect(find.byKey(const ValueKey('run-record')), findsOneWidget);
       if (!qualifies) {
         await tester.drag(
@@ -392,7 +410,7 @@ void main() {
     await tester.runAsync(
       () => _sheet('art/contact/bonus-balance-medal-screen.png', frames),
     );
-  }, skip: !_contact);
+  });
 
   testWidgets('bonus-balance timeline sheet', (tester) async {
     await tester.runAsync(_loadFonts);
@@ -400,9 +418,9 @@ void main() {
       (
         Difficulty.easy,
         2,
-        'Easy · route 1 · sector 2 (the three-second level)',
+        'Easy · route 0 · sector 2 (the three-second level)',
       ),
-      (Difficulty.normal, 3, 'Normal · route 1 · sector 3'),
+      (Difficulty.normal, 3, 'Normal · route 0 · sector 3'),
     ];
     final panels = <(String, List<_Trace>)>[];
     for (final (d, sector, title) in rows) {
@@ -446,5 +464,5 @@ void main() {
         ..createSync(recursive: true)
         ..writeAsBytesSync(png!.buffer.asUint8List());
     });
-  }, skip: !_contact);
+  });
 }

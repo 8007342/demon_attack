@@ -18,4 +18,4 @@
 - [x] 3.5 `test/run_record_test.dart`
 
 ## 4. Review
-- [x] 4.1 Contact sheets `art/contact/bonus-balance-*.png` (`--dart-define=BONUS_BALANCE_CONTACT=true`)
+- [x] 4.1 Contact sheets `art/contact/bonus-balance-*.png` (`test/bonus_balance_review_test.dart`, tagged `review`)
