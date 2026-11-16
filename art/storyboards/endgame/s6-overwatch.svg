@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="700" viewBox="0 0 960 700">
+<rect x="0" y="0" width="960" height="700" fill="#fff6e6"/>
+<rect x="0.0" y="56.0" width="960.0" height="135.0" fill="#c2507a" fill-opacity="1" stroke="none" stroke-width="2"/>
+<rect x="0.0" y="191.0" width="960.0" height="90.0" fill="#e8805f" fill-opacity="1" stroke="none" stroke-width="2"/>
+<rect x="0.0" y="281.0" width="960.0" height="75.0" fill="#f9cf8f" fill-opacity="1" stroke="none" stroke-width="2"/>
+<circle cx="600.0" cy="356.0" r="62.0" fill="#ffe9c4" fill-opacity="1" stroke="none" stroke-width="2"/>
+<rect x="0.0" y="356.0" width="960.0" height="46.0" fill="#2e8f9b" fill-opacity="1" stroke="none" stroke-width="2"/>
+<line x1="530.0" y1="370.0" x2="670.0" y2="370.0" stroke="#ffe9c4" stroke-width="3" stroke-linecap="round"/>
+<line x1="560.0" y1="386.0" x2="640.0" y2="386.0" stroke="#ffe9c4" stroke-width="3" stroke-linecap="round"/>
+<rect x="0.0" y="402.0" width="960.0" height="194.0" fill="#e8c48a" fill-opacity="1" stroke="none" stroke-width="2"/>
+<polygon points="872.3,406.0 876.7,197.0 885.5,197.0 889.9,406.0" fill="#8a5230" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="880.0,197.0 792.0,208.0 831.6,236.6" fill="#2f7d4f" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="880.0,197.0 814.0,153.0 843.7,181.6" fill="#2f7d4f" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="880.0,197.0 880.0,128.8 880.0,157.4" fill="#2f7d4f" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="880.0,197.0 946.0,153.0 916.3,181.6" fill="#2f7d4f" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="880.0,197.0 968.0,208.0 928.4,236.6" fill="#2f7d4f" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="523.8,506.0 541.8,312.8 658.2,312.8 676.2,506.0" fill="#1c2a5a" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="600.0" cy="266.8" r="55.2" fill="#6b4226" fill-opacity="1" stroke="#1b1430" stroke-width="2"/>
+<polygon points="544.8,258.5 555.8,214.4 600.0,200.6 644.2,214.4 655.2,258.5 627.6,236.4 572.4,236.4" fill="#c9ccd6" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="580.1" cy="269.6" r="6.0" fill="#1b1430" fill-opacity="1" stroke="none" stroke-width="2"/>
+<circle cx="619.9" cy="269.6" r="6.0" fill="#1b1430" fill-opacity="1" stroke="none" stroke-width="2"/>
+<polygon points="572.4,285.6 627.6,285.6 615.5,304.3 584.5,304.3" fill="#ffffff" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<line x1="652.9" y1="351.4" x2="790.9" y2="466.4" stroke="#1b1430" stroke-width="34.5" stroke-linecap="round"/>
+<line x1="652.9" y1="351.4" x2="790.9" y2="466.4" stroke="#1c2a5a" stroke-width="25.3" stroke-linecap="round"/>
+<circle cx="790.9" cy="466.4" r="16.1" fill="#6b4226" fill-opacity="1" stroke="#1b1430" stroke-width="2"/>
+<circle cx="600.0" cy="346.0" r="6.0" fill="#ffc94a" fill-opacity="1" stroke="#1b1430" stroke-width="2"/>
+<circle cx="600.0" cy="386.0" r="6.0" fill="#ffc94a" fill-opacity="1" stroke="#1b1430" stroke-width="2"/>
+<circle cx="600.0" cy="426.0" r="6.0" fill="#ffc94a" fill-opacity="1" stroke="#1b1430" stroke-width="2"/>
+<circle cx="768.0" cy="474.0" r="9.0" fill="#c9ccd6" fill-opacity="1" stroke="#1b1430" stroke-width="2"/>
+<polygon points="768.0,486.0 778.0,508.0 758.0,508.0" fill="#2de2c8" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="652.0" cy="262.0" r="6.0" fill="#ffffff" fill-opacity="1" stroke="#1b1430" stroke-width="2"/>
+<line x1="668.0" y1="206.0" x2="690.0" y2="306.0" stroke="#ffe9c4" stroke-width="5" stroke-linecap="round"/>
+<line x1="706.0" y1="356.0" x2="716.0" y2="496.0" stroke="#ffe9c4" stroke-width="5" stroke-linecap="round"/>
+<circle cx="170.0" cy="526.0" r="74.0" fill="#1b1430" fill-opacity="1" stroke="#1b1430" stroke-width="2"/>
+<polygon points="60.0,596.0 290.0,596.0 280.0,556.0 70.0,556.0" fill="#2de2c8" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="360.0" cy="556.0" r="56.0" fill="#b4532a" fill-opacity="1" stroke="#1b1430" stroke-width="2"/>
+<polygon points="866.0,596.0 960.0,596.0 960.0,526.0 880.0,526.0" fill="#8f2030" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="880.0,526.0 870.0,476.0 910.0,508.0" fill="#8f2030" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<line x1="328.1" y1="60.0" x2="328.1" y2="592.0" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 8"/>
+<line x1="631.9" y1="60.0" x2="631.9" y2="592.0" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 8"/>
+<text x="600.0" y="576.0" font-family="Noto Sans" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1430">MOM = FLEET ADMIRAL (OVERWATCH)</text>
+<line x1="250.0" y1="436.0" x2="330.0" y2="396.0" stroke="#1b1430" stroke-width="7" stroke-linecap="round"/>
+<line x1="250.0" y1="436.0" x2="330.0" y2="396.0" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+<polygon points="335.4,393.3 320.2,408.7 314.0,396.2" fill="#ffffff" fill-opacity="1" stroke="#1b1430" stroke-width="2" stroke-linejoin="round"/>
+<text x="307.0" y="405.0" font-family="Noto Sans" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1430">heads turn</text>
+<text x="306.0" y="404.0" font-family="Noto Sans" font-size="14" font-weight="bold" text-anchor="start" fill="#ffffff">heads turn</text>
+<rect x="0" y="0" width="960" height="56" fill="#fff6e6"/>
+<rect x="0" y="596" width="960" height="104" fill="#fff6e6"/>
+<rect x="1" y="56" width="958" height="540" fill="none" stroke="#1b1430" stroke-width="3"/>
+<text x="14.0" y="26.0" font-family="Noto Sans" font-size="22" font-weight="bold" text-anchor="start" fill="#1b1430">S6  Overwatch</text>
+<text x="946.0" y="26.0" font-family="Noto Sans" font-size="18" font-weight="bold" text-anchor="end" fill="#1b1430">20.0 – 24.5 s</text>
+<text x="14.0" y="47.0" font-family="Noto Sans" font-size="14" font-weight="normal" text-anchor="start" fill="#5b4a6b">CAMERA: Over the kids' shoulders, low. Mom stands against the low sun: gold rim light. Kids turn on her first word.</text>
+<text x="14.0" y="626.0" font-family="Noto Sans" font-size="15" font-weight="normal" text-anchor="start" fill="#1b1430">MOM (the Admiral's voice, no radio at all now): Squadron. Time to go home.</text>
+<text x="14.0" y="652.0" font-family="Noto Sans" font-size="15" font-weight="normal" text-anchor="start" fill="#5b4a6b">LITTLE BROTHER: One more turn? Please?</text>
+<text x="14.0" y="678.0" font-family="Noto Sans" font-size="15" font-weight="normal" text-anchor="start" fill="#5b4a6b">MOM (a beat; the smile she never shows on the radio): …One more turn.</text>
+<text x="946.0" y="692.0" font-family="Noto Sans" font-size="11" font-weight="normal" text-anchor="end" fill="#5b4a6b">white dashes = portrait-safe column (9:16)</text>
+</svg>

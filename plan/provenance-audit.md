@@ -220,3 +220,49 @@ No source states them; each is checked by the test or sheet named once the chang
 | <a id="CH-6"></a>CH-6 | design §B4 | The release schedule: at most a quarter of a transition's components (≥ 2) per 0.25 s, ≥ 1.2 s per transition, outer first, 35 % at the armour shed, shield thresholds for the shed, impact-triggered early releases | UNSOURCED | `test/carrier_breakup_test.dart` (rate rule); `art/contact/carrier-hatches-breakup.{png,gif}` |
 | <a id="CH-7"></a>CH-7 | design §B9 | The component-id page and manifest add ≤ 1.5 MB per hull | UNSOURCED | `rigsheet budget` after the component pass |
 | <a id="CH-8"></a>CH-8 | design §B5 | Body constants per size class (kick, spin, gravity, life, shrink 0.45, the root tear of 8–20° over 0.15–0.35 s, fragments at 0.25–0.7 s) | UNSOURCED | `test/carrier_breakup_test.dart` (continuity, bounds); the break-up sheet |
+
+## Part E: the end-game cinematic (`endgame-cinematic`, added 2026-11-16)
+
+`plan/endgame-cinematic-research.md` marks these 33 claims `[UNSOURCED: plan/provenance-audit.md#<id>]`. Ids
+`endgame-coats` to `endgame-flutterweb` are Part A (craft); the rest are Part B (pipeline). Most hosts that would
+source Part A were blocked by the forge proxy on 2026-11-16 (Wikipedia, ted.com, npr.org, pixar.com, khanacademy.org,
+the animation trade sites), as were blender.org, gnu.org, webkit.org and copyright.gov for Part B. Nothing was routed
+around the proxy. Five Stack Exchange answers were read through the site's public API, not as pages; claims resting
+only on them are counted here as unsourced. The rules the change draws from these claims are its own design
+decisions and do not depend on the attributions.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="endgame-coats"></a>endgame-coats | The 22 rules are Emma Coats's personal 2011 tweets, not an official Pixar document | snippets only |
+| <a id="endgame-spine"></a>endgame-spine | Kenn Adams created the story spine in 1991 for improv; Pixar adopted it later | snippet only |
+| <a id="endgame-stanton"></a>endgame-stanton | Stanton's "2+2": give the audience the parts, not the sum | from memory; snippet did not show it |
+| <a id="endgame-illusion"></a>endgame-illusion | The twelve principles originate in Thomas and Johnston, "The Illusion of Life" (1981) | snippet only; definitions themselves are read |
+| <a id="endgame-dream"></a>endgame-dream | Why "all a dream" feels cheap, and when it works | api-read and snippet only |
+| <a id="endgame-twist"></a>endgame-twist | A twist must improve the story and its truth must be present from the start | api-read only |
+| <a id="endgame-plants"></a>endgame-plants | Rewatch bonus; techniques for hiding a plant in plain sight | api-read only |
+| <a id="endgame-precedents"></a>endgame-precedents | The LEGO Movie, Toy Story 3 opening, Costume Quest, Stick of Truth as described | memory and snippets |
+| <a id="endgame-spoiler"></a>endgame-spoiler | Leavitt and Christenfeld (2011): knowing the ending did not reduce enjoyment | snippet only |
+| <a id="endgame-density"></a>endgame-density | Any number for plant density (R-A4.3 is a design choice) | no source found |
+| <a id="endgame-asl"></a>endgame-asl | Average shot length figures; the 3.5 s average in R-A5.1 is a design choice | snippet only |
+| <a id="endgame-eyetrace"></a>endgame-eyetrace | Murch's rule of six and eye-trace (R-A5.6's one-sixth figure is a design choice) | snippet only |
+| <a id="endgame-table"></a>endgame-table | Blocking a table scene with seated children and passing adults (R-A5.4, 5.5, 5.8) | inference, no source |
+| <a id="endgame-tiltshift"></a>endgame-tiltshift | Shallow focus front and back reads as miniature | api-read only |
+| <a id="endgame-transitions"></a>endgame-transitions | Rack focus, dolly-out and crane-up reveals, whip pan, pull-back-to-reveal gag | no source read |
+| <a id="endgame-worldizing"></a>endgame-worldizing | Murch's worldizing; the sound-bridge practice in R-A9.1 to R-A9.3 beyond the J/L definitions | snippet only |
+| <a id="endgame-flutterweb"></a>endgame-flutterweb | How Flutter web maps the browser's `prefers-reduced-motion` to `disableAnimations` | not stated on the page read |
+| <a id="endgame-quality-judgement"></a>endgame-quality-judgement | No local route reaches feature-film character animation; the list of consistency problems of generated video | our judgement, backed in part by repo evidence cited in place |
+| <a id="endgame-mpfb-features"></a>endgame-mpfb-features | MPFB2 offers rigs, face shapes, clothes and child phenotypes | its documentation site is blocked; the README does not list features |
+| <a id="endgame-hbm-cc0"></a>endgame-hbm-cc0 | Human Base Meshes is CC0, 49 MB, v1.4.1, with stylised meshes | search snippet only; blender.org blocked |
+| <a id="endgame-rigify"></a>endgame-rigify | Rigify is bundled with Blender and generates a control rig from a meta-rig | docs.blender.org blocked |
+| <a id="endgame-blender-output"></a>endgame-blender-output | Blender's licence does not cover renders made with it | blender.org blocked |
+| <a id="endgame-gpl-output"></a>endgame-gpl-output | A GPL tool's licence (Blender, x264, ffmpeg) does not reach its output | gnu.org blocked |
+| <a id="endgame-ai-copyright"></a>endgame-ai-copyright | How far generated images are protected by copyright | copyright.gov blocked; a legal question |
+| <a id="endgame-ltx-terms"></a>endgame-ltx-terms | The commercial terms of the LTX-Video and LTX-2 licences | only the cards were read |
+| <a id="endgame-svd-terms"></a>endgame-svd-terms | The commercial terms of the Stability community licence | stability.ai not fetched (blocked in `plan/voice-stack-research.md`) |
+| <a id="endgame-layered-comfy"></a>endgame-layered-comfy | Qwen-Image-Layered runs with core ComfyUI nodes | inferred from the Comfy-Org repack; docs.comfy.org blocked |
+| <a id="endgame-ios-gesture"></a>endgame-ios-gesture | iOS needs `playsinline` and a user gesture for video with sound | webkit.org blocked |
+| <a id="endgame-lipsync"></a>endgame-lipsync | Envelope-timed mouth poses are good enough at this shot size | untested |
+| <a id="endgame-vace-720"></a>endgame-vace-720 | Time and VRAM of a full-frame 81-frame or 720p Fun VACE clip on the A5000 | never run here |
+| <a id="endgame-cycles-cpu"></a>endgame-cycles-cpu | The layout's CPU cost is minutes | extrapolated from one 384² measurement |
+| <a id="endgame-webp-size"></a>endgame-webp-size | WebP sizes per plate and the 7 MB total | estimates until the first pack |
+| <a id="endgame-video-bitrate"></a>endgame-video-bitrate | 2.5 and 5 Mbit/s as adequate bitrates for 720p and 1080p | assumption |
