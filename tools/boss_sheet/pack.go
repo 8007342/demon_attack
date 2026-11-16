@@ -144,6 +144,7 @@ func cmdPack(a []string) {
 	}
 	var dart strings.Builder
 	dart.WriteString(heroTypes)
+	dart.WriteString(heroTypesV3)
 	dart.WriteString("abstract final class BossHeroAtlas {\n  /// Packed hulls by key; a hull missing here is drawn from its frontal\n  /// atlas ([BossAtlas.classes]) until its view set is packed.\n  static const hulls = <String, BossHeroHull>{\n")
 	for _, hull := range hulls {
 		// HULL=CLASS packs a v2 bake (boss-carrier-v2: BAKE/HULL/manifest.json) under
@@ -197,12 +198,23 @@ func packHullAs(bake, rigDir, root, hull, key, class, dartSrc string, v2 *bakeMa
 		pitch  int
 		yaw    int
 		layers map[string][4]*packItem
+		doors  map[string][4]*packItem
 	}
 	var views []viewRec
+	v3 := v2 != nil && v3Rig(rigDir, hull)
 	for _, p := range pitches {
 		for _, yw := range []int{0, 12} {
 			t := tag(p, yw)
 			v := viewRec{tag: t, pitch: p, yaw: yw, layers: map[string][4]*packItem{}}
+			if v3 { // carrier-v3: one stored view (45, 0), bent at runtime; doors in their open state
+				if p != 45 || yw != 0 {
+					continue
+				}
+				v.layers = v2.viewLayers(t, add)
+				v.doors = v2.viewDoors(t, add)
+				views = append(views, v)
+				continue
+			}
 			if v2 != nil {
 				v.layers = v2.viewLayers(t, add)
 				if len(v.layers) == 0 { // not stored (a v2 budget decision): alias the middle pitch
@@ -332,6 +344,11 @@ func packHullAs(bake, rigDir, root, hull, key, class, dartSrc string, v2 *bakeMa
 		pages[len(pages)-1].h = max(pages[len(pages)-1].h, y+h)
 	}
 	resident := 0
+	var x3 v3Extras
+	if v3 {
+		x3 = v3Data(bake, rigDir, root, hull, key)
+		resident += x3.dataBytes
+	}
 	var names []string
 	var sizes []string
 	for i := range pages {
@@ -421,6 +438,18 @@ func packHullAs(bake, rigDir, root, hull, key, class, dartSrc string, v2 *bakeMa
 			w("            '%s': [%s, %s, %s, %s],\n", id, spr(st[0]), spr(st[1]), spr(st[2]), spr(st[3]))
 		}
 		w("          },\n")
+		if len(v.doors) > 0 {
+			w("          doors: {\n")
+			for _, id := range ids {
+				if st, ok := v.doors[id]; ok {
+					w("            '%s': [%s, %s, %s, %s],\n", id, spr(st[0]), spr(st[1]), spr(st[2]), spr(st[3]))
+				}
+			}
+			w("          },\n")
+		}
+		if v3 {
+			w("          vortex: %s,\n", pts(x3.vortex, func(rigPoint) int { return 0 }, true))
+		}
 		rs := rv.Views[v.tag].Stages
 		for si, stage := range []string{"S0", "S3"} {
 			s := rs[stage]
@@ -436,6 +465,9 @@ func packHullAs(bake, rigDir, root, hull, key, class, dartSrc string, v2 *bakeMa
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
+			if strings.HasPrefix(k, "gate_") {
+				continue // carrier-v3: the gate anchors are checked in the rig; the atlas carries `gates`
+			}
 			var p struct {
 				X, Y *float64
 			}
@@ -445,7 +477,11 @@ func packHullAs(bake, rigDir, root, hull, key, class, dartSrc string, v2 *bakeMa
 		}
 		w("          anchors: {%s},\n        ),\n", strings.Join(an, ", "))
 	}
-	w("      },\n      wrecks: {\n")
+	w("      },\n")
+	if v3 {
+		x3.dart(func(f string, a ...any) { w(f, a...) })
+	}
+	w("      wrecks: {\n")
 	for _, id := range ids {
 		if wr, ok := wrecks[id]; ok {
 			w("        '%s': [%s, %s],\n", id, spr(wr[0]), spr(wr[1]))
@@ -541,8 +577,17 @@ class BossHeroView {
     required this.firesBroken,
     required this.nozzlesBroken,
     required this.anchors,
+    this.doors = const {},
+    this.vortex = const [],
   });
   final int pitch, yaw;
+
+  /// carrier-v3 gates: a door instance's open state per stage (the closed
+  /// state is its layer); the runtime blends the two.
+  final Map<String, List<BossHeroSprite?>> doors;
+
+  /// carrier-v3 §7: the vortex-trail anchors (prong, wing and tendril tips).
+  final List<BossHeroPoint> vortex;
   final Map<String, List<BossHeroSprite?>> layers;
   final List<BossHeroPoint> lights, fires, nozzles;
   final List<BossHeroPoint> lightsBroken, firesBroken, nozzlesBroken;
@@ -580,8 +625,21 @@ class BossHeroHull {
     required this.breach,
     required this.debris,
     required this.plumes,
+    this.gates = const {},
+    this.hinges = const {},
+    this.data,
   });
   final String key;
+
+  /// carrier-v3: CarrierGate id to the art instance that draws it.
+  final Map<String, String> gates;
+
+  /// carrier-v3 §2.2: per lagging instance its hinge root and tip (x0, y0,
+  /// x1, y1, hull-local units at the stored view).
+  final Map<String, (double, double, double, double)> hinges;
+
+  /// carrier-v3: the hull's data page (field texture and height grids).
+  final BossHeroData? data;
 
   /// The tour class ([BossAtlas.classes] key) this hull is drawn for, and
   /// its set combination (empty for a v1 hull): a class with several packed

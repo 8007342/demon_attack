@@ -2,7 +2,7 @@
 #
 #   PY=$(lua tools/boss_rig/setup_bpy.lua)
 #   $PY -I tools/rigkit/rig.py FAMILY.json --check [--hulls a,b]      grammar gate, no renders
-#   $PY -I tools/rigkit/rig.py FAMILY.json OUT [--hulls a,b] [--stages S0,S2,S3] [--views all|stored|hero]
+#   $PY -I tools/rigkit/rig.py FAMILY.json OUT [--hulls a,b] [--stages S0,S2,S3] [--views stored|review|all|hero|belly] (default stored)
 #                                   [--passes clay,hint,depth,normal,id,z] [--threads 8] [--envelope off]
 #                                   [--pose-passes clay,hint]
 #
@@ -63,8 +63,32 @@ def verify_dart(g):
     return errs
 
 
+def verify_gates(g):
+    """carrier-v3 §4.1: every anchors.gates point equals its CarrierGate constant (the simulation
+    owns the gate positions; the art conforms within the anchor tolerance)."""
+    vg = g.get('anchors', {}).get('verify_gates')
+    if not vg:
+        return []
+    src = open(os.path.join(K.ROOT, vg)).read(); errs = []
+    consts = {m.group(1): (float(m.group(2)), float(m.group(3))) for m in re.finditer(
+        r"CarrierGate\(\s*'(\w+)',\s*'\w+',\s*CarrierGateKind\.\w+,\s*(-?[\d.]+),\s*(-?[\d.]+)", src)}
+    names = {p['name'] for p in g['anchors']['points']}
+    for gid, (x, y) in consts.items():
+        pt = next((p for p in g['anchors']['points'] if p['name'] == 'gate_' + gid), None)
+        if pt is None:
+            errs.append('verify_gates: no anchor gate_%s' % gid); continue
+        if abs(pt['at'][0] - x) > 1e-6 or abs(pt['at'][1] - y) > 1e-6:
+            errs.append('verify_gates: gate_%s at %s, CarrierGate %s' % (gid, pt['at'], (x, y)))
+    return errs
+
+
 def run_check(g, hulls):
-    errs = verify_dart(g)
+    errs = verify_dart(g) + verify_gates(g)
+    m = g.get('render', {}).get('margin', 6)
+    for hull in hulls:  # carrier-v3 §2.4: drawVertices does not anti-alias; the silhouette comes from alpha
+        lo = min(g['hulls'][hull]['texel'].values()) * g.get('budget', {}).get('stage_scale', 1.0)
+        if m * lo < 2 and g.get('budget', {}).get('mesh_margin'):
+            errs.append('%s: render.margin %s units is under 2 texels at %.2f px/unit' % (hull, m, lo))
     words = [w.lower() for w in g.get('originality', {}).get('forbidden_words', [])]
     texts = [h['title'] for h in g['hulls'].values()] + list(g['slots'].keys()) + \
             [s for sl in g['slots'].values() for s in sl.get('sets', {}).keys()] + \
@@ -92,11 +116,25 @@ def run_check(g, hulls):
             bad = sum(1 for v in vs if kd.find(v * 1 - 2 * v.x * K.Vector((1, 0, 0)))[2] > 0.5)
             if bad:
                 errs.append('%s: %d of %d vertices break the mirror symmetry' % (hull, bad, len(vs)))
-        for (p, y) in K.all_views(g):
+        for (p, y) in K.all_views(g, 'stored'):  # carrier-v3: one stored view, bent at runtime
             _, fails = K.gate_view(g, objs, K.view_basis(g, p, y), sc)
             errs += ['%s %s: %s' % (hull, K.view_tag(p, y), f) for f in fails]
         print('%-22s instances %2d  verts %7d  %.1f s' % (hull, len(insts), nv, time.time() - t0), flush=True)
     return errs
+
+
+def hinges(g, hull, insts):
+    """carrier-v3 §2.2: per lagging instance, its hinge root and tip projected at the hero view
+    (arena units): the runtime ramps the wing lag from root to tip."""
+    b = K.view_basis(g, *g['views']['hero']); out = {}
+    for i in insts:
+        hg = i['def'].get('hinge')
+        if not hg:
+            continue
+        r = K.project(K.module_point(g, hull, i, hg['root']), b)
+        t = K.project(K.module_point(g, hull, i, hg['tip']), b)
+        out[i['id']] = {'root': [round(r[0], 2), round(r[1], 2)], 'tip': [round(t[0], 2), round(t[1], 2)]}
+    return out
 
 
 def run_render(g, out, hulls, stages, which, passes, threads, pose_passes=()):
@@ -123,7 +161,7 @@ def run_render(g, out, hulls, stages, which, passes, threads, pose_passes=()):
                'tour': h.get('tour'), 'extent': h.get('extent', 1.0), 'ppu': ppu, 'render_scale': rcfg.get('scale', 2),
                'texel': tex, 'frame': frame, 'size': [sc.render.resolution_x, sc.render.resolution_y],
                'origin_px': [round(-frame[0] * ppu, 3), round(-frame[1] * ppu, 3)],
-               'envelope': rcfg.get('envelope'),
+               'envelope': K.envelope(g, hull),
                'depth': {'near': near, 'far': far, 'map': 'value = 1 - (viewZ - near) / (far - near)'},
                'swerve_axis': list(K.swerve_axis(g)), 'views': {}, 'overlay': g.get('anchors', {}).get('overlay', []),
                'module_ids': {k: '#%02X%02X%02X' % tuple(round(c * 255) for c in v) for k, v in ids.items()},
@@ -133,6 +171,7 @@ def run_render(g, out, hulls, stages, which, passes, threads, pose_passes=()):
                               'texel_class': i['def'].get('texel', 'mass'),
                               'texel': tex[i['def'].get('texel', 'mass')], 'wreck': i['def'].get('wreck', True)}
                              for i in insts],
+               'hinges': hinges(g, hull, insts),
                'poses': [{'id': p[0], 'dir': p[1], 'tilt': p[2]} for p in K.poses(g)] if g.get('articulation') else [],
                'stages': {s: {'shed': sorted(K.stage_plan(g, hull, s)[0]), 'removed': sorted(K.stage_plan(g, hull, s)[1])}
                           for s in g['stages']}}
@@ -156,6 +195,14 @@ def run_render(g, out, hulls, stages, which, passes, threads, pose_passes=()):
                     'back': [round(c, 6) for c in basis[2]]}, 'stages': {}})
                 v['stages'][stage] = {'anchors': gate, **pts, 'gate_fail': fails}
                 all_fail += ['%s %s %s: %s' % (hull, stage, tag, f) for f in fails]
+            if stage == 'S0' and K.door_insts(objs) and which != 'belly':
+                hv = tuple(g['views']['hero']); basis = K.view_basis(g, *hv); K.place_camera(cam, basis, frame)
+                K.set_doors(objs, 'open'); d = os.path.join(out, hull, stage)
+                for kind in passes:
+                    if kind in ('clay', 'hint', 'id', 'z'):
+                        K.render_pass(sc, os.path.join(d, '%s_%s_open.png' % (kind, K.view_tag(*hv))), kind, objs, ctx)
+                K.set_doors(objs, 'closed')
+                rig['doors'] = K.door_insts(objs)
             if stage == 'S0' and pose_passes and g.get('articulation'):
                 hv = tuple(g['views']['hero']); basis = K.view_basis(g, *hv); K.place_camera(cam, basis, frame)
                 d = os.path.join(out, hull, stage)
@@ -180,12 +227,15 @@ def main(argv):
         for e in errs: print('FAIL', e)
         print('check: %s' % ('ok' if not errs else '%d failures' % len(errs)))
         return 1 if errs else 0
-    if opt.get('envelope') == 'off':  # full plan renders (lineups), never for the atlas
-        g.setdefault('render', {}).pop('envelope', None)
+    if opt.get('envelope') == 'off':  # full plan renders (lineups, bellies, wreck frames), never for the atlas
+        g.setdefault('render', {}).pop('envelope', None); g['_envelope_off'] = True
     stages = opt.get('stages', 'S0,S2,S3').split(',')
     passes = opt.get('passes', 'clay,hint,depth,normal,id,z').split(',')
     pp = [p for p in opt.get('pose-passes', '').split(',') if p]
-    fails = run_render(g, args[1], hulls, stages, opt.get('views', 'all'), passes, int(opt.get('threads', 8)), pp)
+    which = opt.get('views', 'stored')
+    if which == 'review':  # carrier-v3: the 3 x 3 clay turntable for review sheets only, never stored
+        which = 'all'; passes = [p for p in passes if p in ('clay', 'hint')] if 'passes' in opt else ['clay', 'hint']
+    fails = run_render(g, args[1], hulls, stages, which, passes, int(opt.get('threads', 8)), pp)
     for f in fails: print('GATE', f)
     print('anchor gate: %s' % ('ok' if not fails else '%d failures' % len(fails)))
     return 2 if fails else 0

@@ -23,7 +23,7 @@
 ## 3. Bend (works on today's art)
 - [x] 3.1 `lib/game/carrier_bend.dart`: the analytic bend (design §2.2), springs, limits, wing lag, buffet; anchor invariance test (±3 units at the limits)
 - [x] 3.2 `BossPainter`: one `drawVertices` per pass from the hull page's `ImageShader` (grid step 20 units, `FilterQuality.low`), vertex buffers reused, rebuilt only when the bend moves; stored view (45, 0) only — 1,858 vertices and 3,288 triangles per frame on tour 1 (3,045 and 5,324 on tour 5), one page, two calls; position rebuild ≈ 70 µs on the desktop VM
-- [x] 3.3 Until the re-render: per-module heights from the mount (dorsal, lateral, bow, ventral); the height-parallax shift is capped at 4 units
+- [x] 3.3 Until the re-render: per-module heights from the mount (dorsal, lateral, bow, ventral); the height-parallax shift is capped at 4 units — after it: the baked height grids, cap 12 (the under-paint margin)
 - [x] 3.4 Retire the view selection (`BossView` stays as the hero view for non-carrier hulls)
 - [ ] 3.5 Profiling on a mid-range Android phone in Chrome (CanvasKit) and Safari iOS: the carrier passes ≤ 2 ms of raster per frame at DPR 2; record it in the design — **deferred**: needs a phone and the operator's playtest; the desktop numbers and the reasoning are in design §2.4, "Runtime notes"
 
@@ -45,10 +45,10 @@
 - [x] 6.2 `music_director.dart`: existing cues on `bossApproach`, `bossInRange` and `bossTakeoff`; the doom and epic-metal layers wait on tillandsias#1103
 
 ## 7. Re-render (after the operator's review; `plan/render-runs/carrier-v3.md`)
-- [ ] 7.1 Rig and kit: one stored view, gate and compartment modules with door states, under-painted occlusion margins, the height, distance and region grid export, per-tour envelopes
-- [ ] 7.2 Tour 1: regional gate and fix passes on the three picked heroes; stages re-projected
-- [ ] 7.3 Tours 2–5: hero rerolls with the face and teeth fixes, S2 and S3 looks, bellies
-- [ ] 7.4 Pack, budget (≤ 16 MB per hull), review strips `art/contact/carrier-v3-*.png`
+- [x] 7.1 Rig and kit: one stored view, gate and compartment modules with door states, under-painted occlusion margins, the height, distance and region grid export, per-tour envelopes — plus 80 units of overscan, fracture chunks and sections for `carrier-render-engine` §5 (`plan/render-runs/carrier-v3.md` K0)
+- [x] 7.2 Tour 1: regional gate and fix passes on the three picked heroes; stages re-projected (S2 and S3 regional edits too; tour-1 lattice also takes the fixed prow)
+- [x] 7.3 Tours 2–5: hero rerolls with the face and teeth fixes, S2 and S3 looks, bellies (bellies for tour-1 lattice and shroud too)
+- [x] 7.4 Pack, budget (≤ 16 MB per hull), review strips `art/contact/carrier-v3-render-*.png`; the runtime reads the data page (heights, field distance, chunks), the door layers and the vortex points
 - [ ] 7.5 Operator phone playtest
 
 ## Archive order

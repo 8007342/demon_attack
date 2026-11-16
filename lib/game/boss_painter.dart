@@ -8,6 +8,7 @@ import 'boss_atlas.dart';
 import 'boss_director.dart';
 import 'boss_grammar.dart';
 import 'carrier_bend.dart';
+import 'carrier_render_data.dart';
 import 'carrier_compose.dart';
 import 'carrier_field.dart';
 import 'carrier_wreck.dart';
@@ -46,6 +47,10 @@ class BossPainter {
   /// back to its frontal atlas.
   BossHeroHull? hero;
   List<ui.Image>? heroPages;
+
+  /// carrier-v3-render: the hull's decoded data page (height grids, field
+  /// distance, fracture chunks), null until decoded or for a hull without.
+  CarrierRenderData? renderData;
 
   /// The Overflight's underside (`fin_belly`), loaded with the hull.
   ui.Image? bellyImage;
@@ -224,10 +229,16 @@ class BossPainter {
     if (_heightsKey != state) {
       final all = _compositeLayers(stage, detached: detached);
       final f = hero!.frame;
-      _heights = CarrierHeightGrid.fromLayers(
-        Rect.fromLTRB(f.$1, f.$2, f.$3, f.$4),
-        all,
-      );
+      final rect = Rect.fromLTRB(f.$1, f.$2, f.$3, f.$4);
+      // carrier-v3-render: the baked height grids when the data page is in
+      // (carrier-render-engine §2.4, task 5.1), else the mount heights.
+      final baked = renderData;
+      _heights = baked != null
+          ? baked.heights(rect)
+          : CarrierHeightGrid.fromLayers(rect, all);
+      bend?.cap = baked != null
+          ? CarrierBend.bakedCap
+          : CarrierBend.parallaxCap;
       _heightsKey = state;
     }
     final key = '$state|$front';
@@ -300,7 +311,20 @@ class BossPainter {
   /// carrier-v3 §7: the vortex trails' anchor points until the rig's
   /// `vortex` points exist: the outer-lower extreme of each wing, arm and
   /// sail layer (hull-local, unbent), with its module.
-  List<(Offset, String)> vortexTips() => [
+  List<(Offset, String)> vortexTips() {
+    // carrier-v3-render: the rig's own vortex points (prong, wing and
+    // tendril tips), when the hull was baked with them.
+    final v = hero?.views[BossView.hero.storedTag];
+    if (v != null && v.vortex.isNotEmpty) {
+      return [
+        for (final p in v.vortex)
+          if (_assembled(p.module)) (Offset(p.x, p.y), _moduleOf(p.module)),
+      ];
+    }
+    return _extremeTips();
+  }
+
+  List<(Offset, String)> _extremeTips() => [
     for (final (s, flip, module) in _heroS0())
       if (CarrierBend.lags(module))
         () {
@@ -408,6 +432,7 @@ class BossPainter {
     BossHeroHull hull,
     List<ui.Image> pages, {
     ui.Image? belly,
+    CarrierRenderData? data,
   }) {
     _dropMeshes();
     image = null;
@@ -415,6 +440,7 @@ class BossPainter {
     loadedKey = hull.key;
     hero = hull;
     heroPages = pages;
+    renderData = data;
     bellySprite = belly == null ? null : bellyOf(hull);
     bellyImage = belly;
   }
@@ -445,7 +471,11 @@ class BossPainter {
     if (h == null) {
       return [BossAtlas.classes[int.parse(key.split(':').last)].asset];
     }
-    return [...h.pages, if (bellyOf(h) case final b?) b.asset];
+    return [
+      ...h.pages,
+      if (bellyOf(h) case final b?) b.asset,
+      if (h.data case final d?) d.asset,
+    ];
   }
 
   /// Keeps exactly the art the model needs resident: the current run's
@@ -468,6 +498,7 @@ class BossPainter {
         image = null;
         hero = null;
         heroPages = null;
+        renderData = null;
         bellyImage = null;
         bellySprite = null;
         loadedClass = null;
@@ -481,9 +512,14 @@ class BossPainter {
     // Overflight's belly, or its frontal atlas while its view set is not
     // packed yet.
     final belly = heroHull == null ? null : bellyOf(heroHull);
+    final data = heroHull?.data;
     final pending = heroHull != null
         ? Future.wait(
-            [...heroHull.pages, if (belly != null) belly.asset].map(load),
+            [
+              ...heroHull.pages,
+              if (belly != null) belly.asset,
+              if (data != null) data.asset,
+            ].map(load),
           )
         : load(BossAtlas.classes[cls].asset).then((i) => [i]);
     pending
@@ -494,8 +530,16 @@ class BossPainter {
             hero = heroHull;
             heroPages = imgs.sublist(0, heroHull.pages.length);
             bellySprite = belly;
-            bellyImage = belly == null ? null : imgs.last;
+            bellyImage = belly == null ? null : imgs[heroHull.pages.length];
             image = null;
+            renderData = null;
+            if (data != null) {
+              CarrierRenderData.decode(data, imgs.last).then((d) {
+                if (hero?.key != heroHull.key) return;
+                renderData = d;
+                _heightsKey = null; // rebuild the height field from the bake
+              });
+            }
           } else {
             image = imgs.single;
             hero = null;
@@ -602,7 +646,9 @@ class BossPainter {
   }
 
   /// The stored view, whether it is drawn mirrored, for [view].
-  BossHeroView? storedView(BossView view) => hero?.views[view.storedTag];
+  /// carrier-v3: a hull baked with one view answers every view with it.
+  BossHeroView? storedView(BossView view) =>
+      hero?.views[view.storedTag] ?? hero?.views[BossView.hero.storedTag];
 
   /// The run's assembly (boss_grammar): which of the hull's modules are
   /// drawn and from which art set. Null draws every packed module.
@@ -628,12 +674,27 @@ class BossPainter {
   }
 
   bool _assembled(String id) =>
-      assembly == null || assembly!.modules.any((m) => m.id == id);
+      assembly == null ||
+      isGateModule(id) ||
+      assembly!.modules.any((m) => m.id == id);
+
+  /// carrier-v3-render: the gate and compartment modules (deck bays,
+  /// prong pods, aft gates, dorsal hatches) are gameplay geometry
+  /// ([BossHeroHull.gates]), outside the visual grammar: always drawn.
+  static bool isGateModule(String id) =>
+      id.startsWith('gate_') || id.startsWith('hatch');
 
   /// The front pass (drawn after the creatures): the v2 `prow` (mount
   /// bow, the hangar deck with the functional windows), or the v1 `bow`.
   static bool isFront(BossHeroModule m) =>
-      m.module == 'prow' || m.module.startsWith('prow.') || m.id == 'bow';
+      m.module == 'prow' ||
+      m.module.startsWith('prow.') ||
+      m.module ==
+          'gate.bay' || // carrier-v3: the deck bays' leaves sit on the prow
+      m.id == 'bow';
+
+  /// The stage [paintHero] drew last (the gates' door layers follow it).
+  int lastStage = 0;
 
   /// Whether any module has a layer at [stage] (a hull baked without a
   /// stage falls back to S0).
@@ -699,7 +760,7 @@ class BossPainter {
       );
       return;
     }
-    final v = h.views[view.storedTag];
+    final v = storedView(view);
     if (v == null) return;
     final st = _drawnStage(v, stage);
     c.save();
@@ -750,7 +811,8 @@ class BossPainter {
     double clock = 0,
   }) {
     if (!heroReady) return;
-    final v = hero!.views[view.storedTag];
+    lastStage = stage;
+    final v = storedView(view);
     final sev = v == null ? 0.0 : overlayFor(stage, _drawnStage(v, stage));
     final dome = front && hero!.set.isNotEmpty;
     if (sev > 0 || dome) {
@@ -1076,7 +1138,8 @@ class BossPainter {
         rect,
         key: key,
         char: .42,
-        feather: 56,
+        // the re-render's art fades itself out past the visible frame (§5.3)
+        feather: renderData != null ? 0 : 56,
       );
       composites++;
       // Seeds: each layer's centre, its big layers split into ~180-unit
@@ -1093,8 +1156,21 @@ class BossPainter {
           }
         }
       }
+      // carrier-v3-render: the art's fracture chunks and sections (§5.4)
+      final rd = renderData;
+      if (rd != null && rd.chunkSeeds.isNotEmpty) {
+        seeds
+          ..clear()
+          ..addAll(rd.chunkSeeds);
+      }
       final keep = _keep(layers, 20);
       final frac = CarrierFracture.build(
+        chunkOf: rd == null || rd.chunkSeeds.isEmpty
+            ? null
+            : (x, y) {
+                final k = rd.chunkAt(x, y);
+                return k >= 0 ? k : rd.nearestChunk(x, y);
+              },
         left: rect.left,
         top: rect.top,
         right: rect.right,
