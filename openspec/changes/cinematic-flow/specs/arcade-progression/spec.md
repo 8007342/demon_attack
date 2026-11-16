@@ -9,6 +9,10 @@ Level completion SHALL play as swarm beats on one transition clock: a rout of ab
 - **WHEN** a level ends with its last kill
 - **THEN** no creature flees through the fog, the ship climbs into the clouds, and the next sector's first wave comes out of the clouds on the side the rout set
 
+#### Scenario: Fleet recognition
+- **WHEN** a boss that is not the fifth is beaten
+- **THEN** its falling wreck precedes a short medal-glyph flourish beside the ship during the pursuit (no panel and no `+1UP` text; the HUD counts the life), followed by the next destination; the fifth leads to the final ending
+
 ### Requirement: Opening cockpit zoom-out, pictorial storyboards, and defeat pan
 New campaign runs SHALL start with a 3-beat Cockpit Control Panel zoom-out sequence into the live arena without fading to black. The run's opening arrival SHALL present an illustrated pixel-art tip; later sector transitions SHALL play as swarm beats without storyboard cards. Boss encounters SHALL stage an orbital retro-burn arrival and sequential chain-reaction destruction. Losing the final life SHALL stage an enemy victory celebration, a swarm mill over the wreck and a skyward pan to High Scores.
 

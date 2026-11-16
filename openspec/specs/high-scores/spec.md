@@ -6,11 +6,15 @@ Persist a shared Top10 scoreboard with constrained arcade initials and recoverab
 ## Requirements
 
 ### Requirement: Durable Top10
-A Cloudflare Durable Object SHALL persist the ten highest scores in descending order and return them from a same-origin endpoint.
+A Cloudflare Durable Object SHALL persist independent Easy, Normal and Hard Top10 boards, each ordered by descending score with stable ties. Each result SHALL retain initials, score, difficulty, zero to five medals, accumulated active time and remaining lives for completed campaigns. Existing entries SHALL remain Normal results with default metadata.
 
 #### Scenario: Reload scores
-- **WHEN** a valid score has been accepted and a new request loads the board
-- **THEN** the persisted score appears if it remains in the Top10
+- **WHEN** a valid score has been accepted and its mode board is loaded
+- **THEN** the persisted result appears if it remains in that mode Top10
+
+#### Scenario: Independent pruning
+- **WHEN** a Hard result enters its Top10
+- **THEN** no Easy or Normal result is removed
 
 ### Requirement: Three-wheel entry
 Score entry SHALL offer exactly three rotating wheels containing only A–Z and 0–9 and no free-text name input.
@@ -20,19 +24,45 @@ Score entry SHALL offer exactly three rotating wheels containing only A–Z and 
 - **THEN** the submission contains exactly three permitted characters
 
 ### Requirement: Validation and failure handling
-The API SHALL reject malformed initials and noninteger, negative, or excessive scores. The client SHALL show loading, empty, and unavailable states and retain failed submissions for retry.
+The API SHALL reject malformed initials, invalid modes, noninteger or out-of-range score/medals/time/lives and inconsistent completion metadata. Legacy requests SHALL default to Normal with absent achievement metadata. The client SHALL show loading, empty and unavailable states and retain failed submissions for retry.
 
 #### Scenario: Offline submission
-- **WHEN** a score submission fails
-- **THEN** the player can retry without reentering initials or losing the result
+- **WHEN** a submission fails
+- **THEN** retry preserves initials and the complete run result
+
+#### Scenario: Legacy client
+- **WHEN** a valid request supplies only initials and score
+- **THEN** it is accepted as a Normal result with default metadata
 
 ### Requirement: Inline landing Top10
-The landing page SHALL load and display all available Top10 entries, with loading, empty, unavailable and retry states independent of Start. Desktop SHALL present it alongside the title and mobile SHALL allow scrolling to it below the title. Successful initials submission SHALL return to that inline board.
+The landing page SHALL display a neutral Top10 heading with unlocked difficulty tabs labelled only by mode; a lone Normal tab SHALL be hidden. It SHALL provide loading, empty, unavailable and retry independent of starting play. Desktop SHALL show the board beside the title; mobile SHALL scroll below it. Rows SHALL show rank, initials, five medal positions, active time and score; five-medal finishers SHALL additionally show a heart times remaining lives.
 
 #### Scenario: Unavailable scores
-- **WHEN** the score endpoint fails
-- **THEN** retry is offered on the landing page and starting a game remains available
+- **WHEN** the endpoint fails
+- **THEN** retry is offered while starting play remains available
 
 #### Scenario: Score accepted
-- **WHEN** a score submission succeeds
-- **THEN** the player returns to the landing page with the returned board and confirmation
+- **WHEN** submission succeeds
+- **THEN** its mode board and confirmation appear
+
+#### Scenario: Finisher row
+- **WHEN** a result has five medals and four remaining lives
+- **THEN** its row displays all five medals, active time, score and heart ×4
+
+### Requirement: Direct terminal score routing
+At run completion the client SHALL check the matching difficulty Top10 and open three-character entry directly for qualifying scores. Nonqualifying results SHALL appear below that difficulty's board on landing. Ranking-load failures SHALL preserve submission access; submission failures SHALL retain initials and run metadata for retry.
+
+#### Scenario: Tenth-place tie
+- **WHEN** a finished score ties tenth place in a full board
+- **THEN** its personal final result appears below that difficulty board without initials entry
+
+#### Scenario: Qualifying result
+- **WHEN** a score exceeds tenth place or the matching board has fewer than ten entries
+- **THEN** the three-character entry appears directly
+
+### Requirement: Console runs are not ranked
+The game SHALL NOT submit a console run's result to `/api/scores` and SHALL NOT open the initials entry for it, whatever its score. Its final score SHALL be shown beside the board, tagged `CONSOLE RUN · NOT RANKED`.
+
+#### Scenario: High console score
+- **WHEN** a console run ends with a score that would enter an empty or low board
+- **THEN** no initials entry opens, no POST is sent, and the result shows with the unranked tag

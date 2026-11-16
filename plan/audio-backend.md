@@ -155,6 +155,28 @@ The measured tier keys are the spec's tonic (L2: its dominant A, the takes sit o
 
 Music runs on the shared game-event bridge (`lib/game/game_events.dart`: the model queues `GameEvent`s, `main.dart` drains them into `dispatchGameEvent`, and consumers subscribe with `GameEvents.listen`). `MusicDirector` (`lib/game/music_director.dart`) reads the model once per frame and **publishes** music events on that bridge. They are named in `GameEventNames.music`: `musicIntensity` (data `tier`, `level`), `diveTell`, `lastStandTell`, `carrierHatchOpen` and `reinforcementsArrived`. Other layers, such as the commander comms panel, can listen too. The director also **listens**: `allyUnderAttack` and `groundForceInRange` lift the tier for 6 s like a reinforcement arrival, and ground pressure (`model.ground.pressure`, 0–1, read each frame; also published as `groundPressure {level}`) adds a tier from 0.4 and two from 0.8. `groundBreakthrough` (L3–L4) plays the **breakthrough** accent. `MusicBridge` is the one listener that plays music. It sends `musicIntensity` to `audioIntensity(tier)`, the four tells to `audioAccent(dive|laststand|hatch|reinforce)`, and `fleetIntact` to `audioFleetIntact()` (`lib/services/audio_web.dart` → `demonAudio.intensity` / `accent` / `fleetIntact`; no-ops off the web). The director is read-only: it never writes to the model, and a test checks the checkpoint is unchanged. Hook lines, each marked `// --- music event hook`: three in `scene.dart` (the import, the `music` field, and `music.observe(model, dt)` right after `model.update(dt)`, before `onTick` takes the string events, so it sees `reinforcements`), and four in `main.dart` (the import, the listener list, registering both listeners after the scene is built, and removing them in `dispose`). The cue events (`level`, `boss`, `levelclear`, `travel`, `victory`, `defeat`, `gameover`, `completed`) still go through `main.dart`'s `audioCue` unchanged. `fleetIntact` (data `scope`: `level` at sector clear, `campaign` at victory) is drained in the same tick right after the clear cue. The player then starts the fleet variant in place of the still-loading normal march, or switches in place on the next bar if the normal march is already playing.
 
+### Two event channels
+
+The model reports events in two ways, and a consumer has to know which one it reads.
+
+- **Raw string events** (`model.events`, e.g. `explosion`, `stormBolt`). Each frame `main.dart` passes each one to
+  `audioSfx(name)`, which plays the sound effect. `GameEventObserver` (`lib/game/game_events.dart`) also forwards it
+  as a `GameEvent` of the same name (or its alias in `GameEventNames.aliases`). It skips `GameEventNames.unforwarded`
+  (`shot`, `hit`, `explosion`) and `incoming`, which is voiced through the model's queued `cohortSighted`.
+- **Structured events**, which the model queues as `GameEvent`s with data. Only `GameEvent` listeners see them: the
+  radio director, `MusicDirector` and `MusicBridge`. They never reach `audioSfx`.
+
+Use a raw event for a sound and a structured event for the radio and the music. Giving both the same name makes the
+radio speak twice. Stormfront follows this split: `stormTell` and `stormBolt` are raw, `stormStrike` and `stormBait`
+are structured.
+
+### Sound effects (`web/audio/demon-audio.js`)
+
+Sound effects are synthesised in the browser: each name passed to `audioSfx` matches an `if (name === '…')` recipe
+in `demon-audio.js`. There are 18 such checks today and no table. Noise bursts (`noiseBurst`) all read one shared
+noise buffer of **0.5 s**, so a burst asked to last longer is cut off at 0.5 s. To make a long roll (thunder, say),
+overlap several bursts. Nothing in the test host plays audio, so check every new effect by ear in a browser.
+
 ### MIDI fallback
 
 `generate-midi.py` writes Standard MIDI Format 0 files, each with its cue's tempo meta, for every cue from the same motif events (`tools/music_motifs.py`), keeping riff, bass, lead, kick and snare, and drops cymbals and pads. A tier that fails to load therefore still plays its motif on the same grid. The peril tier has at least 1.3× the note events of tier 1 (tested). The cackle falls back to falling staccato "ha" notes, and the menu keeps its sine-pad motif. The fallback synthesizer voices channel 9 as percussion, 1 as sawtooth, 2 as sine and the rest as square waves.

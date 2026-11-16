@@ -322,7 +322,7 @@ void main() {
           m.invulnerable = 5;
           for (final d in List<Demon>.of(m.demons)) {
             if (d.entering) continue;
-            while (m.demons.contains(d)) {
+            for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
               m.hitDemon(d);
             }
           }

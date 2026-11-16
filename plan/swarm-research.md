@@ -69,7 +69,7 @@ JEPA programme, not from atrapa:
 
 | Option | Cost | Verdict |
 |---|---|---|
-| atrapa-size MLP (18 k MACs) per creature per frame | 40 × 18 k ≈ 0.7 M MACs/frame, roughly 1–4 ms on a phone (estimated at 3–5× slower than desktop) | Too much every frame. Fine staggered at 10 Hz (about 0.2–0.6 ms). |
+| atrapa-size MLP (18 k MACs) per creature per frame | 40 × 18 k ≈ 0.7 M MACs/frame, roughly 1–4 ms on a phone (estimated at 3–5× slower than desktop) [UNSOURCED: plan/provenance-audit.md#R-16] | Too much every frame. Fine staggered at 10 Hz (about 0.2–0.6 ms). |
 | Learned latent world model + planning (JEPA-like), top tier only | K=5 candidates × 8 steps × a 2 k-MAC predictor ≈ 80 k per decision | Affordable for 3–6 elites at 10 Hz. But it needs human play data we do not have, and it adds parity, versioning and retraining work. |
 | Hand-written forward model + energy scoring | 30 bullets × 8 candidates × 15 steps ≈ 3.6 k distance checks per creature | Well under 1 ms for 40 creatures. We have the *true* state, so an exact closed-form forward model beats a learned one. |
 
@@ -182,7 +182,7 @@ drives Wan 2.2 VACE; 72 frames at 12 fps). The techniques that transfer to a swa
 - **Lévy flight** (Viswanathan et al., Nature 401:911, 1999,
   https://havlin.ph.biu.ac.il/wp-content/uploads/Publications/vabhlrs426.pdf): for sparse targets the best search
   has steps with `P(l) ∝ l^−μ`, μ ≈ 2. ‡Sample with `l = l_min · u^(−1/(μ−1))`. We use it for scouts and for
-  far-fog skeins "searching" before they lock onto a station. Later studies dispute how general Lévy foraging is;
+  far-fog skeins "searching" before they lock onto a station. Later studies dispute how general Lévy foraging is [UNSOURCED: plan/provenance-audit.md#R-17];
   we use it as an aesthetic, not as biology.
 
 ### 3.3 Reacting to a predator (the player's fire)
@@ -195,7 +195,7 @@ drives Wan 2.2 VACE; 72 frames at 12 fps). The techniques that transfer to a swa
   more frequent as attacks increase. This is a menu for escalating the swarm's reaction to heavier fire.
   Plain-language summary: https://bou.org.uk/blog-hemelrijk-waves-of-terror-in-starling-flocks/.
 - The fountain effect (split around the predator and rejoin behind it) is from fish-school studies (Pitcher &
-  Parrish), not checked here.
+  Parrish), not checked here. [UNSOURCED: plan/provenance-audit.md#R-18]
 - **Adopted split:** the *look* of evasion (an agitation wave as a wing-tilt and position ripple smaller than a
   third of the hitbox, a vacuole closing after a kill) is presentation for every creature. The *gameplay* of
   evasion (moving the hitbox out of a shot) stays gated and calibrated, and belongs to W4. Otherwise "swarm

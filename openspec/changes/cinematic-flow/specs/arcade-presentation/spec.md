@@ -82,3 +82,7 @@ Each of the five levels SHALL have a distinct original pixel-art environment wit
 #### Scenario: Territory story
 - **WHEN** the player travels toward the carrier or begins a harder cycle
 - **THEN** radio chatter on the comms dock and environmental occupation details communicate the deeper threat, with no floating captions or storyboard interludes
+
+#### Scenario: Slums and docks
+- **WHEN** Krybor Slums and Krybor Docks are viewed at phone size without their destination labels
+- **THEN** dense irregular habitation distinguishes the Slums from docking gantries, berths and cargo structures at the Docks while the firing lane stays readable
