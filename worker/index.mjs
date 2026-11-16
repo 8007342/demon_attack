@@ -6,6 +6,21 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), { status
 const MAX_BODY = 512;
 const difficulties = ['easy', 'normal', 'hard'];
 const boundedInteger = (value, max) => Number.isSafeInteger(value) && value >= 0 && value <= max;
+// bonus-balance: a record's run modifiers (the bonus levels met, the run rule) are catalogue ids.
+const MAX_MODIFIERS = 4;
+const modifierId = /^[a-z][A-Za-z0-9]{0,31}$/;
+const validModifiers = (value) => Array.isArray(value) && value.length <= MAX_MODIFIERS && value.every(id => typeof id === 'string' && modifierId.test(id)) && new Set(value).size === value.length;
+const isoDay = (date) => date.toISOString().slice(0, 10);
+/** The play date: the client's local day when it is within a day of the server's, else the server's (UTC). */
+export function playedOn(claimed, now = new Date()) {
+  if (typeof claimed === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(claimed)) {
+    const day = Date.parse(`${claimed}T00:00:00Z`);
+    const today = Date.parse(`${isoDay(now)}T00:00:00Z`);
+    if (Number.isFinite(day) && isoDay(new Date(day)) === claimed && Math.abs(day - today) <= 86400000) return claimed;
+  }
+  return isoDay(now);
+}
+const fields = ['initials', 'score', 'difficulty', 'medals', 'activeMilliseconds', 'remainingLives', 'modifiers', 'playedOn'];
 
 export async function readScore(request) {
   if (!(request.headers.get('content-type') || '').toLowerCase().startsWith('application/json')) throw new Error('Use application/json');
@@ -24,11 +39,13 @@ export async function readScore(request) {
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
   const data = JSON.parse(new TextDecoder().decode(bytes));
-  if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).some(key => !['initials', 'score', 'difficulty', 'medals', 'activeMilliseconds', 'remainingLives'].includes(key)) || !/^[A-Z0-9]{3}$/.test(data.initials) || typeof data.initials !== 'string' || !Number.isSafeInteger(data.score) || data.score < 0 || data.score > 999999999) throw new Error('Expected three A-Z0-9 initials and a score from 0 to 999999999');
+  if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).some(key => !fields.includes(key)) || !/^[A-Z0-9]{3}$/.test(data.initials) || typeof data.initials !== 'string' || !Number.isSafeInteger(data.score) || data.score < 0 || data.score > 999999999) throw new Error('Expected three A-Z0-9 initials and a score from 0 to 999999999');
   if ('difficulty' in data && !difficulties.includes(data.difficulty)) throw new Error('Invalid difficulty');
   if ('medals' in data && !boundedInteger(data.medals, 5)) throw new Error('Invalid medals');
   if (data.activeMilliseconds != null && !boundedInteger(data.activeMilliseconds, 31536000000)) throw new Error('Invalid play time');
   if (data.remainingLives != null && (!boundedInteger(data.remainingLives, 999999) || data.medals !== 5)) throw new Error('Finisher lives require five medals');
+  if (data.modifiers != null && !validModifiers(data.modifiers)) throw new Error('Invalid run modifiers');
+  if (data.playedOn != null && typeof data.playedOn !== 'string') throw new Error('Invalid play date');
   return data;
 }
 
@@ -38,12 +55,13 @@ export class HighScores {
     this.sql = state.storage.sql;
     this.sql.exec('CREATE TABLE IF NOT EXISTS scores (id INTEGER PRIMARY KEY AUTOINCREMENT, initials TEXT NOT NULL, score INTEGER NOT NULL)');
     const columns = new Set([...this.sql.exec('PRAGMA table_info(scores)')].map(column => column.name));
-    for (const [name, definition] of Object.entries({ difficulty: "TEXT NOT NULL DEFAULT 'normal'", medals: 'INTEGER NOT NULL DEFAULT 0', activeMilliseconds: 'INTEGER', remainingLives: 'INTEGER' })) {
+    for (const [name, definition] of Object.entries({ difficulty: "TEXT NOT NULL DEFAULT 'normal'", medals: 'INTEGER NOT NULL DEFAULT 0', activeMilliseconds: 'INTEGER', remainingLives: 'INTEGER', modifiers: "TEXT NOT NULL DEFAULT ''", playedOn: 'TEXT' })) {
       if (!columns.has(name)) this.sql.exec(`ALTER TABLE scores ADD COLUMN ${name} ${definition}`);
     }
   }
   list(difficulty = 'normal') {
-    return [...this.sql.exec('SELECT initials, score, difficulty, medals, activeMilliseconds, remainingLives FROM scores WHERE difficulty = ? ORDER BY score DESC, id ASC LIMIT 10', difficulty)].map((entry, index) => ({ rank: index + 1, ...entry }));
+    // Records saved before bonus-balance have no modifiers ('') and no play date (null).
+    return [...this.sql.exec('SELECT initials, score, difficulty, medals, activeMilliseconds, remainingLives, modifiers, playedOn FROM scores WHERE difficulty = ? ORDER BY score DESC, id ASC LIMIT 10', difficulty)].map((entry, index) => ({ rank: index + 1, ...entry, modifiers: entry.modifiers ? entry.modifiers.split(',') : [], playedOn: entry.playedOn ?? null }));
   }
   async fetch(request) {
     if (request.method === 'GET') {
@@ -55,7 +73,7 @@ export class HighScores {
     let score;
     try { score = await readScore(request); } catch { return json({ error: 'Use JSON with exactly three A-Z0-9 initials and an integer score from 0 to 999999999' }, 400); }
     this.storage.transactionSync(() => {
-      this.sql.exec('INSERT INTO scores (initials, score, difficulty, medals, activeMilliseconds, remainingLives) VALUES (?, ?, ?, ?, ?, ?)', score.initials, score.score, score.difficulty ?? 'normal', score.medals ?? 0, score.activeMilliseconds ?? null, score.remainingLives ?? null);
+      this.sql.exec('INSERT INTO scores (initials, score, difficulty, medals, activeMilliseconds, remainingLives, modifiers, playedOn) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', score.initials, score.score, score.difficulty ?? 'normal', score.medals ?? 0, score.activeMilliseconds ?? null, score.remainingLives ?? null, (score.modifiers ?? []).join(','), playedOn(score.playedOn));
       this.sql.exec('DELETE FROM scores WHERE difficulty = ? AND id NOT IN (SELECT id FROM scores WHERE difficulty = ? ORDER BY score DESC, id ASC LIMIT 10)', score.difficulty ?? 'normal', score.difficulty ?? 'normal');
     });
     return json({ scores: this.list(score.difficulty ?? 'normal') }, 201);
