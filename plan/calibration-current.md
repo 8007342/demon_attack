@@ -326,3 +326,126 @@ Easy +8.3 %, Normal +0.7 %, Hard +5.4 %, pooled +4.5 %). Ablations on the way (s
 +10 / +7 / +13 %, of which the power timers running out during the 5 s Rise were the cause (shield phase +25 %
 with 0.15 vs 0.23 powers active); the timers now hold while the carrier rises. Resetting the level clock, the
 ground war or the pilot model at the Rise changed nothing measurable.
+
+## Bonus balance (2026-11-16, change `bonus-balance`)
+
+Operator: bonus levels last about as long as the regular level they replace, bring about as many enemies, offer
+about the same possible score, and are about as hard (a little easier or harder by design). One lasted about three
+seconds.
+
+Harness: `test/support/bonus_balance.dart`, gate `test/bonus_balance_test.dart` (runs with the suite, about a minute;
+`--dart-define=BONUS_BALANCE=<tag>` writes `.cache/bonus-balance-<tag>.md`, `BONUS_BALANCE_ROUTES=4` adds routes 2-3).
+Each bonus level against the regular sector it replaces, sectors 2-4, every difficulty, eight seeds (1982, 7, 21, 42,
+99, 314, 2718, 5150), `startAt` the sector:
+- **Duration**: combat seconds of the protected real-shot pilot (`steer(oracle: false)`, invulnerable) to the last kill.
+- **Enemies**: its kills (it clears every creature).
+- **Possible score**: its score minus the level's extras plus the level's cap (what a perfect level pays).
+- **Difficulty**: lives the Average pilot (99 lives) loses before the last kill.
+Both pilots line up under a supply crate that hangs in range with no creature between; neither baits lightning.
+Gate (routes 0-1, where nine runs in ten meet their bonus level): pooled within ±15 % on all four, duration / enemies /
+possible within ±20 % per difficulty, no cell under 60 % of its sector's duration or 85 % of its enemies.
+
+### Before (bonus-levels as built, 4 seeds, protected pilot)
+
+Two waves (`BonusWaves.count = 2`) where the sector has 3-7; Supply Run at 60 % rosters (min 3), half the
+reinforcements, two lightest species; Stormfront at 85 %, half the reinforcements; no sentinels or elites in either.
+
+| Cell | Regular combat s / kills | Supply Run | Stormfront |
+|---|---:|---:|---:|
+| easy r0 s2 | 24.6 / 27 | **8.9 / 10** | 12.9 / 15 |
+| normal r0 s3 | 69.6 / 90 | 19.0 / 23 | 24.5 / 29 |
+| normal r1 s3 | 111.7 / 148 | 21.3 / 24 | 22.8 / 31 |
+| hard r1 s4 | 90.4 / 187 | 23.2 / 32 | 24.3 / 41 |
+
+Root cause of the three-second level: Easy route 0 has no reinforcement groups, so a Supply Run in sector 2 was two
+waves of three to five drones; the pilot (no powers) took 8.9 s, a player carrying spread or powerful from sector 1
+about three. Awards were shares of a par that counted only the opening rosters: +45-60 % over the sector at route 1.
+
+### After (routes 0-1, pooled; change against the regular sectors)
+
+| Level | Mode | Duration | Enemies | Score (pilot) | Possible score | Lives lost |
+|---|---|---:|---:|---:|---:|---:|
+| supplyRun | easy | +16.6 % | +0.0 % | +5.1 % | +5.1 % | +15.2 % |
+| supplyRun | normal | +8.5 % | -0.0 % | +6.0 % | +6.0 % | -26.1 % |
+| supplyRun | hard | +8.6 % | +0.0 % | +5.1 % | +5.2 % | -7.7 % |
+| supplyRun | **pooled** | +10.5 % | -0.0 % | +5.4 % | +5.5 % | -11.2 % |
+| stormfront | easy | +3.8 % | +13.2 % | +5.9 % | +6.1 % | +14.9 % |
+| stormfront | normal | -9.4 % | +8.2 % | +1.2 % | +1.4 % | -6.1 % |
+| stormfront | hard | -17.1 % | +8.3 % | +1.2 % | +1.2 % | -4.8 % |
+| stormfront | **pooled** | -9.2 % | +9.2 % | +1.9 % | +2.1 % | -2.0 % |
+
+Supply Run sits a little easier by design (crates every 3.5 s give more powers than the regular one drop per eight
+kills) and a little longer (no kill drops, crates to chase). Stormfront brings 9 % more creatures (rosters × 1.15)
+because its lightning kills some of them; Hard stays the shortest (−17 %, inside the ±20 % band).
+
+Routes 0-3 (report only; routes 2-3 hold one bonus level in five): Supply Run duration +1.0 %, enemies 0 %, possible
++3.9 %, lives −23.5 %; Stormfront duration −12.9 %, enemies +8.6 %, possible −0.9 %, lives −7.1 %. At routes 2-3 the
+Average pilot loses fewer lives in a Supply Run (its crates); not gated, noted for a later pass.
+
+Tuning path (routes 0-1 pooled, duration / enemies / possible / lives):
+1. Sector's waves, scales 1, old awards: Supply Run +39 % / 0 / +71 % / +106 %, Stormfront −12 % / 0 / +74 % / −13 %
+   (kill drops withheld under sentinels made Supply Run long and hard; awards on the old par paid +70 %).
+2. Par counts the whole sector; Supply Run kills × 0.6, crates every 5 s; Stormfront kills × 0.7: +23 % / 0 / +8 % /
+   −1 % and −12 % / 0 / +4 % / −13 %.
+3. Supply Run crates every 3.5 s, pilots chase crates only with a clear line: +10.5 % / 0 / +6 % / −11 %.
+4. Stormfront: storm gaps Normal 2.5-3.7 → 3.1-4.5 s, Hard 2.2-3.2 → 3.3-4.7 s (fork .35 → .3), rosters × 1.1 → 1.15,
+   gaps × (1 + 0.1 · route): the table above.
+
+Per-cell table (routes 0-1, eight seeds; score / par is the pilot's score over the new `sectorPar`):
+
+| Mode | Route | Sector | Level | Combat s | Enemies | Score | Possible | Lives lost (avg pilot) | Score / par |
+|---|---:|---:|---|---:|---:|---:|---:|---:|---:|
+| easy | 0 | 2 | regular | 25.6 | 27.0 | 3569 | 3569 | 0.88 | 1.01 |
+| easy | 0 | 2 | supplyRun | 30.6 | 27.0 | 3892 | 3892 | 1.50 | 1.10 |
+| easy | 0 | 2 | stormfront | 25.7 | 31.0 | 4122 | 4195 | 1.50 | 1.16 |
+| easy | 0 | 3 | regular | 50.3 | 43.0 | 10885 | 10885 | 4.63 | 1.13 |
+| easy | 0 | 3 | supplyRun | 47.0 | 43.0 | 11716 | 11716 | 5.00 | 1.21 |
+| easy | 0 | 3 | stormfront | 48.1 | 51.0 | 12002 | 12092 | 5.25 | 1.24 |
+| easy | 0 | 4 | regular | 57.9 | 50.0 | 16701 | 16701 | 7.25 | 1.19 |
+| easy | 0 | 4 | supplyRun | 62.7 | 50.0 | 17058 | 17058 | 7.63 | 1.21 |
+| easy | 0 | 4 | stormfront | 55.2 | 58.0 | 17648 | 17661 | 6.75 | 1.25 |
+| easy | 1 | 2 | regular | 58.6 | 65.0 | 27896 | 27896 | 9.25 | 1.18 |
+| easy | 1 | 2 | supplyRun | 71.0 | 65.0 | 30332 | 30332 | 12.00 | 1.28 |
+| easy | 1 | 2 | stormfront | 66.3 | 72.0 | 29499 | 29645 | 10.13 | 1.24 |
+| easy | 1 | 3 | regular | 66.2 | 75.0 | 32055 | 32055 | 7.88 | 1.20 |
+| easy | 1 | 3 | supplyRun | 80.0 | 75.0 | 32901 | 32901 | 9.88 | 1.23 |
+| easy | 1 | 3 | stormfront | 67.7 | 85.0 | 33885 | 33885 | 7.38 | 1.27 |
+| easy | 1 | 4 | regular | 74.3 | 96.0 | 44006 | 44006 | 12.88 | 1.25 |
+| easy | 1 | 4 | supplyRun | 97.0 | 96.0 | 46137 | 46137 | 13.25 | 1.32 |
+| easy | 1 | 4 | stormfront | 82.4 | 106.0 | 45882 | 45882 | 18.13 | 1.31 |
+| normal | 0 | 2 | regular | 34.3 | 60.0 | 10756 | 10756 | 2.00 | 1.02 |
+| normal | 0 | 2 | supplyRun | 37.0 | 60.0 | 11726 | 11726 | 2.38 | 1.12 |
+| normal | 0 | 2 | stormfront | 33.8 | 66.0 | 11633 | 11677 | 2.13 | 1.11 |
+| normal | 0 | 3 | regular | 72.6 | 90.0 | 29988 | 29988 | 9.75 | 1.11 |
+| normal | 0 | 3 | supplyRun | 77.7 | 90.0 | 32358 | 32358 | 8.00 | 1.20 |
+| normal | 0 | 3 | stormfront | 65.7 | 98.0 | 30571 | 30646 | 7.88 | 1.13 |
+| normal | 0 | 4 | regular | 79.9 | 98.0 | 42606 | 42606 | 11.25 | 1.16 |
+| normal | 0 | 4 | supplyRun | 89.4 | 98.0 | 44347 | 44432 | 7.75 | 1.21 |
+| normal | 0 | 4 | stormfront | 69.4 | 107.0 | 43842 | 43922 | 9.88 | 1.19 |
+| normal | 1 | 2 | regular | 98.5 | 114.0 | 68078 | 68078 | 18.25 | 1.21 |
+| normal | 1 | 2 | supplyRun | 95.3 | 113.9 | 72377 | 72377 | 17.13 | 1.29 |
+| normal | 1 | 2 | stormfront | 88.9 | 122.0 | 68515 | 68741 | 24.13 | 1.22 |
+| normal | 1 | 3 | regular | 105.7 | 148.0 | 86894 | 86894 | 32.75 | 1.21 |
+| normal | 1 | 3 | supplyRun | 111.8 | 148.0 | 92120 | 92120 | 17.88 | 1.28 |
+| normal | 1 | 3 | stormfront | 92.9 | 159.0 | 87699 | 87874 | 25.88 | 1.22 |
+| normal | 1 | 4 | regular | 107.5 | 158.0 | 97122 | 97122 | 28.50 | 1.25 |
+| normal | 1 | 4 | supplyRun | 129.6 | 157.9 | 102553 | 102553 | 22.63 | 1.32 |
+| normal | 1 | 4 | stormfront | 100.7 | 171.0 | 97325 | 97325 | 26.38 | 1.26 |
+| hard | 0 | 2 | regular | 39.3 | 72.0 | 13481 | 13481 | 3.63 | 1.07 |
+| hard | 0 | 2 | supplyRun | 40.0 | 72.0 | 14240 | 14247 | 3.38 | 1.13 |
+| hard | 0 | 2 | stormfront | 36.2 | 78.0 | 14213 | 14274 | 3.75 | 1.13 |
+| hard | 0 | 3 | regular | 77.2 | 109.0 | 36195 | 36195 | 9.88 | 1.11 |
+| hard | 0 | 3 | supplyRun | 89.7 | 109.0 | 39377 | 39377 | 10.25 | 1.20 |
+| hard | 0 | 3 | stormfront | 60.8 | 119.0 | 37182 | 37249 | 8.00 | 1.14 |
+| hard | 0 | 4 | regular | 78.7 | 118.0 | 52355 | 52355 | 13.25 | 1.18 |
+| hard | 0 | 4 | supplyRun | 86.4 | 118.0 | 53324 | 53812 | 13.88 | 1.21 |
+| hard | 0 | 4 | stormfront | 71.8 | 130.0 | 53517 | 53720 | 13.00 | 1.21 |
+| hard | 1 | 2 | regular | 97.0 | 134.0 | 80613 | 80613 | 34.63 | 1.23 |
+| hard | 1 | 2 | supplyRun | 101.1 | 134.0 | 85209 | 85209 | 22.75 | 1.30 |
+| hard | 1 | 2 | stormfront | 88.9 | 143.0 | 81592 | 81600 | 24.75 | 1.25 |
+| hard | 1 | 3 | regular | 126.6 | 175.0 | 102616 | 102616 | 21.13 | 1.20 |
+| hard | 1 | 3 | supplyRun | 119.8 | 175.0 | 107926 | 107941 | 24.75 | 1.27 |
+| hard | 1 | 3 | stormfront | 88.6 | 189.0 | 105062 | 105062 | 29.25 | 1.23 |
+| hard | 1 | 4 | regular | 104.8 | 187.0 | 116997 | 116997 | 28.13 | 1.29 |
+| hard | 1 | 4 | supplyRun | 131.8 | 187.0 | 122677 | 122705 | 27.13 | 1.35 |
+| hard | 1 | 4 | stormfront | 87.8 | 202.0 | 115361 | 115361 | 26.63 | 1.27 |

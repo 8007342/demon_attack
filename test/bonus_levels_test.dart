@@ -117,7 +117,10 @@ void main() {
       expect({for (final p in bonusPowers) p.id}.length, bonusPowers.length);
       for (final l in bonusLevels) {
         expect(l.sectors.every((s) => s >= 1 && s <= 4), isTrue);
-        expect(l.waves.count, inInclusiveRange(1, 7));
+        // bonus-balance: null keeps the sector's own count.
+        if (l.waves.count != null) {
+          expect(l.waves.count, inInclusiveRange(3, 7));
+        }
         for (final id in l.crates.bonusPowers) {
           expect(bonusPowerById(id), isNotNull, reason: '${l.id}: $id');
         }
@@ -364,7 +367,11 @@ void main() {
       final restored = ArcadeModel();
       expect(restored.restoreCheckpoint(saved), isTrue);
       expect(restored.bonus?.id, slot.level.id);
-      expect(restored.wavesPerLevel, slot.level.waves.count);
+      expect(
+        restored.wavesPerLevel,
+        slot.level.waves.count ??
+            ArcadeModel.wavesFor(sector: slot.sector, route: slot.route),
+      );
       expect(restored.bonusPlan.toString(), m.bonusPlan.toString());
     });
 

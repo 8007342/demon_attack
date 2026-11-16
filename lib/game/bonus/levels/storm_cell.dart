@@ -80,14 +80,19 @@ class StormTuning {
   final double rodColumn;
 
   static const easy = StormTuning(first: 4, gapMin: 3, gapMax: 4.2);
-  static const normal = StormTuning(forkChance: .2);
-  static const hard = StormTuning(gapMin: 2.2, gapMax: 3.2, forkChance: .35);
+  // bonus-balance: Normal and Hard strike less often than first built
+  // (2.5-3.7 s and 2.2-3.2 s, fork .35): the storm cleared the swarm too fast,
+  // so the level ran 17-26 % shorter than the sector it replaces.
+  static const normal = StormTuning(gapMin: 3.1, gapMax: 4.5, forkChance: .2);
+  static const hard = StormTuning(gapMin: 3.3, gapMax: 4.7, forkChance: .3);
 
-  /// Later routes fork a little more often (never faster tells).
+  /// Later routes fork a little more often (never faster tells) and, so
+  /// the storm does not clear their bigger swarms ahead of the pilot,
+  /// strike a tenth less often per route (bonus-balance).
   StormTuning forRoute(int route) => StormTuning(
     first: first,
-    gapMin: gapMin,
-    gapMax: gapMax,
+    gapMin: gapMin * (1 + .1 * route.clamp(0, 4)),
+    gapMax: gapMax * (1 + .1 * route.clamp(0, 4)),
     tell: tell,
     glow: glow,
     shipShare: shipShare,

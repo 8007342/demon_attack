@@ -86,12 +86,12 @@ class BonusPowerDef {
 }
 
 class BonusWaves {
-  const BonusWaves({this.count = 2, this.rosterScale = 1, this.reinforcementScale = 1,
-      this.sentinels = false, this.elites = false, this.maxKind});
-  final int count;                 // waves in the level (regular sectors: 3-7)
+  const BonusWaves({this.count, this.rosterScale = 1, this.reinforcementScale = 1,
+      this.sentinels = true, this.elites = true, this.maxKind});
+  final int? count;                // waves in the level; null: the sector's own (3-7) (bonus-balance)
   final double rosterScale;        // x the sector's calibrated roster (min 3 creatures)
   final double reinforcementScale; // x the sector's finite reinforcement groups
-  final bool sentinels, elites;    // false: none in this level
+  final bool sentinels, elites;    // false: none in this level (default: the sector's)
   final int? maxKind;              // cap the species (0-3); null: the sector's own
 }
 
@@ -299,3 +299,20 @@ comms dock (design section "Urgent-mission card and banter"). What a new level a
 - Nothing else: the card, its timing, the dismiss and the layout are the framework's (`lib/comms/comms_briefing.dart`).
 - `test/comms_director_test.dart`'s borrowed count does not change for written lines (they borrow nothing).
 
+
+## Bonus balance (`work/bonus-balance`, change `bonus-balance`)
+
+The operator played a bonus level that lasted about three seconds: two thin waves where the sector has 3-7. A bonus
+level is now weighed against the sector it replaces (duration, enemies, possible score, difficulty), and a new level
+joins that gate by being in the catalogue.
+
+- **Neutral wave defaults.** `BonusWaves()` is the sector's waves: `count` null (the sector's number), sentinels and
+  elites on. Change only what the twist needs.
+- **Par counts the whole sector** (`model.sectorPar`): opening rosters, finite reinforcements, sentinels and their
+  escorts at face value. A clear pays about 1.0-1.35 x par. Size awards so that `pointsScale * K + capPar * par` is
+  about the sector's kill points `K`; `model.bonusCap` is the level's cap in points.
+- **The gate**: `test/bonus_balance_test.dart` (one minute). Numbers: `plan/calibration-current.md`, "Bonus balance".
+  If your twist kills creatures for the player (like the storm), give the waves more creatures or the twist less
+  reach; if it withholds powers (like the Supply Run), give them back some other way.
+- **The run record**: `model.runModifierIds` (bonus levels reached, then the run rule) goes into the scoreboard and
+  the end-of-run card. Give a `RunModifierDef` a `label:` (its tag); a level's tag is its `label`.
