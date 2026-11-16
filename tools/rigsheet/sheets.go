@@ -27,6 +27,13 @@ func finBeauty(bake string, r *Rig, stage, t string) *image.NRGBA {
 // beautyAt returns the finished beauty of a view, yaw < 0 drawn as the mirror of +yaw
 // about the hull's centre axis (what the runtime does), and its density.
 func beautyAt(bake string, r *Rig, stage string, p, yw int) *image.NRGBA {
+	ay := yw
+	if ay < 0 {
+		ay = -ay
+	}
+	if p != 45 && !mustStat(filepath.Join(bake, r.Hull, stage, "fin_beauty_"+tag(p, ay)+".png")) {
+		p = 45 // not stored (the v2 budget): the runtime draws the middle pitch
+	}
 	if yw < 0 {
 		im := finBeauty(bake, r, stage, tag(p, -yw))
 		if im == nil {
@@ -72,7 +79,11 @@ func cmdViews(a []string) {
 				blit(sheet, im, x, y, k/r.maxTexel())
 			}
 			overlay(sheet, r, x, y, k)
-			text(sheet, x, y+ch+4, 2, fmt.Sprintf("PITCH %d YAW %+d", p, yw), dim)
+			lbl := fmt.Sprintf("PITCH %d YAW %+d", p, yw)
+			if p != 45 && yw != 0 && !mustStat(filepath.Join(bake, r.Hull, "S0", "fin_beauty_"+tag(p, 12)+".png")) {
+				lbl += "  (NOT STORED: DRAWS PITCH 45)"
+			}
+			text(sheet, x, y+ch+4, 2, lbl, dim)
 		}
 	}
 	save(out, sheet)

@@ -208,5 +208,3 @@ func hex(s string) color.NRGBA {
 	fmt.Sscanf(strings.TrimPrefix(s, "#"), "%02x%02x%02x", &r, &g, &b)
 	return color.NRGBA{r, g, b, 255}
 }
-
-

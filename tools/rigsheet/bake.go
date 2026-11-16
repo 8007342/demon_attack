@@ -92,8 +92,8 @@ func cmdBakeFinish(a []string) {
 		}
 		rel, _ := filepath.Rel(filepath.Join(bake, hull), out)
 		e := Entry{File: rel, Kind: kind, Inst: inst, Stage: stage, View: view, Texel: texel,
-			Crop: [4]int{cr.Min.X, cr.Min.Y, cr.Dx(), cr.Dy()},
-			DXY:  [2]float64{r.Frame[0] + float64(cr.Min.X)/texel, r.Frame[1] + float64(cr.Min.Y)/texel},
+			Crop:  [4]int{cr.Min.X, cr.Min.Y, cr.Dx(), cr.Dy()},
+			DXY:   [2]float64{r.Frame[0] + float64(cr.Min.X)/texel, r.Frame[1] + float64(cr.Min.Y)/texel},
 			Bytes: (cr.Dx() + 2) * (cr.Dy() + 2) * 4}
 		if kind != "beauty" {
 			m.Resident += e.Bytes

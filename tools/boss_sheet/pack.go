@@ -42,7 +42,7 @@ type packItem struct {
 	img  *image.NRGBA
 	dx   float64 // top-left in arena units from the anchor
 	dy   float64
-	ppu  int
+	ppu  float64 // px per unit (2 and 1 in the v1 frigate bake; any density in a v2 manifest)
 	page int
 	x, y int
 }
@@ -146,6 +146,12 @@ func cmdPack(a []string) {
 	dart.WriteString(heroTypes)
 	dart.WriteString("abstract final class BossHeroAtlas {\n  /// Packed hulls by key; a hull missing here is drawn from its frontal\n  /// atlas ([BossAtlas.classes]) until its view set is packed.\n  static const hulls = <String, BossHeroHull>{\n")
 	for _, hull := range hulls {
+		// HULL=KEY packs a v2 bake (boss-carrier-v2: BAKE/HULL/manifest.json) under the
+		// runtime key KEY (the tour class it replaces, e.g. carrier1-thorn=frigate)
+		if i := strings.Index(hull, "="); i > 0 {
+			dart.WriteString(packHullV2(bake, rigDir, root, hull[:i], hull[i+1:], dartSrc))
+			continue
+		}
 		dart.WriteString(packHull(bake, rigDir, root, hull, dartSrc))
 	}
 	dart.WriteString("  };\n}\n")
@@ -156,6 +162,10 @@ func cmdPack(a []string) {
 }
 
 func packHull(bake, rigDir, root, hull, dartSrc string) string {
+	return packHullAs(bake, rigDir, root, hull, hull, dartSrc, nil)
+}
+
+func packHullAs(bake, rigDir, root, hull, key, dartSrc string, v2 *bakeManifest) string {
 	rig := readRig(rigDir, hull)
 	raw, _ := os.ReadFile(filepath.Join(rigDir, hull, "rig.json"))
 	var rv struct {
@@ -174,7 +184,7 @@ func packHull(bake, rigDir, root, hull, dartSrc string) string {
 		isID[in.ID] = true
 	}
 	var items []*packItem
-	add := func(key string, im *image.NRGBA, dx, dy float64, ppu int) *packItem {
+	add := func(key string, im *image.NRGBA, dx, dy float64, ppu float64) *packItem {
 		it := &packItem{key: key, img: im, dx: dx, dy: dy, ppu: ppu}
 		items = append(items, it)
 		return it
@@ -190,6 +200,21 @@ func packHull(bake, rigDir, root, hull, dartSrc string) string {
 		for _, yw := range []int{0, 12} {
 			t := tag(p, yw)
 			v := viewRec{tag: t, pitch: p, yaw: yw, layers: map[string][4]*packItem{}}
+			if v2 != nil {
+				v.layers = v2.viewLayers(t, add)
+				if len(v.layers) == 0 { // not stored (a v2 budget decision): alias the middle pitch
+					for _, o := range views {
+						if o.pitch == 45 && o.yaw == yw {
+							v.layers = o.layers
+						}
+					}
+					if len(v.layers) == 0 {
+						v.layers = v2.viewLayers(tag(45, yw), add)
+					}
+				}
+				views = append(views, v)
+				continue
+			}
 			for _, id := range ids {
 				if yw == 0 && strings.HasSuffix(id, "L") && isID[strings.TrimSuffix(id, "L")+"R"] {
 					continue // drawn as the right one, flipped
@@ -201,10 +226,10 @@ func packHull(bake, rigDir, root, hull, dartSrc string) string {
 						continue
 					}
 					im := load(path)
-					k, cx, cy := 2, ox, oy
+					k, cx, cy := 2.0, ox, oy
 					if si > 0 {
 						im = areaScale(im, .5)
-						k, cx, cy = 1, ox/2, oy/2
+						k, cx, cy = 1.0, ox/2, oy/2
 					}
 					c, r, ok := crop(im)
 					if !ok {
@@ -219,7 +244,14 @@ func packHull(bake, rigDir, root, hull, dartSrc string) string {
 		}
 	}
 	wrecks := map[string][2]*packItem{}
-	for _, id := range ids {
+	if v2 != nil {
+		wrecks = v2.wrecks(add)
+	}
+	wids := ids
+	if v2 != nil {
+		wids = nil
+	}
+	for _, id := range wids {
 		// A mirrored pair's wreck is stored once (the left one); the right
 		// one draws it flipped (ledger §4: the B3 budget rule).
 		if strings.HasSuffix(id, "R") && isID[strings.TrimSuffix(id, "R")+"L"] {
@@ -241,8 +273,8 @@ func packHull(bake, rigDir, root, hull, dartSrc string) string {
 			wrecks[id] = w
 		}
 	}
-	parts, shape := frontalParts(dartSrc, hull)
-	atlas := load(filepath.Join(root, "assets/images/boss-"+hull+".png"))
+	parts, shape := frontalParts(dartSrc, key)
+	atlas := load(filepath.Join(root, "assets/images/boss-"+key+".png"))
 	partItems := map[string][]*packItem{}
 	for _, name := range []string{"jaws", "vents", "plumes", "breach", "debris"} {
 		for i, s := range parts[name] {
@@ -261,8 +293,26 @@ func packHull(bake, rigDir, root, hull, dartSrc string) string {
 		return order[i].img.Bounds().Dx() > order[j].img.Bounds().Dx()
 	})
 	const pad = 1
+	pw := pageW
 	type page struct{ h int }
 	pages := []page{{}}
+	if v2 != nil {
+		area := map[string]int{}
+		for _, it := range order {
+			k := strings.SplitN(it.key, ".", 2)[0]
+			if strings.HasPrefix(k, "p") {
+				k = "layer"
+			}
+			area[k] += it.img.Bounds().Dx() * it.img.Bounds().Dy() * 4
+		}
+		fmt.Printf("%s sprite RGBA by kind: %v\n", key, area)
+		pages = nil
+		pw = 4096 // the contract allows 4096 x 2048; one wide page wastes less than two narrow ones
+		for _, ph := range skylinePack(order, pad, pw) {
+			pages = append(pages, page{ph})
+		}
+		order = nil // placed
+	}
 	x, y, shelf := 0, 0, 0
 	for _, it := range order {
 		w, h := it.img.Bounds().Dx(), it.img.Bounds().Dy()
@@ -283,22 +333,22 @@ func packHull(bake, rigDir, root, hull, dartSrc string) string {
 	var sizes []string
 	for i := range pages {
 		h := (pages[i].h + 1) &^ 1
-		im := image.NewNRGBA(image.Rect(0, 0, pageW, h))
+		im := image.NewNRGBA(image.Rect(0, 0, pw, h))
 		for _, it := range items {
 			if it.page == i {
 				blit(im, it.img, it.x, it.y, 1)
 			}
 		}
-		name := fmt.Sprintf("boss-%s-hero-%d.png", hull, i)
+		name := fmt.Sprintf("boss-%s-hero-%d.png", key, i)
 		save(filepath.Join(root, "assets/images", name), im)
-		resident += pageW * h * 4
+		resident += pw * h * 4
 		names = append(names, "'"+name+"'")
-		sizes = append(sizes, fmt.Sprintf("(%d, %d)", pageW, h))
+		sizes = append(sizes, fmt.Sprintf("(%d, %d)", pw, h))
 	}
 	mb := float64(resident) / (1 << 20)
-	fmt.Printf("%s: %d sprites on %d pages, %.2f MB RGBA resident\n", hull, len(items), len(pages), mb)
+	fmt.Printf("%s: %d sprites on %d pages, %.2f MB RGBA resident\n", key, len(items), len(pages), mb)
 	if resident > budgetBytes {
-		fail("%s: %.2f MB over the 16 MB budget", hull, mb)
+		fail("%s: %.2f MB over the 16 MB budget", key, mb)
 	}
 
 	spr := func(it *packItem) string {
@@ -306,7 +356,7 @@ func packHull(bake, rigDir, root, hull, dartSrc string) string {
 			return "null"
 		}
 		return fmt.Sprintf("BossHeroSprite(%d, %d, %d, %d, %d, %s, %s%s)", it.page, it.x, it.y,
-			it.img.Bounds().Dx(), it.img.Bounds().Dy(), num(it.dx), num(it.dy), map[bool]string{true: "", false: ", 1"}[it.ppu == 2])
+			it.img.Bounds().Dx(), it.img.Bounds().Dy(), num(it.dx), num(it.dy), map[bool]string{true: "", false: ", " + num(it.ppu)}[it.ppu == 2])
 	}
 	pts := func(ps []rigPoint, kind func(rigPoint) int, all bool) string {
 		var b []string
@@ -334,8 +384,8 @@ func packHull(bake, rigDir, root, hull, dartSrc string) string {
 
 	var o strings.Builder
 	w := func(f string, args ...any) { fmt.Fprintf(&o, f, args...) }
-	w("    '%s': BossHeroHull(\n", hull)
-	w("      key: '%s',\n", hull)
+	w("    '%s': BossHeroHull(\n", key)
+	w("      key: '%s',\n", key)
 	w("      pages: [%s],\n", strings.Join(names, ", "))
 	w("      pageSizes: [%s],\n", strings.Join(sizes, ", "))
 	w("      residentBytes: %d,\n", resident)
@@ -438,8 +488,8 @@ const heroTypes = `// Generated by tools/boss_sheet pack from the projection bak
 class BossHeroSprite {
   const BossHeroSprite(this.page, this.x, this.y, this.w, this.h, this.dx,
       this.dy, [this.ppu = 2]);
-  final int page, x, y, w, h, ppu;
-  final double dx, dy;
+  final int page, x, y, w, h;
+  final double dx, dy, ppu;
 }
 
 /// One module instance of a hull: id, catalogue module, mirror (-1 for the

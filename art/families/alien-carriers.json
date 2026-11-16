@@ -4,6 +4,10 @@
  "notes": "The Thornwake carriers: the boss art direction v2 (R8, plan/operator-feedback-2026-11-15b.md; styleguide docs/styleguide/alien-capital-ships.md; openspec/changes/boss-hero-assets/design.md section 10). Input of tools/rigkit (rig.py, bake.py) and tools/rigsheet. Units are arena units. Ship frame: x = screen right, y = aft (the prow points -y, toward the player), z = up. Plane frame ('face' in v1 files): [ax, ay, n] on the plane through the carrier centre that faces the hero camera (pitch 45, yaw 0): ax, ay are hero-view screen units and n is the distance toward the camera; the functional windows live on it, so they hold at every pitch and swerve. A module is a slot (shared fields and common prims) plus one of its sets (set prims). A hull lists its slots and picks a set per slot; one bake per hull (= per set combination). Prims and generators: see tools/rigkit/rigkit.py prim_geometry and array_geometry.",
  "symmetric": true,
  "views": {"pitch": [38, 45, 52], "yaw": [-12, 0, 12], "hero": [45, 0], "stored_yaw": [0, 12],
+           "stored": [[38, 0], [45, 0], [45, 12], [52, 0]],
+           "belly": [-48, 0],
+           "belly_notes": "The underside seen from below and in front, for the boss-grandeur Overflight (the hull passes over the ship): one finished image, not a layered view set (rig.py --views belly --envelope off).",
+           "stored_notes": "Budget decision (ledger C3): the swerve views are stored at the middle pitch only; a (38|52, +-12) request draws (45, +-12). Yaw -12 draws +12 mirrored.",
            "swerve_axis": [0.0, 0.70710678, 0.70710678]},
  "render": {
   "scale": 1.5, "margin": 6,
@@ -31,7 +35,7 @@
  },
  "materials": {
   "chitin":   {"clay": 0.50, "fill": "#2A2236", "notes": "lacquered carapace: the hull mass"},
-  "plate":    {"clay": 0.64, "fill": "#3E3150", "notes": "armour scales: shed at S2"},
+  "plate":    {"clay": 0.54, "fill": "#3E3150", "notes": "armour scales: shed at S2"},
   "sinew":    {"clay": 0.36, "fill": "#5A1E2A", "notes": "living tissue between and under the scales; glows ember once exposed"},
   "bone":     {"clay": 0.86, "fill": "#CDBB92", "notes": "spines, ribs, thorns, gun thorns"},
   "membrane": {"clay": 0.30, "fill": "#2E1220", "notes": "sails between ribs"},
@@ -62,7 +66,7 @@
                       "galactica", "sauron", "nazgul", "gargoyle"]
  },
  "prompts": {
-  "hero": "Repaint this grey clay model as a finished, highly detailed painted game sprite of a colossal alien bio-organic carrier warship seen from above and in front, in the style of a high-resolution sci-fi capital ship concept painting. Materials: dark lacquered violet-black chitin carapace in large overlapping organic scales, satin and weathered, never glossy, ivory bone spines, ribs and thorns, dark wine-red membranes stretched between ribs, glowing violet psionic crystal growths where the clay is violet, small hot ember-orange glowing organic gun ports where the clay is orange. The weapons are grown bone thorns and glowing pores, not machinery. The black shapes stay deep black empty hangar openings. Organic, alien, ancient and menacing, enormous scale with dense fine detail, no metal panels, no windows. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+  "hero": "Repaint this grey clay model as a finished, highly detailed painted game sprite of a colossal alien bio-organic carrier warship seen from above and in front, in the style of a high-resolution sci-fi capital ship concept painting. Materials: dark violet-black chitin carapace in overlapping organic scales and long armour strakes, satin and weathered like old horn, never glossy, with dusky violet highlights on the edges, ivory bone spines, ribs and thorns, dark wine-red membranes stretched between ribs, glowing violet psionic crystal growths where the clay is violet, small hot ember-orange glowing organic gun ports where the clay is orange. The weapons are grown bone thorns and glowing pores, not machinery. Only the three black rectangles are openings: deep black empty hangar mouths; everything around them is solid armoured chitin. Organic, alien, ancient and menacing, enormous scale with dense fine detail, no metal panels, no windows. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
   "hero_set_thorn": "The armour is jagged and thorny, bristling with racks of bone thorn blades and long armour strakes.",
   "hero_set_lattice": "Violet crystal lattices grow through the carapace in columns and veins, glowing softly.",
   "hero_set_shroud": "The carapace is smooth and layered like overlapping beetle wing cases, heavy and armoured.",
@@ -74,7 +78,7 @@
  },
  "slots": {
   "prow": {
-   "mount": "bow", "fixed": true, "frame": "face", "gameplay": "turret", "detach": null, "wreck": true,
+   "mount": "bow", "fixed": true, "frame": "face", "gameplay": "turret", "detach": null, "wreck": "layer",
    "texel": "core", "id": "#E0402A",
    "notes": "The launch gallery in the throat between the forward prongs, on the hero plane: the core maw and both bays as one hangar deck behind solid bulkheads, the two gun blisters on the sill below. Never detaches (it carries the simulation windows); it breaks only in S4. Head-reading guard: no thin repeated vertical bars, no rows of beads, no arcs over the openings, no paired bright features above them.",
    "common_lights": [[-140, 6, 4, 3], [140, 6, 4, 3]],
@@ -138,17 +142,12 @@
      ]
     },
     "shroud": {
-     "notes": "Three straight, overlapping armour cases layered over the top of the deck.",
+     "notes": "A staggered field of small overlapping wing-case scales armours the deck top: texture, never a pair of shapes (a pair above the gallery reads as brows).",
      "prims": [
-      {"name": "case1", "type": "horn", "tag": "plate", "seg": 12, "subsurf": 1, "aspect": [1, 0.35], "up": [0, 0, 1],
-       "pts": [[-160, -24, 2], [0, -32, 7], [160, -24, 2]], "radii": [8, 12, 8]},
-      {"name": "case2", "type": "horn", "tag": "plate", "seg": 12, "subsurf": 1, "aspect": [1, 0.35], "up": [0, 0, 1],
-       "pts": [[-150, -46, 0], [0, -54, 5], [150, -46, 0]], "radii": [8, 12, 8]},
-      {"name": "case3", "type": "horn", "tag": "plate", "seg": 12, "subsurf": 1, "aspect": [1, 0.35], "up": [0, 0, 1],
-       "pts": [[-130, -64, -2], [0, -72, 3], [130, -64, -2]], "radii": [7, 10, 7]},
-      {"name": "case_edge", "type": "array", "tag": "bone", "count": 9,
-       "path": [[-120, -2, 4], [120, -2, 4]],
-       "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, -4, 8], [0, -10, 12]], "radii": [2.6, 1.6, 0.3]}}
+      {"name": "cases", "type": "array", "tag": "plate", "subsurf": 1,
+       "grid": {"x": [-135, -105, -75, -45, -15, 15, 45, 75, 105, 135], "y": [-66, -46, -26]},
+       "seed": 51, "jitter": {"pos": 6, "scale": 0.15, "rot": 8},
+       "child": {"type": "ell", "radii": [17, 11, 2.6], "at": [0, 0, 1.4], "seg": 10}}
      ]
     }
    }
@@ -183,7 +182,17 @@
     {"name": "prong_sinew", "type": "array", "tag": "sinew", "surface": false, "mirror": true,
      "grid": {"x": [192, 240, 264], "y": [-145, -95, -45, 5, 55]},
      "drop": {"onto": "self", "offset": 0.3},
-     "child": {"type": "box", "size": [16, 4, 1.4]}}
+     "child": {"type": "box", "size": [16, 4, 1.4]}},
+    {"name": "v_keel", "type": "horn", "tag": "bone", "seg": 10, "subsurf": 1, "aspect": [0.7, 1], "surface": false,
+     "pts": [[0, 80, -14], [0, 280, -32], [0, 500, -28], [0, 700, -12]], "radii": [8, 14, 12, 4]},
+    {"name": "v_ribs", "type": "array", "tag": "bone", "surface": false, "mirror": true,
+     "grid": {"x": [70, 150, 230], "y": [130, 200, 270, 340, 410, 480, 550]},
+     "drop": {"onto": "self", "offset": 1, "dir": [0, 0, 1], "tilt": 1},
+     "child": {"type": "box", "size": [72, 7, 5], "taper": [0.8, 1]}},
+    {"name": "v_pores", "type": "array", "tag": "ember", "surface": false, "mirror": true,
+     "grid": {"x": [110, 190, 262], "y": [165, 305, 375, 515]},
+     "drop": {"onto": "self", "offset": 2, "dir": [0, 0, 1], "tilt": 1},
+     "child": {"type": "ell", "radii": [6, 6, 3], "seg": 10}}
    ],
    "sets": {
     "ridged": {
@@ -347,7 +356,7 @@
      "notes": "A dense field of short bone thorns over the whole slab.",
      "prims": [
       {"name": "thorns", "type": "array", "tag": "bone", "mirror": true,
-       "grid": {"x": [20, 65, 110, 155, 200, 245], "y": [120, 175, 230, 285, 340, 395, 450, 505, 560]},
+       "grid": {"x": [60, 105, 150, 195, 240], "y": [120, 175, 230, 285, 340, 395, 450, 505, 560]},
        "drop": {"onto": "carapace", "offset": -2, "tilt": 0.5},
        "seed": 23, "jitter": {"rot": 12, "scale": 0.35, "pos": 10},
        "child": {"type": "horn", "seg": 6, "pts": [[0, 0, 0], [0, 6, 24], [0, 18, 46]], "radii": [6.5, 4, 0.3]}}
@@ -579,7 +588,7 @@
                        "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister",
                                  {"slot": "blister", "suffix": "aft", "offset": [70, 230, 0]}, "maw"]},
   "carrier3-lattice": {"tour": 3, "title": "Thornwake Siege-Ark (lattice set)", "replaces": "battlecruiser", "extent": 1.16, "forms": 4,
-                       "texel": {"core": 2.0, "mass": 0.85}, "set": "lattice",
+                       "texel": {"core": 2.0, "mass": 0.8}, "set": "lattice",
                        "sets": {"carapace": "lobed", "wing": "fan", "spines": "crown", "emitter": "lattice", "blister": "crystal", "maw": "iris", "barrier": "palisade", "tendril": "barbed"},
                        "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister",
                                  {"slot": "blister", "suffix": "aft", "offset": [70, 230, 0]}, "maw", "barrier", "tendril"]},
@@ -597,21 +606,21 @@
                                  {"slot": "blister", "suffix": "aft", "offset": [70, 230, 0]},
                                  {"slot": "blister", "suffix": "far", "offset": [40, 360, 0]}, "maw", "barrier", "tendril", "sac", "crown"]},
   "carrier1-thorn":   {"tour": 1, "title": "Thornwake Carrier (thorn set)", "replaces": "frigate", "extent": 1.0, "forms": 2,
-                       "texel": {"core": 2.0, "mass": 1.0}, "set": "thorn",
+                       "texel": {"core": 2.0, "mass": 0.8}, "set": "thorn",
                        "sets": {"carapace": "ridged", "wing": "scythe", "spines": "ridge", "emitter": "spire", "blister": "thorn"},
                        "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister"]},
   "carrier1-lattice": {"tour": 1, "title": "Thornwake Carrier (lattice set)", "replaces": "frigate", "extent": 1.0, "forms": 2,
-                       "texel": {"core": 2.0, "mass": 1.0}, "set": "lattice",
+                       "texel": {"core": 2.0, "mass": 0.8}, "set": "lattice",
                        "sets": {"carapace": "lobed", "wing": "fan", "spines": "crown", "emitter": "lattice", "blister": "crystal"},
                        "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister"]},
   "carrier1-shroud":  {"tour": 1, "title": "Thornwake Carrier (shroud set)", "replaces": "frigate", "extent": 1.0, "forms": 2,
-                       "texel": {"core": 2.0, "mass": 1.0}, "set": "shroud",
+                       "texel": {"core": 2.0, "mass": 0.8}, "set": "shroud",
                        "sets": {"carapace": "shroud", "wing": "lobe", "spines": "forest", "emitter": "veil", "blister": "hive"},
                        "slots": ["carapace", "prow", "wing", "spines", "emitter", "blister"]}
  },
  "stages": {
   "S0": {"notes": "shielded: intact; cyan hex cells are a runtime overlay"},
-  "S1": {"notes": "shield failing: texture only (S0 geometry), crystals flicker, scorch"},
+  "S1": {"bake": false, "notes": "shield failing: a runtime scorch and crystal-flicker overlay on the S0 layers (boss-grandeur design 6, S1); not baked (budget decision, ledger C3)"},
   "S2": {"shed": ["plate", "shard"], "notes": "armour shedding: every scale and emitter crystal gone, sinew exposed"},
   "S3": {"shed": ["plate", "shard"], "detach": 1, "notes": "module loss: the first detach group breaks off"}
  },

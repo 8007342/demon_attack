@@ -485,10 +485,12 @@ def view_tag(pitch, yaw):
 
 
 def all_views(g, which='all'):
-    if which == 'hero':
-        return [tuple(g['views']['hero'])]
+    if which in ('hero', 'belly'):
+        return [tuple(g['views'][which])]
     vs = [(p, y) for p in g['views']['pitch'] for y in g['views']['yaw']]
     if which == 'stored':
+        if 'stored' in g['views']:
+            return [tuple(v) for v in g['views']['stored']]
         st = g['views'].get('stored_yaw', g['views']['yaw'])
         vs = [(p, y) for (p, y) in vs if y in st]
     return vs

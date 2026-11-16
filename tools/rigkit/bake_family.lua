@@ -31,7 +31,10 @@ local t0 = os.time()
 local py = capture("lua tools/boss_rig/setup_bpy.lua")
 sh("cd tools/rigsheet && go build -o " .. sheet .. " .")
 sh(("mkdir -p %s %s %s"):format(rig, bake, inp))
-sh(("%s -I tools/rigkit/rig.py %s %s --hulls %s --threads %s"):format(py, family, rig, hull, threads))
+-- RIGKIT_REUSE_RIG=1 keeps an existing rig of this hull (rendered from the same family JSON)
+if not (os.getenv("RIGKIT_REUSE_RIG") == "1" and io.open(rig .. "/" .. hull .. "/rig.json")) then
+  sh(("%s -I tools/rigkit/rig.py %s %s --hulls %s --threads %s"):format(py, family, rig, hull, threads))
+end
 local root = capture(("jq -r '.selected.root // \"\"' %s"):format(family))
 local side = pick("sym"); if side == "" then side = "left" end
 local geo = {S0 = "S0", S1 = "S0", S2 = "S2", S3 = "S3"}

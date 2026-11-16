@@ -108,7 +108,7 @@ def run_render(g, out, hulls, stages, which, passes, threads):
         ppu = max(tex.values()) * rcfg.get('scale', 2)
         K.clear_scene()
         objs0 = K.build_hull(g, hull, 'S0'); bpy.context.view_layer.update()
-        frame, radius = K.hull_frame(g, objs0, K.all_views(g, 'all'), ppu)
+        frame, radius = K.hull_frame(g, objs0, K.all_views(g, 'belly' if which == 'belly' else 'all'), ppu)
         sc.render.resolution_x = round((frame[2] - frame[0]) * ppu)
         sc.render.resolution_y = round((frame[3] - frame[1]) * ppu)
         sc.render.resolution_percentage = 100
@@ -146,7 +146,7 @@ def run_render(g, out, hulls, stages, which, passes, threads):
                     if kind == 'z' and (p, y) != tuple(g['views']['hero']):
                         continue
                     K.render_pass(sc, os.path.join(d, '%s_%s.png' % (kind, tag)), kind, objs, ctx)
-                gate, fails = K.gate_view(g, objs, basis, sc)
+                gate, fails = K.gate_view(g, objs, basis, sc) if which != 'belly' else ({}, [])
                 pts = K.project_points(g, hull, objs, basis, sc)
                 v = rig['views'].setdefault(tag, {'pitch': p, 'yaw': y, 'camera': {
                     'right': [round(c, 6) for c in basis[0]], 'up': [round(c, 6) for c in basis[1]],

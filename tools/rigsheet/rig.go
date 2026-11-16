@@ -130,7 +130,7 @@ type Family struct {
 	Materials map[string]struct {
 		Hint string `json:"hint"`
 	} `json:"materials"`
-	Prompts  map[string]string `json:"prompts"`
+	Prompts  map[string]string          `json:"prompts"`
 	Selected map[string]json.RawMessage `json:"selected"`
 	Hulls    map[string]struct {
 		Tour  int               `json:"tour"`

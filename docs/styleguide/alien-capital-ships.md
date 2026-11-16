@@ -62,6 +62,10 @@ words in titles, slot and set names, notes and prompts (`originality.forbidden_w
    - no paired bright or round features above or beside the gallery (eyes): the gun blisters sit in **batteries** along
      the prongs, never as a single pair near the prow;
    - no paired hooks beside the gallery (mandibles);
+   - no pair of elongated light shapes above the gallery, even as armour (they paint as brows or closed eyes). Armour
+     there is a staggered *field* of small scales: texture, never a pair of shapes;
+   - no V of two thorns or plates on the centre line (an angry brow);
+   - on the belly, no pairs of dark ovals (eyes); the ventral detail is transverse ribs, a keel and rows of small pores;
    - prompts and negatives exclude "face, eyes, mouth, teeth".
 5. **Mass is layered.** Terraces stack up the screen: slab → citadel → keel or crown → spines. Each step is a
    silhouette edge, so the eye reads height and distance even in flat light.
