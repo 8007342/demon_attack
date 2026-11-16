@@ -9,6 +9,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/draw"
 	"os"
@@ -95,8 +96,24 @@ func (m *bakeManifest) wrecks(add addFn) map[string][2]*packItem {
 	return out
 }
 
-func packHullV2(bake, rigDir, root, hull, key, dartSrc string) string {
-	return packHullAs(bake, rigDir, root, hull, key, dartSrc, readBakeManifest(bake, hull))
+func packHullV2(bake, rigDir, root, hull, class, dartSrc string) string {
+	return packHullAs(bake, rigDir, root, hull, hull, class, dartSrc, readBakeManifest(bake, hull))
+}
+
+// belly writes the manifest's belly sprite (kind "belly": the Overflight's
+// underside, outside the resident budget) to assets/images/boss-KEY-belly.png
+// and returns its Dart constant, or "" when the bake has none.
+func (m *bakeManifest) belly(root, key string) string {
+	for _, e := range m.Entries {
+		if e.Kind != "belly" {
+			continue
+		}
+		im := m.sprite(e)
+		name := "boss-" + key + "-belly.png"
+		save(filepath.Join(root, "assets/images", name), im)
+		return fmt.Sprintf("BossHeroBelly('%s', %d, %d, %s)", name, e.Crop[2], e.Crop[3], num(e.Texel))
+	}
+	return ""
 }
 
 // skylinePack places the items (sorted tallest first) on pages of pageW x pageMaxH with a

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'bonus/bonus_catalog.dart';
 import 'bonus/bonus_plan.dart';
 import 'bonus/bonus_types.dart';
+import 'boss_grammar.dart';
 import 'demon_planner.dart';
 import 'difficulty.dart';
 import 'flock.dart';
@@ -976,6 +977,7 @@ class ArcadeModel {
     heartAssemblyLeft = 0;
     heartPickups.clear();
     wreckBoss = null;
+    _bossCollapsing = false;
     score = 0;
     level = 1;
     cycle = 0;
@@ -1226,47 +1228,123 @@ class ArcadeModel {
     return true;
   }
 
-  /// boss-grandeur (operator R8.5): every step of the carrier's decay goes
-  /// into the game event queue (music and comms read it): each hex shield
-  /// cell going dark, the field's collapse, each armour plate lost, each
-  /// module breaking away at a form change, and the collapse at core 0.
+  /// boss-grandeur (operator R8.5), on the styleguide's vocabulary
+  /// (`docs/styleguide/alien-capital-ships.md` §6, boss-carrier-wire):
+  /// every step of the carrier's decay goes into the game event queue for
+  /// the dynamic music engine and comms, in the fixed order shield → armour
+  /// → modules → collapse, once per step and per module:
+  /// - `bossShieldCellLost` (cell, remaining; and `cellsLeft`) per hex cell;
+  /// - `bossShieldFailing` once, at shield ≤ 50 % (S1);
+  /// - `bossShieldDown` once, at shield 0 (S2);
+  /// - `bossArmourShed` (slot) at the odd armour steps: the plates of the
+  ///   module next in the detach order peel off;
+  /// - `bossModuleLost` (slot, set, rank, form) per form change (S3);
+  /// - `bossCoreExposed` on the last form;
+  /// - `bossCollapseStart`, then `bossWreckFalls` (slot, rank, delay) for
+  ///   every module left in detach order (the carapace last), at core 0;
+  ///   `bossCollapseEnd` when the victory rout ends.
+  /// The slots come from the run's assembly (boss_grammar, visual only):
+  /// the simulation never reads them.
   void _bossDecayEvents(
     Carrier b, {
     int? cellsBefore,
+    int? shieldBefore,
     int? armourBefore,
     int? formBefore,
   }) {
-    final data = {'route': cycle, 'variant': b.variant};
+    final a = BossGrammar.forRun(route: cycle, variant: b.variant);
+    final data = {'route': cycle, 'variant': b.variant, 'set': a.setName};
     if (cellsBefore != null) {
       final cells = Carrier.shieldCells(b.shield, b.shieldMax);
       for (var c = cellsBefore - 1; c >= cells; c--) {
         _queueGameEvent(GameEventNames.bossShieldCellLost, {
           ...data,
+          'cell': c,
+          'remaining': c,
           'cellsLeft': c,
         });
       }
+      if (shieldBefore != null &&
+          shieldBefore * 2 > b.shieldMax &&
+          b.shield * 2 <= b.shieldMax) {
+        _queueGameEvent(GameEventNames.bossShieldFailing, data);
+      }
       if (b.shield == 0) {
-        _queueGameEvent(GameEventNames.bossShieldDepleted, data);
+        _queueGameEvent(GameEventNames.bossShieldDown, data);
       }
     }
+    final ranks = a.ranks;
     if (armourBefore != null && b.armourStep > armourBefore) {
-      for (var a = armourBefore + 1; a <= b.armourStep; a++) {
-        if (a >= b.armourSteps) break; // the last step is the collapse
-        if (a.isEven) continue; // even steps are form changes (modules)
-        _queueGameEvent(GameEventNames.bossArmourLost, {...data, 'plate': a});
+      for (var s = armourBefore + 1; s <= b.armourStep; s++) {
+        if (s >= b.armourSteps) break; // the last step is the collapse
+        if (s.isEven) continue; // even steps are form changes (modules)
+        // Plates shed from the module that tears away next (form s ~/ 2 + 1).
+        final form = s ~/ 2 + 1;
+        _queueGameEvent(GameEventNames.bossArmourShed, {
+          ...data,
+          'plate': s,
+          'slot': (a.slotAtForm(form) ?? BossSlot.carapace).name,
+        });
       }
     }
     if (formBefore != null && b.phase > formBefore) {
       for (var f = formBefore + 1; f <= b.phase; f++) {
+        final slot = a.slotAtForm(f);
         _queueGameEvent(GameEventNames.bossModuleLost, {
           ...data,
           'form': f,
           'detachOrder': f,
+          'rank': f <= ranks.length ? ranks[f - 1] : f,
+          'slot': slot?.name,
+          'set': slot == null ? a.setName : _slotSet(a, slot),
         });
+        if (f == b.formCount - 1) {
+          _queueGameEvent(GameEventNames.bossCoreExposed, data);
+        }
       }
     }
-    if (b.core <= 0) _queueGameEvent(GameEventNames.bossCollapse, data);
+    if (b.core <= 0) {
+      _queueGameEvent(GameEventNames.bossCollapseStart, data);
+      // What is left falls in detach order, the carapace last (the
+      // director's collapse timing: 0.25 s apart, the last after 0.9 s).
+      final gone = b.phase;
+      final left = [
+        for (final r in ranks.skip(gone)) a.ofRank(r).first.slot,
+        BossSlot.prow,
+        BossSlot.carapace,
+      ];
+      for (final (i, slot) in left.indexed) {
+        _queueGameEvent(GameEventNames.bossWreckFalls, {
+          ...data,
+          'slot': slot.name,
+          'rank': i + gone + 1,
+          'delay': slot == BossSlot.carapace ? .9 : i * .25,
+        });
+      }
+      _bossCollapsing = true;
+    }
   }
+
+  static String _slotSet(BossAssembly a, BossSlot slot) =>
+      a.modules.firstWhere((m) => m.slot == slot).set;
+
+  /// A collapse is under way (its end is queued when the rout ends).
+  bool _bossCollapsing = false;
+
+  void _bossCollapseEnd() {
+    if (!_bossCollapsing) return;
+    _bossCollapsing = false;
+    final b = wreckBoss;
+    _queueGameEvent(GameEventNames.bossCollapseEnd, {
+      'route': cycle,
+      if (b != null) 'variant': b.variant,
+    });
+  }
+
+  /// The run's visual set pick for the current route (boss_grammar): from
+  /// the run seed, so a run's carriers are deterministic; an unseeded run
+  /// (tests, the calibrated campaign) always draws the first combination.
+  int get bossVariant => BossGrammar.variantFor(runSeed, cycle);
 
   Carrier _newCarrier() => Carrier(
     cycle,
@@ -1275,8 +1353,9 @@ class ArcadeModel {
     startingPhase: random.nextDouble() * math.pi * 2,
   )
     ..glidePhase = bossRandom.nextDouble() * math.pi * 2
-    // The run's module set (visual only; boss_grammar.dart picks from it).
-    ..variant = bossRandom.nextInt(1 << 16);
+    // The boss stream keeps its draw (the glide of later carriers must not
+    // move), but the module set comes from the run seed.
+    ..variant = (bossRandom.nextInt(1 << 16), bossVariant).$2;
 
   /// boss-grandeur: the last loom wave is cleared (or the loom's cap ran
   /// out): the carrier's wave starts and it rises from under the fog. What
@@ -2646,11 +2725,13 @@ class ArcadeModel {
           events.add('levelclear');
           if (_skipPending) _finishTravel();
         } else if (mode == RunMode.victory && finalBoss) {
+          _bossCollapseEnd(); // --- boss-carrier-wire: the decay events
           mode = RunMode.completed;
           events.add('completed');
           _groundCampaignComplete(); // --- ground war
           _flowEnd();
         } else if (mode == RunMode.levelClear || mode == RunMode.victory) {
+          if (mode == RunMode.victory) _bossCollapseEnd(); // --- boss-carrier-wire
           _flowBase += transitionDuration;
           _flowReplan();
           _enterPhase(
@@ -4201,10 +4282,11 @@ class ArcadeModel {
     if (b.shield > 0) {
       final impactY = b.forceFieldSurfaceY(shotX);
       final cellsBefore = Carrier.shieldCells(b.shield, b.shieldMax);
+      final shieldBefore = b.shield;
       b.shield = math.max(0, b.shield - damage);
       events.add('hit');
       blasts.add(Blast(shotX, impactY));
-      _bossDecayEvents(b, cellsBefore: cellsBefore);
+      _bossDecayEvents(b, cellsBefore: cellsBefore, shieldBefore: shieldBefore);
       if (b.shield == 0) events.add('boss');
       return true;
     }

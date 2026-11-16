@@ -450,20 +450,40 @@ abstract final class GameEventNames {
   /// The carrier finished its loom and rises out of the fog.
   static const bossRise = 'bossRise';
 
-  /// One hex shield cell went dark (data `cellsLeft`, 11 … 0).
+  // boss-carrier-wire: the names and data of the styleguide's decay
+  // vocabulary (docs/styleguide/alien-capital-ships.md §6). Every step also
+  // carries `set` (the run's set combination).
+
+  /// One hex shield cell went dark (data `cell`, `remaining` and
+  /// `cellsLeft`, 11 … 0).
   static const bossShieldCellLost = 'bossShieldCellLost';
 
-  /// The force field is gone (after the last cell).
-  static const bossShieldDepleted = 'bossShieldDepleted';
+  /// The shield fell to half (S1: the crystals flicker and dim).
+  static const bossShieldFailing = 'bossShieldFailing';
 
-  /// An armour plate fell off the hull (data `plate`).
-  static const bossArmourLost = 'bossArmourLost';
+  /// The force field is gone (after the last cell; S2).
+  static const bossShieldDown = 'bossShieldDown';
 
-  /// A module broke away at a form change (data `form`, `detachOrder`).
+  /// Armour plates peel off (data `slot`: the module next in the detach
+  /// order; `plate`: the armour step).
+  static const bossArmourShed = 'bossArmourShed';
+
+  /// A module tore away at a form change (data `slot`, `set`, `rank`,
+  /// `form`, `detachOrder`; S3).
   static const bossModuleLost = 'bossModuleLost';
 
-  /// Core 0: the hull breaks into module wrecks.
-  static const bossCollapse = 'bossCollapse';
+  /// The last form: the gallery breaks open.
+  static const bossCoreExposed = 'bossCoreExposed';
+
+  /// Core 0: the hull breaks into module wrecks (S4) …
+  static const bossCollapseStart = 'bossCollapseStart';
+
+  /// … each remaining module falls (data `slot`, `rank`, `delay` s), the
+  /// carapace last …
+  static const bossWreckFalls = 'bossWreckFalls';
+
+  /// … and the victory rout that carried the fall is over.
+  static const bossCollapseEnd = 'bossCollapseEnd';
   static const defeat = 'defeat';
 
   /// Celebrations: [fleetIntact] with no player ship lost either, per

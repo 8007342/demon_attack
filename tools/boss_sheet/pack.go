@@ -146,8 +146,9 @@ func cmdPack(a []string) {
 	dart.WriteString(heroTypes)
 	dart.WriteString("abstract final class BossHeroAtlas {\n  /// Packed hulls by key; a hull missing here is drawn from its frontal\n  /// atlas ([BossAtlas.classes]) until its view set is packed.\n  static const hulls = <String, BossHeroHull>{\n")
 	for _, hull := range hulls {
-		// HULL=KEY packs a v2 bake (boss-carrier-v2: BAKE/HULL/manifest.json) under the
-		// runtime key KEY (the tour class it replaces, e.g. carrier1-thorn=frigate)
+		// HULL=CLASS packs a v2 bake (boss-carrier-v2: BAKE/HULL/manifest.json) under
+		// its own key HULL, as one set combination of the tour class CLASS it
+		// replaces (e.g. carrier1-thorn=frigate); the runtime picks one per run
 		if i := strings.Index(hull, "="); i > 0 {
 			dart.WriteString(packHullV2(bake, rigDir, root, hull[:i], hull[i+1:], dartSrc))
 			continue
@@ -162,10 +163,12 @@ func cmdPack(a []string) {
 }
 
 func packHull(bake, rigDir, root, hull, dartSrc string) string {
-	return packHullAs(bake, rigDir, root, hull, hull, dartSrc, nil)
+	return packHullAs(bake, rigDir, root, hull, hull, hull, dartSrc, nil)
 }
 
-func packHullAs(bake, rigDir, root, hull, key, dartSrc string, v2 *bakeManifest) string {
+// packHullAs packs HULL's bake as runtime key KEY, one set combination of the tour
+// class CLASS (whose frontal atlas lends the small functional parts).
+func packHullAs(bake, rigDir, root, hull, key, class, dartSrc string, v2 *bakeManifest) string {
 	rig := readRig(rigDir, hull)
 	raw, _ := os.ReadFile(filepath.Join(rigDir, hull, "rig.json"))
 	var rv struct {
@@ -273,8 +276,8 @@ func packHullAs(bake, rigDir, root, hull, key, dartSrc string, v2 *bakeManifest)
 			wrecks[id] = w
 		}
 	}
-	parts, shape := frontalParts(dartSrc, key)
-	atlas := load(filepath.Join(root, "assets/images/boss-"+key+".png"))
+	parts, shape := frontalParts(dartSrc, class)
+	atlas := load(filepath.Join(root, "assets/images/boss-"+class+".png"))
 	partItems := map[string][]*packItem{}
 	for _, name := range []string{"jaws", "vents", "plumes", "breach", "debris"} {
 		for i, s := range parts[name] {
@@ -386,6 +389,15 @@ func packHullAs(bake, rigDir, root, hull, key, dartSrc string, v2 *bakeManifest)
 	w := func(f string, args ...any) { fmt.Fprintf(&o, f, args...) }
 	w("    '%s': BossHeroHull(\n", key)
 	w("      key: '%s',\n", key)
+	w("      replaces: '%s',\n", class)
+	if set := strings.TrimPrefix(key, strings.SplitN(key, "-", 2)[0]+"-"); set != key {
+		w("      set: '%s',\n", set)
+	}
+	if v2 != nil {
+		if b := v2.belly(root, key); b != "" {
+			w("      belly: %s,\n", b)
+		}
+	}
 	w("      pages: [%s],\n", strings.Join(names, ", "))
 	w("      pageSizes: [%s],\n", strings.Join(sizes, ", "))
 	w("      residentBytes: %d,\n", resident)
@@ -540,9 +552,22 @@ class BossHeroView {
 /// A hull's packed view set: pages, modules, views, wrecks (rest and
 /// tumbled, at the hero view) and the functional parts carried over from
 /// its frontal atlas (jaw leaves, bay vents, plumes, breaches, debris).
+/// The Overflight's underside (boss-carrier-v2 fin_belly.png): its own page,
+/// outside the resident budget, drawn centred on the overflight position at
+/// w / ppu x h / ppu units.
+class BossHeroBelly {
+  const BossHeroBelly(this.asset, this.w, this.h, this.ppu);
+  final String asset;
+  final int w, h;
+  final double ppu;
+}
+
 class BossHeroHull {
   const BossHeroHull({
     required this.key,
+    required this.replaces,
+    this.set = '',
+    this.belly,
     required this.pages,
     required this.pageSizes,
     required this.residentBytes,
@@ -557,6 +582,12 @@ class BossHeroHull {
     required this.plumes,
   });
   final String key;
+
+  /// The tour class ([BossAtlas.classes] key) this hull is drawn for, and
+  /// its set combination (empty for a v1 hull): a class with several packed
+  /// hulls picks one per run.
+  final String replaces, set;
+  final BossHeroBelly? belly;
   final List<String> pages;
   final List<(int, int)> pageSizes;
   final int residentBytes;

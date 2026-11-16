@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:demon_attack/game/arena_camera.dart';
 import 'package:demon_attack/game/boss_atlas.dart';
 import 'package:demon_attack/game/boss_director.dart';
+import 'package:demon_attack/game/boss_painter.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
 import 'package:flutter/material.dart';
@@ -40,11 +42,16 @@ const _dir = String.fromEnvironment(
 const _contact = bool.fromEnvironment('BOSS_GRANDEUR_CONTACT');
 
 Future<void> _hero(WidgetTester tester, DemonScene scene) async {
-  final hull = BossHeroAtlas.hulls['frigate']!;
-  final pages = await tester.runAsync(() async => [
+  // boss-carrier-wire: the frigate placeholder is retired; the tour-1
+  // carrier an unseeded run draws (thorn) stands in.
+  final hull = BossHeroAtlas.hulls['carrier1-thorn']!;
+  final belly = BossPainter.bellyOf(hull);
+  final imgs = await tester.runAsync(() async => [
         for (final p in hull.pages) await decodeReviewImage('assets/images/$p'),
+        if (belly != null) await decodeReviewImage('assets/images/${belly.asset}'),
       ]);
-  scene.armada.setHero(0, hull, pages!);
+  scene.armada.setHero(0, hull, imgs!.sublist(0, hull.pages.length),
+      belly: belly == null ? null : imgs.last);
 }
 
 Future<void> _sheet(
@@ -272,7 +279,7 @@ void main() {
       reduced.add(await d.grab('reduced-$i'));
       expect(dir.camera.followStrength, lessThan(1e-6));
     }
-    expect(dir.camera.zoom, closeTo(.94, .01));
+    expect(dir.camera.zoom, closeTo(ArenaCamera.carrierReducedZoom, .01));
     await _sheet(tester, 'reduced', reduced, size, columns: 6);
     scene.sectors.flyover.reducedMotionOverride = false;
     await dispose(tester);

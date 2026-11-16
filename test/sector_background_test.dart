@@ -133,6 +133,11 @@ void main() {
           scene.update(.1);
           expect(await _capture(scene, combat: false), orderedEquals(moving));
           model.resume();
+          // The handoffs run between sectors, where no carrier is alive (it
+          // is a wreck after the victory, and spawns only at its rise): the
+          // v2 carrier is several screens wide, so a live one left from the
+          // sector-5 frame would dominate these boundary frames.
+          model.boss = null;
           model.mode = RunMode.levelClear;
           model.transitionDuration = 4;
           model.transitionLeft = 0;
