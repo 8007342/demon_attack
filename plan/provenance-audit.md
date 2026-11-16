@@ -176,3 +176,9 @@ Network note: from this forge, Google-hosted pages (developer.chrome.com, web.de
 - Still unsourced: 14 (D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09, D-11, D-17, D-19, D-21, D-23)
 - Contradicted by their source: D-15 (WebKit is Opposed, not silent) and D-13 (the Intent to Ship lists the origin-trial extensions ending in 150, not 153)
 
+
+## Part W: dynamic-weather (added 2026-11-16)
+
+| ID | File:line | Conclusion | Status | Source or note |
+|---|---|---|---|---|
+| <a id="W-01"></a>W-01 | plan/dynamic-weather-research.md, conclusion 3 | Rain drawn under the play (and its dimming) keeps bullets and creatures readable | UNSOURCED | No read source measures rain density against gameplay readability. PC Gamer, 80.lv and Tatarchuk 2006 were unreachable (unread: snippet only). Checked instead on `art/contact/dynamic-weather-tiers.png` |
