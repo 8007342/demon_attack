@@ -23,23 +23,23 @@ void _idle(ArcadeModel m, double seconds) {
 /// Shoots [crate] open through the ordinary shot collision.
 
 void main() {
-  test('it replaces the sector with two thin scavenger waves', () {
+  // bonus-balance: the level keeps the replaced sector's waves (the
+  // two thin waves it first had made a three-second level).
+  test('it keeps the sector\'s waves, wave for wave', () {
     final regular = ArcadeModel()..startAt(sector: 2);
     final m = _supplyRun();
     expect(m.bonus?.id, 'supplyRun');
     expect(m.level, 2);
-    expect(m.wavesPerLevel, 2);
-    expect(regular.wavesPerLevel, greaterThan(2));
-    expect(m.demons.length, lessThan(regular.demons.length));
-    expect(m.demons.length, greaterThanOrEqualTo(3));
-    expect(m.demons.every((d) => !d.isLarge && !d.elite), isTrue);
-    expect(m.demons.every((d) => d.kind <= 1), isTrue);
-    // Later routes too: no sentinel, no elite, whatever the wave.
+    expect(m.wavesPerLevel, regular.wavesPerLevel);
+    expect(m.wavesPerLevel, greaterThanOrEqualTo(3));
+    expect(m.demons.length, regular.demons.length);
+    // Later routes too: the sector's own sentinels.
     final late = _supplyRun(sector: 4, route: 3);
+    final lateRegular = ArcadeModel()..startAt(sector: 4, route: 3);
+    expect(late.wavesPerLevel, lateRegular.wavesPerLevel);
     for (var w = 1; w <= late.wavesPerLevel; w++) {
-      expect(late.sentinelFor(w), isNull);
+      expect(late.sentinelFor(w), lateRegular.sentinelFor(w));
     }
-    expect(late.demons.every((d) => !d.isLarge && !d.elite), isTrue);
   });
 
   test('kills drop no powers here; the crates carry them', () {
@@ -71,7 +71,9 @@ void main() {
       most = most < m.supplyCrates.length ? m.supplyCrates.length : most;
     }
     expect(most, inInclusiveRange(2, crates.max));
-    expect(m.bonusRun.cratesDropped, lessThanOrEqualTo(crates.total));
+    if (crates.total > 0) {
+      expect(m.bonusRun.cratesDropped, lessThanOrEqualTo(crates.total));
+    }
     expect(m.bonusRun.cratesDropped, greaterThanOrEqualTo(5));
   });
 
@@ -127,7 +129,8 @@ void main() {
     while (m.demons.contains(d)) {
       m.hitDemon(d);
     }
-    expect(m.score - before, base * 2);
+    // Kills pay the level's share, twice over while it lasts.
+    expect(m.score - before, (base * m.bonus!.scoring.pointsScale * 2).round());
     _idle(m, doubleScore.seconds + .2);
     expect(m.hasBonusPower('doubleScore'), isFalse);
   });
@@ -147,6 +150,7 @@ void main() {
     final m = _supplyRun();
     final cap = (m.bonus!.scoring.capPar * m.sectorPar).round();
     expect(cap, greaterThan(0));
+    expect(m.bonusCap, cap);
     m.collectBonus(doubleScore);
     for (var i = 0; i < 60; i++) {
       final c = SupplyCrate(100, 100, Power.spread);
@@ -162,7 +166,7 @@ void main() {
   test('the last kill pays the clear award and leaves by the fog', () {
     final m = _supplyRun();
     final events = <String>[];
-    for (var w = 0; w < 2 && m.combat; w++) {
+    for (var w = 0; w < m.wavesPerLevel && m.combat; w++) {
       final wave = m.wave;
       for (var f = 0; f < 2400 && m.combat && m.wave == wave; f++) {
         m.invulnerable = 5;
@@ -183,7 +187,11 @@ void main() {
     expect(events.first, 'bonusStart.supplyRun');
     expect(events.last, 'bonusCleared.supplyRun');
     // No ship lost: the clear and flawless shares of the sector's par.
-    expect(m.bonusRun.award, (1.3 * m.sectorPar).round());
+    final s = m.bonus!.scoring;
+    expect(
+      m.bonusRun.award,
+      ((s.clearPar + s.flawlessPar) * m.sectorPar).round(),
+    );
     expect(m.supplyCrates, isEmpty, reason: 'leftover crates burst open');
     // The ordinary sector change follows: Rout, Pursuit, Descent.
     expect(m.flow.kind, FlowKind.sectorChange);
@@ -206,7 +214,7 @@ void main() {
     for (var f = 0; f < 600 && !m.combat || m.shipAway; f++) {
       m.update(1 / 60);
     }
-    for (var w = 0; w < 2 && m.mode != RunMode.salvage; w++) {
+    for (var w = 0; w < m.wavesPerLevel && m.mode != RunMode.salvage; w++) {
       final wave = m.wave;
       for (var f = 0; f < 3000 && m.combat && m.wave == wave; f++) {
         m.invulnerable = 5;
@@ -220,7 +228,7 @@ void main() {
       }
     }
     expect(m.mode, RunMode.salvage);
-    expect(m.bonusRun.award, m.sectorPar);
+    expect(m.bonusRun.award, (m.bonus!.scoring.clearPar * m.sectorPar).round());
   });
 
   test('the transition before it knows a bonus level is ahead', () {

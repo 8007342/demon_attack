@@ -95,17 +95,22 @@ void main() {
     expect(seen, greaterThan(20));
   });
 
-  test('it replaces the sector with two thinned waves and no sentinel', () {
+  // bonus-balance: the sector's own waves and sentinels, a tenth more
+  // creatures in each opening roster (the storm kills some of them).
+  test('it keeps the sector\'s waves, with a denser swarm', () {
     final regular = ArcadeModel()..startAt(sector: 3, route: 2);
     final m = _storm(route: 2);
     expect(m.bonus?.id, 'stormfront');
     expect(m.level, 3);
-    expect(m.wavesPerLevel, 2);
-    expect(regular.wavesPerLevel, greaterThan(2));
+    expect(m.wavesPerLevel, regular.wavesPerLevel);
     for (var w = 1; w <= m.wavesPerLevel; w++) {
-      expect(m.sentinelFor(w), isNull);
+      expect(m.sentinelFor(w), regular.sentinelFor(w));
     }
-    expect(m.demons.every((d) => !d.isLarge && !d.elite), isTrue);
+    expect(m.demons.length, greaterThan(regular.demons.length));
+    expect(
+      m.demons.length,
+      lessThanOrEqualTo((regular.demons.length * 1.15).ceil()),
+    );
     expect(m.bonusMechanic, isA<StormfrontMechanic>());
     // A regular sector has no mechanic.
     expect(regular.bonusMechanic, isNull);

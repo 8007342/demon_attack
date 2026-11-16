@@ -30,13 +30,18 @@ const stormfront = BonusLevelDef(
       'Lure the lightning onto the swarm. When the air hums over you, '
       'slide out.',
   weight: 1,
-  waves: BonusWaves(count: 2, rosterScale: .85, reinforcementScale: .5),
+  waves: BonusWaves(rosterScale: 1.15),
   // "A certain percentage of a chance": half the kill drops are shields.
   rules: PowerRules(chances: [PowerChance(Power.shield, .5)]),
   // Shares of the replaced sector's par (measured in the change's design,
   // "Bonus level #2"): a clean storm is worth about the sector on the
   // first tour. The bait bonus lives inside the same cap.
-  scoring: BonusScoring(clearPar: .8, flawlessPar: .4, capPar: 1.6),
+  scoring: BonusScoring(
+    pointsScale: .7,
+    clearPar: .15,
+    flawlessPar: .1,
+    capPar: .3,
+  ),
   look: BonusLook(
     tint: 0xFF0B1030, // a storm-dark blue over the sector's own backdrop
     strength: .46,

@@ -35,18 +35,12 @@ const supplyRun = BonusLevelDef(
       'Crack the falling crates: three hits each. Kills drop nothing; '
       'the cargo drops everything.',
   weight: 1,
-  waves: BonusWaves(
-    count: 2,
-    rosterScale: .6,
-    reinforcementScale: .5,
-    maxKind: 1,
-  ),
+  waves: BonusWaves(),
   rules: PowerRules(killDrops: false),
   crates: BonusCrates(
-    every: 4.5,
-    first: 1.5,
+    every: 3.5,
+    first: 2,
     max: 3,
-    total: 8,
     points: 150,
     powers: [
       Power.spread,
@@ -58,10 +52,15 @@ const supplyRun = BonusLevelDef(
     bonusPowers: ['salvageMagnet', 'doubleScore'],
     bonusPowerChance: .3,
   ),
-  // Kills here pay a fraction of the replaced sector's; the awards
-  // make a clean Supply Run worth about that sector (measured in
-  // openspec/changes/bonus-levels/design.md §6).
-  scoring: BonusScoring(clearPar: 1, flawlessPar: .3, capPar: 1.5),
+  // bonus-balance: kills pay 60 %; crates, the clear and a flawless run
+  // pay the rest, up to the cap, so a perfect Supply Run is worth about
+  // the sector it replaces (plan/calibration-current.md, Bonus balance).
+  scoring: BonusScoring(
+    pointsScale: .6,
+    clearPar: .25,
+    flawlessPar: .1,
+    capPar: .45,
+  ),
   look: BonusLook(
     tint: 0xFFFFD79A, // a warm dawn over the sector's own backdrop
     strength: .22,

@@ -66,6 +66,23 @@ extension ArcadeBonus on ArcadeModel {
       : bonusRun.plan.at(flowDestinationRoute, flowDestination);
 
   PowerRules get powerRules => bonusRun.rules;
+
+  /// bonus-balance: the run's modifiers for its record, as ids: the bonus
+  /// levels the run has reached (in run order), then the run modifier.
+  /// A pure function of the plan and the run's place, so a restored run
+  /// keeps them; a run without a plan has none.
+  List<String> get runModifierIds {
+    final plan = bonusRun.plan;
+    final slots = [...plan.slots]
+      ..sort((a, b) => (a.route * 10 + a.sector) - (b.route * 10 + b.sector));
+    return [
+      for (final s in slots)
+        if (s.route < cycle || (s.route == cycle && s.sector <= level))
+          s.level.id,
+      ?plan.modifier?.id,
+    ];
+  }
+
   Map<String, double> get bonusPowerTimers => bonusRun.timers;
   bool hasBonusPower(String id) => (bonusRun.timers[id] ?? 0) > 0;
 
@@ -189,33 +206,83 @@ extension ArcadeBonus on ArcadeModel {
     return scaled <= points ? scaled : points + _bonusCapped(scaled - points);
   }
 
-  /// What the roster of the regular sector at this place would pay in kill
-  /// points (its opening rosters at face value; reinforcements, sentinels
-  /// and dive bonuses are left out, so a real clear pays somewhat more).
-  /// A bonus level's awards and cap are shares of it, so the level is
-  /// worth about the sector it replaces on every route and difficulty.
+  /// What the regular sector at this place pays in kill points at face
+  /// value (bonus-balance): every wave's opening roster, its finite
+  /// reinforcement groups, and on a sentinel wave the sentinel and its
+  /// escort. Dive bonuses and dive shields are left out, so a real clear
+  /// pays about 1.1-1.2 x par. A bonus level's awards and cap are shares
+  /// of it, so the level is worth about the sector it replaces on every
+  /// route and difficulty.
   int get sectorPar {
     if (level == 5) return 0;
+    double face(int kind, int hp) => (100 + kind * 75 + (hp - 1) * 50) * 1.0;
     final kinds = cycle > 0 ? const [0, 1, 2, 3] : [level - 1];
     var mean = 0.0;
     for (final k in kinds) {
       final hp = policy.ordinaryHealth(route: cycle, kind: k, elite: false);
-      mean += (100 + k * 75 + (hp - 1) * 50) / kinds.length;
+      mean += face(k, hp) / kinds.length;
     }
-    var creatures = 0;
+    var total = 0.0;
     final waves = ArcadeModel.wavesFor(sector: level, route: cycle);
+    final flocks = policy.reinforcementFlocks(route: cycle, sector: level);
     for (var w = 1; w <= waves; w++) {
-      creatures += policy.rosterCount(sector: level, wave: w, route: cycle);
+      final roster = policy.rosterCount(sector: level, wave: w, route: cycle);
+      var creatures = roster;
+      for (var f = 0; f < flocks; f++) {
+        creatures += policy.reinforcementSize(route: cycle, flock: f);
+      }
+      final sentinel = regularSentinelWave(
+        difficulty: difficulty,
+        sector: level,
+        route: cycle,
+        wave: w,
+      );
+      if (sentinel) {
+        creatures += policy.escortSize(route: cycle, sector: level) - 1;
+        final armored = cycle >= 2 && difficulty != Difficulty.easy;
+        total += face(
+          (roster - 1 + w + level) % 4,
+          (armored ? 12 : 9) + math.min(cycle, 4) * 2,
+        );
+      }
+      total += creatures * mean;
     }
-    return (creatures * mean * (cycle + 1) * policy.enemyPoints).round();
+    return (total * (cycle + 1) * policy.enemyPoints).round();
+  }
+
+  /// The regular sector's sentinel rule (`sentinelFor` without a bonus
+  /// level): wave [wave] of [sector] on [route] brings a sentinel. Kept
+  /// equal to `sentinelFor` by test/bonus_balance_test.dart.
+  static bool regularSentinelWave({
+    required Difficulty difficulty,
+    required int sector,
+    required int route,
+    required int wave,
+  }) {
+    if (sector < 1 || sector > 4 || route < 1) return false;
+    final last = ArcadeModel.wavesFor(sector: sector, route: route);
+    if (wave < 1 || wave > last) return false;
+    return (wave == last &&
+            sector >= 2 &&
+            (difficulty != Difficulty.easy || sector.isEven)) ||
+        (difficulty != Difficulty.easy &&
+            wave >= 3 &&
+            (wave + sector + route).isEven);
+  }
+
+  /// The most the bonus level being played may add beyond ordinary kill
+  /// points (0: uncapped, or a regular sector).
+  int get bonusCap {
+    final s = bonus?.scoring;
+    if (s == null) return 0;
+    return s.cap * (cycle + 1) + (s.capPar * sectorPar).round();
   }
 
   /// [points] of bonus score, as far as the level's cap still allows.
   int _bonusCapped(int points) {
     final def = bonus;
     if (def == null || points <= 0) return 0;
-    final s = def.scoring;
-    final cap = s.cap * (cycle + 1) + (s.capPar * sectorPar).round();
+    final cap = bonusCap;
     final granted = cap <= 0
         ? points
         : math.min(points, math.max(0, cap - bonusRun.extra));
