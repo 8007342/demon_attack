@@ -17,6 +17,10 @@ Each pass of a carrier hull SHALL be composed into one texture, re-composed only
 - **WHEN** lights, nozzles, fires, gates or the field are drawn on a bent hull
 - **THEN** each is displaced by the same displacement and height field as the mesh, so it stays on its spot of the art
 
+#### Scenario: A tall phone
+- **WHEN** the screen has a band of background above the arena, during the fight, the killing blow or the collapse
+- **THEN** the hull and its wreck continue into that band, no layer, tint or flash shows a straight edge anywhere on screen, and the ship is drawn on the killing blow's own frame
+
 ### Requirement: Cohesive carrier collapse
 A carrier SHALL collapse as one structure. The hull as it was at death breaks along its structure into a hierarchy of sections, then chunks. Each piece stays attached until it is released, then inherits its parent's velocity at its own pivot and its spin, plus a small separation kick. All pieces recede at one depth scale and sink into the cloud deck together.
 

@@ -202,7 +202,10 @@ edges (§3.3), the depth-scale centre (§3.4), the cloud deck and the fade keep 
 - **Blasts.** At most 32 (the scene's explosion sprite). Each rides its body and appears where a crack opens: a radial
   kick look on top of the inherited motion `[X4]`.
 - **Shadow.** One shadow for the whole wreck: its own alpha, inked, blurred by 3 and multiplied, closing in as it
-  sinks. The old code drew eight.
+  sinks. The old code drew eight. Its layer is 16 units wider than the wreck, so the blur's tail (3σ = 9 units) never
+  meets the layer's edge.
+  - It is the likeliest phone cost (§7), so it sits behind a flag: `BossPainter.collapseShadow`, set at build time
+    with `--dart-define=CARRIER_WRECK_SHADOW=false`. It defaults to on.
 - **Fog.** A haze tint up to 0.6 × progress, plus a tint band above the cloud deck.
 
 ### 3.7 Reduced motion
@@ -215,6 +218,22 @@ fades.
 - **GPU.** The collapse lasts 7 s, with two `saveLayer`s per frame: the shadow and the fog/dissolve. That is fewer
   than the eight per-wreck layers before.
 - **Memory.** The wreck texture is 1,440 × 1,280 px (7.4 MB). The fight's composites are released when it is built.
+
+### 3.9 No straight layer edge (review blocker, 2026-11-16)
+The coordinator found a hard-edged rectangle on the collapse sheet's first frame. It was not a layer of this change:
+it was the scene's existing hit-beat flash, a `0, 0, 360, 520` arena rect drawn under the boss zoom, which showed its
+four sides. The 360 × 780 check then found two more straight edges, both older than this change:
+- **The flash** is now a radial glow around the kill that fades to nothing before the nearest visible edge. No clip
+  and no headroom can show its edge.
+- **The headroom band.** On a tall phone the band above the arena is background, and gameplay is clipped out of it
+  (playtest-fixes-3). The carrier is larger than the screen, so its hull, and later its wreck, ended in a straight
+  line at the arena's top. `DemonScene._carrierHeadroom` draws the back pass, the prow, the wreck and the sky sheets a
+  second time, clipped to the band only, through the same camera. The band and the arena render the same pixels at
+  their seam. On a tall phone this costs two more `drawVertices` calls per frame, over a band of about 90 px.
+- **The killing blow's frame** drew neither the hull, already gone from the model, nor the wreck, not yet made by the
+  director's next step: the ship blinked out for one frame. `BossDirector.ensureCollapse` runs from the scene's paint.
+
+The pixel test that guards all three is in §6.
 
 ## 4. The field thins in place
 
@@ -284,7 +303,17 @@ instead of from the Voronoi partition. Everything downstream is unchanged.
 - **`test/carrier_render_engine_review_test.dart`** (`review`):
   - the bend sheet asserts one call per pass and prints the counts;
   - the collapse sheet and the field sheet;
-  - the GIF frames for the collapse and the bend sweep.
+  - the GIF frames for the collapse and the bend sweep;
+  - **no straight layer edge**, at 360 × 780. It paints the arena exactly as the page does (`paintArena` at the arena
+    widget's size, bottom-aligned, the headroom band included). It checks the take-off's first three frames, the
+    frame after every re-compose, and the collapse every 0.25 s for 7 s. Along each side of every offscreen layer and
+    composite (their device bounds, recorded through `Canvas.getTransform`), of the zoomed arena rect and of the
+    headroom band's edge, it requires the mean step across the side to stay small against the texture beside it,
+    unless the step varies along the side (an edge in the art). Every column and row is also scanned for a long
+    one-sided step that is not a thin line.
+    - **Validation.** It fails on the original flash (49 faults: the arena rect's four sides) and on a rectangle flash
+      widened to the visible arena (45 faults: the headroom edge). With the fixes it checks 368 sides and finds 0
+      faults. It also asserts that the wreck is drawn on the killing blow's own frame.
 - **Gates:** `flutter analyze`, the full suite through the lock, the worker tests, the build and the calibration gates
   (CLAUDE.md §2 and §7).
 
@@ -294,6 +323,6 @@ instead of from the Voronoi partition. Everything downstream is unchanged.
 - **Impeller colour filters on image-shader `drawVertices`.** An open issue reports them ignored `[D10]`. This change
   puts every colour filter on a `saveLayer`, as carrier-v3 §2.4 did, and none on the mesh paint.
 - **The collapse's two `saveLayer`s** each cover the wreck's bounds for 7 s. If a phone drops frames there, the shadow
-  layer goes first.
+  layer goes first: `CARRIER_WRECK_SHADOW=false` (§3.6).
 - **The lip still moves in** (§4.3), because it is gameplay. If the operator wants the lip to hold still too, the
   intercept surface would have to change, and that is a balance change for `plan/calibration-current.md`.

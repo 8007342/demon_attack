@@ -25,6 +25,7 @@
 - [x] 4.1 `test/carrier_render_engine_review_test.dart` (`review`): `art/contact/carrier-render-engine-{bend,collapse,field}.png`
 - [x] 4.2 `tools/gifstrip` (Go, stdlib): `art/contact/carrier-render-engine-collapse.gif` and `-bend-sweep.gif`
 - [x] 4.3 Picks, logged on the sheets and here: list 0.011 rad/s², depth scale 0.35 about hull-local (0, −150), gravity 4/6/10, the cloud deck dissolving instead of tinting (a light tint turned the pieces into flat white shapes on the first sheet), lost regions kept at 0.3 × wear (switching them off read as narrowing)
+- [x] 4.5 Review blocker (2026-11-16): no straight layer edge. The hit-beat flash becomes a radial glow; the carrier and its wreck are drawn into the headroom band; the killing blow's frame draws the wreck; the shadow layer goes behind `CARRIER_WRECK_SHADOW`; the 360 × 780 pixel test (design §3.9, §6)
 - [ ] 4.4 Phone profile on CanvasKit and skwasm at DPR 2 (with carrier-v3 task 3.5): the fight's two passes and the collapse's two `saveLayer`s
 
 ## 5. When the re-render lands (`work/carrier-v3-render`, design §5)

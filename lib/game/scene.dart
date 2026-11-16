@@ -473,6 +473,7 @@ class DemonScene extends FlameGame {
         }
         _zoomApplied = false;
         canvas.restore();
+        _carrierHeadroom(canvas, cam);
         // The high fog over the band (the layers that reach the arena's
         // top carry on to the viewport's).
         if (model.perspective) atmosphere.paintBand(canvas);
@@ -1686,6 +1687,54 @@ class DemonScene extends FlameGame {
     final descent = 1 - Curves.easeOutCubic.transform(p);
     c.translate(0, -180 * descent);
     if (effects) _bossOrbitalArrivalEffects(c, b, p, descent);
+  }
+
+  /// --- carrier-render-engine: on a tall phone the band above the arena
+  /// (headroom) is background, and gameplay is clipped out of it; but the
+  /// carrier is larger than the screen, and clipped there its hull (and its
+  /// wreck) ended in a straight line at the arena's top. Its two passes, its
+  /// wreck and the sky sheets over them are drawn again into that band
+  /// only, through the same camera, so the hull continues to the top.
+  void _carrierHeadroom(Canvas canvas, ArenaCamera cam) {
+    if (headroom <= .5 || !armada.carrier) return;
+    final b = model.boss;
+    final k = bossDirector.collapse;
+    final wreck = k != null && !k.done;
+    if (b == null && !wreck) return;
+    canvas.save();
+    canvas.clipRect(Rect.fromLTRB(0, -headroom, 360, 0), doAntiAlias: false);
+    _zoomApplied = cam.zoom != 1;
+    if (_zoomApplied) canvas.transform(cam.gameplayMatrix);
+    if (b != null) {
+      _carrierBackdrop(canvas);
+      if (armada.heroReady) {
+        // The prow too: the back pass is cut out beneath it.
+        canvas.save();
+        _carrierArrival(canvas, b);
+        final rising = _bossRiseBegin(canvas, b);
+        final d = bossDirector;
+        armada.paintHero(
+          canvas,
+          Offset(b.x, b.y),
+          view: d.view,
+          previous: d.previous,
+          blend: d.blend,
+          stage: d.stage,
+          front: true,
+          detached: d.detached,
+          clock: model.visualClock,
+        );
+        if (rising) canvas.restore();
+        canvas.restore();
+      }
+    }
+    if (wreck) _bossWrecks(canvas);
+    if (model.perspective) {
+      _fogSlot(canvas, FogSlot.skySheet1);
+      _fogSlot(canvas, FogSlot.skySheet2);
+    }
+    _zoomApplied = false;
+    canvas.restore();
   }
 
   /// The armada's background layer (engine plumes, superstructure, its
@@ -4570,11 +4619,38 @@ class DemonScene extends FlameGame {
       }
     }
     // The last kill's flash (the hit beat): a translucent glow, never a wipe.
+    // --- carrier-render-engine: a radial glow around the kill that fades
+    // to nothing before the nearest visible edge. A rectangle showed its
+    // edges under the boss zoom, and on tall phones at the arena's top.
     final hit = flow.env('hit');
     if (hit > 0) {
-      c.drawRect(
-        const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()..color = (triumph ? gold : mint).withValues(alpha: hit * .18),
+      final cam = bossDirector.camera;
+      final view = _zoomApplied
+          ? Rect.fromPoints(
+              cam.toArena(Offset.zero),
+              cam.toArena(const Offset(360, 520)),
+            )
+          : const Rect.fromLTWH(0, 0, 360, 520);
+      final w = model.wreckBoss;
+      final at = w != null
+          ? Offset(w.x, w.y).translate(0, 40)
+          : view.center;
+      final r = math
+          .min(
+            math.min(at.dx - view.left, view.right - at.dx),
+            math.min(at.dy - view.top, view.bottom - at.dy),
+          )
+          .clamp(80.0, 260.0);
+      final tint = triumph ? gold : mint;
+      c.drawCircle(
+        at,
+        r,
+        Paint()
+          ..shader = ui.Gradient.radial(at, r, [
+            tint.withValues(alpha: hit * .2),
+            tint.withValues(alpha: hit * .1),
+            tint.withValues(alpha: 0),
+          ], const [0, .55, 1]),
       );
     }
   }
@@ -5308,6 +5384,7 @@ extension _BossGrandeur on DemonScene {
   /// breaks.
   void _bossWrecks(Canvas c) {
     // --- carrier-render-engine §3: a v2 carrier falls as one wreck.
+    bossDirector.ensureCollapse(model, armada.modules);
     final collapse = bossDirector.collapse;
     if (collapse != null && !collapse.done && armada.heroReady) {
       final k = 1 - collapse.progress;

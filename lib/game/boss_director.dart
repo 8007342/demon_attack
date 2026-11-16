@@ -734,6 +734,19 @@ class BossDirector {
     }
   }
 
+  /// carrier-render-engine: the frame painted between the killing blow
+  /// and the director's next step would draw neither the hull (gone from
+  /// the model) nor its wreck: the whole ship blinked out for a frame. The
+  /// scene calls this before drawing the wrecks.
+  void ensureCollapse(ArcadeModel m, List<(String, int?)> modules) {
+    if (collapse != null || !_carrier) return;
+    if (m.boss != null || m.wreckBoss == null) return;
+    if (_phaseOf(m) != BossPhase.collapse) return;
+    _collapse(m, modules);
+    phase = BossPhase.collapse;
+    phaseTime = 0;
+  }
+
   /// S4: every remaining module breaks away in its detach order, the spine
   /// last, each sinking into the fog over 4–6 s.
   void _collapse(ArcadeModel m, List<(String, int?)> modules) {

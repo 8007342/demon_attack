@@ -266,6 +266,7 @@ class BossPainter {
     mesh.rebuild(bend);
     c.save();
     c.translate(center.dx, center.dy);
+    _noteLayer(c, comp.rect);
     _meshPaint
       ..color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0))
       ..shader = comp.shader;
@@ -352,7 +353,42 @@ class BossPainter {
   }
 
   /// Clears the per-frame mesh counters (the scene, once per frame).
-  void beginFrame() => meshVertices = meshTriangles = meshCalls = 0;
+  void beginFrame() {
+    meshVertices = meshTriangles = meshCalls = 0;
+    layerBounds.clear();
+  }
+
+  /// carrier-render-engine: draw the collapse's shadow layer (one blurred
+  /// `saveLayer` over the wreck for 7 s, the likeliest phone cost).
+  /// `--dart-define=CARRIER_WRECK_SHADOW=false` turns it off.
+  static bool collapseShadow = const bool.fromEnvironment(
+    'CARRIER_WRECK_SHADOW',
+    defaultValue: true,
+  );
+
+  /// Tests only: record every offscreen layer's and composite's bounds, in
+  /// device coordinates, for the straight-edge pixel test.
+  bool recordLayers = false;
+  final List<Rect> layerBounds = [];
+
+  void _noteLayer(Canvas c, Rect r) {
+    if (!recordLayers) return;
+    final m = c.getTransform();
+    Offset map(Offset p) => Offset(
+      m[0] * p.dx + m[4] * p.dy + m[12],
+      m[1] * p.dx + m[5] * p.dy + m[13],
+    );
+    final a = map(r.topLeft), b = map(r.topRight);
+    final d = map(r.bottomLeft), e = map(r.bottomRight);
+    layerBounds.add(
+      Rect.fromLTRB(
+        math.min(math.min(a.dx, b.dx), math.min(d.dx, e.dx)),
+        math.min(math.min(a.dy, b.dy), math.min(d.dy, e.dy)),
+        math.max(math.max(a.dx, b.dx), math.max(d.dx, e.dx)),
+        math.max(math.max(a.dy, b.dy), math.max(d.dy, e.dy)),
+      ),
+    );
+  }
 
   /// Installs an already decoded atlas (tests and the gallery).
   void setAtlas(int cls, ui.Image atlas) {
@@ -719,15 +755,14 @@ class BossPainter {
     final dome = front && hero!.set.isNotEmpty;
     if (sev > 0 || dome) {
       final f = hero!.frame;
-      c.saveLayer(
-        Rect.fromLTRB(
-          center.dx + f.$1 - 8,
-          center.dy + f.$2 - 8,
-          center.dx + f.$3 + 8,
-          center.dy + f.$4 + 8,
-        ),
-        Paint(),
+      final r = Rect.fromLTRB(
+        center.dx + f.$1 - 8,
+        center.dy + f.$2 - 8,
+        center.dx + f.$3 + 8,
+        center.dy + f.$4 + 8,
       );
+      _noteLayer(c, r);
+      c.saveLayer(r, Paint());
     }
     if (previous != null && previous != view && blend < 1) {
       _paintHeroView(
@@ -1156,10 +1191,14 @@ class BossPainter {
       ..color = Colors.white
       ..shader = comp.shader;
     final ink = shadowInk;
-    if (ink != null && shadowAlpha > .01) {
+    if (ink != null && shadowAlpha > .01 && collapseShadow) {
       // One shadow for the whole wreck: its own alpha, inked and softened.
+      // The layer is 16 units wider than the wreck: the blur's tail (3σ =
+      // 9 units) never meets the layer's edge.
+      final sb = bounds.shift(shadowShift).inflate(16);
+      _noteLayer(c, sb);
       c.saveLayer(
-        bounds.shift(shadowShift).inflate(8),
+        sb,
         Paint()
           ..colorFilter = ColorFilter.mode(
             ink.withValues(alpha: (shadowAlpha * a).clamp(0.0, 1.0)),
@@ -1172,6 +1211,7 @@ class BossPainter {
       c.drawVertices(verts, BlendMode.srcOver, _meshPaint);
       c.restore();
     }
+    _noteLayer(c, bounds);
     c.saveLayer(bounds, Paint()..color = Color.fromRGBO(255, 255, 255, a));
     c.drawVertices(verts, BlendMode.srcOver, _meshPaint);
     meshCalls++;

@@ -12,6 +12,9 @@ import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flame/components.dart' show Vector2;
+import 'package:flame/game.dart' show GameWidget;
+import 'package:flutter/services.dart' show ByteData;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'boss_carrier_wire_review_test.dart' show seedFor;
@@ -152,6 +155,170 @@ class _Drive {
   }
 }
 
+/// The straight-edge pixel test (coordinator's blocker, 2026-11-16): an
+/// offscreen layer, a tint or a composite drawn with its bounds visible
+/// shows as a long straight luminance step. The arena is painted alone at
+/// 1 px per unit; along the four sides of every recorded layer and
+/// composite (and of the zoomed arena rect, where the hit-beat flash once
+/// drew a box) the mean signed step across the side must stay small
+/// against the local texture, and no whole column or row of the arena may
+/// carry one.
+class _Edges {
+  _Edges(this.d);
+  final _Drive d;
+  final faults = <String>[];
+  int checked = 0;
+
+  Future<void> check(String label) async {
+    final scene = d.scene, armada = scene.armada;
+    armada
+      ..recordLayers = true
+      ..beginFrame();
+    // The arena exactly as the page paints it (`_ArenaView`: the widget's
+    // size, bottom-aligned, the headroom band above it included).
+    final size = d.tester.getSize(
+      find.byWidgetPredicate((x) => x is GameWidget && x.game is! DemonScene),
+    );
+    final w = size.width.round(), h = size.height.round();
+    final rec = ui.PictureRecorder();
+    scene.paintArena(ui.Canvas(rec), Vector2(w * 1.0, h * 1.0), alignY: 1);
+    final pic = rec.endRecording();
+    late ui.Image img;
+    late ByteData bytes;
+    await d.tester.runAsync(() async {
+      img = await pic.toImage(w, h);
+      bytes = (await img.toByteData(format: ui.ImageByteFormat.rawRgba))!;
+    });
+    pic.dispose();
+    img.dispose();
+    armada.recordLayers = false;
+    final k = math.min(w / 360, h / 520);
+    final ox = (w - 360 * k) / 2, oy = h - 520 * k;
+    Rect toCanvas(Rect r) => Rect.fromLTRB(
+      ox + r.left * k,
+      oy + r.top * k,
+      ox + r.right * k,
+      oy + r.bottom * k,
+    );
+    double lum(int x, int y) {
+      final o = (y.clamp(0, h - 1) * w + x.clamp(0, w - 1)) * 4;
+      return .299 * bytes.getUint8(o) +
+          .587 * bytes.getUint8(o + 1) +
+          .114 * bytes.getUint8(o + 2);
+    }
+
+    final cam = d.dir.camera;
+    final rects = [
+      ...armada.layerBounds,
+      toCanvas(
+        Rect.fromPoints(
+          cam.toScreen(Offset.zero),
+          cam.toScreen(const Offset(360, 520)),
+        ),
+      ),
+      // The arena itself: its top is the headroom band's edge.
+      toCanvas(const Rect.fromLTWH(0, 0, 360, 520)),
+    ];
+    // Across a side at [p] (vertical: x = p, along y in [a, b]): the mean
+    // step and its spread. A layer's or a tint's edge shifts the colour
+    // alike all along it (spread below the mean); an edge in the art
+    // (a bone, a spine) varies from row to row.
+    var spread = 0.0;
+    double step(bool vertical, int p, int a, int b, int out, int inn) {
+      var s = 0.0, s2 = 0.0, n = 0;
+      for (var q = a; q < b; q++) {
+        final v = vertical
+            ? lum(p + inn, q) - lum(p + out, q)
+            : lum(q, p + inn) - lum(q, p + out);
+        s += v;
+        s2 += v * v;
+        n++;
+      }
+      if (n == 0) return 0;
+      final m = s / n;
+      spread = math.sqrt(math.max(0.0, s2 / n - m * m));
+      return m;
+    }
+
+    for (final r in rects) {
+      final sides = [
+        (true, r.left.round(), r.top, r.bottom, -2, 2),
+        (true, r.right.round(), r.top, r.bottom, 2, -2),
+        (false, r.top.round(), r.left, r.right, -2, 2),
+        (false, r.bottom.round(), r.left, r.right, 2, -2),
+      ];
+      for (final (vertical, p, lo, hi, out, inn) in sides) {
+        final lim = vertical ? w : h;
+        if (p < 4 || p > lim - 5) continue; // off the arena: never seen
+        final a = math.max(2, lo.round()),
+            b = math.min((vertical ? h : w) - 2, hi.round());
+        if (b - a < 40) continue;
+        final edge = step(vertical, p, a, b, out, inn);
+        final uniform = spread < edge.abs();
+        final base = step(vertical, p, a, b, inn * 2, inn * 4);
+        checked++;
+        if (edge.abs() > 6 && edge.abs() > 2 * base.abs() + 2 && uniform) {
+          faults.add(
+            '$label: ${vertical ? 'x' : 'y'} = $p over $a..$b '
+            'step ${edge.toStringAsFixed(1)} (texture ${base.toStringAsFixed(1)})',
+          );
+        }
+      }
+    }
+    // Any column or row with a long one-sided step: a layer whose bounds
+    // were not recorded. A thin line (a beam, a shot stream) steps up and
+    // back down within a few pixels; a layer edge does not.
+    final cols = <double>[], rows = <double>[];
+    final colU = <bool>[], rowU = <bool>[];
+    for (var x = 0; x < w - 1; x++) {
+      cols.add(step(true, x, 0, h, 0, 1));
+      colU.add(spread < cols.last.abs());
+    }
+    for (var y = 0; y < h - 1; y++) {
+      rows.add(step(false, y, 0, w, 0, 1));
+      rowU.add(spread < rows.last.abs());
+    }
+    void scan(List<double> s, List<bool> u, String what) {
+      for (var i = 4; i < s.length - 4; i++) {
+        if (s[i].abs() <= 14 || !u[i]) continue;
+        var paired = false;
+        for (var k = -24; k <= 24 && !paired; k++) {
+          final j = i + k;
+          if (k == 0 || j < 0 || j >= s.length) continue;
+          paired = s[j].sign != s[i].sign && s[j].abs() > s[i].abs() * .4;
+        }
+        if (!paired) {
+          faults.add('$label: $what $i step ${s[i].toStringAsFixed(1)}');
+        }
+      }
+    }
+
+    scan(cols, colU, 'column');
+    scan(rows, rowU, 'row');
+    if (faults.length > reported) {
+      reported = faults.length;
+      await d.tester.runAsync(() async {
+        final rec2 = ui.PictureRecorder();
+        d.scene.paintArena(
+          ui.Canvas(rec2),
+          Vector2(w * 1.0, h * 1.0),
+          alignY: 1,
+        );
+        final pic2 = rec2.endRecording();
+        final im = await pic2.toImage(w, h);
+        final png = await im.toByteData(format: ui.ImageByteFormat.png);
+        im.dispose();
+        pic2.dispose();
+        final f = File('$_dir/edges/arena-$label.png');
+        await f.parent.create(recursive: true);
+        await f.writeAsBytes(png!.buffer.asUint8List());
+      });
+    }
+  }
+
+  int reported = 0;
+}
+
 void main() {
   const deg = math.pi / 180;
 
@@ -280,6 +447,69 @@ void main() {
     await d.step(.1);
     frames.add((await d.grab('field-down'))!);
     await _sheet(tester, 'field', frames, columns: 6);
+    await dispose(tester);
+  });
+  testWidgets('no straight layer edge: take-off, re-composes, collapse '
+      '(360 × 780)', (tester) async {
+    final rig = await launch(tester, const Size(360, 780), seed: 11);
+    await tester.runAsync(() => loadReviewArt(rig));
+    final d = _Drive(tester, rig);
+    final e = _Edges(d);
+    final b = await d.fight(0);
+    // The take-off's first frames (the director's phase follows the model
+    // by one presentation step).
+    for (var g = 0; g < 30 && d.dir.phase != BossPhase.takeoff; g++) {
+      await d.step(1 / 60);
+    }
+    expect(d.dir.phase, BossPhase.takeoff);
+    expect(d.dir.phaseTime, lessThan(.2));
+    for (var i = 0; i < 3; i++) {
+      await d.step(1 / 60);
+      await e.check('takeoff-$i');
+      await d.grab('edges/takeoff-$i', keep: false);
+    }
+    await d.step(4);
+    // The frame after every re-compose (each damage step).
+    var seen = d.scene.armada.composites;
+    var steps = 0;
+    for (var g = 0; g < 6000 && d.m.boss != null && steps < 8; g++) {
+      if (b.shield > 0) {
+        d.m.hitBoss(b.x + 40 * math.sin(g * .7));
+      } else {
+        b.door = 1;
+        if (g % 6 == 0) d.m.hitBoss(b.x, damage: 4);
+      }
+      await d.step(1 / 60);
+      final now = d.scene.armada.composites;
+      if (now != seen) {
+        seen = now;
+        steps++;
+        await e.check('recompose-$steps');
+        await d.grab('edges/recompose-$steps', keep: false);
+      }
+    }
+    expect(steps, greaterThanOrEqualTo(2), reason: 'damage steps re-compose');
+    // The killing blow and the whole collapse, every 0.25 s.
+    for (var g = 0; g < 4000 && d.m.boss != null; g++) {
+      b
+        ..shield = 0
+        ..door = 1;
+      d.m.hitBoss(b.x, damage: 50);
+      await d.step(1 / 60);
+    }
+    for (var i = 0; i < 28; i++) {
+      final t = (i * .25).toStringAsFixed(2);
+      await e.check('collapse-$t');
+      // The wreck is on screen from the killing blow's own frame: the ship
+      // never blinks out.
+      expect(d.scene.armada.wreckTriangles, greaterThan(0), reason: t);
+      if (i % 4 == 0) await d.grab('edges/collapse-$t', keep: false);
+      await d.step(.25);
+    }
+    // ignore: avoid_print
+    print('CARRIER_EDGES checked=${e.checked} faults=${e.faults.length}');
+    expect(e.checked, greaterThan(50));
+    expect(e.faults, isEmpty, reason: e.faults.take(12).join('\n'));
     await dispose(tester);
   });
 }
