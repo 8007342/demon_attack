@@ -5,6 +5,7 @@ import 'dart:ui' show Offset;
 import 'arena_camera.dart';
 import 'carrier_bend.dart';
 import 'carrier_script.dart';
+import 'carrier_wreck.dart';
 import 'model.dart';
 
 /// The boss level's presentation phases (carrier-v3 §5.1: Overflight →
@@ -137,6 +138,10 @@ class BossDirector {
   final Set<int> detached = {};
 
   final List<BossWreck> wrecks = [];
+
+  // --- carrier-render-engine §3: a v2 carrier's collapse is one cohesive
+  // wreck (hierarchical chunks, shared momentum), not module wrecks.
+  CarrierCollapse? collapse;
   static const maxPlates = 6, maxFalling = 8;
   double _lastDoor = 0;
 
@@ -202,6 +207,7 @@ class BossDirector {
     list = 0;
     detached.clear();
     wrecks.clear();
+    collapse = null;
     overflight = loom = 0;
     rise = 1;
     range = 0;
@@ -224,7 +230,9 @@ class BossDirector {
   BossPhase _phaseOf(ArcadeModel m) {
     final flow = m.flow;
     if (m.wreckBoss != null &&
-        (m.presentationMode == RunMode.victory || wrecks.isNotEmpty)) {
+        (m.presentationMode == RunMode.victory ||
+            wrecks.isNotEmpty ||
+            (collapse != null && !collapse!.done))) {
       return BossPhase.collapse;
     }
     final b = m.boss;
@@ -265,6 +273,7 @@ class BossDirector {
   }) {
     _clock += dt;
     _carrier = carrier;
+    _reduced = reduced;
     final next = _phaseOf(m);
     if (next != phase) {
       if (next == BossPhase.collapse) _collapse(m, modules);
@@ -325,8 +334,7 @@ class BossDirector {
     final route = m.cycle;
     final top = carrier ? script.camera.maxAltitude : maxAltitudeFor(route);
     final fighting0 =
-        phase == BossPhase.climb ||
-        (carrier && phase == BossPhase.takeoff);
+        phase == BossPhase.climb || (carrier && phase == BossPhase.takeoff);
     if (fighting0 && m.boss != null) {
       final forms = math.max(1, m.boss!.formCount - 1);
       altitudeTarget =
@@ -420,6 +428,7 @@ class BossDirector {
       detached.clear();
       list = 0;
     }
+    collapse?.step(dt);
     for (final w in wrecks) {
       w.age += dt;
       if (!w.started) continue;
@@ -436,9 +445,7 @@ class BossDirector {
     // Camera.
     final threatUp = threat ?? _threat(m);
     final fighting = phase == BossPhase.takeoff || phase == BossPhase.climb;
-    final floor = carrier
-        ? script.camera.minZoom
-        : ArenaCamera.carrierMinZoom;
+    final floor = carrier ? script.camera.minZoom : ArenaCamera.carrierMinZoom;
     final want = fighting
         ? ArenaCamera.targetZoom(
             range: range,
@@ -576,7 +583,9 @@ class BossDirector {
       boost = math.max(base, 1 + (c.takeoffBoost - 1) * rush.clamp(0.0, 1.0));
     }
     boost += c.surgeBoost * surge;
-    flowBoost = reduced ? 1 : (carrier ? boost : 1 + (maxFlowBoost - 1) * climb);
+    flowBoost = reduced
+        ? 1
+        : (carrier ? boost : 1 + (maxFlowBoost - 1) * climb);
     final fightCue =
         carrier && (phase == BossPhase.takeoff || phase == BossPhase.climb);
     cues = reduced || !fightCue
@@ -701,7 +710,7 @@ class BossDirector {
     }
   }
 
-  bool _carrier = false;
+  bool _carrier = false, _reduced = false;
 
   /// The module that sinks last: the v2 carapace (or the v1 spine).
   static bool _isBase(String id) => id == 'carapace' || id == 'spine';
@@ -731,6 +740,22 @@ class BossDirector {
     final w = m.wreckBoss;
     if (w == null) return;
     _kick(.5); // carrier-v3 §7: the collapse's shake
+    if (_carrier) {
+      // carrier-render-engine §3: the hull as it was at death breaks up
+      // as one structure; the painter attaches its fracture.
+      collapse = CarrierCollapse(
+        x: w.x,
+        y: w.y,
+        vx: w.horizontalVelocity,
+        direction: w.direction,
+        seed: seed ^ (m.cycle * 7919),
+        detached: {...detached},
+        stage: stage,
+        reduced: _reduced,
+      );
+      detached.addAll([for (final (_, d) in modules) ?d]);
+      return;
+    }
     final left =
         [
           for (final (id, d) in modules)

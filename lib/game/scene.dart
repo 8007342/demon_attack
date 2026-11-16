@@ -5307,6 +5307,33 @@ extension _BossGrandeur on DemonScene {
   /// (S3) and the collapse's module wrecks (S4), each with a blast as it
   /// breaks.
   void _bossWrecks(Canvas c) {
+    // --- carrier-render-engine §3: a v2 carrier falls as one wreck.
+    final collapse = bossDirector.collapse;
+    if (collapse != null && !collapse.done && armada.heroReady) {
+      final k = 1 - collapse.progress;
+      armada.paintCollapse(
+        c,
+        collapse,
+        fog: Color.lerp(atmosphere.cloud, DemonScene.lurkTint, .55)!,
+        cloud: atmosphere.cloud,
+        shadowInk: Color.lerp(DemonScene.lurkTint, const Color(0xFF05030A), .5),
+        shadowAlpha: .45 * k,
+        shadowShift: Offset(10 + 22 * k, 16 + 40 * k) * bossDirector.altitude,
+      );
+      armada.paintCollapseSmoke(
+        c,
+        collapse,
+        fog: atmosphere.cloud,
+        blast: (at, size, age) => sprite(
+          c,
+          CombatAtlas.explosionRow,
+          (age * 8).floor().clamp(0, 7),
+          at,
+          size,
+          opacity: .8 * (1 - collapse.progress * .5),
+        ),
+      );
+    }
     if (bossDirector.wrecks.isEmpty) return;
     // boss-carrier-wire: each wreck throws its shadow onto the fog it
     // falls into, its own sprite's alpha as the mask; the shadow closes in

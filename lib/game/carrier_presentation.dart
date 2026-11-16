@@ -27,7 +27,11 @@ class CarrierPresentation {
   Future<void> ensureField(BossPainter armada) async {
     final key = armada.hero?.key;
     if (key == null || !armada.carrier) return;
-    if (field.mapKey == key || _building) return;
+    if (field.mapKey == key) {
+      armada.footprint ??= field.map; // carrier-render-engine: the cull
+      return;
+    }
+    if (_building) return;
     _building = true;
     try {
       final a = armada.fieldAlpha();
@@ -46,6 +50,7 @@ class CarrierPresentation {
       );
       field.mapKey = key;
       field.reset();
+      armada.footprint = field.map;
     } catch (_) {
       field.map = null; // the arc carries the field
     } finally {
@@ -203,7 +208,9 @@ class CarrierPresentation {
     if (glow > 0) {
       // The interior light (brightest when open), never white-hot.
       final pulse = telegraph ? .55 + .45 * math.sin(t * 14) : 1.0;
-      _p.color = hot.withValues(alpha: (.35 + .5 * open) * glow * pulse * opacity);
+      _p.color = hot.withValues(
+        alpha: (.35 + .5 * open) * glow * pulse * opacity,
+      );
       c.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromCenter(
@@ -248,7 +255,11 @@ class CarrierPresentation {
       ..color = _rimC.withValues(alpha: .9 * opacity);
     c.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset.zero, width: w + 2 * k, height: h + 2 * k),
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: w + 2 * k,
+          height: h + 2 * k,
+        ),
         Radius.circular(h / 2 + k),
       ),
       _p,

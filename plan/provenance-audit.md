@@ -176,3 +176,18 @@ Network note: from this forge, Google-hosted pages (developer.chrome.com, web.de
 - Still unsourced: 14 (D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09, D-11, D-17, D-19, D-21, D-23)
 - Contradicted by their source: D-15 (WebKit is Opposed, not silent) and D-13 (the Intent to Ship lists the origin-trial extensions ending in 150, not 153)
 
+
+## Part CRE: the carrier rendering engine (`carrier-render-engine`, 2026-11-16)
+Our own engineering choices in `plan/carrier-render-engine-research.md` and
+`openspec/changes/carrier-render-engine/design.md`. No source states them; each is checked by a repo test or sheet
+where one is named.
+
+| ID | Where | Claim | Status | Check |
+|---|---|---|---|---|
+| <a id="CRE-1"></a>CRE-1 | research D4; design §2.1 | One indexed mesh over one composite cannot open a seam, because adjacent triangles share vertices; per-layer warps drift because each layer has its own copy of shared edges | UNSOURCED | `test/carrier_render_engine_test.dart` ("one surface", "rigid") |
+| <a id="CRE-2"></a>CRE-2 | research D14 | Grid density for the hull (the research guessed 12 × 10 cells; the runtime keeps carrier-v3's 20-unit grid) | UNSOURCED | vertex counts in `test/carrier_bend_test.dart` |
+| <a id="CRE-3"></a>CRE-3 | research D18, D20 | Bend amplitude and timing for a rigid read (small, slow, eased, no wobble) | UNSOURCED | the carrier-v3 limits; `art/contact/carrier-render-engine-bend*.{png,gif}` |
+| <a id="CRE-4"></a>CRE-4 | research X11; design §3.5 | Off-screen policy: every piece stays bound to its body and is cut from one composite of the whole hull | UNSOURCED | "Off-screen parts" scenario; `art/contact/carrier-render-engine-collapse*.{png,gif}` |
+| <a id="CRE-5"></a>CRE-5 | research X12; design §3.1–§3.4 | Collapse tiers and numbers (sections, then chunks; the timeline, kicks, spins, gravity, depth scale) | UNSOURCED | `test/carrier_render_engine_test.dart` (hierarchy, continuity, cohesion) |
+| <a id="CRE-6"></a>CRE-6 | research F5; design §4 | Shield wear mapping: fixed footprint, width and alpha by the shield, growing gaps, local crackle | UNSOURCED | `test/carrier_render_engine_test.dart` (wear, dropout, offset); `art/contact/carrier-render-engine-field.png` |
+| <a id="CRE-7"></a>CRE-7 | research P3; design §2.2 | Texture memory arithmetic (RGBA8 at 4 bytes per pixel) and the 2 px/unit, ≤ 2,048 px cap | UNSOURCED | `compositeBytes` printed by the review test |
