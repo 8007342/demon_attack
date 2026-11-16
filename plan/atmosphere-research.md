@@ -11,7 +11,7 @@ from search snippets or memory are flagged in the source list.
 - Koschmieder: `L = L0·e^(−βd) + L∞·(1 − e^(−βd))`; contrast `C = C0·e^(−βd)`; visual range
   `V = −ln ε / β` (ε ≈ 0.02–0.05). Graphics form: `f = 1 − exp(−density·distance)`,
   `colour = mix(obj, fog, f)` (Quilez). Per-channel extinction makes distance blue (red lost first); a
-  sun-aware fog colour warms toward the sun.
+  sun-aware fog colour warms toward the sun. [UNSOURCED: plan/provenance-audit.md#R-01]
 - Painters' rules (Leonardo): with distance things get lighter, lower-contrast, less saturated, cooler (toward
   the sky colour) and softer-edged.
 - **Recipe [inference]:** one transmittance `t = exp(−k·(1 − nearness))`, k 2.5–4, drives tint
@@ -23,7 +23,7 @@ from search snippets or memory are flagged in the source list.
 
 ## 2. Fog layers
 
-Sources: Ori (fog blending colour and value over depth, non-linear depth of field), Hollow Knight (fog sheets
+Sources: Ori (fog blending colour and value over depth, non-linear depth of field) [UNSOURCED: plan/provenance-audit.md#R-02], Hollow Knight (fog sheets
 between parallax planes, strongest contrast kept in the playable middle ground), INSIDE (simple linear fog
 plus local box fog volumes), Disney's multiplane camera (6–7 planes at different speeds).
 
@@ -51,7 +51,7 @@ plus local box fog volumes), Disney's multiplane camera (6–7 planes at differe
 
 ## 3. Parallax, flyers and shadows (45° camera)
 
-- Screen scroll and scale both ≈ 1/distance; keep one curve for both (the existing `Perspective`).
+- Screen scroll and scale both ≈ 1/distance; keep one curve for both (the existing `Perspective`). [UNSOURCED: plan/provenance-audit.md#R-03]
 - A flyer at altitude h over ground point g: g's screen position minus h·cos(tilt); scale by g's depth.
 - **Shadow [Unity demo + inference]:** offset `h·tan(zenith)` along the sun azimuth (zenith 25–40°);
   blur `σ0 + k·h` (1–2 px → 6–10 px for the highest flyers; use 3 pre-blurred shadow sprites, not live
@@ -71,7 +71,7 @@ or a 16–24-sample radial march over the fog density at quarter resolution (des
 No authoritative postmortem found; recipe from §1 plus monster-reveal practice [inference]:
 - value .08–.15 below the fog behind it (a darker patch of fog, not a black cutout); soft edges eaten by the
   same fog noise; a thin warm rim toward the sun (alpha .1–.3) and 2–4 emissive eyes that ignore most fog;
-- behind the distant fog band, parallax .1–.15 (near-stillness reads as size); partly cut by the horizon;
+- behind the distant fog band, parallax .1–.15 (near-stillness reads as size) [UNSOURCED: plan/provenance-audit.md#R-04]; partly cut by the horizon;
   known-size waves passing in front;
 - grow over waves: nearness .05 → .15 → .3 → .5, raising t, parallax and scale together; slow breathing
   (scale ±1 %, 4–6 s).
@@ -104,7 +104,7 @@ camera (3D boids hide most of their structure in a top-down shooter):
 - altitude arc as the missiles: `h(u) = h_peak·4u(1 − u)` with per-agent h_peak ±20 % (layering through fog);
 - 2–4 squadrons per wave, each a leader on a Catmull–Rom/Bézier from a horizon point to the anchor,
   followers leader-following + flocking; stagger 40–120 ms within, .5–1.5 s between squadrons;
-- LOD (Saber's Swarm Engine): far = group motion, near = per-agent flocking.
+- LOD (Saber's Swarm Engine): far = group motion, near = per-agent flocking. [UNSOURCED: plan/provenance-audit.md#R-05]
 
 ## 8. Swarm aesthetics
 
@@ -128,7 +128,7 @@ Precompute authored set pieces (boss entrance) as 10–15 Hz keyframes; simulate
 ## 10. Figure-eight boss path
 
 - Gerono (Lissajous 1:2): `x = a·cos t, y = (a/2)·sin 2t`; Bernoulli: `x = a·cos t/(1 + sin²t),
-  y = a·sin t·cos t/(1 + sin²t)`.
+  y = a·sin t·cos t/(1 + sin²t)`. [UNSOURCED: plan/provenance-audit.md#R-06]
 - Depth [inference]: `z = z_c + Z·sin t` (one lobe swoops near) or `Z·cos 2t` (near at the crossing);
   altitude `H·sin 2t`; bank by the curvature sign. Linger at the ends: `t(τ) = τ + .15·sin 2τ`.
 - Over waves p: 0 → 1: `z_c = lerp(z_horizon, z_arena, smoothstep(p))`, period 8–12 s, fog over it thinning
