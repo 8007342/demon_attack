@@ -223,3 +223,9 @@ Licences re-read for a free GPL-3.0 game in [`plan/voice-stack-research.md`](voi
 unrestricted apart from a credit line); Higgs v3, XTTS-v2 and Echo-TTS stay out because their licences restrict the
 audio. The two-layer, themed pseudo-swear list is in the change's design §3.2; hint lines are flagged for the
 `carrier-hatches` one-line test (§3.3).
+
+## C1 art direction: the tusk-prongs lead the design (2026-11-16)
+On the re-rendered carrier, the operator said: "The dark bay between the two tusk-like prongs feels great, narrowing and demon-like, it's a great addition,
+those tusk-like prongs should lead the design of the rest of the ship." It is recorded as the lead motif in
+`docs/styleguide/alien-capital-ships.md` §3.8. It applies to the hatch modules, the transformation shutter, the break-up
+shards and future re-renders.
