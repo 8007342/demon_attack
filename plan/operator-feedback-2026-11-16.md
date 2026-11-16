@@ -229,3 +229,9 @@ On the re-rendered carrier, the operator said: "The dark bay between the two tus
 those tusk-like prongs should lead the design of the rest of the ship." It is recorded as the lead motif in
 `docs/styleguide/alien-capital-ships.md` §3.8. It applies to the hatch modules, the transformation shutter, the break-up
 shards and future re-renders.
+
+## Round 3d, V1 decisions applied (2026-11-16, change `voice-stack`)
+Chatterbox dropped (pin out of `art/comms/audio.json`, its stages out of `tools/comms_pipeline.py`, its CPU worker
+tools out of `tools/production/`); VoxCPM2 renders placeholders and final speech, Dia the non-verbals. Fish S2-Pro
+and Higgs v2 are pilot challengers with their credit lines in the credits; IndexTTS-2.5 stays out unless exact
+duration control is needed. Licences awaiting `/accept-licence`: [`plan/licences-to-sign.md`](licences-to-sign.md).

@@ -3,7 +3,7 @@
 Run trusted, committed Lua job specifications from the repository root:
 
 ```
-lua tools/production/run.lua tools/production/voice-trial.lua
+lua tools/production/run.lua tools/production/campaign-guides.lua
 ```
 
 The runner serializes each run with flock, writes atomic per-job Lua ledgers in
@@ -26,28 +26,16 @@ studio tools own admission and model licence validation for GPU workflows.
 
 ## Full cast / campaign batch
 
-After a cold forge start, restore the required external dependencies with
-`lua tools/production/bootstrap_radio.lua`. It restores the frozen installed
-package versions (including recorded dependency overrides), downloads the pinned
-Kokoro and Chatterbox models through their SDK CLI, and provisions ffmpeg through
-the forge shim. The actual cache lives under the persistent project volume;
-the original absolute path is a symlink so existing render fingerprints remain
-valid. This bootstrap never starts a render or marks a candidate accepted.
-
-Resume with `forge-guard run --need-mb 3072 --threads 20 -- lua
-tools/production/resume_radio.lua JOB-ID`. Find the first unfinished job from
-the ledgers; do not infer it from an old handoff. This controller starts the
-resident worker automatically. Calling `run.lua` alone requires a worker that
-is already running.
-
-`radio-bank-2026-11-12.lua` schedules all 574 lines. Start the single local
-`model_worker.py` adapter under forge-guard with HF_HOME/COMMS_WORK pointing to
-the restored model cache. It retains required Kokoro/Chatterbox instances,
-serves only localhost:18851, and exits after 15 idle minutes. Do not launch
-multiple model workers. Per-clip jobs retain 24-bit PCM FLAC baseline, expressive
-and transformed voice masters, Opus radio, and source/model/timing metadata.
-Float-source hashes and any master gain are explicit. These are candidates;
-logged fallback engines and listening decisions must be reviewed before promotion.
+After a cold forge start, restore the Python env, Kokoro and ffmpeg with
+`lua tools/production/bootstrap_radio.lua` (it never starts a render). The
+2026-11-12 radio bank was rendered by a resident CPU Chatterbox worker
+(`model_worker.py`, `resume_radio.lua`, `voice_job.lua`, `voice_bank_job.lua`,
+`voice-trial.lua`, `radio-bank-2026-11-12.lua`). Chatterbox was dropped on
+2026-11-16 (operator, change `voice-stack`), and those files were removed; the
+ledgers under `plan/render-runs/radio-bank-2026-11-12/` stay as the record, and
+`git log -- tools/production/model_worker.py` recovers them. New voice batches
+render VoxCPM2 speech and Dia non-verbals as admitted host-studio workflows,
+queued one at a time by a new batch job (voice-stack task 4.1).
 
 `run.lua SPEC.lua JOB-ID` runs one selected job. Per-job inputs are hashed along
 with global inputs. `status.lua SPEC.lua` reports current versus stale completed

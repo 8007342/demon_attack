@@ -1,5 +1,5 @@
 -- Restore external voice dependencies; Lua owns orchestration, Python is only
--- the required Kokoro/Chatterbox runtime. Run from the repository root.
+-- the Kokoro runtime and the shared Python env. Run from the repository root.
 local lfs = require('lfs')
 local function q(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
 local function cmd(args)
@@ -46,12 +46,11 @@ local function download(repo, revision, files)
 end
 download(value('.kokoro.repo'), value('.kokoro.revision'),
  {'--include', 'config.json', 'kokoro-v1_0.pth', 'voices/*.pt'})
-local files = {'--include'}; for file in value('.chatterbox.files[]'):gmatch('[^\n]+') do files[#files+1] = file end
-download(value('.chatterbox.repo'), value('.chatterbox.revision'), files)
+-- Chatterbox was dropped (voice-stack, 2026-11-16); new voices render in the host studio.
 local ffmpeg = '/home/linuxbrew/.linuxbrew/bin/ffmpeg'
 if not lfs.attributes(ffmpeg) then
  -- The forge shim provisions the signed bottle on a cold start.
  os.execute(cmd({'ffmpeg', '-version'}))
 end
 run({ffmpeg, '-version'})
-print('Radio runtime restored. Resume with forge-guard and tools/production/resume_radio.lua.')
+print('Radio runtime restored (Kokoro, ffmpeg, the Python env). Voice renders go through the host studio (openspec/changes/voice-stack).')
