@@ -1,0 +1,13 @@
+# Test runner config (package:test, read by `flutter test`).
+#
+# `review` tests render full in-game frames and contact sheets. They decode
+# multi-megabyte hero atlases and hold many full-resolution images, so they are
+# memory-heavy. On 2026-11-16 five concurrent flutter_tester processes reached
+# about 51 GB (18 GB for the largest) and took down the host. They are skipped
+# by default; run them on purpose, one file at a time:
+#
+#   flutter test --concurrency=1 --run-skipped --tags review test/<file>_review_test.dart
+tags:
+  review:
+    skip: "memory-heavy contact-sheet render; opt in with --run-skipped --tags review"
+concurrency: 2

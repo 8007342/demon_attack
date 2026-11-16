@@ -311,7 +311,7 @@ void main() {
       for (var f = 0; f < 2400 && m.kills < 8 && m.combat; f++) {
         for (final d in List<Demon>.of(m.demons)) {
           if (d.entering || m.kills >= 8) continue;
-          while (m.demons.contains(d)) {
+          for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
             m.hitDemon(d);
           }
         }
@@ -386,7 +386,7 @@ void main() {
     for (var f = 0; f < 60 * 120 && m.mode == RunMode.playing; f++) {
       for (final d in List<Demon>.of(m.demons)) {
         if (d.entering) continue;
-        while (m.demons.contains(d)) {
+        for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
           m.hitDemon(d);
         }
       }

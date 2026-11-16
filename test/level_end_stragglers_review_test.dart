@@ -1,3 +1,6 @@
+@Tags(['review'])
+library;
+
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -94,7 +97,7 @@ void main() {
               .firstOrNull;
           if (d != null) {
             if (d.isLarge) sentinelSeen = true;
-            while (m.demons.contains(d)) {
+            for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
               m.hitDemon(d);
             }
             cool = every;
