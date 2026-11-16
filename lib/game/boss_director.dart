@@ -44,11 +44,15 @@ class BossWreck {
     required this.life,
     this.delay = 0,
     this.plate = false,
+    this.sink = .45,
   });
   final String module;
   double x, y, vx, vy, spin, rotation = 0, age = 0;
   final double life, delay;
   final bool plate;
+
+  /// How much it shrinks as it sinks (a carrier's pieces fall far below).
+  final double sink;
 
   /// 0 at the break, 1 when it has sunk into the fog.
   double get progress => ((age - delay) / life).clamp(0.0, 1.0);
@@ -56,7 +60,7 @@ class BossWreck {
   bool get done => age - delay >= life;
 
   /// Drawn scale: it falls away from the camera toward the ground fog.
-  double get scale => 1 - .45 * progress;
+  double get scale => 1 - sink * progress;
 
   /// Opacity of its body (the fog takes it in its last third).
   double get opacity => 1 - ((progress - .62) / .38).clamp(0.0, 1.0);
@@ -180,7 +184,9 @@ class BossDirector {
       return BossPhase.overflight;
     }
     if (m.looming && !flow.active) return BossPhase.loom;
-    if (m.level == 5 && m.boss == null && m.clearedLevel == null &&
+    if (m.level == 5 &&
+        m.boss == null &&
+        m.clearedLevel == null &&
         m.wreckBoss == null) {
       return m.flow.active ? BossPhase.overflight : BossPhase.loom;
     }
@@ -190,14 +196,18 @@ class BossDirector {
   /// One presentation step. [modules]: the drawn hull's module ids and
   /// detach orders (null: never detaches), for the wrecks. [threat]: a dive
   /// tell, rush lock or ground-missile warning is up (the zoom holds).
+  /// [carrier]: a v2 carrier is drawn (boss-carrier-wire): the fight's zoom
+  /// runs in the carrier band (`ArenaCamera.carrierMinZoom` … `carrierMaxZoom`).
   void update(
     ArcadeModel m,
     double dt, {
     bool reduced = false,
     List<(String, int?)> modules = const [],
     bool? threat,
+    bool carrier = false,
   }) {
     _clock += dt;
+    _carrier = carrier;
     final next = _phaseOf(m);
     if (next != phase) {
       if (next == BossPhase.collapse) _collapse(m, modules);
@@ -212,9 +222,10 @@ class BossDirector {
     // Transitions.
     final flow = m.flow;
     if (phase == BossPhase.overflight && flow.active) {
-      overflight = ((flow.seconds - flow.plan.descentAt) /
-              overflightSeconds(flow.plan.reduced))
-          .clamp(0.0, 1.0);
+      overflight =
+          ((flow.seconds - flow.plan.descentAt) /
+                  overflightSeconds(flow.plan.reduced))
+              .clamp(0.0, 1.0);
     } else if (phase != BossPhase.overflight) {
       overflight = phase == BossPhase.none ? 0 : 1;
     }
@@ -224,10 +235,7 @@ class BossDirector {
     rise = m.boss == null ? (phase == BossPhase.loom ? 0 : 1) : m.boss!.emerge;
     if (phase == BossPhase.loom || phase == BossPhase.overflight) {
       // It drifts slowly under the far banks and rises one layer per ~8 s.
-      loomAt = Offset(
-        180 + 46 * math.sin(_clock * .13),
-        104 + 46 * loom,
-      );
+      loomAt = Offset(180 + 46 * math.sin(_clock * .13), 104 + 46 * loom);
       loomScale = .4 + .22 * loom;
     }
 
@@ -249,8 +257,8 @@ class BossDirector {
       altitude += d.clamp(-dt * (top - 1), dt * (top - 1));
       _altitudeV = 0;
     } else {
-      final acc = omega * omega * (altitudeTarget - altitude) -
-          2 * omega * _altitudeV;
+      final acc =
+          omega * omega * (altitudeTarget - altitude) - 2 * omega * _altitudeV;
       _altitudeV += acc * dt;
       altitude += _altitudeV * dt;
     }
@@ -275,7 +283,10 @@ class BossDirector {
       range = 0;
       _xs.clear();
     }
-    blend = math.min(1.0, blend + dt / (reduced ? crossfadeReduced : crossfade));
+    blend = math.min(
+      1.0,
+      blend + dt / (reduced ? crossfadeReduced : crossfade),
+    );
 
     // Stages and detaches.
     if (m.boss != null) {
@@ -294,16 +305,18 @@ class BossDirector {
         final plates = wrecks.where((w) => w.plate && !w.done).length;
         if (opening && plates < maxPlates && wrecks.length < maxFalling) {
           for (var i = 0; i < 2; i++) {
-            wrecks.add(BossWreck(
-              module: 'plate',
-              plate: true,
-              x: c.x + (_rng.nextDouble() - .5) * 120,
-              y: c.y - 10 + _rng.nextDouble() * 40,
-              vx: (_rng.nextDouble() - .5) * 60,
-              vy: 20 + _rng.nextDouble() * 30,
-              spin: (_rng.nextDouble() - .5) * 6,
-              life: 2.2 + _rng.nextDouble(),
-            ));
+            wrecks.add(
+              BossWreck(
+                module: 'plate',
+                plate: true,
+                x: c.x + (_rng.nextDouble() - .5) * 120,
+                y: c.y - 10 + _rng.nextDouble() * 40,
+                vx: (_rng.nextDouble() - .5) * 60,
+                vy: 20 + _rng.nextDouble() * 30,
+                spin: (_rng.nextDouble() - .5) * 6,
+                life: 2.2 + _rng.nextDouble(),
+              ),
+            );
           }
         }
       }
@@ -316,7 +329,10 @@ class BossDirector {
     for (final w in wrecks) {
       w.age += dt;
       if (!w.started) continue;
-      w.vy += (w.plate ? 70 : 34) * dt;
+      // A carrier's modules are hundreds of units across: they sink away
+      // into the fog below (slower fall, more shrink) rather than sliding
+      // down over the ship.
+      w.vy += (w.plate ? 70 : (_carrier ? 9 : 34)) * dt;
       w.x += w.vx * dt;
       w.y += w.vy * dt;
       w.rotation += w.spin * dt;
@@ -331,13 +347,21 @@ class BossDirector {
             range: range,
             swerve: view.yaw.abs().toDouble(),
             altitude: altitude,
+            carrier: carrier,
           )
-        : 1.0;
+        // A carrier rises into its band: it is framed before it engages.
+        : (carrier && phase == BossPhase.rise
+              ? ArenaCamera.carrierMaxZoom
+              : 1.0);
+    final framing = carrier
+        ? ArenaCamera.carrierReducedZoom
+        : ArenaCamera.reducedZoom;
     camera.stepZoom(
       dt,
-      reduced ? (phase == BossPhase.climb ? ArenaCamera.reducedZoom : 1) : want,
+      reduced ? (phase == BossPhase.climb ? framing : 1) : want,
       hold: threatUp,
       reduced: reduced,
+      carrier: carrier,
     );
     camera.altitude = altitude;
     camera.stepFollow(
@@ -370,7 +394,12 @@ class BossDirector {
     return 0;
   }
 
-  void _selectView(Carrier b, double dt, {required bool reduced, required bool ready}) {
+  void _selectView(
+    Carrier b,
+    double dt, {
+    required bool reduced,
+    required bool ready,
+  }) {
     _pitchHeld += dt;
     _yawHeld += dt;
     var p = view.pitch, y = view.yaw;
@@ -413,19 +442,27 @@ class BossDirector {
     }
   }
 
+  bool _carrier = false;
+
+  /// The module that sinks last: the v2 carapace (or the v1 spine).
+  static bool _isBase(String id) => id == 'carapace' || id == 'spine';
+
   void _detach(Carrier c, int order, List<(String, int?)> modules) {
     detached.add(order);
     for (final (id, d) in modules) {
       if (d != order || wrecks.length >= maxFalling) continue;
-      wrecks.add(BossWreck(
-        module: id,
-        x: c.x,
-        y: c.y,
-        vx: (_rng.nextDouble() - .5) * 30,
-        vy: 8,
-        spin: (_rng.nextDouble() - .5) * .8,
-        life: 4 + _rng.nextDouble() * 2,
-      ));
+      wrecks.add(
+        BossWreck(
+          module: id,
+          x: c.x,
+          y: c.y,
+          vx: (_rng.nextDouble() - .5) * 30,
+          vy: 8,
+          spin: (_rng.nextDouble() - .5) * (_carrier ? .3 : .8),
+          life: 4 + _rng.nextDouble() * 2,
+          sink: _carrier ? .7 : .45,
+        ),
+      );
     }
   }
 
@@ -434,22 +471,30 @@ class BossDirector {
   void _collapse(ArcadeModel m, List<(String, int?)> modules) {
     final w = m.wreckBoss;
     if (w == null) return;
-    final left = [
-      for (final (id, d) in modules)
-        if (d == null || !detached.contains(d)) (id, d),
-    ]..sort((a, b) => (a.$2 ?? 99).compareTo(b.$2 ?? 99));
+    final left =
+        [
+          for (final (id, d) in modules)
+            if (d == null || !detached.contains(d)) (id, d),
+        ]..sort((a, b) {
+          final r = (a.$2 ?? 99).compareTo(b.$2 ?? 99);
+          return r != 0 ? r : (_isBase(a.$1) ? 1 : 0) - (_isBase(b.$1) ? 1 : 0);
+        });
     for (final (i, (id, _)) in left.indexed) {
       final spine = i == left.length - 1;
-      wrecks.add(BossWreck(
-        module: id,
-        x: w.x,
-        y: w.y,
-        vx: spine ? 0 : (_rng.nextDouble() - .5) * 50,
-        vy: spine ? 4 : 10,
-        spin: (_rng.nextDouble() - .5) * (spine ? .3 : 1.0),
-        life: 4 + _rng.nextDouble() * 2,
-        delay: spine ? .9 : i * .25,
-      ));
+      final k = _carrier ? .35 : 1.0;
+      wrecks.add(
+        BossWreck(
+          module: id,
+          x: w.x,
+          y: w.y,
+          vx: spine ? 0 : (_rng.nextDouble() - .5) * 50,
+          vy: spine ? 4 : 10,
+          spin: (_rng.nextDouble() - .5) * (spine ? .3 : 1.0) * k,
+          life: 4 + _rng.nextDouble() * 2,
+          delay: spine ? .9 : i * .25,
+          sink: _carrier ? .7 : .45,
+        ),
+      );
     }
     detached.addAll([for (final (_, d) in modules) ?d]);
   }

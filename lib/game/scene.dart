@@ -54,6 +54,15 @@ class DemonScene extends FlameGame {
 
   /// The gameplay layer is drawn under the arena camera's zoom this frame.
   bool _zoomApplied = false;
+
+  /// boss-carrier-wire: the creature draw-size floor under the zoom (1
+  /// unless the carrier band takes the far-row creature under 34 CSS px).
+  double get _creatureFloor => _zoomApplied
+      ? bossDirector.camera.floorScale(
+          44 * Perspective.scaleOf(Perspective.nearTop),
+          ArenaCamera.creatureFloor,
+        )
+      : 1.0;
   final sectors = SectorBackground();
   final creatures = CreaturePresentation();
   // --- alien-insignia: rank glyphs and shield cells over the arena.
@@ -253,6 +262,7 @@ class DemonScene extends FlameGame {
       dt,
       reduced: sectors.flyover.reducedMotion,
       modules: armada.modules,
+      carrier: armada.carrier,
     );
     bossShadowAltitude = defaultBossShadowAltitude * bossDirector.altitude;
     GroundCamera.spriteAltitude = bossDirector.camera.altitude;
@@ -272,7 +282,10 @@ class DemonScene extends FlameGame {
       ..cloudScroll = model.reducedMotion ? 0 : cloudRun
       // boss-grandeur (R8): the fight plays higher and faster: the fog
       // flows faster past it (the ground below slows by the altitude).
-      ..advance(dt * bossDirector.flowBoost, distance: sectors.flyover.distance);
+      ..advance(
+        dt * bossDirector.flowBoost,
+        distance: sectors.flyover.distance,
+      );
   }
 
   @override
@@ -1000,7 +1013,9 @@ class DemonScene extends FlameGame {
       final t = _transmittance(d, holding: holding);
       final reveal = Perspective.gearReveal(t);
       c.save();
-      _scaleAbout(c, pos, d.scale); // sizes below are at scale 1
+      // sizes below are at scale 1; boss-carrier-wire: the 34-CSS-px
+      // creature floor is a draw-size floor in the carrier band.
+      _scaleAbout(c, pos, d.scale * _creatureFloor);
       // --- alien-insignia: the elite's dotted ring is gone; its ocellus
       // (and every rank's glyph) is drawn over the arena after the fog.
       // Gargoyle frames carry their own banking (3/4 left/neutral/right
@@ -1175,8 +1190,9 @@ class DemonScene extends FlameGame {
           stage: d.stage,
           front: true,
           detached: d.detached,
+          clock: model.visualClock,
         );
-        _carrierTurretBarrels(c, b);
+        if (!armada.carrier) _carrierTurretBarrels(c, b);
         armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
       } else if (armada.ready) {
         // Bright bow: idle life (eye pulse, ear-fin breath, spine flex and
@@ -1202,33 +1218,39 @@ class DemonScene extends FlameGame {
           height: 118,
         );
       }
-      _carrierLighting(c, Offset(b.x, b.y), carrierBank);
-      if (!hero) _carrierEyes(c, b); // the view set's eyes are its own
-      _carrierSideHatches(c, b);
-      final core = Offset(b.x, b.y + 25);
-      c.drawRect(
-        Rect.fromCenter(center: core, width: 32, height: 22),
-        Paint()..color = const Color(0xFF070A14),
-      );
-      c.drawRect(
-        Rect.fromCenter(center: core, width: 24, height: 12),
-        Paint()..color = b.shield > 0 ? violet : gold,
-      );
-      if (armada.anyReady) {
-        // Authored blast jaws: fanged armoured leaves.
-        armada.paintJaws(c, b);
+      if (armada.carrier) {
+        // boss-carrier-wire: the v2 prow's hangar deck carries its own
+        // doors (no fanged jaws, no lit windows: styleguide §3.4).
+        _carrierDeck(c, b);
       } else {
-        final closed = 16 * (1 - b.door);
-        for (final direction in [-1, 1]) {
-          c.drawRect(
-            Rect.fromLTWH(
-              core.dx + (direction < 0 ? -16 : 16 - closed),
-              core.dy - 11,
-              closed,
-              22,
-            ),
-            Paint()..color = const Color(0xFF57617E),
-          );
+        _carrierLighting(c, Offset(b.x, b.y), carrierBank);
+        if (!hero) _carrierEyes(c, b); // the view set's eyes are its own
+        _carrierSideHatches(c, b);
+        final core = Offset(b.x, b.y + 25);
+        c.drawRect(
+          Rect.fromCenter(center: core, width: 32, height: 22),
+          Paint()..color = const Color(0xFF070A14),
+        );
+        c.drawRect(
+          Rect.fromCenter(center: core, width: 24, height: 12),
+          Paint()..color = b.shield > 0 ? violet : gold,
+        );
+        if (armada.anyReady) {
+          // Authored blast jaws: fanged armoured leaves.
+          armada.paintJaws(c, b);
+        } else {
+          final closed = 16 * (1 - b.door);
+          for (final direction in [-1, 1]) {
+            c.drawRect(
+              Rect.fromLTWH(
+                core.dx + (direction < 0 ? -16 : 16 - closed),
+                core.dy - 11,
+                closed,
+                22,
+              ),
+              Paint()..color = const Color(0xFF57617E),
+            );
+          }
         }
       }
       if (b.shield > 0) {
@@ -1730,6 +1752,13 @@ class DemonScene extends FlameGame {
     c.translate(center.dx, center.dy);
     c.rotate(bank * 0.14);
     c.scale(1.0 - bank.abs() * 0.14, 1.0);
+    // boss-carrier-wire: the ship's 36-CSS-px floor is a draw-size floor in
+    // the carrier band (Z < 0.75); its hitbox is untouched.
+    if (_zoomApplied) {
+      c.scale(
+        bossDirector.camera.floorScale(ShipPainter.size, ArenaCamera.shipFloor),
+      );
+    }
     c.translate(-center.dx, -center.dy);
     if (ship.ready) {
       // continuous-swarm: a creature's shadow over the ship dims it a
@@ -3937,6 +3966,108 @@ class DemonScene extends FlameGame {
     );
   }
 
+  /// boss-carrier-wire: the v2 carrier's hangar deck furniture over the
+  /// prow art, at the simulation windows (core, bays, turret pivots). The
+  /// head-reading guard (styleguide §3.4) shapes every piece: the slot is
+  /// split into three hatches by solid chitin bulkheads, the weak points
+  /// glow through vertical slits (a horizontal lit slot reads as a mouth),
+  /// the doors are plain chitin leaves (no fangs), and the gun barrels are
+  /// dark with an ember muzzle (pale pegs read as teeth).
+  void _carrierDeck(Canvas c, Carrier b) {
+    final paint = Paint()..isAntiAlias = false;
+    const black = Color(0xFF05040A), chitin = Color(0xFF2B2234);
+    const edge = Color(0xFF55456A), ember = Color(0xFFFF7A2A);
+    final weak = b.shield > 0 ? violet : gold;
+    // A hatch: black well, a vertical slit glow, two chitin leaves closing
+    // from the sides with a lighter lip.
+    void hatch(
+      Offset at,
+      double w,
+      double h,
+      double open, {
+      bool locked = false,
+    }) {
+      c.drawRect(
+        Rect.fromCenter(center: at, width: w, height: h),
+        paint..color = black,
+      );
+      if (!locked) {
+        final glow = .35 + .65 * open.clamp(0.0, 1.0);
+        c.drawRect(
+          Rect.fromCenter(center: at, width: 4 + 3 * open, height: h - 6),
+          paint..color = weak.withValues(alpha: glow),
+        );
+      }
+      final closed = (w / 2) * (locked ? 1 : 1 - open.clamp(0.0, 1.0));
+      for (final dir in const [-1.0, 1.0]) {
+        final x0 = dir < 0 ? at.dx - w / 2 : at.dx + w / 2 - closed;
+        c.drawRect(
+          Rect.fromLTWH(x0, at.dy - h / 2, closed, h),
+          paint..color = chitin,
+        );
+        if (closed > 1) {
+          final lip = dir < 0 ? x0 + closed - 1 : x0;
+          c.drawRect(
+            Rect.fromLTWH(lip, at.dy - h / 2, 1, h),
+            paint..color = edge,
+          );
+        }
+      }
+      if (locked) {
+        c.drawRect(
+          Rect.fromCenter(center: at, width: 3, height: 3),
+          paint..color = ember,
+        );
+      }
+    }
+
+    hatch(Offset(b.x, b.y + 25), 32, 22, b.door);
+    for (final (dx, open) in [
+      (-Carrier.sideHatchOffset, b.sideDoorLeft),
+      (Carrier.sideHatchOffset, b.sideDoorRight),
+    ]) {
+      hatch(
+        Offset(b.x + dx, b.y + 21),
+        22,
+        16,
+        open,
+        locked: b.sideHatchesLocked,
+      );
+    }
+    // Bulkheads between the core and the bays: the deck reads as three
+    // hangar mouths in a row, not one slot.
+    for (final dx in const [-28.0, 28.0]) {
+      final r = Rect.fromLTWH(b.x + dx - 3, b.y + 10, 6, 26);
+      c.drawRect(r, paint..color = chitin);
+      c.drawRect(
+        Rect.fromLTWH(r.left, r.top, 1, r.height),
+        paint..color = edge,
+      );
+    }
+    // The art paints pale bone tusks under the sill blisters (y 38–56):
+    // pegs in a slot read as fangs; a chitin tint takes them to hull value.
+    for (final side in const [-28.0, 28.0]) {
+      c.drawRect(
+        Rect.fromLTWH(b.x + side - 6, b.y + 39, 12, 19),
+        paint..color = const Color(0xB0140E1C),
+      );
+    }
+    // Gun barrels on the sill: dark, an ember muzzle.
+    final aim = math
+        .atan2(ArcadeModel.shipY - (b.y + 36), model.shipX - b.x)
+        .clamp(0.4, 2.74);
+    for (final side in const [-28.0, 28.0]) {
+      c.save();
+      c.translate(b.x + side, b.y + 36);
+      c.rotate(aim - math.pi / 2);
+      c.drawRect(const Rect.fromLTWH(-3, 0, 2, 7), paint..color = chitin);
+      c.drawRect(const Rect.fromLTWH(1, 0, 2, 7), paint..color = chitin);
+      c.drawRect(const Rect.fromLTWH(-3, 6, 2, 1), paint..color = ember);
+      c.drawRect(const Rect.fromLTWH(1, 6, 2, 1), paint..color = ember);
+      c.restore();
+    }
+  }
+
   void _carrierTurretBarrels(Canvas c, Carrier b) {
     final aim = math
         .atan2(ArcadeModel.shipY - (b.y + 36), model.shipX - b.x)
@@ -4743,7 +4874,13 @@ extension _BossGrandeur on DemonScene {
   void paintBossBody(Canvas c, Offset center) {
     if (armada.heroReady) {
       for (final front in const [false, true]) {
-        armada.paintHero(c, center, view: BossView.hero, stage: 0, front: front);
+        armada.paintHero(
+          c,
+          center,
+          view: BossView.hero,
+          stage: 0,
+          front: front,
+        );
       }
     } else if (armada.ready) {
       final h = armada.hull;
@@ -4754,9 +4891,8 @@ extension _BossGrandeur on DemonScene {
 
   /// The fog layer after which the loom is drawn: it starts behind all
   /// but the horizon band and rises one layer per ~8 s.
-  int _loomLayer(int layers) => layers == 0
-      ? 0
-      : math.min(layers - 1, (model.loomClock / 8).floor());
+  int _loomLayer(int layers) =>
+      layers == 0 ? 0 : math.min(layers - 1, (model.loomClock / 8).floor());
 
   /// The carrier looming under the fog: a dark mass between the far banks.
   void _bossLoom(Canvas c) {
@@ -4787,10 +4923,13 @@ extension _BossGrandeur on DemonScene {
     final paint = Paint()..isAntiAlias = false;
     for (final l in armada.heroPoints(BossView.hero, 0, kind: 'lights')) {
       final p = at + Offset(l.x, l.y) * k;
-      paint.color = (l.kind == 0
-              ? const Color(0xFFFF3048)
-              : (l.kind == 1 ? const Color(0xFF40FF90) : const Color(0xFFFFC45A)))
-          .withValues(alpha: .5);
+      paint.color =
+          (l.kind == 0
+                  ? const Color(0xFFFF3048)
+                  : (l.kind == 1
+                        ? const Color(0xFF40FF90)
+                        : const Color(0xFFFFC45A)))
+              .withValues(alpha: .5);
       c.drawRect(Rect.fromCenter(center: p, width: 2, height: 2), paint);
     }
   }
@@ -4862,7 +5001,8 @@ extension _BossGrandeur on DemonScene {
     final x = 180 + 26 * math.sin(p * math.pi);
     final k = 2.9 + (.42 - 2.9) * math.pow(p, .55);
     final top = y - 160 * k, bottom = y + 90 * k;
-    final overShip = top < ArcadeModel.shipY + 30 && bottom > ArcadeModel.shipY - 30;
+    final overShip =
+        top < ArcadeModel.shipY + 30 && bottom > ArcadeModel.shipY - 30;
     var o = overShip ? .55 : .85;
     o *= 1 - Perspective.smoothstep(.72, 1, p); // into the far fog
     o *= Perspective.smoothstep(0, .06, p);
@@ -4892,10 +5032,21 @@ extension _BossGrandeur on DemonScene {
         )
         ..color = Color.fromRGBO(255, 255, 255, o),
     );
-    paintBossBody(c, Offset.zero);
+    // boss-carrier-wire: the carrier's baked underside (`fin_belly`, 0.5
+    // px/unit, ≈ 926 units wide), drawn at [bellyScale] so it passes over
+    // the ship about as wide as the frigate did, still two screens across
+    // as it enters; the hull from above where no belly is packed.
+    c.save();
+    c.scale(bellyScale);
+    final belly = armada.paintBelly(c, Offset.zero);
+    c.restore();
+    if (!belly) paintBossBody(c, Offset.zero);
     c.restore();
     c.restore();
   }
+
+  /// The belly's scale in the overflight's frame (see [_bossOverflight]).
+  static const bellyScale = .3;
 
   /// Its shadow sweeps the ground first, a little ahead of the hull.
   void _bossOverflightShadow(Canvas c) {
@@ -4906,7 +5057,11 @@ extension _BossGrandeur on DemonScene {
     final a = .3 * (1 - p) * (o > 0 ? 1 : 0);
     if (a < .01) return;
     c.drawOval(
-      Rect.fromCenter(center: at + Offset(10, 30 * k), width: 220 * k, height: 80 * k),
+      Rect.fromCenter(
+        center: at + Offset(10, 30 * k),
+        width: 220 * k,
+        height: 80 * k,
+      ),
       Paint()
         ..color = DemonScene.lurkTint.withValues(alpha: a)
         ..blendMode = BlendMode.multiply
@@ -4919,6 +5074,38 @@ extension _BossGrandeur on DemonScene {
   /// breaks.
   void _bossWrecks(Canvas c) {
     if (bossDirector.wrecks.isEmpty) return;
+    // boss-carrier-wire: each wreck throws its shadow onto the fog it
+    // falls into, its own sprite's alpha as the mask; the shadow closes in
+    // and fades into the fog as the wreck sinks.
+    if (armada.heroReady) {
+      final ink = Color.lerp(DemonScene.lurkTint, const Color(0xFF05030A), .5)!;
+      for (final w in bossDirector.wrecks) {
+        if (!w.started) continue; // at rest it is still the hull
+        final k = 1 - w.progress;
+        armada.paintHeroWreckShadow(
+          c,
+          w,
+          shift: Offset(10 + 22 * k, 16 + 40 * k) * bossDirector.altitude,
+          ink: ink,
+          alpha: (w.plate ? .3 : .5) * w.opacity * (.35 + .65 * k),
+        );
+      }
+    }
+    // Pieces that have not broken away yet hold the hull's shape where it
+    // died (back to front: the carapace, the modules, the prow), so the
+    // carrier never vanishes before its pieces fall.
+    if (armada.heroReady) {
+      int depth(String id) => id == 'carapace' || id == 'spine'
+          ? 0
+          : (id == 'prow' || id == 'bow' ? 2 : 1);
+      final waiting = [
+        for (final w in bossDirector.wrecks)
+          if (!w.started && !w.plate) w,
+      ]..sort((a, b) => depth(a.module) - depth(b.module));
+      for (final w in waiting) {
+        armada.paintHeroWreck(c, w, fog: atmosphere.cloud);
+      }
+    }
     for (final w in bossDirector.wrecks) {
       if (!w.started) continue;
       if (armada.heroReady) {
@@ -4927,7 +5114,12 @@ extension _BossGrandeur on DemonScene {
         c.save();
         c.translate(w.x, w.y);
         c.rotate(w.rotation);
-        armada.sprite(c, armada.hull.debris[0], Offset.zero, opacity: w.opacity);
+        armada.sprite(
+          c,
+          armada.hull.debris[0],
+          Offset.zero,
+          opacity: w.opacity,
+        );
         c.restore();
       }
       final age = w.age - w.delay;
@@ -4957,14 +5149,20 @@ extension _BossGrandeur on DemonScene {
         ink.withValues(alpha: 0),
       ]);
     if (tl.dx > 0) {
-      c.drawRect(Rect.fromLTRB(0, 0, tl.dx + 6, 520),
-          shade(Offset.zero, Offset(tl.dx + 6, 0)));
-      c.drawRect(Rect.fromLTRB(br.dx - 6, 0, 360, 520),
-          shade(const Offset(360, 0), Offset(br.dx - 6, 0)));
+      c.drawRect(
+        Rect.fromLTRB(0, 0, tl.dx + 6, 520),
+        shade(Offset.zero, Offset(tl.dx + 6, 0)),
+      );
+      c.drawRect(
+        Rect.fromLTRB(br.dx - 6, 0, 360, 520),
+        shade(const Offset(360, 0), Offset(br.dx - 6, 0)),
+      );
     }
     if (tl.dy > 0) {
-      c.drawRect(Rect.fromLTRB(0, 0, 360, tl.dy + 6),
-          shade(Offset.zero, Offset(0, tl.dy + 6)));
+      c.drawRect(
+        Rect.fromLTRB(0, 0, 360, tl.dy + 6),
+        shade(Offset.zero, Offset(0, tl.dy + 6)),
+      );
     }
   }
 
@@ -4985,7 +5183,13 @@ extension _BossGrandeur on DemonScene {
         ..colorFilter = DemonScene._shadowInk,
     );
     for (final front in const [false, true]) {
-      armada.paintHero(c, Offset.zero, view: BossView.hero, stage: 0, front: front);
+      armada.paintHero(
+        c,
+        Offset.zero,
+        view: BossView.hero,
+        stage: 0,
+        front: front,
+      );
     }
     c.restore();
     final pic = rec.endRecording();
@@ -5006,7 +5210,9 @@ extension _BossGrandeur on DemonScene {
       // The lurking shadow crawls from the far terrain toward the front.
       return (d.loomAt.dx, -60 + 210 * d.loom, .7);
     }
-    if (d.phase == BossPhase.overflight && d.overflight > 0 && d.overflight < 1) {
+    if (d.phase == BossPhase.overflight &&
+        d.overflight > 0 &&
+        d.overflight < 1) {
       final (at, _, _) = overflightPose(d.overflight);
       return (at.dx, at.dy, .9 * (1 - d.overflight));
     }

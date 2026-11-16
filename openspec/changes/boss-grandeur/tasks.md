@@ -46,3 +46,13 @@
 ## Workflow follow-up
 - Consumes `boss-hero-assets` atlases when they land (view set, module layers, wrecks); until then the frontal atlas is used for every view.
 - Operator phone playtest, then `openspec archive boss-grandeur`.
+
+## 7. The v2 carriers wired in (boss-carrier-wire, design §13)
+- [x] 7.1 Grammar on the v2 slot ids (carapace, prow, wing, spines, emitter, blister + tours 2–5 slots); `prow` is the front pass; the v1 frigate hero retired
+- [x] 7.2 Pack the three tour-1 combinations and the tour 2–5 S0 bakes (`boss_sheet pack HULL=CLASS`: own keys, `replaces`, `set`, belly page); the run picks one from its run seed; unseeded runs draw the thorn
+- [x] 7.3 Missing stage looks fall back to S0 under the runtime overlay, torn modules as charred stumps
+- [x] 7.4 Carrier band Z 0.70–0.86, draw-size floors at 0.70, fog-bank shadows (already in, 6.2)
+- [x] 7.5 Decay events on the styleguide §6 names; the S1 runtime overlay kept
+- [x] 7.6 `fin_belly` in the Overflight
+- [x] 7.7 Wreck shadows from the wreck sprites' alpha
+- [x] 7.8 `test/boss_carrier_wire_review_test.dart` → `art/contact/boss-carrier-wire-*.png`

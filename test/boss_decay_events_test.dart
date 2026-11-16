@@ -24,7 +24,8 @@ void main() {
     expect(rise.single.data['route'], 0);
   });
 
-  test('12 shield cells, the field, armour plates, modules, the collapse', () {
+  test('the styleguide §6 order: cells, failing, down, armour, modules, '
+      'core exposed, collapse, wrecks, collapse end', () {
     final m = ArcadeModel(seed: 4)..startAt(sector: 5, route: 2);
     m.mode = RunMode.playing;
     final b = m.boss!;
@@ -37,21 +38,19 @@ void main() {
     }
     final cells = [
       for (final e in all)
-        if (e.name == GameEventNames.bossShieldCellLost) e.data['cellsLeft'],
+        if (e.name == GameEventNames.bossShieldCellLost) e.data['remaining'],
     ];
     expect(cells, [for (var c = 11; c >= 0; c--) c]);
-    expect(
-      all.where((e) => e.name == GameEventNames.bossShieldDepleted),
-      hasLength(1),
-    );
-    // Core: two armour steps per form; the odd ones are plates, the even
-    // ones the form's module, the last the collapse.
+    expect(all.where((e) => e.name == GameEventNames.bossShieldFailing), hasLength(1));
+    expect(all.where((e) => e.name == GameEventNames.bossShieldDown), hasLength(1));
+    // Core: two armour steps per form; the odd ones shed plates, the even
+    // ones tear the form's module away, the last is the collapse.
     while (m.boss != null) {
       b.door = 1;
       m.hitBoss(b.x);
       all.addAll(m.takeGameEvents());
     }
-    final plates = all.where((e) => e.name == GameEventNames.bossArmourLost);
+    final plates = all.where((e) => e.name == GameEventNames.bossArmourShed);
     final modules = all.where((e) => e.name == GameEventNames.bossModuleLost);
     expect(plates, hasLength(b.formCount));
     expect(modules, hasLength(b.formCount - 1));
@@ -59,12 +58,62 @@ void main() {
       [for (final e in modules) e.data['form']],
       [for (var f = 1; f < b.formCount; f++) f],
     );
-    expect(all.where((e) => e.name == GameEventNames.bossCollapse), hasLength(1));
+    // The slots tear away in the hull's detach order (tour 3: the lattice
+    // Siege-Ark): spines, blisters, wings; the armour sheds from the module
+    // that goes next.
+    expect([for (final e in modules) e.data['slot']], ['spines', 'blister', 'wing']);
+    expect([for (final e in modules) e.data['rank']], [1, 2, 3]);
+    expect(plates.first.data['slot'], 'spines');
+    expect(modules.first.data['set'], 'crown');
+    expect(all.where((e) => e.name == GameEventNames.bossCoreExposed), hasLength(1));
+    expect(all.where((e) => e.name == GameEventNames.bossCollapseStart), hasLength(1));
+    final wrecks = [
+      for (final e in all)
+        if (e.name == GameEventNames.bossWreckFalls) e.data['slot'],
+    ];
+    expect(wrecks.last, 'carapace', reason: 'the carapace sinks last');
+    expect(wrecks, containsAllInOrder(['emitter', 'maw', 'barrier', 'tendril']));
+    // The fixed order, step by step.
+    final order = [
+      for (final e in all)
+        if (e.name != GameEventNames.bossShieldCellLost &&
+            e.name != GameEventNames.bossWreckFalls &&
+            e.name.startsWith('boss'))
+          e.name,
+    ];
+    expect(order.indexOf(GameEventNames.bossShieldFailing),
+        lessThan(order.indexOf(GameEventNames.bossShieldDown)));
+    expect(order.indexOf(GameEventNames.bossShieldDown),
+        lessThan(order.indexOf(GameEventNames.bossArmourShed)));
+    expect(order.lastIndexOf(GameEventNames.bossModuleLost),
+        lessThan(order.indexOf(GameEventNames.bossCoreExposed)));
+    expect(order.last, GameEventNames.bossCollapseStart);
     // Every decay event names the run's module set (visual variety).
     for (final e in all.where((e) => e.name.startsWith('boss'))) {
       expect(e.data['variant'], b.variant, reason: e.name);
     }
+    // The rout ends: the collapse is over.
+    for (var i = 0; i < 60 * 30 && m.mode == RunMode.victory; i++) {
+      m.update(1 / 60);
+      all.addAll(m.takeGameEvents());
+    }
+    expect(all.where((e) => e.name == GameEventNames.bossCollapseEnd), hasLength(1));
   });
+
+  test('the set pick follows the run seed; unseeded runs draw the first set', () {
+    final a = ArcadeModel(seed: 4)..startAt(sector: 5, route: 0);
+    expect(a.boss!.variant, 0);
+    final sets = <int>{};
+    for (var s = 1; s < 30; s++) {
+      final m = ArcadeModel(seed: 4)..startAt(sector: 5, route: 0, runSeed: s);
+      sets.add(m.bossVariant % 3);
+      expect(m.boss!.variant, m.bossVariant);
+      final again = ArcadeModel(seed: 4)..startAt(sector: 5, route: 0, runSeed: s);
+      expect(again.bossVariant, m.bossVariant);
+    }
+    expect(sets, {0, 1, 2});
+  });
+
 
   test('nothing is queued while the carrier rises (no hitbox)', () {
     final m = ArcadeModel(seed: 6)..startAt(sector: 5, route: 0);
@@ -85,7 +134,7 @@ void main() {
     for (final name in [
       GameEventNames.bossOverflight,
       GameEventNames.bossRise,
-      GameEventNames.bossCollapse,
+      GameEventNames.bossCollapseStart,
     ]) {
       bridge(GameEvent(name));
     }

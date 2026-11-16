@@ -268,3 +268,39 @@ a placeholder and does not tune the look to it. What R8 changed here:
   seconds pooled +4.9 % (gate 5 %), hits +2.1 %; Easy +3.8 %, Normal +1.1 %, Hard +9.4 % (gate 10 % each). The
   ablations are in `plan/calibration-current.md`.
 - **Review strips** also include `boss-grandeur-phone.png` (1:1) and `boss-grandeur-wide.png` (1280 × 720).
+
+## 13. The v2 carriers wired in (boss-carrier-wire, 2026-11-16)
+The Thornwake carriers of `boss-hero-assets` §8 replace the frigate placeholder. What changed here:
+- **Grammar on the v2 slots.** `BossSlot` is the family's slots (carapace, prow, wing, spines, emitter, blister, maw,
+  barrier, tendril, sac, crown); tours have 9 / 13 / 17 / 21 / 24 instances at extent ×1.00 → ×1.32 and the detach
+  ranks of the family (spines 1, blisters 2, wings 3, emitters 4, maws 5 …; carapace and prow never). Battery suffixes
+  give `blister_aftL` and the like. The v1 grammar (spine, bow, tower …) is retired with the frigate hero page; the v1
+  frontal atlases stay as the fallback and the v1 tools stay frozen.
+- **Set combinations, not runtime mixing.** `BossGrammar.baked` lists each tour's baked hulls (tour 1: thorn, lattice,
+  shroud). A run picks one from its run seed (`BossGrammar.variantFor(runSeed, route)`, a 32-bit mix); an unseeded
+  run (tests, the calibrated campaign) is variant 0, the thorn. `Carrier.variant` keeps its draw from the boss stream so
+  the glide of later carriers does not move (boss endurance unchanged: pooled +4.86 %). Beyond tour 5 the seeded pick
+  is among the tour 3–5 hulls.
+- **The pack.** `boss_sheet pack BAKE RIG carrier1-thorn=frigate …` writes each hull under its own key with
+  `replaces` (the tour class) and `set`, one 4096-wide page each (11.8–15.5 MB resident), and the manifest's belly to
+  its own page. `BossPainter` loads the run's hull (pages and belly) from the sector before the carrier.
+- **Front pass.** The `prow` (or the v1 `bow`) is drawn after the creatures; everything else before.
+- **Carrier band** (`boss-hero-assets` §8.3). With a v2 hull the zoom runs in Z ∈ [0.70, 0.86]: the rise eases to
+  0.86, the same range, swerve and climb terms (mapped onto the band) take it to 0.70, holds ease back to 0.86, and the
+  reduced-motion framing is 0.78. At 0.70 the creature (33.9 CSS px) and ship (33.6) floors bind, so they are
+  draw-size floors (`ArenaCamera.floorScale`); bullets keep 3.5 px. Hitboxes never see Z (the scripted fight is
+  identical at 0.70).
+- **Decay overlay.** S1 is a runtime overlay (char, crystal flicker, ember hairline cracks from the fire points,
+  `srcATop` on the hull's own pixels). A stage a hull has no layers for (tours 2–5: S0 only so far) is drawn as S0
+  under a heavier overlay, and a module that tore away is drawn as a charred stump (its holdout left no hole). The
+  prow gets no cracks within 60 units of the centre line (embers round the deck read as teeth).
+- **Decay events** on the styleguide §6 names (see the `arcade-combat` delta): the model reads the run's assembly
+  (visual data only) for the slot, set and rank.
+- **Faceless deck.** The frigate's fanged jaw leaves, lit bay windows and pale barrels made the v2 prow read as a face.
+  For carriers the scene draws its own deck: chitin hatch leaves, vertical weak-point slits, two bulkheads that split
+  the slot into three hatches, dark barrels with ember muzzles, a tint over the thorn prow's pale blister tusks, and a
+  shade that takes the prow dome down to the hull's value ceiling (styleguide §7.1).
+- **Belly and wrecks.** The Overflight draws `fin_belly` (×0.3 in its frame, ≈ 2 screens wide as it enters); hulls
+  without one borrow the thorn's. Wrecks cast a shadow masked by their own sprite's alpha; the collapse keeps the hull
+  whole until each piece breaks away (the carapace last), and carrier pieces sink (less gravity, more shrink) instead
+  of sliding over the ship. The carapace and prow (no wreck frames) sink their own layer.

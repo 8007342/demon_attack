@@ -85,6 +85,62 @@ void main() {
     expect(5 * z, greaterThanOrEqualTo(3));
   });
 
+  group('carrier band (boss-carrier-wire, boss-hero-assets §8.3)', () {
+    test('target zoom runs in [0.70, 0.86]: engage framing, full spread', () {
+      expect(
+        ArenaCamera.targetZoom(range: 0, swerve: 0, altitude: 1, carrier: true),
+        ArenaCamera.carrierMaxZoom,
+      );
+      expect(
+        ArenaCamera.targetZoom(range: 1, swerve: 1, altitude: 1.6, carrier: true),
+        closeTo(ArenaCamera.carrierMinZoom, 1e-9),
+      );
+      expect(
+        ArenaCamera.targetZoom(range: 9, swerve: 9, altitude: 9, carrier: true),
+        ArenaCamera.carrierMinZoom,
+      );
+    });
+
+    test('same rate limit; a hold eases back to the engage framing, not 1', () {
+      final cam = ArenaCamera();
+      for (var i = 0; i < 60 * 12; i++) {
+        final before = cam.zoom;
+        cam.stepZoom(1 / 60, ArenaCamera.carrierMinZoom, carrier: true);
+        expect(before - cam.zoom, lessThanOrEqualTo(.05 / 60 + 1e-12));
+      }
+      expect(cam.zoom, closeTo(ArenaCamera.carrierMinZoom, 1e-6));
+      // (eased: the hold creeps back in at the slow end of the rate.)
+      for (var i = 0; i < 60 * 40; i++) {
+        cam.stepZoom(1 / 60, ArenaCamera.carrierMinZoom, hold: true, carrier: true);
+        expect(cam.zoom, lessThanOrEqualTo(ArenaCamera.carrierMaxZoom + 1e-9));
+      }
+      expect(cam.zoom, closeTo(ArenaCamera.carrierMaxZoom, 1e-6));
+      // Reduced motion: one static framing.
+      final r = ArenaCamera();
+      for (var i = 0; i < 60 * 10; i++) {
+        r.stepZoom(1 / 60, ArenaCamera.carrierMinZoom, reduced: true, carrier: true);
+      }
+      expect(r.zoom, closeTo(ArenaCamera.carrierReducedZoom, 1e-9));
+    });
+
+    test('phone floors at 0.70 hold as draw-size floors', () {
+      final cam = ArenaCamera()..zoom = ArenaCamera.carrierMinZoom;
+      final far = 44 * Perspective.scaleOf(Perspective.nearTop);
+      expect(far * cam.zoom, lessThan(ArenaCamera.creatureFloor),
+          reason: 'the floor binds here');
+      expect(far * cam.zoom * cam.floorScale(far, ArenaCamera.creatureFloor),
+          greaterThanOrEqualTo(ArenaCamera.creatureFloor - 1e-9));
+      expect(
+          ShipPainter.size * cam.zoom *
+              cam.floorScale(ShipPainter.size, ArenaCamera.shipFloor),
+          greaterThanOrEqualTo(ArenaCamera.shipFloor - 1e-9));
+      expect(5 * cam.zoom, greaterThanOrEqualTo(ArenaCamera.bulletFloor));
+      // Above the band's floor nothing is scaled.
+      cam.zoom = 1;
+      expect(cam.floorScale(far, ArenaCamera.creatureFloor), 1);
+    });
+  });
+
   test('background follow: far layers move less than near ones', () {
     final cam = ArenaCamera()
       ..fx = 24
@@ -133,6 +189,7 @@ void main() {
     }
 
     final a = fight(1), b = fight(ArenaCamera.minZoom);
+    expect(fight(ArenaCamera.carrierMinZoom), a, reason: 'the carrier band');
     expect(a, isNotEmpty);
     expect(a.where((e) => e.contains(':hit:')), isNotEmpty);
     expect(b, a);

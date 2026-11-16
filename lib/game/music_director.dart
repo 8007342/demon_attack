@@ -256,7 +256,7 @@ class MusicBridge {
     // the heroic accent as it collapses.
     GameEventNames.bossOverflight: 'gloat',
     GameEventNames.bossRise: 'laststand',
-    GameEventNames.bossCollapse: 'respawn',
+    GameEventNames.bossCollapseStart: 'respawn',
   };
 
   void call(GameEvent event) {

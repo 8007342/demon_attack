@@ -31,6 +31,17 @@ class ArenaCamera {
   static const minZoom = .86;
   static const reducedZoom = .94;
 
+  /// boss-carrier-wire (boss-hero-assets §8.3): a v2 carrier is too big for
+  /// that band, so its fight runs at Z ∈ [[carrierMinZoom], [carrierMaxZoom]]
+  /// with the same pivot, rate limit and holds, and a static framing of
+  /// [carrierReducedZoom] under reduced motion. At 0.70 the creature and
+  /// ship floors are draw-size floors ([floorScale]).
+  static const carrierMinZoom = .70, carrierMaxZoom = .86;
+  static const carrierReducedZoom = .78;
+
+  /// Phone floors in CSS px of the 360-wide arena (design §3.1).
+  static const creatureFloor = 34.0, shipFloor = 36.0, bulletFloor = 3.0;
+
   /// Zoom rate limit (per second) and the static framing's ramp.
   static const maxRate = .05, reducedRate = .06;
 
@@ -68,40 +79,83 @@ class ArenaCamera {
   /// The target zoom: `Z* = 1 − 0.06·range − 0.05·swerve − 0.03·(A − 1)/0.6`,
   /// clamped to [[minZoom], 1]. [range] is the boss's horizontal travel span
   /// over the last 3 s (0..1), [swerve] its |yaw| view index (0 or 1).
+  ///
+  /// A [carrier] maps the same terms onto its own band: it engages at
+  /// [carrierMaxZoom] and the full range, swerve and climb take it to
+  /// [carrierMinZoom].
   static double targetZoom({
     required double range,
     required double swerve,
     required double altitude,
-  }) =>
-      (1 -
-              .06 * range.clamp(0.0, 1.0) -
-              .05 * swerve.clamp(0.0, 1.0) -
-              .03 * (altitude - 1) / .6)
-          .clamp(minZoom, 1.0);
+    bool carrier = false,
+  }) {
+    final out =
+        .06 * range.clamp(0.0, 1.0) +
+        .05 * swerve.clamp(0.0, 1.0) +
+        .03 * ((altitude - 1) / .6).clamp(0.0, 1.0);
+    if (!carrier) return (1 - out).clamp(minZoom, 1.0);
+    const k = (carrierMaxZoom - carrierMinZoom) / .14;
+    return (carrierMaxZoom - k * out).clamp(carrierMinZoom, carrierMaxZoom);
+  }
+
+  /// Whether the camera is in the carrier band (set by [stepZoom]).
+  bool carrier = false;
+
+  /// The smallest zoom the current band allows.
+  double get floorZoom => carrier ? carrierMinZoom : minZoom;
+
+  /// The draw-size factor that keeps a sprite of [size] arena units at
+  /// least [floor] screen units (CSS px of the 360-wide arena) under the
+  /// current zoom: 1 down to the zoom where the floor binds. Drawing only;
+  /// hitboxes stay arena units.
+  double floorScale(double size, double floor) =>
+      math.max(1.0, floor / (size * zoom));
 
   /// Advances the zoom toward [want]. [hold]: a threat the player must read
   /// (dive tell, rush lock, ground-missile warning): the zoom never moves
   /// out and eases back toward 1. [reduced]: [want] is the static framing,
   /// ramped at [reducedRate], never dynamic.
-  void stepZoom(double dt, double want, {bool hold = false, bool reduced = false}) {
+  /// [carrier]: the carrier band ([carrierMinZoom]); a hold eases back
+  /// toward [carrierMaxZoom] (the engage framing), not 1.
+  void stepZoom(
+    double dt,
+    double want, {
+    bool hold = false,
+    bool reduced = false,
+    bool carrier = false,
+  }) {
+    this.carrier = carrier;
     if (reduced) {
-      target = want <= reducedZoom ? reducedZoom : 1;
+      final framing = carrier ? carrierReducedZoom : reducedZoom;
+      target = want <= framing ? framing : 1;
       final d = target - zoom;
       zoom += d.clamp(-reducedRate * dt, reducedRate * dt);
       return;
     }
-    target = want.clamp(minZoom, 1.0);
-    if (hold) target = math.max(target, math.min(1.0, zoom + maxRate * dt));
+    final lo = floorZoom;
+    target = want.clamp(lo, 1.0);
+    final top = carrier ? carrierMaxZoom : 1.0;
+    if (hold) {
+      target = math.max(
+        target,
+        math.min(math.max(top, zoom), zoom + maxRate * dt),
+      );
+    }
     final d = target - zoom;
     // Eased: full rate far from the target, slowing within 0.02 of it.
     final ease = (d.abs() / .02).clamp(.15, 1.0);
     final step = maxRate * ease * dt;
-    zoom = (zoom + d.clamp(-step, step)).clamp(minZoom, 1.0);
+    zoom = (zoom + d.clamp(-step, step)).clamp(lo, 1.0);
   }
 
   /// Advances the follow toward the boss at [bossX] and glide phase
   /// [glide] (−1..1), at [strength] (0..1; 0 under reduced motion).
-  void stepFollow(double dt, {required double bossX, required double glide, required double strength}) {
+  void stepFollow(
+    double dt, {
+    required double bossX,
+    required double glide,
+    required double strength,
+  }) {
     final k = 1 - math.exp(-dt * 3 / followSeconds);
     followStrength += (strength.clamp(0.0, 1.0) - followStrength) * k;
     final wantX = followPan * ((bossX - 180) / 100).clamp(-1.0, 1.0);
@@ -165,6 +219,9 @@ class ArenaCamera {
   /// Where a background point is drawn (tests, review).
   Offset backgroundPoint(Offset p) {
     final m = backgroundMatrix;
-    return Offset(m[0] * p.dx + m[4] * p.dy + m[12], m[1] * p.dx + m[5] * p.dy + m[13]);
+    return Offset(
+      m[0] * p.dx + m[4] * p.dy + m[12],
+      m[1] * p.dx + m[5] * p.dy + m[13],
+    );
   }
 }
