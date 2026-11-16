@@ -12,7 +12,9 @@ package main
 //	rigsheet kit RIG OUT.png HULL...                 kit turntables: 3x3 clay views + passes per hull
 //	rigsheet heroes RIG HULL OUT.png TITLE RAW...    hero candidate sheet (raw, finished, phone scale)
 //	rigsheet bakefinish BAKE RIG HULL                finish every baked layer at its class density + manifest.json
-//	rigsheet budget BAKE RIG HULL...                 measured resident RGBA of the finished outputs
+//	rigsheet budget BAKE RIG HULL...                 measured resident RGBA of the finished outputs (+ the field page)
+//	rigsheet fielddata BAKE RIG HULL                 carrier-v3 field data texture: R distance, G region, B height
+//	                                                 (bakefinish also under-paints layers, finishes door_ states and wreck frames)
 //	rigsheet views BAKE RIG HULL OUT.png             finished views x stages with the overlay (+ OUT.gif swerve)
 //	rigsheet stages BAKE RIG HULL OUT.png            S0-S3 at three yaws, S4 wrecks
 //	rigsheet sets BAKE RIG OUT.png HULL...           the same tour with different module sets, side by side
@@ -65,6 +67,8 @@ func main() {
 		cmdHeroes(a)
 	case "bakefinish":
 		cmdBakeFinish(a)
+	case "fielddata":
+		cmdFieldData(a)
 	case "budget":
 		cmdBudget(a)
 	case "views":

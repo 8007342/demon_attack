@@ -83,22 +83,33 @@ func cmdBakeFinish(a []string) {
 	m := Manifest{Schema: "demon-attack.boss-bake/v2", Hull: hull, Family: r.Family, Frame: r.Frame, Texel: r.Texel,
 		StageScale: ss, StoredYaw: fam.Views.StoredYaw, Mirror: "yaw -t draws +t mirrored about x = 0; at yaw 0 and in wrecks a mirrored pair stores its L or R once (see inst)",
 		Notes: "dxy = top-left of the cropped sprite in arena units from the carrier centre at the view; draw at w/texel x h/texel units"}
-	add := func(dir, name, kind, inst, stage, view string, texel float64, im *image.NRGBA) {
+	addAt := func(frame [4]float64, dir, name, kind, inst, stage, view string, texel float64, im *image.NRGBA) {
 		out := filepath.Join(dir, "fin_"+name)
 		save(out, im)
-		cr := alphaBounds(im)
+		// carrier-v3 §2.4: 4 transparent texels around every sprite (the mesh's edge lies in them)
+		cr := padCrop(im, 4)
 		if cr.Empty() {
 			return
 		}
 		rel, _ := filepath.Rel(filepath.Join(bake, hull), out)
 		e := Entry{File: rel, Kind: kind, Inst: inst, Stage: stage, View: view, Texel: texel,
 			Crop:  [4]int{cr.Min.X, cr.Min.Y, cr.Dx(), cr.Dy()},
-			DXY:   [2]float64{r.Frame[0] + float64(cr.Min.X)/texel, r.Frame[1] + float64(cr.Min.Y)/texel},
+			DXY:   [2]float64{frame[0] + float64(cr.Min.X)/texel, frame[1] + float64(cr.Min.Y)/texel},
 			Bytes: (cr.Dx() + 2) * (cr.Dy() + 2) * 4}
 		if kind != "beauty" {
 			m.Resident += e.Bytes
 		}
 		m.Entries = append(m.Entries, e)
+	}
+	add := func(dir, name, kind, inst, stage, view string, texel float64, im *image.NRGBA) {
+		addAt(r.Frame, dir, name, kind, inst, stage, view, texel, im)
+	}
+	// a layer's render with its under-paint when bake.py rendered one (carrier-v3)
+	withUnder := func(d, nm string, src *image.NRGBA) *image.NRGBA {
+		if u := filepath.Join(d, "under_"+nm); mustStat(u) {
+			return underPaint(src, load(u), r)
+		}
+		return src
 	}
 	for _, stage := range []string{"S0", "S1", "S2", "S3"} {
 		d := filepath.Join(bake, hull, stage)
@@ -109,7 +120,7 @@ func cmdBakeFinish(a []string) {
 		n := 0
 		for _, e := range ents {
 			nm := e.Name()
-			if strings.HasPrefix(nm, "fin_") || !strings.HasSuffix(nm, ".png") {
+			if strings.HasPrefix(nm, "fin_") || strings.HasPrefix(nm, "under_") || !strings.HasSuffix(nm, ".png") {
 				continue
 			}
 			src := load(filepath.Join(d, nm))
@@ -117,8 +128,9 @@ func cmdBakeFinish(a []string) {
 			switch {
 			case strings.HasPrefix(nm, "beauty_"):
 				add(d, nm, "beauty", "", stage, v, r.maxTexel(), finishAt(src, r, r.maxTexel(), pal, true))
-			case strings.HasPrefix(nm, "layer_"):
-				id := strings.TrimSuffix(strings.TrimPrefix(nm, "layer_"), "_"+v+".png")
+			case strings.HasPrefix(nm, "layer_"), strings.HasPrefix(nm, "door_"):
+				kind := strings.SplitN(nm, "_", 2)[0] // layer, or door: a gate's open state
+				id := strings.TrimSuffix(strings.TrimPrefix(nm, kind+"_"), "_"+v+".png")
 				in := r.inst(id)
 				if in == nil {
 					continue
@@ -127,7 +139,7 @@ func cmdBakeFinish(a []string) {
 				if stage != "S0" {
 					tx *= ss
 				}
-				add(d, nm, "layer", id, stage, v, tx, finishAt(src, r, tx, pal, false))
+				add(d, nm, kind, id, stage, v, tx, finishAt(withUnder(d, nm, src), r, tx, pal, false))
 			}
 			n++
 		}
@@ -145,7 +157,17 @@ func cmdBakeFinish(a []string) {
 		if in == nil {
 			continue
 		}
-		add(d, nm, "wreck", id, "S4", tag(45, 0), in.Texel, finishAt(load(filepath.Join(d, nm)), r, in.Texel, pal, true))
+		if !strings.HasSuffix(nm, ".png") {
+			continue
+		}
+		fr := r.Frame // carrier-v3: a wreck rendered in its own frame carries it in a sidecar
+		if b, err := os.ReadFile(filepath.Join(d, strings.TrimSuffix(nm, ".png")+".json")); err == nil {
+			var wf struct{ Frame [4]float64 }
+			if json.Unmarshal(b, &wf) == nil {
+				fr = wf.Frame
+			}
+		}
+		addAt(fr, d, nm, "wreck", id, "S4", tag(45, 0), in.Texel, finishAt(load(filepath.Join(d, nm)), r, in.Texel, pal, true))
 	}
 	if b := filepath.Join(d, "fin_belly.png"); mustStat(b) { // the Overflight underside: its own asset, not resident with the hull
 		im := load(b)
@@ -187,6 +209,11 @@ func cmdBudget(a []string) {
 			}
 			by[k] += e.Bytes
 			total += e.Bytes
+		}
+		if im, err := os.Stat(filepath.Join(bake, hull, "fin_field.png")); err == nil && im.Size() > 0 {
+			f := load(filepath.Join(bake, hull, "fin_field.png"))
+			by["field data"] = f.Bounds().Dx() * f.Bounds().Dy() * 4
+			total += by["field data"]
 		}
 		keys := make([]string, 0, len(by))
 		for k := range by {

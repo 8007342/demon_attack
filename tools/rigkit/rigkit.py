@@ -210,6 +210,17 @@ def align_to(n):
     return Matrix((x, y, n)).transposed()
 
 
+def cleared(surfaces, w):
+    """Whether an array element at unscaled module point w falls in a gate clearing (hero-view
+    arena units; surfaces['_clear'] = [(x, y, r)], set per hull; gate modules are never cleared)."""
+    cl = surfaces.get('_clear')
+    if not cl or surfaces.get('_noclear'):
+        return False
+    e = surfaces.get('_ext', {}).get('_self', 1.0)
+    sx, sy = w.x * e, -(w.y + w.z) * S2 * e
+    return any(math.hypot(sx - x, sy - y) < r for x, y, r in cl)
+
+
 def array_geometry(p, frame, surfaces, off=Vector((0, 0, 0))):
     """An array generator: copies of a child prim at points along a path / arc / grid,
     with ramps (scale, rot), seeded jitter, and optional drop onto a module surface."""
@@ -239,16 +250,20 @@ def array_geometry(p, frame, surfaces, off=Vector((0, 0, 0))):
             bvh = surfaces.get(drop['onto'])
             if bvh is None:
                 raise ValueError('drop onto unknown surface %s' % drop['onto'])
+            # surfaces are stored unscaled; a module with another extent (a fixed gate on a
+            # scaled hull) casts in the target's unscaled space: k = own extent / target extent
+            ext = surfaces.get('_ext', {})
+            k = ext.get('_self', 1.0) / ext.get(drop['onto'], ext.get('_self', 1.0))
             d = Vector(drop.get('dir', (0, 0, -1))).normalized()
             # mirror-safe: a left element casts at its right twin and mirrors the hit (the BVH
             # triangulates quads along one diagonal, so hit normals are not mirror-exact)
-            o = q + off; fl = o.x < 0
+            o = (q + off) * k; fl = o.x < 0
             m = Vector((-1, 1, 1))
             oc = o * m if fl else o; dc = d * m if fl else d
             hit = bvh.ray_cast(oc - dc * 4000, dc)
             if hit[0] is None:
                 continue  # off the surface: no copy
-            hp, hn = Vector(hit[0]), Vector(hit[1])
+            hp, hn = Vector(hit[0]) / k, Vector(hit[1])
             if hn.dot(dc) > 0:
                 hn = -hn
             if abs(o.x) < 0.5:
@@ -260,6 +275,8 @@ def array_geometry(p, frame, surfaces, off=Vector((0, 0, 0))):
             if drop.get('align', True):
                 tilt = drop.get('tilt', 1.0)  # 1 = follow the normal, 0 = keep the drop direction
                 M = align_to((-d).lerp(nrm, tilt)) @ M
+        if cleared(surfaces, q + off):
+            continue  # carrier-v3: decor never covers a gate
         base = len(V)
         for c in cv:
             V.append(M @ (cR @ (Vector(c) * sc) + cat * sc) + q)
@@ -361,8 +378,10 @@ def module_def(g, slot, set_name):
     m.update({k: v for k, v in sd.items() if k != 'prims'})
     m['prims'] = list(s.get('common', [])) + list(sd.get('prims', []))
     m['set'] = set_name
-    for k in ('lights', 'fires', 'nozzles'):
+    for k in ('lights', 'fires', 'nozzles', 'vortex'):
         m[k] = list(s.get('common_' + k, [])) + list(sd.get(k, []))
+    if 'hinge' in sd:
+        m['hinge'] = sd['hinge']
     return m
 
 
@@ -406,7 +425,11 @@ def module_geometry(g, hull, inst, surfaces, shed=()):
     mod = inst['def']; frame = mod.get('frame', 'ship')
     ext = 1.0 if mod.get('fixed') else g['hulls'][hull].get('extent', 1.0) * inst.get('scale', 1.0)
     off = Vector(inst['offset']); parts = []; surf_v, surf_f = [], []
+    surfaces.setdefault('_ext', {})['_self'] = ext
+    surfaces['_noclear'] = mod.get('gameplay') == 'gate' or inst['slot'] == 'prow'
+    tmap = g['hulls'][hull].get('tag_map', {})  # carrier-v3: a hull may repaint a material (carrier4-shroud plate -> scale)
     for p in mod['prims']:
+        tag = tmap.get(p['tag'], p['tag'])
         if p.get('drop', {}).get('onto') == 'self':  # drop onto this module's earlier prims
             surfaces['self'] = BVHTree.FromPolygons([tuple(q) for q in surf_v], surf_f)
         v, f = build_prim(p, frame, surfaces, off)
@@ -419,35 +442,77 @@ def module_geometry(g, hull, inst, surfaces, shed=()):
         for ci, (cv, cf) in enumerate(copies):
             if p.get('surface', True):
                 b = len(surf_v); surf_v += cv; surf_f += [tuple(b + k for k in x) for x in cf]
-            if p['tag'] in shed:
+            if tag in shed:
                 continue
             wv = mirror_x(cv) if inst['sign'] < 0 else cv
             wv = [q * ext for q in wv]
-            parts.append((p['name'] + ('' if ci == 0 else '.m'), p['tag'], bool(p.get('subsurf') or p.get('smooth')), wv, cf))
+            door = door_matrix(p.get('open'), frame, wv, inst['sign'] if ci == 0 else -inst['sign']) if p.get('open') else None
+            parts.append((p['name'] + ('' if ci == 0 else '.m'), tag, bool(p.get('subsurf') or p.get('smooth')), wv, cf, door))
     if surf_v:
         surfaces[inst['slot']] = BVHTree.FromPolygons([tuple(q) for q in surf_v], surf_f)
+        surfaces['_ext'][inst['slot']] = ext
     return parts
 
 
-def build_hull(g, hull, stage='S0', mats=None):
+def door_matrix(spec, frame, verts, sign):
+    """carrier-v3 gates: the world matrix of a door part in its open state. spec (module frame):
+    {pivot: [x, y, n] from the part's centroid, rot: [rx, ry, rz] degrees about the pivot,
+    move: [x, y, n], scale: s}. Only matrix_world moves, so the bake's object coordinates carry
+    the closed state's projected texture with the part (as the articulation poses do)."""
+    F = PLANE if frame in ('face', 'plane') else Matrix.Identity(3)
+    M = Matrix(((-1, 0, 0), (0, 1, 0), (0, 0, 1)))
+    R = F @ rot_matrix(spec.get('rot', [0, 0, 0])) @ F.transposed()
+    piv = F @ Vector(spec.get('pivot', [0, 0, 0])); mv = F @ Vector(spec.get('move', [0, 0, 0]))
+    if sign < 0:
+        R = M @ R @ M; piv = M @ piv; mv = M @ mv
+    c = Vector((0, 0, 0))
+    for v in verts: c += v
+    P = c / max(1, len(verts)) + piv
+    S = Matrix.Diagonal(Vector((spec.get('scale', 1.0),) * 3)).to_4x4()
+    return Matrix.Translation(P + mv) @ R.to_4x4() @ S @ Matrix.Translation(-P)
+
+
+def build_hull(g, hull, stage='S0', mats=None, doors='closed'):
     """Create the hull's objects in the scene; returns {instance id: [objects]}.
-    Instances build in hull order, so a later slot can drop onto an earlier one."""
+    Instances build in hull order, so a later slot can drop onto an earlier one.
+    doors='open' sets every door part (a prim with an 'open' spec) to its open matrix."""
     shed, removed = stage_plan(g, hull, stage)
-    surfaces = {}; objs = {}
+    ids = {i['id'] for i in instances(g, hull)}
+    surfaces = {'_clear': [(p['at'][0], p['at'][1], p['clear']) for p in g.get('anchors', {}).get('points', [])
+                           if p.get('clear') and p['module'] in ids]}
+    objs = {}
     for inst in instances(g, hull):
         parts = module_geometry(g, hull, inst, surfaces, shed)
         if inst['id'] in removed:
             continue
         objs[inst['id']] = []
-        for name, tag, smooth, v, f in parts:
+        for name, tag, smooth, v, f, door in parts:
             nm = '%s.%s' % (inst['id'], name)
             ob = bpy.data.objects.new(nm, mesh_from(v, f, nm, smooth))
             ob['tag'] = tag; ob['inst'] = inst['id']; ob['prim'] = name
+            if door is not None:
+                ob['door'] = [c for r in door for c in r]
             bpy.context.scene.collection.objects.link(ob)
             if mats:
                 ob.data.materials.append(mats[tag])
             objs[inst['id']].append(ob)
+    set_doors(objs, doors)
     return objs
+
+
+def set_doors(objs, state):
+    """Door parts to their closed (rest) or open matrix."""
+    for lst in objs.values():
+        for ob in lst:
+            if 'door' in ob:
+                d = list(ob['door'])
+                ob.matrix_world = Matrix([d[0:4], d[4:8], d[8:12], d[12:16]]) if state == 'open' else Matrix.Identity(4)
+    bpy.context.view_layer.update()
+
+
+def door_insts(objs):
+    """Instance ids with door parts."""
+    return [iid for iid, lst in objs.items() if any('door' in ob for ob in lst)]
 
 
 def module_point(g, hull, inst, q):
@@ -535,11 +600,21 @@ def hull_frame(g, objs, views, ppu, hull=None):
             x0, x1, y0, y1 = min(x0, sx), max(x1, sx), min(y0, sy), max(y1, sy)
     m = g.get('render', {}).get('margin', 6)
     x0, y0 = math.floor(x0 - m), math.floor(y0 - m); x1, y1 = math.ceil(x1 + m), math.ceil(y1 + m)
-    env = g.get('render', {}).get('envelope')
+    env = envelope(g, hull)
     if env:
         x0, y0, x1, y1 = max(x0, env[0]), max(y0, env[1]), min(x1, env[2]), min(y1, env[3])
     w = math.ceil((x1 - x0) * ppu / 2) * 2 / ppu; h = math.ceil((y1 - y0) * ppu / 2) * 2 / ppu
     return (x0, y0, x0 + w, y0 + h), max(v.length for v in verts)
+
+
+def envelope(g, hull=None):
+    """The visible envelope (carrier-v3 §6.2: per hull, render.envelope as the fallback); None
+    with --envelope off."""
+    if g.get('_envelope_off'):
+        return None
+    if hull is not None and 'envelope' in g['hulls'].get(hull, {}):
+        return g['hulls'][hull]['envelope']
+    return g.get('render', {}).get('envelope')
 
 
 def module_rect_px(objs_list, basis, frame, ppu, pad=3):
@@ -577,12 +652,15 @@ def gate_view(g, objs, basis, scene):
     for pt in a.get('points', []):
         inst, prim = pt['module'], pt['prim']
         obs = [ob for ob in objs.get(inst, []) if ob['prim'] == prim]
+        if not obs and pt.get('optional') and inst not in objs:
+            continue  # a gate of a later tour
         if not obs:
             fails.append('%s: prim %s.%s missing' % (pt['name'], inst, prim)); continue
         c = obj_centre(obs); sx, sy = project(c, basis)
         err = math.hypot(sx - pt['at'][0], sy - pt['at'][1])
         hit, _ = ray_hit(scene, c + back * DIST, -back)
-        clear = hit is not None and hit.startswith(inst + '.')
+        # a closed gate door over a window is part of the window (carrier-v3 §4)
+        clear = hit is not None and (hit.startswith(inst + '.') or hit.startswith('gate_'))
         res[pt['name']] = {'x': round(sx, 2), 'y': round(sy, 2), 'err': round(err, 2), 'unobstructed': clear, 'hit': hit}
         if err > tol:
             fails.append('%s off by %.2f' % (pt['name'], err))
@@ -607,7 +685,7 @@ def gate_view(g, objs, basis, scene):
 
 def project_points(g, hull, objs, basis, scene):
     """Lights, fires and nozzles of the present instances, projected, with visibility."""
-    out = {'lights': [], 'fires': [], 'nozzles': []}
+    out = {'lights': [], 'fires': [], 'nozzles': [], 'vortex': []}
     insts = {i['id']: i for i in instances(g, hull)}
     _, _, back = basis
     for iid in objs:

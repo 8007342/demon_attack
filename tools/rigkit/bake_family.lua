@@ -10,7 +10,8 @@
 local family, hull = assert(arg[1], "usage: bake_family.lua FAMILY.json HULL [--sheets PREFIX]"), assert(arg[2])
 local home = os.getenv("HOME")
 local name = family:match("([^/]+)%.json$")
-local base = home .. "/.cache/tillandsias-project/rigkit/" .. name
+-- RIGKIT_BASE overrides the output root (carrier-v3 keeps its bakes beside the v2 ones)
+local base = os.getenv("RIGKIT_BASE") or (home .. "/.cache/tillandsias-project/rigkit/" .. name)
 local rig, bake, inp = base .. "/rig", base .. "/bake", base .. "/in"
 local sheet = home .. "/.cache/tillandsias-project/rigsheet"
 local threads = os.getenv("RIGKIT_THREADS") or "8"
@@ -68,6 +69,10 @@ if belly ~= "" then
   sh(("%s finish %s %s %s S0 %s 0.5 %s/%s/fin_belly.png"):format(sheet, root .. belly, rb, hull, bt, bake, hull))
 end
 sh(("%s bakefinish %s %s %s"):format(sheet, bake, rig, hull))
+-- carrier-v3: the field data texture (distance, region, height) when the family declares a field
+if capture(("jq -r '.field // empty | .ppu' %s"):format(family)) ~= "" then
+  sh(("%s fielddata %s %s %s"):format(sheet, bake, rig, hull))
+end
 sh(("%s budget %s %s %s"):format(sheet, bake, rig, hull))
 if arg[3] == "--sheets" then
   local pre = assert(arg[4], "--sheets needs a PREFIX, e.g. art/contact/boss-carrier-v2-t1-thorn")
