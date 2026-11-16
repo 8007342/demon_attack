@@ -78,12 +78,63 @@ func nearest(pal []color.NRGBA, c color.NRGBA) color.NRGBA {
 	return color.NRGBA{best.R, best.G, best.B, c.A}
 }
 
+// registerBBox maps a raw (already at the rig size) so the bounding box of its non-key
+// pixels lands on the clay silhouette's box (independent x and y scale and offset). For
+// edits that drift off the control's framing (a small subject the model re-centres or
+// stretches); a raw that keeps the framing comes back nearly unchanged.
+func registerBBox(fit, clay *image.NRGBA) *image.NRGBA {
+	W, H := fit.Bounds().Dx(), fit.Bounds().Dy()
+	box := func(in func(x, y int) bool) (float64, float64, float64, float64) {
+		x0, y0, x1, y1 := W, H, -1, -1
+		for y := 0; y < H; y++ {
+			for x := 0; x < W; x++ {
+				if in(x, y) {
+					x0, y0, x1, y1 = min(x0, x), min(y0, y), max(x1, x), max(y1, y)
+				}
+			}
+		}
+		return float64(x0), float64(y0), float64(x1 + 1), float64(y1 + 1)
+	}
+	// raw subject: neither key nor near-key, with a little margin against noise in the key
+	rx0, ry0, rx1, ry1 := box(func(x, y int) bool {
+		c := fit.NRGBAAt(x, y)
+		return !(int(c.G) > int(c.R)+30 && int(c.G) > int(c.B)+30)
+	})
+	cx0, cy0, cx1, cy1 := box(func(x, y int) bool { return clay.Pix[(y*W+x)*4+3] >= 128 })
+	if rx1 <= rx0 || cx1 <= cx0 {
+		return fit
+	}
+	sx, sy := (rx1-rx0)/(cx1-cx0), (ry1-ry0)/(cy1-cy0)
+	out := image.NewNRGBA(fit.Bounds())
+	for y := 0; y < H; y++ {
+		fy := ry0 + (float64(y)+0.5-cy0)*sy
+		for x := 0; x < W; x++ {
+			fx := rx0 + (float64(x)+0.5-cx0)*sx
+			xx, yy := int(math.Floor(fx)), int(math.Floor(fy))
+			if xx < 0 || yy < 0 || xx >= W || yy >= H {
+				out.SetNRGBA(x, y, keyCol)
+				continue
+			}
+			out.SetNRGBA(x, y, fit.NRGBAAt(xx, yy))
+		}
+	}
+	return out
+}
+
 // fitRaw: the raw resized to the rig frame, masked to the stage's silhouette (+1 texel),
 // key removed and despilled. Render resolution.
 func fitRaw(raw *image.NRGBA, r *Rig, stage, t string) *image.NRGBA {
+	return fitRawOpt(raw, r, stage, t, false)
+}
+
+// fitRawOpt: fitRaw, optionally registered to the clay silhouette box first (registerBBox).
+func fitRawOpt(raw *image.NRGBA, r *Rig, stage, t string, register bool) *image.NRGBA {
 	W, H := r.Size[0], r.Size[1]
 	fit := resize(raw, W, H)
 	clay := load(r.path(stage, "clay", t))
+	if register {
+		fit = registerBBox(fit, clay)
+	}
 	sil := make([]bool, W*H)
 	for i := range sil {
 		sil[i] = clay.Pix[i*4+3] >= 128

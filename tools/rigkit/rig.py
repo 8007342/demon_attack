@@ -4,12 +4,14 @@
 #   $PY -I tools/rigkit/rig.py FAMILY.json --check [--hulls a,b]      grammar gate, no renders
 #   $PY -I tools/rigkit/rig.py FAMILY.json OUT [--hulls a,b] [--stages S0,S2,S3] [--views all|stored|hero]
 #                                   [--passes clay,hint,depth,normal,id,z] [--threads 8] [--envelope off]
+#                                   [--pose-passes clay,hint]
 #
 # Per hull, view and stage: clay (Workbench, studio light + cavity), hint (flat hint colours:
 # family materials with a "hint"), depth (near = white), normal (camera space), id (flat
 # instance colours, no AA), z (16-bit depth at the hero view, for the projection bake).
 # OUT/<hull>/rig.json: the frame, render density, cameras, instances (slot, set, texel class,
-# detach), the projected anchors, lights, fires and nozzles per view and stage, the overlay
+# detach), the poses of an articulated family (rigkit.poses; --pose-passes renders those passes per
+# pose at the hero view as <kind>_<view>_<pose>.png in S0), the projected anchors, lights, fires and nozzles per view and stage, the overlay
 # the sheets draw (family anchors.overlay), and the gate results. Exit 2 when the gate fails.
 import json, math, os, re, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -45,7 +47,7 @@ def instance_ids(g, hull):
 
 def verify_dart(g):
     """Optional: the family's anchor targets must equal constants in a Dart source."""
-    vd = g['anchors'].get('verify_dart')
+    vd = g.get('anchors', {}).get('verify_dart')
     if not vd:
         return []
     src = open(os.path.join(K.ROOT, vd['file'])).read(); errs = []
@@ -97,7 +99,7 @@ def run_check(g, hulls):
     return errs
 
 
-def run_render(g, out, hulls, stages, which, passes, threads):
+def run_render(g, out, hulls, stages, which, passes, threads, pose_passes=()):
     all_fail = []
     rcfg = g.get('render', {})
     for hull in hulls:
@@ -108,7 +110,7 @@ def run_render(g, out, hulls, stages, which, passes, threads):
         ppu = max(tex.values()) * rcfg.get('scale', 2)
         K.clear_scene()
         objs0 = K.build_hull(g, hull, 'S0'); bpy.context.view_layer.update()
-        frame, radius = K.hull_frame(g, objs0, K.all_views(g, 'belly' if which == 'belly' else 'all'), ppu)
+        frame, radius = K.hull_frame(g, objs0, K.all_views(g, 'belly' if which == 'belly' else 'all'), ppu, hull)
         sc.render.resolution_x = round((frame[2] - frame[0]) * ppu)
         sc.render.resolution_y = round((frame[3] - frame[1]) * ppu)
         sc.render.resolution_percentage = 100
@@ -123,7 +125,7 @@ def run_render(g, out, hulls, stages, which, passes, threads):
                'origin_px': [round(-frame[0] * ppu, 3), round(-frame[1] * ppu, 3)],
                'envelope': rcfg.get('envelope'),
                'depth': {'near': near, 'far': far, 'map': 'value = 1 - (viewZ - near) / (far - near)'},
-               'swerve_axis': list(K.swerve_axis(g)), 'views': {}, 'overlay': g['anchors'].get('overlay', []),
+               'swerve_axis': list(K.swerve_axis(g)), 'views': {}, 'overlay': g.get('anchors', {}).get('overlay', []),
                'module_ids': {k: '#%02X%02X%02X' % tuple(round(c * 255) for c in v) for k, v in ids.items()},
                'instances': [{'id': i['id'], 'module': i['module'], 'slot': i['slot'], 'set': i['set'],
                               'mirror': i['sign'], 'offset': i['offset'], 'detach': i['def'].get('detach'),
@@ -131,6 +133,7 @@ def run_render(g, out, hulls, stages, which, passes, threads):
                               'texel_class': i['def'].get('texel', 'mass'),
                               'texel': tex[i['def'].get('texel', 'mass')], 'wreck': i['def'].get('wreck', True)}
                              for i in insts],
+               'poses': [{'id': p[0], 'dir': p[1], 'tilt': p[2]} for p in K.poses(g)] if g.get('articulation') else [],
                'stages': {s: {'shed': sorted(K.stage_plan(g, hull, s)[0]), 'removed': sorted(K.stage_plan(g, hull, s)[1])}
                           for s in g['stages']}}
         for stage in stages:
@@ -153,6 +156,14 @@ def run_render(g, out, hulls, stages, which, passes, threads):
                     'back': [round(c, 6) for c in basis[2]]}, 'stages': {}})
                 v['stages'][stage] = {'anchors': gate, **pts, 'gate_fail': fails}
                 all_fail += ['%s %s %s: %s' % (hull, stage, tag, f) for f in fails]
+            if stage == 'S0' and pose_passes and g.get('articulation'):
+                hv = tuple(g['views']['hero']); basis = K.view_basis(g, *hv); K.place_camera(cam, basis, frame)
+                d = os.path.join(out, hull, stage)
+                for pose in K.poses(g):
+                    K.apply_pose(g, objs, hull, pose)
+                    for kind in pose_passes:
+                        K.render_pass(sc, os.path.join(d, '%s_%s_%s.png' % (kind, K.view_tag(*hv), pose[0])), kind, objs, ctx)
+                K.apply_pose(g, objs, hull, K.poses(g)[0])
             print('%s %s: %.1f s' % (hull, stage, time.time() - t0), flush=True)
         with open(os.path.join(out, hull, 'rig.json'), 'w') as fh:
             json.dump(rig, fh, indent=1)
@@ -173,7 +184,8 @@ def main(argv):
         g.setdefault('render', {}).pop('envelope', None)
     stages = opt.get('stages', 'S0,S2,S3').split(',')
     passes = opt.get('passes', 'clay,hint,depth,normal,id,z').split(',')
-    fails = run_render(g, args[1], hulls, stages, opt.get('views', 'all'), passes, int(opt.get('threads', 8)))
+    pp = [p for p in opt.get('pose-passes', '').split(',') if p]
+    fails = run_render(g, args[1], hulls, stages, opt.get('views', 'all'), passes, int(opt.get('threads', 8)), pp)
     for f in fails: print('GATE', f)
     print('anchor gate: %s' % ('ok' if not fails else '%d failures' % len(fails)))
     return 2 if fails else 0

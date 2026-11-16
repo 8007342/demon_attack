@@ -7,6 +7,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'game/atmosphere.dart' show AtmosphereQuality;
 import 'game/model.dart';
+import 'widgets/flight_joystick.dart';
 import 'widgets/pilot_console_content.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
@@ -1808,6 +1809,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 collecting: model.canPilot && !model.combat,
                 tiltActive: tilt.isActive,
                 steering: model.steering,
+                joystick: flightJoystickTarget(
+                  model,
+                  boost: scene.bossDirector.flowBoost,
+                ),
+                reduceMotion: model.reducedMotion ? true : null,
               ),
             ),
           ),

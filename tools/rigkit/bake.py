@@ -4,7 +4,7 @@
 # Python only because bpy forces it.
 #
 #   $PY -I tools/rigkit/bake.py FAMILY.json RIG OUT HULL S0=fit.png[,S1=...,S2=...,S3=...]
-#        [--views stored|all|hero] [--layers 1] [--wrecks 1] [--samples 6] [--threads 8]
+#        [--views stored|all|hero] [--layers 1] [--wrecks 1] [--samples 6] [--threads 8] [--poses 1]
 #
 # A surface point takes the hero texel at its hero-view position when the hero camera saw it
 # (it faces the camera and its depth matches the rig's 16-bit z pass within eps units);
@@ -14,7 +14,9 @@
 #
 # Outputs: OUT/<hull>/<stage>/beauty_<view>.png, layer_<inst>_<view>.png (other instances held
 # out: the layers recompose the beauty), OUT/<hull>/wreck_<inst>_f<0|1>.png, and with --views
-# stored also beauty_<mirror view>.png at the hero pitch for the mirror check.
+# stored also beauty_<mirror view>.png at the hero pitch for the mirror check. With --poses 1 (an
+# articulated family, rigkit.poses) also beauty_<hero view>_<pose>.png for every pose of the S0 stage:
+# the parts move with their projected texture, so every pose frame carries the same paint.
 import json, math, os, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy
@@ -151,6 +153,13 @@ def main(argv):
                     bpy.ops.render.render(write_still=True); n += 1
         for lst in objs.values():
             for ob in lst: ob.is_holdout = False
+        if opt.get('poses') == '1' and stage == 'S0' and g.get('articulation'):
+            basis = K.view_basis(g, *hero); K.place_camera(cam, basis, frame); set_border(sc, None, rig['size'])
+            for pose in K.poses(g):
+                K.apply_pose(g, objs, hull, pose)
+                sc.render.filepath = os.path.join(d, 'beauty_%s_%s.png' % (hero_tag, pose[0]))
+                bpy.ops.render.render(write_still=True); n += 1
+            K.apply_pose(g, objs, hull, K.poses(g)[0])
         if opt.get('wrecks', '1') == '1' and stage == wreck_stage:
             basis = K.view_basis(g, *hero); K.place_camera(cam, basis, frame)
             for iid, lst in objs.items():
