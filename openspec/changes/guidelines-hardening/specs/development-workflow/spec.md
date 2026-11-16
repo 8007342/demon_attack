@@ -24,7 +24,7 @@ A file whose header says it is generated SHALL change only by rerunning its gene
 - **THEN** the merge keeps both blocks and reruns `python3 -I tools/comms_pipeline.py dart` instead of hand-merging `lib/comms/comms_bank.dart`
 
 ### Requirement: Research provenance
-Every research conclusion in a spec or plan document SHALL keep its source beside it: author or organisation, title, URL or citation, and date read. A conclusion with no source that can be verified online SHALL be marked `UNSOURCED` with a reference into `plan/provenance-audit.md`. Citations SHALL NOT be invented.
+Every research conclusion in a spec or plan document SHALL keep its source beside it: author or organisation, title, URL or citation, and date read; a source is read only if its page was fetched. A conclusion with no source that can be verified online SHALL be marked `UNSOURCED` with a reference into `plan/provenance-audit.md`. Citations SHALL NOT be invented.
 
 #### Scenario: New research
 - **WHEN** an agent writes a conclusion drawn from a talk, paper or web page
@@ -32,7 +32,11 @@ Every research conclusion in a spec or plan document SHALL keep its source besid
 
 #### Scenario: Source cannot be reached
 - **WHEN** the only source for a claim cannot be opened from the forge
-- **THEN** the claim is marked `UNSOURCED` and listed in the audit, not cited from memory or a search snippet
+- **THEN** the claim is marked `UNSOURCED` and listed in the audit, not cited from memory
+
+#### Scenario: Snippet only
+- **WHEN** a source could only be seen as a search-result snippet because the proxy blocks its page
+- **THEN** it is cited with the label `unread: snippet only`, the claim still counts as unsourced, and the proxy is not bypassed through host tools
 
 ### Requirement: Render durability and studio safety
 Picked raw renders and their rebuild recipes SHALL be committed, because a host reset wipes everything outside the repository and re-rendering a seed is not byte-identical. Agents SHALL NOT call `studio.restart`, and SHALL NOT start a model download without the operator's consent token.

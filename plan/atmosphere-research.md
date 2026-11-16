@@ -4,7 +4,7 @@
 delicious fog … let's do so much more with it"): fog layers, aerial perspective, parallax, shadows, a giant
 silhouette in the fog, and flock/swarm arrivals. **[inference]** marks engineering judgement, not a source.
 Some primary pages refused fetches (iquilezles.org, Reynolds' GDC 99 page, the INSIDE slides); claims taken
-from search snippets or memory are flagged in the source list.
+from search snippets are labelled `unread: snippet only` and those from memory are flagged in the source list.
 
 ## 1. Aerial perspective (distance colour)
 
@@ -155,7 +155,7 @@ sector grounds.
 
 ## Sources
 
-Atmosphere: Quilez, "Better fog" (https://iquilezles.org/articles/fog/, snippets only) and "Domain warping"
+Atmosphere: Quilez, "Better fog" (https://iquilezles.org/articles/fog/, unread: snippet only) and "Domain warping"
 (https://iquilezles.org/articles/warp/); Gonzalez Vivo & Lowe, The Book of Shaders ch. 13; Hillaire, SIGGRAPH
 2015 Advances (Frostbite volumetrics) and EGSR 2020 (sky and atmosphere); Bruneton & Neyret, EGSR 2008 (from
 memory); Wenzel, "Real-time Atmospheric Effects in Games", SIGGRAPH 2006; Mitchell, GPU Gems 3 ch. 13;

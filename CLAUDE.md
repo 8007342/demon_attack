@@ -163,8 +163,11 @@ When a change moves a number on purpose, record the before and after values and 
 ## 8. Provenance
 
 Every research conclusion in a spec or a plan doc keeps its sources next to it: author or organisation, title, URL
-or citation, and date read. Use the form `[source: Author/Org, "Title", URL, read YYYY-MM-DD]`. A claim with no
-source you can verify online is marked `[UNSOURCED: plan/provenance-audit.md#<id>]`. Never invent a citation.
+or citation, and date read. Use the form `[source: Author/Org, "Title", URL, read YYYY-MM-DD]`. A source counts as
+"read" only if its page was actually fetched. A source seen only as a search-result snippet is cited as
+`[source: Author/Org, "Title", URL, unread: snippet only]` and does not make the claim sourced. A claim with no
+read source is marked `[UNSOURCED: plan/provenance-audit.md#<id>]`. Never invent a citation, and never route around
+the forge proxy (for example through host browser tools) to reach a blocked reference site.
 *Why:* earlier research kept its conclusions and lost its sources, so nobody could check them (operator, 2026-11-16).
 The audit is in `plan/provenance-audit.md`.
 

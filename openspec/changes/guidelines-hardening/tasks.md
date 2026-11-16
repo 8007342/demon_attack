@@ -53,7 +53,8 @@
 
 - [ ] 6.1 Act on the contradictions: C-09 (keep the AAC fallback for Safari, and fix the `battle-metal-radio-rework` design), and D-13 and D-15 (the `pwa-install` design's dates and engine positions). Reason: decision and edit in other changes
 - [ ] 6.2 Apply part D's citations and `UNSOURCED` marks inline once `bonus-levels`, `boss-*`, `terrain-shadows`, `transition-ascent`, `alien-insignia`, `pwa-install` and the style guides are idle. Reason: concurrent workstreams
-- [ ] 6.3 Re-source the 35 `UNSOURCED` claims from a network that reaches Wikipedia, arXiv, GDC Vault and Google's developer sites, checking each "candidate" first. Reason: those hosts reset connections from the forge on 2026-11-16
+- [ ] 6.3 Re-source the 35 `UNSOURCED` claims once the forge proxy lets the reference sites through (Wikipedia, arXiv, GDC Vault, Google's developer sites), checking each "candidate" first. Never bypass the proxy through host tools. Reason: those hosts reset connections from the forge on 2026-11-16
+- [ ] 6.4 Align `plan/carrier-v3-research.md` and the `carrier-v3` design, whose **[S]** mark means "search snippet", with the `unread: snippet only` label. Reason: carrier-v3 is under concurrent work
 
 ## 7. Forge (outside this repo)
 
