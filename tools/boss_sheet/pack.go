@@ -465,6 +465,9 @@ func packHullAs(bake, rigDir, root, hull, key, class, dartSrc string, v2 *bakeMa
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
+			if strings.HasPrefix(k, "gate_") {
+				continue // carrier-v3: the gate anchors are checked in the rig; the atlas carries `gates`
+			}
 			var p struct {
 				X, Y *float64
 			}

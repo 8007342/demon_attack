@@ -6912,7 +6912,8 @@
         -530,
         420.0,
         240.0
-      ]
+      ],
+      "stage_scale": 0.4
     },
     "carrier5-thorn": {
       "tour": 5,
@@ -7047,7 +7048,8 @@
         -560,
         430.0,
         240.0
-      ]
+      ],
+      "stage_scale": 0.4
     },
     "carrier1-thorn": {
       "tour": 1,
@@ -7279,22 +7281,22 @@
       2048
     ],
     "stage_scale": 0.5,
-    "notes": "Resident RGBA of one hull (one set combination) <= 16 MB: S0 layers at their texel class (core 2.0 px/unit: the prow; mass 1.0: everything else), S1-S3 layers at x stage_scale, wrecks at their class, mirrored pairs once, everything clipped to render.envelope. Measured by rigsheet budget from the manifest."
+    "notes": "Resident RGBA of one hull (one set combination) <= 16 MB: S0 layers at their texel class (core 2.0 px/unit: the prow; mass 1.0: everything else), S1-S3 layers at x stage_scale, wrecks at their class, mirrored pairs once, everything clipped to render.envelope. Measured by rigsheet budget from the manifest. carrier-v3: wreck frames are stored at the stage density; tours 4-5 set hulls.<h>.stage_scale 0.4 (plan lever 1)."
   },
   "selected": {
     "notes": "Picked raws (paths under root); ledger plan/render-runs/boss-carrier-v2.md. sym = the hero half mirrored onto the other (yaw -12 draws +12 mirrored). carrier-v3: picks under art/sprites/sources/carrier-v3/ (ledger plan/render-runs/carrier-v3.md).",
     "root": "art/sprites/sources/",
     "carrier1-thorn": {
-      "S0": "carrier-v3/carrier1-thorn/hero/1016000-regional-1018003.png",
-      "S2": "carrier-v3/carrier1-thorn/stage/S2-1017201-regional-1017401.png",
-      "S3": "carrier-v3/carrier1-thorn/stage/S3-1017300-regional-1017501.png",
+      "S0": "carrier-v3/carrier1-thorn/hero/1016000-regional-1018003-deckshade.png",
+      "S2": "carrier-v3/carrier1-thorn/stage/S2-1017201-regional-1017401-deckshade.png",
+      "S3": "carrier-v3/carrier1-thorn/stage/S3-1017300-regional-1017501-deckshade.png",
       "sym": "left",
       "belly": "boss-carrier-v2/carrier1-thorn/belly/1019000.png"
     },
     "carrier1-lattice": {
-      "S0": "carrier-v3/carrier1-lattice/hero/1025000-regional-1029003.png",
-      "S2": "carrier-v3/carrier1-lattice/stage/S2-1027202-regional-1027400.png",
-      "S3": "carrier-v3/carrier1-lattice/stage/S3-1027303-regional-1027500.png",
+      "S0": "carrier-v3/carrier1-lattice/hero/1025000-regional-1029003-deckshade.png",
+      "S2": "carrier-v3/carrier1-lattice/stage/S2-1027202-regional-1027400-deckshade.png",
+      "S3": "carrier-v3/carrier1-lattice/stage/S3-1027303-regional-1027500-deckshade.png",
       "sym": "left",
       "belly": "carrier-v3/carrier1-lattice/belly/1029911.png"
     },

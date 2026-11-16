@@ -52,17 +52,22 @@ type Manifest struct {
 	Notes      string             `json:"notes"`
 }
 
-func stageScale(fam string) float64 {
+func stageScale(fam string, hull ...string) float64 {
 	b, _ := os.ReadFile(filepath.Join(repoRoot(), fam))
 	var g struct {
 		Budget struct {
 			StageScale float64 `json:"stage_scale"`
 		} `json:"budget"`
 		Hulls map[string]struct {
-			Replaces string `json:"replaces"`
+			Replaces   string  `json:"replaces"`
+			StageScale float64 `json:"stage_scale"`
 		} `json:"hulls"`
 	}
 	_ = json.Unmarshal(b, &g)
+	// carrier-v3: a hull may lower its own stage scale (the plan's first budget lever)
+	if len(hull) > 0 && g.Hulls[hull[0]].StageScale > 0 {
+		return g.Hulls[hull[0]].StageScale
+	}
 	if g.Budget.StageScale == 0 {
 		return 0.5
 	}
@@ -79,7 +84,7 @@ func cmdBakeFinish(a []string) {
 	r := readRig(rigDir, hull)
 	fam := readFamily(r.Family)
 	pal := fam.palette()
-	ss := stageScale(r.Family)
+	ss := stageScale(r.Family, hull)
 	m := Manifest{Schema: "demon-attack.boss-bake/v2", Hull: hull, Family: r.Family, Frame: r.Frame, Texel: r.Texel,
 		StageScale: ss, StoredYaw: fam.Views.StoredYaw, Mirror: "yaw -t draws +t mirrored about x = 0; at yaw 0 and in wrecks a mirrored pair stores its L or R once (see inst)",
 		Notes: "dxy = top-left of the cropped sprite in arena units from the carrier centre at the view; draw at w/texel x h/texel units"}
@@ -169,7 +174,9 @@ func cmdBakeFinish(a []string) {
 				fr = wf.Frame
 			}
 		}
-		addAt(fr, d, nm, "wreck", id, "S4", tag(45, 0), in.Texel, finishAt(load(filepath.Join(d, nm)), r, in.Texel, pal, true))
+		// carrier-v3: wreck frames are stored at the stage density (a torn module falls and
+		// tumbles away; in its own frame the wing wreck was a hull's largest sprite)
+		addAt(fr, d, nm, "wreck", id, "S4", tag(45, 0), in.Texel*ss, finishAt(load(filepath.Join(d, nm)), r, in.Texel*ss, pal, true))
 	}
 	if b := filepath.Join(d, "fin_belly.png"); mustStat(b) { // the Overflight underside: its own asset, not resident with the hull
 		im := load(b)

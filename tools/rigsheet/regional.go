@@ -19,6 +19,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"strings"
 )
 
 func cmdRegional(a []string) {
@@ -97,4 +98,48 @@ func cmdRegionMerge(a []string) {
 	}
 	_ = notM
 	save(a[3], out)
+}
+
+// deckshade RAW RIG HULL OUT.png: a raw at the rig size with the highlights of the
+// prow and the deck-bay leaves compressed (above luminance 56, × 0.35): the AI's
+// gloss on the deck dome quantised to pale bone as two symmetric blobs (eyes) on the
+// tour-1 thorn, and the bay leaves as two pale squares on the lattice. The runtime
+// dome shade stays as the guard; this fixes it in the art.
+func cmdDeckShade(a []string) {
+	r := readRig(a[1], a[2])
+	raw := placeRaw(load(a[0]), r)
+	ids := load(r.path("S0", "id", tag(45, 0)))
+	var want []color.NRGBA
+	for id, h := range r.IDs {
+		if id == "prow" || strings.HasPrefix(id, "gate_bay") {
+			want = append(want, hex(h))
+		}
+	}
+	W, H := raw.Bounds().Dx(), raw.Bounds().Dy()
+	n := 0
+	for i := 0; i < W*H; i++ {
+		c := ids.Pix[i*4 : i*4+4]
+		hit := false
+		for _, w := range want {
+			if abs(int(c[0])-int(w.R)) < 6 && abs(int(c[1])-int(w.G)) < 6 && abs(int(c[2])-int(w.B)) < 6 {
+				hit = true
+				break
+			}
+		}
+		if !hit {
+			continue
+		}
+		p := raw.Pix[i*4 : i*4+3]
+		l := .3*float64(p[0]) + .59*float64(p[1]) + .11*float64(p[2])
+		if l <= 56 {
+			continue
+		}
+		f := (56 + (l-56)*.35) / l
+		for k := 0; k < 3; k++ {
+			p[k] = uint8(float64(p[k]) * f)
+		}
+		n++
+	}
+	save(a[3], raw)
+	fmt.Printf("deckshade: %d texels compressed\n", n)
 }

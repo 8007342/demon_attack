@@ -307,6 +307,9 @@ abstract final class BossGrammar {
       BossSlot.maw: 'slit',
     },
     'lattice': {
+      // carrier-v3-render: the lattice prow without its strut and crystal
+      // rows (they painted as a tooth row over the deck)
+      BossSlot.prow: 'spire',
       BossSlot.carapace: 'lobed',
       BossSlot.wing: 'fan',
       BossSlot.spines: 'crown',
@@ -337,6 +340,14 @@ abstract final class BossGrammar {
     BossSlot.tendril: 'barbed',
     BossSlot.sac: 'cluster',
     BossSlot.crown: 'blaze',
+  };
+
+  /// carrier-v3-render: per-tour set overrides of the family (tour 3's
+  /// scythe arms; tour 4's chitin-case prow and thorn blisters, against
+  /// the pale scale field and the eye-pair hive blisters).
+  static const _tourSets = <int, Map<BossSlot, String>>{
+    2: {BossSlot.wing: 'scythe'},
+    3: {BossSlot.prow: 'bastion', BossSlot.blister: 'thorn'},
   };
 
   /// Extent per tour (×1.00 … ×1.32).
@@ -372,7 +383,11 @@ abstract final class BossGrammar {
   ];
 
   static List<BossModule> _place(int tour, String setName) {
-    final sets = {...?setsOf[setName], if (tour >= 4) ..._tour5};
+    final sets = {
+      ...?setsOf[setName],
+      if (tour >= 4) ..._tour5,
+      ...?_tourSets[tour],
+    };
     return [
       for (var t = 0; t <= tour; t++)
         for (final (slot, suffix) in _adds[t])
@@ -381,7 +396,7 @@ abstract final class BossGrammar {
               catalogue[slot]!,
               side,
               suffix: suffix,
-              set: slot == BossSlot.prow ? setName : (sets[slot] ?? setName),
+              set: sets[slot] ?? setName,
             ),
     ];
   }

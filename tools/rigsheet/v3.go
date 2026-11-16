@@ -708,7 +708,8 @@ func paintFrame(r *Rig) [4]float64 {
 func placeRaw(raw *image.NRGBA, r *Rig) *image.NRGBA {
 	W, H := r.Size[0], r.Size[1]
 	pf := paintFrame(r)
-	if math.Abs(pf[0]-r.Frame[0]) < 1e-6 && math.Abs(pf[1]-r.Frame[1]) < 1e-6 &&
+	// a rig without an envelope (the belly, full plans: --envelope off) is its own paint frame
+	if len(r.Envelope) < 4 || math.Abs(pf[0]-r.Frame[0]) < 1e-6 && math.Abs(pf[1]-r.Frame[1]) < 1e-6 &&
 		math.Abs(pf[2]-r.Frame[2]) < 1e-6 && math.Abs(pf[3]-r.Frame[3]) < 1e-6 {
 		return resize(raw, W, H)
 	}
