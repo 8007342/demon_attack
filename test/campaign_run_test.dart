@@ -19,7 +19,7 @@ void defeatRoster(ArcadeModel m) {
   for (var frame = 0; frame < 2400 && m.combat && m.wave == wave; frame++) {
     for (final d in List<Demon>.of(m.demons)) {
       if (d.entering) continue;
-      while (m.demons.contains(d)) {
+      for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
         m.hitDemon(d);
       }
     }
@@ -82,11 +82,11 @@ void main() {
           );
           m.collect(Power.rapid);
           final lives = m.lives;
-          while (boss.shield > 0) {
+          for (var guard = 0; guard < 100000 && boss.shield > 0; guard++) {
             m.hitBoss(boss.x);
           }
           boss.door = 1;
-          while (m.boss != null) {
+          for (var guard = 0; guard < 100000 && m.boss != null; guard++) {
             m.hitBoss(boss.x);
           }
           expect(m.mode, RunMode.victory);

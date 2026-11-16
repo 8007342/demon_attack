@@ -22,7 +22,7 @@ Notes and lessons:
 - **Blender ran inside the forge, never as a program.**
   - The note says "There is no `blender` binary or shim in the forge, but the `bpy` wheel works headless."
   - Install: `uv python install 3.13`, a venv on persistent disk, `uv pip install bpy==5.3.0` (~430 MB download).
-    bpy 5.3 needs Python 3.13.
+    bpy 5.3 needs Python 3.13. [source: Blender Foundation via PyPI, "bpy 5.3.0" release metadata (requires_python ==3.13.*; manylinux x86_64 wheel 427,524,100 bytes), https://pypi.org/project/bpy/5.3.0/, read 2026-11-16]
   - Scripts run as plain Python (`python art/tools/blockout*.py OUT …`), with CPU rendering only: Workbench for clay
     and wire, EEVEE for depth.
   - The idea came from the kumbia-kombat repo ("Blender as a bpy venv").

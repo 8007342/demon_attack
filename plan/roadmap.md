@@ -8,7 +8,8 @@ Work branch: `game`. Production `main` remains unchanged until stable.
 4. Refresh managed Wrangler preview and push working checkpoints.
 5. Playtest balance on the host browser, tune readability/feel, then consider a stable main merge.
 
-Tracked implementation tasks: `openspec/changes/build-demon-attack-game/tasks.md`.
+Open work is the list of open OpenSpec changes: run `openspec list` (this file is history plus "left" notes, not the
+list of open work). The first tasks: `openspec/changes/archive/2026-11-16-build-demon-attack-game/tasks.md`.
 Current design and tunables: `game-design.md`. Art direction: `style-guide.md`.
 Historical references and screenshots: `research-original.md`.
 6. Flyover backgrounds (horizon pass, branch `work/parallax-refine`): left — check frame rate on a real phone GPU (the ground plane is a perspective image shader; CPU raster harness: `test/flyover_perf_test.dart`), and reroll the Ember Forges "forge-channel" landmark (it came out as a sphere) with `tools/flyover_assets.py run --only landmark/ember/2/forge-channel` after a prompt change.

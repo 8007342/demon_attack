@@ -45,7 +45,7 @@ void main() {
     expect(all.where((e) => e.name == GameEventNames.bossShieldDown), hasLength(1));
     // Core: two armour steps per form; the odd ones shed plates, the even
     // ones tear the form's module away, the last is the collapse.
-    while (m.boss != null) {
+    for (var guard = 0; guard < 100000 && m.boss != null; guard++) {
       b.door = 1;
       m.hitBoss(b.x);
       all.addAll(m.takeGameEvents());

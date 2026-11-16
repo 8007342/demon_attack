@@ -1,3 +1,6 @@
+@Tags(['review'])
+library;
+
 // Opt-in review renderer. Reads retained candidates without promoting a partial
 // audio bank. Lua/ffmpeg can mux these exact 30 Hz frames with radio.ogg.
 import 'dart:convert';

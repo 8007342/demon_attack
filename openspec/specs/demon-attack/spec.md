@@ -13,11 +13,15 @@ The app SHALL run in Flutter on mobile web with readable content and a quiet dar
 - **THEN** the title and play screens fit without horizontal scrolling
 
 ### Requirement: Construction identity
-The landing page SHALL show the Demon Attack identity, Start action and inline Top10.
+The landing page SHALL show the Demon Attack identity, a Normal start action and inline Top10. Easy and Hard start actions and matching board tabs SHALL appear only when unlocked. A valid interrupted checkpoint SHALL expose Resume Game, using its saved difficulty independently of current board selection.
 
 #### Scenario: Viewing the landing page
-- **WHEN** the page loads
-- **THEN** the visitor sees an original demon logo, Demon Attack, Start and the scoreboard without opening a separate screen
+- **WHEN** a new visitor opens the page
+- **THEN** the original demon logo, title, Normal start and Normal board are visible
+
+#### Scenario: Resume selection
+- **WHEN** a player selects Resume Game while another board is selected
+- **THEN** the checkpoint resumes in its original difficulty
 
 ### Requirement: Flame foundation
 The Flutter app SHALL embed a Flame game scene for its animated arcade background and gameplay.
