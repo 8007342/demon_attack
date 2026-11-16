@@ -139,3 +139,11 @@ exclusive to the Stormfront bonus level.
 - Spec: [`openspec/changes/carrier-render-engine/`](../openspec/changes/carrier-render-engine/) (design §1 has the
   causes; §5 has the interfaces the re-render on `work/carrier-v3-render` is expected to provide).
 - Sheets and clips: `art/contact/carrier-render-engine-{bend,collapse,field}.png`, `-collapse.gif`, `-bend-sweep.gif`.
+
+## Round 3c, V1. Voice stack: expressive radio voices on local models (2026-11-16, change `voice-stack`)
+Research in [`plan/voice-stack-research.md`](voice-stack-research.md) (recommends VoxCPM2 for speech and Dia 1.6B for
+laughs, whoops, cheers and growls, with Chatterbox-Turbo as fallback, all as admitted studio nodes; §9 is the request
+list for the coordinator). Spec [`openspec/changes/voice-stack/`](../openspec/changes/voice-stack/): emotion,
+intensity, direction and non-verbal cues in `lines.json`, a PG tone check with a pseudo-swear allowlist ("frak",
+"blast it", "son of a glitch"), take/pick ledgers, loudness, and the placeholder-to-final swap. No placeholders were
+rendered: no TTS engine is installed in the forge or the studio today (design §6).

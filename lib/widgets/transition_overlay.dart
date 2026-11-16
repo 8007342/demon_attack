@@ -67,6 +67,20 @@ class TransitionPresenter {
   Set<CommsMessage> briefingHidden(SquadComms comms) =>
       briefing?.hiddenAt(comms.now) ?? const {};
 
+  /// mission-medals: the card holds the level's start (the model is not
+  /// stepped) until it has been read or tapped; see [BonusBriefing.holds].
+  bool briefingHolds(ArcadeModel model, SquadComms comms) {
+    final b = briefing;
+    if (b == null || model.mode == RunMode.paused) return false;
+    final flying = slotted(model) && model.flow.active;
+    return b.holds(
+      comms.director,
+      comms.now,
+      flying: flying,
+      flightLeft: flying ? model.flow.plan.seconds - model.flow.seconds : 0,
+    );
+  }
+
   /// Tap on the card, or Space / Enter with nothing else to skip.
   bool dismissBriefing(SquadComms comms) {
     final b = briefing;

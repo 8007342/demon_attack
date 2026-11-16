@@ -12,6 +12,7 @@ import 'dart:ui';
 
 import '../model.dart';
 import 'levels/stormfront_painter.dart';
+import 'levels/supply_run_painter.dart';
 
 /// Draws one level's mechanic. [time] is the presentation clock.
 abstract class BonusPainter {
@@ -23,6 +24,8 @@ abstract class BonusPainter {
 abstract final class BonusPainters {
   static const Map<String, BonusPainter> byLevel = {
     'stormfront': StormfrontPainter(),
+    // --- mission-medals: Supply Run's cues on the crates and the cargo.
+    'supplyRun': SupplyRunPainter(),
   };
 
   static BonusPainter? _of(ArcadeModel model) =>

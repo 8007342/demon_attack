@@ -20,6 +20,7 @@ import 'services/install_prompt.dart'; // --- pwa-install
 import 'services/comms_audio.dart' show commsStopAll;
 import 'ending/ending_page.dart';
 import 'widgets/medal.dart';
+import 'widgets/mission_medal.dart'; // --- mission-medals
 import 'widgets/run_record.dart'; // --- bonus-balance: the run record
 import 'widgets/heart_parts.dart';
 import 'widgets/widescreen_backdrop.dart'; // --- widescreen backdrop
@@ -267,6 +268,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     key: const ValueKey('bonus-briefing'),
     briefing: transitions.briefing!,
     now: squadComms.now,
+    // --- mission-medals: the tap prompt while the card holds the start.
+    holding: transitions.briefing!.holding,
     maxHeight: maxHeight,
     onDismiss: _dismissBriefing,
   );
@@ -316,7 +319,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         savedCheckpoint = candidate.checkpoint();
       }
     }
-    scene = DemonScene(model, _tick);
+    scene = DemonScene(model, _tick)
+      // --- mission-medals: the urgent-mission card holds the level's start.
+      ..holdModel = () => transitions.briefingHolds(model, squadComms);
     // --- atmosphere: the remembered fog quality (full / reduced).
     try {
       scene.atmosphere.quality = AtmosphereQuality.parse(
@@ -1411,12 +1416,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     ),
   );
 
-  /// bonus-balance: a record's play date and run modifiers, one small line
-  /// under its row ('' for an older record that has neither).
-  String _recordNote(ScoreEntry entry) => [
-    ?playDateLabel(entry.playedOn),
-    for (final id in entry.modifiers) runTagLabel(id),
-  ].join(' · ');
+  /// bonus-balance: a record's play date, one small line under its row (''
+  /// for an older record without one). mission-medals: its modifiers are
+  /// medals beside the regular ones, not words here.
+  String _recordNote(ScoreEntry entry) => playDateLabel(entry.playedOn) ?? '';
 
   Widget _scoreRow(int index, ScoreEntry entry) => Container(
     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1471,6 +1474,16 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           ),
           const SizedBox(width: 7),
           _medals(entry.difficulty, entry.medals, size: compact ? 14 : 18),
+          // --- mission-medals: the run's mission medals beside its medals.
+          if (entry.modifiers.isNotEmpty) ...[
+            const SizedBox(width: 4),
+            MissionMedals(
+              key: ValueKey('board-missions-$index'),
+              ids: entry.modifiers,
+              size: compact ? 16 : 20,
+              gap: 1,
+            ),
+          ],
           const Spacer(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),

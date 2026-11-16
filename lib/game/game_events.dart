@@ -354,6 +354,10 @@ abstract final class GameEventNames {
   /// squad's mid-level banter and the brood's retort).
   static const bonusMidway = 'bonusMidway';
 
+  /// mission-medals: a bonus level's crate fell past the ship unopened
+  /// (the squad's banter; Supply Run's cue tracker queues it).
+  static const bonusCrateMissed = 'bonusCrateMissed';
+
   // --- bonus level #2, Stormfront (specs/bonus-level-stormfront). The raw
   // string events `stormTell` and `stormBolt` (every tell, every bolt) are
   // forwarded under the same names with no data, for the sound and the
@@ -374,6 +378,7 @@ abstract final class GameEventNames {
     bonusPickup,
     bonusCleared,
     bonusMidway,
+    bonusCrateMissed,
     stormStrike,
     stormBait,
   ];

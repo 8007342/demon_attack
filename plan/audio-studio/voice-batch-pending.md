@@ -50,15 +50,20 @@ on the audio studio (tillandsias#1103).
 | `bonusEntry.supplyRun.h0` | human | admiral | urgent | A convoy spilled its cargo. Crack those crates, pilot! | (text card) |
 | `bonusEntry.supplyRun.h1` | human | wisp | excited | Crates falling through the fog! Three hits cracks one open. | (text card) |
 | `bonusEntry.supplyRun.h2` | human | rook | teasing | Free cargo raining from the sky. Finders keepers, slowpoke! | (text card) |
-| `bonusStart.supplyRun.h0` | human | anvil | calm | Crates on parachutes. Three hits opens one. Show off a little. | salvage.h2 |
-| `bonusStart.supplyRun.h1` | human | kestrel | urgent | Scavengers are after our cargo. Beat them to it. | salvage.h3 |
-| `bonusCrate.supplyRun.h0` | human | rook | excited | Crate is open! Catch it! | weaponPickup.h0 |
-| `bonusCrate.supplyRun.h1` | human | sparrow | excited | Cargo is loose. Grab it! | salvage.h1 |
-| `bonusCrate.supplyRun.h2` | human | pip | excited | Ooh, what was in that one? | weaponPickup.h4 |
-| `bonusPickup.salvageMagnet.h0` | human | wisp | excited | Salvage magnet online. It all comes to you now. | salvage.h1 |
-| `bonusPickup.salvageMagnet.h1` | human | rook | teasing | A magnet! Everything is attracted to you. Cannot blame it. | weaponPickup.h0 |
-| `bonusPickup.doubleScore.h0` | human | sparrow | excited | Double points! Make every shot count. | weaponPickup.h2 |
-| `bonusPickup.doubleScore.h1` | human | sunny | teasing | Double score! Twice the sunshine. | weaponPickup.h0 |
+| `bonusStart.supplyRun.h0` | human | anvil | calm | Crates on parachutes. Three hits opens one. Show off a little. | (text card) |
+| `bonusStart.supplyRun.h1` | human | kestrel | urgent | Scavengers want our cargo. Shoot the crates, catch what falls. | (text card) |
+| `bonusStart.supplyRun.h2` | human | wisp | calm | Gold brackets mark the crates. Crack one, then slide under it. | (text card) |
+| `bonusStart.supplyRun.h3` | human | sunny | teasing | Crates up top! Pop them open and catch the goodies. Finders keepers. | (text card) |
+| `bonusCrate.supplyRun.h0` | human | rook | excited | Crate is open! Catch it! | (text card) |
+| `bonusCrate.supplyRun.h1` | human | sparrow | excited | Cargo is loose. Grab it! | (text card) |
+| `bonusCrate.supplyRun.h2` | human | pip | excited | Ooh, what was in that one? | (text card) |
+| `bonusCrate.supplyRun.h3` | human | sunny | teasing | Cracked it! Tell me it's snacks this time. | (text card) |
+| `bonusCrate.supplyRun.h4` | human | nomad | calm | One down. Catch it before it hits the sand. | (text card) |
+| `bonusCrate.supplyRun.h5` | human | anvil | calm | Clean break. Get under the cargo. | (text card) |
+| `bonusPickup.salvageMagnet.h0` | human | wisp | excited | Salvage magnet online. Loose cargo flies to you now. | (text card) |
+| `bonusPickup.salvageMagnet.h1` | human | rook | teasing | A magnet! Everything is attracted to you. Cannot blame it. | (text card) |
+| `bonusPickup.doubleScore.h0` | human | sparrow | excited | Gold coins! Every kill and crate pays double for a bit. | (text card) |
+| `bonusPickup.doubleScore.h1` | human | sunny | teasing | Double score! Twice the sunshine. | (text card) |
 | `bonusCleared.supplyRun.h0` | human | admiral | warm | Convoy cargo recovered. The fleet thanks you, pilot. | levelClear.h0 |
 | `bonusCleared.supplyRun.h1` | human | nomad | warm | Every crate accounted for. Clean work. | levelClear.h4 |
 | `bonusCleared.supplyRun.h2` | human | rook | teasing | Best shopping trip ever. | levelClear.h2 |
@@ -120,3 +125,9 @@ on the audio studio (tillandsias#1103).
 | `bonusMidway.stormfront.d0` | demon | skarn | stern | [snarl] Who keeps calling the lightning?! | (text card) |
 | `bonusMidway.stormfront.d1` | demon | morth | teasing | [gloat] Storms pass. Turns pass. The brood remains. | (text card) |
 | `bonusMidway.stormfront.d2` | demon | sliss | panicked | [alarm] Wet scales! Somebody move the umbrella! | (text card) |
+| `bonusCrateMissed.supplyRun.h0` | human | rook | teasing | That crate's going to the fish. Shoot the next one open! | (text card) |
+| `bonusCrateMissed.supplyRun.h1` | human | sparrow | teasing | Missed one! Three hits and it pops, remember? | (text card) |
+| `bonusCrateMissed.supplyRun.h2` | human | pip | panicked | Noooo, the snack crate! Crack the next one, quick! | (text card) |
+| `bonusCrateMissed.supplyRun.h3` | human | anvil | calm | Unopened crates are just litter. Pop them on the way down. | (text card) |
+| `bonusCrateMissed.supplyRun.d0` | demon | skritch | excited | [cackle] Dropped it! Finders keepers! | (text card) |
+| `bonusCrateMissed.supplyRun.d1` | demon | nibb | excited | [cackle] Mine now. Does it have the crunchy ones? | (text card) |

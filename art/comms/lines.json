@@ -4280,9 +4280,12 @@
       "cooldown": 20,
       "ttl": 4,
       "mood": "happy",
+      "pending": "text",
       "lines": [
         {"speaker": "anvil", "text": "Crates on parachutes. Three hits opens one. Show off a little.", "emotion": "calm", "placeholder": "salvage.h2"},
-        {"speaker": "kestrel", "text": "Scavengers are after our cargo. Beat them to it.", "emotion": "urgent", "placeholder": "salvage.h3"}
+        {"speaker": "kestrel", "text": "Scavengers want our cargo. Shoot the crates, catch what falls.", "emotion": "urgent", "placeholder": "salvage.h3"},
+        {"speaker": "wisp", "text": "Gold brackets mark the crates. Crack one, then slide under it.", "emotion": "calm"},
+        {"speaker": "sunny", "text": "Crates up top! Pop them open and catch the goodies. Finders keepers.", "emotion": "teasing"}
       ]
     },
     "bonusCrate.supplyRun": {
@@ -4290,12 +4293,16 @@
       "cooldown": 12,
       "ttl": 2,
       "mood": "happy",
-      "chance": 0.4,
+      "chance": 0.75,
       "group": "loot",
+      "pending": "text",
       "lines": [
         {"speaker": "rook", "text": "Crate is open! Catch it!", "emotion": "excited", "placeholder": "weaponPickup.h0"},
         {"speaker": "sparrow", "text": "Cargo is loose. Grab it!", "emotion": "excited", "placeholder": "salvage.h1"},
-        {"speaker": "pip", "text": "Ooh, what was in that one?", "emotion": "excited", "placeholder": "weaponPickup.h4"}
+        {"speaker": "pip", "text": "Ooh, what was in that one?", "emotion": "excited", "placeholder": "weaponPickup.h4"},
+        {"speaker": "sunny", "text": "Cracked it! Tell me it's snacks this time.", "emotion": "teasing"},
+        {"speaker": "nomad", "text": "One down. Catch it before it hits the sand.", "emotion": "calm"},
+        {"speaker": "anvil", "text": "Clean break. Get under the cargo.", "emotion": "calm"}
       ]
     },
     "bonusPickup.salvageMagnet": {
@@ -4303,8 +4310,9 @@
       "cooldown": 20,
       "ttl": 4,
       "mood": "happy",
+      "pending": "text",
       "lines": [
-        {"speaker": "wisp", "text": "Salvage magnet online. It all comes to you now.", "emotion": "excited", "placeholder": "salvage.h1"},
+        {"speaker": "wisp", "text": "Salvage magnet online. Loose cargo flies to you now.", "emotion": "excited", "placeholder": "salvage.h1"},
         {"speaker": "rook", "text": "A magnet! Everything is attracted to you. Cannot blame it.", "emotion": "teasing", "placeholder": "weaponPickup.h0"}
       ]
     },
@@ -4313,8 +4321,9 @@
       "cooldown": 20,
       "ttl": 4,
       "mood": "happy",
+      "pending": "text",
       "lines": [
-        {"speaker": "sparrow", "text": "Double points! Make every shot count.", "emotion": "excited", "placeholder": "weaponPickup.h2"},
+        {"speaker": "sparrow", "text": "Gold coins! Every kill and crate pays double for a bit.", "emotion": "excited", "placeholder": "weaponPickup.h2"},
         {"speaker": "sunny", "text": "Double score! Twice the sunshine.", "emotion": "teasing", "placeholder": "weaponPickup.h0"}
       ]
     },
@@ -4545,6 +4554,31 @@
           {"speaker": "skarn", "grunt": "snarl", "gloss": "Who keeps calling the lightning?!", "say": "Who keeps calling the lightning?!", "emotion": "stern"},
           {"speaker": "morth", "grunt": "gloat", "gloss": "Storms pass. Turns pass. The brood remains.", "say": "Storms pass. Turns pass. The brood remains.", "emotion": "teasing"},
           {"speaker": "sliss", "grunt": "alarm", "gloss": "Wet scales! Somebody move the umbrella!", "say": "Wet scales! Somebody move the umbrella!", "emotion": "panicked"}
+        ]
+      }
+    },
+    "bonusCrateMissed.supplyRun": {
+      "priority": 3,
+      "cooldown": 25,
+      "ttl": 2.5,
+      "mood": "happy",
+      "chance": 0.6,
+      "group": "loot",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "That crate's going to the fish. Shoot the next one open!", "emotion": "teasing"},
+        {"speaker": "sparrow", "text": "Missed one! Three hits and it pops, remember?", "emotion": "teasing"},
+        {"speaker": "pip", "text": "Noooo, the snack crate! Crack the next one, quick!", "emotion": "panicked"},
+        {"speaker": "anvil", "text": "Unopened crates are just litter. Pop them on the way down.", "emotion": "calm"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 25,
+        "ttl": 2.5,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "skritch", "grunt": "cackle", "gloss": "Dropped it! Finders keepers!", "say": "Dropped it! Finders keepers!", "emotion": "excited"},
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "Mine now. Does it have the crunchy ones?", "say": "Mine now. Does it have the crunchy ones?", "emotion": "excited"}
         ]
       }
     }

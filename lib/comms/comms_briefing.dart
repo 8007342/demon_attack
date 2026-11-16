@@ -70,6 +70,67 @@ class BonusBriefing {
   /// The player dismissed the card (tap, Space or Enter).
   bool dismissed = false;
 
+  // --- mission-medals: the card holds the level's start until it has been
+  // read or tapped (the operator: "instructions … went too fast").
+
+  /// The longest the card may hold the level's start, whatever is left.
+  static const maxHold = 15.0;
+
+  /// Seconds of flight left when the hold begins (the Descent's end: the
+  /// ship is in place and nothing fires yet).
+  static const holdLead = .25;
+
+  /// When the current hold began (null: not holding now).
+  double? heldAt;
+
+  /// The card is holding the level's start (it shows its tap prompt).
+  bool get holding => heldAt != null && open;
+
+  double _heldFor = 0;
+
+  /// Seconds the brief (and the run rule) need to be read once the card is
+  /// up: about 15 characters a second, between 3 and 7 seconds.
+  double get readFor {
+    final chars = brief.length + (rule?.length ?? 0);
+    return (1.5 + chars / 15).clamp(3.0, 7.0);
+  }
+
+  /// The brief has been up long enough and every turn has been read.
+  bool read(CommsDirector director, double now) {
+    final opened = openedAt;
+    if (opened == null) return true;
+    return now - opened >= readFor && _done(director, now);
+  }
+
+  /// Whether the game should hold the level's start at [now] (asked every
+  /// frame; [flying] and [flightLeft] as in [update]). Holds only at the
+  /// flight's very end, only while open and unread, at most [maxHold].
+  bool holds(
+    CommsDirector director,
+    double now, {
+    required bool flying,
+    required double flightLeft,
+  }) {
+    final want =
+        open &&
+        flying &&
+        flightLeft <= holdLead &&
+        _heldFor < maxHold &&
+        !read(director, now);
+    if (!want) {
+      if (heldAt != null) _heldFor += now - heldAt!;
+      heldAt = null;
+      return false;
+    }
+    heldAt ??= now;
+    if (_heldFor + now - heldAt! >= maxHold) {
+      _heldFor = maxHold;
+      heldAt = null;
+      return false;
+    }
+    return true;
+  }
+
   bool get offered => _offered;
 
   /// The card is up (not closing).
