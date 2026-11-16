@@ -294,3 +294,48 @@ Go finishing and sheets took a few minutes more.
    stage scale of 0.4.
 3. The scythe-arm wrecks are cropped by the envelope (the wing extends past it). Give wrecks their own frame
    (`--envelope off` rig for wrecks).
+
+## 7. Wired into the game (boss-carrier-wire, 2026-11-16, no GPU)
+Branch `work/boss-carrier-wire`; the runtime notes are in `openspec/changes/boss-grandeur/design.md` §13.
+
+**Packed** (`boss_sheet pack BAKE RIG carrier1-thorn=frigate carrier1-lattice=frigate carrier1-shroud=frigate
+carrier2-thorn=cruiser carrier3-lattice=battlecruiser carrier4-shroud=battleship carrier5-thorn=dreadnought`; each hull
+under its own key, one 4096-wide page):
+
+| Hull | Resident | PNG |
+| --- | --- | --- |
+| carrier1-thorn | 15.53 MB | 1.08 MB (+ belly 0.06 MB) |
+| carrier1-lattice | 14.59 MB | 1.22 MB |
+| carrier1-shroud | 14.72 MB | 1.11 MB |
+| carrier2-thorn (S0) | 12.97 MB | 0.87 MB |
+| carrier3-lattice (S0) | 11.84 MB | 0.84 MB |
+| carrier4-shroud (S0) | 12.72 MB | 0.79 MB |
+| carrier5-thorn (S0) | 14.59 MB | 0.86 MB |
+
+The superseded frigate hero page (1.66 MB) is retired. Web build: the game grows 92.27 → 97.51 MB (+5.25 MB; the gallery
+bundle copies the same assets). A player downloads only the run's hull (≈ 1 MB) when the carrier sector nears.
+
+**Picks (delegated)**
+- **Set per run from the run seed**, unseeded runs draw the thorn: the calibrated campaign and every page test keep
+  one deterministic carrier, and the boss stream's draw is kept so later carriers' glides do not move.
+- **The v1 frigate grammar is retired, not kept beside v2.** Keeping it would need its bake (not in the cache) and a
+  second grammar for one superseded placeholder; the frontal atlases still back a hull that is not packed.
+- **Faceless deck in the scene, not in the art.** The first in-game frames read as a face: the frigate's fanged jaw
+  sprite sat in the core slot, its lit bay windows read as eyes, the pale barrels and the thorn prow's own bone tusks
+  under the blisters read as teeth, and the light prow dome put its rows of ports in eye contrast. The fixes are
+  runtime: chitin hatch leaves, vertical slits, two bulkheads (three hatches, not one slot), dark barrels with ember
+  muzzles, a tint over the tusks, a dome shade to the §7.1 value ceiling.
+- **Missing stage looks** (tours 2–5): S0 under a heavier runtime overlay, torn modules as charred stumps.
+- **Belly for every hull** is the thorn's (the only one baked), at ×0.3 in the overflight frame.
+
+**Sheets** (`test/boss_carrier_wire_review_test.dart`, `--dart-define=BOSS_CARRIER_WIRE_CONTACT=true`):
+`art/contact/boss-carrier-wire-{thorn,lattice,shroud}.png` (engage, climb + swerve, S2, S3),
+`-phone.png` (Z 0.70 on 360 × 640), `-tour3.png`, `-tour5.png`, `-overflight.png`, `-collapse.png`.
+
+**Left (art lane)**
+1. Stage looks (S2, S3) and their budget for tours 2–5; until then the overlay fallback carries them and reads weaker
+   than the baked looks.
+2. Bellies for the lattice and shroud sets and tours 2–5.
+3. The thorn prow's rows of dark ports on the dome still suggest eyes at Z 0.86 to a primed eye (shaded, not fixed);
+   the lattice tour-3 prow's crystal-and-strut row and the shroud scale field (ledger §5) still read as teeth.
+4. The tour-2 core glow reroll and the scythe-arm wreck frames (§6) are unchanged.

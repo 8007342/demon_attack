@@ -126,10 +126,11 @@ carries the size; the sets and the prompts carry the menace.
 - Beyond tour 5 (repeat cycles), the seeded assembly draws extra sets per slot under the same budget.
 
 ## 6. Damage and decay vocabulary
-Every step is a named event for the game event queue (`lib/game/game_events.dart`, owned by `boss-grandeur`) so the
+Every step is a named event for the game event queue (`lib/game/game_events.dart`, owned by `boss-grandeur`; wired in
+boss-carrier-wire, so the names below are the ones the game emits) so the
 future dynamic music engine can score it. The art for each step is listed beside it.
 
-| Step | Event (proposed name) | Trigger | What the player sees | Art |
+| Step | Event | Trigger | What the player sees | Art |
 |---|---|---|---|---|
 | Shield hit | `bossShieldCellLost` (data: cell, remaining) | each shield point lost | one cyan hex cell flashes white and splits into shards | overlay (`alien-insignia` §5.1) |
 | Shield failing | `bossShieldFailing` | shield ≤ 50 % (S1) | the crystals flicker and dim, soot and ember hairline cracks spread | S1 stage look |

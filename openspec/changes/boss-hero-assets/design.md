@@ -254,7 +254,8 @@ page) and writes the hull under the tour key it replaces. It is **not committed 
 asserts that `BossGrammar.tour(0)` (v1 ids: spine, bow, tower, engines) equals the packed hull's module ids, and the v2 ids
 are `carapace, prow, wingL/R, spines, emitterL/R, blisterL/R`. The runtime owner switches the grammar to the v2 slots,
 treats the `prow` (mount bow) as the front pass (today `BossPainter` hard-codes `bow`), picks a set combination per run
-among the baked hulls of a tour, then packs.
+among the baked hulls of a tour, then packs. Done in boss-carrier-wire (`boss-grandeur` design §13): every hull is
+packed under its own key with `replaces` and `set`, and the run picks one from its seed.
 
 ### 8.7 GPU recipe
 | Pass | Workflow | Settings | Use |
