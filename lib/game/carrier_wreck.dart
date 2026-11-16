@@ -479,6 +479,7 @@ class CarrierFracture {
     required bool Function(double l, double t, double r, double b) keep,
     double step = 20,
     int seed = 1,
+    int Function(double x, double y)? chunkOf,
   }) {
     final f = CarrierFracture._();
     final nx = ((right - left) / step).ceil(),
@@ -511,6 +512,11 @@ class CarrierFracture {
     }
 
     int chunkAt(double x, double y) {
+      // carrier-v3-render (§5.4): the art's own chunk map, when it has one
+      if (chunkOf != null) {
+        final k = chunkOf(x, y);
+        if (k >= 0) return k;
+      }
       var best = 0;
       var bd = double.infinity;
       for (final (k, (sx, sy, _)) in seeds.indexed) {

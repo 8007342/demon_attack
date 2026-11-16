@@ -40,6 +40,12 @@ class CarrierBend {
   /// Until the re-render, the height-parallax terms are capped (§2.5).
   static const parallaxCap = 4.0;
 
+  /// The height-parallax cap in use: [parallaxCap] on mount heights, the
+  /// under-paint margin (12 units) once the hull's baked heights are in
+  /// (carrier-render-engine task 5.1; set by [BossPainter]).
+  double cap = parallaxCap;
+  static const bakedCap = 12.0;
+
   /// A held pose (radians: lean, bank, pitch) for review strips; null in
   /// the game.
   (double, double, double)? pose;
@@ -166,7 +172,7 @@ class CarrierBend {
   /// Where hull-local point ([x], [y]) at height [h] is drawn under this
   /// bend.
   ui.Offset displace(double x, double y, {double h = 0}) {
-    final (dx, dy) = displacement(x, y, h, psi, phi, theta);
+    final (dx, dy) = displacement(x, y, h, psi, phi, theta, cap: cap);
     return ui.Offset(x + dx, y + dy);
   }
 

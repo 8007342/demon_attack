@@ -92,6 +92,24 @@ class CarrierFieldMap {
     return map;
   }
 
+  /// carrier-v3-render (carrier-render-engine §5.6): the map from a baked
+  /// signed distance ([d], units, outside positive; [w] × [h] texels at
+  /// [ppu] px per unit, texel centres at left + (i + .5) / ppu).
+  static CarrierFieldMap fromDistance(
+    Float32List d,
+    int w,
+    int h, {
+    required double left,
+    required double top,
+    double ppu = .5,
+  }) {
+    final map = CarrierFieldMap._(left, top, w, h, ppu, d);
+    for (final l in levels) {
+      map.contours[l] = map._contour(l.toDouble());
+    }
+    return map;
+  }
+
   /// Squared EDT to the nearest pixel whose mask equals [target].
   static Float64List _edt(Uint8List mask, int w, int h, int target) {
     const inf = 1e20;

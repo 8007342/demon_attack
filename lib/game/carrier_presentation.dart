@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'arena_camera.dart';
+import 'boss_atlas.dart';
 import 'boss_director.dart';
 import 'boss_painter.dart';
 import 'carrier_field.dart';
@@ -34,6 +35,14 @@ class CarrierPresentation {
     if (_building) return;
     _building = true;
     try {
+      // carrier-v3-render: the baked distance (carrier-render-engine §5.6)
+      final baked = armada.renderData;
+      if (baked != null) {
+        field.map = baked.field();
+        field.mapKey = key;
+        field.reset();
+        return;
+      }
       final a = armada.fieldAlpha();
       if (a == null) return;
       final img = await a.picture.toImage(a.w, a.h);
@@ -117,7 +126,8 @@ class CarrierPresentation {
     return true;
   }
 
-  // --- gates (runtime placeholder until the re-render's door layers) -----
+  // --- gates: the re-render's door layers (carrier-v3-render), with the
+  // runtime placeholder for a hull or gate without them ------------------
 
   static const _ember = Color(0xFFFF5A36), _amber = Color(0xFFFFB24A);
   static const _slit = Color(0xFF140A0C), _rimC = Color(0xFF56456C);
@@ -136,6 +146,8 @@ class CarrierPresentation {
     double opacity = 1,
     double clock = 0,
     Offset Function(double x, double y)? bend,
+    BossPainter? armada,
+    int stage = 0,
   }) {
     if (launches == null) return;
     final v = launches.timing;
@@ -150,6 +162,24 @@ class CarrierPresentation {
       if ((g.slot == 'prow') != front) continue;
       final local = bend == null ? Offset(g.x, g.y) : bend(g.x, g.y);
       final at = center + local * scale;
+      final door = armada == null ? null : bakedDoor(armada, g, stage);
+      if (door != null) {
+        _paintBakedGate(
+          c,
+          armada!,
+          g,
+          door,
+          center,
+          local - Offset(g.x, g.y),
+          scale,
+          glow: r.glow(timing),
+          open: r.door(timing),
+          telegraph: r.state == GateState.telegraph,
+          t: r.t,
+          opacity: opacity,
+        );
+        continue;
+      }
       _paintGate(
         c,
         g,
@@ -162,6 +192,104 @@ class CarrierPresentation {
         opacity: opacity,
         clock: clock,
       );
+    }
+  }
+
+  /// The baked open state of gate [g] on the resident hull at [stage]
+  /// (the nearest baked stage at or below it) and whether it is drawn
+  /// mirrored (a mirrored pair stores its right instance); null when the
+  /// hull has no door layer for it. The deck bays stay runtime-drawn: the
+  /// deck's own side hatches carry them.
+  static (BossHeroSprite, bool)? bakedDoor(
+    BossPainter a,
+    CarrierGate g,
+    int stage,
+  ) {
+    final h = a.hero;
+    if (h == null || !a.heroReady) return null;
+    final inst = h.gates[g.id];
+    if (inst == null || inst.startsWith('gate_bay')) return null;
+    final v = h.views[BossView.hero.storedTag];
+    if (v == null) return null;
+    var flip = false;
+    var list = v.doors[inst];
+    if (list == null && inst.endsWith('L')) {
+      list = v.doors['${inst.substring(0, inst.length - 1)}R'];
+      flip = true;
+    }
+    if (list == null) return null;
+    for (var s = stage.clamp(0, 3); s >= 0; s--) {
+      final sp = list[s];
+      if (sp != null) return (sp, flip);
+    }
+    return null;
+  }
+
+  /// A gate with baked doors: the closed state is in the hull; the open
+  /// state blends over it with the door's opening (design §4.2: the two
+  /// baked states plus the leaves' scale), then the interior light, the
+  /// halo and the rail chase stay runtime.
+  void _paintBakedGate(
+    Canvas c,
+    BossPainter armada,
+    CarrierGate g,
+    (BossHeroSprite, bool) door,
+    Offset center,
+    Offset bendDelta,
+    double k, {
+    required double glow,
+    required double open,
+    required bool telegraph,
+    required double t,
+    required double opacity,
+  }) {
+    final at = center + (Offset(g.x, g.y) + bendDelta) * k;
+    final hot = Color.lerp(_ember, _amber, glow)!;
+    final w = g.width * k;
+    if (glow > 0) {
+      _p.color = hot.withValues(alpha: .18 * glow * opacity);
+      c.drawOval(
+        Rect.fromCenter(center: at, width: w * 2.4, height: w * 1.8),
+        _p,
+      );
+    }
+    final o = open.clamp(0.0, 1.0);
+    if (o > 0) {
+      c.save();
+      c.translate(center.dx, center.dy);
+      c.scale(k);
+      // the leaves' scale: the open state grows in from 0.92 about the gate
+      final s = .92 + .08 * o;
+      final gx = g.x + bendDelta.dx, gy = g.y + bendDelta.dy;
+      c.translate(gx, gy);
+      c.scale(s);
+      c.translate(-gx, -gy);
+      armada.heroSprite(
+        c,
+        door.$1,
+        bendDelta,
+        opacity: o * opacity,
+        flipX: door.$2,
+      );
+      c.restore();
+      if (glow > 0) {
+        final pulse = telegraph ? .55 + .45 * math.sin(t * 14) : 1.0;
+        _p.color = hot.withValues(alpha: .55 * o * glow * pulse * opacity);
+        c.drawOval(
+          Rect.fromCenter(center: at, width: w * .7, height: w * .45),
+          _p,
+        );
+      }
+    }
+    if (glow <= 0) return;
+    final n = Offset(g.nx, g.ny);
+    for (var i = 0; i < 4; i++) {
+      final p = at - n * ((8 + 7 * i) * k);
+      final phase = telegraph ? ((t * 5 - (3 - i) * .25) % 1) : 1.0;
+      final a = telegraph ? (phase < .35 ? 1.0 : .25) : .7;
+      final sz = math.max(1.5, 2.4 * k);
+      _p.color = hot.withValues(alpha: a * glow * opacity);
+      c.drawRect(Rect.fromCenter(center: p, width: sz, height: sz), _p);
     }
   }
 
