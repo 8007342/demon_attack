@@ -8,7 +8,7 @@ on `continuous-swarm`. Rates are at hostile rate. s is the skill level (§4).
 | Option | Decision | Why |
 |---|---|---|
 | Ship a JEPA-like latent world model | **No** | No human play data. We have the exact state, and an exact forward model beats a learned one. It would add parity, versioning and retraining work. |
-| Retrain a bigger MLP (atrapa scale) | **No (for now)** | 40 × 18 k MACs per frame is 1–4 ms on a phone. It is not needed when a lookahead is this cheap. |
+| Retrain a bigger MLP (atrapa scale) | **No (for now)** | 40 × 18 k MACs per frame is 1–4 ms on a phone. [UNSOURCED: plan/provenance-audit.md#C-07] It is not needed when a lookahead is this cheap. |
 | Hand-written forecast + energy planner | **Yes** | It is the teacher we already trust (`scripts/train-policy.mjs`), made exact and multi-shot. It costs < 0.3 ms per frame and is deterministic and testable. |
 | Keep `SwarmPolicy` | **Yes** | It is the T0/T1 prior, already calibrated and tested (`test/swarm_policy_test.dart`). |
 

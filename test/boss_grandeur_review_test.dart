@@ -1,3 +1,6 @@
+@Tags(['review'])
+library;
+
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -120,7 +123,7 @@ class _Drive {
             .where((d) => !d.entering && d.swarmState != SwarmState.reserve)
             .firstOrNull;
         if (d != null) {
-          while (m.demons.contains(d)) {
+          for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
             m.hitDemon(d);
           }
           cool = every;

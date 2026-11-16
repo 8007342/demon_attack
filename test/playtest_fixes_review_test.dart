@@ -1,3 +1,6 @@
+@Tags(['review'])
+library;
+
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -123,7 +126,7 @@ void main() {
         if (m.combat && cool <= 0) {
           final d = m.demons.where((d) => !d.entering).firstOrNull;
           if (d != null) {
-            while (m.demons.contains(d)) {
+            for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
               m.hitDemon(d);
             }
             cool = every;

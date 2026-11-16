@@ -1,3 +1,6 @@
+@Tags(['review'])
+library;
+
 import 'dart:io';
 import 'dart:ui' as ui;
 
