@@ -1,3 +1,4 @@
+import 'package:demon_attack/widgets/pilot_console_content.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/main.dart';
 import 'package:demon_attack/services/scores.dart';
@@ -63,7 +64,7 @@ void main() {
           if (keyboard) {
             await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowRight);
           } else {
-            final controller = find.text('◀     SLIDE TO PILOT     ▶');
+            final controller = find.text(PilotConsoleContent.guidance);
             await tester.dragFrom(
               tester.getCenter(controller),
               const Offset(80, 0),

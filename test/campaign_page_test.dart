@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:demon_attack/widgets/pilot_console_content.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/main.dart';
 import 'package:demon_attack/services/run_storage.dart';
@@ -165,7 +166,7 @@ void main() {
     await tester.tap(find.text('START GAME  →'));
     await tester.pump();
     final scene = sceneOf(tester);
-    final guidance = find.text('◀     SLIDE TO PILOT     ▶');
+    final guidance = find.text(PilotConsoleContent.guidance);
     final before = tester.getCenter(guidance);
     scene.model.mode = RunMode.playing;
     scene.model.powerTimers.addAll({
