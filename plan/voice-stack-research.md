@@ -90,7 +90,7 @@ https://github.com/OpenMOSS/MOSS-TTSD, read 2026-11-16].
    above). Maya1 has a comparable set but asks for 16 GB+ and cannot clone, so it cannot hold our cast.
 3. Chatterbox-Turbo adds native `[laugh]`/`[chuckle]`/`[cough]` to the engine we already know, under MIT, but the
    project is retired and unmaintained since August 2026 and every output is watermarked (Chatterbox sources above).
-   It is the right placeholder engine (§8) and a poor long-term base.
+   The operator dropped it on 2026-11-16 (§10.4); VoxCPM2 renders placeholders too.
 
 ## 3. Voice identity for a consistent cast
 
@@ -137,7 +137,7 @@ second stage only if a listening pass hears the speech and non-verbal engines dr
 
 **Findings.**
 1. Human non-verbals (laughs, whoops, cheers, grunts, efforts, gasps) come from tagged TTS in the character's own
-   voice: Dia first, Chatterbox-Turbo for laugh/chuckle/cough while it is the placeholder engine (§2).
+   voice: Dia (Chatterbox, which also had laugh/chuckle/cough tags, was dropped on 2026-11-16, §10.4).
 2. Because Dia's short clips sound unnatural (§2), a stinger is rendered inside a short carrier phrase and trimmed at
    word boundaries, or rendered as a 5–8 s "reel" of several cues and cut. [UNSOURCED: plan/provenance-audit.md#V-01]
    (a working assumption to test in the pilot, not a documented technique).
@@ -197,7 +197,7 @@ second stage only if a listening pass hears the speech and non-verbal engines dr
 |---|---|---|
 | TTS as admitted ComfyUI nodes in the existing studio | One GPU queue, admission and licence register, provenance; the #1103 audio nodes chain after it | **Chosen** (coordinator's frame) |
 | A standalone TTS server container (Gradio/FastAPI/vLLM) | Second GPU tenant beside ComfyUI | Ruled out by the coordinator |
-| CPU in the forge (as in 2026-11-12) | 12 GiB cgroup, ~15 cores per worker, slow; Chatterbox-Nano would be 3× realtime on 8 cores (§2) | Placeholder only |
+| CPU in the forge (as in 2026-11-12) | 12 GiB cgroup, ~15 cores per worker, slow; no CPU engine is planned since Chatterbox was dropped (§10.4) | Not planned |
 | ollama | Text drafting only | Optional helper (§6) |
 
 VRAM budget on the 24 GB A5000: VoxCPM2 ~8 GB + Dia ~4.4 GB ≈ 12.4 GB, both resident, by the sources' figures (§2).
@@ -205,13 +205,14 @@ ACE-Step 1.5 XL needs about 20 GB without offload [source: ACE-Step, "ACE-Step-1
 https://github.com/ace-step/ACE-Step-1.5, read 2026-11-16], so voice and music batches cannot share the GPU: run them
 one at a time and free memory with `gpu.unload_model` between them.
 
-## 8. Recommendation (revised after the licence re-read, §10)
+## 8. Recommendation (operator decisions of 2026-11-16 applied, §10.4)
 
-**Default stack: no condition on the audio**
+**Stack**
 
-1. Speech: **VoxCPM2** (2B, Apache-2.0, ~8 GB, 48 kHz) with per-line style text built from `emotion`, `intensity`
-   and `direction`, conditioned on each character's committed identity clip. New characters (tip officers, guests)
-   by voice design, then frozen as identity clips.
+1. Speech, placeholders and final: **VoxCPM2** (2B, Apache-2.0, ~8 GB, 48 kHz) with per-line style text built from
+   `emotion`, `intensity` and `direction`, conditioned on each character's committed identity clip. A placeholder is
+   a quick single take; a final is a picked take (spec, "Placeholder to final swap"). New characters (tip officers,
+   guests) by voice design, then frozen as identity clips.
 2. Non-verbals and efforts: **Dia 1.6B** (Apache-2.0, ~4.4 GB) in the character's cloned voice, rendered as reels
    and cut into stingers; crowd cheers layered from several identities.
 3. Brood: today's reversal and pitch-down on the speech performances, plus Dia growls pitched down and the
@@ -220,38 +221,37 @@ one at a time and free memory with `gpu.unload_model` between them.
 5. Direction: `lines.json` v5 fields, the tone check, optional ollama drafts; takes and picks in
    `plan/render-runs/voice-<batch>/`.
 
-**Now in the running: a pilot bake-off for the speech engine.** The licence re-read (§10) lets three stronger
-expressive models compete, because their licences leave the generated audio unrestricted apart from a credit line:
+**Pilot bake-off for the speech engine.** Two stronger expressive models compete with VoxCPM2 on the same 20 pilot
+lines (spec task 6.1), from the same identity clips. Their licences leave the audio ours, and the operator accepts
+non-commercial use with a credit line (§10.4). Both need the operator's `/accept-licence` signature first
+(`plan/licences-to-sign.md`):
 
 - **Fish Audio S2-Pro**: free-form inline tags and emotion ("fine-grained inline control of prosody and emotion"),
   multi-speaker, cloning [source: Fish Audio, "fishaudio/s2-pro", https://huggingface.co/fishaudio/s2-pro, read
-  2026-11-16]. It could do speech *and* non-verbals in one engine, which fits the cue design (spec) best.
-  Conditions: "Built with Fish Audio" in the credits; the operator decides whether a free, unsold game made by a
-  hobbyist team is a "Non-Commercial Purpose" under its definition (§10).
+  2026-11-16]. It could do speech *and* non-verbals in one engine, which fits the cue design best. Credit: "Built
+  with Fish Audio".
 - **Higgs Audio v2**: the highest published emotion score of the set (75.7 % win rate over gpt-4o-mini-tts on
   Emotions) [source: Boson AI, "bosonai/higgs-audio-v2-generation-3B-base",
-  https://huggingface.co/bosonai/higgs-audio-v2-generation-3B-base, read 2026-11-16], multi-speaker. Conditions: the "Built with Higgs Materials …" credit; under 100,000 annual active
-  users; the incorporated Llama 3 terms.
-- **IndexTTS-2.5** (only if the operator accepts §10's caveat): the finest emotion control (8-value vector, emotion
-  text or reference), ~0.8B, ~6 GB [source: IndexTeam, "IndexTeam/IndexTTS-2.5",
-  https://huggingface.co/IndexTeam/IndexTTS-2.5, read 2026-11-16]. Its outputs count as "Derivative Works" under the bilibili licence, so its
-  notices travel with the clips.
+  https://huggingface.co/bosonai/higgs-audio-v2-generation-3B-base, read 2026-11-16], multi-speaker. Credit: the
+  "Built with Higgs Materials … and Meta Llama 3 …" line; the Llama 3 terms come with it.
 
-The pilot (spec task 6.1) renders the same 20 lines with VoxCPM2 and each admitted challenger, from the same identity
-clips, and the agent picks per line with reasons in the ledger. If a challenger wins most lines, it becomes the
-speech engine (and, for Fish S2-Pro, possibly the non-verbal engine too); VoxCPM2 + Dia stay the fallback with no
-licence conditions.
+If a challenger wins most lines, it becomes the speech engine (and, for Fish S2-Pro, possibly the non-verbal engine
+too). VoxCPM2 + Dia stay the fallback with no licence conditions. **Qwen3-TTS** (Apache-2.0, instruction control,
+VoiceDesign) is the next candidate if all three disappoint; VRAM not stated.
 
-**Fallback and placeholders**: **Chatterbox-Turbo** (350M, MIT, `[laugh]`/`[chuckle]`/`[cough]`) plus the original
-Chatterbox (`exaggeration`). It made today's bank, so the cast stays consistent, and Nano runs on CPU. It is retired
-(no fixes) and watermarks its output. **Qwen3-TTS** (Apache-2.0, instruction control, VoiceDesign) is the next
-candidate; VRAM not stated.
+**Dropped:** Chatterbox, Chatterbox-Turbo and -Nano (operator, 2026-11-16). The shipped 2026-11-12 bank keeps its
+Chatterbox takes, and the credits keep crediting them, until each clip is re-rendered.
 
-**Still out** (§10): Higgs v3 and Coqui XTTS-v2 (their licences restrict the outputs themselves), Echo-TTS (outputs
-CC-BY-NC-SA by its own README), Fish S1-mini (CC-BY-NC-SA, licence text gated and unread, and the same codec Echo
-names), VibeVoice (TTS code removed; an audible AI disclaimer in every file), F5-TTS (CC-BY-NC weights and no emotion
-control, so nothing to gain). AudioLDM2, TangoFlux, MMAudio and AudioGen stay out of the voice work because none of
-them does vocals (§4), whatever their licence.
+**IndexTTS-2.5 stays out** (operator, 2026-11-16). Condition for revisiting it: a need that VoxCPM2, Fish S2-Pro and
+Higgs v2 cannot meet, such as exact duration control to fit a line to a cue or a cinematic shot. IndexTTS 2.5 has a
+`duration_factor` speed control [source: bilibili Index team, "index-tts/index-tts README",
+https://github.com/index-tts/index-tts, read 2026-11-16]; if such a need appears, its licence questions (§10.2) come
+back to the operator with it.
+
+**Still out** (§10.2): Higgs v3 and Coqui XTTS-v2 (their licences restrict the outputs themselves), Echo-TTS
+(outputs CC-BY-NC-SA by its own README), Fish S1-mini (CC-BY-NC-SA, licence text gated and unread), VibeVoice (TTS
+code removed; an audible AI disclaimer in every file), F5-TTS (no emotion control, so nothing to gain). AudioLDM2,
+TangoFlux, MMAudio and AudioGen stay out of the voice work because none of them does vocals (§4).
 
 ## 9. What this forge needs (for the coordinator, via the lead)
 
@@ -264,7 +264,8 @@ them does vocals (§4), whatever their licence.
 - Host audio appliance: `audio.transform` (loudness, stretch, Opus/AAC, resample), `audio.detect_glitches`,
   `audio.separate` (Demucs, non-commercial weights). No synthesis.
 
-So no placeholder could be rendered within "already installed, no new download, no new nodes".
+So no placeholder could be rendered within "already installed, no new download, no new nodes". Placeholders now wait
+for VoxCPM2's admission.
 
 ### 9.1 Requests, in priority order
 
@@ -273,15 +274,15 @@ parameter) is given as an arithmetic floor, marked "est."; real use needs more. 
 
 | # | Model | Params | VRAM | Licence (weights) | OK for this repo? | Reason | Role |
 |---|---|---|---|---|---|---|---|
-| 1 | **Chatterbox** + **Turbo** (+ Nano, CPU) | 500M + 350M (110M) | not stated; est. ≥ 1 GB / 0.7 GB | MIT | **Yes** | MIT; audio unrestricted; output watermarked; project retired | Placeholders now; fallback |
-| 2 | **VoxCPM2** | 2B | ~8 GB | Apache-2.0 | **Yes** | Apache-2.0, "free for commercial use"; no condition on audio | Default speech |
-| 3 | **Dia 1.6B** | 1.6B | ~4.4 GB bf16 | Apache-2.0 | **Yes** | Apache-2.0 LICENSE; the card's "research and educational use" and misuse rules are not in the licence; we clone only our own synthetic voices | Non-verbals |
-| 4 | **Fish Audio S2-Pro** | ~5B | not stated; est. ≥ 10 GB | Fish Audio Research License | **Yes, if the operator decides** | Outputs are ours and not Derivative Works; credit "Built with Fish Audio"; the operator decides whether our use is a "Non-Commercial Purpose"; confirm at admission that its codec is under the same licence | Bake-off challenger (speech + tags) |
-| 5 | **Higgs Audio v2** (3B base) | ~6B total | not stated; est. ≥ 12 GB | Boson Higgs Audio 2 Community License | **Yes, with conditions** | Not non-commercial; outputs unrestricted except training other LLMs; credit line; < 100k annual active users; Llama 3 terms incorporated (operator to accept) | Bake-off challenger (emotion) |
-| 6 | **IndexTTS-2.5** | ~0.8B | ~6 GB | bilibili Model Use License | **Operator decides** | Royalty-free, thresholds far above us; but outputs are "Derivative Works", so notices, a licence copy and use rules travel with the clips: those clips would need their own licence note beside GPL (§10.2) | Optional challenger (emotion vectors) |
-| 7 | A Whisper-class ASR model | not researched | not researched | check at admission | — | Not researched | Take rejection |
-| 8 | Optional: **RVC** | small | not stated | MIT | **Yes** | MIT code and weights | Timbre lock if engines drift |
-| 9 | Optional: **Qwen3-TTS** VoiceDesign 1.7B | 1.7B | not stated; est. ≥ 3.4 GB | Apache-2.0 | **Yes** | Apache-2.0 LICENSE | Second fallback |
+| 1 | **VoxCPM2** | 2B | ~8 GB | Apache-2.0 | **Yes** | Apache-2.0, "free for commercial use"; no condition on audio | Speech: placeholders and final |
+| 2 | **Dia 1.6B** | 1.6B | ~4.4 GB bf16 | Apache-2.0 | **Yes** | Apache-2.0 LICENSE; the card's "research and educational use" and misuse rules are not in the licence; we clone only our own synthetic voices | Non-verbals |
+| 3 | **Fish Audio S2-Pro** | ~5B | not stated; est. ≥ 10 GB | Fish Audio Research License | **Yes** (operator, 2026-11-16; signature pending) | Outputs are ours and not Derivative Works; non-commercial use with the credit "Built with Fish Audio" | Pilot challenger (speech + tags) |
+| 4 | **Higgs Audio v2** (3B base) | ~6B total | not stated; est. ≥ 12 GB | Boson Higgs Audio 2 Community License + Meta Llama 3 Community License | **Yes** (operator, 2026-11-16; two signatures pending) | Outputs unrestricted except training other LLMs; credit line; under 100k annual active users; Llama 3 terms and Acceptable Use Policy | Pilot challenger (emotion) |
+| 5 | A Whisper-class ASR model | not researched | not researched | check at admission | — | Not researched | Take rejection |
+| 6 | Optional: **RVC** | small | not stated | MIT | **Yes** | MIT code and weights | Timbre lock if engines drift |
+| 7 | Optional: **Qwen3-TTS** VoiceDesign 1.7B | 1.7B | not stated; est. ≥ 3.4 GB | Apache-2.0 | **Yes** | Apache-2.0 LICENSE | Second fallback |
+| — | IndexTTS-2.5 | ~0.8B | ~6 GB | bilibili Model Use License | **No** (operator, 2026-11-16) | Revisit only for a need the others cannot meet, e.g. exact duration control | — |
+| — | Chatterbox, -Turbo, -Nano | | | MIT | Dropped (operator, 2026-11-16) | VoxCPM2 covers placeholders | — |
 | — | Higgs v3, XTTS-v2, Echo-TTS, Fish S1-mini, VibeVoice, F5-TTS | | | | **No** | §10.2 | — |
 
 Node requirements for every TTS node: seed input; output AUDIO at the native rate (no resample, no normalise); the
@@ -299,7 +300,7 @@ endpoint the forge may call if line drafting (§6) is wanted.
 
 Operator: "We're not using them commercially, our software is free and open source, and so are our games." This
 section reports what the licence texts say. It is not legal advice; the points where the operator must decide are
-marked **Decide**.
+marked **Decide**; §10.4 records how the operator resolved them.
 
 ### 10.1 What the repo ships under
 
@@ -319,8 +320,9 @@ marked **Decide**.
 - `plan/asset-pipeline/licence-review.md` records the operator's standing approval for free models "we'll not be
   selling any of those assets" (2026-11-01) and an allowlist of licence ids (apache-2.0, mit, bsd, openrail).
 - The production site, demonattack.tlatoani.net, is free to play. The repo has no ads, payments or donation links
-  (searched `README.md`, `web/`, `lib/`). **Decide:** whether any revenue (ads, donations, sponsorship) is ever planned,
-  because several definitions below turn on "monetary compensation" or "generate revenue … indirectly".
+  (searched `README.md`, `web/`, `lib/`). **Resolved (§10.4):** the game is free and the operator accepts non-commercial licences
+  with a credit line; several definitions below still turn on "monetary compensation" or "generate revenue …
+  indirectly", so any future revenue (ads, donations, sponsorship) reopens them.
 - The FSF's FAQ on game data under other licences (gnu.org) and Creative Commons' FAQ on AI outputs
   (creativecommons.org) were blocked, so neither informs this section.
 
@@ -328,8 +330,8 @@ marked **Decide**.
 because GPL-3.0 lets anyone sell copies and forbids further restrictions (§10 above). It could still sit in the repo
 as a separate work under its own terms (§5 aggregate), with a licence note naming those files. Then the repo is
 "GPL code plus some non-free audio": third parties could not reuse those clips commercially, and a strict
-free-software packager would treat them as non-free. **Decide:** whether the game accepts any separately licensed
-audio at all. The recommendation (§8) avoids needing that decision: every "Yes" row leaves the audio unrestricted.
+free-software packager would treat them as non-free. **Resolved (§10.4):** no separately licensed audio; IndexTTS stays
+out. The recommendation (§8) avoids needing that decision: every "Yes" row leaves the audio unrestricted.
 
 ### 10.2 Per licence: does it restrict the outputs?
 
@@ -337,11 +339,11 @@ audio at all. The recommendation (§8) avoids needing that decision: every "Yes"
 |---|---|---|---|---|---|
 | VoxCPM2 | Apache-2.0 LICENSE | No | Free for commercial use | Apache notice for the weights only (not shipped) | **Yes** |
 | Dia 1.6B | Apache-2.0 LICENSE; card adds "intended for research and educational use" and bans identity misuse, deception, illegal use | No (card rules are about use; we clone only synthetic voices) | none in the licence | none for audio | **Yes** |
-| Chatterbox / Turbo | MIT LICENSE | No; every file carries an imperceptible Perth watermark | none | none | **Yes** |
+| Chatterbox / Turbo | MIT LICENSE | No; every file carries an imperceptible Perth watermark | none | none | Yes by licence; dropped by the operator (§10.4) |
 | Qwen3-TTS | Apache-2.0 LICENSE | No | none | none | **Yes** |
-| Fish S2-Pro | Fish Audio Research License (2026-03-07) | **No.** Derivative Works "do not include the output of any Model"; "You own any outputs" | Grant for "Research or Non-Commercial Purpose"; Non-Commercial includes "personal use (i.e., hobbyist)"; Commercial includes "distributing Your product or service" and use "for which You charge a fee or generate revenue, whether directly or indirectly" | Credit "Built with Fish Audio" on a related website | **Yes, if the operator decides** our use is non-commercial; audio itself can be GPL |
-| Higgs Audio v2 | Boson Higgs Audio 2 Community License (Llama 3 based, incorporated by reference) | Only: no use of outputs to improve other LLMs | Royalty-free, commercial allowed; expanded licence above 100,000 annual active users | "Built with Higgs Materials licensed from Boson AI USA, Inc. …" displayed prominently | **Yes, with conditions** (credit; operator accepts the Llama 3 terms) |
-| IndexTTS2 / 2.5 | bilibili Model Use License Agreement | **Yes, in part**: outputs fall under "Derivative Work", which must keep notices and a copy of the agreement, carry a non-endorsement disclaimer when distributed, follow content rules, and not be used to improve other AI models except non-commercial ones | Royalty-free; thresholds 100M monthly users or RMB 1bn revenue | Notices + licence copy with every Derivative Work | **Operator decides**: the conditions follow the clips, so they cannot be plain GPL; ship only as separately licensed audio (§10.1) |
+| Fish S2-Pro | Fish Audio Research License (2026-03-07) | **No.** Derivative Works "do not include the output of any Model"; "You own any outputs" | Grant for "Research or Non-Commercial Purpose"; Non-Commercial includes "personal use (i.e., hobbyist)"; Commercial includes "distributing Your product or service" and use "for which You charge a fee or generate revenue, whether directly or indirectly" | Credit "Built with Fish Audio" on a related website | **Yes** (operator, 2026-11-16: non-commercial with credit is acceptable); audio itself can be GPL |
+| Higgs Audio v2 | Boson Higgs Audio 2 Community License (Llama 3 based, incorporated by reference) | Only: no use of outputs to improve other LLMs | Royalty-free, commercial allowed; expanded licence above 100,000 annual active users | "Built with Higgs Materials licensed from Boson AI USA, Inc. …" displayed prominently | **Yes** (operator, 2026-11-16; credit line; Llama 3 terms signed with it) |
+| IndexTTS2 / 2.5 | bilibili Model Use License Agreement | **Yes, in part**: outputs fall under "Derivative Work", which must keep notices and a copy of the agreement, carry a non-endorsement disclaimer when distributed, follow content rules, and not be used to improve other AI models except non-commercial ones | Royalty-free; thresholds 100M monthly users or RMB 1bn revenue | Notices + licence copy with every Derivative Work | **No** (operator, 2026-11-16): the conditions follow the clips, so they could not be plain GPL; revisit only for a need the others cannot meet (§8) |
 | Higgs Audio v3 | Boson Higgs TTS 3 Research and Non-Commercial License ("not an open source license") | **Yes**: outputs used for a Commercial Purpose need a licence, and Commercial Purpose includes "any use made available to end users outside Your organization" | Creator Use Grant covers podcasts and videos, not an application | several | **No**: a public website is outside the grant |
 | Coqui XTTS-v2 | Coqui Public Model License 1.0.0 | **Yes**: "only non-commercial use of a machine learning model and its outputs"; anyone who gets the output must get the terms | NC only; no direct or indirect payment | Terms travel with outputs | **No**: incompatible with GPL audio |
 | Echo-TTS | weights CC-BY-NC-SA-4.0; README | **Yes**: "audio outputs are CC-BY-NC-SA-4.0 due to the dependency on the Fish Speech S1-DAC autoencoder" | NC-SA | CC attribution | **No** |
@@ -383,11 +385,27 @@ the admission review reads the full texts.
 
 - For every "Yes" row: nothing on the site beyond what the credits already do, plus the credit line where one is
   required (Fish S2-Pro "Built with Fish Audio"; Higgs v2 "Built with Higgs Materials licensed from Boson AI USA,
-  Inc., Copyright Boson AI USA, Inc., All Rights Reserved"). The credits list production models today
-  (`plan/battle-metal-radio-research.md`, "Credits reference access"), so the line goes there and in the README.
+  Inc., Copyright Boson AI USA, Inc., All Rights Reserved and Meta Llama 3 licensed under the Meta Llama 3 Community
+  License, Copyright Meta Platforms, Inc., All Right Reserved", the full line in the licence text, read 2026-11-16
+  for `plan/licences-to-sign.md`). The credits page lists every production model, so the lines go there
+  (`tools/generate_credits.lua` → `assets/credits.json`).
 - The manifest records each clip's engine and licence (spec), so the credits can be generated from what actually
   shipped, and a later licence change can be traced to the clips it touches.
-- For IndexTTS (if chosen): a licence note file beside those clips with the bilibili agreement and notices, and a
-  line in the README saying those clips are not GPL. **Decide** before any are rendered for shipping.
+- IndexTTS is out (§10.4), so no separately licensed clips ship.
+- The credit lines are generated into `assets/credits.json` by `tools/generate_credits.lua` (done 2026-11-16).
 - No weights are ever shipped or committed (the studio holds them), so no model's redistribution terms reach the
   repo.
+
+### 10.4 Operator decisions (2026-11-16, relayed by the coordinator)
+
+1. **Chatterbox is dropped** (with Turbo and Nano). VoxCPM2 renders placeholders and final speech; Dia renders the
+   non-verbals. Its pin left `art/comms/audio.json`; the CPU worker tools that ran it were removed from
+   `tools/production/`; the credits keep it for the shipped 2026-11-12 takes until they are re-rendered.
+2. **Non-commercial with a credit line is acceptable**: the game is free and open source, and the credits page lists
+   every model and licence. Fish Audio S2-Pro and Higgs Audio v2 are pilot challengers; their credit lines are in
+   `assets/credits.json`. The signatures are prepared in `plan/licences-to-sign.md` (Fish Audio Research License,
+   Boson Higgs Audio 2 Community License, Meta Llama 3 Community License with its Acceptable Use Policy).
+3. **IndexTTS-2.5 stays out**, revisited only for a need the others cannot meet, such as exact duration control to
+   fit a cue (§8).
+4. Restricted licences are signed through `/accept-licence`, project by project; Apache-2.0 and MIT need no
+   signature.

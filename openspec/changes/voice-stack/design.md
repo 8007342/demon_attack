@@ -27,26 +27,39 @@ worker on about 15 cores. A GPU studio node replaces that worker; the forge only
 Decision (research §8, revised after the licence re-read in research §10): VoxCPM2 for speech (Apache-2.0, ~8 GB,
 style text, cloning from identity clips) and Dia 1.6B for non-verbals and efforts (Apache-2.0, ~4.4 GB, 21 tags) are
 the default, with no condition on the audio. Fish Audio S2-Pro and Higgs Audio v2, whose licences leave the outputs
-unrestricted apart from a credit line, compete with VoxCPM2 in the pilot (task 6.1); IndexTTS-2.5 joins only if the
-operator accepts that its notices travel with the clips. Chatterbox / Chatterbox-Turbo (MIT) is the placeholder and
-fallback engine. VRAM, licences and the "OK for this repo?" verdicts, with sources, are in research §9 and §10. The spec is engine-agnostic: an engine
-is a row in `art/comms/voice-engines.json`:
+unrestricted apart from a credit line, compete with VoxCPM2 in the pilot (task 6.1), after the operator signs their
+licences (`plan/licences-to-sign.md`).
+
+Operator decisions, 2026-11-16 (research §10.4):
+- **Chatterbox is dropped** (with Turbo and Nano). VoxCPM2 renders placeholders as well as final speech; Dia renders
+  the non-verbals. Its pin left `art/comms/audio.json` (the engine-independent delivery shaping moved to `delivery`,
+  the reference sentence to `identity`), and the CPU worker tools that ran it left `tools/production/`. The shipped
+  2026-11-12 takes stay, and stay credited, until each is re-rendered.
+- **Non-commercial with a credit line is acceptable.** The credits generator lists the voice engines and the exact
+  credit lines Fish Audio and Boson AI require.
+- **IndexTTS-2.5 stays out.** Revisit it only for a need the others cannot meet, such as exact duration control to fit
+  a cue.
+
+VRAM, licences and the "OK for this repo?" verdicts, with sources, are in research §9 and §10. The spec is
+engine-agnostic: an engine is a row in `art/comms/voice-engines.json`:
 
 ```json
 {
-  "id": "chatterbox",
+  "id": "voxcpm2",
   "studio_node": "<class name from the admission register>",
   "revision": "<pinned commit>",
-  "licence": {"code": "MIT", "weights": "MIT", "outputs": "unrestricted", "credit": null,
+  "licence": {"code": "Apache-2.0", "weights": "Apache-2.0", "outputs": "unrestricted", "credit": null,
               "decision": null},
-  "sample_rate": 24000,
-  "cues": "native-tags",
-  "emotions": {"urgent": {"exaggeration": 1.0, "cfg_weight": 0.4, "temperature": 0.8}}
+  "sample_rate": 48000,
+  "cues": "stingers",
+  "emotions": {"urgent": {"style": "urgent, clipped, shouting over engine noise"}}
 }
 ```
 
-`emotions` carries the per-emotion settings that `audio.json` `chatterbox.emotions` holds today; intensity scales the
-engine's own expressiveness control (§3). `licence.outputs` is `unrestricted`, `credit` (unrestricted apart from the `credit` line) or `restricted`;
+`emotions` carries the per-emotion engine settings (for VoxCPM2 a style text, for Fish S2-Pro inline tags, for Higgs
+its scene prompt); intensity scales the engine's own expressiveness control (§3). The engine-independent post-shaping
+stays in `audio.json` `delivery`. A challenger row (Fish S2-Pro, Higgs v2) has `outputs: "credit"`, its `credit`
+line and the `decision` file that records the operator's signature. `licence.outputs` is `unrestricted`, `credit` (unrestricted apart from the `credit` line) or `restricted`;
 `decision` names a signed file in `licences/acknowledgements/` when the operator has accepted conditions. `verify`
 rejects a shipped clip whose engine is `restricted` without a `decision`, and the credits list every `credit` line
 of the engines that actually shipped.
@@ -58,7 +71,7 @@ Additions, all optional, so today's bank validates unchanged:
 | Field | Where | Meaning |
 |---|---|---|
 | `emotion` | human line, demon line | Closed list: today's `excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern` plus `cheering, furious, relieved, awed, smug`. |
-| `intensity` | line | 0 low, 1 normal (default), 2 high, 3 peak. Maps to the engine's control, e.g. Chatterbox exaggeration ×0.7 / ×1 / ×1.3 / ×1.6 of the emotion's base, capped at the engine's stable range. |
+| `intensity` | line | 0 low, 1 normal (default), 2 high, 3 peak. Maps to the engine's control, e.g. a VoxCPM2 style adverb ladder ("a little", plain, "very", "extremely") or a scale on an engine's expressiveness knob, capped at the engine's stable range. |
 | `direction` | line | Up to 120 characters for the take: "out of breath, grinning", "through gritted teeth". Goes to engines that take text instructions; logged for the rest. |
 | cues | inside `text` / `say` | `[laugh]`, `[whoop]` … from `art/comms/cues.json`. |
 
@@ -189,8 +202,8 @@ change `carrier-hatches`; this change only adds the flag and rejects cues in hin
 ## 4. Takes, picks and identities
 
 - Identity: `art/comms/voices/<id>.flac` (mono, 6–20 s, lossless) plus transcript and description in `cast.json`.
-  Today's identities were Kokoro-82M voices (Apache-2.0) re-voiced by Chatterbox; the existing reference-clip text is
-  `audio.json` `chatterbox.reference_text`. The identity clip is the only thing that conditions a character, so it is
+  Today's identities are Kokoro-82M voices (Apache-2.0), which Chatterbox re-voiced for the 2026-11-12 bank; the
+  reference sentence is `audio.json` `identity.reference_text`, and the `refs` stage renders it per character. The identity clip is the only thing that conditions a character, so it is
   committed (CLAUDE.md §5: GPU re-renders are not byte-identical).
 - Take counts: three seeds for priority ≥ 8 and `signature` lines, two for the rest, one for cue-only stingers plus a
   pick from a small cue library per character.
@@ -230,8 +243,8 @@ nodes". Inventory on 2026-11-16:
 - Host audio appliance (`audio.transform`): loudness, stretch, Opus/AAC encode, resample. No synthesis.
 
 So nothing qualifies, and no placeholder was rendered. New lines keep using the existing mechanisms: a borrowed clip
-(`"placeholder"`) or `"pending": "text"`. The fastest legitimate placeholder route, once the coordinator agrees, is
-research §9 item 1 (restore the pinned Kokoro + Chatterbox, both MIT/Apache, through the studio's admission).
+(`"placeholder"`) or `"pending": "text"`. Since Chatterbox was dropped (§2), placeholders wait for VoxCPM2's admission
+as a studio node (research §9.1 row 1): a placeholder is then a quick single VoxCPM2 take with tier `placeholder`.
 
 ## 7. The swap from placeholder to final
 

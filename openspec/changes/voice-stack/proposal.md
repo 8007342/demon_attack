@@ -35,8 +35,11 @@ tillandsias#1103, and #1103 batch 1 (per the coordinator, relayed 2026-11-16) is
 
 ## Not in this change
 
-- No placeholder audio: no TTS engine is installed in the forge or the studio today (design §6).
-- No code. The schema checks, ledger writer and tier field are tasks, implemented once an engine is admitted.
+- No placeholder audio: no TTS engine is installed in the forge or the studio today (design §6). Placeholders come
+  from VoxCPM2 once it is admitted.
+- Little code. Removing Chatterbox (operator, 2026-11-16) touched `art/comms/audio.json`, `tools/comms_pipeline.py`,
+  `tools/production/` and the credits generator (design §2); the schema checks, ledger writer and tier field are
+  tasks, implemented once an engine is admitted.
 - No change to the director, pacing or the existing clips. The current bank keeps playing until a batch is promoted.
 
 ## Impact
