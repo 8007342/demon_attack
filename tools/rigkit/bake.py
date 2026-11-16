@@ -142,7 +142,11 @@ def main(argv):
                         continue  # a mirrored pair is stored once at yaw 0
                     for jid, lst in objs.items():
                         for ob in lst: ob.is_holdout = jid != iid
-                    set_border(sc, K.module_rect_px(objs[iid], basis, frame, ppu), rig['size'])
+                    rect = K.module_rect_px(objs[iid], basis, frame, ppu)
+                    W, H = rig['size']
+                    if rect is None or rect[0] >= W - 2 or rect[1] >= H - 2 or rect[2] <= 2 or rect[3] <= 2:
+                        continue  # the module is outside the visible envelope in this view
+                    set_border(sc, rect, rig['size'])
                     sc.render.filepath = os.path.join(d, 'layer_%s_%s.png' % (iid, tag))
                     bpy.ops.render.render(write_still=True); n += 1
         for lst in objs.values():
@@ -164,7 +168,11 @@ def main(argv):
                           Matrix.Translation(-c))
                     for ob in lst: ob.matrix_world = Rm
                     bpy.context.view_layer.update()
-                    set_border(sc, K.module_rect_px(lst, basis, frame, ppu, pad=8), rig['size'])
+                    rect = K.module_rect_px(lst, basis, frame, ppu, pad=8)
+                    W, H = rig['size']
+                    if rect is None or rect[0] >= W - 2 or rect[1] >= H - 2 or rect[2] <= 2 or rect[3] <= 2:
+                        continue  # wreck outside the frame
+                    set_border(sc, rect, rig['size'])
                     sc.render.filepath = os.path.join(out, hull, 'wreck_%s_f%d.png' % (iid, f))
                     bpy.ops.render.render(write_still=True); n += 1
                 for ob in lst: ob.matrix_world = Matrix.Identity(4)

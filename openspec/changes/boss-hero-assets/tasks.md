@@ -43,7 +43,7 @@
 - [x] 7.1 Styleguide `docs/styleguide/alien-capital-ships.md`: materials, giant-scale silhouette and spill, module sets, tour escalation, decay events, phone readability
 - [x] 7.2 Shared libraries: `tools/rigkit` (bpy kit, rig, bake, `bake_family.lua`, `collect.lua`) and `tools/rigsheet` (finish, manifest, budget, sheets), family-driven (`demon-attack.rig-family/v1`)
 - [x] 7.3 Kit `art/families/alien-carriers.json`: tour 1 in three set combinations (thorn, lattice, shroud); tours 2–5 slots and hulls; C1 sheets `boss-carrier-v2-kit.png`, `-lineup.png`
-- [ ] 7.4 Tour-1 heroes (exploration, full-model heroes, refine) per set; C2 sheets `boss-carrier-v2-heroes-<set>.png`
-- [ ] 7.5 Tour-1 bakes: views, stages S0–S3, wrecks, manifest, budget ≤ 16 MB; C3 sheets `-views-<set>.png`, `-stages-<set>.png`, `-sets.png`; C4 `-phone-mock.png`
-- [ ] 7.6 Tours 2–5: heroes and bakes (rigs and lineup done in 7.3)
+- [x] 7.4 Tour-1 heroes (exploration, full-model heroes, refine) per set; C2 sheets `boss-carrier-v2-heroes-<set>.png`
+- [x] 7.5 Tour-1 bakes: views, stages S0–S3, wrecks, manifest, budget ≤ 16 MB; C3 sheets `-views-<set>.png`, `-stages-<set>.png`, `-sets.png`; C4 `-phone-mock.png`
+- [ ] 7.6 Tours 2–5: first-pass S0 heroes and bakes done (ledger C5); rerolls, prow fixes, stage looks and the 0.4 stage-scale budget left
 - [ ] 7.7 Hand-off to `boss-grandeur`: pack from `manifest.json` (texel per sprite, no frontal parts, carapace wreck = S3 layer), the carrier camera band Z 0.70–0.86, the decay events of styleguide §6

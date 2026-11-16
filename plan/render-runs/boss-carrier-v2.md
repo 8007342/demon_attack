@@ -218,3 +218,79 @@ citadel top).
   manifest; `BossHeroSprite.ppu` is now a double). It replaced the superseded frigate hero:
   - `assets/images/boss-frigate-hero-0.png`: 4096 × 994, 15.53 MB resident;
   - the regenerated hero section of `lib/game/boss_atlas.dart`, a generated file (no hand edits to `lib/`).
+
+**Not packed in this branch (hand-off).** Packing the thorn carrier as `frigate` worked (15.53 MB on one page), but
+`test/boss_grammar_test.dart` "the frigate assembly matches its packed view set" then fails: the v1 grammar's tour-0
+ids (spine, bow, tower, engines) are not the v2 ids. `lib/` belongs to `boss-grandeur`, so the pack output was reverted.
+The game still draws the v1 frigate hero, repacked byte-identically with the patched tool; the only change in
+`boss_atlas.dart` is that `ppu` is now a double. `flutter test`: all tests passed. What the runtime owner does is in
+the design §8.6.
+
+## 5. C5: tours 2–5 (2026-11-16, first pass)
+
+The rigs and the full-plan lineup have been in place since C1. One Lightning batch of 4 seeds per tour used the tour's
+set prompt plus its escalation line (`prompts.hero_tour_N`) and the clause "The black shapes are deep black empty
+hangar mouths" (tours 2+ add flank maws). Jobs st-…-108 to -111, seeds 2014000–03, 3024000–03, 4034000–03, 5014000–03.
+
+| Tour | Hull | Pick | Note |
+| --- | --- | --- | --- |
+| 2 | carrier2-thorn (13 inst., ×1.08) | 2014000 | the clean strake ship. Rejected: 2014001 (violet glow fills the gallery), 2014002 (two ember dots read as eyes). On the lineup a violet glow sits in the core window: **reroll** with a stronger dark-opening clause |
+| 3 | carrier3-lattice (17 inst., ×1.16) | 3024003, provisional | at this extent the lattice prow's crystal and strut row paints as **bone teeth** in all four seeds. **Fix the lattice prow** (point the crystals up and back, drop the struts) before a final pass |
+| 4 | carrier4-shroud (21 inst., ×1.24) | 4034003, provisional | the scale field paints pale and tooth-like at this scale; darken the field (plate clay) or replace it with chitin |
+| 5 | carrier5-thorn (24 inst., ×1.32) | 5014001 | the crystal crown blazes over a thorn forest: the scariest of the five. 5014002: the scythe arms read as bull horns |
+
+**Bakes (S0 only, no stage looks yet):** `lua tools/rigkit/bake_family.lua art/families/alien-carriers.json <hull>`,
+130–139 s each with the rig. The tour-5 bake first failed: a module outside the envelope in a view gave Blender an empty
+render border. `bake.py` now skips such layers and wrecks.
+
+| Tour | S0 core | S0 mass | Wrecks | S0 total | Projected with S2 + S3 at stage scale 0.5 | at 0.4 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2 | 3.78 | 6.72 | 1.03 | 11.53 | 16.78 | 14.89 |
+| 3 | 3.35 | 6.00 | 0.99 | 10.35 | 15.02 | 13.33 |
+| 4 | 2.77 | 7.12 | 1.49 | 11.37 | 16.33 | 14.54 |
+| 5 | 3.91 | 7.06 | 1.44 | 12.42 | 17.89 | 15.92 |
+
+**Escalation budget plan.** Stage layers at 0.4 × the class density for tours 2–5. Page overhead was ≈ 12 % on
+tour 1, so tour 5 also needs mass 0.65 px/unit (or S3 as tile patches over S2, B3 lesson 5) to land under 16 MB as a
+packed page. Re-measure after the stage looks.
+
+**Sheets**
+- `art/contact/boss-carrier-v2-lineup-finished.png`: the finished S0 of tours 1–5 at one scale, with the phone screen
+  at Z 0.70;
+- `art/contact/boss-carrier-v2-lineup.png`: the full clay plans;
+- `art/contact/boss-carrier-v2-belly.png`: the belly control and the finished belly.
+
+## 6. Spent and left
+
+**GPU** (one job at a time; the queue was never flooded; no failures, no downloads, the studio was never restarted).
+There were 140 images in 29 jobs, ≈ 2.6 h from the output timestamps:
+- 118 Lightning images at ≈ 21 s (≈ 41 min);
+- 20 full-model images at 1.6 MP, 40 steps, true CFG (≈ 5.3 min each, ≈ 106 min);
+- 2 refine images at 2.4 MP (≈ 9 min);
+- the rest is model loads and queue turnover.
+
+Waste worth naming: the value-lift batch (st-…-90/91/92, ≈ 63 min) and the shroud ctl5 full run (st-…-98, ≈ 11 min)
+were rejected.
+
+**CPU** (Blender at 8 threads, peak RSS 1.57 GB): ≈ 35 min of Blender wall time.
+- Six full tour-1 rigs (140–209 s each);
+- ≈ 40 hero-only and belly previews;
+- tour-1 bakes (≈ 60 s of projection per hull, 4 runs);
+- tours 2–5 rigs and bakes (≈ 10 min).
+
+Go finishing and sheets took a few minutes more.
+
+**Left**
+1. Hand-off to `boss-grandeur`:
+   - the grammar on the v2 slot ids;
+   - the `prow` as the front pass;
+   - a per-run pick among the baked combinations;
+   - then `boss_sheet pack BAKE RIG carrier1-<set>=frigate`;
+   - the carrier camera band Z 0.70–0.86;
+   - the decay events of the styleguide §6;
+   - the belly in the Overflight;
+   - wreck shadows (the wreck sprites' alpha is the shadow mask).
+2. Tours 2–5: reroll tour 2's core glow; fix the lattice prow and the shroud scale field; stage looks; budget at a
+   stage scale of 0.4.
+3. The scythe-arm wrecks are cropped by the envelope (the wing extends past it). Give wrecks their own frame
+   (`--envelope off` rig for wrecks).

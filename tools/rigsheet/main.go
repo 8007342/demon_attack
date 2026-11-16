@@ -223,7 +223,13 @@ func cmdGrid(a []string) {
 	h := 0
 	for _, p := range ims {
 		im := load(p)
-		im = areaScale(im, float64(w)/float64(im.Bounds().Dx()))
+		if k := float64(w) / float64(im.Bounds().Dx()); k < 1 {
+			im = areaScale(im, k)
+		} else {
+			up := image.NewNRGBA(image.Rect(0, 0, w, int(float64(im.Bounds().Dy())*k)))
+			blit(up, im, 0, 0, k)
+			im = up
+		}
 		cells = append(cells, im)
 		h = max(h, im.Bounds().Dy())
 	}
