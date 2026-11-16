@@ -34,12 +34,15 @@ per-heading pivot, with recoil along its angle; the friendly tracer SHALL leave 
 Ground units SHALL show move, idle, aim and fire, hit, damage, wreck and rubble (Host), totalled and pod
 (Fleet), pitch on slopes, walker bob and the infantry action set from their blocks. Sparse overlays (channel
 fill, lights, damage) SHALL be drawn over the cell they belong to; a missing overlay SHALL draw nothing.
-Beyond depth 900 only the `lights` overlay SHALL be drawn and the layer SHALL snap to every other angle;
-beyond 1200 five-heading units SHALL show every other heading and the layer SHALL follow the hull.
+Beyond depth 900 only the `lights` overlay SHALL be drawn and the layer SHALL snap to every other angle.
 
 #### Scenario: Far unit
 - **WHEN** a damaged Host tank winds up at depth 1000
 - **THEN** its lights overlay is drawn but its fill and damage overlays are not
+
+#### Scenario: Very far unit
+- **WHEN** a five-heading unit is beyond depth 1200
+- **THEN** it shows every other heading and its articulated layer follows the hull
 
 ### Requirement: Threat telegraph timing unchanged
 The four threat vehicles SHALL show their telegraph on the block's special frames (launcher raised, glow,

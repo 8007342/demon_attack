@@ -6,8 +6,11 @@
 A hit that costs a non-final life SHALL destroy the ship in a multi-frame explosion and start a regroup pause of 1.5–2 s.
 - During the pause, hostile shots SHALL fizzle out and no new hostile fire, dive or ground launch SHALL start.
 - During the pause, the swarm SHALL return to formation and nothing SHALL hit the player.
-- After the pause, the reserve ship SHALL fly up from the bottom edge with 2 s of blinking protection, and play SHALL resume.
-- Lives, scoring and the loadout rules SHALL be unchanged, and module timers SHALL freeze while the ship is away.
+- After the pause, the reserve ship SHALL return as the next requirement says.
+
+#### Scenario: Nothing starts while the ship is away
+- **WHEN** the regroup pause is running
+- **THEN** no hostile fire, dive or ground launch starts and nothing can hit the player
 
 #### Scenario: Regroup
 - **WHEN** an unshielded hit costs a life with lives remaining
@@ -16,6 +19,13 @@ A hit that costs a non-final life SHALL destroy the ship in a multi-frame explos
 #### Scenario: Final life
 - **WHEN** the last life is lost
 - **THEN** `playerDestroyed` fires with `final: true` and the defeat celebration starts as before
+
+### Requirement: Reserve ship return
+After the regroup pause, the reserve ship SHALL fly up from the bottom edge with 2 s of blinking protection, and play SHALL resume. Lives, scoring and the loadout rules SHALL be unchanged, and module timers SHALL freeze while the ship is away.
+
+#### Scenario: Timers hold while away
+- **WHEN** a life is lost with a power active
+- **THEN** the power's timer does not count down until the reserve ship is back in play
 
 ### Requirement: Ground homing flight
 A homing missile fired at a ground unit SHALL fly a longer arc, 0.95–1.75 s depending on depth. It SHALL climb away from the ship, arc out and dive into the perspective ground plane, shrinking with distance, and impact at the unit's ground position. Air targets SHALL keep their fast direct flight.

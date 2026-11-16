@@ -2,7 +2,7 @@
 
 An original pixel arcade remake inspired by Imagic's 1982 Demon Attack and its expanded conversions. Flutter and Flame power a finite campaign of five carrier victories, with four multi-wave sectors before each boss, named destinations, layered parallax worlds, and fleet recognition cutscenes.
 
-Drag the bottom controller panel or use **← →** to pilot. Firing is automatic. Press **P / Esc** to pause. Sound starts after a user gesture and can be muted. Collect and combine spread, rapid-fire, and shield powers; each has its own nine-second timer. Cannon glyphs, a rapid-fire bolt, a shield, and countdowns show the active combination without moving the controller guidance. Between waves, keep piloting to collect falling powers; each sector ends with a protected salvage window.
+Drag the bottom controller panel or use **← →** to pilot. Firing is automatic. Press **P / Esc** to pause. Sound starts after a user gesture and can be muted. Collect and combine five powers (spread, rapid fire, shield, powerful and large shots); each has its own nine-second timer. Powers drop every eighth kill (cycling through the five), from a sentinel shot down in a dive, and from fleet supply crates once the carrier's shield is down. Cannon glyphs, a rapid-fire bolt, a shield, and countdowns show the active combination without moving the controller guidance. Between waves, keep piloting to collect falling powers; each sector ends with a protected salvage window.
 
 Normal starts with three lives. Three game overs before any boss victory unlock Easy: five starting lives, 10% slower hostile movement and attacks, 20% less boss health, smaller flocks, and 25% fewer enemy points. A Normal boss victory unlocks Hard and Easy; Hard has three starting lives, larger flocks and 5% faster hostile activity. Later routes grow through one bounded campaign curve. Reinforcements and dedicated escorts share their parent wave’s health rules, with small whole-wave elite budgets. After the first boss, scarce segmented-wing sentinels descend slowly above the swarm, with heavier armored variants deeper in the campaign. Pixel warning poses precede their fast dives. Some badly wounded sentinels make a one-way last-stand rush: move after their climbing tell to dodge the committed attack. Player movement and firing remain equally responsive in every mode.
 
@@ -48,13 +48,15 @@ flutter analyze
 flutter test
 npm run test:worker
 npm run build
-openspec validate --all --strict
+openspec validate <change> --strict   # --all --strict still has three recorded warnings
 ```
 
 `tools/browser-smoke.cjs` drives a standalone Playwright Chromium against `URL` (default `http://127.0.0.1:8765`) and captures phone/desktop screenshots. Install Playwright's Chromium separately; it is a developer tool, not a runtime dependency.
 `tools/campaign-browser-smoke.cjs` additionally checks unlocked boards, achievement rows, compatible saved-wave resume and reload on desktop, phone and landscape. It uses isolated local state and mocked score rows, and accepts the same `URL` and `PLAYWRIGHT_MODULE` settings.
 
 ## Project layout
+
+Working rules for people and agents (branches, test gates, generated files, pipelines, provenance) are in [CLAUDE.md](CLAUDE.md). The main paths:
 
 - `lib/game/model.dart`: deterministic combat and progression.
 - `lib/game/difficulty.dart`: lives, hostile pacing, roster, scoring, and heart-drop policies.
@@ -64,7 +66,8 @@ openspec validate --all --strict
 - `worker/index.mjs`: same-origin API and independent persistent difficulty Top10s.
 - `web/audio/`: original MIDI cues, generator and browser synthesizer.
 - `assets/images/`: original sprite atlas and generated cosmic artwork.
-- `openspec/changes/`: tracked requirements and implementation, including `balance-five-tour-campaign`.
+- `lib/game/model.dart` and its `part` files (`model_flow.dart`, `model_bonus.dart`, `ground_war*.dart`, `life_loss.dart`, `sentinel_rush.dart`): the pure-Dart simulation; `lib/game/bonus/`: bonus levels; `lib/comms/`: the squad radio; `lib/review/`: the asset review studio.
+- `openspec/specs/`: the shipped behaviour; `openspec/changes/`: open work (`openspec list`), finished work under `archive/`.
 - `plan/`: original-game research, game tuning, visual/music guides and validation evidence.
 
 Regenerate sprite pixels with `python3 tools/generate_sprites.py`; regenerate MIDI with `python3 web/audio/generate-midi.py`.

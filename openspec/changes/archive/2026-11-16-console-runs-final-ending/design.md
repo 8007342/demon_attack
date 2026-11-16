@@ -25,4 +25,4 @@ Every route ends in sector 5, the carrier, so a carrier falls five times per cam
 - The console runs can still play the ending: a console start on route 5's carrier is the quickest way to review it.
 
 ## 4. Reference: kumbia-kombat `/console`
-Its console (`lib/console/`, `lib/review_links.dart`) starts review runs from one place that names every option, labels each item with a stable reference, and keeps review links apart from the game's own flow. Matched here: the console states its rules on the page, `ConsoleStart.label` names the start, and the link row is the place for the review pages (gallery now, the asset viewer / notes page next).
+Its console (`lib/console/`, `lib/review_links.dart`) starts review runs from one place that names every option, labels each item with a stable reference, and keeps review links apart from the game's own flow. [UNSOURCED: plan/provenance-audit.md#C-04] Matched here: the console states its rules on the page, `ConsoleStart.label` names the start, and the link row is the place for the review pages (gallery now, the asset viewer / notes page next).
