@@ -6,6 +6,9 @@
 // every regular power and the two bonus-only ones.
 import '../../model.dart' show Power;
 import '../bonus_types.dart';
+import 'supply_run_cues.dart';
+
+export 'supply_run_cues.dart';
 
 /// Falling pickups and heart pieces fly to the ship.
 const salvageMagnet = BonusPowerDef(
@@ -31,9 +34,12 @@ const doubleScore = BonusPowerDef(
 const supplyRun = BonusLevelDef(
   id: 'supplyRun',
   label: 'SUPPLY RUN',
-  brief:
-      'Crack the falling crates: three hits each. Kills drop nothing; '
-      'the cargo drops everything.',
+  // mission-medals: one short sentence on the goal (the operator did not
+  // understand the old two-clause rule); the crate's cracks and the radio
+  // carry the rest in the level.
+  brief: 'Shoot the falling crates open and catch the cargo.',
+  // mission-medals: no rule of play, only the cues (supply_run_cues.dart).
+  mechanic: SupplyRunCues.new,
   weight: 1,
   waves: BonusWaves(),
   rules: PowerRules(killDrops: false),

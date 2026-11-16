@@ -43,6 +43,11 @@ class DemonScene extends FlameGame {
   DemonScene(this.model, this.onTick);
   final ArcadeModel model;
   final VoidCallback onTick;
+
+  /// --- mission-medals: true while the urgent-mission card holds a bonus
+  /// level's start; the model is not stepped (presentation runs on).
+  bool Function() holdModel = _never;
+  static bool _never() => false;
   ui.Image? atlas, effectsAtlas, sky, cockpitAtlas;
 
   /// The foreshadow silhouette sheet (tools/sentinel_silhouettes); the
@@ -164,12 +169,13 @@ class DemonScene extends FlameGame {
   void update(double dt) {
     super.update(dt);
     if (model.mode != RunMode.paused) advancePresentation(dt);
-    if (model.canPilot && keyboardDirection != 0) {
+    final held = holdModel(); // --- mission-medals
+    if (!held && model.canPilot && keyboardDirection != 0) {
       model.moveBy(keyboardDirection * dt * 280);
     }
     // --- cinematic flow: the accessibility setting picks the plan.
     model.reducedMotion = sectors.flyover.reducedMotion;
-    model.update(dt);
+    if (!held) model.update(dt);
     armada.sync(model, images.load, images.clear);
     // --- ground blocks runtime: the current sector's block atlases.
     if (GroundPainter.useBlocks) {

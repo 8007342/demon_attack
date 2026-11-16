@@ -224,6 +224,56 @@ void main() {
     await dispose(tester);
   });
 
+  // --- mission-medals: the card holds the level's start until read.
+  testWidgets('the card holds the start until read, then the level runs', (
+    tester,
+  ) async {
+    final rig = await _toBonus(tester, const Size(360, 780), 'supplyRun');
+    final m = rig.model;
+    var heldFor = 0.0, prompt = false, pictogram = false;
+    for (var i = 0; i < 400 && !m.combat; i++) {
+      final held = rig.scene.holdModel();
+      await rig.step(.1, hold: true);
+      if (held) {
+        heldFor += .1;
+        expect(m.mode, isNot(RunMode.playing));
+      }
+      prompt |= find
+          .byKey(const ValueKey('bonus-briefing-start'))
+          .evaluate()
+          .isNotEmpty;
+      pictogram |= find
+          .byKey(const ValueKey('bonus-briefing-howto'))
+          .evaluate()
+          .isNotEmpty;
+    }
+    final b = _briefing(rig) as BonusBriefing?;
+    expect(m.combat, isTrue);
+    expect(prompt, isTrue, reason: 'TAP TO START while holding');
+    expect(pictogram, isTrue);
+    expect(heldFor, lessThanOrEqualTo(BonusBriefing.maxHold + .2));
+    expect(b == null || b.read(rig.comms.director, rig.comms.now), isTrue);
+    expect(tester.takeException(), isNull);
+    await dispose(tester);
+  });
+
+  testWidgets('a tap on the held card starts the level', (tester) async {
+    final rig = await _toBonus(tester, const Size(360, 780), 'supplyRun');
+    final m = rig.model;
+    var held = false;
+    for (var i = 0; i < 400 && !held; i++) {
+      await rig.step(.1, hold: true);
+      held = rig.scene.holdModel();
+    }
+    expect(held, isTrue);
+    await tester.tap(find.byKey(_card));
+    await rig.step(.05, hold: true);
+    expect(rig.scene.holdModel(), isFalse);
+    await rig.step(1, hold: true);
+    expect(m.combat, isTrue);
+    await dispose(tester);
+  });
+
   testWidgets('reduced motion: the card appears and goes without a fade', (
     tester,
   ) async {

@@ -22,6 +22,10 @@ package main
 //	                                                 articulated family: every pose finished, one cell, one page
 //	rigsheet posesheet BAKE RIG HULL TEXEL OUT.png TITLE   clay and finished poses by tilt and direction
 //	rigsheet posecands RIG HULL TEXEL OUT.png TITLE PICK RAW...  hero candidates: raw + finished rest pose
+//	rigsheet layeratlas FAMILY.json RIG COLS OUT.png [OUT.dart CLASS]
+//	                                                 layer family (render.frame + layers): id-pass cells, one page
+//	rigsheet layersheet FAMILY.json RIG OUT.png TITLE  every variant stacked, at display sizes, with its layers
+//	rigsheet layercands FAMILY.json RIG OUT.png TITLE HULL=RAW[,RAW...]...  candidates per hull: raw + stacked cut
 
 import (
 	"fmt"
@@ -85,6 +89,12 @@ func main() {
 		cmdPoseSheet(a)
 	case "posecands":
 		cmdPoseCands(a)
+	case "layeratlas":
+		cmdLayerAtlas(a)
+	case "layersheet":
+		cmdLayerSheet(a)
+	case "layercands":
+		cmdLayerCands(a)
 	default:
 		fail("unknown command %s", os.Args[1])
 	}

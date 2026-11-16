@@ -1010,8 +1010,10 @@ void rushRadio() {
       // 16 sentinel-rush + 13 transition-ascent front-line calls + 23
       // bonus-levels (framework and Supply Run) + 18 Stormfront, less the
       // 8 entry calls that became the urgent-mission card's silent written
-      // lines, plus 2 bonus-briefing clear lines (bonus-briefing).
-      expect(borrowed, 64);
+      // lines, plus 2 bonus-briefing clear lines (bonus-briefing), less
+      // the 9 Supply Run in-level lines that now show their own words
+      // (mission-medals: the borrowed subtitles told the player nothing).
+      expect(borrowed, 55);
     });
 
     test('triggers without a truthful placeholder stay silent', () {

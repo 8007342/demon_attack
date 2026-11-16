@@ -15,9 +15,20 @@ class BonusBriefingCard extends StatelessWidget {
     required this.now,
     this.maxHeight = double.infinity,
     this.onDismiss,
+    this.holding = false,
   });
   final BonusBriefing briefing;
   final double now;
+
+  /// mission-medals: the card is holding the level's start (it shows its
+  /// tap prompt).
+  final bool holding;
+
+  /// mission-medals: a level's rule as a pictogram under its brief (what
+  /// to do, drawn on the objects), keyed by level id.
+  static const Map<String, CustomPainter> howTo = {
+    'supplyRun': SupplyRunHowTo(),
+  };
 
   /// The most the card may take (the caller ends it above the ship row).
   final double maxHeight;
@@ -105,6 +116,19 @@ class BonusBriefingCard extends StatelessWidget {
                           _header(),
                           const SizedBox(height: 3),
                           _mission(who, current, portrait, reduce),
+                          // --- mission-medals: the rule as a pictogram.
+                          if (howTo[b.level.id] case final picture?
+                              when maxHeight >= tight) ...[
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              key: const ValueKey('bonus-briefing-howto'),
+                              height: 26,
+                              child: CustomPaint(
+                                painter: picture,
+                                size: Size.infinite,
+                              ),
+                            ),
+                          ],
                           if (chatter.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             const SizedBox(
@@ -127,6 +151,29 @@ class BonusBriefingCard extends StatelessWidget {
                                     for (final m in chatter)
                                       _turn(m, identical(m, current)),
                                   ],
+                                ),
+                              ),
+                            ),
+                          ],
+                          // --- mission-medals: the hold's prompt.
+                          if (holding) ...[
+                            const SizedBox(height: 3),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                'TAP TO START',
+                                key: const ValueKey('bonus-briefing-start'),
+                                style: TextStyle(
+                                  color: titleColor.withValues(
+                                    alpha: reduce
+                                        ? 1
+                                        : .65 +
+                                              .35 *
+                                                  math.sin(now * math.pi * 2),
+                                  ),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.4,
                                 ),
                               ),
                             ),
@@ -439,4 +486,120 @@ class _AlertMark extends CustomPainter {
 
   @override
   bool shouldRepaint(_AlertMark old) => false;
+}
+
+/// mission-medals: Supply Run's rule as a strip of five small pictures,
+/// in the colours of the level's own cues: a crate in gold target
+/// brackets, three shots, the crate bursting, the cargo falling on its
+/// dotted line, the ship under it on its landing marker.
+class SupplyRunHowTo extends CustomPainter {
+  const SupplyRunHowTo();
+
+  static const _gold = Color(0xFFFFD27A), _mint = Color(0xFF70F5D5);
+  static const _crate = Color(0xFF23364A), _edge = Color(0xFF5B7894);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cy = size.height / 2;
+    const step = 34.0;
+    var x = 12.0;
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    void crate(Offset c, {bool cracked = false}) {
+      final r = Rect.fromCenter(center: c, width: 12, height: 10);
+      canvas.drawRect(r, Paint()..color = _crate);
+      canvas.drawRect(r, stroke..color = _edge);
+      if (cracked) {
+        canvas.drawLine(
+          c.translate(-6, -3),
+          c.translate(1, 5),
+          stroke..color = _gold,
+        );
+      }
+    }
+
+    void arrow(double ax) {
+      final p = Path()
+        ..moveTo(ax - 2, cy - 3)
+        ..lineTo(ax + 1, cy)
+        ..lineTo(ax - 2, cy + 3);
+      canvas.drawPath(p, stroke..color = const Color(0x99FFE2B0));
+    }
+
+    // 1. The crate on its parachute, in target brackets.
+    final c1 = Offset(x, cy + 3);
+    canvas.drawArc(
+      Rect.fromCenter(center: c1.translate(0, -9), width: 16, height: 10),
+      math.pi,
+      math.pi,
+      true,
+      Paint()..color = const Color(0xFFF0F5FA),
+    );
+    crate(c1);
+    final box = Rect.fromCenter(center: c1, width: 18, height: 16);
+    stroke.color = _gold;
+    for (final (corner, dx, dy) in [
+      (box.topLeft, 1.0, 1.0),
+      (box.topRight, -1.0, 1.0),
+      (box.bottomLeft, 1.0, -1.0),
+      (box.bottomRight, -1.0, -1.0),
+    ]) {
+      canvas.drawLine(corner, corner + Offset(3 * dx, 0), stroke);
+      canvas.drawLine(corner, corner + Offset(0, 3 * dy), stroke);
+    }
+    arrow(x + step / 2);
+    x += step;
+    // 2. Three shots.
+    for (var i = 0; i < 3; i++) {
+      final sx = x - 5 + i * 5.0;
+      canvas.drawLine(
+        Offset(sx, cy + 6 - i * 2.0),
+        Offset(sx, cy - 2 - i * 2.0),
+        Paint()
+          ..color = _mint
+          ..strokeWidth = 1.6,
+      );
+    }
+    arrow(x + step / 2);
+    x += step;
+    // 3. The crate bursts.
+    crate(Offset(x, cy), cracked: true);
+    canvas.drawCircle(
+      Offset(x, cy),
+      10,
+      Paint()
+        ..color = _gold.withValues(alpha: .8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4,
+    );
+    arrow(x + step / 2);
+    x += step;
+    // 4. The cargo falls on its dotted line.
+    canvas.drawCircle(
+      Offset(x, cy - 6),
+      4,
+      Paint()..color = _mint.withValues(alpha: .9),
+    );
+    for (var y = cy - 1; y < cy + 10; y += 3.5) {
+      canvas.drawCircle(Offset(x, y), .8, Paint()..color = _mint);
+    }
+    arrow(x + step / 2);
+    x += step;
+    // 5. The ship catches it on its marker.
+    final ship = Path()
+      ..moveTo(x, cy - 7)
+      ..lineTo(x + 6, cy + 5)
+      ..lineTo(x, cy + 2)
+      ..lineTo(x - 6, cy + 5)
+      ..close();
+    canvas.drawPath(ship, Paint()..color = const Color(0xFF8FE6FF));
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(x, cy + 9), width: 16, height: 5),
+      stroke..color = _mint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(SupplyRunHowTo old) => false;
 }

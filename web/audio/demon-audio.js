@@ -656,6 +656,13 @@
       return;
     }
     if (name === 'fleetIntact') return;  // a music event, not an effect
+    // --- mission-medals: a bonus crate shot open (a wooden pop and a bright three-note chime).
+    if (name === 'crateOpen') {
+      limitVoices('wave');
+      noiseBurst(now, .16, .07, 1800);
+      [79, 86, 91].forEach((pitch, index) => voice({ pitch, velocity: 62, channel: 0, tag: 'wave' }, now + .03 + index*.055, .14, effects));
+      return;
+    }
     // --- ground war sfx (missile whoosh, incoming whistle, homing lock, ground blast) ---
     if (groundSfx(name, now)) return;
     const shapes = { shot: [82, .055, 35], explosion: [35, .24, 95], hit: [47, .12, 85], powerup: [84,.3,80], heart: [88,.16,65], life: [43,.4,90] };
