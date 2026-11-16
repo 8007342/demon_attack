@@ -1,99 +1,109 @@
-# Proposal: Carrier hatch cascade and component break-up (C4, C5)
+# Proposal: Carrier hatch cascade and component break-up (C4 revised, C5)
 
 ## Why
-From the operator's round 3c on 2026-11-16 (`plan/operator-feedback-2026-11-16.md`, C4 and C5), after the
-carrier-v3 runtime and the carrier-render-engine landed on `game`:
-- "The current huge boss fight is great, it does feel enormous." But **the demons fly under it**, so the player
-  cannot see them. Today the fight's flocks leave the deck bays and the prong gates (hull-local y 21 and 52) and
-  settle at y + 70, and the prow is drawn after the creatures (`scene.dart`, the boss block after the creature loop),
-  so the prow covers them.
-- **C4, the hatch cascade.** The hatches open on the carrier's **top** surface and the creatures emerge from them.
-  "As we hit it the top hatches drop, so demons need to come over from lower and lower hatches, until they come out
-  from the hatch we can shoot."
-- "This is just the beginning of the boss fight." With the planned dynamic soundtrack, "one whole run of the game
-  should feel like one smooth play of a long song", and "it's all about the boss fights".
-- **C5, component break-up.** The spikes fell off as one whole layer, not as individual spikes. "Whether we keep the
-  spike motif or anything else we use, make sure components fall off and break apart instead of as whole layers."
-  Today `BossDirector._detach` turns each detached module into one `BossWreck` sprite, and the S2 stage swap removes
-  every scale and crystal in one re-compose (`design.md` §B1).
+From the operator's rounds 3c and 3d on 2026-11-16 (`plan/operator-feedback-2026-11-16.md`: C4, C5 and the C4
+revision):
+- "The current huge boss fight is great, it does feel enormous." But **the demons fly under it**: the flocks leave
+  the deck bays and prong gates and settle under the prow, which is drawn after them.
+- **C4, the hatches.** The hatches open from the **top**, and the demons emerge from them, from lower and lower
+  hatches as the carrier is hit.
+- **C4 revision.** Every player finds the fight "waaay too difficult". Make it fairer through structure:
+  - each upper hatch has hit points and its own force field, and destroying them is the prerequisite;
+  - when all of them are destroyed and have fallen, the ship transforms to expose its lower, delicate hatch, and the
+    camera zooms in slowly again;
+  - three one-line radio hints;
+  - subtitles stay on one line so the font can grow.
 
-The research, with its sources, is in `plan/carrier-hatches-research.md`.
+  This supersedes the first version's "upper hatches not directly shootable".
+- **The run as one song.** The boss fights are the heart of it, and the dynamic soundtrack will follow their
+  sections.
+- **C5, components.** The spikes fell off as one whole layer. Every component must break off and apart on its own.
+
+The research, with its sources, is in `plan/carrier-hatches-research.md`. The causes, read from the code, are in
+`design.md` §A1 and §B1.
 
 ## What Changes
-- **Launch hatches on the top surface, in tiers** (Part A). This supersedes carrier-v3 §4.1–§4.4 and its
-  indestructible gates, which the operator approved earlier.
-  - Each tour's carrier has 2–4 **upper tiers** of dorsal hatches (one pair per tier), then the **deck tier** (the
-    two deck bays, which are already the core's side hatches) and the **maw tier** (the core door).
-  - The tiers per tour are 4, 4, 5, 5 and 6.
-  - Only the topmost intact tier launches.
-  - **Shield damage drops the upper tiers**, one tier per threshold. The thresholds are the shield-cell counts
-    6 and 0 on tours 1–2, 9, 6 and 0 on tours 3–4, and 9, 6, 3 and 0 from tour 5.
-  - The shield going down hands the launches to the deck tier, which the player can shoot.
-  - The last form seals the side hatches (the rule today), so the maw is the last tier.
+- **Three chapters** (Part A):
+  1. **The hatches.** 2–4 tiers of dorsal hatches (one pair each); only the topmost intact tier launches and is
+     vulnerable. Each hatch has its own small field, then hull hit points, from the old shield's HP redistributed
+     (×0.85 to start). The armour elsewhere sparks and takes no damage, and there is no hull-wide shield.
+  2. **The transformation** (3.5 s, when the last hatch has fallen). No hitbox, no fire and the timers held. The plates
+     shed as components, a shutter folds aside to expose the core door, and the camera zooms back in slowly
+     (0.04/s).
+  3. **The core.** The core door is the only target, hit while it is open, with its window widened to 16 × its
+     openness. The side hatches are sealed, and the core-chapter flocks leave through the open door.
+- **Fairness aids:**
+  - the glide is slowed (×0.35 in the hatch chapter, ×0.6 in the core chapter), so the lead needed falls from
+    ≈ 67 to ≈ 40 units;
+  - a lead pip on Easy and Normal;
+  - three radio hints ("Destroy the hatches!", "Time the open hatch!", "Fire ahead of its position!"), as written
+    lines (`"pending": "text"`).
 - **Creatures are always seen.**
-  - They pop up out of a hatch and cross over the hull to their places.
-  - In the fight they are drawn over every pass of the hull.
-  - They cannot be targeted above a transit line, so the kill windows do not move.
-  - Each creature's arrival moment (its entrance's end) is the same as today's.
-- **Deck and maw launches ride the existing door cycles.** A deck or maw launch leaves through an opening that is
-  open in the game. No door is forced open, so the exposure of the core is unchanged.
-- **The approach's launch waves** come out of the upper tiers' dorsal hatches, all of them intact, and are drawn in
-  front of the hull.
-- **Events for the music engine.**
-  - The volley lifecycle is renamed from gates to hatches: `bossHatchTelegraph`, `bossHatchOpen`, `bossLaunch` and
-    `bossHatchClose`.
-  - `bossHatchDrop` is new: one per hatch knocked out.
-  - `bossHatchTier` is new: each tier change, with `tier`, `tiers`, `depth` and `shootable`. The tiers are the
-    fight's song sections.
-  - All of them are structured events only.
+  - They pop up out of a hatch and cross over the hull.
+  - They are drawn over every hull pass, and cannot be targeted above a transit line.
+  - The flock timer, sizes, kinds and caps are unchanged, and the arrivals are invariant.
+- **Calibration: easier on purpose.** The targets are for the protected expert pilot and a new naive pilot that
+  does not lead:
+  - time-to-kill −25/−20/−10 % on Easy, Normal and Hard;
+  - hits taken −30/−25/−15 %;
+  - the naive pilot kills every carrier on Easy and 90 % on Normal.
+
+  `test/boss_endurance_test.dart` re-baselines on the result, and keeps the old values as `preHatches`.
+- **Events:**
+  - the gate names become `bossHatch*`;
+  - new: `bossHatchFieldDown`, `bossHatchDrop`, `bossHatchTier` (song sections), `bossTransform` (the bridge), and
+    the hint events;
+  - `bossCoreExposed` moves to the transformation's end;
+  - the shield-cell and field-impact events are retired for the carrier.
+
+  All are structured events only.
+- **Radio subtitles.**
+  - The font grows from 13 to 14.5 px on the phone and from 13.5 to 15 on the desktop.
+  - A 28-character one-line limit applies to flagged lines, the hints at least, enforced by a test over
+    `lines.json`.
+  - Measured today: median 37 characters, longest 88. 471 of 695 lines exceed the limit and keep wrapping.
 - **Component break-up** (Part B).
-  - Art removed between two damage states is no longer dropped as a layer. This covers the plates and crystals of
-    the S2 shed, the module of a form change, and a dropped hatch's doors.
-  - Each removed spike, plate, crystal or leaf is a **component** with its own pivot, axis and size class.
-  - Components stay attached until they are released one by one. The releases are staggered, and no more than a
-    quarter of a transition's components go in any 0.25 s.
-  - Each released component tears at its root, flies on the carrier-render-engine's closed-form body model
-    (`v + ω × r`), spins, sinks and fragments.
-  - The final collapse stays the cohesive carrier-render-engine collapse. Components still attached at death are
-    composed into the wreck.
-- **Art pipeline.** The bake has no per-component data today. The rigkit must provide:
-  - a per-element `comp` id pass;
-  - a component manifest with pivots, axes, size classes and cracks;
-  - stump sockets;
-  - dorsal hatch modules at the new hatch anchors.
-  
-  Until it does, the runtime derives the components from the layer art (`design.md` §B6).
+  - The art removed between damage states leaves as individual spikes, plates, crystals and door or rim pieces.
+    This covers the transformation's shed, form-change modules and destroyed hatches.
+  - Releases are staggered (≤ ¼ of a transition per 0.25 s), with a root tear, inherited `v + ω × r`, spin, sink and
+    fragments.
+  - The final collapse stays cohesive.
+- **Art pipeline.** The bake has no per-component data. The rigkit must provide:
+  - a `comp` id pass;
+  - a component manifest;
+  - sockets;
+  - dorsal hatches at the new anchors, with door and rim pieces.
+
+  Until then, the runtime derives the components from the layer art.
 
 ## Capabilities
 
 ### Modified Capabilities
-- `arcade-combat`: the carrier's launch hatches, their tiers and drops, the deck and maw launches, arrival
-  invariance, and the hatch events.
-- `arcade-presentation`: creatures drawn over the hull, the hatch and cascade presentation, and the component
-  break-up.
+- `arcade-combat`: the hatches, fields, transformation, core chapter, arrival invariance, the easier calibration and
+  the events.
+- `arcade-presentation`: creatures over the hull; hatch fields, destruction and cascade; the transformation and lead
+  pip; component break-up.
 - `arcade-progression`: the approach's launch waves leave from the dorsal hatches.
+- `squad-comms`: the carrier hints; one-line subtitles at a larger size.
 
-All requirements are ADDED. They supersede carrier-v3's "Carrier gate launches" and "Carrier approach and launch
-events" (gate names). carrier-v3 is not archived yet, so the supersession is reconciled when it is archived
-(tasks 10.2).
+All requirements are ADDED. They supersede, for the carrier, three requirements that are not archived yet:
+- carrier-v3's "Carrier gate launches", "Carrier approach and launch events" and "Carrier shield intercept
+  unchanged";
+- the main spec's side-hatch rule in "Carrier shield and door".
+
+They are reconciled at archive (tasks 10.2).
 
 ## Impact
 - **New:**
-  - `lib/game/carrier_hatches.dart` (pure Dart), which replaces `carrier_gates.dart`'s geometry and keeps its volley
-    state machine;
-  - `lib/game/carrier_breakup.dart` (components, schedule, bodies).
+  - `lib/game/carrier_hatches.dart` and `lib/game/carrier_breakup.dart`;
+  - `test/carrier_hatches_test.dart`, `test/carrier_breakup_test.dart`, `test/boss_fairness_test.dart` and
+    `test/comms_line_length_test.dart`.
 - **Changed:**
-  - `model.dart`: the tiers, drops, arrival invariance, deck hold and events;
-  - `carrier_script.dart`: the hatches replace the gates;
-  - `game_events.dart`: the renamed and new names;
-  - `boss_director.dart`: the release schedule, with no module `BossWreck` for carriers;
-  - `boss_painter.dart`: the transition composites and the component mesh;
-  - `carrier_presentation.dart`: the hatch doors, the pop-up, the cascade chase and the drop effects;
-  - `scene.dart`: the creatures are drawn over the hull in the fight;
+  - `model.dart`, `carrier_script.dart`, `game_events.dart`, `boss_director.dart`, `arena_camera.dart`,
+    `boss_painter.dart`, `carrier_field.dart`, `carrier_presentation.dart` and `scene.dart`;
+  - `lib/comms/comms_view.dart`;
+  - `art/comms/lines.json`, with `lib/comms/comms_bank.dart` regenerated;
+  - `test/campaign_playtest_test.dart` (`steer`), `test/boss_endurance_test.dart` and the event tests;
   - `tools/rigkit`, `tools/boss_sheet` and `art/families/alien-carriers.json`.
-- **Not before `work/carrier-v3-render` merges into `game`.** That branch has uncommitted edits to `carrier_bend`,
-  `carrier_field`, `carrier_presentation`, `carrier_wreck`, `boss_painter` and `scene.dart`. This change is a spec
-  only until then (tasks §1).
-- **Calibration.** The flock timer, its sizes, kinds and caps, and the door cycles are unchanged, and the arrivals
-  are invariant. Boss endurance, the campaign playtest and the boss level's clear time must stay within the gates
-  (CLAUDE.md §7).
+- **Not before `work/carrier-v3-render` merges into `game`.** The spec is landed first.
+- **Balance.** A deliberate easing with targets (design §A11), recorded in `plan/calibration-current.md`.

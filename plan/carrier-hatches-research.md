@@ -104,19 +104,21 @@ Game titles are references for technique only. The styleguide's originality rule
 ---
 
 ## Conclusions and where they go
-1. **Hatches on the top surface, in tiers, the topmost first.** The launch hatches are the targets and the boss's
-   readable routine `[H1]` `[A2]`. Dropping them shows progress without a health bar `[P3]`. The tier counts and
-   positions are ours: CH-1. → design §A2.
-2. **Drops on the shield cells; then the core's own openings.** The cells are the decay the player already sees; the
-   shootable openings exist `[H6]`; escalation comes from position and density, not randomness `[A3]`. The
-   thresholds are ours: CH-2. → design §A3.
-3. **Each drop is its own local event**, with effects at the hatch and an event `[H2]`. The next tier is telegraphed
-   by the chase `[A1]` `[A2]`, which is ours: CH-3. No shake `[J3]`. → design §A8, §A10.
-4. **Caps and arrival times unchanged.** The caps stay `[A1]`. Arrival invariance and the levers are ours: CH-4.
-   → design §A4–§A6, §A11.
+1. **Hatches on the top surface, in tiers, the topmost first, each a target with its own hit points.** The read
+   precedent has a carrier whose launch hatches each have hit points, and destroying them all summons the core
+   `[H1]`. The hatches are also the boss's readable routine `[A2]`, and destroying them shows progress without a
+   health bar `[P3]`. The structure's numbers are ours: CH-1. → design §A2–§A3 (round 3d revision).
+2. **Then a transformation exposing one delicate hatch, with timing and leading taught by the radio.** Every attack
+   advertises itself, and a failing player should know why `[A3]`. The breather, the zoom-in, the window and the
+   glide factors are ours: CH-2 and CH-3. → design §A4, §A5, §A7.
+3. **Each destroyed hatch is its own local event**, with effects at the hatch and an event `[H2]`. The next tier is
+   telegraphed by the chase `[A1]` `[A2]`, with no shake `[J3]`. → design §A8, §A10.
+4. **Caps and arrival times unchanged; easier through structure.** The caps stay `[A1]`. Arrival invariance, the
+   easing targets and the naive pilot are ours: CH-4. → design §A6, §A11.
 5. **Components, not layers.** Pre-fractured pieces become their own bodies when released `[P4]` `[B1]`, inherit
    `v + ω × r` `[B2]`, smoke in world space `[B5]`, and their effects are separate terms `[J1]`. Budgets come from
    `[B3]` `[B4]`. The transient memory estimate is CH-5, the schedule and rate rule CH-6, and the body constants CH-8. → design §B2–§B7.
 6. **The art data does not exist yet** `[B7]` `[B8]`. The component pass and manifest are specified in design §B9;
    the size estimate is CH-7.
-7. **Tiers are song sections** `[M1]` `[M2]` `[M3]`. → design §A8.
+7. **Tiers are song sections**, with the transformation as the bridge `[M1]` `[M2]` `[M3]`. → design §A8.
+8. **Subtitles.** The line-length census and the one-line limit are measured from `art/comms/lines.json` [R], and the glyph-width estimate is CH-9. → design §A12.

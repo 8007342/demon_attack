@@ -1,288 +1,377 @@
 # Design: Carrier hatch cascade and component break-up (carrier-hatches)
 
 ## Inputs and citations
-- **Operator input:** round 3c, C4 and C5 in `plan/operator-feedback-2026-11-16.md`, quoted in the proposal.
-- **Code read on `origin/game` (445f2888):**
+- **Operator input:**
+  - round 3c, C4 and C5;
+  - round 3d, the **C4 revision** in `plan/operator-feedback-2026-11-16.md`.
+
+  Every player finds the fight "waaay too difficult". It must become fairer through structure:
+  - each upper hatch has hit points and its own force field, and destroying them is the prerequisite;
+  - when all of them are destroyed and have fallen, the ship transforms to expose its lower, delicate hatch, and the
+    camera zooms in slowly again;
+  - three radio hints;
+  - subtitles on one line, so the font can grow.
+
+  The revision supersedes this design's first version: "upper hatches not directly shootable", and the shield-cell
+  thresholds.
+- **Code read on `origin/game` (445f2888, 3cfe1c32):**
   - `lib/game/carrier_gates.dart`, `carrier_script.dart`, `boss_director.dart` and `boss_grammar.dart`;
   - `model.dart`: `Carrier`, `hitBoss`, `_updateApproach`, `_gateLaunch`, the fight flocks in `_updateBoss`, and
     `_bossDecayEvents`;
   - `scene.dart`: the boss block after the creature loop;
+  - `lib/comms/comms_view.dart`: `CommsSubtitle`, the phone dock strip and the desktop tiles;
+  - `art/comms/lines.json`;
+  - `test/boss_endurance_test.dart` and `test/campaign_playtest_test.dart` (`steer`);
   - `tools/rigkit/rig.py` and `rigkit.py`, and `art/families/alien-carriers.json`.
 - **The carrier specs this change builds on:**
   - `openspec/changes/carrier-v3/design.md` §4 (gates) and §10 (events);
-  - `openspec/changes/carrier-render-engine/design.md` §3 (collapse) and §5 (re-render interfaces);
-  - `plan/render-runs/carrier-v3.md` on `origin/work/carrier-v3-render` (K0: what the re-render delivers).
+  - `openspec/changes/carrier-render-engine/design.md` §3 (collapse), §4 (field wear) and §5 (re-render interfaces);
+  - `plan/render-runs/carrier-v3.md` on `origin/work/carrier-v3-render` (K0).
 - **Research:** `plan/carrier-hatches-research.md`. Source IDs (`[H1]`, `[B2]` …) are its rows, in the CLAUDE.md §8
   form. Our own choices are marked `[UNSOURCED: plan/provenance-audit.md#CH-n]`.
 
-## 0. What stays
-- **The fight's rhythm**, all carrier-v3 numbers:
-  - the flock timer (2.4–5.6 s), the flock size (≤ 3), the kinds, and the caps (6, 8 and 10);
-  - the volley timing (telegraph 1.2 s, open 0.5 s, 0.12 s apart, close 0.8 s, at most two open).
-- **The core's hit rules:**
-  - the shield intercept;
-  - the centre door and side-hatch cycles;
-  - the side hatches sealing on the last form (main spec, "Carrier shield and door").
-- **Unchanged:**
-  - the decay stages and their events;
-  - the intro;
+## 0. What stays, and what is deliberately changed
+- **Stays:**
+  - the intro (approach, close, take-off, climb);
   - the bend;
-  - the field;
-  - the cohesive collapse.
+  - the cohesive collapse;
+  - the flock timer, sizes, kinds and caps;
+  - the volley timing (telegraph 1.2 s, open 0.5 s, 0.12 s apart, close 0.8 s, at most two open);
+  - the core's armour steps and form changes, and their module detaches (now broken up, Part B).
+- **Changed on purpose (the C4 revision): the boss gets easier.**
+  - The carrier's hull-wide shield, and its 12-cell intercept, are replaced by the hatches' own small fields.
+  - The side hatches no longer take core hits.
+  - The glide slows while the hatches are the targets.
+  - The core door's hit window widens.
+
+  This is a balance change with its own targets (§A11), not a change to keep within the old gates.
 
 ---
 
-# Part A. The hatch cascade (C4)
+# Part A. The hatch cascade (C4, revised)
 
 ## A1. What the operator saw, and why
 | Saw | Cause in the code |
 | --- | --- |
-| "The demons fly under it, so we cannot see them anymore." | The fight's flocks leave `bayL/bayR` (hull-local y 21) or the prong gates (y 52), and settle at `b.y + 70`. The prow spans hull-local y −78 … +66 (`BossHeroSprite` of `prow.thorn`), and `scene.dart` draws the prow (`paintHero(front: true)`), the deck and the gates **after** the creature loop. So every creature over the prow is under its art. |
-| Gates are not "from the top". | The tour-1 gates are the deck bays and two pods under the prongs. The dorsal compartments exist only from tour 3, and the aft gates (y −300) lie above the visible arena at zoom 0.86. |
+| "The demons fly under it, so we cannot see them anymore." | The fight's flocks leave `bayL/bayR` (hull-local y 21) or the prong gates (y 52), and settle at `b.y + 70`. The prow spans hull-local y −78 … +66 (`prow.thorn`), and `scene.dart` draws the prow (`paintHero(front: true)`), the deck and the gates **after** the creature loop, so the prow covers them `[H5]`. |
+| "Waaay too difficult" (every player). | The goal is unclear: one hull-wide shield, with no target to aim at. The core is hit only through doors that cycle on a hull moving at up to ≈ 106 units/s (`forecastX`: amplitude 80 + 10·rage, phase rate 0.7 × up to 1.9). A shot climbs to the door's row in ≈ 0.63 s (390 units/s), so the player must lead the door by up to ≈ 67 units, against a 12-unit half-window. The protected campaign pilot leads exactly (`steer` uses `forecastX`), so the calibration never saw this difficulty. |
 
-## A2. Hatches in tiers
-**The decision.** Launches leave from hatches on the hull's top (dorsal) surface. The view looks down at 45°, so
-that surface faces the player and a creature leaving it is in view (§A2, "Visibility"). The hatches are ordered in
-**tiers** from the stern (up-screen) toward the deck. Only the **topmost intact tier** launches. Damage knocks out
-tiers from the top, so the launches come from lower and lower hatches, closer to the player, until they leave the
-openings the player can shoot. One read reference stages this, and one snippet adds context:
-- the Star Fox 64 mothership, whose hatches release fighters before its core is summoned, each hatch a target of its own `[H1]` `[H2]`;
-- Gradius, where the open hatch is both the threat and the opportunity (`[H3]`, snippet only: context, not a source).
+## A2. The structure: hatches first, then the transformation, then the core
+"Fairer through structure" `[A3]` `[P3]` means the fight becomes three readable chapters, each with one goal and a
+radio hint:
 
-The progressive dismantling of a giant ship is the shmup "battleship raid" (`[P1]`, snippet only); losing parts shows progress better than a health bar `[P3]`. The tier count and positions are
-ours `[UNSOURCED: plan/provenance-audit.md#CH-1]`.
+| Chapter | Goal | Targets | Launches | Ends when |
+| --- | --- | --- | --- | --- |
+| **1. Hatches** | "Destroy the hatches!" | the hatches of the topmost intact tier: first their small fields, then their hulls | from the topmost intact tier | every upper hatch is destroyed **and has fallen** (its break-up done, §B4) |
+| **2. Transformation** (3.5 s) | — (a breather) | none: no hitbox, no fire, the flock timer paused | none | the core door is exposed |
+| **3. Core** | "Time the open hatch!", "Fire ahead of its position!" | the core door, the lower delicate hatch, only while open | from the core door, as it opens | the core dies: the cohesive collapse |
 
-**The tiers of one tour.** Upper tiers U1 … Un (one dorsal pair each), then the **deck tier** D (the deck bays
-`bayL/bayR` at ±46, y 21, which are already the core's side hatches, plus the core door at (0, 25)), then the **maw
-tier** M (the core door alone).
+The Star Fox 64 mothership is the read precedent:
+- each launch hatch has its own hit points;
+- destroying every hatch summons the core;
+- each hatch's destruction is a local event `[H1]` `[H2]`.
 
-| Tour | Upper tiers n | All tiers | U1 | U2 | U3 | U4 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1, 2 | 2 | 4 | y −215, x ±72, `hatch.slab` | y −110, x ±92, `hatch.petal` | — | — |
-| 3, 4 | 3 | 5 | −225, ±70, slab | −160, ±96, petal | −95, ±80, `maw.iris` | — |
-| 5 and later | 4 | 6 | −235, ±68, slab | −180, ±96, petal | −125, ±84, iris | −70, ±62, `sac.cluster` |
+Losing parts shows progress better than a health bar `[P3]`. The numbers are ours
+`[UNSOURCED: plan/provenance-audit.md#CH-1]`.
 
-**The coordinates** are hull-local arena units: x to the right, y down-screen, so negative y is up-screen, toward
-the stern.
-- Normals point up out of the hull: (±0.2, −0.98), as carrier-v3's dorsal compartments do.
-- Hatch widths are 22 units.
+## A3. Upper hatches: tiers, fields and hit points
+**Tiers per tour.** The tier counts of the first version stay: 2, 2, 3, 3 and 4 upper tiers (one pair each), so
+4, 4, 6, 6 and 8 upper hatches. Tours beyond 5 use tour 5's. They are moved **lower** than in the first version, so
+shots reach them sooner:
 
-**Why these places.**
-- **Visibility.**
-  - At the fight's widest-to-tightest zoom band [0.86, minZ], the arena's top edge at zoom 0.86 is screen
-    y = 477 − 477/0.86 ≈ −78.
-  - The glide's highest row is b.y = 189, so the U1 hatch at −235 sits at screen y −46. That is 32 units inside, and
-    the 0.3 s pop-up (§A5) rises 10 units.
-  - The aft gates of carrier-v3 (y −300) fail this test, so they retire as launchers.
-- **Width.** |x| ≤ 96 keeps both hatches of a pair inside the arena band [16, 344] for most of the carrier's travel
-  (x ∈ [82, 278]). The carrier-v3 skip rule still applies: a hatch off the arena does not launch, and its skein moves
-  to the pair's other hatch.
-- **Retired as launchers:**
-  - the prong pods (y 52: under the prongs, the cause of A1);
-  - the flank maws and sacs (|x| ≥ 228, mostly off the arena);
-  - the aft gates.
+| Tour | U1 | U2 | U3 | U4 |
+| --- | --- | --- | --- | --- |
+| 1, 2 | y −150, x ±72, `hatch.slab` | y −70, x ±92, `hatch.petal` | — | — |
+| 3, 4 | −165, ±70, slab | −110, ±96, petal | −55, ±80, `maw.iris` | — |
+| 5 and later | −170, ±68, slab | −125, ±96, petal | −80, ±84, iris | −35, ±62, `sac.cluster` |
 
-  Their art, when the re-render has it, stays as closed decor (§B9.4).
-- **Simulation geometry.** As with the carrier-v3 gates, the hatches are simulation data: the art conforms to them
-  within ±3 units through the rig's anchor gate, never the reverse.
+- **Coordinates.** Hull-local arena units, with y down-screen. The normals are (±0.2, −0.98).
+- **Distances.**
+  - U1 at −170 sits at screen y ≥ 19 over the glide (b.y ∈ [189, 221]), inside the arena at every fight zoom.
+  - A shot reaches it in ≤ 1.17 s.
+  - The prong pods, flank maws, sacs and aft gates are not launchers (§A9).
 
-## A3. What drops a hatch
-**Upper tiers drop on shield-cell thresholds.** The shield has 12 cells (`Carrier.shieldCells`). When the lit count
-reaches a threshold, the topmost intact upper tier drops, so both of its hatches drop at once.
+**Only the topmost intact tier is vulnerable**, and it is the tier that launches.
+- The other tiers are sealed: shots pass over them (they intercept nothing), and their rims are dark.
+- When both hatches of the tier are destroyed, the tier drops. The next tier arms with its field rising over 0.6 s,
+  and launches.
+- So the creatures come from lower and lower hatches, as in the operator's first request.
 
-| Upper tiers | Thresholds (lit cells) | Shield share per tier (U1 … Un) |
-| --- | --- | --- |
-| 2 (tours 1–2) | 6, 0 | 50 %, 50 % |
-| 3 (tours 3–4) | 9, 6, 0 | 25 %, 25 %, 50 % |
-| 4 (tour 5+) | 9, 6, 3, 0 | 25 % each |
+**A hatch's field.**
+- It is a small hex membrane: radius 18 units around the hatch, with the carrier-render-engine wear look (width and
+  opacity by the field's HP, its §4).
+- A shot whose path crosses the hatch's row within 18 units of its centre is stopped at the membrane and removes
+  1 HP of field (`damage` scales as today).
+- At 0 the membrane breaks in place, with shards and `bossHatchFieldDown`.
 
-- **Why cells.** These are the decay steps the player already sees: the field's regions and insignia cells, and
-  S1 at 6 cells. "As we hit it the top hatches drop": shield hits are the hits of the shield phase. The lowest upper
-  tier holds longest on tours 3–4, because it is the closest and most pressing tier, so the shield phase escalates
-  `[A3]` `[UNSOURCED: plan/provenance-audit.md#CH-2]`.
-- **The deck tier** takes over at 0 cells, at the same moment as `bossShieldDown` (S2). Its bays are the core's
-  side hatches, so the player can shoot the hatch the creatures come out of.
-- **The maw tier** takes over at the last form, when the side hatches seal (the rule today). The bays drop, with
-  cause `form`, and the core door is the last hatch. The core fight has no other tier changes: the intermediate
-  form changes (tours 2–5) tear modules away (Part B) and quicken the flock timer, as today.
-- **Upper hatches have no hit points.** The intercept is unchanged, so shield balance cannot move.
-- **The supersession.** carrier-v3 kept its gates indestructible, and the operator approved that. This change
-  supersedes it: upper hatches are knocked out by the shield's damage, and the last two tiers are the core's own
-  shootable openings.
-- **A volley caught by a drop.** Creatures already out keep flying. Creatures still queued move to the same side's
-  hatch on the next tier, or the other side when that hatch is off the arena. Their remaining telegraph is shortened
-  to at most 0.4 s, and the next tier's shorter transit (§A5) absorbs the rest.
+**A hatch's hull.**
+- Once its field is down, a shot within 12 units of its centre hits the hatch (1 HP).
+- At 0 the hatch is destroyed (`bossHatchDrop`, cause `shot`). Its doors and rim break off as Part B components
+  (§B4), so it has **fallen** when its last component is released, at most 1.2 s later.
 
-## A4. Launch cadence and roster per tier
-The flock timer, flock size, kind (`min(3, cycle + 1)`), hit points and caps are **the same on every tier**: the
-calibration gates (§A11) rest on them. A tier changes only three things:
-- **The origin.** The active tier's pair, alternating sides from a seeded start (carrier-v3's round-robin, now
-  within one tier).
-- **The volley shape.** Upper tiers release the flock as a **skein**: the 0.12 s spacing, each creature taking the
-  same swoop, offset 14 units outward. Deck and maw launches release it as a **burst**: the same spacing, fanned
-  ±25°.
-- **The lead.** The telegraph starts `telegraph + open + (transit − 0.55)` before the nominal timer, so the arrival
-  stays fixed (§A5).
+**Hit points.** The old shield's HP is redistributed. For a tour, the upper-hatch pool is
+`H = round(k·shieldMax)`, split equally over its hatches: 60 % field and 40 % hull, each at least 3.
+- The pool factor `k` starts at **0.85** (fewer total hits than the old shield) and is set by calibration (§A11).
+- The hull outside a vulnerable hatch's field is armour: a shot there sparks off (the playtest-fixes-3 deflect
+  sparks), does no damage, and counts toward the hint of §A7.
 
-The operator's "this is just the beginning of the boss fight" leaves room for per-tier rosters later: escorts,
-heavier kinds on lower tiers. `CarrierScript.hatches[].roster` is reserved, defaults to today's, and is not used by
-this change.
+**The meter.** The insignia row shows one cell per upper hatch, lit while intact. Its field state is a half-lit cell.
 
-## A5. Transit, arrival invariance and fairness
+## A4. The transformation (3.5 s) and the camera
+When the last upper hatch has fallen:
+
+| t (s) | What happens |
+| --- | --- |
+| 0 | `bossShieldDown`, `bossTransform` `{stage: start}`. The carrier's hitbox and fire are off, and the flock timer holds (creatures already out keep fighting). The S2 shed (plates and crystals) releases as a Part B transition in a staggered burst over 2.5 s. The armour shutter over the core door begins to part. |
+| 0–3.5 | The deck's shutter leaves fold aside (runtime-drawn until the re-render's door layers). The core door's rim lights ember, then amber. |
+| 0–(≈4–6) | **The camera zooms in slowly**: from the tour's minimum zoom back toward 0.86, at 0.04/s, so 4 s from 0.70 and 6 s from 0.62. The core door is a small target, so the closer framing makes it readable. The bend's limits halve for the core chapter: a quieter hull. |
+| 3.5 | `bossTransform` `{stage: end}`, then `bossCoreExposed` (moved here from the last form). The core chapter starts: the hitbox is on, and the timers resume. |
+
+- **A breather after a goal.** Pacing alternates tension and relief, and a break after a milestone lets the player
+  reset. No read source states this; it, the 3.5 s and the zoom rate are ours `[UNSOURCED: plan/provenance-audit.md#CH-2]`.
+- **Shake.** None: carrier-v3's four trauma beats stay `[J3]`. The "core exposed" beat (trauma 0.25) moves to
+  `bossCoreExposed`.
+- **Reduced motion.** The shutter opens as a 1 s fade, and the zoom eases at the same rate.
+
+## A5. The core chapter: the lower, delicate hatch
+**The target.**
+- The core door at hull-local (0, 25) is the only target.
+- The deck bays (side hatches) are sealed for good at the transformation. The main spec's side-hatch rule is
+  superseded for the carrier; reconcile it at archive (tasks §10).
+
+**Fairness by structure** (each one constant):
+- **The door cycle is unchanged**, `door = clamp(2·(sin(c·(1.55 + 0.22·phase)) − k), 0, 1)`. It is hit at
+  door ≥ 0.6, with the hit half-width widened from `12·door` to **`16·door`**, because it is now the only opening.
+- **A slower glide.** The lateral motion's phase rate is scaled by **0.6** in the core chapter (and **0.35** in the
+  hatch chapter), and the amplitude stays at 80.
+  - The core door's maximum speed falls from ≈ 106 to ≈ 64 units/s.
+  - The lead needed at its row falls from ≈ 67 to ≈ 40 units.
+  - In the hatch chapter, U1's lead is ≤ 44 units for a ≤ 1.17 s flight, at most 2.4 field radii.
+- **The lead pip** (Easy and Normal only, after the first `bossHintLead`). A faint ember tick on the door's row,
+  where a shot fired now would meet the door's centre. It is drawn under the gameplay layer and is never on Hard.
+  Telegraphing where to aim is the readability rule `[A3]`. The pip is ours
+  `[UNSOURCED: plan/provenance-audit.md#CH-3]`.
+
+**Forms** still change by core damage. Each change tears a module away (Part B), quickens the flock timer as today,
+and emits `bossModuleLost`. The last form no longer emits `bossCoreExposed` (§A4).
+
+**Launches.**
+- A core-chapter flock leaves through the core door when it is open (`door ≥ 0.6`).
+- When it is closed, the volley parks unseen and untargetable in the door until it opens, at most one period
+  (≈ 3.5 s).
+- No door is forced open.
+
+So the threat and the opportunity are the same opening `[H1]`.
+
+## A6. Transit, arrival and draw order
 **The path.**
-- **Pop-up, 0.3 s.** The creature rises 10 units out of the hatch along its normal and grows from 0.8 to 1.0, lit by
-  the hatch's glow. Every attack advertises itself `[A3]`.
-- **The swoop.** A cubic curve from the hatch to the creature's home slot, bowed 40 units outward to its side, at
-  300 units/s. It is never aimed at the ship's row: the homes sit at y ≤ b.y + 110 < 330, and the ship's row is
-  477 `[A3]`.
-- **The transit time:** `transit = 0.3 + max(0.25, 1.1·L/300)` s, where L is the straight distance from the hatch to
-  the home, rounded to 0.05 s.
-  - A deck bay gives 0.55 s, today's entrance.
-  - U1 on tour 5 (L ≈ 305) gives ≈ 1.45 s.
+- **Pop-up, 0.3 s:** the creature rises 10 units out of the hatch and grows from 0.8 to 1.0, lit by the hatch's
+  glow. Every attack advertises itself `[A3]`.
+- **The swoop:** a cubic curve to its home slot, bowed 40 units outward, at 300 units/s. It never aims at the ship's
+  row: the homes are at y ≤ b.y + 110 < 330, and the ship's row is 477 `[A3]`.
+- **The transit time:** `transit = 0.3 + max(0.25, 1.1·L/300)` s, rounded to 0.05.
 
-**Arrival invariance.** Today a flock is added when the timer reaches 0, and its entrance ends 0.55 s (+ i·0.06)
-later. Under this change:
-- the cap and size are decided, and the creatures added at the hatch, when the timer reaches `transit − 0.55`
-  instead of 0;
-- the timer reloads with `+= period`, so its nominal schedule is unchanged;
-- each entrance ends at the moment it ends today.
+**Arrival invariance.**
+- The flock's cap and size are decided, and the creatures are added at the hatch, when the timer reaches
+  `transit − 0.55` instead of 0.
+- The timer reloads with `+= period`.
+- Each entrance ends when it does today, except when a core-door hold delays it.
 
-The flocks therefore pressure the player at the same moments. Only their origin and path change.
+The fight's pressure therefore keeps its rhythm, and the balance change comes from the structure, not from the
+flocks.
 
-**Targetable only below the transit line.** A creature above hull-local y + 40 (just under the deck, above today's
-`b.y + 52` entry) cannot be hit. A shot crossing it flies on. Below the line, the entering rules apply as they do
-today. The kill windows therefore match today's, while the creature is visible the whole way: "seen, not yet in
-play", the carrier-v3 launch rule `[A2]`.
+**Not targetable above the transit line** (hull-local y + 40). Shots cross the creature, so its kill window matches
+today's while it stays visible the whole way `[A2]`.
 
-## A6. The shootable tiers ride the door cycles
-A deck-tier or maw-tier launch must leave through an opening that is open in the game, or the "hatch we can shoot"
-would be a lie. Forcing a door open would add core exposure and move the endurance gate.
+**The approach.** Its launch waves keep their rosters, counts, D steps and cap (carrier-v3 §4.3–§5.3). They come out of
+all the upper hatches (none is destroyed yet), round-robin across sides and tiers, projected through D. The core door
+is not used.
 
-**The release opening.** At the release moment (the end of the lead), the model evaluates the closed-form door
-cycles:
-- `sideDoorLeft/Right ≥ 0.55`;
-- the centre door `door ≥ 0.6`;
-- the cycles are functions of the level clock and the phase (`_updateBoss`), so a forecast is exact unless the phase
-  changes in between.
+**Draw order (the fix for A1).** In the fight, `scene.dart` draws the hull's back pass, the prow, the deck, the
+hatches, the hatch fields, and only then the creatures, their tells, deaths and muzzle flashes. During the approach,
+a launched creature's nearness is at least the carrier's slot nearness + 0.02.
 
-The rules:
-- **Deck tier:** an open bay, alternating; otherwise the open core door.
-- **Maw tier:** the core door.
-- **When nothing is open,** the volley parks in the opening that opens first: the creatures are unseen and
-  untargetable (carrier-v3's `gateWait`). It leaves as that opening opens, at most one door period later (≈ 4.3 s for
-  the bays, ≈ 3.5 s for the core door).
+## A7. Radio hints (one line each, `"pending": "text"`)
+These are model events (structured `GameEvent`s, deterministic) that trigger the hint lines. Each fires at most once
+per its cooldown, and never during the transformation.
 
-So the hatch's doors open, the creatures burst out, and that same opening is the core's hit window: the threat and
-the opportunity at once: a hatch that launches and can be destroyed `[H1]`. Only these held arrivals move later, and the calibration measures their share (§A11).
+| Event / trigger | Line (speaker, emotion) | When | Cooldown |
+| --- | --- | --- | --- |
+| `bossHintHatches` | "Destroy the hatches!" (admiral, urgent) | 2.0 s after `bossTakeoff`; again when ≥ 6 of the player's shots in 4 s spark off the armour or pass a sealed tier | 20 s |
+| `bossHintTiming` | "Time the open hatch!" (kestrel, urgent) | at `bossCoreExposed`; again when ≥ 4 shots in 3 s hit the closed core door | 20 s |
+| `bossHintLead` | "Fire ahead of its position!" (wisp, urgent) | ≥ 3 shots in 4 s pass the open door's row within 40 units on its trailing side (aimed where it was) | 25 s |
 
-## A7. The approach
-The launch waves keep their rosters, counts, D steps and the 90 s cap (carrier-v3 §4.3–§5.3). Only their origin
-changes:
-- they come out of **all the upper tiers' hatches** (no tier is dropped yet), round-robin, crossing sides and tiers;
-- their positions are projected through D, as today;
-- the deck bays are not used: "they come out of the top".
-
-The entry nearness is at least the carrier's fog-slot nearness + 0.02. A launched creature is therefore drawn in
-front of its hull from its first frame (§A10).
+- **`art/comms/lines.json`.** Three new triggers, appended, each with one human line. Each carries `priority` 7,
+  `ttl` 3, the cooldown above, `mood` `stern` and `"pending": "text"`.
+  - No TTS exists yet, so each shows its own words with the mouth closed and borrows no clip.
+  - Then run `python3 -I tools/comms_pipeline.py dart` (CLAUDE.md §4).
+  - The borrowed-line count in `test/comms_director_test.dart` does **not** change: written-only lines borrow
+    nothing. The test's comment gains the note.
+- **Names.** These are distinct trigger names rather than variants. The carrier's event data already carries a
+  numeric `variant` (the set combination), which `GameEvent.variant` would read as a trigger suffix.
 
 ## A8. Events for the music engine
-These are all structured `GameEvent`s, queued by `_queueGameEvent`. None is a raw string in `model.events`, so the
-radio never speaks twice (CLAUDE.md §3). Every event carries `route`, `tour`, `set`, `variant` and `sector`.
+These are all structured, queued by `_queueGameEvent`. None is a raw string in `model.events` (CLAUDE.md §3). Each
+carries `route`, `tour`, `set`, `variant` and `sector`.
 
 | Event | When | Data | For the score (suggested) |
 | --- | --- | --- | --- |
-| `bossHatchTelegraph` (was `bossGateTelegraph`) | a hatch's telegraph starts | `hatch`, `tier`, `side`, `kind`, `shootable` | a riser, panned by `side` |
-| `bossHatchOpen` (was `bossGateOpen`) | its doors open | `hatch`, `tier`, `shootable` | a mechanical hit on the next beat |
-| `bossLaunch` (kept) | the volley leaves | `hatch`, `tier`, `count`, `kind` | a percussion burst sized by `count` |
-| `bossHatchClose` (was `bossGateClose`) | its doors close | `hatch`, `tier` | — |
-| `bossHatchDrop` (new) | a hatch is knocked out | `hatch`, `tier`, `side`, `cause` (`shield` or `form`), `cellsLeft` | an impact, then a falling figure |
-| `bossHatchTier` (new) | the active tier changes, and tier 1 right after `bossInRange` | `tier` (1-based), `tiers`, `depth` = (tier − 1)/(tiers − 1), `shootable`, `from` | **a section change** |
+| `bossHatchTelegraph`, `bossHatchOpen`, `bossLaunch`, `bossHatchClose` | the volley lifecycle (renamed from carrier-v3's `bossGate*`, which are retired) | `hatch`, `tier`, `side`, `kind`, `shootable`; `count` on `bossLaunch` | riser, hit, burst |
+| `bossHatchFieldDown` (new) | a hatch's field breaks | `hatch`, `tier`, `side` | a glass-break accent |
+| `bossHatchDrop` (new) | a hatch is destroyed | `hatch`, `tier`, `side`, `cause` (`shot`), `left` (upper hatches remaining) | an impact, then a falling figure |
+| `bossHatchTier` (new) | the vulnerable tier changes; tier 1 right after `bossInRange`; the core chapter as the last tier | `tier` (1-based), `tiers` (upper tiers + 1), `depth` = (tier − 1)/(tiers − 1), `shootable`, `from` | **a section change** |
+| `bossShieldFailing` (kept) | half the upper hatches are destroyed | — | as today |
+| `bossShieldDown` (kept) | the transformation starts | — | as today |
+| `bossTransform` (new) | `{stage: start}`, `{stage: end}` | `stage`, `seconds` | the bridge between sections |
+| `bossCoreExposed` (moved) | the transformation ends | — | the drop into the last section |
+| `bossHintHatches`, `bossHintTiming`, `bossHintLead` (new) | §A7 | `hint` | — (radio only) |
 
-- **Order within one hit:** `bossShieldCellLost` … → `bossShieldFailing` or `bossShieldDown` → `bossHatchDrop`
-  (left, then right) → `bossHatchTier`.
-- **Order on the last form:** `bossModuleLost` → `bossCoreExposed` → `bossHatchDrop` (the bays, cause `form`) →
-  `bossHatchTier`.
-- **One name per moment.** The old `bossGate*` names are retired, not emitted alongside the new ones. Nothing maps
-  them today (`music_director.dart` maps only `bossApproach`, `bossInRange` and `bossTakeoff`).
-
-**The tiers are the fight's song.** Adaptive scores change sections on game-state cues and move to the next musical
-boundary, rather than cutting at the event `[M1]` `[M3]`. So:
-- `bossHatchTier` is the section boundary;
-- `depth` is a continuous intensity parameter for layering `[M2]`;
-- the volley events are hits the engine may quantise to its own next beat.
-
-The game never waits for the music. This is the shape for "one whole run … one smooth play of a long song". The
-score itself still waits on tillandsias#1103.
+- **Retired for the carrier:** `bossShieldCellLost` and `bossFieldImpact`. The cells and the hull-wide field are gone,
+  and per-hatch fields report through `bossHatchFieldDown`.
+- **Order of one destroying hit:** `bossHatchDrop` → (`bossShieldFailing`) → `bossHatchTier`.
+- **The tiers are the fight's song sections.** Adaptive scores change sections on the game's cues at their own next
+  bar `[M1]` `[M3]`, and `depth` is a layering intensity `[M2]`. The transformation is the bridge. The game never
+  waits for the music.
 
 ## A9. What changes in the existing code (after the render merge)
-- **`carrier_gates.dart` → `carrier_hatches.dart`.** The geometry is replaced (§A2). `GateRun`, `CarrierLaunches`
-  and `CarrierVolleyTiming` move across unchanged, except that `pick` takes the active tier's hatches. A deprecated
-  re-export stays until carrier-v3 is archived.
-- **`CarrierScript`.** `hatches` and `hatchOrder` replace `gates` and `gateOrder`. The seeded variation picks only
-  which side starts each tier.
+- **`carrier_gates.dart` → `carrier_hatches.dart`:**
+  - geometry (§A3);
+  - per-hatch field and hull HP;
+  - the vulnerable tier;
+  - `GateRun`, `CarrierLaunches` and `CarrierVolleyTiming` moved across;
+  - a deprecated re-export until carrier-v3 is archived.
+- **`CarrierScript`:** `hatches`, `hatchOrder`, `hatchPool` (`k`), `hatchGlide` (0.35), `coreGlide` (0.6),
+  `coreWindow` (16), `transformSeconds` (3.5) and `zoomInRate` (0.04).
 - **`model.dart`:**
-  - `_fightGate` and its lead (§A4–§A5);
-  - `_gateLaunch` for the approach (§A7);
-  - the drops in `hitBoss` and at the form change (§A3);
-  - the deck and maw hold (§A6);
-  - the events (§A8).
-- **`fightReach`.** carrier-v3's `|x| ≤ 150` rule for fight gates is replaced by the active tier.
-- **The render's gate map.** `BossHeroHull.gates` and `BossHeroView.doors` from `work/carrier-v3-render` are re-keyed
-  to hatch ids (§B9.4). The door layers serve the dorsal hatches. Task 1.1 records what the merge brought.
+  - the `Carrier` gains the hatch state and a chapter (hatches, transform, core);
+  - `hitBoss` routes a shot to the vulnerable tier's fields and hulls, then the armour, and to the core door only in
+    the core chapter;
+  - the flocks follow §A5–§A6;
+  - the hints follow §A7;
+  - the events follow §A8.
+
+  `Carrier.shield`/`shieldMax` remain as the sum of the hatch fields, so the HUD and the existing decay hooks keep
+  working.
+- **`campaign_playtest_test.dart` `steer`:** aims at the vulnerable hatch nearest its column, with the forecast lead,
+  then at the core door when it is open (§A11).
+- **`BossDirector`, `ArenaCamera`:** the transformation's zoom-in and the halved bend.
+- **`carrier_field.dart`:** the hull-wide membrane is no longer drawn for the carrier. Its wear and dropout functions
+  draw each hatch's field. `test/carrier_field_equivalence_test.dart` is retired for the carrier, as a deliberate
+  balance change recorded in `plan/calibration-current.md`.
+- **The render's gate map and door layers** are re-keyed to hatch ids (§B9.4).
 
 ## A10. Presentation
-- **Draw order (the fix for A1).** In the fight, `scene.dart` draws the hull's back pass, then the prow pass, the
-  deck, the hatches and the field (membrane and lip), and **then** the creatures, their tells, deaths and muzzle
-  flashes.
-  - No creature is ever covered by the hull. A creature's swoop is its own read of depth: it flies between the
-    carrier and the camera.
-  - During the approach, the entry nearness of §A7 orders launches in front of the hull's slot.
-- **The hatch.** The door layers from the re-render, when present; otherwise carrier-v3's runtime leaves, iris, slab
-  and sac. The telegraph lights and the rail chase are carrier-v3's.
-- **The way out.** A creature passing the force field's membrane makes a faint ripple at 0.5 of a hit's strength,
-  with no event and no `bossFieldImpact`.
-- **The drop (1.0 s).**
-  - The hatch's lights flicker for 0.25 s and die.
-  - Its door leaves blow off as Part B components, with an ember burst.
-  - The opening seals in char, and a world-space smoke emitter puffs at 2 per second for 6 s, then at 0.5 per second
-    (sharing the collapse's 90-puff cap).
-- **The cascade chase.** From 0.2 s to 1.0 s after the drop, the hull's rail lights run down-screen from the dropped
-  tier to the new one, and the new tier's hatches arm with an ember pulse. It tells the player where the creatures
-  come from next `[A1]` `[A2]` `[UNSOURCED: plan/provenance-audit.md#CH-3]`.
-- **No shake.** Shake stays on carrier-v3's four beats `[J3]`.
+- **Hatches.** The door layers from the re-render, when present; otherwise carrier-v3's runtime leaves. The
+  vulnerable tier's rims glow amber. Sealed tiers are dark.
+- **Fields.** Each vulnerable hatch's field is a small membrane with the carrier-render-engine wear (width, alpha and
+  dropout by its HP). A hit ripples it.
+- **Hull hits** on the armour spark (the deflect sparks), so a miss reads as a miss.
+- **The way out.** A creature passing a hatch's field makes a faint ripple, with no event.
+- **The drop (≤ 1.2 s).**
+  - The hatch's lights flicker and die.
+  - Its doors and rim break off as Part B components, with an ember burst.
+  - The opening seals in char and smokes in world space (2 puffs per second for 6 s, sharing the 90-puff cap).
+- **The cascade.** The next tier arms over 0.6 s with a light chase down the hull `[A1]` `[A2]`.
+- **The transformation:** §A4.
+- **The core door:** an amber rim while open, and the lead pip of §A5.
 - **Reduced motion:**
-  - no pop-up growth;
-  - the drop flickers once with no ember burst, and its leaves fall without spin;
-  - the new tier lights at once, with no chase.
+  - no pop-up growth and no chase;
+  - fields break without shards;
+  - the leaves fall without spin;
+  - the shutter fades open.
 
-## A11. Calibration plan (CLAUDE.md §7)
-**What holds by construction:**
-- the timer, sizes, kinds and caps;
-- the arrival moments (§A5);
-- the core's exposure (§A6, no forced doors);
-- the shield intercept.
+## A11. Calibration: easier on purpose (CLAUDE.md §7)
+**Two pilots, both protected (invulnerable), 16 seeds per difficulty**, as `test/boss_endurance_test.dart` measures
+today:
+- **The expert:** the real-shot campaign pilot, which leads with the forecast. Its metrics are the carrier's
+  **time-to-kill** (combat seconds from fight-ready to the fall, summed over the five carriers) and the **hits taken**
+  while it is fight-ready. Each hit taken is a life an unprotected pilot without a shield would lose, so it stands in
+  for **life loss**.
+- **The naive pilot** (new, `test/boss_fairness_test.dart`): the same steering, but it aims at the target's
+  **current** x with no lead, as a new player does. It has a cap of 240 s per carrier. Its metrics are the same, plus
+  the share of carriers it kills before the cap.
 
-**What can move the numbers:**
-1. **Deck and maw holds.** These arrivals come later, by at most one door period, so the core fight is slightly
-   easier.
-2. **Re-routing on a drop.** At most 0.4 s.
-3. **Swoop positions.** Creatures arrive from above rather than from the deck, so they meet the player's fire
-   differently. Untargetable above the transit line, they meet it at the same row.
-4. **The approach's origins.** Dorsal rather than mixed, as in carrier-v3 §4.3.
+**Before values.**
+- The expert's are the latest recorded (`plan/calibration-current.md`, "Carrier v3 tune"):
 
-**The gates:**
-- boss endurance pooled within 5 % and each difficulty within 10 %;
-- the campaign playtest's bounds;
-- the boss level's clear time within 10 %;
-- every value recorded in `plan/calibration-current.md`.
+  | Difficulty | Seconds | Hits |
+  | --- | --- | --- |
+  | Easy | 352.64 | — |
+  | Normal | 417.29 | — |
+  | Hard | 436.03 | — |
 
-**Levers, in order, one at a time** `[UNSOURCED: plan/provenance-audit.md#CH-4]`:
-1. `deckHoldMax`: cap the hold at 1.5 s, after which the volley leaves through the opening that opens soonest, with
-   its doors drawn opening (presentation only).
-2. Hold only the maw tier. The deck tier leaves at the nominal time through the bay whose cycle is nearest open.
-3. `transitSpeed` 300 → 340 units/s, if the swoops arrive too spread out.
+  The hits are re-measured on the merge base before any change, together with the naive pilot (task 5.1).
 
-Only if all three fail does the flock timer itself change, as a recorded balance change.
+**Targets** (each within ± 5 points) `[UNSOURCED: plan/provenance-audit.md#CH-4]`:
+
+| Difficulty | Expert time-to-kill | Expert hits taken | Naive pilot |
+| --- | --- | --- | --- |
+| Easy | −25 % | −30 % | kills every carrier before the cap; time ≤ 1.5 × the expert's |
+| Normal | −20 % | −25 % | kills ≥ 90 % of carriers; time ≤ 1.75 × the expert's |
+| Hard | −10 % | −15 % | measured, no target (Hard stays hard) |
+
+**The levers, in order:**
+1. the hatch pool `k`;
+2. the core window (16);
+3. the glide factors (0.35 and 0.6);
+4. `coreMax` per difficulty (`DifficultyPolicy.bossCoreForRoute`);
+5. the fan-attack rate in the hatch chapter.
+
+The flock timer is the last resort.
+
+**How `test/boss_endurance_test.dart`'s baseline moves.**
+- When the targets are met, `baseline` is replaced by the new expert means.
+- The old map is kept as `preHatches`, with the commit it came from.
+- A new test asserts that each difficulty's ratio to `preHatches` lies inside its target band. That guards the
+  easier boss against regressions.
+- The existing ±5 % pooled and ±10 % per-difficulty gates then apply to the new baseline for every later change.
+
+**Also kept:**
+- the campaign playtest's bounds (`test/campaign_playtest_test.dart`), with the pilot updated per §A9;
+- the boss level's clear time, recorded but no longer gated at +10 %, because it is meant to fall.
+
+**Recorded in `plan/calibration-current.md`:** "Carrier hatches", with the before and after per difficulty, both
+pilots, and the commit.
+
+## A12. Radio subtitles on one line, a little larger
+**Measured** (`art/comms/lines.json`, 695 lines of text and gloss, on 2026-11-16):
+
+| Statistic | Value |
+| --- | --- |
+| Median length | 37 characters |
+| 90th percentile | 57 characters |
+| 99th percentile | 76 characters |
+| Longest | 88 (`transmissionMission`), then 81 (`flawlessRun`), then 80 (`flawlessVictory`) |
+| Lines of ≤ 28 characters | 224 |
+| Lines of ≤ 36 characters | 345 |
+| Boss triggers' longest | 57 |
+
+**Today:**
+- The phone dock's strip draws the speaker's tag (9.5 px bold) and the text at 13 px, up to 4 lines.
+- The desktop tiles draw 13.5 × scale (≤ 1.2), up to 3 lines.
+- The app font is `monospace`, about 0.6 em per glyph `[UNSOURCED: plan/provenance-audit.md#CH-9]` (the widget test of §A12 measures it), so a 13 px line is about 7.8 px per character.
+
+On a 360-px phone, a single call's text column is about 360 − 16 (margins) − 40 (portrait) − 8 (gap) − 51 (tag) ≈
+245 px. So, at 13 px:
+- the longest line (88) needs about 690 px, three lines;
+- the median needs about 290 px, two lines.
+
+**The decision:**
+- **The font** grows to **14.5 px** in the phone strip (+11.5 %) and to 15 × scale on the desktop. The tag grows to
+  10.5 px.
+- **One-line lines.** A line flagged by the limit below is drawn with `maxLines: 1`, at full dock width, even when
+  another call is on screen.
+- **The limit** is ≤ 28 characters of text at 14.5 px. 28 × 8.7 ≈ 244 px fits the 245-px column.
+- **The test** (`test/comms_line_length_test.dart`, pure Dart over `lines.json`) enforces the limit on:
+  - the in-fight hint triggers (`bossHintHatches`, `bossHintTiming`, `bossHintLead`), at minimum;
+  - every trigger listed in its `oneLine` set.
+
+  A widget test lays the three hints out in the phone strip at 360 px with the app's fonts loaded, and asserts
+  `didExceedMaxLines` false.
+
+**The rest of the bank.** 471 lines exceed 28 characters, so "every subtitle on one line" would mean rewriting two
+thirds of the radio. Those lines keep wrapping (2–4 lines) at the new size. Rewriting them is left to a follow-up for
+the cast's writers (open question, §C). The new hints are 20, 20 and 27 characters.
 
 ---
 
@@ -299,7 +388,7 @@ Only if all three fail does the flock timer itself change, as a recorded balance
 **Every piece of art removed between two damage states leaves as components, released one by one.** This covers:
 - the S2 shed;
 - a detach group at a form change;
-- a dropped hatch's doors (§A10).
+- a destroyed hatch's doors and rim (§A3, §A10).
 
 Each component:
 - stays attached, riding the bend, until its release;
@@ -346,9 +435,9 @@ hit goes first.
 
 | Transition | Starts | Releases |
 | --- | --- | --- |
-| **Shed** (plates, crystals) | S1 (`bossShieldFailing`): B = S1, A = S2 | Each component is given a shield threshold in (0, 0.5], outer first, matching the field's region order (carrier-v3 §3.2). It releases as the shield passes it, so about 70 % have gone before the shield is down. A field impact within 40 units of an attached component's pivot may release it early (at most 2 per second). At `bossShieldDown`, the remaining ones go over 2.5 s. |
+| **Shed** (plates, crystals) | `bossShieldFailing` (half the upper hatches destroyed): B = S1, A = S2 | Each component is given a share of the upper hatches in (0.5, 1], outer first, nearest a destroyed hatch first. It releases as that share of hatches is destroyed, so about 60 % have gone before the last hatch falls. The rest go in the transformation's staggered burst over 2.5 s (§A4). |
 | **Detach** (the module of form r) | `bossArmourShed` for that module (the odd armour step before the form change): B = the current set, A = the set + rank r | 35 % at the armour shed, over ≥ 1.2 s, tips first: the module is cracking. The rest at the form change (`bossModuleLost`), over ≥ 1.6 s. Root stubs stay as sockets (§B9.3). |
-| **Hatch drop** | `bossHatchDrop` | The hatch's door leaves (2–4 components) within 0.3 s, outer leaf first (≥ 2, so the rate rule allows it). |
+| **Hatch destroyed** | `bossHatchDrop` | The hatch's door leaves and rim plates (3–6 components) over 1.2 s, outer first. The hatch has **fallen** when the last one is released, which is the gate of the transformation (§A2). |
 
 **One structure, piece by piece.** The rule is the operator's "make sure components fall off and break apart instead
 of as whole layers". The structure follows the progressive-destruction references `[P3]` `[P4]`. The numbers are ours
@@ -469,7 +558,7 @@ None of this is per-component. **So the current bake does not have the C5 data.*
    released spike uncovers a stump, not clean hull. Until then the runtime draws a char decal at each released
    pivot.
 4. **Hatches.**
-   - The dorsal hatch modules sit at the `CarrierHatches` anchors per tour (§A2), with closed and open states, as
+   - The dorsal hatch modules sit at the `CarrierHatches` anchors per tour (§A3), with closed and open states, as
      the render branch's `hatch.slab`, `hatch.petal`, `maw.iris` and `sac.cluster` already are. Their door leaves
      are components (item 1).
    - The `anchors.verify_dart` check reads `lib/game/carrier_hatches.dart` instead of `carrier_gates.dart`.
@@ -484,42 +573,45 @@ Durability (CLAUDE.md §5): commit the picked raws and the recipe. The run ledge
 
 ---
 
-# C. Decisions taken on the operator's behalf, risks and open questions
-**Decisions** (each is one constant or flag; the operator overrides):
-1. One change for both workstreams. The hatch drop *is* a break-up (its doors), and both share the events and the
-   review.
-2. Tiers per tour 4/4/5/5/6, with upper tiers on shield-cell thresholds (§A2–§A3).
-3. The deck tier is the core's side hatches, and the maw tier the core door: the shootable hatch already exists in
-   the rules, so no new hit box is added.
-4. No forced doors. Shootable launches wait for the natural cycle (§A6).
-5. Arrival invariance (§A5). The cascade changes where creatures come from, not when.
-6. The gate events are renamed to hatch events, rather than kept beside them.
-7. Break-up by transition and composite difference (§B3), with an art-derived fallback (§B6).
+# C. Decisions, risks and open questions
+**The operator's decisions (round 3d), which supersede this design's first version:**
+- Upper hatches are shot directly. Each has its own field and hit points, and destroying them is the prerequisite.
+  (The first version said "upper hatches not directly shootable" and dropped tiers on shield cells. Both are gone.)
+- When all of them have fallen, the ship transforms to expose the lower, delicate hatch, and the camera zooms in
+  slowly again.
+- Three radio hints, one line each. Subtitles fit one line so the font can grow.
+- The boss gets easier through structure.
+
+**Decisions taken on the operator's behalf** (each is one constant or flag; the operator overrides):
+1. One change for both workstreams. A destroyed hatch *is* a break-up, and both share the events and the review.
+2. The tiers are kept (2/2/3/3/4 upper tiers), moved lower (§A3), with only the topmost intact tier vulnerable, so
+   the "lower and lower hatches" of round 3c stays.
+3. The old hull-wide shield's HP is redistributed into the hatches at `k` = 0.85 to start. The hull-wide intercept
+   and its equivalence test are retired for the carrier.
+4. The "lower, delicate hatch" is the core door alone. The side hatches seal at the transformation, and the door's
+   window widens to 16·door.
+5. The glide slows to 0.35 in the hatch chapter and 0.6 in the core chapter, and the lead pip shows on Easy and
+   Normal.
+6. Arrival invariance (§A6): the flocks keep their rhythm, and the easing comes from structure.
+7. The gate events are renamed to hatch events, and the cell and field-impact events are retired for the carrier.
+8. Subtitles: 14.5 px on the phone, and a 28-character one-line limit enforced for the hints. The rest of the bank
+   keeps wrapping.
+9. Break-up by transition and composite difference (§B3), with an art-derived fallback (§B6).
 
 **Risks:**
 
 | Risk | Mitigation |
 | --- | --- |
-| The render merge changes the painter, the gates and the doors under this spec | tasks §1 re-reads them first. Design §A9 and §B1 are updated before any code |
-| The deck hold makes the core fight easier | measured (task 5.1); the §A11 levers |
+| The render merge changes the painter, the gates, the doors and the field under this spec | tasks §1 re-reads them first; design §A9 and §B1 are updated before any code |
+| The expert pilot shows little change, because it always led perfectly | the naive pilot measures the human difficulty (§A11) |
+| Easier overshoots: the fight feels trivial on Normal | the targets are bands (± 5 points); the levers in order; Hard is barely eased |
+| Far hatches are hard to hit even slowed | the tiers moved lower; the 18-unit fields; the hint and the lead pip |
 | Long top-tier swoops crowd the upper screen with untargetable creatures | the transit line is just under the deck; the skein spacing; review sheet 8.1 |
 | The split-composite memory spike on phones | one transition per pass; B released at its end; the phone profile (carrier-render-engine 4.4) |
-| The fallback components look wrong on dense sets (forest thorns, crown shards) | the clump merge; the component pass (§B9) replaces it |
-| The hatches overlap existing dorsal decor before the re-render | the runtime draws hatch rims over the composite; the clearings rule in the re-render |
+| The fallback components look wrong on dense sets | the clump merge; the component pass (§B9) replaces it |
+| A larger subtitle font overflows the desktop tiles or the dock's height | a widget test at 360 × 640 and 1280 × 720 over every line: no ellipsis at the new size (task 4.5) |
 
 **Open questions for the operator:**
-- Should lower tiers bring heavier kinds or escorts ("this is just the beginning")? The roster field is reserved
-  (§A4).
-- Should an upper hatch also be directly shootable, beside the shield thresholds? This change says no, to keep the
-  shield's balance.
-
-## Lead decisions on the open questions (2026-11-16)
-
-- **Lower tiers bring heavier creatures?** Not in the first cut: rosters stay as they are today. *Why:* the change is
-  balance-neutral by construction, so the boss endurance gate (§7) stays meaningful. Escalation per tier is a
-  follow-up tuning task once the cascade is in the operator's hands; it is also a natural hook for the music engine's
-  `bossHatchTier` sections.
-- **Upper hatches directly shootable?** No. Upper tiers drop only on the shield thresholds. *Why:* the operator's words
-  were "until they come out from the hatch we can shoot", so only the last tiers (deck bays, then the maw) are
-  targets. Shooting the hull is what drops the upper hatches, which keeps one clear rule: hit the ship, the launches
-  move down.
+- Should lower tiers bring heavier kinds or escorts? `roster` is reserved.
+- Should the rest of the radio bank be rewritten to one line (471 lines exceed 28 characters)?
+- Is the lead pip welcome, or should the hint alone teach leading?

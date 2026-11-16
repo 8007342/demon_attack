@@ -13,6 +13,17 @@ In the carrier fight, no creature, tell or death burst SHALL be covered by the h
 - **WHEN** a launch wave leaves the approaching carrier's dorsal hatches
 - **THEN** its creatures are drawn in front of the hull from their first frame
 
+### Requirement: Carrier transformation and lead pip
+The transformation SHALL shed the plates and crystals as staggered components and fold the deck's shutter aside to reveal the core door, while the camera zooms in slowly. On Easy and Normal, after the first lead hint, a faint pip SHALL mark where a shot fired now meets the open core door. Never on Hard.
+
+#### Scenario: The core is exposed
+- **WHEN** the transformation runs
+- **THEN** the plates break off one by one, the shutter folds aside, the core door's rim lights, and the zoom eases in without shake
+
+#### Scenario: Leading on Normal
+- **WHEN** the lead hint has played on Normal and the core door is open
+- **THEN** a pip on the door's row shows the forecast meeting point
+
 ### Requirement: Hatch launch presentation
 Each launch SHALL read as coming out of the top surface. The creature pops up out of the open hatch for 0.3 s, growing from 0.8 to full size, then swoops over the hull to its place, never aimed at the ship's row. Its passage out through the force field SHALL show a faint ripple and queue no event.
 
@@ -20,19 +31,19 @@ Each launch SHALL read as coming out of the top surface. The creature pops up ou
 - **WHEN** a creature leaves a dorsal hatch
 - **THEN** it rises out of the opening in the hatch's glow, then crosses the hull visibly toward the formation
 
-### Requirement: Hatch drop and cascade presentation
-A dropped hatch SHALL go dark with a short flicker, blow its doors off as break-up components, and keep smoking where it is. A light chase SHALL run down the hull to the new tier, whose hatches arm with an ember pulse. A drop SHALL add no camera shake.
+### Requirement: Hatch fields, destruction and cascade presentation
+A vulnerable hatch's field SHALL be a small membrane that thins with its hit points and ripples when hit. A destroyed hatch SHALL go dark, break its doors and rim off as components, and smoke where it is. A light chase SHALL run down the hull to the next tier, whose fields arm over 0.6 s. No camera shake.
 
-#### Scenario: Tier 1 drops
-- **WHEN** the first threshold is reached
-- **THEN** both tier-1 hatches blow and seal in smoke, the chase runs down to tier 2 within 1 s, and tier 2's hatches glow ember
+#### Scenario: Tier 1 destroyed
+- **WHEN** the second tier-1 hatch is destroyed
+- **THEN** both tier-1 hatches have broken apart and seal in smoke, the chase runs down to tier 2 within 1 s, and tier 2's fields rise
 
 #### Scenario: Reduced motion
-- **WHEN** reduced motion is on and a tier drops
+- **WHEN** reduced motion is on and a tier is destroyed
 - **THEN** the hatches go dark and seal, the doors fall without spin, and the new tier lights without a chase
 
 ### Requirement: Carrier components break off individually
-Art removed between two damage states SHALL leave as individual components, never as a whole layer. This covers the plates and crystals of the S2 shed, the module of a form change, and a dropped hatch's doors. Each component SHALL stay attached until released, and no more than a quarter of a transition's components, at least two, SHALL release in any 0.25 s.
+Art removed between two damage states SHALL leave as individual components, never as a whole layer. This covers the plates and crystals of the S2 shed, the module of a form change, and a destroyed hatch's doors and rim. Each component SHALL stay attached until released, and no more than a quarter of a transition's components, at least two, SHALL release in any 0.25 s.
 
 #### Scenario: The spines break off
 - **WHEN** the carrier's first form change tears away its spines

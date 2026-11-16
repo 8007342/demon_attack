@@ -3,63 +3,74 @@
 ## ADDED Requirements
 
 ### Requirement: Carrier launch hatches on the top surface
-In the fight, the carrier SHALL release creatures only through launch hatches on the side of its hull that faces the player: dorsal hatches in tiers, then the deck bays, then the core door. Only the topmost intact tier SHALL launch. No creature SHALL leave from under the hull.
+In the fight, the carrier SHALL release creatures only through hatches on the side of its hull facing the player: dorsal hatches in tiers, then its core door. Only the topmost intact tier SHALL launch. No creature SHALL leave from under the hull.
 
 #### Scenario: A fresh fight
-- **WHEN** the carrier comes in range with its shield full
-- **THEN** its minion flocks come out of the first, topmost upper tier's dorsal hatches, alternating sides
+- **WHEN** the carrier comes in range
+- **THEN** its minion flocks come out of the topmost tier's dorsal hatches, alternating sides
 
 #### Scenario: Tiers per tour
 - **WHEN** the carrier of tours 1, 2, 3, 4 and 5 or later is built
-- **THEN** it has 2, 2, 3, 3 and 4 upper tiers of one hatch pair each, plus the deck tier and the maw tier: 4, 4, 5, 5 and 6 tiers in all
+- **THEN** it has 2, 2, 3, 3 and 4 upper tiers of one hatch pair each
 
-### Requirement: Hatch tiers drop with the shield and the forms
-Upper tiers SHALL drop at fixed shield-cell counts, one tier per threshold, the topmost first. The deck tier SHALL take over at shield zero, and the maw tier at the last form, when the side hatches seal. A dropped hatch SHALL never launch again.
+### Requirement: Shootable upper hatches with their own fields
+Each upper hatch SHALL have its own small force field and hit points. Only the topmost intact tier SHALL be vulnerable; shots pass over sealed tiers. A shot on the armour outside a vulnerable hatch SHALL do no damage. The carrier SHALL have no hull-wide shield.
 
-#### Scenario: Thresholds
-- **WHEN** the lit shield cells fall to 6 and then 0 on tours 1–2, to 9, 6 and 0 on tours 3–4, or to 9, 6, 3 and 0 from tour 5
-- **THEN** the topmost intact upper tier drops at each of those counts, and at 0 the deck tier becomes the launching tier
+#### Scenario: Breaking a hatch
+- **WHEN** the player's shots strike a vulnerable hatch
+- **THEN** its field takes the hits until it breaks, then the hatch itself, and at zero the hatch is destroyed and breaks apart
 
-#### Scenario: The last form
-- **WHEN** the carrier enters its last form and its side hatches seal
-- **THEN** the deck bays drop and the core door is the only launching hatch until the collapse
+#### Scenario: A tier destroyed
+- **WHEN** both hatches of the vulnerable tier are destroyed
+- **THEN** the next tier down arms its fields and becomes the vulnerable, launching tier
 
-#### Scenario: A volley caught by a drop
-- **WHEN** a tier drops while one of its hatches still holds creatures waiting to leave
-- **THEN** those creatures leave from the next tier's hatch on the same side, or from the other side when that hatch is outside the arena
+#### Scenario: A miss on the armour
+- **WHEN** a shot strikes the hull away from any vulnerable hatch
+- **THEN** it sparks off and does no damage
 
-### Requirement: Shootable last tiers ride the door cycles
-A deck-tier launch SHALL leave through a deck bay or the core door that is open in the simulation at that moment, and a maw-tier launch through the open core door. When none is open, the volley SHALL wait in the hatch for the first opening, at most one door period. A launch SHALL NOT force a door open.
+### Requirement: Carrier transformation exposes the core door
+Only when every upper hatch is destroyed and has fallen SHALL the carrier transform, for 3.5 s, with no hitbox, no fire and its flock timer held. The transformation SHALL expose the core door, the lower delicate hatch, which is then the only target, and the camera SHALL zoom back in slowly.
 
-#### Scenario: No opening is open
-- **WHEN** a deck-tier flock is due and both bays and the core door are closed
-- **THEN** the creatures wait unseen and untargetable in the bay that opens first, and leave as it opens, while the core's hit windows follow the unchanged door cycles
+#### Scenario: The last hatch falls
+- **WHEN** the last upper hatch's break-up completes
+- **THEN** the transformation starts, the camera eases from the tour's minimum zoom toward 0.86 at 0.04 per second, and after 3.5 s the core door is exposed
+
+#### Scenario: Before the hatches are gone
+- **WHEN** any upper hatch is intact
+- **THEN** no shot can damage the core
+
+### Requirement: Fairer core chapter
+In the core chapter, the core door SHALL take hits only while it is open, with a hit half-width of 16 × its openness. The carrier's lateral motion SHALL be slowed to 0.35 of today's rate in the hatch chapter and 0.6 in the core chapter. The side hatches SHALL be sealed. Core-chapter flocks SHALL leave through the open core door, never forcing it open.
+
+#### Scenario: Leading the door
+- **WHEN** the carrier glides at its fastest in the core chapter
+- **THEN** the core door moves at most about 64 units per second, and a shot from the ship's row needs a lead of about 40 units or less
 
 ### Requirement: Carrier launch arrival invariance
-Hatches SHALL change where the fight's creatures come from, not when they arrive. The flock timer, flock size, kinds and caps SHALL be unchanged. Each creature's entrance SHALL end when it does today, except for a deck or maw hold. A creature SHALL not be targetable above the transit line, hull-local y + 40.
+Hatches SHALL change where the fight's creatures come from, not when they arrive. The flock timer, size, kinds and caps SHALL be unchanged. Each entrance SHALL end when it does today, except during a core-door hold or the transformation. A creature SHALL not be targetable above hull-local y + 40.
 
 #### Scenario: A top-tier flock
-- **WHEN** a flock launches from the topmost tier, about 300 units above its home row
+- **WHEN** a flock launches from a tier far above its home row
 - **THEN** it leaves the hatch earlier, by its longer transit less today's 0.55 s entrance, and each creature reaches its home at today's moment
 
-#### Scenario: Crossing the hull
-- **WHEN** a player shot passes a creature still above the transit line
-- **THEN** the shot does not hit it
-
-### Requirement: Calibrated hatch cascade
-The cascade SHALL keep boss endurance pooled within 5 % and each difficulty within 10 % of its baseline. It SHALL keep the campaign playtest metrics in bounds and the boss level's clear time within 10 %. The before and after values SHALL be recorded in `plan/calibration-current.md`.
+### Requirement: Easier carrier by calibrated targets
+The carrier fight SHALL get easier on purpose. For the protected expert pilot, time-to-kill SHALL fall by 25, 20 and 10 % on Easy, Normal and Hard, and hits taken by 30, 25 and 15 %, each within 5 points. A naive pilot that does not lead SHALL kill every carrier on Easy and 90 % on Normal.
 
 #### Scenario: Calibration run
-- **WHEN** `test/boss_endurance_test.dart` and `test/campaign_playtest_test.dart` run with the cascade
-- **THEN** they pass within those gates, and the deck hold's share of delayed arrivals is printed
+- **WHEN** `test/boss_endurance_test.dart` and `test/boss_fairness_test.dart` run against the recorded pre-hatches values
+- **THEN** every ratio lies inside its band, and the before and after values and the commit are in `plan/calibration-current.md`
 
-### Requirement: Hatch events for the score
-The volley lifecycle SHALL be emitted as `bossHatchTelegraph`, `bossHatchOpen`, `bossLaunch` and `bossHatchClose`, each with the hatch, tier and shootability; carrier-v3's `bossGate*` names SHALL no longer be emitted. Each knocked-out hatch SHALL emit `bossHatchDrop`, and each tier change `bossHatchTier`, as structured events only.
+#### Scenario: Later changes
+- **WHEN** a later change runs the endurance test
+- **THEN** it is gated within 5 % pooled and 10 % per difficulty of the new baseline
 
-#### Scenario: A tier drops
-- **WHEN** a shot takes the shield to the first threshold
-- **THEN** the queue carries `bossShieldCellLost`, then `bossHatchDrop` for the left and then the right hatch of tier 1, then `bossHatchTier` with tier 2, the tier count, depth and shootable false, and none of these names appears in the raw event list
+### Requirement: Hatch and transformation events
+The volley lifecycle SHALL be emitted as `bossHatchTelegraph`, `bossHatchOpen`, `bossLaunch` and `bossHatchClose`, not as the `bossGate*` names. `bossHatchFieldDown`, `bossHatchDrop`, `bossHatchTier`, `bossTransform` (start, end) and `bossCoreExposed` SHALL follow the structure. All SHALL be structured events only.
 
-#### Scenario: The fight begins
-- **WHEN** the carrier comes in range
-- **THEN** `bossHatchTier` with tier 1 is queued right after `bossInRange`
+#### Scenario: A tier destroyed
+- **WHEN** a shot destroys the second hatch of a tier
+- **THEN** the queue carries `bossHatchDrop`, then `bossHatchTier` with the next tier, the tier count, depth and shootable, and none of these names appears in the raw event list
+
+#### Scenario: The transformation
+- **WHEN** the last upper hatch has fallen
+- **THEN** the queue carries `bossShieldDown`, `bossTransform` start, and 3.5 s later `bossTransform` end, then `bossCoreExposed`
