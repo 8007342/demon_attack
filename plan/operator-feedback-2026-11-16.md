@@ -116,6 +116,10 @@ Requests:
 The boss now has intro waves, so /console needs an easy way to launch the carrier fight straight away and to defeat
 it quickly: skip the intro and launch waves, and offer a defeat or "fast-forward the decay" control for testing.
 
+**Done** (`work/carrier-v3-tune`): with SECTOR 5 picked, the console's BONUS LEVEL row becomes CARRIER: APPROACH,
+FIGHT (in range at once) or FAST DECAY (one decay step every 2.5 s, through to the collapse). It is debug only: ranked
+runs ignore it. Sheet: `art/contact/console-carrier-row.png`.
+
 ## W1. Dynamic weather (change `dynamic-weather`)
 Random levels of dynamic rain on regular levels, from a drizzle to heavy rain. The thunderstorm, with lightning, stays
 exclusive to the Stormfront bonus level.
