@@ -1,6 +1,9 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:demon_attack/game/boss_atlas.dart';
+import 'package:demon_attack/game/boss_painter.dart';
+import 'package:demon_attack/game/carrier_compose.dart';
 import 'package:demon_attack/game/carrier_bend.dart';
 import 'package:demon_attack/game/carrier_script.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,10 +28,19 @@ void main() {
     for (final (psi, phi, theta) in combos) {
       for (final h in [0.0, 60.0]) {
         for (final a in anchors.values) {
-          final (dx, dy) =
-              CarrierBend.displacement(a.$1, a.$2, h, psi, phi, theta);
-          expect(math.sqrt(dx * dx + dy * dy), lessThanOrEqualTo(3),
-              reason: 'anchor $a at ($psi, $phi, $theta)');
+          final (dx, dy) = CarrierBend.displacement(
+            a.$1,
+            a.$2,
+            h,
+            psi,
+            phi,
+            theta,
+          );
+          expect(
+            math.sqrt(dx * dx + dy * dy),
+            lessThanOrEqualTo(3),
+            reason: 'anchor $a at ($psi, $phi, $theta)',
+          );
         }
       }
     }
@@ -66,50 +78,104 @@ void main() {
     expect(b.lean, 0);
   });
 
-  test('the tour-1 mesh: vertex and triangle counts (mobile budget)', () {
-    for (final key in ['carrier1-thorn', 'carrier1-lattice', 'carrier5-thorn']) {
-      final hull = BossHeroAtlas.hulls[key]!;
-      final v = hull.views['p45_y+00']!;
-      final layers = <CarrierMeshLayer>[];
-      for (final m in hull.modules) {
-        var list = v.layers[m.id];
-        var flip = false;
-        if (list == null && m.id.endsWith('L')) {
-          list = v.layers['${m.id.substring(0, m.id.length - 1)}R'];
-          flip = true;
+  test(
+    'the composed warp mesh: vertex and triangle counts (mobile budget)',
+    () {
+      for (final key in [
+        'carrier1-thorn',
+        'carrier1-lattice',
+        'carrier5-thorn',
+      ]) {
+        final hull = BossHeroAtlas.hulls[key]!;
+        final layers = compositeLayersOf(hull);
+        final f = hull.frame;
+        final frame = Rect.fromLTRB(f.$1, f.$2, f.$3, f.$4);
+        final heights = CarrierHeightGrid.fromLayers(frame, layers);
+        var vertices = 0, triangles = 0, us = 0.0, layerArea = 0.0;
+        var cellArea = 0.0;
+        for (final front in [false, true]) {
+          final pass = [
+            for (final (i, l) in layers.indexed)
+              if (frontOf(hull, i) == front) l,
+          ];
+          var rect = pass.first.placed;
+          for (final l in pass.skip(1)) {
+            rect = rect.expandToInclude(l.placed);
+          }
+          final mesh = CarrierWarpMesh(
+            rect,
+            2,
+            heights: heights,
+            keep: (cell) => pass.any((l) => l.placed.overlaps(cell)),
+          );
+          final b = CarrierBend()..update(1, vx: 1, ax: 1, glide: 1, buffet: 1);
+          final sw = Stopwatch()..start();
+          for (var i = 0; i < 100; i++) {
+            mesh.rebuild(null);
+            mesh.rebuild(b);
+          }
+          sw.stop();
+          us += sw.elapsedMicroseconds / 200;
+          // Overdraw: the per-layer rects drawn before against the one
+          // composed surface's cells now.
+          for (final l in pass) {
+            layerArea += l.placed.width * l.placed.height;
+          }
+          cellArea += mesh.triangleCount / 2 * 400;
+          vertices += mesh.vertexCount;
+          triangles += mesh.triangleCount;
         }
-        final s = list?.first;
-        if (s == null) continue;
-        final k = s.ppu;
-        layers.add(CarrierMeshLayer(
+        // ignore: avoid_print
+        print(
+          'CARRIER_MESH $key vertices=$vertices triangles=$triangles '
+          'calls=2 rebuild_us=${us.toStringAsFixed(1)} '
+          'layer_overdraw=${(layerArea / cellArea).toStringAsFixed(2)}',
+        );
+        expect(vertices, lessThan(4000));
+        expect(triangles, lessThan(7000));
+      }
+    },
+  );
+}
+
+/// The S0 composite layers of [hull] in draw order (both passes).
+List<CarrierCompositeLayer> compositeLayersOf(BossHeroHull hull) {
+  final v = hull.views['p45_y+00']!;
+  return [
+    for (final m in hull.modules)
+      if (_s0(v, m.id) case (final s, final flip))
+        CarrierCompositeLayer(
           page: s.page,
-          left: s.dx,
-          top: s.dy,
-          right: s.dx + s.w / k,
-          bottom: s.dy + s.h / k,
-          u0: s.x.toDouble(),
-          v0: s.y.toDouble(),
-          u1: (s.x + s.w).toDouble(),
-          v1: (s.y + s.h).toDouble(),
+          src: Rect.fromLTWH(
+            s.x.toDouble(),
+            s.y.toDouble(),
+            s.w.toDouble(),
+            s.h.toDouble(),
+          ),
+          dst: Rect.fromLTWH(s.dx, s.dy, s.w / s.ppu, s.h / s.ppu),
           flip: flip,
           height: CarrierBend.heightOf(m.module),
-          lag: CarrierBend.lags(m.module),
-        ));
-      }
-      final mesh = CarrierMesh(layers);
-      final b = CarrierBend()..update(1, vx: 1, ax: 1, glide: 1, buffet: 1);
-      final sw = Stopwatch()..start();
-      for (var i = 0; i < 100; i++) {
-        mesh.rebuild(null);
-        mesh.rebuild(b);
-      }
-      sw.stop();
-      // ignore: avoid_print
-      print('CARRIER_MESH $key vertices=${mesh.vertexCount} '
-          'triangles=${mesh.triangleCount} pages=${mesh.pages.length} '
-          'rebuild_us=${(sw.elapsedMicroseconds / 200).toStringAsFixed(1)}');
-      expect(mesh.vertexCount, lessThan(6000));
-      expect(mesh.triangleCount, lessThan(10000));
-    }
-  });
+        ),
+  ];
+}
+
+/// Whether the [i]th S0 layer of [hull] is in the front (prow) pass.
+bool frontOf(BossHeroHull hull, int i) {
+  final v = hull.views['p45_y+00']!;
+  final drawn = [
+    for (final m in hull.modules)
+      if (_s0(v, m.id) != null) m,
+  ];
+  return BossPainter.isFront(drawn[i]);
+}
+
+(BossHeroSprite, bool)? _s0(BossHeroView v, String id) {
+  var list = v.layers[id];
+  var flip = false;
+  if (list == null && id.endsWith('L')) {
+    list = v.layers['${id.substring(0, id.length - 1)}R'];
+    flip = true;
+  }
+  final s = list?.first;
+  return s == null ? null : (s, flip);
 }
