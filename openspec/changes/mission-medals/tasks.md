@@ -14,9 +14,9 @@
 ## 2. Mission medals
 - [x] 2.1 `MissionMedal` / `MissionMedals` widgets composing atlas layers, fallback, label and tap tooltip
 - [x] 2.2 Run record card and scoreboard rows show medals, never modifier text
-- [ ] 2.3 Medal family, hero renders, picks, atlas and generated Dart through rigkit + ComfyUI + rigsheet (`plan/render-runs/mission-medals.md`)
-- [ ] 2.4 Commit the picked raws and the recipe
+- [x] 2.3 Medal family, hero renders, picks, atlas and generated Dart through rigkit + ComfyUI + rigsheet (`plan/render-runs/mission-medals.md`)
+- [x] 2.4 Commit the picked raws and the recipe
 
 ## 3. Sheets and gates
-- [ ] 3.1 `art/contact/mission-medals-supply-run.png`, `mission-medals-screens.png`, `mission-medals-variants.png`, reviewed
+- [x] 3.1 `art/contact/mission-medals-supply-run.png`, `mission-medals-screens.png`, `mission-medals-variants.png`, reviewed
 - [ ] 3.2 `flutter analyze`, the full suite through the lock, `npm run test:worker`, `npm run build`, `openspec validate mission-medals --strict`

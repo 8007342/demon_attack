@@ -172,8 +172,17 @@ void main() {
       expect(find.text('123456'), findsOneWidget);
       expect(find.text('TIME 12:34'), findsOneWidget);
       expect(find.text('16 NOV 2026'), findsOneWidget);
-      expect(find.text('SUPPLY RUN'), findsOneWidget);
-      expect(find.text('HEAVY ORDNANCE'), findsOneWidget);
+      // mission-medals: the modifiers are medals, not words.
+      expect(
+        find.byKey(const ValueKey('mission-medal-supplyRun')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('mission-medal-heavyOrdnance')),
+        findsOneWidget,
+      );
+      expect(find.text('SUPPLY RUN'), findsNothing);
+      expect(find.text('HEAVY ORDNANCE'), findsNothing);
       expect(tester.takeException(), isNull);
       // Compact: under a fifth of the phone's height.
       final h = tester.getSize(find.byKey(const ValueKey('run-record'))).height;

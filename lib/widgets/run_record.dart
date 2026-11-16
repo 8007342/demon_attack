@@ -1,17 +1,18 @@
 // bonus-balance: the end-of-run medal screen's run record. One compact
 // card: the medals earned (of five), the score, the play time, the play
 // date and the run's modifiers (the bonus levels met, the run rule). Sized
-// for a 360-wide phone: two short rows and a wrap of tags.
+// for a 360-wide phone: two short rows and a row of mission medals.
+// mission-medals: the modifiers are badges (mission_medal.dart), never
+// text chips; a mission's name is its medal's label and tap tooltip.
 import 'package:flutter/material.dart';
 
-import '../game/bonus/bonus_catalog.dart' show runTagLabel;
 import '../services/scores.dart';
 import 'medal.dart';
+import 'mission_medal.dart';
 
 const _mint = Color(0xFF70F5D5);
 const _gold = Color(0xFFF4CA79);
 const _muted = Color(0xFF8AA1B8);
-const _tagInk = Color(0xFFFFD79A);
 
 const _months = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', //
@@ -42,7 +43,7 @@ class RunRecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = playDateLabel(entry.playedOn);
-    final tags = [for (final id in entry.modifiers) runTagLabel(id)];
+    final missions = entry.modifiers;
     TextStyle small(Color c) =>
         TextStyle(fontSize: 9, letterSpacing: 1.2, color: c, height: 1.3);
     return Container(
@@ -110,30 +111,20 @@ class RunRecordCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          if (tags.isEmpty)
+          if (missions.isEmpty)
             Text(
               key: const ValueKey('run-record-standard'),
               'STANDARD RUN',
               style: small(const Color(0xFF647D94)),
             )
           else
+            // --- mission-medals: one medal per mission met.
             Wrap(
               key: const ValueKey('run-record-modifiers'),
-              spacing: 5,
+              spacing: 6,
               runSpacing: 4,
               children: [
-                for (final t in tags)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0x33FFD79A),
-                      border: Border.all(color: const Color(0x88FFD79A)),
-                    ),
-                    child: Text(t, style: small(_tagInk)),
-                  ),
+                for (final id in missions) MissionMedal(id: id, size: 34),
               ],
             ),
         ],
