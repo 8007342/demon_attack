@@ -5,8 +5,6 @@
 // 360-wide phone.
 import 'dart:convert';
 
-import 'package:demon_attack/game/bonus/bonus_catalog.dart';
-import 'package:demon_attack/game/bonus/bonus_plan.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/services/scores.dart';
 import 'package:demon_attack/widgets/run_record.dart';

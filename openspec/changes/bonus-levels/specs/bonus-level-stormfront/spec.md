@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Stormfront replaces a sector with a thunderstorm
-The bonus level `stormfront` SHALL replace one regular sector's content with a fight inside a thunderstorm over that sector's own backdrop: two thinned waves without sentinels, under a dark storm grade. It SHALL be entered and left through the ordinary fog transition, and it SHALL NOT show any card, title or text over the play area.
+The bonus level `stormfront` SHALL replace one regular sector's content with a fight inside a thunderstorm over that sector's own backdrop: the sector's waves, sentinels and elites, each opening roster 15 % larger (the storm kills some of them), under a dark storm grade. It SHALL be entered and left through the ordinary fog transition, and it SHALL NOT show any card, title or text over the play area.
 
 #### Scenario: Entering the storm
 - **WHEN** a run's bonus slot holds `stormfront` and the previous sector is cleared
@@ -12,6 +12,17 @@ The bonus level `stormfront` SHALL replace one regular sector's content with a f
 #### Scenario: Leaving the storm
 - **WHEN** the level's last creature falls
 - **THEN** the ordinary sector change to the next sector begins
+
+#### Scenario: As long as the sector
+- **WHEN** the storm replaces a sector that has five waves
+- **THEN** it plays five waves
+
+### Requirement: Stormfront pays and strikes like its sector
+Kills in Stormfront SHALL pay 70 % of their points. The clear award SHALL be 0.15 of the sector's par score and the flawless award a further 0.1; the clear, flawless and bait awards together SHALL stay within 0.3 of it. The storm SHALL strike every 3-4.2 s on Easy, 3.1-4.5 s on Normal and 3.3-4.7 s on Hard (divided by the hostile rate), a tenth less often per route.
+
+#### Scenario: A clean storm
+- **WHEN** the last creature falls and no ship was lost
+- **THEN** the level adds a quarter of the sector's par score, within its cap
 
 ### Requirement: Lightning strikes a telegraphed column
 During Stormfront combat, lightning SHALL strike columns of the arena. Every strike SHALL be telegraphed for at least one second of real time by a leader flickering down its column and a marker on the ship's row, and its column SHALL NOT move after the tell begins. Most tells SHALL take the ship's position at the moment they begin; the others SHALL take the swarm's densest column. No tell SHALL begin, and a running tell SHALL end without a bolt, while the ship is away or outside combat.

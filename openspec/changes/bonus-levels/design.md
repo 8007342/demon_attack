@@ -102,6 +102,11 @@ lib/game/model_bonus.dart   part of model.dart: BonusRun (state) and every hook
 
 ## 6. Bonus level #1: Supply Run
 
+> **Superseded numbers (bonus-balance, 2026-11-16).** The two thin waves below made a level of 9-25 combat seconds
+> (about three for a powered-up player on Easy route 0) against a sector of 25-119. Supply Run now plays the
+> sector's waves and is scored against a par that counts the whole sector: see `openspec/changes/bonus-balance`
+> and `plan/calibration-current.md` "Bonus balance". The fantasy and the crates stand.
+
 Fantasy: a fleet supply convoy was shot down over the sector. Its crates come down on parachutes through a thin
 screen of brood scavengers. Shoot a crate open, catch what falls.
 
@@ -259,7 +264,9 @@ parks under the swarm and stays. The framework runs the timer, the pickup, the b
 lavender) and `bonusPickup.lightningRod`; the effect lives in the mechanic, because no power primitive describes it.
 
 ### Waves, drops, look
-`BonusWaves(count: 2, rosterScale: .85, reinforcementScale: .5)`, no sentinel, no elite.
+`BonusWaves(count: 2, rosterScale: .85, reinforcementScale: .5)`, no sentinel, no elite. (Superseded by
+bonus-balance: the sector's waves and sentinels at `rosterScale: 1.15`, a slower storm on Normal and Hard; see
+`openspec/changes/bonus-balance`.)
 `PowerRules(chances: [PowerChance(Power.shield, .5)])`: half the kill drops are shields ("a certain percentage of a
 chance"), which makes a mistimed bait forgivable. `BonusLook`: storm-dark blue wash (0xFF0B1030 at .46), a pale
 violet horizon glow, haze .14. Drawing is procedural, no atlas: rain (44 streaks), the tell (a faint amber band over
