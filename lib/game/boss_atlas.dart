@@ -244,8 +244,8 @@ abstract final class BossAtlas {
 class BossHeroSprite {
   const BossHeroSprite(this.page, this.x, this.y, this.w, this.h, this.dx,
       this.dy, [this.ppu = 2]);
-  final int page, x, y, w, h, ppu;
-  final double dx, dy;
+  final int page, x, y, w, h;
+  final double dx, dy, ppu;
 }
 
 /// One module instance of a hull: id, catalogue module, mirror (-1 for the
@@ -346,10 +346,10 @@ abstract final class BossHeroAtlas {
           pitch: 38,
           yaw: 0,
           layers: {
-            'spine': [BossHeroSprite(0, 684, 1507, 264, 136, -66.0, -115.5), BossHeroSprite(0, 1699, 1771, 132, 69, -66.0, -116.0, 1), BossHeroSprite(0, 1832, 1771, 132, 69, -66.0, -116.0, 1), BossHeroSprite(0, 928, 1771, 132, 79, -66.0, -126.0, 1)],
-            'bow': [BossHeroSprite(0, 1303, 419, 440, 394, -110.0, -118.0), BossHeroSprite(0, 0, 1309, 220, 197, -110.0, -118.0, 1), BossHeroSprite(0, 221, 1309, 220, 197, -110.0, -118.0, 1), BossHeroSprite(0, 442, 1309, 220, 197, -110.0, -118.0, 1)],
-            'tower': [BossHeroSprite(0, 1904, 1309, 80, 154, -20.0, -152.0), BossHeroSprite(0, 1157, 1771, 40, 77, -20.0, -152.0, 1), BossHeroSprite(0, 1198, 1771, 40, 77, -20.0, -152.0, 1), null],
-            'engineR': [BossHeroSprite(0, 1100, 1507, 153, 119, 51.5, -115.5), BossHeroSprite(0, 228, 1862, 77, 60, 51.0, -116.0, 1), BossHeroSprite(0, 306, 1862, 77, 60, 51.0, -116.0, 1), BossHeroSprite(0, 384, 1862, 77, 60, 51.0, -116.0, 1)],
+            'spine': [BossHeroSprite(0, 684, 1507, 264, 136, -66.0, -115.5), BossHeroSprite(0, 1699, 1771, 132, 69, -66.0, -116.0, 1.0), BossHeroSprite(0, 1832, 1771, 132, 69, -66.0, -116.0, 1.0), BossHeroSprite(0, 928, 1771, 132, 79, -66.0, -126.0, 1.0)],
+            'bow': [BossHeroSprite(0, 1303, 419, 440, 394, -110.0, -118.0), BossHeroSprite(0, 0, 1309, 220, 197, -110.0, -118.0, 1.0), BossHeroSprite(0, 221, 1309, 220, 197, -110.0, -118.0, 1.0), BossHeroSprite(0, 442, 1309, 220, 197, -110.0, -118.0, 1.0)],
+            'tower': [BossHeroSprite(0, 1904, 1309, 80, 154, -20.0, -152.0), BossHeroSprite(0, 1157, 1771, 40, 77, -20.0, -152.0, 1.0), BossHeroSprite(0, 1198, 1771, 40, 77, -20.0, -152.0, 1.0), null],
+            'engineR': [BossHeroSprite(0, 1100, 1507, 153, 119, 51.5, -115.5), BossHeroSprite(0, 228, 1862, 77, 60, 51.0, -116.0, 1.0), BossHeroSprite(0, 306, 1862, 77, 60, 51.0, -116.0, 1.0), BossHeroSprite(0, 384, 1862, 77, 60, 51.0, -116.0, 1.0)],
           },
           lights: [BossHeroPoint(-90.0, 1.58, 3, 'bow'), BossHeroPoint(90.0, 1.58, 3, 'bow'), BossHeroPoint(-124.0, -115.4, 1, 'engineL'), BossHeroPoint(124.0, -115.4, 1, 'engineR')],
           fires: [BossHeroPoint(-30.0, -76.05, 0, 'spine'), BossHeroPoint(30.0, -76.05, 0, 'spine'), BossHeroPoint(-60.0, -20.09, 0, 'bow'), BossHeroPoint(60.0, -20.09, 0, 'bow'), BossHeroPoint(0.0, -39.95, 0, 'bow')],
@@ -363,11 +363,11 @@ abstract final class BossHeroAtlas {
           pitch: 38,
           yaw: 12,
           layers: {
-            'spine': [BossHeroSprite(0, 1547, 1309, 261, 158, -70.5, -126.5), BossHeroSprite(0, 532, 1771, 131, 80, -71.0, -127.0, 1), BossHeroSprite(0, 664, 1771, 131, 80, -71.0, -127.0, 1), BossHeroSprite(0, 796, 1771, 131, 80, -71.0, -127.0, 1)],
-            'bow': [BossHeroSprite(0, 872, 419, 430, 396, -112.5, -119.0), BossHeroSprite(0, 1314, 1108, 216, 198, -113.0, -119.0, 1), BossHeroSprite(0, 1531, 1108, 216, 198, -113.0, -119.0, 1), BossHeroSprite(0, 1748, 1108, 216, 198, -113.0, -119.0, 1)],
-            'tower': [BossHeroSprite(0, 1809, 1309, 94, 155, -28.0, -152.5), BossHeroSprite(0, 1061, 1771, 47, 78, -28.0, -153.0, 1), BossHeroSprite(0, 1109, 1771, 47, 78, -28.0, -153.0, 1), null],
-            'engineL': [BossHeroSprite(0, 949, 1507, 150, 121, -131.0, -118.5), BossHeroSprite(0, 0, 1862, 75, 61, -131.0, -119.0, 1), BossHeroSprite(0, 76, 1862, 75, 61, -131.0, -119.0, 1), BossHeroSprite(0, 152, 1862, 75, 61, -131.0, -119.0, 1)],
-            'engineR': [BossHeroSprite(0, 151, 1659, 190, 110, 32.0, -112.5), BossHeroSprite(0, 462, 1862, 95, 56, 32.0, -113.0, 1), BossHeroSprite(0, 558, 1862, 95, 56, 32.0, -113.0, 1), BossHeroSprite(0, 654, 1862, 95, 56, 32.0, -113.0, 1)],
+            'spine': [BossHeroSprite(0, 1547, 1309, 261, 158, -70.5, -126.5), BossHeroSprite(0, 532, 1771, 131, 80, -71.0, -127.0, 1.0), BossHeroSprite(0, 664, 1771, 131, 80, -71.0, -127.0, 1.0), BossHeroSprite(0, 796, 1771, 131, 80, -71.0, -127.0, 1.0)],
+            'bow': [BossHeroSprite(0, 872, 419, 430, 396, -112.5, -119.0), BossHeroSprite(0, 1314, 1108, 216, 198, -113.0, -119.0, 1.0), BossHeroSprite(0, 1531, 1108, 216, 198, -113.0, -119.0, 1.0), BossHeroSprite(0, 1748, 1108, 216, 198, -113.0, -119.0, 1.0)],
+            'tower': [BossHeroSprite(0, 1809, 1309, 94, 155, -28.0, -152.5), BossHeroSprite(0, 1061, 1771, 47, 78, -28.0, -153.0, 1.0), BossHeroSprite(0, 1109, 1771, 47, 78, -28.0, -153.0, 1.0), null],
+            'engineL': [BossHeroSprite(0, 949, 1507, 150, 121, -131.0, -118.5), BossHeroSprite(0, 0, 1862, 75, 61, -131.0, -119.0, 1.0), BossHeroSprite(0, 76, 1862, 75, 61, -131.0, -119.0, 1.0), BossHeroSprite(0, 152, 1862, 75, 61, -131.0, -119.0, 1.0)],
+            'engineR': [BossHeroSprite(0, 151, 1659, 190, 110, 32.0, -112.5), BossHeroSprite(0, 462, 1862, 95, 56, 32.0, -113.0, 1.0), BossHeroSprite(0, 558, 1862, 95, 56, 32.0, -113.0, 1.0), BossHeroSprite(0, 654, 1862, 95, 56, 32.0, -113.0, 1.0)],
           },
           lights: [BossHeroPoint(-90.74, -0.73, 3, 'bow'), BossHeroPoint(85.33, 3.83, 3, 'bow'), BossHeroPoint(-116.0, -118.47, 1, 'engineL'), BossHeroPoint(126.58, -112.19, 1, 'engineR')],
           fires: [BossHeroPoint(-36.11, -76.89, 0, 'spine'), BossHeroPoint(22.58, -75.37, 0, 'spine'), BossHeroPoint(-58.27, -21.61, 0, 'bow'), BossHeroPoint(59.1, -18.57, 0, 'bow'), BossHeroPoint(0.42, -39.94, 0, 'bow')],
@@ -381,10 +381,10 @@ abstract final class BossHeroAtlas {
           pitch: 45,
           yaw: 0,
           layers: {
-            'spine': [BossHeroSprite(0, 1193, 1309, 264, 177, -66.0, -137.0), BossHeroSprite(0, 133, 1771, 132, 89, -66.0, -137.0, 1), BossHeroSprite(0, 266, 1771, 132, 89, -66.0, -137.0, 1), BossHeroSprite(0, 399, 1771, 132, 89, -66.0, -137.0, 1)],
-            'bow': [BossHeroSprite(0, 1325, 0, 440, 400, -110.0, -122.0), BossHeroSprite(0, 0, 1108, 220, 200, -110.0, -122.0, 1), BossHeroSprite(0, 221, 1108, 220, 200, -110.0, -122.0, 1), BossHeroSprite(0, 442, 1108, 220, 200, -110.0, -122.0, 1)],
-            'tower': [BossHeroSprite(0, 195, 1507, 80, 150, -20.0, -152.5), BossHeroSprite(0, 1335, 1771, 40, 76, -20.0, -153.0, 1), BossHeroSprite(0, 1376, 1771, 40, 76, -20.0, -153.0, 1), null],
-            'engineR': [BossHeroSprite(0, 1627, 1507, 153, 111, 51.5, -120.5), BossHeroSprite(0, 1038, 1862, 77, 56, 51.0, -121.0, 1), BossHeroSprite(0, 1116, 1862, 77, 56, 51.0, -121.0, 1), BossHeroSprite(0, 1194, 1862, 77, 56, 51.0, -121.0, 1)],
+            'spine': [BossHeroSprite(0, 1193, 1309, 264, 177, -66.0, -137.0), BossHeroSprite(0, 133, 1771, 132, 89, -66.0, -137.0, 1.0), BossHeroSprite(0, 266, 1771, 132, 89, -66.0, -137.0, 1.0), BossHeroSprite(0, 399, 1771, 132, 89, -66.0, -137.0, 1.0)],
+            'bow': [BossHeroSprite(0, 1325, 0, 440, 400, -110.0, -122.0), BossHeroSprite(0, 0, 1108, 220, 200, -110.0, -122.0, 1.0), BossHeroSprite(0, 221, 1108, 220, 200, -110.0, -122.0, 1.0), BossHeroSprite(0, 442, 1108, 220, 200, -110.0, -122.0, 1.0)],
+            'tower': [BossHeroSprite(0, 195, 1507, 80, 150, -20.0, -152.5), BossHeroSprite(0, 1335, 1771, 40, 76, -20.0, -153.0, 1.0), BossHeroSprite(0, 1376, 1771, 40, 76, -20.0, -153.0, 1.0), null],
+            'engineR': [BossHeroSprite(0, 1627, 1507, 153, 111, 51.5, -120.5), BossHeroSprite(0, 1038, 1862, 77, 56, 51.0, -121.0, 1.0), BossHeroSprite(0, 1116, 1862, 77, 56, 51.0, -121.0, 1.0), BossHeroSprite(0, 1194, 1862, 77, 56, 51.0, -121.0, 1.0)],
           },
           lights: [BossHeroPoint(-90.0, 0.0, 3, 'bow'), BossHeroPoint(90.0, 0.0, 3, 'bow'), BossHeroPoint(-124.0, -113.14, 1, 'engineL'), BossHeroPoint(124.0, -113.14, 1, 'engineR')],
           fires: [BossHeroPoint(-30.0, -80.61, 0, 'spine'), BossHeroPoint(30.0, -80.61, 0, 'spine'), BossHeroPoint(-60.0, -20.0, 0, 'bow'), BossHeroPoint(60.0, -20.0, 0, 'bow'), BossHeroPoint(0.0, -40.0, 0, 'bow')],
@@ -398,11 +398,11 @@ abstract final class BossHeroAtlas {
           pitch: 45,
           yaw: 12,
           layers: {
-            'spine': [BossHeroSprite(0, 928, 1309, 264, 179, -72.0, -137.0), BossHeroSprite(0, 1652, 1659, 132, 90, -72.0, -137.0, 1), BossHeroSprite(0, 1785, 1659, 132, 90, -72.0, -137.0, 1), BossHeroSprite(0, 0, 1771, 132, 90, -72.0, -137.0, 1)],
-            'bow': [BossHeroSprite(0, 441, 419, 430, 400, -112.5, -122.0), BossHeroSprite(0, 663, 1108, 216, 200, -113.0, -122.0, 1), BossHeroSprite(0, 880, 1108, 216, 200, -113.0, -122.0, 1), BossHeroSprite(0, 1097, 1108, 216, 200, -113.0, -122.0, 1)],
-            'tower': [BossHeroSprite(0, 100, 1507, 94, 150, -28.0, -152.5), BossHeroSprite(0, 1239, 1771, 47, 76, -28.0, -153.0, 1), BossHeroSprite(0, 1287, 1771, 47, 76, -28.0, -153.0, 1), null],
-            'engineL': [BossHeroSprite(0, 0, 1659, 150, 111, -131.0, -120.5), BossHeroSprite(0, 1506, 1862, 75, 56, -131.0, -121.0, 1), BossHeroSprite(0, 1582, 1862, 75, 56, -131.0, -121.0, 1), BossHeroSprite(0, 1658, 1862, 75, 56, -131.0, -121.0, 1)],
-            'engineR': [BossHeroSprite(0, 534, 1659, 190, 108, 32.0, -120.5), BossHeroSprite(0, 1734, 1862, 95, 55, 32.0, -121.0, 1), BossHeroSprite(0, 1830, 1862, 95, 55, 32.0, -121.0, 1), BossHeroSprite(0, 1926, 1862, 95, 55, 32.0, -121.0, 1)],
+            'spine': [BossHeroSprite(0, 928, 1309, 264, 179, -72.0, -137.0), BossHeroSprite(0, 1652, 1659, 132, 90, -72.0, -137.0, 1.0), BossHeroSprite(0, 1785, 1659, 132, 90, -72.0, -137.0, 1.0), BossHeroSprite(0, 0, 1771, 132, 90, -72.0, -137.0, 1.0)],
+            'bow': [BossHeroSprite(0, 441, 419, 430, 400, -112.5, -122.0), BossHeroSprite(0, 663, 1108, 216, 200, -113.0, -122.0, 1.0), BossHeroSprite(0, 880, 1108, 216, 200, -113.0, -122.0, 1.0), BossHeroSprite(0, 1097, 1108, 216, 200, -113.0, -122.0, 1.0)],
+            'tower': [BossHeroSprite(0, 100, 1507, 94, 150, -28.0, -152.5), BossHeroSprite(0, 1239, 1771, 47, 76, -28.0, -153.0, 1.0), BossHeroSprite(0, 1287, 1771, 47, 76, -28.0, -153.0, 1.0), null],
+            'engineL': [BossHeroSprite(0, 0, 1659, 150, 111, -131.0, -120.5), BossHeroSprite(0, 1506, 1862, 75, 56, -131.0, -121.0, 1.0), BossHeroSprite(0, 1582, 1862, 75, 56, -131.0, -121.0, 1.0), BossHeroSprite(0, 1658, 1862, 75, 56, -131.0, -121.0, 1.0)],
+            'engineR': [BossHeroSprite(0, 534, 1659, 190, 108, 32.0, -120.5), BossHeroSprite(0, 1734, 1862, 95, 55, 32.0, -121.0, 1.0), BossHeroSprite(0, 1830, 1862, 95, 55, 32.0, -121.0, 1.0), BossHeroSprite(0, 1926, 1862, 95, 55, 32.0, -121.0, 1.0)],
           },
           lights: [BossHeroPoint(-90.74, 0.0, 3, 'bow'), BossHeroPoint(85.33, 0.0, 3, 'bow'), BossHeroPoint(-116.0, -113.14, 1, 'engineL'), BossHeroPoint(126.58, -113.14, 1, 'engineR')],
           fires: [BossHeroPoint(-36.11, -80.61, 0, 'spine'), BossHeroPoint(22.58, -80.61, 0, 'spine'), BossHeroPoint(-58.27, -20.0, 0, 'bow'), BossHeroPoint(59.1, -20.0, 0, 'bow'), BossHeroPoint(0.42, -40.0, 0, 'bow')],
@@ -416,10 +416,10 @@ abstract final class BossHeroAtlas {
           pitch: 52,
           yaw: 0,
           layers: {
-            'spine': [BossHeroSprite(0, 663, 1309, 264, 194, -66.0, -146.0), BossHeroSprite(0, 1168, 1659, 132, 97, -66.0, -146.0, 1), BossHeroSprite(0, 1301, 1659, 132, 97, -66.0, -146.0, 1), BossHeroSprite(0, 1434, 1659, 132, 97, -66.0, -146.0, 1)],
-            'bow': [BossHeroSprite(0, 884, 0, 440, 408, -110.0, -124.5), BossHeroSprite(0, 916, 820, 220, 205, -110.0, -125.0, 1), BossHeroSprite(0, 1137, 820, 220, 205, -110.0, -125.0, 1), BossHeroSprite(0, 1358, 820, 220, 205, -110.0, -125.0, 1)],
-            'tower': [BossHeroSprite(0, 562, 1507, 80, 145, -20.0, -151.0), BossHeroSprite(0, 1576, 1771, 40, 73, -20.0, -151.0, 1), BossHeroSprite(0, 1617, 1771, 40, 73, -20.0, -151.0, 1), null],
-            'engineR': [BossHeroSprite(0, 1781, 1507, 153, 111, 51.5, -128.0), BossHeroSprite(0, 1272, 1862, 77, 56, 51.0, -128.0, 1), BossHeroSprite(0, 1350, 1862, 77, 56, 51.0, -128.0, 1), BossHeroSprite(0, 1428, 1862, 77, 56, 51.0, -128.0, 1)],
+            'spine': [BossHeroSprite(0, 663, 1309, 264, 194, -66.0, -146.0), BossHeroSprite(0, 1168, 1659, 132, 97, -66.0, -146.0, 1.0), BossHeroSprite(0, 1301, 1659, 132, 97, -66.0, -146.0, 1.0), BossHeroSprite(0, 1434, 1659, 132, 97, -66.0, -146.0, 1.0)],
+            'bow': [BossHeroSprite(0, 884, 0, 440, 408, -110.0, -124.5), BossHeroSprite(0, 916, 820, 220, 205, -110.0, -125.0, 1.0), BossHeroSprite(0, 1137, 820, 220, 205, -110.0, -125.0, 1.0), BossHeroSprite(0, 1358, 820, 220, 205, -110.0, -125.0, 1.0)],
+            'tower': [BossHeroSprite(0, 562, 1507, 80, 145, -20.0, -151.0), BossHeroSprite(0, 1576, 1771, 40, 73, -20.0, -151.0, 1.0), BossHeroSprite(0, 1617, 1771, 40, 73, -20.0, -151.0, 1.0), null],
+            'engineR': [BossHeroSprite(0, 1781, 1507, 153, 111, 51.5, -128.0), BossHeroSprite(0, 1272, 1862, 77, 56, 51.0, -128.0, 1.0), BossHeroSprite(0, 1350, 1862, 77, 56, 51.0, -128.0, 1.0), BossHeroSprite(0, 1428, 1862, 77, 56, 51.0, -128.0, 1.0)],
           },
           lights: [BossHeroPoint(-90.0, -1.58, 3, 'bow'), BossHeroPoint(90.0, -1.58, 3, 'bow'), BossHeroPoint(-124.0, -109.19, 1, 'engineL'), BossHeroPoint(124.0, -109.19, 1, 'engineR')],
           fires: [BossHeroPoint(-30.0, -83.97, 0, 'spine'), BossHeroPoint(30.0, -83.97, 0, 'spine'), BossHeroPoint(-60.0, -19.61, 0, 'bow'), BossHeroPoint(60.0, -19.61, 0, 'bow'), BossHeroPoint(0.0, -39.46, 0, 'bow')],
@@ -433,11 +433,11 @@ abstract final class BossHeroAtlas {
           pitch: 52,
           yaw: 12,
           layers: {
-            'spine': [BossHeroSprite(0, 1579, 820, 265, 200, -72.5, -146.0), BossHeroSprite(0, 725, 1659, 133, 100, -73.0, -146.0, 1), BossHeroSprite(0, 859, 1659, 133, 100, -73.0, -146.0, 1), BossHeroSprite(0, 993, 1659, 133, 100, -73.0, -146.0, 1)],
-            'bow': [BossHeroSprite(0, 453, 0, 430, 411, -112.5, -125.5), BossHeroSprite(0, 265, 820, 216, 206, -113.0, -126.0, 1), BossHeroSprite(0, 482, 820, 216, 206, -113.0, -126.0, 1), BossHeroSprite(0, 699, 820, 216, 206, -113.0, -126.0, 1)],
-            'tower': [BossHeroSprite(0, 276, 1507, 94, 147, -28.0, -151.5), BossHeroSprite(0, 1480, 1771, 47, 74, -28.0, -152.0, 1), BossHeroSprite(0, 1528, 1771, 47, 74, -28.0, -152.0, 1), null],
-            'engineL': [BossHeroSprite(0, 342, 1659, 150, 110, -131.0, -126.0), BossHeroSprite(0, 0, 1924, 75, 55, -131.0, -126.0, 1), BossHeroSprite(0, 76, 1924, 75, 55, -131.0, -126.0, 1), BossHeroSprite(0, 152, 1924, 75, 55, -131.0, -126.0, 1)],
-            'engineR': [BossHeroSprite(0, 1437, 1507, 189, 111, 32.5, -131.0), BossHeroSprite(0, 750, 1862, 95, 56, 32.0, -131.0, 1), BossHeroSprite(0, 846, 1862, 95, 56, 32.0, -131.0, 1), BossHeroSprite(0, 942, 1862, 95, 56, 32.0, -131.0, 1)],
+            'spine': [BossHeroSprite(0, 1579, 820, 265, 200, -72.5, -146.0), BossHeroSprite(0, 725, 1659, 133, 100, -73.0, -146.0, 1.0), BossHeroSprite(0, 859, 1659, 133, 100, -73.0, -146.0, 1.0), BossHeroSprite(0, 993, 1659, 133, 100, -73.0, -146.0, 1.0)],
+            'bow': [BossHeroSprite(0, 453, 0, 430, 411, -112.5, -125.5), BossHeroSprite(0, 265, 820, 216, 206, -113.0, -126.0, 1.0), BossHeroSprite(0, 482, 820, 216, 206, -113.0, -126.0, 1.0), BossHeroSprite(0, 699, 820, 216, 206, -113.0, -126.0, 1.0)],
+            'tower': [BossHeroSprite(0, 276, 1507, 94, 147, -28.0, -151.5), BossHeroSprite(0, 1480, 1771, 47, 74, -28.0, -152.0, 1.0), BossHeroSprite(0, 1528, 1771, 47, 74, -28.0, -152.0, 1.0), null],
+            'engineL': [BossHeroSprite(0, 342, 1659, 150, 110, -131.0, -126.0), BossHeroSprite(0, 0, 1924, 75, 55, -131.0, -126.0, 1.0), BossHeroSprite(0, 76, 1924, 75, 55, -131.0, -126.0, 1.0), BossHeroSprite(0, 152, 1924, 75, 55, -131.0, -126.0, 1.0)],
+            'engineR': [BossHeroSprite(0, 1437, 1507, 189, 111, 32.5, -131.0), BossHeroSprite(0, 750, 1862, 95, 56, 32.0, -131.0, 1.0), BossHeroSprite(0, 846, 1862, 95, 56, 32.0, -131.0, 1.0), BossHeroSprite(0, 942, 1862, 95, 56, 32.0, -131.0, 1.0)],
           },
           lights: [BossHeroPoint(-90.74, 0.73, 3, 'bow'), BossHeroPoint(85.33, -3.83, 3, 'bow'), BossHeroPoint(-116.0, -106.12, 1, 'engineL'), BossHeroPoint(126.58, -112.4, 1, 'engineR')],
           fires: [BossHeroPoint(-36.11, -83.13, 0, 'spine'), BossHeroPoint(22.58, -84.65, 0, 'spine'), BossHeroPoint(-58.27, -18.09, 0, 'bow'), BossHeroPoint(59.1, -21.13, 0, 'bow'), BossHeroPoint(0.42, -39.46, 0, 'bow')],
