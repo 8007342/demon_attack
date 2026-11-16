@@ -1591,7 +1591,7 @@
       "wreck": "layer",
       "texel": "mass",
       "id": "#4A6CE0",
-      "notes": "The hull mass: a flat, wide-fronted wedge slab stepping up in terraces, with two forward prongs that embrace the arena. Linear fore-and-aft plating carries the scale (a ship's detail language in grown materials). Goes last in S4 (its wreck is its own S3 layer sinking into the fog).",
+      "notes": "The hull mass: a flat, wide-fronted wedge slab stepping up in terraces, with two forward prongs that embrace the arena. Linear fore-and-aft plating carries the scale (a ship's detail language in grown materials). Goes last in S4 (its wreck is its own S3 layer sinking into the fog). carrier-v3: the belly keel and ribs are chitin (in ivory they painted as a vertebral column, a skeleton reading).",
       "common_lights": [
         [
           -260,
@@ -2027,7 +2027,7 @@
         {
           "name": "v_keel",
           "type": "horn",
-          "tag": "bone",
+          "tag": "chitin",
           "seg": 10,
           "subsurf": 1,
           "aspect": [
@@ -2067,7 +2067,7 @@
         {
           "name": "v_ribs",
           "type": "array",
-          "tag": "bone",
+          "tag": "chitin",
           "surface": false,
           "mirror": true,
           "grid": {
@@ -7286,38 +7286,52 @@
     "root": "art/sprites/sources/",
     "carrier1-thorn": {
       "S0": "carrier-v3/carrier1-thorn/hero/1016000-regional-1018003.png",
-      "S2": "boss-carrier-v2/carrier1-thorn/stage/S2-1017201.png",
-      "S3": "boss-carrier-v2/carrier1-thorn/stage/S3-1017300.png",
+      "S2": "carrier-v3/carrier1-thorn/stage/S2-1017201-regional-1017401.png",
+      "S3": "carrier-v3/carrier1-thorn/stage/S3-1017300-regional-1017501.png",
       "sym": "left",
       "belly": "boss-carrier-v2/carrier1-thorn/belly/1019000.png"
     },
     "carrier1-lattice": {
       "S0": "carrier-v3/carrier1-lattice/hero/1025000-regional-1029003.png",
-      "S2": "boss-carrier-v2/carrier1-lattice/stage/S2-1027202.png",
-      "S3": "boss-carrier-v2/carrier1-lattice/stage/S3-1027303.png",
-      "sym": "left"
+      "S2": "carrier-v3/carrier1-lattice/stage/S2-1027202-regional-1027400.png",
+      "S3": "carrier-v3/carrier1-lattice/stage/S3-1027303-regional-1027500.png",
+      "sym": "left",
+      "belly": "carrier-v3/carrier1-lattice/belly/1029911.png"
     },
     "carrier1-shroud": {
       "S0": "carrier-v3/carrier1-shroud/hero/1036001-regional-1039000.png",
-      "S2": "boss-carrier-v2/carrier1-shroud/stage/S2-1037200.png",
-      "S3": "boss-carrier-v2/carrier1-shroud/stage/S3-1037301.png",
-      "sym": "left"
+      "S2": "carrier-v3/carrier1-shroud/stage/S2-1037200-regional-1037401.png",
+      "S3": "carrier-v3/carrier1-shroud/stage/S3-1037301-regional-1037500.png",
+      "sym": "left",
+      "belly": "carrier-v3/carrier1-shroud/belly/1039911.png"
     },
     "carrier2-thorn": {
       "S0": "carrier-v3/carrier2-thorn/hero/2017001.png",
-      "sym": "left"
+      "sym": "left",
+      "S2": "carrier-v3/carrier2-thorn/stage/S2-2017200.png",
+      "S3": "carrier-v3/carrier2-thorn/stage/S3-2017301.png",
+      "belly": "carrier-v3/carrier2-thorn/belly/2019901.png"
     },
     "carrier3-lattice": {
       "S0": "carrier-v3/carrier3-lattice/hero/3028000.png",
-      "sym": "left"
+      "sym": "left",
+      "S2": "carrier-v3/carrier3-lattice/stage/S2-3028203.png",
+      "S3": "carrier-v3/carrier3-lattice/stage/S3-3028312.png",
+      "belly": "carrier-v3/carrier3-lattice/belly/3029902.png"
     },
     "carrier4-shroud": {
       "S0": "carrier-v3/carrier4-shroud/hero/4037002.png",
-      "sym": "left"
+      "sym": "left",
+      "S2": "carrier-v3/carrier4-shroud/stage/S2-4037201.png",
+      "S3": "carrier-v3/carrier4-shroud/stage/S3-4037301.png",
+      "belly": "carrier-v3/carrier4-shroud/belly/4039903.png"
     },
     "carrier5-thorn": {
       "S0": "carrier-v3/carrier5-thorn/hero/5017002.png",
-      "sym": "left"
+      "sym": "left",
+      "S2": "carrier-v3/carrier5-thorn/stage/S2-5017202.png",
+      "S3": "carrier-v3/carrier5-thorn/stage/S3-5017301.png",
+      "belly": "carrier-v3/carrier5-thorn/belly/5019902.png"
     }
   },
   "field": {
