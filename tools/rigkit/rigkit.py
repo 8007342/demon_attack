@@ -131,6 +131,26 @@ def prim_geometry(p):
         f = [tuple(range(m))[::-1], tuple(range(m, 2 * m))]
         f += [(k, (k + 1) % m, m + (k + 1) % m, m + k) for k in range(m)]
         return v, f
+    if t == 'star':
+        # a flat badge outline extruded along local z: n points alternating r and r2 (r2 = r or
+        # omitted: a regular n-gon), first point at a0 degrees (90 = +y); hole > 0 makes it a ring
+        n, r, ln = p['n'], p['r'], p['len']; r2 = p.get('r2', r); a0 = math.radians(p.get('a0', 90))
+        hole = p.get('hole', 0)
+        pts = [(r if k % 2 == 0 else r2) for k in range(2 * n)] if r2 != r else [r] * n
+        m = len(pts)
+        ring = [(q * math.cos(a0 + 2 * math.pi * k / m), q * math.sin(a0 + 2 * math.pi * k / m)) for k, q in enumerate(pts)]
+        if not hole:
+            v = [(x, y, z) for z in (-ln / 2, ln / 2) for x, y in ring]
+            return v, _ring_faces(2, m)
+        inner = [(hole * math.cos(a0 + 2 * math.pi * k / m), hole * math.sin(a0 + 2 * math.pi * k / m)) for k in range(m)]
+        v = [(x, y, z) for z in (-ln / 2, ln / 2) for x, y in ring] + [(x, y, z) for z in (-ln / 2, ln / 2) for x, y in inner]
+        o0, o1, i0, i1 = 0, m, 2 * m, 3 * m
+        f = []
+        for k in range(m):
+            k2 = (k + 1) % m
+            f += [(o1 + k, o1 + k2, i1 + k2, i1 + k), (o0 + k2, o0 + k, i0 + k, i0 + k2),
+                  (o0 + k, o0 + k2, o1 + k2, o1 + k), (i0 + k2, i0 + k, i1 + k, i1 + k2)]
+        return v, f
     if t == 'web':
         pts = p['pts']; v = [tuple(q) for q in pts]
         c = Vector((0, 0, 0))
@@ -535,6 +555,10 @@ def hull_frame(g, objs, views, ppu, hull=None):
             x0, x1, y0, y1 = min(x0, sx), max(x1, sx), min(y0, sy), max(y1, sy)
     m = g.get('render', {}).get('margin', 6)
     x0, y0 = math.floor(x0 - m), math.floor(y0 - m); x1, y1 = math.ceil(x1 + m), math.ceil(y1 + m)
+    fixed = g.get('render', {}).get('frame')
+    if fixed:  # one frame for every hull (layer families: cells stack when the frames agree)
+        x0, y0, x1, y1 = fixed
+        return (x0, y0, x1, y1), max(max(v.length for v in verts), math.hypot(x1 - x0, y1 - y0))
     env = g.get('render', {}).get('envelope')
     if env:
         x0, y0, x1, y1 = max(x0, env[0]), max(y0, env[1]), min(x1, env[2]), min(y1, env[3])
