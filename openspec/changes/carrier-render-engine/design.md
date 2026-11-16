@@ -50,12 +50,13 @@ limits and springs are already small, slow and critically damped (carrier-v3 §2
 - **Extent.** The texture covers the union of the pass's layer rects in hull units, off-screen parts included. A
   composite cut to the screen would clip the hull `[D2]`.
 - **Density.** 2 px per unit, the packed pages' own density, so nothing is resampled. Tour 1's back pass is
-  1,440 × 1,262 px, under the 2,048 cap `[P1]` `[P3]` `[UNSOURCED: plan/provenance-audit.md#CRE-7]`.
+  1,440 × 1,200 px and its prow 874 × 284, under the 2,048 cap `[P1]` `[P3]` `[UNSOURCED: plan/provenance-audit.md#CRE-7]`.
 - **Torn-away modules** that the art still draws at that stage are composed as charred stumps (the old `saveLayer`
   stump filter, applied once at compose time).
 - **The cache.** One composite per pass, keyed by the hull, the drawn stage, the stage, the detached set, the run's
   assembly and whether the footprint is resident.
-  - It is re-composed only when that key changes, about 4–6 times per fight.
+  - It is re-composed only when that key changes: at most once per damage step (stages S0–S3 and each detach,
+    ≤ 7 per fight).
   - The old image is disposed at once `[P5]` `[P6]`.
   - At the collapse, the fight's composites are released and only the wreck's stays.
 - **No per-frame `saveLayer`** composes the layers `[P7]`. The decay overlay keeps its own `saveLayer` (carrier-v3
@@ -94,13 +95,15 @@ displacement linearly between nodes, and the difference is under 0.5 unit.
 | Triangles, tour 1 | 3,288 | **1,910** in game; 2,328 without the cull | same |
 | Tour 5 (`carrier5-thorn`), without the cull | 3,045 / 5,324 | 1,508 / 2,810 | `test/carrier_bend_test.dart` |
 | `drawVertices` calls per frame | 2 | 2 | review test asserts 2 |
-| Position rebuild (desktop VM) | ≈ 70 µs | 20–66 µs | `test/carrier_bend_test.dart`, only when the bend moved |
+| Position rebuild (desktop VM) | ≈ 70 µs | 23–76 µs | `test/carrier_bend_test.dart`, only when the bend moved |
 | Texture memory (both passes, tour 1) | the shared page | +7.9 MB | `compositeBytes` |
-| Compose (recording plus GPU raster) | — | 4–6 times per fight | composite counter |
+| Layer overdraw the composite removes (sum of layer rects ÷ mesh area) | 1.24 (tour 1), 1.67 (tour 5) | 1.0 | `layer_overdraw` in `test/carrier_bend_test.dart` |
+| Compose (recording plus GPU raster) | — | ≤ 7 per fight, both passes | `composites` counter |
 
 **Frame-time reasoning.** No phone has been profiled yet (carrier-v3 task 3.5 stays open).
 - **Raster.** The hull's fill is now one textured pass per pass, where the old meshes drew every layer's overlapping
-  rects. The overdraw falls by the layers' overlap, about 1.5–2 × on tour 1 by the rect areas.
+  rects. The overdraw falls by the layers' overlap: 1.24 × on tour 1, 1.37 on the lattice set and 1.67 on tour 5, by
+  the rect areas.
 - **Vertices.** The vertex work fell by 40 %, and is far under the terrain mesh already drawn on phones (about
   4,800 × 2, carrier-v3 `[R2]`).
 - **Memory.** The extra 7.9 MB of texture sits inside the 16 MB per-hull budget of `plan/render-runs/carrier-v3.md`.
