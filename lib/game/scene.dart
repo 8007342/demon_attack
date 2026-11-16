@@ -9,6 +9,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'arena_camera.dart';
 import 'atmosphere.dart';
+import 'weather/rain_layer.dart';
 import 'attract.dart';
 import 'boss_director.dart';
 import 'ground_atmosphere.dart';
@@ -74,6 +75,8 @@ class DemonScene extends FlameGame {
   final insignia = InsigniaPainter();
   // --- atmosphere: fog layers and creature veils (atmosphere.dart).
   final atmosphere = Atmosphere();
+  // --- dynamic-weather: a regular level's rain (lib/game/weather/).
+  final rain = RainLayer();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- ground war (ground_painter.dart) ---
   late final groundForces = GroundPainter()
@@ -253,6 +256,8 @@ class DemonScene extends FlameGame {
       sectors.advance(dt, model, environment);
       advanceBoss(dt);
       syncAtmosphere(dt);
+      // --- dynamic-weather: visual only; reads the run seed and the level.
+      rain.advance(dt, model, reduced: sectors.flyover.reducedMotion);
     }
   }
 
@@ -336,6 +341,7 @@ class DemonScene extends FlameGame {
       canvas.save();
       canvas.translate(0, panY);
       _background(canvas);
+      rain.paint(canvas, haze: atmosphere.cloud); // --- dynamic-weather
       final active = model.mode != RunMode.title;
       if (active && combat) {
         groundForces.paintGround(
@@ -436,6 +442,14 @@ class DemonScene extends FlameGame {
         _background(canvas);
       }
       bonusLook.paint(canvas); // --- bonus levels: the level's grade
+      // --- dynamic-weather: rain over the backdrop (and the band above the
+      // arena), under the ground units, the fog, the creatures and shots.
+      rain.paint(
+        canvas,
+        headroom: headroom,
+        haze: atmosphere.cloud,
+        perspective: model.perspective,
+      );
       if (active && combat) {
         // --- bonus levels: a level's mechanic, under the fight.
         BonusPainters.under(canvas, model, model.visualClock);
