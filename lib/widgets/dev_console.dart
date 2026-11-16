@@ -46,7 +46,11 @@ class ConsoleStart {
     this.route = 0,
     this.wave = 1,
     this.bonus,
+    this.carrier = ConsoleCarrier.fight,
   });
+
+  /// --- console boss launcher (C2): how sector 5 begins.
+  final ConsoleCarrier carrier;
   final Difficulty difficulty;
 
   /// --- bonus levels: the id of a bonus level this sector becomes
@@ -65,11 +69,15 @@ class ConsoleStart {
   factory ConsoleStart.boss({
     Difficulty difficulty = Difficulty.normal,
     int route = 0,
+    ConsoleCarrier carrier = ConsoleCarrier.fight,
   }) => ConsoleStart(
     difficulty: difficulty,
     sector: 5,
     route: route,
-    wave: ArcadeModel.wavesFor(sector: 5, route: route),
+    wave: carrier == ConsoleCarrier.approach
+        ? 1
+        : ArcadeModel.wavesFor(sector: 5, route: route),
+    carrier: carrier,
   );
 
   /// The first sentinel wave on [route] (at least route 1), preferring
@@ -105,18 +113,37 @@ class ConsoleStart {
     );
   }
 
-  void applyTo(ArcadeModel model) => model.startAt(
-    difficulty: difficulty,
-    sector: sector,
-    route: route,
-    // Sector 5 is the carrier (its own wave, after the loom).
-    wave: sector == 5 ? null : wave,
-    console: true,
-    bonus: bonus,
-  );
+  void applyTo(ArcadeModel model) {
+    model.startAt(
+      difficulty: difficulty,
+      sector: sector,
+      route: route,
+      // Sector 5 is the carrier: its fight straight away (its own wave,
+      // the approach and launch waves skipped), or the approach.
+      wave: sector == 5
+          ? (carrier == ConsoleCarrier.approach ? 1 : null)
+          : wave,
+      console: true,
+      bonus: bonus,
+    );
+    model.consoleDecay = sector == 5 && carrier == ConsoleCarrier.decay;
+  }
 
   String get label =>
       'RUN ${route + 1} · SECTOR $sector${sector == 5 ? '' : ' · WAVE $wave'}';
+}
+
+/// --- console boss launcher (operator C2): the carrier's approach (its
+/// launch waves), its fight straight away, or its fight with the decay
+/// fast-forwarded (shield → armour → modules → collapse, one step every
+/// [ArcadeModel.consoleDecaySeconds]).
+enum ConsoleCarrier {
+  approach('APPROACH'),
+  fight('FIGHT'),
+  decay('FAST DECAY');
+
+  const ConsoleCarrier(this.label);
+  final String label;
 }
 
 /// The console page. [onStart] launches a run; the app pushes ArcadePage.
@@ -138,6 +165,9 @@ class _DevConsolePageState extends State<DevConsolePage> {
 
   /// --- bonus levels: 0 = the regular sector, n = bonusLevels[n - 1].
   int bonus = 0;
+
+  /// --- console boss launcher (C2).
+  ConsoleCarrier carrier = ConsoleCarrier.fight;
   String? get _bonusId =>
       bonus == 0 || sector == 5 ? null : bonusLevels[bonus - 1].id;
 
@@ -242,26 +272,46 @@ class _DevConsolePageState extends State<DevConsolePage> {
                       _dim,
                       8,
                     ),
-                    // --- bonus levels: play this sector as a bonus level.
                     const SizedBox(height: 18),
-                    _heading('BONUS LEVEL'),
-                    _choices(
-                      'bonus',
-                      ['NONE', for (final b in bonusLevels) b.label],
-                      sector == 5 ? 0 : bonus,
-                      (i) => setState(() => bonus = i),
-                    ),
+                    if (sector == 5) ...[
+                      // --- console boss launcher (C2): bonus levels never
+                      // replace the carrier, so its row picks how the
+                      // carrier begins (LAUNCH and BOSS).
+                      _heading('CARRIER'),
+                      _choices(
+                        'carrier',
+                        [for (final c in ConsoleCarrier.values) c.label],
+                        carrier.index,
+                        (i) =>
+                            setState(() => carrier = ConsoleCarrier.values[i]),
+                      ),
+                    ] else ...[
+                      // --- bonus levels: play this sector as a bonus level.
+                      _heading('BONUS LEVEL'),
+                      _choices(
+                        'bonus',
+                        ['NONE', for (final b in bonusLevels) b.label],
+                        bonus,
+                        (i) => setState(() => bonus = i),
+                      ),
+                    ],
                   ]),
                   const SizedBox(height: 16),
                   FilledButton(
                     key: const ValueKey('console-launch'),
                     onPressed: () => _launch(
-                      ConsoleStart(
-                        difficulty: difficulty,
-                        sector: sector,
-                        route: route,
-                        bonus: _bonusId,
-                      ),
+                      sector == 5
+                          ? ConsoleStart.boss(
+                              difficulty: difficulty,
+                              route: route,
+                              carrier: carrier,
+                            )
+                          : ConsoleStart(
+                              difficulty: difficulty,
+                              sector: sector,
+                              route: route,
+                              bonus: _bonusId,
+                            ),
                     ),
                     child: Text(
                       'LAUNCH · RUN ${route + 1} · SECTOR $sector  →',
@@ -286,6 +336,7 @@ class _DevConsolePageState extends State<DevConsolePage> {
                             ConsoleStart.boss(
                               difficulty: difficulty,
                               route: route,
+                              carrier: carrier,
                             ),
                           ),
                           child: const Text('BOSS'),
@@ -311,7 +362,11 @@ class _DevConsolePageState extends State<DevConsolePage> {
                   Row(
                     children: [
                       Expanded(
-                        child: _label('CARRIER · RUN ${route + 1}', _faint, 8),
+                        child: _label(
+                          'CARRIER · RUN ${route + 1} · ${carrier.label}',
+                          _faint,
+                          8,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(child: _label(sentinel.label, _faint, 8)),

@@ -578,3 +578,29 @@ intends: dodging, not shooting, is the answer.
 | Average pilot lives lost per sector, Normal | ≤ +0.3 | route 1 −1.75, route 2 −0.40; route 0 ±0 |
 | Rush fairness guards | §6.4 | `test/sentinel_rush_fairness_test.dart` green (kinematics unchanged) |
 | Hostile bullets | ≤ 120 | peak 18 |
+
+### Carrier v3 tune (2026-11-16): Easy's second launch wave
+
+**Decision (coordinator, for the operator's "first couple of waves").** Every tour keeps two launch waves on every
+difficulty. Easy's second launch wave is made smaller until Easy's boss level is inside its 10 % clear-time gate:
+- it leaves in **one go**, with every skein setting out through the gates at once instead of half of them
+  waiting. So there are fewer sequential volley leads, and the wave's time was mostly those leads, not kills;
+- it keeps half its roster and half its reinforcement flocks (`CarrierScript.easySecondWave` = 0.5).
+
+Halving the roster and the flocks alone moved Easy by only 0.1 %. Releasing the wave in one go is the lever that
+moved it.
+
+**The boss level's clear time.** The probe is now 16 seeds, the endurance set: combat seconds while sector 5 is
+current, summed over the five routes, with the protected pilot. The 8-seed figures above were noisy: untuned Easy
+measured +12.6 % on 8 seeds and +9.7 % on 16.
+
+| Difficulty | `game` cd416186 s | carrier-v3, untuned s | carrier-v3 tune s | Δ (tune) |
+|---|---:|---:|---:|---:|
+| easy | 524.0 | 574.8 (+9.7 %) | 554.1 | **+5.7 %** |
+| normal | 664.5 | 696.5 | 696.5 | +4.8 % |
+| hard | 714.4 | 742.6 | 742.6 | +3.9 % |
+
+Easy's approach went from 213.5 s to 181.3 s (the `game` baseline is 153.1 s). Normal and Hard are untouched.
+
+**Boss endurance** (`test/boss_endurance_test.dart`) with the tune: easy 352.64 s (+5.9 %), normal 417.29 s
+(−3.3 %), hard 436.03 s (+1.7 %). Pooled: +1.0 % seconds and −0.4 % hits. Everything is within its gates.
