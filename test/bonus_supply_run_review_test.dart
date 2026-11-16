@@ -1,3 +1,6 @@
+@Tags(['review'])
+library;
+
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -213,7 +216,7 @@ class _Story {
   void killAll() {
     for (final d in List<Demon>.of(m.demons)) {
       if (d.entering) continue;
-      while (m.demons.contains(d)) {
+      for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
         m.hitDemon(d);
       }
     }

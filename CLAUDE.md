@@ -30,7 +30,7 @@ Run all of these before any push to `game`. Every command here was run on 2026-1
 
 ```sh
 flutter analyze                 # must print "No issues found!"
-flutter test                    # must print "All tests passed!" (about 3 min, ~1 000 lines)
+flock ~/.cache/tillandsias-project/flutter-test.lock flutter test --concurrency=2   # must print "All tests passed!"
 npm run test:worker             # node --test test-worker/*.test.mjs: "# fail 0"
 npm run build                   # scripts/build-web.sh: the game and /gallery/ web builds
 openspec validate <change> --strict
@@ -38,6 +38,16 @@ openspec validate <change> --strict
 
 - Judge `flutter test` only by the line `All tests passed!` (or `Some tests failed`) at the end. *Why:* a toolchain
   flake once let an untested push through; the exit status of the forge wrapper is not enough.
+- **Host memory: `flutter test` runs on the HOST, not in the forge.** On 2026-11-16 five concurrent flutter_tester
+  processes reached about 51 GB (the largest 18 GB) and took down the operator's desktop. The rules:
+  - Always run tests through the shared lock with a concurrency cap, as above: one suite at a time across all agents.
+    `dart_test.yaml` sets `concurrency: 2` as well.
+  - `review`-tagged tests (`*_review_test.dart`, the contact-sheet renders) are skipped by default. Run them on
+    purpose, one file at a time:
+    `flutter test --concurrency=1 --run-skipped --tags review test/<file>_review_test.dart`.
+  - Never write an unbounded loop in a test (`while (m.demons.contains(d)) m.hitDemon(d);`). Bound it with a guard:
+    a rule change such as an invincible phase turns it into an infinite loop that allocates on every turn.
+  - Dispose every `ui.Image` a test creates.
 - Run one `flutter` command at a time. A second concurrent `flutter test` can fail with
   `runtime_unavailable: podman failed at step … (timeout)`; retry once, alone. *Why:* the lane's toolchain container is
   shared (blocker logs A25, B T2).

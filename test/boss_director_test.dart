@@ -69,7 +69,7 @@ void main() {
     expect(dir.camera.zoom, lessThan(1));
     // Down to its core: the collapse breaks it into module wrecks.
     b.shield = 0;
-    while (m.boss != null) {
+    for (var guard = 0; guard < 100000 && m.boss != null; guard++) {
       m.hitBoss(b.x, damage: 50);
       if (m.boss != null) b.door = 1;
       step(1);
