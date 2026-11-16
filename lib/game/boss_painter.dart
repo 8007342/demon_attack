@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import 'boss_atlas.dart';
 import 'boss_director.dart';
 import 'boss_grammar.dart';
+import 'carrier_bend.dart';
 import 'model.dart';
 
 /// Draws the boss armada from `assets/images/boss-<class>.png`
@@ -66,8 +68,228 @@ class BossPainter {
   /// the screen) is drawn: the camera uses the carrier band.
   bool get carrier => heroReady && hero!.set.isNotEmpty;
 
+  // --- carrier-v3 §2: one stored view, bent at runtime ---
+  /// The runtime bend of a v2 carrier (set by the scene every frame; null
+  /// draws the rigid hero view, as under reduced motion).
+  CarrierBend? bend;
+
+  /// Bend meshes per hull, stage, pass, assembly and detached set; the
+  /// page shaders (bilinear, set explicitly, design §2.4).
+  final Map<String, CarrierMesh> _meshes = {};
+  final Map<int, ImageShader> _pageShaders = {};
+  final Paint _meshPaint = Paint()..filterQuality = FilterQuality.low;
+
+  /// The meshes drawn last frame (tests, profiling): vertices, triangles,
+  /// `drawVertices` calls.
+  int meshVertices = 0, meshTriangles = 0, meshCalls = 0;
+
+  void _dropMeshes() {
+    for (final m in _meshes.values) {
+      m.dispose();
+    }
+    _meshes.clear();
+    _pageShaders.clear();
+  }
+
+  /// Where a hull-local rig point of [module] is drawn under the bend
+  /// (lights, fires, nozzles, gates and the field follow the hull).
+  Offset bent(double x, double y, {String module = 'carapace'}) {
+    final b = bend;
+    if (b == null) return Offset(x, y);
+    final lag = CarrierBend.lags(module);
+    return b.displace(
+      x,
+      y,
+      h: CarrierBend.heightOf(module),
+      wing: lag ? ((x.abs() - 180) / 180).clamp(0.0, 1.0) : 0,
+    );
+  }
+
+  String _moduleOf(String id) {
+    for (final m in hero?.modules ?? const <BossHeroModule>[]) {
+      if (m.id == id) return m.module;
+    }
+    return 'carapace';
+  }
+
+  /// The hero view of a v2 carrier as one bent mesh per page: one
+  /// `drawVertices` per page and pass (design §2.4). Detached modules
+  /// drawn as stumps stay rigid sprites under their char layer.
+  void _paintHeroMesh(
+    Canvas c,
+    Offset center, {
+    required int stage,
+    required bool front,
+    Set<int> detached = const {},
+    double opacity = 1,
+  }) {
+    final h = hero!;
+    final v = h.views[BossView.hero.storedTag];
+    if (v == null) return;
+    final st = _drawnStage(v, stage);
+    final key = StringBuffer('${h.key}|$st|$front|')
+      ..writeAll((detached.toList()..sort()), ',')
+      ..write('|')
+      ..writeAll(assembly?.modules.map((m) => m.id) ?? const ['*'], ',');
+    final stumps = <(BossHeroSprite, bool)>[];
+    final layers = <CarrierMeshLayer>[];
+    for (final m in h.modules) {
+      if (isFront(m) != front) continue;
+      if (!_assembled(m.id)) continue;
+      var list = v.layers[m.id];
+      var flip = false;
+      if (list == null && m.id.endsWith('L')) {
+        list = v.layers['${m.id.substring(0, m.id.length - 1)}R'];
+        flip = true;
+      }
+      final s = list?[st];
+      if (s == null) continue;
+      if (m.detach != null && detached.contains(m.detach)) {
+        if (st >= stage) continue;
+        stumps.add((s, flip));
+        continue;
+      }
+      final k = s.ppu;
+      // Half a texel inside the sprite's rect: bilinear never samples a
+      // neighbour on the page.
+      const inset = .5;
+      layers.add(
+        CarrierMeshLayer(
+          page: s.page,
+          left: s.dx + inset / k,
+          top: s.dy + inset / k,
+          right: s.dx + (s.w - inset) / k,
+          bottom: s.dy + (s.h - inset) / k,
+          u0: s.x + inset,
+          v0: s.y + inset,
+          u1: s.x + s.w - inset,
+          v1: s.y + s.h - inset,
+          flip: flip,
+          height: CarrierBend.heightOf(m.module),
+          lag: CarrierBend.lags(m.module),
+        ),
+      );
+    }
+    final mesh = _meshes.putIfAbsent(
+      key.toString(),
+      () => CarrierMesh(layers),
+    );
+    mesh.rebuild(bend);
+    final pages = heroPages!;
+    c.save();
+    c.translate(center.dx, center.dy);
+    _meshPaint.color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0));
+    for (final p in mesh.pages.keys) {
+      _meshPaint.shader = _pageShaders[p] ??= ImageShader(
+        pages[p],
+        TileMode.clamp,
+        TileMode.clamp,
+        _identity,
+        filterQuality: FilterQuality.low,
+      );
+      c.drawVertices(mesh.verticesOf(p), BlendMode.srcOver, _meshPaint);
+      meshCalls++;
+    }
+    meshVertices += mesh.vertexCount;
+    meshTriangles += mesh.triangleCount;
+    c.restore();
+    for (final (s, flip) in stumps) {
+      c.saveLayer(null, _stump);
+      heroSprite(c, s, center, opacity: opacity, flipX: flip);
+      c.restore();
+    }
+  }
+
+  static final _identity = Float64List.fromList([
+    1, 0, 0, 0, //
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1,
+  ]);
+
+  /// The hero view's S0 sprites of the run's assembly, with their flips
+  /// and modules (both passes).
+  List<(BossHeroSprite, bool, String)> _heroS0() {
+    final h = hero;
+    final v = h?.views[BossView.hero.storedTag];
+    if (h == null || v == null) return const [];
+    return [
+      for (final m in h.modules)
+        if (_assembled(m.id))
+          if ((v.layers[m.id] ??
+                  (m.id.endsWith('L')
+                      ? v.layers['${m.id.substring(0, m.id.length - 1)}R']
+                      : null))
+              ?.first
+              case final s?)
+            (s, v.layers[m.id] == null, m.module),
+    ];
+  }
+
+  /// carrier-v3 §7: the vortex trails' anchor points until the rig's
+  /// `vortex` points exist: the outer-lower extreme of each wing, arm and
+  /// sail layer (hull-local, unbent), with its module.
+  List<(Offset, String)> vortexTips() => [
+    for (final (s, flip, module) in _heroS0())
+      if (CarrierBend.lags(module))
+        () {
+          final k = s.ppu;
+          final l = s.dx, r = s.dx + s.w / k, b = s.dy + s.h / k;
+          final outer = (l.abs() > r.abs() ? l : r) * (flip ? -1 : 1);
+          return (
+            Offset(outer - outer.sign * 6, b - .18 * (b - s.dy)),
+            module,
+          );
+        }(),
+  ];
+
+  /// carrier-v3 §3.4: the hull's S0 alpha at [ppu] px per unit over its
+  /// frame plus [pad] units, for the field's distance map (the load-time
+  /// stand-in for the re-render's baked texture). Returns the picture's
+  /// size and hull-local origin; null without a hero hull.
+  ({ui.Picture picture, int w, int h, double left, double top})? fieldAlpha({
+    double ppu = .5,
+    double pad = 40,
+  }) {
+    final hh = hero;
+    final pages = heroPages;
+    if (hh == null || pages == null) return null;
+    final f = hh.frame;
+    final left = f.$1 - pad, top = f.$2 - pad;
+    final w = ((f.$3 - f.$1 + 2 * pad) * ppu).ceil();
+    final h = ((f.$4 - f.$2 + 2 * pad) * ppu).ceil();
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec);
+    c.scale(ppu);
+    c.translate(-left, -top);
+    final paint = Paint()..filterQuality = FilterQuality.low;
+    for (final (s, flip, _) in _heroS0()) {
+      final k = s.ppu;
+      final src = Rect.fromLTWH(
+        s.x.toDouble(),
+        s.y.toDouble(),
+        s.w.toDouble(),
+        s.h.toDouble(),
+      );
+      c.save();
+      if (flip) c.scale(-1, 1);
+      c.drawImageRect(
+        pages[s.page],
+        src,
+        Rect.fromLTWH(s.dx, s.dy, s.w / k, s.h / k),
+        paint,
+      );
+      c.restore();
+    }
+    return (picture: rec.endRecording(), w: w, h: h, left: left, top: top);
+  }
+
+  /// Clears the per-frame mesh counters (the scene, once per frame).
+  void beginFrame() => meshVertices = meshTriangles = meshCalls = 0;
+
   /// Installs an already decoded atlas (tests and the gallery).
   void setAtlas(int cls, ui.Image atlas) {
+    _dropMeshes();
     image = atlas;
     loadedClass = cls;
     loadedKey = 'frontal:$cls';
@@ -84,6 +306,7 @@ class BossPainter {
     List<ui.Image> pages, {
     ui.Image? belly,
   }) {
+    _dropMeshes();
     image = null;
     loadedClass = cls;
     loadedKey = hull.key;
@@ -362,6 +585,17 @@ class BossPainter {
     double opacity = 1,
   }) {
     final h = hero!;
+    if (carrier && view == BossView.hero) {
+      _paintHeroMesh(
+        c,
+        center,
+        stage: stage,
+        front: front,
+        detached: detached,
+        opacity: opacity,
+      );
+      return;
+    }
     final v = h.views[view.storedTag];
     if (v == null) return;
     final st = _drawnStage(v, stage);
@@ -640,7 +874,7 @@ class BossPainter {
       heroSprite(
         c,
         h.plumes[size][level][(flick + i) % 2],
-        at + Offset(n.x, n.y),
+        at + bent(n.x, n.y, module: _moduleOf(n.module)),
         opacity: opacity,
       );
     }
@@ -668,7 +902,12 @@ class BossPainter {
       for (var i = 0; i < count; i++) {
         final f = fires[(i * 5) % fires.length];
         final pick = (sev * 2 + (flick + i) % 2).clamp(0, h.breach.length - 1);
-        heroSprite(c, h.breach[pick], at + Offset(f.x, f.y), opacity: opacity);
+        heroSprite(
+          c,
+          h.breach[pick],
+          at + bent(f.x, f.y, module: _moduleOf(f.module)),
+          opacity: opacity,
+        );
       }
     }
     // S1 scorched: the running lights flicker.
@@ -683,7 +922,7 @@ class BossPainter {
         _ => pulse ? const Color(0xFFFFC45A) : const Color(0xFFB0702A),
       };
       if (color.a == 0) continue;
-      final p = at + Offset(l.x, l.y);
+      final p = at + bent(l.x, l.y, module: _moduleOf(l.module));
       _block.color = color.withValues(alpha: .3 * opacity);
       c.drawRect(Rect.fromLTWH(p.dx - 2, p.dy - 2, 4, 4), _block);
       _block.color = color.withValues(alpha: opacity);

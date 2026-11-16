@@ -194,7 +194,7 @@ void main() {
       if (m.boss != null) break;
       loom.add(await d.grab('loom-$i'));
     }
-    expect(dir.phase, anyOf(BossPhase.loom, BossPhase.rise));
+    expect(dir.phase, anyOf(BossPhase.approach, BossPhase.close));
     if (loom.length > 2) phone.add(loom[2]);
     await _sheet(tester, 'loom', loom, size, columns: loom.length);
 

@@ -328,6 +328,15 @@ class Atmosphere {
   /// Seconds of fog time (frozen while [reducedMotion]).
   double time = 0;
 
+  /// carrier-v3 §7: the fog's flow boost (the carrier fight's speed). Each
+  /// layer flows at `base·(1 + (boost − 1)·(0.5 + nearness))`: the near
+  /// layers faster than the far (differential parallax). 1 outside it.
+  double flowBoost = 1;
+  final Map<FogSlot, double> _flowAhead = {};
+
+  /// The fog time layer [slot] is drawn at.
+  double timeOf(FogSlot slot) => time + (_flowAhead[slot] ?? 0);
+
   /// Flight distance (arena units at the bottom row; flyover `distance`).
   double groundDistance = 0;
   double environment = 0;
@@ -529,7 +538,16 @@ class Atmosphere {
   /// position: it is world-anchored (fog-restoration).
   void advance(double dt, {required double distance}) {
     _guard(dt);
-    if (!reducedMotion) time += dt;
+    if (!reducedMotion) {
+      time += dt;
+      final extra = flowBoost - 1;
+      if (extra.abs() > 1e-6) {
+        for (final e in layers.entries) {
+          _flowAhead[e.key] =
+              (_flowAhead[e.key] ?? 0) + dt * extra * (.5 + e.value.nearness);
+        }
+      }
+    }
     groundDistance = distance;
   }
 
@@ -861,7 +879,7 @@ class Atmosphere {
     final r = _bounds(l);
     final color = _colorOf(slot, l);
     final a = art[slot] ?? tileA!, b = tileB!;
-    final t = time;
+    final t = timeOf(slot);
     final ground = slot == FogSlot.groundFog;
     c.saveLayer(r, Paint());
     final tint = ColorFilter.mode(color, BlendMode.srcIn);
@@ -1015,7 +1033,7 @@ class Atmosphere {
     f(color.b);
     f(l.threshold);
     // uMotion: time, drift x, drift y, warp
-    f(time);
+    f(timeOf(slot));
     f(l.drift.dx);
     f(l.drift.dy);
     f(l.warp);

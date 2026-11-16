@@ -3,13 +3,19 @@ import 'dart:math' as math;
 import 'dart:ui' show Offset;
 
 import 'arena_camera.dart';
+import 'carrier_bend.dart';
+import 'carrier_script.dart';
 import 'model.dart';
 
-/// boss-grandeur: the boss level's presentation phases (design §1).
-enum BossPhase { none, overflight, loom, rise, engage, climb, collapse }
+/// The boss level's presentation phases (carrier-v3 §5.1: Overflight →
+/// Approach → Close → Take-off → Climb, then the Collapse). Approach
+/// replaces boss-grandeur's Loom, Close its Rise, Take-off its Engage.
+enum BossPhase { none, overflight, approach, close, takeoff, climb, collapse }
 
 /// One of the 3 × 3 views: pitch index 0..2 (38°, 45°, 52°) and yaw −1, 0,
-/// +1 (−12°, 0°, +12°). Yaw −1 is drawn as +1 mirrored.
+/// +1 (−12°, 0°, +12°). Yaw −1 is drawn as +1 mirrored. carrier-v3: a v2
+/// carrier is drawn from [hero] only, bent at runtime ([CarrierBend]); the
+/// selection stays for hulls that are not carriers.
 class BossView {
   const BossView(this.pitch, this.yaw);
   static const pitches = [38, 45, 52];
@@ -86,8 +92,16 @@ class BossDirector {
   /// from 1.45 / 1.6 by the operator's R8: the fight plays much higher).
   static double maxAltitudeFor(int route) => route >= 3 ? 1.75 : 1.6;
 
-  /// The fight climbs 1.5 s after it engages.
+  /// The fight climbs 1.5 s after it engages (boss-grandeur; carrier-v3
+  /// drops the wait: the take-off is the start of the climb).
   static const engageSeconds = 1.5;
+
+  /// carrier-v3 §5.4: the take-off beat, its pitch-up and fog-rush peak.
+  static const takeoffSeconds = 2.4, takeoffPeak = .8;
+
+  /// The world's pitch at the take-off's peak (the transition-ascent
+  /// pitch's q).
+  static const takeoffWorldPitch = .6;
 
   /// Overflight length (design §1).
   static double overflightSeconds(bool reduced) => reduced ? 2.0 : 3.2;
@@ -126,6 +140,35 @@ class BossDirector {
   // --- progress of the transitions.
   double overflight = 0, loom = 0, rise = 1;
 
+  // --- carrier-v3: the approach, the take-off and the speed cues.
+  /// The tour's script (the model's).
+  CarrierScript script = CarrierScript.authored(0);
+
+  /// The runtime bend (design §2), driven here, drawn by the painter.
+  final bend = CarrierBend();
+
+  /// The approach distance D drawn (1 in range) and its fog mix.
+  double distance = 1, fog = 0;
+
+  /// The take-off's pulse 0..1 (nose up), the world's pitch q and the
+  /// follow strength's ramp.
+  double takeoff = 0, worldPitch = 0;
+
+  /// Speed cues: strength 0..1 (climb × the script's intensity; 0 under
+  /// reduced motion), the surge 0..1 and the cloud punch's progress
+  /// (−1: none).
+  double cues = 0, surge = 0, punch = -1;
+  double _surgeLeft = 0, _nextSurge = 14;
+  int _surges = 0;
+  math.Random _cueRng = math.Random(1);
+
+  /// Trauma shake (design §7): trauma 0..1, offset (units).
+  double trauma = 0;
+  Offset shake = Offset.zero;
+
+  bool _peaked = false;
+  double _vxPrev = 0, _ax = 0;
+
   /// Where the looming carrier is drawn (under the far fog) and its scale;
   /// the Rise starts from here.
   Offset loomAt = const Offset(180, 112);
@@ -162,6 +205,17 @@ class BossDirector {
     _xs.clear();
     flowBoost = 1;
     climb = 0;
+    bend.reset();
+    distance = 1;
+    fog = takeoff = worldPitch = 0;
+    cues = surge = 0;
+    punch = -1;
+    _surgeLeft = 0;
+    _surges = 0;
+    trauma = 0;
+    shake = Offset.zero;
+    _peaked = false;
+    _vxPrev = _ax = 0;
   }
 
   BossPhase _phaseOf(ArcadeModel m) {
@@ -172,23 +226,23 @@ class BossDirector {
     }
     final b = m.boss;
     if (b != null) {
-      if (!b.fightReady) return BossPhase.rise;
+      if (!b.fightReady) return BossPhase.close;
       return phase == BossPhase.climb ||
-              (phase == BossPhase.engage && phaseTime >= engageSeconds)
+              (phase == BossPhase.takeoff && phaseTime >= takeoffSeconds)
           ? BossPhase.climb
-          : BossPhase.engage;
+          : BossPhase.takeoff;
     }
     if (flow.active &&
         flow.kind == FlowKind.bossArrival &&
         flow.seconds >= flow.plan.descentAt) {
       return BossPhase.overflight;
     }
-    if (m.looming && !flow.active) return BossPhase.loom;
+    if (m.looming && !flow.active) return BossPhase.approach;
     if (m.level == 5 &&
         m.boss == null &&
         m.clearedLevel == null &&
         m.wreckBoss == null) {
-      return m.flow.active ? BossPhase.overflight : BossPhase.loom;
+      return m.flow.active ? BossPhase.overflight : BossPhase.approach;
     }
     return BossPhase.none;
   }
@@ -229,20 +283,48 @@ class BossDirector {
     } else if (phase != BossPhase.overflight) {
       overflight = phase == BossPhase.none ? 0 : 1;
     }
-    loom = phase == BossPhase.loom
-        ? (m.loomClock / (m.loomWaves * 30.0)).clamp(0.0, 1.0)
-        : (phase == BossPhase.rise ? 1 : loom);
-    rise = m.boss == null ? (phase == BossPhase.loom ? 0 : 1) : m.boss!.emerge;
-    if (phase == BossPhase.loom || phase == BossPhase.overflight) {
-      // It drifts slowly under the far banks and rises one layer per ~8 s.
-      loomAt = Offset(180 + 46 * math.sin(_clock * .13), 104 + 46 * loom);
-      loomScale = .4 + .22 * loom;
+    script = m.carrierScript;
+    bend.limits = script.bend;
+    final steps = script.approach.distances;
+    loom = phase == BossPhase.approach
+        ? ((steps.first - math.max(1.0, m.approachD)) /
+                  (steps.first - steps.last))
+              .clamp(0.0, 1.0)
+        : (phase == BossPhase.close ? 1 : loom);
+    rise = m.boss == null
+        ? (phase == BossPhase.approach ? 0 : 1)
+        : m.boss!.emerge;
+    // carrier-v3 §5.2: the approach distance, its placement and haze.
+    if (phase == BossPhase.approach || phase == BossPhase.overflight) {
+      distance = m.approachD > 1 ? m.approachD : steps.first;
+      final at = m.approachD > 1
+          ? m.approachAt
+          : CarrierApproachScript.placement(distance, 0);
+      loomAt = Offset(at.x, at.y);
+      loomScale = 1 / distance;
+    } else if (phase == BossPhase.close) {
+      // The Close eases from where the approach was to the fight row.
+      distance = math.max(1.0, m.approachD);
+      if (phaseTime == 0) {
+        final at = CarrierApproachScript.placement(
+          m.closeFromD,
+          m.approachClock,
+        );
+        loomAt = Offset(at.x, at.y);
+        loomScale = 1 / m.closeFromD;
+      }
+    } else {
+      distance = 1;
     }
+    fog = CarrierApproachScript.fogMix(distance);
 
     // Altitude.
     final route = m.cycle;
-    final top = maxAltitudeFor(route);
-    if (phase == BossPhase.climb && m.boss != null) {
+    final top = carrier ? script.camera.maxAltitude : maxAltitudeFor(route);
+    final fighting0 =
+        phase == BossPhase.climb ||
+        (carrier && phase == BossPhase.takeoff);
+    if (fighting0 && m.boss != null) {
       final forms = math.max(1, m.boss!.formCount - 1);
       altitudeTarget =
           1 + (top - 1) * (.65 + .35 * (m.boss!.phase / forms).clamp(0.0, 1.0));
@@ -264,7 +346,7 @@ class BossDirector {
     }
     altitude = altitude.clamp(1.0, top);
     climb = ((altitude - 1) / (top - 1)).clamp(0.0, 1.0);
-    flowBoost = 1 + (maxFlowBoost - 1) * climb * (reduced ? 0 : 1);
+    _cues(m, dt, reduced: reduced, carrier: carrier);
 
     // Range of motion and views.
     if (b != null && m.boss != null) {
@@ -278,11 +360,18 @@ class BossDirector {
         hi = math.max(hi, x);
       }
       range = ((hi - lo) / 196).clamp(0.0, 1.0);
-      _selectView(b, dt, reduced: reduced, ready: b.fightReady);
+      if (carrier) {
+        // carrier-v3 §2: one stored view, bent; no view changes.
+        view = previous = BossView.hero;
+        blend = 1;
+      } else {
+        _selectView(b, dt, reduced: reduced, ready: b.fightReady);
+      }
     } else {
       range = 0;
       _xs.clear();
     }
+    _bend(m, dt, reduced: reduced);
     blend = math.min(
       1.0,
       blend + dt / (reduced ? crossfadeReduced : crossfade),
@@ -296,6 +385,8 @@ class BossDirector {
         for (var f = _form + 1; f <= c.phase; f++) {
           _detach(c, f, modules);
         }
+        // carrier-v3 §7: shake on a module lost, more when the core shows.
+        _kick(c.phase >= c.formCount - 1 ? .25 : .30);
         _form = c.phase;
       }
       list = detached.isEmpty ? 0 : 4 * math.pi / 180;
@@ -341,34 +432,197 @@ class BossDirector {
 
     // Camera.
     final threatUp = threat ?? _threat(m);
-    final fighting = phase == BossPhase.engage || phase == BossPhase.climb;
+    final fighting = phase == BossPhase.takeoff || phase == BossPhase.climb;
+    final floor = carrier
+        ? script.camera.minZoom
+        : ArenaCamera.carrierMinZoom;
     final want = fighting
         ? ArenaCamera.targetZoom(
             range: range,
-            swerve: view.yaw.abs().toDouble(),
+            // carrier-v3: the lean stands in for the retired swerve view.
+            swerve: carrier
+                ? (bend.lean.abs() / (script.bend.leanMax * CarrierBend.deg))
+                : view.yaw.abs().toDouble(),
             altitude: altitude,
             carrier: carrier,
+            carrierFloor: floor,
           )
-        // A carrier rises into its band: it is framed before it engages.
-        : (carrier && phase == BossPhase.rise
+        // A carrier closes into its band: it is framed before it fights.
+        : (carrier && phase == BossPhase.close
               ? ArenaCamera.carrierMaxZoom
               : 1.0);
     final framing = carrier
-        ? ArenaCamera.carrierReducedZoom
+        ? ArenaCamera.carrierReducedFor(floor)
         : ArenaCamera.reducedZoom;
+    final reducedFight =
+        phase == BossPhase.climb || (carrier && phase == BossPhase.takeoff);
     camera.stepZoom(
       dt,
-      reduced ? (phase == BossPhase.climb ? framing : 1) : want,
+      reduced ? (reducedFight ? framing : 1) : want,
       hold: threatUp,
       reduced: reduced,
       carrier: carrier,
+      carrierFloor: carrier ? floor : null,
     );
     camera.altitude = altitude;
+    // carrier-v3 §6.1: the follow ramps in over the take-off; the horizon
+    // sinks as the fight climbs (the ground battle drops lower).
+    final follow = !carrier
+        ? climb
+        : phase == BossPhase.takeoff
+        ? (phaseTime / takeoffSeconds).clamp(0.0, 1.0)
+        : (phase == BossPhase.climb || phase == BossPhase.collapse ? 1.0 : 0.0);
     camera.stepFollow(
       dt,
       bossX: b?.x ?? 180,
       glide: b?.glide ?? 0,
-      strength: reduced || phase == BossPhase.none ? 0 : climb,
+      strength: reduced || phase == BossPhase.none ? 0 : follow,
+    );
+    camera.horizonDrop = reduced || !carrier
+        ? 0
+        : script.camera.horizonDrop * climb;
+    _shake(dt, reduced: reduced);
+  }
+
+  // --- carrier-v3 -----------------------------------------------------------
+
+  /// Adds trauma (design §7: the take-off, a module lost, the core
+  /// exposed, the collapse; nothing else shakes).
+  void _kick(double t) => trauma = math.min(1.0, trauma + t);
+
+  void _shake(double dt, {required bool reduced}) {
+    trauma = math.max(0.0, trauma - .8 * dt);
+    if (reduced || trauma <= 0) {
+      shake = Offset.zero;
+      return;
+    }
+    final a = trauma * trauma * 4;
+    final t = _clock;
+    shake = Offset(
+      a * (.6 * math.sin(t * 37.1) + .4 * math.sin(t * 23.3 + 1.7)),
+      a * (.6 * math.sin(t * 31.7 + .9) + .4 * math.sin(t * 19.9 + 2.3)),
+    );
+  }
+
+  /// The take-off beat, the flow, the surges and punches, the climb peak.
+  void _cues(
+    ArcadeModel m,
+    double dt, {
+    required bool reduced,
+    required bool carrier,
+  }) {
+    final c = script.cues;
+    final t = phase == BossPhase.takeoff ? phaseTime : -1.0;
+    if (phase == BossPhase.takeoff && phaseTime == 0 && carrier) {
+      _kick(.35);
+      _peaked = false;
+      _nextSurge = c.firstSurge;
+      _surges = 0;
+      _cueRng = math.Random(c.surgeSeed ^ seed ^ m.cycle);
+    }
+    // The take-off pulse: nose up to its peak at 0.8 s, then eased back.
+    if (t >= 0 && carrier && !reduced) {
+      final up = (t / takeoffPeak).clamp(0.0, 1.0);
+      final down = ((t - takeoffPeak) / (takeoffSeconds - takeoffPeak)).clamp(
+        0.0,
+        1.0,
+      );
+      final e = t <= takeoffPeak
+          ? up * up * (3 - 2 * up)
+          : 1 - down * down * (3 - 2 * down);
+      takeoff = e;
+      worldPitch = takeoffWorldPitch * e;
+    } else {
+      takeoff = 0;
+      worldPitch = 0;
+    }
+    // Surges and cloud punches (seeded), in the climbed fight only.
+    final fight = carrier && phase == BossPhase.climb && !reduced;
+    if (fight) {
+      _nextSurge -= dt;
+      if (_nextSurge <= 0) {
+        _surges++;
+        _surgeLeft = 1.5;
+        final (lo, hi) = c.surgeEvery;
+        _nextSurge = lo + (hi - lo) * _cueRng.nextDouble();
+        m.queuePresentationEvent(GameEventNames.bossSpeedSurge, {
+          'intensity': double.parse((c.intensity * climb).toStringAsFixed(2)),
+        });
+        if (_surges % c.punchShare == 0) {
+          punch = 0;
+          m.queuePresentationEvent(GameEventNames.bossCloudPunch);
+        }
+      }
+    }
+    _surgeLeft = math.max(0, _surgeLeft - dt);
+    surge = _surgeLeft <= 0 ? 0 : math.sin(math.pi * (1 - _surgeLeft / 1.5));
+    if (punch >= 0) {
+      punch += dt / .8;
+      if (punch >= 1) punch = -1;
+    }
+    // The fog's flow: faster with the climb, rushing at the take-off's
+    // peak, pushed by surges; none of it under reduced motion.
+    final base = 1 + (c.flowBoostMax - 1) * climb;
+    var boost = base;
+    if (carrier && t >= 0) {
+      final rush = t <= takeoffPeak
+          ? t / takeoffPeak
+          : 1 - ((t - takeoffPeak) / (takeoffSeconds - takeoffPeak));
+      boost = math.max(base, 1 + (c.takeoffBoost - 1) * rush.clamp(0.0, 1.0));
+    }
+    boost += c.surgeBoost * surge;
+    flowBoost = reduced ? 1 : (carrier ? boost : 1 + (maxFlowBoost - 1) * climb);
+    final fightCue =
+        carrier && (phase == BossPhase.takeoff || phase == BossPhase.climb);
+    cues = reduced || !fightCue
+        ? 0
+        : (math.max(climb, takeoff) * c.intensity).clamp(0.0, 1.0);
+    // The top of the climb.
+    if (carrier &&
+        !_peaked &&
+        (phase == BossPhase.climb || phase == BossPhase.takeoff) &&
+        altitudeTarget > 1 &&
+        altitude - 1 >= .98 * (altitudeTarget - 1)) {
+      _peaked = true;
+      m.queuePresentationEvent(GameEventNames.bossClimbPeak, {
+        'altitude': double.parse(altitude.toStringAsFixed(3)),
+      });
+    }
+  }
+
+  /// The bend's drivers (design §2.3): lean into the travel, bank into the
+  /// turn, pitch with the glide, nose up in the take-off, buffet with the
+  /// climb and the speed.
+  void _bend(ArcadeModel m, double dt, {required bool reduced}) {
+    final b = m.boss;
+    double vx = 0, glide = 0;
+    if (b != null && b.fightReady) {
+      final maxV = .7 * b.movementRate * (80 + b.rage * 10);
+      vx = b.horizontalVelocity / math.max(1.0, maxV);
+      glide = math.cos(b.glidePhase);
+      final w = .7 * b.movementRate;
+      final a = dt > 0 ? (vx - _vxPrev) / dt / math.max(.1, w) : 0.0;
+      _ax += (a - _ax) * (1 - math.exp(-dt / .3));
+    } else if (phase == BossPhase.approach) {
+      // The approach's slow drift.
+      vx = .13 * 46 * math.cos(_clock * .13) * (1 - 1 / distance) / 56;
+      _ax = 0;
+    } else {
+      _ax = 0;
+    }
+    _vxPrev = vx;
+    final buffet =
+        (climb * (flowBoost - 1) / math.max(.1, script.cues.flowBoostMax - 1))
+            .clamp(0.0, 1.0);
+    bend.update(
+      dt,
+      vx: vx,
+      // Banks into the turn: against the acceleration's sign along x.
+      ax: -_ax,
+      glide: glide,
+      takeoff: takeoff,
+      buffet: buffet,
+      reduced: reduced,
     );
   }
 
@@ -471,6 +725,7 @@ class BossDirector {
   void _collapse(ArcadeModel m, List<(String, int?)> modules) {
     final w = m.wreckBoss;
     if (w == null) return;
+    _kick(.5); // carrier-v3 §7: the collapse's shake
     final left =
         [
           for (final (id, d) in modules)

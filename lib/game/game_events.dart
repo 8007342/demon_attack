@@ -447,8 +447,61 @@ abstract final class GameEventNames {
   /// published by the music director).
   static const bossOverflight = 'bossOverflight';
 
-  /// The carrier finished its loom and rises out of the fog.
+  /// The carrier finished its loom and rises out of the fog (carrier-v3:
+  /// its wave starts at the Close).
   static const bossRise = 'bossRise';
+
+  // --- carrier-v3 §10: the intro and the launches, for the future epic
+  // and doom-metal score. Every one carries `route`, `tour` and `set`.
+
+  /// The approach starts (step 0) and each step closer (`step`,
+  /// `distance`).
+  static const bossApproach = 'bossApproach';
+
+  /// A gate's telegraph starts (`gate`, `slot`, `side`).
+  static const bossGateTelegraph = 'bossGateTelegraph';
+
+  /// Its doors open (`gate`).
+  static const bossGateOpen = 'bossGateOpen';
+
+  /// A volley leaves (`gate`, `count`, `tier`).
+  static const bossLaunch = 'bossLaunch';
+
+  /// Its doors close (`gate`).
+  static const bossGateClose = 'bossGateClose';
+
+  /// The hittable threshold, D = 1 (`distance`).
+  static const bossInRange = 'bossInRange';
+
+  /// The take-off beat (`minZoom`, `altitude`).
+  static const bossTakeoff = 'bossTakeoff';
+
+  /// The climb reaches 98 % of its altitude (`altitude`; presentation).
+  static const bossClimbPeak = 'bossClimbPeak';
+
+  /// A shot stopped by the field (`region`, `x`), at most 4 per second.
+  static const bossFieldImpact = 'bossFieldImpact';
+
+  /// A speed surge starts (`intensity`; presentation).
+  static const bossSpeedSurge = 'bossSpeedSurge';
+
+  /// The hull bursts through a cloud bank (presentation).
+  static const bossCloudPunch = 'bossCloudPunch';
+
+  /// The intro's events in their order of first appearance.
+  static const carrierIntro = [
+    bossApproach,
+    bossGateTelegraph,
+    bossGateOpen,
+    bossLaunch,
+    bossGateClose,
+    bossInRange,
+    bossTakeoff,
+    bossClimbPeak,
+    bossFieldImpact,
+    bossSpeedSurge,
+    bossCloudPunch,
+  ];
 
   // boss-carrier-wire: the names and data of the styleguide's decay
   // vocabulary (docs/styleguide/alien-capital-ships.md §6). Every step also

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'carrier_script.dart' show CarrierCamera;
 import 'model.dart' show ArcadeModel, GroundCamera;
 
 /// boss-grandeur §3–§4: the arena camera of the boss fight. Pure Dart, no
@@ -39,6 +40,23 @@ class ArenaCamera {
   static const carrierMinZoom = .70, carrierMaxZoom = .86;
   static const carrierReducedZoom = .78;
 
+  /// carrier-v3 §6.2: each later tour's carrier frames a little wider, down
+  /// the one-constant ladder 0.70, 0.68, 0.66, 0.64, 0.62
+  /// ([CarrierCamera.zoomStep]); the floors are draw-size floors there too.
+  static double carrierMinZoomFor(int route) => CarrierCamera.minZoomFor(route);
+
+  /// The static framing under reduced motion for a band floor [minZoom]:
+  /// 0.78 + (minZ − 0.70) (design §8).
+  static double carrierReducedFor(double minZoom) =>
+      carrierReducedZoom + (minZoom - carrierMinZoom);
+
+  /// The current band's floor (set by [stepZoom]; tour 1 by default).
+  double carrierFloor = carrierMinZoom;
+
+  /// carrier-v3 §6.1: the horizon sinks below its place as the fight
+  /// climbs ("the ground battle drops lower"), units.
+  double horizonDrop = 0;
+
   /// Phone floors in CSS px of the 360-wide arena (design §3.1).
   static const creatureFloor = 34.0, shipFloor = 36.0, bulletFloor = 3.0;
 
@@ -69,11 +87,13 @@ class ArenaCamera {
   double target = 1;
 
   bool get identity =>
-      zoom == 1 && fx == 0 && fy == 0 && altitude == 1 && followStrength == 0;
+      zoom == 1 && fx == 0 && fy == 0 && altitude == 1 && followStrength == 0 &&
+      horizonDrop == 0;
 
   void reset() {
     zoom = target = altitude = 1;
-    fx = fy = followStrength = 0;
+    fx = fy = followStrength = horizonDrop = 0;
+    carrierFloor = carrierMinZoom;
   }
 
   /// The target zoom: `Z* = 1 − 0.06·range − 0.05·swerve − 0.03·(A − 1)/0.6`,
@@ -88,21 +108,22 @@ class ArenaCamera {
     required double swerve,
     required double altitude,
     bool carrier = false,
+    double carrierFloor = carrierMinZoom,
   }) {
     final out =
         .06 * range.clamp(0.0, 1.0) +
         .05 * swerve.clamp(0.0, 1.0) +
         .03 * ((altitude - 1) / .6).clamp(0.0, 1.0);
     if (!carrier) return (1 - out).clamp(minZoom, 1.0);
-    const k = (carrierMaxZoom - carrierMinZoom) / .14;
-    return (carrierMaxZoom - k * out).clamp(carrierMinZoom, carrierMaxZoom);
+    final k = (carrierMaxZoom - carrierFloor) / .14;
+    return (carrierMaxZoom - k * out).clamp(carrierFloor, carrierMaxZoom);
   }
 
   /// Whether the camera is in the carrier band (set by [stepZoom]).
   bool carrier = false;
 
   /// The smallest zoom the current band allows.
-  double get floorZoom => carrier ? carrierMinZoom : minZoom;
+  double get floorZoom => carrier ? carrierFloor : minZoom;
 
   /// The draw-size factor that keeps a sprite of [size] arena units at
   /// least [floor] screen units (CSS px of the 360-wide arena) under the
@@ -123,10 +144,14 @@ class ArenaCamera {
     bool hold = false,
     bool reduced = false,
     bool carrier = false,
+    double? carrierFloor,
   }) {
     this.carrier = carrier;
+    if (carrierFloor != null) this.carrierFloor = carrierFloor;
     if (reduced) {
-      final framing = carrier ? carrierReducedZoom : reducedZoom;
+      final framing = carrier
+          ? carrierReducedFor(this.carrierFloor)
+          : reducedZoom;
       target = want <= framing ? framing : 1;
       final d = target - zoom;
       zoom += d.clamp(-reducedRate * dt, reducedRate * dt);
@@ -207,7 +232,7 @@ class ArenaCamera {
     // x' = kx·x + kx·px·(w0y + dwdy·y) + 180(1 − kx)
     // y' = a·y + h(1 − a) + py·(w0y + dwdy·y)
     final xx = kx, xy = kx * px * dwdy, xt = kx * px * w0y + 180 * (1 - kx);
-    final yy = a + py * dwdy, yt = h * (1 - a) + py * w0y;
+    final yy = a + py * dwdy, yt = h * (1 - a) + py * w0y + horizonDrop;
     return Float64List.fromList([
       xx, 0, 0, 0, //
       xy, yy, 0, 0,

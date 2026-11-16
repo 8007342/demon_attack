@@ -257,6 +257,13 @@ class MusicBridge {
     GameEventNames.bossOverflight: 'gloat',
     GameEventNames.bossRise: 'laststand',
     GameEventNames.bossCollapseStart: 'respawn',
+    // carrier-v3 §10, existing cues until the score lands (tillandsias
+    // #1103: the doom and epic-metal layers): the reinforcement stinger as
+    // the approaching carrier steps closer, the mechanical hatch hit at the
+    // hittable threshold, the heroic accent as it takes off.
+    GameEventNames.bossApproach: 'reinforce',
+    GameEventNames.bossInRange: 'hatch',
+    GameEventNames.bossTakeoff: 'respawn',
   };
 
   void call(GameEvent event) {
