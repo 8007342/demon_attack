@@ -232,11 +232,14 @@ class FlowPlan {
         // inside the cloud at the swap, holds, and eases back through the
         // Descent. Reduced motion keeps the beat (a gentle ×2 at most).
         FlowBeat('speed', p0, swap, p1, p1 + 2.0, cubicRise: true),
-        // The camera pitches up as the cloud comes in: the horizon drops and
-        // the ground foreshortens (its seam is in cloud).
-        FlowBeat('pitch', cloudUp, cloudFull, p1 - .3, p1 + 1.8, gain: m),
-        // A small bank toward the pursuit.
-        FlowBeat('roll', p0 + .3, p0 + 1.5, p1, p1 + 1.2, gain: m),
+        // The camera pitches up with the climb, in clear air before the
+        // cloud: the horizon drops and the ground foreshortens (its seam
+        // is in cloud). playtest-fixes-3: it starts with the climb, so the
+        // world visibly falls away below the ship (straight up).
+        FlowBeat('pitch', p0 + .2, cloudFull, p1 - .3, p1 + 1.8, gain: m),
+        // playtest-fixes-3: no bank. A banked world read as a turn
+        // (flying sideways); the ascent is straight up.
+        FlowBeat('roll', p0 + .3, p0 + 1.5, p1, p1 + 1.2, gain: 0),
         // Fog streaks rush past the ship.
         FlowBeat('streaks', p0 + .5, swap, p1, p1 + 1.0, gain: m),
         FlowBeat('cloud', cloudUp, cloudFull, cloudOut, cloudClear),

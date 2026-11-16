@@ -292,7 +292,7 @@ that rushed ended, `tells` = rally warnings. Pre-W4 rows count the old last stan
 | Expert skill | reaches ≥ 0.7 | max 0.80 (= the Normal cap), mean 0.63 over route ≥ 1 waves; Hard max 1.00 |
 | Average skill | 0.25–0.55 | **0.07 mean** (max 0.43): see below |
 | Rush fairness guards | §6.4 | escape ≥ 99.8 %, threat 100 %, corridor holds (`test/sentinel_rush_fairness_test.dart`) |
-| Hostile bullets | ≤ 120 | peak 16 |
+| Hostile bullets | ≤ 120 | peak 18 |
 | Dive concurrency | ≤ cap | never above (10-minute Hard sim, `test/demon_intelligence_test.dart`) |
 | Easy route 0 | no change | identical |
 
@@ -449,3 +449,91 @@ Per-cell table (routes 0-1, eight seeds; score / par is the pilot's score over t
 | hard | 1 | 4 | regular | 104.8 | 187.0 | 116997 | 116997 | 28.13 | 1.29 |
 | hard | 1 | 4 | supplyRun | 131.8 | 187.0 | 122677 | 122705 | 27.13 | 1.35 |
 | hard | 1 | 4 | stormfront | 87.8 | 202.0 | 115361 | 115361 | 26.63 | 1.27 |
+
+## Playtest fixes 3 (2026-11-16): the sentinel's berserk rush
+
+`openspec/changes/playtest-fixes-3`: the sentinel is invulnerable in its rally and lock; its rush shield is a
+super-powerful diving shield (base gun deflects; powers and homing wear it; 6 / 8 + cycle÷2 / 10 + cycle÷2); a dodged
+pass pays 300 × (cycle + 1), a break 150, a burn-out after a dodged last pass the kill value; rush chance
+0.28 / 0.45 / 0.50 (was 0.20 / 0.35 / 0.45).
+
+Harness: `test/swarm_calibration_test.dart` (`--dart-define=SWARM_CALIBRATION=pf3-post`, eight seeds, expert and
+Average pilots, run alone under the test lock). **Pre** is the same harness on `game` at 1c670982
+(`SWARM_CALIBRATION=pf3-pre`). The comparison is a small Go tool over the two JSON/Markdown outputs.
+
+**Re-tune.** With Hard at 0.55 the Average pilot lost +3.37 lives per sector on Hard route 1 (S3 21.1 → 28.8,
+S4 28.1 → 32.6); Hard at 0.50 gives +2.44 there (S3 unchanged: a seed-path effect, within the 2–8-life standard
+error of a sector mean). Hard is set to 0.50; Easy and Normal are unchanged between the two runs. Tables below are
+the 0.50 run.
+
+### Per sector (expert)
+
+| Sector | Clear pre → post (s) | Δ clear | Aimed hit pre → post | Δ aimed | Peak hostile (post) |
+|---|---:|---:|---:|---:|---:|
+| easy1 | 16.21 → 16.31 | +0.6% | 48.1% → 48.7% | +1.4% | 9 |
+| easy2 | 21.10 → 20.79 | -1.5% | 59.7% → 58.9% | -1.4% | 10 |
+| easy3 | 18.90 → 18.31 | -3.1% | 53.0% → 53.3% | +0.7% | 9 |
+| easy4 | 22.59 → 23.13 | +2.4% | 60.7% → 59.9% | -1.3% | 10 |
+| easy5 | 31.01 → 32.91 | +6.1% | 75.3% → 76.9% | +2.0% | 11 |
+| normal1 | 31.31 → 31.57 | +0.8% | 65.5% → 66.8% | +2.0% | 14 |
+| normal2 | 36.19 → 34.37 | -5.0% | 71.1% → 69.8% | -1.9% | 13 |
+| normal3 | 33.00 → 34.00 | +3.1% | 69.4% → 69.4% | -0.0% | 13 |
+| normal4 | 33.73 → 33.30 | -1.3% | 68.3% → 68.8% | +0.8% | 13 |
+| normal5 | 40.66 → 38.91 | -4.3% | 78.3% → 76.6% | -2.1% | 12 |
+| hard1 | 33.69 → 32.52 | -3.5% | 69.2% → 67.1% | -3.1% | 15 |
+| hard2 | 36.95 → 36.37 | -1.6% | 70.5% → 70.4% | -0.2% | 15 |
+| hard3 | 36.64 → 38.17 | +4.2% | 71.8% → 72.4% | +0.7% | 17 |
+| hard4 | 35.86 → 36.71 | +2.4% | 71.8% → 71.9% | +0.1% | 18 |
+| hard5 | 42.60 → 43.46 | +2.0% | 77.8% → 80.8% | +3.9% | 15 |
+
+worst clear +6.1%, worst aimed -3.1%
+
+#### Expert
+| Bucket | T0 / T1 / T2 hit pre → post | Rush (pre) | Rush (post) | Skill mean / max (post) |
+|---|---|---|---|---|
+| easy/r0 | 52.3 → 52.3%; 44.0 → 44.0% |  |  | 0.19 / 0.41 |
+| easy/r1+ | 51.6 → 51.2%; 65.1 → 65.8%; 39.5 → 40.2% | passEnded 7, passes 7, shieldBroken 18, shotDown 18, tells 18 | passEnded 8, passHit 14, passes 22, sacrificed 14, shieldBroken 11, shotDown 8, tells 22 | 0.42 / 0.50 |
+| hard/r0 | 54.1 → 54.1%; 57.6 → 57.6% |  |  | 0.42 / 0.80 |
+| hard/r1+ | 66.7 → 67.3%; 74.9 → 74.7%; 62.3 → 61.8% | passDodged 2, passEnded 78, passHit 46, passes 126, shieldBroken 152, shotDown 152, tells 195 | passDodged 5, passEnded 92, passHit 346, passes 443, sacrificed 83, shieldBroken 97, shotDown 96, tells 443 | 0.71 / 1.00 |
+| normal/r0 | 55.1 → 55.1%; 54.8 → 54.8% |  |  | 0.32 / 0.80 |
+| normal/r1+ | 62.6 → 62.4%; 72.1 → 72.0%; 55.4 → 55.5% | passDodged 1, passEnded 49, passHit 41, passes 91, shieldBroken 111, shotDown 111, tells 149 | passDodged 2, passEnded 77, passHit 183, passes 262, sacrificed 66, shieldBroken 81, shotDown 80, tells 263 | 0.63 / 0.80 |
+
+#### Average
+| Bucket | T0 / T1 / T2 hit pre → post | Rush (pre) | Rush (post) | Skill mean / max (post) |
+|---|---|---|---|---|
+| easy/r0 | 31.6 → 31.6%; 46.5 → 46.5% |  |  | 0.14 / 0.32 |
+| easy/r1+ | 51.9 → 51.9%; 50.7 → 50.6%; 37.1 → 37.1% | passEnded 6, passHit 1, passes 7, sacrificed 4, shieldBroken 8, shotDown 6, tells 10 | passEnded 9, passHit 2, passes 11, sacrificed 11, shieldBroken 1, tells 11 | 0.07 / 0.48 |
+| hard/r0 | 39.5 → 39.5%; 57.4 → 57.4% |  |  | 0.11 / 0.30 |
+| hard/r1+ | 66.2 → 66.2%; 63.9 → 64.2%; 55.4 → 56.6% | passDodged 1, passEnded 45, passHit 21, passes 67, sacrificed 11, shieldBroken 55, shotDown 45, tells 78 | passDodged 6, passEnded 49, passHit 47, passes 102, sacrificed 40, shieldBroken 20, shotDown 15, tells 102 | 0.06 / 0.30 |
+| normal/r0 | 38.7 → 38.7%; 54.3 → 54.3% |  |  | 0.11 / 0.49 |
+| normal/r1+ | 61.1 → 60.6%; 59.6 → 60.2%; 48.2 → 47.0% | passDodged 2, passEnded 29, passHit 9, passes 40, sacrificed 9, shieldBroken 46, shotDown 37, tells 55 | passDodged 6, passEnded 50, passHit 28, passes 84, sacrificed 36, shieldBroken 25, shotDown 20, tells 84 | 0.07 / 0.43 |
+
+#### Average pilot: lives lost per sector (mean of 8 seeds)
+| Mode | Route | S1 | S2 | S3 | S4 | Mean Δ |
+|---|---:|---|---|---|---|---:|
+| easy | 0 | 0.00 → 0.00 | 0.88 → 0.88 | 4.63 → 4.63 | 7.25 → 7.25 | +0.00 |
+| easy | 1 | 4.63 → 4.63 | 9.25 → 9.63 | 7.88 → 7.88 | 12.88 → 13.13 | +0.16 |
+| easy | 2 | 10.13 → 10.13 | 16.38 → 16.50 | 18.50 → 18.50 | 46.00 → 46.13 | +0.06 |
+| normal | 0 | 1.63 → 1.63 | 2.00 → 2.00 | 9.75 → 9.75 | 11.25 → 11.25 | +0.00 |
+| normal | 1 | 8.75 → 9.13 | 18.25 → 19.50 | 32.75 → 26.00 | 28.50 → 26.63 | -1.75 |
+| normal | 2 | 31.38 → 27.63 | 46.13 → 46.63 | 71.38 → 74.63 | 59.00 → 57.38 | -0.40 |
+| hard | 0 | 1.88 → 1.88 | 3.63 → 3.63 | 9.88 → 9.88 | 13.25 → 13.25 | +0.00 |
+| hard | 1 | 19.88 → 20.00 | 34.63 → 35.88 | 21.13 → 28.75 | 28.13 → 28.88 | +2.44 |
+| hard | 2 | 48.13 → 44.38 | 44.50 → 44.13 | 81.13 → 74.38 | 56.88 → 60.75 | -1.75 |
+
+The expert pilot sits under the sentinel it shoots at, so its passes mostly touch the ship (it is protected); with
+the bare gun no longer wearing the rush shield, rushes now run their passes (`passes`, `sacrificed` up; `shieldBroken`,
+`shotDown` down). The Average pilot meets 1.5–2.1× the passes and breaks a shield a third as often, as the rule
+intends: dodging, not shooting, is the answer.
+
+### Acceptance (Normal against pre, as design §9 of demon-intelligence)
+
+| Check | Bound | Result |
+|---|---|---|
+| Every campaign completes (invulnerable pilot) | all | 24 / 24 |
+| Ordinary-wave clear time per sector | ≤ +10 % | −5.0 … +4.2 % (sectors 1–4; the carrier, sector 5, −4.3 … +6.1 %) |
+| Aimed hit ratio | ≤ −15 % | −3.1 % worst |
+| T0 / T1 / T2 hit ratio | ≤ 5 % / drop ≤ 25 % | within −1.2 … +1.2 points |
+| Average pilot lives lost per sector, Normal | ≤ +0.3 | route 1 −1.75, route 2 −0.40; route 0 ±0 |
+| Rush fairness guards | §6.4 | `test/sentinel_rush_fairness_test.dart` green (kinematics unchanged) |
+| Hostile bullets | ≤ 120 | peak 18 |

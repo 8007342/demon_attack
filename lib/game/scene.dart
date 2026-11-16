@@ -308,12 +308,15 @@ class DemonScene extends FlameGame {
       dimensions.y / ArcadeModel.height,
     );
     canvas.save();
-    canvas.translate(
-      (dimensions.x - ArcadeModel.width * scale) / 2,
-      (dimensions.y - ArcadeModel.height * scale) * alignY,
-    );
+    final spare = (dimensions.y - ArcadeModel.height * scale) * alignY;
+    canvas.translate((dimensions.x - ArcadeModel.width * scale) / 2, spare);
     canvas.scale(scale);
-    canvas.clipRect(const Rect.fromLTWH(0, 0, 360, 520));
+    // --- playtest-fixes-3: the spare height above the arena (the toast
+    // band on a tall phone) is background, always: sky, parallax, fog and
+    // cloud reach the viewport's top. Gameplay stays clipped to the arena.
+    headroom = scale > 0 ? math.max(0.0, spare / scale) : 0.0;
+    atmosphere.headroom = headroom;
+    canvas.clipRect(Rect.fromLTWH(0, -headroom, 360, 520 + headroom));
     final (shakeX, shakeY) = rushShake(); // --- sentinel rush (≤ 2 px)
     if (shakeX != 0 || shakeY != 0) canvas.translate(shakeX, shakeY);
     final panY = model.mode == RunMode.gameOver ? model.cameraPanY : 0.0;
@@ -354,16 +357,24 @@ class DemonScene extends FlameGame {
       final band = tilt + drop;
       final roll = model.flow.env('roll');
       final shake = _flowShake();
+      // playtest-fixes-3: the band the pitch uncovers is the deep sky above
+      // the painted one in clear air, and cloud once the cloud is in (the
+      // pitch now starts with the climb, before the cloud).
+      final bandSky = Color.lerp(
+        const Color(0xFF070B16),
+        atmosphere.cloud,
+        model.flow.env('cloud').clamp(0.0, 1.0),
+      )!;
       if (roll > .001) {
         // Under a banked world the corners show the cloud, never black.
         canvas.drawRect(
-          const Rect.fromLTWH(0, 0, 360, 520),
+          Rect.fromLTWH(0, -headroom, 360, 520 + headroom),
           Paint()..color = atmosphere.cloud,
         );
       } else if (band > .01) {
         canvas.drawRect(
-          Rect.fromLTWH(0, 0, 360, band + 2),
-          Paint()..color = atmosphere.cloud,
+          Rect.fromLTRB(0, -headroom, 360, band + 2 - headroom),
+          Paint()..color = bandSky,
         );
       }
       canvas.save();
@@ -397,7 +408,7 @@ class DemonScene extends FlameGame {
         final h = Perspective.horizonY + drop;
         canvas.save();
         // Overlaps the ground pass by 2 units: no hairline at the seam.
-        canvas.clipRect(Rect.fromLTRB(-40, -40, 400, h + 2));
+        canvas.clipRect(Rect.fromLTRB(-40, -40 - headroom, 400, h + 2));
         canvas.translate(0, drop);
         _background(canvas);
         canvas.restore();
@@ -421,6 +432,12 @@ class DemonScene extends FlameGame {
       }
       if (bgCam) canvas.restore();
       if (active && combat) {
+        // Gameplay never draws in the band above the arena.
+        canvas.save();
+        canvas.clipRect(
+          const Rect.fromLTWH(0, 0, 360, 520),
+          doAntiAlias: false,
+        );
         _zoomApplied = cam.zoom != 1;
         if (_zoomApplied) {
           canvas.save();
@@ -441,6 +458,10 @@ class DemonScene extends FlameGame {
           _arenaEdge(canvas, cam);
         }
         _zoomApplied = false;
+        canvas.restore();
+        // The high fog over the band (the layers that reach the arena's
+        // top carry on to the viewport's).
+        if (model.perspective) atmosphere.paintBand(canvas);
       } else {
         sectors.flyover.paintFlyers(canvas); // --- easter eggs: flocks
         if (!active) _attractPass(canvas); // --- cinematic flow: attract
@@ -453,12 +474,12 @@ class DemonScene extends FlameGame {
           // Feather the band the tilt or pitch uncovered into the scene
           // below it.
           canvas.drawRect(
-            Rect.fromLTWH(0, 0, 360, band + 36),
+            Rect.fromLTRB(0, -headroom, 360, band + 36 - headroom),
             Paint()
               ..shader = ui.Gradient.linear(
-                Offset.zero,
-                Offset(0, band + 36),
-                [atmosphere.cloud, atmosphere.cloud.withValues(alpha: 0)],
+                Offset(0, -headroom),
+                Offset(0, band + 36 - headroom),
+                [bandSky, bandSky.withValues(alpha: 0)],
                 [band / (band + 36), 1],
               ),
           );
@@ -590,7 +611,7 @@ class DemonScene extends FlameGame {
 
   void _deepStarfieldPan(Canvas c, double panY) {
     c.drawRect(
-      const Rect.fromLTWH(0, 0, 360, 520),
+      Rect.fromLTWH(0, -headroom, 360, 520 + headroom),
       Paint()..color = const Color(0xFF050811),
     );
     final s = sky;
@@ -831,7 +852,13 @@ class DemonScene extends FlameGame {
     model.cycle,
     sky,
     wave: model.wave,
+    headroom: headroom,
   );
+
+  /// playtest-fixes-3: arena units of viewport above the arena this frame
+  /// (the band a bottom-aligned arena leaves on a tall phone). Background
+  /// only: no spawn, target, shot or HUD element is ever placed there.
+  double headroom = 0;
 
   void sprite(
     Canvas c,
@@ -1155,6 +1182,7 @@ class DemonScene extends FlameGame {
       _bossLoom(c);
     }
     _bossLoomLights(c);
+    _deflectSparks(c); // --- playtest-fixes-3: hits glancing off
     for (final fx in creatures.deaths) {
       c.save();
       c.translate(fx.x, fx.y);
@@ -2604,6 +2632,7 @@ class DemonScene extends FlameGame {
           (SwarmFlock.fightAltitude(d.homeY) - LurkTrack.nearAltitude) *
               Perspective.smoothstep(0, 1, d.entranceProgress);
     }
+    if (d.isLarge && h <= 0 && !d.entering) h = sentinelShadowAltitude(d);
     if (n <= 0 || h <= 0) return null;
     final gy = Perspective.groundY(n);
     if (gy > 530) return null;
@@ -2647,32 +2676,38 @@ class DemonScene extends FlameGame {
     final bucket = ShadowProjector.bucketOf(k);
     if (d.isLarge) {
       var at = center, atFlat = flat;
-      var size = grow / 1.8 * 1.6;
       if (d.lastStand &&
           (d.rushPhase == RushPhase.lock || d.rushPhase == RushPhase.rush)) {
         // --- sentinel rush: on lock its shadow snaps over the ship's
-        // (W3 shadows), at its largest; on the relief, onto the ship's
-        // projected hit point.
+        // (W3 shadows); on the relief, onto the ship's projected hit point.
         final ship = _shipShadowHit(surface);
         final snap = d.rushPhase == RushPhase.rush
             ? 1.0
             : Perspective.smoothstep(0, .12, d.rushClock);
         at = Offset.lerp(center, ship.center, snap)!;
         atFlat = Offset.lerp(flat, ship.flat, snap)!;
-        size = math.max(size, 1.6 * 1.25);
       }
       final img = effectsAtlas;
       if (img == null) return null;
       final species = d.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
-      final frame = (model.clock / .4 + d.seed).floor() % 8;
+      // playtest-fixes-3: one sentinel shadow from lurk through play and
+      // the rush: the lurk's occluder look, sized by the one rule
+      // [sentinelShadowScale] (ground nearness under it, its altitude).
+      final frame = (model.clock / .55 + d.seed).floor() % 4;
+      final clear = .7 + .3 * (1 - FlyoverBackground.groundFogAt(atFlat.dy));
+      var a = lurkAlpha * clear;
+      if (d.entering && d.swarmState != SwarmState.reentering && !handoff) {
+        a *= Perspective.smoothstep(0, .12, d.entranceProgress);
+      }
       return _ShadowSpec(
         img,
         Rect.fromLTWH(frame * 128.0, species * 64.0, 128, 64),
         at,
-        size,
-        alpha.clamp(0.0, .9),
-        bucket,
+        sentinelShadowScale(groundNearness(atFlat.dy), h),
+        a.clamp(0.0, lurkAlpha),
+        2,
         atFlat,
+        occluder: true,
       );
     }
     final img = atlas;
@@ -2726,8 +2761,14 @@ class DemonScene extends FlameGame {
   /// The visible centre of [d]'s shadow in the last pass (tests, review).
   Offset? shadowCenterOf(Demon d) => _lastShadows[d]?.center;
 
+  /// The footprint scale of [d]'s shadow in the last pass (tests, review).
+  double? shadowScaleOf(Demon d) => _lastShadows[d]?.scale;
+
   /// The last lurking shadow (tests and review), null when none is drawn.
   Offset? get lurkCenter => _lurkLast?.center;
+
+  /// The last lurking shadow's footprint scale (tests and review).
+  double? get lurkScale => _lurkLast?.scale;
 
   /// The flat-ground point and visible centre of a caster over [base] at
   /// [h] on the sun of this frame (flyers' direction).
@@ -2779,11 +2820,39 @@ class DemonScene extends FlameGame {
         64,
       ),
       hit.center,
-      2.5 * 1.6 * n * (1 + .3 * l.progress),
+      sentinelShadowScale(n, l.altitude),
       alpha.clamp(0.0, lurkAlpha),
       2,
       hit.flat,
+      occluder: true,
     );
+  }
+
+  /// playtest-fixes-3: the one size rule of every sentinel shadow (the
+  /// lurk, the rising sentinel, the fight and the rush), as a scale of
+  /// the 128 × 64 strip: the ground's nearness [n] under it (perspective)
+  /// times its softness growth, spread by its altitude [h] above the
+  /// fight's (a high caster's penumbra). In the fight it matches the
+  /// sentinel's own drawn size; far and high, the lurk is broad for the
+  /// ground it lies on, and nothing jumps at the hand-off.
+  static double sentinelShadowScale(double n, double h) {
+    final k = (h / _shadowHMax).clamp(0.0, 1.0);
+    final spread = 1 + 1.2 * math.max(0.0, h - 90) / 130;
+    return 1.6 * n.clamp(lurkMinNearness, 1.0) * (1 + .3 * k) * spread;
+  }
+
+  /// The ground's nearness at flat-ground row [y].
+  static double groundNearness(double y) =>
+      ((y - Perspective.horizonY) / Perspective.groundSpan).clamp(0.0, 1.0);
+
+  /// A fighting sentinel's shadow altitude (presentation: it publishes
+  /// none once it has arrived, which once left it shadowless): its flight
+  /// sheet's altitude, falling toward the ship's 40 as a rush comes down.
+  static double sentinelShadowAltitude(Demon d) {
+    final fight = SwarmFlock.fightAltitude(d.homeY);
+    if (!d.lastStand || d.rushPhase != RushPhase.rush) return fight;
+    final k = ((d.y - 40) / (ArcadeModel.shipY - 40)).clamp(0.0, 1.0);
+    return fight + (40 - fight) * k;
   }
 
   /// Blends the lurking shadow into the rising sentinel's own over
@@ -2799,28 +2868,17 @@ class DemonScene extends FlameGame {
     }
     final k = Perspective.smoothstep(0, 1, u.clamp(0.0, 1.0));
     double mix(double a, double b) => a + (b - a) * k;
-    final center = Offset.lerp(from.center, to.center, k)!;
-    final flat = Offset.lerp(from.flat, to.flat, k)!;
-    final scale = mix(from.scale, to.scale);
-    // lurk-visibility: one shape gliding and contracting, cross-fading
-    // from the lurk's occluder to the sentinel's ink shadow.
-    _lurkDraw = _ShadowSpec(
-      from.image,
-      from.src,
-      center,
-      scale,
-      from.alpha * (1 - k),
-      2,
-      flat,
-    );
+    // playtest-fixes-3: one occluder gliding from the lurk onto the
+    // sentinel (both are drawn alike and sized by one rule).
     return _ShadowSpec(
-      to.image,
-      to.src,
-      center,
-      scale,
-      to.alpha * k,
-      to.bucket,
-      flat,
+      k < .5 ? from.image : to.image,
+      k < .5 ? from.src : to.src,
+      Offset.lerp(from.center, to.center, k)!,
+      mix(from.scale, to.scale),
+      mix(from.alpha, to.alpha),
+      2,
+      Offset.lerp(from.flat, to.flat, k)!,
+      occluder: true,
     );
   }
 
@@ -3063,6 +3121,7 @@ class DemonScene extends FlameGame {
     final surface = _shadowSurface;
     final buckets = [<_ShadowSpec>[], <_ShadowSpec>[], <_ShadowSpec>[]];
     final now = <Demon, _ShadowSpec>{};
+    final occluders = <_ShadowSpec>[];
     final flying = <Demon>{
       ...airCensus().shadows,
       ...also, // --- cinematic flow: the title's attract swarm
@@ -3095,7 +3154,11 @@ class DemonScene extends FlameGame {
       if (s == null) continue;
       now[d] = s;
       shadowed.add(d);
-      buckets[reduced ? 0 : s.bucket].add(s);
+      if (s.occluder) {
+        occluders.add(s);
+      } else {
+        buckets[reduced ? 0 : s.bucket].add(s);
+      }
     }
     // Death: the shadow fades with the creature (0.3 s).
     _ghostClock = model.clock;
@@ -3110,7 +3173,11 @@ class DemonScene extends FlameGame {
     _shadowGhosts.removeWhere((g) => _ghostClock - g.$2 > .3);
     for (final (s, born) in _shadowGhosts) {
       final left = 1 - (_ghostClock - born) / .3;
-      buckets[reduced ? 0 : s.bucket].add(s.faded(left));
+      if (s.occluder) {
+        occluders.add(s.faded(left));
+      } else {
+        buckets[reduced ? 0 : s.bucket].add(s.faded(left));
+      }
     }
     // The ship's silhouette, on the same sun at its fixed altitude.
     final shipImg = ship.image;
@@ -3172,6 +3239,10 @@ class DemonScene extends FlameGame {
     final lurkNow = _lurkDraw;
     if (lurkNow != null && drawLurk) {
       shadowDrawCalls += _paintLurk(c, surface, lurkNow);
+    }
+    // playtest-fixes-3: the fighting sentinel's shadow, the same occluder.
+    for (final s in occluders) {
+      shadowDrawCalls += _paintLurk(c, surface, s);
     }
     // Draw: one layer per bucket, the ground seen at a slant.
     for (var b = 0; b < 3; b++) {
@@ -3308,165 +3379,231 @@ class DemonScene extends FlameGame {
     }
   }
 
-  /// alien-insignia: the thermal bow is cut into one segment per
-  /// dive-shield point (palette unchanged). Returns true when the column at
-  /// [dx] is not drawn as plasma: a gap between segments, a burnt-off
-  /// segment, or one burning off this instant (a white flash).
-  bool _diveSegmentGap(
+  // --- playtest-fixes-3: diving shields as one coherent shape ------------
+  //
+  // The old bows were assembled from 3-unit columns, each with its own
+  // rounded y, sine-driven tongue and jitter, 6-unit cuts per segment and
+  // wingtip sparks at fixed offsets. The columns were rounded in the
+  // creature's local units before its scale, so under the scale transform
+  // neighbouring columns jumped by whole scaled units and the arc shattered
+  // into offset blocks with gaps. Now every layer of a bow is a band of one
+  // crescent function (leading edge, thickness, flicker), drawn as a few
+  // polygons in the same local frame, so the whole shield scales, turns
+  // and wears as one shape.
+
+  /// The crescent of a thermal bow, in the creature's local units about
+  /// its centre: half span [span], nose drop [nose], leading edge at
+  /// [lead] below the centre (at the tips), thickness [thick] and flame
+  /// lick [lick] on the trailing edge.
+  static const _bowSmall = (
+    span: 16.0,
+    nose: 5.5,
+    lead: 7.5,
+    thick: 6.0,
+    lick: 2.5,
+  );
+  static const _bowMedium = (
+    span: 24.0,
+    nose: 7.5,
+    lead: 5.5,
+    thick: 7.5,
+    lick: 3.5,
+  );
+  static const _bowSentinel = (
+    span: 52.0,
+    nose: 15.0,
+    lead: 3.0,
+    thick: 10.0,
+    lick: 5.0,
+  );
+  static const _bowRush = (
+    span: 64.0,
+    nose: 18.0,
+    lead: 2.0,
+    thick: 13.0,
+    lick: 6.0,
+  );
+
+  /// Thermal palette (outer envelope to the white-hot nose) and the rush's
+  /// crimson-to-black one.
+  static const _thermal = [
+    Color(0xFFDD2C00),
+    Color(0xFFFF6D00),
+    Color(0xFFFFC23A),
+    Color(0xFFFFF6CC),
+  ];
+  static const _crimson = [
+    Color(0xFF1A0508),
+    Color(0xFF8E1020),
+    Color(0xFFFF3B3B),
+    Color(0xFFFFC2B0),
+  ];
+
+  /// Share of the thickness each band keeps (outer first) and its alpha.
+  static const _bowBands = [(1.0, .78), (.7, .9), (.42, .95), (.2, 1.0)];
+
+  /// The bow's leading edge (y below the centre) at u in [-1, 1].
+  static double bowLead(
+    ({double span, double nose, double lead, double thick, double lick}) b,
+    double u,
+  ) => b.lead + b.nose * (1 - u * u);
+
+  /// The bow's thickness at u: full at the nose, tapering to points.
+  static double bowThick(
+    ({double span, double nose, double lead, double thick, double lick}) b,
+    double u,
+  ) => b.thick * math.pow(math.max(0.0, 1 - u * u), .55) + .6;
+
+  /// Draws one thermal bow about [pos] (local units, under the caller's
+  /// scale): [n] segments ([lit] of them burning, the rest dark sockets,
+  /// one flashing white while it burns off), turned [turn] radians toward
+  /// the dive's heading. [strength] dims the envelope as the shield wears.
+  void _thermalBow(
     Canvas c,
-    Demon d,
-    double dx,
-    double halfSpan,
-    double sx,
-    double sy,
-    Paint paint,
-  ) {
-    final n = d.diveShieldMax;
-    if (n <= 1) return false;
-    final width = 2 * halfSpan / n;
-    final seg = ((dx + halfSpan) / width).floor().clamp(0, n - 1);
-    if (seg > 0 && dx + halfSpan - seg * width < 6) return true;
-    if (InsigniaPainter.litCells(n, d.diveShield)[seg]) return false;
-    if (creatures.shields.flashAge(d, 'dive', seg) != null) {
-      paint.color = const Color(0xFFFFFFFF);
-      c.drawRect(Rect.fromLTWH(sx, sy - 4, 3, 6), paint);
+    Offset pos,
+    ({double span, double nose, double lead, double thick, double lick}) b, {
+    int n = 1,
+    List<bool>? lit,
+    List<bool>? flashing,
+    double turn = 0,
+    double strength = 1,
+    double opacity = 1,
+    List<Color> palette = _thermal,
+    double seed = 0,
+  }) {
+    final paint = Paint()..isAntiAlias = true;
+    final t = model.clock;
+    final calm = sectors.flyover.reducedMotion;
+    // One smooth flame lick along the trailing edge (two low harmonics:
+    // continuous across segments, never per-column noise).
+    double lick(double u) {
+      if (calm) return b.lick * .5;
+      final w =
+          .55 +
+          .3 * math.sin(t * 17 + u * 5.1 + seed) +
+          .15 * math.sin(t * 29 - u * 9.3 + seed * 2);
+      return b.lick * w * (1 - .45 * u * u);
     }
-    return true;
+
+    c.save();
+    if (turn.abs() > .01) {
+      c
+        ..translate(pos.dx, pos.dy)
+        ..rotate(turn)
+        ..translate(-pos.dx, -pos.dy);
+    }
+    // A notch between segments: 1.6 units of span, whatever the scale.
+    final notch = n > 1 ? 1.6 / b.span : 0.0;
+    const steps = 18;
+    Path band(double u0, double u1, double share, {bool flame = true}) {
+      final p = Path();
+      final k = math.max(2, ((u1 - u0) / 2 * steps).ceil());
+      for (var i = 0; i <= k; i++) {
+        final u = u0 + (u1 - u0) * i / k;
+        final x = pos.dx + u * b.span;
+        final y = pos.dy + bowLead(b, u) + .5 * share;
+        i == 0 ? p.moveTo(x, y) : p.lineTo(x, y);
+      }
+      for (var i = k; i >= 0; i--) {
+        final u = u0 + (u1 - u0) * i / k;
+        final x = pos.dx + u * b.span;
+        final th = bowThick(b, u) * share + (flame ? lick(u) * share : 0);
+        p.lineTo(x, pos.dy + bowLead(b, u) - th);
+      }
+      return p..close();
+    }
+
+    for (var s = 0; s < n; s++) {
+      final u0 = -1 + 2 * s / n + (s > 0 ? notch : 0);
+      final u1 = -1 + 2 * (s + 1) / n - (s < n - 1 ? notch : 0);
+      final on = lit?[s] ?? true;
+      if (flashing?[s] ?? false) {
+        paint.color = const Color(0xFFFFFFFF).withValues(alpha: opacity);
+        c.drawPath(band(u0, u1, 1), paint);
+        continue;
+      }
+      if (!on) {
+        // A spent segment keeps the bow's outline as a dark ember socket,
+        // so the shield still reads as one shape.
+        paint.color = palette[0].withValues(alpha: .28 * strength * opacity);
+        c.drawPath(band(u0, u1, .7, flame: false), paint);
+        continue;
+      }
+      for (var k = 0; k < _bowBands.length; k++) {
+        final (share, alpha) = _bowBands[k];
+        paint.color = palette[k].withValues(
+          alpha: alpha * (k == 0 ? .55 + .45 * strength : 1) * opacity,
+        );
+        c.drawPath(band(u0, u1, share), paint);
+      }
+    }
+    // Embers shed from the two tips, attached to them and rising.
+    if (!calm) {
+      final tipU = .96;
+      for (final side in const [-1.0, 1.0]) {
+        final on = lit == null || lit[side < 0 ? 0 : n - 1];
+        if (!on) continue;
+        final tip = Offset(
+          pos.dx + side * tipU * b.span,
+          pos.dy + bowLead(b, tipU) - bowThick(b, tipU),
+        );
+        for (var e = 0; e < 3; e++) {
+          final age = ((t * 2.2 + e / 3 + seed * .1) % 1.0);
+          final r = (1.4 - age) * b.thick * .14;
+          paint.color = Color.lerp(
+            palette[2],
+            palette[0],
+            age,
+          )!.withValues(alpha: (1 - age) * .85 * strength * opacity);
+          c.drawCircle(
+            tip.translate(side * age * b.thick * .35, -age * b.thick * 1.6),
+            math.max(.5, r),
+            paint,
+          );
+        }
+      }
+    }
+    c.restore();
+  }
+
+  /// The dive heading as a turn of the bow (radians, ±0.45), so its nose
+  /// leads the creature's motion in every dive pose.
+  static double bowTurn(Demon d) {
+    if (d.vy < 30) return 0;
+    return (-math.atan2(d.vx, d.vy) * .8).clamp(-.45, .45);
+  }
+
+  /// alien-insignia: the thermal bow cut into one segment per dive-shield
+  /// point, spent points outside-in, a burning one flashing white.
+  void _diveBow(
+    Canvas c,
+    Offset pos,
+    Demon d,
+    ({double span, double nose, double lead, double thick, double lick}) b,
+  ) {
+    final n = math.max(1, d.diveShieldMax);
+    final lit = InsigniaPainter.litCells(n, d.diveShield);
+    final flashing = [
+      for (var s = 0; s < n; s++)
+        !lit[s] && creatures.shields.flashAge(d, 'dive', s) != null,
+    ];
+    _thermalBow(
+      c,
+      pos,
+      b,
+      n: n,
+      lit: lit,
+      flashing: flashing,
+      turn: bowTurn(d),
+      strength: (d.diveShield / n).clamp(.35, 1.0),
+      seed: d.seed,
+    );
   }
 
   void _smallOrMediumDiveShield(Canvas c, Offset pos, Demon d) {
-    final paint = Paint()..isAntiAlias = false;
     final notSoSmall =
         d.diveShieldMax >= 2 || d.elite || d.kind >= 2 || d.maxHp >= 3;
-    final ratio = (d.diveShield / math.max(1, d.diveShieldMax)).clamp(
-      0.35,
-      1.0,
-    );
-    if (notSoSmall) {
-      // Tier 2: Not-so-small creature double-shock incandescent re-entry plasma (~48 px).
-      const halfSpan = 24.0;
-      for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
-        final norm = dx / halfSpan;
-        final absNorm = norm.abs();
-        final curve = (1 - norm * norm) * 7.5;
-        final jitter = math.sin(model.clock * 38 + dx * 0.9) > 0.15 ? 1.0 : 0.0;
-        final sx = (pos.dx + dx - 1).roundToDouble();
-        final sy = (pos.dy + 11 + curve).roundToDouble();
-        if (_diveSegmentGap(c, d, dx, halfSpan, sx, sy, paint)) continue;
-
-        // Turbulent ablation envelope (superheated flame orange to deep crimson).
-        final tongueHeight =
-            ((1 - absNorm * 0.7) * 3.0 +
-                    (math.sin(model.clock * 32 + dx * 1.3).abs() * 3.0))
-                .roundToDouble();
-        paint.color = const Color(0xFFDD2C00)
-            .withValues(alpha: (0.55 + 0.35 * ratio) * (1 - absNorm * 0.35));
-        c.drawRect(
-          Rect.fromLTWH(sx, sy - 4 - tongueHeight, 3, 2 + tongueHeight),
-          paint,
-        );
-        paint.color = const Color(0xFFFF6D00)
-            .withValues(alpha: 0.75 + 0.2 * ratio);
-        c.drawRect(Rect.fromLTWH(sx, sy - 4 + jitter, 3, 3), paint);
-
-        // Primary compression shock (incandescent solar yellow-gold).
-        paint.color =
-            (absNorm < 0.55 ? const Color(0xFFFFD54F) : const Color(0xFFFFAB00))
-                .withValues(alpha: 0.85 + 0.15 * ratio);
-        c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 2), paint);
-
-        // Leading stagnation nose (blinding white-hot core).
-        if (absNorm < 0.75) {
-          paint.color = absNorm < 0.35
-              ? const Color(0xFFFFFFFF)
-              : const Color(0xFFFFF6CC);
-          c.drawRect(Rect.fromLTWH(sx, sy, 3, 2), paint);
-        }
-      }
-      // Ablative ember trail & smoke puffs streaming upward behind wingtips.
-      final sparkShift = ((model.clock * 24).floor() % 4).toDouble();
-      for (final side in [-1.0, 1.0]) {
-        final wx = (pos.dx + side * 23 - 1).roundToDouble();
-        paint.color = const Color(0xFFFF9100).withValues(alpha: 0.85);
-        c.drawRect(
-          Rect.fromLTWH(wx, (pos.dy + 3 - sparkShift).roundToDouble(), 2, 3),
-          paint,
-        );
-        paint.color = const Color(0xFFFF3D00).withValues(alpha: 0.7);
-        c.drawRect(
-          Rect.fromLTWH(
-            (wx + side * 2).roundToDouble(),
-            (pos.dy - 2 - sparkShift).roundToDouble(),
-            2,
-            2,
-          ),
-          paint,
-        );
-        paint.color = const Color(0xAA6D1B1B);
-        c.drawRect(
-          Rect.fromLTWH(
-            (wx + side).roundToDouble(),
-            (pos.dy - 6 - sparkShift).roundToDouble(),
-            2,
-            2,
-          ),
-          paint,
-        );
-      }
-    } else {
-      // Tier 1: Small creature compact white-yellow nose cone with flickering orange-red wisps (~32 px).
-      const halfSpan = 16.0;
-      for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
-        final norm = dx / halfSpan;
-        final absNorm = norm.abs();
-        final curve = (1 - norm * norm) * 5.5;
-        final jitter = math.sin(model.clock * 38 + dx * 0.9) > 0.2 ? 1.0 : 0.0;
-        final sx = (pos.dx + dx - 1).roundToDouble();
-        final sy = (pos.dy + 11 + curve).roundToDouble();
-        if (_diveSegmentGap(c, d, dx, halfSpan, sx, sy, paint)) continue;
-
-        // Turbulent orange-crimson ablation wisps.
-        paint.color = const Color(0xFFDD2C00).withValues(alpha: 0.65);
-        c.drawRect(Rect.fromLTWH(sx, sy - 4 - jitter, 3, 2), paint);
-        paint.color = const Color(0xFFFF6D00).withValues(alpha: 0.82);
-        c.drawRect(Rect.fromLTWH(sx, sy - 3, 3, 2), paint);
-
-        // Solar yellow-gold compression shock.
-        paint.color = const Color(0xFFFFD54F).withValues(alpha: 0.9);
-        c.drawRect(Rect.fromLTWH(sx, sy - 1, 3, 2), paint);
-
-        // White-hot stagnation nose.
-        if (absNorm < 0.75) {
-          paint.color = absNorm < 0.35
-              ? const Color(0xFFFFFFFF)
-              : const Color(0xFFFFF6CC);
-          c.drawRect(Rect.fromLTWH(sx, sy, 2, 2), paint);
-        }
-      }
-      final flicker = ((model.clock * 22).floor() % 3).toDouble();
-      for (final side in [-1.0, 1.0]) {
-        paint.color = const Color(0xFFFF9100).withValues(alpha: 0.8);
-        c.drawRect(
-          Rect.fromLTWH(
-            (pos.dx + side * 16 - 1).roundToDouble(),
-            (pos.dy + 5 - flicker).roundToDouble(),
-            2,
-            3,
-          ),
-          paint,
-        );
-        paint.color = const Color(0xFFFF3D00).withValues(alpha: 0.65);
-        c.drawRect(
-          Rect.fromLTWH(
-            (pos.dx + side * 17 - 1).roundToDouble(),
-            (pos.dy + 1 - flicker).roundToDouble(),
-            2,
-            2,
-          ),
-          paint,
-        );
-      }
-    }
+    _diveBow(c, pos, d, notSoSmall ? _bowMedium : _bowSmall);
   }
 
   void _carrierLighting(Canvas c, Offset center, double bank) {
@@ -3758,49 +3895,45 @@ class DemonScene extends FlameGame {
   }
 
   /// The berserk aura (drawn scaled with the sentinel): flaring eyes in the
-  /// rally and lock, a crimson-to-black thermal bow (≈ 128 px) in the
-  /// rush, and the rush-shield ring that shrinks as the shield wears.
+  /// rally and lock while its crimson bow forms (the transformation, when
+  /// nothing hurts it), then the bow at full size in the rush: the
+  /// super-powerful diving shield, dimming as the rush shield wears.
   void _sentinelBerserk(Canvas c, Offset pos, Demon d) {
-    final paint = Paint()..isAntiAlias = false;
     final phase = d.rushPhase;
-    if (phase == RushPhase.rally || phase == RushPhase.lock) {
+    final forming = phase == RushPhase.rally || phase == RushPhase.lock;
+    if (forming) {
       final flare = phase == RushPhase.lock
           ? 1.0
           : (d.rushClock / RushTuning.rally).clamp(0.0, 1.0);
       _sentinelEyes(c, pos, .6 + .4 * flare, scale: 1 + .25 * flare);
     }
-    if (phase == RushPhase.rush) {
-      const halfSpan = 64.0;
-      final reel = d.rushStagger > 0 ? .5 : 1.0;
-      for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
-        final norm = dx / halfSpan, absNorm = norm.abs();
-        final bow = (1 - norm * norm) * 18.0;
-        final jitter = math.sin(model.clock * 41 + dx * .8) * 1.5;
-        final sx = (pos.dx + dx - 1).roundToDouble();
-        final sy = (pos.dy + 18 + bow).roundToDouble();
-        final tongue =
-            ((1 - absNorm * .6) * 6 +
-                    math.sin(model.clock * 31 + dx * 1.3).abs() * 6)
-                .roundToDouble();
-        paint.color = const Color(0xFF1A0508)
-            .withValues(alpha: .7 * (1 - absNorm * .4) * reel);
-        c.drawRect(Rect.fromLTWH(sx, sy - 8 - tongue, 3, 3 + tongue), paint);
-        paint.color = const Color(0xFF8E1020)
-            .withValues(alpha: (.75 + .2 * (1 - absNorm)) * reel);
-        c.drawRect(
-          Rect.fromLTWH(sx, (sy - 5 + jitter).roundToDouble(), 3, 3),
-          paint,
-        );
-        paint.color =
-            (absNorm < .45 ? const Color(0xFFFF3B3B) : const Color(0xFFC2182B))
-                .withValues(alpha: .9 * reel);
-        c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 3), paint);
-        if (absNorm < .3) {
-          paint.color = const Color(0xFFFFC2B0).withValues(alpha: reel);
-          c.drawRect(Rect.fromLTWH(sx, sy, 3, 2), paint);
-        }
-      }
-    }
+    if (!forming && phase != RushPhase.rush) return;
+    if (d.rushShield <= 0 && phase == RushPhase.rush) return;
+    final ratio = d.rushShieldMax <= 0
+        ? 0.0
+        : (d.rushShield / d.rushShieldMax).clamp(0.0, 1.0);
+    final reel = d.rushStagger > 0 ? .5 : 1.0;
+    final grow = forming
+        ? Perspective.smoothstep(0, 1, d.lastStandTellProgress)
+        : 1.0;
+    c.save();
+    // The bow condenses out of the sentinel as it transforms.
+    final k = .55 + .45 * grow;
+    c
+      ..translate(pos.dx, pos.dy)
+      ..scale(k)
+      ..translate(-pos.dx, -pos.dy);
+    _thermalBow(
+      c,
+      pos,
+      _bowRush,
+      palette: _crimson,
+      strength: reel * (.4 + .6 * ratio),
+      opacity: forming ? .3 + .7 * grow : reel,
+      turn: phase == RushPhase.rush ? -d.rushHeading * .8 : 0,
+      seed: d.seed,
+    );
+    c.restore();
   }
 
   /// The rush shield (alien-insignia): the force-shield cell arc one row
@@ -3849,76 +3982,58 @@ class DemonScene extends FlameGame {
       );
     }
   }
-  // --- end sentinel rush presentation
 
-  void _sentinelDiveShield(Canvas c, Offset pos, Demon demon) {
-    // Tier 3: Massive roaring spacecraft atmospheric re-entry plasma bow shock (~104 px).
-    final ratio = (demon.diveShield / math.max(1, demon.diveShieldMax)).clamp(
-      0.3,
-      1.0,
-    );
+  /// playtest-fixes-3: a hit glancing off a berserk sentinel: a white-hot
+  /// star at the impact and five sparks ricocheting away from the body
+  /// (gold to ember), gone in [Deflect.life] s. Reduced motion keeps the
+  /// star only.
+  void _deflectSparks(Canvas c) {
+    if (model.deflects.isEmpty) return;
     final paint = Paint()..isAntiAlias = false;
-    const halfSpan = 52.0;
-    for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
-      final norm = dx / halfSpan;
-      final absNorm = norm.abs();
-      final bow = (1 - norm * norm) * 15.0;
-      final jitter = math.sin(model.clock * 38 + dx * 0.9) * 1.5;
-      final sx = (pos.dx + dx - 1).roundToDouble();
-      final sy = (pos.dy + 16 + bow).roundToDouble();
-      if (_diveSegmentGap(c, demon, dx, halfSpan, sx, sy, paint)) continue;
-
-      // Jagged trailing flame tongues licking backward along the flanks.
-      final tongueHeight =
-          ((1 - absNorm * 0.65) * 5.0 +
-                  math.sin(model.clock * 34 + dx * 1.1).abs() * 5.0)
-              .roundToDouble();
-      paint.color = const Color(0xFFDD2C00)
-          .withValues(alpha: (0.5 + 0.35 * ratio) * (1 - absNorm * 0.3));
+    for (final f in model.deflects) {
+      final u = (f.age / Deflect.life).clamp(0.0, 1.0);
+      final at = Offset(f.x, f.y);
+      // The star: a plus of white and gold, shrinking.
+      final r = (5 * (1 - u) + 1).roundToDouble();
+      paint.color = const Color(0xFFFFFFFF).withValues(alpha: 1 - u * .6);
       c.drawRect(
-        Rect.fromLTWH(sx, sy - 6 - tongueHeight, 3, 2 + tongueHeight),
+        Rect.fromCenter(center: at, width: r * 2 + 1, height: 3),
         paint,
       );
-
-      // Turbulent ablation envelope (superheated flame orange).
-      paint.color = const Color(0xFFFF6D00)
-          .withValues(alpha: 0.72 + 0.22 * ratio);
       c.drawRect(
-        Rect.fromLTWH(sx, (sy - 5 + jitter).roundToDouble(), 3, 3),
+        Rect.fromCenter(center: at, width: 3, height: r * 2 + 1),
         paint,
       );
-
-      // Primary compression shock (incandescent solar yellow-gold).
-      paint.color =
-          (absNorm < 0.5 ? const Color(0xFFFFD54F) : const Color(0xFFFFAB00))
-              .withValues(alpha: 0.85 + 0.15 * ratio);
-      c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 3), paint);
-
-      // Leading stagnation nose (blinding white-hot core).
-      if (absNorm < 0.75) {
-        paint.color = absNorm < 0.35
-            ? const Color(0xFFFFFFFF)
-            : const Color(0xFFFFF6CC);
-        c.drawRect(Rect.fromLTWH(sx, sy, 3, 2), paint);
-      }
-    }
-
-    // Roaring wingtip fire plumes & ablative ember trail streaming upward.
-    final flicker = (model.clock * 20).floor() % 4;
-    for (final side in [-1.0, 1.0]) {
-      for (var plume = 0; plume < 4; plume++) {
-        final px = (pos.dx + side * (46 + plume * 2) - 1).roundToDouble();
-        final py = (pos.dy + 9 - plume * 5 - flicker).roundToDouble();
-        paint.color = switch (plume) {
-          0 => const Color(0xFFFFD54F).withValues(alpha: 0.9),
-          1 => const Color(0xFFFF9100).withValues(alpha: 0.82),
-          2 => const Color(0xFFFF3D00).withValues(alpha: 0.68),
-          _ => const Color(0xAA6D1B1B),
-        };
-        c.drawRect(Rect.fromLTWH(px, py, 3, 3), paint);
+      paint.color = const Color(0xFFFFD54F).withValues(alpha: 1 - u);
+      c.drawRect(Rect.fromCenter(center: at, width: 3, height: 3), paint);
+      if (sectors.flyover.reducedMotion) continue;
+      // Away from the sentinel's centre (a ricochet off its ward).
+      final away = math.atan2(f.y - f.cy, f.x - f.cx);
+      for (var i = 0; i < 5; i++) {
+        final a = away + (i - 2) * .42 + math.sin(f.x * 3.1 + i) * .12;
+        final reach = (6 + 16 * u) * (.75 + .25 * ((i * 7) % 3));
+        final p = at + Offset(math.cos(a), math.sin(a)) * reach;
+        paint.color = Color.lerp(
+          const Color(0xFFFFF6CC),
+          const Color(0xFFFF6D00),
+          u,
+        )!.withValues(alpha: 1 - u);
+        c.drawRect(
+          Rect.fromCenter(
+            center: Offset(p.dx.roundToDouble(), p.dy.roundToDouble()),
+            width: 2,
+            height: 2,
+          ),
+          paint,
+        );
       }
     }
   }
+
+  // --- end sentinel rush presentation
+
+  void _sentinelDiveShield(Canvas c, Offset pos, Demon demon) =>
+      _diveBow(c, pos, demon, _bowSentinel);
 
   void _bossOrbitalArrivalEffects(
     Canvas c,
@@ -4772,10 +4887,15 @@ class _ShadowSpec {
     this.scale,
     this.alpha,
     this.bucket,
-    this.flat,
-  );
+    this.flat, {
+    this.occluder = false,
+  });
   final ui.Image image;
   final Rect src;
+
+  /// playtest-fixes-3: drawn as an occluder of the ground's light (the
+  /// lurk's look), not as ink in a blur bucket: every sentinel shadow.
+  final bool occluder;
 
   /// Visible centre (on the surface) and the flat-ground point the drape is
   /// built around (terrain-shadows; equal on flat ground).
@@ -4791,6 +4911,7 @@ class _ShadowSpec {
     alpha * k.clamp(0.0, 1.0),
     bucket,
     flat,
+    occluder: occluder,
   );
 }
 

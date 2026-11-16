@@ -35,6 +35,13 @@ abstract final class RushTuning {
   /// Speed factor while staggered (its rush shield just broke).
   static const staggerSlow = .4;
 
+  /// playtest-fixes-3: score per (cycle + 1) × enemy points. A pass
+  /// dodged (left without touching the ship) pays more than breaking the
+  /// rush shield, and a sentinel that burns out after its last pass was
+  /// dodged pays its full kill value: dodging is always the better play
+  /// (standing in the charge to break the shield also risks a life).
+  static const dodgePoints = 300, breakPoints = 150;
+
   /// The homing limit (degrees from the lock's aim): with it the whole
   /// homing reach stays inside the smallest dodge room (design §6.4, as
   /// built; Normal 104 u, Hard 124 u < 162 − 24).
@@ -252,12 +259,18 @@ extension SentinelRush on ArcadeModel {
             d.x > ArcadeModel.width + 56 ||
             d.y > ArcadeModel.height + 32) {
           if (!d.rushContact) {
+            score += _rushPoints(RushTuning.dodgePoints);
             _queueGameEvent(GameEventNames.rushSurvived, {'pass': d.rushPass});
             _queueGameEvent(GameEventNames.sentinelRushMissed, {
               'pass': d.rushPass,
             });
           }
           if (d.rushPass >= policy.rushPasses) {
+            // Outlasted: the last pass was dodged, so it burns out paying
+            // its kill value (never a power drop or a kill count).
+            if (!d.rushContact) {
+              score += _bonusKillPoints(_killBase(d).round());
+            }
             _sacrifice(d);
             return false;
           }
@@ -308,11 +321,51 @@ extension SentinelRush on ArcadeModel {
     });
   }
 
-  /// A player hit on a rushing sentinel while its rush shield holds:
-  /// every hit damages it (breaker damage), the hull takes nothing.
+  int _rushPoints(int base) =>
+      (base * (cycle + 1) * policy.enemyPoints).round();
+
+  /// Whether [d] is in its berserk transformation (the rally and lock):
+  /// nothing hurts it then (playtest-fixes-3).
+  bool berserkTransforming(Demon d) =>
+      d.lastStand &&
+      (d.rushPhase == RushPhase.none ||
+          d.rushPhase == RushPhase.rally ||
+          d.rushPhase == RushPhase.lock);
+
+  /// A hit that glances off: a spark at the impact (or the body's edge).
+  void _deflect(Demon d, double? atX, double? atY) {
+    deflects.add(Deflect(atX ?? d.x, atY ?? d.y + d.hitHalfHeight, d.x, d.y));
+    if (deflects.length > 24) deflects.removeAt(0);
+    // No white body flash: the hit did not land; the spark says so.
+    d.flash = 0;
+    events.add('hit');
+  }
+
+  /// A player hit on a berserk sentinel (playtest-fixes-3):
+  /// - in the transformation (rally, lock) it is invulnerable: the hit
+  ///   deflects with a spark and nothing is damaged;
+  /// - in the rush, its rush shield is the super-powerful diving shield:
+  ///   only offensive powers and homing hits wear it, with breaker damage
+  ///   (damage + 1 Powerful + 1 Large); the bare gun deflects. The hull
+  ///   takes nothing while it holds.
   /// Returns true when the hit was absorbed.
-  bool _rushShieldHit(Demon d, int damage) {
-    if (!d.lastStand || d.rushShield <= 0) return false;
+  bool _rushShieldHit(
+    Demon d,
+    int damage, {
+    bool homing = false,
+    double? atX,
+    double? atY,
+  }) {
+    if (!d.lastStand) return false;
+    if (berserkTransforming(d)) {
+      _deflect(d, atX, atY);
+      return true;
+    }
+    if (d.rushShield <= 0) return false;
+    if (!hasOffensivePower && !homing) {
+      _deflect(d, atX, atY);
+      return true;
+    }
     final breaker =
         damage +
         (hasPower(Power.powerful) ? 1 : 0) +
@@ -322,7 +375,7 @@ extension SentinelRush on ArcadeModel {
     if (d.rushShield == 0) {
       final midRush = d.rushPhase == RushPhase.rush;
       if (midRush) {
-        score += (400 * (cycle + 1) * policy.enemyPoints).round();
+        score += _rushPoints(RushTuning.breakPoints);
         d.rushStagger = RushTuning.stagger;
       }
       _queueGameEvent(GameEventNames.rushShieldBroken, {

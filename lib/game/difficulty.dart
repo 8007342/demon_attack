@@ -81,15 +81,21 @@ class DifficultyPolicy {
   /// The sentinel final rush (design §6): birth chance (+ up to 0.10
   /// with skill), rush shield, top speed (u/s at hostile rate), homing
   /// turn rate (°/s) and passes.
+  ///
+  /// playtest-fixes-3: rushes a little more often (was .20 / .35 / .45;
+  /// Hard .55 cost the Average pilot +3.4 lives on route 1, so .50),
+  /// and the rush shield is the super-powerful diving shield: only
+  /// offensive powers and homing hits wear it (breaker damage), so it
+  /// is about twice the old points (was 3 / 4 + route ÷ 2 / 5 + route ÷ 2).
   double get rushChance => switch (difficulty) {
-    Difficulty.easy => .20,
-    Difficulty.normal => .35,
-    Difficulty.hard => .45,
+    Difficulty.easy => .28,
+    Difficulty.normal => .45,
+    Difficulty.hard => .50,
   };
   int rushShieldFor(int route) => switch (difficulty) {
-    Difficulty.easy => 3,
-    Difficulty.normal => 4 + route ~/ 2,
-    Difficulty.hard => 5 + route ~/ 2,
+    Difficulty.easy => 6,
+    Difficulty.normal => 8 + route ~/ 2,
+    Difficulty.hard => 10 + route ~/ 2,
   };
   double get rushSpeed => switch (difficulty) {
     Difficulty.easy => 640,

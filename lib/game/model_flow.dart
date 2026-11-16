@@ -174,15 +174,21 @@ extension ArcadeFlow on ArcadeModel {
       final ax = m.x0 - 180, ay = m.y0 - 160;
       final al = math.max(1.0, math.sqrt(ax * ax + ay * ay));
       final flee = Perspective.smoothstep(.2, math.max(.6, routEnd + .6), s);
-      var x = m.x0 + ax / al * burst + dir * 70 * flee + jx * 6;
-      var y = m.y0 + ay / al * burst * .6 - 40 * flee + jy * 4;
+      var x = m.x0 + ax / al * burst + dir * 24 * flee + jx * 6;
+      var y = m.y0 + ay / al * burst * .6 - 64 * flee + jy * 4;
       var nn = m.n0 + (.3 - m.n0) * flee;
-      // Pursuit: ahead of the climbing ship, drifting toward [dir] the whole
-      // time (direction is kept across the swap: the motivated cut).
+      // Pursuit: straight up ahead of the climbing ship (playtest-fixes-3:
+      // a sideways drift read as the squadron flying sideways). The flock
+      // gathers over the ship's lane and climbs into the high cloud; [dir]
+      // is kept for the Descent, where it streams out (the motivated cut).
       final pt = (s - p0).clamp(0.0, 20.0);
-      final cx = 180 + dir * (-40 + 14 * pt);
+      final cx = 180 + (shipX - 180) * .5;
       final px = cx + (m.index - (n - 1) / 2) * 13 + jx * 10;
-      final py = 92 + (m.index % 3) * 9 + jy * 7;
+      final py =
+          92 -
+          46 * Perspective.smoothstep(0, 3, pt) +
+          (m.index % 3) * 9 +
+          jy * 7;
       x += (px - x) * pursue;
       y += (py - y) * pursue;
       nn += (.36 - nn) * pursue;
