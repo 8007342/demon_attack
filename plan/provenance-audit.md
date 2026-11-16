@@ -191,3 +191,9 @@ where one is named.
 | <a id="CRE-5"></a>CRE-5 | research X12; design §3.1–§3.4 | Collapse tiers and numbers (sections, then chunks; the timeline, kicks, spins, gravity, depth scale) | UNSOURCED | `test/carrier_render_engine_test.dart` (hierarchy, continuity, cohesion) |
 | <a id="CRE-6"></a>CRE-6 | research F5; design §4 | Shield wear mapping: fixed footprint, width and alpha by the shield, growing gaps, local crackle | UNSOURCED | `test/carrier_render_engine_test.dart` (wear, dropout, offset); `art/contact/carrier-render-engine-field.png` |
 | <a id="CRE-7"></a>CRE-7 | research P3; design §2.2 | Texture memory arithmetic (RGBA8 at 4 bytes per pixel) and the 2 px/unit, ≤ 2,048 px cap | UNSOURCED | `compositeBytes` printed by the review test |
+
+## Part W: dynamic-weather (added 2026-11-16)
+
+| ID | File:line | Conclusion | Status | Source or note |
+|---|---|---|---|---|
+| <a id="W-01"></a>W-01 | plan/dynamic-weather-research.md, conclusion 3 | Rain drawn under the play (and its dimming) keeps bullets and creatures readable | UNSOURCED | No read source measures rain density against gameplay readability. PC Gamer, 80.lv and Tatarchuk 2006 were unreachable (unread: snippet only). Checked instead on `art/contact/dynamic-weather-tiers.png` |
