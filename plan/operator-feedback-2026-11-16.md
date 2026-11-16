@@ -133,3 +133,9 @@ exclusive to the Stormfront bonus level.
   research and fixes.
 - **The force field:** it should thin out (thickness or opacity wearing down) instead of narrowing inward. It took a
   while to understand that the fields were wearing down.
+
+**Spec'd and implemented on today's art** (branch `work/carrier-render-engine`):
+- Research, with a source beside every conclusion: [`plan/carrier-render-engine-research.md`](carrier-render-engine-research.md).
+- Spec: [`openspec/changes/carrier-render-engine/`](../openspec/changes/carrier-render-engine/) (design §1 has the
+  causes; §5 has the interfaces the re-render on `work/carrier-v3-render` is expected to provide).
+- Sheets and clips: `art/contact/carrier-render-engine-{bend,collapse,field}.png`, `-collapse.gif`, `-bend-sweep.gif`.

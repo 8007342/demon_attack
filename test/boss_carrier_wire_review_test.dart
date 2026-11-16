@@ -27,7 +27,7 @@ import 'playtest_fixes_review_test.dart' show decodeReviewImage, loadReviewArt;
 /// - `-tour3`, `-tour5`: later tours (S0 bakes; S2 and S3 are the runtime
 ///   overlay fallback with charred stumps);
 /// - `-overflight`: the belly in the Overflight;
-/// - `-collapse`: the module wrecks with their shadows.
+/// - `-collapse`: the wreck breaking up, with its shadow.
 ///
 /// Frames go to `$BOSS_CARRIER_WIRE_REVIEW_DIR` (default
 /// .cache/boss-carrier-wire-review); with
@@ -257,7 +257,7 @@ void main() {
     }
     await _sheet(tester, 'overflight', over, size, columns: 6);
 
-    // The collapse: every module falls with its shadow, the carapace last.
+    // The collapse: one wreck breaking up, with its shadow.
     final b = await d.engage(0, 0);
     b
       ..shield = 0
@@ -272,10 +272,9 @@ void main() {
       expect(dir.phase, BossPhase.collapse);
       fall.add(await d.grab('collapse-$i'));
     }
-    expect(
-      dir.wrecks.where((w) => !w.plate && scene.armada.wreckSprite(w) != null),
-      isNotEmpty,
-    );
+    // carrier-render-engine: a v2 carrier falls as one fractured wreck.
+    expect(dir.collapse?.fracture, isNotNull);
+    expect(scene.armada.wreckTriangles, greaterThan(0));
     await _sheet(tester, 'collapse', fall, size, columns: 4);
     await dispose(tester);
   });

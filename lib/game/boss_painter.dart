@@ -8,6 +8,9 @@ import 'boss_atlas.dart';
 import 'boss_director.dart';
 import 'boss_grammar.dart';
 import 'carrier_bend.dart';
+import 'carrier_compose.dart';
+import 'carrier_field.dart';
+import 'carrier_wreck.dart';
 import 'model.dart';
 
 /// Draws the boss armada from `assets/images/boss-<class>.png`
@@ -68,41 +71,63 @@ class BossPainter {
   /// the screen) is drawn: the camera uses the carrier band.
   bool get carrier => heroReady && hero!.set.isNotEmpty;
 
-  // --- carrier-v3 §2: one stored view, bent at runtime ---
+  // --- carrier-render-engine §2: compose, then warp ---
   /// The runtime bend of a v2 carrier (set by the scene every frame; null
-  /// draws the rigid hero view, as under reduced motion).
+  /// draws the hull at rest, as under reduced motion).
   CarrierBend? bend;
 
-  /// Bend meshes per hull, stage, pass, assembly and detached set; the
-  /// page shaders (bilinear, set explicitly, design §2.4).
-  final Map<String, CarrierMesh> _meshes = {};
-  final Map<int, ImageShader> _pageShaders = {};
+  /// The hull's footprint (the field's distance map, when built): the warp
+  /// and wreck meshes keep only the cells near the hull's own pixels.
+  CarrierFieldMap? footprint;
+
+  /// Per pass (false: back, true: front) the current composite and its
+  /// warp mesh; re-composed only when the damage state (stage, detached
+  /// set, assembly) or the footprint changes.
+  final Map<bool, (CarrierComposite, CarrierWarpMesh)> _composed = {};
   final Paint _meshPaint = Paint()..filterQuality = FilterQuality.low;
 
+  /// The one height field both passes share (keyed by the damage state):
+  /// the front and back meshes displace every point alike.
+  CarrierHeightGrid? _heights;
+  String? _heightsKey;
+
   /// The meshes drawn last frame (tests, profiling): vertices, triangles,
-  /// `drawVertices` calls.
-  int meshVertices = 0, meshTriangles = 0, meshCalls = 0;
+  /// `drawVertices` calls; and how many composites were built so far.
+  int meshVertices = 0, meshTriangles = 0, meshCalls = 0, composites = 0;
+
+  /// Composite texture bytes resident (both passes and the wreck).
+  int get compositeBytes =>
+      _composed.values.fold(0, (n, e) => n + e.$1.bytes) +
+      (_wreckArt?.$1.bytes ?? 0);
+
+  /// The resident composites' pixel sizes (review, profiling).
+  String get compositeSizes => [
+    for (final e in _composed.entries)
+      '${e.key ? 'front' : 'back'}:${e.value.$1.image.width}x${e.value.$1.image.height}',
+    if (_wreckArt case (final w, _)) 'wreck:${w.image.width}x${w.image.height}',
+  ].join(' ');
 
   void _dropMeshes() {
-    for (final m in _meshes.values) {
+    for (final (c, m) in _composed.values) {
+      c.dispose();
       m.dispose();
     }
-    _meshes.clear();
-    _pageShaders.clear();
+    _composed.clear();
+    _heights = null;
+    _heightsKey = null;
+    footprint = null;
+    _dropWreck();
   }
 
-  /// Where a hull-local rig point of [module] is drawn under the bend
-  /// (lights, fires, nozzles, gates and the field follow the hull).
+  /// Where a hull-local rig point is drawn under the bend (lights, fires,
+  /// nozzles, gates and the field follow the hull): the same displacement
+  /// and height field as the mesh, so a point never slides on the art.
   Offset bent(double x, double y, {String module = 'carapace'}) {
     final b = bend;
     if (b == null) return Offset(x, y);
-    final lag = CarrierBend.lags(module);
-    return b.displace(
-      x,
-      y,
-      h: CarrierBend.heightOf(module),
-      wing: lag ? ((x.abs() - 180) / 180).clamp(0.0, 1.0) : 0,
-    );
+    final h = _heights?.at(x, y) ?? CarrierBend.heightOf(module);
+    final (dx, dy) = CarrierBend.displacement(x, y, h, b.psi, b.phi, b.theta);
+    return Offset(x + dx, y + dy);
   }
 
   String _moduleOf(String id) {
@@ -112,9 +137,81 @@ class BossPainter {
     return 'carapace';
   }
 
-  /// The hero view of a v2 carrier as one bent mesh per page: one
-  /// `drawVertices` per page and pass (design §2.4). Detached modules
-  /// drawn as stumps stay rigid sprites under their char layer.
+  /// The composite layers of the hero view at [stage]: [front] the prow
+  /// pass, false the back pass, null both (back, then front: the wreck).
+  List<CarrierCompositeLayer> _compositeLayers(
+    int stage, {
+    bool? front,
+    Set<int> detached = const {},
+  }) {
+    final h = hero!;
+    final v = h.views[BossView.hero.storedTag];
+    if (v == null) return const [];
+    final st = _drawnStage(v, stage);
+    final out = <CarrierCompositeLayer>[];
+    for (final pass in front == null ? const [false, true] : [front]) {
+      for (final m in h.modules) {
+        if (isFront(m) != pass) continue;
+        if (!_assembled(m.id)) continue;
+        var list = v.layers[m.id];
+        var flip = false;
+        if (list == null && m.id.endsWith('L')) {
+          list = v.layers['${m.id.substring(0, m.id.length - 1)}R'];
+          flip = true;
+        }
+        final s = list?[st];
+        if (s == null) continue;
+        final gone = m.detach != null && detached.contains(m.detach);
+        if (gone && st >= stage) continue;
+        final k = s.ppu;
+        out.add(
+          CarrierCompositeLayer(
+            page: s.page,
+            src: Rect.fromLTWH(
+              s.x.toDouble(),
+              s.y.toDouble(),
+              s.w.toDouble(),
+              s.h.toDouble(),
+            ),
+            dst: Rect.fromLTWH(s.dx, s.dy, s.w / k, s.h / k),
+            flip: flip,
+            height: CarrierBend.heightOf(m.module),
+            stump: gone,
+          ),
+        );
+      }
+    }
+    return out;
+  }
+
+  String _stateKey(int stage, Set<int> detached) {
+    final h = hero!;
+    final v = h.views[BossView.hero.storedTag];
+    final st = v == null ? 0 : _drawnStage(v, stage);
+    final key = StringBuffer('${h.key}|$st|$stage|')
+      ..writeAll((detached.toList()..sort()), ',')
+      ..write('|')
+      ..writeAll(assembly?.modules.map((m) => m.id) ?? const ['*'], ',')
+      ..write('|${footprint != null}');
+    return key.toString();
+  }
+
+  /// Whether the grid cell [cell] can show any of the hull: it overlaps a
+  /// layer's rect and (with the footprint) lies within a cell of the hull.
+  bool Function(Rect) _keep(List<CarrierCompositeLayer> layers, double step) {
+    final map = footprint;
+    final rects = [for (final l in layers) l.placed];
+    return (cell) {
+      if (!rects.any((r) => r.overlaps(cell))) return false;
+      if (map == null) return true;
+      final c = cell.center;
+      return map.at(c.dx, c.dy) < step * .75;
+    };
+  }
+
+  /// The hero view of a v2 carrier: the pass's layers composed into one
+  /// texture (cached until the damage state changes) and warped by one
+  /// mesh, one `drawVertices` per pass.
   void _paintHeroMesh(
     Canvas c,
     Offset center, {
@@ -123,89 +220,63 @@ class BossPainter {
     Set<int> detached = const {},
     double opacity = 1,
   }) {
-    final h = hero!;
-    final v = h.views[BossView.hero.storedTag];
-    if (v == null) return;
-    final st = _drawnStage(v, stage);
-    final key = StringBuffer('${h.key}|$st|$front|')
-      ..writeAll((detached.toList()..sort()), ',')
-      ..write('|')
-      ..writeAll(assembly?.modules.map((m) => m.id) ?? const ['*'], ',');
-    final stumps = <(BossHeroSprite, bool)>[];
-    final layers = <CarrierMeshLayer>[];
-    for (final m in h.modules) {
-      if (isFront(m) != front) continue;
-      if (!_assembled(m.id)) continue;
-      var list = v.layers[m.id];
-      var flip = false;
-      if (list == null && m.id.endsWith('L')) {
-        list = v.layers['${m.id.substring(0, m.id.length - 1)}R'];
-        flip = true;
-      }
-      final s = list?[st];
-      if (s == null) continue;
-      if (m.detach != null && detached.contains(m.detach)) {
-        if (st >= stage) continue;
-        stumps.add((s, flip));
-        continue;
-      }
-      final k = s.ppu;
-      // Half a texel inside the sprite's rect: bilinear never samples a
-      // neighbour on the page.
-      const inset = .5;
-      layers.add(
-        CarrierMeshLayer(
-          page: s.page,
-          left: s.dx + inset / k,
-          top: s.dy + inset / k,
-          right: s.dx + (s.w - inset) / k,
-          bottom: s.dy + (s.h - inset) / k,
-          u0: s.x + inset,
-          v0: s.y + inset,
-          u1: s.x + s.w - inset,
-          v1: s.y + s.h - inset,
-          flip: flip,
-          height: CarrierBend.heightOf(m.module),
-          lag: CarrierBend.lags(m.module),
-        ),
+    final state = _stateKey(stage, detached);
+    if (_heightsKey != state) {
+      final all = _compositeLayers(stage, detached: detached);
+      final f = hero!.frame;
+      _heights = CarrierHeightGrid.fromLayers(
+        Rect.fromLTRB(f.$1, f.$2, f.$3, f.$4),
+        all,
       );
+      _heightsKey = state;
     }
-    final mesh = _meshes.putIfAbsent(
-      key.toString(),
-      () => CarrierMesh(layers),
-    );
+    final key = '$state|$front';
+    var entry = _composed[front];
+    if (entry == null || entry.$1.key != key) {
+      if (entry != null) {
+        entry.$1.dispose();
+        entry.$2.dispose();
+      }
+      final layers = _compositeLayers(stage, front: front, detached: detached);
+      if (layers.isEmpty) {
+        _composed.remove(front);
+        return;
+      }
+      var rect = layers.first.placed;
+      for (final l in layers.skip(1)) {
+        rect = rect.expandToInclude(l.placed);
+      }
+      rect = Rect.fromLTRB(
+        rect.left.floorToDouble(),
+        rect.top.floorToDouble(),
+        rect.right.ceilToDouble(),
+        rect.bottom.ceilToDouble(),
+      );
+      final comp = CarrierComposer.compose(layers, heroPages!, rect, key: key);
+      composites++;
+      final mesh = CarrierWarpMesh(
+        rect,
+        comp.ppu,
+        heights: _heights!,
+        keep: _keep(layers, 20),
+      );
+      _composed[front] = entry = (comp, mesh);
+    }
+    final (comp, mesh) = entry;
     mesh.rebuild(bend);
-    final pages = heroPages!;
     c.save();
     c.translate(center.dx, center.dy);
-    _meshPaint.color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0));
-    for (final p in mesh.pages.keys) {
-      _meshPaint.shader = _pageShaders[p] ??= ImageShader(
-        pages[p],
-        TileMode.clamp,
-        TileMode.clamp,
-        _identity,
-        filterQuality: FilterQuality.low,
-      );
-      c.drawVertices(mesh.verticesOf(p), BlendMode.srcOver, _meshPaint);
-      meshCalls++;
-    }
+    _noteLayer(c, comp.rect);
+    _meshPaint
+      ..color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0))
+      ..shader = comp.shader;
+    c.drawVertices(mesh.vertices, BlendMode.srcOver, _meshPaint);
+    _meshPaint.shader = null;
+    meshCalls++;
     meshVertices += mesh.vertexCount;
     meshTriangles += mesh.triangleCount;
     c.restore();
-    for (final (s, flip) in stumps) {
-      c.saveLayer(null, _stump);
-      heroSprite(c, s, center, opacity: opacity, flipX: flip);
-      c.restore();
-    }
   }
-
-  static final _identity = Float64List.fromList([
-    1, 0, 0, 0, //
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1,
-  ]);
 
   /// The hero view's S0 sprites of the run's assembly, with their flips
   /// and modules (both passes).
@@ -217,10 +288,10 @@ class BossPainter {
       for (final m in h.modules)
         if (_assembled(m.id))
           if ((v.layers[m.id] ??
-                  (m.id.endsWith('L')
-                      ? v.layers['${m.id.substring(0, m.id.length - 1)}R']
-                      : null))
-              ?.first
+                      (m.id.endsWith('L')
+                          ? v.layers['${m.id.substring(0, m.id.length - 1)}R']
+                          : null))
+                  ?.first
               case final s?)
             (s, v.layers[m.id] == null, m.module),
     ];
@@ -236,10 +307,7 @@ class BossPainter {
           final k = s.ppu;
           final l = s.dx, r = s.dx + s.w / k, b = s.dy + s.h / k;
           final outer = (l.abs() > r.abs() ? l : r) * (flip ? -1 : 1);
-          return (
-            Offset(outer - outer.sign * 6, b - .18 * (b - s.dy)),
-            module,
-          );
+          return (Offset(outer - outer.sign * 6, b - .18 * (b - s.dy)), module);
         }(),
   ];
 
@@ -285,7 +353,42 @@ class BossPainter {
   }
 
   /// Clears the per-frame mesh counters (the scene, once per frame).
-  void beginFrame() => meshVertices = meshTriangles = meshCalls = 0;
+  void beginFrame() {
+    meshVertices = meshTriangles = meshCalls = 0;
+    layerBounds.clear();
+  }
+
+  /// carrier-render-engine: draw the collapse's shadow layer (one blurred
+  /// `saveLayer` over the wreck for 7 s, the likeliest phone cost).
+  /// `--dart-define=CARRIER_WRECK_SHADOW=false` turns it off.
+  static bool collapseShadow = const bool.fromEnvironment(
+    'CARRIER_WRECK_SHADOW',
+    defaultValue: true,
+  );
+
+  /// Tests only: record every offscreen layer's and composite's bounds, in
+  /// device coordinates, for the straight-edge pixel test.
+  bool recordLayers = false;
+  final List<Rect> layerBounds = [];
+
+  void _noteLayer(Canvas c, Rect r) {
+    if (!recordLayers) return;
+    final m = c.getTransform();
+    Offset map(Offset p) => Offset(
+      m[0] * p.dx + m[4] * p.dy + m[12],
+      m[1] * p.dx + m[5] * p.dy + m[13],
+    );
+    final a = map(r.topLeft), b = map(r.topRight);
+    final d = map(r.bottomLeft), e = map(r.bottomRight);
+    layerBounds.add(
+      Rect.fromLTRB(
+        math.min(math.min(a.dx, b.dx), math.min(d.dx, e.dx)),
+        math.min(math.min(a.dy, b.dy), math.min(d.dy, e.dy)),
+        math.max(math.max(a.dx, b.dx), math.max(d.dx, e.dx)),
+        math.max(math.max(a.dy, b.dy), math.max(d.dy, e.dy)),
+      ),
+    );
+  }
 
   /// Installs an already decoded atlas (tests and the gallery).
   void setAtlas(int cls, ui.Image atlas) {
@@ -652,15 +755,14 @@ class BossPainter {
     final dome = front && hero!.set.isNotEmpty;
     if (sev > 0 || dome) {
       final f = hero!.frame;
-      c.saveLayer(
-        Rect.fromLTRB(
-          center.dx + f.$1 - 8,
-          center.dy + f.$2 - 8,
-          center.dx + f.$3 + 8,
-          center.dy + f.$4 + 8,
-        ),
-        Paint(),
+      final r = Rect.fromLTRB(
+        center.dx + f.$1 - 8,
+        center.dy + f.$2 - 8,
+        center.dx + f.$3 + 8,
+        center.dy + f.$4 + 8,
       );
+      _noteLayer(c, r);
+      c.saveLayer(r, Paint());
     }
     if (previous != null && previous != view && blend < 1) {
       _paintHeroView(
@@ -927,6 +1029,267 @@ class BossPainter {
       c.drawRect(Rect.fromLTWH(p.dx - 2, p.dy - 2, 4, 4), _block);
       _block.color = color.withValues(alpha: opacity);
       c.drawRect(Rect.fromLTWH(p.dx - 1, p.dy - 1, 2, 2), _block);
+    }
+  }
+
+  // --- carrier-render-engine §3: the cohesive collapse ---
+  /// The wreck's art: the hull at death composed once (both passes,
+  /// charred, its cut edges feathered), its fracture, and the key.
+  (CarrierComposite, CarrierFracture)? _wreckArt;
+  Float32List? _wreckPos, _wreckTex;
+  ui.Vertices? _wreckVertices;
+
+  /// Triangles of the wreck drawn last frame (tests, profiling).
+  int wreckTriangles = 0;
+
+  void _dropWreck() {
+    _wreckArt?.$1.dispose();
+    _wreckArt = null;
+    _wreckPos = _wreckTex = null;
+    _wreckVertices?.dispose();
+    _wreckVertices = null;
+  }
+
+  /// The wreck's fracture once built (tests, review).
+  CarrierFracture? get wreckFracture => _wreckArt?.$2;
+
+  /// Builds (once per collapse) the wreck's composite and fracture and
+  /// attaches it to [k]. False without a hero hull.
+  bool prepareCollapse(CarrierCollapse k) {
+    if (!heroReady) return false;
+    final key = 'wreck|${_stateKey(k.stage, k.detached)}|${k.seed}';
+    if (_wreckArt?.$1.key != key) {
+      _dropWreck();
+      // The fight's composites are done: only the wreck stays resident.
+      for (final (comp, mesh) in _composed.values) {
+        comp.dispose();
+        mesh.dispose();
+      }
+      _composed.clear();
+      final layers = _compositeLayers(k.stage, detached: k.detached);
+      if (layers.isEmpty) return false;
+      final f = hero!.frame;
+      final rect = Rect.fromLTRB(f.$1, f.$2, f.$3, f.$4);
+      final comp = CarrierComposer.compose(
+        layers,
+        heroPages!,
+        rect,
+        key: key,
+        char: .42,
+        feather: 56,
+      );
+      composites++;
+      // Seeds: each layer's centre, its big layers split into ~180-unit
+      // cells (the structure: modules break along their own seams).
+      final seeds = <FractureSeed>[];
+      for (final l in layers) {
+        final r = l.placed;
+        final nx = (r.width / 180).ceil(), ny = (r.height / 180).ceil();
+        for (var j = 0; j < ny; j++) {
+          for (var i = 0; i < nx; i++) {
+            final x = r.left + (i + .5) * r.width / nx;
+            final y = r.top + (j + .5) * r.height / ny;
+            seeds.add((x, y, CarrierFracture.sectionOf(x, y)));
+          }
+        }
+      }
+      final keep = _keep(layers, 20);
+      final frac = CarrierFracture.build(
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        seeds: seeds,
+        keep: (l, t, r, b) => keep(Rect.fromLTRB(l, t, r, b)),
+        seed: k.seed,
+      );
+      _wreckArt = (comp, frac);
+      final n = frac.rest.length;
+      _wreckPos = Float32List(n);
+      _wreckTex = Float32List(n);
+      for (var i = 0; i < n; i += 2) {
+        _wreckTex![i] = (frac.rest[i] - rect.left) * comp.ppu;
+        _wreckTex![i + 1] = (frac.rest[i + 1] - rect.top) * comp.ppu;
+      }
+    }
+    k.attach(_wreckArt!.$2);
+    return true;
+  }
+
+  /// Draws the collapse [k]: one `drawVertices` of the fractured wreck
+  /// texture (every chunk at its body's pose, the sag, the common depth
+  /// scale), its shadow on the deck below, the fog taking it, and the cloud
+  /// deck rising over it from below ([cloudY]: the deck's top edge, arena
+  /// units). The blasts and smoke are the scene's ([paintCollapseSmoke]).
+  void paintCollapse(
+    Canvas c,
+    CarrierCollapse k, {
+    required Color fog,
+    required Color cloud,
+    Color? shadowInk,
+    double shadowAlpha = 0,
+    Offset shadowShift = Offset.zero,
+  }) {
+    wreckTriangles = 0;
+    if (!prepareCollapse(k)) return;
+    final (comp, frac) = _wreckArt!;
+    final pos = _wreckPos!, rest = frac.rest;
+    final t = k.t;
+    // Per body: its pose at t; then every vertex through its chunk's body.
+    final poses = [for (var i = 0; i < k.bodies.length; i++) k.pose(i, t)];
+    final (ox, oy) = k.sinkCentre(t);
+    final s = k.scaleAt(t);
+    // The bend the hull died in carries on (its springs relax to rest), so
+    // the wreck starts exactly where the hull was drawn.
+    final b = bend;
+    final heights = _heights;
+    final bent =
+        b != null &&
+        (b.psi.abs() + b.phi.abs() + b.theta.abs()) > .01 * CarrierBend.deg;
+    var minX = double.infinity, minY = double.infinity;
+    var maxX = -double.infinity, maxY = -double.infinity;
+    for (var tri = 0; tri < frac.triangles; tri++) {
+      final p = poses[frac.chunkBody[frac.triChunk[tri]]];
+      final cs = math.cos(p.a), sn = math.sin(p.a);
+      for (var v = 0; v < 3; v++) {
+        final o = tri * 6 + v * 2;
+        var x = rest[o], y = rest[o + 1] + k.sagAt(rest[o], rest[o + 1]);
+        if (bent) {
+          final (dx, dy) = CarrierBend.displacement(
+            x,
+            y,
+            heights?.at(x, y) ?? 0,
+            b.psi,
+            b.phi,
+            b.theta,
+          );
+          x += dx;
+          y += dy;
+        }
+        final rx = x - p.cx, ry = y - p.cy;
+        final wx = p.x + cs * rx - sn * ry, wy = p.y + sn * rx + cs * ry;
+        final fx = ox + (wx - ox) * s, fy = oy + (wy - oy) * s;
+        pos[o] = fx;
+        pos[o + 1] = fy;
+        if (fx < minX) minX = fx;
+        if (fx > maxX) maxX = fx;
+        if (fy < minY) minY = fy;
+        if (fy > maxY) maxY = fy;
+      }
+    }
+    _wreckVertices?.dispose();
+    final verts = _wreckVertices = ui.Vertices.raw(
+      ui.VertexMode.triangles,
+      pos,
+      textureCoordinates: _wreckTex,
+    );
+    wreckTriangles = frac.triangles;
+    final bounds = Rect.fromLTRB(minX, minY, maxX, maxY).inflate(4);
+    final a = k.opacity;
+    if (a <= .01) return;
+    _meshPaint
+      ..color = Colors.white
+      ..shader = comp.shader;
+    final ink = shadowInk;
+    if (ink != null && shadowAlpha > .01 && collapseShadow) {
+      // One shadow for the whole wreck: its own alpha, inked and softened.
+      // The layer is 16 units wider than the wreck: the blur's tail (3σ =
+      // 9 units) never meets the layer's edge.
+      final sb = bounds.shift(shadowShift).inflate(16);
+      _noteLayer(c, sb);
+      c.saveLayer(
+        sb,
+        Paint()
+          ..colorFilter = ColorFilter.mode(
+            ink.withValues(alpha: (shadowAlpha * a).clamp(0.0, 1.0)),
+            BlendMode.srcIn,
+          )
+          ..imageFilter = ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3)
+          ..blendMode = BlendMode.multiply,
+      );
+      c.translate(shadowShift.dx, shadowShift.dy);
+      c.drawVertices(verts, BlendMode.srcOver, _meshPaint);
+      c.restore();
+    }
+    _noteLayer(c, bounds);
+    c.saveLayer(bounds, Paint()..color = Color.fromRGBO(255, 255, 255, a));
+    c.drawVertices(verts, BlendMode.srcOver, _meshPaint);
+    meshCalls++;
+    _meshPaint.shader = null;
+    // The fog takes it as it recedes, and the cloud deck rises over it
+    // from below: the lower pieces go into the clouds first.
+    final f = k.progress;
+    c.drawRect(
+      bounds,
+      Paint()
+        ..blendMode = BlendMode.srcATop
+        ..color = fog.withValues(alpha: (.6 * f).clamp(0.0, .6)),
+    );
+    // The deck: above it a haze tint, below it the wreck dissolves (its
+    // own alpha goes), so the pieces pass INTO the cloud, never turn white.
+    final deck = cloudDeckY(k);
+    c.drawRect(
+      bounds,
+      Paint()
+        ..blendMode = BlendMode.srcATop
+        ..shader = ui.Gradient.linear(Offset(0, deck - 160), Offset(0, deck), [
+          cloud.withValues(alpha: 0),
+          cloud.withValues(alpha: .5),
+        ]),
+    );
+    c.drawRect(
+      bounds,
+      Paint()
+        ..blendMode = BlendMode.dstOut
+        ..shader = ui.Gradient.linear(
+          Offset(0, deck - 60),
+          Offset(0, deck + 90),
+          const [Color(0x00000000), Color(0xFF000000)],
+        ),
+    );
+    c.restore();
+  }
+
+  /// The cloud deck's top edge (arena y) at the collapse's time: it rises
+  /// from below the arena to above the wreck's centre by the end.
+  static double cloudDeckY(CarrierCollapse k) {
+    final u = ((k.t - .8) / (k.script.duration - .8)).clamp(0.0, 1.0);
+    final e = u * u * (3 - 2 * u);
+    return 700 - 720 * e;
+  }
+
+  /// The collapse's smoke (puffs left behind by the falling pieces: the
+  /// trails) and its blasts, riding their bodies. [blast] draws one
+  /// explosion (the scene's sprite) at a point, size and age 0..1.
+  void paintCollapseSmoke(
+    Canvas c,
+    CarrierCollapse k, {
+    required Color fog,
+    required void Function(Offset at, double size, double age) blast,
+  }) {
+    if (k.fracture == null) return;
+    final f = k.progress;
+    final smoke = Color.lerp(const Color(0xFF1A1418), fog, .35 + .5 * f)!;
+    final p = Paint()..isAntiAlias = true;
+    for (final q in k.puffs) {
+      final u = q.age / q.life;
+      final r = q.r0 + 22 * u;
+      p.color = smoke.withValues(
+        alpha: (.42 * (1 - u) * k.opacity).clamp(0.0, 1.0),
+      );
+      c.drawCircle(Offset(q.x, q.y), r, p);
+      if (u < .2) {
+        // The ember core of a fresh puff.
+        p.color = const Color(0xFFFF7A2E).withValues(alpha: .35 * (1 - u / .2));
+        c.drawCircle(Offset(q.x, q.y), r * .45, p);
+      }
+    }
+    final s = k.scaleAt(k.t);
+    for (final b in k.blasts) {
+      final age = (k.t - b.t) / .55;
+      if (age < 0 || age >= 1) continue;
+      final (x, y) = k.world(b.body, b.x, b.y, k.t);
+      blast(Offset(x, y), b.size * s, age);
     }
   }
 

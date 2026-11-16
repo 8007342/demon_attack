@@ -23,8 +23,14 @@ import 'carrier_script.dart';
 /// identically in tests and on every backend, and its cost is a few
 /// thousand line segments, not a full-screen fill.
 class CarrierFieldMap {
-  CarrierFieldMap._(this.left, this.top, this.width, this.height, this.ppu,
-      this.distance);
+  CarrierFieldMap._(
+    this.left,
+    this.top,
+    this.width,
+    this.height,
+    this.ppu,
+    this.distance,
+  );
 
   /// Hull-local origin of pixel (0, 0) (units), size (px), px per unit.
   final double left, top;
@@ -73,7 +79,10 @@ class CarrierFieldMap {
     final d = Float32List(n);
     for (var i = 0; i < n; i++) {
       // px → units; half a pixel splits the edge.
-      d[i] = (inside[i] == 1 ? -(math.sqrt(inn[i]) - .5) : math.sqrt(out[i]) - .5) /
+      d[i] =
+          (inside[i] == 1
+              ? -(math.sqrt(inn[i]) - .5)
+              : math.sqrt(out[i]) - .5) /
           ppu;
     }
     final map = CarrierFieldMap._(left, top, w, h, ppu, d);
@@ -156,7 +165,10 @@ class CarrierFieldMap {
       for (var i = 0; i + 1 < width; i++) {
         final a = val(i, j), b = val(i + 1, j);
         final c = val(i + 1, j + 1), d = val(i, j + 1);
-        final k = (a > 0 ? 8 : 0) | (b > 0 ? 4 : 0) | (c > 0 ? 2 : 0) |
+        final k =
+            (a > 0 ? 8 : 0) |
+            (b > 0 ? 4 : 0) |
+            (c > 0 ? 2 : 0) |
             (d > 0 ? 1 : 0);
         if (k == 0 || k == 15) continue;
         // Edge crossings (top, right, bottom, left).
@@ -189,16 +201,12 @@ class CarrierFieldMap {
         }
       }
     }
-    return {
-      for (final e in seg.entries) e.key: Float32List.fromList(e.value),
-    };
+    return {for (final e in seg.entries) e.key: Float32List.fromList(e.value)};
   }
 
   /// Segment count at [level] (tests, profiling).
-  int segments(int level) => (contours[level] ?? const {}).values.fold(
-    0,
-    (n, l) => n + l.length ~/ 4,
-  );
+  int segments(int level) =>
+      (contours[level] ?? const {}).values.fold(0, (n, l) => n + l.length ~/ 4);
 }
 
 /// One field hit, for the ripple and the hex flash (hull-local).
@@ -333,25 +341,30 @@ class CarrierFieldPainter {
     final m = map;
     if (!lip) drawnSegments = 0;
     if (m == null) return;
-    var off = 6 + 18 * s.clamp(0.0, 1.0);
+    // carrier-render-engine §4: the membrane never moves. It stays at
+    // [offset] from the hull and wears THIN: its width and opacity fall
+    // with the shield, gaps open and crawl, and a low field crackles.
+    var w = wear(s);
     var alpha = opacity;
     if (down >= 0) {
-      // Shield down: the membrane snaps inward over 0.4 s and is gone.
-      off *= 1 - down;
+      // Shield down: the last of it thins to nothing and breaks apart
+      // where it is (0.4 s), no inward motion.
+      w = w * (1 - down);
       alpha *= 1 - down;
       if (alpha <= .01) {
         if (!lip) _paintShards(c, center, bend);
         return;
       }
     }
-    final level = (off / 2).round().clamp(1, 12) * 2;
-    final segs = m.contours[level];
+    final segs = m.contours[offset];
     if (segs == null) return;
     final critical = s <= .25;
-    final flick = critical
-        ? .55 + .45 * (math.sin(_clock * 24) * .5 + .5)
+    final flick = critical && !reduced
+        ? .7 + .3 * (math.sin(_clock * 11) * .5 + .5)
         : 1.0;
     final color = s > .6 ? rim : (s > .25 ? teal : deepTeal);
+    final gaps = down >= 0 ? .35 + .65 * down : dropout(s);
+    final crackle = !reduced && s <= .5 && down < 0;
     final scanY = 100 - ((_clock / 4) % 1) * 560; // prow → stern, 4 s
     c.save();
     c.translate(center.dx, center.dy);
@@ -359,10 +372,12 @@ class CarrierFieldPainter {
       final region = e.key;
       final lit = _lit.contains(region);
       final flash = flashes[region];
-      if (!lit && flash == null) continue;
+      // A lost cell's region is not switched off (the field would shrink
+      // inward): it is worn through where it is, thinnest and most gapped.
+      final rw = lit ? w : w * .3;
+      final rg = lit ? gaps : math.max(gaps, .6);
       final src = e.value;
-      final dst = _scratch[region] =
-          (_scratch[region]?.length == src.length)
+      final dst = _scratch[region] = (_scratch[region]?.length == src.length)
           ? _scratch[region]!
           : Float32List(src.length);
       var n = 0, scanN = 0;
@@ -376,6 +391,13 @@ class CarrierFieldPainter {
         final w0 = _lipWeight(src[i], src[i + 1], lipHalf);
         final w1 = _lipWeight(src[i + 2], src[i + 3], lipHalf);
         if ((w0 > 0 || w1 > 0) != lip) continue;
+        // Worn patches: coherent 36-unit cells drop out (crawling slowly),
+        // never salt-and-pepper; the lip keeps its gaps narrower.
+        if (rg > 0 &&
+            _gap(src[i], src[i + 1], reduced ? 0 : _clock) <
+                rg * (w0 > 0 ? .6 : 1)) {
+          continue;
+        }
         final start = n;
         for (var k = 0; k < 4; k += 2) {
           final x = src[i + k];
@@ -399,23 +421,23 @@ class CarrierFieldPainter {
       if (n == 0) continue;
       final pts = Float32List.sublistView(dst, 0, n);
       drawnSegments += n ~/ 4;
-      final a = alpha * (lit ? flick : 0);
+      final a = alpha * (lit ? flick : .75);
       if (flash != null) {
         final f = 1 - flash / .35;
         _core
           ..color = const Color(0xFFFFFFFF).withValues(alpha: alpha * f)
           ..strokeWidth = 2.4;
         c.drawRawPoints(ui.PointMode.lines, pts, _core);
-        if (!lit) continue;
       }
       _glow
-        ..color = color.withValues(alpha: .16 * a)
-        ..strokeWidth = 6;
+        ..color = color.withValues(alpha: (.04 + .14 * rw) * a)
+        ..strokeWidth = 1.5 + 5.5 * rw;
       c.drawRawPoints(ui.PointMode.lines, pts, _glow);
       _core
-        ..color = color.withValues(alpha: .85 * a)
-        ..strokeWidth = 1.6;
+        ..color = color.withValues(alpha: (.3 + .6 * rw) * a)
+        ..strokeWidth = .7 + 1.3 * rw;
       c.drawRawPoints(ui.PointMode.lines, pts, _core);
+      if (crackle && lit) _crackle(c, pts, a, s);
       if (!reduced && scanN > 0) {
         // The slow scan: a band sweeping from the prow to the stern.
         _core
@@ -434,6 +456,59 @@ class CarrierFieldPainter {
   }
 
   Float32List _scanBuf = Float32List(0);
+
+  /// The membrane's fixed offset from the hull (units): the full field's
+  /// look, held at every shield level.
+  static const offset = 24;
+
+  /// The membrane's wear 0..1 for shield fraction [s]: 1 full, thinning
+  /// faster as it nears empty (a slight ease keeps the full field bold).
+  static double wear(double s) {
+    final x = s.clamp(0.0, 1.0);
+    return .18 + .82 * math.pow(x, .8);
+  }
+
+  /// The share of the membrane worn through (gaps) at shield [s]: none
+  /// above 70 %, about a third at 25 %, over half when nearly empty.
+  static double dropout(double s) {
+    final x = ((.7 - s.clamp(0.0, 1.0)) / .7).clamp(0.0, 1.0);
+    return .6 * math.pow(x, 1.4).toDouble();
+  }
+
+  /// Patch noise for the gaps: 36-unit cells, crawling at 6 units/s.
+  static double _gap(double x, double y, double t) {
+    final gx = ((x + t * 6) / 36).floor(), gy = ((y - t * 4) / 36).floor();
+    final v = math.sin(gx * 127.1 + gy * 311.7) * 43758.5453;
+    return v - v.floorToDouble();
+  }
+
+  final Paint _spark = Paint()
+    ..strokeCap = StrokeCap.round
+    ..isAntiAlias = true;
+
+  /// Crackle on a worn field: a run of three segments flashes white-cyan
+  /// for one 0.2 s tick, more often as the field wears: at most 1.75
+  /// sparks per second per region (WCAG 2.3.1: under three flashes a
+  /// second, and each spark is a few units long, far under the area limit).
+  void _crackle(ui.Canvas c, Float32List pts, double a, double s) {
+    final tick = (_clock / .2).floor();
+    final segs = pts.length ~/ 4;
+    if (segs == 0) return;
+    final h = math.sin(tick * 78.233 + segs) * 43758.5453;
+    final r = h - h.floorToDouble();
+    final chance = .1 + .25 * (1 - s / .5);
+    if (r > chance) return;
+    final i = (r * 1e4).floor() % segs * 4;
+    final run = math.min(pts.length - i, 4 * 3);
+    _spark
+      ..color = const Color(0xFFE6FFFF).withValues(alpha: .8 * a)
+      ..strokeWidth = 1.4;
+    c.drawRawPoints(
+      ui.PointMode.lines,
+      Float32List.sublistView(pts, i, i + run),
+      _spark,
+    );
+  }
 
   /// The lip blends into the contour over this many units past the band.
   static const blend = 70.0;
@@ -491,7 +566,8 @@ class CarrierFieldPainter {
           final path = Path();
           for (var v = 0; v < 6; v++) {
             final a = v * math.pi / 3;
-            final pt = hc +
+            final pt =
+                hc +
                 ui.Offset(math.cos(a) * cell * .5, math.sin(a) * cell * .22);
             v == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
           }
@@ -516,4 +592,3 @@ class CarrierFieldPainter {
     }
   }
 }
-

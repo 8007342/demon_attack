@@ -235,6 +235,22 @@ abstract final class GameEventNames {
     reinforcementsArrived,
   ];
 
+  // --- dynamic-weather: a regular level's rain (lib/game/weather/), for
+  // the future music and SFX engine. Visual only, sent by the scene's rain
+  // layer through dispatchGameEvent. Data: `tier` ('drizzle' | 'rain' |
+  // 'downpour'), `intensity` (0-1), `wind` (slant), `sector`.
+
+  /// Rain begins (softly, from nothing).
+  static const rainStart = 'rainStart';
+
+  /// The rain has died away.
+  static const rainStop = 'rainStop';
+
+  /// The rain crossed into another tier (data `from`: the previous tier).
+  static const rainIntensity = 'rainIntensity';
+
+  static const weather = [rainStart, rainStop, rainIntensity];
+
   static const all = [
     groundForceSighted,
     groundForceInRange,
