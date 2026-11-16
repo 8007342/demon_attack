@@ -326,3 +326,41 @@ Easy +8.3 %, Normal +0.7 %, Hard +5.4 %, pooled +4.5 %). Ablations on the way (s
 +10 / +7 / +13 %, of which the power timers running out during the 5 s Rise were the cause (shield phase +25 %
 with 0.15 vs 0.23 powers active); the timers now hold while the carrier rises. Resetting the level clock, the
 ground war or the pilot model at the Rise changed nothing measurable.
+
+## Carrier v3 runtime (2026-11-16): launch waves from gates
+
+The same harness as "Boss grandeur": `test/boss_endurance_test.dart`, 16 seeds per difficulty, measured against
+the bac1f458 baseline in the test. `game` at cd416186 measures pooled +4.9 % on the same harness, unchanged from
+the last entry.
+
+| Build | Easy s | Normal s | Hard s | Pooled seconds | Pooled hits |
+|---|---:|---:|---:|---:|---:|
+| `game` cd416186 | 345.77 | 436.46 | 469.45 | +4.9 % | +2.1 % |
+| carrier-v3, first build | 349.61 | 472.29 | 463.54 | **+7.7 %** (fails 5 %) | +4.3 % |
+| ablation: fight gates limited to the bays (|x| ≤ 60) | 350.82 | 467.50 | 471.15 | +8.0 % | +5.0 % |
+| ablation: old launch-wave counts (1 / 2) | 366.50 | 444.20 | 480.67 | +8.2 % | +4.0 % |
+| ablation: old flock entrance points | 346.59 | 464.05 | 468.86 | +7.2 % | +4.3 % |
+| ablation: no gate launches in the approach | 347.63 | 444.79 | 441.68 | +3.4 % | +1.4 % |
+| **accepted:** power timers hold while all of the approach's live creatures wait in gates | 318.66 | 393.24 | 432.20 | **−4.2 %** | **−4.2 %** |
+
+- **Cause.** Members of a volley wait inside their gate for its 1.7 s lead plus 0.12 s per creature. That stretches
+  the launch waves, so the pilot's powers ran out before the fight (the Rise's power-timer effect again).
+- **Tune.** The power timers hold while every live ordinary creature of the approach is parked in a gate. That is
+  a held beat with nothing to shoot, the same rule as the carrier's Close.
+- **Result.** Per difficulty: easy −4.3 %, normal −8.9 %, hard +0.8 % against the baseline. All are within 10 %,
+  and pooled is within 5 %.
+
+**The boss level's clear time.** This is a temporary probe, not committed: combat seconds while sector 5 is current,
+summed over the five routes, mean of the eight calibration seeds, with the same protected pilot.
+
+| Difficulty | `game` s | carrier-v3 s | Δ |
+|---|---:|---:|---:|
+| easy | 512.2 | 576.5 | **+12.6 %** |
+| normal | 679.9 | 648.9 | −4.6 % |
+| hard | 704.9 | 736.7 | +4.5 % |
+| pooled | 1897.0 | 1962.1 | +3.4 % |
+
+- Pooled is within 10 %. Easy is over: tour 1 now has two launch waves and tours 4–5 have three (design §12's
+  named risk).
+- Not tuned, so the spec's wave counts hold. If the operator wants Easy inside 10 %, the lever is one script field,
+  `launchWaves`: tour 1 back to one wave. That would also make tour 1's approach one step (4 → 1.35).

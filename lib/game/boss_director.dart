@@ -103,6 +103,9 @@ class BossDirector {
   /// pitch's q).
   static const takeoffWorldPitch = .6;
 
+  /// Units the horizon drops per unit of [worldPitch] (36 at the peak).
+  static const takeoffHorizon = 60.0;
+
   /// Overflight length (design §1).
   static double overflightSeconds(bool reduced) => reduced ? 2.0 : 3.2;
 
@@ -478,9 +481,11 @@ class BossDirector {
       glide: b?.glide ?? 0,
       strength: reduced || phase == BossPhase.none ? 0 : follow,
     );
+    // The take-off's world pitch: the horizon drops further at its peak
+    // (the transition-ascent pitch, on the background only).
     camera.horizonDrop = reduced || !carrier
         ? 0
-        : script.camera.horizonDrop * climb;
+        : script.camera.horizonDrop * climb + takeoffHorizon * worldPitch;
     _shake(dt, reduced: reduced);
   }
 

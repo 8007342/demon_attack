@@ -42,6 +42,10 @@ class CarrierBend {
   /// Until the re-render, the height-parallax terms are capped (§2.5).
   static const parallaxCap = 4.0;
 
+  /// A held pose (radians: lean, bank, pitch) for review strips; null in
+  /// the game.
+  (double, double, double)? pose;
+
   /// Total bend (springs + buffet) used by the mesh.
   double get psi => lean;
   double get phi => bank + buffetBank;
@@ -72,6 +76,14 @@ class CarrierBend {
       reset();
       return;
     }
+    final hold = pose;
+    if (hold != null) {
+      wingLean = lean = hold.$1;
+      wingBank = bank = hold.$2;
+      wingPitch = pitch = hold.$3;
+      buffetBank = buffetPitch = 0;
+      return;
+    }
     final l = limits;
     final leanT = l.leanMax * deg * vx.clamp(-1.0, 1.0);
     final bankT = l.bankMax * deg * ax.clamp(-1.0, 1.0);
@@ -79,9 +91,15 @@ class CarrierBend {
         takeoff > 0
             ? l.takeoffPitch * deg * takeoff.clamp(0.0, 1.0)
             : l.pitchMax * deg * glide.clamp(-1.0, 1.0);
-    (lean, _leanV) = _spring(lean, _leanV, leanT, leanOmega, dt);
-    (bank, _bankV) = _spring(bank, _bankV, bankT, bankOmega, dt);
-    (pitch, _pitchV) = _spring(pitch, _pitchV, pitchT, pitchOmega, dt);
+    final sl = _spring(lean, _leanV, leanT, leanOmega, dt);
+    final sb = _spring(bank, _bankV, bankT, bankOmega, dt);
+    final sp = _spring(pitch, _pitchV, pitchT, pitchOmega, dt);
+    lean = sl.$1;
+    _leanV = sl.$2;
+    bank = sb.$1;
+    _bankV = sb.$2;
+    pitch = sp.$1;
+    _pitchV = sp.$2;
     lean = lean.clamp(-l.leanMax * deg, l.leanMax * deg);
     bank = bank.clamp(-l.bankMax * deg, l.bankMax * deg);
     final pm = math.max(l.pitchMax, l.takeoffPitch) * deg;

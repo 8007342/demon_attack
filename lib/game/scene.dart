@@ -262,6 +262,7 @@ class DemonScene extends FlameGame {
   void advanceBoss(double dt) {
     final b = model.boss;
     if (b != null && armada.heroReady) armada.assemble(b, model.cycle);
+    armada.beginFrame(); // carrier-v3: the mesh counters, per frame
     bossDirector.update(
       model,
       dt,
@@ -359,9 +360,10 @@ class DemonScene extends FlameGame {
       // cloud. HUD, comms dock, ship and bullets are never pitched or
       // rolled (the flow ship and the cover are drawn after the world).
       final tilt = model.flow.env('tilt') * flowTilt;
-      // carrier-v3 §5.4: the take-off pitches the world the same way, and
-      // its trauma shake joins the flow's (four beats only, §7).
-      final q = math.max(model.flow.env('pitch'), bossDirector.worldPitch);
+      // carrier-v3 §7: the carrier's trauma shake joins the flow's (four
+      // beats only). Its take-off pitch goes through the arena camera's
+      // background transform (no uncovered band over the hull).
+      final q = model.flow.env('pitch');
       final drop = pitchDrop * q;
       final band = tilt + drop;
       final roll = model.flow.env('roll');
@@ -1206,17 +1208,6 @@ class DemonScene extends FlameGame {
         );
         if (!armada.carrier) _carrierTurretBarrels(c, b);
         armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
-        if (armada.carrier) {
-          // carrier-v3 §4: the prow's gates (deck bays, prong gates).
-          carrierV3.paintGates(
-            c,
-            model.launches,
-            Offset(b.x, b.y),
-            front: true,
-            clock: model.visualClock,
-            bend: armada.bent,
-          );
-        }
       } else if (armada.ready) {
         // Bright bow: idle life (eye pulse, ear-fin breath, spine flex and
         // fissure flicker at 2 fps), damage and the turret heads.
@@ -1245,6 +1236,16 @@ class DemonScene extends FlameGame {
         // boss-carrier-wire: the v2 prow's hangar deck carries its own
         // doors (no fanged jaws, no lit windows: styleguide §3.4).
         _carrierDeck(c, b);
+        // carrier-v3 §4: the prow's gates (deck bays, prong gates), over
+        // the deck's furniture.
+        carrierV3.paintGates(
+          c,
+          model.launches,
+          Offset(b.x, b.y),
+          front: true,
+          clock: model.visualClock,
+          bend: armada.bent,
+        );
       } else {
         _carrierLighting(c, Offset(b.x, b.y), carrierBank);
         if (!hero) _carrierEyes(c, b); // the view set's eyes are its own
@@ -4967,14 +4968,15 @@ extension _BossGrandeur on DemonScene {
   /// The fog layer after which the loom is drawn: it starts behind all
   /// but the horizon band and rises one layer per ~8 s.
   ///
-  /// carrier-v3 §5.2: by the approach distance D: behind the far banks for
-  /// D ≥ 3, between the mid banks for 1.8 ≤ D < 3, under the near sheets
-  /// below.
+  /// carrier-v3 §5.2: by the approach distance D: between the far banks
+  /// for D ≥ 3, between the veils for 1.8 ≤ D < 3, under the near sheets
+  /// below (one bank nearer than the design: behind every far bank the
+  /// hull read as a pale ghost on the review strip).
   int _loomLayer(int layers) {
     if (layers == 0) return 0;
     final d = bossDirector.distance;
-    if (d >= 3) return 0;
-    if (d >= 1.8) return math.min(layers - 1, 2);
+    if (d >= 3) return math.min(layers - 1, 1);
+    if (d >= 1.8) return math.min(layers - 1, 3);
     return layers - 1;
   }
 
@@ -4992,7 +4994,7 @@ extension _BossGrandeur on DemonScene {
     c.saveLayer(
       null,
       Paint()
-        ..colorFilter = fogFilter(_approachFog, bossDirector.fog)
+        ..colorFilter = fogFilter(_approachFog, .85 * bossDirector.fog)
         ..color = const Color.fromRGBO(255, 255, 255, .94),
     );
     paintBossBody(c, Offset.zero);
@@ -5001,7 +5003,7 @@ extension _BossGrandeur on DemonScene {
   }
 
   /// The approach's haze colour: the fog's, a little into its shade.
-  Color get _approachFog => Color.lerp(atmosphere.cloud, _bossShade, .35)!;
+  Color get _approachFog => Color.lerp(_bossShade, atmosphere.cloud, .3)!;
 
   /// Its running lights blink through the fog (drawn after the banks), and
   /// its gates telegraph and launch through it (carrier-v3 §4.3).
@@ -5064,7 +5066,7 @@ extension _BossGrandeur on DemonScene {
       Paint()
         ..colorFilter = fogFilter(
           _approachFog,
-          CarrierApproachScript.fogMix(bossDirector.distance),
+          .85 * CarrierApproachScript.fogMix(bossDirector.distance),
         )
         ..color = Color.fromRGBO(255, 255, 255, .9 + .1 * e),
     );

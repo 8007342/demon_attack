@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -176,7 +175,7 @@ class CarrierPresentation {
     // The opening runs across the normal; the rail runs back along it.
     final n = Offset(g.nx, g.ny);
     final across = Offset(-g.ny, g.nx);
-    final w = g.width * k;
+    final w = g.width * k * 1.4;
     final angle = math.atan2(across.dy, across.dx);
     c.save();
     c.translate(at.dx, at.dy);
@@ -184,7 +183,15 @@ class CarrierPresentation {
     // The slit (closed: a dark seam with a rim; telegraph: it glows).
     final hot = Color.lerp(_ember, _amber, glow)!;
     final open = door.clamp(0.0, 1.0);
-    final h = math.max(2.0, 3 * k) + 7 * k * open;
+    final h = math.max(2.0, 4 * k) + 9 * k * open;
+    if (glow > 0) {
+      // A warm halo so the gate reads at phone size (never white-hot).
+      _p.color = hot.withValues(alpha: .22 * glow * opacity);
+      c.drawOval(
+        Rect.fromCenter(center: Offset.zero, width: w * 2.2, height: h * 3.2),
+        _p,
+      );
+    }
     _p.color = _slit.withValues(alpha: .85 * opacity);
     c.drawRRect(
       RRect.fromRectAndRadius(
@@ -287,8 +294,11 @@ class CarrierPresentation {
     c.clipRect(view);
     // Streaks: thin, in the fog's highlight colour, streaming down; the
     // near ones longer and faster; more of them as the climb rises.
-    final count = (d.script.cues.streakDensity * k).round().clamp(0, 40);
-    final tint = Color.lerp(cloudLight, _streakTint, .4)!;
+    final count = (d.script.cues.streakDensity * (.4 + .6 * k)).round().clamp(
+      0,
+      40,
+    );
+    final tint = Color.lerp(cloudLight, _streakTint, .25)!;
     for (var i = 0; i < count; i++) {
       double r(int salt) {
         final v = math.sin((seed + i * 17 + salt * 131) * 12.9898) * 43758.5;
@@ -301,9 +311,9 @@ class CarrierPresentation {
       final x = view.left + r(2) * view.width;
       final span = view.height + len;
       final y = view.top + (r(3) * span + _streakRun * speed) % span - len;
-      final a = (.08 + .14 * near) * k * (.6 + .4 * (1 + d.surge));
+      final a = (.1 + .12 * near) * (.5 + .5 * k) * (1 + .3 * d.surge);
       _p.color = tint.withValues(alpha: a.clamp(0.0, .22));
-      c.drawRect(Rect.fromLTWH(x, y, near > .6 ? 2 : 1, len), _p);
+      c.drawRect(Rect.fromLTWH(x, y, near > .5 ? 3 : 2, len), _p);
     }
     // Torn wisps over the off-screen hull's edges: the top band and the
     // sides, moving at 1.5–3 × the hull's flow.

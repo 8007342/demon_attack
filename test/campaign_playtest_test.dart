@@ -110,8 +110,8 @@ void main() {
             'route=${model.cycle} level=${model.level} wave=${model.wave} kills=${model.kills} demons=${model.demons.length} flocks=${model.flocksRemaining} escort=${model.escortSpawned} boss=${model.boss?.core}',
       );
       expect(visitedRoutes, {0, 1, 2, 3, 4});
-      // 106 ordinary waves, nine loom waves (1 + 2 × 4) and five carriers.
-      expect(entrances, 120);
+      // 106 ordinary waves, twelve launch waves (carrier-v3: 2 × 3 + 3 × 2) and five carriers.
+      expect(entrances, 123);
       expect(bossVictories, 5);
       expect(completions, 1);
       expect(model.medals, 5);

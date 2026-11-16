@@ -958,6 +958,19 @@ class ArcadeModel {
     }
   }
 
+  /// The approach's live creatures are all parked in gates (the power
+  /// timers hold, as they do while the carrier closes).
+  bool get _gateHeld {
+    if (!looming || launches == null) return false;
+    var parked = false;
+    for (final d in demons) {
+      if (d.isLarge || d.swarmState == SwarmState.reserve) continue;
+      if (d.gateWait <= 0) return false;
+      parked = true;
+    }
+    return parked;
+  }
+
   /// The fight's flock gate (design §4.4): chosen and telegraphing ahead
   /// of the flock timer, so the spawn moments do not move.
   GateRun? _fightGate;
@@ -2982,7 +2995,11 @@ class ArcadeModel {
     // Module timers freeze while the ship is away: the loadout survives.
     // boss-grandeur: and while the carrier rises (a held beat, as the
     // transition into a carrier sector held them before the loom).
-    for (final value in shipAway || bossRising ? const <Power>[] : Power.values) {
+    // carrier-v3: and while everything the approach has in play waits
+    // inside the carrier's gates (nothing to shoot; calibration §2.5).
+    for (final value in shipAway || bossRising || _gateHeld
+        ? const <Power>[]
+        : Power.values) {
       if (powerTimers.containsKey(value)) {
         powerTimers[value] = math.max(0, powerTimers[value]! - dt);
       }

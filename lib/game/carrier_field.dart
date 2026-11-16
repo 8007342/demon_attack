@@ -435,11 +435,16 @@ class CarrierFieldPainter {
 
   Float32List _scanBuf = Float32List(0);
 
+  /// The lip blends into the contour over this many units past the band.
+  static const blend = 70.0;
+
   static double _lipWeight(double x, double y, double half) {
     if (y <= -12) return 0;
     final ax = x.abs();
-    if (ax >= half + 20) return 0;
-    return ax <= half ? 1.0 : (half + 20 - ax) / 20;
+    if (ax >= half + blend) return 0;
+    if (ax <= half) return 1.0;
+    final u = (half + blend - ax) / blend;
+    return u * u * (3 - 2 * u);
   }
 
   /// Hits: a ripple and a ring of hex cells lighting outward (design §3.1);
