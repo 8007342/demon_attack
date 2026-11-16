@@ -33,6 +33,7 @@ const runModifiers = <RunModifierDef>[
     chance: .05,
     rules: PowerRules(banned: {Power.shield}),
     brief: 'No shield modules this run.',
+    label: 'NO SHIELDS',
   ),
   // "Or a certain powerup only."
   RunModifierDef(
@@ -40,6 +41,7 @@ const runModifiers = <RunModifierDef>[
     chance: .03,
     rules: PowerRules(only: Power.spread),
     brief: 'Spread modules only this run.',
+    label: 'SPREAD ONLY',
   ),
   // "A certain percentage of a chance to happen."
   RunModifierDef(
@@ -47,6 +49,7 @@ const runModifiers = <RunModifierDef>[
     chance: .05,
     rules: PowerRules(chances: [PowerChance(Power.large, .35)]),
     brief: 'Extra blast rounds in the drops this run.',
+    label: 'HEAVY ORDNANCE',
   ),
 ];
 
@@ -69,4 +72,17 @@ RunModifierDef? runModifierById(String id) {
     if (m.id == id) return m;
   }
   return null;
+}
+
+/// bonus-balance: the display name of a run record's modifier id (a bonus
+/// level or a run modifier); an id this build does not know (a newer
+/// record) is spelled out from its camelCase.
+String runTagLabel(String id) {
+  final level = bonusLevelById(id);
+  if (level != null) return level.label;
+  final rule = runModifierById(id);
+  if (rule != null && rule.label.isNotEmpty) return rule.label;
+  return id
+      .replaceAllMapped(RegExp('([a-z0-9])([A-Z])'), (m) => '${m[1]} ${m[2]}')
+      .toUpperCase();
 }

@@ -142,13 +142,15 @@ void main() {
         findsOneWidget,
       );
       expect(find.byType(ListWheelScrollView), findsNWidgets(3));
-      expect(submissions, [
-        {
-          'initials': 'B9A',
-          'score': 12345,
-          'activeMilliseconds': scene.model.activeMilliseconds,
-        },
-      ]);
+      expect(submissions, hasLength(1));
+      expect(submissions[0], {
+        'initials': 'B9A',
+        'score': 12345,
+        'activeMilliseconds': scene.model.activeMilliseconds,
+        // bonus-balance: the run record's play date (an unseeded run has
+        // no modifiers, so none are sent).
+        'playedOn': matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')),
+      });
       await tester.tap(find.text('SAVE SCORE'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));

@@ -155,7 +155,12 @@ void main() {
             peak = peak < plan.envAt(id, s) ? plan.envAt(id, s) : peak;
           }
           // Reduced motion: no pitch, no roll, no streaks at any time.
-          expect(peak, reduced ? 0 : closeTo(1, .01), reason: '$id $reduced');
+          // playtest-fixes-3: never a roll (the bank read as sideways).
+          expect(
+            peak,
+            reduced || id == 'roll' ? 0 : closeTo(1, .01),
+            reason: '$id $reduced',
+          );
         }
       }
     }

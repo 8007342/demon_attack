@@ -1,0 +1,566 @@
+{
+  "schema": "demon-attack.rig-runs/v1",
+  "family": "flight-joystick",
+  "runs": [
+    {
+      "job": "st-1794808140133-112",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/rugged-v1-7010000.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7010000,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal gunmetal blue-grey base with bevelled armoured edges and worn paint, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Rugged military hardware: chipped paint on the edges, scuffed rubber, stencilled hazard marks on the base.",
+      "negative_prompt": "text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "69940a7a81413f73158ed902fe6d46d373d156b0deb1f7cf45d8017bc6ee42cc",
+      "at": "2026-11-16T05:50:22Z",
+      "verdict": "rejected: rugged look painted rust, stencilled text (7010000, 7010001), hazard signs and an extra orange button on the base"
+    },
+    {
+      "job": "st-1794808140133-112",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/rugged-v1-7010001.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7010001,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal gunmetal blue-grey base with bevelled armoured edges and worn paint, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Rugged military hardware: chipped paint on the edges, scuffed rubber, stencilled hazard marks on the base.",
+      "negative_prompt": "text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "eee4b0b7490bc9c55f456d193105d97f604baeda7a449357d089a35728943880",
+      "at": "2026-11-16T05:50:22Z",
+      "verdict": "rejected: rugged look painted rust, stencilled text (7010000, 7010001), hazard signs and an extra orange button on the base"
+    },
+    {
+      "job": "st-1794808140133-112",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/rugged-v1-7010002.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7010002,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal gunmetal blue-grey base with bevelled armoured edges and worn paint, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Rugged military hardware: chipped paint on the edges, scuffed rubber, stencilled hazard marks on the base.",
+      "negative_prompt": "text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "d3f499a479cf363c72bcc2ae8e28632056af6ec78241a97e832c92ad9111c62b",
+      "at": "2026-11-16T05:50:22Z",
+      "verdict": "rejected: rugged look painted rust, stencilled text (7010000, 7010001), hazard signs and an extra orange button on the base"
+    },
+    {
+      "job": "st-1794808140133-112",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/rugged-v1-7010003.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7010003,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal gunmetal blue-grey base with bevelled armoured edges and worn paint, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Rugged military hardware: chipped paint on the edges, scuffed rubber, stencilled hazard marks on the base.",
+      "negative_prompt": "text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "077fec51c06674092a3b0057a021d1b12f23d34c83e7aa67b309af052cc3ea87",
+      "at": "2026-11-16T05:50:22Z",
+      "verdict": "rejected: rugged look painted rust, stencilled text (7010000, 7010001), hazard signs and an extra orange button on the base"
+    },
+    {
+      "job": "st-1794808228888-113",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v1-7020000.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7020000,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal gunmetal blue-grey base with bevelled armoured edges and worn paint, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "743ff53a8b03f3b4993943f7d3da95fd3d9ed533a721494c194ae472594d13e5",
+      "at": "2026-11-16T05:51:53Z",
+      "verdict": "rejected: the shared 'worn paint' clause still painted rust; extra orange button or lever on the base in every seed"
+    },
+    {
+      "job": "st-1794808228888-113",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v1-7020001.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7020001,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal gunmetal blue-grey base with bevelled armoured edges and worn paint, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "4834b448ff8c14d83c62c389877ae43f28de612c66913960909027622b3515d6",
+      "at": "2026-11-16T05:51:53Z",
+      "verdict": "rejected: the shared 'worn paint' clause still painted rust; extra orange button or lever on the base in every seed"
+    },
+    {
+      "job": "st-1794808228888-113",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v1-7020002.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7020002,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal gunmetal blue-grey base with bevelled armoured edges and worn paint, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "62511978af0a337f6c39fad1f26d168b3341954327125419ba50da5a2c58ad7f",
+      "at": "2026-11-16T05:51:53Z",
+      "verdict": "rejected: the shared 'worn paint' clause still painted rust; extra orange button or lever on the base in every seed"
+    },
+    {
+      "job": "st-1794808228888-113",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v1-7020003.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7020003,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal gunmetal blue-grey base with bevelled armoured edges and worn paint, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "c63c4e826ad46b5c0bf2dd1805125e14c7dcaba523c9cab1dd10cc9e6598e8b2",
+      "at": "2026-11-16T05:51:53Z",
+      "verdict": "rejected: the shared 'worn paint' clause still painted rust; extra orange button or lever on the base in every seed"
+    },
+    {
+      "job": "st-1794808372403-114",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v2-7030000.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7030000,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal slate blue-grey metal base with bevelled armoured edges, clean satin paint and fine panel lines, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange; the base has only the four bolts, the two arrows, the ring light and the front light strip, nothing else on it. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "rust, dirt, scratches, extra buttons, orange buttons on the base, levers, warning signs, hazard stripes, stickers, text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "9c695ce06838cab8273104b03fc0210dbdc5a40bc3e973d8f3712aac03c1221c",
+      "at": "2026-11-16T05:54:44Z",
+      "verdict": "runner-up: orange front strip instead of the mint status light"
+    },
+    {
+      "job": "st-1794808372403-114",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v2-7030001.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7030001,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal slate blue-grey metal base with bevelled armoured edges, clean satin paint and fine panel lines, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange; the base has only the four bolts, the two arrows, the ring light and the front light strip, nothing else on it. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "rust, dirt, scratches, extra buttons, orange buttons on the base, levers, warning signs, hazard stripes, stickers, text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "2c26d3af90c43a900b25c6085a6fcfe9445f8c18bc312f9ed6e68f7030a6b28f",
+      "at": "2026-11-16T05:54:44Z",
+      "verdict": "rejected: front and back bolts painted orange (reads as extra buttons)"
+    },
+    {
+      "job": "st-1794808372403-114",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v2-7030002.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7030002,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal slate blue-grey metal base with bevelled armoured edges, clean satin paint and fine panel lines, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange; the base has only the four bolts, the two arrows, the ring light and the front light strip, nothing else on it. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "rust, dirt, scratches, extra buttons, orange buttons on the base, levers, warning signs, hazard stripes, stickers, text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "34d75180f12d1198ca38e2dd9861fc31230530dfe414fb07742163a073ed7d7e",
+      "at": "2026-11-16T05:54:44Z",
+      "verdict": "rejected: an extra lever on the base"
+    },
+    {
+      "job": "st-1794808372403-114",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v2-7030003.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7030003,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal slate blue-grey metal base with bevelled armoured edges, clean satin paint and fine panel lines, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange; the base has only the four bolts, the two arrows, the ring light and the front light strip, nothing else on it. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "rust, dirt, scratches, extra buttons, orange buttons on the base, levers, warning signs, hazard stripes, stickers, text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "2d051d474f04e982187c2a093d9e8297d6a062fb1c495f8d2b7d07b9340f91e2",
+      "at": "2026-11-16T05:54:44Z",
+      "verdict": "runner-up: orange front strip"
+    },
+    {
+      "job": "st-1794808372403-114",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v2-7030004.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7030004,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal slate blue-grey metal base with bevelled armoured edges, clean satin paint and fine panel lines, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange; the base has only the four bolts, the two arrows, the ring light and the front light strip, nothing else on it. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "rust, dirt, scratches, extra buttons, orange buttons on the base, levers, warning signs, hazard stripes, stickers, text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "26eeba313570b59e73cc1f2be084f4f4f169a142907692025205e422815f2ef6",
+      "at": "2026-11-16T05:54:44Z",
+      "verdict": "runner-up: orange front strip, weaker grip band"
+    },
+    {
+      "job": "st-1794808372403-114",
+      "hull": "stick",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/flight-joystick-raw/hero/clean-v2-7030005.png",
+      "workflow": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+      "workflow_sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb",
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/flight-joystick/ctl1.png",
+          "sha256": "180a8999a040201d2bb5aaab6db69ff9802e606e937d393db3ac0114e27da495"
+        }
+      ],
+      "seed": 7030005,
+      "prompt": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal slate blue-grey metal base with bevelled armoured edges, clean satin paint and fine panel lines, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange; the base has only the four bolts, the two arrows, the ring light and the front light strip, nothing else on it. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow. Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+      "negative_prompt": "rust, dirt, scratches, extra buttons, orange buttons on the base, levers, warning signs, hazard stripes, stickers, text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple",
+      "output_sha256": "310ca071ed7f83226a7f8fa01f17dd14a9b8c45f53c5ff1470756312dfbd382e",
+      "at": "2026-11-16T05:54:44Z",
+      "verdict": "PICK: clean satin slate base, mint ring and cyan arrows, ribbed navy grip with a glowing band, red fire button, grey back bolts; the subject was re-framed taller (fit ... bbox registers it)"
+    }
+  ]
+}

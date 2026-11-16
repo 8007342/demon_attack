@@ -7,6 +7,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'game/atmosphere.dart' show AtmosphereQuality;
 import 'game/model.dart';
+import 'widgets/flight_joystick.dart';
 import 'widgets/pilot_console_content.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
@@ -19,6 +20,7 @@ import 'services/install_prompt.dart'; // --- pwa-install
 import 'services/comms_audio.dart' show commsStopAll;
 import 'ending/ending_page.dart';
 import 'widgets/medal.dart';
+import 'widgets/run_record.dart'; // --- bonus-balance: the run record
 import 'widgets/heart_parts.dart';
 import 'widgets/widescreen_backdrop.dart'; // --- widescreen backdrop
 // --- squad comms
@@ -571,6 +573,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         difficulty: model.difficulty,
         medals: model.medals,
         activeMilliseconds: model.activeMilliseconds,
+        modifiers: model.runModifierIds, // --- bonus-balance
+        playedOn: playDate(DateTime.now()),
       );
       finalRanked = false;
       boardDifficulty = model.difficulty;
@@ -594,6 +598,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       medals: model.medals,
       activeMilliseconds: model.activeMilliseconds,
       remainingLives: model.medals == 5 ? model.lives : null,
+      modifiers: model.runModifierIds, // --- bonus-balance
+      playedOn: playDate(DateTime.now()),
     );
     boardDifficulty = model.difficulty;
     screen = 'ranking';
@@ -798,6 +804,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         medals: model.medals,
         activeMilliseconds: model.activeMilliseconds,
         remainingLives: model.medals == 5 ? model.lives : null,
+        // --- bonus-balance: the run record's modifiers and play date.
+        modifiers: finalResult?.modifiers ?? model.runModifierIds,
+        playedOn: finalResult?.playedOn ?? playDate(DateTime.now()),
       );
       if (mounted) {
         setState(() {
@@ -1353,7 +1362,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         if (showFinalResult && finalResult?.difficulty == boardDifficulty) ...[
           const SizedBox(height: 18),
           _label('YOUR FINAL SCORE', gold, size: 11),
-          _scoreRow(-1, finalResult!),
+          const SizedBox(height: 6),
+          RunRecordCard(entry: finalResult!), // --- bonus-balance
           if (!finalRanked) ...[
             const SizedBox(height: 6),
             _unrankedTag(key: const ValueKey('result-unranked')),
@@ -1388,66 +1398,95 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     ),
   );
 
+  /// bonus-balance: a record's play date and run modifiers, one small line
+  /// under its row ('' for an older record that has neither).
+  String _recordNote(ScoreEntry entry) => [
+    ?playDateLabel(entry.playedOn),
+    for (final id in entry.modifiers) runTagLabel(id),
+  ].join(' · ');
+
   Widget _scoreRow(int index, ScoreEntry entry) => Container(
     padding: const EdgeInsets.symmetric(vertical: 10),
     decoration: const BoxDecoration(
       border: Border(bottom: BorderSide(color: Color(0xFF1E3043))),
     ),
-    child: LayoutBuilder(
-      builder: (context, bounds) {
-        final compact = bounds.maxWidth < 320;
-        return Row(
-          children: [
-            SizedBox(
-              width: 22,
-              child: Text(
-                index < 0 ? '—' : '${index + 1}'.padLeft(2, '0'),
-                style: TextStyle(
-                  fontSize: 10,
-                  color: index == 0 ? gold : const Color(0xFF647D94),
-                ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _scoreRowLine(index, entry),
+        if (_recordNote(entry).isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 22, top: 2),
+            child: Text(
+              _recordNote(entry),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 8,
+                letterSpacing: 1,
+                color: Color(0xFF7C91A6),
               ),
             ),
-            Text(
-              entry.initials,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: index == 0 ? gold : Colors.white,
-              ),
-            ),
-            const SizedBox(width: 7),
-            _medals(entry.difficulty, entry.medals, size: compact ? 14 : 18),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                _playingTime(entry.activeMilliseconds),
-                style: const TextStyle(color: Color(0xFF9AAEC3), fontSize: 10),
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  entry.score.toString().padLeft(6, '0'),
-                  style: const TextStyle(color: mint, fontSize: 11),
-                ),
-                if (entry.medals == 5 && entry.remainingLives != null)
-                  Text(
-                    '♥ ×${entry.remainingLives}',
-                    style: const TextStyle(
-                      color: Color(0xFFFF8C89),
-                      fontSize: 10,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        );
-      },
+          ),
+      ],
     ),
+  );
+
+  Widget _scoreRowLine(int index, ScoreEntry entry) => LayoutBuilder(
+    builder: (context, bounds) {
+      final compact = bounds.maxWidth < 320;
+      return Row(
+        children: [
+          SizedBox(
+            width: 22,
+            child: Text(
+              index < 0 ? '—' : '${index + 1}'.padLeft(2, '0'),
+              style: TextStyle(
+                fontSize: 10,
+                color: index == 0 ? gold : const Color(0xFF647D94),
+              ),
+            ),
+          ),
+          Text(
+            entry.initials,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: index == 0 ? gold : Colors.white,
+            ),
+          ),
+          const SizedBox(width: 7),
+          _medals(entry.difficulty, entry.medals, size: compact ? 14 : 18),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              _playingTime(entry.activeMilliseconds),
+              style: const TextStyle(color: Color(0xFF9AAEC3), fontSize: 10),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                entry.score.toString().padLeft(6, '0'),
+                style: const TextStyle(color: mint, fontSize: 11),
+              ),
+              if (entry.medals == 5 && entry.remainingLives != null)
+                Text(
+                  '♥ ×${entry.remainingLives}',
+                  style: const TextStyle(
+                    color: Color(0xFFFF8C89),
+                    fontSize: 10,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      );
+    },
   );
 
   Widget _hud() => Row(
@@ -1808,6 +1847,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 collecting: model.canPilot && !model.combat,
                 tiltActive: tilt.isActive,
                 steering: model.steering,
+                joystick: flightJoystickTarget(
+                  model,
+                  boost: scene.bossDirector.flowBoost,
+                ),
+                reduceMotion: model.reducedMotion ? true : null,
               ),
             ),
           ),
@@ -1945,6 +1989,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 gold,
                 size: 17,
               ),
+              // --- bonus-balance: the run record (medals, modifiers,
+              // date, time) under the score being saved.
+              if (finalResult != null) ...[
+                const SizedBox(height: 12),
+                RunRecordCard(entry: finalResult!),
+              ],
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

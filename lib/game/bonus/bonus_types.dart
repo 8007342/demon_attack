@@ -85,10 +85,15 @@ class RunModifierDef {
     required this.chance,
     required this.rules,
     this.brief = '',
+    this.label = '',
   });
 
   /// camelCase; the radio trigger is `runModifier.<id>`.
   final String id;
+
+  /// bonus-balance: the run record's tag on the end-of-run screen and the
+  /// scoreboard, upper case ('': the id, spelled out).
+  final String label;
 
   /// bonus-briefing: the rule in a few words, shown on a bonus level's
   /// urgent-mission card while the modifier is in play ('': not shown).
@@ -152,16 +157,18 @@ class BonusPowerDef {
 /// The level's waves, as changes to the replaced sector's calibrated ones.
 class BonusWaves {
   const BonusWaves({
-    this.count = 2,
+    this.count,
     this.rosterScale = 1,
     this.reinforcementScale = 1,
-    this.sentinels = false,
-    this.elites = false,
+    this.sentinels = true,
+    this.elites = true,
     this.maxKind,
   });
 
-  /// Waves in the level (regular sectors have 3 to 7).
-  final int count;
+  /// Waves in the level; null (the default): the replaced sector's own
+  /// number (3 to 7), so the level lasts about as long as the sector
+  /// (bonus-balance). Regular sectors have 3 to 7.
+  final int? count;
 
   /// × the sector's roster (at least 3 creatures).
   final double rosterScale;

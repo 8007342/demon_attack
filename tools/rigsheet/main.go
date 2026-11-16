@@ -4,8 +4,9 @@ package main
 // BAKE = tools/rigkit/bake.py output):
 //
 //	rigsheet ctl RIG HULL STAGE TAG OUT.png          clay + hint colours on the green key (the hero control)
-//	rigsheet fit RAW RIG HULL STAGE TAG OUT.png [left|right|none]
-//	                                                 raw -> rig frame, silhouette mask, despill (+ symmetrise)
+//	rigsheet fit RAW RIG HULL STAGE TAG OUT.png [left|right|none] [bbox]
+//	                                                 raw -> rig frame, silhouette mask, despill (+ symmetrise);
+//	                                                 bbox first registers the raw's subject box to the clay's
 //	rigsheet maskdiff FIT RIG HULL A B OUT.png       drop texels whose geometry left between stages A and B
 //	rigsheet finish RAW RIG HULL STAGE TAG TEXEL OUT.png  one finished image at TEXEL px per unit (the belly)
 //	rigsheet kit RIG OUT.png HULL...                 kit turntables: 3x3 clay views + passes per hull
@@ -17,6 +18,10 @@ package main
 //	rigsheet sets BAKE RIG OUT.png HULL...           the same tour with different module sets, side by side
 //	rigsheet mock BAKE RIG OUT.png HULL [zoom] [x]   phone-scale in-context mock (360 x 520 arena, zoomed out, spill)
 //	rigsheet lineup RIG OUT.png [BAKE] HULL...       tour escalation lineup (clay, or finished when baked)
+//	rigsheet poseatlas BAKE RIG HULL TEXEL COLS OUT.png [OUT.dart CLASS]
+//	                                                 articulated family: every pose finished, one cell, one page
+//	rigsheet posesheet BAKE RIG HULL TEXEL OUT.png TITLE   clay and finished poses by tilt and direction
+//	rigsheet posecands RIG HULL TEXEL OUT.png TITLE PICK RAW...  hero candidates: raw + finished rest pose
 
 import (
 	"fmt"
@@ -38,7 +43,7 @@ func main() {
 		save(a[4], keyIn(clayHint(r, a[2], a[3]), keyCol))
 	case "fit":
 		r := readRig(a[1], a[2])
-		fit := fitRaw(load(a[0]), r, a[3], a[4])
+		fit := fitRawOpt(load(a[0]), r, a[3], a[4], len(a) > 7 && a[7] == "bbox")
 		if len(a) > 6 && a[6] != "none" {
 			fit = symmetrise(fit, r, a[6] == "left")
 		}
@@ -74,6 +79,12 @@ func main() {
 		cmdLineup(a)
 	case "grid":
 		cmdGrid(a)
+	case "poseatlas":
+		cmdPoseAtlas(a)
+	case "posesheet":
+		cmdPoseSheet(a)
+	case "posecands":
+		cmdPoseCands(a)
 	default:
 		fail("unknown command %s", os.Args[1])
 	}

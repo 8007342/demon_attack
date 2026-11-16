@@ -373,6 +373,18 @@ class Pickup {
   final BonusPowerDef? bonus;
 }
 
+/// playtest-fixes-3: a player hit glancing off a berserk sentinel (its
+/// transformation, or its rush shield against the bare gun): a spark at
+/// the impact, presentation only.
+class Deflect {
+  Deflect(this.x, this.y, this.cx, this.cy);
+
+  /// The impact and the sentinel's centre (the spark flies away from it).
+  final double x, y, cx, cy;
+  double age = 0;
+  static const life = .28;
+}
+
 class Blast {
   Blast(
     this.x,
@@ -523,6 +535,9 @@ class ArcadeModel {
   final List<Shot> shots = [];
   final List<Pickup> pickups = [];
   final List<Blast> blasts = [];
+
+  /// playtest-fixes-3: hits glancing off a berserk sentinel this moment.
+  final List<Deflect> deflects = [];
   final List<SupplyCrate> supplyCrates = [];
   final List<FallingPart> fallingParts = [];
   double crateSpawnTimer = 0.0;
@@ -2850,6 +2865,10 @@ class ArcadeModel {
     }
     clock += dt;
     _updateForeshadow(dt); // --- atmosphere-and-swarms (presentation)
+    for (final f in deflects) {
+      f.age += dt;
+    }
+    deflects.removeWhere((f) => f.age > Deflect.life);
     for (final b in blasts) {
       b.age += dt;
     }
@@ -4371,7 +4390,7 @@ class ArcadeModel {
           if (s.blastRadius > 0) {
             _explodeShot(s);
           } else {
-            hitDemon(d, damage: s.damage);
+            hitDemon(d, damage: s.damage, atX: s.x, atY: s.y);
           }
           hit = true;
           break;
@@ -4415,7 +4434,7 @@ class ArcadeModel {
       final radius = shot.blastRadius + 14 * d.scale;
       final dx = shot.x - d.x, dy = shot.y - d.y;
       if (dx * dx + dy * dy <= radius * radius) {
-        hitDemon(d, damage: shot.damage);
+        hitDemon(d, damage: shot.damage, atX: shot.x, atY: shot.y);
       }
     }
     final b = hittableBoss;
@@ -4443,10 +4462,19 @@ class ArcadeModel {
 
   /// [homing]: a homing missile's heavy hit, which can break a sentinel's
   /// dive shield like an offensive module.
-  void hitDemon(Demon d, {int damage = 1, bool homing = false}) {
+  ///
+  /// [atX], [atY]: where the hit landed (a deflect spark is drawn there).
+  void hitDemon(
+    Demon d, {
+    int damage = 1,
+    bool homing = false,
+    double? atX,
+    double? atY,
+  }) {
     if (!combat || damage <= 0 || d.entering || !demons.contains(d)) return;
     d.flash = .12;
-    if (_rushShieldHit(d, damage)) return; // --- sentinel rush shield
+    // --- sentinel rush: the berserk transformation and the rush shield.
+    if (_rushShieldHit(d, damage, homing: homing, atX: atX, atY: atY)) return;
     if (d.dive > 0 && d.diveShieldMax == 0) {
       _igniteDiveShield(d);
     }
@@ -4507,10 +4535,7 @@ class ArcadeModel {
       demons.remove(d);
       if (boss == null) _reinforcementCasualties++;
       kills++;
-      final basePoints =
-          (100 + d.kind * 75 + (d.maxHp - 1) * 50) *
-          (cycle + 1) *
-          policy.enemyPoints;
+      final basePoints = _killBase(d);
       score += _bonusKillPoints((basePoints * (wasDiving ? 1.5 : 1.0)).round());
       blasts.add(Blast(d.x, d.y, archetype: d.archetype));
       events.add('explosion');
@@ -4556,6 +4581,12 @@ class ArcadeModel {
       }
     }
   }
+
+  /// A creature's kill value before any dive bonus or bonus-level scale.
+  double _killBase(Demon d) =>
+      (100 + d.kind * 75 + (d.maxHp - 1) * 50) *
+      (cycle + 1) *
+      policy.enemyPoints;
 
   /// Shield can be hit across its width. Core needs an exposed central or side hatch.
   bool hitBoss(double shotX, {int damage = 1, double blastRadius = 0}) {

@@ -14,6 +14,8 @@
 #   family    load_family / instances / stage_plan: slots x sets -> instances.
 #   scene     setup_scene / view_basis / place_camera / render_pass.
 #   gate      gate_view: data-driven anchor and coverage gate.
+#   pose      poses / pose_matrix / apply_pose: optional articulation (a family "articulation"
+#             block tilts slots rigidly about a pivot, e.g. a control stick's tilt grid).
 import bpy, bmesh, json, math, os, random, re
 from mathutils import Matrix, Vector, noise
 from mathutils.bvhtree import BVHTree
@@ -516,10 +518,15 @@ def all_verts(objs):
                 yield ob.matrix_world @ v.co
 
 
-def hull_frame(g, objs, views, ppu):
+def hull_frame(g, objs, views, ppu, hull=None):
     """One frame (arena units) for every view: the projected bounds + margin, clipped to the
-    family's visible envelope (render.envelope; parts outside it never reach the screen)."""
+    family's visible envelope (render.envelope; parts outside it never reach the screen).
+    With an articulated family and its hull, the frame holds every pose too."""
     verts = list(all_verts(objs))
+    if hull is not None and g.get('articulation'):
+        for pose in poses(g):
+            apply_pose(g, objs, hull, pose); verts += list(all_verts(objs))
+        apply_pose(g, objs, hull, poses(g)[0])
     x0 = y0 = 1e9; x1 = y1 = -1e9
     for (p, y) in views:
         b = view_basis(g, p, y)
@@ -565,7 +572,7 @@ def obj_centre(objs_list):
 def gate_view(g, objs, basis, scene):
     """The data-driven anchor gate of one view: each anchor prim projects within the tolerance of
     its target and is the first thing the camera sees there; the coverage rect is all hull."""
-    a = g['anchors']; tol = a['tolerance']; res = {}; fails = []
+    a = g.get('anchors', {}); tol = a.get('tolerance', 3.0); res = {}; fails = []
     right, up, back = basis
     for pt in a.get('points', []):
         inst, prim = pt['module'], pt['prim']
@@ -759,3 +766,48 @@ def render_pass(sc, path, kind, objs, ctx):
             set_override(objs, lambda ob: ctx['normal'])
     rs.filepath = path
     bpy.ops.render.render(write_still=True)
+
+
+# ================================================================ articulation
+# A family may declare
+#   "articulation": {"pivot": [x, y, z], "dirs": 8, "tilts": [8, 16, 24],
+#                    "follow": {slot: k | {"k": k, "pivot": [x, y, z]}}}
+# A pose tilts every instance of a following slot rigidly by k x tilt degrees about its pivot,
+# toward the direction a (degrees, 0 = +x, 90 = +y; the family's own frame). Slots not listed
+# stay put. Objects keep their rest mesh (only matrix_world moves), so the projection bake's
+# object coordinates carry the hero texture with the part: every pose shows the same paint.
+def poses(g):
+    """[(id, direction degrees, tilt degrees)]: the rest pose first, then dirs x tilts."""
+    a = g.get('articulation')
+    if not a:
+        return [('rest', 0.0, 0.0)]
+    n = a.get('dirs', 8); out = [('c', 0.0, 0.0)]
+    for t in a['tilts']:
+        for k in range(n):
+            ang = 360.0 * k / n
+            out.append(('a%03d_t%02d' % (round(ang), round(t)), ang, float(t)))
+    return out
+
+
+def pose_matrix(g, slot, pose):
+    a = g.get('articulation') or {}
+    _, ang, tilt = pose
+    f = a.get('follow', {}).get(slot, 0); pv = a.get('pivot', [0, 0, 0])
+    if isinstance(f, dict):
+        pv = f.get('pivot', pv); f = f.get('k', 1.0)
+    if not f or not tilt:
+        return Matrix.Identity(4)
+    r = math.radians(ang)
+    axis = Vector((-math.sin(r), math.cos(r), 0.0))  # rotating +z about it leans toward (cos, sin, 0)
+    pv = Vector(pv)
+    return Matrix.Translation(pv) @ Matrix.Rotation(math.radians(tilt * f), 4, axis) @ Matrix.Translation(-pv)
+
+
+def apply_pose(g, objs, hull, pose):
+    """Set every object's matrix_world for a pose (instances keep their rest meshes)."""
+    slots = {i['id']: i['slot'] for i in instances(g, hull)}
+    for iid, lst in objs.items():
+        M = pose_matrix(g, slots[iid], pose)
+        for ob in lst:
+            ob.matrix_world = M
+    bpy.context.view_layer.update()

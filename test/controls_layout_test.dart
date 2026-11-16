@@ -1,3 +1,4 @@
+import 'package:demon_attack/widgets/pilot_console_content.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/main.dart';
 import 'package:demon_attack/services/scores.dart';
@@ -50,7 +51,7 @@ void main() {
     await tester.tap(find.text('START GAME  →'));
     await tester.pump();
     expectNoDesktopMode();
-    expect(find.text('◀     SLIDE TO PILOT     ▶'), findsOneWidget);
+    expect(find.text(PilotConsoleContent.guidance), findsOneWidget);
 
     final scene =
         tester
@@ -83,7 +84,7 @@ void main() {
     expectNoDesktopMode();
     await tester.tap(find.text('RESUME'));
     await tester.pump();
-    expect(find.text('◀     SLIDE TO PILOT     ▶'), findsOneWidget);
+    expect(find.text(PilotConsoleContent.guidance), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox());

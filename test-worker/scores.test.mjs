@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
-import worker, { HighScores, readScore } from '../worker/index.mjs';
+import worker, { HighScores, playedOn, readScore } from '../worker/index.mjs';
 const request = (data) => new Request('https://game.test/api/scores', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) });
 function database() {
   const db = new DatabaseSync(':memory:');
@@ -19,8 +19,9 @@ test('leaderboard persists only ten, ties favor earlier entries, responds in des
   await board.fetch(request({ initials: 'XYZ', score: 14 }));
   const scores = (await (await new HighScores({ storage }).fetch(new Request('https://game.test'))).json()).scores;
   assert.equal(scores.length, 10);
-  assert.deepEqual(scores[0], { rank: 1, initials: 'ABC', score: 14, difficulty: 'normal', medals: 0, activeMilliseconds: null, remainingLives: null });
-  assert.deepEqual(scores[1], { rank: 2, initials: 'XYZ', score: 14, difficulty: 'normal', medals: 0, activeMilliseconds: null, remainingLives: null });
+  const today = new Date().toISOString().slice(0, 10);
+  assert.deepEqual(scores[0], { rank: 1, initials: 'ABC', score: 14, difficulty: 'normal', medals: 0, activeMilliseconds: null, remainingLives: null, modifiers: [], playedOn: today });
+  assert.deepEqual(scores[1], { rank: 2, initials: 'XYZ', score: 14, difficulty: 'normal', medals: 0, activeMilliseconds: null, remainingLives: null, modifiers: [], playedOn: today });
   assert.equal([...storage.sql.exec('SELECT count(*) AS count FROM scores')][0].count, 10);
 });
 test('worker rejects cross-origin writes and routes unknown APIs without serving app HTML', async () => {
@@ -81,4 +82,43 @@ test('body limit rejects oversized valid JSON and nullable legacy metadata remai
   assert.equal(entry.difficulty, 'normal');
   assert.equal((await board.fetch(request({ initials: 'BAD', score: 999, medals: 4, remainingLives: 3 }))).status, 400);
   assert.equal(board.list().length, 1);
+});
+
+// bonus-balance: the run record carries the run's modifiers and its play date.
+test('records keep their run modifiers and play date', async () => {
+  const board = new HighScores({ storage: database() });
+  const today = new Date().toISOString().slice(0, 10);
+  const response = await board.fetch(request({ initials: 'RUN', score: 500, medals: 2, activeMilliseconds: 61000, modifiers: ['supplyRun', 'noShield'], playedOn: today }));
+  assert.equal(response.status, 201);
+  const entry = (await response.json()).scores[0];
+  assert.deepEqual(entry.modifiers, ['supplyRun', 'noShield']);
+  assert.equal(entry.playedOn, today);
+  await board.fetch(request({ initials: 'OLD', score: 400 }));
+  assert.deepEqual(board.list()[1].modifiers, []);
+  assert.equal(board.list()[1].playedOn, today, 'the server stamps a record sent without a date');
+});
+test('old records without modifiers or a date still load', async () => {
+  const storage = database();
+  storage.sql.exec("CREATE TABLE scores (id INTEGER PRIMARY KEY AUTOINCREMENT, initials TEXT NOT NULL, score INTEGER NOT NULL, difficulty TEXT NOT NULL DEFAULT 'normal', medals INTEGER NOT NULL DEFAULT 0, activeMilliseconds INTEGER, remainingLives INTEGER)");
+  storage.sql.exec("INSERT INTO scores (initials, score, medals, activeMilliseconds) VALUES ('VET', 777, 3, 90000)");
+  const board = new HighScores({ storage });
+  const [entry] = board.list();
+  assert.equal(entry.initials, 'VET');
+  assert.deepEqual(entry.modifiers, []);
+  assert.equal(entry.playedOn, null);
+  assert.equal(entry.medals, 3);
+});
+test('rejects malformed run modifiers; a far-off play date becomes the server\'s', async () => {
+  for (const modifiers of ['supplyRun', [1], ['Bad'], ['a-b'], ['x'.repeat(33)], ['a', 'a'], ['a', 'b', 'c', 'd', 'e']]) {
+    await assert.rejects(readScore(request({ initials: 'ABC', score: 1, modifiers })));
+  }
+  await assert.rejects(readScore(request({ initials: 'ABC', score: 1, playedOn: 20261116 })));
+  const now = new Date('2026-11-16T12:00:00Z');
+  assert.equal(playedOn('2026-11-16', now), '2026-11-16');
+  assert.equal(playedOn('2026-11-15', now), '2026-11-15');
+  assert.equal(playedOn('2026-11-17', now), '2026-11-17');
+  assert.equal(playedOn('2026-11-19', now), '2026-11-16');
+  assert.equal(playedOn('2026-02-31', now), '2026-11-16');
+  assert.equal(playedOn('yesterday', now), '2026-11-16');
+  assert.equal(playedOn(undefined, now), '2026-11-16');
 });
