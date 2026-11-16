@@ -102,17 +102,18 @@ the base onto the grip. Fix: `rigsheet fit … bbox`. After it, the rest pose ma
 - Sides seen only in tilted poses take the flat family fill (the back of the grip at 27° toward the pilot, the
   trigger). They read fine at 52 × 66; a second hero from behind would cover them if the stick ever grows.
 
-## 9. Gates (WIP, 2026-11-16)
-Testing is paused by the operator (a host memory leak in `flutter_tester`).
-- **Passed**:
-  - `flutter analyze`: clean.
-  - `openspec validate flight-joystick --strict`: valid.
-  - `npm run test:worker`: 48/48.
-  - Targeted `flutter test` on `test/flight_joystick_test.dart`, `test/flight_joystick_review_test.dart`,
-    `test/pilot_console_content_test.dart` and `test/controls_layout_test.dart`: 18 + 1 passed.
-- **Not finished**:
-  - The full suite: one unlocked run reached +878 ~4 with no failure before the host lane dropped.
-  - `npm run build`: not run, so the bytes added are not measured. The asset itself is 25,596 bytes, copied into
-    the game and the gallery bundles.
-- **To do when testing reopens**: `flock ~/.cache/tillandsias-project/flutter-test.lock flutter test --concurrency=2`,
-  then `npm run build`.
+## 9. Gates (2026-11-16, after merging origin/game at c30a33fc)
+- `flutter analyze`: clean.
+- `openspec validate flight-joystick --strict`: valid.
+- `npm run test:worker`: 48/48.
+- Full suite, through the lock (`flock ~/.cache/tillandsias-project/flutter-test.lock flutter test --concurrency=2`):
+  +847 ~25, "All tests passed!" (the 25 skipped are `review`-tagged).
+- `test/flight_joystick_review_test.dart` is tagged `review`. It ran alone through the lock
+  (`--concurrency=1 --run-skipped --tags review`): passed. The sheet re-rendered byte-identical. Its memory could not
+  be sampled from the forge: `flutter_tester` runs in the host toolchain container.
+- `npm run build`: ok. Against a baseline build of origin/game c30a33fc:
+
+  | Bundle | Bytes added | Breakdown |
+  | --- | --- | --- |
+  | Game | **+29,208** | the 25,596-byte atlas, main.dart.js +3,423, the rest in asset manifests |
+  | Total, with the gallery's copy | +54,993 | |
