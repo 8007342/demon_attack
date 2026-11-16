@@ -48,7 +48,7 @@
       360,
       240
     ],
-    "envelope_notes": "Carrier-relative arena rect that can ever reach the screen: carrier x in [82, 278], y in [189, 221] (glide), camera zoom down to Z = 0.70 about (180, 477) shows arena x in [-77, 437] and y from -204. Geometry outside is never rendered or stored (the budget-by-visible-region rule, boss-hero-assets ledger 4.3 lesson 5). carrier-v3 (design 6.2): each hull carries its own envelope (tours 2-5 frame wider at their lower zoom floors); render.envelope is the fallback. Tours 2-5 render 40 units of overscan past their visible envelope (hulls.<h>.visible), so a collapse or a bend never shows a cut edge (operator round 3b C3)."
+    "envelope_notes": "The rect of a carrier that can ever reach the screen is hulls.<h>.visible (carrier-v3 design 6.2, per tour). The rendered envelope (hulls.<h>.envelope) adds 80 units of overscan on the top and both sides (carrier-render-engine design 5.3: art past the visible frame, so the bend and the collapse never show a cut edge); bakefinish fades the alpha to 0 over the outer 24 units, so no opaque texel lies on the envelope edge. hulls.<h>.paint_frame is the frame the hero raws were painted on (the control frame); rigsheet fit places a raw there, and the band beyond it takes the bake fill (the family fill colours under the key light). Geometry outside the envelope is never rendered or stored."
   },
   "anchors": {
     "tolerance": 3.0,
@@ -6681,9 +6681,9 @@
         }
       ],
       "envelope": [
-        -410,
-        -490,
-        410,
+        -450,
+        -530,
+        450,
         240
       ],
       "visible": [
@@ -6691,6 +6691,12 @@
         -450,
         370,
         240
+      ],
+      "paint_frame": [
+        -410,
+        -490,
+        410.0,
+        225.33333333333337
       ]
     },
     "carrier3-lattice": {
@@ -6772,9 +6778,9 @@
         }
       ],
       "envelope": [
-        -415,
-        -510,
-        415,
+        -455,
+        -550,
+        455,
         240
       ],
       "visible": [
@@ -6782,6 +6788,12 @@
         -470,
         375,
         240
+      ],
+      "paint_frame": [
+        -415,
+        -510,
+        415.0,
+        240.0
       ]
     },
     "carrier4-shroud": {
@@ -6881,9 +6893,9 @@
         }
       ],
       "envelope": [
-        -420,
-        -530,
-        420,
+        -460,
+        -570,
+        460,
         240
       ],
       "tag_map": {
@@ -6894,6 +6906,12 @@
         -490,
         380,
         240
+      ],
+      "paint_frame": [
+        -420,
+        -530,
+        420.0,
+        240.0
       ]
     },
     "carrier5-thorn": {
@@ -7013,9 +7031,9 @@
         }
       ],
       "envelope": [
-        -430,
-        -560,
-        430,
+        -470,
+        -600,
+        470,
         240
       ],
       "visible": [
@@ -7023,6 +7041,12 @@
         -520,
         390,
         240
+      ],
+      "paint_frame": [
+        -430,
+        -560,
+        430.0,
+        240.0
       ]
     },
     "carrier1-thorn": {
@@ -7072,10 +7096,22 @@
         }
       ],
       "envelope": [
+        -440,
+        -510,
+        440,
+        240
+      ],
+      "visible": [
         -360,
         -430,
         360,
         240
+      ],
+      "paint_frame": [
+        -360,
+        -430,
+        360.0,
+        209.33333333333337
       ]
     },
     "carrier1-lattice": {
@@ -7125,10 +7161,22 @@
         }
       ],
       "envelope": [
+        -440,
+        -510,
+        440,
+        240
+      ],
+      "visible": [
         -360,
         -430,
         360,
         240
+      ],
+      "paint_frame": [
+        -360,
+        -430,
+        360.0,
+        199.33333333333337
       ]
     },
     "carrier1-shroud": {
@@ -7178,10 +7226,22 @@
         }
       ],
       "envelope": [
+        -440,
+        -510,
+        440,
+        240
+      ],
+      "visible": [
         -360,
         -430,
         360,
         240
+      ],
+      "paint_frame": [
+        -360,
+        -430,
+        360.0,
+        208.0
       ]
     }
   },
@@ -7251,7 +7311,7 @@
       "sym": "left"
     },
     "carrier4-shroud": {
-      "S0": "boss-carrier-v2/carrier4-shroud/hero/4034003.png",
+      "S0": "carrier-v3/carrier4-shroud/hero/4037002.png",
       "sym": "left"
     },
     "carrier5-thorn": {

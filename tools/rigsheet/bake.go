@@ -139,7 +139,9 @@ func cmdBakeFinish(a []string) {
 				if stage != "S0" {
 					tx *= ss
 				}
-				add(d, nm, kind, id, stage, v, tx, finishAt(withUnder(d, nm, src), r, tx, pal, false))
+				fin := finishAt(withUnder(d, nm, src), r, tx, pal, false)
+				edgeFade(fin, r, tx, 24, r.Frame)
+				add(d, nm, kind, id, stage, v, tx, fin)
 			}
 			n++
 		}

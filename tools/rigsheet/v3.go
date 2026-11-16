@@ -355,14 +355,28 @@ func cmdFieldData(a []string) {
 	save(filepath.Join(bake, hull, "fin_field.png"), out)
 	cm := image.NewNRGBA(image.Rect(0, 0, w, h))
 	var cs [][3]float64
+	var secs []int
 	for k, l := range lab {
 		cm.Pix[k*4], cm.Pix[k*4+3] = l, 255
 	}
 	for _, c := range cent {
-		cs = append(cs, [3]float64{math.Round((left+(c[0]+.5)/ppu)*10) / 10, math.Round((top+(c[1]+.5)/ppu)*10) / 10, math.Round(c[2] / ppu / ppu)})
+		x, y := math.Round((left+(c[0]+.5)/ppu)*10)/10, math.Round((top+(c[1]+.5)/ppu)*10)/10
+		cs = append(cs, [3]float64{x, y, math.Round(c[2] / ppu / ppu)})
+		// carrier-render-engine §5.4: the chunk's section (0 the fore hull with
+		// the deck, 1 left wing, 2 right wing, 3 the stern), by its centre
+		sec := 0
+		switch {
+		case x < -120:
+			sec = 1
+		case x > 120:
+			sec = 2
+		case y < -200:
+			sec = 3
+		}
+		secs = append(secs, sec)
 	}
 	save(filepath.Join(bake, hull, "fin_chunks.png"), cm)
-	cj, _ := json.Marshal(map[string]any{"encoding": "R = chunk id (1..n, 0 outside the S0 silhouette) at the field grid; chunks[i] = [x, y, area units^2] of chunk i+1 (hull-local)", "chunks": cs})
+	cj, _ := json.Marshal(map[string]any{"encoding": "R = chunk id (1..n, 0 outside the S0 silhouette) at the field grid; chunks[i] = [x, y, area units^2] of chunk i+1 (hull-local); sections[i]: 0 fore hull with the deck, 1 left wing, 2 right wing, 3 stern", "chunks": cs, "sections": secs})
 	os.WriteFile(filepath.Join(bake, hull, "fin_chunks.json"), cj, 0o644)
 	fmt.Printf("%s: %d fracture chunks\n", hull, len(cs))
 	meta, _ := json.MarshalIndent(map[string]any{"left": left, "top": top, "w": w, "h": h, "ppu": ppu, "range": rng,
@@ -671,4 +685,71 @@ func cmdV3Sheet(a []string) {
 	}
 	save(out, sheet)
 	fmt.Println(out)
+}
+
+// paintFrame: the frame (arena units) the hull's hero raws were painted on
+// (family hulls.<h>.paint_frame), or the rig frame.
+func paintFrame(r *Rig) [4]float64 {
+	var fam struct {
+		Hulls map[string]struct {
+			PaintFrame []float64 `json:"paint_frame"`
+		} `json:"hulls"`
+	}
+	b, _ := os.ReadFile(filepath.Join(repoRoot(), r.Family))
+	json.Unmarshal(b, &fam)
+	if pf := fam.Hulls[r.Hull].PaintFrame; len(pf) == 4 {
+		return [4]float64{pf[0], pf[1], pf[2], pf[3]}
+	}
+	return r.Frame
+}
+
+// placeRaw: a raw (painted on the hull's paint frame) at the rig's size and
+// frame; the overscan band outside the paint frame is key (the bake fills it).
+func placeRaw(raw *image.NRGBA, r *Rig) *image.NRGBA {
+	W, H := r.Size[0], r.Size[1]
+	pf := paintFrame(r)
+	if math.Abs(pf[0]-r.Frame[0]) < 1e-6 && math.Abs(pf[1]-r.Frame[1]) < 1e-6 &&
+		math.Abs(pf[2]-r.Frame[2]) < 1e-6 && math.Abs(pf[3]-r.Frame[3]) < 1e-6 {
+		return resize(raw, W, H)
+	}
+	pw, ph := int(math.Round((pf[2]-pf[0])*r.PPU)), int(math.Round((pf[3]-pf[1])*r.PPU))
+	ox, oy := int(math.Round((pf[0]-r.Frame[0])*r.PPU)), int(math.Round((pf[1]-r.Frame[1])*r.PPU))
+	in := resize(raw, pw, ph)
+	out := newCanvas(W, H, keyCol)
+	for y := 0; y < ph; y++ {
+		for x := 0; x < pw; x++ {
+			if xx, yy := x+ox, y+oy; xx >= 0 && yy >= 0 && xx < W && yy < H {
+				out.SetNRGBA(xx, yy, in.NRGBAAt(x, y))
+			}
+		}
+	}
+	return out
+}
+
+// edgeFade: carrier-render-engine §5.3: no opaque texel on the envelope's edge.
+// Alpha falls to 0 over the outer fade units on every side where the rig frame
+// is the envelope's (top, left, right; the hull's own bottom is never cut).
+func edgeFade(im *image.NRGBA, r *Rig, texel, fade float64, frame [4]float64) {
+	if len(r.Envelope) < 4 {
+		return
+	}
+	W, H := im.Bounds().Dx(), im.Bounds().Dy()
+	cut := [4]bool{frame[0] <= r.Envelope[0]+1e-6, frame[1] <= r.Envelope[1]+1e-6, frame[2] >= r.Envelope[2]-1e-6, frame[3] >= r.Envelope[3]-1e-6}
+	f := fade * texel
+	for y := 0; y < H; y++ {
+		for x := 0; x < W; x++ {
+			a := im.Pix[(y*W+x)*4+3]
+			if a == 0 {
+				continue
+			}
+			w := 1.0
+			for k, d := range []float64{float64(x) + .5, float64(y) + .5, float64(W-x) - .5, float64(H-y) - .5} {
+				if cut[k] && d < f {
+					u := d / f
+					w = math.Min(w, u*u*(3-2*u))
+				}
+			}
+			im.Pix[(y*W+x)*4+3] = uint8(float64(a)*w + .5)
+		}
+	}
 }

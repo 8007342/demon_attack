@@ -136,7 +136,8 @@ func v3Data(bake, rigDir, root, hull, key string) v3Extras {
 	// the fracture map (operator round 3b C3) sits beside the field, same grid
 	var chunks *image.NRGBA
 	var cj struct {
-		Chunks [][3]float64 `json:"chunks"`
+		Chunks   [][3]float64 `json:"chunks"`
+		Sections []int        `json:"sections"`
 	}
 	if _, err := os.Stat(filepath.Join(bake, hull, "fin_chunks.png")); err == nil {
 		chunks = load(filepath.Join(bake, hull, "fin_chunks.png"))
@@ -168,8 +169,12 @@ func v3Data(bake, rigDir, root, hull, key string) v3Extras {
 	chunkDart := "null"
 	if chunks != nil {
 		var cs []string
-		for _, c := range cj.Chunks {
-			cs = append(cs, fmt.Sprintf("(%s, %s, %s)", num(c[0]), num(c[1]), num(c[2])))
+		for i, c := range cj.Chunks {
+			sec := 0
+			if i < len(cj.Sections) {
+				sec = cj.Sections[i]
+			}
+			cs = append(cs, fmt.Sprintf("(%s, %s, %s, %d)", num(c[0]), num(c[1]), num(c[2]), sec))
 		}
 		chunkDart = fmt.Sprintf("BossHeroGrid(0, 0, %d, %d, %s, %s), chunkCentres: [%s]", fw, fh, num(fm.Left), num(fm.Top), strings.Join(cs, ", "))
 	}
@@ -255,9 +260,11 @@ class BossHeroData {
   /// The collapse's fracture map (operator round 3b C3): the field
   /// texture's B channel, chunk id (1..n, 0 outside the S0 silhouette); cracks follow
   /// the painted seams (a marker watershed on the beauty's luminance edges).
-  /// [chunkCentres] (x, y, area in units²) of chunk i + 1.
+  /// [chunkCentres] (x, y, area in units², section) of chunk i + 1; the
+  /// section is 0 the fore hull with the deck, 1 the left wing, 2 the right
+  /// wing, 3 the stern (carrier-render-engine §5.4).
   final BossHeroGrid? chunks;
-  final List<(double, double, double)> chunkCentres;
+  final List<(double, double, double, int)> chunkCentres;
 }
 
 `
