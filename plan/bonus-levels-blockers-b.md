@@ -81,3 +81,8 @@ Severity: **S** needed a significant change, **M** cost time or forced a guess, 
 3. A shared review harness and a headless audio render, so a level's look and sound can both be reviewed from the
    forge.
 4. A calibration run for bonus levels (`tools/analyze_difficulty.dart --bonus <id>`).
+
+## Triage (2026-11-16)
+
+Every entry above is now either fixed or a tracked task: see `openspec/changes/guidelines-hardening/design.md` §4
+(the triage table) and `tasks.md`. The working rules these entries asked for are in `CLAUDE.md`.

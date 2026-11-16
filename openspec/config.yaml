@@ -1,9 +1,23 @@
 schema: spec-driven
 context: |
-  Demon Attack is an original remake inspired by Imagic's 1982 game for Atari hardware and expanded conversions.
-  Stack: Flutter with Flame, mobile-first web plus Android and iOS foundations.
-  Build four demon-swarm levels, a shield-and-sliding-door carrier boss, and evolving repeat cycles.
-  Pixel artwork, parallax planets, touch controller panel, arrow keys, permanent auto-fire, three lives.
-  Adaptive original MIDI-event synthesized music and Cloudflare Durable Object Top10 with three A-Z0-9 initials.
-  Work and push on game; merge main only when stable. Production is demonattack.tlatoani.net.
-  Keep specs and plan/ coherent with implementation; validate on the managed local Wrangler preview.
+  Demon Attack: an original pixel-art arcade remake inspired by Imagic's 1982 game. Flutter + Flame, mobile-first web
+  (PWA) with Android/iOS foundations; production is demonattack.tlatoani.net (Cloudflare Worker, static assets,
+  SQLite Durable Objects for per-difficulty Top10 scores and operator review notes).
+  The game today: a five-tour campaign (five carrier bosses), four multi-wave sectors per tour with continuous
+  swarms, perspective depth, sentinels with dive tells and final rushes, a ground war with allies and homing
+  missiles, five combinable powers, bonus levels and run modifiers, Easy/Normal/Hard, medals and heart pieces.
+  Story and warnings come only by squad radio (lib/comms); there is no floating text in play.
+  The model (lib/game/model.dart and its parts) is deterministic, seeded, pure Dart.
+  Working rules (branches, gates, generated files, pipelines, provenance) are in CLAUDE.md at the repo root.
+rules:
+  proposal:
+    - 'Name the operator feedback round or plan file the change answers (plan/operator-feedback-*.md).'
+  specs:
+    - 'Keep each requirement''s text under 500 characters; put numbers, examples and edge cases in scenarios.'
+    - 'A MODIFIED requirement replaces the whole block; copy every scenario that still holds.'
+    - 'One capability spec per independent author when two agents share a change.'
+  design:
+    - 'Every research conclusion carries its source beside it, as [source: Author/Org, "Title", URL, read YYYY-MM-DD], or is marked [UNSOURCED: plan/provenance-audit.md#ID].'
+    - 'Calibration-affecting designs name the gate tests (CLAUDE.md section 7) and the expected effect.'
+  tasks:
+    - 'Refactors of shared files (model.dart, scene.dart, main.dart) are separate tasks with their own plan.'
