@@ -181,3 +181,38 @@ implementation follows the merge of `work/carrier-v3-render`.
   - the final collapse stays cohesive;
   - the bake has no per-component data yet. The rigkit needs a `comp` id pass, a component manifest (pivots, axes,
     cracks) and stump sockets, and the runtime derives the components from the layer art until it has them.
+
+# Round 3d (same day, after the voice-stack and carrier-hatches specs)
+
+## V1 addendum: licences and a two-layer tone list (change `voice-stack`)
+- "We're not using them commercially, our software is free and open source, and so are our games." Re-evaluate the
+  non-commercial models against what the repo actually ships under: GPL-3.0 code, plus the asset licences in
+  `licences/`. The question is whether a model's licence restricts its *outputs*, and whether NC-restricted audio can
+  sit in a GPL repo that others may reuse commercially.
+- The curated, family-friendly pseudo-swear list is a feature: the cast trades lines back and forth with it. Theme it
+  in two layers. Young players relate to the surface; older players find hidden layers and double entendres that nod
+  to older games and pop culture. The nods are original phrasing, never quoted or copied material.
+
+## E1. The end-game cinematic (change `endgame-cinematic`), led by a Fable agent
+- A few seconds long, with a few cinematic shots and transitions, its own exclusive dialogue, and Pixar-level
+  production as the bar. Research it and plan it first: storyboard, shot list, guidelines, and whether it needs its
+  own ComfyUI or Blender pipeline.
+- **The reveal:** the kids imagined the whole game while playing a board game in a restaurant.
+  - The radio cast appears as bystanders: the Admiral is the mom telling them it's time to go home; the grumpy General
+    is the always-smiling restaurant owner; the sassy purple cadet (a prominent character from now on) is the teenage
+    waitress who teases the kids and gives them free soda refills.
+  - Krybor is the restaurant's name.
+  - The gargoyles, ships and tanks are little plastic figures on the board.
+- After it, every detail of the game should take on a new meaning on a second run. Collect details from everywhere in
+  the game (cast, lines, art, sectors, bosses, sounds) so a player who finished once thinks "I wanna finish it again so
+  I can see if…". The radio dialogue plants these details, so players pay attention to it.
+
+## C4 revision: the hatch cascade made fairer (change `carrier-hatches`)
+- Every player says the current boss fight is "waaay too difficult" (the operator loves it). Make it easier through
+  structure:
+  - Each upper hatch has hit points and its own force field. Shooting the upper hatches is the prerequisite.
+  - Only after all the upper hatches are exhausted, destroyed and fallen does the ship transform to expose its lower,
+    delicate hatch. The camera then zooms in slowly again.
+  - This supersedes the lead's earlier "upper hatches not directly shootable".
+- Radio hints, one line each: "Destroy the hatches!", "Time the open hatch!", "Fire ahead of its position!". Radio
+  subtitles stay on one line so the font can grow a little.
