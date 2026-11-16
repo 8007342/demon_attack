@@ -45,9 +45,10 @@ void run(ArcadeModel m, double seconds, {void Function()? each}) {
 void main() {
   test('rush chance by difficulty over 2000 births; one draw, as before', () {
     for (final (difficulty, base) in [
-      (Difficulty.easy, .20),
-      (Difficulty.normal, .35),
-      (Difficulty.hard, .45),
+      // playtest-fixes-3: a little more often (was .20 / .35 / .45).
+      (Difficulty.easy, .28),
+      (Difficulty.normal, .45),
+      (Difficulty.hard, .55),
     ]) {
       var eligible = 0;
       for (var seed = 0; seed < 2000; seed++) {
@@ -94,26 +95,32 @@ void main() {
     expect(d2.lastStand, isFalse, reason: 'above half hull');
   });
 
-  test('the rush shield: base-gun hits break it, stagger and bonus', () {
-    // The spec scenario: four base-gun hits on a Normal route-1 sentinel.
+  test('the rush shield: powered hits break it, stagger and bonus', () {
+    // playtest-fixes-3: the super diving shield of a Normal route-1
+    // sentinel (8 points): the bare gun deflects, Powerful breaks it in
+    // three hits (2 + 1 breaker each).
     final (m, d) = arena(Difficulty.normal);
     m.hitDemon(d);
     expect(d.lastStand, isTrue);
-    expect(d.rushShieldMax, 4);
+    expect(d.rushShieldMax, 8);
     final hull = d.hp, shield = d.shield, armor = d.armor;
     run(m, RushTuning.tell(Difficulty.normal) + .05);
     expect(d.rushing, isTrue);
-    for (var i = 0; i < 3; i++) {
-      m.hitDemon(d);
+    m.hitDemon(d);
+    expect(d.rushShield, 8, reason: 'the bare gun deflects');
+    m.powerTimers[Power.powerful] = 9;
+    for (var i = 0; i < 2; i++) {
+      m.hitDemon(d, damage: 2);
     }
     expect((d.hp, d.shield, d.armor), (hull, shield, armor));
     final score = m.score;
     final events = <String>[];
-    m.hitDemon(d);
+    m.hitDemon(d, damage: 2);
+    m.powerTimers.clear();
     events.addAll(m.takeGameEvents().map((e) => e.name));
     expect(d.rushShield, 0);
     expect(events, contains(GameEventNames.rushShieldBroken));
-    expect(m.score - score, 400 * 2, reason: '400 · (cycle + 1)');
+    expect(m.score - score, 150 * 2, reason: '150 · (cycle + 1)');
     expect(d.rushStagger, RushTuning.stagger);
     final fast = m.policy.rushSpeed;
     m.update(dt);

@@ -396,9 +396,12 @@ void main() {
           if (!m.demons.contains(s)) break;
         }
         _run(m, scene, .08, each: _only(m, [s]));
+        // playtest-fixes-3: only powered hits wear the rush shield.
+        m.powerTimers[Power.powerful] = 9;
         while (s.rushShield > 0) {
-          m.hitDemon(s);
+          m.hitDemon(s, damage: 2);
         }
+        m.powerTimers.clear();
         await _strip(
           m,
           scene,

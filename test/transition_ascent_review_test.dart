@@ -258,7 +258,8 @@ void main() {
       '×${reduced.speed.toStringAsFixed(2)} rise ${reduced.rise}',
     );
     expect(full.pitch, closeTo(1, .02));
-    expect(full.roll, closeTo(1, .02));
+    // playtest-fixes-3: no bank (it read as flying sideways).
+    expect(full.roll, 0);
     expect(full.streaks, greaterThan(.9));
     expect(full.speed, closeTo(8, .05));
     expect(full.rise, lessThanOrEqualTo(FlowPlan.ascentClimb + 1e-9));

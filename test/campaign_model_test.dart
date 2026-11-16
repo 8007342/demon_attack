@@ -373,10 +373,10 @@ void main() {
       }
       counts.add(eligible);
     }
-    // 0.20 / 0.35 / 0.45 (+ skill 0.3 x 0.10) of 200.
-    expect(counts[0], inInclusiveRange(30, 75));
-    expect(counts[1], inInclusiveRange(55, 105));
-    expect(counts[2], inInclusiveRange(75, 125));
+    // 0.28 / 0.45 / 0.55 (+ skill 0.3 x 0.10) of 200 (playtest-fixes-3).
+    expect(counts[0], inInclusiveRange(40, 85));
+    expect(counts[1], inInclusiveRange(70, 120));
+    expect(counts[2], inInclusiveRange(90, 140));
     expect(counts[0], lessThan(counts[1]));
     expect(counts[1], lessThan(counts[2]));
   });
@@ -408,11 +408,13 @@ void main() {
     expect(d.hp, 4);
     expect(d.lastStand, isTrue);
     expect(d.rushPhase, RushPhase.rally);
-    expect(d.rushShield, 4, reason: 'Normal route 0: 4 + 0');
+    expect(d.rushShield, 8, reason: 'Normal route 0: 8 + 0');
     expect(d.rushing, isFalse);
     m.hitDemon(d);
-    expect(d.hp, 4, reason: 'the rush shield holds the hull');
-    expect(d.rushShield, 3);
+    // playtest-fixes-3: the berserk transformation is invulnerable.
+    expect(d.hp, 4, reason: 'nothing hurts it in the rally');
+    expect(d.rushShield, 8);
+    expect(m.deflects, isNotEmpty);
     advance(m, .3);
     expect(d.y, lessThan(90));
     expect(d.x, 90);
@@ -440,7 +442,8 @@ void main() {
     advance(m, .5);
     expect((d.x, d.y), (x, y));
     m.resume();
-    // Two passes on Normal, then the sacrifice: no reward either time.
+    // Two passes on Normal, then the sacrifice. playtest-fixes-3: the
+    // dodged pass pays 300; the pass that takes a life ends it unpaid.
     m.moveTo(330);
     for (var i = 0; i < 300 && m.demons.contains(d); i++) {
       m.update(1 / 60);
@@ -448,7 +451,7 @@ void main() {
     }
     expect(m.demons, isNot(contains(d)));
     expect(m.kills, 0);
-    expect(m.score, 0);
+    expect(m.score, RushTuning.dodgePoints);
     expect(m.pickups, isEmpty);
     expect(m.heartPickups, isEmpty);
     expect(m.blasts.where((b) => b.isLarge), hasLength(1));
@@ -543,7 +546,9 @@ void main() {
     }
   });
 
-  test('base-gun hits break the rush shield, then one more kills normally', () {
+  test('powered hits break the rush shield, then one more kills normally', () {
+    // playtest-fixes-3: in the rally nothing hurts it; in the rush the
+    // bare gun deflects and Powerful wears it 3 per hit.
     for (final rushing in [false, true]) {
       final m = ArcadeModel()..start(difficulty: Difficulty.hard);
       m.mode = RunMode.playing;
@@ -564,21 +569,24 @@ void main() {
       expect(d.hp, 2);
       if (rushing) d.rushPhase = RushPhase.rush;
       final shield = d.rushShield;
-      expect(shield, 5, reason: 'Hard route 0: 5 + 0');
-      for (var i = 0; i < shield; i++) {
-        m.hitDemon(d);
+      expect(shield, 10, reason: 'Hard route 0: 10 + 0');
+      m.powerTimers[Power.powerful] = 9;
+      for (var i = 0; i < 4; i++) {
+        m.hitDemon(d, damage: 2);
       }
-      expect(d.rushShield, 0);
+      m.powerTimers.clear();
+      expect(d.rushShield, rushing ? 0 : 10);
       expect(d.hp, 2);
       // The bonus and the stagger only when it breaks mid-rush.
-      expect(m.score, rushing ? 400 : 0);
+      expect(m.score, rushing ? 150 : 0);
       expect(d.rushStagger, rushing ? RushTuning.stagger : 0);
+      if (!rushing) continue;
       m.hitDemon(d);
       m.shots.add(Shot(d.x, d.y, 0, 0));
       m.update(1 / 60);
       expect(m.demons, isNot(contains(d)));
       expect(m.kills, 8);
-      expect(m.score, (rushing ? 400 : 0) + 600);
+      expect(m.score, 150 + 600);
       expect(m.pickups, hasLength(1));
       expect(m.blasts.where((b) => b.isLarge), hasLength(1));
     }

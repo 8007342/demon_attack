@@ -18,6 +18,9 @@ class SectorBackground {
   final List<ui.Image?> images = List.filled(5, null);
   final flyover = FlyoverBackground();
 
+  /// playtest-fixes-3: viewport above the arena this frame (arena units).
+  double headroom = 0;
+
   /// Loads the flyover atlases; missing files leave the legacy renderer.
   Future<void> loadFlyover(Future<ui.Image> Function(String file) load) async {
     const ids = ['krybor', 'ringfall', 'ember', 'hollow', 'carrier'];
@@ -65,7 +68,11 @@ class SectorBackground {
     int cycle,
     ui.Image? fallback, {
     int wave = 1,
+    double headroom = 0,
   }) {
+    // playtest-fixes-3: [headroom] arena units of viewport above the arena
+    // (the toast band of a tall phone) are background too, always.
+    this.headroom = headroom;
     final near = environment.floor().clamp(0, 4);
     final far = math.min(4, near + 1);
     final blend = (environment - near).clamp(0.0, 1.0);
@@ -109,6 +116,7 @@ class SectorBackground {
       images[sector] ?? fallback,
       tint,
       opacity,
+      headroom: headroom,
     );
     if (opacity >= 1) {
       _paintSectorAtmosphere(
@@ -131,7 +139,7 @@ class SectorBackground {
   }) {
     final tint = colors[sector];
     c.drawRect(
-      const Rect.fromLTWH(0, 0, 360, 520),
+      Rect.fromLTWH(0, -headroom, 360, 520 + headroom),
       Paint()..color = const Color(0xFF070B16),
     );
     final image = images[sector] ?? fallback;
@@ -396,11 +404,14 @@ class SectorBackground {
     final tension = (wave.clamp(1, 4) - 1) * 0.02;
     final p = Paint()..isAntiAlias = false;
 
-    // 28 atmospheric particulates per sector
+    // 28 atmospheric particulates per sector (per 520 rows: the toast band
+    // above a tall phone's arena gets its share, at the same density).
+    final span = 520 + headroom;
+    final count = (28 * span / 520).round();
     final rng = math.Random(104729 + sector * 521);
-    for (var i = 0; i < 28; i++) {
+    for (var i = 0; i < count; i++) {
       final seedX = rng.nextDouble() * 360;
-      final seedY = rng.nextDouble() * 520;
+      final seedY = rng.nextDouble() * span;
       final depth = i % 3 + 1;
 
       double x;
@@ -413,7 +424,7 @@ class SectorBackground {
         case 0:
           // Krybor: Drifting frozen ice crystal dust
           x = (seedX + math.sin(time * 0.6 + i) * 6) % 360;
-          y = (seedY + time * (10 + depth * 3)) % 520;
+          y = (seedY + time * (10 + depth * 3)) % span - headroom;
           if (i % 7 == 0) w = 2.0;
           color = const Color(0xFFC8F3FC).withValues(
             alpha: (0.16 + 0.05 * depth + tension).clamp(0.0, 0.45),
@@ -422,7 +433,7 @@ class SectorBackground {
         case 1:
           // Ringfall: Micro-meteorite ion dust along ring inclination
           x = (seedX - time * (8 + depth * 3)) % 360;
-          y = (seedY + time * (12 + depth * 4)) % 520;
+          y = (seedY + time * (12 + depth * 4)) % span - headroom;
           color = const Color(0xFFD6C8F8).withValues(
             alpha: (0.14 + 0.04 * depth + tension).clamp(0.0, 0.40),
           );
@@ -430,7 +441,7 @@ class SectorBackground {
         case 2:
           // Ember: Incandescent embers rising from lava horizon
           x = (seedX + math.sin(time * 1.3 + i * 1.7) * 8) % 360;
-          y = (520 - (seedY + time * (14 + depth * 4)) % 520);
+          y = 520 - (seedY + time * (14 + depth * 4)) % span;
           final flicker = 0.08 * math.sin(time * 3.0 + i).abs();
           color = (i % 2 == 0 ? const Color(0xFFFF9E4A) : const Color(0xFFFFD066))
               .withValues(alpha: (0.18 + flicker + tension).clamp(0.0, 0.45));
@@ -438,7 +449,7 @@ class SectorBackground {
         case 3:
           // Hollow: Bio-luminescent alien spores in gothic abyss
           x = (seedX + math.cos(time * 0.45 + i) * 11) % 360;
-          y = (seedY + time * (6 + depth * 2.5)) % 520;
+          y = (seedY + time * (6 + depth * 2.5)) % span - headroom;
           if (i % 9 == 0) {
             w = 2.0;
             h = 2.0;
@@ -451,7 +462,7 @@ class SectorBackground {
         default:
           // Carrier: Blood storm motes & occult power sparks near citadel
           x = (seedX + math.sin(time * 2.1 + i * 2) * 10) % 360;
-          y = (seedY + time * (18 + depth * 5)) % 520;
+          y = (seedY + time * (18 + depth * 5)) % span - headroom;
           final spark = 0.10 * math.sin(time * 4.0 + i).abs();
           color = const Color(0xFFFF5A6E).withValues(
             alpha: (0.20 + spark + tension).clamp(0.0, 0.50),
