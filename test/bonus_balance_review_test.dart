@@ -104,6 +104,7 @@ Future<void> _sheet(String path, List<ui.Image> frames) async {
     (h + gap * 2).round(),
   );
   final png = await sheet.toByteData(format: ui.ImageByteFormat.png);
+  sheet.dispose();
   File(path)
     ..createSync(recursive: true)
     ..writeAsBytesSync(png!.buffer.asUint8List());
@@ -410,6 +411,9 @@ void main() {
     await tester.runAsync(
       () => _sheet('art/contact/bonus-balance-medal-screen.png', frames),
     );
+    for (final f in frames) {
+      f.dispose();
+    }
   });
 
   testWidgets('bonus-balance timeline sheet', (tester) async {
@@ -460,6 +464,7 @@ void main() {
         (ph * panels.length + 8).round(),
       );
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
+      img.dispose();
       File('art/contact/bonus-balance-timeline.png')
         ..createSync(recursive: true)
         ..writeAsBytesSync(png!.buffer.asUint8List());
