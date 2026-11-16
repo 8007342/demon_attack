@@ -288,6 +288,22 @@ Visiting the page stays silent until a user gesture unlocks browser audio. Mutin
 
 Future refinements: true stems (the tiers are full mixes crossfaded on bars), music/effects balance controls, and sound preference persistence.
 
+## Hazards, weather and flashes
+
+- **Colour meaning.** Warm amber and red mark a hostile hazard and its tell (ground-missile markers, storm tells).
+  Cyan, teal and violet are friendly technology (allies, homing exhaust). Thermal gradients are reserved for dive
+  shields. A hazard that hurts both sides, like Stormfront's lightning, uses a warm tell and a white bolt with a
+  pale violet-white halo, never cyan. (Taken from what the game already does; Stormfront design, `bonus-levels`.)
+- **Weather** is drawn above the backdrop grade and must keep the firing lane readable. Rain, flicker and screen
+  flashes are dropped under reduced motion; the gameplay tell stays.
+- **Flashes.** Nothing flashes more than three times in any one second over an area above the general or red flash
+  threshold. A general flash is a pair of opposing luminance changes of at least 10 % of maximum luminance (the darker
+  state below 0.80). The area threshold is 25 % of any 10° visual field, about 341 × 256 px on a 1024 × 768 screen
+  [source: W3C, "Understanding Success Criterion 2.3.1: Three Flashes or Below Threshold" (WCAG 2.2),
+  https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html, read 2026-11-16].
+  The project's own, stricter limit: a whole-screen flash stays at or below 10 % white for at most 0.12 s, at most
+  once a second (`arcade-presentation`, "Flash safety").
+
 ## Review gates
 
 At native scale every demon species, angry state, player, and pickup must be recognizable, with no screenshot or original-game sprite reused. Inspect extracted alpha edges and atlas frames; generated concept sheets require review before becoming production assets. Review the sentinel and carrier fire together with ordinary demons: all must share hard pixel edges, bounded palettes and discrete frames. Inspect a full sentinel entrance/hover/warning/dive sequence and reject immediate dives, fast flapping, bird silhouettes (feathers, beaks, frontal wide-open wings) and arrow warnings. Enemy bullets must remain visible on every background. Musical loops should have no silent boundary, old voices should release cleanly, state changes must not restore stale cues, and first visit must stay silent until interaction. Browser checks should cover music through a complete boss transformation, victory, next cycle, pause, resume, and muted play.

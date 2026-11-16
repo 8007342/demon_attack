@@ -152,3 +152,8 @@ eye.
 2. Decide the announcement question (11) and the score-board question (12).
 3. Make the borrowed-line count derived and regenerate generated files at integration (16).
 4. Plan the `LevelDef` and power-registry refactors before a third bonus level (1, 2, 20).
+
+## Triage (2026-11-16)
+
+Every entry above is now either fixed or a tracked task: see `openspec/changes/guidelines-hardening/design.md` §4
+(the triage table) and `tasks.md`. The working rules these entries asked for are in `CLAUDE.md`.

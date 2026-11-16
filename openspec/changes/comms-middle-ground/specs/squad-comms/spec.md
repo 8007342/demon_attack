@@ -21,7 +21,11 @@ A line SHALL never be cut by another line, whatever its class. The comms-pacing 
 - **THEN** the briefing finishes, the grace gap follows, and the warning plays next
 
 ### Requirement: Lookahead for timed calls
-The director SHALL NOT start a line that would still be speaking (with its grace gap, and with an exchange's answer) when a known timed call is due: a queued dive call, a queued ground-fire warning, or the last 2.1 s before a forecast launch (`groundFireForecast`). If a conflict still happens, the line on air SHALL finish, the grace gap SHALL follow, and the waiting warning SHALL play its shortest variant. A must-play warning SHALL never be dropped. The simulation SHALL report how many warnings ended after their launch, and that number SHALL stay at or below 8 % of launches.
+The director SHALL NOT start a line that would still be speaking (with its grace gap, and with an exchange's answer) when a known timed call is due: a queued dive call, a queued ground-fire warning, or the last 2.1 s before a forecast launch (`groundFireForecast`). If a conflict still happens, the line on air SHALL finish, the grace gap SHALL follow, and the waiting warning SHALL play its shortest variant. A must-play warning SHALL never be dropped.
+
+#### Scenario: Late warnings stay rare
+- **WHEN** the simulation plays a campaign and counts the warnings that ended after their launch
+- **THEN** it reports that count, and it stays at or below 8 % of launches
 
 #### Scenario: Warning after a long line
 - **WHEN** a ground unit commits to a shot due in 1 s while a 3 s line is speaking
@@ -43,7 +47,11 @@ Wave starts, reinforcement arrivals, sentinel escorts, carrier phases and hatch,
 - **THEN** a recorded line such as "Field's down! Hit the core!" plays
 
 ### Requirement: Readable radio text
-Each subtitle or card SHALL stay on screen until the later of its clip end plus its hold (2.6 s human, 3.2 s demon) and its reading time (0.9 s + 0.055 s per character of text or SIGINT gloss, at most 7 s). A linked exchange's opening line SHALL stay up until its answer has been read. In the compact dock, cards SHALL keep their place, oldest first, until read. A linked exchange SHALL take the full width. A card without room SHALL wait as a one-line ticker under the dock, so that no card hides another and the dock never grows past its maximum height.
+Each subtitle or card SHALL stay on screen until the later of its clip end plus its hold (2.6 s human, 3.2 s demon) and its reading time (0.9 s + 0.055 s per character of text or SIGINT gloss, at most 7 s). A linked exchange's opening line SHALL stay up until its answer has been read. In the compact dock, cards SHALL keep their place, oldest first, until read. A linked exchange SHALL take the full width.
+
+#### Scenario: No room in the dock
+- **WHEN** a card arrives and the compact dock has no room for it
+- **THEN** it waits as a one-line ticker under the dock, no card hides another, and the dock does not grow past its maximum height
 
 #### Scenario: Taunt and retort
 - **WHEN** the brood taunts and the squad answers
@@ -59,7 +67,10 @@ The observer SHALL publish `groundPicture` (engaged units, threats, whether the 
 - Calls for help only within 10 s of `allyUnderAttack` while ground units are engaged.
 - Surge and pressure narration only while ground units are engaged.
 - Flank, force and artillery lines only when the event's data matches.
-- Ground-crew comebacks only in sectors with a ground war.
+
+#### Scenario: No ground war in the sector
+- **WHEN** a sector has no ground war
+- **THEN** no ground-crew comeback plays there
 
 #### Scenario: Ship away from the battle
 - **WHEN** ground units reach range while the ship flies far from them

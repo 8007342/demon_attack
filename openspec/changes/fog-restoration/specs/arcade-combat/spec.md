@@ -15,10 +15,9 @@ player ship's position and the steering input SHALL NOT move, shift or reshape a
 ### Requirement: Pervasive layered fog
 The fog SHALL cover the whole depth of the field, from the upper sky down to the near ground, as several soft,
 overlapping layers that add up, not as a single band. At least five air layers SHALL be interleaved with the
-creatures by depth, so that an arriving creature rises up through the layers in front of it one at a time,
-and the fog SHALL cover ground units as well as creatures. Inside the near lane the combined fog opacity SHALL
-stay at or under 30 %, and over the ship at or under the existing sky-sheet cap. The ground-atmosphere art
-SHALL add to these layers, not replace them.
+creatures by depth (an arriving creature rises through them one at a time), and the fog SHALL cover ground units
+as well as creatures. The near-lane limits are in the scenarios. The ground-atmosphere art SHALL add to these
+layers, not replace them.
 
 #### Scenario: A wave rises through the fog
 - **WHEN** the next wave sets out from the horizon toward its formation slots
@@ -27,7 +26,8 @@ SHALL add to these layers, not replace them.
 
 #### Scenario: Near lane stays readable
 - **WHEN** fog drifts over the near lane and the ship
-- **THEN** the ship, bullets and lane units stay readable and the fog's combined opacity there is at most 30 %
+- **THEN** the ship, bullets and lane units stay readable, the fog's combined opacity in the near lane is at most
+  30 %, and over the ship it stays at or under the existing sky-sheet cap
 
 ### Requirement: Sentinel fades in through the fog
 The sentinel's foreshadow silhouette SHALL fade in slowly (over about three seconds) far behind the fog, with

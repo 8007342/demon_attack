@@ -3,7 +3,7 @@
 The full design, API and event table are in `plan/terrain-relief.md`. Key decisions:
 
 ## Generator
-- A pure, seeded function per sector and route (`TerrainField`): rolling value noise plus one feature per 300-texel segment from the sector's weights; every feature's support stays within its neighbours, so any distance is seamless. Hashing uses Park–Miller steps below 2^53 so the VM and the web agree.
+- A pure, seeded function per sector and route (`TerrainField`): rolling value noise plus one feature per 300-texel segment from the sector's weights; every feature's support stays within its neighbours, so any distance is seamless. Hashing uses Park–Miller steps below 2^53 so the VM and the web agree [source: MDN, "Number.MAX_SAFE_INTEGER", https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER, read 2026-11-16].
 - The lateral frame is distance from the nearer screen-edge line, the frame walls, landmarks and props already use. A centred world frame put most features under the walls or inside the faded lane; the edge frame keeps them in the side bands at every depth while they still grow as they approach.
 
 ## Drawing
