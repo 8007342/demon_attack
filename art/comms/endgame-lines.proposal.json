@@ -1,0 +1,488 @@
+{
+  "comment": "PROPOSAL for the end-game cinematic (openspec/changes/endgame-cinematic). Not read by tools/comms_pipeline.py and not referenced at runtime. Two lists. `cinematic`: the scene's exclusive lines; no radio trigger may ever play them; `chain` is the audio chain (`radio>room` starts with the radio effect and loses it at the cut, `room` has none); `echoes` names a radio line whose words the line answers. `plants`: radio lines that set the reveal up; fields follow art/comms/lines.json (trigger = GameEvent name, speaker = cast id, emotion; brood lines carry grunt, gloss and say); `set` is `first` (eligible from the first run) or `second` (eligible only after the ending has been seen on the device); `ledger` lists rows of plan/endgame-reveal-ledger.md; `payoff` is the shot. When the voice-stack change admits an engine, append the accepted plants to lines.json under their trigger (never reorder existing clips) with the `plant` and `set` fields that change adds to the schema. All phrasing is original. Speaker picks follow ledger decisions D1 (Gorrak is 'the General') and D2 (Vexxa is the cadet); if the operator picks other characters, only the speaker ids change.",
+  "date": "2026-11-16",
+  "status": "proposal",
+  "cinematic": [
+    {
+      "id": "endgame.e1",
+      "shot": "S1",
+      "at": 0.3,
+      "speaker": "admiral",
+      "role": "ADMIRAL",
+      "text": "Overwatch to squadron. Carrier's down. All wings… come home.",
+      "emotion": "warm",
+      "chain": "radio>room",
+      "direction": "The last two words are hers, not the Admiral's: softer, closer, no radio."
+    },
+    {
+      "id": "endgame.e2",
+      "shot": "S2",
+      "at": 4.4,
+      "speaker": "ulgra",
+      "role": "KID (BROOD SIDE)",
+      "text": "No way. You rolled a six again?",
+      "emotion": "teasing",
+      "chain": "room",
+      "direction": "A kid's real voice. The first brood line ever heard plainly."
+    },
+    {
+      "id": "endgame.e3",
+      "shot": "S2",
+      "at": 6.6,
+      "speaker": "rook",
+      "role": "KID (FLEET SIDE)",
+      "text": "Carrier's down! That's the game!",
+      "emotion": "triumphant",
+      "chain": "room",
+      "echoes": "bossDefeated.h1"
+    },
+    {
+      "id": "endgame.e4",
+      "shot": "S3",
+      "at": 9.0,
+      "speaker": "morth",
+      "role": "KID (BROOD SIDE)",
+      "text": "A rematch. After a short break.",
+      "emotion": "calm",
+      "chain": "room",
+      "echoes": "bossDefeated.d1",
+      "direction": "He growls the first two words in his monster voice, then finishes as himself."
+    },
+    {
+      "id": "endgame.e5",
+      "shot": "S3",
+      "at": 11.0,
+      "speaker": "nibb",
+      "role": "LITTLE SISTER",
+      "text": "Dibs on the crunchy ones!",
+      "emotion": "excited",
+      "chain": "room",
+      "echoes": "bonusDare.supplyRun.d2"
+    },
+    {
+      "id": "endgame.e6",
+      "shot": "S4",
+      "at": 13.2,
+      "speaker": "vexxa",
+      "role": "WAITRESS",
+      "text": "Refills for the fleet. On the house.",
+      "emotion": "teasing",
+      "chain": "room"
+    },
+    {
+      "id": "endgame.e7",
+      "shot": "S4",
+      "at": 15.4,
+      "speaker": "vexxa",
+      "role": "WAITRESS",
+      "text": "Don't tell the General.",
+      "emotion": "teasing",
+      "chain": "room",
+      "direction": "Stage whisper, a nod at the counter. This line starts the rack focus."
+    },
+    {
+      "id": "endgame.e8",
+      "shot": "S5",
+      "at": 17.3,
+      "speaker": "gorrak",
+      "role": "OWNER",
+      "text": "Order up, table five! Smile, everybody. It's a beautiful day!",
+      "emotion": "warm",
+      "chain": "room",
+      "direction": "Booming and delighted. Everything the Marshal's growl was not."
+    },
+    {
+      "id": "endgame.e9",
+      "shot": "S6",
+      "at": 20.5,
+      "speaker": "admiral",
+      "role": "MOM",
+      "text": "Squadron. Time to go home.",
+      "emotion": "warm",
+      "chain": "room"
+    },
+    {
+      "id": "endgame.e10",
+      "shot": "S6",
+      "at": 22.2,
+      "speaker": "pip",
+      "role": "LITTLE BROTHER",
+      "text": "One more turn? Please?",
+      "emotion": "excited",
+      "chain": "room",
+      "echoes": "bonusCleared.supplyRun.h3"
+    },
+    {
+      "id": "endgame.e11",
+      "shot": "S6",
+      "at": 23.4,
+      "speaker": "admiral",
+      "role": "MOM",
+      "text": "…One more turn.",
+      "emotion": "warm",
+      "chain": "room",
+      "direction": "A beat first. The smile she never shows on the radio."
+    },
+    {
+      "id": "endgame.e12",
+      "shot": "S8",
+      "at": 0.6,
+      "speaker": "vexxa",
+      "role": "WAITRESS",
+      "text": "Same time next week, Marshal?",
+      "emotion": "teasing",
+      "chain": "room",
+      "direction": "Off screen, to the plastic figure."
+    }
+  ],
+  "plants": [
+    {
+      "id": "N1",
+      "set": "first",
+      "trigger": "lowLives",
+      "speaker": "admiral",
+      "text": "Last ship, pilot. Then we pack up. Make it a good one.",
+      "emotion": "calm",
+      "ledger": [
+        "C3"
+      ],
+      "payoff": "S6"
+    },
+    {
+      "id": "N2",
+      "set": "first",
+      "trigger": "sectorStart.5",
+      "speaker": "admiral",
+      "text": "Sun's getting low on the Carrier. One more, then home.",
+      "emotion": "calm",
+      "ledger": [
+        "C3",
+        "C4"
+      ],
+      "payoff": "S6"
+    },
+    {
+      "id": "N3",
+      "set": "first",
+      "trigger": "shieldSpotted",
+      "speaker": "vexxa",
+      "grunt": "cackle",
+      "gloss": "Fine. That one is on the house.",
+      "say": "Fine. That one is on the house.",
+      "emotion": "teasing",
+      "ledger": [
+        "L2",
+        "C24"
+      ],
+      "payoff": "S4"
+    },
+    {
+      "id": "N4",
+      "set": "first",
+      "trigger": "shieldBroken",
+      "speaker": "vexxa",
+      "grunt": "cackle",
+      "gloss": "Empty already? I just topped you up!",
+      "say": "Empty already? I just topped you up!",
+      "emotion": "teasing",
+      "ledger": [
+        "L1"
+      ],
+      "payoff": "S4"
+    },
+    {
+      "id": "N5",
+      "set": "first",
+      "trigger": "broodTaunt",
+      "speaker": "vexxa",
+      "grunt": "cackle",
+      "gloss": "Sit still, little ship. I am carrying a full tray.",
+      "say": "Sit still, little ship. I am carrying a full tray.",
+      "emotion": "teasing",
+      "ledger": [
+        "C24"
+      ],
+      "payoff": "S4"
+    },
+    {
+      "id": "N6",
+      "set": "first",
+      "trigger": "broodTaunt",
+      "speaker": "rook",
+      "text": "The General sounds grumpy today. Somebody smile at him.",
+      "emotion": "teasing",
+      "ledger": [
+        "C23"
+      ],
+      "payoff": "S5",
+      "note": "Only after a Gorrak line. The owner answers it in endgame.e8."
+    },
+    {
+      "id": "N7",
+      "set": "first",
+      "trigger": "sectorStart.1",
+      "speaker": "sunny",
+      "text": "Krybor! I hear the General runs a tidy place.",
+      "emotion": "teasing",
+      "ledger": [
+        "P1",
+        "C23"
+      ],
+      "payoff": "S5"
+    },
+    {
+      "id": "N8",
+      "set": "first",
+      "trigger": "sectorStart.1",
+      "speaker": "gorrak",
+      "grunt": "warcry",
+      "gloss": "My house, my rules. And wipe your feet!",
+      "say": "My house, my rules. And wipe your feet!",
+      "emotion": "stern",
+      "ledger": [
+        "P1"
+      ],
+      "payoff": "S5"
+    },
+    {
+      "id": "N9",
+      "set": "first",
+      "trigger": "levelClear",
+      "speaker": "gorrak",
+      "grunt": "alarm",
+      "gloss": "Fine. Keep the corner. You are good for business.",
+      "say": "Fine. Keep the corner. You are good for business.",
+      "emotion": "stern",
+      "ledger": [
+        "C23"
+      ],
+      "payoff": "S5"
+    },
+    {
+      "id": "N10",
+      "set": "first",
+      "trigger": "waveStart",
+      "speaker": "skarn",
+      "grunt": "warcry",
+      "gloss": "Order up! I mean, wings up!",
+      "say": "Order up! I mean, wings up!",
+      "emotion": "excited",
+      "ledger": [
+        "P7"
+      ],
+      "payoff": "S5",
+      "note": "Sector 3 only."
+    },
+    {
+      "id": "N11",
+      "set": "first",
+      "trigger": "levelClear",
+      "speaker": "wisp",
+      "text": "Scoring that one. In pen.",
+      "emotion": "calm",
+      "ledger": [
+        "L16"
+      ],
+      "payoff": "S2"
+    },
+    {
+      "id": "N12",
+      "set": "first",
+      "trigger": "weaponPickup",
+      "speaker": "pip",
+      "text": "Count the dots! Did I roll that? I rolled that!",
+      "emotion": "excited",
+      "ledger": [
+        "C5",
+        "B8"
+      ],
+      "payoff": "S2"
+    },
+    {
+      "id": "N13",
+      "set": "first",
+      "trigger": "sectorStart.3",
+      "speaker": "sunny",
+      "text": "Forecast for Ember Moon: sizzling, with a chance of onions.",
+      "emotion": "teasing",
+      "ledger": [
+        "P7"
+      ],
+      "payoff": "S5"
+    },
+    {
+      "id": "N14",
+      "set": "first",
+      "trigger": "transmissionMission",
+      "speaker": "lindqvist",
+      "text": "Beacon is buzzing, Overwatch. I think our number is up.",
+      "emotion": "calm",
+      "ledger": [
+        "P4",
+        "E18",
+        "U7"
+      ],
+      "payoff": "S2"
+    },
+    {
+      "id": "N15",
+      "set": "first",
+      "trigger": "terrainAhead.ruins",
+      "speaker": "voss",
+      "text": "Careful. One good wave and this whole place washes out.",
+      "emotion": "calm",
+      "ledger": [
+        "P8"
+      ],
+      "payoff": "S7"
+    },
+    {
+      "id": "N16",
+      "set": "first",
+      "trigger": "convoyStuck",
+      "speaker": "kessler",
+      "text": "It's the sand again! Who parks a rig on a beach?",
+      "emotion": "panicked",
+      "ledger": [
+        "G11"
+      ],
+      "payoff": "S7"
+    },
+    {
+      "id": "N17",
+      "set": "second",
+      "trigger": "broodChatter",
+      "speaker": "sliss",
+      "grunt": "cackle",
+      "gloss": "Quiet. The big one under the table is asleep.",
+      "say": "Quiet. The big one under the table is asleep.",
+      "emotion": "calm",
+      "ledger": [
+        "P9"
+      ],
+      "payoff": "S7",
+      "note": "Sector 4 only."
+    },
+    {
+      "id": "N18",
+      "set": "first",
+      "trigger": "rainStart",
+      "speaker": "nomad",
+      "text": "Light rain, right on the hour. You could set a watch by it.",
+      "emotion": "calm",
+      "ledger": [
+        "W2"
+      ],
+      "payoff": "S4",
+      "note": "New trigger; the event exists in lib/game/game_events.dart."
+    },
+    {
+      "id": "N19",
+      "set": "first",
+      "trigger": "bonusCrateMissed.supplyRun",
+      "speaker": "skritch",
+      "grunt": "cackle",
+      "gloss": "One fry! I only took one fry!",
+      "say": "One fry! I only took one fry!",
+      "emotion": "panicked",
+      "ledger": [
+        "C29"
+      ],
+      "payoff": "S7"
+    },
+    {
+      "id": "N20",
+      "set": "second",
+      "trigger": "bossDefeated",
+      "speaker": "morth",
+      "grunt": "alarm",
+      "gloss": "Five rounds. Good game. Same table next week?",
+      "say": "Five rounds. Good game. Same table next week?",
+      "emotion": "calm",
+      "ledger": [
+        "U10"
+      ],
+      "payoff": "S7",
+      "note": "Route 5 only."
+    },
+    {
+      "id": "N21",
+      "set": "second",
+      "trigger": "broodTaunt",
+      "speaker": "vexxa",
+      "grunt": "cackle",
+      "gloss": "Back again? I kept your corner.",
+      "say": "Back again? I kept your corner.",
+      "emotion": "teasing",
+      "ledger": [
+        "C24"
+      ],
+      "payoff": "S4"
+    },
+    {
+      "id": "N22",
+      "set": "second",
+      "trigger": "sectorStart.1",
+      "speaker": "gorrak",
+      "grunt": "warcry",
+      "gloss": "You again! The usual, I suppose?",
+      "say": "You again! The usual, I suppose?",
+      "emotion": "stern",
+      "ledger": [
+        "C23",
+        "P1"
+      ],
+      "payoff": "S5"
+    },
+    {
+      "id": "N23",
+      "set": "second",
+      "trigger": "sectorStart",
+      "speaker": "admiral",
+      "text": "Overwatch to squadron. I said one more turn. One.",
+      "emotion": "teasing",
+      "ledger": [
+        "C3"
+      ],
+      "payoff": "S6",
+      "note": "Answers endgame.e11. Sector 1 of a new campaign only."
+    },
+    {
+      "id": "N24",
+      "set": "second",
+      "trigger": "levelClear",
+      "speaker": "pip",
+      "text": "Best of five? Best of seven? I can do this all day!",
+      "emotion": "excited",
+      "ledger": [
+        "C4"
+      ],
+      "payoff": "S3"
+    },
+    {
+      "id": "N25",
+      "set": "second",
+      "trigger": "transmissionJunior",
+      "speaker": "nomad",
+      "text": "Funny. I'd swear I have flown this exact afternoon before.",
+      "emotion": "calm",
+      "ledger": [
+        "C4"
+      ],
+      "payoff": "S7"
+    },
+    {
+      "id": "N26",
+      "set": "second",
+      "trigger": "shieldCollected",
+      "speaker": "rook",
+      "text": "Topped up! Tell the cadet she's my favourite enemy.",
+      "emotion": "teasing",
+      "ledger": [
+        "L2",
+        "C24"
+      ],
+      "payoff": "S4"
+    }
+  ]
+}
