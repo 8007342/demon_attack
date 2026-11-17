@@ -1,0 +1,26 @@
+# Third-party licence acknowledgement (order 1956-ecpb, implements 1954-dvz9).
+# Recorded by merging the pull request that adds it (strength: github-merge).
+record: tillandsias-licence-acknowledgement v1
+licence: creativeml-openrail-m
+licence_sha256: be351ebe7ac01bcdbb018639aadcfd38f136b7dc3f2a3d4d3a24db51d1b210ef
+covers: [LayerDiffusion/layerdiffusion-v1]
+grantor: project-owner
+scope: project:demon_attack
+use: non-sale
+expiry: "standing"
+signed_at: "2026-11-17T20:30:38Z"
+strength: github-merge
+host: macuahuitl
+statement: |
+  tillandsias-licence-acknowledgement v1
+  licence: creativeml-openrail-m
+  licence_sha256: be351ebe7ac01bcdbb018639aadcfd38f136b7dc3f2a3d4d3a24db51d1b210ef
+  covers: LayerDiffusion/layerdiffusion-v1
+  grantor: project-owner
+  scope: project:demon_attack
+  use: non-sale
+  expiry: standing
+  host: macuahuitl
+  strength: github-merge
+  issued: 2026-11-17T20:30:38Z
+signature: ""
