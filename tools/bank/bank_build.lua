@@ -170,8 +170,9 @@ end
 --     root F: while odd(F) > OCT_DOWN * all(F) and odd(F) > OCT_MIN the zone sounds an octave lower (F/2); else
 --     while odd(2F) < OCT_UP * all(2F) and all(2F) > OCT_MIN (2F's partials carry the sound, F's odd ones are
 --     absent) an octave higher (2F); at most ±2. OCT_MIN keeps a zone with no energy near F from moving on noise.
---   note: the harmonic sum S(f) = sum of |X(h f)| (h = 1..8, below 7 kHz) is maximised within ±6.5 semitones of the
---     zone's octave-corrected root (10-cent steps, then 1-cent); the residual is that f against the root.
+--   note: the harmonic sum S(f) = sum of sqrt|X(h f)| (h = 1..8, below 7 kHz) is maximised within ±6.5 semitones of
+--     the zone's octave-corrected root (10-cent steps taking each partial's peak within ±12 cents, then 1-cent steps
+--     within ±15 cents); the residual is that f against the root.
 local OCT_DOWN, OCT_UP, OCT_MIN, SPAN = 0.9, 0.02, 0.3, 6.5
 local function fft(re, im, n)
   local j = 1
@@ -199,17 +200,40 @@ local function fft(re, im, n)
   end
 end
 local SR, NFFT = rate / 3, 65536
-local function spectrum(pcm, channels)
-  local x, step = {}, 3 * channels
-  for i = 1, #pcm - step + 1, step do
-    local s = 0
-    for j = 0, step - 1 do s = s + pcm[i + j] end
-    x[#x + 1] = s / step
+-- Decimation by 3 behind a 63-tap Hamming-windowed sinc low-pass at 7 kHz: a plain 3-sample average lets a bright
+-- DI guitar's partials above 8 kHz alias into the band and outvote the real ones (twang_g6 read 3.9 semitones flat).
+local FIR = {}
+do
+  local N, fc, sum = 63, 7000 / rate, 0
+  for n = 0, N - 1 do
+    local m = n - (N - 1) / 2
+    local h = (m == 0 and 2 * fc or math.sin(2 * math.pi * fc * m) / (math.pi * m)) * (0.54 - 0.46 * math.cos(2 * math.pi * n / (N - 1)))
+    FIR[n + 1] = h; sum = sum + h
   end
+  for n = 1, N do FIR[n] = FIR[n] / sum end
+end
+local function spectrum(pcm, channels)
+  local frames = #pcm // channels
+  local mono = {}
+  for i = 0, frames - 1 do
+    local s = 0
+    for c = 1, channels do s = s + pcm[i * channels + c] end
+    mono[i + 1] = s / channels
+  end
+  local total = frames // 3
   local start = math.floor(0.08 * SR)
-  local L = math.min(#x - start, math.floor(SR))
-  if L < math.floor(0.2 * SR) then start = 0; L = math.min(#x, math.floor(SR)) end
+  local L = math.min(total - start, math.floor(SR))
+  if L < math.floor(0.2 * SR) then start = 0; L = math.min(total, math.floor(SR)) end
   if L < 2048 then return nil end
+  local x, N = {}, #FIR
+  for k = start, start + L - 1 do
+    local c, acc = 3 * k + 1, 0
+    for n = 1, N do
+      local v = mono[c + n - 1 - (N - 1) // 2]
+      if v then acc = acc + FIR[n] * v end
+    end
+    x[k + 1] = acc
+  end
   local re, im = {}, {}
   for i = 1, NFFT do re[i], im[i] = 0, 0 end
   for i = 0, L - 1 do re[i + 1] = x[start + i + 1] * (0.5 - 0.5 * math.cos(2 * math.pi * i / (L - 1))) end
@@ -228,9 +252,19 @@ local function magAt(mag, hz)
   local t = b - i
   return mag[i + 1] * (1 - t) + mag[i + 2] * t
 end
-local function hsum(mag, f)
+-- The strongest bin within ±cents of hz (real partials sit a few cents off exact multiples, and a 1 s window's
+-- peaks are ~1 Hz wide).
+local function peakNear(mag, hz, cents)
+  local a, b = math.floor(hz * 2 ^ (-cents / 1200) * NFFT / SR), math.ceil(hz * 2 ^ (cents / 1200) * NFFT / SR)
+  local m = 0
+  for i = math.max(1, a), math.min(#mag - 1, b) do if mag[i + 1] > m then m = mag[i + 1] end end
+  return m
+end
+-- The harmonic sum on compressed magnitudes (sqrt), so one loud partial cannot outvote the series (twang_g6: its 4th
+-- partial is 17 dB over the fundamental, and 626 Hz x 5 landed on it). `cents` > 0: peak within that tolerance.
+local function hsum(mag, f, cents)
   local s = 0
-  for h = 1, 8 do if h * f < 7000 then s = s + magAt(mag, h * f) end end
+  for h = 1, 8 do if h * f < 7000 then s = s + math.sqrt(cents and peakNear(mag, h * f, cents) or magAt(mag, h * f)) end end
   return s
 end
 local function oddAll(mag, f)
@@ -253,11 +287,12 @@ local function pitchCheck(pcm, channels, root)
   local best, bestHz = -1, F
   for c = -SPAN * 100, SPAN * 100, 10 do
     local hz = F * 2 ^ (c / 1200)
-    local v = hsum(mag, hz)
+    local v = hsum(mag, hz, 12)
     if v > best then best, bestHz = v, hz end
   end
   local coarse = bestHz
-  for c = -10, 10 do
+  best = -1
+  for c = -15, 15 do
     local hz = coarse * 2 ^ (c / 1200)
     local v = hsum(mag, hz)
     if v > best then best, bestHz = v, hz end
