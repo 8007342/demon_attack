@@ -3,6 +3,13 @@
 Research and sources: `plan/soundtrack-research.md` (§ numbers below as R§). This file records decisions. Repo facts
 name their file. The pilot's ledger: `plan/render-runs/soundtrack-pilot.md`.
 
+**Revision of 2026-11-17: MIDI first.** The operator asked that MIDI become the soundtrack's first layer rather than
+its fallback, with no duplicated assets. §11 records that decision, and its research is
+`plan/midi-first-research.md` (M§ below). Where §2–§7 describe recorded full-mix sections, §11 narrows those
+sections to **texture beds**: optional layers holding only parts the score does not play. The song map (§3), the boss
+section graph and transition table (§4), the `SongDirector` (§5.1), the pilot (§8) and the gates (§6) stand. The
+score now plays those graphs, not the rendered files.
+
 ## 1. Goals and limits
 
 - **One run, one long song.** From the menu to the credits the music never stops and never restarts: every change
@@ -14,17 +21,22 @@ name their file. The pilot's ledger: `plan/render-runs/soundtrack-pilot.md`.
 - **Honest layers only.** No shipped stem comes from separating a mix with a separation model
   (`plan/audio-studio/music-requirements.md` §5). Layers are either cut from our own mixes by plain DSP (as the
   dive and power layers are today), generated on the grid, or (after #1103) rendered from samples.
+- **The score is the first layer (§11).** Drums, bass, guitars, leads and stingers play from committed multitrack
+  MIDI through a sampled bank in the browser. Rendered audio adds only texture the score does not play, and no part
+  ships twice (CLAUDE.md §5, one format per asset).
 - **Not in this change:** the radio, the effects, the credits list, any gameplay or calibration change.
 
 ## 2. Architecture: a hybrid (R§1.2)
 
 | Layer | Mechanism | Prior art | Status |
 |---|---|---|---|
-| Sections | whole-bar files on one grid per song; a transition table moves between them on the next bar (or beat), into the destination's start or the same position, with a cut, a fade or a bridge | horizontal re-sequencing (R§1 A1, A3–A5) | core nodes now |
+| **Score (first layer, §11)** | committed multitrack MIDI per section, played by the in-browser sampler on the song's grid; per-track gains carry intensity (track masks), so sections, variants and layers are one arrangement | iMUSE's MIDI hooks and markers (M§3.4) | score generator now; bank sources with #1103 |
+| Sections | whole-bar sections on one grid per song (score sections first; texture-bed files where a song has them); a transition table moves between them on the next bar (or beat), into the destination's start or the same position, with a cut, a fade or a bridge | horizontal re-sequencing (R§1 A1, A3–A5) | core nodes now |
 | Intensity inside a section | variants of one section that share its bars (`v1` calm, `v2` peril); switching keeps the position | same-position transitions (A1 `SAME_POSITION`) | core nodes now (as separate takes); one arrangement needs #1103 |
 | Layers | stingers (accents), the dive layers and the power layer (HPSS cuts of our own mixes), a riser; later the sampled drum and bass bed | vertical layering (A2), stingers (A5) | stingers and cuts now; beds #1103 |
 
-The model is the engines' common one (R§1.1): sections plus a transition table keyed on game state, quantised to
+With §11 the "Intensity" row becomes a track mask on the score (same bars, by construction), and "Layers" become
+score tracks plus optional texture beds. The model is the engines' common one (R§1.1): sections plus a transition table keyed on game state, quantised to
 the grid, with bridges where a jump needs one, layers synced inside a section, and stingers over it.
 
 ## 3. The song map of a run
@@ -63,6 +75,10 @@ Source of truth: `art/music/soundtrack/song-map.json` (task 2.1). Grids are inte
 A run is 25 songs. A sector song is four 8-bar sections × two variants, an arrival, a clear, and a bridge: about 11
 files, 2.2 MB as Opus 160 kbps. A carrier song (§4) is about 1.4 MB (the pilot's seven files: 1.36 MB). With the
 world songs shared by routes: 4 × 2.2 + 5 × 1.4 + overture, coda, defeat ≈ 18 MB in all, fetched one song ahead.
+
+**MIDI first (§11):** the same run as scores is about 18 minutes of unique music × 530 B/s ≈ 0.6 MB (0.3 MB
+gzipped; measured on the L3 score, M§0.1 F2), plus one shared sample bank of ≈ 1.6 MB Opus (M§3.3): ≈ 2.2 MB in all,
+plus whatever texture beds a song carries (budget §11.5).
 
 ## 4. The boss fight as a section graph
 
@@ -173,7 +189,8 @@ depends on #1103's libraries (contents unverified, R§2.3).
 - Each section is mastered to −19 LUFS integrated with true peak ≤ −1.5 dBTP by a fixed (linear) gain, so sections
   of one song match in level; the engine's gains, Music toggle and safety limiter stay as today
   (`plan/audio-backend.md`).
-- Ogg Opus decodes on Safari only from 18.4 (R§3 W3). No fallback format (operator, 2026-11-17: "No fallback format, this project is already asset heavy, no need to duplicate assets. Just keep the latest, unless the older one is signifficantly smaller in size."): older iPhones get the MIDI fallback.
+- Ogg Opus decodes on Safari only from 18.4 (R§3 W3). No fallback format (operator, 2026-11-17: "No fallback format, this project is already asset heavy, no need to duplicate assets. Just keep the latest, unless the older one is signifficantly smaller in size."): older iPhones get the MIDI fallback. With §11 the score plays there through the oscillator voice (the
+  bank's Opus samples cannot decode either), so no second format is needed anywhere.
 
 ### 5.3 Loading
 
@@ -183,6 +200,8 @@ depends on #1103's libraries (contents unverified, R§2.3).
   sections are evicted first; the current section and its neighbours never are.
 - A section that has not decoded in time is skipped: the current section keeps looping and the move waits for the
   next bar. If nothing of a song decodes, the MIDI fallback plays (the modified "Adaptive MIDI soundtrack").
+- With §11 the 48 MB cap covers the sample bank plus any texture beds. The score itself needs no decoding, and a song
+  with no beds never waits for audio to decode.
 
 ### 5.4 Diagnostics
 
@@ -207,6 +226,8 @@ seeds, workflow, overrides) is, so a section can be re-generated (not byte-ident
 ## 7. What waits for tillandsias#1103
 
 - **XL SFT** (the "highest quality" variant, R§2.1 S4): re-render the picked sections' recipes with it.
+- **The CC0 sample sources** (Karoryfer, VCSL, VSCO 2 CE) from which §11's web bank is extracted, and
+  `TillandsiasSFZRender` for full-quality offline auditions of the scores (the A/B against the web bank).
 - **SFZ stems** (Karoryfer, VCSL): true vertical layers in one arrangement (`v1`/`v2` as stem mixes), the drum and
   bass bed that intensifies with `musicIntensity`, the route thickening of shared world songs, and possibly the
   sampled ukulele.
@@ -251,3 +272,199 @@ audio latents as a seam repair; P6 the coda and ukulele sketch.
 | N6 | Ownership of `web/audio/demon-audio.js`, `lib/game/music_director.dart` and `main.dart`'s music hook while `battle-metal-radio-rework` and `voice-stack` are open | coordinator | tasks 3–4 |
 | N7 | GPU budget for production: about 5 carrier songs × 8 sections × 4 takes and 4 world songs × 11 files × 4 takes, roughly 340 takes at 6–25 s each, under an hour of GPU in one-at-a-time jobs | coordinator | task 5 |
 | N8 | **Decided 2026-11-17:** no committed lossless masters; the committed Opus plus the recipe (workflow, seed, pick) is the record. A re-render replaces a pick | operator | done |
+| N9 | Route B (§11.6): may MIDI motifs transcribed from htdemucs-separated stems be quoted in shipped scores? The acknowledgement is "non-sale", and separated **audio** never ships; transcribed notes are a derived analysis | operator | task 8.8 |
+| N10 | Admission and download consent for basic-pitch's ONNX model (Apache-2.0) and ONNX Runtime (MIT) for route B; for Anticipatory Music Transformer `music-large-800k` and Clef-0.2B (Apache-2.0 weights) for route C | coordinator / operator | tasks 8.8, 8.9 |
+| N11 | The CC0 libraries for the bank: whether #1103 delivers Karoryfer (drums, Growlybass, Black And Green Guitars), VCSL and VSCO 2 CE on the host, or the operator consents to fetching them; Meatbass looks GPL-3 (M§3.3 B3), so Growlybass replaces it | coordinator / operator | tasks 8.5, 8.6 |
+| N12 | A CC0 choir: none found (M§3.3 B4); a texture bed rendered with ACE-Step carries the choir until a CC0 source turns up | coordinator | task 8.7 |
+| N13 | The bake-off verdict (task 8.4): the operator hears one carrier section as score + bank and as the recorded pick, and approves MIDI-first for production | operator | production (task 5) |
+
+## 11. MIDI first: the score as the first layer (revision of 2026-11-17)
+
+Research and sources: `plan/midi-first-research.md` (M§). The operator, 2026-11-17: "let's keep MIDI as the fallback,
+but try to make it so it becomes our first layer instead", and "No fallback format, this project is already asset
+heavy, no need to duplicate assets."
+
+### 11.1 Decision
+
+The adaptive backbone of the soundtrack is a **committed multitrack MIDI score**: drums, bass, rhythm guitars,
+leads, pads and stingers. The score is played in the browser by a **sampler** from one curated CC0 bank, on the song
+grids, section graph and transition table of §3–§4. Rendered ACE-Step audio becomes an **optional texture layer**
+holding only parts the score does not play. Where the bank cannot play, the same score plays through the built-in
+oscillator voices.
+
+Why (M§4): MIDI-first wins on size, adaptivity and coherence, and those three are what "one run, one long song"
+needs. Its weak spot is the quality ceiling of sampled distorted guitar in a small web bank. The odds are our
+judgement (M§4):
+
+| Outcome | Odds |
+|---|---|
+| MIDI-first is the better backbone | ≈ 75 % |
+| Sampled guitars alone reach the operator's bar on the first try | ≈ 50 % |
+| Backbone plus texture beds beats rendered-only on the whole brief | ≈ 85 % |
+
+A listening bake-off (task 8.4, N13) gates production.
+
+| | MIDI-first | Rendered sections (§2–§7 before this revision) |
+|---|---|---|
+| Whole run | ≈ 0.6 MB of scores + ≈ 1.6 MB bank (M§3.3) | ≈ 18 MB (§3.2) |
+| Intensity | track masks on one arrangement: true vertical layers, same position by construction | separate takes per variant; vertical layers wait on #1103 |
+| Coherence | one bank, one mix chain | the pilot's main open risk (§9) |
+| Key, tempo, stingers | data: transpose and grid are parameters; stingers play in the current key | fixed in the audio |
+| Quality ceiling | bounded by the bank and the browser amp; no CC0 choir | higher density and "real band" feel, with the turbo model's air problems |
+
+### 11.2 Layers
+
+| Layer | What | Ships as | Always present |
+|---|---|---|---|
+| 1. Score | per section: multitrack MIDI (SMF type 1, PPQ 480, a conductor track with tempo, key, time signature and section markers; one track per part, named by role) | `web/audio/score/<song>/<section>.mid` | yes |
+| 2. Bank | CC0 instrument samples, curated and trimmed (M§3.3): drums, bass DI, guitar DI, organ/brass/string pads, timpani, bells, war drum | one Opus sprite per instrument group + `bank.json` (zones: key and velocity range, root, offset, length, loop points) | loads progressively |
+| 3. Texture beds | rendered ACE-Step audio of parts the score does not play: choir and "air" beds, risers, impacts, the worldized ending, the ukulele (no CC0 ukulele, M§3.3) | Opus sections on the score's grid (§5.2 rules) | optional, per song |
+| 4. Fallback voice | the oscillator voices of `demon-audio.js` playing layer 1 | code only, no asset | where layer 2 cannot load or decode |
+
+**No duplicates.** Each part of a section lives in exactly one layer.
+- A texture bed may not contain drums, bass or rhythm guitar. Its prompt excludes them, and the gate rejects a bed
+  whose percussive share or low-band energy says otherwise (§11.9).
+- When a section's score is approved, any recorded full-mix of that section stops being a shipping asset and is
+  deleted (the recipe stays the record, §1 N8).
+- The old fallback cues in `web/audio/midi/` are deleted as each is replaced by a score section; the manifest maps
+  the old cue names to score sections until then.
+
+### 11.3 The score, per section
+
+- **Tracks and roles.** These are the L3 score's parts (`tools/score_l3.py`): `drums` (GM map, channel 10), `bass`,
+  `gtrL`, `gtrL-pm`, `gtrR`, `gtrR-pm`, `lead`, `lead2`, `lead-clean`, `clean`, `organ`, `brass`, `strings`,
+  `timpani`, `bells`, plus `fill` (dive fills) and `sting` (accents).
+  - `choir` stays in the score as a guide part. It is muted where a texture bed carries the choir, and played by the
+    organ patch where none does.
+- **Intensity masks.** The song map lists, per section, the tracks each `musicIntensity` tier plays. The default
+  masks (M§3.4):
+  - tier 1: kick, snare, hats, bass, rhythm guitars;
+  - tier 2: adds the lead, crash and ride;
+  - tier 3: adds the double kick (a separate drum track), `lead2` and the pads;
+  - tier 4: all tracks.
+
+  A `v2` (peril) variant is a mask or an extra track of the same file, not a second file.
+- **Stingers** are short score files in scale degrees, transposed at play time to the current song's key, and
+  quantised as today (§4.3 "Accents").
+- **Bridges** stay written score files. The tempo changes only at song boundaries, inside a bridge (§3.1).
+- **Size.** Measured on the L3 score: 530 B/s raw, 259 B/s gzipped, peak 25 voices (50 with 0.5-beat release
+  tails) (M§0.1 F2–F3).
+
+### 11.4 The sampler runtime (`web/audio/demon-audio.js`)
+
+- **One clock.** Score notes use the existing scheduler (25 ms timer, 120 ms lookahead) and parser
+  (`parseMidi`, extended to SMF type 1 with track names). The sampler replaces the oscillator in `voice()` with an
+  `AudioBufferSourceNode` on the nearest zone's sample. Pitch is set by `playbackRate` within ±3 semitones of the
+  zone root, with a velocity-scaled gain and a release envelope.
+  - No new dependency. spessasynth_lib (Apache-2.0, M§3.1 P1) is the measured alternative in the bake-off, but it
+    adds a second scheduler, has unverified Safari support, and its SF3 bank is Vorbis, a second compressed format
+    beside the game's Opus.
+- **Per-track graph.** Each note passes through track gain → instrument bus → music bus → the existing master gain
+  and safety limiter (`plan/audio-backend.md`).
+  - **Guitar bus:** pre-EQ → `WaveShaper` (`oversample = '4x'`, two gain stages) → a cabinet of our own filters
+    (high-pass ≈ 80 Hz, low-pass ≈ 5.5 kHz, a presence peak at 2–3 kHz, a notch near 400 Hz) → a left and right
+    double from one DI (a few cents apart, different curves).
+  - **Bass bus:** light drive, then a low-pass blend.
+  - **Drums:** a dry bus plus a short room.
+  - **Pads:** a shared convolution or algorithmic reverb.
+  - The amp and cabinet are code, not an impulse response; no CC0 cabinet IR was found (M§3.2). NAM in WASM is
+    ruled out on phones by its memory (M§3.2 M2).
+- **Intensity.** A mask change ramps track gains (20 ms in, 60 ms out) on the next bar line. Muted tracks keep their
+  notes scheduled at zero gain for one bar, then stop scheduling, so unmuting is immediate and bar-exact.
+- **Section moves (§4.3) on a score.**
+  1. At the move's time, no new notes of the source are scheduled past it.
+  2. Held notes are released over 30 ms.
+  3. The destination is scheduled from its start, or from the same beat offset for `enter: same`.
+  4. A bridge auto-advances at its end.
+- **Voices.** The cap is 48 on desktop and 32 on phones (by `navigator.deviceMemory` or the screen class). Stealing
+  takes pads first, then leads; it never takes kick, snare or bass. `demonAudio.state` adds `voices`, `stolen`,
+  `bankLoaded`, `bankDecodedBytes` and the current mask.
+- **Loading.** `bank.json` lists groups by priority:
+  1. core: kick, snare, bass sustain, guitar sustain and palm mute;
+  2. cymbals and hats, then pads, timpani and bells;
+  3. extra velocity layers and round-robins (skipped on phones).
+
+  A note whose zone is not decoded yet plays through the oscillator voice, so the music starts at once and
+  sharpens as the bank arrives. The 48 MB decoded cap (§5.3) covers the bank (≈ 41 MB full, ≈ 16 MB phone tier,
+  M§3.3) plus texture beds.
+
+### 11.5 Size budget
+
+| Item | Budget | Basis |
+|---|---|---|
+| Scores, whole run | ≤ 1 MB raw | ≈ 18 min × 530 B/s ≈ 0.6 MB (M§0.1 F2) |
+| Bank, compressed | ≤ 2 MB | ≈ 1.6 MB plan (M§3.3) |
+| Bank, decoded | ≤ 41 MB desktop, ≤ 16 MB phone tier | M§3.3 |
+| Texture beds, whole run | ≤ 4 MB | e.g. 5 carrier choir beds × 8 bars × 2 sections ≈ 2 MB at 160 kbps, plus the coda |
+| **Total** | **≤ 7 MB** | against ≈ 18 MB for rendered sections (§3.2) |
+
+### 11.6 Pipeline
+
+| Route | Stages | Tools (CLAUDE.md §9: Lua > Rust > Go) | Runs on | Status |
+|---|---|---|---|---|
+| **A. Score first** (main) | song map → score generator (motifs from `art/music/campaign.json` and `tools/music_motifs.py`) → gates (§11.9) → committed `.mid` + recipe | today `tools/score_l3.py` (Python, standard library; existing); new generators in Lua reading the motifs' JSON export; `tools/midi_stats.lua` (Lua, new) | forge CPU | **now** |
+| **B. From a take** (motif mining) | picked ACE-Step take → `audio.separate` (htdemucs_6s) → drums: kick/snare onsets snapped to the 16th grid; bass: basic-pitch or f0; lead: f0; guitar and "other": chord labels and roots → cleanup: snap to the known grid, fold to the key, voice power chords by rule, hats and cymbals by rule → a motif file the score generator quotes | separation on the host; basic-pitch's ONNX model through Rust `ort`; onsets and f0 in Go beside `tools/soundtrack_check` | host GPU (separation), forge CPU | needs N9, N10 |
+| **C. Generate** | song map + our motifs → Anticipatory Music Transformer (infill and accompaniment around fixed notes), Clef-0.2B (key, tempo, meter, instrument header) or a validator-gated qwen2.5 draft (JSON per bar, fixed durations, scale degrees) → the same gates + a Lakh-overlap screen for Lakh-trained models → bars absorbed by the generator | AMT and Clef as admitted studio jobs; qwen2.5 on the served ollama (`inference:11434`), one job at a time | host GPU | qwen now; AMT and Clef need N10 |
+| **Bank** | CC0 sources → per-zone pick (note, velocity, round-robin) → trim, mono where possible, −1 dB peak → Opus 64 kbps mono / 96 kbps stereo sprites + `bank.json` (zones, sha256, sizes, sources and licences) | Lua + ffmpeg | forge CPU | sources need N11 |
+| **Texture beds** | ACE-Step text-to-music with prompts that exclude drums, bass and guitars → §6 gates + the bed gate (§11.9) → picks → Opus | §6 pipeline unchanged | host GPU | core nodes now |
+
+Every shipped score keeps its recipe beside it: the generator, its inputs and seed, and for route B or C the take
+or model, the tool versions and each manual edit. Transcriptions and model outputs are inputs to the generator,
+never shipped as they are.
+
+### 11.7 How the game drives the score
+
+The `SongDirector` (§5.1) is unchanged. It sends the same moves, and the runtime plays them on scores.
+
+| Event | Score action |
+|---|---|
+| `waveStart` (wave share) | next sector section A → B → C → D on the next bar (§3.1) |
+| `musicIntensity` tier | the section's mask for that tier on the next bar; tiers 3–4 take the `v2` mask |
+| power-up active or falling | the power mask (ride, double kick) instead of the HPSS power layer |
+| `dive`, `diveIn` | a 1–2 bar `fill` pattern on the next beat (instead of the dive-layer sprite) |
+| `bossHatchTier {tier k}` | section `Hk` on the next bar (§4.3, the minimum dwell and latest-wins rules stand) |
+| `bossShieldFailing` | `Hk`'s `v2` mask (adds `lead2` and choir) on the next bar, same position |
+| `bossTransform {stage: start}` | the 3-bar `transform` bridge on the next bar; the `core` follows its end |
+| `bossModuleLost` | `core`'s `v2` mask, same position |
+| `bossCollapseStart` / `bossCollapseEnd` | `collapse` on the next beat / `victory` on the next bar |
+| `fleetIntact` | `victory-fleet`: the victory section with the brass fanfare track unmuted |
+| accents (§4.3 list) | `sting` scores in the current key, on today's quanta |
+| `gameover` | `cackle` → `alienwin` as today |
+
+### 11.8 Fallback ladder (one score, no second asset)
+
+1. The bank group a note needs is decoded: the sampler plays it.
+2. It is not decoded yet, or the bank cannot decode (Safari before 18.4 cannot decode Opus, R§3 W3): the oscillator
+   voice plays that note. This is today's synth, kept for this purpose.
+3. A texture bed that is not decoded is simply absent: the score carries the music.
+4. Mute and pause as today.
+
+### 11.9 Gates
+
+**Score gates** (`lua tools/midi_stats.lua`, extended with `check`):
+- whole bars of the section's grid;
+- every onset on the 1/16 or triplet grid within ±12 ms (humanised timing allowed only inside that window);
+- out-of-scale notes ≤ 3 % outside marked chromatic passages;
+- every pitch inside the bank's zones for its track;
+- peak voices ≤ 32 with a 0.5-beat release (the phone cap);
+- sizes recorded.
+
+**Bed gate** (`soundtrack_check`, new `bed` mode). On top of the §6 gates:
+- the percussive share from HPSS stays below a threshold;
+- the energy below 120 Hz relative to the total stays below a threshold;
+- either one failing rejects the take as a duplicate of score parts.
+
+**Bake-off** (task 8.4): one carrier section (the pilot's `core`) as score + bank, and as the recorded pick, on the
+listening page. Measured: CPU load and voices on a mid-range Android phone and an iPhone, decoded bytes, and gaps at
+moves. Judged by the operator.
+
+### 11.10 Risks
+
+| Risk | Mitigation |
+|---|---|
+| Sampled distorted guitar sounds cheap next to the rendered takes | bake-off before production (N13); the amp chain is tunable per world; sampled power chords as a measured option (+0.6 MB, M§3.3); rendered texture beds for density |
+| No CC0 choir | a texture bed carries the choir (N12); organ doubles it in the fallback |
+| Phone CPU or voice cap | 32-voice cap with stealing; phone tier of the bank; measured in the bake-off |
+| Authoring every song by hand is slow | generators per song form (A–D sections from motifs), routes B and C for motifs and infill; the L3 score shows the scale of one song |
+| Lakh-trained models reproduce existing music | short infill only, an overlap screen, preference for Clef and Composer's Assistant data (M§2.1) |
+| Separated-stem transcription is not allowed | route B is optional; route A needs nothing from it (N9) |

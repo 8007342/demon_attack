@@ -47,6 +47,22 @@
 - [ ] 6.2 SFZ drum and bass bed per song, following `musicIntensity`; route thickening of the world songs
 - [ ] 6.3 One-arrangement `v1`/`v2` variants as stem mixes; if the pack exposes ACE's masked tasks, repaint seams
 
+## 8. MIDI first: the score as the first layer (`work/midi-first`, design §11)
+- [x] 8.1 Research with provenance: `plan/midi-first-research.md`; Part M in `plan/provenance-audit.md`
+- [x] 8.2 Design §11, delta specs (score as the first layer, bank, voice budget, score gates; "Adaptive MIDI soundtrack" modified), these tasks; `openspec validate adaptive-soundtrack --strict`
+- [x] 8.3 Feasibility probe without downloads: `tools/midi_stats.lua` (size, peak voices) on the L3 score and the fallback cues; inventory of forge tools (none of fluidsynth, sfizz, basic-pitch, demucs installed; ollama served)
+- [ ] 8.4 Bake-off (N13): the pilot's `core` section as a score with a provisional bank and as the recorded pick on the listening page; measure CPU, voices, decoded bytes and move gaps on a mid-range Android phone and an iPhone; spessasynth_lib as the measured alternative runtime; operator verdict
+- [ ] 8.5 Bank builder (Lua + ffmpeg): CC0 sources → zones (note, velocity, round-robin) → trimmed Opus sprites + `bank.json` (zones, sizes, sha256, source, licence); credits in `assets/credits.json` (needs N11)
+- [ ] 8.6 Curate the first bank: drums (Big Rusty or Virtuosity), Growlybass (not Meatbass), Black And Green Guitars DI, VCSL organ, timpani and tubular bells, VSCO 2 CE brass; ≤ 2 MB Opus, ≤ 41 MB decoded, phone tier ≤ 16 MB (needs N11)
+- [ ] 8.7 Texture-bed gate in `soundtrack_check` (`bed`: percussive share, energy below 120 Hz); a carrier choir bed for `core` and `collapse` from the pilot recipe with a no-drums prompt (N12)
+- [ ] 8.8 Route B probe: transcribe the pilot's picked `core` take (host `audio.separate`, basic-pitch ONNX via Rust `ort`, Go onsets and f0) into a motif file; report per part what survived cleanup (needs N9, N10)
+- [ ] 8.9 Route C probe: a validator-gated qwen2.5 draft of an 8-bar lead and fill from the song map (one ollama job at a time); then AMT infill and a Clef header take, if admitted (N10); measure bar-correctness and key fit
+- [ ] 8.10 `tools/midi_stats.lua check`: whole bars, grid onsets within 12 ms, out-of-scale share, zone ranges, peak voices ≤ 32 with a 0.5-beat release; a Lua test on the L3 score
+- [ ] 8.11 Score generator in Lua driven by the song map (sections, masks, variants as masks, stingers in scale degrees), reading the motifs' JSON export; the carrier song `c1` first, then the four world songs
+- [ ] 8.12 `demon-audio.js` sampler: SMF type 1 with track names, zones and `playbackRate`, per-track gains and masks on bar lines, the guitar, bass, drum and pad buses, the 48/32 voice cap with stealing, progressive bank loading with the oscillator per note until decoded; `state` diagnostics
+- [ ] 8.13 `test-worker/music.test.mjs`: score files parse, every section is whole bars, masks reference existing tracks, `bank.json` zones cover every track's range
+- [ ] 8.14 Retire each `web/audio/midi/` cue and any recorded full mix once its score section is approved (no duplicates, design §11.2)
+
 ## 7. Close
 - [ ] 7.1 Test gates (CLAUDE.md §2) on the runtime tasks; `openspec validate adaptive-soundtrack --strict`
 - [ ] 7.2 Archive after all tasks are checked

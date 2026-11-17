@@ -286,3 +286,20 @@ gapless and scheduling claims are checked by measurement (pilot, task 1.8) or by
 | <a id="soundtrack-webm-opus-ios"></a>soundtrack-webm-opus-ios | WebM Opus decodes through `decodeAudioData` on iOS from Safari 17.4 | WebKit Bugzilla seen as a snippet only |
 | <a id="soundtrack-opus-gapless"></a>soundtrack-opus-gapless | Ogg Opus pre-skip and end trimming make decoding sample-exact (RFC 7845) | rfc-editor.org reset; measured with ffmpeg instead |
 | <a id="soundtrack-two-clocks"></a>soundtrack-two-clocks | The "two clocks" lookahead scheduling pattern (web.dev) | web.dev reset; the repo's scheduler already uses it |
+
+## Part M: the MIDI-first revision of the soundtrack (`adaptive-soundtrack` design §11, added 2026-11-17)
+
+`plan/midi-first-research.md` marks these claims. On 2026-11-17 arxiv.org, mdpi.com, merl.com, the QMUL page,
+karoryfer.com, caniuse.com, schristiancollins.com and the ISMIR program pages reset the connection or returned
+404 from the forge. Nothing was routed around the proxy. The design's decisions do not rest on these claims: the
+transcription plan avoids the weak classes by rule, and the phone numbers are to be measured (task 8.4).
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="midi-sep-artifacts"></a>midi-sep-artifacts | Drum-stem separation before ADT is about equal or slightly better; separation artifacts limit transcription | QMUL and MERL papers seen as snippets only |
+| <a id="midi-metal-transcription"></a>midi-metal-transcription | How well transcription works on distorted metal guitar, blast beats and cymbal wash | no benchmark found; extrapolated from general benchmarks |
+| <a id="midi-lakh-licence"></a>midi-lakh-licence | Lakh MIDI files were scraped and their authors cannot be traced, so the collection licence does not clear each song | the Lakh page reset twice; snippet only |
+| <a id="midi-qwen-composer"></a>midi-qwen-composer | How reliably qwen2.5 3b–14b writes bar-correct note lists | no source measures Qwen; to be measured (task 8.9) |
+| <a id="midi-phone-polyphony"></a>midi-phone-polyphony | Voice counts, CPU and latency of WebAudio samplers on phones | no measured numbers found; to be measured (task 8.4) |
+| <a id="midi-cab-ir"></a>midi-cab-ir | No CC0 guitar-cabinet impulse response pack exists | one CC-BY-SA pack seen as a snippet; absence is not provable |
+| <a id="midi-meatbass-licence"></a>midi-meatbass-licence | Karoryfer Meatbass is a GPL-3 double bass, not CC0 | KVR news seen as a snippet; karoryfer.com reset |
