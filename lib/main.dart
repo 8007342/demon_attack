@@ -1768,7 +1768,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           hideTransmission: false,
                           // --- bonus briefing: the urgent-mission card
                           // heads the dock and ends above the ship row.
-                          hide: transitions.briefingHidden(squadComms),
+                          // --- portrait-comms-lanes: and the transition
+                          // chatter's lines show over the clouds instead.
+                          hide: {
+                            ...transitions.briefingHidden(squadComms),
+                            ...transitions.chatterHidden(squadComms),
+                          },
                           banner: transitions.briefingVisible(squadComms)
                               ? _briefingCard(
                                   shipRowTop(area.biggest) -
