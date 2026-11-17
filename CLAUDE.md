@@ -20,8 +20,11 @@ wins. Fix it here when a rule changes.
   git fetch origin && git switch game && git merge --ff-only origin/game
   git merge --squash origin/work/<id> && git commit   # title "<id>: <summary>", body = the branch's story + trailers
   # gates (§2) on this tree, then:
-  git push origin game && git push origin --delete work/<id>
+  git push origin game && git branch -D work/<id>     # local ref only, see below
   ```
+  The git mirror's pre-receive hook **refuses ref deletion** ("receive hardening policy"; checked 2026-11-17), so the
+  forge can't delete a remote `work/<id>` yet. Record each squashed branch in `plan/handoff-*.md` for cleanup, and
+  don't try to work around the refusal.
   If `git merge --squash` conflicts, have the work branch merge `origin/game` and re-push, then squash again. Don't
   resolve generated files by hand (§4).
   - `game` → `main` stays a **normal merge** via PR. `game` is already squashed, and squashing again would make the
