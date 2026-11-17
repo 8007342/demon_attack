@@ -3290,6 +3290,10 @@ class ArcadeModel {
     return result;
   }
 
+  // --- phone-performance: render-side shot interpolation (shot_layer.dart).
+  /// Wall time banked toward the next fixed 1/60 s step (0 ≤ x < 1/60 s).
+  double get stepRemainder => _accumulator;
+
   void update(double dt) {
     if (mode == RunMode.paused ||
         mode == RunMode.title ||

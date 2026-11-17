@@ -42,7 +42,7 @@ async function textVisible(page, value) {
       page.on('response', response => {
         if (new URL(response.url()).pathname === '/api/scores' && response.request().method() === 'GET') scoreLoads.push(response);
       });
-      page.on('response', response => { if (/\.(mid|ogg|m4a)$/.test(new URL(response.url()).pathname)) midi.push({url: response.url(), status: response.status()}); });
+      page.on('response', response => { if (/\.(mid|ogg)$/.test(new URL(response.url()).pathname)) midi.push({url: response.url(), status: response.status()}); });
       page.on('pageerror', error => errors.push(`${name}: ${error.message}`));
       page.on('console', message => {
         if (message.type() === 'error') errors.push(`${name}: ${message.text()}`);

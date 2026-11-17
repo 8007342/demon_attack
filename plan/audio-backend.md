@@ -10,6 +10,8 @@ Original music only. The levels are battle music at their own tempos, inspired b
 
 Every cue ships as `web/audio/music/<cue>.ogg` (Opus, 80 kbps) and `<cue>.m4a` (AAC-LC, 128 kbps, for browsers that cannot decode Ogg Opus). `manifest.json` records each cue's kind, length, loop points, source (mode, seed, source tempo, window start, seam similarity; for a2a cues the denoise), its timbre measurements (`flat15`, `perc`, `crestDb`, `fluxAbs`, `guideDistance`) and file hashes.
 
+> **No fallback format (operator, 2026-11-17).** Opus (`.ogg`) is the one shipped audio format: the AAC (`.m4a`) twins were deleted from `web/audio/`, and `tools/music_pipeline.py` and `tools/comms_pipeline.py` no longer encode AAC. A browser that cannot decode Ogg Opus (Safari before 18.4) plays the MIDI score through the synthesizer (`web/audio/demon-score.js`, the MIDI fallback in `demon-audio.js`).
+
 **Metal-v2 (2026-11-10): ACE-Step's own band takes at the exact tempo.** The operator heard the round-3 score on a phone as "still the old simple one". Round 3 re-performed the synthesized motif guides audio-to-audio at denoise 0.45–0.55, and at that strength ACE keeps the guide's synth character: its 1–5 kHz band is tonal (spectral flatness 0.09 on `l1-t3`, where ACE's own metal takes measure 0.26–0.47), the drums stay soft (percussive share 0.20 against 0.30–0.39), and its frame-level log-mel still follows the guide (melR 0.32). The selection score (motif chroma plus closeness to a reference take) rewarded exactly those guide-like takes. A sweep on the `l1-t3` guide ruled out the obvious fixes:
 
 | Setting (L1 t3 guide, 170 BPM) | 1–5 kHz flatness | Onset r to guide | Pulse |
@@ -186,6 +188,8 @@ Integration: load `audio/demon-audio.js` before Flutter bootstrap, then call `wi
 ## Squad comms voices
 
 The squad video call's radio lines are short clips in `web/audio/comms/<clip id>.ogg` (Opus) and `.m4a` (AAC-LC), one per line of the bank in `art/comms/lines.json` (clip ids `<trigger>.h<n>` for spoken lines, `<trigger>.d<n>` for demon grunts, in list order). `web/audio/comms/manifest.json` records every clip's speaker, kind, trigger, engine (`chatterbox`, `kokoro` or `grunt`), emotion, any fallback reason, duration, mouth, openness and viseme tracks, loudness, byte sizes and SHA-256, plus the Kokoro and Chatterbox revisions, the SHA-256 of every model and voice file, the emotion table and the reference clips.
+
+> **No fallback format (operator, 2026-11-17).** Opus (`.ogg`) is the one shipped audio format: the AAC (`.m4a`) twins were deleted from `web/audio/`, and `tools/music_pipeline.py` and `tools/comms_pipeline.py` no longer encode AAC. A browser that cannot decode Ogg Opus (Safari before 18.4) plays the MIDI score through the synthesizer (`web/audio/demon-score.js`, the MIDI fallback in `demon-audio.js`).
 
 ### Pipeline (`tools/comms_pipeline.py`)
 

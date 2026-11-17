@@ -104,7 +104,7 @@ Future<_Rig> _launch(WidgetTester tester, Size size) async {
       }
 
       scene.atlas = await decode('combat.png');
-      scene.sky = await decode('cosmic-sky.png');
+      scene.sky = await decode('cosmic-sky.webp');
       scene.ship.image = await decode('ship-weapons.png');
       for (var i = 0; i < 5; i++) {
         scene.sectors.images[i] = await decode('sector-${i + 1}.png');

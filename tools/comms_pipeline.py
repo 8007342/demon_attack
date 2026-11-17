@@ -22,7 +22,8 @@ Stages:
             squelch click at start and end and a short noise tail (demons: a
             narrower, hummier "enemy intercept" band); measures the mouth
             frames; loudness-normalises (BS.1770 gated) -> $COMMS_WORK/radio.
-  encode    Opus (.ogg) + AAC-LC (.m4a) mono into web/audio/comms/, writes
+  encode    Opus (.ogg) mono into web/audio/comms/ (the one shipped format,
+            no fallback: operator, 2026-11-17), writes
             web/audio/comms/manifest.json.
   verify    decodes every file again: length vs manifest, peak, loudness,
             non-silence, every bank line present, no stray files.
@@ -33,7 +34,7 @@ Stages:
   all       voices grunts radio encode verify dart.
 
 Every stage except `dart` needs the comms venv (numpy, scipy, soundfile,
-kokoro + torch CPU) and ffmpeg with libopus and aac; see
+kokoro + torch CPU) and ffmpeg with libopus; see
 plan/audio-backend.md#squad-comms-voices. Run Python with -I.
 
 Clip ids are '<trigger>.h<n>' (human, spoken) and '<trigger>.d<n>' (demon
@@ -1205,25 +1206,19 @@ def stage_encode(args):
         pcm.parent.mkdir(parents=True, exist_ok=True)
         ffmpeg('-i', wav, '-ac', 1, '-ar', codec['sample_rate'], '-c:a', 'pcm_s16le', '-fflags', '+bitexact', '-map_metadata', -1, pcm)
         ogg = CLIPS / f'{clip_id}.ogg'
-        m4a = CLIPS / f'{clip_id}.m4a'
         ffmpeg('-i', pcm, '-c:a', 'libopus', '-b:a', f"{codec['opus_kbps']}k", '-vbr', 'on', '-application', 'voip',
                '-ac', 1, '-map_metadata', -1, '-fflags', '+bitexact', '-flags:a', '+bitexact', ogg)
-        # The cutoff matches the radio band: without it the encoder spends
-        # bits on empty highs and rings several dB over the peak ceiling.
-        ffmpeg('-i', pcm, '-c:a', 'aac', '-b:a', f"{codec['aac_kbps']}k", '-cutoff', codec['aac_cutoff_hz'],
-               '-ac', 1, '-ar', codec['sample_rate'],
-               '-map_metadata', -1, '-movflags', '+faststart', '-fflags', '+bitexact', '-flags:a', '+bitexact',
-               '-metadata:s:a', 'handler_name=', m4a)
         clips[clip_id] = {
             'speaker': m['speaker'], 'kind': m['kind'], 'trigger': m['trigger'],
             'engine': m['engine'], **({'emotion': m['emotion']} if m.get('emotion') else {}),
             **({'fallback': m['fallback']} if m.get('fallback') else {}),
             'duration': round(m['samples'] / SR, 3), 'mouth': m['mouth'], 'open': m['open'], 'vis': m.get('vis', ''), 'lufs': m['lufs'],
-            'ogg_bytes': ogg.stat().st_size, 'm4a_bytes': m4a.stat().st_size,
-            'sha256': {'ogg': sha256(ogg), 'm4a': sha256(m4a)},
+            'ogg_bytes': ogg.stat().st_size,
+            'sha256': {'ogg': sha256(ogg)},
         }
-    stray = {p.name for p in CLIPS.glob('*.ogg')} | {p.name for p in CLIPS.glob('*.m4a')}
-    stray -= {f'{i}.{e}' for i in clips for e in ('ogg', 'm4a')}
+    # Anything else in the folder (a retired AAC twin included) is stray.
+    stray = {p.name for p in CLIPS.iterdir() if p.is_file() and p.suffix != '.json'}
+    stray -= {f'{i}.ogg' for i in clips}
     for name in stray:
         (CLIPS / name).unlink()
     files = {}
@@ -1237,20 +1232,19 @@ def stage_encode(args):
         'kokoro': {**spec['kokoro'], 'files_sha256': files},
         'delivery': spec['delivery']['emotions'], 'references': refs,
         'engines': dict(Counter(c['engine'] for c in clips.values())),
-        'codec': codec, 'loudness': spec['loudness'], 'mouth_fps': spec['mouth_fps'],
+        'codec': {k: v for k, v in codec.items() if not k.startswith('aac')}, 'loudness': spec['loudness'], 'mouth_fps': spec['mouth_fps'],
         'totals': {
             'clips': len(clips),
             'human': sum(1 for c in clips.values() if c['kind'] == 'human'),
             'demon': sum(1 for c in clips.values() if c['kind'] == 'demon'),
             'seconds': round(sum(c['duration'] for c in clips.values()), 2),
             'ogg_bytes': sum(c['ogg_bytes'] for c in clips.values()),
-            'm4a_bytes': sum(c['m4a_bytes'] for c in clips.values()),
         },
         'clips': clips,
     }
     MANIFEST.write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + '\n')
     t = manifest['totals']
-    print(f"encode: {t['clips']} clips, {t['seconds']} s, ogg {t['ogg_bytes'] / 1e6:.2f} MB, m4a {t['m4a_bytes'] / 1e6:.2f} MB")
+    print(f"encode: {t['clips']} clips, {t['seconds']} s, ogg {t['ogg_bytes'] / 1e6:.2f} MB")
 
 
 def decode(path):
@@ -1281,7 +1275,7 @@ def stage_verify(_args):
     if set(clips) != expected:
         problems.append(f'manifest/bank mismatch: missing {sorted(expected - set(clips))[:5]}, extra {sorted(set(clips) - expected)[:5]}')
     for clip_id, m in clips.items():
-        for ext in ('ogg', 'm4a'):
+        for ext in ('ogg',):
             f = CLIPS / f'{clip_id}.{ext}'
             if not f.exists():
                 problems.append(f'{f.name} missing')
@@ -1318,7 +1312,7 @@ def stage_verify(_args):
     for p in problems:
         print('FAIL', p)
     t = manifest['totals']
-    print(f"verify: {len(clips)} clips, {len(problems)} problems; ogg {t['ogg_bytes']} B, m4a {t['m4a_bytes']} B")
+    print(f"verify: {len(clips)} clips, {len(problems)} problems; ogg {t['ogg_bytes']} B")
     if problems:
         sys.exit(1)
 

@@ -34,6 +34,9 @@ source and does not count as re-sourced. Check it from another network before yo
 **Contradictions to act on.**
 - C-09: `battle-metal-radio-rework` design says every current browser plays Opus. MDN's codec guide says Safari plays
   Opus in `<audio>` only inside CAF, so keep the AAC fallback (`plan/audio-backend.md`).
+  **Decided 2026-11-17:** no fallback format (operator). The AAC twins were deleted; the game decodes Opus with
+  `decodeAudioData`, not `<audio>`, and a browser that cannot (Safari before 18.4) plays the MIDI score through the
+  synthesizer.
 - D-13, D-15: `pwa-install` design. The Web Install origin trial's end and the other engines' positions are out of
   date (WebKit is opposed; Gecko has no signal).
 
@@ -303,3 +306,24 @@ transcription plan avoids the weak classes by rule, and the phone numbers are to
 | <a id="midi-phone-polyphony"></a>midi-phone-polyphony | Voice counts, CPU and latency of WebAudio samplers on phones | no measured numbers found; to be measured (task 8.4) |
 | <a id="midi-cab-ir"></a>midi-cab-ir | No CC0 guitar-cabinet impulse response pack exists | one CC-BY-SA pack seen as a snippet; absence is not provable |
 | <a id="midi-meatbass-licence"></a>midi-meatbass-licence | Karoryfer Meatbass is a GPL-3 double bass, not CC0 | KVR news seen as a snippet; karoryfer.com reset |
+
+## Part PP: phone performance (`phone-performance`, added 2026-11-17)
+
+`plan/phone-performance-research.md` marks these claims. On 2026-11-17 developer.chrome.com, developer.apple.com,
+developer.android.com, web.dev, en.wikipedia.org, gafferongames.com, blurbusters.com, docs.unity3d.com,
+dev.epicgames.com, docs.flame-engine.org, caniuse.com and bugs.webkit.org reset the connection from the forge. Nothing
+was routed around the proxy. The design rests on the read WebKit source and Flutter docs and on the repo's own
+measurements (`plan/phone-performance-ledger.md`); these claims only motivate it.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="pp-chrome-panel"></a>pp-chrome-panel | How the Chrome DevTools Performance panel shows frames and CPU throttling | developer.chrome.com reset |
+| <a id="pp-thermal"></a>pp-thermal | Sustained GPU and CPU load raises the phone's thermal state and the OS then throttles clocks | Apple and Android docs reset |
+| <a id="pp-pacing"></a>pp-pacing | An even frame cadence looks smoother than a higher, uneven one; adaptive quality in engines (Swappy, Unity Adaptive Performance, Unreal dynamic resolution) | the four hosts reset |
+| <a id="pp-wagon-wheel"></a>pp-wagon-wheel | The wagon-wheel effect: a row of identical objects seems to stall or reverse when the per-frame move nears their spacing; motion trails and smears hide it | Wikipedia and Blur Busters reset; Fiedler's "Fix Your Timestep!" reset |
+| <a id="pp-flame"></a>pp-flame | Flame's own guidance on component counts and rendering cost | docs.flame-engine.org reset |
+| <a id="pp-wasm-size"></a>pp-wasm-size | How a `--wasm` build's size compares with the JS build | no read page gives numbers; to be measured (task 8.3) |
+| <a id="pp-safari-timestamps"></a>pp-safari-timestamps | Safari's rAF timestamps are rounded or jittered enough to step a fixed 1/60 s loop 0 then 2 times | no read source; to be checked on an iPhone (task 9.2) |
+| <a id="pp-maskfilter"></a>pp-maskfilter | What a `MaskFilter.blur` paint costs per draw | its API page was not read |
+| <a id="pp-ios-formats"></a>pp-ios-formats | The iOS Safari versions that decode WebP and AVIF | caniuse.com and Apple release notes reset; MDN gives desktop Safari only |
+| <a id="pp-font-subset"></a>pp-font-subset | Subsetting text fonts (beyond icon tree shaking) in a Flutter web build | no read page covers it |

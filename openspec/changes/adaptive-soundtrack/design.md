@@ -652,7 +652,8 @@ As first built. **Superseded by §12.8.3:** everything proposed here was done on
     needed.
 - **Found in passing.** `web/audio/music/` still ships an `.m4a` (AAC) twin of every cue (9.68 MB in all), although
   N5 decided on one format with no AAC fallback, and demon-audio.js loads only `.ogg` (`formats = ['ogg']`). That is
-  dead weight, flagged for the lead.
+  dead weight, flagged for the lead. **Done 2026-11-17** (no fallback format, operator): the twins are deleted and the
+  pipelines encode Opus only.
 
 ### 12.7 What the sample bank would add
 

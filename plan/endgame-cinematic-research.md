@@ -826,6 +826,8 @@ What the repo does today:
 - `cinematic-flow` set the house rules for transitions: one beat clock, motivated cuts, no all-black frame, skip
   at once, reduced motion keeps the same beats (`openspec/changes/cinematic-flow/proposal.md`).
 
+> **No fallback format (operator, 2026-11-17).** Opus (`.ogg`) is the one shipped audio format: the AAC (`.m4a`) twins were deleted from `web/audio/`, and `tools/music_pipeline.py` and `tools/comms_pipeline.py` no longer encode AAC. A browser that cannot decode Ogg Opus (Safari before 18.4) plays the MIDI score through the synthesizer (`web/audio/demon-score.js`, the MIDI fallback in `demon-audio.js`).
+
 | | (1) Video file | (2) In-engine 2.5D | (3) In-engine plus inserts |
 |---|---|---|---|
 | Look ceiling | Highest if the footage is good; fails whole if it flickers | Limited animation, but every frame is a picked still | Same as (2) with real motion in 2–3 places |

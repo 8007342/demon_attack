@@ -626,7 +626,7 @@ List<ReviewAsset> backgroundAssets() => [
       title: 'Sector ${s + 1} · ${sectorTitles[s]}',
       source:
           'assets/images/flyover-${_sectorNames[s]}.png, '
-          'flyover-${_sectorNames[s]}-ground.png, sector-${s + 1}.png',
+          'flyover-${_sectorNames[s]}-ground.png, sector-${s + 1}.webp',
       detail: 'flyover parallax, landmarks, critters, vegetation',
     ),
 ];
@@ -635,7 +635,7 @@ List<ReviewAsset> backgroundAssets() => [
 List<String> backgroundFiles(int sector) => [
   'assets/images/flyover-${_sectorNames[sector]}.png',
   'assets/images/flyover-${_sectorNames[sector]}-ground.png',
-  'assets/images/sector-${sector + 1}.png',
+  'assets/images/sector-${sector + 1}.webp',
   'assets/images/flyover-props.png',
   'assets/images/flyover-creatures.png',
   'assets/images/flyover-vegetation.png',

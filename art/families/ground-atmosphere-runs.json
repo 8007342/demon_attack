@@ -1,7 +1,7 @@
 {
  "ground-atmosphere/procedural": {
   "atlas": "assets/images/ground-atmosphere.png",
-  "atlas_sha256": "e518db87a927fe936c9a21c2cd06ce8445cab586d5e84b9dc6ec741d7c739038",
+  "atlas_sha256": "381bc4f31e04d04534c297497e3b6b8bd1ad1a6130a525809b32e14492eeed5e",
   "generator": "tools/ground_atmosphere (go run . pack)",
   "gpu_jobs": [],
   "layers": {
@@ -390,42 +390,42 @@
   "models": [],
   "tints": {
    "carrier": {
-    "dark": "#2F1E31",
-    "fog": "#3C273F",
-    "horizon_sample": "#0F0812",
-    "lit": "#4A344D",
+    "dark": "#2C1F2D",
+    "fog": "#39283A",
+    "horizon_sample": "#151019",
+    "lit": "#473548",
     "smoke": "#3F3F4A",
     "start": "#3A2836"
    },
    "ember": {
-    "dark": "#35252F",
-    "fog": "#442F3C",
-    "horizon_sample": "#0E0A13",
-    "lit": "#513C49",
+    "dark": "#33252B",
+    "fog": "#423037",
+    "horizon_sample": "#15111A",
+    "lit": "#4F3D44",
     "smoke": "#262A32",
     "start": "#46302C"
    },
    "hollow": {
-    "dark": "#252D2F",
-    "fog": "#2F3A3C",
-    "horizon_sample": "#050F16",
-    "lit": "#3C4749",
+    "dark": "#242D2E",
+    "fog": "#2E3A3B",
+    "horizon_sample": "#0C161C",
+    "lit": "#3B4748",
     "smoke": "#535C63",
     "start": "#2E3A35"
    },
    "krybor": {
     "dark": "#252C3C",
-    "fog": "#30384D",
-    "horizon_sample": "#050814",
-    "lit": "#3D455A",
+    "fog": "#2F384D",
+    "horizon_sample": "#0C101A",
+    "lit": "#3C455A",
     "smoke": "#555B65",
     "start": "#3A4458"
    },
    "ringfall": {
-    "dark": "#292A41",
-    "fog": "#353653",
-    "horizon_sample": "#050713",
-    "lit": "#424360",
+    "dark": "#2B2941",
+    "fog": "#373553",
+    "horizon_sample": "#0D0F19",
+    "lit": "#444260",
     "smoke": "#3F4050",
     "start": "#3D3550"
    }
