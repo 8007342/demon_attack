@@ -98,6 +98,30 @@ function A.seq(text, t0)
   return out, t - (t0 or 0)
 end
 
+-- Scale degree `deg` (1-based, may exceed 7) of a key in MIDI octave `oct` (the tonic's octave): the
+-- campaign theme and its developments are written in degrees so every world sings them in its own key.
+function A.degree(key, deg, oct, alter)
+  local scale = A.scales[key.mode]
+  local i = deg - 1
+  return 12 * (oct + 1) + key.tonic + scale[i % 7 + 1] + 12 * (i // 7) + (alter or 0)
+end
+
+-- Melodies in degrees: '1:1.5 3:.5 5:1 4:1 7#:2 R:1' (a trailing # or b alters the degree; R is a rest).
+function A.line(key, oct, text, t0)
+  local out, t = {}, t0 or 0
+  for tok in text:gmatch('%S+') do
+    local d, acc, dur = tok:match('^(%d*R?)([#b]?):([%d%.]+)$')
+    assert(d and d ~= '', 'bad degree token ' .. tok)
+    dur = tonumber(dur)
+    local alter = acc == '#' and 1 or acc == 'b' and -1 or 0
+    -- '7#' is the leading tone: raised in a minor key, already there in a major one.
+    if d ~= 'R' and acc == '#' and key.mode == 'major' and tonumber(d) % 7 == 0 then alter = 0 end
+    if d ~= 'R' then out[#out + 1] = { t = t, len = dur, p = A.degree(key, tonumber(d), oct, alter) } end
+    t = t + dur
+  end
+  return out, t - (t0 or 0)
+end
+
 -- Riff: eighth-note roots, one string per bar ('E2 E2 G2 A2 ...'). Returns rows of 8 pitches.
 function A.riff(rows)
   local out = {}
@@ -299,7 +323,7 @@ end
 
 -- GM programs, for auditions in any MIDI player (the game's voices are chosen by track role).
 A.programs = { bass = 34, gtrL = 30, gtrR = 30, clean = 27, lead = 29, lead2 = 29, organ = 19, strings = 48,
-  brass = 61, choir = 52, timpani = 47, bells = 14, fanfare = 56 }
+  brass = 61, choir = 52, timpani = 47, bells = 14, fanfare = 56, uke = 24 }
 
 -- Writes the section as SMF type 1: a conductor track (tempo, 4/4, key, section marker), then one track per
 -- part in `order`, named by role. `total` beats is the file length (bars plus any hold bars).

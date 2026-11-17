@@ -70,7 +70,7 @@ Working rules for people and agents (branches, test gates, generated files, pipe
 - `openspec/specs/`: the shipped behaviour; `openspec/changes/`: open work (`openspec list`), finished work under `archive/`.
 - `plan/`: original-game research, game tuning, visual/music guides and validation evidence.
 
-Regenerate sprite pixels with `python3 tools/generate_sprites.py`; regenerate MIDI with `python3 web/audio/generate-midi.py`.
+Regenerate sprite pixels with `python3 tools/generate_sprites.py`; regenerate the music score with `lua tools/score/score_gen.lua`.
 
 ## Deployment
 

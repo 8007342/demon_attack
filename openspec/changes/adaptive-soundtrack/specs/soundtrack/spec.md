@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: One run as one continuous song
-From the menu to the credits the recorded score SHALL never stop or restart between scenes. Every change of music SHALL start on a bar line of the music already playing, or pass through a written bridge. Each route SHALL build through its four sector songs to its carrier song, and the fifth carrier SHALL be the climax of the run.
+From the menu to the credits the score SHALL never stop or restart between scenes. Every change of music SHALL start on a bar line of the music already playing, or pass through a written bridge. Each route SHALL build through its four sector songs to its carrier song, and the fifth carrier SHALL be the climax of the run.
 
 #### Scenario: Sector to sector
 - **WHEN** a sector is cleared and the fleet travels to the next world
@@ -120,23 +120,31 @@ Every shipped score SHALL be reproducible from a committed recipe (generator, in
 - **WHEN** generated bars from a symbolic model are absorbed into a score
 - **THEN** the recipe names the model, its licence, the prompt or prime, the seed, and which bars were kept
 
-### Requirement: Score and recorded cues hand over on bar lines
-Where a sector has a score, a pure-Dart director SHALL move it from the game's cues and structured events, and the recorded cues SHALL stay silent. The score SHALL start on the playing recorded cue's next bar line, and a recorded cue SHALL start on the score's next bar line, except the immediate cues. A switch SHALL play the recorded cues everywhere for comparison.
+### Requirement: The score is the only music
+Every scene SHALL play the score: the overture, the four world songs with a Stormfront storm section each, one carrier song per tour with a hatch section per upper tier, the bridges between songs, the defeat and the coda. A pure-Dart director SHALL move it from the game's cues and structured events. No recorded music cue, MIDI fallback cue or score switch SHALL ship.
 
-#### Scenario: Into a scored sector
-- **WHEN** sector 1 starts while the previous sector's recorded cue plays
-- **THEN** the score's arrival starts on that cue's next bar line and the cue stops there
+#### Scenario: A full campaign trace
+- **WHEN** a five-route campaign's events drive the director
+- **THEN** the songs play menu, menu-k, then per route k, k-r, r, r-e, e, e-h, h, h-c and the tour's carrier (c-k between routes), then the coda, each move on a bar line of the music playing before it (the collapse and the clear on a beat line, the defeat at once)
 
-#### Scenario: Out of a scored sector
-- **WHEN** sector 2 starts while the Krybor score holds its clear
-- **THEN** the recorded sector 2 cue starts on the score's next bar line
+#### Scenario: Every hatch tier native
+- **WHEN** tour 5's carrier reports upper tiers 1 to 4
+- **THEN** sections H1 to H4 play, one per tier, with no depth folding
 
-#### Scenario: Score switched off
-- **WHEN** the console's RECORDED switch is on, or the page has `?score=off`
-- **THEN** every move plays its recorded fallback cue instead
+#### Scenario: Stormfront
+- **WHEN** a sector is the Stormfront bonus level
+- **THEN** the world's half-time storm section in its own key plays from the arrival's end until the clear
+
+#### Scenario: Nothing recorded
+- **WHEN** the game plays a whole run
+- **THEN** it fetches only web/audio/score/, and web/audio/music/ and web/audio/midi/ do not exist
 
 ### Requirement: Score listening aid
-The console SHALL offer a panel that drives the live score player through the same director and event names as the game, with a scripted carrier fight, a scripted sector song, a button per section move and per stinger, and the score/recorded switch.
+The console SHALL offer a panel that drives the live score player through the same director and event names as the game, with a FULL RUN tour, a scripted carrier fight per tour, a scripted sector song per world, a button per song, section move and stinger, and the overture, defeat and coda.
+
+#### Scenario: Full run
+- **WHEN** the operator presses FULL RUN
+- **THEN** the overture, route 1's four worlds with their bridges and a storm, the first carrier, the bridge into route 2, and the last carrier into the coda play from scripted game events
 
 #### Scenario: Scripted fight
 - **WHEN** the operator presses CARRIER FIGHT

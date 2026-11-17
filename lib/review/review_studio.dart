@@ -14,6 +14,7 @@ import '../comms/comms_bank.dart';
 import 'notes_panel.dart';
 import 'page_notes.dart';
 import 'review_audio_views.dart';
+import 'review_score_audio.dart';
 import 'review_catalog.dart';
 import 'review_notes.dart';
 import 'review_platform.dart';
@@ -80,6 +81,9 @@ class _ReviewStudioState extends State<ReviewStudio> {
       widget.platform ?? createReviewPlatform();
   late final store = ReviewNotesStore(platform);
   late final ReviewAudio audio = platform.audio();
+
+  /// --- adaptive-soundtrack: the music tab plays score sections live.
+  final scoreAudio = ScoreReviewAudio();
   late final api = NotesApi(widget.send);
   final link = PlayheadLink();
 
@@ -157,7 +161,7 @@ class _ReviewStudioState extends State<ReviewStudio> {
         }
       } catch (_) {}
     }
-    final music = await widget.loadText('audio/music/manifest.json');
+    final music = await widget.loadText('audio/score/score.json');
     if (music != null) {
       try {
         final data = jsonDecode(music);
@@ -653,11 +657,13 @@ class _ReviewStudioState extends State<ReviewStudio> {
         final c = cues.where((c) => c.name == cue).firstOrNull;
         return c == null
             ? _empty(
-                cues.isEmpty
-                    ? 'Loading audio/music/manifest.json…'
-                    : 'Pick a cue',
+                cues.isEmpty ? 'Loading audio/score/score.json…' : 'Pick a cue',
               )
-            : MusicView(cue: c, audio: audio, link: link);
+            : MusicView(
+                cue: c,
+                audio: scoreAudio..length = c.seconds,
+                link: link,
+              );
       case StudioTab.notes:
         return _summary();
     }
