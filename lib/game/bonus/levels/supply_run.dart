@@ -43,8 +43,10 @@ const supplyRun = BonusLevelDef(
   weight: 1,
   waves: BonusWaves(),
   rules: PowerRules(killDrops: false),
+  // fire-rate-tune: every 3 s (was 3.5): with no kill drops the crates
+  // are the level's only powers, and the gun is 23 % slower.
   crates: BonusCrates(
-    every: 3.5,
+    every: 3,
     first: 2,
     max: 3,
     points: 150,

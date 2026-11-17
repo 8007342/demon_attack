@@ -67,10 +67,18 @@ abstract final class CarrierHatches {
   /// calibrated §A11) and the field's share of each hatch.
   /// Per difficulty (easy, normal, hard; index [Difficulty.index]).
   /// Calibrated (plan/calibration-current.md, "Carrier hatches").
-  static const pools = [.5, .55, .65], fieldShare = .6;
+  /// fire-rate-tune: scaled for the 23 % slower gun (was .5 / .55 / .65
+  /// with [minLayer] 3; openspec/changes/fire-rate-tune design §5.2).
+  static const pools = [.45, .425, .46], fieldShare = .6;
 
-  /// The core's HP share per difficulty (calibration, §A11).
-  static const coreShares = [.65, .8, .8];
+  /// The least HP of a hatch's field and of its hull (fire-rate-tune: 2,
+  /// was 3, which floored most small hatches and erased the difficulty
+  /// order between Easy and Normal).
+  static const minLayer = 2;
+
+  /// The core's HP share per difficulty (calibration, §A11; fire-rate-tune:
+  /// was .65 / .8 / .8).
+  static const coreShares = [.41, .55, .55];
 
   /// The carrier's fan-attack rate per difficulty (lever 5, §A11).
   static const fanShares = [.7, .85, .75];
@@ -135,15 +143,16 @@ abstract final class CarrierHatches {
   }
 
   /// Field and hull HP of each of [count] hatches from the old shield
-  /// [shieldMax]: the pool split equally, 60 % field, each at least 3.
+  /// [shieldMax]: the pool split equally, 60 % field, each at least
+  /// [minLayer].
   static (int field, int hull) hpOf(
     int shieldMax,
     int count, {
     int difficulty = 1,
   }) {
     final each = (pools[difficulty] * shieldMax / math.max(1, count)).round();
-    final field = math.max(3, (each * fieldShare).round());
-    final hull = math.max(3, each - field);
+    final field = math.max(minLayer, (each * fieldShare).round());
+    final hull = math.max(minLayer, each - field);
     return (field, hull);
   }
 

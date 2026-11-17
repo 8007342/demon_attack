@@ -303,3 +303,18 @@ transcription plan avoids the weak classes by rule, and the phone numbers are to
 | <a id="midi-phone-polyphony"></a>midi-phone-polyphony | Voice counts, CPU and latency of WebAudio samplers on phones | no measured numbers found; to be measured (task 8.4) |
 | <a id="midi-cab-ir"></a>midi-cab-ir | No CC0 guitar-cabinet impulse response pack exists | one CC-BY-SA pack seen as a snippet; absence is not provable |
 | <a id="midi-meatbass-licence"></a>midi-meatbass-licence | Karoryfer Meatbass is a GPL-3 double bass, not CC0 | KVR news seen as a snippet; karoryfer.com reset |
+
+## Part FR: the player's fire rate and anti-strobe tuning (`fire-rate-tune`, added 2026-11-17)
+
+`openspec/changes/fire-rate-tune/design.md` marks these claims. On 2026-11-17 en.wikipedia.org, michaelbach.de,
+people.csail.mit.edu, medium.com, gafferongames.com, blurbusters.com, pmc.ncbi.nlm.nih.gov and frontiersin.org reset
+the connection from the forge. Nothing was routed around the proxy. MDN, docs.flutter.dev and the Flame source on
+GitHub were read and are cited in the design. The design's numbers rest on its own maths (`tools/strobe/strobe.lua`),
+not on these claims.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="fr-temporal-sensitivity"></a>fr-temporal-sensitivity | A periodic hitch between about 2 and 15 Hz is the most visible; at 30 Hz it fuses | Frontiers 2023 and van den Berg 2011 seen as snippets only (peak 5–20 Hz by luminance) |
+| <a id="fr-phantom-array"></a>fr-phantom-array | A small bright object that jumps more than its own length per frame is seen as separate copies | no page opened; Blur Busters and Wikipedia reset |
+| <a id="fr-nearest-neighbour"></a>fr-nearest-neighbour | Apparent motion matches each element to its nearest neighbour in the next frame (the wagon-wheel mechanism) | M. Bach's demonstration and Wikipedia, "Stroboscopic effect", seen as snippets only |
+| <a id="fr-dt-snap"></a>fr-dt-snap | Snapping the measured frame time to vsync multiples removes 0-then-2 update stutter | T. Glaiel's article seen as a snippet only |

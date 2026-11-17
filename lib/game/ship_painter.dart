@@ -258,7 +258,7 @@ class ShipPainter {
       col = 6;
     } else if (s.kind == ShotKind.powerful) {
       col = 4;
-    } else if (s.vy == -370) {
+    } else if (s.vy == -ArcadeModel.spreadShotSpeed) {
       col = 8; // spread's angled pair
     } else if (m.hasPower(Power.rapid)) {
       col = 2;

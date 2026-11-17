@@ -124,7 +124,12 @@ void main() {
   });
 
   test('only the last wave advances each level through clear and travel', () {
-    final model = ArcadeModel()..start();
+    // Spare lives: the ship stands still under hostile fire for five
+    // sectors, and this test is about the flow, not survival
+    // (fire-rate-tune: the three lives ran out in the carrier's approach).
+    final model = ArcadeModel()
+      ..start()
+      ..lives = 99;
     for (var level = 1; level <= 4; level++) {
       final waveCount = level <= 2 ? 3 : 4;
       for (var wave = 1; wave <= waveCount; wave++) {
@@ -236,15 +241,16 @@ void main() {
         ..score = 1234;
       model.collect(Power.spread);
       final boss = model.boss!;
-      // carrier-hatches §A11: the shield is the hatches' pool (0.55 × 48
-      // over four hatches, 4 + 3 each), the core 0.8 × 16.
+      // carrier-hatches §A11: the shield is the hatches' pool; with
+      // fire-rate-tune 0.425 × 48 over four hatches, 3 + 2 each, and the
+      // core 0.55 × 16.
       expect(boss.shield, boss.shieldMax);
-      expect(boss.shieldMax, 28);
-      expect(boss.core, 13);
-      for (var hit = 0; hit < 28; hit++) {
+      expect(boss.shieldMax, 20);
+      expect(boss.core, 9);
+      for (var hit = 0; hit < 20; hit++) {
         expect(model.hitBoss(boss.x), isTrue);
-        expect(boss.core, 13);
-        expect(boss.shield, 27 - hit);
+        expect(boss.core, 9);
+        expect(boss.shield, 19 - hit);
       }
       boss.door = 0;
       boss.sideDoorLeft = 0;
@@ -257,7 +263,7 @@ void main() {
       boss.sideDoorLeft = 1;
       expect(model.hitBoss(boss.x - Carrier.sideHatchOffset), isFalse);
       boss.sideDoorLeft = 0;
-      for (var hit = 0; hit < 13; hit++) {
+      for (var hit = 0; hit < 9; hit++) {
         expect(model.hitBoss(boss.x), isTrue);
       }
       expect(model.mode, RunMode.victory);

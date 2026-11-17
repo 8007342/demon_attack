@@ -59,7 +59,9 @@ void main() {
         final d = m.demons.firstWhere((d) => !d.isLarge && !d.entering);
         m.hitDemon(d, damage: 1000);
       }
-      for (var frame = 0; frame < 240 && !m.escortSpawned; frame++) {
+      // fire-rate-tune: 6 s (was 4 s); the ship's own slower fire brings
+      // the casualties that release the group before the escort later.
+      for (var frame = 0; frame < 360 && !m.escortSpawned; frame++) {
         m.update(1 / 60);
         expect(m.demons.length, lessThanOrEqualTo(ArcadeModel.maxActiveDemons));
       }

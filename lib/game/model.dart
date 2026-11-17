@@ -869,8 +869,10 @@ class ArcadeModel {
   int get loomWaves => loomWavesFor(cycle);
 
   /// The loom's cap: after it the carrier closes regardless (carrier-v3:
-  /// 90 s, was 75).
-  static const loomCap = 90.0;
+  /// 90 s, was 75). fire-rate-tune: 120 s, the old 90 s scaled with the
+  /// volley interval (90 × 0.30 / 0.23 ≈ 117), so tour 5's third launch
+  /// wave still comes before the carrier closes.
+  static const loomCap = 120.0;
 
   // --- carrier-v3: the approach and the gates (design §4–§5) ---
   /// This tour's carrier script (seeded presentation for a seeded run).
@@ -1375,7 +1377,7 @@ class ArcadeModel {
   /// x when the shot arrives, on that row (arena units).
   ({double dx, double dy}) leadPipAt(Carrier b) {
     final row = b.y + CarrierHatches.core.y;
-    final flight = (shipY - row) / 390;
+    final flight = (shipY - row) / shotSpeed;
     return (dx: b.forecastX(flight, speed), dy: row);
   }
 
@@ -1569,6 +1571,46 @@ class ArcadeModel {
       hasPower(Power.rapid) ||
       hasPower(Power.spread);
   double _fire = 0, _enemyFire = 1.5, _dive = 3, _flock = 0, _accumulator = 0;
+
+  // --- fire-rate-tune: the player's cadence and shot speeds, and the
+  // anti-strobe grid (openspec/changes/fire-rate-tune/design.md).
+  /// The model's fixed step (s).
+  static const fixedStep = 1 / 60;
+
+  /// Volley interval in whole model steps: 18 = 0.30 s (was 0.23 s, 13.8
+  /// steps, which fired 13- and 14-step gaps in a repeating pattern).
+  static const fireSteps = 18;
+
+  /// Rapid's volley interval: 8 steps = 0.133 s (was 0.105 s, 6.3 steps).
+  static const rapidFireSteps = 8;
+
+  /// Primary shot speed (u/s): 8 u per model step, a whole number, so the
+  /// scene's whole-unit rounding never alternates step lengths (was 390).
+  static const shotSpeed = 480.0;
+
+  /// Spread's angled pair (u/s of climb): 7 u per step (was 370), one
+  /// unit a step behind the primary, as before (390 / 370).
+  static const spreadShotSpeed = 420.0;
+
+  /// Hostile climb speeds snap to this grid (u/s): 0.25 u per 60 Hz step,
+  /// so the rounded step length never beats below 15 Hz at 60 or 30 fps.
+  static const hostileSpeedGrid = 15.0;
+
+  /// Seconds between volleys now ([fireSteps] or [rapidFireSteps], scaled
+  /// by any bonus fire power, in whole steps).
+  double get fireInterval =>
+      math.max(
+        1,
+        ((hasPower(Power.rapid) ? rapidFireSteps : fireSteps) *
+                _bonusFireScale)
+            .round(),
+      ) *
+      fixedStep;
+
+  /// [vy] on the hostile speed grid.
+  static double hostileVy(double vy) =>
+      (vy / hostileSpeedGrid).roundToDouble() * hostileSpeedGrid;
+
 
   /// Left wing muzzle of each wing module, in logical px from the ship centre
   /// (the right muzzle mirrors it). The scene replaces these with the
@@ -2191,8 +2233,10 @@ class ArcadeModel {
       final elite = profile?.$3 ?? false;
       final hp =
           profile?.$2 ??
-          (archetype == EnemyArchetype.armoredSentinel ? 12 : 9) +
-              math.min(cycle, 4) * 2;
+          policy.sentinelHull(
+            route: cycle,
+            armored: archetype == EnemyArchetype.armoredSentinel,
+          ); // --- fire-rate-tune
       final demon = Demon(
         large ? width / 2 : 38 + (i % 6) * 56.0,
         large
@@ -3297,10 +3341,13 @@ class ArcadeModel {
         (mode == RunMode.gameOver && defeatTimer <= 0)) {
       return;
     }
+    // --- fire-rate-tune: the epsilon keeps a whole step's frame time from
+    // missing its step by float drift (design §3.3; the vsync snap itself
+    // is the scene's, phone-performance `snapFrameDelta`).
     _accumulator += dt.clamp(0, .1);
-    while (_accumulator >= 1 / 60) {
-      _step(1 / 60);
-      _accumulator -= 1 / 60;
+    while (_accumulator >= fixedStep - 1e-9) {
+      _step(fixedStep);
+      _accumulator = math.max(0, _accumulator - fixedStep);
     }
   }
 
@@ -3518,9 +3565,12 @@ class ArcadeModel {
     wingRecoil[0] = math.max(0, wingRecoil[0] - dt);
     wingRecoil[1] = math.max(0, wingRecoil[1] - dt);
     noseFlash = math.max(0, noseFlash - dt);
-    if (_fire <= 0) {
+    // --- fire-rate-tune: whole-step volley intervals (the epsilon keeps
+    // float drift from making one gap a step longer and the next shorter;
+    // an overdue timer, as after a reset to 0, does not shorten the next).
+    if (_fire <= 1e-9) {
       final fired = shots.length;
-      _fire += (hasPower(Power.rapid) ? .105 : .23) * _bonusFireScale;
+      _fire = math.max(0.0, _fire) + fireInterval;
       final powerful = hasPower(Power.powerful), large = hasPower(Power.large);
       final double slingVx;
       if (shipVx.abs() <= 15 && steering.abs() < 0.05) {
@@ -3555,19 +3605,31 @@ class ArcadeModel {
             shipX + wingSide * muzzle.x.abs() + shipBank * 3,
             shipY + muzzle.y,
             slingVx,
-            -390,
+            -shotSpeed,
           ),
         );
         wingRecoil[wingSide < 0 ? 0 : 1] = wingRecoilDuration;
         wingSide = -wingSide;
       } else {
-        shots.add(playerShot(shipX + shipBank * 3, shipY - 13, slingVx, -390));
+        shots.add(
+          playerShot(shipX + shipBank * 3, shipY - 13, slingVx, -shotSpeed),
+        );
         noseFlash = wingRecoilDuration;
       }
       if (hasPower(Power.spread)) {
         shots.addAll([
-          playerShot(shipX - 5, shipY - 8, -90 + slingVx * 0.85, -370),
-          playerShot(shipX + 5, shipY - 8, 90 + slingVx * 0.85, -370),
+          playerShot(
+            shipX - 5,
+            shipY - 8,
+            -90 + slingVx * 0.85,
+            -spreadShotSpeed,
+          ),
+          playerShot(
+            shipX + 5,
+            shipY - 8,
+            90 + slingVx * 0.85,
+            -spreadShotSpeed,
+          ),
         ]);
       }
       shotsFired += shots.length - fired; // --- demon intelligence
@@ -3645,7 +3707,20 @@ class ArcadeModel {
 
   void _hostile(Shot shot) {
     if (shipAway) return; // the regroup holds all hostile fire
-    if (shots.where((s) => s.hostile).length < 120) shots.add(shot);
+    if (shots.where((s) => s.hostile).length >= 120) return;
+    // --- fire-rate-tune: the climb speed on the anti-strobe grid.
+    shots.add(
+      Shot(
+        shot.x,
+        shot.y,
+        shot.vx,
+        hostileVy(shot.vy),
+        hostile: true,
+        kind: shot.kind,
+        damage: shot.damage,
+        blastRadius: shot.blastRadius,
+      ),
+    );
   }
 
   double _smootherstep(double t) {
@@ -3655,12 +3730,13 @@ class ArcadeModel {
 
   void _igniteDiveShield(Demon d) {
     if (demons.any((o) => o.isLarge && o.waitingForEscort)) return;
+    // --- fire-rate-tune: one point less for a sentinel (was 4 + route ÷ 2)
+    // and an elite (was 3); the heavier species' 2 is now 1, as the
+    // light ones', so the slower gun still stops a diver (design §5).
     if (d.isLarge) {
-      d.diveShieldMax = 4 + (cycle ~/ 2);
-    } else if (d.elite || d.kind >= 2 || d.maxHp >= 3) {
-      d.diveShieldMax = d.elite ? 3 : 2;
+      d.diveShieldMax = 3 + (cycle ~/ 2);
     } else {
-      d.diveShieldMax = 1;
+      d.diveShieldMax = d.elite ? 2 : 1;
     }
     d.diveShield = d.diveShieldMax;
   }

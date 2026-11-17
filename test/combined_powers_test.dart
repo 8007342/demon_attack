@@ -19,7 +19,8 @@ void main() {
     m.update(1 / 60);
     expect(m.shots.where((s) => !s.hostile).length, 3);
     expect(m.shots.map((s) => s.vx).toSet(), {0.0, -90.0, 90.0});
-    advance(m, .1);
+    // fire-rate-tune: the next Rapid volley is 8 steps on.
+    advance(m, ArcadeModel.rapidFireSteps / 60);
     expect(m.shots.where((s) => !s.hostile).length, 6);
     expect(
       m.activePowers,
