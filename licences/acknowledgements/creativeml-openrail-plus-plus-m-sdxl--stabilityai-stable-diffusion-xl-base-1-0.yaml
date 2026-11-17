@@ -1,0 +1,26 @@
+# Third-party licence acknowledgement (order 1956-ecpb, implements 1954-dvz9).
+# Recorded by merging the pull request that adds it (strength: github-merge).
+record: tillandsias-licence-acknowledgement v1
+licence: creativeml-openrail-plus-plus-m-sdxl
+licence_sha256: 19b6998b569b53ac1fc2158a8a3202c8699a9a4605b47075715d9c96be7fb6d0
+covers: [stabilityai/stable-diffusion-xl-base-1.0]
+grantor: project-owner
+scope: project:demon_attack
+use: non-sale
+expiry: "standing"
+signed_at: "2026-11-17T20:30:31Z"
+strength: github-merge
+host: macuahuitl
+statement: |
+  tillandsias-licence-acknowledgement v1
+  licence: creativeml-openrail-plus-plus-m-sdxl
+  licence_sha256: 19b6998b569b53ac1fc2158a8a3202c8699a9a4605b47075715d9c96be7fb6d0
+  covers: stabilityai/stable-diffusion-xl-base-1.0
+  grantor: project-owner
+  scope: project:demon_attack
+  use: non-sale
+  expiry: standing
+  host: macuahuitl
+  strength: github-merge
+  issued: 2026-11-17T20:30:31Z
+signature: ""

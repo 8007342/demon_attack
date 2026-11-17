@@ -112,3 +112,24 @@ The MIDI score is the first layer, as decided. The next step is the CC0 sample b
 real drum, bass, guitar, organ and brass samples replace the synth voices note for note, so the score keeps its
 seamless combining. Samples wait for the register to admit the pins in `plan/sample-bank-pins.md`; the bank builder,
 the sampler runtime and the score checks are built now.
+
+# Round 7 (2026-11-17, evening)
+
+- **Licences:** the operator merged PRs #9–#11 (Open RAIL++-M for SDXL and SDXL-Lightning, Open RAIL-M for Pixel Art XL
+  and LayerDiffuse). Merging is the acceptance. The inventory is in `plan/licences-round-2.md`. The coordinator cleared
+  the CC0 sample bank (196 pins) for a forge fetch at pinned commits.
+- **Credits page (change `credits-page`):** "remove the autoscroll, but make it have a nice soundtrack, and display all
+  of these licenses and models, and the pile of projects on which we build upon. Please include Tillandsias, Fedora, and
+  Podman, prominently near the top, with icons and links to their websites. A self link to the github repo".
+- **High-res score:** "I would rather preview the music score replacement with the high res assets until complete".
+  The bank ships off by default (`?bank=1` / console toggle) until the operator approves it from a listening page.
+- **Sentinel shadow (change `sentinel-shadow-align`):** the looming sentinel's shadow doesn't follow its silhouette
+  behind the clouds. "Don't use my percentages lol just make it smaller at a distance, and track the centinel as it
+  approaches. Once its shadow maps correctly it should behave correctly for size and perspective as well."
+- **Bonus 1UP challenges (change `bonus-challenges`):** "add a condition, and display it with iconography, like "catch
+  all the cargo for 1UP", or "dodge all lightning for 1UP", let's use radio comms and in-game idioms".
+- **Wind and a wind bonus level (change `crosswind`):** "significant wind effects, enough to deviate bullets, ours and
+  enemies, with swinging directions, sometimes even speeding up bullets a tiny little bit, we'll use clouds as effect
+  ... one bonus level that uses this wind gimmick for its goal, like no multifire". With pretty assets, radio chatter
+  and new musical accents (`bonus-music`), and "figure out how flexible and extensible our pipelines are early on"
+  (crosswind design §Pipelines).

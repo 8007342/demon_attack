@@ -21,6 +21,7 @@ import 'dart:math' as math;
 import '../game/game_events.dart';
 import 'comms_bank.dart';
 import 'comms_context.dart';
+import 'comms_lanes.dart';
 import 'comms_lineup.dart';
 import 'comms_moments.dart';
 import 'comms_mouth.dart';
@@ -290,6 +291,10 @@ class CommsDirector {
   bool celebrating(double at) => at < celebrateUntil;
 
   final slots = List.generate(4, CommsSlot.new);
+
+  // --- portrait-comms-lanes: the compact dock's two independent lanes
+  // (humans left, brood right), kept here so they persist across frames.
+  final lanes = CommsLanes();
   final List<CommsMessage> active = [], queue = [];
   final _lastFired = <String, double>{};
   final _lastVariant = <String, int>{};
@@ -373,6 +378,7 @@ class CommsDirector {
     }
     active.clear();
     queue.clear();
+    lanes.clear();
     _lastFired.clear();
     _speakerUsed.clear();
     _signatureAt.clear();
