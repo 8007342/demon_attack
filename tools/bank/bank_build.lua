@@ -8,6 +8,8 @@
 --   lua tools/bank/bank_build.lua --fetch-maps         fetch the pinned SFZ maps only (each < 100 KB) into --src
 --   lua tools/bank/bank_build.lua --sync-keys          write art/music/bank/sfz-keys.json from the maps in --src
 --   lua tools/bank/bank_build.lua [--src DIR]          build: verify every source, cut, check, encode, write
+--   lua tools/bank/bank_build.lua --f0-report          verify and cut, then print every pitched zone's f0 against its
+--                                                     root (the run ledger's table) and stop; nothing is written
 --   lua tools/bank/bank_build.lua --fetch [--src DIR]  ONLY once the Tillandsias register has admitted the pins:
 --                                                     fetch the manifest's files that --src lacks, then build
 -- Options: --recipe FILE (art/music/bank/recipe.json), --manifest FILE (the recipe's), --keys FILE|none (the
@@ -16,7 +18,7 @@
 -- default ~/.cache/tillandsias-project/tmp/bank-build-*).
 --
 -- The build refuses (exit 1, nothing written) when a source is missing, its size or git blob sha1 differs from the
--- manifest, an f0 check of a `strict` instrument disagrees with its root by more than 0.6 semitone (a whole-octave
+-- manifest, the pitch check of a `strict` instrument disagrees with its root by more than 0.6 semitone (a whole-octave
 -- disagreement shared by the instrument is corrected and logged), or a budget is exceeded (≤ 2 MB Opus, ≤ 41 MB
 -- decoded, ≤ 16 MB decoded for the phone tier). Each zone: leading silence below -60 dB removed, trimmed to the
 -- recipe's seconds, normalised per instrument to -1 dBFS peak (so velocity layers keep their dynamics), a 20 ms fade
@@ -32,7 +34,7 @@ do
   local i = 1
   while i <= #arg do
     local a = arg[i]
-    if a == '--dry-run' or a == '--json' or a == '--sync-keys' or a == '--fetch' or a == '--fetch-maps' then opts[a:sub(3)] = true; i = i + 1
+    if a == '--dry-run' or a == '--json' or a == '--sync-keys' or a == '--fetch' or a == '--fetch-maps' or a == '--f0-report' then opts[a:sub(3)] = true; i = i + 1
     elseif a == '--with' then opts.with[arg[i + 1]] = true; i = i + 2
     elseif a:match('^%-%-') and arg[i + 1] then opts[a:sub(3)] = arg[i + 1]; i = i + 2
     else io.stderr:write('unknown argument ' .. a .. '\n'); os.exit(2) end
@@ -159,36 +161,108 @@ local function decode(z)
   return pcm
 end
 
--- f0 by YIN (de Cheveigné and Kawahara's cumulative mean normalised difference, threshold 0.15) on the mono mix,
--- decimated to 16 kHz, 80 ms after the onset; 25 Hz to 2 kHz. Returns Hz or nil.
-local function f0(pcm, channels)
+-- The pitch check (sample-bank run, 2026-11-17: a blind YIN estimate failed on the distorted bass, the short
+-- staccatos and the low brass, and read the open organ pipes' octave-first attack as the pitch). It verifies a
+-- planned root instead of guessing one, on one spectrum per zone: the mono mix decimated to 16 kHz, from 80 ms after
+-- the onset for up to 1 s, Hann-windowed and zero-padded to 2^16 points (0.24 Hz bins).
+--   octave: periodicity at f shows as partials at odd multiples of f. odd(f) = the summed magnitude at (h - 1/2) f,
+--     all(f) the summed magnitude at h f (h = 1..8), both relative to the spectrum's peak. Starting from the planned
+--     root F: while odd(F) > OCT_DOWN * all(F) and odd(F) > OCT_MIN the zone sounds an octave lower (F/2); else
+--     while odd(2F) < OCT_UP * all(2F) and all(2F) > OCT_MIN (2F's partials carry the sound, F's odd ones are
+--     absent) an octave higher (2F); at most ±2. OCT_MIN keeps a zone with no energy near F from moving on noise.
+--   note: the harmonic sum S(f) = sum of |X(h f)| (h = 1..8, below 7 kHz) is maximised within ±6.5 semitones of the
+--     zone's octave-corrected root (10-cent steps, then 1-cent); the residual is that f against the root.
+local OCT_DOWN, OCT_UP, OCT_MIN, SPAN = 0.9, 0.02, 0.3, 6.5
+local function fft(re, im, n)
+  local j = 1
+  for i = 1, n do
+    if i < j then re[i], re[j] = re[j], re[i]; im[i], im[j] = im[j], im[i] end
+    local m = n >> 1
+    while m >= 1 and j > m do j = j - m; m = m >> 1 end
+    j = j + m
+  end
+  local len = 2
+  while len <= n do
+    local ang = -2 * math.pi / len
+    local wr, wi = math.cos(ang), math.sin(ang)
+    for i = 1, n, len do
+      local cr, ci = 1, 0
+      for k = 0, len // 2 - 1 do
+        local a, b = i + k, i + k + len // 2
+        local tr, ti = re[b] * cr - im[b] * ci, re[b] * ci + im[b] * cr
+        re[b], im[b] = re[a] - tr, im[a] - ti
+        re[a], im[a] = re[a] + tr, im[a] + ti
+        cr, ci = cr * wr - ci * wi, cr * wi + ci * wr
+      end
+    end
+    len = len * 2
+  end
+end
+local SR, NFFT = rate / 3, 65536
+local function spectrum(pcm, channels)
   local x, step = {}, 3 * channels
   for i = 1, #pcm - step + 1, step do
     local s = 0
     for j = 0, step - 1 do s = s + pcm[i + j] end
     x[#x + 1] = s / step
   end
-  local sr, W, minLag, maxLag = rate / 3, 1400, 8, 640
-  local start = math.floor(0.08 * sr)
-  if #x < start + W + maxLag then start = math.max(0, #x - W - maxLag) end
-  if #x < W + maxLag then return nil end
-  local d, cum = {}, 0
-  for tau = 1, maxLag do
-    local s = 0
-    for j = start + 1, start + W do local e = x[j] - x[j + tau]; s = s + e * e end
-    cum = cum + s
-    d[tau] = cum > 0 and s * tau / cum or 1
+  local start = math.floor(0.08 * SR)
+  local L = math.min(#x - start, math.floor(SR))
+  if L < math.floor(0.2 * SR) then start = 0; L = math.min(#x, math.floor(SR)) end
+  if L < 2048 then return nil end
+  local re, im = {}, {}
+  for i = 1, NFFT do re[i], im[i] = 0, 0 end
+  for i = 0, L - 1 do re[i + 1] = x[start + i + 1] * (0.5 - 0.5 * math.cos(2 * math.pi * i / (L - 1))) end
+  fft(re, im, NFFT)
+  local mag, peak = {}, 0
+  local lo, hi = math.floor(20 * NFFT / SR), math.floor(7000 * NFFT / SR)
+  for i = 1, NFFT // 2 do mag[i] = math.sqrt(re[i] * re[i] + im[i] * im[i]); if i >= lo and i <= hi and mag[i] > peak then peak = mag[i] end end
+  if peak <= 0 then return nil end
+  for i = 1, #mag do mag[i] = mag[i] / peak end
+  return mag
+end
+local function magAt(mag, hz)
+  local b = hz * NFFT / SR
+  local i = math.floor(b)
+  if i < 1 or i + 1 >= #mag then return 0 end
+  local t = b - i
+  return mag[i + 1] * (1 - t) + mag[i + 2] * t
+end
+local function hsum(mag, f)
+  local s = 0
+  for h = 1, 8 do if h * f < 7000 then s = s + magAt(mag, h * f) end end
+  return s
+end
+local function oddAll(mag, f)
+  local odd, all = 0, 0
+  for h = 1, 8 do if h * f < 7000 then all = all + magAt(mag, h * f); odd = odd + magAt(mag, (h - 0.5) * f) end end
+  return odd, all
+end
+local function lower(mag, f) local odd, all = oddAll(mag, f); return odd > OCT_DOWN * all and odd > OCT_MIN end
+local function higher(mag, f) local odd, all = oddAll(mag, 2 * f); return odd < OCT_UP * all and all > OCT_MIN end
+local function ratio(mag, f) local odd, all = oddAll(mag, f); return all > 0 and odd / all or math.huge end
+local function hzOf(m) return 440 * 2 ^ ((m - 69) / 12) end
+-- Returns { octave = k, hz = f, odd = odd(F'), up = odd(2F') } for a planned root (MIDI), or nil (too short).
+local function pitchCheck(pcm, channels, root)
+  local mag = spectrum(pcm, channels)
+  if not mag then return nil end
+  local k = 0
+  while k > -2 and lower(mag, hzOf(root + 12 * k)) do k = k - 1 end
+  if k == 0 then while k < 2 and higher(mag, hzOf(root + 12 * k)) do k = k + 1 end end
+  local F = hzOf(root + 12 * k)
+  local best, bestHz = -1, F
+  for c = -SPAN * 100, SPAN * 100, 10 do
+    local hz = F * 2 ^ (c / 1200)
+    local v = hsum(mag, hz)
+    if v > best then best, bestHz = v, hz end
   end
-  for tau = minLag, maxLag - 1 do
-    if d[tau] < 0.15 then
-      while tau + 1 < maxLag and d[tau + 1] < d[tau] do tau = tau + 1 end
-      local a, b, c = d[tau - 1], d[tau], d[tau + 1]
-      local den = a - 2 * b + c
-      local shift = den ~= 0 and 0.5 * (a - c) / den or 0
-      return sr / (tau + shift)
-    end
+  local coarse = bestHz
+  for c = -10, 10 do
+    local hz = coarse * 2 ^ (c / 1200)
+    local v = hsum(mag, hz)
+    if v > best then best, bestHz = v, hz end
   end
-  return nil
+  return { octave = k, hz = bestHz, odd = ratio(mag, F), up = ratio(mag, 2 * F) }
 end
 local function midiOf(hz) return 69 + 12 * math.log(hz / 440, 2) end
 
@@ -210,23 +284,26 @@ for _, id in ipairs(instOrder) do
     for i = 1, #pcm do local a = math.abs(pcm[i]); if a > peak then peak = a end end
     z.pcm = pcm
   end
-  -- f0: one estimate per distinct source note; a shared whole-octave offset is corrected, anything else refused
-  -- (strict) or reported.
+  -- The pitch check: each zone's octave and note against its planned root. The instrument's octave is the zones'
+  -- majority (a shared whole-octave offset is corrected and logged); a zone voting another octave, or a note more
+  -- than 0.6 semitone off, is refused (strict) or reported.
   if inst.verify and not inst.keys then
-    local octaves, checked = {}, 0
+    local octaves = {}
     for _, z in ipairs(list) do
-      local hz = f0(z.pcm, z.channels)
-      z.f0 = hz and math.floor(hz * 100 + 0.5) / 100 or nil
-      if hz then
-        local diff = midiOf(hz) - z.root
-        local k = math.floor(diff / 12 + 0.5)
-        local residual = diff - 12 * k
+      local p = pitchCheck(z.pcm, z.channels, z.root)
+      if p then
+        z.f0 = math.floor(p.hz * 100 + 0.5) / 100
+        z.f0Odd, z.f0Up = p.odd, p.up
+        local residual = midiOf(p.hz) - (z.root + 12 * p.octave)
         z.f0Residual = math.floor(residual * 100 + 0.5) / 100
-        if math.abs(residual) <= 0.6 then octaves[k] = (octaves[k] or 0) + 1; z.f0Octave = k; checked = checked + 1
-        elseif inst.verify == 'strict' then refusals[#refusals + 1] = ('%s %s: f0 %.1f Hz is %.2f semitones off root %d'):format(id, z.file, hz, residual, z.root)
-        else notes[#notes + 1] = ('%s %s: f0 %.1f Hz, %.2f semitones off root %d (reported)'):format(id, z.file, hz, residual, z.root) end
-      elseif inst.verify == 'strict' then refusals[#refusals + 1] = ('%s %s: no f0 found'):format(id, z.file)
-      else notes[#notes + 1] = ('%s %s: no f0 found (reported)'):format(id, z.file) end
+        z.f0Octave = p.octave
+        octaves[p.octave] = (octaves[p.octave] or 0) + 1
+        if math.abs(residual) > 0.6 then
+          local msg = ('%s %s: f0 %.1f Hz is %.2f semitones off root %d'):format(id, z.file, p.hz, residual, z.root + 12 * p.octave)
+          if inst.verify == 'strict' then refusals[#refusals + 1] = msg else notes[#notes + 1] = msg .. ' (reported)' end
+        end
+      elseif inst.verify == 'strict' then refusals[#refusals + 1] = ('%s %s: too short for the pitch check'):format(id, z.file)
+      else notes[#notes + 1] = ('%s %s: too short for the pitch check (reported)'):format(id, z.file) end
     end
     local best, votes = 0, -1
     for k, n in pairs(octaves) do if n > votes or (n == votes and math.abs(k) < math.abs(best)) then best, votes = k, n end end
@@ -275,6 +352,19 @@ for _, id in ipairs(instOrder) do
     z.bin, z.pcm = table.concat(packed), nil
   end
   collectgarbage()
+end
+if opts['f0-report'] then
+  io.write('inst\tfile\troot\tf0_hz\tf0_midi\tresidual\toctave\todd_f\todd_2f\troot_source\n')
+  for _, z in ipairs(plan.zones) do
+    if z.root and recipeInst[z.inst].verify then
+      io.write(('%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n'):format(z.inst, z.file, z.root, z.f0 or '-', z.f0 and ('%.2f'):format(midiOf(z.f0)) or '-',
+        z.f0Residual and ('%+.2f'):format(z.f0Residual) or '-', z.f0Octave and ('%+d'):format(z.f0Octave) or '-',
+        z.f0Odd and ('%.3f'):format(z.f0Odd) or '-', z.f0Up and ('%.3f'):format(z.f0Up) or '-', z.rootSource))
+    end
+  end
+  for _, n in ipairs(notes) do say('note: %s', n) end
+  for _, r in ipairs(refusals) do say('refusal: %s', r) end
+  os.exit(#refusals > 0 and 1 or 0)
 end
 if #refusals > 0 then die('refused: %d f0 check(s) failed:\n  %s', #refusals, table.concat(refusals, '\n  ')) end
 for _, n in ipairs(notes) do say('note: %s', n) end

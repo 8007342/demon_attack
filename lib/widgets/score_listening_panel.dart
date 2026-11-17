@@ -8,6 +8,10 @@
 // start) and then the last carrier into the ending's coda; the step buttons
 // trigger every section move and stinger by hand. The score is the game's only
 // music, so there is no recorded A/B any more.
+//
+// --- sample-bank: VOICES switches the score between its synth voices and the
+// CC0 sample bank on this device (stored; off by default until the operator
+// approves the bank, adaptive-soundtrack design §12.9.7).
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -235,6 +239,25 @@ class _ScoreListeningPanelState extends State<ScoreListeningPanel> {
   Timer? _poll;
   String _now = '';
   int _wave = 0, _sector = 1, _tour = 0;
+  bool _bank = audioScoreBank();
+  String _bankNow = '';
+
+  String _bankText() {
+    final b = audioScoreBankState();
+    if (b == null || !b.on) return 'SYNTH VOICES';
+    if (b.sprites == 0) return 'SAMPLED · LOADING THE BANK';
+    final mb = (b.decodedBytes / 1e6).toStringAsFixed(1);
+    return 'SAMPLED · ${b.loaded}/${b.sprites} SPRITES · $mb MB · ${b.sampled} NOTES';
+  }
+
+  void _setBank(bool on) {
+    audioUnlock();
+    final now = audioSetScoreBank(on);
+    setState(() {
+      _bank = now;
+      _bankNow = _bankText();
+    });
+  }
 
   @override
   void dispose() {
@@ -258,7 +281,13 @@ class _ScoreListeningPanelState extends State<ScoreListeningPanel> {
     _poll ??= Timer.periodic(const Duration(milliseconds: 250), (_) {
       final p = audioScorePosition();
       final text = p == null ? 'silence' : '${p.song} · ${p.section}';
-      if (mounted && text != _now) setState(() => _now = text);
+      final bank = _bankText();
+      if (mounted && (text != _now || bank != _bankNow)) {
+        setState(() {
+          _now = text;
+          _bankNow = bank;
+        });
+      }
     });
     setState(() => _now = label);
   }
@@ -359,6 +388,35 @@ class _ScoreListeningPanelState extends State<ScoreListeningPanel> {
               fontSize: 9,
               letterSpacing: 1.5,
               color: Color(0xFF8D9EB3),
+            ),
+          ),
+          heading('VOICES · ${_bankNow.isEmpty ? _bankText() : _bankNow}'),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Wrap(
+              spacing: 6,
+              children: [
+                for (final (label, on) in [('SYNTH', false), ('SAMPLED', true)])
+                  OutlinedButton(
+                    key: ValueKey('score-voices-${label.toLowerCase()}'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _bank == on
+                          ? mint
+                          : const Color(0xFFD7E5EF),
+                      side: BorderSide(
+                        color: _bank == on ? mint : const Color(0xFF33485A),
+                      ),
+                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      shape: const RoundedRectangleBorder(),
+                    ),
+                    onPressed: () => _setBank(on),
+                    child: Text(
+                      label,
+                      style: const TextStyle(fontSize: 10, letterSpacing: 1.5),
+                    ),
+                  ),
+              ],
             ),
           ),
           heading('SCRIPTED'),

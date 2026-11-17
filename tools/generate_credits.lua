@@ -96,5 +96,16 @@ local result={schema='demon-attack.credits/v1',title='Demon Attack',platform='Ti
   model_pins='art/comms/audio.json',asset_provenance='plan/asset-provenance.md',
   beach_provenance='assets/research/battle-metal-radio/ending/beach-qwen-v1.provenance.json'},
  note='All game artwork, performances and musical themes are original project work. Package notices are available through the bundled license registry.'}
+-- --- sample-bank: the score's CC0 sample libraries, one row each, with the credit line web/audio/bank/bank.json
+-- carries for each source (tools/bank/bank_build.lua from art/music/bank/recipe.json), after the models.
+do
+ local bank_rows={}
+ local ok,list=pcall(read,{'jq','-r','.sources|to_entries|sort_by(.key)[]|[.value.credit,.value.spdx,.key,.value.commit]|@tsv','web/audio/bank/bank.json'})
+ for _,row in ipairs(ok and lines(list)or{})do
+  local credit,spdx,repo,commit=row:match('^([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]*)$')
+  if credit then bank_rows[#bank_rows+1]={name=credit,spdx=spdx,source='https://github.com/'..repo..'/tree/'..commit}end
+ end
+ if #bank_rows>0 then table.insert(result.sections,3,{title='Sampled instruments',degree='samples',entries=bank_rows})end
+end
 local file=assert(io.open('assets/credits.json','w'));file:write(json(result),'\n');file:close()
 print('credits: '..#authors..' contributor name(s), '..#direct_rows..' direct packages, '..#indirect_rows..' runtime foundations, '..#models..' model credits')
