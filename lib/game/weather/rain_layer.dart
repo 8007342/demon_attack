@@ -52,6 +52,10 @@ class RainLayer {
   /// with no splashes and no gusts.
   static const reducedCount = .5, reducedSpeed = .35, reducedLength = .6;
 
+  /// --- phone-performance §4: the quality tier's share of the drops and
+  /// splashes (1 at the full tier; the batches stay one draw call each).
+  double budget = 1;
+
   /// The intensity drawn now (0-1), the wind, and the presentation clock.
   double amount = 0, wind = 0, time = 0;
   bool reduced = false;
@@ -217,7 +221,7 @@ class RainLayer {
           const [0, .35, 1],
         ),
     );
-    final count = reduced ? reducedCount : 1.0;
+    final count = (reduced ? reducedCount : 1.0) * budget;
     final speed = reduced ? reducedSpeed : 1.0;
     final length = reduced ? reducedLength : 1.0;
     final w = reduced ? wind * .6 : wind;
@@ -236,7 +240,7 @@ class RainLayer {
     _draw(c, _far, lastFar, .13 + .11 * k);
     if (!reduced) {
       lastSplashes = _splashes(
-        (splashMax * k).round(),
+        (splashMax * k * budget).round(),
         ground: ground,
         perspective: perspective,
       );

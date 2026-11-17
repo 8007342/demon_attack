@@ -13,7 +13,6 @@
  "loudness_lufs": -18.0,
  "peak_dbfs": -1.0,
  "opus_kbps": 80,
- "aac_kbps": 128,
  "common_tags": "live band recording, 4/4, steady tempo",
  "lyrics": "[instrumental]",
  "nodes": {

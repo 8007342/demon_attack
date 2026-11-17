@@ -73,7 +73,7 @@ void main() {
 
       await tester.runAsync(() async {
         scene.atlas = await decode('assets/images/combat.png');
-        scene.sky = await decode('assets/images/cosmic-sky.png');
+        scene.sky = await decode('assets/images/cosmic-sky.webp');
         await scene.atmosphere.load();
         until(RunMode.levelClear);
         final early = await capture(

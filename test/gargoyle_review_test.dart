@@ -332,10 +332,10 @@ void main() {
       // Sheet 3: combat over each sector background at phone size.
       await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
       scene.sectors.flyover.reducedMotionOverride = true;
-      scene.sky = await _decode('assets/images/cosmic-sky.png');
+      scene.sky = await _decode('assets/images/cosmic-sky.webp');
       for (var i = 0; i < 5; i++) {
         scene.sectors.images[i] = await _decode(
-          'assets/images/sector-${i + 1}.png',
+          'assets/images/sector-${i + 1}.webp',
         );
       }
       for (var level = 1; level <= 5; level++) {

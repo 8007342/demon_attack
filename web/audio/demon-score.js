@@ -1,17 +1,23 @@
-/* The MIDI-first score player (adaptive-soundtrack design §5.1, §11.4): one committed multitrack score per
+/* The MIDI-first score player (adaptive-soundtrack design §5.1, §11.4, §12): one committed multitrack score per
    section (web/audio/score/, written by tools/score/score_gen.lua), played on the song's bar grid by synth voices,
-   moved between sections by SongDirector (lib/game/song_director.dart) through demonAudio.song(move).
+   moved between sections by SongDirector (lib/game/song_director.dart) through demonAudio.song(move). It is the
+   game's only music: the overture, every sector, every carrier, the bridges between them, the defeat and the coda.
 
    It runs inside demon-audio.js's scheduler (one audio clock, one 25 ms timer): tick(until) schedules every note up
    to `until` (a lookahead of LOOKAHEAD seconds) with start(when) on the audio clock, so the main thread only does a
    few node creations per tick and timing never depends on frame rate.
 
    The combining rules, all on the audio clock:
-   - Section moves land on the requested time, which SongDirector puts on a bar or beat line of the playing section
-     (or, from recorded music, on that cue's bar line). A move that would fall inside the already-scheduled window
-     slips to the next line instead (state.slipped counts these). The latest pending move replaces an earlier one.
+   - Section moves land on the requested time, which SongDirector puts on a bar or beat line of the playing section.
+     A move that would fall inside the already-scheduled window slips to the next line instead (state.slipped counts
+     these). The latest pending move replaces an earlier one. A `now` move (the defeat) lands 30 ms ahead and
+     cancels whatever was scheduled past it.
    - `enter: same` keeps the bar position (modulo the destination's length); `start` begins at its first bar.
-   - Tails and bridges hand over to `next` at their own end; a tail without one repeats its hold bars.
+   - Tails and bridges hand over to `next` at their own end; a tail without one repeats its hold bars. `next` may
+     name another song (`song:section`), and a move's `then` overrides it (the bridge into the tour's carrier): the
+     next song's grid starts on the bridge's last bar line.
+   - A section with `fx: worldized` passes the music through a mono band-pass (300 Hz-4 kHz, design §4.4) while it
+     plays; the next section opens it again.
    - Intensity is a track mask (song-map tier masks plus the v2, power and fleet layers) applied on the requested
      line: newly audible tracks fade in over 20 ms, silenced ones out over 60 ms, notes of silent tracks are not
      scheduled. Nothing restarts.
@@ -19,6 +25,8 @@
    - Stingers are short scores in scale degrees, transposed to the playing section's key and put on its grid.
    - Voices: a key struck again on its track chokes its previous note; lead and bass are monophonic; at most 48
      voices (32 on phones), stealing pads first, then leads, never kick, snare or bass.
+   - Loading: score.json, then each song's sections in parallel, song by song in the run's order (the overture and
+     Krybor first). A move to a song still loading runs once it has loaded.
 
    Voices are synthesis (the guaranteed-everywhere layer, §11.8 step 2). makeVoice() is the seam for the CC0 sample
    bank (§11.4 "Loading"): a bank adds a zone lookup there and plays an AudioBufferSourceNode through the same role
@@ -80,9 +88,8 @@
   const frequency = pitch => 440 * 2 ** ((pitch - 69) / 12);
 
   function create(host) {
-    // host: { context(), input(), legacyBar(), yieldLegacy(at), lifeLoss: [names] }
-    let manifest = null, failed = false, context = null, out = null, wanted = null, loadError = null;
-    let enabled = readEnabled();
+    // host: { input(), lifeLoss: [names] }
+    let manifest = null, failed = false, context = null, out = null, wanted = null, loadError = null, fx = null;
     const songs = new Map();       // id -> { spec, sections: Map(id -> { spec, score }) }
     let current = null;            // { id, song, section, startAt, entry, spec, data, songSpec }
     let pending = null;            // a section move { at, song, section, enter, reason }
@@ -94,35 +101,56 @@
     const trackGains = new Map(), buses = {};
     const cap = phoneClass() ? 32 : 48;
 
-    function readEnabled() {
-      try { if (/[?&]score=off\b/.test(location.search)) return false; } catch { /* no location */ }
-      try { return window.localStorage?.getItem('demonAttack.score') !== 'off'; } catch { return true; }
-    }
     function phoneClass() {
       try { if ((navigator.deviceMemory ?? 8) <= 4) return true; } catch { /* no navigator */ }
       try { return !!window.matchMedia?.('(pointer: coarse)').matches; } catch { return false; }
     }
 
-    // --- loading: the whole score is ~60 KB; it is fetched and parsed once, before the first gesture.
+    // --- loading: score.json (~50 KB), then the songs in the run's order, each song's sections fetched in
+    // parallel and parsed as they arrive (a section is a few KB: no long task). The whole run is ~340 KB of MIDI,
+    // ~115 KB gzipped; the overture and Krybor are ready first.
+    function loadOrder(map) {
+      const family = id => (map.songs[id]?.form === 'carrier' ? 'c' : id);
+      const order = [];
+      const add = id => { if (id && map.songs[id] && !order.includes(id)) order.push(id); };
+      for (const scene of ['menu', 'gameover']) add(map.scenes?.[scene]?.split(':')[0]);
+      for (const play of map.plays || []) {
+        for (const [pair, bridge] of Object.entries(map.bridges || {})) if (pair.split('>')[1] === family(play.song)) add(bridge);
+        add(play.song);
+      }
+      for (const id of Object.keys(map.songs)) add(id);
+      return order;
+    }
+    async function loadSong(id, spec) {
+      const parsed = await Promise.all(Object.entries(spec.sections).map(async ([sid, sspec]) => {
+        const res = await fetch(new URL(sspec.file, root));
+        if (!res.ok) throw new Error(`score section ${sspec.file} unavailable`);
+        return [sid, { spec: sspec, score: parseScore(await res.arrayBuffer()) }];
+      }));
+      songs.set(id, { spec, sections: new Map(parsed) });
+    }
     const loading = (async () => {
       try {
         const response = await fetch(new URL('score.json', root));
         if (!response.ok) throw new Error('score unavailable');
         const map = await response.json();
-        for (const [id, spec] of Object.entries(map.songs)) {
-          const sections = new Map();
-          for (const [sid, sspec] of Object.entries(spec.sections)) {
-            const res = await fetch(new URL(sspec.file, root));
-            if (!res.ok) throw new Error(`score section ${sspec.file} unavailable`);
-            sections.set(sid, { spec: sspec, score: parseScore(await res.arrayBuffer()) });
-          }
-          songs.set(id, { spec, sections });
+        for (const id of loadOrder(map)) {
+          await loadSong(id, map.songs[id]);
+          if (!manifest) manifest = map;   // ready once the first song is parsed
+          flushWanted();
         }
-        manifest = map;   // ready only once every section is parsed
-      } catch (error) { failed = true; manifest = null; loadError = String(error?.message || error); }
+      } catch (error) { failed = true; loadError = String(error?.message || error); }
       flushWanted();
     })();
     const ready = () => !!manifest && !failed && !!context;
+    const loaded = id => songs.has(id);
+    // `next` (or a move's `then`): a section of the same song, or `song:section`.
+    function successor(seg) {
+      const next = seg.then || seg.spec.next;
+      if (!next) return null;
+      const i = next.indexOf(':');
+      return i < 0 ? { song: seg.song, section: next } : { song: next.slice(0, i), section: next.slice(i + 1) };
+    }
 
     // --- the grid of the playing section ----------------------------------------------------------------------
     const beatSeconds = (songId) => songs.get(songId).spec.barSamples / 48000 / 4;
@@ -134,7 +162,7 @@
     }
     // When a tail or bridge with a successor reaches its end (Infinity for loops and held tails).
     function boundary(seg) {
-      if (!seg || seg.spec.kind === 'loop' || !seg.spec.next) return Infinity;
+      if (!seg || seg.spec.kind === 'loop' || seg.stalled || !successor(seg)) return Infinity;
       return segTime(seg, seg.spec.bars * 4);
     }
 
@@ -215,7 +243,17 @@
     }
     function buildBuses() {
       out = gainNode(.55);
-      out.connect(host.input());
+      // The worldized chain (design §4.4): a band-pass that is wide open until a section asks for it, and a mono
+      // fold (a one-channel gain downmixes, the next stage upmixes to the centre) crossfaded with the stereo path.
+      const low = filter('highpass', 20, .7), high = filter('lowpass', 20000, .7);
+      if (low && high) {
+        chain(out, low, high);
+        const stereo = gainNode(1), mono = gainNode(0), fold = gainNode(1);
+        fold.channelCount = 1; fold.channelCountMode = 'explicit'; fold.channelInterpretation = 'speakers';
+        high.connect(stereo); stereo.connect(host.input());
+        high.connect(fold); fold.connect(mono); mono.connect(host.input());
+        fx = { low, high, stereo, mono, on: false };
+      } else out.connect(host.input());
       const wet = gainNode(.32), room = reverb(phoneClass() ? 1.1 : 1.7);
       if (room) chain(room, wet, out);
       const send = (from, amount) => { if (room) { const g = gainNode(amount); from.connect(g); g.connect(room); } };
@@ -256,7 +294,7 @@
       buses.sting = gainNode(1);
     }
     const roleBus = { drums: 'drums', bass: 'bass', guitarL: 'guitarL', guitarR: 'guitarR', lead: 'lead', clean: 'clean',
-      organ: 'pad', strings: 'pad', brass: 'pad', choir: 'pad', timpani: 'perc', bells: 'perc' };
+      organ: 'pad', strings: 'pad', brass: 'pad', choir: 'pad', timpani: 'perc', bells: 'perc', uke: 'clean' };
     function bus(role) { return buses[roleBus[role] || 'pad']; }
 
     // --- voices -------------------------------------------------------------------------------------------------
@@ -393,6 +431,15 @@
           end = envelope(frame, at, dur, .5 * v, .003, 1.4, .25, .3);
           break;
         }
+        case 'uke': {
+          // A plucked nylon string: triangle and its octave through a soft low-pass, a quick decay. The sampled
+          // ukulele's zone replaces this (a gap until the bank has one).
+          const input = perNoteFilter(frame, 'lowpass', 2200 + v * 1400, .8);
+          osc(frame, 'triangle', f, at, input);
+          osc(frame, 'sine', f * 2, at, input, 4);
+          end = envelope(frame, at, dur, .5 * v, .002, .55, .12, .22);
+          break;
+        }
         case 'organ': {
           osc(frame, 'sine', f, at); osc(frame, 'sine', f * 2, at); osc(frame, 'triangle', f * 4, at, perNoteFilter(frame, 'lowpass', 3000, .7));
           end = envelope(frame, at, dur, .26 * v, .02, .2, .9, .25);
@@ -445,7 +492,7 @@
       return { ...frame, end };
     }
     const priority = role => (role === 'organ' || role === 'strings' || role === 'brass' || role === 'choir') ? 0
-      : (role === 'lead' || role === 'clean' || role === 'bells') ? 1 : role === 'bass' ? 3 : 2;
+      : (role === 'lead' || role === 'clean' || role === 'bells' || role === 'uke') ? 1 : role === 'bass' ? 3 : 2;
     const mono = role => role === 'lead' || role === 'bass';
     function releaseVoice(entry, at, seconds = .03) {
       if (entry.released) return;
@@ -514,7 +561,12 @@
     function enter(move, at) {
       const song = songs.get(move.song);
       const data = song?.sections.get(move.section);
-      if (!data) return;
+      if (!data) {
+        // Its song is still loading: the section being left holds, and the move runs once the song has loaded.
+        if (current) current.stalled = true;
+        wanted = { ...move, at: -1 };
+        return;
+      }
       const old = current;
       if (old) for (const v of voices) if (v.seg === old.id && v.end > at) releaseVoice(v, at, .03);
       let entry = 0;
@@ -523,8 +575,10 @@
         const local = old.spec.kind === 'loop' ? ((g % oldLen) + oldLen) % oldLen : g;
         entry = ((local % len) + len) % len;
       }
-      current = { id: ++segment, song: move.song, section: move.section, startAt: at, entry, spec: data.spec, data, songSpec: song.spec };
+      current = { id: ++segment, song: move.song, section: move.section, startAt: at, entry, spec: data.spec, data, songSpec: song.spec,
+        then: move.then || null };
       applyMask(at);
+      worldize(at, data.spec.fx === 'worldized');
       moveLog.push({ song: move.song, section: move.section, at, entry, requestedAt: move.requestedAt, reason: move.reason || null });
       if (moveLog.length > 16) moveLog.shift();
     }
@@ -549,9 +603,9 @@
         }
         if (pending && pending.at <= end + 1e-9) {
           const move = pending; pending = null;
-          if (move.stop) halt(move.at, move.seconds); else enter(move, move.at);
+          enter(move, move.at);
         }
-        else if (current && boundary(current) <= end + 1e-9) enter({ song: current.song, section: current.spec.next, enter: 'start', reason: 'end' }, boundary(current));
+        else if (current && boundary(current) <= end + 1e-9) enter({ ...successor(current), enter: 'start', reason: 'end' }, boundary(current));
       }
     }
     // A requested time at or after what is already scheduled (else the next line after it).
@@ -564,28 +618,29 @@
     }
     function resolve(move) {
       const now = context.currentTime, floor = Math.max(scheduledUntil, now + MARGIN);
+      if (move.quantum === 'now') return now + MARGIN;
       if (typeof move.at === 'number' && move.at >= 0) return settle(move.at, move.quantum);
-      if (move.quantum === 'now') return floor;
       if (current) return nextLine(current, floor, move.quantum === 'beat' ? 1 : 4);
-      const legacy = host.legacyBar?.(floor);
-      return typeof legacy === 'number' && legacy >= floor ? legacy : floor;
+      return floor;
     }
-    // A move from SongDirector: { song, section?, at, quantum, enter, tier?, variant?, fleet?, reason, fallback? }.
-    // Returns the time it lands on, -1 while the score or the audio context is not ready (it runs once both are),
-    // or -2 when the score is off or failed (the fallback cue has been played instead).
+    // A move from SongDirector: { song, section?, at, quantum, enter, tier?, variant?, fleet?, then?, reason }.
+    // Returns the time it lands on, -1 while the score, the move's song or the audio context is not ready (it runs
+    // once they are), or -2 when the score failed to load (the game is silent then).
     function move(m) {
-      if (!enabled || failed) { if (m.fallback) host.fallback?.(m.fallback); return -2; }
-      if (!ready()) { wanted = m.section ? m : (wanted ? { ...wanted, ...maskOf(m) } : null); return -1; }
+      if (failed) return -2;
+      if (!ready() || (m.section && !loaded(m.song))) { wanted = m.section ? m : (wanted ? { ...wanted, ...maskOf(m) } : null); return -1; }
       const startsScore = !current && !pending && m.section;
       if (!m.section && !current && !pending) return -1;
       const at = resolve(m);
+      // A `now` move cancels what was scheduled past it (enter() releases those notes before they start).
+      if (m.quantum === 'now' && at < scheduledUntil) scheduledUntil = Math.max(context.currentTime, at);
       const mk = maskOf(m);
       if (Object.keys(mk).length) {
         maskEvents = maskEvents.filter(e => e.at < at - 1e-9);   // the latest request wins
         maskEvents.push({ at, ...mk });
       }
       if (m.section) pending = { ...m, at, requestedAt: context.currentTime };
-      if (startsScore) { host.yieldLegacy?.(at); scheduledUntil = Math.max(scheduledUntil, context.currentTime); }
+      if (startsScore) scheduledUntil = Math.max(scheduledUntil, context.currentTime);
       return at;
     }
     function maskOf(m) {
@@ -596,25 +651,22 @@
       return out;
     }
     function flushWanted() {
-      if (!wanted) return;
-      if (failed || !enabled) { const w = wanted; wanted = null; if (w.fallback) host.fallback?.(w.fallback); return; }
-      if (!ready()) return;
+      if (!wanted || failed || !ready()) return;
+      if (wanted.section && !loaded(wanted.song)) return;
       const w = wanted; wanted = null;
       move({ ...w, at: -1 });
     }
-    // The recorded music takes over at `at`: until then the score keeps playing; there it releases everything
-    // sounding (notes already scheduled past `at` never start) and forgets its moves.
-    function halt(at, seconds) {
-      for (const v of voices) releaseVoice(v, at, seconds);
-      current = null; pending = null; maskEvents = [];
-      moveLog.push({ song: null, section: null, at, reason: 'recorded' });
-      if (moveLog.length > 16) moveLog.shift();
-    }
-    function stop(at, seconds = .09) {
-      wanted = null;
-      if (!context) return;
-      if (!current || at <= scheduledUntil + 1e-9) halt(at, seconds);
-      else pending = { stop: true, at, seconds };
+    // The worldized chain: the band-pass closes in over a beat or so while a worldized section plays, and opens
+    // again when the next one starts.
+    function worldize(at, on) {
+      if (!fx || fx.on === on) return;
+      fx.on = on;
+      const glide = on ? .6 : .08;
+      fx.low.frequency.cancelScheduledValues?.(at); fx.high.frequency.cancelScheduledValues?.(at);
+      fx.low.frequency.setTargetAtTime(on ? 300 : 20, at, glide / 3);
+      fx.high.frequency.setTargetAtTime(on ? 4000 : 20000, at, glide / 3);
+      fx.stereo.gain.setTargetAtTime(on ? 0 : 1, at, glide / 3);
+      fx.mono.gain.setTargetAtTime(on ? 1 : 0, at, glide / 3);
     }
     // Stingers: the accent's score in the playing section's key, on its grid.
     function accent(name) {
@@ -675,26 +727,23 @@
       maskEvents.sort((x, y) => x.at - y.at);
     }
     function nextBar(after) { return current && context ? nextLine(current, Math.max(after, scheduledUntil), 4) : after; }
-    function setEnabled(value) {
-      enabled = !!value;
-      try { window.localStorage?.setItem('demonAttack.score', enabled ? 'on' : 'off'); } catch { /* storage denied */ }
-      return enabled;
-    }
     return {
-      attach, tick, move, stop, accent, power, nextBar, setEnabled, loading, parseScore,
-      get playing() { return !!(pending ? !pending.stop : current || wanted); },
-      get enabled() { return enabled; },
+      attach, tick, move, accent, power, nextBar, loading, parseScore,
+      get playing() { return !!(pending || current || wanted); },
       get time() { return context?.currentTime ?? -1; },
       // The playing section and the time of its beat 0 (its bar lines are start + k bars): SongDirector's sync.
       get position() { return current ? { song: current.song, section: current.section, start: segTime(current, 0), startAt: current.startAt, entry: current.entry } : null; },
       get state() {
         const now = context?.currentTime ?? 0;
-        return { enabled, loaded: !!manifest, failed, loadError, song: current?.song ?? null, section: current?.section ?? null,
+        return { loaded: !!manifest, songs: [...songs.keys()], failed, loadError, song: current?.song ?? null, section: current?.section ?? null,
+          then: current?.then ?? null, worldized: !!fx?.on,
           startAt: current?.startAt ?? null, entry: current?.entry ?? null, beat: current ? segBeat(current, now) : null,
-          pending: pending ? { song: pending.song, section: pending.section, at: pending.at } : null,
+          pending: pending ? { song: pending.song, section: pending.section, at: pending.at, then: pending.then ?? null } : null,
           wanted: wanted ? { song: wanted.song, section: wanted.section } : null,
           mask: { ...mask }, audible: [...audible].sort(), queuedMasks: maskEvents.map(e => ({ ...e })),
-          voices: [...voices].filter(v => !v.released && v.end > now).length, cap, stolen, slipped, scheduledUntil,
+          // Sounding now (scheduled voices that have not started yet are not counted).
+          voices: [...voices].filter(v => !v.released && v.at <= now && v.end > now).length,
+          scheduled: [...voices].filter(v => !v.released && v.end > now).length, cap, stolen, slipped, scheduledUntil,
           moves: moveLog.slice(), stingers: stingLog.slice() };
       },
     };

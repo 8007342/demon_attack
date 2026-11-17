@@ -163,6 +163,8 @@ current song's reachable sections (design §5.4).
 `battle-metal-radio-rework` spec says AAC fallback is not required. That is an operator decision to confirm
 (needs list N6), since the existing runtime still ships `.m4a`.
 
+> **No fallback format (operator, 2026-11-17).** Opus (`.ogg`) is the one shipped audio format: the AAC (`.m4a`) twins were deleted from `web/audio/`, and `tools/music_pipeline.py` and `tools/comms_pipeline.py` no longer encode AAC. A browser that cannot decode Ogg Opus (Safari before 18.4) plays the MIDI score through the synthesizer (`web/audio/demon-score.js`, the MIDI fallback in `demon-audio.js`).
+
 ## 4. The pipeline
 
 ### 4.1 What exists

@@ -45,12 +45,12 @@ void main() {
       ),
       '248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1',
     );
-    // A real asset against the music manifest's recorded hash.
+    // A real asset against the score map's recorded hash.
     final manifest = jsonDecode(
-      File('web/audio/music/manifest.json').readAsStringSync(),
+      File('web/audio/score/score.json').readAsStringSync(),
     ) as Map<String, dynamic>;
-    final menu = manifest['cues']['menu']['sha256']['ogg'] as String;
-    expect(sha256Hex(File('web/audio/music/menu.ogg').readAsBytesSync()), menu);
+    final a = manifest['songs']['k']['sections']['A']['sha256'] as String;
+    expect(sha256Hex(File('web/audio/score/k/A.mid').readAsBytesSync()), a);
   });
 
   test('notes persist, export, merge and keep the newer edit', () {
@@ -174,7 +174,7 @@ void main() {
     expect(store.notes.single.ref, 'music / l1-t3');
   });
 
-  test('catalog covers the radio bank, the music manifest and the atlases', () {
+  test('catalog covers the radio bank, the score and the atlases', () {
     final comms = jsonDecode(
       File('web/audio/comms/manifest.json').readAsStringSync(),
     ) as Map<String, dynamic>;
@@ -187,17 +187,21 @@ void main() {
     expect(clips.every((c) => commsCast.containsKey(c.line.speaker)), isTrue);
 
     final music = jsonDecode(
-      File('web/audio/music/manifest.json').readAsStringSync(),
+      File('web/audio/score/score.json').readAsStringSync(),
     ) as Map<String, dynamic>;
     final cues = musicCues(music);
-    expect(cues.length, (music['cues'] as Map).length);
-    final layers = cues.firstWhere((c) => c.name == 'l1-layers');
-    expect(layers.slots, contains('stab'));
-    expect(layers.stem, isTrue);
     expect(
-      cues.firstWhere((c) => c.name == 'l1-t1').score,
-      'web/audio/midi/l1-t1.mid',
+      cues.length,
+      (music['songs'] as Map).values.fold<int>(
+        0,
+        (n, s) => n + ((s as Map)['sections'] as Map).length,
+      ),
     );
+    final a = cues.firstWhere((c) => c.name == 'k/A');
+    expect(a.score, 'web/audio/score/k/A.mid');
+    expect(a.level, 1);
+    expect(a.seconds, closeTo(8 * 67765 / 48000, 1e-9));
+    expect(cues.firstWhere((c) => c.name == 'c5/H4').level, 5);
     for (final c in cues) {
       expect(File('web/${c.url}').existsSync(), isTrue, reason: c.url);
       if (c.score != null) {
@@ -329,10 +333,10 @@ void main() {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      final music = File('web/audio/music/manifest.json').readAsStringSync();
+      final music = File('web/audio/score/score.json').readAsStringSync();
       for (final (tab, item) in [
         (StudioTab.sprites, 'creature-gold/death'),
-        (StudioTab.music, 'l2-layers'),
+        (StudioTab.music, 'r/storm'),
         (StudioTab.backgrounds, 'sector-3'),
         (StudioTab.scenes, 'carrier'),
         (StudioTab.radio, null),
@@ -344,7 +348,7 @@ void main() {
             home: ReviewStudio(
               platform: MemoryReviewPlatform(),
               sceneBuilder: (page) => Text('scene $page'),
-              loadText: (path) async => path.contains('music') ? music : null,
+              loadText: (path) async => path.contains('score') ? music : null,
               initialTab: tab,
               initialItem: item,
             ),

@@ -38,7 +38,7 @@ async function harness({ storage, storageThrows = false, compressor = true } = {
   const sandbox = { URL, Uint8Array, DataView, Map, Set, Math, Object, Promise, Number, TextDecoder, encodeURIComponent, window, document: { baseURI: 'https://game.test/', addEventListener() {} },
     setInterval() {}, setTimeout() { return {}; }, clearTimeout() {},
     async fetch(url) {
-      const clip = url.pathname.match(/^\/audio\/comms\/(.+)\.(ogg|m4a)$/);
+      const clip = url.pathname.match(/^\/audio\/comms\/(.+)\.ogg$/);
       if (clip) { const bytes = new TextEncoder().encode(decodeURIComponent(clip[1])); return { ok: true, async arrayBuffer() { return bytes.buffer; } }; }
       return { ok: false };
     } };

@@ -254,5 +254,9 @@ return function(A, spec, seed)
     s:note('bass', 16, 4, 'E1', 70)
   end
 
+  -- storm (8 bars loop, Stormfront): the sector band's half-time storm in Krybor's key (songs/sector.lua).
+  local sector = require 'songs.sector'
+  sector.storm(A, new('storm'), sector.worlds.k, key)
+
   return S
 end

@@ -36,8 +36,8 @@ class SongMove {
     this.tier,
     this.variant,
     this.fleet,
+    this.then,
     required this.reason,
-    this.fallback,
   });
   final String song;
 
@@ -48,7 +48,7 @@ class SongMove {
   /// section); -1 lets the player pick the next [quantum] line itself.
   final double at;
 
-  /// 'bar', 'beat' or 'now'.
+  /// 'bar', 'beat' or 'now' (30 ms ahead, cancelling what was scheduled).
   final String quantum;
 
   /// 'start' (the section's first bar) or 'same' (the same bar position).
@@ -61,11 +61,12 @@ class SongMove {
   /// The fleet layer (the brass fanfare of an intact fleet).
   final bool? fleet;
 
+  /// `song:section` the section hands over to at its end, in place of its
+  /// own `next` (the bridge into the tour's carrier).
+  final String? then;
+
   /// The event that asked for it (diagnostics).
   final String reason;
-
-  /// The recorded cue to play if the score is off: mode, level, phase, cycle.
-  final Map<String, Object?>? fallback;
 
   Map<String, Object?> toJson() => {
     'song': song,
@@ -76,8 +77,8 @@ class SongMove {
     'tier': ?tier,
     'variant': ?variant,
     'fleet': ?fleet,
+    'then': ?then,
     'reason': reason,
-    'fallback': ?fallback,
   };
 }
 
@@ -95,34 +96,37 @@ class SongStep {
 }
 
 /// Turns game events into moves of the MIDI-first score (adaptive-soundtrack
-/// design §4.3, §11.7). Pure Dart: no dart:ui, no audio; [send] and [clock]
-/// are injected (main.dart wires them to the web audio engine).
+/// design §4.3, §11.7, §12). Pure Dart: no dart:ui, no audio; [send] and
+/// [clock] are injected (main.dart wires them to the web audio engine).
 ///
-/// It owns the song graph: which song a sector plays (`scorePlays`), the
-/// sector's arrival and wave-progress sections, the carrier's hatch tiers,
-/// transformation, core, collapse and victory, the intensity mask and the v2
-/// and fleet layers. It keeps its own picture of the bar grid (section starts
-/// on the music clock), so every move it sends lands on a bar line (or a beat
-/// line for the collapse and the clear), and it applies the rules of design
-/// §4.3: a section requested within [scoreDwellBars] bars of the last start
-/// waits until they have played, and the latest waiting request wins (two
-/// hatch tiers in quick succession play only the later one). The player
-/// re-checks each time against what it has already scheduled.
+/// It owns the song graph of the whole run: the overture, which song each
+/// sector plays (`scoreSongFor`: the four worlds, each tour's carrier), the
+/// bridge songs between them (`scoreBridges`), the sector's arrival,
+/// wave-progress, bonus-level and clear sections, the carrier's hatch tiers,
+/// transformation, core, collapse and victory, the last carrier's finale into
+/// the coda, and the defeat. It keeps its own picture of the bar grid
+/// (section starts on the music clock), so every move it sends lands on a bar
+/// line (or a beat line for the collapse and the clear), and it applies the
+/// rules of design §4.3: a section requested within [scoreDwellBars] bars of
+/// the last start waits until they have played, and the latest waiting
+/// request wins (two hatch tiers in quick succession play only the later
+/// one). The player re-checks each time against what it has already
+/// scheduled. There is no recorded music: every scene plays the score.
 class SongDirector {
   SongDirector({
     double Function(SongMove move)? sendMove,
     SongClock? clock,
     this.waveShare,
-    Map<int, String>? plays,
+    String? Function(int level, int cycle)? songFor,
     Map<String, ScoreSong>? songs,
   }) : _send = sendMove ?? ((m) => audioSong(m.toJson())),
        clock = clock ?? const AudioSongClock(),
-       plays = plays ?? scorePlays,
+       songFor = songFor ?? scoreSongFor,
        songs = songs ?? scoreSongs;
 
   final double Function(SongMove move) _send;
   final SongClock clock;
-  final Map<int, String> plays;
+  final String? Function(int level, int cycle) songFor;
   final Map<String, ScoreSong> songs;
 
   /// Wave progress of the sector, 0 (first wave) .. 1 (last wave).
@@ -142,6 +146,10 @@ class SongDirector {
   double? start;
   String? pendingSection;
   double? pendingAt;
+
+  /// `song:section` the playing (or the pending) section hands over to in
+  /// place of its own `next`.
+  String? then, pendingThen;
   int tier = 1;
   bool fleet = false;
   bool _shieldFailing = false, _moduleLost = false;
@@ -153,37 +161,59 @@ class SongDirector {
   bool get _sector => _song?.form == 'sector';
 
   /// A scene cue from the game (main.dart's raw events). Returns whether the
-  /// score plays it; false means the recorded cue plays (and the score yields
-  /// on its bar line).
+  /// score plays it; false means the cue has no score (nothing new plays).
   bool cue(String mode, {int level = 1, int phase = 1, int cycle = 0}) {
     _advance(clock.now);
     switch (mode) {
+      case 'menu':
+        return _scene('menu', mode);
+      case 'gameover':
+        return _scene('gameover', mode, quantum: 'now');
       case 'level' || 'boss':
-        final id = plays[level];
+        final id = songFor(level, cycle);
+        _level = level;
+        _cycle = cycle;
         if (id == null || !songs.containsKey(id)) return _stop();
         // The carrier's repeated cues (the rise, a form change, the
         // transformation) never restart its song.
         if (mode == 'boss' && song == id && _carrier) return true;
-        _startSong(id, level: level, cycle: cycle, mode: mode, phase: phase);
+        // Already arriving: the travel's bridge leads into it, or it is in
+        // its arrival.
+        if (_heading(id) || (song == id && _target == 'arrival')) return true;
+        final bridge = _bridgeTo(id);
+        if (bridge != null) {
+          _startSong(bridge, 'pivot', reason: mode, then: '$id:arrival');
+        } else {
+          _startSong(id, 'arrival', reason: mode);
+        }
         return true;
       case 'levelclear':
-        if (!_sector) return _stop();
+        if (!_sector) return false;
         _request('clear', quantum: 'beat', dwell: 0, reason: 'levelClear');
         return true;
       case 'travel':
-        // The clear's (or the victory's) hold bars carry the travel.
+        // The clear's (or the victory's) written bars play out; then the
+        // bridge into the next sector's song. Its hold bars carry the travel
+        // where no bridge is needed.
         if (song == null) return false;
+        _travel(level, cycle);
         return true;
       case 'victory':
-        if (!_carrier) return _stop();
-        if (!{'collapse', 'victory'}.contains(_target)) {
+        if (_song?.form == 'coda') return true;
+        if (!_carrier) return false;
+        if (!_collapsing) {
           _request('collapse', quantum: 'beat', dwell: 0, reason: 'victory');
         }
         return true;
+      case 'completed':
+        // The last carrier's collapse and victory run on into its finale and
+        // the coda by themselves.
+        if (_carrier || _song?.form == 'coda') return true;
+        return _scene('ending', mode);
+      case 'ending':
+        return _ending();
       default:
-        // completed (the last carrier's finale into the ending), gameover,
-        // menu, ending: recorded cues.
-        return _stop();
+        return false;
     }
   }
 
@@ -199,6 +229,8 @@ class SongDirector {
         _mask(reason: event.name, tier: t);
       case GameEventNames.waveStart || GameEventNames.cohortMerged:
         if (_sector) _waveProgress(event.name);
+      case GameEventNames.bonusStart:
+        if (_sector) _bonus(event.data['variant'] as String?, event.name);
       case GameEventNames.fleetIntact:
         if (fleet) return;
         fleet = true;
@@ -226,7 +258,7 @@ class SongDirector {
         _moduleLost = true;
         if (_target == 'core') _mask(reason: event.name, variant: 'v2');
       case GameEventNames.bossCollapseStart:
-        if (_carrier && !{'collapse', 'victory'}.contains(_target)) {
+        if (_carrier && !_collapsing) {
           _request('collapse', quantum: 'beat', dwell: 0, reason: event.name);
         }
       case GameEventNames.bossCollapseEnd:
@@ -236,33 +268,59 @@ class SongDirector {
     }
   }
 
+  /// The collapse, the victory and (the last carrier) its finale and the
+  /// worldized bridge: the fight is over.
+  bool get _collapsing =>
+      {'collapse', 'victory', 'finale', 'worldized'}.contains(_target);
+
   // --- the bar grid ---------------------------------------------------------
+
+  /// `song:section` (or a section of the same song) that [id] hands over to.
+  (String, String)? _successor(String id, String? override) {
+    final next = override ?? _song?.sections[id]?.next;
+    if (next == null) return null;
+    final i = next.indexOf(':');
+    return i < 0
+        ? (song!, next)
+        : (next.substring(0, i), next.substring(i + 1));
+  }
 
   /// Rolls the planned timeline forward to [now]: a pending move that has
   /// landed becomes the section, and a tail or bridge hands over to its next
-  /// section at its end.
+  /// section (of this song or the next) at its end.
   void _advance(double now) {
-    final s = _song;
-    if (s == null) return;
     for (var guard = 0; guard < 16; guard++) {
+      final s = _song;
+      if (s == null) return;
       final current = section == null ? null : s.sections[section];
-      final edge = (current != null && start != null && current.next != null)
+      final successor = current == null ? null : _successor(current.id, then);
+      final edge = (current != null && start != null && successor != null)
           ? start! + current.bars * s.barSeconds
           : double.infinity;
       final pending = pendingAt;
       if (pending != null && pending <= now && pending <= edge) {
         section = pendingSection;
         start = pending;
-        pendingSection = pendingAt = null;
+        then = pendingThen;
+        pendingSection = pendingAt = pendingThen = null;
         _pendingStep = null;
       } else if (edge <= now) {
-        section = current!.next;
+        final (nextSong, nextSection) = successor!;
+        if (nextSong != song) _enteredSong(nextSong);
+        section = nextSection;
         start = edge;
+        then = null;
         _log(SongStep(song!, section!, edge, 'end'));
       } else {
         return;
       }
     }
+  }
+
+  /// A new song begins: its layers start over (the tier carries on).
+  void _enteredSong(String id) {
+    song = id;
+    _shieldFailing = _moduleLost = fleet = false;
   }
 
   /// Adopts what the player reports when it differs (a slipped move, or a
@@ -279,6 +337,25 @@ class SongDirector {
   /// The section the music is in or heading to.
   String? get _target => pendingSection ?? section;
 
+  /// The song a bridge (playing or pending) leads into.
+  String? get _bridgeDestination {
+    if (_song?.form != 'bridge') return null;
+    final id = _target;
+    if (id == null) return null;
+    return _successor(id, pendingSection != null ? pendingThen : then)?.$1;
+  }
+
+  bool _heading(String id) => _bridgeDestination == id;
+
+  /// The bridge song from the playing song into [id], if the map has one.
+  String? _bridgeTo(String id) {
+    final from = song;
+    if (from == null || from == id) return null;
+    String family(String s) => songs[s]?.form == 'carrier' ? 'c' : s;
+    final bridge = scoreBridges['${family(from)}>${family(id)}'];
+    return bridge != null && songs.containsKey(bridge) ? bridge : null;
+  }
+
   /// The first [beats]-line of the playing section at least [margin] ahead.
   double? _nextLine(double now, int beats) {
     final s = _song, origin = start;
@@ -286,6 +363,18 @@ class SongDirector {
     final unit = s.beatSeconds * beats;
     final k = ((now + margin - origin) / unit - 1e-9).ceil();
     return origin + math.max(0, k) * unit;
+  }
+
+  /// The end of the written bars of the tail or bridge the music is in or
+  /// heading to (the clear's flourish before its hold), when still ahead.
+  double? _writtenEnd(double now) {
+    final s = _song, id = _target;
+    final origin = pendingAt ?? start;
+    final sec = id == null ? null : s?.sections[id];
+    if (s == null || sec == null || origin == null) return null;
+    if (sec.kind == ScoreKind.loop) return null;
+    final end = origin + sec.bars * s.barSeconds;
+    return end >= now + margin ? end : null;
   }
 
   String _variantFor(String id) =>
@@ -298,13 +387,16 @@ class SongDirector {
     String id, {
     String quantum = 'bar',
     int dwell = scoreDwellBars,
+    bool afterTail = false,
     required String reason,
   }) {
     final s = _song;
     if (s == null || !s.sections.containsKey(id)) return;
     final now = clock.now;
     _sync(now);
-    var at = _nextLine(now, quantum == 'beat' ? 1 : 4);
+    var at =
+        (afterTail ? _writtenEnd(now) : null) ??
+        _nextLine(now, quantum == 'beat' ? 1 : 4);
     if (at != null && dwell > 0 && start != null && section != null) {
       // Minimum dwell: wait for the section's first [dwell] bars.
       final dwellEnd = start! + dwell * s.barSeconds;
@@ -325,7 +417,7 @@ class SongDirector {
     _landed(id, landed, reason);
   }
 
-  void _landed(String id, double landed, String reason) {
+  void _landed(String id, double landed, String reason, {String? then}) {
     if (landed == -2) {
       _stop();
       return;
@@ -334,7 +426,8 @@ class SongDirector {
       // The player starts it once it is ready; its grid is unknown till then.
       section = id;
       start = null;
-      pendingSection = pendingAt = null;
+      this.then = then;
+      pendingSection = pendingAt = pendingThen = null;
       _log(SongStep(song!, id, null, reason));
       return;
     }
@@ -342,6 +435,7 @@ class SongDirector {
     if (_pendingStep != null) log.remove(_pendingStep);
     pendingSection = id;
     pendingAt = landed;
+    pendingThen = then;
     _log(_pendingStep = SongStep(song!, id, landed, reason));
   }
 
@@ -380,58 +474,101 @@ class SongDirector {
     );
   }
 
+  /// Starts section [first] of song [id]: from the same song on its next bar
+  /// line, at [at] when given (the end of a written tail), else on the
+  /// playing music's next line (the player knows that grid).
   void _startSong(
-    String id, {
-    required int level,
-    required int cycle,
-    required String mode,
-    required int phase,
+    String id,
+    String first, {
+    required String reason,
+    String quantum = 'bar',
+    double at = -1,
+    String? then,
   }) {
     final previous = song;
-    song = id;
-    _level = level;
-    _cycle = cycle;
-    _shieldFailing = _moduleLost = fleet = false;
-    pendingSection = pendingAt = null;
-    _pendingStep = null;
     final now = clock.now;
-    // Within one song the arrival starts on its bar line; from another song
-    // or recorded music the player picks that music's next bar line.
-    double at = -1;
-    if (previous == id) {
+    if (previous == id && at < 0 && quantum != 'now') {
       _sync(now);
       at = _nextLine(now, 4) ?? -1;
     }
+    _enteredSong(id);
+    pendingSection = pendingAt = pendingThen = null;
+    _pendingStep = null;
     section = null;
     start = null;
+    this.then = null;
     final landed = _send(
       SongMove(
         song: id,
-        section: 'arrival',
+        section: first,
         at: at,
+        quantum: quantum,
         tier: tier,
         variant: 'v1',
         fleet: false,
-        reason: mode,
-        fallback: {
-          'mode': mode,
-          'level': level,
-          'phase': phase,
-          'cycle': cycle,
-        },
+        then: then,
+        reason: reason,
       ),
     );
     if (landed >= 0) {
-      section = 'arrival';
+      section = first;
       start = landed;
-      _log(SongStep(id, 'arrival', landed, mode));
+      this.then = then;
+      _log(SongStep(id, first, landed, reason));
     } else {
-      _landed('arrival', landed, mode);
+      _landed(first, landed, reason, then: then);
     }
+  }
+
+  /// The overture, the defeat or the coda (`scoreScenes`).
+  bool _scene(String name, String reason, {String quantum = 'bar'}) {
+    final entry = scoreScenes[name];
+    if (entry == null) return _stop();
+    final i = entry.indexOf(':');
+    final id = entry.substring(0, i), first = entry.substring(i + 1);
+    if (!songs.containsKey(id)) return _stop();
+    if (song == id) return true;
+    _startSong(id, first, reason: reason, quantum: quantum);
+    return true;
+  }
+
+  /// The ending opens: the last carrier's music thins into the worldized
+  /// bridge on its next bar line and hands over to the coda's ukulele; from
+  /// anywhere else (the credits from the title) the coda starts on the next
+  /// bar line.
+  bool _ending() {
+    if (_song?.form == 'coda') return true;
+    if (_carrier && _song!.sections.containsKey('worldized')) {
+      if (_target != 'worldized') {
+        _request('worldized', dwell: 0, reason: 'ending');
+      }
+      return true;
+    }
+    return _scene('ending', 'ending');
+  }
+
+  /// The travel after a clear or a carrier's victory: the bridge song into
+  /// the next sector's song, from the end of the written tail.
+  void _travel(int level, int cycle) {
+    final next = level < 5 ? songFor(level + 1, cycle) : songFor(1, cycle + 1);
+    if (next == null || next == song || _heading(next)) return;
+    final bridge = _bridgeTo(next);
+    if (bridge == null) return;
+    final now = clock.now;
+    _sync(now);
+    final at = _writtenEnd(now) ?? _nextLine(now, 4) ?? -1;
+    _startSong(
+      bridge,
+      'pivot',
+      reason: 'travel',
+      at: at,
+      then: '$next:arrival',
+    );
   }
 
   bool _stop() {
     song = section = start = pendingSection = pendingAt = null;
+    then = pendingThen = null;
     _pendingStep = null;
     return false;
   }
@@ -448,9 +585,20 @@ class SongDirector {
     final target = _target;
     final have = target == null ? null : s.sections[target];
     if (have?.wave != null && have!.wave! >= want.wave!) return;
-    if (have?.wave == null && target != 'arrival') return; // the clear
+    // The clear and a bonus level's section stay.
+    if (have?.wave == null && target != 'arrival') return;
     if (target == 'arrival' && want.wave == 1) return; // the arrival hands over
     _request(want.id, reason: reason);
+  }
+
+  /// A bonus level (`bonusStart`, its id in `variant`) plays its section of
+  /// the sector's song for the whole level, from the end of the arrival.
+  void _bonus(String? variant, String reason) {
+    if (variant == null) return;
+    final s = _song!;
+    final section = s.sections.values.where((x) => x.bonus == variant);
+    if (section.isEmpty || _target == section.first.id) return;
+    _request(section.first.id, afterTail: true, reason: reason);
   }
 
   /// `bossHatchTier`: tier k of U upper tiers plays hatch section k, or (when

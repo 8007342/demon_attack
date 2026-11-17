@@ -111,7 +111,7 @@ void main() {
       final scene = DemonScene(m, () {});
       for (var i = 0; i < 5; i++) {
         scene.sectors.images[i] = await decode(
-          'assets/images/sector-${i + 1}.png',
+          'assets/images/sector-${i + 1}.webp',
         );
       }
       scene.atlas = await decode('assets/images/combat.png');

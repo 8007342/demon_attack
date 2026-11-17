@@ -477,6 +477,8 @@ the game. Where it differs from §5 and §11.4, this section is what shipped.
 
 ### 12.1 What plays where
 
+As first built. **Superseded by §12.8:** the score now plays the whole run, and nothing recorded remains.
+
 | Where | Music |
 |---|---|
 | Sector 1 (Krybor), every route | score song `k`: `arrival` → `A` → `B` → `C` → `D` by wave progress, `clear` on the level clear, whose hold bar carries the travel |
@@ -637,6 +639,8 @@ the game. Where it differs from §5 and §11.4, this section is what shipped.
 
 ### 12.6 Coexistence with the rendered audio (§11.2)
 
+As first built. **Superseded by §12.8.3:** everything proposed here was done once the operator approved the preview.
+
 - **The rendered pilot sections are not used.** These are `art/music/soundtrack/pilot/c1-*.opus` (7 files, 1.36 MB,
   under `art/`, never shipped). They are full mixes of the same parts the score plays, so under §11.2 they cannot be
   texture beds. A future choir or air bed would be a new no-drums take (task 8.7).
@@ -648,7 +652,8 @@ the game. Where it differs from §5 and §11.4, this section is what shipped.
     needed.
 - **Found in passing.** `web/audio/music/` still ships an `.m4a` (AAC) twin of every cue (9.68 MB in all), although
   N5 decided on one format with no AAC fallback, and demon-audio.js loads only `.ogg` (`formats = ['ogg']`). That is
-  dead weight, flagged for the lead.
+  dead weight, flagged for the lead. **Done 2026-11-17** (no fallback format, operator): the twins are deleted and the
+  pipelines encode Opus only.
 
 ### 12.7 What the sample bank would add
 
@@ -661,3 +666,166 @@ The bank (N11, tasks 8.5 and 8.6) is real recorded instruments behind the same s
 Its budget stays ≤ 2 MB Opus and ≤ 41 MB decoded (16 MB on phones). There is no CC0 choir: a texture bed carries the
 choir (N12), and the synth choir plays meanwhile. Nothing in the score, the graph, the director or the tests changes
 when it lands.
+
+### 12.8 The whole run (`work/score-full-run`, 2026-11-17, tasks 9.8 and 9.9)
+
+The operator heard the `k` and `c1` preview and approved the approach and its sound: "That's a pretty sweet preview,
+continue with the rest :D" (2026-11-17). This section records the rest of the run in the same generator, player and
+director. Where it differs from §12.1-§12.6, this section is what ships.
+
+#### 12.8.1 What plays where
+
+| Scene | Song (`art/music/soundtrack/song-map.json`) | Sections |
+|---|---|---|
+| Title | `menu` Overture, E minor, 120 | `overture` (loop): the campaign theme on bells, then lead with a half-time band |
+| Sector 1, every route | `k` Krybor, E minor, 170 | as §12.1, plus `storm` |
+| Sector 2 | `r` Ringfall, D major, 160 | `arrival`, `A`-`D` by wave progress, `storm`, `clear` (D major) |
+| Sector 3 | `e` Ember Moon, E minor, 180 | the same form; `clear` in E major |
+| Sector 4 | `h` The Hollow, C minor, 150 | the same form; `clear` in C major |
+| A Stormfront bonus level | that sector's song | `storm` from the arrival's end until the clear (`bonusStart` `variant: stormfront`); Supply Run keeps the waves |
+| Sector 5, tour *t* | `c1`-`c5`, F minor, 190 | `arrival`, `approach`, `H1`-`HU` (U = 2, 2, 3, 3, 4: one per upper tier), `transform`, `core`, `collapse`, `victory` |
+| The last carrier's end | `c5` | `victory` (F major resolution) → `finale` (8 bars, F major) → `worldized` (6-bar bridge, mono band-pass) → `coda:ukulele` |
+| The ending and the credits | `coda`, F major, 95 (bar 121 264 = the carrier bar × 2) | `ukulele` (8 bars, tail) → `reprise` (loop) |
+| Game over | `defeat`, 120 | `cackle` (2-bar bridge, lands 30 ms after the event) → `alienwin` (loop, E Phrygian dominant) |
+
+- **Sector songs** share one composer, `tools/score/songs/sector.lua`. It has the same form, band and mix as Krybor,
+  and the world's own riff, hook and harmony (`tools/music_motifs.py` MOTIFS[2-4], `art/music/campaign.json`). The
+  campaign theme is written in scale degrees and sung in each world's key. The world's style changes the picking and
+  the drums:
+  - Ringfall plays 3+3+2 open chords over driving eighths;
+  - Ember Moon plays the gallop with its Phrygian F;
+  - The Hollow plays half-time doom with the Gb tritone.
+
+  Krybor keeps its own composer and gains only `storm`. Its other sections are byte-identical to the approved preview.
+- **Carrier songs.** `c1` is unchanged, byte for byte. Tours 2-5 are `tools/score/songs/carrier_tours.lua`, with the
+  same riff, hook and theme. Each tour climbs its own ladder of hatch figures:
+
+  | Tour | Hatch figures, from H1 up |
+  |---|---|
+  | 2 | skank, then blast |
+  | 3 | gallop, skank, blast |
+  | 4 | doom march, gallop and blast bar by bar, blast |
+  | 5 | gallop, skank, tremolo into blasts, full blast |
+
+  Each hatch section has its own lead writing: the hook answered by the theme, in sixths, in octaves, augmented, or
+  in canon, or the choir chanting the theme. The approach, transformation, core, collapse and victory of each tour
+  escalate on the tour before: double tolls, choir chants, sixteenth double kick, the climb doubled in octaves, a
+  canon in the core. The fights are the choruses (§3.1). Every tier maps natively (`bossHatchTier` tier k → `Hk`).
+  The depth fold of §4.3 remains only for a song with fewer sections.
+- **The coda's ukulele** is its own track, `uke` (role `uke`, GM program 24). It is an oscillator pluck (a triangle and
+  its octave through a soft low-pass) on the clean bus. Its re-entrant G-C-E-A shapes strum the island pattern under
+  the theme. A sampled ukulele replaces the pluck at the bank seam (§12.8.5).
+
+#### 12.8.2 Bridges: one run, one song
+
+A bridge is its own song (`form: bridge`, one `pivot` section, `tools/score/songs/bridges.lua`) at the source
+song's tempo:
+
+- it holds the campaign's common tone through its pivot chords (`art/music/campaign.json` `bridges`, design §3.1);
+- it plays the destination key's theme fragment on bells and clean guitar;
+- it has no drums, only a timpani swell into the next downbeat;
+- it hands over to the destination's `arrival` on its last bar line (`next: song:section`).
+
+| Bridge | Grid | Pivot | Into |
+|---|---|---|---|
+| `menu-k` | 120, 1 bar | E under Em → B7 | Krybor's arrival, on START |
+| `k-r` | 170, 2 bars | E under Em → G → A7 | Ringfall (D) |
+| `r-e` | 160, 2 bars | B under Bm → C → B7 | Ember Moon (Em) |
+| `e-h` | 180, 2 bars | G under Em → G → G7 | The Hollow (Cm) |
+| `h-c` | 150, 2 bars | C under Cm → Db → C7 (V → i) | the tour's carrier (Fm); SongDirector sends `then: c<t>:arrival` |
+| `c-k` | 190, 2 bars | F → C (C held) → B7 | the next route's Krybor |
+| `c5/worldized` | 190, 6 bars | F → Bb → F-C → Dm → Bb → C, mono band-pass 300 Hz-4 kHz | the coda's ukulele (F) |
+
+- **When they play.** The travel cue (`travel`) asks for the bridge into the next sector's song (`level + 1`, or
+  route + 1's Krybor after a carrier). The bridge lands at the end of the clear's or the victory's written bars, or
+  on the next bar line if the hold is already playing. The next level's cue then finds the bridge heading into its
+  song and moves nothing. A sector reached with no travel (a console start, a continue after a defeat) starts its
+  arrival on the next bar line of whatever plays.
+- **The ending.** The cinematic opens about 4 s into the last carrier's victory phase. `ending` moves `c5` into
+  `worldized` on its next bar line, and the ukulele enters about 8-9 s later, near S3 (§4.4). Without the cinematic,
+  the chain runs on: `victory` → `finale` → `worldized` → `ukulele` → `reprise`. `completed` moves nothing.
+- **Coverage.** `test/song_director_test.dart` ("a full five-route campaign plays as one song") drives the director
+  with a five-route event trace: arrivals, waves, intensity, a storm, clears, travels, every tour's tiers, the
+  transformation, the collapse, the ending. A model of the player's grid checks the song sequence (`menu`, `menu-k`,
+  then per route `k`, `k-r`, `r`, `r-e`, `e`, `e-h`, `h`, `h-c`, `c<t>`, with `c-k` between routes, then `coda`). It
+  also checks that every section move lands on a bar line of the music playing before it (a beat line for the
+  collapse and the clear).
+
+#### 12.8.3 Retired (the one-format rule, §11.2)
+
+Every place a recorded cue played is now covered by the score:
+
+| Recorded cue | Now plays |
+|---|---|
+| menu | `menu` |
+| `l<n>-*` | the world songs and the carriers |
+| levelclear(-fleet) | each world's `clear` plus the fleet layer |
+| victory | each carrier's `victory` |
+| finale(-fleet) | `c5` `finale` |
+| ending | `coda` |
+| cackle and alienwin | `defeat` |
+
+So the recorded music is deleted, and no recorded cue is kept.
+
+| Retired | Files | Bytes |
+|---|---|---|
+| `web/audio/music/` (the Opus cues and `manifest.json`) | 53 + 1 | 6 337 063 (Opus 6 301 643, manifest 35 420) |
+| `web/audio/midi/` (the MIDI fallback cues) and `web/audio/generate-midi.py` | 38 + 1 | 67 929 + 3 299 |
+| `art/music/soundtrack/pilot/c1-*.opus` (rendered pilot sections, never shipped) | 7 | 1 360 205 |
+| `test-worker/music.test.mjs`, `test-worker/audio.test.mjs` (the recorded player's tests) | 2 | — |
+
+- **The AAC twins.** `work/one-format-audio` (db685525) had already deleted the 53 `.m4a` twins (9 677 826 B). With
+  this branch, the recorded music is gone entirely: 17.4 MB in all since the preview, 7.77 MB of it here.
+- **The recipes stay.** `art/music/soundtrack/pilot-carrier-t1.json`, `art/workflows/music/cues.json` and the
+  provenance in `plan/asset-provenance.md` remain the record (N8). `tools/music_pipeline.py` and
+  `tools/soundtrack_pilot.lua` are kept as tools. They would write into the retired paths, so they are not part of the
+  build.
+- **The switch is gone.** `demonAudio.cue`, `scoreEnabled`, `?score=off`, the console's SCORE/RECORDED switch and
+  `demonAttack.score` are removed. `demon-audio.js` is now the engine only (context, buses, levels, effects, the
+  score's scheduler): 15.5 KB, down from 46.2 KB. `SongMove.fallback` is gone. A score that fails to load leaves the
+  game silent, with effects only.
+- **The review studio** (`/gallery/?page=studio`) lists the score's 85 sections as its music cues. They come from
+  `audio/score/score.json` (`song/section`, the MIDI file and its sha256). `lib/review/review_score_audio.dart`
+  plays them on the live player.
+
+#### 12.8.4 Sizes and runtime
+
+- **The score.** 85 sections in 18 songs: 340 710 B of MIDI and a 49.6 KB `score.json`, 110 KB gzipped together. That
+  is 764 s (12.7 min) of unique music at about 446 B/s.
+- **The player.** `demon-score.js` is 40.9 KB (12.7 KB gzipped).
+- **Per song** (sections, bytes):
+
+  | Songs | Sections, bytes |
+  |---|---|
+  | Worlds `k`, `r`, `e`, `h` | 7 each: 31 061, 29 288, 32 253, 28 939 |
+  | Carriers `c1`-`c5` | 8, 8, 9, 9, 12: 33 817, 33 712, 40 458, 38 510, 55 753 |
+  | Bridges | 711-866 each |
+  | Overture, coda, defeat | 2 530, 5 348, 4 119 |
+
+- **Gates.** Every section passes the §11.9 gates. The peak is 12-30 voices with every track sounding (`c5`
+  `transform` is 30), under the gate's 32. `score.test.mjs` holds the sizes (MIDI under 400 KB, `score.json` under
+  64 KB, under 160 KB gzipped) and the voice cap. The cap is checked on sounding voices: a tier-4, v2, fleet and
+  power `c5/H4` stays within 48 on desktop and 32 on phones.
+- **Loading.** The player fetches `score.json`, then the songs in the run's order:
+  - the overture, the defeat and the bridges into Krybor first, then each world after its bridge, then the carriers
+    and the coda;
+  - each song's sections in parallel, parsed as they arrive (a few KB each, so no long task);
+  - the score is ready after its first song;
+  - a move to a song still loading returns -1 and runs on the next bar line once that song has loaded; an
+    auto-advance into one holds the section being left.
+- **Move rules.** A `now` move (the defeat) lands 30 ms ahead and cancels the notes scheduled past it. A move's `then`
+  overrides a bridge's `next`. Stingers, masks, the voice rules and the cap are as §12.3. The new code adds nothing to
+  each tick: one boundary check per tick, and one filter retarget per worldized section.
+
+#### 12.8.5 What still waits for the sample bank (N11, tasks 8.5-8.6) and tillandsias#1103
+
+- **The instruments.** Real drums, DI guitars, bass, organ, brass, strings, timpani and bells behind `makeVoice`
+  (§12.7) are the largest audible step, and they need no score change.
+- **The ukulele.** It plays the oscillator pluck. The bank needs a CC0 ukulele zone, which is not yet found or
+  verified (R§2.3, unverified). It drops in as role `uke`.
+- **The choir.** It stays synthesized. There is no CC0 choir, so a texture bed carries it later (N12, task 8.7).
+- **Route thickening and v1/v2 stem variants** wait for #1103 (tasks 6.2-6.3). The world songs are shared by the five
+  routes, so the carriers carry the escalation.
+- **The worldized chain** is a band-pass plus mono fold. The design's small-room colour is the shared room reverb.
+- **Operator listening (9.7)** of the new songs, the bridges, the coda and the mix balance is still open. None of the
+  sound was verified in a real browser here: the host preview serves only the operator's checkout.

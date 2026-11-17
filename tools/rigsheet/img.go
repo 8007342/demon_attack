@@ -12,6 +12,8 @@ import (
 	"math"
 	"os"
 	"strings"
+
+	"golang.org/x/image/webp"
 )
 
 func load(p string) *image.NRGBA {
@@ -20,7 +22,12 @@ func load(p string) *image.NRGBA {
 		fail("%v", err)
 	}
 	defer f.Close()
-	im, err := png.Decode(f)
+	// phone-performance: the painted backdrops ship as WebP.
+	decode := png.Decode
+	if strings.HasSuffix(p, ".webp") {
+		decode = webp.Decode
+	}
+	im, err := decode(f)
 	if err != nil {
 		fail("%s: %v", p, err)
 	}
