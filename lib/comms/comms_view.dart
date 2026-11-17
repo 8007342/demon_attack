@@ -10,6 +10,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../game/bonus/challenge_badge.dart'; // --- bonus challenges
 import 'comms_bank.dart';
 import 'comms_briefing.dart';
 import 'comms_director.dart';

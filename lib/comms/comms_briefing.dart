@@ -188,16 +188,27 @@ class BonusBriefing {
     return m.brief;
   }
 
-  /// The card's one radio line: the level's `bonusCall.<id>` (a single
-  /// sentence, not a copy of the card's text), else the slot's invite.
+  /// The card's one radio line: the level's challenge call
+  /// (`bonusChallenge.<id>`, bonus-challenges) when it declares a
+  /// challenge, else its `bonusCall.<id>` (a single sentence, not a copy
+  /// of the card's text), else the slot's invite.
   (CommsLine, CommsTriggerSpec) get call {
-    final spec = commsHumanTriggers['bonusCall.${level.id}'];
-    final line = spec?.lines.firstOrNull;
-    if (spec == null || line == null || commsCast[line.speaker] == null) {
-      return (invite, inviteSpec);
+    for (final trigger in [
+      if (level.challenge != null) 'bonusChallenge.${level.id}',
+      'bonusCall.${level.id}',
+    ]) {
+      final spec = commsHumanTriggers[trigger];
+      final line = spec?.lines.firstOrNull;
+      if (spec != null && line != null && commsCast[line.speaker] != null) {
+        return (line, spec);
+      }
     }
-    return (line, spec);
+    return (invite, inviteSpec);
   }
+
+  /// bonus-challenges: the level's perfect-run condition, shown as a badge
+  /// beside the goal; null: none.
+  BonusChallengeDef? get challenge => level.challenge;
 
   /// The script: exactly one turn, [call].
   List<(CommsLine, CommsTriggerSpec)> script() => [call];

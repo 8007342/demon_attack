@@ -80,6 +80,9 @@ RunModifierDef? runModifierById(String id) {
 String runTagLabel(String id) {
   final level = bonusLevelById(id);
   if (level != null) return level.label;
+  // --- bonus challenges: a level whose 1UP the run won.
+  final perfect = bonusLevelById(oneUpLevelOf(id) ?? '');
+  if (perfect != null) return '${perfect.label} · 1UP';
   final rule = runModifierById(id);
   if (rule != null && rule.label.isNotEmpty) return rule.label;
   return id

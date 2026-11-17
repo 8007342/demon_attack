@@ -1,5 +1,5 @@
 {
-  "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base. v4: \"divePrep\" (a demon is about to start a dive tell) carries brood battle cries; the reinforcements cheer chains a second brood voice; grunt kinds add \"cackle\" and \"warcry\". bonus-briefing: \"pending\": \"text\" on a trigger shows its unrecorded lines with their OWN words and speaker and plays no audio (a written radio line, mouth closed) instead of borrowing a placeholder; once recorded they are voiced as usual. Used for the urgent-mission card's chatter (bonusEntry*, bonusDare*) and the mid-level banter (bonusMidway*), whose words matter more than a borrowed voice. bonus-briefing-clarity: the card now speaks exactly one line, the level's bonusCall.<level> trigger (one sentence, one line per level); bonusEntry* still marks the transition slot as a bonus briefing, and bonusEntry* and bonusDare* keep their clip ids but are no longer spoken.",
+  "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base. v4: \"divePrep\" (a demon is about to start a dive tell) carries brood battle cries; the reinforcements cheer chains a second brood voice; grunt kinds add \"cackle\" and \"warcry\". bonus-briefing: \"pending\": \"text\" on a trigger shows its unrecorded lines with their OWN words and speaker and plays no audio (a written radio line, mouth closed) instead of borrowing a placeholder; once recorded they are voiced as usual. Used for the urgent-mission card's chatter (bonusEntry*, bonusDare*) and the mid-level banter (bonusMidway*), whose words matter more than a borrowed voice. bonus-briefing-clarity: the card now speaks exactly one line, the level's bonusCall.<level> trigger (one sentence, one line per level); bonusEntry* still marks the transition slot as a bonus briefing, and bonusEntry* and bonusDare* keep their clip ids but are no longer spoken. bonus-challenges: a bonus level that declares a perfect-run challenge has the card speak its bonusChallenge.<level> line (the challenge call, one sentence) in place of bonusCall.<level>, which keeps its clip id; bonusChallengeFailed.<level> is the quip the moment the challenge breaks and bonusChallengeEarned(.<level>) the 1UP cheer, each with an optional brood retort.",
   "groupGap": {
     "ground": 6,
     "loot": 25
@@ -4631,6 +4631,140 @@
       "lines": [
         {"speaker": "sunny", "text": "Park under the brood, then scoot, and let the thunder zap them!", "emotion": "teasing"}
       ]
+    },
+    "bonusChallenge.supplyRun": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 6,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "pip", "text": "Don't let a single prize hit the ground, and the fleet throws in a 1UP!", "emotion": "excited"}
+      ]
+    },
+    "bonusChallenge.stormfront": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 6,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Don't let one bolt tickle you, and there's a shiny 1UP in it!", "emotion": "teasing"}
+      ]
+    },
+    "bonusChallengeFailed.supplyRun": {
+      "priority": 4,
+      "cooldown": 30,
+      "ttl": 3,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Dropped one! No 1UP, but every prize still counts.", "emotion": "teasing"},
+        {"speaker": "sparrow", "text": "Butterfingers! Keep popping, the points are still good.", "emotion": "warm"},
+        {"speaker": "kestrel", "text": "That one got away. Forget the bonus ship and keep catching.", "emotion": "calm"}
+      ],
+      "demon": {
+        "priority": 4,
+        "cooldown": 30,
+        "ttl": 3,
+        "delay": 0.5,
+        "chance": 0.5,
+        "lines": [
+          {"speaker": "skritch", "grunt": "cackle", "gloss": "Dropped it! No spare ship for you!", "say": "Dropped it! No spare ship for you!", "emotion": "excited"},
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "Crunchy prize, my prize!", "say": "Crunchy prize, my prize!", "emotion": "excited"}
+        ]
+      }
+    },
+    "bonusChallengeFailed.stormfront": {
+      "priority": 4,
+      "cooldown": 30,
+      "ttl": 3,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "wisp", "text": "Zapped! The 1UP's gone, but the storm still works for us.", "emotion": "calm"},
+        {"speaker": "anvil", "text": "Took a jolt. No bonus ship, so just fly the storm.", "emotion": "calm"},
+        {"speaker": "sunny", "text": "Well, that was shocking! Bonus ship's off, fun's still on.", "emotion": "teasing"}
+      ],
+      "demon": {
+        "priority": 4,
+        "cooldown": 30,
+        "ttl": 3,
+        "delay": 0.5,
+        "chance": 0.5,
+        "lines": [
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "See? The sky picked a side.", "say": "See? The sky picked a side.", "emotion": "teasing"},
+          {"speaker": "skarn", "grunt": "roar", "gloss": "Crackle crackle! Ha!", "say": "Crackle crackle! Ha!", "emotion": "excited"}
+        ]
+      }
+    },
+    "bonusChallengeEarned": {
+      "priority": 6,
+      "cooldown": 20,
+      "ttl": 5,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Not one miss! That's a 1UP, pilot!", "emotion": "excited"},
+        {"speaker": "sparrow", "text": "Perfect run! Spare ship on the line!", "emotion": "triumphant"},
+        {"speaker": "pip", "text": "One up! One up! You actually did it!", "emotion": "excited"},
+        {"speaker": "admiral", "text": "Flawless work. The fleet sends you a spare ship.", "emotion": "triumphant"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 20,
+        "ttl": 4,
+        "delay": 0.6,
+        "chance": 0.6,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "alarm", "gloss": "Not one slip? Who trained that pilot?!", "say": "Not one slip? Who trained that pilot?!", "emotion": "panicked"},
+          {"speaker": "morth", "grunt": "gloat", "gloss": "Enjoy your spare ship. We have spares too.", "say": "Enjoy your spare ship. We have spares too.", "emotion": "teasing"},
+          {"speaker": "nibb", "grunt": "alarm", "gloss": "Hey! That has to be cheating!", "say": "Hey! That has to be cheating!", "emotion": "panicked"}
+        ]
+      }
+    },
+    "bonusChallengeEarned.supplyRun": {
+      "priority": 6,
+      "cooldown": 20,
+      "ttl": 5,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Every prize caught! Here's your 1UP, gift wrapped!", "emotion": "teasing"},
+        {"speaker": "rook", "text": "Clean sweep of the crates! That's a 1UP!", "emotion": "excited"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 20,
+        "ttl": 4,
+        "delay": 0.6,
+        "chance": 0.6,
+        "lines": [
+          {"speaker": "skritch", "grunt": "snarl", "gloss": "All of them? Not even one for me?", "say": "All of them? Not even one for me?", "emotion": "stern"}
+        ]
+      }
+    },
+    "bonusChallengeEarned.stormfront": {
+      "priority": 6,
+      "cooldown": 20,
+      "ttl": 5,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sparrow", "text": "Not a single zap! The storm owes you a 1UP!", "emotion": "triumphant"},
+        {"speaker": "kestrel", "text": "Clean through the lightning. Spare ship earned.", "emotion": "triumphant"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 20,
+        "ttl": 4,
+        "delay": 0.6,
+        "chance": 0.6,
+        "lines": [
+          {"speaker": "sliss", "grunt": "alarm", "gloss": "It danced through the lightning! Rude!", "say": "It danced through the lightning! Rude!", "emotion": "panicked"}
+        ]
+      }
     }
+
   }
 }

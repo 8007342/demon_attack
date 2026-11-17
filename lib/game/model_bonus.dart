@@ -43,6 +43,12 @@ class BonusRun {
   /// The level's own rule of play (bonus_mechanic.dart), one per visit.
   BonusMechanic? mechanic;
 
+  // --- bonus challenges: the level's perfect-run condition, one per
+  // visit (bonus_challenge.dart), and the levels whose 1UP this run won
+  // (run order; saved in the checkpoint, shown on the run record).
+  BonusChallenge? challenge;
+  final List<String> oneUps = [];
+
   void resetLevel() {
     cratesDropped = cratesOpened = shipsLost = 0;
     extra = award = 0;
@@ -50,6 +56,7 @@ class BonusRun {
     startAnnounced = false;
     midwayAnnounced = false;
     mechanic = null;
+    challenge = null;
   }
 }
 
@@ -78,7 +85,11 @@ extension ArcadeBonus on ArcadeModel {
     return [
       for (final s in slots)
         if (s.route < cycle || (s.route == cycle && s.sector <= level))
-          s.level.id,
+          // --- bonus challenges: a won 1UP turns the level's medal into
+          // its perfect-run medal (`<id>OneUp`, runTagLabel).
+          bonusRun.oneUps.contains(s.level.id)
+              ? oneUpRecordId(s.level.id)
+              : s.level.id,
       ?plan.modifier?.id,
     ];
   }
@@ -102,6 +113,7 @@ extension ArcadeBonus on ArcadeModel {
       ..rules = PowerRules.none
       ..modifierAnnounced = false
       ..timers.clear()
+      ..oneUps.clear()
       ..resetLevel();
   }
 
@@ -138,6 +150,9 @@ extension ArcadeBonus on ArcadeModel {
         difficulty: difficulty,
       ),
     );
+    // --- bonus challenges: a fresh condition per visit.
+    final challenge = run.level?.challenge;
+    run.challenge = challenge == null ? null : BonusChallenge(challenge);
     // A bonus power never leaves its level.
     if (run.level == null) run.timers.clear();
   }
@@ -312,6 +327,7 @@ extension ArcadeBonus on ArcadeModel {
   void _bonusClear() {
     final def = bonus;
     if (def == null) return;
+    _bonusChallengeSettle(def); // --- bonus challenges: the 1UP first
     final flawless = bonusRun.shipsLost == 0;
     final s = def.scoring;
     final award = _bonusCapped(
@@ -332,7 +348,79 @@ extension ArcadeBonus on ArcadeModel {
       'award': award,
       'flawless': flawless,
       'crates': bonusRun.cratesOpened,
+      if (bonusRun.challenge case final c?) 'challenge': c.status.name,
     });
+  }
+
+  // --- bonus challenges (openspec/changes/bonus-challenges, design §API)
+
+  /// The live challenge of the bonus level being played (the HUD pip and
+  /// the tests read it); null in a regular sector or a level without one.
+  BonusChallenge? get bonusChallenge => bonusRun.challenge;
+
+  /// The levels whose 1UP this run has won, in run order.
+  List<String> get bonusOneUps => List.unmodifiable(bonusRun.oneUps);
+
+  /// Reports [name] to the level's challenge (a mechanic calls it the
+  /// moment the thing happens). A note in its `failOn` fails it at once:
+  /// the badge breaks and the squad's quip is queued. Ignored outside a
+  /// bonus level, after the challenge has settled, and without one.
+  void challengeNote(String name, [int count = 1]) {
+    final c = bonusRun.challenge;
+    final def = bonus;
+    if (c == null || def == null) return;
+    if (!c.note(name, at: clock, count: count)) return;
+    _queueGameEvent(GameEventNames.bonusChallengeFailed, {
+      'variant': def.id,
+      'challenge': c.def.id,
+      'by': name,
+    });
+  }
+
+  /// The ship was hit inside a bonus level ([lost]: a ship, else a shield).
+  void _bonusShipHit({required bool lost}) {
+    challengeNote(ChallengeNotes.shipHit);
+    if (lost) challengeNote(ChallengeNotes.shipLost);
+  }
+
+  /// The level's last kill settles its challenge: earned pays its lives
+  /// through the extra-life path (the `bonusOneUp` sound, no heart card),
+  /// once per visit.
+  void _bonusChallengeSettle(BonusLevelDef def) {
+    final c = bonusRun.challenge;
+    if (c == null) return;
+    if (!c.settle(at: clock)) {
+      if (c.failed && c.failedBy == null) {
+        _queueGameEvent(GameEventNames.bonusChallengeFailed, {
+          'variant': def.id,
+          'challenge': c.def.id,
+          'by': '',
+        });
+      }
+      return;
+    }
+    lives += c.def.lives;
+    if (!bonusRun.oneUps.contains(def.id)) bonusRun.oneUps.add(def.id);
+    events.add('bonusOneUp');
+    _queueGameEvent(GameEventNames.bonusChallengeEarned, {
+      'variant': def.id,
+      'challenge': c.def.id,
+      'lives': lives,
+    });
+  }
+
+  /// Restores the won 1UPs of a checkpoint (unknown ids are kept: the
+  /// record names them by their camelCase).
+  void _bonusRestoreOneUps(Object? raw) {
+    bonusRun.oneUps.clear();
+    if (raw is! List) return;
+    for (final id in raw) {
+      if (id is String &&
+          RegExp(r'^[a-z][A-Za-z0-9]{0,26}$').hasMatch(id) &&
+          !bonusRun.oneUps.contains(id)) {
+        bonusRun.oneUps.add(id);
+      }
+    }
   }
 
   // --- bonus mechanic (bonus_mechanic.dart): what a level's own rule of
