@@ -5,7 +5,9 @@
 - [x] 1.1 Research emotion direction, dialogue modes, non-verbals, brood DSP, take rejection and ComfyUI nodes, with sources (`plan/audio-voices-research.md`); unsourced claims V-04 to V-07 in `plan/provenance-audit.md`
 - [x] 1.2 Design: beats, threads, brood layers, FX chain v2, render routes, pipeline, pilot, ready-to-run checklist (`design.md`)
 - [x] 1.3 Pilot script `art/comms/voice-pilot.json` (8 lines, 4 threads, 10 brood items; beats checked against text)
-- [ ] 1.4 Operator answers design §9 (pilot scorer, child voices); coordinator answers the admission pins (§9, question 3)
+- [ ] 1.4 Operator answers design §9 (pilot scorer, child voices)
+- [x] 1.5 Runtime code pins per engine, Dia re-pinned to 1.6B-0626, Higgs re-pinned to the revisions its code loads, DAC and hubert_base dependencies, whisper.cpp models and code (`plan/model-pins-voice.md`); S2-Pro 4-bit and VoxCPM2 continuation written as capability requirements
+- [ ] 1.6 Coordinator builds the studio voice capability against these requirements; smoke run of every runtime code pin; the register hashes the DAC weights on first fetch
 
 ## 2. Schema (`tools/comms_pipeline.py` `dart`, pure Python)
 

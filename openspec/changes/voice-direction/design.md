@@ -6,8 +6,11 @@ This change adds what one label per line cannot carry: swings, banter, and brood
 
 ## 1. Frame
 
-- Engines run as admitted ComfyUI studio capabilities on the host's 24 GB RTX A5000 (voice-stack design §1). Nothing
-  is admitted yet; this design is ready for the day they are.
+- **No TTS node is admitted.** Voices need a Tillandsias studio voice capability, designed like #1103, which the
+  coordinator queues after the cut with `voice-stack` and this change as its input. So the specs here are
+  **requirements for that capability** (spec "Voice capability inputs", "Continuation audio for banter turns", "Fish
+  S2-Pro runs in 4 bits and alone"), not facts about an existing node. It runs on the host's 24 GB RTX A5000
+  (voice-stack design §1). Weights, runtime code commits and dependency pins: `plan/model-pins-voice.md`.
 - Default stack: VoxCPM2 for speech, Dia 1.6B for non-verbals (Apache-2.0, no condition on the audio). Challengers:
   Fish Audio S2-Pro and Higgs Audio v2, licences signed (PRs #4–#7), credit lines in `assets/credits.json`.
 - Forge side: Lua orchestrates (`tools/production/run.lua`), Rust does DSP (`tools/brood_fx`), Go or Rust wraps the
@@ -102,7 +105,7 @@ engine's inputs:
 ```json
 {"id": "fish-s2-pro", "roles": ["single", "beats", "threads", "vocals"],
  "recipe": {"beat_tag": "[{emotion_tag}]", "intensity_tags": ["[low voice]", "", "[volume up]", "[shouting]"],
-            "temperature": 0.7, "top_p": 0.7, "hot_reference_at": 3, "precision": "bf16|nf4"}}
+            "temperature": 0.7, "top_p": 0.7, "hot_reference_at": 3, "precision": "nf4"}}
 ```
 
 ```json
@@ -146,7 +149,7 @@ The ledger records the route per take, so the pilot compares the splice and the 
 |---|---|
 | Higgs v2 | One dialogue job: `[SPEAKER0..n]` turns, one reference per speaker, `chunk_method speaker`, buffer 2; output split at turn boundaries by the recogniser's word timestamps. |
 | S2-Pro | Multi-Speaker Split TTS node: one aligned track per speaker. |
-| VoxCPM2 | Turn by turn. Turn k gets turn k−1's picked take as continuation context if the admitted node exposes it; otherwise its instruction names the energy it answers ("answering an excited teammate, matching the energy"). |
+| VoxCPM2 | Turn by turn. Turn k gets turn k−1's picked take and its text as continuation audio (upstream `prompt_wav_path` + `prompt_text`) with the speaker's identity clip as `reference_wav_path`; the two combine in `OpenBMB/VoxCPM` `src/voxcpm/core.py` at the pinned commit `300e4260` (required, spec "Continuation audio for banter turns"). The instruction also names the energy the turn answers ("answering an excited teammate, matching the energy"). |
 
 Each turn becomes its own clip. The engine's own pauses are trimmed; timing comes only from `gap`, so the director
 controls overlap and a lineup-skipped thread costs nothing.
@@ -222,7 +225,7 @@ chain over the performance and the vocal, the growl mixed after → radio chain.
 |---|---|---|---|
 | 1 | Script: `lines.json` v6, tone check, beats and threads validated | forge, `dart` | bank, pending list |
 | 2 | Direction: recipe applied per engine, render requests written | forge, Lua | `plan/render-runs/<batch>/requests/*.json` |
-| 3 | Takes: studio workflows, one at a time | studio (§7 of research: VoxCPM2, Dia, S2-Pro, Higgs nodes; core `TrimAudioDuration`, `AudioConcat`, `SaveAudioAdvanced`; #1103 save node with provenance) | raw takes in `~/.cache` |
+| 3 | Takes: studio workflows, one at a time | studio voice capability (to be built; requirements in the spec; the community packs in research §7 are reference designs, not admitted nodes), then core `TrimAudioDuration`, `AudioConcat`, `SaveAudioAdvanced` and #1103's save node with provenance | raw takes in `~/.cache` |
 | 4 | Automatic rejection: duration, clipping (≥ −0.5 dBFS), inner silence > 0.8 s, WER < 15 % (whisper.cpp on the clean take), speaker similarity ≥ threshold (ECAPA or WeSpeaker), no words in vocal-only takes | forge CLI | verdict per take |
 | 5 | Pre-rank: passing takes ordered by WER, similarity and loudness range; listening page built, engine-blind | forge | `listen/index.html` via `preview.*` |
 | 6 | Pick: scores and a one-line reason per clip into the ledger | listener + agent | `ledger.json`, `README.md` |
@@ -319,7 +322,11 @@ item disqualifies that take. Otherwise the default keeps the role (no credit lin
 
 1. VoxCPM2 + Dia resident together (about 12.4 GB, voice-stack research §7): all default-stack takes, hot references,
    vocal reels.
-2. `gpu.unload_model`; S2-Pro alone (bf16 if it fits beside ComfyUI, else NF4; logged).
+2. `gpu.unload_model` for every model; S2-Pro alone in 4-bit NF4 (bitsandbytes on the fly from the pinned bf16
+   weights, or fish-speech int4; never bf16, which leaves no activation headroom in 24 GB, and never FP8, which needs
+   Ada or Blackwell); record the quantisation and the peak VRAM from `gpu.status` during the run; `gpu.unload_model`
+   after. If its 4-bit takes fall short (spec "Fish S2-Pro runs in 4 bits and alone"), S2-Pro becomes "pilot later on
+   a bigger GPU".
 3. `gpu.unload_model`; Higgs v2 alone.
 4. Never beside ACE-Step music batches. Never `studio.restart`.
 
@@ -334,23 +341,28 @@ item disqualifies that take. Otherwise the default keeps the role (no credit lin
 1. Who scores the pilot: the operator, or someone the operator names? Agents can pre-rank by the automatic checks but
    cannot judge emotion by ear.
 2. Child voices for Ulgra, Morth and Nibb in the ending (endgame design §12, decision 9).
-3. Admission pins: Dia examples moved to `Dia-1.6B-0626`; the Higgs and fish-speech repos moved on to v3 and Drama 3
-   (research §9). The coordinator pins code revisions that run our pinned weights.
-4. S2-Pro in 24 GB: bf16 or NF4 (research §2.2).
-5. Does the admitted VoxCPM2 node expose continuation for thread turns (research §4)?
+3. ~~Admission pins~~ Answered 2026-11-17: `plan/model-pins-voice.md` "Runtime code pins". Dia re-pinned to
+   `Dia-1.6B-0626`; Higgs re-pinned to the last revision before the transformers conversion; every code commit is
+   marked "verify by smoke run when the capability is built". Open: the DAC codec's sha256 (no published digest).
+4. ~~S2-Pro precision~~ Answered: 4-bit NF4, exclusive (§7.5).
+5. ~~VoxCPM2 continuation~~ Answered: required of the capability; the upstream API has it (§4.2).
 6. Whisper weights for the recogniser need the operator's consent token, like any model.
 
 ## 10. Ready to run when the models land
 
-- [ ] `studio.models` lists VoxCPM2 and Dia (and, for the challengers, S2-Pro and Higgs v2 with the tokenizer) at
-      the revisions of `plan/model-pins-voice.md`; `voice-engines.json` rows carry the admitted node class names.
+- [ ] The studio voice capability exists and meets this change's capability requirements (inputs, continuation,
+      S2-Pro 4-bit); smoke run of each runtime code pin passes (`plan/model-pins-voice.md`).
+- [ ] `studio.models` lists VoxCPM2 and Dia 1.6B-0626 with the DAC codec (and, for the challengers, S2-Pro and
+      Higgs v2 with its tokenizer and `bosonai/hubert_base`) at the pinned revisions; `voice-engines.json` rows carry
+      the capability's class names.
 - [ ] Consent tokens: each model download asked for and approved by the operator; nothing pulled without one.
 - [ ] `studio.status` up, `gpu.status` shows ≥ 13 GB free for VoxCPM2 + Dia; no ACE-Step batch queued.
 - [ ] Identity clips committed (`art/comms/voices/<id>.flac`, voice-stack task 3.2), brood re-cast to the reveal people,
       hot references for the pilot's speakers.
 - [ ] `lines.json` v6 validation in `dart` (tasks 2.x) and the pilot script `art/comms/voice-pilot.json` validated.
-- [ ] whisper.cpp built in the forge (`~/.cache/tillandsias-project/bin/`), its small English model approved and
-      fetched; speaker-embedding model approved; `tools/brood_fx` built.
+- [ ] whisper.cpp built in the forge at the pinned commit (`~/.cache/tillandsias-project/bin/`), its pinned
+      `ggml-large-v3-turbo-q5_0` and `ggml-base.en` approved and fetched (`plan/model-pins-voice.md`);
+      speaker-embedding model approved; `tools/brood_fx` built.
 - [ ] Lua job file `tools/production/voice-pilot.lua` dry-runs: requests written, no studio call.
 - [ ] Ledger directory `plan/render-runs/voice-pilot/` created with an empty `ledger.json`.
 - [ ] Run order §7.5; one workflow at a time; checkpoint commits of picks and compare Opus files per engine.

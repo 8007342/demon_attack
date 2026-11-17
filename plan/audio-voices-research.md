@@ -85,8 +85,9 @@ mood overrides the direction.
   https://raw.githubusercontent.com/fishaudio/fish-speech/main/docs/en/install.md, read 2026-11-17]. The ComfyUI
   pack lists about 24 GB bf16, about 20 GB FP8 (Ada or Blackwell only) and about 16 GB NF4 [source: Saganaki22,
   "ComfyUI-FishAudioS2", https://github.com/Saganaki22/ComfyUI-FishAudioS2, read 2026-11-17]. The A5000 is an
-  Ampere card with 24 GB, so FP8 is out and bf16 has no headroom: the pilot runs S2-Pro alone, in NF4 if bf16 does
-  not fit, and logs which. [UNSOURCED: plan/provenance-audit.md#V-04] (the A5000's architecture is from the
+  Ampere card with 24 GB, so FP8 is out and bf16 leaves no activation headroom (coordinator, 2026-11-17): S2-Pro
+  runs in 4-bit NF4, alone, and the pilot records the peak VRAM; if 4-bit quality falls short it becomes "pilot later
+  on a bigger GPU" (`plan/model-pins-voice.md`, voice-direction design §7.5). [UNSOURCED: plan/provenance-audit.md#V-04] (the A5000's architecture is from the
   tillandsias host notes, not a fetched page).
 - 44.1 kHz codec [source: Fish Audio S2 Technical Report, above].
 - **New:** the fish-speech repo now ships "Drama 3" (35B-A3B, ≥ 48 GB FP8) under a separate "FISH AUDIO COMMUNITY
@@ -145,8 +146,9 @@ mood overrides the direction.
   "example/simple.py", https://raw.githubusercontent.com/nari-labs/dia/main/example/simple.py, read 2026-11-17].
   Dia2 (1B, 2B; Apache-2.0; Mimi codec, per-speaker prefix WAVs, up to 2 minutes) exists [source: Nari Labs, "dia2",
   https://github.com/nari-labs/dia2, read 2026-11-17], and its card does not mention non-verbal tags [source: Nari
-  Labs, "Dia2-2B model card", https://huggingface.co/nari-labs/Dia2-2B, read 2026-11-17]. Neither is pinned; the
-  pilot keeps the pinned 1.6B.
+  Labs, "Dia2-2B model card", https://huggingface.co/nari-labs/Dia2-2B, read 2026-11-17]. Dia2 is not pinned. **Dia was
+  re-pinned to `Dia-1.6B-0626` on 2026-11-17** (same Apache-2.0 card licence and disclaimer; the code's default since
+  `65028e0`): `plan/model-pins-voice.md`.
 - VRAM about 4.4 GB bf16 per the README; the card says "around 10GB" [sources above].
 
 ## 3. Emotion swings
@@ -181,10 +183,13 @@ Sources: §2.1–2.4.
 
 - **Context, not just order.** Higgs v2's chunked dialogue keeps previous generated turns as context (§2.3); Dia
   continues from an audio prompt and needs the last turns carried forward (§2.4); S2-Pro takes several speakers in one
-  pass (§2.2); VoxCPM2 has no documented dialogue mode, so turn k is rendered with turn k−1's picked take as context
-  only if the admitted node exposes a prompt/continuation input (the README lists "Isolated Reference & Continuation"
-  [source: OpenBMB, "VoxCPM README", above]); otherwise each turn's instruction names the energy it answers ("answers
-  an excited teammate, matching the energy, then calming").
+  pass (§2.2); VoxCPM2 has no documented dialogue mode, but its API takes continuation audio: at the pinned code commit
+  `300e4260`, `src/voxcpm/core.py` documents "`prompt_wav_path`: Path to prompt audio for continuation mode. Must be
+  paired with `prompt_text`" and "`reference_wav_path` … Can be used alone or combined with `prompt_wav_path` +
+  `prompt_text`" [source: OpenBMB, "src/voxcpm/core.py @300e4260",
+  https://raw.githubusercontent.com/OpenBMB/VoxCPM/300e4260b509066151d623dc9c0aa922cf82232b/src/voxcpm/core.py, read 2026-11-17].
+  So turn k is rendered with turn k−1's picked take as continuation and the speaker's identity as reference; the spec
+  requires the capability to expose both. The instruction also names the energy it answers.
 - **Timing and overlap are ours.** No engine documents turn timing or overlap (§2). A thread renders each turn as its
   own clip (or splits a one-pass dialogue into per-speaker tracks: the S2-Pro ComfyUI pack has a "Multi-Speaker Split
   TTS" node that outputs one aligned track per speaker [source: Saganaki22, "ComfyUI-FishAudioS2", above]), and the
@@ -359,15 +364,15 @@ coordinator's call; these are the candidates that expose seed and reference inpu
 |---|---|---|
 | **VoxCPM2** | single lines, placeholder, per-beat renders, hot references by voice design | controllable cloning (never Hi-Fi); instruction = emotion phrase + intensity adverb + `direction`; `cfg_value` 2.0 (≤ 2.5; 1.6 if artefacts); `inference_timesteps` 10–20; tags `[laughing]`, `[sigh]` only; beats ≥ 1 s as separate calls, shorter ones as a ramp instruction |
 | **Dia 1.6B** | vocal reels (efforts, laughs, screams, gasps), crowd beds | reels of 8–15 s, `[S1]` only for one character, ≤ 1 "!" per sentence, clone example settings (`cfg_scale` 4.0, `temperature` 1.8, `top_p` 0.90, `cfg_filter_top_k` 50) as the start, seed fixed per take |
-| **Fish S2-Pro** | challenger for beats and single lines; vocal tags (free-form growl test) | tag before each beat; defaults temperature 0.7, top_p 0.7; hot reference for intensity 3; runs alone on the GPU (bf16 or NF4, logged) |
+| **Fish S2-Pro** | challenger for beats and single lines; vocal tags (free-form growl test) | tag before each beat; defaults temperature 0.7, top_p 0.7; hot reference for intensity 3; runs alone on the GPU in 4-bit NF4, peak VRAM logged |
 | **Higgs v2** | challenger for threads | `[SPEAKER0..n]`, references per speaker, `--chunk_method speaker`, buffer 2–3, scene prompt "two pilots on a crackling fleet radio in a dogfight"; `[laugh]`, `[cheering]`; runs alone |
 
 ## 9. Open questions
 
-1. **Admission pins.** Dia's examples moved to `Dia-1.6B-0626`; the Higgs and fish-speech repos moved to v3 and Drama
-   3. The coordinator pins code revisions that run our pinned weights (§2.2–2.4).
-2. **S2-Pro on 24 GB.** bf16 may not fit beside ComfyUI's own memory; NF4 changes quality. The pilot logs which ran.
-3. **VoxCPM2 continuation.** Does the admitted node expose a prompt/continuation input for thread turns?
+1. ~~Admission pins~~ Answered 2026-11-17 in `plan/model-pins-voice.md` ("Runtime code pins"); each to be verified by a
+   smoke run. Still open there: the DAC codec weights publish no digest.
+2. ~~S2-Pro on 24 GB~~ Answered: 4-bit NF4, exclusive; peak VRAM recorded in the pilot.
+3. ~~VoxCPM2 continuation~~ Answered: the upstream API has it (§4); the capability must expose it.
 4. **Child voices** for Ulgra, Morth, Nibb in the ending: operator approval (endgame design §12, decision 9).
 5. **emotion2vec licence**, Rubber Band GPL as an offline tool (not needed if Signalsmith suffices).
 6. **Growl tags** on S2-Pro and Higgs: undocumented; only the pilot can say.

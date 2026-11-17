@@ -40,7 +40,15 @@ Operator decisions, 2026-11-16 (research §10.4):
 - **IndexTTS-2.5 stays out.** Revisit it only for a need the others cannot meet, such as exact duration control to fit
   a cue.
 
-VRAM, licences and the "OK for this repo?" verdicts, with sources, are in research §9 and §10. The spec is
+VRAM, licences and the "OK for this repo?" verdicts, with sources, are in research §9 and §10.
+
+**Capability, pins, precision (coordinator, 2026-11-17).** No TTS node is admitted. The engines run through a
+Tillandsias studio voice capability, designed like #1103 and queued after the cut with this change (and
+`voice-direction`) as its requirements. It loads only the weight revisions and runtime code commits in
+`plan/model-pins-voice.md` (Dia re-pinned to `Dia-1.6B-0626`; Higgs re-pinned to the revisions its code loads; each
+code commit to be verified by a smoke run). Fish S2-Pro runs in 4-bit NF4, alone on the GPU: bf16 leaves no activation
+headroom in 24 GB and FP8 needs Ada or Blackwell; if 4-bit quality falls short it becomes "pilot later on a bigger
+GPU" (`voice-direction` spec). The spec is
 engine-agnostic: an engine is a row in `art/comms/voice-engines.json`:
 
 ```json

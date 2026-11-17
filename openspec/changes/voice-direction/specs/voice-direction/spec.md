@@ -2,6 +2,43 @@
 
 ## ADDED Requirements
 
+### Requirement: Voice capability inputs
+The studio voice capability (not built yet) SHALL expose, per engine: a seed; the identity reference audio and its transcript; the engine's direction inputs (VoxCPM2 instruction text, `cfg_value` and `inference_timesteps`; S2-Pro inline tags; Higgs scene prompt and per-speaker references; Dia audio prompt and sampling values); and an AUDIO output at the engine's native rate, neither resampled nor normalised.
+
+#### Scenario: Same seed, same take
+- **WHEN** the capability renders the same request twice with the same seed on the same engine and pins
+- **THEN** the ledger records both takes, and a difference between them is logged as the engine's nondeterminism, not treated as a new input
+
+#### Scenario: Native rate
+- **WHEN** VoxCPM2 renders a take
+- **THEN** the AUDIO output is at 48 kHz and its loudness is untouched, so the forge's checks and loudness stage see the raw take
+
+### Requirement: Continuation audio for banter turns
+The VoxCPM2 capability SHALL accept continuation audio with its transcript alongside the identity reference: the upstream `prompt_wav_path` and `prompt_text`, which combine with `reference_wav_path` in `OpenBMB/VoxCPM` `src/voxcpm/core.py` at the pinned commit `300e4260`. A thread turn SHALL be conditioned on the previous turn's picked take this way, while the identity stays the character's reference clip.
+
+#### Scenario: Second turn of a thread
+- **WHEN** VoxCPM2 renders turn 1 of a thread whose turn 0 has a picked take
+- **THEN** the request carries the turn 0 take and its text as continuation audio and the turn 1 speaker's identity clip as the reference
+
+#### Scenario: Capability delivered without it
+- **WHEN** the voice capability exposes VoxCPM2 without a continuation input
+- **THEN** it does not meet this requirement, VoxCPM2 threads render from the instruction text only, and the ledger marks every such turn `continuation: unavailable`
+
+### Requirement: Fish S2-Pro runs in 4 bits and alone
+On the 24 GB RTX A5000, Fish S2-Pro SHALL run in a 4-bit quantisation that works on Ampere (bitsandbytes NF4 on the fly, or fish-speech int4), never bf16 or FP8. Every other model SHALL be unloaded before it loads, and S2-Pro SHALL be unloaded after its batch. The ledger SHALL record the quantisation and the peak VRAM measured. If its 4-bit takes fall short in the pilot, S2-Pro moves to "pilot later on a bigger GPU".
+
+#### Scenario: Exclusive run
+- **WHEN** the pilot reaches the S2-Pro step
+- **THEN** the runner unloads every model, loads S2-Pro in NF4, renders, records the peak VRAM, and unloads it before the next engine
+
+#### Scenario: bf16 asked for
+- **WHEN** a job asks for S2-Pro in bf16 on the A5000
+- **THEN** the job is refused before loading, with the reason `no activation headroom on 24 GB`
+
+#### Scenario: 4-bit falls short
+- **WHEN** S2-Pro's 4-bit takes score below the default stack on every role, or show artefacts on more than a tenth of takes
+- **THEN** the design records S2-Pro as "pilot later on a bigger GPU", and the decision rule runs without it
+
 ### Requirement: Emotion beats inside a line
 A line in `art/comms/lines.json` MAY carry `beats`: an ordered list that splits its spoken words into two to four parts, each with its own `emotion` (from the voice-stack list), `intensity` (0–3) and optional `direction`. The words of the beats, joined with single spaces, SHALL equal the line's text with cues removed. The line's own `emotion` SHALL equal the last beat's emotion. The `dart` stage SHALL reject a mismatch and name the clip id.
 
