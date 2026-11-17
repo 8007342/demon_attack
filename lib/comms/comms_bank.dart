@@ -1466,6 +1466,33 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'bonusCrateMissed.supplyRun.h3', speaker: 'anvil', duration: 3.47, text: 'Unopened crates are just litter. Pop them on the way down.', emotion: 'calm', silent: true),
     ],
   ),
+  'bossHintHatches': CommsTriggerSpec(
+    name: 'bossHintHatches',
+    priority: 7,
+    cooldown: 20.0,
+    ttl: 3.0,
+    lines: [
+      CommsLine(id: 'bossHintHatches.h0', speaker: 'admiral', duration: 1.31, text: 'Destroy the hatches!', emotion: 'urgent', silent: true),
+    ],
+  ),
+  'bossHintTiming': CommsTriggerSpec(
+    name: 'bossHintTiming',
+    priority: 7,
+    cooldown: 20.0,
+    ttl: 3.0,
+    lines: [
+      CommsLine(id: 'bossHintTiming.h0', speaker: 'kestrel', duration: 1.58, text: 'Time the open hatch!', emotion: 'urgent', silent: true),
+    ],
+  ),
+  'bossHintLead': CommsTriggerSpec(
+    name: 'bossHintLead',
+    priority: 7,
+    cooldown: 25.0,
+    ttl: 3.0,
+    lines: [
+      CommsLine(id: 'bossHintLead.h0', speaker: 'wisp', duration: 1.85, text: 'Fire ahead of its position!', emotion: 'urgent', silent: true),
+    ],
+  ),
 };
 
 const commsDemonTriggers = <String, CommsTriggerSpec>{

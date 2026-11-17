@@ -236,12 +236,15 @@ void main() {
         ..score = 1234;
       model.collect(Power.spread);
       final boss = model.boss!;
-      expect(boss.shield, 48);
-      expect(boss.core, 16);
-      for (var hit = 0; hit < 48; hit++) {
+      // carrier-hatches §A11: the shield is the hatches' pool (0.55 × 48
+      // over four hatches, 4 + 3 each), the core 0.8 × 16.
+      expect(boss.shield, boss.shieldMax);
+      expect(boss.shieldMax, 28);
+      expect(boss.core, 13);
+      for (var hit = 0; hit < 28; hit++) {
         expect(model.hitBoss(boss.x), isTrue);
-        expect(boss.core, 16);
-        expect(boss.shield, 47 - hit);
+        expect(boss.core, 13);
+        expect(boss.shield, 27 - hit);
       }
       boss.door = 0;
       boss.sideDoorLeft = 0;
@@ -249,11 +252,12 @@ void main() {
       expect(model.hitBoss(boss.x), isFalse);
       boss.door = 1;
       expect(model.hitBoss(boss.x + 30), isFalse);
-      // Early form allows side hatch hits when side doors open.
+      // carrier-hatches §A5: the side hatches are sealed; the core door is
+      // the only opening.
       boss.sideDoorLeft = 1;
-      expect(model.hitBoss(boss.x - Carrier.sideHatchOffset), isTrue);
+      expect(model.hitBoss(boss.x - Carrier.sideHatchOffset), isFalse);
       boss.sideDoorLeft = 0;
-      for (var hit = 0; hit < 15; hit++) {
+      for (var hit = 0; hit < 13; hit++) {
         expect(model.hitBoss(boss.x), isTrue);
       }
       expect(model.mode, RunMode.victory);

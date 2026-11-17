@@ -4581,6 +4581,36 @@
           {"speaker": "nibb", "grunt": "cackle", "gloss": "Mine now. Does it have the crunchy ones?", "say": "Mine now. Does it have the crunchy ones?", "emotion": "excited"}
         ]
       }
+    },
+    "bossHintHatches": {
+      "priority": 7,
+      "cooldown": 20,
+      "ttl": 3,
+      "mood": "stern",
+      "pending": "text",
+      "lines": [
+        {"speaker": "admiral", "text": "Destroy the hatches!", "emotion": "urgent"}
+      ]
+    },
+    "bossHintTiming": {
+      "priority": 7,
+      "cooldown": 20,
+      "ttl": 3,
+      "mood": "stern",
+      "pending": "text",
+      "lines": [
+        {"speaker": "kestrel", "text": "Time the open hatch!", "emotion": "urgent"}
+      ]
+    },
+    "bossHintLead": {
+      "priority": 7,
+      "cooldown": 25,
+      "ttl": 3,
+      "mood": "stern",
+      "pending": "text",
+      "lines": [
+        {"speaker": "wisp", "text": "Fire ahead of its position!", "emotion": "urgent"}
+      ]
     }
   }
 }

@@ -5,6 +5,7 @@ import 'bonus/bonus_plan.dart';
 import 'bonus/bonus_types.dart';
 import 'boss_grammar.dart';
 import 'carrier_gates.dart';
+import 'carrier_hatches.dart';
 import 'carrier_script.dart';
 import 'demon_planner.dart';
 import 'difficulty.dart';
@@ -19,6 +20,8 @@ import 'skill_meter.dart';
 import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
+export 'carrier_hatches.dart'
+    show CarrierChapter, CarrierHatch, CarrierHatches, HatchState;
 export 'bonus/bonus_catalog.dart';
 export 'bonus/bonus_plan.dart';
 export 'bonus/bonus_types.dart';
@@ -439,9 +442,29 @@ class Carrier {
     Difficulty difficulty = Difficulty.normal,
     this.startingDirection = 1,
     this.startingPhase = 0,
-  }) : shieldMax = DifficultyPolicy(difficulty).bossShieldForRoute(cycle),
-       coreMax = DifficultyPolicy(difficulty).bossCoreForRoute(cycle),
+  }) : shieldMax = _hatchPool(
+         DifficultyPolicy(difficulty).bossShieldForRoute(cycle),
+         cycle,
+         difficulty.index,
+       ),
+       coreMax = math.max(
+         1,
+         (DifficultyPolicy(difficulty).bossCoreForRoute(cycle) *
+                 CarrierHatches.coreShares[difficulty.index])
+             .round(),
+       ),
        formCount = math.min(4, 2 + cycle) {
+    // --- carrier-hatches (design §A3): the old shield's HP redistributed
+    // into the upper hatches; [shield] is the sum of what stands.
+    final list = CarrierHatches.forTour(cycle);
+    final (field, hull) = CarrierHatches.hpOf(
+      DifficultyPolicy(difficulty).bossShieldForRoute(cycle),
+      list.length,
+      difficulty: difficulty.index,
+    );
+    hatches = [
+      for (final h in list) HatchState(h, fieldMax: field, hullMax: hull),
+    ];
     shield = shieldMax;
     core = coreMax;
     motionPhase = startingPhase;
@@ -449,6 +472,55 @@ class Carrier {
     horizontalVelocity = startingDirection.toDouble();
   }
   static const double sideHatchOffset = 46.0;
+
+  // --- carrier-hatches (design §A2–§A5): the three chapters.
+  late final List<HatchState> hatches;
+  CarrierChapter chapter = CarrierChapter.hatches;
+
+  /// The fight's first `bossHatchTier` has been queued.
+  bool announced = false;
+
+  /// Seconds into the transformation (0 outside it).
+  double transformT = 0;
+
+  static int _hatchPool(int shield, int cycle, int difficulty) {
+    final n = CarrierHatches.forTour(cycle).length;
+    final (f, h) = CarrierHatches.hpOf(shield, n, difficulty: difficulty);
+    return n * (f + h);
+  }
+
+  /// The vulnerable (and launching) upper tier: the topmost with a hatch
+  /// standing; null when every upper hatch is destroyed.
+  int? get vulnerableTier {
+    int? t;
+    for (final h in hatches) {
+      if (h.destroyed) continue;
+      if (t == null || h.hatch.tier < t) t = h.hatch.tier;
+    }
+    return t;
+  }
+
+  /// The hatches of the vulnerable tier still standing.
+  Iterable<HatchState> get vulnerableHatches {
+    final t = vulnerableTier;
+    return hatches.where((h) => !h.destroyed && h.hatch.tier == t);
+  }
+
+  int get upperTiers => hatches.isEmpty ? 0 : hatches.last.hatch.tier + 1;
+  int get hatchesLeft => hatches.where((h) => !h.destroyed).length;
+
+  /// Every upper hatch destroyed and its break-up done.
+  bool get hatchesDown => hatches.every((h) => h.down);
+
+  /// The lateral glide's phase-rate factor of this chapter.
+  double get glideFactor => switch (chapter) {
+    CarrierChapter.hatches => CarrierHatches.hatchGlide,
+    CarrierChapter.transform => CarrierHatches.transformGlide,
+    CarrierChapter.core => CarrierHatches.coreGlide,
+  };
+
+  /// The core can be damaged (the core chapter only).
+  bool get coreOpen => chapter == CarrierChapter.core;
   final int startingDirection;
   final double startingPhase;
   double motionPhase = 0, horizontalVelocity = 0;
@@ -499,7 +571,8 @@ class Carrier {
   int get direction => horizontalVelocity < 0 ? -1 : 1;
   double forecastX(double seconds, double speed) {
     final phase =
-        motionPhase + seconds * .7 * speed * movementRate * startingDirection;
+        motionPhase +
+        seconds * .7 * speed * movementRate * glideFactor * startingDirection;
     return (180 +
             math.sin(phase) * (80 + rage * 10) +
             math.sin(phase * 2 + startingPhase) * rage * 8)
@@ -514,7 +587,9 @@ class Carrier {
   double door = 0;
   double sideDoorLeft = 0;
   double sideDoorRight = 0;
-  bool get sideHatchesLocked => phase >= formCount - 1;
+  // --- carrier-hatches §A5: the side hatches are sealed for good (the core
+  // door is the only target).
+  bool get sideHatchesLocked => true;
 }
 
 /// Pure fixed-step simulation; renderers and input never change its clock.
@@ -929,24 +1004,34 @@ class ArcadeModel {
 
   void _queueGateEvent(GateEvent e) {
     final g = e.run.gate;
-    final data = {..._carrierEventData, 'gate': g.id};
+    // --- carrier-hatches §A8: the volley lifecycle on the hatches.
+    final tier = g is CarrierHatch
+        ? (g.isCore ? (boss?.upperTiers ?? 0) + 1 : g.tier + 1)
+        : 0;
+    final data = {
+      ..._carrierEventData,
+      'hatch': g.id,
+      'tier': tier,
+      'shootable': true,
+    };
     switch (e.kind) {
       case GateState.telegraph:
-        _queueGameEvent(GameEventNames.bossGateTelegraph, {
+        _queueGameEvent(GameEventNames.bossHatchTelegraph, {
           ...data,
           'slot': g.slot,
           'side': g.side,
+          'kind': g.kind.name,
         });
       case GateState.opening:
-        _queueGameEvent(GameEventNames.bossGateOpen, data);
+        _queueGameEvent(GameEventNames.bossHatchOpen, data);
       case GateState.launching:
         _queueGameEvent(GameEventNames.bossLaunch, {
           ...data,
           'count': e.count,
-          'tier': e.run.tier,
+          'kind': e.run.tier,
         });
       case GateState.closed:
-        _queueGameEvent(GameEventNames.bossGateClose, data);
+        _queueGameEvent(GameEventNames.bossHatchClose, data);
       case GateState.closing:
         break;
     }
@@ -963,7 +1048,11 @@ class ArcadeModel {
         if (d.arrivesFromDistance && !d.isLarge && d.gateWait <= 0) d,
     ];
     if (members.isEmpty) return;
-    final run = l.pick((g) => gateOnApproach(g).x);
+    // carrier-hatches: the approach launches from the upper hatches.
+    final run = l.pick(
+      (g) => gateOnApproach(g).x,
+      eligible: (g) => g is CarrierHatch && !g.isCore,
+    );
     if (run == null) return;
     final delays = l.volley(run, members.length, tier: members.first.kind);
     final at = gateOnApproach(run.gate);
@@ -1017,6 +1106,15 @@ class ArcadeModel {
   void consoleDecayNow() {
     final b = hittableBoss;
     if (b == null || ranked) return;
+    // --- carrier-hatches: one step destroys the vulnerable tier.
+    if (b.chapter == CarrierChapter.hatches) {
+      for (final h in b.vulnerableHatches.toList()) {
+        _damageHatch(b, h, h.hp);
+        if (!h.destroyed) _damageHatch(b, h, h.hp);
+      }
+      return;
+    }
+    if (b.chapter == CarrierChapter.transform) return;
     if (b.shield * 2 > b.shieldMax) {
       hitBoss(b.x, damage: b.shield - b.shieldMax ~/ 2);
     } else if (b.shield > 0) {
@@ -1032,6 +1130,289 @@ class ArcadeModel {
   /// The fight's flock gate (design §4.4): chosen and telegraphing ahead
   /// of the flock timer, so the spawn moments do not move.
   GateRun? _fightGate;
+
+  // --- carrier-hatches (design §A2–§A8): chapters, hatch hits, hints.
+  /// Core-door launches, and how many of them waited for the door
+  /// (calibration: the hold's share of delayed arrivals, §A11).
+  int coreLaunches = 0, coreHolds = 0;
+
+  /// A shield zeroed from outside the hit path (fixtures, saved states):
+  /// the hatches are gone and the core is exposed at once, no events.
+  static void syncChapter(Carrier b) {
+    if (b.chapter != CarrierChapter.hatches || b.shield > 0) return;
+    if (b.hatches.every((h) => h.destroyed)) return; // the real path
+    for (final h in b.hatches) {
+      h
+        ..field = 0
+        ..hull = 0
+        ..fallen = CarrierHatches.fallSeconds;
+    }
+    b.chapter = CarrierChapter.core;
+  }
+
+  /// Upper hatches still to fall before the transformation: their break-up
+  /// time is mirrored here ([CarrierHatches.fallSeconds]).
+  void _updateHatchChapters(Carrier b, double dt) {
+    syncChapter(b);
+    // The fight's first section, then the first hint (2 s in).
+    if (!b.announced) {
+      b.announced = true;
+      if (b.chapter == CarrierChapter.hatches) {
+        _hatchTierEvent(b, from: 0);
+        _hintHatchesAt = levelClock + 2;
+      }
+    }
+    for (final h in b.hatches) {
+      if (h.destroyed && !h.down) h.fallen += dt;
+    }
+    switch (b.chapter) {
+      case CarrierChapter.hatches:
+        if (b.hatchesDown) {
+          b
+            ..chapter = CarrierChapter.transform
+            ..transformT = 0;
+          launches?.closeAll();
+          _fightGate = null;
+          final data = _decayData(b);
+          _queueGameEvent(GameEventNames.bossShieldDown, data);
+          _queueGameEvent(GameEventNames.bossTransform, {
+            ..._carrierEventData,
+            'stage': 'start',
+            'seconds': CarrierHatches.transformSeconds,
+          });
+          events.add('boss');
+        }
+      case CarrierChapter.transform:
+        b.transformT += dt;
+        if (b.transformT >= CarrierHatches.transformSeconds) {
+          b.chapter = CarrierChapter.core;
+          _queueGameEvent(GameEventNames.bossTransform, {
+            ..._carrierEventData,
+            'stage': 'end',
+            'seconds': CarrierHatches.transformSeconds,
+          });
+          _queueGameEvent(GameEventNames.bossCoreExposed, _decayData(b));
+          _hatchTierEvent(b, from: b.upperTiers);
+          _hint(GameEventNames.bossHintTiming, force: true);
+        }
+      case CarrierChapter.core:
+        break;
+    }
+    _hintClock(b);
+  }
+
+  /// The fall and the transformation at once (the direct-damage API).
+  void _instantTransform(Carrier b) {
+    for (final h in b.hatches) {
+      h.fallen = math.max(h.fallen, CarrierHatches.fallSeconds);
+    }
+    _updateHatchChapters(b, 0); // → transform (shieldDown, transform start)
+    b.transformT = CarrierHatches.transformSeconds;
+    _updateHatchChapters(b, 0); // → core (transform end, core exposed)
+  }
+
+  Map<String, Object?> _decayData(Carrier b) {
+    final a = BossGrammar.forRun(route: cycle, variant: b.variant);
+    return {'route': cycle, 'variant': b.variant, 'set': a.setName};
+  }
+
+  /// `bossHatchTier`: the vulnerable tier is now [Carrier.vulnerableTier]
+  /// (or the core door), from tier [from] (1-based; 0 at the start).
+  void _hatchTierEvent(Carrier b, {required int from}) {
+    final tiers = b.upperTiers + 1;
+    final t = b.chapter == CarrierChapter.core
+        ? tiers
+        : (b.vulnerableTier ?? b.upperTiers - 1) + 1;
+    if (t == from) return;
+    _queueGameEvent(GameEventNames.bossHatchTier, {
+      ..._carrierEventData,
+      'tier': t,
+      'tiers': tiers,
+      'depth': tiers <= 1 ? 1.0 : (t - 1) / (tiers - 1),
+      'shootable': true,
+      'from': from,
+    });
+  }
+
+  /// The hull-local y the next fight flock leaves from.
+  double _launchTierY(Carrier b) {
+    if (b.chapter == CarrierChapter.core) return CarrierHatches.core.y;
+    final v = b.vulnerableHatches;
+    return v.isEmpty ? CarrierHatches.core.y : v.first.hatch.y;
+  }
+
+  /// Whether gate [g] launches now: a standing hatch of the vulnerable
+  /// tier, or the core door in the core chapter.
+  bool _launchesFrom(Carrier b, CarrierGate g) {
+    if (g is! CarrierHatch) return false;
+    if (b.chapter == CarrierChapter.core) return g.isCore;
+    if (g.isCore) return false;
+    final t = b.vulnerableTier;
+    return t != null &&
+        g.tier == t &&
+        b.hatches.any((h) => h.hatch.id == g.id && !h.destroyed);
+  }
+
+  /// The core door's opening (the unchanged cycle) at fight clock [c].
+  static double coreDoorAt(Carrier b, double c, int cycle) =>
+      ((math.sin(c * (1.55 + b.phase * .22)) - (cycle == 0 ? 0.0 : .1)) * 2)
+          .clamp(0.0, 1.0);
+
+  /// Seconds until the core door is open (≥ 0.6) from fight clock [c], at
+  /// most one period (§A5); 0 when it is open now.
+  double _coreDoorWait(Carrier b, double c) {
+    final period = 2 * math.pi / (1.55 + b.phase * .22);
+    for (var t = 0.0; t <= period; t += 1 / 60) {
+      if (coreDoorAt(b, c + t, cycle) >= CarrierHatches.coreOpenAt) return t;
+    }
+    return period;
+  }
+
+  /// Damages hatch [h] of carrier [b] (its field first). Returns true.
+  bool _damageHatch(Carrier b, HatchState h, int damage) {
+    if (h.destroyed || damage <= 0) return false;
+    final tierBefore = b.vulnerableTier;
+    final halfBefore = b.hatchesLeft * 2 > b.hatches.length;
+    final data = {
+      ..._carrierEventData,
+      'hatch': h.hatch.id,
+      'tier': h.hatch.tier + 1,
+      'side': h.hatch.side,
+    };
+    if (h.field > 0) {
+      h.field = math.max(0, h.field - damage);
+      if (h.field == 0) {
+        _queueGameEvent(GameEventNames.bossHatchFieldDown, data);
+      }
+    } else {
+      h.hull = math.max(0, h.hull - damage);
+      if (h.hull == 0) {
+        h.fallen = 0;
+        _queueGameEvent(GameEventNames.bossHatchDrop, {
+          ...data,
+          'cause': 'shot',
+          'left': b.hatchesLeft,
+        });
+        blasts.add(Blast(b.x + h.hatch.x, b.y + h.hatch.y, big: true));
+        if (halfBefore && b.hatchesLeft * 2 <= b.hatches.length) {
+          _queueGameEvent(GameEventNames.bossShieldFailing, _decayData(b));
+        }
+        final t = b.vulnerableTier;
+        if (t != null && t != tierBefore) {
+          _hatchTierEvent(b, from: (tierBefore ?? 0) + 1);
+        }
+      }
+    }
+    b.shield = b.hatches.fold(0, (a, x) => a + x.hp);
+    events.add('hit');
+    blasts.add(Blast(b.x + h.hatch.x, b.y + h.hatch.y));
+    return true;
+  }
+
+  /// A player shot against the hatch chapter (design §A3): crossing the
+  /// vulnerable tier's row this frame, it strikes a hatch's field or hull
+  /// within its radius, or sparks off the armour. Returns whether the shot
+  /// was stopped.
+  bool _hatchShot(Carrier b, Shot s) {
+    final v = b.vulnerableHatches.toList();
+    if (v.isEmpty) return false;
+    final row = b.y + v.first.hatch.y;
+    final previousY = s.y - s.vy / 60;
+    if (!(s.y <= row && previousY >= row)) return false;
+    final blast = s.blastRadius > 0 ? 5.0 : 0.0;
+    for (final h in v) {
+      final r =
+          (h.field > 0 ? CarrierHatches.fieldRadius : CarrierHatches.hullRadius) +
+          blast;
+      if ((s.x - (b.x + h.hatch.x)).abs() <= r) {
+        s.y = row;
+        if (s.blastRadius > 0) _explodeShot(s, hitCarrier: false);
+        _damageHatch(b, h, s.damage);
+        return true;
+      }
+    }
+    if ((s.x - b.x).abs() <= CarrierHatches.armourHalfWidth) {
+      deflects.add(Deflect(s.x, row, b.x, row - 30));
+      _armourMisses.add(levelClock);
+      return true;
+    }
+    return false;
+  }
+
+  /// Hits hatch [i] directly (tests, the /console fast decay).
+  bool hitHatch(int i, {int damage = 1}) {
+    final b = hittableBoss;
+    if (b == null || !combat || b.chapter != CarrierChapter.hatches) {
+      return false;
+    }
+    final h = b.hatches[i];
+    if (h.destroyed || h.hatch.tier != b.vulnerableTier) return false;
+    return _damageHatch(b, h, damage);
+  }
+
+  // Hints (§A7): shot patterns and cooldowns, on the level clock.
+  final List<double> _armourMisses = [], _closedDoorHits = [], _trailing = [];
+  final Map<String, double> _hintAt = {};
+  double? _hintHatchesAt;
+  static const _hintCooldown = {
+    GameEventNames.bossHintHatches: 20.0,
+    GameEventNames.bossHintTiming: 20.0,
+    GameEventNames.bossHintLead: 25.0,
+  };
+
+  /// Whether the lead hint has played this fight (the lead pip shows on
+  /// Easy and Normal after it, §A5).
+  bool leadHinted = false;
+
+  /// The lead pip shows (Easy and Normal, after the first lead hint, in
+  /// the core chapter); never on Hard.
+  bool get leadPipShown =>
+      leadHinted &&
+      difficulty != Difficulty.hard &&
+      boss?.chapter == CarrierChapter.core;
+
+  /// Where a shot fired now meets the core door's row: the door's forecast
+  /// x when the shot arrives, on that row (arena units).
+  ({double dx, double dy}) leadPipAt(Carrier b) {
+    final row = b.y + CarrierHatches.core.y;
+    final flight = (shipY - row) / 390;
+    return (dx: b.forecastX(flight, speed), dy: row);
+  }
+
+  void _hint(String name, {bool force = false}) {
+    final last = _hintAt[name];
+    if (!force && last != null && levelClock - last < _hintCooldown[name]!) {
+      return;
+    }
+    _hintAt[name] = levelClock;
+    if (name == GameEventNames.bossHintLead) leadHinted = true;
+    _queueGameEvent(name, {..._carrierEventData, 'hint': name});
+  }
+
+  void _hintClock(Carrier b) {
+    final now = levelClock;
+    final at = _hintHatchesAt;
+    if (at != null && now >= at) {
+      _hintHatchesAt = null;
+      _hint(GameEventNames.bossHintHatches, force: true);
+    }
+    if (b.chapter == CarrierChapter.transform) return;
+    _armourMisses.removeWhere((t) => t < now - 4);
+    _closedDoorHits.removeWhere((t) => t < now - 3);
+    _trailing.removeWhere((t) => t < now - 4);
+    if (_armourMisses.length >= 6) {
+      _armourMisses.clear();
+      _hint(GameEventNames.bossHintHatches);
+    }
+    if (_closedDoorHits.length >= 4) {
+      _closedDoorHits.clear();
+      _hint(GameEventNames.bossHintTiming);
+    }
+    if (_trailing.length >= 3) {
+      _trailing.clear();
+      _hint(GameEventNames.bossHintLead);
+    }
+  }
 
   /// Field impacts in the last second (`bossFieldImpact`: at most 4/s).
   final List<double> _fieldImpacts = [];
@@ -1579,9 +1960,8 @@ class ArcadeModel {
           'slot': slot?.name,
           'set': slot == null ? a.setName : _slotSet(a, slot),
         });
-        if (f == b.formCount - 1) {
-          _queueGameEvent(GameEventNames.bossCoreExposed, data);
-        }
+        // carrier-hatches §A4: `bossCoreExposed` is the transformation's
+        // end now, not the last form.
       }
     }
     if (b.core <= 0) {
@@ -1627,7 +2007,21 @@ class ArcadeModel {
   /// (tests, the calibrated campaign) always draws the first combination.
   int get bossVariant => BossGrammar.variantFor(runSeed, cycle);
 
-  Carrier _newCarrier() => Carrier(
+  Carrier _newCarrier() {
+    _resetHints(); // --- carrier-hatches
+    return _buildCarrier();
+  }
+
+  void _resetHints() {
+    leadHinted = false;
+    _hintAt.clear();
+    _armourMisses.clear();
+    _closedDoorHits.clear();
+    _trailing.clear();
+    _hintHatchesAt = null;
+  }
+
+  Carrier _buildCarrier() => Carrier(
     cycle,
     difficulty: difficulty,
     startingDirection: random.nextBool() ? 1 : -1,
@@ -4276,7 +4670,9 @@ class ArcadeModel {
     }
     final clock = levelClock - b.readyAt;
     final oldX = b.x;
-    b.motionPhase += dt * .7 * speed * b.movementRate * b.startingDirection;
+    _updateHatchChapters(b, dt); // --- carrier-hatches
+    b.motionPhase +=
+        dt * .7 * speed * b.movementRate * b.glideFactor * b.startingDirection;
     b.x = b.forecastX(0, speed);
     b.horizontalVelocity = dt > 0 ? (b.x - oldX) / dt : b.horizontalVelocity;
     // --- boss-grandeur (hook b): the bounded vertical glide.
@@ -4304,21 +4700,28 @@ class ArcadeModel {
               .clamp(0.0, 1.0) *
           sideRamp);
     }
+    // --- carrier-hatches §A4: the transformation holds the timers and the
+    // fire (creatures already out keep fighting).
+    if (b.chapter == CarrierChapter.transform) return;
     _flock -= dt * policy.hostileRate;
     final maxMinions = cycle == 0 ? 6 : (cycle == 1 ? 8 : 10);
-    // carrier-v3 §4.4: the flock's gate telegraphs and opens ahead of the
-    // timer (the spawn moments do not move; only the spawn positions do).
+    // carrier-v3 §4.4, carrier-hatches §A6: the flock's hatch telegraphs
+    // and opens ahead of the timer, and a flock from a high tier leaves
+    // earlier by its longer transit, so each creature still arrives at
+    // today's moment (arrival invariance); only the origins change.
     final l = launches ??= _launchesFor();
-    final lead = l.timing.telegraph + l.timing.open;
+    final tierY = _launchTierY(b);
+    final early = CarrierHatches.early(tierY);
+    final lead = l.timing.telegraph + l.timing.open + early;
     if (_fightGate == null && _flock / policy.hostileRate <= lead) {
       _fightGate = l.pick(
         (g) => gateOnCarrier(b, g).x,
-        eligible: (g) => g.x.abs() <= CarrierGates.fightReach,
+        eligible: (g) => _launchesFrom(b, g),
       );
       final r = _fightGate;
       if (r != null) l.volley(r, 0, tier: math.min(3, cycle + 1), hold: true);
     }
-    if (_flock <= 0 && demons.length < maxMinions) {
+    if (_flock / policy.hostileRate <= early && demons.length < maxMinions) {
       final flockSize = math.min(3, maxMinions - demons.length);
       final gate = _fightGate;
       _fightGate = null;
@@ -4327,6 +4730,13 @@ class ArcadeModel {
         gate.queued += flockSize;
         l.release(gate);
       }
+      final transit = gate == null
+          ? .55
+          : CarrierHatches.transit(gate.gate.y);
+      // §A5: a core-door flock waits in the door until it opens.
+      final hold = gate != null && gate.gate.y == CarrierHatches.core.y
+          ? _coreDoorWait(b, clock)
+          : 0.0;
       for (var i = 0; i < flockSize; i++) {
         final d =
             Demon(
@@ -4339,18 +4749,27 @@ class ArcadeModel {
               ..homeY = b.y + 70
               ..entranceProgress = 0
               ..entranceDelay = i * .06
-              ..entranceDuration = .55
+              ..entranceDuration = transit
+              ..gateWait = hold
               ..entranceStartY = from == null ? b.y + 36 : from.y
               ..entranceStartX = from?.x;
         d.y = d.entranceStartY;
         demons.add(d);
       }
+      if (gate != null && gate.gate.y == CarrierHatches.core.y) {
+        coreLaunches++;
+        if (hold > 0) coreHolds++;
+      }
       _flock =
           math.max(2.4, 5.6 - b.phase * 0.45 - cycle * 0.25) /
-          policy.hostileRate;
+              policy.hostileRate +
+          early * policy.hostileRate;
     }
     // Fan attacks force positioning without tracking a player after launch.
-    final fanRate = (0.85 + math.min(cycle, 3) * 0.08) * policy.hostileRate;
+    final fanRate =
+        (0.85 + math.min(cycle, 3) * 0.08) *
+        policy.hostileRate *
+        CarrierHatches.fanShares[difficulty.index]; // --- carrier-hatches
     if ((clock * fanRate).floor() != ((clock - dt) * fanRate).floor()) {
       for (var i = -1; i <= 1; i++) {
         _hostile(
@@ -4405,8 +4824,20 @@ class ArcadeModel {
         }
         continue;
       }
+      // --- carrier-hatches §A3: the hatch chapter's rows.
+      final hatchCarrier = hittableBoss;
+      if (hatchCarrier != null) syncChapter(hatchCarrier);
+      if (hatchCarrier != null &&
+          hatchCarrier.chapter == CarrierChapter.hatches) {
+        if (_hatchShot(hatchCarrier, s)) {
+          s.y = height + 20;
+          shotsHit++;
+          continue;
+        }
+      }
       final shieldedCarrier = hittableBoss;
       if (shieldedCarrier != null &&
+          shieldedCarrier.chapter == CarrierChapter.core &&
           shieldedCarrier.shield > 0 &&
           (s.x - shieldedCarrier.x).abs() <=
               shieldedCarrier.forceFieldHalfWidth) {
@@ -4466,10 +4897,12 @@ class ArcadeModel {
       final b = hittableBoss;
       if (!hit &&
           b != null &&
+          b.chapter == CarrierChapter.core &&
           b.shield == 0 &&
           (s.x - b.x).abs() < 78 + (s.blastRadius > 0 ? 5 : 0) &&
           s.y < b.y + 43 + (s.blastRadius > 0 ? 5 : 0) &&
           s.y > b.y - 25 - (s.blastRadius > 0 ? 5 : 0)) {
+        _coreShotPattern(b, s); // --- carrier-hatches §A7 hints
         if (s.blastRadius > 0) {
           _explodeShot(s);
         } else {
@@ -4495,6 +4928,22 @@ class ArcadeModel {
     }
   }
 
+  /// carrier-hatches §A7: a shot meeting the hull band at the core door
+  /// on a closed door, or on the open door's trailing side (aimed where it
+  /// was), feeds the timing and lead hints.
+  void _coreShotPattern(Carrier b, Shot s) {
+    final dx = s.x - b.x;
+    if (b.door < CarrierHatches.coreOpenAt) {
+      if (dx.abs() <= 20) _closedDoorHits.add(levelClock);
+      return;
+    }
+    final window = CarrierHatches.coreWindow * b.door;
+    final v = b.horizontalVelocity;
+    if (dx.abs() > window && dx.abs() <= window + 40 && dx * v < 0) {
+      _trailing.add(levelClock);
+    }
+  }
+
   void _explodeShot(Shot shot, {bool hitCarrier = true}) {
     blasts.add(Blast(shot.x, shot.y, blastRadius: shot.blastRadius));
     for (final d in List<Demon>.of(demons)) {
@@ -4506,6 +4955,16 @@ class ArcadeModel {
     }
     final b = hittableBoss;
     if (b == null || !hitCarrier) return;
+    // --- carrier-hatches: a blast on a vulnerable hatch.
+    if (b.chapter == CarrierChapter.hatches) {
+      for (final h in b.vulnerableHatches) {
+        final dx = shot.x - (b.x + h.hatch.x), dy = shot.y - (b.y + h.hatch.y);
+        final r = shot.blastRadius + CarrierHatches.fieldRadius;
+        if (dx * dx + dy * dy <= r * r) _damageHatch(b, h, shot.damage);
+      }
+      return;
+    }
+    if (b.chapter != CarrierChapter.core) return;
     final touchesField =
         b.shield > 0 &&
         (shot.x - b.x).abs() <= b.forceFieldHalfWidth + shot.blastRadius &&
@@ -4659,6 +5118,28 @@ class ArcadeModel {
   bool hitBoss(double shotX, {int damage = 1, double blastRadius = 0}) {
     final b = hittableBoss;
     if (b == null || !combat || damage <= 0) return false;
+    syncChapter(b);
+    // --- carrier-hatches §A3: in the hatch chapter, player shots reach the
+    // hatches through [_hatchShot] (the collision rows), never through
+    // here: this is the direct-damage API of fixtures and review harnesses.
+    // It damages the vulnerable hatch nearest [shotX]; the last one's fall
+    // and the transformation are then skipped (their events still queue),
+    // so a fixture can go on into the core without advancing time.
+    if (b.chapter == CarrierChapter.hatches) {
+      HatchState? near;
+      for (final h in b.vulnerableHatches) {
+        if (near == null ||
+            (shotX - (b.x + h.hatch.x)).abs() <
+                (shotX - (b.x + near.hatch.x)).abs()) {
+          near = h;
+        }
+      }
+      if (near == null) return false;
+      final hit = _damageHatch(b, near, damage);
+      if (b.hatches.every((h) => h.destroyed)) _instantTransform(b);
+      return hit;
+    }
+    if (b.chapter == CarrierChapter.transform) return false;
     if (b.shield > 0) {
       final impactY = b.forceFieldSurfaceY(shotX);
       final cellsBefore = Carrier.shieldCells(b.shield, b.shieldMax);
@@ -4680,8 +5161,11 @@ class ArcadeModel {
       if (b.shield == 0) events.add('boss');
       return true;
     }
+    // --- carrier-hatches §A5: the core door, wider (the only opening).
     final centerHit =
-        b.door >= .60 && (shotX - b.x).abs() <= 12 * b.door + blastRadius;
+        b.door >= CarrierHatches.coreOpenAt &&
+        (shotX - b.x).abs() <=
+            CarrierHatches.coreWindow * b.door + blastRadius;
     final leftHit =
         !b.sideHatchesLocked &&
         b.sideDoorLeft >= .55 &&

@@ -5,7 +5,8 @@ import 'dart:math' as math;
 /// the carrier centre (x right, y down-screen), each with an outward normal.
 /// The art conforms to them (the rig's anchor gate, ±3 units), never the
 /// reverse, so the simulation stays art-free and deterministic.
-enum CarrierGateKind { leaf, iris, hatch, sac }
+/// [tusk]: carrier-hatches, a tusk-framed slot (styleguide §3 item 8).
+enum CarrierGateKind { leaf, iris, hatch, sac, tusk }
 
 class CarrierGate {
   const CarrierGate(
@@ -180,7 +181,7 @@ class CarrierVolleyTiming {
   final int maxOpen;
 }
 
-/// A gate event for the game event queue (`bossGateTelegraph`, …).
+/// A gate event for the game event queue (`bossHatchTelegraph`, …).
 class GateEvent {
   const GateEvent(this.kind, this.run, {this.count = 0});
   final GateState kind; // telegraph, opening (open), launching, closed

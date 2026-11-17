@@ -3,7 +3,7 @@ import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// carrier-v3 task 6.1: the intro's events in the game event queue, in
-/// order, with their data; field impacts throttled to 4 per second.
+/// order, with their data; the hatch cascade's events (carrier-hatches).
 void main() {
   void clearWave(ArcadeModel m) {
     for (final d in List.of(m.demons)) {
@@ -38,10 +38,10 @@ void main() {
     int first(String n) => names.indexOf(n);
     for (final n in [
       GameEventNames.bossApproach,
-      GameEventNames.bossGateTelegraph,
-      GameEventNames.bossGateOpen,
+      GameEventNames.bossHatchTelegraph,
+      GameEventNames.bossHatchOpen,
       GameEventNames.bossLaunch,
-      GameEventNames.bossGateClose,
+      GameEventNames.bossHatchClose,
       GameEventNames.bossInRange,
       GameEventNames.bossTakeoff,
       GameEventNames.bossClimbPeak,
@@ -49,13 +49,13 @@ void main() {
       expect(first(n), greaterThanOrEqualTo(0), reason: n);
     }
     expect(first(GameEventNames.bossApproach),
-        lessThan(first(GameEventNames.bossGateTelegraph)));
-    expect(first(GameEventNames.bossGateTelegraph),
-        lessThan(first(GameEventNames.bossGateOpen)));
-    expect(first(GameEventNames.bossGateOpen),
+        lessThan(first(GameEventNames.bossHatchTelegraph)));
+    expect(first(GameEventNames.bossHatchTelegraph),
+        lessThan(first(GameEventNames.bossHatchOpen)));
+    expect(first(GameEventNames.bossHatchOpen),
         lessThan(first(GameEventNames.bossLaunch)));
     expect(first(GameEventNames.bossLaunch),
-        lessThan(first(GameEventNames.bossGateClose)));
+        lessThan(first(GameEventNames.bossHatchClose)));
     expect(first(GameEventNames.bossInRange) + 1,
         first(GameEventNames.bossTakeoff));
     expect(first(GameEventNames.bossTakeoff),
@@ -67,14 +67,17 @@ void main() {
       expect(e.data['set'], isA<String>());
     }
     final launch = log.firstWhere((e) => e.name == GameEventNames.bossLaunch);
-    expect(launch.data['gate'], isA<String>());
+    expect(launch.data['hatch'], isA<String>());
     expect(launch.data['count'], isA<int>());
     // Each step closer.
     expect(log.where((e) => e.name == GameEventNames.bossApproach).length,
         greaterThanOrEqualTo(2));
   });
 
-  test('field impacts: at most 4 per second', () {
+  // carrier-hatches §A8 (the hull-wide field and its impacts are retired):
+  // a tier's destruction, the transformation and the core, in order, all
+  // structured, none raw.
+  test('hatches → tier → transformation → core exposed, in order', () {
     final m = ArcadeModel(seed: 6)..startAt(sector: 5, route: 0);
     final b = m.boss!;
     for (var g = 0; g < 60 * 60 && !(b.fightReady && m.combat); g++) {
@@ -82,19 +85,42 @@ void main() {
       m.update(1 / 60);
     }
     expect(m.combat, isTrue);
-    m.takeGameEvents();
-    for (var i = 0; i < 10; i++) {
-      m.hitBoss(b.x + i * 5);
+    final log = <GameEvent>[...m.takeGameEvents()];
+    final raw = <String>[];
+    for (var guard = 0; guard < 600 && b.chapter.name != 'core'; guard++) {
+      for (final (i, h) in b.hatches.indexed) {
+        if (!h.destroyed) m.hitHatch(i, damage: 2);
+      }
       m.invulnerable = 2;
       m.update(1 / 60);
+      log.addAll(m.takeGameEvents());
+      raw.addAll(m.takeEvents());
     }
-    final impacts = m
-        .takeGameEvents()
-        .where((e) => e.name == GameEventNames.bossFieldImpact)
-        .toList();
-    expect(impacts, hasLength(4));
-    expect(impacts.first.data['region'], isA<String>());
-    final cells = m.takeGameEvents();
-    expect(cells, isEmpty);
+    final names = log.map((e) => e.name).toList();
+    int first(String n) => names.indexOf(n);
+    expect(first(GameEventNames.bossHatchTier), greaterThanOrEqualTo(0));
+    expect(first(GameEventNames.bossHatchFieldDown),
+        lessThan(first(GameEventNames.bossHatchDrop)));
+    expect(first(GameEventNames.bossHatchDrop),
+        lessThan(first(GameEventNames.bossShieldDown)));
+    expect(first(GameEventNames.bossShieldDown),
+        lessThan(first(GameEventNames.bossTransform)));
+    expect(first(GameEventNames.bossTransform),
+        lessThan(first(GameEventNames.bossCoreExposed)));
+    final tiers = log.where((e) => e.name == GameEventNames.bossHatchTier);
+    expect([for (final e in tiers) e.data['tier']], [1, 2, 3]);
+    expect(tiers.last.data['tiers'], 3);
+    expect(tiers.last.data['depth'], 1.0);
+    expect(log.where((e) => e.name == GameEventNames.bossHatchDrop),
+        hasLength(4));
+    for (final n in [
+      GameEventNames.bossHatchDrop,
+      GameEventNames.bossHatchTier,
+      GameEventNames.bossTransform,
+      GameEventNames.bossHatchFieldDown,
+    ]) {
+      expect(raw.contains(n), isFalse, reason: 'structured only: $n');
+    }
+    expect(names.contains('bossGateOpen'), isFalse);
   });
 }

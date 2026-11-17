@@ -131,3 +131,6 @@ on the audio studio (tillandsias#1103).
 | `bonusCrateMissed.supplyRun.h3` | human | anvil | calm | Unopened crates are just litter. Pop them on the way down. | (text card) |
 | `bonusCrateMissed.supplyRun.d0` | demon | skritch | excited | [cackle] Dropped it! Finders keepers! | (text card) |
 | `bonusCrateMissed.supplyRun.d1` | demon | nibb | excited | [cackle] Mine now. Does it have the crunchy ones? | (text card) |
+| `bossHintHatches.h0` | human | admiral | urgent | Destroy the hatches! | (text card) |
+| `bossHintTiming.h0` | human | kestrel | urgent | Time the open hatch! | (text card) |
+| `bossHintLead.h0` | human | wisp | urgent | Fire ahead of its position! | (text card) |

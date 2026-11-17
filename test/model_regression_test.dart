@@ -84,7 +84,7 @@ void main() {
     boss.door = 0;
     expect(model.hitBoss(boss.x), isFalse);
     boss.door = 1;
-    expect(model.hitBoss(boss.x + 20), isFalse);
+    expect(model.hitBoss(boss.x + 26), isFalse); // the 24-unit core window
     expect(model.hitBoss(boss.x), isTrue);
     expect(boss.core, core - 1);
   });

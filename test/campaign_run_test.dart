@@ -72,8 +72,15 @@ void main() {
           final boss = m.boss!;
           advance(m, Carrier.riseSeconds + .1);
           expect(boss.fightReady, isTrue);
-          expect(boss.shieldMax, m.policy.bossShieldForRoute(route));
-          expect(boss.coreMax, m.policy.bossCoreForRoute(route));
+          // carrier-hatches §A11: the hatches' pool and the core's share.
+          expect(
+            boss.shieldMax,
+            lessThanOrEqualTo(m.policy.bossShieldForRoute(route)),
+          );
+          expect(
+            boss.coreMax,
+            lessThanOrEqualTo(m.policy.bossCoreForRoute(route)),
+          );
           m.invulnerable = 100;
           advance(m, 4);
           expect(

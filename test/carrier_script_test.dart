@@ -7,7 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('authored tours 1–5 follow the design tables', () {
     final zooms = [.70, .68, .66, .64, .62];
-    final gates = [4, 6, 8, 10, 12];
+    // carrier-hatches: the upper hatches (4, 4, 6, 6, 8) and the core door.
+    final gates = [5, 5, 7, 7, 9];
     for (var r = 0; r < 5; r++) {
       final s = CarrierScript.authored(r);
       expect(s.launchWaves, r <= 2 ? 2 : 3);
@@ -64,7 +65,7 @@ void main() {
         expect(s.bend.leanMax, lessThanOrEqualTo(t5.bend.leanMax));
         expect(s.bend.bankMax, lessThanOrEqualTo(t5.bend.bankMax));
         expect(s.bend.pitchMax, lessThanOrEqualTo(t5.bend.pitchMax));
-        expect(s.gates, hasLength(12));
+        expect(s.gates, hasLength(9)); // carrier-hatches: tour 5's hatches
         expect(s.launchWaves, 3);
       }
     }

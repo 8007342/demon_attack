@@ -40,8 +40,24 @@ void steer(ArcadeModel model, {bool react = true, bool oracle = true}) {
   var x = model.shipX;
   final boss = model.boss;
   if (boss != null) {
-    final flight = (ArcadeModel.shipY - boss.y) / 390;
-    x = boss.forecastX(flight, model.speed);
+    // carrier-hatches §A9: the vulnerable tier's hatch nearest the ship,
+    // led by the forecast; then the core door (hull-local y 25).
+    var dx = 0.0, dy = 0.0;
+    if (boss.chapter == CarrierChapter.hatches) {
+      var best = double.infinity;
+      for (final h in boss.vulnerableHatches) {
+        final d = (boss.x + h.hatch.x - model.shipX).abs();
+        if (d < best) {
+          best = d;
+          dx = h.hatch.x;
+          dy = h.hatch.y;
+        }
+      }
+    } else {
+      dy = 25;
+    }
+    final flight = (ArcadeModel.shipY - (boss.y + dy)) / 390;
+    x = boss.forecastX(flight, model.speed) + dx;
   } else if (model.demons.isNotEmpty) {
     // The first settled enemy (a parked or arriving one cannot be hit).
     final d =

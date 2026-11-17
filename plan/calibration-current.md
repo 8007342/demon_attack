@@ -604,3 +604,73 @@ Easy's approach went from 213.5 s to 181.3 s (the `game` baseline is 153.1 s). N
 
 **Boss endurance** (`test/boss_endurance_test.dart`) with the tune: easy 352.64 s (+5.9 %), normal 417.29 s
 (−3.3 %), hard 436.03 s (+1.7 %). Pooled: +1.0 % seconds and −0.4 % hits. Everything is within its gates.
+
+## Carrier hatches (2026-11-17): the boss made easier on purpose
+
+The operator's round 3d (C4 revision): every player finds the carrier fight "waaay too difficult", so make it fairer
+through structure (`openspec/changes/carrier-hatches/design.md` §A2–§A11):
+- shootable hatches, each with its own field;
+- a transformation;
+- the core door as the only target.
+
+This is a **deliberate balance change** with targets, not a change held within the old gates.
+
+**Harnesses.**
+- `test/support/boss_fairness.dart` (run headless with `dart run test/support/boss_fairness.dart`;
+  `test/boss_fairness_test.dart` checks the targets). Each tour's boss level is played from its start, 6 seeds × 5
+  tours per difficulty, unprotected with lives refilled. It uses two pilots:
+  - the expert leads every target;
+  - the naive pilot aims at where the target is now.
+
+  The values are seconds and lives lost per five carriers (fight-ready time only), and the kill share within 240 s
+  per carrier.
+- `test/boss_endurance_test.dart`: the protected campaign pilot, 16 full campaigns per difficulty (unchanged).
+
+**Before** (`game` dde01449) and **after** (this change, work/carrier-hatches):
+
+| Difficulty | Expert s, before → after | Δ (target) | Expert lives, before → after | Δ (target) | Naive kill share, before → after |
+|---|---:|---:|---:|---:|---:|
+| easy | 476.7 → 335.0 | −29.7 % (−25 ± 5) | 72.67 → 49.5 | −31.9 % (−30 ± 5) | 0.967 → 1.0 |
+| normal | 689.3 → 529.5 | −23.2 % (−20 ± 5) | 111.83 → 83.5 | −25.3 % (−25 ± 5) | 0.70 → 0.967 |
+| hard | 666.0 → 595.5 | −10.6 % (−10 ± 5) | 109.83 → 94.83 | −13.7 % (−15 ± 5) | 0.80 → 0.867 |
+
+**Boss endurance** (`test/boss_endurance_test.dart`, the protected pilot, which never loses a life, so the faster
+kill shows in full):
+
+| Difficulty | Seconds | Hits |
+|---|---|---|
+| easy | 352.64 → 183.85 (−47.9 %) | 932.3 → 483.9 |
+| normal | 417.29 → 277.84 (−33.4 %) | 1211.7 → 790.8 |
+| hard | 436.03 → 300.83 (−31.0 %) | 1332.4 → 921.1 |
+
+Pooled: seconds −36.1 %, hits −37.1 %.
+- The test's `baseline` now holds the after values. The old ones are kept as `preHatches`, and a new assertion keeps
+  every difficulty at least 20 % faster to kill than `preHatches`.
+- The ±5 % pooled and ±10 % per-difficulty gates apply to the new baseline from here on.
+
+**The levers used** (`lib/game/carrier_hatches.dart`):
+
+| Lever | Easy | Normal | Hard |
+|---|---|---|---|
+| Hatch pool (share of the old shield) | 0.5 | 0.55 | 0.65 |
+| Core share of `coreMax` | 0.65 | 0.8 | 0.8 |
+| Fan-attack rate | 0.7 | 0.85 | 0.75 |
+
+The rest apply on every difficulty:
+- hatch field and hull radii 24 and 16 units;
+- glide 0.25 in the hatch chapter and 0.4 in the core chapter;
+- the core door hit from 0.4 open, with a half-width of 24 × its openness.
+
+The flock timer, flock sizes, kinds and caps are unchanged.
+
+**What the first draft measured** (pool 0.85, radii 18/12, glide 0.35/0.6, window 16 from 0.6 open, no core share):
+- the expert took +16 %, +3 % and +6 %: *harder*;
+- the naive pilot killed only 63 %, 43 % and 53 % of carriers.
+
+The hatches, unlike the old 220-unit field lip, must be aimed at and led. Losing the side hatches had also cut the
+core's exposure.
+
+**The boss level's clear time** is no longer gated at +10 %, because it is meant to fall (design §A11).
+
+**The campaign playtest's bounds** (`test/campaign_playtest_test.dart`) hold, with the pilot taught the hatches: it
+aims at the vulnerable tier's nearest hatch with the forecast lead, then at the core door.

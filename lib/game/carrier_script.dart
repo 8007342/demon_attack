@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'carrier_gates.dart';
+import 'carrier_hatches.dart';
 
 /// carrier-v3 §9: every number of a tour's carrier, as data. Tours 1–5
 /// (routes 0–4) are authored ([CarrierScript.authored]); an unseeded run
@@ -36,7 +37,8 @@ class CarrierScript {
   final int launchWaves;
   final CarrierApproachScript approach;
 
-  /// The hull's gates (gameplay data, [CarrierGates.forTour]).
+  /// The hull's launch hatches: the upper tiers' dorsal hatches, then the
+  /// core door (carrier-hatches; gameplay data, [CarrierHatches]).
   final List<CarrierGate> gates;
 
   /// The round-robin order over [gates] (indices): authored left-right
@@ -61,7 +63,8 @@ class CarrierScript {
     final r = route.clamp(0, 4);
     final waves = r <= 2 ? 2 : 3;
     final d0 = r == 0 ? 4.0 : (r <= 2 ? 4.5 : 5.0);
-    final gates = CarrierGates.forTour(r);
+    // --- carrier-hatches: the upper hatches, then the core door.
+    final gates = <CarrierGate>[...CarrierHatches.forTour(r), CarrierHatches.core];
     return CarrierScript(
       route: route,
       launchWaves: waves,

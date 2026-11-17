@@ -479,17 +479,38 @@ abstract final class GameEventNames {
   /// `distance`).
   static const bossApproach = 'bossApproach';
 
-  /// A gate's telegraph starts (`gate`, `slot`, `side`).
-  static const bossGateTelegraph = 'bossGateTelegraph';
+  // carrier-hatches §A8: the volley lifecycle on the hatches (carrier-v3's
+  // `bossGate*` names are retired, never emitted beside these).
 
-  /// Its doors open (`gate`).
-  static const bossGateOpen = 'bossGateOpen';
+  /// A hatch's telegraph starts (`hatch`, `tier`, `side`, `kind`, `slot`).
+  static const bossHatchTelegraph = 'bossHatchTelegraph';
 
-  /// A volley leaves (`gate`, `count`, `tier`).
+  /// Its doors open (`hatch`, `tier`).
+  static const bossHatchOpen = 'bossHatchOpen';
+
+  /// A volley leaves (`hatch`, `count`, `tier`).
   static const bossLaunch = 'bossLaunch';
 
-  /// Its doors close (`gate`).
-  static const bossGateClose = 'bossGateClose';
+  /// Its doors close (`hatch`, `tier`).
+  static const bossHatchClose = 'bossHatchClose';
+
+  /// A hatch's own field breaks (`hatch`, `tier`, `side`).
+  static const bossHatchFieldDown = 'bossHatchFieldDown';
+
+  /// A hatch is destroyed (`hatch`, `tier`, `side`, `cause`, `left`).
+  static const bossHatchDrop = 'bossHatchDrop';
+
+  /// The vulnerable tier changes: a section of the fight's song (`tier`,
+  /// `tiers`, `depth` 0..1, `shootable`, `from`).
+  static const bossHatchTier = 'bossHatchTier';
+
+  /// The transformation (`stage`: start or end; `seconds`).
+  static const bossTransform = 'bossTransform';
+
+  /// The radio hints (`hint`): written lines until they are recorded.
+  static const bossHintHatches = 'bossHintHatches';
+  static const bossHintTiming = 'bossHintTiming';
+  static const bossHintLead = 'bossHintLead';
 
   /// The hittable threshold, D = 1 (`distance`).
   static const bossInRange = 'bossInRange';
@@ -512,10 +533,10 @@ abstract final class GameEventNames {
   /// The intro's events in their order of first appearance.
   static const carrierIntro = [
     bossApproach,
-    bossGateTelegraph,
-    bossGateOpen,
+    bossHatchTelegraph,
+    bossHatchOpen,
     bossLaunch,
-    bossGateClose,
+    bossHatchClose,
     bossInRange,
     bossTakeoff,
     bossClimbPeak,
@@ -546,7 +567,8 @@ abstract final class GameEventNames {
   /// `form`, `detachOrder`; S3).
   static const bossModuleLost = 'bossModuleLost';
 
-  /// The last form: the gallery breaks open.
+  /// The transformation's end: the core door is exposed (carrier-hatches
+  /// §A4; it was the last form).
   static const bossCoreExposed = 'bossCoreExposed';
 
   /// Core 0: the hull breaks into module wrecks (S4) …

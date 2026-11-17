@@ -32,15 +32,18 @@ void main() {
     expect(b.fightReady, isTrue);
     m.takeGameEvents();
     final all = <GameEvent>[];
-    while (b.shield > 0) {
+    // carrier-hatches: the shield is the hatches' own fields and hulls;
+    // the cell events are retired, each hatch reports its drop.
+    for (var guard = 0; guard < 100000 && b.shield > 0; guard++) {
       m.hitBoss(b.x);
       all.addAll(m.takeGameEvents());
     }
-    final cells = [
-      for (final e in all)
-        if (e.name == GameEventNames.bossShieldCellLost) e.data['remaining'],
-    ];
-    expect(cells, [for (var c = 11; c >= 0; c--) c]);
+    expect(all.where((e) => e.name == GameEventNames.bossShieldCellLost),
+        isEmpty);
+    expect(all.where((e) => e.name == GameEventNames.bossHatchDrop),
+        hasLength(b.hatches.length));
+    expect(all.where((e) => e.name == GameEventNames.bossCoreExposed),
+        hasLength(1));
     expect(all.where((e) => e.name == GameEventNames.bossShieldFailing), hasLength(1));
     expect(all.where((e) => e.name == GameEventNames.bossShieldDown), hasLength(1));
     // Core: two armour steps per form; the odd ones shed plates, the even
@@ -65,7 +68,6 @@ void main() {
     expect([for (final e in modules) e.data['rank']], [1, 2, 3]);
     expect(plates.first.data['slot'], 'spines');
     expect(modules.first.data['set'], 'crown');
-    expect(all.where((e) => e.name == GameEventNames.bossCoreExposed), hasLength(1));
     expect(all.where((e) => e.name == GameEventNames.bossCollapseStart), hasLength(1));
     final wrecks = [
       for (final e in all)
@@ -83,10 +85,12 @@ void main() {
     ];
     expect(order.indexOf(GameEventNames.bossShieldFailing),
         lessThan(order.indexOf(GameEventNames.bossShieldDown)));
+    // carrier-hatches §A4: the transformation exposes the core before the
+    // armour and forms.
     expect(order.indexOf(GameEventNames.bossShieldDown),
-        lessThan(order.indexOf(GameEventNames.bossArmourShed)));
-    expect(order.lastIndexOf(GameEventNames.bossModuleLost),
         lessThan(order.indexOf(GameEventNames.bossCoreExposed)));
+    expect(order.indexOf(GameEventNames.bossCoreExposed),
+        lessThan(order.indexOf(GameEventNames.bossArmourShed)));
     expect(order.last, GameEventNames.bossCollapseStart);
     // Every decay event names the run's module set (visual variety).
     for (final e in all.where((e) => e.name.startsWith('boss'))) {

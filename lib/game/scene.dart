@@ -17,6 +17,8 @@ import 'ground_atmosphere_atlas.dart';
 import 'bonus/bonus_look.dart'; // --- bonus levels
 import 'bonus/bonus_painters.dart'; // --- bonus levels: mechanics
 import 'boss_painter.dart';
+import 'carrier_breakup_painter.dart';
+import 'carrier_hatch_painter.dart';
 import 'carrier_presentation.dart';
 import 'carrier_script.dart' show CarrierApproachScript;
 import 'ground_painter.dart';
@@ -62,6 +64,8 @@ class DemonScene extends FlameGame {
 
   /// carrier-v3: the field, the gates and the speed cues.
   final carrierV3 = CarrierPresentation();
+  final hatchPainter = CarrierHatchPainter(); // --- carrier-hatches
+  final breakup = CarrierBreakupPainter(); // --- carrier-hatches Part B
 
   /// The gameplay layer is drawn under the arena camera's zoom this frame.
   bool _zoomApplied = false;
@@ -289,6 +293,10 @@ class DemonScene extends FlameGame {
     armada.bend = armada.carrier && !reduced ? bossDirector.bend : null;
     if (armada.carrier && model.level >= 4) carrierV3.ensureField(armada);
     carrierV3.update(dt, model, bossDirector, reduced: reduced);
+    hatchPainter.update(model.boss, model.visualClock, reduced: reduced);
+    // --- carrier-hatches Part B: the hull's components, cut at install.
+    if (armada.carrier && model.level >= 4) breakup.prepare(armada);
+    breakup.update(model, bossDirector, reduced: reduced);
   }
 
   /// Feeds the fog its clock and the flight distance (visual only). The fog
@@ -1032,6 +1040,11 @@ class DemonScene extends FlameGame {
       if (nextFog == fogSlots.length) lurkFogPass(c);
     }
 
+    // --- carrier-hatches §A6: in the fight, the hull (prow, deck, hatches)
+    // is drawn before the creatures, so none is ever covered by it.
+    final front = model.boss;
+    if (front != null && _carrierFrontFirst(front)) _carrierFront(c, front);
+
     for (final d in _byDepth(census.bodies)) {
       while (nextFog < fogSlots.length &&
           Atmosphere.layers[fogSlots[nextFog]]!.nearness <= d.nearness) {
@@ -1232,188 +1245,7 @@ class DemonScene extends FlameGame {
       c.restore();
     }
     final b = model.boss;
-    if (b != null) {
-      c.save();
-      _carrierArrival(c, b, effects: true);
-      final rising = _bossRiseBegin(c, b);
-      final carrierBank = _carrierBank(b);
-      final hullDamage = (1 - b.core / b.coreMax).clamp(0.0, 1.0);
-      final hero = armada.heroReady;
-      if (hero) {
-        // boss-grandeur: the bow of the view set (the functional face) at
-        // the director's view and stage; the scene adds barrels, hatches,
-        // maw and shield as before.
-        final d = bossDirector;
-        armada.paintHero(
-          c,
-          Offset(b.x, b.y),
-          view: d.view,
-          previous: d.previous,
-          blend: d.blend,
-          stage: d.stage,
-          front: true,
-          detached: d.detached,
-          clock: model.visualClock,
-        );
-        if (!armada.carrier) _carrierTurretBarrels(c, b);
-        armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
-      } else if (armada.ready) {
-        // Bright bow: idle life (eye pulse, ear-fin breath, spine flex and
-        // fissure flicker at 2 fps), damage and the turret heads.
-        final turretFrame =
-            ((model.visualClock * 6 + (model.shipX > b.x ? 1 : 0)).floor() % 4);
-        armada.paintBow(
-          c,
-          b,
-          clock: model.visualClock,
-          damageCell: _carrierDamageCell(hullDamage),
-          turretFrame: turretFrame,
-        );
-        _carrierTurretBarrels(c, b);
-        armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
-      } else {
-        sprite(
-          c,
-          CombatAtlas.fallbackRow,
-          4 + b.phase.clamp(0, 3),
-          Offset(b.x, b.y),
-          184,
-          height: 118,
-        );
-      }
-      if (armada.carrier) {
-        // boss-carrier-wire: the v2 prow's hangar deck carries its own
-        // doors (no fanged jaws, no lit windows: styleguide §3.4).
-        _carrierDeck(c, b);
-        // carrier-v3 §4: the prow's gates (deck bays, prong gates), over
-        // the deck's furniture.
-        carrierV3.paintGates(
-          c,
-          model.launches,
-          Offset(b.x, b.y),
-          front: true,
-          clock: model.visualClock,
-          bend: armada.bent,
-          armada: armada,
-          stage: armada.lastStage,
-        );
-      } else {
-        _carrierLighting(c, Offset(b.x, b.y), carrierBank);
-        if (!hero) _carrierEyes(c, b); // the view set's eyes are its own
-        _carrierSideHatches(c, b);
-        final core = Offset(b.x, b.y + 25);
-        c.drawRect(
-          Rect.fromCenter(center: core, width: 32, height: 22),
-          Paint()..color = const Color(0xFF070A14),
-        );
-        c.drawRect(
-          Rect.fromCenter(center: core, width: 24, height: 12),
-          Paint()..color = b.shield > 0 ? violet : gold,
-        );
-        if (armada.anyReady) {
-          // Authored blast jaws: fanged armoured leaves.
-          armada.paintJaws(c, b);
-        } else {
-          final closed = 16 * (1 - b.door);
-          for (final direction in [-1, 1]) {
-            c.drawRect(
-              Rect.fromLTWH(
-                core.dx + (direction < 0 ? -16 : 16 - closed),
-                core.dy - 11,
-                closed,
-                22,
-              ),
-              Paint()..color = const Color(0xFF57617E),
-            );
-          }
-        }
-      }
-      // carrier-v3 §3: a v2 carrier's field is the hull-conforming
-      // membrane; its front lip (where shots stop) is drawn here, over the
-      // prow. Without a distance map, today's arc.
-      final membrane =
-          armada.carrier &&
-          b.fightReady &&
-          carrierV3.paintField(
-            c,
-            b,
-            armada,
-            bossDirector,
-            lip: true,
-            reduced: sectors.flyover.reducedMotion,
-          );
-      if (b.shield > 0 && !membrane) {
-        // A fixed-width egg encases the hull; depletion brings its surface
-        // inward vertically, so incoming fire visibly reaches nearer the ship.
-        final strength = b.shield / b.shieldMax;
-        final paint = Paint()..isAntiAlias = false;
-        // alien-insignia: the force-shield cyan family (styleguide §3),
-        // dimming toward the spent-socket teal as it wears.
-        final Color shieldColor;
-        if (strength > 0.6) {
-          shieldColor = InsigniaPainter.rimCyan;
-        } else if (strength > 0.25) {
-          // Stressed force field dims with fracture flicker.
-          shieldColor = const Color(0xFF3FC4DC);
-        } else {
-          // Critical force field flickers rapidly with warning energy
-          final flicker = (math.sin(model.visualClock * 24) + 1.0) * 0.5;
-          shieldColor = Color.lerp(
-            const Color(0xFF1C6F86),
-            InsigniaPainter.rimCyan,
-            flicker,
-          )!;
-        }
-
-        for (var offset = 0.0; offset <= b.forceFieldHalfWidth; offset += 2) {
-          for (final side in [-1.0, 1.0]) {
-            final worldX = b.x + side * offset;
-            final surface = b.forceFieldSurfaceY(worldX);
-            paint.color = shieldColor.withValues(alpha: .65 + strength * .3);
-            c.drawRect(
-              Rect.fromLTWH(
-                (worldX - 1).roundToDouble(),
-                surface.roundToDouble(),
-                2,
-                strength > .5 ? 3 : 2,
-              ),
-              paint,
-            );
-            if (strength > .25) {
-              paint.color = violet.withValues(alpha: .22 + strength * .2);
-              c.drawRect(
-                Rect.fromLTWH(
-                  (worldX - 1).roundToDouble(),
-                  surface.roundToDouble() - 4,
-                  2,
-                  2,
-                ),
-                paint,
-              );
-            }
-          }
-        }
-        if (strength <= 0.6) {
-          final arcP = Paint()
-            ..color = shieldColor.withValues(alpha: 0.8)
-            ..strokeWidth = 1.5;
-          final arcX =
-              b.x +
-              math.sin(model.visualClock * 9) * (b.forceFieldHalfWidth * 0.7);
-          final arcY = b.forceFieldSurfaceY(arcX);
-          c.drawLine(
-            Offset(arcX - 6, arcY - 3),
-            Offset(arcX + 4, arcY + 2),
-            arcP,
-          );
-        }
-      }
-      // The view set carries its own damage stages (S1–S3).
-      if (!hero) _damage(c, Offset(b.x, b.y), hullDamage, model.visualClock);
-      if (rising) c.restore();
-      c.restore();
-      if (b.fightReady) _carrierInsignia(b);
-    }
+    if (b != null && !_carrierFrontFirst(b)) _carrierFront(c, b);
     _bossWrecks(c); // --- boss-grandeur: plates, modules, the collapse
     // --- atmosphere: one or two very thin sheets over the arena, creatures
     // and carrier included. Bullets, the player, tells and the HUD are drawn
@@ -1557,6 +1389,135 @@ class DemonScene extends FlameGame {
   /// alien-insignia: the carrier's form glyph on the brood sigil (the
   /// rank ladder: talon, two talons, ocellus, crown) and its 12 hull cells
   /// on the force field's lower arc, `ceil(12 · shield / shieldMax)` lit.
+  /// carrier-hatches §A6: the fighting carrier's front pass goes under the
+  /// creatures.
+  bool _carrierFrontFirst(Carrier b) => b.fightReady;
+
+  /// The carrier's front pass: the prow, deck, gates and core door.
+  void _carrierFront(Canvas c, Carrier b) {
+    c.save();
+    _carrierArrival(c, b, effects: true);
+    final rising = _bossRiseBegin(c, b);
+    final carrierBank = _carrierBank(b);
+    final hullDamage = (1 - b.core / b.coreMax).clamp(0.0, 1.0);
+    final hero = armada.heroReady;
+    if (hero) {
+      // boss-grandeur: the bow of the view set (the functional face) at
+      // the director's view and stage; the scene adds barrels, hatches,
+      // maw and shield as before.
+      final d = bossDirector;
+      armada.paintHero(
+        c,
+        Offset(b.x, b.y),
+        view: d.view,
+        previous: d.previous,
+        blend: d.blend,
+        stage: d.stage,
+        front: true,
+        detached: d.detached,
+        clock: model.visualClock,
+      );
+      if (!armada.carrier) _carrierTurretBarrels(c, b);
+      armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
+    } else if (armada.ready) {
+      // Bright bow: idle life (eye pulse, ear-fin breath, spine flex and
+      // fissure flicker at 2 fps), damage and the turret heads.
+      final turretFrame =
+          ((model.visualClock * 6 + (model.shipX > b.x ? 1 : 0)).floor() % 4);
+      armada.paintBow(
+        c,
+        b,
+        clock: model.visualClock,
+        damageCell: _carrierDamageCell(hullDamage),
+        turretFrame: turretFrame,
+      );
+      _carrierTurretBarrels(c, b);
+      armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
+    } else {
+      sprite(
+        c,
+        CombatAtlas.fallbackRow,
+        4 + b.phase.clamp(0, 3),
+        Offset(b.x, b.y),
+        184,
+        height: 118,
+      );
+    }
+    if (armada.carrier) {
+      // boss-carrier-wire: the v2 prow's hangar deck carries its own
+      // doors (no fanged jaws, no lit windows: styleguide §3.4).
+      _carrierDeck(c, b);
+      // carrier-v3 §4: the prow's gates (deck bays, prong gates), over
+      // the deck's furniture.
+      carrierV3.paintGates(
+        c,
+        model.launches,
+        Offset(b.x, b.y),
+        front: true,
+        clock: model.visualClock,
+        bend: armada.bent,
+        armada: armada,
+        stage: armada.lastStage,
+      );
+    } else {
+      _carrierLighting(c, Offset(b.x, b.y), carrierBank);
+      if (!hero) _carrierEyes(c, b); // the view set's eyes are its own
+      _carrierSideHatches(c, b);
+      final core = Offset(b.x, b.y + 25);
+      c.drawRect(
+        Rect.fromCenter(center: core, width: 32, height: 22),
+        Paint()..color = const Color(0xFF070A14),
+      );
+      c.drawRect(
+        Rect.fromCenter(center: core, width: 24, height: 12),
+        Paint()..color = b.shield > 0 ? violet : gold,
+      );
+      if (armada.anyReady) {
+        // Authored blast jaws: fanged armoured leaves.
+        armada.paintJaws(c, b);
+      } else {
+        final closed = 16 * (1 - b.door);
+        for (final direction in [-1, 1]) {
+          c.drawRect(
+            Rect.fromLTWH(
+              core.dx + (direction < 0 ? -16 : 16 - closed),
+              core.dy - 11,
+              closed,
+              22,
+            ),
+            Paint()..color = const Color(0xFF57617E),
+          );
+        }
+      }
+    }
+    // carrier-v3 §3: a v2 carrier's field is the hull-conforming
+    // membrane; its front lip (where shots stop) is drawn here, over the
+    // prow. Without a distance map, today's arc.
+    // --- carrier-hatches §A3–§A5: no hull-wide field any more; the core
+    // door (the tusk-framed slot, its shutter and the lead pip).
+    if (b.fightReady) {
+      hatchPainter.paintCore(
+        c,
+        b,
+        bend: armada.carrier ? armada.bent : null,
+        clock: model.visualClock,
+        reduced: sectors.flyover.reducedMotion,
+        pip: model.leadPipShown
+            ? Offset(model.leadPipAt(b).dx, model.leadPipAt(b).dy)
+            : null,
+      );
+      // Part B: the breaking modules' components, attached or flying.
+      if (armada.carrier) {
+        breakup.paint(c, armada, bossDirector.clock, bent: armada.bent);
+      }
+    }
+    // The view set carries its own damage stages (S1–S3).
+    if (!hero) _damage(c, Offset(b.x, b.y), hullDamage, model.visualClock);
+    if (rising) c.restore();
+    c.restore();
+    if (b.fightReady) _carrierInsignia(b);
+  }
+
   void _carrierInsignia(Carrier b) {
     insignia.rank(
       b,
@@ -1806,14 +1767,15 @@ class DemonScene extends FlameGame {
           stage: armada.lastStage,
         );
         if (b.fightReady) {
-          final reduced = sectors.flyover.reducedMotion;
-          carrierV3.paintField(
+          // --- carrier-hatches §A3: the upper hatches and their own fields
+          // replace the hull-wide membrane.
+          hatchPainter.paintHatches(
             c,
             b,
-            armada,
-            bossDirector,
-            lip: false,
-            reduced: reduced,
+            model.launches,
+            bend: armada.bent,
+            clock: model.visualClock,
+            reduced: sectors.flyover.reducedMotion,
           );
           carrierV3.paintTrails(
             c,
@@ -5409,6 +5371,10 @@ extension _BossGrandeur on DemonScene {
   /// (S3) and the collapse's module wrecks (S4), each with a blast as it
   /// breaks.
   void _bossWrecks(Canvas c) {
+    // --- carrier-hatches Part B: components still flying after the kill.
+    if (model.boss == null && armada.heroReady) {
+      breakup.paint(c, armada, bossDirector.clock);
+    }
     // --- carrier-render-engine §3: a v2 carrier falls as one wreck.
     bossDirector.ensureCollapse(model, armada.modules);
     final collapse = bossDirector.collapse;

@@ -216,6 +216,14 @@ implementation follows the merge of `work/carrier-v3-render`.
   - This supersedes the lead's earlier "upper hatches not directly shootable".
 - Radio hints, one line each: "Destroy the hatches!", "Time the open hatch!", "Fire ahead of its position!". Radio
   subtitles stay on one line so the font can grow a little.
+- **Spec'd** (`work/carrier-hatches`, design §A2–§A12 of
+  [`openspec/changes/carrier-hatches/`](../openspec/changes/carrier-hatches/design.md)):
+  - three chapters: shootable hatches with their own fields, a 3.5 s transformation with a slow zoom-in, then the
+    core door alone;
+  - a slower glide, a wider door window and a lead pip on Easy and Normal;
+  - the three hints as written lines;
+  - subtitles at 14.5 px, with a 28-character one-line limit tested over `lines.json`;
+  - easing targets for an expert and a naive pilot.
 
 ## Round 3d, V1 addendum: status (2026-11-16, change `voice-stack`)
 Licences re-read for a free GPL-3.0 game in [`plan/voice-stack-research.md`](voice-stack-research.md) §10, with an

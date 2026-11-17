@@ -326,6 +326,8 @@ void main() {
       }
       maxLean = maxLean > d.bend.lean.abs() ? maxLean : d.bend.lean.abs();
     }
-    expect(maxLean, greaterThan(1.5 * deg), reason: 'it leans into travel');
+    // carrier-hatches §A5: the hatch chapter glides at 0.25 of the old
+    // rate, so it leans less (was 1.5°).
+    expect(maxLean, greaterThan(.6 * deg), reason: 'it leans into travel');
   });
 }

@@ -85,10 +85,24 @@ void main() {
         final normal = Carrier(route);
         final easy = Carrier(route, difficulty: Difficulty.easy);
         final hard = Carrier(route, difficulty: Difficulty.hard);
-        expect(easy.shieldMax, (normal.shieldMax * .8).round());
-        expect(easy.coreMax, (normal.coreMax * .8).round());
-        expect(hard.shieldMax, normal.shieldMax);
-        expect(hard.coreMax, normal.coreMax);
+        // carrier-hatches: the shield is the hatches' pool, split per hatch
+        // from the policy's shield (still 80 % on Easy).
+        expect(
+          DifficultyPolicy(Difficulty.easy).bossShieldForRoute(route),
+          (DifficultyPolicy(Difficulty.normal).bossShieldForRoute(route) * .8)
+              .round(),
+        );
+        expect(easy.shieldMax, lessThan(normal.shieldMax));
+        // carrier-hatches §A11: the core's calibrated share per difficulty.
+        expect(
+          DifficultyPolicy(Difficulty.easy).bossCoreForRoute(route),
+          (DifficultyPolicy(Difficulty.normal).bossCoreForRoute(route) * .8)
+              .round(),
+        );
+        expect(easy.coreMax, lessThanOrEqualTo(normal.coreMax));
+        // carrier-hatches §A11: Hard keeps more of the old shield.
+        expect(hard.shieldMax, greaterThanOrEqualTo(normal.shieldMax));
+        expect(hard.coreMax, greaterThanOrEqualTo(normal.coreMax));
       }
     },
   );

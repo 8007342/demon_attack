@@ -6,6 +6,7 @@ import 'package:demon_attack/comms/comms_bank.dart';
 import 'package:demon_attack/comms/comms_director.dart';
 import 'package:demon_attack/comms/comms_lineup.dart';
 import 'package:demon_attack/comms/comms_mouth.dart';
+import 'package:demon_attack/comms/comms_one_line.dart';
 import 'package:demon_attack/comms/comms_types.dart';
 import 'package:demon_attack/game/game_events.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -783,7 +784,12 @@ void main() {
         ...commsHumanTriggers.values,
         ...commsDemonTriggers.values,
       ]) {
-        expect(spec.lines.length, inInclusiveRange(2, 30), reason: spec.name);
+        // carrier-hatches: the carrier hints are one line each.
+        expect(
+          spec.lines.length,
+          inInclusiveRange(commsOneLineTriggers.contains(spec.name) ? 1 : 2, 30),
+          reason: spec.name,
+        );
         for (final line in spec.lines) {
           expect(commsCast, contains(line.speaker));
           expect(
@@ -1013,6 +1019,8 @@ void rushRadio() {
       // lines, plus 2 bonus-briefing clear lines (bonus-briefing), less
       // the 9 Supply Run in-level lines that now show their own words
       // (mission-medals: the borrowed subtitles told the player nothing).
+      // The carrier hints (carrier-hatches) are written lines: they borrow
+      // nothing, so the count is unchanged.
       expect(borrowed, 55);
     });
 

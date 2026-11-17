@@ -16,6 +16,7 @@ import 'comms_director.dart';
 import 'brood_script.dart';
 import 'comms_portraits.dart';
 import 'comms_types.dart';
+import 'comms_one_line.dart';
 
 part 'comms_briefing_view.dart';
 
@@ -761,7 +762,7 @@ class CommsSidePanels extends StatelessWidget {
                     : CommsSubtitle(
                         message: m,
                         now: now,
-                        fontSize: 13.5 * math.min(scale, 1.2),
+                        fontSize: commsTileFont * math.min(scale, 1.2),
                         glyphHeight: 11 * math.min(scale, 1.3),
                       ),
               ),
@@ -806,7 +807,8 @@ class CommsHudStack extends StatelessWidget {
   /// Cards are sized to their text (mobile-top-trim): [stripHeight] is the
   /// tallest a card gets (four lines of radio text, or a brood grunt's
   /// glyphs and three SIGINT lines, plus the frame).
-  static const stripHeight = 76.0, chipHeight = 18.0, gap = 2.0;
+  // carrier-hatches §A12: four lines at the larger 14.5 px (was 76).
+  static const stripHeight = 84.0, chipHeight = 18.0, gap = 2.0;
 
   /// The portrait is never taller than the text beside it, between
   /// [minPortrait] (the half-scale face) and [portrait].
@@ -887,7 +889,9 @@ class CommsHudStack extends StatelessWidget {
                           conversation: conversation,
                         ),
                       ),
-                    ] else ...[
+                    ] else if (!commsOneLine(panels.first.line.id)) ...[
+                      // carrier-hatches §A12: a one-line line takes the
+                      // full width; any other single call half of it.
                       const SizedBox(width: gap * 2),
                       const Spacer(),
                     ],
@@ -1192,7 +1196,7 @@ class CommsHudStack extends StatelessWidget {
                               color: celebrating
                                   ? const Color(0xFFFFD86B)
                                   : accent,
-                              fontSize: 9.5,
+                              fontSize: commsStripTagFont,
                               fontWeight: FontWeight.bold,
                               letterSpacing: .8,
                             ),
@@ -1200,11 +1204,12 @@ class CommsHudStack extends StatelessWidget {
                           TextSpan(text: m.line.text ?? ''),
                         ],
                       ),
-                      maxLines: 4,
+                      // carrier-hatches §A12: flagged lines stay on one line.
+                      maxLines: commsOneLine(m.line.id) ? 1 : 4,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: _text,
-                        fontSize: 13,
+                        fontSize: commsStripFont,
                         height: 1.15,
                         shadows: [
                           Shadow(color: Color(0xFF000000), blurRadius: 2),
