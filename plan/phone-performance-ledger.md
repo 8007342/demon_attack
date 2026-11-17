@@ -112,7 +112,7 @@ rain 193 far + 77 near streaks + 29 splashes in a downpour (LEAN 116 + 46 + 20, 
 
 | Item | Before | After |
 |---|---:|---:|
-| `main.dart.js` | 3,885,385 B (gzip 1,194,677) | 3,889,734 B (gzip 1,196,741) |
+| `main.dart.js` | 3,885,385 B (gzip 1,194,677) | 3,889,754 B (gzip 1,196,756) |
 | `canvaskit/canvaskit.wasm` (what Safari loads) | 7,284,602 B (gzip 2,916,585) | unchanged |
 | `assets/images/` in the build | 27,063,183 B | 13,728,625 B |
 | The seven converted backdrops | 15,141,237 B (PNG) | 1,806,664 B (WebP q88) |
@@ -133,7 +133,7 @@ WebP per file (`lua tools/asset_compress/webp.lua`, quality 88, method 6, sharp 
 | cosmic-sky | 2,296,272 | 242,178 | 10.5 % | 39.31 |
 | hint-scenes | 2,433,641 | 339,016 | 13.9 % | 36.39 |
 
-`main.dart.js` grew 4,349 B (the tiers, the shot layer). `lib/game/ground_atmosphere_atlas.dart` was regenerated from
+`main.dart.js` grew 4,369 B (the tiers, the shot layer). `lib/game/ground_atmosphere_atlas.dart` was regenerated from
 the WebP paintings (`go run . pack`, `check` passes): fog tints moved by at most 5/255 (sector 3 `0x442F3C` →
 `0x423037`, sector 5 `0x3C273F` → `0x39283A`).
 
