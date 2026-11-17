@@ -34,6 +34,9 @@ source and does not count as re-sourced. Check it from another network before yo
 **Contradictions to act on.**
 - C-09: `battle-metal-radio-rework` design says every current browser plays Opus. MDN's codec guide says Safari plays
   Opus in `<audio>` only inside CAF, so keep the AAC fallback (`plan/audio-backend.md`).
+  **Decided 2026-11-17:** no fallback format (operator). The AAC twins were deleted; the game decodes Opus with
+  `decodeAudioData`, not `<audio>`, and a browser that cannot (Safari before 18.4) plays the MIDI score through the
+  synthesizer.
 - D-13, D-15: `pwa-install` design. The Web Install origin trial's end and the other engines' positions are out of
   date (WebKit is opposed; Gecko has no signal).
 

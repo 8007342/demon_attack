@@ -133,6 +133,8 @@ them is a game change, made in this repo.
   high enough that dense distorted guitars stay transparent (to be set by
   listening; today about 80 kbps, which is too low).
 
+> **No fallback format (operator, 2026-11-17).** Opus (`.ogg`) is the one shipped audio format: the AAC (`.m4a`) twins were deleted from `web/audio/`, and `tools/music_pipeline.py` and `tools/comms_pipeline.py` no longer encode AAC. A browser that cannot decode Ogg Opus (Safari before 18.4) plays the MIDI score through the synthesizer (`web/audio/demon-score.js`, the MIDI fallback in `demon-audio.js`).
+
 ### 4.2 Cues per level `l<n>` (n = 1..5)
 
 | Cue | Kind | What it is |

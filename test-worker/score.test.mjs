@@ -10,7 +10,7 @@ const web = path => new URL(`../web/${path}`, import.meta.url);
 const manifest = JSON.parse(await readFile(web('audio/score/score.json'), 'utf8'));
 
 // A Web Audio mock that records every source start (time, frequency) and every gain automation.
-function mockAudio() {
+function mockAudio({ opus = true } = {}) {
   const started = [];
   const param = (value = 0) => ({ value, events: [], cancelScheduledValues(t) { this.events.push(['cancel', t]); },
     setValueAtTime(v, t) { this.events.push(['set', v, t]); }, linearRampToValueAtTime(v, t) { this.events.push(['ramp', v, t]); this.value = v; },
@@ -35,16 +35,17 @@ function mockAudio() {
     createDelay() { return audioNode({ delayTime: param(0) }); }
     createDynamicsCompressor() { return audioNode({ threshold: param(), knee: param(), ratio: param(), attack: param(), release: param() }); }
     createBuffer(channels, length) { const data = Array.from({ length: channels }, () => new Float32Array(length)); return { length, numberOfChannels: channels, getChannelData: c => data[c] }; }
-    decodeAudioData(bytes) { return Promise.resolve({ duration: 12, length: 12 * 48000, numberOfChannels: 2, name: new TextDecoder().decode(new Uint8Array(bytes)) }); }
+    // opus: false is Safari before 18.4, whose decodeAudioData rejects Ogg Opus (there is no fallback format).
+    decodeAudioData(bytes) { if (!opus) return Promise.reject(new Error('EncodingError')); return Promise.resolve({ duration: 12, length: 12 * 48000, numberOfChannels: 2, name: new TextDecoder().decode(new Uint8Array(bytes)) }); }
     async resume() { this.state = 'running'; }
     async suspend() { this.state = 'suspended'; }
   }
   return { AudioContext, started };
 }
 
-async function player({ search = '', recorded = true } = {}) {
+async function player({ search = '', recorded = true, opus = true } = {}) {
   let tick;
-  const { AudioContext, started } = mockAudio();
+  const { AudioContext, started } = mockAudio({ opus });
   const fetched = [];
   const sandbox = { URL, Uint8Array, DataView, Float32Array, Map, Set, Math, Object, Promise, TextDecoder, TextEncoder, JSON, Array, Number, String,
     location: { search }, navigator: { deviceMemory: 8 },
@@ -53,7 +54,7 @@ async function player({ search = '', recorded = true } = {}) {
     setInterval(fn) { tick = fn; },
     async fetch(url) {
       fetched.push(url.pathname);
-      const music = url.pathname.match(/^\/audio\/music\/(.+)\.(ogg|m4a)$/);
+      const music = url.pathname.match(/^\/audio\/music\/(.+)\.ogg$/);
       if (music) {
         if (!recorded) return { ok: false };
         const bytes = new TextEncoder().encode(music[1]);
@@ -224,6 +225,22 @@ test('with the score off (or missing) a move plays its recorded fallback cue', a
   await run(.3);
   assert.ok(fetched.includes('/audio/music/l5-intro.ogg'));
   assert.equal(audio.state.score.section, null);
+});
+
+test('without Opus decoding (Safari before 18.4) recorded cues play their MIDI through the synth and the score still runs', async () => {
+  const { audio, ctx, run, settle, started, fetched } = await player({ opus: false });
+  await audio.cue('level', 2);
+  await audio.unlock(); await run(1);
+  assert.equal(audio.state.active, 'l2-intro');
+  assert.equal(audio.state.source, 'midi', 'the cue falls back to its MIDI score');
+  assert.ok(fetched.includes('/audio/midi/l2-intro.mid'));
+  assert.ok(fetched.every(path => !/\.(m4a|aac|mp3)$/.test(path)), 'no second audio format is requested');
+  const t0 = audio.song({ song: 'k', section: 'arrival', at: -1, quantum: 'bar', enter: 'start' });
+  assert.ok(t0 >= 0, 'the score accepts the move');
+  await run(t0 - ctx().currentTime + 4 * bar('k') + .2);
+  assert.equal(audio.state.score.section, 'A');
+  assert.ok(started.some(node => node.at >= t0 && node.frequency), 'the score is synthesized');
+  await settle();
 });
 
 test('scheduling stays bounded: a long fight never exceeds the voice cap and every timer tick is cheap', async () => {

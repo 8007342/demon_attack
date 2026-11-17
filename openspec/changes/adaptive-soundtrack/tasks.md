@@ -71,7 +71,7 @@
 - [x] 9.5 Tests: `test/song_director_test.dart`, `test-worker/score.test.mjs` (the score files, the graph on a mocked audio clock, hand-overs, masks, stingers, cap)
 - [x] 9.6 Listening aid: the SCORE · LISTEN panel on `/console` (scripted carrier fight and sector song, step buttons, stingers, SCORE/RECORDED A/B)
 - [ ] 9.7 Operator listening in the live game (N1, N13): the combining, the voices and the mix balance; tune `makeVoice` levels and the buses from the verdict
-- [ ] 9.8 Lead decision (design §12.6): delete `art/music/soundtrack/pilot/c1-*.opus` once `c1` is approved; retire the recorded `l1-*`/`l5-*` cues when the A/B is no longer needed; remove the unused `.m4a` twins in `web/audio/music/`
+- [ ] 9.8 Lead decision (design §12.6): delete `art/music/soundtrack/pilot/c1-*.opus` once `c1` is approved; retire the recorded `l1-*`/`l5-*` cues when the A/B is no longer needed; remove the unused `.m4a` twins in `web/audio/music/` (done 2026-11-17: no fallback format, operator; `work/one-format-audio`)
 - [ ] 9.9 Score songs for sectors 2-4 (Ringfall, Ember Moon, The Hollow) and tours 2-5's carriers in the same generator; bridges `k→r`, `h→c`
 
 ## 7. Close
