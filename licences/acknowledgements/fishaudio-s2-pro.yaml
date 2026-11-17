@@ -1,0 +1,27 @@
+# Third-party licence acknowledgement (order 1956-ecpb, implements 1954-dvz9).
+# Signed over `statement` as SSHSIG in namespace tillandsias-approval@v1; verify with
+#   ssh-keygen -Y verify -n tillandsias-approval@v1 -I <grantor> -f <allowed_signers> -s <sig> < <statement>
+record: tillandsias-licence-acknowledgement v1
+licence: fish-audio-research-license-2026-03-07
+licence_sha256: aa7d9206e9d710590987a3636934f643529c00cd490323594e6206aaa0c32d80
+covers: [fishaudio/s2-pro]
+grantor: project-owner
+scope: project:demon_attack
+use: non-sale
+expiry: "standing"
+signed_at: "2026-11-17T01:47:57Z"
+strength: github-merge
+host: macuahuitl
+statement: |
+  tillandsias-licence-acknowledgement v1
+  licence: fish-audio-research-license-2026-03-07
+  licence_sha256: aa7d9206e9d710590987a3636934f643529c00cd490323594e6206aaa0c32d80
+  covers: fishaudio/s2-pro
+  grantor: project-owner
+  scope: project:demon_attack
+  use: non-sale
+  expiry: standing
+  host: macuahuitl
+  strength: github-merge
+  issued: 2026-11-17T01:47:57Z
+signature: ""
