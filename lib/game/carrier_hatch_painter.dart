@@ -223,35 +223,26 @@ class CarrierHatchPainter {
       final g = h.hatch;
       final at = center + (bend == null ? Offset(g.x, g.y) : bend(g.x, g.y));
       if (h.destroyed) {
-        _sealed(c, at, g.width);
+        _sealed(c, at, g.width, g.x < 0);
         continue;
       }
       final run = _run(launches, g.id);
       final glow = run == null ? 0.0 : _glow(run, launches!.timing);
       final open = run == null ? 0.0 : _door(run, launches!.timing);
       final vulnerable = g.tier == tier && b.chapter == CarrierChapter.hatches;
-      // The vulnerable tier reads at phone size: a warm halo under the
-      // tusks (never white-hot), the target the hint names.
-      if (vulnerable) {
-        final pulse = reduced ? 1.0 : .75 + .25 * math.sin(clock * 5);
-        // --- hatch-emergence §1.6 staging: a dark vignette ring under the
-        // halo lifts the active hatch off the hull (contrast leads the eye).
-        _p.color = _char.withValues(alpha: .35);
-        c.drawCircle(at, CarrierHatches.fieldRadius * 1.6, _p);
-        _p.color = _amber.withValues(alpha: .2 * pulse);
-        c.drawCircle(at, CarrierHatches.fieldRadius * 1.15, _p);
-      }
-      // --- hatch-emergence §1.2: the telegraph pulse, quickening toward
-      // the opening (an expanding ember ring, 2 → 5 Hz).
-      if (run != null && rich && !reduced && run.state == GateState.telegraph) {
+      // --- hatch-emergence §1.2: the telegraph quickens the rim light and
+      // the spill (2 → 5 Hz toward the opening), no ring round the hatch.
+      var pulse = 1.0;
+      if (run != null && !reduced && run.state == GateState.telegraph) {
         final u = (run.t / launches!.timing.telegraph).clamp(0.0, 1.0);
         final ph = (run.t * (2 + 3 * u)) % 1.0;
-        _p
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.6
-          ..color = _ember.withValues(alpha: .55 * (1 - ph) * (.4 + .6 * u));
-        c.drawCircle(at, g.width * (.5 + .9 * ph), _p);
-        _p.style = PaintingStyle.fill;
+        pulse = 1 + (rich ? .9 : .4) * (1 - ph) * (.4 + .6 * u);
+      }
+      // --- hatch-emergence §1.6 staging: light falls DOWN the hull from
+      // the live tier (directional, toward the core), never a disc round it.
+      if (vulnerable) {
+        final breathe = reduced ? 1.0 : .8 + .2 * math.sin(clock * 5);
+        _spill(c, at, g.width * 1.5, .13 * breathe * pulse);
       }
       if (run != null) _vent(g.id, at, g.width * 1.5, run.state);
       _tuskSlot(
@@ -259,25 +250,51 @@ class CarrierHatchPainter {
         at,
         g.width * 1.5,
         open: open,
-        glow: vulnerable ? math.max(glow, .35) : glow * .5,
+        glow:
+            (vulnerable ? math.max(glow, .35) : glow * .5) *
+            math.min(1.6, pulse),
         live: vulnerable,
+        dim:
+            !vulnerable &&
+            (run == null || !run.busy) &&
+            b.chapter == CarrierChapter.hatches,
         flip: g.x < 0,
+        rim: vulnerable ? math.min(1.0, .55 * pulse) : 0,
       );
       if (vulnerable && h.field > 0) {
-        _hatchField(c, at, h.field / h.fieldMax, clock, reduced, g.id);
-      }
-      // Sealed tiers sink into the hull (staging: only the live tier is lit).
-      if (!vulnerable &&
-          (run == null || !run.busy) &&
-          b.chapter == CarrierChapter.hatches) {
-        _p.color = _char.withValues(alpha: .45);
-        c.drawCircle(at, g.width * .85, _p);
+        _hatchField(
+          c,
+          at,
+          g.width * 1.5,
+          h.field / h.fieldMax,
+          clock,
+          reduced,
+          g.id,
+        );
       }
     }
     _paintSmoke(c);
     _paintVents(c);
     _paintBursts(c);
     _paintSplinters(c);
+  }
+
+  /// Staging: a wash of warm light falling down the hull below a live
+  /// hatch (three stacked bands fading down-screen, offset with the hull's
+  /// grain), the directional lead to the target; no round shape.
+  void _spill(Canvas c, Offset at, double width, double alpha) {
+    for (var k = 0; k < 3; k++) {
+      _p.color = _amber.withValues(alpha: alpha * (1 - k / 3));
+      c.drawRect(
+        Rect.fromLTWH(
+          at.dx - width * (.42 - .06 * k),
+          at.dy + width * (.3 + .38 * k),
+          width * (.84 - .12 * k),
+          width * .4,
+        ),
+        _p,
+      );
+    }
   }
 
   void _paintVents(Canvas c) {
@@ -385,8 +402,29 @@ class CarrierHatchPainter {
   double _glow(GateRun r, CarrierVolleyTiming v) => r.glow(v);
   double _door(GateRun r, CarrierVolleyTiming v) => r.door(v);
 
-  /// Two ivory tusks framing a dark, narrowing slot. [open] parts the
-  /// tusks and widens the slot; [glow] lights the interior ember → amber.
+  /// The slot's outline (hull-local, width [w], height [h]): a tall,
+  /// flat-ended slot narrowing down-screen, its top edge ragged and
+  /// asymmetric (styleguide §3.8: "a dark slot that narrows inward"). Not a
+  /// lens: no point at either end, no vertical line down its middle.
+  void _slotPath(Offset at, double w, double h, bool flip) {
+    final s = flip ? -1.0 : 1.0;
+    _path
+      ..reset()
+      ..moveTo(at.dx - s * w * .5, at.dy - h * .46)
+      ..lineTo(at.dx - s * w * .18, at.dy - h * .4)
+      ..lineTo(at.dx + s * w * .06, at.dy - h * .5)
+      ..lineTo(at.dx + s * w * .3, at.dy - h * .42)
+      ..lineTo(at.dx + s * w * .5, at.dy - h * .47)
+      ..lineTo(at.dx + s * w * .24, at.dy + h * .44)
+      ..lineTo(at.dx - s * w * .16, at.dy + h * .46)
+      ..close();
+  }
+
+  /// Two separate ivory tusks standing either side of a dark slot that
+  /// narrows inward (styleguide §3.8). [open] parts the tusks and widens
+  /// the slot; [glow] is warm light spilling from deep inside (uneven, low
+  /// in the slot), [rim] the live tier's amber rim light on the tusks,
+  /// [dim] a sealed tier sunk into the hull.
   void _tuskSlot(
     Canvas c,
     Offset at,
@@ -395,120 +433,187 @@ class CarrierHatchPainter {
     required double glow,
     required bool live,
     required bool flip,
+    bool dim = false,
+    double rim = 0,
   }) {
-    final w = width * (.55 + .35 * open);
+    final w = width * (.5 + .35 * open);
     final h = width * 1.15;
-    // The slot: a lens narrowing to a point down-screen (demon-like).
-    _path
-      ..reset()
-      ..moveTo(at.dx, at.dy - h * .5)
-      ..quadraticBezierTo(at.dx + w * .5, at.dy - h * .1, at.dx, at.dy + h * .5)
-      ..quadraticBezierTo(at.dx - w * .5, at.dy - h * .1, at.dx, at.dy - h * .5)
-      ..close();
+    _slotPath(at, w, h, flip);
     _p.color = _slot;
     c.drawPath(_path, _p);
-    if (glow > 0 && open > 0) {
-      // --- hatch-emergence §1.1: the inner glow, a warm bloom out of the
-      // slot as the doors part (two flat ovals, no blur).
-      _p.color = _amber.withValues(alpha: .18 * open * glow);
-      c.drawOval(
-        Rect.fromCenter(center: at, width: w * 1.6, height: h * 1.1),
-        _p,
-      );
-    }
     if (glow > 0) {
-      final hot = Color.lerp(_ember, _amber, glow)!;
-      _p.color = hot.withValues(alpha: (.25 + .55 * open) * glow);
+      // --- hatch-emergence §1.1: light from deep inside: small warm blooms
+      // low in the slot, uneven and offset, rising as the doors part. They
+      // never fill the slot (no lit iris).
+      final s = flip ? -1.0 : 1.0;
+      final hot = Color.lerp(_ember, _amber, glow.clamp(0.0, 1.0))!;
       c.save();
-      c.translate(at.dx, at.dy);
-      c.scale(.6, .75);
-      c.translate(-at.dx, -at.dy);
-      c.drawPath(_path, _p);
+      c.clipPath(_path);
+      for (final (dx, dy, rw, rh, a) in const [
+        (.08, .36, .55, .16, 1.0),
+        (-.1, .26, .38, .12, .7),
+        (.14, .12, .3, .1, .45),
+      ]) {
+        final rise = .12 * open;
+        _p.color = hot.withValues(
+          alpha: (a * (.22 + .5 * open) * glow).clamp(0.0, 1.0),
+        );
+        c.drawOval(
+          Rect.fromCenter(
+            center: at + Offset(s * dx * w, (dy - rise) * h),
+            width: rw * w,
+            height: rh * h,
+          ),
+          _p,
+        );
+      }
       c.restore();
     }
-    // The tusks: tapered ivory curves, tips bending in toward the slot's
-    // narrow end, parted by [open].
-    for (final s in const [-1.0, 1.0]) {
-      final root = Offset(at.dx + s * (w * .5 + 3), at.dy - h * .55);
+    // The tusks: tapered ivory blades standing beside the slot, roots out
+    // past its top corners, tips curving in toward its narrow end but never
+    // meeting (a gap of at least 5 units), parted further by [open]. One is
+    // a touch longer: architecture, not a mirrored face.
+    for (final side in const [-1.0, 1.0]) {
+      final long = (side > 0) != flip ? 1.0 : .9;
+      final root = Offset(at.dx + side * (w * .5 + 3.5), at.dy - h * .56);
       final tip = Offset(
-        at.dx + s * (1.5 + 5 * open),
-        at.dy + h * (.55 - .08 * open),
+        at.dx + side * (w * .3 + 2.5 + 4 * open),
+        at.dy + h * (.34 * long - .06 * open),
       );
-      final ctrl = Offset(at.dx + s * (w * .75 + 5), at.dy + h * .15);
+      final ctrl = Offset(at.dx + side * (w * .66 + 4.5), at.dy - h * .05);
       _path
         ..reset()
-        ..moveTo(root.dx - s * 3.2, root.dy)
+        ..moveTo(root.dx - side * 2.8, root.dy)
         ..quadraticBezierTo(ctrl.dx, ctrl.dy, tip.dx, tip.dy)
         ..quadraticBezierTo(
-          ctrl.dx - s * 4.5,
+          ctrl.dx - side * 3.6,
           ctrl.dy - 1,
-          root.dx + s * 3.2,
+          root.dx + side * 2.8,
           root.dy + 1,
         )
         ..close();
-      _p.color = _ivory;
+      _p.color = dim ? _ivoryShade.withValues(alpha: .7) : _ivory;
       c.drawPath(_path, _p);
+      if (rim > 0) {
+        // --- hatch-emergence §1.6: the live tier's rim light on the tusks.
+        _p
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.6
+          ..color = _amber.withValues(alpha: .28 * rim);
+        c.drawPath(_path, _p);
+      }
       _p
         ..style = PaintingStyle.stroke
         ..strokeWidth = .8
-        ..color = live ? _amber.withValues(alpha: .8) : _ivoryShade;
+        ..color = live
+            ? _amber.withValues(alpha: .5 + .4 * rim)
+            : (dim ? _char : _ivoryShade);
       c.drawPath(_path, _p);
       _p.style = PaintingStyle.fill;
     }
   }
 
-  /// The hatch's own field: a small membrane that thins with its HP
-  /// (carrier-render-engine wear: width and alpha, coherent gaps).
+  /// The hatch's own field, conforming to the slot (the hull-conforming
+  /// field language): an open U of membrane hung from the two tusk roots and
+  /// wrapping under the slot's narrow end, never a circle round it.
   ///
   /// hatch-emergence §1.4 (the dive-shield-thinning principle, operator
-  /// round 5 S1): one continuous ring that keeps its whole circle and wears
-  /// in THICKNESS per hit, never in angular width, with a ripple on a hit.
+  /// round 5 S1): it keeps its whole extent and wears in THICKNESS per hit,
+  /// with a ripple on a hit.
   void _hatchField(
     Canvas c,
     Offset at,
+    double width,
     double s,
     double clock,
     bool reduced,
     String id,
   ) {
     final w = s.clamp(0.0, 1.0);
-    const r = CarrierHatches.fieldRadius;
-    final breathe = reduced ? 0.0 : .6 * math.sin(clock * 2.1);
+    final breathe = reduced ? 0.0 : .5 * math.sin(clock * 2.1);
+    void u(double grow) {
+      final hw = width * .5 + 8 + grow, top = width * 1.15 * .6;
+      final bottom = width * 1.15 * .62 + 4 + grow;
+      _path
+        ..reset()
+        ..moveTo(at.dx - hw * .92, at.dy - top)
+        ..cubicTo(
+          at.dx - hw * 1.02,
+          at.dy + bottom * .35,
+          at.dx - hw * .55,
+          at.dy + bottom,
+          at.dx + hw * .06,
+          at.dy + bottom,
+        )
+        ..cubicTo(
+          at.dx + hw * .6,
+          at.dy + bottom,
+          at.dx + hw * 1.0,
+          at.dy + bottom * .3,
+          at.dx + hw * .9,
+          at.dy - top * .9,
+        );
+    }
+
+    u(breathe);
     _p
       ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
       ..strokeWidth = hatchFieldWidth(w) * 2.2
       ..color = _fieldDeep.withValues(alpha: .06 + .16 * w);
-    c.drawCircle(at, r + breathe * .5, _p);
+    c.drawPath(_path, _p);
     _p
       ..strokeWidth = hatchFieldWidth(w)
       ..color = _field.withValues(alpha: .35 + .55 * w);
-    c.drawCircle(at, r + breathe * .5, _p);
+    c.drawPath(_path, _p);
     final hit = _rippleAt[id];
     if (hit != null && clock - hit < rippleSeconds) {
-      final u = (clock - hit) / rippleSeconds;
+      final t = (clock - hit) / rippleSeconds;
+      u(breathe + 6 * t);
       _p
         ..strokeWidth = 1.2
-        ..color = Colors.white.withValues(alpha: .7 * (1 - u));
-      c.drawCircle(at, r + 6 * u, _p);
+        ..color = Colors.white.withValues(alpha: .7 * (1 - t));
+      c.drawPath(_path, _p);
     }
-    _p.style = PaintingStyle.fill;
+    _p
+      ..style = PaintingStyle.fill
+      ..strokeCap = StrokeCap.butt;
   }
 
-  /// The hatch field's ring thickness (units) at field share [s]: 7 units
-  /// full, 1.2 at its last point, linear per hit; the circle never narrows.
+  /// The hatch field's thickness (units) at field share [s]: 7 units full,
+  /// 1.2 at its last point, linear per hit; its extent never shrinks.
   static double hatchFieldWidth(double s) => 1.2 + 5.8 * s.clamp(0.0, 1.0);
 
-  void _sealed(Canvas c, Offset at, double width) {
+  /// A destroyed hatch sealed in char: a ragged scorch along the slot (tall,
+  /// asymmetric) with two ember cracks off-centre; no round dark shape and
+  /// no centred light.
+  void _sealed(Canvas c, Offset at, double width, bool flip) {
+    final s = flip ? -1.0 : 1.0, w = width * .9, h = width * 1.3;
+    _path
+      ..reset()
+      ..moveTo(at.dx - s * w * .4, at.dy - h * .45)
+      ..lineTo(at.dx + s * w * .1, at.dy - h * .38)
+      ..lineTo(at.dx + s * w * .45, at.dy - h * .48)
+      ..lineTo(at.dx + s * w * .3, at.dy + h * .05)
+      ..lineTo(at.dx + s * w * .2, at.dy + h * .42)
+      ..lineTo(at.dx - s * w * .25, at.dy + h * .3)
+      ..lineTo(at.dx - s * w * .32, at.dy - h * .05)
+      ..close();
     _p.color = _char.withValues(alpha: .9);
-    c.drawOval(
-      Rect.fromCenter(center: at, width: width * .9, height: width * .7),
-      _p,
-    );
-    _p.color = _ember.withValues(alpha: .25);
-    c.drawOval(
-      Rect.fromCenter(center: at, width: width * .3, height: width * .2),
-      _p,
-    );
+    c.drawPath(_path, _p);
+    _p
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .9
+      ..color = _ember.withValues(alpha: .35);
+    _path
+      ..reset()
+      ..moveTo(at.dx + s * w * .05, at.dy - h * .3)
+      ..lineTo(at.dx + s * w * .18, at.dy - h * .05)
+      ..lineTo(at.dx + s * w * .08, at.dy + h * .2)
+      ..moveTo(at.dx - s * w * .2, at.dy + h * .08)
+      ..lineTo(at.dx - s * w * .1, at.dy + h * .22);
+    c.drawPath(_path, _p);
+    _p.style = PaintingStyle.fill;
   }
 
   /// The core door: the bay between two great tusks. [part] 0 sealed (the
@@ -531,10 +636,6 @@ class CarrierHatchPainter {
       live: part >= 1 && door >= .6,
       flip: false,
     );
-    if (part > 0 && door >= .6) {
-      _p.color = _amber.withValues(alpha: .18 + .1 * math.sin(clock * 6));
-      c.drawOval(Rect.fromCenter(center: at, width: 46, height: 30), _p);
-    }
   }
 
   void _paintSmoke(Canvas c) {

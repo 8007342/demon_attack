@@ -119,3 +119,19 @@ rows or brow arcs to the hatch. The creature's own eyes and fangs are its specie
   kept (it is the arm, not a wing, and it reads as gripping at game scale).
 - Finding while testing: the fight's core-door flock keeps `gateWait` set while its entrance runs (design §2.1), and a
   volley held in a hatch destroyed the same moment still leaves from it; the director handles both.
+
+## 7. Head-reading fix (lead review, 2026-11-17)
+The lead found that the first draft's hatch close-ups (the strips' rows 2, 4 and 6) read strongly as a **reptile
+eye**: an amber almond with a dark vertical slit, inside a round cyan field ring and a round dark vignette. That is
+iris, pupil and socket, which the guard forbids (styleguide §3.4, §3.8). It was a runtime-drawing fault, not an art
+pick, so no GPU was needed. The redesign (design §1.0–§1.7):
+- a ragged, flat-ended slot between two separate tusks;
+- light from deep inside the slot;
+- an open U field hung from the tusk roots;
+- light falling down the hull, and a rim light on the tusks;
+- the pulse carried by the rim light;
+- a ragged scorch for a sealed hatch.
+
+`test/hatch_eye_guard_test.dart` now scores a hatch at rest against an eye template and a concentricity measure. The
+draft scored eye 0.53–0.58 and concentric 0.63–0.67; the redesign scores 0.21–0.22 and 0.36–0.41, against ceilings
+of 0.35 and 0.45. The close-up, strip and fight sheets and the GIF were re-rendered.

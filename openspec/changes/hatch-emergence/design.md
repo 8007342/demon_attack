@@ -44,21 +44,48 @@ Every number below (beat lengths, hop heights, ring widths, budgets) is ours
 ## 1. Hatch candy: each hatch a focal point
 | # | Layer | When | Look |
 | --- | --- | --- | --- |
-| 1.1 | Inner glow | the tusks part (`door > 0`) | a warm amber bloom out of the slot, ×1.6 the slot, alpha 0.18 × door × glow; two flat ovals, no blur |
-| 1.2 | Telegraph pulse | the 1.2 s telegraph | an ember ring expanding from 0.5 to 1.4 slot widths, its rate quickening 2 → 5 Hz toward the opening |
+| 1.0 | The slot | always | §3.8 literally: two **separate** ivory tusks standing beside a tall, flat-ended slot that narrows down-screen, its top edge ragged and asymmetric. Not a lens: no point at either end, no line down its middle; the tusk tips never meet (a gap of at least 5 units), and one tusk is a touch longer |
+| 1.1 | Inner glow | the telegraph and the opening | warm light from deep inside: three small offset blooms low in the slot (uneven, clipped to it), rising a little as the doors part; it never fills the slot (no lit iris) |
+| 1.2 | Telegraph pulse | the 1.2 s telegraph | the tusks' rim light and the inner light swell and fall at a rate quickening 2 → 5 Hz toward the opening; no ring round the hatch |
 | 1.3 | Steam and ichor | each opening; a cracked hatch | two steam jets from each tusk root as the doors part (pale, growing, 0.9 s); a dark ichor drip every 0.7 s from a hatch whose field is down and hull is hurt; cap 32 |
-| 1.4 | Its force field | while its field stands | one continuous ring, radius 24 (the hit radius); **thickness** `1.2 + 5.8·s` units with `s` the field's share, alpha `0.35 + 0.55·s`; the circle never narrows or opens gaps; a white ripple (0.28 s, +6 units) on each hit |
-| 1.5 | The break | the hatch is destroyed | a white-amber flash (0.13 s), a shock ring to 50 units (0.45 s), 10 ember sparks, over the existing six ivory splinters and the smoke |
-| 1.6 | Staging | the hatch chapter | a dark char vignette (×1.6 field radius) under each live hatch lifts it off the hull; sealed, idle tiers sink under a char disc (alpha 0.45) |
+| 1.4 | Its force field | while its field stands | an open **U** of membrane hung from the two tusk roots and wrapping under the slot's narrow end (the hull-conforming field language), never a circle; **thickness** `1.2 + 5.8·s` units with `s` the field's share, alpha `0.35 + 0.55·s`; its extent never shrinks and it opens no gaps; a white ripple (0.28 s, the U grown by 6 units) on each hit |
+| 1.5 | The break | the hatch is destroyed | a white-amber flash (0.13 s), a shock ring to 50 units (0.45 s), 10 ember sparks, over the existing six ivory splinters and the smoke; the sealed opening is a ragged, asymmetric char scorch with two off-centre ember cracks |
+| 1.6 | Staging | the hatch chapter | **directional**: warm light falls down the hull below each live hatch (three stacked bands fading down-screen, toward the core), plus an amber rim light on its tusks; sealed, idle tiers keep shaded tusks with a char outline. No disc or vignette round any hatch |
 
 - **1.4 and the dive-shield thinning (round 5 S1, change `dive-shield-thinning`, in parallel).** The operator's rule
   is "a wide arc whose THICKNESS wears down while its angular width stays the same", and "the same principle as the
   carrier's thick force field that thins out". The hatch field now follows it: the old coherent gaps (a narrowing,
-  segmented read) are gone. It is also cheaper: two circles instead of up to 48 arcs.
-- **Head-reading guard (§3.4, §3.8).** Every layer is a ring, an oval, a jet or a spark: nothing paired above a slot
-  (no eyes), no rows (no teeth), no arcs over it (no brows). The vents leave from the tusk roots sideways, not as two
-  bright points. The lurkers' faces (§2) belong to a creature whose horns and claws show with them, never to the slot.
-- **Reduced motion:** no pulse, no vents, no sparks; the glow, the ring and the flash stay.
+  segmented read) are gone. It is also cheaper: two paths instead of up to 48 arcs.
+- **Reduced motion:** no pulse, no vents, no sparks; the glow, the field and the flash stay.
+
+### 1.7 The head-reading guard (§3.4, §3.8), and the first draft's failure
+The first draft failed the guard. The lead's review of the strips found that the hatch at rest read strongly as a
+**reptile eye**: an amber almond with a dark vertical slit (iris and pupil), centred in a round cyan field ring and a
+round dark vignette (the eye socket). The operator has rejected that read repeatedly. The redesign removes each part
+of it:
+- the almond lens became a ragged, flat-ended slot between two separate tusks (1.0);
+- the lit lens inside it became small, offset blooms deep in the slot (1.1);
+- the round field became an open U conforming to the slot (1.4);
+- the round vignette and halo became light falling down the hull and a rim light on the tusks (1.6);
+- the expanding pulse ring became a pulse of the rim light (1.2);
+- the sealed hatch's dark oval with an ember dot (a pupil) became a ragged scorch with off-centre cracks (1.5).
+
+Nothing is paired above a slot (no eyes), nothing repeats in a row (no teeth), nothing arcs over it (no brows). The
+lurkers' faces (§2) belong to a creature whose horns, arm and claws show with them, offset to a tusk, never centred
+in the slot.
+
+**The test** (`test/hatch_eye_guard_test.dart`, after the lookalike score of `gargoyle-insignia`). A hatch at rest
+(closed on the live tier, mid-telegraph, open) is drawn over the hull tone, area-averaged to a 24 × 24 glance, and
+scored two ways:
+- its Pearson correlation with a reptile-eye template (an almond iris with a slit pupil, a ring and a socket), with
+  a ceiling of 0.35;
+- the share of its luminance variance explained by rings about its centre (concentricity), with a ceiling of 0.45.
+
+| Design | Eye (≤ 0.35) | Concentric (≤ 0.45) |
+| --- | --- | --- |
+| First draft (almond, round ring, vignette) | 0.53–0.58 | 0.63–0.67 |
+| Redesign | 0.21–0.22 | 0.36–0.41 |
+
 
 ## 2. The emergence sequence (played once per launched creature)
 ### 2.1 The beats
@@ -155,7 +182,7 @@ score. The calibration gates (`boss_endurance`, `boss_fairness`, `campaign_playt
 | Atlas | ≤ 64 KB PNG, ≤ 1 MB resident, cells ≤ 80 × 80 | 852 × 210, 31,194 bytes, 715,680 bytes resident, cell 71 × 70 |
 | Frames | 12 poses × 3 species = 36 cells | 36 |
 | Emergence draws | one `drawImageRect` per lurker or creature; ≤ 16 a frame | 6 at worst (test `HATCH_BUDGET`, tour 5, 20 s) |
-| Hatch draws | ≤ 160 calls a frame on tour 5 (8 hatches, fields, vents, bursts, smoke, splinters) | 100 at worst (same test); the old segmented field alone drew up to 48 arcs a hatch |
+| Hatch draws | ≤ 160 calls a frame on tour 5 (8 hatches, fields, vents, bursts, smoke, splinters) | 110 at worst (same test); the old segmented field alone drew up to 48 arcs a hatch |
 
 ## 6. Review
 `test/hatch_emergence_review_test.dart` (review-tagged, opt-in) writes to `art/contact/`:

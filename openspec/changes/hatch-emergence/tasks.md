@@ -19,6 +19,7 @@
 
 ## 4. Tests
 - [x] 4.1 `test/hatch_emergence_test.dart`: timing inside the windows; parity; exactly once; variety; LITE; atlas and draw-call budgets
+- [x] 4.3 The head-reading guard (lead review: the first draft read as a reptile eye): redesign per design §1.7; `test/hatch_eye_guard_test.dart` (eye ≤ 0.35, concentric ≤ 0.45); sheets re-rendered
 - [x] 4.2 Calibration gates unchanged (full `flutter test`)
 
 ## 5. Review
