@@ -9,6 +9,52 @@ voice stack needs signed. It is a record of what the texts say, not legal advice
 `curl -sS -L <URL>`, then hashed with `sha256sum` over the exact bytes received. If a later fetch hashes
 differently, the licence text changed: re-read it before signing or renewing.
 
+**Do not sign by any interim route.** Signing waits for the coordinator's proof-of-gate design (2026-11-17).
+
+## Decide on the text itself (verbatim clauses, re-fetched and hash-checked 2026-11-17)
+
+### 1. Fish Audio S2-Pro: is our use permitted? (sha256 `aa7d9206…c32d80`, unchanged)
+The coordinator flagged this: a licence named "Research License" may be research-only, and our rules never accept
+research-only. The text grants use for "any Research **or** Non-Commercial Purpose" and defines both:
+
+> LICENSE.md line 15: "…to use, reproduce, distribute, and create Derivative Works of, and make modifications to, the
+> Fish Audio Materials for any Research or Non-Commercial Purpose."
+
+> Line 17: "\"Research Purpose\" means academic or scientific advancement, and in each case, is not primarily intended
+> for commercial advantage or monetary compensation to You or others."
+
+> Line 19: "\"Non-Commercial Purpose\" means any purpose other than a Research Purpose that is not primarily intended
+> for commercial advantage or monetary compensation to You or others, such as personal use (i.e., hobbyist) or
+> evaluation and testing."
+
+> Line 25: "\"Commercial Purpose\" means any purpose other than a Research Purpose or Non-Commercial Purpose that is
+> primarily intended for or directed toward commercial advantage or monetary compensation to You or others, including
+> but not limited to: (i) creating, modifying, or distributing Your product or service, including via a hosted service
+> or application programming interface, (ii) Your business's or organization's internal operations, and (iii) any use
+> in connection with a product or service for which You charge a fee or generate revenue, whether directly or
+> indirectly."
+
+> Line 54: "**(iii) Ownership of Outputs.** As between You and Fish Audio, You own any outputs generated from the
+> Models or Derivative Works to the extent permitted by applicable law."
+
+**The point to decide (the lead's reading, not legal advice):** the licence is not research-only; it also covers
+Non-Commercial Purpose, which names hobbyist use. But "Commercial Purpose" lists "(i) creating, modifying, or
+distributing Your product or service" without any condition of revenue. A free, open-source game served to the public
+could be read as "distributing Your product". The definition's first clause still requires the purpose to be
+"primarily intended for or directed toward commercial advantage or monetary compensation", which a free hobby game is
+not. The operator decides whether that reading is safe enough to accept.
+
+### 2. Higgs Audio v2: the credit line, quoted exactly (sha256 `8b2e018e…dde9a0`, unchanged)
+> LICENSE line 21: "(B) prominently display “Built with Higgs Materials licensed from Boson AI USA, Inc., Copyright
+> Boson AI USA, Inc., All Rights Reserved and Meta Llama 3 licensed under the Meta Llama 3 Community License,
+> Copyright Meta Platforms, Inc., All Right Reserved". based on Meta Llama 3” on a related website, user interface,
+> blogpost, about page, or product documentation."
+
+The quoted span opens with “ and closes once with a straight " (after "All Right Reserved") and once with ” (after
+"based on Meta Llama 3"), so it is unclear whether ". based on Meta Llama 3" belongs to the required display text.
+The credits currently show the sentence up to "All Right Reserved". To be safe, it could also show "based on Meta
+Llama 3"; the operator decides.
+
 **Operator decisions already made (2026-11-16, relayed by the coordinator):**
 - Non-commercial use with a credit line is acceptable: the game is free and open source, and the credits page lists
   every model and licence. So Fish Audio S2-Pro and Higgs Audio v2 qualify as pilot challengers.
