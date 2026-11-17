@@ -26,7 +26,7 @@ const results = { levels, seconds: SECONDS, music: {}, speech: {}, mix: null };
 const cases = [];
 for (const song of ['k', 'r', 'e', 'h']) for (const tier of [1, 2, 3, 4]) cases.push({ song, section: 'A', tier });
 for (const song of ['c1', 'c2', 'c3', 'c4', 'c5']) cases.push({ song, section: 'core', tier: 4 });
-cases.push({ song: 'menu', section: 'overture', tier: 4 }, { song: 'defeat', section: 'cackle', tier: 4 });
+cases.push({ song: 'menu', section: 'overture', tier: 4 }, { song: 'defeat', section: 'cackle', tier: 4 }, { song: 'coda', section: 'reprise', tier: 4 });
 for (const c of cases) {
   if (only && !only.includes(c.song)) continue;
   const p = await page(levels);

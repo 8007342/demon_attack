@@ -7,4 +7,4 @@ Voice clips SHALL play through the music engine's AudioContext and master gain, 
 
 #### Scenario: Ducking
 - **WHEN** a callout plays during a level cue
-- **THEN** the music ducks 4 dB (2 dB for a demon line or a clip under 1 s) from the clip's first sample and returns after its last
+- **THEN** the music ducks 3 dB (1.5 dB for a demon line or a clip under 1 s) from the clip's first sample and returns after its last

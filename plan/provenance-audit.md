@@ -355,5 +355,5 @@ guidelines", https://courses.ecuad.ca/mod/page/view.php?id=358042, unread: snipp
 
 | Id | Claim | Why unsourced |
 |---|---|---|
-| <a id="mb-dialogue-gap"></a>mb-dialogue-gap | A game's music bed commonly sits about 8–10 LU under dialogue | the task's figure; the pages that discuss it reset, snippets disagree (3–12 dB) |
+| <a id="mb-dialogue-gap"></a>mb-dialogue-gap | A game's music bed commonly sits about 8–10 LU under dialogue (no longer used: mix-balance design §5 sets 2–4 LU by operator ruling) | the task's figure; the pages that discuss it reset, snippets disagree (3–12 dB) |
 | <a id="mb-duck-depth"></a>mb-duck-depth | A few dB of music duck under a line, with tens of ms attack and a few hundred ms release, is usual | Godot gives only the 250 ms default release; Wwise and FMOD docs reset |

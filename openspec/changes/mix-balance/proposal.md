@@ -17,6 +17,11 @@ the score itself, so only the mix changes.
 - `tools/mix_meter/`: an offline Web Audio renderer that plays the shipped players and meters them (BS.1770), so the
   mix can be measured again.
 
+## Retune (operator follow-up, 2026-11-17)
+The operator found -20 dB far too quiet ("even at half radio it was louder than music"). Full moves to -14 dB,
+the loudest gameplay 2.5 LU under the radio; per-section trims hold calm sections within 2 LU of it; the duck
+softens to 3 dB (1.5 dB for growls and stingers). Design §5.
+
 ## Impact
 - `web/audio/demon-audio.js` (level table, duck stage), `web/audio/comms-audio.js` (duck calls).
 - Tests: `test-worker/mix-balance.test.mjs` (new), `audio-levels`, `comms-audio`.

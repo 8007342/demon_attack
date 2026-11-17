@@ -123,6 +123,7 @@ after the merge instead of resolving its text.
 | `lib/game/ground_atmosphere_atlas.dart` | `cd tools/ground_atmosphere && go run . pack` (`go run . check` compares) | `check` passes |
 | `lib/game/ground_blocks_atlas.dart` | `cd tools/ground_blocks && go run . offline` | runs, but the PNG bytes differ from the committed ones |
 | `lib/game/sentinel_silhouette_atlas.dart` | `cd tools/sentinel_silhouettes && go run .` | byte-identical |
+| `web/audio/score/mix-trim.json` (the score's section trims; rerun after `tools/score/score_gen.lua`) | `node tools/mix_meter/trim.mjs` (`--check` compares; several minutes, wrap in `forge-guard run --`) | byte-identical |
 | `lib/game/swarm_policy.dart` | `node scripts/train-policy.mjs` (`plan/policy.md`) | byte-identical |
 | `lib/game/flyover_atlas.dart` | `tools/flyover_assets.py pack` (needs Pillow) | not run (no venv) |
 | `lib/game/ground_atlas.dart` | `tools/ground_forces_assets.py offline` (needs Pillow) | not run (no venv) |

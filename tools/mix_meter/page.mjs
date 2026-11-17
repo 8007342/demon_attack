@@ -16,7 +16,8 @@ function decodeClip(path) {
 
 // One page: a fresh context with the three players loaded, the stored levels set.
 // clip(id): optional clip bytes ('F32M' + float32 PCM, see OfflineContext.decodeAudioData) instead of decoding the shipped Ogg.
-export async function page(levels = { music: 'full', speech: 'full' }, { clip = null } = {}) {
+// trims: false loads the score without web/audio/score/mix-trim.json (how trim.mjs measures the untrimmed score).
+export async function page(levels = { music: 'full', speech: 'full' }, { clip = null, trims = true } = {}) {
   let timer = null, context = null;
   class AudioContext extends OfflineContext { constructor() { super({ sampleRate: 48000 }); context = this; } }
   const store = { 'demonAttack.musicVolume': levels.music, 'demonAttack.speechVolume': levels.speech };
@@ -29,6 +30,7 @@ export async function page(levels = { music: 'full', speech: 'full' }, { clip = 
     async fetch(url) {
       const path = decodeURIComponent(url.pathname.slice(1));
       try {
+        if (!trims && path === 'audio/score/mix-trim.json') return { ok: false };
         const id = path.match(/^audio\/comms\/(.+)\.ogg$/)?.[1];
         const bytes = id ? (clip ? clip(id) : decodeClip(web(path).pathname)) : (await readFile(web(path))).buffer;
         if (!bytes) return { ok: false };
