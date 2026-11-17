@@ -276,6 +276,78 @@ void main() {
     },
   );
 
+  test('the wind bonus level plays its own song: A from the arrival\'s end, '
+      'B on the second wave, then the sector\'s clear on the beat', () {
+    final r = rig();
+    final d = r.director, clock = r.clock;
+    final eb = scoreSongs['e']!.barSeconds;
+    final wind = scoreSongs['bonus-wind']!;
+    expect(wind.form, 'bonus');
+    expect(scoreBonusSongs['crosswind'], 'bonus-wind');
+    d.cue('level', level: 3, cycle: 1);
+    final origin = d.log.single.at!;
+    clock.now = origin + 1.5 * eb;
+    d.onGameEvent(
+      const GameEvent(GameEventNames.bonusStart, {'variant': 'crosswind'}),
+    );
+    expect((d.song, d.section), ('bonus-wind', 'A'));
+    expect(
+      d.log.last.at,
+      closeTo(origin + 4 * eb, 1e-9),
+      reason: 'after the arrival',
+    );
+    // Waves move nothing inside a bonus song; the second wave lifts into B.
+    clock.now = origin + 7 * eb;
+    d.onGameEvent(const GameEvent(GameEventNames.waveStart));
+    expect(d.log.last.section, 'A');
+    d.onGameEvent(
+      const GameEvent(GameEventNames.bonusMidway, {'variant': 'crosswind'}),
+    );
+    expect(d.log.last.section, 'B');
+    final bStart = d.log.last.at!;
+    expect(onLine(bStart, origin + 4 * eb, wind.barSeconds), isTrue);
+    clock.now = bStart + 3.2 * wind.barSeconds;
+    expect(d.cue('levelclear', level: 3, cycle: 1), isTrue);
+    expect((d.song, d.section), ('e', 'clear'));
+    expect(
+      (r.player.moves.last.song, r.player.moves.last.section),
+      ('e', 'clear'),
+    );
+    expect(r.player.moves.last.quantum, 'beat');
+    // The travel then bridges on from the sector's song as ever.
+    expect(d.cue('travel', level: 3, cycle: 1), isTrue);
+    expect(r.player.moves.last.song, 'e-h');
+  });
+
+  test('the bonus API fails soft: unknown songs and accents play nothing', () {
+    final sent = <String>[];
+    final clock = FakeClock(), player = FakePlayer();
+    final d = SongDirector(
+      sendMove: player.call,
+      clock: clock,
+      sendAccent: sent.add,
+    );
+    expect(d.playBonus('bonus-wind'), isFalse, reason: 'no sector playing');
+    d.cue('level', level: 2);
+    final moves = player.moves.length;
+    expect(d.playBonus('no-such-song'), isFalse);
+    expect(d.playBonus('k'), isFalse, reason: 'not a bonus song');
+    expect(player.moves.length, moves);
+    for (final name in [
+      'gust',
+      'oneup',
+      'challenge-fail',
+      'cargo',
+      'thunder',
+    ]) {
+      expect(d.accent(name), isTrue, reason: name);
+    }
+    expect(d.accent('no-such-accent'), isFalse);
+    expect(sent, ['gust', 'oneup', 'challenge-fail', 'cargo', 'thunder']);
+    expect(d.playBonus('bonus-wind'), isTrue);
+    expect(d.song, 'bonus-wind');
+  });
+
   test('a Stormfront bonus level plays its storm from the arrival\'s end and '
       'stays there through the waves', () {
     var share = 0.0;
