@@ -12,6 +12,7 @@ import '../game/scene.dart' show ink, mint, gold;
 import '../review/page_notes.dart';
 import '../review/review_notes.dart';
 import '../services/audio.dart';
+import 'score_listening_panel.dart'; // --- adaptive-soundtrack
 
 /// Path of the console page.
 const consoleRoute = '/console';
@@ -410,6 +411,10 @@ class _DevConsolePageState extends State<DevConsolePage> {
                       ),
                     ),
                   ],
+                  // --- adaptive-soundtrack: hear the score's sections and
+                  // transitions, driven by the game's own events.
+                  const SizedBox(height: 22),
+                  const ScoreListeningPanel(),
                   const SizedBox(height: 18),
                   _label(
                     'EARLIER RUNS COUNT AS WON · NO TOP 10 · NO SAVED RUN',
