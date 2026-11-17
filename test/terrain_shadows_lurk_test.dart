@@ -1,5 +1,5 @@
-// terrain-shadows tasks 3.1-3.4 (design §3, §4): the lurking shadow's
-// track, its hand-off into the rising sentinel's shadow, the ground's
+// terrain-shadows tasks 3.1-3.4 (design §3, §4): the lurking shadow (cast
+// from the silhouette since sentinel-shadow-align), its hand-off into the rising sentinel's shadow, the ground's
 // hesitation under it, and the boss shadow.
 import 'dart:io';
 import 'dart:math' as math;
@@ -56,57 +56,6 @@ ArcadeModel _sentinelWave({bool before = false}) {
 }
 
 void main() {
-  test('the lurk track: 10-16 u/s from the far terrain to the front', () {
-    final speeds = <double>{};
-    for (var seed = 0; seed < 40; seed++) {
-      final a = LurkTrack(seed), b = LurkTrack(seed);
-      expect(a.speed, b.speed);
-      expect(a.x0, b.x0);
-      expect(a.speed, inInclusiveRange(10, 16));
-      speeds.add(a.speed);
-    }
-    expect(speeds.length, greaterThan(30));
-    final t = LurkTrack(9);
-    expect(t.flatY, closeTo(LurkTrack.startY, 1e-9));
-    expect(t.altitude, LurkTrack.farAltitude);
-    var last = t.flatY;
-    var maxMeander = 0.0;
-    for (var i = 0; i < 60 * 40; i++) {
-      t.advance(1 / 60, frontZ: GroundTuning.fireZ);
-      expect(t.flatY, greaterThanOrEqualTo(last));
-      expect(t.flatY - last, lessThanOrEqualTo(16 / 60 + 1e-9));
-      last = t.flatY;
-      maxMeander = math.max(maxMeander, (t.x() - t.x0).abs());
-      expect(t.x(meander: false), t.x0);
-    }
-    // It stops at the front, at its lowest altitude, having meandered.
-    expect(t.flatY, closeTo(GroundCamera.yOf(GroundTuning.fireZ), 1e-9));
-    expect(t.progress, 1);
-    expect(t.altitude, LurkTrack.nearAltitude);
-    expect(maxMeander, closeTo(LurkTrack.amplitude, .5));
-  });
-
-  test('the lurk track never draws from the simulation', () {
-    // Two runs, one painting its shadows (and so its lurk) and one not,
-    // see the same simulation.
-    List<double> run({required bool watch}) {
-      final m = _sentinelWave(before: true);
-      for (var i = 0; i < 60 * 12; i++) {
-        m.invulnerable = 5;
-        m.update(1 / 60);
-        if (watch) m.foreshadow?.lurk.x();
-        m.shots.removeWhere((s) => !s.hostile);
-      }
-      expect(m.foreshadow, isNotNull);
-      return [
-        for (final d in m.demons) ...[d.x, d.y],
-        m.random.nextDouble(),
-      ];
-    }
-
-    expect(run(watch: true), run(watch: false));
-  });
-
   testWidgets('a foreshadowed sentinel: one shadow, from lurk to combat', (
     tester,
   ) async {
@@ -115,7 +64,6 @@ void main() {
       final scene = await _scene(m, 2);
       Offset? last;
       var lurkFrames = 0, handoffFrames = 0, inPlay = 0;
-      double? firstLurkY, lastLurkY;
       var maxStep = 0.0;
       for (var f = 0; f < 60 * 30; f++) {
         _step(m, scene);
@@ -127,8 +75,6 @@ void main() {
         final now = lurk ?? own;
         if (lurk != null) {
           lurkFrames++;
-          firstLurkY ??= lurk.dy;
-          lastLurkY = lurk.dy;
         }
         if (own != null) {
           if (scene.lurkCover == null && m.foreshadow == null) inPlay++;
@@ -141,7 +87,6 @@ void main() {
         if (sentinel != null && !sentinel.entering) break;
       }
       expect(lurkFrames, greaterThan(60));
-      expect(lastLurkY!, greaterThan(firstLurkY!)); // it crept nearer
       expect(handoffFrames, greaterThan(30));
       // No pop: the shadow glides into the sentinel's own.
       expect(maxStep, lessThan(8));
