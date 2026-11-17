@@ -1,6 +1,6 @@
 {
   "schema": "demon-attack.song-map/v2",
-  "comment": "Source of truth for the MIDI-first score of the whole run (openspec/changes/adaptive-soundtrack design §3, §4, §11, §12). tools/score/score_gen.lua composes every section listed here into web/audio/score/<song>/<section>.mid and packs this map into web/audio/score/score.json (for demon-score.js) and lib/game/song_map.dart (for SongDirector). Edit this file, then rerun the generator; never edit the outputs. There is no recorded music any more: every scene of the game plays a song of this map. Section kinds: loop (repeats until a move), tail (plays once; then its `hold` bars repeat, or it hands over to `next`), bridge (plays once and always hands over to `next` at its end). `next` names a section of the same song, or `song:section` of another song (a bridge into the next song's grid). `mask: all` plays every track except the fleet layer; otherwise the tier masks apply (`masks` on the song or section override the shared ones; a string names a set of `maskSets`). `hatch` numbers the carrier's hatch sections, `wave` orders a sector's wave-progress sections, `bonus` names the bonus level a section plays (bonus-levels: `stormfront`). `fx: worldized` passes the section through the band-pass small-room chain of design §4.4. Grids are integer samples per 4/4 bar at 48 kHz (tools/music_motifs.py BAR_SAMPLES).",
+  "comment": "Source of truth for the MIDI-first score of the whole run (openspec/changes/adaptive-soundtrack design §3, §4, §11, §12). tools/score/score_gen.lua composes every section listed here into web/audio/score/<song>/<section>.mid and packs this map into web/audio/score/score.json (for demon-score.js) and lib/game/song_map.dart (for SongDirector). Edit this file, then rerun the generator; never edit the outputs. There is no recorded music any more: every scene of the game plays a song of this map. Section kinds: loop (repeats until a move), tail (plays once; then its `hold` bars repeat, or it hands over to `next`), bridge (plays once and always hands over to `next` at its end). `next` names a section of the same song, or `song:section` of another song (a bridge into the next song's grid). `mask: all` plays every track except the fleet layer; otherwise the tier masks apply (`masks` on the song or section override the shared ones; a string names a set of `maskSets`). `hatch` numbers the carrier's hatch sections, `wave` orders a sector's wave-progress sections, `bonus` names the bonus level a section plays (bonus-levels: `stormfront`); a bonus level with a song of its own (form `bonus`, e.g. `bonus-wind`) is listed in `bonusSongs` (design §12.10). `fx: worldized` passes the section through the band-pass small-room chain of design §4.4. Grids are integer samples per 4/4 bar at 48 kHz (tools/music_motifs.py BAR_SAMPLES).",
   "ppq": 480,
   "seed": 1982,
   "dwellBars": 2,
@@ -47,6 +47,12 @@
       "2": ["drums", "bass", "gtrL", "gtrR", "strings", "timpani", "lead", "cymbals", "bells"],
       "3": ["drums", "bass", "gtrL", "gtrR", "strings", "timpani", "lead", "cymbals", "bells", "drums2", "lead2", "organ"],
       "4": ["drums", "bass", "gtrL", "gtrR", "strings", "timpani", "lead", "cymbals", "bells", "drums2", "lead2", "organ", "brass", "choir", "clean"]
+    },
+    "wind": {
+      "1": ["drums", "bass", "gtrL", "gtrR", "clean", "bells"],
+      "2": ["drums", "bass", "gtrL", "gtrR", "clean", "bells", "lead", "cymbals", "strings", "timpani"],
+      "3": ["drums", "bass", "gtrL", "gtrR", "clean", "bells", "lead", "cymbals", "strings", "timpani", "drums2", "lead2", "brass"],
+      "4": ["drums", "bass", "gtrL", "gtrR", "clean", "bells", "lead", "cymbals", "strings", "timpani", "drums2", "lead2", "brass", "choir"]
     }
   },
   "layers": {
@@ -350,10 +356,26 @@
         "cackle": { "kind": "bridge", "bars": 2, "next": "alienwin", "mask": "all", "character": "the cackle: a falling chromatic laugh on lead and choir over an organ cluster and timpani" },
         "alienwin": { "kind": "loop", "bars": 8, "mask": "all", "character": "the twisted triumphant march in E Phrygian dominant" }
       }
+    },
+    "bonus-wind": {
+      "name": "Crosswind",
+      "form": "bonus",
+      "key": "E minor",
+      "bpm": 160,
+      "barSamples": 72000,
+      "motifs": "art/music/campaign.json (the campaign theme, swung, over Krybor's harmony) and its head lifted into the relative major; tools/score/songs/bonus.lua",
+      "sections": {
+        "A": { "kind": "loop", "bars": 8, "masks": "wind", "character": "Tailwind: a battle-metal shuffle (power chords on the beat and its last third), the campaign theme swung on lead, clean swung arpeggios, high strings; a triplet tom fill into the loop" },
+        "B": { "kind": "loop", "bars": 8, "masks": "wind", "character": "Crosswind: the lift into G-D-Em-C, triplet chug and gallop, the theme's head called from the third and answered by bells, brass stabs on the swung and of 4, choir at tier 4" }
+      }
     }
   },
+  "bonusSongs": {
+    "comment": "A bonus level with a song of its own (form `bonus`): the level's id (bonusStart `variant`) -> its song. SongDirector starts the song's `A` at the end of the sector's arrival, moves to `B` on the level's second wave (bonusMidway), and hands back to the sector song's `clear` on the level clear (design §12.10).",
+    "crosswind": "bonus-wind"
+  },
   "stingers": {
-    "comment": "Accents in the current key: `deg` is a scale degree of the playing section's key (1-7, may exceed 7), `semi` a chromatic step from its tonic, `oct` the MIDI octave (C4 = 60), `drum` a GM drum note. `t` and `len` are in beats from the anchor, the next multiple of `quantum` beats on the score's grid (with negative `t` the stinger leads into its anchor). `spacing` is the minimum beats between two of one stinger.",
+    "comment": "Accents in the current key: `deg` is a scale degree of the playing section's key (1-7, may exceed 7), `semi` a chromatic step from its tonic, `oct` the MIDI octave (C4 = 60), `drum` a GM drum note. `t` and `len` are in beats from the anchor, the next multiple of `quantum` beats on the score's grid (with negative `t` the stinger leads into its anchor). `spacing` is the minimum beats between two of one stinger. `break` [from, to] (beats from the anchor) is a stop-time: the playing section's own notes are silenced over it while the stinger plays alone. `always` plays it even over two live stingers. `over` names the sections the stinger is gated over (score_gen.lua: their peak plus the stinger's, with the break, stays <= 32 voices): `all`, `wave` (wave-progress sections), `bonus` (bonus-level sections of the sector songs) or `song:<id>`.",
     "fill": { "quantum": 4, "spacing": 8, "notes": [
       { "t": -2, "len": 0.25, "v": 96, "track": "drums", "drum": 50 }, { "t": -1.75, "len": 0.25, "v": 90, "track": "drums", "drum": 50 },
       { "t": -1.5, "len": 0.25, "v": 98, "track": "drums", "drum": 48 }, { "t": -1.25, "len": 0.25, "v": 92, "track": "drums", "drum": 48 },
@@ -399,10 +421,57 @@
       { "t": 0, "len": 0.25, "v": 96, "track": "drums", "drum": 42 } ] },
     "toll": { "quantum": 1, "spacing": 4, "notes": [
       { "t": 0, "len": 3, "v": 108, "track": "bells", "deg": 1, "oct": 4 }, { "t": 0, "len": 3, "v": 84, "track": "organ", "deg": 1, "oct": 2 },
-      { "t": 0, "len": 3, "v": 84, "track": "organ", "deg": 5, "oct": 2 }, { "t": 0, "len": 1.5, "v": 96, "track": "timpani", "deg": 1, "oct": 2 } ] }
+      { "t": 0, "len": 3, "v": 84, "track": "organ", "deg": 5, "oct": 2 }, { "t": 0, "len": 1.5, "v": 96, "track": "timpani", "deg": 1, "oct": 2 } ] },
+    "oneup": { "quantum": 4, "spacing": 16, "always": true, "break": [0, 4], "over": ["all"], "notes": [
+      { "t": -1, "len": 0.25, "v": 96, "track": "drums", "drum": 38 }, { "t": -0.75, "len": 0.25, "v": 100, "track": "drums", "drum": 45 },
+      { "t": -0.5, "len": 0.25, "v": 104, "track": "drums", "drum": 38 }, { "t": -0.25, "len": 0.25, "v": 110, "track": "drums", "drum": 45 },
+      { "t": 0, "len": 0.5, "v": 124, "track": "drums", "drum": 36 }, { "t": 0, "len": 2, "v": 116, "track": "cymbals", "drum": 49 },
+      { "t": 1, "len": 0.25, "v": 108, "track": "drums", "drum": 38 }, { "t": 2, "len": 0.25, "v": 112, "track": "drums", "drum": 36 },
+      { "t": 3, "len": 0.25, "v": 112, "track": "drums", "drum": 38 },
+      { "t": 2, "len": 0.25, "v": 84, "track": "drums2", "drum": 36 }, { "t": 2.25, "len": 0.25, "v": 88, "track": "drums2", "drum": 36 },
+      { "t": 2.5, "len": 0.25, "v": 90, "track": "drums2", "drum": 36 }, { "t": 2.75, "len": 0.25, "v": 94, "track": "drums2", "drum": 36 },
+      { "t": 3, "len": 0.25, "v": 96, "track": "drums2", "drum": 36 }, { "t": 3.25, "len": 0.25, "v": 100, "track": "drums2", "drum": 36 },
+      { "t": 0, "len": 1.4, "v": 120, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 2, "len": 0.9, "v": 114, "track": "gtrL", "deg": 6, "oct": 2 },
+      { "t": 3, "len": 0.45, "v": 116, "track": "gtrL", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 1.4, "v": 116, "track": "gtrR", "deg": 1, "oct": 2 }, { "t": 2, "len": 0.9, "v": 110, "track": "gtrR", "deg": 6, "oct": 2 },
+      { "t": 3, "len": 0.45, "v": 112, "track": "gtrR", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 1.4, "v": 116, "track": "bass", "deg": 1, "oct": 1 }, { "t": 2, "len": 0.9, "v": 110, "track": "bass", "deg": 6, "oct": 1 },
+      { "t": 3, "len": 0.45, "v": 112, "track": "bass", "deg": 5, "oct": 1 },
+      { "t": 0, "len": 1.4, "v": 112, "track": "timpani", "deg": 1, "oct": 2 }, { "t": 3, "len": 0.45, "v": 104, "track": "timpani", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 1.4, "v": 104, "track": "brass", "deg": 1, "oct": 4 }, { "t": 1.5, "len": 0.45, "v": 100, "track": "brass", "deg": 3, "oct": 4 },
+      { "t": 2, "len": 0.9, "v": 108, "track": "brass", "deg": 5, "oct": 4 }, { "t": 3, "len": 0.45, "v": 112, "track": "brass", "semi": 11, "oct": 4 },
+      { "t": 0, "len": 1.4, "v": 96, "track": "brass", "deg": 5, "oct": 3 }, { "t": 2, "len": 0.9, "v": 100, "track": "brass", "deg": 3, "oct": 4 },
+      { "t": 3, "len": 0.45, "v": 104, "track": "brass", "deg": 5, "oct": 3 },
+      { "t": 0, "len": 1.4, "v": 96, "track": "lead", "deg": 1, "oct": 5 }, { "t": 1.5, "len": 0.45, "v": 96, "track": "lead", "deg": 3, "oct": 5 },
+      { "t": 2, "len": 0.9, "v": 104, "track": "lead", "deg": 5, "oct": 5 }, { "t": 3, "len": 0.9, "v": 108, "track": "lead", "semi": 11, "oct": 5 },
+      { "t": 4, "len": 1, "v": 112, "track": "lead", "deg": 8, "oct": 5 },
+      { "t": 0, "len": 3.5, "v": 72, "track": "choir", "deg": 1, "oct": 4 }, { "t": 0, "len": 3.5, "v": 68, "track": "choir", "deg": 3, "oct": 4 },
+      { "t": 0, "len": 3.5, "v": 68, "track": "choir", "deg": 5, "oct": 4 },
+      { "t": 4, "len": 1.5, "v": 92, "track": "bells", "deg": 8, "oct": 5 } ] },
+    "challenge-fail": { "quantum": 1, "spacing": 8, "over": ["wave", "bonus", "song:bonus-wind"], "notes": [
+      { "t": 0, "len": 0.9, "v": 84, "track": "gtrL", "deg": 6, "oct": 2 }, { "t": 1, "len": 1.2, "v": 76, "track": "gtrL", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 0.9, "v": 86, "track": "lead", "deg": 6, "oct": 4 }, { "t": 1, "len": 1.2, "v": 78, "track": "lead", "deg": 5, "oct": 4 } ] },
+    "gust": { "quantum": 1, "spacing": 4, "over": ["song:bonus-wind"], "notes": [
+      { "t": 0, "len": 0.25, "v": 40, "track": "cymbals", "drum": 51 }, { "t": 0.25, "len": 0.25, "v": 50, "track": "cymbals", "drum": 51 },
+      { "t": 0.5, "len": 0.25, "v": 60, "track": "cymbals", "drum": 51 }, { "t": 0.75, "len": 0.25, "v": 70, "track": "cymbals", "drum": 51 },
+      { "t": 1, "len": 0.25, "v": 80, "track": "cymbals", "drum": 51 }, { "t": 1.25, "len": 0.25, "v": 90, "track": "cymbals", "drum": 51 },
+      { "t": 0, "len": 0.45, "v": 48, "track": "strings", "deg": 1, "oct": 4 }, { "t": 0, "len": 0.45, "v": 44, "track": "strings", "deg": 5, "oct": 4 },
+      { "t": 0.5, "len": 0.45, "v": 60, "track": "strings", "deg": 1, "oct": 4 }, { "t": 0.5, "len": 0.45, "v": 56, "track": "strings", "deg": 5, "oct": 4 },
+      { "t": 1, "len": 0.9, "v": 74, "track": "strings", "deg": 1, "oct": 4 }, { "t": 1, "len": 0.9, "v": 70, "track": "strings", "deg": 5, "oct": 4 },
+      { "t": 1, "len": 0.9, "v": 60, "track": "choir", "deg": 8, "oct": 4 }, { "t": 1.5, "len": 1, "v": 90, "track": "cymbals", "drum": 57 } ] },
+    "cargo": { "quantum": 0.25, "spacing": 1, "over": ["wave"], "notes": [
+      { "t": 0, "len": 0.25, "v": 72, "track": "bells", "deg": 5, "oct": 4 }, { "t": 0.25, "len": 0.75, "v": 84, "track": "bells", "deg": 1, "oct": 5 },
+      { "t": 0, "len": 0.25, "v": 70, "track": "drums", "drum": 37 } ] },
+    "thunder": { "quantum": 0.5, "spacing": 4, "over": ["bonus"], "notes": [
+      { "t": 0, "len": 0.2, "v": 100, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 0.25, "len": 0.2, "v": 90, "track": "gtrL", "deg": 1, "oct": 2 },
+      { "t": 0.5, "len": 0.2, "v": 96, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 0.75, "len": 0.2, "v": 104, "track": "gtrL", "deg": 3, "oct": 2 },
+      { "t": 1, "len": 1, "v": 116, "track": "gtrL", "deg": 1, "oct": 2 },
+      { "t": 1, "len": 0.25, "v": 96, "track": "drums", "drum": 41 }, { "t": 1.25, "len": 0.25, "v": 104, "track": "drums", "drum": 41 },
+      { "t": 1.5, "len": 0.25, "v": 112, "track": "drums", "drum": 41 }, { "t": 1.75, "len": 0.25, "v": 120, "track": "drums", "drum": 41 } ] }
   },
   "accents": {
     "dive": "fill", "laststand": "hit", "hatch": "hatch", "reinforce": "rise", "breakthrough": "hit", "destroyed": "impact",
-    "gloat": "gloat", "respawn": "respawn", "riser": "riser", "stab": "stab", "glass": "glass", "impact": "impact", "toll": "toll"
+    "gloat": "gloat", "respawn": "respawn", "riser": "riser", "stab": "stab", "glass": "glass", "impact": "impact", "toll": "toll",
+    "oneup": "oneup", "challenge-fail": "challenge-fail", "gust": "gust", "cargo": "cargo", "thunder": "thunder"
   }
 }

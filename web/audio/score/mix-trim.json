@@ -9,6 +9,14 @@
   "k": 0.2994
  },
  "measuredLufs": {
+  "bonus-wind:A@1": -9.74,
+  "bonus-wind:A@2": -8.69,
+  "bonus-wind:A@3": -8.11,
+  "bonus-wind:A@4": -8.11,
+  "bonus-wind:B@1": -9.61,
+  "bonus-wind:B@2": -8.51,
+  "bonus-wind:B@3": -7.37,
+  "bonus-wind:B@4": -7.32,
   "c-k:pivot": -10.44,
   "c1:H1@1": -8.43,
   "c1:H1@2": -7.76,
@@ -228,6 +236,14 @@
   "r-e:pivot": -10.34
  },
  "trims": {
+  "bonus-wind:A@1": 3.3,
+  "bonus-wind:A@2": 2.6,
+  "bonus-wind:A@3": 2.2,
+  "bonus-wind:A@4": 2.2,
+  "bonus-wind:B@1": 3.3,
+  "bonus-wind:B@2": 2.5,
+  "bonus-wind:B@3": 1.7,
+  "bonus-wind:B@4": 1.6,
   "c-k:pivot": 3.8,
   "c1:H1@1": 2.4,
   "c1:H1@2": 2,

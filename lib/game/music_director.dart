@@ -1,5 +1,6 @@
 import '../services/audio.dart';
 import 'model.dart';
+import 'song_map.dart' show scoreAccents;
 
 /// Derives adaptive-music events from the simulation, read-only.
 ///
@@ -271,12 +272,26 @@ class MusicBridge {
     GameEventNames.bossHatchFieldDown: 'glass',
     GameEventNames.bossHatchDrop: 'impact',
     GameEventNames.bossWreckFalls: 'impact',
+    // --- bonus-music (adaptive-soundtrack §12.10): the bonus levels' own
+    // accents. Supply Run ticks as a crate is shot open (its cargo falls);
+    // Stormfront answers a bolt the ship drew and dodged with a riff.
+    GameEventNames.bonusCrate: 'cargo',
+    GameEventNames.stormBait: 'thunder',
   };
+
+  /// A structured event asking for a stinger by its accent name (data
+  /// `name`: `gust`, `oneup`, `challenge-fail`, ... from `scoreAccents`), so
+  /// the pure-Dart model can ask without importing audio. An unknown name
+  /// plays nothing.
+  static const accentEvent = 'musicAccent';
 
   void call(GameEvent event) {
     final accent = accents[event.name];
     if (accent != null) {
       onAccent(accent);
+    } else if (event.name == accentEvent) {
+      final name = event.data['name'];
+      if (name is String && scoreAccents.contains(name)) onAccent(name);
     } else if (event.name == GameEventNames.cohortMerged) {
       // continuous-swarm: the merged next wave takes the old interwave
       // stinger's place (no transition phase marks it any more).
