@@ -8,10 +8,28 @@ wins. Fix it here when a rule changes.
 
 ## 1. Branches and pushes
 
-- Flow: `work/<id>` → `git merge --no-ff` into `game` → pull request `game` → `main`. Pushes to `main` deploy to
-  production, so **never push `main`**, and agents never push `game` unless their task says so. Push only your
-  own `work/<id>`.
+- Flow: `work/<id>` → **squash** into `game` → pull request `game` → `main` (a normal merge commit). Pushes to
+  `main` deploy to production, so **never push `main`**. Agents push only their own `work/<id>`. Only the lead
+  session squashes into `game`.
   *Why:* `main` deploys, and `game` is where everyone integrates (`.tillandsias/branch-discipline.yaml`, level 1).
+- **Generated assets keep no history** (operator, 2026-11-17). Every piece of work lands in `game` as ONE squashed
+  commit; intermediate renders and superseded assets live only on the work branch, which is deleted after the
+  squash. Never push asset batches straight to `game`. The lead squashes it **from the forge, self-sufficiently**:
+  no host session or PR is needed.
+  ```sh
+  git fetch origin && git switch game && git merge --ff-only origin/game
+  git merge --squash origin/work/<id> && git commit   # title "<id>: <summary>", body = the branch's story + trailers
+  # gates (§2) on this tree, then:
+  git push origin game && git push origin --delete work/<id>
+  ```
+  If `git merge --squash` conflicts, have the work branch merge `origin/game` and re-push, then squash again. Don't
+  resolve generated files by hand (§4).
+  - `game` → `main` stays a **normal merge** via PR. `game` is already squashed, and squashing again would make the
+    two diverge.
+  - When `main` gets commits of its own (licence PRs), bring them into `game` with
+    `git merge --squash origin/main`, then gate it and push it like any other squash.
+  *Why:* operator, 2026-11-17: the checkout's 3.6 GB disk filled with art history (§9), and "forges should be
+  self sufficient", so the forge does not depend on a host coordinator for routine merges.
 - **Merge, don't rebase, once a branch has been pushed.** The git mirror rejects non-fast-forward pushes, so a pushed
   work ref is never rewritten. If `game` moved, `git merge origin/game` into your branch. A branch that depends on
   another agent's branch builds on the **pushed** ref (`refs/heads/work/<id>` in `git ls-remote`, which also lists
@@ -27,7 +45,8 @@ wins. Fix it here when a rule changes.
   operator asks for a release, push `game` through the gates, then ask the coordinator session (`macuahuitl-fedora`,
   via SendMessage) to open the `game` → `main` PR from the host with your title and body. Give the operator the PR
   link; they press Merge. Agents never merge to `main`. *Why:* PR #3 (2026-11-17); before that, the forge told the
-  operator it couldn't be done.
+  operator it couldn't be done. This is a stopgap until forges can open PRs themselves (Tillandsias 2065-ccx9,
+  #1123). A regular user has no coordinator session, so don't add new dependencies on one.
 
 ## 2. Test gates
 
