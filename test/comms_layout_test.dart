@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:demon_attack/comms/comms_bank.dart';
 import 'package:demon_attack/comms/brood_script.dart';
 import 'package:demon_attack/comms/comms_director.dart';
+import 'package:demon_attack/comms/comms_lanes.dart';
 import 'package:demon_attack/comms/comms_mouth.dart';
 import 'package:demon_attack/comms/comms_portraits.dart';
 import 'package:demon_attack/comms/comms_types.dart';
@@ -296,29 +297,33 @@ void main() {
               .map((e) => tester.getRect(find.byWidget(e.widget))),
         ],
       ];
-      expect(rects.length, 2, reason: 'two full dialogue cards');
-      expect(rects[0].top, rects[1].top);
-      // mobile-top-trim: cards hug their text, the HUD band its content.
+      // portrait-comms-lanes: the lost ship's lines fill the lanes by side
+      // (a second brood grunt waits for the brood lane); every toast has
+      // the one fixed height and the lanes share one row.
+      expect(rects, isNotEmpty);
       for (final r in rects) {
-        expect(r.height, lessThanOrEqualTo(CommsHudStack.stripHeight));
+        expect(r.height, closeTo(CommsHudStack.stripHeight, .01));
+        expect(r.top, closeTo(rects.first.top, .01));
       }
       expect(
         tester.getSize(find.byKey(const ValueKey('hud-band'))).height,
         lessThan(80),
       );
-      expect(rects[0].overlaps(rects[1]), isFalse);
-      expect(rects[0].width, closeTo(rects[1].width, .01));
-      final ordered = [...rects]..sort((a, b) => a.left.compareTo(b.left));
-      final faces = [
-        for (final m in rig.director.active)
-          ...find
-              .byKey(ValueKey('comms-portrait-${m.line.id}'))
-              .evaluate()
-              .map((e) => tester.getRect(find.byWidget(e.widget))),
-      ]..sort((a, b) => a.left.compareTo(b.left));
-      // Portraits sit just inside the toast frame (border + accent bar + gap).
-      expect(faces.first.left - ordered.first.left, lessThan(8));
-      expect(ordered.last.right - faces.last.right, lessThan(8));
+      if (rects.length == 2) {
+        expect(rects[0].overlaps(rects[1]), isFalse);
+        expect(rects[0].width, closeTo(rects[1].width, .01));
+        final ordered = [...rects]..sort((a, b) => a.left.compareTo(b.left));
+        final faces = [
+          for (final m in rig.director.active)
+            ...find
+                .byKey(ValueKey('comms-portrait-${m.line.id}'))
+                .evaluate()
+                .map((e) => tester.getRect(find.byWidget(e.widget))),
+        ]..sort((a, b) => a.left.compareTo(b.left));
+        // Portraits sit just inside the toast frame (border + accent bar + gap).
+        expect(faces.first.left - ordered.first.left, lessThan(8));
+        expect(ordered.last.right - faces.last.right, lessThan(8));
+      }
       expect(find.byKey(const ValueKey('hud-score')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-lives')), findsOneWidget);
       expect(find.byKey(const ValueKey('hud-hearts')), findsOneWidget);
@@ -421,8 +426,10 @@ void main() {
     expect(secondPortrait.right, greaterThan(350));
     expect(tester.takeException(), isNull);
 
-    // An isolated call reserves half the dock, even when no second call exists.
+    // An isolated call reserves half the dock, even when no second call
+    // exists (portrait-comms-lanes: a fresh dock, its own lane).
     answer.inReplyTo = null;
+    director.lanes.clear();
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -439,7 +446,27 @@ void main() {
       tester.getSize(isolated).width,
       (360 - 2 * CommsHudStack.gap) / 2, // half the dock, minus the gap
     );
-    director.active.add(message('unrelated', 'Hold the line!', 2.1));
+    final before = tester.getRect(isolated);
+    // portrait-comms-lanes: a brood line takes the other lane; the human
+    // card stays exactly where it was.
+    final brood = commsCast.values.firstWhere((c) => c.isDemon);
+    director.active.add(
+      CommsMessage(
+        trigger: trigger,
+        line: CommsLine(
+          id: 'unrelated',
+          speaker: brood.id,
+          duration: 1,
+          text: 'Hold the line!',
+        ),
+        character: brood,
+        priority: 1,
+        queuedAt: 0,
+        readyAt: 0,
+        expiresAt: 10,
+        sequence: 0,
+      )..startedAt = 2.1,
+    );
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -451,7 +478,8 @@ void main() {
       ),
     );
     final unrelated = find.byKey(const ValueKey('comms-strip-unrelated'));
-    expect(tester.getSize(unrelated).width, (360 - 2 * CommsHudStack.gap) / 2);
+    expect(tester.getRect(isolated), before);
+    expect(tester.getRect(unrelated).left, greaterThan(before.right));
     expect(
       tester.getRect(isolated).overlaps(tester.getRect(unrelated)),
       isFalse,
@@ -535,14 +563,17 @@ void main() {
           find.textContaining('Save a turn for me!', findRichText: true),
           findsOneWidget,
         );
+        // portrait-comms-lanes: the human half is on the left and the
+        // brood half on the right, whoever opens.
         final first = tester.getRect(
           find.byKey(const ValueKey('comms-portrait-first')),
         );
         final second = tester.getRect(
           find.byKey(const ValueKey('comms-portrait-second')),
         );
-        expect(first.left, lessThan(10));
-        expect(second.right, greaterThan(size.width - 10));
+        final (left, right) = demonFirst ? (second, first) : (first, second);
+        expect(left.left, lessThan(10));
+        expect(right.right, greaterThan(size.width - 10));
         expect(tester.takeException(), isNull);
         await _snap(
           tester,
@@ -563,12 +594,20 @@ void main() {
     rig.model.transitionDuration = 12;
     rig.model.transitionLeft = 12;
     await rig.run(['travel'], 0);
-    final on = await rig.until(
-      () =>
-          rig.director.transmission != null &&
-          rig.director.transmission!.age(rig.comms.now) > 1.2,
-      limit: 20,
-    );
+    // portrait-comms-lanes: it may wait for the squad lane first.
+    final on = await rig.until(() {
+      final t = rig.director.transmission;
+      if (t == null) return false;
+      rig.director.lanes.sync(
+        rig.comms.now,
+        rig.director.active,
+        queue: rig.director.queue,
+      );
+      final shown = rig.director.lanes.toast(CommsLane.human);
+      return shown != null &&
+          shown.messages.contains(t) &&
+          rig.comms.now - shown.shownAt > .5;
+    }, limit: 20);
     expect(on, isTrue, reason: '${rig.director.history}');
     final id = rig.director.transmission!.line.id;
     expect(find.byKey(ValueKey('comms-transmission-$id')), findsNothing);

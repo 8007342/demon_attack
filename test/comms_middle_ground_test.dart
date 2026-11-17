@@ -8,6 +8,7 @@ import 'dart:math' as math;
 import 'package:demon_attack/comms/comms_bank.dart';
 import 'package:demon_attack/comms/comms_context.dart';
 import 'package:demon_attack/comms/comms_director.dart';
+import 'package:demon_attack/comms/comms_lanes.dart';
 import 'package:demon_attack/comms/comms_lineup.dart';
 import 'package:demon_attack/comms/comms_types.dart';
 import 'package:demon_attack/comms/comms_view.dart';
@@ -69,23 +70,28 @@ void main() {
       expect(huge.endsAt, closeTo(CommsMessage.readCap, 1e-9));
     });
 
+    // portrait-comms-lanes: the dock is two lanes; a card is never hidden
+    // or pushed aside by a newer line (it waits in its own lane).
     test('the dock never hides a card that is still being read', () {
       final a = _msg('a', 'First', 0);
       final b = _msg('b', 'Second', 1.4);
       final c = _msg('c', 'Third', 2.8);
-      final (:placed, :overflow) = CommsHudStack.dockEntries([c, a, b]);
-      expect(placed.map((e) => e.single.line.id), ['a', 'b']);
-      expect(overflow.single.single.line.id, 'c');
-      // An exchange takes both halves; a newer call waits in the ticker.
+      final lanes = CommsLanes()..sync(3, [c, a, b]);
+      expect(lanes.toast(CommsLane.human)!.messages.single.line.id, 'a');
+      expect(lanes.waiting(CommsLane.human), 2);
+      expect(lanes.toast(CommsLane.demon), isNull);
+      // An exchange takes both lanes; a newer call waits for its lane.
       final opening = _msg('o', 'That sector is mine!', 0);
       final answer = _msg('r', 'Only until my turn!', 1.4, inReplyTo: opening);
       final warn = _msg('w', 'Missile up!', 2.9);
-      final dock = CommsHudStack.dockEntries([opening, answer, warn]);
-      expect(dock.placed.single.map((m) => m.line.id), ['o', 'r']);
-      expect(dock.overflow.single.single.line.id, 'w');
+      final dock = CommsLanes()..sync(3, [opening, answer, warn]);
+      final pair = dock.toast(CommsLane.human)!;
+      expect(pair.messages.map((m) => m.line.id), ['o', 'r']);
+      expect(identical(pair, dock.toast(CommsLane.demon)), isTrue);
+      expect(dock.waiting(CommsLane.human), 1);
     });
 
-    testWidgets('a waiting card shows as a ticker under the exchange', (
+    testWidgets('a waiting card waits in its lane under the exchange', (
       tester,
     ) async {
       final director = CommsDirector();
@@ -104,12 +110,8 @@ void main() {
         ),
       );
       expect(find.byKey(const ValueKey('comms-conversation')), findsOneWidget);
-      expect(find.byKey(const ValueKey('comms-ticker-w')), findsOneWidget);
-      for (final text in [
-        'That sector is mine!',
-        'Only until my turn!',
-        'Missile up!',
-      ]) {
+      expect(find.byKey(const ValueKey('comms-strip-w')), findsNothing);
+      for (final text in ['That sector is mine!', 'Only until my turn!']) {
         expect(
           find.textContaining(text, findRichText: true),
           findsOneWidget,
