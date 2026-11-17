@@ -53,8 +53,10 @@ Each commit is the one that loads the weights above. **Every row: verify by smok
   `https://github.com/descriptinc/descript-audio-codec/releases/download/0.0.1/weights.pth` (44 kHz, 8 kbps; the
   package's `__MODEL_LATEST_TAGS__`). The codec repo says "Weights are released as part of this repo under MIT license"
   (README) and the package is MIT (PyPI 1.0.0). The GitHub releases API gives the asset's size (306,717,287 bytes) but
-  no digest, so its sha256 is **not verified here**; the register hashes it on its first, consented fetch and records
-  it in this file. The Hugging Face copy `descript/dac_44khz` (rev `c1bc521685adf9cfe247bc39a5ca58917eda1ac4`,
+  no digest, so its sha256 is **not verified here**; the register never hashes on first fetch
+  (trust-on-first-use). Before adding the row, the coordinator fetches it once on the host, hashes it, and pins that sha256
+  with its MIT LICENSE bytes at the release tag (coordinator, 2026-11-17). Fish's int4 checkpoint is a derived
+  artefact: the capability builds it from the pinned inputs and records its hash. The Hugging Face copy `descript/dac_44khz` (rev `c1bc521685adf9cfe247bc39a5ca58917eda1ac4`,
   `model.safetensors` sha256 `6128ebff483a41422b0164d079a3773b0d8d82e64c4293d775994cbf8baf913a`) is the transformers
   path the 0626 repo's `audio_tokenizer_config.json` names, but its card says "License: [More Information Needed]", so
   it is not the pick.
