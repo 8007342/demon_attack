@@ -6,10 +6,11 @@
    API calls are safe before the first user gesture and when audio is unavailable. */
 (() => {
   'use strict';
-  // music: the music bus (demonAudio.graph). Its level is CONSTANT: speech never ducks it, effects never
-  // side-chain it and the life loss no longer dips it (operator ruling: the score is the star). drop and
-  // sidechain stay as fixed unity-gain stages of the music chain (comms-audio.js shares the graph).
-  // musicLevel: the player's music volume (Mute/Low/Full), the only thing that changes the music's level;
+  // music: the music bus (demonAudio.graph). Effects never side-chain it and the life loss no longer dips it.
+  // drop is a fixed unity-gain stage of the music chain (comms-audio.js shares the graph).
+  // sidechain: the speech duck (mix-balance, operator round 5 M1): a few dB down while a radio line plays, on
+  // its own gain stage, so the score's track gains, masks and bar-quantised moves never see it.
+  // musicLevel: the player's music volume (Mute/Low/Full);
   // bright: a high shelf that opens while a power-up pickup is falling;
   // limiter: a safety limiter on the master (Full music + stacked layers).
   let context, master, music, musicLevel, bright, limiter, drop, sidechain, effects, timer;
@@ -19,13 +20,16 @@
   // The accents that always play, even over two live stingers or with the music muted (the life loss).
   const lifeLoss = ['destroyed', 'gloat', 'respawn'];
   // --- audio round: player volume levels.
-  // Volume levels per channel, cycled Mute -> Low -> Full by the HUD toggles and remembered per device. Music
-  // gains are relative to the round-3 mix: Full is +6 dB louder than that, Low is 10 dB under Full. Speech gains
-  // live in comms-audio.js. Effects keep their level unless both music and speech are muted, which mutes
+  // Volume levels per channel, cycled Mute -> Low -> Full by the HUD toggles and remembered per device. Speech
+  // gains live in comms-audio.js. Effects keep their level unless both music and speech are muted, which mutes
   // everything (the old master mute).
+  // --- mix-balance: Full music is -20 dB on the music level (was +6 dB), Low 10 dB under Full. Metered with
+  // tools/mix_meter/measure.mjs, this puts the score's loudest gameplay 8.3 LU under the radio at Full/Full (the old Full sat
+  // 6-8 LU OVER it and drove the master limiter). Stored choices keep their names; only what they sound like moved.
   const levelNames = ['mute', 'low', 'full'];
   const dB = value => 10 ** (value / 20);
-  const musicLevels = { mute: 0, low: dB(-4), full: dB(6) };
+  const musicFullDb = -20;
+  const musicLevels = { mute: 0, low: dB(musicFullDb - 10), full: dB(musicFullDb) };
   const storageKeys = { music: 'demonAttack.musicVolume', speech: 'demonAttack.speechVolume' };
   function storage() { try { return window.localStorage || null; } catch { return null; } }
   function readLevel(channel) {
@@ -40,6 +44,64 @@
   // while a pickup is falling the music's top end opens a little.
   const brightDb = 3, brightHz = 3500;
   const power = { active: 0, falling: false, brightOn: false };
+
+  // --- mix-balance: the speech duck. comms-audio.js calls duck(key, depthDb, from, until) when a radio line starts
+  // (audio-clock times of its first and last sample) and unduck(key, at) when a line is cut early. The duck gain
+  // follows the deepest line sounding: down with an attack time constant, held for `hold` after the last line ends,
+  // then back with a release time constant (setTargetAtTime: about 3 time constants to settle). The plan is kept here
+  // so a change mid-ramp starts from the exact scheduled value, without reading AudioParam.value.
+  const duckTiming = { attack: .03, release: .15, hold: .25 };
+  const duckHolders = new Map();   // key -> { depth, from, until }
+  let duckPlan = { at: 0, value: 1, steps: [] };   // value at `at`, then setTargetAtTime steps { at, target, tau }
+  function duckValueAt(t) {
+    let value = duckPlan.value, from = duckPlan.at, target = null, tau = 1;
+    for (const step of duckPlan.steps) {
+      if (step.at > t) break;
+      if (target !== null) value = target + (value - target) * Math.exp(-(step.at - from) / tau);
+      from = step.at; target = step.target; tau = step.tau;
+    }
+    return target === null ? value : target + (value - target) * Math.exp(-(t - from) / tau);
+  }
+  function duckDepthAt(t) {
+    let depth = 0;
+    for (const h of duckHolders.values()) if (h.from <= t + 1e-9 && t < h.until + duckTiming.hold - 1e-9) depth = Math.max(depth, h.depth);
+    return depth;
+  }
+  function planDuck() {
+    if (!context || !sidechain) return;
+    const now = context.currentTime;
+    for (const [key, h] of duckHolders) if (h.until + duckTiming.hold < now) duckHolders.delete(key);
+    const value = duckValueAt(now), times = new Set([now]);
+    for (const h of duckHolders.values()) for (const t of [h.from, h.until + duckTiming.hold]) if (t > now) times.add(t);
+    // One step now toward the depth that holds now (unless already there), then one per change of depth.
+    const steps = [];
+    let previous = null;
+    for (const at of [...times].sort((a, b) => a - b)) {
+      const target = dB(-duckDepthAt(at)), from = previous ?? value;
+      if (Math.abs(target - from) > 1e-6) steps.push({ at, target, tau: target < from ? duckTiming.attack : duckTiming.release });
+      previous = target;
+    }
+    const gain = sidechain.gain;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(value, now);
+    for (const step of steps) gain.setTargetAtTime(step.target, step.at, step.tau);
+    duckPlan = { at: now, value, steps };
+  }
+  function duck(key, depthDb, from, until) {
+    if (!context || key === undefined || key === null) return false;
+    const depth = Math.max(0, Math.min(12, Number(depthDb) || 0));
+    if (!depth || !(until > from)) { duckHolders.delete(key); planDuck(); return false; }
+    duckHolders.set(key, { depth, from: Math.max(from, context.currentTime), until });
+    planDuck();
+    return true;
+  }
+  function unduck(key, at) {
+    const h = duckHolders.get(key);
+    if (!h || !context) return false;
+    h.until = Math.max(h.from, Math.min(h.until, Number.isFinite(at) ? at : context.currentTime));
+    planDuck();
+    return true;
+  }
 
   // --- the score (demon-score.js, loaded first; absent in older pages and tests).
   const score = window.demonScore?.create({ input: () => drop, lifeLoss }) || null;
@@ -215,16 +277,17 @@
   // --- adaptive-soundtrack: SongDirector's moves (see demon-score.js move()); returns the landing time, -1 while
   // loading or before the first gesture (the move runs once ready), -2 when the score failed to load.
   function song(move) { return score ? score.move(move || {}) : -2; }
-  window.demonAudio = Object.freeze({ unlock, intensity, accent, fleetIntact, mute, pause, resume, sfx, setLevel, powerLayer, song, get muted() { return muted; },
+  window.demonAudio = Object.freeze({ unlock, intensity, accent, fleetIntact, mute, pause, resume, sfx, setLevel, powerLayer, song, duck, unduck, get muted() { return muted; },
     get time() { return context?.currentTime ?? -1; },
     get scorePosition() { return score?.position ?? null; },
     get scoreLoading() { return score?.loading ?? Promise.resolve(); },
     get levels() { return { ...levels }; },
-    get graph() { return { context, master, music, effects }; }, // shared with comms-audio.js
+    get graph() { return { context, master, music, effects, duck: sidechain }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.
     get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length,
       levels: { ...levels }, masterGain: master?.gain.value ?? null, musicLevel: musicLevel?.gain.value ?? null, limiter: !!limiter,
-      power: { ...power }, score: score?.state ?? null }; } });
+      power: { ...power }, score: score?.state ?? null,
+      duck: { gain: context ? duckValueAt(context.currentTime) : 1, depthDb: context ? duckDepthAt(context.currentTime) : 0, lines: duckHolders.size, ...duckTiming } }; } });
   // Unlock from real DOM gestures, including Flutter canvas input.
   for (const type of ['pointerdown', 'keydown']) window.addEventListener(type, unlock, { once: true, capture: true });
 })();
