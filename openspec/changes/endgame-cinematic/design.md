@@ -216,3 +216,20 @@ in task 1.4, after the operator's review.
 | `voice-stack` owners | the `plant` and `set` fields, the ration and the second-set gate, the plant tone check | task 7.1, 7.2 |
 | `carrier-v3` owners | the final carrier mesh and the wreck's last frame for the match cut | task 3.2 |
 | Nobody | no new model, node pack or container for the baseline | – |
+
+## 12. Operator decisions (2026-11-17)
+
+The operator approved the recommendations as written ("I approve of your recommendations for the end scene"). CP0
+passes, and the §10 answers are the agent's picks:
+1. The General is Gorrak and the waitress is Vexxa (WING CADET), so the brood are the restaurant's staff. Her lines may
+   be voiced plainly.
+2. 29 s plus a 3 s button.
+3. Kids only at the table, with the one wink in S8.
+4. The sign reads KRYBOR, with "burgers · shakes · since 1982" under it. The caption "San Diego · after the last turn"
+   stays.
+5. Mom is in her forties with a silver streak.
+6. The pilot is never shown and never voiced.
+7. Second-run lines may wink at the room.
+8. A video cut, if ever made, uses royalty-free codecs only.
+9. Subtitled kids, with laughs and groans, are the fallback for child voices.
+10. The optional downloads still go through a consent token each, when a stage asks.

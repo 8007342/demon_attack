@@ -9,6 +9,8 @@ voice stack needs signed. It is a record of what the texts say, not legal advice
 `curl -sS -L <URL>`, then hashed with `sha256sum` over the exact bytes received. If a later fetch hashes
 differently, the licence text changed: re-read it before signing or renewing.
 
+**Operator decision (2026-11-17):** "I think our credits section covers the license issues doesn't it? I approve." Fish S2-Pro (as Non-Commercial Purpose) and the Higgs v2 credit as shown are accepted; the formal signature follows when the gate exists.
+
 **Do not sign by any interim route.** Signing waits for the coordinator's proof-of-gate design (2026-11-17).
 
 ## Decide on the text itself (verbatim clauses, re-fetched and hash-checked 2026-11-17)
