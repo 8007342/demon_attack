@@ -5,10 +5,10 @@
 // saved checkpoint and the unlock history are all closed to them
 // (ArcadeModel.startAt with console: true; ArcadePage reads model.ranked).
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../game/model.dart';
 import '../game/scene.dart' show ink, mint, gold;
+import '../review/dev_nav.dart';
 import '../review/page_notes.dart';
 import '../review/review_notes.dart';
 import '../services/audio.dart';
@@ -16,9 +16,6 @@ import 'score_listening_panel.dart'; // --- adaptive-soundtrack
 
 /// Path of the console page.
 const consoleRoute = '/console';
-
-/// Path of the asset review studio (the gallery app, served by the Worker).
-const studioRoute = '/studio';
 
 /// What console notes are attached to: the page as a whole.
 final consoleNotesAsset = ReviewAsset(
@@ -373,43 +370,11 @@ class _DevConsolePageState extends State<DevConsolePage> {
                       Expanded(child: _label(sentinel.label, _faint, 8)),
                     ],
                   ),
-                  // --- console links: review pages opened from here (the
-                  // art gallery; an asset viewer / notes link joins this row).
+                  // --- dev-pages-overhaul: the dev pages' navigation (the
+                  // gallery's scenes and the asset review studio).
                   if (widget.galleryUrl != null) ...[
                     const SizedBox(height: 22),
-                    TextButton.icon(
-                      key: const ValueKey('console-gallery'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: mint,
-                        shape: const RoundedRectangleBorder(),
-                      ),
-                      onPressed: () => launchUrl(
-                        Uri.base.resolve(widget.galleryUrl!),
-                        webOnlyWindowName: '_self',
-                      ),
-                      icon: const Icon(Icons.grid_view, size: 16),
-                      label: const Text(
-                        'ART GALLERY',
-                        style: TextStyle(fontSize: 11, letterSpacing: 2),
-                      ),
-                    ),
-                    // Asset review studio (lib/review/), served at /studio.
-                    TextButton.icon(
-                      key: const ValueKey('console-review'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: mint,
-                        shape: const RoundedRectangleBorder(),
-                      ),
-                      onPressed: () => launchUrl(
-                        Uri.base.resolve(studioRoute),
-                        webOnlyWindowName: '_self',
-                      ),
-                      icon: const Icon(Icons.rate_review, size: 16),
-                      label: const Text(
-                        'ASSET REVIEW',
-                        style: TextStyle(fontSize: 11, letterSpacing: 2),
-                      ),
-                    ),
+                    const DevNavBar(current: DevPage.console),
                   ],
                   // --- adaptive-soundtrack: hear the score's sections and
                   // transitions, driven by the game's own events.
@@ -421,6 +386,8 @@ class _DevConsolePageState extends State<DevConsolePage> {
                     _faint,
                     8,
                   ),
+                  const SizedBox(height: 12),
+                  const DevFooter(page: DevPage.console),
                 ],
               ),
             ),

@@ -33,4 +33,4 @@ Tiers are a parameter of `plan`. When I2/I3 or ComfyUI arrive, run `plan --tier 
 - 48×48 logical canvas, stored at 2× (96 px cells). Drawn 1:1 in the arena with `FilterQuality.none`.
 - Parts: `hull`, `spread`/`large` (nose slot, never both at once), `rapid`/`powerful` (wing slot, never both at once, one side generated and mirrored), and `shield` (dorsal emitter). That gives 3 × 3 × 2 = 18 loadouts.
 - Atlas rows follow the `parts` order. Columns are the wear states. `lib/game/scene.dart` (`_shipLayers`) picks the column from the power's remaining time: above half → fresh, above 2.5 s → worn, otherwise it flickers worn/critical. Spent modules tumble away using their critical sprite.
-- If `ship-parts.png` is missing, the game falls back to the original sprite and the attachments drawn in code.
+- The game draws the ship from `assets/images/ship-weapons.png` and `ship-weapons.json` (`tools/generate_ship_sprites.py`). The provisional `ship-parts.png` / `ship-parts.json` pack was never loaded by the game and was removed (dev-pages-overhaul); a pack written by this pipeline is review material, not a game asset.

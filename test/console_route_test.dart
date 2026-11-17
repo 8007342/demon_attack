@@ -130,7 +130,7 @@ void main() {
       _size(tester, size);
       await tester.pumpWidget(const DemonAttackApp(initialRoute: '/console'));
       await tester.pump();
-      expect(find.text('CONSOLE'), findsOneWidget);
+      expect(find.text('CONSOLE'), findsWidgets);
       expect(find.byType(GameWidget), findsNothing);
       for (final key in [
         for (var i = 0; i < 3; i++) 'console-difficulty-$i',
@@ -139,8 +139,8 @@ void main() {
         'console-launch',
         'console-boss',
         'console-sentinel',
-        'console-gallery',
-        'console-review',
+        'dev-nav-gallery',
+        'dev-nav-studio',
       ]) {
         final button = find.byKey(ValueKey(key));
         expect(button, findsOneWidget, reason: key);
@@ -250,7 +250,7 @@ void main() {
     await tester.tap(back);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
-    expect(find.text('CONSOLE'), findsOneWidget);
+    expect(find.text('CONSOLE'), findsWidgets);
     expect(find.byType(ArcadePage), findsNothing);
     await _disposeApp(tester);
   });
