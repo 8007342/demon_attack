@@ -6,7 +6,9 @@ Operator, 2026-11-16 (`plan/operator-feedback-2026-11-16.md`, Round 3c, V1): "Ev
 flat of emotion... we're likely going to re-render most of our radio speech once we figure out how to add proper
 emotion and excitement, as well as a bit of cheering, wooing, grunting, growling, etc." The operator asked which
 models, pipelines or software suite to use with local models, to file the research in `plan/` and the specs here, and
-allowed a few PG-13-cleared pseudo-swears while keeping the game family friendly.
+allowed a few PG-13-cleared pseudo-swears while keeping the game family friendly. Round 3d (same file, V1 addendum):
+re-read the non-commercial model licences for a free GPL-3.0 game, and make the pseudo-swear list a two-layer
+feature, a surface for young players and nods to older games and pop culture for older ones, in original phrasing.
 
 Today's bank (574 clips: 380 Chatterbox, 188 Chatterbox reverse-pitch demon, 5 Kokoro, 1 synthesized grunt, from
 `web/audio/comms/manifest.json`) was rendered on CPU in a forge venv that a reset has since wiped. It has one emotion
@@ -20,18 +22,24 @@ tillandsias#1103, and #1103 batch 1 (per the coordinator, relayed 2026-11-16) is
 - New capability `voice-authoring`:
   - line direction: emotion (closed list, five new emotions), intensity 0–3 and a direction note;
   - non-verbal cues from a closed vocabulary (`art/comms/cues.json`), mapped per engine to native tags or stingers;
-  - a family-friendly tone check (`art/comms/tone.json`: pseudo-swear allowlist, deny list) that fails the build;
+  - a family-friendly tone check (`art/comms/tone.json`: a two-layer, themed pseudo-swear allowlist the cast trades
+    lines with, a deny list and a quote deny list) that fails the build;
+  - in-fight hint lines flagged for the one-line subtitle test of `carrier-hatches`;
   - committed voice identities per character;
   - take/pick ledgers in `plan/render-runs/voice-<batch>/`;
   - loudness and format targets;
   - clip tiers (`text`, `placeholder`, `candidate`, `final`) and the promotion rule;
-  - engines as admitted host-studio capabilities with commercial-clean licences.
+  - engines as admitted host-studio capabilities whose licences leave the audio unrestricted (or carry a credit
+    line), unless the operator signs a decision (Round 3d licence re-read, research §10).
 - A request list for the coordinator (research §9): the models, VRAM, licences and studio nodes this needs.
 
 ## Not in this change
 
-- No placeholder audio: no TTS engine is installed in the forge or the studio today (design §6).
-- No code. The schema checks, ledger writer and tier field are tasks, implemented once an engine is admitted.
+- No placeholder audio: no TTS engine is installed in the forge or the studio today (design §6). Placeholders come
+  from VoxCPM2 once it is admitted.
+- Little code. Removing Chatterbox (operator, 2026-11-16) touched `art/comms/audio.json`, `tools/comms_pipeline.py`,
+  `tools/production/` and the credits generator (design §2); the schema checks, ledger writer and tier field are
+  tasks, implemented once an engine is admitted.
 - No change to the director, pacing or the existing clips. The current bank keeps playing until a batch is promoted.
 
 ## Impact

@@ -47,6 +47,36 @@ Every human line, demon `say` and gloss SHALL pass the tone check in `art/comms/
 - **WHEN** the existing line "Target destroyed. Hell of a run, pilot." is checked
 - **THEN** it passes because "hell of a" is an allowlisted idiom, while "hell" on its own is denied
 
+### Requirement: Two-layer pseudo-swears
+Each allowlist entry in `tone.json` SHALL carry a `theme`, a `layer` (`surface`, `nod` or `reveal`) and a plain `surface` meaning that works on its own for a young player. A `nod` or `reveal` entry SHALL also note its hidden reading for reviewers. Every phrase SHALL be original: no quoted line, lyric or catchphrase from another work. The hidden reading SHALL stay as PG as the surface.
+
+#### Scenario: Surface stands alone
+- **WHEN** a reviewer reads a `nod` entry's `surface` field without its hidden note
+- **THEN** the phrase still makes sense as a squad exclamation
+
+#### Scenario: Copied catchphrase
+- **WHEN** a line contains a phrase on `tone.json` `quoteDeny` (famous lines from games, films or songs), matched case-insensitively
+- **THEN** the `dart` stage exits non-zero and names the clip id
+
+#### Scenario: Missing layer
+- **WHEN** an allowlist entry has no `theme` or `layer`
+- **THEN** the `dart` stage exits non-zero and names the entry
+
+#### Scenario: Trading lines
+- **WHEN** an exchange trigger pairs a brood taunt with a squad retort
+- **THEN** both may use allowlist entries, and an entry with `retorts` lists the entries that answer it
+
+### Requirement: Hint lines fit one line
+An in-fight hint line (a short instruction such as "Destroy the hatches!", "Time the open hatch!" or "Fire ahead of its position!") SHALL fit on one radio subtitle line at the radio font size. The font size and the line-length test are owned by change `carrier-hatches`; this change only marks hint lines (`"hint": true`) so that test can find them. A hint line SHALL carry no cues.
+
+#### Scenario: Hint too long
+- **WHEN** a line marked `"hint": true` is too long for one subtitle line
+- **THEN** the `carrier-hatches` line-length test fails and names the clip id
+
+#### Scenario: Cue in a hint
+- **WHEN** a hint line contains `[whoop]`
+- **THEN** the `dart` stage exits non-zero
+
 ### Requirement: One stable voice per character
 Each cast member SHALL have a committed voice identity: a reference clip (lossless, 6–20 s, under `art/comms/voices/`), its transcript, a short voice description and the engine that made it. Every take for that character SHALL be conditioned on that identity. The `stats` stage SHALL report per-character pitch and timbre and flag two characters closer than its distinctness threshold.
 
@@ -92,11 +122,15 @@ Each manifest clip SHALL carry a `tier`: `text` (no audio), `placeholder` (borro
 - **THEN** the build uses the clip's placeholder or text card instead
 
 ### Requirement: Engines run as admitted studio capabilities
-Voice engines SHALL run as host studio capabilities behind the studio's admission and licence register, never as a second GPU container or a direct model pull. A shipped clip SHALL come only from an engine whose code and weights licences allow commercial use, and its engine, revision and licence SHALL be in the manifest.
+Voice engines SHALL run as host studio capabilities behind the studio's admission and licence register, never as a second GPU container or a direct model pull. A shipped clip SHALL come only from an engine whose licence leaves the generated audio free of conditions other than a credit line, unless the operator has signed a decision in `licences/acknowledgements/` for that engine. The manifest SHALL carry each clip's engine, revision, licence and credit line.
 
-#### Scenario: Non-commercial weights
-- **WHEN** an engine's weights are licensed non-commercial
+#### Scenario: Output-restricting licence
+- **WHEN** an engine's licence restricts its outputs (for example Coqui XTTS-v2 or Higgs v3) and no signed decision covers it
 - **THEN** its takes may be used for internal reference only, and the `verify` stage fails if one is in the shipped bank
+
+#### Scenario: Credit line
+- **WHEN** a shipped clip comes from an engine whose licence asks for a credit (for example "Built with Fish Audio")
+- **THEN** the credits and the README carry that line, generated from the manifest
 
 #### Scenario: Model not admitted
 - **WHEN** a batch asks for a model that the studio has not admitted

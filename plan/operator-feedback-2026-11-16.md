@@ -224,3 +224,22 @@ implementation follows the merge of `work/carrier-v3-render`.
   - the three hints as written lines;
   - subtitles at 14.5 px, with a 28-character one-line limit tested over `lines.json`;
   - easing targets for an expert and a naive pilot.
+
+## Round 3d, V1 addendum: status (2026-11-16, change `voice-stack`)
+Licences re-read for a free GPL-3.0 game in [`plan/voice-stack-research.md`](voice-stack-research.md) §10, with an
+"OK for this repo?" column (§9.1): Fish S2-Pro and Higgs v2 now compete with VoxCPM2 in the pilot (outputs
+unrestricted apart from a credit line); Higgs v3, XTTS-v2 and Echo-TTS stay out because their licences restrict the
+audio. The two-layer, themed pseudo-swear list is in the change's design §3.2; hint lines are flagged for the
+`carrier-hatches` one-line test (§3.3).
+
+## C1 art direction: the tusk-prongs lead the design (2026-11-16)
+On the re-rendered carrier, the operator said: "The dark bay between the two tusk-like prongs feels great, narrowing and demon-like, it's a great addition,
+those tusk-like prongs should lead the design of the rest of the ship." It is recorded as the lead motif in
+`docs/styleguide/alien-capital-ships.md` §3.8. It applies to the hatch modules, the transformation shutter, the break-up
+shards and future re-renders.
+
+## Round 3d, V1 decisions applied (2026-11-16, change `voice-stack`)
+Chatterbox dropped (pin out of `art/comms/audio.json`, its stages out of `tools/comms_pipeline.py`, its CPU worker
+tools out of `tools/production/`); VoxCPM2 renders placeholders and final speech, Dia the non-verbals. Fish S2-Pro
+and Higgs v2 are pilot challengers with their credit lines in the credits; IndexTTS-2.5 stays out unless exact
+duration control is needed. Licences awaiting `/accept-licence`: [`plan/licences-to-sign.md`](licences-to-sign.md).

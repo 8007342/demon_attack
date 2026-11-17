@@ -58,7 +58,16 @@ end
 local models={
  {name='ACE-Step 1.5 XL',license='Apache-2.0',source='Host model inventory; art/workflows/music'},
  {name='Kokoro-82M / hexgrad',license='Apache-2.0',revision=read({'jq','-r','.kokoro.revision','art/comms/audio.json'})},
- {name='Chatterbox / Resemble AI',license='MIT',revision=read({'jq','-r','.chatterbox.revision','art/comms/audio.json'})},
+ -- The 2026-11-12 radio bank still ships Chatterbox takes. Chatterbox was dropped from the
+ -- voice stack on 2026-11-16 and its pin left art/comms/audio.json, so the revision those
+ -- takes used is kept here. Remove this row when the last Chatterbox clip is re-rendered.
+ {name='Chatterbox / Resemble AI',license='MIT',revision='5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18'},
+ -- Voice-stack engines (openspec/changes/voice-stack). Fish Audio and Boson AI require
+ -- these exact credit lines wherever their audio is used (plan/licences-to-sign.md).
+ {name='VoxCPM2 / OpenBMB',license='Apache-2.0',source='Voice stack: speech'},
+ {name='Dia 1.6B / Nari Labs',license='Apache-2.0',source='Voice stack: non-verbals'},
+ {name='Fish Audio S2-Pro · Built with Fish Audio',license='Fish Audio Research License',source='Voice stack: pilot challenger'},
+ {name='Higgs Audio v2 · Built with Higgs Materials licensed from Boson AI USA, Inc., Copyright Boson AI USA, Inc., All Rights Reserved and Meta Llama 3 licensed under the Meta Llama 3 Community License, Copyright Meta Platforms, Inc., All Right Reserved',license='Boson Higgs Audio 2 Community License; Meta Llama 3 Community License',source='Voice stack: pilot challenger'},
  {name='SDXL-Lightning / ByteDance',license='OpenRAIL++',source='Beach concept provenance'},
  {name='SDXL Base 1.0',license='OpenRAIL++',source='Project asset provenance register'},
  {name='Pixel Art XL / nerijs',license='CreativeML OpenRAIL-M',source='Beach concept provenance'},

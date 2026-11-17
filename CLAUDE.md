@@ -190,5 +190,16 @@ The audit is in `plan/provenance-audit.md`.
 - Stop a process with `pgrep -af <name>` and then `kill <PID>`. Never use `pkill -f` or `killall -r`. *Why:* the
   pattern also matches your own shell's command line and kills it.
 - Temp files go in your session scratchpad, not `/tmp` or the checkout.
+- **The checkout's disk is small.** In this forge `/home/forge/src` is a 3.6 GB tmpfs. On 2026-11-16 it filled to
+  100% (`.git` 1.3 GB, `.dart_tool/flutter_build` 908 MB of stale build hashes), and a git index write and the web
+  build failed. Keep it clear:
+  - write review renders and other bulky scratch output under `~/.cache/tillandsias-project/`, not the checkout's
+    `.cache/`;
+  - after a build, prune `.dart_tool/flutter_build` to its two newest directories;
+  - run `git repack -d` / `git gc` after art batches;
+  - never commit intermediate renders, only the picks and their recipes (§5).
+
+  If final art keeps growing `.git`, propose Git LFS or a separate assets store to the operator. The disk itself is
+  tracked as a Tillandsias packet (coordinator, 2026-11-17).
 - The forge's bash policy hook refuses a whole compound command if any part of it is refused (e.g. an `rm` whose
   target it cannot resolve). Keep risky steps in their own command.
