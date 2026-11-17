@@ -25,8 +25,13 @@ fi
 
 "$flutter_bin" config --no-analytics
 "$flutter_bin" pub get --enforce-lockfile
-"$flutter_bin" build web --release --base-href / --no-web-resources-cdn
+# build-version: vYY.MM.DD.<daily build> from git (scripts/build-version.mjs),
+# shown in the game, /console, /gallery and /studio and served at /version.
+build_version="$(node scripts/build-version.mjs --out build/version.json)"
+echo "Build version: $build_version"
+"$flutter_bin" build web --release --base-href / --no-web-resources-cdn --dart-define=BUILD_VERSION="$build_version"
 # Art gallery (lib/gallery_main.dart), linked from /console, served at /gallery/.
 # Its asset review studio (?page=studio) stamps notes with the build commit.
 build_commit="$(git rev-parse --short HEAD 2>/dev/null || true)"
-"$flutter_bin" build web --release -t lib/gallery_main.dart --base-href /gallery/ --no-web-resources-cdn --dart-define=BUILD_COMMIT="$build_commit" -o "$PWD/build/web/gallery"
+"$flutter_bin" build web --release -t lib/gallery_main.dart --base-href /gallery/ --no-web-resources-cdn --dart-define=BUILD_COMMIT="$build_commit" --dart-define=BUILD_VERSION="$build_version" -o "$PWD/build/web/gallery"
+cp build/version.json build/web/version.json

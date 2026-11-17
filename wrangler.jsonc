@@ -22,7 +22,9 @@
       "/studio",
       "/studio/",
       "/qr",
-      "/qr/"
+      "/qr/",
+      "/version",
+      "/version/"
     ]
   },
   "main": "worker/index.mjs",

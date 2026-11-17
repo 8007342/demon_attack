@@ -1,0 +1,12 @@
+{
+  "comment": "Shared by test-worker/build-version.test.mjs (scripts/build-version.mjs) and test/build_version_test.dart (lib/build_info.dart): both formatters must agree. day is the committer-local YYYY-MM-DD; build 0 means unknown.",
+  "cases": [
+    { "day": "2026-11-17", "build": 1, "channel": "production", "commit": "58a1140f", "version": "v56.11.17.1" },
+    { "day": "2026-11-16", "build": 5, "channel": "production", "commit": "26ac20c3", "version": "v56.11.16.5" },
+    { "day": "2026-08-31", "build": 3, "channel": "production", "commit": "", "version": "v56.8.31.3" },
+    { "day": "2027-01-02", "build": 12, "channel": "production", "commit": "abcdef12", "version": "v57.1.2.12" },
+    { "day": "2026-11-17", "build": 0, "channel": "production", "commit": "58a1140f", "version": "v56.11.17.0+58a1140f" },
+    { "day": "2026-11-17", "build": 0, "channel": "dev", "commit": "b29c9749", "version": "v56.11.17-dev+b29c9749" },
+    { "day": "2026-11-17", "build": 0, "channel": "dev", "commit": "", "version": "v56.11.17-dev" }
+  ]
+}

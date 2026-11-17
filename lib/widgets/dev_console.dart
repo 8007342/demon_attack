@@ -13,6 +13,7 @@ import '../review/page_notes.dart';
 import '../review/review_notes.dart';
 import '../services/audio.dart';
 import 'score_listening_panel.dart'; // --- adaptive-soundtrack
+import 'build_version_label.dart'; // --- build-version
 
 /// Path of the console page.
 const consoleRoute = '/console';
@@ -209,6 +210,7 @@ class _DevConsolePageState extends State<DevConsolePage> {
       // Notes on the console and the runs started from it, shared with the
       // studio and the gallery (lib/review/page_notes.dart).
       floatingActionButton: PageNotesButton(asset: consoleNotesAsset),
+      bottomNavigationBar: const BuildVersionFooter(), // --- build-version
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
