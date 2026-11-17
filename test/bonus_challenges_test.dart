@@ -312,6 +312,40 @@ void main() {
     });
   });
 
+  group('music', () {
+    test('the fail and 1UP stingers are asked for once each', () {
+      List<String> accents(List<GameEvent> all) => [
+        for (final e in all)
+          if (e.name == 'musicAccent') e.data['name']! as String,
+      ];
+      // A failure the moment it happens.
+      final s = _level('supplyRun');
+      s.supplyCrates.add(SupplyCrate(40, ArcadeModel.shipY - 3, Power.spread));
+      final seen = <String>[];
+      for (var f = 0; f < 120; f++) {
+        s.invulnerable = 5;
+        s.update(1 / 60);
+        seen.addAll(accents(s.takeGameEvents()));
+      }
+      expect(seen, ['challenge-fail']);
+      // The 1UP at the clear.
+      final m = _level('stormfront');
+      final all = <String>[];
+      for (var f = 0; f < 60 * 300 && m.mode == RunMode.playing; f++) {
+        for (final d in List<Demon>.of(m.demons)) {
+          if (d.entering) continue;
+          for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
+            m.hitDemon(d);
+          }
+        }
+        m.invulnerable = 5;
+        m.update(1 / 60);
+        all.addAll(accents(m.takeGameEvents()));
+      }
+      expect(all, ['oneup']);
+    });
+  });
+
   group('radio', () {
     for (final level in bonusLevels) {
       test('${level.id}: one challenge call, a quip and a cheer', () {

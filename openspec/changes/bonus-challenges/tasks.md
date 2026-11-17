@@ -23,5 +23,5 @@
 - [x] 5.1 `test/bonus_challenges_test.dart`: per-level tracking, immediate failure, the 1UP once, checkpoint and record, badge states, one call per level
 - [x] 5.2 `test/bonus_challenges_rate_test.dart`: winnable by a pilot trying, rare by default
 - [x] 5.3 `test/bonus_briefing_test.dart`: the card's one line is the challenge call
-- [x] 5.4 All §2 gates (analyze clean, 1062 tests passed, worker 78 pass 0 fail, build ok, strict validate)
+- [x] 5.4 All §2 gates (analyze clean, 1070 tests passed after merging origin/game 207e0585, worker 78 pass 0 fail, build ok, strict validate)
 - [ ] 5.5 Operator playtest: the badge reads at a glance on a phone, the quip and the cheer land

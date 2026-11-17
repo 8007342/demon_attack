@@ -184,6 +184,13 @@ early (routes 0-1 hold nine in ten bonus levels). The §7 calibration gates are 
 the campaign, endurance and fairness tests run without a run seed (`BonusPlan.none`), so they never meet a bonus
 level or a challenge.
 
+## 5a. Music (bonus-music)
+The model queues bonus-music's stinger request, the `musicAccent` game event (`MusicBridge.accentEvent`; the model
+spells the string because it imports no audio), with `{'name': 'challenge-fail'}` in the step a challenge breaks
+and `{'name': 'oneup'}` with the 1UP (a stop-time hit on the next bar line, at most once per 16 beats). A challenge
+that only falls short at the clear asks for no fail stinger: the clear's own music is starting. Unknown names fail
+soft, so this is silent until `work/bonus-music` (d1050d12) lands on `game`.
+
 ## 6. Cinematic-flow check
 No new screen, card, modal step or control; no floating text in the arena (the pip is in the HUD band). The card's
 reading time and hold are unchanged, and it still speaks one line. The quip and cheer are ordinary queued radio
