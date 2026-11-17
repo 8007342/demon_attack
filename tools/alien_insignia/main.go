@@ -12,6 +12,8 @@
 //	go run . atlas  -root ../..          # assets/images/insignia.png + lib/game/insignia_atlas.dart
 //	go run . probe  -root ../.. -kind 1  # gridded 8x enlargement of one cell
 //	go run . montage -out x.png -cols 3 -scale 1 a.png b.png ...
+//	go run . gargoyle -root ../..        # art/contact/gargoyle-insignia.png (gargoyle.go)
+//	go run . candidates -root ../.. -out x.png  # the shapes tried per rank
 package main
 
 import (
@@ -36,6 +38,7 @@ func main() {
 	out := fs.String("out", "", "output png (probe, montage)")
 	cols := fs.Int("cols", 3, "montage columns")
 	scale := fs.Int("scale", 1, "montage nearest scale")
+	ingameDir := fs.String("ingame", "", "gargoyle: review-test frame dir")
 	_ = fs.Parse(args)
 	switch verb {
 	case "sheets":
@@ -47,6 +50,36 @@ func main() {
 		mustSave(filepath.Join(dir, "alien-insignia-glyphs.png"), glyphSheet())
 	case "atlas":
 		writeAtlas(*root)
+	case "candidates":
+		atlas := mustLoad(filepath.Join(*root, "assets/images/combat.png"))
+		mustSave(*out, candidatesSheet(atlas))
+	case "gargoyle":
+		// gargoyle-insignia: the old-against-new review sheet. The in-game
+		// rows need the frames of test/gargoyle_insignia_review_test.dart
+		// in -ingame (default <root>/.cache/gargoyle-insignia-review).
+		checkGlyphs()
+		atlas := mustLoad(filepath.Join(*root, "assets/images/combat.png"))
+		dir := *ingameDir
+		if dir == "" {
+			dir = filepath.Join(*root, ".cache/gargoyle-insignia-review")
+		}
+		g := loadIngame(dir)
+		if g == nil {
+			fmt.Fprintln(os.Stderr, "no in-game frames in", dir, "- run the review test first")
+			os.Exit(1)
+		}
+		// The compositor must reproduce the painter: seat the new glyphs on
+		// the bare frame and compare with the real one.
+		fmt.Printf("compositor check: mean |diff| %.3f (phone), %.3f (zoom)\n",
+			meanDiff(g.seat(g.bare, newShapes(), newKeys(), 1, -g.ArenaTop), g.real),
+			meanDiff(g.seat(g.bareZoom, newShapes(), newKeys(), 2, g.BandTop), g.realZoom))
+		fmt.Print(metricsText(ladderMetrics(legacyShapes(), legacyKeys)))
+		fmt.Print(metricsText(ladderMetrics(newShapes(), newKeys())))
+		path := *out
+		if path == "" {
+			path = filepath.Join(*root, "art/contact/gargoyle-insignia.png")
+		}
+		mustSave(path, gargoyleSheet(atlas, g))
 	case "probe":
 		atlas := mustLoad(filepath.Join(*root, "assets/images/combat.png"))
 		c := cell(atlas, *kind, 0, glideCol)

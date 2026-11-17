@@ -75,13 +75,14 @@ class InsigniaPainter {
   static String glyphKey(AlienRank rank, InsigniaTone tone) =>
       '${switch (rank) {
         AlienRank.drone => '',
-        AlienRank.skirmisher => 'talon',
-        AlienRank.veteran => 'talon2',
-        AlienRank.hunter => 'ocellus',
-        AlienRank.sentinel => 'crown',
+        // --- gargoyle-insignia: fangs and wings (styleguide §4).
+        AlienRank.skirmisher => 'fang',
+        AlienRank.veteran => 'fang2',
+        AlienRank.hunter => 'wingfang',
+        AlienRank.sentinel => 'wingcrown',
       }}/${tone.name}';
 
-  /// The carrier's form ladder: talon, two talons, ocellus, crown.
+  /// The carrier's form ladder: fang, twin fangs, winged fang, winged crown.
   static AlienRank carrierRank(int form) => const [
     AlienRank.skirmisher,
     AlienRank.veteran,

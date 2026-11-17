@@ -150,11 +150,33 @@ void main() {
     test('strokes are 2 glyph px (2.7 units) and the smallest fill is at '
         'least 9 x 6 units', () {
       expect(2 * InsigniaPainter.unitsPerGlyphPx, closeTo(2.7, .01));
-      final talon = InsigniaPainter.sizeOf('talon/bone');
+      final fang = InsigniaPainter.sizeOf('fang/bone');
       // The atlas rect carries a 1 glyph px outline on each side.
       final outline = 2 * InsigniaPainter.unitsPerGlyphPx;
-      expect(talon.width - outline, greaterThanOrEqualTo(9));
-      expect(talon.height - outline, greaterThanOrEqualTo(6));
+      expect(fang.width - outline, greaterThanOrEqualTo(9));
+      expect(fang.height - outline, greaterThanOrEqualTo(6));
+    });
+
+    // gargoyle-insignia (design §3): the fang-and-wing ladder escalates at
+    // a glance: every rank is wider than the one below it, and the two
+    // winged officer marks carry the ember core the fangs do not.
+    test('the gargoyle ladder widens with rank; officers carry ember', () {
+      final widths = [
+        for (final r in AlienRank.values.skip(1))
+          InsigniaPainter.sizeOf(InsigniaPainter.glyphKey(r, InsigniaTone.bone))
+              .width,
+      ];
+      for (var i = 1; i < widths.length; i++) {
+        expect(widths[i], greaterThan(widths[i - 1]), reason: 'rank $i');
+      }
+      expect(
+        InsigniaPainter.glyphKey(AlienRank.skirmisher, InsigniaTone.bone),
+        'fang/bone',
+      );
+      expect(
+        InsigniaPainter.glyphKey(AlienRank.sentinel, InsigniaTone.angry),
+        'wingcrown/angry',
+      );
     });
 
     testWidgets('bone glyphs differ from every species hide by luma >= 0.35', (
@@ -255,7 +277,7 @@ void main() {
       final marks = paintMarks(scene);
       expect(marks.where((k) => k.owner == drone), isEmpty);
       final g = marks.singleWhere((k) => k.owner == vet);
-      expect(g.key, 'talon2/bone');
+      expect(g.key, 'fang2/bone');
       // Just above the skull: 5-12 units above the body centre.
       expect(150 - g.rect.bottom, inInclusiveRange(5, 12));
       expect((g.rect.center.dx - 200).abs(), lessThan(4));
@@ -271,11 +293,11 @@ void main() {
         ..telegraph = .5;
       m.demons.addAll([angry, tell]);
       final marks = paintMarks(scene);
-      expect(marks.singleWhere((k) => k.owner == angry).key, 'talon/angry');
+      expect(marks.singleWhere((k) => k.owner == angry).key, 'fang/angry');
       final on = InsigniaPainter.tellOn(m.visualClock);
       expect(
         marks.singleWhere((k) => k.owner == tell).key,
-        on ? 'talon/tell' : 'talon/bone',
+        on ? 'fang/tell' : 'fang/bone',
       );
       expect(scene.rimCount, on ? 2 : 1);
       expect(InsigniaPainter.tellOn(1.05, reducedMotion: true), isTrue);
@@ -323,7 +345,7 @@ void main() {
       expect(scene.rimCount, 1, reason: 'the cyan rim remains');
       expect(
         scene.insignia.lastMarks.where((k) => k.owner == s).single.key,
-        'crown/bone',
+        'wingcrown/bone',
       );
     });
 
@@ -353,7 +375,7 @@ void main() {
         cells.where((k) => k.key == 'cell/lit'),
         hasLength(ShieldFx.bossCells(b.shield, b.shieldMax)),
       );
-      expect(marks.where((k) => k.owner == b).single.key, 'talon/bone');
+      expect(marks.where((k) => k.owner == b).single.key, 'fang/bone');
     });
   });
 

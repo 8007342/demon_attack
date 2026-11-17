@@ -1141,8 +1141,8 @@ class DemonScene extends FlameGame {
       // sizes below are at scale 1; boss-carrier-wire: the 34-CSS-px
       // creature floor is a draw-size floor in the carrier band.
       _scaleAbout(c, pos, d.scale * _creatureFloor);
-      // --- alien-insignia: the elite's dotted ring is gone; its ocellus
-      // (and every rank's glyph) is drawn over the arena after the fog.
+      // --- alien-insignia: the elite's dotted ring is gone; its winged
+      // fang (gargoyle-insignia; and every rank's glyph) is drawn over the arena after the fog.
       // Gargoyle frames carry their own banking (3/4 left/neutral/right
       // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
@@ -1401,7 +1401,8 @@ class DemonScene extends FlameGame {
   }
 
   /// alien-insignia: the carrier's form glyph on the brood sigil (the
-  /// rank ladder: talon, two talons, ocellus, crown) and its 12 hull cells
+  /// gargoyle-insignia ladder: fang, twin fangs, winged fang, winged
+  /// crown) and its 12 hull cells
   /// on the force field's lower arc, `ceil(12 · shield / shieldMax)` lit.
   /// carrier-hatches §A6: the fighting carrier's front pass goes under the
   /// creatures.
@@ -3921,7 +3922,8 @@ class DemonScene extends FlameGame {
     c.restore();
     final reveal = Perspective.gearReveal(t);
     if (mark > 0) {
-      // --- alien-insignia: the crown over the head, and one cyan cell per
+      // --- alien-insignia: the winged crown (gargoyle-insignia) over the
+      // head, and one cyan cell per
       // shield point in front of the body (spent points stay as sockets).
       // Overlays are queued in arena units (the canvas here is scaled).
       insignia.rank(
