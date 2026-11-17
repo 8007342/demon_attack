@@ -28,9 +28,15 @@
    - Loading: score.json, then each song's sections in parallel, song by song in the run's order (the overture and
      Krybor first). A move to a song still loading runs once it has loaded.
 
-   Voices are synthesis (the guaranteed-everywhere layer, §11.8 step 2). makeVoice() is the seam for the CC0 sample
-   bank (§11.4 "Loading"): a bank adds a zone lookup there and plays an AudioBufferSourceNode through the same role
-   buses; the score, the graph player and the buses stay as they are. */
+   Voices are synthesis (the guaranteed-everywhere layer, §11.8 step 2) until the CC0 sample bank plays them
+   (design §12.9). makeVoice() is the seam: with web/audio/bank/bank.json present (tools/bank/bank_build.lua), a note
+   whose zone has decoded plays an AudioBufferSourceNode (zone, playbackRate, velocity layer, round robin, loop)
+   into the same role bus, through the same voice rules and cap. The bank loads progressively after the score, one
+   Opus sprite at a time in priority order (core, then cymbals, pads, timpani and bells, then extra layers and round
+   robins), within 41 MB decoded on desktop and 16 MB on phones (the phone tier skips the sprites the bank marks
+   desktop-only). Until a note's zone decodes, the synth voice plays it. A section's track plays from the bank only
+   if the bank covers every one of its notes, so a part never changes timbre in the middle of a section. With no
+   bank.json, nothing else is fetched or created: the synth path is exactly as before. */
 (() => {
   'use strict';
   const LOOKAHEAD = .25;          // seconds of score scheduled ahead of the audio clock
@@ -136,6 +142,13 @@
     let trims = null, trimDb = 0;
     const trimFetch = Promise.resolve().then(() => fetch(new URL('mix-trim.json', root)))
       .then(r => (r.ok ? r.json() : null)).catch(() => null);
+    // --- score-sampler: the CC0 sample bank (design §12.9). bank.json is tiny; the sprites load after attach().
+    const bankRoot = new URL('./audio/bank/', document.baseURI);
+    const bankFetch = Promise.resolve().then(() => fetch(new URL('bank.json', bankRoot)))
+      .then(r => (r.ok ? r.json() : null)).catch(() => null);
+    let bank = null, bankLoading = null;
+    const bankState = { present: false, tier: null, sprites: 0, loaded: 0, skipped: 0, failedSprites: 0, decodedBytes: 0, budget: 0,
+      zones: 0, ready: 0, sampled: 0, synth: 0, error: null };
     const loading = (async () => {
       try {
         const response = await fetch(new URL('score.json', root));
@@ -371,8 +384,16 @@
       return off + release * 2;
     }
     const tomHz = { 41: 82, 43: 98, 45: 116, 47: 134, 48: 156, 50: 182 };
-    // The seam for the sample bank: role, pitch, velocity -> a voice into `dest`. Synthesis today.
-    function makeVoice(role, pitch, vel, at, dur, dest) {
+    // The seam for the sample bank: role, pitch, velocity -> a voice into `dest`. A bank zone when the note's track
+    // may sample (`sample`) and its zone has decoded, else synthesis.
+    function makeVoice(role, pitch, vel, at, dur, dest, sample = true) {
+      if (bank && sample) {
+        const voice = sampleVoice(role, pitch, vel, at, dur, dest);
+        if (voice) return voice;
+      }
+      return synthVoice(role, pitch, vel, at, dur, dest);
+    }
+    function synthVoice(role, pitch, vel, at, dur, dest) {
       const v = vel / 127, frame = voiceFrame(dest, at);
       let end;
       const f = frequency(pitch);
@@ -510,6 +531,136 @@
       for (const s of frame.sources) { s.start(at); try { s.stop(end + .02); } catch { /* already stopped */ } }
       return { ...frame, end };
     }
+    // --- score-sampler: zones -----------------------------------------------------------------------------------
+    // bank.json (tools/bank/bank_build.lua): instruments in the order they are tried, each with roles and an optional
+    // `when` (velMax, durMax in seconds); zones with a sprite, offset and length (s), root and key range (pitched) or
+    // keys (drums), a velocity range, a round robin, a loop (s from the zone's start) and a gain. The device's tier:
+    // every sprite on desktop, the sprites marked `phone` on phones.
+    function prepareBank(spec) {
+      const phone = phoneClass(), tierZones = spec.zones.filter(z => !phone || z.phone);
+      const instruments = spec.instruments.map(inst => ({ ...inst, byPitch: new Map() }));
+      const byId = new Map(instruments.map(inst => [inst.id, inst]));
+      for (const z of tierZones) {
+        const inst = byId.get(z.inst);
+        if (!inst) continue;
+        const keys = z.keys || Array.from({ length: z.hi - z.lo + 1 }, (_, i) => z.lo + i);
+        for (const k of keys) { if (!inst.byPitch.has(k)) inst.byPitch.set(k, []); inst.byPitch.get(k).push(z); }
+      }
+      const sprites = spec.sprites.filter(s => !phone || s.phone);
+      const budget = phone ? spec.budgets?.decodedPhone ?? 16e6 : spec.budgets?.decodedDesktop ?? 41e6;
+      Object.assign(bankState, { present: true, tier: phone ? 'phone' : 'desktop', sprites: sprites.length, budget, zones: tierZones.length });
+      return { spec, roles: spec.roles || {}, instruments, sprites, buffers: new Map(), rr: new Map(), coverage: new Map() };
+    }
+    // The instrument that plays a note (plan only: decode state does not matter): the first whose role, `when` and
+    // zones (every chord tone of guitar parts) fit.
+    function instrumentFor(role, pitch, vel, seconds) {
+      const tones = role === 'drums' ? [0] : bank.roles[role]?.chord || [0];
+      for (const inst of bank.instruments) {
+        if (!inst.roles.includes(role)) continue;
+        const w = inst.when;
+        if (w && ((w.velMax != null && vel > w.velMax) || (w.durMax != null && seconds > w.durMax))) continue;
+        if (tones.every(t => inst.byPitch.has(pitch + t))) return inst;
+      }
+      return null;
+    }
+    // Whether a section's track plays from the bank: only if the bank covers all its notes (one timbre per part).
+    function trackSampled(seg, name, role, notes, bs) {
+      const key = `${seg.song}/${seg.section}/${name}`;
+      let ok = bank.coverage.get(key);
+      if (ok === undefined) {
+        ok = !!bank.roles[role] && notes.every(n => instrumentFor(role, n.pitch, n.vel, n.len * bs));
+        bank.coverage.set(key, ok);
+      }
+      return ok;
+    }
+    // A decoded zone of `inst` for pitch and velocity: the velocity layer that contains it (else the nearest one
+    // decoded), cycling its round robins.
+    function zoneFor(inst, pitch, vel) {
+      const list = inst.byPitch.get(pitch);
+      if (!list) return null;
+      let best = null, bestDistance = Infinity;
+      for (const z of list) {
+        if (!bank.buffers.has(z.sprite)) continue;
+        const distance = vel < z.vlo ? z.vlo - vel : vel > z.vhi ? vel - z.vhi : 0;
+        if (distance < bestDistance) { best = z; bestDistance = distance; }
+      }
+      if (!best) return null;
+      const layer = list.filter(z => bank.buffers.has(z.sprite) && z.vlo === best.vlo && z.vhi === best.vhi && (z.root ?? z.keys?.[0]) === (best.root ?? best.keys?.[0]));
+      if (layer.length < 2) return best;
+      const key = `${inst.id}:${best.root ?? best.keys[0]}:${best.vlo}`, n = bank.rr.get(key) || 0;
+      bank.rr.set(key, n + 1);
+      return layer[n % layer.length];
+    }
+    // A sampled voice, or null (no instrument, or a tone's zone not decoded yet: the synth plays the note).
+    function sampleVoice(role, pitch, vel, at, dur, dest) {
+      const inst = instrumentFor(role, pitch, vel, dur);
+      if (!inst) return null;
+      const spec = bank.roles[role] || {}, tones = role === 'drums' ? [0] : spec.chord || [0];
+      const zones = [];
+      for (const t of tones) {
+        const z = zoneFor(inst, pitch + t, vel);
+        if (!z) { bankState.synth++; return null; }
+        zones.push(z);
+      }
+      bankState.sampled++;
+      const v = vel / 127, frame = voiceFrame(dest, at);
+      // Palm-muted guitar (velocity <= 92) keeps the synth's darker pre-amp colour; the staccato zones damp it.
+      const input = (role === 'guitarL' || role === 'guitarR') && vel <= 92 ? perNoteFilter(frame, 'lowpass', 1800, .9) : frame.env;
+      let stopAt = Infinity, looped = false;
+      zones.forEach((z, i) => {
+        const buffer = bank.buffers.get(z.sprite), src = context.createBufferSource();
+        const cents = (spec.cents || 0) * (i % 2 ? -1 : 1);
+        const rate = z.keys ? 1 : 2 ** ((pitch + tones[i] - z.root) / 12 + cents / 1200);
+        src.buffer = buffer;
+        src.playbackRate.value = rate;
+        src.connect(input);
+        frame.sources.push(src);
+        src.zone = z;
+        if (z.loop && z.art === 'sus') {
+          src.loop = true; src.loopStart = z.offset + z.loop[0]; src.loopEnd = z.offset + z.loop[1]; looped = true;
+        } else stopAt = Math.min(stopAt, at + z.length / rate);
+      });
+      const level = (spec.level ?? .5) * 10 ** ((zones[0].gainDb || 0) / 20) * (.35 + .65 * v);
+      const g = frame.env.gain;
+      g.setValueAtTime(level, at);
+      let end;
+      if (inst.art === 'hit') end = stopAt;
+      else {
+        const release = zones[0].release ?? .06, off = at + Math.max(.005, dur);
+        g.setTargetAtTime(0, off, release / 3);
+        end = Math.min(off + release * 2, looped ? Infinity : stopAt);
+      }
+      for (const s of frame.sources) {
+        const z = s.zone;
+        s.start(at, z.offset, s.loop ? undefined : z.length);
+        try { s.stop(end + .005); } catch { /* already stopped */ }
+      }
+      return { ...frame, end, sampled: true };
+    }
+    // Progressive loading: one sprite at a time in bank.json's order (fetch, decode), within the tier's decoded budget.
+    async function loadBank() {
+      const spec = await bankFetch;
+      if (!spec || !context || failed) return;
+      if (typeof context.decodeAudioData !== 'function') { bankState.error = 'no decodeAudioData'; return; }
+      try { bank = prepareBank(spec); } catch (error) { bankState.error = String(error?.message || error); bank = null; return; }
+      for (const sprite of bank.sprites) {
+        if (bankState.decodedBytes + sprite.decodedBytes > bankState.budget) { bankState.skipped++; continue; }
+        try {
+          const res = await fetch(new URL(sprite.file, bankRoot));
+          if (!res.ok) throw new Error(`${sprite.file} unavailable`);
+          const bytes = await res.arrayBuffer();
+          // Safari before 18.4 cannot decode Opus: the sprite fails and its notes stay synthesized (design §11.8).
+          const buffer = await new Promise((resolve, reject) => {
+            const p = context.decodeAudioData(bytes, resolve, reject);
+            if (p && typeof p.then === 'function') p.then(resolve, reject);
+          });
+          bank.buffers.set(sprite.file, buffer);
+          bankState.loaded++;
+          bankState.decodedBytes += buffer.length * buffer.numberOfChannels * 4;
+          bankState.ready = bank.spec.zones.filter(z => bank.buffers.has(z.sprite)).length;
+        } catch (error) { bankState.failedSprites++; bankState.error = String(error?.message || error); }
+      }
+    }
     const priority = role => (role === 'organ' || role === 'strings' || role === 'brass' || role === 'choir') ? 0
       : (role === 'lead' || role === 'clean' || role === 'bells' || role === 'uke') ? 1 : role === 'bass' ? 3 : 2;
     const mono = role => role === 'lead' || role === 'bass';
@@ -527,7 +678,7 @@
       for (const s of entry.sources) { try { s.stop(at + seconds * 1.5 + .01); } catch { /* stopped */ } }
       entry.end = Math.min(entry.end, at + seconds * 1.5);
     }
-    function play(trackName, role, pitch, vel, at, dur, dest, seg) {
+    function play(trackName, role, pitch, vel, at, dur, dest, seg, sample = true) {
       const now = context.currentTime;
       if (at < now - .01) return null;
       const isKickSnare = role === 'drums' && (pitch === 35 || pitch === 36 || pitch === 38 || pitch === 40);
@@ -542,7 +693,7 @@
         }
       }
       if (sounding >= cap && victim) { releaseVoice(victim, at, .02); stolen++; }
-      const voice = makeVoice(role, pitch, vel, at, dur, dest);
+      const voice = makeVoice(role, pitch, vel, at, dur, dest, sample);
       const entry = { ...voice, track: trackName, pitch, at, priority: isKickSnare ? 3 : priority(role), kickSnare: isKickSnare, dest, seg };
       voices.add(entry);
       const last = voice.sources[voice.sources.length - 1];
@@ -569,9 +720,10 @@
           if (!audible.has(name)) continue;
           const role = manifest.tracks[name]?.role || 'lead';
           const dest = trackGain(name);
+          const sample = !!bank && trackSampled(seg, name, role, notes, bs);
           for (let i = lowerBound(notes, local); i < notes.length && notes[i].beat < local + take - 1e-9; i++) {
             const n = notes[i];
-            play(name, role, n.pitch, n.vel, origin + n.beat * bs, n.len * bs, dest, seg.id);
+            play(name, role, n.pitch, n.vel, origin + n.beat * bs, n.len * bs, dest, seg.id, sample);
           }
         }
         g0 += take;
@@ -716,7 +868,7 @@
           pitch = 12 * ((n.oct ?? 4) + 1) + tonic + step;
         }
         const at = anchor + n.t * bs;
-        play(`sting:${n.track}`, role, pitch, n.v, at, n.len * bs, stingInput(role), 0);
+        play(`sting:${n.track}`, role, pitch, n.v, at, n.len * bs, stingInput(role), 0, true);
         end = Math.max(end, at + n.len * bs);
       }
       lastSting.set(stingName, now);
@@ -736,6 +888,8 @@
       buildBuses();
       scheduledUntil = context.currentTime;
       flushWanted();
+      // The bank after the score: the music never waits for it.
+      bankLoading = loading.then(loadBank).catch(error => { bankState.error = String(error?.message || error); });
     }
     // The power-up layer (ride and double kick) follows the active powers on the next bar line.
     function power(active) {
@@ -750,6 +904,8 @@
     function nextBar(after) { return current && context ? nextLine(current, Math.max(after, scheduledUntil), 4) : after; }
     return {
       attach, tick, move, accent, power, nextBar, loading, parseScore,
+      // Resolves once the bank's sprites for this device have loaded (or immediately when there is no bank).
+      get bankLoading() { return bankLoading || bankFetch.then(() => undefined); },
       get playing() { return !!(pending || current || wanted); },
       get time() { return context?.currentTime ?? -1; },
       // The playing section and the time of its beat 0 (its bar lines are start + k bars): SongDirector's sync.
@@ -765,7 +921,11 @@
           // Sounding now (scheduled voices that have not started yet are not counted).
           voices: [...voices].filter(v => !v.released && v.at <= now && v.end > now).length,
           scheduled: [...voices].filter(v => !v.released && v.end > now).length, cap, stolen, slipped, scheduledUntil,
-          moves: moveLog.slice(), stingers: stingLog.slice() };
+          moves: moveLog.slice(), stingers: stingLog.slice(),
+          // The sample bank (design §12.9): absent, loading or loaded; notes sampled and notes the synth played while
+          // their zone was not decoded yet.
+          bankLoaded: bankState.present && bankState.loaded + bankState.skipped + bankState.failedSprites >= bankState.sprites && bankState.loaded > 0,
+          bankDecodedBytes: bankState.decodedBytes, bank: { ...bankState } };
       },
     };
   }

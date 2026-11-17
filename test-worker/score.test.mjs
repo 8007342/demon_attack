@@ -137,7 +137,9 @@ test('the size totals: the whole run stays a small download', async () => {
   assert.ok(midi < 400 * 1024, `MIDI ${midi} B`);
   assert.ok(json.length < 64 * 1024, `score.json ${json.length} B`);
   assert.ok(gzipped < 160 * 1024, `score gzipped ${gzipped} B`);
-  assert.ok(player < 48 * 1024, `player ${player} B`);
+  // 48 KB until the sample bank's loader and zone lookup joined it (design §12.9): 52 KB raw, 16 KB gzipped.
+  assert.ok(player < 56 * 1024, `player ${player} B`);
+  assert.ok(gzipSync(await readFile(web('audio/demon-score.js')), { level: 9 }).length < 20 * 1024, 'player gzipped');
   // Unique music: every section's written length (hold bars once).
   let seconds = 0;
   for (const song of Object.values(manifest.songs)) for (const s of Object.values(song.sections)) seconds += (s.bars + s.hold) * song.barSamples / 48000;
@@ -152,7 +154,9 @@ test('no recorded music: the engine never fetches a recorded cue, and the old di
   await run(3);
   audio.accent('dive'); audio.powerLayer(2, true); audio.sfx('explosion');
   await run(1);
-  assert.ok(fetched.every(p => p.startsWith('/audio/score/')), `only the score is fetched: ${fetched.filter(p => !p.startsWith('/audio/score/'))}`);
+  // The score, and the sample bank's bank.json (absent until the CC0 pins are admitted: design §12.9).
+  const other = fetched.filter(p => !p.startsWith('/audio/score/') && p !== '/audio/bank/bank.json');
+  assert.deepEqual(other, [], `only the score (and the bank's map) is fetched: ${other}`);
   for (const dir of ['audio/music', 'audio/midi']) await assert.rejects(stat(web(dir)), `${dir} is retired`);
   assert.equal(audio.cue, undefined, 'no recorded-cue API');
   assert.equal(audio.scoreEnabled, undefined, 'no score switch');
