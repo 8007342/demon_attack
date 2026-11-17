@@ -610,7 +610,7 @@ void main() {
           d.update(t, combat: true);
         }
         final human = started.where((m) => !m.isDemon).toList();
-        expect(human, hasLength(1), reason: '$name');
+        expect(human, hasLength(1), reason: name);
         final want = variant == null ? name : '$name.$variant';
         expect(human.single.trigger.name, want);
         expect(human.single.startedAt, lessThan(2.5));

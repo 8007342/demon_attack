@@ -24,7 +24,8 @@ Today a bolt deals a creature a heavy hit (2 damage, usually a kill) and costs t
   they drift toward a tell to catch it.
 - **Stormfront redesigned around the stun:** "Lure the lightning onto the demons!" / "Sit under them, slide away, then
   shoot them as they fall." Shooting a creature stunned by a baited bolt pays the bait bonus and the wave's first such
-  kill drops the lightning rod; rosters back to the sector's own (the storm no longer kills); five-step pictogram.
+  kill drops the lightning rod; rosters 93 % of the sector's (the storm no longer kills), kills pay 77 %, slightly
+  longer storm gaps; five-step pictogram.
 - **Radio** (all written lines, `"pending": "text"`, voices blocked on tillandsias#1103): "Avoid lightning!" on every
   other tell on the ship (rate-limited, ends on the bolt), reassurance after a zap ("You're fine, only the power-ups
   are gone." / "You're fine, the ship can take it."), squad cues and brood yelps on stuns, warnings and gloats on a

@@ -42,7 +42,8 @@ const stormfront = BonusLevelDef(
 
   weight: 1,
   // lightning-rework: the storm stuns and no longer kills, so the pilot
-  // shoots every creature: the sector's own rosters (was × 1.15).
+  // shoots every creature: 93 % of the sector's rosters (was × 1.15),
+  // tuned on the bonus balance gate (plan/calibration-current.md).
   waves: BonusWaves(rosterScale: .93),
   // "A certain percentage of a chance": half the kill drops are shields.
   rules: PowerRules(chances: [PowerChance(Power.shield, .5)]),
@@ -63,6 +64,17 @@ const stormfront = BonusLevelDef(
     fog: .14,
   ),
   mechanic: StormfrontMechanic.new,
+  // --- bonus challenges: every bolt dodged, clear of its bright column
+  // (a hit, a shield knocked off and a graze inside the band all count;
+  // a bolt the rod grounds does not). StormfrontMechanic reports it as
+  // the bolt lands. Only hits: a pilot not trying won it 26 % of the time
+  // (design §5).
+  challenge: BonusChallengeDef(
+    id: 'noBoltHit',
+    label: 'DODGE EVERY BOLT',
+    icon: 'bolt',
+    failOn: {ChallengeNotes.boltHit, ChallengeNotes.boltGrazed},
+  ),
 );
 
 /// Stormfront's rule of play: the storm, applied to the model.
@@ -194,8 +206,26 @@ class StormfrontMechanic implements BonusMechanic {
       } else if (m.zapShip()) {
         s.hitShip = true;
         shipHits++;
+        // --- bonus challenges: a bolt that strips the ship breaks it.
+        m.challengeNote(ChallengeNotes.boltHit);
+      } else if (m.invulnerable <= 0) {
+        // lightning-rework: a bolt in the core during the zap's grace
+        // strips nothing but was not dodged: a graze.
+        m.challengeNote(ChallengeNotes.boltGrazed);
+      }
+    } else if (m.combat && !m.shipAway) {
+      // --- bonus challenges: inside the bright column is a graze; clear
+      // of it, a ship-aimed bolt was dodged. The rod's wider column draws
+      // every bolt to a grounded ship, so it never grazes; a ship still
+      // protected (a respawn, a broken shield) is not grazed, as it is
+      // not hit.
+      if ((m.shipX - s.x).abs() < s.column && !s.rod && m.invulnerable <= 0) {
+        m.challengeNote(ChallengeNotes.boltGrazed);
+      } else if (s.aim == StrikeAim.ship) {
+        m.challengeNote(ChallengeNotes.boltDodged);
       }
     }
+
     // A bolt drawn to the ship that missed it is a bait: its stun is the
     // squad's cue (`stormBait`, variant `stun`); any other stun is the
     // brood's yelp (`lightningStun`).

@@ -124,7 +124,8 @@ Radio call: "Lure the lightning onto the brood, then shoot them while they fall!
 (the stunned demon drops, the ship shoots it). Bait: a bolt aimed at the ship (or its fork) that misses the ship marks
 the creatures it stunned; each one shot down while still stunned pays `baitPoints × (route + 1)` inside the level's
 cap, and the wave's first drops the lightning rod. The rod still grounds the ship and widens the column (now a wider
-stun). Rosters go back to the sector's own (× 1.15 compensated for storm kills that no longer happen).
+stun). Rosters drop from × 1.15 (which compensated for storm kills) to × 0.93, kills pay 77 % (was 70 %) and the
+storm strikes a little less often (Easy 3.4-4.6 s, Normal 3.3-4.7 s, Hard 3.4-4.8 s, Hard fork .25; §8).
 `StormfrontMechanic` keeps `bolts`, `shipHits` (now zaps) and `StormStrike.hitShip`, so `bonus-challenges`' "dodge
 every bolt" 1UP reads them unchanged; it adds `stuns`, `charges`, and `stormKills`/`baitKills` now count stunned
 creatures shot down.
@@ -137,7 +138,13 @@ are in `plan/calibration-current.md` ("Lightning rework").
 
 ## 9. Parallel changes
 - `crosswind` owns the weather scheduler; this change adds nothing to it (no scheduler hook), so a merge is clean.
-- `bonus-challenges`: Stormfront edits are limited to the goal and the mechanic; the counters it may read are kept.
+- `bonus-challenges` (merged): "DODGE EVERY BOLT" stays meaningful. `_land` notes `boltHit` whenever a bolt strips
+  the ship (a zap, with or without powers to lose), `boltGrazed` for a bolt in the bright column outside the core, and
+  also for a bolt in the core during the zap's grace (it strips nothing but was not dodged); a grounded bolt and a
+  protected ship note nothing, as before.
+- `bonus-music`: its Stormfront `thunder` accent fires on `stormBait`, which is kept (a bolt drawn to the ship that
+  misses it and stuns creatures; variant `stun`).
+
 - `bonus-music`: `stormTell` / `stormBolt` raw events are unchanged; three new raw sound names are added.
 
 ## 10. Open questions

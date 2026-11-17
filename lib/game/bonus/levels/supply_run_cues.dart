@@ -14,6 +14,7 @@
 // - the crates opened and the cargo caught (the tally in the corner);
 // - a crate that fell past unopened queues `bonusCrateMissed` (banter).
 import '../../model.dart' show ArcadeBonus, ArcadeModel, Pickup, SupplyCrate;
+import '../bonus_challenge.dart' show ChallengeNotes;
 import '../../game_events.dart' show GameEventNames;
 import '../bonus_mechanic.dart';
 
@@ -46,6 +47,13 @@ class SupplyRunCues extends BonusMechanic {
   double tallyAge = 99;
 
   final _crates = <SupplyCrate, (double, double)>{};
+
+  // --- bonus challenges: crates and cargo already reported as missed.
+  final _missed = <Object>{};
+
+  /// Cargo below this row can no longer be caught (the model's catch box
+  /// is ±23 around the ship's row).
+  static const cargoGone = ArcadeModel.shipY + 23;
   final _cargo = <Pickup, (double, double, bool)>{};
 
   @override
@@ -62,6 +70,7 @@ class SupplyRunCues extends BonusMechanic {
     catches.removeWhere((c) => c.age > life);
     tallyAge += dt;
 
+    _challenge(model);
     final crates = model.supplyCrates.toSet();
     for (final MapEntry(key: crate, value: (x, y)) in _crates.entries) {
       if (crates.contains(crate)) continue;
@@ -91,6 +100,7 @@ class SupplyRunCues extends BonusMechanic {
       if (near) {
         catches.add(SupplyCue(model.shipX, ArcadeModel.shipY, bonus: bonus));
         caught++;
+        model.challengeNote(ChallengeNotes.cargoCaught); // --- challenges
         tallyAge = 0;
       }
     }
@@ -99,5 +109,26 @@ class SupplyRunCues extends BonusMechanic {
       ..addEntries([
         for (final p in cargo) MapEntry(p, (p.x, p.y, p.bonus != null)),
       ]);
+  }
+
+  // --- bonus challenges: the moment a crate passes the ship's row
+  // unopened (no shot can reach it) or cargo passes below the catch box,
+  // the "catch all the cargo" challenge breaks. Combat only: the clear's
+  // burst crates fall through the salvage window.
+  void _challenge(ArcadeModel model) {
+    if (!model.combat) return;
+    for (final c in model.supplyCrates) {
+      if (c.y > ArcadeModel.shipY && _missed.add(c)) {
+        model.challengeNote(ChallengeNotes.crateMissed);
+      }
+    }
+    for (final p in model.pickups) {
+      if (p.y > cargoGone && p.y < ArcadeModel.height && _missed.add(p)) {
+        model.challengeNote(ChallengeNotes.cargoMissed);
+      }
+    }
+    _missed.removeWhere(
+      (o) => !model.supplyCrates.contains(o) && !model.pickups.contains(o),
+    );
   }
 }

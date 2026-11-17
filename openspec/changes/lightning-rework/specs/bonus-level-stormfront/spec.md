@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Stormfront replaces a sector with a thunderstorm
-The bonus level `stormfront` SHALL replace one regular sector's content with a fight inside a thunderstorm over that sector's own backdrop: the sector's waves, sentinels, elites and opening rosters, under a dark storm grade. It SHALL be entered and left through the ordinary fog transition, and it SHALL NOT show any card, title or text over the play area.
+The bonus level `stormfront` SHALL replace one regular sector's content with a fight inside a thunderstorm over that sector's own backdrop: the sector's waves, sentinels and elites, each opening roster 7 % smaller (the storm stuns and the pilot shoots every creature), under a dark storm grade. It SHALL be entered and left through the ordinary fog transition, and it SHALL NOT show any card, title or text over the play area.
 
 #### Scenario: Entering the storm
 - **WHEN** a run's bonus slot holds `stormfront` and the previous sector is cleared
@@ -15,7 +15,7 @@ The bonus level `stormfront` SHALL replace one regular sector's content with a f
 
 #### Scenario: As long as the sector
 - **WHEN** the storm replaces a sector that has five waves
-- **THEN** it plays five waves, with the sector's own number of creatures in each opening roster
+- **THEN** it plays five waves, each opening roster 93 % of the sector's
 
 ### Requirement: Lightning does not take sides
 A bolt SHALL stun every targetable creature inside its column (storm-lightning) and SHALL zap the ship when the ship is inside the bolt's narrower core: every shield and power-up stripped, never a life. Protection ignores it. A ship that leaves the column after the tell begins SHALL always escape.
@@ -52,3 +52,10 @@ Stormfront SHALL be announced and narrated only by radio: a storm warning in the
 #### Scenario: The first tell on the ship
 - **WHEN** the level's first tell begins on the ship
 - **THEN** a written "Avoid lightning!" line is shown and ends on the bolt
+
+### Requirement: Stormfront pays and strikes like its sector
+Kills in Stormfront SHALL pay 77 % of their points. The clear award SHALL be 0.15 of the sector's par score and the flawless award a further 0.1; the clear, flawless and bait awards together SHALL stay within 0.3 of it. The storm SHALL strike every 3.4-4.6 s on Easy, 3.3-4.7 s on Normal and 3.4-4.8 s on Hard (divided by the hostile rate), a tenth less often per route.
+
+#### Scenario: A clean storm
+- **WHEN** the last creature falls and no ship was lost
+- **THEN** the level adds a quarter of the sector's par score, within its cap

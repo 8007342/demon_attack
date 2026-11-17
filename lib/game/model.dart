@@ -254,13 +254,12 @@ class Demon {
 /// Gerono figure-eight with depth, far behind the fog, nearer and larger
 /// each wave. No hitbox, no fire, no effect on the encounter.
 class SentinelForeshadow {
-  SentinelForeshadow(this.archetype, this.stage, {int lurkSeed = 0x5E57})
-    : growth = stage,
-      lurk = LurkTrack(lurkSeed);
+  SentinelForeshadow(this.archetype, this.stage) : growth = stage;
   EnemyArchetype archetype;
 
-  /// terrain-shadows §4: where its lurking shadow creeps on the ground.
-  final LurkTrack lurk;
+  // --- sentinel-shadow-align: its shadow is cast from this silhouette
+  // (x, nearness) at this altitude, the rising sentinel's starting one.
+  static const shadowAltitude = 120.0;
 
   /// Target growth (0 two waves ahead, .5 one wave ahead, 1 arriving) and
   /// the eased value shown.
@@ -298,59 +297,6 @@ class SentinelForeshadow {
     // Bank by the lateral velocity (curvature sign).
     final dtp = 1 + .3 * math.cos(2 * tau);
     bank = (-math.sin(tp) * dtp).clamp(-1.0, 1.0);
-  }
-}
-
-/// terrain-shadows design §4: the sentinel's lurking shadow's path on the
-/// ground, from the far terrain under its circling point toward the
-/// ground-war front at walking pace, meandering. Pure presentation: its
-/// own PRNG stream, never the simulation's draws.
-class LurkTrack {
-  LurkTrack(int seed) {
-    final r = math.Random(seed);
-    speed = 10 + 6 * r.nextDouble();
-    x0 = 180 + (r.nextDouble() * 2 - 1) * 54;
-    phase = r.nextDouble() * 2 * math.pi;
-  }
-
-  /// Screen travel (arena units per second, 10-16), start lateral and
-  /// meander phase.
-  late final double speed, x0, phase;
-
-  /// Far terrain near the fog, and the front's depth without a ground war.
-  static const startZ = 9 * GroundCamera.z0;
-  static const openFrontZ = 2 * GroundCamera.z0;
-  static const amplitude = 30.0, period = 9.0;
-
-  /// Its virtual altitude, high far out and lower near the front.
-  static const farAltitude = 220.0, nearAltitude = 120.0;
-
-  double clock = 0, travelled = 0;
-  double frontZ = openFrontZ;
-
-  static double get startY => GroundCamera.yOf(startZ);
-  double get endY => GroundCamera.yOf(frontZ);
-
-  /// Flat-ground y of the shadow's centre now.
-  double get flatY => math.min(startY + travelled, math.max(startY, endY));
-
-  /// 0 at the far terrain, 1 at the front.
-  double get progress =>
-      endY > startY ? ((flatY - startY) / (endY - startY)).clamp(0.0, 1.0) : 1;
-
-  double get altitude => farAltitude + (nearAltitude - farAltitude) * progress;
-
-  /// Lateral position; reduced motion drops the meander.
-  double x({bool meander = true}) =>
-      x0 +
-      (meander
-          ? amplitude * math.sin(2 * math.pi * clock / period + phase)
-          : 0);
-
-  void advance(double dt, {required double frontZ}) {
-    this.frontZ = frontZ;
-    clock += dt;
-    travelled += speed * dt;
   }
 }
 
@@ -1842,6 +1788,8 @@ class ArcadeModel {
     'heartSlots': List<int>.of(heartSlots),
     'activeMilliseconds': activeMilliseconds,
     if (bonusRun.seed != null) 'runSeed': bonusRun.seed, // --- bonus levels
+    // --- bonus challenges: the levels whose 1UP this run won.
+    if (bonusRun.oneUps.isNotEmpty) 'bonusOneUps': [...bonusRun.oneUps],
   };
 
   /// Restores a fresh wave, validating before changing this model.
@@ -1961,6 +1909,7 @@ class ArcadeModel {
     loomClock = 0;
     boss = _bossWave ? _newCarrier() : null;
     _bonusStartRun(restoredSeed); // --- bonus levels
+    _bonusRestoreOneUps(data['bonusOneUps']); // --- bonus challenges
     _bonusBeginLevel();
     _groundBeginLevel(); // --- ground war
     _spawnWave(fromCheckpoint: true);
@@ -3998,10 +3947,6 @@ class ArcadeModel {
   /// waves ahead of it (pure presentation; null when none is due).
   SentinelForeshadow? foreshadow;
 
-  /// Where the lurking shadow stops: the ground war's fire line, or a
-  /// little nearer when no ground war is on.
-  double get _lurkFrontZ =>
-      ground.front.presence > 0 ? GroundTuning.fireZ : LurkTrack.openFrontZ;
 
   void _updateForeshadow(double dt) {
     final f = foreshadow;
@@ -4052,19 +3997,11 @@ class ArcadeModel {
       if (f == null) return;
       f.opacity = math.max(0, f.opacity - dt / .8);
       f.clock += dt;
-      f.lurk.advance(dt, frontZ: _lurkFrontZ);
       f.place();
       if (f.opacity <= 0) foreshadow = null;
       return;
     }
-    // terrain-shadows: the lurking shadow's own stream (seed ^ 0x5E57),
-    // one track per sentinel.
-    final g = foreshadow ??= SentinelForeshadow(
-      kind,
-      stage,
-      lurkSeed: seed ^ 0x5E57 ^ (level * 64 + wave),
-    );
-    g.lurk.advance(dt, frontZ: _lurkFrontZ);
+    final g = foreshadow ??= SentinelForeshadow(kind, stage);
     g
       ..archetype = kind
       ..stage = stage
@@ -5401,10 +5338,12 @@ class ArcadeModel {
       powerTimers.remove(Power.shield);
       invulnerable = 1;
       events.add('hit');
+      _bonusShipHit(lost: false); // --- bonus challenges
       return;
     }
     lives--;
     bonusRun.shipsLost++; // --- bonus levels
+    _bonusShipHit(lost: true); // --- bonus challenges
     pilot.reset(shipX); // --- demon intelligence
     skill.lifeLost();
     _lastSkill = skill.level;

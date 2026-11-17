@@ -217,8 +217,31 @@ void main() {
         'glass',
         'impact',
         'impact',
+        // bonus-music: Supply Run's crate, Stormfront's dodged bolt.
+        'cargo',
+        'thunder',
       ]);
       expect(fleet, 1);
+    },
+  );
+
+  test(
+    'a musicAccent event plays a known stinger; an unknown name is ignored',
+    () {
+      final accents = <String>[];
+      final bridge = MusicBridge(onAccent: accents.add);
+      final remove = GameEvents.listen(bridge.call);
+      for (final name in [
+        'gust',
+        'oneup',
+        'challenge-fail',
+        'no-such-accent',
+      ]) {
+        dispatchGameEvent(GameEvent(MusicBridge.accentEvent, {'name': name}));
+      }
+      dispatchGameEvent(const GameEvent(MusicBridge.accentEvent));
+      remove();
+      expect(accents, ['gust', 'oneup', 'challenge-fail']);
     },
   );
 

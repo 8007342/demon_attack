@@ -2842,11 +2842,13 @@ class DemonScene extends FlameGame {
     var h = d.altitude;
     if (h <= 0 && d.isLarge && d.entering && d.entranceProgress > 0) {
       // terrain-shadows §4: a sentinel rising out of the fog has no
-      // published altitude yet; its shadow eases from the lurking shadow's
-      // low pass down to its fight altitude (presentation only).
+      // published altitude yet; its shadow eases from the looming
+      // silhouette's (sentinel-shadow-align) down to its fight altitude
+      // (presentation only).
+      const h0 = SentinelForeshadow.shadowAltitude;
       h =
-          LurkTrack.nearAltitude +
-          (SwarmFlock.fightAltitude(d.homeY) - LurkTrack.nearAltitude) *
+          h0 +
+          (SwarmFlock.fightAltitude(d.homeY) - h0) *
               Perspective.smoothstep(0, 1, d.entranceProgress);
     }
     if (d.isLarge && h <= 0 && !d.entering) h = sentinelShadowAltitude(d);
@@ -2956,8 +2958,8 @@ class DemonScene extends FlameGame {
 
   /// lurk-visibility: the occluder's strength at its core (multiply
   /// darkening toward [lurkTint], plus [lurkDesaturate] of the colour
-  /// under it), and the smallest ground nearness its size uses.
-  static const lurkAlpha = .9, lurkDesaturate = .6, lurkMinNearness = .2;
+  /// under it).
+  static const lurkAlpha = .9, lurkDesaturate = .6;
 
   /// Share of the occluder repeated over the depth fog banks above it.
   static const lurkFog = .65;
@@ -3006,20 +3008,23 @@ class DemonScene extends FlameGame {
           ShadowProjector.flyerDir(_sunDrift),
         );
 
+  // --- sentinel-shadow-align: the looming silhouette's shadow is cast
+  // like every flyer's (the demons' projection in [_shadowOf]): from the
+  // ground under its nearness, below its drawn x, at its altitude, on this
+  // frame's sun. Position and size follow from that projection alone.
+
+  /// The flat-ground point under the looming silhouette (tests, review).
+  static Offset foreshadowBase(SentinelForeshadow f) =>
+      Offset(f.x, Perspective.groundY(f.nearness));
+
   _ShadowSpec? _lurkSpec(
     SentinelForeshadow f,
     ui.Image fx,
     ShadowSurface surface,
   ) {
-    final l = f.lurk;
-    final base = Offset(l.x(meander: !sectors.flyover.reducedMotion), l.flatY);
-    final hit = _flyerHit(surface, base, l.altitude);
-    // Size by the ground's nearness there: about 2.5 x the sentinel's own,
-    // growing 1.0 -> 1.3 as it nears (and its virtual altitude falls).
-    // lurk-visibility: never smaller than a broad patch near the fog, so it
-    // is seen as soon as it appears.
-    final n = ((hit.flat.dy - Perspective.horizonY) / Perspective.groundSpan)
-        .clamp(lurkMinNearness, 1.0);
+    const h = SentinelForeshadow.shadowAltitude;
+    final hit = _flyerHit(surface, foreshadowBase(f), h);
+    final n = groundNearness(hit.flat.dy);
     // Full within 1.5 s of the silhouette appearing.
     final rise = Perspective.smoothstep(0, .5, f.opacity);
     // In thick ground fog it is a little softer, never nothing (the fog
@@ -3037,7 +3042,7 @@ class DemonScene extends FlameGame {
         64,
       ),
       hit.center,
-      sentinelShadowScale(n, l.altitude),
+      sentinelShadowScale(n, h),
       alpha.clamp(0.0, lurkAlpha),
       2,
       hit.flat,
@@ -3050,12 +3055,13 @@ class DemonScene extends FlameGame {
   /// the 128 × 64 strip: the ground's nearness [n] under it (perspective)
   /// times its softness growth, spread by its altitude [h] above the
   /// fight's (a high caster's penumbra). In the fight it matches the
-  /// sentinel's own drawn size; far and high, the lurk is broad for the
-  /// ground it lies on, and nothing jumps at the hand-off.
+  /// sentinel's own drawn size; far away it is small with the ground it
+  /// lies on (sentinel-shadow-align: no nearness floor), and nothing jumps
+  /// at the hand-off.
   static double sentinelShadowScale(double n, double h) {
     final k = (h / _shadowHMax).clamp(0.0, 1.0);
     final spread = 1 + 1.2 * math.max(0.0, h - 90) / 130;
-    return 1.6 * n.clamp(lurkMinNearness, 1.0) * (1 + .3 * k) * spread;
+    return 1.6 * n.clamp(0.0, 1.0) * (1 + .3 * k) * spread;
   }
 
   /// The ground's nearness at flat-ground row [y].
@@ -3414,8 +3420,8 @@ class DemonScene extends FlameGame {
         ),
       );
     }
-    // terrain-shadows §4: a coming sentinel's lurking shadow creeps from the
-    // far terrain toward the front while it circles in the fog.
+    // terrain-shadows §4: a coming sentinel's shadow while it circles in
+    // the fog, under its silhouette (sentinel-shadow-align).
     final f = model.foreshadow;
     final fx = effectsAtlas;
     final lurk = f != null && f.visible && fx != null

@@ -66,6 +66,8 @@ flutter:
     - assets/credits.json
     - assets/images/
     - assets/images/widescreen/
+    # Built-on card icons (credits-page; lib/ending/credits_view.dart).
+    - assets/images/credits/
     # Per-sector ground-block atlases (lib/game/ground_blocks_atlas.dart).
     - assets/images/ground-blocks/
     # Ground atmosphere atlas (lib/game/ground_atmosphere_atlas.dart, generated

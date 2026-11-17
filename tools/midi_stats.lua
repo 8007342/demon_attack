@@ -20,7 +20,9 @@
 --     through the synth voice (the sampler's own rule);
 --   - peak voices <= 32 with a 0.5-beat release and the score's voice rules (a key struck again chokes, lead and
 --     bass are monophonic), every track sounding;
---   - sizes recorded (the file against score.json's bytes).
+--   - sizes recorded (the file against score.json's bytes);
+--   - stingers (bonus-music, design §12.10): each note of each stinger in the key of every section its `over`
+--     names (all keys for `all`), against the same zones: drums must be covered, the rest is reported.
 -- Exit 1 with the failures listed; the last line is `check: ok …` or `check: FAILED …`.
 
 local release = 0
@@ -214,6 +216,55 @@ if mode == 'check' then
           chromatic and ' (chromatic)' or ''))
       end
     end
+  end
+  -- Stingers in the keys of the sections they layer over (score_gen.lua gates their voices).
+  local stingNames = {}
+  for name in pairs(score.stingers or {}) do stingNames[#stingNames + 1] = name end
+  table.sort(stingNames)
+  for _, name in ipairs(stingNames) do
+    local st = score.stingers[name]
+    local keys, keyList = {}, {}
+    for _, songId in ipairs(songIds) do
+      local song = score.songs[songId]
+      for id, spec in pairs(song.sections) do
+        local hit = false
+        for _, sel in ipairs(st.over or { 'all' }) do
+          if sel == 'all' or (sel == 'wave' and spec.wave) or (sel == 'bonus' and spec.bonus) or sel == 'song:' .. songId then hit = true end
+        end
+        if hit then
+          local tonic, mode = spec.tonic or song.tonic, spec.mode or song.mode
+          local k = tonic .. ' ' .. mode
+          if not keys[k] then keys[k] = { tonic = tonic, mode = mode }; keyList[#keyList + 1] = k end
+        end
+      end
+    end
+    table.sort(keyList)
+    local notes, covered, phone, misses = 0, 0, 0, {}
+    for _, k in ipairs(keyList) do
+      local key = keys[k]
+      local scale = A.scales[key.mode] or A.scales.minor
+      for _, n in ipairs(st.notes) do
+        local role = score.tracks[n.track] and score.tracks[n.track].role
+        local p = n.drum
+        if not p then
+          local step = n.deg and (scale[(n.deg - 1) % 7 + 1] + 12 * ((n.deg - 1) // 7)) or n.semi or 0
+          p = 12 * ((n.oct or 4) + 1) + key.tonic + step
+        end
+        if role and roles[role] then
+          notes = notes + 1
+          local secs = n.len * 0.375
+          if B.covering(recipeLike, plan, role, p, n.v, secs) then covered = covered + 1 else
+            misses[#misses + 1] = ('%s %d'):format(n.track, p)
+            if roles[role].cover == 'full' or copts.strict then fail(('stinger %s: %s %s note %d has no bank zone'):format(name, n.track, role, p)) end
+          end
+          if B.covering(recipeLike, phonePlan, role, p, n.v, secs) then phone = phone + 1 end
+        end
+      end
+    end
+    local seen, uniq = {}, {}
+    for _, m in ipairs(misses) do if not seen[m] then seen[m] = true; uniq[#uniq + 1] = m end end
+    print(string.format('  sting %-14s %2d key(s)  %5.1f %% of %3d notes covered (%5.1f %% on phones)%s', name, #keyList,
+      100 * covered / math.max(1, notes), notes, 100 * phone / math.max(1, notes), #uniq > 0 and ('  synth: ' .. table.concat(uniq, ', ')) or ''))
   end
   print(('bank: %s'):format(bankWhat))
   local roleNames = {}

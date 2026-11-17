@@ -42,6 +42,16 @@ const supplyRun = BonusLevelDef(
   how: 'Shoot a crate till it bursts, then fly under what falls.',
   // mission-medals: no rule of play, only the cues (supply_run_cues.dart).
   mechanic: SupplyRunCues.new,
+  // --- bonus challenges: every crate opened and every prize caught pays
+  // a 1UP. SupplyRunCues reports the misses the moment they happen (a
+  // crate past the ship's row unopened, cargo past it uncaught).
+  challenge: BonusChallengeDef(
+    id: 'catchAll',
+    label: 'CATCH ALL CARGO',
+    icon: 'cargo',
+    failOn: {ChallengeNotes.crateMissed, ChallengeNotes.cargoMissed},
+    atLeast: {ChallengeNotes.cargoCaught: 1},
+  ),
   weight: 1,
   waves: BonusWaves(),
   rules: PowerRules(killDrops: false),

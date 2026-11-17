@@ -7,7 +7,7 @@
 
 ## 2. Stormfront
 - [x] 2.1 Mechanic: stun instead of kill, zap instead of a hit, bait paid on stunned kills, the rod from the first baited kill, rod armour fitted, dodges fed
-- [x] 2.2 `StormStrike.stunned/charged`; `StormTuning.damage` removed; rosters × 1.0
+- [x] 2.2 `StormStrike.stunned/charged`; `StormTuning.damage` removed; rosters × 0.93, kills × 0.77, storm gaps Easy 3.4-4.6 s, Normal 3.3-4.7 s, Hard 3.4-4.8 s (fork .25)
 - [x] 2.3 Briefing goal and how-to, five-step pictogram, `bonusCall.stormfront` reworded
 
 ## 3. Presentation

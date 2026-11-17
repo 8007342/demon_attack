@@ -96,9 +96,9 @@ void main() {
   });
 
   // bonus-balance: the sector's own waves and sentinels. lightning-rework:
-  // the storm no longer kills, so the rosters are the sector's own (they
-  // were 15 % larger).
-  test('it keeps the sector\'s waves and rosters', () {
+  // the storm no longer kills, so the rosters are a little under the
+  // sector's own (× 0.93; they were × 1.15), tuned on the balance gate.
+  test('it keeps the sector\'s waves, with a slightly thinner swarm', () {
     final regular = ArcadeModel()..startAt(sector: 3, route: 2);
     final m = _storm(route: 2);
     expect(m.bonus?.id, 'stormfront');
@@ -107,7 +107,12 @@ void main() {
     for (var w = 1; w <= m.wavesPerLevel; w++) {
       expect(m.sentinelFor(w), regular.sentinelFor(w));
     }
-    expect(m.demons.length, regular.demons.length);
+    expect(m.demons.length, lessThanOrEqualTo(regular.demons.length));
+    expect(
+      m.demons.length,
+      greaterThanOrEqualTo((regular.demons.length * .93).floor()),
+    );
+
     expect(m.bonusMechanic, isA<StormfrontMechanic>());
     // A regular sector has no mechanic.
     expect(regular.bonusMechanic, isNull);

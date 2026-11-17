@@ -52,7 +52,7 @@ class ScoreSong {
   final String id;
   final String name;
 
-  /// 'sector', 'carrier', 'bridge', 'menu', 'coda' or 'defeat'.
+  /// 'sector', 'carrier', 'bridge', 'menu', 'coda', 'credits', 'defeat' or 'bonus'.
   final String form;
 
   /// Samples per 4/4 bar at 48 kHz (the song's grid).
@@ -97,6 +97,7 @@ String? scoreSongFor(int level, int cycle) =>
 
 /// The scenes outside the sectors: `song:section` each starts on.
 const scoreScenes = <String, String>{
+  'credits': 'credits:dawn',
   'ending': 'coda:ukulele',
   'gameover': 'defeat:cackle',
   'menu': 'menu:overture',
@@ -112,7 +113,37 @@ const scoreBridges = <String, String>{
   'r>e': 'r-e',
 };
 
+/// The bonus levels with a song of their own (form `bonus`): level id ->
+/// song.
+const scoreBonusSongs = <String, String>{'crosswind': 'bonus-wind'};
+
+/// The accents the score plays as stingers (`demonAudio.accent(name)`).
+const scoreAccents = <String>{
+  'breakthrough',
+  'cargo',
+  'challenge-fail',
+  'destroyed',
+  'dive',
+  'glass',
+  'gloat',
+  'gust',
+  'hatch',
+  'impact',
+  'laststand',
+  'oneup',
+  'reinforce',
+  'respawn',
+  'riser',
+  'stab',
+  'thunder',
+  'toll',
+};
+
 const scoreSongs = <String, ScoreSong>{
+  'bonus-wind': ScoreSong('bonus-wind', 'Crosswind', 'bonus', 72000, {
+    'A': ScoreSection('A', ScoreKind.loop, 8),
+    'B': ScoreSection('B', ScoreKind.loop, 8),
+  }),
   'c-k': ScoreSong('c-k', 'Bridge: the carrier to Krybor', 'bridge', 60632, {
     'pivot': ScoreSection('pivot', ScoreKind.bridge, 2, next: 'k:arrival'),
   }),
@@ -180,6 +211,10 @@ const scoreSongs = <String, ScoreSong>{
   'coda': ScoreSong('coda', 'Coda', 'coda', 121264, {
     'reprise': ScoreSection('reprise', ScoreKind.loop, 8),
     'ukulele': ScoreSection('ukulele', ScoreKind.tail, 8, next: 'reprise'),
+  }),
+  'credits': ScoreSong('credits', 'Credits', 'credits', 160000, {
+    'dawn': ScoreSection('dawn', ScoreKind.tail, 4, next: 'drift'),
+    'drift': ScoreSection('drift', ScoreKind.loop, 16),
   }),
   'defeat': ScoreSong('defeat', 'Alien victory', 'defeat', 96000, {
     'alienwin': ScoreSection('alienwin', ScoreKind.loop, 8),

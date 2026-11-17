@@ -393,6 +393,18 @@ abstract final class GameEventNames {
 
   static const lightning = [lightningStun, lightningShipHit, lightningCharged];
 
+  // --- bonus challenges (openspec/changes/bonus-challenges). `variant`:
+  // the level's id; data `challenge` (its id). The raw `bonusOneUp` is the
+  // 1UP's sound (lib/main.dart).
+
+  /// A level's perfect-run condition broke (data `by`: the note that broke
+  /// it; '' when it fell short at the clear).
+  static const bonusChallengeFailed = 'bonusChallengeFailed';
+
+  /// A level's perfect-run condition held to the clear: its 1UP was paid
+  /// (data `lives`: the lives after it).
+  static const bonusChallengeEarned = 'bonusChallengeEarned';
+
   static const bonus = [
     runModifier,
     bonusStart,
@@ -403,6 +415,8 @@ abstract final class GameEventNames {
     bonusCrateMissed,
     stormStrike,
     stormBait,
+    bonusChallengeFailed,
+    bonusChallengeEarned,
   ];
 
   /// A full-size transmission: the fleet's mission briefing on travel
