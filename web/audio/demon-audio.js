@@ -282,6 +282,7 @@
     get time() { return context?.currentTime ?? -1; },
     get scorePosition() { return score?.position ?? null; },
     get scoreLoading() { return score?.loading ?? Promise.resolve(); },
+    get bankLoading() { return score?.bankLoading ?? Promise.resolve(); },
     get levels() { return { ...levels }; },
     get graph() { return { context, master, music, effects, duck: sidechain }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.

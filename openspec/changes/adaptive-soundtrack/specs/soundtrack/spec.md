@@ -88,7 +88,11 @@ The soundtrack's backbone SHALL be a committed multitrack MIDI score per section
 - **THEN** any recorded full mix of that section is removed from the shipped assets, and its recipe stays committed
 
 ### Requirement: Sampled instrument bank
-The score SHALL be voiced by one bank of CC0 or similarly permissive samples, shipped as Ogg Opus with a manifest of zones, sizes, hashes, sources and licences, within 2 MB compressed and 41 MB decoded (16 MB on phones). The bank SHALL load by priority, core drums, bass and guitar first, and the score SHALL start before the bank has finished loading.
+The score SHALL be voiced by one bank of CC0 or similarly permissive samples, shipped as Ogg Opus with a manifest of zones, sizes, hashes, sources and licences, within 2 MB compressed and 41 MB decoded (16 MB on phones). The bank SHALL load by priority, core drums, bass and guitar first, and the score SHALL start before the bank has finished loading. A section's track with a note outside the bank's zones SHALL play through the synthesizer voice for that whole section.
+
+#### Scenario: A partly covered track
+- **WHEN** a section's brass track has a note above the bank's highest horn zone
+- **THEN** that track plays through the synthesizer voice for the whole section, and the score gate reports the role's coverage instead of failing
 
 #### Scenario: Cold start
 - **WHEN** the music starts and only the core group has decoded
@@ -97,6 +101,14 @@ The score SHALL be voiced by one bank of CC0 or similarly permissive samples, sh
 #### Scenario: Phone tier
 - **WHEN** the device is classed as a phone
 - **THEN** the bank loads one velocity layer and one round-robin per zone and stays within 16 MB decoded
+
+#### Scenario: A source that is not the pin
+- **WHEN** a source file's size or git blob sha1 differs from the pin manifest
+- **THEN** the bank builder refuses, names the file, and writes no bank
+
+#### Scenario: No bank
+- **WHEN** `bank.json` is absent
+- **THEN** the score plays through the synthesizer voices exactly as without a sampler, and the section trims stay byte-identical
 
 ### Requirement: Score voice budget
 The sampler SHALL cap simultaneous voices at 48 on desktop and 32 on phones. When the cap is reached it SHALL steal pad voices first, then lead voices, and SHALL never steal kick, snare or bass voices. Every shipped score section SHALL peak at most 32 voices with a 0.5-beat release.
@@ -110,7 +122,7 @@ The sampler SHALL cap simultaneous voices at 48 on desktop and 32 on phones. Whe
 - **THEN** the score gate rejects it with the peak and the bar where it occurs
 
 ### Requirement: Score recipes and gates
-Every shipped score SHALL be reproducible from a committed recipe (generator, inputs, seed, and for transcribed or model-generated material the source take or model, tool versions and manual edits) and SHALL pass the score gates: whole bars, onsets on the grid within 12 ms, out-of-scale notes at most 3 % outside marked chromatic passages, and pitches inside the bank's zones.
+Every shipped score SHALL be reproducible from a committed recipe (generator, inputs, seed, and for transcribed or model-generated material the source take or model, tool versions and manual edits) and SHALL pass the score gates: whole bars, onsets on the grid within 12 ms, out-of-scale notes at most 3 % outside marked chromatic passages, and pitches inside the bank's zones for the roles it covers in full.
 
 #### Scenario: An off-grid transcription
 - **WHEN** a transcribed bass motif has onsets 30 ms off the 16th grid
