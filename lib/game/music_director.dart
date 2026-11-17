@@ -271,6 +271,9 @@ class MusicBridge {
     GameEventNames.bossHatchFieldDown: 'glass',
     GameEventNames.bossHatchDrop: 'impact',
     GameEventNames.bossWreckFalls: 'impact',
+    // --- crosswind: a called gust or swing swells (bonus-music's `gust`
+    // stinger; the score player skips an accent it has no stinger for).
+    GameEventNames.windGust: 'gust',
   };
 
   void call(GameEvent event) {

@@ -4631,6 +4631,239 @@
       "lines": [
         {"speaker": "sunny", "text": "Park under the brood, then scoot, and let the thunder zap them!", "emotion": "teasing"}
       ]
+    },
+    "bonusEntry.crosswind": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Forecast: gale force, with a chance of flying kites.", "signature": true, "emotion": "teasing"},
+        {"speaker": "admiral", "text": "The brood is flying kites in a gale. Bring them down.", "emotion": "calm"}
+      ]
+    },
+    "bonusCall.crosswind": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 6,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Kites in a gale! One shot at a time, aim upwind, and let the wind carry it in!", "emotion": "excited"}
+      ]
+    },
+    "bonusDare.crosswind": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 4,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Bet you can't pop one with your eyes shut. Kidding. Keep them open.", "emotion": "teasing"},
+        {"speaker": "kestrel", "text": "Read the windsock, then breathe, then fire.", "emotion": "calm"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 45,
+        "ttl": 4,
+        "lines": [
+          {"speaker": "nibb", "grunt": "gloat", "gloss": "Our kites, our wind, our sky!", "say": "Our kites, our wind, our sky!", "emotion": "teasing"},
+          {"speaker": "skarn", "grunt": "roar", "gloss": "The gale is on our side, little ship!", "say": "The gale is on our side, little ship!", "emotion": "triumphant"}
+        ]
+      }
+    },
+    "bonusStart.crosswind": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "wisp", "text": "Watch the windsock, top left. It turns before your shots bend.", "emotion": "calm"},
+        {"speaker": "anvil", "text": "No spread, no rapid in this wind. One good shot beats ten wild ones.", "emotion": "calm"},
+        {"speaker": "sparrow", "text": "Kites coming in on the gust. Lead them upwind!", "emotion": "urgent"}
+      ]
+    },
+    "bonusChallenge.crosswind": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 5,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Pop every kite and the fleet sends you a spare ship. Don't let one get away!", "emotion": "excited"}
+      ]
+    },
+    "bonusChallengeEarned.crosswind": {
+      "priority": 6,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Every last kite! Not one got away. That's a spare ship for you!", "emotion": "triumphant"},
+        {"speaker": "kestrel", "text": "Every kite down, in that wind. Take the extra ship, you earned it.", "emotion": "warm"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 20,
+        "ttl": 4,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "nibb", "grunt": "alarm", "gloss": "All of them? Even the shiny one?!", "say": "All of them? Even the shiny one?!", "emotion": "panicked"}
+        ]
+      }
+    },
+    "bonusChallengeFailed.crosswind": {
+      "priority": 4,
+      "cooldown": 30,
+      "ttl": 3,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "anvil", "text": "One rode the wind out. No spare ship this time, but keep popping.", "emotion": "calm"}
+      ],
+      "demon": {
+        "priority": 4,
+        "cooldown": 30,
+        "ttl": 3,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "morth", "grunt": "gloat", "gloss": "Fly free, little kite! Tell the others!", "say": "Fly free, little kite! Tell the others!", "emotion": "teasing"}
+        ]
+      }
+    },
+    "bonusMidway.crosswind": {
+      "priority": 3,
+      "cooldown": 60,
+      "ttl": 4,
+      "mood": "happy",
+      "exchange": "human",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Halftime weather report: windy, windier, and kites.", "emotion": "teasing"},
+        {"speaker": "nomad", "text": "My grandmother flew kites. She never shot at them, mind you.", "emotion": "calm"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 60,
+        "ttl": 4,
+        "lines": [
+          {"speaker": "sliss", "grunt": "snarl", "gloss": "Who tied my kite to a demon? Untie me!", "say": "Who tied my kite to a demon? Untie me!", "emotion": "stern"},
+          {"speaker": "gorrak", "grunt": "order", "gloss": "Hold the strings! Hold the strings!", "say": "Hold the strings! Hold the strings!", "emotion": "stern"}
+        ]
+      }
+    },
+    "bonusCleared.crosswind": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Wind's dropping. Clear skies, empty strings. Lovely.", "signature": true, "emotion": "teasing"},
+        {"speaker": "sparrow", "text": "We shot straight in a gale! Sky's ours.", "emotion": "triumphant"},
+        {"speaker": "nomad", "text": "Steady hands in a crooked wind. Fine flying.", "emotion": "warm"}
+      ]
+    },
+    "kitePopped": {
+      "priority": 3,
+      "cooldown": 7,
+      "ttl": 2,
+      "chance": 0.5,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Pop! Right through the gust.", "emotion": "excited"},
+        {"speaker": "kessler", "text": "Nice lead on that one. The wind did the rest.", "emotion": "warm"},
+        {"speaker": "pip", "text": "Kite down! Ooh, it's all sparkly.", "emotion": "excited"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 9,
+        "ttl": 2,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "nibb", "grunt": "alarm", "gloss": "My kite! I made that one myself!", "say": "My kite! I made that one myself!", "emotion": "panicked"},
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "Lucky gust. Lucky, lucky gust.", "say": "Lucky gust. Lucky, lucky gust.", "emotion": "stern"}
+        ]
+      }
+    },
+    "kiteEscaped": {
+      "priority": 3,
+      "cooldown": 10,
+      "ttl": 2,
+      "mood": "worried",
+      "pending": "text",
+      "exchange": "demon",
+      "lines": [
+        {"speaker": "wisp", "text": "One got away. Next one, lead it more.", "emotion": "calm"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 10,
+        "ttl": 2,
+        "lines": [
+          {"speaker": "morth", "grunt": "gloat", "gloss": "Bye-bye! The wind loves us more!", "say": "Bye-bye! The wind loves us more!", "emotion": "teasing"},
+          {"speaker": "skarn", "grunt": "cackle", "gloss": "Can't catch the wind, can you?", "say": "Can't catch the wind, can you?", "emotion": "teasing"}
+        ]
+      }
+    },
+    "windStart": {
+      "priority": 4,
+      "cooldown": 60,
+      "ttl": 4,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "wisp", "text": "Wind's picking up. Watch the windsock and aim into it.", "emotion": "calm"},
+        {"speaker": "kestrel", "text": "Crosswind on this sector. Your shots will drift, and so will theirs.", "emotion": "calm"},
+        {"speaker": "sunny", "text": "Breezy out here! Hold onto your helmets.", "emotion": "teasing"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 60,
+        "ttl": 4,
+        "delay": 1.2,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "gloat", "gloss": "Our wind. Our home. Your shots go astray.", "say": "Our wind. Our home. Your shots go astray.", "emotion": "teasing"}
+        ]
+      }
+    },
+    "windGust": {
+      "priority": 5,
+      "cooldown": 9,
+      "ttl": 1.3,
+      "chance": 0.6,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "wisp", "text": "Gust coming! Lead your shots into it.", "emotion": "urgent"},
+        {"speaker": "sparrow", "text": "Wind's swinging round! Watch the sock!", "emotion": "urgent"},
+        {"speaker": "rook", "text": "Here comes a big one! Aim upwind!", "emotion": "urgent"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 20,
+        "ttl": 2,
+        "delay": 0.8,
+        "lines": [
+          {"speaker": "sliss", "grunt": "cackle", "gloss": "Wheee! Ride it, brood!", "say": "Wheee! Ride it, brood!", "emotion": "triumphant"}
+        ]
+      }
+    },
+    "windStop": {
+      "priority": 3,
+      "cooldown": 60,
+      "ttl": 3,
+      "chance": 0.6,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "anvil", "text": "Wind's dying down. Back to straight shooting.", "emotion": "calm"},
+        {"speaker": "nomad", "text": "Calm air again. Enjoy it while it lasts.", "emotion": "warm"}
+      ]
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../services/audio.dart';
+import 'bonus/bonus_catalog.dart' show bonusLevelById; // --- crosswind
 import 'game_events.dart';
 import 'song_map.dart';
 
@@ -593,10 +594,17 @@ class SongDirector {
 
   /// A bonus level (`bonusStart`, its id in `variant`) plays its section of
   /// the sector's song for the whole level, from the end of the arrival.
+  /// --- crosswind: a section tagged with the level's id, else one named
+  /// like the level's cue (`BonusLook.cue`, e.g. `bonus-wind`); with
+  /// neither in the song the music fails soft and stays where it is.
   void _bonus(String? variant, String reason) {
     if (variant == null) return;
     final s = _song!;
-    final section = s.sections.values.where((x) => x.bonus == variant);
+    final cue = bonusLevelById(variant)?.look.cue;
+    var section = s.sections.values.where((x) => x.bonus == variant);
+    if (section.isEmpty && cue != null) {
+      section = s.sections.values.where((x) => x.id == cue);
+    }
     if (section.isEmpty || _target == section.first.id) return;
     _request(section.first.id, afterTail: true, reason: reason);
   }

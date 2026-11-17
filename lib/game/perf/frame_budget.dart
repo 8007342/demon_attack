@@ -29,6 +29,7 @@ enum PerfTier {
 class FrameBudget {
   const FrameBudget._({
     required this.rainScale,
+    required this.windScale,
     required this.moteScale,
     required this.blasts,
     required this.sparks,
@@ -41,6 +42,9 @@ class FrameBudget {
 
   /// Rain drops and splashes, as a fraction of the weather's own count.
   final double rainScale;
+
+  /// --- crosswind: the wind's cloud wisps and billows, as a fraction.
+  final double windScale;
 
   /// Sector motes (dust, embers, spores), as a fraction.
   final double moteScale;
@@ -72,6 +76,7 @@ class FrameBudget {
 
   static const full = FrameBudget._(
     rainScale: 1,
+    windScale: 1,
     moteScale: 1,
     blasts: 28,
     sparks: true,
@@ -83,6 +88,7 @@ class FrameBudget {
   );
   static const lean = FrameBudget._(
     rainScale: .6,
+    windScale: .6,
     moteScale: .75,
     blasts: 20,
     sparks: true,
@@ -94,6 +100,7 @@ class FrameBudget {
   );
   static const lite = FrameBudget._(
     rainScale: .35,
+    windScale: .35,
     moteScale: .5,
     blasts: 14,
     sparks: false,

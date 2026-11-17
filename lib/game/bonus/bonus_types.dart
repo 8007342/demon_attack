@@ -50,7 +50,9 @@ class PowerRules {
     if (isNone) return inner;
     return PowerRules(
       banned: {...banned, ...inner.banned},
-      only: inner.only ?? only,
+      // --- crosswind: a level that bans the run's `only` power wins
+      // (Crosswind under Spread Only: the drops fall back to the cycle).
+      only: inner.only ?? (inner.banned.contains(only) ? null : only),
       chances: [...chances, ...inner.chances],
       killDrops: killDrops && inner.killDrops,
     );
@@ -299,7 +301,12 @@ class BonusLevelDef {
     this.mechanic,
     this.brief = '',
     this.how = '',
+    this.wind = false,
   });
+
+  /// --- crosswind: the level blows the crosswind tier of the wind
+  /// (lib/game/weather/wind_field.dart) from its start to its end.
+  final bool wind;
 
   /// camelCase; the radio triggers key on it.
   final String id;

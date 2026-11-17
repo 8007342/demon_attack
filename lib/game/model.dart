@@ -20,6 +20,7 @@ import 'skill_meter.dart';
 import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
+import 'weather/wind_field.dart'; // --- crosswind
 export 'carrier_hatches.dart'
     show CarrierChapter, CarrierHatch, CarrierHatches, HatchState;
 export 'bonus/bonus_catalog.dart';
@@ -35,6 +36,7 @@ export 'skill_meter.dart';
 export 'swarm_policy.dart';
 export 'swarm_patterns.dart' show Squad, SquadState;
 export 'swarm_stream.dart' show SwarmState, SwarmGate, SwarmGateGeometry;
+export 'weather/wind_field.dart'; // --- crosswind
 
 // --- ground war (demon ground forces, allies, homing missiles) ---
 part 'ground_war.dart';
@@ -51,6 +53,9 @@ part 'model_bonus.dart';
 
 // --- the sentinel final rush (demon-intelligence design §6) ---
 part 'sentinel_rush.dart';
+
+// --- crosswind: the wind that drifts every shot ---
+part 'model_wind.dart';
 
 enum RunMode {
   title,
@@ -107,6 +112,10 @@ class Demon {
        homeY = y;
   double x, y, homeX, homeY;
   double vx = 0, vy = 0, bank = 0;
+
+  /// --- crosswind: how far the wind has pushed it sideways (units). The
+  /// flight code steers in still air; the push rides on top of it.
+  double windOffset = 0;
   int diveShield = 0, diveShieldMax = 0;
   final int kind, maxHp;
   final bool elite, isEscort;
@@ -365,6 +374,11 @@ class Shot {
   /// Seconds since it was fired (demon-intelligence: the planner's
   /// perception delay ignores younger shots).
   double age = 0;
+
+  /// --- crosswind: the wind's share of its velocity (u/s): the sideways
+  /// drift it has picked up, and a tailwind's one grid step along its
+  /// track (set at the muzzle).
+  double windVx = 0, windVy = 0;
 }
 
 class Pickup {
@@ -630,6 +644,9 @@ class ArcadeModel {
   // --- bonus levels (model_bonus.dart): the run's plan, the level being
   // played and the bonus powers. Empty unless the run has a run seed.
   final BonusRun bonusRun = BonusRun();
+
+  /// --- crosswind: the level's wind (model_wind.dart).
+  final WindRun windRun = WindRun();
 
   /// The odds a seeded run's plan is drawn with.
   BonusTuning bonusTuning = BonusTuning.standard;
@@ -1941,6 +1958,7 @@ class ArcadeModel {
     boss = _bossWave ? _newCarrier() : null;
     _bonusStartRun(restoredSeed); // --- bonus levels
     _bonusBeginLevel();
+    _windBeginLevel(); // --- crosswind
     _groundBeginLevel(); // --- ground war
     _spawnWave(fromCheckpoint: true);
     events.add(boss == null ? 'level' : 'boss');
@@ -2133,6 +2151,7 @@ class ArcadeModel {
     _resetApproach(); // --- carrier-v3
     boss = _bossWave ? _newCarrier() : null;
     _bonusBeginLevel(); // --- bonus levels
+    _windBeginLevel(); // --- crosswind
     levelClock = 0;
     pickups.clear();
     heartPickups.clear();
@@ -3658,7 +3677,9 @@ class ArcadeModel {
     }
     if (!shipAway) _updateReinforcements(dt);
     _updateStream(dt); // --- continuous swarm: skein releases, reserve
+    _windUnpush(); // --- crosswind: fly in still air
     _updateDemons(dt);
+    _windPush(dt); // --- crosswind: then the wind's push on top
     _updateIncoming(dt); // --- continuous swarm (after formation targets move)
     _advanceFlock(dt); // --- atmosphere-and-swarms: arrivals drawn as a flock
     _publishSwarmStates(); // --- continuous swarm
@@ -3676,9 +3697,11 @@ class ArcadeModel {
       if (loomClock >= loomCap && !shipAway) _beginRise();
     }
     if (level == 5) _updateApproach(dt); // --- carrier-v3
+    _windStep(); // --- crosswind: the field now, its calls
     for (final s in shots) {
-      s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1);
-      s.y += s.vy * dt;
+      _windShot(s, dt); // --- crosswind: the drift
+      s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1) + s.windVx * dt;
+      s.y += (s.vy + s.windVy) * dt;
       s.age += dt;
     }
     _collisions();

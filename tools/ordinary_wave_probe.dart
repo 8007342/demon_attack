@@ -1,7 +1,14 @@
 // fire-rate-tune: how hard the ordinary sectors feel, before and after a
 // change to the player's weapon (openspec/changes/fire-rate-tune design §5).
 //
-//   dart run tools/ordinary_wave_probe.dart [seeds=8]
+//   dart run tools/ordinary_wave_probe.dart [seeds=8] [wind=off|on] [skill=0]
+//
+// --- crosswind: `wind=on` makes every eligible sector windy (the plan's own
+// tiers and timings, WindPlan.forLevel(always: true); route 0 sector 1
+// stays calm, as in a run), and `skill` is the share of the wind's drift
+// the pilot leads its aim by. A run meets wind on one eligible level in
+// five (WindPlan.chance), so the scheduled effect is a fifth of the
+// difference between `wind=on` and `wind=off`.
 //
 // The Average pilot of continuous-swarm (test/support/average_pilot.dart:
 // not invulnerable, 0.25 s reaction, 70 % aim, dodges the nearest shot)
@@ -18,6 +25,12 @@ import '../test/support/average_pilot.dart';
 
 void main(List<String> args) {
   final count = args.isEmpty ? 8 : int.parse(args.first);
+  final windy = args.contains('wind=on');
+  final skill = double.parse(
+    args
+        .firstWhere((a) => a.startsWith('skill='), orElse: () => 'skill=0')
+        .substring(6),
+  );
   const all = [
     1982, 7, 21, 42, 99, 314, 2718, 5150, 3, 11, 64, 128, //
     777, 1001, 4242, 9001, 5, 13, 17, 23, 29, 31, 37, 41,
@@ -33,10 +46,14 @@ void main(List<String> args) {
       var routeLost = 0;
       for (var sector = 1; sector <= 4; sector++) {
         for (final seed in seeds) {
-          final m = ArcadeModel(seed: seed)
-            ..startAt(difficulty: difficulty, sector: sector, route: route);
+          final m = ArcadeModel(seed: seed);
+          if (windy) {
+            m.windRun.force = (r, s) =>
+                WindPlan.forLevel(seed, route: r, sector: s, always: true);
+          }
+          m.startAt(difficulty: difficulty, sector: sector, route: route);
           m.lives = 99;
-          final pilot = AveragePilot(seed: seed);
+          final pilot = AveragePilot(seed: seed, windSkill: skill);
           var t = 0.0;
           for (var f = 0; f < 60 * 900 && m.level == sector; f++) {
             if (m.mode == RunMode.salvage) {
@@ -80,7 +97,8 @@ void main(List<String> args) {
     }
     // ignore: avoid_print
     print(
-      'ORDINARY_WAVES ${difficulty.name} ${jsonEncode({
+      'ORDINARY_WAVES ${difficulty.name} wind=${windy ? 'on' : 'off'} '
+      'skill=$skill ${jsonEncode({
         'livesPerSector': double.parse((lost / runs).toStringAsFixed(3)),
         'secondsPerSector': double.parse((seconds / runs).toStringAsFixed(1)),
         'cleared': '$cleared/$runs',

@@ -10,12 +10,15 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'arena_camera.dart';
 import 'atmosphere.dart';
 import 'weather/rain_layer.dart';
+import 'weather/wind_layer.dart'; // --- crosswind
 import 'attract.dart';
 import 'boss_director.dart';
 import 'ground_atmosphere.dart';
 import 'ground_atmosphere_atlas.dart';
 import 'bonus/bonus_look.dart'; // --- bonus levels
 import 'bonus/bonus_painters.dart'; // --- bonus levels: mechanics
+import 'bonus/levels/crosswind_painter.dart'; // --- crosswind
+import 'bonus/levels/wind_kites_atlas.dart'; // --- crosswind
 import 'boss_painter.dart';
 import 'carrier_breakup_painter.dart';
 import 'carrier_hatch_painter.dart';
@@ -95,6 +98,9 @@ class DemonScene extends FlameGame {
   final atmosphere = Atmosphere();
   // --- dynamic-weather: a regular level's rain (lib/game/weather/).
   final rain = RainLayer();
+
+  // --- crosswind: the wind's clouds, wisps and windsock.
+  final wind = WindLayer();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- phone-performance: the quality tier (from measured frame
   // intervals) and the batched, interpolated shot layer.
@@ -150,6 +156,10 @@ class DemonScene extends FlameGame {
     } catch (_) {}
     try {
       insignia.image = await images.load(InsigniaAtlas.file);
+    } catch (_) {}
+    try {
+      // --- crosswind: the kites (tools/wind_kites).
+      CrosswindPainter.image = await images.load(WindKitesAtlas.file);
     } catch (_) {}
     try {
       // --- hatch-emergence (tools/rigkit, plan/render-runs/hatch-emergence.md)
@@ -240,6 +250,7 @@ class DemonScene extends FlameGame {
     final b = budget;
     atmosphere.tierReduced = b.fogReduced;
     rain.budget = b.rainScale;
+    wind.budget = b.windScale; // --- crosswind
     sectors.moteScale = b.moteScale;
     // --- hatch-emergence §5: LITE skips the emergence and the vents.
     emergence
@@ -325,6 +336,11 @@ class DemonScene extends FlameGame {
       syncAtmosphere(dt);
       // --- dynamic-weather: visual only; reads the run seed and the level.
       rain.advance(dt, model, reduced: sectors.flyover.reducedMotion);
+      // --- crosswind: the wind's look; a shower slants with it.
+      wind.advance(dt, model, reduced: sectors.flyover.reducedMotion);
+      if (wind.amount > .02) {
+        rain.wind += (wind.lateral * .3 - rain.wind) * wind.amount;
+      }
     }
   }
 
@@ -524,6 +540,12 @@ class DemonScene extends FlameGame {
         haze: atmosphere.cloud,
         perspective: model.perspective,
       );
+      wind.paintSky(
+        canvas,
+        headroom: headroom,
+        cloud: atmosphere.cloud,
+        blur: budget.blur,
+      ); // --- crosswind
       if (active && combat) {
         // --- bonus levels: a level's mechanic, under the fight.
         BonusPainters.under(canvas, model, model.visualClock);
@@ -556,6 +578,7 @@ class DemonScene extends FlameGame {
         _mark(canvas, 'overlay');
         // --- bonus levels: a level's mechanic, over the fight.
         BonusPainters.over(canvas, model, model.visualClock);
+        wind.paintSock(canvas); // --- crosswind: the windsock
         _bossOverflight(canvas); // --- boss-grandeur: over the ship
         _cinematic(canvas);
         if (_zoomApplied) {

@@ -29,6 +29,7 @@ class BonusBriefingCard extends StatelessWidget {
   static const Map<String, CustomPainter> howTo = {
     'supplyRun': SupplyRunHowTo(),
     'stormfront': StormfrontHowTo(), // --- bonus-briefing-clarity
+    'crosswind': CrosswindHowTo(), // --- crosswind
   };
 
   /// The most the card may take (the caller ends it above the ship row).
@@ -729,4 +730,121 @@ class StormfrontHowTo extends CustomPainter {
 
   @override
   bool shouldRepaint(StormfrontHowTo old) => false;
+}
+
+/// --- crosswind: Crosswind's rule as a strip of three small pictures: the
+/// windsock streams to the right; the ship fires one shot up and left of
+/// the kite and the wind bends it in; the kite pops.
+class CrosswindHowTo extends CustomPainter {
+  const CrosswindHowTo();
+
+  static const _sockA = Color(0xFFFF8A4C), _sockB = Color(0xFFF4EEE4);
+  static const _kite = Color(0xFFE0604A), _shot = Color(0xFF9FF6FF);
+  static const _ship = Color(0xFF8FE6FF), _wind = Color(0x99D8ECFF);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final h = size.height;
+    const step = 56.0;
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    void ship(double x) {
+      final p = Path()
+        ..moveTo(x, h - 12)
+        ..lineTo(x + 5, h - 3)
+        ..lineTo(x, h - 5)
+        ..lineTo(x - 5, h - 3)
+        ..close();
+      canvas.drawPath(p, Paint()..color = _ship);
+    }
+
+    void kite(Offset c, {bool popped = false}) {
+      final p = Path()
+        ..moveTo(c.dx, c.dy - 5)
+        ..lineTo(c.dx + 4, c.dy)
+        ..lineTo(c.dx, c.dy + 5)
+        ..lineTo(c.dx - 4, c.dy)
+        ..close();
+      if (popped) {
+        for (var i = 0; i < 6; i++) {
+          final a = i * 1.047;
+          canvas.drawRect(
+            Rect.fromCenter(
+              center: c + Offset(7 * math.cos(a), 7 * math.sin(a)),
+              width: 2,
+              height: 2,
+            ),
+            Paint()..color = _kite,
+          );
+        }
+        return;
+      }
+      canvas.drawPath(p, Paint()..color = _kite);
+      canvas.drawLine(
+        c + const Offset(0, 5),
+        c + const Offset(3, 11),
+        stroke..color = const Color(0xFFFFB070),
+      );
+    }
+
+    void gusts(double x) {
+      stroke.color = _wind;
+      for (var i = 0; i < 3; i++) {
+        final y = 4.0 + i * 6;
+        canvas.drawLine(
+          Offset(x - 8 + i * 2, y),
+          Offset(x + 4 + i * 2, y),
+          stroke,
+        );
+      }
+    }
+
+    void arrow(double ax) {
+      final cy = h / 2;
+      final p = Path()
+        ..moveTo(ax - 2, cy - 3)
+        ..lineTo(ax + 1, cy)
+        ..lineTo(ax - 2, cy + 3);
+      canvas.drawPath(p, stroke..color = const Color(0x99FFE2B0));
+    }
+
+    var x = 16.0;
+    // 1. The windsock streams to the right: the wind blows that way.
+    canvas.drawRect(
+      Rect.fromLTWH(x - 9, 2, 1.5, h - 6),
+      Paint()..color = const Color(0xFF8C96A8),
+    );
+    for (var s = 0; s < 4; s++) {
+      canvas.drawRect(
+        Rect.fromLTWH(x - 7.5 + s * 4, 3 + s * .5, 4, 5 - s * .6),
+        Paint()..color = s.isEven ? _sockA : _sockB,
+      );
+    }
+    gusts(x + 4);
+    arrow(x + step / 2);
+    x += step;
+    // 2. One shot aimed left of the kite; the wind bends it in.
+    final k = Offset(x + 6, 7);
+    kite(k);
+    ship(x - 8);
+    final path = Path()
+      ..moveTo(x - 8, h - 13)
+      ..quadraticBezierTo(x - 10, h * .35, k.dx - 1, k.dy + 4);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = _shot.withValues(alpha: .8),
+    );
+    arrow(x + step / 2);
+    x += step;
+    // 3. Pop.
+    kite(Offset(x + 6, 7), popped: true);
+    ship(x - 8);
+  }
+
+  @override
+  bool shouldRepaint(CrosswindHowTo old) => false;
 }

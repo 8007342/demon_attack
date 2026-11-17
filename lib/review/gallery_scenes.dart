@@ -584,16 +584,24 @@ GalleryScene sectorRun(
   int wave = 2,
   int? runSeed,
   String? bonus,
+  WindTier? wind,
   void Function(GalleryScene scene)? setup,
 }) {
-  void begin(ArcadeModel m) => m.startAt(
-    sector: sector,
-    route: route,
-    wave: wave,
-    runSeed: runSeed,
-    bonus: bonus,
-    console: true,
-  );
+  void begin(ArcadeModel m) {
+    // --- crosswind: a forced wind on the tile's sector.
+    m.windRun.force = wind == null
+        ? null
+        : (r, s) => WindPlan.draw(77 + s, tier: wind);
+    m.startAt(
+      sector: sector,
+      route: route,
+      wave: wave,
+      runSeed: runSeed,
+      bonus: bonus,
+      console: true,
+    );
+  }
+
   final m = ArcadeModel(seed: 11);
   begin(m);
   return GalleryScene(
@@ -628,6 +636,17 @@ List<GalleryTile> _weather() => [
       '$label · SECTOR $sector',
       sectorRun(sector, setup: (s) => s.rain.override = spec),
     ),
+  // --- crosswind: the wind, alone and with a shower.
+  GalleryTile.scene('BREEZE · SECTOR 3', sectorRun(3, wind: WindTier.breeze)),
+  GalleryTile.scene('GALE · SECTOR 2', sectorRun(2, wind: WindTier.gale)),
+  GalleryTile.scene(
+    'GALE + RAIN · SECTOR 4',
+    sectorRun(
+      4,
+      wind: WindTier.gale,
+      setup: (s) => s.rain.override = weatherSpecs[1].$3,
+    ),
+  ),
 ];
 
 List<GalleryTile> _bonus() => [
