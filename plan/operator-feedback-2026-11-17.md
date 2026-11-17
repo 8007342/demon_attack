@@ -34,3 +34,38 @@ player driven by the game's events into the live game. The operator verifies by 
 ## G2. Player fire rate down (change `fire-rate-tune`)
 "It's a bit hard to see everything going on in the screen, we might need to decrease our ships firerate overall, keep
 the demons fire rate intact, just decrease ours." Re-adjust the difficulty to match, as usual.
+
+# Round 5 (2026-11-17, a playthrough of several levels in the preview)
+
+The operator's verdicts:
+- On the soundtrack: "the transitions and continuity of the soundtrack are amazing :D !!"
+- "This music score is pretty great".
+- "The game plays great :D !!"
+
+## M1. Music too loud against the radio (change `mix-balance`)
+"The current soundtrack is way too loud, I had to use half music volume to be able to hear the radio chatter at full
+volume, and it was still a little louder." Set the default mix so the radio sits clearly above the music at the
+default levels, and duck the music under radio lines.
+
+## S1. Dive shields: one continuous shield that thins (change `dive-shield-thinning`)
+- The shields are still segmented. The parts zoom in and out independently instead of moving as one continuous asset.
+- The shields still wear from the sides to the middle. Instead, the shield should be thick and always wide enough to
+  cover the whole demon: a wide arc whose THICKNESS wears down while its angular width stays the same. "Say, a whole
+  70 degrees arc of 10 pixels width, then still 70 degrees arc but 9 pixels width, then 8, etc, don't use these
+  numbers, but I want you to use this kind of thinning shield, instead of a narrowing one."
+- Use the same principle as the carrier's thick force field that thins out.
+
+## I1. Rank insignia that read as gargoyle, not hearts (change `gargoyle-insignia`)
+"The Chevrons for the aliens look a little bit too much like hearts." Design tiny rank iconography inspired by fangs
+and wings, through the asset pipeline.
+
+## C6. Carrier hatches as the centrepiece (change `hatch-emergence`)
+- Keep the large boss ship asset. Redesign the launch hatches so they are central and draw attention, since players
+  look at them while shooting them, and give them "nice candy".
+- Demons get a few extra sprites that play only once as they come out of a hatch: peeking from the side, holding the
+  hatch, jumping off, then a short glide from the top hatches into fighting distance.
+- Follow the cinematic guidelines and use the Blender pipeline. "These are tiny assets so these extra sprites
+  shouldn't be too bad."
+
+## V2. Flat radio lines
+"There are still a few flat emotion radio chatter." Covered by `voice-direction`; this waits for the voice models.
