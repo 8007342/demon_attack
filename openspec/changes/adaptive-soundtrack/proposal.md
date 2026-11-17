@@ -16,7 +16,17 @@ pilot with ComfyUI's core ACE-Step nodes on 2026-11-17.
 
 Research with sources: `plan/soundtrack-research.md`.
 
+**Revision, 2026-11-17 (MIDI first).** The operator: "let's keep MIDI as the fallback, but try to make it so it
+becomes our first layer instead", and "No fallback format, this project is already asset heavy, no need to
+duplicate assets." Research: `plan/midi-first-research.md`. The score becomes the adaptive backbone. Rendered audio
+becomes optional texture holding only parts the score does not play (design §11).
+
 ## What Changes
+- **MIDI first** (design §11): committed multitrack scores per section, played by an in-browser sampler from one
+  curated CC0 bank (Opus, ≤ 2 MB), with intensity as track masks on one arrangement. Rendered ACE-Step sections
+  narrow to optional texture beds (choir, air, risers, the worldized ending) that never duplicate a score part. The
+  oscillator synth plays the same score where the bank cannot. The whole run is about 2.2 MB plus beds, against
+  about 18 MB rendered. Production waits on a listening bake-off.
 - **A song map for the whole run** (`art/music/soundtrack/song-map.json`, design §3): an overture, five movements
   (routes), each four sector songs and a carrier song, bridges between them, and a coda that hands over to the
   ending's ukulele. Keys and tempos stay per world; bridges pivot between them.
@@ -38,10 +48,12 @@ Research with sources: `plan/soundtrack-research.md`.
 ## Capabilities
 - New: `soundtrack` (the song map, the boss section graph, the transition rules, the runtime limits, the pipeline
   gates).
-- Modified: `arcade-presentation` ("Adaptive MIDI soundtrack": the MIDI synthesizer becomes the fallback of the
-  recorded song).
+- Modified: `arcade-presentation` ("Adaptive MIDI soundtrack": the MIDI score becomes the first layer, played by a
+  sampler; the synthesizer voices play the same score where the bank cannot).
 
 ## Impact
+- MIDI first: `web/audio/score/` (scores), the bank (`bank.json` + Opus sprites), `tools/midi_stats.lua` (Lua),
+  a Lua bank builder and score generator, the sampler in `demon-audio.js`.
 - New files: `art/music/soundtrack/` (song map, recipes, pilot encodes), `tools/soundtrack_check/` (Go),
   `tools/soundtrack_pilot.lua`, `plan/render-runs/soundtrack-pilot.md`.
 - Later code (tasks 3–5): `lib/game/song_director.dart` (pure Dart), `lib/game/music_director.dart` and
