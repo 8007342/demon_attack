@@ -71,3 +71,44 @@ and wings, through the asset pipeline.
 
 ## V2. Flat radio lines
 "There are still a few flat emotion radio chatter." Covered by `voice-direction`; this waits for the voice models.
+
+# Round 6 (2026-11-17, after PR #8 merged and a phone playtest)
+
+The operator merged PR #8 (main `58a1140f`; Cloudflare shows `demon-attack` redeployed 16:27 UTC) and played on a
+phone: "that midi music has a nice and smooth progression".
+
+## D1. Dev pages overhaul (change `dev-pages-overhaul`)
+"The /console, /studio, and /gallery could use some overhauling ;) some of them like the boss fight scene still shows
+assets from several versions of the game ago." Audit every scene on the three pages against the shipped atlases and
+painters; draw from the live code, never from frozen copies.
+
+## B2. Build version (change `build-version`)
+"Please file a spec to have a "vYY.MM.DD.<daily-build-number>", today would be v56.11.17.1, that way I could tell
+when the newer versions are live." The major is 56 on 2026-11-17 (the operator's numbering, same as the Tillandsias
+lane `56.11.x`), not the calendar's 26.
+
+## T1. Portrait radio: two independent toast lanes (change `portrait-comms-lanes`)
+- Today: one queue showing the last two messages; a toast slides left when the left one closes. Wrong.
+- Wanted: TWO independent queues, humans on one side and demons on the other, each with its own timeout and
+  persistence. A toast stays on its side until it expires.
+- Fixed size in portrait: a short line must not collapse to its text height, and must not grow when the other side
+  shows a taller one.
+- A comeback (human→demon or demon→human) shows in portrait as one combined toast across both lanes; the queues
+  support it.
+
+## T2. Radio during level transitions (same change, `portrait-comms-lanes`)
+During a level transition, show one or two radio lines at landscape size, centred over the flowing clouds: one longer
+line, or two short ones, or one line with its comeback. Follow the cinematic-flow advisories
+(`openspec/changes/cinematic-flow`, `openspec/specs/arcade-presentation`) so it stays non-invasive and keeps the game
+flowing.
+
+## B3. Bonus level instructions (change `bonus-briefing-clarity`)
+"The instructions for the Bonus Levels are still unclear, and the overlapping of the radio chatter closed the box
+before I was able to read it." Clear instructions; radio must not close or cover them. Each bonus level gets one radio
+line, a single sentence of instruction (it need not match the text), to keep the game flowing.
+
+## A1. Music: what "higher res" means now
+The MIDI score is the first layer, as decided. The next step is the CC0 sample bank (`adaptive-soundtrack` §8.5–8.13):
+real drum, bass, guitar, organ and brass samples replace the synth voices note for note, so the score keeps its
+seamless combining. Samples wait for the register to admit the pins in `plan/sample-bank-pins.md`; the bank builder,
+the sampler runtime and the score checks are built now.
