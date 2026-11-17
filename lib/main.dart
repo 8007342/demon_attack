@@ -403,7 +403,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     super.didChangeDependencies();
     if (!hintArtPrecached) {
       hintArtPrecached = true;
-      precacheImage(const AssetImage('assets/images/hint-scenes.png'), context);
+      precacheImage(const AssetImage('assets/images/hint-scenes.webp'), context);
     }
   }
 

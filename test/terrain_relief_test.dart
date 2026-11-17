@@ -33,7 +33,7 @@ Future<void> _save(ui.Picture picture, int w, int h, String name) async {
 Future<DemonScene> _scene(ArcadeModel model) async {
   final scene = DemonScene(model, () {});
   for (var i = 0; i < 5; i++) {
-    scene.sectors.images[i] = await _decode('assets/images/sector-${i + 1}.png');
+    scene.sectors.images[i] = await _decode('assets/images/sector-${i + 1}.webp');
   }
   await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
   scene.sectors.flyover.reducedMotionOverride = false;

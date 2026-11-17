@@ -25,6 +25,8 @@ import 'ground_painter.dart';
 import 'insignia_atlas.dart';
 import 'insignia_painter.dart';
 import 'model.dart';
+import 'perf/frame_budget.dart'; // --- phone-performance
+import 'shot_layer.dart'; // --- phone-performance
 import 'music_director.dart'; // --- music event hook
 import 'flock.dart' show SwarmFlock;
 import 'flyover_background.dart';
@@ -87,6 +89,26 @@ class DemonScene extends FlameGame {
   // --- dynamic-weather: a regular level's rain (lib/game/weather/).
   final rain = RainLayer();
   final music = MusicDirector(); // --- music event hook (read-only)
+  // --- phone-performance: the quality tier (from measured frame
+  // intervals) and the batched, interpolated shot layer.
+  final perf = PerfGovernor(
+    forced: PerfTier.parse(Uri.base.queryParameters['perf']),
+  );
+  FrameBudget get budget => perf.budget;
+  final shots = ShotLayer();
+
+  /// The fog-bank boss shadow's cell and its pre-blurred copy (§4.4).
+  ui.Image? _fogShadowSource, _fogShadowSoft;
+
+  /// The frame-cost harness's layer marker (one type test in the game).
+  String _layerNow = 'frame';
+  void _mark(Canvas c, String layer) {
+    if (c case final LayerSink sink) {
+      _layerNow = layer;
+      sink.layer(layer);
+    }
+  }
+
   // --- ground war (ground_painter.dart) ---
   late final groundForces = GroundPainter()
     ..occluders = (sectors.flyover..deferFlyers = true)
@@ -112,7 +134,7 @@ class DemonScene extends FlameGame {
       assetError = '$e';
     }
     try {
-      sky = await images.load('cosmic-sky.png');
+      sky = await images.load('cosmic-sky.webp');
     } catch (e) {
       assetError = '$e';
     }
@@ -144,7 +166,7 @@ class DemonScene extends FlameGame {
     await Future.wait(
       List.generate(5, (i) async {
         try {
-          sectors.images[i] = await images.load('sector-${i + 1}.png');
+          sectors.images[i] = await images.load('sector-${i + 1}.webp');
         } catch (_) {
           /* Keep the original sky as a fallback. */
         }
@@ -172,6 +194,9 @@ class DemonScene extends FlameGame {
   @override
   void update(double dt) {
     super.update(dt);
+    // --- phone-performance: the tier from frame intervals.
+    perf.frame(dt, moving: model.mode == RunMode.playing);
+    applyBudget();
     if (model.mode != RunMode.paused) advancePresentation(dt);
     final held = holdModel(); // --- mission-medals
     if (!held && model.canPilot && keyboardDirection != 0) {
@@ -179,7 +204,9 @@ class DemonScene extends FlameGame {
     }
     // --- cinematic flow: the accessibility setting picks the plan.
     model.reducedMotion = sectors.flyover.reducedMotion;
-    if (!held) model.update(dt);
+    // --- phone-performance §5.1: a jittered vsync interval steps the
+    // fixed-step model exactly once (snapFrameDelta), not 0 then 2.
+    if (!held) model.update(snapFrameDelta(dt));
     armada.sync(model, images.load, images.clear);
     // --- ground blocks runtime: the current sector's block atlases.
     if (GroundPainter.useBlocks) {
@@ -195,6 +222,14 @@ class DemonScene extends FlameGame {
       _notify = 0;
       onTick();
     }
+  }
+
+  /// --- phone-performance §3-§4: hands the tier's budget to the painters.
+  void applyBudget() {
+    final b = budget;
+    atmosphere.tierReduced = b.fogReduced;
+    rain.budget = b.rainScale;
+    sectors.moteScale = b.moteScale;
   }
 
   /// One presentation step (unpaused): the backdrop's sector blend, the
@@ -250,6 +285,12 @@ class DemonScene extends FlameGame {
             ? model.nextLevel - 1
             : model.level - 1;
         environment += (destination - environment) * math.min(1, dt * .65);
+        // --- phone-performance §4.3: land on the sector. The exponential
+        // approach never reaches the integer, and a hair short of it the
+        // backdrop draws both worlds (the far one at 99.9 %) every frame.
+        if ((destination - environment).abs() < 1e-3) {
+          environment = destination.toDouble();
+        }
       }
       // --- transition ascent: the streaks and the cloud billows scroll at
       // the world's speed (design §3).
@@ -346,6 +387,7 @@ class DemonScene extends FlameGame {
     // cloud reach the viewport's top. Gameplay stays clipped to the arena.
     headroom = scale > 0 ? math.max(0.0, spare / scale) : 0.0;
     atmosphere.headroom = headroom;
+    _mark(canvas, 'background'); // --- phone-performance: harness layers
     canvas.clipRect(Rect.fromLTWH(0, -headroom, 360, 520 + headroom));
     final (shakeX, shakeY) = rushShake(); // --- sentinel rush (≤ 2 px)
     if (shakeX != 0 || shakeY != 0) canvas.translate(shakeX, shakeY);
@@ -455,6 +497,7 @@ class DemonScene extends FlameGame {
       } else {
         _background(canvas);
       }
+      _mark(canvas, 'rain');
       bonusLook.paint(canvas); // --- bonus levels: the level's grade
       // --- dynamic-weather: rain over the backdrop (and the band above the
       // arena), under the ground units, the fog, the creatures and shots.
@@ -467,6 +510,7 @@ class DemonScene extends FlameGame {
       if (active && combat) {
         // --- bonus levels: a level's mechanic, under the fight.
         BonusPainters.under(canvas, model, model.visualClock);
+        _mark(canvas, 'ground');
         groundForces.paintGround(
           canvas,
           model,
@@ -486,11 +530,13 @@ class DemonScene extends FlameGame {
           canvas.transform(cam.gameplayMatrix);
         }
         _combat(canvas);
+        _mark(canvas, 'air');
         groundForces.paintAir(
           canvas,
           model,
           ship,
         ); // --- ground war: in the air
+        _mark(canvas, 'overlay');
         // --- bonus levels: a level's mechanic, over the fight.
         BonusPainters.over(canvas, model, model.visualClock);
         _bossOverflight(canvas); // --- boss-grandeur: over the ship
@@ -527,6 +573,7 @@ class DemonScene extends FlameGame {
               ),
           );
         }
+        _mark(canvas, 'flow');
         atmosphere.paintCloudCover(
           canvas,
           below: model.flow.kind == FlowKind.campaignOutro,
@@ -972,14 +1019,17 @@ class DemonScene extends FlameGame {
   }
 
   void _combat(Canvas c) {
+    _mark(c, 'creatures'); // --- phone-performance: harness layers
     insignia.begin(); // --- alien-insignia: this frame's marks
     _rims = 0;
     // --- atmosphere: ground fog lies on the terrain, over the shadows.
     if (model.perspective) _fogSlot(c, FogSlot.groundFog);
     // --- easter eggs: flock flyers over the ground fog (in the air).
     sectors.flyover.paintFlyers(c);
+    _mark(c, 'shadows');
     _creatureShadows(c); // --- continuous swarm: every flyer, the ship
     _bossOverflightShadow(c); // --- boss-grandeur: it sweeps the ground first
+    _mark(c, 'creatures');
     for (final p in model.heartPickups) {
       c.save();
       c.translate(p.x - 10, p.y - 10);
@@ -1280,58 +1330,17 @@ class DemonScene extends FlameGame {
     } else {
       insignia.paint(c, now: model.visualClock);
     }
-    for (final s in model.shots) {
-      final x = s.x.roundToDouble(), y = s.y.roundToDouble();
-      final p = Paint()..isAntiAlias = false;
-      void block(double dx, double dy, double w, double h, Color color) {
-        p.color = color;
-        c.drawRect(Rect.fromLTWH(x + dx, y + dy, w, h), p);
-      }
-
-      if (!s.hostile && s.vx.abs() > 4) {
-        // Stepped pixel angled plasma wake/tail for slung or spread shots.
-        final wakeDx = (-s.vx * 0.025).clamp(-6.0, 6.0);
-        for (var step = 1; step <= 3; step++) {
-          final f = step / 3.0;
-          block(
-            (wakeDx * f - 1).roundToDouble(),
-            (4 + step * 2).toDouble(),
-            2,
-            2,
-            (s.kind == ShotKind.powerful || s.damage > 1 ? gold : mint)
-                .withValues(alpha: (0.55 - step * 0.14).clamp(0.1, 0.6)),
-          );
-        }
-      }
-
-      if (ship.paintShot(c, model, s, (s.y / 9).floor())) continue;
-      if (s.kind == ShotKind.sentinel) {
-        // Fast hostile bolts have a forked red head and an amber central spine.
-        block(-2, -7, 4, 11, const Color(0xFFFF4C70));
-        block(-4, -2, 2, 6, const Color(0xFFFF8676));
-        block(2, -2, 2, 6, const Color(0xFFFF8676));
-        block(-1, -4, 2, 10, const Color(0xFFFFE3AF));
-        block(-1, 6, 2, 2, const Color(0xFFFF4C70));
-      } else if (s.kind == ShotKind.large) {
-        final rim = s.damage > 1 ? gold : violet;
-        block(-3, -5, 6, 10, rim);
-        block(-5, -2, 10, 5, rim);
-        block(-2, -7, 4, 2, const Color(0xFFFFF5C9));
-        block(-2, -2, 4, 5, const Color(0xFFFFF5C9));
-        block(-1, 5, 2, 4, mint);
-      } else if (s.kind == ShotKind.powerful) {
-        block(-2, -5, 4, 10, gold);
-        block(-1, -7, 2, 10, const Color(0xFFFFF5C9));
-        block(-3, 3, 6, 2, gold);
-        block(-1, 5, 2, 4, mint);
-      } else if (s.hostile) {
-        block(-2, -3, 5, 7, const Color(0xFFFF8676));
-        block(-1, -2, 2, 3, const Color(0xFFFFE3AF));
-      } else {
-        block(-1, -5, 2, 10, mint);
-        block(-2, 4, 4, 5, mint.withValues(alpha: .2));
-      }
-    }
+    // --- phone-performance §6: shots are drawn interpolated, smeared and
+    // batched (shot_layer.dart); speeds and fire rates stay the model's.
+    _mark(c, 'shots');
+    shots.paint(
+      c,
+      model,
+      ship,
+      frameInterval: perf.interval,
+      smear: !sectors.flyover.reducedMotion,
+    );
+    _mark(c, 'player');
     if (model.mode != RunMode.gameOver &&
         model.presentationMode != RunMode.levelClear &&
         model.presentationMode != RunMode.travel &&
@@ -1357,7 +1366,12 @@ class DemonScene extends FlameGame {
     if (model.defeatActive) {
       _defeatCelebration(c);
     }
-    for (final b in model.blasts) {
+    // --- phone-performance §4.2: at most budget.blasts explosion sprites,
+    // the newest (the model keeps every blast; only drawing is capped).
+    final blasts = model.blasts;
+    final firstBlast = math.max(0, blasts.length - budget.blasts);
+    for (var bi = firstBlast; bi < blasts.length; bi++) {
+      final b = blasts[bi];
       if (b.age < 0) continue;
       if (b.isLarge) {
         effectSprite(
@@ -2533,7 +2547,10 @@ class DemonScene extends FlameGame {
     if (o <= .02) return;
     final halo = Paint()
       ..color = const Color(0xFFFF9A3C).withValues(alpha: .35 * o)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+      // --- phone-performance §4.1: the lite tier draws the halo sharp.
+      ..maskFilter = budget.blur
+          ? const MaskFilter.blur(BlurStyle.normal, 2.5)
+          : null;
     final core = Paint()
       ..isAntiAlias = false
       ..color = const Color(0xFFFFE7A8).withValues(alpha: o);
@@ -2676,7 +2693,7 @@ class DemonScene extends FlameGame {
   /// reduced drops the shadows with it. [shadowModeOverride] forces a mode
   /// (tests, review strips, the perf baseline).
   ShadowMode? shadowModeOverride;
-  ShadowMode get shadowMode => atmosphere.quality == AtmosphereQuality.reduced
+  ShadowMode get shadowMode => atmosphere.drawnQuality == AtmosphereQuality.reduced
       ? ShadowMode.flat
       : shadowModeOverride ?? ShadowMode.draped;
 
@@ -3227,7 +3244,7 @@ class DemonScene extends FlameGame {
       sectors.flyover.terrain.lurkCover = null;
       return;
     }
-    final reduced = atmosphere.quality == AtmosphereQuality.reduced;
+    final reduced = atmosphere.drawnQuality == AtmosphereQuality.reduced;
     final draped = shadowMode == ShadowMode.draped;
     final surface = _shadowSurface;
     final buckets = [<_ShadowSpec>[], <_ShadowSpec>[], <_ShadowSpec>[]];
@@ -4098,10 +4115,20 @@ class DemonScene extends FlameGame {
   /// star at the impact and five sparks ricocheting away from the body
   /// (gold to ember), gone in [Deflect.life] s. Reduced motion keeps the
   /// star only.
+  /// phone-performance §4.2: the hard cap on deflect stars drawn at once.
+  static const maxDeflectsDrawn = 24;
+
   void _deflectSparks(Canvas c) {
     if (model.deflects.isEmpty) return;
     final paint = Paint()..isAntiAlias = false;
-    for (final f in model.deflects) {
+    // --- phone-performance §4.2: the newest [maxDeflectsDrawn]; the lite
+    // tier keeps the stars and drops the ricochet sparks.
+    final all = model.deflects;
+    final sparks = budget.sparks;
+    for (var di = math.max(0, all.length - maxDeflectsDrawn);
+        di < all.length;
+        di++) {
+      final f = all[di];
       final u = (f.age / Deflect.life).clamp(0.0, 1.0);
       final at = Offset(f.x, f.y);
       // The star: a plus of white and gold, shrinking.
@@ -4117,7 +4144,7 @@ class DemonScene extends FlameGame {
       );
       paint.color = const Color(0xFFFFD54F).withValues(alpha: 1 - u);
       c.drawRect(Rect.fromCenter(center: at, width: 3, height: 3), paint);
-      if (sectors.flyover.reducedMotion) continue;
+      if (sectors.flyover.reducedMotion || !sparks) continue;
       // Away from the sentinel's centre (a ricochet off its ward).
       final away = math.atan2(f.y - f.cy, f.x - f.cx);
       for (var i = 0; i < 5; i++) {
@@ -5099,6 +5126,13 @@ extension _BossGrandeur on DemonScene {
   /// zoomed (it is weather, world-anchored, drawn to the whole frame), so
   /// the zoomed arena never shows a fog rectangle's edge.
   void _fogSlot(Canvas c, FogSlot slot) {
+    final layer = _layerNow; // --- phone-performance: harness layers
+    _mark(c, 'fog');
+    _fogSlotIn(c, slot);
+    _mark(c, layer);
+  }
+
+  void _fogSlotIn(Canvas c, FogSlot slot) {
     if (!_zoomApplied) {
       atmosphere.paint(c, slot);
       return;
@@ -5272,23 +5306,52 @@ extension _BossGrandeur on DemonScene {
     final scale = .8 + .25 * (l.nearness - .3);
     final mid = Offset(cell.width / 2, cell.height / 2) - _bossShadowAnchor;
     final center = Offset(b.x + 14 + mid.dx * scale, l.peak);
+    // --- phone-performance §4.4: the blur is baked into the cell once (a
+    // per-draw ImageFilter is an offscreen layer, up to four a frame).
+    final soft = _fogShadowCell(cell);
     c.save();
     c.clipRect(Rect.fromLTRB(-60, l.top, 420, l.bottom));
     c.drawImageRect(
-      cell,
-      Rect.fromLTWH(0, 0, cell.width.toDouble(), cell.height.toDouble()),
+      soft,
+      Rect.fromLTWH(0, 0, soft.width.toDouble(), soft.height.toDouble()),
       Rect.fromCenter(
         center: center,
-        width: cell.width * scale,
-        height: cell.height * scale * .45,
+        width: soft.width * scale,
+        height: soft.height * scale * .45,
       ),
       Paint()
         ..color = Color.fromRGBO(255, 255, 255, a)
         ..blendMode = BlendMode.multiply
-        ..filterQuality = FilterQuality.medium
-        ..imageFilter = ui.ImageFilter.blur(sigmaX: 4, sigmaY: 3),
+        ..filterQuality = FilterQuality.medium,
     );
     c.restore();
+  }
+
+  /// [cell] blurred as the fog-bank shadow draws it: the blur of (4, 3)
+  /// arena units, at the cell's mean drawn scale (.875 across, .875 × .45
+  /// down), in cell pixels, with a margin of three sigmas.
+  ui.Image _fogShadowCell(ui.Image cell) {
+    final hit = _fogShadowSoft;
+    if (hit != null && identical(_fogShadowSource, cell)) return hit;
+    const k = .875, sx = 4 / k, sy = 3 / (k * .45);
+    final px = (sx * 3).ceilToDouble(), py = (sy * 3).ceilToDouble();
+    final rec = ui.PictureRecorder();
+    Canvas(rec).drawImage(
+      cell,
+      Offset(px, py),
+      Paint()
+        ..filterQuality = FilterQuality.medium
+        ..imageFilter = ui.ImageFilter.blur(sigmaX: sx, sigmaY: sy),
+    );
+    final pic = rec.endRecording();
+    _fogShadowSoft?.dispose();
+    final soft = pic.toImageSync(
+      (cell.width + 2 * px).round(),
+      (cell.height + 2 * py).round(),
+    );
+    pic.dispose();
+    _fogShadowSource = cell;
+    return _fogShadowSoft = soft;
   }
 
   /// Overflight geometry at progress [p]: centre, scale, and the hull's

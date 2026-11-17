@@ -161,7 +161,7 @@ void main() {
       final scene = DemonScene(model, () {});
       scene.atlas = await _decode('assets/images/combat.png');
       scene.effectsAtlas = await _decode('assets/images/sentinel-effects.png');
-      scene.sectors.images[0] = await _decode('assets/images/sector-1.png');
+      scene.sectors.images[0] = await _decode('assets/images/sector-1.webp');
       final idle = await _capture(scene, 'sentinels-idle');
       model.clock = .2;
       final held = await _capture(scene, 'sentinels-held-frame');

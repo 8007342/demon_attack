@@ -88,10 +88,10 @@ void main() {
       final scene = DemonScene(model, () {});
       scene.atlas = await _decode('assets/images/combat.png');
       scene.effectsAtlas = await _decode('assets/images/sentinel-effects.png');
-      scene.sky = await _decode('assets/images/cosmic-sky.png');
+      scene.sky = await _decode('assets/images/cosmic-sky.webp');
       for (var i = 0; i < 5; i++) {
         scene.sectors.images[i] = await _decode(
-          'assets/images/sector-${i + 1}.png',
+          'assets/images/sector-${i + 1}.webp',
         );
       }
       await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));

@@ -49,7 +49,7 @@ Future<void> loadReviewArt(Rig rig) async {
   final scene = rig.scene;
   for (var i = 0; i < 5; i++) {
     scene.sectors.images[i] = await decodeReviewImage(
-      'assets/images/sector-${i + 1}.png',
+      'assets/images/sector-${i + 1}.webp',
     );
   }
   await scene.sectors.loadFlyover((f) => decodeReviewImage('assets/images/$f'));
@@ -57,7 +57,7 @@ Future<void> loadReviewArt(Rig rig) async {
   scene.effectsAtlas = await decodeReviewImage(
     'assets/images/sentinel-effects.png',
   );
-  scene.sky = await decodeReviewImage('assets/images/cosmic-sky.png');
+  scene.sky = await decodeReviewImage('assets/images/cosmic-sky.webp');
   scene.silhouetteAtlas = await decodeReviewImage(
     'assets/images/${SentinelSilhouetteAtlas.file}',
   );
