@@ -2148,6 +2148,7 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
     delay: 0.6,
     lines: [
       CommsLine(id: 'bonusChallengeEarned.supplyRun.d0', speaker: 'skritch', duration: 1.1, grunt: 'snarl', gloss: 'All of them? Not even one for me?', emotion: 'stern', silent: true),
+      CommsLine(id: 'bonusChallengeEarned.supplyRun.d1', speaker: 'nibb', duration: 1.1, grunt: 'alarm', gloss: 'Who took ALL the crunchy ones?!', emotion: 'panicked', silent: true),
     ],
   ),
   'bonusChallengeEarned.stormfront': CommsTriggerSpec(
@@ -2159,6 +2160,7 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
     delay: 0.6,
     lines: [
       CommsLine(id: 'bonusChallengeEarned.stormfront.d0', speaker: 'sliss', duration: 1.1, grunt: 'alarm', gloss: 'It danced through the lightning! Rude!', emotion: 'panicked', silent: true),
+      CommsLine(id: 'bonusChallengeEarned.stormfront.d1', speaker: 'vexxa', duration: 1.1, grunt: 'snarl', gloss: 'The storm missed? Every single time?!', emotion: 'stern', silent: true),
     ],
   ),
 };

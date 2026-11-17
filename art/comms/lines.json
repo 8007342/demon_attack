@@ -4740,7 +4740,8 @@
         "delay": 0.6,
         "chance": 0.6,
         "lines": [
-          {"speaker": "skritch", "grunt": "snarl", "gloss": "All of them? Not even one for me?", "say": "All of them? Not even one for me?", "emotion": "stern"}
+          {"speaker": "skritch", "grunt": "snarl", "gloss": "All of them? Not even one for me?", "say": "All of them? Not even one for me?", "emotion": "stern"},
+          {"speaker": "nibb", "grunt": "alarm", "gloss": "Who took ALL the crunchy ones?!", "say": "Who took ALL the crunchy ones?!", "emotion": "panicked"}
         ]
       }
     },
@@ -4761,7 +4762,8 @@
         "delay": 0.6,
         "chance": 0.6,
         "lines": [
-          {"speaker": "sliss", "grunt": "alarm", "gloss": "It danced through the lightning! Rude!", "say": "It danced through the lightning! Rude!", "emotion": "panicked"}
+          {"speaker": "sliss", "grunt": "alarm", "gloss": "It danced through the lightning! Rude!", "say": "It danced through the lightning! Rude!", "emotion": "panicked"},
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "The storm missed? Every single time?!", "say": "The storm missed? Every single time?!", "emotion": "stern"}
         ]
       }
     }

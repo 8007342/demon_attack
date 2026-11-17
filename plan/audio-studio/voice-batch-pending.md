@@ -158,6 +158,8 @@ on the audio studio (tillandsias#1103).
 | `bonusChallengeEarned.supplyRun.h0` | human | sunny | teasing | Every prize caught! Here's your 1UP, gift wrapped! | (text card) |
 | `bonusChallengeEarned.supplyRun.h1` | human | rook | excited | Clean sweep of the crates! That's a 1UP! | (text card) |
 | `bonusChallengeEarned.supplyRun.d0` | demon | skritch | stern | [snarl] All of them? Not even one for me? | (text card) |
+| `bonusChallengeEarned.supplyRun.d1` | demon | nibb | panicked | [alarm] Who took ALL the crunchy ones?! | (text card) |
 | `bonusChallengeEarned.stormfront.h0` | human | sparrow | triumphant | Not a single zap! The storm owes you a 1UP! | (text card) |
 | `bonusChallengeEarned.stormfront.h1` | human | kestrel | triumphant | Clean through the lightning. Spare ship earned. | (text card) |
 | `bonusChallengeEarned.stormfront.d0` | demon | sliss | panicked | [alarm] It danced through the lightning! Rude! | (text card) |
+| `bonusChallengeEarned.stormfront.d1` | demon | vexxa | stern | [snarl] The storm missed? Every single time?! | (text card) |
