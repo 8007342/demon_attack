@@ -251,7 +251,7 @@ Future<Map<String, Object>> _review({required bool reduced}) async {
           _Shot('tell-late', (m, k) => tell(k, StrikeAim.ship, .85)),
           _Shot(
             'bolt-baited',
-            (m, k) => bolt(k, (s) => s.aim == StrikeAim.ship && s.kills > 0),
+            (m, k) => bolt(k, (s) => s.aim == StrikeAim.ship && s.stunned > 0),
           ),
           _Shot(
             'rod-falling',

@@ -57,6 +57,9 @@ part 'sentinel_rush.dart';
 // --- crosswind: the wind that drifts every shot ---
 part 'model_wind.dart';
 
+// --- lightning-rework: stuns, the ship's zap, rank dodges and rod armour ---
+part 'lightning.dart';
+
 enum RunMode {
   title,
   playing,
@@ -186,6 +189,16 @@ class Demon {
 
   /// Seconds left of the beat before a dive tell (`divePrep` fired).
   double divePrep = 0;
+
+  // --- lightning-rework (lightning.dart): a bolt's stun (seconds left,
+  // the fall still to go, its fall speed and where it was struck), the
+  // lightning-rod armour and its charge, and the rank dodge (an x offset on
+  // the formation target and the offset it is easing toward).
+  double stun = 0, stunFall = 0, stunVy = 0, stunFromY = 0;
+  bool lightningRods = false;
+  double charged = 0;
+  double boltDodge = 0, boltDodgeGoal = 0;
+  bool get stunned => stun > 0;
   bool _prepLead = false;
   bool get angry => hp == 1 && maxHp > 1;
 
@@ -668,6 +681,14 @@ class ArcadeModel {
     ground.events.clear();
     return result;
   }
+
+  // --- lightning-rework state (see lightning.dart): the ship's lightning
+  // grace and its zap (seconds left, what the last zap stripped), and the
+  // stunned creatures shot down this step (a storm's mechanic drains it).
+  double lightningGrace = 0, shipShock = 0;
+  List<Power> shockLost = const [];
+  int shipZaps = 0;
+  final List<Demon> stunKills = [];
 
   // --- life-loss sequence state (see life_loss.dart) ---
   LifeLossPhase lifeLossPhase = LifeLossPhase.none;
@@ -3505,6 +3526,7 @@ class ArcadeModel {
       _observeSkill(dt);
     }
     invulnerable = math.max(0, invulnerable - dt);
+    _lightningStep(dt); // --- lightning-rework: grace, zap, charge timers
     // Module timers freeze while the ship is away: the loadout survives.
     // boss-grandeur: and while the carrier rises (a held beat, as the
     // transition into a carrier sector held them before the loom).
@@ -3782,7 +3804,8 @@ class ArcadeModel {
       final nextX =
           (d.homeX +
                   math.sin(levelClock * .4 * speed + d.seed) * 42 +
-                  d.evadeOffset)
+                  d.evadeOffset +
+                  d.boltDodge) // --- lightning-rework: the rank dodge
               .clamp(62.0, width - 62.0);
       final nextY = d.homeY + math.sin(levelClock * .65 * speed + d.seed) * 5;
       return (nextX, nextY);
@@ -3796,7 +3819,7 @@ class ArcadeModel {
     final pattern = _patternTarget(d);
     if (pattern != null) {
       var (px, py) = pattern;
-      px += evadeX;
+      px += evadeX + d.boltDodge; // --- lightning-rework: the rank dodge
       py += evadeY;
       if (d.telegraph > 0) {
         final totalTell = d.elite ? 0.55 : 0.7;
@@ -3812,7 +3835,8 @@ class ArcadeModel {
                     29 +
                 math.sin(levelClock * .44 * policy.hostileRate) * 13 +
                 boidsX +
-                evadeX)
+                evadeX +
+                d.boltDodge) // --- lightning-rework: the rank dodge
             .clamp(20.0, width - 20.0);
     var targetFormY =
         d.homeY +
@@ -4152,6 +4176,7 @@ class ArcadeModel {
           (d) =>
               !d.entering &&
               !d.lastStand &&
+              !d.stunned && // --- lightning-rework
               d.dive == 0 &&
               d.telegraph <= 0 &&
               d.divePrep <= 0 &&
@@ -4217,6 +4242,7 @@ class ArcadeModel {
         continue;
       }
       if (_regroupDemon(d, prevX, prevY, dt)) continue; // --- life loss
+      if (_stunnedDemon(d, prevX, prevY, dt)) continue; // --- lightning-rework
       if (d.divePrep > 0 && dt > 0) {
         d.divePrep -= dt * policy.hostileRate;
         if (d.divePrep <= 0) _startDiveTell(d);
@@ -4229,7 +4255,8 @@ class ArcadeModel {
         continue;
       }
       if (d.isLarge && d.dive == 0 && d.telegraph <= 0) {
-        d.volleyLeft -= dt * policy.hostileRate;
+        // --- lightning-rework: a charged rod-armoured creature fires faster.
+        d.volleyLeft -= dt * policy.hostileRate * _chargeRate(d);
         if (d.volleyLeft <= 0) {
           final aim = ((shipX - d.x) * .35).clamp(-85.0, 85.0);
           _hostile(
@@ -4246,7 +4273,7 @@ class ArcadeModel {
         }
       }
       if ((d.elite || d.isLarge) && dt > 0) {
-        d.attackLeft -= dt * policy.hostileRate;
+        d.attackLeft -= dt * policy.hostileRate * _chargeRate(d);
         if (d.attackLeft <= 0) {
           final aim = ((shipX - d.x) * .3).clamp(-70.0, 70.0);
           if (!d.isLarge) {
@@ -4394,7 +4421,9 @@ class ArcadeModel {
       }
     }
     _enemyFire -= dt * policy.hostileRate;
-    final shooters = demons.where((d) => !d.isLarge && !d.entering).toList();
+    final shooters = demons
+        .where((d) => !d.isLarge && !d.entering && !d.stunned)
+        .toList(); // --- lightning-rework: a stunned creature cannot fire
     if (_enemyFire <= 0 && shooters.isNotEmpty) {
       final d = shooters[random.nextInt(shooters.length)];
       final aim = ((shipX - d.x) * .22).clamp(-65.0, 65.0);
@@ -5102,12 +5131,13 @@ class ArcadeModel {
         }
       }
     }
-    if (d.shield > 0) {
+    // --- lightning-rework: a stunned creature's shield and armour are down.
+    if (d.shield > 0 && !d.stunned) {
       d.shield = math.max(0, d.shield - damage);
       events.add('hit');
       return;
     }
-    if (d.armor > 0) {
+    if (d.armor > 0 && !d.stunned) {
       d.armor = math.max(0, d.armor - damage);
       events.add('hit');
       return;
@@ -5116,6 +5146,7 @@ class ArcadeModel {
     if (d.hp <= 0) {
       final wasDiving = d.dive > 0;
       demons.remove(d);
+      if (d.stunned) stunKills.add(d); // --- lightning-rework
       if (boss == null) _reinforcementCasualties++;
       kills++;
       final basePoints = _killBase(d);

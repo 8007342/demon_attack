@@ -389,8 +389,11 @@ abstract final class GameEventNames {
   /// real seconds until the bolt; the squad's warning ends on it).
   static const stormStrike = 'stormStrike';
 
-  /// A bolt that was drawn to the ship destroyed creatures and missed it
-  /// (data `x`, `kills`, `award`).
+  /// A bolt that was drawn to the ship stunned creatures and missed it
+  /// (data `x`, `stunned`; variant `stun`): the squad's "pick them off"
+  /// (lightning-rework: bolts stun, they no longer kill; the bait bonus is
+  /// paid as each stunned creature is shot down).
+
   static const stormBait = 'stormBait';
 
   // --- crosswind: the bonus level's kites (data `kites`: popped so far,
@@ -401,6 +404,25 @@ abstract final class GameEventNames {
 
   /// A kite rode the wind off the screen.
   static const kiteEscaped = 'kiteEscaped';
+
+  // --- lightning-rework (lib/game/lightning.dart): what a bolt does,
+  // whatever storm throws it. Raw string events for the sound: `stormStun`
+  // (a bolt stunned creatures), `shipZapped`, `demonCharged`.
+
+  /// A bolt stunned creatures (data `x`, `stunned`): the brood's yelps and
+  /// the squad's "pick them off". Stormfront's baited bolts say
+  /// [stormBait] instead (variant `stun`).
+  static const lightningStun = 'lightningStun';
+
+  /// A bolt met the ship and stripped it (data `x`, `lost`: shields and
+  /// powers stripped, `shield`; variant `powers`, or `clean` when it had
+  /// nothing to lose). Never a life: the squad reassures the pilot.
+  static const lightningShipHit = 'lightningShipHit';
+
+  /// Rod-armoured creatures drank a bolt (data `x`, `charged`).
+  static const lightningCharged = 'lightningCharged';
+
+  static const lightning = [lightningStun, lightningShipHit, lightningCharged];
 
   // --- bonus challenges (openspec/changes/bonus-challenges). `variant`:
   // the level's id; data `challenge` (its id). The raw `bonusOneUp` is the

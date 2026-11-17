@@ -244,7 +244,12 @@
     // --- bonus levels: Stormfront (a rising static crackle, then thunder)
     if (name === 'stormTell') { sweep(now, 1.05, 240, 2600, .022, 'square'); noiseBurst(now + .6, .45, .035, 6200); return true; }
     if (name === 'stormBolt') { limitVoices('explosion'); noiseBurst(now, .12, .2, 7000); voice({ pitch: 28, velocity: 110, channel: 9, tag: 'explosion' }, now + .03, .5, effects); noiseBurst(now + .05, .5, .13, 420); noiseBurst(now + .45, .5, .08, 260); return true; }
-    if (name === 'groundExplosion') { limitVoices('explosion'); voice({ pitch: 31, velocity: 100, channel: 9, tag: 'explosion' }, now, .3, effects); noiseBurst(now, .7, .16, 1500); return true; }
+    // --- lightning-rework: a stun's crackle, the ship's zap (a hard buzz and a falling sweep: the powers are gone, never the ship), a rod drinking a bolt (a rising whine).
+    if (name === 'stormStun') { noiseBurst(now, .09, .09, 5200); noiseBurst(now + .1, .07, .07, 4600); sweep(now + .02, .35, 1800, 420, .02, 'square'); return true; }
+    if (name === 'shipZapped') { limitVoices('life'); noiseBurst(now, .25, .16, 6800); sweep(now, .5, 1600, 180, .035, 'sawtooth'); noiseBurst(now + .28, .3, .06, 900); return true; }
+    if (name === 'demonCharged') { sweep(now, .45, 300, 1900, .02, 'square'); noiseBurst(now + .35, .12, .05, 5600); return true; }
+    if (name === 'groundExplosion') {
+ limitVoices('explosion'); voice({ pitch: 31, velocity: 100, channel: 9, tag: 'explosion' }, now, .3, effects); noiseBurst(now, .7, .16, 1500); return true; }
     return false;
   }
   function sfx(name) {

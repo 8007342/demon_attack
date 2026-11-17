@@ -4629,8 +4629,143 @@
       "mood": "happy",
       "pending": "text",
       "lines": [
-        {"speaker": "sunny", "text": "Park under the brood, then scoot, and let the thunder zap them!", "emotion": "teasing"}
+        {"speaker": "sunny", "text": "Lure the lightning onto the brood, then shoot them while they fall!", "emotion": "teasing"}
       ]
+    },
+    "stormStrike.avoid": {
+      "priority": 7,
+      "cooldown": 11,
+      "ttl": 1.2,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Avoid lightning!", "emotion": "urgent"},
+        {"speaker": "sunny", "text": "Avoid lightning! Move!", "emotion": "urgent"},
+        {"speaker": "wisp", "text": "Avoid lightning! Slide out!", "emotion": "urgent"},
+        {"speaker": "kestrel", "text": "Avoid lightning, pilot!", "emotion": "urgent"}
+
+      ]
+    },
+    "stormBait.stun": {
+      "priority": 5,
+      "cooldown": 12,
+      "ttl": 2.5,
+      "chance": 0.85,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "kessler", "text": "They're stunned! Pick them off while they fall!", "emotion": "excited"},
+        {"speaker": "voss", "text": "Stunned and dropping. Light them up!", "emotion": "excited"},
+        {"speaker": "nomad", "text": "Easy targets now, friend. Take the shot.", "emotion": "calm"},
+        {"speaker": "pip", "text": "Zapped and wobbly! Get them before they wake up!", "emotion": "excited"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 12,
+        "ttl": 2.5,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "My wings! They will not answer!", "say": "My wings! They will not answer!", "emotion": "stern"},
+          {"speaker": "gorrak", "grunt": "alarm", "gloss": "Can't fly! Somebody catch me!", "say": "Can't fly! Somebody catch me!", "emotion": "panicked"},
+          {"speaker": "nibb", "grunt": "alarm", "gloss": "Bzzt! My scales are all fizzy!", "say": "Bzzt! My scales are all fizzy!", "emotion": "panicked"},
+          {"speaker": "skarn", "grunt": "snarl", "gloss": "You tricked the sky! Cheater!", "say": "You tricked the sky! Cheater!", "emotion": "stern"}
+        ]
+      }
+    },
+    "lightningStun": {
+      "priority": 3,
+      "cooldown": 14,
+      "ttl": 2,
+      "chance": 0.6,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "anvil", "text": "The storm stunned a few. Free shots!", "emotion": "calm"},
+        {"speaker": "sparrow", "text": "Look, they're dropping! Shoot, shoot!", "emotion": "excited"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 14,
+        "ttl": 2,
+        "delay": 0.3,
+        "lines": [
+          {"speaker": "skarn", "grunt": "roar", "gloss": "Who aimed the sky at me?!", "say": "Who aimed the sky at me?!", "emotion": "stern"},
+          {"speaker": "morth", "grunt": "gloat", "gloss": "Just a tickle. Just a tickle!", "say": "Just a tickle. Just a tickle!", "emotion": "teasing"},
+          {"speaker": "sliss", "grunt": "alarm", "gloss": "Everything is buzzing!", "say": "Everything is buzzing!", "emotion": "panicked"},
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "Wings, wake up! Fly!", "say": "Wings, wake up! Fly!", "emotion": "stern"}
+        ]
+      }
+    },
+    "lightningShipHit": {
+      "priority": 6,
+      "cooldown": 8,
+      "ttl": 2.5,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "You're fine, the ship can take it.", "emotion": "warm"},
+        {"speaker": "nomad", "text": "Easy, friend. Just a jolt, you're fine.", "emotion": "calm"}
+      ],
+
+      "demon": {
+        "priority": 4,
+        "cooldown": 12,
+        "ttl": 2.5,
+        "delay": 0.5,
+        "lines": [
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "Ha! Even the sky picks our side!", "say": "Ha! Even the sky picks our side!", "emotion": "teasing"},
+          {"speaker": "skarn", "grunt": "cackle", "gloss": "Fried your shiny toys!", "say": "Fried your shiny toys!", "emotion": "teasing"},
+          {"speaker": "morth", "grunt": "gloat", "gloss": "A bare hull now. How brave are you?", "say": "A bare hull now. How brave are you?", "emotion": "teasing"}
+        ]
+      }
+    },
+    "lightningShipHit.powers": {
+      "priority": 6,
+      "cooldown": 8,
+      "ttl": 2.5,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "admiral", "text": "You're fine, only the power-ups are gone.", "emotion": "calm"},
+        {"speaker": "mensah", "text": "You're fine! The shields are fried, the ship is not.", "emotion": "warm"},
+        {"speaker": "kestrel", "text": "Just your toys, pilot. We'll find you new ones.", "emotion": "calm"},
+        {"speaker": "voss", "text": "Power-ups gone, pilot still here. Keep flying!", "emotion": "warm"}
+      ]
+    },
+    "lightningShipHit.clean": {
+      "priority": 6,
+      "cooldown": 8,
+      "ttl": 2.5,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "admiral", "text": "You're fine, the ship can take it.", "emotion": "calm"},
+        {"speaker": "anvil", "text": "Just a jolt. The hull is holding fine!", "emotion": "warm"},
+        {"speaker": "rook", "text": "Nice hairdo! You're fine, keep flying.", "emotion": "teasing"}
+      ]
+    },
+    "lightningCharged": {
+      "priority": 6,
+      "cooldown": 12,
+      "ttl": 2,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "wisp", "text": "That one drank the lightning! Watch its fire!", "emotion": "urgent"},
+        {"speaker": "anvil", "text": "Rods on that armour. It's charged up, careful!", "emotion": "stern"},
+        {"speaker": "sparrow", "text": "It's glowing! Don't feed it more lightning!", "emotion": "urgent"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 12,
+        "ttl": 2,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "skarn", "grunt": "roar", "gloss": "The storm is mine!", "say": "The storm is mine!", "emotion": "triumphant"},
+          {"speaker": "vexxa", "grunt": "warcry", "gloss": "More! Strike me again!", "say": "More! Strike me again!", "emotion": "triumphant"},
+          {"speaker": "gorrak", "grunt": "roar", "gloss": "Thunder in my claws!", "say": "Thunder in my claws!", "emotion": "triumphant"}
+        ]
+      }
     },
     "bonusChallenge.supplyRun": {
       "priority": 5,
@@ -5009,3 +5144,4 @@
     }
   }
 }
+

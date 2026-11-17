@@ -9,6 +9,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'arena_camera.dart';
 import 'atmosphere.dart';
+import 'weather/lightning_painter.dart'; // --- lightning-rework
 import 'weather/rain_layer.dart';
 import 'weather/wind_layer.dart'; // --- crosswind
 import 'attract.dart';
@@ -1171,6 +1172,14 @@ class DemonScene extends FlameGame {
           c.save();
           _scaleAbout(c, at, d.scale);
           _sentinel(c, at, d);
+          // --- lightning-rework: rod armour, its charge and the stun.
+          LightningPainter.creature(
+            c,
+            d,
+            at,
+            model.clock,
+            reduced: model.reducedMotion,
+          );
           if (d.lastStand) _sentinelBerserk(c, at, d);
           c.restore();
         }
@@ -1193,10 +1202,14 @@ class DemonScene extends FlameGame {
       // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
       final tilt = creatures.look.of(d)?.tilt ?? 0;
-      if (tilt.abs() > .02) {
+      // --- lightning-rework: a stunned creature tumbles as it falls.
+      final roll =
+          tilt * .14 +
+          LightningPainter.tumble(d, model.clock, reduced: model.reducedMotion);
+      if (roll.abs() > .02 * .14) {
         // Wing tilt of the agitation wave: a small roll about the body.
         c.translate(pos.dx, pos.dy);
-        c.rotate(tilt * .14);
+        c.rotate(roll);
         c.translate(-pos.dx, -pos.dy);
       }
       final cell = CombatAtlas.creature(
@@ -1303,6 +1316,15 @@ class DemonScene extends FlameGame {
       );
       // --- dive-shield-thinning: one shield in the body's own transform.
       if (d.dive > 0 && reveal > 0) _diveShield(c, pos, d, reveal);
+      // --- lightning-rework: rod armour, its charge and the stun's crackle.
+      LightningPainter.creature(
+        c,
+        d,
+        pos,
+        model.clock,
+        reduced: model.reducedMotion,
+        alpha: reveal * far,
+      );
       c.restore();
       final fired = creatures.fireAge(d);
       if (fired != null && fired < 0.16) {
@@ -1392,6 +1414,7 @@ class DemonScene extends FlameGame {
         model.presentationMode != RunMode.victory &&
         model.presentationMode != RunMode.transition &&
         !model.shipAway && // --- life-loss sequence: the ship is away
+        !LightningPainter.shipFlickerOff(model) && // --- lightning-rework
         (model.invulnerable == 0 || (model.clock * 12).floor() % 2 == 0)) {
       // --- life-loss sequence: the reserve ship flies in from below.
       final rise = model.shipDrawY - ArcadeModel.shipY;
@@ -1405,6 +1428,14 @@ class DemonScene extends FlameGame {
       }
     }
     _lifeLossEffects(c); // --- life-loss sequence
+    // --- lightning-rework: static before a bolt, the zap after one.
+    LightningPainter.ship(
+      c,
+      model,
+      model.visualClock,
+      tells: BonusPainters.lightningTells(model),
+    );
+
     // Spent modules are debris outside the ship's own drawing, so they keep
     // falling through cutscenes and damage blinking instead of vanishing.
     _fallingParts(c);
