@@ -27,7 +27,9 @@ poses, then finishes (grade, combat ramps, ink) and packs one page with one shar
 ```sh
 flock ~/.cache/tillandsias-project/flutter-test.lock flutter test --concurrency=1 --run-skipped --tags review \
   test/hatch_emergence_review_test.dart --dart-define=HATCH_EMERGENCE_CONTACT=true
-go run ./tools/gifstrip -scale 0.6 -delay 7 art/contact/hatch-emergence-fight.gif .cache/hatch-emergence-review/fight
+magick art/contact/hatch-emergence-fight.png -resize 60% art/contact/hatch-emergence-fight.png
+(cd tools/gifstrip && go run . -scale 0.6 -delay 7 -crop 0,40,360,440 \
+  "$PWD/../../art/contact/hatch-emergence-fight.gif" "$PWD/../../.cache/hatch-emergence-review/fight")
 ```
 
 ## 1. Library extensions (generic)
@@ -103,3 +105,17 @@ rows or brow arcs to the hatch. The creature's own eyes and fangs are its specie
 - The flock's three variants by entrance order (peek, vault, spring) and the lead on the outboard tusk.
 - The rim clip at 3 units above the hatch centre (the slot's widest point) with 1.5 units of overlap for the claws.
 - FULL 3 lurkers a hatch, LEAN 1, LITE none and no emergence.
+
+## 6. Review (2026-11-17)
+- `art/contact/hatch-emergence-closeups.png` (403 KB): one hatch at ×3 — the telegraph pulse and the grips, the
+  opening with the peek and the held door and the steam, the launch (crouch, leap, unfurl, flare, glide), the field
+  thinning 100 → 66 → 33 → 10 % with its ripple, the break (flash, ring, sparks, splinters).
+- `art/contact/hatch-emergence-strips.png` (518 KB): per species the 12 atlas poses at ×4 with the rim line, then the
+  lead's drawn sequence at a hatch.
+- `art/contact/hatch-emergence-fight.png` (840 KB, 8 page frames) and `-fight.gif` (1.9 MB, 48 frames at 15 fps):
+  tour 1 (violet), the left hatch's telegraph, a lurker, the crouch on the rim and the flock gliding down.
+- Verdict (delegated): the sequence reads at phone scale from the peek on; the grips are 3–5 px and serve as the
+  anticipation. The close-up shows the lead's hanging arm as a short horizontal stroke beside the slot in the peeks;
+  kept (it is the arm, not a wing, and it reads as gripping at game scale).
+- Finding while testing: the fight's core-door flock keeps `gateWait` set while its entrance runs (design §2.1), and a
+  volley held in a hatch destroyed the same moment still leaves from it; the director handles both.

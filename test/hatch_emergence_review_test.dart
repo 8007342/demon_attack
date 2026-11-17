@@ -386,9 +386,11 @@ void main() {
     var found = false;
     for (var g = 0; g < 60 * 30 && !found; g++) {
       await step(1 / 60, kill: true);
-      found = m.launches!.runs.any(
-        (r) => r.state == GateState.telegraph && r.t < .1,
-      );
+      found =
+          m.launches?.runs.any(
+            (r) => r.state == GateState.telegraph && r.t < .1,
+          ) ??
+          false;
     }
     expect(found, isTrue);
     final frames = <ui.Image>[];

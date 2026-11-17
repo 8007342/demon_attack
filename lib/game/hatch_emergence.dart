@@ -375,11 +375,9 @@ class HatchEmergence {
     final lx = d.entranceStartX! - b.x, ly = d.entranceStartY - b.y;
     CarrierGate? best;
     var bestD = 30.0 * 30.0;
-    for (final h in [
-      for (final s in b.hatches)
-        if (!s.destroyed) s.hatch,
-      CarrierHatches.core,
-    ]) {
+    // Every hatch, destroyed or not: a volley held in a hatch that falls the
+    // same moment still leaves from it.
+    for (final h in [for (final s in b.hatches) s.hatch, CarrierHatches.core]) {
       final dx = h.x - lx, dy = h.y - ly;
       final q = dx * dx + dy * dy;
       if (q < bestD) {
