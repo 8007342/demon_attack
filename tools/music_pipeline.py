@@ -24,7 +24,8 @@ Stages, in order (all deterministic for the same model files and seeds):
             envelope) and spectral closeness to the group's reference.
   build     pick one candidate per cue (or its pinned `pick`), cut the
             guide-aligned window (text cues: best downbeat window), build the
-            loop seam, loudness-normalise, encode Opus/OGG + AAC/M4A; render the
+            loop seam, loudness-normalise, encode Opus/OGG (the one shipped format,
+            no fallback: operator, 2026-11-17); render the
             synth cues (accent sprites, cackle); write web/audio/music/manifest.json.
   verify    decode the encoded files and check lengths, loop wraps, codec
             edges, clipping and the 120 BPM grid.
@@ -32,7 +33,7 @@ Stages, in order (all deterministic for the same model files and seeds):
             motif-similarity matrix within each level (JSON + text).
   table     the markdown cue table for the docs.
 
-Requires python3 with numpy + scipy, and ffmpeg (libopus, aac).
+Requires python3 with numpy + scipy, and ffmpeg (libopus).
 """
 from __future__ import annotations
 
@@ -727,23 +728,6 @@ def render(audio, cue, start, spec):
 CODEC_CONTEXT = 4096  # samples of real context primed into each lossy encoder
 
 
-def patch_elst(path, extra):
-    """Shift the MP4 edit list start by `extra` samples (hidden priming context)."""
-    data = bytearray(path.read_bytes())
-    at = data.find(b'elst')
-    if at < 0:
-        raise SystemExit(f'{path}: no edit list')
-    version = data[at + 4]
-    entry = at + 12
-    if version == 0:
-        media = struct.unpack('>i', data[entry + 4:entry + 8])[0]
-        data[entry + 4:entry + 8] = struct.pack('>i', media + extra)
-    else:
-        media = struct.unpack('>q', data[entry + 8:entry + 16])[0]
-        data[entry + 8:entry + 16] = struct.pack('>q', media + extra)
-    path.write_bytes(bytes(data))
-
-
 def ogg_crc(page):
     crc = 0
     for byte in page:
@@ -783,12 +767,12 @@ def trim_ogg_opus(path, head, length):
 
 
 def encode(wav, name, spec, out, loop, kind):
-    ogg = OUT / f'{name}.ogg'; m4a = OUT / f'{name}.m4a'
-    # Lossy codecs smear the first/last frame. Prime each encoder with the
+    ogg = OUT / f'{name}.ogg'
+    # Lossy codecs smear the first/last frame. Prime the encoder with the
     # audio that really precedes the file start when looping (the loop's own
     # end) and append the audio that follows the loop end (the loop start),
     # then hide both with the container's trimming (Opus pre-skip + final
-    # granule; MP4 edit list) so the decoded length stays exact and the wrap
+    # granule) so the decoded length stays exact and the wrap
     # is coded as continuous audio.
     c = CODEC_CONTEXT
     pre = out[-c:] if kind == 'loop' else np.zeros((c, 2))
@@ -797,19 +781,8 @@ def encode(wav, name, spec, out, loop, kind):
     write_wav(padded, np.concatenate([pre, out, post]))
     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(padded), '-c:a', 'libopus', '-b:a', f"{spec['opus_kbps']}k", '-vbr', 'on', '-application', 'audio', '-map_metadata', '-1', '-fflags', '+bitexact', '-flags:a', '+bitexact', str(ogg)], check=True)
     trim_ogg_opus(ogg, c, len(out))
-    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(padded), '-c:a', 'aac', '-b:a', f"{spec['aac_kbps']}k", '-map_metadata', '-1', '-movflags', '+faststart',
-                    '-metadata:s:a', 'handler_name=', '-t', f'{(len(out) + 2 * c) / SR:.6f}', str(m4a)], check=True)
-    patch_elst(m4a, c)
-    # Trim the edit list duration to the cue itself.
-    data = bytearray(m4a.read_bytes())
-    at = data.find(b'elst')
-    if data[at + 4] == 0:
-        data[at + 12:at + 16] = struct.pack('>I', len(out))
-    else:
-        data[at + 12:at + 20] = struct.pack('>Q', len(out))
-    m4a.write_bytes(bytes(data))
     padded.unlink()
-    return ogg, m4a
+    return ogg
 
 
 def candidate_files(work, cue, spec=None):
@@ -1083,14 +1056,14 @@ def cmd_analyze(args):
     target.write_text(json.dumps(dict(sorted(report.items())), indent=1))
 
 
-def build_record(cue, out, loop, ogg, m4a, extra):
+def build_record(cue, out, loop, ogg, extra):
     import music_motifs
     rec = {'kind': cue['kind'], 'beats': cue.get('beats'), 'bpm': round(cue.get('bpm', 120.0), 4),
            'barSamples': beats_samples(4, cue.get('bpm', 120.0)), 'seconds': len(out) / SR,
            'loopStart': None if loop is None else loop[0] / SR, 'loopEnd': None if loop is None else loop[1] / SR}
     rec.update(extra)
-    rec.update({'bytes': {'ogg': ogg.stat().st_size, 'm4a': m4a.stat().st_size},
-                'sha256': {'ogg': hashlib.sha256(ogg.read_bytes()).hexdigest(), 'm4a': hashlib.sha256(m4a.read_bytes()).hexdigest()}})
+    rec.update({'bytes': {'ogg': ogg.stat().st_size},
+                'sha256': {'ogg': hashlib.sha256(ogg.read_bytes()).hexdigest()}})
     return rec
 
 
@@ -1368,7 +1341,7 @@ def cmd_build(args):
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {'cues': {}}
     if manifest.get('schema') not in ('demon-attack.music/v2', 'demon-attack.music/v3'):
         manifest = {'cues': {}}
-    manifest.update({'schema': 'demon-attack.music/v3', 'bpm': spec['bpm'], 'sampleRate': SR, 'formats': ['ogg', 'm4a']})
+    manifest.update({'schema': 'demon-attack.music/v3', 'bpm': spec['bpm'], 'sampleRate': SR, 'formats': ['ogg']})
     import music_motifs
     manifest['motifs'] = {str(k): {'name': m['name'], 'genre': spec['groups'][str(k)]['genre'], 'keyscale': m['keyscale'], 'summary': m['summary'],
                                    'bpm': round(music_motifs.BPM[k], 4), 'barSamples': music_motifs.BAR_SAMPLES[k]} for k, m in music_motifs.MOTIFS.items()}
@@ -1447,11 +1420,11 @@ def cmd_build(args):
             loop_for_codec, kind = None, 'oneshot'
         else:
             loop_for_codec, kind = loop, cue['kind']
-        ogg, m4a = encode(wav, cue['name'], cspec, out, loop_for_codec, kind)
+        ogg = encode(wav, cue['name'], cspec, out, loop_for_codec, kind)
         if cue.get('next'):
             extra['next'] = cue['next']
-        manifest['cues'][cue['name']] = build_record(cue, out, loop, ogg, m4a, extra)
-        print(f"{cue['name']:11} {extra.get('mode', 'synth'):5} seed={extra.get('seed', '-')} d={extra.get('denoise', '-')} -> {len(out) / SR:.3f}s ogg={ogg.stat().st_size // 1024}KB m4a={m4a.stat().st_size // 1024}KB")
+        manifest['cues'][cue['name']] = build_record(cue, out, loop, ogg, extra)
+        print(f"{cue['name']:11} {extra.get('mode', 'synth'):5} seed={extra.get('seed', '-')} d={extra.get('denoise', '-')} -> {len(out) / SR:.3f}s ogg={ogg.stat().st_size // 1024}KB")
     names = {c['name'] for c in spec['cues']}
     manifest['cues'] = {k: v for k, v in sorted(manifest['cues'].items()) if k in names}
     manifest_path.write_text(json.dumps(manifest, indent=1) + '\n')
@@ -1550,7 +1523,7 @@ def cmd_verify(args):
         if args.cue and name not in args.cue:
             continue
         master = read_audio(work / f'{name}.wav') if (work / f'{name}.wav').exists() else None
-        for fmt in ('ogg', 'm4a'):
+        for fmt in ('ogg',):
             audio = read_audio(OUT / f'{name}.{fmt}')
             expected = round(meta['seconds'] * SR)
             problems, notes = [], []
@@ -1577,9 +1550,9 @@ def cmd_verify(args):
                 if mw:
                     notes.append(f"master wrap {mw['wrap_step']:.4f} d2 {mw['wrap_d2']:.4f}")
                 if w['wrap_step'] > step_limit:
-                    (problems if fmt == 'ogg' else notes).append('wrap step exceeds the loop\'s 99.9th percentile step and the master wrap')
+                    problems.append('wrap step exceeds the loop\'s 99.9th percentile step and the master wrap')
                 if w['wrap_d2'] > d2_limit:
-                    (problems if fmt == 'ogg' else notes).append('click-like curvature at the wrap')
+                    problems.append('click-like curvature at the wrap')
             if meta['kind'] in ('loop', 'tail') and meta.get('beats'):
                 # Whole bars of the cue's integer bar length (bpm in the manifest is rounded).
                 ideal = meta['beats'] / 4 * bar_samples
@@ -1593,8 +1566,7 @@ def cmd_verify(args):
                 # Layer slots are played up to LAYER_TAIL_S before their end.
                 cut = round(LAYER_TAIL_S * SR) if meta.get('mode') == 'stems' else 0
                 ends = [float(np.abs(audio[(i + 1) * slot - cut - 480:(i + 1) * slot - cut]).max()) for i in range(len(meta['slots']))]
-                # AAC pre-echo of the next slot's attack is allowed (about -30 dB).
-                if max(ends) > (0.02 if fmt == 'ogg' else 0.05):
+                if max(ends) > 0.02:
                     problems.append(f'slot does not end silent ({max(ends):.3f})')
             if master is not None and len(master) == len(audio) and meta['kind'] in ('loop', 'tail'):
                 err = audio - master
@@ -1606,11 +1578,11 @@ def cmd_verify(args):
                 tail = rms(slice(-960, None)) / (np.median(inner_tail) + 1e-9) if inner_tail else 1.0
                 notes.append(f'edge {head:.2f}x/{tail:.2f}x')
                 checked = [head, tail] if meta['kind'] == 'loop' else [tail]
-                if max(checked) > (2.5 if fmt == 'ogg' else 4.0):
-                    (problems if fmt == 'ogg' else notes).append('codec edge artefact')
+                if max(checked) > 2.5:
+                    problems.append('codec edge artefact')
             guide = work / 'guides' / f'{name}.flac'
             r = 0.0
-            if fmt == 'ogg' and meta.get('mode') == 'a2a' and guide.exists():
+            if meta.get('mode') == 'a2a' and guide.exists():
                 # The guide fixes the grid: the cue's onsets must line up with
                 # the guide window's (lag of the best onset correlation).
                 ginfo = guide_info(work, name)
@@ -1631,7 +1603,7 @@ def cmd_verify(args):
                 if not tempo_ok:
                     problems.append(f'a foreign {tempo:.1f} BPM pulse dominates the {bpm:g} BPM grid')
                 r = 1.0  # the guide check stands in for the lattice check
-            if fmt == 'ogg' and meta['kind'] in ('loop', 'tail') and not (meta.get('mode') == 'a2a' and guide.exists()):
+            if meta['kind'] in ('loop', 'tail') and not (meta.get('mode') == 'a2a' and guide.exists()):
                 # No reliable guide correlation: check the eighth lattice at the cue's tempo.
                 probe = np.concatenate([audio[:b], audio[a:b]]) if b else audio
                 info = analyse(probe, fixed_bpm=bpm)
@@ -1748,9 +1720,9 @@ def cmd_compare(args):
 def cmd_table(args):
     """Markdown cue table from the manifest (for the plan docs)."""
     manifest = json.loads((OUT / 'manifest.json').read_text())
-    print('| Cue | Kind | Source | Beats | Seconds | Loop | Opus | AAC |')
-    print('| --- | --- | --- | ---: | ---: | --- | ---: | ---: |')
-    total = [0, 0]
+    print('| Cue | Kind | Source | Beats | Seconds | Loop | Opus |')
+    print('| --- | --- | --- | ---: | ---: | --- | ---: |')
+    total = [0]
     for name, m in manifest['cues'].items():
         loop = '—' if m['loopEnd'] is None else f"{m['loopStart']:g}–{m['loopEnd']:g} s"
         src = m.get('mode', m.get('source', ''))
@@ -1758,9 +1730,9 @@ def cmd_table(args):
             src = f"a2a s{m['seed']} d{m['denoise']:.2f}"
         elif src == 'text':
             src = f"text s{m['seed']}"
-        total[0] += m['bytes']['ogg']; total[1] += m['bytes']['m4a']
-        print(f"| `{name}` | {m['kind']} | {src} | {m.get('beats') or '—'} | {m['seconds']:g} | {loop} | {m['bytes']['ogg'] / 1024:.0f} KB | {m['bytes']['m4a'] / 1024:.0f} KB |")
-    print(f"| **Total** | | | | | | **{total[0] / 1048576:.2f} MB** | **{total[1] / 1048576:.2f} MB** |")
+        total[0] += m['bytes']['ogg']
+        print(f"| `{name}` | {m['kind']} | {src} | {m.get('beats') or '—'} | {m['seconds']:g} | {loop} | {m['bytes']['ogg'] / 1024:.0f} KB |")
+    print(f"| **Total** | | | | | | **{total[0] / 1048576:.2f} MB** |")
 
 
 def main():

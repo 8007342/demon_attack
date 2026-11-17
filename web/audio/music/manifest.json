@@ -20,12 +20,10 @@
    "fluxAbs": 0.325,
    "guideDistance": 0.126,
    "bytes": {
-    "ogg": 172274,
-    "m4a": 262963
+    "ogg": 172274
    },
    "sha256": {
-    "ogg": "54cfef2aef7b2a81bd233b86ca7bbdac2379be9343f6185dc372eb866042ff01",
-    "m4a": "d860d99fbc53be87ba8fadd3135bbec0ed9aea79d8880605bae64bb91a3e6298"
+    "ogg": "54cfef2aef7b2a81bd233b86ca7bbdac2379be9343f6185dc372eb866042ff01"
    }
   },
   "cackle": {
@@ -48,12 +46,10 @@
    "startSeconds": 1.0,
    "next": "alienwin",
    "bytes": {
-    "ogg": 38567,
-    "m4a": 67432
+    "ogg": 38567
    },
    "sha256": {
-    "ogg": "ffabe117445aba2350be5a4de78b21d22eef406361d4f2dd12733c395fae2b45",
-    "m4a": "c2511cdc752a07b8aa50d0c9b0e128cb8c1145a633cc9f9d082e43dd8fbc9fbf"
+    "ogg": "ffabe117445aba2350be5a4de78b21d22eef406361d4f2dd12733c395fae2b45"
    }
   },
   "finale": {
@@ -76,12 +72,10 @@
    "fluxAbs": 0.381,
    "guideDistance": 0.344,
    "bytes": {
-    "ogg": 199331,
-    "m4a": 329697
+    "ogg": 199331
    },
    "sha256": {
-    "ogg": "3d295cbe32aab27184227f7e64baa63d0fe91a395a3f303abbf84c10cb3f1c9a",
-    "m4a": "f8648d83588b38cc1341dc523ba541f7a669cb3ad929e669ab8acbc300ba69f5"
+    "ogg": "3d295cbe32aab27184227f7e64baa63d0fe91a395a3f303abbf84c10cb3f1c9a"
    }
   },
   "finale-fleet": {
@@ -105,12 +99,10 @@
    "crestDb": 11.27,
    "fluxAbs": 0.371,
    "bytes": {
-    "ogg": 202684,
-    "m4a": 332171
+    "ogg": 202684
    },
    "sha256": {
-    "ogg": "f81a66b9696e38294ecb374946cc82b2ebc766ea7b79d0050a97916973ad773f",
-    "m4a": "8f7ce13c68ea5b40469a4c05ea6fadc98241de148f3ea91b61970e8fa54d0754"
+    "ogg": "f81a66b9696e38294ecb374946cc82b2ebc766ea7b79d0050a97916973ad773f"
    }
   },
   "l1-accents": {
@@ -134,12 +126,10 @@
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 123931,
-    "m4a": 199857
+    "ogg": 123931
    },
    "sha256": {
-    "ogg": "f30d71036d0ea2a465204dae00d53d5767523d48e7e798347644d4b7b3e47959",
-    "m4a": "abb54bcdbcbc3c8fd6751cf1d4f21f25a86f9f155440c87d1463770db8a729dc"
+    "ogg": "f30d71036d0ea2a465204dae00d53d5767523d48e7e798347644d4b7b3e47959"
    }
   },
   "l1-intro": {
@@ -163,12 +153,10 @@
    "guideDistance": 0.462,
    "part": "intro",
    "bytes": {
-    "ogg": 80348,
-    "m4a": 119411
+    "ogg": 80348
    },
    "sha256": {
-    "ogg": "c4aa7df67b1bee6fdf3778c0bcfda35e768fa097aeebd7474ffd51597d6767de",
-    "m4a": "60750cc785724f83e046ea83d6310811600d885552a88ee5748610ffdc86ebbb"
+    "ogg": "c4aa7df67b1bee6fdf3778c0bcfda35e768fa097aeebd7474ffd51597d6767de"
    }
   },
   "l1-layers": {
@@ -246,12 +234,10 @@
     }
    },
    "bytes": {
-    "ogg": 191490,
-    "m4a": 230261
+    "ogg": 191490
    },
    "sha256": {
-    "ogg": "8ae4146a7d025cff6e6870baecfd489b416a037a34d6ac2ea5ec80a46e367ff1",
-    "m4a": "f40d9d919d6af80f4db26b15e951bb38b1ad54199ec76b3227be6f25f90bed96"
+    "ogg": "8ae4146a7d025cff6e6870baecfd489b416a037a34d6ac2ea5ec80a46e367ff1"
    }
   },
   "l1-outro": {
@@ -275,12 +261,10 @@
    "guideDistance": 0.501,
    "part": "outro",
    "bytes": {
-    "ogg": 60203,
-    "m4a": 94972
+    "ogg": 60203
    },
    "sha256": {
-    "ogg": "ba17142f67ce7d85a3c207c5bf45e37892d5a9098e4469ffb70e4931e97afec0",
-    "m4a": "41937a4ebf6dc2d95e6971422e046e90224fe044858b61f8cb5de4afd38d0752"
+    "ogg": "ba17142f67ce7d85a3c207c5bf45e37892d5a9098e4469ffb70e4931e97afec0"
    }
   },
   "l1-power": {
@@ -300,12 +284,10 @@
    "onsetOnEighth": 0.154,
    "onsetOnSixteenth": 0.006,
    "bytes": {
-    "ogg": 130959,
-    "m4a": 187055
+    "ogg": 130959
    },
    "sha256": {
-    "ogg": "a0d77b08aa912e4991fede8a7158469b91c25bdbc702e4bdeb8d08f9bdf5b5b1",
-    "m4a": "7507e53f878c941c7527770705035e434f604805abb8ca1a2faa9773851d0447"
+    "ogg": "a0d77b08aa912e4991fede8a7158469b91c25bdbc702e4bdeb8d08f9bdf5b5b1"
    }
   },
   "l1-t1": {
@@ -329,12 +311,10 @@
    "guideDistance": 0.463,
    "tier": 1,
    "bytes": {
-    "ogg": 113467,
-    "m4a": 186740
+    "ogg": 113467
    },
    "sha256": {
-    "ogg": "d84c2fbd08be11fb4f0e0593b65cb7fa5c922027dbcef5e26772f86f2d946bb2",
-    "m4a": "608a071a8a1beeed79a8f41f91572288222fd4bb893389beb2111f1eea744236"
+    "ogg": "d84c2fbd08be11fb4f0e0593b65cb7fa5c922027dbcef5e26772f86f2d946bb2"
    }
   },
   "l1-t2": {
@@ -358,12 +338,10 @@
    "guideDistance": 0.479,
    "tier": 2,
    "bytes": {
-    "ogg": 111490,
-    "m4a": 186682
+    "ogg": 111490
    },
    "sha256": {
-    "ogg": "ab122b3fe856e28b56d2004c7c02a2b74e55c552477e683010881807137a6d87",
-    "m4a": "57ce9dd8c6e4217d0a6fd7dfa8dc38639d99cb7251c7bc616f4d32fcd7524776"
+    "ogg": "ab122b3fe856e28b56d2004c7c02a2b74e55c552477e683010881807137a6d87"
    }
   },
   "l1-t3": {
@@ -387,12 +365,10 @@
    "guideDistance": 0.649,
    "tier": 3,
    "bytes": {
-    "ogg": 110664,
-    "m4a": 186755
+    "ogg": 110664
    },
    "sha256": {
-    "ogg": "bd9e3bab3500de9bad748cf7e9673ba13e8bd405cff7eba3a2a1f58530d0929d",
-    "m4a": "6b48ad5f8df9e903806ff8edda855372724ea9e8720be1e47b11d9b44e9dbfe7"
+    "ogg": "bd9e3bab3500de9bad748cf7e9673ba13e8bd405cff7eba3a2a1f58530d0929d"
    }
   },
   "l1-t4": {
@@ -416,12 +392,10 @@
    "guideDistance": 0.678,
    "tier": 4,
    "bytes": {
-    "ogg": 111186,
-    "m4a": 187007
+    "ogg": 111186
    },
    "sha256": {
-    "ogg": "82a415f241bf3806920bf3884e10b3397d28511b1e7b5ccee38480befb084bd4",
-    "m4a": "f173e1a3ae210956996475e1043bba59701197194a512ea41d0aedbf68b4a551"
+    "ogg": "82a415f241bf3806920bf3884e10b3397d28511b1e7b5ccee38480befb084bd4"
    }
   },
   "l2-accents": {
@@ -445,12 +419,10 @@
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 122641,
-    "m4a": 198497
+    "ogg": 122641
    },
    "sha256": {
-    "ogg": "4c020179b2d2f438d166ac5cd9043b14192af0f07c185c60015f867f5870230f",
-    "m4a": "8e7123d4fde1053915da093a2aa84e490d9d862a604bed543ac9a2df78cd290e"
+    "ogg": "4c020179b2d2f438d166ac5cd9043b14192af0f07c185c60015f867f5870230f"
    }
   },
   "l2-intro": {
@@ -474,12 +446,10 @@
    "guideDistance": 0.256,
    "part": "intro",
    "bytes": {
-    "ogg": 79532,
-    "m4a": 126898
+    "ogg": 79532
    },
    "sha256": {
-    "ogg": "ff6726f566cb7602d9842dd561e0ad3fabe15a63be0b8046d4d3914cc42089b3",
-    "m4a": "c1651d04c3eeac69c527b138cd1ea495a430d8230d97304845b23a6fad90124d"
+    "ogg": "ff6726f566cb7602d9842dd561e0ad3fabe15a63be0b8046d4d3914cc42089b3"
    }
   },
   "l2-layers": {
@@ -557,12 +527,10 @@
     }
    },
    "bytes": {
-    "ogg": 202335,
-    "m4a": 244397
+    "ogg": 202335
    },
    "sha256": {
-    "ogg": "c3a69614c4f0ca81ea14eb4c09de2c438b8e527120d35087f6a060b12d6efb23",
-    "m4a": "4e76cd6127ea7539282a3dd449a9d1ce6559eb9bfb94d594eec3622a25f5fd32"
+    "ogg": "c3a69614c4f0ca81ea14eb4c09de2c438b8e527120d35087f6a060b12d6efb23"
    }
   },
   "l2-outro": {
@@ -586,12 +554,10 @@
    "guideDistance": 0.455,
    "part": "outro",
    "bytes": {
-    "ogg": 67249,
-    "m4a": 100734
+    "ogg": 67249
    },
    "sha256": {
-    "ogg": "1f56715b6a04d209a5fea8b3e90d9238883bc03e043f758c38d2091232d980e2",
-    "m4a": "48bbcc40616d98b0d48322b28754a43f29d60644459dccecdbbe750aadf57018"
+    "ogg": "1f56715b6a04d209a5fea8b3e90d9238883bc03e043f758c38d2091232d980e2"
    }
   },
   "l2-power": {
@@ -611,12 +577,10 @@
    "onsetOnEighth": 0.227,
    "onsetOnSixteenth": 0.01,
    "bytes": {
-    "ogg": 137618,
-    "m4a": 199637
+    "ogg": 137618
    },
    "sha256": {
-    "ogg": "18c0b4b4b83ff77531eeedccf8d7792273eb1ba0a819315983ca0797640e98d1",
-    "m4a": "60dd289861415652222293ddee7ed98b813561a399361b635788ad49bc2d627a"
+    "ogg": "18c0b4b4b83ff77531eeedccf8d7792273eb1ba0a819315983ca0797640e98d1"
    }
   },
   "l2-t1": {
@@ -640,12 +604,10 @@
    "guideDistance": 0.433,
    "tier": 1,
    "bytes": {
-    "ogg": 129902,
-    "m4a": 198043
+    "ogg": 129902
    },
    "sha256": {
-    "ogg": "f9394c39d7fc8a13432b284e48b5927b09b195b2b356d662c7e38ad2409e1347",
-    "m4a": "281858d109a69e01ba6224ee95c886a1346c674e9ff7a74504f1bf992b7a9649"
+    "ogg": "f9394c39d7fc8a13432b284e48b5927b09b195b2b356d662c7e38ad2409e1347"
    }
   },
   "l2-t2": {
@@ -669,12 +631,10 @@
    "guideDistance": 0.368,
    "tier": 2,
    "bytes": {
-    "ogg": 126845,
-    "m4a": 198012
+    "ogg": 126845
    },
    "sha256": {
-    "ogg": "e70464e9438ef9c32671bb03adfe0770932381b2f02cd7c2ee9a4c5a4c40091c",
-    "m4a": "47c4ebf1752f6b12159430434dc1b70dc7a15c70a9e2bb113c428e8d673ba202"
+    "ogg": "e70464e9438ef9c32671bb03adfe0770932381b2f02cd7c2ee9a4c5a4c40091c"
    }
   },
   "l2-t3": {
@@ -698,12 +658,10 @@
    "guideDistance": 0.417,
    "tier": 3,
    "bytes": {
-    "ogg": 120692,
-    "m4a": 198081
+    "ogg": 120692
    },
    "sha256": {
-    "ogg": "c3a7aff92e48443eb78ed33c81e60f2749b5d5d9df063a1dc86479fbbf532d3c",
-    "m4a": "2d1b426e96e015f87ed6e2ddbdb174a6b14a85d87ba8fc42998350fce24b23b4"
+    "ogg": "c3a7aff92e48443eb78ed33c81e60f2749b5d5d9df063a1dc86479fbbf532d3c"
    }
   },
   "l2-t4": {
@@ -727,12 +685,10 @@
    "guideDistance": 0.566,
    "tier": 4,
    "bytes": {
-    "ogg": 123744,
-    "m4a": 198752
+    "ogg": 123744
    },
    "sha256": {
-    "ogg": "698abd3b8edb07588efaf021bc82840e6c845746d62eecef352f7b125c852207",
-    "m4a": "6c6b12dde8f18ddcc5c6409536882583c69e53e0ea8d53569d7f418498995a67"
+    "ogg": "698abd3b8edb07588efaf021bc82840e6c845746d62eecef352f7b125c852207"
    }
   },
   "l3-accents": {
@@ -756,12 +712,10 @@
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 127029,
-    "m4a": 199150
+    "ogg": 127029
    },
    "sha256": {
-    "ogg": "2da3361e430c052e2e63492b2df959a643320d2b03dfeae5474e040b37e6afe7",
-    "m4a": "08de8ddeb93aaef72142db2e065293a0949d820095ca223cad877ecb6560e585"
+    "ogg": "2da3361e430c052e2e63492b2df959a643320d2b03dfeae5474e040b37e6afe7"
    }
   },
   "l3-intro": {
@@ -785,12 +739,10 @@
    "guideDistance": 0.343,
    "part": "intro",
    "bytes": {
-    "ogg": 68963,
-    "m4a": 112490
+    "ogg": 68963
    },
    "sha256": {
-    "ogg": "335707d4fde0f4c725edc2a79f52a317608e14e31b41e2edee00b3e465e33c5b",
-    "m4a": "16d19c40487c53a2812914b769a6057fa46eedafcd389415ec120546a8c4d7df"
+    "ogg": "335707d4fde0f4c725edc2a79f52a317608e14e31b41e2edee00b3e465e33c5b"
    }
   },
   "l3-layers": {
@@ -868,12 +820,10 @@
     }
    },
    "bytes": {
-    "ogg": 179197,
-    "m4a": 223746
+    "ogg": 179197
    },
    "sha256": {
-    "ogg": "9f9939e9d45b1bfc70e018973cd37f409937b578982b2f0a62d09003ea86b3dd",
-    "m4a": "9bc90a36e901660092db33a26891a98f0db89e4fc69c676c8ce1358c91565e7f"
+    "ogg": "9f9939e9d45b1bfc70e018973cd37f409937b578982b2f0a62d09003ea86b3dd"
    }
   },
   "l3-outro": {
@@ -897,12 +847,10 @@
    "guideDistance": 0.432,
    "part": "outro",
    "bytes": {
-    "ogg": 58135,
-    "m4a": 89776
+    "ogg": 58135
    },
    "sha256": {
-    "ogg": "a7f2fefccfabc2ae352b638a6564de900c4acf5fab349f882a506dd599619d15",
-    "m4a": "23f53d117ec160f7043de7196d5996c9c462f7d76d9dd3f284756fa845065ae8"
+    "ogg": "a7f2fefccfabc2ae352b638a6564de900c4acf5fab349f882a506dd599619d15"
    }
   },
   "l3-power": {
@@ -922,12 +870,10 @@
    "onsetOnEighth": 0.319,
    "onsetOnSixteenth": 0.024,
    "bytes": {
-    "ogg": 118548,
-    "m4a": 176663
+    "ogg": 118548
    },
    "sha256": {
-    "ogg": "9b113296faa27bccfdae74ef19c1f35d0077bd59cd343177300aefca6cb34074",
-    "m4a": "2b2ab2ed623eed081f4945d4d0813ddd45b50de2a3fc90362c34439c93981e73"
+    "ogg": "9b113296faa27bccfdae74ef19c1f35d0077bd59cd343177300aefca6cb34074"
    }
   },
   "l3-t1": {
@@ -951,12 +897,10 @@
    "guideDistance": 0.583,
    "tier": 1,
    "bytes": {
-    "ogg": 106594,
-    "m4a": 178447
+    "ogg": 106594
    },
    "sha256": {
-    "ogg": "8507fdf45ca6b3bd47c0ef48e24335a767170eec4e07c070574c66caa3f3baa4",
-    "m4a": "39671039d8cdb4b38b668ee44488d53a2b840c97269384dc7ce19b3fc347a707"
+    "ogg": "8507fdf45ca6b3bd47c0ef48e24335a767170eec4e07c070574c66caa3f3baa4"
    }
   },
   "l3-t2": {
@@ -980,12 +924,10 @@
    "guideDistance": 0.573,
    "tier": 2,
    "bytes": {
-    "ogg": 107641,
-    "m4a": 176465
+    "ogg": 107641
    },
    "sha256": {
-    "ogg": "15966a91046c02149a58e5836fb907f2fa6b393506b9bbbd7000261e509ed7ed",
-    "m4a": "50795f369ee5a03d2c65e47699b12bc72cee71925bf0a2fb5cecc43f12b43812"
+    "ogg": "15966a91046c02149a58e5836fb907f2fa6b393506b9bbbd7000261e509ed7ed"
    }
   },
   "l3-t3": {
@@ -1009,12 +951,10 @@
    "guideDistance": 0.546,
    "tier": 3,
    "bytes": {
-    "ogg": 102599,
-    "m4a": 177009
+    "ogg": 102599
    },
    "sha256": {
-    "ogg": "78251a3d03c58a22b71283d90b660880b2826468fd91cefc50fe479440feecb6",
-    "m4a": "9c9d1b995ea31eb4cc07d87f78dba80f787f2bda5d665e8a4c656159afdfa6e4"
+    "ogg": "78251a3d03c58a22b71283d90b660880b2826468fd91cefc50fe479440feecb6"
    }
   },
   "l3-t4": {
@@ -1038,12 +978,10 @@
    "guideDistance": 0.568,
    "tier": 4,
    "bytes": {
-    "ogg": 105848,
-    "m4a": 176627
+    "ogg": 105848
    },
    "sha256": {
-    "ogg": "f9625c52090bb46cfc82a736f1262ed7ff7bbf9125a743a63579e9ab7fe4c6fd",
-    "m4a": "68257ce7b2fef4ad2f5d937ab80186ae6053cb72a3c7a29307e3f1c1b95cb686"
+    "ogg": "f9625c52090bb46cfc82a736f1262ed7ff7bbf9125a743a63579e9ab7fe4c6fd"
    }
   },
   "l4-accents": {
@@ -1067,12 +1005,10 @@
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 121961,
-    "m4a": 198394
+    "ogg": 121961
    },
    "sha256": {
-    "ogg": "4fe6c62e7ecd3200a46926f4c3bf54bac113c1b1e0980c666ad7ee73a0706d9d",
-    "m4a": "b1479082947859a654d4564f57a67066f2c34e41476dc516d3581fded9c9fa73"
+    "ogg": "4fe6c62e7ecd3200a46926f4c3bf54bac113c1b1e0980c666ad7ee73a0706d9d"
    }
   },
   "l4-intro": {
@@ -1096,12 +1032,10 @@
    "guideDistance": 0.164,
    "part": "intro",
    "bytes": {
-    "ogg": 89168,
-    "m4a": 133904
+    "ogg": 89168
    },
    "sha256": {
-    "ogg": "78b7c824fe8d9f4fb241f107066a4f545981fe137fbee502bd5d8c243e2b2b1d",
-    "m4a": "6c6e7b4f67eabd0851a34df3527166bbab8e1f39f7b59ddaeede3b1c2ac3724e"
+    "ogg": "78b7c824fe8d9f4fb241f107066a4f545981fe137fbee502bd5d8c243e2b2b1d"
    }
   },
   "l4-layers": {
@@ -1179,12 +1113,10 @@
     }
    },
    "bytes": {
-    "ogg": 220718,
-    "m4a": 259275
+    "ogg": 220718
    },
    "sha256": {
-    "ogg": "f264389aeac89adbf10e38378455883a78058645b78671abe3de0bd0f6e8bf85",
-    "m4a": "9159a6ee63483ec2f6f3fe436029d4a713181c4b8e6b54c01676e5f3f1a384ab"
+    "ogg": "f264389aeac89adbf10e38378455883a78058645b78671abe3de0bd0f6e8bf85"
    }
   },
   "l4-outro": {
@@ -1208,12 +1140,10 @@
    "guideDistance": 0.297,
    "part": "outro",
    "bytes": {
-    "ogg": 68535,
-    "m4a": 107323
+    "ogg": 68535
    },
    "sha256": {
-    "ogg": "52068542f3977480d171c1845829cd0e26930de9a6de2f9289e267fe32361fb9",
-    "m4a": "0eac94ffcd2e9fb7ced379cd8be40ff7df419e849ad518f746b42e04cee4b2ba"
+    "ogg": "52068542f3977480d171c1845829cd0e26930de9a6de2f9289e267fe32361fb9"
    }
   },
   "l4-power": {
@@ -1233,12 +1163,10 @@
    "onsetOnEighth": 0.593,
    "onsetOnSixteenth": 0.017,
    "bytes": {
-    "ogg": 149583,
-    "m4a": 213167
+    "ogg": 149583
    },
    "sha256": {
-    "ogg": "aa8db9cd6cbfcf2cfd4c424318a809995b09dec5da6c16159cdbb5f13f17e627",
-    "m4a": "4848628819b199bdac07be59ad892f77c559ef2efcd4fbe818cfed70eeffc4ff"
+    "ogg": "aa8db9cd6cbfcf2cfd4c424318a809995b09dec5da6c16159cdbb5f13f17e627"
    }
   },
   "l4-t1": {
@@ -1262,12 +1190,10 @@
    "guideDistance": 0.453,
    "tier": 1,
    "bytes": {
-    "ogg": 128450,
-    "m4a": 212555
+    "ogg": 128450
    },
    "sha256": {
-    "ogg": "d1a294f6ae653bd65209479b3d59fb1c61a47f8f50cc6ab0da60c30b231e582a",
-    "m4a": "558175b3e08be0d597a8cac8b71e03d2317c891760e44fd23415a6d989509cd3"
+    "ogg": "d1a294f6ae653bd65209479b3d59fb1c61a47f8f50cc6ab0da60c30b231e582a"
    }
   },
   "l4-t2": {
@@ -1291,12 +1217,10 @@
    "guideDistance": 0.366,
    "tier": 2,
    "bytes": {
-    "ogg": 126493,
-    "m4a": 213047
+    "ogg": 126493
    },
    "sha256": {
-    "ogg": "4fab202db8e4b374fbe223cad58ce94c7b7ce82749c47e8fbcafb1252a96df06",
-    "m4a": "f6d6869b48ed9595b759923acb7366daf239bfac7cad9b62111d14af7cf5ffcc"
+    "ogg": "4fab202db8e4b374fbe223cad58ce94c7b7ce82749c47e8fbcafb1252a96df06"
    }
   },
   "l4-t3": {
@@ -1320,12 +1244,10 @@
    "guideDistance": 0.455,
    "tier": 3,
    "bytes": {
-    "ogg": 132152,
-    "m4a": 211305
+    "ogg": 132152
    },
    "sha256": {
-    "ogg": "7d6e785df6d08f293ed78919eb364506b99bc6db8f5c874d89433d19e9148807",
-    "m4a": "d8e3c723ba2f31c8a9c620ce292543b29813fe35e5cb7fe98c15e6c280afdcf0"
+    "ogg": "7d6e785df6d08f293ed78919eb364506b99bc6db8f5c874d89433d19e9148807"
    }
   },
   "l4-t4": {
@@ -1349,12 +1271,10 @@
    "guideDistance": 0.377,
    "tier": 4,
    "bytes": {
-    "ogg": 130976,
-    "m4a": 212050
+    "ogg": 130976
    },
    "sha256": {
-    "ogg": "94437ba94dd8562cdf94756f85a97c362766fbcd45aadd2ca4638c3ce831d97c",
-    "m4a": "8dfe2ee3461a0862947d8ed49c69c94dfac37833f7fbee07f42cccbf9c391a59"
+    "ogg": "94437ba94dd8562cdf94756f85a97c362766fbcd45aadd2ca4638c3ce831d97c"
    }
   },
   "l5-accents": {
@@ -1378,12 +1298,10 @@
    ],
    "source": "synth",
    "bytes": {
-    "ogg": 124643,
-    "m4a": 198329
+    "ogg": 124643
    },
    "sha256": {
-    "ogg": "cc543d8b4567cf3fae734a466a2e24f6d646c744ceb4779964c68b722ec969d0",
-    "m4a": "eb94cd1f0dbe973af72d32d75ec067edcedf4ba8fe470272949bc9c4877ac85d"
+    "ogg": "cc543d8b4567cf3fae734a466a2e24f6d646c744ceb4779964c68b722ec969d0"
    }
   },
   "l5-intro": {
@@ -1407,12 +1325,10 @@
    "guideDistance": 0.255,
    "part": "intro",
    "bytes": {
-    "ogg": 68971,
-    "m4a": 106659
+    "ogg": 68971
    },
    "sha256": {
-    "ogg": "97b2364c0a47727973231e8a40b07a81a5aefcb65bd89018562f118a3805d861",
-    "m4a": "1a6885c732b51a0b94f4fc60f76919b3a6c3f418c683040794f3ba974239d9d2"
+    "ogg": "97b2364c0a47727973231e8a40b07a81a5aefcb65bd89018562f118a3805d861"
    }
   },
   "l5-layers": {
@@ -1490,12 +1406,10 @@
     }
    },
    "bytes": {
-    "ogg": 177003,
-    "m4a": 210201
+    "ogg": 177003
    },
    "sha256": {
-    "ogg": "ecf9fee974d014674c2d5e0778febf57c6ddc7355ee6f20aa172c4db95bed752",
-    "m4a": "998d8d5a2be4122896581635ff724d36dcbab422056a8efda5b0e0edbc403527"
+    "ogg": "ecf9fee974d014674c2d5e0778febf57c6ddc7355ee6f20aa172c4db95bed752"
    }
   },
   "l5-outro": {
@@ -1519,12 +1433,10 @@
    "guideDistance": 0.537,
    "part": "outro",
    "bytes": {
-    "ogg": 55272,
-    "m4a": 85598
+    "ogg": 55272
    },
    "sha256": {
-    "ogg": "a4c17e1c7cb93cdd8c0909fa2fbc101e40c4125e5c0d758a22ffb45463369479",
-    "m4a": "98ea5df0ae93e883ed1bb37251dd11119e6ecd3f4c734ed1278e1cf233eafa13"
+    "ogg": "a4c17e1c7cb93cdd8c0909fa2fbc101e40c4125e5c0d758a22ffb45463369479"
    }
   },
   "l5-power": {
@@ -1544,12 +1456,10 @@
    "onsetOnEighth": 0.274,
    "onsetOnSixteenth": 0.008,
    "bytes": {
-    "ogg": 115228,
-    "m4a": 167938
+    "ogg": 115228
    },
    "sha256": {
-    "ogg": "8b88dcaad7fee1870ffbf2cff5695ce7dc7142315b1b24d36ada908d7ae72c07",
-    "m4a": "ec8721333482c8fe9ba65d3cbd5a189d2870147163220119a0d30c0e776dc626"
+    "ogg": "8b88dcaad7fee1870ffbf2cff5695ce7dc7142315b1b24d36ada908d7ae72c07"
    }
   },
   "l5-t1": {
@@ -1573,12 +1483,10 @@
    "guideDistance": 0.451,
    "tier": 1,
    "bytes": {
-    "ogg": 100528,
-    "m4a": 167491
+    "ogg": 100528
    },
    "sha256": {
-    "ogg": "bdc94f6495816bfaffb537ea09ea6a23107b513d779e742ba3954dca52a3abe9",
-    "m4a": "5d56029796d60f1cf097be7271ec572955fc8d2b50dcbb5495b3cb32631210e6"
+    "ogg": "bdc94f6495816bfaffb537ea09ea6a23107b513d779e742ba3954dca52a3abe9"
    }
   },
   "l5-t2": {
@@ -1602,12 +1510,10 @@
    "guideDistance": 0.537,
    "tier": 2,
    "bytes": {
-    "ogg": 97036,
-    "m4a": 167549
+    "ogg": 97036
    },
    "sha256": {
-    "ogg": "18729c084d44bddc883238cfcf95342e445fceaec2acaf3ea301f6cf3ceee3df",
-    "m4a": "f056bd8fa179c4e84ed66a4a7a55720410239a484b675715aad65b7ac414eeff"
+    "ogg": "18729c084d44bddc883238cfcf95342e445fceaec2acaf3ea301f6cf3ceee3df"
    }
   },
   "l5-t3": {
@@ -1631,12 +1537,10 @@
    "guideDistance": 0.594,
    "tier": 3,
    "bytes": {
-    "ogg": 104268,
-    "m4a": 167805
+    "ogg": 104268
    },
    "sha256": {
-    "ogg": "25e3317d8f466d83af1f2fb863f393cee0c8f4a7f961915c0d330d465bea1b9f",
-    "m4a": "075863cd4438f3e205217cf66271103c3ec4ecf037ac789eacd6e5239ed32598"
+    "ogg": "25e3317d8f466d83af1f2fb863f393cee0c8f4a7f961915c0d330d465bea1b9f"
    }
   },
   "l5-t4": {
@@ -1660,12 +1564,10 @@
    "guideDistance": 0.522,
    "tier": 4,
    "bytes": {
-    "ogg": 106494,
-    "m4a": 167575
+    "ogg": 106494
    },
    "sha256": {
-    "ogg": "f4715859b8af0cb97b46e6aa9caca4d2d8ffd029e04d9887a0e43e3384ceb8a7",
-    "m4a": "3502836966792b4e5927e423457138ac5e640770c7cfa92c179461ddaf62315c"
+    "ogg": "f4715859b8af0cb97b46e6aa9caca4d2d8ffd029e04d9887a0e43e3384ceb8a7"
    }
   },
   "levelclear": {
@@ -1688,12 +1590,10 @@
    "fluxAbs": 0.488,
    "guideDistance": 0.529,
    "bytes": {
-    "ogg": 76888,
-    "m4a": 135507
+    "ogg": 76888
    },
    "sha256": {
-    "ogg": "8c18ea07eabf9ff0d498731d0a5af2f8fb747086d314a61c4fe2a55132e5c279",
-    "m4a": "a0a8745a953577a36d5ebcd22f160a21be780b5f38cc6ebcf2a9f63b06afec69"
+    "ogg": "8c18ea07eabf9ff0d498731d0a5af2f8fb747086d314a61c4fe2a55132e5c279"
    }
   },
   "levelclear-fleet": {
@@ -1717,12 +1617,10 @@
    "crestDb": 13.86,
    "fluxAbs": 0.419,
    "bytes": {
-    "ogg": 78150,
-    "m4a": 134559
+    "ogg": 78150
    },
    "sha256": {
-    "ogg": "7929d852e186a2272fa28e2c3f2ec6d8e99cd659ef996931d46485ccba22f1d9",
-    "m4a": "dca6eaf73efd0579b54403c07447266875f6d3ae05254fc13ec3a6a919178653"
+    "ogg": "7929d852e186a2272fa28e2c3f2ec6d8e99cd659ef996931d46485ccba22f1d9"
    }
   },
   "menu": {
@@ -1744,12 +1642,10 @@
    "crestDb": 10.02,
    "fluxAbs": 0.301,
    "bytes": {
-    "ogg": 170321,
-    "m4a": 264409
+    "ogg": 170321
    },
    "sha256": {
-    "ogg": "6042616867a531321e5461e906a7aaa1c1e1ed2ae3e1a3427c657b0b37256c6a",
-    "m4a": "3c024dbf28e672e829c486e355f427adecbd7a7dcba4ace2b07e427beca428f2"
+    "ogg": "6042616867a531321e5461e906a7aaa1c1e1ed2ae3e1a3427c657b0b37256c6a"
    }
   },
   "victory": {
@@ -1772,12 +1668,10 @@
    "fluxAbs": 0.378,
    "guideDistance": 0.304,
    "bytes": {
-    "ogg": 127099,
-    "m4a": 198759
+    "ogg": 127099
    },
    "sha256": {
-    "ogg": "696f5c54f5a09698701b1f6d5668399b48e4cbd66165d73a45e327133e4045fb",
-    "m4a": "933ffdd59e9048c02193ea7f56a30a7877fb4acd4e571c83a8e75ee5e7a2f953"
+    "ogg": "696f5c54f5a09698701b1f6d5668399b48e4cbd66165d73a45e327133e4045fb"
    }
   }
  },
@@ -1785,8 +1679,7 @@
  "bpm": 120,
  "sampleRate": 48000,
  "formats": [
-  "ogg",
-  "m4a"
+  "ogg"
  ],
  "motifs": {
   "1": {

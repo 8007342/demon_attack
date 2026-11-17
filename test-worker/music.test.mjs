@@ -34,7 +34,7 @@ async function player({ missing = new Set(), localStorage, durationOf = seconds 
   const sandbox = { URL, Uint8Array, DataView, Map, Set, Math, Object, Promise, TextDecoder, window: { AudioContext, addEventListener() {}, ...(localStorage ? { localStorage } : {}) }, document: { baseURI: 'https://game.test/', addEventListener() {} }, setInterval(fn) { callback = fn; },
     async fetch(url) {
       fetched.push(url.pathname);
-      const music = url.pathname.match(/^\/audio\/music\/(.+)\.(ogg|m4a)$/);
+      const music = url.pathname.match(/^\/audio\/music\/(.+)\.ogg$/);
       if (music) {
         if (missing.has(music[1])) return { ok: false };
         const bytes = new TextEncoder().encode(music[1]);
@@ -255,8 +255,13 @@ test('clear, victory, finale and the game-over cackle are immediate; the alien t
   await audio.cue('gameover'); assert.equal(audio.state.active, 'alienwin');
 });
 
-test('every cue ships Opus and AAC files with whole-bar loops inside the download budget', async () => {
+test('every cue ships one Opus file with whole-bar loops inside the download budget', async () => {
   const manifest = JSON.parse(await readFile(new URL('../web/audio/music/manifest.json', import.meta.url), 'utf8'));
+  // One format per asset, no fallback copies (operator, 2026-11-17).
+  assert.deepEqual(manifest.formats, ['ogg']);
+  const { readdir } = await import('node:fs/promises');
+  const files = await readdir(new URL('../web/audio/music/', import.meta.url));
+  assert.deepEqual(files.filter(name => !name.endsWith('.ogg') && name !== 'manifest.json'), [], 'no second audio format ships');
   const spec = JSON.parse(await readFile(new URL('../art/workflows/music/cues.json', import.meta.url), 'utf8'));
   let opus = 0;
   const layerSlots = ['stab', 'swell', 'fill', 'gallop', 'lead', 'low'];
@@ -266,7 +271,7 @@ test('every cue ships Opus and AAC files with whole-bar loops inside the downloa
     assert.ok(cue, `${name} is in the manifest`);
     assert.equal(cue.kind, kind);
     const size = (await stat(new URL(`../web/audio/music/${name}.ogg`, import.meta.url))).size;
-    await stat(new URL(`../web/audio/music/${name}.m4a`, import.meta.url));
+    assert.deepEqual(Object.keys(cue.bytes), ['ogg'], `${name} records one format`);
     assert.equal(size, cue.bytes.ogg);
     opus += size;
     const level = name.match(/^l(\d)-/)?.[1];
