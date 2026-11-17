@@ -464,6 +464,13 @@ class GroundBlocksLayer {
 
   void _draw(Canvas c, ui.Image img, Rect src, double left, double top,
       double w, double h, bool mirror) {
+    // boss-grandeur: under the altitude stretch a block keeps its size,
+    // standing on the same ground point.
+    final a = GroundCamera.spriteAltitude;
+    if (a != 1) {
+      top += h - h / a;
+      h /= a;
+    }
     final l = left.roundToDouble(), t = top.roundToDouble();
     if (mirror) {
       c.save();
@@ -624,7 +631,9 @@ class GroundBlocksLayer {
     var phase = GroundPace.isWalker(unit) && moving
         // Feet plant: the stride follows the ground covered.
         ? (gaitOf(t, s, u.z) * t.cells.moveFrames(k) + u.id * .37).floor()
-        : (clock * rate * GroundPace.of(unit) * (moving ? 1 : .6) + u.id * .37)
+        : (clock * rate * GroundPace.of(unit) * (moving ? 1 : .6) *
+                    (u.pose?.hesitate ?? 1) + // terrain-shadows: lurk
+                u.id * .37)
             .floor();
     // The telegraph contract (old columns 4-7): same clock arithmetic.
     int? special;
@@ -814,6 +823,7 @@ class GroundBlocksLayer {
     final turning = t.hull.hold > 0;
     final rate = (7 + math.min(10.0, a.vz.abs() * .05)) *
         (a.pose?.pace ?? 1) *
+        (a.pose?.hesitate ?? 1) * // terrain-shadows: lurk
         GroundPace.of(unit) *
         (moving ? 1 : (turning ? .6 : 0));
     final dir = t.reverse ? -1 : 1;

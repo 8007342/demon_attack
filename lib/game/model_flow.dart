@@ -25,6 +25,24 @@ extension ArcadeFlow on ArcadeModel {
   /// The remnant fleeing in a rout is at most this many silhouettes.
   static const remnant = 18;
 
+  /// The sector a transition flies to (transition-ascent design §4).
+  int get flowDestination => nextLevel;
+
+  /// The route the destination belongs to.
+  int get flowDestinationRoute => level == 5 ? cycle + 1 : cycle;
+
+  /// A plain sector change returning to a sector the squadron has already
+  /// fought over in this run (a later tour, or a sector entered before):
+  /// its radio slot is a front-line call from [flowDestination]. Boss
+  /// arrivals and a carrier's fall are never revisits here (they keep their
+  /// own calls).
+  bool get flowRevisit {
+    if (flow.kind != FlowKind.sectorChange) return false;
+    final dest = flowDestination;
+    if (dest == 5) return false;
+    return flowDestinationRoute > 0 || visitedSectors.contains(dest);
+  }
+
   /// Starts the plan of a sector change (the last kill) or a carrier's fall.
   void _flowBegin({required bool victory}) {
     final reduced = reducedMotion;
@@ -102,7 +120,9 @@ extension ArcadeFlow on ArcadeModel {
     final next = nextLevel;
     if (next == 5) return null;
     final route = level == 5 ? cycle + 1 : cycle;
-    final count = policy.rosterCount(sector: next, wave: 1, route: route);
+    final calibrated = policy.rosterCount(sector: next, wave: 1, route: route);
+    // --- bonus levels: a bonus level ahead has its own first roster.
+    final count = bonusAhead?.waves.roster(calibrated) ?? calibrated;
     final rng = stream.rngFor(sector: next, route: route, wave: 1);
     final plan = stream.preload(List<double>.filled(count, 180), rng);
     for (final s in plan.skeins) {
@@ -141,11 +161,9 @@ extension ArcadeFlow on ArcadeModel {
     final routEnd = rout == null ? 0.0 : rout.c;
     final pursue = flow.env('pursue');
     final wheel = flow.env('wheel');
-    final mill = flow.env('mill');
-    final vacuole = flow.env('vacuole');
-    final pour = flow.env('pour');
+    final overflight = plan.overflightAt(s);
+    final over = flow.on('overflight');
     final p0 = plan.descentAt - plan.pursuitSeconds;
-    final carrier = boss;
     final n = flowFlock.length;
     for (final m in flowFlock) {
       final d = m.demon;
@@ -156,15 +174,21 @@ extension ArcadeFlow on ArcadeModel {
       final ax = m.x0 - 180, ay = m.y0 - 160;
       final al = math.max(1.0, math.sqrt(ax * ax + ay * ay));
       final flee = Perspective.smoothstep(.2, math.max(.6, routEnd + .6), s);
-      var x = m.x0 + ax / al * burst + dir * 70 * flee + jx * 6;
-      var y = m.y0 + ay / al * burst * .6 - 40 * flee + jy * 4;
+      var x = m.x0 + ax / al * burst + dir * 24 * flee + jx * 6;
+      var y = m.y0 + ay / al * burst * .6 - 64 * flee + jy * 4;
       var nn = m.n0 + (.3 - m.n0) * flee;
-      // Pursuit: ahead of the climbing ship, drifting toward [dir] the whole
-      // time (direction is kept across the swap: the motivated cut).
+      // Pursuit: straight up ahead of the climbing ship (playtest-fixes-3:
+      // a sideways drift read as the squadron flying sideways). The flock
+      // gathers over the ship's lane and climbs into the high cloud; [dir]
+      // is kept for the Descent, where it streams out (the motivated cut).
       final pt = (s - p0).clamp(0.0, 20.0);
-      final cx = 180 + dir * (-40 + 14 * pt);
+      final cx = 180 + (shipX - 180) * .5;
       final px = cx + (m.index - (n - 1) / 2) * 13 + jx * 10;
-      final py = 92 + (m.index % 3) * 9 + jy * 7;
+      final py =
+          92 -
+          46 * Perspective.smoothstep(0, 3, pt) +
+          (m.index % 3) * 9 +
+          jy * 7;
       x += (px - x) * pursue;
       y += (py - y) * pursue;
       nn += (.36 - nn) * pursue;
@@ -174,24 +198,14 @@ extension ArcadeFlow on ArcadeModel {
         x += (180 + dir * 230 - x) * wheel * .8;
         y += (130 - y) * wheel * .5;
       }
-      // Boss arrival: ring the arrival point, part for the carrier, pour
-      // into its bays (ordered by distance, 40 ms apart).
-      if (carrier != null && mill > 0) {
-        final a = m.index / n * 2 * math.pi + s * .5 * (reducedMotion ? 0 : 1);
-        final r = 60 + 70 * vacuole;
-        final rx = carrier.x + math.cos(a) * r;
-        final ry = carrier.y + math.sin(a) * r * .45;
-        x += (rx - x) * mill;
-        y += (ry - y) * mill;
-        nn += (.42 - nn) * mill;
-      }
-      if (carrier != null && pour > 0) {
+      // boss-grandeur: the Overflight. The flock streams after the
+      // carrier as it sinks into the far fog (staggered 40 ms apart).
+      if (over && overflight > 0) {
         final order = (m.index * .04).clamp(0.0, .5);
-        final k = Perspective.smoothstep(order, order + .5, pour);
-        final bx = carrier.x + m.bay * Carrier.sideHatchOffset;
-        final by = carrier.y + 14;
-        x += (bx - x) * k;
-        y += (by - y) * k;
+        final k = Perspective.smoothstep(order, order + .5, overflight);
+        x += (180 + (m.index - (n - 1) / 2) * 9 - x) * k;
+        y += (118 + jy * 4 - y) * k;
+        nn += (.3 - nn) * k;
       }
       final oldX = d.x;
       d
@@ -202,18 +216,22 @@ extension ArcadeFlow on ArcadeModel {
         ..altitude = 30 + 20 * (1 - pursue)
         ..scale = Perspective.scaleOf(nn.clamp(.12, .6));
     }
-    if (carrier != null && pour >= 1) flowFlock.clear();
-    if (wheel >= 1 && carrier == null) flowFlock.clear();
+    if (over && overflight >= 1) flowFlock.clear();
+    if (wheel >= 1 && !over) flowFlock.clear();
   }
 
   /// Seconds of flow opacity for member [m]: it fades into the hangar or
   /// out at the edge (scene).
   double flowOpacity(FlowMember m) {
-    final carrier = boss;
-    if (carrier != null && flow.on('pour')) {
+    if (flow.on('overflight')) {
+      // boss-grandeur: into the far fog behind the carrier.
       final order = (m.index * .04).clamp(0.0, .5);
       return 1 -
-          Perspective.smoothstep(order + .3, order + .5, flow.env('pour'));
+          Perspective.smoothstep(
+            order + .4,
+            order + .5,
+            flow.plan.overflightAt(flow.seconds),
+          );
     }
     return 1 - Perspective.smoothstep(.5, 1, flow.env('wheel'));
   }

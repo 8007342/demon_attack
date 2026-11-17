@@ -1,5 +1,5 @@
 {
-  "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base. v4: \"divePrep\" (a demon is about to start a dive tell) carries brood battle cries; the reinforcements cheer chains a second brood voice; grunt kinds add \"cackle\" and \"warcry\".",
+  "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base. v4: \"divePrep\" (a demon is about to start a dive tell) carries brood battle cries; the reinforcements cheer chains a second brood voice; grunt kinds add \"cackle\" and \"warcry\". bonus-briefing: \"pending\": \"text\" on a trigger shows its unrecorded lines with their OWN words and speaker and plays no audio (a written radio line, mouth closed) instead of borrowing a placeholder; once recorded they are voiced as usual. Used for the urgent-mission card's chatter (bonusEntry*, bonusDare*) and the mid-level banter (bonusMidway*), whose words matter more than a borrowed voice.",
   "groupGap": {
     "ground": 6,
     "loot": 25
@@ -4198,6 +4198,419 @@
           {"speaker": "morth", "grunt": "gloat", "gloss": "It learns. So do we.", "say": "It learns. So do we.", "emotion": "teasing", "placeholder": "broodTaunt.d2"}
         ]
       }
+    },
+    "frontCall": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "march", "text": "We're getting overwhelmed here!", "emotion": "panicked", "placeholder": "groundPressureHigh.h2"},
+        {"speaker": "kessler", "text": "They're everywhere down here! We need you back!", "emotion": "panicked", "placeholder": "groundPressureHigh.h0"},
+        {"speaker": "voss", "text": "Lantern's being overrun! Anyone up there?", "emotion": "panicked", "placeholder": "groundPressureHigh.h1"},
+        {"speaker": "admiral", "text": "A ground team is calling for air. Turn around, pilot.", "emotion": "urgent", "placeholder": "groundPressureHigh.h4"},
+        {"speaker": "mensah", "text": "Granite to air wing. They're back, and there are more of them!", "emotion": "urgent", "placeholder": "allyUnderAttack.h7"}
+      ]
+    },
+    "frontCall.1": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "admiral", "text": "Ground support needed in Krybor!", "emotion": "urgent", "placeholder": "groundTide.surge.h4"},
+        {"speaker": "march", "text": "Bastion to air wing. Krybor's outpost is under attack again!", "emotion": "panicked", "placeholder": "allyUnderAttack.h3"}
+      ]
+    },
+    "frontCall.2": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "admiral", "text": "Ground support needed in Ringfall!", "emotion": "urgent", "placeholder": "groundTide.surge.h4"},
+        {"speaker": "kessler", "text": "Ringfall's line is buckling! Come back!", "emotion": "panicked", "placeholder": "groundPressureHigh.h0"}
+      ]
+    },
+    "frontCall.3": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "admiral", "text": "Ground support needed on Ember Moon!", "emotion": "urgent", "placeholder": "groundTide.surge.h4"},
+        {"speaker": "voss", "text": "The Ember line is overrun! We need you back!", "emotion": "panicked", "placeholder": "groundPressureHigh.h1"}
+      ]
+    },
+    "frontCall.4": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "admiral", "text": "Ground support needed in the Hollow!", "emotion": "urgent", "placeholder": "groundTide.surge.h4"},
+        {"speaker": "mensah", "text": "Granite's surrounded in the Hollow! Help!", "emotion": "panicked", "placeholder": "allyUnderAttack.h7"}
+      ]
+    },
+    "bonusEntry": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "admiral", "text": "Overwatch, urgent. Special orders ahead. Make it count, pilot.", "emotion": "urgent", "placeholder": "sectorStart.h0"},
+        {"speaker": "lindqvist", "text": "Beacon here. Readings ahead are off the charts. Enjoy!", "emotion": "excited", "placeholder": "sectorStart.h1"}
+      ]
+    },
+    "bonusEntry.supplyRun": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "admiral", "text": "A convoy spilled its cargo. Crack those crates, pilot!", "emotion": "urgent", "placeholder": "salvage.h3"},
+        {"speaker": "wisp", "text": "Crates falling through the fog! Three hits cracks one open.", "emotion": "excited", "placeholder": "salvage.h2"},
+        {"speaker": "rook", "text": "Free cargo raining from the sky. Finders keepers, slowpoke!", "emotion": "teasing", "placeholder": "salvage.h1"}
+      ]
+    },
+    "bonusStart.supplyRun": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "anvil", "text": "Crates on parachutes. Three hits opens one. Show off a little.", "emotion": "calm", "placeholder": "salvage.h2"},
+        {"speaker": "kestrel", "text": "Scavengers want our cargo. Shoot the crates, catch what falls.", "emotion": "urgent", "placeholder": "salvage.h3"},
+        {"speaker": "wisp", "text": "Gold brackets mark the crates. Crack one, then slide under it.", "emotion": "calm"},
+        {"speaker": "sunny", "text": "Crates up top! Pop them open and catch the goodies. Finders keepers.", "emotion": "teasing"}
+      ]
+    },
+    "bonusCrate.supplyRun": {
+      "priority": 3,
+      "cooldown": 12,
+      "ttl": 2,
+      "mood": "happy",
+      "chance": 0.75,
+      "group": "loot",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Crate is open! Catch it!", "emotion": "excited", "placeholder": "weaponPickup.h0"},
+        {"speaker": "sparrow", "text": "Cargo is loose. Grab it!", "emotion": "excited", "placeholder": "salvage.h1"},
+        {"speaker": "pip", "text": "Ooh, what was in that one?", "emotion": "excited", "placeholder": "weaponPickup.h4"},
+        {"speaker": "sunny", "text": "Cracked it! Tell me it's snacks this time.", "emotion": "teasing"},
+        {"speaker": "nomad", "text": "One down. Catch it before it hits the sand.", "emotion": "calm"},
+        {"speaker": "anvil", "text": "Clean break. Get under the cargo.", "emotion": "calm"}
+      ]
+    },
+    "bonusPickup.salvageMagnet": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "wisp", "text": "Salvage magnet online. Loose cargo flies to you now.", "emotion": "excited", "placeholder": "salvage.h1"},
+        {"speaker": "rook", "text": "A magnet! Everything is attracted to you. Cannot blame it.", "emotion": "teasing", "placeholder": "weaponPickup.h0"}
+      ]
+    },
+    "bonusPickup.doubleScore": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sparrow", "text": "Gold coins! Every kill and crate pays double for a bit.", "emotion": "excited", "placeholder": "weaponPickup.h2"},
+        {"speaker": "sunny", "text": "Double score! Twice the sunshine.", "emotion": "teasing", "placeholder": "weaponPickup.h0"}
+      ]
+    },
+    "bonusCleared.supplyRun": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "lines": [
+        {"speaker": "admiral", "text": "Convoy cargo recovered. The fleet thanks you, pilot.", "emotion": "warm", "placeholder": "levelClear.h0"},
+        {"speaker": "nomad", "text": "Every crate accounted for. Clean work.", "emotion": "warm", "placeholder": "levelClear.h4"},
+        {"speaker": "rook", "text": "Best shopping trip ever.", "emotion": "teasing", "placeholder": "levelClear.h2"},
+        {"speaker": "pip", "text": "Can we play that one again? Please?", "emotion": "excited", "placeholder": "levelClear.h5"}
+      ]
+    },
+    "runModifier.noShield": {
+      "priority": 5,
+      "cooldown": 60,
+      "ttl": 8,
+      "lines": [
+        {"speaker": "admiral", "text": "Shield modules are out of stock this sortie. Fly careful.", "emotion": "stern", "placeholder": "shieldBroken.h2"},
+        {"speaker": "nomad", "text": "No shields on this run. Easy does it.", "emotion": "calm", "placeholder": "shieldBroken.h3"}
+      ]
+    },
+    "runModifier.spreadOnly": {
+      "priority": 5,
+      "cooldown": 60,
+      "ttl": 8,
+      "lines": [
+        {"speaker": "wisp", "text": "Supply only has spread modules today. Wide coverage it is.", "emotion": "calm", "placeholder": "weaponPickup.spread.h1"},
+        {"speaker": "rook", "text": "Spread shot or nothing this run. Paint the whole sky!", "emotion": "excited", "placeholder": "weaponPickup.spread.h0"}
+      ]
+    },
+    "runModifier.heavyOrdnance": {
+      "priority": 5,
+      "cooldown": 60,
+      "ttl": 8,
+      "lines": [
+        {"speaker": "sparrow", "text": "Extra blast rounds in the supply chain this run. Boom!", "emotion": "excited", "placeholder": "weaponPickup.large.h2"},
+        {"speaker": "kestrel", "text": "Plenty of blast rounds this sortie. Aim into the crowd.", "emotion": "calm", "placeholder": "weaponPickup.large.h3"}
+      ]
+    },
+    "bonusEntry.stormfront": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 3,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Forecast: thunderstorm, ninety percent chance of fried demons.", "signature": true, "emotion": "teasing", "placeholder": "sectorStart.h5"},
+        {"speaker": "wisp", "text": "Storm cell ahead! When the air hums over you, slide out.", "emotion": "urgent", "placeholder": "diveWarning.h6"},
+        {"speaker": "admiral", "text": "The brood flew into a storm. Lure the lightning onto them.", "emotion": "calm", "placeholder": "sectorStart.h0"}
+      ]
+    },
+    "bonusStart.stormfront": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "wisp", "text": "Static is off my scopes. When the air hums over you, move.", "emotion": "urgent", "placeholder": "diveWarning.h2"},
+        {"speaker": "mensah", "text": "Get right under them, then slide out. Let the storm bring the rain!", "emotion": "urgent", "placeholder": "groundForceInRange.h4"}
+      ]
+    },
+    "stormStrike": {
+      "priority": 7,
+      "cooldown": 11,
+      "ttl": 1.2,
+      "mood": "worried",
+      "lines": [
+        {"speaker": "rook", "text": "Lightning on you! Dodge, dodge, dodge!", "emotion": "panicked", "placeholder": "sentinelDive.h3"},
+        {"speaker": "sunny", "text": "Bolt building right above you, look sharp!", "emotion": "urgent", "placeholder": "diveWarning.h6"}
+      ]
+    },
+    "stormBait": {
+      "priority": 4,
+      "cooldown": 14,
+      "ttl": 2.5,
+      "chance": 0.75,
+      "mood": "happy",
+      "lines": [
+        {"speaker": "kessler", "text": "The storm did that one for us! Thanks for the thunder!", "emotion": "teasing", "placeholder": "skirmishWon.h4"},
+        {"speaker": "nomad", "text": "Easy, friend. Leave some thunder for the storm.", "emotion": "calm", "placeholder": "broodTaunt.h7"},
+        {"speaker": "voss", "text": "Fried, the lot of them. Beautiful flying!", "emotion": "warm", "placeholder": "allySaved.h4"}
+      ],
+      "demon": {
+        "priority": 4,
+        "cooldown": 14,
+        "ttl": 2.5,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "The sky bites its own!", "say": "The sky bites its own!", "emotion": "stern", "placeholder": "broodTaunt.d6"},
+          {"speaker": "sliss", "grunt": "snarl", "gloss": "Not my sky! This is not my sky!", "say": "Not my sky! This is not my sky!", "emotion": "stern", "placeholder": "broodChatter.d24"},
+          {"speaker": "gorrak", "grunt": "alarm", "gloss": "Scatter! The storm fights for it!", "say": "Scatter! The storm fights for it!", "emotion": "panicked", "placeholder": "levelClear.d0"}
+        ]
+      }
+    },
+    "bonusPickup.lightningRod": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "lines": [
+        {"speaker": "sunny", "text": "Lightning rod! You are grounded. Now that's a bright idea.", "signature": true, "emotion": "teasing", "placeholder": "shieldCollected.h3"},
+        {"speaker": "anvil", "text": "Rod's live. Sit under them and let it hit you.", "emotion": "warm", "placeholder": "shieldCollected.h0"}
+      ]
+    },
+    "bonusCleared.stormfront": {
+      "priority": 5,
+      "cooldown": 20,
+      "ttl": 4,
+      "mood": "happy",
+      "lines": [
+        {"speaker": "sunny", "text": "Storm's behind us. Clean skies ahead! That's the forecast I like.", "signature": true, "emotion": "teasing", "placeholder": "levelClear.h7"},
+        {"speaker": "sparrow", "text": "We flew through a thunderstorm and won! Sky's ours.", "emotion": "triumphant", "placeholder": "levelClear.h1"},
+        {"speaker": "kestrel", "text": "Out of the weather. That was beautiful flying.", "emotion": "triumphant", "placeholder": "levelClear.h6"},
+        {"speaker": "nomad", "text": "Fine flying. I would play that round again.", "emotion": "warm", "placeholder": "levelClear.h4"}
+      ]
+    },
+    "bonusDare": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 4,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Dare you to make that look easy.", "emotion": "teasing"},
+        {"speaker": "sparrow", "text": "Loser buys the snacks. Just saying.", "emotion": "teasing"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 45,
+        "ttl": 4,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "order", "gloss": "Come, little ship. Our rules now.", "say": "Come, little ship. Our rules now.", "emotion": "stern"},
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "Your turn ends here.", "say": "Your turn ends here.", "emotion": "teasing"}
+        ]
+      }
+    },
+    "bonusDare.supplyRun": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 4,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sparrow", "text": "Ten credits says you drop more than you catch.", "emotion": "teasing"},
+        {"speaker": "sunny", "text": "Grab me a snack crate. The salty ones!", "emotion": "teasing"},
+        {"speaker": "pip", "text": "Who even packs fries in a supply crate?", "emotion": "excited"},
+        {"speaker": "kestrel", "text": "Catch them all and the next round is on me.", "emotion": "warm"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 45,
+        "ttl": 4,
+        "lines": [
+          {"speaker": "skritch", "grunt": "cackle", "gloss": "Shiny boxes! Mine, mine, mine!", "say": "Shiny boxes! Mine, mine, mine!", "emotion": "excited"},
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "Those crates are ours. Wait your turn!", "say": "Those crates are ours. Wait your turn!", "emotion": "stern"},
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "Dibs on the crunchy ones!", "say": "Dibs on the crunchy ones!", "emotion": "excited"},
+          {"speaker": "skarn", "grunt": "roar", "gloss": "Burn the boxes! Burn the sky!", "say": "Burn the boxes! Burn the sky!", "emotion": "excited"}
+        ]
+      }
+    },
+    "bonusDare.stormfront": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 4,
+      "mood": "worried",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Bet you flinch first. Loser carries the cooler.", "emotion": "teasing"},
+        {"speaker": "kestrel", "text": "Dance with the lightning, pilot. Just don't let it lead.", "emotion": "calm"},
+        {"speaker": "sparrow", "text": "Who rolled for weather? I want a word.", "emotion": "teasing"},
+        {"speaker": "anvil", "text": "Park under them, then step aside. Let the sky swing.", "emotion": "warm"}
+      ],
+      "demon": {
+        "priority": 5,
+        "cooldown": 45,
+        "ttl": 4,
+        "lines": [
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "The storm is ours. You will be ash!", "say": "The storm is ours. You will be ash!", "emotion": "stern"},
+          {"speaker": "skarn", "grunt": "roar", "gloss": "Thunder bows to the brood!", "say": "Thunder bows to the brood!", "emotion": "triumphant"},
+          {"speaker": "nibb", "grunt": "alarm", "gloss": "Rain? Nobody said rain was in the rules!", "say": "Rain? Nobody said rain was in the rules!", "emotion": "panicked"},
+          {"speaker": "morth", "grunt": "gloat", "gloss": "Every storm passes. So does every turn.", "say": "Every storm passes. So does every turn.", "emotion": "teasing"}
+        ]
+      }
+    },
+    "bonusMidway.supplyRun": {
+      "priority": 3,
+      "cooldown": 60,
+      "ttl": 4,
+      "mood": "happy",
+      "exchange": "human",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Half the cargo is still up there. Somebody's slacking.", "emotion": "teasing"},
+        {"speaker": "anvil", "text": "Odd. This crate is half full of sand. Who packed it?", "emotion": "calm"},
+        {"speaker": "sunny", "text": "Smell that? Salt air. Way out here?", "emotion": "teasing"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 60,
+        "ttl": 4,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "order", "gloss": "Stop counting their boxes! Count ours!", "say": "Stop counting their boxes! Count ours!", "emotion": "stern"},
+          {"speaker": "sliss", "grunt": "snarl", "gloss": "Sticky crate. Who spilled the soda?", "say": "Sticky crate. Who spilled the soda?", "emotion": "stern"},
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "Enjoy your boxes. The next turn is mine.", "say": "Enjoy your boxes. The next turn is mine.", "emotion": "teasing"}
+        ]
+      }
+    },
+    "bonusMidway.stormfront": {
+      "priority": 3,
+      "cooldown": 60,
+      "ttl": 4,
+      "mood": "worried",
+      "exchange": "human",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Halftime weather report: still stormy, still winning.", "emotion": "teasing"},
+        {"speaker": "nomad", "text": "Funny. That thunder sounded like someone shaking dice.", "emotion": "calm"},
+        {"speaker": "wisp", "text": "Pressure's dropping again. Keep them under the clouds!", "emotion": "urgent"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 60,
+        "ttl": 4,
+        "lines": [
+          {"speaker": "skarn", "grunt": "snarl", "gloss": "Who keeps calling the lightning?!", "say": "Who keeps calling the lightning?!", "emotion": "stern"},
+          {"speaker": "morth", "grunt": "gloat", "gloss": "Storms pass. Turns pass. The brood remains.", "say": "Storms pass. Turns pass. The brood remains.", "emotion": "teasing"},
+          {"speaker": "sliss", "grunt": "alarm", "gloss": "Wet scales! Somebody move the umbrella!", "say": "Wet scales! Somebody move the umbrella!", "emotion": "panicked"}
+        ]
+      }
+    },
+    "bonusCrateMissed.supplyRun": {
+      "priority": 3,
+      "cooldown": 25,
+      "ttl": 2.5,
+      "mood": "happy",
+      "chance": 0.6,
+      "group": "loot",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "That crate's going to the fish. Shoot the next one open!", "emotion": "teasing"},
+        {"speaker": "sparrow", "text": "Missed one! Three hits and it pops, remember?", "emotion": "teasing"},
+        {"speaker": "pip", "text": "Noooo, the snack crate! Crack the next one, quick!", "emotion": "panicked"},
+        {"speaker": "anvil", "text": "Unopened crates are just litter. Pop them on the way down.", "emotion": "calm"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 25,
+        "ttl": 2.5,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "skritch", "grunt": "cackle", "gloss": "Dropped it! Finders keepers!", "say": "Dropped it! Finders keepers!", "emotion": "excited"},
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "Mine now. Does it have the crunchy ones?", "say": "Mine now. Does it have the crunchy ones?", "emotion": "excited"}
+        ]
+      }
+    },
+    "bossHintHatches": {
+      "priority": 7,
+      "cooldown": 20,
+      "ttl": 3,
+      "mood": "stern",
+      "pending": "text",
+      "lines": [
+        {"speaker": "admiral", "text": "Destroy the hatches!", "emotion": "urgent"}
+      ]
+    },
+    "bossHintTiming": {
+      "priority": 7,
+      "cooldown": 20,
+      "ttl": 3,
+      "mood": "stern",
+      "pending": "text",
+      "lines": [
+        {"speaker": "kestrel", "text": "Time the open hatch!", "emotion": "urgent"}
+      ]
+    },
+    "bossHintLead": {
+      "priority": 7,
+      "cooldown": 25,
+      "ttl": 3,
+      "mood": "stern",
+      "pending": "text",
+      "lines": [
+        {"speaker": "wisp", "text": "Fire ahead of its position!", "emotion": "urgent"}
+      ]
     }
   }
 }

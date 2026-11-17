@@ -1,20 +1,35 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'arena_camera.dart';
 import 'atmosphere.dart';
+import 'weather/rain_layer.dart';
 import 'attract.dart';
+import 'boss_director.dart';
 import 'ground_atmosphere.dart';
 import 'ground_atmosphere_atlas.dart';
+import 'bonus/bonus_look.dart'; // --- bonus levels
+import 'bonus/bonus_painters.dart'; // --- bonus levels: mechanics
 import 'boss_painter.dart';
+import 'carrier_breakup_painter.dart';
+import 'carrier_hatch_painter.dart';
+import 'carrier_presentation.dart';
+import 'carrier_script.dart' show CarrierApproachScript;
 import 'ground_painter.dart';
+import 'insignia_atlas.dart';
+import 'insignia_painter.dart';
 import 'model.dart';
 import 'music_director.dart'; // --- music event hook
+import 'flock.dart' show SwarmFlock;
+import 'flyover_background.dart';
 import 'sector_background.dart';
+import 'shadow_projector.dart';
 import 'sentinel_silhouette_atlas.dart';
 import 'ship_painter.dart';
 import 'sprite_atlas.dart';
@@ -30,6 +45,11 @@ class DemonScene extends FlameGame {
   DemonScene(this.model, this.onTick);
   final ArcadeModel model;
   final VoidCallback onTick;
+
+  /// --- mission-medals: true while the urgent-mission card holds a bonus
+  /// level's start; the model is not stepped (presentation runs on).
+  bool Function() holdModel = _never;
+  static bool _never() => false;
   ui.Image? atlas, effectsAtlas, sky, cockpitAtlas;
 
   /// The foreshadow silhouette sheet (tools/sentinel_silhouettes); the
@@ -38,10 +58,34 @@ class DemonScene extends FlameGame {
   final ship = ShipPainter();
   // Boss armada: one hull class per run, its atlas loaded on approach.
   final armada = BossPainter();
+
+  /// boss-grandeur: the boss level's phases, altitude, camera and views.
+  late final bossDirector = BossDirector(seed: model.seed);
+
+  /// carrier-v3: the field, the gates and the speed cues.
+  final carrierV3 = CarrierPresentation();
+  final hatchPainter = CarrierHatchPainter(); // --- carrier-hatches
+  final breakup = CarrierBreakupPainter(); // --- carrier-hatches Part B
+
+  /// The gameplay layer is drawn under the arena camera's zoom this frame.
+  bool _zoomApplied = false;
+
+  /// boss-carrier-wire: the creature draw-size floor under the zoom (1
+  /// unless the carrier band takes the far-row creature under 34 CSS px).
+  double get _creatureFloor => _zoomApplied
+      ? bossDirector.camera.floorScale(
+          44 * Perspective.scaleOf(Perspective.nearTop),
+          ArenaCamera.creatureFloor,
+        )
+      : 1.0;
   final sectors = SectorBackground();
   final creatures = CreaturePresentation();
+  // --- alien-insignia: rank glyphs and shield cells over the arena.
+  final insignia = InsigniaPainter();
   // --- atmosphere: fog layers and creature veils (atmosphere.dart).
   final atmosphere = Atmosphere();
+  // --- dynamic-weather: a regular level's rain (lib/game/weather/).
+  final rain = RainLayer();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- ground war (ground_painter.dart) ---
   late final groundForces = GroundPainter()
@@ -52,6 +96,9 @@ class DemonScene extends FlameGame {
   List<ScoreEntry> topScores = const [];
   double ambient = 0, _notify = 0;
   double environment = 0;
+
+  /// --- bonus levels: the grade over a bonus level's backdrop.
+  final bonusLook = BonusLookLayer();
   double keyboardDirection = 0;
   String? assetError;
   @override
@@ -71,6 +118,9 @@ class DemonScene extends FlameGame {
     }
     try {
       cockpitAtlas = await images.load('cockpit-panel.png');
+    } catch (_) {}
+    try {
+      insignia.image = await images.load(InsigniaAtlas.file);
     } catch (_) {}
     try {
       silhouetteAtlas = await images.load(SentinelSilhouetteAtlas.file);
@@ -123,12 +173,13 @@ class DemonScene extends FlameGame {
   void update(double dt) {
     super.update(dt);
     if (model.mode != RunMode.paused) advancePresentation(dt);
-    if (model.canPilot && keyboardDirection != 0) {
+    final held = holdModel(); // --- mission-medals
+    if (!held && model.canPilot && keyboardDirection != 0) {
       model.moveBy(keyboardDirection * dt * 280);
     }
     // --- cinematic flow: the accessibility setting picks the plan.
     model.reducedMotion = sectors.flyover.reducedMotion;
-    model.update(dt);
+    if (!held) model.update(dt);
     armada.sync(model, images.load, images.clear);
     // --- ground blocks runtime: the current sector's block atlases.
     if (GroundPainter.useBlocks) {
@@ -151,7 +202,17 @@ class DemonScene extends FlameGame {
   /// The title's attract swarm (cinematic-flow task 6.1).
   final attract = AttractSwarm();
 
+  /// The drawn reserve's opacity: hidden through a transition (playtest
+  /// R1), it fades back into the deep fog over [reserveFade] seconds once
+  /// the fight is on, instead of popping in.
+  double reserveIn = 1;
+  static const reserveFade = 1.2;
+
   void advancePresentation(double dt) {
+    bonusLook.advance(model, dt); // --- bonus levels
+    reserveIn = model.flow.active
+        ? 0
+        : math.min(1.0, reserveIn + dt / reserveFade);
     if (model.mode == RunMode.title) {
       attract
         ..reduced = sectors.flyover.reducedMotion
@@ -190,10 +251,52 @@ class DemonScene extends FlameGame {
             : model.level - 1;
         environment += (destination - environment) * math.min(1, dt * .65);
       }
+      // --- transition ascent: the streaks and the cloud billows scroll at
+      // the world's speed (design §3).
+      if (flow.active && !model.reducedMotion) {
+        final factor = flow.plan.beat('speed') == null
+            ? 1.0
+            : flow.plan.speedFactor(flow.env('speed'));
+        streakRun += dt * streakSpeed * factor;
+        cloudRun += dt * 28 * factor;
+      } else {
+        streakRun = cloudRun = 0;
+      }
       // --- flyover parallax hook (visual only; reads model state) ---
       sectors.advance(dt, model, environment);
+      advanceBoss(dt);
       syncAtmosphere(dt);
+      // --- dynamic-weather: visual only; reads the run seed and the level.
+      rain.advance(dt, model, reduced: sectors.flyover.reducedMotion);
     }
+  }
+
+  /// boss-grandeur: the director's step and what it drives elsewhere: the
+  /// boss shadow's altitude (terrain-shadows hook) and the ground sprites'
+  /// altitude (they keep their size as the ground stretches below).
+  void advanceBoss(double dt) {
+    final b = model.boss;
+    if (b != null && armada.heroReady) armada.assemble(b, model.cycle);
+    armada.beginFrame(); // carrier-v3: the mesh counters, per frame
+    bossDirector.update(
+      model,
+      dt,
+      reduced: sectors.flyover.reducedMotion,
+      modules: armada.modules,
+      carrier: armada.carrier,
+    );
+    bossShadowAltitude = defaultBossShadowAltitude * bossDirector.altitude;
+    GroundCamera.spriteAltitude = bossDirector.camera.altitude;
+    // carrier-v3 §2: the carrier is drawn bent (rigid under reduced motion);
+    // its field's distance map is derived once per hull at load.
+    final reduced = sectors.flyover.reducedMotion;
+    armada.bend = armada.carrier && !reduced ? bossDirector.bend : null;
+    if (armada.carrier && model.level >= 4) carrierV3.ensureField(armada);
+    carrierV3.update(dt, model, bossDirector, reduced: reduced);
+    hatchPainter.update(model.boss, model.visualClock, reduced: reduced);
+    // --- carrier-hatches Part B: the hull's components, cut at install.
+    if (armada.carrier && model.level >= 4) breakup.prepare(armada);
+    breakup.update(model, bossDirector, reduced: reduced);
   }
 
   /// Feeds the fog its clock and the flight distance (visual only). The fog
@@ -207,7 +310,11 @@ class DemonScene extends FlameGame {
       // --- cinematic flow: the Pursuit's cloud and the outro's thinning.
       ..cloudCover = model.flow.env('cloud')
       ..fogThin = model.flow.env('thin')
-      ..cloudScroll = model.reducedMotion ? 0 : model.flow.seconds * 28
+      ..cloudScroll = model.reducedMotion ? 0 : cloudRun
+      // boss-grandeur (R8): the fight plays higher and faster: the fog
+      // flows faster past it (the ground below slows by the altitude).
+      // carrier-v3 §7: and each layer at its own rate, the near faster.
+      ..flowBoost = bossDirector.flowBoost
       ..advance(dt, distance: sectors.flyover.distance);
   }
 
@@ -217,18 +324,29 @@ class DemonScene extends FlameGame {
     paintArena(canvas, size, combat: false);
   }
 
-  void paintArena(Canvas canvas, Vector2 dimensions, {bool combat = true}) {
+  /// Paints the 360 × 520 arena scaled to fit [dimensions]: centred
+  /// across, and at [alignY] down the spare height (0 top, .5 centred,
+  /// 1 bottom; the cabinet arena is bottom-aligned on the pilot dock).
+  void paintArena(
+    Canvas canvas,
+    Vector2 dimensions, {
+    bool combat = true,
+    double alignY = .5,
+  }) {
     final scale = math.min(
       dimensions.x / ArcadeModel.width,
       dimensions.y / ArcadeModel.height,
     );
     canvas.save();
-    canvas.translate(
-      (dimensions.x - ArcadeModel.width * scale) / 2,
-      (dimensions.y - ArcadeModel.height * scale) / 2,
-    );
+    final spare = (dimensions.y - ArcadeModel.height * scale) * alignY;
+    canvas.translate((dimensions.x - ArcadeModel.width * scale) / 2, spare);
     canvas.scale(scale);
-    canvas.clipRect(const Rect.fromLTWH(0, 0, 360, 520));
+    // --- playtest-fixes-3: the spare height above the arena (the toast
+    // band on a tall phone) is background, always: sky, parallax, fog and
+    // cloud reach the viewport's top. Gameplay stays clipped to the arena.
+    headroom = scale > 0 ? math.max(0.0, spare / scale) : 0.0;
+    atmosphere.headroom = headroom;
+    canvas.clipRect(Rect.fromLTWH(0, -headroom, 360, 520 + headroom));
     final (shakeX, shakeY) = rushShake(); // --- sentinel rush (≤ 2 px)
     if (shakeX != 0 || shakeY != 0) canvas.translate(shakeX, shakeY);
     final panY = model.mode == RunMode.gameOver ? model.cameraPanY : 0.0;
@@ -237,6 +355,7 @@ class DemonScene extends FlameGame {
       canvas.save();
       canvas.translate(0, panY);
       _background(canvas);
+      rain.paint(canvas, haze: atmosphere.cloud); // --- dynamic-weather
       final active = model.mode != RunMode.title;
       if (active && combat) {
         groundForces.paintGround(
@@ -255,33 +374,137 @@ class DemonScene extends FlameGame {
       }
       canvas.restore();
     } else {
-      // --- cinematic flow: the camera tilts up through the layers (the
-      // world slides down) and shakes on the last kill (never in reduced
-      // motion); the band the tilt uncovers is already cloud.
+      // --- cinematic flow: the outro's flat tilt (the world slides down)
+      // and the shake on the last kill (never in reduced motion).
+      // --- transition ascent (design §2): in a sector change the camera
+      // pitches up instead: the horizon drops by [pitchDrop]·q and the
+      // ground foreshortens about it, and the world banks toward the
+      // pursuit about the ship. The band the drop uncovers is already
+      // cloud. HUD, comms dock, ship and bullets are never pitched or
+      // rolled (the flow ship and the cover are drawn after the world).
       final tilt = model.flow.env('tilt') * flowTilt;
-      final shake = _flowShake();
-      if (tilt > .01) {
+      // carrier-v3 §7: the carrier's trauma shake joins the flow's (four
+      // beats only). Its take-off pitch goes through the arena camera's
+      // background transform (no uncovered band over the hull).
+      final q = model.flow.env('pitch');
+      final drop = pitchDrop * q;
+      final band = tilt + drop;
+      final roll = model.flow.env('roll');
+      final shake = _flowShake() + bossDirector.shake;
+      // playtest-fixes-3: the band the pitch uncovers is the deep sky above
+      // the painted one in clear air, and cloud once the cloud is in (the
+      // pitch now starts with the climb, before the cloud).
+      final bandSky = Color.lerp(
+        const Color(0xFF070B16),
+        atmosphere.cloud,
+        model.flow.env('cloud').clamp(0.0, 1.0),
+      )!;
+      if (roll > .001) {
+        // Under a banked world the corners show the cloud, never black.
         canvas.drawRect(
-          Rect.fromLTWH(0, 0, 360, tilt + 2),
+          Rect.fromLTWH(0, -headroom, 360, 520 + headroom),
           Paint()..color = atmosphere.cloud,
+        );
+      } else if (band > .01) {
+        canvas.drawRect(
+          Rect.fromLTRB(0, -headroom, 360, band + 2 - headroom),
+          Paint()..color = bandSky,
         );
       }
       canvas.save();
       canvas.translate(shake.dx, tilt + shake.dy);
-      _background(canvas);
+      if (roll > .001) {
+        // About the arena's centre, with just enough overscan that the
+        // banked world still covers every edge and corner (a bank about
+        // the ship's low row would uncover the frame; design §2,
+        // deviations).
+        const pivot = Offset(180, 260);
+        final k = 1 + rollOverscan * roll;
+        canvas
+          ..translate(pivot.dx, pivot.dy)
+          ..rotate(worldRoll(roll, model.flowDirection))
+          ..scale(k, k)
+          ..translate(-pivot.dx, -pivot.dy);
+      }
       final active = model.mode != RunMode.title;
+      // --- boss-grandeur: the background (sky, terrain, ground units) is
+      // drawn through the camera's altitude and follow; the gameplay layer
+      // through its zoom only (design §2–§4).
+      final cam = bossDirector.camera;
+      final bgCam = active && combat && !cam.identity;
+      if (bgCam) {
+        canvas.save();
+        canvas.transform(cam.backgroundMatrix);
+      }
+      if (q > .001) {
+        // The sky translates with the horizon; the ground plane turns
+        // about it (near rows leave the bottom first).
+        final h = Perspective.horizonY + drop;
+        canvas.save();
+        // Overlaps the ground pass by 2 units: no hairline at the seam.
+        canvas.clipRect(Rect.fromLTRB(-40, -40 - headroom, 400, h + 2));
+        canvas.translate(0, drop);
+        _background(canvas);
+        canvas.restore();
+        canvas.save();
+        canvas.clipRect(Rect.fromLTRB(-40, h, 400, 760));
+        _groundPitch(canvas, q);
+        _background(canvas);
+        canvas.restore();
+        _groundPitch(canvas, q);
+      } else {
+        _background(canvas);
+      }
+      bonusLook.paint(canvas); // --- bonus levels: the level's grade
+      // --- dynamic-weather: rain over the backdrop (and the band above the
+      // arena), under the ground units, the fog, the creatures and shots.
+      rain.paint(
+        canvas,
+        headroom: headroom,
+        haze: atmosphere.cloud,
+        perspective: model.perspective,
+      );
       if (active && combat) {
+        // --- bonus levels: a level's mechanic, under the fight.
+        BonusPainters.under(canvas, model, model.visualClock);
         groundForces.paintGround(
           canvas,
           model,
         ); // --- ground war: on the ground
+      }
+      if (bgCam) canvas.restore();
+      if (active && combat) {
+        // Gameplay never draws in the band above the arena.
+        canvas.save();
+        canvas.clipRect(
+          const Rect.fromLTWH(0, 0, 360, 520),
+          doAntiAlias: false,
+        );
+        _zoomApplied = cam.zoom != 1;
+        if (_zoomApplied) {
+          canvas.save();
+          canvas.transform(cam.gameplayMatrix);
+        }
         _combat(canvas);
         groundForces.paintAir(
           canvas,
           model,
           ship,
         ); // --- ground war: in the air
+        // --- bonus levels: a level's mechanic, over the fight.
+        BonusPainters.over(canvas, model, model.visualClock);
+        _bossOverflight(canvas); // --- boss-grandeur: over the ship
         _cinematic(canvas);
+        if (_zoomApplied) {
+          canvas.restore();
+          _arenaEdge(canvas, cam);
+        }
+        _zoomApplied = false;
+        canvas.restore();
+        _carrierHeadroom(canvas, cam);
+        // The high fog over the band (the layers that reach the arena's
+        // top carry on to the viewport's).
+        if (model.perspective) atmosphere.paintBand(canvas);
       } else {
         sectors.flyover.paintFlyers(canvas); // --- easter eggs: flocks
         if (!active) _attractPass(canvas); // --- cinematic flow: attract
@@ -290,16 +513,17 @@ class DemonScene extends FlameGame {
       if (active && combat) {
         // --- cinematic flow: the cover, the pursued flock (sprites that
         // turn to dark silhouettes in the cloud) and the climbing ship.
-        if (tilt > .01) {
-          // Feather the band the tilt uncovered into the scene below it.
+        if (band > .01) {
+          // Feather the band the tilt or pitch uncovered into the scene
+          // below it.
           canvas.drawRect(
-            Rect.fromLTWH(0, 0, 360, tilt + 36),
+            Rect.fromLTRB(0, -headroom, 360, band + 36 - headroom),
             Paint()
               ..shader = ui.Gradient.linear(
-                Offset.zero,
-                Offset(0, tilt + 36),
-                [atmosphere.cloud, atmosphere.cloud.withValues(alpha: 0)],
-                [tilt / (tilt + 36), 1],
+                Offset(0, -headroom),
+                Offset(0, band + 36 - headroom),
+                [bandSky, bandSky.withValues(alpha: 0)],
+                [band / (band + 36), 1],
               ),
           );
         }
@@ -308,7 +532,8 @@ class DemonScene extends FlameGame {
           below: model.flow.kind == FlowKind.campaignOutro,
           warmth: model.flow.env('thin'),
         );
-        _flowFlockPass(canvas, tilt);
+        _fogStreaks(canvas); // --- transition ascent: speed past the ship
+        _flowFlockPass(canvas, band);
         _cinematicFlowShip(canvas);
       }
     }
@@ -332,7 +557,7 @@ class DemonScene extends FlameGame {
       ..sort((a, b) => a.demon.nearness.compareTo(b.demon.nearness));
     for (final m in members) {
       final o = model.flowOpacity(m);
-      if (o <= .01) continue;
+      if (o <= AirCensus.flockDrawn) continue;
       final d = m.demon;
       final pos = Offset(
         d.x.roundToDouble(),
@@ -429,7 +654,7 @@ class DemonScene extends FlameGame {
 
   void _deepStarfieldPan(Canvas c, double panY) {
     c.drawRect(
-      const Rect.fromLTWH(0, 0, 360, 520),
+      Rect.fromLTWH(0, -headroom, 360, 520 + headroom),
       Paint()..color = const Color(0xFF050811),
     );
     final s = sky;
@@ -670,7 +895,13 @@ class DemonScene extends FlameGame {
     model.cycle,
     sky,
     wave: model.wave,
+    headroom: headroom,
   );
+
+  /// playtest-fixes-3: arena units of viewport above the arena this frame
+  /// (the band a bottom-aligned arena leaves on a tall phone). Background
+  /// only: no spawn, target, shot or HUD element is ever placed there.
+  double headroom = 0;
 
   void sprite(
     Canvas c,
@@ -741,11 +972,14 @@ class DemonScene extends FlameGame {
   }
 
   void _combat(Canvas c) {
+    insignia.begin(); // --- alien-insignia: this frame's marks
+    _rims = 0;
     // --- atmosphere: ground fog lies on the terrain, over the shadows.
-    if (model.perspective) atmosphere.paint(c, FogSlot.groundFog);
+    if (model.perspective) _fogSlot(c, FogSlot.groundFog);
     // --- easter eggs: flock flyers over the ground fog (in the air).
     sectors.flyover.paintFlyers(c);
     _creatureShadows(c); // --- continuous swarm: every flyer, the ship
+    _bossOverflightShadow(c); // --- boss-grandeur: it sweeps the ground first
     for (final p in model.heartPickups) {
       c.save();
       c.translate(p.x - 10, p.y - 10);
@@ -753,6 +987,11 @@ class DemonScene extends FlameGame {
       c.restore();
     }
     for (final p in model.pickups) {
+      final special = p.bonus; // --- bonus levels
+      if (special != null) {
+        _bonusBadge(c, special, Offset(p.x, p.y), 36, aura: true);
+        continue;
+      }
       c.drawCircle(
         Offset(p.x, p.y),
         13,
@@ -769,6 +1008,7 @@ class DemonScene extends FlameGame {
     for (final crate in model.supplyCrates) {
       _paintSupplyCrate(c, crate);
     }
+    _bonusPowerStatus(c); // --- bonus levels
     _carrierBackdrop(c);
     // --- perspective: far to near, each drawn at its simulated scale. The
     // next wave, still approaching (model.incoming), is the farthest of all.
@@ -778,11 +1018,8 @@ class DemonScene extends FlameGame {
     // --- continuous swarm: the reserve (groups and later skeins waiting in
     // the deep fog) is drawn veiled with the approaching cohort; neither
     // shows gear (swarmState is the contract with the fog layers).
-    final approaching = <Demon>{
-      for (final d in model.incoming)
-        if (!d.isLarge && d.swarmState != SwarmState.reserve) d,
-      if (model.perspective) ...model.drawnReserve,
-    };
+    final census = airCensus();
+    final approaching = census.approaching;
     final fogSlots = model.perspective
         ? Atmosphere.depthSlots
         : const <FogSlot>[];
@@ -790,18 +1027,25 @@ class DemonScene extends FlameGame {
     final tells = <Demon>[];
     void fog() {
       final slot = fogSlots[nextFog++];
-      atmosphere.paint(c, slot);
+      _fogSlot(c, slot);
       // The sentinel's silhouette circles in the murk: in front of the
       // horizon band's glow (a darker shape in the fog), behind the far
       // banks and both veils, which drift across it at their own winds.
       if (slot == FogSlot.horizonBand) _foreshadowSilhouette(c);
+      // --- boss-grandeur: the looming carrier rises through the layers
+      // (one per ~8 s), and the fighting carrier's shadow falls on the
+      // intermediate fog banks (operator R8).
+      if (nextFog - 1 == _loomLayer(fogSlots.length)) _bossLoom(c);
+      if (nextFog > 1) _bossFogShadow(c, slot);
+      if (nextFog == fogSlots.length) lurkFogPass(c);
     }
 
-    for (final d in _byDepth([
-      ...approaching,
-      for (final d in model.demons)
-        if (d.isLarge || d.swarmState != SwarmState.reserve) d,
-    ])) {
+    // --- carrier-hatches §A6: in the fight, the hull (prow, deck, hatches)
+    // is drawn before the creatures, so none is ever covered by it.
+    final front = model.boss;
+    if (front != null && _carrierFrontFirst(front)) _carrierFront(c, front);
+
+    for (final d in _byDepth(census.bodies)) {
       while (nextFog < fogSlots.length &&
           Atmosphere.layers[fogSlots[nextFog]]!.nearness <= d.nearness) {
         fog();
@@ -812,8 +1056,9 @@ class DemonScene extends FlameGame {
       final (lx, ly) = d.isLarge ? (0.0, 0.0) : creatures.look.offset(d);
       final pos = Offset(d.x + lx, d.y + ly);
       if (d.isLarge) {
-        // Large creatures have their own delayed entrance in simulation.
-        if (d.entranceProgress > 0) {
+        // Large creatures have their own delayed entrance in simulation
+        // (the census leaves one that has not set out undrawn).
+        {
           // --- sentinel rush: the lock shudders it in place (±2 px).
           final shudder =
               d.lastStand &&
@@ -835,7 +1080,6 @@ class DemonScene extends FlameGame {
         }
         continue;
       }
-      if (_parked(d)) continue;
       // One transmittance per creature drives tint, saturation, contrast
       // and the staged reveal: shields, armour and rank halos (no health pips:
       // ux-declutter; hits read from the flash and the shed armour)
@@ -844,24 +1088,11 @@ class DemonScene extends FlameGame {
       final t = _transmittance(d, holding: holding);
       final reveal = Perspective.gearReveal(t);
       c.save();
-      _scaleAbout(c, pos, d.scale); // sizes below are at scale 1
-      if (d.elite && reveal > 0) {
-        // Rank halo: a slow dotted ring of elite insignia pips.
-        for (var i = 0; i < 12; i++) {
-          if ((i + (model.clock * 2).floor()) % 4 == 0) continue;
-          final angle = i * math.pi / 6;
-          c.drawRect(
-            Rect.fromLTWH(
-              (pos.dx + math.cos(angle) * 24).roundToDouble(),
-              (pos.dy + math.sin(angle) * 24).roundToDouble(),
-              2,
-              2,
-            ),
-            Paint()
-              ..color = (d.angry ? gold : violet).withValues(alpha: reveal),
-          );
-        }
-      }
+      // sizes below are at scale 1; boss-carrier-wire: the 34-CSS-px
+      // creature floor is a draw-size floor in the carrier band.
+      _scaleAbout(c, pos, d.scale * _creatureFloor);
+      // --- alien-insignia: the elite's dotted ring is gone; its ocellus
+      // (and every rank's glyph) is drawn over the arena after the fog.
       // Gargoyle frames carry their own banking (3/4 left/neutral/right
       // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
@@ -879,7 +1110,40 @@ class DemonScene extends FlameGame {
         motion: creatures.motion.of(d),
       );
       final size = d.angry ? 44.0 : 40.0;
-      final far = model.perspective ? _bodyOpacity(d.nearness) : 1.0;
+      final far =
+          (model.perspective ? _bodyOpacity(d.nearness) : 1.0) *
+          (census.reserve.contains(d) ? reserveIn : 1.0);
+      // --- alien-insignia: state rim under the body, wound warm-up in the
+      // body's colour filter, the rank glyph queued at the head anchor.
+      final mark = InsigniaPainter.revealAlpha(t) * far;
+      final telling = d.telegraph > 0 && _tellOn;
+      final rim = mark <= 0
+          ? null
+          : telling
+          ? const Color(0xFFFFFFFF)
+          : d.angry
+          ? InsigniaPainter.rimEmber
+          : null;
+      if (rim != null && _rims < InsigniaPainter.maxRims) {
+        _rims++;
+        final w = InsigniaPainter.unitsPerGlyphPx / d.scale;
+        for (final o in [
+          Offset(w, 0),
+          Offset(-w, 0),
+          Offset(0, w),
+          Offset(0, -w),
+        ]) {
+          sprite(
+            c,
+            cell.row,
+            cell.col,
+            pos + o,
+            size,
+            tint: rim,
+            opacity: mark,
+          );
+        }
+      }
       sprite(
         c,
         cell.row,
@@ -887,9 +1151,28 @@ class DemonScene extends FlameGame {
         pos,
         size,
         tint: cell.tintFlash ? Colors.white : null,
-        filter: cell.tintFlash ? null : atmosphere.tintFor(t),
+        filter: cell.tintFlash ? null : _bodyFilter(t, d.moltStage.clamp(0, 3)),
         opacity: far,
       );
+      if (mark > 0) {
+        final head = CombatAtlas.headAnchor(
+          cell.row,
+          cell.col,
+          lift: cell.lift,
+        );
+        final k = size / CombatAtlas.cell * d.scale;
+        insignia.rank(
+          d,
+          CombatAtlas.rankOf(d),
+          pos + Offset(head.dx * k, (head.dy - 1) * k),
+          tone: telling
+              ? InsigniaTone.tell
+              : d.angry
+              ? InsigniaTone.angry
+              : InsigniaTone.bone,
+          alpha: mark,
+        );
+      }
       final glow = Perspective.glowAlpha(t) - t;
       if (glow > .02 && !cell.tintFlash) {
         // Eyes and cracks punch through the fog (research §1).
@@ -942,7 +1225,12 @@ class DemonScene extends FlameGame {
     while (nextFog < fogSlots.length) {
       fog();
     }
-    if (fogSlots.isEmpty) _foreshadowSilhouette(c);
+    if (fogSlots.isEmpty) {
+      _foreshadowSilhouette(c);
+      _bossLoom(c);
+    }
+    _bossLoomLights(c);
+    _deflectSparks(c); // --- playtest-fixes-3: hits glancing off
     for (final fx in creatures.deaths) {
       c.save();
       c.translate(fx.x, fx.y);
@@ -957,137 +1245,14 @@ class DemonScene extends FlameGame {
       c.restore();
     }
     final b = model.boss;
-    if (b != null) {
-      c.save();
-      _carrierArrival(c, b, effects: true);
-      final carrierBank = _carrierBank(b);
-      final hullDamage = (1 - b.core / b.coreMax).clamp(0.0, 1.0);
-      if (armada.ready) {
-        // Bright bow: idle life (eye pulse, ear-fin breath, spine flex and
-        // fissure flicker at 2 fps), damage and the turret heads.
-        final turretFrame =
-            ((model.visualClock * 6 + (model.shipX > b.x ? 1 : 0)).floor() % 4);
-        armada.paintBow(
-          c,
-          b,
-          clock: model.visualClock,
-          damageCell: _carrierDamageCell(hullDamage),
-          turretFrame: turretFrame,
-        );
-        _carrierTurretBarrels(c, b);
-        armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
-      } else {
-        sprite(
-          c,
-          CombatAtlas.fallbackRow,
-          4 + b.phase.clamp(0, 3),
-          Offset(b.x, b.y),
-          184,
-          height: 118,
-        );
-      }
-      _carrierLighting(c, Offset(b.x, b.y), carrierBank);
-      _carrierEyes(c, b);
-      _carrierSideHatches(c, b);
-      final core = Offset(b.x, b.y + 25);
-      c.drawRect(
-        Rect.fromCenter(center: core, width: 32, height: 22),
-        Paint()..color = const Color(0xFF070A14),
-      );
-      c.drawRect(
-        Rect.fromCenter(center: core, width: 24, height: 12),
-        Paint()..color = b.shield > 0 ? violet : gold,
-      );
-      if (armada.ready) {
-        // Authored blast jaws: fanged armoured leaves.
-        armada.paintJaws(c, b);
-      } else {
-        final closed = 16 * (1 - b.door);
-        for (final direction in [-1, 1]) {
-          c.drawRect(
-            Rect.fromLTWH(
-              core.dx + (direction < 0 ? -16 : 16 - closed),
-              core.dy - 11,
-              closed,
-              22,
-            ),
-            Paint()..color = const Color(0xFF57617E),
-          );
-        }
-      }
-      if (b.shield > 0) {
-        // A fixed-width egg encases the hull; depletion brings its surface
-        // inward vertically, so incoming fire visibly reaches nearer the ship.
-        final strength = b.shield / b.shieldMax;
-        final paint = Paint()..isAntiAlias = false;
-        final Color shieldColor;
-        if (strength > 0.6) {
-          shieldColor = mint;
-        } else if (strength > 0.25) {
-          // Stressed force field shifts to electric jade/lime with fracture flicker
-          shieldColor = const Color(0xFF45E898);
-        } else {
-          // Critical force field flickers rapidly with warning energy
-          final flicker = (math.sin(model.visualClock * 24) + 1.0) * 0.5;
-          shieldColor = Color.lerp(
-            const Color(0xFF50E070),
-            const Color(0xFF70F050),
-            flicker,
-          )!;
-        }
-
-        for (var offset = 0.0; offset <= b.forceFieldHalfWidth; offset += 2) {
-          for (final side in [-1.0, 1.0]) {
-            final worldX = b.x + side * offset;
-            final surface = b.forceFieldSurfaceY(worldX);
-            paint.color = shieldColor.withValues(alpha: .65 + strength * .3);
-            c.drawRect(
-              Rect.fromLTWH(
-                (worldX - 1).roundToDouble(),
-                surface.roundToDouble(),
-                2,
-                strength > .5 ? 3 : 2,
-              ),
-              paint,
-            );
-            if (strength > .25) {
-              paint.color = violet.withValues(alpha: .22 + strength * .2);
-              c.drawRect(
-                Rect.fromLTWH(
-                  (worldX - 1).roundToDouble(),
-                  surface.roundToDouble() - 4,
-                  2,
-                  2,
-                ),
-                paint,
-              );
-            }
-          }
-        }
-        if (strength <= 0.6) {
-          final arcP = Paint()
-            ..color = shieldColor.withValues(alpha: 0.8)
-            ..strokeWidth = 1.5;
-          final arcX =
-              b.x +
-              math.sin(model.visualClock * 9) * (b.forceFieldHalfWidth * 0.7);
-          final arcY = b.forceFieldSurfaceY(arcX);
-          c.drawLine(
-            Offset(arcX - 6, arcY - 3),
-            Offset(arcX + 4, arcY + 2),
-            arcP,
-          );
-        }
-      }
-      _damage(c, Offset(b.x, b.y), hullDamage, model.visualClock);
-      c.restore();
-    }
+    if (b != null && !_carrierFrontFirst(b)) _carrierFront(c, b);
+    _bossWrecks(c); // --- boss-grandeur: plates, modules, the collapse
     // --- atmosphere: one or two very thin sheets over the arena, creatures
     // and carrier included. Bullets, the player, tells and the HUD are drawn
     // after them: never fogged (research §11).
     if (model.perspective) {
-      atmosphere.paint(c, FogSlot.skySheet1);
-      atmosphere.paint(c, FogSlot.skySheet2);
+      _fogSlot(c, FogSlot.skySheet1);
+      _fogSlot(c, FogSlot.skySheet2);
     }
     for (final d in tells) {
       final pos = Offset(d.x, d.y);
@@ -1095,6 +1260,25 @@ class DemonScene extends FlameGame {
       _scaleAbout(c, pos, d.scale);
       _wingTellChevrons(c, pos);
       c.restore();
+    }
+    // --- alien-insignia: rank glyphs, shield cells and shards, drawn after
+    // the arena camera at a fixed size (identity until boss-grandeur's
+    // camera lands: pass its toScreen here).
+    creatures.shields.paintShards(c);
+    if (_zoomApplied) {
+      // Undo the zoom: the marks are placed through the camera and drawn
+      // at their fixed size (alien-insignia's hook).
+      final cam = bossDirector.camera;
+      c.save();
+      final z = 1 / cam.zoom;
+      c
+        ..translate(ArenaCamera.pivotX, ArenaCamera.pivotY)
+        ..scale(z, z)
+        ..translate(-ArenaCamera.pivotX, -ArenaCamera.pivotY);
+      insignia.paint(c, now: model.visualClock, toScreen: cam.toScreen);
+      c.restore();
+    } else {
+      insignia.paint(c, now: model.visualClock);
     }
     for (final s in model.shots) {
       final x = s.x.roundToDouble(), y = s.y.roundToDouble();
@@ -1202,6 +1386,190 @@ class DemonScene extends FlameGame {
     }
   }
 
+  /// alien-insignia: the carrier's form glyph on the brood sigil (the
+  /// rank ladder: talon, two talons, ocellus, crown) and its 12 hull cells
+  /// on the force field's lower arc, `ceil(12 · shield / shieldMax)` lit.
+  /// carrier-hatches §A6: the fighting carrier's front pass goes under the
+  /// creatures.
+  bool _carrierFrontFirst(Carrier b) => b.fightReady;
+
+  /// The carrier's front pass: the prow, deck, gates and core door.
+  void _carrierFront(Canvas c, Carrier b) {
+    c.save();
+    _carrierArrival(c, b, effects: true);
+    final rising = _bossRiseBegin(c, b);
+    final carrierBank = _carrierBank(b);
+    final hullDamage = (1 - b.core / b.coreMax).clamp(0.0, 1.0);
+    final hero = armada.heroReady;
+    if (hero) {
+      // boss-grandeur: the bow of the view set (the functional face) at
+      // the director's view and stage; the scene adds barrels, hatches,
+      // maw and shield as before.
+      final d = bossDirector;
+      armada.paintHero(
+        c,
+        Offset(b.x, b.y),
+        view: d.view,
+        previous: d.previous,
+        blend: d.blend,
+        stage: d.stage,
+        front: true,
+        detached: d.detached,
+        clock: model.visualClock,
+      );
+      if (!armada.carrier) _carrierTurretBarrels(c, b);
+      armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
+    } else if (armada.ready) {
+      // Bright bow: idle life (eye pulse, ear-fin breath, spine flex and
+      // fissure flicker at 2 fps), damage and the turret heads.
+      final turretFrame =
+          ((model.visualClock * 6 + (model.shipX > b.x ? 1 : 0)).floor() % 4);
+      armada.paintBow(
+        c,
+        b,
+        clock: model.visualClock,
+        damageCell: _carrierDamageCell(hullDamage),
+        turretFrame: turretFrame,
+      );
+      _carrierTurretBarrels(c, b);
+      armada.paintRcs(c, Offset(b.x, b.y), carrierBank, model.visualClock);
+    } else {
+      sprite(
+        c,
+        CombatAtlas.fallbackRow,
+        4 + b.phase.clamp(0, 3),
+        Offset(b.x, b.y),
+        184,
+        height: 118,
+      );
+    }
+    if (armada.carrier) {
+      // boss-carrier-wire: the v2 prow's hangar deck carries its own
+      // doors (no fanged jaws, no lit windows: styleguide §3.4).
+      _carrierDeck(c, b);
+      // carrier-v3 §4: the prow's gates (deck bays, prong gates), over
+      // the deck's furniture.
+      carrierV3.paintGates(
+        c,
+        model.launches,
+        Offset(b.x, b.y),
+        front: true,
+        clock: model.visualClock,
+        bend: armada.bent,
+        armada: armada,
+        stage: armada.lastStage,
+      );
+    } else {
+      _carrierLighting(c, Offset(b.x, b.y), carrierBank);
+      if (!hero) _carrierEyes(c, b); // the view set's eyes are its own
+      _carrierSideHatches(c, b);
+      final core = Offset(b.x, b.y + 25);
+      c.drawRect(
+        Rect.fromCenter(center: core, width: 32, height: 22),
+        Paint()..color = const Color(0xFF070A14),
+      );
+      c.drawRect(
+        Rect.fromCenter(center: core, width: 24, height: 12),
+        Paint()..color = b.shield > 0 ? violet : gold,
+      );
+      if (armada.anyReady) {
+        // Authored blast jaws: fanged armoured leaves.
+        armada.paintJaws(c, b);
+      } else {
+        final closed = 16 * (1 - b.door);
+        for (final direction in [-1, 1]) {
+          c.drawRect(
+            Rect.fromLTWH(
+              core.dx + (direction < 0 ? -16 : 16 - closed),
+              core.dy - 11,
+              closed,
+              22,
+            ),
+            Paint()..color = const Color(0xFF57617E),
+          );
+        }
+      }
+    }
+    // carrier-v3 §3: a v2 carrier's field is the hull-conforming
+    // membrane; its front lip (where shots stop) is drawn here, over the
+    // prow. Without a distance map, today's arc.
+    // --- carrier-hatches §A3–§A5: no hull-wide field any more; the core
+    // door (the tusk-framed slot, its shutter and the lead pip).
+    if (b.fightReady) {
+      hatchPainter.paintCore(
+        c,
+        b,
+        bend: armada.carrier ? armada.bent : null,
+        clock: model.visualClock,
+        reduced: sectors.flyover.reducedMotion,
+        pip: model.leadPipShown
+            ? Offset(model.leadPipAt(b).dx, model.leadPipAt(b).dy)
+            : null,
+      );
+      // Part B: the breaking modules' components, attached or flying.
+      if (armada.carrier) {
+        breakup.paint(c, armada, bossDirector.clock, bent: armada.bent);
+      }
+    }
+    // The view set carries its own damage stages (S1–S3).
+    if (!hero) _damage(c, Offset(b.x, b.y), hullDamage, model.visualClock);
+    if (rising) c.restore();
+    c.restore();
+    if (b.fightReady) _carrierInsignia(b);
+  }
+
+  void _carrierInsignia(Carrier b) {
+    insignia.rank(
+      b,
+      InsigniaPainter.carrierRank(b.phase),
+      Offset(b.x, b.y + carrierSigilY),
+      size: 2,
+    );
+    final fx = creatures.shields;
+    if (b.shieldMax <= 0 || (b.shield <= 0 && fx.bossFlashes.isEmpty)) return;
+    final lit = ShieldFx.bossCells(b.shield, b.shieldMax);
+    final on = InsigniaPainter.litCells(12, lit);
+    for (var i = 0; i < 12; i++) {
+      final x = b.x + (i / 11 - .5) * 1.5 * b.forceFieldHalfWidth;
+      final at = Offset(x, b.forceFieldSurfaceY(x));
+      insignia.cell(at, fx.bossCellState(i, on[i], at), size: 1.5);
+    }
+  }
+
+  /// Where the carrier's sigil glyph sits (units below its centre).
+  static const double carrierSigilY = -16;
+
+  // --- alien-insignia: per-frame rim budget, the tell flash and the
+  // wound warm-up composed into the body's veil filter (design §5).
+  int _rims = 0;
+
+  /// Rims drawn in the last frame (at most InsigniaPainter.maxRims).
+  int get rimCount => _rims;
+  bool get _tellOn => InsigniaPainter.tellOn(
+    model.visualClock,
+    reducedMotion: sectors.flyover.reducedMotion,
+  );
+  final Map<int, ColorFilter?> _warmFilters = {};
+  int _warmVeil = 0;
+
+  ColorFilter? _bodyFilter(double t, int molt) {
+    if (molt <= 0) return atmosphere.tintFor(t);
+    final bucket = Perspective.tintBucket(t);
+    final veil = atmosphere.veil;
+    if (veil.toARGB32() != _warmVeil) {
+      _warmFilters.clear();
+      _warmVeil = veil.toARGB32();
+    }
+    return _warmFilters[bucket * 4 + molt] ??= ColorFilter.matrix(
+      bucket >= 15
+          ? InsigniaPainter.warmMatrix(molt)
+          : InsigniaPainter.compose(
+              Atmosphere.veilMatrix(bucket / 15, veil),
+              InsigniaPainter.warmMatrix(molt),
+            ),
+    );
+  }
+
   /// Jettisoned overheated or replaced components tumbling off the ship.
   void _fallingParts(Canvas c) {
     for (final part in model.fallingParts) {
@@ -1304,15 +1672,132 @@ class DemonScene extends FlameGame {
     if (effects) _bossOrbitalArrivalEffects(c, b, p, descent);
   }
 
+  /// --- carrier-render-engine: on a tall phone the band above the arena
+  /// (headroom) is background, and gameplay is clipped out of it; but the
+  /// carrier is larger than the screen, and clipped there its hull (and its
+  /// wreck) ended in a straight line at the arena's top. Its two passes, its
+  /// wreck and the sky sheets over them are drawn again into that band
+  /// only, through the same camera, so the hull continues to the top.
+  void _carrierHeadroom(Canvas canvas, ArenaCamera cam) {
+    if (headroom <= .5 || !armada.carrier) return;
+    final b = model.boss;
+    final k = bossDirector.collapse;
+    final wreck = k != null && !k.done;
+    if (b == null && !wreck) return;
+    canvas.save();
+    canvas.clipRect(Rect.fromLTRB(0, -headroom, 360, 0), doAntiAlias: false);
+    _zoomApplied = cam.zoom != 1;
+    if (_zoomApplied) canvas.transform(cam.gameplayMatrix);
+    if (b != null) {
+      _carrierBackdrop(canvas);
+      if (armada.heroReady) {
+        // The prow too: the back pass is cut out beneath it.
+        canvas.save();
+        _carrierArrival(canvas, b);
+        final rising = _bossRiseBegin(canvas, b);
+        final d = bossDirector;
+        armada.paintHero(
+          canvas,
+          Offset(b.x, b.y),
+          view: d.view,
+          previous: d.previous,
+          blend: d.blend,
+          stage: d.stage,
+          front: true,
+          detached: d.detached,
+          clock: model.visualClock,
+        );
+        if (rising) canvas.restore();
+        canvas.restore();
+      }
+    }
+    if (wreck) _bossWrecks(canvas);
+    if (model.perspective) {
+      _fogSlot(canvas, FogSlot.skySheet1);
+      _fogSlot(canvas, FogSlot.skySheet2);
+    }
+    _zoomApplied = false;
+    canvas.restore();
+  }
+
   /// The armada's background layer (engine plumes, superstructure, its
   /// breaches and running lights), drawn before the creatures so the
   /// outer hull reads as non-solid background that shots pass over.
   void _carrierBackdrop(Canvas c) {
     final b = model.boss;
-    if (b == null || !armada.ready) return;
+    if (b == null || !armada.anyReady) return;
     c.save();
     _carrierArrival(c, b);
     final arriving = model.presentationMode == RunMode.transition;
+    if (armada.heroReady) {
+      final rising = _bossRiseBegin(c, b);
+      // S3: the hull lists as a module breaks away (the outer hull only;
+      // the functional face stays on its windows).
+      final list = bossDirector.list;
+      if (list != 0) {
+        c
+          ..translate(b.x, b.y)
+          ..rotate(list * (b.direction < 0 ? -1 : 1))
+          ..translate(-b.x, -b.y);
+      }
+      armada.paintHeroBackdrop(
+        c,
+        b,
+        director: bossDirector,
+        clock: model.visualClock,
+        bank: _carrierBank(b),
+        damage: (1 - b.core / b.coreMax).clamp(0.0, 1.0),
+        burn: arriving
+            ? .2
+            : model.defeatActive
+            ? (math.sin(model.visualClock * 9.2) > 0 ? 1.0 : .5)
+            : -1,
+      );
+      if (armada.carrier) {
+        // carrier-v3: the hull's own gates, the field's membrane, then the
+        // speed cues over the hull and under the creatures.
+        carrierV3.paintGates(
+          c,
+          model.launches,
+          Offset(b.x, b.y),
+          front: false,
+          clock: model.visualClock,
+          bend: armada.bent,
+          armada: armada,
+          stage: armada.lastStage,
+        );
+        if (b.fightReady) {
+          // --- carrier-hatches §A3: the upper hatches and their own fields
+          // replace the hull-wide membrane.
+          hatchPainter.paintHatches(
+            c,
+            b,
+            model.launches,
+            bend: armada.bent,
+            clock: model.visualClock,
+            reduced: sectors.flyover.reducedMotion,
+          );
+          carrierV3.paintTrails(
+            c,
+            b,
+            armada,
+            bossDirector,
+            bossDirector.camera,
+          );
+          carrierV3.paintCues(
+            c,
+            bossDirector,
+            bossDirector.camera,
+            cloud: atmosphere.cloud,
+            cloudLight: Atmosphere.cloudLight,
+            seed: model.seed * 31 + model.cycle,
+          );
+        }
+      }
+      if (rising) c.restore();
+      c.restore();
+      return;
+    }
     armada.paintBackdrop(
       c,
       b,
@@ -1406,6 +1891,13 @@ class DemonScene extends FlameGame {
     c.translate(center.dx, center.dy);
     c.rotate(bank * 0.14);
     c.scale(1.0 - bank.abs() * 0.14, 1.0);
+    // boss-carrier-wire: the ship's 36-CSS-px floor is a draw-size floor in
+    // the carrier band (Z < 0.75); its hitbox is untouched.
+    if (_zoomApplied) {
+      c.scale(
+        bossDirector.camera.floorScale(ShipPainter.size, ArenaCamera.shipFloor),
+      );
+    }
     c.translate(-center.dx, -center.dy);
     if (ship.ready) {
       // continuous-swarm: a creature's shadow over the ship dims it a
@@ -1686,6 +2178,79 @@ class DemonScene extends FlameGame {
     }
   }
 
+  // --- bonus levels: a bonus-only powerup is a regular badge from the
+  // combat atlas, recoloured (and paired when `twin`), so it never reads
+  // as the regular power. No new art.
+  void _bonusBadge(
+    Canvas c,
+    BonusPowerDef def,
+    Offset at,
+    double size, {
+    bool aura = false,
+    double opacity = 1,
+  }) {
+    final tint = Color(def.tint);
+    if (aura) {
+      final pulse = .5 + .5 * math.sin(model.clock * 7);
+      c.drawCircle(
+        at,
+        15 + 2 * pulse,
+        Paint()..color = tint.withValues(alpha: .16 + .10 * pulse),
+      );
+    }
+    final filter = ColorFilter.mode(tint, BlendMode.modulate);
+    final shift = def.twin ? size * .14 : 0.0;
+    if (def.twin) {
+      sprite(
+        c,
+        CombatAtlas.pickupRow,
+        def.badge,
+        at + Offset(-shift, -shift * .6),
+        size,
+        filter: filter,
+        opacity: opacity * .8,
+      );
+    }
+    sprite(
+      c,
+      CombatAtlas.pickupRow,
+      def.badge,
+      at + Offset(shift, shift * .6),
+      size,
+      filter: filter,
+      opacity: opacity,
+    );
+  }
+
+  /// Active bonus powers ride beside the ship: the badge and a ring that
+  /// runs down with its timer (no text over the play area).
+  void _bonusPowerStatus(Canvas c) {
+    if (model.shipAway) return;
+    var i = 0;
+    for (final def in model.activeBonusPowers) {
+      final left = model.bonusPowerTimers[def.id] ?? 0;
+      final side = i.isEven ? -1.0 : 1.0;
+      final at = Offset(
+        model.shipX + side * (30 + 4 * (i ~/ 2)),
+        model.shipDrawY + 8 - 16.0 * (i ~/ 2),
+      );
+      final ending = left < 2 && (model.clock * 8).floor().isEven;
+      final tint = Color(def.tint);
+      c.drawArc(
+        Rect.fromCircle(center: at, radius: 11),
+        -math.pi / 2,
+        2 * math.pi * (left / def.seconds).clamp(0.0, 1.0),
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = tint.withValues(alpha: ending ? .35 : .9),
+      );
+      _bonusBadge(c, def, at, 20, opacity: ending ? .5 : 1);
+      i++;
+    }
+  }
+
   void _paintSupplyCrate(Canvas c, SupplyCrate crate) {
     final cx = crate.x;
     final cy = crate.y;
@@ -1706,7 +2271,8 @@ class DemonScene extends FlameGame {
       math.pi,
       math.pi,
       true,
-      Paint()..color = mint,
+      // --- bonus levels: a bonus power's crate flies its colour.
+      Paint()..color = crate.bonus == null ? mint : Color(crate.bonus!.tint),
     );
 
     // 2. Parachute Rigging Lines
@@ -1746,6 +2312,11 @@ class DemonScene extends FlameGame {
     );
 
     // Powerup Icon preview inside crate
+    final special = crate.bonus; // --- bonus levels
+    if (special != null) {
+      _bonusBadge(c, special, Offset(cx, cy), 22);
+      return;
+    }
     sprite(
       c,
       CombatAtlas.pickupRow,
@@ -1994,6 +2565,57 @@ class DemonScene extends FlameGame {
       d.entranceProgress <= 0 &&
       d.swarmState != SwarmState.reserve;
 
+  /// Whether [d] casts a shadow on the terrain: a body that is drawn.
+  bool _casts(Demon d) =>
+      d.swarmState != SwarmState.reserve &&
+      !_parked(d) &&
+      !(d.isLarge && d.entranceProgress <= 0);
+
+  /// What the air passes draw this frame (playtest R1: the one list the
+  /// combat pass, the flock pass and the shadow pass all read, so a test
+  /// can prove what is in or behind the fog without painting).
+  AirCensus airCensus() {
+    final reserve = <Demon>{if (model.perspective) ...model.drawnReserve};
+    final approaching = <Demon>{
+      for (final d in model.incoming)
+        if (!d.isLarge && d.swarmState != SwarmState.reserve) d,
+      ...reserve,
+    };
+    final bodies = <Demon>[
+      for (final d in approaching)
+        if (!_parked(d)) d,
+      for (final d in model.demons)
+        if (!approaching.contains(d) &&
+            (d.isLarge
+                ? d.entranceProgress > 0
+                : d.swarmState != SwarmState.reserve && !_parked(d)))
+          d,
+    ];
+    final flock = [
+      for (final m in model.flowFlock)
+        if (model.flowOpacity(m) > AirCensus.flockDrawn) m,
+    ];
+    final shadows = <Demon>[
+      if (model.perspective && creatureShadows) ...{
+        for (final d in model.incoming)
+          if (_casts(d)) d,
+        for (final d in model.demons)
+          if (_casts(d)) d,
+        for (final m in model.flowFlock)
+          if (model.flowOpacity(m) > AirCensus.flockShadow) m.demon,
+      },
+    ];
+    final f = model.foreshadow;
+    return AirCensus(
+      approaching: approaching,
+      reserve: reserve,
+      bodies: bodies,
+      flock: flock,
+      shadows: shadows,
+      silhouette: f != null && f.visible,
+    );
+  }
+
   void _scaleAbout(Canvas c, Offset pos, double scale) {
     if (scale == 1) return;
     c.translate(pos.dx, pos.dy);
@@ -2048,58 +2670,155 @@ class DemonScene extends FlameGame {
       180 *
       math.sin(2 * math.pi * model.clock / 40 + model.level * 1.7);
 
-  _ShadowSpec? _shadowOf(Demon d) {
+  /// How shadows are placed (terrain-shadows design §2): draped on the
+  /// relief, or today's flat plane on the reduced atmosphere tier. There is
+  /// no separate frame-time governor yet: one that drops the atmosphere to
+  /// reduced drops the shadows with it. [shadowModeOverride] forces a mode
+  /// (tests, review strips, the perf baseline).
+  ShadowMode? shadowModeOverride;
+  ShadowMode get shadowMode => atmosphere.quality == AtmosphereQuality.reduced
+      ? ShadowMode.flat
+      : shadowModeOverride ?? ShadowMode.draped;
+
+  /// Draw calls of the last pass, total and the most in one bucket (tests:
+  /// at most four per bucket, one per image).
+  int shadowDrawCalls = 0, shadowDrawCallsPerBucket = 0;
+
+  /// The surface shadows fall on this frame.
+  ShadowSurface get _shadowSurface => shadowMode == ShadowMode.draped
+      ? sectors.flyover.relief
+      : const FlatShadowSurface();
+
+  final _shadowShaders = Expando<ImageShader>('shadow shader');
+  static final _identity4 = Float64List.fromList(const [
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+  ]);
+
+  /// Where the ship's own shadow falls: its legacy point on flat ground,
+  /// the sun-ray hit on the relief otherwise.
+  ShadowHit _shipShadowHit(ShadowSurface surface) {
+    if (shadowMode == ShadowMode.flat) {
+      final p = Offset(
+        model.shipX + 6 + 40 * _shadowTan * .22,
+        ArcadeModel.shipY + 24,
+      );
+      return ShadowHit(p, p, 0);
+    }
+    return ShadowProjector.hit(
+      surface,
+      Offset(model.shipX + 6, ArcadeModel.shipY + 24),
+      40,
+      ShadowProjector.shipDir,
+    );
+  }
+
+  _ShadowSpec? _shadowOf(
+    Demon d,
+    ShadowSurface surface, {
+    bool handoff = false,
+  }) {
     final n = d.nearness;
-    final h = d.altitude;
+    var h = d.altitude;
+    if (h <= 0 && d.isLarge && d.entering && d.entranceProgress > 0) {
+      // terrain-shadows §4: a sentinel rising out of the fog has no
+      // published altitude yet; its shadow eases from the lurking shadow's
+      // low pass down to its fight altitude (presentation only).
+      h =
+          LurkTrack.nearAltitude +
+          (SwarmFlock.fightAltitude(d.homeY) - LurkTrack.nearAltitude) *
+              Perspective.smoothstep(0, 1, d.entranceProgress);
+    }
+    if (d.isLarge && h <= 0 && !d.entering) h = sentinelShadowAltitude(d);
     if (n <= 0 || h <= 0) return null;
     final gy = Perspective.groundY(n);
     if (gy > 530) return null;
-    final k = (h / _shadowHMax).clamp(0.0, 1.0);
+    final az = _sunDrift;
+    // The caster's ground hit (flat: the legacy centre, kept verbatim so the
+    // reduced tier stays byte-identical).
+    final Offset flat, center;
+    var lift = 0.0;
+    if (shadowMode == ShadowMode.flat) {
+      final off = h * _shadowTan * .22;
+      flat = center = Offset(
+        d.x + off * math.cos(az),
+        gy + off * .25 + off * math.sin(az),
+      );
+    } else {
+      final hit = ShadowProjector.hit(
+        surface,
+        Offset(d.x, gy),
+        h,
+        ShadowProjector.flyerDir(az),
+      );
+      flat = hit.flat;
+      center = hit.center;
+      lift = hit.lift;
+    }
+    // Softness from the height above the surface it falls on (task 2.4):
+    // a creature low over a ridge casts a sharper, darker shadow there.
+    final k = lift == 0
+        ? (h / _shadowHMax).clamp(0.0, 1.0)
+        : ShadowProjector.softness(h, lift);
     // 0.95, not the design's 0.55: on the dark sector grounds 0.55 read as
     // nothing (review frames); 0.95 is the old arrival shadow the operator
     // praised.
-    var alpha = .95 * (1 - .4 * k) * Atmosphere.groundLight(gy);
+    var alpha = .95 * (1 - .4 * k) * Atmosphere.groundLight(center.dy);
     if (d.dive > 0 || d.rushing) alpha *= 1.25;
-    if (d.entering && d.swarmState != SwarmState.reentering) {
+    if (d.entering && d.swarmState != SwarmState.reentering && !handoff) {
       alpha *= Perspective.smoothstep(0, .12, d.entranceProgress);
     }
-    if (alpha < .015) return null;
-    final off = h * _shadowTan * .22;
-    final az = _sunDrift;
-    final center = Offset(
-      d.x + off * math.cos(az),
-      gy + off * .25 + off * math.sin(az),
-    );
+    if (alpha < .015 && !handoff) return null;
     final grow = n * 1.8 * (1 + .3 * k);
-    final bucket = k < .45 ? 0 : (k < .8 ? 1 : 2);
+    final bucket = ShadowProjector.bucketOf(k);
     if (d.isLarge) {
-      var at = center;
-      var size = grow / 1.8 * 1.6;
+      var at = center, atFlat = flat;
       if (d.lastStand &&
           (d.rushPhase == RushPhase.lock || d.rushPhase == RushPhase.rush)) {
         // --- sentinel rush: on lock its shadow snaps over the ship's
-        // (W3 shadows), at its largest.
-        final ship = Offset(
-          model.shipX + 6 + 40 * _shadowTan * .22,
-          ArcadeModel.shipY + 24,
-        );
+        // (W3 shadows); on the relief, onto the ship's projected hit point.
+        final ship = _shipShadowHit(surface);
         final snap = d.rushPhase == RushPhase.rush
             ? 1.0
             : Perspective.smoothstep(0, .12, d.rushClock);
-        at = Offset.lerp(center, ship, snap)!;
-        size = math.max(size, 1.6 * 1.25);
+        at = Offset.lerp(center, ship.center, snap)!;
+        atFlat = Offset.lerp(flat, ship.flat, snap)!;
       }
       final img = effectsAtlas;
       if (img == null) return null;
       final species = d.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
-      final frame = (model.clock / .4 + d.seed).floor() % 8;
+      // playtest-fixes-3: one sentinel shadow from lurk through play and
+      // the rush: the lurk's occluder look, sized by the one rule
+      // [sentinelShadowScale] (ground nearness under it, its altitude).
+      final frame = (model.clock / .55 + d.seed).floor() % 4;
+      final clear = .7 + .3 * (1 - FlyoverBackground.groundFogAt(atFlat.dy));
+      var a = lurkAlpha * clear;
+      if (d.entering && d.swarmState != SwarmState.reentering && !handoff) {
+        a *= Perspective.smoothstep(0, .12, d.entranceProgress);
+      }
       return _ShadowSpec(
         img,
         Rect.fromLTWH(frame * 128.0, species * 64.0, 128, 64),
         at,
-        size,
-        alpha.clamp(0.0, .9),
-        bucket,
+        sentinelShadowScale(groundNearness(atFlat.dy), h),
+        a.clamp(0.0, lurkAlpha),
+        2,
+        atFlat,
+        occluder: true,
       );
     }
     final img = atlas;
@@ -2116,34 +2835,441 @@ class DemonScene extends FlameGame {
       40 * grow / 64,
       alpha.clamp(0.0, .9),
       bucket,
+      flat,
     );
   }
+
+  // --- terrain-shadows §4: the sentinel's lurking shadow ---
+
+  /// The lurking shadow drawn last (its hand-off source), the sentinel it
+  /// hands off to and since when.
+  _ShadowSpec? _lurkLast, _handoffFrom;
+  Demon? _handoffTo;
+  double _handoffAt = 0;
+  static const lurkHandoff = .8;
+
+  /// lurk-visibility: the occluder's strength at its core (multiply
+  /// darkening toward [lurkTint], plus [lurkDesaturate] of the colour
+  /// under it), and the smallest ground nearness its size uses.
+  static const lurkAlpha = .9, lurkDesaturate = .6, lurkMinNearness = .2;
+
+  /// Share of the occluder repeated over the depth fog banks above it.
+  static const lurkFog = .65;
+  static const lurkTint = Color(0xFF323C64);
+
+  /// Tests and review: false leaves the lurking shadow undrawn (it is
+  /// still tracked, so hesitation and the hand-off are unchanged).
+  bool drawLurk = true;
+
+  /// What the lurk pass draws this frame (the lurk, or its fading half
+  /// during the hand-off).
+  _ShadowSpec? _lurkDraw;
+
+  /// The lurking shadow's visible footprint this frame (ground units and
+  /// critters under it hesitate), or null.
+  Rect? lurkCover;
+
+  /// The visible centre of [d]'s shadow in the last pass (tests, review).
+  Offset? shadowCenterOf(Demon d) => _lastShadows[d]?.center;
+
+  /// The footprint scale of [d]'s shadow in the last pass (tests, review).
+  double? shadowScaleOf(Demon d) => _lastShadows[d]?.scale;
+
+  /// The last lurking shadow (tests and review), null when none is drawn.
+  Offset? get lurkCenter => _lurkLast?.center;
+
+  /// The last lurking shadow's footprint scale (tests and review).
+  double? get lurkScale => _lurkLast?.scale;
+
+  /// The flat-ground point and visible centre of a caster over [base] at
+  /// [h] on the sun of this frame (flyers' direction).
+  ShadowHit _flyerHit(ShadowSurface surface, Offset base, double h) =>
+      shadowMode == ShadowMode.flat
+      ? (() {
+          final p = ShadowProjector.flatCenter(
+            base,
+            h,
+            ShadowProjector.flyerDir(_sunDrift),
+          );
+          return ShadowHit(p, p, 0);
+        })()
+      : ShadowProjector.hit(
+          surface,
+          base,
+          h,
+          ShadowProjector.flyerDir(_sunDrift),
+        );
+
+  _ShadowSpec? _lurkSpec(
+    SentinelForeshadow f,
+    ui.Image fx,
+    ShadowSurface surface,
+  ) {
+    final l = f.lurk;
+    final base = Offset(l.x(meander: !sectors.flyover.reducedMotion), l.flatY);
+    final hit = _flyerHit(surface, base, l.altitude);
+    // Size by the ground's nearness there: about 2.5 x the sentinel's own,
+    // growing 1.0 -> 1.3 as it nears (and its virtual altitude falls).
+    // lurk-visibility: never smaller than a broad patch near the fog, so it
+    // is seen as soon as it appears.
+    final n = ((hit.flat.dy - Perspective.horizonY) / Perspective.groundSpan)
+        .clamp(lurkMinNearness, 1.0);
+    // Full within 1.5 s of the silhouette appearing.
+    final rise = Perspective.smoothstep(0, .5, f.opacity);
+    // In thick ground fog it is a little softer, never nothing (the fog
+    // over it dims too: [lurkFogPass]).
+    final clear = .7 + .3 * (1 - FlyoverBackground.groundFogAt(hit.flat.dy));
+    final alpha = lurkAlpha * rise * clear;
+    if (alpha < .01) return null;
+    final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
+    return _ShadowSpec(
+      fx,
+      Rect.fromLTWH(
+        ((f.clock / .55).floor() % 4) * 128.0,
+        species * 64.0,
+        128,
+        64,
+      ),
+      hit.center,
+      sentinelShadowScale(n, l.altitude),
+      alpha.clamp(0.0, lurkAlpha),
+      2,
+      hit.flat,
+      occluder: true,
+    );
+  }
+
+  /// playtest-fixes-3: the one size rule of every sentinel shadow (the
+  /// lurk, the rising sentinel, the fight and the rush), as a scale of
+  /// the 128 × 64 strip: the ground's nearness [n] under it (perspective)
+  /// times its softness growth, spread by its altitude [h] above the
+  /// fight's (a high caster's penumbra). In the fight it matches the
+  /// sentinel's own drawn size; far and high, the lurk is broad for the
+  /// ground it lies on, and nothing jumps at the hand-off.
+  static double sentinelShadowScale(double n, double h) {
+    final k = (h / _shadowHMax).clamp(0.0, 1.0);
+    final spread = 1 + 1.2 * math.max(0.0, h - 90) / 130;
+    return 1.6 * n.clamp(lurkMinNearness, 1.0) * (1 + .3 * k) * spread;
+  }
+
+  /// The ground's nearness at flat-ground row [y].
+  static double groundNearness(double y) =>
+      ((y - Perspective.horizonY) / Perspective.groundSpan).clamp(0.0, 1.0);
+
+  /// A fighting sentinel's shadow altitude (presentation: it publishes
+  /// none once it has arrived, which once left it shadowless): its flight
+  /// sheet's altitude, falling toward the ship's 40 as a rush comes down.
+  static double sentinelShadowAltitude(Demon d) {
+    final fight = SwarmFlock.fightAltitude(d.homeY);
+    if (!d.lastStand || d.rushPhase != RushPhase.rush) return fight;
+    final k = ((d.y - 40) / (ArcadeModel.shipY - 40)).clamp(0.0, 1.0);
+    return fight + (40 - fight) * k;
+  }
+
+  /// Blends the lurking shadow into the rising sentinel's own over
+  /// [lurkHandoff] s: position, size and darkness; the in-play shadow is
+  /// this blend until then.
+  _ShadowSpec? _handOff(_ShadowSpec? to) {
+    final from = _handoffFrom;
+    final u = (model.clock - _handoffAt) / lurkHandoff;
+    if (from == null || to == null || u >= 1) {
+      _handoffTo = null;
+      _handoffFrom = null;
+      return to;
+    }
+    final k = Perspective.smoothstep(0, 1, u.clamp(0.0, 1.0));
+    double mix(double a, double b) => a + (b - a) * k;
+    // playtest-fixes-3: one occluder gliding from the lurk onto the
+    // sentinel (both are drawn alike and sized by one rule).
+    return _ShadowSpec(
+      k < .5 ? from.image : to.image,
+      k < .5 ? from.src : to.src,
+      Offset.lerp(from.center, to.center, k)!,
+      mix(from.scale, to.scale),
+      mix(from.alpha, to.alpha),
+      2,
+      Offset.lerp(from.flat, to.flat, k)!,
+      occluder: true,
+    );
+  }
+
+  // --- lurk-visibility: the lurk as an occluder of the ground's light ---
+
+  /// The effects strip's sentinel frames as soft white masks (blurred once,
+  /// padded by [_lurkPad]), so the lurk is soft without a blur layer.
+  ui.Image? _lurkMask;
+  ui.Image? _lurkMaskFor;
+  ImageShader? _lurkMaskShader;
+  static const _lurkPad = 12.0;
+
+  ui.Image _lurkMaskImage(ui.Image fx) {
+    final cached = _lurkMask;
+    if (cached != null && identical(_lurkMaskFor, fx)) return cached;
+    const cw = 128 + 2 * _lurkPad, ch = 64 + 2 * _lurkPad;
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec);
+    final paint = Paint()
+      ..filterQuality = FilterQuality.medium
+      ..colorFilter = const ColorFilter.mode(Color(0xFFFFFFFF), BlendMode.srcIn)
+      ..imageFilter = ui.ImageFilter.blur(sigmaX: 3.2, sigmaY: 2.4);
+    for (var row = 0; row < 2; row++) {
+      for (var col = 0; col < 4; col++) {
+        c.drawImageRect(
+          fx,
+          Rect.fromLTWH(col * 128.0, row * 64.0, 128, 64),
+          Rect.fromLTWH(col * cw + _lurkPad, row * ch + _lurkPad, 128, 64),
+          paint,
+        );
+      }
+    }
+    final pic = rec.endRecording();
+    _lurkMask?.dispose();
+    final mask = pic.toImageSync((4 * cw).round(), (2 * ch).round());
+    pic.dispose();
+    _lurkMask = mask;
+    _lurkMaskFor = fx;
+    _lurkMaskShader = ImageShader(
+      mask,
+      TileMode.clamp,
+      TileMode.clamp,
+      _identity4,
+      filterQuality: FilterQuality.medium,
+    );
+    return mask;
+  }
+
+  /// Draws [s] (a strip frame of the effects atlas) as the lurking
+  /// shadow: its soft mask draped on the surface, first desaturating the
+  /// ground under it, then multiplying it toward [lurkTint]. Lit slopes,
+  /// crest rims and the ground fog's glow dim with it, so it reads as a
+  /// great shape passing over the light, never as a black blob.
+  int _paintLurk(
+    Canvas c,
+    ShadowSurface surface,
+    _ShadowSpec s, {
+    double strength = 1,
+    bool desaturate = true,
+  }) {
+    final fx = s.image;
+    _lurkMaskImage(fx);
+    final shader = _lurkMaskShader!;
+    final lift = 1 - model.flow.env('lift');
+    final a = (s.alpha * lift * strength).clamp(0.0, 1.0);
+    if (a < .01) return 0;
+    const cw = 128 + 2 * _lurkPad, ch = 64 + 2 * _lurkPad;
+    final col = (s.src.left / 128).round(), row = (s.src.top / 64).round();
+    final src = Rect.fromLTWH(col * cw, row * ch, cw, ch);
+    const nv = ShadowProjector.vertices;
+    final pos = Float32List(nv * 2), tex = Float32List(nv * 2);
+    final idx = Uint16List(ShadowProjector.cells * 6);
+    final n = ShadowProjector.drape(
+      surface,
+      s.flat,
+      cw * s.scale,
+      ch * s.scale * ShadowProjector.squash,
+      src,
+      pos,
+      tex,
+      idx,
+      0,
+      0,
+    );
+    if (n == 0) return 0;
+    final indices = Uint16List.sublistView(idx, 0, n);
+    ui.Vertices mesh(Color color) => ui.Vertices.raw(
+      ui.VertexMode.triangles,
+      pos,
+      textureCoordinates: tex,
+      colors: Int32List(nv)..fillRange(0, nv, color.toARGB32()),
+      indices: indices,
+    );
+    if (desaturate) {
+      c.drawVertices(
+        mesh(Color.fromRGBO(128, 128, 128, lurkDesaturate * a)),
+        BlendMode.modulate,
+        Paint()
+          ..shader = shader
+          ..blendMode = BlendMode.saturation,
+      );
+    }
+    c.drawVertices(
+      mesh(lurkTint.withValues(alpha: a)),
+      BlendMode.modulate,
+      Paint()
+        ..shader = shader
+        ..blendMode = BlendMode.multiply,
+    );
+    return desaturate ? 2 : 1;
+  }
+
+  /// The fog banks drawn over the far ground dim over the lurk too, as the
+  /// great shape above blocks their light (after the last depth bank).
+  void lurkFogPass(Canvas c) {
+    final s = _lurkDraw;
+    if (s == null || !drawLurk || !model.perspective) return;
+    _paintLurk(c, _shadowSurface, s, strength: lurkFog, desaturate: false);
+  }
+
+  // --- terrain-shadows §3: the boss shadow ---
+
+  /// The boss's altitude above the terrain (arena units) for its shadow.
+  /// `boss-grandeur` owns it: the shadow shrinks and fades as it climbs.
+  double bossShadowAltitude = defaultBossShadowAltitude;
+  static const defaultBossShadowAltitude = 160.0;
+
+  /// The boss shadow cell (the hull's alpha, area-downscaled to one pixel
+  /// per arena unit, inked), baked once per hull load, and where the
+  /// boss's centre sits in it.
+  ui.Image? _bossShadowCell;
+  Object? _bossShadowFor;
+  Offset _bossShadowAnchor = Offset.zero;
+
+  /// The last boss shadow (tests and review): visible centre, size, alpha.
+  ({Offset center, double scale, double alpha})? bossShadow;
+
+  ui.Image? _bossShadowImage() {
+    if (armada.heroReady) return _heroShadowImage();
+    final img = armada.image;
+    if (!armada.ready || img == null) return null;
+    final key = (img, armada.loadedClass);
+    if (_bossShadowFor == key) return _bossShadowCell;
+    final h = armada.hull;
+    final parts = [h.superstructure[0], h.hull[0][0]];
+    Rect? bounds;
+    for (final p in parts) {
+      final r = Rect.fromLTWH(p.dx, p.dy, p.w / 2, p.h / 2);
+      bounds = bounds?.expandToInclude(r) ?? r;
+    }
+    final b = bounds!;
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec)..translate(-b.left, -b.top);
+    final paint = Paint()
+      ..filterQuality = FilterQuality.medium
+      ..colorFilter = _shadowInk;
+    for (final p in parts) {
+      c.drawImageRect(
+        img,
+        Rect.fromLTWH(
+          p.x.toDouble(),
+          p.y.toDouble(),
+          p.w.toDouble(),
+          p.h.toDouble(),
+        ),
+        Rect.fromLTWH(p.dx, p.dy, p.w / 2, p.h / 2),
+        paint,
+      );
+    }
+    final pic = rec.endRecording();
+    _bossShadowCell?.dispose();
+    _bossShadowCell = pic.toImageSync(b.width.ceil(), b.height.ceil());
+    pic.dispose();
+    _bossShadowAnchor = -b.topLeft;
+    _bossShadowFor = key;
+    return _bossShadowCell;
+  }
+
+  _ShadowSpec? _bossShadow(ShadowSurface surface) {
+    bossShadow = null;
+    if (model.mode == RunMode.title) return null;
+    // boss-grandeur: before the carrier exists its shadow still moves: it
+    // sweeps the ground in the overflight and lurks toward the front while
+    // the carrier looms under the fog.
+    final caster = _bossShadowCaster();
+    if (caster == null) return null;
+    final (bx, by, k) = caster;
+    final b = model.boss;
+    final cell = _bossShadowImage();
+    if (cell == null) return null;
+    final h = math.max(1.0, bossShadowAltitude);
+    var alpha = .35 * (defaultBossShadowAltitude / h).clamp(0.0, 1.0) * .85 * k;
+    if (b != null && model.presentationMode == RunMode.transition) {
+      // It firms up as the carrier settles out of its descent.
+      alpha *= Curves.easeOutCubic.transform(
+        model.transitionProgress.clamp(0.0, 1.0),
+      );
+    }
+    if (alpha < .01) return null;
+    final scale = .9 * math.sqrt(defaultBossShadowAltitude / h).clamp(.4, 1.2);
+    final gy = Perspective.groundY(Perspective.nearnessAtY(by));
+    // The cell's centre relative to the carrier's centre, on the ground.
+    final mid = Offset(cell.width / 2, cell.height / 2) - _bossShadowAnchor;
+    final base = Offset(
+      bx + mid.dx * scale,
+      gy + mid.dy * scale * ShadowProjector.squash,
+    );
+    final hit = _flyerHit(surface, base, h);
+    bossShadow = (center: hit.center, scale: scale, alpha: alpha);
+    return _ShadowSpec(
+      cell,
+      Rect.fromLTWH(0, 0, cell.width.toDouble(), cell.height.toDouble()),
+      hit.center,
+      scale,
+      alpha.clamp(0.0, .35),
+      2,
+      hit.flat,
+    );
+  }
+
+  /// The shadow pass alone (tests: the reduced-tier identity fixture).
+  @visibleForTesting
+  void paintShadowPass(Canvas c) => _creatureShadows(c);
 
   void _creatureShadows(Canvas c, {Iterable<Demon> also = const []}) {
     shadowLayers = 0;
     shadowCount = 0;
+    lurkCover = null;
+    _lurkDraw = null;
+    shadowDrawCalls = 0;
+    shadowDrawCallsPerBucket = 0;
     shipShadowDim = 0;
     shadowed.clear();
-    if (!model.perspective || !creatureShadows) return;
+    if (!model.perspective || !creatureShadows) {
+      sectors.flyover.terrain.lurkCover = null;
+      return;
+    }
     final reduced = atmosphere.quality == AtmosphereQuality.reduced;
+    final draped = shadowMode == ShadowMode.draped;
+    final surface = _shadowSurface;
     final buckets = [<_ShadowSpec>[], <_ShadowSpec>[], <_ShadowSpec>[]];
     final now = <Demon, _ShadowSpec>{};
+    final occluders = <_ShadowSpec>[];
     final flying = <Demon>{
-      for (final d in model.incoming)
-        if (d.swarmState != SwarmState.reserve) d,
-      ...model.demons,
-      for (final m in model.flowFlock)
-        if (model.flowOpacity(m) > .3) m.demon, // --- cinematic flow
+      ...airCensus().shadows,
       ...also, // --- cinematic flow: the title's attract swarm
     };
+    // terrain-shadows §4: the lurking shadow hands off to the sentinel that
+    // rises out of the fog (one sentinel shadow at all times).
+    final lastLurk = _lurkLast;
+    if (lastLurk != null && !(model.foreshadow?.visible ?? false)) {
+      final heir = model.demons
+          .where(
+            (d) =>
+                d.isLarge &&
+                d.entryScale != null &&
+                d.entering &&
+                d.entranceProgress > 0,
+          )
+          .firstOrNull;
+      if (heir != null) {
+        _handoffTo = heir;
+        _handoffFrom = lastLurk;
+        _handoffAt = model.clock;
+      }
+      _lurkLast = null;
+    }
     for (final d in flying) {
-      if (d.swarmState == SwarmState.reserve || _parked(d)) continue;
-      if (d.isLarge && d.entranceProgress <= 0) continue;
-      final s = _shadowOf(d);
+      if (!_casts(d)) continue;
+      final heir = identical(d, _handoffTo);
+      var s = _shadowOf(d, surface, handoff: heir);
+      if (heir) s = _handOff(s);
       if (s == null) continue;
       now[d] = s;
       shadowed.add(d);
-      buckets[reduced ? 0 : s.bucket].add(s);
+      if (s.occluder) {
+        occluders.add(s);
+      } else {
+        buckets[reduced ? 0 : s.bucket].add(s);
+      }
     }
     // Death: the shadow fades with the creature (0.3 s).
     _ghostClock = model.clock;
@@ -2158,54 +3284,52 @@ class DemonScene extends FlameGame {
     _shadowGhosts.removeWhere((g) => _ghostClock - g.$2 > .3);
     for (final (s, born) in _shadowGhosts) {
       final left = 1 - (_ghostClock - born) / .3;
-      buckets[reduced ? 0 : s.bucket].add(s.faded(left));
+      if (s.occluder) {
+        occluders.add(s.faded(left));
+      } else {
+        buckets[reduced ? 0 : s.bucket].add(s.faded(left));
+      }
     }
     // The ship's silhouette, on the same sun at its fixed altitude.
     final shipImg = ship.image;
     final flyover = sectors.flyover;
     flyover.shipShadowByScene = shipImg != null;
     if (shipImg != null && flyover.shipShadowVisible) {
-      const h = 40.0;
-      final off = h * _shadowTan * .22;
+      final hit = _shipShadowHit(surface);
       buckets[reduced ? 0 : 1].add(
         _ShadowSpec(
           shipImg,
           const Rect.fromLTWH(0, 0, ShipPainter.cell, ShipPainter.cell),
-          Offset(model.shipX + 6 + off, ArcadeModel.shipY + 24),
+          hit.center,
           ShipPainter.size / ShipPainter.cell * 1.05,
           .5,
           1,
+          hit.flat,
         ),
       );
     }
-    // A coming sentinel sweeps the far terrain while it circles in the fog.
+    // terrain-shadows §4: a coming sentinel's lurking shadow creeps from the
+    // far terrain toward the front while it circles in the fog.
     final f = model.foreshadow;
     final fx = effectsAtlas;
-    if (f != null && f.visible && fx != null) {
-      final gy = Perspective.groundY(f.nearness.clamp(.08, .4));
-      final alpha = (.2 * f.opacity * Atmosphere.groundLight(gy) - .02).clamp(
-        0.0,
-        .2,
-      );
-      if (alpha > .01) {
-        final species = f.archetype == EnemyArchetype.armoredSentinel ? 1 : 0;
-        buckets[reduced ? 0 : 2].add(
-          _ShadowSpec(
-            fx,
-            Rect.fromLTWH(
-              ((f.clock / .55).floor() % 4) * 128.0,
-              species * 64.0,
-              128,
-              64,
-            ),
-            Offset(f.x + 30, gy + 8),
-            f.scale * 2.2,
-            alpha,
-            2,
-          ),
+    final lurk = f != null && f.visible && fx != null
+        ? _lurkSpec(f, fx, surface)
+        : null;
+    if (lurk != null) {
+      _lurkDraw = lurk;
+      _lurkLast = lurk;
+      if (lurk.alpha > .06) {
+        lurkCover = Rect.fromCenter(
+          center: lurk.center,
+          width: lurk.src.width * lurk.scale * .8,
+          height: lurk.src.height * lurk.scale * ShadowProjector.squash * .8,
         );
       }
     }
+    flyover.terrain.lurkCover = lurkCover;
+    // terrain-shadows §3: the boss's large, soft, low shadow.
+    final boss = _bossShadow(surface);
+    if (boss != null) buckets[reduced ? 0 : 2].add(boss);
     // Shadow over the ship: a multiply dim by overlap, capped.
     final hull = Rect.fromCenter(
       center: Offset(model.shipX, ArcadeModel.shipY),
@@ -2221,6 +3345,16 @@ class DemonScene extends FlameGame {
       shipShadowDim += shipDimCap * share * (s.alpha / .55).clamp(0.0, 1.0);
     }
     shipShadowDim = shipShadowDim.clamp(0.0, shipDimCap);
+    // lurk-visibility: the lurking shadow first, as a passing occluder of
+    // the ground's light (no layer of its own).
+    final lurkNow = _lurkDraw;
+    if (lurkNow != null && drawLurk) {
+      shadowDrawCalls += _paintLurk(c, surface, lurkNow);
+    }
+    // playtest-fixes-3: the fighting sentinel's shadow, the same occluder.
+    for (final s in occluders) {
+      shadowDrawCalls += _paintLurk(c, surface, s);
+    }
     // Draw: one layer per bucket, the ground seen at a slant.
     for (var b = 0; b < 3; b++) {
       final specs = buckets[b];
@@ -2235,37 +3369,112 @@ class DemonScene extends FlameGame {
           // --- cinematic flow: the campaign outro lifts every shadow.
           ..color = Color.fromRGBO(0, 0, 0, 1 - model.flow.env('lift')),
       );
-      c.scale(1, .42);
       final byImage = <ui.Image, List<_ShadowSpec>>{};
       for (final s in specs) {
         (byImage[s.image] ??= []).add(s);
       }
-      for (final e in byImage.entries) {
-        c.drawAtlas(
-          e.key,
-          [
-            for (final s in e.value)
-              RSTransform.fromComponents(
-                rotation: 0,
-                scale: s.scale,
-                anchorX: s.src.width / 2,
-                anchorY: s.src.height / 2,
-                translateX: s.center.dx,
-                translateY: s.center.dy / .42,
-              ),
-          ],
-          [for (final s in e.value) s.src],
-          [
-            for (final s in e.value)
-              Color.fromRGBO(255, 255, 255, s.alpha.clamp(0.0, 1.0)),
-          ],
-          BlendMode.modulate,
-          null,
-          Paint()..filterQuality = FilterQuality.none,
-        );
-      }
+      final calls = draped
+          ? _drapedBatches(c, surface, byImage)
+          : _flatBatches(c, byImage);
+      shadowDrawCalls += calls;
+      shadowDrawCallsPerBucket = math.max(shadowDrawCallsPerBucket, calls);
       c.restore();
     }
+  }
+
+  /// Today's path (ShadowMode.flat): one drawAtlas per image on a plane
+  /// squashed to the slant.
+  int _flatBatches(Canvas c, Map<ui.Image, List<_ShadowSpec>> byImage) {
+    c.save();
+    c.scale(1, .42);
+    for (final e in byImage.entries) {
+      c.drawAtlas(
+        e.key,
+        [
+          for (final s in e.value)
+            RSTransform.fromComponents(
+              rotation: 0,
+              scale: s.scale,
+              anchorX: s.src.width / 2,
+              anchorY: s.src.height / 2,
+              translateX: s.center.dx,
+              translateY: s.center.dy / .42,
+            ),
+        ],
+        [for (final s in e.value) s.src],
+        [
+          for (final s in e.value)
+            Color.fromRGBO(255, 255, 255, s.alpha.clamp(0.0, 1.0)),
+        ],
+        BlendMode.modulate,
+        null,
+        Paint()..filterQuality = FilterQuality.none,
+      );
+    }
+    c.restore();
+    return byImage.length;
+  }
+
+  /// Draped (design §2): every silhouette a 4 x 3 vertex mesh on the
+  /// visible surface, one drawVertices per image.
+  int _drapedBatches(
+    Canvas c,
+    ShadowSurface surface,
+    Map<ui.Image, List<_ShadowSpec>> byImage,
+  ) {
+    var calls = 0;
+    const nv = ShadowProjector.vertices;
+    for (final e in byImage.entries) {
+      final specs = e.value;
+      final pos = Float32List(specs.length * nv * 2);
+      final tex = Float32List(specs.length * nv * 2);
+      final col = Int32List(specs.length * nv);
+      final idx = Uint16List(specs.length * ShadowProjector.cells * 6);
+      var v = 0, n = 0;
+      for (final s in specs) {
+        n += ShadowProjector.drape(
+          surface,
+          s.flat,
+          s.src.width * s.scale,
+          s.src.height * s.scale * ShadowProjector.squash,
+          s.src,
+          pos,
+          tex,
+          idx,
+          v,
+          n,
+        );
+        final argb = Color.fromRGBO(
+          255,
+          255,
+          255,
+          s.alpha.clamp(0.0, 1.0),
+        ).toARGB32();
+        col.fillRange(v, v + nv, argb);
+        v += nv;
+      }
+      if (n == 0) continue;
+      final shader = _shadowShaders[e.key] ??= ImageShader(
+        e.key,
+        TileMode.clamp,
+        TileMode.clamp,
+        _identity4,
+        filterQuality: FilterQuality.none,
+      );
+      c.drawVertices(
+        ui.Vertices.raw(
+          ui.VertexMode.triangles,
+          pos,
+          textureCoordinates: tex,
+          colors: col,
+          indices: Uint16List.sublistView(idx, 0, n),
+        ),
+        BlendMode.modulate,
+        Paint()..shader = shader,
+      );
+      calls++;
+    }
+    return calls;
   }
 
   void _wingTellChevrons(Canvas c, Offset pos) {
@@ -2281,137 +3490,231 @@ class DemonScene extends FlameGame {
     }
   }
 
-  void _smallOrMediumDiveShield(Canvas c, Offset pos, Demon d) {
-    final paint = Paint()..isAntiAlias = false;
-    final notSoSmall =
-        d.diveShieldMax >= 2 || d.elite || d.kind >= 2 || d.maxHp >= 3;
-    final ratio = (d.diveShield / math.max(1, d.diveShieldMax)).clamp(
-      0.35,
-      1.0,
-    );
-    if (notSoSmall) {
-      // Tier 2: Not-so-small creature double-shock incandescent re-entry plasma (~48 px).
-      const halfSpan = 24.0;
-      for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
-        final norm = dx / halfSpan;
-        final absNorm = norm.abs();
-        final curve = (1 - norm * norm) * 7.5;
-        final jitter = math.sin(model.clock * 38 + dx * 0.9) > 0.15 ? 1.0 : 0.0;
-        final sx = (pos.dx + dx - 1).roundToDouble();
-        final sy = (pos.dy + 11 + curve).roundToDouble();
+  // --- playtest-fixes-3: diving shields as one coherent shape ------------
+  //
+  // The old bows were assembled from 3-unit columns, each with its own
+  // rounded y, sine-driven tongue and jitter, 6-unit cuts per segment and
+  // wingtip sparks at fixed offsets. The columns were rounded in the
+  // creature's local units before its scale, so under the scale transform
+  // neighbouring columns jumped by whole scaled units and the arc shattered
+  // into offset blocks with gaps. Now every layer of a bow is a band of one
+  // crescent function (leading edge, thickness, flicker), drawn as a few
+  // polygons in the same local frame, so the whole shield scales, turns
+  // and wears as one shape.
 
-        // Turbulent ablation envelope (superheated flame orange to deep crimson).
-        final tongueHeight =
-            ((1 - absNorm * 0.7) * 3.0 +
-                    (math.sin(model.clock * 32 + dx * 1.3).abs() * 3.0))
-                .roundToDouble();
-        paint.color = const Color(0xFFDD2C00)
-            .withValues(alpha: (0.55 + 0.35 * ratio) * (1 - absNorm * 0.35));
-        c.drawRect(
-          Rect.fromLTWH(sx, sy - 4 - tongueHeight, 3, 2 + tongueHeight),
-          paint,
-        );
-        paint.color = const Color(0xFFFF6D00)
-            .withValues(alpha: 0.75 + 0.2 * ratio);
-        c.drawRect(Rect.fromLTWH(sx, sy - 4 + jitter, 3, 3), paint);
+  /// The crescent of a thermal bow, in the creature's local units about
+  /// its centre: half span [span], nose drop [nose], leading edge at
+  /// [lead] below the centre (at the tips), thickness [thick] and flame
+  /// lick [lick] on the trailing edge.
+  static const _bowSmall = (
+    span: 16.0,
+    nose: 5.5,
+    lead: 7.5,
+    thick: 6.0,
+    lick: 2.5,
+  );
+  static const _bowMedium = (
+    span: 24.0,
+    nose: 7.5,
+    lead: 5.5,
+    thick: 7.5,
+    lick: 3.5,
+  );
+  static const _bowSentinel = (
+    span: 52.0,
+    nose: 15.0,
+    lead: 3.0,
+    thick: 10.0,
+    lick: 5.0,
+  );
+  static const _bowRush = (
+    span: 64.0,
+    nose: 18.0,
+    lead: 2.0,
+    thick: 13.0,
+    lick: 6.0,
+  );
 
-        // Primary compression shock (incandescent solar yellow-gold).
-        paint.color =
-            (absNorm < 0.55 ? const Color(0xFFFFD54F) : const Color(0xFFFFAB00))
-                .withValues(alpha: 0.85 + 0.15 * ratio);
-        c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 2), paint);
+  /// Thermal palette (outer envelope to the white-hot nose) and the rush's
+  /// crimson-to-black one.
+  static const _thermal = [
+    Color(0xFFDD2C00),
+    Color(0xFFFF6D00),
+    Color(0xFFFFC23A),
+    Color(0xFFFFF6CC),
+  ];
+  static const _crimson = [
+    Color(0xFF1A0508),
+    Color(0xFF8E1020),
+    Color(0xFFFF3B3B),
+    Color(0xFFFFC2B0),
+  ];
 
-        // Leading stagnation nose (blinding white-hot core).
-        if (absNorm < 0.75) {
-          paint.color = absNorm < 0.35
-              ? const Color(0xFFFFFFFF)
-              : const Color(0xFFFFF6CC);
-          c.drawRect(Rect.fromLTWH(sx, sy, 3, 2), paint);
-        }
+  /// Share of the thickness each band keeps (outer first) and its alpha.
+  static const _bowBands = [(1.0, .78), (.7, .9), (.42, .95), (.2, 1.0)];
+
+  /// The bow's leading edge (y below the centre) at u in [-1, 1].
+  static double bowLead(
+    ({double span, double nose, double lead, double thick, double lick}) b,
+    double u,
+  ) => b.lead + b.nose * (1 - u * u);
+
+  /// The bow's thickness at u: full at the nose, tapering to points.
+  static double bowThick(
+    ({double span, double nose, double lead, double thick, double lick}) b,
+    double u,
+  ) => b.thick * math.pow(math.max(0.0, 1 - u * u), .55) + .6;
+
+  /// Draws one thermal bow about [pos] (local units, under the caller's
+  /// scale): [n] segments ([lit] of them burning, the rest dark sockets,
+  /// one flashing white while it burns off), turned [turn] radians toward
+  /// the dive's heading. [strength] dims the envelope as the shield wears.
+  void _thermalBow(
+    Canvas c,
+    Offset pos,
+    ({double span, double nose, double lead, double thick, double lick}) b, {
+    int n = 1,
+    List<bool>? lit,
+    List<bool>? flashing,
+    double turn = 0,
+    double strength = 1,
+    double opacity = 1,
+    List<Color> palette = _thermal,
+    double seed = 0,
+  }) {
+    final paint = Paint()..isAntiAlias = true;
+    final t = model.clock;
+    final calm = sectors.flyover.reducedMotion;
+    // One smooth flame lick along the trailing edge (two low harmonics:
+    // continuous across segments, never per-column noise).
+    double lick(double u) {
+      if (calm) return b.lick * .5;
+      final w =
+          .55 +
+          .3 * math.sin(t * 17 + u * 5.1 + seed) +
+          .15 * math.sin(t * 29 - u * 9.3 + seed * 2);
+      return b.lick * w * (1 - .45 * u * u);
+    }
+
+    c.save();
+    if (turn.abs() > .01) {
+      c
+        ..translate(pos.dx, pos.dy)
+        ..rotate(turn)
+        ..translate(-pos.dx, -pos.dy);
+    }
+    // A notch between segments: 1.6 units of span, whatever the scale.
+    final notch = n > 1 ? 1.6 / b.span : 0.0;
+    const steps = 18;
+    Path band(double u0, double u1, double share, {bool flame = true}) {
+      final p = Path();
+      final k = math.max(2, ((u1 - u0) / 2 * steps).ceil());
+      for (var i = 0; i <= k; i++) {
+        final u = u0 + (u1 - u0) * i / k;
+        final x = pos.dx + u * b.span;
+        final y = pos.dy + bowLead(b, u) + .5 * share;
+        i == 0 ? p.moveTo(x, y) : p.lineTo(x, y);
       }
-      // Ablative ember trail & smoke puffs streaming upward behind wingtips.
-      final sparkShift = ((model.clock * 24).floor() % 4).toDouble();
-      for (final side in [-1.0, 1.0]) {
-        final wx = (pos.dx + side * 23 - 1).roundToDouble();
-        paint.color = const Color(0xFFFF9100).withValues(alpha: 0.85);
-        c.drawRect(
-          Rect.fromLTWH(wx, (pos.dy + 3 - sparkShift).roundToDouble(), 2, 3),
-          paint,
-        );
-        paint.color = const Color(0xFFFF3D00).withValues(alpha: 0.7);
-        c.drawRect(
-          Rect.fromLTWH(
-            (wx + side * 2).roundToDouble(),
-            (pos.dy - 2 - sparkShift).roundToDouble(),
-            2,
-            2,
-          ),
-          paint,
-        );
-        paint.color = const Color(0xAA6D1B1B);
-        c.drawRect(
-          Rect.fromLTWH(
-            (wx + side).roundToDouble(),
-            (pos.dy - 6 - sparkShift).roundToDouble(),
-            2,
-            2,
-          ),
-          paint,
-        );
+      for (var i = k; i >= 0; i--) {
+        final u = u0 + (u1 - u0) * i / k;
+        final x = pos.dx + u * b.span;
+        final th = bowThick(b, u) * share + (flame ? lick(u) * share : 0);
+        p.lineTo(x, pos.dy + bowLead(b, u) - th);
       }
-    } else {
-      // Tier 1: Small creature compact white-yellow nose cone with flickering orange-red wisps (~32 px).
-      const halfSpan = 16.0;
-      for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
-        final norm = dx / halfSpan;
-        final absNorm = norm.abs();
-        final curve = (1 - norm * norm) * 5.5;
-        final jitter = math.sin(model.clock * 38 + dx * 0.9) > 0.2 ? 1.0 : 0.0;
-        final sx = (pos.dx + dx - 1).roundToDouble();
-        final sy = (pos.dy + 11 + curve).roundToDouble();
+      return p..close();
+    }
 
-        // Turbulent orange-crimson ablation wisps.
-        paint.color = const Color(0xFFDD2C00).withValues(alpha: 0.65);
-        c.drawRect(Rect.fromLTWH(sx, sy - 4 - jitter, 3, 2), paint);
-        paint.color = const Color(0xFFFF6D00).withValues(alpha: 0.82);
-        c.drawRect(Rect.fromLTWH(sx, sy - 3, 3, 2), paint);
-
-        // Solar yellow-gold compression shock.
-        paint.color = const Color(0xFFFFD54F).withValues(alpha: 0.9);
-        c.drawRect(Rect.fromLTWH(sx, sy - 1, 3, 2), paint);
-
-        // White-hot stagnation nose.
-        if (absNorm < 0.75) {
-          paint.color = absNorm < 0.35
-              ? const Color(0xFFFFFFFF)
-              : const Color(0xFFFFF6CC);
-          c.drawRect(Rect.fromLTWH(sx, sy, 2, 2), paint);
-        }
+    for (var s = 0; s < n; s++) {
+      final u0 = -1 + 2 * s / n + (s > 0 ? notch : 0);
+      final u1 = -1 + 2 * (s + 1) / n - (s < n - 1 ? notch : 0);
+      final on = lit?[s] ?? true;
+      if (flashing?[s] ?? false) {
+        paint.color = const Color(0xFFFFFFFF).withValues(alpha: opacity);
+        c.drawPath(band(u0, u1, 1), paint);
+        continue;
       }
-      final flicker = ((model.clock * 22).floor() % 3).toDouble();
-      for (final side in [-1.0, 1.0]) {
-        paint.color = const Color(0xFFFF9100).withValues(alpha: 0.8);
-        c.drawRect(
-          Rect.fromLTWH(
-            (pos.dx + side * 16 - 1).roundToDouble(),
-            (pos.dy + 5 - flicker).roundToDouble(),
-            2,
-            3,
-          ),
-          paint,
+      if (!on) {
+        // A spent segment keeps the bow's outline as a dark ember socket,
+        // so the shield still reads as one shape.
+        paint.color = palette[0].withValues(alpha: .28 * strength * opacity);
+        c.drawPath(band(u0, u1, .7, flame: false), paint);
+        continue;
+      }
+      for (var k = 0; k < _bowBands.length; k++) {
+        final (share, alpha) = _bowBands[k];
+        paint.color = palette[k].withValues(
+          alpha: alpha * (k == 0 ? .55 + .45 * strength : 1) * opacity,
         );
-        paint.color = const Color(0xFFFF3D00).withValues(alpha: 0.65);
-        c.drawRect(
-          Rect.fromLTWH(
-            (pos.dx + side * 17 - 1).roundToDouble(),
-            (pos.dy + 1 - flicker).roundToDouble(),
-            2,
-            2,
-          ),
-          paint,
-        );
+        c.drawPath(band(u0, u1, share), paint);
       }
     }
+    // Embers shed from the two tips, attached to them and rising.
+    if (!calm) {
+      final tipU = .96;
+      for (final side in const [-1.0, 1.0]) {
+        final on = lit == null || lit[side < 0 ? 0 : n - 1];
+        if (!on) continue;
+        final tip = Offset(
+          pos.dx + side * tipU * b.span,
+          pos.dy + bowLead(b, tipU) - bowThick(b, tipU),
+        );
+        for (var e = 0; e < 3; e++) {
+          final age = ((t * 2.2 + e / 3 + seed * .1) % 1.0);
+          final r = (1.4 - age) * b.thick * .14;
+          paint.color = Color.lerp(
+            palette[2],
+            palette[0],
+            age,
+          )!.withValues(alpha: (1 - age) * .85 * strength * opacity);
+          c.drawCircle(
+            tip.translate(side * age * b.thick * .35, -age * b.thick * 1.6),
+            math.max(.5, r),
+            paint,
+          );
+        }
+      }
+    }
+    c.restore();
+  }
+
+  /// The dive heading as a turn of the bow (radians, ±0.45), so its nose
+  /// leads the creature's motion in every dive pose.
+  static double bowTurn(Demon d) {
+    if (d.vy < 30) return 0;
+    return (-math.atan2(d.vx, d.vy) * .8).clamp(-.45, .45);
+  }
+
+  /// alien-insignia: the thermal bow cut into one segment per dive-shield
+  /// point, spent points outside-in, a burning one flashing white.
+  void _diveBow(
+    Canvas c,
+    Offset pos,
+    Demon d,
+    ({double span, double nose, double lead, double thick, double lick}) b,
+  ) {
+    final n = math.max(1, d.diveShieldMax);
+    final lit = InsigniaPainter.litCells(n, d.diveShield);
+    final flashing = [
+      for (var s = 0; s < n; s++)
+        !lit[s] && creatures.shields.flashAge(d, 'dive', s) != null,
+    ];
+    _thermalBow(
+      c,
+      pos,
+      b,
+      n: n,
+      lit: lit,
+      flashing: flashing,
+      turn: bowTurn(d),
+      strength: (d.diveShield / n).clamp(.35, 1.0),
+      seed: d.seed,
+    );
+  }
+
+  void _smallOrMediumDiveShield(Canvas c, Offset pos, Demon d) {
+    final notSoSmall =
+        d.diveShieldMax >= 2 || d.elite || d.kind >= 2 || d.maxHp >= 3;
+    _diveBow(c, pos, d, notSoSmall ? _bowMedium : _bowSmall);
   }
 
   void _carrierLighting(Canvas c, Offset center, double bank) {
@@ -2560,6 +3863,29 @@ class DemonScene extends FlameGame {
     final bodyCol = firing
         ? species * 4 + (fired / .07).floor().clamp(0, 3)
         : frame;
+    // --- alien-insignia: a white rim in the tell, cyan while shielded.
+    final mark = InsigniaPainter.revealAlpha(t) * (1 - shade);
+    final telling = warning && _tellOn;
+    final shielded = demon.shield > 0 && demon.shieldMax > 0;
+    if (mark > 0 && (telling || shielded) && _rims < InsigniaPainter.maxRims) {
+      _rims++;
+      final w = InsigniaPainter.unitsPerGlyphPx / demon.scale;
+      for (final o in [
+        Offset(w, 0),
+        Offset(-w, 0),
+        Offset(0, w),
+        Offset(0, -w),
+      ]) {
+        effectSprite(
+          c,
+          bodyRow,
+          bodyCol,
+          pos + o,
+          tint: telling ? const Color(0xFFFFFFFF) : InsigniaPainter.rimCyan,
+          opacity: mark * (telling ? 1 : InsigniaPainter.shieldRimAlpha),
+        );
+      }
+    }
     effectSprite(
       c,
       bodyRow,
@@ -2577,18 +3903,34 @@ class DemonScene extends FlameGame {
     _creatureLighting(c, pos, bank, width: 92, diving: diving);
     c.restore();
     final reveal = Perspective.gearReveal(t);
-    if (reveal <= 0) return;
-    if (demon.shield > 0 &&
-        demon.shieldMax > 0 &&
-        !(diving && demon.diveShield > 0)) {
-      effectSprite(
-        c,
-        2,
-        ((1 - demon.shield / demon.shieldMax) * 4).floor().clamp(0, 3),
-        pos,
-        opacity: reveal,
+    if (mark > 0) {
+      // --- alien-insignia: the crown over the head, and one cyan cell per
+      // shield point in front of the body (spent points stay as sockets).
+      // Overlays are queued in arena units (the canvas here is scaled).
+      insignia.rank(
+        demon,
+        AlienRank.sentinel,
+        pos + Offset(0, sentinelHeadTop * demon.scale),
+        tone: telling ? InsigniaTone.tell : InsigniaTone.bone,
+        alpha: mark,
       );
+      final shieldUp =
+          demon.shield > 0 || creatures.shields.breaking(demon, 'shield');
+      if (demon.shieldMax > 0 &&
+          shieldUp &&
+          !(diving && demon.diveShield > 0)) {
+        _shieldCells(
+          demon,
+          'shield',
+          demon.shield,
+          demon.shieldMax,
+          pos + Offset(0, 4 * demon.scale),
+          demon.scale,
+          mark,
+        );
+      }
     }
+    if (reveal <= 0) return;
     if (demon.armor > 0 && demon.armorMax > 0) {
       final layers = (demon.armor / demon.armorMax * 4).ceil();
       for (var layer = 0; layer < layers; layer++) {
@@ -2664,148 +4006,145 @@ class DemonScene extends FlameGame {
   }
 
   /// The berserk aura (drawn scaled with the sentinel): flaring eyes in the
-  /// rally and lock, a crimson-to-black thermal bow (≈ 128 px) in the
-  /// rush, and the rush-shield ring that shrinks as the shield wears.
+  /// rally and lock while its crimson bow forms (the transformation, when
+  /// nothing hurts it), then the bow at full size in the rush: the
+  /// super-powerful diving shield, dimming as the rush shield wears.
   void _sentinelBerserk(Canvas c, Offset pos, Demon d) {
-    final paint = Paint()..isAntiAlias = false;
     final phase = d.rushPhase;
-    if (phase == RushPhase.rally || phase == RushPhase.lock) {
+    final forming = phase == RushPhase.rally || phase == RushPhase.lock;
+    if (forming) {
       final flare = phase == RushPhase.lock
           ? 1.0
           : (d.rushClock / RushTuning.rally).clamp(0.0, 1.0);
       _sentinelEyes(c, pos, .6 + .4 * flare, scale: 1 + .25 * flare);
     }
-    if (phase == RushPhase.rush) {
-      const halfSpan = 64.0;
-      final reel = d.rushStagger > 0 ? .5 : 1.0;
-      for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
-        final norm = dx / halfSpan, absNorm = norm.abs();
-        final bow = (1 - norm * norm) * 18.0;
-        final jitter = math.sin(model.clock * 41 + dx * .8) * 1.5;
-        final sx = (pos.dx + dx - 1).roundToDouble();
-        final sy = (pos.dy + 18 + bow).roundToDouble();
-        final tongue =
-            ((1 - absNorm * .6) * 6 +
-                    math.sin(model.clock * 31 + dx * 1.3).abs() * 6)
-                .roundToDouble();
-        paint.color = const Color(0xFF1A0508)
-            .withValues(alpha: .7 * (1 - absNorm * .4) * reel);
-        c.drawRect(Rect.fromLTWH(sx, sy - 8 - tongue, 3, 3 + tongue), paint);
-        paint.color = const Color(0xFF8E1020)
-            .withValues(alpha: (.75 + .2 * (1 - absNorm)) * reel);
+    if (!forming && phase != RushPhase.rush) return;
+    if (d.rushShield <= 0 && phase == RushPhase.rush) return;
+    final ratio = d.rushShieldMax <= 0
+        ? 0.0
+        : (d.rushShield / d.rushShieldMax).clamp(0.0, 1.0);
+    final reel = d.rushStagger > 0 ? .5 : 1.0;
+    final grow = forming
+        ? Perspective.smoothstep(0, 1, d.lastStandTellProgress)
+        : 1.0;
+    c.save();
+    // The bow condenses out of the sentinel as it transforms.
+    final k = .55 + .45 * grow;
+    c
+      ..translate(pos.dx, pos.dy)
+      ..scale(k)
+      ..translate(-pos.dx, -pos.dy);
+    _thermalBow(
+      c,
+      pos,
+      _bowRush,
+      palette: _crimson,
+      strength: reel * (.4 + .6 * ratio),
+      opacity: forming ? .3 + .7 * grow : reel,
+      turn: phase == RushPhase.rush ? -d.rushHeading * .8 : 0,
+      seed: d.seed,
+    );
+    c.restore();
+  }
+
+  /// The rush shield (alien-insignia): the force-shield cell arc one row
+  /// below the sentinel's own, in ember-tinted cells, one per point, spent
+  /// points kept as sockets. Fixed size, so it reads at any depth.
+  void _rushShieldRing(Canvas c, Offset pos, Demon d) {
+    if (d.rushShieldMax <= 0 || d.entering) return;
+    if (d.rushShield <= 0 && !creatures.shields.breaking(d, 'rush')) return;
+    final scale = math.max(d.scale, .8);
+    _shieldCells(
+      d,
+      'rush',
+      d.rushShield,
+      d.rushShieldMax,
+      pos + Offset(0, 4 * scale + 11),
+      scale,
+      InsigniaPainter.revealAlpha(_transmittance(d)),
+      litAs: ShieldCell.rush,
+    );
+  }
+
+  /// Head top of the sentinel sheet's creature (units above the centre at
+  /// scale 1): where its crown sits.
+  static const double sentinelHeadTop = -17;
+
+  /// Queues a force-shield arc: [max] cells about [centre] (arena units)
+  /// for a body at [scale], [lit] of them lit, breaks flashing white and
+  /// then shedding shards.
+  void _shieldCells(
+    Demon d,
+    String kind,
+    int lit,
+    int max,
+    Offset centre,
+    double scale,
+    double alpha, {
+    ShieldCell litAs = ShieldCell.lit,
+  }) {
+    final on = InsigniaPainter.litCells(max, lit);
+    final at = InsigniaPainter.arc(max, centre, 34 * scale, 24 * scale);
+    for (var i = 0; i < max; i++) {
+      insignia.cell(
+        at[i],
+        creatures.shields.cellState(d, kind, i, on[i], at[i], litAs: litAs),
+        alpha: alpha,
+      );
+    }
+  }
+
+  /// playtest-fixes-3: a hit glancing off a berserk sentinel: a white-hot
+  /// star at the impact and five sparks ricocheting away from the body
+  /// (gold to ember), gone in [Deflect.life] s. Reduced motion keeps the
+  /// star only.
+  void _deflectSparks(Canvas c) {
+    if (model.deflects.isEmpty) return;
+    final paint = Paint()..isAntiAlias = false;
+    for (final f in model.deflects) {
+      final u = (f.age / Deflect.life).clamp(0.0, 1.0);
+      final at = Offset(f.x, f.y);
+      // The star: a plus of white and gold, shrinking.
+      final r = (5 * (1 - u) + 1).roundToDouble();
+      paint.color = const Color(0xFFFFFFFF).withValues(alpha: 1 - u * .6);
+      c.drawRect(
+        Rect.fromCenter(center: at, width: r * 2 + 1, height: 3),
+        paint,
+      );
+      c.drawRect(
+        Rect.fromCenter(center: at, width: 3, height: r * 2 + 1),
+        paint,
+      );
+      paint.color = const Color(0xFFFFD54F).withValues(alpha: 1 - u);
+      c.drawRect(Rect.fromCenter(center: at, width: 3, height: 3), paint);
+      if (sectors.flyover.reducedMotion) continue;
+      // Away from the sentinel's centre (a ricochet off its ward).
+      final away = math.atan2(f.y - f.cy, f.x - f.cx);
+      for (var i = 0; i < 5; i++) {
+        final a = away + (i - 2) * .42 + math.sin(f.x * 3.1 + i) * .12;
+        final reach = (6 + 16 * u) * (.75 + .25 * ((i * 7) % 3));
+        final p = at + Offset(math.cos(a), math.sin(a)) * reach;
+        paint.color = Color.lerp(
+          const Color(0xFFFFF6CC),
+          const Color(0xFFFF6D00),
+          u,
+        )!.withValues(alpha: 1 - u);
         c.drawRect(
-          Rect.fromLTWH(sx, (sy - 5 + jitter).roundToDouble(), 3, 3),
+          Rect.fromCenter(
+            center: Offset(p.dx.roundToDouble(), p.dy.roundToDouble()),
+            width: 2,
+            height: 2,
+          ),
           paint,
         );
-        paint.color =
-            (absNorm < .45 ? const Color(0xFFFF3B3B) : const Color(0xFFC2182B))
-                .withValues(alpha: .9 * reel);
-        c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 3), paint);
-        if (absNorm < .3) {
-          paint.color = const Color(0xFFFFC2B0).withValues(alpha: reel);
-          c.drawRect(Rect.fromLTWH(sx, sy, 3, 2), paint);
-        }
       }
     }
   }
 
-  /// The rush-shield ring (unscaled, so it reads at any depth): a broken
-  /// crimson ellipse that shrinks and thins as the shield wears.
-  void _rushShieldRing(Canvas c, Offset pos, Demon d) {
-    if (d.rushShield <= 0 || d.rushShieldMax <= 0 || d.entering) return;
-    final paint = Paint()..isAntiAlias = false;
-    final ratio = d.rushShield / d.rushShieldMax;
-    final size = math.max(d.scale, .8);
-    final r = (34 + 18 * ratio) * size;
-    final pulse = .6 + .3 * math.sin(model.clock * 9);
-    const dots = 36;
-    for (var i = 0; i < dots; i++) {
-      // The worn share of the ring breaks up into gaps.
-      if (i / dots > ratio && i % 3 != 0) continue;
-      final a = i / dots * 2 * math.pi + model.clock * 1.4;
-      paint.color =
-          (i.isEven ? const Color(0xFFFF4D5E) : const Color(0xFFB0102A))
-              .withValues(alpha: pulse);
-      c.drawRect(
-        Rect.fromLTWH(
-          (pos.dx + math.cos(a) * r - 1.5).roundToDouble(),
-          (pos.dy + math.sin(a) * r * .62 - 1.5).roundToDouble(),
-          3,
-          3,
-        ),
-        paint,
-      );
-    }
-  }
   // --- end sentinel rush presentation
 
-  void _sentinelDiveShield(Canvas c, Offset pos, Demon demon) {
-    // Tier 3: Massive roaring spacecraft atmospheric re-entry plasma bow shock (~104 px).
-    final ratio = (demon.diveShield / math.max(1, demon.diveShieldMax)).clamp(
-      0.3,
-      1.0,
-    );
-    final paint = Paint()..isAntiAlias = false;
-    const halfSpan = 52.0;
-    for (var dx = -halfSpan; dx <= halfSpan; dx += 3) {
-      final norm = dx / halfSpan;
-      final absNorm = norm.abs();
-      final bow = (1 - norm * norm) * 15.0;
-      final jitter = math.sin(model.clock * 38 + dx * 0.9) * 1.5;
-      final sx = (pos.dx + dx - 1).roundToDouble();
-      final sy = (pos.dy + 16 + bow).roundToDouble();
-
-      // Jagged trailing flame tongues licking backward along the flanks.
-      final tongueHeight =
-          ((1 - absNorm * 0.65) * 5.0 +
-                  math.sin(model.clock * 34 + dx * 1.1).abs() * 5.0)
-              .roundToDouble();
-      paint.color = const Color(0xFFDD2C00)
-          .withValues(alpha: (0.5 + 0.35 * ratio) * (1 - absNorm * 0.3));
-      c.drawRect(
-        Rect.fromLTWH(sx, sy - 6 - tongueHeight, 3, 2 + tongueHeight),
-        paint,
-      );
-
-      // Turbulent ablation envelope (superheated flame orange).
-      paint.color = const Color(0xFFFF6D00)
-          .withValues(alpha: 0.72 + 0.22 * ratio);
-      c.drawRect(
-        Rect.fromLTWH(sx, (sy - 5 + jitter).roundToDouble(), 3, 3),
-        paint,
-      );
-
-      // Primary compression shock (incandescent solar yellow-gold).
-      paint.color =
-          (absNorm < 0.5 ? const Color(0xFFFFD54F) : const Color(0xFFFFAB00))
-              .withValues(alpha: 0.85 + 0.15 * ratio);
-      c.drawRect(Rect.fromLTWH(sx, sy - 2, 3, 3), paint);
-
-      // Leading stagnation nose (blinding white-hot core).
-      if (absNorm < 0.75) {
-        paint.color = absNorm < 0.35
-            ? const Color(0xFFFFFFFF)
-            : const Color(0xFFFFF6CC);
-        c.drawRect(Rect.fromLTWH(sx, sy, 3, 2), paint);
-      }
-    }
-
-    // Roaring wingtip fire plumes & ablative ember trail streaming upward.
-    final flicker = (model.clock * 20).floor() % 4;
-    for (final side in [-1.0, 1.0]) {
-      for (var plume = 0; plume < 4; plume++) {
-        final px = (pos.dx + side * (46 + plume * 2) - 1).roundToDouble();
-        final py = (pos.dy + 9 - plume * 5 - flicker).roundToDouble();
-        paint.color = switch (plume) {
-          0 => const Color(0xFFFFD54F).withValues(alpha: 0.9),
-          1 => const Color(0xFFFF9100).withValues(alpha: 0.82),
-          2 => const Color(0xFFFF3D00).withValues(alpha: 0.68),
-          _ => const Color(0xAA6D1B1B),
-        };
-        c.drawRect(Rect.fromLTWH(px, py, 3, 3), paint);
-      }
-    }
-  }
+  void _sentinelDiveShield(Canvas c, Offset pos, Demon demon) =>
+      _diveBow(c, pos, demon, _bowSentinel);
 
   void _bossOrbitalArrivalEffects(
     Canvas c,
@@ -2851,6 +4190,108 @@ class DemonScene extends FlameGame {
       ),
       ripplePaint,
     );
+  }
+
+  /// boss-carrier-wire: the v2 carrier's hangar deck furniture over the
+  /// prow art, at the simulation windows (core, bays, turret pivots). The
+  /// head-reading guard (styleguide §3.4) shapes every piece: the slot is
+  /// split into three hatches by solid chitin bulkheads, the weak points
+  /// glow through vertical slits (a horizontal lit slot reads as a mouth),
+  /// the doors are plain chitin leaves (no fangs), and the gun barrels are
+  /// dark with an ember muzzle (pale pegs read as teeth).
+  void _carrierDeck(Canvas c, Carrier b) {
+    final paint = Paint()..isAntiAlias = false;
+    const black = Color(0xFF05040A), chitin = Color(0xFF2B2234);
+    const edge = Color(0xFF55456A), ember = Color(0xFFFF7A2A);
+    final weak = b.shield > 0 ? violet : gold;
+    // A hatch: black well, a vertical slit glow, two chitin leaves closing
+    // from the sides with a lighter lip.
+    void hatch(
+      Offset at,
+      double w,
+      double h,
+      double open, {
+      bool locked = false,
+    }) {
+      c.drawRect(
+        Rect.fromCenter(center: at, width: w, height: h),
+        paint..color = black,
+      );
+      if (!locked) {
+        final glow = .35 + .65 * open.clamp(0.0, 1.0);
+        c.drawRect(
+          Rect.fromCenter(center: at, width: 4 + 3 * open, height: h - 6),
+          paint..color = weak.withValues(alpha: glow),
+        );
+      }
+      final closed = (w / 2) * (locked ? 1 : 1 - open.clamp(0.0, 1.0));
+      for (final dir in const [-1.0, 1.0]) {
+        final x0 = dir < 0 ? at.dx - w / 2 : at.dx + w / 2 - closed;
+        c.drawRect(
+          Rect.fromLTWH(x0, at.dy - h / 2, closed, h),
+          paint..color = chitin,
+        );
+        if (closed > 1) {
+          final lip = dir < 0 ? x0 + closed - 1 : x0;
+          c.drawRect(
+            Rect.fromLTWH(lip, at.dy - h / 2, 1, h),
+            paint..color = edge,
+          );
+        }
+      }
+      if (locked) {
+        c.drawRect(
+          Rect.fromCenter(center: at, width: 3, height: 3),
+          paint..color = ember,
+        );
+      }
+    }
+
+    hatch(Offset(b.x, b.y + 25), 32, 22, b.door);
+    for (final (dx, open) in [
+      (-Carrier.sideHatchOffset, b.sideDoorLeft),
+      (Carrier.sideHatchOffset, b.sideDoorRight),
+    ]) {
+      hatch(
+        Offset(b.x + dx, b.y + 21),
+        22,
+        16,
+        open,
+        locked: b.sideHatchesLocked,
+      );
+    }
+    // Bulkheads between the core and the bays: the deck reads as three
+    // hangar mouths in a row, not one slot.
+    for (final dx in const [-28.0, 28.0]) {
+      final r = Rect.fromLTWH(b.x + dx - 3, b.y + 10, 6, 26);
+      c.drawRect(r, paint..color = chitin);
+      c.drawRect(
+        Rect.fromLTWH(r.left, r.top, 1, r.height),
+        paint..color = edge,
+      );
+    }
+    // The art paints pale bone tusks under the sill blisters (y 38–56):
+    // pegs in a slot read as fangs; a chitin tint takes them to hull value.
+    for (final side in const [-28.0, 28.0]) {
+      c.drawRect(
+        Rect.fromLTWH(b.x + side - 6, b.y + 39, 12, 19),
+        paint..color = const Color(0xB0140E1C),
+      );
+    }
+    // Gun barrels on the sill: dark, an ember muzzle.
+    final aim = math
+        .atan2(ArcadeModel.shipY - (b.y + 36), model.shipX - b.x)
+        .clamp(0.4, 2.74);
+    for (final side in const [-28.0, 28.0]) {
+      c.save();
+      c.translate(b.x + side, b.y + 36);
+      c.rotate(aim - math.pi / 2);
+      c.drawRect(const Rect.fromLTWH(-3, 0, 2, 7), paint..color = chitin);
+      c.drawRect(const Rect.fromLTWH(1, 0, 2, 7), paint..color = chitin);
+      c.drawRect(const Rect.fromLTWH(-3, 6, 2, 1), paint..color = ember);
+      c.drawRect(const Rect.fromLTWH(1, 6, 2, 1), paint..color = ember);
+      c.restore();
+    }
   }
 
   void _carrierTurretBarrels(Canvas c, Carrier b) {
@@ -3111,7 +4552,7 @@ class DemonScene extends FlameGame {
     final p = model.transitionProgress.clamp(0.0, 1.0);
     final flow = model.flow;
 
-    if (triumph && model.wreckBoss != null) {
+    if (triumph && model.wreckBoss != null && !armada.heroReady) {
       final wreck = model.wreckBoss!;
       final fallY = (wreck.y + p * p * 360).roundToDouble();
       _bossMeltdownWreckage(
@@ -3164,11 +4605,38 @@ class DemonScene extends FlameGame {
       }
     }
     // The last kill's flash (the hit beat): a translucent glow, never a wipe.
+    // --- carrier-render-engine: a radial glow around the kill that fades
+    // to nothing before the nearest visible edge. A rectangle showed its
+    // edges under the boss zoom, and on tall phones at the arena's top.
     final hit = flow.env('hit');
     if (hit > 0) {
-      c.drawRect(
-        const Rect.fromLTWH(0, 0, 360, 520),
-        Paint()..color = (triumph ? gold : mint).withValues(alpha: hit * .18),
+      final cam = bossDirector.camera;
+      final view = _zoomApplied
+          ? Rect.fromPoints(
+              cam.toArena(Offset.zero),
+              cam.toArena(const Offset(360, 520)),
+            )
+          : const Rect.fromLTWH(0, 0, 360, 520);
+      final w = model.wreckBoss;
+      final at = w != null
+          ? Offset(w.x, w.y).translate(0, 40)
+          : view.center;
+      final r = math
+          .min(
+            math.min(at.dx - view.left, view.right - at.dx),
+            math.min(at.dy - view.top, view.bottom - at.dy),
+          )
+          .clamp(80.0, 260.0);
+      final tint = triumph ? gold : mint;
+      c.drawCircle(
+        at,
+        r,
+        Paint()
+          ..shader = ui.Gradient.radial(at, r, [
+            tint.withValues(alpha: hit * .2),
+            tint.withValues(alpha: hit * .1),
+            tint.withValues(alpha: 0),
+          ], const [0, .55, 1]),
       );
     }
   }
@@ -3198,19 +4666,105 @@ class DemonScene extends FlameGame {
     }
     final climb = flow.env('climb');
     final cloud = flow.env('cloud');
-    final y = ArcadeModel.shipY - flow.plan.climb * climb;
+    final speed = flow.env('speed');
     // In the cloud the ship is a little veiled, never lost.
     final veil = (1 - .35 * cloud).clamp(0.0, 1.0);
     c.saveLayer(
       const Rect.fromLTWH(0, 0, 360, 520),
       Paint()..color = Color.fromRGBO(0, 0, 0, veil),
     );
-    _cinematicShip(c, Offset(model.shipX, y), 42, 1 + climb * 2.5);
+    // transition ascent (design §2): the plume grows with the speed and the
+    // hull pulls away (a 4 % scale-down, none in reduced motion).
+    final nudge = model.reducedMotion ? 0.0 : shipNudge * speed;
+    _cinematicShip(
+      c,
+      flowShipAt(),
+      42 * (1 - nudge),
+      1 + climb * 2.5 + speed * 1.5,
+    );
     c.restore();
   }
 
-  /// Camera tilt in a Pursuit: the world below slides down this far.
+  /// Where the transition ship is drawn: its row, raised by the climb beat
+  /// (at most [FlowPlan.climb] units: 24 in a sector change).
+  Offset flowShipAt() => Offset(
+    model.shipX,
+    ArcadeModel.shipY - model.flow.plan.climb * model.flow.env('climb'),
+  );
+
+  /// The camera pitch's ground transform at pitch [q] (design §2): a row
+  /// at y moves to horizon + drop + (y - horizon)(1 + [pitchStretch]·q).
+  void _groundPitch(Canvas c, double q) {
+    const h = Perspective.horizonY;
+    c
+      ..translate(0, h + pitchDrop * q)
+      ..scale(1, 1 + pitchStretch * q)
+      ..translate(0, -h);
+  }
+
+  /// Where a ground row at [y] is drawn at pitch [q] (tests, review).
+  static double pitchedRow(double y, double q) {
+    const h = Perspective.horizonY;
+    return y < h
+        ? y + pitchDrop * q
+        : h + pitchDrop * q + (y - h) * (1 + pitchStretch * q);
+  }
+
+  /// The world's bank at roll envelope [roll] toward [dir] (radians).
+  static double worldRoll(double roll, int dir) =>
+      roll * FlowPlan.maxRollDegrees * math.pi / 180 * dir.sign;
+
+  /// Fog streaks rushing down past both sides of the ship (design §3):
+  /// 12 thin cloud-tinted strokes seeded from the run and the sector, at a
+  /// speed proportional to the world's. None in reduced motion (the beat's
+  /// gain is 0).
+  void _fogStreaks(Canvas c) {
+    final k = model.flow.env('streaks');
+    if (k <= .01 || model.reducedMotion) return;
+    final ship = flowShipAt();
+    final seed = model.seed * 31 + model.level * 7 + model.cycle;
+    final colour = Color.lerp(atmosphere.cloud, Atmosphere.cloudLight, .7)!;
+    for (var i = 0; i < streakCount; i++) {
+      double r(int salt) {
+        final v = math.sin((seed + i * 17 + salt * 131) * 12.9898) * 43758.5;
+        return v - v.floorToDouble();
+      }
+
+      final side = i.isEven ? -1 : 1;
+      final x = ship.dx + side * (26 + r(1) * 110);
+      final length = 18 + r(2) * 22;
+      final span = 520 + length;
+      final y = (r(3) * span + streakRun * (.8 + .4 * r(4))) % span - length;
+      final a = k * streakAlpha * (.5 + .5 * r(5));
+      c.drawRect(
+        Rect.fromLTWH(x.roundToDouble(), y.roundToDouble(), 2, length),
+        Paint()..color = colour.withValues(alpha: a),
+      );
+    }
+  }
+
+  /// Camera tilt in the campaign outro (still zero gain): the world below
+  /// slides down this far.
   static const flowTilt = 46.0;
+
+  /// transition ascent (design §2): the horizon drops this far at full
+  /// pitch, and the ground below it stretches by this much.
+  static const pitchDrop = 96.0, pitchStretch = .35;
+
+  /// The banked world's overscan at full roll: a 3° bank about the arena
+  /// centre needs 260·sin 3° / 180 ≈ 7.6 % to keep the corners covered.
+  static const rollOverscan = .09;
+
+  /// The hull's pull-away at full speed (a scale-down).
+  static const shipNudge = .04;
+
+  /// Fog streaks: how many, their peak alpha and their speed per unit of
+  /// world speed (arena units a second).
+  static const streakCount = 12, streakAlpha = .35, streakSpeed = 150.0;
+
+  /// The streaks' and the cloud billows' scroll, integrated from the
+  /// world's speed (reset when no flow is playing).
+  double streakRun = 0, cloudRun = 0;
 
   void _cinematicShip(Canvas c, Offset center, double width, double thrust) {
     if (center.dy < -70 || center.dy > 590) return;
@@ -3471,13 +5025,527 @@ class _ShadowSpec {
     this.scale,
     this.alpha,
     this.bucket,
-  );
+    this.flat, {
+    this.occluder = false,
+  });
   final ui.Image image;
   final Rect src;
-  final Offset center;
+
+  /// playtest-fixes-3: drawn as an occluder of the ground's light (the
+  /// lurk's look), not as ink in a blur bucket: every sentinel shadow.
+  final bool occluder;
+
+  /// Visible centre (on the surface) and the flat-ground point the drape is
+  /// built around (terrain-shadows; equal on flat ground).
+  final Offset center, flat;
   final double scale, alpha;
   final int bucket;
 
-  _ShadowSpec faded(double k) =>
-      _ShadowSpec(image, src, center, scale, alpha * k.clamp(0.0, 1.0), bucket);
+  _ShadowSpec faded(double k) => _ShadowSpec(
+    image,
+    src,
+    center,
+    scale,
+    alpha * k.clamp(0.0, 1.0),
+    bucket,
+    flat,
+    occluder: occluder,
+  );
+}
+
+/// One frame's census of the air (DemonScene.airCensus): every creature body,
+/// fog-veiled arrival, transition-flock member and shadow caster the passes
+/// draw, and whether the sentinel's foreshadow silhouette is up.
+class AirCensus {
+  AirCensus({
+    required this.approaching,
+    required this.reserve,
+    required this.bodies,
+    required this.flock,
+    required this.shadows,
+    required this.silhouette,
+  });
+
+  /// A flock member is drawn above this opacity, casts a shadow above
+  /// [flockShadow].
+  static const flockDrawn = .01, flockShadow = .3;
+
+  /// The veiled cohort and drawn reserve (in the fog, no gear).
+  final Set<Demon> approaching;
+
+  /// The drawn reserve alone (a subset of [approaching]).
+  final Set<Demon> reserve;
+
+  /// Every creature the depth sort draws (approaching included).
+  final List<Demon> bodies;
+  final List<FlowMember> flock;
+  final List<Demon> shadows;
+  final bool silhouette;
+
+  /// Nothing alive is drawn in the air, in the fog or on the ground below.
+  bool get empty =>
+      bodies.isEmpty && flock.isEmpty && shadows.isEmpty && !silhouette;
+
+  @override
+  String toString() =>
+      'bodies ${bodies.length} (veiled ${approaching.length}), '
+      'flock ${flock.length}, shadows ${shadows.length}, '
+      'silhouette $silhouette';
+}
+
+// --- boss-grandeur: the boss level's presentation (design §1–§6) ---------
+extension _BossGrandeur on DemonScene {
+  /// A fog layer over the arena. Under the camera's zoom the fog is not
+  /// zoomed (it is weather, world-anchored, drawn to the whole frame), so
+  /// the zoomed arena never shows a fog rectangle's edge.
+  void _fogSlot(Canvas c, FogSlot slot) {
+    if (!_zoomApplied) {
+      atmosphere.paint(c, slot);
+      return;
+    }
+    final z = 1 / bossDirector.camera.zoom;
+    c.save();
+    c
+      ..translate(ArenaCamera.pivotX, ArenaCamera.pivotY)
+      ..scale(z, z)
+      ..translate(-ArenaCamera.pivotX, -ArenaCamera.pivotY);
+    atmosphere.paint(c, slot);
+    c.restore();
+  }
+
+  /// A colour matrix toward [fog] by [t] (alpha kept), darkened by [dark].
+  static ColorFilter fogFilter(Color fog, double t, {double dark = 0}) {
+    final k = (1 - t) * (1 - dark);
+    return ColorFilter.matrix([
+      k, 0, 0, 0, fog.r * 255 * t, //
+      0, k, 0, 0, fog.g * 255 * t,
+      0, 0, k, 0, fog.b * 255 * t,
+      0, 0, 0, 1, 0,
+    ]);
+  }
+
+  /// The carrier's shade under the fog: the fog's colour, deep in shadow.
+  Color get _bossShade =>
+      Color.lerp(atmosphere.cloud, const Color(0xFF0A0710), .78)!;
+
+  /// The whole hull (both layers) at [center], drawn from the view set's
+  /// hero view, or the frontal atlas's first form.
+  void paintBossBody(Canvas c, Offset center) {
+    if (armada.heroReady) {
+      for (final front in const [false, true]) {
+        armada.paintHero(
+          c,
+          center,
+          view: BossView.hero,
+          stage: 0,
+          front: front,
+        );
+      }
+    } else if (armada.ready) {
+      final h = armada.hull;
+      armada.sprite(c, h.superstructure[0], center);
+      armada.sprite(c, h.hull[0][0], center);
+    }
+  }
+
+  /// The fog layer after which the loom is drawn: it starts behind all
+  /// but the horizon band and rises one layer per ~8 s.
+  ///
+  /// carrier-v3 §5.2: by the approach distance D: between the far banks
+  /// for D ≥ 3, between the veils for 1.8 ≤ D < 3, under the near sheets
+  /// below (one bank nearer than the design: behind every far bank the
+  /// hull read as a pale ghost on the review strip).
+  int _loomLayer(int layers) {
+    if (layers == 0) return 0;
+    final d = bossDirector.distance;
+    if (d >= 3) return math.min(layers - 1, 1);
+    if (d >= 1.8) return math.min(layers - 1, 3);
+    return layers - 1;
+  }
+
+  /// The carrier looming under the fog: a dark mass between the far banks.
+  void _bossLoom(Canvas c) {
+    if (bossDirector.phase != BossPhase.approach || !armada.anyReady) return;
+    final at = bossDirector.loomAt;
+    final k = bossDirector.loomScale;
+    c.save();
+    c
+      ..translate(at.dx, at.dy)
+      ..scale(k, k);
+    // carrier-v3 §5.2: aerial perspective, toward the fog's colour (value
+    // and contrast, never blur) by 1 − e^(−0.55 (D − 1)).
+    c.saveLayer(
+      null,
+      Paint()
+        ..colorFilter = fogFilter(_approachFog, .85 * bossDirector.fog)
+        ..color = const Color.fromRGBO(255, 255, 255, .94),
+    );
+    paintBossBody(c, Offset.zero);
+    c.restore();
+    c.restore();
+  }
+
+  /// The approach's haze colour: the fog's, a little into its shade.
+  Color get _approachFog => Color.lerp(_bossShade, atmosphere.cloud, .3)!;
+
+  /// Its running lights blink through the fog (drawn after the banks), and
+  /// its gates telegraph and launch through it (carrier-v3 §4.3).
+  void _bossLoomLights(Canvas c) {
+    if (bossDirector.phase != BossPhase.approach || !armada.heroReady) return;
+    final at = bossDirector.loomAt;
+    final k = bossDirector.loomScale;
+    if (armada.carrier) {
+      carrierV3.paintGates(
+        c,
+        model.launches,
+        at,
+        front: false,
+        scale: k,
+        clock: model.visualClock,
+        opacity: .9,
+        armada: armada,
+      );
+      carrierV3.paintGates(
+        c,
+        model.launches,
+        at,
+        front: true,
+        scale: k,
+        clock: model.visualClock,
+        opacity: .9,
+        armada: armada,
+      );
+    }
+    if ((ambient * 1.4).floor().isOdd) return;
+    final paint = Paint()..isAntiAlias = false;
+    for (final l in armada.heroPoints(BossView.hero, 0, kind: 'lights')) {
+      final p = at + Offset(l.x, l.y) * k;
+      paint.color =
+          (l.kind == 0
+                  ? const Color(0xFFFF3048)
+                  : (l.kind == 1
+                        ? const Color(0xFF40FF90)
+                        : const Color(0xFFFFC45A)))
+              .withValues(alpha: .5);
+      c.drawRect(Rect.fromCenter(center: p, width: 2, height: 2), paint);
+    }
+  }
+
+  /// The Rise: the carrier comes out of the fog from its loom position to
+  /// its fight row, shedding the fog; true when a layer was pushed (the
+  /// caller restores it).
+  bool _bossRiseBegin(Canvas c, Carrier b) {
+    if (b.fightReady) return false;
+    final e = Curves.easeInOutCubic.transform(b.emerge.clamp(0.0, 1.0));
+    final from = bossDirector.loomAt;
+    final k = bossDirector.loomScale + (1 - bossDirector.loomScale) * e;
+    final x = from.dx + (b.x - from.dx) * e;
+    final y = from.dy + (b.y - from.dy) * e;
+    c
+      ..translate(x, y)
+      ..scale(k, k)
+      ..translate(-b.x, -b.y);
+    // carrier-v3 §5.2: the Close sheds the haze of distance D.
+    c.saveLayer(
+      null,
+      Paint()
+        ..colorFilter = fogFilter(
+          _approachFog,
+          .85 * CarrierApproachScript.fogMix(bossDirector.distance),
+        )
+        ..color = Color.fromRGBO(255, 255, 255, .9 + .1 * e),
+    );
+    return true;
+  }
+
+  /// The intermediate fog banks take the fighting carrier's shadow
+  /// (operator R8), as the lurk dims them: a soft dark shape on the band.
+  void _bossFogShadow(Canvas c, FogSlot slot) {
+    final b = model.boss;
+    if (b == null || !b.fightReady || !model.perspective) return;
+    final cell = _bossShadowImage();
+    if (cell == null) return;
+    final l = Atmosphere.layers[slot];
+    if (l == null || l.nearness <= 0) return;
+    final a = (.1 + .14 * bossDirector.climb) * (l.alpha * 2).clamp(0.0, 1.0);
+    if (a < .01) return;
+    final scale = .8 + .25 * (l.nearness - .3);
+    final mid = Offset(cell.width / 2, cell.height / 2) - _bossShadowAnchor;
+    final center = Offset(b.x + 14 + mid.dx * scale, l.peak);
+    c.save();
+    c.clipRect(Rect.fromLTRB(-60, l.top, 420, l.bottom));
+    c.drawImageRect(
+      cell,
+      Rect.fromLTWH(0, 0, cell.width.toDouble(), cell.height.toDouble()),
+      Rect.fromCenter(
+        center: center,
+        width: cell.width * scale,
+        height: cell.height * scale * .45,
+      ),
+      Paint()
+        ..color = Color.fromRGBO(255, 255, 255, a)
+        ..blendMode = BlendMode.multiply
+        ..filterQuality = FilterQuality.medium
+        ..imageFilter = ui.ImageFilter.blur(sigmaX: 4, sigmaY: 3),
+    );
+    c.restore();
+  }
+
+  /// Overflight geometry at progress [p]: centre, scale, and the hull's
+  /// opacity (never more than 0.55 while it covers the ship's row).
+  (Offset, double, double) overflightPose(double p) {
+    final e = Curves.easeOutCubic.transform(p);
+    final y = 760 + (112 - 760) * e;
+    final x = 180 + 26 * math.sin(p * math.pi);
+    final k = 2.9 + (.42 - 2.9) * math.pow(p, .55);
+    final top = y - 160 * k, bottom = y + 90 * k;
+    final overShip =
+        top < ArcadeModel.shipY + 30 && bottom > ArcadeModel.shipY - 30;
+    var o = overShip ? .55 : .85;
+    o *= 1 - Perspective.smoothstep(.72, 1, p); // into the far fog
+    o *= Perspective.smoothstep(0, .06, p);
+    return (Offset(x, y), k.toDouble(), o);
+  }
+
+  /// The carrier flies in from behind the camera, over the ship, and sinks
+  /// into the far fog (presentation only, no hitbox).
+  void _bossOverflight(Canvas c) {
+    if (bossDirector.phase != BossPhase.overflight || !armada.anyReady) return;
+    final p = bossDirector.overflight;
+    if (p <= 0 || p >= 1) return;
+    final (at, k, o) = overflightPose(p);
+    if (o < .01) return;
+    c.save();
+    c
+      ..translate(at.dx, at.dy)
+      ..scale(k, k);
+    // Its dark belly, fogging as it recedes.
+    final far = Perspective.smoothstep(.5, 1, p);
+    c.saveLayer(
+      null,
+      Paint()
+        ..colorFilter = fogFilter(
+          Color.lerp(_bossShade, atmosphere.cloud, far)!,
+          .62 + .3 * far,
+        )
+        ..color = Color.fromRGBO(255, 255, 255, o),
+    );
+    // boss-carrier-wire: the carrier's baked underside (`fin_belly`, 0.5
+    // px/unit, ≈ 926 units wide), drawn at [bellyScale] so it passes over
+    // the ship about as wide as the frigate did, still two screens across
+    // as it enters; the hull from above where no belly is packed.
+    c.save();
+    c.scale(bellyScale);
+    final belly = armada.paintBelly(c, Offset.zero);
+    c.restore();
+    if (!belly) paintBossBody(c, Offset.zero);
+    c.restore();
+    c.restore();
+  }
+
+  /// The belly's scale in the overflight's frame (see [_bossOverflight]).
+  static const bellyScale = .3;
+
+  /// Its shadow sweeps the ground first, a little ahead of the hull.
+  void _bossOverflightShadow(Canvas c) {
+    if (bossDirector.phase != BossPhase.overflight) return;
+    final p = bossDirector.overflight;
+    if (p <= 0 || p >= 1) return;
+    final (at, k, o) = overflightPose((p + .12).clamp(0.0, 1.0));
+    final a = .3 * (1 - p) * (o > 0 ? 1 : 0);
+    if (a < .01) return;
+    c.drawOval(
+      Rect.fromCenter(
+        center: at + Offset(10, 30 * k),
+        width: 220 * k,
+        height: 80 * k,
+      ),
+      Paint()
+        ..color = DemonScene.lurkTint.withValues(alpha: a)
+        ..blendMode = BlendMode.multiply
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * k),
+    );
+  }
+
+  /// The director's falling pieces: plates (S2), modules breaking away
+  /// (S3) and the collapse's module wrecks (S4), each with a blast as it
+  /// breaks.
+  void _bossWrecks(Canvas c) {
+    // --- carrier-hatches Part B: components still flying after the kill.
+    if (model.boss == null && armada.heroReady) {
+      breakup.paint(c, armada, bossDirector.clock);
+    }
+    // --- carrier-render-engine §3: a v2 carrier falls as one wreck.
+    bossDirector.ensureCollapse(model, armada.modules);
+    final collapse = bossDirector.collapse;
+    if (collapse != null && !collapse.done && armada.heroReady) {
+      final k = 1 - collapse.progress;
+      armada.paintCollapse(
+        c,
+        collapse,
+        fog: Color.lerp(atmosphere.cloud, DemonScene.lurkTint, .55)!,
+        cloud: atmosphere.cloud,
+        shadowInk: Color.lerp(DemonScene.lurkTint, const Color(0xFF05030A), .5),
+        shadowAlpha: .45 * k,
+        shadowShift: Offset(10 + 22 * k, 16 + 40 * k) * bossDirector.altitude,
+      );
+      armada.paintCollapseSmoke(
+        c,
+        collapse,
+        fog: atmosphere.cloud,
+        blast: (at, size, age) => sprite(
+          c,
+          CombatAtlas.explosionRow,
+          (age * 8).floor().clamp(0, 7),
+          at,
+          size,
+          opacity: .8 * (1 - collapse.progress * .5),
+        ),
+      );
+    }
+    if (bossDirector.wrecks.isEmpty) return;
+    // boss-carrier-wire: each wreck throws its shadow onto the fog it
+    // falls into, its own sprite's alpha as the mask; the shadow closes in
+    // and fades into the fog as the wreck sinks.
+    if (armada.heroReady) {
+      final ink = Color.lerp(DemonScene.lurkTint, const Color(0xFF05030A), .5)!;
+      for (final w in bossDirector.wrecks) {
+        if (!w.started) continue; // at rest it is still the hull
+        final k = 1 - w.progress;
+        armada.paintHeroWreckShadow(
+          c,
+          w,
+          shift: Offset(10 + 22 * k, 16 + 40 * k) * bossDirector.altitude,
+          ink: ink,
+          alpha: (w.plate ? .3 : .5) * w.opacity * (.35 + .65 * k),
+        );
+      }
+    }
+    // Pieces that have not broken away yet hold the hull's shape where it
+    // died (back to front: the carapace, the modules, the prow), so the
+    // carrier never vanishes before its pieces fall.
+    if (armada.heroReady) {
+      int depth(String id) => id == 'carapace' || id == 'spine'
+          ? 0
+          : (id == 'prow' || id == 'bow' ? 2 : 1);
+      final waiting = [
+        for (final w in bossDirector.wrecks)
+          if (!w.started && !w.plate) w,
+      ]..sort((a, b) => depth(a.module) - depth(b.module));
+      for (final w in waiting) {
+        armada.paintHeroWreck(c, w, fog: atmosphere.cloud);
+      }
+    }
+    for (final w in bossDirector.wrecks) {
+      if (!w.started) continue;
+      if (armada.heroReady) {
+        armada.paintHeroWreck(c, w, fog: atmosphere.cloud);
+      } else if (armada.ready && w.plate && armada.hull.debris.isNotEmpty) {
+        c.save();
+        c.translate(w.x, w.y);
+        c.rotate(w.rotation);
+        armada.sprite(
+          c,
+          armada.hull.debris[0],
+          Offset.zero,
+          opacity: w.opacity,
+        );
+        c.restore();
+      }
+      final age = w.age - w.delay;
+      if (!w.plate && age < .55) {
+        sprite(
+          c,
+          CombatAtlas.explosionRow,
+          (age / .55 * 8).floor().clamp(0, 7),
+          Offset(w.x, w.y - 30),
+          120,
+          opacity: .75,
+        );
+      }
+    }
+  }
+
+  /// A soft 12 % vignette outside the zoomed arena's bounds.
+  void _arenaEdge(Canvas c, ArenaCamera cam) {
+    final tl = cam.toScreen(Offset.zero);
+    final br = cam.toScreen(const Offset(360, 520));
+    final k = ((1 - cam.zoom) / (1 - ArenaCamera.minZoom)).clamp(0.0, 1.0);
+    if (k <= 0) return;
+    const ink = Color(0xFF05040A);
+    Paint shade(Offset a, Offset b) => Paint()
+      ..shader = ui.Gradient.linear(a, b, [
+        ink.withValues(alpha: .12 * k + .1 * k),
+        ink.withValues(alpha: 0),
+      ]);
+    if (tl.dx > 0) {
+      c.drawRect(
+        Rect.fromLTRB(0, 0, tl.dx + 6, 520),
+        shade(Offset.zero, Offset(tl.dx + 6, 0)),
+      );
+      c.drawRect(
+        Rect.fromLTRB(br.dx - 6, 0, 360, 520),
+        shade(const Offset(360, 0), Offset(br.dx - 6, 0)),
+      );
+    }
+    if (tl.dy > 0) {
+      c.drawRect(
+        Rect.fromLTRB(0, 0, 360, tl.dy + 6),
+        shade(Offset.zero, Offset(0, tl.dy + 6)),
+      );
+    }
+  }
+
+  /// The hero hull's shadow cell (its S0 hero view, inked, 1 px per unit).
+  ui.Image? _heroShadowImage() {
+    final pages = armada.heroPages;
+    final h = armada.hero;
+    if (pages == null || h == null) return null;
+    final key = (pages, armada.loadedClass, 'hero');
+    if (_bossShadowFor == key) return _bossShadowCell;
+    final (l, t, r, bt) = h.frame;
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec)..translate(-l, -t);
+    c.saveLayer(
+      null,
+      Paint()
+        ..filterQuality = FilterQuality.medium
+        ..colorFilter = DemonScene._shadowInk,
+    );
+    for (final front in const [false, true]) {
+      armada.paintHero(
+        c,
+        Offset.zero,
+        view: BossView.hero,
+        stage: 0,
+        front: front,
+      );
+    }
+    c.restore();
+    final pic = rec.endRecording();
+    _bossShadowCell?.dispose();
+    _bossShadowCell = pic.toImageSync((r - l).ceil(), (bt - t).ceil());
+    pic.dispose();
+    _bossShadowAnchor = Offset(-l, -t);
+    _bossShadowFor = key;
+    return _bossShadowCell;
+  }
+
+  /// Where the boss shadow's caster is (x, row) and its strength.
+  (double, double, double)? _bossShadowCaster() {
+    final b = model.boss;
+    if (b != null) return (b.x, b.y, b.fightReady ? 1 : b.emerge);
+    final d = bossDirector;
+    if (d.phase == BossPhase.approach) {
+      // The lurking shadow crawls from the far terrain toward the front.
+      return (d.loomAt.dx, -60 + 210 * d.loom, .7);
+    }
+    if (d.phase == BossPhase.overflight &&
+        d.overflight > 0 &&
+        d.overflight < 1) {
+      final (at, _, _) = overflightPose(d.overflight);
+      return (at.dx, at.dy, .9 * (1 - d.overflight));
+    }
+    return null;
+  }
 }

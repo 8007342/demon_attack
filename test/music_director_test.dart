@@ -205,6 +205,14 @@ void main() {
         'destroyed',
         'gloat',
         'respawn',
+        // boss-grandeur stingers: overflight, rise, collapse.
+        'gloat',
+        'laststand',
+        'respawn',
+        // carrier-v3 stand-ins: approach, in range, take-off.
+        'reinforce',
+        'hatch',
+        'respawn',
       ]);
       expect(fleet, 1);
     },

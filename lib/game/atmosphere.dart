@@ -328,6 +328,15 @@ class Atmosphere {
   /// Seconds of fog time (frozen while [reducedMotion]).
   double time = 0;
 
+  /// carrier-v3 §7: the fog's flow boost (the carrier fight's speed). Each
+  /// layer flows at `base·(1 + (boost − 1)·(0.5 + nearness))`: the near
+  /// layers faster than the far (differential parallax). 1 outside it.
+  double flowBoost = 1;
+  final Map<FogSlot, double> _flowAhead = {};
+
+  /// The fog time layer [slot] is drawn at.
+  double timeOf(FogSlot slot) => time + (_flowAhead[slot] ?? 0);
+
   /// Flight distance (arena units at the bottom row; flyover `distance`).
   double groundDistance = 0;
   double environment = 0;
@@ -349,6 +358,29 @@ class Atmosphere {
   /// Vertical scroll of the cover (arena units; the camera tilting up).
   double cloudScroll = 0;
 
+  /// playtest-fixes-3: viewport above the arena (arena units): the band a
+  /// bottom-aligned arena leaves on a tall phone. The cloud cover fills it,
+  /// and the layers that reach the arena's top carry on through it
+  /// ([paintBand]); inside the arena every layer is unchanged.
+  double headroom = 0;
+
+  /// The air layers that reach the arena's top edge.
+  static const bandSlots = [FogSlot.upperVeil, FogSlot.skySheet1];
+
+  /// Paints the high fog over the band above the arena (clipped to it):
+  /// each layer at its arena-top strength, thinning by a third toward the
+  /// viewport's top.
+  void paintBand(Canvas c) {
+    if (headroom <= 0) return;
+    final band = Rect.fromLTWH(0, -headroom, 360, headroom);
+    c.save();
+    c.clipRect(band, doAntiAlias: false);
+    for (final slot in bandSlots) {
+      paint(c, slot);
+    }
+    c.restore();
+  }
+
   static const maxCloud = .92;
   static const cloudLight = Color(0xFFE2E7F2);
 
@@ -361,7 +393,8 @@ class Atmosphere {
   /// the light above it.
   void paintCloudCover(Canvas c, {bool below = false, double warmth = 0}) {
     final k = cloudCover.clamp(0.0, 1.0);
-    const r = Rect.fromLTWH(0, 0, 360, 520);
+    // playtest-fixes-3: the cover fills the band above the arena too.
+    final r = Rect.fromLTWH(0, -headroom, 360, 520 + headroom);
     if (warmth > .003) {
       // The light warms as the fog thins (the campaign's last dawn).
       c.drawRect(
@@ -529,7 +562,16 @@ class Atmosphere {
   /// position: it is world-anchored (fog-restoration).
   void advance(double dt, {required double distance}) {
     _guard(dt);
-    if (!reducedMotion) time += dt;
+    if (!reducedMotion) {
+      time += dt;
+      final extra = flowBoost - 1;
+      if (extra.abs() > 1e-6) {
+        for (final e in layers.entries) {
+          _flowAhead[e.key] =
+              (_flowAhead[e.key] ?? 0) + dt * extra * (.5 + e.value.nearness);
+        }
+      }
+    }
     groundDistance = distance;
   }
 
@@ -744,8 +786,20 @@ class Atmosphere {
         : base;
   }
 
-  Rect _bounds(FogLayer l) =>
-      Rect.fromLTRB(0, math.max(0, l.top), 360, math.min(520, l.bottom));
+  Rect _bounds(FogLayer l) => Rect.fromLTRB(
+    0,
+    l.top <= 0 ? -headroom : math.max(0, l.top),
+    360,
+    math.min(520, l.bottom),
+  );
+
+  /// The layer's vertical profile at [y], carried on above the arena's
+  /// top (the band) at its top-edge strength, thinning toward the
+  /// viewport's top.
+  double _profileAt(FogLayer l, double y) {
+    if (y >= 0 || headroom <= 0 || l.top > 0) return _profile(l, y);
+    return _profile(l, 0) * (1 - .35 * (-y / headroom).clamp(0.0, 1.0));
+  }
 
   void _paintGradientOnly(Canvas c, FogSlot slot, FogLayer l) {
     final r = _bounds(l);
@@ -832,7 +886,7 @@ class Atmosphere {
     for (var i = 0; i <= 8; i++) {
       final y = r.top + (r.bottom - r.top) * i / 8;
       stops.add(i / 8);
-      var a = _profile(l, y) * k;
+      var a = _profileAt(l, y) * k;
       if (l.lighten > 0) {
         final zone = Perspective.smoothstep(shipZoneTop - 30, shipZoneTop, y);
         a *= 1 - zone * (1 - shipZoneFactor);
@@ -861,7 +915,7 @@ class Atmosphere {
     final r = _bounds(l);
     final color = _colorOf(slot, l);
     final a = art[slot] ?? tileA!, b = tileB!;
-    final t = time;
+    final t = timeOf(slot);
     final ground = slot == FogSlot.groundFog;
     c.saveLayer(r, Paint());
     final tint = ColorFilter.mode(color, BlendMode.srcIn);
@@ -1015,7 +1069,7 @@ class Atmosphere {
     f(color.b);
     f(l.threshold);
     // uMotion: time, drift x, drift y, warp
-    f(time);
+    f(timeOf(slot));
     f(l.drift.dx);
     f(l.drift.dy);
     f(l.warp);

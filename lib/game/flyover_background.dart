@@ -136,12 +136,17 @@ class FlyoverBackground implements GroundOccluders {
     _pushVegetation(dt, model);
     if (reducedMotion) return;
     final p = model.transitionProgress;
-    final factor = switch (mode) {
-      RunMode.travel => 1 + 9 * math.sin(math.pi * p),
-      RunMode.levelClear || RunMode.victory => 1 + 2.5 * p * p,
-      RunMode.gameOver => .5,
-      _ => 1.0,
-    };
+    // transition ascent (design §3): a sector change's world speed is the
+    // flow's monotonic `speed` ramp (×8 inside the cloud), in place of the
+    // old symmetric travel bump; the fog and the cloud take the same factor.
+    final flow = model.flow;
+    final factor = flow.active && flow.plan.beat('speed') != null
+        ? flow.plan.speedFactor(flow.env('speed'))
+        : switch (mode) {
+            RunMode.levelClear || RunMode.victory => 1 + 2.5 * p * p,
+            RunMode.gameOver => .5,
+            _ => 1.0,
+          };
     distance += dt * baseSpeed * factor;
     _clock += dt;
     _react(dt, model);
@@ -201,30 +206,47 @@ class FlyoverBackground implements GroundOccluders {
 
   final _skyBakes = List<ui.Image?>.filled(5, null);
   final _skySources = List<ui.Image?>.filled(5, null);
+  final _skyRooms = List<double>.filled(5, 0);
+
+  /// The sky's extra height above the arena for [headroom] units of
+  /// viewport there: whole 8-unit steps (one bake per step), covering it.
+  static double skyRoom(double headroom) =>
+      headroom <= 0 ? 0 : (headroom / 8).ceil() * 8.0;
+
+  /// The painting's rows above its own horizon band that the sky may use.
+  static const skyRowsShare = .58;
   static const _bakeScale = 3.0;
   static const _skyTop = -8.0, _skyBottom = horizon + 8;
 
   /// Sky + painted horizon + stars, baked once per sector at 3x arena
   /// resolution, so the far layer is a single image draw per frame.
-  ui.Image _sky(int sector, ui.Image painting, Color tint) {
+  ui.Image _sky(int sector, ui.Image painting, Color tint, [double room = 0]) {
     final cached = _skyBakes[sector];
-    if (cached != null && identical(_skySources[sector], painting)) {
+    if (cached != null &&
+        identical(_skySources[sector], painting) &&
+        _skyRooms[sector] == room) {
       return cached;
     }
+    final top = _skyTop - room, height = _skyBottom - top;
     final recorder = ui.PictureRecorder();
     final c = Canvas(recorder);
     c.scale(_bakeScale);
-    c.translate(0, -_skyTop);
-    c.drawRect(const Rect.fromLTWH(0, _skyTop, 360, _skyBottom - _skyTop),
+    c.translate(0, -top);
+    c.drawRect(Rect.fromLTWH(0, top, 360, height),
         Paint()..color = const Color(0xFF070B16));
     // The painting keeps its width; its sky (planets, moons, nebulae) fills
-    // the band above the horizon at the painting's own aspect ratio.
-    final scale = 360 / painting.width;
-    final skyRows = (_skyBottom - _skyTop) / scale;
+    // the band above the horizon at the painting's own aspect ratio, from
+    // the top of the viewport. A band taller than the painting's sky (above
+    // its own horizon) zooms the sky to cover it, cropping the sides evenly.
+    final base = 360 / painting.width;
+    final rowsMax = painting.height * skyRowsShare;
+    final scale = math.max(base, height / rowsMax);
+    final skyRows = height / scale;
+    final width = painting.width * scale;
     c.drawImageRect(
       painting,
       Rect.fromLTWH(0, 0, painting.width.toDouble(), skyRows),
-      const Rect.fromLTWH(0, _skyTop, 360, _skyBottom - _skyTop),
+      Rect.fromLTWH((360 - width) / 2, top, width, height),
       Paint()
         ..filterQuality = FilterQuality.medium
         ..colorFilter =
@@ -235,7 +257,7 @@ class FlyoverBackground implements GroundOccluders {
     c.drawImageRect(
       painting,
       Rect.fromLTWH(0, bandTop, painting.width.toDouble(), bandH),
-      Rect.fromLTWH(0, horizon + 6 - bandH * scale, 360, bandH * scale),
+      Rect.fromLTWH(0, horizon + 6 - bandH * base, 360, bandH * base),
       Paint()
         ..filterQuality = FilterQuality.medium
         ..colorFilter =
@@ -243,19 +265,21 @@ class FlyoverBackground implements GroundOccluders {
     );
     final random = math.Random(1982 + sector * 709);
     final star = Paint()..isAntiAlias = false;
-    for (var i = 0; i < 46; i++) {
+    final stars = (46 * (horizon - 40 + room) / (horizon - 40)).round();
+    for (var i = 0; i < stars; i++) {
       final x = random.nextDouble() * 360;
-      final y = random.nextDouble() * (horizon - 40);
+      final y = random.nextDouble() * (horizon - 40 + room) - room;
       star.color = tint.withValues(alpha: .14 + .06 * (i % 3));
       c.drawRect(Rect.fromLTWH(x.floorToDouble(), y.floorToDouble(),
           i % 13 == 0 ? 2 : 1, 1), star);
     }
     final picture = recorder.endRecording();
     final image = picture.toImageSync(
-        (360 * _bakeScale).round(), ((_skyBottom - _skyTop) * _bakeScale).round());
+        (360 * _bakeScale).round(), (height * _bakeScale).round());
     picture.dispose();
     _skyBakes[sector]?.dispose();
     _skyBakes[sector] = image;
+    _skyRooms[sector] = room;
     _skySources[sector] = painting;
     return image;
   }
@@ -263,7 +287,7 @@ class FlyoverBackground implements GroundOccluders {
   /// Draws one complete world.  [opacity] < 1 is used for the travel
   /// crossfade, so no full-screen saveLayer is needed.
   void paintWorld(Canvas c, int sector, int route, ui.Image? painting,
-      Color tint, double opacity) {
+      Color tint, double opacity, {double headroom = 0}) {
     final strip = strips[sector], plane = planes[sector];
     final sheet = props, critterSheet = creatures;
     if (strip == null || plane == null || sheet == null || critterSheet == null) {
@@ -272,12 +296,15 @@ class FlyoverBackground implements GroundOccluders {
     final alpha = (opacity * 255).round().clamp(0, 255);
     // Far layer: baked sky with a slow ~0.02x sway.
     if (painting != null) {
-      final sky = _sky(sector, painting, tint);
+      // playtest-fixes-3: the sky reaches the viewport's top through any
+      // band above the arena (baked per 8-unit step of headroom).
+      final room = skyRoom(headroom);
+      final sky = _sky(sector, painting, tint, room);
       final sway = reducedMotion ? 0.0 : 3 * math.sin(distance * .02 / 40);
       c.drawImageRect(
         sky,
         Rect.fromLTWH(0, 0, sky.width.toDouble(), sky.height.toDouble()),
-        Rect.fromLTWH(0, _skyTop + sway, 360, _skyBottom - _skyTop),
+        Rect.fromLTWH(0, _skyTop - room + sway, 360, _skyBottom - _skyTop + room),
         Paint()
           ..filterQuality = FilterQuality.none
           ..color = Color.fromARGB(alpha, 255, 255, 255),
@@ -342,6 +369,8 @@ class FlyoverBackground implements GroundOccluders {
 
   /// Distance fog on the ground (the old 110 px gradient): 0 clear, toward
   /// 0.85 at the horizon.
+  static double groundFogAt(double flatY) => _groundFog(flatY);
+
   static double _groundFog(double flatY) {
     final t = (flatY - horizon) / 110;
     if (t >= 1) return 0;
@@ -757,6 +786,8 @@ class FlyoverBackground implements GroundOccluders {
       }
       final ds = center - shadow;
       if (_shadow && ds.dx.abs() < 40 && ds.dy.abs() < 30) s.duckT = .5;
+      // terrain-shadows §4: critters duck under the lurking shadow too.
+      if (_underLurk(center)) s.duckT = .5;
       if (s.burrowIn > 0) {
         // Easter-egg scatter: half the group burrows after 1-1.5 s.
         s.burrowIn -= dt;
@@ -1283,6 +1314,14 @@ class FlyoverBackground implements GroundOccluders {
     final p = _plants[index];
     c.drawAtlas(sheet, [p.$3], [p.$4], [p.$5], BlendMode.modulate, null,
         _pixelPaint);
+  }
+
+  bool _underLurk(Offset p) {
+    final r = terrain.lurkCover;
+    if (r == null) return false;
+    final dx = (p.dx - r.center.dx) / (r.width / 2);
+    final dy = (p.dy - r.center.dy) / (r.height / 2);
+    return dx * dx + dy * dy <= 1;
   }
 
   /// The ship's shadow is shown (also drives the critters' duck reaction).

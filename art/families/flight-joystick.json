@@ -1,0 +1,126 @@
+{
+  "schema": "demon-attack.rig-family/v1",
+  "name": "flight-joystick",
+  "notes": "The control pad's flight stick (openspec/changes/flight-joystick, plan/render-runs/flight-joystick.md). Input of tools/rigkit (rig.py, bake.py) and tools/rigsheet. Units are finished texels (1 unit = 1 stored pixel at texel 1.0). Frame: x = screen right, y = forward (away from the pilot, screen up when tilted), z = up out of the pad. The camera sits behind and above the pilot (hero pitch 45). The articulation block tilts the boot, shaft, grip and trigger about the gimbal; the base never moves. Symmetric about x = 0 so the left and right tilts are mirror images.",
+  "symmetric": true,
+  "views": {
+    "pitch": [45],
+    "yaw": [0],
+    "hero": [45, 0],
+    "stored": [[45, 0]],
+    "swerve_axis": [0.0, 0.70710678, 0.70710678]
+  },
+  "render": {
+    "scale": 12,
+    "margin": 3
+  },
+  "articulation": {
+    "pivot": [0, 0, 10],
+    "dirs": 8,
+    "tilts": [9, 18, 27],
+    "follow": {
+      "boot": {"k": 0.45, "pivot": [0, 0, 7.5]},
+      "stick": 1.0,
+      "grip": 1.0,
+      "trigger": 1.0
+    },
+    "notes": "8 directions x 3 tilt magnitudes + centred = 25 poses. Direction 0 = right, 90 = forward (screen up). The bellows boot leans by 0.45 of the tilt about its own foot, so it bends with the shaft instead of detaching from the base."
+  },
+  "materials": {
+    "housing": {"clay": 0.42, "fill": "#223647", "notes": "the gunmetal base plinth (the pad's slate)"},
+    "deck": {"clay": 0.50, "fill": "#34485B", "notes": "the top plate of the base"},
+    "rubber": {"clay": 0.26, "fill": "#0E1822", "notes": "the bellows boot"},
+    "chrome": {"clay": 0.72, "fill": "#99B4C7", "notes": "shaft and collar: brushed steel"},
+    "grip": {"clay": 0.34, "fill": "#1B2D3E", "notes": "the moulded grip"},
+    "bolt": {"clay": 0.64, "fill": "#6E8BA3", "notes": "deck bolts and the hat switch"},
+    "led": {"clay": 0.80, "fill": "#70F5D5", "hint": "#70F5D5", "notes": "mint status light: the pad's active colour"},
+    "arrow": {"clay": 0.80, "fill": "#39DFCC", "hint": "#39DFCC", "notes": "the left / right drag arrows on the deck"},
+    "button": {"clay": 0.70, "fill": "#FF4444", "hint": "#FF4444", "notes": "the fire button on the grip top"},
+    "trigger": {"clay": 0.70, "fill": "#FFB347", "hint": "#FFB347", "notes": "the amber trigger paddle"}
+  },
+  "palettes": {
+    "notes": "The game's pixel UI colours (lib/main.dart ConsolePainter, PilotConsoleContent): slate navy steps, mint and cyan for active, amber for combat, red for fire.",
+    "ramps": {
+      "slate": ["#070E16", "#0B1522", "#101F2D", "#1B2D3E", "#223647", "#34485B", "#4C6B82", "#6E8BA3", "#99B4C7", "#C9DAE6", "#EEF5FA"],
+      "mint": ["#0E4A44", "#1E8C7C", "#39DFCC", "#70F5D5", "#C8FFF2"],
+      "amber": ["#5A300C", "#A8661A", "#FFB347", "#FFD594", "#FFF1D6"],
+      "red": ["#4A1010", "#9A2222", "#FF4444", "#FF9A8A"],
+      "navy": ["#16204A", "#22306A", "#33478E", "#4C66B4"],
+      "ink": ["#050A10"]
+    }
+  },
+  "stages": {"S0": {"notes": "the only stage"}},
+  "slots": {
+    "base": {
+      "id": "#3A7BD5", "texel": "stick", "gameplay": "none", "wreck": false,
+      "notes": "Octagonal plinth with a bevelled deck, a mint status ring round the boot, drag arrows left and right, four bolts and a front status strip.",
+      "common": [
+        {"name": "plinth", "type": "loft", "tag": "housing", "axis": "z",
+         "sections": [[0, 24, 17.5, 0.34, 0, 0], [4.5, 24, 17.5, 0.34, 0, 0], [7, 21, 14.8, 0.34, 0, 0]]},
+        {"name": "ring", "type": "cyl", "tag": "led", "r": 12.6, "len": 1.2, "seg": 32, "at": [0, 0, 7.4]},
+        {"name": "collarplate", "type": "cyl", "tag": "deck", "r": 11.2, "len": 1.4, "seg": 32, "at": [0, 0, 7.8]},
+        {"name": "arrowR", "type": "cyl", "tag": "arrow", "r": 3.4, "len": 1.0, "seg": 3, "at": [16.2, 0, 7.3]},
+        {"name": "arrowL", "type": "cyl", "tag": "arrow", "r": 3.4, "len": 1.0, "seg": 3, "at": [-16.2, 0, 7.3], "rot": [0, 0, 180]},
+        {"name": "boltFR", "type": "cyl", "tag": "bolt", "r": 1.3, "len": 1.0, "seg": 8, "at": [13.2, -10.6, 7.2]},
+        {"name": "boltFL", "type": "cyl", "tag": "bolt", "r": 1.3, "len": 1.0, "seg": 8, "at": [-13.2, -10.6, 7.2]},
+        {"name": "boltBR", "type": "cyl", "tag": "bolt", "r": 1.3, "len": 1.0, "seg": 8, "at": [13.2, 10.6, 7.2]},
+        {"name": "boltBL", "type": "cyl", "tag": "bolt", "r": 1.3, "len": 1.0, "seg": 8, "at": [-13.2, 10.6, 7.2]},
+        {"name": "strip", "type": "box", "tag": "led", "size": [12, 1.0, 1.6], "at": [0, -17.7, 2.6]}
+      ]
+    },
+    "boot": {
+      "id": "#D53A7B", "texel": "stick", "gameplay": "none", "wreck": false,
+      "notes": "Rubber bellows between the deck and the shaft collar.",
+      "common": [
+        {"name": "bellows", "type": "lathe", "tag": "rubber", "seg": 28, "smooth": true,
+         "profile": [[10.4, 7.6], [10.0, 9.0], [8.0, 10.0], [9.0, 11.2], [7.0, 12.4], [7.8, 13.6], [5.8, 14.8], [6.4, 16.0], [4.2, 17.2], [3.2, 18.0]]}
+      ]
+    },
+    "stick": {
+      "id": "#7BD53A", "texel": "stick", "gameplay": "none", "wreck": false,
+      "notes": "Steel shaft and its collar on the boot.",
+      "common": [
+        {"name": "shaft", "type": "cyl", "tag": "chrome", "r": 2.4, "len": 18, "seg": 16, "smooth": true, "at": [0, 0, 24]},
+        {"name": "collar", "type": "cyl", "tag": "chrome", "r": 3.4, "len": 2.0, "seg": 20, "smooth": true, "at": [0, 0, 18.2]}
+      ]
+    },
+    "grip": {
+      "id": "#D5B03A", "texel": "stick", "gameplay": "none", "wreck": false,
+      "notes": "A moulded flight grip with a mint band, a fire button on top and one hat switch on the pilot side (no pair of thumb keys: two dots under a cap read as eyes).",
+      "common": [
+        {"name": "body", "type": "lathe", "tag": "grip", "seg": 28, "smooth": true,
+         "profile": [[3.0, 31.0], [4.8, 32.8], [5.4, 36.0], [5.0, 40.0], [5.5, 45.0], [6.4, 49.5], [6.9, 52.5], [6.4, 55.2], [4.6, 56.8], [0.0, 57.3]]},
+        {"name": "band", "type": "cyl", "tag": "led", "r": 5.7, "len": 1.2, "seg": 28, "smooth": true, "at": [0, 0, 42.6]},
+        {"name": "fire", "type": "cyl", "tag": "button", "r": 2.3, "len": 1.8, "seg": 16, "smooth": true, "at": [0, 0.6, 57.2]},
+        {"name": "hat", "type": "ell", "tag": "bolt", "radii": [1.6, 1.4, 1.6], "seg": 12, "at": [0, -6.7, 52.0]}
+      ]
+    },
+    "trigger": {
+      "id": "#3AD5B0", "texel": "stick", "gameplay": "none", "wreck": false,
+      "notes": "An amber trigger paddle on the front, wider than the grip so both tips show from the pilot's seat.",
+      "common": [
+        {"name": "paddle", "type": "horn", "tag": "trigger", "seg": 10, "aspect": [1.0, 4.6], "up": [1, 0, 0],
+         "pts": [[0, 5.2, 50.0], [0, 7.6, 48.6], [0, 8.6, 46.2], [0, 7.8, 43.8]], "radii": [1.5, 1.6, 1.5, 1.2]}
+      ]
+    }
+  },
+  "hulls": {
+    "stick": {
+      "title": "Flight stick",
+      "texel": {"stick": 1.0},
+      "slots": ["base", "boot", "stick", "grip", "trigger"]
+    }
+  },
+  "prompts": {
+    "hero": "Repaint this grey clay model as a finished, detailed painted game sprite of a sci-fi spaceship cockpit flight control joystick seen from behind and above, as the pilot sees it, in the style of a high-resolution sci-fi hardware concept painting. Materials: a heavy octagonal slate blue-grey metal base with bevelled armoured edges, clean satin paint and fine panel lines, a black ribbed rubber bellows boot, a brushed steel shaft and collar, a dark navy moulded ergonomic grip with fine texture, small panel seams and a glowing mint-cyan light band. Glowing mint-cyan light where the clay is mint, glowing cyan-teal arrow lights where the clay is cyan, a glossy red fire button where the clay is red, an amber-orange trigger where the clay is orange; the base has only the four bolts, the two arrows, the ring light and the front light strip, nothing else on it. Crisp edge highlights, lit from the upper left, readable at small size. Keep the outline, every shape, the pose and the viewing angle exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
+    "hero_look_rugged": "Rugged military hardware: chipped paint on the edges, scuffed rubber, stencilled hazard marks on the base.",
+    "hero_look_rugged_notes": "v1 only (st-...-112): rejected, it painted rust, stencilled text and an extra orange button on the base.",
+    "hero_look_clean": "Clean premium arcade hardware: smooth satin surfaces, sharp bevels, soft rim light.",
+    "negative": "rust, dirt, scratches, extra buttons, orange buttons on the base, levers, warning signs, hazard stripes, stickers, text, letters, numbers, watermark, logo, signature, frame, border, blurry, photo, multiple views, grid, hand, fingers, person, background scene, table, cockpit interior, checkerboard, shadow, cartoon, toy, plastic toy, pink, purple"
+  },
+  "selected": {
+    "notes": "Picked raws (paths under root); ledger plan/render-runs/flight-joystick.md. sym none: the painted light is one-sided, so the hero is not mirrored. register bbox: the Lightning edit re-framed the small subject (taller, higher) so the raw is registered to the clay silhouette box before the mask (rigsheet fit ... bbox).",
+    "root": "art/sprites/sources/flight-joystick/",
+    "stick": {"S0": "hero/7030005.png", "sym": "none", "register": "bbox"}
+  }
+}

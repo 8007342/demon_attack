@@ -1,9 +1,17 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import 'boss_atlas.dart';
+import 'boss_director.dart';
+import 'boss_grammar.dart';
+import 'carrier_bend.dart';
+import 'carrier_render_data.dart';
+import 'carrier_compose.dart';
+import 'carrier_field.dart';
+import 'carrier_wreck.dart';
 import 'model.dart';
 
 /// Draws the boss armada from `assets/images/boss-<class>.png`
@@ -23,22 +31,455 @@ class BossPainter {
 
   /// Hull class of [image] (index into [BossAtlas.classes]).
   int? loadedClass;
-  int? _loading;
 
   static int classFor(int cycle) =>
       cycle.clamp(0, BossAtlas.classes.length - 1);
 
   BossHull get hull => BossAtlas.classes[loadedClass ?? 0];
+
+  /// The frontal atlas is resident (the fallback for a hull whose view set
+  /// is not packed yet).
   bool get ready => image != null && loadedClass != null;
+
+  // --- boss-grandeur / boss-hero-assets 4.4: the packed view set ---
+  /// The hero hull drawn this run (one of [BossHeroAtlas]'s set
+  /// combinations), when its view set is packed; null while a hull falls
+  /// back to its frontal atlas.
+  BossHeroHull? hero;
+  List<ui.Image>? heroPages;
+
+  /// carrier-v3-render: the hull's decoded data page (height grids, field
+  /// distance, fracture chunks), null until decoded or for a hull without.
+  CarrierRenderData? renderData;
+
+  /// The Overflight's underside (`fin_belly`), loaded with the hull.
+  ui.Image? bellyImage;
+  BossHeroBelly? bellySprite;
+  bool get heroReady => hero != null && heroPages != null;
+
+  /// Either art is resident.
+  bool get anyReady => ready || heroReady;
+
+  /// The resident art's key: a hero hull key, or `frontal:<class>`.
+  String? loadedKey;
+  String? _loadingKey;
+
+  /// The drawn hull's modules and detach orders (for the director).
+  List<(String, int?)> get modules => [
+    if (heroReady)
+      for (final m in hero!.modules) (m.id, m.detach)
+    else if (ready)
+      ('spine', null),
+  ];
+
+  /// A v2 carrier (boss-carrier-v2: a GIANORMOUS hull that spills off
+  /// the screen) is drawn: the camera uses the carrier band.
+  bool get carrier => heroReady && hero!.set.isNotEmpty;
+
+  // --- carrier-render-engine §2: compose, then warp ---
+  /// The runtime bend of a v2 carrier (set by the scene every frame; null
+  /// draws the hull at rest, as under reduced motion).
+  CarrierBend? bend;
+
+  /// The hull's footprint (the field's distance map, when built): the warp
+  /// and wreck meshes keep only the cells near the hull's own pixels.
+  CarrierFieldMap? footprint;
+
+  /// Per pass (false: back, true: front) the current composite and its
+  /// warp mesh; re-composed only when the damage state (stage, detached
+  /// set, assembly) or the footprint changes.
+  final Map<bool, (CarrierComposite, CarrierWarpMesh)> _composed = {};
+  final Paint _meshPaint = Paint()..filterQuality = FilterQuality.low;
+
+  /// The one height field both passes share (keyed by the damage state):
+  /// the front and back meshes displace every point alike.
+  CarrierHeightGrid? _heights;
+  String? _heightsKey;
+
+  /// The meshes drawn last frame (tests, profiling): vertices, triangles,
+  /// `drawVertices` calls; and how many composites were built so far.
+  int meshVertices = 0, meshTriangles = 0, meshCalls = 0, composites = 0;
+
+  /// Composite texture bytes resident (both passes and the wreck).
+  int get compositeBytes =>
+      _composed.values.fold(0, (n, e) => n + e.$1.bytes) +
+      (_wreckArt?.$1.bytes ?? 0);
+
+  /// The resident composites' pixel sizes (review, profiling).
+  String get compositeSizes => [
+    for (final e in _composed.entries)
+      '${e.key ? 'front' : 'back'}:${e.value.$1.image.width}x${e.value.$1.image.height}',
+    if (_wreckArt case (final w, _)) 'wreck:${w.image.width}x${w.image.height}',
+  ].join(' ');
+
+  void _dropMeshes() {
+    for (final (c, m) in _composed.values) {
+      c.dispose();
+      m.dispose();
+    }
+    _composed.clear();
+    _heights = null;
+    _heightsKey = null;
+    footprint = null;
+    _dropWreck();
+  }
+
+  /// Where a hull-local rig point is drawn under the bend (lights, fires,
+  /// nozzles, gates and the field follow the hull): the same displacement
+  /// and height field as the mesh, so a point never slides on the art.
+  Offset bent(double x, double y, {String module = 'carapace'}) {
+    final b = bend;
+    if (b == null) return Offset(x, y);
+    final h = _heights?.at(x, y) ?? CarrierBend.heightOf(module);
+    final (dx, dy) = CarrierBend.displacement(x, y, h, b.psi, b.phi, b.theta);
+    return Offset(x + dx, y + dy);
+  }
+
+  String _moduleOf(String id) {
+    for (final m in hero?.modules ?? const <BossHeroModule>[]) {
+      if (m.id == id) return m.module;
+    }
+    return 'carapace';
+  }
+
+  /// The composite layers of the hero view at [stage]: [front] the prow
+  /// pass, false the back pass, null both (back, then front: the wreck).
+  List<CarrierCompositeLayer> _compositeLayers(
+    int stage, {
+    bool? front,
+    Set<int> detached = const {},
+  }) {
+    final h = hero!;
+    final v = h.views[BossView.hero.storedTag];
+    if (v == null) return const [];
+    final st = _drawnStage(v, stage);
+    final out = <CarrierCompositeLayer>[];
+    for (final pass in front == null ? const [false, true] : [front]) {
+      for (final m in h.modules) {
+        if (isFront(m) != pass) continue;
+        if (!_assembled(m.id)) continue;
+        var list = v.layers[m.id];
+        var flip = false;
+        if (list == null && m.id.endsWith('L')) {
+          list = v.layers['${m.id.substring(0, m.id.length - 1)}R'];
+          flip = true;
+        }
+        final s = list?[st];
+        if (s == null) continue;
+        final gone = m.detach != null && detached.contains(m.detach);
+        if (gone && st >= stage) continue;
+        final k = s.ppu;
+        out.add(
+          CarrierCompositeLayer(
+            page: s.page,
+            src: Rect.fromLTWH(
+              s.x.toDouble(),
+              s.y.toDouble(),
+              s.w.toDouble(),
+              s.h.toDouble(),
+            ),
+            dst: Rect.fromLTWH(s.dx, s.dy, s.w / k, s.h / k),
+            flip: flip,
+            height: CarrierBend.heightOf(m.module),
+            stump: gone,
+          ),
+        );
+      }
+    }
+    return out;
+  }
+
+  String _stateKey(int stage, Set<int> detached) {
+    final h = hero!;
+    final v = h.views[BossView.hero.storedTag];
+    final st = v == null ? 0 : _drawnStage(v, stage);
+    final key = StringBuffer('${h.key}|$st|$stage|')
+      ..writeAll((detached.toList()..sort()), ',')
+      ..write('|')
+      ..writeAll(assembly?.modules.map((m) => m.id) ?? const ['*'], ',')
+      ..write('|${footprint != null}');
+    return key.toString();
+  }
+
+  /// Whether the grid cell [cell] can show any of the hull: it overlaps a
+  /// layer's rect and (with the footprint) lies within a cell of the hull.
+  bool Function(Rect) _keep(List<CarrierCompositeLayer> layers, double step) {
+    final map = footprint;
+    final rects = [for (final l in layers) l.placed];
+    return (cell) {
+      if (!rects.any((r) => r.overlaps(cell))) return false;
+      if (map == null) return true;
+      final c = cell.center;
+      return map.at(c.dx, c.dy) < step * .75;
+    };
+  }
+
+  /// The hero view of a v2 carrier: the pass's layers composed into one
+  /// texture (cached until the damage state changes) and warped by one
+  /// mesh, one `drawVertices` per pass.
+  void _paintHeroMesh(
+    Canvas c,
+    Offset center, {
+    required int stage,
+    required bool front,
+    Set<int> detached = const {},
+    double opacity = 1,
+  }) {
+    final state = _stateKey(stage, detached);
+    if (_heightsKey != state) {
+      final all = _compositeLayers(stage, detached: detached);
+      final f = hero!.frame;
+      final rect = Rect.fromLTRB(f.$1, f.$2, f.$3, f.$4);
+      // carrier-v3-render: the baked height grids when the data page is in
+      // (carrier-render-engine §2.4, task 5.1), else the mount heights.
+      final baked = renderData;
+      _heights = baked != null
+          ? baked.heights(rect)
+          : CarrierHeightGrid.fromLayers(rect, all);
+      bend?.cap = baked != null
+          ? CarrierBend.bakedCap
+          : CarrierBend.parallaxCap;
+      _heightsKey = state;
+    }
+    final key = '$state|$front';
+    var entry = _composed[front];
+    if (entry == null || entry.$1.key != key) {
+      if (entry != null) {
+        entry.$1.dispose();
+        entry.$2.dispose();
+      }
+      final layers = _compositeLayers(stage, front: front, detached: detached);
+      if (layers.isEmpty) {
+        _composed.remove(front);
+        return;
+      }
+      var rect = layers.first.placed;
+      for (final l in layers.skip(1)) {
+        rect = rect.expandToInclude(l.placed);
+      }
+      rect = Rect.fromLTRB(
+        rect.left.floorToDouble(),
+        rect.top.floorToDouble(),
+        rect.right.ceilToDouble(),
+        rect.bottom.ceilToDouble(),
+      );
+      final comp = CarrierComposer.compose(layers, heroPages!, rect, key: key);
+      composites++;
+      final mesh = CarrierWarpMesh(
+        rect,
+        comp.ppu,
+        heights: _heights!,
+        keep: _keep(layers, 20),
+      );
+      _composed[front] = entry = (comp, mesh);
+    }
+    final (comp, mesh) = entry;
+    mesh.rebuild(bend);
+    c.save();
+    c.translate(center.dx, center.dy);
+    _noteLayer(c, comp.rect);
+    _meshPaint
+      ..color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0))
+      ..shader = comp.shader;
+    c.drawVertices(mesh.vertices, BlendMode.srcOver, _meshPaint);
+    _meshPaint.shader = null;
+    meshCalls++;
+    meshVertices += mesh.vertexCount;
+    meshTriangles += mesh.triangleCount;
+    c.restore();
+  }
+
+  /// The hero view's S0 sprites of the run's assembly, with their flips
+  /// and modules (both passes).
+  List<(BossHeroSprite, bool, String)> _heroS0() {
+    final h = hero;
+    final v = h?.views[BossView.hero.storedTag];
+    if (h == null || v == null) return const [];
+    return [
+      for (final m in h.modules)
+        if (_assembled(m.id))
+          if ((v.layers[m.id] ??
+                      (m.id.endsWith('L')
+                          ? v.layers['${m.id.substring(0, m.id.length - 1)}R']
+                          : null))
+                  ?.first
+              case final s?)
+            (s, v.layers[m.id] == null, m.module),
+    ];
+  }
+
+  /// carrier-v3 §7: the vortex trails' anchor points until the rig's
+  /// `vortex` points exist: the outer-lower extreme of each wing, arm and
+  /// sail layer (hull-local, unbent), with its module.
+  List<(Offset, String)> vortexTips() {
+    // carrier-v3-render: the rig's own vortex points (prong, wing and
+    // tendril tips), when the hull was baked with them.
+    final v = hero?.views[BossView.hero.storedTag];
+    if (v != null && v.vortex.isNotEmpty) {
+      return [
+        for (final p in v.vortex)
+          if (_assembled(p.module)) (Offset(p.x, p.y), _moduleOf(p.module)),
+      ];
+    }
+    return _extremeTips();
+  }
+
+  List<(Offset, String)> _extremeTips() => [
+    for (final (s, flip, module) in _heroS0())
+      if (CarrierBend.lags(module))
+        () {
+          final k = s.ppu;
+          final l = s.dx, r = s.dx + s.w / k, b = s.dy + s.h / k;
+          final outer = (l.abs() > r.abs() ? l : r) * (flip ? -1 : 1);
+          return (Offset(outer - outer.sign * 6, b - .18 * (b - s.dy)), module);
+        }(),
+  ];
+
+  /// carrier-v3 §3.4: the hull's S0 alpha at [ppu] px per unit over its
+  /// frame plus [pad] units, for the field's distance map (the load-time
+  /// stand-in for the re-render's baked texture). Returns the picture's
+  /// size and hull-local origin; null without a hero hull.
+  ({ui.Picture picture, int w, int h, double left, double top})? fieldAlpha({
+    double ppu = .5,
+    double pad = 40,
+  }) {
+    final hh = hero;
+    final pages = heroPages;
+    if (hh == null || pages == null) return null;
+    final f = hh.frame;
+    final left = f.$1 - pad, top = f.$2 - pad;
+    final w = ((f.$3 - f.$1 + 2 * pad) * ppu).ceil();
+    final h = ((f.$4 - f.$2 + 2 * pad) * ppu).ceil();
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec);
+    c.scale(ppu);
+    c.translate(-left, -top);
+    final paint = Paint()..filterQuality = FilterQuality.low;
+    for (final (s, flip, _) in _heroS0()) {
+      final k = s.ppu;
+      final src = Rect.fromLTWH(
+        s.x.toDouble(),
+        s.y.toDouble(),
+        s.w.toDouble(),
+        s.h.toDouble(),
+      );
+      c.save();
+      if (flip) c.scale(-1, 1);
+      c.drawImageRect(
+        pages[s.page],
+        src,
+        Rect.fromLTWH(s.dx, s.dy, s.w / k, s.h / k),
+        paint,
+      );
+      c.restore();
+    }
+    return (picture: rec.endRecording(), w: w, h: h, left: left, top: top);
+  }
+
+  /// Clears the per-frame mesh counters (the scene, once per frame).
+  void beginFrame() {
+    meshVertices = meshTriangles = meshCalls = 0;
+    layerBounds.clear();
+  }
+
+  /// carrier-render-engine: draw the collapse's shadow layer (one blurred
+  /// `saveLayer` over the wreck for 7 s, the likeliest phone cost).
+  /// `--dart-define=CARRIER_WRECK_SHADOW=false` turns it off.
+  static bool collapseShadow = const bool.fromEnvironment(
+    'CARRIER_WRECK_SHADOW',
+    defaultValue: true,
+  );
+
+  /// Tests only: record every offscreen layer's and composite's bounds, in
+  /// device coordinates, for the straight-edge pixel test.
+  bool recordLayers = false;
+  final List<Rect> layerBounds = [];
+
+  void _noteLayer(Canvas c, Rect r) {
+    if (!recordLayers) return;
+    final m = c.getTransform();
+    Offset map(Offset p) => Offset(
+      m[0] * p.dx + m[4] * p.dy + m[12],
+      m[1] * p.dx + m[5] * p.dy + m[13],
+    );
+    final a = map(r.topLeft), b = map(r.topRight);
+    final d = map(r.bottomLeft), e = map(r.bottomRight);
+    layerBounds.add(
+      Rect.fromLTRB(
+        math.min(math.min(a.dx, b.dx), math.min(d.dx, e.dx)),
+        math.min(math.min(a.dy, b.dy), math.min(d.dy, e.dy)),
+        math.max(math.max(a.dx, b.dx), math.max(d.dx, e.dx)),
+        math.max(math.max(a.dy, b.dy), math.max(d.dy, e.dy)),
+      ),
+    );
+  }
 
   /// Installs an already decoded atlas (tests and the gallery).
   void setAtlas(int cls, ui.Image atlas) {
+    _dropMeshes();
     image = atlas;
     loadedClass = cls;
+    loadedKey = 'frontal:$cls';
+    hero = null;
+    heroPages = null;
+    bellyImage = null;
+    bellySprite = null;
   }
 
-  /// Keeps exactly the atlas the model needs resident: the current run's
-  /// class from the sector before the carrier until its wreck has fallen,
+  /// Installs a decoded hero view set (tests, review).
+  void setHero(
+    int cls,
+    BossHeroHull hull,
+    List<ui.Image> pages, {
+    ui.Image? belly,
+    CarrierRenderData? data,
+  }) {
+    _dropMeshes();
+    image = null;
+    loadedClass = cls;
+    loadedKey = hull.key;
+    hero = hull;
+    heroPages = pages;
+    renderData = data;
+    bellySprite = belly == null ? null : bellyOf(hull);
+    bellyImage = belly;
+  }
+
+  /// The belly a hull draws in the Overflight: its own, else the first
+  /// packed one (only the thorn carrier's underside is baked so far).
+  static BossHeroBelly? bellyOf(BossHeroHull hull) =>
+      hull.belly ??
+      BossHeroAtlas.hulls.values.map((h) => h.belly).nonNulls.firstOrNull;
+
+  /// The packed hero hulls (keys).
+  static Set<String> get packed => BossHeroAtlas.hulls.keys.toSet();
+
+  /// The hero hull a run draws at route [route]: the run's set combination
+  /// (boss_grammar, picked from the run seed's [variant]) among the packed
+  /// ones; null when none of its tour is packed (frontal atlas).
+  static BossHeroHull? heroForRun(int route, int variant) =>
+      BossHeroAtlas.hulls[BossGrammar.forRun(
+        route: route,
+        variant: variant,
+        packed: packed,
+      ).hull];
+
+  /// Every asset of hero hull [key] (pages and belly), or of frontal class
+  /// `frontal:<n>`.
+  static List<String> assetsOf(String key) {
+    final h = BossHeroAtlas.hulls[key];
+    if (h == null) {
+      return [BossAtlas.classes[int.parse(key.split(':').last)].asset];
+    }
+    return [
+      ...h.pages,
+      if (bellyOf(h) case final b?) b.asset,
+      if (h.data case final d?) d.asset,
+    ];
+  }
+
+  /// Keeps exactly the art the model needs resident: the current run's
+  /// hull from the sector before the carrier until its wreck has fallen,
   /// none during the other sectors. [load] decodes an asset name; [evict]
   /// releases a cached one.
   void sync(
@@ -48,27 +489,72 @@ class BossPainter {
   ) {
     final needed =
         model.boss != null || model.wreckBoss != null || model.level >= 4;
-    final want = classFor(model.cycle);
+    final cls = classFor(model.cycle);
+    final heroHull = heroForRun(model.cycle, model.bossVariant);
+    final want = heroHull?.key ?? 'frontal:$cls';
     if (!needed) {
-      if (image != null && loadedClass != null) {
-        evict(BossAtlas.classes[loadedClass!].asset);
+      if (anyReady && loadedKey != null) {
+        assetsOf(loadedKey!).forEach(evict);
         image = null;
+        hero = null;
+        heroPages = null;
+        renderData = null;
+        bellyImage = null;
+        bellySprite = null;
         loadedClass = null;
+        loadedKey = null;
       }
       return;
     }
-    if (loadedClass == want || _loading == want) return;
-    _loading = want;
-    load(BossAtlas.classes[want].asset).then((img) {
-      if (_loading != want) return;
-      final old = loadedClass;
-      image = img;
-      loadedClass = want;
-      _loading = null;
-      if (old != null && old != want) evict(BossAtlas.classes[old].asset);
-    }).catchError((Object _) {
-      _loading = null;
-    });
+    if (loadedKey == want || _loadingKey == want) return;
+    _loadingKey = want;
+    // One hull resident at a time: its hero pages (≤ 16 MB) and the
+    // Overflight's belly, or its frontal atlas while its view set is not
+    // packed yet.
+    final belly = heroHull == null ? null : bellyOf(heroHull);
+    final data = heroHull?.data;
+    final pending = heroHull != null
+        ? Future.wait(
+            [
+              ...heroHull.pages,
+              if (belly != null) belly.asset,
+              if (data != null) data.asset,
+            ].map(load),
+          )
+        : load(BossAtlas.classes[cls].asset).then((i) => [i]);
+    pending
+        .then((imgs) {
+          if (_loadingKey != want) return;
+          final old = loadedKey;
+          if (heroHull != null) {
+            hero = heroHull;
+            heroPages = imgs.sublist(0, heroHull.pages.length);
+            bellySprite = belly;
+            bellyImage = belly == null ? null : imgs[heroHull.pages.length];
+            image = null;
+            renderData = null;
+            if (data != null) {
+              CarrierRenderData.decode(data, imgs.last).then((d) {
+                if (hero?.key != heroHull.key) return;
+                renderData = d;
+                _heightsKey = null; // rebuild the height field from the bake
+              });
+            }
+          } else {
+            image = imgs.single;
+            hero = null;
+            heroPages = null;
+            bellyImage = null;
+            bellySprite = null;
+          }
+          loadedClass = cls;
+          loadedKey = want;
+          _loadingKey = null;
+          if (old != null && old != want) assetsOf(old).forEach(evict);
+        })
+        .catchError((Object _) {
+          _loadingKey = null;
+        });
   }
 
   final Paint _paint = Paint()
@@ -117,6 +603,891 @@ class BossPainter {
 
   static int formOf(Carrier b, BossHull h) => b.phase.clamp(0, h.forms - 1);
 
+  // --- boss-grandeur: drawing the hero view set ---
+
+  /// Draws hero sprite [s] with its anchor at [anchor] (arena units).
+  void heroSprite(
+    Canvas c,
+    BossHeroSprite s,
+    Offset anchor, {
+    double opacity = 1,
+    bool flipX = false,
+    bool flipY = false,
+  }) {
+    final pages = heroPages;
+    if (pages == null) return;
+    _paint.color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0));
+    final src = Rect.fromLTWH(
+      s.x.toDouble(),
+      s.y.toDouble(),
+      s.w.toDouble(),
+      s.h.toDouble(),
+    );
+    final k = s.ppu.toDouble();
+    if (!flipX && !flipY) {
+      c.drawImageRect(
+        pages[s.page],
+        src,
+        Rect.fromLTWH(anchor.dx + s.dx, anchor.dy + s.dy, s.w / k, s.h / k),
+        _paint,
+      );
+      return;
+    }
+    c.save();
+    c.translate(anchor.dx, anchor.dy);
+    c.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+    c.drawImageRect(
+      pages[s.page],
+      src,
+      Rect.fromLTWH(s.dx, s.dy, s.w / k, s.h / k),
+      _paint,
+    );
+    c.restore();
+  }
+
+  /// The stored view, whether it is drawn mirrored, for [view].
+  /// carrier-v3: a hull baked with one view answers every view with it.
+  BossHeroView? storedView(BossView view) =>
+      hero?.views[view.storedTag] ?? hero?.views[BossView.hero.storedTag];
+
+  /// The run's assembly (boss_grammar): which of the hull's modules are
+  /// drawn and from which art set. Null draws every packed module.
+  BossAssembly? assembly;
+
+  /// Picks the run's assembly for carrier [b] (its seeded set combination,
+  /// R8.6; visual only). A hull whose packed modules share no id with the
+  /// assembly (art not in yet) draws everything packed.
+  void assemble(Carrier b, int route) {
+    final h = hero;
+    if (h == null) {
+      assembly = null;
+      return;
+    }
+    final a = BossGrammar.forRun(
+      route: route,
+      variant: b.variant,
+      packed: packed,
+    );
+    final ids = {for (final m in a.modules) m.id};
+    final have = {for (final m in h.modules) m.id};
+    assembly = ids.intersection(have).isEmpty ? null : a;
+  }
+
+  bool _assembled(String id) =>
+      assembly == null ||
+      isGateModule(id) ||
+      assembly!.modules.any((m) => m.id == id);
+
+  /// carrier-v3-render: the gate and compartment modules (deck bays,
+  /// prong pods, aft gates, dorsal hatches) are gameplay geometry
+  /// ([BossHeroHull.gates]), outside the visual grammar: always drawn.
+  static bool isGateModule(String id) =>
+      id.startsWith('gate_') || id.startsWith('hatch');
+
+  /// The front pass (drawn after the creatures): the v2 `prow` (mount
+  /// bow, the hangar deck with the functional windows), or the v1 `bow`.
+  static bool isFront(BossHeroModule m) =>
+      m.module == 'prow' ||
+      m.module.startsWith('prow.') ||
+      m.module ==
+          'gate.bay' || // carrier-v3: the deck bays' leaves sit on the prow
+      m.id == 'bow';
+
+  /// The stage [paintHero] drew last (the gates' door layers follow it).
+  int lastStage = 0;
+
+  /// Whether any module has a layer at [stage] (a hull baked without a
+  /// stage falls back to S0).
+  int _drawnStage(BossHeroView v, int stage) {
+    for (var s = stage; s > 0; s--) {
+      if (v.layers.values.any((l) => l[s] != null)) return s;
+    }
+    return 0;
+  }
+
+  /// The stage the art of [view] really draws for [stage] (tests, review).
+  int drawnStage(BossView view, int stage) {
+    final v = storedView(view);
+    return v == null ? 0 : _drawnStage(v, stage);
+  }
+
+  /// The runtime decay overlay's strength for [stage] drawn from the art's
+  /// stage [drawn]: S1 is always the overlay on S0 (boss-hero-assets §8.4:
+  /// not baked); a stage the hull has no layers for (tours 2–5 so far: S0
+  /// only) falls back to S0 under a heavier overlay. Baked S2/S3 looks
+  /// carry their own damage.
+  static double overlayFor(int stage, int drawn) {
+    if (stage <= 0 || drawn >= 2) return 0;
+    return switch (stage) {
+      1 => .35,
+      2 => .6,
+      _ => .8,
+    };
+  }
+
+  static const _char = Color(0xFF140A0C);
+  static const _ember = Color(0xFFFF6A24), _emberHot = Color(0xFFFFB060);
+  final Paint _stump = Paint()
+    ..colorFilter = const ColorFilter.mode(
+      Color(0xD8140A0C),
+      BlendMode.srcATop,
+    );
+
+  /// One view of the hull's module layers at [stage]. [front]: only the
+  /// prow (the functional face, drawn after the creatures); otherwise every
+  /// other module. Modules whose detach order is in [detached] are gone;
+  /// where the art still draws such a module at this stage (a stage it has
+  /// no layers for), its layer is drawn as a charred stump so the hull
+  /// never shows a hole where the module was held out.
+  void _paintHeroView(
+    Canvas c,
+    Offset center,
+    BossView view, {
+    required int stage,
+    required bool front,
+    Set<int> detached = const {},
+    double opacity = 1,
+  }) {
+    final h = hero!;
+    if (carrier && view == BossView.hero) {
+      _paintHeroMesh(
+        c,
+        center,
+        stage: stage,
+        front: front,
+        detached: detached,
+        opacity: opacity,
+      );
+      return;
+    }
+    final v = storedView(view);
+    if (v == null) return;
+    final st = _drawnStage(v, stage);
+    c.save();
+    if (view.mirrored) {
+      c.translate(center.dx * 2, 0);
+      c.scale(-1, 1);
+    }
+    for (final m in h.modules) {
+      if (isFront(m) != front) continue;
+      if (!_assembled(m.id)) continue;
+      var layers = v.layers[m.id];
+      var flip = false;
+      if (layers == null && m.id.endsWith('L')) {
+        layers = v.layers['${m.id.substring(0, m.id.length - 1)}R'];
+        flip = true;
+      }
+      final sprite = layers?[st];
+      if (sprite == null) continue;
+      if (m.detach != null && detached.contains(m.detach)) {
+        // Torn away. A baked stage that sheds it has no layer for it; a
+        // fallback stage still has one: char it.
+        if (st >= stage) continue;
+        c.saveLayer(null, _stump);
+        heroSprite(c, sprite, center, opacity: opacity, flipX: flip);
+        c.restore();
+        continue;
+      }
+      heroSprite(c, sprite, center, opacity: opacity, flipX: flip);
+    }
+    c.restore();
+  }
+
+  /// The hull's layers in [view], crossfading from [previous] by [blend]
+  /// (both views share the simulation anchors, so the blend never pops),
+  /// under the runtime decay overlay ([overlayFor]): scorch, crystal
+  /// flicker and ember hairline cracks from the fire points, clipped to the
+  /// hull's own pixels.
+  void paintHero(
+    Canvas c,
+    Offset center, {
+    required BossView view,
+    BossView? previous,
+    double blend = 1,
+    required int stage,
+    required bool front,
+    Set<int> detached = const {},
+    double opacity = 1,
+    double clock = 0,
+  }) {
+    if (!heroReady) return;
+    lastStage = stage;
+    final v = storedView(view);
+    final sev = v == null ? 0.0 : overlayFor(stage, _drawnStage(v, stage));
+    final dome = front && hero!.set.isNotEmpty;
+    if (sev > 0 || dome) {
+      final f = hero!.frame;
+      final r = Rect.fromLTRB(
+        center.dx + f.$1 - 8,
+        center.dy + f.$2 - 8,
+        center.dx + f.$3 + 8,
+        center.dy + f.$4 + 8,
+      );
+      _noteLayer(c, r);
+      c.saveLayer(r, Paint());
+    }
+    if (previous != null && previous != view && blend < 1) {
+      _paintHeroView(
+        c,
+        center,
+        previous,
+        stage: stage,
+        front: front,
+        detached: detached,
+        opacity: opacity,
+      );
+      _paintHeroView(
+        c,
+        center,
+        view,
+        stage: stage,
+        front: front,
+        detached: detached,
+        opacity: opacity * blend,
+      );
+    } else {
+      _paintHeroView(
+        c,
+        center,
+        view,
+        stage: stage,
+        front: front,
+        detached: detached,
+        opacity: opacity,
+      );
+    }
+    if (dome) _domeShade(c, center, opacity);
+    if (sev > 0) {
+      _decayOverlay(
+        c,
+        center,
+        view,
+        stage,
+        sev,
+        front: front,
+        clock: clock,
+        opacity: opacity,
+      );
+    }
+    if (sev > 0 || dome) c.restore();
+  }
+
+  /// boss-carrier-wire: the v2 prow's dome above the hangar deck is painted
+  /// lighter than the hull's value ceiling (styleguide §7.1, `#56456C`), and
+  /// its rows of dark ports then read as eyes over the deck (§3.4). A shade
+  /// over the prow's own pixels, deepest at the crown and gone at the deck
+  /// sill, takes the dome down to the hull's value so the gallery reads
+  /// first (§7.3).
+  void _domeShade(Canvas c, Offset center, double opacity) {
+    final top = center.dy - 80, sill = center.dy + 10;
+    c.drawRect(
+      Rect.fromLTRB(center.dx - 240, top, center.dx + 240, sill),
+      Paint()
+        ..blendMode = BlendMode.srcATop
+        ..shader = ui.Gradient.linear(
+          Offset(0, top),
+          Offset(0, sill),
+          [
+            _char.withValues(alpha: .62 * opacity),
+            _char.withValues(alpha: .5 * opacity),
+            _char.withValues(alpha: 0),
+          ],
+          const [0, .62, 1],
+        ),
+    );
+  }
+
+  /// The overlay itself, drawn `srcATop` over the hull's layer: a warm char
+  /// (deeper as the stage rises; S1's crystal flicker dims it in pulses),
+  /// then ember hairline cracks radiating from the view's fire points. The
+  /// prow keeps its gallery dark: no cracks within 60 units of the centre
+  /// line (embers around the deck would read as teeth; styleguide §3.4).
+  void _decayOverlay(
+    Canvas c,
+    Offset center,
+    BossView view,
+    int stage,
+    double sev, {
+    required bool front,
+    required double clock,
+    double opacity = 1,
+  }) {
+    final f = hero!.frame;
+    final flicker = stage == 1 && (clock * 7).floor() % 3 == 0 ? .12 : 0.0;
+    final atop = Paint()
+      ..blendMode = BlendMode.srcATop
+      ..color = _char.withValues(
+        alpha: ((.55 * sev + flicker) * opacity).clamp(0.0, 1.0),
+      );
+    c.drawRect(
+      Rect.fromLTRB(
+        center.dx + f.$1,
+        center.dy + f.$2,
+        center.dx + f.$3,
+        center.dy + f.$4,
+      ),
+      atop,
+    );
+    final fires = [
+      for (final p in heroPoints(view, stage, kind: 'fires'))
+        if ((p.module == 'prow' || p.module == 'bow') == front &&
+            !(front && p.x.abs() < 60))
+          p,
+    ];
+    if (fires.isEmpty) return;
+    final n = (fires.length * sev).ceil().clamp(1, fires.length);
+    final glow = (math.sin(clock * 5.3) * .5 + .5) * .3 + .55;
+    // Strokes in arena units: at Z 0.70 on a DPR-2 phone one unit is 1.4
+    // device px, so the glow stays ≥ 4 px and the hot core ≥ 2 px.
+    final a = (glow * (.5 + .5 * sev) * opacity).clamp(0.0, 1.0);
+    final halo = Paint()
+      ..blendMode = BlendMode.srcATop
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.5
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5)
+      ..color = _ember.withValues(alpha: a * .55);
+    final wide = Paint()
+      ..blendMode = BlendMode.srcATop
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round
+      ..color = _ember.withValues(alpha: a);
+    final hot = Paint()
+      ..blendMode = BlendMode.srcATop
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..color = _emberHot.withValues(alpha: a * .9);
+    final pore = Paint()
+      ..blendMode = BlendMode.srcATop
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5)
+      ..color = _ember.withValues(alpha: (.55 * sev * opacity).clamp(0.0, 1.0));
+    for (var i = 0; i < n; i++) {
+      final p = fires[(i * 7) % fires.length];
+      final o = center + Offset(p.x, p.y);
+      // Seeded by the point (mirror-stable: |x|), never by the frame.
+      final rng = math.Random(
+        (p.x.abs() * 13).round() * 7919 + (p.y * 7).round(),
+      );
+      final path = Path();
+      final arms = 3 + rng.nextInt(2);
+      for (var a = 0; a < arms; a++) {
+        var dir = rng.nextDouble() * math.pi * 2;
+        var q = o;
+        path.moveTo(q.dx, q.dy);
+        final segs = 2 + (sev * 3).round();
+        for (var s = 0; s < segs; s++) {
+          dir += (rng.nextDouble() - .5) * 1.1;
+          final len = 6 + rng.nextDouble() * 9;
+          q += Offset(math.cos(dir), math.sin(dir) * .7) * len;
+          path.lineTo(q.dx, q.dy);
+        }
+      }
+      c.drawCircle(o, 4 + 8 * sev, pore);
+      c.drawPath(path, halo);
+      c.drawPath(path, wide);
+      c.drawPath(path, hot);
+    }
+  }
+
+  /// Points of [view] (mirrored for yaw −12) at [stage].
+  List<BossHeroPoint> heroPoints(
+    BossView view,
+    int stage, {
+    required String kind,
+  }) {
+    final v = storedView(view);
+    if (v == null) return const [];
+    final broken = stage >= 3;
+    final list = switch (kind) {
+      'lights' => broken ? v.lightsBroken : v.lights,
+      'fires' => broken ? v.firesBroken : v.fires,
+      _ => broken ? v.nozzlesBroken : v.nozzles,
+    };
+    if (!view.mirrored) return list;
+    return [for (final p in list) BossHeroPoint(-p.x, p.y, p.kind, p.module)];
+  }
+
+  /// Background layer of the hero hull: plumes at its nozzles, every module
+  /// but the bow, breaches at its fire points, running lights (S1 flickers).
+  void paintHeroBackdrop(
+    Canvas c,
+    Carrier b, {
+    required BossDirector director,
+    required double clock,
+    required double bank,
+    required double damage,
+    double burn = -1,
+    Offset? center,
+    double opacity = 1,
+  }) {
+    if (!heroReady) return;
+    final h = hero!;
+    final at = center ?? Offset(b.x, b.y);
+    final flick = (clock * 12).floor() % 2;
+    final stage = director.stage;
+    for (final (i, n) in heroPoints(
+      director.view,
+      stage,
+      kind: 'nozzles',
+    ).indexed) {
+      if (h.plumes.isEmpty) break;
+      final t = burn >= 0 ? burn : thrust(n.x, bank, b.rage);
+      final level = t < .42 ? 0 : (t < .72 ? 1 : 2);
+      final size = n.kind.clamp(0, h.plumes.length - 1);
+      heroSprite(
+        c,
+        h.plumes[size][level][(flick + i) % 2],
+        at + bent(n.x, n.y, module: _moduleOf(n.module)),
+        opacity: opacity,
+      );
+    }
+    paintHero(
+      c,
+      at,
+      view: director.view,
+      previous: director.previous,
+      blend: director.blend,
+      stage: stage,
+      front: false,
+      detached: director.detached,
+      clock: clock,
+      opacity: opacity,
+    );
+    if (damage > .45 && h.breach.isNotEmpty) {
+      final fires = heroPoints(director.view, stage, kind: 'fires');
+      final count = fires.isEmpty
+          ? 0
+          : (fires.length * ((damage - .45) / .45)).ceil().clamp(
+              1,
+              fires.length,
+            );
+      final sev = damage > .8 ? 2 : (damage > .62 ? 1 : 0);
+      for (var i = 0; i < count; i++) {
+        final f = fires[(i * 5) % fires.length];
+        final pick = (sev * 2 + (flick + i) % 2).clamp(0, h.breach.length - 1);
+        heroSprite(
+          c,
+          h.breach[pick],
+          at + bent(f.x, f.y, module: _moduleOf(f.module)),
+          opacity: opacity,
+        );
+      }
+    }
+    // S1 scorched: the running lights flicker.
+    if (stage == 1 && (clock * 7).floor() % 3 == 0) return;
+    final strobe = (clock * 8).floor() % 10 == 0;
+    final pulse = (clock * 2).floor().isEven;
+    for (final l in heroPoints(director.view, stage, kind: 'lights')) {
+      final Color color = switch (l.kind) {
+        0 => const Color(0xFFFF3048),
+        1 => const Color(0xFF40FF90),
+        2 => strobe ? const Color(0xFFFFFFFF) : const Color(0x00000000),
+        _ => pulse ? const Color(0xFFFFC45A) : const Color(0xFFB0702A),
+      };
+      if (color.a == 0) continue;
+      final p = at + bent(l.x, l.y, module: _moduleOf(l.module));
+      _block.color = color.withValues(alpha: .3 * opacity);
+      c.drawRect(Rect.fromLTWH(p.dx - 2, p.dy - 2, 4, 4), _block);
+      _block.color = color.withValues(alpha: opacity);
+      c.drawRect(Rect.fromLTWH(p.dx - 1, p.dy - 1, 2, 2), _block);
+    }
+  }
+
+  // --- carrier-render-engine §3: the cohesive collapse ---
+  /// The wreck's art: the hull at death composed once (both passes,
+  /// charred, its cut edges feathered), its fracture, and the key.
+  (CarrierComposite, CarrierFracture)? _wreckArt;
+  Float32List? _wreckPos, _wreckTex;
+  ui.Vertices? _wreckVertices;
+
+  /// Triangles of the wreck drawn last frame (tests, profiling).
+  int wreckTriangles = 0;
+
+  void _dropWreck() {
+    _wreckArt?.$1.dispose();
+    _wreckArt = null;
+    _wreckPos = _wreckTex = null;
+    _wreckVertices?.dispose();
+    _wreckVertices = null;
+  }
+
+  /// The wreck's fracture once built (tests, review).
+  CarrierFracture? get wreckFracture => _wreckArt?.$2;
+
+  /// Builds (once per collapse) the wreck's composite and fracture and
+  /// attaches it to [k]. False without a hero hull.
+  bool prepareCollapse(CarrierCollapse k) {
+    if (!heroReady) return false;
+    final key = 'wreck|${_stateKey(k.stage, k.detached)}|${k.seed}';
+    if (_wreckArt?.$1.key != key) {
+      _dropWreck();
+      // The fight's composites are done: only the wreck stays resident.
+      for (final (comp, mesh) in _composed.values) {
+        comp.dispose();
+        mesh.dispose();
+      }
+      _composed.clear();
+      final layers = _compositeLayers(k.stage, detached: k.detached);
+      if (layers.isEmpty) return false;
+      final f = hero!.frame;
+      final rect = Rect.fromLTRB(f.$1, f.$2, f.$3, f.$4);
+      final comp = CarrierComposer.compose(
+        layers,
+        heroPages!,
+        rect,
+        key: key,
+        char: .42,
+        // the re-render's art fades itself out past the visible frame (§5.3)
+        feather: renderData != null ? 0 : 56,
+      );
+      composites++;
+      // Seeds: each layer's centre, its big layers split into ~180-unit
+      // cells (the structure: modules break along their own seams).
+      final seeds = <FractureSeed>[];
+      for (final l in layers) {
+        final r = l.placed;
+        final nx = (r.width / 180).ceil(), ny = (r.height / 180).ceil();
+        for (var j = 0; j < ny; j++) {
+          for (var i = 0; i < nx; i++) {
+            final x = r.left + (i + .5) * r.width / nx;
+            final y = r.top + (j + .5) * r.height / ny;
+            seeds.add((x, y, CarrierFracture.sectionOf(x, y)));
+          }
+        }
+      }
+      // carrier-v3-render: the art's fracture chunks and sections (§5.4)
+      final rd = renderData;
+      if (rd != null && rd.chunkSeeds.isNotEmpty) {
+        seeds
+          ..clear()
+          ..addAll(rd.chunkSeeds);
+      }
+      final keep = _keep(layers, 20);
+      final frac = CarrierFracture.build(
+        chunkOf: rd == null || rd.chunkSeeds.isEmpty
+            ? null
+            : (x, y) {
+                final k = rd.chunkAt(x, y);
+                return k >= 0 ? k : rd.nearestChunk(x, y);
+              },
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        seeds: seeds,
+        keep: (l, t, r, b) => keep(Rect.fromLTRB(l, t, r, b)),
+        seed: k.seed,
+      );
+      _wreckArt = (comp, frac);
+      final n = frac.rest.length;
+      _wreckPos = Float32List(n);
+      _wreckTex = Float32List(n);
+      for (var i = 0; i < n; i += 2) {
+        _wreckTex![i] = (frac.rest[i] - rect.left) * comp.ppu;
+        _wreckTex![i + 1] = (frac.rest[i + 1] - rect.top) * comp.ppu;
+      }
+    }
+    k.attach(_wreckArt!.$2);
+    return true;
+  }
+
+  /// Draws the collapse [k]: one `drawVertices` of the fractured wreck
+  /// texture (every chunk at its body's pose, the sag, the common depth
+  /// scale), its shadow on the deck below, the fog taking it, and the cloud
+  /// deck rising over it from below ([cloudY]: the deck's top edge, arena
+  /// units). The blasts and smoke are the scene's ([paintCollapseSmoke]).
+  void paintCollapse(
+    Canvas c,
+    CarrierCollapse k, {
+    required Color fog,
+    required Color cloud,
+    Color? shadowInk,
+    double shadowAlpha = 0,
+    Offset shadowShift = Offset.zero,
+  }) {
+    wreckTriangles = 0;
+    if (!prepareCollapse(k)) return;
+    final (comp, frac) = _wreckArt!;
+    final pos = _wreckPos!, rest = frac.rest;
+    final t = k.t;
+    // Per body: its pose at t; then every vertex through its chunk's body.
+    final poses = [for (var i = 0; i < k.bodies.length; i++) k.pose(i, t)];
+    final (ox, oy) = k.sinkCentre(t);
+    final s = k.scaleAt(t);
+    // The bend the hull died in carries on (its springs relax to rest), so
+    // the wreck starts exactly where the hull was drawn.
+    final b = bend;
+    final heights = _heights;
+    final bent =
+        b != null &&
+        (b.psi.abs() + b.phi.abs() + b.theta.abs()) > .01 * CarrierBend.deg;
+    var minX = double.infinity, minY = double.infinity;
+    var maxX = -double.infinity, maxY = -double.infinity;
+    for (var tri = 0; tri < frac.triangles; tri++) {
+      final p = poses[frac.chunkBody[frac.triChunk[tri]]];
+      final cs = math.cos(p.a), sn = math.sin(p.a);
+      for (var v = 0; v < 3; v++) {
+        final o = tri * 6 + v * 2;
+        var x = rest[o], y = rest[o + 1] + k.sagAt(rest[o], rest[o + 1]);
+        if (bent) {
+          final (dx, dy) = CarrierBend.displacement(
+            x,
+            y,
+            heights?.at(x, y) ?? 0,
+            b.psi,
+            b.phi,
+            b.theta,
+          );
+          x += dx;
+          y += dy;
+        }
+        final rx = x - p.cx, ry = y - p.cy;
+        final wx = p.x + cs * rx - sn * ry, wy = p.y + sn * rx + cs * ry;
+        final fx = ox + (wx - ox) * s, fy = oy + (wy - oy) * s;
+        pos[o] = fx;
+        pos[o + 1] = fy;
+        if (fx < minX) minX = fx;
+        if (fx > maxX) maxX = fx;
+        if (fy < minY) minY = fy;
+        if (fy > maxY) maxY = fy;
+      }
+    }
+    _wreckVertices?.dispose();
+    final verts = _wreckVertices = ui.Vertices.raw(
+      ui.VertexMode.triangles,
+      pos,
+      textureCoordinates: _wreckTex,
+    );
+    wreckTriangles = frac.triangles;
+    final bounds = Rect.fromLTRB(minX, minY, maxX, maxY).inflate(4);
+    final a = k.opacity;
+    if (a <= .01) return;
+    _meshPaint
+      ..color = Colors.white
+      ..shader = comp.shader;
+    final ink = shadowInk;
+    if (ink != null && shadowAlpha > .01 && collapseShadow) {
+      // One shadow for the whole wreck: its own alpha, inked and softened.
+      // The layer is 16 units wider than the wreck: the blur's tail (3σ =
+      // 9 units) never meets the layer's edge.
+      final sb = bounds.shift(shadowShift).inflate(16);
+      _noteLayer(c, sb);
+      c.saveLayer(
+        sb,
+        Paint()
+          ..colorFilter = ColorFilter.mode(
+            ink.withValues(alpha: (shadowAlpha * a).clamp(0.0, 1.0)),
+            BlendMode.srcIn,
+          )
+          ..imageFilter = ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3)
+          ..blendMode = BlendMode.multiply,
+      );
+      c.translate(shadowShift.dx, shadowShift.dy);
+      c.drawVertices(verts, BlendMode.srcOver, _meshPaint);
+      c.restore();
+    }
+    _noteLayer(c, bounds);
+    c.saveLayer(bounds, Paint()..color = Color.fromRGBO(255, 255, 255, a));
+    c.drawVertices(verts, BlendMode.srcOver, _meshPaint);
+    meshCalls++;
+    _meshPaint.shader = null;
+    // The fog takes it as it recedes, and the cloud deck rises over it
+    // from below: the lower pieces go into the clouds first.
+    final f = k.progress;
+    c.drawRect(
+      bounds,
+      Paint()
+        ..blendMode = BlendMode.srcATop
+        ..color = fog.withValues(alpha: (.6 * f).clamp(0.0, .6)),
+    );
+    // The deck: above it a haze tint, below it the wreck dissolves (its
+    // own alpha goes), so the pieces pass INTO the cloud, never turn white.
+    final deck = cloudDeckY(k);
+    c.drawRect(
+      bounds,
+      Paint()
+        ..blendMode = BlendMode.srcATop
+        ..shader = ui.Gradient.linear(Offset(0, deck - 160), Offset(0, deck), [
+          cloud.withValues(alpha: 0),
+          cloud.withValues(alpha: .5),
+        ]),
+    );
+    c.drawRect(
+      bounds,
+      Paint()
+        ..blendMode = BlendMode.dstOut
+        ..shader = ui.Gradient.linear(
+          Offset(0, deck - 60),
+          Offset(0, deck + 90),
+          const [Color(0x00000000), Color(0xFF000000)],
+        ),
+    );
+    c.restore();
+  }
+
+  /// The cloud deck's top edge (arena y) at the collapse's time: it rises
+  /// from below the arena to above the wreck's centre by the end.
+  static double cloudDeckY(CarrierCollapse k) {
+    final u = ((k.t - .8) / (k.script.duration - .8)).clamp(0.0, 1.0);
+    final e = u * u * (3 - 2 * u);
+    return 700 - 720 * e;
+  }
+
+  /// The collapse's smoke (puffs left behind by the falling pieces: the
+  /// trails) and its blasts, riding their bodies. [blast] draws one
+  /// explosion (the scene's sprite) at a point, size and age 0..1.
+  void paintCollapseSmoke(
+    Canvas c,
+    CarrierCollapse k, {
+    required Color fog,
+    required void Function(Offset at, double size, double age) blast,
+  }) {
+    if (k.fracture == null) return;
+    final f = k.progress;
+    final smoke = Color.lerp(const Color(0xFF1A1418), fog, .35 + .5 * f)!;
+    final p = Paint()..isAntiAlias = true;
+    for (final q in k.puffs) {
+      final u = q.age / q.life;
+      final r = q.r0 + 22 * u;
+      p.color = smoke.withValues(
+        alpha: (.42 * (1 - u) * k.opacity).clamp(0.0, 1.0),
+      );
+      c.drawCircle(Offset(q.x, q.y), r, p);
+      if (u < .2) {
+        // The ember core of a fresh puff.
+        p.color = const Color(0xFFFF7A2E).withValues(alpha: .35 * (1 - u / .2));
+        c.drawCircle(Offset(q.x, q.y), r * .45, p);
+      }
+    }
+    final s = k.scaleAt(k.t);
+    for (final b in k.blasts) {
+      final age = (k.t - b.t) / .55;
+      if (age < 0 || age >= 1) continue;
+      final (x, y) = k.world(b.body, b.x, b.y, k.t);
+      blast(Offset(x, y), b.size * s, age);
+    }
+  }
+
+  /// The sprite a director wreck draws: a module's wreck frame (rest, then
+  /// tumbled; a mirrored pair stores one side), an armour plate (a debris
+  /// piece), or for a module baked without wreck frames (the v2 carapace
+  /// and prow: `wreck: "layer"`) its own layer at the hero view and the
+  /// last stage the hull has, sinking whole.
+  (BossHeroSprite, bool)? wreckSprite(BossWreck w) {
+    if (!heroReady) return null;
+    final h = hero!;
+    if (w.plate) {
+      return h.debris.isEmpty
+          ? null
+          : (h.debris[w.module.hashCode.abs() % h.debris.length], false);
+    }
+    var frames = h.wrecks[w.module];
+    var flip = false;
+    if (frames == null && w.module.length > 1) {
+      final base = w.module.substring(0, w.module.length - 1);
+      final other = w.module.endsWith('R') ? '${base}L' : '${base}R';
+      frames = h.wrecks[other];
+      flip = frames != null;
+    }
+    if (frames != null) {
+      final s = frames[w.progress > .35 ? 1 : 0] ?? frames[0];
+      return s == null ? null : (s, flip);
+    }
+    final v = h.views[BossView.hero.storedTag];
+    if (v == null) return null;
+    var layers = v.layers[w.module];
+    flip = false;
+    if (layers == null && w.module.endsWith('L')) {
+      layers = v.layers['${w.module.substring(0, w.module.length - 1)}R'];
+      flip = true;
+    }
+    if (layers == null) return null;
+    for (var s = _drawnStage(v, 3); s >= 0; s--) {
+      if (layers[s] != null) return (layers[s]!, flip);
+    }
+    return null;
+  }
+
+  void _wreckTransform(Canvas c, BossWreck w, Offset shift) {
+    c.translate(w.x + shift.dx, w.y + shift.dy);
+    c.rotate(w.rotation);
+    c.scale(w.scale * (w.plate ? .5 : 1));
+  }
+
+  /// A cosmetic wreck of the director, sinking into the fog. [fog] tints
+  /// it as it goes. Before it breaks away ([BossWreck.started]) it is drawn
+  /// at rest, as part of the dying hull.
+  void paintHeroWreck(
+    Canvas c,
+    BossWreck w, {
+    Color fog = const Color(0xFF2A2436),
+  }) {
+    final pick = wreckSprite(w);
+    if (pick == null) return;
+    final (s, flip) = pick;
+    c.save();
+    _wreckTransform(c, w, Offset.zero);
+    final layer = Paint()
+      ..colorFilter = ColorFilter.mode(
+        fog.withValues(alpha: (w.progress * .85).clamp(0.0, .85)),
+        BlendMode.srcATop,
+      );
+    c.saveLayer(null, layer);
+    heroSprite(c, s, Offset.zero, opacity: w.opacity, flipX: flip);
+    c.restore();
+    c.restore();
+  }
+
+  /// The wreck's shadow (boss-carrier-wire): the wreck sprite's own alpha
+  /// as the mask, inked with [ink] at [alpha], softened, and thrown by
+  /// [shift] (down and to the right, the light's side; it closes in as the
+  /// wreck sinks toward the fog it falls on).
+  void paintHeroWreckShadow(
+    Canvas c,
+    BossWreck w, {
+    required Offset shift,
+    required Color ink,
+    required double alpha,
+  }) {
+    if (!w.started || alpha < .01) return;
+    final pick = wreckSprite(w);
+    if (pick == null) return;
+    final (s, flip) = pick;
+    c.save();
+    _wreckTransform(c, w, shift);
+    c.saveLayer(
+      null,
+      Paint()
+        ..colorFilter = ColorFilter.mode(
+          ink.withValues(alpha: alpha.clamp(0.0, 1.0)),
+          BlendMode.srcIn,
+        )
+        ..imageFilter = ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3)
+        ..blendMode = BlendMode.multiply,
+    );
+    heroSprite(c, s, Offset.zero, opacity: w.opacity, flipX: flip);
+    c.restore();
+    c.restore();
+  }
+
+  /// The Overflight's belly (boss-carrier-v2 `fin_belly`), centred on
+  /// [center] in the overflight's own scaled frame; false when the hull
+  /// has none resident (the caller draws the hull from above instead).
+  bool paintBelly(Canvas c, Offset center, {double opacity = 1}) {
+    final img = bellyImage, b = bellySprite;
+    if (img == null || b == null) return false;
+    _paint.color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0));
+    final w = b.w / b.ppu, h = b.h / b.ppu;
+    c.drawImageRect(
+      img,
+      Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble()),
+      Rect.fromCenter(center: center, width: w, height: h),
+      _paint,
+    );
+    return true;
+  }
+
   /// Engine thrust 0..1 per nozzle: idle burn, rage, and vectoring (the
   /// engines on the side away from the motion push harder).
   static double thrust(double x, double bank, double rage) {
@@ -148,9 +1519,10 @@ class BossPainter {
     sprite(c, h.superstructure[form], center);
     if (damage > .45) {
       final stage = damage > .8 ? 2 : (damage > .62 ? 1 : 0);
-      final count = (h.fire.length * ((damage - .45) / .45))
-          .ceil()
-          .clamp(1, h.fire.length);
+      final count = (h.fire.length * ((damage - .45) / .45)).ceil().clamp(
+        1,
+        h.fire.length,
+      );
       for (var i = 0; i < count; i++) {
         final (x, y) = h.fire[(i * 5) % h.fire.length];
         sprite(c, h.breach[stage][(flick + i) % 2], center + Offset(x, y));
@@ -191,12 +1563,17 @@ class BossPainter {
     final f = (clock * 16).floor() % 3;
     final p = center + Offset(side * 87, 4);
     for (var i = 0; i < 3 - f; i++) {
-      _block.color = (i == 0 ? const Color(0xFFE8F4FF) : const Color(0xFF8AB4D8))
-          .withValues(alpha: .8 - i * .22);
+      _block.color =
+          (i == 0 ? const Color(0xFFE8F4FF) : const Color(0xFF8AB4D8))
+              .withValues(alpha: .8 - i * .22);
       final w = 2.0 + i;
       c.drawRect(
-        Rect.fromLTWH(p.dx + side * (i * 2.5 + f) - (side < 0 ? w : 0),
-            p.dy - w / 2, w, w),
+        Rect.fromLTWH(
+          p.dx + side * (i * 2.5 + f) - (side < 0 ? w : 0),
+          p.dy - w / 2,
+          w,
+          w,
+        ),
         _block,
       );
     }
@@ -227,12 +1604,44 @@ class BossPainter {
   }
 
   void paintJaws(Canvas c, Carrier b) {
+    if (heroReady) {
+      final j = hero!.jaws;
+      if (j.isNotEmpty) {
+        heroSprite(
+          c,
+          j[(b.door.clamp(0.0, 1.0) * (j.length - 1)).round()],
+          Offset(b.x, b.y),
+        );
+      }
+      return;
+    }
     if (!ready) return;
-    sprite(c, hull.jaws[(b.door.clamp(0.0, 1.0) * 3).round()], Offset(b.x, b.y));
+    sprite(
+      c,
+      hull.jaws[(b.door.clamp(0.0, 1.0) * 3).round()],
+      Offset(b.x, b.y),
+    );
   }
 
   /// Bay door frame for one side (the atlas holds the left bay).
-  void paintBay(Canvas c, Carrier b, {required bool right, required int frame}) {
+  void paintBay(
+    Canvas c,
+    Carrier b, {
+    required bool right,
+    required int frame,
+  }) {
+    if (heroReady) {
+      final v = hero!.vents;
+      if (v.isNotEmpty) {
+        heroSprite(
+          c,
+          v[frame.clamp(0, v.length - 1)],
+          Offset(b.x, b.y),
+          flipX: right,
+        );
+      }
+      return;
+    }
     if (!ready) return;
     sprite(c, hull.vents[frame], Offset(b.x, b.y), flipX: right);
   }
@@ -240,10 +1649,23 @@ class BossPainter {
   /// Bow retro-thrusters braking the arrival: plumes pointing down from the
   /// bow corners, longest at the start of the descent.
   void paintRetro(Canvas c, Offset center, double descent, double clock) {
-    if (!ready || descent <= .05) return;
-    final h = hull;
+    if (descent <= .05) return;
     final level = descent > .6 ? 2 : (descent > .3 ? 1 : 0);
     final f = (clock * 12).floor() % 2;
+    if (heroReady) {
+      if (hero!.plumes.isEmpty) return;
+      for (final x in const [-70.0, 70.0]) {
+        heroSprite(
+          c,
+          hero!.plumes[0][level][f],
+          center + Offset(x, 30),
+          flipY: true,
+        );
+      }
+      return;
+    }
+    if (!ready) return;
+    final h = hull;
     for (final x in const [-70.0, 70.0]) {
       sprite(c, h.plumes[0][level][f], center + Offset(x, 30), flipY: true);
     }
@@ -282,8 +1704,12 @@ class BossPainter {
       }
     }
     sprite(c, h.hullWreck, Offset.zero);
-    sprite(c, h.damage[2][((p * 30).floor()) % 2], Offset.zero,
-        opacity: (p * 1.2).clamp(.4, 1.0));
+    sprite(
+      c,
+      h.damage[2][((p * 30).floor()) % 2],
+      Offset.zero,
+      opacity: (p * 1.2).clamp(.4, 1.0),
+    );
     // Chain explosions run along the fire points, outer engines first.
     final fire = h.fire;
     for (var i = 0; i < fire.length; i++) {
@@ -298,8 +1724,12 @@ class BossPainter {
     for (final (i, d) in h.debris.indexed) {
       final side = i.isEven ? -1.0 : 1.0;
       final spread = 60.0 + i * 18 + 40 * heavy;
-      final at = pos +
-          Offset(side * (50 + i * 12 + p * spread), -10 + p * p * (110 + i * 30));
+      final at =
+          pos +
+          Offset(
+            side * (50 + i * 12 + p * spread),
+            -10 + p * p * (110 + i * 30),
+          );
       c.save();
       c.translate(at.dx, at.dy);
       c.rotate(side * p * (2 + i * .7));

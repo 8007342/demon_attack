@@ -150,7 +150,8 @@ class GroundPainter {
     if (img == null) return;
     final cw = troop ? GroundTroopsAtlas.cellW : GroundAtlas.cellW;
     final ch = troop ? GroundTroopsAtlas.cellH : GroundAtlas.cellH;
-    final w = cw * scale, h = ch * scale;
+    // boss-grandeur: under the altitude stretch a unit keeps its size.
+    final w = cw * scale, h = ch * scale / GroundCamera.spriteAltitude;
     final v = (255 * light).round().clamp(0, 255);
     _paint.color = Color.fromARGB((255 * opacity).round().clamp(0, 255), v, v, v);
     final tint = _fogTint;
@@ -359,7 +360,9 @@ class GroundPainter {
                 ((clock * (p > .8 ? 16 : 8)).floor().isEven ? 1 : 0);
     } else {
       col = GroundAtlas.moveCol +
-          ((clock * 10 * GroundPace.anim + u.id * .37).floor() %
+          ((clock * 10 * GroundPace.anim * (u.pose?.hesitate ?? 1) +
+                      u.id * .37)
+                  .floor() %
               GroundAtlas.moveFrames);
     }
     // Dust kicked up behind the advancing unit (toward the horizon).
@@ -863,7 +866,9 @@ class GroundPainter {
     } else {
       col = GroundTroopsAtlas.tankMoveCol +
           (moving
-              ? (clock * 10 * GroundPace.anim + u.id * .37).floor() %
+              ? (clock * 10 * GroundPace.anim * (u.pose?.hesitate ?? 1) +
+                      u.id * .37)
+                  .floor() %
                   GroundTroopsAtlas.tankMoveFrames
               : 0);
     }
@@ -1039,6 +1044,7 @@ class GroundPainter {
     // --- terrain: slower treads uphill (the flyover's relief pose).
     final rate = (7 + math.min(10.0, a.vz.abs() * .05)) *
         (a.pose?.pace ?? 1) *
+        (a.pose?.hesitate ?? 1) * // terrain-shadows: lurk
         GroundPace.anim;
     final dir = a.vz < 0 ? -1 : 1;
     final phase = ((clock * rate * dir + a.id * .37).floor() %

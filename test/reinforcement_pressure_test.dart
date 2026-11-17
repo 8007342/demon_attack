@@ -123,39 +123,33 @@ void main() {
     },
   );
 
-  test('full-width carrier field intercepts flank bolts before hull and contracts in depth', () {
+  // carrier-hatches §A3: the hull-wide field is retired; a flank bolt on the
+  // vulnerable tier's row is stopped by a hatch's own field, a bolt between
+  // the hatches sparks off the armour, and the core waits for the hatches.
+  test('hatch fields intercept bolts on their row; the armour sparks', () {
     final m = ArcadeModel()..restoreCheckpoint({'sector': 5});
     m.mode = RunMode.playing;
     m.invulnerable = 1000;
     m.update(1 / 60);
     final b = m.boss!;
-    expect(b.forceFieldHalfWidth, 110);
-    expect(b.forceFieldDepth, 75);
-    expect(
-      b.forceFieldSurfaceY(b.x - 60),
-      closeTo(b.forceFieldSurfaceY(b.x + 60), .0001),
-    );
+    expect(b.chapter, CarrierChapter.hatches);
     final core = b.core, shield = b.shield;
-    final shotX = b.x + (b.direction > 0 ? 100 : -100);
-    m.shots.add(Shot(shotX, b.forceFieldSurfaceY(shotX) + 3, 0, -390));
-    m.update(1 / 60);
+    final h = b.hatches.first;
+    m.shots.add(Shot(b.x + h.hatch.x, b.y + h.hatch.y + 30, 0, -390));
+    for (var i = 0; i < 10 && b.shield == shield; i++) {
+      m.update(1 / 60);
+    }
     expect(b.shield, shield - 1);
+    expect(h.field, h.fieldMax - 1);
     expect(b.core, core);
-    final oldSurface = b.forceFieldSurfaceY(b.x);
-    m.hitBoss(b.x, damage: b.shield - 1);
-    expect(m.blasts.last.y, oldSurface);
-    expect(b.forceFieldHalfWidth, 110);
-    expect(b.forceFieldDepth, greaterThan(43));
-    expect(b.forceFieldDepth, lessThan(44));
-    final lastSurface = b.forceFieldSurfaceY(b.x + 100);
-    m.hitBoss(b.x + 100);
-    expect(m.blasts.last.y, lastSurface);
-    expect(b.shield, 0);
-    expect(b.core, core);
-    b.door = 0;
-    expect(m.hitBoss(b.x, blastRadius: 30), isFalse);
+    m.shots.add(Shot(b.x, b.y + h.hatch.y + 30, 0, -390));
+    for (var i = 0; i < 10 && m.deflects.isEmpty; i++) {
+      m.update(1 / 60);
+    }
+    expect(m.deflects, isNotEmpty);
+    expect(b.shield, shield - 1);
     b.door = 1;
-    expect(m.hitBoss(b.x + 100, blastRadius: 30), isFalse);
-    expect(m.hitBoss(b.x), isTrue);
+    m.hitBoss(b.x);
+    expect(b.core, core, reason: 'the core waits for the hatches');
   });
 }

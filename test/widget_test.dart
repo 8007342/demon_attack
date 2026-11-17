@@ -1,3 +1,4 @@
+import 'package:demon_attack/widgets/pilot_console_content.dart';
 import 'package:demon_attack/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,7 +27,7 @@ void main() {
       expect(find.text('SCORE'), findsOneWidget);
       expect(find.text('KRYBOR'), findsOneWidget);
       expect(find.text('TACTICAL BRIEFING'), findsOneWidget);
-      expect(find.text('◀     SLIDE TO PILOT     ▶'), findsOneWidget);
+      expect(find.text(PilotConsoleContent.guidance), findsOneWidget);
       expect(find.byTooltip('Pause game'), findsOneWidget);
       expect(tester.takeException(), isNull);
       // Dispose Flame tickers before the test binding checks for pending timers.

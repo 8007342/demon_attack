@@ -290,32 +290,37 @@ void main() {
       if (state != 'shield') b.shield = 0;
       m.levelClock = state == 'closed' ? 0 : .6;
       final shield = b.shield, core = b.core;
+      // carrier-hatches: the shielded state is a hatch's own field.
+      final h = b.hatches.first.hatch;
       m.shots.add(
         Shot(
-          b.forecastX(1 / 60, m.speed) + 25,
           state == 'shield'
-              ? b.forceFieldSurfaceY(b.forecastX(1 / 60, m.speed) + 25)
-              : b.y + 15,
+              ? b.forecastX(1 / 60, m.speed) + h.x + 15
+              : b.forecastX(1 / 60, m.speed) + 25,
+          state == 'shield' ? b.y + h.y + 3 : b.y + 15,
           0,
-          0,
+          state == 'shield' ? -390 : 0,
           kind: ShotKind.large,
           damage: 2,
           blastRadius: 30,
         ),
       );
       m.update(1 / 60);
+      m.update(1 / 60); // a hatch is met where the shot crosses its row
       expect(b.shield, state == 'shield' ? shield - 2 : 0);
       expect(b.core, state == 'open' ? core - 2 : core);
       expect(m.blasts.where((b) => b.blastRadius == 30), hasLength(1));
     }
     final m = arena();
-    final b = Carrier(0)
-      ..shield = 1
-      ..door = 1;
+    final b = Carrier(0)..door = 1;
     m.boss = b;
-    m.hitBoss(b.x, damage: 2, blastRadius: 30);
-    expect(b.shield, 0);
+    // carrier-hatches: a blast on the hatch's row widens its reach too.
+    final first = b.hatches.first;
+    final before = b.shield;
+    m.hitBoss(b.x + first.hatch.x + 40, damage: 2, blastRadius: 30);
+    expect(b.shield, before - 2);
     expect(b.core, b.coreMax);
+    b.shield = 0;
     b.core = 1;
     m.hitBoss(b.x, damage: 2, blastRadius: 30);
     final score = m.score;
@@ -449,8 +454,11 @@ void main() {
   test('carrier encounters seed varied directions and damage accelerates bounded motion', () {
     final directions = <int>{}, phases = <double>{};
     for (var seed = 0; seed < 20; seed++) {
-      final a = ArcadeModel(seed: seed)..restoreCheckpoint({'sector': 5});
-      final b = ArcadeModel(seed: seed)..restoreCheckpoint({'sector': 5});
+      // carrier-v3: the carrier is wave 3 on tour 1 (after 2 launch waves).
+      final a = ArcadeModel(seed: seed)
+        ..restoreCheckpoint({'sector': 5, 'wave': 3});
+      final b = ArcadeModel(seed: seed)
+        ..restoreCheckpoint({'sector': 5, 'wave': 3});
       expect(a.boss!.startingDirection, b.boss!.startingDirection);
       expect(a.boss!.startingPhase, b.boss!.startingPhase);
       directions.add(a.boss!.startingDirection);
@@ -458,21 +466,21 @@ void main() {
     }
     expect(directions, {-1, 1});
     expect(phases.length, greaterThan(10));
-    final m = ArcadeModel()..restoreCheckpoint({'sector': 5});
+    final m = ArcadeModel()..restoreCheckpoint({'sector': 5, 'wave': 3});
     m.mode = RunMode.playing;
     m.invulnerable = 1000;
     final b = m.boss!;
     expect(b.rage, 0);
     expect(b.movementRate, 1);
     b.shield = 0;
-    b.core = 5;
+    b.core = 2; // carrier-hatches: a smaller core and pool
     expect(b.rage, greaterThan(.9));
     expect(b.movementRate, greaterThan(1.8));
     final motion = b.motionPhase;
     advance(m, 1 / 60);
     expect(
       (b.motionPhase - motion).abs(),
-      closeTo(.7 * m.speed * b.movementRate / 60, .0001),
+      closeTo(.7 * m.speed * b.movementRate * b.glideFactor / 60, .0001),
     );
     for (var i = 0; i < 180; i++) {
       m.update(1 / 60);

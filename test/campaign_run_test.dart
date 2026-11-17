@@ -19,7 +19,7 @@ void defeatRoster(ArcadeModel m) {
   for (var frame = 0; frame < 2400 && m.combat && m.wave == wave; frame++) {
     for (final d in List<Demon>.of(m.demons)) {
       if (d.entering) continue;
-      while (m.demons.contains(d)) {
+      for (var guard = 0; guard < 1000 && m.demons.contains(d); guard++) {
         m.hitDemon(d);
       }
     }
@@ -64,9 +64,23 @@ void main() {
             defeatRoster(m);
           }
           until(m, RunMode.playing);
+          // boss-grandeur: the loom waves first, then the carrier rises.
+          while (m.boss == null && m.combat) {
+            m.invulnerable = 100;
+            defeatRoster(m);
+          }
           final boss = m.boss!;
-          expect(boss.shieldMax, m.policy.bossShieldForRoute(route));
-          expect(boss.coreMax, m.policy.bossCoreForRoute(route));
+          advance(m, Carrier.riseSeconds + .1);
+          expect(boss.fightReady, isTrue);
+          // carrier-hatches §A11: the hatches' pool and the core's share.
+          expect(
+            boss.shieldMax,
+            lessThanOrEqualTo(m.policy.bossShieldForRoute(route)),
+          );
+          expect(
+            boss.coreMax,
+            lessThanOrEqualTo(m.policy.bossCoreForRoute(route)),
+          );
           m.invulnerable = 100;
           advance(m, 4);
           expect(
@@ -75,11 +89,11 @@ void main() {
           );
           m.collect(Power.rapid);
           final lives = m.lives;
-          while (boss.shield > 0) {
+          for (var guard = 0; guard < 100000 && boss.shield > 0; guard++) {
             m.hitBoss(boss.x);
           }
           boss.door = 1;
-          while (m.boss != null) {
+          for (var guard = 0; guard < 100000 && m.boss != null; guard++) {
             m.hitBoss(boss.x);
           }
           expect(m.mode, RunMode.victory);

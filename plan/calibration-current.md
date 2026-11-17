@@ -292,7 +292,7 @@ that rushed ended, `tells` = rally warnings. Pre-W4 rows count the old last stan
 | Expert skill | reaches ≥ 0.7 | max 0.80 (= the Normal cap), mean 0.63 over route ≥ 1 waves; Hard max 1.00 |
 | Average skill | 0.25–0.55 | **0.07 mean** (max 0.43): see below |
 | Rush fairness guards | §6.4 | escape ≥ 99.8 %, threat 100 %, corridor holds (`test/sentinel_rush_fairness_test.dart`) |
-| Hostile bullets | ≤ 120 | peak 16 |
+| Hostile bullets | ≤ 120 | peak 18 |
 | Dive concurrency | ≤ cap | never above (10-minute Hard sim, `test/demon_intelligence_test.dart`) |
 | Easy route 0 | no change | identical |
 
@@ -304,3 +304,373 @@ a gentler life drop (against the spec) or a stronger reference pilot.
 
 Lives-lost noise: per-sector values move by several lives between seeds (the pre-W4 standard error of a sector mean
 is 2–8 lives), so the route means above are the meaningful figure.
+
+## Boss grandeur (2026-11-15): carrier endurance
+
+`test/boss_endurance_test.dart`: the protected real-shot pilot of `campaign_playtest_test.dart` plays full campaigns
+on 16 seeds per difficulty; carrier endurance is the combat seconds from the carrier being fight-ready to its fall
+(sum of the five carriers), and the hits taken while it is ready. One seed's sum varies by ±10 % (a single carrier
+by ±50 %), so the gate is on means: the three difficulties pooled within 5 % of the baseline, each within 10 %.
+Baseline: `game` at bac1f458 with the same harness (the carrier was fight-ready on arrival).
+
+| Mode | Baseline s | After s | Δ | Baseline hits | After hits | Δ |
+|---|---:|---:|---:|---:|---:|---:|
+| easy | 333.07 | 345.77 | +3.8 % | 914.3 | 936.6 | +2.4 % |
+| normal | 431.69 | 436.46 | +1.1 % | 1252.1 | 1265.0 | +1.0 % |
+| hard | 428.92 | 469.45 | +9.4 % | 1325.3 | 1362.9 | +2.8 % |
+| **pooled** | 1193.7 | 1251.7 | **+4.9 %** | 3491.7 | 3564.5 | **+2.1 %** |
+
+The gate holds with little margin (pooled +4.9 % of 5 %; Hard +9.4 % of 10 %): a seed-to-seed spread of ±10 %
+makes the 16-seed mean move by ±2.5 % between equivalent builds (an earlier build of the same rules measured
+Easy +8.3 %, Normal +0.7 %, Hard +5.4 %, pooled +4.5 %). Ablations on the way (same harness): the glide alone (no loom) +1.5 / +4.0 / +3.2 %; the loom as first built
++10 / +7 / +13 %, of which the power timers running out during the 5 s Rise were the cause (shield phase +25 %
+with 0.15 vs 0.23 powers active); the timers now hold while the carrier rises. Resetting the level clock, the
+ground war or the pilot model at the Rise changed nothing measurable.
+
+## Carrier v3 runtime (2026-11-16): launch waves from gates
+
+The same harness as "Boss grandeur": `test/boss_endurance_test.dart`, 16 seeds per difficulty, measured against
+the bac1f458 baseline in the test. `game` at cd416186 measures pooled +4.9 % on the same harness, unchanged from
+the last entry.
+
+| Build | Easy s | Normal s | Hard s | Pooled seconds | Pooled hits |
+|---|---:|---:|---:|---:|---:|
+| `game` cd416186 | 345.77 | 436.46 | 469.45 | +4.9 % | +2.1 % |
+| carrier-v3, first build | 349.61 | 472.29 | 463.54 | **+7.7 %** (fails 5 %) | +4.3 % |
+| ablation: fight gates limited to the bays (|x| ≤ 60) | 350.82 | 467.50 | 471.15 | +8.0 % | +5.0 % |
+| ablation: old launch-wave counts (1 / 2) | 366.50 | 444.20 | 480.67 | +8.2 % | +4.0 % |
+| ablation: old flock entrance points | 346.59 | 464.05 | 468.86 | +7.2 % | +4.3 % |
+| ablation: no gate launches in the approach | 347.63 | 444.79 | 441.68 | +3.4 % | +1.4 % |
+| power timers hold while all of the approach's live creatures wait in gates | 318.66 | 393.24 | 432.20 | −4.2 % | −4.2 % |
+| the same after merging `game` at the playtest-fixes-3 merge | 304.93 | 410.39 | 416.95 | −5.1 % (fails) | −5.2 % |
+| **accepted:** the timers run at half rate (`ArcadeModel.gateHoldRate` 0.5) while they wait | 341.09 | 417.29 | 436.03 | **+0.1 %** | **−1.0 %** |
+
+- **Cause.** Members of a volley wait inside their gate for its 1.7 s lead plus 0.12 s per creature. That stretches
+  the launch waves, so the pilot's powers ran out before the fight (the Rise's power-timer effect again).
+- **Tune.** While every live ordinary creature of the approach is parked in a gate, the power timers run at half
+  rate. That is a held beat with nothing to shoot, a softer form of the Close's rule. A full hold overshot to −5 %
+  once `game` moved.
+- **Result.** Per difficulty: easy +2.4 %, normal −3.3 %, hard +1.7 % against the baseline. All are within 10 %,
+  and pooled is within 5 %.
+
+**The boss level's clear time.** This is a temporary probe, not committed: combat seconds while sector 5 is current,
+summed over the five routes, mean of the eight calibration seeds, with the same protected pilot.
+
+| Difficulty | `game` s | carrier-v3 s | Δ |
+|---|---:|---:|---:|
+| easy | 512.2 | 576.5 | **+12.6 %** |
+| normal | 679.9 | 648.9 | −4.6 % |
+| hard | 704.9 | 736.7 | +4.5 % |
+| pooled | 1897.0 | 1962.1 | +3.4 % |
+
+- Pooled is within 10 %. Easy is over: tour 1 now has two launch waves and tours 4–5 have three (design §12's
+  named risk).
+- Not tuned, so the spec's wave counts hold. If the operator wants Easy inside 10 %, the lever is one script field,
+  `launchWaves`: tour 1 back to one wave. That would also make tour 1's approach one step (4 → 1.35).
+
+## Bonus balance (2026-11-16, change `bonus-balance`)
+
+Operator: bonus levels last about as long as the regular level they replace, bring about as many enemies, offer
+about the same possible score, and are about as hard (a little easier or harder by design). One lasted about three
+seconds.
+
+Harness: `test/support/bonus_balance.dart`, gate `test/bonus_balance_test.dart` (runs with the suite, about a minute;
+`--dart-define=BONUS_BALANCE=<tag>` writes `.cache/bonus-balance-<tag>.md`, `BONUS_BALANCE_ROUTES=4` adds routes 2-3).
+Each bonus level against the regular sector it replaces, sectors 2-4, every difficulty, eight seeds (1982, 7, 21, 42,
+99, 314, 2718, 5150), `startAt` the sector:
+- **Duration**: combat seconds of the protected real-shot pilot (`steer(oracle: false)`, invulnerable) to the last kill.
+- **Enemies**: its kills (it clears every creature).
+- **Possible score**: its score minus the level's extras plus the level's cap (what a perfect level pays).
+- **Difficulty**: lives the Average pilot (99 lives) loses before the last kill.
+Both pilots line up under a supply crate that hangs in range with no creature between; neither baits lightning.
+Gate (routes 0-1, where nine runs in ten meet their bonus level): pooled within ±15 % on all four, duration / enemies /
+possible within ±20 % per difficulty, no cell under 60 % of its sector's duration or 85 % of its enemies.
+
+### Before (bonus-levels as built, 4 seeds, protected pilot)
+
+Two waves (`BonusWaves.count = 2`) where the sector has 3-7; Supply Run at 60 % rosters (min 3), half the
+reinforcements, two lightest species; Stormfront at 85 %, half the reinforcements; no sentinels or elites in either.
+
+| Cell | Regular combat s / kills | Supply Run | Stormfront |
+|---|---:|---:|---:|
+| easy r0 s2 | 24.6 / 27 | **8.9 / 10** | 12.9 / 15 |
+| normal r0 s3 | 69.6 / 90 | 19.0 / 23 | 24.5 / 29 |
+| normal r1 s3 | 111.7 / 148 | 21.3 / 24 | 22.8 / 31 |
+| hard r1 s4 | 90.4 / 187 | 23.2 / 32 | 24.3 / 41 |
+
+Root cause of the three-second level: Easy route 0 has no reinforcement groups, so a Supply Run in sector 2 was two
+waves of three to five drones; the pilot (no powers) took 8.9 s, a player carrying spread or powerful from sector 1
+about three. Awards were shares of a par that counted only the opening rosters: +45-60 % over the sector at route 1.
+
+### After (routes 0-1, pooled; change against the regular sectors)
+
+| Level | Mode | Duration | Enemies | Score (pilot) | Possible score | Lives lost |
+|---|---|---:|---:|---:|---:|---:|
+| supplyRun | easy | +16.6 % | +0.0 % | +5.1 % | +5.1 % | +15.2 % |
+| supplyRun | normal | +8.5 % | -0.0 % | +6.0 % | +6.0 % | -26.1 % |
+| supplyRun | hard | +8.6 % | +0.0 % | +5.1 % | +5.2 % | -7.7 % |
+| supplyRun | **pooled** | +10.5 % | -0.0 % | +5.4 % | +5.5 % | -11.2 % |
+| stormfront | easy | +3.8 % | +13.2 % | +5.9 % | +6.1 % | +14.9 % |
+| stormfront | normal | -9.4 % | +8.2 % | +1.2 % | +1.4 % | -6.1 % |
+| stormfront | hard | -17.1 % | +8.3 % | +1.2 % | +1.2 % | -4.8 % |
+| stormfront | **pooled** | -9.2 % | +9.2 % | +1.9 % | +2.1 % | -2.0 % |
+
+Supply Run sits a little easier by design (crates every 3.5 s give more powers than the regular one drop per eight
+kills) and a little longer (no kill drops, crates to chase). Stormfront brings 9 % more creatures (rosters × 1.15)
+because its lightning kills some of them; Hard stays the shortest (−17 %, inside the ±20 % band).
+
+Routes 0-3 (report only; routes 2-3 hold one bonus level in five): Supply Run duration +1.0 %, enemies 0 %, possible
++3.9 %, lives −23.5 %; Stormfront duration −12.9 %, enemies +8.6 %, possible −0.9 %, lives −7.1 %. At routes 2-3 the
+Average pilot loses fewer lives in a Supply Run (its crates); not gated, noted for a later pass.
+
+Tuning path (routes 0-1 pooled, duration / enemies / possible / lives):
+1. Sector's waves, scales 1, old awards: Supply Run +39 % / 0 / +71 % / +106 %, Stormfront −12 % / 0 / +74 % / −13 %
+   (kill drops withheld under sentinels made Supply Run long and hard; awards on the old par paid +70 %).
+2. Par counts the whole sector; Supply Run kills × 0.6, crates every 5 s; Stormfront kills × 0.7: +23 % / 0 / +8 % /
+   −1 % and −12 % / 0 / +4 % / −13 %.
+3. Supply Run crates every 3.5 s, pilots chase crates only with a clear line: +10.5 % / 0 / +6 % / −11 %.
+4. Stormfront: storm gaps Normal 2.5-3.7 → 3.1-4.5 s, Hard 2.2-3.2 → 3.3-4.7 s (fork .35 → .3), rosters × 1.1 → 1.15,
+   gaps × (1 + 0.1 · route): the table above.
+
+Per-cell table (routes 0-1, eight seeds; score / par is the pilot's score over the new `sectorPar`):
+
+| Mode | Route | Sector | Level | Combat s | Enemies | Score | Possible | Lives lost (avg pilot) | Score / par |
+|---|---:|---:|---|---:|---:|---:|---:|---:|---:|
+| easy | 0 | 2 | regular | 25.6 | 27.0 | 3569 | 3569 | 0.88 | 1.01 |
+| easy | 0 | 2 | supplyRun | 30.6 | 27.0 | 3892 | 3892 | 1.50 | 1.10 |
+| easy | 0 | 2 | stormfront | 25.7 | 31.0 | 4122 | 4195 | 1.50 | 1.16 |
+| easy | 0 | 3 | regular | 50.3 | 43.0 | 10885 | 10885 | 4.63 | 1.13 |
+| easy | 0 | 3 | supplyRun | 47.0 | 43.0 | 11716 | 11716 | 5.00 | 1.21 |
+| easy | 0 | 3 | stormfront | 48.1 | 51.0 | 12002 | 12092 | 5.25 | 1.24 |
+| easy | 0 | 4 | regular | 57.9 | 50.0 | 16701 | 16701 | 7.25 | 1.19 |
+| easy | 0 | 4 | supplyRun | 62.7 | 50.0 | 17058 | 17058 | 7.63 | 1.21 |
+| easy | 0 | 4 | stormfront | 55.2 | 58.0 | 17648 | 17661 | 6.75 | 1.25 |
+| easy | 1 | 2 | regular | 58.6 | 65.0 | 27896 | 27896 | 9.25 | 1.18 |
+| easy | 1 | 2 | supplyRun | 71.0 | 65.0 | 30332 | 30332 | 12.00 | 1.28 |
+| easy | 1 | 2 | stormfront | 66.3 | 72.0 | 29499 | 29645 | 10.13 | 1.24 |
+| easy | 1 | 3 | regular | 66.2 | 75.0 | 32055 | 32055 | 7.88 | 1.20 |
+| easy | 1 | 3 | supplyRun | 80.0 | 75.0 | 32901 | 32901 | 9.88 | 1.23 |
+| easy | 1 | 3 | stormfront | 67.7 | 85.0 | 33885 | 33885 | 7.38 | 1.27 |
+| easy | 1 | 4 | regular | 74.3 | 96.0 | 44006 | 44006 | 12.88 | 1.25 |
+| easy | 1 | 4 | supplyRun | 97.0 | 96.0 | 46137 | 46137 | 13.25 | 1.32 |
+| easy | 1 | 4 | stormfront | 82.4 | 106.0 | 45882 | 45882 | 18.13 | 1.31 |
+| normal | 0 | 2 | regular | 34.3 | 60.0 | 10756 | 10756 | 2.00 | 1.02 |
+| normal | 0 | 2 | supplyRun | 37.0 | 60.0 | 11726 | 11726 | 2.38 | 1.12 |
+| normal | 0 | 2 | stormfront | 33.8 | 66.0 | 11633 | 11677 | 2.13 | 1.11 |
+| normal | 0 | 3 | regular | 72.6 | 90.0 | 29988 | 29988 | 9.75 | 1.11 |
+| normal | 0 | 3 | supplyRun | 77.7 | 90.0 | 32358 | 32358 | 8.00 | 1.20 |
+| normal | 0 | 3 | stormfront | 65.7 | 98.0 | 30571 | 30646 | 7.88 | 1.13 |
+| normal | 0 | 4 | regular | 79.9 | 98.0 | 42606 | 42606 | 11.25 | 1.16 |
+| normal | 0 | 4 | supplyRun | 89.4 | 98.0 | 44347 | 44432 | 7.75 | 1.21 |
+| normal | 0 | 4 | stormfront | 69.4 | 107.0 | 43842 | 43922 | 9.88 | 1.19 |
+| normal | 1 | 2 | regular | 98.5 | 114.0 | 68078 | 68078 | 18.25 | 1.21 |
+| normal | 1 | 2 | supplyRun | 95.3 | 113.9 | 72377 | 72377 | 17.13 | 1.29 |
+| normal | 1 | 2 | stormfront | 88.9 | 122.0 | 68515 | 68741 | 24.13 | 1.22 |
+| normal | 1 | 3 | regular | 105.7 | 148.0 | 86894 | 86894 | 32.75 | 1.21 |
+| normal | 1 | 3 | supplyRun | 111.8 | 148.0 | 92120 | 92120 | 17.88 | 1.28 |
+| normal | 1 | 3 | stormfront | 92.9 | 159.0 | 87699 | 87874 | 25.88 | 1.22 |
+| normal | 1 | 4 | regular | 107.5 | 158.0 | 97122 | 97122 | 28.50 | 1.25 |
+| normal | 1 | 4 | supplyRun | 129.6 | 157.9 | 102553 | 102553 | 22.63 | 1.32 |
+| normal | 1 | 4 | stormfront | 100.7 | 171.0 | 97325 | 97325 | 26.38 | 1.26 |
+| hard | 0 | 2 | regular | 39.3 | 72.0 | 13481 | 13481 | 3.63 | 1.07 |
+| hard | 0 | 2 | supplyRun | 40.0 | 72.0 | 14240 | 14247 | 3.38 | 1.13 |
+| hard | 0 | 2 | stormfront | 36.2 | 78.0 | 14213 | 14274 | 3.75 | 1.13 |
+| hard | 0 | 3 | regular | 77.2 | 109.0 | 36195 | 36195 | 9.88 | 1.11 |
+| hard | 0 | 3 | supplyRun | 89.7 | 109.0 | 39377 | 39377 | 10.25 | 1.20 |
+| hard | 0 | 3 | stormfront | 60.8 | 119.0 | 37182 | 37249 | 8.00 | 1.14 |
+| hard | 0 | 4 | regular | 78.7 | 118.0 | 52355 | 52355 | 13.25 | 1.18 |
+| hard | 0 | 4 | supplyRun | 86.4 | 118.0 | 53324 | 53812 | 13.88 | 1.21 |
+| hard | 0 | 4 | stormfront | 71.8 | 130.0 | 53517 | 53720 | 13.00 | 1.21 |
+| hard | 1 | 2 | regular | 97.0 | 134.0 | 80613 | 80613 | 34.63 | 1.23 |
+| hard | 1 | 2 | supplyRun | 101.1 | 134.0 | 85209 | 85209 | 22.75 | 1.30 |
+| hard | 1 | 2 | stormfront | 88.9 | 143.0 | 81592 | 81600 | 24.75 | 1.25 |
+| hard | 1 | 3 | regular | 126.6 | 175.0 | 102616 | 102616 | 21.13 | 1.20 |
+| hard | 1 | 3 | supplyRun | 119.8 | 175.0 | 107926 | 107941 | 24.75 | 1.27 |
+| hard | 1 | 3 | stormfront | 88.6 | 189.0 | 105062 | 105062 | 29.25 | 1.23 |
+| hard | 1 | 4 | regular | 104.8 | 187.0 | 116997 | 116997 | 28.13 | 1.29 |
+| hard | 1 | 4 | supplyRun | 131.8 | 187.0 | 122677 | 122705 | 27.13 | 1.35 |
+| hard | 1 | 4 | stormfront | 87.8 | 202.0 | 115361 | 115361 | 26.63 | 1.27 |
+
+## Playtest fixes 3 (2026-11-16): the sentinel's berserk rush
+
+`openspec/changes/playtest-fixes-3`: the sentinel is invulnerable in its rally and lock; its rush shield is a
+super-powerful diving shield (base gun deflects; powers and homing wear it; 6 / 8 + cycle÷2 / 10 + cycle÷2); a dodged
+pass pays 300 × (cycle + 1), a break 150, a burn-out after a dodged last pass the kill value; rush chance
+0.28 / 0.45 / 0.50 (was 0.20 / 0.35 / 0.45).
+
+Harness: `test/swarm_calibration_test.dart` (`--dart-define=SWARM_CALIBRATION=pf3-post`, eight seeds, expert and
+Average pilots, run alone under the test lock). **Pre** is the same harness on `game` at 1c670982
+(`SWARM_CALIBRATION=pf3-pre`). The comparison is a small Go tool over the two JSON/Markdown outputs.
+
+**Re-tune.** With Hard at 0.55 the Average pilot lost +3.37 lives per sector on Hard route 1 (S3 21.1 → 28.8,
+S4 28.1 → 32.6); Hard at 0.50 gives +2.44 there (S3 unchanged: a seed-path effect, within the 2–8-life standard
+error of a sector mean). Hard is set to 0.50; Easy and Normal are unchanged between the two runs. Tables below are
+the 0.50 run.
+
+### Per sector (expert)
+
+| Sector | Clear pre → post (s) | Δ clear | Aimed hit pre → post | Δ aimed | Peak hostile (post) |
+|---|---:|---:|---:|---:|---:|
+| easy1 | 16.21 → 16.31 | +0.6% | 48.1% → 48.7% | +1.4% | 9 |
+| easy2 | 21.10 → 20.79 | -1.5% | 59.7% → 58.9% | -1.4% | 10 |
+| easy3 | 18.90 → 18.31 | -3.1% | 53.0% → 53.3% | +0.7% | 9 |
+| easy4 | 22.59 → 23.13 | +2.4% | 60.7% → 59.9% | -1.3% | 10 |
+| easy5 | 31.01 → 32.91 | +6.1% | 75.3% → 76.9% | +2.0% | 11 |
+| normal1 | 31.31 → 31.57 | +0.8% | 65.5% → 66.8% | +2.0% | 14 |
+| normal2 | 36.19 → 34.37 | -5.0% | 71.1% → 69.8% | -1.9% | 13 |
+| normal3 | 33.00 → 34.00 | +3.1% | 69.4% → 69.4% | -0.0% | 13 |
+| normal4 | 33.73 → 33.30 | -1.3% | 68.3% → 68.8% | +0.8% | 13 |
+| normal5 | 40.66 → 38.91 | -4.3% | 78.3% → 76.6% | -2.1% | 12 |
+| hard1 | 33.69 → 32.52 | -3.5% | 69.2% → 67.1% | -3.1% | 15 |
+| hard2 | 36.95 → 36.37 | -1.6% | 70.5% → 70.4% | -0.2% | 15 |
+| hard3 | 36.64 → 38.17 | +4.2% | 71.8% → 72.4% | +0.7% | 17 |
+| hard4 | 35.86 → 36.71 | +2.4% | 71.8% → 71.9% | +0.1% | 18 |
+| hard5 | 42.60 → 43.46 | +2.0% | 77.8% → 80.8% | +3.9% | 15 |
+
+worst clear +6.1%, worst aimed -3.1%
+
+#### Expert
+| Bucket | T0 / T1 / T2 hit pre → post | Rush (pre) | Rush (post) | Skill mean / max (post) |
+|---|---|---|---|---|
+| easy/r0 | 52.3 → 52.3%; 44.0 → 44.0% |  |  | 0.19 / 0.41 |
+| easy/r1+ | 51.6 → 51.2%; 65.1 → 65.8%; 39.5 → 40.2% | passEnded 7, passes 7, shieldBroken 18, shotDown 18, tells 18 | passEnded 8, passHit 14, passes 22, sacrificed 14, shieldBroken 11, shotDown 8, tells 22 | 0.42 / 0.50 |
+| hard/r0 | 54.1 → 54.1%; 57.6 → 57.6% |  |  | 0.42 / 0.80 |
+| hard/r1+ | 66.7 → 67.3%; 74.9 → 74.7%; 62.3 → 61.8% | passDodged 2, passEnded 78, passHit 46, passes 126, shieldBroken 152, shotDown 152, tells 195 | passDodged 5, passEnded 92, passHit 346, passes 443, sacrificed 83, shieldBroken 97, shotDown 96, tells 443 | 0.71 / 1.00 |
+| normal/r0 | 55.1 → 55.1%; 54.8 → 54.8% |  |  | 0.32 / 0.80 |
+| normal/r1+ | 62.6 → 62.4%; 72.1 → 72.0%; 55.4 → 55.5% | passDodged 1, passEnded 49, passHit 41, passes 91, shieldBroken 111, shotDown 111, tells 149 | passDodged 2, passEnded 77, passHit 183, passes 262, sacrificed 66, shieldBroken 81, shotDown 80, tells 263 | 0.63 / 0.80 |
+
+#### Average
+| Bucket | T0 / T1 / T2 hit pre → post | Rush (pre) | Rush (post) | Skill mean / max (post) |
+|---|---|---|---|---|
+| easy/r0 | 31.6 → 31.6%; 46.5 → 46.5% |  |  | 0.14 / 0.32 |
+| easy/r1+ | 51.9 → 51.9%; 50.7 → 50.6%; 37.1 → 37.1% | passEnded 6, passHit 1, passes 7, sacrificed 4, shieldBroken 8, shotDown 6, tells 10 | passEnded 9, passHit 2, passes 11, sacrificed 11, shieldBroken 1, tells 11 | 0.07 / 0.48 |
+| hard/r0 | 39.5 → 39.5%; 57.4 → 57.4% |  |  | 0.11 / 0.30 |
+| hard/r1+ | 66.2 → 66.2%; 63.9 → 64.2%; 55.4 → 56.6% | passDodged 1, passEnded 45, passHit 21, passes 67, sacrificed 11, shieldBroken 55, shotDown 45, tells 78 | passDodged 6, passEnded 49, passHit 47, passes 102, sacrificed 40, shieldBroken 20, shotDown 15, tells 102 | 0.06 / 0.30 |
+| normal/r0 | 38.7 → 38.7%; 54.3 → 54.3% |  |  | 0.11 / 0.49 |
+| normal/r1+ | 61.1 → 60.6%; 59.6 → 60.2%; 48.2 → 47.0% | passDodged 2, passEnded 29, passHit 9, passes 40, sacrificed 9, shieldBroken 46, shotDown 37, tells 55 | passDodged 6, passEnded 50, passHit 28, passes 84, sacrificed 36, shieldBroken 25, shotDown 20, tells 84 | 0.07 / 0.43 |
+
+#### Average pilot: lives lost per sector (mean of 8 seeds)
+| Mode | Route | S1 | S2 | S3 | S4 | Mean Δ |
+|---|---:|---|---|---|---|---:|
+| easy | 0 | 0.00 → 0.00 | 0.88 → 0.88 | 4.63 → 4.63 | 7.25 → 7.25 | +0.00 |
+| easy | 1 | 4.63 → 4.63 | 9.25 → 9.63 | 7.88 → 7.88 | 12.88 → 13.13 | +0.16 |
+| easy | 2 | 10.13 → 10.13 | 16.38 → 16.50 | 18.50 → 18.50 | 46.00 → 46.13 | +0.06 |
+| normal | 0 | 1.63 → 1.63 | 2.00 → 2.00 | 9.75 → 9.75 | 11.25 → 11.25 | +0.00 |
+| normal | 1 | 8.75 → 9.13 | 18.25 → 19.50 | 32.75 → 26.00 | 28.50 → 26.63 | -1.75 |
+| normal | 2 | 31.38 → 27.63 | 46.13 → 46.63 | 71.38 → 74.63 | 59.00 → 57.38 | -0.40 |
+| hard | 0 | 1.88 → 1.88 | 3.63 → 3.63 | 9.88 → 9.88 | 13.25 → 13.25 | +0.00 |
+| hard | 1 | 19.88 → 20.00 | 34.63 → 35.88 | 21.13 → 28.75 | 28.13 → 28.88 | +2.44 |
+| hard | 2 | 48.13 → 44.38 | 44.50 → 44.13 | 81.13 → 74.38 | 56.88 → 60.75 | -1.75 |
+
+The expert pilot sits under the sentinel it shoots at, so its passes mostly touch the ship (it is protected); with
+the bare gun no longer wearing the rush shield, rushes now run their passes (`passes`, `sacrificed` up; `shieldBroken`,
+`shotDown` down). The Average pilot meets 1.5–2.1× the passes and breaks a shield a third as often, as the rule
+intends: dodging, not shooting, is the answer.
+
+### Acceptance (Normal against pre, as design §9 of demon-intelligence)
+
+| Check | Bound | Result |
+|---|---|---|
+| Every campaign completes (invulnerable pilot) | all | 24 / 24 |
+| Ordinary-wave clear time per sector | ≤ +10 % | −5.0 … +4.2 % (sectors 1–4; the carrier, sector 5, −4.3 … +6.1 %) |
+| Aimed hit ratio | ≤ −15 % | −3.1 % worst |
+| T0 / T1 / T2 hit ratio | ≤ 5 % / drop ≤ 25 % | within −1.2 … +1.2 points |
+| Average pilot lives lost per sector, Normal | ≤ +0.3 | route 1 −1.75, route 2 −0.40; route 0 ±0 |
+| Rush fairness guards | §6.4 | `test/sentinel_rush_fairness_test.dart` green (kinematics unchanged) |
+| Hostile bullets | ≤ 120 | peak 18 |
+
+### Carrier v3 tune (2026-11-16): Easy's second launch wave
+
+**Decision (coordinator, for the operator's "first couple of waves").** Every tour keeps two launch waves on every
+difficulty. Easy's second launch wave is made smaller until Easy's boss level is inside its 10 % clear-time gate:
+- it leaves in **one go**, with every skein setting out through the gates at once instead of half of them
+  waiting. So there are fewer sequential volley leads, and the wave's time was mostly those leads, not kills;
+- it keeps half its roster and half its reinforcement flocks (`CarrierScript.easySecondWave` = 0.5).
+
+Halving the roster and the flocks alone moved Easy by only 0.1 %. Releasing the wave in one go is the lever that
+moved it.
+
+**The boss level's clear time.** The probe is now 16 seeds, the endurance set: combat seconds while sector 5 is
+current, summed over the five routes, with the protected pilot. The 8-seed figures above were noisy: untuned Easy
+measured +12.6 % on 8 seeds and +9.7 % on 16.
+
+| Difficulty | `game` cd416186 s | carrier-v3, untuned s | carrier-v3 tune s | Δ (tune) |
+|---|---:|---:|---:|---:|
+| easy | 524.0 | 574.8 (+9.7 %) | 554.1 | **+5.7 %** |
+| normal | 664.5 | 696.5 | 696.5 | +4.8 % |
+| hard | 714.4 | 742.6 | 742.6 | +3.9 % |
+
+Easy's approach went from 213.5 s to 181.3 s (the `game` baseline is 153.1 s). Normal and Hard are untouched.
+
+**Boss endurance** (`test/boss_endurance_test.dart`) with the tune: easy 352.64 s (+5.9 %), normal 417.29 s
+(−3.3 %), hard 436.03 s (+1.7 %). Pooled: +1.0 % seconds and −0.4 % hits. Everything is within its gates.
+
+## Carrier hatches (2026-11-17): the boss made easier on purpose
+
+The operator's round 3d (C4 revision): every player finds the carrier fight "waaay too difficult", so make it fairer
+through structure (`openspec/changes/carrier-hatches/design.md` §A2–§A11):
+- shootable hatches, each with its own field;
+- a transformation;
+- the core door as the only target.
+
+This is a **deliberate balance change** with targets, not a change held within the old gates.
+
+**Harnesses.**
+- `test/support/boss_fairness.dart` (run headless with `dart run test/support/boss_fairness.dart`;
+  `test/boss_fairness_test.dart` checks the targets). Each tour's boss level is played from its start, 6 seeds × 5
+  tours per difficulty, unprotected with lives refilled. It uses two pilots:
+  - the expert leads every target;
+  - the naive pilot aims at where the target is now.
+
+  The values are seconds and lives lost per five carriers (fight-ready time only), and the kill share within 240 s
+  per carrier.
+- `test/boss_endurance_test.dart`: the protected campaign pilot, 16 full campaigns per difficulty (unchanged).
+
+**Before** (`game` dde01449) and **after** (this change, work/carrier-hatches):
+
+| Difficulty | Expert s, before → after | Δ (target) | Expert lives, before → after | Δ (target) | Naive kill share, before → after |
+|---|---:|---:|---:|---:|---:|
+| easy | 476.7 → 335.0 | −29.7 % (−25 ± 5) | 72.67 → 49.5 | −31.9 % (−30 ± 5) | 0.967 → 1.0 |
+| normal | 689.3 → 529.5 | −23.2 % (−20 ± 5) | 111.83 → 83.5 | −25.3 % (−25 ± 5) | 0.70 → 0.967 |
+| hard | 666.0 → 595.5 | −10.6 % (−10 ± 5) | 109.83 → 94.83 | −13.7 % (−15 ± 5) | 0.80 → 0.867 |
+
+**Boss endurance** (`test/boss_endurance_test.dart`, the protected pilot, which never loses a life, so the faster
+kill shows in full):
+
+| Difficulty | Seconds | Hits |
+|---|---|---|
+| easy | 352.64 → 183.85 (−47.9 %) | 932.3 → 483.9 |
+| normal | 417.29 → 277.84 (−33.4 %) | 1211.7 → 790.8 |
+| hard | 436.03 → 300.83 (−31.0 %) | 1332.4 → 921.1 |
+
+Pooled: seconds −36.1 %, hits −37.1 %.
+- The test's `baseline` now holds the after values. The old ones are kept as `preHatches`, and a new assertion keeps
+  every difficulty at least 20 % faster to kill than `preHatches`.
+- The ±5 % pooled and ±10 % per-difficulty gates apply to the new baseline from here on.
+
+**The levers used** (`lib/game/carrier_hatches.dart`):
+
+| Lever | Easy | Normal | Hard |
+|---|---|---|---|
+| Hatch pool (share of the old shield) | 0.5 | 0.55 | 0.65 |
+| Core share of `coreMax` | 0.65 | 0.8 | 0.8 |
+| Fan-attack rate | 0.7 | 0.85 | 0.75 |
+
+The rest apply on every difficulty:
+- hatch field and hull radii 24 and 16 units;
+- glide 0.25 in the hatch chapter and 0.4 in the core chapter;
+- the core door hit from 0.4 open, with a half-width of 24 × its openness.
+
+The flock timer, flock sizes, kinds and caps are unchanged.
+
+**What the first draft measured** (pool 0.85, radii 18/12, glide 0.35/0.6, window 16 from 0.6 open, no core share):
+- the expert took +16 %, +3 % and +6 %: *harder*;
+- the naive pilot killed only 63 %, 43 % and 53 % of carriers.
+
+The hatches, unlike the old 220-unit field lip, must be aimed at and led. Losing the side hatches had also cut the
+core's exposure.
+
+**The boss level's clear time** is no longer gated at +10 %, because it is meant to fall (design §A11).
+
+**The campaign playtest's bounds** (`test/campaign_playtest_test.dart`) hold, with the pilot taught the hatches: it
+aims at the vulnerable tier's nearest hatch with the forecast lead, then at the core door.

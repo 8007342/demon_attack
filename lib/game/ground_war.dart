@@ -15,6 +15,13 @@ part of 'model.dart';
 abstract final class GroundCamera {
   static const horizon = 172.0;
   static const g = 520 - horizon;
+
+  /// boss-grandeur: the presentation altitude the scene draws the ground
+  /// at (the background is stretched about the horizon by it). Ground
+  /// sprites divide their drawn height by it so they keep their size while
+  /// the ground below them recedes. Presentation only: the simulation never
+  /// reads it.
+  static double spriteAltitude = 1;
   static const z0 = g / 2;
 
   /// Screen y of the ground at depth [z].
@@ -646,8 +653,18 @@ class HomingPickup {
 /// Where the relief puts a ground object: screen ground contact, the slope
 /// along its travel (> 0 uphill toward the camera) and a visual pace.
 class GroundPose {
-  const GroundPose(this.x, this.y, {this.climb = 0, this.pace = 1});
+  const GroundPose(
+    this.x,
+    this.y, {
+    this.climb = 0,
+    this.pace = 1,
+    this.hesitate = 1,
+  });
   final double x, y, climb, pace;
+
+  /// terrain-shadows: gait factor under the sentinel's lurking shadow (.7
+  /// while covered; presentation only).
+  final double hesitate;
 }
 
 /// Installed by the scene as [GroundWar.relief]; null keeps flat ground.
@@ -1378,7 +1395,7 @@ extension GroundWarSimulation on ArcadeModel {
       if (bestGround == null || u.threat > bestGround.threat) bestGround = u;
     }
     if (bestGround != null) return (bestGround, HomingTargetKind.ground);
-    final b = boss;
+    final b = hittableBoss; // boss-grandeur: not while it rises
     if (b != null && _carrierCoreOpen(b)) return (b, HomingTargetKind.carrierCore);
     Demon? bestAir;
     for (final d in demons) {
@@ -1408,7 +1425,7 @@ extension GroundWarSimulation on ArcadeModel {
   bool _homingTargetValid(HomingMissile h) => switch (h.target) {
     final GroundUnit u => u.alive && u.z >= GroundTuning.leaveZ,
     final Demon d => demons.contains(d) && !d.entering,
-    final Carrier c => identical(c, boss),
+    final Carrier c => identical(c, boss) && c.fightReady,
     _ => false,
   };
 

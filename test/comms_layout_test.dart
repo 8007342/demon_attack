@@ -224,6 +224,8 @@ void main() {
       expect(tile.overlaps(arena), isFalse);
     }
     expect(find.byKey(const ValueKey('comms-hud-stack')), findsNothing);
+    // Desktop keeps its HUD band (mobile-top-trim trims phones only).
+    expect(tester.getSize(find.byKey(const ValueKey('hud-band'))).height, 94);
     expect(
       find.text('DEMON / ATTACK'),
       findsNothing,
@@ -296,6 +298,14 @@ void main() {
       ];
       expect(rects.length, 2, reason: 'two full dialogue cards');
       expect(rects[0].top, rects[1].top);
+      // mobile-top-trim: cards hug their text, the HUD band its content.
+      for (final r in rects) {
+        expect(r.height, lessThanOrEqualTo(CommsHudStack.stripHeight));
+      }
+      expect(
+        tester.getSize(find.byKey(const ValueKey('hud-band'))).height,
+        lessThan(80),
+      );
       expect(rects[0].overlaps(rects[1]), isFalse);
       expect(rects[0].width, closeTo(rects[1].width, .01));
       final ordered = [...rects]..sort((a, b) => a.left.compareTo(b.left));

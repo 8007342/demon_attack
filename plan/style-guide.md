@@ -8,6 +8,18 @@ Original pixel artwork honors early-console clarity with animated winged demons,
 
 Every ordinary creature and sentinel is a **demonic gargoyle**: stony, leathery hide; heavy shoulders and a hunched torso; curled or swept horns; a snarling fanged maw; glowing eyes; clawed hands and feet; a barbed tail; and **bat-like membrane wings** stretched between visible finger bones, with scalloped, torn edges. No feathers, beaks, fanned primaries or bird proportions, and no upright "standing, seen from the front, wings wide open" pose. They are cartoonish and friendly-scary, clearly a threat but never gory or truly frightening for a child: damage is cracked stone with glowing fissures and torn membranes, never blood or wounds. Species keep distinct silhouettes and roles: teal a lean imp with big ram horns, violet an armoured brute with massive shoulders and stubby wings, coral a sleek predatory hunter with long horns, jaws and a stinger tail, gold a crowned elder holding orbs. The sentinels are a horned violet warden and a crowned gold colossus. The carrier shares their ornament but not their anatomy: it is an engineered warship whose gargoyle figurehead, bat-wing solar sails, carved spires and buttresses are applied to a hard-surface hull (see [Boss armada](#boss-armada-gargoyle-warships-spaceship-first-gargoyle-second)). Never imitate an existing game's creatures, including the 1982 game this project shares a name with.
 
+### Alien troops: rank, shields and status
+
+How fliers, sentinels and the carrier show **rank, shields, health and state** is defined in
+[`docs/styleguide/alien-troops.md`](../docs/styleguide/alien-troops.md) (change `alien-insignia`). Where this guide
+and that one disagree on those readouts, that one wins. In short:
+- rank is an ink-outlined bone glyph above the head (talon, two talons, ocellus, crown);
+- force shields are cyan hex cells, with spent points kept as sockets;
+- health is a whole-hide warm-up;
+- the dive tell flashes the glyph and rim white.
+
+The chest badges below stay as species identity only.
+
 ## Durable pixel-art and animation rules
 
 These requirements apply to every new combat creature, attack warning and damage effect. The visual reference is the simple, expressive low-resolution silhouettes and stepped poses of 1982-era Demon Attack. All shipping drawings must be original; never copy, trace or extract the original game's sprites or screenshots.
@@ -43,7 +55,7 @@ The extra resolution goes into motion and readable equipment, capped where it wo
 - **3/4 flight, not a frontal pose.** Creatures are rendered by a small 3-D rig (`tools/gargoyle_rig.py`) from a camera tilted 34° above them, the body leaning toward the player with the head forward, legs tucked and tail trailing. Every flight frame exists **banking left, neutral and banking right**: the body turns (yaw ±38°) and leans (roll ±12°), the head leads into the turn, the wings are asymmetric (the inner wing beats shallower and folds more, the outer reaches further) and the tail trails outward. Right banks are real renders, never mirrors, so damage, slanted rank marks, the tail and weapon mounts stay on their anatomical side.
 - **Downstroke, upstroke, hover and glide are distinct.** Eight flap poses per 0.5-second stroke: 0–3 the extended wings drive down while the whole body lifts 1–2 px; 4–7 the wrists lead, the wings fold and rise while the body drops. The neutral set is the hover/idle cycle; two glide frames hold the wings spread with the legs trailing. Humerus, forearm and each finger bone articulate separately and the membrane panels are re-rasterised every pose; membrane undersides are darker, so the upstroke reads as the wing turning over. Two-pose toggles and rigid up/down translation are out of style. Sentinels keep eight slow poses held 0.4 s each.
 - **Frames follow the creature's actual motion.** The renderer measures each creature's velocity from its successive positions and picks left / neutral / right with hysteresis (enter at 55 units/s, leave below 24, hold ≥ 0.14 s) so it never flickers; climbing strokes faster with a longer downstroke, sinking lingers in the upstroke and fast sinking glides. Dive warning, dive, weapon fire and death still take priority. Every damage molt, the angry state and the hit flash exist for every direction (no overlay compositing). Presentation only: the simulation, its timings and hitboxes are untouched. Details in [sprite-atlas.md](sprite-atlas.md#frame-selection).
-- **Armour, weapons, shields and rank are visible.** Every species wears armour (chest plates, pauldrons, crown) and a rank insignia (teal chevron, violet twin bars, coral fang slashes, gold star jewel). Each has a visible weapon mount that animates when it fires: teal throat emitter, violet pauldron barbs, coral tail stinger, gold claw orbs. Elites add a gold double-chevron brow mark, side helm plates, gold crest spikes, a steel gorget and gold-studded pauldrons, authored per direction and shedding one level per hit. Sentinels wear shaped metal armour layers and chest insignia (violet crescent, ruby sunburst) and discharge from the maw. The carrier carries a brood sigil and one rank pip per form.
+- **Armour, weapons, shields and rank are visible.** Every species wears armour (chest plates, pauldrons, crown) and a species badge (teal chevron, violet twin bars, coral fang slashes, gold star jewel; rank itself is the overlay glyph of `docs/styleguide/alien-troops.md`). Each has a visible weapon mount that animates when it fires: teal throat emitter, violet pauldron barbs, coral tail stinger, gold claw orbs. Elites add a gold double-chevron brow mark, side helm plates, gold crest spikes, a steel gorget and gold-studded pauldrons, authored per direction and shedding one level per hit. Sentinels wear shaped metal armour layers and chest insignia (violet crescent, ruby sunburst) and discharge from the maw. The carrier carries a brood sigil; its form rank is the insignia ladder glyph drawn on the brow (alien-insignia), and the baked rank pips are to be dropped in the next hull pass.
 - **Anticipation before attacks.** Before a dive the creature cocks its wings high, hunches and flares its eyes (four frames); weapon fire plays charge, flash, recoil and settle on the creature while a muzzle flash marks the actual shot spawn.
 - **Hits and deaths are authored.** Hit flashes are highlighted frames (ramps stepped toward white, outline kept); molts crack the stone hide with glowing fissures, chip and snap horns and tear the membranes; deaths are an eight-frame species sequence (flash, glowing seams, the stone body breaking into tumbling chunks around a core burst, dust) instead of a generic burst.
 - **Readability caps.** Keep a 1 px outline, depth contours between overlapping parts and a top-left key light on every frame; no feature thinner than one logical pixel against the outline; eyes 2 × 2 with a bright core under a dark brow; maws 5–7 px with fangs; insignia at most about 5 × 5 px; detail textures never cover eyes, insignia or plates; the head, horns and wings carry the silhouette. Judge every change on a phone-sized screenshot as well as enlarged.
@@ -275,6 +287,22 @@ Mixing:
 Visiting the page stays silent until a user gesture unlocks browser audio. Muting ramps the master gain, and pause suspends the audio context. Resume keeps the bar grid's phase, skipping only whole beats that fell behind.
 
 Future refinements: true stems (the tiers are full mixes crossfaded on bars), music/effects balance controls, and sound preference persistence.
+
+## Hazards, weather and flashes
+
+- **Colour meaning.** Warm amber and red mark a hostile hazard and its tell (ground-missile markers, storm tells).
+  Cyan, teal and violet are friendly technology (allies, homing exhaust). Thermal gradients are reserved for dive
+  shields. A hazard that hurts both sides, like Stormfront's lightning, uses a warm tell and a white bolt with a
+  pale violet-white halo, never cyan. (Taken from what the game already does; Stormfront design, `bonus-levels`.)
+- **Weather** is drawn above the backdrop grade and must keep the firing lane readable. Rain, flicker and screen
+  flashes are dropped under reduced motion; the gameplay tell stays.
+- **Flashes.** Nothing flashes more than three times in any one second over an area above the general or red flash
+  threshold. A general flash is a pair of opposing luminance changes of at least 10 % of maximum luminance (the darker
+  state below 0.80). The area threshold is 25 % of any 10° visual field, about 341 × 256 px on a 1024 × 768 screen
+  [source: W3C, "Understanding Success Criterion 2.3.1: Three Flashes or Below Threshold" (WCAG 2.2),
+  https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html, read 2026-11-16].
+  The project's own, stricter limit: a whole-screen flash stays at or below 10 % white for at most 0.12 s, at most
+  once a second (`arcade-presentation`, "Flash safety").
 
 ## Review gates
 

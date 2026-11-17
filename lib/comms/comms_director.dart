@@ -79,6 +79,10 @@ class CommsMessage {
 
   /// This message answers an exchange (it holds the reserved channel).
   bool isReply = false;
+
+  /// bonus-briefing: a turn of the urgent-mission card's scripted chatter
+  /// ([CommsDirector.offerScript]); a hush does not hold it.
+  bool scripted = false;
   bool get isDemon => character.isDemon;
   bool get critical => priority >= CommsTriggerSpec.criticalPriority;
   bool get urgent => kind.index >= CommsClass.urgent.index;
@@ -125,7 +129,8 @@ class CommsMessage {
   /// smoothed lip-sync of [CommsMouth].
   int frame(double now) {
     final t = now - startedAt;
-    if (!started || t < 0 || t >= line.duration || interrupted) {
+    // A silent written line (bonus-briefing) keeps the mouth closed.
+    if (!started || t < 0 || t >= line.duration || interrupted || line.silent) {
       return CommsFrame.idle;
     }
     return CommsMouth.of(line).frameAt(t);
@@ -135,7 +140,7 @@ class CommsMessage {
   /// and how far the fade into it has come (see [CommsMouth.blendAt]).
   (int from, int to, double amount) mouthBlend(double now) {
     final t = now - startedAt;
-    if (!started || t < 0 || t >= line.duration || interrupted) {
+    if (!started || t < 0 || t >= line.duration || interrupted || line.silent) {
       return (CommsFrame.idle, CommsFrame.idle, 1);
     }
     return CommsMouth.of(line).blendAt(t);
@@ -496,6 +501,59 @@ class CommsDirector {
     return queue.contains(m) ? m : null;
   }
 
+  /// bonus-briefing: queues [parts] as one scripted back-and-forth (the
+  /// urgent-mission card's chatter). The first turn goes through the
+  /// normal pacing like [offer]; every later turn is the reply of the one
+  /// before, so the channel stays reserved from turn to turn: one voice at
+  /// a time, each after the grace gap, none cut. Turns whose speaker is
+  /// not in the cast are left out. Scripted turns are not held by a
+  /// [hush] (the card hushes the rest of the channel while it is up).
+  /// Returns the turns in order; empty when the first could not queue.
+  List<CommsMessage> offerScript(
+    List<(CommsLine, CommsTriggerSpec)> parts, {
+    double? at,
+    double ttl = 6,
+  }) {
+    final when = math.max(now, at ?? now);
+    now = when;
+    final turns = <CommsMessage>[];
+    for (final (line, spec) in parts) {
+      final m = _build(
+        spec,
+        line,
+        when,
+        0,
+        kind: CommsClass.useful,
+        ready: when,
+        expires: when + ttl,
+      );
+      if (m == null) continue;
+      m.scripted = true;
+      if (turns.isNotEmpty) {
+        m.isReply = true;
+        turns.last.reply = m;
+      }
+      turns.add(m);
+    }
+    if (turns.isEmpty) return turns;
+    queue.add(turns.first);
+    _sortQueue();
+    _trimQueue();
+    return queue.contains(turns.first) ? turns : const [];
+  }
+
+  /// Takes back a queued message that has not started (and every turn
+  /// chained after it): it will not play, and a channel reserved for it is
+  /// free again. A message already on air is never cut.
+  void withdraw(CommsMessage m) {
+    if (m.started) return;
+    queue.remove(m);
+    if (identical(_reserved, m)) _reserved = null;
+    for (final o in [...active, ...queue]) {
+      if (identical(o.reply, m)) o.reply = null;
+    }
+  }
+
   /// Records what [event] says about the fight below without voicing it
   /// (also called for events the glue filters out, such as homing kills).
   void note(GameEvent event, double at) => ground.note(event, at);
@@ -615,8 +673,18 @@ class CommsDirector {
           _offerTimed(spec, at, at + diveIn, demon: false);
         }
         return true;
+      default:
+        // --- bonus levels: any other event may carry `endIn` (seconds
+        // until the moment it warns of): its squad line then ends on that
+        // moment, or is dropped when it cannot (a late warning is worse
+        // than none). First user: Stormfront's `stormStrike`.
+        final endIn = _num(event.data['endIn']);
+        if (endIn == null || endIn <= 0) return false;
+        final spec = _spec(human, event);
+        if (spec == null) return false;
+        _offerTimed(spec, at, at + endIn, demon: false);
+        return true;
     }
-    return false;
   }
 
   /// The class of a line from [spec].
@@ -1051,7 +1119,8 @@ class CommsDirector {
   /// waits for the grace gap after the last one ends.
   bool _gateOpen(CommsMessage m) {
     final grace = now >= _speechEnd + lineGap - 1e-9;
-    if (identical(m, _reserved)) return grace;
+    // The card's script holds the channel like an exchange's answer.
+    if (identical(m, _reserved) || m.scripted) return grace;
     final d = m.line.duration;
     switch (m.kind) {
       case CommsClass.mustPlay:
@@ -1109,6 +1178,7 @@ class CommsDirector {
   bool _screenFree(CommsMessage m) {
     if (m.timed ||
         m.urgent ||
+        m.scripted ||
         m.kind == CommsClass.hint ||
         m.isReply ||
         identical(m, _reserved)) {
@@ -1158,8 +1228,10 @@ class CommsDirector {
     if (_onAir == null) {
       for (final m in [...queue]) {
         if (m.overlap || now < m.readyAt) continue;
-        // A hush holds everything but the warnings.
-        if (hushed && !m.urgent) continue;
+        // A hush holds everything but the warnings, the answer of an
+        // exchange already on screen (never left hanging) and the scripted
+        // chatter of the urgent-mission card, which asked for the hush.
+        if (hushed && !m.urgent && !m.scripted && !m.isReply) continue;
         if (_reserved != null && !identical(m, _reserved) && !m.urgent) {
           continue;
         }

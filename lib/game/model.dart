@@ -1,5 +1,12 @@
 import 'dart:math' as math;
 
+import 'bonus/bonus_catalog.dart';
+import 'bonus/bonus_plan.dart';
+import 'bonus/bonus_types.dart';
+import 'boss_grammar.dart';
+import 'carrier_gates.dart';
+import 'carrier_hatches.dart';
+import 'carrier_script.dart';
 import 'demon_planner.dart';
 import 'difficulty.dart';
 import 'flock.dart';
@@ -13,6 +20,11 @@ import 'skill_meter.dart';
 import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
+export 'carrier_hatches.dart'
+    show CarrierChapter, CarrierHatch, CarrierHatches, HatchState;
+export 'bonus/bonus_catalog.dart';
+export 'bonus/bonus_plan.dart';
+export 'bonus/bonus_types.dart';
 export 'demon_planner.dart' show DemonTier, Manoeuvre;
 export 'difficulty.dart';
 export 'game_events.dart';
@@ -33,6 +45,9 @@ part 'life_loss.dart';
 
 // --- cinematic flow (one transition clock, the pursued flock, skip) ---
 part 'model_flow.dart';
+
+// --- bonus levels, bonus-only powerups and run modifiers ---
+part 'model_bonus.dart';
 
 // --- the sentinel final rush (demon-intelligence design §6) ---
 part 'sentinel_rush.dart';
@@ -188,6 +203,15 @@ class Demon {
   /// point (a foreshadowed sentinel leaves from its silhouette).
   double? entryX, entryY, entryN, entryScale;
 
+  // --- carrier-v3 §4: launched from a carrier gate.
+  /// Seconds until it leaves its gate (parked, undrawn and untargetable
+  /// until then); 0 when not waiting on a gate.
+  double gateWait = 0;
+
+  /// Where a flat (non-perspective) entrance starts across: the gate it
+  /// left (null: straight down from its home column).
+  double? entranceStartX;
+
   // --- continuous swarm (swarm_stream.dart, swarm_patterns.dart) ---
   /// Where this creature is in the swarm's life, published with [nearness]
   /// and [altitude] for the fog (fog-restoration decides how to veil it).
@@ -217,8 +241,13 @@ class Demon {
 /// Gerono figure-eight with depth, far behind the fog, nearer and larger
 /// each wave. No hitbox, no fire, no effect on the encounter.
 class SentinelForeshadow {
-  SentinelForeshadow(this.archetype, this.stage) : growth = stage;
+  SentinelForeshadow(this.archetype, this.stage, {int lurkSeed = 0x5E57})
+    : growth = stage,
+      lurk = LurkTrack(lurkSeed);
   EnemyArchetype archetype;
+
+  /// terrain-shadows §4: where its lurking shadow creeps on the ground.
+  final LurkTrack lurk;
 
   /// Target growth (0 two waves ahead, .5 one wave ahead, 1 arriving) and
   /// the eased value shown.
@@ -259,6 +288,59 @@ class SentinelForeshadow {
   }
 }
 
+/// terrain-shadows design §4: the sentinel's lurking shadow's path on the
+/// ground, from the far terrain under its circling point toward the
+/// ground-war front at walking pace, meandering. Pure presentation: its
+/// own PRNG stream, never the simulation's draws.
+class LurkTrack {
+  LurkTrack(int seed) {
+    final r = math.Random(seed);
+    speed = 10 + 6 * r.nextDouble();
+    x0 = 180 + (r.nextDouble() * 2 - 1) * 54;
+    phase = r.nextDouble() * 2 * math.pi;
+  }
+
+  /// Screen travel (arena units per second, 10-16), start lateral and
+  /// meander phase.
+  late final double speed, x0, phase;
+
+  /// Far terrain near the fog, and the front's depth without a ground war.
+  static const startZ = 9 * GroundCamera.z0;
+  static const openFrontZ = 2 * GroundCamera.z0;
+  static const amplitude = 30.0, period = 9.0;
+
+  /// Its virtual altitude, high far out and lower near the front.
+  static const farAltitude = 220.0, nearAltitude = 120.0;
+
+  double clock = 0, travelled = 0;
+  double frontZ = openFrontZ;
+
+  static double get startY => GroundCamera.yOf(startZ);
+  double get endY => GroundCamera.yOf(frontZ);
+
+  /// Flat-ground y of the shadow's centre now.
+  double get flatY => math.min(startY + travelled, math.max(startY, endY));
+
+  /// 0 at the far terrain, 1 at the front.
+  double get progress =>
+      endY > startY ? ((flatY - startY) / (endY - startY)).clamp(0.0, 1.0) : 1;
+
+  double get altitude => farAltitude + (nearAltitude - farAltitude) * progress;
+
+  /// Lateral position; reduced motion drops the meander.
+  double x({bool meander = true}) =>
+      x0 +
+      (meander
+          ? amplitude * math.sin(2 * math.pi * clock / period + phase)
+          : 0);
+
+  void advance(double dt, {required double frontZ}) {
+    this.frontZ = frontZ;
+    clock += dt;
+    travelled += speed * dt;
+  }
+}
+
 class Shot {
   Shot(
     this.x,
@@ -286,9 +368,24 @@ class Shot {
 }
 
 class Pickup {
-  Pickup(this.x, this.y, this.power);
+  Pickup(this.x, this.y, this.power, {this.bonus});
   double x, y;
   final Power power;
+
+  /// --- bonus levels: a bonus-only powerup (then [power] is unused).
+  final BonusPowerDef? bonus;
+}
+
+/// playtest-fixes-3: a player hit glancing off a berserk sentinel (its
+/// transformation, or its rush shield against the bare gun): a spark at
+/// the impact, presentation only.
+class Deflect {
+  Deflect(this.x, this.y, this.cx, this.cy);
+
+  /// The impact and the sentinel's centre (the spark flies away from it).
+  final double x, y, cx, cy;
+  double age = 0;
+  static const life = .28;
 }
 
 class Blast {
@@ -308,9 +405,13 @@ class Blast {
 }
 
 class SupplyCrate {
-  SupplyCrate(this.x, this.y, this.power, {this.maxHp = 3}) : hp = maxHp;
+  SupplyCrate(this.x, this.y, this.power, {this.maxHp = 3, this.bonus})
+    : hp = maxHp;
   double x, y;
   final Power power;
+
+  /// --- bonus levels: a bonus-only powerup (then [power] is unused).
+  final BonusPowerDef? bonus;
   final int maxHp;
   int hp;
   double vy = 28.0;
@@ -341,9 +442,29 @@ class Carrier {
     Difficulty difficulty = Difficulty.normal,
     this.startingDirection = 1,
     this.startingPhase = 0,
-  }) : shieldMax = DifficultyPolicy(difficulty).bossShieldForRoute(cycle),
-       coreMax = DifficultyPolicy(difficulty).bossCoreForRoute(cycle),
+  }) : shieldMax = _hatchPool(
+         DifficultyPolicy(difficulty).bossShieldForRoute(cycle),
+         cycle,
+         difficulty.index,
+       ),
+       coreMax = math.max(
+         1,
+         (DifficultyPolicy(difficulty).bossCoreForRoute(cycle) *
+                 CarrierHatches.coreShares[difficulty.index])
+             .round(),
+       ),
        formCount = math.min(4, 2 + cycle) {
+    // --- carrier-hatches (design §A3): the old shield's HP redistributed
+    // into the upper hatches; [shield] is the sum of what stands.
+    final list = CarrierHatches.forTour(cycle);
+    final (field, hull) = CarrierHatches.hpOf(
+      DifficultyPolicy(difficulty).bossShieldForRoute(cycle),
+      list.length,
+      difficulty: difficulty.index,
+    );
+    hatches = [
+      for (final h in list) HatchState(h, fieldMax: field, hullMax: hull),
+    ];
     shield = shieldMax;
     core = coreMax;
     motionPhase = startingPhase;
@@ -351,9 +472,93 @@ class Carrier {
     horizontalVelocity = startingDirection.toDouble();
   }
   static const double sideHatchOffset = 46.0;
+
+  // --- carrier-hatches (design §A2–§A5): the three chapters.
+  late final List<HatchState> hatches;
+  CarrierChapter chapter = CarrierChapter.hatches;
+
+  /// The fight's first `bossHatchTier` has been queued.
+  bool announced = false;
+
+  /// Seconds into the transformation (0 outside it).
+  double transformT = 0;
+
+  static int _hatchPool(int shield, int cycle, int difficulty) {
+    final n = CarrierHatches.forTour(cycle).length;
+    final (f, h) = CarrierHatches.hpOf(shield, n, difficulty: difficulty);
+    return n * (f + h);
+  }
+
+  /// The vulnerable (and launching) upper tier: the topmost with a hatch
+  /// standing; null when every upper hatch is destroyed.
+  int? get vulnerableTier {
+    int? t;
+    for (final h in hatches) {
+      if (h.destroyed) continue;
+      if (t == null || h.hatch.tier < t) t = h.hatch.tier;
+    }
+    return t;
+  }
+
+  /// The hatches of the vulnerable tier still standing.
+  Iterable<HatchState> get vulnerableHatches {
+    final t = vulnerableTier;
+    return hatches.where((h) => !h.destroyed && h.hatch.tier == t);
+  }
+
+  int get upperTiers => hatches.isEmpty ? 0 : hatches.last.hatch.tier + 1;
+  int get hatchesLeft => hatches.where((h) => !h.destroyed).length;
+
+  /// Every upper hatch destroyed and its break-up done.
+  bool get hatchesDown => hatches.every((h) => h.down);
+
+  /// The lateral glide's phase-rate factor of this chapter.
+  double get glideFactor => switch (chapter) {
+    CarrierChapter.hatches => CarrierHatches.hatchGlide,
+    CarrierChapter.transform => CarrierHatches.transformGlide,
+    CarrierChapter.core => CarrierHatches.coreGlide,
+  };
+
+  /// The core can be damaged (the core chapter only).
+  bool get coreOpen => chapter == CarrierChapter.core;
   final int startingDirection;
   final double startingPhase;
   double motionPhase = 0, horizontalVelocity = 0;
+  // --- boss-grandeur: the Rise (design §1) and the glide (§5) ---
+  /// Rise progress 0..1: the carrier emerges from under the fog over
+  /// [riseSeconds]; it has no hitbox and fires nothing until it is fully
+  /// out (the fight-ready rule).
+  double emerge = 1;
+
+  /// carrier-v3: the Close (D 1.35 → 1) takes 4 s (was the 5 s Rise).
+  static const riseSeconds = 4.0;
+  bool get fightReady => emerge >= 1;
+
+  /// The level clock when it became fight-ready: door and fan cycles run
+  /// on the seconds since (as they ran on the level clock when the carrier
+  /// arrived ready).
+  double readyAt = 0;
+
+  /// The vertical glide phase φ (gameplay hook b): y = 205 + 16·sin φ.
+  double glidePhase = 0;
+  static const fightRow = 205.0, glideAmplitude = 16.0, glideRate = .35;
+  double get glide => math.sin(glidePhase);
+
+  /// Seeded pick of this carrier's visual module set (operator R8.6:
+  /// per-run variety; presentation only, never read by the simulation).
+  int variant = 0;
+
+  /// Lit hex shield cells (alien-insignia: 12 on the carrier).
+  static int shieldCells(int shield, int shieldMax) =>
+      shieldMax <= 0 ? 0 : (12 * shield / shieldMax).ceil().clamp(0, 12);
+
+  /// Armour steps: two per form (a plate lost, then the form's module),
+  /// counted from core damage; [armourSteps] is the collapse.
+  int get armourSteps => 2 * formCount;
+  int get armourStep =>
+      ((1 - core / coreMax) * armourSteps).floor().clamp(0, armourSteps);
+  // --- end boss-grandeur
+
   double get forceFieldHalfWidth => 110;
   double get forceFieldDepth => 43 + 32 * shield / shieldMax;
   double forceFieldSurfaceY(double worldX) {
@@ -366,7 +571,8 @@ class Carrier {
   int get direction => horizontalVelocity < 0 ? -1 : 1;
   double forecastX(double seconds, double speed) {
     final phase =
-        motionPhase + seconds * .7 * speed * movementRate * startingDirection;
+        motionPhase +
+        seconds * .7 * speed * movementRate * glideFactor * startingDirection;
     return (180 +
             math.sin(phase) * (80 + rage * 10) +
             math.sin(phase * 2 + startingPhase) * rage * 8)
@@ -381,7 +587,9 @@ class Carrier {
   double door = 0;
   double sideDoorLeft = 0;
   double sideDoorRight = 0;
-  bool get sideHatchesLocked => phase >= formCount - 1;
+  // --- carrier-hatches §A5: the side hatches are sealed for good (the core
+  // door is the only target).
+  bool get sideHatchesLocked => true;
 }
 
 /// Pure fixed-step simulation; renderers and input never change its clock.
@@ -402,6 +610,9 @@ class ArcadeModel {
   final List<Shot> shots = [];
   final List<Pickup> pickups = [];
   final List<Blast> blasts = [];
+
+  /// playtest-fixes-3: hits glancing off a berserk sentinel this moment.
+  final List<Deflect> deflects = [];
   final List<SupplyCrate> supplyCrates = [];
   final List<FallingPart> fallingParts = [];
   double crateSpawnTimer = 0.0;
@@ -415,6 +626,13 @@ class ArcadeModel {
   /// (a fixture and calibration flag). Route 0 is unchanged either way.
   bool intelligence = true;
   bool get _intel => intelligence && cycle >= 1;
+
+  // --- bonus levels (model_bonus.dart): the run's plan, the level being
+  // played and the bonus powers. Empty unless the run has a run seed.
+  final BonusRun bonusRun = BonusRun();
+
+  /// The odds a seeded run's plan is drawn with.
+  BonusTuning bonusTuning = BonusTuning.standard;
 
   /// The energy planner (its own PRNG: never draws from [random]).
   late final DemonPlanner planner = DemonPlanner(seed);
@@ -636,6 +854,595 @@ class ArcadeModel {
 
   Carrier? boss;
   Carrier? wreckBoss;
+
+  // --- boss-grandeur: the loom (design §1, gameplay hook a) ---
+  /// The boss level's own PRNG stream (`seed ^ 0xB055`): the glide phase.
+  late final math.Random bossRandom = math.Random(seed ^ 0xB055);
+
+  /// Ordinary waves that open the boss level while the carrier looms under
+  /// the fog: one on the first tour, two from the second.
+  ///
+  /// carrier-v3 §4.3: these are the carrier's launch waves, two on tours
+  /// 1–3 and three from tour 4 (the script's `launchWaves`).
+  static int loomWavesFor(int route) =>
+      CarrierScript.authored(route).launchWaves;
+  int get loomWaves => loomWavesFor(cycle);
+
+  /// The loom's cap: after it the carrier closes regardless (carrier-v3:
+  /// 90 s, was 75).
+  static const loomCap = 90.0;
+
+  // --- carrier-v3: the approach and the gates (design §4–§5) ---
+  /// This tour's carrier script (seeded presentation for a seeded run).
+  CarrierScript get carrierScript {
+    final key = (runSeed, cycle);
+    if (_scriptKey != key || _carrierScript == null) {
+      _scriptKey = key;
+      _carrierScript = CarrierScript.forRun(runSeed, cycle);
+    }
+    return _carrierScript!;
+  }
+
+  CarrierScript? _carrierScript;
+  (int?, int)? _scriptKey;
+
+  /// The approach distance factor D (scale on screen 1/D); 0 outside the
+  /// boss level's approach and close. [approachClock]: its seconds.
+  double approachD = 0, approachClock = 0;
+  int _approachStep = -1;
+  double _stepFrom = 0, _stepT = 0;
+
+  /// D when the Close began (presentation eases from it to 1).
+  double closeFromD = 1.35;
+
+  /// The carrier's gates (approach launches and the fight's flocks).
+  CarrierLaunches? launches;
+
+  /// Where the approaching carrier is (arena units, presentation and the
+  /// gates' projection).
+  ({double x, double y}) get approachAt =>
+      CarrierApproachScript.placement(math.max(1, approachD), approachClock);
+
+  /// Where gate [g] is on screen during the approach.
+  ({double x, double y}) gateOnApproach(CarrierGate g) {
+    final at = approachAt, d = math.max(1.0, approachD);
+    return (x: at.x + g.x / d, y: at.y + g.y / d);
+  }
+
+  /// Where gate [g] of fighting carrier [b] is (hull-local plus centre).
+  static ({double x, double y}) gateOnCarrier(Carrier b, CarrierGate g) =>
+      (x: b.x + g.x, y: b.y + g.y);
+
+  CarrierLaunches _launchesFor() {
+    final sc = carrierScript;
+    return CarrierLaunches(
+      gates: sc.gates,
+      order: sc.gateOrder,
+      seed: seed,
+      timing: CarrierVolleyTiming(
+        telegraph: sc.volley.telegraph,
+        open: sc.volley.open,
+        interval: sc.volley.interval,
+        close: sc.volley.close,
+        maxOpen: sc.volley.maxOpen,
+      ),
+    );
+  }
+
+  void _resetApproach() {
+    approachD = 0;
+    approachClock = 0;
+    _approachStep = -1;
+    _stepT = 0;
+    launches = null;
+    _fightGate = null;
+    _fieldImpacts.clear();
+  }
+
+  /// Steps the approach (combat seconds): D eases to the step of the
+  /// launch waves cleared so far over 3 s, then creeps toward the next.
+  void _updateApproach(double dt) {
+    final a = carrierScript.approach;
+    if (looming) {
+      launches ??= _launchesFor();
+      final step = (wave - 1).clamp(0, a.distances.length - 2);
+      if (_approachStep < 0) {
+        _approachStep = step;
+        approachD = a.d0;
+        _stepFrom = a.d0;
+        _stepT = a.stepSeconds;
+        _queueGameEvent(GameEventNames.bossApproach, {
+          ..._carrierEventData,
+          'step': 0,
+          'distance': approachD,
+        });
+      } else if (step != _approachStep) {
+        _approachStep = step;
+        _stepFrom = approachD;
+        _stepT = 0;
+        _queueGameEvent(GameEventNames.bossApproach, {
+          ..._carrierEventData,
+          'step': step,
+          'distance': a.distances[step],
+        });
+      }
+      approachClock += dt;
+      final target = a.distances[step];
+      final next = a.distances[step + 1];
+      if (_stepT < a.stepSeconds) {
+        _stepT += dt;
+        final u = (_stepT / a.stepSeconds).clamp(0.0, 1.0);
+        approachD = _stepFrom + (target - _stepFrom) * u * u * (3 - 2 * u);
+      } else {
+        approachD = math.max(next, approachD - a.creep * dt);
+      }
+    } else if (boss != null && !boss!.fightReady) {
+      // The Close: D eases from where it was to 1 (the hittable threshold).
+      final e = boss!.emerge.clamp(0.0, 1.0);
+      final k = e * e * (3 - 2 * e);
+      approachD = closeFromD + (1 - closeFromD) * k;
+      approachClock += dt;
+    }
+    final l = launches;
+    if (l != null) {
+      l.step(dt);
+      for (final e in l.takeEvents()) {
+        _queueGateEvent(e);
+      }
+    }
+  }
+
+  Map<String, Object?> get _carrierEventData {
+    final a = BossGrammar.forRun(route: cycle, variant: bossVariant);
+    return {
+      'route': cycle,
+      'tour': cycle + 1,
+      'set': a.setName,
+      'variant': bossVariant,
+    };
+  }
+
+  void _queueGateEvent(GateEvent e) {
+    final g = e.run.gate;
+    // --- carrier-hatches §A8: the volley lifecycle on the hatches.
+    final tier = g is CarrierHatch
+        ? (g.isCore ? (boss?.upperTiers ?? 0) + 1 : g.tier + 1)
+        : 0;
+    final data = {
+      ..._carrierEventData,
+      'hatch': g.id,
+      'tier': tier,
+      'shootable': true,
+    };
+    switch (e.kind) {
+      case GateState.telegraph:
+        _queueGameEvent(GameEventNames.bossHatchTelegraph, {
+          ...data,
+          'slot': g.slot,
+          'side': g.side,
+          'kind': g.kind.name,
+        });
+      case GateState.opening:
+        _queueGameEvent(GameEventNames.bossHatchOpen, data);
+      case GateState.launching:
+        _queueGameEvent(GameEventNames.bossLaunch, {
+          ...data,
+          'count': e.count,
+          'kind': e.run.tier,
+        });
+      case GateState.closed:
+        _queueGameEvent(GameEventNames.bossHatchClose, data);
+      case GateState.closing:
+        break;
+    }
+  }
+
+  /// The approach's launch waves come out of the carrier's gates (design
+  /// §4.3): [group] enters from the next gate of the round-robin, projected
+  /// through D, each member parked until its turn in the volley.
+  void _gateLaunch(List<Demon> group) {
+    final l = launches;
+    if (l == null || approachD <= 0) return;
+    final members = [
+      for (final d in group)
+        if (d.arrivesFromDistance && !d.isLarge && d.gateWait <= 0) d,
+    ];
+    if (members.isEmpty) return;
+    // carrier-hatches: the approach launches from the upper hatches.
+    final run = l.pick(
+      (g) => gateOnApproach(g).x,
+      eligible: (g) => g is CarrierHatch && !g.isCore,
+    );
+    if (run == null) return;
+    final delays = l.volley(run, members.length, tier: members.first.kind);
+    final at = gateOnApproach(run.gate);
+    // Out of a deep gate: the far fog's nearness, nearer as D falls.
+    final n = (.12 + .08 * ((4.5 - approachD) / 3.5)).clamp(.12, .2);
+    for (final (i, d) in members.indexed) {
+      d
+        ..entryX = at.x
+        ..entryY = at.y
+        ..entryN = n
+        ..gateWait = delays[i];
+    }
+  }
+
+  /// The approach's live creatures are all parked in gates (the power
+  /// timers hold, as they do while the carrier closes).
+  /// The power timers' rate while [_gateHeld].
+  static const gateHoldRate = .5;
+
+  bool get _gateHeld {
+    if (!looming || launches == null) return false;
+    var parked = false;
+    for (final d in demons) {
+      if (d.isLarge || d.swarmState == SwarmState.reserve) continue;
+      if (d.gateWait <= 0) return false;
+      parked = true;
+    }
+    return parked;
+  }
+
+  // --- console boss launcher (operator C2, round 3b): debug only.
+  /// A /console run fast-forwards the carrier's decay: every
+  /// [consoleDecaySeconds] of its fight, one step (shield to half, shield
+  /// down, then each armour step and form change, then the collapse),
+  /// through the real hit path so every decay event is queued. Only a
+  /// console run (never ranked) sets it; [start] clears it.
+  bool consoleDecay = false;
+  static const consoleDecaySeconds = 2.5;
+  double _consoleDecayLeft = consoleDecaySeconds;
+
+  void _consoleDecayStep(double dt) {
+    final b = hittableBoss;
+    if (b == null) return;
+    _consoleDecayLeft -= dt;
+    if (_consoleDecayLeft > 0) return;
+    _consoleDecayLeft = consoleDecaySeconds;
+    consoleDecayNow();
+  }
+
+  /// One decay step now (the console's fast-forward; tests).
+  void consoleDecayNow() {
+    final b = hittableBoss;
+    if (b == null || ranked) return;
+    // --- carrier-hatches: one step destroys the vulnerable tier.
+    if (b.chapter == CarrierChapter.hatches) {
+      for (final h in b.vulnerableHatches.toList()) {
+        _damageHatch(b, h, h.hp);
+        if (!h.destroyed) _damageHatch(b, h, h.hp);
+      }
+      return;
+    }
+    if (b.chapter == CarrierChapter.transform) return;
+    if (b.shield * 2 > b.shieldMax) {
+      hitBoss(b.x, damage: b.shield - b.shieldMax ~/ 2);
+    } else if (b.shield > 0) {
+      hitBoss(b.x, damage: b.shield);
+    } else {
+      final next = b.armourStep + 1;
+      final target = (b.coreMax * (1 - next / b.armourSteps)).floor();
+      b.door = 1; // the core is open for the step
+      hitBoss(b.x, damage: math.max(1, b.core - target));
+    }
+  }
+
+  /// The fight's flock gate (design §4.4): chosen and telegraphing ahead
+  /// of the flock timer, so the spawn moments do not move.
+  GateRun? _fightGate;
+
+  // --- carrier-hatches (design §A2–§A8): chapters, hatch hits, hints.
+  /// Core-door launches, and how many of them waited for the door
+  /// (calibration: the hold's share of delayed arrivals, §A11).
+  int coreLaunches = 0, coreHolds = 0;
+
+  /// A shield zeroed from outside the hit path (fixtures, saved states):
+  /// the hatches are gone and the core is exposed at once, no events.
+  static void syncChapter(Carrier b) {
+    if (b.chapter != CarrierChapter.hatches || b.shield > 0) return;
+    if (b.hatches.every((h) => h.destroyed)) return; // the real path
+    for (final h in b.hatches) {
+      h
+        ..field = 0
+        ..hull = 0
+        ..fallen = CarrierHatches.fallSeconds;
+    }
+    b.chapter = CarrierChapter.core;
+  }
+
+  /// Upper hatches still to fall before the transformation: their break-up
+  /// time is mirrored here ([CarrierHatches.fallSeconds]).
+  void _updateHatchChapters(Carrier b, double dt) {
+    syncChapter(b);
+    // The fight's first section, then the first hint (2 s in).
+    if (!b.announced) {
+      b.announced = true;
+      if (b.chapter == CarrierChapter.hatches) {
+        _hatchTierEvent(b, from: 0);
+        _hintHatchesAt = levelClock + 2;
+      }
+    }
+    for (final h in b.hatches) {
+      if (h.destroyed && !h.down) h.fallen += dt;
+    }
+    switch (b.chapter) {
+      case CarrierChapter.hatches:
+        if (b.hatchesDown) {
+          b
+            ..chapter = CarrierChapter.transform
+            ..transformT = 0;
+          launches?.closeAll();
+          _fightGate = null;
+          final data = _decayData(b);
+          _queueGameEvent(GameEventNames.bossShieldDown, data);
+          _queueGameEvent(GameEventNames.bossTransform, {
+            ..._carrierEventData,
+            'stage': 'start',
+            'seconds': CarrierHatches.transformSeconds,
+          });
+          events.add('boss');
+        }
+      case CarrierChapter.transform:
+        b.transformT += dt;
+        if (b.transformT >= CarrierHatches.transformSeconds) {
+          b.chapter = CarrierChapter.core;
+          _queueGameEvent(GameEventNames.bossTransform, {
+            ..._carrierEventData,
+            'stage': 'end',
+            'seconds': CarrierHatches.transformSeconds,
+          });
+          _queueGameEvent(GameEventNames.bossCoreExposed, _decayData(b));
+          _hatchTierEvent(b, from: b.upperTiers);
+          _hint(GameEventNames.bossHintTiming, force: true);
+        }
+      case CarrierChapter.core:
+        break;
+    }
+    _hintClock(b);
+  }
+
+  /// The fall and the transformation at once (the direct-damage API).
+  void _instantTransform(Carrier b) {
+    for (final h in b.hatches) {
+      h.fallen = math.max(h.fallen, CarrierHatches.fallSeconds);
+    }
+    _updateHatchChapters(b, 0); // → transform (shieldDown, transform start)
+    b.transformT = CarrierHatches.transformSeconds;
+    _updateHatchChapters(b, 0); // → core (transform end, core exposed)
+  }
+
+  Map<String, Object?> _decayData(Carrier b) {
+    final a = BossGrammar.forRun(route: cycle, variant: b.variant);
+    return {'route': cycle, 'variant': b.variant, 'set': a.setName};
+  }
+
+  /// `bossHatchTier`: the vulnerable tier is now [Carrier.vulnerableTier]
+  /// (or the core door), from tier [from] (1-based; 0 at the start).
+  void _hatchTierEvent(Carrier b, {required int from}) {
+    final tiers = b.upperTiers + 1;
+    final t = b.chapter == CarrierChapter.core
+        ? tiers
+        : (b.vulnerableTier ?? b.upperTiers - 1) + 1;
+    if (t == from) return;
+    _queueGameEvent(GameEventNames.bossHatchTier, {
+      ..._carrierEventData,
+      'tier': t,
+      'tiers': tiers,
+      'depth': tiers <= 1 ? 1.0 : (t - 1) / (tiers - 1),
+      'shootable': true,
+      'from': from,
+    });
+  }
+
+  /// The hull-local y the next fight flock leaves from.
+  double _launchTierY(Carrier b) {
+    if (b.chapter == CarrierChapter.core) return CarrierHatches.core.y;
+    final v = b.vulnerableHatches;
+    return v.isEmpty ? CarrierHatches.core.y : v.first.hatch.y;
+  }
+
+  /// Whether gate [g] launches now: a standing hatch of the vulnerable
+  /// tier, or the core door in the core chapter.
+  bool _launchesFrom(Carrier b, CarrierGate g) {
+    if (g is! CarrierHatch) return false;
+    if (b.chapter == CarrierChapter.core) return g.isCore;
+    if (g.isCore) return false;
+    final t = b.vulnerableTier;
+    return t != null &&
+        g.tier == t &&
+        b.hatches.any((h) => h.hatch.id == g.id && !h.destroyed);
+  }
+
+  /// The core door's opening (the unchanged cycle) at fight clock [c].
+  static double coreDoorAt(Carrier b, double c, int cycle) =>
+      ((math.sin(c * (1.55 + b.phase * .22)) - (cycle == 0 ? 0.0 : .1)) * 2)
+          .clamp(0.0, 1.0);
+
+  /// Seconds until the core door is open (≥ 0.6) from fight clock [c], at
+  /// most one period (§A5); 0 when it is open now.
+  double _coreDoorWait(Carrier b, double c) {
+    final period = 2 * math.pi / (1.55 + b.phase * .22);
+    for (var t = 0.0; t <= period; t += 1 / 60) {
+      if (coreDoorAt(b, c + t, cycle) >= CarrierHatches.coreOpenAt) return t;
+    }
+    return period;
+  }
+
+  /// Damages hatch [h] of carrier [b] (its field first). Returns true.
+  bool _damageHatch(Carrier b, HatchState h, int damage) {
+    if (h.destroyed || damage <= 0) return false;
+    final tierBefore = b.vulnerableTier;
+    final halfBefore = b.hatchesLeft * 2 > b.hatches.length;
+    final data = {
+      ..._carrierEventData,
+      'hatch': h.hatch.id,
+      'tier': h.hatch.tier + 1,
+      'side': h.hatch.side,
+    };
+    if (h.field > 0) {
+      h.field = math.max(0, h.field - damage);
+      if (h.field == 0) {
+        _queueGameEvent(GameEventNames.bossHatchFieldDown, data);
+      }
+    } else {
+      h.hull = math.max(0, h.hull - damage);
+      if (h.hull == 0) {
+        h.fallen = 0;
+        _queueGameEvent(GameEventNames.bossHatchDrop, {
+          ...data,
+          'cause': 'shot',
+          'left': b.hatchesLeft,
+        });
+        blasts.add(Blast(b.x + h.hatch.x, b.y + h.hatch.y, big: true));
+        if (halfBefore && b.hatchesLeft * 2 <= b.hatches.length) {
+          _queueGameEvent(GameEventNames.bossShieldFailing, _decayData(b));
+        }
+        final t = b.vulnerableTier;
+        if (t != null && t != tierBefore) {
+          _hatchTierEvent(b, from: (tierBefore ?? 0) + 1);
+        }
+      }
+    }
+    b.shield = b.hatches.fold(0, (a, x) => a + x.hp);
+    events.add('hit');
+    blasts.add(Blast(b.x + h.hatch.x, b.y + h.hatch.y));
+    return true;
+  }
+
+  /// A player shot against the hatch chapter (design §A3): crossing the
+  /// vulnerable tier's row this frame, it strikes a hatch's field or hull
+  /// within its radius, or sparks off the armour. Returns whether the shot
+  /// was stopped.
+  bool _hatchShot(Carrier b, Shot s) {
+    final v = b.vulnerableHatches.toList();
+    if (v.isEmpty) return false;
+    final row = b.y + v.first.hatch.y;
+    final previousY = s.y - s.vy / 60;
+    if (!(s.y <= row && previousY >= row)) return false;
+    final blast = s.blastRadius > 0 ? 5.0 : 0.0;
+    for (final h in v) {
+      final r =
+          (h.field > 0 ? CarrierHatches.fieldRadius : CarrierHatches.hullRadius) +
+          blast;
+      if ((s.x - (b.x + h.hatch.x)).abs() <= r) {
+        s.y = row;
+        if (s.blastRadius > 0) _explodeShot(s, hitCarrier: false);
+        _damageHatch(b, h, s.damage);
+        return true;
+      }
+    }
+    if ((s.x - b.x).abs() <= CarrierHatches.armourHalfWidth) {
+      deflects.add(Deflect(s.x, row, b.x, row - 30));
+      _armourMisses.add(levelClock);
+      return true;
+    }
+    return false;
+  }
+
+  /// Hits hatch [i] directly (tests, the /console fast decay).
+  bool hitHatch(int i, {int damage = 1}) {
+    final b = hittableBoss;
+    if (b == null || !combat || b.chapter != CarrierChapter.hatches) {
+      return false;
+    }
+    final h = b.hatches[i];
+    if (h.destroyed || h.hatch.tier != b.vulnerableTier) return false;
+    return _damageHatch(b, h, damage);
+  }
+
+  // Hints (§A7): shot patterns and cooldowns, on the level clock.
+  final List<double> _armourMisses = [], _closedDoorHits = [], _trailing = [];
+  final Map<String, double> _hintAt = {};
+  double? _hintHatchesAt;
+  static const _hintCooldown = {
+    GameEventNames.bossHintHatches: 20.0,
+    GameEventNames.bossHintTiming: 20.0,
+    GameEventNames.bossHintLead: 25.0,
+  };
+
+  /// Whether the lead hint has played this fight (the lead pip shows on
+  /// Easy and Normal after it, §A5).
+  bool leadHinted = false;
+
+  /// The lead pip shows (Easy and Normal, after the first lead hint, in
+  /// the core chapter); never on Hard.
+  bool get leadPipShown =>
+      leadHinted &&
+      difficulty != Difficulty.hard &&
+      boss?.chapter == CarrierChapter.core;
+
+  /// Where a shot fired now meets the core door's row: the door's forecast
+  /// x when the shot arrives, on that row (arena units).
+  ({double dx, double dy}) leadPipAt(Carrier b) {
+    final row = b.y + CarrierHatches.core.y;
+    final flight = (shipY - row) / 390;
+    return (dx: b.forecastX(flight, speed), dy: row);
+  }
+
+  void _hint(String name, {bool force = false}) {
+    final last = _hintAt[name];
+    if (!force && last != null && levelClock - last < _hintCooldown[name]!) {
+      return;
+    }
+    _hintAt[name] = levelClock;
+    if (name == GameEventNames.bossHintLead) leadHinted = true;
+    _queueGameEvent(name, {..._carrierEventData, 'hint': name});
+  }
+
+  void _hintClock(Carrier b) {
+    final now = levelClock;
+    final at = _hintHatchesAt;
+    if (at != null && now >= at) {
+      _hintHatchesAt = null;
+      _hint(GameEventNames.bossHintHatches, force: true);
+    }
+    if (b.chapter == CarrierChapter.transform) return;
+    _armourMisses.removeWhere((t) => t < now - 4);
+    _closedDoorHits.removeWhere((t) => t < now - 3);
+    _trailing.removeWhere((t) => t < now - 4);
+    if (_armourMisses.length >= 6) {
+      _armourMisses.clear();
+      _hint(GameEventNames.bossHintHatches);
+    }
+    if (_closedDoorHits.length >= 4) {
+      _closedDoorHits.clear();
+      _hint(GameEventNames.bossHintTiming);
+    }
+    if (_trailing.length >= 3) {
+      _trailing.clear();
+      _hint(GameEventNames.bossHintLead);
+    }
+  }
+
+  /// Field impacts in the last second (`bossFieldImpact`: at most 4/s).
+  final List<double> _fieldImpacts = [];
+
+  /// Queues a presentation event (the director's take-off, climb peak,
+  /// surges): it goes into the game event queue and never changes the
+  /// simulation.
+  void queuePresentationEvent(String name, [Map<String, Object?> data = const {}]) =>
+      _queueGameEvent(name, {..._carrierEventData, ...data});
+
+  /// Combat seconds of the current loom (0 outside it).
+  double loomClock = 0;
+
+  /// The boss level's ordinary loom waves are under way (no carrier yet).
+  bool get looming =>
+      level == 5 && boss == null && wave < wavesPerLevel && clearedLevel == null;
+
+  /// The wave that brings the carrier: the boss level's last.
+  bool get _bossWave => level == 5 && wave >= wavesPerLevel;
+
+  /// The carrier rises out of the fog (presentation reads it).
+  bool get bossRising => boss != null && !boss!.fightReady;
+
+  /// The carrier when it can be hit and targeted (fully emerged).
+  Carrier? get hittableBoss {
+    final b = boss;
+    return b != null && b.fightReady ? b : null;
+  }
+  // --- end boss-grandeur
+
   Difficulty difficulty = Difficulty.normal;
   DifficultyPolicy get policy => DifficultyPolicy(difficulty);
   int medals = 0;
@@ -721,6 +1528,11 @@ class ArcadeModel {
   /// Screen direction the pursued flock flies (-1 left, 1 right).
   int flowDirection = 1;
 
+  /// Sectors this run has entered (transition-ascent: a sector change into
+  /// one of them is a revisit, answered by a front-line call). Presentation
+  /// only; a resumed or later-route run counts every sector as visited.
+  final Set<int> visitedSectors = {};
+
   /// The cosmetic flock of the transition (never in [demons]).
   final List<FlowMember> flowFlock = [];
   double _flowBase = 0;
@@ -742,6 +1554,7 @@ class ArcadeModel {
     incoming.clear();
     _completeWave();
   }
+
   // --- end cinematic flow
   static const arrivalHintDuration = 4.5;
   double transitionDuration = arrivalHintDuration;
@@ -793,7 +1606,7 @@ class ArcadeModel {
       (mode == RunMode.transition && wave > 1);
   bool get isBoss => boss != null;
   int get wavesPerLevel =>
-      level == 5 ? 1 : 3 + ((level - 1) ~/ 2) + math.min(cycle, 3);
+      bonusRun.level?.waves.count ?? wavesFor(sector: level, route: cycle);
   int get nextLevel => level == 5 ? 1 : level + 1;
   RunMode get presentationMode => mode == RunMode.paused ? _beforePause : mode;
   bool get cinematic => [
@@ -806,8 +1619,14 @@ class ArcadeModel {
   bool get waveTransition => presentationMode == RunMode.transition && wave > 1;
   double get transitionProgress =>
       (1 - transitionLeft / transitionDuration).clamp(0, 1);
-  void start({Difficulty difficulty = Difficulty.normal}) {
+
+  /// [runSeed] draws the run's bonus plan (a bonus level, a run modifier);
+  /// without one the run is the calibrated campaign.
+  void start({Difficulty difficulty = Difficulty.normal, int? runSeed}) {
     this.difficulty = difficulty;
+    consoleDecay = false; // --- console boss launcher (C2)
+    _bonusStartRun(runSeed); // --- bonus levels
+    visitedSectors.clear(); // --- transition ascent
     _resetSkill(); // --- demon intelligence
     ranked = true;
     lives = policy.startingLives;
@@ -818,6 +1637,7 @@ class ArcadeModel {
     heartAssemblyLeft = 0;
     heartPickups.clear();
     wreckBoss = null;
+    _bossCollapsing = false;
     score = 0;
     level = 1;
     cycle = 0;
@@ -845,9 +1665,12 @@ class ArcadeModel {
 
   // --- console start (the /console route) ---
 
-  /// The last wave of [sector] on [route] (zero-based), 1 for the carrier.
+  /// The last wave of [sector] on [route] (zero-based). The carrier's
+  /// sector: its loom waves, then the carrier's own wave (boss-grandeur).
   static int wavesFor({required int sector, required int route}) =>
-      sector == 5 ? 1 : 3 + ((sector - 1) ~/ 2) + math.min(route, 3);
+      sector == 5
+      ? loomWavesFor(route) + 1
+      : 3 + ((sector - 1) ~/ 2) + math.min(route, 3);
 
   /// First wave of [sector] on [route] where a sentinel can appear, or null
   /// (route 0, or Easy sectors without one). Sentinels need a prior boss
@@ -873,7 +1696,8 @@ class ArcadeModel {
   }
 
   /// A fresh run that begins at [sector] 1-5 of [route] 0-4 (optionally at
-  /// [wave]): 0 points, normal scoring. Earlier routes count as won
+  /// [wave]; sector 5 defaults to the carrier's own wave, after its loom
+  /// waves, so a jump to sector 5 meets the carrier): 0 points, normal scoring. Earlier routes count as won
   /// (medals = route), which satisfies the sentinel prerequisite.
   ///
   /// A [console] run starts with exactly one life and is not [ranked];
@@ -882,10 +1706,13 @@ class ArcadeModel {
     Difficulty difficulty = Difficulty.normal,
     int sector = 1,
     int route = 0,
-    int wave = 1,
+    int? wave,
     bool console = false,
+    int? runSeed,
+    String? bonus,
+    String? modifier,
   }) {
-    start(difficulty: difficulty);
+    start(difficulty: difficulty, runSeed: runSeed);
     if (console) {
       ranked = false;
       lives = 1;
@@ -897,11 +1724,22 @@ class ArcadeModel {
     kills = 0;
     events.clear();
     ground.resetRun();
+    // --- bonus levels: the console may make this sector a bonus level.
+    // [modifier] likewise puts the run under a run modifier.
+    final forced = bonus == null ? null : bonusLevelById(bonus);
+    final rule = modifier == null ? null : runModifierById(modifier);
+    if ((forced != null && level != 5) || rule != null) {
+      _bonusForce(level == 5 ? null : forced, modifier: rule);
+    }
     _beginLevel();
-    final target = wave.clamp(1, wavesPerLevel);
+    final target = (wave ?? (level == 5 ? wavesPerLevel : 1)).clamp(
+      1,
+      wavesPerLevel,
+    );
     if (target > 1) {
       events.clear();
       this.wave = target;
+      boss = _bossWave ? _newCarrier() : null; // boss-grandeur: after the loom
       _spawnWave();
       events.add(boss == null ? 'level' : 'boss');
     }
@@ -923,6 +1761,7 @@ class ArcadeModel {
     'kills': kills,
     'heartSlots': List<int>.of(heartSlots),
     'activeMilliseconds': activeMilliseconds,
+    if (bonusRun.seed != null) 'runSeed': bonusRun.seed, // --- bonus levels
   };
 
   /// Restores a fresh wave, validating before changing this model.
@@ -946,10 +1785,25 @@ class ArcadeModel {
     );
     final sector = integer(data['sector'] ?? data['level'], 1, 1, 5);
     if (route == null || sector == null) return false;
+    // --- bonus levels: the plan is a pure function of the saved run seed.
+    final rawSeed = data['runSeed'];
+    final restoredSeed = rawSeed is int ? rawSeed : null;
+    final restoredPlan = restoredSeed == null
+        ? BonusPlan.none
+        : BonusPlan.forRun(restoredSeed, tuning: bonusTuning);
+    // boss-grandeur: the carrier's sector has its loom waves before it.
     final maxWave = sector == 5
-        ? 1
-        : 3 + ((sector - 1) ~/ 2) + math.min(route, 3);
-    final restoredWave = integer(data['wave'], 1, 1, maxWave.toInt());
+        ? wavesFor(sector: sector, route: route)
+        : restoredPlan.at(route, sector)?.waves.count ??
+              wavesFor(sector: sector, route: route);
+    // A sector-5 checkpoint without a wave is the carrier (boss-grandeur:
+    // after its loom waves), as before the loom existed.
+    final restoredWave = integer(
+      data['wave'],
+      sector == 5 ? maxWave : 1,
+      1,
+      maxWave.toInt(),
+    );
     final restoredLives = integer(
       data['lives'],
       DifficultyPolicy(restoredDifficulty).startingLives,
@@ -1024,27 +1878,202 @@ class ArcadeModel {
     clock = levelClock = _accumulator = 0;
     invulnerable = 2;
     _resetLifeLoss();
-    boss = level == 5 ? _newCarrier() : null;
+    loomClock = 0;
+    boss = _bossWave ? _newCarrier() : null;
+    _bonusStartRun(restoredSeed); // --- bonus levels
+    _bonusBeginLevel();
     _groundBeginLevel(); // --- ground war
     _spawnWave(fromCheckpoint: true);
     events.add(boss == null ? 'level' : 'boss');
     return true;
   }
 
-  Carrier _newCarrier() => Carrier(
+  /// boss-grandeur (operator R8.5), on the styleguide's vocabulary
+  /// (`docs/styleguide/alien-capital-ships.md` §6, boss-carrier-wire):
+  /// every step of the carrier's decay goes into the game event queue for
+  /// the dynamic music engine and comms, in the fixed order shield → armour
+  /// → modules → collapse, once per step and per module:
+  /// - `bossShieldCellLost` (cell, remaining; and `cellsLeft`) per hex cell;
+  /// - `bossShieldFailing` once, at shield ≤ 50 % (S1);
+  /// - `bossShieldDown` once, at shield 0 (S2);
+  /// - `bossArmourShed` (slot) at the odd armour steps: the plates of the
+  ///   module next in the detach order peel off;
+  /// - `bossModuleLost` (slot, set, rank, form) per form change (S3);
+  /// - `bossCoreExposed` on the last form;
+  /// - `bossCollapseStart`, then `bossWreckFalls` (slot, rank, delay) for
+  ///   every module left in detach order (the carapace last), at core 0;
+  ///   `bossCollapseEnd` when the victory rout ends.
+  /// The slots come from the run's assembly (boss_grammar, visual only):
+  /// the simulation never reads them.
+  void _bossDecayEvents(
+    Carrier b, {
+    int? cellsBefore,
+    int? shieldBefore,
+    int? armourBefore,
+    int? formBefore,
+  }) {
+    final a = BossGrammar.forRun(route: cycle, variant: b.variant);
+    final data = {'route': cycle, 'variant': b.variant, 'set': a.setName};
+    if (cellsBefore != null) {
+      final cells = Carrier.shieldCells(b.shield, b.shieldMax);
+      for (var c = cellsBefore - 1; c >= cells; c--) {
+        _queueGameEvent(GameEventNames.bossShieldCellLost, {
+          ...data,
+          'cell': c,
+          'remaining': c,
+          'cellsLeft': c,
+          // carrier-v3 §3.2: the field region this cell guarded.
+          'region': carrierScript.field.regionOfCell(c).name,
+        });
+      }
+      if (shieldBefore != null &&
+          shieldBefore * 2 > b.shieldMax &&
+          b.shield * 2 <= b.shieldMax) {
+        _queueGameEvent(GameEventNames.bossShieldFailing, data);
+      }
+      if (b.shield == 0) {
+        _queueGameEvent(GameEventNames.bossShieldDown, data);
+      }
+    }
+    final ranks = a.ranks;
+    if (armourBefore != null && b.armourStep > armourBefore) {
+      for (var s = armourBefore + 1; s <= b.armourStep; s++) {
+        if (s >= b.armourSteps) break; // the last step is the collapse
+        if (s.isEven) continue; // even steps are form changes (modules)
+        // Plates shed from the module that tears away next (form s ~/ 2 + 1).
+        final form = s ~/ 2 + 1;
+        _queueGameEvent(GameEventNames.bossArmourShed, {
+          ...data,
+          'plate': s,
+          'slot': (a.slotAtForm(form) ?? BossSlot.carapace).name,
+        });
+      }
+    }
+    if (formBefore != null && b.phase > formBefore) {
+      for (var f = formBefore + 1; f <= b.phase; f++) {
+        final slot = a.slotAtForm(f);
+        _queueGameEvent(GameEventNames.bossModuleLost, {
+          ...data,
+          'form': f,
+          'detachOrder': f,
+          'rank': f <= ranks.length ? ranks[f - 1] : f,
+          'slot': slot?.name,
+          'set': slot == null ? a.setName : _slotSet(a, slot),
+        });
+        // carrier-hatches §A4: `bossCoreExposed` is the transformation's
+        // end now, not the last form.
+      }
+    }
+    if (b.core <= 0) {
+      _queueGameEvent(GameEventNames.bossCollapseStart, data);
+      // What is left falls in detach order, the carapace last (the
+      // director's collapse timing: 0.25 s apart, the last after 0.9 s).
+      final gone = b.phase;
+      final left = [
+        for (final r in ranks.skip(gone)) a.ofRank(r).first.slot,
+        BossSlot.prow,
+        BossSlot.carapace,
+      ];
+      for (final (i, slot) in left.indexed) {
+        _queueGameEvent(GameEventNames.bossWreckFalls, {
+          ...data,
+          'slot': slot.name,
+          'rank': i + gone + 1,
+          'delay': slot == BossSlot.carapace ? .9 : i * .25,
+        });
+      }
+      _bossCollapsing = true;
+    }
+  }
+
+  static String _slotSet(BossAssembly a, BossSlot slot) =>
+      a.modules.firstWhere((m) => m.slot == slot).set;
+
+  /// A collapse is under way (its end is queued when the rout ends).
+  bool _bossCollapsing = false;
+
+  void _bossCollapseEnd() {
+    if (!_bossCollapsing) return;
+    _bossCollapsing = false;
+    final b = wreckBoss;
+    _queueGameEvent(GameEventNames.bossCollapseEnd, {
+      'route': cycle,
+      if (b != null) 'variant': b.variant,
+    });
+  }
+
+  /// The run's visual set pick for the current route (boss_grammar): from
+  /// the run seed, so a run's carriers are deterministic; an unseeded run
+  /// (tests, the calibrated campaign) always draws the first combination.
+  int get bossVariant => BossGrammar.variantFor(runSeed, cycle);
+
+  Carrier _newCarrier() {
+    _resetHints(); // --- carrier-hatches
+    return _buildCarrier();
+  }
+
+  void _resetHints() {
+    leadHinted = false;
+    _hintAt.clear();
+    _armourMisses.clear();
+    _closedDoorHits.clear();
+    _trailing.clear();
+    _hintHatchesAt = null;
+  }
+
+  Carrier _buildCarrier() => Carrier(
     cycle,
     difficulty: difficulty,
     startingDirection: random.nextBool() ? 1 : -1,
     startingPhase: random.nextDouble() * math.pi * 2,
-  );
+  )
+    ..glidePhase = bossRandom.nextDouble() * math.pi * 2
+    // The boss stream keeps its draw (the glide of later carriers must not
+    // move), but the module set comes from the run seed.
+    ..variant = (bossRandom.nextInt(1 << 16), bossVariant).$2;
+
+  /// boss-grandeur: the last loom wave is cleared (or the loom's cap ran
+  /// out): the carrier's wave starts and it rises from under the fog. What
+  /// is left of the loom wave falls where it is (the R1 rule: nothing stays
+  /// in the fog), and nothing waits in the reserve.
+  void _beginRise() {
+    for (final d in demons) {
+      if (d.swarmState != SwarmState.reserve &&
+          !(d.entering && d.entranceProgress <= 0)) {
+        d.hp = 0;
+        blasts.add(Blast(d.x, d.y));
+      }
+    }
+    demons.clear();
+    incoming.clear();
+    _pendingSkeins.clear();
+    _reserveGroups.clear();
+    stream.drain();
+    wave = wavesPerLevel;
+    loomClock = 0;
+    levelClock = 0; // the carrier's wave is timed from its own start
+    // carrier-v3: the Close starts from where the approach is.
+    closeFromD = approachD > 1 ? approachD : carrierScript.approach.closeFrom;
+    approachD = closeFromD;
+    launches?.closeAll();
+    _fightGate = null;
+    boss = _newCarrier()..emerge = 0;
+    _spawnWave(continuous: true);
+    events.add('boss');
+    _queueGameEvent(GameEventNames.bossRise, {'route': cycle});
+  }
 
   void _beginLevel() {
+    visitedSectors.add(level); // --- transition ascent
     wave = 1;
     pilot.reset(shipX); // --- demon intelligence
     _adaptedThisSector = false;
     clearedLevel = null;
     wreckBoss = null;
-    boss = level == 5 ? _newCarrier() : null;
+    loomClock = 0;
+    _resetApproach(); // --- carrier-v3
+    boss = _bossWave ? _newCarrier() : null;
+    _bonusBeginLevel(); // --- bonus levels
     levelClock = 0;
     pickups.clear();
     heartPickups.clear();
@@ -1110,8 +2139,13 @@ class ArcadeModel {
     _flock = 2;
     flocksSpawned = 0;
     flocksPlanned = boss == null
-        ? policy.reinforcementFlocks(route: cycle, sector: level)
+        ? _bonusReinforcements(
+            policy.reinforcementFlocks(route: cycle, sector: level),
+          )
         : 0;
+    if (_easySecondLaunch(wave)) {
+      flocksPlanned = (flocksPlanned * CarrierScript.easySecondWave).floor();
+    }
     _reinforcementLeft = 4.5;
     _reinforcementCooldown = .6;
     _reinforcementCasualties = 0;
@@ -1125,13 +2159,24 @@ class ArcadeModel {
   /// The opening roster of wave [forWave] and its size. Births count
   /// against the wave-wide ordinal and elite budget, so call it with those
   /// counters belonging to [forWave].
+  /// carrier-v3 tune: [forWave] is Easy's second launch wave (shorter
+  /// roster and fewer reinforcement flocks, [CarrierScript.easySecondWave]).
+  bool _easySecondLaunch(int forWave) =>
+      level == 5 &&
+      forWave == 2 &&
+      forWave <= loomWaves &&
+      difficulty == Difficulty.easy;
+
   (List<Demon>, int) _buildRoster(int forWave, {bool fromCheckpoint = false}) {
     final roster = <Demon>[];
-    final count = policy.rosterCount(
-      sector: level,
-      wave: forWave,
-      route: cycle,
+    var count = _bonusRoster(
+      policy.rosterCount(sector: level, wave: forWave, route: cycle),
     );
+    // carrier-v3 tune: Easy's second launch wave is shorter (the boss
+    // level's clear-time gate; plan/calibration-current.md).
+    if (_easySecondLaunch(forWave)) {
+      count = math.max(4, (count * CarrierScript.easySecondWave).round());
+    }
     final rows = (count / 6).ceil();
     final spacing = rows <= 4 ? 48.0 : 160.0 / (rows - 1);
     final special = sentinelFor(forWave);
@@ -1302,7 +2347,11 @@ class ArcadeModel {
   /// be sighted after it, so the fog stages nothing (playtest-fixes). What
   /// this wave still holds back (its later roster skeins, its reinforcement
   /// groups) waits unseen and leaves the fog only when it is admitted.
-  bool get finalWave => boss != null || level == 5 || wave >= wavesPerLevel;
+  bool get finalWave =>
+      boss != null ||
+      // boss-grandeur: nothing comes out of the fog after the last loom wave.
+      (level == 5 && wave >= wavesPerLevel - 1) ||
+      wave >= wavesPerLevel;
 
   /// What the fog shows waiting: the drawn reserve plus the incoming
   /// cohort's approaching skeins (both empty during [finalWave]).
@@ -1315,9 +2364,14 @@ class ArcadeModel {
 
   /// The reserve members the scene draws: whole skeins up to
   /// [reserveDrawn] members, then one leader per further skein. None during
-  /// the [finalWave]: nothing more comes out of the fog after it.
+  /// the [finalWave]: nothing more comes out of the fog after it. None while
+  /// a transition plays either (playtest R1): the Descent shows the new
+  /// sector's first cohort coming out of the cloud and nothing waiting
+  /// behind it; the reserve is sighted once the fight is on.
   List<Demon> get drawnReserve {
-    if (finalWave) return const [];
+    if (finalWave || flow.active) return const [];
+    // carrier-v3: the approach's reserve waits inside the carrier.
+    if (looming) return const [];
     final out = <Demon>[];
     final seen = <int>{};
     for (final d in swarmReserve) {
@@ -1333,6 +2387,7 @@ class ArcadeModel {
       combat &&
       boss == null &&
       wave < wavesPerLevel &&
+      !(level == 5 && wave >= wavesPerLevel - 1) && // boss-grandeur: Rise
       incoming.isEmpty &&
       flocksRemaining == 0 &&
       lifeLossPhase == LifeLossPhase.none &&
@@ -1667,6 +2722,11 @@ class ArcadeModel {
     }
     for (final d in incoming) {
       if (d.isLarge || d.swarmState == SwarmState.reserve) continue;
+      if (d.gateWait > 0) {
+        d.gateWait = math.max(0, d.gateWait - dt); // carrier-v3: in its gate
+        d.entranceProgress = 0;
+        continue;
+      }
       final p = _holdOf(d);
       final (tx, ty) = _targetFormationPosition(d);
       d.entranceProgress = p;
@@ -1689,7 +2749,11 @@ class ArcadeModel {
     _ordinaryBirthOrdinal = ordinal;
     _eliteBirths = elites;
     final skeins = _skeinsOf(roster, wave + 1);
-    final approach = (skeins.length / 2).ceil();
+    // carrier-v3 tune: Easy's second launch wave leaves in one go (fewer
+    // volleys): every skein sets out from the gates now, none waits.
+    final approach = _easySecondLaunch(wave + 1)
+        ? skeins.length
+        : (skeins.length / 2).ceil();
     _incomingOrder.clear();
     _incomingApproach = approach;
     for (var s = 0; s < skeins.length; s++) {
@@ -1988,13 +3052,16 @@ class ArcadeModel {
   (int, int, bool) _ordinaryProfile([int? forWave]) {
     final w = forWave ?? wave;
     final index = _ordinaryBirthOrdinal++;
-    final kind = cycle > 0
-        ? (index + w + level) % 4
-        : w > 1 && index % 4 == 0
-        ? math.max(0, level - 2)
-        : level - 1;
+    final kind = _bonusKind(
+      cycle > 0
+          ? (index + w + level) % 4
+          : w > 1 && index % 4 == 0
+          ? math.max(0, level - 2)
+          : level - 1,
+    );
     final elite =
         (index + 1) % 10 == 0 &&
+        !_bonusNoElites &&
         _eliteBirths < policy.eliteBudget(route: cycle);
     if (elite) _eliteBirths++;
     return (
@@ -2156,7 +3223,9 @@ class ArcadeModel {
       lifeLossPhase = LifeLossPhase.none;
     }
     // --- continuous swarm: no transition phase between waves of a sector.
-    if (wave < wavesPerLevel && incoming.isNotEmpty) {
+    if (level == 5 && boss == null && wave == wavesPerLevel - 1) {
+      _beginRise(); // --- boss-grandeur: the last loom wave is cleared
+    } else if (wave < wavesPerLevel && incoming.isNotEmpty) {
       _mergeCohort(forced: false);
     } else if (wave < wavesPerLevel) {
       wave++;
@@ -2170,6 +3239,7 @@ class ArcadeModel {
     } else {
       shots.clear();
       clearedLevel = level;
+      _bonusClear(); // --- bonus levels: the clear award
       _groundEndLevel(); // --- ground war
       _enterPhase(RunMode.salvage, FlowPlan.routSeconds);
       _flowBegin(victory: false); // --- cinematic flow
@@ -2253,6 +3323,10 @@ class ArcadeModel {
     }
     clock += dt;
     _updateForeshadow(dt); // --- atmosphere-and-swarms (presentation)
+    for (final f in deflects) {
+      f.age += dt;
+    }
+    deflects.removeWhere((f) => f.age > Deflect.life);
     for (final b in blasts) {
       b.age += dt;
     }
@@ -2351,6 +3425,7 @@ class ArcadeModel {
         targetX = shipX;
       }
       _flowStep();
+      _bonusIdle(dt); // --- bonus levels: a mechanic winds down
       if (transitionLeft <= 0) {
         if (mode == RunMode.salvage) {
           pickups.clear();
@@ -2362,11 +3437,13 @@ class ArcadeModel {
           events.add('levelclear');
           if (_skipPending) _finishTravel();
         } else if (mode == RunMode.victory && finalBoss) {
+          _bossCollapseEnd(); // --- boss-carrier-wire: the decay events
           mode = RunMode.completed;
           events.add('completed');
           _groundCampaignComplete(); // --- ground war
           _flowEnd();
         } else if (mode == RunMode.levelClear || mode == RunMode.victory) {
+          if (mode == RunMode.victory) _bossCollapseEnd(); // --- boss-carrier-wire
           _flowBase += transitionDuration;
           _flowReplan();
           _enterPhase(
@@ -2393,9 +3470,15 @@ class ArcadeModel {
     }
     invulnerable = math.max(0, invulnerable - dt);
     // Module timers freeze while the ship is away: the loadout survives.
-    for (final value in shipAway ? const <Power>[] : Power.values) {
+    // boss-grandeur: and while the carrier rises (a held beat, as the
+    // transition into a carrier sector held them before the loom).
+    // carrier-v3: and at half rate while everything the approach has in
+    // play waits inside the carrier's gates (nothing to shoot; tuned on the
+    // boss endurance gate, plan/calibration-current.md "Carrier v3").
+    final powerDt = _gateHeld ? dt * gateHoldRate : dt;
+    for (final value in shipAway || bossRising ? const <Power>[] : Power.values) {
       if (powerTimers.containsKey(value)) {
-        powerTimers[value] = math.max(0, powerTimers[value]! - dt);
+        powerTimers[value] = math.max(0, powerTimers[value]! - powerDt);
       }
     }
     powerTimers.removeWhere((power, remaining) {
@@ -2423,6 +3506,7 @@ class ArcadeModel {
     });
 
     _updateFallingParts(dt);
+    _bonusStep(dt); // --- bonus levels: crates, bonus power timers
 
     for (final crate in supplyCrates) {
       crate.y += crate.vy * dt;
@@ -2436,7 +3520,7 @@ class ArcadeModel {
     noseFlash = math.max(0, noseFlash - dt);
     if (_fire <= 0) {
       final fired = shots.length;
-      _fire += hasPower(Power.rapid) ? .105 : .23;
+      _fire += (hasPower(Power.rapid) ? .105 : .23) * _bonusFireScale;
       final powerful = hasPower(Power.powerful), large = hasPower(Power.large);
       final double slingVx;
       if (shipVx.abs() <= 15 && steering.abs() < 0.05) {
@@ -2500,8 +3584,15 @@ class ArcadeModel {
       'continuous swarm occupancy $swarmOccupancy > $swarmOccupancyBound',
     );
     _updateBoss(dt);
+    if (consoleDecay && !ranked && combat) _consoleDecayStep(dt); // --- C2
     _updateGround(dt); // --- ground war
     if (!combat) return;
+    // --- boss-grandeur: the loom's cap.
+    if (looming) {
+      loomClock += dt;
+      if (loomClock >= loomCap && !shipAway) _beginRise();
+    }
+    if (level == 5) _updateApproach(dt); // --- carrier-v3
     for (final s in shots) {
       s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1);
       s.y += s.vy * dt;
@@ -2535,7 +3626,8 @@ class ArcadeModel {
     for (final p in pickups) {
       p.y += fallSpeed * dt;
       if ((p.x - shipX).abs() < 22 && (p.y - shipY).abs() < 23) {
-        collect(p.power);
+        final special = p.bonus; // --- bonus levels
+        special != null ? collectBonus(special) : collect(p.power);
         p.y = height + 20;
       }
     }
@@ -2688,6 +3780,11 @@ class ArcadeModel {
           d.swarmState == SwarmState.reserve) {
         continue;
       }
+      if (d.gateWait > 0) {
+        // carrier-v3: parked in its gate until its turn in the volley.
+        d.gateWait = math.max(0, d.gateWait - dt);
+        continue;
+      }
       final prevX = d.x, prevY = d.y;
       d.entranceElapsed += dt;
       d.entranceProgress =
@@ -2724,6 +3821,7 @@ class ArcadeModel {
     if (boss != null || level == 5 || forWave < 1 || forWave > wavesPerLevel) {
       return null;
     }
+    if (_bonusNoSentinels) return null; // --- bonus levels
     final eligible =
         cycle >= 1 &&
         ((forWave == wavesPerLevel &&
@@ -2745,6 +3843,8 @@ class ArcadeModel {
     SentinelForeshadow? origin,
     SwarmGate? gate,
   }) {
+    // carrier-v3: the approach's waves leave the carrier's gates.
+    if (looming && level == 5) _gateLaunch(group);
     if (!perspective || !flockArrivals) return;
     flock.launch(
       [
@@ -2777,6 +3877,11 @@ class ArcadeModel {
   /// waves ahead of it (pure presentation; null when none is due).
   SentinelForeshadow? foreshadow;
 
+  /// Where the lurking shadow stops: the ground war's fire line, or a
+  /// little nearer when no ground war is on.
+  double get _lurkFrontZ =>
+      ground.front.presence > 0 ? GroundTuning.fireZ : LurkTrack.openFrontZ;
+
   void _updateForeshadow(double dt) {
     final f = foreshadow;
     // What is due: the sentinel of this wave still waiting for its escort
@@ -2805,9 +3910,13 @@ class ArcadeModel {
           kind = after;
         }
       }
+      // No silhouette through a level's end or a transition (playtest
+      // R1): the Descent shows the new sector's first cohort only; a
+      // sentinel due later fades in once the fight is on.
       if (mode == RunMode.salvage ||
           mode == RunMode.levelClear ||
-          mode == RunMode.travel) {
+          mode == RunMode.travel ||
+          flow.active) {
         stage = null;
       }
     }
@@ -2822,11 +3931,19 @@ class ArcadeModel {
       if (f == null) return;
       f.opacity = math.max(0, f.opacity - dt / .8);
       f.clock += dt;
+      f.lurk.advance(dt, frontZ: _lurkFrontZ);
       f.place();
       if (f.opacity <= 0) foreshadow = null;
       return;
     }
-    final g = foreshadow ??= SentinelForeshadow(kind, stage);
+    // terrain-shadows: the lurking shadow's own stream (seed ^ 0x5E57),
+    // one track per sentinel.
+    final g = foreshadow ??= SentinelForeshadow(
+      kind,
+      stage,
+      lurkSeed: seed ^ 0x5E57 ^ (level * 64 + wave),
+    );
+    g.lurk.advance(dt, frontZ: _lurkFrontZ);
     g
       ..archetype = kind
       ..stage = stage
@@ -2887,7 +4004,8 @@ class ArcadeModel {
       }
       return;
     }
-    d.x = (d.homeX + arcX + (tx - d.homeX) * s).clamp(18.0, width - 18.0);
+    final x0 = d.entranceStartX ?? d.homeX; // carrier-v3: from a gate
+    d.x = (x0 + arcX + (tx - x0) * s).clamp(18.0, width - 18.0);
     d.y = d.entranceStartY + (ty - d.entranceStartY) * s;
   }
 
@@ -3526,13 +4644,42 @@ class ArcadeModel {
   void _updateBoss(double dt) {
     final b = boss;
     if (b == null) return;
+    if (!b.fightReady) {
+      // --- boss-grandeur: the Rise. It holds its station under the fog;
+      // no motion, doors, minions or fire until it is fully out.
+      if (combat) {
+        b.emerge = math.min(1.0, b.emerge + dt / Carrier.riseSeconds);
+        if (b.fightReady) {
+          b.readyAt = levelClock;
+          // carrier-v3 §5.2–§5.4: the hittable threshold, then the take-off.
+          approachD = 1;
+          final sc = carrierScript;
+          _queueGameEvent(GameEventNames.bossInRange, {
+            ..._carrierEventData,
+            'distance': 1,
+          });
+          _queueGameEvent(GameEventNames.bossTakeoff, {
+            ..._carrierEventData,
+            'minZoom': sc.camera.minZoom,
+            'altitude': sc.camera.maxAltitude,
+          });
+        }
+      }
+      b.y = Carrier.fightRow + Carrier.glideAmplitude * b.glide;
+      return;
+    }
+    final clock = levelClock - b.readyAt;
     final oldX = b.x;
-    b.motionPhase += dt * .7 * speed * b.movementRate * b.startingDirection;
+    _updateHatchChapters(b, dt); // --- carrier-hatches
+    b.motionPhase +=
+        dt * .7 * speed * b.movementRate * b.glideFactor * b.startingDirection;
     b.x = b.forecastX(0, speed);
     b.horizontalVelocity = dt > 0 ? (b.x - oldX) / dt : b.horizontalVelocity;
-    b.y = 205 + math.sin(b.motionPhase * 1.28) * (12 + b.rage * 6);
+    // --- boss-grandeur (hook b): the bounded vertical glide.
+    b.glidePhase += dt * Carrier.glideRate * b.movementRate;
+    b.y = Carrier.fightRow + Carrier.glideAmplitude * b.glide;
     b.door =
-        ((math.sin(levelClock * (1.55 + b.phase * .22)) -
+        ((math.sin(clock * (1.55 + b.phase * .22)) -
                     (cycle == 0 ? 0.0 : .1)) *
                 2)
             .clamp(0, 1);
@@ -3541,22 +4688,55 @@ class ArcadeModel {
       b.sideDoorRight = 0;
     } else {
       final sideBonus = cycle <= 1 ? 0.15 : 0.0;
-      final sideRamp = ((levelClock - 0.65) / 0.35).clamp(0.0, 1.0);
+      final sideRamp = ((clock - 0.65) / 0.35).clamp(0.0, 1.0);
       b.sideDoorLeft =
-          (((math.sin(levelClock * (1.45 + b.phase * .2) + 1.9) + sideBonus) *
+          (((math.sin(clock * (1.45 + b.phase * .2) + 1.9) + sideBonus) *
                   2)
               .clamp(0.0, 1.0) *
           sideRamp);
       b.sideDoorRight =
-          (((math.sin(levelClock * (1.45 + b.phase * .2) + 4.1) + sideBonus) *
+          (((math.sin(clock * (1.45 + b.phase * .2) + 4.1) + sideBonus) *
                   2)
               .clamp(0.0, 1.0) *
           sideRamp);
     }
+    // --- carrier-hatches §A4: the transformation holds the timers and the
+    // fire (creatures already out keep fighting).
+    if (b.chapter == CarrierChapter.transform) return;
     _flock -= dt * policy.hostileRate;
     final maxMinions = cycle == 0 ? 6 : (cycle == 1 ? 8 : 10);
-    if (_flock <= 0 && demons.length < maxMinions) {
+    // carrier-v3 §4.4, carrier-hatches §A6: the flock's hatch telegraphs
+    // and opens ahead of the timer, and a flock from a high tier leaves
+    // earlier by its longer transit, so each creature still arrives at
+    // today's moment (arrival invariance); only the origins change.
+    final l = launches ??= _launchesFor();
+    final tierY = _launchTierY(b);
+    final early = CarrierHatches.early(tierY);
+    final lead = l.timing.telegraph + l.timing.open + early;
+    if (_fightGate == null && _flock / policy.hostileRate <= lead) {
+      _fightGate = l.pick(
+        (g) => gateOnCarrier(b, g).x,
+        eligible: (g) => _launchesFrom(b, g),
+      );
+      final r = _fightGate;
+      if (r != null) l.volley(r, 0, tier: math.min(3, cycle + 1), hold: true);
+    }
+    if (_flock / policy.hostileRate <= early && demons.length < maxMinions) {
       final flockSize = math.min(3, maxMinions - demons.length);
+      final gate = _fightGate;
+      _fightGate = null;
+      final from = gate == null ? null : gateOnCarrier(b, gate.gate);
+      if (gate != null) {
+        gate.queued += flockSize;
+        l.release(gate);
+      }
+      final transit = gate == null
+          ? .55
+          : CarrierHatches.transit(gate.gate.y);
+      // §A5: a core-door flock waits in the door until it opens.
+      final hold = gate != null && gate.gate.y == CarrierHatches.core.y
+          ? _coreDoorWait(b, clock)
+          : 0.0;
       for (var i = 0; i < flockSize; i++) {
         final d =
             Demon(
@@ -3569,19 +4749,28 @@ class ArcadeModel {
               ..homeY = b.y + 70
               ..entranceProgress = 0
               ..entranceDelay = i * .06
-              ..entranceDuration = .55
-              ..entranceStartY = b.y + 36;
+              ..entranceDuration = transit
+              ..gateWait = hold
+              ..entranceStartY = from == null ? b.y + 36 : from.y
+              ..entranceStartX = from?.x;
         d.y = d.entranceStartY;
         demons.add(d);
       }
+      if (gate != null && gate.gate.y == CarrierHatches.core.y) {
+        coreLaunches++;
+        if (hold > 0) coreHolds++;
+      }
       _flock =
           math.max(2.4, 5.6 - b.phase * 0.45 - cycle * 0.25) /
-          policy.hostileRate;
+              policy.hostileRate +
+          early * policy.hostileRate;
     }
     // Fan attacks force positioning without tracking a player after launch.
-    final fanRate = (0.85 + math.min(cycle, 3) * 0.08) * policy.hostileRate;
-    if ((levelClock * fanRate).floor() !=
-        ((levelClock - dt) * fanRate).floor()) {
+    final fanRate =
+        (0.85 + math.min(cycle, 3) * 0.08) *
+        policy.hostileRate *
+        CarrierHatches.fanShares[difficulty.index]; // --- carrier-hatches
+    if ((clock * fanRate).floor() != ((clock - dt) * fanRate).floor()) {
       for (var i = -1; i <= 1; i++) {
         _hostile(
           Shot(
@@ -3609,7 +4798,11 @@ class ArcadeModel {
                   ? Power.powerful
                   : (roll < 0.90 ? Power.spread : Power.shield));
         final spawnX = 50.0 + random.nextDouble() * 260.0;
-        supplyCrates.add(SupplyCrate(spawnX, -20.0, power));
+        // --- bonus levels: a run modifier may change or withhold it.
+        final allowed = _bonusDrop(power, crate: true);
+        if (allowed != null) {
+          supplyCrates.add(SupplyCrate(spawnX, -20.0, allowed));
+        }
       }
     }
   }
@@ -3631,8 +4824,20 @@ class ArcadeModel {
         }
         continue;
       }
-      final shieldedCarrier = boss;
+      // --- carrier-hatches §A3: the hatch chapter's rows.
+      final hatchCarrier = hittableBoss;
+      if (hatchCarrier != null) syncChapter(hatchCarrier);
+      if (hatchCarrier != null &&
+          hatchCarrier.chapter == CarrierChapter.hatches) {
+        if (_hatchShot(hatchCarrier, s)) {
+          s.y = height + 20;
+          shotsHit++;
+          continue;
+        }
+      }
+      final shieldedCarrier = hittableBoss;
       if (shieldedCarrier != null &&
+          shieldedCarrier.chapter == CarrierChapter.core &&
           shieldedCarrier.shield > 0 &&
           (s.x - shieldedCarrier.x).abs() <=
               shieldedCarrier.forceFieldHalfWidth) {
@@ -3664,8 +4869,13 @@ class ArcadeModel {
           if (crate.destroyed) {
             supplyCrates.remove(crate);
             blasts.add(Blast(crate.x, crate.y, big: true));
-            pickups.add(Pickup(crate.x, crate.y, crate.power));
-            events.add('salvage');
+            pickups.add(
+              Pickup(crate.x, crate.y, crate.power, bonus: crate.bonus),
+            );
+            _bonusCrateOpened(crate); // --- bonus levels
+            // --- mission-medals: a bonus crate pops with its own sound
+            // (the 'salvage' jingle and radio meant "wave clear").
+            events.add(bonus == null ? 'salvage' : 'crateOpen');
           }
           break;
         }
@@ -3678,19 +4888,21 @@ class ArcadeModel {
           if (s.blastRadius > 0) {
             _explodeShot(s);
           } else {
-            hitDemon(d, damage: s.damage);
+            hitDemon(d, damage: s.damage, atX: s.x, atY: s.y);
           }
           hit = true;
           break;
         }
       }
-      final b = boss;
+      final b = hittableBoss;
       if (!hit &&
           b != null &&
+          b.chapter == CarrierChapter.core &&
           b.shield == 0 &&
           (s.x - b.x).abs() < 78 + (s.blastRadius > 0 ? 5 : 0) &&
           s.y < b.y + 43 + (s.blastRadius > 0 ? 5 : 0) &&
           s.y > b.y - 25 - (s.blastRadius > 0 ? 5 : 0)) {
+        _coreShotPattern(b, s); // --- carrier-hatches §A7 hints
         if (s.blastRadius > 0) {
           _explodeShot(s);
         } else {
@@ -3716,17 +4928,43 @@ class ArcadeModel {
     }
   }
 
+  /// carrier-hatches §A7: a shot meeting the hull band at the core door
+  /// on a closed door, or on the open door's trailing side (aimed where it
+  /// was), feeds the timing and lead hints.
+  void _coreShotPattern(Carrier b, Shot s) {
+    final dx = s.x - b.x;
+    if (b.door < CarrierHatches.coreOpenAt) {
+      if (dx.abs() <= 20) _closedDoorHits.add(levelClock);
+      return;
+    }
+    final window = CarrierHatches.coreWindow * b.door;
+    final v = b.horizontalVelocity;
+    if (dx.abs() > window && dx.abs() <= window + 40 && dx * v < 0) {
+      _trailing.add(levelClock);
+    }
+  }
+
   void _explodeShot(Shot shot, {bool hitCarrier = true}) {
     blasts.add(Blast(shot.x, shot.y, blastRadius: shot.blastRadius));
     for (final d in List<Demon>.of(demons)) {
       final radius = shot.blastRadius + 14 * d.scale;
       final dx = shot.x - d.x, dy = shot.y - d.y;
       if (dx * dx + dy * dy <= radius * radius) {
-        hitDemon(d, damage: shot.damage);
+        hitDemon(d, damage: shot.damage, atX: shot.x, atY: shot.y);
       }
     }
-    final b = boss;
+    final b = hittableBoss;
     if (b == null || !hitCarrier) return;
+    // --- carrier-hatches: a blast on a vulnerable hatch.
+    if (b.chapter == CarrierChapter.hatches) {
+      for (final h in b.vulnerableHatches) {
+        final dx = shot.x - (b.x + h.hatch.x), dy = shot.y - (b.y + h.hatch.y);
+        final r = shot.blastRadius + CarrierHatches.fieldRadius;
+        if (dx * dx + dy * dy <= r * r) _damageHatch(b, h, shot.damage);
+      }
+      return;
+    }
+    if (b.chapter != CarrierChapter.core) return;
     final touchesField =
         b.shield > 0 &&
         (shot.x - b.x).abs() <= b.forceFieldHalfWidth + shot.blastRadius &&
@@ -3750,10 +4988,19 @@ class ArcadeModel {
 
   /// [homing]: a homing missile's heavy hit, which can break a sentinel's
   /// dive shield like an offensive module.
-  void hitDemon(Demon d, {int damage = 1, bool homing = false}) {
+  ///
+  /// [atX], [atY]: where the hit landed (a deflect spark is drawn there).
+  void hitDemon(
+    Demon d, {
+    int damage = 1,
+    bool homing = false,
+    double? atX,
+    double? atY,
+  }) {
     if (!combat || damage <= 0 || d.entering || !demons.contains(d)) return;
     d.flash = .12;
-    if (_rushShieldHit(d, damage)) return; // --- sentinel rush shield
+    // --- sentinel rush: the berserk transformation and the rush shield.
+    if (_rushShieldHit(d, damage, homing: homing, atX: atX, atY: atY)) return;
     if (d.dive > 0 && d.diveShieldMax == 0) {
       _igniteDiveShield(d);
     }
@@ -3814,11 +5061,8 @@ class ArcadeModel {
       demons.remove(d);
       if (boss == null) _reinforcementCasualties++;
       kills++;
-      final basePoints =
-          (100 + d.kind * 75 + (d.maxHp - 1) * 50) *
-          (cycle + 1) *
-          policy.enemyPoints;
-      score += (basePoints * (wasDiving ? 1.5 : 1.0)).round();
+      final basePoints = _killBase(d);
+      score += _bonusKillPoints((basePoints * (wasDiving ? 1.5 : 1.0)).round());
       blasts.add(Blast(d.x, d.y, archetype: d.archetype));
       events.add('explosion');
       if (policy.heartDropChance > 0 &&
@@ -3832,13 +5076,11 @@ class ArcadeModel {
         );
       }
       if (kills % 8 == 0 || (d.isLarge && wasDiving)) {
-        pickups.add(
-          Pickup(
-            d.x,
-            d.y,
-            Power.values[(math.max(1, kills ~/ 8) - 1) % Power.values.length],
-          ),
+        // --- bonus levels: the rules in force may change or withhold it.
+        final power = _bonusDrop(
+          Power.values[(math.max(1, kills ~/ 8) - 1) % Power.values.length],
         );
+        if (power != null) pickups.add(Pickup(d.x, d.y, power));
       }
       _groundDropOnKill(d); // --- ground war
     } else {
@@ -3866,20 +5108,64 @@ class ArcadeModel {
     }
   }
 
+  /// A creature's kill value before any dive bonus or bonus-level scale.
+  double _killBase(Demon d) =>
+      (100 + d.kind * 75 + (d.maxHp - 1) * 50) *
+      (cycle + 1) *
+      policy.enemyPoints;
+
   /// Shield can be hit across its width. Core needs an exposed central or side hatch.
   bool hitBoss(double shotX, {int damage = 1, double blastRadius = 0}) {
-    final b = boss;
+    final b = hittableBoss;
     if (b == null || !combat || damage <= 0) return false;
+    syncChapter(b);
+    // --- carrier-hatches §A3: in the hatch chapter, player shots reach the
+    // hatches through [_hatchShot] (the collision rows), never through
+    // here: this is the direct-damage API of fixtures and review harnesses.
+    // It damages the vulnerable hatch nearest [shotX]; the last one's fall
+    // and the transformation are then skipped (their events still queue),
+    // so a fixture can go on into the core without advancing time.
+    if (b.chapter == CarrierChapter.hatches) {
+      HatchState? near;
+      for (final h in b.vulnerableHatches) {
+        if (near == null ||
+            (shotX - (b.x + h.hatch.x)).abs() <
+                (shotX - (b.x + near.hatch.x)).abs()) {
+          near = h;
+        }
+      }
+      if (near == null) return false;
+      final hit = _damageHatch(b, near, damage);
+      if (b.hatches.every((h) => h.destroyed)) _instantTransform(b);
+      return hit;
+    }
+    if (b.chapter == CarrierChapter.transform) return false;
     if (b.shield > 0) {
       final impactY = b.forceFieldSurfaceY(shotX);
+      final cellsBefore = Carrier.shieldCells(b.shield, b.shieldMax);
+      final shieldBefore = b.shield;
       b.shield = math.max(0, b.shield - damage);
       events.add('hit');
       blasts.add(Blast(shotX, impactY));
+      // carrier-v3 §10: field impacts, at most 4 per second.
+      _fieldImpacts.removeWhere((t) => t <= levelClock - 1);
+      if (_fieldImpacts.length < 4) {
+        _fieldImpacts.add(levelClock);
+        _queueGameEvent(GameEventNames.bossFieldImpact, {
+          ..._carrierEventData,
+          'region': CarrierRegion.at(shotX - b.x, impactY - b.y).name,
+          'x': shotX,
+        });
+      }
+      _bossDecayEvents(b, cellsBefore: cellsBefore, shieldBefore: shieldBefore);
       if (b.shield == 0) events.add('boss');
       return true;
     }
+    // --- carrier-hatches §A5: the core door, wider (the only opening).
     final centerHit =
-        b.door >= .60 && (shotX - b.x).abs() <= 12 * b.door + blastRadius;
+        b.door >= CarrierHatches.coreOpenAt &&
+        (shotX - b.x).abs() <=
+            CarrierHatches.coreWindow * b.door + blastRadius;
     final leftHit =
         !b.sideHatchesLocked &&
         b.sideDoorLeft >= .55 &&
@@ -3894,8 +5180,10 @@ class ArcadeModel {
       return false;
     }
     final old = b.phase;
+    final armourBefore = b.armourStep;
     b.core = math.max(0, b.core - damage);
     events.add('hit');
+    _bossDecayEvents(b, armourBefore: armourBefore, formBefore: old);
     final hitX = centerHit
         ? b.x
         : (leftHit
@@ -3910,11 +5198,15 @@ class ArcadeModel {
       boss = null;
       medals = cycle + 1;
       lives++;
-      // --- cinematic flow: only the minions that were fighting scatter.
-      final fighters = [
-        for (final d in demons)
-          if (d.swarmState != SwarmState.reserve) d,
-      ];
+      // --- cinematic flow (playtest R1): the minions that were fighting
+      // die with the carrier, where they are (the scene bursts them); none
+      // flees into the fog, so nothing is left in it after a boss fight.
+      for (final d in demons) {
+        if (d.swarmState != SwarmState.reserve &&
+            !(d.entering && d.entranceProgress <= 0)) {
+          d.hp = 0;
+        }
+      }
       demons.clear();
       shots.clear();
       pickups.clear();
@@ -3922,8 +5214,8 @@ class ArcadeModel {
       ground.clearField(); // --- ground war
       clearedLevel = level;
       _enterPhase(RunMode.victory, FlowPlan.victorySeconds);
-      _flowBegin(victory: true); // --- cinematic flow: the remnant scatters
-      _flowRout(fighters);
+      _flowBegin(victory: true); // --- cinematic flow
+      _flowRout(const []); // its minions fell with it: the fog stays empty
       events.add('victory');
       events.add('bossDefeated');
     }
@@ -3983,6 +5275,7 @@ class ArcadeModel {
       return;
     }
     lives--;
+    bonusRun.shipsLost++; // --- bonus levels
     pilot.reset(shipX); // --- demon intelligence
     skill.lifeLost();
     _lastSkill = skill.level;

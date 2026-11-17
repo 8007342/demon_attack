@@ -77,18 +77,8 @@ void main() {
           final picture = recorder.endRecording();
           final image = await picture.toImage(360, 520);
           images.add((await image.toByteData())!.buffer.asUint8List().toList());
-          if (boss.shield > 0) {
-            // The field remains outside both hull edges even when depleted.
-            for (final side in [-1, 1]) {
-              final x = (boss.x + side * 104).round();
-              final y = boss.forceFieldSurfaceY(x.toDouble()).round();
-              final pixel = (y * 360 + x) * 4;
-              expect(
-                images.last[pixel + 1],
-                greaterThan(images.last[pixel] + 20),
-              );
-            }
-          }
+          // carrier-hatches: the hull-wide field is retired; the shield is
+          // the hatches' own fields (drawn by the v2 hull's painter).
 
           final file = File('.cache/cinematics/boss-health-$stage.png');
           await file.parent.create(recursive: true);

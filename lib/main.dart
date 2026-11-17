@@ -7,6 +7,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'game/atmosphere.dart' show AtmosphereQuality;
 import 'game/model.dart';
+import 'widgets/flight_joystick.dart';
 import 'widgets/pilot_console_content.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
@@ -15,9 +16,12 @@ import 'services/audio.dart';
 import 'services/scores.dart';
 import 'services/run_storage.dart';
 import 'services/tilt_control.dart';
+import 'services/install_prompt.dart'; // --- pwa-install
 import 'services/comms_audio.dart' show commsStopAll;
 import 'ending/ending_page.dart';
 import 'widgets/medal.dart';
+import 'widgets/mission_medal.dart'; // --- mission-medals
+import 'widgets/run_record.dart'; // --- bonus-balance: the run record
 import 'widgets/heart_parts.dart';
 import 'widgets/widescreen_backdrop.dart'; // --- widescreen backdrop
 // --- squad comms
@@ -30,12 +34,20 @@ import 'widgets/interlude_card.dart'
     show TipInterludeCard; // --- cinematic flow
 import 'game/hints.dart' show tacticalHints; // --- cinematic flow: pause tips
 import 'widgets/level_toggle.dart'; // --- audio round: music / speech toggles
+import 'widgets/install_toast.dart'; // --- pwa-install
 export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
 // --- end console route
 export 'game/scene.dart' show DemonScene;
 
 // Path URLs (not the default #/hash) so the browser path picks the route:
 // /console opens the console. The Worker serves index.html for any path.
+// --- bonus levels: where a new run's seed comes from. A seeded run draws
+// its bonus plan (lib/game/bonus/bonus_plan.dart); null starts the
+// calibrated campaign with no bonus level and no run modifier, which is
+// what every test gets (test/flutter_test_config.dart).
+int? Function() arcadeRunSeed = clockRunSeed;
+int clockRunSeed() => DateTime.now().microsecondsSinceEpoch & 0x3fffffff;
+
 void main() {
   usePathUrlStrategy();
   runApp(const DemonAttackApp());
@@ -124,6 +136,7 @@ class ArcadePage extends StatefulWidget {
     this.squadComms,
     this.consoleStart, // --- console route
     this.interludeSeed, // --- fluid transitions
+    this.installPrompt, // --- pwa-install
   });
   final ScoreService? scoreService;
   final RunStorage? runStorage;
@@ -134,6 +147,10 @@ class ArcadePage extends StatefulWidget {
 
   /// --- fluid transitions: fixed interlude seed (tests); null: per run.
   final int? interludeSeed;
+
+  /// --- pwa-install: the browser's one-click install offer (tests inject a
+  /// fake); null reads web/install_bridge.js on the web, nothing elsewhere.
+  final InstallPrompt? installPrompt;
   @override
   State<ArcadePage> createState() => _ArcadePageState();
 }
@@ -227,6 +244,36 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     if (transitions.skip(model, squadComms, voice: voiceOn)) _tick();
   }
 
+  // --- bonus briefing: the urgent-mission card of a bonus level.
+  void _dismissBriefing() {
+    if (transitions.dismissBriefing(squadComms)) setState(() {});
+  }
+
+  /// The arena's top edge to the ship row's, for a card of [area] that
+  /// must end above the ship (the 360 x 520 arena is bottom-aligned).
+  static double shipRowTop(Size area) {
+    final scale = math.min(
+      area.width / ArcadeModel.width,
+      area.height / ArcadeModel.height,
+    );
+    return area.height -
+        ArcadeModel.height * scale +
+        (ArcadeModel.shipY - shipRowHalf) * scale;
+  }
+
+  /// Half the ship row's height in arena units (the ship and its modules).
+  static const shipRowHalf = 26.0;
+
+  Widget _briefingCard(double maxHeight) => BonusBriefingCard(
+    key: const ValueKey('bonus-briefing'),
+    briefing: transitions.briefing!,
+    now: squadComms.now,
+    // --- mission-medals: the tap prompt while the card holds the start.
+    holding: transitions.briefing!.holding,
+    maxHeight: maxHeight,
+    onDismiss: _dismissBriefing,
+  );
+
   // --- end fluid transitions
   bool hintArtPrecached = false;
   ScoreEntry? finalResult;
@@ -249,6 +296,14 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   final alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   final keys = <LogicalKeyboardKey>{};
   final tilt = TiltController();
+  // --- pwa-install: the title page's install toast (never during a run).
+  late final installPrompt = widget.installPrompt ?? createInstallPrompt();
+  late final installPolicy = InstallToastPolicy(storage.store);
+  void _installChanged() {
+    if (mounted) setState(() {});
+  }
+
+  // --- end pwa-install
   int? touch;
   double touchPosition = .5;
   List<void Function()> _music = const []; // --- music event hook
@@ -264,7 +319,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         savedCheckpoint = candidate.checkpoint();
       }
     }
-    scene = DemonScene(model, _tick);
+    scene = DemonScene(model, _tick)
+      // --- mission-medals: the urgent-mission card holds the level's start.
+      ..holdModel = () => transitions.briefingHolds(model, squadComms);
     // --- atmosphere: the remembered fog quality (full / reduced).
     try {
       scene.atmosphere.quality = AtmosphereQuality.parse(
@@ -282,6 +339,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       GameEvents.listen(scene.music.onGameEvent),
     ];
     scene.topScores = board;
+    installPrompt.addListener(_installChanged); // --- pwa-install
     audioCue('menu', 1, 1, 0);
     _refreshBoard();
     _attachComms(); // --- squad comms
@@ -328,6 +386,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     } // --- music event hook
     WidgetsBinding.instance.removeObserver(this);
     _detachComms(); // --- squad comms
+    installPrompt.removeListener(_installChanged); // --- pwa-install
     focus.dispose();
     scores.close();
     tilt.disable();
@@ -519,6 +578,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         difficulty: model.difficulty,
         medals: model.medals,
         activeMilliseconds: model.activeMilliseconds,
+        modifiers: model.runModifierIds, // --- bonus-balance
+        playedOn: playDate(DateTime.now()),
       );
       finalRanked = false;
       boardDifficulty = model.difficulty;
@@ -542,6 +603,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       medals: model.medals,
       activeMilliseconds: model.activeMilliseconds,
       remainingLives: model.medals == 5 ? model.lives : null,
+      modifiers: model.runModifierIds, // --- bonus-balance
+      playedOn: playDate(DateTime.now()),
     );
     boardDifficulty = model.difficulty;
     screen = 'ranking';
@@ -617,7 +680,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       showFinalResult = false;
       heartNotice = null;
       _resetComms();
-      model.start(difficulty: difficulty);
+      model.start(difficulty: difficulty, runSeed: arcadeRunSeed());
     });
     _tick();
     focus.requestFocus();
@@ -684,6 +747,14 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       _skipTransition(); // --- fluid transitions
       return KeyEventResult.handled;
     }
+    // --- bonus briefing: with nothing else to skip, the keys close the card.
+    if (event is KeyDownEvent &&
+        transitions.briefingOpen(squadComms) &&
+        model.mode != RunMode.paused &&
+        (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.enter)) {
+      _dismissBriefing();
+      return KeyEventResult.handled;
+    }
     if (event is KeyDownEvent &&
         (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.keyP)) {
       _pause();
@@ -738,6 +809,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         medals: model.medals,
         activeMilliseconds: model.activeMilliseconds,
         remainingLives: model.medals == 5 ? model.lives : null,
+        // --- bonus-balance: the run record's modifiers and play date.
+        modifiers: finalResult?.modifiers ?? model.runModifierIds,
+        playedOn: finalResult?.playedOn ?? playDate(DateTime.now()),
       );
       if (mounted) {
         setState(() {
@@ -879,6 +953,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                               director: squadComms.director,
                               now: squadComms.now,
                               layout: commsLayout,
+                              // --- bonus briefing
+                              hide: transitions.briefingHidden(squadComms),
                             ),
                           ),
                         ),
@@ -974,38 +1050,57 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   }
   // --- end widescreen backdrop
 
+  /// The landing's fixed bars: the scroll viewport stops at them, so the
+  /// hall of fame never scrolls under the top label and toggles or the
+  /// credits row (carrier-v3 tune: the board screen's overlap).
+  static const landingTopBar = 56.0, landingBottomBar = 52.0;
+
   Widget _titleScreen(BoxConstraints bounds) => Stack(
     children: [
-      Center(
-        child: SingleChildScrollView(
-          key: const ValueKey('landing-scroll'),
-          padding: const EdgeInsets.fromLTRB(24, 84, 24, 70),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 960),
-            child: bounds.maxWidth > 820
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(child: _titleHero()),
-                      const SizedBox(width: 64),
-                      Expanded(child: _landingScores()),
-                    ],
-                  )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 420),
-                        child: _titleHero(),
+      Positioned.fill(
+        top: landingTopBar,
+        bottom: landingBottomBar,
+        child: ClipRect(
+          child: Center(
+            child: SingleChildScrollView(
+              key: const ValueKey('landing-scroll'),
+              // --- pwa-install: room under the landing for the install toast.
+              // (The same places as before: the bars' heights come off.)
+              padding: EdgeInsets.fromLTRB(
+                24,
+                84 - landingTopBar,
+                24,
+                (installPolicy.shows(installPrompt) ? 122 : 70) -
+                    landingBottomBar,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 960),
+                child: bounds.maxWidth > 820
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: _titleHero()),
+                          const SizedBox(width: 64),
+                          Expanded(child: _landingScores()),
+                        ],
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 420),
+                            child: _titleHero(),
+                          ),
+                          const SizedBox(height: 36),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 380),
+                            child: _landingScores(),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 36),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 380),
-                        child: _landingScores(),
-                      ),
-                    ],
-                  ),
+              ),
+            ),
           ),
         ),
       ),
@@ -1032,6 +1127,16 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           ],
         ),
       ),
+      // --- pwa-install: one-click install, only where the browser offers it.
+      Positioned(
+        bottom: 64,
+        left: 16,
+        right: 16,
+        child: Center(
+          child: InstallToast(prompt: installPrompt, policy: installPolicy),
+        ),
+      ),
+      // --- end pwa-install
       Positioned(
         bottom: 18,
         left: 24,
@@ -1275,7 +1380,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         if (showFinalResult && finalResult?.difficulty == boardDifficulty) ...[
           const SizedBox(height: 18),
           _label('YOUR FINAL SCORE', gold, size: 11),
-          _scoreRow(-1, finalResult!),
+          const SizedBox(height: 6),
+          RunRecordCard(entry: finalResult!), // --- bonus-balance
           if (!finalRanked) ...[
             const SizedBox(height: 6),
             _unrankedTag(key: const ValueKey('result-unranked')),
@@ -1310,66 +1416,103 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     ),
   );
 
+  /// bonus-balance: a record's play date, one small line under its row (''
+  /// for an older record without one). mission-medals: its modifiers are
+  /// medals beside the regular ones, not words here.
+  String _recordNote(ScoreEntry entry) => playDateLabel(entry.playedOn) ?? '';
+
   Widget _scoreRow(int index, ScoreEntry entry) => Container(
     padding: const EdgeInsets.symmetric(vertical: 10),
     decoration: const BoxDecoration(
       border: Border(bottom: BorderSide(color: Color(0xFF1E3043))),
     ),
-    child: LayoutBuilder(
-      builder: (context, bounds) {
-        final compact = bounds.maxWidth < 320;
-        return Row(
-          children: [
-            SizedBox(
-              width: 22,
-              child: Text(
-                index < 0 ? '—' : '${index + 1}'.padLeft(2, '0'),
-                style: TextStyle(
-                  fontSize: 10,
-                  color: index == 0 ? gold : const Color(0xFF647D94),
-                ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _scoreRowLine(index, entry),
+        if (_recordNote(entry).isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 22, top: 2),
+            child: Text(
+              _recordNote(entry),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 8,
+                letterSpacing: 1,
+                color: Color(0xFF7C91A6),
               ),
             ),
-            Text(
-              entry.initials,
+          ),
+      ],
+    ),
+  );
+
+  Widget _scoreRowLine(int index, ScoreEntry entry) => LayoutBuilder(
+    builder: (context, bounds) {
+      final compact = bounds.maxWidth < 320;
+      return Row(
+        children: [
+          SizedBox(
+            width: 22,
+            child: Text(
+              index < 0 ? '—' : '${index + 1}'.padLeft(2, '0'),
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: index == 0 ? gold : Colors.white,
+                fontSize: 10,
+                color: index == 0 ? gold : const Color(0xFF647D94),
               ),
             ),
-            const SizedBox(width: 7),
-            _medals(entry.difficulty, entry.medals, size: compact ? 14 : 18),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                _playingTime(entry.activeMilliseconds),
-                style: const TextStyle(color: Color(0xFF9AAEC3), fontSize: 10),
-              ),
+          ),
+          Text(
+            entry.initials,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: index == 0 ? gold : Colors.white,
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  entry.score.toString().padLeft(6, '0'),
-                  style: const TextStyle(color: mint, fontSize: 11),
-                ),
-                if (entry.medals == 5 && entry.remainingLives != null)
-                  Text(
-                    '♥ ×${entry.remainingLives}',
-                    style: const TextStyle(
-                      color: Color(0xFFFF8C89),
-                      fontSize: 10,
-                    ),
-                  ),
-              ],
+          ),
+          const SizedBox(width: 7),
+          _medals(entry.difficulty, entry.medals, size: compact ? 14 : 18),
+          // --- mission-medals: the run's mission medals beside its medals.
+          if (entry.modifiers.isNotEmpty) ...[
+            const SizedBox(width: 4),
+            MissionMedals(
+              key: ValueKey('board-missions-$index'),
+              ids: entry.modifiers,
+              size: compact ? 16 : 20,
+              gap: 1,
             ),
           ],
-        );
-      },
-    ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              _playingTime(entry.activeMilliseconds),
+              style: const TextStyle(color: Color(0xFF9AAEC3), fontSize: 10),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                entry.score.toString().padLeft(6, '0'),
+                style: const TextStyle(color: mint, fontSize: 11),
+              ),
+              if (entry.medals == 5 && entry.remainingLives != null)
+                Text(
+                  '♥ ×${entry.remainingLives}',
+                  style: const TextStyle(
+                    color: Color(0xFFFF8C89),
+                    fontSize: 10,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      );
+    },
   );
 
   Widget _hud() => Row(
@@ -1474,11 +1617,27 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
 
   Widget _cabinet(BoxConstraints bounds) {
     // Flame is rendered once behind this transparent arena; overlays stay in logical alignment.
+    // --- mobile-top-trim: on phones and narrow windows (the comms dock
+    // layout) the HUD band is only as tall as its content (never under the
+    // 48 px touch target), and the toasts over the arena hug their text.
+    final compact = !CommsLayout.of(bounds.biggest).side;
+    final heartUp =
+        heartNotice != null &&
+        model.clock < heartNoticeUntil &&
+        model.mode != RunMode.paused;
+    final noticeTop = compact ? 2.0 : 8.0;
     return Column(
       children: [
         Container(
-          height: 94,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          key: const ValueKey('hud-band'),
+          height: compact ? null : 94,
+          constraints: compact
+              ? const BoxConstraints(minHeight: kMinInteractiveDimension)
+              : null,
+          padding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: compact ? 2 : 0,
+          ),
           decoration: const BoxDecoration(
             color: Color(0xF0080D18),
             border: Border(bottom: BorderSide(color: Color(0xFF26394C))),
@@ -1496,6 +1655,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 } else if (transitions.canSkip(model) &&
                     model.mode != RunMode.paused) {
                   _skipTransition(); // --- cinematic flow: skip to Descent
+                } else if (model.mode != RunMode.paused) {
+                  _dismissBriefing(); // --- bonus briefing
                 }
               },
               child: Stack(
@@ -1506,19 +1667,20 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       child: GameWidget(game: _arenaProxy, autofocus: false),
                     ),
                   ),
-                  if (heartNotice != null &&
-                      model.clock < heartNoticeUntil &&
-                      model.mode != RunMode.paused)
+                  if (heartUp)
                     Positioned(
-                      top: 8,
+                      top: noticeTop,
                       left: 8,
                       right: 8,
                       child: IgnorePointer(
                         child: Center(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
+                            key: const ValueKey('heart-notice'),
+                            height: compact ? _heartNoticeHeight : null,
+                            alignment: compact ? Alignment.center : null,
+                            padding: EdgeInsets.symmetric(
                               horizontal: 12,
-                              vertical: 8,
+                              vertical: compact ? 0 : 8,
                             ),
                             color: const Color(0xE8080D18),
                             child: Text(
@@ -1562,9 +1724,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       key: const ValueKey('comms-hud-stack'),
                       left: 4,
                       right: 4,
-                      top: heartNotice != null && model.clock < heartNoticeUntil
-                          ? 44
-                          : 4,
+                      top: heartUp ? noticeTop + _heartNoticeHeight + 2 : 2,
                       child: CommsAtlasScope(
                         child: CommsHudStack(
                           director: squadComms.director,
@@ -1574,7 +1734,32 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                               model.invulnerable > .4 &&
                               model.levelClock > 2.5,
                           hideTransmission: false,
+                          // --- bonus briefing: the urgent-mission card
+                          // heads the dock and ends above the ship row.
+                          hide: transitions.briefingHidden(squadComms),
+                          banner: transitions.briefingVisible(squadComms)
+                              ? _briefingCard(
+                                  shipRowTop(area.biggest) -
+                                      (heartUp
+                                          ? noticeTop + _heartNoticeHeight + 2
+                                          : 2) -
+                                      6,
+                                )
+                              : null,
                         ),
+                      ),
+                    ),
+                  // --- bonus briefing: wide screens put the card at the
+                  // top of the arena (the call tiles sit in the margins).
+                  if (CommsLayout.of(bounds.biggest).side &&
+                      model.mode != RunMode.paused &&
+                      transitions.briefingVisible(squadComms))
+                    Positioned(
+                      left: 8,
+                      right: 8,
+                      top: 8,
+                      child: CommsAtlasScope(
+                        child: _briefingCard(shipRowTop(area.biggest) - 14),
                       ),
                     ),
                   if (model.mode == RunMode.paused)
@@ -1612,6 +1797,10 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     );
   }
 
+  /// The heart-piece toast on phones: one line of 14 px text, no padding
+  /// above or below it (mobile-top-trim).
+  static const _heartNoticeHeight = 20.0;
+
   // A render-only view avoids updating the simulation twice when the full-screen sky is mounted.
   late final _ArenaView _arenaProxy = _ArenaView(scene);
   Widget _controller() => LayoutBuilder(
@@ -1632,7 +1821,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         final steerNorm = ((touchPosition - 0.5) * 2.0).clamp(-1.0, 1.0);
         model.setSteering(steerNorm);
         if (model.canPilot) {
-          model.moveBy(e.delta.dx / bounds.maxWidth * 360 * 1.3);
+          // boss-grandeur: the drag maps through the arena camera's zoom,
+          // so the ship moves the same on screen at every zoom.
+          model.moveBy(
+            scene.bossDirector.camera.deltaToArena(
+              e.delta.dx / bounds.maxWidth * 360 * 1.3,
+            ),
+          );
         }
         setState(() {});
       },
@@ -1678,6 +1873,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 collecting: model.canPilot && !model.combat,
                 tiltActive: tilt.isActive,
                 steering: model.steering,
+                joystick: flightJoystickTarget(
+                  model,
+                  boost: scene.bossDirector.flowBoost,
+                ),
+                reduceMotion: model.reducedMotion ? true : null,
               ),
             ),
           ),
@@ -1815,6 +2015,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                 gold,
                 size: 17,
               ),
+              // --- bonus-balance: the run record (medals, modifiers,
+              // date, time) under the score being saved.
+              if (finalResult != null) ...[
+                const SizedBox(height: 12),
+                RunRecordCard(entry: finalResult!),
+              ],
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1921,7 +2127,9 @@ class _ArenaView extends FlameGame {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    scene.paintArena(canvas, size);
+    // --- mobile-top-trim: the arena sits on the pilot dock; any spare
+    // height is one band at the top, under the HUD and the toasts.
+    scene.paintArena(canvas, size, alignY: 1);
   }
 }
 

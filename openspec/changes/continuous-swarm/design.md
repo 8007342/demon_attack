@@ -261,6 +261,10 @@ These are out of scope here (W5b `cinematic-flow`). This change exposes the hook
 
 ## 8. Shadows
 
+> Superseded in placement by `terrain-shadows` (design §2): every caster below now lands where its sun ray meets the
+> visible terrain and is draped over the relief as a 4 × 3 vertex mesh. On flat ground, and on the reduced tier, the
+> placement, size, softness and darkness here are unchanged.
+
 ### 8.1 Creatures
 `_swarmShadows` and `_arrivalShadows` merge into `_creatureShadows`.
 

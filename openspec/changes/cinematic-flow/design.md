@@ -52,6 +52,12 @@ class FlowDirector {
   4.0 s (+ reading). `storyReadingTime` applies only when a radio line or caption is scheduled.
 - **The route jump** (sector 5 → the next tour's sector 1) uses the same plan. The tour-escalation story becomes
   the radio slot's line (`transmissionMission.<n>`), and the caption names the new tour.
+- **Superseded in part by `transition-ascent` (R3, 2026-11-15).** The Pursuit's motion is now a monotonic `speed`
+  ramp (×8 peak inside the cloud, replacing the travel `1 + 9 sin(πp)` bump), a camera `pitch` about the horizon
+  (horizon drop 96·q, ground stretch 1 + 0.35q) and a ≤ 3° world `roll`, with fog `streaks`; the ship rises only
+  24 units (was 40) and the flat 46-unit `tilt` remains on the campaign outro only. On a revisit the radio slot is a
+  front-line call from the destination (`frontCall.<sector>`, then `frontCall`). See
+  `openspec/changes/transition-ascent/design.md` §1–§4 and §7 (deviations).
 
 ### 2.1 Continuity rules (tested on rendered frames)
 - **No black.** Every frame's mean luminance is ≥ the sector's night floor (0.06 in linear sRGB), and no frame is

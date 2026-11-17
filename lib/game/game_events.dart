@@ -235,6 +235,22 @@ abstract final class GameEventNames {
     reinforcementsArrived,
   ];
 
+  // --- dynamic-weather: a regular level's rain (lib/game/weather/), for
+  // the future music and SFX engine. Visual only, sent by the scene's rain
+  // layer through dispatchGameEvent. Data: `tier` ('drizzle' | 'rain' |
+  // 'downpour'), `intensity` (0-1), `wind` (slant), `sector`.
+
+  /// Rain begins (softly, from nothing).
+  static const rainStart = 'rainStart';
+
+  /// The rain has died away.
+  static const rainStop = 'rainStop';
+
+  /// The rain crossed into another tier (data `from`: the previous tier).
+  static const rainIntensity = 'rainIntensity';
+
+  static const weather = [rainStart, rainStop, rainIntensity];
+
   static const all = [
     groundForceSighted,
     groundForceInRange,
@@ -314,6 +330,59 @@ abstract final class GameEventNames {
     broodAdapting,
   ];
 
+  // --- bonus levels (openspec/changes/bonus-levels design §5). Each
+  // carries `variant`: the bonus level's id (the power's for bonusPickup,
+  // the modifier's for runModifier), so `bonusStart.supplyRun` wins over
+  // `bonusStart` in the line bank.
+
+  /// The run has a run modifier (once, on the run's first combat frame).
+  static const runModifier = 'runModifier';
+
+  /// A bonus level's first wave begins combat.
+  static const bonusStart = 'bonusStart';
+
+  /// A bonus level's supply crate is shot open (data `points`, `opened`).
+  static const bonusCrate = 'bonusCrate';
+
+  /// A bonus-only powerup is collected.
+  static const bonusPickup = 'bonusPickup';
+
+  /// A bonus level's last kill (data `award`, `flawless`, `crates`).
+  static const bonusCleared = 'bonusCleared';
+
+  /// bonus-briefing: a bonus level's second wave begins combat (the
+  /// squad's mid-level banter and the brood's retort).
+  static const bonusMidway = 'bonusMidway';
+
+  /// mission-medals: a bonus level's crate fell past the ship unopened
+  /// (the squad's banter; Supply Run's cue tracker queues it).
+  static const bonusCrateMissed = 'bonusCrateMissed';
+
+  // --- bonus level #2, Stormfront (specs/bonus-level-stormfront). The raw
+  // string events `stormTell` and `stormBolt` (every tell, every bolt) are
+  // forwarded under the same names with no data, for the sound and the
+  // music.
+
+  /// A lightning tell began on the unprotected ship (data `x`, `endIn`:
+  /// real seconds until the bolt; the squad's warning ends on it).
+  static const stormStrike = 'stormStrike';
+
+  /// A bolt that was drawn to the ship destroyed creatures and missed it
+  /// (data `x`, `kills`, `award`).
+  static const stormBait = 'stormBait';
+
+  static const bonus = [
+    runModifier,
+    bonusStart,
+    bonusCrate,
+    bonusPickup,
+    bonusCleared,
+    bonusMidway,
+    bonusCrateMissed,
+    stormStrike,
+    stormBait,
+  ];
+
   /// A full-size transmission: the fleet's mission briefing on travel
   /// (variant: the next sector) or a junior-pilot moment on a new wave.
   static const transmissionMission = 'transmissionMission';
@@ -390,6 +459,127 @@ abstract final class GameEventNames {
   /// A carrier form change or its field breaking (variant: phase).
   static const bossPhase = 'bossPhase';
   static const bossDefeated = 'bossDefeated';
+
+  // --- boss-grandeur (operator R8.5): the carrier's decay, one event per
+  // step, for the dynamic music engine and comms. Data: `route`, `variant`
+  // (the run's module set), plus the step's own field.
+
+  /// The carrier flies in over the ship (the boss arrival's Descent;
+  /// published by the music director).
+  static const bossOverflight = 'bossOverflight';
+
+  /// The carrier finished its loom and rises out of the fog (carrier-v3:
+  /// its wave starts at the Close).
+  static const bossRise = 'bossRise';
+
+  // --- carrier-v3 §10: the intro and the launches, for the future epic
+  // and doom-metal score. Every one carries `route`, `tour` and `set`.
+
+  /// The approach starts (step 0) and each step closer (`step`,
+  /// `distance`).
+  static const bossApproach = 'bossApproach';
+
+  // carrier-hatches §A8: the volley lifecycle on the hatches (carrier-v3's
+  // `bossGate*` names are retired, never emitted beside these).
+
+  /// A hatch's telegraph starts (`hatch`, `tier`, `side`, `kind`, `slot`).
+  static const bossHatchTelegraph = 'bossHatchTelegraph';
+
+  /// Its doors open (`hatch`, `tier`).
+  static const bossHatchOpen = 'bossHatchOpen';
+
+  /// A volley leaves (`hatch`, `count`, `tier`).
+  static const bossLaunch = 'bossLaunch';
+
+  /// Its doors close (`hatch`, `tier`).
+  static const bossHatchClose = 'bossHatchClose';
+
+  /// A hatch's own field breaks (`hatch`, `tier`, `side`).
+  static const bossHatchFieldDown = 'bossHatchFieldDown';
+
+  /// A hatch is destroyed (`hatch`, `tier`, `side`, `cause`, `left`).
+  static const bossHatchDrop = 'bossHatchDrop';
+
+  /// The vulnerable tier changes: a section of the fight's song (`tier`,
+  /// `tiers`, `depth` 0..1, `shootable`, `from`).
+  static const bossHatchTier = 'bossHatchTier';
+
+  /// The transformation (`stage`: start or end; `seconds`).
+  static const bossTransform = 'bossTransform';
+
+  /// The radio hints (`hint`): written lines until they are recorded.
+  static const bossHintHatches = 'bossHintHatches';
+  static const bossHintTiming = 'bossHintTiming';
+  static const bossHintLead = 'bossHintLead';
+
+  /// The hittable threshold, D = 1 (`distance`).
+  static const bossInRange = 'bossInRange';
+
+  /// The take-off beat (`minZoom`, `altitude`).
+  static const bossTakeoff = 'bossTakeoff';
+
+  /// The climb reaches 98 % of its altitude (`altitude`; presentation).
+  static const bossClimbPeak = 'bossClimbPeak';
+
+  /// A shot stopped by the field (`region`, `x`), at most 4 per second.
+  static const bossFieldImpact = 'bossFieldImpact';
+
+  /// A speed surge starts (`intensity`; presentation).
+  static const bossSpeedSurge = 'bossSpeedSurge';
+
+  /// The hull bursts through a cloud bank (presentation).
+  static const bossCloudPunch = 'bossCloudPunch';
+
+  /// The intro's events in their order of first appearance.
+  static const carrierIntro = [
+    bossApproach,
+    bossHatchTelegraph,
+    bossHatchOpen,
+    bossLaunch,
+    bossHatchClose,
+    bossInRange,
+    bossTakeoff,
+    bossClimbPeak,
+    bossFieldImpact,
+    bossSpeedSurge,
+    bossCloudPunch,
+  ];
+
+  // boss-carrier-wire: the names and data of the styleguide's decay
+  // vocabulary (docs/styleguide/alien-capital-ships.md §6). Every step also
+  // carries `set` (the run's set combination).
+
+  /// One hex shield cell went dark (data `cell`, `remaining` and
+  /// `cellsLeft`, 11 … 0).
+  static const bossShieldCellLost = 'bossShieldCellLost';
+
+  /// The shield fell to half (S1: the crystals flicker and dim).
+  static const bossShieldFailing = 'bossShieldFailing';
+
+  /// The force field is gone (after the last cell; S2).
+  static const bossShieldDown = 'bossShieldDown';
+
+  /// Armour plates peel off (data `slot`: the module next in the detach
+  /// order; `plate`: the armour step).
+  static const bossArmourShed = 'bossArmourShed';
+
+  /// A module tore away at a form change (data `slot`, `set`, `rank`,
+  /// `form`, `detachOrder`; S3).
+  static const bossModuleLost = 'bossModuleLost';
+
+  /// The transformation's end: the core door is exposed (carrier-hatches
+  /// §A4; it was the last form).
+  static const bossCoreExposed = 'bossCoreExposed';
+
+  /// Core 0: the hull breaks into module wrecks (S4) …
+  static const bossCollapseStart = 'bossCollapseStart';
+
+  /// … each remaining module falls (data `slot`, `rank`, `delay` s), the
+  /// carapace last …
+  static const bossWreckFalls = 'bossWreckFalls';
+
+  /// … and the victory rout that carried the fall is over.
+  static const bossCollapseEnd = 'bossCollapseEnd';
   static const defeat = 'defeat';
 
   /// Celebrations: [fleetIntact] with no player ship lost either, per
@@ -632,7 +822,8 @@ class GameEventObserver {
           final boss = model.boss;
           if (boss != null && !identical(boss, _boss)) {
             _boss = boss;
-            _sectorStart(emit);
+            // boss-grandeur: after the loom waves the sector has started.
+            if (model.wave == 1) _sectorStart(emit);
             emit(GameEventNames.bossArrival);
           } else if (boss != null) {
             emit(GameEventNames.bossPhase, variant: '${boss.phase}');
@@ -803,6 +994,9 @@ class GameEventObserver {
     _diving.removeWhere((d) => !model.demons.contains(d));
     for (final p in model.pickups) {
       if (!_seenPickups.add(p)) continue;
+      // --- bonus levels: a bonus-only powerup is not the regular power
+      // its `power` field holds (its own `bonusPickup` call speaks).
+      if (p.bonus != null) continue;
       // `hint`: the ship lacks what is falling, so the squad recommends it
       // (these calls win over flavour chatter on the radio).
       if (p.power == Power.shield) {

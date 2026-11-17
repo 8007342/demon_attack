@@ -23,7 +23,7 @@ Wrap every heavy local job, such as torch or ML inference, big image or audio ba
 
 ```bash
 G=~/.cache/tillandsias-project/bin/forge-guard
-$G run -- python -I tools/comms_pipeline.py expressive --workers 1
+$G run -- python -I tools/comms_pipeline.py radio
 $G run --need 4 --threads 6 -- cargo run --release -p terrain-gen
 ```
 

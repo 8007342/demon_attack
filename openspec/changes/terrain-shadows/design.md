@@ -1,0 +1,236 @@
+# Design: terrain-conforming shadows
+
+Builds on `continuous-swarm` design §8 (the shadow pass), `ground-terrain-interaction` (`TerrainView`, the 25-column
+screen mesh with `surfaceAt`, `yOf` and `heightAt`) and `fog-restoration` (ground fog transmittance).
+
+## 1. What exists
+- `Scene._shadowOf(Demon)` (`lib/game/scene.dart`):
+  - centre at `Perspective.groundY(n)` plus a sun offset of `h · tan 32° · 0.22`, rotated by a ±4° sun drift;
+  - three blur buckets by altitude (`k = h / 300`); alpha `0.95 · (1 − 0.4k) · groundLight`;
+  - one `saveLayer` per bucket with the ink colour filter and a `drawAtlas` of cells.
+- The ship shadow is a fixed-altitude caster (h = 40).
+- The foreshadow shadow is an effects-atlas strip at nearness 0.08–0.4, alpha ≤ 0.2.
+- `TerrainView` (`lib/game/terrain_field.dart`):
+  - keeps per-frame grids `gridY` (visible surface screen y) and `gridHeight` over `rowZ` × 25 columns;
+  - answers `surfaceAt(x, z)` with height, visible y, world slopes `slopeS` and `slopeW`, and a `hidden` flag behind a
+    nearer crest.
+- "Deformation" in the operator's words covers three things, and the projector honours all of them because it reads
+  only `TerrainView`:
+  - the per-sector relief;
+  - the lane-relief and distance envelopes;
+  - the cross-sector blend `mix` during travel.
+
+## 2. The projector (`lib/game/shadow_projector.dart`)
+A caster is `(x, z, h, footprint, kind)`, where:
+- `x` is the screen/world lateral position;
+- `z` is the ground depth under the caster, `GroundCamera.zOf(Perspective.groundY(n))` for flyers;
+- `h` is the altitude in arena units, the same channel the swarm already publishes;
+- `footprint` is the silhouette's ground size (cell plus scale).
+
+**Hit point.** The sun ray leaves the caster with ground displacement `d = (h − t) · tan θ · 0.22` along azimuth `φ`,
+where `t` is the terrain height at the landing point. Three fixed-point iterations are enough (the height field is
+smooth at the mesh resolution):
+```
+t0 = 0; p_i = (x, z) + (h − t_i)·tanθ·0.22·(cos φ, sin φ·zStretch(z)); t_{i+1} = heightAt(p_i)
+```
+- `zStretch` converts a screen-space ground offset into depth at that row, so the offset reads the same as today's.
+- When the result is flat (t = 0), the hit point equals today's centre exactly. Unit test: every shadow on a flat
+  field matches the legacy centre within 0.01 units.
+
+**Drape.** The silhouette is drawn as a 3 × 2 grid (4 × 3 vertices) on the ground plane around the hit point.
+- Each vertex is moved to its surface position: `TerrainView.yOf(vx, vz)` for y, and x unchanged.
+- The result is a sheared and stretched quad mesh. A shadow crossing a ridge bends over it, and a shadow in a valley
+  sits on the floor.
+- **Foreshortening by slope** comes from the vertices, with no extra term:
+  - a slope facing away from the sun spreads the rows (longer);
+  - a slope facing toward it compresses them.
+- **Occlusion.** A vertex whose `surfaceAt(..).hidden` is true takes the crest line's y. Any cell whose four corners
+  are all hidden is dropped. This is the same rule units use, so a shadow never shows through a hill.
+- **Softness.** `k` is now `(h − t) / 300`, the caster's height above the surface it falls on, not above the flat
+  plane. A creature low over a ridge casts a sharper shadow there, as the operator's "follow the relief" asks.
+
+**Batching.** Vertices and texture coordinates go into one `Float32List` per (image, blur bucket) and are drawn with
+`Canvas.drawVertices(Vertices.raw(...), BlendMode.srcOver, paint..shader = ImageShader(image))` inside the existing
+bucket `saveLayer`.
+- The images are the creature atlas, the effects atlas, the ship image and the boss atlas, so at most four draw calls
+  per bucket.
+- The layer cap stays three.
+- About 60 casters × 12 triangles is about 720 triangles: negligible next to the terrain mesh.
+
+**Fallback tier.** The flat placement (today's code path) is kept behind `ShadowMode.flat`. It is used:
+- on `AtmosphereQuality.reduced`;
+- when the frame-time governor already dropped the atmosphere tier;
+- in the perf test's baseline.
+
+**As built (task 1).**
+- The projector works against a small `ShadowSurface` interface (`shadowLift`, `shadowDrape`) rather than
+  `GroundRelief`; `TerrainView` implements both. `FlatShadowSurface` is today's plane, and the tests use synthetic
+  surfaces (a ridge, a mesa) through the same interface.
+- Positions are screen x and *flat-ground y* (`GroundCamera.yOf(z)`), not (x, z). An offset along flat-ground y is
+  exactly the legacy screen offset, so `zStretch` is the identity in that frame and drops out.
+- The terrain height `t` is measured in arena units, as the visible lift of the surface above flat ground (texel height
+  × `GroundCamera.texel(z)`), so that `h − t` subtracts like units. Both lookups read the cached mesh grids
+  (`gridHeight`, `gridY`), never the relief functions.
+- The ship keeps its own legacy offset direction (lateral only, `ShadowProjector.shipDir`); flyers use
+  `(cos φ, 0.25 + sin φ)`.
+- "Rows spread on the slope facing away from the sun": with the sun behind the scene, shadows fall toward the camera,
+  so that slope is the one facing the camera (the near side of a ridge). The ridge test checks exactly that.
+
+**As built (task 2).**
+- `DemonScene.shadowMode` is `ShadowMode.flat` on `AtmosphereQuality.reduced` and `draped` otherwise;
+  `shadowModeOverride` forces either (tests, review strips, the perf comparison). There is no frame-time governor in
+  the code base yet, so "the governor's low tier" is the reduced tier: a governor that drops the atmosphere to reduced
+  drops the shadows to flat with it.
+- The flat path is the legacy code verbatim (`drawAtlas` on a plane scaled by 0.42), and the legacy centre expression
+  is kept as written, so the reduced tier is byte-identical. `test/terrain_shadows_scene_test.dart` compares the pass
+  with `test/fixtures/shadow-flat-reduced.png`, rendered by the untouched pre-change pass.
+- The draped path draws one `drawVertices` per image per bucket (`shadowDrawCalls`, `shadowDrawCallsPerBucket`),
+  with a cached `ImageShader` per image (nearest sampling, as the atlas path) and vertex colours carrying each
+  shadow's alpha (`BlendMode.modulate`).
+- Softness `k = (h − t) / 300` drives the bucket, the alpha and the growth together, as the legacy `k` did, so a
+  creature low over a ridge casts a sharper, darker and slightly smaller shadow there.
+- Death ghosts keep their flat-ground point and are re-draped each frame while they fade.
+- Measured (`test/atmosphere_perf_test.dart`, 61 casters, phone size ×3): recording 0.03 ms flat, 0.10 ms draped;
+  CPU raster of the pass 64 ms flat, 68 ms draped (dominated by the blur layers, as before).
+
+## 3. Casters
+| Caster | Altitude source | Footprint | Notes |
+|---|---|---|---|
+| Ordinary creature | `Demon.altitude` (swarm patterns, dive ramp) | its current atlas cell | Unchanged alpha and buckets; only placement and drape change |
+| Diver | the dive ramp down to 0 at the ship row | cell | The "converging tell" (§8.2 of continuous-swarm) now converges *on the terrain* under the ship |
+| Sentinel (in play) | its altitude | effects-atlas shadow strip | The rush lock snap keeps targeting the ship's shadow hit point, not a flat point |
+| Lurking sentinel (§4) | the foreshadow's virtual altitude, 220 down to 120 | strip × 2.5 | bucket 2, extra blur |
+| Ship | fixed h = 40 | ship hull cell | From `FlyoverBackground.shipShadowVisible`; ground critters still duck under it |
+| Boss | `boss-grandeur`'s boss altitude (default 160) | a boss shadow cell: the hull's alpha, area-downscaled ×0.5 and inked, baked once per hull load | alpha ≤ 0.35, bucket 2. It shrinks and fades as the boss climbs |
+
+## 4. The lurking shadow
+**Track.** `SentinelForeshadow` gains a `lurk` track, a presentation-only path on the ground:
+- it starts at the far terrain under the silhouette's circling point (z ≈ 9 z0, near the fog);
+- it ends at the ground-war front's depth (`GroundTuning.frontZ`, or z ≈ 2 z0 when there is no ground war);
+- it moves at 10–16 units/s of screen travel with a slow lateral meander (amplitude 30, period 9 s);
+- it is seeded from the run seed on its own stream (`seed ^ 0x5E57`), so the simulation's draws are untouched.
+
+**Envelope.**
+- Alpha is `0.30 · rise · groundLight`, where `rise` eases in over the first 3 s of the foreshadow.
+- It is gated by ground-fog transmittance, so in thick fog it is a darkening, not a shape.
+- The footprint grows 1.0 → 1.3 as the virtual altitude falls.
+- The sun drift applies as usual.
+
+**Hand-off.** When the sentinel's entrance begins, the lurking shadow's hit point is interpolated over 0.8 s onto the
+in-play sentinel's projected shadow. Footprint and alpha are interpolated too, and the in-play shadow is suppressed
+until then, so there is exactly one sentinel shadow at all times.
+
+**Ground reaction.** Ground units and critters inside the lurking footprint use the existing duck or hesitate reaction
+(`FlyoverBackground` critter duck; ground units slow their pace × 0.7 while covered). Presentation only: fire,
+ranges and fronts are unchanged.
+
+**Reduced motion.** The track still moves (it is slow), but without meander.
+
+**As built (task 3).**
+- **Stream.** Each sentinel's track draws from `Random(seed ^ 0x5E57 ^ (level · 64 + wave))`, so two sentinels in
+  one run do not repeat the same path; the simulation's `random` is never touched (tested).
+- **Front.** There is no `GroundTuning.frontZ`; the track ends at `GroundTuning.fireZ` (the ground war's fire line,
+  y ≈ 323) when the sector has a ground front, and at 2 z0 otherwise.
+- **Size.** The footprint is `2.5 × 1.6 × n × (1 + 0.3 · progress)` of the 128 × 64 strip, where `n` is the ground's
+  nearness under the shadow. The sentinel's own shadow is `1.6 × n`, so the lurking one stays 2.5 times as broad at
+  every depth: small near the fog, broad at the front.
+- **Fog.** Alpha is `0.30 · rise · groundLight · (1 − groundFog(y))`, with `rise` the eased foreshadow opacity (which
+  itself fades in over 3 s) and `FlyoverBackground.groundFogAt` the ground's distance fog.
+- **The rising sentinel.** The legacy code gave a sentinel no altitude during its 3.2 s rise out of the fog, so it cast
+  no shadow until it arrived. Its shadow altitude now eases from the lurk's 120 to its fight altitude over the rise
+  (presentation only), and the hand-off blends the lurking shadow into it over 0.8 s (position, size and alpha; image
+  and bucket switch at the midpoint). Measured: at most 3.3 units of movement per frame through the hand-off.
+- **Hesitation.** The scene publishes the footprint as `TerrainView.lurkCover`; `GroundPose.hesitate` is 0.7 for poses
+  inside it, and the painters multiply the gait and tread animation rate of demon units and allies by it. A walker's
+  stride follows the ground it covers, which is gameplay motion, so walkers are unchanged. Critters duck under the
+  footprint with the existing ship-shadow duck.
+- **Reduced tier.** The lurking and boss shadows are drawn there too, flat and sharp. The byte-identity fixture
+  therefore covers frames without them (the legacy casters).
+- **Boss.** The shadow cell is the class's superstructure (form 0) and bow (frame 0), drawn at one pixel per arena
+  unit with medium filtering and the ink filter, and baked with `toImageSync` once per (image, class). The ground
+  point is under the carrier's flight-sheet nearness (`Perspective.nearnessAtY(b.y)`). Alpha is
+  `0.35 · 0.85 · min(1, 160 / h)` and the scale is `0.9 · √(160 / h)` (clamped to 0.4–1.2). It fades in with the arrival
+  descent. `DemonScene.bossShadowAltitude` (default 160) is the hook for `boss-grandeur`.
+
+## 5. Determinism and tests
+- **Pure projector tests** on synthetic `GroundRelief` fields:
+  - flat equivalence;
+  - a 30-unit ridge: the shadow centre lies on the ridge, and the drape rows spread on the far slope;
+  - crest occlusion: every cell is hidden behind a nearer mesa;
+  - morph: across `mix` 0 → 1 the hit point moves continuously, with no jump above 2 units per 1/60 s.
+- **Scene tests:**
+  - the layer count is still ≤ 3 and the draw count ≤ 4 per bucket;
+  - the reduced tier is byte-identical to today's flat output on a fixed frame.
+- **Review strips** (`test/terrain_shadows_review_test.dart` writes `art/contact/terrain-shadows-*.png`):
+  - Hollow towers and Ringfall mesas with a swarm overhead;
+  - a diver converging over a ridge;
+  - the lurking shadow at 0 / 25 / 50 / 75 / 100 % of its track;
+  - the boss shadow at two altitudes;
+  - 360 × 780 and 1280 × 720.
+
+**As built (task 4).**
+- The lurking shadow's peak alpha is 0.5, not 0.30 (`DemonScene.lurkAlpha`). At 0.30 the review strips showed nothing
+  on the dark sector grounds, the same finding that raised the swarm shadows to 0.95. The widest blur keeps it soft.
+- The review test writes, with `--dart-define=TERRAIN_SHADOWS_CONTACT=true`:
+  - `art/contact/terrain-shadows-relief.png`: Hollow and Ringfall, alternating flat and draped columns;
+  - `-morph.png`: Ringfall blending into Ember;
+  - `-diver.png`;
+  - `-lurk.png`: the track at 0 / 25 / 50 / 75 / 100 %;
+  - `-lurk-handoff.png`;
+  - `-boss.png`: altitudes 160 / 240 / 320;
+  - `-relief-wide.png`, `-lurk-wide.png` and `-boss-wide.png` at 1280 × 720.
+- Every sheet has two rows: the real frame, then the shadow pass alone over the terrain mesh on grey. On the dark
+  grounds the shadows are subtle by design, so the second row is what shows the relief interaction. The relief and
+  morph sheets also pose a row of far casters over the relief band in that second row.
+
+**Lurk visibility (follow-up after the first merge).** In real frames the ink shadow at 0.5 was still invisible on
+the dark grounds, for two reasons:
+- darkening already-dark ground by half changes little;
+- the depth fog banks are painted after the shadow pass and veil the far ground the lurk crosses.
+
+The lurk is now drawn as an occluder of the ground's light, outside the blur layers:
+- **Mask.** The sentinel strip's frames are baked once into soft white masks (blur σ 3.2 × 2.4 source pixels, padded
+  12), so the lurk is soft without a blur layer, and the layer cap and the per-bucket draw counts are unchanged.
+- **Two draws on the draped mesh.** A `BlendMode.saturation` draw with grey at 0.6 × strength desaturates the
+  ground under it. A `BlendMode.multiply` draw toward a cool tint (`#323C64`) at strength `a` follows. The result is
+  `ground × (1 − a·(1 − tint))`: lit slopes, crest rims and the ground fog's glow all dim and turn cool, and the
+  texture stays visible, so it is never a black blob.
+- **The fog above it.** After the last depth fog bank, the multiply is repeated at 0.65 × strength
+  (`DemonScene.lurkFogPass`), so the banks drawn over the far ground dim over it too: the great shape blocks their
+  light.
+- **Strength.** `a = 0.9 · rise · (0.7 + 0.3 · (1 − groundFog))`, where `rise` reaches full 1.5 s after the
+  silhouette appears (it was 3 s). The ground fog only softens it now, and `groundLight` no longer scales it.
+- **Size.** It never shrinks below a ground nearness of 0.2, so it is a broad patch from the moment it appears near
+  the fog (about 100 units wide), not a sliver.
+- **Hand-off.** One shape glides and contracts as before. Its occluder fades out (`1 − k`) while the sentinel's ink
+  shadow fades in (`k`) at the same position and size.
+
+Measured in real phone frames (`test/lurk_visibility_review_test.dart`: core of the footprint, mean luma with vs
+without):
+
+| Time after appearing | Hollow | Ember | Krybor | Ringfall |
+|---|---|---|---|---|
+| 1 s | 27 % | 22 % | 29 % | 23 % |
+| 1.5 s | 35 % | 37 % | 41 % | 38 % |
+| 2–10 s | 46–52 % | 41–59 % | 39–42 % | 45–61 % |
+
+Single frames dip (7–19 %) where creatures fly over the core or a nearer crest hides it. The test asserts that the
+per-sector mean from 1.5 s on is above 30 %. Sheet: `art/contact/terrain-shadows-lurk-visibility.png`, one row per
+sector at 0.5 / 1 / 1.5 / 2 / 4 / 7 / 10 s, plus the last frame without the lurk (grey tick).
+
+Not done: a cool rim where the edge crosses lit relief, and ground units' lights or eyes reacting. The multiply
+already cools and dims the lit relief under it. Units under it hesitate (gait × 0.7), and critters duck.
+
+## 6. Risks
+- **Mesh cost.** `yOf` interpolates the cached grid, so there is no relief evaluation per vertex. Twelve vertex
+  lookups per caster are cheap. Measured in the perf test.
+- **Shimmer.** Vertices snap to the mesh as the camera scrolls. Vertex y is smoothed with the same sub-row
+  interpolation `yOf` already uses. If needed, the drape is quantised to whole pixels after the warp, never before.
+- **Readability.** Shadows on bright slopes get darker. The existing `groundLight` factor and the 0.9 alpha cap still
+  apply, and bullets are never dimmed.
+
+## 7. Decisions taken on the operator's behalf
+- The drape is 3 × 2 cells, not per-pixel. It is enough to bend over a ridge at sprite scale and costs nothing.
+- The lurking shadow is presentation only. It never telegraphs a gameplay event the player must react to (the rush
+  keeps its own tell), so it can be atmospheric without fairness rules.
+- The boss shadow ships here (it was missing). Its altitude coupling is owned by `boss-grandeur`.
