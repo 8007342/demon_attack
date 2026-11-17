@@ -279,8 +279,9 @@ func cmdMock(a []string) {
 	r := readRig(rigDir, hull)
 	root := repoRoot()
 	bg := load(filepath.Join(root, "assets/images/sector-1.webp"))
-	parts := load(filepath.Join(root, "assets/images/ship-parts.png"))
-	ship := image.NewNRGBA(image.Rect(0, 0, 96, 96))
+	// The shipped ship: ship-weapons.png's hull cell (64 px for 48 units).
+	parts := load(filepath.Join(root, "assets/images/ship-weapons.png"))
+	ship := image.NewNRGBA(image.Rect(0, 0, 64, 64))
 	draw.Draw(ship, ship.Bounds(), parts, image.Point{}, draw.Src)
 	type panel struct {
 		z      float64
@@ -357,7 +358,7 @@ func cmdMock(a []string) {
 		}
 		// the player ship at the ship row (48 units, drawn at Z)
 		sx, sy := S(180+float64(i-1)*40, 477)
-		blit(ph, ship, int(sx-24*p.z*dpr), int(sy-24*p.z*dpr), p.z*dpr/2)
+		blit(ph, ship, int(sx-24*p.z*dpr), int(sy-24*p.z*dpr), p.z*dpr*48/64)
 		// creature size markers (34 CSS px floor) along the swarm band
 		for c := 0; c < 5; c++ {
 			cx, cy := S(70+float64(c)*55, 330+float64(c%2)*30)
