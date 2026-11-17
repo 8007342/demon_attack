@@ -139,6 +139,11 @@ branches each added lines, keep both `lines.json` blocks, rerun the stage, and u
 
 ## 5. Asset pipelines
 
+- **One format per asset; no duplicates.** (operator, 2026-11-17: "No fallback format, this project is already asset
+  heavy, no need to duplicate assets. Just keep the latest, unless the older one is signifficantly smaller in size.")
+  Ship each asset in a single, current format, with no fallback copies (e.g. no AAC beside Opus) and no committed
+  lossless masters. When a newer render or format replaces an asset, delete the old one, unless the older format is
+  significantly smaller. The recipe (workflow, seed, pick) is the record.
 - **Durability:** host resets wipe `~/.cache` and everything outside the repo. Commit the picked raw renders (e.g.
   `art/sprites/sources/…-selected/`) and the rebuild recipe (family JSON, seeds, commands). *Why:* re-rendering the
   same seeds is **not** byte-identical (GPU nondeterminism); a reset on 2026-11-15 lost pilot raws and venvs.

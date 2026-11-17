@@ -173,7 +173,7 @@ depends on #1103's libraries (contents unverified, R§2.3).
 - Each section is mastered to −19 LUFS integrated with true peak ≤ −1.5 dBTP by a fixed (linear) gain, so sections
   of one song match in level; the engine's gains, Music toggle and safety limiter stay as today
   (`plan/audio-backend.md`).
-- Ogg Opus decodes on Safari only from 18.4 (R§3 W3). Fallback for older iPhones: the operator's call (needs N5).
+- Ogg Opus decodes on Safari only from 18.4 (R§3 W3). No fallback format (operator, 2026-11-17: "No fallback format, this project is already asset heavy, no need to duplicate assets. Just keep the latest, unless the older one is signifficantly smaller in size."): older iPhones get the MIDI fallback.
 
 ### 5.3 Loading
 
@@ -247,7 +247,7 @@ audio latents as a seam repair; P6 the coda and ukulele sketch.
 | N2 | tillandsias#1103: its timeline; whether its pack exposes ACE's masked tasks (repaint, lego, extract) or only the 16 generic + 6 core audio nodes; the instrument list of its SFZ libraries (is there a ukulele?) | coordinator / host | §7, tasks 5.4, 6.x |
 | N3 | The tray app (56.11.15.5) is older than the enclave images (56.11.16.6), so `audio.detect_glitches` and `audio.transform` refuse to run; update the tray app (not `--force-downgrade`) | operator | the host-side seam check (the Go checker covers it meanwhile) |
 | N4 | Licence register: upstream ACE-Step 1.5 code and weights are MIT; the studio's pins list the Comfy-Org repack as apache-2.0. Both permissive; the register should name MIT upstream | coordinator | nothing |
-| N5 | Ogg Opus decodes on Safari only from 18.4: keep an AAC fallback for older iPhones, or accept MIDI fallback there (`battle-metal-radio-rework` said AAC is not required) | operator | task 4.1 |
+| N5 | **Decided 2026-11-17:** no AAC fallback; one format per asset. Safari before 18.4 plays the MIDI fallback | operator | done |
 | N6 | Ownership of `web/audio/demon-audio.js`, `lib/game/music_director.dart` and `main.dart`'s music hook while `battle-metal-radio-rework` and `voice-stack` are open | coordinator | tasks 3–4 |
 | N7 | GPU budget for production: about 5 carrier songs × 8 sections × 4 takes and 4 world songs × 11 files × 4 takes, roughly 340 takes at 6–25 s each, under an hour of GPU in one-at-a-time jobs | coordinator | task 5 |
-| N8 | A durable home for lossless picks (WAV, about 1 MB per second of stereo), if masters are wanted beyond the committed Opus; `~/.cache` is wiped on reset | operator | nothing now (recipes are committed) |
+| N8 | **Decided 2026-11-17:** no committed lossless masters; the committed Opus plus the recipe (workflow, seed, pick) is the record. A re-render replaces a pick | operator | done |
