@@ -309,8 +309,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   double touchPosition = .5;
   List<void Function()> _music = const []; // --- music event hook
   // --- adaptive-soundtrack: the MIDI-first score's director. Every scene cue
-  // goes through it; where it has no score (or the score is off) the
-  // recorded cue plays, and the two hand over on each other's bar lines.
+  // goes through it: the score is the game's only music (the overture, every
+  // sector and carrier, the bridges between them, the defeat and the coda).
   late final songs = SongDirector(
     waveShare: () {
       final waves = model.wavesPerLevel;
@@ -324,13 +324,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     int cycle, {
     String? scoreMode,
   }) {
-    final handled = songs.cue(
-      scoreMode ?? mode,
-      level: level,
-      phase: phase,
-      cycle: cycle,
-    );
-    if (!handled) audioCue(mode, level, phase, cycle);
+    songs.cue(scoreMode ?? mode, level: level, phase: phase, cycle: cycle);
   }
 
   // --- end adaptive-soundtrack
@@ -497,7 +491,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           }
         case 'completed':
           _finishRun(failed: false);
-          // The last carrier's score hands over to the recorded finale.
+          // The last carrier's collapse and victory run on into the coda.
           _musicCue(
             'victory',
             model.level,

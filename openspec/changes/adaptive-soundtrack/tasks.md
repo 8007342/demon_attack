@@ -40,7 +40,7 @@
 - [ ] 5.2 World songs: Krybor, Ringfall, Ember Moon, The Hollow (arrival, A–D × v1/v2, clear), the Stormfront section
 - [ ] 5.3 Bridges (`k→r`, `r→e`, `e→h`, `h→c`, `c→k`), the overture, the defeat song
 - [ ] 5.4 The coda: finale, worldized chain, ukulele theme at 95 BPM (text-to-music sketch now; sampled after #1103)
-- [ ] 5.5 Retire the old `l<n>-t<k>` cues from the manifest once every song is in
+- [x] 5.5 Retire the old `l<n>-t<k>` cues from the manifest once every song is in (done by 9.8: the score covers every song, design §12.8.3)
 
 ## 6. After tillandsias#1103
 - [ ] 6.1 Re-render the approved recipes with XL SFT and A/B them against the turbo picks
@@ -61,7 +61,7 @@
 - [ ] 8.11 Score generator in Lua driven by the song map (sections, masks, variants as masks, stingers in scale degrees), reading the motifs' JSON export; the carrier song `c1` first, then the four world songs
 - [ ] 8.12 `demon-audio.js` sampler: SMF type 1 with track names, zones and `playbackRate`, per-track gains and masks on bar lines, the guitar, bass, drum and pad buses, the 48/32 voice cap with stealing, progressive bank loading with the oscillator per note until decoded; `state` diagnostics
 - [ ] 8.13 `test-worker/music.test.mjs`: score files parse, every section is whole bars, masks reference existing tracks, `bank.json` zones cover every track's range
-- [ ] 8.14 Retire each `web/audio/midi/` cue and any recorded full mix once its score section is approved (no duplicates, design §11.2)
+- [x] 8.14 Retire each `web/audio/midi/` cue and any recorded full mix once its score section is approved (no duplicates, design §11.2): all 38 MIDI cues and every recorded cue retired (design §12.8.3)
 
 ## 9. Score runtime in the live game (`work/score-runtime`, design §12)
 - [x] 9.1 Song map `art/music/soundtrack/song-map.json` for songs `k` (Krybor) and `c1` (the carrier): sections, kinds, grids, keys, tier masks, v2/power/fleet layers, stingers in scale degrees, the accent map
@@ -71,8 +71,8 @@
 - [x] 9.5 Tests: `test/song_director_test.dart`, `test-worker/score.test.mjs` (the score files, the graph on a mocked audio clock, hand-overs, masks, stingers, cap)
 - [x] 9.6 Listening aid: the SCORE · LISTEN panel on `/console` (scripted carrier fight and sector song, step buttons, stingers, SCORE/RECORDED A/B)
 - [ ] 9.7 Operator listening in the live game (N1, N13): the combining, the voices and the mix balance; tune `makeVoice` levels and the buses from the verdict
-- [ ] 9.8 Lead decision (design §12.6): delete `art/music/soundtrack/pilot/c1-*.opus` once `c1` is approved; retire the recorded `l1-*`/`l5-*` cues when the A/B is no longer needed; remove the unused `.m4a` twins in `web/audio/music/` (done 2026-11-17: no fallback format, operator; `work/one-format-audio`)
-- [ ] 9.9 Score songs for sectors 2-4 (Ringfall, Ember Moon, The Hollow) and tours 2-5's carriers in the same generator; bridges `k→r`, `h→c`
+- [x] 9.8 Lead decision (design §12.6, §12.8.3): the operator approved the preview; deleted `art/music/soundtrack/pilot/c1-*.opus` (7 files, 1.36 MB), every recorded cue in `web/audio/music/` and its manifest (54 files, 6.34 MB; the `.m4a` twins went with `work/one-format-audio`) and `web/audio/midi/` (38 files, 68 KB); removed `demonAudio.cue`, the SCORE/RECORDED switch and `?score=off`; the review studio's music tab lists the score
+- [x] 9.9 Score songs for sectors 2-4 (Ringfall, Ember Moon, The Hollow) and tours 2-5's carriers in the same generator; bridges `k→r`, `h→c` (design §12.8): `songs/sector.lua` (the three worlds and every world's Stormfront `storm`), `songs/carrier_tours.lua` (tours 2-5, every hatch tier native, `c5`'s finale and worldized bridge), `songs/bridges.lua` (`menu-k`, `k-r`, `r-e`, `e-h`, `h-c`, `c-k`), the overture, the defeat and the coda with its ukulele track; the player's cross-song hand-over, `then`, `now` moves, the worldized chain, per-song loading; SongDirector's travel bridges, bonus levels, scenes and the ending; tests (a five-route campaign trace on bar lines, the size totals); the listening panel's FULL RUN tour
 
 ## 7. Close
 - [ ] 7.1 Test gates (CLAUDE.md §2) on the runtime tasks; `openspec validate adaptive-soundtrack --strict`

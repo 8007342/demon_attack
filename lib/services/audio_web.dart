@@ -3,13 +3,6 @@ import 'dart:js_interop_unsafe';
 
 @JS('demonAudio.unlock')
 external void _unlock();
-@JS('demonAudio.cue')
-external void _cue(
-  JSString mode,
-  JSNumber level,
-  JSNumber phase,
-  JSNumber cycle,
-);
 @JS('demonAudio.sfx')
 external void _sfx(JSString name);
 @JS('demonAudio.intensity')
@@ -31,8 +24,6 @@ external void _pause();
 @JS('demonAudio.resume')
 external void _resume();
 void audioUnlock() => _unlock();
-void audioCue(String mode, int level, int phase, int cycle) =>
-    _cue(mode.toJS, level.toJS, phase.toJS, cycle.toJS);
 void audioSfx(String name) => _sfx(name.toJS);
 void audioMute(bool muted) => _mute(muted.toJS);
 void audioPause() => _pause();
@@ -65,13 +56,9 @@ external JSNumber? _song(JSAny? move);
 external JSNumber? get _time;
 @JS('demonAudio.scorePosition')
 external JSObject? get _scorePosition;
-@JS('demonAudio.scoreEnabled')
-external JSBoolean? _scoreEnabled(JSBoolean on);
-@JS('demonAudio.scoreOn')
-external JSBoolean? get _scoreOn;
 
 /// Sends a section or mask move; returns the time it lands on (audio clock),
-/// -1 while the score or the audio context is not ready, -2 when it is off.
+/// -1 while the score or the audio context is not ready, -2 when it failed.
 double audioSong(Map<String, Object?> move) {
   try {
     return _song(move.jsify())?.toDartDouble ?? -2;
@@ -106,22 +93,5 @@ double audioTime() {
     );
   } catch (_) {
     return null;
-  }
-}
-
-/// Turns the score on or off (remembered per device); returns the new state.
-bool audioScoreEnabled(bool on) {
-  try {
-    return _scoreEnabled(on.toJS)?.toDart ?? false;
-  } catch (_) {
-    return false;
-  }
-}
-
-bool audioScoreOn() {
-  try {
-    return _scoreOn?.toDart ?? false;
-  } catch (_) {
-    return false;
   }
 }

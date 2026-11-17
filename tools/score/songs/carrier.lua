@@ -3,7 +3,10 @@
 -- the campaign theme (degrees 1-3-5-4). One arrangement for the whole fight graph of design §4: arrival, approach,
 -- the hatch tiers H1 and H2, the transformation bridge, the core, the collapse and the F major victory. The riff is
 -- chromatic by design (song-map `chromatic`), so the out-of-scale gate only reports it.
+--
+-- Tours 2-5 (spec.tour > 1) are songs/carrier_tours.lua: the same band and motifs, escalating.
 return function(A, spec, seed)
+  if (spec.tour or 1) > 1 then return require('songs.carrier_tours')(A, spec, seed) end
   local key = A.key(spec.key)
   local P = A.pitch
 
