@@ -213,6 +213,10 @@ class SongDirector {
         return _scene('ending', mode);
       case 'ending':
         return _ending();
+      // --- credits-page: the title's CREDITS play their own slow song from
+      // the next bar line of the title music; closing them cues 'menu'.
+      case 'credits':
+        return _scene('credits', mode);
       default:
         return false;
     }

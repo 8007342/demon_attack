@@ -65,7 +65,7 @@
     { "level": 5, "cycle": 3, "song": "c4" },
     { "level": 5, "cycle": 4, "song": "c5" }
   ],
-  "scenes": { "menu": "menu:overture", "gameover": "defeat:cackle", "ending": "coda:ukulele" },
+  "scenes": { "menu": "menu:overture", "gameover": "defeat:cackle", "ending": "coda:ukulele", "credits": "credits:dawn" },
   "bridges": {
     "comment": "Which bridge song plays between two songs (`from>to`; `c` is any carrier). It plays at the source song's tempo from the end of the source's written tail (the clear or the victory) and hands over to the destination's arrival on its last bar line. Pivots from art/music/campaign.json `bridges` and design §3.1.",
     "menu>k": "menu-k", "k>r": "k-r", "r>e": "r-e", "e>h": "e-h", "h>c": "h-c", "c>k": "c-k"
@@ -336,6 +336,18 @@
       "sections": {
         "ukulele": { "kind": "tail", "bars": 8, "next": "reprise", "mask": "all", "character": "the campaign theme on ukulele at half the carrier tempo, island strum (oscillator voice until a sampled ukulele)" },
         "reprise": { "kind": "loop", "bars": 8, "mask": "all", "character": "the warm credits reprise: ukulele, strings, soft band, the theme on clean guitar and bells" }
+      }
+    },
+    "credits": {
+      "name": "Credits",
+      "form": "credits",
+      "key": "G major",
+      "bpm": 72,
+      "barSamples": 160000,
+      "motifs": "art/music/campaign.json (theme: the coda's line, slow), the overture's E minor as G major's relative minor (credits-page design §3)",
+      "sections": {
+        "dawn": { "kind": "tail", "bars": 4, "next": "drift", "mask": "all", "character": "pads only, the theme's first notes on bells, the bass from bar 3; it lands on D and opens into the drift" },
+        "drift": { "kind": "loop", "bars": 16, "mask": "all", "character": "the credits' reading loop: slow clean arpeggios, the theme on bells, then an octave lower on strings with a soft choir and brushed time" }
       }
     },
     "defeat": {

@@ -80,6 +80,7 @@
  ],
  "ppq": 480,
  "scenes": {
+  "credits": "credits:dawn",
   "ending": "coda:ukulele",
   "gameover": "defeat:cackle",
   "menu": "menu:overture"
@@ -742,6 +743,38 @@
     }
    },
    "tonic": 5
+  },
+  "credits": {
+   "barSamples": 160000,
+   "bpm": 72,
+   "form": "credits",
+   "key": "G major",
+   "mode": "major",
+   "name": "Credits",
+   "sections": {
+    "dawn": {
+     "bars": 4,
+     "bytes": 898,
+     "file": "credits/dawn.mid",
+     "hold": 0,
+     "kind": "tail",
+     "mask": "all",
+     "next": "drift",
+     "sha256": "bcfc3d9d33a628f93f6568e833706b9b1695fcbbeb4db2ac4bd8605595800be2",
+     "tracks": ["bass","clean","organ","strings","choir","bells"]
+    },
+    "drift": {
+     "bars": 16,
+     "bytes": 3179,
+     "file": "credits/drift.mid",
+     "hold": 0,
+     "kind": "loop",
+     "mask": "all",
+     "sha256": "93f25f92cc2d0c828d6f144beee681afe32180737d489dd7bfcfa536f5f464f0",
+     "tracks": ["drums","bass","clean","organ","strings","choir","bells"]
+    }
+   },
+   "tonic": 7
   },
   "defeat": {
    "barSamples": 96000,
