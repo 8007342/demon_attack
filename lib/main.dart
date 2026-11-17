@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'game/atmosphere.dart' show AtmosphereQuality;
+import 'game/bonus/challenge_badge.dart'; // --- bonus challenges
 import 'game/model.dart';
 import 'widgets/flight_joystick.dart';
 import 'widgets/pilot_console_content.dart';
@@ -471,6 +472,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         case 'extraLife':
           heartNotice = 'HEART ASSEMBLED · +1UP';
           heartNoticeUntil = model.clock + 1.6;
+          audioSfx('extraLife');
+        // --- bonus challenges: the 1UP's fanfare (the HUD pip bursts).
+        case 'bonusOneUp':
           audioSfx('extraLife');
         case 'checkpoint':
           // A console run never replaces the player's saved run.
@@ -1618,6 +1622,20 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  // --- bonus challenges: the level's 1UP pip.
+                  if (model.bonusChallenge case final c?) ...[
+                    const SizedBox(width: 7),
+                    ChallengeBadge(
+                      key: const ValueKey('hud-challenge'),
+                      challenge: c.def,
+                      status: c.status,
+                      age: c.changedAt == null
+                          ? null
+                          : model.clock - c.changedAt!,
+                      time: model.clock,
+                      height: 16,
+                    ),
+                  ],
                   if (model.difficulty != Difficulty.hard) ...[
                     const SizedBox(width: 7),
                     HeartInventory(
@@ -1768,7 +1786,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           hideTransmission: false,
                           // --- bonus briefing: the urgent-mission card
                           // heads the dock and ends above the ship row.
-                          hide: transitions.briefingHidden(squadComms),
+                          // --- portrait-comms-lanes: and the transition
+                          // chatter's lines show over the clouds instead.
+                          hide: {
+                            ...transitions.briefingHidden(squadComms),
+                            ...transitions.chatterHidden(squadComms),
+                          },
                           banner: transitions.briefingVisible(squadComms)
                               ? _briefingCard(
                                   shipRowTop(area.biggest) -

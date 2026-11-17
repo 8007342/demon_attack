@@ -1838,6 +1838,8 @@ class ArcadeModel {
     'heartSlots': List<int>.of(heartSlots),
     'activeMilliseconds': activeMilliseconds,
     if (bonusRun.seed != null) 'runSeed': bonusRun.seed, // --- bonus levels
+    // --- bonus challenges: the levels whose 1UP this run won.
+    if (bonusRun.oneUps.isNotEmpty) 'bonusOneUps': [...bonusRun.oneUps],
   };
 
   /// Restores a fresh wave, validating before changing this model.
@@ -1957,6 +1959,7 @@ class ArcadeModel {
     loomClock = 0;
     boss = _bossWave ? _newCarrier() : null;
     _bonusStartRun(restoredSeed); // --- bonus levels
+    _bonusRestoreOneUps(data['bonusOneUps']); // --- bonus challenges
     _bonusBeginLevel();
     _windBeginLevel(); // --- crosswind
     _groundBeginLevel(); // --- ground war
@@ -5393,10 +5396,12 @@ class ArcadeModel {
       powerTimers.remove(Power.shield);
       invulnerable = 1;
       events.add('hit');
+      _bonusShipHit(lost: false); // --- bonus challenges
       return;
     }
     lives--;
     bonusRun.shipsLost++; // --- bonus levels
+    _bonusShipHit(lost: true); // --- bonus challenges
     pilot.reset(shipX); // --- demon intelligence
     skill.lifeLost();
     _lastSkill = skill.level;

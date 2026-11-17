@@ -170,7 +170,7 @@ void main() {
   group('one radio line per level', () {
     for (final level in bonusLevels) {
       test('${level.id}: exactly one line, one sentence, its own words', () {
-        final spec = commsHumanTriggers['bonusCall.${level.id}'];
+        final spec = commsHumanTriggers[_callTrigger(level)];
         expect(spec, isNotNull);
         expect(spec!.lines, hasLength(1));
         final line = spec.lines.single;
@@ -217,7 +217,7 @@ void main() {
             if (m.scripted) m,
         ];
         expect(script, hasLength(1), reason: level.id);
-        expect(script.single.line.id, 'bonusCall.${level.id}.h0');
+        expect(script.single.line.id, '${_callTrigger(level)}.h0');
         // While the card is up the squad is hushed: nothing else starts.
         expect([
           for (final m in started)
@@ -420,3 +420,9 @@ void main() {
     });
   });
 }
+
+/// bonus-challenges: the card's one line is the level's challenge call
+/// when it declares a challenge, else its `bonusCall`.
+String _callTrigger(BonusLevelDef level) => level.challenge != null
+    ? 'bonusChallenge.${level.id}'
+    : 'bonusCall.${level.id}';

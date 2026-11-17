@@ -136,6 +136,33 @@ on the audio studio (tillandsias#1103).
 | `bossHintLead.h0` | human | wisp | urgent | Fire ahead of its position! | (text card) |
 | `bonusCall.supplyRun.h0` | human | pip | excited | Presents from the sky, so pop 'em open and grab the goodies! | (text card) |
 | `bonusCall.stormfront.h0` | human | sunny | teasing | Park under the brood, then scoot, and let the thunder zap them! | (text card) |
+| `bonusChallenge.supplyRun.h0` | human | pip | excited | Don't let a single prize hit the ground, and the fleet throws in a 1UP! | (text card) |
+| `bonusChallenge.stormfront.h0` | human | sunny | teasing | Don't let one bolt tickle you, and there's a shiny 1UP in it! | (text card) |
+| `bonusChallengeFailed.supplyRun.h0` | human | rook | teasing | Dropped one! No 1UP, but every prize still counts. | (text card) |
+| `bonusChallengeFailed.supplyRun.h1` | human | sparrow | warm | Butterfingers! Keep popping, the points are still good. | (text card) |
+| `bonusChallengeFailed.supplyRun.h2` | human | kestrel | calm | That one got away. Forget the bonus ship and keep catching. | (text card) |
+| `bonusChallengeFailed.supplyRun.d0` | demon | skritch | excited | [cackle] Dropped it! No spare ship for you! | (text card) |
+| `bonusChallengeFailed.supplyRun.d1` | demon | nibb | excited | [cackle] Crunchy prize, my prize! | (text card) |
+| `bonusChallengeFailed.stormfront.h0` | human | wisp | calm | Zapped! The 1UP's gone, but the storm still works for us. | (text card) |
+| `bonusChallengeFailed.stormfront.h1` | human | anvil | calm | Took a jolt. No bonus ship, so just fly the storm. | (text card) |
+| `bonusChallengeFailed.stormfront.h2` | human | sunny | teasing | Well, that was shocking! Bonus ship's off, fun's still on. | (text card) |
+| `bonusChallengeFailed.stormfront.d0` | demon | vexxa | teasing | [gloat] See? The sky picked a side. | (text card) |
+| `bonusChallengeFailed.stormfront.d1` | demon | skarn | excited | [roar] Crackle crackle! Ha! | (text card) |
+| `bonusChallengeEarned.h0` | human | rook | excited | Not one miss! That's a 1UP, pilot! | (text card) |
+| `bonusChallengeEarned.h1` | human | sparrow | triumphant | Perfect run! Spare ship on the line! | (text card) |
+| `bonusChallengeEarned.h2` | human | pip | excited | One up! One up! You actually did it! | (text card) |
+| `bonusChallengeEarned.h3` | human | admiral | triumphant | Flawless work. The fleet sends you a spare ship. | (text card) |
+| `bonusChallengeEarned.d0` | demon | gorrak | panicked | [alarm] Not one slip? Who trained that pilot?! | (text card) |
+| `bonusChallengeEarned.d1` | demon | morth | teasing | [gloat] Enjoy your spare ship. We have spares too. | (text card) |
+| `bonusChallengeEarned.d2` | demon | nibb | panicked | [alarm] Hey! That has to be cheating! | (text card) |
+| `bonusChallengeEarned.supplyRun.h0` | human | sunny | teasing | Every prize caught! Here's your 1UP, gift wrapped! | (text card) |
+| `bonusChallengeEarned.supplyRun.h1` | human | rook | excited | Clean sweep of the crates! That's a 1UP! | (text card) |
+| `bonusChallengeEarned.supplyRun.d0` | demon | skritch | stern | [snarl] All of them? Not even one for me? | (text card) |
+| `bonusChallengeEarned.supplyRun.d1` | demon | nibb | panicked | [alarm] Who took ALL the crunchy ones?! | (text card) |
+| `bonusChallengeEarned.stormfront.h0` | human | sparrow | triumphant | Not a single zap! The storm owes you a 1UP! | (text card) |
+| `bonusChallengeEarned.stormfront.h1` | human | kestrel | triumphant | Clean through the lightning. Spare ship earned. | (text card) |
+| `bonusChallengeEarned.stormfront.d0` | demon | sliss | panicked | [alarm] It danced through the lightning! Rude! | (text card) |
+| `bonusChallengeEarned.stormfront.d1` | demon | vexxa | stern | [snarl] The storm missed? Every single time?! | (text card) |
 | `bonusEntry.crosswind.h0` | human | sunny | teasing | Forecast: gale force, with a chance of flying kites. | (text card) |
 | `bonusEntry.crosswind.h1` | human | admiral | calm | The brood is flying kites in a gale. Bring them down. | (text card) |
 | `bonusCall.crosswind.h0` | human | sunny | excited | Kites in a gale! One shot at a time, aim upwind, and let the wind carry it in! | (text card) |

@@ -6,8 +6,10 @@
 import 'dart:math' as math;
 
 import '../model.dart' show Power;
+import 'bonus_challenge.dart';
 import 'bonus_mechanic.dart';
 
+export 'bonus_challenge.dart';
 export 'bonus_mechanic.dart';
 
 /// With probability [chance] a power drop becomes [power].
@@ -302,6 +304,7 @@ class BonusLevelDef {
     this.brief = '',
     this.how = '',
     this.wind = false,
+    this.challenge,
   });
 
   /// --- crosswind: the level blows the crosswind tier of the wind
@@ -339,6 +342,10 @@ class BonusLevelDef {
   /// The level's own rule of play, when data is not enough (a constructor
   /// tear-off); null: none. See `bonus_mechanic.dart`.
   final BonusMechanicFactory? mechanic;
+
+  // --- bonus challenges: the level's perfect-run condition, paying a 1UP
+  // (bonus_challenge.dart); null: none.
+  final BonusChallengeDef? challenge;
 
   bool fits(int route, int sector) =>
       sectors.contains(sector) && route >= minRoute && route <= maxRoute;
