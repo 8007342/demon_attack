@@ -58,6 +58,14 @@ double _shipRowTop(WidgetTester tester) {
 
 dynamic _briefing(Rig rig) => rig.transitions.briefing;
 
+/// Skips the flight to its Descent once the card is open (the player's
+/// tap on the arena); true once done.
+bool _skipOnceOpen(Rig rig) {
+  final b = _briefing(rig) as BonusBriefing?;
+  if (b == null || !b.open) return false;
+  return rig.transitions.skip(rig.model, rig.comms, voice: false);
+}
+
 void main() {
   const phones = [
     Size(360, 780),
@@ -125,39 +133,50 @@ void main() {
     }
   }
 
-  testWidgets('the card shows the rule, the run rule and the chatter', (
-    tester,
-  ) async {
-    final rig = await _toBonus(
-      tester,
-      const Size(390, 844),
-      'stormfront',
-      modifier: 'noShield',
-    );
-    for (var i = 0; i < 80; i++) {
-      await rig.step(.1);
-      final b = _briefing(rig) as BonusBriefing?;
-      if (b != null && b.spoken().length >= 2) break;
-    }
-    final b = _briefing(rig) as BonusBriefing;
-    expect(find.byKey(_card), findsOneWidget);
-    expect(find.byKey(const ValueKey('bonus-briefing-brief')), findsOneWidget);
-    expect(find.text(stormfront.brief), findsOneWidget);
-    expect(find.byKey(const ValueKey('bonus-briefing-rule')), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('bonus-briefing-portrait')),
-      findsOneWidget,
-    );
-    // The written lines themselves, not a borrowed clip's subtitle.
-    for (final t in b.spoken()) {
+  testWidgets(
+    'the card shows the goal, the how-to, the run rule and its line',
+    (tester) async {
+      final rig = await _toBonus(
+        tester,
+        const Size(390, 844),
+        'stormfront',
+        modifier: 'noShield',
+      );
+      for (var i = 0; i < 80; i++) {
+        await rig.step(.1);
+        final b = _briefing(rig) as BonusBriefing?;
+        if (b != null && b.spoken().isNotEmpty) break;
+      }
+      final b = _briefing(rig) as BonusBriefing;
+      expect(find.byKey(_card), findsOneWidget);
       expect(
-        find.byKey(ValueKey('bonus-briefing-turn-${t.line.id}')),
+        find.byKey(const ValueKey('bonus-briefing-brief')),
         findsOneWidget,
       );
-      expect(t.line.silent, isTrue);
-    }
-    await dispose(tester);
-  });
+      expect(find.text(stormfront.brief), findsOneWidget);
+      // --- bonus-briefing-clarity: the how-to line and the pictogram.
+      expect(find.text(stormfront.how), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('bonus-briefing-howto')),
+        findsOneWidget,
+      );
+      expect(b.spoken().single.line.id, 'bonusCall.stormfront.h0');
+      expect(find.byKey(const ValueKey('bonus-briefing-rule')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('bonus-briefing-portrait')),
+        findsOneWidget,
+      );
+      // The written lines themselves, not a borrowed clip's subtitle.
+      for (final t in b.spoken()) {
+        expect(
+          find.byKey(ValueKey('bonus-briefing-turn-${t.line.id}')),
+          findsOneWidget,
+        );
+        expect(t.line.silent, isTrue);
+      }
+      await dispose(tester);
+    },
+  );
 
   testWidgets('wide screens show the card over the arena', (tester) async {
     final rig = await _toBonus(tester, const Size(1440, 900), 'supplyRun');
@@ -231,7 +250,11 @@ void main() {
     final rig = await _toBonus(tester, const Size(360, 780), 'supplyRun');
     final m = rig.model;
     var heldFor = 0.0, prompt = false, pictogram = false;
+    var skipped = false;
     for (var i = 0; i < 400 && !m.combat; i++) {
+      // bonus-briefing-clarity: the slot now leaves room to read, so only
+      // a player who skips the flight meets the hold.
+      skipped = skipped || _skipOnceOpen(rig);
       final held = rig.scene.holdModel();
       await rig.step(.1, hold: true);
       if (held) {
@@ -252,7 +275,7 @@ void main() {
     expect(prompt, isTrue, reason: 'TAP TO START while holding');
     expect(pictogram, isTrue);
     expect(heldFor, lessThanOrEqualTo(BonusBriefing.maxHold + .2));
-    expect(b == null || b.read(rig.comms.director, rig.comms.now), isTrue);
+    expect(b == null || b.read(rig.comms.now), isTrue);
     expect(tester.takeException(), isNull);
     await dispose(tester);
   });
@@ -260,8 +283,9 @@ void main() {
   testWidgets('a tap on the held card starts the level', (tester) async {
     final rig = await _toBonus(tester, const Size(360, 780), 'supplyRun');
     final m = rig.model;
-    var held = false;
+    var held = false, skipped = false;
     for (var i = 0; i < 400 && !held; i++) {
+      skipped = skipped || _skipOnceOpen(rig);
       await rig.step(.1, hold: true);
       held = rig.scene.holdModel();
     }
@@ -271,6 +295,57 @@ void main() {
     expect(rig.scene.holdModel(), isFalse);
     await rig.step(1, hold: true);
     expect(m.combat, isTrue);
+    await dispose(tester);
+  });
+
+  // --- bonus-briefing-clarity: the radio never closes or covers the card.
+  testWidgets('radio chatter neither closes nor covers the card', (
+    tester,
+  ) async {
+    final rig = await _toBonus(tester, const Size(360, 780), 'supplyRun');
+    final m = rig.model;
+    double? opened, closed;
+    BonusBriefing? b;
+    for (var i = 0; i < 400 && !m.combat; i++) {
+      // Squad chatter and urgent warnings keep arriving all the while.
+      if (i % 5 == 0) {
+        final now = rig.comms.now;
+        rig.comms.director
+          ..handle(const GameEvent(GameEventNames.salvage), now)
+          ..handle(const GameEvent(GameEventNames.shieldExpiring), now);
+      }
+      await rig.step(.1, hold: true);
+      b ??= _briefing(rig) as BonusBriefing?;
+      final card = find.byKey(_card);
+      final up = card.evaluate().isNotEmpty;
+      if (up) opened ??= rig.comms.now;
+      if (!up && opened != null) closed ??= rig.comms.now;
+      if (!up) continue;
+      // No radio toast is drawn over the card.
+      final rect = tester.getRect(card);
+      for (final e
+          in find
+              .byWidgetPredicate(
+                (w) =>
+                    w.key is ValueKey<String> &&
+                    (w.key! as ValueKey<String>).value.startsWith(
+                      'comms-strip-',
+                    ),
+              )
+              .evaluate()) {
+        final r = tester.getRect(find.byWidget(e.widget));
+        expect(
+          r.overlaps(rect),
+          isFalse,
+          reason: '${e.widget.key} over the card',
+        );
+      }
+    }
+    expect(opened, isNotNull);
+    expect(b, isNotNull);
+    final until = closed ?? rig.comms.now;
+    expect(until - opened!, greaterThanOrEqualTo(b!.readFor - .15));
+    expect(tester.takeException(), isNull);
     await dispose(tester);
   });
 

@@ -28,6 +28,7 @@ class BonusBriefingCard extends StatelessWidget {
   /// to do, drawn on the objects), keyed by level id.
   static const Map<String, CustomPainter> howTo = {
     'supplyRun': SupplyRunHowTo(),
+    'stormfront': StormfrontHowTo(), // --- bonus-briefing-clarity
   };
 
   /// The most the card may take (the caller ends it above the ship row).
@@ -69,7 +70,7 @@ class BonusBriefingCard extends StatelessWidget {
     return Semantics(
       container: true,
       label:
-          '${BonusBriefing.title} ${b.level.label}. ${b.brief}'
+          '${BonusBriefing.title} ${b.level.label}. ${b.brief} ${b.how}'
           '${rule == null ? '' : ' Run rule: $rule'}',
       child: Opacity(
         key: const ValueKey('bonus-briefing-card'),
@@ -168,8 +169,7 @@ class BonusBriefingCard extends StatelessWidget {
                                     alpha: reduce
                                         ? 1
                                         : .65 +
-                                              .35 *
-                                                  math.sin(now * math.pi * 2),
+                                              .35 * math.sin(now * math.pi * 2),
                                   ),
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -285,11 +285,27 @@ class BonusBriefingCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // --- bonus-briefing-clarity: the goal, big and bold, then
+              // how to do it in one plain line.
               if (briefing.brief.isNotEmpty)
                 Text(
                   briefing.brief,
                   key: const ValueKey('bonus-briefing-brief'),
-                  maxLines: maxHeight >= tight ? 3 : 2,
+                  maxLines: maxHeight >= tight ? 2 : 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFFFF4DC),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    height: 1.15,
+                  ),
+                ),
+              if (briefing.how.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  briefing.how,
+                  key: const ValueKey('bonus-briefing-how'),
+                  maxLines: maxHeight >= tight ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: _text,
@@ -297,6 +313,7 @@ class BonusBriefingCard extends StatelessWidget {
                     height: 1.2,
                   ),
                 ),
+              ],
               if (rule != null) ...[
                 const SizedBox(height: 3),
                 Text.rich(
@@ -602,4 +619,114 @@ class SupplyRunHowTo extends CustomPainter {
 
   @override
   bool shouldRepaint(SupplyRunHowTo old) => false;
+}
+
+/// bonus-briefing-clarity: Stormfront's rule as a strip of four small
+/// pictures, in the level's own colours: a demon over the ship, the amber
+/// mark blinking under the ship, the ship sliding away, the bolt striking
+/// the demon where the ship was.
+class StormfrontHowTo extends CustomPainter {
+  const StormfrontHowTo();
+
+  static const _amber = Color(0xFFFFB45A), _bolt = Color(0xFFFFFFFF);
+  static const _halo = Color(0xFFCFC4FF), _demon = Color(0xFFB07CFF);
+  static const _ship = Color(0xFF8FE6FF);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final h = size.height;
+    const step = 42.0;
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    void demon(double x, {bool hit = false}) {
+      final c = Offset(x, 5);
+      final body = Path()
+        ..moveTo(c.dx - 7, c.dy - 1)
+        ..lineTo(c.dx - 3, c.dy - 4)
+        ..lineTo(c.dx + 3, c.dy - 4)
+        ..lineTo(c.dx + 7, c.dy - 1)
+        ..lineTo(c.dx + 3, c.dy + 3)
+        ..lineTo(c.dx - 3, c.dy + 3)
+        ..close();
+      canvas.drawPath(
+        body,
+        Paint()..color = hit ? _halo.withValues(alpha: .7) : _demon,
+      );
+    }
+
+    void ship(double x) {
+      final p = Path()
+        ..moveTo(x, h - 12)
+        ..lineTo(x + 5, h - 3)
+        ..lineTo(x, h - 5)
+        ..lineTo(x - 5, h - 3)
+        ..close();
+      canvas.drawPath(p, Paint()..color = _ship);
+    }
+
+    void mark(double x) {
+      final y = h - 1.5;
+      stroke.color = _amber;
+      canvas
+        ..drawLine(Offset(x - 6, y), Offset(x + 6, y), stroke)
+        ..drawLine(Offset(x - 6, y), Offset(x - 6, y - 3), stroke)
+        ..drawLine(Offset(x + 6, y), Offset(x + 6, y - 3), stroke);
+    }
+
+    void arrow(double ax) {
+      final cy = h / 2;
+      final p = Path()
+        ..moveTo(ax - 2, cy - 3)
+        ..lineTo(ax + 1, cy)
+        ..lineTo(ax - 2, cy + 3);
+      canvas.drawPath(p, stroke..color = const Color(0x99FFE2B0));
+    }
+
+    var x = 14.0;
+    // 1. The ship sits under a demon.
+    demon(x);
+    ship(x);
+    arrow(x + step / 2);
+    x += step;
+    // 2. The amber mark blinks under the ship.
+    demon(x);
+    ship(x);
+    mark(x);
+    arrow(x + step / 2);
+    x += step;
+    // 3. The ship slides away; the mark stays.
+    demon(x - 6);
+    mark(x - 6);
+    ship(x + 8);
+    stroke.color = _ship.withValues(alpha: .6);
+    canvas.drawLine(Offset(x - 3, h - 7), Offset(x + 2, h - 7), stroke);
+    arrow(x + step / 2);
+    x += step;
+    // 4. The bolt strikes the demon where the ship was.
+    final bolt = Path()
+      ..moveTo(x, 0)
+      ..lineTo(x - 3, h * .35)
+      ..lineTo(x + 2, h * .5)
+      ..lineTo(x - 1, h - 2);
+    canvas.drawPath(
+      bolt,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..color = _halo.withValues(alpha: .5),
+    );
+    canvas.drawPath(
+      bolt,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = _bolt,
+    );
+    demon(x, hit: true);
+    ship(x + 14);
+  }
+
+  @override
+  bool shouldRepaint(StormfrontHowTo old) => false;
 }

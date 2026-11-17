@@ -134,3 +134,5 @@ on the audio studio (tillandsias#1103).
 | `bossHintHatches.h0` | human | admiral | urgent | Destroy the hatches! | (text card) |
 | `bossHintTiming.h0` | human | kestrel | urgent | Time the open hatch! | (text card) |
 | `bossHintLead.h0` | human | wisp | urgent | Fire ahead of its position! | (text card) |
+| `bonusCall.supplyRun.h0` | human | pip | excited | Presents from the sky, so pop 'em open and grab the goodies! | (text card) |
+| `bonusCall.stormfront.h0` | human | sunny | teasing | Park under the brood, then scoot, and let the thunder zap them! | (text card) |

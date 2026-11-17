@@ -1493,6 +1493,26 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'bossHintLead.h0', speaker: 'wisp', duration: 1.85, text: 'Fire ahead of its position!', emotion: 'urgent', silent: true),
     ],
   ),
+  'bonusCall.supplyRun': CommsTriggerSpec(
+    name: 'bonusCall.supplyRun',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 6.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusCall.supplyRun.h0', speaker: 'pip', duration: 3.74, text: 'Presents from the sky, so pop \'em open and grab the goodies!', emotion: 'excited', silent: true),
+    ],
+  ),
+  'bonusCall.stormfront': CommsTriggerSpec(
+    name: 'bonusCall.stormfront',
+    priority: 5,
+    cooldown: 45.0,
+    ttl: 6.0,
+    mood: CommsMood.happy,
+    lines: [
+      CommsLine(id: 'bonusCall.stormfront.h0', speaker: 'sunny', duration: 3.74, text: 'Park under the brood, then scoot, and let the thunder zap them!', emotion: 'teasing', silent: true),
+    ],
+  ),
 };
 
 const commsDemonTriggers = <String, CommsTriggerSpec>{

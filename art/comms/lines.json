@@ -1,5 +1,5 @@
 {
-  "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base. v4: \"divePrep\" (a demon is about to start a dive tell) carries brood battle cries; the reinforcements cheer chains a second brood voice; grunt kinds add \"cackle\" and \"warcry\". bonus-briefing: \"pending\": \"text\" on a trigger shows its unrecorded lines with their OWN words and speaker and plays no audio (a written radio line, mouth closed) instead of borrowing a placeholder; once recorded they are voiced as usual. Used for the urgent-mission card's chatter (bonusEntry*, bonusDare*) and the mid-level banter (bonusMidway*), whose words matter more than a borrowed voice.",
+  "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base. v4: \"divePrep\" (a demon is about to start a dive tell) carries brood battle cries; the reinforcements cheer chains a second brood voice; grunt kinds add \"cackle\" and \"warcry\". bonus-briefing: \"pending\": \"text\" on a trigger shows its unrecorded lines with their OWN words and speaker and plays no audio (a written radio line, mouth closed) instead of borrowing a placeholder; once recorded they are voiced as usual. Used for the urgent-mission card's chatter (bonusEntry*, bonusDare*) and the mid-level banter (bonusMidway*), whose words matter more than a borrowed voice. bonus-briefing-clarity: the card now speaks exactly one line, the level's bonusCall.<level> trigger (one sentence, one line per level); bonusEntry* still marks the transition slot as a bonus briefing, and bonusEntry* and bonusDare* keep their clip ids but are no longer spoken.",
   "groupGap": {
     "ground": 6,
     "loot": 25
@@ -4610,6 +4610,26 @@
       "pending": "text",
       "lines": [
         {"speaker": "wisp", "text": "Fire ahead of its position!", "emotion": "urgent"}
+      ]
+    },
+    "bonusCall.supplyRun": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 6,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "pip", "text": "Presents from the sky, so pop 'em open and grab the goodies!", "emotion": "excited"}
+      ]
+    },
+    "bonusCall.stormfront": {
+      "priority": 5,
+      "cooldown": 45,
+      "ttl": 6,
+      "mood": "happy",
+      "pending": "text",
+      "lines": [
+        {"speaker": "sunny", "text": "Park under the brood, then scoot, and let the thunder zap them!", "emotion": "teasing"}
       ]
     }
   }
