@@ -327,3 +327,18 @@ measurements (`plan/phone-performance-ledger.md`); these claims only motivate it
 | <a id="pp-maskfilter"></a>pp-maskfilter | What a `MaskFilter.blur` paint costs per draw | its API page was not read |
 | <a id="pp-ios-formats"></a>pp-ios-formats | The iOS Safari versions that decode WebP and AVIF | caniuse.com and Apple release notes reset; MDN gives desktop Safari only |
 | <a id="pp-font-subset"></a>pp-font-subset | Subsetting text fonts (beyond icon tree shaking) in a Flutter web build | no read page covers it |
+
+## Part MB: mix balance (`mix-balance`, added 2026-11-17)
+
+`openspec/changes/mix-balance/design.md` marks these claims. On 2026-11-17 audiokinetic.com, gamedeveloper.com,
+courses.ecuad.ca and wiki.eecs.yorku.ca reset the connection from the forge (WebFetch and curl). Nothing was routed
+around the proxy. The levels themselves rest on the repo's own measurement (`tools/mix_meter`); these claims only set
+the target. Search snippets seen, not read: Audiokinetic, "Loudness Processing Best Practice, Chapter 3",
+https://audiokinetic.com/zh/loudness-processing-best-practice-chapter-3-scalable-loudness-processing-for-games,
+unread: snippet only (console RMS references, dialogue -12 dB, music -16 dB); Emily Carr University, "Audio asset file
+guidelines", https://courses.ecuad.ca/mod/page/view.php?id=358042, unread: snippet only (music 3–9 dB under dialogue).
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="mb-dialogue-gap"></a>mb-dialogue-gap | A game's music bed commonly sits about 8–10 LU under dialogue | the task's figure; the pages that discuss it reset, snippets disagree (3–12 dB) |
+| <a id="mb-duck-depth"></a>mb-duck-depth | A few dB of music duck under a line, with tens of ms attack and a few hundred ms release, is usual | Godot gives only the 250 ms default release; Wwise and FMOD docs reset |

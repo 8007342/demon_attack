@@ -74,7 +74,7 @@ test('comms voices are silent before the gesture, then share the context and mas
   assert.equal(comms.play('reinforcements.h0', 6, false), false, 'same clip does not double-play');
 });
 
-test('music volume is constant: speech (human or demon, any priority) never ducks it', async () => {
+test('the music bus and level stay constant under speech: lines duck only their own stage (mix-balance)', async () => {
   const h = await harness();
   const comms = h.window.commsAudio, audio = h.window.demonAudio;
   await audio.unlock();
@@ -88,6 +88,7 @@ test('music volume is constant: speech (human or demon, any priority) never duck
   assert.equal(music.gain.value, before.bus, 'music bus unchanged while clips play');
   assert.equal(music.gain.targets.length, 0, 'no gain ramp scheduled on the music bus');
   assert.equal(audio.state.musicLevel, before.level, 'music level unchanged');
+  assert.equal(audio.state.duck.lines, 3, 'each sounding line holds the duck stage (demonAudio.graph.duck)');
   for (const s of h.sources.filter(s => s.buffer)) s.onended?.();
   h.flushTimers();
   assert.equal(music.gain.value, before.bus, 'and after the last voice');

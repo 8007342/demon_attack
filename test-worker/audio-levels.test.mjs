@@ -48,19 +48,19 @@ async function harness({ storage, storageThrows = false, compressor = true } = {
   return { window, audio: window.demonAudio, comms: window.commsAudio, get ctx() { return ctx; }, sources, settle };
 }
 
-test('both channels start at Full; Full music is 6 dB louder than the previous mix, Low 10 dB under Full', async () => {
+test('both channels start at Full; Full music is -20 dB (mix-balance; was +6 dB), Low 10 dB under Full', async () => {
   const h = await harness();
   assert.deepEqual({ ...h.audio.levels }, { music: 'full', speech: 'full' });
   await h.audio.unlock();
   const { master, music } = h.audio.graph;
-  assert.ok(close(h.audio.state.musicLevel, dB(6)), 'Full: +6 dB over the round-3 music level');
+  assert.ok(close(h.audio.state.musicLevel, dB(-20)), 'Full: the mix-balance bed, about 9 LU under the radio');
   assert.equal(h.audio.state.masterGain, .65, 'effects keep their level');
   assert.equal(h.audio.setLevel('music', 'low').music, 'low');
-  assert.ok(close(h.audio.state.musicLevel, dB(-4)), 'Low: 10 dB under Full');
+  assert.ok(close(h.audio.state.musicLevel, dB(-30)), 'Low: 10 dB under Full');
   h.audio.setLevel('music', 'mute');
   assert.equal(h.audio.state.musicLevel, 0);
   assert.equal(h.audio.state.masterGain, .65, 'muting music alone keeps effects and speech');
-  assert.equal(music.gain.value, 1, 'the music bus stays at unity: only the music level changes the music');
+  assert.equal(music.gain.value, 1, 'the music bus stays at unity: the music level (and the speech duck, its own stage) change the music');
   // Full music runs into a safety limiter on the master.
   assert.equal(h.audio.state.limiter, true);
   assert.equal(master.to.threshold.value, -1.5);
@@ -101,7 +101,7 @@ test('choices are remembered per device and read back before the first sound', a
   assert.deepEqual({ ...again.audio.levels }, { music: 'low', speech: 'mute' });
   assert.equal(again.comms.state.level, 'mute', 'comms starts at the remembered speech level');
   await again.audio.unlock();
-  assert.ok(close(again.audio.state.musicLevel, dB(-4)), 'the first music plays at the remembered level');
+  assert.ok(close(again.audio.state.musicLevel, dB(-30)), 'the first music plays at the remembered level');
   const junk = await harness({ storage: memoryStorage({ 'demonAttack.musicVolume': 'eleven' }) });
   assert.equal(junk.audio.levels.music, 'full', 'unknown stored values fall back to Full');
 });
@@ -114,11 +114,11 @@ test('unavailable or failing storage falls back to Full and still applies the ch
     const result = h.audio.setLevel('music', 'low');
     assert.equal(result.music, 'low');
     assert.equal(result.stored, false);
-    assert.ok(close(h.audio.state.musicLevel, dB(-4)));
+    assert.ok(close(h.audio.state.musicLevel, dB(-30)));
   }
 });
 
-test('speech levels scale only the voice bus; the music level never moves with speech', async () => {
+test('speech levels scale only the voice bus; the music level never moves with speech (the duck is its own stage)', async () => {
   const h = await harness();
   await h.audio.unlock();
   const music = h.audio.graph.music;
