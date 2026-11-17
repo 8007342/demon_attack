@@ -169,3 +169,26 @@ The console SHALL offer a panel that drives the live score player through the sa
 #### Scenario: Scripted fight
 - **WHEN** the operator presses CARRIER FIGHT
 - **THEN** the carrier song plays arrival, approach, the hatch tiers, the transformation, the core, the collapse and the victory from the fight's events, each move on a bar or beat line
+
+### Requirement: Bonus-level music and accents
+A bonus level SHALL be able to own a small score song (form `bonus`) that the director plays from the sector's arrival to its clear, and SHALL be able to request stingers by name through the director or a `musicAccent` event. Stingers SHALL layer over the playing section in its key on its grid, SHALL fail soft for an unknown name, and SHALL keep a layered peak of at most 32 voices.
+
+#### Scenario: The wind bonus level
+- **WHEN** `bonusStart` reports variant `crosswind`
+- **THEN** song `bonus-wind` plays `A` from the end of the sector's arrival, `B` from `bonusMidway`, and the sector song's `clear` on the next beat line at the level clear, so the travel bridge follows as in any sector
+
+#### Scenario: Requests by name
+- **WHEN** the game asks for `gust`, `oneup`, `challenge-fail`, `cargo` or `thunder`
+- **THEN** the stinger plays in the playing key on its quantum line; a name the score does not know plays nothing and returns false (null on the web player)
+
+#### Scenario: The extra life
+- **WHEN** `oneup` plays
+- **THEN** a drum fill leads into the next bar line, the band stops for that bar while a power-chord hit, the campaign theme's head on brass and lead and a choir lift play, and the band returns on the following bar line under the theme's last note
+
+#### Scenario: Layered voices
+- **WHEN** the score generator gates a stinger over the sections its `over` names
+- **THEN** the section's peak plus the stinger's voices at each onset stays at most 32, counting only the stinger inside its stop-time
+
+#### Scenario: The existing bonus levels
+- **WHEN** a Supply Run crate is shot open or a Stormfront bolt drawn to the ship misses it
+- **THEN** the `cargo` tick or the `thunder` riff plays over the sector's music

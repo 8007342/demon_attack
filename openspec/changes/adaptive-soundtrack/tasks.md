@@ -76,6 +76,13 @@
 - [x] 9.8 Lead decision (design §12.6, §12.8.3): the operator approved the preview; deleted `art/music/soundtrack/pilot/c1-*.opus` (7 files, 1.36 MB), every recorded cue in `web/audio/music/` and its manifest (54 files, 6.34 MB; the `.m4a` twins went with `work/one-format-audio`) and `web/audio/midi/` (38 files, 68 KB); removed `demonAudio.cue`, the SCORE/RECORDED switch and `?score=off`; the review studio's music tab lists the score
 - [x] 9.9 Score songs for sectors 2-4 (Ringfall, Ember Moon, The Hollow) and tours 2-5's carriers in the same generator; bridges `k→r`, `h→c` (design §12.8): `songs/sector.lua` (the three worlds and every world's Stormfront `storm`), `songs/carrier_tours.lua` (tours 2-5, every hatch tier native, `c5`'s finale and worldized bridge), `songs/bridges.lua` (`menu-k`, `k-r`, `r-e`, `e-h`, `h-c`, `c-k`), the overture, the defeat and the coda with its ukulele track; the player's cross-song hand-over, `then`, `now` moves, the worldized chain, per-song loading; SongDirector's travel bridges, bonus levels, scenes and the ending; tests (a five-route campaign trace on bar lines, the size totals); the listening panel's FULL RUN tour
 
+## 10. Bonus-level music (`work/bonus-music`, design §12.10)
+- [x] 10.1 Song `bonus-wind` ("Crosswind", E minor shuffle at 160 on the triplet grid): `A` Tailwind and `B` Crosswind (8-bar loops, mask set `wind`), quoting the campaign theme swung; composer `tools/score/songs/bonus.lua`; `bonusSongs` maps the level id `crosswind` to it
+- [x] 10.2 Stingers `oneup` (a stop-time: fill, power-chord hit, the theme's head on brass and lead with a choir lift, the band back on the next bar line; the operator's direction of 2026-11-17), `challenge-fail`, `gust`, and the existing bonus levels' `cargo` (Supply Run crate) and `thunder` (Stormfront dodged bolt); the player's `break` and `always`
+- [x] 10.3 API: `SongDirector.playBonus`, `SongDirector.accent`, `scoreBonusSongs`/`scoreAccents`, the `musicAccent` event through `MusicBridge`, `bonusStart`/`bonusMidway`/`levelclear` handling; unknown names fail soft
+- [x] 10.4 Gates: `score_gen.lua` stinger gate (layered peak <= 32 over `over`, break-aware), `midi_stats.lua check` stinger zone report; tests in `test/song_director_test.dart`, `test/music_director_test.dart`, `test-worker/score.test.mjs`
+- [x] 10.5 Regenerated the score and `mix-trim.json`; preview clips and a listening page (operator picks the 1UP variant)
+- [ ] 10.6 Operator listening: the 1UP variants, the shuffle, the stingers against the radio (with 9.7)
 ## 7. Close
 - [ ] 7.1 Test gates (CLAUDE.md §2) on the runtime tasks; `openspec validate adaptive-soundtrack --strict`
 - [ ] 7.2 Archive after all tasks are checked

@@ -109,10 +109,11 @@ test('8.13 the bank plan: zones cover the score note for note where the recipe s
 test('8.10 the score gate: midi_stats.lua check passes on the committed score and fails a broken one', { skip: !tools && 'needs lua' }, async () => {
   const ok = lua(['tools/midi_stats.lua', 'check']);
   assert.equal(ok.status, 0, ok.stdout + ok.stderr);
-  // credits-page: the section count follows the committed score (85 before the credits song's two).
   const sections = Object.values(JSON.parse(await readFile(web('audio/score/score.json'), 'utf8')).songs)
-    .reduce((n, s) => n + Object.keys(s.sections).length, 0);
+    .reduce((n, song) => n + Object.keys(song.sections).length, 0);
   assert.match(ok.stdout, new RegExp(`^check: ok {2}${sections} sections, \\d+ B of MIDI, peak (\\d+) voices, 0 failure\\(s\\)$`, 'm'));
+  // bonus-music: every stinger's notes are checked against the zones (drums must be covered).
+  assert.match(ok.stdout, /^ {2}sting oneup +\d+ key\(s\)/m);
   assert.ok(Number(ok.stdout.match(/peak (\d+) voices, 0/)[1]) <= 32);
   assert.match(ok.stdout, /zones drums +\d+ notes +100\.0 % covered/);
   // A broken fixture: an onset 30 ms off the grid, a section that ends half a bar short, a note out of the key.

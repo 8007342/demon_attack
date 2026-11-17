@@ -160,7 +160,14 @@ void main() {
         find.byKey(const ValueKey('bonus-briefing-howto')),
         findsOneWidget,
       );
-      expect(b.spoken().single.line.id, 'bonusCall.stormfront.h0');
+      // --- bonus-challenges: the card's line is the challenge call, and
+      // the badge sits under the how-to line.
+      expect(b.spoken().single.line.id, 'bonusChallenge.stormfront.h0');
+      expect(
+        find.byKey(const ValueKey('bonus-briefing-challenge')),
+        findsOneWidget,
+      );
+      expect(find.text(stormfront.challenge!.label), findsOneWidget);
       expect(find.byKey(const ValueKey('bonus-briefing-rule')), findsOneWidget);
       expect(
         find.byKey(const ValueKey('bonus-briefing-portrait')),

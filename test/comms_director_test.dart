@@ -785,10 +785,12 @@ void main() {
         ...commsDemonTriggers.values,
       ]) {
         // carrier-hatches: the carrier hints are one line each;
-        // bonus-briefing-clarity: so is each bonus level's briefing call.
+        // bonus-briefing-clarity: so is each bonus level's briefing call
+        // (bonus-challenges: and its challenge call).
         final single =
             commsOneLineTriggers.contains(spec.name) ||
-            spec.name.startsWith('bonusCall.');
+            spec.name.startsWith('bonusCall.') ||
+            spec.name.startsWith('bonusChallenge.');
         expect(
           spec.lines.length,
           inInclusiveRange(single ? 1 : 2, 30),

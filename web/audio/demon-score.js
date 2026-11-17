@@ -23,6 +23,7 @@
      scheduled. Nothing restarts.
    - Held notes of the section being left are released over 30 ms at the move.
    - Stingers are short scores in scale degrees, transposed to the playing section's key and put on its grid.
+     A stinger with `break` (the 1UP) silences the section over its stop-time; an unknown accent plays nothing.
    - Voices: a key struck again on its track chokes its previous note; lead and bass are monophonic; at most 48
      voices (32 on phones), stealing pads first, then leads, never kick, snare or bass.
    - Loading: score.json, then each song's sections in parallel, song by song in the run's order (the overture and
@@ -117,6 +118,7 @@
     let current = null;            // { id, song, section, startAt, entry, spec, data, songSpec }
     let pending = null;            // a section move { at, song, section, enter, reason }
     let maskEvents = [];           // [{ at, tier?, variant?, fleet?, power? }] in time order
+    let breaks = [];               // stop-times of a stinger's `break`: [{ from, to }] (the section's own notes rest)
     const mask = { tier: 1, variant: 'v1', fleet: false, power: 0 };
     let audible = new Set();
     let scheduledUntil = 0, segment = 0, slipped = 0, stolen = 0;
@@ -746,6 +748,7 @@
           const sample = bankOn && !!bank && trackSampled(seg, name, role, notes, bs);
           for (let i = lowerBound(notes, local); i < notes.length && notes[i].beat < local + take - 1e-9; i++) {
             const n = notes[i];
+            if (breaks.length && resting(origin + n.beat * bs)) continue;
             play(name, role, n.pitch, n.vel, origin + n.beat * bs, n.len * bs, dest, seg.id, sample);
           }
         }
@@ -864,7 +867,17 @@
       fx.stereo.gain.setTargetAtTime(on ? 0 : 1, at, glide / 3);
       fx.mono.gain.setTargetAtTime(on ? 1 : 0, at, glide / 3);
     }
-    // Stingers: the accent's score in the playing section's key, on its grid.
+    // --- bonus-music: a stinger's `break` [from, to] (beats from its anchor) is a stop-time. The playing section's
+    // notes that would sound in it are released at `from` (60 ms) or never start, and none is scheduled inside it;
+    // the section's grid runs on, so the band comes back on the line at `to`.
+    function resting(t) { return breaks.some(b => t >= b.from - 1e-6 && t < b.to - 1e-6); }
+    function rest(from, to) {
+      const now = context.currentTime;
+      breaks = breaks.filter(b => b.to > now);
+      breaks.push({ from, to });
+      for (const v of voices) if (current && v.seg === current.id && !v.released && v.end > from) releaseVoice(v, Math.max(from, v.at), .06);
+    }
+    // Stingers: the accent's score in the playing section's key, on its grid. An unknown name plays nothing (null).
     function accent(name) {
       if (!ready() || !current) return null;
       const stingName = manifest.accents[name];
@@ -875,7 +888,7 @@
       if (now - last < (sting.spacing || 1) * bs) return null;
       const lifeLoss = host.lifeLoss?.includes(name);
       const live = stingLog.filter(s => s.end > now).length;
-      if (live >= 2 && !lifeLoss) return null;
+      if (live >= 2 && !lifeLoss && !sting.always) return null;
       const lead = Math.min(0, ...sting.notes.map(n => n.t));
       const earliest = now + MARGIN - lead * bs;
       const g = segBeat(current, earliest);
@@ -883,6 +896,7 @@
       const tonic = current.spec.tonic ?? current.songSpec.tonic, mode = current.spec.mode ?? current.songSpec.mode;
       const scale = scales[mode] || scales.minor;
       let end = anchor;
+      if (sting.break) rest(anchor + sting.break[0] * bs, anchor + sting.break[1] * bs);
       for (const n of sting.notes) {
         const role = manifest.tracks[n.track]?.role || 'lead';
         let pitch = n.drum;

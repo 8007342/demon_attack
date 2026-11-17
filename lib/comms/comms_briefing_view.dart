@@ -71,6 +71,7 @@ class BonusBriefingCard extends StatelessWidget {
       container: true,
       label:
           '${BonusBriefing.title} ${b.level.label}. ${b.brief} ${b.how}'
+          '${b.challenge == null ? '' : ' ${ChallengeBadge.describe(b.challenge!)}.'}'
           '${rule == null ? '' : ' Run rule: $rule'}',
       child: Opacity(
         key: const ValueKey('bonus-briefing-card'),
@@ -312,6 +313,18 @@ class BonusBriefingCard extends StatelessWidget {
                     fontSize: 12.5,
                     height: 1.2,
                   ),
+                ),
+              ],
+              // --- bonus challenges: the level's perfect-run condition,
+              // a badge with its pictogram and the 1UP it pays.
+              if (briefing.challenge case final challenge?) ...[
+                const SizedBox(height: 4),
+                ChallengeBadge(
+                  key: const ValueKey('bonus-briefing-challenge'),
+                  challenge: challenge,
+                  height: maxHeight >= tight ? 20 : 15,
+                  time: now,
+                  label: true,
                 ),
               ],
               if (rule != null) ...[

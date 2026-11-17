@@ -1146,3 +1146,131 @@ with the credit line from `bank.json`, the SPDX id and the source at its commit.
 
 What remains: the operator's verdict on the preview, then the default flip (9.7); tuning levels, gains and splits by
 ear; the 8.4 bake-off on phones.
+
+### 12.10 Bonus-level music and accents (`work/bonus-music`, 2026-11-17, task group 10)
+
+The operator on the score: "transitions and continuity… amazing", "nice and smooth progression", and asked for "some
+new musical accents" for the bonus levels. On the 1UP (2026-11-17, via the coordinator): "Please don't make the 1UP
+sound cartoonish, keep it in the spirit of the battle mettal inspired soundtrack, design it properly, as it will be a
+sound players will love to hear, for its rarity and its special and desired effects of 1 extra life."
+
+#### 12.10.1 What the bonus levels had
+
+- **Stormfront** has its own music: every world song's `storm` section (§12.8.1), from the arrival's end to the clear.
+  Its `stormTell` and `stormBolt` reach only the effects. Nothing musical answers the player's dodge.
+- **Supply Run** has none: the sector's waves play (`BonusLevelDef.cue` is still "once one exists"), and its crates
+  and catches reach only the radio and the effects.
+
+So each gets one accent, and neither gets a section. A whole song would cost another 4 × 2 sections across the worlds,
+while the level is short and already sits in its world's song.
+- `cargo` (Supply Run, on `bonusCrate`, a crate shot open): a two-note bell "tick-ting" up a fourth (5 → 8) with a
+  rim click, on the next sixteenth, at most once a beat.
+- `thunder` (Stormfront, on `stormBait`, a bolt the ship drew that missed it): a palm-muted three-sixteenth riff on
+  the tonic, a minor-third push and an open tonic with a floor-tom roll, on the next half beat.
+
+#### 12.10.2 `bonus-wind`, "Crosswind" (the wind bonus level, `crosswind`'s)
+
+| Section | Kind | Bars | Length | MIDI | Peak voices | What plays |
+|---|---|---|---|---|---|---|
+| `A` Tailwind | loop | 8 | 12.0 s | 5 274 B | 19 | the shuffle riff, the campaign theme swung on lead (thirds below on `lead2`), clean swung arpeggios, high strings, a triplet tom fill into the loop |
+| `B` Crosswind | loop | 8 | 12.0 s | 6 575 B | 25 | the lift into G-D-Em-C, triplet chug and gallop, the theme's head called from the third and climbing to the ninth, bells answering, brass stabs on the swung "and" of 4, choir at tier 4 |
+
+- **E minor, 160 BPM, on Ringfall's grid** (72 000 samples a bar). The shuffle sits on the triplet grid the gate
+  already allows: a power chord on each beat and a palm-muted one on its last third, the bass walking root, root,
+  fifth, octave. So it drives like the punk sections but rolls, which is the swing. Every eighth of the theme is
+  swung (5/3 + 1/3 + 1 + 1 for its 1.5/.5/1/1).
+- **Airy, in the same palette:** clean guitar in swung arpeggios (at most E5, inside the round-1 guitar zones), high
+  strings, bells. The metal stays in the power chords, the triplet double kick and the brass stabs.
+- **Masks:** a `wind` mask set. Tier 1 is drums, bass, guitars, clean and bells; tier 2 adds lead, cymbals, strings
+  and timpani; tier 3 adds `drums2`, `lead2` and brass; tier 4 adds the choir.
+- **Composer:** `tools/score/songs/bonus.lua` (form `bonus`, one table entry per bonus song).
+- **Keys at the edges.** The bonus levels play in sectors 2-4 (`BonusLevelDef.sectors`), so the song enters from
+  Ringfall's D major, Ember Moon's E minor or The Hollow's C minor arrival, and hands back to that world's clear (D, E
+  or C major). Each change is a new song on a bar line (in) or a march flourish on a beat (out), as a sector start
+  is. A per-world transposition is an open question for the operator's ear (§12.10.6).
+
+#### 12.10.3 Stingers
+
+| Accent | Quantum | Spacing | Sounds for | Voices alone | Layered peak (over) | JSON |
+|---|---|---|---|---|---|---|
+| `oneup` | bar (fill 1 beat before) | 16 beats | 6.5 beats: 2.3 s at 170, 2.4 s at 160, 2.1 s at 190 | 16 | 32 (`all`: c5/transform) | 2 459 B |
+| `challenge-fail` | beat | 8 | 2.2 beats, about 0.8 s | 3 | 32 (`wave`, `bonus`, `song:bonus-wind`) | 302 B |
+| `gust` | beat | 4 | 2.5 beats, about 0.9 s | 5 | 30 (`song:bonus-wind`) | 870 B |
+| `cargo` | 1/16 | 1 | 1 beat | 3 | 31 (`wave`) | 226 B |
+| `thunder` | 1/2 beat | 4 | 2 beats | 3 | 32 (`bonus`) | 563 B |
+
+- **`oneup`, a stop-time.** A snare-and-tom pickup in sixteenths leads into the next bar line. On it, the band
+  stops for one bar (the stinger's `break`), and the 1UP plays alone: a kick, crash, timpani and power-chord hit on
+  the tonic, the campaign theme's head (1-3-5-7♯, its own 1.5/.5/1/1 rhythm) on brass in two parts with the lead an
+  octave above, a choir triad lifting under it, the guitars and bass moving I → VI → V under a sixteenth double-kick
+  roll, a backbeat snare on 2 and 4. The band comes back on the following bar line under the theme's last note, the
+  tonic an octave up on lead with the glockenspiel. It is quantised to the bar so the stop lands on the grid of any
+  section (bar-safe), it has `always` (it plays over two live stingers), and it is spaced 16 beats. The game's own
+  `extraLife` effect still sounds at once; the musical moment follows on the next bar line.
+  - Two more variants were rendered for the operator (§12.10.5): **B** "twin-lead gallop" (a stop-time gallop on
+    the tonic, the theme in thirds on lead and brass) and **C** "trumpet call" (a brass triplet call into a held
+    triad on the octave, the choir entering on it). **A** ships; a pick of B or C is a data change to the stinger.
+  - Before this direction a classic arcade arpeggio was drafted. It was dropped without shipping.
+- **`challenge-fail`**, in the band's palette: a soft palm-muted ♭VI → V on the guitar with the lead sighing 6 → 5
+  over it (the falling half step in minor). It names the miss without a minor-key thud or a sad trombone.
+- **`gust`**, the wind's telegraph: a ride swell in sixteenths (velocity 40 → 90), strings on 1 and 5 re-bowed louder
+  each half beat, a choir octave on the crest and a crash on its last eighth. It layers; it never changes the
+  section.
+
+**`break` and `always`** are new stinger fields, read by the player (`demon-score.js`):
+- `break: [from, to]` (beats from the anchor): the playing section's notes are released over 60 ms at `from`, those
+  scheduled inside never start, and none is scheduled until `to`. The section's grid runs on, so the band comes back
+  on its own line. A move during the break is unaffected; the rest is by time.
+- `always: true`: plays even when two stingers are live (like the life-loss accents).
+- `over: [...]`: the sections the generator gates the stinger over (below). The player ignores it.
+
+#### 12.10.4 Voices and zones
+
+- **Layered peak.** `score_gen.lua` now gates each stinger against the sections its `over` names (`all`, `wave`,
+  `bonus`, `song:<id>`). At each onset of the stinger (and at the end of its break), it adds the stinger's sounding
+  voices (the score's voice rules, 0.5-beat release) to the section's peak, wherever in the section that peak falls.
+  Inside a break the section counts 0, since it is released at the break. The limit is 32. The sector songs peak at
+  28-29, so a stinger heard over them has at most 3 voices outside a break; the 1UP's pickup has 2 and its landing 2,
+  and the c5 transformation (30) is its tightest case at exactly 32.
+- **Zones.** `midi_stats.lua check` now prints each stinger's coverage in every key of the sections it layers over.
+  Against the committed round-1 recipe, the new sections and `cargo`, `thunder`, `gust` and `challenge-fail` are
+  fully covered. The 1UP's brass above F♯4 and its glockenspiel octave (84-89) wait for round 2. Against the
+  `sample-bank` worktree's round-2 recipe (trumpet G4-D♯6, glockenspiel A♯5-F♯6; `plan/licences-round-2.md` §5), every
+  new note is covered on desktop. On phones the 1UP's brass and bells stay synthesized, as every brass part above the
+  horns does.
+
+#### 12.10.5 The API (for `crosswind` and `bonus-challenges`)
+
+| Want | Call | Where |
+|---|---|---|
+| Play the wind level's song | nothing: emit `bonusStart` with `variant: 'crosswind'` (the level id), as every bonus level does | `scoreBonusSongs` maps `crosswind` → `bonus-wind`; if the level's id differs, change that one line of `song-map.json` `bonusSongs` and regenerate |
+| Lift into `B` | nothing: `bonusMidway` (the second wave) moves `bonus-wind` to `B` on the next bar line after the dwell | `SongDirector.onGameEvent` |
+| End the level | nothing: `levelclear` moves to the sector song's `clear` on the next beat line; the travel bridge follows | `SongDirector.cue` |
+| A gust telegraph, a 1UP, a failed challenge | from the model (pure Dart): `_queueGameEvent('musicAccent', {'name': 'gust'})` (or `bonusEvent(...)`); `MusicBridge.accentEvent` is the name | `MusicBridge.call` plays it if `scoreAccents` has the name |
+| The same from Flutter code | `songs.accent('oneup')` on main.dart's `SongDirector` returns false for an unknown name; or `audioAccent('oneup')` | `SongDirector.accent`, `lib/services/audio.dart` |
+| Start a bonus song by hand | `songs.playBonus('bonus-wind')` returns false (and moves nothing) for an unknown song, a non-bonus song, or when no sector song plays | `SongDirector.playBonus` |
+| On the web | `demonAudio.accent(name)` returns the anchor time on the audio clock, or `null` (unknown name, spacing, two live stingers, music muted, no score) | `demon-score.js accent()` |
+
+Names: `oneup`, `challenge-fail`, `gust`, `cargo`, `thunder` (and the older `dive`, `laststand`, `hatch`,
+`reinforce`, `breakthrough`, `destroyed`, `gloat`, `respawn`, `riser`, `stab`, `glass`, `impact`, `toll`).
+`cargo` and `thunder` are already wired (`bonusCrate`, `stormBait`). Don't also emit the raw string event of the
+same name, or both paths fire (CLAUDE.md §3).
+
+#### 12.10.6 Levels, previews and what is open
+
+- **Trims** (`node tools/mix_meter/trim.mjs`, regenerated): `bonus-wind` measures -9.74 to -7.32 LUFS untrimmed across
+  tiers 1-4, inside the score's range (top -4.97, floor -11.65, unchanged), so it gets trims of 1.6-3.3 dB like the
+  sector loops. No other trim moved.
+- **Against the radio** (offline renders through the shipped players, Full/Full, BS.1770): the radio sample
+  (48 lines) is -16.48 LUFS. Each new accent's window (its first note to 2.5 s after its anchor) is -20.6 to
+  -19.3 LUFS integrated, 2.8-4.1 LU under the radio, with a maximum momentary of -17.4 LUFS (the radio's is -8.9). The
+  Crosswind clips are -20.1 to -19.8 LUFS, 3.3-3.6 LU under. The accents play through the music bus, so the speech
+  duck lowers them under a line as it lowers the section.
+- **Listening page** (operator, private): https://claude.ai/artifact/7YdEZo151RhG5j5DZ8bFeU, with the three 1UP
+  variants first (A marked as the pick), the 1UP over Crosswind, both sections and the level's flow, and every
+  accent in context. The renders are the synth voices (no bank yet), not a browser.
+- **Open, for the operator's ear (task 10.6):**
+  - the 1UP pick (A, B or C), and whether the stop-time should keep the drums playing under it;
+  - Crosswind's fixed E minor between the D major and C minor worlds, or a transposition per world;
+  - whether Supply Run should also get its own section later; it keeps the waves now.
+
