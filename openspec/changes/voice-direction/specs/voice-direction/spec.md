@@ -128,6 +128,17 @@ Each brood character's voice identity SHALL be cast as the restaurant person the
 - **WHEN** the ending reaches a line spoken by Ulgra, Morth or Nibb and no child-voice approval is recorded in `art/comms/cast.json`
 - **THEN** the line shows as a subtitle and plays only its non-verbal cue
 
+### Requirement: One voice per character from gameplay to the ending
+Every character SHALL keep one voice identity (one reference clip in `art/comms/cast.json`) from their first gameplay line to the end-game cinematic, fleet and brood alike, because the ending reveals the voices the kids imagined. Only the post chain differs: `radio` or demon FX in play, the `room` chain in the ending. A re-cast SHALL re-render that character's gameplay and ending lines together.
+
+#### Scenario: The Admiral is Mom
+- **WHEN** the ending plays Mom's line "Squadron. Time to go home."
+- **THEN** it is rendered from the Admiral's identity clip, the same one behind every Admiral radio line, with the `room` chain instead of the `radio` chain
+
+#### Scenario: A re-cast keeps the match
+- **WHEN** a character's identity clip changes in `cast.json`
+- **THEN** the bank build marks every gameplay and ending line of that character `placeholder` until they are re-rendered from the new clip
+
 ### Requirement: Automatic take rejection
 Every take SHALL pass automatic checks before anyone listens: the duration within 0.5–2.5× the expected length of its words, no sample at or above −0.5 dBFS, no silence over 0.8 s inside speech, a word error rate under 15 % against the cue-stripped text from the admitted speech recogniser, and a speaker similarity to the identity clip at or above the engine's calibrated threshold. A vocal-only take SHALL show no recognised words. A rejected take SHALL be logged with its reasons and never picked.
 
