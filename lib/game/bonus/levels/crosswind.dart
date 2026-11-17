@@ -26,10 +26,16 @@ const crosswind = BonusLevelDef(
   weight: 1,
   // The sector's own swarm (bonus-balance: a bonus level is worth about
   // the sector it replaces, enemies and time alike); the kites come on top.
-  waves: BonusWaves(),
+  waves: BonusWaves(rosterScale: .88, reinforcementScale: .88),
   // No multifire, no Rapid: single deliberate shots (the mechanic also
-  // strips any carried in, whatever the run modifier says).
-  rules: PowerRules(banned: {Power.spread, Power.rapid}),
+  // strips any carried in, whatever the run modifier says). Three drops in four
+  // are Powerful instead (heavier single shots from the wing cannons), so
+  // the slower gun still clears the sector in about its time
+  // (bonus-balance).
+  rules: PowerRules(
+    banned: {Power.spread, Power.rapid},
+    chances: [PowerChance(Power.powerful, .75)],
+  ),
   scoring: BonusScoring(
     pointsScale: .6,
     clearPar: .2,

@@ -33,7 +33,7 @@ shifts) scaled by the spec's ramp in and out; `forecast(t) = at(t + 1.5)`.
 
 | Constant | Value | Why |
 |---|---|---|
-| `peakDrift` breeze / gale / crosswind | 34 / 52 / 66 u/s | a full gale carries a player shot 12–30 u by the swarm's rows (one target width) |
+| `peakDrift` breeze / gale / crosswind | 34 / 52 / 60 u/s | a full gale carries a player shot 12–30 u by the swarm's rows (one target width) |
 | `settle` | 0.55 s | a shot is carried by the air: its sideways speed relaxes toward the wind's, never past it |
 | `lead` | 1.5 s | every change is visible this long before it pushes (≥ the 1 s tell rule of bonus mechanics) |
 | `tailwind` | 0.5 | along-screen strength at the muzzle that earns the speed-up |
@@ -56,7 +56,7 @@ unseeded calibration gate is unchanged draw for draw.
 - **Demons fight the wind** (the operator's direction): the flight code steers in still air; the push rides on top
   (`d.windOffset`), settling over 0.8 s toward `W · yield · 0.6 s` and fading with the wind, clamped to the arena. The
   yield is 0.24 − 0.02·species (heavier species steadier), × 0.7 elite, × 0.8 escort, × 0.6 in a committed dive, and
-  0.08 for a sentinel: a full crosswind moves an ordinary creature at most about 9.5 u, a sentinel about 3 u. They lean
+  0.08 for a sentinel: a full crosswind moves an ordinary creature at most about 8.6 u, a sentinel about 3 u. They lean
   into it: the bank gains `−lateral · 0.04 · (1 − yield)` per step (bounded by the bank's own clamp), so they visibly
   correct. Hostile shots are fired from the still-air position (at most a few units from the drawn one).
 - **The brood aims with the wind** ("it's their planet"): a demon's shot gets `−0.6 ·` the drift it expects over its fall
@@ -95,8 +95,8 @@ only. Aim upwind and let the gust carry it."
 - Rules: `PowerRules(banned: {spread, rapid})`. `CrosswindMechanic` also strips carried-in Spread and Rapid each step and
   removes such drops; `PowerRules.merge` now lets a level's ban beat a run's `only` (Spread Only falls back to the
   regular cycle here). Powerful (single wing-cannon shots), Large and Shield stay: they help a deliberate shot.
-- Waves: the sector's own (bonus-balance gates a bonus level's enemies and time against the sector it replaces); the
-  kites come on top.
+- Waves: roster and reinforcements × 0.88, and three drops in four become Powerful (heavier single shots): the
+  bonus-balance gate holds a bonus level's time and enemies to the sector it replaces (§8). The kites come on top.
 - **Kites:** 3 + min(route, 2) per wave, at most 3 at once, one every 2.8 s (first at 1.5 s). Each enters from the
   upwind edge at a height of 60–210 (from the top in a lull, |drift| < 10), rides the wind at 1.5 × a shot's drift plus
   14 u/s of its own, bobs ±12, and leaves when the wind carries it off or climbs away after 15 s. One player shot pops
@@ -140,7 +140,21 @@ See `plan/calibration-current.md`, "Crosswind". Every calibration gate runs unse
 wind's own effect, measured with the Average pilot (`dart run tools/ordinary_wave_probe.dart 24 wind=on skill=S`:
 sectors 1–4 of routes 0–2, 24 seeds, every eligible sector windy with the plan's own tiers and timings):
 
-CALIBRATION_TABLE
+| Mode | Lives per sector, calm | Windy, skill 0 | Windy, skill 0.6 | Seconds, calm → windy (skill 0) |
+|---|---|---|---|---|
+| Easy | 11.43 | 11.33 (−0.8 %) | 11.44 (+0.1 %) | 113.6 → 114.0 (+0.4 %) |
+| Normal | 25.46 | 25.86 (+1.6 %) | 25.63 (+0.7 %) | 196.5 → 200.5 (+2.0 %) |
+| Hard | 33.19 | 32.18 (−3.1 %) | 32.41 (−2.4 %) | 233.5 → 229.0 (−1.9 %) |
+
+Scheduled (one eligible level in five) that is within ±0.6 % per run. The first build, without the brood's aim, made a
+windy sector 5–7 % *easier* (Easy −5.1 %, Hard −6.8 % lives): the wind bent the brood's aimed fire off the ship. Hence
+`broodAim` 0.6. "Spicy but fair": the risk is unchanged and the spice is the player's aim, which a scripted pilot that
+fires into a dense swarm barely feels.
+
+Crosswind against the sector it replaces (bonus-balance gate, ±15 % pooled): with the sector's own swarm and a 66 u/s
+drift it ran +25 % long with +26 % lives lost (single shots clear slowly). Kept: roster and reinforcements × 0.88,
+crosswind drift 60 u/s, three drops in four Powerful (heavier single shots, no multifire): duration +12.5 %, enemies
+−7.0 %, possible score −1.8 %, lives +6.4 %.
 
 ## Pipelines
 

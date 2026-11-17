@@ -113,7 +113,7 @@ class WindField {
   static const peakDrift = {
     WindTier.breeze: 34.0,
     WindTier.gale: 52.0,
-    WindTier.crosswind: 66.0,
+    WindTier.crosswind: 60.0,
   };
   static const settle = .55;
 

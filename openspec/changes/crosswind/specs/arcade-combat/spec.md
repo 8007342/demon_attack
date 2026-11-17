@@ -25,7 +25,7 @@ A windy level's wind SHALL be a deterministic function of its seed and the level
 - **THEN** it blows both left and right at more than 0.3 of full strength
 
 ### Requirement: Wind drifts every projectile
-Every projectile, the player's and the demons' alike, SHALL pick up the wind's sideways drift, settling toward the wind's speed with a 0.55 s time constant and never exceeding it (34, 52 and 66 u/s at full breeze, gale and crosswind). A strong wind SHALL carry a shot about a target's width off its line by the swarm's rows.
+Every projectile, the player's and the demons' alike, SHALL pick up the wind's sideways drift, settling toward the wind's speed with a 0.55 s time constant and never exceeding it (34, 52 and 60 u/s at full breeze, gale and crosswind). A strong wind SHALL carry a shot about a target's width off its line by the swarm's rows.
 
 #### Scenario: Both sides drift
 - **WHEN** a gale blows at more than half strength for 40 s of a fight
