@@ -403,7 +403,7 @@ void main() {
           band: const Rect.fromLTWH(0, 200, 360, 320),
         );
       }
-      // (4) The lurking shadow at 0 / 25 / 50 / 75 / 100 % of its track,
+      // (4) The lurking shadow at 0 / 4 / 8 / 12 / 16 s of its silhouette,
       // then its hand-off as the sentinel rises.
       {
         final m = _sentinelWave(2, before: true);
@@ -413,14 +413,16 @@ void main() {
         for (var f = 0; f < 60 * 40 && next < 5; f++) {
           _run(m, scene, 1 / 60);
           _tick(scene);
-          final p = m.foreshadow?.lurk.progress;
-          if (p == null || scene.lurkCenter == null) continue;
+          // sentinel-shadow-align: under the silhouette, every 4 s.
+          final c = m.foreshadow?.clock;
+          if (c == null || scene.lurkCenter == null) continue;
+          final p = c / 16;
           if (p >= next / 4 - 1e-9) {
             await _pair(scene, real, diag);
             next++;
           }
         }
-        expect(next, 5, reason: 'the lurk reached the front');
+        expect(next, 5, reason: 'the lurk was seen for 16 s');
         await _wide(scene, 'lurk-wide');
         await _twoRows(
           real,

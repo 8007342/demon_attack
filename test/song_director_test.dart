@@ -170,7 +170,40 @@ void main() {
       'menu': 'menu:overture',
       'gameover': 'defeat:cackle',
       'ending': 'coda:ukulele',
+      'credits': 'credits:dawn',
     });
+  });
+
+  // --- credits-page: the title's CREDITS have their own slow song.
+  test('the credits song: slow, whole bars, its dawn opens into a looping '
+      'drift, and it moves to and from the overture on bar lines', () {
+    final credits = scoreSongs['credits']!;
+    expect(credits.form, 'credits');
+    expect(credits.barSamples, 160000, reason: '72 BPM: 4 x 60 / 72 x 48 kHz');
+    expect(credits.barSeconds, greaterThan(scoreSongs['menu']!.barSeconds));
+    final dawn = credits.sections['dawn']!, drift = credits.sections['drift']!;
+    expect((dawn.kind, dawn.bars, dawn.next), (ScoreKind.tail, 4, 'drift'));
+    expect((drift.kind, drift.bars), (ScoreKind.loop, 16));
+    for (final s in credits.sections.values) {
+      expect(s.bars, greaterThan(0));
+      expect(s.bars % 4, 0, reason: '${s.id}: whole four-bar phrases');
+    }
+    final r = rig();
+    final d = r.director, clock = r.clock, player = r.player;
+    expect(d.cue('menu'), isTrue);
+    clock.now = 10 + 2.5 * scoreSongs['menu']!.barSeconds;
+    expect(d.cue('credits'), isTrue);
+    final open = player.moves.last;
+    expect((open.song, open.section, open.quantum), ('credits', 'dawn', 'bar'));
+    expect(d.cue('credits'), isTrue);
+    expect(player.moves.last, same(open), reason: 'already playing');
+    clock.now += 20;
+    expect(d.cue('menu'), isTrue);
+    final back = player.moves.last;
+    expect(
+      (back.song, back.section, back.quantum),
+      ('menu', 'overture', 'bar'),
+    );
   });
 
   test(
