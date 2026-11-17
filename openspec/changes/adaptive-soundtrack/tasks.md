@@ -24,10 +24,10 @@
 - [ ] 2.4 A cross-section coherence measure (long-term spectrum distance between neighbouring sections) in `soundtrack_check`
 
 ## 3. Runtime: Dart
-- [ ] 3.1 `lib/game/song_director.dart` (pure Dart): song state, transition table, minimum dwell, latest-wins queue, tier mapping by `depth`
-- [ ] 3.2 Unit tests: every row of design §4.3, two quick tiers, a late decode, the coda; no audio needed
-- [ ] 3.3 `MusicBridge`: carrier accents per design §4.3; drop the carrier-v3 placeholders
-- [ ] 3.4 `lib/services/audio.dart`: `audioSong(...)` with a test stub; `// --- adaptive-soundtrack` marker in `main.dart` where the director is registered
+- [x] 3.1 `lib/game/song_director.dart` (pure Dart): song state, transition table, minimum dwell, latest-wins queue, tier mapping by `depth`
+- [x] 3.2 Unit tests: every row of design §4.3, two quick tiers, a late decode, the coda; no audio needed
+- [x] 3.3 `MusicBridge`: carrier accents per design §4.3; drop the carrier-v3 placeholders
+- [x] 3.4 `lib/services/audio.dart`: `audioSong(...)` with a test stub; `// --- adaptive-soundtrack` marker in `main.dart` where the director is registered
 
 ## 4. Runtime: web
 - [ ] 4.1 `demon-audio.js`: section graph player (loop re-scheduling with `start(when, offset)`, same-position switches, bridges that auto-advance, next-beat moves)
@@ -62,6 +62,17 @@
 - [ ] 8.12 `demon-audio.js` sampler: SMF type 1 with track names, zones and `playbackRate`, per-track gains and masks on bar lines, the guitar, bass, drum and pad buses, the 48/32 voice cap with stealing, progressive bank loading with the oscillator per note until decoded; `state` diagnostics
 - [ ] 8.13 `test-worker/music.test.mjs`: score files parse, every section is whole bars, masks reference existing tracks, `bank.json` zones cover every track's range
 - [ ] 8.14 Retire each `web/audio/midi/` cue and any recorded full mix once its score section is approved (no duplicates, design §11.2)
+
+## 9. Score runtime in the live game (`work/score-runtime`, design §12)
+- [x] 9.1 Song map `art/music/soundtrack/song-map.json` for songs `k` (Krybor) and `c1` (the carrier): sections, kinds, grids, keys, tier masks, v2/power/fleet layers, stingers in scale degrees, the accent map
+- [x] 9.2 Score generator `lua tools/score/score_gen.lua` (+ `--check`): composers from the game's motifs, the §11.9 score gates (whole bars, grid, key share, tracks, peak voices ≤ 32 with a 0.5-beat release), outputs `web/audio/score/`, `score.json`, `lib/game/song_map.dart` (added to CLAUDE.md §4)
+- [x] 9.3 `web/audio/demon-score.js`: SMF type 1 parser, section-graph player on demon-audio.js's clock (bar/beat moves, slip, latest wins, same position, tails/bridges, masks with 20/60 ms ramps, stingers in key, voice rules, 48/32 cap with stealing), synth voices and role buses (amp + cabinet guitars, bass drive, room), the `makeVoice` bank seam, `state.score`; hand-over with the recorded cues on bar lines both ways; `?score=off` and the per-device switch
+- [x] 9.4 `SongDirector` wired in main.dart (`// --- adaptive-soundtrack`): every scene cue through `cue()`, structured events through the shared bridge
+- [x] 9.5 Tests: `test/song_director_test.dart`, `test-worker/score.test.mjs` (the score files, the graph on a mocked audio clock, hand-overs, masks, stingers, cap)
+- [x] 9.6 Listening aid: the SCORE · LISTEN panel on `/console` (scripted carrier fight and sector song, step buttons, stingers, SCORE/RECORDED A/B)
+- [ ] 9.7 Operator listening in the live game (N1, N13): the combining, the voices and the mix balance; tune `makeVoice` levels and the buses from the verdict
+- [ ] 9.8 Lead decision (design §12.6): delete `art/music/soundtrack/pilot/c1-*.opus` once `c1` is approved; retire the recorded `l1-*`/`l5-*` cues when the A/B is no longer needed; remove the unused `.m4a` twins in `web/audio/music/`
+- [ ] 9.9 Score songs for sectors 2-4 (Ringfall, Ember Moon, The Hollow) and tours 2-5's carriers in the same generator; bridges `k→r`, `h→c`
 
 ## 7. Close
 - [ ] 7.1 Test gates (CLAUDE.md §2) on the runtime tasks; `openspec validate adaptive-soundtrack --strict`

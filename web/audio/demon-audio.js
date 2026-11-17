@@ -8,7 +8,11 @@
    travel that follows it, and an accent sprite (dive, last stand, hatch,
    reinforcements). The game drives the tier with intensity(tier) and the
    stingers with accent(name); both are read-only with respect to the game.
-   API calls are safe before the first user gesture and when audio is unavailable. */
+   API calls are safe before the first user gesture and when audio is unavailable.
+
+   --- adaptive-soundtrack (MIDI first): where a song has a score (web/audio/score/, played by demon-score.js),
+   SongDirector moves it with song(move) and these recorded cues stay silent; the score and the cues hand over to
+   each other on the bar line of whichever is playing. The score runs inside this file's scheduler. */
 (() => {
   'use strict';
   const midiRoot = new URL('./audio/midi/', document.baseURI);
@@ -116,6 +120,32 @@
   let fleetIntactFlag = false;
   // Current-browser PWA delivery: one high-quality Opus bank.
   const formats = ['ogg'];
+  // --- adaptive-soundtrack: the score player (demon-score.js, loaded first; absent in older pages and tests).
+  // Accents with no recorded slot that the carrier's score uses, mapped to the nearest recorded accent.
+  const legacyAccent = { toll: 'reinforce' };
+  const score = window.demonScore?.create({
+    input: () => drop,
+    legacyBar: floor => (active && context ? gridTime(4, floor - .03) : floor),
+    yieldLegacy: at => yieldToScore(at),
+    fallback: f => cue(f.mode, f.level, f.phase, f.cycle),
+    lifeLoss,
+  }) || null;
+  // The score starts at `at`: the recorded cue (and any MIDI-fallback notes) stop there.
+  function yieldToScore(at) {
+    requested++;
+    pending = null; wanted = null;
+    if (context) {
+      for (const v of voices) {
+        if (v.output !== drop || v.released) continue;
+        if (v.at >= at - 1e-4) { v.released = true; try { v.oscillator.stop(at); } catch { /* not started */ } }
+        else release(v, at, .06);
+      }
+      stopFile(active, at, .12);
+      stopPower(at, .09);
+    }
+    active = null;
+    scene.section = 'score';
+  }
 
   function parseMidi(buffer) {
     const data = new Uint8Array(buffer);
@@ -275,6 +305,7 @@
   }
   function schedule() {
     if (!context || paused || context.state !== 'running') return;
+    score?.tick(context.currentTime + window.demonScore.LOOKAHEAD);  // --- adaptive-soundtrack
     while (nextBeat < context.currentTime + .12) {
       // Cues change on the active cue's bar line; a cue at another tempo then
       // starts its own grid there (the old bar is always finished first).
@@ -330,6 +361,7 @@
         music.connect(musicLevel); musicLevel.connect(master); effects.connect(master);
         if (limiter) { master.connect(limiter); limiter.connect(context.destination); } else master.connect(context.destination);
         nextBeat = context.currentTime + .04;
+        score?.attach(context);  // --- adaptive-soundtrack
         timer = setInterval(schedule, 25);
         await context.resume();
         if (wanted && !active) await start(wanted.name, ++requested);
@@ -360,6 +392,17 @@
     const entry = await resolveCue(name);
     if (ticket !== requested || !entry) return;
     if (active?.name === name || pending?.name === name) return;
+    // --- adaptive-soundtrack: from the score, hand over on its next bar line (immediate cues at once).
+    if (score?.playing) {
+      const now = context?.currentTime ?? 0;
+      const at = !context ? 0 : immediate.includes(name) ? now + .02 : score.nextBar(now + .05);
+      score.stop(at, immediate.includes(name) ? .09 : .06);
+      pending = null;
+      if (context) { nextBeat = at; beat = 0; }
+      activate(entry, nextBeat);
+      schedule();
+      return;
+    }
     if (!active || immediate.includes(name)) {
       // Clear, victory and the cackle must follow the moment, rather than wait up to a bar.
       // Release current/future scheduled music voices over 90ms; effects survive.
@@ -423,6 +466,7 @@
   // normal cue: switch to it on the next bar at the same position.
   async function fleetIntact() {
     fleetIntactFlag = true;
+    if (score?.playing) return true;  // SongDirector unmutes the score's fleet layer
     // Same tick as the cue (main.dart dispatches game events after the cues):
     // the normal march is still loading, so start the variant in its place.
     if (fleetVariant[wanted?.name] && active?.name !== wanted.name) {
@@ -445,6 +489,7 @@
     tier = Math.min(4, Math.max(1, Math.round(tier) || 1));
     if (!fromPhase) scene.driven = true;
     scene.tier = tier;
+    if (score?.playing) return tier;  // the score's masks follow SongDirector
     if (!scene.level || !['intro', 'tiers'].includes(scene.section)) return tier;
     const name = `l${scene.level}-t${tier}`;
     if (active?.name === name && !pending) return tier;
@@ -461,6 +506,13 @@
   // Accents: the current level's stinger, quantized to the next half-beat or
   // beat of the music grid; never delays the caller.
   async function accent(name) {
+    // --- adaptive-soundtrack: over the score, accents are stingers in its key on its grid.
+    if (score?.playing) {
+      if (!context || paused || context.state !== 'running') return null;
+      if (levels.music === 'mute' && !lifeLoss.includes(name)) return null;
+      return score.accent(name);
+    }
+    if (legacyAccent[name]) name = legacyAccent[name];
     if (!context || paused || context.state !== 'running' || !accentSlots.includes(name) || !scene.level) return null;
     if (levels.music === 'mute' && !lifeLoss.includes(name)) return null;  // nothing to hear
     // At most one per second each; dive layers compose, so dives may come every half second.
@@ -548,7 +600,8 @@
   function powerLayer(active = 0, falling = false) {
     power.active = Math.max(0, Math.round(Number(active) || 0));
     power.falling = !!falling;
-    if (scene.level) loadBuffer(`l${scene.level}-power`);
+    score?.power(power.active);  // --- adaptive-soundtrack: the ride and double kick layer
+    if (scene.level && !score?.playing) loadBuffer(`l${scene.level}-power`);
     return { active: power.active, falling: power.falling };
   }
   function stopPower(at, seconds = beatSeconds) {
@@ -561,7 +614,7 @@
   }
   // Runs on every bar line of the scheduler (at = that bar's time).
   function syncPower(at) {
-    const tiers = scene.section === 'tiers' && active?.info.tier && active.info.level === scene.level;
+    const tiers = !score?.playing && scene.section === 'tiers' && active?.info.tier && active.info.level === scene.level;
     const want = tiers && levels.music !== 'mute' ? Math.min(2, power.active) : 0;
     const name = `l${scene.level}-power`, buffer = want ? ready.get(name) : null;
     if (power.player && (power.player.name !== name || !want)) stopPower(at);
@@ -578,7 +631,7 @@
       power.player.level = want;
       power.player.gain.gain.setTargetAtTime(fileGain * powerGain[want], at, .05);
     }
-    const brighten = tiers && power.falling;
+    const brighten = (tiers || !!score?.playing) && power.falling;
     if (bright && brighten !== power.brightOn) bright.gain.setTargetAtTime(brighten ? brightDb : 0, at, .08);
     power.brightOn = brighten;
   }
@@ -674,7 +727,18 @@
     else if (name === 'life') noiseBurst(now, .45, .08, 900);
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
-  window.demonAudio = Object.freeze({ unlock, cue, intensity, accent, fleetIntact, mute, pause, resume, sfx, setLevel, powerLayer, get muted() { return muted; },
+  // --- adaptive-soundtrack: SongDirector's moves (see demon-score.js move()); returns the landing time, -1 while
+  // loading or before the first gesture, -2 when the score is off (the move's fallback cue then plays).
+  function song(move) {
+    if (!score) { if (move?.fallback) cue(move.fallback.mode, move.fallback.level, move.fallback.phase, move.fallback.cycle); return -2; }
+    return score.move(move || {});
+  }
+  function scoreEnabled(value) { return score ? score.setEnabled(value) : false; }
+  window.demonAudio = Object.freeze({ unlock, cue, intensity, accent, fleetIntact, mute, pause, resume, sfx, setLevel, powerLayer, song, scoreEnabled, get muted() { return muted; },
+    get time() { return context?.currentTime ?? -1; },
+    get scorePosition() { return score?.position ?? null; },
+    get scoreOn() { return !!score?.enabled; },
+    get scoreLoading() { return score?.loading ?? Promise.resolve(); },
     get levels() { return { ...levels }; },
     get graph() { return { context, master, music, effects }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.
@@ -683,7 +747,8 @@
       bpm: 60 / beatSeconds, beatSeconds, drop: null,
       levels: { ...levels }, masterGain: master?.gain.value ?? null, musicLevel: musicLevel?.gain.value ?? null, limiter: !!limiter,
       layers: layersLive.filter(l => l.end > (context?.currentTime ?? 0)).map(l => ({ ...l })), layerLog: layerLog.slice(),
-      power: { active: power.active, falling: power.falling, playing: power.player ? { ...power.player, source: undefined, gain: undefined } : null, bright: power.brightOn } }; } });
+      power: { active: power.active, falling: power.falling, playing: power.player ? { ...power.player, source: undefined, gain: undefined } : null, bright: power.brightOn },
+      score: score?.state ?? null }; } });
   // Unlock from real DOM gestures, including Flutter canvas input.
   for (const type of ['pointerdown','keydown']) window.addEventListener(type, unlock, { once: true, capture: true });
   cue('menu');

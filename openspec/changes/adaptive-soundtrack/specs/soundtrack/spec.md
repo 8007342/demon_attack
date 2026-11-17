@@ -119,3 +119,25 @@ Every shipped score SHALL be reproducible from a committed recipe (generator, in
 #### Scenario: Model output
 - **WHEN** generated bars from a symbolic model are absorbed into a score
 - **THEN** the recipe names the model, its licence, the prompt or prime, the seed, and which bars were kept
+
+### Requirement: Score and recorded cues hand over on bar lines
+Where a sector has a score, a pure-Dart director SHALL move it from the game's cues and structured events, and the recorded cues SHALL stay silent. The score SHALL start on the playing recorded cue's next bar line, and a recorded cue SHALL start on the score's next bar line, except the immediate cues. A switch SHALL play the recorded cues everywhere for comparison.
+
+#### Scenario: Into a scored sector
+- **WHEN** sector 1 starts while the previous sector's recorded cue plays
+- **THEN** the score's arrival starts on that cue's next bar line and the cue stops there
+
+#### Scenario: Out of a scored sector
+- **WHEN** sector 2 starts while the Krybor score holds its clear
+- **THEN** the recorded sector 2 cue starts on the score's next bar line
+
+#### Scenario: Score switched off
+- **WHEN** the console's RECORDED switch is on, or the page has `?score=off`
+- **THEN** every move plays its recorded fallback cue instead
+
+### Requirement: Score listening aid
+The console SHALL offer a panel that drives the live score player through the same director and event names as the game, with a scripted carrier fight, a scripted sector song, a button per section move and per stinger, and the score/recorded switch.
+
+#### Scenario: Scripted fight
+- **WHEN** the operator presses CARRIER FIGHT
+- **THEN** the carrier song plays arrival, approach, the hatch tiers, the transformation, the core, the collapse and the victory from the fight's events, each move on a bar or beat line

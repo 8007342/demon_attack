@@ -251,19 +251,26 @@ class MusicBridge {
     GameEventNames.lifeLost: 'destroyed',
     GameEventNames.regroupStart: 'gloat',
     GameEventNames.playerRespawn: 'respawn',
-    // boss-grandeur §5.2, existing cues only: the demonic gloat as the
-    // carrier overflies, the last-stand tell as it rises out of the fog,
-    // the heroic accent as it collapses.
+    // boss-grandeur §5.2: the demonic gloat as the carrier overflies, the
+    // last-stand tell as it rises out of the fog.
     GameEventNames.bossOverflight: 'gloat',
     GameEventNames.bossRise: 'laststand',
-    GameEventNames.bossCollapseStart: 'respawn',
-    // carrier-v3 §10, existing cues until the score lands (tillandsias
-    // #1103: the doom and epic-metal layers): the reinforcement stinger as
-    // the approaching carrier steps closer, the mechanical hatch hit at the
-    // hittable threshold, the heroic accent as it takes off.
-    GameEventNames.bossApproach: 'reinforce',
+    // --- adaptive-soundtrack §4.3: the carrier fight's accents, stingers in
+    // the score's key on its grid (web/audio/score/score.json `stingers`). A
+    // bell toll per approach step, the hatch hit at the hittable threshold,
+    // the heroic accent at take-off, a snare riser on a hatch's telegraph, a
+    // stab per volley, glass as a hatch field breaks, an impact per hatch
+    // destroyed and per falling wreck. The collapse needs none: its section
+    // starts with the hit. Over recorded music only `toll` has a stand-in
+    // (the reinforcement accent).
+    GameEventNames.bossApproach: 'toll',
     GameEventNames.bossInRange: 'hatch',
     GameEventNames.bossTakeoff: 'respawn',
+    GameEventNames.bossHatchTelegraph: 'riser',
+    GameEventNames.bossLaunch: 'stab',
+    GameEventNames.bossHatchFieldDown: 'glass',
+    GameEventNames.bossHatchDrop: 'impact',
+    GameEventNames.bossWreckFalls: 'impact',
   };
 
   void call(GameEvent event) {

@@ -468,3 +468,196 @@ moves. Judged by the operator.
 | Authoring every song by hand is slow | generators per song form (A–D sections from motifs), routes B and C for motifs and infill; the L3 score shows the scale of one song |
 | Lakh-trained models reproduce existing music | short infill only, an overlap screen, preference for Clef and Composer's Assistant data (M§2.1) |
 | Separated-stem transcription is not allowed | route B is optional; route A needs nothing from it (N9) |
+
+## 12. The score runtime as built (`work/score-runtime`, 2026-11-17)
+
+Operator, round 4 (`plan/operator-feedback-2026-11-17.md`): "each one of the little segments is 'fine' … it's combining
+them dynamically that has been the problem from day 1." This section records the combining runtime that now plays in
+the game. Where it differs from §5 and §11.4, this section is what shipped.
+
+### 12.1 What plays where
+
+| Where | Music |
+|---|---|
+| Sector 1 (Krybor), every route | score song `k`: `arrival` → `A` → `B` → `C` → `D` by wave progress, `clear` on the level clear, whose hold bar carries the travel |
+| Sector 5 (every carrier, all tours) | score song `c1`: `arrival` → `approach` → `H1`/`H2` by `bossHatchTier` → `transform` → `core` → `collapse` → `victory` |
+| Sectors 2–4, the menu, the defeat, the last carrier's finale and the ending | the recorded cues, unchanged (`web/audio/music/`) |
+
+- Tours 2–5 reuse `c1`. Their extra upper tiers map onto H1 and H2 by depth (§4.3 "Tier mapping").
+- The last carrier plays the score through the collapse and the victory. On `completed` it hands over to the recorded
+  finale, which carries the ending as before.
+- The score and the recorded cues hand over on each other's bar lines: the score starts on the playing cue's next bar
+  line, and a recorded cue starts on the score's next bar line. Immediate cues (clear, victory, cackle, ending) cut at
+  once with a 90 ms fade, as they did before.
+- `?score=off`, or the console's RECORDED switch (remembered per device, `demonAttack.score`), plays the recorded cues
+  everywhere for an A/B comparison.
+
+### 12.2 The score (route A, §11.6)
+
+- **Source of truth.** `art/music/soundtrack/song-map.json` lists the songs `k` and `c1`. Each has a key, a tempo, a
+  grid (`barSamples`), its sections (kind, bars, hold, next, wave or hatch), the tier masks and the v2, power and
+  fleet layers, the stingers and the accent map.
+- **Generator.** `lua tools/score/score_gen.lua` (Lua 5.4, no libraries) composes each section with the song's
+  composer and writes three outputs:
+  - `web/audio/score/<song>/<section>.mid`, SMF type 1 at PPQ 480: a conductor track (tempo, 4/4, key, section marker,
+    and a `hold` marker), then one track per part, named by its song-map id;
+  - `web/audio/score/score.json`, the map plus sizes and sha256, for the player;
+  - `lib/game/song_map.dart`, const data for `SongDirector`.
+
+  `--check` regates and compares the outputs byte for byte. The composers are `tools/score/songs/krybor.lua` and
+  `carrier.lua`. They are original writing from the game's own motifs (`tools/music_motifs.py` MOTIFS[1] and [5]:
+  riff, hook) and the campaign theme and harmony (`art/music/campaign.json`). No model wrote any notes, and the ollama
+  route was not needed (§11.6 route C stays a probe).
+- **Coherence by construction.** Every section of a song shares its key, tempo, grid, track set, voices and mix. The
+  sectors' calm and peril versions are one arrangement: tiers 1–2 are calm, and tiers 3–4 add the double kick, the
+  harmony lead and the pads. The carrier's hatch sections share the riff and the hook (gallop in H1, tremolo into
+  blasts in H2). The bridge's chromatic climb Db-D-Eb-E is the riff's own bar 7, and it lands on the core's F.
+- **Guitar parts carry the root of each power chord.** The guitar voice sounds the fifth, and the right double also
+  the octave, so a chord costs one voice, as a power-chord sample would (§11.10).
+- **Voice rules.** These are shared by the gate and the player:
+  - a key struck again on its track chokes its previous note;
+  - lead and bass are monophonic;
+  - pad chords end half a beat before the next chord, so their release carries the legato.
+- **Gates** (all pass):
+  - whole bars;
+  - onsets on the 1/16 or triplet grid;
+  - out-of-key notes ≤ 3 %. The carrier song (its riff is chromatic by design) and Krybor's Picardy clear are marked
+    `chromatic` and only report it;
+  - every track in a mask or layer;
+  - peak voices ≤ 32 with a 0.5-beat release, with every track sounding: 14 to 29 per section.
+- **Size.**
+  - 14 sections, 59.8 KB of MIDI, plus a 15.6 KB `score.json`: 22.5 KB gzipped for both songs. That is about
+    124 s of unique music at about 480 B/s, against the 1.36 MB of the rendered c1 pilot.
+  - The player is `web/audio/demon-score.js`: 37.8 KB, 11.6 KB gzipped.
+
+### 12.3 The player (`web/audio/demon-score.js`, inside demon-audio.js's scheduler)
+
+- **One clock.** demon-audio.js's 25 ms timer calls `tick(now + 0.25)`. Every note is scheduled ahead with `start(when)`
+  on the audio clock, so the main thread does a few node creations per tick. The lookahead is 0.25 s for the score
+  (0.12 s for the recorded cues), because score moves are quantised to bars anyway. Stingers schedule at once on their
+  own anchors.
+- **Moves.** `demonAudio.song(move)` takes `{song, section?, at, quantum, enter, tier?, variant?, fleet?, reason,
+  fallback?}` and returns the landing time: −1 while loading or before the first gesture (the move then runs once
+  ready), or −2 when the score is off (the fallback cue plays).
+  - A move lands at `at`. If `at` falls inside the already-scheduled window, it slips to the next line (`state.slipped`).
+  - The latest pending move replaces an earlier one.
+  - At a move, the left section's held notes are released over 30 ms, and notes scheduled past the move never start.
+  - `enter: same` keeps the bar position, modulo the destination's length.
+  - Tails and bridges hand over to `next` at their end. A tail without `next` repeats its hold bars.
+- **Intensity.** It is a track mask applied on the requested line: newly audible tracks fade in over 20 ms, silenced
+  ones fade out over 60 ms, and the notes of silent tracks are not scheduled. Nothing restarts.
+  - The power-up layer (cymbals and double kick) follows `powerLayer()` on the next bar line.
+  - The bright shelf still opens while a pickup falls.
+- **Stingers.** These are scale-degree scores in `score.json`, transposed to the playing section's key (`clear` is in
+  E major, `victory` in F major) and anchored on its grid.
+  - Lead-ins with negative times end on the anchor; the dive fill ends on the next bar line.
+  - Each stinger has a minimum spacing in beats. At most two play at once, except the life-loss accents.
+- **Voices** (synthesis: §11.8 step 2, the guaranteed-everywhere layer). Each voice role passes through a bus:
+
+  | Voice | Synthesis | Bus |
+  |---|---|---|
+  | Kick | sine with a pitch drop, plus a noise click | drum bus |
+  | Snare | triangle body plus band-passed noise | drum bus |
+  | Hats, ride, crash, china, splash | filtered noise; the ride adds a ping | drum bus |
+  | Toms | sines with a pitch drop | drum bus |
+  | Bass | saw plus sine through an enveloped low-pass | light tanh drive and a low-pass |
+  | Guitars | detuned saws per chord tone, darker and damped when palm-muted (velocity ≤ 92) | §11.4 chain: pre-EQ high-pass → gain → tanh `WaveShaper` (4x oversampled, 2x on phones) → a second shaper → cabinet filters (80 Hz high-pass, −5 dB at 400 Hz, +4 dB presence at 2.4 or 2.9 kHz, 5.5 kHz low-pass) → left and right doubles with different curves |
+  | Lead | two saws with delayed vibrato | drive, cabinet and a 0.3 s echo |
+  | Organ | additive partials | pad bus |
+  | Strings | detuned saws, slow attack | pad bus |
+  | Brass | a low-pass envelope swell | pad bus |
+  | Choir | band-passed saw and triangle | pad bus |
+  | Timpani | pitched sine with a thump | percussion bus |
+  | Bells | four inharmonic partials | percussion bus |
+
+  The pad bus has a long generated convolution room (1.7 s, 1.1 s on phones), and the drum bus a little of it.
+- **Voice cap.** 48 voices on desktop and 32 on phones (`deviceMemory` ≤ 4 or a coarse pointer). Pads are stolen
+  first, then leads; kick, snare and bass never.
+- **The sample-bank seam.** `makeVoice(role, pitch, velocity, at, duration, destination)` is the one function a bank
+  replaces. With tillandsias#1103 or the operator's consent (N11), it looks up a zone and plays an
+  `AudioBufferSourceNode` into the same role bus, falling back to the synth per note until the zone decodes (§11.8).
+  The score, the graph player, the buses and `SongDirector` stay as they are.
+- **Diagnostics.** `demonAudio.state.score` reports:
+  - the section and its start;
+  - the pending move, the mask, the audible tracks and the queued masks;
+  - voices, the cap, stolen voices and slipped moves;
+  - the last 16 moves and stingers.
+
+  `demonAudio.scorePosition` reports the playing section and the time of its beat 0.
+
+### 12.4 `SongDirector` (`lib/game/song_director.dart`, pure Dart)
+
+- **Inputs.**
+  - Every scene cue of main.dart goes through `cue(mode, …)`. It returns false where the recorded cue should play.
+  - It listens on the shared bridge for `musicIntensity`, `waveStart`/`cohortMerged`, `fleetIntact`,
+    `bossHatchTier`, `bossTransform`, `bossCoreExposed`, `bossShieldFailing`, `bossModuleLost`, `bossCollapseStart`
+    and `bossCollapseEnd`. These are all structured events or MusicDirector's own; nothing new is emitted, so nothing
+    is double-emitted (CLAUDE.md §3).
+  - `MusicBridge` keeps the accents and forwards the carrier's accents per §4.3. `bossLaunch` plays a light `stab`
+    rather than the full `hit`, because volleys come often.
+- **The grid.** The director keeps its own picture of the grid: section starts on the audio clock (`AudioSongClock`
+  reads `demonAudio.time`). Each move is sent with an explicit bar-line (or beat-line) time at least 0.3 s ahead. It
+  re-syncs from `demonAudio.scorePosition` when the player reports a different section, for example after a slip or a
+  deferred start.
+- **The rules of §4.3.**
+  - Minimum dwell: 2 bars, and 1 bar before the transformation.
+  - The latest waiting request wins.
+  - Tier mapping by depth.
+  - The collapse and the clear land on the next beat; the rest on the next bar.
+  - The v2 layer is sticky once the shield fails (hatch sections) or a module is lost (core).
+  - The fleet layer joins on `fleetIntact`.
+  - Wave progress only moves forward.
+- **Tests.** `test/song_director_test.dart` covers the sector sequence, the whole fight graph on bar lines, two quick
+  tiers, the dwell, depth mapping, the recorded-cue hand-backs, the deferred sync, the score-off fallback, the fleet
+  layer and the move format. `test-worker/score.test.mjs` runs the real player on a mocked audio clock and covers:
+  - the score files against the map;
+  - bar-exact hand-over, no gap at a move, and latest-wins;
+  - the bridge into the core;
+  - same position and beat moves, and slip;
+  - masks without a restart, and the power, v2 and fleet layers;
+  - hand-over in both directions with the recorded cues, and stingers;
+  - the score-off fallback, and the voice cap over a long fight.
+
+### 12.5 How to hear it
+
+- **In the game.** Play sector 1, or open `/console`, choose BOSS with FIGHT or FAST DECAY, and launch: the real fight
+  drives the score.
+- **On `/console`, the SCORE · LISTEN panel** drives the live player through its own `SongDirector`, using the game's
+  event names:
+  - CARRIER FIGHT plays the fight's events on their own timing (approach tolls, tier 1, telegraph, volley, tier 2, the
+    shield failing, the 3.5 s transformation, the core, a module lost, the collapse, the fleet and the victory) in
+    about 55 s;
+  - SECTOR SONG plays the arrival, four waves with the intensity rising and falling, dives, a last stand and the
+    clear;
+  - step buttons trigger every section move and every stinger by hand;
+  - SCORE / RECORDED switches the game for an A/B comparison.
+- **Not verified in a real browser here.** The host preview serves only the operator's checkout, so the synth voices,
+  levels and CPU load still need a listen. That is the operator's verdict (N1, N13), together with the mix balance
+  between voices, which no metric here measures.
+
+### 12.6 Coexistence with the rendered audio (§11.2)
+
+- **The rendered pilot sections are not used.** These are `art/music/soundtrack/pilot/c1-*.opus` (7 files, 1.36 MB,
+  under `art/`, never shipped). They are full mixes of the same parts the score plays, so under §11.2 they cannot be
+  texture beds. A future choir or air bed would be a new no-drums take (task 8.7).
+- **Proposed, for the lead to decide (not done here):**
+  - once the operator approves the `c1` score by ear, delete the seven pilot encodes. Their recipe stays the record
+    (N8);
+  - once `k` and `c1` are approved, the recorded `l1-*` and `l5-*` cues in `web/audio/music/` (1.98 MB as Opus) and
+    `web/audio/midi/` (22 KB) are reached only through RECORDED or `?score=off`; delete them when the A/B is no longer
+    needed.
+- **Found in passing.** `web/audio/music/` still ships an `.m4a` (AAC) twin of every cue (9.68 MB in all), although
+  N5 decided on one format with no AAC fallback, and demon-audio.js loads only `.ogg` (`formats = ['ogg']`). That is
+  dead weight, flagged for the lead.
+
+### 12.7 What the sample bank would add
+
+The bank (N11, tasks 8.5 and 8.6) is real recorded instruments behind the same seam:
+
+- multi-velocity drum hits with round-robins instead of noise and sine models;
+- a DI bass and DI guitars through the same amp and cabinet chain, which is the largest audible step (§11.10);
+- organ, brass, strings, timpani and tubular bells from VCSL and VSCO 2 CE.
+
+Its budget stays ≤ 2 MB Opus and ≤ 41 MB decoded (16 MB on phones). There is no CC0 choir: a texture bed carries the
+choir (N12), and the synth choir plays meanwhile. Nothing in the score, the graph, the director or the tests changes
+when it lands.
