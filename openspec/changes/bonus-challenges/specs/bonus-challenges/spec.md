@@ -11,7 +11,7 @@ Each bonus level SHALL declare one perfect-run challenge as data on its definiti
 
 #### Scenario: Stormfront
 - **WHEN** a Stormfront is played
-- **THEN** its challenge reads DODGE EVERY BOLT with a bolt pictogram, and fails when a bolt touches the ship, a shield knocked off included; a bolt the lightning rod grounds does not fail it
+- **THEN** its challenge reads DODGE EVERY BOLT with a bolt pictogram, and fails when a bolt lands with the ship inside the bright column its tell draws: a hit, a shield knocked off or a graze that costs no life; a bolt the lightning rod grounds, or one on a ship still protected after a respawn, does not fail it
 
 #### Scenario: A new level
 - **WHEN** a new bonus level declares a challenge that fails on a note of its own and its mechanic reports that note
@@ -32,7 +32,7 @@ The model SHALL track the challenge of the bonus level being played as live (in 
 An earned challenge SHALL add its lives through the extra-life path at the level's last kill, play the extra-life fanfare, and pay once per visit. The run's won challenges SHALL be kept in the checkpoint and shown on the run record as the level's perfect-run medal.
 
 #### Scenario: A clean storm
-- **WHEN** a Stormfront is cleared with no bolt touching the ship
+- **WHEN** a Stormfront is cleared with every bolt landing clear of the ship's column
 - **THEN** the player gains exactly one life, the earned event is queued before the clear's own, and the run record shows the STORMFRONT · 1UP medal
 
 #### Scenario: Restored run

@@ -767,3 +767,32 @@ hits baseline now holds the new values; the seconds baseline is unchanged.
   dive shields).
 - Fixtures that pinned the 8-kill drop on route 0 now read `killDropEvery` (campaign model and refinements); two
   tests that a collected drop now disturbs clear their pickups or shield (bonus-level PRNG, Stormfront tell).
+
+## Bonus challenges (2026-11-17, change `bonus-challenges`): a 1UP for a perfect bonus level
+
+Each bonus level pays one life for a perfect run: Supply Run CATCH ALL CARGO (no crate past the ship unopened, no
+prize past it uncaught), Stormfront DODGE EVERY BOLT (no bolt landing with the ship inside its bright column).
+Harness `test/support/challenge_pilot.dart`; `--dart-define=BONUS_CHALLENGE=true test/bonus_challenges_rate_test.dart`
+prints the table (routes 0-1, sectors 2-4, every difficulty, eight seeds, 48 runs per level and difficulty). The
+Average pilot is the bonus-balance pilot (not trying); the Challenger tries (0.25 s reaction, 70 % aim).
+
+| Level | Pilot | Easy | Normal | Hard | Pooled |
+|---|---|---:|---:|---:|---:|
+| Supply Run | Average | 4.2 % | 0.0 % | 0.0 % | 1.4 % |
+| Supply Run | Challenger | 35.4 % | 27.1 % | 27.1 % | 29.9 % |
+| Stormfront | Average | 4.2 % | 2.1 % | 4.2 % | 3.5 % |
+| Stormfront | Challenger | 97.9 % | 66.7 % | 68.8 % | 77.8 % |
+
+Before the graze rule (Stormfront failing only on a hit in the 13-unit core): Average 26.4 %, Challenger 54.2 %;
+the graze rule is the tuning (design §5).
+
+**Lives budget, before → after.** Before: no life is paid in a bonus level beyond the hearts. After: expected extra
+lives per run .85 × (Supply Run rate + Stormfront rate) / 2 = **0 → 0.02** for the Average pilot and **0 → 0.46**
+for the Challenger, never more than one per run (one bonus level per run). Starting lives are unchanged (3; 5 on
+Easy).
+
+**§7 gates: unchanged by construction.** `tools/analyze_difficulty.dart`, `test/difficulty_calibration_test.dart`,
+`test/campaign_playtest_test.dart`, `test/boss_endurance_test.dart`, `test/perspective_difficulty_test.dart` and
+`test/sentinel_rush_fairness_test.dart` start runs without a run seed (`BonusPlan.none`): no bonus level, no
+challenge, no extra life. They pass unchanged on this branch (the full suite, design §5); the bonus-balance gate
+also passes (its pilots never touch the challenge state, which draws no random numbers).
