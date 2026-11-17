@@ -1,0 +1,152 @@
+{
+  "schema": "demon-attack.song-map/v1",
+  "comment": "Source of truth for the MIDI-first score (openspec/changes/adaptive-soundtrack design §3, §4, §11). tools/score/score_gen.lua composes every section listed here into web/audio/score/<song>/<section>.mid and packs this map into web/audio/score/score.json (for demon-score.js) and lib/game/song_map.dart (for SongDirector). Edit this file, then rerun the generator; never edit the outputs. Songs not listed here still play the recorded cues (web/audio/music). Section kinds: loop (repeats until a move), tail (plays once; then its `hold` bars repeat, or it hands over to `next`), bridge (plays once and always hands over to `next` at its end). `mask: all` plays every track except the fleet layer; otherwise the tier masks apply (`masks` on the song or section override the shared ones). `hatch` numbers the carrier's hatch sections, `wave` orders a sector's wave-progress sections. Grids are integer samples per 4/4 bar at 48 kHz (tools/music_motifs.py BAR_SAMPLES).",
+  "ppq": 480,
+  "seed": 1982,
+  "dwellBars": 2,
+  "tracks": {
+    "drums": { "role": "drums", "channel": 9 },
+    "cymbals": { "role": "drums", "channel": 9 },
+    "drums2": { "role": "drums", "channel": 9 },
+    "bass": { "role": "bass", "channel": 0 },
+    "gtrL": { "role": "guitarL", "channel": 1 },
+    "gtrR": { "role": "guitarR", "channel": 2 },
+    "clean": { "role": "clean", "channel": 3 },
+    "lead": { "role": "lead", "channel": 4 },
+    "lead2": { "role": "lead", "channel": 5 },
+    "organ": { "role": "organ", "channel": 6 },
+    "strings": { "role": "strings", "channel": 7 },
+    "brass": { "role": "brass", "channel": 8 },
+    "choir": { "role": "choir", "channel": 10 },
+    "timpani": { "role": "timpani", "channel": 11 },
+    "bells": { "role": "bells", "channel": 12 },
+    "fanfare": { "role": "brass", "channel": 13 }
+  },
+  "masks": {
+    "1": ["drums", "bass", "gtrL", "gtrR", "clean"],
+    "2": ["drums", "bass", "gtrL", "gtrR", "clean", "lead", "cymbals", "timpani"],
+    "3": ["drums", "bass", "gtrL", "gtrR", "clean", "lead", "cymbals", "timpani", "drums2", "lead2", "organ"],
+    "4": ["drums", "bass", "gtrL", "gtrR", "clean", "lead", "cymbals", "timpani", "drums2", "lead2", "organ", "strings", "brass", "choir", "bells"]
+  },
+  "layers": {
+    "v2": ["lead2", "choir"],
+    "power": ["cymbals", "drums2"],
+    "fleet": ["fanfare"]
+  },
+  "plays": [
+    { "level": 1, "song": "k" },
+    { "level": 5, "song": "c1" }
+  ],
+  "songs": {
+    "k": {
+      "name": "Krybor",
+      "form": "sector",
+      "key": "E minor",
+      "tonic": 4,
+      "mode": "minor",
+      "bpm": 170,
+      "barSamples": 67765,
+      "motifs": "tools/music_motifs.py MOTIFS[1] (riff, hook) and art/music/campaign.json (theme, harmony)",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "A", "mask": "all", "character": "quiet clean arrival: clean guitar and organ, the theme on bells, drums build into A" },
+        "A": { "kind": "loop", "bars": 8, "wave": 1, "character": "the riff: E5 downstrokes with the G-A push, punk drive, the shouted hook on lead" },
+        "B": { "kind": "loop", "bars": 8, "wave": 2, "character": "the answer: galloping riff, the campaign theme called and answered" },
+        "C": { "kind": "loop", "bars": 8, "wave": 3, "character": "the reduced contrast: half-time, ringing chords, clean arpeggios, the theme augmented" },
+        "D": { "kind": "loop", "bars": 8, "wave": 4, "character": "the developed recap: double-time drums, the hook in twin thirds and up an octave" },
+        "clear": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "key": "E major", "chromatic": true, "character": "the march flourish into an E major chord, then a held pad through the travel" }
+      }
+    },
+    "c1": {
+      "name": "Carrier, tour 1",
+      "form": "carrier",
+      "key": "F minor",
+      "tonic": 5,
+      "mode": "minor",
+      "bpm": 190,
+      "barSamples": 60632,
+      "chromatic": true,
+      "motifs": "tools/music_motifs.py MOTIFS[5] (riff, hook) and art/music/campaign.json (theme)",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "approach", "mask": "all", "character": "the fog and the overflight: organ pedal, tolling bell, timpani roll, doom swell" },
+        "approach": {
+          "kind": "loop", "bars": 8,
+          "masks": {
+            "1": ["drums", "bass", "gtrL", "gtrR", "bells"],
+            "2": ["drums", "bass", "gtrL", "gtrR", "bells", "cymbals", "timpani", "lead"],
+            "3": ["drums", "bass", "gtrL", "gtrR", "bells", "cymbals", "timpani", "lead", "drums2", "organ", "brass", "lead2"],
+            "4": ["drums", "bass", "gtrL", "gtrR", "bells", "cymbals", "timpani", "lead", "drums2", "organ", "brass", "lead2", "choir", "strings"]
+          },
+          "character": "slow crushing half-time doom: the riff as sustained chords, tolling bells, brass drones"
+        },
+        "H1": { "kind": "loop", "bars": 8, "hatch": 1, "character": "galloping battle metal on the riff, the carrier hook on lead" },
+        "H2": { "kind": "loop", "bars": 8, "hatch": 2, "character": "tremolo picking rising into blast beats, twin leads" },
+        "transform": { "kind": "bridge", "bars": 3, "next": "core", "mask": "all", "character": "riser: timpani and snare rolls, organ and choir Db to Eb, the chromatic climb landing on the core" },
+        "core": {
+          "kind": "loop", "bars": 8,
+          "masks": {
+            "1": ["drums", "bass", "gtrL", "gtrR", "organ"],
+            "2": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir"],
+            "3": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir", "drums2", "lead2"],
+            "4": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir", "drums2", "lead2", "brass", "strings", "bells"]
+          },
+          "character": "the climax: blast beats, tremolo, cathedral organ, choir, the hook an octave up"
+        },
+        "collapse": { "kind": "tail", "bars": 8, "next": "victory", "mask": "all", "character": "monumental half-time doom finale: the hull falls" },
+        "victory": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "key": "F major", "character": "F major fanfare on the campaign theme; the fleet layer adds the brass" }
+      }
+    }
+  },
+  "stingers": {
+    "comment": "Accents in the current key: `deg` is a scale degree of the playing section's key (1-7, may exceed 7), `semi` a chromatic step from its tonic, `oct` the MIDI octave (C4 = 60), `drum` a GM drum note. `t` and `len` are in beats from the anchor, the next multiple of `quantum` beats on the score's grid (with negative `t` the stinger leads into its anchor). `spacing` is the minimum beats between two of one stinger.",
+    "fill": { "quantum": 4, "spacing": 8, "notes": [
+      { "t": -2, "len": 0.25, "v": 96, "track": "drums", "drum": 50 }, { "t": -1.75, "len": 0.25, "v": 90, "track": "drums", "drum": 50 },
+      { "t": -1.5, "len": 0.25, "v": 98, "track": "drums", "drum": 48 }, { "t": -1.25, "len": 0.25, "v": 92, "track": "drums", "drum": 48 },
+      { "t": -1, "len": 0.25, "v": 102, "track": "drums", "drum": 45 }, { "t": -0.75, "len": 0.25, "v": 96, "track": "drums", "drum": 45 },
+      { "t": -0.5, "len": 0.25, "v": 108, "track": "drums", "drum": 43 }, { "t": -0.25, "len": 0.25, "v": 112, "track": "drums", "drum": 38 },
+      { "t": 0, "len": 1, "v": 118, "track": "drums", "drum": 49 }, { "t": 0, "len": 0.5, "v": 118, "track": "drums", "drum": 36 } ] },
+    "hit": { "quantum": 1, "spacing": 2, "notes": [
+      { "t": 0, "len": 1.5, "v": 116, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 0, "len": 1.5, "v": 116, "track": "gtrL", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 1.5, "v": 112, "track": "gtrR", "deg": 1, "oct": 3 }, { "t": 0, "len": 1.5, "v": 112, "track": "gtrR", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 1.5, "v": 110, "track": "bass", "deg": 1, "oct": 1 },
+      { "t": 0, "len": 1, "v": 120, "track": "drums", "drum": 49 }, { "t": 0, "len": 0.5, "v": 120, "track": "drums", "drum": 36 } ] },
+    "stab": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 0.45, "v": 104, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 0, "len": 0.45, "v": 104, "track": "gtrL", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 0.45, "v": 100, "track": "brass", "deg": 1, "oct": 3 }, { "t": 0, "len": 0.45, "v": 100, "track": "brass", "deg": 5, "oct": 3 },
+      { "t": 0, "len": 0.5, "v": 104, "track": "drums", "drum": 38 } ] },
+    "hatch": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 2, "v": 112, "track": "timpani", "deg": 1, "oct": 2 }, { "t": 0, "len": 2, "v": 108, "track": "bass", "deg": 1, "oct": 1 },
+      { "t": 0, "len": 1, "v": 112, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 0, "len": 1, "v": 112, "track": "gtrL", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 3, "v": 90, "track": "bells", "deg": 1, "oct": 5 }, { "t": 0, "len": 1, "v": 110, "track": "drums", "drum": 55 } ] },
+    "rise": { "quantum": 0.5, "spacing": 2, "notes": [
+      { "t": 0, "len": 0.45, "v": 96, "track": "brass", "deg": 1, "oct": 4 }, { "t": 0.5, "len": 0.45, "v": 102, "track": "brass", "deg": 3, "oct": 4 },
+      { "t": 1, "len": 1, "v": 110, "track": "brass", "deg": 5, "oct": 4 }, { "t": 0, "len": 0.25, "v": 90, "track": "drums", "drum": 38 },
+      { "t": 0.5, "len": 0.25, "v": 100, "track": "drums", "drum": 38 }, { "t": 1, "len": 1, "v": 112, "track": "drums", "drum": 57 } ] },
+    "impact": { "quantum": 0.25, "spacing": 1, "notes": [
+      { "t": 0, "len": 2, "v": 120, "track": "bass", "deg": 1, "oct": 1 }, { "t": 0, "len": 2, "v": 120, "track": "gtrL", "deg": 1, "oct": 2 },
+      { "t": 0, "len": 2, "v": 120, "track": "gtrL", "deg": 5, "oct": 2 }, { "t": 0, "len": 2, "v": 118, "track": "timpani", "deg": 1, "oct": 2 },
+      { "t": 0, "len": 0.5, "v": 124, "track": "drums", "drum": 36 }, { "t": 0, "len": 1.5, "v": 120, "track": "drums", "drum": 57 } ] },
+    "gloat": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 0.9, "v": 100, "track": "brass", "semi": 0, "oct": 3 }, { "t": 1, "len": 0.9, "v": 104, "track": "brass", "semi": 1, "oct": 3 },
+      { "t": 2, "len": 2, "v": 108, "track": "brass", "semi": 0, "oct": 3 }, { "t": 2, "len": 2, "v": 92, "track": "organ", "semi": 6, "oct": 2 },
+      { "t": 2, "len": 2, "v": 92, "track": "organ", "semi": 0, "oct": 2 } ] },
+    "respawn": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 0.45, "v": 100, "track": "lead", "deg": 1, "oct": 4 }, { "t": 0.5, "len": 0.45, "v": 104, "track": "lead", "deg": 5, "oct": 4 },
+      { "t": 1, "len": 1.5, "v": 112, "track": "lead", "deg": 1, "oct": 5 }, { "t": 1, "len": 1, "v": 108, "track": "drums", "drum": 49 } ] },
+    "riser": { "quantum": 0.5, "spacing": 4, "notes": [
+      { "t": 0, "len": 0.25, "v": 52, "track": "drums", "drum": 38 }, { "t": 0.25, "len": 0.25, "v": 60, "track": "drums", "drum": 38 },
+      { "t": 0.5, "len": 0.25, "v": 68, "track": "drums", "drum": 38 }, { "t": 0.75, "len": 0.25, "v": 76, "track": "drums", "drum": 38 },
+      { "t": 1, "len": 0.25, "v": 84, "track": "drums", "drum": 38 }, { "t": 1.25, "len": 0.25, "v": 92, "track": "drums", "drum": 38 },
+      { "t": 1.5, "len": 0.25, "v": 100, "track": "drums", "drum": 38 }, { "t": 1.75, "len": 0.25, "v": 110, "track": "drums", "drum": 38 },
+      { "t": 0, "len": 2, "v": 70, "track": "timpani", "deg": 5, "oct": 2 } ] },
+    "glass": { "quantum": 0.25, "spacing": 1, "notes": [
+      { "t": 0, "len": 1.5, "v": 92, "track": "bells", "deg": 5, "oct": 5 }, { "t": 0, "len": 1.5, "v": 84, "track": "bells", "semi": 1, "oct": 6 },
+      { "t": 0, "len": 0.25, "v": 96, "track": "drums", "drum": 42 } ] },
+    "toll": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 3, "v": 108, "track": "bells", "deg": 1, "oct": 4 }, { "t": 0, "len": 3, "v": 84, "track": "organ", "deg": 1, "oct": 2 },
+      { "t": 0, "len": 3, "v": 84, "track": "organ", "deg": 5, "oct": 2 }, { "t": 0, "len": 1.5, "v": 96, "track": "timpani", "deg": 1, "oct": 2 } ] }
+  },
+  "accents": {
+    "dive": "fill", "laststand": "hit", "hatch": "hatch", "reinforce": "rise", "breakthrough": "hit", "destroyed": "impact",
+    "gloat": "gloat", "respawn": "respawn", "riser": "riser", "stab": "stab", "glass": "glass", "impact": "impact", "toll": "toll"
+  }
+}
