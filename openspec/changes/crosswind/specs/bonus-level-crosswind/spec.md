@@ -36,12 +36,19 @@ Kites SHALL enter from the upwind edge (from the top in a lull), ride the wind f
 - **THEN** its sideways speed points with the wind
 
 ### Requirement: Crosswind briefing, radio and music
-The urgent-mission card SHALL show one bold goal line and one how-to line, and the radio SHALL speak exactly one briefing call (`bonusCall.crosswind`, one sentence), as for every bonus level. The level SHALL request the score section `bonus-wind` (its `BonusLook.cue`) and fail soft, staying on the current section, while the song has none.
+The urgent-mission card SHALL show one bold goal line and one how-to line, and the radio SHALL speak exactly one briefing call (`bonusCall.crosswind`, one sentence), as for every bonus level. The level's start SHALL play its own song (`bonus-wind`); a score without that song SHALL move nothing and leave the music where it is.
 
-#### Scenario: Missing section
-- **WHEN** Crosswind starts in a song without a `bonus-wind` section
+#### Scenario: Missing song
+- **WHEN** Crosswind starts and the score has no `bonus-wind` song
 - **THEN** the director sends no move and the music stays on its section
 
-#### Scenario: Section present
-- **WHEN** Crosswind starts in a song with a `bonus-wind` section
-- **THEN** the director moves to it
+#### Scenario: Song present
+- **WHEN** Crosswind starts in a sector song
+- **THEN** the director moves to `bonus-wind`
+
+### Requirement: Every kite down pays a 1UP
+Crosswind SHALL declare the bonus-challenges condition `everyKite` ("POP EVERY KITE", a kite pictogram): a kite that rides off the screen during combat SHALL fail it, and at least one kite SHALL have been popped by the clear.
+
+#### Scenario: A kite escapes
+- **WHEN** a kite leaves the screen during combat
+- **THEN** the challenge fails at once and `bonusChallengeFailed` is sent

@@ -127,12 +127,10 @@ only. Aim upwind and let the gust carry it."
   `kiteEscaped` (brood taunts first), and the regular levels' `windStart`, `windGust` (urgent, 9 s cooldown, 60 %),
   `windStop`. Family friendly; brood lines are grunts with a gloss.
 - Music (bonus-music's API, adaptive-soundtrack §12.10.5): `bonusStart` with `variant: 'crosswind'` starts the
-  level's own song (`bonus-wind`) by itself, `bonusMidway` lifts it to B, the clear hands back to the sector's clear.
-  Before that song exists the director falls back to a section of the sector's song named like `BonusLook.cue`, and
-  with neither it sends nothing and the music stays (tested). Every `windGust` also queues
-  `musicAccent {name: 'gust'}` (`MusicBridge.accentEvent`; the model names it `musicAccentEvent`, being pure Dart).
-  `bonusChallengeEarned` → `oneup` and `bonusChallengeFailed` → `challenge-fail` (MusicBridge accents, for every bonus
-  level). An unknown name plays nothing.
+  level's own song `bonus-wind` (`scoreBonusSongs`), `bonusMidway` lifts it to B, the clear hands back to the sector's
+  clear; a score without that song moves nothing (tested). Every `windGust` also queues `musicAccent {name: 'gust'}`
+  (`MusicBridge.accentEvent`; the pure model names it `musicAccentEvent`). The 1UP's `oneup` and `challenge-fail` are
+  queued by bonus-challenges' model hooks for every level. An unknown name plays nothing.
 - Review: `test/crosswind_review_test.dart` (tag `review`) → `art/contact/crosswind-sheet.png`: calm, breeze, gale,
   gale + rain, the level at 6 s and 16 s, a gale at LITE and with reduced motion. Gallery: three wind tiles on the
   weather page; Crosswind on the bonus page (it lists the catalogue).
@@ -182,7 +180,5 @@ would make radio edits and merges mechanical; (3) a shared review-scene harness.
 
 - Should the wind push the player's ship too? The operator's words cover bullets and demons; the coordinator's note
   mentioned the ship in passing. Not done: it would change the controls' feel.
-- `bonus-wind`, `gust`, `oneup` and `challenge-fail` need bonus-music's sections and stingers; until then they are
-  silent by design.
 - `lightning-rework` owns lightning; the weather hooks here are `_windBeginLevel`, `_windStep` and the scene's
   `wind.advance`/`paintSky`/`paintSock`.

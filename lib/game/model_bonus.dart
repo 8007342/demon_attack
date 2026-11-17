@@ -375,7 +375,13 @@ extension ArcadeBonus on ArcadeModel {
       'challenge': c.def.id,
       'by': name,
     });
+    _queueGameEvent(_musicAccent, {'name': 'challenge-fail'});
   }
+
+  /// bonus-music's stinger request (`MusicBridge.accentEvent` in
+  /// music_director.dart, kept as a string: the model imports no audio).
+  /// Unknown names fail soft.
+  static const _musicAccent = 'musicAccent';
 
   /// The ship was hit inside a bonus level ([lost]: a ship, else a shield).
   void _bonusShipHit({required bool lost}) {
@@ -407,6 +413,8 @@ extension ArcadeBonus on ArcadeModel {
       'challenge': c.def.id,
       'lives': lives,
     });
+    // The stop-time 1UP stinger (bonus-music: on the next bar line).
+    _queueGameEvent(_musicAccent, {'name': 'oneup'});
   }
 
   /// Restores the won 1UPs of a checkpoint (unknown ids are kept: the

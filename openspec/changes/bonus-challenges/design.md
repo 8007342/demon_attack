@@ -14,7 +14,7 @@ replays it exactly, and the calibrated campaign (no run seed, no bonus level) is
 | Level | Id | Label | Pictogram | Fails on | Needs by the clear |
 |---|---|---|---|---|---|
 | Supply Run | `catchAll` | CATCH ALL CARGO | parachute crate | `crateMissed`, `cargoMissed` | `cargoCaught` ≥ 1 |
-| Stormfront | `noBoltHit` | DODGE EVERY BOLT | bolt | `boltHit` | none |
+| Stormfront | `noBoltHit` | DODGE EVERY BOLT | bolt | `boltHit`, `boltGrazed` | none |
 
 Checked against the rules in code:
 - Supply Run: a crate is shot from below, so once it passes the ship's row (`ArcadeModel.shipY`) no shot can reach
@@ -22,9 +22,11 @@ Checked against the rules in code:
   can no longer be caught: `cargoMissed`. `SupplyRunCues` (the level's existing cue tracker) reports both in combat
   only, so the crates the clear bursts open fall through the salvage window without failing anything. Kills drop
   nothing in a Supply Run, so every falling pickup is cargo.
-- Stormfront: `StormfrontMechanic._land` already decides `hitShip` (a ship lost, or a shield knocked off); a bolt
-  the lightning rod grounds is not a hit, and a bolt on a ship still invulnerable from a respawn is not either. A
-  ship-aimed bolt that lands and misses reports `boltDodged` (counted, not required).
+- Stormfront: `StormfrontMechanic._land` already decides `hitShip` (a ship lost, or a shield knocked off): a
+  `boltHit`. A bolt that lands with the ship outside the lethal core but inside the bright column the tell draws
+  (`s.column`, ±34) is a graze, `boltGrazed`, and costs no life (§5 explains the pick). A bolt the lightning rod
+  grounds is neither, and a ship still invulnerable (a respawn, a broken shield) is neither hit nor grazed. A
+  ship-aimed bolt that lands clear of the band reports `boltDodged` (counted, not required).
 
 ## API
 For a new bonus level (the `crosswind` agent's wind level is the first user). Everything is in
@@ -139,7 +141,55 @@ adds the painted 1UP plate.
 All are written lines (`"pending": "text"`): no borrowed clip, so the borrowed count stays 55.
 
 ## 5. Balance and earn rates
-<!-- filled from the measurement -->
+Harness: `test/support/challenge_pilot.dart`; `test/bonus_challenges_rate_test.dart` gates a small sample in the suite
+(Normal, route 0, four seeds: the Average pilot wins at most half, the Challenger at least once and at least as often)
+and `--dart-define=BONUS_CHALLENGE=true` prints the full table: routes 0-1, sectors 2-4, every difficulty, eight
+seeds (1982, 7, 21, 42, 99, 314, 2718, 5150), 48 runs per level and difficulty, `startAt` the sector with the level
+forced. Pilots (99 lives, so a run always reaches the clear):
+- **Average**: the calibration's `AveragePilot` plus `chaseCrate`, as the bonus-balance gate plays (not trying).
+- **Challenger**: the same, trying for it with a 0.25 s reaction: it gets under a crate about to pass the ship,
+  slides under falling cargo, and keeps clear of a lightning tell's bright column. Still 70 % aim, no oracle.
+
+Earn rates (2026-11-17, on `work/bonus-challenges`):
+
+| Level | Pilot | Easy | Normal | Hard | **Pooled** | Failed by (runs) |
+|---|---|---:|---:|---:|---:|---|
+| Supply Run | Average | 4.2 % | 0.0 % | 0.0 % | **1.4 %** | cargoMissed 140, crateMissed 2 |
+| Supply Run | Challenger | 35.4 % | 27.1 % | 27.1 % | **29.9 %** | crateMissed 101 |
+| Stormfront | Average | 4.2 % | 2.1 % | 4.2 % | **3.5 %** | boltHit 58, boltGrazed 81 |
+| Stormfront | Challenger | 97.9 % | 66.7 % | 68.8 % | **77.8 %** | boltHit 22, boltGrazed 10 |
+
+Tuning path (picks logged here; the operator overrides):
+1. Stormfront first failed only on `boltHit` (the 13-unit lethal core): the Average pilot, which never looks at the
+   storm, won it 26.4 % of the time (Challenger 54.2 %, dodging only the core). Too easy for a 1UP.
+2. **Pick:** a bolt landing with the ship inside its bright column (the ±34 band the tell draws, `s.column`) is a
+   graze (`boltGrazed`) and fails it too, while costing no life. "Dodge" now means what the player sees: out of the
+   band. Average 3.5 %, Challenger 77.8 %. A ship still invulnerable (respawn, broken shield) is not grazed, as it
+   is not hit; the rod's wider column never grazes.
+3. Supply Run kept as built: Average 1.4 %, Challenger 29.9 %. Its misses are crates that pass unopened (three hits
+   each, up to three on screen); a player who chases every crate wins about a third of the time. Hard, and fair: the
+   crates' brackets and drop lines (mission-medals) show every one.
+
+Stormfront's Challenger rate is higher than a person's will be: the bot reads the column the instant its reaction
+time is up and never misjudges the band's edge. Supply Run's is closer to human play (it is limited by shots, not by
+reading). Both are left as they are pending the operator's playtest (task 5.5).
+
+**Lives budget.** A run meets at most one bonus level (`BonusTuning.maxPerRun` 1) with probability .85, either
+level with equal weight, so the expected extra lives per run are .85 × (rate(Supply Run) + rate(Stormfront)) / 2:
+- Average pilot: .85 × (1.4 % + 3.5 %) / 2 = **0.02 lives per run**;
+- Challenger: .85 × (29.9 % + 77.8 %) / 2 = **0.46 lives per run**, at most one.
+
+Against 3 starting lives (5 on Easy) and the hearts (four pieces per life), that is at most one extra life per run,
+early (routes 0-1 hold nine in ten bonus levels). The §7 calibration gates are unchanged: the difficulty tools and
+the campaign, endurance and fairness tests run without a run seed (`BonusPlan.none`), so they never meet a bonus
+level or a challenge.
+
+## 5a. Music (bonus-music)
+The model queues bonus-music's stinger request, the `musicAccent` game event (`MusicBridge.accentEvent`; the model
+spells the string because it imports no audio), with `{'name': 'challenge-fail'}` in the step a challenge breaks
+and `{'name': 'oneup'}` with the 1UP (a stop-time hit on the next bar line, at most once per 16 beats). A challenge
+that only falls short at the clear asks for no fail stinger: the clear's own music is starting. Unknown names fail
+soft, so this is silent until `work/bonus-music` (d1050d12) lands on `game`.
 
 ## 6. Cinematic-flow check
 No new screen, card, modal step or control; no floating text in the arena (the pip is in the HUD band). The card's

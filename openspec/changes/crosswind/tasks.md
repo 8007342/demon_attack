@@ -37,9 +37,9 @@
 
 ## 5. Radio and music
 - [x] 5.1 Lines appended to `art/comms/lines.json`; `comms_pipeline.py dart`
-- [x] 5.2 `BonusLook.cue = 'bonus-wind'`; `SongDirector._bonus` falls back to the cue and fails soft
-- [x] 5.3 Accents: `windGust` -> `gust`, `bonusChallengeEarned` -> `oneup`, `bonusChallengeFailed` -> `challenge-fail`
-- [x] 5.4 Tests: gust accent, fail-soft section, section present
+- [x] 5.2 Merged bonus-music (via origin/game): `bonusStart` crosswind plays `bonus-wind`; fail soft without it
+- [x] 5.3 `windGust` also queues `musicAccent {name: 'gust'}` (bonus-music's API)
+- [x] 5.4 Tests: gust swell per call, accent event name, own song and fail-soft
 
 ## 6. Calibration and gates
 - [x] 6.1 `tools/ordinary_wave_probe.dart` `wind=on skill=`; Average pilot `windSkill`

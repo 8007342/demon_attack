@@ -15,8 +15,8 @@ perfect run, and nothing on screen says what a perfect run would be.
   in a few lines; a mechanic reports its own notes with `model.challengeNote(name)` (design §API).
 - **The two shipped levels:**
   - Supply Run, CATCH ALL CARGO: no crate may pass the ship unopened and no prize may fall past it uncaught.
-  - Stormfront, DODGE EVERY BOLT: no lightning bolt may touch the ship (a shield knocked off counts; a bolt the
-    lightning rod grounds does not).
+  - Stormfront, DODGE EVERY BOLT: every bolt must land clear of the ship and of the bright band its tell draws (a
+    hit, a shield knocked off and a graze inside the band all count; a bolt the lightning rod grounds does not).
 - **Live state in the model**, pure Dart and deterministic: live (in progress, still possible), failed, earned. The HUD
   and the radio read it.
 - **Iconography:** a medal-style badge (gold rim, dark socket, the condition's pictogram) beside an arcade 1UP plate.

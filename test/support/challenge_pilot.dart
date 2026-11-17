@@ -100,22 +100,27 @@ void _tryFor(ArcadeModel m, Map<Object, double> seen) {
   }
   if (cargo != null) m.moveTo(cargo.x);
 
-  // 3. A lightning tell on the ship's column: step out of it, to the
-  // roomier side, away from any fork.
+  // 3. A lightning tell: keep the ship and its target clear of the bright
+  // band the tell draws (its column), on the side the ship is already on
+  // (the roomier one when it is at a wall or a fork is there).
   if (m.bonusMechanic case final StormfrontMechanic storm) {
-    for (final s in storm.cell.strikes) {
-      if (!s.telling || !noticed(s)) continue;
-      // Clear of the bright band the tell draws (its column), not just
-      // the lethal core.
+    final tells = [
+      for (final s in storm.cell.strikes)
+        if (s.telling && noticed(s)) s,
+    ];
+    for (final s in tells) {
       final reach = s.column + 8;
-      if ((s.x - m.shipX).abs() > reach) continue;
-      final forks = [
-        for (final o in storm.cell.strikes)
-          if (o.telling && !identical(o, s)) o.x,
-      ];
-      var side = m.shipX < 180 ? 1.0 : -1.0;
-      if (forks.any((x) => (x - (s.x + side * 50)).abs() < 40)) side = -side;
-      m.moveTo(s.x + side * 50);
+      if ((s.x - m.shipX).abs() > reach && (s.x - m.targetX).abs() > reach) {
+        continue;
+      }
+      double away(double side) => s.x + side * (reach + 14);
+      bool clear(double x) =>
+          x > 20 &&
+          x < ArcadeModel.width - 20 &&
+          tells.every((o) => (o.x - x).abs() > o.column + 8);
+      var side = m.shipX >= s.x ? 1.0 : -1.0;
+      if (!clear(away(side))) side = -side;
+      m.moveTo(away(side));
       break;
     }
   }
@@ -136,9 +141,7 @@ void _tryFor(ArcadeModel m, Map<Object, double> seen) {
     if (risk != null) {
       final flight = (ArcadeModel.shipY - risk.y) / ArcadeModel.shotSpeed;
       m.moveTo(
-        risk.x +
-            risk.vx * flight -
-            .7 * AveragePilot.expectedDrift(m, risk.y),
+        risk.x + risk.vx * flight - .7 * AveragePilot.expectedDrift(m, risk.y),
       );
     }
   }

@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import '../services/audio.dart';
-import 'bonus/bonus_catalog.dart' show bonusLevelById; // --- crosswind
 import 'game_events.dart';
 import 'song_map.dart';
 
@@ -120,12 +119,28 @@ class SongDirector {
     this.waveShare,
     String? Function(int level, int cycle)? songFor,
     Map<String, ScoreSong>? songs,
+    Map<String, String>? bonusSongs,
+    Set<String>? accents,
+    void Function(String name)? sendAccent,
   }) : _send = sendMove ?? ((m) => audioSong(m.toJson())),
        clock = clock ?? const AudioSongClock(),
        songFor = songFor ?? scoreSongFor,
-       songs = songs ?? scoreSongs;
+       songs = songs ?? scoreSongs,
+       bonusSongs = bonusSongs ?? scoreBonusSongs,
+       accents = accents ?? scoreAccents,
+       _sendAccent = sendAccent ?? audioAccent;
 
   final double Function(SongMove move) _send;
+  final void Function(String name) _sendAccent;
+
+  /// Bonus levels with a song of their own: level id -> song (form `bonus`).
+  final Map<String, String> bonusSongs;
+
+  /// The accent names the score plays as stingers.
+  final Set<String> accents;
+
+  /// The sector song a bonus song left (its `clear` ends the level).
+  String? _home;
   final SongClock clock;
   final String? Function(int level, int cycle) songFor;
   final Map<String, ScoreSong> songs;
@@ -189,6 +204,12 @@ class SongDirector {
         }
         return true;
       case 'levelclear':
+        // --- bonus-music: a bonus song hands back to its sector's clear.
+        final home = _home;
+        if (_song?.form == 'bonus' && home != null) {
+          _startSong(home, 'clear', quantum: 'beat', reason: 'levelClear');
+          return true;
+        }
         if (!_sector) return false;
         _request('clear', quantum: 'beat', dwell: 0, reason: 'levelClear');
         return true;
@@ -235,7 +256,18 @@ class SongDirector {
       case GameEventNames.waveStart || GameEventNames.cohortMerged:
         if (_sector) _waveProgress(event.name);
       case GameEventNames.bonusStart:
-        if (_sector) _bonus(event.data['variant'] as String?, event.name);
+        final variant = event.data['variant'] as String?;
+        final own = bonusSongs[variant];
+        if (_sector && own != null) {
+          playBonus(own, reason: event.name);
+        } else if (_sector) {
+          _bonus(variant, event.name);
+        }
+      case GameEventNames.bonusMidway:
+        // A bonus song's second wave lifts into its B section.
+        if (_song?.form == 'bonus' && _target != 'B') {
+          _request('B', reason: event.name);
+        }
       case GameEventNames.fleetIntact:
         if (fleet) return;
         fleet = true;
@@ -598,17 +630,10 @@ class SongDirector {
 
   /// A bonus level (`bonusStart`, its id in `variant`) plays its section of
   /// the sector's song for the whole level, from the end of the arrival.
-  /// --- crosswind: a section tagged with the level's id, else one named
-  /// like the level's cue (`BonusLook.cue`, e.g. `bonus-wind`); with
-  /// neither in the song the music fails soft and stays where it is.
   void _bonus(String? variant, String reason) {
     if (variant == null) return;
     final s = _song!;
-    final cue = bonusLevelById(variant)?.look.cue;
-    var section = s.sections.values.where((x) => x.bonus == variant);
-    if (section.isEmpty && cue != null) {
-      section = s.sections.values.where((x) => x.id == cue);
-    }
+    final section = s.sections.values.where((x) => x.bonus == variant);
     if (section.isEmpty || _target == section.first.id) return;
     _request(section.first.id, afterTail: true, reason: reason);
   }
@@ -629,6 +654,43 @@ class SongDirector {
         ? k
         : (1 + (k - 1) / math.max(1, upper - 1) * (n - 1)).round();
     return hatches[index.clamp(1, n) - 1].id;
+  }
+
+  // --- bonus-music (design §12.10): the API a bonus level calls ---------------
+
+  /// Plays bonus song [id] (form `bonus`, e.g. `bonus-wind`) from the
+  /// sector's song: its `A` lands at the end of the arrival's written bars,
+  /// else on the next bar line. `bonusStart` with a level id listed in
+  /// `scoreBonusSongs` calls it by itself; `bonusMidway` moves to `B`; the
+  /// level clear hands back to the sector's `clear`. Returns false (and moves
+  /// nothing) for an unknown name, a song that is not a bonus song, or when no
+  /// sector song is playing.
+  bool playBonus(String id, {String reason = 'bonus'}) {
+    final bonus = songs[id];
+    if (bonus == null || bonus.form != 'bonus' || bonus.sections.isEmpty) {
+      return false;
+    }
+    _advance(clock.now);
+    if (song == id) return true;
+    if (!_sector) return false;
+    _home = song;
+    final now = clock.now;
+    _sync(now);
+    final first = bonus.sections.containsKey('A')
+        ? 'A'
+        : (bonus.sections.keys.toList()..sort()).first;
+    _startSong(id, first, reason: reason, at: _writtenEnd(now) ?? -1);
+    return true;
+  }
+
+  /// Plays the stinger of accent [name] (`gust`, `oneup`, `challenge-fail`,
+  /// `cargo`, `thunder`, or any of `scoreAccents`) in the playing key on its
+  /// grid, layered over the section. Returns false for an unknown name: it
+  /// fails soft and plays nothing.
+  bool accent(String name) {
+    if (!accents.contains(name)) return false;
+    _sendAccent(name);
+    return true;
   }
 
   /// The level and route of the playing song (diagnostics and the console).

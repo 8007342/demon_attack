@@ -270,54 +270,41 @@ void main() {
       expect(swells, calls);
     });
 
-    test('a won or broken 1UP challenge asks for `oneup` / '
-        '`challenge-fail`', () {
+    test('the swell goes through bonus-music\'s accent event', () {
+      expect(musicAccentEvent, MusicBridge.accentEvent);
+      expect(scoreAccents, contains('gust'));
       final accents = <String>[];
-      final bridge = MusicBridge(onAccent: accents.add);
-      bridge(const GameEvent(GameEventNames.bonusChallengeEarned));
-      bridge(const GameEvent(GameEventNames.bonusChallengeFailed));
-      expect(accents, ['oneup', 'challenge-fail']);
+      MusicBridge(onAccent: accents.add)(
+        const GameEvent(musicAccentEvent, {'name': 'gust'}),
+      );
+      expect(accents, ['gust']);
     });
 
-    test('Crosswind fails soft while the song has no `bonus-wind`', () {
+    test('Crosswind starts its own song, and fails soft without it', () {
       final played = <SongMove>[];
-      final d = SongDirector(
-        sendMove: (m) {
-          played.add(m);
-          return 10;
-        },
-        clock: _Clock(),
-      );
-      d.cue('level', level: 2);
-      final before = played.length;
-      d.onGameEvent(
-        const GameEvent(GameEventNames.bonusStart, {'variant': 'crosswind'}),
-      );
-      expect(played.length, before); // no move, no crash
-      expect(d.log.map((s) => s.section), ['arrival']);
-    });
-
-    test('... and plays it once the song has one', () {
-      final songs = Map.of(scoreSongs);
-      final r = scoreSongs['r']!;
-      songs['r'] = ScoreSong(r.id, r.name, r.form, r.barSamples, {
-        ...r.sections,
-        'bonus-wind': const ScoreSection('bonus-wind', ScoreKind.loop, 8),
-      });
-      final played = <SongMove>[];
-      final d = SongDirector(
+      SongDirector rig(Map<String, ScoreSong> songs) => SongDirector(
         sendMove: (m) {
           played.add(m);
           return 10;
         },
         clock: _Clock(),
         songs: songs,
+        sendAccent: (_) {},
       );
-      d.cue('level', level: 2);
-      d.onGameEvent(
-        const GameEvent(GameEventNames.bonusStart, {'variant': 'crosswind'}),
-      );
-      expect(played.last.section, 'bonus-wind');
+      const start = GameEvent(GameEventNames.bonusStart, {
+        'variant': 'crosswind',
+      });
+      final d = rig(scoreSongs)..cue('level', level: 2);
+      d.onGameEvent(start);
+      expect(played.last.song, scoreBonusSongs['crosswind']);
+      // Without the song (an older score): no move, no crash.
+      played.clear();
+      final missing = Map.of(scoreSongs)..remove(scoreBonusSongs['crosswind']);
+      final d2 = rig(missing)..cue('level', level: 2);
+      final before = played.length;
+      d2.onGameEvent(start);
+      expect(played.length, before);
+      expect(d2.log.map((s) => s.section), ['arrival']);
     });
   });
 
