@@ -1,0 +1,109 @@
+{
+  "comment": "Soundtrack pilot (openspec adaptive-soundtrack, plan/render-runs/soundtrack-pilot.md): the tour-1 carrier fight's sections, generated with ComfyUI core ACE-Step 1.5 nodes only. Each section is one text-to-music request: the committed campaign-text-headroom.json (acestep15-cue.json plus an 8 dB headroom trim before the FLAC save, so the decoder output never clips) plus $node overrides (studio.queue_workflow) on node 5 (TextEncodeAceStepAudio1.5) and node 7 (latent seconds). Grid: L5, 60632 samples per 4/4 bar at 48 kHz (189.9987 BPM). bpm_param is half the tempo with the real tempo in the tags (plan/audio-backend.md, metal-v2 finding). Keys: F minor, the victory sting F major.",
+  "grid": {
+    "sample_rate": 48000,
+    "bar_samples": 60632,
+    "bpm": 189.9987,
+    "beats_per_bar": 4
+  },
+  "common_tags": "instrumental, no vocals, epic blackened power metal with doom metal undertones, heavily distorted downtuned electric guitars, driving electric bass, tight powerful metal drums, cathedral pipe organ, dark orchestral brass, 190 bpm, F minor",
+  "bpm_param": 95,
+  "keyscale": "F minor",
+  "gen_seconds": 40,
+  "lyrics": "[Instrumental]",
+  "sections": [
+    {
+      "id": "approach",
+      "kind": "loop",
+      "bars": 8,
+      "event": "bossApproach (step 0)",
+      "tags": "slow crushing half-time doom groove, tolling church bells, low brass drones, ominous, menacing, sparse ride cymbal, dread building"
+    },
+    {
+      "id": "tier1",
+      "kind": "loop",
+      "bars": 8,
+      "event": "bossHatchTier tier 1",
+      "tags": "relentless galloping battle metal riff, pounding double kick drums, palm-muted chugging, aggressive, driving, heroic"
+    },
+    {
+      "id": "tier2",
+      "kind": "loop",
+      "bars": 8,
+      "event": "bossHatchTier tier 2",
+      "tags": "heavier and faster, harmonised twin lead guitars, wordless male choir, blast beats, tremolo picking, frantic, intense"
+    },
+    {
+      "id": "transform",
+      "kind": "bridge",
+      "bars": 3,
+      "event": "bossTransform start",
+      "tags": "dramatic orchestral riser, timpani roll, choir crescendo, pipe organ swell, suspense, building to an explosive hit"
+    },
+    {
+      "id": "core",
+      "kind": "loop",
+      "bars": 8,
+      "event": "bossCoreExposed (bossHatchTier last tier)",
+      "tags": "apocalyptic climax, blast beats, tremolo picking, thundering cathedral organ, massive wordless choir, epic, desperate, triumphant"
+    },
+    {
+      "id": "collapse",
+      "kind": "tail",
+      "bars": 8,
+      "event": "bossCollapseStart",
+      "tags": "monumental epic doom metal finale, slow crushing half-time, massive choir, orchestral hits, falling, majestic, final"
+    },
+    {
+      "id": "victory",
+      "kind": "tail",
+      "bars": 4,
+      "event": "bossCollapseEnd / victory",
+      "keyscale": "F major",
+      "tags_replace": "instrumental, no vocals, triumphant heroic power metal fanfare, soaring brass, galloping drums, distorted guitars, choir, victorious, major key, 190 bpm, F major"
+    }
+  ],
+  "long_form": {
+    "id": "longform",
+    "seconds": 150,
+    "lyrics": "[Intro - ominous doom, tolling bells]\n\n[Verse - galloping battle metal riff]\n\n[Chorus - epic choir, organ]\n\n[Bridge - orchestral riser]\n\n[Climax - blast beats, organ, choir]\n\n[Outro - crushing doom finale]",
+    "tags": "dark epic battle metal suite with doom metal passages, choir and pipe organ"
+  },
+  "seeds": {
+    "turbo": [
+      7101,
+      7102,
+      7103,
+      7104
+    ],
+    "base": [
+      7201,
+      7202
+    ]
+  },
+  "workflow": {
+    "turbo": {
+      "path": "art/workflows/music/campaign-text-headroom.json",
+      "overrides": {
+        "$node:5.tags": "<common_tags>, <section tags>",
+        "$node:5.bpm": 95,
+        "$node:5.keyscale": "<keyscale>",
+        "$node:5.duration": 40,
+        "$node:7.seconds": 40,
+        "$node:10.filename_prefix": "music/soundtrack-pilot/<section>-turbo"
+      },
+      "count": 4,
+      "seed": "first of seeds.turbo (the studio runs seed, seed+1, ...)"
+    },
+    "base": {
+      "path": "art/workflows/music/campaign-text-headroom.json",
+      "overrides": {
+        "$node:1.unet_name": "acestep_v1.5_xl_base_bf16.safetensors",
+        "$node:8.steps": 32,
+        "$node:8.cfg": 5.0,
+        "...": "as turbo"
+      },
+      "count": 2
+    }
+  }
+}

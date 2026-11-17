@@ -271,3 +271,18 @@ decisions and do not depend on the attributions.
 | <a id="endgame-cycles-cpu"></a>endgame-cycles-cpu | The layout's CPU cost is minutes | extrapolated from one 384² measurement |
 | <a id="endgame-webp-size"></a>endgame-webp-size | WebP sizes per plate and the 7 MB total | estimates until the first pack |
 | <a id="endgame-video-bitrate"></a>endgame-video-bitrate | 2.5 and 5 Mbit/s as adequate bitrates for 720p and 1080p | assumption |
+
+## Part S: the adaptive soundtrack (`adaptive-soundtrack`, added 2026-11-17)
+
+`plan/soundtrack-research.md` marks these claims. On 2026-11-17 fmod.com, audiokinetic.com, web.dev, arxiv.org,
+rfc-editor.org and ffmpeg.org reset the connection from the forge; nothing was routed around the proxy. The
+design's decisions do not rest on them: the transition model is sourced from Godot's class references, and the
+gapless and scheduling claims are checked by measurement (pilot, task 1.8) or by the repo's own code.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="soundtrack-wwise"></a>soundtrack-wwise | Wwise music switch containers: exit at cue, bar or beat; destination sync; transition segments; stingers | audiokinetic.com reset; community Q&A seen as snippets only |
+| <a id="soundtrack-vcsl-ukulele"></a>soundtrack-vcsl-ukulele | Whether a CC0 library in #1103 (VCSL, Karoryfer) includes a ukulele | not checked; #1103's library list not read |
+| <a id="soundtrack-webm-opus-ios"></a>soundtrack-webm-opus-ios | WebM Opus decodes through `decodeAudioData` on iOS from Safari 17.4 | WebKit Bugzilla seen as a snippet only |
+| <a id="soundtrack-opus-gapless"></a>soundtrack-opus-gapless | Ogg Opus pre-skip and end trimming make decoding sample-exact (RFC 7845) | rfc-editor.org reset; measured with ffmpeg instead |
+| <a id="soundtrack-two-clocks"></a>soundtrack-two-clocks | The "two clocks" lookahead scheduling pattern (web.dev) | web.dev reset; the repo's scheduler already uses it |
