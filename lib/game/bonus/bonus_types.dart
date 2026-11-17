@@ -298,6 +298,7 @@ class BonusLevelDef {
     this.look = const BonusLook(),
     this.mechanic,
     this.brief = '',
+    this.how = '',
   });
 
   /// camelCase; the radio triggers key on it.
@@ -307,9 +308,14 @@ class BonusLevelDef {
   /// urgent-mission card (bonus-briefing); never drawn over the play area.
   final String label;
 
-  /// bonus-briefing: the level's twist or rule in one or two short lines,
-  /// shown on its urgent-mission card ('': the card shows none).
+  /// bonus-briefing: the level's goal, shown on its urgent-mission card
+  /// ('': the card shows none). bonus-briefing-clarity: one short line a
+  /// first-time player (a kid too) gets at a glance.
   final String brief;
+
+  /// bonus-briefing-clarity: how to do it, in one short line under the
+  /// goal (what to shoot, where to fly); '': none.
+  final String how;
 
   /// Relative odds among the levels eligible for the drawn slot.
   final double weight;

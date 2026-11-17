@@ -784,10 +784,14 @@ void main() {
         ...commsHumanTriggers.values,
         ...commsDemonTriggers.values,
       ]) {
-        // carrier-hatches: the carrier hints are one line each.
+        // carrier-hatches: the carrier hints are one line each;
+        // bonus-briefing-clarity: so is each bonus level's briefing call.
+        final single =
+            commsOneLineTriggers.contains(spec.name) ||
+            spec.name.startsWith('bonusCall.');
         expect(
           spec.lines.length,
-          inInclusiveRange(commsOneLineTriggers.contains(spec.name) ? 1 : 2, 30),
+          inInclusiveRange(single ? 1 : 2, 30),
           reason: spec.name,
         );
         for (final line in spec.lines) {

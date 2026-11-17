@@ -1,13 +1,16 @@
 /// bonus-briefing: the "URGENT MISSION!" radio card that opens a bonus
 /// level (openspec/changes/bonus-levels, design "Urgent-mission card").
 ///
-/// The transition into a bonus level fills its radio slot with a short
-/// scripted back-and-forth instead of one line: the invite (the level's
-/// entry call), a dare from a squadmate and the brood's retort. The card
-/// shows the level's name, its rule in one or two lines, the run modifier
-/// in play and the chatter as it is spoken; the dock hides those turns
-/// while the card is up. Pure Dart, driven by the comms clock, so the
-/// timing is testable without widgets.
+/// bonus-briefing-clarity (openspec/changes/bonus-briefing-clarity): the
+/// card shows the level's name, its goal line, its how-to line, the run
+/// modifier in play and ONE radio line (the level's `bonusCall.<id>`, a
+/// single sentence in a squadmate's voice) as it is spoken; the dock hides
+/// that line while the card is up. The card's life is its own: it opens at
+/// the transition's radio slot whatever the channel is doing, stays up for
+/// at least [BonusBriefing.readFor] unless the player taps, and the radio
+/// never closes it (the operator, round 6: "the overlapping of the radio
+/// chatter closed the box before I was able to read it"). Pure Dart,
+/// driven by the comms clock, so the timing is testable without widgets.
 ///
 /// Audio and text stay honest: the card's lines come from triggers marked
 /// `"pending": "text"` in `art/comms/lines.json`. Until they are recorded
@@ -30,9 +33,7 @@ class BonusBriefing {
     required this.invite,
     required this.inviteSpec,
     this.modifier,
-    this.crew = const {},
-    int seed = 0,
-  }) : _random = math.Random(seed);
+  });
 
   /// The bonus level ahead and the sector it replaces.
   final BonusLevelDef level;
@@ -41,13 +42,11 @@ class BonusBriefing {
   /// The run modifier in play, if any (shown as the card's run rule).
   final RunModifierDef? modifier;
 
-  /// The slot's own pick: the level's entry call.
+  /// The slot's own pick: the level's entry call. It marks the slot as a
+  /// bonus briefing; the card speaks [call] instead, and this line only
+  /// when the level has no call of its own.
   final CommsLine invite;
   final CommsTriggerSpec inviteSpec;
-
-  /// This run's radio crew; empty: anyone.
-  final Set<String> crew;
-  final math.Random _random;
 
   /// Fade in and out (none with reduced motion).
   static const fade = .25;
@@ -62,10 +61,18 @@ class BonusBriefing {
   /// Title of the card.
   static const title = 'URGENT MISSION!';
 
-  /// The scripted turns once offered, in order.
+  /// The card's radio turn once offered (one line; empty when it could not
+  /// queue, and the card is up all the same).
   List<CommsMessage> turns = const [];
   bool _offered = false;
   double? openedAt, closedAt, _combatAt;
+
+  /// bonus-briefing-clarity: the shortest time the card stays up unless
+  /// the player taps, Space or Enter (a first-time reader, a kid too).
+  static const minRead = 4.0;
+
+  /// The longest reading time asked for (the hold stays short).
+  static const maxRead = 8.0;
 
   /// The player dismissed the card (tap, Space or Enter).
   bool dismissed = false;
@@ -88,18 +95,20 @@ class BonusBriefing {
 
   double _heldFor = 0;
 
-  /// Seconds the brief (and the run rule) need to be read once the card is
-  /// up: about 15 characters a second, between 3 and 7 seconds.
+  /// Seconds the goal, the how-to line and the run rule need once the
+  /// card is up: about 18 characters a second after a 1.5 s glance,
+  /// between [minRead] and [maxRead].
   double get readFor {
-    final chars = brief.length + (rule?.length ?? 0);
-    return (1.5 + chars / 15).clamp(3.0, 7.0);
+    final chars = brief.length + how.length + (rule?.length ?? 0);
+    return (1.5 + chars / 18).clamp(minRead, maxRead);
   }
 
-  /// The brief has been up long enough and every turn has been read.
-  bool read(CommsDirector director, double now) {
+  /// The card has been up for [readFor]. Only time counts: the radio's
+  /// progress never shortens (or ends) the read.
+  bool read(double now) {
     final opened = openedAt;
     if (opened == null) return true;
-    return now - opened >= readFor && _done(director, now);
+    return now - opened >= readFor;
   }
 
   /// Whether the game should hold the level's start at [now] (asked every
@@ -116,7 +125,7 @@ class BonusBriefing {
         flying &&
         flightLeft <= holdLead &&
         _heldFor < maxHold &&
-        !read(director, now);
+        !read(now);
     if (!want) {
       if (heldAt != null) _heldFor += now - heldAt!;
       heldAt = null;
@@ -166,8 +175,11 @@ class BonusBriefing {
   /// The latest turn on the card (its portrait is the card's).
   CommsMessage? current() => spoken().lastOrNull;
 
-  /// One-line brief of the level's rule (the card's description).
+  /// The level's goal line (the card's headline).
   String get brief => level.brief;
+
+  /// The level's how-to line, under the goal.
+  String get how => level.how;
 
   /// The run modifier's rule, if one is in play.
   String? get rule {
@@ -176,69 +188,37 @@ class BonusBriefing {
     return m.brief;
   }
 
-  /// The script: the invite, a squadmate's dare (another speaker) and the
-  /// brood's retort (an officer of the destination sector first, then a
-  /// minion). The level's own `bonusDare.<id>` lines win over `bonusDare`.
-  /// Composed once per card, so planning and playing agree.
-  List<(CommsLine, CommsTriggerSpec)> script() => _script ??= _compose();
-  List<(CommsLine, CommsTriggerSpec)>? _script;
+  /// The card's one radio line: the level's `bonusCall.<id>` (a single
+  /// sentence, not a copy of the card's text), else the slot's invite.
+  (CommsLine, CommsTriggerSpec) get call {
+    final spec = commsHumanTriggers['bonusCall.${level.id}'];
+    final line = spec?.lines.firstOrNull;
+    if (spec == null || line == null || commsCast[line.speaker] == null) {
+      return (invite, inviteSpec);
+    }
+    return (line, spec);
+  }
 
-  /// Seconds the whole script needs on the channel (each turn and the grace
-  /// gap after it) plus the last turn's reading hold.
+  /// The script: exactly one turn, [call].
+  List<(CommsLine, CommsTriggerSpec)> script() => [call];
+
+  /// Seconds the slot should give the card: its line on the channel (and
+  /// the grace gap and half its reading hold), or its reading time if
+  /// longer.
   double needs({double gap = .4}) {
-    var total = 0.0;
-    for (final (line, _) in script()) {
-      total += line.duration + gap;
-    }
-    return total + CommsMessage.readingTime(script().last.$1) * .5;
+    final (line, _) = call;
+    final talk = line.duration + gap + CommsMessage.readingTime(line) * .5;
+    return math.max(talk, readFor);
   }
 
-  List<(CommsLine, CommsTriggerSpec)> _compose() {
-    final parts = <(CommsLine, CommsTriggerSpec)>[(invite, inviteSpec)];
-    final human =
-        commsHumanTriggers['bonusDare.${level.id}'] ??
-        commsHumanTriggers['bonusDare'];
-    if (human != null) {
-      final dare = _pick(human.lines, [
-        (l) => l.speaker != invite.speaker && crew.contains(l.speaker),
-        (l) => l.speaker != invite.speaker,
-      ]);
-      if (dare != null) parts.add((dare, human));
-    }
-    final demon =
-        commsDemonTriggers['bonusDare.${level.id}'] ??
-        commsDemonTriggers['bonusDare'];
-    if (demon != null) {
-      final officers = commsDemonSectors[sector] ?? const <String>[];
-      final retort = _pick(demon.lines, [
-        (l) => officers.contains(l.speaker),
-        (l) => commsMinions.contains(l.speaker),
-        (_) => true,
-      ]);
-      if (retort != null) parts.add((retort, demon));
-    }
-    return parts;
-  }
-
-  CommsLine? _pick(List<CommsLine> lines, List<bool Function(CommsLine)> by) {
-    for (final test in by) {
-      final pool = [
-        for (final l in lines)
-          if (test(l) && commsCast[l.speaker] != null) l,
-      ];
-      if (pool.isNotEmpty) return pool[_random.nextInt(pool.length)];
-    }
-    return null;
-  }
-
-  /// Queues the script on [director] and opens the card. [ttl]: how long
-  /// the first turn may wait for the channel. False when nothing queued
-  /// (the card then stays shut and the radio carries on as usual).
+  /// Opens the card and queues its line on [director]. [ttl]: how long
+  /// the line may wait for the channel. The card opens even when the line
+  /// cannot queue: the words on the card are the instructions, the radio
+  /// only keeps the flow. Always true once offered.
   bool offer(CommsDirector director, {required double now, double ttl = 6}) {
-    if (_offered) return turns.isNotEmpty;
+    if (_offered) return true;
     _offered = true;
     turns = director.offerScript(script(), at: now, ttl: ttl);
-    if (turns.isEmpty) return false;
     openedAt = now;
     // The card is the transition's radio: the rest of the squad waits (a
     // line on air finishes, an exchange on screen gets its answer).
@@ -259,24 +239,13 @@ class BonusBriefing {
     if (!open) return;
     if (combat && !flying) _combatAt ??= now;
     final combatFor = _combatAt == null ? 0.0 : now - _combatAt!;
-    final ending =
-        (flying && flightLeft <= 0) ||
-        (!flying && (!combat || combatFor >= combatGrace));
-    if (dismissed || ending || _done(director, now)) close(director, now);
-  }
-
-  /// Every turn has been read, or the ones left can no longer play.
-  bool _done(CommsDirector director, double now) {
-    for (final m in turns) {
-      if (m.started) {
-        if (now < m.endsAt) return false;
-        continue;
-      }
-      // Queued (or reserved as the next turn): still to come. A turn that
-      // is neither has expired, and so has everything after it.
-      return !director.queue.contains(m);
-    }
-    return true;
+    // bonus-briefing-clarity: the radio has no say. The card goes when the
+    // player dismisses it, when the fight has run [combatGrace] (the hold
+    // has already given it its reading time), or when its transition is
+    // over and it has been read.
+    final fought = combatFor >= combatGrace;
+    final over = !flying || flightLeft <= 0;
+    if (dismissed || fought || (over && read(now))) close(director, now);
   }
 
   /// The player's skip: the card closes; a turn on air finishes in the

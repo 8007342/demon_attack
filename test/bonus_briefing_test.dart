@@ -8,10 +8,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'progression_test.dart' show reach;
 
-/// bonus-briefing: the urgent-mission card's script and the bonus levels'
+/// bonus-briefing: the urgent-mission card's line and the bonus levels'
 /// banter on the radio channel (openspec/changes/bonus-levels, design
 /// "Urgent-mission card"). One voice at a time, nothing cut, the card's
-/// own written words.
+/// own written words. bonus-briefing-clarity: one radio line per level,
+/// a guaranteed reading time, and the radio never closes the card.
 
 BonusBriefing _briefing(
   String level, {
@@ -34,7 +35,6 @@ BonusBriefing _briefing(
     invite: pick.radio!.line,
     inviteSpec: pick.radio!.spec,
     modifier: modifier == null ? null : runModifierById(modifier),
-    seed: seed,
   );
 }
 
@@ -75,43 +75,72 @@ void _oneVoice(List<CommsMessage> started, double gap) {
   }
 }
 
+/// Steps [b] and [d] together from [from] for [seconds] at 60 Hz. The
+/// flight lasts [flightEnd] seconds of flight time, which (as in the game)
+/// does not advance while the card holds the level's start; combat follows.
+/// [each] runs every frame. Returns when the card closed (NaN: still open).
+double _fly(
+  CommsDirector d,
+  BonusBriefing b, {
+  double from = 0,
+  double seconds = 20,
+  double flightEnd = 30,
+  void Function(double t)? each,
+}) {
+  const dt = 1 / 60;
+  var flown = 0.0;
+  for (var t = from; t < from + seconds; t += dt) {
+    each?.call(t);
+    d.update(t);
+    var flying = flown < flightEnd;
+    final held = b.holds(
+      d,
+      t,
+      flying: flying,
+      flightLeft: flying ? flightEnd - flown : 0,
+    );
+    if (!held) flown += dt;
+    flying = flown < flightEnd;
+    b.update(
+      d,
+      t,
+      flying: flying,
+      flightLeft: flying ? flightEnd - flown : 0,
+      combat: !flying,
+    );
+    if (!b.open) return t;
+  }
+  return double.nan;
+}
+
 void main() {
-  group('script', () {
+  group('instructions', () {
     for (final level in bonusLevels) {
-      test('${level.id}: invite, a squadmate\'s dare, the brood\'s retort', () {
-        for (var seed = 0; seed < 12; seed++) {
-          final b = _briefing(level.id, seed: seed);
-          final parts = b.script();
-          expect(parts, hasLength(3), reason: 'seed $seed');
-          final (invite, inviteSpec) = parts[0];
-          final (dare, dareSpec) = parts[1];
-          final (retort, retortSpec) = parts[2];
-          expect(inviteSpec.name, 'bonusEntry.${level.id}');
-          expect(dareSpec.name, 'bonusDare.${level.id}');
-          expect(retortSpec.name, 'bonusDare.${level.id}');
-          expect(dare.speaker, isNot(invite.speaker));
-          expect(commsCast[invite.speaker]!.isDemon, isFalse);
-          expect(commsCast[dare.speaker]!.isDemon, isFalse);
-          expect(commsCast[retort.speaker]!.isDemon, isTrue);
-          // The brood voice is one on that sector's net, or a minion.
-          expect([
-            ...commsDemonSectors[3]!,
-            ...commsMinions,
-          ], contains(retort.speaker));
-          // Written lines: their own words, no borrowed voice.
-          for (final (line, _) in parts) {
-            expect(line.silent, isTrue, reason: line.id);
-            expect(line.clip, line.id, reason: line.id);
-            expect(line.text ?? line.gloss, isNotEmpty);
-          }
+      test('${level.id}: one goal line and one how-to line', () {
+        expect(level.brief, isNotEmpty);
+        expect(level.how, isNotEmpty);
+        // Short enough to take in at a glance on a phone.
+        expect(level.brief.length, lessThanOrEqualTo(40), reason: level.brief);
+        expect(level.how.length, lessThanOrEqualTo(60), reason: level.how);
+        // Short words: no word longer than "lightning".
+        for (final w in '${level.brief} ${level.how}'.split(RegExp(r'\W+'))) {
+          expect(w.length, lessThanOrEqualTo(9), reason: w);
         }
       });
-
-      test('${level.id}: the card has a rule to show', () {
-        expect(level.brief, isNotEmpty);
-        expect(level.brief.length, lessThan(110), reason: 'two short lines');
-      });
     }
+
+    test('the words match the rules in code', () {
+      // Supply Run: crates are shot open (several hits), the cargo falls
+      // and is caught by flying under it.
+      expect(SupplyCrate(0, 0, Power.shield).maxHp, greaterThan(1));
+      expect(supplyRun.how.toLowerCase(), contains('crate'));
+      expect(supplyRun.how.toLowerCase(), contains('fly under'));
+      expect(supplyRun.rules.killDrops, isFalse);
+      // Stormfront: the bolt goes where the mark blinked; the player slides
+      // out from under it.
+      expect(stormfront.brief.toLowerCase(), contains('lightning'));
+      expect(stormfront.how.toLowerCase(), contains('slide away'));
+    });
 
     test('every run modifier has a run rule for the card', () {
       for (final m in runModifiers) {
@@ -138,83 +167,63 @@ void main() {
     });
   });
 
-  group('sequencing', () {
-    test('the turns play one after another, one voice at a time', () {
-      for (final level in bonusLevels) {
+  group('one radio line per level', () {
+    for (final level in bonusLevels) {
+      test('${level.id}: exactly one line, one sentence, its own words', () {
+        final spec = commsHumanTriggers['bonusCall.${level.id}'];
+        expect(spec, isNotNull);
+        expect(spec!.lines, hasLength(1));
+        final line = spec.lines.single;
+        final text = line.text!;
+        // One sentence: one end mark, at the end.
+        expect(RegExp(r'[.!?]').allMatches(text).length, 1, reason: text);
+        expect(text, matches(RegExp(r'[.!?]$')));
+        // A squadmate speaks it, as a written line (no borrowed voice).
+        expect(commsCast[line.speaker]!.isDemon, isFalse);
+        expect(line.silent, isTrue);
+        expect(line.clip, line.id);
+        // Not a copy of the card's text.
+        expect(text, isNot(contains(level.brief)));
+        expect(text, isNot(contains(level.how)));
         for (var seed = 0; seed < 8; seed++) {
-          final d = CommsDirector();
           final b = _briefing(level.id, seed: seed);
-          expect(b.offer(d, now: 0, ttl: 6), isTrue);
-          expect(b.open, isTrue);
-          final started = _run(d, 0, 16);
-          final script = [
-            for (final m in started)
-              if (m.scripted) m,
-          ];
-          expect(script, hasLength(3), reason: '${level.id} seed $seed');
-          expect(
-            [for (final m in script) m.line.id],
-            [for (final m in b.turns) m.line.id],
-            reason: 'in order',
-          );
-          _oneVoice(started, d.lineGap);
-          // Each answer follows right after the turn before it.
-          for (var i = 1; i < script.length; i++) {
-            expect(
-              script[i].startedAt - script[i - 1].speechEndsAt,
-              lessThan(d.lineGap + .1),
-            );
-          }
+          final script = b.script();
+          expect(script, hasLength(1));
+          expect(script.single.$1.id, line.id);
         }
-      }
-    });
+      });
+    }
 
-    test('squad chatter waits for the script and never talks over it', () {
-      final d = CommsDirector();
-      final b = _briefing('supplyRun');
-      b.offer(d, now: 0, ttl: 6);
-      final started = _run(
-        d,
-        0,
-        18,
-        each: (t) {
-          // The ordinary transition chatter keeps coming meanwhile.
-          if ((t * 60).round() % 90 == 0) {
-            d.handle(const GameEvent(GameEventNames.levelClear), t);
-            d.handle(const GameEvent(GameEventNames.salvage), t);
-          }
-        },
-      );
-      _oneVoice(started, d.lineGap);
-      final script = [
-        for (final m in started)
-          if (m.scripted) m,
-      ];
-      expect(script, hasLength(3));
-      // Nothing else starts between the first turn and the retort.
-      final others = [
-        for (final m in started)
-          if (!m.scripted) m,
-      ];
-      for (final o in others) {
-        expect(
-          o.startedAt < script.first.startedAt ||
-              o.startedAt >= script.last.speechEndsAt,
-          isTrue,
-          reason: '$o interleaved with the script',
+    test('it plays once alongside the card, and nothing else talks', () {
+      for (final level in bonusLevels) {
+        final d = CommsDirector();
+        final b = _briefing(level.id);
+        expect(b.offer(d, now: 0, ttl: 6), isTrue);
+        final started = _run(
+          d,
+          0,
+          10,
+          each: (t) {
+            // The ordinary transition chatter keeps coming meanwhile.
+            if ((t * 60).round() % 90 == 0) {
+              d.handle(const GameEvent(GameEventNames.levelClear), t);
+              d.handle(const GameEvent(GameEventNames.salvage), t);
+            }
+          },
         );
+        _oneVoice(started, d.lineGap);
+        final script = [
+          for (final m in started)
+            if (m.scripted) m,
+        ];
+        expect(script, hasLength(1), reason: level.id);
+        expect(script.single.line.id, 'bonusCall.${level.id}.h0');
+        // While the card is up the squad is hushed: nothing else starts.
+        expect([
+          for (final m in started)
+            if (!m.scripted) m,
+        ], isEmpty);
       }
-    });
-
-    test('a hush holds the squad but not the card\'s turns', () {
-      final d = CommsDirector()..hush(30, at: 0);
-      final b = _briefing('stormfront');
-      b.offer(d, now: 0, ttl: 6);
-      final started = _run(d, 0, 14);
-      expect([
-        for (final m in started)
-          if (m.scripted) m,
-      ], hasLength(3));
     });
 
     test('a written turn keeps the portrait\'s mouth closed', () {
@@ -231,7 +240,55 @@ void main() {
   });
 
   group('the card', () {
-    test('dismissing it lets the turn on air finish and drops the rest', () {
+    test('it stays up for its reading time, whatever the radio does', () {
+      for (final level in bonusLevels) {
+        final d = CommsDirector();
+        final b = _briefing(level.id, modifier: 'heavyOrdnance');
+        expect(b.readFor, greaterThanOrEqualTo(BonusBriefing.minRead));
+        expect(b.readFor, lessThanOrEqualTo(BonusBriefing.maxRead));
+        b.offer(d, now: 0, ttl: 6);
+        // A flight that ends early: the card still stays for its read.
+        final closed = _fly(d, b, flightEnd: 1, seconds: 20);
+        expect(closed.isNaN, isFalse);
+        expect(closed, greaterThanOrEqualTo(b.readFor - 1e-6));
+      }
+    });
+
+    test('the briefing survives incoming radio', () {
+      final d = CommsDirector();
+      final b = _briefing('stormfront');
+      b.offer(d, now: 0, ttl: 6);
+      // Urgent warnings, ground fire and squad chatter pile in, and the
+      // card's own line is pushed back until it expires.
+      final closed = _fly(
+        d,
+        b,
+        seconds: 12,
+        each: (t) {
+          final f = (t * 60).round();
+          if (f % 30 == 0) {
+            d.handle(const GameEvent(GameEventNames.levelClear), t);
+            d.handle(const GameEvent(GameEventNames.salvage), t);
+            d.handle(const GameEvent(GameEventNames.shieldExpiring), t);
+            d.handle(const GameEvent(GameEventNames.groundBreakthrough), t);
+          }
+        },
+      );
+      // The flight is 30 s long: nothing but the player closes the card.
+      expect(closed.isNaN, isTrue, reason: 'the radio closed the card');
+      expect(b.open, isTrue);
+    });
+
+    test('a line that never plays leaves the card up', () {
+      final d = CommsDirector();
+      final b = _briefing('supplyRun');
+      // The line expires at once: the card is up all the same.
+      expect(b.offer(d, now: 0, ttl: 0), isTrue);
+      final closed = _fly(d, b, flightEnd: 2, seconds: 20);
+      expect(closed, greaterThanOrEqualTo(b.readFor - 1e-6));
+    });
+
+    test('dismissing it lets the line on air finish', () {
       final d = CommsDirector();
       final b = _briefing('supplyRun');
       b.offer(d, now: 0, ttl: 6);
@@ -243,60 +300,37 @@ void main() {
       expect(b.open, isFalse);
       expect(b.visible(d.now), isTrue, reason: 'fading');
       expect(b.visible(d.now + BonusBriefing.fade + .01), isFalse);
-      final later = _run(d, d.now, 14);
+      _run(d, d.now, 8);
       expect(first.interrupted, isFalse);
       expect(first.endsAt, ends, reason: 'never cut');
-      expect([
-        for (final m in later)
-          if (m.scripted) m,
-      ], isEmpty);
-      // The channel is free again: the squad speaks after the first turn.
+      // The channel is free again: the squad speaks.
       d.handle(const GameEvent(GameEventNames.levelClear), d.now);
       final after = _run(d, d.now, 6);
       expect(after, isNotEmpty);
     });
 
-    test('it closes when the script has been read', () {
+    test('a tap closes it before its reading time', () {
       final d = CommsDirector();
       final b = _briefing('stormfront');
       b.offer(d, now: 0, ttl: 6);
-      var closed = double.nan;
-      for (var t = 0.0; t < 20; t += 1 / 60) {
-        d.update(t);
-        b.update(d, t, flying: true, flightLeft: 30, combat: false);
-        if (!b.open && closed.isNaN) closed = t;
-      }
-      expect(closed.isNaN, isFalse);
-      expect(closed, greaterThanOrEqualTo(b.turns.last.endsAt - 1e-6));
+      _fly(d, b, seconds: 1);
+      b.dismiss(d, d.now);
+      expect(b.open, isFalse);
+      expect(d.now, lessThan(b.readFor));
     });
 
     test('it is gone before the fight gets busy', () {
       final d = CommsDirector();
       final b = _briefing('supplyRun');
       b.offer(d, now: 0, ttl: 6);
-      // The Descent ends at 4 s; combat follows.
-      double? closed;
-      for (var t = 0.0; t < 10; t += 1 / 60) {
-        d.update(t);
-        final flying = t < 4;
-        b.update(
-          d,
-          t,
-          flying: flying,
-          flightLeft: flying ? 4 - t : 0,
-          combat: !flying,
-        );
-        if (!b.open) {
-          closed ??= t;
-        }
-      }
-      expect(closed, isNotNull);
-      expect(closed!, lessThanOrEqualTo(4 + BonusBriefing.combatGrace + .05));
+      // The Descent ends at 6 s (after the reading time); combat follows.
+      final closed = _fly(d, b, flightEnd: 6, seconds: 12);
+      expect(closed, lessThanOrEqualTo(6 + BonusBriefing.combatGrace + .05));
       expect(
-        b.visible(4 + BonusBriefing.combatGrace + BonusBriefing.fade + .05),
+        b.visible(6 + BonusBriefing.combatGrace + BonusBriefing.fade + .05),
         isFalse,
       );
-      // Unplayed turns were withdrawn, not left to talk over the fight.
+      // Nothing of it is left to talk over the fight.
       expect(d.queue.where((m) => m.scripted), isEmpty);
     });
 

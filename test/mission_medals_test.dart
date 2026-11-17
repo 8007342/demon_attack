@@ -95,7 +95,7 @@ void main() {
       }
       expect(released.isNaN, isFalse);
       expect(released, greaterThanOrEqualTo(b.readFor - 1e-6));
-      expect(b.read(d, released), isTrue);
+      expect(b.read(released), isTrue);
       expect(released, lessThan(BonusBriefing.maxHold));
     });
 

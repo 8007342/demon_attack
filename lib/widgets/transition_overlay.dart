@@ -259,13 +259,12 @@ class TransitionPresenter {
         invite: pick.line,
         inviteSpec: pick.spec,
         modifier: model.bonusPlan.modifier,
-        crew: comms.lineup?.members ?? const {},
-        seed: (seed ?? 0) * 31 + level * 7 + model.cycle,
       );
     }
     final b = briefing;
     final needs = b != null
-        // The card's whole script (it starts at the slot, no adoption wait).
+        // The card's line or its reading time, whichever is longer (it
+        // starts at the slot, no adoption wait).
         ? b.needs(gap: comms.director.lineGap) + InterludeTiming.fade
         : s.radio!.needs + InterludeTiming.adoptWait + 2 * InterludeTiming.fade;
     // The model rounds it up to whole beats before travel starts.
@@ -280,18 +279,16 @@ class TransitionPresenter {
     if (elapsed < 0) return;
     final b = briefing;
     if (b != null && !b.offered) {
-      // The card's script goes on the channel at the slot's start (no
-      // adoption of a line already on air: the director queues the first
-      // turn behind it, and the card is the slot).
+      // The card opens at the slot's start and its one line goes on the
+      // channel (no adoption of a line already on air: the director queues
+      // it behind, and the card is the slot). bonus-briefing-clarity: the
+      // card opens even if the line cannot queue.
       final room =
           model.flow.plan.descentAt - model.flow.seconds + FlowPlan.maxExtra;
-      if (b.offer(comms.director, now: comms.now, ttl: room)) {
-        played.add(b.invite.id);
-        planner.shown(b.invite.id);
-        return;
-      }
-      // Nothing could queue: the ordinary slot carries on.
-      briefing = null;
+      b.offer(comms.director, now: comms.now, ttl: room);
+      played.add(b.script().first.$1.id);
+      planner.shown(b.invite.id);
+      return;
     }
     if (b != null && b.offered) return;
     _updateRadio(model, comms, elapsed);

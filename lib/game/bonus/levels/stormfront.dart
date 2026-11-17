@@ -26,9 +26,12 @@ const lightningRod = BonusPowerDef(
 const stormfront = BonusLevelDef(
   id: 'stormfront',
   label: 'STORMFRONT',
-  brief:
-      'Lure the lightning onto the swarm. When the air hums over you, '
-      'slide out.',
+  // bonus-briefing-clarity: one goal line and one how-to line. Checked
+  // against StormCell: most tells sample the ship's x once and blink an
+  // amber marker on the ship's row; the bolt then strikes that column,
+  // hitting the swarm above and the ship if it stayed.
+  brief: 'Let the lightning zap the demons!',
+  how: 'Sit under them. When the orange mark blinks, slide away!',
   weight: 1,
   waves: BonusWaves(rosterScale: 1.15),
   // "A certain percentage of a chance": half the kill drops are shields.
