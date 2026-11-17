@@ -243,3 +243,33 @@ only `bank.json`'s role levels changed.
 - bank `top` −4.48 LUFS (synth −4.97), `offset` −0.49 dB, `floor` −14.35 (synth −11.65);
 - 4 trims hit the +8 dB cap, down from 38. The coda's reprise and ukulele end 2.5 and 3.3 dB under the window (their
   uke and strings play the synth), and two bridge pivots ≤ 0.8 dB.
+
+## 7. Listening preview (A/B)
+
+Private page for the operator: https://claude.ai/artifact/9GWPRDxFJByguEg56jPmpJ. Seven sections are rendered
+offline through the shipped players (`tools/mix_meter/page.mjs`), synth against sampled, each with its own mode's
+trims, on the desktop tier at Full music. One +2 dB listening gain applies to every clip; peaks stay under −1 dBFS.
+The clips are 96 kbps Opus, 2.3 MB, embedded in the page as data URIs. They live in scratch, never in the repo.
+
+| Clip | Section | Synth LUFS | Sampled LUFS | Bank trim | Notes sampled |
+|---|---|---:|---:|---:|---:|
+| calm | Krybor A, tier 1 (calm) | -20.54 | -19.93 | 3.6 | 400 |
+| clear | Krybor clear (sampled trumpet fanfare) | -22.34 | -22.26 | 2.6 | 160 |
+| core | Carrier tour 1, core at tier 4 | -18.97 | -19.05 | -0.4 | 1125 |
+| defeat | Defeat (alien victory) | -20.15 | -20.04 | 3.9 | 273 |
+| fanfare | Carrier tour 4 victory (brass falls back to synth) | -22.48 | -22.63 | 2.2 | 170 |
+| menu | Overture (menu) | -21.2 | -20.87 | 6.4 | 156 |
+| world | Krybor B, tier 3 (a world song) | -19.59 | -19.54 | 1.5 | 779 |
+
+The LUFS figures are at game level, before the listening gain. Each pair matches within 0.6 LU. The sampled clips
+peak 1-4.5 dB higher at the same loudness: real transients have more crest than the synth.
+
+Picks:
+- world = `k:B` at tier 3, the most-played band texture;
+- core = `c1:core` at tier 4, the densest arrangement;
+- calm = `k:A` at tier 1;
+- fanfare = `c4:victory`: with round 2 the trumpet covers brass 99.9 %, but this fanfare reaches E6 (88), above the
+  trumpet's top zone, so its brass track plays the synth for the whole section, as asked;
+- clear = `k:clear`, a fanfare whose brass is sampled, for contrast;
+- menu = `menu:overture`;
+- defeat = `defeat:alienwin`.

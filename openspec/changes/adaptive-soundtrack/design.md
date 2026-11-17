@@ -1130,9 +1130,14 @@ loudest case sat 4.6 LU under the synth's, and 38 bank trims hit the +8 dB cap: 
 - `mix-balance.test.mjs` checks that the bank block covers every case, that its top lands on the synth top, that every
   uncapped case falls in the synth's window, and that the player picks each mode's trims.
 
-**The listening preview.** A/B clips of six sections, synth against sampled, rendered offline through the shipped
-players with each mode's trims: a world song, a carrier core, a calm section, the victory fanfare, the overture and
-the defeat. They are published as a private page for the operator. The clips stay in scratch, never in the repo.
+**The listening preview** (https://claude.ai/artifact/9GWPRDxFJByguEg56jPmpJ, private to the operator). A/B clips
+of seven sections, synth against sampled, rendered offline through the shipped players with each mode's trims:
+- a world song (`k:B`), a carrier core (`c1:core`) and a calm section (`k:A`);
+- the tour-4 victory, whose fanfare reaches E6 above the trumpet, so its brass falls back to the synth;
+- a sampled-trumpet clear;
+- the overture and the defeat.
+
+Each pair matches within 0.6 LU. The clips stay in scratch, never in the repo (`plan/render-runs/sample-bank.md` §7).
 
 **Credits.** `tools/generate_credits.lua` adds a "Sampled instruments" section after the models: one row per source,
 with the credit line from `bank.json`, the SPDX id and the source at its commit.
