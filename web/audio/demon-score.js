@@ -114,7 +114,7 @@
       const family = id => (map.songs[id]?.form === 'carrier' ? 'c' : id);
       const order = [];
       const add = id => { if (id && map.songs[id] && !order.includes(id)) order.push(id); };
-      for (const scene of ['menu', 'gameover']) add(map.scenes?.[scene]?.split(':')[0]);
+      for (const scene of ['menu', 'credits', 'gameover']) add(map.scenes?.[scene]?.split(':')[0]); // credits-page: the title's CREDITS song early
       for (const play of map.plays || []) {
         for (const [pair, bridge] of Object.entries(map.bridges || {})) if (pair.split('>')[1] === family(play.song)) add(bridge);
         add(play.song);

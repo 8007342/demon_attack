@@ -43,11 +43,11 @@ end
 
 local map = json.decode(read('art/music/soundtrack/song-map.json'))
 -- The composer of each song: Krybor keeps its own; the other sectors share the sector band; every carrier tour
--- is one composer with the tour as a parameter; bridges, the overture, the coda and the defeat have theirs.
+-- is one composer with the tour as a parameter; bridges, the overture, the coda, the credits and the defeat have theirs.
 local function composerOf(songId, song)
   if songId == 'k' then return 'songs.krybor' end
   return ({ sector = 'songs.sector', carrier = 'songs.carrier', bridge = 'songs.bridges', menu = 'songs.overture',
-    coda = 'songs.coda', defeat = 'songs.defeat' })[song.form]
+    coda = 'songs.coda', credits = 'songs.credits', defeat = 'songs.defeat' })[song.form]
 end
 local trackOrder = { 'drums', 'cymbals', 'drums2', 'bass', 'gtrL', 'gtrR', 'clean', 'lead', 'lead2', 'organ',
   'strings', 'brass', 'choir', 'timpani', 'bells', 'fanfare', 'uke' }
@@ -221,7 +221,7 @@ class ScoreSong {
   final String id;
   final String name;
 
-  /// 'sector', 'carrier', 'bridge', 'menu', 'coda' or 'defeat'.
+  /// 'sector', 'carrier', 'bridge', 'menu', 'coda', 'credits' or 'defeat'.
   final String form;
 
   /// Samples per 4/4 bar at 48 kHz (the song's grid).

@@ -562,7 +562,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     commsStopAll();
     audioUnlock();
     audioResume();
-    _musicCue('ending', 5, 1, model.cycle);
+    // --- credits-page: the title's CREDITS play the credits song.
+    _musicCue(creditsOnly ? 'credits' : 'ending', 5, 1, model.cycle);
     // --- cinematic flow (design §4.1): the ending fades up from the cloud
     // tops over the climbing ship: a crossfade between two lit scenes,
     // never through black (a cut with reduced motion).
