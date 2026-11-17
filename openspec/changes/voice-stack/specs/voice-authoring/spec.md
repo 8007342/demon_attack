@@ -122,7 +122,7 @@ Each manifest clip SHALL carry a `tier`: `text` (no audio), `placeholder` (borro
 - **THEN** the build uses the clip's placeholder or text card instead
 
 ### Requirement: Engines run as admitted studio capabilities
-Voice engines SHALL run as host studio capabilities behind the studio's admission and licence register, never as a second GPU container or a direct model pull. A shipped clip SHALL come only from an engine whose licence leaves the generated audio free of conditions other than a credit line, unless the operator has signed a decision in `licences/acknowledgements/` for that engine. The manifest SHALL carry each clip's engine, revision, licence and credit line.
+Voice engines SHALL run through a Tillandsias studio voice capability (like #1103, not built yet) behind the licence register, never as a second GPU container or a direct pull, loading only the weights and code commits in `plan/model-pins-voice.md`. A shipped clip SHALL come only from an engine whose licence leaves the audio free beyond a credit line, or one a signed decision covers. The manifest SHALL carry each clip's engine, revision, licence and credit.
 
 #### Scenario: Output-restricting licence
 - **WHEN** an engine's licence restricts its outputs (for example Coqui XTTS-v2 or Higgs v3) and no signed decision covers it
@@ -135,3 +135,11 @@ Voice engines SHALL run as host studio capabilities behind the studio's admissio
 #### Scenario: Model not admitted
 - **WHEN** a batch asks for a model that the studio has not admitted
 - **THEN** the batch stops with the studio's consent or admission answer, and nothing is downloaded without the operator's token
+
+#### Scenario: Pinned runtime code
+- **WHEN** the capability loads an engine
+- **THEN** it runs the code commit and weight revision pinned in `plan/model-pins-voice.md` for that engine, and a dependency the engine would fetch on its own (Dia's DAC codec, Higgs's `bosonai/hubert_base`, VoxCPM's optional denoiser) is either pinned there or switched off
+
+#### Scenario: An engine larger than the GPU's headroom
+- **WHEN** Fish S2-Pro runs on the 24 GB RTX A5000
+- **THEN** it runs in a 4-bit quantisation that works on Ampere (NF4), alone on the GPU with every other model unloaded before and after, as change `voice-direction` specifies

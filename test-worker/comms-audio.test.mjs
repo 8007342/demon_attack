@@ -21,7 +21,7 @@ async function harness() {
     setInterval() {}, setTimeout(fn, ms) { const t = { fn, ms }; timers.push(t); return t; }, clearTimeout(t) { const i = timers.indexOf(t); if (i >= 0) timers.splice(i, 1); },
     async fetch(url) {
       fetched.push(url.pathname);
-      const clip = url.pathname.match(/^\/audio\/comms\/(.+)\.(ogg|m4a)$/);
+      const clip = url.pathname.match(/^\/audio\/comms\/(.+)\.ogg$/);
       if (clip) { if (clip[1] === 'missing') return { ok: false }; const bytes = new TextEncoder().encode(decodeURIComponent(clip[1])); return { ok: true, async arrayBuffer() { return bytes.buffer; } }; }
       return { ok: false };
     } };
@@ -74,7 +74,7 @@ test('comms voices are silent before the gesture, then share the context and mas
   assert.equal(comms.play('reinforcements.h0', 6, false), false, 'same clip does not double-play');
 });
 
-test('music volume is constant: speech (human or demon, any priority) never ducks it', async () => {
+test('the music bus and level stay constant under speech: lines duck only their own stage (mix-balance)', async () => {
   const h = await harness();
   const comms = h.window.commsAudio, audio = h.window.demonAudio;
   await audio.unlock();
@@ -88,6 +88,7 @@ test('music volume is constant: speech (human or demon, any priority) never duck
   assert.equal(music.gain.value, before.bus, 'music bus unchanged while clips play');
   assert.equal(music.gain.targets.length, 0, 'no gain ramp scheduled on the music bus');
   assert.equal(audio.state.musicLevel, before.level, 'music level unchanged');
+  assert.equal(audio.state.duck.lines, 3, 'each sounding line holds the duck stage (demonAudio.graph.duck)');
   for (const s of h.sources.filter(s => s.buffer)) s.onended?.();
   h.flushTimers();
   assert.equal(music.gain.value, before.bus, 'and after the last voice');
@@ -137,7 +138,7 @@ test('at most three voices: only an urgent line cuts a playing one, anything els
   assert.equal(comms.state.voices.length, 0, 'an unavailable clip frees its slot');
 });
 
-test('every bank clip ships Opus inside a modest budget; modern banks omit AAC', async () => {
+test('every bank clip ships Opus, its one format, inside a modest budget', async () => {
   let manifest;
   try { manifest = JSON.parse(await readFile(new URL('../web/audio/comms/manifest.json', import.meta.url), 'utf8')); } catch { return; }
   const clips = Object.entries(manifest.clips);
@@ -155,13 +156,14 @@ test('every bank clip ships Opus inside a modest budget; modern banks omit AAC',
   }
   const modern = manifest.schema === 'demon-attack.comms-bank/v2';
   assert.ok(manifest.totals.ogg_bytes < (modern ? 16e6 : 3.4e6), 'complete Opus bank stays within its delivery budget');
-  if (manifest.schema === 'demon-attack.comms-bank/v2') {
+  if (modern) {
     assert.equal(manifest.complete, true, 'a partial development bank must not ship');
     assert.deepEqual(manifest.formats, ['ogg']);
-    const { readdir } = await import('node:fs/promises');
-    const files = await readdir(new URL('../web/audio/comms/', import.meta.url));
-    assert.ok(!files.some(name => name.endsWith('.m4a')), 'modern delivery removes duplicate legacy audio');
   }
+  // One format per asset, no fallback copies (operator, 2026-11-17): the folder holds the Opus clips and the manifest.
+  const { readdir } = await import('node:fs/promises');
+  const files = await readdir(new URL('../web/audio/comms/', import.meta.url));
+  assert.deepEqual(files.filter(name => !name.endsWith('.ogg') && name !== 'manifest.json'), [], 'no second audio format ships');
 });
 
 test('an unrecorded line plays its borrowed placeholder clip, tracked by its own id', async () => {

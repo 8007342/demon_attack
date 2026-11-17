@@ -24,7 +24,7 @@ A strict incomplete assembly removes an old staging manifest and exits nonzero.
 The tool refuses to assemble directly over the runtime bank. No source assets
 are promoted or deployed by either command. Final integration can copy only the
 complete verified manifest's clip inventory, regenerate Dart data, and remove
-legacy AAC files. Listening and synchronized mouth review remain separate from
+any non-Opus files (one format, no fallback: operator, 2026-11-17). Listening and synchronized mouth review remain separate from
 numeric validation; the manifest records that they are pending.
 
 Every staging directory is owned by the assembler. Use a fresh cache directory,

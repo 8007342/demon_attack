@@ -1,6 +1,6 @@
 // playtest-fixes-3 (openspec/changes/playtest-fixes-3): the sentinel's
-// berserk rush rules, its shadow, the diving shields' shape, the
-// background through the toast band and the straight-up ascent.
+// berserk rush rules, its shadow, the background through the toast band
+// and the straight-up ascent (the diving shields moved to dive-shield-thinning).
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -210,31 +210,8 @@ void main() {
     });
   });
 
-  group('diving shield shape', () {
-    test('the bow is one continuous crescent tapering to its tips', () {
-      const b = (span: 24.0, nose: 7.5, lead: 5.5, thick: 7.5, lick: 3.5);
-      var last = DemonScene.bowLead(b, -1);
-      for (var i = 1; i <= 40; i++) {
-        final u = -1 + i / 20;
-        final y = DemonScene.bowLead(b, u);
-        expect((y - last).abs(), lessThan(1.0), reason: 'continuous at $u');
-        last = y;
-      }
-      expect(
-        DemonScene.bowThick(b, 0),
-        greaterThan(DemonScene.bowThick(b, .95) * 3),
-      );
-    });
-
-    test('heading turns the bow toward the dive, within ±0.45 rad', () {
-      final d = Demon(0, 0, 0, 1, 0)
-        ..vx = 300
-        ..vy = 200;
-      expect(DemonScene.bowTurn(d), inInclusiveRange(-.45, 0));
-      d.vy = 0;
-      expect(DemonScene.bowTurn(d), 0);
-    });
-  });
+  // The diving shield's shape: superseded by dive-shield-thinning
+  // (test/dive_shield_thinning_test.dart).
 
   testWidgets('the background fills the toast band; gameplay never does', (
     tester,
@@ -247,7 +224,7 @@ void main() {
       final scene = DemonScene(m, () {});
       for (var i = 0; i < 5; i++) {
         scene.sectors.images[i] = await _decode(
-          'assets/images/sector-${i + 1}.png',
+          'assets/images/sector-${i + 1}.webp',
         );
       }
       await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));

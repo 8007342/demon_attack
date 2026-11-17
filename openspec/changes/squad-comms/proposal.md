@@ -15,6 +15,8 @@ The mission has no voice. The user wants in-mission radio interventions, inspire
 - **Call UI** (`lib/comms/comms_view.dart`): name and rank tags, signal-static connect and disconnect transitions, a speaking glow, scanlines, a stepped breathing bob, blinks and tilts, a demon zoom-in with a shake (no shake with reduced motion), brood glyph subtitles with a SIGINT gloss, and a fleet-intact banner.
 - **Settings**: a voice on/off button next to the sound button; subtitles stay on.
 
+> **No fallback format (operator, 2026-11-17).** Opus (`.ogg`) is the one shipped audio format: the AAC (`.m4a`) twins were deleted from `web/audio/`, and `tools/music_pipeline.py` and `tools/comms_pipeline.py` no longer encode AAC. A browser that cannot decode Ogg Opus (Safari before 18.4) plays the MIDI score through the synthesizer (`web/audio/demon-score.js`, the MIDI fallback in `demon-audio.js`).
+
 ## Capabilities
 
 ### New Capabilities

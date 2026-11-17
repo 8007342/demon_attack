@@ -12,6 +12,7 @@ import 'widgets/pilot_console_content.dart';
 import 'game/campaign_story.dart';
 import 'game/scene.dart';
 import 'game/music_director.dart'; // --- music event hook
+import 'game/song_director.dart'; // --- adaptive-soundtrack
 import 'services/audio.dart';
 import 'services/scores.dart';
 import 'services/run_storage.dart';
@@ -307,6 +308,26 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
   int? touch;
   double touchPosition = .5;
   List<void Function()> _music = const []; // --- music event hook
+  // --- adaptive-soundtrack: the MIDI-first score's director. Every scene cue
+  // goes through it: the score is the game's only music (the overture, every
+  // sector and carrier, the bridges between them, the defeat and the coda).
+  late final songs = SongDirector(
+    waveShare: () {
+      final waves = model.wavesPerLevel;
+      return waves <= 1 ? 0.0 : (model.wave - 1) / (waves - 1);
+    },
+  );
+  void _musicCue(
+    String mode,
+    int level,
+    int phase,
+    int cycle, {
+    String? scoreMode,
+  }) {
+    songs.cue(scoreMode ?? mode, level: level, phase: phase, cycle: cycle);
+  }
+
+  // --- end adaptive-soundtrack
   @override
   void initState() {
     super.initState();
@@ -337,10 +358,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     _music = [
       GameEvents.listen(MusicBridge().call),
       GameEvents.listen(scene.music.onGameEvent),
+      GameEvents.listen(songs.onGameEvent), // --- adaptive-soundtrack
     ];
     scene.topScores = board;
     installPrompt.addListener(_installChanged); // --- pwa-install
-    audioCue('menu', 1, 1, 0);
+    _musicCue('menu', 1, 1, 0);
     _refreshBoard();
     _attachComms(); // --- squad comms
     // --- console route: the run begins before the first frame (no title).
@@ -375,7 +397,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     super.didChangeDependencies();
     if (!hintArtPrecached) {
       hintArtPrecached = true;
-      precacheImage(const AssetImage('assets/images/hint-scenes.png'), context);
+      precacheImage(const AssetImage('assets/images/hint-scenes.webp'), context);
     }
   }
 
@@ -417,9 +439,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     for (final event in rawEvents) {
       switch (event) {
         case 'level':
-          audioCue('level', model.level, 1, model.cycle);
+          _musicCue('level', model.level, 1, model.cycle);
         case 'boss':
-          audioCue(
+          _musicCue(
             'boss',
             model.level,
             (model.boss?.phase ?? 0) + 1,
@@ -428,11 +450,11 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         case 'salvage':
           audioSfx('wave');
         case 'levelclear':
-          audioCue('levelclear', model.level, 1, model.cycle);
+          _musicCue('levelclear', model.level, 1, model.cycle);
         case 'travel':
-          audioCue('travel', model.level, 1, model.cycle);
+          _musicCue('travel', model.level, 1, model.cycle);
         case 'victory':
-          audioCue('victory', model.level, 1, model.cycle);
+          _musicCue('victory', model.level, 1, model.cycle);
           if (!_endingShown && model.finalBoss) {
             precacheImage(
               const AssetImage('assets/images/beach-ending.webp'),
@@ -440,7 +462,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             );
           }
         case 'defeat':
-          audioCue('gameover', model.level, 1, model.cycle);
+          _musicCue('gameover', model.level, 1, model.cycle);
         case 'heart':
           heartNotice = 'HEART PIECE COLLECTED';
           heartNoticeUntil = model.clock + 1.25;
@@ -465,11 +487,18 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         case 'gameover':
           if (!model.defeatActive) {
             _finishRun(failed: true);
-            audioCue('gameover', model.level, 1, model.cycle);
+            _musicCue('gameover', model.level, 1, model.cycle);
           }
         case 'completed':
           _finishRun(failed: false);
-          audioCue('victory', model.level, 1, model.cycle);
+          // The last carrier's collapse and victory run on into the coda.
+          _musicCue(
+            'victory',
+            model.level,
+            1,
+            model.cycle,
+            scoreMode: 'completed',
+          );
         case 'pause':
           if (!_endingOpen) audioPause();
         case 'resume':
@@ -532,7 +561,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     commsStopAll();
     audioUnlock();
     audioResume();
-    audioCue('ending', 5, 1, model.cycle);
+    _musicCue('ending', 5, 1, model.cycle);
     // --- cinematic flow (design §4.1): the ending fades up from the cloud
     // tops over the climbing ship: a crossfade between two lit scenes,
     // never through black (a cut with reduced motion).
@@ -556,7 +585,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     _tick();
     _endingOpen = false;
     audioResume();
-    audioCue(
+    _musicCue(
       model.mode == RunMode.title ? 'menu' : 'victory',
       model.level,
       1,
@@ -697,7 +726,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
       scene.keyboardDirection = 0;
     });
     audioResume();
-    audioCue('menu', 1, 1, 0);
+    _musicCue('menu', 1, 1, 0);
     focus.requestFocus();
   }
 
@@ -830,7 +859,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           scene.keyboardDirection = 0;
         });
         audioResume();
-        audioCue('menu', 1, 1, 0);
+        _musicCue('menu', 1, 1, 0);
         focus.requestFocus();
       }
     } catch (_) {

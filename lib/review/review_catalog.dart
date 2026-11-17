@@ -626,7 +626,7 @@ List<ReviewAsset> backgroundAssets() => [
       title: 'Sector ${s + 1} · ${sectorTitles[s]}',
       source:
           'assets/images/flyover-${_sectorNames[s]}.png, '
-          'flyover-${_sectorNames[s]}-ground.png, sector-${s + 1}.png',
+          'flyover-${_sectorNames[s]}-ground.png, sector-${s + 1}.webp',
       detail: 'flyover parallax, landmarks, critters, vegetation',
     ),
 ];
@@ -635,7 +635,7 @@ List<ReviewAsset> backgroundAssets() => [
 List<String> backgroundFiles(int sector) => [
   'assets/images/flyover-${_sectorNames[sector]}.png',
   'assets/images/flyover-${_sectorNames[sector]}-ground.png',
-  'assets/images/sector-${sector + 1}.png',
+  'assets/images/sector-${sector + 1}.webp',
   'assets/images/flyover-props.png',
   'assets/images/flyover-creatures.png',
   'assets/images/flyover-vegetation.png',
@@ -684,7 +684,8 @@ List<RadioClip> radioClips() => [
           RadioClip(trigger, line, who),
 ];
 
-/// One music cue of `web/audio/music/manifest.json`.
+/// One music cue: a section of the MIDI-first score
+/// (`web/audio/score/score.json`), named `song/section`.
 class MusicCue {
   MusicCue(this.name, this.meta);
   final String name;
@@ -708,44 +709,56 @@ class MusicCue {
   ];
   double get slotSeconds => _num('slotSeconds', 1.5);
 
-  /// Level 1-5 for the level cues, else 0.
-  int get level =>
-      RegExp(r'^l([1-5])-').firstMatch(name) == null ? 0 : int.parse(name[1]);
+  /// The sector the cue's song plays in (1-4 the worlds, 5 the carriers),
+  /// else 0 (the overture, the bridges, the defeat, the coda).
+  int get level => (meta['level'] as num?)?.toInt() ?? 0;
 
-  /// Stems: the per-level layer and power slices of the tier masters.
-  bool get stem => meta['mode'] == 'stems' || name.endsWith('-accents');
-  String get url => 'audio/music/$name.ogg';
+  /// Stems: the score has none (its layers are track masks).
+  bool get stem => false;
+  String get file => meta['file'] as String? ?? '$name.mid';
+  String get url => 'audio/score/$file';
 
-  /// The original MIDI score of the cue (web/audio/midi/), when it has one.
-  String? get score =>
-      RegExp(
-        r'^(l[1-5]-(intro|outro|t[1-4])|menu|victory|alienwin|cackle|'
-        r'(levelclear|finale)(-fleet)?)$',
-      ).hasMatch(name)
-      ? 'web/audio/midi/$name.mid'
-      : null;
-  String? get hash => switch (meta['sha256']) {
-    {'ogg': final String h} => h,
-    _ => null,
-  };
+  /// The section's MIDI file in the repository.
+  String? get score => 'web/audio/score/$file';
+  String? get hash => meta['sha256'] as String?;
 
   ReviewAsset asset() => ReviewAsset(
     kind: ReviewKind.music,
     id: name,
     title: name,
-    source: 'web/audio/music/$name.ogg',
+    source: 'web/audio/score/$file',
     hash: hash,
     detail:
         '$kind · ${seconds.toStringAsFixed(1)} s · ${bpm.toStringAsFixed(0)} BPM',
   );
 }
 
+/// The score's sections as cues, from `web/audio/score/score.json`.
 List<MusicCue> musicCues(Map<String, Object?> manifest) {
-  final cues = manifest['cues'];
-  if (cues is! Map) return const [];
+  final songs = manifest['songs'];
+  if (songs is! Map) return const [];
+  final levels = <String, int>{
+    for (final p in manifest['plays'] is List ? manifest['plays'] as List : [])
+      if (p is Map) '${p['song']}': (p['level'] as num).toInt(),
+  };
   final list = [
-    for (final MapEntry(:key, :value) in cues.entries)
-      if (value is Map) MusicCue('$key', value.cast<String, Object?>()),
+    for (final MapEntry(key: id, value: song) in songs.entries)
+      if (song is Map && song['sections'] is Map)
+        for (final MapEntry(key: sid, value: s)
+            in (song['sections'] as Map).entries)
+          if (s is Map)
+            MusicCue('$id/$sid', {
+              'kind': s['kind'],
+              'file': s['file'],
+              'sha256': s['sha256'],
+              'barSamples': song['barSamples'],
+              'bpm': song['bpm'],
+              'level': levels['$id'] ?? 0,
+              'seconds':
+                  ((s['bars'] as num) + ((s['hold'] as num?) ?? 0)) *
+                  (song['barSamples'] as num) /
+                  48000,
+            }),
   ];
   list.sort((a, b) {
     final l = (a.level == 0 ? 9 : a.level).compareTo(

@@ -115,7 +115,8 @@ void main() {
     // Sliding right builds shipVx and shipBank, slinging shots with positive vx.
     model.shots.clear();
     model.moveTo(320);
-    for (var i = 0; i < 16; i++) {
+    // fire-rate-tune: a volley every 18 steps, so 20 steps hold one.
+    for (var i = 0; i < 20; i++) {
       model.update(1 / 60);
     }
     expect(model.shipVx, greaterThan(50));
@@ -133,11 +134,13 @@ void main() {
     final small = Demon(120, 120, 0, 2, 0.1)
       ..entranceProgress = 1
       ..telegraph = 0.01;
-    // Tier 2: Not-so-small creature (elite / higher species -> 2..3 HP medium diving shield).
+    // Tier 2: Not-so-small creature (an elite -> 2 HP medium diving shield;
+    // fire-rate-tune: was 3, and the heavier species' 2 is now 1).
     final medium = Demon(180, 120, 2, 3, 0.2, elite: true)
       ..entranceProgress = 1
       ..telegraph = 0.01;
-    // Tier 3: Large Sentinel (4+ HP re-entry diving shield, breakable only with powerups).
+    // Tier 3: Large Sentinel (3+ HP re-entry diving shield, breakable only
+    // with powerups; fire-rate-tune: was 4+).
     final large =
         Demon(
             240,
@@ -162,11 +165,11 @@ void main() {
     expect(small.diveShield, 1);
 
     expect(medium.dive, greaterThan(0));
-    expect(medium.diveShieldMax, 3);
-    expect(medium.diveShield, 3);
+    expect(medium.diveShieldMax, 2);
+    expect(medium.diveShield, 2);
 
     expect(large.dive, greaterThan(0));
-    expect(large.diveShieldMax, greaterThanOrEqualTo(4));
+    expect(large.diveShieldMax, greaterThanOrEqualTo(3));
     expect(large.diveShield, large.diveShieldMax);
 
     // 2-damage Powerful shot pierces small demon's 1-HP dive shield and deals 1 HP damage.
@@ -174,9 +177,9 @@ void main() {
     expect(small.diveShield, 0);
     expect(small.hp, 1);
 
-    // Medium demon's 3-HP dive shield absorbs a 2-damage shot with 1 shield remaining.
+    // Medium demon's 2-HP dive shield absorbs a 2-damage shot whole.
     model.hitDemon(medium, damage: 2);
-    expect(medium.diveShield, 1);
+    expect(medium.diveShield, 0);
     expect(medium.hp, 3);
 
     // Without active offensive powerups, unpowered shots cannot break the large dive shield!

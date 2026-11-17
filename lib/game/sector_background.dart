@@ -61,6 +61,9 @@ class SectorBackground {
     Color(0xFFE8787C),
   ];
 
+  /// --- phone-performance §4: the quality tier's share of the motes.
+  double moteScale = 1;
+
   void paint(
     Canvas c,
     double environment,
@@ -407,7 +410,7 @@ class SectorBackground {
     // 28 atmospheric particulates per sector (per 520 rows: the toast band
     // above a tall phone's arena gets its share, at the same density).
     final span = 520 + headroom;
-    final count = (28 * span / 520).round();
+    final count = (28 * span / 520 * moteScale).round();
     final rng = math.Random(104729 + sector * 521);
     for (var i = 0; i < count; i++) {
       final seedX = rng.nextDouble() * 360;

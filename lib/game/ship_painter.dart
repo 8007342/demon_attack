@@ -247,30 +247,26 @@ class ShipPainter {
     layer(c, row, 14, Offset.zero, mirror: part.vx > 0);
   }
 
-  /// Projectile sprite; returns false if the atlas is not loaded.
-  bool paintShot(Canvas c, ArcadeModel m, Shot s, int index) {
+  /// The projectile's sprite column in [shotRow] (its first frame).
+  static int shotColumn(ArcadeModel m, Shot s) {
+    if (s.hostile) return s.kind == ShotKind.sentinel ? 12 : 10;
+    if (s.kind == ShotKind.large) return 6;
+    if (s.kind == ShotKind.powerful) return 4;
+    if (s.vy == -ArcadeModel.spreadShotSpeed) return 8; // spread pair
+    return m.hasPower(Power.rapid) ? 2 : 0;
+  }
+
+  // --- phone-performance §6: the two-frame shimmer runs on the shot's own
+  // age (a steady 12 Hz), no longer on its height. Keyed to y, the frame
+  // flipped every 9 px of travel, which at 6.5 px per step beat against
+  // the frame rate (an irregular 1-1-2 flicker) in every bullet stream.
+  /// The projectile's animation frame (0 or 1).
+  static int shotFrame(Shot s) => (s.age * 12).floor() % 2;
+
+  /// Projectile sprite at [at]; returns false if the atlas is not loaded.
+  bool paintShot(Canvas c, ArcadeModel m, Shot s, Offset at) {
     if (image == null) return false;
-    final frame = ((m.clock * 12).floor() + index) % 2;
-    final int col;
-    if (s.hostile) {
-      col = s.kind == ShotKind.sentinel ? 12 : 10;
-    } else if (s.kind == ShotKind.large) {
-      col = 6;
-    } else if (s.kind == ShotKind.powerful) {
-      col = 4;
-    } else if (s.vy == -370) {
-      col = 8; // spread's angled pair
-    } else if (m.hasPower(Power.rapid)) {
-      col = 2;
-    } else {
-      col = 0;
-    }
-    layer(
-      c,
-      shotRow,
-      col + frame,
-      Offset(s.x.roundToDouble(), s.y.roundToDouble()),
-    );
+    layer(c, shotRow, shotColumn(m, s) + shotFrame(s), at);
     return true;
   }
 }

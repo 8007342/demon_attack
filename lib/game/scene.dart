@@ -21,10 +21,16 @@ import 'carrier_breakup_painter.dart';
 import 'carrier_hatch_painter.dart';
 import 'carrier_presentation.dart';
 import 'carrier_script.dart' show CarrierApproachScript;
+import 'dive_shield.dart'; // --- dive-shield-thinning
 import 'ground_painter.dart';
 import 'insignia_atlas.dart';
 import 'insignia_painter.dart';
 import 'model.dart';
+import 'perf/frame_budget.dart'; // --- phone-performance
+import 'hatch_emergence.dart'; // --- hatch-emergence
+import 'carrier_gates.dart' show CarrierGate;
+import 'hatch_emergence_painter.dart';
+import 'shot_layer.dart'; // --- phone-performance
 import 'music_director.dart'; // --- music event hook
 import 'flock.dart' show SwarmFlock;
 import 'flyover_background.dart';
@@ -65,6 +71,9 @@ class DemonScene extends FlameGame {
   /// carrier-v3: the field, the gates and the speed cues.
   final carrierV3 = CarrierPresentation();
   final hatchPainter = CarrierHatchPainter(); // --- carrier-hatches
+  // --- hatch-emergence: the launched creatures' one-shot emergence.
+  final emergence = HatchEmergence();
+  final emergencePainter = HatchEmergencePainter();
   final breakup = CarrierBreakupPainter(); // --- carrier-hatches Part B
 
   /// The gameplay layer is drawn under the arena camera's zoom this frame.
@@ -87,6 +96,26 @@ class DemonScene extends FlameGame {
   // --- dynamic-weather: a regular level's rain (lib/game/weather/).
   final rain = RainLayer();
   final music = MusicDirector(); // --- music event hook (read-only)
+  // --- phone-performance: the quality tier (from measured frame
+  // intervals) and the batched, interpolated shot layer.
+  final perf = PerfGovernor(
+    forced: PerfTier.parse(Uri.base.queryParameters['perf']),
+  );
+  FrameBudget get budget => perf.budget;
+  final shots = ShotLayer();
+
+  /// The fog-bank boss shadow's cell and its pre-blurred copy (§4.4).
+  ui.Image? _fogShadowSource, _fogShadowSoft;
+
+  /// The frame-cost harness's layer marker (one type test in the game).
+  String _layerNow = 'frame';
+  void _mark(Canvas c, String layer) {
+    if (c case final LayerSink sink) {
+      _layerNow = layer;
+      sink.layer(layer);
+    }
+  }
+
   // --- ground war (ground_painter.dart) ---
   late final groundForces = GroundPainter()
     ..occluders = (sectors.flyover..deferFlyers = true)
@@ -112,7 +141,7 @@ class DemonScene extends FlameGame {
       assetError = '$e';
     }
     try {
-      sky = await images.load('cosmic-sky.png');
+      sky = await images.load('cosmic-sky.webp');
     } catch (e) {
       assetError = '$e';
     }
@@ -121,6 +150,10 @@ class DemonScene extends FlameGame {
     } catch (_) {}
     try {
       insignia.image = await images.load(InsigniaAtlas.file);
+    } catch (_) {}
+    try {
+      // --- hatch-emergence (tools/rigkit, plan/render-runs/hatch-emergence.md)
+      emergencePainter.image = await images.load('hatch-emergence.png');
     } catch (_) {}
     try {
       silhouetteAtlas = await images.load(SentinelSilhouetteAtlas.file);
@@ -144,7 +177,7 @@ class DemonScene extends FlameGame {
     await Future.wait(
       List.generate(5, (i) async {
         try {
-          sectors.images[i] = await images.load('sector-${i + 1}.png');
+          sectors.images[i] = await images.load('sector-${i + 1}.webp');
         } catch (_) {
           /* Keep the original sky as a fallback. */
         }
@@ -172,6 +205,9 @@ class DemonScene extends FlameGame {
   @override
   void update(double dt) {
     super.update(dt);
+    // --- phone-performance: the tier from frame intervals.
+    perf.frame(dt, moving: model.mode == RunMode.playing);
+    applyBudget();
     if (model.mode != RunMode.paused) advancePresentation(dt);
     final held = holdModel(); // --- mission-medals
     if (!held && model.canPilot && keyboardDirection != 0) {
@@ -179,7 +215,9 @@ class DemonScene extends FlameGame {
     }
     // --- cinematic flow: the accessibility setting picks the plan.
     model.reducedMotion = sectors.flyover.reducedMotion;
-    if (!held) model.update(dt);
+    // --- phone-performance §5.1: a jittered vsync interval steps the
+    // fixed-step model exactly once (snapFrameDelta), not 0 then 2.
+    if (!held) model.update(snapFrameDelta(dt));
     armada.sync(model, images.load, images.clear);
     // --- ground blocks runtime: the current sector's block atlases.
     if (GroundPainter.useBlocks) {
@@ -195,6 +233,19 @@ class DemonScene extends FlameGame {
       _notify = 0;
       onTick();
     }
+  }
+
+  /// --- phone-performance §3-§4: hands the tier's budget to the painters.
+  void applyBudget() {
+    final b = budget;
+    atmosphere.tierReduced = b.fogReduced;
+    rain.budget = b.rainScale;
+    sectors.moteScale = b.moteScale;
+    // --- hatch-emergence §5: LITE skips the emergence and the vents.
+    emergence
+      ..enabled = b.emergence
+      ..lurkers = b.lurkers;
+    hatchPainter.rich = b.hatchVents;
   }
 
   /// One presentation step (unpaused): the backdrop's sector blend, the
@@ -250,6 +301,12 @@ class DemonScene extends FlameGame {
             ? model.nextLevel - 1
             : model.level - 1;
         environment += (destination - environment) * math.min(1, dt * .65);
+        // --- phone-performance §4.3: land on the sector. The exponential
+        // approach never reaches the integer, and a hair short of it the
+        // backdrop draws both worlds (the far one at 99.9 %) every frame.
+        if ((destination - environment).abs() < 1e-3) {
+          environment = destination.toDouble();
+        }
       }
       // --- transition ascent: the streaks and the cloud billows scroll at
       // the world's speed (design §3).
@@ -294,6 +351,7 @@ class DemonScene extends FlameGame {
     if (armada.carrier && model.level >= 4) carrierV3.ensureField(armada);
     carrierV3.update(dt, model, bossDirector, reduced: reduced);
     hatchPainter.update(model.boss, model.visualClock, reduced: reduced);
+    emergence.update(model); // --- hatch-emergence
     // --- carrier-hatches Part B: the hull's components, cut at install.
     if (armada.carrier && model.level >= 4) breakup.prepare(armada);
     breakup.update(model, bossDirector, reduced: reduced);
@@ -346,6 +404,7 @@ class DemonScene extends FlameGame {
     // cloud reach the viewport's top. Gameplay stays clipped to the arena.
     headroom = scale > 0 ? math.max(0.0, spare / scale) : 0.0;
     atmosphere.headroom = headroom;
+    _mark(canvas, 'background'); // --- phone-performance: harness layers
     canvas.clipRect(Rect.fromLTWH(0, -headroom, 360, 520 + headroom));
     final (shakeX, shakeY) = rushShake(); // --- sentinel rush (≤ 2 px)
     if (shakeX != 0 || shakeY != 0) canvas.translate(shakeX, shakeY);
@@ -455,6 +514,7 @@ class DemonScene extends FlameGame {
       } else {
         _background(canvas);
       }
+      _mark(canvas, 'rain');
       bonusLook.paint(canvas); // --- bonus levels: the level's grade
       // --- dynamic-weather: rain over the backdrop (and the band above the
       // arena), under the ground units, the fog, the creatures and shots.
@@ -467,6 +527,7 @@ class DemonScene extends FlameGame {
       if (active && combat) {
         // --- bonus levels: a level's mechanic, under the fight.
         BonusPainters.under(canvas, model, model.visualClock);
+        _mark(canvas, 'ground');
         groundForces.paintGround(
           canvas,
           model,
@@ -486,11 +547,13 @@ class DemonScene extends FlameGame {
           canvas.transform(cam.gameplayMatrix);
         }
         _combat(canvas);
+        _mark(canvas, 'air');
         groundForces.paintAir(
           canvas,
           model,
           ship,
         ); // --- ground war: in the air
+        _mark(canvas, 'overlay');
         // --- bonus levels: a level's mechanic, over the fight.
         BonusPainters.over(canvas, model, model.visualClock);
         _bossOverflight(canvas); // --- boss-grandeur: over the ship
@@ -527,6 +590,7 @@ class DemonScene extends FlameGame {
               ),
           );
         }
+        _mark(canvas, 'flow');
         atmosphere.paintCloudCover(
           canvas,
           below: model.flow.kind == FlowKind.campaignOutro,
@@ -972,14 +1036,17 @@ class DemonScene extends FlameGame {
   }
 
   void _combat(Canvas c) {
+    _mark(c, 'creatures'); // --- phone-performance: harness layers
     insignia.begin(); // --- alien-insignia: this frame's marks
     _rims = 0;
     // --- atmosphere: ground fog lies on the terrain, over the shadows.
     if (model.perspective) _fogSlot(c, FogSlot.groundFog);
     // --- easter eggs: flock flyers over the ground fog (in the air).
     sectors.flyover.paintFlyers(c);
+    _mark(c, 'shadows');
     _creatureShadows(c); // --- continuous swarm: every flyer, the ship
     _bossOverflightShadow(c); // --- boss-grandeur: it sweeps the ground first
+    _mark(c, 'creatures');
     for (final p in model.heartPickups) {
       c.save();
       c.translate(p.x - 10, p.y - 10);
@@ -1043,7 +1110,11 @@ class DemonScene extends FlameGame {
     // --- carrier-hatches §A6: in the fight, the hull (prow, deck, hatches)
     // is drawn before the creatures, so none is ever covered by it.
     final front = model.boss;
-    if (front != null && _carrierFrontFirst(front)) _carrierFront(c, front);
+    if (front != null && _carrierFrontFirst(front)) {
+      _carrierFront(c, front);
+      _hatchLurkers(c, front); // --- hatch-emergence: beats 1-3
+    }
+    emergencePainter.beginFrame();
 
     for (final d in _byDepth(census.bodies)) {
       while (nextFog < fogSlots.length &&
@@ -1055,6 +1126,9 @@ class DemonScene extends FlameGame {
       // of the hitbox at most), never the creature.
       final (lx, ly) = d.isLarge ? (0.0, 0.0) : creatures.look.offset(d);
       final pos = Offset(d.x + lx, d.y + ly);
+      // --- hatch-emergence: beats 4-6 replace the flight sprite until the
+      // entrance hands off (beat 7).
+      if (!d.isLarge && _emergingCreature(c, d, pos)) continue;
       if (d.isLarge) {
         // Large creatures have their own delayed entrance in simulation
         // (the census leaves one that has not set out undrawn).
@@ -1076,7 +1150,6 @@ class DemonScene extends FlameGame {
           _sentinel(c, at, d);
           if (d.lastStand) _sentinelBerserk(c, at, d);
           c.restore();
-          if (d.lastStand) _rushShieldRing(c, at, d);
         }
         continue;
       }
@@ -1091,8 +1164,8 @@ class DemonScene extends FlameGame {
       // sizes below are at scale 1; boss-carrier-wire: the 34-CSS-px
       // creature floor is a draw-size floor in the carrier band.
       _scaleAbout(c, pos, d.scale * _creatureFloor);
-      // --- alien-insignia: the elite's dotted ring is gone; its ocellus
-      // (and every rank's glyph) is drawn over the arena after the fog.
+      // --- alien-insignia: the elite's dotted ring is gone; its winged
+      // fang (gargoyle-insignia; and every rank's glyph) is drawn over the arena after the fog.
       // Gargoyle frames carry their own banking (3/4 left/neutral/right
       // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
@@ -1205,6 +1278,8 @@ class DemonScene extends FlameGame {
         width: d.angry ? 36 : 32,
         diving: d.dive > 0,
       );
+      // --- dive-shield-thinning: one shield in the body's own transform.
+      if (d.dive > 0 && reveal > 0) _diveShield(c, pos, d, reveal);
       c.restore();
       final fired = creatures.fireAge(d);
       if (fired != null && fired < 0.16) {
@@ -1217,9 +1292,6 @@ class DemonScene extends FlameGame {
         );
       }
       if (warning) tells.add(d); // drawn above the sky sheets
-      if (d.dive > 0 && d.diveShield > 0 && reveal > 0) {
-        _smallOrMediumDiveShield(c, pos, d);
-      }
       c.restore();
     }
     while (nextFog < fogSlots.length) {
@@ -1280,58 +1352,17 @@ class DemonScene extends FlameGame {
     } else {
       insignia.paint(c, now: model.visualClock);
     }
-    for (final s in model.shots) {
-      final x = s.x.roundToDouble(), y = s.y.roundToDouble();
-      final p = Paint()..isAntiAlias = false;
-      void block(double dx, double dy, double w, double h, Color color) {
-        p.color = color;
-        c.drawRect(Rect.fromLTWH(x + dx, y + dy, w, h), p);
-      }
-
-      if (!s.hostile && s.vx.abs() > 4) {
-        // Stepped pixel angled plasma wake/tail for slung or spread shots.
-        final wakeDx = (-s.vx * 0.025).clamp(-6.0, 6.0);
-        for (var step = 1; step <= 3; step++) {
-          final f = step / 3.0;
-          block(
-            (wakeDx * f - 1).roundToDouble(),
-            (4 + step * 2).toDouble(),
-            2,
-            2,
-            (s.kind == ShotKind.powerful || s.damage > 1 ? gold : mint)
-                .withValues(alpha: (0.55 - step * 0.14).clamp(0.1, 0.6)),
-          );
-        }
-      }
-
-      if (ship.paintShot(c, model, s, (s.y / 9).floor())) continue;
-      if (s.kind == ShotKind.sentinel) {
-        // Fast hostile bolts have a forked red head and an amber central spine.
-        block(-2, -7, 4, 11, const Color(0xFFFF4C70));
-        block(-4, -2, 2, 6, const Color(0xFFFF8676));
-        block(2, -2, 2, 6, const Color(0xFFFF8676));
-        block(-1, -4, 2, 10, const Color(0xFFFFE3AF));
-        block(-1, 6, 2, 2, const Color(0xFFFF4C70));
-      } else if (s.kind == ShotKind.large) {
-        final rim = s.damage > 1 ? gold : violet;
-        block(-3, -5, 6, 10, rim);
-        block(-5, -2, 10, 5, rim);
-        block(-2, -7, 4, 2, const Color(0xFFFFF5C9));
-        block(-2, -2, 4, 5, const Color(0xFFFFF5C9));
-        block(-1, 5, 2, 4, mint);
-      } else if (s.kind == ShotKind.powerful) {
-        block(-2, -5, 4, 10, gold);
-        block(-1, -7, 2, 10, const Color(0xFFFFF5C9));
-        block(-3, 3, 6, 2, gold);
-        block(-1, 5, 2, 4, mint);
-      } else if (s.hostile) {
-        block(-2, -3, 5, 7, const Color(0xFFFF8676));
-        block(-1, -2, 2, 3, const Color(0xFFFFE3AF));
-      } else {
-        block(-1, -5, 2, 10, mint);
-        block(-2, 4, 4, 5, mint.withValues(alpha: .2));
-      }
-    }
+    // --- phone-performance §6: shots are drawn interpolated, smeared and
+    // batched (shot_layer.dart); speeds and fire rates stay the model's.
+    _mark(c, 'shots');
+    shots.paint(
+      c,
+      model,
+      ship,
+      frameInterval: perf.interval,
+      smear: !sectors.flyover.reducedMotion,
+    );
+    _mark(c, 'player');
     if (model.mode != RunMode.gameOver &&
         model.presentationMode != RunMode.levelClear &&
         model.presentationMode != RunMode.travel &&
@@ -1357,7 +1388,12 @@ class DemonScene extends FlameGame {
     if (model.defeatActive) {
       _defeatCelebration(c);
     }
-    for (final b in model.blasts) {
+    // --- phone-performance §4.2: at most budget.blasts explosion sprites,
+    // the newest (the model keeps every blast; only drawing is capped).
+    final blasts = model.blasts;
+    final firstBlast = math.max(0, blasts.length - budget.blasts);
+    for (var bi = firstBlast; bi < blasts.length; bi++) {
+      final b = blasts[bi];
       if (b.age < 0) continue;
       if (b.isLarge) {
         effectSprite(
@@ -1387,11 +1423,47 @@ class DemonScene extends FlameGame {
   }
 
   /// alien-insignia: the carrier's form glyph on the brood sigil (the
-  /// rank ladder: talon, two talons, ocellus, crown) and its 12 hull cells
+  /// gargoyle-insignia ladder: fang, twin fangs, winged fang, winged
+  /// crown) and its 12 hull cells
   /// on the force field's lower arc, `ceil(12 · shield / shieldMax)` lit.
   /// carrier-hatches §A6: the fighting carrier's front pass goes under the
   /// creatures.
   bool _carrierFrontFirst(Carrier b) => b.fightReady;
+
+  // --- hatch-emergence (design §4): the hatch's anchor on the bent hull.
+  Offset _hatchAt(Carrier b, CarrierGate g) =>
+      Offset(b.x, b.y) +
+      (armada.carrier ? armada.bent(g.x, g.y) : Offset(g.x, g.y));
+
+  /// Beats 1-3: the claws, peeks and held doors of the held hatches.
+  void _hatchLurkers(Canvas c, Carrier b) {
+    for (final (g, f, row) in emergence.lurking(model)) {
+      emergencePainter.paint(
+        c,
+        f,
+        row,
+        _hatchAt(b, g),
+        scale: _creatureFloor,
+      );
+    }
+  }
+
+  /// Beats 4-6 for [d] when it is emerging; false to draw it as usual.
+  bool _emergingCreature(Canvas c, Demon d, Offset pos) {
+    final b = model.boss;
+    final e = emergence.of(d);
+    final f = e?.frame;
+    if (b == null || e == null || f == null) return false;
+    emergencePainter.paint(
+      c,
+      f,
+      e.row,
+      _hatchAt(b, e.hatch),
+      modelAt: pos,
+      scale: d.scale * _creatureFloor,
+    );
+    return true;
+  }
 
   /// The carrier's front pass: the prow, deck, gates and core door.
   void _carrierFront(Canvas c, Carrier b) {
@@ -2533,7 +2605,10 @@ class DemonScene extends FlameGame {
     if (o <= .02) return;
     final halo = Paint()
       ..color = const Color(0xFFFF9A3C).withValues(alpha: .35 * o)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+      // --- phone-performance §4.1: the lite tier draws the halo sharp.
+      ..maskFilter = budget.blur
+          ? const MaskFilter.blur(BlurStyle.normal, 2.5)
+          : null;
     final core = Paint()
       ..isAntiAlias = false
       ..color = const Color(0xFFFFE7A8).withValues(alpha: o);
@@ -2676,7 +2751,7 @@ class DemonScene extends FlameGame {
   /// reduced drops the shadows with it. [shadowModeOverride] forces a mode
   /// (tests, review strips, the perf baseline).
   ShadowMode? shadowModeOverride;
-  ShadowMode get shadowMode => atmosphere.quality == AtmosphereQuality.reduced
+  ShadowMode get shadowMode => atmosphere.drawnQuality == AtmosphereQuality.reduced
       ? ShadowMode.flat
       : shadowModeOverride ?? ShadowMode.draped;
 
@@ -3227,7 +3302,7 @@ class DemonScene extends FlameGame {
       sectors.flyover.terrain.lurkCover = null;
       return;
     }
-    final reduced = atmosphere.quality == AtmosphereQuality.reduced;
+    final reduced = atmosphere.drawnQuality == AtmosphereQuality.reduced;
     final draped = shadowMode == ShadowMode.draped;
     final surface = _shadowSurface;
     final buckets = [<_ShadowSpec>[], <_ShadowSpec>[], <_ShadowSpec>[]];
@@ -3490,231 +3565,49 @@ class DemonScene extends FlameGame {
     }
   }
 
-  // --- playtest-fixes-3: diving shields as one coherent shape ------------
+  // --- dive-shield-thinning: one shield that thins in place ---------------
   //
-  // The old bows were assembled from 3-unit columns, each with its own
-  // rounded y, sine-driven tongue and jitter, 6-unit cuts per segment and
-  // wingtip sparks at fixed offsets. The columns were rounded in the
-  // creature's local units before its scale, so under the scale transform
-  // neighbouring columns jumped by whole scaled units and the arc shattered
-  // into offset blocks with gaps. Now every layer of a bow is a band of one
-  // crescent function (leading edge, thickness, flicker), drawn as a few
-  // polygons in the same local frame, so the whole shield scales, turns
-  // and wears as one shape.
+  // Replaces playtest-fixes-3's segmented crescents: those were cut into one
+  // segment per point and spent from the outside in (the shield narrowed),
+  // their flame lick throbbed the thickness on its own clock, they turned
+  // with the heading while the body did not, and they were drawn outside
+  // the body's wing roll (and the sentinel's bank squash). Now the same
+  // crescent, whole and in the body's transform, loses only thickness
+  // (to 40 % of full on the last point; design §5).
 
-  /// The crescent of a thermal bow, in the creature's local units about
-  /// its centre: half span [span], nose drop [nose], leading edge at
-  /// [lead] below the centre (at the tips), thickness [thick] and flame
-  /// lick [lick] on the trailing edge.
-  static const _bowSmall = (
-    span: 16.0,
-    nose: 5.5,
-    lead: 7.5,
-    thick: 6.0,
-    lick: 2.5,
-  );
-  static const _bowMedium = (
-    span: 24.0,
-    nose: 7.5,
-    lead: 5.5,
-    thick: 7.5,
-    lick: 3.5,
-  );
-  static const _bowSentinel = (
-    span: 52.0,
-    nose: 15.0,
-    lead: 3.0,
-    thick: 10.0,
-    lick: 5.0,
-  );
-  static const _bowRush = (
-    span: 64.0,
-    nose: 18.0,
-    lead: 2.0,
-    thick: 13.0,
-    lick: 6.0,
-  );
-
-  /// Thermal palette (outer envelope to the white-hot nose) and the rush's
-  /// crimson-to-black one.
-  static const _thermal = [
-    Color(0xFFDD2C00),
-    Color(0xFFFF6D00),
-    Color(0xFFFFC23A),
-    Color(0xFFFFF6CC),
-  ];
-  static const _crimson = [
-    Color(0xFF1A0508),
-    Color(0xFF8E1020),
-    Color(0xFFFF3B3B),
-    Color(0xFFFFC2B0),
-  ];
-
-  /// Share of the thickness each band keeps (outer first) and its alpha.
-  static const _bowBands = [(1.0, .78), (.7, .9), (.42, .95), (.2, 1.0)];
-
-  /// The bow's leading edge (y below the centre) at u in [-1, 1].
-  static double bowLead(
-    ({double span, double nose, double lead, double thick, double lick}) b,
-    double u,
-  ) => b.lead + b.nose * (1 - u * u);
-
-  /// The bow's thickness at u: full at the nose, tapering to points.
-  static double bowThick(
-    ({double span, double nose, double lead, double thick, double lick}) b,
-    double u,
-  ) => b.thick * math.pow(math.max(0.0, 1 - u * u), .55) + .6;
-
-  /// Draws one thermal bow about [pos] (local units, under the caller's
-  /// scale): [n] segments ([lit] of them burning, the rest dark sockets,
-  /// one flashing white while it burns off), turned [turn] radians toward
-  /// the dive's heading. [strength] dims the envelope as the shield wears.
-  void _thermalBow(
-    Canvas c,
-    Offset pos,
-    ({double span, double nose, double lead, double thick, double lick}) b, {
-    int n = 1,
-    List<bool>? lit,
-    List<bool>? flashing,
-    double turn = 0,
-    double strength = 1,
-    double opacity = 1,
-    List<Color> palette = _thermal,
-    double seed = 0,
-  }) {
-    final paint = Paint()..isAntiAlias = true;
-    final t = model.clock;
-    final calm = sectors.flyover.reducedMotion;
-    // One smooth flame lick along the trailing edge (two low harmonics:
-    // continuous across segments, never per-column noise).
-    double lick(double u) {
-      if (calm) return b.lick * .5;
-      final w =
-          .55 +
-          .3 * math.sin(t * 17 + u * 5.1 + seed) +
-          .15 * math.sin(t * 29 - u * 9.3 + seed * 2);
-      return b.lick * w * (1 - .45 * u * u);
-    }
-
-    c.save();
-    if (turn.abs() > .01) {
-      c
-        ..translate(pos.dx, pos.dy)
-        ..rotate(turn)
-        ..translate(-pos.dx, -pos.dy);
-    }
-    // A notch between segments: 1.6 units of span, whatever the scale.
-    final notch = n > 1 ? 1.6 / b.span : 0.0;
-    const steps = 18;
-    Path band(double u0, double u1, double share, {bool flame = true}) {
-      final p = Path();
-      final k = math.max(2, ((u1 - u0) / 2 * steps).ceil());
-      for (var i = 0; i <= k; i++) {
-        final u = u0 + (u1 - u0) * i / k;
-        final x = pos.dx + u * b.span;
-        final y = pos.dy + bowLead(b, u) + .5 * share;
-        i == 0 ? p.moveTo(x, y) : p.lineTo(x, y);
-      }
-      for (var i = k; i >= 0; i--) {
-        final u = u0 + (u1 - u0) * i / k;
-        final x = pos.dx + u * b.span;
-        final th = bowThick(b, u) * share + (flame ? lick(u) * share : 0);
-        p.lineTo(x, pos.dy + bowLead(b, u) - th);
-      }
-      return p..close();
-    }
-
-    for (var s = 0; s < n; s++) {
-      final u0 = -1 + 2 * s / n + (s > 0 ? notch : 0);
-      final u1 = -1 + 2 * (s + 1) / n - (s < n - 1 ? notch : 0);
-      final on = lit?[s] ?? true;
-      if (flashing?[s] ?? false) {
-        paint.color = const Color(0xFFFFFFFF).withValues(alpha: opacity);
-        c.drawPath(band(u0, u1, 1), paint);
-        continue;
-      }
-      if (!on) {
-        // A spent segment keeps the bow's outline as a dark ember socket,
-        // so the shield still reads as one shape.
-        paint.color = palette[0].withValues(alpha: .28 * strength * opacity);
-        c.drawPath(band(u0, u1, .7, flame: false), paint);
-        continue;
-      }
-      for (var k = 0; k < _bowBands.length; k++) {
-        final (share, alpha) = _bowBands[k];
-        paint.color = palette[k].withValues(
-          alpha: alpha * (k == 0 ? .55 + .45 * strength : 1) * opacity,
-        );
-        c.drawPath(band(u0, u1, share), paint);
-      }
-    }
-    // Embers shed from the two tips, attached to them and rising.
-    if (!calm) {
-      final tipU = .96;
-      for (final side in const [-1.0, 1.0]) {
-        final on = lit == null || lit[side < 0 ? 0 : n - 1];
-        if (!on) continue;
-        final tip = Offset(
-          pos.dx + side * tipU * b.span,
-          pos.dy + bowLead(b, tipU) - bowThick(b, tipU),
-        );
-        for (var e = 0; e < 3; e++) {
-          final age = ((t * 2.2 + e / 3 + seed * .1) % 1.0);
-          final r = (1.4 - age) * b.thick * .14;
-          paint.color = Color.lerp(
-            palette[2],
-            palette[0],
-            age,
-          )!.withValues(alpha: (1 - age) * .85 * strength * opacity);
-          c.drawCircle(
-            tip.translate(side * age * b.thick * .35, -age * b.thick * 1.6),
-            math.max(.5, r),
-            paint,
-          );
-        }
-      }
-    }
-    c.restore();
-  }
-
-  /// The dive heading as a turn of the bow (radians, ±0.45), so its nose
-  /// leads the creature's motion in every dive pose.
-  static double bowTurn(Demon d) {
-    if (d.vy < 30) return 0;
-    return (-math.atan2(d.vx, d.vy) * .8).clamp(-.45, .45);
-  }
-
-  /// alien-insignia: the thermal bow cut into one segment per dive-shield
-  /// point, spent points outside-in, a burning one flashing white.
-  void _diveBow(
-    Canvas c,
-    Offset pos,
-    Demon d,
-    ({double span, double nose, double lead, double thick, double lick}) b,
-  ) {
-    final n = math.max(1, d.diveShieldMax);
-    final lit = InsigniaPainter.litCells(n, d.diveShield);
-    final flashing = [
-      for (var s = 0; s < n; s++)
-        !lit[s] && creatures.shields.flashAge(d, 'dive', s) != null,
-    ];
-    _thermalBow(
-      c,
-      pos,
-      b,
-      n: n,
-      lit: lit,
-      flashing: flashing,
-      turn: bowTurn(d),
-      strength: (d.diveShield / n).clamp(.35, 1.0),
-      seed: d.seed,
-    );
-  }
-
-  void _smallOrMediumDiveShield(Canvas c, Offset pos, Demon d) {
+  /// The shield spec for an ordinary diver or a sentinel.
+  static DiveShieldSpec diveShieldSpec(Demon d) {
+    if (d.isLarge) return DiveShield.sentinel;
     final notSoSmall =
         d.diveShieldMax >= 2 || d.elite || d.kind >= 2 || d.maxHp >= 3;
-    _diveBow(c, pos, d, notSoSmall ? _bowMedium : _bowSmall);
+    final s = notSoSmall ? DiveShield.medium : DiveShield.small;
+    // The angry gargoyle is drawn 44 units wide instead of 40.
+    return d.angry ? s.scaled(44 / 40) : s;
+  }
+
+  /// Where a sentinel's body is drawn: [effectSprite] snaps its corner to
+  /// whole local units, and the shield snaps with it.
+  static Offset _sentinelCentre(Offset pos) => Offset(
+    (pos.dx - 64).roundToDouble() + 64,
+    (pos.dy - 32).roundToDouble() + 32,
+  );
+
+  /// A diving creature's shield, in the caller's (the body's) transform.
+  void _diveShield(Canvas c, Offset pos, Demon d, double reveal) {
+    final flash = creatures.shields.hitFlash(d, 'dive');
+    if (d.diveShield <= 0 && flash <= 0) return;
+    DiveShield.paint(
+      c,
+      d.isLarge ? _sentinelCentre(pos) : pos,
+      diveShieldSpec(d),
+      points: d.diveShield,
+      max: math.max(1, d.diveShieldMax),
+      flash: flash,
+      clock: model.clock,
+      calm: sectors.flyover.reducedMotion,
+      opacity: reveal.clamp(0.0, 1.0),
+      seed: d.seed,
+    );
   }
 
   void _carrierLighting(Canvas c, Offset center, double bank) {
@@ -3842,16 +3735,9 @@ class DemonScene extends FlameGame {
     final fired = creatures.fireAge(demon);
     final firing = hovering && fired != null && fired < .28;
     final flashFrame = hovering && demon.flash > 0;
-    final bank = demon.bank.abs() > 0.01
-        ? demon.bank.clamp(-1.0, 1.0)
-        : (demon.vx / 140).clamp(-1.0, 1.0);
+    final bank = sentinelBank(demon);
     c.save();
-    if (bank.abs() > 0.04) {
-      c.translate(pos.dx, pos.dy);
-      c.rotate(bank * 0.08);
-      c.scale(1.0 - bank.abs() * 0.08, 1.0);
-      c.translate(-pos.dx, -pos.dy);
-    }
+    _bankAbout(c, pos, bank);
     final t = _transmittance(demon);
     final whiteFlash = demon.flash > 0 && !flashFrame;
     // A foreshadowed sentinel leaves its silhouette behind as it comes out
@@ -3901,10 +3787,13 @@ class DemonScene extends FlameGame {
     final glow = (Perspective.glowAlpha(t) - t) * (1 - shade);
     if (glow > .02 && !whiteFlash) _sentinelEyes(c, pos, glow);
     _creatureLighting(c, pos, bank, width: 92, diving: diving);
-    c.restore();
     final reveal = Perspective.gearReveal(t);
+    // --- dive-shield-thinning: under the body's bank, on its snapped centre.
+    if (diving && reveal > 0) _diveShield(c, pos, demon, reveal);
+    c.restore();
     if (mark > 0) {
-      // --- alien-insignia: the crown over the head, and one cyan cell per
+      // --- alien-insignia: the winged crown (gargoyle-insignia) over the
+      // head, and one cyan cell per
       // shield point in front of the body (spent points stay as sockets).
       // Overlays are queued in arena units (the canvas here is scaled).
       insignia.rank(
@@ -3944,9 +3833,20 @@ class DemonScene extends FlameGame {
         );
       }
     }
-    if (diving && demon.diveShield > 0) {
-      _sentinelDiveShield(c, pos, demon);
-    }
+  }
+
+  /// The sentinel's bank (-1..1): the simulation's, or its sideways speed.
+  static double sentinelBank(Demon demon) => demon.bank.abs() > 0.01
+      ? demon.bank.clamp(-1.0, 1.0)
+      : (demon.vx / 140).clamp(-1.0, 1.0);
+
+  /// The sentinel body's bank transform about [pos]: a roll and a squash.
+  void _bankAbout(Canvas c, Offset pos, double bank) {
+    if (bank.abs() <= 0.04) return;
+    c.translate(pos.dx, pos.dy);
+    c.rotate(bank * 0.08);
+    c.scale(1.0 - bank.abs() * 0.08, 1.0);
+    c.translate(-pos.dx, -pos.dy);
   }
 
   // --- sentinel rush presentation (demon-intelligence design §6.5) ------
@@ -4019,51 +3919,32 @@ class DemonScene extends FlameGame {
       _sentinelEyes(c, pos, .6 + .4 * flare, scale: 1 + .25 * flare);
     }
     if (!forming && phase != RushPhase.rush) return;
-    if (d.rushShield <= 0 && phase == RushPhase.rush) return;
-    final ratio = d.rushShieldMax <= 0
-        ? 0.0
-        : (d.rushShield / d.rushShieldMax).clamp(0.0, 1.0);
+    final breaking = creatures.shields.breaking(d, 'rush');
+    if (d.rushShield <= 0 && phase == RushPhase.rush && !breaking) return;
     final reel = d.rushStagger > 0 ? .5 : 1.0;
     final grow = forming
         ? Perspective.smoothstep(0, 1, d.lastStandTellProgress)
         : 1.0;
+    // --- dive-shield-thinning: the super-strong shield, the thickest. It
+    // fades in at its full size (never growing) and thins with the rush
+    // shield's points, in the body's bank.
+    final max = d.rushShieldMax > 0 ? d.rushShieldMax : 1;
+    final points = d.rushShieldMax > 0 ? d.rushShield : 1;
     c.save();
-    // The bow condenses out of the sentinel as it transforms.
-    final k = .55 + .45 * grow;
-    c
-      ..translate(pos.dx, pos.dy)
-      ..scale(k)
-      ..translate(-pos.dx, -pos.dy);
-    _thermalBow(
+    _bankAbout(c, pos, sentinelBank(d));
+    DiveShield.paint(
       c,
-      pos,
-      _bowRush,
-      palette: _crimson,
-      strength: reel * (.4 + .6 * ratio),
+      _sentinelCentre(pos),
+      DiveShield.rush,
+      points: points,
+      max: max,
+      flash: creatures.shields.hitFlash(d, 'rush'),
+      clock: model.clock,
+      calm: sectors.flyover.reducedMotion,
       opacity: forming ? .3 + .7 * grow : reel,
-      turn: phase == RushPhase.rush ? -d.rushHeading * .8 : 0,
       seed: d.seed,
     );
     c.restore();
-  }
-
-  /// The rush shield (alien-insignia): the force-shield cell arc one row
-  /// below the sentinel's own, in ember-tinted cells, one per point, spent
-  /// points kept as sockets. Fixed size, so it reads at any depth.
-  void _rushShieldRing(Canvas c, Offset pos, Demon d) {
-    if (d.rushShieldMax <= 0 || d.entering) return;
-    if (d.rushShield <= 0 && !creatures.shields.breaking(d, 'rush')) return;
-    final scale = math.max(d.scale, .8);
-    _shieldCells(
-      d,
-      'rush',
-      d.rushShield,
-      d.rushShieldMax,
-      pos + Offset(0, 4 * scale + 11),
-      scale,
-      InsigniaPainter.revealAlpha(_transmittance(d)),
-      litAs: ShieldCell.rush,
-    );
   }
 
   /// Head top of the sentinel sheet's creature (units above the centre at
@@ -4098,10 +3979,20 @@ class DemonScene extends FlameGame {
   /// star at the impact and five sparks ricocheting away from the body
   /// (gold to ember), gone in [Deflect.life] s. Reduced motion keeps the
   /// star only.
+  /// phone-performance §4.2: the hard cap on deflect stars drawn at once.
+  static const maxDeflectsDrawn = 24;
+
   void _deflectSparks(Canvas c) {
     if (model.deflects.isEmpty) return;
     final paint = Paint()..isAntiAlias = false;
-    for (final f in model.deflects) {
+    // --- phone-performance §4.2: the newest [maxDeflectsDrawn]; the lite
+    // tier keeps the stars and drops the ricochet sparks.
+    final all = model.deflects;
+    final sparks = budget.sparks;
+    for (var di = math.max(0, all.length - maxDeflectsDrawn);
+        di < all.length;
+        di++) {
+      final f = all[di];
       final u = (f.age / Deflect.life).clamp(0.0, 1.0);
       final at = Offset(f.x, f.y);
       // The star: a plus of white and gold, shrinking.
@@ -4117,7 +4008,7 @@ class DemonScene extends FlameGame {
       );
       paint.color = const Color(0xFFFFD54F).withValues(alpha: 1 - u);
       c.drawRect(Rect.fromCenter(center: at, width: 3, height: 3), paint);
-      if (sectors.flyover.reducedMotion) continue;
+      if (sectors.flyover.reducedMotion || !sparks) continue;
       // Away from the sentinel's centre (a ricochet off its ward).
       final away = math.atan2(f.y - f.cy, f.x - f.cx);
       for (var i = 0; i < 5; i++) {
@@ -4142,9 +4033,6 @@ class DemonScene extends FlameGame {
   }
 
   // --- end sentinel rush presentation
-
-  void _sentinelDiveShield(Canvas c, Offset pos, Demon demon) =>
-      _diveBow(c, pos, demon, _bowSentinel);
 
   void _bossOrbitalArrivalEffects(
     Canvas c,
@@ -5099,6 +4987,13 @@ extension _BossGrandeur on DemonScene {
   /// zoomed (it is weather, world-anchored, drawn to the whole frame), so
   /// the zoomed arena never shows a fog rectangle's edge.
   void _fogSlot(Canvas c, FogSlot slot) {
+    final layer = _layerNow; // --- phone-performance: harness layers
+    _mark(c, 'fog');
+    _fogSlotIn(c, slot);
+    _mark(c, layer);
+  }
+
+  void _fogSlotIn(Canvas c, FogSlot slot) {
     if (!_zoomApplied) {
       atmosphere.paint(c, slot);
       return;
@@ -5272,23 +5167,52 @@ extension _BossGrandeur on DemonScene {
     final scale = .8 + .25 * (l.nearness - .3);
     final mid = Offset(cell.width / 2, cell.height / 2) - _bossShadowAnchor;
     final center = Offset(b.x + 14 + mid.dx * scale, l.peak);
+    // --- phone-performance §4.4: the blur is baked into the cell once (a
+    // per-draw ImageFilter is an offscreen layer, up to four a frame).
+    final soft = _fogShadowCell(cell);
     c.save();
     c.clipRect(Rect.fromLTRB(-60, l.top, 420, l.bottom));
     c.drawImageRect(
-      cell,
-      Rect.fromLTWH(0, 0, cell.width.toDouble(), cell.height.toDouble()),
+      soft,
+      Rect.fromLTWH(0, 0, soft.width.toDouble(), soft.height.toDouble()),
       Rect.fromCenter(
         center: center,
-        width: cell.width * scale,
-        height: cell.height * scale * .45,
+        width: soft.width * scale,
+        height: soft.height * scale * .45,
       ),
       Paint()
         ..color = Color.fromRGBO(255, 255, 255, a)
         ..blendMode = BlendMode.multiply
-        ..filterQuality = FilterQuality.medium
-        ..imageFilter = ui.ImageFilter.blur(sigmaX: 4, sigmaY: 3),
+        ..filterQuality = FilterQuality.medium,
     );
     c.restore();
+  }
+
+  /// [cell] blurred as the fog-bank shadow draws it: the blur of (4, 3)
+  /// arena units, at the cell's mean drawn scale (.875 across, .875 × .45
+  /// down), in cell pixels, with a margin of three sigmas.
+  ui.Image _fogShadowCell(ui.Image cell) {
+    final hit = _fogShadowSoft;
+    if (hit != null && identical(_fogShadowSource, cell)) return hit;
+    const k = .875, sx = 4 / k, sy = 3 / (k * .45);
+    final px = (sx * 3).ceilToDouble(), py = (sy * 3).ceilToDouble();
+    final rec = ui.PictureRecorder();
+    Canvas(rec).drawImage(
+      cell,
+      Offset(px, py),
+      Paint()
+        ..filterQuality = FilterQuality.medium
+        ..imageFilter = ui.ImageFilter.blur(sigmaX: sx, sigmaY: sy),
+    );
+    final pic = rec.endRecording();
+    _fogShadowSoft?.dispose();
+    final soft = pic.toImageSync(
+      (cell.width + 2 * px).round(),
+      (cell.height + 2 * py).round(),
+    );
+    pic.dispose();
+    _fogShadowSource = cell;
+    return _fogShadowSoft = soft;
   }
 
   /// Overflight geometry at progress [p]: centre, scale, and the hull's

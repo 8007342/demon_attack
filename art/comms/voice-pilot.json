@@ -1,0 +1,77 @@
+{
+  "schema": "demon-attack.voice-pilot/v1",
+  "comment": "Voice-direction pilot script (openspec/changes/voice-direction design §7). Not read by the game or by tools/comms_pipeline.py yet. Fields follow lines.json v6 (design §3): beats, threads (turns with gap), brood vocal layers. `ref` names an existing clip id whose words are reused; `new` marks pilot text that becomes a pending-text line in lines.json once the v6 schema lands. B6 is a pilot-only test of the brood-to-plain crossfade and never ships as a radio line. Every line must pass the voice-stack tone check.",
+  "lines": [
+    {"id": "P1", "ref": "sentinelDive.h3", "speaker": "rook", "text": "Incoming! Dodge, dodge, dodge!", "emotion": "panicked", "intensity": 3},
+    {"id": "P2", "ref": "defeat.h0", "speaker": "admiral", "text": "All ships totalled, but every pilot is safe. Regroup at base. We go again.", "emotion": "warm", "intensity": 2,
+     "beats": [{"text": "All ships totalled, but every pilot is safe.", "emotion": "exhausted", "intensity": 1},
+               {"text": "Regroup at base. We go again.", "emotion": "warm", "intensity": 2}]},
+    {"id": "P3", "ref": "levelClear.h2", "speaker": "rook", "text": "[laugh] Ha! Did you see that? Textbook.", "emotion": "smug", "intensity": 2,
+     "beats": [{"text": "Ha! Did you see that?", "emotion": "triumphant", "intensity": 2},
+               {"text": "Textbook.", "emotion": "smug", "intensity": 2}]},
+    {"id": "P4", "ref": "allySaved.h7", "speaker": "kessler", "text": "Whew. That was close. Thanks, friend!", "emotion": "warm", "intensity": 2,
+     "beats": [{"text": "Whew. That was close.", "emotion": "relieved", "intensity": 1},
+               {"text": "Thanks, friend!", "emotion": "warm", "intensity": 2}]},
+    {"id": "P5", "ref": "sectorStart.h4", "speaker": "pip", "text": "Cadet Pip, reporting for awesome! I mean, for duty!", "emotion": "calm", "intensity": 1, "signature": true,
+     "beats": [{"text": "Cadet Pip, reporting for awesome!", "emotion": "excited", "intensity": 3},
+               {"text": "I mean, for duty!", "emotion": "calm", "intensity": 1, "direction": "flustered, correcting himself"}]},
+    {"id": "P6", "ref": "bossDefeated.h3", "speaker": "sparrow", "text": "[whoop] Carrier down! Woohoo!", "emotion": "cheering", "intensity": 3},
+    {"id": "P7", "ref": "broodTaunt.h0", "speaker": "admiral", "text": "Keep talking. We can play this all afternoon.", "emotion": "stern", "intensity": 1, "direction": "dry, unimpressed"},
+    {"id": "P8", "new": true, "speaker": "kestrel", "text": "Frak! They're on my six!", "emotion": "panicked", "intensity": 2,
+     "beats": [{"text": "Frak!", "emotion": "furious", "intensity": 3},
+               {"text": "They're on my six!", "emotion": "panicked", "intensity": 2, "direction": "breathless"}]}
+  ],
+  "threads": [
+    {"id": "T1", "trigger": "convoyStuck", "new": true, "turns": [
+      {"speaker": "kessler", "text": "Son of a glitch, the tracks are spinning! We're stuck!", "emotion": "panicked", "intensity": 3},
+      {"speaker": "mensah", "text": "Easy, Bulwark. Rock it. Forward, back, forward.", "emotion": "calm", "intensity": 1, "gap": 0.1},
+      {"speaker": "kessler", "text": "Rocking... rocking... [whoop] We're loose! Sweet thrusters!", "emotion": "cheering", "intensity": 3, "gap": -0.2,
+       "beats": [{"text": "Rocking... rocking...", "emotion": "exhausted", "intensity": 1},
+                 {"text": "We're loose! Sweet thrusters!", "emotion": "cheering", "intensity": 3}]}
+    ]},
+    {"id": "T2", "trigger": "bossDefeated", "new": true, "turns": [
+      {"speaker": "sparrow", "text": "[whoop] Carrier's down! Did you see that?!", "emotion": "cheering", "intensity": 3},
+      {"speaker": "rook", "text": "[laugh] Saw it, heard it, want it on a poster!", "emotion": "excited", "intensity": 3, "gap": -0.3},
+      {"speaker": "admiral", "text": "Settle down, squadron. ...Okay. One cheer.", "emotion": "warm", "intensity": 2, "gap": 0.3,
+       "beats": [{"text": "Settle down, squadron.", "emotion": "stern", "intensity": 1},
+                 {"text": "...Okay. One cheer.", "emotion": "warm", "intensity": 2, "direction": "giving in, smiling"}]}
+    ]},
+    {"id": "T3", "trigger": "broodTaunt", "new": true, "opens": "demon", "turns": [
+      {"speaker": "vexxa", "grunt": "gloat", "gloss": "Shiny-shell! Your fleet is painted tin!", "say": "Shiny-shell! Your fleet is painted tin! [cackle]", "emotion": "teasing", "intensity": 2,
+       "vocal": {"cue": "cackle", "source": "effort"}},
+      {"speaker": "sparrow", "text": "Painted tin with a full tank, pixel-pusher. Eat static!", "emotion": "smug", "intensity": 2, "gap": 0.15},
+      {"speaker": "vexxa", "grunt": "snarl", "gloss": "(an offended snarl)", "say": "[snarl]", "emotion": "furious", "intensity": 2, "gap": 0.05,
+       "vocal": {"cue": "snarl", "source": "effort"}}
+    ]},
+    {"id": "T4", "trigger": "sentinelDive", "new": true, "turns": [
+      {"speaker": "pip", "text": "It's diving at me! It's diving at me!", "emotion": "panicked", "intensity": 3},
+      {"speaker": "nomad", "text": "Breathe, cadet. Left. Now.", "emotion": "calm", "intensity": 1, "gap": 0.0},
+      {"speaker": "pip", "text": "[gasp] Missed me? It missed me! Woo!", "emotion": "cheering", "intensity": 3, "gap": 0.4,
+       "beats": [{"text": "Missed me?", "emotion": "awed", "intensity": 1},
+                 {"text": "It missed me! Woo!", "emotion": "cheering", "intensity": 3}]}
+    ]}
+  ],
+  "brood": [
+    {"id": "B1", "speaker": "gorrak", "grunt": "roar", "say": "[roar]", "gloss": "(a roar that shakes the hull)", "emotion": "triumphant", "intensity": 3,
+     "vocal": {"cue": "roar", "source": "effort"}, "reveal": "owner"},
+    {"id": "B2", "ref": "sentinelRushMissed.d0", "speaker": "gorrak", "grunt": "snarl", "say": "Again! [snarl] AGAIN!", "gloss": "Again! AGAIN!", "emotion": "furious", "intensity": 3,
+     "vocal": {"cue": "snarl", "source": "effort"}, "reveal": "owner"},
+    {"id": "B3", "ref": "broodTaunt.d1", "speaker": "vexxa", "grunt": "gloat", "say": "You brought a whole fleet for little old me? [cackle]", "gloss": "You brought a whole fleet for little old me?", "emotion": "teasing", "intensity": 2,
+     "vocal": {"cue": "cackle", "source": "effort"}, "reveal": "waitress"},
+    {"id": "B4", "speaker": "vexxa", "grunt": "cackle", "say": "[cackle]", "gloss": "(a delighted cackle)", "emotion": "smug", "intensity": 2,
+     "vocal": {"cue": "cackle", "source": "effort"}, "reveal": "waitress"},
+    {"id": "B5", "ref": "bonusDare.supplyRun.d3", "speaker": "skarn", "grunt": "warcry", "say": "Burn the boxes! Burn the sky!", "gloss": "Burn the boxes! Burn the sky!", "emotion": "excited", "intensity": 3,
+     "vocal": {"cue": "roar", "source": "effort"}, "reveal": "grill cook"},
+    {"id": "B6", "ref": "levelClear.d0", "pilot_only": true, "speaker": "gorrak", "grunt": "alarm", "say": "Fine! Take this patch of sky!", "gloss": "Fine! Take this patch of sky!", "emotion": "panicked", "intensity": 2,
+     "beats": [{"text": "Fine!", "emotion": "furious", "intensity": 2, "voice": "brood"},
+               {"text": "Take this patch of sky!", "emotion": "panicked", "intensity": 2, "voice": "plain"}], "reveal": "owner"},
+    {"id": "B7", "ref": "reinforcements.d8", "speaker": "grunnok", "grunt": "cackle", "say": "Oh, that was good! [cheer]", "gloss": "Oh, that was good!", "emotion": "cheering", "intensity": 3,
+     "vocal": {"cue": "cheer", "source": "effort"}, "reveal": "big brother"},
+    {"id": "B8", "speaker": "krag", "grunt": "snarl", "say": "[growl]", "gloss": "(a low, rumbling growl)", "emotion": "stern", "intensity": 2,
+     "vocal": {"cue": "growl", "source": "effort"}, "reveal": "dog"},
+    {"id": "B9", "speaker": "sliss", "grunt": "snarl", "say": "[hiss]", "gloss": "(a long hiss)", "emotion": "furious", "intensity": 2,
+     "vocal": {"cue": "hiss", "source": "effort"}, "reveal": "cat"},
+    {"id": "B10", "ref": "bonusDare.supplyRun.d0", "speaker": "skritch", "grunt": "cackle", "say": "Shiny boxes! Mine, mine, mine! [chitter]", "gloss": "Shiny boxes! Mine, mine, mine!", "emotion": "excited", "intensity": 3,
+     "vocal": {"cue": "chitter", "source": "effort"}, "reveal": "seagull"}
+  ]
+}

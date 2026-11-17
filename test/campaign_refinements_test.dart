@@ -145,23 +145,25 @@ void main() {
     'eight-kill pickups cycle all five weapons and survive checkpoint restore',
     () {
       final m = arena();
-      for (var kill = 1; kill <= 40; kill++) {
+      // fire-rate-tune: route 0 drops on every 5th kill (later routes 8th).
+      final every = m.killDropEvery;
+      for (var kill = 1; kill <= 5 * every; kill++) {
         final d = Demon(20, 70, 0, 1, 0);
         m.demons.add(d);
         m.hitDemon(d);
-        expect(m.pickups.length, kill ~/ 8);
+        expect(m.pickups.length, kill ~/ every);
       }
       expect(m.pickups.map((p) => p.power), Power.values);
       final saved = m.checkpoint();
       m.restoreCheckpoint(saved);
       m.mode = RunMode.playing;
-      for (var i = 0; i < 8; i++) {
+      for (var i = 0; i < every; i++) {
         final d = Demon(20, 70, 0, 1, 0);
         m.demons.add(d);
         m.hitDemon(d);
       }
       expect(m.pickups.single.power, Power.spread);
-      expect(m.kills, 48);
+      expect(m.kills, 6 * every);
     },
   );
 
@@ -262,7 +264,8 @@ void main() {
   );
 
   test('large powerful blast hits each nearby demon once and gives one reward per kill', () {
-    final m = arena()..kills = 7;
+    final m = arena();
+    m.kills = m.killDropEvery - 1; // the next kill drops a power
     final first = Demon(100, 200, 0, 2, 0);
     final second = Demon(124, 200, 0, 2, 0);
     final distant = Demon(200, 200, 0, 5, 0);
@@ -273,12 +276,12 @@ void main() {
     m.update(1 / 60);
     expect(m.demons, [distant]);
     expect(distant.hp, 5);
-    expect(m.kills, 9);
+    expect(m.kills, m.killDropEvery + 1);
     expect(m.score, 300);
     expect(m.pickups, hasLength(1));
     expect(m.blasts.where((b) => b.blastRadius == 30), hasLength(1));
     m.update(1 / 60);
-    expect(m.kills, 9);
+    expect(m.kills, m.killDropEvery + 1);
     expect(m.pickups, hasLength(1));
   });
 

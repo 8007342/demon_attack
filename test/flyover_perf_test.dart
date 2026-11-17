@@ -24,7 +24,7 @@ void main() {
       final scene = DemonScene(model, () {});
       for (var i = 0; i < 5; i++) {
         scene.sectors.images[i] =
-            await _decode('assets/images/sector-${i + 1}.png');
+            await _decode('assets/images/sector-${i + 1}.webp');
       }
       await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
       scene.sectors.flyover.reducedMotionOverride = false;

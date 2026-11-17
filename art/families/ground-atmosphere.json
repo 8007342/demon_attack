@@ -21,11 +21,11 @@
  },
  "smoke_ramp": ["#16181E", "#262A32", "#3A3F48", "#555B65", "#7A808A"],
  "sectors": [
-  {"id": "krybor", "painting": "assets/images/sector-1.png", "fog_start": "#3A4458", "smoke": "#555B65", "smoke_mix": null, "smoke_mix_amount": 0},
-  {"id": "ringfall", "painting": "assets/images/sector-2.png", "fog_start": "#3D3550", "smoke": "#3A3F48", "smoke_mix": "#6A4C9C", "smoke_mix_amount": 0.10},
-  {"id": "ember", "painting": "assets/images/sector-3.png", "fog_start": "#46302C", "smoke": "#262A32", "smoke_mix": null, "smoke_mix_amount": 0},
-  {"id": "hollow", "painting": "assets/images/sector-4.png", "fog_start": "#2E3A35", "smoke": "#555B65", "smoke_mix": "#3C6A48", "smoke_mix_amount": 0.08},
-  {"id": "carrier", "painting": "assets/images/sector-5.png", "fog_start": "#3A2836", "smoke": "#3A3F48", "smoke_mix": "#6A3A5C", "smoke_mix_amount": 0.10}
+  {"id": "krybor", "painting": "assets/images/sector-1.webp", "fog_start": "#3A4458", "smoke": "#555B65", "smoke_mix": null, "smoke_mix_amount": 0},
+  {"id": "ringfall", "painting": "assets/images/sector-2.webp", "fog_start": "#3D3550", "smoke": "#3A3F48", "smoke_mix": "#6A4C9C", "smoke_mix_amount": 0.10},
+  {"id": "ember", "painting": "assets/images/sector-3.webp", "fog_start": "#46302C", "smoke": "#262A32", "smoke_mix": null, "smoke_mix_amount": 0},
+  {"id": "hollow", "painting": "assets/images/sector-4.webp", "fog_start": "#2E3A35", "smoke": "#555B65", "smoke_mix": "#3C6A48", "smoke_mix_amount": 0.08},
+  {"id": "carrier", "painting": "assets/images/sector-5.webp", "fog_start": "#3A2836", "smoke": "#3A3F48", "smoke_mix": "#6A3A5C", "smoke_mix_amount": 0.10}
  ],
  "bands": [
   {"id": "horizonFog", "h": 48, "seed": 790010, "alpha_max": 0.8, "top_y": 178, "pass": "ground", "sort_z": 1150, "parallax": 0.08, "drift": 1.5, "opacity": [0.7, 1.0], "runtime_opacity": 0.8, "reduced": true},

@@ -581,7 +581,7 @@ void main() {
   testWidgets('CP6 review sheet: every layer per sector, then over each sector', (tester) async {
     await tester.runAsync(() async {
       final paintings = [
-        for (var i = 1; i <= 5; i++) await _decode('assets/images/sector-$i.png'),
+        for (var i = 1; i <= 5; i++) await _decode('assets/images/sector-$i.webp'),
       ];
       // Section A: per sector, the five bands at x2 over the sector's own
       // horizon (left) and the shared sprites tinted for the sector (right).
@@ -676,7 +676,7 @@ Future<DemonScene> _sectorScene(int sector, ui.Image? art, {int seconds = 14}) a
   final m = ArcadeModel(seed: 1982)..startAt(sector: sector);
   final scene = DemonScene(m, () {});
   for (var i = 0; i < 5; i++) {
-    scene.sectors.images[i] = await _decode('assets/images/sector-${i + 1}.png');
+    scene.sectors.images[i] = await _decode('assets/images/sector-${i + 1}.webp');
   }
   await scene.sectors.loadFlyover((f) => _decode('assets/images/$f'));
   scene.sectors.flyover.reducedMotionOverride = false;

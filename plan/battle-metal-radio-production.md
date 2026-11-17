@@ -90,3 +90,5 @@ accessible meaning and full/half toast behavior are implemented. Demons target
 promotion/removal. Flutter comms/layout 47 pass; director checks also pass after
 share adjustment; 19 web-audio tests pass and analysis is clean. Full-cast audio,
 final mouth review, score selection/bridges and playback integration remain open.
+
+> **No fallback format (operator, 2026-11-17).** Opus (`.ogg`) is the one shipped audio format: the AAC (`.m4a`) twins were deleted from `web/audio/`, and `tools/music_pipeline.py` and `tools/comms_pipeline.py` no longer encode AAC. A browser that cannot decode Ogg Opus (Safari before 18.4) plays the MIDI score through the synthesizer (`web/audio/demon-score.js`, the MIDI fallback in `demon-audio.js`).

@@ -1,0 +1,408 @@
+{
+  "schema": "demon-attack.song-map/v2",
+  "comment": "Source of truth for the MIDI-first score of the whole run (openspec/changes/adaptive-soundtrack design §3, §4, §11, §12). tools/score/score_gen.lua composes every section listed here into web/audio/score/<song>/<section>.mid and packs this map into web/audio/score/score.json (for demon-score.js) and lib/game/song_map.dart (for SongDirector). Edit this file, then rerun the generator; never edit the outputs. There is no recorded music any more: every scene of the game plays a song of this map. Section kinds: loop (repeats until a move), tail (plays once; then its `hold` bars repeat, or it hands over to `next`), bridge (plays once and always hands over to `next` at its end). `next` names a section of the same song, or `song:section` of another song (a bridge into the next song's grid). `mask: all` plays every track except the fleet layer; otherwise the tier masks apply (`masks` on the song or section override the shared ones; a string names a set of `maskSets`). `hatch` numbers the carrier's hatch sections, `wave` orders a sector's wave-progress sections, `bonus` names the bonus level a section plays (bonus-levels: `stormfront`). `fx: worldized` passes the section through the band-pass small-room chain of design §4.4. Grids are integer samples per 4/4 bar at 48 kHz (tools/music_motifs.py BAR_SAMPLES).",
+  "ppq": 480,
+  "seed": 1982,
+  "dwellBars": 2,
+  "tracks": {
+    "drums": { "role": "drums", "channel": 9 },
+    "cymbals": { "role": "drums", "channel": 9 },
+    "drums2": { "role": "drums", "channel": 9 },
+    "bass": { "role": "bass", "channel": 0 },
+    "gtrL": { "role": "guitarL", "channel": 1 },
+    "gtrR": { "role": "guitarR", "channel": 2 },
+    "clean": { "role": "clean", "channel": 3 },
+    "lead": { "role": "lead", "channel": 4 },
+    "lead2": { "role": "lead", "channel": 5 },
+    "organ": { "role": "organ", "channel": 6 },
+    "strings": { "role": "strings", "channel": 7 },
+    "brass": { "role": "brass", "channel": 8 },
+    "choir": { "role": "choir", "channel": 10 },
+    "timpani": { "role": "timpani", "channel": 11 },
+    "bells": { "role": "bells", "channel": 12 },
+    "fanfare": { "role": "brass", "channel": 13 },
+    "uke": { "role": "uke", "channel": 14 }
+  },
+  "masks": {
+    "1": ["drums", "bass", "gtrL", "gtrR", "clean", "uke"],
+    "2": ["drums", "bass", "gtrL", "gtrR", "clean", "uke", "lead", "cymbals", "timpani"],
+    "3": ["drums", "bass", "gtrL", "gtrR", "clean", "uke", "lead", "cymbals", "timpani", "drums2", "lead2", "organ"],
+    "4": ["drums", "bass", "gtrL", "gtrR", "clean", "uke", "lead", "cymbals", "timpani", "drums2", "lead2", "organ", "strings", "brass", "choir", "bells"]
+  },
+  "maskSets": {
+    "approach": {
+      "1": ["drums", "bass", "gtrL", "gtrR", "bells"],
+      "2": ["drums", "bass", "gtrL", "gtrR", "bells", "cymbals", "timpani", "lead"],
+      "3": ["drums", "bass", "gtrL", "gtrR", "bells", "cymbals", "timpani", "lead", "drums2", "organ", "brass", "lead2"],
+      "4": ["drums", "bass", "gtrL", "gtrR", "bells", "cymbals", "timpani", "lead", "drums2", "organ", "brass", "lead2", "choir", "strings"]
+    },
+    "core": {
+      "1": ["drums", "bass", "gtrL", "gtrR", "organ"],
+      "2": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir"],
+      "3": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir", "drums2", "lead2"],
+      "4": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir", "drums2", "lead2", "brass", "strings", "bells"]
+    },
+    "storm": {
+      "1": ["drums", "bass", "gtrL", "gtrR", "strings", "timpani"],
+      "2": ["drums", "bass", "gtrL", "gtrR", "strings", "timpani", "lead", "cymbals", "bells"],
+      "3": ["drums", "bass", "gtrL", "gtrR", "strings", "timpani", "lead", "cymbals", "bells", "drums2", "lead2", "organ"],
+      "4": ["drums", "bass", "gtrL", "gtrR", "strings", "timpani", "lead", "cymbals", "bells", "drums2", "lead2", "organ", "brass", "choir", "clean"]
+    }
+  },
+  "layers": {
+    "v2": ["lead2", "choir"],
+    "power": ["cymbals", "drums2"],
+    "fleet": ["fanfare"]
+  },
+  "plays": [
+    { "level": 1, "song": "k" },
+    { "level": 2, "song": "r" },
+    { "level": 3, "song": "e" },
+    { "level": 4, "song": "h" },
+    { "level": 5, "cycle": 0, "song": "c1" },
+    { "level": 5, "cycle": 1, "song": "c2" },
+    { "level": 5, "cycle": 2, "song": "c3" },
+    { "level": 5, "cycle": 3, "song": "c4" },
+    { "level": 5, "cycle": 4, "song": "c5" }
+  ],
+  "scenes": { "menu": "menu:overture", "gameover": "defeat:cackle", "ending": "coda:ukulele" },
+  "bridges": {
+    "comment": "Which bridge song plays between two songs (`from>to`; `c` is any carrier). It plays at the source song's tempo from the end of the source's written tail (the clear or the victory) and hands over to the destination's arrival on its last bar line. Pivots from art/music/campaign.json `bridges` and design §3.1.",
+    "menu>k": "menu-k", "k>r": "k-r", "r>e": "r-e", "e>h": "e-h", "h>c": "h-c", "c>k": "c-k"
+  },
+  "songs": {
+    "menu": {
+      "name": "Overture",
+      "form": "menu",
+      "key": "E minor",
+      "bpm": 120,
+      "barSamples": 96000,
+      "motifs": "art/music/campaign.json (theme, Krybor's harmony) and tools/music_motifs.py MOTIFS[1] (the hook's opening)",
+      "sections": {
+        "overture": { "kind": "loop", "bars": 8, "mask": "all", "character": "the campaign theme stated slowly: clean arpeggios, organ and strings, the theme on bells then lead, a half-time pulse; the title page's loop" }
+      }
+    },
+    "menu-k": {
+      "name": "Bridge: overture to Krybor",
+      "form": "bridge",
+      "key": "E minor",
+      "bpm": 120,
+      "barSamples": 96000,
+      "motifs": "art/music/campaign.json bridges (E pedal), design §3.1 (bridge menu→k on START)",
+      "sections": {
+        "pivot": { "kind": "bridge", "bars": 1, "next": "k:arrival", "mask": "all", "character": "E held under Em then B7; a swell, no drums, into Krybor's arrival" }
+      }
+    },
+    "k": {
+      "name": "Krybor",
+      "form": "sector",
+      "key": "E minor",
+      "bpm": 170,
+      "barSamples": 67765,
+      "motifs": "tools/music_motifs.py MOTIFS[1] (riff, hook) and art/music/campaign.json (theme, harmony)",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "A", "mask": "all", "character": "quiet clean arrival: clean guitar and organ, the theme on bells, drums build into A" },
+        "A": { "kind": "loop", "bars": 8, "wave": 1, "character": "the riff: E5 downstrokes with the G-A push, punk drive, the shouted hook on lead" },
+        "B": { "kind": "loop", "bars": 8, "wave": 2, "character": "the answer: galloping riff, the campaign theme called and answered" },
+        "C": { "kind": "loop", "bars": 8, "wave": 3, "character": "the reduced contrast: half-time, ringing chords, clean arpeggios, the theme augmented" },
+        "D": { "kind": "loop", "bars": 8, "wave": 4, "character": "the developed recap: double-time drums, the hook in twin thirds and up an octave" },
+        "storm": { "kind": "loop", "bars": 8, "bonus": "stormfront", "masks": "storm", "character": "Stormfront: the riff half-time as ringing chords, rolling floor-tom thunder, string tremolo, the theme low on lead" },
+        "clear": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "key": "E major", "chromatic": true, "character": "the march flourish into an E major chord, then a held pad through the travel" }
+      }
+    },
+    "k-r": {
+      "name": "Bridge: Krybor to Ringfall",
+      "form": "bridge",
+      "key": "D major",
+      "bpm": 170,
+      "barSamples": 67765,
+      "motifs": "art/music/campaign.json bridges[1→2]: E sustained through Em → G → A7 → D",
+      "sections": {
+        "pivot": { "kind": "bridge", "bars": 2, "next": "r:arrival", "mask": "all", "character": "E held through Em, G and A7; strings, choir and organ, no drums; lands on Ringfall's D" }
+      }
+    },
+    "r": {
+      "name": "Ringfall",
+      "form": "sector",
+      "key": "D major",
+      "bpm": 160,
+      "barSamples": 72000,
+      "motifs": "tools/music_motifs.py MOTIFS[2] (riff, hook) and art/music/campaign.json (theme with the major third, harmony)",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "A", "mask": "all", "character": "open clean chords ringing over D and F#m, the theme on bells, the band builds on A" },
+        "A": { "kind": "loop", "bars": 8, "wave": 1, "character": "the syncopated open-chord riff (3+3+2), melodic-rock drive, the soaring hook on lead" },
+        "B": { "kind": "loop", "bars": 8, "wave": 2, "character": "the answer: driving eighths, the campaign theme in D major called and answered a third up" },
+        "C": { "kind": "loop", "bars": 8, "wave": 3, "character": "the reduced contrast: half-time, ringing chords, clean arpeggios, the theme augmented" },
+        "D": { "kind": "loop", "bars": 8, "wave": 4, "character": "the developed recap: double-time, the hook in thirds and up an octave, brass doubling" },
+        "storm": { "kind": "loop", "bars": 8, "bonus": "stormfront", "masks": "storm", "character": "Stormfront: half-time ringing chords on the riff, thunder toms, string tremolo, the theme low" },
+        "clear": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "character": "the march flourish into D major, then a held pad through the travel" }
+      }
+    },
+    "r-e": {
+      "name": "Bridge: Ringfall to Ember Moon",
+      "form": "bridge",
+      "key": "E minor",
+      "bpm": 160,
+      "barSamples": 72000,
+      "motifs": "art/music/campaign.json bridges[2→3]: B sustained through Bm → C → B7 → Em",
+      "sections": {
+        "pivot": { "kind": "bridge", "bars": 2, "next": "e:arrival", "mask": "all", "character": "B held through Bm, C and B7; no drums; lands on Ember Moon's E" }
+      }
+    },
+    "e": {
+      "name": "Ember Moon",
+      "form": "sector",
+      "key": "E minor",
+      "bpm": 180,
+      "barSamples": 64000,
+      "chromatic": true,
+      "motifs": "tools/music_motifs.py MOTIFS[3] (riff, hook) and art/music/campaign.json (theme, harmony)",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "A", "mask": "all", "character": "a low E pedal, clean arpeggios, the Phrygian F on organ, a gallop building into A" },
+        "A": { "kind": "loop", "bars": 8, "wave": 1, "character": "the galloping E pedal riff with the Phrygian F, heavy-metal drums, the twin-guitar hook" },
+        "B": { "kind": "loop", "bars": 8, "wave": 2, "character": "the answer: chugging eighths, the campaign theme called and answered" },
+        "C": { "kind": "loop", "bars": 8, "wave": 3, "character": "the reduced contrast: half-time, ringing chords, clean arpeggios, the theme augmented" },
+        "D": { "kind": "loop", "bars": 8, "wave": 4, "character": "the developed recap: double kick, the hook in thirds and up an octave" },
+        "storm": { "kind": "loop", "bars": 8, "bonus": "stormfront", "masks": "storm", "character": "Stormfront: half-time gallop chords, thunder toms, string tremolo, the theme low" },
+        "clear": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "key": "E major", "character": "the march flourish into an E major chord, then a held pad through the travel" }
+      }
+    },
+    "e-h": {
+      "name": "Bridge: Ember Moon to The Hollow",
+      "form": "bridge",
+      "key": "C minor",
+      "bpm": 180,
+      "barSamples": 64000,
+      "chromatic": true,
+      "motifs": "art/music/campaign.json bridges[3→4]: G sustained through Em → G → G7 → Cm",
+      "sections": {
+        "pivot": { "kind": "bridge", "bars": 2, "next": "h:arrival", "mask": "all", "character": "G held through Em, G and G7; no drums; lands on The Hollow's C minor" }
+      }
+    },
+    "h": {
+      "name": "The Hollow",
+      "form": "sector",
+      "key": "C minor",
+      "bpm": 150,
+      "barSamples": 76800,
+      "chromatic": true,
+      "motifs": "tools/music_motifs.py MOTIFS[4] (riff, hook) and art/music/campaign.json (theme, harmony)",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "A", "mask": "all", "character": "the tolling bell motif C-G-Ab-G over an organ pedal, the Gb tritone in the choir, the doom groove arrives" },
+        "A": { "kind": "loop", "bars": 8, "wave": 1, "character": "the slow drop-C riff with the Gb tritone, half-time doom drums, the tolling hook on lead" },
+        "B": { "kind": "loop", "bars": 8, "wave": 2, "character": "the answer: the riff in a doom gallop, the campaign theme called and answered" },
+        "C": { "kind": "loop", "bars": 8, "wave": 3, "character": "the reduced contrast: ringing chords, clean arpeggios, bells, the theme augmented" },
+        "D": { "kind": "loop", "bars": 8, "wave": 4, "character": "the developed recap: double kick under the doom, the hook in thirds and up an octave" },
+        "storm": { "kind": "loop", "bars": 8, "bonus": "stormfront", "masks": "storm", "character": "Stormfront: the doom riff as whole-bar chords, thunder toms, string tremolo, the theme low" },
+        "clear": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "key": "C major", "character": "the march flourish into a C major chord, then a held pad through the travel" }
+      }
+    },
+    "h-c": {
+      "name": "Bridge: Hollow to the carrier",
+      "form": "bridge",
+      "key": "F minor",
+      "bpm": 150,
+      "barSamples": 76800,
+      "motifs": "art/music/campaign.json bridges[4→5]: C sustained through Cm → Db → C7 → Fm (V → i, design §3.1)",
+      "sections": {
+        "pivot": { "kind": "bridge", "bars": 2, "next": "c1:arrival", "mask": "all", "character": "C held through Cm, Db and C7, the dominant of F minor; no drums; lands on the tour's carrier arrival (SongDirector names the tour)" }
+      }
+    },
+    "c1": {
+      "name": "Carrier, tour 1",
+      "form": "carrier",
+      "tour": 1,
+      "key": "F minor",
+      "bpm": 190,
+      "barSamples": 60632,
+      "chromatic": true,
+      "motifs": "tools/music_motifs.py MOTIFS[5] (riff, hook) and art/music/campaign.json (theme)",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "approach", "mask": "all", "character": "the fog and the overflight: organ pedal, tolling bell, timpani roll, doom swell" },
+        "approach": { "kind": "loop", "bars": 8, "masks": "approach", "character": "slow crushing half-time doom: the riff as sustained chords, tolling bells, brass drones" },
+        "H1": { "kind": "loop", "bars": 8, "hatch": 1, "character": "galloping battle metal on the riff, the carrier hook on lead" },
+        "H2": { "kind": "loop", "bars": 8, "hatch": 2, "character": "tremolo picking rising into blast beats, twin leads" },
+        "transform": { "kind": "bridge", "bars": 3, "next": "core", "mask": "all", "character": "riser: timpani and snare rolls, organ and choir Db to Eb, the chromatic climb landing on the core" },
+        "core": { "kind": "loop", "bars": 8, "masks": "core", "character": "the climax: blast beats, tremolo, cathedral organ, choir, the hook an octave up" },
+        "collapse": { "kind": "tail", "bars": 8, "next": "victory", "mask": "all", "character": "monumental half-time doom finale: the hull falls" },
+        "victory": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "key": "F major", "character": "F major fanfare on the campaign theme; the fleet layer adds the brass" }
+      }
+    },
+    "c2": {
+      "name": "Carrier, tour 2",
+      "form": "carrier",
+      "tour": 2,
+      "key": "F minor",
+      "bpm": 190,
+      "barSamples": 60632,
+      "chromatic": true,
+      "motifs": "tools/music_motifs.py MOTIFS[5] (riff, hook) and art/music/campaign.json (theme); the second chorus",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "approach", "mask": "all", "character": "the fog again, closer: two bells a fifth apart, the hook's first bar on low brass" },
+        "approach": { "kind": "loop", "bars": 8, "masks": "approach", "character": "half-time doom with a ride pulse and the campaign theme on brass under the riff" },
+        "H1": { "kind": "loop", "bars": 8, "hatch": 1, "character": "thrash skank on the riff, the hook answered by the campaign theme" },
+        "H2": { "kind": "loop", "bars": 8, "hatch": 2, "character": "tremolo over blast beats, twin leads in sixths" },
+        "transform": { "kind": "bridge", "bars": 3, "next": "core", "mask": "all", "character": "riser: the chromatic climb, choir up a third" },
+        "core": { "kind": "loop", "bars": 8, "masks": "core", "character": "blast beats, tremolo, the hook in sixths, bells on the downbeats" },
+        "collapse": { "kind": "tail", "bars": 8, "next": "victory", "mask": "all", "character": "half-time doom finale with tom fills: the hull falls" },
+        "victory": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "key": "F major", "character": "F major fanfare with a strings countermelody" }
+      }
+    },
+    "c3": {
+      "name": "Carrier, tour 3",
+      "form": "carrier",
+      "tour": 3,
+      "key": "F minor",
+      "bpm": 190,
+      "barSamples": 60632,
+      "chromatic": true,
+      "motifs": "tools/music_motifs.py MOTIFS[5] (riff, hook) and art/music/campaign.json (theme); three hatch tiers",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "approach", "mask": "all", "character": "the fog with choir: a minor-key chant on the theme, timpani rolls" },
+        "approach": { "kind": "loop", "bars": 8, "masks": "approach", "character": "a slow gallop under the doom chords, tolling bells" },
+        "H1": { "kind": "loop", "bars": 8, "hatch": 1, "character": "gallop with the hook in octaves" },
+        "H2": { "kind": "loop", "bars": 8, "hatch": 2, "character": "thrash skank, the theme on lead, the hook on brass" },
+        "H3": { "kind": "loop", "bars": 8, "hatch": 3, "character": "full blast and tremolo, the hook an octave up" },
+        "transform": { "kind": "bridge", "bars": 3, "next": "core", "mask": "all", "character": "riser with a choir climb and bells" },
+        "core": { "kind": "loop", "bars": 8, "masks": "core", "character": "blasts, the hook in octaves, the theme on brass" },
+        "collapse": { "kind": "tail", "bars": 8, "next": "victory", "mask": "all", "character": "monumental doom with the theme in the choir" },
+        "victory": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "key": "F major", "character": "F major fanfare, the theme in canon" }
+      }
+    },
+    "c4": {
+      "name": "Carrier, tour 4",
+      "form": "carrier",
+      "tour": 4,
+      "key": "F minor",
+      "bpm": 190,
+      "barSamples": 60632,
+      "chromatic": true,
+      "motifs": "tools/music_motifs.py MOTIFS[5] (riff, hook) and art/music/campaign.json (theme); three hatch tiers, heavier",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "approach", "mask": "all", "character": "double tolls, organ cluster, a double-kick swell" },
+        "approach": { "kind": "loop", "bars": 8, "masks": "approach", "character": "doom with sixteenth double kick in every second bar and choir drones" },
+        "H1": { "kind": "loop", "bars": 8, "hatch": 1, "character": "doom march with double kick, the hook augmented" },
+        "H2": { "kind": "loop", "bars": 8, "hatch": 2, "character": "gallop and blast bar by bar, the hook against the theme" },
+        "H3": { "kind": "loop", "bars": 8, "hatch": 3, "character": "full blast, the hook in canon a bar apart" },
+        "transform": { "kind": "bridge", "bars": 3, "next": "core", "mask": "all", "character": "riser, the climb doubled in octaves" },
+        "core": { "kind": "loop", "bars": 8, "masks": "core", "character": "half-bar blasts, the hook in canon, organ pedal" },
+        "collapse": { "kind": "tail", "bars": 8, "next": "victory", "mask": "all", "character": "doom finale, the hook augmented in the brass" },
+        "victory": { "kind": "tail", "bars": 4, "hold": 1, "mask": "all", "key": "F major", "character": "F major fanfare with a descant" }
+      }
+    },
+    "c5": {
+      "name": "Carrier, tour 5",
+      "form": "carrier",
+      "tour": 5,
+      "key": "F minor",
+      "bpm": 190,
+      "barSamples": 60632,
+      "chromatic": true,
+      "motifs": "tools/music_motifs.py MOTIFS[5] (riff, hook) and art/music/campaign.json (theme, ending: F minor cadence, F major resolution); four hatch tiers and the ending",
+      "sections": {
+        "arrival": { "kind": "tail", "bars": 4, "next": "approach", "mask": "all", "character": "the last fog: full organ, choir and bells, timpani rolls" },
+        "approach": { "kind": "loop", "bars": 8, "masks": "approach", "character": "doom with blasts in its last two bars, choir and brass drones" },
+        "H1": { "kind": "loop", "bars": 8, "hatch": 1, "character": "gallop, the hook on lead" },
+        "H2": { "kind": "loop", "bars": 8, "hatch": 2, "character": "thrash skank, the hook answered by the theme" },
+        "H3": { "kind": "loop", "bars": 8, "hatch": 3, "character": "tremolo rising into blasts, twin leads" },
+        "H4": { "kind": "loop", "bars": 8, "hatch": 4, "character": "full blast, the choir chanting the theme, the hook on brass" },
+        "transform": { "kind": "bridge", "bars": 3, "next": "core", "mask": "all", "character": "the last riser: everything climbing Db-D-Eb-E" },
+        "core": { "kind": "loop", "bars": 8, "masks": "core", "character": "the climax of the run: blasts, the hook in octaves, the theme in the choir" },
+        "collapse": { "kind": "tail", "bars": 8, "next": "victory", "mask": "all", "character": "the last doom finale: the hull falls" },
+        "victory": { "kind": "tail", "bars": 4, "next": "finale", "mask": "all", "key": "F major", "character": "the F major resolution: the minor cadence opens into F major" },
+        "finale": { "kind": "tail", "bars": 8, "next": "worldized", "mask": "all", "key": "F major", "character": "the campaign theme in F major with the whole band, choir and fanfare" },
+        "worldized": { "kind": "bridge", "bars": 6, "next": "coda:ukulele", "mask": "all", "key": "F major", "fx": "worldized", "character": "the finale thinning through a band-pass small room over the cinematic's first shots (design §4.4), into the ukulele" }
+      }
+    },
+    "c-k": {
+      "name": "Bridge: the carrier to Krybor",
+      "form": "bridge",
+      "key": "E minor",
+      "bpm": 190,
+      "barSamples": 60632,
+      "chromatic": true,
+      "motifs": "design §3.1: F → C → B7 → E minor",
+      "sections": {
+        "pivot": { "kind": "bridge", "bars": 2, "next": "k:arrival", "mask": "all", "character": "from F major through C and B7, no drums; the next route's Krybor" }
+      }
+    },
+    "coda": {
+      "name": "Coda",
+      "form": "coda",
+      "key": "F major",
+      "bpm": 95,
+      "barSamples": 121264,
+      "motifs": "art/music/campaign.json (theme, ending: slow reprise for beach and credits), design §4.4 (95 BPM, the carrier grid's doubled bar)",
+      "sections": {
+        "ukulele": { "kind": "tail", "bars": 8, "next": "reprise", "mask": "all", "character": "the campaign theme on ukulele at half the carrier tempo, island strum (oscillator voice until a sampled ukulele)" },
+        "reprise": { "kind": "loop", "bars": 8, "mask": "all", "character": "the warm credits reprise: ukulele, strings, soft band, the theme on clean guitar and bells" }
+      }
+    },
+    "defeat": {
+      "name": "Alien victory",
+      "form": "defeat",
+      "key": "E minor",
+      "bpm": 120,
+      "barSamples": 96000,
+      "chromatic": true,
+      "motifs": "tools/music_motifs.py ALIEN, ALIEN_ROOTS (E Phrygian dominant march) and the gloat accent",
+      "sections": {
+        "cackle": { "kind": "bridge", "bars": 2, "next": "alienwin", "mask": "all", "character": "the cackle: a falling chromatic laugh on lead and choir over an organ cluster and timpani" },
+        "alienwin": { "kind": "loop", "bars": 8, "mask": "all", "character": "the twisted triumphant march in E Phrygian dominant" }
+      }
+    }
+  },
+  "stingers": {
+    "comment": "Accents in the current key: `deg` is a scale degree of the playing section's key (1-7, may exceed 7), `semi` a chromatic step from its tonic, `oct` the MIDI octave (C4 = 60), `drum` a GM drum note. `t` and `len` are in beats from the anchor, the next multiple of `quantum` beats on the score's grid (with negative `t` the stinger leads into its anchor). `spacing` is the minimum beats between two of one stinger.",
+    "fill": { "quantum": 4, "spacing": 8, "notes": [
+      { "t": -2, "len": 0.25, "v": 96, "track": "drums", "drum": 50 }, { "t": -1.75, "len": 0.25, "v": 90, "track": "drums", "drum": 50 },
+      { "t": -1.5, "len": 0.25, "v": 98, "track": "drums", "drum": 48 }, { "t": -1.25, "len": 0.25, "v": 92, "track": "drums", "drum": 48 },
+      { "t": -1, "len": 0.25, "v": 102, "track": "drums", "drum": 45 }, { "t": -0.75, "len": 0.25, "v": 96, "track": "drums", "drum": 45 },
+      { "t": -0.5, "len": 0.25, "v": 108, "track": "drums", "drum": 43 }, { "t": -0.25, "len": 0.25, "v": 112, "track": "drums", "drum": 38 },
+      { "t": 0, "len": 1, "v": 118, "track": "drums", "drum": 49 }, { "t": 0, "len": 0.5, "v": 118, "track": "drums", "drum": 36 } ] },
+    "hit": { "quantum": 1, "spacing": 2, "notes": [
+      { "t": 0, "len": 1.5, "v": 116, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 0, "len": 1.5, "v": 116, "track": "gtrL", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 1.5, "v": 112, "track": "gtrR", "deg": 1, "oct": 3 }, { "t": 0, "len": 1.5, "v": 112, "track": "gtrR", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 1.5, "v": 110, "track": "bass", "deg": 1, "oct": 1 },
+      { "t": 0, "len": 1, "v": 120, "track": "drums", "drum": 49 }, { "t": 0, "len": 0.5, "v": 120, "track": "drums", "drum": 36 } ] },
+    "stab": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 0.45, "v": 104, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 0, "len": 0.45, "v": 104, "track": "gtrL", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 0.45, "v": 100, "track": "brass", "deg": 1, "oct": 3 }, { "t": 0, "len": 0.45, "v": 100, "track": "brass", "deg": 5, "oct": 3 },
+      { "t": 0, "len": 0.5, "v": 104, "track": "drums", "drum": 38 } ] },
+    "hatch": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 2, "v": 112, "track": "timpani", "deg": 1, "oct": 2 }, { "t": 0, "len": 2, "v": 108, "track": "bass", "deg": 1, "oct": 1 },
+      { "t": 0, "len": 1, "v": 112, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 0, "len": 1, "v": 112, "track": "gtrL", "deg": 5, "oct": 2 },
+      { "t": 0, "len": 3, "v": 90, "track": "bells", "deg": 1, "oct": 5 }, { "t": 0, "len": 1, "v": 110, "track": "drums", "drum": 55 } ] },
+    "rise": { "quantum": 0.5, "spacing": 2, "notes": [
+      { "t": 0, "len": 0.45, "v": 96, "track": "brass", "deg": 1, "oct": 4 }, { "t": 0.5, "len": 0.45, "v": 102, "track": "brass", "deg": 3, "oct": 4 },
+      { "t": 1, "len": 1, "v": 110, "track": "brass", "deg": 5, "oct": 4 }, { "t": 0, "len": 0.25, "v": 90, "track": "drums", "drum": 38 },
+      { "t": 0.5, "len": 0.25, "v": 100, "track": "drums", "drum": 38 }, { "t": 1, "len": 1, "v": 112, "track": "drums", "drum": 57 } ] },
+    "impact": { "quantum": 0.25, "spacing": 1, "notes": [
+      { "t": 0, "len": 2, "v": 120, "track": "bass", "deg": 1, "oct": 1 }, { "t": 0, "len": 2, "v": 120, "track": "gtrL", "deg": 1, "oct": 2 },
+      { "t": 0, "len": 2, "v": 120, "track": "gtrL", "deg": 5, "oct": 2 }, { "t": 0, "len": 2, "v": 118, "track": "timpani", "deg": 1, "oct": 2 },
+      { "t": 0, "len": 0.5, "v": 124, "track": "drums", "drum": 36 }, { "t": 0, "len": 1.5, "v": 120, "track": "drums", "drum": 57 } ] },
+    "gloat": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 0.9, "v": 100, "track": "brass", "semi": 0, "oct": 3 }, { "t": 1, "len": 0.9, "v": 104, "track": "brass", "semi": 1, "oct": 3 },
+      { "t": 2, "len": 2, "v": 108, "track": "brass", "semi": 0, "oct": 3 }, { "t": 2, "len": 2, "v": 92, "track": "organ", "semi": 6, "oct": 2 },
+      { "t": 2, "len": 2, "v": 92, "track": "organ", "semi": 0, "oct": 2 } ] },
+    "respawn": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 0.45, "v": 100, "track": "lead", "deg": 1, "oct": 4 }, { "t": 0.5, "len": 0.45, "v": 104, "track": "lead", "deg": 5, "oct": 4 },
+      { "t": 1, "len": 1.5, "v": 112, "track": "lead", "deg": 1, "oct": 5 }, { "t": 1, "len": 1, "v": 108, "track": "drums", "drum": 49 } ] },
+    "riser": { "quantum": 0.5, "spacing": 4, "notes": [
+      { "t": 0, "len": 0.25, "v": 52, "track": "drums", "drum": 38 }, { "t": 0.25, "len": 0.25, "v": 60, "track": "drums", "drum": 38 },
+      { "t": 0.5, "len": 0.25, "v": 68, "track": "drums", "drum": 38 }, { "t": 0.75, "len": 0.25, "v": 76, "track": "drums", "drum": 38 },
+      { "t": 1, "len": 0.25, "v": 84, "track": "drums", "drum": 38 }, { "t": 1.25, "len": 0.25, "v": 92, "track": "drums", "drum": 38 },
+      { "t": 1.5, "len": 0.25, "v": 100, "track": "drums", "drum": 38 }, { "t": 1.75, "len": 0.25, "v": 110, "track": "drums", "drum": 38 },
+      { "t": 0, "len": 2, "v": 70, "track": "timpani", "deg": 5, "oct": 2 } ] },
+    "glass": { "quantum": 0.25, "spacing": 1, "notes": [
+      { "t": 0, "len": 1.5, "v": 92, "track": "bells", "deg": 5, "oct": 5 }, { "t": 0, "len": 1.5, "v": 84, "track": "bells", "semi": 1, "oct": 6 },
+      { "t": 0, "len": 0.25, "v": 96, "track": "drums", "drum": 42 } ] },
+    "toll": { "quantum": 1, "spacing": 4, "notes": [
+      { "t": 0, "len": 3, "v": 108, "track": "bells", "deg": 1, "oct": 4 }, { "t": 0, "len": 3, "v": 84, "track": "organ", "deg": 1, "oct": 2 },
+      { "t": 0, "len": 3, "v": 84, "track": "organ", "deg": 5, "oct": 2 }, { "t": 0, "len": 1.5, "v": 96, "track": "timpani", "deg": 1, "oct": 2 } ] }
+  },
+  "accents": {
+    "dive": "fill", "laststand": "hit", "hatch": "hatch", "reinforce": "rise", "breakthrough": "hit", "destroyed": "impact",
+    "gloat": "gloat", "respawn": "respawn", "riser": "riser", "stab": "stab", "glass": "glass", "impact": "impact", "toll": "toll"
+  }
+}

@@ -24,16 +24,16 @@ enum AlienRank {
   /// Small creatures (intelligence tier T0): no mark.
   drone,
 
-  /// Not-so-small creatures (T1): one talon.
+  /// Not-so-small creatures (T1): one fang.
   skirmisher,
 
-  /// Route-hardened T1 creatures (`maxHp >= 4`): two talons.
+  /// Route-hardened T1 creatures (`maxHp >= 4`): twin fangs.
   veteran,
 
-  /// Elites (T2): the ocellus, a rayed eye with an ember core.
+  /// Elites (T2): the winged fang, bat wings on an ember-cored fang.
   hunter,
 
-  /// Sentinels (T3): a crown of tines over an ocellus.
+  /// Sentinels (T3): the winged crown, three fangs rising between wings.
   sentinel,
 }
 

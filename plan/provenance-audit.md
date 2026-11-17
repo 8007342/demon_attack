@@ -34,6 +34,9 @@ source and does not count as re-sourced. Check it from another network before yo
 **Contradictions to act on.**
 - C-09: `battle-metal-radio-rework` design says every current browser plays Opus. MDN's codec guide says Safari plays
   Opus in `<audio>` only inside CAF, so keep the AAC fallback (`plan/audio-backend.md`).
+  **Decided 2026-11-17:** no fallback format (operator). The AAC twins were deleted; the game decodes Opus with
+  `decodeAudioData`, not `<audio>`, and a browser that cannot (Safari before 18.4) plays the MIDI score through the
+  synthesizer.
 - D-13, D-15: `pwa-install` design. The Web Install origin trial's end and the other engines' positions are out of
   date (WebKit is opposed; Gecko has no signal).
 
@@ -205,6 +208,10 @@ where one is named.
 | <a id="V-01"></a>V-01 | plan/voice-stack-research.md §4, finding 2 | Rendering a short non-verbal inside a carrier phrase or a multi-cue reel, then cutting it, avoids Dia's unnatural short clips | UNSOURCED | A working assumption from Dia's own note that clips under about 5 s sound unnatural; to be tested in the voice-stack pilot (task 6.1) |
 | <a id="V-02"></a>V-02 | plan/voice-stack-research.md §5; openspec/changes/voice-stack/design.md §5 | Integrated loudness is gated over 400 ms blocks, so a very short stinger has few or no complete blocks | UNSOURCED | ITU-R BS.1770 (itu.int) and EBU Tech 3341 (tech.ebu.ch) reset the connection. The 400 ms momentary meter is sourced from libebur128 |
 | <a id="V-03"></a>V-03 | plan/voice-stack-research.md §5 | Game loudness targets of about −18 LUFS / −1 dBTP for mobile and −24 LUFS for console | UNSOURCED | Audiokinetic and GANG IESD pages seen as search snippets only (audiokinetic.com, audiogang.org, aes.org blocked) |
+| <a id="V-04"></a>V-04 | plan/audio-voices-research.md §2.2 | The host's RTX A5000 is an Ampere card, so Fish S2-Pro's FP8 path (Ada or Blackwell only) cannot run on it | UNSOURCED | The card model is from the tillandsias host notes (`studio.status`, `plan/battle-metal-radio-production.md`); its architecture was not read from a fetched page. Check with `gpu.status` at admission |
+| <a id="V-05"></a>V-05 | plan/audio-voices-research.md §3, finding 1 | Rendering each beat of a line as its own VoxCPM2 call from the same identity clip and splicing at a pause keeps the voice continuous | UNSOURCED | A design assumption; VoxCPM2's docs describe one style per call. Tested in the voice-direction pilot (design §7) |
+| <a id="V-06"></a>V-06 | plan/audio-voices-research.md §4 | Short overlaps between turns are part of radio banter | UNSOURCED | A craft assumption; no source read. The pilot's listening criteria judge overlaps directly |
+| <a id="V-07"></a>V-07 | plan/audio-voices-research.md §5.3 | A human effort sound processed by the brood FX chain can pass as the dog's growl, the cat's hiss or the gull's squawk in the ending | UNSOURCED | A design bet. No engine read documents animal sounds; tested in the pilot (brood vocalisations B8–B10) |
 
 ## Part CH: the carrier hatch cascade and component break-up (`carrier-hatches`, 2026-11-16)
 Our own engineering choices in `plan/carrier-hatches-research.md` and `openspec/changes/carrier-hatches/design.md`.
@@ -267,3 +274,94 @@ decisions and do not depend on the attributions.
 | <a id="endgame-cycles-cpu"></a>endgame-cycles-cpu | The layout's CPU cost is minutes | extrapolated from one 384² measurement |
 | <a id="endgame-webp-size"></a>endgame-webp-size | WebP sizes per plate and the 7 MB total | estimates until the first pack |
 | <a id="endgame-video-bitrate"></a>endgame-video-bitrate | 2.5 and 5 Mbit/s as adequate bitrates for 720p and 1080p | assumption |
+
+## Part S: the adaptive soundtrack (`adaptive-soundtrack`, added 2026-11-17)
+
+`plan/soundtrack-research.md` marks these claims. On 2026-11-17 fmod.com, audiokinetic.com, web.dev, arxiv.org,
+rfc-editor.org and ffmpeg.org reset the connection from the forge; nothing was routed around the proxy. The
+design's decisions do not rest on them: the transition model is sourced from Godot's class references, and the
+gapless and scheduling claims are checked by measurement (pilot, task 1.8) or by the repo's own code.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="soundtrack-wwise"></a>soundtrack-wwise | Wwise music switch containers: exit at cue, bar or beat; destination sync; transition segments; stingers | audiokinetic.com reset; community Q&A seen as snippets only |
+| <a id="soundtrack-vcsl-ukulele"></a>soundtrack-vcsl-ukulele | Whether a CC0 library in #1103 (VCSL, Karoryfer) includes a ukulele | not checked; #1103's library list not read |
+| <a id="soundtrack-webm-opus-ios"></a>soundtrack-webm-opus-ios | WebM Opus decodes through `decodeAudioData` on iOS from Safari 17.4 | WebKit Bugzilla seen as a snippet only |
+| <a id="soundtrack-opus-gapless"></a>soundtrack-opus-gapless | Ogg Opus pre-skip and end trimming make decoding sample-exact (RFC 7845) | rfc-editor.org reset; measured with ffmpeg instead |
+| <a id="soundtrack-two-clocks"></a>soundtrack-two-clocks | The "two clocks" lookahead scheduling pattern (web.dev) | web.dev reset; the repo's scheduler already uses it |
+
+## Part M: the MIDI-first revision of the soundtrack (`adaptive-soundtrack` design §11, added 2026-11-17)
+
+`plan/midi-first-research.md` marks these claims. On 2026-11-17 arxiv.org, mdpi.com, merl.com, the QMUL page,
+karoryfer.com, caniuse.com, schristiancollins.com and the ISMIR program pages reset the connection or returned
+404 from the forge. Nothing was routed around the proxy. The design's decisions do not rest on these claims: the
+transcription plan avoids the weak classes by rule, and the phone numbers are to be measured (task 8.4).
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="midi-sep-artifacts"></a>midi-sep-artifacts | Drum-stem separation before ADT is about equal or slightly better; separation artifacts limit transcription | QMUL and MERL papers seen as snippets only |
+| <a id="midi-metal-transcription"></a>midi-metal-transcription | How well transcription works on distorted metal guitar, blast beats and cymbal wash | no benchmark found; extrapolated from general benchmarks |
+| <a id="midi-lakh-licence"></a>midi-lakh-licence | Lakh MIDI files were scraped and their authors cannot be traced, so the collection licence does not clear each song | the Lakh page reset twice; snippet only |
+| <a id="midi-qwen-composer"></a>midi-qwen-composer | How reliably qwen2.5 3b–14b writes bar-correct note lists | no source measures Qwen; to be measured (task 8.9) |
+| <a id="midi-phone-polyphony"></a>midi-phone-polyphony | Voice counts, CPU and latency of WebAudio samplers on phones | no measured numbers found; to be measured (task 8.4) |
+| <a id="midi-cab-ir"></a>midi-cab-ir | No CC0 guitar-cabinet impulse response pack exists | one CC-BY-SA pack seen as a snippet; absence is not provable |
+| <a id="midi-meatbass-licence"></a>midi-meatbass-licence | Karoryfer Meatbass is a GPL-3 double bass, not CC0 | KVR news seen as a snippet; karoryfer.com reset |
+
+## Part PP: phone performance (`phone-performance`, added 2026-11-17)
+
+`plan/phone-performance-research.md` marks these claims. On 2026-11-17 developer.chrome.com, developer.apple.com,
+developer.android.com, web.dev, en.wikipedia.org, gafferongames.com, blurbusters.com, docs.unity3d.com,
+dev.epicgames.com, docs.flame-engine.org, caniuse.com and bugs.webkit.org reset the connection from the forge. Nothing
+was routed around the proxy. The design rests on the read WebKit source and Flutter docs and on the repo's own
+measurements (`plan/phone-performance-ledger.md`); these claims only motivate it.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="pp-chrome-panel"></a>pp-chrome-panel | How the Chrome DevTools Performance panel shows frames and CPU throttling | developer.chrome.com reset |
+| <a id="pp-thermal"></a>pp-thermal | Sustained GPU and CPU load raises the phone's thermal state and the OS then throttles clocks | Apple and Android docs reset |
+| <a id="pp-pacing"></a>pp-pacing | An even frame cadence looks smoother than a higher, uneven one; adaptive quality in engines (Swappy, Unity Adaptive Performance, Unreal dynamic resolution) | the four hosts reset |
+| <a id="pp-wagon-wheel"></a>pp-wagon-wheel | The wagon-wheel effect: a row of identical objects seems to stall or reverse when the per-frame move nears their spacing; motion trails and smears hide it | Wikipedia and Blur Busters reset; Fiedler's "Fix Your Timestep!" reset |
+| <a id="pp-flame"></a>pp-flame | Flame's own guidance on component counts and rendering cost | docs.flame-engine.org reset |
+| <a id="pp-wasm-size"></a>pp-wasm-size | How a `--wasm` build's size compares with the JS build | no read page gives numbers; to be measured (task 8.3) |
+| <a id="pp-safari-timestamps"></a>pp-safari-timestamps | Safari's rAF timestamps are rounded or jittered enough to step a fixed 1/60 s loop 0 then 2 times | no read source; to be checked on an iPhone (task 9.2) |
+| <a id="pp-maskfilter"></a>pp-maskfilter | What a `MaskFilter.blur` paint costs per draw | its API page was not read |
+| <a id="pp-ios-formats"></a>pp-ios-formats | The iOS Safari versions that decode WebP and AVIF | caniuse.com and Apple release notes reset; MDN gives desktop Safari only |
+| <a id="pp-font-subset"></a>pp-font-subset | Subsetting text fonts (beyond icon tree shaking) in a Flutter web build | no read page covers it |
+
+## Part HE: hatch emergence (`hatch-emergence`, added 2026-11-17)
+Our own engineering choices in `openspec/changes/hatch-emergence/design.md`. The animation principles they apply are
+sourced there (Microsoft Learn and UCBUGG, read 2026-11-17); the numbers are ours.
+
+| ID | Where | Claim | Status | Check |
+|---|---|---|---|---|
+| <a id="HE-1"></a>HE-1 | design §1–§5 | The beat lengths (grip 0.5 s inside the telegraph, peek 0.34 s, crouch 0.16 s, leap 0.12 s, unfurl and flare 0.16 s), the hop heights 9/12/6, the blend 0.24–0.56 s; the field ring 1.2–7 units; the vent and burst timings; the tier budgets (3/1/0 lurkers), the atlas and draw-call ceilings; the tone grade 1.35/0.03/1.15 | UNSOURCED | `test/hatch_emergence_test.dart`; `art/contact/hatch-emergence-*.png`, `-fight.gif` |
+
+## Part FR: the player's fire rate and anti-strobe tuning (`fire-rate-tune`, added 2026-11-17)
+
+`openspec/changes/fire-rate-tune/design.md` marks these claims. On 2026-11-17 en.wikipedia.org, michaelbach.de,
+people.csail.mit.edu, medium.com, gafferongames.com, blurbusters.com, pmc.ncbi.nlm.nih.gov and frontiersin.org reset
+the connection from the forge. Nothing was routed around the proxy. MDN, docs.flutter.dev and the Flame source on
+GitHub were read and are cited in the design. The design's numbers rest on its own maths (`tools/strobe/strobe.lua`),
+not on these claims.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="fr-temporal-sensitivity"></a>fr-temporal-sensitivity | A periodic hitch between about 2 and 15 Hz is the most visible; at 30 Hz it fuses | Frontiers 2023 and van den Berg 2011 seen as snippets only (peak 5–20 Hz by luminance) |
+| <a id="fr-phantom-array"></a>fr-phantom-array | A small bright object that jumps more than its own length per frame is seen as separate copies | no page opened; Blur Busters and Wikipedia reset |
+| <a id="fr-nearest-neighbour"></a>fr-nearest-neighbour | Apparent motion matches each element to its nearest neighbour in the next frame (the wagon-wheel mechanism) | M. Bach's demonstration and Wikipedia, "Stroboscopic effect", seen as snippets only |
+| <a id="fr-dt-snap"></a>fr-dt-snap | Snapping the measured frame time to vsync multiples removes 0-then-2 update stutter | T. Glaiel's article seen as a snippet only |
+
+## Part MB: mix balance (`mix-balance`, added 2026-11-17)
+
+`openspec/changes/mix-balance/design.md` marks these claims. On 2026-11-17 audiokinetic.com, gamedeveloper.com,
+courses.ecuad.ca and wiki.eecs.yorku.ca reset the connection from the forge (WebFetch and curl). Nothing was routed
+around the proxy. The levels themselves rest on the repo's own measurement (`tools/mix_meter`); these claims only set
+the target. Search snippets seen, not read: Audiokinetic, "Loudness Processing Best Practice, Chapter 3",
+https://audiokinetic.com/zh/loudness-processing-best-practice-chapter-3-scalable-loudness-processing-for-games,
+unread: snippet only (console RMS references, dialogue -12 dB, music -16 dB); Emily Carr University, "Audio asset file
+guidelines", https://courses.ecuad.ca/mod/page/view.php?id=358042, unread: snippet only (music 3–9 dB under dialogue).
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="mb-dialogue-gap"></a>mb-dialogue-gap | A game's music bed commonly sits about 8–10 LU under dialogue (no longer used: mix-balance design §5 sets 2–4 LU by operator ruling) | the task's figure; the pages that discuss it reset, snippets disagree (3–12 dB) |
+| <a id="mb-duck-depth"></a>mb-duck-depth | A few dB of music duck under a line, with tens of ms attack and a few hundred ms release, is usual | Godot gives only the 250 ms default release; Wwise and FMOD docs reset |

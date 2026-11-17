@@ -3,13 +3,6 @@ import 'dart:js_interop_unsafe';
 
 @JS('demonAudio.unlock')
 external void _unlock();
-@JS('demonAudio.cue')
-external void _cue(
-  JSString mode,
-  JSNumber level,
-  JSNumber phase,
-  JSNumber cycle,
-);
 @JS('demonAudio.sfx')
 external void _sfx(JSString name);
 @JS('demonAudio.intensity')
@@ -31,8 +24,6 @@ external void _pause();
 @JS('demonAudio.resume')
 external void _resume();
 void audioUnlock() => _unlock();
-void audioCue(String mode, int level, int phase, int cycle) =>
-    _cue(mode.toJS, level.toJS, phase.toJS, cycle.toJS);
 void audioSfx(String name) => _sfx(name.toJS);
 void audioMute(bool muted) => _mute(muted.toJS);
 void audioPause() => _pause();
@@ -56,3 +47,51 @@ String audioLevel(String channel) {
 
 void audioPowerLayer(int active, bool falling) =>
     _powerLayer(active.toJS, falling.toJS);
+
+// --- adaptive-soundtrack: the score player (web/audio/demon-score.js, driven
+// by SongDirector). Every call is safe when the page has no audio engine.
+@JS('demonAudio.song')
+external JSNumber? _song(JSAny? move);
+@JS('demonAudio.time')
+external JSNumber? get _time;
+@JS('demonAudio.scorePosition')
+external JSObject? get _scorePosition;
+
+/// Sends a section or mask move; returns the time it lands on (audio clock),
+/// -1 while the score or the audio context is not ready, -2 when it failed.
+double audioSong(Map<String, Object?> move) {
+  try {
+    return _song(move.jsify())?.toDartDouble ?? -2;
+  } catch (_) {
+    return -2;
+  }
+}
+
+/// Seconds on the audio clock, or -1 before the first gesture.
+double audioTime() {
+  try {
+    return _time?.toDartDouble ?? -1;
+  } catch (_) {
+    return -1;
+  }
+}
+
+/// The section the score is playing and the time of its beat 0.
+({String song, String section, double start})? audioScorePosition() {
+  try {
+    final p = _scorePosition;
+    if (p == null) return null;
+    final song = p.getProperty<JSAny?>('song'.toJS);
+    final section = p.getProperty<JSAny?>('section'.toJS);
+    final start = p.getProperty<JSAny?>('start'.toJS);
+    if (!song.isA<JSString>() || !section.isA<JSString>()) return null;
+    if (!start.isA<JSNumber>()) return null;
+    return (
+      song: (song as JSString).toDart,
+      section: (section as JSString).toDart,
+      start: (start as JSNumber).toDartDouble,
+    );
+  } catch (_) {
+    return null;
+  }
+}

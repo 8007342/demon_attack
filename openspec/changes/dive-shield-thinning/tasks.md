@@ -1,0 +1,22 @@
+# Tasks: dive-shield-thinning
+
+## 1. Cause
+- [x] 1.1 Trace every dive-shield drawing path (ordinary divers, elites, sentinels, the rush) and record why it narrowed and why its parts moved apart from the body (design §1)
+- [x] 1.2 Confirm the drawn shape never fed a hit test (design §3)
+
+## 2. Thinning shield
+- [x] 2.1 `lib/game/dive_shield.dart`: one arc of constant 124° span, specs sized from the atlas silhouettes, thickness by points down to a hairline, heat, flicker, hit flash
+- [x] 2.2 Draw it in the body's transform: ordinary divers inside the wing roll; sentinels inside the bank on the snapped centre
+- [x] 2.3 Rush shield: the thickest, forming in place; remove the fixed-size rush cell ring
+- [x] 2.4 Remove the playtest-fixes-3 bow code and its shape tests
+
+## 3. Verification
+- [x] 3.1 `test/dive_shield_thinning_test.dart`: constant angular width and body coverage at every zoom, monotone thickness, one connected shape
+- [x] 3.2 Review sheet `art/contact/dive-shield-thinning.png` (before | after, three zooms) and `art/contact/dive-shield-thinning-dive.gif`
+- [x] 3.3 Full gates
+
+## 4. Shape restored (operator, 2026-11-17: "the previous form and size was right")
+- [x] 4.1 Restore playtest-fixes-3's crescent (span, nose, lead, tapering thickness, bands, palettes, ember tips), whole and in the body's transform; fixed flame lick, no heading turn, no rush growth
+- [x] 4.2 Thickness by points: full = the old thickness, equal steps to a 40 % floor on the last point
+- [x] 4.3 Tests: constant span, strictly falling thickness, floor kept, one connected shape; sheet re-rendered (old crescent | new)
+- [x] 4.4 Full gates

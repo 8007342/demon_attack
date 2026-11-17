@@ -40,7 +40,15 @@ Operator decisions, 2026-11-16 (research §10.4):
 - **IndexTTS-2.5 stays out.** Revisit it only for a need the others cannot meet, such as exact duration control to fit
   a cue.
 
-VRAM, licences and the "OK for this repo?" verdicts, with sources, are in research §9 and §10. The spec is
+VRAM, licences and the "OK for this repo?" verdicts, with sources, are in research §9 and §10.
+
+**Capability, pins, precision (coordinator, 2026-11-17).** No TTS node is admitted. The engines run through a
+Tillandsias studio voice capability, designed like #1103 and queued after the cut with this change (and
+`voice-direction`) as its requirements. It loads only the weight revisions and runtime code commits in
+`plan/model-pins-voice.md` (Dia re-pinned to `Dia-1.6B-0626`; Higgs re-pinned to the revisions its code loads; each
+code commit to be verified by a smoke run). Fish S2-Pro runs in 4-bit NF4, alone on the GPU: bf16 leaves no activation
+headroom in 24 GB and FP8 needs Ada or Blackwell; if 4-bit quality falls short it becomes "pilot later on a bigger
+GPU" (`voice-direction` spec). The spec is
 engine-agnostic: an engine is a row in `art/comms/voice-engines.json`:
 
 ```json
@@ -229,6 +237,8 @@ Unchanged where the current bank already works: human −18 LUFS, demon −18.5 
   engine's clipping.
 - Tolerance in `verify`: ±1 LU.
 - The AAC copies (`aac_kbps` 24) are legacy; Opus-only fetch is already implemented. They are not re-rendered.
+
+> **No fallback format (operator, 2026-11-17).** Opus (`.ogg`) is the one shipped audio format: the AAC (`.m4a`) twins were deleted from `web/audio/`, and `tools/music_pipeline.py` and `tools/comms_pipeline.py` no longer encode AAC. A browser that cannot decode Ogg Opus (Safari before 18.4) plays the MIDI score through the synthesizer (`web/audio/demon-score.js`, the MIDI fallback in `demon-audio.js`).
 
 ## 6. Placeholders today: none rendered
 

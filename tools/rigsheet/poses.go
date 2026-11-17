@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -54,7 +55,7 @@ func finishedPoses(bake string, r *Rig, texel float64) ([]RigPose, []*image.NRGB
 	var u image.Rectangle
 	for i, p := range ps {
 		f := filepath.Join(bake, r.Hull, "S0", fmt.Sprintf("beauty_%s_%s.png", hero, p.ID))
-		im := finishAt(load(f), r, texel, pal, true)
+		im := finishAt(readFamily(r.Family).grade(load(f)), r, texel, pal, true)
 		b := alphaBounds(im)
 		if i == 0 {
 			u = b
@@ -290,7 +291,7 @@ func cmdPoseCands(a []string) {
 		x, y := place(i + 1)
 		im := load(raw)
 		blit(sheet, im, x, y, float64(rw)/float64(im.Bounds().Dx()))
-		fin := finishAt(fitRawOpt(im, r, "S0", hero, true), r, texel, pal, true)
+		fin := finishAt(readFamily(r.Family).grade(fitRawOpt(im, r, "S0", hero, true)), r, texel, pal, true)
 		fill(sheet, image.Rect(x+rw+8, y, x+rw+8+fw, y+fh), hex("#101F2D"))
 		blit(sheet, fin, x+rw+8, y, k)
 		lbl := strings.ToUpper(strings.TrimSuffix(filepath.Base(raw), ".png"))
@@ -305,4 +306,40 @@ func cmdPoseCands(a []string) {
 	}
 	save(out, sheet)
 	fmt.Println(out)
+}
+
+// Grade is a family's tone grade for pose atlases: out = lift + gain × in (per channel, 0..1),
+// then the saturation scaled about the luma by sat. Missing = identity.
+type Grade struct {
+	Gain float64 `json:"gain"`
+	Lift float64 `json:"lift"`
+	Sat  float64 `json:"sat"`
+}
+
+func (f *Family) grade(im *image.NRGBA) *image.NRGBA {
+	g := f.Grade
+	if g == nil {
+		return im
+	}
+	gain, sat := g.Gain, g.Sat
+	if gain == 0 {
+		gain = 1
+	}
+	if sat == 0 {
+		sat = 1
+	}
+	out := image.NewNRGBA(im.Bounds())
+	copy(out.Pix, im.Pix)
+	clamp := func(v float64) uint8 { return uint8(math.Max(0, math.Min(255, math.Round(v*255)))) }
+	for i := 0; i < len(out.Pix); i += 4 {
+		if out.Pix[i+3] == 0 {
+			continue
+		}
+		r, gg, b := float64(out.Pix[i])/255, float64(out.Pix[i+1])/255, float64(out.Pix[i+2])/255
+		r, gg, b = g.Lift+gain*r, g.Lift+gain*gg, g.Lift+gain*b
+		y := 0.2126*r + 0.7152*gg + 0.0722*b
+		r, gg, b = y+(r-y)*sat, y+(gg-y)*sat, y+(b-y)*sat
+		out.Pix[i], out.Pix[i+1], out.Pix[i+2] = clamp(r), clamp(gg), clamp(b)
+	}
+	return out
 }

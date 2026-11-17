@@ -44,6 +44,6 @@
 
 ## 6. Pilot and promotion
 
-- [ ] 6.1 Pilot batch: 20 lines across all emotions, five cue-only clips, two pseudo-swears, three brood lines, rendered by VoxCPM2 and each admitted challenger (Fish S2-Pro, Higgs v2) from the same identity clips; per-line picks with reasons; operator listens
+- [ ] 6.1 Pilot batch: 20 lines across all emotions, five cue-only clips, two pseudo-swears, three brood lines, rendered by VoxCPM2 and each admitted challenger (Fish S2-Pro, Higgs v2) from the same identity clips; per-line picks with reasons; operator listens. Superseded in detail by change `voice-direction` design §7 (20 lines with beats and threads, 10 brood vocalisations, blind scoring); closes when its task 6.4 records the decision
 - [ ] 6.2 Promote the pilot; update the borrowed-line count; full gates
 - [ ] 6.3 Re-render the remaining bank in batches; promote each; archive this change when the bank is all `final`

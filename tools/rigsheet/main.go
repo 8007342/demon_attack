@@ -25,6 +25,7 @@ package main
 //	rigsheet lineup RIG OUT.png [BAKE] HULL...       tour escalation lineup (clay, or finished when baked)
 //	rigsheet poseatlas BAKE RIG HULL TEXEL COLS OUT.png [OUT.dart CLASS]
 //	                                                 articulated family: every pose finished, one cell, one page
+//	rigsheet posepack BAKE RIG TEXEL OUT.png OUT.dart|- CLASS HULL...   key-pose family: hulls x poses, one cell, one page
 //	rigsheet posesheet BAKE RIG HULL TEXEL OUT.png TITLE   clay and finished poses by tilt and direction
 //	rigsheet posecands RIG HULL TEXEL OUT.png TITLE PICK RAW...  hero candidates: raw + finished rest pose
 //	rigsheet layeratlas FAMILY.json RIG COLS OUT.png [OUT.dart CLASS]
@@ -100,6 +101,8 @@ func main() {
 		cmdGrid(a)
 	case "poseatlas":
 		cmdPoseAtlas(a)
+	case "posepack":
+		cmdPosePack(a)
 	case "posesheet":
 		cmdPoseSheet(a)
 	case "posecands":

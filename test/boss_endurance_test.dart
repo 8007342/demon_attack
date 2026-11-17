@@ -18,14 +18,17 @@ const seeds = [
   1982, 7, 21, 42, 99, 314, 2718, 5150, 3, 11, 64, 128, 777, 1001, 4242, 9001,
 ];
 
-/// Mean carrier seconds and hits per campaign (sum of the five carriers),
-/// measured with carrier-hatches (the boss made easier on purpose, design
-/// §A11; plan/calibration-current.md, "Carrier hatches"). Later changes
-/// stay within 5 % pooled and 10 % per difficulty of these.
+/// Mean carrier seconds and hits per campaign (sum of the five carriers).
+/// Seconds as measured with carrier-hatches (the boss made easier on
+/// purpose, design §A11; plan/calibration-current.md, "Carrier hatches").
+/// Hits re-measured with fire-rate-tune: the carrier has fewer hit points
+/// for the slower gun, so it takes fewer hits by construction (was 483.9,
+/// 790.8, 921.1; plan/calibration-current.md, "Fire-rate tune"). Later
+/// changes stay within 5 % pooled and 10 % per difficulty of these.
 const baseline = <String, ({double seconds, double hits})>{
-  'easy': (seconds: 183.85, hits: 483.9),
-  'normal': (seconds: 277.84, hits: 790.8),
-  'hard': (seconds: 300.83, hits: 921.1),
+  'easy': (seconds: 183.85, hits: 380.8),
+  'normal': (seconds: 277.84, hits: 581.9),
+  'hard': (seconds: 300.83, hits: 696.3),
 };
 
 /// Before carrier-hatches (`game` dde01449, the same harness): the easier

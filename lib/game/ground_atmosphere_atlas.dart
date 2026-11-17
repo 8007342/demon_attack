@@ -86,9 +86,9 @@ abstract final class GroundAtmosphereAtlas {
 
   /// Fog tint per sector (ARGB): each horizon sampled, clamped to luma
   /// 0.1-0.22 and chroma <= 0.12.
-  static const List<int> fogTint = [0xFF30384D, 0xFF353653, 0xFF442F3C, 0xFF2F3A3C, 0xFF3C273F];
-  static const List<int> fogLit = [0xFF3D455A, 0xFF424360, 0xFF513C49, 0xFF3C4749, 0xFF4A344D];
-  static const List<int> fogDark = [0xFF252C3C, 0xFF292A41, 0xFF35252F, 0xFF252D2F, 0xFF2F1E31];
+  static const List<int> fogTint = [0xFF2F384D, 0xFF373553, 0xFF423037, 0xFF2E3A3B, 0xFF39283A];
+  static const List<int> fogLit = [0xFF3C455A, 0xFF444260, 0xFF4F3D44, 0xFF3B4748, 0xFF473548];
+  static const List<int> fogDark = [0xFF252C3C, 0xFF2B2941, 0xFF33252B, 0xFF242D2E, 0xFF2C1F2D];
   static const List<int> smokeTint = [0xFF555B65, 0xFF3F4050, 0xFF262A32, 0xFF535C63, 0xFF3F3F4A];
   static const int shadowInk = 0xFF0A0716;
 

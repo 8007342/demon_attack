@@ -130,6 +130,17 @@ class DifficultyPolicy {
   int escortSize({required int route, required int sector}) =>
       12 + difficulty.index + route.clamp(0, 2);
 
+  // --- fire-rate-tune: the player fires 23 % slower, so a sentinel's
+  // hull is 70 % of what it was; its shield and armour layers are
+  // unchanged (openspec/changes/fire-rate-tune design §5).
+  static const sentinelHullScale = .7;
+
+  /// A sentinel's hull HP on [route]: (9 for the shield sentinel, 12 for
+  /// the armoured one, + 2 per route up to 4) × [sentinelHullScale].
+  int sentinelHull({required int route, required bool armored}) =>
+      (((armored ? 12 : 9) + route.clamp(0, 4) * 2) * sentinelHullScale)
+          .round();
+
   /// Shared by opening creatures, reinforcements and the sentinel's bodyguard.
   /// A species never gains HP just because it arrived in a later sub-wave.
   int ordinaryHealth({

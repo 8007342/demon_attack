@@ -45,6 +45,9 @@ import (
 	"sort"
 	"strconv"
 	"time"
+
+	// phone-performance: the sector paintings ship as WebP.
+	_ "golang.org/x/image/webp"
 )
 
 // ---------------------------------------------------------------- spec

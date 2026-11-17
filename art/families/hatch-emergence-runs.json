@@ -1,0 +1,547 @@
+{
+  "schema": "demon-attack.rig-runs/v1",
+  "family": "hatch-emergence",
+  "prompt": "art/families/hatch-emergence.json prompts: hero + hero_<species>; negative",
+  "runs": [
+    {
+      "job": "st-1794898571154-172",
+      "hull": "violet",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/violet-9010000.png",
+      "picked": true,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-violet.png",
+          "sha256": "7d2346c873d8ef5147fd8cac2e8a12a1cdac538b0454d58808904d2f14a7e7fb"
+        }
+      ],
+      "seed": 9010000,
+      "output_sha256": "aaa11ef49b825e8097e148846c354141e95896393e106cb2e14c7935fab3b321",
+      "at": "2026-11-17T06:57:50Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898571154-172",
+      "hull": "violet",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/violet-9010001.png",
+      "picked": false,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-violet.png",
+          "sha256": "7d2346c873d8ef5147fd8cac2e8a12a1cdac538b0454d58808904d2f14a7e7fb"
+        }
+      ],
+      "seed": 9010001,
+      "output_sha256": "a8df3a8097daba3b2a06546a7a375f8b5c68f93d473059848738b98f02461aac",
+      "at": "2026-11-17T06:57:50Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898571154-172",
+      "hull": "violet",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/violet-9010002.png",
+      "picked": false,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-violet.png",
+          "sha256": "7d2346c873d8ef5147fd8cac2e8a12a1cdac538b0454d58808904d2f14a7e7fb"
+        }
+      ],
+      "seed": 9010002,
+      "output_sha256": "20564c0a26d712d77166ef2f24586549616fff12bcc73c60fc3908eb3621cddc",
+      "at": "2026-11-17T06:57:50Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898571154-172",
+      "hull": "violet",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/violet-9010003.png",
+      "picked": false,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-violet.png",
+          "sha256": "7d2346c873d8ef5147fd8cac2e8a12a1cdac538b0454d58808904d2f14a7e7fb"
+        }
+      ],
+      "seed": 9010003,
+      "output_sha256": "0855733455dbe83f81a070a1dbc4139e81e4e6905bb217cf42c27ec7b9728e1e",
+      "at": "2026-11-17T06:57:50Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898688605-173",
+      "hull": "coral",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/coral-9020000.png",
+      "picked": false,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-coral.png",
+          "sha256": "f2072be5a012e031d8239cd5a76759f6db855fb7318cae9df88b092c2e5da4fa"
+        }
+      ],
+      "seed": 9020000,
+      "output_sha256": "9b23a2af558948afe705997602c8d92fd3f68159af15bee4c991ff7512f3d657",
+      "at": "2026-11-17T06:59:35Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898688605-173",
+      "hull": "coral",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/coral-9020001.png",
+      "picked": false,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-coral.png",
+          "sha256": "f2072be5a012e031d8239cd5a76759f6db855fb7318cae9df88b092c2e5da4fa"
+        }
+      ],
+      "seed": 9020001,
+      "output_sha256": "18b80e9acd3532ade28f2d096fd4acf27abeaa405c4310ff17e715746bcd9e21",
+      "at": "2026-11-17T06:59:35Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898688605-173",
+      "hull": "coral",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/coral-9020002.png",
+      "picked": true,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-coral.png",
+          "sha256": "f2072be5a012e031d8239cd5a76759f6db855fb7318cae9df88b092c2e5da4fa"
+        }
+      ],
+      "seed": 9020002,
+      "output_sha256": "5a3edb033a8b1861354708dfc0719b50428e89a4da692dc4c229b5870ab63fda",
+      "at": "2026-11-17T06:59:35Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898688605-173",
+      "hull": "coral",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/coral-9020003.png",
+      "picked": false,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-coral.png",
+          "sha256": "f2072be5a012e031d8239cd5a76759f6db855fb7318cae9df88b092c2e5da4fa"
+        }
+      ],
+      "seed": 9020003,
+      "output_sha256": "c91643ccc845a9efd5529ce26656557069b1d7a5e21b2a9d7a3247f1a0eee869",
+      "at": "2026-11-17T06:59:35Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898776951-174",
+      "hull": "gold",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/gold-9030000.png",
+      "picked": false,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-gold.png",
+          "sha256": "324fb2de6c1a0e6e98b51c62b5e8396018498c5eab23544cf74e9deb69e8b259"
+        }
+      ],
+      "seed": 9030000,
+      "output_sha256": "60ee7d71cfdd909d65f482d92f8aead4e9be564f4eaf837383c21723292db2fe",
+      "at": "2026-11-17T07:01:03Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898776951-174",
+      "hull": "gold",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/gold-9030001.png",
+      "picked": false,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-gold.png",
+          "sha256": "324fb2de6c1a0e6e98b51c62b5e8396018498c5eab23544cf74e9deb69e8b259"
+        }
+      ],
+      "seed": 9030001,
+      "output_sha256": "f119c0585dbf3db28577cdf02076b7c5d7d4d30970056cc348d53c3ef748b30a",
+      "at": "2026-11-17T07:01:03Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898776951-174",
+      "hull": "gold",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/gold-9030002.png",
+      "picked": false,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-gold.png",
+          "sha256": "324fb2de6c1a0e6e98b51c62b5e8396018498c5eab23544cf74e9deb69e8b259"
+        }
+      ],
+      "seed": 9030002,
+      "output_sha256": "07f68791414cce7ee4b6f8f6ba6b50470928b3b3fa2b2ccf3a26bf246b3170d7",
+      "at": "2026-11-17T07:01:03Z",
+      "placement": "cuda"
+    },
+    {
+      "job": "st-1794898776951-174",
+      "hull": "gold",
+      "stage": "S0",
+      "view": "p45_y+00",
+      "raw": "/home/forge/.cache/tillandsias-project/hatch-emergence-raw/hero/gold-9030003.png",
+      "picked": true,
+      "workflow": {
+        "path": "art/workflows/sprites/carrier-hero-qwen-fast.json",
+        "sha256": "7654be7edf0054c5ebf210bf76f7578cb66666203f8b7aba400cff074d5019cb"
+      },
+      "models": [
+        {
+          "file": "qwen_image_edit_2511_fp8mixed.safetensors",
+          "sha256": "c9fdc158e46d3b61ef75f21ae866ca2fe808bf4a53643120d1c1e87c19280a4e",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "qwen_image_vae.safetensors",
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+          "licence": "apache-2.0"
+        },
+        {
+          "file": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+          "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+          "licence": "apache-2.0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "input",
+          "path": "/work/tmp/imagegen/hatch-emergence/ctlc-gold.png",
+          "sha256": "324fb2de6c1a0e6e98b51c62b5e8396018498c5eab23544cf74e9deb69e8b259"
+        }
+      ],
+      "seed": 9030003,
+      "output_sha256": "2d27f0f2292ae65410ee239ec9e938a73e59476e91ff90204b52fbc800576a55",
+      "at": "2026-11-17T07:01:03Z",
+      "placement": "cuda"
+    }
+  ]
+}

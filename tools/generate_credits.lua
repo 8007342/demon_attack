@@ -68,6 +68,8 @@ local models={
  {name='Dia 1.6B / Nari Labs',license='Apache-2.0',source='Voice stack: non-verbals'},
  {name='Fish Audio S2-Pro · Built with Fish Audio',license='Fish Audio Research License',source='Voice stack: pilot challenger'},
  {name='Higgs Audio v2 · Built with Higgs Materials licensed from Boson AI USA, Inc., Copyright Boson AI USA, Inc., All Rights Reserved and Meta Llama 3 licensed under the Meta Llama 3 Community License, Copyright Meta Platforms, Inc., All Right Reserved',license='Boson Higgs Audio 2 Community License; Meta Llama 3 Community License',source='Voice stack: pilot challenger'},
+ -- Signed licence records: licences/acknowledgements/ (PRs #4-#7, 2026-11-17).
+ {name='Built with Meta Llama 3 · Meta Llama 3 is licensed under the Meta Llama 3 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.',license='Meta Llama 3 Community License; Meta Llama 3 Acceptable Use Policy',source='Voice stack: bundled with Higgs Audio v2 (bosonai/higgs-tts-2-3b-base)'},
  {name='SDXL-Lightning / ByteDance',license='OpenRAIL++',source='Beach concept provenance'},
  {name='SDXL Base 1.0',license='OpenRAIL++',source='Project asset provenance register'},
  {name='Pixel Art XL / nerijs',license='CreativeML OpenRAIL-M',source='Beach concept provenance'},
