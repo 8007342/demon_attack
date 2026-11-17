@@ -123,6 +123,8 @@ after the merge instead of resolving its text.
 | `lib/game/ground_atmosphere_atlas.dart` | `cd tools/ground_atmosphere && go run . pack` (`go run . check` compares) | `check` passes |
 | `lib/game/ground_blocks_atlas.dart` | `cd tools/ground_blocks && go run . offline` | runs, but the PNG bytes differ from the committed ones |
 | `lib/game/sentinel_silhouette_atlas.dart` | `cd tools/sentinel_silhouettes && go run .` | byte-identical |
+| `art/music/bank/sfz-keys.json` (the bank's keycenters from the pinned SFZ maps) | `lua tools/bank/bank_build.lua --fetch-maps --sync-keys` (maps only, each < 100 KB) | byte-identical |
+| `web/audio/bank/` (`bank.json`, `bank-*.ogg`: the score's CC0 sample bank, once the pins are admitted) | `forge-guard run -- lua tools/bank/bank_build.lua` (recipe `art/music/bank/recipe.json`; sources verified against `plan/sample-bank-pins.manifest.tsv`; `--dry-run` plans without audio; then rerun `mix-trim.json`) | not run (pins not admitted); a fixture rebuild is byte-identical |
 | `web/audio/score/mix-trim.json` (the score's section trims; rerun after `tools/score/score_gen.lua`) | `node tools/mix_meter/trim.mjs` (`--check` compares; several minutes, wrap in `forge-guard run --`) | byte-identical |
 | `lib/game/swarm_policy.dart` | `node scripts/train-policy.mjs` (`plan/policy.md`) | byte-identical |
 | `lib/game/flyover_atlas.dart` | `tools/flyover_assets.py pack` (needs Pillow) | not run (no venv) |

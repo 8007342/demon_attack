@@ -1631,7 +1631,7 @@ class ArcadeModel {
 
   /// Left wing muzzle of each wing module, in logical px from the ship centre
   /// (the right muzzle mirrors it). The scene replaces these with the
-  /// `wing_muzzles` packed into ship-parts.json for the shipped art.
+  /// `wing_muzzles` packed into ship-weapons.json for the shipped art.
   final Map<Power, ({double x, double y})> wingMuzzles = {
     Power.rapid: (x: -15.5, y: -10.0),
     Power.powerful: (x: -17.0, y: -8.0),
