@@ -1665,6 +1665,7 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     mood: CommsMood.worried,
     lines: [
       CommsLine(id: 'bonusChallengeFailed.crosswind.h0', speaker: 'anvil', duration: 4.01, text: 'One rode the wind out. No spare ship this time, but keep popping.', emotion: 'calm', silent: true),
+      CommsLine(id: 'bonusChallengeFailed.crosswind.h1', speaker: 'kestrel', duration: 3.74, text: 'That one slipped the wind. Shake it off and lead the next.', emotion: 'calm', silent: true),
     ],
   ),
   'bonusMidway.crosswind': CommsTriggerSpec(
@@ -1713,6 +1714,7 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     exchange: CommsSide.demon,
     lines: [
       CommsLine(id: 'kiteEscaped.h0', speaker: 'wisp', duration: 2.66, text: 'One got away. Next one, lead it more.', emotion: 'calm', silent: true),
+      CommsLine(id: 'kiteEscaped.h1', speaker: 'sparrow', duration: 3.47, text: 'Missed that one. Aim where it\'s going, not where it is!', emotion: 'calm', silent: true),
     ],
   ),
   'windStart': CommsTriggerSpec(
@@ -2341,6 +2343,7 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
     delay: 0.4,
     lines: [
       CommsLine(id: 'bonusChallengeEarned.crosswind.d0', speaker: 'nibb', duration: 1.1, grunt: 'alarm', gloss: 'All of them? Even the shiny one?!', emotion: 'panicked', silent: true),
+      CommsLine(id: 'bonusChallengeEarned.crosswind.d1', speaker: 'gorrak', duration: 1.1, grunt: 'alarm', gloss: 'Every kite? Who taught them the wind?!', emotion: 'panicked', silent: true),
     ],
   ),
   'bonusChallengeFailed.crosswind': CommsTriggerSpec(
@@ -2351,6 +2354,7 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
     delay: 0.4,
     lines: [
       CommsLine(id: 'bonusChallengeFailed.crosswind.d0', speaker: 'morth', duration: 1.1, grunt: 'gloat', gloss: 'Fly free, little kite! Tell the others!', emotion: 'teasing', silent: true),
+      CommsLine(id: 'bonusChallengeFailed.crosswind.d1', speaker: 'nibb', duration: 1.1, grunt: 'cackle', gloss: 'Ha! The wind likes us better!', emotion: 'teasing', silent: true),
     ],
   ),
   'bonusMidway.crosswind': CommsTriggerSpec(
@@ -2394,6 +2398,7 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
     delay: 1.2,
     lines: [
       CommsLine(id: 'windStart.d0', speaker: 'gorrak', duration: 1.1, grunt: 'gloat', gloss: 'Our wind. Our home. Your shots go astray.', emotion: 'teasing', silent: true),
+      CommsLine(id: 'windStart.d1', speaker: 'vexxa', duration: 1.1, grunt: 'gloat', gloss: 'Feel that? Our sky breathes for us.', emotion: 'teasing', silent: true),
     ],
   ),
   'windGust': CommsTriggerSpec(
@@ -2404,6 +2409,7 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
     delay: 0.8,
     lines: [
       CommsLine(id: 'windGust.d0', speaker: 'sliss', duration: 1.1, grunt: 'cackle', gloss: 'Wheee! Ride it, brood!', emotion: 'triumphant', silent: true),
+      CommsLine(id: 'windGust.d1', speaker: 'skarn', duration: 1.1, grunt: 'roar', gloss: 'The gale answers the brood!', emotion: 'triumphant', silent: true),
     ],
   ),
 };

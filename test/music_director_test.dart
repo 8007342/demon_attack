@@ -217,6 +217,9 @@ void main() {
         'glass',
         'impact',
         'impact',
+        // crosswind: a bonus level's 1UP won or broken (bonus-music).
+        'oneup',
+        'challenge-fail',
       ]);
       expect(fleet, 1);
     },

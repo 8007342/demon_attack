@@ -177,8 +177,11 @@ on the audio studio (tillandsias#1103).
 | `bonusChallengeEarned.crosswind.h0` | human | sunny | triumphant | Every last kite! Not one got away. That's a spare ship for you! | (text card) |
 | `bonusChallengeEarned.crosswind.h1` | human | kestrel | warm | Every kite down, in that wind. Take the extra ship, you earned it. | (text card) |
 | `bonusChallengeEarned.crosswind.d0` | demon | nibb | panicked | [alarm] All of them? Even the shiny one?! | (text card) |
+| `bonusChallengeEarned.crosswind.d1` | demon | gorrak | panicked | [alarm] Every kite? Who taught them the wind?! | (text card) |
 | `bonusChallengeFailed.crosswind.h0` | human | anvil | calm | One rode the wind out. No spare ship this time, but keep popping. | (text card) |
+| `bonusChallengeFailed.crosswind.h1` | human | kestrel | calm | That one slipped the wind. Shake it off and lead the next. | (text card) |
 | `bonusChallengeFailed.crosswind.d0` | demon | morth | teasing | [gloat] Fly free, little kite! Tell the others! | (text card) |
+| `bonusChallengeFailed.crosswind.d1` | demon | nibb | teasing | [cackle] Ha! The wind likes us better! | (text card) |
 | `bonusMidway.crosswind.h0` | human | sunny | teasing | Halftime weather report: windy, windier, and kites. | (text card) |
 | `bonusMidway.crosswind.h1` | human | nomad | calm | My grandmother flew kites. She never shot at them, mind you. | (text card) |
 | `bonusMidway.crosswind.d0` | demon | sliss | stern | [snarl] Who tied my kite to a demon? Untie me! | (text card) |
@@ -192,15 +195,18 @@ on the audio studio (tillandsias#1103).
 | `kitePopped.d0` | demon | nibb | panicked | [alarm] My kite! I made that one myself! | (text card) |
 | `kitePopped.d1` | demon | vexxa | stern | [snarl] Lucky gust. Lucky, lucky gust. | (text card) |
 | `kiteEscaped.h0` | human | wisp | calm | One got away. Next one, lead it more. | (text card) |
+| `kiteEscaped.h1` | human | sparrow | calm | Missed that one. Aim where it's going, not where it is! | (text card) |
 | `kiteEscaped.d0` | demon | morth | teasing | [gloat] Bye-bye! The wind loves us more! | (text card) |
 | `kiteEscaped.d1` | demon | skarn | teasing | [cackle] Can't catch the wind, can you? | (text card) |
 | `windStart.h0` | human | wisp | calm | Wind's picking up. Watch the windsock and aim into it. | (text card) |
 | `windStart.h1` | human | kestrel | calm | Crosswind on this sector. Your shots will drift, and so will theirs. | (text card) |
 | `windStart.h2` | human | sunny | teasing | Breezy out here! Hold onto your helmets. | (text card) |
 | `windStart.d0` | demon | gorrak | teasing | [gloat] Our wind. Our home. Your shots go astray. | (text card) |
+| `windStart.d1` | demon | vexxa | teasing | [gloat] Feel that? Our sky breathes for us. | (text card) |
 | `windGust.h0` | human | wisp | urgent | Gust coming! Lead your shots into it. | (text card) |
 | `windGust.h1` | human | sparrow | urgent | Wind's swinging round! Watch the sock! | (text card) |
 | `windGust.h2` | human | rook | urgent | Here comes a big one! Aim upwind! | (text card) |
 | `windGust.d0` | demon | sliss | triumphant | [cackle] Wheee! Ride it, brood! | (text card) |
+| `windGust.d1` | demon | skarn | triumphant | [roar] The gale answers the brood! | (text card) |
 | `windStop.h0` | human | anvil | calm | Wind's dying down. Back to straight shooting. | (text card) |
 | `windStop.h1` | human | nomad | warm | Calm air again. Enjoy it while it lasts. | (text card) |

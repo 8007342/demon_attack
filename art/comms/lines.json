@@ -4847,7 +4847,8 @@
         "ttl": 4,
         "delay": 0.4,
         "lines": [
-          {"speaker": "nibb", "grunt": "alarm", "gloss": "All of them? Even the shiny one?!", "say": "All of them? Even the shiny one?!", "emotion": "panicked"}
+          {"speaker": "nibb", "grunt": "alarm", "gloss": "All of them? Even the shiny one?!", "say": "All of them? Even the shiny one?!", "emotion": "panicked"},
+          {"speaker": "gorrak", "grunt": "alarm", "gloss": "Every kite? Who taught them the wind?!", "say": "Every kite? Who taught them the wind?!", "emotion": "panicked"}
         ]
       }
     },
@@ -4858,7 +4859,8 @@
       "mood": "worried",
       "pending": "text",
       "lines": [
-        {"speaker": "anvil", "text": "One rode the wind out. No spare ship this time, but keep popping.", "emotion": "calm"}
+        {"speaker": "anvil", "text": "One rode the wind out. No spare ship this time, but keep popping.", "emotion": "calm"},
+        {"speaker": "kestrel", "text": "That one slipped the wind. Shake it off and lead the next.", "emotion": "calm"}
       ],
       "demon": {
         "priority": 4,
@@ -4866,7 +4868,8 @@
         "ttl": 3,
         "delay": 0.4,
         "lines": [
-          {"speaker": "morth", "grunt": "gloat", "gloss": "Fly free, little kite! Tell the others!", "say": "Fly free, little kite! Tell the others!", "emotion": "teasing"}
+          {"speaker": "morth", "grunt": "gloat", "gloss": "Fly free, little kite! Tell the others!", "say": "Fly free, little kite! Tell the others!", "emotion": "teasing"},
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "Ha! The wind likes us better!", "say": "Ha! The wind likes us better!", "emotion": "teasing"}
         ]
       }
     },
@@ -4934,7 +4937,8 @@
       "pending": "text",
       "exchange": "demon",
       "lines": [
-        {"speaker": "wisp", "text": "One got away. Next one, lead it more.", "emotion": "calm"}
+        {"speaker": "wisp", "text": "One got away. Next one, lead it more.", "emotion": "calm"},
+        {"speaker": "sparrow", "text": "Missed that one. Aim where it's going, not where it is!", "emotion": "calm"}
       ],
       "demon": {
         "priority": 3,
@@ -4963,7 +4967,8 @@
         "ttl": 4,
         "delay": 1.2,
         "lines": [
-          {"speaker": "gorrak", "grunt": "gloat", "gloss": "Our wind. Our home. Your shots go astray.", "say": "Our wind. Our home. Your shots go astray.", "emotion": "teasing"}
+          {"speaker": "gorrak", "grunt": "gloat", "gloss": "Our wind. Our home. Your shots go astray.", "say": "Our wind. Our home. Your shots go astray.", "emotion": "teasing"},
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "Feel that? Our sky breathes for us.", "say": "Feel that? Our sky breathes for us.", "emotion": "teasing"}
         ]
       }
     },
@@ -4985,7 +4990,8 @@
         "ttl": 2,
         "delay": 0.8,
         "lines": [
-          {"speaker": "sliss", "grunt": "cackle", "gloss": "Wheee! Ride it, brood!", "say": "Wheee! Ride it, brood!", "emotion": "triumphant"}
+          {"speaker": "sliss", "grunt": "cackle", "gloss": "Wheee! Ride it, brood!", "say": "Wheee! Ride it, brood!", "emotion": "triumphant"},
+          {"speaker": "skarn", "grunt": "roar", "gloss": "The gale answers the brood!", "say": "The gale answers the brood!", "emotion": "triumphant"}
         ]
       }
     },
