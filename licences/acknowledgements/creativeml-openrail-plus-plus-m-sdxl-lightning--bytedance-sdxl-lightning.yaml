@@ -1,0 +1,26 @@
+# Third-party licence acknowledgement (order 1956-ecpb, implements 1954-dvz9).
+# Recorded by merging the pull request that adds it (strength: github-merge).
+record: tillandsias-licence-acknowledgement v1
+licence: creativeml-openrail-plus-plus-m-sdxl-lightning
+licence_sha256: 58a5efadd5103ca0906bfc86817ad2d02ebd0856a79e5034756cadd02fa97066
+covers: [ByteDance/SDXL-Lightning]
+grantor: project-owner
+scope: project:demon_attack
+use: non-sale
+expiry: "standing"
+signed_at: "2026-11-17T20:30:35Z"
+strength: github-merge
+host: macuahuitl
+statement: |
+  tillandsias-licence-acknowledgement v1
+  licence: creativeml-openrail-plus-plus-m-sdxl-lightning
+  licence_sha256: 58a5efadd5103ca0906bfc86817ad2d02ebd0856a79e5034756cadd02fa97066
+  covers: ByteDance/SDXL-Lightning
+  grantor: project-owner
+  scope: project:demon_attack
+  use: non-sale
+  expiry: standing
+  host: macuahuitl
+  strength: github-merge
+  issued: 2026-11-17T20:30:35Z
+signature: ""
