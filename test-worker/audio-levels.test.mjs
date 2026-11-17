@@ -48,15 +48,15 @@ async function harness({ storage, storageThrows = false, compressor = true } = {
   return { window, audio: window.demonAudio, comms: window.commsAudio, get ctx() { return ctx; }, sources, settle };
 }
 
-test('both channels start at Full; Full music is -20 dB (mix-balance; was +6 dB), Low 10 dB under Full', async () => {
+test('both channels start at Full; Full music is -14 dB (mix-retune; was +6, then -20 dB), Low 10 dB under Full', async () => {
   const h = await harness();
   assert.deepEqual({ ...h.audio.levels }, { music: 'full', speech: 'full' });
   await h.audio.unlock();
   const { master, music } = h.audio.graph;
-  assert.ok(close(h.audio.state.musicLevel, dB(-20)), 'Full: the mix-balance bed, about 9 LU under the radio');
+  assert.ok(close(h.audio.state.musicLevel, dB(-14)), 'Full: the score 2.5-4.5 LU under the radio (mix-retune)');
   assert.equal(h.audio.state.masterGain, .65, 'effects keep their level');
   assert.equal(h.audio.setLevel('music', 'low').music, 'low');
-  assert.ok(close(h.audio.state.musicLevel, dB(-30)), 'Low: 10 dB under Full');
+  assert.ok(close(h.audio.state.musicLevel, dB(-24)), 'Low: 10 dB under Full');
   h.audio.setLevel('music', 'mute');
   assert.equal(h.audio.state.musicLevel, 0);
   assert.equal(h.audio.state.masterGain, .65, 'muting music alone keeps effects and speech');
@@ -101,7 +101,7 @@ test('choices are remembered per device and read back before the first sound', a
   assert.deepEqual({ ...again.audio.levels }, { music: 'low', speech: 'mute' });
   assert.equal(again.comms.state.level, 'mute', 'comms starts at the remembered speech level');
   await again.audio.unlock();
-  assert.ok(close(again.audio.state.musicLevel, dB(-30)), 'the first music plays at the remembered level');
+  assert.ok(close(again.audio.state.musicLevel, dB(-24)), 'the first music plays at the remembered level');
   const junk = await harness({ storage: memoryStorage({ 'demonAttack.musicVolume': 'eleven' }) });
   assert.equal(junk.audio.levels.music, 'full', 'unknown stored values fall back to Full');
 });
@@ -114,7 +114,7 @@ test('unavailable or failing storage falls back to Full and still applies the ch
     const result = h.audio.setLevel('music', 'low');
     assert.equal(result.music, 'low');
     assert.equal(result.stored, false);
-    assert.ok(close(h.audio.state.musicLevel, dB(-30)));
+    assert.ok(close(h.audio.state.musicLevel, dB(-24)));
   }
 });
 

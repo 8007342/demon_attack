@@ -29,7 +29,7 @@ music (carrier cores, sector e at tier 3–4) is 8.3–8.7 LU under the radio, t
 stay under -9 dBFS, so the limiter rests in normal play. Low is now linear (10 dB under Full) because the limiter no
 longer acts on it.
 
-## 2. Target
+## 2. Target (superseded by §5)
 
 Dialogue-first game mixes keep the music bed well under speech; the task set 8–10 LU under dialogue as common
 practice [UNSOURCED: plan/provenance-audit.md#mb-dialogue-gap]. The score is dynamic (tiers differ by about 3 LU), so
@@ -63,3 +63,45 @@ scheduled rather than detected:
 The stored values (`demonAttack.musicVolume` / `speechVolume`: mute, low, full) and their keys are unchanged, so a
 saved choice is read back as saved. Only the gain behind each name moved. A player with nothing stored starts at
 Full, the new mix.
+
+## 5. Retune (operator follow-up, 2026-11-17)
+
+The operator played §1–4: "the volume went too far, this time volume went too low, even at half radio it was louder
+than music, and I had to crank my speakers much louder." Before mix-balance, at Low (Full −10 dB, so −4 dB absolute)
+the music was "a little louder" than the radio, so the level sits between the two. The coordinator's targets: the
+loudest gameplay music 2–4 LU under the radio, calm sections within about 2 LU of it, a gentler duck. These are the
+operator's rulings, not research; they supersede §2's 8–10 LU.
+
+**Section trims.** At one fixed level the score spreads 9.9 LU: carrier and tier 4 sections are loudest (−24.97 LUFS
+at −20 dB), arrival tails, bridges and the coda quietest (−34.8). `tools/mix_meter/trim.mjs` renders every section
+untrimmed: tier-masked loops at tiers 1–4, fixed-mask sections once, one pass of their bars (loops 8–16 s), 217
+cases. It narrows the spread to 2 LU and keeps the order: L' = max(top − 2, top − (top − L)·k) with k = 2 / (top −
+5th percentile) = 0.299, so the louder of two sections stays louder. Each trim (L' − L, at most +8 dB, the loudest
+0 dB) goes into `web/audio/score/mix-trim.json`, a generated file: rerun the script after `score_gen.lua` changes the
+score; `--check` compares. The file stores each level as if the music level were 0 dB, so it changes only with the
+score, not with the Full setting. `demon-score.js` sets the playing section's trim on its own output gain (0.55 × trim) at the
+move or mask change, which already lands on a bar or beat line, with a 50 ms glide. The notes, the masks and the
+timing are untouched (tested: the same moves with and without trims). Each section keeps its dynamics inside itself;
+for example the overture's loudest 3 s still read 2.1 LU over one pass of it.
+
+**Level.** Full = −14 dB (Low −24 dB): the loudest case moves from −24.97 to about −19.0 LUFS, 2.5 LU under the radio's
+−16.5, and the trimmed calm sections sit about 4.5 LU under it.
+
+**Duck.** 3 dB under a squad line, 1.5 dB under a growl or a clip under 1 s; timing as §3.
+
+Measured 2026-11-17 with `node tools/mix_meter/measure.mjs` (24 s per case, from 1.5 s), defaults Full/Full, LUFS:
+
+| Case | Radio gap | mix-balance (−20 dB) | mix-retune (−14 dB + trims) |
+|---|---|---|---|
+| Radio, 48 clips | — | −16.5 | −16.5 |
+| Sectors k/r/e/h, A, tier 1 | 3.6–4.2 LU | −28.5 to −30.8 | −20.1 to −20.7 |
+| Sectors, tier 2 | 3.2–3.9 LU | −27.4 to −29.6 | −19.7 to −20.4 |
+| Sectors, tier 3–4 | 2.5–3.6 LU | −25.1 to −28.6 | −19.0 to −20.1 |
+| Carrier cores c1–c5, tier 4 | 2.5 LU | −25.0 to −25.2 | −19.0 |
+| Menu overture | 5.5 LU (one pass: 4.2) | −32.2 | −22.0 (one pass −20.7) |
+| Defeat (cackle) | 3.7 LU | −29.2 | −20.2 |
+| Coda reprise | 4.5 LU | — | −21.0 |
+
+The overture's 24 s window counts its quiet opening twice; one pass of its bars, the unit the trims use, reads
+−20.7. One pass of an arrival tail (k) and of the coda ukulele reads −21.0 and −20.9. Music peaks stay at −5.6 dBFS
+or lower, under the limiter's −1.5 dBFS.

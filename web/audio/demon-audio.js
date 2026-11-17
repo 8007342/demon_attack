@@ -23,12 +23,13 @@
   // Volume levels per channel, cycled Mute -> Low -> Full by the HUD toggles and remembered per device. Speech
   // gains live in comms-audio.js. Effects keep their level unless both music and speech are muted, which mutes
   // everything (the old master mute).
-  // --- mix-balance: Full music is -20 dB on the music level (was +6 dB), Low 10 dB under Full. Metered with
-  // tools/mix_meter/measure.mjs, this puts the score's loudest gameplay 8.3 LU under the radio at Full/Full (the old Full sat
-  // 6-8 LU OVER it and drove the master limiter). Stored choices keep their names; only what they sound like moved.
+  // --- mix-balance / mix-retune: Full music is -14 dB on the music level, Low 10 dB under Full. Metered with
+  // tools/mix_meter/measure.mjs (and the score's section trims, web/audio/score/mix-trim.json, which hold every section
+  // within 2 LU), this puts the score 2.5-4.5 LU under the radio at Full/Full. History: +6 dB sat 6-8 LU OVER the radio
+  // and drove the master limiter; -20 dB (mix-balance) was too quiet. Stored choices keep their names.
   const levelNames = ['mute', 'low', 'full'];
   const dB = value => 10 ** (value / 20);
-  const musicFullDb = -20;
+  const musicFullDb = -14;
   const musicLevels = { mute: 0, low: dB(musicFullDb - 10), full: dB(musicFullDb) };
   const storageKeys = { music: 'demonAttack.musicVolume', speech: 'demonAttack.speechVolume' };
   function storage() { try { return window.localStorage || null; } catch { return null; } }

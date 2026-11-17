@@ -4,6 +4,7 @@
 // syllable-modulated noise normalised to the bank's -18 LUFS, so no decoder is needed.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { page } from '../tools/mix_meter/page.mjs';
 import { loudness } from '../tools/mix_meter/loudness.mjs';
 
@@ -30,32 +31,32 @@ const clip = id => clips[id] ?? null;
 const start = (p, song, section, tier) => p.audio.song({ song, section, at: -1, quantum: 'bar', enter: 'start', tier, reason: 'test' });
 const meter = (out, skip = 1.5) => loudness([out.L.subarray(skip * SR), out.R.subarray(skip * SR)]).integrated;
 
-test('default levels: the score bed sits 8-12 LU under the radio (measured end to end)', async () => {
+test('default levels: the score sits 2-5 LU under the radio, the loudest 2-4 LU (measured end to end)', async () => {
   // Nothing saved: both channels at their defaults (Full).
   const speech = await page({}, { clip });
   let next = 0;
   const said = meter(await speech.render(6.5, t => { if (t >= next) { speech.comms.play(`line`, 5, false); next = t + 2.3; } }), 0);
-  for (const [song, section, tier, low, high] of [['k', 'A', 3, 8, 12], ['c1', 'core', 4, 8, 10]]) {
+  for (const [song, section, tier, low, high] of [['k', 'A', 3, 2, 5], ['c1', 'core', 4, 2, 4]]) {
     const p = await page({}, { clip });
     start(p, song, section, tier);
     const music = meter(await p.render(9));
     const gap = said - music;
     assert.ok(gap >= low && gap <= high, `${song}:${section}@${tier}: radio ${said.toFixed(1)} LUFS, music ${music.toFixed(1)} LUFS, gap ${gap.toFixed(1)} LU`);
   }
-  // The master limiter no longer works on the music at Full: its peaks stay well under the -1.5 dBFS threshold.
+  // The master limiter rests under the music at Full: its peaks stay well under the -1.5 dBFS threshold.
   const p = await page({}, { clip });
   start(p, 'c1', 'core', 4);
   const out = await p.render(6);
-  assert.ok(loudness([out.L, out.R]).peakDbfs < -6, 'the loudest carrier stays clear of the limiter');
+  assert.ok(loudness([out.L, out.R]).peakDbfs < -4, 'the loudest carrier stays clear of the limiter');
 });
 
-test('levels: Full music is -20 dB, Low 10 dB under; saved choices are honoured, defaults are Full', async () => {
+test('levels: Full music is -14 dB, Low 10 dB under; saved choices are honoured, defaults are Full', async () => {
   const fresh = await page({}, { clip });
   assert.deepEqual({ ...fresh.audio.levels }, { music: 'full', speech: 'full' });
-  assert.ok(Math.abs(fresh.audio.state.musicLevel - dB(-20)) < 1e-9);
+  assert.ok(Math.abs(fresh.audio.state.musicLevel - dB(-14)) < 1e-9);
   const saved = await page({ music: 'low', speech: 'low' }, { clip });
   assert.deepEqual({ ...saved.audio.levels }, { music: 'low', speech: 'low' }, 'a stored choice is read back as it was saved');
-  assert.ok(Math.abs(saved.audio.state.musicLevel - dB(-30)) < 1e-9);
+  assert.ok(Math.abs(saved.audio.state.musicLevel - dB(-24)) < 1e-9);
   assert.equal(saved.comms.state.level, 'low');
   const muted = await page({ music: 'mute', speech: 'full' }, { clip });
   assert.equal(muted.audio.state.musicLevel, 0);
@@ -69,43 +70,43 @@ async function duckTrace(p, seconds, at = () => {}) {
 }
 const near = (trace, t) => trace.reduce((best, s) => (Math.abs(s[0] - t) < Math.abs(best[0] - t) ? s : best))[1];
 
-test('a radio line ducks the music 4 dB with a short attack, holds, then releases smoothly', async () => {
+test('a radio line ducks the music 3 dB with a short attack, holds, then releases smoothly', async () => {
   const p = await page({}, { clip });
   start(p, 'k', 'A', 3);
   let played = false;
   const trace = await duckTrace(p, 5, t => { if (!played && t >= 1) played = p.comms.play('line', 5, false); });
   const lineStart = trace.find(([t]) => t >= 1)[0];   // the clip starts on the next tick after decode, within ~30 ms
   assert.ok(Math.abs(near(trace, .9)) < .01, 'no duck before the line');
-  assert.ok(Math.abs(near(trace, lineStart + .2) + 4) < .3, `down 4 dB within 200 ms (${near(trace, lineStart + .2).toFixed(2)})`);
-  assert.ok(Math.abs(near(trace, lineStart + 2.1) + 4) < .3, 'held through the line and its hold');
+  assert.ok(Math.abs(near(trace, lineStart + .2) + 3) < .3, `down 3 dB within 200 ms (${near(trace, lineStart + .2).toFixed(2)})`);
+  assert.ok(Math.abs(near(trace, lineStart + 2.1) + 3) < .3, 'held through the line and its hold');
   assert.ok(Math.abs(near(trace, lineStart + 2 + .25 + .6)) < .5, 'back within half a dB 0.6 s after the hold');
   assert.ok(Math.abs(near(trace, 4.9)) < .02, 'fully back');
   for (let i = 1; i < trace.length; i++) assert.ok(Math.abs(trace[i][1] - trace[i - 1][1]) < 2.5, `no step at ${trace[i][0].toFixed(3)} s`);
   assert.deepEqual({ attack: p.audio.state.duck.attack, release: p.audio.state.duck.release, hold: p.audio.state.duck.hold }, { attack: .03, release: .15, hold: .25 });
 });
 
-test('a brood growl or a short stinger ducks only 2 dB; overlapping lines hold the deepest', async () => {
+test('a brood growl or a short stinger ducks only 1.5 dB; overlapping lines hold the deepest', async () => {
   const growl = await page({}, { clip });
   start(growl, 'k', 'A', 3);
   let g = false;
   const gt = await duckTrace(growl, 2, t => { if (!g && t >= .5) g = growl.comms.play('growl', 5, true); });
-  assert.ok(Math.abs(near(gt, 1.5) + 2) < .3, `demon line: 2 dB (${near(gt, 1.5).toFixed(2)})`);
+  assert.ok(Math.abs(near(gt, 1.5) + 1.5) < .3, `demon line: 1.5 dB (${near(gt, 1.5).toFixed(2)})`);
 
   const whoop = await page({}, { clip });
   start(whoop, 'k', 'A', 3);
   let w = false;
   const wt = await duckTrace(whoop, 1.2, t => { if (!w && t >= .3) w = whoop.comms.play('whoop', 5, false); });
-  assert.ok(Math.abs(near(wt, .7) + 2) < .3, `a clip under 1 s: 2 dB (${near(wt, .7).toFixed(2)})`);
+  assert.ok(Math.abs(near(wt, .7) + 1.5) < .3, `a clip under 1 s: 1.5 dB (${near(wt, .7).toFixed(2)})`);
 
   const both = await page({}, { clip });
   start(both, 'k', 'A', 3);
   let a = false, b = false;
   const bt = await duckTrace(both, 6, t => {
-    if (!a && t >= .5) a = both.comms.play('growl', 5, true);        // 2 dB, .5 - 2.5 s
-    if (!b && t >= 1) b = both.comms.play('other', 5, false);        // 4 dB, 1 - 2.5 s
+    if (!a && t >= .5) a = both.comms.play('growl', 5, true);        // 1.5 dB, .5 - 2.5 s
+    if (!b && t >= 1) b = both.comms.play('other', 5, false);        // 3 dB, 1 - 2.5 s
   });
-  assert.ok(Math.abs(near(bt, .9) + 2) < .3, 'the growl alone: 2 dB');
-  assert.ok(Math.abs(near(bt, 1.8) + 4) < .3, 'the squad line on top: 4 dB');
+  assert.ok(Math.abs(near(bt, .9) + 1.5) < .3, 'the growl alone: 1.5 dB');
+  assert.ok(Math.abs(near(bt, 1.8) + 3) < .3, 'the squad line on top: 3 dB');
   assert.ok(Math.abs(near(bt, 5.5)) < .05, 'both done: back to 0 dB');
 });
 
@@ -117,7 +118,7 @@ test('a line cut early releases the duck early', async () => {
     if (!played && t >= .3) played = p.comms.play('line', 5, false);
     if (!cut && t >= .8) { p.comms.stop('line'); cut = true; }
   });
-  assert.ok(Math.abs(near(trace, .7) + 4) < .3);
+  assert.ok(Math.abs(near(trace, .7) + 3) < .3);
   assert.ok(Math.abs(near(trace, .8 + .04 + .25 + .7)) < .3, 'released after the cut and the hold, not at the clip end');
 });
 
@@ -138,4 +139,50 @@ test('ducking never moves the score: bar-quantised moves land on the same times 
   assert.deepEqual(talking, quiet);
   assert.equal(talking.moves.length, 2, 'the start and the move to B');
   assert.equal(talking.music, 1, 'the music bus itself stays at unity; the duck is its own stage');
+});
+
+// --- mix-retune: the score's section trims (web/audio/score/mix-trim.json, from tools/mix_meter/trim.mjs).
+const trimFile = JSON.parse(await readFile(new URL('../web/audio/score/mix-trim.json', import.meta.url), 'utf8'));
+const scoreMap = JSON.parse(await readFile(new URL('../web/audio/score/score.json', import.meta.url), 'utf8'));
+
+test('the trim table covers every section and tier and narrows them to 2 LU', () => {
+  const { measuredLufs: measured, trims, rule } = trimFile;
+  for (const [song, spec] of Object.entries(scoreMap.songs)) for (const [section, s] of Object.entries(spec.sections)) {
+    const keys = s.mask === 'all' ? [`${song}:${section}`] : [1, 2, 3, 4].map(t => `${song}:${section}@${t}`);
+    for (const key of keys) assert.ok(Number.isFinite(measured[key]), `${key} measured (rerun node tools/mix_meter/trim.mjs after a score change)`);
+  }
+  assert.equal(Object.keys(measured).length, Object.values(scoreMap.songs).reduce((n, s) => n + Object.values(s.sections).reduce((m, x) => m + (x.mask === 'all' ? 1 : 4), 0), 0), 'no stale keys');
+  const levels = Object.entries(measured).map(([key, L]) => L + (trims[key] ?? 0));
+  for (const t of Object.values(trims)) assert.ok(t > 0 && t <= rule.maxTrim, `trim ${t} dB within 0-${rule.maxTrim}`);
+  assert.ok(Math.max(...levels) - Math.min(...levels) <= 2.1, `trimmed spread (trims round to 0.1 dB) ${(Math.max(...levels) - Math.min(...levels)).toFixed(2)} LU`);
+  assert.equal(trims[Object.entries(measured).sort((a, b) => b[1] - a[1])[0][0]], undefined, 'the loudest section keeps 0 dB');
+});
+
+test('rendered with trims, calm and loud sections sit within about 2 LU', async () => {
+  const onePass = async (song, section, tier) => {
+    const p = await page({}, { clip });
+    start(p, song, section, tier);
+    const s = scoreMap.songs[song], bars = s.sections[section].bars, seconds = bars * s.barSamples / SR;
+    const out = await p.render(seconds + .6);
+    const a = Math.round(p.audio.state.score.moves[0].at * SR), b = a + Math.round(seconds * SR);
+    return loudness([out.L.subarray(a, b), out.R.subarray(a, b)]).integrated;
+  };
+  const levels = { 'k:A@1': await onePass('k', 'A', 1), 'c1:core@4': await onePass('c1', 'core', 4), 'k:arrival': await onePass('k', 'arrival', 4) };
+  const spread = Math.max(...Object.values(levels)) - Math.min(...Object.values(levels));
+  assert.ok(spread <= 2.3, `spread ${spread.toFixed(2)} LU: ${JSON.stringify(levels)}`);
+});
+
+test('trims follow the grid and never move the score: the same moves with or without them', async () => {
+  const run = async trims => {
+    const p = await page({}, { clip, trims });
+    start(p, 'k', 'A', 1);
+    let moved = false;
+    await p.render(8, t => { if (!moved && t >= 3.1) { p.audio.song({ song: 'k', section: 'B', at: -1, quantum: 'bar', enter: 'same', tier: 3, reason: 'test' }); moved = true; } });
+    const s = p.audio.state.score;
+    return JSON.parse(JSON.stringify({ moves: s.moves.map(m => [m.section, +m.at.toFixed(6), m.entry]), audible: s.audible, slipped: s.slipped, trimDb: s.trimDb }));
+  };
+  const plain = await run(false), trimmed = await run(true);
+  assert.deepEqual({ ...trimmed, trimDb: 0 }, { ...plain, trimDb: 0 });
+  assert.equal(plain.trimDb, 0);
+  assert.equal(trimmed.trimDb, trimFile.trims['k:B@3'] ?? 0, 'the section and tier now playing set the trim');
 });
