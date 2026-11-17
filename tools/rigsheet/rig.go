@@ -130,7 +130,10 @@ type Family struct {
 	Materials map[string]struct {
 		Hint string `json:"hint"`
 	} `json:"materials"`
-	Prompts  map[string]string          `json:"prompts"`
+	Prompts map[string]string `json:"prompts"`
+	// Grade: an optional tone grade applied to a pose family's beauty before the finish
+	// (hatch-emergence: the area scale of a pixel-art paint averages its outlines into mud).
+	Grade    *Grade                     `json:"grade"`
 	Selected map[string]json.RawMessage `json:"selected"`
 	Hulls    map[string]struct {
 		Tour  int               `json:"tour"`

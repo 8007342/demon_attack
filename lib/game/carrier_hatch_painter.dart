@@ -28,6 +28,26 @@ class CarrierHatchPainter {
   /// time; released into [splinters] as their time comes.
   final List<(BreakupComponent, double)> pending = [];
   bool _reduced = false;
+
+  // --- hatch-emergence (design §1): the hatch's candy. [rich] (the tier's
+  // hatchVents) adds the steam vents and the telegraph pulse rings.
+  bool rich = true;
+
+  /// Steam (and ichor drips) from the hatches: (x, y, vx, vy, t0, ichor),
+  /// world space, capped at [maxVents].
+  final List<(double, double, double, double, double, bool)> vents = [];
+  static const maxVents = 32;
+
+  /// A destroyed hatch's burst: (x, y, t0).
+  final List<(double, double, double)> bursts = [];
+
+  /// The last field HP seen per hatch, and the moment it last dropped (the
+  /// hit ripple).
+  final Map<String, int> _lastField = {};
+  final Map<String, double> _rippleAt = {};
+  final Map<String, double> _ventAt = {};
+  final Map<String, GateState> _ventState = {};
+  static const rippleSeconds = .28, burstSeconds = .45, ventSeconds = .9;
   final math.Random _rng = math.Random(0xC5B7);
   double clock = 0;
   Carrier? _carrier;
@@ -46,7 +66,34 @@ class CarrierHatchPainter {
     }
     if (b != null) {
       for (final h in b.hatches) {
-        if (h.destroyed && _broken.add(h.hatch.id)) _shatter(b, h, reduced);
+        if (h.destroyed && _broken.add(h.hatch.id)) {
+          _shatter(b, h, reduced);
+          bursts.add((b.x + h.hatch.x, b.y + h.hatch.y, t));
+        }
+        // --- hatch-emergence: a field hit ripples its membrane.
+        final last = _lastField[h.hatch.id];
+        if (last != null && h.field < last) _rippleAt[h.hatch.id] = t;
+        _lastField[h.hatch.id] = h.field;
+        // Ichor seeps from a cracked hatch (field down, hull hurt): a slow
+        // drip, one per 0.7 s per hatch.
+        if (rich &&
+            !reduced &&
+            !h.destroyed &&
+            h.field <= 0 &&
+            h.hull < h.hullMax &&
+            vents.length < maxVents &&
+            t - (_ventAt['i${h.hatch.id}'] ?? -9) > .7) {
+          _ventAt['i${h.hatch.id}'] = t;
+          final s = _rng.nextDouble() - .5;
+          vents.add((
+            b.x + h.hatch.x + s * 8,
+            b.y + h.hatch.y + 4,
+            s * 6,
+            14,
+            t,
+            true,
+          ));
+        }
       }
       // World-space smoke from the sealed openings (2/s for 6 s, then 0.5/s).
       for (final h in b.hatches) {
@@ -102,6 +149,31 @@ class CarrierHatchPainter {
     });
     splinters.addAll(grown.take(math.max(0, 96 - splinters.length)));
     smoke.removeWhere((s) => t - s.$3 > 2.2);
+    vents.removeWhere((v) => t - v.$5 > ventSeconds);
+    bursts.removeWhere((v) => t - v.$3 > burstSeconds);
+  }
+
+  /// --- hatch-emergence: steam jets from both tusk roots as the doors part
+  /// (one pair per opening), hull-local [at] in world space.
+  void _vent(String id, Offset at, double width, GateState state) {
+    final was = _ventState[id];
+    _ventState[id] = state;
+    if (!rich || _reduced || state != GateState.opening || was == state) {
+      return;
+    }
+    for (final s in const [-1.0, 1.0]) {
+      for (var k = 0; k < 2 && vents.length < maxVents; k++) {
+        final j = _rng.nextDouble();
+        vents.add((
+          at.dx + s * width * .45,
+          at.dy - width * .4,
+          s * (22 + 14 * j),
+          -18 - 10 * j - 8 * k,
+          clock + k * .06,
+          false,
+        ));
+      }
+    }
   }
 
   /// A destroyed hatch: its two tusks and rim splinter into 6 ivory
@@ -162,9 +234,26 @@ class CarrierHatchPainter {
       // tusks (never white-hot), the target the hint names.
       if (vulnerable) {
         final pulse = reduced ? 1.0 : .75 + .25 * math.sin(clock * 5);
-        _p.color = _amber.withValues(alpha: .16 * pulse);
+        // --- hatch-emergence §1.6 staging: a dark vignette ring under the
+        // halo lifts the active hatch off the hull (contrast leads the eye).
+        _p.color = _char.withValues(alpha: .35);
+        c.drawCircle(at, CarrierHatches.fieldRadius * 1.6, _p);
+        _p.color = _amber.withValues(alpha: .2 * pulse);
         c.drawCircle(at, CarrierHatches.fieldRadius * 1.15, _p);
       }
+      // --- hatch-emergence §1.2: the telegraph pulse, quickening toward
+      // the opening (an expanding ember ring, 2 → 5 Hz).
+      if (run != null && rich && !reduced && run.state == GateState.telegraph) {
+        final u = (run.t / launches!.timing.telegraph).clamp(0.0, 1.0);
+        final ph = (run.t * (2 + 3 * u)) % 1.0;
+        _p
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..color = _ember.withValues(alpha: .55 * (1 - ph) * (.4 + .6 * u));
+        c.drawCircle(at, g.width * (.5 + .9 * ph), _p);
+        _p.style = PaintingStyle.fill;
+      }
+      if (run != null) _vent(g.id, at, g.width * 1.5, run.state);
       _tuskSlot(
         c,
         at,
@@ -175,11 +264,71 @@ class CarrierHatchPainter {
         flip: g.x < 0,
       );
       if (vulnerable && h.field > 0) {
-        _hatchField(c, at, h.field / h.fieldMax, clock, reduced);
+        _hatchField(c, at, h.field / h.fieldMax, clock, reduced, g.id);
+      }
+      // Sealed tiers sink into the hull (staging: only the live tier is lit).
+      if (!vulnerable &&
+          (run == null || !run.busy) &&
+          b.chapter == CarrierChapter.hatches) {
+        _p.color = _char.withValues(alpha: .45);
+        c.drawCircle(at, g.width * .85, _p);
       }
     }
     _paintSmoke(c);
+    _paintVents(c);
+    _paintBursts(c);
     _paintSplinters(c);
+  }
+
+  void _paintVents(Canvas c) {
+    for (final (x, y, vx, vy, t0, ichor) in vents) {
+      final age = clock - t0;
+      if (age < 0) continue;
+      final u = (age / ventSeconds).clamp(0.0, 1.0);
+      final drag = 1 - .5 * u;
+      final p = Offset(x + vx * age * drag, y + vy * age * drag);
+      if (ichor) {
+        _p.color = const Color(0xFF6A1430).withValues(alpha: .85 * (1 - u));
+        c.drawCircle(p, 1.4 + .6 * u, _p);
+      } else {
+        _p.color = const Color(0xFFD8CCD8).withValues(alpha: .38 * (1 - u));
+        c.drawCircle(p, 2.5 + 7 * u, _p);
+      }
+    }
+  }
+
+  /// A destroyed hatch's break: a white-amber flash, a shock ring and the
+  /// ember spray (the splinters fly on their own bodies).
+  void _paintBursts(Canvas c) {
+    for (final (x, y, t0) in bursts) {
+      final u = ((clock - t0) / burstSeconds).clamp(0.0, 1.0);
+      final at = Offset(x, y);
+      if (u < .3) {
+        _p.color = const Color(0xFFFFE6B0)
+            .withValues(alpha: .85 * (1 - u / .3));
+        c.drawCircle(at, 10 + 14 * u, _p);
+      }
+      _p
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3 * (1 - u) + .5
+        ..color = _amber.withValues(alpha: .8 * (1 - u));
+      c.drawCircle(at, 12 + 38 * u, _p);
+      _p.style = PaintingStyle.fill;
+      if (_reduced) continue;
+      for (var k = 0; k < 10; k++) {
+        final a = k * 2.399 + x * .01;
+        final r = 8 + 46 * u * (.6 + .4 * ((k * 37) % 10) / 10);
+        _p.color = _ember.withValues(alpha: (1 - u));
+        c.drawRect(
+          Rect.fromCenter(
+            center: at + Offset(math.cos(a) * r, math.sin(a) * r + 20 * u * u),
+            width: 2,
+            height: 2,
+          ),
+          _p,
+        );
+      }
+    }
   }
 
   /// The core door (front pass): sealed in the hatch chapter, opening in
@@ -258,6 +407,15 @@ class CarrierHatchPainter {
       ..close();
     _p.color = _slot;
     c.drawPath(_path, _p);
+    if (glow > 0 && open > 0) {
+      // --- hatch-emergence §1.1: the inner glow, a warm bloom out of the
+      // slot as the doors part (two flat ovals, no blur).
+      _p.color = _amber.withValues(alpha: .18 * open * glow);
+      c.drawOval(
+        Rect.fromCenter(center: at, width: w * 1.6, height: h * 1.1),
+        _p,
+      );
+    }
     if (glow > 0) {
       final hot = Color.lerp(_ember, _amber, glow)!;
       _p.color = hot.withValues(alpha: (.25 + .55 * open) * glow);
@@ -301,34 +459,44 @@ class CarrierHatchPainter {
 
   /// The hatch's own field: a small membrane that thins with its HP
   /// (carrier-render-engine wear: width and alpha, coherent gaps).
-  void _hatchField(Canvas c, Offset at, double s, double clock, bool reduced) {
-    final w = .18 + .82 * math.pow(s, .8);
+  ///
+  /// hatch-emergence §1.4 (the dive-shield-thinning principle, operator
+  /// round 5 S1): one continuous ring that keeps its whole circle and wears
+  /// in THICKNESS per hit, never in angular width, with a ripple on a hit.
+  void _hatchField(
+    Canvas c,
+    Offset at,
+    double s,
+    double clock,
+    bool reduced,
+    String id,
+  ) {
+    final w = s.clamp(0.0, 1.0);
     const r = CarrierHatches.fieldRadius;
-    final gaps = s < .7 ? .6 * math.pow((.7 - s) / .7, 1.4) : 0.0;
-    const segs = 24;
-    final drift = reduced ? 0.0 : clock * .35;
+    final breathe = reduced ? 0.0 : .6 * math.sin(clock * 2.1);
     _p
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    for (var i = 0; i < segs; i++) {
-      // Coherent gaps: a smooth hash of the segment and the drift.
-      final n = .5 + .5 * math.sin(i * 1.7 + drift * 2.3 + math.sin(i * .9));
-      if (n < gaps) continue;
-      final a0 = i / segs * 2 * math.pi, a1 = (i + .8) / segs * 2 * math.pi;
-      final rect = Rect.fromCircle(center: at, radius: r);
-      _p
-        ..strokeWidth = 1.5 + 5.5 * w
-        ..color = _fieldDeep.withValues(alpha: .04 + .14 * w);
-      c.drawArc(rect, a0, a1 - a0, false, _p);
-      _p
-        ..strokeWidth = .7 + 1.3 * w
-        ..color = _field.withValues(alpha: .3 + .6 * w);
-      c.drawArc(rect, a0, a1 - a0, false, _p);
-    }
+      ..strokeWidth = hatchFieldWidth(w) * 2.2
+      ..color = _fieldDeep.withValues(alpha: .06 + .16 * w);
+    c.drawCircle(at, r + breathe * .5, _p);
     _p
-      ..style = PaintingStyle.fill
-      ..strokeCap = StrokeCap.butt;
+      ..strokeWidth = hatchFieldWidth(w)
+      ..color = _field.withValues(alpha: .35 + .55 * w);
+    c.drawCircle(at, r + breathe * .5, _p);
+    final hit = _rippleAt[id];
+    if (hit != null && clock - hit < rippleSeconds) {
+      final u = (clock - hit) / rippleSeconds;
+      _p
+        ..strokeWidth = 1.2
+        ..color = Colors.white.withValues(alpha: .7 * (1 - u));
+      c.drawCircle(at, r + 6 * u, _p);
+    }
+    _p.style = PaintingStyle.fill;
   }
+
+  /// The hatch field's ring thickness (units) at field share [s]: 7 units
+  /// full, 1.2 at its last point, linear per hit; the circle never narrows.
+  static double hatchFieldWidth(double s) => 1.2 + 5.8 * s.clamp(0.0, 1.0);
 
   void _sealed(Canvas c, Offset at, double width) {
     _p.color = _char.withValues(alpha: .9);

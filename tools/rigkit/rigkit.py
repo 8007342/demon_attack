@@ -878,11 +878,22 @@ def render_pass(sc, path, kind, objs, ctx):
 # toward the direction a (degrees, 0 = +x, 90 = +y; the family's own frame). Slots not listed
 # stay put. Objects keep their rest mesh (only matrix_world moves), so the projection bake's
 # object coordinates carry the hero texture with the part: every pose shows the same paint.
+#
+# Or named key poses (hatch-emergence: a creature's one-shot sprites):
+#   "articulation": {"parents": {slot: parent slot},
+#                    "keyposes": [{"id": "glide", "slots": {slot: [op, ...]}}, ...]}
+# An op is {"rot": [x, y, z] axis, "deg": d, "pivot": [x, y, z]} or {"move": [x, y, z]}, in the
+# family frame, applied in list order; a slot then follows its parent's matrix (forearm on the
+# upper arm on the torso). The first key pose is the rest pose: the hero is painted on it, so it
+# should show every part.
 def poses(g):
-    """[(id, direction degrees, tilt degrees)]: the rest pose first, then dirs x tilts."""
+    """[(id, direction degrees, tilt degrees)]: the rest pose first, then dirs x tilts; or the
+    named key poses in order."""
     a = g.get('articulation')
     if not a:
         return [('rest', 0.0, 0.0)]
+    if a.get('keyposes'):
+        return [(k['id'], 0.0, 0.0) for k in a['keyposes']]
     n = a.get('dirs', 8); out = [('c', 0.0, 0.0)]
     for t in a['tilts']:
         for k in range(n):
@@ -891,8 +902,30 @@ def poses(g):
     return out
 
 
+def _op_matrix(op):
+    if 'move' in op:
+        return Matrix.Translation(Vector(op['move']))
+    pv = Vector(op.get('pivot', [0, 0, 0]))
+    return (Matrix.Translation(pv) @ Matrix.Rotation(math.radians(op['deg']), 4, Vector(op['rot']).normalized())
+            @ Matrix.Translation(-pv))
+
+
+def keypose_matrix(g, slot, pose_id, _depth=0):
+    """A slot's matrix in a named key pose: its parent's matrix times its own ops."""
+    a = g['articulation']; kp = next(k for k in a['keyposes'] if k['id'] == pose_id)
+    M = Matrix.Identity(4)
+    for op in kp.get('slots', {}).get(slot, []):
+        M = _op_matrix(op) @ M
+    par = a.get('parents', {}).get(slot)
+    if par and _depth < 16:
+        M = keypose_matrix(g, par, pose_id, _depth + 1) @ M
+    return M
+
+
 def pose_matrix(g, slot, pose):
     a = g.get('articulation') or {}
+    if a.get('keyposes'):
+        return keypose_matrix(g, slot, pose[0])
     _, ang, tilt = pose
     f = a.get('follow', {}).get(slot, 0); pv = a.get('pivot', [0, 0, 0])
     if isinstance(f, dict):

@@ -34,6 +34,9 @@ class FrameBudget {
     required this.sparks,
     required this.blur,
     required this.fogReduced,
+    required this.emergence,
+    required this.lurkers,
+    required this.hatchVents,
   });
 
   /// Rain drops and splashes, as a fraction of the weather's own count.
@@ -56,6 +59,17 @@ class FrameBudget {
   /// only, one sharp creature-shadow layer, one smoke puff per wreck.
   final bool fogReduced;
 
+  // --- hatch-emergence (design §5): the carrier hatches' candy.
+  /// The launched creatures' one-shot emergence frames (LITE: off, the
+  /// flight sprites as before).
+  final bool emergence;
+
+  /// Lurkers drawn per held hatch (the claws, peeks and held doors).
+  final int lurkers;
+
+  /// The hatches' steam vents and telegraph pulse rings.
+  final bool hatchVents;
+
   static const full = FrameBudget._(
     rainScale: 1,
     moteScale: 1,
@@ -63,6 +77,9 @@ class FrameBudget {
     sparks: true,
     blur: true,
     fogReduced: false,
+    emergence: true,
+    lurkers: 3,
+    hatchVents: true,
   );
   static const lean = FrameBudget._(
     rainScale: .6,
@@ -71,6 +88,9 @@ class FrameBudget {
     sparks: true,
     blur: true,
     fogReduced: true,
+    emergence: true,
+    lurkers: 1,
+    hatchVents: true,
   );
   static const lite = FrameBudget._(
     rainScale: .35,
@@ -79,6 +99,9 @@ class FrameBudget {
     sparks: false,
     blur: false,
     fogReduced: true,
+    emergence: false,
+    lurkers: 0,
+    hatchVents: false,
   );
 
   static FrameBudget of(PerfTier t) => switch (t) {

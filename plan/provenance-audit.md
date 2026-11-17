@@ -327,3 +327,11 @@ measurements (`plan/phone-performance-ledger.md`); these claims only motivate it
 | <a id="pp-maskfilter"></a>pp-maskfilter | What a `MaskFilter.blur` paint costs per draw | its API page was not read |
 | <a id="pp-ios-formats"></a>pp-ios-formats | The iOS Safari versions that decode WebP and AVIF | caniuse.com and Apple release notes reset; MDN gives desktop Safari only |
 | <a id="pp-font-subset"></a>pp-font-subset | Subsetting text fonts (beyond icon tree shaking) in a Flutter web build | no read page covers it |
+
+## Part HE: hatch emergence (`hatch-emergence`, added 2026-11-17)
+Our own engineering choices in `openspec/changes/hatch-emergence/design.md`. The animation principles they apply are
+sourced there (Microsoft Learn and UCBUGG, read 2026-11-17); the numbers are ours.
+
+| ID | Where | Claim | Status | Check |
+|---|---|---|---|---|
+| <a id="HE-1"></a>HE-1 | design §1–§5 | The beat lengths (grip 0.5 s inside the telegraph, peek 0.34 s, crouch 0.16 s, leap 0.12 s, unfurl and flare 0.16 s), the hop heights 9/12/6, the blend 0.24–0.56 s; the field ring 1.2–7 units; the vent and burst timings; the tier budgets (3/1/0 lurkers), the atlas and draw-call ceilings; the tone grade 1.35/0.03/1.15 | UNSOURCED | `test/hatch_emergence_test.dart`; `art/contact/hatch-emergence-*.png`, `-fight.gif` |
