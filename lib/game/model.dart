@@ -1004,6 +1004,16 @@ class ArcadeModel {
     };
   }
 
+  // --- hatch-emergence: the presentation's read of the next fight flock.
+  /// The fight's minion cap by route (6, 8, then 10).
+  static int fightMinionCap(int cycle) =>
+      cycle == 0 ? 6 : (cycle == 1 ? 8 : 10);
+
+  /// How many creatures the fight's next hatch flock would hold if it left
+  /// now (0–3): the lurkers a held hatch shows. Read only.
+  int get hatchFlockPreview =>
+      (fightMinionCap(cycle) - demons.length).clamp(0, 3);
+
   void _queueGateEvent(GateEvent e) {
     final g = e.run.gate;
     // --- carrier-hatches §A8: the volley lifecycle on the hatches.
@@ -4791,7 +4801,7 @@ class ArcadeModel {
     // fire (creatures already out keep fighting).
     if (b.chapter == CarrierChapter.transform) return;
     _flock -= dt * policy.hostileRate;
-    final maxMinions = cycle == 0 ? 6 : (cycle == 1 ? 8 : 10);
+    final maxMinions = fightMinionCap(cycle);
     // carrier-v3 §4.4, carrier-hatches §A6: the flock's hatch telegraphs
     // and opens ahead of the timer, and a flock from a high tier leaves
     // earlier by its longer transit, so each creature still arrives at

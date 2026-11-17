@@ -27,6 +27,9 @@ import 'insignia_atlas.dart';
 import 'insignia_painter.dart';
 import 'model.dart';
 import 'perf/frame_budget.dart'; // --- phone-performance
+import 'hatch_emergence.dart'; // --- hatch-emergence
+import 'carrier_gates.dart' show CarrierGate;
+import 'hatch_emergence_painter.dart';
 import 'shot_layer.dart'; // --- phone-performance
 import 'music_director.dart'; // --- music event hook
 import 'flock.dart' show SwarmFlock;
@@ -68,6 +71,9 @@ class DemonScene extends FlameGame {
   /// carrier-v3: the field, the gates and the speed cues.
   final carrierV3 = CarrierPresentation();
   final hatchPainter = CarrierHatchPainter(); // --- carrier-hatches
+  // --- hatch-emergence: the launched creatures' one-shot emergence.
+  final emergence = HatchEmergence();
+  final emergencePainter = HatchEmergencePainter();
   final breakup = CarrierBreakupPainter(); // --- carrier-hatches Part B
 
   /// The gameplay layer is drawn under the arena camera's zoom this frame.
@@ -144,6 +150,10 @@ class DemonScene extends FlameGame {
     } catch (_) {}
     try {
       insignia.image = await images.load(InsigniaAtlas.file);
+    } catch (_) {}
+    try {
+      // --- hatch-emergence (tools/rigkit, plan/render-runs/hatch-emergence.md)
+      emergencePainter.image = await images.load('hatch-emergence.png');
     } catch (_) {}
     try {
       silhouetteAtlas = await images.load(SentinelSilhouetteAtlas.file);
@@ -231,6 +241,11 @@ class DemonScene extends FlameGame {
     atmosphere.tierReduced = b.fogReduced;
     rain.budget = b.rainScale;
     sectors.moteScale = b.moteScale;
+    // --- hatch-emergence §5: LITE skips the emergence and the vents.
+    emergence
+      ..enabled = b.emergence
+      ..lurkers = b.lurkers;
+    hatchPainter.rich = b.hatchVents;
   }
 
   /// One presentation step (unpaused): the backdrop's sector blend, the
@@ -336,6 +351,7 @@ class DemonScene extends FlameGame {
     if (armada.carrier && model.level >= 4) carrierV3.ensureField(armada);
     carrierV3.update(dt, model, bossDirector, reduced: reduced);
     hatchPainter.update(model.boss, model.visualClock, reduced: reduced);
+    emergence.update(model); // --- hatch-emergence
     // --- carrier-hatches Part B: the hull's components, cut at install.
     if (armada.carrier && model.level >= 4) breakup.prepare(armada);
     breakup.update(model, bossDirector, reduced: reduced);
@@ -1094,7 +1110,11 @@ class DemonScene extends FlameGame {
     // --- carrier-hatches §A6: in the fight, the hull (prow, deck, hatches)
     // is drawn before the creatures, so none is ever covered by it.
     final front = model.boss;
-    if (front != null && _carrierFrontFirst(front)) _carrierFront(c, front);
+    if (front != null && _carrierFrontFirst(front)) {
+      _carrierFront(c, front);
+      _hatchLurkers(c, front); // --- hatch-emergence: beats 1-3
+    }
+    emergencePainter.beginFrame();
 
     for (final d in _byDepth(census.bodies)) {
       while (nextFog < fogSlots.length &&
@@ -1106,6 +1126,9 @@ class DemonScene extends FlameGame {
       // of the hitbox at most), never the creature.
       final (lx, ly) = d.isLarge ? (0.0, 0.0) : creatures.look.offset(d);
       final pos = Offset(d.x + lx, d.y + ly);
+      // --- hatch-emergence: beats 4-6 replace the flight sprite until the
+      // entrance hands off (beat 7).
+      if (!d.isLarge && _emergingCreature(c, d, pos)) continue;
       if (d.isLarge) {
         // Large creatures have their own delayed entrance in simulation
         // (the census leaves one that has not set out undrawn).
@@ -1406,6 +1429,41 @@ class DemonScene extends FlameGame {
   /// carrier-hatches §A6: the fighting carrier's front pass goes under the
   /// creatures.
   bool _carrierFrontFirst(Carrier b) => b.fightReady;
+
+  // --- hatch-emergence (design §4): the hatch's anchor on the bent hull.
+  Offset _hatchAt(Carrier b, CarrierGate g) =>
+      Offset(b.x, b.y) +
+      (armada.carrier ? armada.bent(g.x, g.y) : Offset(g.x, g.y));
+
+  /// Beats 1-3: the claws, peeks and held doors of the held hatches.
+  void _hatchLurkers(Canvas c, Carrier b) {
+    for (final (g, f, row) in emergence.lurking(model)) {
+      emergencePainter.paint(
+        c,
+        f,
+        row,
+        _hatchAt(b, g),
+        scale: _creatureFloor,
+      );
+    }
+  }
+
+  /// Beats 4-6 for [d] when it is emerging; false to draw it as usual.
+  bool _emergingCreature(Canvas c, Demon d, Offset pos) {
+    final b = model.boss;
+    final e = emergence.of(d);
+    final f = e?.frame;
+    if (b == null || e == null || f == null) return false;
+    emergencePainter.paint(
+      c,
+      f,
+      e.row,
+      _hatchAt(b, e.hatch),
+      modelAt: pos,
+      scale: d.scale * _creatureFloor,
+    );
+    return true;
+  }
 
   /// The carrier's front pass: the prow, deck, gates and core door.
   void _carrierFront(Canvas c, Carrier b) {
