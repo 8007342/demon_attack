@@ -70,21 +70,21 @@ staccato and organ conclusions below come from.
 
 Opus VBR came in 274,626 B over the dry-run's estimate (1,633,224 B), still within the budget.
 
-Coverage (`lua tools/midi_stats.lua check` against the built `bank.json`; `check: ok 85 sections, 340710 B of MIDI, peak
-30 voices, 0 failure(s)`):
+Coverage (`lua tools/midi_stats.lua check` against the built `bank.json`; `check: ok 87 sections, 344787 B of MIDI, peak
+30 voices, 0 failure(s)`, after merging credits-page's credits song):
 
 | Role | Notes | Covered | Phones |
 |---|---:|---:|---:|
-| drums | 12,915 | 100 % | 100 % |
-| bass | 2,812 | 98.1 % | 98.1 % |
+| drums | 12,947 | 100 % | 100 % |
+| bass | 2,832 | 98.1 % | 98.1 % |
 | guitarL / guitarR | 3,631 / 4,364 | 98.5 / 98.1 % | 98.5 / 94.7 % |
-| organ | 2,231 | 98.6 % | 94.3 % |
+| organ | 2,297 | 98.6 % | 94.2 % |
 | timpani | 1,067 | 99.8 % | 99.8 % |
 | brass | 1,277 | 99.9 % | 13.6 % |
-| clean | 668 | 98.1 % | 12.4 % |
-| bells | 392 | 100 % | 0 % |
+| clean | 828 | 98.4 % | 20.5 % |
+| bells | 431 | 100 % | 0 % |
 
-Section tracks played whole from the bank: 773 of 796 (556 on phones). The rest play the synth voice.
+Section tracks played whole from the bank: 782 of 805 (559 on phones). The rest play the synth voice.
 
 ## 5. Per-zone pitch check (`--f0-report`, final)
 
@@ -239,10 +239,12 @@ Pick: **match the levels**. The operator approved the synth score's balance (rou
 start from that balance. Tuning by ear (9.7) starts from here. The rebuild reproduced every sprite byte for byte;
 only `bank.json`'s role levels changed.
 
-`trim.mjs` after the match:
-- bank `top` −4.48 LUFS (synth −4.97), `offset` −0.49 dB, `floor` −14.35 (synth −11.65);
-- 4 trims hit the +8 dB cap, down from 38. The coda's reprise and ukulele end 2.5 and 3.3 dB under the window (their
-  uke and strings play the synth), and two bridge pivots ≤ 0.8 dB.
+`trim.mjs` after the match, and again after merging credits-page's credits song (219 cases):
+- bank `top` −4.48 LUFS (synth −4.97), `offset` −0.49 dB, `floor` −14.64 (synth −11.88);
+- 6 trims hit the +8 dB cap, down from 38: the coda's reprise and ukulele 2.5 and 3.3 dB under the window (their uke
+  and strings play the synth), the credits song's dawn and drift 2.1 and 2.5 dB, and two bridge pivots ≤ 0.8 dB.
+- The A/B clips (§7) were rendered before the credits song joined. Its two cases moved the narrowing's `k` slightly,
+  so the clips' trims can differ from the committed file by about 0.1 dB.
 
 ## 7. Listening preview (A/B)
 

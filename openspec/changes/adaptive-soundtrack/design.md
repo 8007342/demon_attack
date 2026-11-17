@@ -963,7 +963,7 @@ On the committed score: `check: ok 85 sections, 340710 B of MIDI, peak 30 voices
 | timpani | 1 067 | 99.8 % | A1 (33) |
 | organ | 2 231 | 94.3 % | F1-F#1 and A#4-A5: the six VCSL pipes span C2-F#4 |
 | clean | 668 | 76.3 % (12.4 %) | above E5; on phones the guitar stops at A#4 |
-| bells | 392 | 82.1 % (0 %) | above A5; no bells on phones |
+| bells | 431 | 82.1 % (0 %) | above A5; no bells on phones |
 | brass | 1 277 | 63.4 % (13.6 %) | above F#4: the horns stop at C4 (+6 by the map), and the score's fanfares sit higher |
 
 So 653 of 796 section tracks play from the bank whole (556 on phones), and the rest play the synth. This is a
@@ -1072,21 +1072,21 @@ source files and printed harmonic profiles, in scratch only.
 
 Opus VBR came in 0.27 MB over the dry-run estimate, still within the budget.
 
-`lua tools/midi_stats.lua check` against the built `bank.json`: `ok 85 sections, 340710 B of MIDI, peak 30 voices, 0
-failure(s)`. Coverage is the round-2 §5.2 table:
+`lua tools/midi_stats.lua check` against the built `bank.json`: `ok 87 sections, 344787 B of MIDI, peak 30 voices, 0
+failure(s)` (with credits-page's new credits song). Coverage:
 
 | Role | Desktop | Phones |
 |---|---|---|
 | drums | 100 % | 100 % |
 | bass | 98.1 % | 98.1 % |
 | guitarL / guitarR | 98.5 / 98.1 % | 98.5 / 94.7 % |
-| organ | 98.6 % | 94.3 % |
+| organ | 98.6 % | 94.2 % |
 | timpani | 99.8 % | 99.8 % |
 | brass | 99.9 % | 13.6 % |
-| clean | 98.1 % | 12.4 % |
+| clean | 98.4 % | 20.5 % |
 | bells | 100 % | 0 % |
 
-773 of 796 section tracks play from the bank whole (556 on phones).
+782 of 805 section tracks play from the bank whole (559 on phones).
 
 **The switch (operator, round 7: "I would rather preview the music score replacement with the high res assets until
 complete").**
@@ -1123,10 +1123,12 @@ loudest case sat 4.6 LU under the synth's, and 38 bank trims hit the +8 dB cap: 
 - The rebuild reproduced the sprites byte for byte; only `bank.json`'s levels changed.
 
 **The trims, measured** (`mix-trim.json`):
-- The synth block is unchanged (`top` −4.97 LUFS, 207 trims of 217 cases).
-- The `bank` block: `top` −4.48, `floor` −14.35, `k` 0.2026, `offset` −0.49 dB, 216 trims from −0.5 to +8 dB.
-- Four trims hit the cap: `coda:reprise` and `coda:ukulele` end 2.5 and 3.3 dB under the window (their uke and
-  strings stay synth), and `menu-k:pivot` and `k-r:pivot` 0.8 dB or less.
+- The synth block is byte for byte the one on `game` (`top` −4.97 LUFS, 209 trims of 219 cases, with credits-page's
+  credits song).
+- The `bank` block: `top` −4.48, `floor` −14.64, `k` 0.1969, `offset` −0.49 dB, 218 trims from −0.5 to +8 dB.
+- Six trims hit the cap. The coda's `reprise` and `ukulele` end 2.5 and 3.3 dB under the window (their uke and
+  strings stay synth), the credits song's `dawn` and `drift` 2.1 and 2.5 dB, and `menu-k:pivot` and `k-r:pivot` 0.8 dB
+  or less.
 - `mix-balance.test.mjs` checks that the bank block covers every case, that its top lands on the synth top, that every
   uncapped case falls in the synth's window, and that the player picks each mode's trims.
 
