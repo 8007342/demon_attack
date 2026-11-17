@@ -963,7 +963,7 @@ On the committed score: `check: ok 85 sections, 340710 B of MIDI, peak 30 voices
 | timpani | 1 067 | 99.8 % | A1 (33) |
 | organ | 2 231 | 94.3 % | F1-F#1 and A#4-A5: the six VCSL pipes span C2-F#4 |
 | clean | 668 | 76.3 % (12.4 %) | above E5; on phones the guitar stops at A#4 |
-| bells | 431 | 82.1 % (0 %) | above A5; no bells on phones |
+| bells | 442 | 82.1 % (0 %) | above A5; no bells on phones |
 | brass | 1 277 | 63.4 % (13.6 %) | above F#4: the horns stop at C4 (+6 by the map), and the score's fanfares sit higher |
 
 So 653 of 796 section tracks play from the bank whole (556 on phones), and the rest play the synth. This is a
@@ -1072,21 +1072,21 @@ source files and printed harmonic profiles, in scratch only.
 
 Opus VBR came in 0.27 MB over the dry-run estimate, still within the budget.
 
-`lua tools/midi_stats.lua check` against the built `bank.json`: `ok 87 sections, 344787 B of MIDI, peak 30 voices, 0
-failure(s)` (with credits-page's new credits song). Coverage:
+`lua tools/midi_stats.lua check` against the built `bank.json`: `ok 89 sections, 356636 B of MIDI, peak 30 voices, 0
+failure(s)` (with the credits and Crosswind songs merged from `game`). Coverage:
 
 | Role | Desktop | Phones |
 |---|---|---|
 | drums | 100 % | 100 % |
-| bass | 98.1 % | 98.1 % |
-| guitarL / guitarR | 98.5 / 98.1 % | 98.5 / 94.7 % |
+| bass | 98.2 % | 98.2 % |
+| guitarL / guitarR | 98.6 / 98.2 % | 98.6 / 94.8 % |
 | organ | 98.6 % | 94.2 % |
 | timpani | 99.8 % | 99.8 % |
-| brass | 99.9 % | 13.6 % |
-| clean | 98.4 % | 20.5 % |
+| brass | 99.9 % | 13.7 % |
+| clean | 98.6 % | 18.2 % |
 | bells | 100 % | 0 % |
 
-782 of 805 section tracks play from the bank whole (559 on phones).
+801 of 824 section tracks play from the bank whole (573 on phones).
 
 **The switch (operator, round 7: "I would rather preview the music score replacement with the high res assets until
 complete").**
@@ -1123,9 +1123,9 @@ loudest case sat 4.6 LU under the synth's, and 38 bank trims hit the +8 dB cap: 
 - The rebuild reproduced the sprites byte for byte; only `bank.json`'s levels changed.
 
 **The trims, measured** (`mix-trim.json`):
-- The synth block is byte for byte the one on `game` (`top` −4.97 LUFS, 209 trims of 219 cases, with credits-page's
-  credits song).
-- The `bank` block: `top` −4.48, `floor` −14.64, `k` 0.1969, `offset` −0.49 dB, 218 trims from −0.5 to +8 dB.
+- The synth block is byte for byte the one on `game` (`top` −4.97 LUFS, 217 trims of 227 cases, with the credits and
+  Crosswind songs).
+- The `bank` block: `top` −4.48, `floor` −14.59, `k` 0.1978, `offset` −0.49 dB, 226 trims from −0.5 to +8 dB.
 - Six trims hit the cap. The coda's `reprise` and `ukulele` end 2.5 and 3.3 dB under the window (their uke and
   strings stay synth), the credits song's `dawn` and `drift` 2.1 and 2.5 dB, and `menu-k:pivot` and `k-r:pivot` 0.8 dB
   or less.
