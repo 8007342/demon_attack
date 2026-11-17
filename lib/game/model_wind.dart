@@ -8,6 +8,10 @@ part of 'model.dart';
 // wind (every unseeded run: the tests and the calibrated campaign) costs
 // one null check per step and per shot, and draws nothing.
 
+/// `MusicBridge.accentEvent` (lib/game/music_director.dart), named here so
+/// the pure model can ask for a stinger without importing audio.
+const musicAccentEvent = 'musicAccent';
+
 /// The wind state of one run.
 class WindRun {
   /// The level's wind (null: calm) and its field.
@@ -106,6 +110,9 @@ extension ArcadeWind on ArcadeModel {
           'strength': double.parse(after.abs().toStringAsFixed(2)),
           'endIn': WindField.lead,
         });
+        // The gust swell (bonus-music's `gust` stinger, through
+        // `MusicBridge.accentEvent`; an unknown name plays nothing).
+        _queueGameEvent(musicAccentEvent, {'name': 'gust'});
       }
     }
     run.told = t;

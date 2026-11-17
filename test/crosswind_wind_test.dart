@@ -256,12 +256,27 @@ void main() {
   });
 
   group('music', () {
-    test('a called gust asks for the `gust` stinger', () {
+    test('every called gust asks the music for its `gust` swell', () {
+      final m = windy(seed: 3)..invulnerable = 1e6;
+      var calls = 0, swells = 0;
+      for (var f = 0; f < 60 * 60; f++) {
+        m.update(1 / 60);
+        for (final e in m.takeGameEvents()) {
+          if (e.name == GameEventNames.windGust) calls++;
+          if (e.name == musicAccentEvent && e.data['name'] == 'gust') swells++;
+        }
+      }
+      expect(calls, greaterThan(0));
+      expect(swells, calls);
+    });
+
+    test('a won or broken 1UP challenge asks for `oneup` / '
+        '`challenge-fail`', () {
       final accents = <String>[];
-      MusicBridge(onAccent: accents.add)(
-        const GameEvent(GameEventNames.windGust, {'from': 'left'}),
-      );
-      expect(accents, ['gust']);
+      final bridge = MusicBridge(onAccent: accents.add);
+      bridge(const GameEvent(GameEventNames.bonusChallengeEarned));
+      bridge(const GameEvent(GameEventNames.bonusChallengeFailed));
+      expect(accents, ['oneup', 'challenge-fail']);
     });
 
     test('Crosswind fails soft while the song has no `bonus-wind`', () {

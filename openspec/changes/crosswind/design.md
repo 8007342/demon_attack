@@ -126,10 +126,13 @@ only. Aim upwind and let the gust carry it."
   `bonusDare`, `bonusStart`, `bonusMidway`, `bonusCleared` for the level, `kitePopped` (squad cheers, brood "My kite!"),
   `kiteEscaped` (brood taunts first), and the regular levels' `windStart`, `windGust` (urgent, 9 s cooldown, 60 %),
   `windStop`. Family friendly; brood lines are grunts with a gloss.
-- Music: the director looks for a section tagged with the level's id, then one named like `BonusLook.cue`; with neither
-  it sends nothing and the music stays (tested with and without a `bonus-wind` section). Accents: `windGust` → `gust`,
-  `bonusChallengeEarned` → `oneup`, `bonusChallengeFailed` → `challenge-fail`; the score player already returns
-  nothing for an accent it has no stinger for.
+- Music (bonus-music's API, adaptive-soundtrack §12.10.5): `bonusStart` with `variant: 'crosswind'` starts the
+  level's own song (`bonus-wind`) by itself, `bonusMidway` lifts it to B, the clear hands back to the sector's clear.
+  Before that song exists the director falls back to a section of the sector's song named like `BonusLook.cue`, and
+  with neither it sends nothing and the music stays (tested). Every `windGust` also queues
+  `musicAccent {name: 'gust'}` (`MusicBridge.accentEvent`; the model names it `musicAccentEvent`, being pure Dart).
+  `bonusChallengeEarned` → `oneup` and `bonusChallengeFailed` → `challenge-fail` (MusicBridge accents, for every bonus
+  level). An unknown name plays nothing.
 - Review: `test/crosswind_review_test.dart` (tag `review`) → `art/contact/crosswind-sheet.png`: calm, breeze, gale,
   gale + rain, the level at 6 s and 16 s, a gale at LITE and with reduced motion. Gallery: three wind tiles on the
   weather page; Crosswind on the bonus page (it lists the catalogue).
