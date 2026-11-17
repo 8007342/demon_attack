@@ -30,3 +30,8 @@ Operator round 5, S1 (`plan/operator-feedback-2026-11-17.md`), after `playtest-f
   and the crimson bow's condensing in its berserk requirement.
 - Tests: `test/dive_shield_thinning_test.dart`; the bow-shape group in `test/playtest_fixes_3_test.dart` is retired.
 - Review: `art/contact/dive-shield-thinning.png` (before | after) and `art/contact/dive-shield-thinning-dive.gif`.
+
+## Revision (2026-11-17, operator)
+The 124° arc and its thicknesses were rejected ("too round", "thin out to nothing"). The shield is again
+playtest-fixes-3's crescent in form and size, drawn whole in the body's transform, and it wears by thickness only, to
+40 % of full on the last point (design §5).

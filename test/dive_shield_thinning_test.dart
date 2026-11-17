@@ -1,7 +1,7 @@
 // dive-shield-thinning (openspec/changes/dive-shield-thinning): every diving
-// shield is one continuous arc of constant angular width, wide enough to
-// cover the whole gargoyle at every zoom, that loses only thickness as its
-// points are spent, down to a hairline.
+// shield is one continuous crescent (playtest-fixes-3's form and size) of
+// constant span, covering the whole gargoyle at every zoom, that loses only
+// thickness as its points are spent, to 40 % of full on the last point.
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -95,22 +95,6 @@ int _components(Uint8List px, int size, {int cut = 24}) {
   return (lo, hi);
 }
 
-/// Angular extent (radians from straight down) of the pixels on the
-/// shield's centre line (within a pixel of radius [mid] px).
-(double, double) _angles(Uint8List px, int size, double mid, {int cut = 128}) {
-  var lo = double.infinity, hi = -double.infinity;
-  for (var i = 0; i < size * size; i++) {
-    if (px[i * 4 + 3] <= cut) continue;
-    final x = (i % size) + .5 - size / 2, y = (i ~/ size) + .5 - size / 2;
-    if ((math.sqrt(x * x + y * y) - mid).abs() > 1) continue;
-    final a = math.atan2(x, y); // 0 straight down, + to the right
-    lo = math.min(lo, a);
-    hi = math.max(hi, a);
-  }
-  return (lo, hi);
-}
-
-/// Opaque run (px) straight below the centre: the thickness at the nose.
 int _noseRun(Uint8List px, int size, {int cut = 128}) {
   final x = size ~/ 2;
   var run = 0;
@@ -155,44 +139,51 @@ Future<ui.Image> _decode(String file) async {
   return (hw: hw, reach: reach);
 }
 
+/// The width the shield spans at its tips (local units, both sides).
+double _bodyHalf(String name) => switch (name) {
+  'angry medium' => 25 * 44 / 64,
+  'sentinel' => 29,
+  'rush' => 49,
+  _ => 25 * 40 / 64,
+};
+
 void main() {
   group('thinning, not narrowing', () {
-    test('thickness falls strictly with every spent point', () {
-      for (final (name, s, top) in _specs) {
+    test('thickness falls strictly with every spent point, to the floor', () {
+      for (final (name, _, top) in _specs) {
         for (var max = 1; max <= top; max++) {
           var last = 0.0;
           for (var p = 1; p <= max; p++) {
-            final th = DiveShield.thickness(s, p, max);
-            expect(th, greaterThan(last), reason: '$name $p/$max');
-            last = th;
+            final w = DiveShield.wear(p, max);
+            expect(w, greaterThan(last), reason: '$name $p/$max');
+            last = w;
           }
-          expect(DiveShield.thickness(s, max, max), s.full);
-          expect(DiveShield.thickness(s, 0, max), 0);
-          if (max > 1) {
-            expect(DiveShield.thickness(s, 1, max), DiveShield.hairline);
-          }
+          expect(DiveShield.wear(max, max), 1);
+          expect(DiveShield.wear(0, max), 0);
+          expect(
+            DiveShield.wear(1, max),
+            greaterThanOrEqualTo(DiveShield.floor),
+          );
         }
       }
+      expect(DiveShield.floor, inInclusiveRange(.35, .45));
     });
 
     test('the rush shield is the thickest', () {
       for (final (name, s, _) in _specs) {
         if (s == DiveShield.rush) continue;
-        expect(DiveShield.rush.full, greaterThan(s.full), reason: name);
+        expect(DiveShield.rush.thick, greaterThan(s.thick), reason: name);
       }
     });
 
-    test('the arc reaches past the body and clears it below', () {
-      // One constant angular width; the centre line is fixed by the spec
-      // (the shield thins about it, the carrier field's principle).
-      expect(DiveShield.halfAngle, closeTo(62 * math.pi / 180, 1e-12));
-      for (final (name, s, _) in _specs) {
-        expect(
-          s.mid * math.sin(DiveShield.halfAngle),
-          greaterThan(s.coverHalfWidth),
-          reason: name,
-        );
-        expect(s.inner, greaterThan(s.clearance), reason: name);
+    test('the leading edge never depends on the points', () {
+      for (final (_, s, _) in _specs) {
+        for (var i = 0; i <= 20; i++) {
+          final u = -1 + i / 10;
+          // Only the trailing side is scaled by the wear.
+          expect(DiveShield.leadAt(s, u), s.lead + s.nose * (1 - u * u));
+          expect(DiveShield.thickAt(s, u), greaterThan(0));
+        }
       }
     });
 
@@ -207,108 +198,105 @@ void main() {
         0,
         archetype: EnemyArchetype.shieldSentinel,
       )..diveShieldMax = 4;
-      expect(DemonScene.diveShieldSpec(small).full, DiveShield.small.full);
-      expect(DemonScene.diveShieldSpec(medium).full, DiveShield.medium.full);
+      expect(DemonScene.diveShieldSpec(small), DiveShield.small);
+      expect(DemonScene.diveShieldSpec(medium), DiveShield.medium);
       expect(DemonScene.diveShieldSpec(sentinel), DiveShield.sentinel);
       medium.hp = 1; // angry: one hit point left of several
       expect(
-        DemonScene.diveShieldSpec(medium).mid,
-        closeTo(DiveShield.medium.mid * 44 / 40, 1e-9),
+        DemonScene.diveShieldSpec(medium).span,
+        closeTo(DiveShield.medium.span * 44 / 40, 1e-9),
       );
     });
   });
 
-  testWidgets('the specs cover every silhouette measured from the atlases', (
+  testWidgets('the spans cover every silhouette measured from the atlases', (
     tester,
   ) async {
     await tester.runAsync(() async {
-      // Ordinary divers: combat.png, 64 px cells drawn 40 units wide.
       final combat = await _decode('assets/images/combat.png');
       final cb = (await combat.toByteData(format: ui.ImageByteFormat.rawRgba))!;
-      var hw = 0.0, reach = 0.0;
+      var hw = 0.0;
       for (var kind = 0; kind < 4; kind++) {
         for (var col = 20; col < 32; col++) {
           final b = _cellBounds(cb, combat.width, col, kind * 9 + 7, 64, 64);
           hw = math.max(hw, b.hw);
-          reach = math.max(reach, b.reach);
         }
       }
       combat.dispose();
-      for (final s in [DiveShield.small, DiveShield.medium]) {
-        expect(s.coverHalfWidth, greaterThanOrEqualTo(hw * 40 / 64));
-        expect(s.clearance, greaterThanOrEqualTo(reach * 40 / 64));
-      }
-      // Sentinels: sentinel-effects.png, 128 × 64 cells at 1 unit per px.
+      expect(_bodyHalf('small'), greaterThanOrEqualTo(hw * 40 / 64));
       final fx = await _decode('assets/images/sentinel-effects.png');
       final fb = (await fx.toByteData(format: ui.ImageByteFormat.rawRgba))!;
-      ({double hw, double reach}) span(List<int> rows, List<int> cols) {
-        var w = 0.0, r = 0.0;
+      double span(List<int> rows, List<int> cols) {
+        var w = 0.0;
         for (final row in rows) {
           for (final c in cols) {
-            final x = _cellBounds(fb, fx.width, c, row, 128, 64);
-            w = math.max(w, x.hw);
-            r = math.max(r, x.reach);
+            w = math.max(w, _cellBounds(fb, fx.width, c, row, 128, 64).hw);
           }
         }
-        return (hw: w, reach: r);
+        return w;
       }
 
       final dive = span([8, 9], [4, 5, 6, 7]);
       final berserk = span([6, 7], [0, 1, 2, 3, 4, 5, 6, 7]);
       fx.dispose();
-      expect(DiveShield.sentinel.coverHalfWidth, greaterThanOrEqualTo(dive.hw));
-      expect(DiveShield.sentinel.clearance, greaterThanOrEqualTo(dive.reach));
-      expect(DiveShield.rush.coverHalfWidth, greaterThanOrEqualTo(berserk.hw));
-      expect(DiveShield.rush.clearance, greaterThanOrEqualTo(berserk.reach));
+      expect(_bodyHalf('sentinel'), greaterThanOrEqualTo(dive));
+      expect(_bodyHalf('rush'), greaterThanOrEqualTo(berserk));
+      for (final (name, s, _) in _specs) {
+        expect(s.span, greaterThanOrEqualTo(_bodyHalf(name)), reason: name);
+      }
     });
   });
 
-  testWidgets('constant angular width, covering the body at every zoom', (
+  testWidgets('constant span, covering the body at every zoom and level', (
     tester,
   ) async {
     await tester.runAsync(() async {
       for (final (name, s, top) in _specs) {
         for (final z in _zooms) {
-          final size = (2 * (s.mid + s.full * 2) * z).ceil() + 8;
-          final mid = s.mid * z;
-          final want = DiveShield.halfAngle;
-          // Allow a pixel of rasterisation at the centre line's ends.
-          final tol = 1.5 / mid;
-          final maxes = {1, top};
-          for (final max in maxes) {
-            for (var p = 1; p <= max; p++) {
-              final px = await _shield(size, s, p, max, z);
-              final (lo, hi) = _angles(px, size, mid, cut: 60);
-              expect(lo, closeTo(-want, tol), reason: '$name $p/$max ×$z');
-              expect(hi, closeTo(want, tol), reason: '$name $p/$max ×$z');
-              final (xl, xr) = _xExtent(px, size, cut: 60);
-              final body = s.coverHalfWidth * z;
-              expect(xl, lessThan(-body), reason: '$name $p/$max ×$z');
-              expect(xr, greaterThan(body), reason: '$name $p/$max ×$z');
-            }
+          final size = (2 * (s.span + 4) * z).ceil() + 8;
+          final full = _xExtent(await _shield(size, s, top, top, z), size);
+          for (var p = 1; p <= top; p++) {
+            final px = await _shield(size, s, p, top, z);
+            final (xl, xr) = _xExtent(px, size, cut: 60);
+            expect(xl, closeTo(full.$1, 1.5), reason: '$name $p/$top ×$z');
+            expect(xr, closeTo(full.$2, 1.5), reason: '$name $p/$top ×$z');
+            final body = _bodyHalf(name) * z;
+            expect(xl, lessThanOrEqualTo(-body + 1), reason: '$name ×$z');
+            expect(xr, greaterThanOrEqualTo(body - 1), reason: '$name ×$z');
           }
         }
       }
     });
   });
 
-  testWidgets('the drawn thickness falls with every spent point', (
-    tester,
-  ) async {
+  testWidgets('the drawn thickness falls with every point, never below the '
+      'floor', (tester) async {
     await tester.runAsync(() async {
       for (final (name, s, top) in _specs) {
         if (top < 2) continue;
         const z = 1.6;
-        final size = (2 * (s.mid + s.full * 2) * z).ceil() + 8;
-        var last = 1 << 30;
+        final size = (2 * (s.span + 4) * z).ceil() + 8;
+        final full = _noseRun(
+          await _shield(size, s, top, top, z),
+          size,
+          cut: 60,
+        );
+        var last = full + 1;
         for (var p = top; p >= 1; p--) {
-          final run = _noseRun(await _shield(size, s, p, top, z), size);
+          final run = _noseRun(
+            await _shield(size, s, p, top, z),
+            size,
+            cut: 60,
+          );
           expect(run, lessThanOrEqualTo(last), reason: '$name $p/$top');
-          expect(run, greaterThan(0), reason: '$name $p/$top: still drawn');
           last = run;
         }
-        final full = _noseRun(await _shield(size, s, top, top, z), size);
-        expect(full, greaterThan(last * 3), reason: '$name: visibly thinner');
+        expect(last, lessThan(full), reason: '$name: visibly worn');
+        expect(
+          last,
+          greaterThanOrEqualTo((full * DiveShield.floor).floor() - 1),
+          reason: '$name: the last point keeps the floor',
+        );
       }
     });
   });
@@ -319,7 +307,7 @@ void main() {
     await tester.runAsync(() async {
       for (final (name, s, top) in _specs) {
         for (final z in _zooms) {
-          final size = (2 * (s.mid + s.full * 2) * z).ceil() + 8;
+          final size = (2 * (s.span + 4) * z).ceil() + 8;
           for (var p = 1; p <= top; p++) {
             final px = await _shield(size, s, p, top, z);
             expect(
