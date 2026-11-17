@@ -186,3 +186,30 @@ test('trims follow the grid and never move the score: the same moves with or wit
   assert.equal(plain.trimDb, 0);
   assert.equal(trimmed.trimDb, trimFile.trims['k:B@3'] ?? 0, 'the section and tier now playing set the trim');
 });
+
+// --- sample-bank: the trims measured with the sample bank on (mix-trim.json `bank`), used while the bank is switched
+// on. Same narrowing, shifted so the sampled score's loudest case lands on the synth's (the radio balance holds).
+test('the bank trims cover every case and land the sampled score on the synth top', { skip: !trimFile.bank && 'no bank in mix-trim.json' }, () => {
+  const { measuredLufs: measured, trims, rule } = trimFile.bank;
+  assert.deepEqual(Object.keys(measured).sort(), Object.keys(trimFile.measuredLufs).sort(), 'the same cases as the synth');
+  for (const t of Object.values(trims)) assert.ok(Math.abs(t) <= rule.maxTrim, `trim ${t} dB within ±${rule.maxTrim}`);
+  assert.ok(Math.abs(rule.top + rule.offset - trimFile.rule.top) < .01, 'the offset puts the bank top on the synth top');
+  // Every case lands in the synth's window, except where the cap stopped the trim short.
+  const lo = trimFile.rule.top - rule.spread - .15, hi = trimFile.rule.top + .15;
+  for (const [key, L] of Object.entries(measured)) {
+    const level = L + (trims[key] ?? 0);
+    if ((trims[key] ?? 0) >= rule.maxTrim) continue;
+    assert.ok(level >= lo && level <= hi, `${key}: ${level.toFixed(2)} LUFS outside ${lo.toFixed(2)}..${hi.toFixed(2)}`);
+  }
+});
+
+test('with the bank on, the player uses the bank trims (and the synth trims when it is off)', { skip: !trimFile.bank && 'no bank in mix-trim.json' }, async () => {
+  for (const bank of [false, true]) {
+    const p = await page({}, { clip, bank });
+    start(p, 'k', 'B', 3);
+    await p.render(1);
+    const want = (bank ? trimFile.bank.trims : trimFile.trims)['k:B@3'] ?? 0;
+    assert.equal(p.audio.state.score.trimDb, want, `bank ${bank}`);
+    assert.equal(p.audio.state.score.bank.enabled, bank);
+  }
+});

@@ -1,6 +1,6 @@
 {
   "schema": "demon-attack.bank-recipe/v1",
-  "comment": "The CC0 sample bank's recipe (adaptive-soundtrack design §11.4, §12.9; task 8.5). tools/bank/bank_build.lua reads it with the pin manifest (plan/sample-bank-pins.manifest.tsv) and the SFZ keycenters (art/music/bank/sfz-keys.json), cuts each listed file into one zone (note, velocity layer, round robin), and writes web/audio/bank/bank.json plus one Opus sprite per load tier. Velocity splits, trims, gains and stretches are our judgement (tune by ear, task 9.7); pitches come from the SFZ maps, the pins doc (plan/sample-bank-pins.md §6) or the file name, and the builder confirms each with an f0 estimate. Instruments are tried in order for a note: the first whose roles and `when` match and whose zones cover the pitch plays it.",
+  "comment": "The CC0 sample bank's recipe (adaptive-soundtrack design §11.4, §12.9; task 8.5). tools/bank/bank_build.lua reads it with the pin manifest (plan/sample-bank-pins.manifest.tsv) and the SFZ keycenters (art/music/bank/sfz-keys.json), cuts each listed file into one zone (note, velocity layer, round robin), and writes web/audio/bank/bank.json plus one Opus sprite per load tier. Velocity splits, trims, gains and stretches are our judgement (tune by ear, task 9.7); pitches come from the SFZ maps, the pins doc (plan/sample-bank-pins.md §6) or the file name, and the builder confirms each with an f0 estimate. Instruments are tried in order for a note: the first whose roles and `when` match and whose zones cover the pitch plays it. Role levels are matched to the synth voices the operator approved: each role soloed over nine sections in both modes, the level moved by the median loudness gap (guitars were within 1 dB and keep 0.5; the bass gets +2 dB over its median because its drive compresses; plan/render-runs/sample-bank.md §6).",
   "manifest": "plan/sample-bank-pins.manifest.tsv",
   "keys": "art/music/bank/sfz-keys.json",
   "out": "web/audio/bank",
@@ -19,15 +19,15 @@
     "sgossner/VSCO-2-CE": { "spdx": "CC0-1.0", "licenceBlob": "670154e3538863b2d9891fd5483160fbdfc89164", "credit": "VSCO 2 Community Edition by Versilian Studios / Sam Gossner (CC0 1.0)" }
   },
   "roles": {
-    "drums": { "level": 1.0, "cover": "full" },
-    "bass": { "level": 0.7 },
+    "drums": { "level": 5.25, "cover": "full" },
+    "bass": { "level": 3.7 },
     "guitarL": { "level": 0.5, "chord": [0, 7], "cents": -7 },
     "guitarR": { "level": 0.5, "chord": [0, 7, 12], "cents": 7 },
-    "clean": { "level": 0.45 },
-    "organ": { "level": 0.32 },
-    "brass": { "level": 0.36 },
-    "timpani": { "level": 0.85 },
-    "bells": { "level": 0.36 }
+    "clean": { "level": 4.1 },
+    "organ": { "level": 1.05 },
+    "brass": { "level": 0.9 },
+    "timpani": { "level": 3.84 },
+    "bells": { "level": 0.58 }
   },
   "instruments": [
     { "id": "kick", "groups": ["kick"], "roles": ["drums"], "keys": [35, 36], "art": "hit", "parse": { "layer": "_(vl%d+)_rr", "rr": "_rr(%d+)" },

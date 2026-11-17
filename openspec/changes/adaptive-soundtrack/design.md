@@ -1113,7 +1113,22 @@ on (desktop tier, every sprite). `mix-trim.json` keeps the synth's `measuredLufs
 - A phone loads only its tier. A track whose zones have not decoded yet plays the synth with the bank trims, a small
   difference that the 9.7 listening checks.
 
-BANK-TRIM-NUMBERS
+**Role levels, matched to the synth.** The first two-mode measurement showed a large gap. The sampled score's
+loudest case sat 4.6 LU under the synth's, and 38 bank trims hit the +8 dB cap: the arrivals and the coda fell up to
+8.8 dB short. The recipe's role levels had never been measured against the synth voices, which the operator approved.
+- Each role was soloed over nine sections in both modes (a scratch copy of the players, trims off). Its level moved by
+  the median loudness gap: drums 1.0 → 5.25, bass 0.7 → 3.7, clean 0.45 → 4.1, organ 0.32 → 1.05, brass 0.36 → 0.9,
+  timpani 0.85 → 3.84, bells 0.36 → 0.58. The guitars were within 1 dB through the amp and keep 0.5.
+- Re-measured, every role lands within about ±1 dB of its synth.
+- The rebuild reproduced the sprites byte for byte; only `bank.json`'s levels changed.
+
+**The trims, measured** (`mix-trim.json`):
+- The synth block is unchanged (`top` −4.97 LUFS, 207 trims of 217 cases).
+- The `bank` block: `top` −4.48, `floor` −14.35, `k` 0.2026, `offset` −0.49 dB, 216 trims from −0.5 to +8 dB.
+- Four trims hit the cap: `coda:reprise` and `coda:ukulele` end 2.5 and 3.3 dB under the window (their uke and
+  strings stay synth), and `menu-k:pivot` and `k-r:pivot` 0.8 dB or less.
+- `mix-balance.test.mjs` checks that the bank block covers every case, that its top lands on the synth top, that every
+  uncapped case falls in the synth's window, and that the player picks each mode's trims.
 
 **The listening preview.** A/B clips of six sections, synth against sampled, rendered offline through the shipped
 players with each mode's trims: a world song, a carrier core, a calm section, the victory fanfare, the overture and

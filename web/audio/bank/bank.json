@@ -189,20 +189,20 @@
  "rate": 48000,
  "roles": {
   "bass": {
-   "level": 0.7
+   "level": 3.7
   },
   "bells": {
-   "level": 0.36
+   "level": 0.58
   },
   "brass": {
-   "level": 0.36
+   "level": 0.9
   },
   "clean": {
-   "level": 0.45
+   "level": 4.1
   },
   "drums": {
    "cover": "full",
-   "level": 1
+   "level": 5.25
   },
   "guitarL": {
    "cents": -7,
@@ -215,10 +215,10 @@
    "level": 0.5
   },
   "organ": {
-   "level": 0.32
+   "level": 1.05
   },
   "timpani": {
-   "level": 0.85
+   "level": 3.84
   }
  },
  "schema": "demon-attack.bank/v1",

@@ -214,3 +214,32 @@ low. Residuals are in semitones against the root (after the recipe's shift).
 | bells | `TB_hit_E5_v4_2.wav` | 76 | 664.22 | +0.13 | +0 | 0.062 | 0.112 |
 | glock | `glock_medium_C6.wav` | 84 | 1055.61 | +0.15 | +0 | 0.232 | 0.137 |
 | glock | `glock_medium_G6.wav` | 91 | 1582.54 | +0.16 | +0 | 1.191 | 0.480 |
+
+## 6. Role levels matched to the synth
+
+The first `trim.mjs` run with the bank on showed a large level gap. The sampled score's loudest case sat 4.6 LU under
+the synth's, the spread was 9 LU (synth: 6.7), and 38 bank trims hit the +8 dB cap. The arrival tails and the coda
+fell up to 8.8 dB short of the window. The cause was the recipe's role levels, which were never measured against the
+synth voices. A scratch copy of the players with a solo hook rendered each role alone, over nine sections (k:B, h:A,
+c1:arrival, k:clear, coda:reprise, c1:core, k:arrival, menu:overture, r:C), in both modes, with trims off. Sections
+where the role's track stays synth in both modes were left out.
+
+| Role | Sampled − synth (median) | Level before → after | After the match |
+|---|---:|---|---:|
+| drums | −14.4 dB | 1.0 → 5.25 | +0.3 dB |
+| bass | −12.5 dB | 0.7 → 3.7 | about −1 dB (its drive compresses: the median fit gave −3 dB at 2.94, so +2 dB more) |
+| clean | −19.2 dB | 0.45 → 4.1 | +0.1 dB |
+| organ | −10.3 dB | 0.32 → 1.05 | +0.2 dB |
+| brass | −8.0 dB | 0.36 → 0.9 | −0.4 dB |
+| timpani | −13.1 dB | 0.85 → 3.84 | −0.9 dB |
+| bells | −4.1 dB | 0.36 → 0.58 | −0.3 dB |
+| guitarL / guitarR | −0.9 / −0.7 dB | 0.5 (kept) | |
+
+Pick: **match the levels**. The operator approved the synth score's balance (round 6), so the sampled score should
+start from that balance. Tuning by ear (9.7) starts from here. The rebuild reproduced every sprite byte for byte;
+only `bank.json`'s role levels changed.
+
+`trim.mjs` after the match:
+- bank `top` −4.48 LUFS (synth −4.97), `offset` −0.49 dB, `floor` −14.35 (synth −11.65);
+- 4 trims hit the +8 dB cap, down from 38. The coda's reprise and ukulele end 2.5 and 3.3 dB under the window (their
+  uke and strings play the synth), and two bridge pivots ≤ 0.8 dB.
