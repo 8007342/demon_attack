@@ -1,9 +1,10 @@
 /* Squad comms voice playback: radio clips from web/audio/comms/ (built by
    tools/comms_pipeline.py). Shares demon-audio.js's AudioContext and master
    gain through window.demonAudio.graph, so master mute and pause (context
-   suspend) apply to voices too. Speech NEVER touches the music: no ducking,
-   no side-chain, the music bus keeps its level while voices play (the
-   score is the star; the director keeps the radio sparse instead). Caps
+   suspend) apply to voices too. While a line sounds the music ducks a few
+   dB (mix-balance: demonAudio.duck, from the clip's first sample to its
+   last; a cut line releases early): a squad line 4 dB, a brood (demon)
+   growl or a short stinger under 1 s only 2 dB. Caps
    simultaneous voices (3; only an urgent line, priority >= 8, may cut one
    that is playing; anything else beyond the cap is dropped). Every call is
    a safe no-op before the first gesture has created the context.
@@ -18,6 +19,9 @@
   const voiceGain = 1.26;        // +2 dB: clips are mastered to -18 LUFS with codec headroom
   // Speech levels: Full is the round-3 voice level, Low 8 dB under it.
   const speechLevels = { mute: 0, low: 10 ** (-8 / 20), full: 1 };
+  // --- mix-balance: how far the music ducks under a line (dB).
+  const duckDb = { line: 4, demon: 2, short: 2 }, shortLine = 1;
+  const duckDepth = (entry, buffer) => (entry.demon ? duckDb.demon : buffer.duration < shortLine ? duckDb.short : duckDb.line);
   const bytesCache = new Map(), bufferCache = new Map(), decoded = new Map();
   const decodedLimit = 12 * 1024 * 1024, decodedCountLimit = 96;
   let decodedBytes = 0;
@@ -107,6 +111,7 @@
     remove(entry);
     if (!g) return;
     const now = g.context.currentTime;
+    window.demonAudio?.unduck?.(`comms:${entry.order}`, now + seconds);
     try {
       entry.gain.gain.cancelScheduledValues?.(now);
       entry.gain.gain.setTargetAtTime(0, now, seconds / 3);
@@ -142,7 +147,9 @@
       entry.source = source;
       entry.startedAt = g.context.currentTime;
       source.onended = () => { remove(entry); try { source.disconnect(); entry.gain.disconnect(); } catch { /* detached */ } };
-      source.start(g.context.currentTime + .005);
+      const at = g.context.currentTime + .005;
+      source.start(at);
+      window.demonAudio?.duck?.(`comms:${entry.order}`, duckDepth(entry, buffer), at, at + buffer.duration);
       played++;
     });
     return true;
@@ -170,7 +177,7 @@
     // Read-only diagnostics for browser checks.
     get state() {
       const g = window.demonAudio?.graph;
-      return { context: g?.context?.state ?? 'none', voices: live.map(v => ({ id: v.id, priority: v.priority, demon: v.demon, started: v.startedAt !== null })),
+      return { context: g?.context?.state ?? 'none', duckDb: { ...duckDb }, voices: live.map(v => ({ id: v.id, priority: v.priority, demon: v.demon, started: v.startedAt !== null })),
         musicGain: g?.music?.gain?.value ?? null, volume, level, busGain: bus?.gain?.value ?? null, loaded: [...bufferCache.keys()], decodedBytes, decodedLimit, played, dropped, maxConcurrent, cap, formats };
     } });
 })();
