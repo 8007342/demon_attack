@@ -796,3 +796,43 @@ Easy).
 `test/sentinel_rush_fairness_test.dart` start runs without a run seed (`BonusPlan.none`): no bonus level, no
 challenge, no extra life. They pass unchanged on this branch (the full suite, design §5); the bonus-balance gate
 also passes (its pilots never touch the challenge state, which draws no random numbers).
+
+## Crosswind (2026-11-17, change `crosswind`): wind, and the Crosswind bonus level
+
+Wind is gameplay (every projectile drifts; demons are pushed a little; the brood aims with it), but only seeded runs
+have it, so **every calibration gate (unseeded) is unchanged draw for draw**: the 318-wave budgets, the campaign
+playtest, boss endurance, perspective parity and the rush fairness run calm. Design: `openspec/changes/crosswind`.
+
+**Windy ordinary sectors, the Average pilot** (`dart run tools/ordinary_wave_probe.dart 24 wind=on skill=S`: sectors
+1–4 of routes 0–2, 24 seeds, unprotected, lives refilled; `wind=on` makes every eligible sector windy with the plan's
+own tiers and timings, route 0 sector 1 stays calm; `skill` is the share of the drift the pilot leads its aim by).
+Before = the same harness with `wind=off` (identical to the fire-rate-tune row above).
+
+| Mode | Lives per sector, calm | Windy, skill 0 | Windy, skill 0.6 | Seconds per sector, calm → windy (skill 0) |
+|---|---|---|---|---|
+| Easy | 11.43 | 11.33 (−0.8 %) | 11.44 (+0.1 %) | 113.6 → 114.0 (+0.4 %) |
+| Normal | 25.46 | 25.86 (+1.6 %) | 25.63 (+0.7 %) | 196.5 → 200.5 (+2.0 %) |
+| Hard | 33.19 | 32.18 (−3.1 %) | 32.41 (−2.4 %) | 233.5 → 229.0 (−1.9 %) |
+
+- The plan makes one eligible level in five windy (11 of the 12 sectors measured are eligible), so the scheduled
+  effect on a run is about a fifth of these: within ±0.6 % on every mode.
+- Before the brood aimed with the wind (first build, the same harness): Easy 10.84 (−5.1 %), Normal 25.45 (0.0 %),
+  Hard 30.94 (−6.8 %): the wind bent the demons' aimed fire off the ship and made windy levels easier. With
+  `broodAim` 0.6 (they lead 60 % of the drift) a windy sector is as dangerous as a calm one; the wind's cost is the
+  player's aim, which this scripted pilot (it fires at whatever is under it in a dense swarm) barely feels.
+- Hard's unfinished sectors (281–282 of 288 windy, 283 calm) are all `gameOver` of the refilled 99 lives on route 2
+  sector 3, the same cells as calm.
+
+**Crosswind vs the sector it replaces** (`test/bonus_balance_test.dart`, routes 0–1 pooled, 8 seeds; gate ±15 %
+pooled, ±20 % per mode):
+
+| Build | Duration | Enemies | Score | Possible | Lives lost |
+|---|---|---|---|---|---|
+| Sector's swarm, crosswind drift 66 | +24.9 % | −0.1 % | −7.1 % | +2.6 % | +26.1 % (fails) |
+| Roster and reinforcements × 0.88, drift 60 | +24.3 % | −7.2 % | −10.5 % | −1.1 % | +13.1 % (fails) |
+| + half the drops Powerful | +16.7 % | −7.0 % | −10.9 % | −1.4 % | +6.8 % (fails) |
+| **+ three drops in four Powerful (kept)** | **+12.5 %** | **−7.0 %** | **−11.3 %** | **−1.8 %** | **+6.4 %** |
+
+Per mode (kept): duration +9.2 / +12.2 / +15.0 %, lives +0.6 / +1.0 / +13.4 % (Easy / Normal / Hard). The single
+shots cost time (no Spread, no Rapid); heavier single shots from the wing cannons win most of it back without
+multifire. The balance pilot ignores the kites, so their points (inside the level's cap) are not in "Score".

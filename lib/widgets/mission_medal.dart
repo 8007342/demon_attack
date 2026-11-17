@@ -187,6 +187,7 @@ class MissionMedalPainter extends CustomPainter {
   static const fallbackColors = <String, (Color, Color)>{
     'supplyRun': (Color(0xFF3FBF9A), Color(0xFFFFD27A)),
     'stormfront': (Color(0xFF5B4FC4), Color(0xFFE4DCFF)),
+    'crosswind': (Color(0xFF4F8FB8), Color(0xFFFF8A4C)), // --- crosswind
     'noShield': (Color(0xFFC4473F), Color(0xFF70F5D5)),
     'spreadOnly': (Color(0xFF2E8FD0), Color(0xFFFFFFFF)),
     'heavyOrdnance': (Color(0xFFD9822B), Color(0xFF3A2410)),

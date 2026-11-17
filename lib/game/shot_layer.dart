@@ -54,8 +54,10 @@ class ShotLayer {
   /// banked toward the next step. [lead] is 0 when the model isn't moving
   /// shots this frame.
   static Offset drawn(Shot s, double lead, double hostileRate) => Offset(
-    (s.x + s.vx * lead * (s.hostile ? hostileRate : 1)).roundToDouble(),
-    (s.y + s.vy * lead).roundToDouble(),
+    // --- crosswind: the wind's drift and tailwind step move it too.
+    (s.x + (s.vx * (s.hostile ? hostileRate : 1) + s.windVx) * lead)
+        .roundToDouble(),
+    (s.y + (s.vy + s.windVy) * lead).roundToDouble(),
   );
 
   /// Seconds to advance drawn shots: the model's banked step time while it
@@ -146,7 +148,7 @@ class ShotLayer {
     double interval,
     void Function(Color, Rect) rect,
   ) {
-    final vx = s.vx * (s.hostile ? rate : 1), vy = s.vy;
+    final vx = s.vx * (s.hostile ? rate : 1) + s.windVx, vy = s.vy + s.windVy;
     final speed = math.sqrt(vx * vx + vy * vy);
     if (speed < smearSpeed) return;
     final len = math.min(smearMax, speed * interval).roundToDouble();

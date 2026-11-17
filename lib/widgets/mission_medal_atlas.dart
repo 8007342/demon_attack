@@ -26,7 +26,10 @@ abstract final class MissionMedalAtlas {
     'ribbon.heavyOrdnance': (1, 2),
     'accent.heavyOrdnance': (2, 2),
     'emblem.heavyOrdnance': (3, 2),
-    'ribbon.generic': (4, 2),
-    'emblem.generic': (5, 2),
+    'ribbon.crosswind': (4, 2),
+    'accent.crosswind': (5, 2),
+    'emblem.crosswind': (0, 3),
+    'ribbon.generic': (1, 3),
+    'emblem.generic': (2, 3),
   };
 }

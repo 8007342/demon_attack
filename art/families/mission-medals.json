@@ -45,6 +45,7 @@
       "noShield",
       "spreadOnly",
       "heavyOrdnance",
+      "crosswind",
       "generic"
     ],
     "notes": "Atlas cells in this hull order; a module cell comes from the first listed hull that has it (base from hull base). Cell id = slot, or slot.set. colours keep: the paint is area-averaged with its coverage (smooth edges, no palette, no ink), like the vector medals beside it; ink applies to the palette mode only.",
@@ -886,6 +887,135 @@
               ]
             }
           ]
+        },
+        "crosswind": {
+          "prims": [
+            {
+              "name": "s1",
+              "type": "prism",
+              "tag": "sky",
+              "n0": -2,
+              "n1": -1,
+              "poly": [
+                [
+                  -22,
+                  60
+                ],
+                [
+                  -13.2,
+                  60
+                ],
+                [
+                  -8.4,
+                  16
+                ],
+                [
+                  -14,
+                  16
+                ]
+              ]
+            },
+            {
+              "name": "s2",
+              "type": "prism",
+              "tag": "white",
+              "n0": -2,
+              "n1": -1,
+              "poly": [
+                [
+                  -13.2,
+                  60
+                ],
+                [
+                  -4.4,
+                  60
+                ],
+                [
+                  -2.8,
+                  16
+                ],
+                [
+                  -8.4,
+                  16
+                ]
+              ]
+            },
+            {
+              "name": "s3",
+              "type": "prism",
+              "tag": "orange",
+              "n0": -2,
+              "n1": -1,
+              "poly": [
+                [
+                  -4.4,
+                  60
+                ],
+                [
+                  4.4,
+                  60
+                ],
+                [
+                  2.8,
+                  16
+                ],
+                [
+                  -2.8,
+                  16
+                ]
+              ]
+            },
+            {
+              "name": "s4",
+              "type": "prism",
+              "tag": "white",
+              "n0": -2,
+              "n1": -1,
+              "poly": [
+                [
+                  4.4,
+                  60
+                ],
+                [
+                  13.2,
+                  60
+                ],
+                [
+                  8.4,
+                  16
+                ],
+                [
+                  2.8,
+                  16
+                ]
+              ]
+            },
+            {
+              "name": "s5",
+              "type": "prism",
+              "tag": "sky",
+              "n0": -2,
+              "n1": -1,
+              "poly": [
+                [
+                  13.2,
+                  60
+                ],
+                [
+                  22,
+                  60
+                ],
+                [
+                  14,
+                  16
+                ],
+                [
+                  8.4,
+                  16
+                ]
+              ]
+            }
+          ]
         }
       }
     },
@@ -975,6 +1105,24 @@
               "name": "ring",
               "type": "star",
               "tag": "orange",
+              "n": 48,
+              "r": 30.6,
+              "hole": 27,
+              "len": 1,
+              "at": [
+                0,
+                0,
+                4.6
+              ]
+            }
+          ]
+        },
+        "crosswind": {
+          "prims": [
+            {
+              "name": "ring",
+              "type": "star",
+              "tag": "white",
               "n": 48,
               "r": 30.6,
               "hole": 27,
@@ -1552,6 +1700,106 @@
               ]
             }
           ]
+        },
+        "crosswind": {
+          "prims": [
+            {
+              "name": "kite",
+              "type": "prism",
+              "tag": "orange",
+              "n0": 5.5,
+              "n1": 7.5,
+              "poly": [
+                [
+                  0,
+                  21
+                ],
+                [
+                  13,
+                  5
+                ],
+                [
+                  0,
+                  -13
+                ],
+                [
+                  -13,
+                  5
+                ]
+              ]
+            },
+            {
+              "name": "strutV",
+              "type": "box",
+              "tag": "white",
+              "size": [
+                1.8,
+                30,
+                1
+              ],
+              "at": [
+                0,
+                4,
+                8
+              ]
+            },
+            {
+              "name": "strutH",
+              "type": "box",
+              "tag": "white",
+              "size": [
+                22,
+                1.8,
+                1
+              ],
+              "at": [
+                0,
+                5,
+                8
+              ]
+            },
+            {
+              "name": "tail",
+              "type": "prism",
+              "tag": "sky",
+              "n0": 5.5,
+              "n1": 7,
+              "poly": [
+                [
+                  -1,
+                  -13
+                ],
+                [
+                  1,
+                  -13
+                ],
+                [
+                  4,
+                  -16
+                ],
+                [
+                  0,
+                  -19
+                ],
+                [
+                  3,
+                  -22
+                ],
+                [
+                  1,
+                  -22.5
+                ],
+                [
+                  -2,
+                  -19
+                ],
+                [
+                  2,
+                  -16
+                ]
+              ]
+            }
+          ]
         }
       }
     }
@@ -1665,6 +1913,23 @@
         "ribbon",
         "emblem"
       ]
+    },
+    "crosswind": {
+      "title": "Crosswind",
+      "texel": {
+        "medal": 1.0
+      },
+      "sets": {
+        "ribbon": "crosswind",
+        "accent": "crosswind",
+        "emblem": "crosswind"
+      },
+      "slots": [
+        "base",
+        "ribbon",
+        "accent",
+        "emblem"
+      ]
     }
   },
   "prompts": {
@@ -1680,7 +1945,8 @@
     "ribbon": " and a flat striped silk ribbon drape that tucks behind the medal, hung from a straight gold clasp bar at the top, exactly the shape shown (no ring, no loop, no fold)",
     "notes": "Prompt of hull H: hero with {subject} = subject_H and {ribbon} = ribbon (empty for hull base). Sampler denoise 0.72 (override $node:11.denoise) keeps the control framing so the id-pass cut fits.",
     "hero_v1": "Repaint this flat clay model as a finished, detailed painted game icon of a military service medal seen straight from the front: {subject}. A polished gold medal with a scalloped rim, a dark navy enamel centre{ribbon}. Keep every colour where the clay shows it: gold where the clay is gold, the coloured enamel ring and ribbon stripes exactly in the colours shown, the emblem in the colours shown. Bold clean shapes with crisp bevelled metal edges, glossy enamel, subtle silk sheen on the ribbon, lit from the upper left, readable at very small size, in the style of a polished sci-fi arcade game badge. Keep the outline, every shape and its position exactly. Solid flat green background (#00FF00), no checkerboard, no shadow.",
-    "hero_v1_notes": "v1 (st-...-118, denoise 1.0): rejected, the edit re-framed the medal and redrew the ribbon as a short folded band on a ring, so the id-pass cut no longer fits."
+    "hero_v1_notes": "v1 (st-...-118, denoise 1.0): rejected, the edit re-framed the medal and redrew the ribbon as a short folded band on a ring, so the id-pass cut no longer fits.",
+    "subject_crosswind": "the emblem is an orange diamond kite with a white cross of struts and a short sky-blue zigzag tail"
   },
   "selected": {
     "notes": "Picked raws (paths under root); ledger plan/render-runs/mission-medals.md. register bbox: the edit may re-frame the subject, so the raw's subject box is registered to the clay silhouette box first.",
@@ -1711,6 +1977,10 @@
     },
     "generic": {
       "S0": "generic/8080001.png",
+      "register": "bbox"
+    },
+    "crosswind": {
+      "S0": "crosswind/8100002.png",
       "register": "bbox"
     }
   }

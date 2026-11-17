@@ -249,7 +249,29 @@ abstract final class GameEventNames {
   /// The rain crossed into another tier (data `from`: the previous tier).
   static const rainIntensity = 'rainIntensity';
 
-  static const weather = [rainStart, rainStop, rainIntensity];
+  // --- crosswind: the wind (lib/game/weather/wind_field.dart). Gameplay:
+  // queued by the model (model_wind.dart). Data: `tier` ('breeze' | 'gale'
+  // | 'crosswind'), `sector`, `side` (where it blows to).
+
+  /// The wind rises.
+  static const windStart = 'windStart';
+
+  /// The wind has died away.
+  static const windStop = 'windStop';
+
+  /// A big swing or a gust is coming: the telegraph, [WindField.lead]
+  /// seconds before it pushes (data `from`, `to`: 'left' | 'right';
+  /// `gust`; `strength` 0-1; `endIn`). The music's `gust` stinger.
+  static const windGust = 'windGust';
+
+  static const weather = [
+    rainStart,
+    rainStop,
+    rainIntensity,
+    windStart,
+    windStop,
+    windGust,
+  ];
 
   static const all = [
     groundForceSighted,
@@ -371,6 +393,15 @@ abstract final class GameEventNames {
   /// (data `x`, `kills`, `award`).
   static const stormBait = 'stormBait';
 
+  // --- crosswind: the bonus level's kites (data `kites`: popped so far,
+  // `escaped`, `total`, `x`).
+
+  /// A kite was shot down.
+  static const kitePopped = 'kitePopped';
+
+  /// A kite rode the wind off the screen.
+  static const kiteEscaped = 'kiteEscaped';
+
   // --- bonus challenges (openspec/changes/bonus-challenges). `variant`:
   // the level's id; data `challenge` (its id). The raw `bonusOneUp` is the
   // 1UP's sound (lib/main.dart).
@@ -393,6 +424,8 @@ abstract final class GameEventNames {
     bonusCrateMissed,
     stormStrike,
     stormBait,
+    kitePopped,
+    kiteEscaped,
     bonusChallengeFailed,
     bonusChallengeEarned,
   ];

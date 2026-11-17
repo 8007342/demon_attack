@@ -11,6 +11,8 @@
 //   steps out of a lightning tell's column. Still 70 % aim, no oracle.
 //
 // Every loop is bounded by a frame count.
+import 'dart:math' as math;
+
 import 'package:demon_attack/game/model.dart';
 
 import 'average_pilot.dart';
@@ -74,6 +76,7 @@ void _tryFor(ArcadeModel m, Map<Object, double> seen) {
     ...m.supplyCrates,
     ...m.pickups,
     if (m.bonusMechanic case final StormfrontMechanic s) ...s.cell.strikes,
+    if (m.bonusMechanic case final CrosswindMechanic c) ...c.kites,
   };
   seen.removeWhere((k, _) => !now.contains(k));
   for (final o in now) {
@@ -119,6 +122,27 @@ void _tryFor(ArcadeModel m, Map<Object, double> seen) {
       if (!clear(away(side))) side = -side;
       m.moveTo(away(side));
       break;
+    }
+  }
+  // 4. --- crosswind: the kite closest to riding off the screen, led for
+  // its own drift and (reading the windsock) 70 % of the wind's.
+  if (m.bonusMechanic case final CrosswindMechanic cw) {
+    Kite? risk;
+    var exit = double.infinity;
+    for (final k in cw.kites) {
+      if (k.popped != null || k.gone || !noticed(k)) continue;
+      final dist = k.vx >= 0 ? ArcadeModel.width + 40 - k.x : k.x + 40;
+      final t = dist / math.max(10.0, k.vx.abs());
+      if (t < exit) {
+        exit = t;
+        risk = k;
+      }
+    }
+    if (risk != null) {
+      final flight = (ArcadeModel.shipY - risk.y) / ArcadeModel.shotSpeed;
+      m.moveTo(
+        risk.x + risk.vx * flight - .7 * AveragePilot.expectedDrift(m, risk.y),
+      );
     }
   }
 }

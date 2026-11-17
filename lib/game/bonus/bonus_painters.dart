@@ -11,6 +11,7 @@
 import 'dart:ui';
 
 import '../model.dart';
+import 'levels/crosswind_painter.dart';
 import 'levels/stormfront_painter.dart';
 import 'levels/supply_run_painter.dart';
 
@@ -26,6 +27,8 @@ abstract final class BonusPainters {
     'stormfront': StormfrontPainter(),
     // --- mission-medals: Supply Run's cues on the crates and the cargo.
     'supplyRun': SupplyRunPainter(),
+    // --- crosswind: the kites and their tally.
+    'crosswind': CrosswindPainter(),
   };
 
   static BonusPainter? _of(ArcadeModel model) =>

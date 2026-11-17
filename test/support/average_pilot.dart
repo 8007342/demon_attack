@@ -7,8 +7,22 @@ import 'dart:math' as math;
 import 'package:demon_attack/game/model.dart';
 
 class AveragePilot {
-  AveragePilot({int seed = 1}) : _rng = math.Random(seed);
+  AveragePilot({int seed = 1, this.windSkill = 0}) : _rng = math.Random(seed);
   final math.Random _rng;
+
+  /// --- crosswind: the share of the wind's drift this pilot leads its
+  /// aim by (0: it ignores the wind, the baseline; 1: perfect).
+  final double windSkill;
+
+  /// --- crosswind: how far the wind carries a shot fired now on its climb
+  /// from the ship's row to [y] (the settling of model_wind.dart).
+  static double expectedDrift(ArcadeModel m, double y) {
+    final w = m.windDrift;
+    if (w == 0) return 0;
+    final t = math.max(0.0, (ArcadeModel.shipY - y) / ArcadeModel.shotSpeed);
+    const tau = WindField.settle;
+    return w * (t - tau * (1 - math.exp(-t / tau)));
+  }
 
   /// Reaction delay (s) and aim quality.
   static const reaction = .25, aim = .7;
@@ -41,6 +55,10 @@ class AveragePilot {
           : (_rng.nextBool() ? 1 : -1) * (20 + 20 * _rng.nextDouble());
     }
     x += _aimError;
+    // --- crosswind: lead the aim upwind (a target's own row).
+    if (windSkill > 0 && d != null && boss == null) {
+      x -= windSkill * expectedDrift(m, d.y);
+    }
     // Dodge: the nearest hostile shot that will cross the ship's row soon.
     Shot? threat;
     var soonest = .6;
