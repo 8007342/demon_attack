@@ -110,6 +110,14 @@ The score SHALL be voiced by one bank of CC0 or similarly permissive samples, sh
 - **WHEN** `bank.json` is absent
 - **THEN** the score plays through the synthesizer voices exactly as without a sampler, and the section trims stay byte-identical
 
+#### Scenario: Bank switched off until approved
+- **WHEN** the bank is off (the default until the operator approves it, with no `?bank=1` and no stored per-device choice)
+- **THEN** neither `bank.json` nor any sprite is fetched, the score plays through the synthesizer voices with the synth trims, and the synth trims stay as measured without a bank
+
+#### Scenario: Previewing the bank
+- **WHEN** the page loads with `?bank=1`, or the operator switches the bank on in the /console music panel
+- **THEN** the bank loads progressively from the next notes, the per-device choice is stored (the panel) or applies to that load (the query), and the section trims measured on the sampled score apply
+
 ### Requirement: Score voice budget
 The sampler SHALL cap simultaneous voices at 48 on desktop and 32 on phones. When the cap is reached it SHALL steal pad voices first, then lead voices, and SHALL never steal kick, snare or bass voices. Every shipped score section SHALL peak at most 32 voices with a 0.5-beat release.
 

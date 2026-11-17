@@ -284,13 +284,16 @@ function bankFromPlan(p) {
   }
   return { schema: 'demon-attack.bank/v1', budgets: { decodedDesktop: 41e6, decodedPhone: 16e6 }, roles: p.roles, instruments: p.instruments, sprites, zones };
 }
-async function player({ bank = null, decode = 'now', phone = false } = {}) {
+// search: the page's query (the bank is off by default: these tests switch it on with ?bank=1 unless they say
+// otherwise); stored: localStorage's contents (the /console choice).
+async function player({ bank = null, decode = 'now', phone = false, search = '?bank=1', stored = {} } = {}) {
   let tick;
   const { AudioContext, started } = mockAudio({ decode });
   const fetched = [];
   const sandbox = { URL, Uint8Array, DataView, Float32Array, Map, Set, Math, Object, Promise, TextDecoder, TextEncoder, JSON, Array, Number, String,
-    location: { search: '' }, navigator: { deviceMemory: phone ? 2 : 8 },
-    window: { AudioContext, addEventListener() {}, matchMedia: () => ({ matches: false }) },
+    location: { search }, navigator: { deviceMemory: phone ? 2 : 8 },
+    window: { AudioContext, addEventListener() {}, matchMedia: () => ({ matches: false }),
+      localStorage: { getItem: k => stored[k] ?? null, setItem: (k, v) => { stored[k] = String(v); } } },
     document: { baseURI: 'https://game.test/', addEventListener() {} },
     setInterval(fn) { tick = fn; },
     async fetch(url) {
@@ -319,7 +322,7 @@ async function player({ bank = null, decode = 'now', phone = false } = {}) {
   if (decode !== 'never') await audio.bankLoading;
   await settle();
   const run = async seconds => { const steps = Math.round(seconds / .025); for (let i = 0; i < steps; i++) { ctx().currentTime += .025; tick(); } await settle(); };
-  return { audio, run, started, fetched, ctx };
+  return { audio, run, started, fetched, ctx, stored, settle };
 }
 // Krybor's B at tier 4 with the power layer: every band track sounds.
 async function playKrybor(p, seconds = 8) {
@@ -346,6 +349,40 @@ test('8.12 no bank: the synth path is untouched (only bank.json is asked for), a
   assert.equal(ps.present, true);
   assert.equal(ps.sampled, 0);
   assert.ok(ps.synth > 100, `${ps.synth} notes waited for their zone`);
+});
+
+test('8.12 the bank switch: off by default (nothing under audio/bank/ is fetched), ?bank=1|0 per load, the stored /console choice, switched on live', { skip: !tools && 'needs lua' }, async () => {
+  const bank = bankFromPlan(plan());
+  const ref = await player({ search: '' });
+  await playKrybor(ref);
+  // Off by default even with a bank on the server: not even bank.json is asked for, and the synth plays as before.
+  const off = await player({ bank, search: '' });
+  await playKrybor(off);
+  assert.deepEqual(off.fetched.filter(f => f.startsWith('/audio/bank/')), []);
+  assert.deepEqual(shape(off.started), shape(ref.started));
+  assert.equal(off.audio.scoreBank, false);
+  assert.equal(off.audio.state.score.bank.enabled, false);
+  assert.equal(off.audio.state.score.bank.present, false);
+  // The stored choice turns it on; ?bank=0 overrides the stored choice for one load.
+  const stored = await player({ bank, search: '', stored: { 'demonAttack.scoreBank': 'on' } });
+  assert.equal(stored.audio.scoreBank, true);
+  assert.equal(stored.audio.state.score.bankLoaded, true);
+  const vetoed = await player({ bank, search: '?bank=0', stored: { 'demonAttack.scoreBank': 'on' } });
+  assert.equal(vetoed.audio.scoreBank, false);
+  assert.deepEqual(vetoed.fetched.filter(f => f.startsWith('/audio/bank/')), []);
+  // Switched on live (the /console toggle): stored, loaded, sampled from the next notes; off again: synth only.
+  assert.equal(off.audio.setScoreBank(true), true);
+  assert.equal(off.stored['demonAttack.scoreBank'], 'on');
+  await off.audio.bankLoading;
+  await off.settle();
+  assert.equal(off.audio.state.score.bankLoaded, true);
+  await off.run(4);
+  const sampled = off.audio.state.score.bank.sampled;
+  assert.ok(sampled > 20, `${sampled} notes sampled after the switch`);
+  assert.equal(off.audio.setScoreBank(false), false);
+  assert.equal(off.stored['demonAttack.scoreBank'], 'off');
+  await off.run(4);
+  assert.equal(off.audio.state.score.bank.sampled, sampled, 'no sampled notes once switched off');
 });
 
 test('8.12 a decoded bank: zones by key and velocity, playbackRate from the root, power chords, round robins, the cap', { skip: !tools && 'needs lua' }, async () => {

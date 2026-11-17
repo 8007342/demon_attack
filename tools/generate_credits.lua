@@ -191,6 +191,18 @@ local result={schema='demon-attack.credits/v2',title='Demon Attack',platform='Ti
   licences='licences/acknowledgements',sample_pins='plan/sample-bank-pins.md',
   beach_provenance='assets/research/battle-metal-radio/ending/beach-qwen-v1.provenance.json'},
  note='All game artwork, performances and musical themes are original project work. Package notices are available through the bundled license registry.'}
+-- --- sample-bank: once web/audio/bank/bank.json exists (tools/bank/bank_build.lua), the samples section's rows are
+-- the bank's own: each source's credit line from the recipe, its licence and the commit it was cut from.
+do
+ local bank_rows={}
+ local ok,list=pcall(read,{'jq','-r','.sources|to_entries|sort_by(.key)[]|[.value.credit,.value.spdx,.key,.value.commit]|@tsv','web/audio/bank/bank.json'})
+ for _,row in ipairs(ok and lines(list)or{})do
+  local credit,spdx,repo,commit=row:match('^([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]*)$')
+  if credit then bank_rows[#bank_rows+1]={name=(credit:gsub('%s*%(CC0 1%.0%)$','')),license=spdx=='CC0-1.0'and'CC0 1.0'or spdx,
+   url='https://github.com/'..repo,source='Score sample bank, pinned at '..commit:sub(1,12)}end
+ end
+ if #bank_rows>0 then for _,s in ipairs(result.sections)do if s.degree=='samples'then s.entries=bank_rows end end end
+end
 local file=assert(io.open('assets/credits.json','w'));file:write(json(result),'\n');file:close()
 local project_count=0;for _,g in ipairs(projects)do project_count=project_count+#g.entries end
 print('credits: '..#authors..' contributor name(s), '..#direct_rows..' direct packages, '..#indirect_rows..' runtime foundations, '..#models..' model credits, '..#licences..' licences, '..#samples..' sample libraries (coming), '..project_count..' open-source projects')

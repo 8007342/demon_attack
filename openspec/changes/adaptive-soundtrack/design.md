@@ -838,6 +838,8 @@ register must admit the pins of `plan/sample-bank-pins.md` first, and the coordi
 nothing here downloaded a sample. Everything around the samples is built and tested on synthetic tones, and only the
 fetch remains (§12.9.6).
 
+Update: the pins were admitted and the bank is built. It ships off by default behind a switch (§12.9.7).
+
 #### 12.9.1 Recipe and keys
 
 - **`art/music/bank/recipe.json`** is the bank's record (N8). It lists 20 instruments over the manifest's groups. For
@@ -961,7 +963,7 @@ On the committed score: `check: ok 85 sections, 340710 B of MIDI, peak 30 voices
 | timpani | 1 067 | 99.8 % | A1 (33) |
 | organ | 2 231 | 94.3 % | F1-F#1 and A#4-A5: the six VCSL pipes span C2-F#4 |
 | clean | 668 | 76.3 % (12.4 %) | above E5; on phones the guitar stops at A#4 |
-| bells | 392 | 82.1 % (0 %) | above A5; no bells on phones |
+| bells | 442 | 82.1 % (0 %) | above A5; no bells on phones |
 | brass | 1 277 | 63.4 % (13.6 %) | above F#4: the horns stop at C4 (+6 by the map), and the score's fanfares sit higher |
 
 So 653 of 796 section tracks play from the bank whole (556 on phones), and the rest play the synth. This is a
@@ -1011,6 +1013,139 @@ Each needs its own licence check and pin, and the register has to admit it, so t
 4. Credits: `bank.json` carries each source's credit, but the credits screen does not read it yet (task 8.5's
    `assets/credits.json` part).
 5. Listen (9.7, 8.4): tune the role levels, the instrument gains and the velocity splits in the recipe, then rebuild.
+
+#### 12.9.7 The real bank, behind a switch (`work/sample-bank`, 2026-11-17, tasks 8.5, 8.6)
+
+**The fetch.** The coordinator cleared it: all 196 manifest rows, round 1 plus the 12 round-2 rows of
+`plan/licences-round-2.md` §5, match GitHub's trees at the five pinned commits, with the CC0 licence hashes.
+- The forge fetched each file at its pinned commit, never from a branch or a tag.
+- Every file passed the size and blob sha1 check. Nothing was refused.
+- Round 2 needed the four recipe entries of its §5.4 (`gtr-hi`, `trumpet-sus`, `glock`, `organ-ext`) and a new
+  `sfz-keys.json` (11 maps).
+- The run, the picks with their reasons and every measurement are in `plan/render-runs/sample-bank.md`.
+
+**The pitch check, replaced.** The first build refused 27 zones:
+- YIN on one 87.5 ms window at 80 ms found no f0 for the distorted bass, the short staccatos and the low brass;
+- it read three organ pipes an octave high, because open flue pipes speak the octave first;
+- a multi-window YIN with the paper's global-minimum fallback was worse, because it locked onto subharmonics.
+
+So the builder now verifies the planned root instead of guessing one. It computes one spectrum per zone: 16 kHz
+behind a 63-tap low-pass, from 80 ms for up to 1 s, Hann-windowed, zero-padded to 2^16 points. Then:
+- **Octave.** Periodicity at f puts partials at odd multiples of f.
+  - A zone moves an octave down while the partials at odd multiples of F/2 carry more than 0.9 of the energy at
+    multiples of F, and over 0.3 of the spectrum's peak.
+  - It moves up while F's odd partials are under 0.02 of 2F's, and 2F's partials carry over 0.3 of the peak.
+  - The instrument takes its zones' majority. A shared offset is corrected and logged.
+- **Note.** The harmonic sum of sqrt-magnitudes (8 partials under 7 kHz) is maximised within ±6.5 semitones of the
+  octave-corrected root.
+  - The coarse 10-cent search takes each partial's peak within ±12 cents. Real partials sit a few cents off exact
+    multiples, and `twang_g6`'s 4th partial is 17 dB over its fundamental.
+  - A note more than 0.6 semitone off is refused (`strict`) or reported.
+
+`--f0-report` prints the table and stops. An independent Go check agreed zone for zone. It measured the whole
+source files and printed harmonic profiles, in scratch only.
+
+**Findings.**
+- **Bass −12: confirmed.** All 20 sustain zones sound within 0.40 semitone of the map keycenter −12.
+  - Their odd half-partials are 0.002-0.024 of the partials, so nothing sounds an octave lower.
+  - The odd partials of the shifted root are 0.34-8.7 of 2F's, so the bass does not sound at the map's own octave.
+- **Bass staccato: now `verify: report`.** A 0.4 s trim of a decaying 35-160 Hz note is too short to separate
+  partials from half-partials, and 7 of 20 zones read noise. On the full source files, all 20 measure within 0.6
+  semitone, and the staccatos use the sustains' map.
+- **Organ: the VCSL names stand (C4 = 60).** This answers round 2 §5.3.
+  - All eight pipes measure within 0.12 semitone of their names.
+  - Their odd half-partials are noise (0.001-0.006).
+  - The odd partials of the named root are present (0.024-1.7 of 2F's). C2's 3rd and 5th partials sit at −18 and
+    −12 dB re the strongest.
+  - VSCO's `OrganLoud.sfz` maps the same files an octave higher, perhaps for the heard register: the even partials
+    dominate. The 9.7 listening decides. The fallback is `shift: 12` with the C1/F#1 pins of round 2 §5.1.
+- **Guitars, horns, trombones, trumpet, glockenspiel and the upper organ pipes:** every zone is within 0.35 semitone,
+  in the mapped octave.
+- **Timpani and bells** (`report`): a struck membrane is inharmonic, so the check reads its partials, not the heard
+  note. The timpani scatter, and they keep the pins doc's table until the listening. The tubular bells read within
+  0.30.
+
+| Bank | Zones | Sprites | Opus | Decoded, desktop | Decoded, phone tier |
+|---|---|---|---|---|---|
+| Built | 168 | 8 | 1 907 850 B | 40 934 400 B | 14 553 600 B |
+| Budget (§11.5) | | | 2 000 000 B | 41 000 000 B | 16 000 000 B |
+
+Opus VBR came in 0.27 MB over the dry-run estimate, still within the budget.
+
+`lua tools/midi_stats.lua check` against the built `bank.json`: `ok 89 sections, 356636 B of MIDI, peak 30 voices, 0
+failure(s)` (with the credits and Crosswind songs merged from `game`). Coverage:
+
+| Role | Desktop | Phones |
+|---|---|---|
+| drums | 100 % | 100 % |
+| bass | 98.2 % | 98.2 % |
+| guitarL / guitarR | 98.6 / 98.2 % | 98.6 / 94.8 % |
+| organ | 98.6 % | 94.2 % |
+| timpani | 99.8 % | 99.8 % |
+| brass | 99.9 % | 13.7 % |
+| clean | 98.6 % | 18.2 % |
+| bells | 100 % | 0 % |
+
+801 of 824 section tracks play from the bank whole (573 on phones).
+
+**The switch (operator, round 7: "I would rather preview the music score replacement with the high res assets until
+complete").**
+- The bank ships **off**. `demon-score.js` `BANK_DEFAULT = false`.
+- Each page load decides once: `?bank=1` or `?bank=0` in the URL wins, else the per-device choice
+  (`localStorage['demonAttack.scoreBank']`, `on` or `off`), else `BANK_DEFAULT`.
+- **While the bank is off, nothing under `audio/bank/` is fetched, not even `bank.json`.** The synth path is the old
+  one, note for note (`music.test.mjs`).
+- /console's SCORE · LISTEN panel has a **VOICES** row with SYNTH and SAMPLED buttons and a line showing what has
+  loaded: sprites loaded, decoded MB and sampled notes. A press stores the choice and applies it from the next
+  scheduled notes, through `demonAudio.setScoreBank(on)` and Dart's `audioSetScoreBank`.
+- Switching off keeps the decoded sprites until the page reloads, so an A/B is instant.
+- **To go live:** set `BANK_DEFAULT = true` in `web/audio/demon-score.js`. That is one line. `?bank=0` and the stored
+  `off` still opt out.
+
+**The trims in both modes.** `node tools/mix_meter/trim.mjs` measures every case twice, without the bank and with it
+on (desktop tier, every sprite). `mix-trim.json` keeps the synth's `measuredLufs` and `trims` as before, and adds a
+`bank` block with its own `rule`, `measuredLufs` and `trims`.
+- The bank block narrows the same way, then shifts every trim by `rule.offset` (the synth top minus the bank top).
+  The sampled score's loudest case then lands on the synth's loudest, and the score-to-radio balance of the music
+  level (§12.8, mix-balance) holds in both modes.
+- Bank trims may be negative (the sampled score is louder), capped at ±8 dB.
+- The player uses `bank.trims` while the switch is on, else `trims`.
+- A phone loads only its tier. A track whose zones have not decoded yet plays the synth with the bank trims, a small
+  difference that the 9.7 listening checks.
+
+**Role levels, matched to the synth.** The first two-mode measurement showed a large gap. The sampled score's
+loudest case sat 4.6 LU under the synth's, and 38 bank trims hit the +8 dB cap: the arrivals and the coda fell up to
+8.8 dB short. The recipe's role levels had never been measured against the synth voices, which the operator approved.
+- Each role was soloed over nine sections in both modes (a scratch copy of the players, trims off). Its level moved by
+  the median loudness gap: drums 1.0 → 5.25, bass 0.7 → 3.7, clean 0.45 → 4.1, organ 0.32 → 1.05, brass 0.36 → 0.9,
+  timpani 0.85 → 3.84, bells 0.36 → 0.58. The guitars were within 1 dB through the amp and keep 0.5.
+- Re-measured, every role lands within about ±1 dB of its synth.
+- The rebuild reproduced the sprites byte for byte; only `bank.json`'s levels changed.
+
+**The trims, measured** (`mix-trim.json`):
+- The synth block is byte for byte the one on `game` (`top` −4.97 LUFS, 217 trims of 227 cases, with the credits and
+  Crosswind songs).
+- The `bank` block: `top` −4.48, `floor` −14.59, `k` 0.1978, `offset` −0.49 dB, 226 trims from −0.5 to +8 dB.
+- Six trims hit the cap. The coda's `reprise` and `ukulele` end 2.5 and 3.3 dB under the window (their uke and
+  strings stay synth), the credits song's `dawn` and `drift` 2.1 and 2.5 dB, and `menu-k:pivot` and `k-r:pivot` 0.8 dB
+  or less.
+- `mix-balance.test.mjs` checks that the bank block covers every case, that its top lands on the synth top, that every
+  uncapped case falls in the synth's window, and that the player picks each mode's trims.
+
+**The listening preview** (https://claude.ai/artifact/9GWPRDxFJByguEg56jPmpJ, private to the operator). A/B clips
+of seven sections, synth against sampled, rendered offline through the shipped players with each mode's trims:
+- a world song (`k:B`), a carrier core (`c1:core`) and a calm section (`k:A`);
+- the tour-4 victory, whose fanfare reaches E6 above the trumpet, so its brass falls back to the synth;
+- a sampled-trumpet clear;
+- the overture and the defeat.
+
+Each pair matches within 0.6 LU. The clips stay in scratch, never in the repo (`plan/render-runs/sample-bank.md` §7).
+
+**Credits.** `tools/generate_credits.lua` adds a "Sampled instruments" section after the models: one row per source,
+with the credit line from `bank.json`, the SPDX id and the source at its commit.
+
+What remains: the operator's verdict on the preview, then the default flip (9.7); tuning levels, gains and splits by
+ear; the 8.4 bake-off on phones.
 
 ### 12.10 Bonus-level music and accents (`work/bonus-music`, 2026-11-17, task group 10)
 

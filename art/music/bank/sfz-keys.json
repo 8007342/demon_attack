@@ -38,6 +38,12 @@
     "lokey": 73,
     "map": "Programs/modules/maps_black/ord.sfz"
    },
+   "Samples/black/ord/twang_db7_f_rr1.wav": {
+    "hikey": 85,
+    "keycenter": 85,
+    "lokey": 85,
+    "map": "Programs/modules/maps_black/ord.sfz"
+   },
    "Samples/black/ord/twang_e3_f_rr1.wav": {
     "hikey": 40,
     "keycenter": 40,
@@ -72,6 +78,12 @@
     "hikey": 67,
     "keycenter": 67,
     "lokey": 67,
+    "map": "Programs/modules/maps_black/ord.sfz"
+   },
+   "Samples/black/ord/twang_g6_f_rr1.wav": {
+    "hikey": 79,
+    "keycenter": 79,
+    "lokey": 79,
     "map": "Programs/modules/maps_black/ord.sfz"
    },
    "Samples/black/stac/staccato_bb3_rr1.wav": {
@@ -550,6 +562,36 @@
     "lokey": 52,
     "map": "TromboneSus.sfz"
    },
+   "Brass/Trumpet/sus/Sum_SHTrumpet_sus_A#3_v3_rr1.wav": {
+    "hikey": 71,
+    "keycenter": 70,
+    "lokey": 69,
+    "map": "TrumpetSus.sfz"
+   },
+   "Brass/Trumpet/sus/Sum_SHTrumpet_sus_C5_v3_rr1.wav": {
+    "hikey": 84,
+    "keycenter": 84,
+    "lokey": 83,
+    "map": "TrumpetSus.sfz"
+   },
+   "Brass/Trumpet/sus/Sum_SHTrumpet_sus_F4_v3_rr1.wav": {
+    "hikey": 78,
+    "keycenter": 77,
+    "lokey": 76,
+    "map": "TrumpetSus.sfz"
+   },
+   "Percussion/Glock/glock_medium_C6.wav": {
+    "hikey": 87,
+    "keycenter": 84,
+    "lokey": 82,
+    "map": "Glockenspiel.sfz"
+   },
+   "Percussion/Glock/glock_medium_G6.wav": {
+    "hikey": 93,
+    "keycenter": 91,
+    "lokey": 88,
+    "map": "Glockenspiel.sfz"
+   },
    "Strings/Cello Section/susvib/susvib_A2_v3_1.wav": {
     "hikey": 58,
     "keycenter": 57,
@@ -595,7 +637,10 @@
   "sfzinstruments/karoryfer.growlybass/growlybass_vicious.sfz": "af3166e9085d627eac214f7197ff20f262943c63",
   "sgossner/VSCO-2-CE/CelloEnsSusVib.sfz": "9b34afd020314d1bfa01d5578c9b30aae9cdc603",
   "sgossner/VSCO-2-CE/FHornSus.sfz": "8bf03e466eab3294d607b9056a229e0c9970a8d5",
+  "sgossner/VSCO-2-CE/Glockenspiel.sfz": "c9b7f41492d6df5bf0534e579b7a82891771f24a",
+  "sgossner/VSCO-2-CE/OrganLoud.sfz": "adc6c67f31bd618d6cbe3c1c8be5db137c2482d9",
   "sgossner/VSCO-2-CE/TromboneStac.sfz": "6e60edef55889d4ff78f82971f9d9b81bc40987a",
-  "sgossner/VSCO-2-CE/TromboneSus.sfz": "b109b4135b0658d8003a986c51f7c5b4d55f786b"
+  "sgossner/VSCO-2-CE/TromboneSus.sfz": "b109b4135b0658d8003a986c51f7c5b4d55f786b",
+  "sgossner/VSCO-2-CE/TrumpetSus.sfz": "2b9be543a5179638788f8766dc1c181956975025"
  }
 }

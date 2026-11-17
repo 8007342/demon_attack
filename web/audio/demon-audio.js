@@ -278,7 +278,10 @@
   // --- adaptive-soundtrack: SongDirector's moves (see demon-score.js move()); returns the landing time, -1 while
   // loading or before the first gesture (the move runs once ready), -2 when the score failed to load.
   function song(move) { return score ? score.move(move || {}) : -2; }
-  window.demonAudio = Object.freeze({ unlock, intensity, accent, fleetIntact, mute, pause, resume, sfx, setLevel, powerLayer, song, duck, unduck, get muted() { return muted; },
+  // --- sample-bank: the score's sample-bank switch (off by default until approved; /console's music panel, ?bank=1).
+  function setScoreBank(on) { return score ? score.setBank(!!on) : false; }
+  window.demonAudio = Object.freeze({ unlock, intensity, accent, fleetIntact, mute, pause, resume, sfx, setLevel, powerLayer, song, duck, unduck, setScoreBank, get muted() { return muted; },
+    get scoreBank() { return !!score?.bankOn; },
     get time() { return context?.currentTime ?? -1; },
     get scorePosition() { return score?.position ?? null; },
     get scoreLoading() { return score?.loading ?? Promise.resolve(); },

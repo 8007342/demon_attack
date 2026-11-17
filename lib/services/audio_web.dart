@@ -48,6 +48,62 @@ String audioLevel(String channel) {
 void audioPowerLayer(int active, bool falling) =>
     _powerLayer(active.toJS, falling.toJS);
 
+// --- sample-bank: the score's CC0 sample bank, off by default until the
+// operator approves it (demon-score.js BANK_DEFAULT). The /console music panel
+// switches it per device; `?bank=1` decides for one page load.
+@JS('demonAudio.scoreBank')
+external JSBoolean? get _scoreBank;
+@JS('demonAudio.setScoreBank')
+external JSBoolean? _setScoreBank(JSBoolean on);
+@JS('demonAudio.state')
+external JSObject? get _audioState;
+
+bool audioScoreBank() {
+  try {
+    return _scoreBank?.toDart ?? false;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Switches the sample bank on or off (stored on this device); returns the new
+/// state, false when the page has no score.
+bool audioSetScoreBank(bool on) {
+  try {
+    return _setScoreBank(on.toJS)?.toDart ?? false;
+  } catch (_) {
+    return false;
+  }
+}
+
+int _int(JSObject o, String key) {
+  final v = o.getProperty<JSAny?>(key.toJS);
+  return v.isA<JSNumber>() ? (v as JSNumber).toDartDouble.round() : 0;
+}
+
+/// The bank's loading state for the panel: sprites loaded of this device's,
+/// decoded bytes, notes sampled so far.
+({bool on, int loaded, int sprites, int decodedBytes, int sampled})?
+audioScoreBankState() {
+  try {
+    final score = _audioState?.getProperty<JSAny?>('score'.toJS);
+    if (score == null || !score.isA<JSObject>()) return null;
+    final bank = (score as JSObject).getProperty<JSAny?>('bank'.toJS);
+    if (bank == null || !bank.isA<JSObject>()) return null;
+    final b = bank as JSObject;
+    final on = b.getProperty<JSAny?>('enabled'.toJS);
+    return (
+      on: on.isA<JSBoolean>() && (on as JSBoolean).toDart,
+      loaded: _int(b, 'loaded'),
+      sprites: _int(b, 'sprites'),
+      decodedBytes: _int(b, 'decodedBytes'),
+      sampled: _int(b, 'sampled'),
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
 // --- adaptive-soundtrack: the score player (web/audio/demon-score.js, driven
 // by SongDirector). Every call is safe when the page has no audio engine.
 @JS('demonAudio.song')
