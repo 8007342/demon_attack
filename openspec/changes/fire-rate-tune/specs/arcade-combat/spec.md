@@ -52,9 +52,8 @@ gap and shortens the next. Snapping jittered frame times to vsync is the scene's
 
 ### Requirement: Rebalance for the slower gun
 Because the player deals about 23 % less damage per second, a sentinel's hull SHALL be 70 % of its previous value,
-rounded, and dive shields SHALL be 3 + route ÷ 2 for a sentinel, 2 for an elite and 1 for every other creature. The
-carrier's hatch pools, core shares and hatch layer floor SHALL keep each difficulty within its carrier-hatches targets
-and keep Easy below Normal on every tour.
+rounded, and dive shields SHALL be 3 + route ÷ 2 for a sentinel, 2 for an elite and 1 otherwise. The carrier's HP
+SHALL keep each difficulty within its carrier-hatches targets and Easy below Normal on every tour.
 
 #### Scenario: Sentinel hull
 - **WHEN** a shield sentinel spawns on route 0, or an armoured one on route 4

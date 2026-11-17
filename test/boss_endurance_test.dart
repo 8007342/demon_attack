@@ -26,9 +26,9 @@ const seeds = [
 /// 790.8, 921.1; plan/calibration-current.md, "Fire-rate tune"). Later
 /// changes stay within 5 % pooled and 10 % per difficulty of these.
 const baseline = <String, ({double seconds, double hits})>{
-  'easy': (seconds: 183.85, hits: 369.9),
-  'normal': (seconds: 277.84, hits: 593.9),
-  'hard': (seconds: 300.83, hits: 692.2),
+  'easy': (seconds: 183.85, hits: 380.8),
+  'normal': (seconds: 277.84, hits: 581.9),
+  'hard': (seconds: 300.83, hits: 696.3),
 };
 
 /// Before carrier-hatches (`game` dde01449, the same harness): the easier

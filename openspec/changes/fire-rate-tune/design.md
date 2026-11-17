@@ -39,7 +39,8 @@
   rate, ground cooldowns); the swarm's counts, rosters, reinforcement groups and ordinary HP (so the 318-wave defence
   budgets are unchanged, apart from the sentinel hull, §5.3); the powers' damage, radii and timers; mutual exclusions.
 - **Changed on purpose:** the player's cadence and shot speeds (§2, §3); hostile *climb speeds* by at most 6.5 % per
-  shot (§3.2); the carrier's hatch and core HP, the sentinel's hull, dive shields and the loom cap (§5).
+  shot (§3.2); the carrier's hatch and core HP, the sentinel's hull, dive shields and the loom cap (§5); Supply Run's
+  crate interval and Stormfront's bolt damage (§5.4).
 
 ## 1. What the operator saw, and why (read from the code)
 - `model.dart` fired with `_fire += (rapid ? .105 : .23)`, decremented by the fixed 1/60 s step. 0.23 s is 13.8 steps,
@@ -159,27 +160,31 @@ Measured with every change of §2–§3 in place; the order below is the order o
 
 ### 5.1 Ordinary sectors
 Harness: `tools/ordinary_wave_probe.dart`, the Average pilot (not invulnerable; 0.25 s reaction; 70 % aim) over
-sectors 1–4 of routes 0–2, 12 seeds, lives refilled. First run with only the fire-rate change (8 seeds): lives lost
-per sector +20 % Easy, +46 % Normal, +32 % Hard. Where they went (Normal): with a sentinel on the field 15.9 → 25.1,
-to divers 11.0 → 13.8.
+sectors 1–4 of routes 0–2, lives refilled. First run with only the fire-rate change (8 seeds): lives lost per sector
++20 % Easy, +46 % Normal, +32 % Hard. Where they went (Normal): with a sentinel on the field 15.9 → 25.1, to divers
+11.0 → 13.8.
 
-| Lever tried | Normal lives | Hard lives | Kept |
+| Lever tried (8 seeds) | Normal lives | Hard lives | Kept |
 |---|---:|---:|---|
 | Rosters × 0.8 (counts) | 31.5 | 38.5 | no: barely moves; the sector's length is the stream's pacing, not the hit budget |
 | Rosters × 0.7 / 0.65 | 31.8 | 35.1 | no |
 | Sentinel hull × 0.7 | 30.0 | 39.8 | yes (the sentinel phase is most of the loss) |
 | Dive shields −1 | 27.6 | 34.1 | yes (divers are the other half) |
 | Shot speed 480 (was 420 in the first draft) | 26.5 | 31.7 | yes |
+| A power every 6 kills (was 8; 24 seeds) | 23.1 | 27.0 | no: 10–15 % easier and route 0 neutral, but more powered time on screen, and it moves every drop-count fixture, the bonus balance and the boss endurance |
 
-Final, 12 seeds (`dart run tools/ordinary_wave_probe.dart 12`), before → after:
+Final, 24 seeds (`dart run tools/ordinary_wave_probe.dart 24`), before → after:
 
-| Mode | Lives lost per sector | Seconds per sector | Lives with a sentinel up | Lives to divers |
-|---|---|---|---|---|
-| Easy | 11.24 → 11.33 (+0.8 %) | 109.4 → 114.3 (+4.5 %) | 3.52 → 2.98 | 3.56 → 3.40 |
-| Normal | 26.69 → 26.60 (−0.3 %) | 199.2 → 202.9 (+1.9 %) | 16.68 → 15.18 | 11.79 → 10.00 |
-| Hard | 31.68 → 32.08 (+1.3 %) | 219.3 → 227.3 (+3.6 %) | 18.93 → 18.14 | 13.56 → 12.84 |
+| Mode | Lives lost per sector | Seconds per sector | Lives per route 0 / 1 / 2 (sum of sectors) |
+|---|---|---|---|
+| Easy | 11.13 → 11.42 (+2.7 %) | 109.2 → 113.8 (+4.2 %) | 12.6 / 40.2 / 80.8 → 13.1 / 38.7 / 85.3 |
+| Normal | 25.83 → 25.80 (−0.1 %) | 194.1 → 198.8 (+2.4 %) | 23.3 / 93.9 / 192.7 → 25.8 / 83.5 / 200.2 |
+| Hard | 31.86 → 33.67 (+5.7 %) | 220.4 → 237.3 (+7.7 %) | 28.5 / 113.4 / 240.4 → 32.2 / 108.5 / 263.4 |
 
-Within seed noise (a seed's sector moves by ±2 lives), the ordinary game is as hard as before.
+Easy and Normal are as hard as before. Hard is about 6 % harder for this pilot (about two standard errors), and
+route 0, which has no sentinel or elite to lighten, is 4–13 % harder on every difficulty while route 1 is easier. The
+lever that would remove it, more frequent power drops, was measured and set aside (table above); it is the first knob
+if play agrees with the pilot (§7).
 
 ### 5.2 The carrier (carrier-hatches targets)
 The fairness harness (`dart run test/support/boss_fairness.dart`; `test/boss_fairness_test.dart`): the expert's
@@ -195,15 +200,16 @@ holds on every route (`campaign_model_test`).
 |---|---|---|---|
 | Hatch pool (was .5 / .55 / .65, floor 3) | .45 | .425 | .46 (floor 2) |
 | Hatch pool per tour 1–5 (was) | 16, 24, 36, 42, 48 (24, 28, 42, 48, 56) | 20, 28, 42, 48, 56 (28, 36, 48, 66, 80) | 24, 32, 42, 54, 64 (32, 44, 60, 78, 88) |
-| Core share (was .65 / .8 / .8) | .41 | .55 | .55 |
+| Core share (was .65 / .8 / .8) | .45 | .55 | .55 |
 
 | Difficulty | Expert s: hatches → now (target vs pre-hatches) | Expert lives: hatches → now (target) | Naive kill share |
 |---|---|---|---|
-| Easy | 335.0 → 341.6 (−28.3 %; −30..−20) | 49.5 → 48.5 (−33.3 %; −35..−25) | 1.0 → 1.0 |
-| Normal | 529.5 → 537.5 (−22.0 %; −25..−15) | 83.5 → 86.5 (−22.7 %; −30..−20) | 0.967 → 1.0 |
-| Hard | 595.5 → 577.5 (−13.3 %; −15..−5) | 94.83 → 93.5 (−14.9 %; −20..−10) | 0.867 → 0.967 |
+| Easy | 335.0 → 367.0 (−23.0 %; −30..−20) | 49.5 → 53.83 (−25.9 %; −35..−25) | 1.0 → 1.0 |
+| Normal | 529.5 → 538.6 (−21.9 %; −25..−15) | 83.5 → 86.17 (−22.9 %; −30..−20) | 0.967 → 1.0 |
+| Hard | 595.5 → 573.3 (−13.9 %; −15..−5) | 94.83 → 93.33 (−15.0 %; −20..−10) | 0.867 → 0.933 |
 
-The carrier stays as fair as carrier-hatches shipped, and the naive pilot now kills every Normal carrier.
+The carrier stays as fair as carrier-hatches shipped, and the naive pilot kills more of them. Easy's core share was
+first .41 (341.6 s), which put the protected pilot's endurance 7.9 % under its baseline (§5.4); .45 centres both.
 
 - **The loom cap**, 90 → 120 s (`ArcadeModel.loomCap`). The slower gun stretched tour 5's three launch waves past 90 s
   on Hard, so the carrier closed before the third (the campaign playtest counted 122 entrances, not 123). 120 s is
@@ -211,23 +217,28 @@ The carrier stays as fair as carrier-hatches shipped, and the naive pilot now ki
 
 ### 5.3 Sentinel hull and dive shields
 - `DifficultyPolicy.sentinelHull`: `round(((armoured ? 12 : 9) + 2 · min(route, 4)) × 0.7)`. Shield and armour layers
-  are unchanged, so the Powerful/armour rules hold. The 318-wave audit's sentinel waves need fewer hits; its gates
-  (ordering, caps, the 2.5 whole/opening ratio) still pass. The bonus par (`sectorPar`) uses the same function.
+  are unchanged, so the Powerful/armour rules hold. The bonus par (`sectorPar`) uses the same function.
 - Dive shields: sentinel 3 + route ÷ 2 (was 4 + route ÷ 2), elite 2 (was 3), every other creature 1 (the heavier
   species had 2). The three tiers stay (1 / 2 / 3+), and the sentinel's still needs an offensive power.
 
 ### 5.4 The other gates
-- **Boss endurance** (`test/boss_endurance_test.dart`, the protected campaign pilot, 16 seeds): seconds 183.85 →
-  174.54 (−5.1 %), 277.84 → 262.96 (−5.4 %), 300.83 → 299.40 (−0.5 %); pooled −3.4 %, inside the gates against the
-  unchanged seconds baseline. Its "hits" are the hits the carrier takes, which fall with its HP by construction
-  (483.9 / 790.8 / 921.1 → 369.9 / 593.9 / 692.2, pooled −24.6 %), so only the hits baseline is re-measured.
-- **Campaign playtest:** all bounds hold (123 entrances with the loom cap; ground-missile impacts 0 / 2 / 2).
+- **Boss endurance** (`test/boss_endurance_test.dart`, the protected campaign pilot, 16 seeds): seconds −2.8 / −8.1 /
+  −0.7 %, pooled −3.9 %; see
+  `plan/calibration-current.md`, "Fire-rate tune". The seconds stay within the gates of the unchanged seconds
+  baseline. Its "hits" are the hits the carrier takes, which fall with its HP by construction (pooled about −25 %), so
+  only the hits baseline is re-measured.
+- **Campaign playtest:** all bounds hold (123 entrances with the loom cap; ground-missile impacts 0 / 1 / 1 of 10 /
+  23 / 27).
 - **Perspective parity** and **sentinel rush fairness:** pass unchanged.
 - **318-wave defence budgets:** only the sentinel waves change (§5.3). Worst budgets 159 / 213 / 240 → 154 / 207 /
   234 hits; the peak whole/opening ratio rises from 2.25 to 2.37 (the opening roster's sentinel is lighter, so its
-  escort weighs more), under the 2.5 ceiling. `plan/calibration-current.md` has the table.
-- **Bonus balance:** Supply Run's duration ratio rose to 1.150 (band 1.15): its only powers are crates (no kill
-  drops), so its crates now fall every 3 s (was 3.5 s).
+  escort weighs more), under the 2.5 ceiling.
+- **Bonus balance:**
+  - Supply Run's duration ratio rose to 1.150 (band 1.15). Its only powers are crates (no kill drops), so its crates
+    now fall every 3 s (was 3.5 s).
+  - Stormfront's lives ratio fell to 0.81 (band 0.85): a storm bolt deals 3, and the dive shields that used to stop it
+    (3 on an elite, 2 on a heavier species) lost a point, so bolts broke through divers they used to stop. Bolts now
+    deal 2 (`StormTuning.damage`), which keeps the old bolt-against-shield outcome; lives −11.5 % pooled.
 
 ## 6. Review sheet
 `test/fire_rate_tune_review_test.dart` (tag `review`), with `--dart-define=FIRE_RATE_CONTACT=true`, writes
@@ -242,7 +253,10 @@ The carrier stays as fair as carrier-hatches shipped, and the naive pilot now ki
 
 ## 7. Risks
 - Pilots, not people: the Average pilot does not lead and the fairness experts do. A human who leads shots gains a
-  little more from 480 u/s than the Average pilot does. If play feels easier, the first knob is the dive shields of the
-  heavier species (back to 2).
+  little more from 480 u/s than the Average pilot does.
+- **Route 0 and Hard are a little harder for the Average pilot** (§5.1). If play agrees, the first knob is a power
+  every 7 or 6 kills (`kills % 8` in `hitDemon`), which measured neutral-to-easier everywhere; it needs the drop-count
+  tests and the bonus balance re-run. If play feels easier instead, the knob is the heavier species' dive shield (back
+  to 2).
 - The carrier's per-hatch HP is now small (4–8). One shot is a bigger share of a hatch, which makes Large's splash
   relatively stronger on the hatches.

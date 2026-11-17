@@ -17,8 +17,8 @@
 - [x] 3.2 Ordinary sectors: sentinel hull × 0.7 (`DifficultyPolicy.sentinelHull`, also the bonus par), dive shields −1; rosters tried and rejected (design §5.1)
 - [x] 3.3 Carrier: hatch pools, core shares and `minLayer` 2 inside the carrier-hatches target bands, difficulty order on every tour (design §5.2)
 - [x] 3.4 Loom cap 120 s (tour 5's third launch wave)
-- [x] 3.5 Supply Run crates every 3 s (bonus balance duration band)
-- [x] 3.6 Tests whose numbers the change moves on purpose: boss endurance hits re-baselined; progression, combat balance, combined powers, carrier hatches, wing cannons updated; the drones and escort tests made robust to the faster kills
+- [x] 3.5 Bonus balance: Supply Run crates every 3 s (duration band); Stormfront bolts deal 2 (lives band)
+- [x] 3.6 Tests whose numbers the change moves on purpose: boss endurance hits re-baselined; progression, combat balance, combined powers, carrier hatches, wing cannons updated; the drones, escort and boss-director view tests made robust to the faster kills and lighter carrier
 - [x] 3.7 Before and after values in `plan/calibration-current.md`, "Fire-rate tune"
 
 ## 4. Review

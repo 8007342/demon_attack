@@ -78,7 +78,7 @@ abstract final class CarrierHatches {
 
   /// The core's HP share per difficulty (calibration, §A11; fire-rate-tune:
   /// was .65 / .8 / .8).
-  static const coreShares = [.41, .55, .55];
+  static const coreShares = [.45, .55, .55];
 
   /// The carrier's fan-attack rate per difficulty (lever 5, §A11).
   static const fanShares = [.7, .85, .75];

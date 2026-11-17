@@ -680,8 +680,8 @@ aims at the vulnerable tier's nearest hatch with the forecast lead, then at the 
 The operator's round 4, G2: "decrease our ships firerate overall, keep the demons fire rate intact". A **deliberate
 balance change**: the player's volleys every 18 steps (0.30 s, was 0.23 s) and Rapid every 8 (0.133 s, was 0.105 s);
 player shots at 480 u/s (was 390), Spread's pair at 420 (was 370); hostile climbs on a 15 u/s grid (at most 6.5 %
-per shot). Then rebalanced so the game is as hard as before (`openspec/changes/fire-rate-tune/design.md` §5).
-Before is `game` at 5961ae11 with the same harnesses.
+per shot). Then rebalanced so the game stays about as hard (`openspec/changes/fire-rate-tune/design.md` §5). Before
+is `game` at 5961ae11 with the same harnesses.
 
 **The levers.**
 
@@ -690,36 +690,40 @@ Before is `game` at 5961ae11 with the same harnesses.
 | Sentinel hull (`DifficultyPolicy.sentinelHull`) | (9 or 12) + 2 · route | × 0.7, rounded |
 | Dive shield: sentinel / elite / heavier species / basic | 4 + route ÷ 2 / 3 / 2 / 1 | 3 + route ÷ 2 / 2 / 1 / 1 |
 | Carrier hatch pool (Easy, Normal, Hard), layer floor | .5, .55, .65, floor 3 | .45, .425, .46, floor 2 |
-| Carrier core share | .65, .8, .8 | .41, .55, .55 |
+| Carrier core share | .65, .8, .8 | .45, .55, .55 |
 | Loom cap | 90 s | 120 s |
 | Supply Run crates | every 3.5 s | every 3 s |
+| Stormfront bolt damage | 3 | 2 |
 
-Rosters, reinforcement groups and ordinary HP are unchanged: cutting rosters by 20–35 % moved the Average pilot's
-lives by less than the seed noise.
+Rosters, reinforcement groups, ordinary HP and power drops are unchanged. Cutting rosters by 20–35 % moved the
+Average pilot's lives by less than the seed noise; a power every 6 kills (was 8) made every difficulty 10–15 % easier
+but was set aside (design §5.1, §7).
 
-**Ordinary sectors, the Average pilot** (`dart run tools/ordinary_wave_probe.dart 12`: sectors 1–4 of routes 0–2,
-12 seeds, unprotected, lives refilled).
+**Ordinary sectors, the Average pilot** (`dart run tools/ordinary_wave_probe.dart 24`: sectors 1–4 of routes 0–2,
+24 seeds, unprotected, lives refilled).
 
-| Mode | Lives lost per sector | Seconds per sector | With only the fire-rate change (8 seeds) |
-|---|---|---|---|
-| Easy | 11.24 → 11.33 (+0.8 %) | 109.4 → 114.3 (+4.5 %) | lives +20 %, seconds +17 % |
-| Normal | 26.69 → 26.60 (−0.3 %) | 199.2 → 202.9 (+1.9 %) | lives +46 %, seconds +37 % |
-| Hard | 31.68 → 32.08 (+1.3 %) | 219.3 → 227.3 (+3.6 %) | lives +32 %, seconds +27 % |
+| Mode | Lives lost per sector | Seconds per sector | Lives per route 0 / 1 / 2 | Only the fire-rate change (8 seeds) |
+|---|---|---|---|---|
+| Easy | 11.13 → 11.42 (+2.7 %) | 109.2 → 113.8 (+4.2 %) | 12.6 / 40.2 / 80.8 → 13.1 / 38.7 / 85.3 | lives +20 %, seconds +17 % |
+| Normal | 25.83 → 25.80 (−0.1 %) | 194.1 → 198.8 (+2.4 %) | 23.3 / 93.9 / 192.7 → 25.8 / 83.5 / 200.2 | lives +46 %, seconds +37 % |
+| Hard | 31.86 → 33.67 (+5.7 %) | 220.4 → 237.3 (+7.7 %) | 28.5 / 113.4 / 240.4 → 32.2 / 108.5 / 263.4 | lives +32 %, seconds +27 % |
+
+Easy and Normal hold. Hard is about 6 % harder for this pilot, and route 0 (no sentinel or elite to lighten) 4–13 %
+harder on every difficulty, while route 1 is easier. To review in play (design §7).
 
 **Ordinary sectors, the protected pilot** (`dart run tools/profile_difficulty.dart`, seeds 1982, 42 and 2026; seed 7's
 Normal campaign does not complete with this tool's simpler carrier aim, before and after). Median ordinary wave:
-Easy 24.1 → 26.8 s (+11 %), Normal 32.2 → 36.1 s (+12 %), Hard 32.6 → 39.3 s (+20 %). This pilot never loses a life,
-so the slower gun shows in full as clear time; the unprotected pilot above is the difficulty measure.
-Ground-missile impacts on these three seeds: 1.0 / 0.67 / 5.33 → 1.0 / 1.33 / 2.0 per campaign, of 10.3 / 30.7 / 36.3 →
-10.7 / 22.3 / 32.0 launched (Easy / Normal / Hard).
+Easy 24.1 → 26.8 s (+11 %), Normal 32.2 → 36.1 s (+12 %), Hard 32.6 → 39.1 s (+20 %). This pilot never loses a life,
+so the slower gun shows in full as clear time; the unprotected pilot above is the difficulty measure. Ground-missile
+impacts per campaign: 1.0 / 0.67 / 5.33 → 1.0 / 2.0 / 3.33.
 
 **The carrier** (`test/boss_fairness_test.dart`; targets against `game` dde01449 as before):
 
 | Difficulty | Expert s (target) | Expert lives (target) | Naive kill share |
 |---|---|---|---|
-| Easy | 335.0 → 341.6 (−28.3 %; −30..−20) | 49.5 → 48.5 (−33.3 %; −35..−25) | 1.0 → 1.0 |
-| Normal | 529.5 → 537.5 (−22.0 %; −25..−15) | 83.5 → 86.5 (−22.7 %; −30..−20) | 0.967 → 1.0 |
-| Hard | 595.5 → 577.5 (−13.3 %; −15..−5) | 94.83 → 93.5 (−14.9 %; −20..−10) | 0.867 → 0.967 |
+| Easy | 335.0 → 367.0 (−23.0 %; −30..−20) | 49.5 → 53.83 (−25.9 %; −35..−25) | 1.0 → 1.0 |
+| Normal | 529.5 → 538.6 (−21.9 %; −25..−15) | 83.5 → 86.17 (−22.9 %; −30..−20) | 0.967 → 1.0 |
+| Hard | 595.5 → 573.3 (−13.9 %; −15..−5) | 94.83 → 93.33 (−15.0 %; −20..−10) | 0.867 → 0.933 |
 
 - With only the fire-rate change the expert took 505.2 / 737.8 / 770.1 s (+51 / +39 / +29 %).
 - HP × 0.77 (the DPS ratio) gave 409.8 / 624.4 / 669.3 s: the core door's windows are missed more by a slower gun.
@@ -731,27 +735,29 @@ Ground-missile impacts on these three seeds: 1.0 / 0.67 / 5.33 → 1.0 / 1.33 / 
 
 | Difficulty | Seconds | Hits the carrier takes |
 |---|---|---|
-| Easy | 183.85 → 174.54 (−5.1 %) | 483.9 → 369.9 |
-| Normal | 277.84 → 262.96 (−5.4 %) | 790.8 → 593.9 |
-| Hard | 300.83 → 299.40 (−0.5 %) | 921.1 → 692.2 |
+| Easy | 183.85 → 178.70 (−2.8 %) | 483.9 → 380.8 |
+| Normal | 277.84 → 255.29 (−8.1 %) | 790.8 → 581.9 |
+| Hard | 300.83 → 298.77 (−0.7 %) | 921.1 → 696.3 |
 
-Pooled: seconds −3.4 % (gate 5 %), hits −24.6 %. The hits fall with the carrier's HP by construction, so the test's
+Pooled: seconds −3.9 % (gate 5 %), hits −24.8 %. The hits fall with the carrier's HP by construction, so the test's
 hits baseline now holds the new values; the seconds baseline is unchanged.
 
 **The other gates.**
 - 318-wave defence budgets (`dart run tools/analyze_difficulty.dart`): only waves with a sentinel change. Worst budgets
   159 / 213 / 240 → 154 / 207 / 234 hits; the peak whole/opening ratio 2.25 → 2.37 (ceiling 2.5). Route rows:
 
-| Mode | Route | Standard hit range, before → after | Max whole/opening, before → after |
-|---|---:|---|---|
+| Mode | Routes | Standard hit range, before → after | Max whole/opening, before → after |
+|---|---|---|---|
 | easy | 2 / 3 / 4 / 5 | 17–63, 31–108, 34–112, 53–159 → 17–60, 31–104, 34–108, 53–154 | 1.71, 1.87, 1.79, 1.87 → 1.77, 1.94, 1.85, 1.93 |
 | normal | 2 / 3 / 4 / 5 | 29–80, 55–144, 58–151, 90–213 → 29–77, 55–139, 58–146, 90–207 | 2.07, 2.22, 2.08, 2.25 → 2.09, 2.35, 2.18, 2.36 |
 | hard | 2 / 3 / 4 / 5 | 36–92, 65–162, 68–172, 104–240 → 36–89, 65–157, 68–167, 104–234 | 2.14, 2.25, 2.06, 2.22 → 2.24, 2.37, 2.14, 2.31 |
 
+  Route 1 (no sentinels) and every other column are unchanged.
 - Campaign playtest (seed 1982): every bound holds; 123 entrances with the loom cap (122 without it: tour 5's third
-  launch wave was skipped on Hard); ground-missile impacts 0 / 2 / 2 of 11 / 22 / 26 launched (before 0 / 2 / 1 of
-  9 / 38 / 19). One intermediate build measured 4 of 25 on Normal, over its bound of 3.75: one seed's trajectory, which
-  the three-seed numbers above do not show as a trend.
-- Perspective parity and the sentinel rush fairness: pass, unchanged rules.
-- Bonus balance: Supply Run's pooled duration ratio reached 1.150 against the 1.15 band with the slower gun; its crates
-  (its only powers) now fall every 3 s.
+  launch wave was skipped on Hard); ground-missile impacts 0 / 1 / 1 of 10 / 23 / 27 launched (before 0 / 2 / 1 of
+  9 / 38 / 19). Intermediate builds measured 4 of 25 (Normal) and 5 of 27 (Hard), over the 15 % bound: one seed's
+  trajectory, which the three-seed profile does not show as a trend.
+- Perspective parity and the sentinel rush fairness: pass.
+- Bonus balance (routes 0–1, pooled against the sector each replaces): Supply Run duration +7.8 %, lives −3.9 %;
+  Stormfront duration −12.4 %, enemies +9.2 %, lives −11.5 % (it reached −19 % with bolts of 3 against the lighter
+  dive shields).
