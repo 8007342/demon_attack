@@ -36,6 +36,7 @@ import 'widgets/interlude_card.dart'
 import 'game/hints.dart' show tacticalHints; // --- cinematic flow: pause tips
 import 'widgets/level_toggle.dart'; // --- audio round: music / speech toggles
 import 'widgets/install_toast.dart'; // --- pwa-install
+import 'widgets/build_version_label.dart'; // --- build-version
 export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
 // --- end console route
 export 'game/scene.dart' show DemonScene;
@@ -961,6 +962,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       !(screen != null &&
                           WidescreenBackdrop.shows(bounds.biggest)))
                     _titleScreen(bounds),
+                  // --- build-version: the deploy's version, small, bottom left.
+                  if (title) const BuildVersionCorner(),
                   if (!title)
                     Center(
                       child: SizedBox(
@@ -1814,6 +1817,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           onPressed: _title,
                           child: const Text('RETURN TO TITLE'),
                         ),
+                        const BuildVersionLabel(), // --- build-version
                       ]),
                     ),
                 ],

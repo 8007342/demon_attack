@@ -20,6 +20,7 @@ import 'review/page_notes.dart';
 import 'review/review_catalog.dart';
 import 'review/review_studio.dart';
 import 'services/audio.dart';
+import 'widgets/build_version_label.dart'; // --- build-version
 
 void main() {
   // The gallery loads the game's audio script (web/index.html is shared);
@@ -78,6 +79,7 @@ class GalleryApp extends StatelessWidget {
     if (page == 'studio' || page == 'review') {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
+      builder: withBuildVersion, // --- build-version
         title: 'Demon Attack asset review',
         home: ReviewStudio(
           sceneBuilder: (page) => GalleryPage(page: page),
@@ -90,6 +92,7 @@ class GalleryApp extends StatelessWidget {
     }
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      builder: withBuildVersion, // --- build-version
       home: Scaffold(
         backgroundColor: const Color(0xFF0B0A1C),
         body: Stack(
