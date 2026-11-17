@@ -21,6 +21,7 @@ import 'carrier_breakup_painter.dart';
 import 'carrier_hatch_painter.dart';
 import 'carrier_presentation.dart';
 import 'carrier_script.dart' show CarrierApproachScript;
+import 'dive_shield.dart'; // --- dive-shield-thinning
 import 'ground_painter.dart';
 import 'insignia_atlas.dart';
 import 'insignia_painter.dart';
@@ -1126,7 +1127,6 @@ class DemonScene extends FlameGame {
           _sentinel(c, at, d);
           if (d.lastStand) _sentinelBerserk(c, at, d);
           c.restore();
-          if (d.lastStand) _rushShieldRing(c, at, d);
         }
         continue;
       }
@@ -1255,6 +1255,8 @@ class DemonScene extends FlameGame {
         width: d.angry ? 36 : 32,
         diving: d.dive > 0,
       );
+      // --- dive-shield-thinning: one shield in the body's own transform.
+      if (d.dive > 0 && reveal > 0) _diveShield(c, pos, d, reveal);
       c.restore();
       final fired = creatures.fireAge(d);
       if (fired != null && fired < 0.16) {
@@ -1267,9 +1269,6 @@ class DemonScene extends FlameGame {
         );
       }
       if (warning) tells.add(d); // drawn above the sky sheets
-      if (d.dive > 0 && d.diveShield > 0 && reveal > 0) {
-        _smallOrMediumDiveShield(c, pos, d);
-      }
       c.restore();
     }
     while (nextFog < fogSlots.length) {
@@ -3508,231 +3507,48 @@ class DemonScene extends FlameGame {
     }
   }
 
-  // --- playtest-fixes-3: diving shields as one coherent shape ------------
+  // --- dive-shield-thinning: one shield that thins in place ---------------
   //
-  // The old bows were assembled from 3-unit columns, each with its own
-  // rounded y, sine-driven tongue and jitter, 6-unit cuts per segment and
-  // wingtip sparks at fixed offsets. The columns were rounded in the
-  // creature's local units before its scale, so under the scale transform
-  // neighbouring columns jumped by whole scaled units and the arc shattered
-  // into offset blocks with gaps. Now every layer of a bow is a band of one
-  // crescent function (leading edge, thickness, flicker), drawn as a few
-  // polygons in the same local frame, so the whole shield scales, turns
-  // and wears as one shape.
+  // Replaces playtest-fixes-3's segmented crescents: those were cut into one
+  // segment per point and spent from the outside in (the shield narrowed),
+  // their flame lick throbbed the thickness on its own clock, they turned
+  // with the heading while the body did not, and they were drawn outside
+  // the body's wing roll (and the sentinel's bank squash). Now one arc of
+  // constant angular width, in the body's transform, loses only thickness.
 
-  /// The crescent of a thermal bow, in the creature's local units about
-  /// its centre: half span [span], nose drop [nose], leading edge at
-  /// [lead] below the centre (at the tips), thickness [thick] and flame
-  /// lick [lick] on the trailing edge.
-  static const _bowSmall = (
-    span: 16.0,
-    nose: 5.5,
-    lead: 7.5,
-    thick: 6.0,
-    lick: 2.5,
-  );
-  static const _bowMedium = (
-    span: 24.0,
-    nose: 7.5,
-    lead: 5.5,
-    thick: 7.5,
-    lick: 3.5,
-  );
-  static const _bowSentinel = (
-    span: 52.0,
-    nose: 15.0,
-    lead: 3.0,
-    thick: 10.0,
-    lick: 5.0,
-  );
-  static const _bowRush = (
-    span: 64.0,
-    nose: 18.0,
-    lead: 2.0,
-    thick: 13.0,
-    lick: 6.0,
-  );
-
-  /// Thermal palette (outer envelope to the white-hot nose) and the rush's
-  /// crimson-to-black one.
-  static const _thermal = [
-    Color(0xFFDD2C00),
-    Color(0xFFFF6D00),
-    Color(0xFFFFC23A),
-    Color(0xFFFFF6CC),
-  ];
-  static const _crimson = [
-    Color(0xFF1A0508),
-    Color(0xFF8E1020),
-    Color(0xFFFF3B3B),
-    Color(0xFFFFC2B0),
-  ];
-
-  /// Share of the thickness each band keeps (outer first) and its alpha.
-  static const _bowBands = [(1.0, .78), (.7, .9), (.42, .95), (.2, 1.0)];
-
-  /// The bow's leading edge (y below the centre) at u in [-1, 1].
-  static double bowLead(
-    ({double span, double nose, double lead, double thick, double lick}) b,
-    double u,
-  ) => b.lead + b.nose * (1 - u * u);
-
-  /// The bow's thickness at u: full at the nose, tapering to points.
-  static double bowThick(
-    ({double span, double nose, double lead, double thick, double lick}) b,
-    double u,
-  ) => b.thick * math.pow(math.max(0.0, 1 - u * u), .55) + .6;
-
-  /// Draws one thermal bow about [pos] (local units, under the caller's
-  /// scale): [n] segments ([lit] of them burning, the rest dark sockets,
-  /// one flashing white while it burns off), turned [turn] radians toward
-  /// the dive's heading. [strength] dims the envelope as the shield wears.
-  void _thermalBow(
-    Canvas c,
-    Offset pos,
-    ({double span, double nose, double lead, double thick, double lick}) b, {
-    int n = 1,
-    List<bool>? lit,
-    List<bool>? flashing,
-    double turn = 0,
-    double strength = 1,
-    double opacity = 1,
-    List<Color> palette = _thermal,
-    double seed = 0,
-  }) {
-    final paint = Paint()..isAntiAlias = true;
-    final t = model.clock;
-    final calm = sectors.flyover.reducedMotion;
-    // One smooth flame lick along the trailing edge (two low harmonics:
-    // continuous across segments, never per-column noise).
-    double lick(double u) {
-      if (calm) return b.lick * .5;
-      final w =
-          .55 +
-          .3 * math.sin(t * 17 + u * 5.1 + seed) +
-          .15 * math.sin(t * 29 - u * 9.3 + seed * 2);
-      return b.lick * w * (1 - .45 * u * u);
-    }
-
-    c.save();
-    if (turn.abs() > .01) {
-      c
-        ..translate(pos.dx, pos.dy)
-        ..rotate(turn)
-        ..translate(-pos.dx, -pos.dy);
-    }
-    // A notch between segments: 1.6 units of span, whatever the scale.
-    final notch = n > 1 ? 1.6 / b.span : 0.0;
-    const steps = 18;
-    Path band(double u0, double u1, double share, {bool flame = true}) {
-      final p = Path();
-      final k = math.max(2, ((u1 - u0) / 2 * steps).ceil());
-      for (var i = 0; i <= k; i++) {
-        final u = u0 + (u1 - u0) * i / k;
-        final x = pos.dx + u * b.span;
-        final y = pos.dy + bowLead(b, u) + .5 * share;
-        i == 0 ? p.moveTo(x, y) : p.lineTo(x, y);
-      }
-      for (var i = k; i >= 0; i--) {
-        final u = u0 + (u1 - u0) * i / k;
-        final x = pos.dx + u * b.span;
-        final th = bowThick(b, u) * share + (flame ? lick(u) * share : 0);
-        p.lineTo(x, pos.dy + bowLead(b, u) - th);
-      }
-      return p..close();
-    }
-
-    for (var s = 0; s < n; s++) {
-      final u0 = -1 + 2 * s / n + (s > 0 ? notch : 0);
-      final u1 = -1 + 2 * (s + 1) / n - (s < n - 1 ? notch : 0);
-      final on = lit?[s] ?? true;
-      if (flashing?[s] ?? false) {
-        paint.color = const Color(0xFFFFFFFF).withValues(alpha: opacity);
-        c.drawPath(band(u0, u1, 1), paint);
-        continue;
-      }
-      if (!on) {
-        // A spent segment keeps the bow's outline as a dark ember socket,
-        // so the shield still reads as one shape.
-        paint.color = palette[0].withValues(alpha: .28 * strength * opacity);
-        c.drawPath(band(u0, u1, .7, flame: false), paint);
-        continue;
-      }
-      for (var k = 0; k < _bowBands.length; k++) {
-        final (share, alpha) = _bowBands[k];
-        paint.color = palette[k].withValues(
-          alpha: alpha * (k == 0 ? .55 + .45 * strength : 1) * opacity,
-        );
-        c.drawPath(band(u0, u1, share), paint);
-      }
-    }
-    // Embers shed from the two tips, attached to them and rising.
-    if (!calm) {
-      final tipU = .96;
-      for (final side in const [-1.0, 1.0]) {
-        final on = lit == null || lit[side < 0 ? 0 : n - 1];
-        if (!on) continue;
-        final tip = Offset(
-          pos.dx + side * tipU * b.span,
-          pos.dy + bowLead(b, tipU) - bowThick(b, tipU),
-        );
-        for (var e = 0; e < 3; e++) {
-          final age = ((t * 2.2 + e / 3 + seed * .1) % 1.0);
-          final r = (1.4 - age) * b.thick * .14;
-          paint.color = Color.lerp(
-            palette[2],
-            palette[0],
-            age,
-          )!.withValues(alpha: (1 - age) * .85 * strength * opacity);
-          c.drawCircle(
-            tip.translate(side * age * b.thick * .35, -age * b.thick * 1.6),
-            math.max(.5, r),
-            paint,
-          );
-        }
-      }
-    }
-    c.restore();
-  }
-
-  /// The dive heading as a turn of the bow (radians, ±0.45), so its nose
-  /// leads the creature's motion in every dive pose.
-  static double bowTurn(Demon d) {
-    if (d.vy < 30) return 0;
-    return (-math.atan2(d.vx, d.vy) * .8).clamp(-.45, .45);
-  }
-
-  /// alien-insignia: the thermal bow cut into one segment per dive-shield
-  /// point, spent points outside-in, a burning one flashing white.
-  void _diveBow(
-    Canvas c,
-    Offset pos,
-    Demon d,
-    ({double span, double nose, double lead, double thick, double lick}) b,
-  ) {
-    final n = math.max(1, d.diveShieldMax);
-    final lit = InsigniaPainter.litCells(n, d.diveShield);
-    final flashing = [
-      for (var s = 0; s < n; s++)
-        !lit[s] && creatures.shields.flashAge(d, 'dive', s) != null,
-    ];
-    _thermalBow(
-      c,
-      pos,
-      b,
-      n: n,
-      lit: lit,
-      flashing: flashing,
-      turn: bowTurn(d),
-      strength: (d.diveShield / n).clamp(.35, 1.0),
-      seed: d.seed,
-    );
-  }
-
-  void _smallOrMediumDiveShield(Canvas c, Offset pos, Demon d) {
+  /// The shield spec for an ordinary diver or a sentinel.
+  static DiveShieldSpec diveShieldSpec(Demon d) {
+    if (d.isLarge) return DiveShield.sentinel;
     final notSoSmall =
         d.diveShieldMax >= 2 || d.elite || d.kind >= 2 || d.maxHp >= 3;
-    _diveBow(c, pos, d, notSoSmall ? _bowMedium : _bowSmall);
+    final s = notSoSmall ? DiveShield.medium : DiveShield.small;
+    // The angry gargoyle is drawn 44 units wide instead of 40.
+    return d.angry ? s.scaled(44 / 40) : s;
+  }
+
+  /// Where a sentinel's body is drawn: [effectSprite] snaps its corner to
+  /// whole local units, and the shield snaps with it.
+  static Offset _sentinelCentre(Offset pos) => Offset(
+    (pos.dx - 64).roundToDouble() + 64,
+    (pos.dy - 32).roundToDouble() + 32,
+  );
+
+  /// A diving creature's shield, in the caller's (the body's) transform.
+  void _diveShield(Canvas c, Offset pos, Demon d, double reveal) {
+    final flash = creatures.shields.hitFlash(d, 'dive');
+    if (d.diveShield <= 0 && flash <= 0) return;
+    DiveShield.paint(
+      c,
+      d.isLarge ? _sentinelCentre(pos) : pos,
+      diveShieldSpec(d),
+      points: d.diveShield,
+      max: math.max(1, d.diveShieldMax),
+      flash: flash,
+      clock: model.clock,
+      calm: sectors.flyover.reducedMotion,
+      opacity: reveal.clamp(0.0, 1.0),
+      seed: d.seed,
+    );
   }
 
   void _carrierLighting(Canvas c, Offset center, double bank) {
@@ -3860,16 +3676,9 @@ class DemonScene extends FlameGame {
     final fired = creatures.fireAge(demon);
     final firing = hovering && fired != null && fired < .28;
     final flashFrame = hovering && demon.flash > 0;
-    final bank = demon.bank.abs() > 0.01
-        ? demon.bank.clamp(-1.0, 1.0)
-        : (demon.vx / 140).clamp(-1.0, 1.0);
+    final bank = sentinelBank(demon);
     c.save();
-    if (bank.abs() > 0.04) {
-      c.translate(pos.dx, pos.dy);
-      c.rotate(bank * 0.08);
-      c.scale(1.0 - bank.abs() * 0.08, 1.0);
-      c.translate(-pos.dx, -pos.dy);
-    }
+    _bankAbout(c, pos, bank);
     final t = _transmittance(demon);
     final whiteFlash = demon.flash > 0 && !flashFrame;
     // A foreshadowed sentinel leaves its silhouette behind as it comes out
@@ -3919,8 +3728,10 @@ class DemonScene extends FlameGame {
     final glow = (Perspective.glowAlpha(t) - t) * (1 - shade);
     if (glow > .02 && !whiteFlash) _sentinelEyes(c, pos, glow);
     _creatureLighting(c, pos, bank, width: 92, diving: diving);
-    c.restore();
     final reveal = Perspective.gearReveal(t);
+    // --- dive-shield-thinning: under the body's bank, on its snapped centre.
+    if (diving && reveal > 0) _diveShield(c, pos, demon, reveal);
+    c.restore();
     if (mark > 0) {
       // --- alien-insignia: the winged crown (gargoyle-insignia) over the
       // head, and one cyan cell per
@@ -3963,9 +3774,20 @@ class DemonScene extends FlameGame {
         );
       }
     }
-    if (diving && demon.diveShield > 0) {
-      _sentinelDiveShield(c, pos, demon);
-    }
+  }
+
+  /// The sentinel's bank (-1..1): the simulation's, or its sideways speed.
+  static double sentinelBank(Demon demon) => demon.bank.abs() > 0.01
+      ? demon.bank.clamp(-1.0, 1.0)
+      : (demon.vx / 140).clamp(-1.0, 1.0);
+
+  /// The sentinel body's bank transform about [pos]: a roll and a squash.
+  void _bankAbout(Canvas c, Offset pos, double bank) {
+    if (bank.abs() <= 0.04) return;
+    c.translate(pos.dx, pos.dy);
+    c.rotate(bank * 0.08);
+    c.scale(1.0 - bank.abs() * 0.08, 1.0);
+    c.translate(-pos.dx, -pos.dy);
   }
 
   // --- sentinel rush presentation (demon-intelligence design §6.5) ------
@@ -4038,51 +3860,33 @@ class DemonScene extends FlameGame {
       _sentinelEyes(c, pos, .6 + .4 * flare, scale: 1 + .25 * flare);
     }
     if (!forming && phase != RushPhase.rush) return;
-    if (d.rushShield <= 0 && phase == RushPhase.rush) return;
-    final ratio = d.rushShieldMax <= 0
-        ? 0.0
-        : (d.rushShield / d.rushShieldMax).clamp(0.0, 1.0);
+    final breaking = creatures.shields.breaking(d, 'rush');
+    if (d.rushShield <= 0 && phase == RushPhase.rush && !breaking) return;
     final reel = d.rushStagger > 0 ? .5 : 1.0;
     final grow = forming
         ? Perspective.smoothstep(0, 1, d.lastStandTellProgress)
         : 1.0;
+    // --- dive-shield-thinning: the super-strong shield, the thickest. It
+    // forms in place (a hairline thickening, never a change of size) and
+    // thins with the rush shield's points, in the body's bank.
+    final max = d.rushShieldMax > 0 ? d.rushShieldMax : 1;
+    final points = d.rushShieldMax > 0 ? d.rushShield : 1;
     c.save();
-    // The bow condenses out of the sentinel as it transforms.
-    final k = .55 + .45 * grow;
-    c
-      ..translate(pos.dx, pos.dy)
-      ..scale(k)
-      ..translate(-pos.dx, -pos.dy);
-    _thermalBow(
+    _bankAbout(c, pos, sentinelBank(d));
+    DiveShield.paint(
       c,
-      pos,
-      _bowRush,
-      palette: _crimson,
-      strength: reel * (.4 + .6 * ratio),
+      _sentinelCentre(pos),
+      DiveShield.rush,
+      points: points,
+      max: max,
+      flash: creatures.shields.hitFlash(d, 'rush'),
+      clock: model.clock,
+      calm: sectors.flyover.reducedMotion,
       opacity: forming ? .3 + .7 * grow : reel,
-      turn: phase == RushPhase.rush ? -d.rushHeading * .8 : 0,
+      form: grow,
       seed: d.seed,
     );
     c.restore();
-  }
-
-  /// The rush shield (alien-insignia): the force-shield cell arc one row
-  /// below the sentinel's own, in ember-tinted cells, one per point, spent
-  /// points kept as sockets. Fixed size, so it reads at any depth.
-  void _rushShieldRing(Canvas c, Offset pos, Demon d) {
-    if (d.rushShieldMax <= 0 || d.entering) return;
-    if (d.rushShield <= 0 && !creatures.shields.breaking(d, 'rush')) return;
-    final scale = math.max(d.scale, .8);
-    _shieldCells(
-      d,
-      'rush',
-      d.rushShield,
-      d.rushShieldMax,
-      pos + Offset(0, 4 * scale + 11),
-      scale,
-      InsigniaPainter.revealAlpha(_transmittance(d)),
-      litAs: ShieldCell.rush,
-    );
   }
 
   /// Head top of the sentinel sheet's creature (units above the centre at
@@ -4171,9 +3975,6 @@ class DemonScene extends FlameGame {
   }
 
   // --- end sentinel rush presentation
-
-  void _sentinelDiveShield(Canvas c, Offset pos, Demon demon) =>
-      _diveBow(c, pos, demon, _bowSentinel);
 
   void _bossOrbitalArrivalEffects(
     Canvas c,

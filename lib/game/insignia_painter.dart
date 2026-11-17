@@ -381,6 +381,18 @@ class ShieldFx {
   double? flashAge(Demon d, String kind, int index) =>
       _memo[d]?.flashes['$kind:$index'];
 
+  /// dive-shield-thinning: the white flash of the newest hit on [d]'s
+  /// [kind] shield, 1 at the hit fading to 0 over [diveFlashSeconds].
+  double hitFlash(Demon d, String kind) {
+    final flashes = _memo[d]?.flashes;
+    if (flashes == null || flashes.isEmpty) return 0;
+    var age = double.infinity;
+    flashes.forEach((k, v) {
+      if (k.startsWith('$kind:') && v < age) age = v;
+    });
+    return age.isFinite ? (1 - age / diveFlashSeconds).clamp(0.0, 1.0) : 0;
+  }
+
   /// Whether a cell of [kind] on [d] is still breaking (flash or shards
   /// pending): the arc stays up until the last cell has shed.
   bool breaking(Demon d, String kind) =>
