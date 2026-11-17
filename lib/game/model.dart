@@ -1584,6 +1584,13 @@ class ArcadeModel {
   /// Rapid's volley interval: 8 steps = 0.133 s (was 0.105 s, 6.3 steps).
   static const rapidFireSteps = 8;
 
+  /// A power drops on every this many kills: 5 on route 0 (was 8), 8 after.
+  /// Route 0's 1-2 HP creatures gain nothing from the lighter sentinels
+  /// and dive shields, so the slower gun made the opening 4-13 % harder for
+  /// the Average pilot; powers a little sooner put it back (design §5.1).
+  static const routeZeroDropEvery = 5, dropEvery = 8;
+  int get killDropEvery => cycle == 0 ? routeZeroDropEvery : dropEvery;
+
   /// Primary shot speed (u/s): 8 u per model step, a whole number, so the
   /// scene's whole-unit rounding never alternates step lengths (was 390).
   static const shotSpeed = 480.0;
@@ -5155,10 +5162,11 @@ class ArcadeModel {
           ),
         );
       }
-      if (kills % 8 == 0 || (d.isLarge && wasDiving)) {
+      if (kills % killDropEvery == 0 || (d.isLarge && wasDiving)) {
         // --- bonus levels: the rules in force may change or withhold it.
         final power = _bonusDrop(
-          Power.values[(math.max(1, kills ~/ 8) - 1) % Power.values.length],
+          Power.values[(math.max(1, kills ~/ killDropEvery) - 1) %
+              Power.values.length],
         );
         if (power != null) pickups.add(Pickup(d.x, d.y, power));
       }

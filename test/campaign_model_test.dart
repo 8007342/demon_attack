@@ -147,7 +147,8 @@ void main() {
           m.hitDemon(d);
         }
         drops.add(m.heartPickups.length);
-        expect(m.pickups.length, 625);
+        // fire-rate-tune: route 0 drops on every 5th kill (was 8th).
+        expect(m.pickups.length, 5000 ~/ m.killDropEvery);
       }
       expect(const DifficultyPolicy(Difficulty.easy).heartDropChance, .012);
       expect(const DifficultyPolicy(Difficulty.normal).heartDropChance, .008);
@@ -566,7 +567,7 @@ void main() {
     for (final rushing in [false, true]) {
       final m = ArcadeModel()..start(difficulty: Difficulty.hard);
       m.mode = RunMode.playing;
-      m.kills = 7;
+      m.kills = m.killDropEvery - 1; // its kill drops a power
       final d = Demon(
         90,
         90,
@@ -599,7 +600,7 @@ void main() {
       m.shots.add(Shot(d.x, d.y, 0, 0));
       m.update(1 / 60);
       expect(m.demons, isNot(contains(d)));
-      expect(m.kills, 8);
+      expect(m.kills, m.killDropEvery);
       expect(m.score, 150 + 600);
       expect(m.pickups, hasLength(1));
       expect(m.blasts.where((b) => b.isLarge), hasLength(1));

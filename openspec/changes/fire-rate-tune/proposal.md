@@ -34,6 +34,7 @@ The causes, read from the code, are in `design.md` §1 and §3:
   - the carrier's hatch pools, core shares and hatch HP floor (2, was 3) are re-chosen to keep the carrier-hatches
     time-to-kill targets and Easy below Normal on every tour;
   - a sentinel's hull is 70 % of what it was;
+  - route 0 drops a power every 5 kills (was 8), so the opening is no harder;
   - divers' dive shields lose a point (sentinel 3 + route ÷ 2, elite 2, every other creature 1);
   - the loom cap is 120 s (was 90 s), so tour 5's third launch wave still comes;
   - Supply Run's crates fall every 3 s (was 3.5 s): they are its only powers;
@@ -54,6 +55,7 @@ The causes, read from the code, are in `design.md` §1 and §3:
 - `lib/game/difficulty.dart`: `sentinelHull`. `lib/game/model_bonus.dart`: the bonus par uses it.
   `lib/game/carrier_hatches.dart`: `pools`, `coreShares`, `minLayer`.
   `lib/game/bonus/levels/supply_run.dart`: crates every 3 s. `lib/game/bonus/levels/storm_cell.dart`: bolt damage 2.
+- `lib/game/shot_layer.dart`: `smearMax` 16 (was 14), one line.
 - `lib/game/ship_painter.dart`: one line, the Spread sprite is chosen by `ArcadeModel.spreadShotSpeed` instead of a
   literal −370. No rendering change.
 - Pilots that led targets by a literal 390 u/s now use `ArcadeModel.shotSpeed`.

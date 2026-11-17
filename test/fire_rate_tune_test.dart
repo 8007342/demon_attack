@@ -117,6 +117,26 @@ void main() {
     );
   });
 
+  test('route 0 drops a power every 5 kills, later routes every 8', () {
+    for (final (route, every) in [(0, 5), (1, 8)]) {
+      final m = ArcadeModel(seed: 4)..startAt(sector: 2, route: route);
+      m
+        ..mode = RunMode.playing
+        ..invulnerable = 1000;
+      m.demons.clear();
+      m.pickups.clear();
+      final before = m.kills;
+      for (var i = 0; i < 40; i++) {
+        final d = Demon(20, 70, 0, 1, 0);
+        m.demons.add(d);
+        m.hitDemon(d);
+      }
+      expect(m.killDropEvery, every);
+      final drops = (m.kills ~/ every) - (before ~/ every);
+      expect(m.pickups, hasLength(drops), reason: 'route $route');
+    }
+  });
+
   test('the carrier keeps Easy below Normal below or at Hard', () {
     for (var route = 0; route < 5; route++) {
       final e = Carrier(route, difficulty: Difficulty.easy);
