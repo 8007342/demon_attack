@@ -335,3 +335,18 @@ sourced there (Microsoft Learn and UCBUGG, read 2026-11-17); the numbers are our
 | ID | Where | Claim | Status | Check |
 |---|---|---|---|---|
 | <a id="HE-1"></a>HE-1 | design §1–§5 | The beat lengths (grip 0.5 s inside the telegraph, peek 0.34 s, crouch 0.16 s, leap 0.12 s, unfurl and flare 0.16 s), the hop heights 9/12/6, the blend 0.24–0.56 s; the field ring 1.2–7 units; the vent and burst timings; the tier budgets (3/1/0 lurkers), the atlas and draw-call ceilings; the tone grade 1.35/0.03/1.15 | UNSOURCED | `test/hatch_emergence_test.dart`; `art/contact/hatch-emergence-*.png`, `-fight.gif` |
+
+## Part FR: the player's fire rate and anti-strobe tuning (`fire-rate-tune`, added 2026-11-17)
+
+`openspec/changes/fire-rate-tune/design.md` marks these claims. On 2026-11-17 en.wikipedia.org, michaelbach.de,
+people.csail.mit.edu, medium.com, gafferongames.com, blurbusters.com, pmc.ncbi.nlm.nih.gov and frontiersin.org reset
+the connection from the forge. Nothing was routed around the proxy. MDN, docs.flutter.dev and the Flame source on
+GitHub were read and are cited in the design. The design's numbers rest on its own maths (`tools/strobe/strobe.lua`),
+not on these claims.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="fr-temporal-sensitivity"></a>fr-temporal-sensitivity | A periodic hitch between about 2 and 15 Hz is the most visible; at 30 Hz it fuses | Frontiers 2023 and van den Berg 2011 seen as snippets only (peak 5–20 Hz by luminance) |
+| <a id="fr-phantom-array"></a>fr-phantom-array | A small bright object that jumps more than its own length per frame is seen as separate copies | no page opened; Blur Busters and Wikipedia reset |
+| <a id="fr-nearest-neighbour"></a>fr-nearest-neighbour | Apparent motion matches each element to its nearest neighbour in the next frame (the wagon-wheel mechanism) | M. Bach's demonstration and Wikipedia, "Stroboscopic effect", seen as snippets only |
+| <a id="fr-dt-snap"></a>fr-dt-snap | Snapping the measured frame time to vsync multiples removes 0-then-2 update stutter | T. Glaiel's article seen as a snippet only |

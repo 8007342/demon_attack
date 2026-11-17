@@ -1,6 +1,16 @@
 # Styleguide: alien troops (rank, shields, status)
 
-Change: `openspec/changes/alien-insignia` (R6 in `plan/operator-feedback-2026-11-15b.md`).
+Changes: `openspec/changes/alien-insignia` (R6 in `plan/operator-feedback-2026-11-15b.md`), and
+`openspec/changes/gargoyle-insignia` (I1 in `plan/operator-feedback-2026-11-17.md`: the rank glyphs redrawn from fangs
+and wings, because the talons read as hearts).
+
+Gargoyle-insignia review (`cd tools/alien_insignia && go run . gargoyle -root ../..`, after
+`test/gargoyle_insignia_review_test.dart`; ledger `plan/render-runs/gargoyle-insignia.md`):
+- `art/contact/gargoyle-insignia.png`: the ladder old against new at 8×, 2× and 1×, on the four species at phone
+  size, and in game in a dense formation;
+- `art/contact/gargoyle-insignia-candidates.png`: every shape tried per rank, with its lookalike scores.
+
+The alien-insignia sheets below still show the retired talons, ocellus and crown.
 Mockups (CPU, regenerate with `cd tools/alien_insignia && go run . sheets -root ../..`):
 - `art/contact/alien-insignia-ranks.png`: species × rank, art ×3 and true phone size;
 - `art/contact/alien-insignia-shields.png`: force shield cells, a break, wound tint, angry rim, dive tell;
@@ -55,8 +65,9 @@ up.**
    No channel borrows another's colour.
 3. **Coarse pixels.** Insignia are drawn on the *old* 32-grid pixel, one glyph pixel = 2 art px (≈ 1.35 CSS px). Each
    has a 1-glyph-pixel ink outline, so they sit on any hide or sky.
-4. **Alien, not human.** No chevrons, bars or stars copied from human militaries. The brood brands rank as *talons*
-   (claw hooks) and *ocelli* (rayed eyes), and its officers wear *crowns of tines*.
+4. **Alien, not human; gargoyle, not cute.** No chevrons, bars or stars copied from human militaries, and no shape a
+   player reads as a heart, a smile or a face (§4.1). The brood brands rank with *fangs*, its officers with *wings*:
+   a fang, twin fangs, a winged fang, a winged crown of fangs.
 5. **Drawn after the camera.** Insignia, shield cells and rims are overlays drawn at a fixed CSS size after the
    `boss-grandeur` zoom, so a zoom never shrinks them. They follow a per-cell head anchor, so they stay on the creature
    in every bank and flap pose, and they are never rotated.
@@ -68,7 +79,7 @@ up.**
 |---|---|---|
 | `insignia.ink` | `#0B0A14` | 1 px outline of every glyph and cell |
 | `insignia.bone` | `#F6EBC8` | Rank glyph fill (the brood's bone brand) |
-| `insignia.ember` | `#FF5A36` | Ocellus core; angry rim |
+| `insignia.ember` | `#FF5A36` | Officer core (winged fang, winged crown: one dot, centre line); angry rim |
 | `insignia.angry` | `#FFC24A` | Rank glyph fill while angry (1 HP left) |
 | `shield.cell` | `#62F0FF` | Force-shield cell, lit |
 | `shield.spent` | `#1C6F86` | Force-shield socket, spent |
@@ -79,15 +90,39 @@ up.**
 The cyan family is the force-shield language of the main spec ("geometric cyan/teal/violet"). The thermal dive
 shields keep their blackbody palette (§5.2) and never use cyan.
 
-## 4. Rank insignia (the alien chevrons and stars)
+## 4. Rank insignia (fangs and wings)
 | Rank | Who (game data) | Glyph | Size (glyph px → CSS px at 40-unit draw) |
 |---|---|---|---|
 | R0 Drone | Intelligence tier T0: small creatures (`kind < 2`, `maxHp < 3`, not elite) | none | — |
-| R1 Skirmisher | Tier T1: not-so-small creatures (`kind ≥ 2` or `maxHp ≥ 3`) | one **talon** | 7 × 5 → 9.5 × 6.8 |
-| R2 Veteran | T1 with `maxHp ≥ 4` (route-hardened) | two stacked **talons** | 7 × 9 → 9.5 × 12 |
-| R3 Hunter | Elites (tier T2) | **ocellus**: a four-rayed eye, ember core | 9 × 9 → 12 × 12 |
-| R4 Sentinel | Shield and armoured sentinels (tier T3) | **crown** of five tines over an ocellus | 9 × 4 + 9 × 9, on the sentinel sheet's head anchor at the sentinel's scale |
-| Carrier forms | Boss forms 1–4 | the same ladder on the brood sigil: talon, two talons, ocellus, crown | at the hull's scale |
+| R1 Skirmisher | Tier T1: not-so-small creatures (`kind ≥ 2` or `maxHp ≥ 3`) | one **fang**: an ivory tusk leaning right, tip hooked back | 7 × 8 → 9.5 × 10.8 |
+| R2 Veteran | T1 with `maxHp ≥ 4` (route-hardened) | **twin fangs**: two tusks leaning alike, the second one px lower | 10 × 8 → 13.5 × 10.8 |
+| R3 Hunter | Elites (tier T2) | **winged fang**: bat wings swept up over a hanging fang, ember core | 13 × 9 → 17.6 × 12.2 |
+| R4 Sentinel | Shield and armoured sentinels (tier T3) | **winged crown**: three fangs rising between wide wings, ember core | 15 × 7 → 20.3 × 9.5, on the sentinel sheet's head anchor |
+| Carrier forms | Boss forms 1–4 | the same ladder on the brood sigil: fang, twin fangs, winged fang, winged crown | at 2× |
+
+The ladder escalates twice at a glance: by width (7, 10, 13, 15 glyph px), and by kind, from fangs (the ranks) to
+wings with an ember core (the officers). The fangs rhyme with the carrier's ivory tusk-prongs
+(`alien-capital-ships.md` §3 item 8): long, tapering, never a short round hook. Glyph data: `tools/alien_insignia/
+gargoyle.go`.
+
+### 4.1 Readability rules for marks of a few pixels
+From the gargoyle-insignia diagnosis (design §1). The old talon was the canonical pixel heart, and the old crown, with
+two ember dots over tines, was a face.
+1. **Judge the blurred envelope.** At 7–15 glyph px the outlined silhouette survives the downscale; 1-px notches and
+   interior detail do not.
+2. **Mirror symmetry is a face magnet.** Single and paired fangs are asymmetric. A symmetric mark is at least 1.4 ×
+   wider than tall, so it reads as wings, not a head.
+3. **No two lobes over a point** (a heart). A point hangs clear below a wide, thin top, or ends a leaning stroke.
+4. **No mirrored pair of hooks or fangs.** Converging, they are a heart; diverging, they are vampire teeth. A pair
+   leans the same way and is staggered.
+5. **No row of points under a band** (a mouth). Points rise as a crown or hang as one fang.
+6. **At most one ember dot, on the centre line.** Two side by side are eyes.
+7. **A gap of at least one glyph px** between strokes, so the outline does not merge them.
+8. **Escalate by width and by kind**, never by detail alone.
+
+`go test` in `tools/alien_insignia` checks rules 2, 4, 6, 7 and 8 on the shipped glyphs. It also checks a lookalike
+ceiling: a soft IoU of at most 0.5 against a pixel heart, smile and face. The retired talon scored 0.76 against the
+heart.
 
 **Placement.** Bottom-centre one art px above the head's top, at the per-cell head anchor (species head tops in the
 neutral glide pose are at art y 21 / 20 / 21 / 21, measured on the shipped atlas by `tools/generate_sprites.py`).
@@ -95,7 +130,7 @@ The sentinel's crown sits 17 units above its centre × its scale. The carrier's 
 head is kept free of horns wider than 6 art px in future hero art (§8).
 
 **Replaces:**
-- the elite's rotating 12-dot ring: the ocellus *is* the elite mark;
+- the elite's rotating 12-dot ring: the winged fang *is* the elite mark;
 - the 2 × 2 rank pips on the carrier sigil.
 
 The species chest badges in the art (teal chevron, violet twin bars, coral fang slashes, gold star jewel) stay as
@@ -161,6 +196,7 @@ On a 360 CSS px wide arena at DPR 1 (the worst case), with creatures drawn at 40
 
 ## 9. Do and don't
 - **Do:** one glyph per creature, bone on ink, above the head.
+- **Don't:** draw a rank mark that is a heart, a smile, a face or a mouth with teeth at phone size (§4.1).
 - **Don't:** put rank on the chest, under the wings or in the hide colour.
 - **Do:** count shield points as cells, and keep spent sockets visible.
 - **Don't:** use cyan for anything that is not a force shield, or thermal colours for anything that is not a dive

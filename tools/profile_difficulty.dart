@@ -37,11 +37,11 @@ void steer(ArcadeModel model, {bool react = true, double reaction = 0}) {
   var x = model.shipX;
   final boss = model.boss;
   if (boss != null) {
-    final flight = (ArcadeModel.shipY - boss.y) / 390;
+    final flight = (ArcadeModel.shipY - boss.y) / ArcadeModel.shotSpeed;
     x = boss.forecastX(flight, model.speed);
   } else if (model.demons.isNotEmpty) {
     final d = model.demons.first;
-    final flight = (ArcadeModel.shipY - d.y) / 390;
+    final flight = (ArcadeModel.shipY - d.y) / ArcadeModel.shotSpeed;
     final time = model.levelClock + flight;
     x = d.isLarge
         ? d.x

@@ -243,6 +243,10 @@ void main() {
       for (var f = 0; f < 60 * 60; f++) {
         plain.update(1 / 60);
         seeded.update(1 / 60);
+        // Drops may differ, so none is collected: a collected power plays
+        // differently (fire-rate-tune: route 0 drops every 5th kill).
+        plain.pickups.clear();
+        seeded.pickups.clear();
       }
       // Drops may differ; the swarm and the dice do not.
       expect(seeded.demons.length, plain.demons.length);

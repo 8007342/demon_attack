@@ -143,7 +143,9 @@ void main() {
   });
 
   test('view selection: pitch from the glide, yaw through 0 with holds', () {
-    final m = ArcadeModel(seed: 9)..startAt(sector: 5, route: 0, wave: 3);
+    // fire-rate-tune: tour 2, whose carrier now has tour 1's old hit points
+    // (28 + 13); the lighter tour-1 carrier falls before it swerves.
+    final m = ArcadeModel(seed: 9)..startAt(sector: 5, route: 1, wave: 3);
     final d = BossDirector(seed: 9);
     final views = <BossView>{};
     var changes = 0, last = d.view;

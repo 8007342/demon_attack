@@ -40,7 +40,7 @@ class StormTuning {
     this.forkMax = 104,
     this.column = 34,
     this.core = 13,
-    this.damage = 3,
+    this.damage = 2,
     this.rodColumn = 52,
   });
 
@@ -74,6 +74,9 @@ class StormTuning {
   final double core;
 
   /// Damage a bolt does to a creature (a homing missile's heavy hit).
+  /// fire-rate-tune: 2 (was 3). Dive shields lost a point, so a bolt of 3
+  /// broke through divers it used to stop at, and the storm ran a fifth
+  /// easier than the sector it replaces.
   final int damage;
 
   /// [column] while the ship carries the lightning rod.

@@ -186,6 +186,7 @@ void main() {
     for (var f = 0; f < 300 && s.telling; f++) {
       _park(m, s.x);
       m.invulnerable = 0;
+      m.powerTimers.remove(Power.shield); // a dropped shield would absorb it
       m.shots.clear();
       for (final d in m.demons) {
         d.x = s.x < 180 ? 340 : 20; // nothing else threatens the ship

@@ -56,14 +56,14 @@ void steer(ArcadeModel model, {bool react = true, bool oracle = true}) {
     } else {
       dy = 25;
     }
-    final flight = (ArcadeModel.shipY - (boss.y + dy)) / 390;
+    final flight = (ArcadeModel.shipY - (boss.y + dy)) / ArcadeModel.shotSpeed;
     x = boss.forecastX(flight, model.speed) + dx;
   } else if (model.demons.isNotEmpty) {
     // The first settled enemy (a parked or arriving one cannot be hit).
     final d =
         model.demons.where((d) => !d.entering).firstOrNull ??
         model.demons.first;
-    final flight = (ArcadeModel.shipY - d.y) / 390;
+    final flight = (ArcadeModel.shipY - d.y) / ArcadeModel.shotSpeed;
     final time = model.levelClock + flight;
     x = d.isLarge
         ? d.x

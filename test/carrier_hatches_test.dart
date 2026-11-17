@@ -58,18 +58,20 @@ void main() {
         final pool = b.hatches.fold(0, (a, h) => a + h.hpMax);
         expect(b.shieldMax, pool);
         expect(b.shield, pool);
-        // The calibrated share of the old shield, at least 3 + 3 a hatch.
+        // The calibrated share of the old shield, at least minLayer for
+        // the field and for the hull of each hatch.
         final n = b.hatches.length;
+        const least = 2 * CarrierHatches.minLayer;
         expect(
           pool,
           lessThanOrEqualTo(
-            math.max(6 * n, CarrierHatches.pools[d.index] * shield + 2 * n),
+            math.max(least * n, CarrierHatches.pools[d.index] * shield + 2 * n),
           ),
         );
-        expect(pool, greaterThanOrEqualTo(6 * n));
+        expect(pool, greaterThanOrEqualTo(least * n));
         for (final h in b.hatches) {
           expect(h.fieldMax, greaterThanOrEqualTo(h.hullMax));
-          expect(h.hullMax, greaterThanOrEqualTo(3));
+          expect(h.hullMax, greaterThanOrEqualTo(CarrierHatches.minLayer));
         }
       }
     }

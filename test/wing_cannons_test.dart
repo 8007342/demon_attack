@@ -36,7 +36,7 @@ void main() {
             closeTo(m.wingMuzzles[power]!.x.abs(), 3.5),
             reason: 'the shot leaves from the wing muzzle',
           );
-          expect(volley.single.vy, -390);
+          expect(volley.single.vy, -ArcadeModel.shotSpeed);
         }
         expect(sides, [-1, 1, -1, 1]);
       },
@@ -66,10 +66,12 @@ void main() {
     expect(spread.wingGun, Power.powerful);
     final volley = nextVolley(spread);
     expect(volley, hasLength(3), reason: 'wing shot plus the angled pair');
-    final primary = volley.where((s) => s.vy == -390).single;
+    final primary = volley.where((s) => s.vy == -ArcadeModel.shotSpeed).single;
     expect((primary.x - spread.shipX).abs(), greaterThan(10));
     expect(
-      volley.where((s) => s.vy == -370).map((s) => (s.x - spread.shipX).abs()),
+      volley
+          .where((s) => s.vy == -ArcadeModel.spreadShotSpeed)
+          .map((s) => (s.x - spread.shipX).abs()),
       everyElement(lessThan(8)),
       reason: 'spread still fans from the nose',
     );

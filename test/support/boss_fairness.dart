@@ -37,7 +37,7 @@ double fairnessAim(ArcadeModel m, Carrier b, {required bool lead}) {
     dy = b.shield > 0 ? 50 : 25;
   }
   if (!lead) return b.x + dx;
-  final flight = (ArcadeModel.shipY - (b.y + dy)) / 390;
+  final flight = (ArcadeModel.shipY - (b.y + dy)) / ArcadeModel.shotSpeed;
   return b.forecastX(flight, m.speed) + dx;
 }
 
@@ -60,7 +60,7 @@ double fairnessAim(ArcadeModel m, Carrier b, {required bool lead}) {
     } else if (m.combat && m.demons.isNotEmpty) {
       final d =
           m.demons.where((d) => !d.entering).firstOrNull ?? m.demons.first;
-      final flight = (ArcadeModel.shipY - d.y) / 390;
+      final flight = (ArcadeModel.shipY - d.y) / ArcadeModel.shotSpeed;
       m.moveTo(lead ? d.x + d.vx * flight : d.x);
     }
     m.update(1 / 60);

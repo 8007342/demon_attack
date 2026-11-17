@@ -34,6 +34,8 @@ player driven by the game's events into the live game. The operator verifies by 
 ## G2. Player fire rate down (change `fire-rate-tune`)
 "It's a bit hard to see everything going on in the screen, we might need to decrease our ships firerate overall, keep
 the demons fire rate intact, just decrease ours." Re-adjust the difficulty to match, as usual.
+- Change: `openspec/changes/fire-rate-tune` (with P1's stroboscopic bullets on the model side); calibration in
+  `plan/calibration-current.md`, "Fire-rate tune".
 
 # Round 5 (2026-11-17, a playthrough of several levels in the preview)
 
