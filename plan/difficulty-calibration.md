@@ -50,6 +50,11 @@ Carrier and sentinel health remain unchanged in this correction: their distinct 
 
 ## Powers, shots to kill, and effective damage
 
+> **Superseded cadence (fire-rate-tune, 2026-11-17).** The player now fires every 18 steps (0.30 s) and Rapid every 8
+> (0.133 s); shots climb at 480 u/s. Sustained single-target damage is 3.33/s base, 6.67/s Powerful and 7.50/s Rapid.
+> The shots-to-kill table below is unchanged; the times in this section scale by 0.30 / 0.23. See
+> `openspec/changes/fire-rate-tune/design.md` and `plan/calibration-current.md`, "Fire-rate tune".
+
 Retain integer health and damage. Baseline and Large deal 1 damage; Powerful and Powerful+Large deal 2. Powerful replaces Rapid; Large replaces Spread. Large grants coverage, not a second damage multiplier. Each explosion must hit each target at most once, including the direct target and carrier. The existing nine-second timers and baseline 0.23-second fire interval remain.
 
 Use Large radius **32/30/28** for Easy/Normal/Hard. With the current ordinary hit allowance of 14, effective center-distance reach is 46/44/42. This modest coverage adjustment can assist Easy without changing weapon identity. It is an efficacy adjustment, not a claim that radius creates a fixed DPS multiplier: enemy spacing and accuracy determine how many targets it hits. Keep raw Powerful damage at 2 in every mode. Raising Easy to 3 would make every 3-HP creature a one-hit kill and changes discrete outcomes far more than the nominal percentage suggests. A floating-point damage rewrite is unnecessary for this correction.

@@ -252,7 +252,7 @@ class ShipPainter {
     if (s.hostile) return s.kind == ShotKind.sentinel ? 12 : 10;
     if (s.kind == ShotKind.large) return 6;
     if (s.kind == ShotKind.powerful) return 4;
-    if (s.vy == -370) return 8; // spread's angled pair
+    if (s.vy == -ArcadeModel.spreadShotSpeed) return 8; // spread pair
     return m.hasPower(Power.rapid) ? 2 : 0;
   }
 

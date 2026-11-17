@@ -242,7 +242,7 @@ extension ArcadeBonus on ArcadeModel {
         final armored = cycle >= 2 && difficulty != Difficulty.easy;
         total += face(
           (roster - 1 + w + level) % 4,
-          (armored ? 12 : 9) + math.min(cycle, 4) * 2,
+          policy.sentinelHull(route: cycle, armored: armored),
         );
       }
       total += creatures * mean;

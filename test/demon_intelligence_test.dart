@@ -76,14 +76,21 @@ void main() {
     // Drones only: the same scene with and without the intelligence.
     List<double> run(bool on) {
       final m = arena()..intelligence = on;
-      m.demons.addAll([
+      final drones = [
         for (var i = 0; i < 6; i++) settled(60.0 + i * 48, 120 + (i % 2) * 30),
-      ]);
+      ];
+      m.demons.addAll(drones);
       final xs = <double>[];
       for (var f = 0; f < 240; f++) {
         if (f % 9 == 0) m.shots.add(Shot(60.0 + (f * 7) % 240, 470, 0, -390));
         m.update(dt);
-        xs.addAll([for (final d in m.demons) d.x]);
+        // Only the six drones: kills bring a reinforcement group, whose
+        // route-1 elites are hunters and do use the intelligence
+        // (fire-rate-tune: the faster shots kill sooner).
+        xs.addAll([
+          for (final d in drones)
+            if (m.demons.contains(d)) d.x,
+        ]);
       }
       return xs;
     }

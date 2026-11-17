@@ -29,8 +29,9 @@ class ShotLayer {
   /// A shot at least this fast (arena px/s) gets a motion smear.
   static const smearSpeed = 200.0;
 
-  /// The smear never runs longer than this behind the sprite (arena px).
-  static const smearMax = 14.0;
+  /// The smear never runs longer than this behind the sprite (arena px);
+  /// fire-rate-tune: 16 (was 14), a player shot's jump at 30 Hz.
+  static const smearMax = 16.0;
 
   /// The smear's opacity at the sprite, fading to none at its end.
   static const smearAlpha = .3;
