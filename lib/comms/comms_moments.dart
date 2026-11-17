@@ -25,6 +25,9 @@ const commsMomentEvents = {
   GameEventNames.levelClear,
   GameEventNames.salvage,
   GameEventNames.incoming,
+  // --- lightning-rework: the reassurance after a zap tells the pilot the
+  // ship is fine (a useful line, never dropped as flavour).
+  GameEventNames.lightningShipHit,
 };
 
 /// Moments that announce the same thing share one cooldown: the next wave

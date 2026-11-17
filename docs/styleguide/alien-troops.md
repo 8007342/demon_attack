@@ -161,6 +161,24 @@ never cyan and never hex.
 The authored elite plates (helm plates, crest spikes, gorget, pauldrons) remain and shed one level per hit. They are
 armour, not a shield, so they carry no cyan.
 
+### 5.4 Lightning-rod armour (lightning-rework)
+In a storm, sentinels from the second tour and hunters from the third wear two iron rods rising off the shoulders
+(`LightningPainter.rods`, drawn in the body's transform, so they scale, fog and tumble with it). Rules:
+- **Shoulders, never the head.** The rank glyph owns the head anchor (§4); the rods frame it and never cross it.
+  The single crest rod and the three-rod crown were rejected because they merged with the glyph
+  (`art/contact/lightning-rework-rods.png`, `plan/render-runs/lightning-rework.md`).
+- **Brood iron, bone tips.** Shafts in dark iron `#2E2A33` with a `#5A5262` edge and two collar bands; tips in the
+  insignia's bone `#E9DFC8`. No cyan or teal (friendly technology).
+- **Charged reads as light, not colour.** A charged creature's tips go white, a violet-white halo (Stormfront's
+  `#CFC4FF`) surrounds the body and an arc jumps between the tips; it never changes hue, so the rank glyph's tones
+  (bone, ember, tell white) keep their meaning.
+
+### 5.5 Stunned (lightning-rework)
+A stunned creature tumbles (a roll of up to ±0.55 rad while it falls) under four short white arcs with a violet glow.
+No new colour, no shield ring: it reads as "dazed and open", the opposite of a shield. Reduced motion keeps the arcs
+still and drops the roll.
+
+
 ## 6. Health and state
 | State | Today | Proposed |
 |---|---|---|

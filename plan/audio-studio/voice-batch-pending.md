@@ -135,4 +135,40 @@ on the audio studio (tillandsias#1103).
 | `bossHintTiming.h0` | human | kestrel | urgent | Time the open hatch! | (text card) |
 | `bossHintLead.h0` | human | wisp | urgent | Fire ahead of its position! | (text card) |
 | `bonusCall.supplyRun.h0` | human | pip | excited | Presents from the sky, so pop 'em open and grab the goodies! | (text card) |
-| `bonusCall.stormfront.h0` | human | sunny | teasing | Park under the brood, then scoot, and let the thunder zap them! | (text card) |
+| `bonusCall.stormfront.h0` | human | sunny | teasing | Lure the lightning onto the brood, then shoot them while they fall! | (text card) |
+| `stormStrike.avoid.h0` | human | rook | urgent | Avoid lightning! | (text card) |
+| `stormStrike.avoid.h1` | human | sunny | urgent | Avoid lightning! Move! | (text card) |
+| `stormStrike.avoid.h2` | human | wisp | urgent | Avoid lightning! Slide out! | (text card) |
+| `stormStrike.avoid.h3` | human | kestrel | urgent | Avoid lightning, pilot! | (text card) |
+| `stormBait.stun.h0` | human | kessler | excited | They're stunned! Pick them off while they fall! | (text card) |
+| `stormBait.stun.h1` | human | voss | excited | Stunned and dropping. Light them up! | (text card) |
+| `stormBait.stun.h2` | human | nomad | calm | Easy targets now, friend. Take the shot. | (text card) |
+| `stormBait.stun.h3` | human | pip | excited | Zapped and wobbly! Get them before they wake up! | (text card) |
+| `stormBait.stun.d0` | demon | vexxa | stern | [snarl] My wings! They will not answer! | (text card) |
+| `stormBait.stun.d1` | demon | gorrak | panicked | [alarm] Can't fly! Somebody catch me! | (text card) |
+| `stormBait.stun.d2` | demon | nibb | panicked | [alarm] Bzzt! My scales are all fizzy! | (text card) |
+| `stormBait.stun.d3` | demon | skarn | stern | [snarl] You tricked the sky! Cheater! | (text card) |
+| `lightningStun.h0` | human | anvil | calm | The storm stunned a few. Free shots! | (text card) |
+| `lightningStun.h1` | human | sparrow | excited | Look, they're dropping! Shoot, shoot! | (text card) |
+| `lightningStun.d0` | demon | skarn | stern | [roar] Who aimed the sky at me?! | (text card) |
+| `lightningStun.d1` | demon | morth | teasing | [gloat] Just a tickle. Just a tickle! | (text card) |
+| `lightningStun.d2` | demon | sliss | panicked | [alarm] Everything is buzzing! | (text card) |
+| `lightningStun.d3` | demon | vexxa | stern | [snarl] Wings, wake up! Fly! | (text card) |
+| `lightningShipHit.h0` | human | sunny | warm | You're fine, the ship can take it. | (text card) |
+| `lightningShipHit.h1` | human | nomad | calm | Easy, friend. Just a jolt, you're fine. | (text card) |
+| `lightningShipHit.d0` | demon | vexxa | teasing | [gloat] Ha! Even the sky picks our side! | (text card) |
+| `lightningShipHit.d1` | demon | skarn | teasing | [cackle] Fried your shiny toys! | (text card) |
+| `lightningShipHit.d2` | demon | morth | teasing | [gloat] A bare hull now. How brave are you? | (text card) |
+| `lightningShipHit.powers.h0` | human | admiral | calm | You're fine, only the power-ups are gone. | (text card) |
+| `lightningShipHit.powers.h1` | human | mensah | warm | You're fine! The shields are fried, the ship is not. | (text card) |
+| `lightningShipHit.powers.h2` | human | kestrel | calm | Just your toys, pilot. We'll find you new ones. | (text card) |
+| `lightningShipHit.powers.h3` | human | voss | warm | Power-ups gone, pilot still here. Keep flying! | (text card) |
+| `lightningShipHit.clean.h0` | human | admiral | calm | You're fine, the ship can take it. | (text card) |
+| `lightningShipHit.clean.h1` | human | anvil | warm | Just a jolt. The hull is holding fine! | (text card) |
+| `lightningShipHit.clean.h2` | human | rook | teasing | Nice hairdo! You're fine, keep flying. | (text card) |
+| `lightningCharged.h0` | human | wisp | urgent | That one drank the lightning! Watch its fire! | (text card) |
+| `lightningCharged.h1` | human | anvil | stern | Rods on that armour. It's charged up, careful! | (text card) |
+| `lightningCharged.h2` | human | sparrow | urgent | It's glowing! Don't feed it more lightning! | (text card) |
+| `lightningCharged.d0` | demon | skarn | triumphant | [roar] The storm is mine! | (text card) |
+| `lightningCharged.d1` | demon | vexxa | triumphant | [warcry] More! Strike me again! | (text card) |
+| `lightningCharged.d2` | demon | gorrak | triumphant | [roar] Thunder in my claws! | (text card) |

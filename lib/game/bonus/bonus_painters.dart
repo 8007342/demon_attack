@@ -36,6 +36,19 @@ abstract final class BonusPainters {
 
   static void over(Canvas canvas, ArcadeModel model, double time) =>
       _of(model)?.over(canvas, model, time);
+
+  /// --- lightning-rework: the columns told on the ship's row now (x and
+  /// tell progress 0-1), for the ship's static before a bolt.
+  static Iterable<({double x, double progress})> lightningTells(
+    ArcadeModel model,
+  ) {
+    final m = model.bonusMechanic;
+    if (m is! StormfrontMechanic) return const [];
+    return [
+      for (final s in m.cell.strikes)
+        if (s.telling) (x: s.x, progress: s.tellProgress),
+    ];
+  }
 }
 
 class StormfrontPainter extends BonusPainter {

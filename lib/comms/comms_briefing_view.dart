@@ -635,12 +635,13 @@ class StormfrontHowTo extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final h = size.height;
-    const step = 42.0;
+    // lightning-rework: five steps (the stun is the opening), was four.
+    const step = 36.0;
     final stroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
-    void demon(double x, {bool hit = false}) {
-      final c = Offset(x, 5);
+    void demon(double x, {bool hit = false, double dy = 0}) {
+      final c = Offset(x, 5 + dy);
       final body = Path()
         ..moveTo(c.dx - 7, c.dy - 1)
         ..lineTo(c.dx - 3, c.dy - 4)
@@ -703,7 +704,7 @@ class StormfrontHowTo extends CustomPainter {
     canvas.drawLine(Offset(x - 3, h - 7), Offset(x + 2, h - 7), stroke);
     arrow(x + step / 2);
     x += step;
-    // 4. The bolt strikes the demon where the ship was.
+    // 4. The bolt stuns the demon where the ship was.
     final bolt = Path()
       ..moveTo(x, 0)
       ..lineTo(x - 3, h * .35)
@@ -725,6 +726,19 @@ class StormfrontHowTo extends CustomPainter {
     );
     demon(x, hit: true);
     ship(x + 14);
+    arrow(x + step / 2);
+    x += step;
+    // 5. lightning-rework: the stunned demon drops; the ship shoots it.
+    demon(x, hit: true, dy: 5);
+    stroke.color = _bolt.withValues(alpha: .8);
+    canvas
+      ..drawLine(Offset(x - 9, 7), Offset(x - 6, 5), stroke)
+      ..drawLine(Offset(x + 6, 5), Offset(x + 9, 8), stroke);
+    stroke.color = _amber;
+    canvas
+      ..drawLine(Offset(x, h - 13), Offset(x, h - 16), stroke)
+      ..drawLine(Offset(x, h - 19), Offset(x, h - 21), stroke);
+    ship(x);
   }
 
   @override

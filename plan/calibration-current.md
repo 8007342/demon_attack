@@ -767,3 +767,31 @@ hits baseline now holds the new values; the seconds baseline is unchanged.
   dive shields).
 - Fixtures that pinned the 8-kill drop on route 0 now read `killDropEvery` (campaign model and refinements); two
   tests that a collected drop now disturbs clear their pickups or shield (bonus-level PRNG, Stormfront tell).
+
+## Lightning rework (2026-11-17, change `lightning-rework`): bolts stun, zaps strip
+
+Bolts now stun creatures instead of killing them, and strip the ship's shields and power-ups instead of costing a life
+(`openspec/changes/lightning-rework`). The calibrated campaign has no lightning (unseeded, no bonus levels):
+`dart run tools/analyze_difficulty.dart <prefix>` writes byte-identical JSON and summary before (`origin/game`
+25726939) and after, so the 318-wave budgets, the campaign playtest, carrier endurance, perspective and rush gates do
+not move.
+
+Stormfront, bonus balance gate (`test/bonus_balance_test.dart`, routes 0-1, eight seeds; ratio to the regular sectors):
+
+| Stormfront | Duration | Enemies | Score | Possible | Lives lost |
+|---|---:|---:|---:|---:|---:|
+| before (bolts kill, rosters × 1.15, kills × 0.7) | −11.8 % | +9.2 % | +1.8 % | +1.9 % | −13.1 % |
+| stun only, rosters × 1.0 | +13.9 % | −0.1 % | −4.2 % | −2.4 % | +11.5 % |
+| rosters × 0.95, kills × 0.73, Easy gaps 3.4-4.6 s | +9.3 % | −3.6 % | −4.0 % | −2.0 % | +11.3 % |
+| rosters × 0.93, kills × 0.77, Normal 3.3-4.7 s, Hard 3.5-4.9 s | +10.0 % | −4.3 % | −1.3 % | +0.6 % | +6.1 % (Hard duration +18 %) |
+| **shipped**: Hard 3.4-4.8 s, fork .25 | **+8.1 %** | **−4.3 %** | **−1.1 %** | **+0.9 %** | **+11.3 %** |
+
+Per mode (shipped): Easy +3.4 / −7.1 / −4.5 / −2.4 / +6.2 %; Normal +6.2 / −3.7 / −0.8 / +1.1 / +7.7 %; Hard +12.9 /
+−3.5 / −0.1 / +1.8 / +16.3 %. All inside the gate (pooled ±15 %, per mode ±20 %).
+
+Reading: the storm used to clear about a tenth of the swarm for the pilot, so the level ran 12 % short; now every
+creature is the pilot's to shoot (stunned ones are easy), so it runs 8 % long with 4 % fewer creatures. The Average
+pilot loses 11 % more lives than in the sector: it never dodges a tell (it does not read the storm), so every zap
+strips its shield, and the next ordinary hit costs a ship. A pilot who slides off the amber mark loses nothing, so the
+penalty is the operator's "punishing" for standing still, not for playing; Hard carries most of it (+16 %), Easy the
+least. Commit: the `lightning-rework` squash on `game`.

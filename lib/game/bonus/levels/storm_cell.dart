@@ -7,7 +7,8 @@
 ///
 /// One strike is a **tell** (a leader flickers down a column and a marker
 /// blinks on the ship's row, at least [StormTuning.tell] seconds of real
-/// time), the **bolt** (one step: everything in the column is hit) and an
+/// time), the **bolt** (one step: everything in the column is stunned,
+/// never killed: lightning-rework, `lib/game/lightning.dart`) and an
 /// **afterglow** (presentation only). Most tells sample the ship's x once,
 /// when they start, and never follow it: the player baits a bolt under the
 /// swarm and slides away.
@@ -40,7 +41,6 @@ class StormTuning {
     this.forkMax = 104,
     this.column = 34,
     this.core = 13,
-    this.damage = 2,
     this.rodColumn = 52,
   });
 
@@ -66,28 +66,22 @@ class StormTuning {
   /// units to one side, struck at the same instant.
   final double forkChance, forkMin, forkMax;
 
-  /// Half-width of the column that hits creatures.
+  /// Half-width of the column that stuns creatures.
   final double column;
 
   /// Half-width of the column that hits the ship (narrower than the marker
   /// that is drawn: a near miss is survivable).
   final double core;
 
-  /// Damage a bolt does to a creature (a homing missile's heavy hit).
-  /// fire-rate-tune: 2 (was 3). Dive shields lost a point, so a bolt of 3
-  /// broke through divers it used to stop at, and the storm ran a fifth
-  /// easier than the sector it replaces.
-  final int damage;
-
   /// [column] while the ship carries the lightning rod.
   final double rodColumn;
 
-  static const easy = StormTuning(first: 4, gapMin: 3, gapMax: 4.2);
+  static const easy = StormTuning(first: 4, gapMin: 3.4, gapMax: 4.6);
   // bonus-balance: Normal and Hard strike less often than first built
   // (2.5-3.7 s and 2.2-3.2 s, fork .35): the storm cleared the swarm too fast,
   // so the level ran 17-26 % shorter than the sector it replaces.
-  static const normal = StormTuning(gapMin: 3.1, gapMax: 4.5, forkChance: .2);
-  static const hard = StormTuning(gapMin: 3.3, gapMax: 4.7, forkChance: .3);
+  static const normal = StormTuning(gapMin: 3.3, gapMax: 4.7, forkChance: .2);
+  static const hard = StormTuning(gapMin: 3.4, gapMax: 4.8, forkChance: .25);
 
   /// Later routes fork a little more often (never faster tells) and, so
   /// the storm does not clear their bigger swarms ahead of the pilot,
@@ -106,7 +100,6 @@ class StormTuning {
     forkMax: forkMax,
     column: column,
     core: core,
-    damage: damage,
     rodColumn: rodColumn,
   );
 }
@@ -141,9 +134,11 @@ class StormStrike {
   /// Half-width that hits creatures (set from the tuning at the tell).
   double column = 0;
 
-  /// Creatures this bolt destroyed, and whether it met the ship (written by
-  /// the mechanic; read by the painter and the tests).
-  int kills = 0;
+  /// Creatures this bolt stunned and rod-armoured ones it charged, and
+  /// whether it met (zapped) the ship (written by the mechanic; read by
+  /// the painter and the tests). lightning-rework: bolts no longer kill.
+  int stunned = 0, charged = 0;
+
   bool hitShip = false, grounded = false;
 
   bool get telling => !landed && !fizzled;

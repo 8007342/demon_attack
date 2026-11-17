@@ -95,9 +95,10 @@ void main() {
     expect(seen, greaterThan(20));
   });
 
-  // bonus-balance: the sector's own waves and sentinels, a tenth more
-  // creatures in each opening roster (the storm kills some of them).
-  test('it keeps the sector\'s waves, with a denser swarm', () {
+  // bonus-balance: the sector's own waves and sentinels. lightning-rework:
+  // the storm no longer kills, so the rosters are the sector's own (they
+  // were 15 % larger).
+  test('it keeps the sector\'s waves and rosters', () {
     final regular = ArcadeModel()..startAt(sector: 3, route: 2);
     final m = _storm(route: 2);
     expect(m.bonus?.id, 'stormfront');
@@ -106,11 +107,7 @@ void main() {
     for (var w = 1; w <= m.wavesPerLevel; w++) {
       expect(m.sentinelFor(w), regular.sentinelFor(w));
     }
-    expect(m.demons.length, greaterThan(regular.demons.length));
-    expect(
-      m.demons.length,
-      lessThanOrEqualTo((regular.demons.length * 1.15).ceil()),
-    );
+    expect(m.demons.length, regular.demons.length);
     expect(m.bonusMechanic, isA<StormfrontMechanic>());
     // A regular sector has no mechanic.
     expect(regular.bonusMechanic, isNull);
@@ -140,7 +137,7 @@ void main() {
     expect(m.lives, lives);
   });
 
-  test('a baited bolt hits the creatures in its column and not the ship', () {
+  test('a baited bolt stuns the creatures in its column and not the ship', () {
     final m = _storm();
     _park(m, 120);
     final s = _untilTell(m, where: (s) => s.aim == StrikeAim.ship);
@@ -161,24 +158,35 @@ void main() {
     }
     expect(s.landed, isTrue);
     expect(s.x, closeTo(120, 1));
-    expect(s.kills, 2);
-    expect(m.kills, kills + 2);
-    expect(victims.every((d) => !m.demons.contains(d)), isTrue);
+    // lightning-rework: stunned, not killed.
+    expect(s.stunned, 2);
+    expect(m.kills, kills);
+    expect(victims.every((d) => m.demons.contains(d) && d.stunned), isTrue);
     expect(far.where(m.demons.contains).length, far.length);
+    expect(far.where((d) => d.stunned), isEmpty);
     expect(m.lives, lives);
     expect(s.hitShip, isFalse);
-    // Ordinary kill points, plus the bait bonus once per creature.
     final bait = events.firstWhere((e) => e.name == GameEventNames.stormBait);
-    expect(bait.data['kills'], 2);
-    expect(bait.data['award'], 2 * StormfrontMechanic.baitPoints);
+    expect(bait.variant, 'stun');
+    expect(bait.data['stunned'], 2);
+    expect(m.bonusRun.extra, 0);
+    // Shot down while they fall: ordinary kill points, plus the bait
+    // bonus once per creature.
+    for (final d in victims) {
+      m.hitDemon(d);
+    }
+    m.update(1 / 60);
+    expect(m.kills, kills + 2);
     expect(m.score - score, greaterThan(2 * StormfrontMechanic.baitPoints));
     expect(m.bonusRun.extra, 2 * StormfrontMechanic.baitPoints);
     // The first baited kill of the wave drops the rod, once.
     expect(m.pickups.where((p) => p.bonus == lightningRod).length, 1);
     expect(_mech(m).rods, 1);
+    expect(_mech(m).baitKills, 2);
   });
 
-  test('standing still under a tell costs an ordinary hit', () {
+  // lightning-rework: a zap strips the ship, never a life.
+  test('standing still under a tell is a zap, never a lost ship', () {
     final m = _storm();
     _park(m, 200);
     final s = _untilTell(m, where: (s) => s.aim == StrikeAim.ship);
@@ -195,10 +203,11 @@ void main() {
     }
     expect(s.landed, isTrue);
     expect(s.hitShip, isTrue);
-    expect(m.lives, lives - 1);
+    expect(m.lives, lives);
+    expect(m.shipZaps, 1);
   });
 
-  test('the shield absorbs a bolt; protection ignores it', () {
+  test('a bolt strips the shield; protection ignores it', () {
     final m = _storm();
     _park(m, 200);
     var s = _untilTell(m, where: (s) => s.aim == StrikeAim.ship);
@@ -290,7 +299,9 @@ void main() {
     expect(s.grounded, isTrue);
     expect(s.hitShip, isFalse);
     expect(m.lives, lives);
-    expect(m.demons.contains(wide), isFalse);
+    expect(m.demons.contains(wide), isTrue);
+    expect(wide.stunned, isTrue);
+
     // No second rod while one is carried.
     expect(m.pickups.where((p) => p.bonus == lightningRod), isEmpty);
   });
