@@ -278,7 +278,7 @@ func cmdMock(a []string) {
 	bake, rigDir, out, hull := a[0], a[1], a[2], a[3]
 	r := readRig(rigDir, hull)
 	root := repoRoot()
-	bg := load(filepath.Join(root, "assets/images/sector-1.png"))
+	bg := load(filepath.Join(root, "assets/images/sector-1.webp"))
 	parts := load(filepath.Join(root, "assets/images/ship-parts.png"))
 	ship := image.NewNRGBA(image.Rect(0, 0, 96, 96))
 	draw.Draw(ship, ship.Bounds(), parts, image.Point{}, draw.Src)

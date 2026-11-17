@@ -53,7 +53,7 @@
   "sectors": [
     {
       "id": "krybor",
-      "painting": "assets/images/sector-1.png",
+      "painting": "assets/images/sector-1.webp",
       "seed": 11000,
       "layers": {
         "mid": "distant cold blue lunar mountain ridges with snow capped stepped peaks, long ridge lines, deep navy valleys",
@@ -173,7 +173,7 @@
     },
     {
       "id": "ringfall",
-      "painting": "assets/images/sector-2.png",
+      "painting": "assets/images/sector-2.webp",
       "seed": 12000,
       "layers": {
         "mid": "distant violet planetary ring band of dense small asteroids and ice debris, purple dust lanes",
@@ -296,7 +296,7 @@
     },
     {
       "id": "ember",
-      "painting": "assets/images/sector-3.png",
+      "painting": "assets/images/sector-3.webp",
       "seed": 13000,
       "layers": {
         "mid": "distant black volcanic ridges with dim glowing red lava seams, ash haze, eclipse lit rims",
@@ -419,7 +419,7 @@
     },
     {
       "id": "hollow",
-      "painting": "assets/images/sector-4.png",
+      "painting": "assets/images/sector-4.webp",
       "seed": 14000,
       "layers": {
         "mid": "distant floating emerald rock islands in an abyss with ruined arches, green nebula mist",
@@ -537,7 +537,7 @@
     },
     {
       "id": "carrier",
-      "painting": "assets/images/sector-5.png",
+      "painting": "assets/images/sector-5.webp",
       "seed": 15000,
       "layers": {
         "mid": "distant red black demonic fortress hull ridges with spiked plating and occult ring structures, blood red storm haze",

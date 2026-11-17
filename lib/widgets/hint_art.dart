@@ -13,7 +13,7 @@ import 'power_status.dart';
 class HintArt extends StatefulWidget {
   const HintArt({super.key, required this.scene, this.height = 180});
 
-  static const assetPath = 'assets/images/hint-scenes.png';
+  static const assetPath = 'assets/images/hint-scenes.webp';
   final String scene;
   final double height;
 

@@ -34,7 +34,7 @@ function playwrightModule() {
       await page.waitForTimeout(5000);
       assert(!(await page.locator('flt-semantics-host').innerHTML()).includes('TACTICAL BRIEFING'),'loading hint advances automatically');
       await page.screenshot({path:`/tmp/demon-arrival-${name}.png`});
-      assert.equal((await page.request.get(new URL('/assets/assets/images/hint-scenes.png',page.url()).href)).status(),200);
+      assert.equal((await page.request.get(new URL('/assets/assets/images/hint-scenes.webp',page.url()).href)).status(),200);
       assert.deepEqual(errors,[]);
       console.log(`${name}: automatic illustrated loading hint, no extra controls and subsequent swarm entrance passed`);
       await context.close();

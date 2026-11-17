@@ -250,7 +250,7 @@ class GroundPainter {
     debugSmokePuffs.clear();
     if (atmo != null) {
       _smokeTint = GroundFog.smokeFor(atmo.environment);
-      _smokeFull = atmo.quality == AtmosphereQuality.full;
+      _smokeFull = atmo.drawnQuality == AtmosphereQuality.full;
       _smokeStill = atmo.reducedMotion;
     }
     if (g.units.isEmpty && g.allies.isEmpty && g.tracers.isEmpty) {

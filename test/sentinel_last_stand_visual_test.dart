@@ -56,7 +56,7 @@ void main() {
           scene.effectsAtlas = await decode(
             'assets/images/sentinel-effects.png',
           );
-          scene.sectors.images[0] = await decode('assets/images/sector-1.png');
+          scene.sectors.images[0] = await decode('assets/images/sector-1.webp');
           try {
             final idle = await capture(scene, 'last-stand-$heavy-idle');
             model.hitDemon(demon);

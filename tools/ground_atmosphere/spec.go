@@ -5,12 +5,15 @@ package main
 
 import (
 	"encoding/json"
+	"image"
 	"image/color"
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"demonattack/tools/pixelgrid"
+	"golang.org/x/image/webp"
 )
 
 type Spec struct {
@@ -195,10 +198,24 @@ type Tints struct {
 	Sample, Fog, Lit, Dark, Smoke rgb
 }
 
+// readPainting decodes a sector painting: WebP since phone-performance
+// (assets ship one format), PNG otherwise.
+func readPainting(p string) (image.Image, error) {
+	if !strings.HasSuffix(p, ".webp") {
+		return pixelgrid.ReadPNG(p)
+	}
+	f, err := os.Open(p)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return webp.Decode(f)
+}
+
 // horizonSample averages the painting's horizon band (the rows the flyover
 // sky bake lays on the horizon line) and darkens it as that bake does.
 func horizonSample(s *Spec, painting string) rgb {
-	im, err := pixelgrid.ReadPNG(filepath.Join(root, painting))
+	im, err := readPainting(filepath.Join(root, painting))
 	must(err)
 	b := im.Bounds()
 	y0 := b.Min.Y + int(float64(b.Dy())*s.Tint.SampleRows[0])

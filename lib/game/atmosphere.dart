@@ -322,6 +322,18 @@ class Atmosphere {
   // --- state ---------------------------------------------------------------
   AtmosphereQuality quality = AtmosphereQuality.full;
 
+  // --- phone-performance §4: the quality tier can force the reduced fog
+  // without touching the player's choice ([quality], saved by main.dart).
+  bool tierReduced = false;
+
+  /// phone-performance §4.5: the ground fog's strip height near the
+  /// horizon (arena units; 5 before).
+  static const groundFogStrip = 7.0;
+
+  /// The quality actually drawn: the player's, or reduced under a lean tier.
+  AtmosphereQuality get drawnQuality =>
+      tierReduced ? AtmosphereQuality.reduced : quality;
+
   /// Reduced motion keeps every layer still (accessibility).
   bool reducedMotion = false;
 
@@ -486,7 +498,7 @@ class Atmosphere {
   static const lowCloudUnderBand = .45;
 
   bool _artLayerShown(GroundAtmosphereLayer l) =>
-      quality == AtmosphereQuality.full || l.reduced;
+      drawnQuality == AtmosphereQuality.full || l.reduced;
 
   /// Art layers drawn in the ground depth sort at the current quality, back
   /// to front: (depth, layer); a layer with no depth goes after every
@@ -529,7 +541,7 @@ class Atmosphere {
   /// The shader renders the full tier when it compiled on this platform.
   bool shaderEnabled = true;
   bool get usesShader =>
-      shaderEnabled && program != null && quality == AtmosphereQuality.full;
+      shaderEnabled && program != null && drawnQuality == AtmosphereQuality.full;
   bool get ready => tileA != null && tileB != null;
 
   /// Frame-time guard for the shader: if frames average slower than
@@ -742,7 +754,7 @@ class Atmosphere {
   /// band and the ground fog).
   bool shows(FogSlot slot) => switch (slot) {
     FogSlot.horizonBand || FogSlot.groundFog => true,
-    _ => quality == AtmosphereQuality.full,
+    _ => drawnQuality == AtmosphereQuality.full,
   };
 
   /// Paints [slot] over the arena (360 x 520 arena units on [c]).
@@ -993,7 +1005,10 @@ class Atmosphere {
     final t = time;
     var y = r.top;
     while (y < r.bottom) {
-      final step = y < 300 ? 5.0 : (y < 400 ? 9.0 : 14.0);
+      // --- phone-performance §4.5: coarser strips (were 5 / 9 / 14): each
+      // strip is two ImageShader rects built every frame; the soft fog
+      // hides the piecewise-linear mapping at this pitch.
+      final step = y < 300 ? groundFogStrip : (y < 400 ? 12.0 : 18.0);
       final y2 = math.min(r.bottom, y + step);
       final w1 = depthAt(y), w2 = depthAt(y2);
       final n = ((y + y2) / 2 - h) / g; // ground scale at the strip
