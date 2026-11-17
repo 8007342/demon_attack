@@ -1610,7 +1610,7 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     ttl: 6.0,
     mood: CommsMood.happy,
     lines: [
-      CommsLine(id: 'bonusCall.crosswind.h0', speaker: 'sunny', duration: 5.36, text: 'Kites in a gale! One shot at a time, aim upwind, and let the wind carry it in!', emotion: 'excited', silent: true),
+      CommsLine(id: 'bonusCall.crosswind.h0', speaker: 'sunny', duration: 4.28, text: 'Kites in the gale, so fire one shot at a time and aim upwind!', emotion: 'excited', silent: true),
     ],
   ),
   'bonusDare.crosswind': CommsTriggerSpec(
@@ -1643,7 +1643,7 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
     ttl: 5.0,
     mood: CommsMood.happy,
     lines: [
-      CommsLine(id: 'bonusChallenge.crosswind.h0', speaker: 'rook', duration: 4.82, text: 'Pop every kite and the fleet sends you a spare ship. Don\'t let one get away!', emotion: 'excited', silent: true),
+      CommsLine(id: 'bonusChallenge.crosswind.h0', speaker: 'rook', duration: 4.55, text: 'Pop every kite before the wind steals one, and the fleet sends you a 1UP!', emotion: 'excited', silent: true),
     ],
   ),
   'bonusChallengeEarned.crosswind': CommsTriggerSpec(

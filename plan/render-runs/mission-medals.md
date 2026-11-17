@@ -186,3 +186,22 @@ Every verdict is also in the run log.
 - `test/mission_medals_review_test.dart` ran alone (`--concurrency=1 --run-skipped --tags review`): passed; it writes
   `art/contact/mission-medals-screens.png` and `art/contact/mission-medals-supply-run.png`.
 - `npm run test:worker`: 51 pass, 0 fail. `npm run build`: ok. `openspec validate mission-medals --strict`: valid.
+
+## 9. Crosswind (2026-11-17, change `crosswind`)
+
+A new mission hull, added by the recipe in §1 ("Adding a mission") with no code change: the family gained a
+`crosswind` ribbon set (sky / white / orange / white / sky, the windsock's colours), a white accent ring and an emblem
+(an orange diamond kite with white struts and a short sky-blue zigzag tail, inside r ≈ 22), a hull, a
+`subject_crosswind` prompt and the pick. The clay control was right on the first try.
+
+| Job | Hull | Seeds | Denoise | Verdict |
+| --- | --- | --- | --- | --- |
+| st-1794949896450-177 | crosswind | 8100000–02 | 0.72 | **Pick 8100002** |
+
+- **8100002 (pick):** no glare streak; the bevelled kite and the crisp sky tail read at 20 px; faceted gold rim.
+- 8100000: rejected, an arc of glare across the enamel field would show between the emblem parts.
+- 8100001: rejected, a diagonal glare on the ribbon and the field (the glossy-fold fault of earlier rejects).
+
+Rebuilt with §0 (6 s, 8 hulls now; the atlas is 576 × 448, 64,009 bytes). Spent: one job, 3 Lightning images,
+65.7 s of GPU; about 15 minutes of wall time including the clay check and the sheets. The raws are in
+`~/.cache/tillandsias-project/mission-medals-raw/crosswind/` (wiped by a host reset).

@@ -274,6 +274,10 @@ class MusicBridge {
     // --- crosswind: a called gust or swing swells (bonus-music's `gust`
     // stinger; the score player skips an accent it has no stinger for).
     GameEventNames.windGust: 'gust',
+    // --- crosswind: bonus-music's stingers for a bonus level's 1UP
+    // challenge (bonus-challenges' events), skipped until they exist.
+    GameEventNames.bonusChallengeEarned: 'oneup',
+    GameEventNames.bonusChallengeFailed: 'challenge-fail',
   };
 
   void call(GameEvent event) {

@@ -42,6 +42,7 @@ void main(List<String> args) {
     var byRush = 0, byContact = 0;
     var seconds = 0.0;
     final perRoute = <String, double>{};
+    final uncleared = <String>[];
     for (final route in [0, 1, 2]) {
       var routeLost = 0;
       for (var sector = 1; sector <= 4; sector++) {
@@ -54,10 +55,11 @@ void main(List<String> args) {
           m.startAt(difficulty: difficulty, sector: sector, route: route);
           m.lives = 99;
           final pilot = AveragePilot(seed: seed, windSkill: skill);
-          var t = 0.0;
+          var t = 0.0, done = false;
           for (var f = 0; f < 60 * 900 && m.level == sector; f++) {
             if (m.mode == RunMode.salvage) {
               cleared++;
+              done = true;
               break;
             }
             if (m.combat) {
@@ -85,6 +87,7 @@ void main(List<String> args) {
             }
             m.takeGameEvents();
           }
+          if (!done) uncleared.add('r$route s$sector #$seed ${m.mode.name}');
           lost += 99 - m.lives;
           routeLost += 99 - m.lives;
           seconds += t;
@@ -108,6 +111,7 @@ void main(List<String> args) {
         'livesToRush': double.parse((byRush / runs).toStringAsFixed(3)),
         'livesToContact': double.parse((byContact / runs).toStringAsFixed(3)),
         'livesPerRoute': perRoute,
+        'uncleared': uncleared,
       })}',
     );
   }

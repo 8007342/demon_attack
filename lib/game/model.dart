@@ -3760,7 +3760,7 @@ class ArcadeModel {
       Shot(
         shot.x,
         shot.y,
-        shot.vx,
+        shot.vx + _windLead(shot.y, hostileVy(shot.vy)), // --- crosswind
         hostileVy(shot.vy),
         hostile: true,
         kind: shot.kind,

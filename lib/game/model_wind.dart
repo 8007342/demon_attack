@@ -111,6 +111,23 @@ extension ArcadeWind on ArcadeModel {
     run.told = t;
   }
 
+  /// The brood aims with the wind (it is their planet): the share of the
+  /// drift a demon expects over its shot's fall that it aims off by.
+  static const broodAim = .6;
+
+  /// The sideways speed (u/s, before the hostile rate) a demon adds to a
+  /// shot fired from [y] falling at [vy] so the wind carries it back
+  /// toward its mark: [broodAim] of the expected drift. 0 when calm.
+  double _windLead(double y, double vy) {
+    if (windRun.spec == null || vy <= 0) return 0;
+    final t = (ArcadeModel.shipY - y) / vy;
+    if (t <= .05) return 0;
+    const tau = WindField.settle;
+    final drift = windDrift * (t - tau * (1 - math.exp(-t / tau)));
+    final rate = policy.hostileRate > 0 ? policy.hostileRate : 1.0;
+    return -broodAim * drift / t / rate;
+  }
+
   /// The wind on one projectile this step: a tailwind's grid step at the
   /// muzzle, then its sideways speed settles toward the wind's drift.
   void _windShot(Shot s, double dt) {

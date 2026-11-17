@@ -36,6 +36,7 @@ abstract final class ChallengeIcons {
     'cargo': paintCargo,
     'bolt': paintBolt,
     'star': paintStar,
+    'kite': paintKite, // --- crosswind
   };
 
   static ChallengeIconPainter of(String id) => byId[id] ?? paintStar;
@@ -99,6 +100,45 @@ abstract final class ChallengeIcons {
       ..lineTo(p(.72, 0).dx, p(.72, 0).dy)
       ..close();
     canvas.drawPath(bolt, Paint()..color = ink);
+  }
+
+  /// --- crosswind: a diamond kite with its cross struts and a tail.
+  static void paintKite(Canvas canvas, Rect b, Color ink) {
+    final w = b.width, h = b.height;
+    Offset p(double x, double y) => Offset(b.left + w * x, b.top + h * y);
+    final kite = Path()
+      ..moveTo(p(.5, 0).dx, p(.5, 0).dy)
+      ..lineTo(p(.86, .36).dx, p(.86, .36).dy)
+      ..lineTo(p(.5, .74).dx, p(.5, .74).dy)
+      ..lineTo(p(.14, .36).dx, p(.14, .36).dy)
+      ..close();
+    canvas.drawPath(kite, Paint()..color = ink);
+    final strut = Paint()
+      ..color = const Color(0xFF101827)
+      ..strokeWidth = math.max(1, w * .06);
+    canvas
+      ..drawLine(p(.5, .06), p(.5, .68), strut)
+      ..drawLine(p(.2, .36), p(.8, .36), strut);
+    final tail = Paint()
+      ..color = ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1, w * .07)
+      ..strokeCap = StrokeCap.round;
+    final t = Path()
+      ..moveTo(p(.5, .74).dx, p(.5, .74).dy)
+      ..quadraticBezierTo(
+        p(.66, .86).dx,
+        p(.66, .86).dy,
+        p(.5, .92).dx,
+        p(.5, .92).dy,
+      )
+      ..quadraticBezierTo(
+        p(.36, .98).dx,
+        p(.36, .98).dy,
+        p(.46, 1).dx,
+        p(.46, 1).dy,
+      );
+    canvas.drawPath(t, tail);
   }
 
   /// The arcade star (any condition without its own pictogram).

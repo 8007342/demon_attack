@@ -4786,7 +4786,7 @@
       "mood": "happy",
       "pending": "text",
       "lines": [
-        {"speaker": "sunny", "text": "Kites in a gale! One shot at a time, aim upwind, and let the wind carry it in!", "emotion": "excited"}
+        {"speaker": "sunny", "text": "Kites in the gale, so fire one shot at a time and aim upwind!", "emotion": "excited"}
       ]
     },
     "bonusDare.crosswind": {
@@ -4828,7 +4828,7 @@
       "mood": "happy",
       "pending": "text",
       "lines": [
-        {"speaker": "rook", "text": "Pop every kite and the fleet sends you a spare ship. Don't let one get away!", "emotion": "excited"}
+        {"speaker": "rook", "text": "Pop every kite before the wind steals one, and the fleet sends you a 1UP!", "emotion": "excited"}
       ]
     },
     "bonusChallengeEarned.crosswind": {

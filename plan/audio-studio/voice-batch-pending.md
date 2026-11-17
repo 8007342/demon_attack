@@ -165,7 +165,7 @@ on the audio studio (tillandsias#1103).
 | `bonusChallengeEarned.stormfront.d1` | demon | vexxa | stern | [snarl] The storm missed? Every single time?! | (text card) |
 | `bonusEntry.crosswind.h0` | human | sunny | teasing | Forecast: gale force, with a chance of flying kites. | (text card) |
 | `bonusEntry.crosswind.h1` | human | admiral | calm | The brood is flying kites in a gale. Bring them down. | (text card) |
-| `bonusCall.crosswind.h0` | human | sunny | excited | Kites in a gale! One shot at a time, aim upwind, and let the wind carry it in! | (text card) |
+| `bonusCall.crosswind.h0` | human | sunny | excited | Kites in the gale, so fire one shot at a time and aim upwind! | (text card) |
 | `bonusDare.crosswind.h0` | human | rook | teasing | Bet you can't pop one with your eyes shut. Kidding. Keep them open. | (text card) |
 | `bonusDare.crosswind.h1` | human | kestrel | calm | Read the windsock, then breathe, then fire. | (text card) |
 | `bonusDare.crosswind.d0` | demon | nibb | teasing | [gloat] Our kites, our wind, our sky! | (text card) |
@@ -173,7 +173,7 @@ on the audio studio (tillandsias#1103).
 | `bonusStart.crosswind.h0` | human | wisp | calm | Watch the windsock, top left. It turns before your shots bend. | (text card) |
 | `bonusStart.crosswind.h1` | human | anvil | calm | No spread, no rapid in this wind. One good shot beats ten wild ones. | (text card) |
 | `bonusStart.crosswind.h2` | human | sparrow | urgent | Kites coming in on the gust. Lead them upwind! | (text card) |
-| `bonusChallenge.crosswind.h0` | human | rook | excited | Pop every kite and the fleet sends you a spare ship. Don't let one get away! | (text card) |
+| `bonusChallenge.crosswind.h0` | human | rook | excited | Pop every kite before the wind steals one, and the fleet sends you a 1UP! | (text card) |
 | `bonusChallengeEarned.crosswind.h0` | human | sunny | triumphant | Every last kite! Not one got away. That's a spare ship for you! | (text card) |
 | `bonusChallengeEarned.crosswind.h1` | human | kestrel | warm | Every kite down, in that wind. Take the extra ship, you earned it. | (text card) |
 | `bonusChallengeEarned.crosswind.d0` | demon | nibb | panicked | [alarm] All of them? Even the shiny one?! | (text card) |

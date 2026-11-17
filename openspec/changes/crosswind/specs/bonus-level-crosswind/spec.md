@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Crosswind level
-The bonus catalogue SHALL hold Crosswind, appended after Stormfront: a level in sectors 2 to 4 where the crosswind tier of the wind blows from start to end, the swarm is thinner (roster x 0.7, reinforcements x 0.6) and the brood's kites ride the gusts. Its goal SHALL be popping the kites with shots aimed through the wind.
+The bonus catalogue SHALL hold Crosswind, appended after Stormfront: a level in sectors 2 to 4 where the crosswind tier of the wind blows from start to end over the sector's own swarm and the brood's kites ride the gusts. Its goal SHALL be popping the kites with shots aimed through the wind.
 
 #### Scenario: Wind from the start
 - **WHEN** a run enters Crosswind

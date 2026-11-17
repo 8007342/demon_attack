@@ -5,7 +5,7 @@
 // ember kites and jade lantern moths that ride every gust across the sky.
 // Pop them. The gun fires single shots only (no Spread, no Rapid), and the
 // wind bends every shot, so the player leads each kite upwind and lets the
-// gust carry the shot in. The demons fly too, thinner than usual, and the
+// gust carry the shot in. The sector's own swarm flies too, and the
 // wind bends their fire as well.
 //
 // Pure Dart (no dart:ui): the painter is `crosswind_painter.dart`, reached
@@ -24,8 +24,9 @@ const crosswind = BonusLevelDef(
   brief: 'Pop the kites riding the wind!',
   how: 'Single shots only. Aim upwind and let the gust carry it.',
   weight: 1,
-  // The kites are the show: a thinner swarm.
-  waves: BonusWaves(rosterScale: .7, reinforcementScale: .6),
+  // The sector's own swarm (bonus-balance: a bonus level is worth about
+  // the sector it replaces, enemies and time alike); the kites come on top.
+  waves: BonusWaves(),
   // No multifire, no Rapid: single deliberate shots (the mechanic also
   // strips any carried in, whatever the run modifier says).
   rules: PowerRules(banned: {Power.spread, Power.rapid}),
@@ -44,6 +45,16 @@ const crosswind = BonusLevelDef(
   ),
   wind: true,
   mechanic: CrosswindMechanic.new,
+  // --- bonus challenges: every kite down. A kite that rides the wind off
+  // the screen breaks it; at least one kite must have been popped by the
+  // clear (a level cleared before any kite flew is not a perfect run).
+  challenge: BonusChallengeDef(
+    id: 'everyKite',
+    label: 'POP EVERY KITE',
+    icon: 'kite',
+    failOn: {CrosswindMechanic.noteEscaped},
+    atLeast: {CrosswindMechanic.notePopped: 1},
+  ),
 );
 
 /// One kite riding the wind.
@@ -93,6 +104,9 @@ class CrosswindMechanic extends BonusMechanic {
 
   /// Seconds between launches (the first comes soon after the start).
   static const every = 2.8, first = 1.5;
+
+  /// The challenge's notes (bonus_challenge.dart).
+  static const notePopped = 'kitePopped', noteEscaped = 'kiteEscaped';
 
   /// Points per kite, × (route + 1), inside the level's cap.
   static const kitePoints = 120;
@@ -195,6 +209,7 @@ class CrosswindMechanic extends BonusMechanic {
         k.gone = true;
         if (m.combat) {
           escaped++;
+          m.challengeNote(noteEscaped); // --- bonus challenges
           m.bonusEvent(GameEventNames.kiteEscaped, {
             'kites': popped,
             'escaped': escaped,
@@ -227,6 +242,7 @@ class CrosswindMechanic extends BonusMechanic {
         }
         k.popped = 0;
         popped++;
+        m.challengeNote(notePopped); // --- bonus challenges
         m.shots.remove(s);
         final award = m.bonusAward(kitePoints * (m.cycle + 1));
         m.events.add('hit');
