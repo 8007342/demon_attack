@@ -20,7 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// dive-shield-thinning review (openspec/changes/dive-shield-thinning): real
 /// in-game frames from the real scene with the in-game atlases loaded.
 ///
-/// `--dart-define=DST_TAG=before` (run on the code before the change) writes
+/// `--dart-define=DST_TAG=before` (run on c7b5ffde, the code before the change) writes
 /// one tile per case and zoom to `.cache/dst/before/`; the default `after`
 /// run writes `.cache/dst/after/`, then lays out the sheet
 /// `art/contact/dive-shield-thinning.png` (with `DST_CONTACT=true`):

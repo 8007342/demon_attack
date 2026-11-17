@@ -77,3 +77,28 @@ damage and scores are untouched; no calibration number moves (`plan/calibration-
   elite 3/3, 2/3, 1/3; sentinel 5/5, 3/5, 1/5; rush 8/8, 4/8, 1/8; columns: before | after per zoom, a grey strip under
   before and a gold one under after), and the frames of a dive with hits for
   `art/contact/dive-shield-thinning-dive.gif`.
+
+## 5. Revision: the old form, the new wear (operator, 2026-11-17)
+After playing §2: "Those are some thick shields lol and they 'thin out' to nothing :P and too round, the previous
+form and size was right, it's just the way in which they were getting worn out that was weird. This is the correct
+way to wear the shields down, but an ugly geometry."
+
+§2's 124° arc, its sizes and its hairline are replaced; its principle stays. `DiveShieldSpec` is again the
+playtest-fixes-3 crescent: half span, nose drop, leading edge and nose thickness (small 16 / 5.5 / 7.5 / 6, medium
+24 / 7.5 / 5.5 / 7.5, sentinel 52 / 15 / 3 / 10, rush 64 / 18 / 2 / 13, the thickest), its tapering profile
+`thick · (1 − u²)^0.55 + 0.6`, its four colour bands (1 / 0.7 / 0.42 / 0.2 of the thickness), the thermal and crimson
+palettes and the ember tips. What made it segmented or independent stays removed: the shape is drawn whole (no
+per-point pieces, notches or sockets); the flame lick is a fixed profile (its old mean, 0.55 of `lick`) instead of a
+17 / 29 rad/s animation; no heading turn; it is drawn inside the body's transform (wing roll, sentinel bank, snapped
+centre); the rush shield fades in at full size instead of growing. The embers still rise from the two tips (attached
+to them; none with reduced motion).
+
+Wear: the leading edge and the span never change; the trailing side scales by
+`wear = 0.4 + 0.6 · (points − 1) / (max − 1)` (1 for a one-point shield), so every spent point is an equal step and
+the last point keeps 40 % of the full thickness. The envelope dims slightly with the wear, the last point flickers
+(1.75 Hz) and each hit flashes the whole crescent white for 0.12 s.
+
+The sheet `art/contact/dive-shield-thinning.png` now pairs the old segmented crescent (rendered from c7b5ffde, the
+commit before this change) with the restored, thinning one. Tests: `test/dive_shield_thinning_test.dart` (span
+constant within 1.5 px at every level and zoom and covering the measured silhouettes, wear strictly increasing with the
+points, the drawn thickness non-increasing and never under the floor, one connected shape).

@@ -3513,8 +3513,9 @@ class DemonScene extends FlameGame {
   // segment per point and spent from the outside in (the shield narrowed),
   // their flame lick throbbed the thickness on its own clock, they turned
   // with the heading while the body did not, and they were drawn outside
-  // the body's wing roll (and the sentinel's bank squash). Now one arc of
-  // constant angular width, in the body's transform, loses only thickness.
+  // the body's wing roll (and the sentinel's bank squash). Now the same
+  // crescent, whole and in the body's transform, loses only thickness
+  // (to 40 % of full on the last point; design §5).
 
   /// The shield spec for an ordinary diver or a sentinel.
   static DiveShieldSpec diveShieldSpec(Demon d) {
@@ -3867,8 +3868,8 @@ class DemonScene extends FlameGame {
         ? Perspective.smoothstep(0, 1, d.lastStandTellProgress)
         : 1.0;
     // --- dive-shield-thinning: the super-strong shield, the thickest. It
-    // forms in place (a hairline thickening, never a change of size) and
-    // thins with the rush shield's points, in the body's bank.
+    // fades in at its full size (never growing) and thins with the rush
+    // shield's points, in the body's bank.
     final max = d.rushShieldMax > 0 ? d.rushShieldMax : 1;
     final points = d.rushShieldMax > 0 ? d.rushShield : 1;
     c.save();
@@ -3883,7 +3884,6 @@ class DemonScene extends FlameGame {
       clock: model.clock,
       calm: sectors.flyover.reducedMotion,
       opacity: forming ? .3 + .7 * grow : reel,
-      form: grow,
       seed: d.seed,
     );
     c.restore();
