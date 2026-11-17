@@ -327,7 +327,8 @@ Future<void> _rush() async {
   for (var f = 0; f < 60 * 40 && lurks < 2; f++) {
     _step(m, scene);
     _tick(scene);
-    final p = m.foreshadow?.lurk.progress ?? 0;
+    // sentinel-shadow-align: the lurk has no track of its own now.
+    final p = (m.foreshadow?.clock ?? 0) / 20;
     if (scene.lurkCenter != null && p >= .45 + lurks * .5) {
       await grab('lurk');
       rushShadowScales['lurk$lurks'] = scene.lurkScale ?? 0;
