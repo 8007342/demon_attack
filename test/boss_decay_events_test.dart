@@ -128,7 +128,7 @@ void main() {
     expect(m.takeGameEvents().where((e) => e.name.startsWith('boss')), isEmpty);
   });
 
-  test('music stingers: overflight, rise and collapse use existing accents', () {
+  test('music stingers: overflight and rise use existing accents; the collapse is a section', () {
     final accents = <String>[];
     final bridge = MusicBridge(
       onIntensity: (_) {},
@@ -142,7 +142,7 @@ void main() {
     ]) {
       bridge(GameEvent(name));
     }
-    expect(accents, ['gloat', 'laststand', 'respawn']);
+    expect(accents, ['gloat', 'laststand']);
     // The director publishes the overflight once, on the boss arrival.
     final events = <GameEvent>[];
     final director = MusicDirector(emit: events.add);

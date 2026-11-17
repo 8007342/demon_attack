@@ -115,6 +115,7 @@ after the merge instead of resolving its text.
 | `lib/game/boss_atlas.dart` frontal section | `tools/generate_boss_sprites.py` (needs Pillow) | not run (no venv) |
 | `lib/game/boss_atlas.dart` hero section (after `// ---- BEGIN boss hero atlases`) | `boss_sheet pack BAKE RIG HULL[=CLASS]…`; build it with `cd tools/boss_sheet && go build -o ~/.cache/tillandsias-project/bin/boss_sheet .`, run from the repo root; BAKE/RIG are rigkit outputs | builds, prints usage; pack not run (rewrites `lib/`) |
 | `lib/widgets/mission_medal_atlas.dart`, `assets/images/mission-medals.png` | `lua tools/rigkit/bake_layers.lua art/families/mission-medals.json --cols 6 --atlas assets/images/mission-medals.png --dart lib/widgets/mission_medal_atlas.dart MissionMedalAtlas` (bpy venv + Go; no GPU, picks committed; `plan/render-runs/mission-medals.md`) | byte-identical |
+| `lib/game/song_map.dart`, `web/audio/score/` (`score.json`, `<song>/<section>.mid`) | `lua tools/score/score_gen.lua` (input `art/music/soundtrack/song-map.json`; `--check` regates and compares) | byte-identical |
 | `lib/game/insignia_atlas.dart` | `cd tools/alien_insignia && go run . atlas -root ../..` | byte-identical |
 | `lib/game/ground_troops_atlas.dart` | `cd tools/ground_troops && go run . offline` | byte-identical |
 | `lib/game/vegetation_atlas.dart` | `cd tools/vegetation && go run . offline` | byte-identical |
