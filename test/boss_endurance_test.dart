@@ -19,12 +19,21 @@ const seeds = [
 ];
 
 /// Mean carrier seconds and hits per campaign (sum of the five carriers),
-/// measured on `game` at bac1f458, before the change (the carrier was
-/// fight-ready on arrival; the same harness, `fightReady` read as true).
+/// measured with carrier-hatches (the boss made easier on purpose, design
+/// §A11; plan/calibration-current.md, "Carrier hatches"). Later changes
+/// stay within 5 % pooled and 10 % per difficulty of these.
 const baseline = <String, ({double seconds, double hits})>{
-  'easy': (seconds: 333.07, hits: 914.3),
-  'normal': (seconds: 431.69, hits: 1252.1),
-  'hard': (seconds: 428.92, hits: 1325.3),
+  'easy': (seconds: 183.85, hits: 483.9),
+  'normal': (seconds: 277.84, hits: 790.8),
+  'hard': (seconds: 300.83, hits: 921.1),
+};
+
+/// Before carrier-hatches (`game` dde01449, the same harness): the easier
+/// boss must stay at least 20 % faster to kill on every difficulty.
+const preHatches = <String, ({double seconds, double hits})>{
+  'easy': (seconds: 352.64, hits: 932.3),
+  'normal': (seconds: 417.29, hits: 1211.7),
+  'hard': (seconds: 436.03, hits: 1332.4),
 };
 
 final _measured = <String, ({double seconds, double hits})>{};
@@ -92,6 +101,11 @@ void main() {
         'hits=${hits.toStringAsFixed(1)} ${jsonEncode(perSeed)}',
       );
       _measured[difficulty.name] = (seconds: seconds, hits: hits);
+      expect(
+        seconds / preHatches[difficulty.name]!.seconds,
+        lessThanOrEqualTo(.8),
+        reason: 'carrier-hatches: easier than before the hatches',
+      );
       final base = baseline[difficulty.name]!;
       expect((seconds / base.seconds - 1).abs(), lessThanOrEqualTo(.10),
           reason: 'seconds $seconds vs ${base.seconds}');

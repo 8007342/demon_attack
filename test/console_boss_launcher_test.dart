@@ -46,8 +46,12 @@ void main() {
         names.addAll(m.takeGameEvents().map((e) => e.name));
       }
       expect(m.mode, RunMode.victory, reason: 'route $route');
-      // One step every 2.5 s: 2 shield steps and 2 per form.
-      expect(t, lessThan(ArcadeModel.consoleDecaySeconds * (2 + 2 * 4) + 6));
+      // One step every 2.5 s: one per hatch tier (≤ 4), the fall and the
+      // transformation (carrier-hatches), then 2 per form.
+      expect(
+        t,
+        lessThan(ArcadeModel.consoleDecaySeconds * (4 + 2 * 4) + 1.2 + 3.5 + 6),
+      );
       int at(String n) => names.indexOf(n);
       for (final n in [
         GameEventNames.bossShieldFailing,
@@ -62,10 +66,14 @@ void main() {
       expect(at(GameEventNames.bossShieldFailing),
           lessThan(at(GameEventNames.bossShieldDown)));
       expect(at(GameEventNames.bossShieldDown),
-          lessThan(at(GameEventNames.bossArmourShed)));
-      expect(at(GameEventNames.bossModuleLost),
           lessThan(at(GameEventNames.bossCoreExposed)));
+      // carrier-hatches §A4: the core is exposed by the transformation,
+      // before the armour and forms.
       expect(at(GameEventNames.bossCoreExposed),
+          lessThan(at(GameEventNames.bossArmourShed)));
+      expect(at(GameEventNames.bossArmourShed),
+          lessThan(at(GameEventNames.bossModuleLost)));
+      expect(at(GameEventNames.bossModuleLost),
           lessThan(at(GameEventNames.bossCollapseStart)));
     }
   });

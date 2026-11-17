@@ -200,7 +200,9 @@ void main() {
     expect(large.shield, 3);
   });
 
-  test('carrier boss opens side hatches in early forms and locks them in final form', () {
+  // carrier-hatches §A5: the core door is the only opening; the side
+  // hatches are sealed in every form (supersedes the side-hatch rule).
+  test('carrier core: side hatches sealed, the wider core door the only opening', () {
     final model = ArcadeModel(seed: 12)..start();
     model.mode = RunMode.playing;
     model.level = 5;
@@ -208,30 +210,18 @@ void main() {
       ..shield = 0
       ..core = 24;
     model.boss = boss;
-
-    // Form 0 of 3: sideHatchesLocked is false; side hatches can take core damage.
     expect(boss.phase, 0);
-    expect(boss.sideHatchesLocked, isFalse);
+    expect(boss.sideHatchesLocked, isTrue);
     boss.door = 0;
     boss.sideDoorLeft = 1.0;
-    boss.sideDoorRight = 0;
     expect(model.hitBoss(boss.x), isFalse);
-    expect(model.hitBoss(boss.x - Carrier.sideHatchOffset), isTrue);
-    expect(boss.core, 23);
-
-    // Advance core damage into the final form (phase == formCount - 1).
-    boss.core = 4;
-    expect(boss.phase, boss.formCount - 1);
-    expect(boss.sideHatchesLocked, isTrue);
-    model.update(1 / 60);
-    expect(boss.sideDoorLeft, 0);
-    expect(boss.sideDoorRight, 0);
     expect(model.hitBoss(boss.x - Carrier.sideHatchOffset), isFalse);
-    expect(model.hitBoss(boss.x + Carrier.sideHatchOffset), isFalse);
-
-    // Center hatch still damages the core in final form.
+    expect(boss.core, 24);
     boss.door = 1.0;
-    expect(model.hitBoss(boss.x), isTrue);
-    expect(boss.core, 3);
+    // 24 × openness (was 12; carrier-hatches §A11).
+    expect(model.hitBoss(boss.x + 23), isTrue);
+    expect(boss.core, 23);
+    expect(model.hitBoss(boss.x + 25), isFalse);
+
   });
 }

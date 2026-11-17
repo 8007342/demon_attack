@@ -98,20 +98,20 @@ shots reach them sooner:
 - So the creatures come from lower and lower hatches, as in the operator's first request.
 
 **A hatch's field.**
-- It is a small hex membrane: radius 18 units around the hatch, with the carrier-render-engine wear look (width and
+- It is a small hex membrane: radius 24 units (calibrated, §A11; 18 in the first draft) around the hatch, with the carrier-render-engine wear look (width and
   opacity by the field's HP, its §4).
-- A shot whose path crosses the hatch's row within 18 units of its centre is stopped at the membrane and removes
+- A shot whose path crosses the hatch's row within 24 units of its centre is stopped at the membrane and removes
   1 HP of field (`damage` scales as today).
 - At 0 the membrane breaks in place, with shards and `bossHatchFieldDown`.
 
 **A hatch's hull.**
-- Once its field is down, a shot within 12 units of its centre hits the hatch (1 HP).
+- Once its field is down, a shot within 16 units of its centre hits the hatch (1 HP).
 - At 0 the hatch is destroyed (`bossHatchDrop`, cause `shot`). Its doors and rim break off as Part B components
   (§B4), so it has **fallen** when its last component is released, at most 1.2 s later.
 
 **Hit points.** The old shield's HP is redistributed. For a tour, the upper-hatch pool is
 `H = round(k·shieldMax)`, split equally over its hatches: 60 % field and 40 % hull, each at least 3.
-- The pool factor `k` starts at **0.85** (fewer total hits than the old shield) and is set by calibration (§A11).
+- The pool factor `k` is set by calibration per difficulty (§A11): **0.5 / 0.55 / 0.65** on Easy / Normal / Hard (0.85 in the first draft).
 - The hull outside a vulnerable hatch's field is armour: a shot there sparks off (the playtest-fixes-3 deflect
   sparks), does no damage, and counts toward the hint of §A7.
 
@@ -141,12 +141,12 @@ When the last upper hatch has fallen:
 
 **Fairness by structure** (each one constant):
 - **The door cycle is unchanged**, `door = clamp(2·(sin(c·(1.55 + 0.22·phase)) − k), 0, 1)`. It is hit at
-  door ≥ 0.6, with the hit half-width widened from `12·door` to **`16·door`**, because it is now the only opening.
-- **A slower glide.** The lateral motion's phase rate is scaled by **0.6** in the core chapter (and **0.35** in the
+  door ≥ **0.4** (was 0.6), with the hit half-width widened from `12·door` to **`24·door`**, because it is now the only opening (calibrated, §A11).
+- **A slower glide.** The lateral motion's phase rate is scaled by **0.4** in the core chapter (and **0.25** in the
   hatch chapter), and the amplitude stays at 80.
-  - The core door's maximum speed falls from ≈ 106 to ≈ 64 units/s.
-  - The lead needed at its row falls from ≈ 67 to ≈ 40 units.
-  - In the hatch chapter, U1's lead is ≤ 44 units for a ≤ 1.17 s flight, at most 2.4 field radii.
+  - The core door's maximum speed falls from ≈ 106 to ≈ 48 units/s.
+  - The lead needed at its row falls from ≈ 67 to ≈ 30 units.
+  - In the hatch chapter, U1's lead is ≤ 32 units for a ≤ 1.17 s flight, about 1.3 field radii.
 - **The lead pip** (Easy and Normal only, after the first `bossHintLead`). A faint ember tick on the door's row,
   where a shot fired now would meet the door's centre. It is drawn under the gameplay layer and is never on Hard.
   Telegraphing where to aim is the readability rule `[A3]`. The pip is ours
@@ -240,7 +240,7 @@ carries `route`, `tour`, `set`, `variant` and `sector`.
   - the vulnerable tier;
   - `GateRun`, `CarrierLaunches` and `CarrierVolleyTiming` moved across;
   - a deprecated re-export until carrier-v3 is archived.
-- **`CarrierScript`:** `hatches`, `hatchOrder`, `hatchPool` (`k`), `hatchGlide` (0.35), `coreGlide` (0.6),
+- **`CarrierScript`:** `hatches`, `hatchOrder`, `hatchPool` (`k`), `hatchGlide` (0.25), `coreGlide` (0.4),
   `coreWindow` (16), `transformSeconds` (3.5) and `zoomInRate` (0.04).
 - **`model.dart`:**
   - the `Carrier` gains the hatch state and a chapter (hatches, transform, core);
@@ -281,46 +281,42 @@ carries `route`, `tour`, `set`, `variant` and `sector`.
   - the shutter fades open.
 
 ## A11. Calibration: easier on purpose (CLAUDE.md §7)
-**Two pilots, both protected (invulnerable), 16 seeds per difficulty**, as `test/boss_endurance_test.dart` measures
-today:
-- **The expert:** the real-shot campaign pilot, which leads with the forecast. Its metrics are the carrier's
-  **time-to-kill** (combat seconds from fight-ready to the fall, summed over the five carriers) and the **hits taken**
-  while it is fight-ready. Each hit taken is a life an unprotected pilot without a shield would lose, so it stands in
-  for **life loss**.
-- **The naive pilot** (new, `test/boss_fairness_test.dart`): the same steering, but it aims at the target's
-  **current** x with no lead, as a new player does. It has a cap of 240 s per carrier. Its metrics are the same, plus
-  the share of carriers it kills before the cap.
+**Two harnesses.**
+- **`test/boss_fairness_test.dart`** (new). Each tour's boss level is played from its start, 6 seeds × 5 tours per
+  difficulty, **unprotected but with lives refilled**, so every lost life is counted and the fight goes on. It uses
+  two pilots:
+  - **the expert** leads every target by the forecast (the campaign pilot's rule);
+  - **the naive pilot** aims at the target's **current** x, as a new player does.
 
-**Before values.**
-- The expert's are the latest recorded (`plan/calibration-current.md`, "Carrier v3 tune"):
+  Each reports the **time-to-kill** (combat seconds from fight-ready to the fall), the **lives lost** while the
+  carrier is fight-ready, and the **kill share** within a 240 s cap. It reads the hatch API dynamically, so it ran
+  unchanged on the code before this change.
+- **`test/boss_endurance_test.dart`** (the existing gate). The protected expert plays 16 full campaigns per
+  difficulty. Its `seconds` are the carriers' time-to-kill. Its `hits` are the `hit` events while a carrier is
+  fight-ready: the hits the fight absorbs, not life loss (the first version of this design misread them).
 
-  | Difficulty | Seconds | Hits |
-  | --- | --- | --- |
-  | Easy | 352.64 | — |
-  | Normal | 417.29 | — |
-  | Hard | 436.03 | — |
+**Targets**, on the fairness harness's expert against its own "before", each within ± 5 points
+`[UNSOURCED: plan/provenance-audit.md#CH-4]`:
 
-  The hits are re-measured on the merge base before any change, together with the naive pilot (task 5.1).
-
-**Targets** (each within ± 5 points) `[UNSOURCED: plan/provenance-audit.md#CH-4]`:
-
-| Difficulty | Expert time-to-kill | Expert hits taken | Naive pilot |
+| Difficulty | Expert time-to-kill | Expert lives lost | Naive pilot |
 | --- | --- | --- | --- |
-| Easy | −25 % | −30 % | kills every carrier before the cap; time ≤ 1.5 × the expert's |
-| Normal | −20 % | −25 % | kills ≥ 90 % of carriers; time ≤ 1.75 × the expert's |
+| Easy | −25 % | −30 % | kills every carrier within the cap |
+| Normal | −20 % | −25 % | kills ≥ 90 % of carriers |
 | Hard | −10 % | −15 % | measured, no target (Hard stays hard) |
 
-**The levers, in order:**
-1. the hatch pool `k`;
-2. the core window (16);
-3. the glide factors (0.35 and 0.6);
-4. `coreMax` per difficulty (`DifficultyPolicy.bossCoreForRoute`);
-5. the fan-attack rate in the hatch chapter.
+The before and after values are in §D and in `plan/calibration-current.md`, "Carrier hatches".
+
+**The levers, in order** (all used; the values are in §D):
+1. the hatch pool `k`, per difficulty;
+2. the core window (24·door from 0.4 open) and the hatch radii (24 / 16);
+3. the glide factors (0.25 and 0.4);
+4. the core's share of `coreMax` per difficulty (`CarrierHatches.coreShares`);
+5. the carrier's fan-attack rate per difficulty (`CarrierHatches.fanShares`).
 
 The flock timer is the last resort.
 
 **How `test/boss_endurance_test.dart`'s baseline moves.**
-- When the targets are met, `baseline` is replaced by the new expert means.
+- When the targets are met, `baseline` is replaced by the new expert means (seconds and hits).
 - The old map is kept as `preHatches`, with the commit it came from.
 - A new test asserts that each difficulty's ratio to `preHatches` lies inside its target band. That guards the
   easier boss against regressions.
@@ -357,7 +353,7 @@ On a 360-px phone, a single call's text column is about 360 − 16 (margins) −
 - the median needs about 290 px, two lines.
 
 **The decision:**
-- **The font** grows to **14.5 px** in the phone strip (+11.5 %) and to 15 × scale on the desktop. The tag grows to
+- **The font** grows to **14.5 px** in the phone strip (+11.5 %) and keeps 13.5 × scale on the desktop. The tag grows to
   10.5 px.
 - **One-line lines.** A line flagged by the limit below is drawn with `maxLines: 1`, at full dock width, even when
   another call is on screen.
@@ -558,9 +554,17 @@ None of this is per-component. **So the current bake does not have the C5 data.*
    released spike uncovers a stump, not clean hull. Until then the runtime draws a char decal at each released
    pivot.
 4. **Hatches.**
-   - The dorsal hatch modules sit at the `CarrierHatches` anchors per tour (§A3), with closed and open states, as
-     the render branch's `hatch.slab`, `hatch.petal`, `maw.iris` and `sac.cluster` already are. Their door leaves
-     are components (item 1).
+   - The dorsal hatch modules sit at the `CarrierHatches` anchors per tour (§A3), with closed and open states.
+   - Following the styleguide's §3 item 8, each is a **tusk-framed slot**: a dark bay narrowing down-screen between
+     two ivory tusks, the same language as the bay between the prongs. That replaces the render branch's
+     `hatch.slab`, `hatch.petal`, `maw.iris` and `sac.cluster` looks for launch hatches.
+   - Each needs closed, open and **broken** states. The broken state is the tusks snapped to stumps, with a charred
+     slot.
+   - The **core door's shutter** is a pair of great tusks that part (an `open` matrix per tusk, as the door parts
+     already have), so the transformation shows the slot widening.
+   - The door leaves and tusks are components (item 1). Their break-up pieces must read as **tusk and prong shards
+     and ivory splinters**: tusk material (`bone` or `ivory` tag) in the component pass, and crack planes along the
+     tusk's length for the long ones.
    - The `anchors.verify_dart` check reads `lib/game/carrier_hatches.dart` instead of `carrier_gates.dart`.
    - The pods, flank maws, sacs and aft gates are no longer launchers: they stay closed as decor, or are removed with
      their clearings restored.
@@ -586,11 +590,11 @@ Durability (CLAUDE.md §5): commit the picked raws and the recipe. The run ledge
 1. One change for both workstreams. A destroyed hatch *is* a break-up, and both share the events and the review.
 2. The tiers are kept (2/2/3/3/4 upper tiers), moved lower (§A3), with only the topmost intact tier vulnerable, so
    the "lower and lower hatches" of round 3c stays.
-3. The old hull-wide shield's HP is redistributed into the hatches at `k` = 0.85 to start. The hull-wide intercept
+3. The old hull-wide shield's HP is redistributed into the hatches at `k` = 0.5–0.65 per difficulty. The hull-wide intercept
    and its equivalence test are retired for the carrier.
 4. The "lower, delicate hatch" is the core door alone. The side hatches seal at the transformation, and the door's
-   window widens to 16·door.
-5. The glide slows to 0.35 in the hatch chapter and 0.6 in the core chapter, and the lead pip shows on Easy and
+   window widens to 24·door at door ≥ 0.4.
+5. The glide slows to 0.25 in the hatch chapter and 0.4 in the core chapter, and the lead pip shows on Easy and
    Normal.
 6. Arrival invariance (§A6): the flocks keep their rhythm, and the easing comes from structure.
 7. The gate events are renamed to hatch events, and the cell and field-impact events are retired for the carrier.
@@ -605,13 +609,130 @@ Durability (CLAUDE.md §5): commit the picked raws and the recipe. The run ledge
 | The render merge changes the painter, the gates, the doors and the field under this spec | tasks §1 re-reads them first; design §A9 and §B1 are updated before any code |
 | The expert pilot shows little change, because it always led perfectly | the naive pilot measures the human difficulty (§A11) |
 | Easier overshoots: the fight feels trivial on Normal | the targets are bands (± 5 points); the levers in order; Hard is barely eased |
-| Far hatches are hard to hit even slowed | the tiers moved lower; the 18-unit fields; the hint and the lead pip |
+| Far hatches are hard to hit even slowed | the tiers moved lower; the 24-unit fields; the hint and the lead pip |
 | Long top-tier swoops crowd the upper screen with untargetable creatures | the transit line is just under the deck; the skein spacing; review sheet 8.1 |
 | The split-composite memory spike on phones | one transition per pass; B released at its end; the phone profile (carrier-render-engine 4.4) |
 | The fallback components look wrong on dense sets | the clump merge; the component pass (§B9) replaces it |
 | A larger subtitle font overflows the desktop tiles or the dock's height | a widget test at 360 × 640 and 1280 × 720 over every line: no ellipsis at the new size (task 4.5) |
 
-**Open questions for the operator:**
-- Should lower tiers bring heavier kinds or escorts? `roster` is reserved.
-- Should the rest of the radio bank be rewritten to one line (471 lines exceed 28 characters)?
-- Is the lead pip welcome, or should the hint alone teach leading?
+**The lead's answers (2026-11-16), which close the open questions:**
+1. **The lead marker:** yes, on Easy and Normal only, as designed (§A5). Every player finds the boss too hard.
+2. **Heavier creatures on lower tiers:** no, not in this change. The roster stays neutral (`roster` stays reserved).
+3. **Rewriting the rest of the radio to one line:** not in this change. Only the flagged in-fight hints must fit one
+   line (§A12). The larger rewrite is folded into the voice-stack re-voice, which re-records most lines anyway.
+
+**Art direction** (`docs/styleguide/alien-capital-ships.md` §3 item 8, operator): "The dark bay between the two
+tusk-like prongs feels great, narrowing and demon-like … those tusk-like prongs should lead the design of the rest of
+the ship." For this change:
+- the hatches are **tusk-framed slots**;
+- the transformation's shutter opens like the bay: the tusks part and the dark slot widens to show the core door;
+- the break-up pieces are tusk and prong shards and ivory splinters.
+
+The runtime draws this where it is procedural (the hatches, the core door, a destroyed hatch's splinters; §D). The
+next re-render must carry it (§B9.4).
+
+---
+
+# D. Runtime notes (the implementation on `work/carrier-hatches`)
+These are the picks the runtime made where the spec left room, or where it differs from the spec. Each is a constant
+or a flag.
+
+**Hatches (Part A).**
+- **Geometry.**
+  - `lib/game/carrier_hatches.dart` holds the geometry, hit points, transit and chapter constants.
+  - A `CarrierHatch` is a `CarrierGate`, so carrier-v3's volley state machine (`CarrierLaunches`) runs on the hatches
+    unchanged.
+  - `carrier_gates.dart` keeps the old gates for the re-render's anchor check and as decor.
+  - The script's `gates` are now the upper hatches plus the core door.
+- **The hull-wide shield is gone from gameplay.**
+  - `Carrier.shieldMax` is the hatches' pool, and `shield` the sum of what stands. The stages (S1 at half, S2 at
+    zero), the HUD and the insignia meter keep working on it.
+  - The insignia meter stays 12 cells over the pool rather than one cell per hatch.
+  - `test/carrier_field_equivalence_test.dart` still passes: its log is identical with and without the presentation.
+    It no longer guards a hull-wide intercept.
+- **How shots meet the hatches.** A shot meets the vulnerable tier at that tier's row (`_hatchShot`): within 18
+  units of a hatch's centre while its field stands (12 after), or on the armour within 130 units of the carrier's
+  centre, where it sparks off.
+- **`hitBoss` in the hatch chapter** is a direct-damage API for fixtures and review harnesses only. Gameplay shots
+  never reach it there. It damages the vulnerable hatch nearest the given x. When it destroys the last hatch, the
+  fall and the transformation are skipped, with their events still queued.
+- **Fixtures.** A shield zeroed from outside (`b.shield = 0`) puts the carrier straight into the core chapter
+  (`ArcadeModel.syncChapter`). That keeps the older fixtures meaningful.
+- **The pop-up and swoop.**
+  - The entrance is carrier-v3's eased path from the hatch to the home slot, over `transit` seconds.
+  - Entering creatures are untargetable, as before the change. That is the transit line's rule, satisfied by the
+    whole entrance.
+  - The draw-time pop-up scale was not added: the hatch's glow and the slot's opening carry the launch.
+- **The core door's hold.** It forecasts the door cycle in 1/60-s steps over one period. `coreLaunches` and
+  `coreHolds` count the hold's share (§A11).
+- **The radio.** The hints are model events, deterministic, with cooldowns on the level clock (§A7).
+  `leadHinted` drives the pip.
+- **The approach.** Its launches now leave the dorsal hatches (never the core door). Their entry nearness is still
+  carrier-v3's 0.12–0.2; the "slot nearness + 0.02" rule of §A6 is not coded.
+
+**Presentation.**
+- **Draw order.** `scene.dart` draws the fighting carrier's front pass (`_carrierFront`: prow, deck, core door,
+  components) **before** the creature loop. The approach and close keep the old order: no creature fights there.
+- **`CarrierHatchPainter`** draws the tusk-framed slots:
+  - a dark lens narrowing down-screen between two ivory tusks;
+  - an amber rim on the vulnerable tier;
+  - the hatch's own field, a ring with the carrier-render-engine wear (width, alpha, coherent gaps);
+  - the char and smoke of a destroyed hatch;
+  - the core door's tusks parting through the transformation;
+  - the lead pip, an ember chevron under the door's row.
+- **A destroyed hatch** breaks into six ivory splinters on the rate rule (§B4). They stay attached to the hull until
+  released, then fly on the Part B bodies.
+- **The transformation's zoom-in** eases toward 0.86 at no more than 0.04 per second. The bend halves from the
+  transformation on.
+
+**Break-up (Part B).**
+- **Cut at hull install** (`CarrierBreakupPainter.prepare`), from each layer's own art:
+  - a detachable module's whole layer for its form change;
+  - for the other layers, S0 against S2 (alpha, or a colour step over 150) for the shed.
+- **The cells.** 4 units, grown in steps of 2 to keep a layer within about 700 cells. Pieces are split by a lattice
+  Voronoi only past 96 units, so a spike stays one piece. At most 48 per transition.
+- **The detach.**
+  - It starts at the odd armour step: the director adds the rank to `detached`, so the composite drops it, and
+    `breakStart` records the moment.
+  - 35 % is released, outer first, over ≥ 1.2 s. The rest goes at the form change, over ≥ 1.6 s.
+  - The director makes no module `BossWreck` and no random `plate` wreck for a carrier.
+- **The shed** starts at S2 (the last hatch destroyed) and releases over ≥ 2.5 s, into the transformation. It does
+  not start at half the hatches, as §B4 has it: the S1 art is the S0 art under the overlay, so there is nothing to
+  shed before S2.
+- **Drawing.**
+  - The components are drawn over the composite, one `drawVertices` per atlas page from the page itself, with no
+    second composite.
+  - A later layer overlapping a breaking module shows over its attached pieces, not under them. The split-composite
+    of §B3 is not built yet; the review sheet decides whether it is needed.
+  - A flying piece shrinks to nothing as it fades, since the mesh has no per-vertex alpha.
+- **At the collapse,** every attached component is released in a 0.6 s burst, on the rate rule. They are not
+  composed into the wreck's texture as §B8 says.
+
+**Calibration (§A11).** The targets are met on the fairness harness; the values are in `plan/calibration-current.md`,
+"Carrier hatches".
+
+| Difficulty | Expert time-to-kill | Expert lives lost | Naive kill share |
+| --- | --- | --- | --- |
+| Easy | −29.7 % | −31.9 % | 1.0 |
+| Normal | −23.2 % | −25.3 % | 0.967 |
+| Hard | −10.6 % | −13.7 % | 0.867 |
+
+The first draft's numbers made the fight *harder* (expert +3 to +16 %, naive kills down to 43 %). The calibrated
+values replace them:
+- the radii are 24 and 16 (were 18 and 12);
+- the glide is 0.25 and 0.4 (was 0.35 and 0.6);
+- the core door is hit from 0.4 open, at 24 × its openness (was 0.6 open, 16 ×);
+- three new per-difficulty levers: the hatch pools 0.5 / 0.55 / 0.65, the core shares 0.65 / 0.8 / 0.8, and the
+  fan-attack rate 0.7 / 0.85 / 0.75.
+
+**Budget, measured** (`CARRIER_BREAKUP` in the review test):
+- Tour 1 cuts 87 components across its transitions: the detach ranks and the shed, each at most 48.
+- The worst frame drew 5,058 vertices in one call, against the 3,000 of §B7. The shed's cells are large-area. If the
+  phone profile (carrier-render-engine 4.4) objects, the cell floor rises from 4 to 6 units.
+
+**Review** (`art/contact/`):
+- sheets: `carrier-hatches-cascade.png`, `-transform.png` and `-breakup.png`;
+- clips: `carrier-hatches-fight.gif` (the cascade, then the transformation) and `-breakup.gif`.
+
+The pixel check that no creature is covered by the hull is not automated. The draw order guarantees it (§A6), and
+the sheets show it.

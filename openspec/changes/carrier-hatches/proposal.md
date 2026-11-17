@@ -58,7 +58,7 @@ The research, with its sources, is in `plan/carrier-hatches-research.md`. The ca
 
   All are structured events only.
 - **Radio subtitles.**
-  - The font grows from 13 to 14.5 px on the phone and from 13.5 to 15 on the desktop.
+  - The font grows from 13 to 14.5 px on the phone and keeps 13.5 on the desktop (its tiles have room for three lines).
   - A 28-character one-line limit applies to flagged lines, the hints at least, enforced by a test over
     `lines.json`.
   - Measured today: median 37 characters, longest 88. 471 of 695 lines exceed the limit and keep wrapping.

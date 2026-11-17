@@ -159,6 +159,9 @@ class CarrierPresentation {
     );
     for (final r in launches.runs) {
       final g = r.gate;
+      // carrier-hatches: the hatches and the core door have their own
+      // painter (CarrierHatchPainter).
+      if (g.kind == CarrierGateKind.tusk) continue;
       if ((g.slot == 'prow') != front) continue;
       final local = bend == null ? Offset(g.x, g.y) : bend(g.x, g.y);
       final at = center + local * scale;
@@ -370,6 +373,8 @@ class CarrierPresentation {
             ),
             _p,
           );
+        case CarrierGateKind.tusk:
+          break;
         case CarrierGateKind.hatch:
           c.drawRect(
             Rect.fromLTWH(-w / 2, -h / 2 - h * open, w, h * cover),

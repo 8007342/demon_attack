@@ -137,6 +137,18 @@ class BossDirector {
   /// Detach orders gone (the scene hides those modules' layers).
   final Set<int> detached = {};
 
+  // --- carrier-hatches §B4: a carrier's modules break up component by
+  // component. A detach rank starts breaking at the armour step before its
+  // form change (it leaves the composite then) and finishes at the form
+  // change; the break-up painter releases the components. Director clock.
+  final Map<int, double> breakStart = {}, breakFinish = {};
+
+  /// When the S2 shed started (the last hatch destroyed), director clock.
+  double? shedStart;
+
+  /// The director's clock (seconds of [update]).
+  double get clock => _clock;
+
   final List<BossWreck> wrecks = [];
 
   // --- carrier-render-engine §3: a v2 carrier's collapse is one cohesive
@@ -206,6 +218,9 @@ class BossDirector {
     _form = 0;
     list = 0;
     detached.clear();
+    breakStart.clear();
+    breakFinish.clear();
+    shedStart = null;
     wrecks.clear();
     collapse = null;
     overflight = loom = 0;
@@ -296,7 +311,26 @@ class BossDirector {
       overflight = phase == BossPhase.none ? 0 : 1;
     }
     script = m.carrierScript;
-    bend.limits = script.bend;
+    // --- carrier-hatches §A4: a quieter hull for the core chapter (the
+    // bend's limits halve once the transformation starts).
+    final chapter = m.boss?.chapter ?? m.wreckBoss?.chapter;
+    final calm = chapter != null && chapter != CarrierChapter.hatches;
+    final l = script.bend;
+    bend.limits = calm
+        ? CarrierBendLimits(
+            leanMax: l.leanMax / 2,
+            bankMax: l.bankMax / 2,
+            pitchMax: l.pitchMax / 2,
+            takeoffPitch: l.takeoffPitch,
+            wingLag: l.wingLag,
+            wingGain: l.wingGain,
+            buffet: l.buffet / 2,
+          )
+        : l;
+    if (chapter == CarrierChapter.core && _chapter != CarrierChapter.core) {
+      _kick(.25); // carrier-v3 §7's "core exposed" beat, at the exposure
+    }
+    _chapter = chapter;
     final steps = script.approach.distances;
     loom = phase == BossPhase.approach
         ? ((steps.first - math.max(1.0, m.approachD)) /
@@ -392,17 +426,33 @@ class BossDirector {
     if (m.boss != null) {
       final c = m.boss!;
       stage = stageOf(c);
+      // --- carrier-hatches §B4: a v2 carrier's next module starts breaking
+      // at the odd armour step before its form change.
+      if (carrier) {
+        final step = c.armourStep;
+        if (step.isOdd && step < c.armourSteps) {
+          final form = step ~/ 2 + 1;
+          if (form < c.formCount && !breakStart.containsKey(form)) {
+            breakStart[form] = _clock;
+            detached.add(form);
+          }
+        }
+        if (stage >= 2) shedStart ??= _clock;
+      }
       if (c.phase > _form) {
         for (var f = _form + 1; f <= c.phase; f++) {
           _detach(c, f, modules);
         }
-        // carrier-v3 §7: shake on a module lost, more when the core shows.
-        _kick(c.phase >= c.formCount - 1 ? .25 : .30);
+        // carrier-v3 §7: shake on a module lost (the core's beat moved to
+        // the transformation's end, carrier-hatches §A4).
+        _kick(.30);
         _form = c.phase;
       }
       list = detached.isEmpty ? 0 : 4 * math.pi / 180;
       // S2: plates peel off as the bay doors cycle (2 per cycle, ≤ 6).
-      if (stage >= 2) {
+      // carrier-hatches: a carrier's plates leave as components (the S2
+      // shed), never as random plate sprites.
+      if (stage >= 2 && !carrier) {
         final opening = c.door >= .6 && _lastDoor < .6;
         final plates = wrecks.where((w) => w.plate && !w.done).length;
         if (opening && plates < maxPlates && wrecks.length < maxFalling) {
@@ -426,6 +476,9 @@ class BossDirector {
     } else if (m.wreckBoss == null) {
       _form = 0;
       detached.clear();
+      breakStart.clear();
+      breakFinish.clear();
+      shedStart = null;
       list = 0;
     }
     collapse?.step(dt);
@@ -466,14 +519,25 @@ class BossDirector {
         : ArenaCamera.reducedZoom;
     final reducedFight =
         phase == BossPhase.climb || (carrier && phase == BossPhase.takeoff);
+    // --- carrier-hatches §A4: the transformation zooms back in, slowly.
+    final zoomIn = carrier && calm && fighting;
+    final before = camera.zoom;
     camera.stepZoom(
       dt,
-      reduced ? (reducedFight ? framing : 1) : want,
+      zoomIn
+          ? ArenaCamera.carrierMaxZoom
+          : (reduced ? (reducedFight ? framing : 1) : want),
       hold: threatUp,
       reduced: reduced,
       carrier: carrier,
       carrierFloor: carrier ? floor : null,
     );
+    if (zoomIn && camera.zoom > before) {
+      camera.zoom = math.min(
+        camera.zoom,
+        before + CarrierHatches.zoomInRate * dt,
+      );
+    }
     camera.altitude = altitude;
     // carrier-v3 §6.1: the follow ramps in over the take-off; the horizon
     // sinks as the fight climbs (the ground battle drops lower).
@@ -711,12 +775,20 @@ class BossDirector {
   }
 
   bool _carrier = false, _reduced = false;
+  CarrierChapter? _chapter; // --- carrier-hatches
 
   /// The module that sinks last: the v2 carapace (or the v1 spine).
   static bool _isBase(String id) => id == 'carapace' || id == 'spine';
 
   void _detach(Carrier c, int order, List<(String, int?)> modules) {
     detached.add(order);
+    if (_carrier) {
+      // carrier-hatches §B4: no whole-module wreck; its components finish
+      // breaking away now.
+      breakStart[order] ??= _clock;
+      breakFinish[order] ??= _clock;
+      return;
+    }
     for (final (id, d) in modules) {
       if (d != order || wrecks.length >= maxFalling) continue;
       wrecks.add(

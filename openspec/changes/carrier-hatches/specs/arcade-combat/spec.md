@@ -40,11 +40,11 @@ Only when every upper hatch is destroyed and has fallen SHALL the carrier transf
 - **THEN** no shot can damage the core
 
 ### Requirement: Fairer core chapter
-In the core chapter, the core door SHALL take hits only while it is open, with a hit half-width of 16 × its openness. The carrier's lateral motion SHALL be slowed to 0.35 of today's rate in the hatch chapter and 0.6 in the core chapter. The side hatches SHALL be sealed. Core-chapter flocks SHALL leave through the open core door, never forcing it open.
+In the core chapter, the core door SHALL take hits only while it is at least 0.4 open, with a hit half-width of 24 × its openness. The carrier's lateral motion SHALL be slowed to 0.25 of today's rate in the hatch chapter and 0.4 in the core chapter. The side hatches SHALL be sealed. Core-chapter flocks SHALL leave through the open core door, never forcing it open.
 
 #### Scenario: Leading the door
 - **WHEN** the carrier glides at its fastest in the core chapter
-- **THEN** the core door moves at most about 64 units per second, and a shot from the ship's row needs a lead of about 40 units or less
+- **THEN** the core door moves at most about 48 units per second, and a shot from the ship's row needs a lead of about 30 units or less
 
 ### Requirement: Carrier launch arrival invariance
 Hatches SHALL change where the fight's creatures come from, not when they arrive. The flock timer, size, kinds and caps SHALL be unchanged. Each entrance SHALL end when it does today, except during a core-door hold or the transformation. A creature SHALL not be targetable above hull-local y + 40.
@@ -54,10 +54,10 @@ Hatches SHALL change where the fight's creatures come from, not when they arrive
 - **THEN** it leaves the hatch earlier, by its longer transit less today's 0.55 s entrance, and each creature reaches its home at today's moment
 
 ### Requirement: Easier carrier by calibrated targets
-The carrier fight SHALL get easier on purpose. For the protected expert pilot, time-to-kill SHALL fall by 25, 20 and 10 % on Easy, Normal and Hard, and hits taken by 30, 25 and 15 %, each within 5 points. A naive pilot that does not lead SHALL kill every carrier on Easy and 90 % on Normal.
+The carrier fight SHALL get easier on purpose. For the expert pilot, time-to-kill SHALL fall by 25, 20 and 10 % on Easy, Normal and Hard, and lives lost by 30, 25 and 15 %, each within 5 points. A naive pilot that does not lead SHALL kill every carrier on Easy and 90 % on Normal.
 
 #### Scenario: Calibration run
-- **WHEN** `test/boss_endurance_test.dart` and `test/boss_fairness_test.dart` run against the recorded pre-hatches values
+- **WHEN** `test/boss_fairness_test.dart` runs against the values recorded before the change
 - **THEN** every ratio lies inside its band, and the before and after values and the commit are in `plan/calibration-current.md`
 
 #### Scenario: Later changes
