@@ -138,9 +138,10 @@ test('the size totals: the whole run stays a small download', async () => {
   assert.ok(json.length < 64 * 1024, `score.json ${json.length} B`);
   assert.ok(gzipped < 160 * 1024, `score gzipped ${gzipped} B`);
   // 48 KB until the sample bank's loader and zone lookup joined it (design §12.9): 52 KB raw, 16 KB gzipped; the
-  // brood choir's second bank and sampled-only roles (demon-choir) brought it to 57.5 KB raw, 18.2 KB gzipped.
-  assert.ok(player < 60 * 1024, `player ${player} B`);
-  assert.ok(gzipSync(await readFile(web('audio/demon-score.js')), { level: 9 }).length < 20 * 1024, 'player gzipped');
+  // brood choir's second bank and sampled-only roles (demon-choir) brought it to 57.5 KB raw, 18.2 KB gzipped; the
+  // sampled bass's metal chain (bass-tone, design §12.12) to 67.3 KB raw, 21.6 KB gzipped (the bank's own audio is 5 MB).
+  assert.ok(player < 72 * 1024, `player ${player} B`);
+  assert.ok(gzipSync(await readFile(web('audio/demon-score.js')), { level: 9 }).length < 24 * 1024, 'player gzipped');
   // Unique music: every section's written length (hold bars once).
   let seconds = 0;
   for (const song of Object.values(manifest.songs)) for (const s of Object.values(song.sections)) seconds += (s.bars + s.hold) * song.barSamples / 48000;

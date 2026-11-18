@@ -124,7 +124,7 @@ if (mode === 'render') {
     const process = c.process.bind(c);
     c.stat = { blocks: 0, reducing: 0 };
     c.process = () => { const y = process(); c.stat.blocks++; if (c.env < -.5) c.stat.reducing++; return y; };
-    probe.limiter = c;
+    probe.limiter ||= c;   // the master limiter is the first; bass-tone's compressor comes later
     return c;
   };
   // Solo: keep only the tracks of the soloed roles in every mask and track list (the player schedules nothing else).

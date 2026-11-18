@@ -1,0 +1,205 @@
+{
+  "comment": "bass-tone candidates (adaptive-soundtrack design §12.12; plan/bass-tone-research.md). Measured by node tools/mix_meter/bass_tone.mjs; the pick is copied into recipe.json roles.bass.tone. levels: the DI's 50 ms note peaks at the chain's input with input 1 (median, p95, peak), for the sine test, scaled by each tone's input gain there.",
+  "pick": "classic",
+  "levels": {
+    "median": 1.92,
+    "p95": 4.43,
+    "peak": 4.91
+  },
+  "candidates": {
+    "subtle": {
+      "name": "subtle",
+      "input": 0.18,
+      "comp": {
+        "threshold": -14,
+        "knee": 0,
+        "ratio": 3,
+        "attack": 0.005,
+        "release": 0.12
+      },
+      "split": 250,
+      "low": 1,
+      "lowEq": [
+        [
+          "highpass",
+          28,
+          -3.01
+        ],
+        [
+          "peaking",
+          65,
+          0.9,
+          8
+        ]
+      ],
+      "pre": [
+        [
+          "peaking",
+          900,
+          0.8,
+          3
+        ]
+      ],
+      "drive": 4,
+      "bias": 0.05,
+      "cab": [
+        [
+          "lowpass",
+          3500,
+          -3.01
+        ],
+        [
+          "lowpass",
+          3500,
+          -3.01
+        ]
+      ],
+      "grind": 0.45,
+      "post": [
+        [
+          "peaking",
+          1200,
+          1,
+          1
+        ]
+      ],
+      "output": 6.92,
+      "phone": {
+        "order": 2
+      }
+    },
+    "classic": {
+      "name": "classic",
+      "input": 0.18,
+      "comp": {
+        "threshold": -16,
+        "knee": 0,
+        "ratio": 4,
+        "attack": 0.005,
+        "release": 0.12
+      },
+      "split": 200,
+      "low": 1,
+      "lowEq": [
+        [
+          "highpass",
+          28,
+          -3.01
+        ],
+        [
+          "peaking",
+          65,
+          0.9,
+          9
+        ]
+      ],
+      "pre": [
+        [
+          "peaking",
+          1000,
+          0.8,
+          4
+        ]
+      ],
+      "drive": 10,
+      "bias": 0.08,
+      "cab": [
+        [
+          "lowpass",
+          3500,
+          -3.01
+        ],
+        [
+          "lowpass",
+          3500,
+          -3.01
+        ],
+        [
+          "peaking",
+          2600,
+          2,
+          -3
+        ]
+      ],
+      "grind": 1.0,
+      "post": [
+        [
+          "peaking",
+          250,
+          1,
+          -2
+        ],
+        [
+          "peaking",
+          1200,
+          1,
+          3
+        ]
+      ],
+      "output": 6.12,
+      "phone": {
+        "order": 2
+      }
+    },
+    "doom": {
+      "name": "doom",
+      "input": 0.18,
+      "comp": {
+        "threshold": -18,
+        "knee": 0,
+        "ratio": 4,
+        "attack": 0.005,
+        "release": 0.15
+      },
+      "split": 120,
+      "low": 1,
+      "lowEq": [
+        [
+          "highpass",
+          28,
+          -3.01
+        ],
+        [
+          "peaking",
+          60,
+          0.9,
+          9
+        ]
+      ],
+      "pre": [
+        [
+          "lowshelf",
+          250,
+          0.7,
+          3
+        ]
+      ],
+      "drive": 24,
+      "bias": 0.12,
+      "cab": [
+        [
+          "lowpass",
+          2400,
+          -3.01
+        ],
+        [
+          "lowpass",
+          2400,
+          -3.01
+        ],
+        [
+          "peaking",
+          900,
+          0.7,
+          -5
+        ]
+      ],
+      "grind": 1.25,
+      "post": [],
+      "output": 10.85,
+      "phone": {
+        "order": 2
+      }
+    }
+  }
+}

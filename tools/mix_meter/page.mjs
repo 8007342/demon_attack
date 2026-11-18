@@ -28,7 +28,9 @@ function decodeSprite(path, channels) {
 // bank: true switches the score's sample bank on (the stored /console choice; off by default, as in the game).
 // --- bank-fidelity: webRoot (a URL ending in /) serves the players, the score and the bank from another tree (an
 // earlier build, for A/B renders); scoreFilter(map) rewrites score.json as it is fetched (solo stems).
-export async function page(levels = { music: 'full', speech: 'full' }, { clip = null, trims = true, bank = false, webRoot = null, scoreFilter = null } = {}) {
+// --- bass-tone: bankFilter(bank) rewrites bank.json as it is fetched (a candidate tone in `roles.bass.tone`);
+// phone: true reports a 2 GB device (the players' phone tier: phone sprites, the phone tone, 2x oversampling).
+export async function page(levels = { music: 'full', speech: 'full' }, { clip = null, trims = true, bank = false, webRoot = null, scoreFilter = null, bankFilter = null, phone = false } = {}) {
   const from = path => (webRoot ? new URL(path, webRoot) : web(path));
   let timer = null, context = null;
   class AudioContext extends OfflineContext { constructor() { super({ sampleRate: 48000 }); context = this; } }
@@ -36,7 +38,7 @@ export async function page(levels = { music: 'full', speech: 'full' }, { clip = 
   const window = { AudioContext, addEventListener() {}, matchMedia: () => ({ matches: false }),
     localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; } } };
   const sandbox = { URL, Uint8Array, DataView, Float32Array, Map, Set, Math, Object, Promise, TextDecoder, TextEncoder, JSON, Array, Number, String, Error,
-    encodeURIComponent, decodeURIComponent, console, location: { search: '' }, navigator: { deviceMemory: 8 }, window,
+    encodeURIComponent, decodeURIComponent, console, location: { search: '' }, navigator: { deviceMemory: phone ? 2 : 8 }, window,
     document: { baseURI: 'https://game.test/', addEventListener() {}, hidden: false },
     setInterval(fn) { timer = fn; return 1; }, clearInterval() {}, setTimeout(fn) { return 0; }, clearTimeout() {},
     async fetch(url) {
@@ -47,6 +49,7 @@ export async function page(levels = { music: 'full', speech: 'full' }, { clip = 
         let bytes = id ? (clip ? clip(id) : decodeClip(from(path).pathname))
           : sprite ? decodeSprite(from(path).pathname, sprite[1] === 's' ? 2 : 1) : (await readFile(from(path))).buffer;
         if (scoreFilter && path === 'audio/score/score.json') bytes = new TextEncoder().encode(JSON.stringify(scoreFilter(JSON.parse(new TextDecoder().decode(bytes))))).buffer;
+        if (bankFilter && path === 'audio/bank/bank.json') bytes = new TextEncoder().encode(JSON.stringify(bankFilter(JSON.parse(new TextDecoder().decode(bytes))))).buffer;
         if (!bytes) return { ok: false };
         return { ok: true, async arrayBuffer() { return bytes; }, async json() { return JSON.parse(new TextDecoder().decode(bytes)); } };
       } catch { return { ok: false }; }

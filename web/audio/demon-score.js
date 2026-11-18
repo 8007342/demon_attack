@@ -117,6 +117,108 @@
   const scales = { minor: [0, 2, 3, 5, 7, 8, 10], major: [0, 2, 4, 5, 7, 9, 11] };
   const frequency = pitch => 440 * 2 ** ((pitch - 69) / 12);
 
+  // --- bass-tone: the sampled bass's amp chain (design §12.12; research in plan/bass-tone-research.md). The tone is
+  // data (bank.json `roles.bass.tone`, from art/music/bank/recipe.json): a fast compressor on the DI peaks, then a
+  // Linkwitz-Riley split at `split` Hz. The low band stays clean and tight (`lowEq`: the weight the DI lacks); the band above it goes through pre-EQ, a
+  // tanh drive and a cabinet of low-passes ("grind"), blended back at `grind` (re that band clean). `post` EQ on the sum. The phone tier
+  // applies `tone.phone`'s overrides (a cheaper variant). Every gain is clamped here, so a typo cannot drive the shaper
+  // past full scale (its curve saturates before ±1, so an input over ±1 only holds the saturated end).
+  const clamp = (v, lo, hi, fallback) => (Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback);
+  function toneSpec(tone, phone) {
+    if (!tone || typeof tone !== 'object') return null;
+    const t = phone && tone.phone ? { ...tone, ...tone.phone } : tone;
+    // [type, Hz, Q, dB]: a low- or high-pass Q is in dB (the spec's reading; Butterworth is -3.01), any other type's is linear.
+    const pass = type => type === 'lowpass' || type === 'highpass';
+    const eq = list => (Array.isArray(list) ? list.slice(0, 6).map(([type, f, q, db]) => [String(type), clamp(f, 20, 20000, 1000),
+      pass(type) ? clamp(q, -12, 12, -3.0103) : clamp(q, .1, 12, .7), clamp(db, -12, 12, 0)]) : []);
+    const comp = t.comp && typeof t.comp === 'object' ? { threshold: clamp(t.comp.threshold, -60, 0, -24), knee: clamp(t.comp.knee, 0, 40, 0),
+      ratio: clamp(t.comp.ratio, 1, 20, 4), attack: clamp(t.comp.attack, 0, 1, .003), release: clamp(t.comp.release, .01, 1, .12) } : null;
+    return { input: clamp(t.input, 0, 1, .2), comp, split: clamp(t.split, 40, 1000, 200), order: t.order === 2 ? 2 : 4,
+      low: clamp(t.low, 0, 2, 1), lowEq: eq(t.lowEq), pre: eq(t.pre), drive: clamp(t.drive, 1, 30, 3), bias: clamp(t.bias, -.3, .3, 0),
+      oversample: ['none', '2x', '4x'].includes(t.oversample) ? t.oversample : (phone ? '2x' : '4x'),
+      cab: eq(t.cab), grind: clamp(t.grind, 0, 2, .5), post: eq(t.post), output: clamp(t.output, 0, 16, 1) };
+  }
+  // Builds the chain on `ctx`: { input, output, stages } (stages: the meter's taps), or null without a tone.
+  function bassTone(ctx, tone, { phone = false } = {}) {
+    const t = toneSpec(tone, phone);
+    if (!t) return null;
+    const make = (factory, ...args) => (typeof ctx[factory] === 'function' ? ctx[factory](...args) : null);
+    const gain = value => { const g = ctx.createGain(); g.gain.value = value; return g; };
+    const biquad = ([type, f, q, db]) => {
+      const b = make('createBiquadFilter');
+      if (b) { b.type = type; b.frequency.value = f; b.Q.value = q; if (b.gain) b.gain.value = db; }
+      return b;
+    };
+    const series = (from, nodes) => { let at = from; for (const n of nodes) if (n) { at.connect(n); at = n; } return at; };
+    const input = gain(t.input), output = gain(t.output), sum = gain(1);
+    let head = input, comp = null;
+    if (t.comp) {
+      comp = make('createDynamicsCompressor');
+      if (comp) {
+        for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) if (comp[k]) comp[k].value = t.comp[k];
+        // The compressor always outputs stereo; the bass is mono, so fold it back (half the work downstream: Chrome
+        // 156 measured 0.84 -> 0.59 % of a core for the phone chain).
+        const fold = gain(1);
+        fold.channelCount = 1; fold.channelCountMode = 'explicit'; fold.channelInterpretation = 'speakers';
+        head = series(input, [comp, fold]);
+      }
+    }
+    // Linkwitz-Riley: two Butterworth sections per side (order 4), or one each (order 2, the second side inverted).
+    // Web Audio reads a low- or high-pass Q in dB: Butterworth (linear 0.7071) is -3.0103 dB, LR2's 0.5 is -6.0206.
+    const sections = t.order === 4 ? 2 : 1, butter = -3.0103, lr2 = -6.0206;
+    const lowGain = gain(t.order === 2 ? -t.low : t.low), grindIn = gain(1);
+    const lowEnd = series(head, [...Array.from({ length: sections }, () => biquad(['lowpass', t.split, t.order === 2 ? lr2 : butter, 0])), ...t.lowEq.map(biquad)]);
+    lowEnd.connect(lowGain); lowGain.connect(sum);
+    series(head, Array.from({ length: sections }, () => biquad(['highpass', t.split, t.order === 2 ? lr2 : butter, 0]))).connect(grindIn);
+    const shaper = make('createWaveShaper');
+    if (shaper) {
+      // Unity gain for small signals (tanh(d x) / d), so `grind` is the dirt's level re the clean band it replaces,
+      // and a hotter input only saturates: the output never passes 1 / drive.
+      const n = 2048, curve = new Float32Array(n), norm = t.drive;
+      for (let i = 0; i < n; i++) { const x = i * 2 / (n - 1) - 1; curve[i] = Math.tanh(t.drive * (x + t.bias * x * x)) / norm; }
+      shaper.curve = curve; shaper.oversample = t.oversample;
+    }
+    const preEnd = series(grindIn, t.pre.map(biquad));
+    const grindOut = gain(t.grind);
+    // A bias makes even harmonics and a DC offset: a 30 Hz high-pass after the shaper removes the DC.
+    const dc = t.bias ? biquad(['highpass', 30, butter, 0]) : null;
+    series(series(preEnd, [shaper, dc]), t.cab.map(biquad)).connect(grindOut);
+    grindOut.connect(sum);
+    series(sum, t.post.map(biquad)).connect(output);
+    // align(seconds): delays the clean band by the shaper's oversampling latency, so the two bands meet in phase at
+    // the split (Chrome 156: 128 frames at 2x, 192 at 4x; an un-delayed low band would comb near the crossover).
+    let delay = null;
+    const align = seconds => {
+      if (!(seconds > 0) || delay) return;
+      delay = make('createDelay', .05);
+      if (!delay) return;
+      delay.delayTime.value = seconds;
+      lowEnd.disconnect(); lowEnd.connect(delay); delay.connect(lowGain);
+    };
+    return { input, output, spec: t, align, stages: { input, comp, low: lowGain, grindIn, pre: preEnd, shaper, grind: grindOut, sum, output } };
+  }
+  // The engine's WaveShaper latency at an oversample setting, measured once on an impulse (an OfflineAudioContext of
+  // 1 024 frames: well under a millisecond of work). 0 where there is no OfflineAudioContext (the offline meter,
+  // whose shaper ignores oversampling) or the setting is 'none'.
+  const latencies = new Map();
+  function shaperLatency(oversample, rate) {
+    const Offline = typeof window !== 'undefined' ? window.OfflineAudioContext || window.webkitOfflineAudioContext : null;
+    if (oversample === 'none' || typeof Offline !== 'function') return Promise.resolve(0);
+    const key = `${oversample}@${rate}`;
+    if (!latencies.has(key)) latencies.set(key, (async () => {
+      const c = new Offline(1, 1024, rate), b = c.createBuffer(1, 1024, rate);
+      b.getChannelData(0)[0] = .5;
+      const s = c.createBufferSource(), w = c.createWaveShaper(), n = 1025, line = new Float32Array(n);
+      for (let i = 0; i < n; i++) line[i] = i * 2 / (n - 1) - 1;
+      w.curve = line; w.oversample = oversample; s.buffer = b; s.connect(w); w.connect(c.destination); s.start(0);
+      const d = (await c.startRendering()).getChannelData(0);
+      let at = 0;
+      for (let i = 1; i < d.length; i++) if (Math.abs(d[i]) > Math.abs(d[at])) at = i;
+      return at / rate;
+    })().catch(() => 0));
+    return latencies.get(key);
+  }
+
   function create(host) {
     // host: { input(), lifeLoss: [names] }
     let manifest = null, failed = false, context = null, out = null, wanted = null, loadError = null, fx = null;
@@ -130,6 +232,7 @@
     let scheduledUntil = 0, segment = 0, slipped = 0, stolen = 0;
     const voices = new Set(), moveLog = [], stingLog = [], lastSting = new Map();
     const trackGains = new Map(), buses = {};
+    let bassPost = null, toneGraph = null;   // bass-tone: the sampled bass's chain, once the bank brings one
     const cap = phoneClass() ? 32 : 48;
 
     function phoneClass() {
@@ -181,7 +284,7 @@
     if (bankOn) bankSpec();
     let bank = null, bankLoading = null;
     const bankState = { present: false, tier: null, sprites: 0, loaded: 0, skipped: 0, failedSprites: 0, decodedBytes: 0, budget: 0,
-      zones: 0, ready: 0, sampled: 0, synth: 0, error: null };
+      zones: 0, ready: 0, sampled: 0, synth: 0, error: null, tone: null };
     const loading = (async () => {
       try {
         const response = await fetch(new URL('score.json', root));
@@ -344,9 +447,11 @@
       chain(buses.bass, shaper(1.6, .08), filter('lowpass', 2800, .8), gainNode(.9), out);
       // --- bank-fidelity: the sampled bass skips the drive. Growlybass is a DI recording, and its role level (3.7, to
       // match the synth's loudness) drove this shaper three times hotter than the synth does: THD+N -7.6 dB across the
-      // stage, against the synth's -22.6 dB (design §12.11). Its clean bus has the same gains and no nonlinear stage.
+      // stage, against the synth's -22.6 dB (design §12.11). Its own bus has the same gains; the bank brings its
+      // amp chain (bass-tone, design §12.12: installTone()), with every stage bounded below the old drive.
       buses.bassSampled = gainNode(.8);
-      chain(buses.bassSampled, gainNode(.9), out);
+      bassPost = gainNode(.9);
+      chain(buses.bassSampled, bassPost, out);
       // Guitars: pre-EQ -> two gain stages through tanh shapers -> a cabinet of filters (high-pass 80 Hz, a notch
       // near 400 Hz, presence at 2-3 kHz, low-pass 5.5 kHz) -> left and right doubles with different curves.
       const guitar = (side, drive, bias, presence) => {
@@ -707,12 +812,26 @@
       }
       return { ...frame, end, sampled: true };
     }
+    // --- bass-tone: the sampled bass bus gets its amp chain (design §12.12) when the bank is prepared, before any
+    // sampled note can play. The synth's buses never change, and with the bank off this never runs.
+    function installTone(tone) {
+      if (toneGraph || !buses.bassSampled || !bassPost) return;
+      const graph = bassTone(context, tone, { phone: phoneClass() });
+      if (!graph) return;
+      buses.bassSampled.disconnect();
+      buses.bassSampled.connect(graph.input);
+      graph.output.connect(bassPost);
+      toneGraph = graph;
+      shaperLatency(graph.spec.oversample, context.sampleRate || 48000).then(graph.align);
+      bankState.tone = tone.name || 'tone';
+    }
     // Progressive loading: one sprite at a time in bank.json's order (fetch, decode), within the tier's decoded budget.
     async function loadBank() {
       const spec = await bankSpec();
       if (!spec || !context || failed) return;
       if (typeof context.decodeAudioData !== 'function') { bankState.error = 'no decodeAudioData'; return; }
       try { bank = prepareBank(spec); } catch (error) { bankState.error = String(error?.message || error); bank = null; return; }
+      installTone(spec.roles?.bass?.tone);
       for (const sprite of bank.sprites) {
         if (bankState.decodedBytes + sprite.decodedBytes > bankState.budget) { bankState.skipped++; continue; }
         try {
@@ -1012,6 +1131,7 @@
     function nextBar(after) { return current && context ? nextLine(current, Math.max(after, scheduledUntil), 4) : after; }
     return {
       attach, tick, move, accent, power, nextBar, loading, parseScore, setBank,
+      get toneGraph() { return toneGraph; },   // bass-tone: the meter's taps (tools/mix_meter/bass_tone.mjs)
       get bankOn() { return bankOn; },
       // Resolves once the bank's sprites for this device have loaded (or immediately when there is no bank or it is off).
       get bankLoading() { return bankLoading || (bankOn ? bankSpec().then(() => undefined) : Promise.resolve()); },
@@ -1038,5 +1158,5 @@
       },
     };
   }
-  window.demonScore = Object.freeze({ create, parseScore, LOOKAHEAD });
+  window.demonScore = Object.freeze({ create, parseScore, LOOKAHEAD, bassTone, toneSpec, shaperLatency });
 })();

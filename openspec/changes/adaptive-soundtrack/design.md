@@ -1343,6 +1343,10 @@ and new bank, at one loudness per strip: the bass and the drums alone over `k:B@
 of six sections (`k:A@1`, `k:B@3`, `c1:core@4`, `h:A@4`, `k:clear`, `menu:overture`). Rendered offline through each
 tree's own players, Opus 160 kbps stereo, 8.2 MB; the clips stay in scratch.
 
+**A/B listening page**: https://claude.ai/artifact/7gMPsqL8Vkp2xQFbXouYmM (private to the operator). It plays the
+bass alone (synth, clean DI, the three chains), bass and drums, and four full-mix sections, synth against bank, each
+row at one loudness.
+
 **Open, for the operator's ear:**
 - The clean bass has the crest of a DI: −8 dBFS peaks at −25.9 LUFS alone, against the synth's −17 at the same
   loudness. If it sounds too spiky in the mix, a bus compressor (gain, not saturation) is the next step.
@@ -1350,3 +1354,66 @@ tree's own players, Opus 160 kbps stereo, 8.2 MB; the clips stay in scratch.
 - The tenor trombone sustains are the noisiest kept source (SNR 45 dB).
 - The phone tier now decodes 22.7 MB (was 14.6).
 - `BANK_DEFAULT` stays off.
+
+### 12.12 The sampled bass's metal chain (`work/bass-tone`, 2026-11-18, task 9.13)
+
+Operator, after the §12.11 A/B: the clean bank's bass "sounded like the metallic heavy strings of the bass without any
+electronic distortion at all ... the old midi synth is the fully postprocessed bass play with some distortion ... Our
+audio pipeline is missing the right amount of distortion". Then: "even the old bank was really good, it was just
+missing the postprocessing". §12.11's source fixes stay (declipping, rates, trims, the clean bus). This adds the
+missing post chain on the sampled bass bus only. Research and sources: `plan/bass-tone-research.md`. Candidates, the
+pick and the measurements: `plan/render-runs/sample-bank.md` §9.
+
+**The problem, measured** (`bass_tone.mjs stages`): the DI's fundamental octave sits 20-25 dB under its 250 Hz-4 kHz
+content, and its crest is 21 dB, against the synth's 8 dB. Bright, spiky strings with no weight.
+
+**The chain** (`bassTone()` in `web/audio/demon-score.js`, built when the bank is prepared, so it never exists with
+the bank off), in signal order:
+
+| Stage | What | Classic (the pick) |
+|---|---|---|
+| `input` | gain into the chain: the DI's peak (4.9 on the bus) to about 0.9 | 0.18 |
+| `comp` | DynamicsCompressorNode before the split, so its 6 ms look-ahead delays both bands alike; hard knee (the meter models only that); then a mono fold (the node always outputs stereo) | −16 dB, 4:1, 5 ms, 120 ms |
+| split | Linkwitz-Riley at `split` Hz: two Butterworth sections per side (`Q = -3.0103`: Web Audio reads a pass filter's Q in dB), or LR2 (`order: 2`, the low band inverted). Sums flat within 0.01 dB undriven | 200 Hz, LR4 |
+| `low` + `lowEq` | the clean band, given the weight the DI lacks; delayed by the engine's measured WaveShaper latency (`shaperLatency()`: an impulse through an OfflineAudioContext once; Chrome 156: 128 frames at 2x, 192 at 4x), so the bands meet in phase | high-pass 28 Hz, peak 65 Hz Q 0.9 +9 dB |
+| `pre` | EQ into the drive | peak 1 kHz Q 0.8 +4 dB |
+| `shaper` | `tanh(d(x + b x²)) / d`: unity gain for small signals, so a hotter input only saturates; input under full scale by construction (the meter checks it); oversample 4x (2x on phones); a 30 Hz high-pass removes the bias's DC | d 10, b 0.08 |
+| `cab` | biquad cabinet (no convolver: the cheaper node) | 2 × low-pass 3.5 kHz, peak 2.6 kHz Q 2 −3 dB (the guitars' presence slot) |
+| `grind` | the driven band's level re the clean band it replaces | 1.0 |
+| `post` | EQ on the sum, leaving 400 Hz to the bass (the guitar cabinet notches there) | peak 250 Hz −2 dB, peak 1.2 kHz +3 dB |
+| `output` | the loudness match to the synth bass (median of five sections, trims off) | 6.12 |
+
+The parameters are data: `roles.bass.tone` in `art/music/bank/recipe.json`, copied by `bank_build.lua` into
+`bank.json`. The candidates live in `art/music/bank/bass-tone.json` (`pick` names the one in the recipe), and
+`tools/mix_meter/bass_tone.mjs` measures them (`sine`, `stages`, `match`, `clips`). `toneSpec()` clamps every value:
+drive 1-30, input at most 1, output at most 16, filter gains ±12 dB and so on. `tone.phone` overrides the tone on the
+phone tier (`phoneClass()`). The classic's phone variant is LR2 with 2x oversampling, measured within 0.34 dB of the
+synth.
+
+**Results** (classic):
+
+- Bass alone: within 0.8 dB of the synth in each of five sections (median gap 0.0 dB; 0.34 dB on the phone tier).
+- Peaks: the bass now peaks at the synth's level, −17.5 to −18.4 against the synth's −17.4 to −18.0 dBFS. The clean DI
+  peaked 9 dB over the synth at one loudness.
+- Shaper on the music: input peak at most 0.76 (the shared shaper took 2.47 before §12.11), nonlinear residual −7 dB
+  on the driven band only.
+- Driven band on sines (220 and 440 Hz): THD+N −9 to −13 dB at the shaper.
+- Whole chain on sines below the split: under −46 dB, so the fundamental stays clean.
+- Full mix with the bank: master peaks −3.4 to −5.7 dBFS, no samples over full scale, and the limiter never reduces.
+  The synth renders byte for byte as before (`test-worker/bass-tone.test.mjs`).
+
+CPU, Chrome 156 (one desktop core in real time):
+
+| Chain | CPU |
+|---|---|
+| desktop chain | about 0.8 % |
+| phone chain | 0.59 % |
+| for comparison: one guitar bus | 0.50 % |
+| for comparison: the synth bass bus | 0.25 % |
+
+**Drums: unchanged.** The sampled kit's peak-to-loudness ratio is 17-19 dB, against the synth kit's 12-17. In the
+full mix the master limiter never reduces gain. The operator hears them as fine clean, and compression would flatten
+dynamics he likes. A parallel drum-bus compressor is the next step if a round asks for punch.
+
+**Open, for the operator's ear:** the pick among the three, the amount of grind (`grind`, `drive`), and whether the
+6 ms compressor look-ahead is audible against the kick (we expect not).
