@@ -229,6 +229,11 @@ The audit is in `plan/provenance-audit.md`.
   forge's Lua has no JSON module, so read JSON with `jq`.
 - Stop a process with `pgrep -af <name>` and then `kill <PID>`. Never use `pkill -f` or `killall -r`. *Why:* the
   pattern also matches your own shell's command line and kills it.
+- **Never wait with `until ! pgrep -f '<pattern>'`.** The loop's own command line contains the pattern, so it matches
+  itself and never ends. Wait on the job instead: run it with `run_in_background` and take the completion notice, or
+  wait on its PID (`while kill -0 <PID>; do sleep 15; done`), or bracket the pattern (`pgrep -f '[f]lutter test'`).
+  Give every wait a bound (`timeout 3600`). *Why:* on 2026-11-18 the lead found 23 such loops left by finished
+  agents, still sleeping hours later (and one stalled the render agent for 4.5 h earlier).
 - Temp files go in your session scratchpad, not `/tmp` or the checkout.
 - **The checkout's disk is small.** In this forge `/home/forge/src` is a 3.6 GB tmpfs. On 2026-11-16 it filled to
   100% (`.git` 1.3 GB, `.dart_tool/flutter_build` 908 MB of stale build hashes), and a git index write and the web
