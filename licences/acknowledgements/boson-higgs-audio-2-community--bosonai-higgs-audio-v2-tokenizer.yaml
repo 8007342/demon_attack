@@ -1,0 +1,27 @@
+# Third-party licence acknowledgement (order 1956-ecpb, implements 1954-dvz9).
+# Signed over `statement` as SSHSIG in namespace tillandsias-approval@v1; verify with
+#   ssh-keygen -Y verify -n tillandsias-approval@v1 -I <grantor> -f <allowed_signers> -s <sig> < <statement>
+record: tillandsias-licence-acknowledgement v1
+licence: boson-higgs-audio-2-community
+licence_sha256: 8b2e018eeb3967a4636ccc57528440b33c14dd6e02ad67571fc7759489dde9a0
+covers: [bosonai/higgs-audio-v2-tokenizer]
+grantor: project-owner
+scope: project:demon_attack
+use: non-sale
+expiry: "standing"
+signed_at: "2026-11-18T07:04:27Z"
+strength: github-merge
+host: yoga
+statement: |
+  tillandsias-licence-acknowledgement v1
+  licence: boson-higgs-audio-2-community
+  licence_sha256: 8b2e018eeb3967a4636ccc57528440b33c14dd6e02ad67571fc7759489dde9a0
+  covers: bosonai/higgs-audio-v2-tokenizer
+  grantor: project-owner
+  scope: project:demon_attack
+  use: non-sale
+  expiry: standing
+  host: yoga
+  strength: github-merge
+  issued: 2026-11-18T07:04:27Z
+signature: ""
