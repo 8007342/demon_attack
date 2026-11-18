@@ -16,6 +16,7 @@ import vm from 'node:vm';
 const repo = new URL('..', import.meta.url).pathname;
 const web = path => new URL(`../web/${path}`, import.meta.url);
 const manifest = JSON.parse(await readFile(web('audio/score/score.json'), 'utf8'));
+const budgets = JSON.parse(await readFile(new URL('../art/music/bank/recipe.json', import.meta.url), 'utf8')).budgets;
 const has = cmd => spawnSync(cmd, ['-version'], { stdio: 'ignore' }).status === 0 || spawnSync(cmd, ['-v'], { stdio: 'ignore' }).status === 0;
 const tools = has('lua') && has('ffmpeg') && has('git');
 const lua = (args, opts = {}) => spawnSync('lua', args, { cwd: repo, encoding: 'utf8', maxBuffer: 1 << 26, ...opts });
@@ -90,9 +91,11 @@ test('8.13 the bank plan: zones cover the score note for note where the recipe s
     if (!z.keys) assert.ok(z.lo <= z.root && z.root <= z.hi && z.hi - z.lo <= 12, `${z.id}: ${z.lo}-${z.root}-${z.hi}`);
     assert.match(z.source.blob, /^[0-9a-f]{40}$/);
   }
-  // Budgets (design §11.5): <= 2 MB Opus, <= 41 MB decoded, <= 16 MB decoded on phones; tier 1 loads first.
+  // Budgets (design §12.11, raised from §11.5's 2 / 41 / 16 MB by the fidelity audit): <= 6 MB Opus, <= 72 MB decoded,
+  // <= 24 MB decoded on phones; tier 1 loads first.
   assert.deepEqual(p.over, []);
-  assert.ok(p.totals.opusBytes <= 2e6 && p.totals.decodedDesktop <= 41e6 && p.totals.decodedPhone <= 16e6, JSON.stringify(p.totals));
+  assert.ok(budgets.opusBytes <= 6e6 && budgets.decodedDesktop <= 72e6 && budgets.decodedPhone <= 24e6, JSON.stringify(budgets));
+  assert.ok(p.totals.opusBytes <= budgets.opusBytes && p.totals.decodedDesktop <= budgets.decodedDesktop && p.totals.decodedPhone <= budgets.decodedPhone, JSON.stringify(p.totals));
   assert.deepEqual(p.sprites.map(s => s.tier), [...p.sprites.map(s => s.tier)].sort());
   assert.ok(p.sprites[0].phone && p.sprites[0].tier === 1);
   // A built bank, once the pins are admitted: its sprites exist with their pinned sizes and hashes.
@@ -178,7 +181,7 @@ test('8.5 the bank builder on a synthetic fixture: verify, cut, f0, encode, bank
     const dry = lua([...args, '--dry-run', '--json']);
     assert.equal(dry.status, 0, dry.stderr);
     const planned = JSON.parse(dry.stdout);
-    assert.deepEqual(planned.zones.map(z => [z.inst, z.root ?? z.keys[0], z.sprite]), [['hit', 36, 'bank-1ps.ogg'], ['tone', 57, 'bank-1pm.ogg'], ['oct', 69, 'bank-2dm.ogg']]);
+    assert.deepEqual(planned.zones.map(z => [z.inst, z.root ?? z.keys[0], z.sprite]), [['hit', 36, 'bank-1p96s.ogg'], ['tone', 57, 'bank-1p64m.ogg'], ['oct', 69, 'bank-2d64m.ogg']]);
     assert.equal(planned.totals.decodedDesktop, (Math.round(.25 * 48000) * 2 + Math.round(.85 * 48000) + Math.round(1.05 * 48000)) * 4);
     // Build.
     const built = lua(args);
@@ -206,6 +209,8 @@ test('8.5 the bank builder on a synthetic fixture: verify, cut, f0, encode, bank
     const rms = (a, b) => { let s = 0; for (let i = Math.round(a * 48000); i < Math.round(b * 48000); i++) s += pcm[i] * pcm[i]; return Math.sqrt(s / ((b - a) * 48000)); };
     assert.ok(rms(byInst.tone.offset + .1, byInst.tone.offset + .6) > .3, 'normalised near -1 dBFS');
     assert.ok(rms(byInst.tone.offset + byInst.tone.length + .01, byInst.tone.offset + byInst.tone.length + .04) < .01, 'the gap is silent');
+    // bank-fidelity: the zone opens on its pre-roll (silence fading in), not inside the attack (design §12.11).
+    assert.ok(rms(byInst.tone.offset, byInst.tone.offset + .0005) < .05, 'the zone starts from silence');
     // Same sources, same bytes.
     const again = lua([...args, '--out', join(dir, 'again')]);
     assert.equal(again.status, 0, again.stderr);
@@ -282,7 +287,7 @@ function bankFromPlan(p) {
     }
     sprites.push({ file: s.file, tier: s.tier, phone: s.phone, channels: s.channels, seconds: cursor, decodedBytes: Math.round(cursor * 48000) * 4 * s.channels });
   }
-  return { schema: 'demon-attack.bank/v1', budgets: { decodedDesktop: 41e6, decodedPhone: 16e6 }, roles: p.roles, instruments: p.instruments, sprites, zones };
+  return { schema: 'demon-attack.bank/v1', budgets, roles: p.roles, instruments: p.instruments, sprites, zones };
 }
 // search: the page's query (the bank is off by default: these tests switch it on with ?bank=1 unless they say
 // otherwise); stored: localStorage's contents (the /console choice).
@@ -392,7 +397,7 @@ test('8.12 a decoded bank: zones by key and velocity, playbackRate from the root
   assert.equal(state0.bankLoaded, true);
   assert.equal(state0.bank.loaded, bank.sprites.length);
   assert.equal(state0.bankDecodedBytes, bank.sprites.reduce((n, s) => n + Math.round(s.seconds * 48000) * 4 * s.channels, 0));
-  assert.ok(state0.bankDecodedBytes <= 41e6);
+  assert.ok(state0.bankDecodedBytes <= budgets.decodedDesktop);
   await playKrybor(p);
   const sampled = p.started.filter(s => s.kind === 'buffer' && s.buffer?.file);
   assert.ok(sampled.length > 200, `${sampled.length} sampled sources`);
@@ -423,14 +428,14 @@ test('8.12 a decoded bank: zones by key and velocity, playbackRate from the root
   assert.ok(state.voices <= state.cap && state.cap === 48);
 });
 
-test('8.12 phones: only the phone tier loads (within 16 MB decoded), and the cap is 32', { skip: !tools && 'needs lua' }, async () => {
+test('8.12 phones: only the phone tier loads (within its decoded budget), and the cap is 32', { skip: !tools && 'needs lua' }, async () => {
   const bank = bankFromPlan(plan());
   const p = await player({ bank, phone: true });
   const phoneFiles = bank.sprites.filter(s => s.phone).map(s => `/audio/bank/${s.file}`);
   assert.deepEqual(p.fetched.filter(f => f.startsWith('/audio/bank/') && f !== '/audio/bank/bank.json'), phoneFiles);
   const state = p.audio.state.score;
   assert.equal(state.bank.tier, 'phone');
-  assert.ok(state.bankDecodedBytes <= 16e6, `${state.bankDecodedBytes}`);
+  assert.ok(state.bankDecodedBytes <= budgets.decodedPhone, `${state.bankDecodedBytes}`);
   p.audio.song({ song: 'c5', section: 'H4', at: -1, quantum: 'bar', enter: 'start', tier: 4, variant: 'v2', fleet: true });
   p.audio.powerLayer(2, true);
   let peak = 0;
@@ -439,4 +444,41 @@ test('8.12 phones: only the phone tier loads (within 16 MB decoded), and the cap
   assert.ok(peak <= 32, `peak ${peak}`);
   // Desktop-only zones (bells, the high guitar) are not in the phone's map: those tracks stay synthesized.
   assert.ok(p.started.some(s => s.kind === 'buffer' && s.buffer?.file));
+});
+
+// --- bank-fidelity (design §12.11): the sampled bass never reaches the bass bus's drive. Rendered offline through the
+// shipped players with the real sprites: the bass soloed, the bank on; the synth's wave shaper (the score's first)
+// must see no signal while sampled bass notes play.
+test('bank-fidelity: sampled bass plays on a clean bus, with no wave shaper in its path', { skip: !tools && 'needs lua and ffmpeg' }, async () => {
+  const built = await readFile(web('audio/bank/bank.json'), 'utf8').then(JSON.parse, () => null);
+  if (!built) return;
+  const { OfflineContext } = await import('../tools/mix_meter/offline-audio.mjs');
+  const { page } = await import('../tools/mix_meter/page.mjs');
+  const shapers = [], make = OfflineContext.prototype.createWaveShaper;
+  OfflineContext.prototype.createWaveShaper = function () {
+    const s = make.call(this), process = s.process.bind(s);
+    s.energy = 0;
+    s.process = () => { const y = process(); for (const ch of y) for (const v of ch) s.energy += v * v; return y; };
+    shapers.push(s);
+    return s;
+  };
+  try {
+    const solo = map => {
+      const keep = list => (Array.isArray(list) ? list.filter(n => map.tracks[n]?.role === 'bass') : list);
+      const masks = m => (m ? Object.fromEntries(Object.entries(m).map(([k, v]) => [k, keep(v)])) : m);
+      map.masks = masks(map.masks);
+      for (const k of Object.keys(map.layers)) map.layers[k] = keep(map.layers[k]);
+      for (const song of Object.values(map.songs)) { song.masks = masks(song.masks); for (const s of Object.values(song.sections)) { s.masks = masks(s.masks); s.tracks = keep(s.tracks); } }
+      return map;
+    };
+    const p = await page({ music: 'full', speech: 'full' }, { bank: true, scoreFilter: solo });
+    const bassShaper = shapers[0];
+    p.audio.song({ song: 'k', section: 'B', at: -1, quantum: 'bar', enter: 'start', tier: 3, reason: 'test' });
+    const out = await p.render(4);
+    let energy = 0;
+    for (const v of out.L) energy += v * v;
+    assert.ok(p.audio.state.score.bank.sampled > 10, `${p.audio.state.score.bank.sampled} sampled bass notes`);
+    assert.ok(energy > 1, 'the bass is heard');
+    assert.ok(bassShaper.energy < 1e-6, `nothing reached the drive (${bassShaper.energy})`);
+  } finally { OfflineContext.prototype.createWaveShaper = make; }
 });

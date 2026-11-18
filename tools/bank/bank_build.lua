@@ -7,7 +7,7 @@
 --                                                     the trims (no audio, no network)
 --   lua tools/bank/bank_build.lua --fetch-maps         fetch the pinned SFZ maps only (each < 100 KB) into --src
 --   lua tools/bank/bank_build.lua --sync-keys          write art/music/bank/sfz-keys.json from the maps in --src
---   lua tools/bank/bank_build.lua [--src DIR]          build: verify every source, cut, check, encode, write
+--   lua tools/bank/bank_build.lua [--src DIR] [--keep-pcm DIR]  build: verify every source, cut, check, encode, write
 --   lua tools/bank/bank_build.lua --f0-report          verify and cut, then print every pitched zone's f0 against its
 --                                                     root (the run ledger's table) and stop; nothing is written
 --   lua tools/bank/bank_build.lua --fetch [--src DIR]  ONLY once the Tillandsias register has admitted the pins:
@@ -19,11 +19,14 @@
 --
 -- The build refuses (exit 1, nothing written) when a source is missing, its size or git blob sha1 differs from the
 -- manifest, the pitch check of a `strict` instrument disagrees with its root by more than 0.6 semitone (a whole-octave
--- disagreement shared by the instrument is corrected and logged), or a budget is exceeded (≤ 2 MB Opus, ≤ 41 MB
--- decoded, ≤ 16 MB decoded for the phone tier). Each zone: leading silence below -60 dB removed, trimmed to the
--- recipe's seconds, normalised per instrument to -1 dBFS peak (so velocity layers keep their dynamics), a 20 ms fade
--- (or an equal-power loop crossfade for looped sustains), packed with 50 ms gaps into its tier's sprite at 48 kHz,
--- encoded Opus (64 kbps mono, 96 kbps stereo) in Ogg with bit-exact flags. Same sources, same ffmpeg: same bytes.
+-- disagreement shared by the instrument is corrected and logged), or a budget is exceeded (the recipe's `budgets`:
+-- Opus bytes, decoded bytes on desktop and on the phone tier). Each zone (design §12.11, measured step by step by
+-- tools/bank/bank_audit.lua): decoded at the source's rate, declipped where the recipe says, one microphone of a
+-- stereo pair for a mono zone, started 2 ms before its onset with a fade-in, resampled to 48 kHz by a 256-tap sinc,
+-- trimmed to the recipe's seconds, normalised per instrument to -1 dBFS peak (so velocity layers keep their dynamics),
+-- given the instrument's raised-cosine end fade (or an equal-power loop crossfade for looped sustains), packed with
+-- 50 ms gaps into the sprite of its tier and Opus rate, encoded Opus at the instrument's `kbps` in Ogg with bit-exact
+-- flags. Same sources, same ffmpeg: same bytes. --keep-pcm DIR keeps the pre-encode sprites for the audit.
 local here = arg[0]:match('^(.*)/[^/]*$') or '.'
 package.path = here .. '/?.lua;' .. package.path
 local B = require 'bank'
@@ -143,21 +146,126 @@ do
 end
 
 local rate = recipe.rate
--- Decoded PCM: a flat list of floats, interleaved by channel.
-local function decode(z)
-  local filters = ('silenceremove=start_periods=1:start_threshold=-60dB,atrim=end=%.4f'):format(z.trim)
-  local cmd = ('ffmpeg -v error -nostdin -i %s -af %s -ac %d -ar %d -f f32le -'):format(q(fileOf({ repo = z.source.repo, path = z.source.path })), q(filters), z.channels, rate)
-  local bytes, ok = sh(cmd)
-  if not ok or #bytes < 4 * z.channels then die('ffmpeg could not decode %s', z.source.path) end
-  local pcm, n, pos, batch = {}, #bytes // 4, 1, 64
+-- Scratch goes under the forge cache (or --tmp), never the checkout or /tmp.
+math.randomseed(os.time())
+local tmp = opts.tmp or ('%s/.cache/tillandsias-project/tmp/bank-build-%d-%d'):format(home, os.time(), math.random(1e6))
+assert(os.execute('mkdir -p ' .. q(tmp)))
+
+-- --- bank-fidelity (design §12.11): the cut, step by step, each one measured by tools/bank/bank_audit.lua.
+-- 1. Decode at the source's own rate and channels (every pinned source is 44.1 kHz), only the head the zone needs.
+-- 2. Declip (`declip: true`): Growlybass's staccatos and most `ff` sustains hit the converter's ceiling (1-71 samples
+--    at full scale, runs up to 36 samples). Each run of 2+ samples at the file's peak is rebuilt by a cubic through
+--    the two samples on either side, never below the clip level. ffmpeg's adeclip was tried and rejected: it changed
+--    1 818 samples of a clean file by up to 0.34.
+-- 3. Mono from a stereo source takes ONE channel (`pick`, default the left): the VCSL/VSCO pairs are spaced
+--    microphones (L/R correlation -0.3 to 0.9), and their sum loses 0.2-4.6 dB to comb notches.
+-- 4. The onset: the first sample within 40 dB of the file's peak; the zone starts PREROLL before it with a
+--    raised-cosine fade-in (at least 1 ms, for sources that start inside their attack), so the attack is whole and
+--    the first sample is silence (silenceremove's 20 ms RMS window started zones inside the attack: a click).
+-- 5. Resample 44.1 -> 48 kHz with a 256-tap Kaiser (beta 12) sinc: images -119 dB (ffmpeg's default: -48 dB).
+local PREROLL, ONSET_DB = 0.002, -40
+local RESAMPLE = 'aresample=48000:filter_size=256:phase_shift=14:cutoff=0.97:kaiser_beta=12'
+local function unpackFloats(bytes)
+  local out, n, pos, batch = {}, #bytes // 4, 1, 64
   local fmt = '<' .. ('f'):rep(batch)
   local full = n - n % batch
-  while #pcm < full do
+  while #out < full do
     local values = { string.unpack(fmt, bytes, pos) }
     pos = values[batch + 1]
-    for i = 1, batch do pcm[#pcm + 1] = values[i] end
+    for i = 1, batch do out[#out + 1] = values[i] end
   end
-  while #pcm < n do local v; v, pos = string.unpack('<f', bytes, pos); pcm[#pcm + 1] = v end
+  while #out < n do local v; v, pos = string.unpack('<f', bytes, pos); out[#out + 1] = v end
+  return out
+end
+local function packFloats(list)
+  local parts = {}
+  for k = 1, #list, 256 do local n = math.min(256, #list - k + 1); parts[#parts + 1] = string.pack('<' .. ('f'):rep(n), table.unpack(list, k, k + n - 1)) end
+  return table.concat(parts)
+end
+local function sourceFormat(path)
+  local text = sh(('ffmpeg -hide_banner -nostdin -i %s 2>&1'):format(q(path)))
+  local line = text:match('Audio: ([^\n]*)') or ''
+  local chs = line:match('Hz, (%w+)')
+  return tonumber(line:match('(%d+) Hz')), chs == 'stereo' and 2 or chs == 'mono' and 1 or tonumber(chs)
+end
+-- Rebuilds clipped runs in place; returns the number of samples rebuilt.
+local function declip(x)
+  local peak = 0
+  for i = 1, #x do local a = math.abs(x[i]); if a > peak then peak = a end end
+  local level, fixed, i = peak * 0.9999, 0, 1
+  while i <= #x do
+    if math.abs(x[i]) >= level then
+      local j = i
+      while j + 1 <= #x and math.abs(x[j + 1]) >= level and (x[j + 1] > 0) == (x[i] > 0) do j = j + 1 end
+      if j > i and i > 2 and j + 2 <= #x then
+        local ts, ys = { i - 2, i - 1, j + 1, j + 2 }, { x[i - 2], x[i - 1], x[j + 1], x[j + 2] }
+        local sign = x[i] > 0 and 1 or -1
+        for t = i, j do
+          local y = 0
+          for a = 1, 4 do
+            local l = 1
+            for b2 = 1, 4 do if b2 ~= a then l = l * (t - ts[b2]) / (ts[a] - ts[b2]) end end
+            y = y + ys[a] * l
+          end
+          x[t] = sign * math.max(math.abs(y), level)
+          fixed = fixed + 1
+        end
+      end
+      i = j + 1
+    else i = i + 1 end
+  end
+  return fixed
+end
+-- Decoded PCM at 48 kHz: a flat list of floats, interleaved by channel.
+local cutStats = {}
+local function decode(z)
+  local path = fileOf({ repo = z.source.repo, path = z.source.path })
+  local srate, sch = sourceFormat(path)
+  if not srate or not sch then die('ffmpeg cannot read the format of %s', z.source.path) end
+  local bytes, ok = sh(('ffmpeg -v error -nostdin -i %s -t %.4f -f f32le -'):format(q(path), z.trim + 0.5))
+  if not ok or #bytes < 4 * sch then die('ffmpeg could not decode %s', z.source.path) end
+  local flat = unpackFloats(bytes)
+  local frames = #flat // sch
+  local ch = {}
+  for c = 1, sch do local t = {}; for i = 0, frames - 1 do t[i + 1] = flat[i * sch + c] end; ch[c] = t end
+  flat = nil
+  local stat = { inst = z.inst, file = z.file, declipped = 0 }
+  if z.declip then for c = 1, sch do stat.declipped = stat.declipped + declip(ch[c]) end end
+  local outc
+  if z.channels == 1 then
+    if sch == 1 then outc = { ch[1] }
+    elseif z.pick == 'sum' then local m = {}; for i = 1, frames do local v = 0; for c = 1, sch do v = v + ch[c][i] end; m[i] = v / sch end; outc = { m }
+    else outc = { ch[z.pick == 'R' and 2 or 1] } end
+  else outc = sch == 1 and { ch[1], ch[1] } or { ch[1], ch[2] } end
+  local peak = 0
+  for c = 1, #outc do for i = 1, frames do local a = math.abs(outc[c][i]); if a > peak then peak = a end end end
+  local threshold, onset = peak * 10 ^ (ONSET_DB / 20), 1
+  for i = 1, frames do
+    local hit = false
+    for c = 1, #outc do if math.abs(outc[c][i]) > threshold then hit = true end end
+    if hit then onset = i; break end
+  end
+  local pre = math.floor(PREROLL * srate + 0.5)
+  local start = math.max(1, onset - pre)
+  local stop = math.min(frames, start + math.ceil((z.trim + 0.02) * srate))
+  -- A source that starts inside its attack (no room for the pre-roll) still gets a 1 ms fade-in.
+  local rise = math.max(onset, start + math.floor(0.001 * srate + 0.5))
+  local inter, nch = {}, #outc
+  for i = start, stop do
+    local g = 1
+    if i < rise then local u = (i - start) / (rise - start); g = 0.5 - 0.5 * math.cos(math.pi * u) end
+    for c = 1, nch do inter[#inter + 1] = outc[c][i] * g end
+  end
+  stat.onsetMs = (onset - 1) / srate * 1000
+  local raw = ('%s/zone-%s.f32'):format(tmp, z.file:gsub('[^%w]', '_'))
+  local fh = assert(io.open(raw, 'wb')); fh:write(packFloats(inter)); fh:close()
+  local out, ok2 = sh(('ffmpeg -v error -nostdin -f f32le -ar %d -ac %d -i %s -af %s -f f32le -'):format(srate, nch, q(raw), RESAMPLE))
+  os.remove(raw)
+  if not ok2 or #out < 4 * nch then die('ffmpeg could not resample %s', z.source.path) end
+  local pcm = unpackFloats(out)
+  local keep = math.min(#pcm // nch, math.floor(z.trim * rate + 0.5)) * nch
+  for i = #pcm, keep + 1, -1 do pcm[i] = nil end
+  cutStats[#cutStats + 1] = stat
   return pcm
 end
 
@@ -310,7 +418,6 @@ local recipeInst = {}
 for _, inst in ipairs(recipe.instruments) do recipeInst[inst.id] = inst end
 
 local refusals, notes = {}, {}
-local fade = math.floor(recipe.fadeSeconds * rate + 0.5)
 for _, id in ipairs(instOrder) do
   local inst, list = recipeInst[id], byInst[id]
   local peak = 0
@@ -372,8 +479,11 @@ for _, id in ipairs(instOrder) do
       end
       z.loopFrames = { L0, frames }
     else
-      for i = 0, math.min(fade, frames) - 1 do
-        local g = i / fade
+      -- The end fade: the instrument's `fade` (a struck cymbal or bell decays over its last second or more, instead
+      -- of the 20 ms cut that ended a ringing crash at -18 dB), raised-cosine, at most half the zone.
+      local fade = math.min(math.floor(z.fade * rate + 0.5), frames // 2)
+      for i = 0, fade - 1 do
+        local g = 0.5 - 0.5 * math.cos(math.pi * i / fade)
         for c = 1, ch do local k = (frames - 1 - i) * ch + c; pcm[k] = pcm[k] * g end
       end
     end
@@ -399,16 +509,18 @@ if opts['f0-report'] then
   end
   for _, n in ipairs(notes) do say('note: %s', n) end
   for _, r in ipairs(refusals) do say('refusal: %s', r) end
+  os.execute('rm -rf ' .. q(tmp))
   os.exit(#refusals > 0 and 1 or 0)
 end
 if #refusals > 0 then die('refused: %d f0 check(s) failed:\n  %s', #refusals, table.concat(refusals, '\n  ')) end
 for _, n in ipairs(notes) do say('note: %s', n) end
+do
+  local fixed, files = 0, 0
+  for _, st in ipairs(cutStats) do if st.declipped > 0 then fixed = fixed + st.declipped; files = files + 1 end end
+  if fixed > 0 then say('declipped %d samples in %d zones', fixed, files) end
+end
 
 -- Sprites: zones in plan order with gaps; raw f32le to a temp dir, then Opus.
--- Scratch goes under the forge cache (or --tmp), never the checkout or /tmp.
-math.randomseed(os.time())
-local tmp = opts.tmp or ('%s/.cache/tillandsias-project/tmp/bank-build-%d-%d'):format(home, os.time(), math.random(1e6))
-assert(os.execute('mkdir -p ' .. q(tmp)))
 local gapFrames = math.floor(recipe.gapSeconds * rate + 0.5)
 for _, s in ipairs(plan.sprites) do
   local parts, cursor = {}, 0
@@ -424,12 +536,14 @@ for _, s in ipairs(plan.sprites) do
   local raw = ('%s/%s.f32'):format(tmp, s.key)
   local f = assert(io.open(raw, 'wb')); f:write(table.concat(parts)); f:close()
   s.frames = cursor
-  local kbps = recipe.kbps[tostring(s.channels)]
+  local kbps = s.kbps
   local out = ('%s/%s'):format(tmp, s.file)
   local cmd = ('ffmpeg -v error -nostdin -y -f f32le -ar %d -ac %d -i %s -c:a libopus -b:a %dk -vbr on -application audio -frame_duration 20 -map_metadata -1 -fflags +bitexact -flags:a +bitexact %s')
     :format(rate, s.channels, q(raw), kbps, q(out))
   if not os.execute(cmd) then die('ffmpeg could not encode %s', s.file) end
-  os.remove(raw)
+  -- --keep-pcm DIR: keep the pre-encode sprite for tools/bank/bank_audit.lua (cut, encode, bitrate).
+  if opts['keep-pcm'] then os.execute(('mkdir -p %s && mv %s %s/%s.f32'):format(q(opts['keep-pcm']), q(raw), q(opts['keep-pcm']), s.file:gsub('%.ogg$', '')))
+  else os.remove(raw) end
   s.bytes, s.sha256, s.path = size(out), sha256(out), out
 end
 
@@ -451,7 +565,7 @@ for _, z in ipairs(plan.zones) do
 end
 local spritesOut = {}
 for _, s in ipairs(plan.sprites) do
-  spritesOut[#spritesOut + 1] = { file = s.file, tier = s.tier, phone = s.phone, channels = s.channels, seconds = s.frames / rate,
+  spritesOut[#spritesOut + 1] = { file = s.file, tier = s.tier, phone = s.phone, channels = s.channels, kbps = s.kbps, seconds = s.frames / rate,
     bytes = s.bytes, sha256 = s.sha256, decodedBytes = s.decodedBytes }
 end
 local bank = { schema = 'demon-attack.bank/v1',

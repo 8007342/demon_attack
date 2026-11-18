@@ -88,7 +88,7 @@ The soundtrack's backbone SHALL be a committed multitrack MIDI score per section
 - **THEN** any recorded full mix of that section is removed from the shipped assets, and its recipe stays committed
 
 ### Requirement: Sampled instrument bank
-The score SHALL be voiced by one bank of CC0 or similarly permissive samples, shipped as Ogg Opus with a manifest of zones, sizes, hashes, sources and licences, within 2 MB compressed and 41 MB decoded (16 MB on phones). The bank SHALL load by priority, core drums, bass and guitar first, and the score SHALL start before the bank has finished loading. A section's track with a note outside the bank's zones SHALL play through the synthesizer voice for that whole section.
+The score SHALL be voiced by one bank of CC0 or similarly permissive samples, shipped as Ogg Opus with a manifest of zones, hashes and sources, within 6 MB compressed and 72 MB decoded (24 MB on phones), and no step SHALL distort, clip or band-limit a sample. The bank SHALL load by priority (drums, bass, guitar first), and the score SHALL start before the bank has finished loading. A section's track with a note outside the bank's zones SHALL play the synthesizer voice for the whole section.
 
 #### Scenario: A partly covered track
 - **WHEN** a section's brass track has a note above the bank's highest horn zone
@@ -100,7 +100,15 @@ The score SHALL be voiced by one bank of CC0 or similarly permissive samples, sh
 
 #### Scenario: Phone tier
 - **WHEN** the device is classed as a phone
-- **THEN** the bank loads one velocity layer and one round-robin per zone and stays within 16 MB decoded
+- **THEN** the bank loads one velocity layer and one round-robin per zone and stays within 24 MB decoded
+
+#### Scenario: Sampled bass stays clean
+- **WHEN** the bass track plays from the bank
+- **THEN** its voices reach the output through linear stages only (no wave shaper), its clipped source samples have been rebuilt by the builder, and the rendered bass stem shows no nonlinear residual
+
+#### Scenario: Encode rate per instrument
+- **WHEN** the builder encodes a zone
+- **THEN** it uses the instrument's Opus rate (96-160 kbps), chosen as the lowest rate whose median magnitude SNR against the cut reaches 35 dB, and the encoded zone keeps the cut's -60 dB bandwidth
 
 #### Scenario: A source that is not the pin
 - **WHEN** a source file's size or git blob sha1 differs from the pin manifest

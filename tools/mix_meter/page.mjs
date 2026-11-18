@@ -26,7 +26,10 @@ function decodeSprite(path, channels) {
 // clip(id): optional clip bytes ('F32M' + float32 PCM, see OfflineContext.decodeAudioData) instead of decoding the shipped Ogg.
 // trims: false loads the score without web/audio/score/mix-trim.json (how trim.mjs measures the untrimmed score).
 // bank: true switches the score's sample bank on (the stored /console choice; off by default, as in the game).
-export async function page(levels = { music: 'full', speech: 'full' }, { clip = null, trims = true, bank = false } = {}) {
+// --- bank-fidelity: webRoot (a URL ending in /) serves the players, the score and the bank from another tree (an
+// earlier build, for A/B renders); scoreFilter(map) rewrites score.json as it is fetched (solo stems).
+export async function page(levels = { music: 'full', speech: 'full' }, { clip = null, trims = true, bank = false, webRoot = null, scoreFilter = null } = {}) {
+  const from = path => (webRoot ? new URL(path, webRoot) : web(path));
   let timer = null, context = null;
   class AudioContext extends OfflineContext { constructor() { super({ sampleRate: 48000 }); context = this; } }
   const store = { 'demonAttack.musicVolume': levels.music, 'demonAttack.speechVolume': levels.speech, 'demonAttack.scoreBank': bank ? 'on' : 'off' };
@@ -41,8 +44,9 @@ export async function page(levels = { music: 'full', speech: 'full' }, { clip = 
       try {
         if (!trims && path === 'audio/score/mix-trim.json') return { ok: false };
         const id = path.match(/^audio\/comms\/(.+)\.ogg$/)?.[1], sprite = bankSprite(path);
-        const bytes = id ? (clip ? clip(id) : decodeClip(web(path).pathname))
-          : sprite ? decodeSprite(web(path).pathname, sprite[1] === 's' ? 2 : 1) : (await readFile(web(path))).buffer;
+        let bytes = id ? (clip ? clip(id) : decodeClip(from(path).pathname))
+          : sprite ? decodeSprite(from(path).pathname, sprite[1] === 's' ? 2 : 1) : (await readFile(from(path))).buffer;
+        if (scoreFilter && path === 'audio/score/score.json') bytes = new TextEncoder().encode(JSON.stringify(scoreFilter(JSON.parse(new TextDecoder().decode(bytes))))).buffer;
         if (!bytes) return { ok: false };
         return { ok: true, async arrayBuffer() { return bytes; }, async json() { return JSON.parse(new TextDecoder().decode(bytes)); } };
       } catch { return { ok: false }; }
@@ -50,7 +54,7 @@ export async function page(levels = { music: 'full', speech: 'full' }, { clip = 
   sandbox.window.window = window;
   vm.createContext(sandbox);
   for (const file of ['demon-score.js', 'demon-audio.js', 'comms-audio.js']) {
-    vm.runInContext(await readFile(web(`audio/${file}`), 'utf8'), sandbox, { filename: file });
+    vm.runInContext(await readFile(from(`audio/${file}`), 'utf8'), sandbox, { filename: file });
     for (const key of ['demonScore', 'demonAudio', 'commsAudio']) if (window[key]) sandbox[key] = window[key];
   }
   const audio = window.demonAudio;

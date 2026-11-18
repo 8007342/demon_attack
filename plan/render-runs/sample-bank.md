@@ -275,3 +275,94 @@ Picks:
 - clear = `k:clear`, a fanfare whose brass is sampled, for contrast;
 - menu = `menu:overture`;
 - defeat = `defeat:alienwin`.
+
+## 8. Fidelity audit and rebuild (`work/bank-fidelity`, 2026-11-18; design §12.11)
+
+The operator's round-8 verdict: the sampled parts "combine themselves smoothly", but some "still sound low res, and
+some even sound worse than the MIDI", with compression, low bit-rate or background noise, and a distorted bass that
+"dirties the whole soundtrack". Every step was measured on the `game` bank first (rebuilt from the cached sources with
+`--keep-pcm`: all 8 sprites and `bank.json` came out byte for byte), then fixed, rebuilt and measured again.
+
+Commands (all from the repo root; scratch under `~/.cache/tillandsias-project/`):
+
+```sh
+lua tools/bank/bank_build.lua --keep-pcm PCM                  # the build, keeping the pre-encode sprites
+lua tools/bank/bank_audit.lua sources                         # 1. every pinned source
+lua tools/bank/bank_audit.lua resample                        # 2. the 44.1 -> 48 kHz converter on test tones
+lua tools/bank/bank_audit.lua cut --pcm PCM                   # 2-3. each zone as cut and normalised
+lua tools/bank/bank_audit.lua encode --pcm PCM                # 4. each zone after Opus
+lua tools/bank/bank_audit.lua bitrate --pcm PCM --rates 64,96,128,160
+lua tools/bank/bank_audit.lua shift --pcm PCM --inst timpani,gtr-sus,bass-sus,horn-sus,organ
+node tools/mix_meter/bank_fidelity.mjs rates                  # 5. playbackRate per note
+node tools/mix_meter/bank_fidelity.mjs render --mode synth|bank --solo all|bass|drums|ROLE --cases k:B@3,... [--web-root OLD/web]
+```
+
+### 8.1 Sources (per instrument: min / median / max)
+
+| Instrument | Peak dBFS | Floor dBFS | SNR dB | Clipped samples | L/R corr | Fold loss dB |
+|---|---|---|---|---|---|---|
+| kick, snare, rim, toms (16-bit FLAC mono) | −15 / −10 / 0 | −91 / −90 / −89 | 63 / 72 / 80 | 0 | | |
+| hats, crash, china, ride (16-bit FLAC stereo) | −16 / −10 / −2 | −95 / −94 / −94 | 55 / 61 / 69 | 0 | −0.2 / −0.1 / 0.1 | −4.2 / −3.3 / −2.8 |
+| bass staccato (24-bit) | 0 / 0 / 0 (TP to +1.5) | decay, not noise | 25 / 42 / 62 | **1 / 19 / 71** | | |
+| bass sustain (24-bit) | −5.2 / −1.6 / 0 | −75 / −71 / −58 | 44 / 57 / 63 | **0 / 0 / 65 (8 of 10 `ff`)** | | |
+| guitar staccato / sustain (24-bit) | −9 / −4 / −1 | −108 / −80 / −61; hiss −50 to −57 before the onset | 45 / 55-64 / 92 | 0 | | |
+| organ, organ-ext (16-bit stereo) | −26 / −21 / −18 | −100 / −99 / −98 | 62 / 66 / 70 | 0 | 0.0 / 0.1 / 0.5 | −3.1 / −2.6 / −1.2 |
+| trombone sustain | −26 / −25 / −17 | −100 / −83 / −79 | **45 / 46 / 61** | 0 | 0.2 / 0.4 / 0.6 | −2.2 / −1.5 / −1.3 |
+| horn, trumpet, trombone staccato | −22 / −10 / −3 | −130 / −120 / −100 | 66 / 98 / 108 | 0 | 0.2 / 0.6 / 0.9 | −2.2 / −0.8 / −0.3 |
+| timpani, bells, glock | −39 / −20 / −7 | −130 / −120 / −102 | 79 / 89 / 109 | 0 | −0.3 / 0.6 / 0.9 | −4.6 / −0.7 / −0.2 |
+
+Picks: declip the bass (`declip: true`; 710 samples in 26 zones); keep every library (no source is noisy enough to
+replace, and denoising would cost more than it gains); one microphone per mono zone (`pick`), the left one, except the
+organ's right one: with the left channel alone, the F#2 pipe's fundamental all but vanishes (odd partials 0.020 of 2F's)
+and the strict pitch check refused it; the right channel reads 0.031-0.629, stronger than the old sum (0.024-0.761).
+The bells' C4 reads +5 semitones on either single channel (the sum read −0.2): the bells are `report`-only and
+inharmonic, so the pick stays and the listening decides.
+
+### 8.2 Cut and encode (before → after, median unless noted)
+
+| Instrument | Onset step dB (max) | Cut level dB | Opus kbps | Magnitude SNR dB |
+|---|---|---|---|---|
+| kick | −38 → −inf | −51 → −62 | 64 → 96 | 34.1 → 35.7 |
+| snare / rim | −28 / −48 → −inf | −55 → −66 | 64 → 160 | 26.0 / 24.3 → 37.1 / 34.9 |
+| toms | −26 to −36 → −inf | −22 to −42 → −56 to −75 | 64 → 128-160 | 27-30 → 35-38 |
+| hats, cymbals (stereo) | −25 to −36 → −inf | −18 to −35 → −40 to −83 | 96 → 160 | 8-16 → 14-20 |
+| bass staccato / sustain | −13 / −22 → −inf | −37 / −17 → −38 / −47 | 64 → 160 / 128 | 24.3 / 27.2 → 37.9 / 35.3 |
+| guitar staccato / sustain | −29 / −35 → −inf | −37 / −12 → −37 / −43 | 64 → 160 / 96 | 26.8 / 31.1 → 37.3 / 35.5 |
+| organ / organ-ext | −17 / −21 → −inf | looped | 64 → 128 / 96 | 30.5 / 32.8 → 37.1 / 35.1 |
+| brass sustains | −19 to −42 → −inf | looped; seam max +6.0 → −4.6 dB | 64 → 96 | 34-38 → 38-41 |
+| timpani | −12 → −inf | −36 → −105 | 64 → 128 | 29.1 → 35.3 |
+| bells / glock | −28 / −9 → −inf | −16 / −28 → −76 / −86 | 64 → 128 / 96 | 30.4 / 27.7 → 36.8 / 33.2 |
+
+The resampler: ffmpeg's default images a 19 kHz tone at −48 dB; the 256-tap Kaiser sinc at −119 dB. The kick's
+waveform SNR stays at 23-24 dB from 64 to 160 kbps while its magnitude SNR rises, so the metric that picks rates is the
+phase-blind one. Opus kept every zone's −60 dB bandwidth (up to 21 kHz) at every rate.
+
+### 8.3 Runtime (offline renders through the shipped players, 8-10 s, desktop tier, Full music)
+
+| Render | Bass shaper in-peak | THD+N across it | Master peak dBFS | Over 0 dBFS | Limiter max GR |
+|---|---|---|---|---|---|
+| synth, full mix (6 sections) | 0.67-0.80 | −21.7 to −25.5 dB | −7.3 to −8.6 | 0 | 0 dB |
+| old bank, full mix | 1.78-2.52 | **−7.5 to −14.8 dB** | −4.0 to −6.7 | 0 | 0 dB |
+| new bank, full mix | (no sampled bass reaches it) | none | −4.0 to −6.0 | 0 | 0 dB |
+
+Pitch shift (`rates`): bass 90-94 % of notes within ±1.5 semitones, guitars 88-89 %, organ 61 %, brass 37-54 %,
+timpani 42 % (49 % beyond 3, to −7). Linear interpolation against a high-quality resample of the same zone (`shift`):
+34-60 dB magnitude SNR, the same at ±1.5 and ±7 semitones, so below the codec's noise.
+
+Role levels re-matched (solo renders, trims off, bank − synth median): bass −6.0 dB on the clean bus (3.7 → 7.35),
+brass −1.05 (0.9 → 1.0), bells −2.2 (0.58 → 0.74); organ +0.3, guitars −0.4, timpani −0.2, drums 0.0 (kept).
+
+### 8.4 The bank
+
+168 zones in 16 sprites, 288.5 s: 5 050 218 B Opus (budget 6 000 000), 65 314 176 B decoded on desktop (72 000 000),
+22 675 200 B on the phone tier (24 000 000).
+
+A/B page (synth, old bank, new bank at one loudness per strip; bass and drums alone over `k:B@3` and `c1:core@4`, and
+six full-mix sections): https://claude.ai/artifact/6xUiifLTpteD5txLxKqZss. Clips in scratch only.
+
+**The trims** (`node tools/mix_meter/trim.mjs`, regenerated): the synth block is byte for byte the one on `game`. The
+`bank` block: `top` −4.60 LUFS (was −4.48), `floor` −15.43 (was −14.59), `k` 0.1847, `offset` −0.37 dB, 222 trims
+from −0.4 to +8 dB. 16 trims hit the +8 dB cap (was 6): the arrival tails (`c1`-`c3`, `k`, `r`, `e`, `h`), the
+bridge pivots, the coda and the credits song. The sampled arrivals measure about 1 dB quieter than before (`c1:arrival`
+−15.76 against −14.84), so they end up to 1.1 dB under the synth's window, the coda's reprise 2.6 dB as before. A
+higher cap or the arrivals' own levels is for the 9.7 listening.
