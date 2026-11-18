@@ -10,6 +10,7 @@ import 'ground_painter.dart';
 import 'ground_presentation.dart';
 import 'ground_wildlife_atlas.dart';
 import 'model.dart';
+import 'reduced_effects.dart'; // --- reduced-effects
 import 'terrain_field.dart';
 import 'vegetation_atlas.dart';
 
@@ -68,11 +69,30 @@ class FlyoverBackground implements GroundOccluders {
 
   /// Tests (and accessibility settings) can force reduced decorative motion.
   bool? reducedMotionOverride;
-  bool get reducedMotion {
-    final o = reducedMotionOverride;
-    if (o != null) return o;
-    final f = ui.PlatformDispatcher.instance.accessibilityFeatures;
+
+  /// --- reduced-effects: the calm look: the override, else the player's
+  /// Reduced effects setting (Auto: the system's reduced motion).
+  bool get reducedMotion =>
+      reducedMotionOverride ?? ReducedEffects.calm(_platformReduced);
+
+  /// The system's reduced motion (or the override) alone, never the
+  /// player's setting: what the model and the flight distance follow, so
+  /// the setting stays rendering only (reduced-effects design §2).
+  bool get systemReducedMotion => reducedMotionOverride ?? _platformReduced;
+
+  static bool get _platformReduced {
+    final f = _dispatcher.accessibilityFeatures;
     return f.disableAnimations || f.reduceMotion;
+  }
+
+  /// The binding's dispatcher when there is one (tests can fake its
+  /// accessibility features), else the engine's.
+  static ui.PlatformDispatcher get _dispatcher {
+    try {
+      return WidgetsBinding.instance.platformDispatcher;
+    } catch (_) {
+      return ui.PlatformDispatcher.instance;
+    }
   }
 
   bool ready(int sector) =>
@@ -134,7 +154,9 @@ class FlyoverBackground implements GroundOccluders {
             mode == RunMode.levelClear ||
             mode == RunMode.gameOver && model.defeatActive);
     _pushVegetation(dt, model);
-    if (reducedMotion) return;
+    // --- reduced-effects: the distance feeds the model's ground relief, so
+    // it follows the system setting only, never the player's.
+    if (systemReducedMotion) return;
     final p = model.transitionProgress;
     // transition ascent (design §3): a sector change's world speed is the
     // flow's monotonic `speed` ramp (×8 inside the cloud), in place of the

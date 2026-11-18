@@ -17,6 +17,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import '../model.dart';
+import '../reduced_effects.dart'; // --- reduced-effects
 import 'storm_layer.dart'; // --- weather-everywhere: FlashSafety
 
 /// The rod armour's candidate shapes (the review sheet compares them;
@@ -268,7 +269,7 @@ abstract final class LightningPainter {
     double shipCore = 13,
     Offset? at,
   }) {
-    final reduced = m.reducedMotion;
+    final reduced = ReducedEffects.calm(m.reducedMotion); // reduced-effects
     final p = at ?? Offset(m.shipX, m.shipDrawY);
     if (!m.shipAway && m.shipShock <= 0) {
       for (final t in tells) {

@@ -36,6 +36,8 @@ import 'widgets/interlude_card.dart'
     show TipInterludeCard; // --- cinematic flow
 import 'game/hints.dart' show tacticalHints; // --- cinematic flow: pause tips
 import 'widgets/level_toggle.dart'; // --- audio round: music / speech toggles
+import 'game/reduced_effects.dart'; // --- reduced-effects
+import 'widgets/reduced_effects_toggle.dart'; // --- reduced-effects
 import 'widgets/install_toast.dart'; // --- pwa-install
 import 'widgets/build_version_label.dart'; // --- build-version
 export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
@@ -123,6 +125,8 @@ class DemonAttackApp extends StatelessWidget {
         ),
       ),
     ),
+    // --- reduced-effects: the setting resolves every route's reduced motion.
+    builder: (_, child) => ReducedEffectsScope(child: child!),
     // --- console route
     initialRoute: initialRoute,
     onGenerateInitialRoutes: (name) => [_appRoute(RouteSettings(name: name))],
@@ -203,6 +207,23 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     key: const ValueKey('atmosphere-quality'),
     onPressed: _toggleAtmosphere,
     child: Text('ATMOSPHERE: ${scene.atmosphere.quality.label}'),
+  );
+
+  // --- reduced-effects: Auto (the system's reduced motion), On or Off;
+  // remembered per device. Rendering only (never the model).
+  void _setReducedEffects(ReducedEffectsMode next) {
+    setState(() => ReducedEffects.set(next));
+    try {
+      storage.store.write(ReducedEffects.storageKey, next.name);
+    } catch (_) {}
+  }
+
+  Widget _reducedEffectsToggle(String where) => ReducedEffectsToggle(
+    key: ValueKey('$where-reduced-effects'),
+    system: scene.sectors.flyover.systemReducedMotion,
+    lowPower: scene.perf.lowPower,
+    onChanged: _setReducedEffects,
+    compact: where == 'menu',
   );
   void _resetComms({bool resume = false}) {
     transitions.newRun(squadComms, voice: voiceOn); // --- fluid transitions
@@ -349,6 +370,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     try {
       scene.atmosphere.quality = AtmosphereQuality.parse(
         storage.store.read(_atmosphereKey),
+      );
+    } catch (_) {}
+    // --- reduced-effects: the remembered choice (Auto when none).
+    try {
+      ReducedEffects.set(
+        ReducedEffectsMode.parse(storage.store.read(ReducedEffects.storageKey)),
       );
     } catch (_) {}
     // --- audio round: the remembered levels
@@ -1161,6 +1188,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             ),
             _musicToggle('menu'),
             _speechToggle('menu'),
+            _reducedEffectsToggle('menu'), // --- reduced-effects
           ],
         ),
       ),
@@ -1837,6 +1865,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         const SizedBox(height: 4),
                         _atmosphereToggle(),
                         const SizedBox(height: 4),
+                        _reducedEffectsToggle('pause'), // --- reduced-effects
+                        const SizedBox(height: 4),
                         TextButton(
                           onPressed: _title,
                           child: const Text('RETURN TO TITLE'),
@@ -1934,7 +1964,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                   model,
                   boost: scene.bossDirector.flowBoost,
                 ),
-                reduceMotion: model.reducedMotion ? true : null,
+                reduceMotion: scene.calmLook ? true : null, // reduced-effects
               ),
             ),
           ),

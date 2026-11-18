@@ -11,6 +11,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import '../../model.dart';
+import '../../reduced_effects.dart'; // --- reduced-effects
 import '../bonus_painters.dart';
 import 'wind_kites_atlas.dart';
 
@@ -35,7 +36,7 @@ class CrosswindPainter extends BonusPainter {
   void under(Canvas canvas, ArcadeModel model, double time) {
     final m = model.bonusMechanic;
     if (m is! CrosswindMechanic) return;
-    final reduced = model.reducedMotion;
+    final reduced = ReducedEffects.calm(model.reducedMotion); // reduced-effects
     for (final species in [0, 1]) {
       var n = 0;
       for (final k in m.kites) {

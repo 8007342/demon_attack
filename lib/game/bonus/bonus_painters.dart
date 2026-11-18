@@ -11,6 +11,7 @@
 import 'dart:ui';
 
 import '../model.dart';
+import '../reduced_effects.dart'; // --- reduced-effects
 import 'levels/crosswind_painter.dart';
 import 'levels/stormfront_painter.dart';
 import 'levels/supply_run_painter.dart';
@@ -69,7 +70,7 @@ class StormfrontPainter extends BonusPainter {
       canvas,
       m.cell,
       time: time,
-      reduced: model.reducedMotion,
+      reduced: ReducedEffects.calm(model.reducedMotion), // reduced-effects
       // --- weather-everywhere: reduced flashing (design §3).
       noFlash: FlashSafety.reduced(reducedMotion: model.reducedMotion),
     );
@@ -79,7 +80,7 @@ class StormfrontPainter extends BonusPainter {
   void over(Canvas canvas, ArcadeModel model, double time) {
     final m = model.bonusMechanic;
     if (m is! StormfrontMechanic) return;
-    final reduced = model.reducedMotion;
+    final reduced = ReducedEffects.calm(model.reducedMotion); // reduced-effects
     // --- weather-everywhere: reduced flashing steadies the tells and
     // drops the wash (design §3).
     final steady = FlashSafety.reduced(reducedMotion: reduced);
