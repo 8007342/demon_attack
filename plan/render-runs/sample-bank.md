@@ -366,3 +366,120 @@ from −0.4 to +8 dB. 16 trims hit the +8 dB cap (was 6): the arrival tails (`c1
 bridge pivots, the coda and the credits song. The sampled arrivals measure about 1 dB quieter than before (`c1:arrival`
 −15.76 against −14.84), so they end up to 1.1 dB under the synth's window, the coda's reprise 2.6 dB as before. A
 higher cap or the arrivals' own levels is for the 9.7 listening.
+
+## 9. The sampled bass's metal chain (`work/bass-tone`, 2026-11-18; design §12.12)
+
+Operator, round 8, after the §8 A/B: the clean DI is "the metallic heavy strings of the bass without any electronic
+distortion"; "our audio pipeline is missing the right amount of distortion for the bass to make it sound like a metal
+soundtrack". §8's source fixes stay. Research: `plan/bass-tone-research.md`. Every number below re-runs with
+`node tools/mix_meter/bass_tone.mjs sine|stages|match|clips` (candidates in `art/music/bank/bass-tone.json`).
+
+### 9.1 Candidates
+
+All three share the chain of design §12.12: input 0.18, then a compressor (hard knee) before a Linkwitz-Riley split.
+The clean low band gets a 28 Hz high-pass and a low peak. The driven band goes through pre-EQ, a tanh shaper and a
+biquad cabinet. Post-EQ follows the sum, and the output gain matches the synth's loudness.
+
+| | split | comp | low band | pre | drive, bias | cabinet | grind | post | output |
+|---|---|---|---|---|---|---|---|---|---|
+| subtle | 250 Hz | −14 dB 3:1 5/120 ms | +8 dB at 65 Hz | +3 dB at 900 Hz | 4, 0.05 | 2 × LP 3.5 kHz | 0.45 | +1 dB at 1.2 kHz | 6.92 |
+| **classic** | 200 Hz | −16 dB 4:1 5/120 ms | +9 dB at 65 Hz | +4 dB at 1 kHz | 10, 0.08 | 2 × LP 3.5 kHz, −3 dB at 2.6 kHz Q 2 | 1.0 | −2 dB at 250 Hz, +3 dB at 1.2 kHz | 6.12 |
+| doom | 120 Hz | −18 dB 4:1 5/150 ms | +9 dB at 60 Hz | +3 dB shelf at 250 Hz | 24, 0.12 | 2 × LP 2.4 kHz, −5 dB at 900 Hz (a fuzz's scoop) | 1.25 | none | 10.85 |
+
+Every candidate's phone override is `order: 2` (LR2), with 2x oversampling (the phone default).
+
+### 9.2 Spectra and crest (`stages`, `k:B@3`, bass alone)
+
+Octave bands are in dB relative to the total. The crest is peak over RMS.
+
+| | 31.5 | 63 | 125 | 250 | 500 | 1 k | 2 k | 4 k | 8 k | crest | shaper in-peak | shaper residual |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| synth | −4.5 | −2.6 | −13.4 | −16.1 | −18.4 | −23.6 | −33.5 | −53.3 | −89 | 8.1 | (synth bus 0.79) | (−22.6) |
+| clean DI | −27.5 | −17.8 | −7.9 | −5.7 | −9.3 | −8.2 | −7.3 | −10.3 | −25.9 | 21.2 | | |
+| subtle | −23.5 | −8.9 | −3.7 | −5.5 | −13.4 | −11.4 | −14.1 | −24.7 | −55 | 14.1 | 0.71 | −13.0 |
+| classic | −23.3 | −8.6 | −5.1 | −7.8 | −11.5 | −6.8 | −10.1 | −22.7 | −49 | 12.0 | 0.74 | −7.1 |
+| doom | −18.6 | −6.0 | −3.5 | −7.0 | −15.6 | −15.0 | −15.8 | −29.5 | −59 | 13.0 | 0.52 | −5.1 |
+
+The shaper residual is the nonlinear residual across the shaper on the music, on the driven band only (THD+N across
+that stage). On `c1:core@4` the figures are within 3 dB of these.
+
+### 9.3 THD+N on sines (`sine`, at the DI's median and peak note levels)
+
+Below the split, the fundamental stays clean: at 41-110 Hz the whole chain is at −46 to −89 dB for subtle and
+classic, and at −28 to −63 dB for doom. In the driven band, at the shaper and then at the chain's output:
+
+| | 220 Hz, shaper | 220 Hz, output | 440 Hz, shaper | 440 Hz, output |
+|---|---|---|---|---|
+| subtle | −29 / −24 dB | −43 / −39 dB | −16 / −13 dB | −18 / −16 dB |
+| classic | −13 / −12 dB | −19 / −18 dB | −10 / −9 dB | −9 dB |
+| doom | −8 dB | −16 dB | −8 dB | −12 dB |
+
+The offline renderer ignores oversampling, so its aliases count here; a browser's 2x/4x figures are at most these.
+
+### 9.4 Loudness match (`match`, bass alone, trims off, five sections)
+
+Each output gain sets the median gap to the synth at 0. The classic per section, synth against bank, in LUFS:
+
+| Section | Synth | Bank | Gap |
+|---|---|---|---|
+| `k:A@1` | −27.96 | −27.95 | −0.01 |
+| `k:B@3` | −27.54 | −27.65 | +0.12 |
+| `c1:core@4` | −28.35 | −27.91 | −0.43 |
+| `r:B@4` | −28.13 | −28.19 | +0.06 |
+| `e:C@4` | −29.50 | −28.71 | −0.79 |
+
+Peaks: −17.5 to −18.4 dBFS against the synth's −17.4 to −18.0. On the phone tier (`--phone`) the median gap is +0.34 dB.
+
+### 9.5 Pick: classic
+
+- **Classic** keeps the real instrument's body and pick attack. Its growl peaks at 1 kHz, between the guitar cabinet's
+  400 Hz notch and the guitars' 2.4-2.9 kHz presence, which the cabinet dips. Its tilt (strong 63-125 Hz, a 1 kHz
+  growl, little above 4 kHz) sits between the DI and the synth. That is what the operator asked for: "the fully
+  postprocessed bass play with some distortion", with the real strings underneath.
+- **Subtle** keeps too much of the DI's bare string character (its 2 kHz band is still within 14 dB).
+- **Doom** darkens and scoops the attack away, and its drive of 24 smears 16th notes at 170 BPM.
+
+The operator overrides by naming another candidate in `bass-tone.json` `pick`, copying it into `recipe.json`
+`roles.bass.tone` and rerunning `bank_build.lua` and `trim.mjs`.
+
+### 9.6 Full mix and trims
+
+`bank_fidelity.mjs render --mode bank`, six sections:
+
+- master peaks −3.4 to −5.7 dBFS, 0 samples over, and the limiter never reduces;
+- the synth's renders are byte for byte those of `game` (b9379267), checked on three sections and in
+  `test-worker/bass-tone.test.mjs`.
+
+`trim.mjs`, regenerated:
+
+- the synth block is byte for byte the one on `game`;
+- `bank`: top −4.69 LUFS (was −4.60), floor −13.66 (was −15.43), k 0.223, offset −0.28 dB, 223 trims from −0.3 to
+  +8 dB;
+- only 4 trims now hit the +8 dB cap (was 16): with the bass's crest down, the quiet sections no longer fall as far
+  under the loud ones.
+
+### 9.7 Drums: checked, unchanged
+
+Drums alone, trims off, peak-to-loudness ratio (PLR):
+
+| Section | Synth kit | Sampled kit |
+|---|---|---|
+| `k:A@1` | 16.8 dB | 18.7 dB |
+| `k:B@3` | 14.0 dB | 17.6 dB |
+| `c1:core@4` | 11.9 dB | 16.8 dB |
+
+The sampled kit has more transient than the synth's, as a real kit does. In the full mix the limiter never reduces gain
+and peaks stay under −3.4 dBFS. The operator hears the kit as fine clean. A compressor would flatten exactly that, so
+none is added (research §5).
+
+### 9.8 A/B page
+
+https://claude.ai/artifact/7gMPsqL8Vkp2xQFbXouYmM (private to the operator). It plays:
+
+- the bass alone over `k:B@3` and `c1:core@4`: synth, clean DI and the three chains, the pick marked, at −20 LUFS;
+- bass and drums over the same two sections, the same five takes, at −18 LUFS;
+- the full mix of `k:A@1`, `k:B@3`, `c1:core@4` and `r:B@4`, synth against the bank with the classic chain, each with its
+  own trims, at −18 LUFS.
+
+The clips were rendered offline through the shipped players (`bass_tone.mjs clips --lufs`), 10 s each, as 128 kbps
+stereo Opus. The page is 6.1 MB. The clips stay in scratch, never in the repo.

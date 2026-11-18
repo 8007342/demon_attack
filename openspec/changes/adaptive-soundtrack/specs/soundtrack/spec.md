@@ -88,7 +88,7 @@ The soundtrack's backbone SHALL be a committed multitrack MIDI score per section
 - **THEN** any recorded full mix of that section is removed from the shipped assets, and its recipe stays committed
 
 ### Requirement: Sampled instrument bank
-The score SHALL be voiced by one bank of CC0 or similarly permissive samples, shipped as Ogg Opus with a manifest of zones, hashes and sources, within 6 MB compressed and 72 MB decoded (24 MB on phones), and no step SHALL distort, clip or band-limit a sample. The bank SHALL load by priority (drums, bass, guitar first), and the score SHALL start before the bank has finished loading. A section's track with a note outside the bank's zones SHALL play the synthesizer voice for the whole section.
+The score SHALL be voiced by one bank of CC0 or similarly permissive samples, shipped as Ogg Opus with a manifest of zones, hashes, sources, within 6 MB compressed and 72 MB decoded (24 MB on phones), and no build step SHALL distort, clip or band-limit a sample. The bank SHALL load by priority (drums, bass, guitar first), and the score SHALL start before the bank has finished loading. A section's track with a note outside the bank's zones SHALL play the synthesizer voice for the whole section.
 
 #### Scenario: A partly covered track
 - **WHEN** a section's brass track has a note above the bank's highest horn zone
@@ -102,9 +102,17 @@ The score SHALL be voiced by one bank of CC0 or similarly permissive samples, sh
 - **WHEN** the device is classed as a phone
 - **THEN** the bank loads one velocity layer and one round-robin per zone and stays within 24 MB decoded
 
-#### Scenario: Sampled bass stays clean
+#### Scenario: Sampled bass through its metal chain
 - **WHEN** the bass track plays from the bank
-- **THEN** its voices reach the output through linear stages only (no wave shaper), its clipped source samples have been rebuilt by the builder, and the rendered bass stem shows no nonlinear residual
+- **THEN** its clipped source samples have been rebuilt by the builder, and its voices reach the output through the sampled bass bus's own chain (a compressor, a Linkwitz-Riley split at 120-250 Hz with the low band clean, a tanh drive whose input stays under full scale, a cabinet of biquads), whose parameters are data in `bank.json` `roles.bass.tone`, at the synth bass's loudness within 1 LU and its peak within 3 dB
+
+#### Scenario: The synth bass is untouched
+- **WHEN** the bank is off
+- **THEN** no bass chain is built and the score renders sample for sample as before the chain existed
+
+#### Scenario: Phone bass chain
+- **WHEN** the device is classed as a phone
+- **THEN** the bass chain applies its `phone` overrides (an LR2 split, 2x oversampling), at most one guitar bus's CPU
 
 #### Scenario: Encode rate per instrument
 - **WHEN** the builder encodes a zone

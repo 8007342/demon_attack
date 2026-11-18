@@ -298,7 +298,7 @@
     get scoreLoading() { return score?.loading ?? Promise.resolve(); },
     get bankLoading() { return score?.bankLoading ?? Promise.resolve(); },
     get levels() { return { ...levels }; },
-    get graph() { return { context, master, music, effects, duck: sidechain }; }, // shared with comms-audio.js
+    get graph() { return { context, master, music, effects, duck: sidechain, bassTone: score?.toneGraph ?? null }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.
     get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length,
       levels: { ...levels }, masterGain: master?.gain.value ?? null, musicLevel: musicLevel?.gain.value ?? null, limiter: !!limiter,
