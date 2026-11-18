@@ -159,7 +159,10 @@ function B.plan(recipe, rows, keys, opts)
         if parse.layer and not layer then errors[#errors + 1] = ('%s: cannot read the layer of %s'):format(inst.id, name) end
         local z = { inst = inst.id, roles = inst.roles, art = inst.art, file = name, note = note, layer = layer, rr = rr,
           source = { repo = row.repo, commit = row.commit, path = row.path, bytes = row.bytes, blob = row.git_blob_sha1 },
-          channels = inst.channels or 1, trim = inst.trim, order = index }
+          channels = inst.channels or 1, trim = inst.trim, order = index,
+          -- --- bank-fidelity (design §12.11): the encode rate, end fade, declip and stereo-to-mono pick per instrument.
+          kbps = inst.kbps or recipe.kbps[tostring(inst.channels or 1)], fade = inst.fade or recipe.fadeSeconds,
+          declip = inst.declip, pick = inst.pick }
         -- Velocity range from the recipe's layer split; one layer covers 1..127.
         if inst.layers then
           local v = inst.layers[layer or '']
@@ -246,14 +249,15 @@ function B.plan(recipe, rows, keys, opts)
   for g in pairs(byGroup) do
     if not used[g] then errors[#errors + 1] = ('manifest group %s is in no instrument'):format(g) end
   end
-  -- Sprites: one per (tier, phone, channels), loaded in that order (tier 1 first; phone sprites before desktop-only).
+  -- Sprites: one per (tier, phone, Opus rate, channels), loaded in that order (tier 1 first; phone sprites before
+  -- desktop-only). The file name ends in the channel letter (m|s), which tools/mix_meter/page.mjs reads.
   local sprites, byKey = {}, {}
   for i, z in ipairs(zones) do
     z.id = ('%s-%s%s-rr%d'):format(z.inst, tostring(z.root or (z.keys and z.keys[1])), z.layer and ('-' .. z.layer) or '', z.rr)
-    local key = ('%d%s%s'):format(z.tier, z.phone and 'p' or 'd', z.channels == 2 and 's' or 'm')
+    local key = ('%d%s%d%s'):format(z.tier, z.phone and 'p' or 'd', z.kbps, z.channels == 2 and 's' or 'm')
     local s = byKey[key]
     if not s then
-      s = { key = key, file = ('bank-%s.ogg'):format(key), tier = z.tier, phone = z.phone, channels = z.channels, zones = {} }
+      s = { key = key, file = ('bank-%s.ogg'):format(key), tier = z.tier, phone = z.phone, channels = z.channels, kbps = z.kbps, zones = {} }
       byKey[key] = s; sprites[#sprites + 1] = s
     end
     z.sprite = s.file
@@ -262,7 +266,8 @@ function B.plan(recipe, rows, keys, opts)
   table.sort(sprites, function(a, b)
     if a.tier ~= b.tier then return a.tier < b.tier end
     if a.phone ~= b.phone then return a.phone end
-    return a.channels < b.channels
+    if a.channels ~= b.channels then return a.channels < b.channels end
+    return a.kbps < b.kbps
   end)
   return { zones = zones, instruments = instruments, sprites = sprites }, errors
 end
@@ -280,7 +285,7 @@ function B.estimate(recipe, plan, secondsOf)
       totals.rawBytes = totals.rawBytes + (z.source.bytes or 0)
     end
     s.seconds = seconds
-    s.estOpusBytes = math.floor(seconds * recipe.kbps[tostring(s.channels)] * 1000 / 8 * (1 + recipe.oggOverhead) + 0.5)
+    s.estOpusBytes = math.floor(seconds * (s.kbps or recipe.kbps[tostring(s.channels)]) * 1000 / 8 * (1 + recipe.oggOverhead) + 0.5)
     s.decodedBytes = math.floor(seconds * rate + 0.5) * 4 * s.channels
     totals.opusBytes = totals.opusBytes + (s.bytes or s.estOpusBytes)
     totals.decodedDesktop = totals.decodedDesktop + s.decodedBytes

@@ -234,9 +234,11 @@
       for (const [name, gain] of trackGains) {
         const on = next.has(name), was = audible.has(name);
         if (on === was) continue;
-        gain.gain.cancelScheduledValues?.(at);
-        gain.gain.setValueAtTime(on ? 0 : 1, at);
-        gain.gain.linearRampToValueAtTime(on ? 1 : 0, at + (on ? .02 : .06));
+        for (const g of gain.sampled ? [gain, gain.sampled] : [gain]) {
+          g.gain.cancelScheduledValues?.(at);
+          g.gain.setValueAtTime(on ? 0 : 1, at);
+          g.gain.linearRampToValueAtTime(on ? 1 : 0, at + (on ? .02 : .06));
+        }
       }
       audible = next;
     }
@@ -251,15 +253,26 @@
       out.gain.cancelScheduledValues?.(at);
       out.gain.setTargetAtTime(OUT_GAIN * 10 ** (db / 20), at, TRIM_GLIDE);
     }
+    // --- bank-fidelity: a role whose synth bus distorts (the bass's drive) gets a twin gain into its clean bus for
+    // sampled voices (`sampled`), masked together with the track's gain (design §12.11).
     function trackGain(name) {
       let gain = trackGains.get(name);
       if (!gain) {
+        const role = manifest.tracks[name]?.role || 'lead';
         gain = context.createGain();
         gain.gain.value = 1;
-        gain.connect(bus(manifest.tracks[name]?.role || 'lead'));
+        gain.connect(bus(role));
+        gain.sampled = sampledInput(role, 1);
         trackGains.set(name, gain);
       }
       return gain;
+    }
+    function sampledInput(role, value) {
+      const clean = buses[sampledBus[roleBus[role]]];
+      if (!clean) return null;
+      const g = gainNode(value);
+      g.connect(clean);
+      return g;
     }
 
     // --- the bus graph: per role, into the music chain (host.input(): demon-audio's music bus input) ----------
@@ -320,6 +333,11 @@
       // Bass: light drive, then a low-pass blend.
       buses.bass = gainNode(.8);
       chain(buses.bass, shaper(1.6, .08), filter('lowpass', 2800, .8), gainNode(.9), out);
+      // --- bank-fidelity: the sampled bass skips the drive. Growlybass is a DI recording, and its role level (3.7, to
+      // match the synth's loudness) drove this shaper three times hotter than the synth does: THD+N -7.6 dB across the
+      // stage, against the synth's -22.6 dB (design §12.11). Its clean bus has the same gains and no nonlinear stage.
+      buses.bassSampled = gainNode(.8);
+      chain(buses.bassSampled, gainNode(.9), out);
       // Guitars: pre-EQ -> two gain stages through tanh shapers -> a cabinet of filters (high-pass 80 Hz, a notch
       // near 400 Hz, presence at 2-3 kHz, low-pass 5.5 kHz) -> left and right doubles with different curves.
       const guitar = (side, drive, bias, presence) => {
@@ -353,6 +371,7 @@
     const roleBus = { drums: 'drums', bass: 'bass', guitarL: 'guitarL', guitarR: 'guitarR', lead: 'lead', clean: 'clean',
       organ: 'pad', strings: 'pad', brass: 'pad', choir: 'pad', timpani: 'perc', bells: 'perc', uke: 'clean' };
     function bus(role) { return buses[roleBus[role] || 'pad']; }
+    const sampledBus = { bass: 'bassSampled' };
 
     // --- voices -------------------------------------------------------------------------------------------------
     let noise = null;
@@ -628,7 +647,7 @@
         zones.push(z);
       }
       bankState.sampled++;
-      const v = vel / 127, frame = voiceFrame(dest, at);
+      const v = vel / 127, frame = voiceFrame(dest.sampled || dest, at);
       // Palm-muted guitar (velocity <= 92) keeps the synth's darker pre-amp colour; the staccato zones damp it.
       const input = (role === 'guitarL' || role === 'guitarR') && vel <= 92 ? perNoteFilter(frame, 'lowpass', 1800, .9) : frame.env;
       let stopAt = Infinity, looped = false;
@@ -916,7 +935,7 @@
     const stingInputs = new Map();
     function stingInput(role) {
       let g = stingInputs.get(role);
-      if (!g) { g = gainNode(.9); g.connect(bus(role)); stingInputs.set(role, g); }
+      if (!g) { g = gainNode(.9); g.connect(bus(role)); g.sampled = sampledInput(role, .9); stingInputs.set(role, g); }
       return g;
     }
     function attach(ctx) {
