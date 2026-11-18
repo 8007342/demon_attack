@@ -111,6 +111,23 @@ class FrameBudget {
     hatchVents: false,
   );
 
+  /// --- reduced-effects (design §3): this budget with the eye candy capped
+  /// at LITE: rain, wind, motes and explosion sprites at most LITE's, no
+  /// ricochet sparks, no blur, the reduced fog, no emergence frames. The
+  /// telegraphs (hatch lurkers and pulse rings) keep the tier's own.
+  FrameBudget calmed() => FrameBudget._(
+    rainScale: math.min(rainScale, lite.rainScale),
+    windScale: math.min(windScale, lite.windScale),
+    moteScale: math.min(moteScale, lite.moteScale),
+    blasts: math.min(blasts, lite.blasts),
+    sparks: false,
+    blur: false,
+    fogReduced: true,
+    emergence: false,
+    lurkers: lurkers,
+    hatchVents: hatchVents,
+  );
+
   static FrameBudget of(PerfTier t) => switch (t) {
     PerfTier.full => full,
     PerfTier.lean => lean,
@@ -144,6 +161,10 @@ class PerfGovernor {
 
   PerfTier _tier = PerfTier.full;
   PerfTier get tier => forced ?? _tier;
+
+  /// --- reduced-effects: the governor itself stepped down to LITE (not a
+  /// forced tier): the menu says the device is running at low power.
+  bool get lowPower => forced == null && _tier == PerfTier.lite;
   FrameBudget get budget => FrameBudget.of(tier);
 
   /// The lowest tier index adaptation may climb back to.

@@ -29,6 +29,7 @@ import 'dart:ui';
 import '../bonus/levels/storm_cell.dart';
 import '../bonus/levels/stormfront_painter.dart';
 import '../model.dart';
+import '../reduced_effects.dart'; // --- reduced-effects
 
 /// The flash rules and the reduced-flashing setting.
 abstract final class FlashSafety {
@@ -59,9 +60,11 @@ abstract final class FlashSafety {
   }
 
   /// Reduced flashing: forced, asked for in the address, or implied by the
-  /// system's reduced motion.
+  /// calm look (--- reduced-effects: the player's Reduced effects setting;
+  /// Auto follows the system's reduced motion). `?flash=low` holds whatever
+  /// the menu says.
   static bool reduced({required bool reducedMotion}) =>
-      override ?? (reducedMotion || queryAsks);
+      override ?? (ReducedEffects.calm(reducedMotion) || queryAsks);
 
   /// WCAG relative luminance of an sRGB channel value (0-1).
   static double linear(double c) =>

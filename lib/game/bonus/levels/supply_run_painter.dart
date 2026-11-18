@@ -14,6 +14,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import '../../model.dart';
+import '../../reduced_effects.dart'; // --- reduced-effects
 import '../bonus_painters.dart';
 
 class SupplyRunPainter extends BonusPainter {
@@ -27,7 +28,7 @@ class SupplyRunPainter extends BonusPainter {
   void over(Canvas canvas, ArcadeModel model, double time) {
     final cues = model.bonusMechanic;
     if (cues is! SupplyRunCues) return;
-    final reduced = model.reducedMotion;
+    final reduced = ReducedEffects.calm(model.reducedMotion); // reduced-effects
     final pulse = reduced ? .7 : .5 + .5 * math.sin(time * 7);
     for (final crate in model.supplyCrates) {
       _crate(canvas, crate, pulse);

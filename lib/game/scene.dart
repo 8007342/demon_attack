@@ -37,6 +37,7 @@ import 'spear_bearer_painter.dart';
 import 'insignia_rank.dart';
 import 'model.dart';
 import 'perf/frame_budget.dart'; // --- phone-performance
+import 'reduced_effects.dart'; // --- reduced-effects
 import 'hatch_emergence.dart'; // --- hatch-emergence
 import 'carrier_gates.dart' show CarrierGate;
 import 'hatch_emergence_painter.dart';
@@ -121,7 +122,13 @@ class DemonScene extends FlameGame {
   final perf = PerfGovernor(
     forced: PerfTier.parse(Uri.base.queryParameters['perf']),
   );
-  FrameBudget get budget => perf.budget;
+  // --- reduced-effects: the calm look caps the eye candy at LITE.
+  FrameBudget get budget =>
+      ReducedEffects.budget(perf.tier, calm: sectors.flyover.reducedMotion);
+
+  /// --- reduced-effects: the calm look for painters that read the
+  /// model's flag (the system setting), resolved by the player's choice.
+  bool get calmLook => ReducedEffects.calm(model.reducedMotion);
   final shots = ShotLayer();
 
   /// The fog-bank boss shadow's cell and its pre-blurred copy (§4.4).
@@ -243,7 +250,9 @@ class DemonScene extends FlameGame {
       model.moveBy(keyboardDirection * dt * 280);
     }
     // --- cinematic flow: the accessibility setting picks the plan.
-    model.reducedMotion = sectors.flyover.reducedMotion;
+    // --- reduced-effects: the system's alone; the player's setting is
+    // rendering only and never reaches the model.
+    model.reducedMotion = sectors.flyover.systemReducedMotion;
     // --- phone-performance §5.1: a jittered vsync interval steps the
     // fixed-step model exactly once (snapFrameDelta), not 0 then 2.
     if (!held) model.update(snapFrameDelta(dt));
@@ -341,7 +350,7 @@ class DemonScene extends FlameGame {
       }
       // --- transition ascent: the streaks and the cloud billows scroll at
       // the world's speed (design §3).
-      if (flow.active && !model.reducedMotion) {
+      if (flow.active && !calmLook) {
         final factor = flow.plan.beat('speed') == null
             ? 1.0
             : flow.plan.speedFactor(flow.env('speed'));
@@ -410,7 +419,7 @@ class DemonScene extends FlameGame {
       // --- cinematic flow: the Pursuit's cloud and the outro's thinning.
       ..cloudCover = model.flow.env('cloud')
       ..fogThin = model.flow.env('thin')
-      ..cloudScroll = model.reducedMotion ? 0 : cloudRun
+      ..cloudScroll = calmLook ? 0 : cloudRun
       // boss-grandeur (R8): the fight plays higher and faster: the fog
       // flows faster past it (the ground below slows by the altitude).
       // carrier-v3 §7: and each layer at its own rate, the near faster.
@@ -483,14 +492,16 @@ class DemonScene extends FlameGame {
       // pursuit about the ship. The band the drop uncovers is already
       // cloud. HUD, comms dock, ship and bullets are never pitched or
       // rolled (the flow ship and the cover are drawn after the world).
-      final tilt = model.flow.env('tilt') * flowTilt;
+      // --- reduced-effects: the calm look holds the camera level.
+      final still = calmLook ? 0.0 : 1.0;
+      final tilt = model.flow.env('tilt') * flowTilt * still;
       // carrier-v3 §7: the carrier's trauma shake joins the flow's (four
       // beats only). Its take-off pitch goes through the arena camera's
       // background transform (no uncovered band over the hull).
-      final q = model.flow.env('pitch');
+      final q = model.flow.env('pitch') * still;
       final drop = pitchDrop * q;
       final band = tilt + drop;
-      final roll = model.flow.env('roll');
+      final roll = model.flow.env('roll') * still;
       final shake = _flowShake() + bossDirector.shake;
       // playtest-fixes-3: the band the pitch uncovers is the deep sky above
       // the painted one in clear air, and cloud once the cloud is in (the
@@ -759,7 +770,7 @@ class DemonScene extends FlameGame {
   /// Shake on the last kill: at most 2 units, none with reduced motion.
   Offset _flowShake() {
     final hit = model.flow.env('hit');
-    if (hit <= 0 || model.reducedMotion) return Offset.zero;
+    if (hit <= 0 || calmLook) return Offset.zero;
     final t = model.flow.seconds;
     return Offset(
       (math.sin(t * 91) * 2 * hit).roundToDouble(),
@@ -1203,13 +1214,7 @@ class DemonScene extends FlameGame {
           _scaleAbout(c, at, d.scale);
           _sentinel(c, at, d);
           // --- lightning-rework: rod armour, its charge and the stun.
-          LightningPainter.creature(
-            c,
-            d,
-            at,
-            model.clock,
-            reduced: model.reducedMotion,
-          );
+          LightningPainter.creature(c, d, at, model.clock, reduced: calmLook);
           if (d.lastStand) _sentinelBerserk(c, at, d);
           c.restore();
         }
@@ -1235,7 +1240,7 @@ class DemonScene extends FlameGame {
       // --- lightning-rework: a stunned creature tumbles as it falls.
       final roll =
           tilt * .14 +
-          LightningPainter.tumble(d, model.clock, reduced: model.reducedMotion);
+          LightningPainter.tumble(d, model.clock, reduced: calmLook);
       if (roll.abs() > .02 * .14) {
         // Wing tilt of the agitation wave: a small roll about the body.
         c.translate(pos.dx, pos.dy);
@@ -1353,7 +1358,7 @@ class DemonScene extends FlameGame {
           cell.lift,
           model.clock,
           alpha: reveal * far,
-          reduced: model.reducedMotion,
+          reduced: calmLook,
         );
       }
       _creatureLighting(
@@ -1371,7 +1376,7 @@ class DemonScene extends FlameGame {
         d,
         pos,
         model.clock,
-        reduced: model.reducedMotion,
+        reduced: calmLook,
         alpha: reveal * far,
       );
       c.restore();
@@ -4676,7 +4681,7 @@ class DemonScene extends FlameGame {
     );
     // transition ascent (design §2): the plume grows with the speed and the
     // hull pulls away (a 4 % scale-down, none in reduced motion).
-    final nudge = model.reducedMotion ? 0.0 : shipNudge * speed;
+    final nudge = calmLook ? 0.0 : shipNudge * speed;
     _cinematicShip(
       c,
       flowShipAt(),
@@ -4721,7 +4726,7 @@ class DemonScene extends FlameGame {
   /// gain is 0).
   void _fogStreaks(Canvas c) {
     final k = model.flow.env('streaks');
-    if (k <= .01 || model.reducedMotion) return;
+    if (k <= .01 || calmLook) return;
     final ship = flowShipAt();
     final seed = model.seed * 31 + model.level * 7 + model.cycle;
     final colour = Color.lerp(atmosphere.cloud, Atmosphere.cloudLight, .7)!;
