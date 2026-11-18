@@ -864,3 +864,49 @@ pooled, ±20 % per mode):
 Per mode (kept): duration +9.2 / +12.2 / +15.0 %, lives +0.6 / +1.0 / +13.4 % (Easy / Normal / Hard). The single
 shots cost time (no Spread, no Rapid); heavier single shots from the wing cannons win most of it back without
 multifire. The balance pilot ignores the kites, so their points (inside the level's cap) are not in "Score".
+
+## Spear-bearers (2026-11-18, change `spear-bearers`): a buckler-and-spear hunter from the third tour
+
+Design: `openspec/changes/spear-bearers` (§1 schedule, §2 throw, §3 buckler). A bearer *replaces* an elite birth (the
+elite whose wave + elite ordinal is even, routes 2–4, sectors 2–4; Easy routes 3–4, sectors 3–4), so rosters, HP and
+every random draw are unchanged.
+
+**Defence budgets** (`dart run tools/analyze_difficulty.dart`): unchanged by construction (no roster, HP, shield or
+armour changes; the buckler is per creature and only in a dive). Rerun on `game` (27b07de3) and on this branch: the summary and the per-wave Markdown are byte-identical; in the JSON
+only `observedPeakLiveDefense` (the simulated admission run's peak, not a budget) moved, by −1 on 6 of 318 waves
+(routes 2–4), because a bearer's dive plays out differently (no triple spread).
+
+**Calibration gates** (`difficulty_calibration`, `campaign_playtest`, `boss_endurance`, `perspective_difficulty`,
+`sentinel_rush_fairness`): all pass with bearers on. The campaign playtest's swarm metrics (`.cache/swarm-metrics-*.md`, protected pilot,
+sectors pooled over the five routes), mean clear seconds, `game` 27b07de3 → this branch:
+
+| Mode | S1 | S2 | S3 | S4 | S5 | Peak hostile S2–S4, before → after |
+|---|---|---|---|---|---|---|
+| Easy | 18.17 → 17.74 | 24.11 → 24.60 | 22.37 → 19.83 | 24.23 → 26.04 | 21.64 → 23.43 | 10/9/9 → 10/6/9 |
+| Normal | 30.77 → 33.81 | 40.91 → 37.86 | 41.32 → 36.23 | 42.55 → 35.95 | 32.63 → 32.52 | 12/13/13 → 12/10/12 |
+| Hard | 33.26 → 37.08 | 48.21 → 41.43 | 41.51 → 44.58 | 41.67 → 43.20 | 36.08 → 35.64 | 16/15/13 → 16/12/12 |
+
+Sectors 1 and 5 never have bearers yet move too: the campaign carries powers and the run's random stream across
+sectors, so any change of play in sectors 2–4 reshuffles what follows. Hit ratios moved by at most 3.9 points (Easy
+S5); peak active by at most 1. Peak hostile shots fell in the bearer sectors (the spear replaces a three-shot spread).
+
+**Behaviour, the Average pilot** (`dart run tools/ordinary_wave_probe.dart 24 routes=2,3,4 spears=off|on [lead=L]`:
+sectors 1–4 of routes 2–4, 24 seeds, unprotected, lives refilled; `spears=off` is the same harness without bearers):
+
+| Mode | Lives per sector, no bearers | Bearers (kept, lead 0) | Bearers, lead 1 | Seconds per sector, off → on | Bearers / throws / lives to a spear per sector (kept) |
+|---|---|---|---|---|---|
+| Easy | 29.62 | 29.03 (−2.0 %) | 28.85 (−2.6 %) | 254.4 → 252.9 | 1.33 / 1.56 / 0.39 |
+| Normal | 69.77 | 67.72 (−2.9 %) | 69.03 (−1.1 %) | 472.2 → 467.7 | 4.70 / 2.89 / 0.71 |
+| Hard | 81.60 | 80.01 (−1.9 %) | 79.86 (−2.1 %) | 516.4 → 515.8 | 6.75 / 5.53 / 1.31 |
+
+Per route (Normal, lives per sector-run summed over 24 seeds): route 2 200.21 → 189.92, route 3 274.75 → 260.71,
+route 4 362.29 → 362.04. Easy route 2 is identical (85.29: no bearers there), as it must be.
+
+- A bearer is slightly *easier* than the hunter it replaces: it gives up the hunter's three-shot spread for one
+  telegraphed spear a dive, and its buckler (2 points a life) is weaker than the hunter's thermal shield (2 points a
+  dive) after the first dive. The operator asked for replacement, not added pressure; every unseeded gate passes.
+- Tried: a full aim lead (`lead=1`, the spear thrown at where the ship will be if it keeps moving). It moved the three
+  modes by +0.6, +1.8 and −0.2 points against lead 0 and *lowered* Hard's lives to a spear (1.31 → 0.96): the Average
+  pilot dodges the nearest shot, so a led spear is as often dodged as an unled one. The gap between the two runs is
+  about the size of the effect itself, so neither is a real fix. Kept: **lead 0** (aim at where the ship is), the
+  fairer read (a player who moves dodges it), and the bearers slightly softer than the hunters they replace.

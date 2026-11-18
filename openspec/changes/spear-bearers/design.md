@@ -101,7 +101,17 @@ to 18 px.
 
 See `plan/calibration-current.md`, "Spear-bearers". The defence budgets are unchanged by construction (§1). The behaviour
 is measured with the Average pilot on routes 2–4 (`dart run tools/ordinary_wave_probe.dart 24 routes=2,3,4
-spears=off|on`).
+spears=off|on [lead=L]`), sectors 1–4, 24 seeds, lives refilled:
+
+| Mode | Lives per sector, no bearers → bearers | Lives to a spear per sector | Throws per sector |
+|---|---|---|---|
+| Easy | 29.62 → 29.03 (−2.0 %) | 0.39 | 1.56 |
+| Normal | 69.77 → 67.72 (−2.9 %) | 0.71 | 2.89 |
+| Hard | 81.60 → 80.01 (−1.9 %) | 1.31 | 5.53 |
+
+A bearer is a little softer than the hunter it replaces (no triple spread; a buckler that does not refresh). That meets
+"replace, don't add pressure". A full aim lead (`SpearTuning.lead` = 1, tools only) moved the modes by −0.2 to +1.8
+points and lowered Hard's spear deaths, i.e. noise-sized: kept lead 0, the fairer read.
 
 ## 7. Performance
 
@@ -116,6 +126,7 @@ a 4 s loop: levelled, wind-up, throw with a crosswind bending the spear, a buckl
 
 ## Open questions
 
-- Should the spear lead the ship a little on Hard? Today it aims at where the ship is (§6 has the measured effect).
+- Should the spear lead the ship on Hard? Measured (§6): a full lead changed nothing beyond seed noise for the Average
+  pilot; a human who holds a direction would feel it more. Kept at 0.
 - Should a bearer that lost its buckler regain one on a later tour's rosters? Today a buckler is per creature.
 - A thrown spear could be shot down by the player (a parry). Not done: it would be the only destructible hostile shot.
