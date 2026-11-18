@@ -2,6 +2,15 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
+# Workers Builds runs a hidden non-production trigger on pushes to `game` (`wrangler preview`,
+# which always fails). Stop those builds here, before the Flutter download and the two web
+# builds, so they cost seconds of build minutes instead of 4-5 minutes. Production (main)
+# and local builds (no WORKERS_CI_BRANCH) are unaffected. Operator, 2026-11-18.
+if [[ -n "${WORKERS_CI_BRANCH:-}" && "$WORKERS_CI_BRANCH" != "main" ]]; then
+  echo "Skipping the web build: Workers Builds branch '$WORKERS_CI_BRANCH' is not production (main)." >&2
+  exit 1
+fi
+
 flutter_version="$(tr -d '[:space:]' < .flutter-version)"
 flutter_bin="$(command -v flutter || true)"
 if [[ -n "$flutter_bin" ]]; then
