@@ -130,6 +130,15 @@ for _,row in ipairs({
  {'Versilian Community Sample Library (VCSL)','https://github.com/sgossner/VCSL'},
  {'VSCO 2 Community Edition','https://github.com/sgossner/VSCO-2-CE'},
 })do samples[#samples+1]={name=row[1],license='CC0 1.0',url=row[2],source='Coming with the score\'s sample bank'}end
+-- --- choir-pins: the brood choir's libraries (plan/choir-pins.md), desktop only, also coming. epic-choir is CC BY 4.0:
+-- its row is the credit line its README asks for, with the changes and the licence link CC BY 4.0 requires.
+for _,row in ipairs({
+ {'272 Merry Orks by Karoryfer Lecolds','CC0 1.0','https://github.com/sfzinstruments/karoryfer.272-merry-orks',
+  'Coming with the brood choir'},
+ {'Choir samples derived from VocalSet (Wilkins, Seetharaman, Wahl, Pardo 2018), CC BY 4.0, https://doi.org/10.5281/zenodo.1442513 — epic-choir by thepok',
+  'CC BY 4.0','https://github.com/thepok/epic-choir',
+  'Coming with the brood choir. Changed for this game: cut, pitched, downmixed to mono and encoded to Opus. Licence: https://creativecommons.org/licenses/by/4.0/'},
+})do samples[#samples+1]={name=row[1],license=row[2],url=row[3],source=row[4]}end
 -- The open-source projects the game, its asset pipelines and its delivery are built on (credits-page design §5).
 local function group(title,rows)
  local out={};for _,r in ipairs(rows)do out[#out+1]={name=r[1],url=r[2],license=r[3]}end
@@ -171,7 +180,7 @@ local sections={
   alongside={lead='Made alongside ',name='Claude',url='https://claude.ai/',tail=' by Anthropic'}},
  {title='Models used to make the art, music and voices',degree='models',entries=models},
  {title='Third-party licences',degree='licences',entries=licences},
- {title='CC0 sample libraries (coming)',degree='samples',entries=samples},
+ {title='Sample libraries (coming)',degree='samples',entries=samples},
 }
 for _,g in ipairs(projects)do sections[#sections+1]=g end
 for _,s in ipairs({
@@ -201,6 +210,9 @@ do
   if credit then bank_rows[#bank_rows+1]={name=(credit:gsub('%s*%(CC0 1%.0%)$','')),license=spdx=='CC0-1.0'and'CC0 1.0'or spdx,
    url='https://github.com/'..repo,source='Score sample bank, pinned at '..commit:sub(1,12)}end
  end
+ -- Libraries the built bank does not carry yet (the choir's) stay listed as coming.
+ local built={};for _,r in ipairs(bank_rows)do built[r.url]=true end
+ if #bank_rows>0 then for _,r in ipairs(samples)do if not built[r.url]then bank_rows[#bank_rows+1]=r end end end
  if #bank_rows>0 then for _,s in ipairs(result.sections)do if s.degree=='samples'then s.entries=bank_rows end end end
 end
 local file=assert(io.open('assets/credits.json','w'));file:write(json(result),'\n');file:close()
