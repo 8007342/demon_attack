@@ -133,3 +133,25 @@ the sampler runtime and the score checks are built now.
   ... one bonus level that uses this wind gimmick for its goal, like no multifire". With pretty assets, radio chatter
   and new musical accents (`bonus-music`), and "figure out how flexible and extensible our pipelines are early on"
   (crosswind design §Pipelines).
+
+# Round 8 (2026-11-17, late)
+
+- **Sampled score (`bank-fidelity`):** "the new high res assets combine themselves smoothly, and respond nicely to game
+  events ... However it's the assets themselves, some of them still sound low res, and some even sound worse than the
+  MIDI ... please audit the sound pipeline, since our final sound assets will only be as good as the lowest resolution
+  step in the pipeline ... a bit of distortion there for the bass ... we better justify that extra weight with properly
+  enjoyable high res audio". The bank stays off by default until it beats the synth.
+- **1UP stinger:** "I like the A 1up audio." Variant A ships (already the default).
+- **Weather everywhere (`weather-everywhere`):** "Lightning and wind are regular weather effects that happen sometimes
+  normaly throughout the game, they're just rarer than regular rain. Radio chatter shall notice them. ... no need to
+  rebalance. Just make sure that the demons fighting the wind use strategically their sprites flapping their wings
+  sideways. The smarter enemies shall also use the wind to dive."
+- **Insignia (`insignia-ranks`):** "Currently there are A LOT of fangs on top of the demons, they're not meant to mark
+  everything, just higher ranks ... Make simpler versions of those [winged/crown elite marks] for the regular grunts,
+  to mark that they're elite grunts, but not elite as the centinels".
+- **Lore and war cries (`fang-and-wings-comms`):** "the Fang and Wings shall be their self appointed battle cry: "Fang
+  And Wings!" ... a more prevalent topic in the demons radio chatter ... Some dive attacks shall have their war cry".
+- **Spear-bearers (`spear-bearers`):** "a little shield and spear for the armored ones later, wielding the spear as they
+  dive, and throwing it mid dive ;) New enemy sprites".
+- **Demon choir (`demon-choir`):** "find a music model agents that could consider those grunts and war cryes as part
+  of the music ... our Epic/Doom metal had some wordless chorus, how about some wordless demon grunts".
