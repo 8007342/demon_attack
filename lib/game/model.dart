@@ -22,6 +22,8 @@ import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
 import 'weather/wind_field.dart'; // --- crosswind
+import 'bonus/levels/storm_cell.dart'; // --- weather-everywhere
+import 'weather/storm_plan.dart'; // --- weather-everywhere
 export 'carrier_hatches.dart'
     show CarrierChapter, CarrierHatch, CarrierHatches, HatchState;
 export 'bonus/bonus_catalog.dart';
@@ -38,6 +40,7 @@ export 'swarm_policy.dart';
 export 'swarm_patterns.dart' show Squad, SquadState;
 export 'swarm_stream.dart' show SwarmState, SwarmGate, SwarmGateGeometry;
 export 'weather/wind_field.dart'; // --- crosswind
+export 'weather/storm_plan.dart'; // --- weather-everywhere
 
 // --- ground war (demon ground forces, allies, homing missiles) ---
 part 'ground_war.dart';
@@ -60,6 +63,9 @@ part 'model_wind.dart';
 
 // --- lightning-rework: stuns, the ship's zap, rank dodges and rod armour ---
 part 'lightning.dart';
+
+// --- weather-everywhere: regular-sector storms, smart demons riding the wind
+part 'model_weather.dart';
 
 // --- spear-bearers: the buckler-and-spear hunter, its dive throw ---
 part 'spear_bearers.dart';
@@ -205,6 +211,12 @@ class Demon {
   double boltDodge = 0, boltDodgeGoal = 0;
   bool get stunned => stun > 0;
 
+  // --- weather-everywhere (model_weather.dart): a smart creature holding
+  // its dive for the wind (prep seconds left), the side it rides a
+  // tailwind to (0: not riding) and whether this dive was tallied.
+  double windWait = 0;
+  int windRide = 0;
+  bool windDiveSeen = false;
   // --- spear-bearers (spear_bearers.dart): the buckler and spear (null:
   // not a bearer).
   SpearKit? spear;
@@ -616,6 +628,8 @@ class ArcadeModel {
   /// --- crosswind: the level's wind (model_wind.dart).
   final WindRun windRun = WindRun();
 
+  /// --- weather-everywhere: the level's storm, the wind-dive tallies.
+  final WeatherRun weatherRun = WeatherRun();
   /// --- spear-bearers: the run's bearers (the next birth, fallen bucklers).
   final SpearRun spearRun = SpearRun();
 
@@ -3694,6 +3708,7 @@ class ArcadeModel {
     }
     if (level == 5) _updateApproach(dt); // --- carrier-v3
     _windStep(); // --- crosswind: the field now, its calls
+    _stormStep(dt); // --- weather-everywhere: a regular sector's storm
     for (final s in shots) {
       _windShot(s, dt); // --- crosswind: the drift
       s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1) + s.windVx * dt;
@@ -4213,7 +4228,7 @@ class ArcadeModel {
     if (!shipAway && _dive <= 0 && readyDivers.isNotEmpty) {
       final d = readyDivers[random.nextInt(readyDivers.length)];
       if (level >= 2 || cycle > 0) {
-        _prepDive(d);
+        _windPrepDive(d); // --- weather-everywhere: smart ones wait for wind
         if (!d.isLarge) activeSmallDives++;
         // --- demon intelligence: a pincer by a second ready hunter.
         final partner = _pincerPartner(d, readyDivers);
@@ -4271,6 +4286,7 @@ class ArcadeModel {
       _spearStep(d, dt); // --- spear-bearers: the wind-up and the throw
       if (_regroupDemon(d, prevX, prevY, dt)) continue; // --- life loss
       if (_stunnedDemon(d, prevX, prevY, dt)) continue; // --- lightning-rework
+      _windDiveWait(d, dt); // --- weather-everywhere: a dive held for wind
       if (d.divePrep > 0 && dt > 0) {
         d.divePrep -= dt * policy.hostileRate;
         if (d.divePrep <= 0) _startDiveTell(d);
@@ -4323,7 +4339,7 @@ class ArcadeModel {
               d.telegraph <= 0 &&
               d.divePrep <= 0 &&
               (d.isLarge || activeSmallDives < maxSmallDives)) {
-            _prepDive(d);
+            _windPrepDive(d); // --- weather-everywhere
             if (!d.isLarge) activeSmallDives++;
           }
           d.attackLeft = math.max(2.0, 4 - math.min(cycle, 5) * .3);
@@ -5224,7 +5240,7 @@ class ArcadeModel {
                       )
                       .length <
                   _maxConcurrentSmallDives)) {
-        _prepDive(d);
+        _windPrepDive(d); // --- weather-everywhere
       }
     }
   }

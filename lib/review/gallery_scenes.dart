@@ -10,9 +10,11 @@
 // a frozen copy or a fallback atlas. A live tile runs the simulation too,
 // with the ship kept alive, and restarts its run when the run moves on.
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import '../game/ground_painter.dart';
 import '../game/insignia_rank.dart';
@@ -20,6 +22,7 @@ import '../game/model.dart';
 import '../game/perf/frame_budget.dart';
 import '../game/scene.dart';
 import '../game/weather/rain_plan.dart';
+import '../game/wind_flap_atlas.dart'; // --- weather-everywhere
 import '../widgets/dev_console.dart' show ConsoleCarrier, ConsoleStart;
 import '../widgets/mission_medal.dart';
 import '../widgets/mission_medal_atlas.dart';
@@ -776,9 +779,14 @@ GalleryScene sectorRun(
   int? runSeed,
   String? bonus,
   WindTier? wind,
+  RainSpec? storm,
   void Function(GalleryScene scene)? setup,
 }) {
   void begin(ArcadeModel m) {
+    // --- weather-everywhere: a forced lightning storm on the sector.
+    m.weatherRun.forceStorm = storm == null
+        ? null
+        : (r, s) => StormPlan.force(storm, 91 + s);
     // --- crosswind: a forced wind on the tile's sector.
     m.windRun.force = wind == null
         ? null
@@ -838,7 +846,100 @@ List<GalleryTile> _weather() => [
       setup: (s) => s.rain.override = weatherSpecs[1].$3,
     ),
   ),
+  // --- weather-everywhere: a regular sector's lightning storm, and the
+  // brood's wind-flap frames (the upwind wing beats deeper).
+  GalleryTile.scene(
+    'THUNDERSTORM · SECTOR 3',
+    sectorRun(3, storm: weatherSpecs.last.$3),
+  ),
+  GalleryTile.scene(
+    'STORM + GALE · SECTOR 2',
+    sectorRun(2, wind: WindTier.gale, storm: weatherSpecs[1].$3),
+  ),
+  GalleryTile.widget('WIND FLAP · EVERY SPECIES', const WindFlapSheet()),
 ];
+
+/// --- weather-everywhere: the wind-flap frames (assets/images/
+/// wind-flap.png) animated per species and side, the wind blowing left
+/// then right, at 3x.
+class WindFlapSheet extends StatefulWidget {
+  const WindFlapSheet({super.key});
+
+  @override
+  State<WindFlapSheet> createState() => _WindFlapSheetState();
+}
+
+class _WindFlapSheetState extends State<WindFlapSheet>
+    with SingleTickerProviderStateMixin {
+  ui.Image? _image;
+  late final _ticker = createTicker((e) {
+    if (mounted) setState(() => _t = e.inMicroseconds / 1e6);
+  });
+  double _t = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    _ticker.start();
+  }
+
+  Future<void> _load() async {
+    final data = await rootBundle.load('assets/images/${WindFlapAtlas.asset}');
+    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+    if (mounted) setState(() => _image = frame.image);
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _image?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    painter: _WindFlapPainter(_image, _t),
+    child: const SizedBox.expand(),
+  );
+}
+
+class _WindFlapPainter extends CustomPainter {
+  _WindFlapPainter(this.image, this.t);
+  final ui.Image? image;
+  final double t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final img = image;
+    if (img == null) return;
+    final paint = Paint()..filterQuality = FilterQuality.none;
+    final f = (t * 18).floor() % WindFlapAtlas.frames;
+    const cell = 64.0;
+    final scale = math.min(3.0, (size.width - 24) / (2 * cell + 16));
+    for (var k = 0; k < 4; k++) {
+      for (var side = 0; side < 2; side++) {
+        final src = Rect.fromLTWH(
+          (side * WindFlapAtlas.frames + f) * cell,
+          k * WindFlapAtlas.speciesRows * cell,
+          cell,
+          cell,
+        );
+        final dst = Rect.fromLTWH(
+          12 + side * (cell * scale + 16),
+          28 + k * cell * scale,
+          cell * scale,
+          cell * scale,
+        );
+        canvas.drawImageRect(img, src, dst, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_WindFlapPainter old) => old.t != t || old.image != image;
+}
 
 List<GalleryTile> _bonus() => [
   for (final level in bonusLevels)

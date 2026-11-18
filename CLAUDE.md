@@ -133,6 +133,7 @@ after the merge instead of resolving its text.
 | `lib/game/flyover_atlas.dart` | `tools/flyover_assets.py pack` (needs Pillow) | not run (no venv) |
 | `lib/game/ground_atlas.dart` | `tools/ground_forces_assets.py offline` (needs Pillow) | not run (no venv) |
 | `lib/game/combat_anchors.dart` | `tools/generate_sprites.py --anchors` (needs Pillow) | not run (no venv) |
+| `lib/game/wind_flap_atlas.dart`, `assets/images/wind-flap.png` | `python3 -I tools/generate_wind_flap.py` (needs Pillow; `--sheets` also redraws `art/contact/wind-flap-*.png`; recipe `art/families/wind-flap.json`) | byte-identical (2026-11-18) |
 | `lib/comms/comms_portraits.dart` | `$PY tools/comms_portraits.py offline` (needs Pillow) | not run (no venv) |
 
 The Pillow venvs live in `~/.cache` and are gone after a forge reset. Recreate one with

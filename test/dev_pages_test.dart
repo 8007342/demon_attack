@@ -107,14 +107,20 @@ void main() {
 
     test('weather, bonus and perf tiles carry their forced state', () {
       final weather = galleryTiles('weather');
-      // The rain tiles, then crosswind's wind tiles (a forced wind).
-      expect(weather.length, weatherSpecs.length + 3);
+      // The rain tiles, then crosswind's wind tiles (a forced wind), then
+      // weather-everywhere's storm tiles (a forced storm) and the wind-flap
+      // sheet (a widget).
+      expect(weather.length, weatherSpecs.length + 3 + 3);
       for (final (i, t) in weather.take(weatherSpecs.length).indexed) {
         expect(t.scene!.rain.override, weatherSpecs[i].$3);
       }
-      for (final t in weather.skip(weatherSpecs.length)) {
+      for (final t in weather.skip(weatherSpecs.length).take(3)) {
         expect(t.scene!.model.windField, isNotNull, reason: t.label);
       }
+      for (final t in weather.skip(weatherSpecs.length + 3).take(2)) {
+        expect(t.scene!.model.stormCell, isNotNull, reason: t.label);
+      }
+      expect(weather.last.widget, isNotNull);
       for (final t in galleryTiles('bonus')) {
         expect(t.scene!.model.bonus, isNotNull, reason: t.label);
       }

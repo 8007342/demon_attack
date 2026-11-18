@@ -81,6 +81,9 @@ class RainLayer {
     _sector = model.level;
     spec =
         override ??
+        // --- weather-everywhere: a storm's rain (the plan's own, or a
+        // forced storm's in the tools and the gallery).
+        model.weatherRun.storm?.rain ??
         RainPlan.forLevel(
           model.runSeed,
           route: model.cycle,

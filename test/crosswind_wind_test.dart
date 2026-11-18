@@ -244,10 +244,14 @@ void main() {
       for (var f = 0; f < 60 * 30; f++) {
         m.update(1 / 60);
         for (final d in m.demons) {
-          expect(
-            d.windOffset.abs(),
-            lessThanOrEqualTo(peak * .24 * ArcadeWindDemons.pushHorizon + 1),
+          // weather-everywhere: a smart diver riding a tailwind yields
+          // more (ArcadeWindDive.rideYield): the curve of its dive.
+          // (it eases back from that after the dive).
+          final bound = math.max(
+            peak * ArcadeWindDive.rideYield * ArcadeWindDive.rideHorizon,
+            peak * .24 * ArcadeWindDemons.pushHorizon,
           );
+          expect(d.windOffset.abs(), lessThanOrEqualTo(bound + 1));
           if (d.windOffset.abs() > 1) pushed++;
         }
       }
