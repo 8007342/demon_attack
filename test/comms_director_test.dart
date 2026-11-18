@@ -1026,7 +1026,8 @@ void rushRadio() {
       // the 9 Supply Run in-level lines that now show their own words
       // (mission-medals: the borrowed subtitles told the player nothing).
       // The carrier hints (carrier-hatches) are written lines: they borrow
-      // nothing, so the count is unchanged.
+      // nothing, so the count is unchanged. So are fang-and-wings-comms'
+      // 83 creed lines and dive war cries (written text, no placeholder).
       expect(borrowed, 55);
     });
 

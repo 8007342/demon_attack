@@ -8,6 +8,7 @@ library;
 
 import '../game/game_events.dart';
 import 'comms_bank.dart';
+import 'comms_creed.dart';
 import 'comms_types.dart';
 
 /// Events whose lines rank as useful (a shorter rest, a little budget
@@ -146,4 +147,10 @@ Map<String, CommsTriggerSpec> commsHumanBank(
 
 Map<String, CommsTriggerSpec> commsDemonBank(
   Map<String, CommsTriggerSpec> base,
-) => {...base, ..._demonTuning, ..._demonMoments};
+) => {
+  ...base,
+  ..._demonTuning,
+  ..._demonMoments,
+  // --- fang-and-wings-comms: the recorded dive cries join the written ones.
+  ...commsCryBank(base),
+};

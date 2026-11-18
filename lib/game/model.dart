@@ -767,6 +767,11 @@ class ArcadeModel {
       'diveIn': (divePrepBeat + diveTellFor(d)) / (rate > 0 ? rate : 1),
       'sentinel': d.isLarge,
       'elite': d.elite,
+      // --- fang-and-wings-comms: species, toughness (the rank) and the
+      // seconds until the tell, for the dive war cries (dive_cry.dart).
+      'kind': d.kind,
+      'maxHp': d.maxHp,
+      'tellIn': divePrepBeat / (rate > 0 ? rate : 1),
     });
   }
 
