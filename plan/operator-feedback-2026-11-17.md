@@ -155,3 +155,19 @@ the sampler runtime and the score checks are built now.
   dive, and throwing it mid dive ;) New enemy sprites".
 - **Demon choir (`demon-choir`):** "find a music model agents that could consider those grunts and war cryes as part
   of the music ... our Epic/Doom metal had some wordless chorus, how about some wordless demon grunts".
+
+# Round 9 (2026-11-18)
+
+- **Choir:** "I like the choir, I approve."
+- **Bass (`bass-tone`):** "the old sound was the pure sound as it would have been picked by the bass picks, with
+  absolutely no postprocessing at all ... Our audio pipeline is missing the right amount of distortion for the bass to
+  make it sound like a metal soundtrack ... even the old bank was really good, it was just missing the postprocessing".
+  The sampled bass gets a researched metal post chain: clean lows, driven mids, cabinet, EQ and compression.
+- **Pending recommendations approved:** "Yes I approve the recommendations on what's pending."
+  - Stormfront's dimmed glow and the 3 Hz marker stay.
+  - Spear-bearers wear the crownlet.
+  - Pin epic-choir (CC BY 4.0) and 272 Merry Orks (CC0) (`work/choir-pins`).
+  - An in-game reduced-flashing toggle (`reduced-effects`).
+  - The release goes ahead once the bass is fixed.
+- **Reduced effects:** "Reduced flashing might also run reduced animations, friendly for low end devices as well."
+- **Release:** "Pleas fix the bass, then yes, merge to all to game, and prepare a pull request to release into main".
