@@ -443,6 +443,13 @@ abstract final class GameEventNames {
 
   static const lightning = [lightningStun, lightningShipHit, lightningCharged];
 
+  // --- spear-bearers (lib/game/spear_bearers.dart). A bearer released its
+  // spear mid-dive (data `x`, `y`, `kind`, `throws`): the hook for the
+  // brood's throw war cry (fang-and-wings-comms). Structured only: the raw
+  // sounds are `spearGlint` (the wind-up), `spearRelease`, `bucklerClang`
+  // and `bucklerOff`.
+  static const spearThrow = 'spearThrow';
+
   // --- bonus challenges (openspec/changes/bonus-challenges). `variant`:
   // the level's id; data `challenge` (its id). The raw `bonusOneUp` is the
   // 1UP's sound (lib/main.dart).

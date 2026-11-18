@@ -178,6 +178,21 @@ A stunned creature tumbles (a roll of up to ±0.55 rad while it falls) under fou
 No new colour, no shield ring: it reads as "dazed and open", the opposite of a shield. Reduced motion keeps the arcs
 still and drops the roll.
 
+### 5.6 The spear-bearer's buckler and spear (spear-bearers)
+An armoured hunter variant carries a round **buckler** and a **spear** (`openspec/changes/spear-bearers`, ledger
+`plan/render-runs/spear-bearers.md`, sheet `art/contact/spear-bearers.png`). Rules:
+- **Gear, not a shield channel.** The buckler is physical: a 2 art px bone rim on an iron face, never cyan (force
+  shields) and never blackbody (dive shields). While it is raised it *replaces* the thermal dive shield, so a creature
+  never shows both. Its hit flashes the rim white (the hit language of §5.1); knocked away, it tumbles off edge-on.
+- **Emblem.** One bone fang leaning right, tapering to a single point (§4.1 rules 2-4). No boss dot (an eye at 1×), no
+  zigzag (a lightning bolt).
+- **Spear.** Brood iron shaft (`#2E2A33`, `#5A5262` edge) and a bone tusk head hooked a little to one side. Held
+  upright at the side in formation, levelled at the ship in the dive, drawn back over the right shoulder with a white
+  glint on the head during the throw's wind-up (the one animated element; steady with reduced motion).
+- **Placement.** The gear stays clear of the head anchor: buckler on the creature's left, spear on its right; only the
+  wind-up spear rises past the skull, for about half a second, beside the glyph, never over it.
+- **Rank.** The bearer wears the hunter's mark (§4); the gear says nothing about rank.
+
 
 ## 6. Health and state
 | State | Today | Proposed |
