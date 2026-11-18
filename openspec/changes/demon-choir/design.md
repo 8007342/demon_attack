@@ -14,6 +14,7 @@ MIDI-first score and its sample bank (`openspec/changes/adaptive-soundtrack` des
 - **Only admitted material.** That means our own formant synthesis plus ACE-Step 1.5 XL turbo in the studio (MIT,
   installed, cleared for music pilots). No model download, no TTS (blocked on the register and #1121), and no new
   sample library (each needs a pin and the register's admission; research §5-§6).
+  - Round 9: epic-choir and 272 Merry Orks are pinned and cleared; they feed a candidate (§11), not the active choir.
 
 ## 2. Sources: why two
 
@@ -235,4 +236,121 @@ forge-guard run -- node tools/mix_meter/trim.mjs                                
    approach, and every world's battle section?
 4. Should the cry follow the dive's demon (pitch by rank, or a cry per speaker) once `fang-and-wings-comms` defines its
    data?
-5. Should epic-choir and 272 Merry Orks go to the register (research §8)?
+5. Should epic-choir and 272 Merry Orks go to the register (research §8)? Both are pinned (`plan/choir-pins.md`); the
+   candidate built from them is §11.
+6. Ship the real candidate (§11.6)? It is recommended, but it measures 0.5 dB below the approved brood's codec SNR, so
+   it is not active. It needs the operator's listen.
+7. The ACE-Step war cries exist only as cuts in the cache and as the shipped sprite (§2). A rebuild of either recipe
+   after a forge reset would need the cries re-rendered (not byte-identical) or cut back out of the shipped sprite.
+
+## 11. Real samples: an A/B candidate (`work/choir-real`, 2026-11-18)
+
+The operator approved the brood choir as built (§4.1: formant "oh"/"ah", ACE-Step grunts and war cries) and approved
+pinning epic-choir and 272 Merry Orks (`plan/choir-pins.md`; the coordinator checked both pins on the host and confirmed
+VocalSet's CC BY 4.0). This section builds a **candidate** from the real samples. It does not replace the approved choir
+unless the candidate measures at least as clean, and it does not (§11.6). Numbers and commands: `plan/render-runs/demon-choir.md` §10.
+
+### 11.1 Fetch and verification (`tools/brood_choir/pins.lua`)
+
+- `lua tools/brood_choir/pins.lua fetch` reads `plan/choir-pins.manifest.tsv`. It refuses a file, deletes it and exits 1
+  on any mismatch:
+  - each git blob (6 epic-choir docs, 3 Merry Orks docs, 10 Merry Orks samples) is checked by size and `git hash-object`;
+  - epic-choir's release zip is checked whole (173,859,746 B, sha256 `3f78e9b5…b3002f`) **before** any member is read.
+    It lives in `~/.cache/tillandsias-project/choir-src/`, never in the repo or the checkout;
+  - each of the 10 members is extracted alone by name (`unzip -p`, so no path from the zip reaches the disk) and checked
+    by size and a CRC32 computed in Lua, independently of unzip.
+- Result: all 30 rows matched. The members' git blob sha1s are pinned in `art/music/bank/choir-real.manifest.tsv` for the
+  builder, whose own check is the blob. `pins.lua verify` re-checks without fetching.
+
+### 11.2 Sources as measured
+
+| Source | Format | Clipping | Noise | Stereo | Pitch |
+|---|---|---|---|---|---|
+| epic-choir B `f`, oh/ah × A#2 D3 F#3 A#3 D4 | 44.1 kHz 16-bit stereo, 6.9-8.3 s; 107-281 ms of digital silence before the onset (the SFZ's `offset=3528`) | 6 of 10 files reach full scale (15-46 samples): **declipped**, 85 samples in 6 zones | head −55 to −62 dBFS, the approved synth's −54 to −62 | L/R correlation 0.2-0.44; the mono fold loses −1.6 to −2.3 dB, what decorrelation predicts (10·log10((1+r)/2)); 1/3-octave comb s.d. 0.9-1.5 dB | strict check: every zone within ±0.46 semitone of its SFZ keycenter |
+| Merry Orks misc (ugh, oh, hey, argh × rr1-2) | 44.1 kHz 24-bit mono, 0.70-1.41 s | none; peaks −5 to −11 dBFS | the word ends in silence 64-98 dB down (ACE-Step cuts: 15-25 dB, the take's drone) | mono | unpitched shouts (as the ACE-Step ones) |
+
+### 11.3 Brood: epic-choir's B part
+
+- **Mono:** the sum, not one microphone. §12.11 took one microphone because spaced pairs comb-filter when summed. This
+  hall is decorrelated seats, not a spaced pair. Its fold loss is level, which normalisation restores, and the sum
+  measures cleaner than the left channel: encoded SNR 36.4 against 36.1 dB, loop seams median −13.4 against −6.6 dB.
+- **Rate:** the 35 dB rule gives 160 kbps (64/96/128/160: 26.7/31.0/33.8/36.4 dB). Encoded at 36.7 dB with DC removed.
+- **DC:** the sums carry −55 to −67 dB of DC (re full scale), against the standard's −58. The builder's new `dc: true`
+  subtracts each zone's mean (off by default; `bank.json` and the approved `choir.json` rebuild byte for byte). The DC
+  now measures −78 to −111 dB.
+- **The low drones** (E2, F2: 5-6 semitones under A#2). Measured on tape-shifted renders of each note E2-A#2, by the
+  level-normalised 1/3-octave envelope distance (100 Hz-8 kHz) between neighbouring semitones:
+
+| Option | Steps E2→A#2 | Seam | Budget |
+|---|---|---|---|
+| **Shift A#2 down** (stretch 6) | 2.0-5.3 dB per semitone | none | fits |
+| Two formant zones C2, F2 under G#2 (the hybrid) | 4.8-12.6 within the synth | **21.7-23.4 dB** at G2→G#2 | 962,800 B Opus, 9.22 MB decoded: **over** |
+
+  Pick: **the shift**. The timbre darkens gradually (E2 sits 12 dB from the unshifted A#2) instead of changing instrument
+  at one key. The hybrid is also over both budgets. It stays on the listening page for the ear.
+- **Level:** at the approved role level (1.2) the real brood measured 4.4 dB (k:B) and 5.3 dB (c1:core) quieter. Level
+  **2.1** matches it (−37.46/−41.36 LUFS solo against −37.93/−40.88).
+
+### 11.4 Grunts and war cries: Merry Orks
+
+- **Pitch:** the voice is female. `brood.lua cut` pitches each pick tape-style (relabelled rate, the 256-tap sinc), so the
+  formants move down with the pitch. Spectral centroid as cut, median: ACE-Step 760 Hz; Orks at −4: 900, **−7: 740**,
+  −12: 535. Both are then played from the nominal root C3 down to the bar's root (E2-D3).
+  - Pick: **−7**, the approved grunts' brightness at the same runtime shift.
+  - −12 doubles each grunt's length, and its ends measure worse (median −31.9 dB against −41.7).
+- **Trim:** 0.7 s with a 0.3 s raised-cosine fade. The ends are −26 to −70 dB (median −41.7), against the approved −25 to −36
+  (median −28.4). A 0.6 s trim left −15 to −45; 1.0 s goes over the Opus budget.
+- **Level:** 2.8, which puts the momentary maximum at −30.0 LUFS, the approved grunts' value (3 dB under the lead).
+- **War cries: the ACE-Step cuts stay.** Merry Orks' growled vowels (`a_from_car_rr1`, `o_from_pot_rr1`, −7) were cut
+  and measured as cries:
+  - their ends are −36.6 to −38.9 dB (ACE-Step −49.5 to −61.3);
+  - they have one round robin per cry instead of two;
+  - they carry no stable pitch (the f0 report reads 63 and 182 Hz);
+  - they encode at 32.5 and 37.2 dB.
+  They do not clearly beat the approved cries, so they are not in the recipe (their cut is in the ledger).
+
+### 11.5 The candidate (`art/music/choir/real.json`, `art/music/bank/choir-real-recipe.json`)
+
+- **Same as the approved:** the `name` (`choir`), roles, budgets and runtime. Building it replaces `web/audio/bank/choir.json`
+  and its sprites behind the same bank switch; `BANK_DEFAULT` stays false.
+- **Built:** 21 zones in 2 sprites (`choir-3d160m.ogg` 97,009 B, `choir-4d160m.ogg` 660,882 B), **757,891 B of Opus** and
+  7,203,768 B decoded on desktops (budgets 800,000 and 9,000,000). The approved choir is 756,366 and 7,677,400.
+- **Coverage:** `midi_stats.lua check --choir` covers it note for note: brood 29, grunt 10, warcry 8 keys.
+- **Determinism:** a second `brood.lua cut` reproduced every pick's blob, and a second build reproduced both sprites' sha256.
+- **Credits:** `tools/generate_credits.lua` turns the two "coming" rows live in the same build that ships them. A row goes
+  live once `web/audio/bank/choir.json` names its source (`thepok/epic-choir`, `local/orks-picks`), and the epic-choir row
+  keeps the change note and licence link CC BY 4.0 asks for. The approved choir names neither, so both rows stay "coming"
+  and `assets/credits.json` is unchanged but for its `authors_commit`.
+
+### 11.6 A/B and the verdict
+
+| Instrument | Approved | Real | Cleaner |
+|---|---|---|---|
+| brood: encoded magnitude SNR, median | 37.2 dB at 128 kbps | 36.7 dB at 160 kbps | approved, by 0.5 dB (both above the 35 dB rule) |
+| brood: −60 dB bandwidth | 3.2-3.8 kHz | 7.8-10.0 kHz | real |
+| brood: loop seam, median / max | −5.8 / +4.8 dB | −5.5 / −0.5 dB | real |
+| brood: clipping, DC | none, ≤ −85 dB | none after declip, ≤ −78 dB | tie |
+| grunt: background under the shout | 15-25 dB down | 64-98 dB down | real, by about 40 dB |
+| grunt: encoded SNR at the 160 cap | 34.5 dB | 32.9 dB | approved, by 1.6 dB |
+| grunt: end SNR (source floor and codec together) | ≈ 19 dB | ≈ 33 dB | real, by about 13.6 dB |
+| grunt: level at the end, median | −28.4 dB | −41.7 dB | real |
+| warcry | ACE-Step | the same cuts | tie |
+
+- **Recommendation: the real candidate** (epic-choir brood, Merry Orks grunts at −7, ACE-Step war cries). It has a real
+  ensemble with 2.4 times the bandwidth, one timbre from E2 to D4, smoother loops, and grunts cleaner end to end.
+- **It does not ship active.** The brood encodes 0.5 dB below the approved synth, so the candidate does not measure at
+  least as clean on every count. The approved choir stays in `web/audio/bank/`, and the recipe, manifest and tools are
+  committed.
+- **Listening page:** https://claude.ai/artifact/BRp5LaDJBJYiiQAG7ioU35. It has five strips: the brood solo over k:B and
+  c1:core (approved, real, hybrid), the grunts with drums (ACE-Step, Orks −7, Orks −12), the war cries over k:B (approved,
+  real, Orks growls) and the carrier core mix. Each strip is at one loudness.
+- **To ship it** after a listen:
+
+```sh
+lua tools/brood_choir/pins.lua fetch                                   # verified pins into the cache
+lua tools/brood_choir/brood.lua cut --recipe art/music/choir/real.json # the Orks picks (the ACE-Step cries must be cut already)
+forge-guard run -- lua tools/bank/bank_build.lua --recipe art/music/bank/choir-real-recipe.json
+flutter pub deps --json | sed -n '/^{/,$p' > <scratch>/graph.json && lua tools/generate_credits.lua <scratch>/graph.json
+lua tools/score/score_gen.lua && lua tools/midi_stats.lua check
+forge-guard run -- node tools/mix_meter/trim.mjs                       # the bank block moves where the choir sounds
+```

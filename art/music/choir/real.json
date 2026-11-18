@@ -1,0 +1,165 @@
+{
+ "comment": "The real-sample brood choir (openspec/changes/demon-choir design §11): brood from epic-choir B oh/ah f (CC BY 4.0, VocalSet), grunts from 272 Merry Orks misc (CC0) cut and pitched by lua tools/brood_choir/brood.lua cut --recipe art/music/choir/real.json, the ACE-Step war cries of brood.json kept. Pins: plan/choir-pins.manifest.tsv, fetched and verified by lua tools/brood_choir/pins.lua fetch. sources: used as they are; picks: cut (source, seconds in the source, shift in semitones, tape-style).",
+ "commit": "-",
+ "picks": [
+  {
+   "dir": "local/orks-picks",
+   "end": 0.7,
+   "fadeOut": 0.06,
+   "group": "grunt",
+   "name": "grunt_a_rr1",
+   "shift": -7,
+   "source": "sfzinstruments/karoryfer.272-merry-orks/samples/misc/ugh_rr1.wav",
+   "start": 0
+  },
+  {
+   "dir": "local/orks-picks",
+   "end": 0.7,
+   "fadeOut": 0.06,
+   "group": "grunt",
+   "name": "grunt_a_rr2",
+   "shift": -7,
+   "source": "sfzinstruments/karoryfer.272-merry-orks/samples/misc/ugh_rr2.wav",
+   "start": 0
+  },
+  {
+   "dir": "local/orks-picks",
+   "end": 1.11,
+   "fadeOut": 0.06,
+   "group": "grunt",
+   "name": "grunt_b_rr1",
+   "shift": -7,
+   "source": "sfzinstruments/karoryfer.272-merry-orks/samples/misc/oh_rr1.wav",
+   "start": 0
+  },
+  {
+   "dir": "local/orks-picks",
+   "end": 0.7,
+   "fadeOut": 0.06,
+   "group": "grunt",
+   "name": "grunt_b_rr2",
+   "shift": -7,
+   "source": "sfzinstruments/karoryfer.272-merry-orks/samples/misc/oh_rr2.wav",
+   "start": 0
+  },
+  {
+   "dir": "local/orks-picks",
+   "end": 1.41,
+   "fadeOut": 0.06,
+   "group": "grunt",
+   "name": "grunt_c_rr1",
+   "shift": -7,
+   "source": "sfzinstruments/karoryfer.272-merry-orks/samples/misc/hey_rr1.wav",
+   "start": 0
+  },
+  {
+   "dir": "local/orks-picks",
+   "end": 1.35,
+   "fadeOut": 0.06,
+   "group": "grunt",
+   "name": "grunt_c_rr2",
+   "shift": -7,
+   "source": "sfzinstruments/karoryfer.272-merry-orks/samples/misc/hey_rr2.wav",
+   "start": 0
+  },
+  {
+   "dir": "local/orks-picks",
+   "end": 0.94,
+   "fadeOut": 0.06,
+   "group": "grunt",
+   "name": "grunt_d_rr1",
+   "shift": -7,
+   "source": "sfzinstruments/karoryfer.272-merry-orks/samples/misc/argh_rr1.wav",
+   "start": 0
+  },
+  {
+   "dir": "local/orks-picks",
+   "end": 1.41,
+   "fadeOut": 0.06,
+   "group": "grunt",
+   "name": "grunt_d_rr2",
+   "shift": -7,
+   "source": "sfzinstruments/karoryfer.272-merry-orks/samples/misc/argh_rr2.wav",
+   "start": 0
+  }
+ ],
+ "rate": 48000,
+ "schema": "demon-attack.brood-choir/v1",
+ "sources": [
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_oh_f_As2.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_oh_f_D3.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_oh_f_Fs3.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_oh_f_As3.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_oh_f_D4.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_ah_f_As2.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_ah_f_D3.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_ah_f_Fs3.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_ah_f_As3.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "commit": "38df98f5dbb170da6d8e3ea2d52c7170d2a2b8e3",
+   "group": "brood",
+   "path": "samples/B/B_ah_f_D4.wav",
+   "repo": "thepok/epic-choir"
+  },
+  {
+   "group": "warcry",
+   "path": "cry_a_rr1.wav",
+   "repo": "local/acestep-picks"
+  },
+  {
+   "group": "warcry",
+   "path": "cry_a_rr2.wav",
+   "repo": "local/acestep-picks"
+  },
+  {
+   "group": "warcry",
+   "path": "cry_b_rr1.wav",
+   "repo": "local/acestep-picks"
+  }
+ ]
+}

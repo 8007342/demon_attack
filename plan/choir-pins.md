@@ -195,6 +195,12 @@ Phones: unchanged, no choir (the first bank's phone tier is full).
 6. **No sha256 per sample**: Merry Orks samples have git blob sha1s; epic-choir members have CRC32s inside a zip whose
    sha256 is the API digest. The coordinator may record its own sha256s on the host.
 
+**Update (2026-11-18, `work/choir-real`):** the coordinator checked both pins on the host and confirmed VocalSet's
+licence (Zenodo 10.5281/zenodo.1442513, cc-by-4.0) from there. That is the coordinator's confirmation, relayed; the forge
+still cannot read Zenodo [source: Zenodo, "VocalSet: A Singing Voice Dataset", https://zenodo.org/records/1442513, unread:
+blocked by the forge proxy]. The fetch was then made and verified against this manifest, every row matching
+(`tools/brood_choir/pins.lua`, `plan/render-runs/demon-choir.md` §10.1).
+
 ## 6. Send to coordinator
 
 ```text
