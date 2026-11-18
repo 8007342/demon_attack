@@ -14,6 +14,7 @@ import 'flow_director.dart';
 import 'game_events.dart';
 import 'ground_blocks_atlas.dart';
 import 'ground_blocks_cast.dart';
+import 'insignia_rank.dart'; // --- round8: the dive cry's mark (fang-and-wings-comms §API)
 import 'perspective.dart';
 import 'pilot_model.dart';
 import 'skill_meter.dart';
@@ -772,6 +773,9 @@ class ArcadeModel {
       'kind': d.kind,
       'maxHp': d.maxHp,
       'tellIn': divePrepBeat / (rate > 0 ? rate : 1),
+      // --- round8: the insignia mark above the diver's head
+      // (insignia-ranks), so the cry's rank is the mark the player sees.
+      'mark': InsigniaRanks.markOf(d).name,
     });
   }
 

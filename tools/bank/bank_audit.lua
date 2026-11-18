@@ -56,7 +56,8 @@ local function info(path)
   local codec = line:match('^(%w+)')
   local rate = tonumber(line:match('(%d+) Hz'))
   local chs = line:match('Hz, (%w+)')
-  local bits = tonumber(line:match('%((%d+) bit%)')) or tonumber(line:match('[su](%d+)'))
+  -- --- round8: float WAVs (the choir's local sources, pcm_f32le, "flt") read as 32 bits.
+  local bits = tonumber(line:match('%((%d+) bit%)')) or tonumber(line:match('[su](%d+)')) or tonumber(line:match('^pcm_f(%d+)'))
   return { codec = codec, rate = rate, channels = chs == 'stereo' and 2 or chs == 'mono' and 1 or tonumber(chs), bits = bits }
 end
 local function truePeak(path, extra)

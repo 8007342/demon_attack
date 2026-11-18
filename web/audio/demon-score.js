@@ -926,7 +926,9 @@
       for (const v of voices) if (current && v.seg === current.id && !v.released && v.end > from) releaseVoice(v, Math.max(from, v.at), .06);
     }
     // Stingers: the accent's score in the playing section's key, on its grid. An unknown name plays nothing (null).
-    function accent(name) {
+    // --- round8: `inSeconds` (optional) lands the stinger on a moment, e.g. a dive war cry's dive start: on the
+    // stinger's grid line nearest it within 0.3 s, else at `fallbackIn` (the tell), never before now + MARGIN.
+    function accent(name, inSeconds, fallbackIn) {
       if (!ready() || !current) return null;
       const stingName = manifest.accents[name];
       const sting = stingName && manifest.stingers[stingName];
@@ -943,8 +945,11 @@
       if (live >= 2 && !lifeLoss && !sting.always) return null;
       const lead = Math.min(0, ...sting.notes.map(n => n.t));
       const earliest = now + MARGIN - lead * bs;
-      const g = segBeat(current, earliest);
-      const anchor = segTime(current, Math.ceil(g / sting.quantum - 1e-9) * sting.quantum);
+      let anchor = segTime(current, Math.ceil(segBeat(current, earliest) / sting.quantum - 1e-9) * sting.quantum);
+      if (Number.isFinite(inSeconds)) {
+        const want = now + inSeconds, snap = segTime(current, Math.round(segBeat(current, want) / sting.quantum) * sting.quantum);
+        anchor = Math.abs(snap - want) <= .3 && snap >= earliest ? snap : Math.max(earliest, now + (Number.isFinite(fallbackIn) ? fallbackIn : inSeconds));
+      }
       const tonic = current.spec.tonic ?? current.songSpec.tonic, mode = current.spec.mode ?? current.songSpec.mode;
       const scale = scales[mode] || scales.minor;
       let end = anchor;

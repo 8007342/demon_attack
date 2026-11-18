@@ -70,8 +70,8 @@ Once one is admitted, its files become manifest rows and the zones change. The s
 ## 4. The bank (`tools/bank/bank_build.lua --recipe art/music/bank/choir-recipe.json`)
 
 - **Builder changes** (small, shared with the first bank):
-  - a recipe `name` (default `bank`) names the JSON (`choir.json`) and prefixes the sprites (`choir-3dm.ogg`,
-    `choir-4dm.ogg`), and a rebuild replaces only its own sprites;
+  - a recipe `name` (default `bank`) names the JSON (`choir.json`) and prefixes the sprites (`choir-4d128m.ogg`
+    and its kin, keyed by tier, rate and channels since bank-fidelity), and a rebuild replaces only its own sprites;
   - a recipe `src` names its source folder (`~/.cache/tillandsias-project/demon-choir/src`);
   - `generatedComment` is the output's comment.
   - `bank.json` is unchanged byte for byte: `name` is absent there.
@@ -89,11 +89,30 @@ Once one is admitted, its files become manifest rows and the zones change. The s
   - `brood`'s solo loudness is matched to the synth choir and organ pads (about −38 to −41 LUFS solo at tier 4).
   - The grunts' momentary maximum is set 3 dB under the lead's (ledger §5).
   - The war cry sits about 8 dB under the band at its peak, measured by subtracting a render without cries (ledger §5).
-- **Budgets** (its own): 400,000 B of Opus, 9,000,000 B decoded on desktops, 0 on phones.
-  - Built: 380,958 B of Opus in 2 sprites (64 kbps mono) and 7,678,832 B decoded.
+- **Budgets** (its own): 800,000 B of Opus (400,000 before §4.1), 9,000,000 B decoded on desktops, 0 on phones.
+  - Built (round 8, §4.1): 756,366 B of Opus in 3 sprites (128 and 160 kbps mono) and 7,677,400 B decoded; the pilot built 380,958 B in 2 sprites at 64 kbps.
   - Every zone is normalised per instrument to −1 dBFS peak, as the first bank's are.
 - **Phones:** no choir. The first bank's phone tier already uses 14.55 of its 16 MB, so the choir is desktop-only.
   This is an open question (§10).
+
+### 4.1 Rebuilt to the bank-fidelity standard (round 8)
+
+`bank-fidelity` (adaptive-soundtrack design §12.11) set the standard for every bank: clean sources, no clipping, an
+honest bitrate. The choir was re-measured with its tools (`bank_audit.lua sources | cut | encode | bitrate`, run on the
+choir's own sources and `--keep-pcm` sprites) and rebuilt from the cached sources (no new download, no new render):
+
+| Step | Measured | Verdict |
+|---|---|---|
+| Sources | 23 files, 48 kHz 32-bit float mono; 0 clipped samples; peaks −3 dBFS (brood), −17 to −6 (shouts) | No declip, no mono pick, no resample needed. |
+| Encode rate | median magnitude SNR, 64/96/128/160 kbps: brood 29.7/33.4/37.2/41.0 dB; grunt 26.1/29.1/32.2/34.5; warcry 24.2/27.4/31.0/33.8 | §12.11's rule (lowest rate reaching 35 dB, at most 160): **brood 128, grunt 160, warcry 160** (was 64 for all). The shouts are noise-like, like the cymbals, so they stop at the cap. Opus kept each zone's −60 dB bandwidth (no codec low-pass). |
+| End of the hits | level 50 ms before the end fade, re the loudest 50 ms: grunt −15 to −26 dB, warcry −17 to −28 (20 ms fade) | **Raised-cosine end fades**: grunt 0.15 s (now −25 to −31 dB, bounded by the 0.4 s picks), warcry 0.6 s (−49 to −61). |
+| Loops | brood seam jumps −22 to +4.8 dB re the loop's 90th-percentile step (median −5.8) | Kept: the equal-power crossfade, as §12.11 kept the first bank's. |
+| Buses | grunt and warcry on the `voice` bus (gain, room send), brood on the pad bus | No wave shaper in any choir path: §12.11's bass-bus fault does not apply. |
+
+Built: 23 zones in 3 sprites (`choir-3d160m.ogg`, `choir-4d128m.ogg`, `choir-4d160m.ogg`), 40.0 s, **756,366 B of Opus**
+(budget raised 400,000 → 800,000 B, as §12.11 raised the first bank's for the rates) and 7,677,400 B decoded on desktops
+(budget 9,000,000, unchanged: decoded size follows the trims). Still desktop-only. The role levels are unchanged (the
+rate does not move loudness); the trims are regenerated (`mix-trim.json`, both blocks).
 
 ## 5. The runtime (`web/audio/demon-score.js`)
 
@@ -124,21 +143,26 @@ Once one is admitted, its files become manifest rows and the zones change. The s
 
 ### 6.1 Game to music (Dart)
 
-- **Event:** `diveCry`, a structured `GameEvent` (`MusicBridge.diveCryEvent`). `fang-and-wings-comms` queues it when a
-  demon dives with a war cry; its design §API is the authority for the name and data. Until that change lands, this
-  is the stub name.
-  - Data: any (e.g. `speaker`); the music ignores it.
+- **Event:** `diveCry`, a structured `GameEvent` (`MusicBridge.diveCryEvent` = `GameEventNames.diveCry`, round 8).
+  `fang-and-wings-comms`' `GameEventObserver` raises it from a `divePrep` its `DiveCryGate` lets cry; its design §API
+  is the authority for the name and data.
+  - Data: `diveIn` and `tellIn` (seconds from now to the dive's start and to its tell) time the grunt; the rest
+    (`rank`, `species`, `intensity`, `mark`) is unused for now (open question 4).
+  - **Timing (round 8):** the grunt lands on the dive's start, `now + diveIn`, snapped to the nearest line of the
+    stinger's grid (an 8th, so a beat or half beat) when one is within 0.3 s (the radio's dive tolerance); else on the
+    tell, `now + tellIn`; never before now + the score's margin. Without `diveIn` it plays on the next 8th as before.
   - It reaches the music through `GameEvents.listen` → `MusicBridge.call`, like every structured event. It is not a
     raw `model.events` string, so `audioSfx` never sees it, and the radio and the music each hear it once.
-- **Mapping:** `MusicBridge.diveCryEvent` → `onAccent(MusicBridge.diveCryAccent)`, that is
-  `audioAccent('warcry')` → `demonAudio.accent('warcry')`.
+- **Mapping:** `MusicBridge.diveCryEvent` → `onAccentAt(MusicBridge.diveCryAccent, diveIn, tellIn)`, that is
+  `audioAccentAt('warcry', …)` → `demonAudio.accent('warcry', inSeconds, fallbackIn)`; without `diveIn`,
+  `onAccent('warcry')`.
 - `SongDirector.accent('warcry')` works too: `warcry` is in `scoreAccents`.
 
 ### 6.2 JavaScript
 
 | Call | Returns | Notes |
 |---|---|---|
-| `demonAudio.accent('warcry')` | the anchor time (audio clock), or `null` | `null` when: the bank is off; the stinger played less than 8 beats ago; a radio line is speaking; two stingers are live; the music is muted. |
+| `demonAudio.accent('warcry', inSeconds?, fallbackIn?)` | the anchor time (audio clock), or `null` | round 8: with `inSeconds`, the grid line nearest `now + inSeconds` within 0.3 s, else `now + fallbackIn`. | `null` when: the bank is off; the stinger played less than 8 beats ago; a radio line is speaking; two stingers are live; the music is muted. |
 | `demonAudio.setScoreBank(on)` | the new state | unchanged; also switches the choir |
 | `demonScore.create(host)` | | `host.speaking()` (new, optional): true while the speech duck holds; demon-audio passes `duckDepthAt(now) > 0` |
 | `state.score.bank.choir` | boolean | the choir joined the bank |
@@ -181,15 +205,13 @@ forge-guard run -- node tools/mix_meter/trim.mjs                                
 
 ## 8. Coordination
 
-- **`fang-and-wings-comms`** (not pushed on 2026-11-18): when it lands, `git merge origin/work/fang-and-wings-comms`.
-  If its event is not named `diveCry`, change `MusicBridge.diveCryEvent` to its name. Its radio war cries keep
-  priority by §7.
-- **`bank-fidelity`** (not pushed on 2026-11-18): its §12.11 standard (clean, no clipping, honest bitrate) applies to
-  the choir's sprites too.
-  - So far each zone is peak-normalised to −1 dBFS, encoded at 64 kbps mono like the first bank, and its source
+- **`fang-and-wings-comms`** (merged in round 8): its event is `diveCry`; the grunt follows its §API timing (§6.1).
+  Its radio war cries keep priority by §7.
+- **`bank-fidelity`** (merged in round 8): its §12.11 standard applies to the choir's sprites too; rebuilt (§4.1).
+  Before:
+  - each zone was peak-normalised to −1 dBFS, encoded at 64 kbps mono like the first bank, and its source
     rate is 48 kHz.
   - The ACE-Step cuts are from 48 kHz FLAC, and their bandwidth is the model's (ledger §2).
-  - Re-check against §12.11 once it is pushed.
 
 ## 9. Gates and tests
 

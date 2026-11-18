@@ -11,6 +11,7 @@ import 'package:demon_attack/comms/comms_moments.dart';
 import 'package:demon_attack/comms/comms_one_line.dart';
 import 'package:demon_attack/comms/comms_types.dart';
 import 'package:demon_attack/game/dive_cry.dart';
+import 'package:demon_attack/game/insignia_rank.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -92,6 +93,27 @@ void main() {
       expect(data['maxHp'], isA<int>());
       expect(data['tellIn'] as double, greaterThan(0));
       expect(data['tellIn'] as double, lessThan(data['diveIn'] as double));
+      // --- round8: the model publishes the diver's insignia mark, and the
+      // cry's rank is read from it (not the fields' stand-in).
+      final preparing = m.demons.where((d) => d.divePrep > 0);
+      expect(
+        preparing.map((d) => InsigniaRanks.markOf(d).name),
+        contains(data['mark']),
+      );
+      final mark = RankMark.values.byName(data['mark'] as String);
+      final rank = BroodRank.of(
+        sentinel: false,
+        elite: false,
+        kind: 0,
+        maxHp: 99,
+        mark: data['mark'] as String,
+      );
+      expect(rank, switch (mark) {
+        RankMark.none => BroodRank.grunt,
+        RankMark.winglet || RankMark.crownlet => BroodRank.veteran,
+        RankMark.fangWings => BroodRank.hunter,
+        RankMark.wingCrown => BroodRank.sentinel,
+      });
     });
 
     test('the observer turns some dive preps into a diveCry', () {

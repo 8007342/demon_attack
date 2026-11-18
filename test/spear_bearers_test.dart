@@ -1,11 +1,16 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 
+import 'package:demon_attack/comms/comms_bank.dart';
+import 'package:demon_attack/comms/comms_director.dart';
+import 'package:demon_attack/game/insignia_rank.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/spear_bearer_atlas.dart';
 import 'package:demon_attack/game/spear_bearer_painter.dart';
-import 'package:demon_attack/game/sprite_atlas.dart' show AlienRank;
+import 'package:demon_attack/game/sprite_atlas.dart'
+    show AlienRank, CombatAtlas;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'progression_test.dart' show reach;
@@ -337,10 +342,27 @@ void main() {
   });
 
   group('the painter', () {
-    test('a bearer wears the hunter rank (insignia-ranks hook)', () {
-      final m = _staged();
-      expect(SpearBearerPainter.rankOf(_bearer(m)), AlienRank.hunter);
-    });
+    // --- round8: insignia-ranks design §4. The bearer keeps the hunter's
+    // behaviour rank but wears the crownlet (no fang), for life.
+    test(
+      'a bearer wears the crownlet, from the one ladder (insignia-ranks §4)',
+      () {
+        final m = _staged();
+        final d = _bearer(m);
+        expect(CombatAtlas.rankOf(d), AlienRank.hunter, reason: 'behaviour');
+        expect(InsigniaRanks.markOf(d), RankMark.crownlet);
+        expect(SpearBearerPainter.markOf(d), InsigniaRanks.markOf(d));
+        expect(InsigniaRanks.hasFang(InsigniaRanks.markOf(d)), isFalse);
+        // Still the crownlet empty-handed and with the buckler knocked off.
+        d.spear!
+          ..armed = false
+          ..buckler = 0;
+        expect(InsigniaRanks.markOf(d), RankMark.crownlet);
+        // The same elite without a kit is a hunter: Fang and Wings.
+        final h = Demon(120, 140, 0, 3, 1.3, elite: true);
+        expect(InsigniaRanks.markOf(h), RankMark.fangWings);
+      },
+    );
 
     test('frames follow the state', () {
       final m = _staged();
@@ -407,6 +429,64 @@ void main() {
         SpearBearerPainter.image = null;
         img.dispose();
       }
+    });
+  });
+
+  // --- round8: spear-bearers tasks 3.3/3.4 with fang-and-wings-comms §API.
+  // The release queues ONE structured `spearThrow` (no raw string of that
+  // name), so the radio hears one throw and offers one shout.
+  group('the throw shout (fang-and-wings-comms)', () {
+    /// Every event the radio would hear over one bearer's dive: the raw
+    /// strings forwarded by the observer, the model's structured events, and
+    /// what the observer derives from them.
+    List<GameEvent> heard() {
+      final m = _staged();
+      final observer = GameEventObserver(m, dispatch: false);
+      final d = _bearer(m);
+      _dive(m, d);
+      final out = <GameEvent>[];
+      for (var f = 0; f < 600 && d.spear!.throws == 0 && d.dive > 0; f++) {
+        _step(m);
+        out.addAll(observer.observe(m.takeEvents()));
+        for (final e in m.takeGameEvents()) {
+          out
+            ..add(e)
+            ..addAll(observer.onGameEvent(e));
+        }
+      }
+      expect(d.spear!.throws, 1);
+      return out;
+    }
+
+    test('a throw yields exactly one spearThrow, with one shout candidate', () {
+      final events = heard();
+      final throws = events.where((e) => e.name == GameEventNames.spearThrow);
+      expect(throws, hasLength(1), reason: 'one structured event, no raw twin');
+      expect(throws.single.data['throws'], 1);
+      // The raw sounds never reach a comms trigger.
+      for (final raw in ['spearGlint', 'spearRelease']) {
+        expect(commsDemonTriggers.containsKey(raw), isFalse, reason: raw);
+      }
+      expect(
+        commsDemonTriggers[GameEventNames.spearThrow]!.lines,
+        hasLength(6),
+      );
+      var offered = 0;
+      for (var seed = 1; seed <= 12; seed++) {
+        final director = CommsDirector(random: math.Random(seed))
+          ..setSector(3, 0);
+        for (final e in events) {
+          director.handle(e, 10);
+        }
+        final shouts = [
+          ...director.queue,
+          ...director.active,
+        ].where((c) => c.line.id.startsWith('spearThrow.'));
+        expect(shouts.length, lessThanOrEqualTo(1), reason: 'seed $seed');
+        offered += shouts.length;
+      }
+      // Chance 0.6 a throw: most seeds offer the one shout.
+      expect(offered, greaterThan(3));
     });
   });
 }

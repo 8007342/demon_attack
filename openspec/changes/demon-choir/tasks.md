@@ -41,6 +41,8 @@
 
 ## 7. Follow-ups (open)
 - [ ] 7.1 The operator's verdict on the listening page (open questions, design §10)
-- [ ] 7.2 Merge `origin/work/fang-and-wings-comms` once pushed; align `MusicBridge.diveCryEvent` with its §API
-- [ ] 7.3 Re-check the choir's sprites against `bank-fidelity` §12.11 once pushed
+- [x] 7.2 Merge `origin/work/fang-and-wings-comms` once pushed; align `MusicBridge.diveCryEvent` with its §API
+      (round 8, `work/round8`: `GameEventNames.diveCry`; the grunt lands at `now + diveIn` snapped to the stinger's 8th
+      within 0.3 s, else at `tellIn`: `demonAudio.accent(name, inSeconds, fallbackIn)`, design §6.1)
+- [x] 7.3 Re-check the choir's sprites against `bank-fidelity` §12.11 once pushed (round 8: rebuilt, design §4.1)
 - [ ] 7.4 Phone tier for the choir, more sections, and the register (epic-choir, 272 Merry Orks)

@@ -235,5 +235,29 @@ void main() {
       expect(accents, ['warcry']);
       expect(scoreAccents, contains(MusicBridge.diveCryAccent));
     });
+
+    // --- round8: fang-and-wings-comms' real diveCry lands the grunt on the
+    // dive's start (snapped by the score within 0.3 s), else on the tell.
+    test('a timed dive war cry asks for the warcry at the dive, the tell as fallback', () {
+      final accents = <String>[];
+      final timed = <(String, double, double)>[];
+      final bridge = MusicBridge(
+        onIntensity: (_) {},
+        onAccent: accents.add,
+        onAccentAt: (n, at, fallback) => timed.add((n, at, fallback)),
+        onFleetIntact: () {},
+        onPowerLayer: (_, _) {},
+      );
+      expect(MusicBridge.diveCryEvent, GameEventNames.diveCry);
+      bridge(
+        const GameEvent(GameEventNames.diveCry, {
+          'rank': 'hunter',
+          'diveIn': 1.05,
+          'tellIn': .5,
+        }),
+      );
+      expect(accents, isEmpty);
+      expect(timed, [('warcry', 1.05, .5)]);
+    });
   });
 }

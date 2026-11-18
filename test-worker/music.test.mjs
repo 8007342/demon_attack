@@ -526,7 +526,7 @@ test('demon-choir: off with the bank (no choir note, no war cry); on: brood and 
   const s0 = p.audio.state.score;
   assert.equal(s0.bank.choir, true);
   assert.equal(s0.bank.loaded, bank.sprites.length + choir.sprites.length);
-  assert.ok(s0.bankDecodedBytes <= 41e6 + 9e6);
+  assert.ok(s0.bankDecodedBytes <= bank.budgets.decodedDesktop + choir.budgets.decodedDesktop);   // round8: the recipes' budgets (bank-fidelity raised the first bank's)
   const fetchedSprites = p.fetched.filter(f => /\/audio\/bank\/(bank|choir)-/.test(f));
   assert.ok(fetchedSprites.findIndex(f => f.includes('choir-')) > fetchedSprites.findLastIndex(f => f.includes('/bank-')), 'the choir loads last');
   await playKrybor(p, 8);
@@ -561,4 +561,24 @@ test('demon-choir: off with the bank (no choir note, no war cry); on: brood and 
   assert.equal(p.audio.accent('warcry'), null);
   await p.run(3);
   assert.ok(p.audio.accent('warcry') > p.ctx().currentTime, 'once the line is over, the cry plays again');
+});
+
+// --- round8: the dive war cry lands on its dive (fang-and-wings-comms §API: `diveIn`, `tellIn`): on the stinger's 8th
+// grid line nearest the dive's start when one is within 0.3 s, else on the tell; never before now.
+test('round8: a timed war cry lands on the dive snapped to an 8th within 0.3 s, else on the tell', { skip: !tools && 'needs lua' }, async () => {
+  const bank = bankFromPlan(plan()), choir = choirFromPlan();
+  const p = await player({ bank, choir });
+  await playKrybor(p, 8);
+  const st = p.audio.state.score, e8 = manifest.songs.k.barSamples / 48000 / 8;
+  const onGrid = t => { const n = (t - st.startAt) / e8; return Math.abs(n - Math.round(n)) < 1e-6; };
+  // An 8th at 170 BPM is 0.176 s, so some grid line is always within 0.3 s of the dive: the cry snaps to the nearest.
+  let now = p.ctx().currentTime;
+  const at = p.audio.accent('warcry', 1.1, .5);
+  assert.ok(at !== null && onGrid(at), `on an 8th (${at})`);
+  assert.ok(Math.abs(at - (now + 1.1)) <= e8 / 2 + 1e-6, `nearest the dive (${(at - now).toFixed(3)} s)`);
+  // A dive closer than the score's margin can't be snapped forward in time: it falls back to the tell's moment.
+  await p.run(8 * 2 * e8 + .1);
+  now = p.ctx().currentTime;
+  const late = p.audio.accent('warcry', -1, .2);
+  assert.ok(late !== null && Math.abs(late - (now + .2)) < 1e-6, `on the tell (${late - now})`);
 });

@@ -163,3 +163,32 @@ A scratch harness from an earlier session, in the scratchpad (`solo/`), still he
 worktree. The first solo run wrote into that worktree: its `score.json`, `mix-trim.json` and 20 stray symlinks. The
 symlinks were removed by their target and the two files restored with `git checkout`, and its status is clean again.
 The harness was then rebuilt in a fresh folder. Lesson: never reuse a scratch folder that holds links.
+
+## 9. Round 8: rebuilt to the bank-fidelity standard (2026-11-18, `work/round8`)
+
+Rebuilt from the cached sources (`~/.cache/tillandsias-project/demon-choir/src`, raws in `…/demon-choir/raw/`; nothing
+re-rendered, nothing downloaded) after `work/bank-fidelity` merged. Design §4.1 holds the verdicts; the numbers:
+
+```sh
+lua tools/bank/bank_audit.lua sources --bank web/audio/bank/choir.json --src ~/.cache/tillandsias-project/demon-choir/src
+lua tools/bank/bank_build.lua --recipe art/music/bank/choir-recipe.json --out OUT --keep-pcm PCM
+lua tools/bank/bank_audit.lua bitrate --pcm PCM --bank OUT/choir.json --rates 64,96,128,160
+lua tools/bank/bank_audit.lua cut|encode --pcm PCM --bank OUT/choir.json --sprites OUT
+forge-guard run -- lua tools/bank/bank_build.lua --recipe art/music/bank/choir-recipe.json
+```
+
+| Instrument | Sources | Clipped | Rate sweep, median magnitude SNR (64/96/128/160) | Pick | End level before → after the fade |
+|---|---|---|---|---|---|
+| brood | 12, 48 kHz f32 mono, −3 dBFS | 0 | 29.7 / 33.4 / 37.2 / 41.0 dB | 128 kbps | looped (seams −22 to +4.8 dB, kept) |
+| grunt | 8, 48 kHz f32 mono, −17 to −13 dBFS | 0 | 26.1 / 29.1 / 32.2 / 34.5 dB | 160 kbps (cap) | −15…−26 → −25…−31 dB (fade 0.15 s) |
+| warcry | 3, 48 kHz f32 mono, −14 to −6 dBFS | 0 | 24.2 / 27.4 / 31.0 / 33.8 dB | 160 kbps (cap) | −17…−28 → −49…−61 dB (fade 0.6 s) |
+
+Built: `choir-3d160m.ogg` (5 zones, 72,213 B), `choir-4d128m.ogg` (12, 577,196 B), `choir-4d160m.ogg` (6, 106,957 B):
+756,366 B of Opus (budget raised to 800,000), 7,677,400 B decoded (budget 9,000,000). Encoded magnitude SNR, median:
+brood 37.2, grunt 34.5, warcry 33.8 dB; −60 dB bandwidth unchanged by Opus. `bank_audit.lua` learned to read the
+float WAVs' bit depth (`pcm_f32le`).
+
+Trims regenerated (`forge-guard run -- node tools/mix_meter/trim.mjs`): the synth block is byte for byte bank-fidelity's
+(top −4.97 LUFS, floor −11.81, k 0.2924); the bank block keeps its constants (top −4.60, offset −0.37 dB, floor −15.43,
+k 0.1847, 222 trims) and moves only where the choir sounds: `c1:core@3-4` −0.1/−0.2 → −0.2/−0.3 dB, `k:B@3-4` +1.9/+1.8
+→ +1.7/+1.6 dB (measured loudness `c1:core@2-4` −5.89/−4.84/−4.74 LUFS, `k:B@3-4` −7.19/−7.01).

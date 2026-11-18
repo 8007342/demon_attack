@@ -258,10 +258,10 @@ extension ArcadeSpearBearers on ArcadeModel {
       ..throws += 1
       ..releasedAt = clock;
     events.add('spearRelease'); // the whoosh (lib/main.dart audioSfx)
-    // --- spear-bearers → fang-and-wings-comms HOOK: the throw's war cry.
-    // Until fang-and-wings-comms lands its dive war-cry API, the throw is
-    // this structured event (radio and music only; no raw string of the
-    // same name, so nothing speaks twice).
+    // --- spear-bearers → fang-and-wings-comms: the throw's war cry. One
+    // structured event (fang-and-wings-comms §API); the director voices
+    // `spearThrow.d0`-`d5` on it (brood lane, chance 0.6, cooldown 5 s).
+    // No raw string of the same name, so the radio speaks once.
     _queueGameEvent(GameEventNames.spearThrow, {
       'x': x,
       'y': y,

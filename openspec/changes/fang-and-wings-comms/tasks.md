@@ -29,8 +29,8 @@
 
 ## 5. Follow-ups (other changes)
 
-- [ ] 5.1 After insignia-ranks merges: `'mark': InsigniaRanks.markOf(d).name` in `ArcadeModel._prepDive` (whichever lands second)
-- [ ] 5.2 spear-bearers: queue `GameEventNames.spearThrow` when a spear leaves the hand (design §API)
-- [ ] 5.3 demon-choir: wordless grunts on `diveCry` (design §API)
+- [x] 5.1 After insignia-ranks merges: `'mark': InsigniaRanks.markOf(d).name` in `ArcadeModel._prepDive` (whichever lands second)
+- [x] 5.2 spear-bearers: queue `GameEventNames.spearThrow` when a spear leaves the hand (design §API)
+- [x] 5.3 demon-choir: wordless grunts on `diveCry` (design §API; round 8 landed them on the dive's start)
 - [ ] 5.4 Voices for the 83 written lines once tillandsias#1103 lands
 - [ ] 5.5 Phone playtest of the cry rate and the toasts (operator)

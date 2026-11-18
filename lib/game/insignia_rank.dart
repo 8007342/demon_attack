@@ -59,10 +59,14 @@ abstract final class InsigniaRanks {
   /// The mark [d] wears. A pure read of existing fields: damage, anger and
   /// position never change it.
   ///
-  /// spear-bearers (the parallel change): when they add their archetype,
-  /// map it to [RankMark.crownlet] here, before the `isLarge` line (their
-  /// archetype would otherwise read as a sentinel).
+  /// Spear-bearers (design §4) wear the crownlet, the guard's mark, for
+  /// life: a bearer is an elite with a kit (`Demon.spear`, kept after the
+  /// throw and after the buckler is knocked off), so it is tested first,
+  /// before the `isLarge` and `elite` lines that would give it a fang. This
+  /// is the one source of the bearer's mark (`SpearBearerPainter.markOf`
+  /// reads it).
   static RankMark markOf(Demon d) {
+    if (d.spear != null) return RankMark.crownlet; // --- spear-bearers
     if (d.isLarge) return RankMark.wingCrown;
     if (d.elite) return RankMark.fangWings;
     if (eliteGrunt(d)) {

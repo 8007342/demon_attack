@@ -34,8 +34,11 @@ enum BroodRank {
 
   /// The rank from `divePrep` data. With `mark` (insignia-ranks'
   /// `RankMark` name: none, winglet, crownlet, fangWings, wingCrown) the
-  /// mark decides. Without it, the fields do: sentinels, elites, and the
-  /// route-hardened (`maxHp >= 4`) as the stand-in for the elite grunts.
+  /// mark decides; the model publishes it on every `divePrep` (round 8,
+  /// `ArcadeModel._prepDive`), so in play the cry's rank is the mark the
+  /// player sees. Only data without a mark (synthetic preps: tests, the
+  /// pacing simulation) falls back to the fields: sentinels, elites, and
+  /// the route-hardened (`maxHp >= 4`) as the stand-in for the elite grunts.
   static BroodRank of({
     required bool sentinel,
     required bool elite,
