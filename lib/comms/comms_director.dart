@@ -592,7 +592,13 @@ class CommsDirector {
     if (pacing.timed && _handleTimed(event, at)) return;
     final hint = event.data['hint'] == true;
     final h = _spec(human, event);
-    final d = hint ? null : _spec(demon, event);
+    // --- round8: weather-everywhere ⟂ fang-and-wings-comms. A smart diver
+    // riding a gust (`windDive`) may also have shouted its dive war cry: the
+    // cry is that dive's brood line, so the wind's brood boast gives way
+    // while a cry is waiting or on air (the squad's warning still plays).
+    final d = hint || (event.name == GameEventNames.windDive && _cryOnAir)
+        ? null
+        : _spec(demon, event);
     final exchange = h?.exchange ?? d?.exchange;
     if (exchange != null && h != null && d != null) {
       final demonFirst = exchange == CommsSide.demon;
@@ -904,6 +910,10 @@ class CommsDirector {
 
   static bool _isCry(CommsMessage m) =>
       m.trigger.name.startsWith('${GameEventNames.diveCry}.');
+
+  /// --- round8: a dive war cry is collected, waiting or on air.
+  bool get _cryOnAir =>
+      _cries.isNotEmpty || queue.any(_isCry) || active.any(_isCry);
 
   /// A cry that starts at the dive or right behind the call that ends on
   /// it, at most [commsCryAfter] later; paced like flavour, but not held

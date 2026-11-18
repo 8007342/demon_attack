@@ -90,7 +90,12 @@ after a gust stays quiet.
 | `rainStart` | a shower begins (dynamic-weather's event, unvoiced until now) | 2 | 1 | 180 s, chance 0.5 |
 
 The brood loves its weather ("Thunder! The sky sings for us!", "Ride the gust! Down we go!"). `fang-and-wings-comms`
-owns the dive war cries; `windDive` is a separate event and trigger, so the two never collide.
+owns the dive war cries; `windDive` is a separate event and trigger. Round 8 (`work/round8`): one dive can raise both
+(a cry decided at its prep, `windDive` at its start), so while a war cry is collected, waiting or on air the director
+drops `windDive`'s brood part and keeps its squad part: one brood line a dive (`fang_and_wings_comms_test.dart`). The
+smart-dive wait calls `_prepDive` only when it ends, so the `divePrep` it publishes (`diveIn`, `tellIn`, the insignia
+`mark`) times the cry and the choir's grunt from the real dive; spear-bearers' throw reads the dive itself and is
+untouched.
 
 ## 5. Wing flapping in the wind: real frames
 

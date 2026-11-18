@@ -357,6 +357,49 @@ void main() {
       expect(cry.line.speaker, isNot(isIn(['skritch', 'grunnok', 'morth'])));
     });
 
+    // --- round8: weather-everywhere's `windDive` (a smart diver riding a
+    // gust, at its dive start) keeps its squad part, but its brood boast
+    // gives way to that dive's war cry: one brood line a dive.
+    test('a wind dive with a war cry on air adds no second brood line', () {
+      var boasts = 0, squad = 0;
+      for (var seed = 1; seed <= 16; seed++) {
+        List<CommsMessage> run({required bool cry}) {
+          final started = <CommsMessage>[];
+          final d = director(seed: seed)..onStart = started.add;
+          if (cry) {
+            d.handle(
+              GameEvent(GameEventNames.diveCry, {
+                ..._prep(BroodRank.hunter, kind: 2, diveIn: 1.4),
+                'variant': 'hunter',
+              }),
+              10,
+            );
+          }
+          runTo(d, 10, 11.4);
+          d.handle(
+            const GameEvent(GameEventNames.windDive, {'x': 120.0}),
+            11.4,
+          );
+          runTo(d, 11.4, 16);
+          return started;
+        }
+
+        final withCry = run(cry: true);
+        expect(
+          withCry.where((m) => m.line.id.startsWith('windDive.d')),
+          isEmpty,
+          reason: 'seed $seed',
+        );
+        final calm = run(cry: false);
+        squad += calm.where((m) => m.line.id.startsWith('windDive.h')).length;
+        boasts += calm.where((m) => m.line.id.startsWith('windDive.d')).length;
+      }
+      expect(boasts, greaterThan(0), reason: 'without a cry the boast plays');
+      // The squad's warning is untouched by the guard (it is the event's
+      // human part; with a cry on air the one channel may still be busy).
+      expect(squad, greaterThan(0), reason: 'the squad warns');
+    });
+
     test('behind the squad\'s dive call, the cry rides the plunge', () {
       for (final seed in [1, 2, 3, 4, 5]) {
         final started = <CommsMessage>[];
