@@ -88,6 +88,8 @@ class ShotLayer {
     const k = ShipPainter.size / ShipPainter.cell;
     const half = ShipPainter.size / 2;
     for (final s in m.shots) {
+      // --- spear-bearers: a thrown spear is SpearBearerPainter's.
+      if (s.kind == ShotKind.spear) continue;
       final at = drawn(s, lead, rate);
       final x = at.dx, y = at.dy;
       // Stepped pixel angled plasma wake/tail for slung or spread shots.

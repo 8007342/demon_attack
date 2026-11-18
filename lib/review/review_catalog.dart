@@ -724,6 +724,14 @@ const scenePages = <ScenePage>[
     ['dive-shield-thinning'],
     assets: ['combat.png', 'sentinel-effects.png'],
   ),
+  // --- spear-bearers
+  ScenePage(
+    'spear-bearers',
+    'Spear-bearers: buckler, levelled spear, wind-up glint, throw',
+    GameArea.swarm,
+    ['spear-bearers'],
+    assets: ['combat.png', 'spear-bearers.png'],
+  ),
   ScenePage(
     'weapons',
     'Ship weapons and combos',
