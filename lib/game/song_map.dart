@@ -137,6 +137,7 @@ const scoreAccents = <String>{
   'stab',
   'thunder',
   'toll',
+  'warcry',
 };
 
 const scoreSongs = <String, ScoreSong>{

@@ -17,7 +17,8 @@
   "riser": "riser",
   "stab": "stab",
   "thunder": "thunder",
-  "toll": "toll"
+  "toll": "toll",
+  "warcry": "warcry"
  },
  "bonusSongs": {
   "crosswind": "bonus-wind"
@@ -40,8 +41,8 @@
  "masks": {
   "1": ["drums","bass","gtrL","gtrR","clean","uke"],
   "2": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani"],
-  "3": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani","drums2","lead2","organ"],
-  "4": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani","drums2","lead2","organ","strings","brass","choir","bells"]
+  "3": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani","drums2","lead2","organ","grunts"],
+  "4": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani","drums2","lead2","organ","strings","brass","choir","bells","grunts","brood"]
  },
  "plays": [
   {
@@ -225,18 +226,18 @@
     },
     "core": {
      "bars": 8,
-     "bytes": 7880,
+     "bytes": 8013,
      "file": "c1/core.mid",
      "hold": 0,
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
-     "sha256": "83f467bb2091fab14973c72416dc4afe445179623287455209f8d9b6d9c6f7c2",
-     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
+     "sha256": "4d9eab005025b60155ec8624026977bb62e682329d9445d7426e677f023b18b5",
+     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells","brood"]
     },
     "transform": {
      "bars": 3,
@@ -338,9 +339,9 @@
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
      "sha256": "41e69e2e1b24cde7f49ad26bad288405e5cf30643ac8916e7eefc0e44afbd226",
      "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
@@ -455,9 +456,9 @@
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
      "sha256": "5b03fe5b60d666619e1c94aeb3ec4de1d446fd2be512cfbe6daf66ba8b5d9827",
      "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
@@ -572,9 +573,9 @@
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
      "sha256": "2c791fd25462d47fff2ebe011899b6a7b11449e712862f73f27d34d1dda14129",
      "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
@@ -699,9 +700,9 @@
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
      "sha256": "f7a3dbe3204831d083b065b6c5065025f27019623abd161038127f8c4f01329a",
      "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
@@ -1101,12 +1102,12 @@
     },
     "B": {
      "bars": 8,
-     "bytes": 6251,
+     "bytes": 6558,
      "file": "k/B.mid",
      "hold": 0,
      "kind": "loop",
-     "sha256": "beaeea586fda9b3726997428f889eef629187538518f8738ff5d6ddd7eee7663",
-     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"],
+     "sha256": "715732abed8d3a0aeced14d1aace4b5152d4aab5ae30242608aaeb8f2250f750",
+     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells","brood","grunts"],
      "wave": 2
     },
     "C": {
@@ -2490,6 +2491,22 @@
    ],
    "quantum": 1,
    "spacing": 4
+  },
+  "warcry": {
+   "notes": [
+    {
+     "deg": 1,
+     "len": 2,
+     "oct": 3,
+     "t": 0,
+     "track": "cries",
+     "v": 120
+    }
+   ],
+   "over": ["all"],
+   "quantum": 0.5,
+   "spacing": 8,
+   "speech": "yield"
   }
  },
  "tracks": {
@@ -2505,6 +2522,10 @@
    "channel": 8,
    "role": "brass"
   },
+  "brood": {
+   "channel": 15,
+   "role": "brood"
+  },
   "choir": {
    "channel": 10,
    "role": "choir"
@@ -2512,6 +2533,10 @@
   "clean": {
    "channel": 3,
    "role": "clean"
+  },
+  "cries": {
+   "channel": 15,
+   "role": "warcry"
   },
   "cymbals": {
    "channel": 9,
@@ -2528,6 +2553,10 @@
   "fanfare": {
    "channel": 13,
    "role": "brass"
+  },
+  "grunts": {
+   "channel": 15,
+   "role": "grunt"
   },
   "gtrL": {
    "channel": 1,

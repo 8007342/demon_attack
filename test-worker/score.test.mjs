@@ -137,8 +137,9 @@ test('the size totals: the whole run stays a small download', async () => {
   assert.ok(midi < 400 * 1024, `MIDI ${midi} B`);
   assert.ok(json.length < 64 * 1024, `score.json ${json.length} B`);
   assert.ok(gzipped < 160 * 1024, `score gzipped ${gzipped} B`);
-  // 48 KB until the sample bank's loader and zone lookup joined it (design §12.9): 52 KB raw, 16 KB gzipped.
-  assert.ok(player < 56 * 1024, `player ${player} B`);
+  // 48 KB until the sample bank's loader and zone lookup joined it (design §12.9): 52 KB raw, 16 KB gzipped; the
+  // brood choir's second bank and sampled-only roles (demon-choir) brought it to 57.5 KB raw, 18.2 KB gzipped.
+  assert.ok(player < 60 * 1024, `player ${player} B`);
   assert.ok(gzipSync(await readFile(web('audio/demon-score.js')), { level: 9 }).length < 20 * 1024, 'player gzipped');
   // Unique music: every section's written length (hold bars once).
   let seconds = 0;

@@ -151,6 +151,9 @@ return function(A, spec, seed)
     s:pads('choir', harmony, P('E4'), 3, 58)
     s:note('timpani', 0, 1, 'E2', 102); s:note('timpani', 16, 1, 'E2', 98)
     s:note('bells', 0, 3, 'B5', 70); s:note('bells', 16, 3, 'B5', 70)
+    -- --- demon-choir: the brood choir under the answer (sampled only), "oh" drones from E2 and downbeat grunts.
+    A.drones(s, 'brood', harmony, P('E2'), 66, 1, 8)
+    A.grunts(s, 'grunts', harmony, P('E2'), 4)
   end
 
   -- C: the reduced contrast: half-time, ringing chords, the theme augmented ----------------------------------
