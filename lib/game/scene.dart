@@ -29,6 +29,7 @@ import 'dive_shield.dart'; // --- dive-shield-thinning
 import 'ground_painter.dart';
 import 'insignia_atlas.dart';
 import 'insignia_painter.dart';
+import 'insignia_rank.dart';
 import 'model.dart';
 import 'perf/frame_budget.dart'; // --- phone-performance
 import 'hatch_emergence.dart'; // --- hatch-emergence
@@ -1272,7 +1273,7 @@ class DemonScene extends FlameGame {
         final k = size / CombatAtlas.cell * d.scale;
         insignia.rank(
           d,
-          CombatAtlas.rankOf(d),
+          InsigniaRanks.markOf(d), // --- insignia-ranks
           pos + Offset(head.dx * k, (head.dy - 1) * k),
           tone: telling
               ? InsigniaTone.tell
@@ -1647,9 +1648,10 @@ class DemonScene extends FlameGame {
   void _carrierInsignia(Carrier b) {
     insignia.rank(
       b,
-      InsigniaPainter.carrierRank(b.phase),
+      RankMark.wingCrown,
       Offset(b.x, b.y + carrierSigilY),
       size: 2,
+      glyph: InsigniaPainter.carrierGlyph(b.phase), // --- insignia-ranks
     );
     final fx = creatures.shields;
     if (b.shieldMax <= 0 || (b.shield <= 0 && fx.bossFlashes.isEmpty)) return;
@@ -3858,7 +3860,7 @@ class DemonScene extends FlameGame {
       // Overlays are queued in arena units (the canvas here is scaled).
       insignia.rank(
         demon,
-        AlienRank.sentinel,
+        RankMark.wingCrown,
         pos + Offset(0, sentinelHeadTop * demon.scale),
         tone: telling ? InsigniaTone.tell : InsigniaTone.bone,
         alpha: mark,

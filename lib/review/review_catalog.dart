@@ -712,10 +712,18 @@ const scenePages = <ScenePage>[
   ),
   ScenePage(
     'insignia',
-    'Twin-fang insignia over a dense swarm',
+    'Rank insignia: the rare-mark ladder over a dense swarm',
     GameArea.swarm,
-    ['gargoyle-insignia', 'alien-insignia'],
+    ['insignia-ranks', 'gargoyle-insignia', 'alien-insignia'],
     assets: ['combat.png', 'insignia.png'],
+  ),
+  ScenePage(
+    'insignia-waves',
+    'Rank insignia in live waves: most of the swarm wears no mark',
+    GameArea.swarm,
+    ['insignia-ranks'],
+    assets: ['combat.png', 'insignia.png'],
+    live: true,
   ),
   ScenePage(
     'dive-shields',
