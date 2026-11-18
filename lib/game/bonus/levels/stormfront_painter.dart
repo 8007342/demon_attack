@@ -14,6 +14,48 @@ import 'dart:ui';
 
 import 'storm_cell.dart';
 
+/// --- weather-everywhere: how bright a storm may get (design §3). Every
+/// storm keeps WCAG 2.3.1's general-flash limits: a bolt is one flash (a
+/// fork lands in the same instant), bolts are seconds apart, the tell's
+/// marker blinks at most [StormPainter.maxBlinkHz], and every change over
+/// a large area stays under a 10 % relative-luminance step.
+class StormLook {
+  const StormLook({
+    required this.maxFlash,
+    required this.skyGlow,
+    this.rain = false,
+    this.branches = true,
+  });
+
+  /// Strongest whole-screen white wash a bolt may cause.
+  final double maxFlash;
+
+  /// Peak alpha of the bolt's glow in the cloud (a 260 × 130 oval).
+  final double skyGlow;
+
+  /// The level's own rain streaks (Stormfront; a regular sector has the
+  /// rain layer).
+  final bool rain;
+
+  /// The two side branches of a bolt (off on the LITE tier).
+  final bool branches;
+
+  /// Bonus level #2 (its flash was already faint).
+  // weather-everywhere: its cloud glow .34 -> .2, under a 10 % luminance
+  // step over any backdrop (.34 made 15 % at its centre).
+  static const stormfront = StormLook(maxFlash: .10, skyGlow: .2, rain: true);
+
+  /// A regular sector's storm: fainter (it may come to any sector).
+  static const regular = StormLook(maxFlash: .06, skyGlow: .18);
+
+  StormLook lite() => StormLook(
+    maxFlash: maxFlash,
+    skyGlow: skyGlow,
+    rain: rain,
+    branches: false,
+  );
+}
+
 class StormPainter {
   const StormPainter();
 
@@ -26,6 +68,26 @@ class StormPainter {
   /// Strongest whole-screen flash a bolt may cause (spec: faint).
   static const maxFlash = .10;
 
+  /// --- weather-everywhere: the tell's marker blinks from 1.5 Hz to at
+  /// most this (it was up to 5.7 Hz): never more than three flashes a
+  /// second, the WCAG 2.3.1 limit (dynamic-weather research S4).
+  static const maxBlinkHz = 3.0;
+
+  /// The marker's blink rate at tell progress [p] (Hz).
+  static double blinkHz(double p) => maxBlinkHz / 2 * (1 + p.clamp(0.0, 1.0));
+
+  /// Whether the marker of [s] is lit (steady with [reduced]). The phase
+  /// is integrated from the tell's start, so the rate is exactly
+  /// [blinkHz] (a phase of time × rate would run far faster late in a
+  /// level).
+  static bool markerOn(StormStrike s, {bool reduced = false}) {
+    if (reduced) return true;
+    final e = s.tellTotal * s.tellProgress;
+    final rise = maxBlinkHz / 2 / math.max(s.tellTotal, 1e-6);
+    final cycles = maxBlinkHz / 2 * e + rise * e * e / 2;
+    return math.sin(cycles * 2 * math.pi) > -.2;
+  }
+
   /// The row the ship flies on and the bottom of the arena.
   static const _shipRow = 477.0, _floor = 520.0;
 
@@ -36,8 +98,33 @@ class StormPainter {
     StormCell cell, {
     required double time,
     bool reduced = false,
+    StormLook look = StormLook.stormfront,
+    bool noFlash = false,
   }) {
     if (reduced) return;
+    if (look.rain) _paintRain(canvas, time);
+    if (noFlash) return;
+    for (final s in cell.strikes) {
+      if (!s.landed) continue;
+      final k = (s.glowLeft / cell.tuning.glow).clamp(0.0, 1.0);
+      // A soft glow high in the cloud where the bolt came from.
+      final glow = Rect.fromCenter(
+        center: Offset(s.x, 24),
+        width: 260,
+        height: 130,
+      );
+      canvas.drawOval(
+        glow,
+        Paint()
+          ..shader = Gradient.radial(glow.center, 130, [
+            _halo.withValues(alpha: look.skyGlow * k * k),
+            _halo.withValues(alpha: 0),
+          ]),
+      );
+    }
+  }
+
+  void _paintRain(Canvas canvas, double time) {
     final paint = Paint()
       ..isAntiAlias = false
       ..strokeWidth = 1
@@ -55,24 +142,6 @@ class StormPainter {
         paint,
       );
     }
-    for (final s in cell.strikes) {
-      if (!s.landed) continue;
-      final k = (s.glowLeft / cell.tuning.glow).clamp(0.0, 1.0);
-      // A soft glow high in the cloud where the bolt came from.
-      final glow = Rect.fromCenter(
-        center: Offset(s.x, 24),
-        width: 260,
-        height: 130,
-      );
-      canvas.drawOval(
-        glow,
-        Paint()
-          ..shader = Gradient.radial(glow.center, 130, [
-            _halo.withValues(alpha: .34 * k * k),
-            _halo.withValues(alpha: 0),
-          ]),
-      );
-    }
   }
 
   /// Over the creatures and the ship: tells, bolts and the faint flash.
@@ -81,26 +150,31 @@ class StormPainter {
     StormCell cell, {
     required double time,
     bool reduced = false,
+    StormLook look = StormLook.stormfront,
   }) {
     for (final s in cell.strikes) {
       if (s.telling) {
         _paintTell(canvas, s, cell.tuning, time, reduced);
       } else if (s.landed) {
-        _paintBolt(canvas, s, cell.tuning, reduced);
+        _paintBolt(canvas, s, cell.tuning, reduced, look.branches);
       }
     }
   }
 
   /// The whole-screen flash of the bolts on screen, 0-[maxFlash] (0 with
   /// reduced motion).
-  static double flashOf(StormCell cell, {bool reduced = false}) {
+  static double flashOf(
+    StormCell cell, {
+    bool reduced = false,
+    StormLook look = StormLook.stormfront,
+  }) {
     if (reduced) return 0;
     var f = 0.0;
     for (final s in cell.strikes) {
       if (!s.landed) continue;
       // Only the first 0.12 s of the afterglow, decaying.
       final age = cell.tuning.glow - s.glowLeft;
-      f = math.max(f, maxFlash * (1 - age / .12).clamp(0.0, 1.0));
+      f = math.max(f, look.maxFlash * (1 - age / .12).clamp(0.0, 1.0));
     }
     return f;
   }
@@ -133,9 +207,8 @@ class StormPainter {
     );
     // The marker on the ship's row: a stepped bracket as wide as the core
     // that hits the ship, blinking faster toward the bolt.
-    final blink = reduced
-        ? 1.0
-        : (math.sin(time * (10 + 26 * p)) > -.2 ? 1.0 : .35);
+    // weather-everywhere: at most 3 Hz (was sin(time × (10 + 26 p))).
+    final blink = markerOn(s, reduced: reduced) ? 1.0 : .35;
     final mark = Paint()
       ..isAntiAlias = false
       ..color = _tell.withValues(alpha: (.55 + .45 * p) * blink);
@@ -157,6 +230,7 @@ class StormPainter {
     StormStrike s,
     StormTuning tuning,
     bool reduced,
+    bool branches,
   ) {
     final k = (s.glowLeft / tuning.glow).clamp(0.0, 1.0);
     // A grounded bolt ends on the ship (the rod); any other reaches the
@@ -177,7 +251,7 @@ class StormPainter {
       ..drawPath(main, stroke(_halo, 9, .16 * k))
       ..drawPath(main, stroke(_halo, 5, .4 * k))
       ..drawPath(main, stroke(_core, 2, math.min(1, .25 + k)));
-    if (!reduced) {
+    if (!reduced && branches) {
       // Two short branches off the main channel.
       final r = math.Random(s.shape ^ 0x51ed);
       for (var b = 0; b < 2; b++) {

@@ -102,7 +102,9 @@ class MusicDirector {
     }
     // boss-grandeur: the Overflight's stinger (the boss arrival's Descent).
     final over = model.flow.active && model.flow.on('overflight');
-    if (over && !_overflight) emit(const GameEvent(GameEventNames.bossOverflight));
+    if (over && !_overflight) {
+      emit(const GameEvent(GameEventNames.bossOverflight));
+    }
     _overflight = over;
     if (model.mode != RunMode.playing) {
       // Wave transitions keep the current tier; any other phase belongs to
@@ -157,8 +159,7 @@ class MusicDirector {
         .where(
           (d) =>
               d.lastStand &&
-              (d.rushPhase == RushPhase.rally ||
-                  d.rushPhase == RushPhase.none),
+              (d.rushPhase == RushPhase.rally || d.rushPhase == RushPhase.none),
         )
         .toSet();
     if (stands.difference(_lastStands).isNotEmpty) {
@@ -229,8 +230,10 @@ class MusicBridge {
     void Function(String)? onAccent,
     void Function()? onFleetIntact,
     void Function(int active, bool falling)? onPowerLayer,
+    void Function(String name, double inSeconds, double fallbackIn)? onAccentAt,
   }) : onIntensity = onIntensity ?? audioIntensity,
        onAccent = onAccent ?? audioAccent,
+       onAccentAt = onAccentAt ?? audioAccentAt,
        onFleetIntact = onFleetIntact ?? audioFleetIntact,
        onPowerLayer = onPowerLayer ?? audioPowerLayer;
 
@@ -238,6 +241,10 @@ class MusicBridge {
   final void Function(String) onAccent;
   final void Function() onFleetIntact;
   final void Function(int active, bool falling) onPowerLayer;
+
+  /// A stinger landed on a moment (seconds from now), else at a fallback.
+  final void Function(String name, double inSeconds, double fallbackIn)
+  onAccentAt;
 
   static const accents = {
     GameEventNames.diveTell: 'dive',
@@ -285,10 +292,32 @@ class MusicBridge {
   /// plays nothing.
   static const accentEvent = 'musicAccent';
 
+  // --- demon-choir: a dive war cry becomes music. fang-and-wings-comms'
+  // `diveCry` (GameEventObserver raises it from a crying `divePrep`; §API
+  // there) plays the score's `warcry` stinger: a shout sample pitched to the
+  // section's tonic, through the music bus. --- round8: it lands on the
+  // dive's start (`diveIn` s from now), snapped to the stinger's 8th grid
+  // within 0.3 s, else on the tell (`tellIn`). Without `diveIn`, the next
+  // 8th. The score rate-limits it (8 beats), drops it while a radio line is
+  // speaking, and plays it only while the sample bank is on.
+  static const diveCryEvent = GameEventNames.diveCry;
+  static const diveCryAccent = 'warcry';
+
   void call(GameEvent event) {
     final accent = accents[event.name];
     if (accent != null) {
       onAccent(accent);
+    } else if (event.name == diveCryEvent) {
+      final diveIn = event.data['diveIn'], tellIn = event.data['tellIn'];
+      if (diveIn is num) {
+        onAccentAt(
+          diveCryAccent,
+          diveIn.toDouble(),
+          tellIn is num ? tellIn.toDouble() : diveIn.toDouble(),
+        );
+      } else {
+        onAccent(diveCryAccent);
+      }
     } else if (event.name == accentEvent) {
       final name = event.data['name'];
       if (name is String && scoreAccents.contains(name)) onAccent(name);

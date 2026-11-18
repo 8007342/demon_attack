@@ -558,6 +558,15 @@ var candidates = []struct {
 // candidatesSheet: every candidate at 8x, at 2x, and on a creature at
 // DPR 2 and DPR 1 phone size, with its lookalike scores.
 func candidatesSheet(atlas *image.NRGBA) *image.NRGBA {
+	return candidateList(atlas, candidates, "GARGOYLE INSIGNIA - CANDIDATES")
+}
+
+// candidateList renders one list of candidates (gargoyle-insignia's, or
+// insignia-ranks' elite-grunt marks) and prints their scores.
+func candidateList(atlas *image.NRGBA, candidates []struct {
+	rank, name string
+	shape      []string
+}, title string) *image.NRGBA {
 	set := map[string][]string{}
 	var keys []string
 	for _, c := range candidates {
@@ -565,10 +574,11 @@ func candidatesSheet(atlas *image.NRGBA) *image.NRGBA {
 		set[k] = c.shape
 		keys = append(keys, k)
 	}
+	fmt.Print(metricsText(ladderMetrics(set, keys)))
 	rows := ladderMetrics(set, keys)
 	const rowH = 150
 	c := newCanvas(1300, 80+len(candidates)*rowH, bg)
-	header(c, "GARGOYLE INSIGNIA - CANDIDATES", "8X, 2X, ON A CREATURE AT DPR 2 AND DPR 1.  SCORES: SOFT IOU AGAINST A PIXEL HEART / SMILE / FACE (LOWER IS BETTER).")
+	header(c, title, "8X, 2X, ON A CREATURE AT DPR 2 AND DPR 1.  SCORES: SOFT IOU AGAINST A PIXEL HEART / SMILE / FACE (LOWER IS BETTER).")
 	for i, k := range keys {
 		y := 80 + i*rowH
 		c.text(16, y, 3, k, label)

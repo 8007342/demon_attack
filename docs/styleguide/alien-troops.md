@@ -91,19 +91,32 @@ The cyan family is the force-shield language of the main spec ("geometric cyan/t
 shields keep their blackbody palette (§5.2) and never use cyan.
 
 ## 4. Rank insignia (fangs and wings)
-| Rank | Who (game data) | Glyph | Size (glyph px → CSS px at 40-unit draw) |
-|---|---|---|---|
-| R0 Drone | Intelligence tier T0: small creatures (`kind < 2`, `maxHp < 3`, not elite) | none | — |
-| R1 Skirmisher | Tier T1: not-so-small creatures (`kind ≥ 2` or `maxHp ≥ 3`) | one **fang**: an ivory tusk leaning right, tip hooked back | 7 × 8 → 9.5 × 10.8 |
-| R2 Veteran | T1 with `maxHp ≥ 4` (route-hardened) | **twin fangs**: two tusks leaning alike, the second one px lower | 10 × 8 → 13.5 × 10.8 |
-| R3 Hunter | Elites (tier T2) | **winged fang**: bat wings swept up over a hanging fang, ember core | 13 × 9 → 17.6 × 12.2 |
-| R4 Sentinel | Shield and armoured sentinels (tier T3) | **winged crown**: three fangs rising between wide wings, ember core | 15 × 7 → 20.3 × 9.5, on the sentinel sheet's head anchor |
-| Carrier forms | Boss forms 1–4 | the same ladder on the brood sigil: fang, twin fangs, winged fang, winged crown | at 2× |
+**The mark is rarer than the rank** (insignia-ranks, operator 2026-11-17: "they're not meant to mark everything, just
+higher ranks"). Most of a wave wears nothing; a mark always means a creature above the grunts, and a fang always
+means a hunter, a sentinel or the carrier. "Fang And Wings!" is the brood's battle cry, and its emblem is the hunter's mark.
 
-The ladder escalates twice at a glance: by width (7, 10, 13, 15 glyph px), and by kind, from fangs (the ranks) to
-wings with an ember core (the officers). The fangs rhyme with the carrier's ivory tusk-prongs
-(`alien-capital-ships.md` §3 item 8): long, tapering, never a short round hook. Glyph data: `tools/alien_insignia/
-gargoyle.go`.
+| Mark | Who (game data: `InsigniaRanks.markOf`) | Glyph | Size (glyph px → CSS px at 40-unit draw) |
+|---|---|---|---|
+| none | Grunts: drones (T0) and ordinary skirmishers and veterans (T1) | — | — |
+| **Winglet** | Elite grunt: 1 in 5 of species 2-3 (always T1), picked by a Weyl roll of the seed | bone wings spread wide, tips up, outer feathers down; no fang, no ember | 11 × 5 → 14.9 × 6.8 |
+| **Crownlet** | Elite grunt of a sentinel's escort; spear-bearers (always) | three bone points rising from a flat band; no fang, no ember | 7 × 5 → 9.5 × 6.8 |
+| **Fang and Wings** | Hunters (elites, T2) | the winged fang: bat wings swept up over a hanging fang, ember core | 13 × 9 → 17.6 × 12.2 |
+| **Winged crown** | Shield and armoured sentinels (T3) | three fangs rising between wide wings, ember core | 15 × 7 → 20.3 × 9.5, on the sentinel sheet's head anchor |
+| Carrier sigil | Boss forms 1–4 | fang, twin fangs, Fang and Wings, winged crown (the bare fangs are the boss's alone) | at 2× |
+
+- The elite-grunt marks are the officers' marks simplified: the wings without the fang, and the crown without the
+  wings. Wing = brood, crown = guard. They share one notch.
+- The ladder escalates at a glance: the elite-grunt marks are smaller than Fang and Wings, which is smaller than the
+  winged crown, and only the fang-bearing marks carry the ember core.
+- **Share budget** (measured by `tools/insignia_share.dart`): at most 20 % of the creatures in the fight marked per
+  tour and at most 10 % fanged, and no wave over a third marked or 12.5 % fanged. Shipped: 10–19 % marked and 0–9.4 %
+  fanged (the old ladder: 52–100 %, all fangs). A new creature type takes a slot in this table and counts toward the
+  budget.
+- The behaviour ranks (`AlienRank`: drone, skirmisher, veteran, hunter, sentinel) are unchanged. The planner and the
+  lightning dodge read them; the mark does not show them all.
+
+The fangs rhyme with the carrier's ivory tusk-prongs (`alien-capital-ships.md` §3 item 8): long, tapering, never a short
+round hook. Glyph data: `tools/alien_insignia/gargoyle.go` and `ranks.go`.
 
 ### 4.1 Readability rules for marks of a few pixels
 From the gargoyle-insignia diagnosis (design §1). The old talon was the canonical pixel heart, and the old crown, with
@@ -130,7 +143,7 @@ The sentinel's crown sits 17 units above its centre × its scale. The carrier's 
 head is kept free of horns wider than 6 art px in future hero art (§8).
 
 **Replaces:**
-- the elite's rotating 12-dot ring: the winged fang *is* the elite mark;
+- the elite's rotating 12-dot ring: Fang and Wings *is* the elite mark;
 - the 2 × 2 rank pips on the carrier sigil.
 
 The species chest badges in the art (teal chevron, violet twin bars, coral fang slashes, gold star jewel) stay as

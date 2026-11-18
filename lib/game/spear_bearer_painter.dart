@@ -14,22 +14,20 @@ import 'package:flutter/painting.dart';
 
 import 'model.dart';
 import 'spear_bearer_atlas.dart';
-import 'sprite_atlas.dart' show AlienRank, CombatAtlas;
+import 'insignia_rank.dart';
 
 abstract final class SpearBearerPainter {
   /// assets/images/spear-bearers.png (null in tests without art: nothing
   /// is drawn).
   static ui.Image? image;
 
-  // --- spear-bearers ⟂ insignia-ranks HOOK. A bearer is an elite, so it
-  // wears the HUNTER mark (today the winged fang). insignia-ranks reworks
-  // the ladder (grunts none, elite grunts small wings or a crown, hunters
-  // and up fangs); its branch was not pushed when this landed. When it is:
-  // merge origin/work/insignia-ranks (never rebase), keep the bearer on the
-  // mark its design gives the hunter rank, and check
-  // test/spear_bearers_test.dart's rank test against its ladder.
-  /// The bearer's rank on the insignia ladder: the hunter's.
-  static AlienRank rankOf(Demon d) => CombatAtlas.rankOf(d);
+  // --- spear-bearers ⟂ insignia-ranks (insignia-ranks design §4, round 8):
+  // the mark is the insignia ladder's, not the behaviour rank. A bearer
+  // keeps the hunter's behaviour (CombatAtlas.rankOf: hunter) but wears the
+  // crownlet, the guard's mark, with no fang. InsigniaRanks.markOf is the
+  // one source of truth; this only reads it.
+  /// The mark above a bearer's head: the crownlet.
+  static RankMark markOf(Demon d) => InsigniaRanks.markOf(d);
 
   /// Gear shifts this far (units) toward the bank, so it follows the 3/4
   /// banked frames.

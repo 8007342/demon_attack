@@ -27,9 +27,10 @@ Why there:
   wrap the new `Demon` in `_spearUp`. The roster, its HP sums and every random draw are unchanged, so the 318-wave
   defence budgets (`tools/analyze_difficulty.dart`) are untouched. It is *parity-based* and draws nothing: half of the
   elites, alternating by wave (Normal's budget is 2, Hard's 3, Easy's 1).
-- **Rank.** Elite → hunter (`CombatAtlas.rankOf`). insignia-ranks (parallel, not pushed when this landed) reworks the
-  ladder ("hunters and up get fangs"); the bearer takes whatever mark it gives the hunter rank. Hook:
-  `SpearBearerPainter.rankOf` and its test.
+- **Rank.** Elite → hunter (`CombatAtlas.rankOf`): its behaviour is the hunter's. **Mark** (round 8, insignia-ranks
+  design §4): the crownlet, the guard's mark, no fang, for life. `InsigniaRanks.markOf` tests `Demon.spear` before
+  the sentinel and elite lines and is the one source; `SpearBearerPainter.markOf` reads it. Its dive cries are the
+  veterans' (fang-and-wings-comms §API).
 
 ## 2. The throw ("wielding the spear as they dive, and throwing it mid dive")
 
@@ -89,9 +90,9 @@ to 18 px.
 
 ## 5. Events, sound, wind
 
-- **Structured** `spearThrow` (x, y, kind, throws) on each release: the war-cry hook. fang-and-wings-comms adds dive war
-  cries through a structured event; its branch was not pushed when this landed. When it lands: merge it and voice a
-  throw shout on `spearThrow` with its documented API and line ids.
+- **Structured** `spearThrow` (x, y, kind, throws) on each release: the throw shout. Round 8: the constant is
+  fang-and-wings-comms' `GameEventNames.spearThrow` (one definition), and its director voices `spearThrow.d0`-`d5`
+  (brood lane, chance 0.6, cooldown 5 s). One event a throw, so at most one shout (`spear_bearers_test.dart`).
 - **Raw sounds** (`web/audio/demon-audio.js`, synth, no assets): `spearGlint`, `spearRelease`, `bucklerClang`,
   `bucklerOff`. None shares the structured event's name, so the radio never hears a throw twice.
 - **Wind** (crosswind): the spear is a `Shot`, so `_windShot` drifts it like every hostile shot, and `_hostile` adds the

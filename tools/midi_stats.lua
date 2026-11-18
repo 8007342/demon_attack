@@ -18,6 +18,8 @@
 --     art/music/bank/recipe.json): roles the recipe marks `cover: full` must be covered note for note (all of them
 --     with --strict-zones); the rest report their coverage, and a section's track the bank cannot cover whole plays
 --     through the synth voice (the sampler's own rule);
+--     The brood choir's bank (demon-choir: DIR/../bank/choir.json, `--choir FILE`, else art/music/bank/choir-recipe.json's
+--     plan) joins it; its sampled-only roles are `cover: full`.
 --   - peak voices <= 32 with a 0.5-beat release and the score's voice rules (a key struck again chokes, lead and
 --     bass are monophonic), every track sounding;
 --   - sizes recorded (the file against score.json's bytes);
@@ -137,6 +139,34 @@ if mode == 'check' then
     plan, errors = B.plan(recipe, rows, keys)
     assert(#errors == 0, 'bank plan: ' .. table.concat(errors, '; '))
     roles, bankWhat = recipe.roles, 'art/music/bank/recipe.json (planned; no bank built)'
+  end
+  -- --- demon-choir: the brood choir's bank (choir.json beside bank.json, else its recipe's plan) joins the plan.
+  -- Its roles are sampled-only and marked `cover: full`: a brood, grunt or war-cry note without a zone is silent.
+  do
+    local choirPath = copts.choir or (scoreDir .. '/../bank/choir.json')
+    local choirText = readFile(choirPath)
+    local croles, cplan
+    if choirText then
+      local c = json.decode(choirText)
+      croles, cplan = c.roles, { instruments = c.instruments, zones = c.zones }
+      bankWhat = bankWhat .. ' + ' .. choirPath
+    elseif readFile('art/music/bank/choir-recipe.json') then
+      local recipe, rows, keys = B.load('art/music/bank/choir-recipe.json')
+      local errors
+      cplan, errors = B.plan(recipe, rows, keys)
+      assert(#errors == 0, 'choir plan: ' .. table.concat(errors, '; '))
+      croles = recipe.roles
+      bankWhat = bankWhat .. ' + art/music/bank/choir-recipe.json (planned)'
+    end
+    if cplan then
+      local merged = { instruments = {}, zones = {} }
+      for _, list in ipairs({ plan.instruments, cplan.instruments }) do for _, x in ipairs(list) do merged.instruments[#merged.instruments + 1] = x end end
+      for _, list in ipairs({ plan.zones, cplan.zones }) do for _, x in ipairs(list) do merged.zones[#merged.zones + 1] = x end end
+      local r = {}
+      for k, v in pairs(roles) do r[k] = v end
+      for k, v in pairs(croles) do r[k] = v end
+      roles, plan = r, merged
+    end
   end
   local phonePlan = { instruments = plan.instruments, zones = {} }
   for _, z in ipairs(plan.zones) do if z.phone then phonePlan.zones[#phonePlan.zones + 1] = z end end

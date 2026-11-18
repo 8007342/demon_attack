@@ -240,6 +240,7 @@ proposed new plant, payoff shot. "N…" refers to a proposal in section 4.
 | E16 | The carrier concedes | `lines.json` `bossDefeated.d0`, `bossArrival.d1` | The kid who plays the brood, being a good sport | "All right. That was a good move!"; "You have come a long way to lose this turn!" | none needed | S3 |
 | E17 | Carrier minions, never more than ten | `plan/game-design.md` ("no more than ten simultaneous minions") | Ten figure slots printed around the carrier's space | no | ten small circles on the board | S2 |
 | E18 | The carrier's arrival klaxon | `plan/game-design.md` ("warning klaxon telemetry") | The order pager buzzing | no | N14 | S2 |
+| E19 | "Fang and Wings!", the brood's creed and dive war cries; wings are given, fangs are earned (added 2026-11-18, change `fang-and-wings-comms`) | `art/comms/lines.json` `diveCry.grunt`/`veteran`/`hunter`/`sentinel`, `fangChatter`, `fangBanter`, `fangTease` (written lines); `lib/game/dive_cry.dart`; the marks, `docs/styleguide/alien-troops.md` §4 | The brood-side kids' team name, chanted when a kid swoops a figure down by hand (E11). The marks are stickers the kids award each other: wings first, fangs later. They named the team over a basket of chicken wings (C22), and the youngest wore plastic vampire fangs to the table | "FANG AND WINGS!" (`diveCry.sentinel.d0`); "Fangs and wings? Sounds like the lunch special." (`fangBanter.h2`); "My wing came unstuck!" (`fangChatter.d7`); "Not stickers! Badges! Very serious badges!" (`fangTease.d2`); "I get my wings next week!" (`fangTease.d7`) | N21, N22 | S3 |
 
 ### 2.4 Ground war
 
@@ -443,6 +444,10 @@ How bold the first set may be, and on which tours, was open question 3 of `plan/
 lines must work as plain battle chatter, at most one is spoken per sector, and N1, N2, N6 to N9 wait for tour 3.
 
 ### 4.2 Art tweaks and names
+
+- **The team name** (E19). N21: "FANG AND WINGS" printed across the backs of the brood-side kids' horned hoodies (D5),
+  under a hand-drawn winged fang. N22: the score pad's brood column is headed "FANG + WINGS" in a kid's marker, the
+  fleet column "FLEET". A basket of wing bones and a pair of plastic vampire fangs lie beside the pad (S2).
 
 - **One logo.** The teal chevron on Gorrak's cap is the Krybor logo: on the sign, the cups, the owner's cap and the
   waitress's apron (C23).

@@ -21,13 +21,16 @@
     "timpani": { "role": "timpani", "channel": 11 },
     "bells": { "role": "bells", "channel": 12 },
     "fanfare": { "role": "brass", "channel": 13 },
-    "uke": { "role": "uke", "channel": 14 }
+    "uke": { "role": "uke", "channel": 14 },
+    "brood": { "role": "brood", "channel": 15 },
+    "grunts": { "role": "grunt", "channel": 15 },
+    "cries": { "role": "warcry", "channel": 15 }
   },
   "masks": {
     "1": ["drums", "bass", "gtrL", "gtrR", "clean", "uke"],
     "2": ["drums", "bass", "gtrL", "gtrR", "clean", "uke", "lead", "cymbals", "timpani"],
-    "3": ["drums", "bass", "gtrL", "gtrR", "clean", "uke", "lead", "cymbals", "timpani", "drums2", "lead2", "organ"],
-    "4": ["drums", "bass", "gtrL", "gtrR", "clean", "uke", "lead", "cymbals", "timpani", "drums2", "lead2", "organ", "strings", "brass", "choir", "bells"]
+    "3": ["drums", "bass", "gtrL", "gtrR", "clean", "uke", "lead", "cymbals", "timpani", "drums2", "lead2", "organ", "grunts"],
+    "4": ["drums", "bass", "gtrL", "gtrR", "clean", "uke", "lead", "cymbals", "timpani", "drums2", "lead2", "organ", "strings", "brass", "choir", "bells", "grunts", "brood"]
   },
   "maskSets": {
     "approach": {
@@ -38,9 +41,9 @@
     },
     "core": {
       "1": ["drums", "bass", "gtrL", "gtrR", "organ"],
-      "2": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir"],
-      "3": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir", "drums2", "lead2"],
-      "4": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir", "drums2", "lead2", "brass", "strings", "bells"]
+      "2": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir", "brood"],
+      "3": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir", "drums2", "lead2", "brood", "grunts"],
+      "4": ["drums", "bass", "gtrL", "gtrR", "organ", "lead", "cymbals", "timpani", "choir", "drums2", "lead2", "brass", "strings", "bells", "brood", "grunts"]
     },
     "storm": {
       "1": ["drums", "bass", "gtrL", "gtrR", "strings", "timpani"],
@@ -387,7 +390,7 @@
     "crosswind": "bonus-wind"
   },
   "stingers": {
-    "comment": "Accents in the current key: `deg` is a scale degree of the playing section's key (1-7, may exceed 7), `semi` a chromatic step from its tonic, `oct` the MIDI octave (C4 = 60), `drum` a GM drum note. `t` and `len` are in beats from the anchor, the next multiple of `quantum` beats on the score's grid (with negative `t` the stinger leads into its anchor). `spacing` is the minimum beats between two of one stinger. `break` [from, to] (beats from the anchor) is a stop-time: the playing section's own notes are silenced over it while the stinger plays alone. `always` plays it even over two live stingers. `over` names the sections the stinger is gated over (score_gen.lua: their peak plus the stinger's, with the break, stays <= 32 voices): `all`, `wave` (wave-progress sections), `bonus` (bonus-level sections of the sector songs) or `song:<id>`.",
+    "comment": "Accents in the current key: `deg` is a scale degree of the playing section's key (1-7, may exceed 7), `semi` a chromatic step from its tonic, `oct` the MIDI octave (C4 = 60), `drum` a GM drum note. `t` and `len` are in beats from the anchor, the next multiple of `quantum` beats on the score's grid (with negative `t` the stinger leads into its anchor). `spacing` is the minimum beats between two of one stinger. `break` [from, to] (beats from the anchor) is a stop-time: the playing section's own notes are silenced over it while the stinger plays alone. `always` plays it even over two live stingers. `over` names the sections the stinger is gated over (score_gen.lua: their peak plus the stinger's, with the break, stays <= 32 voices): `all`, `wave` (wave-progress sections), `bonus` (bonus-level sections of the sector songs) or `song:<id>`. `speech: yield` (demon-choir: the war cry) skips the stinger while a radio line is speaking. A stinger whose tracks are all sampled-only (`brood`, `grunts`, `cries`: no synth voice) plays only while the sample bank is on.",
     "fill": { "quantum": 4, "spacing": 8, "notes": [
       { "t": -2, "len": 0.25, "v": 96, "track": "drums", "drum": 50 }, { "t": -1.75, "len": 0.25, "v": 90, "track": "drums", "drum": 50 },
       { "t": -1.5, "len": 0.25, "v": 98, "track": "drums", "drum": 48 }, { "t": -1.25, "len": 0.25, "v": 92, "track": "drums", "drum": 48 },
@@ -479,11 +482,13 @@
       { "t": 0.5, "len": 0.2, "v": 96, "track": "gtrL", "deg": 1, "oct": 2 }, { "t": 0.75, "len": 0.2, "v": 104, "track": "gtrL", "deg": 3, "oct": 2 },
       { "t": 1, "len": 1, "v": 116, "track": "gtrL", "deg": 1, "oct": 2 },
       { "t": 1, "len": 0.25, "v": 96, "track": "drums", "drum": 41 }, { "t": 1.25, "len": 0.25, "v": 104, "track": "drums", "drum": 41 },
-      { "t": 1.5, "len": 0.25, "v": 112, "track": "drums", "drum": 41 }, { "t": 1.75, "len": 0.25, "v": 120, "track": "drums", "drum": 41 } ] }
+      { "t": 1.5, "len": 0.25, "v": 112, "track": "drums", "drum": 41 }, { "t": 1.75, "len": 0.25, "v": 120, "track": "drums", "drum": 41 } ] },
+    "warcry": { "quantum": 0.5, "spacing": 8, "speech": "yield", "over": ["all"], "notes": [
+      { "t": 0, "len": 2, "v": 120, "track": "cries", "deg": 1, "oct": 3 } ] }
   },
   "accents": {
     "dive": "fill", "laststand": "hit", "hatch": "hatch", "reinforce": "rise", "breakthrough": "hit", "destroyed": "impact",
     "gloat": "gloat", "respawn": "respawn", "riser": "riser", "stab": "stab", "glass": "glass", "impact": "impact", "toll": "toll",
-    "oneup": "oneup", "challenge-fail": "challenge-fail", "gust": "gust", "cargo": "cargo", "thunder": "thunder"
+    "oneup": "oneup", "challenge-fail": "challenge-fail", "gust": "gust", "cargo": "cargo", "thunder": "thunder", "warcry": "warcry"
   }
 }

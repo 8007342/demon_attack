@@ -13,8 +13,11 @@
 ## 3. Parallel hooks
 - [x] 3.1 insignia-ranks: `SpearBearerPainter.rankOf` (hunter) and its test; branch not pushed when this landed
 - [x] 3.2 fang-and-wings-comms: `spearThrow` emitted on release; branch not pushed when this landed
-- [ ] 3.3 When `work/insignia-ranks` lands: merge it, keep the bearer on the hunter's mark
-- [ ] 3.4 When `work/fang-and-wings-comms` lands: merge it, voice a throw shout on `spearThrow` with its API and line ids
+- [x] 3.3 When `work/insignia-ranks` lands: merge it (round 8). Superseded pick: the bearer wears the crownlet
+      (insignia-ranks design §4), read from `InsigniaRanks.markOf`, the one source (`SpearBearerPainter.markOf` reads it);
+      its behaviour rank stays the hunter's
+- [x] 3.4 When `work/fang-and-wings-comms` lands: merge it, voice a throw shout on `spearThrow` with its API and line ids
+      (round 8: one `GameEventNames.spearThrow`, fang-and-wings' constant; `spearThrow.d0`-`d5`; test: one throw, one shout)
 
 ## 4. Gallery
 - [x] 4.1 `spear-bearers` scene page: states on the four species, one dive in a loop

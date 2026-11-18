@@ -9,6 +9,9 @@ external void _sfx(JSString name);
 external void _intensity(JSNumber tier);
 @JS('demonAudio.accent')
 external void _accent(JSString name);
+// --- round8: the same JS accent, landed on a moment (demon-score.js).
+@JS('demonAudio.accent')
+external void _accentAt(JSString name, JSNumber inSeconds, JSNumber fallbackIn);
 @JS('demonAudio.fleetIntact')
 external void _fleetIntact();
 @JS('demonAudio.mute')
@@ -30,6 +33,11 @@ void audioPause() => _pause();
 void audioResume() => _resume();
 void audioIntensity(int tier) => _intensity(tier.toJS);
 void audioAccent(String name) => _accent(name.toJS);
+
+/// A stinger landed [inSeconds] from now: on its grid line nearest that
+/// moment within 0.3 s, else [fallbackIn] seconds from now.
+void audioAccentAt(String name, double inSeconds, double fallbackIn) =>
+    _accentAt(name.toJS, inSeconds.toJS, fallbackIn.toJS);
 void audioFleetIntact() => _fleetIntact();
 
 /// Music / speech volume level ('mute' | 'low' | 'full'), remembered per

@@ -5,6 +5,7 @@ void audioPause() {}
 void audioResume() {}
 void audioIntensity(int tier) {}
 void audioAccent(String name) {}
+void audioAccentAt(String name, double inSeconds, double fallbackIn) {}
 void audioFleetIntact() {}
 void audioSetLevel(String channel, String level) {}
 String audioLevel(String channel) => 'full';

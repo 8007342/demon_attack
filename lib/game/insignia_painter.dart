@@ -4,8 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 
 import 'insignia_atlas.dart';
+import 'insignia_rank.dart';
 import 'model.dart';
-import 'sprite_atlas.dart';
 
 /// Glyph tone: the brood's bone brand, gold while angry, white in a tell.
 enum InsigniaTone { bone, angry, tell }
@@ -22,8 +22,8 @@ class InsigniaMark {
   final Rect rect;
   final double alpha;
 
-  /// Rank glyphs take part in the overlap rule; cells do not.
-  final AlienRank? rank;
+  /// Rank marks take part in the overlap rule; cells do not.
+  final RankMark? rank;
   final Object? owner;
 }
 
@@ -32,7 +32,7 @@ class _Pending {
   final String key;
   final Offset anchor; // bottom-centre (glyphs) or centre (cells)
   final double alpha, size;
-  final AlienRank? rank;
+  final RankMark? rank;
   final Object? owner;
 }
 
@@ -72,23 +72,24 @@ class InsigniaPainter {
   static double revealAlpha(double transmittance) =>
       Perspective.smoothstep(.6, .75, transmittance);
 
-  static String glyphKey(AlienRank rank, InsigniaTone tone) =>
-      '${switch (rank) {
-        AlienRank.drone => '',
-        // --- gargoyle-insignia: fangs and wings (styleguide §4).
-        AlienRank.skirmisher => 'fang',
-        AlienRank.veteran => 'fang2',
-        AlienRank.hunter => 'wingfang',
-        AlienRank.sentinel => 'wingcrown',
-      }}/${tone.name}';
+  // --- insignia-ranks: the mark is rarer than the rank (styleguide §4):
+  // grunts wear none, elite grunts a winglet or crownlet, hunters "Fang
+  // and Wings!" (the winged fang), sentinels the winged crown.
+  static String glyphOf(RankMark mark) => switch (mark) {
+    RankMark.none => '',
+    RankMark.winglet => 'winglet',
+    RankMark.crownlet => 'crownlet',
+    RankMark.fangWings => 'wingfang',
+    RankMark.wingCrown => 'wingcrown',
+  };
 
-  /// The carrier's form ladder: fang, twin fangs, winged fang, winged crown.
-  static AlienRank carrierRank(int form) => const [
-    AlienRank.skirmisher,
-    AlienRank.veteran,
-    AlienRank.hunter,
-    AlienRank.sentinel,
-  ][form.clamp(0, 3)];
+  static String glyphKey(RankMark mark, InsigniaTone tone) =>
+      '${glyphOf(mark)}/${tone.name}';
+
+  /// The carrier's form ladder on its brood sigil: fang, twin fangs, Fang
+  /// and Wings, winged crown. The bare fangs are the boss's alone.
+  static String carrierGlyph(int form) =>
+      const ['fang', 'fang2', 'wingfang', 'wingcrown'][form.clamp(0, 3)];
 
   static String cellKey(ShieldCell cell) => 'cell/${cell.name}';
 
@@ -104,20 +105,21 @@ class InsigniaPainter {
     _cells.clear();
   }
 
-  /// A rank glyph with its bottom-centre at [anchor] (arena units, just
-  /// above the head). Drones carry nothing.
+  /// A rank mark with its bottom-centre at [anchor] (arena units, just
+  /// above the head). [RankMark.none] draws nothing. [glyph] overrides the
+  /// mark's glyph (the carrier's sigil) and keeps its overlap priority.
   void rank(
     Object owner,
-    AlienRank rank,
+    RankMark rank,
     Offset anchor, {
     InsigniaTone tone = InsigniaTone.bone,
     double alpha = 1,
     double size = 1,
+    String? glyph,
   }) {
-    if (rank == AlienRank.drone || alpha <= 0) return;
-    _glyphs.add(
-      _Pending(glyphKey(rank, tone), anchor, alpha, size, rank, owner),
-    );
+    if (rank == RankMark.none || alpha <= 0) return;
+    final key = glyph == null ? glyphKey(rank, tone) : '$glyph/${tone.name}';
+    _glyphs.add(_Pending(key, anchor, alpha, size, rank, owner));
   }
 
   /// A force-shield cell centred at [centre].

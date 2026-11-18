@@ -1,0 +1,43 @@
+{
+  "comment": "weather-everywhere: the brood's wind-flap frames (openspec/changes/weather-everywhere design §5). Rendered on the CPU by tools/generate_wind_flap.py from the same gargoyle rig, palette, hide detail and damage variants as assets/images/combat.png (tools/generate_sprites.py), so nothing is drawn by hand and no GPU is used. A demon fighting a crosswind leans into it: the upwind wing beats deeper, reaches forward and opens wider; the downwind wing beats shallow, swept back and half folded, fingers flicked up by the air; the tail streams downwind. Each candidate scales those offsets by its strength k. The pick is the candidate the atlas is built from; candidates are kept here so the contact sheet can be rebuilt. Layout: 16 columns x 24 rows of 64 px; rows species*5 + variant (intact, m1, m2, m3, angry), columns side*8 + frame (side 0: the wind blows to the left, 1: to the right; frames 0-7 the flap cycle); rows 20 + species: elite armour overlays, columns side*4 + level.",
+  "candidates": {
+    "A": {
+      "k": 0.55,
+      "note": "subtle: reads as the ordinary flap at phone size"
+    },
+    "B": {
+      "k": 1.0,
+      "note": "clear asymmetry, the body still upright enough for the insignia"
+    },
+    "C": {
+      "k": 1.45,
+      "note": "strong: the downwind wing collapses, the silhouette shrinks"
+    }
+  },
+  "pose": {
+    "upwind": {
+      "elevGain": 0.35,
+      "elevAdd": 4,
+      "sweep": 4,
+      "fold": -0.1,
+      "curlGain": 0.3,
+      "elevMax": 66
+    },
+    "downwind": {
+      "elevGain": -0.45,
+      "elevAdd": -4,
+      "sweep": -10,
+      "fold": 0.3,
+      "curlGain": -0.4,
+      "curlAdd": 10
+    },
+    "view": {
+      "yaw": 0.45,
+      "roll": 1.1
+    },
+    "headTurn": 10,
+    "tail": 0.9
+  },
+  "pick": "B",
+  "pickReason": "Picked 2026-11-18 from art/contact/wind-flap-candidates.png (plan/render-runs/wind-flap.md): B (k = 1) is the asymmetry that reads at phone size with the body still upright under the insignia; A (k = 0.55) reads as the ordinary flap; C (k = 1.45) folds the downwind wing into the body on the upstroke and shrinks the silhouette. Fit pass: the upwind wing is capped at 66 degrees, sweep 4, view yaw 0.45 / roll 1.1, so no frame touches the 64 px cell edge (frames 0 and 2 did at yaw 0.35 / sweep 8)."
+}

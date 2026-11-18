@@ -41,7 +41,13 @@
 
    The bank is off by default (BANK_DEFAULT) until the operator approves it (design §12.9.7): `?bank=1` (or 0) in the
    page's URL decides for that load, else the per-device choice the /console music panel stores
-   (demonAttack.scoreBank = 'on' | 'off'), else BANK_DEFAULT. While it is off not even bank.json is fetched. */
+   (demonAttack.scoreBank = 'on' | 'off'), else BANK_DEFAULT. While it is off not even bank.json is fetched.
+
+   The brood choir (openspec/changes/demon-choir): a second bank, audio/bank/choir.json (tools/bank/bank_build.lua
+   --recipe art/music/bank/choir-recipe.json), joins the first while the switch is on, on desktops only. Its roles
+   (`brood` doom-choir drones, `grunt` shouts, `warcry` the dive war cries) are sampled-only: they have no synth voice,
+   so their notes sound only from decoded zones and are never scheduled while the bank is off. A stinger marked
+   `speech: yield` (the war cry) gives way while a radio line speaks (host.speaking()). */
 (() => {
   'use strict';
   const LOOKAHEAD = .25;          // seconds of score scheduled ahead of the audio clock
@@ -167,8 +173,11 @@
     let bankOn = typeof host?.bank === 'boolean' ? host.bank : bankChoice();
     const bankRoot = new URL('./audio/bank/', document.baseURI);
     let bankFetch = null;
-    const bankSpec = () => (bankFetch ||= Promise.resolve().then(() => fetch(new URL('bank.json', bankRoot)))
-      .then(r => (r.ok ? r.json() : null)).catch(() => null));
+    // --- demon-choir: choir.json is fetched beside bank.json (desktops only: the choir has no phone tier) and joins it.
+    const bankJson = name => Promise.resolve().then(() => fetch(new URL(name, bankRoot)))
+      .then(r => (r.ok ? r.json() : null)).catch(() => null);
+    const bankSpec = () => (bankFetch ||= Promise.all([bankJson('bank.json'), phoneClass() ? null : bankJson('choir.json')])
+      .then(([main, choir]) => joinBanks(main, choir)));
     if (bankOn) bankSpec();
     let bank = null, bankLoading = null;
     const bankState = { present: false, tier: null, sprites: 0, loaded: 0, skipped: 0, failedSprites: 0, decodedBytes: 0, budget: 0,
@@ -234,9 +243,11 @@
       for (const [name, gain] of trackGains) {
         const on = next.has(name), was = audible.has(name);
         if (on === was) continue;
-        gain.gain.cancelScheduledValues?.(at);
-        gain.gain.setValueAtTime(on ? 0 : 1, at);
-        gain.gain.linearRampToValueAtTime(on ? 1 : 0, at + (on ? .02 : .06));
+        for (const g of gain.sampled ? [gain, gain.sampled] : [gain]) {
+          g.gain.cancelScheduledValues?.(at);
+          g.gain.setValueAtTime(on ? 0 : 1, at);
+          g.gain.linearRampToValueAtTime(on ? 1 : 0, at + (on ? .02 : .06));
+        }
       }
       audible = next;
     }
@@ -251,15 +262,26 @@
       out.gain.cancelScheduledValues?.(at);
       out.gain.setTargetAtTime(OUT_GAIN * 10 ** (db / 20), at, TRIM_GLIDE);
     }
+    // --- bank-fidelity: a role whose synth bus distorts (the bass's drive) gets a twin gain into its clean bus for
+    // sampled voices (`sampled`), masked together with the track's gain (design §12.11).
     function trackGain(name) {
       let gain = trackGains.get(name);
       if (!gain) {
+        const role = manifest.tracks[name]?.role || 'lead';
         gain = context.createGain();
         gain.gain.value = 1;
-        gain.connect(bus(manifest.tracks[name]?.role || 'lead'));
+        gain.connect(bus(role));
+        gain.sampled = sampledInput(role, 1);
         trackGains.set(name, gain);
       }
       return gain;
+    }
+    function sampledInput(role, value) {
+      const clean = buses[sampledBus[roleBus[role]]];
+      if (!clean) return null;
+      const g = gainNode(value);
+      g.connect(clean);
+      return g;
     }
 
     // --- the bus graph: per role, into the music chain (host.input(): demon-audio's music bus input) ----------
@@ -320,6 +342,11 @@
       // Bass: light drive, then a low-pass blend.
       buses.bass = gainNode(.8);
       chain(buses.bass, shaper(1.6, .08), filter('lowpass', 2800, .8), gainNode(.9), out);
+      // --- bank-fidelity: the sampled bass skips the drive. Growlybass is a DI recording, and its role level (3.7, to
+      // match the synth's loudness) drove this shaper three times hotter than the synth does: THD+N -7.6 dB across the
+      // stage, against the synth's -22.6 dB (design §12.11). Its clean bus has the same gains and no nonlinear stage.
+      buses.bassSampled = gainNode(.8);
+      chain(buses.bassSampled, gainNode(.9), out);
       // Guitars: pre-EQ -> two gain stages through tanh shapers -> a cabinet of filters (high-pass 80 Hz, a notch
       // near 400 Hz, presence at 2-3 kHz, low-pass 5.5 kHz) -> left and right doubles with different curves.
       const guitar = (side, drive, bias, presence) => {
@@ -349,10 +376,27 @@
       buses.clean = gainNode(.5); buses.clean.connect(out); send(buses.clean, .35);
       buses.perc = gainNode(.7); buses.perc.connect(out); send(buses.perc, .3);
       buses.sting = gainNode(1);
+      // demon-choir: the grunts and war cries, dry and close with a little of the room (the brood drones use the pads').
+      buses.voice = gainNode(.8); buses.voice.connect(out); send(buses.voice, .18);
     }
     const roleBus = { drums: 'drums', bass: 'bass', guitarL: 'guitarL', guitarR: 'guitarR', lead: 'lead', clean: 'clean',
-      organ: 'pad', strings: 'pad', brass: 'pad', choir: 'pad', timpani: 'perc', bells: 'perc', uke: 'clean' };
+      organ: 'pad', strings: 'pad', brass: 'pad', choir: 'pad', timpani: 'perc', bells: 'perc', uke: 'clean',
+      brood: 'pad', grunt: 'voice', warcry: 'voice' };
     function bus(role) { return buses[roleBus[role] || 'pad']; }
+    const sampledBus = { bass: 'bassSampled' };
+
+    // --- demon-choir: the brood choir's roles have no synth voice: they sound only from decoded bank zones.
+    const SAMPLED_ONLY = new Set(['brood', 'grunt', 'warcry']);
+    const sampledOnly = role => SAMPLED_ONLY.has(role);
+    // The first bank plus the choir's: instruments tried after the first bank's, roles, zones and sprites appended,
+    // the decoded budgets added. No bank.json: no bank at all (the choir never plays alone).
+    function joinBanks(main, choir) {
+      if (!main || !choir) return main;
+      const budgets = { ...(main.budgets || {}) };
+      for (const k of ['decodedDesktop', 'decodedPhone', 'opusBytes']) if (choir.budgets?.[k] != null) budgets[k] = (budgets[k] ?? 0) + choir.budgets[k];
+      return { ...main, budgets, roles: { ...main.roles, ...choir.roles }, instruments: [...main.instruments, ...choir.instruments],
+        sprites: [...main.sprites, ...choir.sprites], zones: [...main.zones, ...choir.zones], choir: true };
+    }
 
     // --- voices -------------------------------------------------------------------------------------------------
     let noise = null;
@@ -416,6 +460,7 @@
         const voice = sampleVoice(role, pitch, vel, at, dur, dest);
         if (voice) return voice;
       }
+      if (sampledOnly(role)) return null;   // demon-choir: no synth voice; the note rests until its zone decodes
       return synthVoice(role, pitch, vel, at, dur, dest);
     }
     function synthVoice(role, pitch, vel, at, dur, dest) {
@@ -628,7 +673,7 @@
         zones.push(z);
       }
       bankState.sampled++;
-      const v = vel / 127, frame = voiceFrame(dest, at);
+      const v = vel / 127, frame = voiceFrame(dest.sampled || dest, at);
       // Palm-muted guitar (velocity <= 92) keeps the synth's darker pre-amp colour; the staccato zones damp it.
       const input = (role === 'guitarL' || role === 'guitarR') && vel <= 92 ? perNoteFilter(frame, 'lowpass', 1800, .9) : frame.env;
       let stopAt = Infinity, looped = false;
@@ -686,8 +731,8 @@
         } catch (error) { bankState.failedSprites++; bankState.error = String(error?.message || error); }
       }
     }
-    const priority = role => (role === 'organ' || role === 'strings' || role === 'brass' || role === 'choir') ? 0
-      : (role === 'lead' || role === 'clean' || role === 'bells' || role === 'uke') ? 1 : role === 'bass' ? 3 : 2;
+    const priority = role => (role === 'organ' || role === 'strings' || role === 'brass' || role === 'choir' || role === 'brood') ? 0
+      : (role === 'lead' || role === 'clean' || role === 'bells' || role === 'uke' || role === 'grunt' || role === 'warcry') ? 1 : role === 'bass' ? 3 : 2;
     const mono = role => role === 'lead' || role === 'bass';
     function releaseVoice(entry, at, seconds = .03) {
       if (entry.released) return;
@@ -706,6 +751,7 @@
     function play(trackName, role, pitch, vel, at, dur, dest, seg, sample = true) {
       const now = context.currentTime;
       if (at < now - .01) return null;
+      if (sampledOnly(role) && !(bankOn && bank && sample)) return null;   // demon-choir: silent without the bank
       const isKickSnare = role === 'drums' && (pitch === 35 || pitch === 36 || pitch === 38 || pitch === 40);
       // Choke and mono rules, then the cap.
       let sounding = 0, victim = null;
@@ -717,8 +763,9 @@
           if (v.priority < 3 && !v.kickSnare && (!victim || v.priority < victim.priority || (v.priority === victim.priority && v.at < victim.at))) victim = v;
         }
       }
-      if (sounding >= cap && victim) { releaseVoice(victim, at, .02); stolen++; }
       const voice = makeVoice(role, pitch, vel, at, dur, dest, sample);
+      if (!voice) return null;   // a sampled-only note whose zone has not decoded: it rests, and steals nothing
+      if (sounding >= cap && victim) { releaseVoice(victim, at, .02); stolen++; }
       const entry = { ...voice, track: trackName, pitch, at, priority: isKickSnare ? 3 : priority(role), kickSnare: isKickSnare, dest, seg };
       voices.add(entry);
       const last = voice.sources[voice.sources.length - 1];
@@ -746,6 +793,7 @@
           const role = manifest.tracks[name]?.role || 'lead';
           const dest = trackGain(name);
           const sample = bankOn && !!bank && trackSampled(seg, name, role, notes, bs);
+          if (!sample && sampledOnly(role)) continue;   // demon-choir: a brood or grunt track rests without its zones
           for (let i = lowerBound(notes, local); i < notes.length && notes[i].beat < local + take - 1e-9; i++) {
             const n = notes[i];
             if (breaks.length && resting(origin + n.beat * bs)) continue;
@@ -878,7 +926,9 @@
       for (const v of voices) if (current && v.seg === current.id && !v.released && v.end > from) releaseVoice(v, Math.max(from, v.at), .06);
     }
     // Stingers: the accent's score in the playing section's key, on its grid. An unknown name plays nothing (null).
-    function accent(name) {
+    // --- round8: `inSeconds` (optional) lands the stinger on a moment, e.g. a dive war cry's dive start: on the
+    // stinger's grid line nearest it within 0.3 s, else at `fallbackIn` (the tell), never before now + MARGIN.
+    function accent(name, inSeconds, fallbackIn) {
       if (!ready() || !current) return null;
       const stingName = manifest.accents[name];
       const sting = stingName && manifest.stingers[stingName];
@@ -886,13 +936,20 @@
       const now = context.currentTime, bs = beatSeconds(current.song);
       const last = lastSting.get(stingName) ?? -Infinity;
       if (now - last < (sting.spacing || 1) * bs) return null;
+      // --- demon-choir: a stinger of sampled-only tracks needs the bank; one marked `speech: yield` gives way to a
+      // radio line (the radio outranks the music's war cries: mix-balance's speech duck is holding).
+      if (sting.notes.every(n => sampledOnly(manifest.tracks[n.track]?.role)) && !(bankOn && bank)) return null;
+      if (sting.speech === 'yield' && host.speaking?.()) return null;
       const lifeLoss = host.lifeLoss?.includes(name);
       const live = stingLog.filter(s => s.end > now).length;
       if (live >= 2 && !lifeLoss && !sting.always) return null;
       const lead = Math.min(0, ...sting.notes.map(n => n.t));
       const earliest = now + MARGIN - lead * bs;
-      const g = segBeat(current, earliest);
-      const anchor = segTime(current, Math.ceil(g / sting.quantum - 1e-9) * sting.quantum);
+      let anchor = segTime(current, Math.ceil(segBeat(current, earliest) / sting.quantum - 1e-9) * sting.quantum);
+      if (Number.isFinite(inSeconds)) {
+        const want = now + inSeconds, snap = segTime(current, Math.round(segBeat(current, want) / sting.quantum) * sting.quantum);
+        anchor = Math.abs(snap - want) <= .3 && snap >= earliest ? snap : Math.max(earliest, now + (Number.isFinite(fallbackIn) ? fallbackIn : inSeconds));
+      }
       const tonic = current.spec.tonic ?? current.songSpec.tonic, mode = current.spec.mode ?? current.songSpec.mode;
       const scale = scales[mode] || scales.minor;
       let end = anchor;
@@ -916,7 +973,7 @@
     const stingInputs = new Map();
     function stingInput(role) {
       let g = stingInputs.get(role);
-      if (!g) { g = gainNode(.9); g.connect(bus(role)); stingInputs.set(role, g); }
+      if (!g) { g = gainNode(.9); g.connect(bus(role)); g.sampled = sampledInput(role, .9); stingInputs.set(role, g); }
       return g;
     }
     function attach(ctx) {
@@ -977,7 +1034,7 @@
           // The sample bank (design §12.9): absent, loading or loaded; notes sampled and notes the synth played while
           // their zone was not decoded yet.
           bankLoaded: bankState.present && bankState.loaded + bankState.skipped + bankState.failedSprites >= bankState.sprites && bankState.loaded > 0,
-          bankDecodedBytes: bankState.decodedBytes, bankOn, bank: { ...bankState, enabled: bankOn } };
+          bankDecodedBytes: bankState.decodedBytes, bankOn, bank: { ...bankState, enabled: bankOn, choir: !!bank?.spec?.choir } };
       },
     };
   }

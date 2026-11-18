@@ -105,7 +105,8 @@
   }
 
   // --- the score (demon-score.js, loaded first; absent in older pages and tests).
-  const score = window.demonScore?.create({ input: () => drop, lifeLoss }) || null;
+  // demon-choir: `speaking()` lets a stinger marked `speech: yield` (the dive war cry) give way to a radio line.
+  const score = window.demonScore?.create({ input: () => drop, lifeLoss, speaking: () => !!context && duckDepthAt(context.currentTime) > 0 }) || null;
 
   function schedule() {
     if (!context || paused || context.state !== 'running') return;
@@ -166,10 +167,10 @@
   function intensity(tier) { return Math.min(4, Math.max(1, Math.round(tier) || 1)); }
   function fleetIntact() { return !!score; }
   // Accents: a stinger in the playing section's key on its grid; never delays the caller.
-  function accent(name) {
+  function accent(name, inSeconds, fallbackIn) {
     if (!score || !context || paused || context.state !== 'running') return null;
     if (levels.music === 'mute' && !lifeLoss.includes(name)) return null;  // nothing to hear
-    return score.accent(name);
+    return score.accent(name, inSeconds, fallbackIn);
   }
   // Power-up layer: what the game reports (active power count, a pickup in the air), applied on the next bar line.
   function powerLayer(active = 0, falling = false) {

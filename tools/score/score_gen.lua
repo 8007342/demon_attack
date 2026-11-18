@@ -50,7 +50,7 @@ local function composerOf(songId, song)
     coda = 'songs.coda', credits = 'songs.credits', defeat = 'songs.defeat', bonus = 'songs.bonus' })[song.form]
 end
 local trackOrder = { 'drums', 'cymbals', 'drums2', 'bass', 'gtrL', 'gtrR', 'clean', 'lead', 'lead2', 'organ',
-  'strings', 'brass', 'choir', 'timpani', 'bells', 'fanfare', 'uke' }
+  'strings', 'brass', 'choir', 'timpani', 'bells', 'fanfare', 'uke', 'brood', 'grunts' }
 for _, name in ipairs(trackOrder) do assert(map.tracks[name], 'track order names an unknown track ' .. name) end
 -- Named mask sets (`masks: "approach"`) resolve to their tables before anything reads them.
 for _, song in pairs(map.songs) do

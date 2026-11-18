@@ -1274,3 +1274,79 @@ same name, or both paths fire (CLAUDE.md §3).
   - Crosswind's fixed E minor between the D major and C minor worlds, or a transposition per world;
   - whether Supply Run should also get its own section later; it keeps the waves now.
 
+
+### 12.11 Fidelity audit (`work/bank-fidelity`, 2026-11-18, task 9.12)
+
+The operator's verdict on `?bank=1` (round 8): the sampled parts combine smoothly and follow the game, but "some of
+them still sound low res, and some even sound worse than the MIDI", with "compression, low bit-rate, or background
+noise", and "a bit of distortion there for the bass ... it dirties the whole soundtrack". Every step of the pipeline
+was measured before anything changed, on the bank as built on `game` (d21b2653; the rebuild reproduced its sprites
+byte for byte), and again after the fixes. The tools are committed, so any number here can be re-run:
+
+- `lua tools/bank/bank_audit.lua sources | resample | cut | encode | bitrate | shift` (steps 1-4; `cut`, `encode`,
+  `bitrate` and `shift` read the pre-encode sprites that `bank_build.lua --keep-pcm DIR` keeps);
+- `node tools/mix_meter/bank_fidelity.mjs rates | render` (step 5: the shipped players rendered offline, with probes on
+  every wave shaper and on the master limiter; `--web-root` renders an older tree, `--solo ROLE` a stem).
+
+Per-zone tables and the commands are in `plan/render-runs/sample-bank.md` §8.
+
+**Weakest step: the runtime bass drive.** The sampled bass's role level (3.7, set to match the synth's loudness) went
+through the bass bus's `tanh` shaper, which was tuned for the synth's 0.7. Its input peaked at 2.5 instead of 0.8, and
+the nonlinear residual across the stage (THD+N) was −7.6 dB, against −22.6 dB for the synth. That is the distortion the
+operator heard, and since the bass carries the beat it dirtied the whole mix. Second: the sources themselves clip
+(28 of the 40 Growlybass files hit 0 dBFS), so the bass was distorted twice. Third: the Opus rates (64 kbps mono,
+96 kbps stereo) and the trims that cut cymbals and bells while they still rang.
+
+| # | Step | Metric | Before (`game`) | After | Verdict and fix |
+|---|---|---|---|---|---|
+| 1 | Sources: format | rate, bits, channels | 168 zones from 44.1 kHz files: drums 16-bit FLAC (48), VCSL/VSCO 16-bit stereo WAV (42), Growlybass and the B&G guitars 24-bit mono WAV (78) | same | Adequate. None is below CD quality. |
+| 1 | Sources: noise | quietest 50 ms after the onset (dBFS), SNR re the loudest 50 ms | drums −89 to −95 (16-bit dither), SNR 55-80 dB; guitars hiss at −50 to −57 dBFS before the onset; organ SNR 62-70; tenor trombone sustains SNR 45-61 (the noisiest sustained source); horns, trumpet, timpani, bells 79-108 | guitar pre-onset hiss cut (2 ms kept) | No library is noisy enough to drop. Trombone sustains are kept and named for the listening. No denoising: it would make them worse. |
+| 1 | Sources: clipping | samples at full scale; true peak | bass staccato 20/20 files clip (1-71 samples, runs up to 36, up to +1.5 dBTP); bass `ff` sustains 8/10; nothing else | 710 samples rebuilt in 26 zones | **Fixed**: `declip: true` rebuilds each flat run by a cubic through its neighbours. ffmpeg's `adeclip` was rejected: it changed 1 818 samples of a clean file by up to 0.34. |
+| 1 | Sources: DC | mean (dB re full scale) | ≤ −58 dB everywhere | ≤ −58 dB | Fine. |
+| 1 | Sources: stereo | L/R correlation; loss of the (L+R)/2 fold | cymbals −0.2 to 0.1, organ 0.0-0.5, timpani −0.3-0.7, brass 0.2-0.9, bells 0.3-0.9 (spaced pairs); the mono fold lost 0.2-4.6 dB to comb notches | mono zones take one microphone (`pick`: left; the organ right, whose F#2 fundamental is missing on the left); cymbals stay stereo | **Fixed.** Brass and bells lost level with the sum's correlated part, so their role levels rose 1.0 and 2.2 dB. |
+| 2 | Resample 44.1 → 48 kHz | image of a 19 kHz tone | −48 dB (ffmpeg default) | −119 dB | **Fixed**: 256-tap Kaiser (β 12) sinc. libsoxr is not in this ffmpeg build. |
+| 2 | Onset | first sample re the zone's peak | up to −8.8 dB (glock), bass staccato −13 dB: `silenceremove`'s 20 ms RMS window started zones inside the attack (a click) | silence in every zone | **Fixed**: onset at −40 dB re the file's peak, 2 ms pre-roll with a raised-cosine fade-in (1 ms minimum). |
+| 2 | Truncation | level at the cut re the loudest 50 ms | crash −17 to −19 dB, ride −21, open hat −18, bells −13 to −19, floor tom −22, bass sustain −10 to −24, guitar sustain −6 to −41 (20 ms fade) | crash −79 to −85, ride −71, open hat −62, bells −71 to −81, floor tom −56, bass sustain −39 to −53, guitar −33 to −107 | **Fixed**: trims crash 3.5 s, china 3.0, ride 2.5, open hat 2.0, toms 1.0, timpani 3.0, bells 4.0, glock 2.5, bass sustain 3.0, guitar sustain 2.5, with per-instrument raised-cosine fades (0.15-1.5 s). Held notes longer than their zone: bass 41 → 16, guitar 35 → 0. |
+| 2 | Loop seams | jump at the loop point re the loop's 90th-percentile step | up to +6.0 dB (trombone), +1.9 (horn) | at most +0.7 dB (trumpet), most below −4 | Fine; the equal-power crossfade stays. |
+| 3 | Normalisation | samples over 0 dBFS; dynamics | 0 overs; per instrument to −1 dBFS, so layers keep their relative levels; the clipped bass tops were normalised as flat tops | 0 overs; the declipped peaks now set the bass's gain | Linear, transparent. |
+| 4 | Encode | Opus rate; magnitude SNR (STFT, phase-blind), median | 64 kbps mono / 96 stereo: bass staccato 24.3 dB, bass sustain 27.2, palm-mute guitar 26.8, snare 26.0, toms 27-30, timpani 29.1, organ 30.5, cymbals 8-16 | 96-160 kbps by instrument: bass staccato 37.9, bass sustain 35.3, palm mute 37.3, snare 37.1, toms 36-38, timpani 35.3, organ 37.1, cymbals 14-20 | **Fixed**: each instrument gets the lowest rate whose median magnitude SNR reaches 35 dB in the 64-160 kbps sweep (`bitrate`), at most 160; kick 96 (its SNR is flat above 96); cymbals 160 stereo (noise-like: their SNR is low at any rate). Opus kept the full −60 dB bandwidth of every zone (up to 21 kHz) at both rates: no codec low-pass. |
+| 5 | Pitch shift | semitones from the zone's root, by notes; linear interpolation against a high-quality resample | drums 0; bass 90-94 % within ±1.5; guitars 88-89 %; organ 61 %; brass 37-54 %; timpani 42 % within ±1.5 and 49 % beyond 3 (to −7); interpolation error 34-60 dB magnitude SNR, the same at ±1.5 and ±7 | unchanged (no new pins) | The interpolation is not the weak step: its error sits below the codec's. The timpani's −6/−7 shifts change their timbre; that is for the listening. |
+| 5 | Bass bus | wave shaper input peak; THD+N across it | synth 0.79, −22.6 dB; **sampled 2.47, −7.6 dB** | sampled bass: no shaper in its path (`bassSampled`, the same gains, linear) | **Fixed: the culprit.** The bass level re-matched +6 dB (3.7 → 7.35) by the median gap over five sections, now in a linear path. |
+| 5 | Guitar amp | what it distorts | B&G DI recordings (pins doc §3): one amp, as designed | same | Not double distortion. |
+| 5 | Gain staging | per-voice level × (0.35 + 0.65 v) × bus × trim × 0.55 × music level × master 0.65 → limiter (−1.5 dBFS) | master peaks −4 to −6 dBFS, 0 samples over 0 dBFS, the limiter never reduced (both banks, 6 sections) | the same | No master limiter change is needed; the buses are floating point, so the only clipping risk was the shaper. |
+
+**The budgets, raised** (operator, round 8: "high res ... will be several MB, so we better justify that extra weight with properly enjoyable high res audio"):
+
+| Bank | Zones | Sprites | Audio | Opus | Decoded, desktop | Decoded, phone tier |
+|---|---|---|---|---|---|---|
+| `game` (§12.9.7) | 168 | 8 | 187.1 s | 1 907 850 B | 40 934 400 B | 14 553 600 B |
+| This build | 168 | 16 | 288.5 s | 5 050 218 B | 65 314 176 B | 22 675 200 B |
+| Budget (recipe) | | | | 6 000 000 B | 72 000 000 B | 24 000 000 B |
+
+- Opus grows by the rates (the larger part) and the longer trims. Sprites are now keyed by tier, phone class, rate
+  and channels (`bank-1p128m.ogg`), so each instrument is encoded at its own rate.
+- Decoded memory is the audio's resident cost: 48 kHz float, 192 KB a second mono. It grows with the trims only.
+  `lib/game/perf/frame_budget.dart` has no audio budget, so the phone tier stays the lighter one: it loads only the
+  phone sprites (22.7 MB), and the loader skips any sprite that would pass the budget, whose notes then play the synth.
+- The sampled score's loudness is matched to the synth's again (bass, brass and bells re-measured; the medians of drums, organ,
+  guitars and timpani within ±0.4 dB of their match) and the trims regenerated (`mix-trim.json`, §12.9.7's rule).
+
+*The trims** (`node tools/mix_meter/trim.mjs`, regenerated): the synth block is byte for byte the one on `game`. The
+`bank` block: `top` −4.60 LUFS (was −4.48), `floor` −15.43 (was −14.59), `k` 0.1847, `offset` −0.37 dB, 222 trims
+from −0.4 to +8 dB. 16 trims hit the +8 dB cap (was 6): the arrival tails (`c1`-`c3`, `k`, `r`, `e`, `h`), the
+bridge pivots, the coda and the credits song. The sampled arrivals measure about 1 dB quieter than before (`c1:arrival`
+−15.76 against −14.84), so they end up to 1.1 dB under the synth's window, the coda's reprise 2.6 dB as before. A
+higher cap or the arrivals' own levels is for the 9.7 listening.
+
+**A/B listening page**: https://claude.ai/artifact/6xUiifLTpteD5txLxKqZss (private to the operator). Synth, old bank
+and new bank, at one loudness per strip: the bass and the drums alone over `k:B@3` and `c1:core@4`, and the full mix
+of six sections (`k:A@1`, `k:B@3`, `c1:core@4`, `h:A@4`, `k:clear`, `menu:overture`). Rendered offline through each
+tree's own players, Opus 160 kbps stereo, 8.2 MB; the clips stay in scratch.
+
+**Open, for the operator's ear:**
+- The clean bass has the crest of a DI: −8 dBFS peaks at −25.9 LUFS alone, against the synth's −17 at the same
+  loudness. If it sounds too spiky in the mix, a bus compressor (gain, not saturation) is the next step.
+- The timpani play half their notes 3-7 semitones below the lowest pinned drum; a lower drum would need new pins.
+- The tenor trombone sustains are the noisiest kept source (SNR 45 dB).
+- The phone tier now decodes 22.7 MB (was 14.6).
+- `BANK_DEFAULT` stays off.

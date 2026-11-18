@@ -865,6 +865,12 @@ Per mode (kept): duration +9.2 / +12.2 / +15.0 %, lives +0.6 / +1.0 / +13.4 % (E
 shots cost time (no Spread, no Rapid); heavier single shots from the wing cannons win most of it back without
 multifire. The balance pilot ignores the kites, so their points (inside the level's cap) are not in "Score".
 
+## Weather everywhere (2026-11-18, change `weather-everywhere`): unchanged
+
+Regular-sector lightning storms (one eligible level in seven) and smart demons holding a dive for a tailwind exist
+only in seeded runs with wind or heavy rain. Every gate above runs unseeded, so it is calm, dry and storm-free: no
+number moves and no random draw is added (a calm level's dive picker returns at once). The operator asked for no
+rebalance ("The windy sectors will already be harder for players dealing with wind ;) no need to rebalance").
 ## Spear-bearers (2026-11-18, change `spear-bearers`): a buckler-and-spear hunter from the third tour
 
 Design: `openspec/changes/spear-bearers` (§1 schedule, §2 throw, §3 buckler). A bearer *replaces* an elite birth (the
