@@ -134,3 +134,226 @@ on the audio studio (tillandsias#1103).
 | `bossHintHatches.h0` | human | admiral | urgent | Destroy the hatches! | (text card) |
 | `bossHintTiming.h0` | human | kestrel | urgent | Time the open hatch! | (text card) |
 | `bossHintLead.h0` | human | wisp | urgent | Fire ahead of its position! | (text card) |
+| `bonusCall.supplyRun.h0` | human | pip | excited | Presents from the sky, so pop 'em open and grab the goodies! | (text card) |
+| `bonusCall.stormfront.h0` | human | sunny | teasing | Lure the lightning onto the brood, then shoot them while they fall! | (text card) |
+| `stormStrike.avoid.h0` | human | rook | urgent | Avoid lightning! | (text card) |
+| `stormStrike.avoid.h1` | human | sunny | urgent | Avoid lightning! Move! | (text card) |
+| `stormStrike.avoid.h2` | human | wisp | urgent | Avoid lightning! Slide out! | (text card) |
+| `stormStrike.avoid.h3` | human | kestrel | urgent | Avoid lightning, pilot! | (text card) |
+| `stormBait.stun.h0` | human | kessler | excited | They're stunned! Pick them off while they fall! | (text card) |
+| `stormBait.stun.h1` | human | voss | excited | Stunned and dropping. Light them up! | (text card) |
+| `stormBait.stun.h2` | human | nomad | calm | Easy targets now, friend. Take the shot. | (text card) |
+| `stormBait.stun.h3` | human | pip | excited | Zapped and wobbly! Get them before they wake up! | (text card) |
+| `stormBait.stun.d0` | demon | vexxa | stern | [snarl] My wings! They will not answer! | (text card) |
+| `stormBait.stun.d1` | demon | gorrak | panicked | [alarm] Can't fly! Somebody catch me! | (text card) |
+| `stormBait.stun.d2` | demon | nibb | panicked | [alarm] Bzzt! My scales are all fizzy! | (text card) |
+| `stormBait.stun.d3` | demon | skarn | stern | [snarl] You tricked the sky! Cheater! | (text card) |
+| `lightningStun.h0` | human | anvil | calm | The storm stunned a few. Free shots! | (text card) |
+| `lightningStun.h1` | human | sparrow | excited | Look, they're dropping! Shoot, shoot! | (text card) |
+| `lightningStun.d0` | demon | skarn | stern | [roar] Who aimed the sky at me?! | (text card) |
+| `lightningStun.d1` | demon | morth | teasing | [gloat] Just a tickle. Just a tickle! | (text card) |
+| `lightningStun.d2` | demon | sliss | panicked | [alarm] Everything is buzzing! | (text card) |
+| `lightningStun.d3` | demon | vexxa | stern | [snarl] Wings, wake up! Fly! | (text card) |
+| `lightningShipHit.h0` | human | sunny | warm | You're fine, the ship can take it. | (text card) |
+| `lightningShipHit.h1` | human | nomad | calm | Easy, friend. Just a jolt, you're fine. | (text card) |
+| `lightningShipHit.d0` | demon | vexxa | teasing | [gloat] Ha! Even the sky picks our side! | (text card) |
+| `lightningShipHit.d1` | demon | skarn | teasing | [cackle] Fried your shiny toys! | (text card) |
+| `lightningShipHit.d2` | demon | morth | teasing | [gloat] A bare hull now. How brave are you? | (text card) |
+| `lightningShipHit.powers.h0` | human | admiral | calm | You're fine, only the power-ups are gone. | (text card) |
+| `lightningShipHit.powers.h1` | human | mensah | warm | You're fine! The shields are fried, the ship is not. | (text card) |
+| `lightningShipHit.powers.h2` | human | kestrel | calm | Just your toys, pilot. We'll find you new ones. | (text card) |
+| `lightningShipHit.powers.h3` | human | voss | warm | Power-ups gone, pilot still here. Keep flying! | (text card) |
+| `lightningShipHit.clean.h0` | human | admiral | calm | You're fine, the ship can take it. | (text card) |
+| `lightningShipHit.clean.h1` | human | anvil | warm | Just a jolt. The hull is holding fine! | (text card) |
+| `lightningShipHit.clean.h2` | human | rook | teasing | Nice hairdo! You're fine, keep flying. | (text card) |
+| `lightningCharged.h0` | human | wisp | urgent | That one drank the lightning! Watch its fire! | (text card) |
+| `lightningCharged.h1` | human | anvil | stern | Rods on that armour. It's charged up, careful! | (text card) |
+| `lightningCharged.h2` | human | sparrow | urgent | It's glowing! Don't feed it more lightning! | (text card) |
+| `lightningCharged.d0` | demon | skarn | triumphant | [roar] The storm is mine! | (text card) |
+| `lightningCharged.d1` | demon | vexxa | triumphant | [warcry] More! Strike me again! | (text card) |
+| `lightningCharged.d2` | demon | gorrak | triumphant | [roar] Thunder in my claws! | (text card) |
+| `bonusChallenge.supplyRun.h0` | human | pip | excited | Don't let a single prize hit the ground, and the fleet throws in a 1UP! | (text card) |
+| `bonusChallenge.stormfront.h0` | human | sunny | teasing | Don't let one bolt tickle you, and there's a shiny 1UP in it! | (text card) |
+| `bonusChallengeFailed.supplyRun.h0` | human | rook | teasing | Dropped one! No 1UP, but every prize still counts. | (text card) |
+| `bonusChallengeFailed.supplyRun.h1` | human | sparrow | warm | Butterfingers! Keep popping, the points are still good. | (text card) |
+| `bonusChallengeFailed.supplyRun.h2` | human | kestrel | calm | That one got away. Forget the bonus ship and keep catching. | (text card) |
+| `bonusChallengeFailed.supplyRun.d0` | demon | skritch | excited | [cackle] Dropped it! No spare ship for you! | (text card) |
+| `bonusChallengeFailed.supplyRun.d1` | demon | nibb | excited | [cackle] Crunchy prize, my prize! | (text card) |
+| `bonusChallengeFailed.stormfront.h0` | human | wisp | calm | Zapped! The 1UP's gone, but the storm still works for us. | (text card) |
+| `bonusChallengeFailed.stormfront.h1` | human | anvil | calm | Took a jolt. No bonus ship, so just fly the storm. | (text card) |
+| `bonusChallengeFailed.stormfront.h2` | human | sunny | teasing | Well, that was shocking! Bonus ship's off, fun's still on. | (text card) |
+| `bonusChallengeFailed.stormfront.d0` | demon | vexxa | teasing | [gloat] See? The sky picked a side. | (text card) |
+| `bonusChallengeFailed.stormfront.d1` | demon | skarn | excited | [roar] Crackle crackle! Ha! | (text card) |
+| `bonusChallengeEarned.h0` | human | rook | excited | Not one miss! That's a 1UP, pilot! | (text card) |
+| `bonusChallengeEarned.h1` | human | sparrow | triumphant | Perfect run! Spare ship on the line! | (text card) |
+| `bonusChallengeEarned.h2` | human | pip | excited | One up! One up! You actually did it! | (text card) |
+| `bonusChallengeEarned.h3` | human | admiral | triumphant | Flawless work. The fleet sends you a spare ship. | (text card) |
+| `bonusChallengeEarned.d0` | demon | gorrak | panicked | [alarm] Not one slip? Who trained that pilot?! | (text card) |
+| `bonusChallengeEarned.d1` | demon | morth | teasing | [gloat] Enjoy your spare ship. We have spares too. | (text card) |
+| `bonusChallengeEarned.d2` | demon | nibb | panicked | [alarm] Hey! That has to be cheating! | (text card) |
+| `bonusChallengeEarned.supplyRun.h0` | human | sunny | teasing | Every prize caught! Here's your 1UP, gift wrapped! | (text card) |
+| `bonusChallengeEarned.supplyRun.h1` | human | rook | excited | Clean sweep of the crates! That's a 1UP! | (text card) |
+| `bonusChallengeEarned.supplyRun.d0` | demon | skritch | stern | [snarl] All of them? Not even one for me? | (text card) |
+| `bonusChallengeEarned.supplyRun.d1` | demon | nibb | panicked | [alarm] Who took ALL the crunchy ones?! | (text card) |
+| `bonusChallengeEarned.stormfront.h0` | human | sparrow | triumphant | Not a single zap! The storm owes you a 1UP! | (text card) |
+| `bonusChallengeEarned.stormfront.h1` | human | kestrel | triumphant | Clean through the lightning. Spare ship earned. | (text card) |
+| `bonusChallengeEarned.stormfront.d0` | demon | sliss | panicked | [alarm] It danced through the lightning! Rude! | (text card) |
+| `bonusChallengeEarned.stormfront.d1` | demon | vexxa | stern | [snarl] The storm missed? Every single time?! | (text card) |
+| `bonusEntry.crosswind.h0` | human | sunny | teasing | Forecast: gale force, with a chance of flying kites. | (text card) |
+| `bonusEntry.crosswind.h1` | human | admiral | calm | The brood is flying kites in a gale. Bring them down. | (text card) |
+| `bonusCall.crosswind.h0` | human | sunny | excited | Kites in the gale, so fire one shot at a time and aim upwind! | (text card) |
+| `bonusDare.crosswind.h0` | human | rook | teasing | Bet you can't pop one with your eyes shut. Kidding. Keep them open. | (text card) |
+| `bonusDare.crosswind.h1` | human | kestrel | calm | Read the windsock, then breathe, then fire. | (text card) |
+| `bonusDare.crosswind.d0` | demon | nibb | teasing | [gloat] Our kites, our wind, our sky! | (text card) |
+| `bonusDare.crosswind.d1` | demon | skarn | triumphant | [roar] The gale is on our side, little ship! | (text card) |
+| `bonusStart.crosswind.h0` | human | wisp | calm | Watch the windsock, top left. It turns before your shots bend. | (text card) |
+| `bonusStart.crosswind.h1` | human | anvil | calm | No spread, no rapid in this wind. One good shot beats ten wild ones. | (text card) |
+| `bonusStart.crosswind.h2` | human | sparrow | urgent | Kites coming in on the gust. Lead them upwind! | (text card) |
+| `bonusChallenge.crosswind.h0` | human | rook | excited | Pop every kite before the wind steals one, and the fleet sends you a 1UP! | (text card) |
+| `bonusChallengeEarned.crosswind.h0` | human | sunny | triumphant | Every last kite! Not one got away. That's a spare ship for you! | (text card) |
+| `bonusChallengeEarned.crosswind.h1` | human | kestrel | warm | Every kite down, in that wind. Take the extra ship, you earned it. | (text card) |
+| `bonusChallengeEarned.crosswind.d0` | demon | nibb | panicked | [alarm] All of them? Even the shiny one?! | (text card) |
+| `bonusChallengeEarned.crosswind.d1` | demon | gorrak | panicked | [alarm] Every kite? Who taught them the wind?! | (text card) |
+| `bonusChallengeFailed.crosswind.h0` | human | anvil | calm | One rode the wind out. No spare ship this time, but keep popping. | (text card) |
+| `bonusChallengeFailed.crosswind.h1` | human | kestrel | calm | That one slipped the wind. Shake it off and lead the next. | (text card) |
+| `bonusChallengeFailed.crosswind.d0` | demon | morth | teasing | [gloat] Fly free, little kite! Tell the others! | (text card) |
+| `bonusChallengeFailed.crosswind.d1` | demon | nibb | teasing | [cackle] Ha! The wind likes us better! | (text card) |
+| `bonusMidway.crosswind.h0` | human | sunny | teasing | Halftime weather report: windy, windier, and kites. | (text card) |
+| `bonusMidway.crosswind.h1` | human | nomad | calm | My grandmother flew kites. She never shot at them, mind you. | (text card) |
+| `bonusMidway.crosswind.d0` | demon | sliss | stern | [snarl] Who tied my kite to a demon? Untie me! | (text card) |
+| `bonusMidway.crosswind.d1` | demon | gorrak | stern | [order] Hold the strings! Hold the strings! | (text card) |
+| `bonusCleared.crosswind.h0` | human | sunny | teasing | Wind's dropping. Clear skies, empty strings. Lovely. | (text card) |
+| `bonusCleared.crosswind.h1` | human | sparrow | triumphant | We shot straight in a gale! Sky's ours. | (text card) |
+| `bonusCleared.crosswind.h2` | human | nomad | warm | Steady hands in a crooked wind. Fine flying. | (text card) |
+| `kitePopped.h0` | human | rook | excited | Pop! Right through the gust. | (text card) |
+| `kitePopped.h1` | human | kessler | warm | Nice lead on that one. The wind did the rest. | (text card) |
+| `kitePopped.h2` | human | pip | excited | Kite down! Ooh, it's all sparkly. | (text card) |
+| `kitePopped.d0` | demon | nibb | panicked | [alarm] My kite! I made that one myself! | (text card) |
+| `kitePopped.d1` | demon | vexxa | stern | [snarl] Lucky gust. Lucky, lucky gust. | (text card) |
+| `kiteEscaped.h0` | human | wisp | calm | One got away. Next one, lead it more. | (text card) |
+| `kiteEscaped.h1` | human | sparrow | calm | Missed that one. Aim where it's going, not where it is! | (text card) |
+| `kiteEscaped.d0` | demon | morth | teasing | [gloat] Bye-bye! The wind loves us more! | (text card) |
+| `kiteEscaped.d1` | demon | skarn | teasing | [cackle] Can't catch the wind, can you? | (text card) |
+| `windStart.h0` | human | wisp | calm | Wind's picking up. Watch the windsock and aim into it. | (text card) |
+| `windStart.h1` | human | kestrel | calm | Crosswind on this sector. Your shots will drift, and so will theirs. | (text card) |
+| `windStart.h2` | human | sunny | teasing | Breezy out here! Hold onto your helmets. | (text card) |
+| `windStart.d0` | demon | gorrak | teasing | [gloat] Our wind. Our home. Your shots go astray. | (text card) |
+| `windStart.d1` | demon | vexxa | teasing | [gloat] Feel that? Our sky breathes for us. | (text card) |
+| `windGust.h0` | human | wisp | urgent | Gust coming! Lead your shots into it. | (text card) |
+| `windGust.h1` | human | sparrow | urgent | Wind's swinging round! Watch the sock! | (text card) |
+| `windGust.h2` | human | rook | urgent | Here comes a big one! Aim upwind! | (text card) |
+| `windGust.d0` | demon | sliss | triumphant | [cackle] Wheee! Ride it, brood! | (text card) |
+| `windGust.d1` | demon | skarn | triumphant | [roar] The gale answers the brood! | (text card) |
+| `windStop.h0` | human | anvil | calm | Wind's dying down. Back to straight shooting. | (text card) |
+| `windStop.h1` | human | nomad | warm | Calm air again. Enjoy it while it lasts. | (text card) |
+| `diveCry.grunt.d0` | demon | skritch | excited | [cackle] Eep! Watch me! | (text card) |
+| `diveCry.grunt.d1` | demon | skritch | excited | [warcry] Fang and... eep! Wings! | (text card) |
+| `diveCry.grunt.d2` | demon | grunnok | excited | [warcry] Big wings someday! | (text card) |
+| `diveCry.grunt.d3` | demon | blatch | excited | [cackle] Eek! Coming through! | (text card) |
+| `diveCry.grunt.d4` | demon | morth | excited | [warcry] For the crown! Later! | (text card) |
+| `diveCry.grunt.d5` | demon | nibb | excited | [warcry] Fangy-wingy! | (text card) |
+| `diveCry.grunt.d6` | demon | nibb | excited | [cackle] Me too! Me too! | (text card) |
+| `diveCry.grunt.d7` | demon | sliss | excited | [cackle] Ssswoop! | (text card) |
+| `diveCry.veteran.d0` | demon | grunnok | triumphant | [roar] WINGS OUT! | (text card) |
+| `diveCry.veteran.d1` | demon | skritch | triumphant | [roar] Wings up, nose down! | (text card) |
+| `diveCry.veteran.d2` | demon | blatch | triumphant | [roar] Got my wings! Fangs next! | (text card) |
+| `diveCry.veteran.d3` | demon | morth | triumphant | [roar] The crown dives! | (text card) |
+| `diveCry.veteran.d4` | demon | krag | triumphant | [roar] Wings! Rrrah! | (text card) |
+| `diveCry.veteran.d5` | demon | sliss | triumphant | [roar] Wingsss wide! | (text card) |
+| `diveCry.hunter.d0` | demon | blatch | stern | [snarl] Fangs first! | (text card) |
+| `diveCry.hunter.d1` | demon | skritch | stern | [snarl] Bite and dive! | (text card) |
+| `diveCry.hunter.d2` | demon | grunnok | stern | [snarl] Fang and Wings! | (text card) |
+| `diveCry.hunter.d3` | demon | morth | stern | [snarl] Fang, wing and crown! | (text card) |
+| `diveCry.hunter.d4` | demon | sliss | stern | [snarl] Fangsss bared! | (text card) |
+| `diveCry.hunter.d5` | demon | vexxa | teasing | [snarl] Fang and Wings, darling! | (text card) |
+| `diveCry.sentinel.d0` | demon | krag | triumphant | [warcry] FANG AND WINGS! | (text card) |
+| `diveCry.sentinel.d1` | demon | gorrak | triumphant | [warcry] FANG! AND! WINGS! | (text card) |
+| `diveCry.sentinel.d2` | demon | ulgra | stern | [roar] BY FANG AND WING! | (text card) |
+| `diveCry.sentinel.d3` | demon | morth | stern | [rally] FANG AND WINGS! KNEEL! | (text card) |
+| `diveCry.sentinel.d4` | demon | skarn | triumphant | [warcry] FANG AND WINGS! STOKE IT! | (text card) |
+| `diveCry.sentinel.d5` | demon | vexxa | triumphant | [warcry] FANG AND WINGS, PILOT! | (text card) |
+| `diveCry.sentinel.d6` | demon | grunnok | triumphant | [roar] FANG AND WIIINGS! | (text card) |
+| `diveCry.sentinel.d7` | demon | skritch | triumphant | [warcry] FANG AND WINGS! BIG ONE! | (text card) |
+| `diveCry.sentinel.d8` | demon | blatch | triumphant | [warcry] FANG AND WINGS! ALL IN! | (text card) |
+| `fangChatter.d0` | demon | gorrak | triumphant | [rally] Fang and Wings! Say it like you mean it! | (text card) |
+| `fangChatter.d1` | demon | vexxa | teasing | [gloat] Wings are given. Fangs are earned, sweetie. | (text card) |
+| `fangChatter.d2` | demon | skarn | stern | [order] Grunts! Earn your wings before you ask for fangs! | (text card) |
+| `fangChatter.d3` | demon | morth | stern | [rally] Fang for the hunt. Wings for the flock. | (text card) |
+| `fangChatter.d4` | demon | ulgra | stern | [rally] The ark remembers every mark you earn. | (text card) |
+| `fangChatter.d5` | demon | grunnok | teasing | [gloat] Polished my wings. Shiny, yes? | (text card) |
+| `fangChatter.d6` | demon | skritch | excited | [cackle] One day, fangs! One day! | (text card) |
+| `fangChatter.d7` | demon | nibb | panicked | [alarm] My wing came unstuck! | (text card) |
+| `fangChatter.d8` | demon | krag | stern | [snarl] Earned my fangs. Now where is my snack? | (text card) |
+| `fangChatter.d9` | demon | blatch | stern | [order] Fangs up front! Wings on the flanks! | (text card) |
+| `fangChatter.d10` | demon | sliss | stern | [snarl] Fangsss are earned in the dark. | (text card) |
+| `fangChatter.d11` | demon | morth | teasing | [gloat] Who forgot the creed? Fang and Wings! | (text card) |
+| `fangBanter.h0` | human | rook | teasing | Fang and Wings? More like Flap and Whine! | (text card) |
+| `fangBanter.h1` | human | sparrow | teasing | Fang and Wings? Fangs for nothing! | (text card) |
+| `fangBanter.h2` | human | sunny | teasing | Fangs and wings? Sounds like the lunch special. | (text card) |
+| `fangBanter.h3` | human | anvil | calm | Nice wings. Mine came with engines. | (text card) |
+| `fangBanter.h4` | human | kestrel | stern | Wear all the fangs you like. Aim still counts. | (text card) |
+| `fangBanter.h5` | human | pip | excited | Can I earn a fang too? For the fleet, I mean! | (text card) |
+| `fangBanter.h6` | human | nomad | warm | Every flock needs a motto. Ours is duck. | (text card) |
+| `fangBanter.h7` | human | admiral | stern | Mottos don't fly. Pilots do. | (text card) |
+| `fangBanter.h8` | human | lindqvist | calm | Battle cry logged. Threat level unchanged. | (text card) |
+| `fangBanter.h9` | human | wisp | calm | Translation: Fang and Wings. Accuracy: still pending. | (text card) |
+| `fangBanter.h10` | human | kessler | teasing | Fang and Wings? Down here it's Tracks and Treads! | (text card) |
+| `fangBanter.h11` | human | march | stern | Bastion has walls. Bring your wings. | (text card) |
+| `fangBanter.d0` | demon | gorrak | triumphant | [rally] Look up, pilot! FANG AND WINGS! | (text card) |
+| `fangBanter.d1` | demon | vexxa | teasing | [gloat] Fang and Wings, shiny-shell. Read it and weep. | (text card) |
+| `fangBanter.d2` | demon | skarn | triumphant | [warcry] FANG AND WINGS! Feel the heat! | (text card) |
+| `fangBanter.d3` | demon | skritch | excited | [cackle] See my wings? Fang and Wings! | (text card) |
+| `fangBanter.d4` | demon | grunnok | triumphant | [roar] Fang and Wings! Count the fangs! | (text card) |
+| `fangBanter.d5` | demon | morth | stern | [rally] Every fang is earned. Every wing is sworn. | (text card) |
+| `fangBanter.d6` | demon | ulgra | stern | [roar] By Fang and Wings, this sky is ours! | (text card) |
+| `fangBanter.d7` | demon | blatch | stern | [snarl] Fangs up! Wings out! Fang and Wings! | (text card) |
+| `fangBanter.d8` | demon | nibb | excited | [cackle] Fang and Wings! I said it right! | (text card) |
+| `fangTease.h0` | human | kestrel | stern | Fangs on its head? That one hunts. Watch it. | (text card) |
+| `fangTease.h1` | human | nomad | calm | Wings and a crown on the big one. Give it room. | (text card) |
+| `fangTease.h2` | human | admiral | calm | Read the marks, pilot. No mark, just a rookie. | (text card) |
+| `fangTease.h3` | human | sparrow | teasing | That one has wings on its head. Is that a hat? | (text card) |
+| `fangTease.h4` | human | rook | teasing | Hey, Fangs! Your little wings are crooked! | (text card) |
+| `fangTease.h5` | human | sunny | teasing | Forecast: Fang and Wings, then Flap and Whine. | (text card) |
+| `fangTease.h6` | human | pip | excited | How come the little ones don't get badges? | (text card) |
+| `fangTease.d0` | demon | vexxa | stern | [snarl] These wings are EARNED, tin-can! | (text card) |
+| `fangTease.d1` | demon | gorrak | stern | [snarl] Mock the marks again. I dare you! | (text card) |
+| `fangTease.d2` | demon | skritch | panicked | [alarm] Not stickers! Badges! Very serious badges! | (text card) |
+| `fangTease.d3` | demon | grunnok | teasing | [gloat] It is a crown! A small one! Still counts! | (text card) |
+| `fangTease.d4` | demon | skarn | stern | [snarl] Fang and WINGS, void-spawn. Say it right! | (text card) |
+| `fangTease.d5` | demon | blatch | teasing | [gloat] Yes. Fear the fangs. | (text card) |
+| `fangTease.d6` | demon | morth | stern | [gloat] Rookies earn wings first. Fangs come after. | (text card) |
+| `fangTease.d7` | demon | nibb | excited | [cackle] I get my wings next week! | (text card) |
+| `spearThrow.d0` | demon | grunnok | teasing | [warcry] Catch! | (text card) |
+| `spearThrow.d1` | demon | krag | triumphant | [roar] Long fang! Hrrah! | (text card) |
+| `spearThrow.d2` | demon | skarn | teasing | [warcry] Special delivery! | (text card) |
+| `spearThrow.d3` | demon | blatch | stern | [snarl] Fang from afar! | (text card) |
+| `spearThrow.d4` | demon | vexxa | teasing | [gloat] Heads up, shiny-shell! | (text card) |
+| `spearThrow.d5` | demon | gorrak | triumphant | [warcry] Fang and Wings! THROW! | (text card) |
+| `windStart.gale.h0` | human | rook | urgent | Gale rising! Aim into it. | (text card) |
+| `windStart.gale.h1` | human | kestrel | calm | Strong wind, pilot. Lead your shots upwind. | (text card) |
+| `windStart.gale.h2` | human | sparrow | excited | Whoa, it's really blowing now! | (text card) |
+| `windStart.gale.d0` | demon | skarn | triumphant | [roar] The gale wakes! Wings wide! | (text card) |
+| `windStart.gale.d1` | demon | nibb | excited | [cackle] Whee! Best weather ever! | (text card) |
+| `windGust.swing.h0` | human | wisp | urgent | Wind's turning! Check the sock. | (text card) |
+| `windGust.swing.h1` | human | anvil | calm | Wind shift. Re-aim. | (text card) |
+| `windGust.swing.h2` | human | sunny | urgent | Other way now! Adjust! | (text card) |
+| `windGust.swing.d0` | demon | vexxa | teasing | [gloat] The sky turns, and we turn with it. | (text card) |
+| `windGust.swing.d1` | demon | morth | excited | [cackle] Swing left! Swing right! Fun! | (text card) |
+| `windDive.h0` | human | rook | urgent | One's riding the gust down! | (text card) |
+| `windDive.h1` | human | kestrel | urgent | Diver on the wind. It'll curve in. | (text card) |
+| `windDive.d0` | demon | gorrak | triumphant | [warcry] Ride the gust! Down we go! | (text card) |
+| `windDive.d1` | demon | sliss | excited | [cackle] Wind at my back! Wheee! | (text card) |
+| `windDive.d2` | demon | ulgra | stern | [snarl] The sky carries me to you. | (text card) |
+| `stormStart.h0` | human | kestrel | calm | Lightning in this storm. Watch for the amber marks. | (text card) |
+| `stormStart.h1` | human | sunny | urgent | Thunderstorm! Bolts won't hurt you, but they'll strip your gear. | (text card) |
+| `stormStart.h2` | human | anvil | stern | Storm's live. Lure the bolts onto them. | (text card) |
+| `stormStart.d0` | demon | skarn | triumphant | [roar] Thunder! The sky sings for us! | (text card) |
+| `stormStart.d1` | demon | vexxa | teasing | [gloat] Our storm. Our home. Mind your sparks. | (text card) |
+| `stormStop.h0` | human | nomad | warm | Storm's moving off. Nice flying. | (text card) |
+| `stormStop.h1` | human | wisp | calm | No more bolts. Sky's clearing. | (text card) |
+| `stormStop.d0` | demon | morth | panicked | [alarm] Come back, thunder! Come back! | (text card) |
+| `stormStop.d1` | demon | skarn | stern | [snarl] The sky goes quiet. We do not. | (text card) |
+| `rainStart.h0` | human | sparrow | calm | Rain coming in. Eyes up. | (text card) |
+| `rainStart.h1` | human | nomad | warm | Here's the rain. Keep it steady. | (text card) |
+| `rainStart.d0` | demon | nibb | excited | [cackle] Puddles! Splashy splashy! | (text card) |
+| `rainStart.d1` | demon | vexxa | teasing | [gloat] Rain on our wings. Home sweet home. | (text card) |

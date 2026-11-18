@@ -7,6 +7,7 @@ import 'dart:math' as math;
 
 import 'package:demon_attack/comms/comms_director.dart';
 import 'package:demon_attack/comms/comms_lineup.dart';
+import 'package:demon_attack/game/dive_cry.dart';
 import 'package:demon_attack/game/model.dart';
 
 /// One line as it was heard.
@@ -163,6 +164,10 @@ PacingStats simulate(
   void at(double t, GameEvent e) => scheduled.add((t, e));
   final rate = busy ? 1.0 : 3.0; // mean gaps scale up in a calm stretch
   // Dives: the model's divePrep, then the observer's late calls.
+  // fang-and-wings-comms: the observer's cry gate turns some preps into
+  // war cries (its own generators: the event stream above is unchanged).
+  final cries = DiveCryGate(seed: seed);
+  final species = math.Random(seed + 101);
   var t = 2.0;
   final diveStarts = <double>[];
   while (t < seconds) {
@@ -170,15 +175,17 @@ PacingStats simulate(
     final elite = !sentinel && rng.nextDouble() < .15;
     final tell = sentinel ? .9 : (elite ? .55 : .7);
     final diveIn = .5 + tell;
-    at(
-      t,
-      GameEvent(GameEventNames.divePrep, {
-        'lead': .5,
-        'diveIn': diveIn,
-        'sentinel': sentinel,
-        'elite': elite,
-      }),
-    );
+    final prep = <String, Object?>{
+      'lead': .5,
+      'diveIn': diveIn,
+      'sentinel': sentinel,
+      'elite': elite,
+      'kind': species.nextInt(4),
+      'maxHp': 1 + species.nextInt(4),
+    };
+    at(t, GameEvent(GameEventNames.divePrep, prep));
+    final cry = cries.consider(prep, t);
+    if (cry != null) at(t, GameEvent(GameEventNames.diveCry, cry));
     if (sentinel) {
       at(t + .5, GameEvent(GameEventNames.sentinelDive, {'diveIn': tell}));
     }

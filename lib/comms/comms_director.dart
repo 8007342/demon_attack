@@ -21,6 +21,8 @@ import 'dart:math' as math;
 import '../game/game_events.dart';
 import 'comms_bank.dart';
 import 'comms_context.dart';
+import 'comms_creed.dart';
+import 'comms_lanes.dart';
 import 'comms_lineup.dart';
 import 'comms_moments.dart';
 import 'comms_mouth.dart';
@@ -290,6 +292,10 @@ class CommsDirector {
   bool celebrating(double at) => at < celebrateUntil;
 
   final slots = List.generate(4, CommsSlot.new);
+
+  // --- portrait-comms-lanes: the compact dock's two independent lanes
+  // (humans left, brood right), kept here so they persist across frames.
+  final lanes = CommsLanes();
   final List<CommsMessage> active = [], queue = [];
   final _lastFired = <String, double>{};
   final _lastVariant = <String, int>{};
@@ -311,6 +317,20 @@ class CommsDirector {
 
   /// When the last ordinary dive call was queued.
   double _lastDiveCall = -1e9;
+
+  // --- fang-and-wings-comms: dive war cries wait for the end of the
+  // event batch, so the squad's dive call for the same dive takes its slot
+  // first; the creed's stand-ins draw from their own generator, so the
+  // line picks of everything else keep their sequence.
+  final List<(GameEvent, double)> _cries = [];
+  math.Random _creed = math.Random(1666);
+
+  /// The generator line picks use while a cry is picked ([_creed]).
+  math.Random? _pickRandom;
+
+  /// Dive war cries offered to the channel, and those that rode the plunge
+  /// (started after the dive began, behind the squad's call).
+  int cries = 0, plungeCries = 0;
 
   /// Forecast ground launches (`groundFireForecast`) whose warning is not
   /// queued yet: the channel stays clear for it ([CommsPacing.fireReserve]).
@@ -373,6 +393,7 @@ class CommsDirector {
     }
     active.clear();
     queue.clear();
+    lanes.clear();
     _lastFired.clear();
     _speakerUsed.clear();
     _signatureAt.clear();
@@ -384,6 +405,9 @@ class CommsDirector {
     _budget = pacing.burst;
     _budgetAt = now;
     _lastDiveCall = -1e9;
+    _cries.clear();
+    _creed = math.Random(1666);
+    cries = plungeCries = 0;
     expectedFire.clear();
     hushUntil = double.negativeInfinity;
     tier = 0;
@@ -426,6 +450,7 @@ class CommsDirector {
     note(event, at);
     final alias = commsEventAliases[event.name];
     if (alias != null) event = GameEvent(alias, event.data);
+    event = _creedSwap(event, at); // --- fang-and-wings-comms
     if (event.name == GameEventNames.sectorStart && event.variant != null) {
       setSector(int.tryParse(event.variant!) ?? sector, at);
     }
@@ -567,7 +592,13 @@ class CommsDirector {
     if (pacing.timed && _handleTimed(event, at)) return;
     final hint = event.data['hint'] == true;
     final h = _spec(human, event);
-    final d = hint ? null : _spec(demon, event);
+    // --- round8: weather-everywhere ⟂ fang-and-wings-comms. A smart diver
+    // riding a gust (`windDive`) may also have shouted its dive war cry: the
+    // cry is that dive's brood line, so the wind's brood boast gives way
+    // while a cry is waiting or on air (the squad's warning still plays).
+    final d = hint || (event.name == GameEventNames.windDive && _cryOnAir)
+        ? null
+        : _spec(demon, event);
     final exchange = h?.exchange ?? d?.exchange;
     if (exchange != null && h != null && d != null) {
       final demonFirst = exchange == CommsSide.demon;
@@ -583,6 +614,8 @@ class CommsDirector {
           demonFirst ? h : d,
           at,
           demon: !demonFirst,
+          // --- fang-and-wings-comms: a banter thread's own comebacks.
+          prefer: commsCreedThreads[first.line.id],
         );
         if (answer != null) {
           answer
@@ -635,13 +668,12 @@ class CommsDirector {
           final spec = human[GameEventNames.diveWarning];
           if (spec != null) call = _offerTimed(spec, at, endBy, demon: false);
         }
-        if (call != null) {
-          _lastDiveCall = now;
-          return true;
-        }
-        // Otherwise a brood battle cry, if the pacing allows it.
-        final cry = demon[GameEventNames.divePrep];
-        if (cry != null) _offerTimed(cry, at, endBy, demon: true);
+        if (call != null) _lastDiveCall = now;
+        // --- fang-and-wings-comms: the brood's battle cry for this dive
+        // arrives as its own `diveCry` (few dives cry; dive_cry.dart).
+        return true;
+      case GameEventNames.diveCry:
+        _cries.add((event, at));
         return true;
       case GameEventNames.incoming ||
           GameEventNames.reinforcements ||
@@ -791,10 +823,125 @@ class CommsDirector {
     CommsTriggerSpec spec,
     double at, {
     required bool demon,
+    List<String>? prefer,
   }) {
     if (!_admit(name, spec, at, demon)) return null;
-    final line = _pickLine(spec, demon: demon);
+    var pick = spec;
+    if (prefer != null) {
+      // Preferred answers whose speaker is on this call (or, for the
+      // squad, on this run's lineup): otherwise any answer fits.
+      final reach = {
+        ...sectorCast,
+        if (!demon) ...{...reserve, anchor},
+      };
+      final only = [
+        for (final l in spec.lines)
+          if (prefer.contains(l.id) && reach.contains(l.speaker)) l,
+      ];
+      if (only.isNotEmpty) pick = spec.copyWith(lines: only);
+    }
+    final line = _pickLine(pick, demon: demon);
     return line == null ? null : _build(spec, line, at, 0);
+  }
+
+  // --- fang-and-wings-comms ------------------------------------------------
+
+  /// [event], or the creed's stand-in for it (`commsCreedSwaps`) when its
+  /// draw comes up and its cooldown allows it.
+  GameEvent _creedSwap(GameEvent event, double at) {
+    final swaps = commsCreedSwaps[event.name];
+    if (swaps == null) return event;
+    var roll = _creed.nextDouble();
+    for (final (name, chance) in swaps) {
+      roll -= chance;
+      if (roll >= 0) continue;
+      final sides = [('h', human[name]), ('d', demon[name])];
+      if (sides.every((s) => s.$2 == null)) return event;
+      for (final (side, spec) in sides) {
+        final last = _lastFired['$side:$name'];
+        if (spec != null && last != null && at - last < spec.cooldown) {
+          return event;
+        }
+      }
+      return GameEvent(name, event.data);
+    }
+    return event;
+  }
+
+  /// Offers the dive war cries collected this batch, after the squad's own
+  /// dive calls: a brood-lane line timed to end as the dive starts, or,
+  /// when the squad's call holds that slot, one that starts right behind
+  /// it and rides the plunge (up to [commsCryAfter] after the dive starts).
+  void _flushCries() {
+    // A cry never holds back a recommendation or a warning that is waiting
+    // for the channel: it is colour, they are the point of the radio. A
+    // waiting one drops the cries not yet on air and lets no new one in.
+    if (queue.any((m) => !m.timed && m.kind.index >= CommsClass.useful.index)) {
+      queue.removeWhere(_isCry);
+      _cries.clear();
+    }
+    if (_cries.isEmpty) return;
+    final batch = [..._cries];
+    _cries.clear();
+    for (final (event, at) in batch) {
+      final spec = _spec(demon, event);
+      if (spec == null) continue;
+      final diveIn = _num(event.data['diveIn']);
+      if (diveIn == null) {
+        _offer(event.name, spec, at, demon: true);
+        continue;
+      }
+      final kind = _num(event.data['kind'])?.toInt() ?? 0;
+      final lines = commsCryLines(spec, kind);
+      final fit = lines.isEmpty ? spec : spec.copyWith(lines: lines);
+      _event = event;
+      _pickRandom = _creed;
+      try {
+        final commit = at + diveIn;
+        var m = _offerTimed(fit, at, commit, demon: true);
+        m ??= _offerPlunge(fit, at, commit);
+        if (m != null) cries++;
+      } finally {
+        _event = null;
+        _pickRandom = null;
+      }
+    }
+  }
+
+  static bool _isCry(CommsMessage m) =>
+      m.trigger.name.startsWith('${GameEventNames.diveCry}.');
+
+  /// --- round8: a dive war cry is collected, waiting or on air.
+  bool get _cryOnAir =>
+      _cries.isNotEmpty || queue.any(_isCry) || active.any(_isCry);
+
+  /// A cry that starts at the dive or right behind the call that ends on
+  /// it, at most [commsCryAfter] later; paced like flavour, but not held
+  /// for the rest after the squad's call (it answers the same moment).
+  CommsMessage? _offerPlunge(CommsTriggerSpec spec, double at, double commit) {
+    final earliest = math.max(commit, _earliest(at, (_) => true));
+    if (earliest > commit + commsCryAfter) return null;
+    bool fits(CommsLine l) =>
+        _budget >= l.duration &&
+        !_hitsFireReserve(earliest, earliest + l.duration + lineGap);
+    if (!spec.lines.any(fits)) return null;
+    if (!_admit(spec.name, spec, at, true)) return null;
+    final line = _pickLine(spec, demon: true, fits: fits);
+    if (line == null) return null;
+    final m = _build(
+      spec,
+      line,
+      at,
+      0,
+      endBy: earliest + line.duration,
+      ready: earliest,
+      expires: commit + commsCryAfter,
+    );
+    if (m == null) return null;
+    plungeCries++;
+    queue.add(m);
+    _sortQueue();
+    return m;
   }
 
   /// Queues [spec]'s line (and its chain); returns the first message.
@@ -1047,7 +1194,7 @@ class CommsDirector {
     final lastIndex = _lastVariant[spec.name + (demon ? '.d' : '.h')];
     double score(int i) {
       final speaker = spec.lines[i].speaker;
-      var s = random.nextDouble();
+      var s = (_pickRandom ?? random).nextDouble();
       if (i == lastIndex) s += 3;
       if (busy.contains(speaker)) s += 2;
       final used = _speakerUsed[speaker];
@@ -1202,6 +1349,7 @@ class CommsDirector {
     now = math.max(now, at);
     _refill();
     _retire();
+    _flushCries(); // --- fang-and-wings-comms
     if (combat &&
         !hushed &&
         now - _lastDemon > starveAfter &&
@@ -1265,8 +1413,11 @@ class CommsDirector {
     } else {
       humanAirtime += m.line.duration;
     }
-    // Must-play warnings are outside the airtime budget.
-    if (!m.mustPlay) _budget -= m.line.duration;
+    // Must-play warnings are outside the airtime budget, and so are dive
+    // war cries (fang-and-wings-comms): barks of about a second, paced by
+    // their own gate (one in flight, 8 s apart), not lines that displace
+    // the build-up calls. They still need the budget to start.
+    if (!m.mustPlay && !_isCry(m)) _budget -= m.line.duration;
     final end = m.speechEndsAt;
     _speechEnd = math.max(_speechEnd, end);
     final rest = pacing.rest + jitter.nextDouble() * pacing.restJitter;

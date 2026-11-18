@@ -23,20 +23,49 @@
      scheduled. Nothing restarts.
    - Held notes of the section being left are released over 30 ms at the move.
    - Stingers are short scores in scale degrees, transposed to the playing section's key and put on its grid.
+     A stinger with `break` (the 1UP) silences the section over its stop-time; an unknown accent plays nothing.
    - Voices: a key struck again on its track chokes its previous note; lead and bass are monophonic; at most 48
      voices (32 on phones), stealing pads first, then leads, never kick, snare or bass.
    - Loading: score.json, then each song's sections in parallel, song by song in the run's order (the overture and
      Krybor first). A move to a song still loading runs once it has loaded.
 
-   Voices are synthesis (the guaranteed-everywhere layer, §11.8 step 2). makeVoice() is the seam for the CC0 sample
-   bank (§11.4 "Loading"): a bank adds a zone lookup there and plays an AudioBufferSourceNode through the same role
-   buses; the score, the graph player and the buses stay as they are. */
+   Voices are synthesis (the guaranteed-everywhere layer, §11.8 step 2) until the CC0 sample bank plays them
+   (design §12.9). makeVoice() is the seam: with web/audio/bank/bank.json present (tools/bank/bank_build.lua), a note
+   whose zone has decoded plays an AudioBufferSourceNode (zone, playbackRate, velocity layer, round robin, loop)
+   into the same role bus, through the same voice rules and cap. The bank loads progressively after the score, one
+   Opus sprite at a time in priority order (core, then cymbals, pads, timpani and bells, then extra layers and round
+   robins), within 41 MB decoded on desktop and 16 MB on phones (the phone tier skips the sprites the bank marks
+   desktop-only). Until a note's zone decodes, the synth voice plays it. A section's track plays from the bank only
+   if the bank covers every one of its notes, so a part never changes timbre in the middle of a section. With no
+   bank.json, nothing else is fetched or created: the synth path is exactly as before.
+
+   The bank is off by default (BANK_DEFAULT) until the operator approves it (design §12.9.7): `?bank=1` (or 0) in the
+   page's URL decides for that load, else the per-device choice the /console music panel stores
+   (demonAttack.scoreBank = 'on' | 'off'), else BANK_DEFAULT. While it is off not even bank.json is fetched.
+
+   The brood choir (openspec/changes/demon-choir): a second bank, audio/bank/choir.json (tools/bank/bank_build.lua
+   --recipe art/music/bank/choir-recipe.json), joins the first while the switch is on, on desktops only. Its roles
+   (`brood` doom-choir drones, `grunt` shouts, `warcry` the dive war cries) are sampled-only: they have no synth voice,
+   so their notes sound only from decoded zones and are never scheduled while the bank is off. A stinger marked
+   `speech: yield` (the war cry) gives way while a radio line speaks (host.speaking()). */
 (() => {
   'use strict';
   const LOOKAHEAD = .25;          // seconds of score scheduled ahead of the audio clock
   const MARGIN = .03;
   const OUT_GAIN = .55;           // the score's output gain before its section trim             // a requested time closer than this to now is re-quantised
   const root = new URL('./audio/score/', document.baseURI);
+  // --- sample-bank: the switch. Flip to true once the operator approves the sampled score (design §12.9.7).
+  const BANK_DEFAULT = false;
+  const BANK_KEY = 'demonAttack.scoreBank';
+  function storage() { try { return window.localStorage || null; } catch { return null; } }
+  function bankChoice() {
+    try {
+      const q = String(window.location?.search || '').match(/[?&]bank=([^&#]*)/);
+      if (q) return q[1] === '1' || q[1] === 'on' || q[1] === 'true';
+    } catch { /* no location */ }
+    try { const v = storage()?.getItem(BANK_KEY); if (v === 'on' || v === 'off') return v === 'on'; } catch { /* denied storage */ }
+    return BANK_DEFAULT;
+  }
 
   // --- SMF type 1 with track names (the conductor track first). Notes: {beat, len, pitch, vel}, sorted by beat.
   function parseScore(buffer) {
@@ -88,6 +117,108 @@
   const scales = { minor: [0, 2, 3, 5, 7, 8, 10], major: [0, 2, 4, 5, 7, 9, 11] };
   const frequency = pitch => 440 * 2 ** ((pitch - 69) / 12);
 
+  // --- bass-tone: the sampled bass's amp chain (design §12.12; research in plan/bass-tone-research.md). The tone is
+  // data (bank.json `roles.bass.tone`, from art/music/bank/recipe.json): a fast compressor on the DI peaks, then a
+  // Linkwitz-Riley split at `split` Hz. The low band stays clean and tight (`lowEq`: the weight the DI lacks); the band above it goes through pre-EQ, a
+  // tanh drive and a cabinet of low-passes ("grind"), blended back at `grind` (re that band clean). `post` EQ on the sum. The phone tier
+  // applies `tone.phone`'s overrides (a cheaper variant). Every gain is clamped here, so a typo cannot drive the shaper
+  // past full scale (its curve saturates before ±1, so an input over ±1 only holds the saturated end).
+  const clamp = (v, lo, hi, fallback) => (Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback);
+  function toneSpec(tone, phone) {
+    if (!tone || typeof tone !== 'object') return null;
+    const t = phone && tone.phone ? { ...tone, ...tone.phone } : tone;
+    // [type, Hz, Q, dB]: a low- or high-pass Q is in dB (the spec's reading; Butterworth is -3.01), any other type's is linear.
+    const pass = type => type === 'lowpass' || type === 'highpass';
+    const eq = list => (Array.isArray(list) ? list.slice(0, 6).map(([type, f, q, db]) => [String(type), clamp(f, 20, 20000, 1000),
+      pass(type) ? clamp(q, -12, 12, -3.0103) : clamp(q, .1, 12, .7), clamp(db, -12, 12, 0)]) : []);
+    const comp = t.comp && typeof t.comp === 'object' ? { threshold: clamp(t.comp.threshold, -60, 0, -24), knee: clamp(t.comp.knee, 0, 40, 0),
+      ratio: clamp(t.comp.ratio, 1, 20, 4), attack: clamp(t.comp.attack, 0, 1, .003), release: clamp(t.comp.release, .01, 1, .12) } : null;
+    return { input: clamp(t.input, 0, 1, .2), comp, split: clamp(t.split, 40, 1000, 200), order: t.order === 2 ? 2 : 4,
+      low: clamp(t.low, 0, 2, 1), lowEq: eq(t.lowEq), pre: eq(t.pre), drive: clamp(t.drive, 1, 30, 3), bias: clamp(t.bias, -.3, .3, 0),
+      oversample: ['none', '2x', '4x'].includes(t.oversample) ? t.oversample : (phone ? '2x' : '4x'),
+      cab: eq(t.cab), grind: clamp(t.grind, 0, 2, .5), post: eq(t.post), output: clamp(t.output, 0, 16, 1) };
+  }
+  // Builds the chain on `ctx`: { input, output, stages } (stages: the meter's taps), or null without a tone.
+  function bassTone(ctx, tone, { phone = false } = {}) {
+    const t = toneSpec(tone, phone);
+    if (!t) return null;
+    const make = (factory, ...args) => (typeof ctx[factory] === 'function' ? ctx[factory](...args) : null);
+    const gain = value => { const g = ctx.createGain(); g.gain.value = value; return g; };
+    const biquad = ([type, f, q, db]) => {
+      const b = make('createBiquadFilter');
+      if (b) { b.type = type; b.frequency.value = f; b.Q.value = q; if (b.gain) b.gain.value = db; }
+      return b;
+    };
+    const series = (from, nodes) => { let at = from; for (const n of nodes) if (n) { at.connect(n); at = n; } return at; };
+    const input = gain(t.input), output = gain(t.output), sum = gain(1);
+    let head = input, comp = null;
+    if (t.comp) {
+      comp = make('createDynamicsCompressor');
+      if (comp) {
+        for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) if (comp[k]) comp[k].value = t.comp[k];
+        // The compressor always outputs stereo; the bass is mono, so fold it back (half the work downstream: Chrome
+        // 156 measured 0.84 -> 0.59 % of a core for the phone chain).
+        const fold = gain(1);
+        fold.channelCount = 1; fold.channelCountMode = 'explicit'; fold.channelInterpretation = 'speakers';
+        head = series(input, [comp, fold]);
+      }
+    }
+    // Linkwitz-Riley: two Butterworth sections per side (order 4), or one each (order 2, the second side inverted).
+    // Web Audio reads a low- or high-pass Q in dB: Butterworth (linear 0.7071) is -3.0103 dB, LR2's 0.5 is -6.0206.
+    const sections = t.order === 4 ? 2 : 1, butter = -3.0103, lr2 = -6.0206;
+    const lowGain = gain(t.order === 2 ? -t.low : t.low), grindIn = gain(1);
+    const lowEnd = series(head, [...Array.from({ length: sections }, () => biquad(['lowpass', t.split, t.order === 2 ? lr2 : butter, 0])), ...t.lowEq.map(biquad)]);
+    lowEnd.connect(lowGain); lowGain.connect(sum);
+    series(head, Array.from({ length: sections }, () => biquad(['highpass', t.split, t.order === 2 ? lr2 : butter, 0]))).connect(grindIn);
+    const shaper = make('createWaveShaper');
+    if (shaper) {
+      // Unity gain for small signals (tanh(d x) / d), so `grind` is the dirt's level re the clean band it replaces,
+      // and a hotter input only saturates: the output never passes 1 / drive.
+      const n = 2048, curve = new Float32Array(n), norm = t.drive;
+      for (let i = 0; i < n; i++) { const x = i * 2 / (n - 1) - 1; curve[i] = Math.tanh(t.drive * (x + t.bias * x * x)) / norm; }
+      shaper.curve = curve; shaper.oversample = t.oversample;
+    }
+    const preEnd = series(grindIn, t.pre.map(biquad));
+    const grindOut = gain(t.grind);
+    // A bias makes even harmonics and a DC offset: a 30 Hz high-pass after the shaper removes the DC.
+    const dc = t.bias ? biquad(['highpass', 30, butter, 0]) : null;
+    series(series(preEnd, [shaper, dc]), t.cab.map(biquad)).connect(grindOut);
+    grindOut.connect(sum);
+    series(sum, t.post.map(biquad)).connect(output);
+    // align(seconds): delays the clean band by the shaper's oversampling latency, so the two bands meet in phase at
+    // the split (Chrome 156: 128 frames at 2x, 192 at 4x; an un-delayed low band would comb near the crossover).
+    let delay = null;
+    const align = seconds => {
+      if (!(seconds > 0) || delay) return;
+      delay = make('createDelay', .05);
+      if (!delay) return;
+      delay.delayTime.value = seconds;
+      lowEnd.disconnect(); lowEnd.connect(delay); delay.connect(lowGain);
+    };
+    return { input, output, spec: t, align, stages: { input, comp, low: lowGain, grindIn, pre: preEnd, shaper, grind: grindOut, sum, output } };
+  }
+  // The engine's WaveShaper latency at an oversample setting, measured once on an impulse (an OfflineAudioContext of
+  // 1 024 frames: well under a millisecond of work). 0 where there is no OfflineAudioContext (the offline meter,
+  // whose shaper ignores oversampling) or the setting is 'none'.
+  const latencies = new Map();
+  function shaperLatency(oversample, rate) {
+    const Offline = typeof window !== 'undefined' ? window.OfflineAudioContext || window.webkitOfflineAudioContext : null;
+    if (oversample === 'none' || typeof Offline !== 'function') return Promise.resolve(0);
+    const key = `${oversample}@${rate}`;
+    if (!latencies.has(key)) latencies.set(key, (async () => {
+      const c = new Offline(1, 1024, rate), b = c.createBuffer(1, 1024, rate);
+      b.getChannelData(0)[0] = .5;
+      const s = c.createBufferSource(), w = c.createWaveShaper(), n = 1025, line = new Float32Array(n);
+      for (let i = 0; i < n; i++) line[i] = i * 2 / (n - 1) - 1;
+      w.curve = line; w.oversample = oversample; s.buffer = b; s.connect(w); w.connect(c.destination); s.start(0);
+      const d = (await c.startRendering()).getChannelData(0);
+      let at = 0;
+      for (let i = 1; i < d.length; i++) if (Math.abs(d[i]) > Math.abs(d[at])) at = i;
+      return at / rate;
+    })().catch(() => 0));
+    return latencies.get(key);
+  }
+
   function create(host) {
     // host: { input(), lifeLoss: [names] }
     let manifest = null, failed = false, context = null, out = null, wanted = null, loadError = null, fx = null;
@@ -95,11 +226,13 @@
     let current = null;            // { id, song, section, startAt, entry, spec, data, songSpec }
     let pending = null;            // a section move { at, song, section, enter, reason }
     let maskEvents = [];           // [{ at, tier?, variant?, fleet?, power? }] in time order
+    let breaks = [];               // stop-times of a stinger's `break`: [{ from, to }] (the section's own notes rest)
     const mask = { tier: 1, variant: 'v1', fleet: false, power: 0 };
     let audible = new Set();
     let scheduledUntil = 0, segment = 0, slipped = 0, stolen = 0;
     const voices = new Set(), moveLog = [], stingLog = [], lastSting = new Map();
     const trackGains = new Map(), buses = {};
+    let bassPost = null, toneGraph = null;   // bass-tone: the sampled bass's chain, once the bank brings one
     const cap = phoneClass() ? 32 : 48;
 
     function phoneClass() {
@@ -114,7 +247,7 @@
       const family = id => (map.songs[id]?.form === 'carrier' ? 'c' : id);
       const order = [];
       const add = id => { if (id && map.songs[id] && !order.includes(id)) order.push(id); };
-      for (const scene of ['menu', 'gameover']) add(map.scenes?.[scene]?.split(':')[0]);
+      for (const scene of ['menu', 'credits', 'gameover']) add(map.scenes?.[scene]?.split(':')[0]); // credits-page: the title's CREDITS song early
       for (const play of map.plays || []) {
         for (const [pair, bridge] of Object.entries(map.bridges || {})) if (pair.split('>')[1] === family(play.song)) add(bridge);
         add(play.song);
@@ -133,15 +266,32 @@
     // --- mix-retune: per-section level trims (dB), generated by tools/mix_meter/trim.mjs into mix-trim.json. Keys
     // are `song:section@tier` (sections that follow the tier masks) or `song:section` (fixed-mask sections). A missing
     // file or key is 0 dB: the score plays as written.
-    let trims = null, trimDb = 0;
+    // With the bank on, the trims measured on the sampled score (mix-trim.json `bank`), when the file has them.
+    let trimFile = null, trims = null, trimDb = 0;
+    const pickTrims = () => { trims = (bankOn && trimFile?.bank?.trims) || trimFile?.trims || null; };
     const trimFetch = Promise.resolve().then(() => fetch(new URL('mix-trim.json', root)))
       .then(r => (r.ok ? r.json() : null)).catch(() => null);
+    // --- score-sampler: the CC0 sample bank (design §12.9). bank.json is tiny; the sprites load after attach().
+    // --- sample-bank: only when the switch is on (host.bank overrides it, for tests and the meter).
+    let bankOn = typeof host?.bank === 'boolean' ? host.bank : bankChoice();
+    const bankRoot = new URL('./audio/bank/', document.baseURI);
+    let bankFetch = null;
+    // --- demon-choir: choir.json is fetched beside bank.json (desktops only: the choir has no phone tier) and joins it.
+    const bankJson = name => Promise.resolve().then(() => fetch(new URL(name, bankRoot)))
+      .then(r => (r.ok ? r.json() : null)).catch(() => null);
+    const bankSpec = () => (bankFetch ||= Promise.all([bankJson('bank.json'), phoneClass() ? null : bankJson('choir.json')])
+      .then(([main, choir]) => joinBanks(main, choir)));
+    if (bankOn) bankSpec();
+    let bank = null, bankLoading = null;
+    const bankState = { present: false, tier: null, sprites: 0, loaded: 0, skipped: 0, failedSprites: 0, decodedBytes: 0, budget: 0,
+      zones: 0, ready: 0, sampled: 0, synth: 0, error: null, tone: null };
     const loading = (async () => {
       try {
         const response = await fetch(new URL('score.json', root));
         if (!response.ok) throw new Error('score unavailable');
         const map = await response.json();
-        trims = (await trimFetch)?.trims || null;
+        trimFile = await trimFetch;
+        pickTrims();
         for (const id of loadOrder(map)) {
           await loadSong(id, map.songs[id]);
           if (!manifest) manifest = map;   // ready once the first song is parsed
@@ -196,9 +346,11 @@
       for (const [name, gain] of trackGains) {
         const on = next.has(name), was = audible.has(name);
         if (on === was) continue;
-        gain.gain.cancelScheduledValues?.(at);
-        gain.gain.setValueAtTime(on ? 0 : 1, at);
-        gain.gain.linearRampToValueAtTime(on ? 1 : 0, at + (on ? .02 : .06));
+        for (const g of gain.sampled ? [gain, gain.sampled] : [gain]) {
+          g.gain.cancelScheduledValues?.(at);
+          g.gain.setValueAtTime(on ? 0 : 1, at);
+          g.gain.linearRampToValueAtTime(on ? 1 : 0, at + (on ? .02 : .06));
+        }
       }
       audible = next;
     }
@@ -213,15 +365,26 @@
       out.gain.cancelScheduledValues?.(at);
       out.gain.setTargetAtTime(OUT_GAIN * 10 ** (db / 20), at, TRIM_GLIDE);
     }
+    // --- bank-fidelity: a role whose synth bus distorts (the bass's drive) gets a twin gain into its clean bus for
+    // sampled voices (`sampled`), masked together with the track's gain (design §12.11).
     function trackGain(name) {
       let gain = trackGains.get(name);
       if (!gain) {
+        const role = manifest.tracks[name]?.role || 'lead';
         gain = context.createGain();
         gain.gain.value = 1;
-        gain.connect(bus(manifest.tracks[name]?.role || 'lead'));
+        gain.connect(bus(role));
+        gain.sampled = sampledInput(role, 1);
         trackGains.set(name, gain);
       }
       return gain;
+    }
+    function sampledInput(role, value) {
+      const clean = buses[sampledBus[roleBus[role]]];
+      if (!clean) return null;
+      const g = gainNode(value);
+      g.connect(clean);
+      return g;
     }
 
     // --- the bus graph: per role, into the music chain (host.input(): demon-audio's music bus input) ----------
@@ -282,6 +445,13 @@
       // Bass: light drive, then a low-pass blend.
       buses.bass = gainNode(.8);
       chain(buses.bass, shaper(1.6, .08), filter('lowpass', 2800, .8), gainNode(.9), out);
+      // --- bank-fidelity: the sampled bass skips the drive. Growlybass is a DI recording, and its role level (3.7, to
+      // match the synth's loudness) drove this shaper three times hotter than the synth does: THD+N -7.6 dB across the
+      // stage, against the synth's -22.6 dB (design §12.11). Its own bus has the same gains; the bank brings its
+      // amp chain (bass-tone, design §12.12: installTone()), with every stage bounded below the old drive.
+      buses.bassSampled = gainNode(.8);
+      bassPost = gainNode(.9);
+      chain(buses.bassSampled, bassPost, out);
       // Guitars: pre-EQ -> two gain stages through tanh shapers -> a cabinet of filters (high-pass 80 Hz, a notch
       // near 400 Hz, presence at 2-3 kHz, low-pass 5.5 kHz) -> left and right doubles with different curves.
       const guitar = (side, drive, bias, presence) => {
@@ -311,10 +481,27 @@
       buses.clean = gainNode(.5); buses.clean.connect(out); send(buses.clean, .35);
       buses.perc = gainNode(.7); buses.perc.connect(out); send(buses.perc, .3);
       buses.sting = gainNode(1);
+      // demon-choir: the grunts and war cries, dry and close with a little of the room (the brood drones use the pads').
+      buses.voice = gainNode(.8); buses.voice.connect(out); send(buses.voice, .18);
     }
     const roleBus = { drums: 'drums', bass: 'bass', guitarL: 'guitarL', guitarR: 'guitarR', lead: 'lead', clean: 'clean',
-      organ: 'pad', strings: 'pad', brass: 'pad', choir: 'pad', timpani: 'perc', bells: 'perc', uke: 'clean' };
+      organ: 'pad', strings: 'pad', brass: 'pad', choir: 'pad', timpani: 'perc', bells: 'perc', uke: 'clean',
+      brood: 'pad', grunt: 'voice', warcry: 'voice' };
     function bus(role) { return buses[roleBus[role] || 'pad']; }
+    const sampledBus = { bass: 'bassSampled' };
+
+    // --- demon-choir: the brood choir's roles have no synth voice: they sound only from decoded bank zones.
+    const SAMPLED_ONLY = new Set(['brood', 'grunt', 'warcry']);
+    const sampledOnly = role => SAMPLED_ONLY.has(role);
+    // The first bank plus the choir's: instruments tried after the first bank's, roles, zones and sprites appended,
+    // the decoded budgets added. No bank.json: no bank at all (the choir never plays alone).
+    function joinBanks(main, choir) {
+      if (!main || !choir) return main;
+      const budgets = { ...(main.budgets || {}) };
+      for (const k of ['decodedDesktop', 'decodedPhone', 'opusBytes']) if (choir.budgets?.[k] != null) budgets[k] = (budgets[k] ?? 0) + choir.budgets[k];
+      return { ...main, budgets, roles: { ...main.roles, ...choir.roles }, instruments: [...main.instruments, ...choir.instruments],
+        sprites: [...main.sprites, ...choir.sprites], zones: [...main.zones, ...choir.zones], choir: true };
+    }
 
     // --- voices -------------------------------------------------------------------------------------------------
     let noise = null;
@@ -371,8 +558,17 @@
       return off + release * 2;
     }
     const tomHz = { 41: 82, 43: 98, 45: 116, 47: 134, 48: 156, 50: 182 };
-    // The seam for the sample bank: role, pitch, velocity -> a voice into `dest`. Synthesis today.
-    function makeVoice(role, pitch, vel, at, dur, dest) {
+    // The seam for the sample bank: role, pitch, velocity -> a voice into `dest`. A bank zone when the note's track
+    // may sample (`sample`) and its zone has decoded, else synthesis.
+    function makeVoice(role, pitch, vel, at, dur, dest, sample = true) {
+      if (bankOn && bank && sample) {
+        const voice = sampleVoice(role, pitch, vel, at, dur, dest);
+        if (voice) return voice;
+      }
+      if (sampledOnly(role)) return null;   // demon-choir: no synth voice; the note rests until its zone decodes
+      return synthVoice(role, pitch, vel, at, dur, dest);
+    }
+    function synthVoice(role, pitch, vel, at, dur, dest) {
       const v = vel / 127, frame = voiceFrame(dest, at);
       let end;
       const f = frequency(pitch);
@@ -510,8 +706,152 @@
       for (const s of frame.sources) { s.start(at); try { s.stop(end + .02); } catch { /* already stopped */ } }
       return { ...frame, end };
     }
-    const priority = role => (role === 'organ' || role === 'strings' || role === 'brass' || role === 'choir') ? 0
-      : (role === 'lead' || role === 'clean' || role === 'bells' || role === 'uke') ? 1 : role === 'bass' ? 3 : 2;
+    // --- score-sampler: zones -----------------------------------------------------------------------------------
+    // bank.json (tools/bank/bank_build.lua): instruments in the order they are tried, each with roles and an optional
+    // `when` (velMax, durMax in seconds); zones with a sprite, offset and length (s), root and key range (pitched) or
+    // keys (drums), a velocity range, a round robin, a loop (s from the zone's start) and a gain. The device's tier:
+    // every sprite on desktop, the sprites marked `phone` on phones.
+    function prepareBank(spec) {
+      const phone = phoneClass(), tierZones = spec.zones.filter(z => !phone || z.phone);
+      const instruments = spec.instruments.map(inst => ({ ...inst, byPitch: new Map() }));
+      const byId = new Map(instruments.map(inst => [inst.id, inst]));
+      for (const z of tierZones) {
+        const inst = byId.get(z.inst);
+        if (!inst) continue;
+        const keys = z.keys || Array.from({ length: z.hi - z.lo + 1 }, (_, i) => z.lo + i);
+        for (const k of keys) { if (!inst.byPitch.has(k)) inst.byPitch.set(k, []); inst.byPitch.get(k).push(z); }
+      }
+      const sprites = spec.sprites.filter(s => !phone || s.phone);
+      const budget = phone ? spec.budgets?.decodedPhone ?? 16e6 : spec.budgets?.decodedDesktop ?? 41e6;
+      Object.assign(bankState, { present: true, tier: phone ? 'phone' : 'desktop', sprites: sprites.length, budget, zones: tierZones.length });
+      return { spec, roles: spec.roles || {}, instruments, sprites, buffers: new Map(), rr: new Map(), coverage: new Map() };
+    }
+    // The instrument that plays a note (plan only: decode state does not matter): the first whose role, `when` and
+    // zones (every chord tone of guitar parts) fit.
+    function instrumentFor(role, pitch, vel, seconds) {
+      const tones = role === 'drums' ? [0] : bank.roles[role]?.chord || [0];
+      for (const inst of bank.instruments) {
+        if (!inst.roles.includes(role)) continue;
+        const w = inst.when;
+        if (w && ((w.velMax != null && vel > w.velMax) || (w.durMax != null && seconds > w.durMax))) continue;
+        if (tones.every(t => inst.byPitch.has(pitch + t))) return inst;
+      }
+      return null;
+    }
+    // Whether a section's track plays from the bank: only if the bank covers all its notes (one timbre per part).
+    function trackSampled(seg, name, role, notes, bs) {
+      const key = `${seg.song}/${seg.section}/${name}`;
+      let ok = bank.coverage.get(key);
+      if (ok === undefined) {
+        ok = !!bank.roles[role] && notes.every(n => instrumentFor(role, n.pitch, n.vel, n.len * bs));
+        bank.coverage.set(key, ok);
+      }
+      return ok;
+    }
+    // A decoded zone of `inst` for pitch and velocity: the velocity layer that contains it (else the nearest one
+    // decoded), cycling its round robins.
+    function zoneFor(inst, pitch, vel) {
+      const list = inst.byPitch.get(pitch);
+      if (!list) return null;
+      let best = null, bestDistance = Infinity;
+      for (const z of list) {
+        if (!bank.buffers.has(z.sprite)) continue;
+        const distance = vel < z.vlo ? z.vlo - vel : vel > z.vhi ? vel - z.vhi : 0;
+        if (distance < bestDistance) { best = z; bestDistance = distance; }
+      }
+      if (!best) return null;
+      const layer = list.filter(z => bank.buffers.has(z.sprite) && z.vlo === best.vlo && z.vhi === best.vhi && (z.root ?? z.keys?.[0]) === (best.root ?? best.keys?.[0]));
+      if (layer.length < 2) return best;
+      const key = `${inst.id}:${best.root ?? best.keys[0]}:${best.vlo}`, n = bank.rr.get(key) || 0;
+      bank.rr.set(key, n + 1);
+      return layer[n % layer.length];
+    }
+    // A sampled voice, or null (no instrument, or a tone's zone not decoded yet: the synth plays the note).
+    function sampleVoice(role, pitch, vel, at, dur, dest) {
+      const inst = instrumentFor(role, pitch, vel, dur);
+      if (!inst) return null;
+      const spec = bank.roles[role] || {}, tones = role === 'drums' ? [0] : spec.chord || [0];
+      const zones = [];
+      for (const t of tones) {
+        const z = zoneFor(inst, pitch + t, vel);
+        if (!z) { bankState.synth++; return null; }
+        zones.push(z);
+      }
+      bankState.sampled++;
+      const v = vel / 127, frame = voiceFrame(dest.sampled || dest, at);
+      // Palm-muted guitar (velocity <= 92) keeps the synth's darker pre-amp colour; the staccato zones damp it.
+      const input = (role === 'guitarL' || role === 'guitarR') && vel <= 92 ? perNoteFilter(frame, 'lowpass', 1800, .9) : frame.env;
+      let stopAt = Infinity, looped = false;
+      zones.forEach((z, i) => {
+        const buffer = bank.buffers.get(z.sprite), src = context.createBufferSource();
+        const cents = (spec.cents || 0) * (i % 2 ? -1 : 1);
+        const rate = z.keys ? 1 : 2 ** ((pitch + tones[i] - z.root) / 12 + cents / 1200);
+        src.buffer = buffer;
+        src.playbackRate.value = rate;
+        src.connect(input);
+        frame.sources.push(src);
+        src.zone = z;
+        if (z.loop && z.art === 'sus') {
+          src.loop = true; src.loopStart = z.offset + z.loop[0]; src.loopEnd = z.offset + z.loop[1]; looped = true;
+        } else stopAt = Math.min(stopAt, at + z.length / rate);
+      });
+      const level = (spec.level ?? .5) * 10 ** ((zones[0].gainDb || 0) / 20) * (.35 + .65 * v);
+      const g = frame.env.gain;
+      g.setValueAtTime(level, at);
+      let end;
+      if (inst.art === 'hit') end = stopAt;
+      else {
+        const release = zones[0].release ?? .06, off = at + Math.max(.005, dur);
+        g.setTargetAtTime(0, off, release / 3);
+        end = Math.min(off + release * 2, looped ? Infinity : stopAt);
+      }
+      for (const s of frame.sources) {
+        const z = s.zone;
+        s.start(at, z.offset, s.loop ? undefined : z.length);
+        try { s.stop(end + .005); } catch { /* already stopped */ }
+      }
+      return { ...frame, end, sampled: true };
+    }
+    // --- bass-tone: the sampled bass bus gets its amp chain (design §12.12) when the bank is prepared, before any
+    // sampled note can play. The synth's buses never change, and with the bank off this never runs.
+    function installTone(tone) {
+      if (toneGraph || !buses.bassSampled || !bassPost) return;
+      const graph = bassTone(context, tone, { phone: phoneClass() });
+      if (!graph) return;
+      buses.bassSampled.disconnect();
+      buses.bassSampled.connect(graph.input);
+      graph.output.connect(bassPost);
+      toneGraph = graph;
+      shaperLatency(graph.spec.oversample, context.sampleRate || 48000).then(graph.align);
+      bankState.tone = tone.name || 'tone';
+    }
+    // Progressive loading: one sprite at a time in bank.json's order (fetch, decode), within the tier's decoded budget.
+    async function loadBank() {
+      const spec = await bankSpec();
+      if (!spec || !context || failed) return;
+      if (typeof context.decodeAudioData !== 'function') { bankState.error = 'no decodeAudioData'; return; }
+      try { bank = prepareBank(spec); } catch (error) { bankState.error = String(error?.message || error); bank = null; return; }
+      installTone(spec.roles?.bass?.tone);
+      for (const sprite of bank.sprites) {
+        if (bankState.decodedBytes + sprite.decodedBytes > bankState.budget) { bankState.skipped++; continue; }
+        try {
+          const res = await fetch(new URL(sprite.file, bankRoot));
+          if (!res.ok) throw new Error(`${sprite.file} unavailable`);
+          const bytes = await res.arrayBuffer();
+          // Safari before 18.4 cannot decode Opus: the sprite fails and its notes stay synthesized (design §11.8).
+          const buffer = await new Promise((resolve, reject) => {
+            const p = context.decodeAudioData(bytes, resolve, reject);
+            if (p && typeof p.then === 'function') p.then(resolve, reject);
+          });
+          bank.buffers.set(sprite.file, buffer);
+          bankState.loaded++;
+          bankState.decodedBytes += buffer.length * buffer.numberOfChannels * 4;
+          bankState.ready = bank.spec.zones.filter(z => bank.buffers.has(z.sprite)).length;
+        } catch (error) { bankState.failedSprites++; bankState.error = String(error?.message || error); }
+      }
+    }
+    const priority = role => (role === 'organ' || role === 'strings' || role === 'brass' || role === 'choir' || role === 'brood') ? 0
+      : (role === 'lead' || role === 'clean' || role === 'bells' || role === 'uke' || role === 'grunt' || role === 'warcry') ? 1 : role === 'bass' ? 3 : 2;
     const mono = role => role === 'lead' || role === 'bass';
     function releaseVoice(entry, at, seconds = .03) {
       if (entry.released) return;
@@ -527,9 +867,10 @@
       for (const s of entry.sources) { try { s.stop(at + seconds * 1.5 + .01); } catch { /* stopped */ } }
       entry.end = Math.min(entry.end, at + seconds * 1.5);
     }
-    function play(trackName, role, pitch, vel, at, dur, dest, seg) {
+    function play(trackName, role, pitch, vel, at, dur, dest, seg, sample = true) {
       const now = context.currentTime;
       if (at < now - .01) return null;
+      if (sampledOnly(role) && !(bankOn && bank && sample)) return null;   // demon-choir: silent without the bank
       const isKickSnare = role === 'drums' && (pitch === 35 || pitch === 36 || pitch === 38 || pitch === 40);
       // Choke and mono rules, then the cap.
       let sounding = 0, victim = null;
@@ -541,8 +882,9 @@
           if (v.priority < 3 && !v.kickSnare && (!victim || v.priority < victim.priority || (v.priority === victim.priority && v.at < victim.at))) victim = v;
         }
       }
+      const voice = makeVoice(role, pitch, vel, at, dur, dest, sample);
+      if (!voice) return null;   // a sampled-only note whose zone has not decoded: it rests, and steals nothing
       if (sounding >= cap && victim) { releaseVoice(victim, at, .02); stolen++; }
-      const voice = makeVoice(role, pitch, vel, at, dur, dest);
       const entry = { ...voice, track: trackName, pitch, at, priority: isKickSnare ? 3 : priority(role), kickSnare: isKickSnare, dest, seg };
       voices.add(entry);
       const last = voice.sources[voice.sources.length - 1];
@@ -569,9 +911,12 @@
           if (!audible.has(name)) continue;
           const role = manifest.tracks[name]?.role || 'lead';
           const dest = trackGain(name);
+          const sample = bankOn && !!bank && trackSampled(seg, name, role, notes, bs);
+          if (!sample && sampledOnly(role)) continue;   // demon-choir: a brood or grunt track rests without its zones
           for (let i = lowerBound(notes, local); i < notes.length && notes[i].beat < local + take - 1e-9; i++) {
             const n = notes[i];
-            play(name, role, n.pitch, n.vel, origin + n.beat * bs, n.len * bs, dest, seg.id);
+            if (breaks.length && resting(origin + n.beat * bs)) continue;
+            play(name, role, n.pitch, n.vel, origin + n.beat * bs, n.len * bs, dest, seg.id, sample);
           }
         }
         g0 += take;
@@ -689,8 +1034,20 @@
       fx.stereo.gain.setTargetAtTime(on ? 0 : 1, at, glide / 3);
       fx.mono.gain.setTargetAtTime(on ? 1 : 0, at, glide / 3);
     }
-    // Stingers: the accent's score in the playing section's key, on its grid.
-    function accent(name) {
+    // --- bonus-music: a stinger's `break` [from, to] (beats from its anchor) is a stop-time. The playing section's
+    // notes that would sound in it are released at `from` (60 ms) or never start, and none is scheduled inside it;
+    // the section's grid runs on, so the band comes back on the line at `to`.
+    function resting(t) { return breaks.some(b => t >= b.from - 1e-6 && t < b.to - 1e-6); }
+    function rest(from, to) {
+      const now = context.currentTime;
+      breaks = breaks.filter(b => b.to > now);
+      breaks.push({ from, to });
+      for (const v of voices) if (current && v.seg === current.id && !v.released && v.end > from) releaseVoice(v, Math.max(from, v.at), .06);
+    }
+    // Stingers: the accent's score in the playing section's key, on its grid. An unknown name plays nothing (null).
+    // --- round8: `inSeconds` (optional) lands the stinger on a moment, e.g. a dive war cry's dive start: on the
+    // stinger's grid line nearest it within 0.3 s, else at `fallbackIn` (the tell), never before now + MARGIN.
+    function accent(name, inSeconds, fallbackIn) {
       if (!ready() || !current) return null;
       const stingName = manifest.accents[name];
       const sting = stingName && manifest.stingers[stingName];
@@ -698,16 +1055,24 @@
       const now = context.currentTime, bs = beatSeconds(current.song);
       const last = lastSting.get(stingName) ?? -Infinity;
       if (now - last < (sting.spacing || 1) * bs) return null;
+      // --- demon-choir: a stinger of sampled-only tracks needs the bank; one marked `speech: yield` gives way to a
+      // radio line (the radio outranks the music's war cries: mix-balance's speech duck is holding).
+      if (sting.notes.every(n => sampledOnly(manifest.tracks[n.track]?.role)) && !(bankOn && bank)) return null;
+      if (sting.speech === 'yield' && host.speaking?.()) return null;
       const lifeLoss = host.lifeLoss?.includes(name);
       const live = stingLog.filter(s => s.end > now).length;
-      if (live >= 2 && !lifeLoss) return null;
+      if (live >= 2 && !lifeLoss && !sting.always) return null;
       const lead = Math.min(0, ...sting.notes.map(n => n.t));
       const earliest = now + MARGIN - lead * bs;
-      const g = segBeat(current, earliest);
-      const anchor = segTime(current, Math.ceil(g / sting.quantum - 1e-9) * sting.quantum);
+      let anchor = segTime(current, Math.ceil(segBeat(current, earliest) / sting.quantum - 1e-9) * sting.quantum);
+      if (Number.isFinite(inSeconds)) {
+        const want = now + inSeconds, snap = segTime(current, Math.round(segBeat(current, want) / sting.quantum) * sting.quantum);
+        anchor = Math.abs(snap - want) <= .3 && snap >= earliest ? snap : Math.max(earliest, now + (Number.isFinite(fallbackIn) ? fallbackIn : inSeconds));
+      }
       const tonic = current.spec.tonic ?? current.songSpec.tonic, mode = current.spec.mode ?? current.songSpec.mode;
       const scale = scales[mode] || scales.minor;
       let end = anchor;
+      if (sting.break) rest(anchor + sting.break[0] * bs, anchor + sting.break[1] * bs);
       for (const n of sting.notes) {
         const role = manifest.tracks[n.track]?.role || 'lead';
         let pitch = n.drum;
@@ -716,7 +1081,7 @@
           pitch = 12 * ((n.oct ?? 4) + 1) + tonic + step;
         }
         const at = anchor + n.t * bs;
-        play(`sting:${n.track}`, role, pitch, n.v, at, n.len * bs, stingInput(role), 0);
+        play(`sting:${n.track}`, role, pitch, n.v, at, n.len * bs, stingInput(role), 0, true);
         end = Math.max(end, at + n.len * bs);
       }
       lastSting.set(stingName, now);
@@ -727,7 +1092,7 @@
     const stingInputs = new Map();
     function stingInput(role) {
       let g = stingInputs.get(role);
-      if (!g) { g = gainNode(.9); g.connect(bus(role)); stingInputs.set(role, g); }
+      if (!g) { g = gainNode(.9); g.connect(bus(role)); g.sampled = sampledInput(role, .9); stingInputs.set(role, g); }
       return g;
     }
     function attach(ctx) {
@@ -736,6 +1101,22 @@
       buildBuses();
       scheduledUntil = context.currentTime;
       flushWanted();
+      // The bank after the score: the music never waits for it.
+      if (bankOn) startBank();
+    }
+    function startBank() {
+      if (!bankLoading && context) bankLoading = loading.then(loadBank).catch(error => { bankState.error = String(error?.message || error); });
+    }
+    // --- sample-bank: the /console switch. Stores the choice on this device and applies from the next scheduled
+    // notes (a part already sounding keeps its voices). Switching off keeps the decoded sprites until the page
+    // reloads, so an A/B is instant; a page that never switches on never fetches the bank.
+    function setBank(on) {
+      bankOn = !!on;
+      try { storage()?.setItem(BANK_KEY, bankOn ? 'on' : 'off'); } catch { /* private mode */ }
+      pickTrims();
+      if (bankOn) { bankSpec(); startBank(); }
+      applyTrim(Math.max(scheduledUntil, context?.currentTime ?? 0));
+      return bankOn;
     }
     // The power-up layer (ride and double kick) follows the active powers on the next bar line.
     function power(active) {
@@ -749,7 +1130,11 @@
     }
     function nextBar(after) { return current && context ? nextLine(current, Math.max(after, scheduledUntil), 4) : after; }
     return {
-      attach, tick, move, accent, power, nextBar, loading, parseScore,
+      attach, tick, move, accent, power, nextBar, loading, parseScore, setBank,
+      get toneGraph() { return toneGraph; },   // bass-tone: the meter's taps (tools/mix_meter/bass_tone.mjs)
+      get bankOn() { return bankOn; },
+      // Resolves once the bank's sprites for this device have loaded (or immediately when there is no bank or it is off).
+      get bankLoading() { return bankLoading || (bankOn ? bankSpec().then(() => undefined) : Promise.resolve()); },
       get playing() { return !!(pending || current || wanted); },
       get time() { return context?.currentTime ?? -1; },
       // The playing section and the time of its beat 0 (its bar lines are start + k bars): SongDirector's sync.
@@ -765,9 +1150,13 @@
           // Sounding now (scheduled voices that have not started yet are not counted).
           voices: [...voices].filter(v => !v.released && v.at <= now && v.end > now).length,
           scheduled: [...voices].filter(v => !v.released && v.end > now).length, cap, stolen, slipped, scheduledUntil,
-          moves: moveLog.slice(), stingers: stingLog.slice() };
+          moves: moveLog.slice(), stingers: stingLog.slice(),
+          // The sample bank (design §12.9): absent, loading or loaded; notes sampled and notes the synth played while
+          // their zone was not decoded yet.
+          bankLoaded: bankState.present && bankState.loaded + bankState.skipped + bankState.failedSprites >= bankState.sprites && bankState.loaded > 0,
+          bankDecodedBytes: bankState.decodedBytes, bankOn, bank: { ...bankState, enabled: bankOn, choir: !!bank?.spec?.choir } };
       },
     };
   }
-  window.demonScore = Object.freeze({ create, parseScore, LOOKAHEAD });
+  window.demonScore = Object.freeze({ create, parseScore, LOOKAHEAD, bassTone, toneSpec, shaperLatency });
 })();

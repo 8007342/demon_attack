@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'game/atmosphere.dart' show AtmosphereQuality;
+import 'game/bonus/challenge_badge.dart'; // --- bonus challenges
 import 'game/model.dart';
 import 'widgets/flight_joystick.dart';
 import 'widgets/pilot_console_content.dart';
@@ -35,7 +36,10 @@ import 'widgets/interlude_card.dart'
     show TipInterludeCard; // --- cinematic flow
 import 'game/hints.dart' show tacticalHints; // --- cinematic flow: pause tips
 import 'widgets/level_toggle.dart'; // --- audio round: music / speech toggles
+import 'game/reduced_effects.dart'; // --- reduced-effects
+import 'widgets/reduced_effects_toggle.dart'; // --- reduced-effects
 import 'widgets/install_toast.dart'; // --- pwa-install
+import 'widgets/build_version_label.dart'; // --- build-version
 export 'widgets/dev_console.dart' show ConsoleStart, isConsoleRoute;
 // --- end console route
 export 'game/scene.dart' show DemonScene;
@@ -121,6 +125,8 @@ class DemonAttackApp extends StatelessWidget {
         ),
       ),
     ),
+    // --- reduced-effects: the setting resolves every route's reduced motion.
+    builder: (_, child) => ReducedEffectsScope(child: child!),
     // --- console route
     initialRoute: initialRoute,
     onGenerateInitialRoutes: (name) => [_appRoute(RouteSettings(name: name))],
@@ -201,6 +207,23 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     key: const ValueKey('atmosphere-quality'),
     onPressed: _toggleAtmosphere,
     child: Text('ATMOSPHERE: ${scene.atmosphere.quality.label}'),
+  );
+
+  // --- reduced-effects: Auto (the system's reduced motion), On or Off;
+  // remembered per device. Rendering only (never the model).
+  void _setReducedEffects(ReducedEffectsMode next) {
+    setState(() => ReducedEffects.set(next));
+    try {
+      storage.store.write(ReducedEffects.storageKey, next.name);
+    } catch (_) {}
+  }
+
+  Widget _reducedEffectsToggle(String where) => ReducedEffectsToggle(
+    key: ValueKey('$where-reduced-effects'),
+    system: scene.sectors.flyover.systemReducedMotion,
+    lowPower: scene.perf.lowPower,
+    onChanged: _setReducedEffects,
+    compact: where == 'menu',
   );
   void _resetComms({bool resume = false}) {
     transitions.newRun(squadComms, voice: voiceOn); // --- fluid transitions
@@ -349,6 +372,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
         storage.store.read(_atmosphereKey),
       );
     } catch (_) {}
+    // --- reduced-effects: the remembered choice (Auto when none).
+    try {
+      ReducedEffects.set(
+        ReducedEffectsMode.parse(storage.store.read(ReducedEffects.storageKey)),
+      );
+    } catch (_) {}
     // --- audio round: the remembered levels
     musicLevel = AudioLevel.parse(audioLevel('music'));
     speechLevel = AudioLevel.parse(audioLevel('speech'));
@@ -471,6 +500,9 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
           heartNotice = 'HEART ASSEMBLED · +1UP';
           heartNoticeUntil = model.clock + 1.6;
           audioSfx('extraLife');
+        // --- bonus challenges: the 1UP's fanfare (the HUD pip bursts).
+        case 'bonusOneUp':
+          audioSfx('extraLife');
         case 'checkpoint':
           // A console run never replaces the player's saved run.
           if (model.ranked) {
@@ -561,7 +593,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
     commsStopAll();
     audioUnlock();
     audioResume();
-    _musicCue('ending', 5, 1, model.cycle);
+    // --- credits-page: the title's CREDITS play the credits song.
+    _musicCue(creditsOnly ? 'credits' : 'ending', 5, 1, model.cycle);
     // --- cinematic flow (design §4.1): the ending fades up from the cloud
     // tops over the climbing ship: a crossfade between two lit scenes,
     // never through black (a cut with reduced motion).
@@ -961,6 +994,8 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       !(screen != null &&
                           WidescreenBackdrop.shows(bounds.biggest)))
                     _titleScreen(bounds),
+                  // --- build-version: the deploy's version, small, bottom left.
+                  if (title) const BuildVersionCorner(),
                   if (!title)
                     Center(
                       child: SizedBox(
@@ -1153,6 +1188,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
             ),
             _musicToggle('menu'),
             _speechToggle('menu'),
+            _reducedEffectsToggle('menu'), // --- reduced-effects
           ],
         ),
       ),
@@ -1615,6 +1651,20 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  // --- bonus challenges: the level's 1UP pip.
+                  if (model.bonusChallenge case final c?) ...[
+                    const SizedBox(width: 7),
+                    ChallengeBadge(
+                      key: const ValueKey('hud-challenge'),
+                      challenge: c.def,
+                      status: c.status,
+                      age: c.changedAt == null
+                          ? null
+                          : model.clock - c.changedAt!,
+                      time: model.clock,
+                      height: 16,
+                    ),
+                  ],
                   if (model.difficulty != Difficulty.hard) ...[
                     const SizedBox(width: 7),
                     HeartInventory(
@@ -1765,7 +1815,12 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                           hideTransmission: false,
                           // --- bonus briefing: the urgent-mission card
                           // heads the dock and ends above the ship row.
-                          hide: transitions.briefingHidden(squadComms),
+                          // --- portrait-comms-lanes: and the transition
+                          // chatter's lines show over the clouds instead.
+                          hide: {
+                            ...transitions.briefingHidden(squadComms),
+                            ...transitions.chatterHidden(squadComms),
+                          },
                           banner: transitions.briefingVisible(squadComms)
                               ? _briefingCard(
                                   shipRowTop(area.biggest) -
@@ -1810,10 +1865,13 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                         const SizedBox(height: 4),
                         _atmosphereToggle(),
                         const SizedBox(height: 4),
+                        _reducedEffectsToggle('pause'), // --- reduced-effects
+                        const SizedBox(height: 4),
                         TextButton(
                           onPressed: _title,
                           child: const Text('RETURN TO TITLE'),
                         ),
+                        const BuildVersionLabel(), // --- build-version
                       ]),
                     ),
                 ],
@@ -1906,7 +1964,7 @@ class _ArcadePageState extends State<ArcadePage> with WidgetsBindingObserver {
                   model,
                   boost: scene.bossDirector.flowBoost,
                 ),
-                reduceMotion: model.reducedMotion ? true : null,
+                reduceMotion: scene.calmLook ? true : null, // reduced-effects
               ),
             ),
           ),

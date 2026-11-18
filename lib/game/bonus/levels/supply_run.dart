@@ -34,12 +34,24 @@ const doubleScore = BonusPowerDef(
 const supplyRun = BonusLevelDef(
   id: 'supplyRun',
   label: 'SUPPLY RUN',
-  // mission-medals: one short sentence on the goal (the operator did not
-  // understand the old two-clause rule); the crate's cracks and the radio
-  // carry the rest in the level.
-  brief: 'Shoot the falling crates open and catch the cargo.',
+  // bonus-briefing-clarity: one goal line and one how-to line (the
+  // operator, round 6: "still unclear"). Checked against the rules: a
+  // crate takes three ordinary hits (SupplyCrate.maxHp), its cargo falls
+  // and is caught by flying under it; the gun fires on its own.
+  brief: 'Pop the crates, catch the prizes!',
+  how: 'Shoot a crate till it bursts, then fly under what falls.',
   // mission-medals: no rule of play, only the cues (supply_run_cues.dart).
   mechanic: SupplyRunCues.new,
+  // --- bonus challenges: every crate opened and every prize caught pays
+  // a 1UP. SupplyRunCues reports the misses the moment they happen (a
+  // crate past the ship's row unopened, cargo past it uncaught).
+  challenge: BonusChallengeDef(
+    id: 'catchAll',
+    label: 'CATCH ALL CARGO',
+    icon: 'cargo',
+    failOn: {ChallengeNotes.crateMissed, ChallengeNotes.cargoMissed},
+    atLeast: {ChallengeNotes.cargoCaught: 1},
+  ),
   weight: 1,
   waves: BonusWaves(),
   rules: PowerRules(killDrops: false),

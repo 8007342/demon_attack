@@ -88,7 +88,11 @@ The soundtrack's backbone SHALL be a committed multitrack MIDI score per section
 - **THEN** any recorded full mix of that section is removed from the shipped assets, and its recipe stays committed
 
 ### Requirement: Sampled instrument bank
-The score SHALL be voiced by one bank of CC0 or similarly permissive samples, shipped as Ogg Opus with a manifest of zones, sizes, hashes, sources and licences, within 2 MB compressed and 41 MB decoded (16 MB on phones). The bank SHALL load by priority, core drums, bass and guitar first, and the score SHALL start before the bank has finished loading.
+The score SHALL be voiced by one bank of CC0 or similarly permissive samples, shipped as Ogg Opus with a manifest of zones, hashes, sources, within 6 MB compressed and 72 MB decoded (24 MB on phones), and no build step SHALL distort, clip or band-limit a sample. The bank SHALL load by priority (drums, bass, guitar first), and the score SHALL start before the bank has finished loading. A section's track with a note outside the bank's zones SHALL play the synthesizer voice for the whole section.
+
+#### Scenario: A partly covered track
+- **WHEN** a section's brass track has a note above the bank's highest horn zone
+- **THEN** that track plays through the synthesizer voice for the whole section, and the score gate reports the role's coverage instead of failing
 
 #### Scenario: Cold start
 - **WHEN** the music starts and only the core group has decoded
@@ -96,7 +100,39 @@ The score SHALL be voiced by one bank of CC0 or similarly permissive samples, sh
 
 #### Scenario: Phone tier
 - **WHEN** the device is classed as a phone
-- **THEN** the bank loads one velocity layer and one round-robin per zone and stays within 16 MB decoded
+- **THEN** the bank loads one velocity layer and one round-robin per zone and stays within 24 MB decoded
+
+#### Scenario: Sampled bass through its metal chain
+- **WHEN** the bass track plays from the bank
+- **THEN** its clipped source samples have been rebuilt by the builder, and its voices reach the output through the sampled bass bus's own chain (a compressor, a Linkwitz-Riley split at 120-250 Hz with the low band clean, a tanh drive whose input stays under full scale, a cabinet of biquads), whose parameters are data in `bank.json` `roles.bass.tone`, at the synth bass's loudness within 1 LU and its peak within 3 dB
+
+#### Scenario: The synth bass is untouched
+- **WHEN** the bank is off
+- **THEN** no bass chain is built and the score renders sample for sample as before the chain existed
+
+#### Scenario: Phone bass chain
+- **WHEN** the device is classed as a phone
+- **THEN** the bass chain applies its `phone` overrides (an LR2 split, 2x oversampling), at most one guitar bus's CPU
+
+#### Scenario: Encode rate per instrument
+- **WHEN** the builder encodes a zone
+- **THEN** it uses the instrument's Opus rate (96-160 kbps), chosen as the lowest rate whose median magnitude SNR against the cut reaches 35 dB, and the encoded zone keeps the cut's -60 dB bandwidth
+
+#### Scenario: A source that is not the pin
+- **WHEN** a source file's size or git blob sha1 differs from the pin manifest
+- **THEN** the bank builder refuses, names the file, and writes no bank
+
+#### Scenario: No bank
+- **WHEN** `bank.json` is absent
+- **THEN** the score plays through the synthesizer voices exactly as without a sampler, and the section trims stay byte-identical
+
+#### Scenario: Bank switched off until approved
+- **WHEN** the bank is off (the default until the operator approves it, with no `?bank=1` and no stored per-device choice)
+- **THEN** neither `bank.json` nor any sprite is fetched, the score plays through the synthesizer voices with the synth trims, and the synth trims stay as measured without a bank
+
+#### Scenario: Previewing the bank
+- **WHEN** the page loads with `?bank=1`, or the operator switches the bank on in the /console music panel
+- **THEN** the bank loads progressively from the next notes, the per-device choice is stored (the panel) or applies to that load (the query), and the section trims measured on the sampled score apply
 
 ### Requirement: Score voice budget
 The sampler SHALL cap simultaneous voices at 48 on desktop and 32 on phones. When the cap is reached it SHALL steal pad voices first, then lead voices, and SHALL never steal kick, snare or bass voices. Every shipped score section SHALL peak at most 32 voices with a 0.5-beat release.
@@ -110,7 +146,7 @@ The sampler SHALL cap simultaneous voices at 48 on desktop and 32 on phones. Whe
 - **THEN** the score gate rejects it with the peak and the bar where it occurs
 
 ### Requirement: Score recipes and gates
-Every shipped score SHALL be reproducible from a committed recipe (generator, inputs, seed, and for transcribed or model-generated material the source take or model, tool versions and manual edits) and SHALL pass the score gates: whole bars, onsets on the grid within 12 ms, out-of-scale notes at most 3 % outside marked chromatic passages, and pitches inside the bank's zones.
+Every shipped score SHALL be reproducible from a committed recipe (generator, inputs, seed, and for transcribed or model-generated material the source take or model, tool versions and manual edits) and SHALL pass the score gates: whole bars, onsets on the grid within 12 ms, out-of-scale notes at most 3 % outside marked chromatic passages, and pitches inside the bank's zones for the roles it covers in full.
 
 #### Scenario: An off-grid transcription
 - **WHEN** a transcribed bass motif has onsets 30 ms off the 16th grid
@@ -149,3 +185,26 @@ The console SHALL offer a panel that drives the live score player through the sa
 #### Scenario: Scripted fight
 - **WHEN** the operator presses CARRIER FIGHT
 - **THEN** the carrier song plays arrival, approach, the hatch tiers, the transformation, the core, the collapse and the victory from the fight's events, each move on a bar or beat line
+
+### Requirement: Bonus-level music and accents
+A bonus level SHALL be able to own a small score song (form `bonus`) that the director plays from the sector's arrival to its clear, and SHALL be able to request stingers by name through the director or a `musicAccent` event. Stingers SHALL layer over the playing section in its key on its grid, SHALL fail soft for an unknown name, and SHALL keep a layered peak of at most 32 voices.
+
+#### Scenario: The wind bonus level
+- **WHEN** `bonusStart` reports variant `crosswind`
+- **THEN** song `bonus-wind` plays `A` from the end of the sector's arrival, `B` from `bonusMidway`, and the sector song's `clear` on the next beat line at the level clear, so the travel bridge follows as in any sector
+
+#### Scenario: Requests by name
+- **WHEN** the game asks for `gust`, `oneup`, `challenge-fail`, `cargo` or `thunder`
+- **THEN** the stinger plays in the playing key on its quantum line; a name the score does not know plays nothing and returns false (null on the web player)
+
+#### Scenario: The extra life
+- **WHEN** `oneup` plays
+- **THEN** a drum fill leads into the next bar line, the band stops for that bar while a power-chord hit, the campaign theme's head on brass and lead and a choir lift play, and the band returns on the following bar line under the theme's last note
+
+#### Scenario: Layered voices
+- **WHEN** the score generator gates a stinger over the sections its `over` names
+- **THEN** the section's peak plus the stinger's voices at each onset stays at most 32, counting only the stinger inside its stop-time
+
+#### Scenario: The existing bonus levels
+- **WHEN** a Supply Run crate is shot open or a Stormfront bolt drawn to the ship misses it
+- **THEN** the `cargo` tick or the `thunder` riff plays over the sector's music

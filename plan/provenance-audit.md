@@ -365,3 +365,35 @@ guidelines", https://courses.ecuad.ca/mod/page/view.php?id=358042, unread: snipp
 |---|---|---|
 | <a id="mb-dialogue-gap"></a>mb-dialogue-gap | A game's music bed commonly sits about 8–10 LU under dialogue (no longer used: mix-balance design §5 sets 2–4 LU by operator ruling) | the task's figure; the pages that discuss it reset, snippets disagree (3–12 dB) |
 | <a id="mb-duck-depth"></a>mb-duck-depth | A few dB of music duck under a line, with tens of ms attack and a few hundred ms release, is usual | Godot gives only the 250 ms default release; Wwise and FMOD docs reset |
+
+## Part DC: demon choir (`demon-choir`, added 2026-11-18)
+
+`plan/demon-choir-research.md` §7 marks these claims. On 2026-11-18 Wikipedia, arXiv, zenodo.org and the ISMIR archives
+reset the connection from the forge; only GitHub and Hugging Face answered. The synth's numbers are our judgement and
+are measured on its output (`plan/render-runs/demon-choir.md`); these claims only motivate them.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="dc-rosenberg-pulse"></a>dc-rosenberg-pulse | The Rosenberg glottal pulse (raised-cosine opening, cosine closing) is a usable voice source | Rosenberg (1971) and Fant, Liljencrants & Lin (1985) not reachable; only an unlicensed LF implementation's README was read |
+| <a id="dc-growl-period-doubling"></a>dc-growl-period-doubling | Metal growl and kargyraa add energy at f0/2 (period doubling of the false folds), which alternating glottal periods imitate | no phonation study reachable; the scream-detection paper read describes the classes, not the mechanism |
+| <a id="dc-choir-scatter"></a>dc-choir-scatter | A choir's sound comes from small pitch scatter, independent vibrato and onset spread among its singers (Ternström) | Ternström's papers not reachable; the SATB F0 dataset that could measure it was found but not fetched |
+
+## Part BT: the sampled bass's metal chain (`adaptive-soundtrack` design §12.12, added 2026-11-18)
+
+`plan/bass-tone-research.md` §2 and §3 mark these claims. On 2026-11-18 soundonsound.com, nailthemix.com, urm.academy,
+darkglass.com, tech21nyc.com, wikipedia.org, rane.com, talkbass.com, gearspace.com, coda-effects.com and the manual
+hosts reset the connection from the forge. Only the W3C, MDN and GitHub pages answered, and they are cited as read.
+Nothing was routed around the proxy. The chain's numbers are our judgement, measured on its output
+(`tools/mix_meter/bass_tone.mjs`, `plan/render-runs/sample-bank.md` §9). These claims only motivate them. The
+snippets seen are cited inline in the research doc as unread.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="bt-split-chain"></a>bt-split-chain | Metal producers split a DI bass into a clean low path and a distorted mid/high path, the latter high-passed near the split | Sound On Sound and Nail The Mix pages reset; snippets only |
+| <a id="bt-crossover"></a>bt-crossover | The split sits between about 80 and 300 Hz, set by the part (about 200 Hz for the distorted copy's high-pass) | TalkBass, Gearspace, URM reset; snippets disagree (80-500 Hz) |
+| <a id="bt-blend"></a>bt-blend | Distortion is blended with the clean DI (a send, or a pedal's Blend control) | Sound On Sound and Tech 21 pages reset |
+| <a id="bt-b7k-bands"></a>bt-b7k-bands | The Darkglass B7K voices its bands at 100 Hz, 1 kHz, 3 kHz and 5 kHz | darkglass.com and the manual host reset |
+| <a id="bt-muff-scoop"></a>bt-muff-scoop | A Big Muff's tone stack scoops about 1 kHz; bass versions add a dry blend so the lows survive | Coda Effects and guitar.com reset |
+| <a id="bt-comp"></a>bt-comp | Bass compression starts near 4:1, with an attack that keeps the pick and a 100-300 ms release | Nail The Mix and iZotope reset |
+| <a id="bt-guitar-slot"></a>bt-guitar-slot | Against distorted guitars the bass carries below about 100 Hz, its grit at 0.7-2 kHz backs them, guitar definition sits at 1.5-2.5 kHz, and a distorted bass is low-passed at 5-8 kHz | Nail The Mix and Violet Recording reset |
+| <a id="bt-lr4-sum"></a>bt-lr4-sum | A Linkwitz-Riley 4th-order crossover (two Butterworth sections per side) sums to an all-pass with a flat magnitude | Wikipedia and Rane reset; measured flat in our renderer (`test-worker/bass-tone.test.mjs`) |

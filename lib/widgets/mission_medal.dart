@@ -15,6 +15,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../game/bonus/bonus_catalog.dart' show runTagLabel;
+import '../game/bonus/bonus_challenge.dart' show ChallengeStatus, oneUpLevelOf;
+import '../game/bonus/challenge_badge.dart'; // --- bonus challenges
 import 'mission_medal_atlas.dart';
 
 /// The atlas image, decoded once and shared by every medal.
@@ -37,6 +39,7 @@ abstract final class MissionMedalSheet {
 
   /// The layers that compose [id], bottom to top, as atlas cells.
   static List<(int, int)> layers(String id) {
+    id = oneUpLevelOf(id) ?? id; // --- bonus challenges: the level's medal
     final cells = MissionMedalAtlas.cells;
     return [
       ?(cells['ribbon.$id'] ?? cells['ribbon.generic']),
@@ -118,6 +121,7 @@ class MissionMedalPainter extends CustomPainter {
     final img = image;
     if (img == null) {
       _fallback(canvas, size);
+      _oneUp(canvas, size);
       return;
     }
     const w = MissionMedalAtlas.cellWidth, h = MissionMedalAtlas.cellHeight;
@@ -133,12 +137,30 @@ class MissionMedalPainter extends CustomPainter {
         paint,
       );
     }
+    _oneUp(canvas, size);
+  }
+
+  /// --- bonus challenges: a perfect-run medal (`<level>OneUp`) is the
+  /// level's medal with the earned 1UP plate across its foot.
+  void _oneUp(Canvas canvas, Size size) {
+    if (oneUpLevelOf(id) == null) return;
+    final h = size.height * .3;
+    final w = h * ChallengeBadgePainter.aspect;
+    canvas.save();
+    canvas.translate((size.width - w) / 2, size.height - h);
+    ChallengeBadgePainter(
+      icon: 'star',
+      status: ChallengeStatus.earned,
+    ).paint(canvas, Size(w, h));
+    canvas.restore();
   }
 
   /// Before the atlas is decoded: a ribbon in the mission's colours over
   /// a plain gold disc (the same footprint, so nothing shifts).
   void _fallback(Canvas canvas, Size size) {
-    final (a, b) = fallbackColors[id] ?? (const Color(0xFF8AA1B8), gold);
+    final (a, b) =
+        fallbackColors[oneUpLevelOf(id) ?? id] ??
+        (const Color(0xFF8AA1B8), gold);
     final w = size.width, h = size.height;
     final ribbon = Path()
       ..moveTo(w * .28, 0)
@@ -165,6 +187,7 @@ class MissionMedalPainter extends CustomPainter {
   static const fallbackColors = <String, (Color, Color)>{
     'supplyRun': (Color(0xFF3FBF9A), Color(0xFFFFD27A)),
     'stormfront': (Color(0xFF5B4FC4), Color(0xFFE4DCFF)),
+    'crosswind': (Color(0xFF4F8FB8), Color(0xFFFF8A4C)), // --- crosswind
     'noShield': (Color(0xFFC4473F), Color(0xFF70F5D5)),
     'spreadOnly': (Color(0xFF2E8FD0), Color(0xFFFFFFFF)),
     'heavyOrdnance': (Color(0xFFD9822B), Color(0xFF3A2410)),

@@ -105,7 +105,8 @@
   }
 
   // --- the score (demon-score.js, loaded first; absent in older pages and tests).
-  const score = window.demonScore?.create({ input: () => drop, lifeLoss }) || null;
+  // demon-choir: `speaking()` lets a stinger marked `speech: yield` (the dive war cry) give way to a radio line.
+  const score = window.demonScore?.create({ input: () => drop, lifeLoss, speaking: () => !!context && duckDepthAt(context.currentTime) > 0 }) || null;
 
   function schedule() {
     if (!context || paused || context.state !== 'running') return;
@@ -166,10 +167,10 @@
   function intensity(tier) { return Math.min(4, Math.max(1, Math.round(tier) || 1)); }
   function fleetIntact() { return !!score; }
   // Accents: a stinger in the playing section's key on its grid; never delays the caller.
-  function accent(name) {
+  function accent(name, inSeconds, fallbackIn) {
     if (!score || !context || paused || context.state !== 'running') return null;
     if (levels.music === 'mute' && !lifeLoss.includes(name)) return null;  // nothing to hear
-    return score.accent(name);
+    return score.accent(name, inSeconds, fallbackIn);
   }
   // Power-up layer: what the game reports (active power count, a pickup in the air), applied on the next bar line.
   function powerLayer(active = 0, falling = false) {
@@ -244,7 +245,17 @@
     // --- bonus levels: Stormfront (a rising static crackle, then thunder)
     if (name === 'stormTell') { sweep(now, 1.05, 240, 2600, .022, 'square'); noiseBurst(now + .6, .45, .035, 6200); return true; }
     if (name === 'stormBolt') { limitVoices('explosion'); noiseBurst(now, .12, .2, 7000); voice({ pitch: 28, velocity: 110, channel: 9, tag: 'explosion' }, now + .03, .5, effects); noiseBurst(now + .05, .5, .13, 420); noiseBurst(now + .45, .5, .08, 260); return true; }
-    if (name === 'groundExplosion') { limitVoices('explosion'); voice({ pitch: 31, velocity: 100, channel: 9, tag: 'explosion' }, now, .3, effects); noiseBurst(now, .7, .16, 1500); return true; }
+    // --- lightning-rework: a stun's crackle, the ship's zap (a hard buzz and a falling sweep: the powers are gone, never the ship), a rod drinking a bolt (a rising whine).
+    if (name === 'stormStun') { noiseBurst(now, .09, .09, 5200); noiseBurst(now + .1, .07, .07, 4600); sweep(now + .02, .35, 1800, 420, .02, 'square'); return true; }
+    if (name === 'shipZapped') { limitVoices('life'); noiseBurst(now, .25, .16, 6800); sweep(now, .5, 1600, 180, .035, 'sawtooth'); noiseBurst(now + .28, .3, .06, 900); return true; }
+    // --- spear-bearers: the wind-up's glint (a bright ting), the throw (an airy whoosh), the buckler struck (a dull clang) and knocked away (a clang and a falling rattle).
+    if (name === 'spearGlint') { sweep(now, .16, 2400, 3600, .018, 'sine'); sweep(now + .08, .2, 3200, 4200, .012, 'sine'); return true; }
+    if (name === 'spearRelease') { noiseBurst(now, .28, .07, 2600); sweep(now, .25, 900, 260, .02, 'triangle'); return true; }
+    if (name === 'bucklerClang') { limitVoices('hit'); sweep(now, .18, 520, 380, .035, 'square'); noiseBurst(now, .08, .06, 3800); return true; }
+    if (name === 'bucklerOff') { limitVoices('hit'); sweep(now, .22, 600, 300, .04, 'square'); noiseBurst(now + .05, .4, .05, 1400); sweep(now + .12, .45, 300, 90, .015, 'triangle'); return true; }
+    if (name === 'demonCharged') { sweep(now, .45, 300, 1900, .02, 'square'); noiseBurst(now + .35, .12, .05, 5600); return true; }
+    if (name === 'groundExplosion') {
+ limitVoices('explosion'); voice({ pitch: 31, velocity: 100, channel: 9, tag: 'explosion' }, now, .3, effects); noiseBurst(now, .7, .16, 1500); return true; }
     return false;
   }
   function sfx(name) {
@@ -278,12 +289,16 @@
   // --- adaptive-soundtrack: SongDirector's moves (see demon-score.js move()); returns the landing time, -1 while
   // loading or before the first gesture (the move runs once ready), -2 when the score failed to load.
   function song(move) { return score ? score.move(move || {}) : -2; }
-  window.demonAudio = Object.freeze({ unlock, intensity, accent, fleetIntact, mute, pause, resume, sfx, setLevel, powerLayer, song, duck, unduck, get muted() { return muted; },
+  // --- sample-bank: the score's sample-bank switch (off by default until approved; /console's music panel, ?bank=1).
+  function setScoreBank(on) { return score ? score.setBank(!!on) : false; }
+  window.demonAudio = Object.freeze({ unlock, intensity, accent, fleetIntact, mute, pause, resume, sfx, setLevel, powerLayer, song, duck, unduck, setScoreBank, get muted() { return muted; },
+    get scoreBank() { return !!score?.bankOn; },
     get time() { return context?.currentTime ?? -1; },
     get scorePosition() { return score?.position ?? null; },
     get scoreLoading() { return score?.loading ?? Promise.resolve(); },
+    get bankLoading() { return score?.bankLoading ?? Promise.resolve(); },
     get levels() { return { ...levels }; },
-    get graph() { return { context, master, music, effects, duck: sidechain }; }, // shared with comms-audio.js
+    get graph() { return { context, master, music, effects, duck: sidechain, bassTone: score?.toneGraph ?? null }; }, // shared with comms-audio.js
     // Read-only diagnostics for browser checks.
     get state() { return { context: context?.state ?? 'none', time: context?.currentTime ?? 0, paused, muted, voices: voices.size, sounding: [...voices].filter(v => !v.released).length,
       levels: { ...levels }, masterGain: master?.gain.value ?? null, musicLevel: musicLevel?.gain.value ?? null, limiter: !!limiter,

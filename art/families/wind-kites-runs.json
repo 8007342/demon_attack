@@ -1,0 +1,202 @@
+{
+ "ember-kite/770100": {
+  "job": "st-1794947875643-175",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, clouds, horizon, ground, landscape, scenery, string, person, hand, many kites, side view, cute, cartoon face",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "f6924e38d08f494e3e9b8822618d9101fd90f41a15717259c2235d2094900bce"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "f828222ac7ce691fe82da91af477f4e6898e9126890fe00c66724bd28fef8b93"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single diamond-shaped kite seen from the front, flat, symmetrical, a taut membrane of crimson and dusky violet leather stretched over four pale bone struts in a cross, a small glowing amber eye-like jewel at the centre, ragged scalloped edges, crisp square pixels, original artwork, centered, isolated, transparent background",
+  "seed": 770100,
+  "selected": true,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ember-kite/770101": {
+  "job": "st-1794947875643-175",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, clouds, horizon, ground, landscape, scenery, string, person, hand, many kites, side view, cute, cartoon face",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "313c7424b79577939d4fd3f333741673b2cb7433c56ad2c224eb5c30e5d5fcaa"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "22459a243af7b6df844ab4bfe2a06f370e947c5eba07580c2ced3cc4ea52e31e"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single diamond-shaped kite seen from the front, flat, symmetrical, a taut membrane of crimson and dusky violet leather stretched over four pale bone struts in a cross, a small glowing amber eye-like jewel at the centre, ragged scalloped edges, crisp square pixels, original artwork, centered, isolated, transparent background",
+  "seed": 770101,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ember-kite/770102": {
+  "job": "st-1794947875643-175",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, clouds, horizon, ground, landscape, scenery, string, person, hand, many kites, side view, cute, cartoon face",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "945f7d8486deb6290ea62079e1786f496550e45e551dc4a65c0d9c5e40bc5c05"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "fb3ea3ff3e5eb3e02ed653ba24d76878411b4378ada1385717f0b9022a83d3bf"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single diamond-shaped kite seen from the front, flat, symmetrical, a taut membrane of crimson and dusky violet leather stretched over four pale bone struts in a cross, a small glowing amber eye-like jewel at the centre, ragged scalloped edges, crisp square pixels, original artwork, centered, isolated, transparent background",
+  "seed": 770102,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "ember-kite/770103": {
+  "job": "st-1794947875643-175",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, clouds, horizon, ground, landscape, scenery, string, person, hand, many kites, side view, cute, cartoon face",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "379fe6a829ce354b1e2d906bf04a95eef0bbf11df21e401b107a64f97f2fca3e"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "86458e33c9bfa9cfd754b4b7cfa2a51f0e87cc451136913e132f4ccd65e0f4f0"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single diamond-shaped kite seen from the front, flat, symmetrical, a taut membrane of crimson and dusky violet leather stretched over four pale bone struts in a cross, a small glowing amber eye-like jewel at the centre, ragged scalloped edges, crisp square pixels, original artwork, centered, isolated, transparent background",
+  "seed": 770103,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "lantern-moth/770200": {
+  "job": "st-1794947937748-176",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, clouds, horizon, ground, landscape, scenery, string, person, hand, many kites, side view, cute, cartoon face",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "9c6a316181a2d6a488db317642fb812c9c207e3d9ca2eba75774765fb9cba457"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "b0741ab2589425262b92cc38cc1e1fe42c8fcff814ebdf491ad0f12c006cc26f"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small kite shaped like a moth with wide rounded wings seen from the front, flat, symmetrical, wings of thin translucent jade and teal paper with dark veins, a glowing pale gold paper lantern body in the middle, crisp square pixels, original artwork, centered, isolated, transparent background",
+  "seed": 770200,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "lantern-moth/770201": {
+  "job": "st-1794947937748-176",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, clouds, horizon, ground, landscape, scenery, string, person, hand, many kites, side view, cute, cartoon face",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "e912e6ea96f1fd20da11d81303a97091bfe9093495a353e9f5fe9187ec11a9d9"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "826259cc045358a6f1e0d19fb6e02d95d87b7afc94d1c727878db25a6aa1f510"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small kite shaped like a moth with wide rounded wings seen from the front, flat, symmetrical, wings of thin translucent jade and teal paper with dark veins, a glowing pale gold paper lantern body in the middle, crisp square pixels, original artwork, centered, isolated, transparent background",
+  "seed": 770201,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "lantern-moth/770202": {
+  "job": "st-1794947937748-176",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, clouds, horizon, ground, landscape, scenery, string, person, hand, many kites, side view, cute, cartoon face",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "30f0b2e3f7a15cb6d8d76257fb1cb4a7afa4c1ac57cb9df3797520429f7d8329"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "e540a33b0395ef55904063cd8480697959944ef1b64d932622fa50f67d9194d5"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small kite shaped like a moth with wide rounded wings seen from the front, flat, symmetrical, wings of thin translucent jade and teal paper with dark veins, a glowing pale gold paper lantern body in the middle, crisp square pixels, original artwork, centered, isolated, transparent background",
+  "seed": 770202,
+  "selected": false,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ },
+ "lantern-moth/770203": {
+  "job": "st-1794947937748-176",
+  "models": [
+   "layer_xl_transparent_conv.safetensors",
+   "pixel-art-xl.safetensors",
+   "sdxl-full/sd_xl_base_1.0.safetensors",
+   "vae_transparent_decoder.safetensors"
+  ],
+  "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, clouds, horizon, ground, landscape, scenery, string, person, hand, many kites, side view, cute, cartoon face",
+  "outputs": [
+   {
+    "file": "sprite-alpha.png",
+    "sha256": "b0376bacb74f3346d5da3db40a1c070ee0d0f56cf2c00a58098ffd0d3210302d"
+   },
+   {
+    "file": "sprite-rgb.png",
+    "sha256": "e87a26531923d2469f34d729658e39593fc30e3b8fbbf824d475ae299f575686"
+   }
+  ],
+  "prompt": "pixel art, 16-bit arcade game sprite, a single small kite shaped like a moth with wide rounded wings seen from the front, flat, symmetrical, wings of thin translucent jade and teal paper with dark veins, a glowing pale gold paper lantern body in the middle, crisp square pixels, original artwork, centered, isolated, transparent background",
+  "seed": 770203,
+  "selected": true,
+  "tool": "studio.run_workflow",
+  "workflow": "art/workflows/backgrounds/sprite-transparent.json"
+ }
+}

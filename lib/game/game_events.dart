@@ -20,6 +20,7 @@ library;
 
 import 'dart:math' as math;
 
+import 'dive_cry.dart';
 import 'model.dart';
 
 /// Stable event names.
@@ -249,7 +250,48 @@ abstract final class GameEventNames {
   /// The rain crossed into another tier (data `from`: the previous tier).
   static const rainIntensity = 'rainIntensity';
 
-  static const weather = [rainStart, rainStop, rainIntensity];
+  // --- crosswind: the wind (lib/game/weather/wind_field.dart). Gameplay:
+  // queued by the model (model_wind.dart). Data: `tier` ('breeze' | 'gale'
+  // | 'crosswind'), `sector`, `side` (where it blows to).
+
+  /// The wind rises.
+  static const windStart = 'windStart';
+
+  /// The wind has died away.
+  static const windStop = 'windStop';
+
+  /// A big swing or a gust is coming: the telegraph, [WindField.lead]
+  /// seconds before it pushes (data `from`, `to`: 'left' | 'right';
+  /// `gust`; `strength` 0-1; `endIn`). The music's `gust` stinger.
+  static const windGust = 'windGust';
+
+  // --- weather-everywhere: a regular sector's lightning storm and the
+  // brood riding the wind (lib/game/model_weather.dart). Gameplay: queued
+  // by the model. The bolts themselves say `stormStrike` (a tell on the
+  // ship) and the lightning-rework events.
+
+  /// The storm begins striking (variant: the rain's tier, `rain` or
+  /// `downpour`; data `sector`).
+  static const stormStart = 'stormStart';
+
+  /// The storm has passed (the rain eased under the storm's threshold).
+  static const stormStop = 'stormStop';
+
+  /// A smart creature rides a tailwind into its dive (data `x`, `side`
+  /// it blows to, `sentinel`, `elite`).
+  static const windDive = 'windDive';
+
+  static const weather = [
+    rainStart,
+    rainStop,
+    rainIntensity,
+    windStart,
+    windStop,
+    windGust,
+    stormStart, // --- weather-everywhere
+    stormStop,
+    windDive,
+  ];
 
   static const all = [
     groundForceSighted,
@@ -296,6 +338,29 @@ abstract final class GameEventNames {
   /// Ambient brood radio the comms director raises when the demons have
   /// been quiet too long.
   static const broodChatter = 'broodChatter';
+
+  // --- fang-and-wings-comms (openspec/changes/fang-and-wings-comms §API).
+
+  /// A creature committing to a dive shouts its war cry. Derived from
+  /// `divePrep` by [GameEventObserver] through its [DiveCryGate] (few
+  /// dives cry, mostly the higher ranks, one cry in flight). Data:
+  /// `rank` (= `variant`: grunt, veteran, hunter, sentinel), `species`
+  /// (teal, violet, coral, gold), `kind`, `x`, `y`, `diveIn` and `tellIn`
+  /// (seconds until the dive starts and until its tell), `intensity`
+  /// (0..1), `cry` (a running id) and `clock`.
+  static const diveCry = 'diveCry';
+
+  /// A spear-bearer lets fly (queued by the model's spear-bearers change
+  /// on release, structured only; data `x`, `y`, `kind`, `throws`): the
+  /// brood's throw shout, `spearThrow.d0`-`d5`.
+  static const spearThrow = 'spearThrow';
+
+  /// Comms triggers the director raises itself, in place of brood chatter
+  /// (the creed, or a creed banter: brood first, squad comeback) or of an
+  /// elite sighting (a squad tease about the marks, brood retort).
+  static const fangChatter = 'fangChatter';
+  static const fangBanter = 'fangBanter';
+  static const fangTease = 'fangTease';
 
   // --- demon intelligence (openspec/changes/demon-intelligence §7-§8).
 
@@ -367,9 +432,58 @@ abstract final class GameEventNames {
   /// real seconds until the bolt; the squad's warning ends on it).
   static const stormStrike = 'stormStrike';
 
-  /// A bolt that was drawn to the ship destroyed creatures and missed it
-  /// (data `x`, `kills`, `award`).
+  /// A bolt that was drawn to the ship stunned creatures and missed it
+  /// (data `x`, `stunned`; variant `stun`): the squad's "pick them off"
+  /// (lightning-rework: bolts stun, they no longer kill; the bait bonus is
+  /// paid as each stunned creature is shot down).
+
   static const stormBait = 'stormBait';
+
+  // --- crosswind: the bonus level's kites (data `kites`: popped so far,
+  // `escaped`, `total`, `x`).
+
+  /// A kite was shot down.
+  static const kitePopped = 'kitePopped';
+
+  /// A kite rode the wind off the screen.
+  static const kiteEscaped = 'kiteEscaped';
+
+  // --- lightning-rework (lib/game/lightning.dart): what a bolt does,
+  // whatever storm throws it. Raw string events for the sound: `stormStun`
+  // (a bolt stunned creatures), `shipZapped`, `demonCharged`.
+
+  /// A bolt stunned creatures (data `x`, `stunned`): the brood's yelps and
+  /// the squad's "pick them off". Stormfront's baited bolts say
+  /// [stormBait] instead (variant `stun`).
+  static const lightningStun = 'lightningStun';
+
+  /// A bolt met the ship and stripped it (data `x`, `lost`: shields and
+  /// powers stripped, `shield`; variant `powers`, or `clean` when it had
+  /// nothing to lose). Never a life: the squad reassures the pilot.
+  static const lightningShipHit = 'lightningShipHit';
+
+  /// Rod-armoured creatures drank a bolt (data `x`, `charged`).
+  static const lightningCharged = 'lightningCharged';
+
+  static const lightning = [lightningStun, lightningShipHit, lightningCharged];
+
+  // --- spear-bearers (lib/game/spear_bearers.dart): the bearer's
+  // release queues [spearThrow] (defined above with fang-and-wings-comms;
+  // data `x`, `y`, `kind`, `throws`). Structured only: the raw sounds are
+  // `spearGlint` (the wind-up), `spearRelease`, `bucklerClang` and
+  // `bucklerOff`.
+
+  // --- bonus challenges (openspec/changes/bonus-challenges). `variant`:
+  // the level's id; data `challenge` (its id). The raw `bonusOneUp` is the
+  // 1UP's sound (lib/main.dart).
+
+  /// A level's perfect-run condition broke (data `by`: the note that broke
+  /// it; '' when it fell short at the clear).
+  static const bonusChallengeFailed = 'bonusChallengeFailed';
+
+  /// A level's perfect-run condition held to the clear: its 1UP was paid
+  /// (data `lives`: the lives after it).
+  static const bonusChallengeEarned = 'bonusChallengeEarned';
 
   static const bonus = [
     runModifier,
@@ -381,6 +495,10 @@ abstract final class GameEventNames {
     bonusCrateMissed,
     stormStrike,
     stormBait,
+    kitePopped,
+    kiteEscaped,
+    bonusChallengeFailed,
+    bonusChallengeEarned,
   ];
 
   /// A full-size transmission: the fleet's mission briefing on travel
@@ -710,6 +828,9 @@ class GameEventObserver {
   bool _diveRunAnnounced = false;
   FleetTally tally = FleetTally();
 
+  // --- fang-and-wings-comms: which dives shout a war cry.
+  final diveCries = DiveCryGate();
+
   /// Ground pressure bands (hysteresis on the way down).
   static const pressureCalm = .3, pressureRising = .45, pressureHigh = .8;
   int _pressureBand = 0;
@@ -751,6 +872,7 @@ class GameEventObserver {
   /// [freshRun] false (a restored checkpoint) disables `flawlessRun`.
   void reset({bool freshRun = true}) {
     tally = FleetTally()..wholeRun = freshRun;
+    diveCries.reset();
     _killTimes.clear();
     _kills = null;
     _lastRout = -100;
@@ -868,6 +990,18 @@ class GameEventObserver {
   List<GameEvent> onGameEvent(GameEvent event) {
     final out = <GameEvent>[];
     switch (event.name) {
+      // --- fang-and-wings-comms: a dive may shout its war cry.
+      case GameEventNames.divePrep:
+        final cry = diveCries.consider(event.data, model.clock);
+        if (cry != null) {
+          out.add(
+            _event(
+              GameEventNames.diveCry,
+              variant: cry['rank'] as String,
+              data: cry,
+            ),
+          );
+        }
       case GameEventNames.allyRetreated:
         tally.lose();
       case GameEventNames.groundPressure:

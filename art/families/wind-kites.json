@@ -1,0 +1,15 @@
+{
+ "schema": "demon-attack.wind-kites/v1",
+ "name": "wind-kites",
+ "notes": "Crosswind bonus level (openspec/changes/crosswind design §6, §Pipelines): the brood's kites that ride the gusts. One selected SDXL + pixel-art-xl + LayerDiffuse transparent keyframe per species (art/workflows/backgrounds/sprite-transparent.json, studio.run_workflow, 4 candidates) is finished on the CPU by tools/wind_kites (Go, standard library only): alpha crop, box downscale to source_px, a 5-colour ramp quantise toward the species hint, a 1 px dark outline for the night sky, then five bank frames (nearest-neighbour rotation, -24..24 degrees) and a torn frame (the membrane split, for the pop). The tail ribbon is not in the atlas: the painter draws it as one line batch that streams with the wind.",
+ "atlas": {"file": "assets/images/wind-kites.png", "cell": [28, 30], "banks_deg": [-24, -12, 0, 12, 24]},
+ "style_prompt": "pixel art, 16-bit arcade game sprite",
+ "negative_prompt": "text, letters, watermark, logo, signature, ui, frame, border, blurry, photo, photorealistic, 3d render, smooth gradient, multiple views, character sheet, grid, sky, clouds, horizon, ground, landscape, scenery, string, person, hand, many kites, side view, cute, cartoon face",
+ "sprite": {"workflow": "art/workflows/backgrounds/sprite-transparent.json", "candidates": 4, "source_px": 24},
+ "species": [
+  {"id": "ember-kite", "row": 0, "seed": 770100, "selected": 770100, "hint": "#E0604A", "job": "st-1794947875643-175",
+   "prompt": "a single diamond-shaped kite seen from the front, flat, symmetrical, a taut membrane of crimson and dusky violet leather stretched over four pale bone struts in a cross, a small glowing amber eye-like jewel at the centre, ragged scalloped edges, crisp square pixels, original artwork, centered, isolated"},
+  {"id": "lantern-moth", "row": 1, "seed": 770200, "selected": 770203, "hint": "#58C8B0", "job": "st-1794947937748-176",
+   "prompt": "a single small kite shaped like a moth with wide rounded wings seen from the front, flat, symmetrical, wings of thin translucent jade and teal paper with dark veins, a glowing pale gold paper lantern body in the middle, crisp square pixels, original artwork, centered, isolated"}
+ ]
+}

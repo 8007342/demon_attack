@@ -1,4 +1,5 @@
 import { handleNotes } from './notes.mjs';
+import { handleVersion, isVersionPath } from './version.mjs'; // --- build-version
 
 export { ReviewNotes } from './notes.mjs';
 const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' };
@@ -102,6 +103,7 @@ export default {
     }
     if (url.pathname === '/api/notes') return handleNotes(request, env);
     if (url.pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
+    if (isVersionPath(url.pathname)) return handleVersion(request, env); // --- build-version
     // /studio is the asset review studio: the gallery app (built with base
     // href /gallery/), which opens the studio when the path is /studio.
     if (isStudioPath(url.pathname)) return env.ASSETS.fetch(new Request(new URL('/gallery/', url), request));

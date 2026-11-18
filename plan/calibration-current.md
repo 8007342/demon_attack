@@ -767,3 +767,152 @@ hits baseline now holds the new values; the seconds baseline is unchanged.
   dive shields).
 - Fixtures that pinned the 8-kill drop on route 0 now read `killDropEvery` (campaign model and refinements); two
   tests that a collected drop now disturbs clear their pickups or shield (bonus-level PRNG, Stormfront tell).
+
+## Lightning rework (2026-11-17, change `lightning-rework`): bolts stun, zaps strip
+
+Bolts now stun creatures instead of killing them, and strip the ship's shields and power-ups instead of costing a life
+(`openspec/changes/lightning-rework`). The calibrated campaign has no lightning (unseeded, no bonus levels):
+`dart run tools/analyze_difficulty.dart <prefix>` writes byte-identical JSON and summary before (`origin/game`
+25726939) and after, so the 318-wave budgets, the campaign playtest, carrier endurance, perspective and rush gates do
+not move.
+
+Stormfront, bonus balance gate (`test/bonus_balance_test.dart`, routes 0-1, eight seeds; ratio to the regular sectors):
+
+| Stormfront | Duration | Enemies | Score | Possible | Lives lost |
+|---|---:|---:|---:|---:|---:|
+| before (bolts kill, rosters × 1.15, kills × 0.7) | −11.8 % | +9.2 % | +1.8 % | +1.9 % | −13.1 % |
+| stun only, rosters × 1.0 | +13.9 % | −0.1 % | −4.2 % | −2.4 % | +11.5 % |
+| rosters × 0.95, kills × 0.73, Easy gaps 3.4-4.6 s | +9.3 % | −3.6 % | −4.0 % | −2.0 % | +11.3 % |
+| rosters × 0.93, kills × 0.77, Normal 3.3-4.7 s, Hard 3.5-4.9 s | +10.0 % | −4.3 % | −1.3 % | +0.6 % | +6.1 % (Hard duration +18 %) |
+| **shipped**: Hard 3.4-4.8 s, fork .25 | **+8.1 %** | **−4.3 %** | **−1.1 %** | **+0.9 %** | **+11.3 %** |
+
+Per mode (shipped): Easy +3.4 / −7.1 / −4.5 / −2.4 / +6.2 %; Normal +6.2 / −3.7 / −0.8 / +1.1 / +7.7 %; Hard +12.9 /
+−3.5 / −0.1 / +1.8 / +16.3 %. All inside the gate (pooled ±15 %, per mode ±20 %).
+
+Reading: the storm used to clear about a tenth of the swarm for the pilot, so the level ran 12 % short; now every
+creature is the pilot's to shoot (stunned ones are easy), so it runs 8 % long with 4 % fewer creatures. The Average
+pilot loses 11 % more lives than in the sector: it never dodges a tell (it does not read the storm), so every zap
+strips its shield, and the next ordinary hit costs a ship. A pilot who slides off the amber mark loses nothing, so the
+penalty is the operator's "punishing" for standing still, not for playing; Hard carries most of it (+16 %), Easy the
+least. Commit: the `lightning-rework` squash on `game`.
+
+## Bonus challenges (2026-11-17, change `bonus-challenges`): a 1UP for a perfect bonus level
+
+Each bonus level pays one life for a perfect run: Supply Run CATCH ALL CARGO (no crate past the ship unopened, no
+prize past it uncaught), Stormfront DODGE EVERY BOLT (no bolt landing with the ship inside its bright column).
+Harness `test/support/challenge_pilot.dart`; `--dart-define=BONUS_CHALLENGE=true test/bonus_challenges_rate_test.dart`
+prints the table (routes 0-1, sectors 2-4, every difficulty, eight seeds, 48 runs per level and difficulty). The
+Average pilot is the bonus-balance pilot (not trying); the Challenger tries (0.25 s reaction, 70 % aim).
+
+| Level | Pilot | Easy | Normal | Hard | Pooled |
+|---|---|---:|---:|---:|---:|
+| Supply Run | Average | 4.2 % | 0.0 % | 0.0 % | 1.4 % |
+| Supply Run | Challenger | 35.4 % | 27.1 % | 27.1 % | 29.9 % |
+| Stormfront | Average | 4.2 % | 2.1 % | 4.2 % | 3.5 % |
+| Stormfront | Challenger | 97.9 % | 66.7 % | 68.8 % | 77.8 % |
+
+Before the graze rule (Stormfront failing only on a hit in the 13-unit core): Average 26.4 %, Challenger 54.2 %;
+the graze rule is the tuning (design §5).
+
+**Lives budget, before → after.** Before: no life is paid in a bonus level beyond the hearts. After: expected extra
+lives per run .85 × (Supply Run rate + Stormfront rate) / 2 = **0 → 0.02** for the Average pilot and **0 → 0.46**
+for the Challenger, never more than one per run (one bonus level per run). Starting lives are unchanged (3; 5 on
+Easy).
+
+**§7 gates: unchanged by construction.** `tools/analyze_difficulty.dart`, `test/difficulty_calibration_test.dart`,
+`test/campaign_playtest_test.dart`, `test/boss_endurance_test.dart`, `test/perspective_difficulty_test.dart` and
+`test/sentinel_rush_fairness_test.dart` start runs without a run seed (`BonusPlan.none`): no bonus level, no
+challenge, no extra life. They pass unchanged on this branch (the full suite, design §5); the bonus-balance gate
+also passes (its pilots never touch the challenge state, which draws no random numbers).
+
+## Crosswind (2026-11-17, change `crosswind`): wind, and the Crosswind bonus level
+
+Wind is gameplay (every projectile drifts; demons are pushed a little; the brood aims with it), but only seeded runs
+have it, so **every calibration gate (unseeded) is unchanged draw for draw**: the 318-wave budgets, the campaign
+playtest, boss endurance, perspective parity and the rush fairness run calm. Design: `openspec/changes/crosswind`.
+
+**Windy ordinary sectors, the Average pilot** (`dart run tools/ordinary_wave_probe.dart 24 wind=on skill=S`: sectors
+1–4 of routes 0–2, 24 seeds, unprotected, lives refilled; `wind=on` makes every eligible sector windy with the plan's
+own tiers and timings, route 0 sector 1 stays calm; `skill` is the share of the drift the pilot leads its aim by).
+Before = the same harness with `wind=off` (identical to the fire-rate-tune row above).
+
+| Mode | Lives per sector, calm | Windy, skill 0 | Windy, skill 0.6 | Seconds per sector, calm → windy (skill 0) |
+|---|---|---|---|---|
+| Easy | 11.43 | 11.33 (−0.8 %) | 11.44 (+0.1 %) | 113.6 → 114.0 (+0.4 %) |
+| Normal | 25.46 | 25.86 (+1.6 %) | 25.63 (+0.7 %) | 196.5 → 200.5 (+2.0 %) |
+| Hard | 33.19 | 32.18 (−3.1 %) | 32.41 (−2.4 %) | 233.5 → 229.0 (−1.9 %) |
+
+- The plan makes one eligible level in five windy (11 of the 12 sectors measured are eligible), so the scheduled
+  effect on a run is about a fifth of these: within ±0.6 % on every mode.
+- Before the brood aimed with the wind (first build, the same harness): Easy 10.84 (−5.1 %), Normal 25.45 (0.0 %),
+  Hard 30.94 (−6.8 %): the wind bent the demons' aimed fire off the ship and made windy levels easier. With
+  `broodAim` 0.6 (they lead 60 % of the drift) a windy sector is as dangerous as a calm one; the wind's cost is the
+  player's aim, which this scripted pilot (it fires at whatever is under it in a dense swarm) barely feels.
+- Hard's unfinished sectors (281–282 of 288 windy, 283 calm) are all `gameOver` of the refilled 99 lives on route 2
+  sector 3, the same cells as calm.
+
+**Crosswind vs the sector it replaces** (`test/bonus_balance_test.dart`, routes 0–1 pooled, 8 seeds; gate ±15 %
+pooled, ±20 % per mode):
+
+| Build | Duration | Enemies | Score | Possible | Lives lost |
+|---|---|---|---|---|---|
+| Sector's swarm, crosswind drift 66 | +24.9 % | −0.1 % | −7.1 % | +2.6 % | +26.1 % (fails) |
+| Roster and reinforcements × 0.88, drift 60 | +24.3 % | −7.2 % | −10.5 % | −1.1 % | +13.1 % (fails) |
+| + half the drops Powerful | +16.7 % | −7.0 % | −10.9 % | −1.4 % | +6.8 % (fails) |
+| **+ three drops in four Powerful (kept)** | **+12.5 %** | **−7.0 %** | **−11.3 %** | **−1.8 %** | **+6.4 %** |
+
+Per mode (kept): duration +9.2 / +12.2 / +15.0 %, lives +0.6 / +1.0 / +13.4 % (Easy / Normal / Hard). The single
+shots cost time (no Spread, no Rapid); heavier single shots from the wing cannons win most of it back without
+multifire. The balance pilot ignores the kites, so their points (inside the level's cap) are not in "Score".
+
+## Weather everywhere (2026-11-18, change `weather-everywhere`): unchanged
+
+Regular-sector lightning storms (one eligible level in seven) and smart demons holding a dive for a tailwind exist
+only in seeded runs with wind or heavy rain. Every gate above runs unseeded, so it is calm, dry and storm-free: no
+number moves and no random draw is added (a calm level's dive picker returns at once). The operator asked for no
+rebalance ("The windy sectors will already be harder for players dealing with wind ;) no need to rebalance").
+## Spear-bearers (2026-11-18, change `spear-bearers`): a buckler-and-spear hunter from the third tour
+
+Design: `openspec/changes/spear-bearers` (§1 schedule, §2 throw, §3 buckler). A bearer *replaces* an elite birth (the
+elite whose wave + elite ordinal is even, routes 2–4, sectors 2–4; Easy routes 3–4, sectors 3–4), so rosters, HP and
+every random draw are unchanged.
+
+**Defence budgets** (`dart run tools/analyze_difficulty.dart`): unchanged by construction (no roster, HP, shield or
+armour changes; the buckler is per creature and only in a dive). Rerun on `game` (27b07de3) and on this branch: the summary and the per-wave Markdown are byte-identical; in the JSON
+only `observedPeakLiveDefense` (the simulated admission run's peak, not a budget) moved, by −1 on 6 of 318 waves
+(routes 2–4), because a bearer's dive plays out differently (no triple spread).
+
+**Calibration gates** (`difficulty_calibration`, `campaign_playtest`, `boss_endurance`, `perspective_difficulty`,
+`sentinel_rush_fairness`): all pass with bearers on. The campaign playtest's swarm metrics (`.cache/swarm-metrics-*.md`, protected pilot,
+sectors pooled over the five routes), mean clear seconds, `game` 27b07de3 → this branch:
+
+| Mode | S1 | S2 | S3 | S4 | S5 | Peak hostile S2–S4, before → after |
+|---|---|---|---|---|---|---|
+| Easy | 18.17 → 17.74 | 24.11 → 24.60 | 22.37 → 19.83 | 24.23 → 26.04 | 21.64 → 23.43 | 10/9/9 → 10/6/9 |
+| Normal | 30.77 → 33.81 | 40.91 → 37.86 | 41.32 → 36.23 | 42.55 → 35.95 | 32.63 → 32.52 | 12/13/13 → 12/10/12 |
+| Hard | 33.26 → 37.08 | 48.21 → 41.43 | 41.51 → 44.58 | 41.67 → 43.20 | 36.08 → 35.64 | 16/15/13 → 16/12/12 |
+
+Sectors 1 and 5 never have bearers yet move too: the campaign carries powers and the run's random stream across
+sectors, so any change of play in sectors 2–4 reshuffles what follows. Hit ratios moved by at most 3.9 points (Easy
+S5); peak active by at most 1. Peak hostile shots fell in the bearer sectors (the spear replaces a three-shot spread).
+
+**Behaviour, the Average pilot** (`dart run tools/ordinary_wave_probe.dart 24 routes=2,3,4 spears=off|on [lead=L]`:
+sectors 1–4 of routes 2–4, 24 seeds, unprotected, lives refilled; `spears=off` is the same harness without bearers):
+
+| Mode | Lives per sector, no bearers | Bearers (kept, lead 0) | Bearers, lead 1 | Seconds per sector, off → on | Bearers / throws / lives to a spear per sector (kept) |
+|---|---|---|---|---|---|
+| Easy | 29.62 | 29.03 (−2.0 %) | 28.85 (−2.6 %) | 254.4 → 252.9 | 1.33 / 1.56 / 0.39 |
+| Normal | 69.77 | 67.72 (−2.9 %) | 69.03 (−1.1 %) | 472.2 → 467.7 | 4.70 / 2.89 / 0.71 |
+| Hard | 81.60 | 80.01 (−1.9 %) | 79.86 (−2.1 %) | 516.4 → 515.8 | 6.75 / 5.53 / 1.31 |
+
+Per route (Normal, lives per sector-run summed over 24 seeds): route 2 200.21 → 189.92, route 3 274.75 → 260.71,
+route 4 362.29 → 362.04. Easy route 2 is identical (85.29: no bearers there), as it must be.
+
+- A bearer is slightly *easier* than the hunter it replaces: it gives up the hunter's three-shot spread for one
+  telegraphed spear a dive, and its buckler (2 points a life) is weaker than the hunter's thermal shield (2 points a
+  dive) after the first dive. The operator asked for replacement, not added pressure; every unseeded gate passes.
+- Tried: a full aim lead (`lead=1`, the spear thrown at where the ship will be if it keeps moving). It moved the three
+  modes by +0.6, +1.8 and −0.2 points against lead 0 and *lowered* Hard's lives to a spear (1.31 → 0.96): the Average
+  pilot dodges the nearest shot, so a led spear is as often dodged as an unled one. The gap between the two runs is
+  about the size of the effect itself, so neither is a real fix. Kept: **lead 0** (aim at where the ship is), the
+  fairer read (a player who moves dodges it), and the bearers slightly softer than the hunters they replace.

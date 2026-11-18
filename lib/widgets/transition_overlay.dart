@@ -18,7 +18,9 @@ import 'package:flutter/material.dart';
 import '../comms/comms_bank.dart';
 import '../comms/comms_briefing.dart';
 import '../comms/comms_director.dart';
-import '../comms/comms_view.dart' show CommsLayout;
+import '../comms/comms_transition_chatter.dart';
+import '../comms/comms_view.dart'
+    show CommsHudStack, CommsLayout, TransitionChatterView;
 import '../comms/squad_comms.dart';
 import '../game/campaign_story.dart';
 import '../game/interlude.dart';
@@ -50,6 +52,36 @@ class TransitionPresenter {
 
   /// Bank lines this presenter started on the speech player.
   final played = <String>[];
+
+  // --- portrait-comms-lanes: the transition's radio chatter over the
+  // clouds (portrait only; the landscape call tiles are unchanged).
+  /// The current sector transition's chatter, while its slot is open.
+  TransitionChatter? chatter;
+
+  /// Lines an earlier chatter showed that are still on the channel: they
+  /// never reappear on the dock.
+  final _chatterDone = Set<CommsMessage>.identity();
+
+  /// The second short line this presenter queued for the chatter.
+  CommsMessage? _second;
+
+  /// The last layout seen by [build] (the portrait dock, not side tiles).
+  bool compact = false;
+
+  /// A line must have this long before the Descent to join the chatter.
+  static const chatterMinRead = 2.0;
+
+  /// Lines the dock leaves to the chatter (shown, or shown and still on
+  /// the channel).
+  Set<CommsMessage> chatterHidden(SquadComms comms) {
+    final d = comms.director;
+    _chatterDone.removeWhere(
+      (m) =>
+          !d.active.any((a) => identical(a, m)) &&
+          !d.queue.any((q) => identical(q, m)),
+    );
+    return {...?chatter?.hidden, ..._chatterDone};
+  }
 
   // --- bonus briefing: the urgent-mission card of a bonus level ahead.
   /// The card of the current (or just finished) transition into a bonus
@@ -174,6 +206,7 @@ class TransitionPresenter {
     if (model.mode != RunMode.title && slotted(model)) {
       if (!_slotPlanned) _planSlot(model, comms, flawless: flawless);
       _updateSlot(model, comms, voice);
+      _updateChatter(model, comms); // --- portrait-comms-lanes
     } else if (_slotPlanned) {
       _endSlot(comms);
     }
@@ -259,13 +292,12 @@ class TransitionPresenter {
         invite: pick.line,
         inviteSpec: pick.spec,
         modifier: model.bonusPlan.modifier,
-        crew: comms.lineup?.members ?? const {},
-        seed: (seed ?? 0) * 31 + level * 7 + model.cycle,
       );
     }
     final b = briefing;
     final needs = b != null
-        // The card's whole script (it starts at the slot, no adoption wait).
+        // The card's line or its reading time, whichever is longer (it
+        // starts at the slot, no adoption wait).
         ? b.needs(gap: comms.director.lineGap) + InterludeTiming.fade
         : s.radio!.needs + InterludeTiming.adoptWait + 2 * InterludeTiming.fade;
     // The model rounds it up to whole beats before travel starts.
@@ -280,21 +312,95 @@ class TransitionPresenter {
     if (elapsed < 0) return;
     final b = briefing;
     if (b != null && !b.offered) {
-      // The card's script goes on the channel at the slot's start (no
-      // adoption of a line already on air: the director queues the first
-      // turn behind it, and the card is the slot).
+      // The card opens at the slot's start and its one line goes on the
+      // channel (no adoption of a line already on air: the director queues
+      // it behind, and the card is the slot). bonus-briefing-clarity: the
+      // card opens even if the line cannot queue.
       final room =
           model.flow.plan.descentAt - model.flow.seconds + FlowPlan.maxExtra;
-      if (b.offer(comms.director, now: comms.now, ttl: room)) {
-        played.add(b.invite.id);
-        planner.shown(b.invite.id);
-        return;
-      }
-      // Nothing could queue: the ordinary slot carries on.
-      briefing = null;
+      b.offer(comms.director, now: comms.now, ttl: room);
+      played.add(b.script().first.$1.id);
+      planner.shown(b.invite.id);
+      return;
     }
     if (b != null && b.offered) return;
     _updateRadio(model, comms, elapsed);
+  }
+
+  /// portrait-comms-lanes: when Pursuit starts (plan seconds), the chatter's
+  /// window opens; it closes at the Descent.
+  static double pursuitAt(FlowPlan p) => p.descentAt - p.pursuitSeconds;
+
+  /// The chatter's opacity on the flow clock: in over [chatterFade] from
+  /// Pursuit's start, out over the slot's last half second before the
+  /// Descent (the slot beat's own fade-out).
+  static double chatterOpacity(FlowPlan p, double s) {
+    final a = ((s - pursuitAt(p)) / chatterFade).clamp(0.0, 1.0);
+    final b = ((p.descentAt - s) / InterludeTiming.fade).clamp(0.0, 1.0);
+    return math.min(a, b);
+  }
+
+  static const chatterFade = .3;
+
+  /// portrait-comms-lanes: opens the chatter when Pursuit starts (portrait
+  /// only; not on the way into a bonus level, whose card is the slot),
+  /// takes the lines the rules allow and, when one short line stands
+  /// alone, queues a second short one if it fits the transition's clock.
+  void _updateChatter(ArcadeModel model, SquadComms comms) {
+    if (chatter == null &&
+        (!compact ||
+            slot == null ||
+            briefing != null ||
+            model.flow.seconds < pursuitAt(model.flow.plan) ||
+            model.flow.seconds >= model.flow.plan.descentAt)) {
+      return;
+    }
+    if (briefing != null) return;
+    final now = comms.now;
+    final left = model.flow.plan.descentAt - model.flow.seconds;
+    final c = chatter ??= TransitionChatter(
+      // A line the Pursuit's own event started this frame counts.
+      openedAt: now - (model.flow.seconds - pursuitAt(model.flow.plan)) - .1,
+      lastStart: now + left - chatterMinRead,
+    );
+    final director = comms.director;
+    c.consider(director.active, now);
+    if (!c.wantsSecond || _second != null || director.queue.isNotEmpty) {
+      return;
+    }
+    final first = c.shown.single;
+    final room = left - InterludeTiming.fade;
+    final start = math.max(0.0, first.speechEndsAt + director.lineGap - now);
+    final crew = comms.lineup?.members ?? const <String>{};
+    final picks = [
+      for (final category in RadioCategory.drawn)
+        for (final p in radioPool(category, level: model.nextLevel, crew: crew))
+          if (p.text.length <= TransitionChatter.shortMax &&
+              p.spec.exchange == null &&
+              p.line.id != first.line.id &&
+              !played.contains(p.line.id) &&
+              commsCast[p.line.speaker] != null &&
+              start + p.needs <= room)
+            p,
+    ];
+    if (picks.isEmpty) return;
+    // The other side first (a human line gets a brood answer in spirit,
+    // never a linked one), then the shortest.
+    picks.sort((a, b) {
+      final sa = (commsCast[a.line.speaker]!.isDemon == first.isDemon) ? 1 : 0;
+      final sb = (commsCast[b.line.speaker]!.isDemon == first.isDemon) ? 1 : 0;
+      return sa != sb ? sa - sb : a.needs.compareTo(b.needs);
+    });
+    final pick = picks.first;
+    final message = director.offer(
+      pick.line,
+      spec: pick.spec,
+      ttl: math.max(.1, room - pick.needs),
+    );
+    _second = message ?? first; // one try per transition
+    if (message == null) return;
+    played.add(pick.line.id);
+    planner.shown(pick.line.id);
   }
 
   void _updateRadio(ArcadeModel model, SquadComms comms, double elapsed) {
@@ -345,6 +451,16 @@ class TransitionPresenter {
     }
     final own = _own;
     if (own != null && !own.started) comms.director.queue.remove(own);
+    // --- portrait-comms-lanes: the chatter closes with the slot; its
+    // lines never move to the dock afterwards.
+    final second = _second;
+    if (second != null && !second.started) {
+      comms.director.queue.remove(second);
+    }
+    final c = chatter;
+    if (c != null) _chatterDone.addAll(c.hidden);
+    chatter = null;
+    _second = null;
     slot = null;
     _own = shown = null;
     _slotPlanned = false;
@@ -392,6 +508,7 @@ class TransitionPresenter {
   }) {
     final phase = model.presentationMode;
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    compact = !CommsLayout.of(MediaQuery.sizeOf(context)).side;
     final children = <Widget>[];
     if (phase == RunMode.transition && model.isBoss) {
       children.add(_bossAlert(model, model.transitionProgress));
@@ -401,6 +518,8 @@ class TransitionPresenter {
     }
     final flourish = _flourish(model);
     if (flourish != null) children.add(flourish);
+    final talk = _chatter(model, comms);
+    if (talk != null) children.add(talk);
     if (children.isEmpty) return const SizedBox.shrink();
     return Stack(
       children: [for (final c in children) Positioned.fill(child: c)],
@@ -435,6 +554,62 @@ class TransitionPresenter {
       },
     );
   }
+
+  /// portrait-comms-lanes: the chatter in the middle of the arena, over
+  /// the clouds, between the dock's room and the ship's highest climb. It
+  /// follows Pursuit on the flow clock (gone by the Descent) and takes no
+  /// input.
+  Widget? _chatter(ArcadeModel model, SquadComms comms) {
+    final c = chatter;
+    if (c == null || c.shown.isEmpty || !compact) return null;
+    final opacity = chatterOpacity(model.flow.plan, model.flow.seconds);
+    if (opacity <= 0) return null;
+    final plan = model.flow.plan;
+    return IgnorePointer(
+      child: LayoutBuilder(
+        builder: (context, bounds) {
+          final scale = math.min(
+            bounds.maxWidth / ArcadeModel.width,
+            bounds.maxHeight / ArcadeModel.height,
+          );
+          final oy = bounds.maxHeight - ArcadeModel.height * scale;
+          // The ship's top at its highest climb, with a margin.
+          final shipTop =
+              oy + (ArcadeModel.shipY - plan.climb - shipClearance) * scale;
+          final top = chatterTop;
+          final height = math.max(0.0, shipTop - top);
+          return Stack(
+            children: [
+              Positioned(
+                key: const ValueKey('transition-chatter-band'),
+                left: 8,
+                right: 8,
+                top: top,
+                height: height,
+                child: Center(
+                  child: Opacity(
+                    opacity: opacity,
+                    child: TransitionChatterView(
+                      chatter: c,
+                      now: comms.now,
+                      maxWidth: bounds.maxWidth - 16,
+                      maxHeight: height,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Room left at the top of the arena for the dock (its tallest).
+  static const chatterTop = CommsHudStack.maxHeight + 4;
+
+  /// Arena units kept clear above the ship's sprite at its highest climb.
+  static const shipClearance = 40.0;
 
   /// The medal of a carrier's fall: a short flourish beside the ship (the
   /// existing medal glyph, no panel and no text: the HUD counts the extra

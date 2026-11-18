@@ -5,6 +5,12 @@ libraries that the web sampler bank (`openspec/changes/adaptive-soundtrack/desig
 §3.3) is cut from. This file holds **research and pins only**. No sample was downloaded. The only files fetched whole
 were licence files, readmes and SFZ maps (each under 100 KB). The machine-readable list of every file is
 `plan/sample-bank-pins.manifest.tsv` (184 rows: repo, commit, group, path, bytes, git blob sha1, raw URL).
+**Round 2 (2026-11-17):** 12 more rows, from the same three repos at the same commits and under the same CC0 licence
+files, fill the score's coverage gaps (trumpet, glockenspiel, upper organ pipes, high guitar). The manifest now has
+196 rows; see `plan/licences-round-2.md` §5.
+**Brood choir (2026-11-18):** epic-choir (CC BY 4.0) and 272 Merry Orks (CC0) are pinned separately, in
+`plan/choir-pins.md` and `plan/choir-pins.manifest.tsv`, because epic-choir is not CC0 and its samples live in a
+release zip rather than in git.
 
 **Method.**
 - Refs came from `git ls-remote https://github.com/<repo>`. Every tag is lightweight, so the tag's sha is the

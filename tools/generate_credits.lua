@@ -1,6 +1,9 @@
 #!/usr/bin/env lua
--- Credits come from this project's dependency graph, author records and pins.
--- Generate a fresh graph with `flutter pub deps --json` before invoking.
+-- Credits come from this project's dependency graph, author records, licence records and pins.
+-- Run from the repo root:
+--   flutter pub deps --json | sed -n '/^{/,$p' > <scratch>/graph.json
+--   lua tools/generate_credits.lua <scratch>/graph.json        (writes assets/credits.json)
+-- The credits page (lib/ending/ending_page.dart) renders every row; openspec/changes/credits-page has the design.
 local graph=assert(arg[1],'usage: lua tools/generate_credits.lua PACKAGE-GRAPH.json')
 local function q(s)return "'"..s:gsub("'","'\\''").."'"end
 local function read(argv)
@@ -51,50 +54,186 @@ table.sort(authors,function(a,b)return a.name<b.name end)
 -- Home pages linked from the credit line.
 local author_urls={['Tlatoāni']='https://tlatoani.net/'}
 for _,a in ipairs(authors)do a.url=author_urls[a.name]end
+local sdk_urls={Dart='https://dart.dev/',Flutter='https://flutter.dev/'}
 local sdks={}
 for _,row in ipairs(lines(read({'jq','-r','.sdks[]|[.name,.version]|@tsv',graph})))do
- local name,version=row:match('^([^\t]+)\t(.+)$');sdks[#sdks+1]={name=name,version=version}
+ local name,version=row:match('^([^\t]+)\t(.+)$');sdks[#sdks+1]={name=name,version=version,url=sdk_urls[name]}
 end
+-- Every package row links to its pub.dev page.
+for _,rows in ipairs({direct_rows,indirect_rows})do
+ for _,row in ipairs(rows)do row.url='https://pub.dev/packages/'..row.name end
+end
+-- The models used in production (credits-page design §4: each licence below is the one the model's own card or
+-- licence file states, read 2026-11-17; the Hugging Face card's `license` field where nothing else is cited).
 local models={
- {name='ACE-Step 1.5 XL',license='Apache-2.0',source='Host model inventory; art/workflows/music'},
- {name='Kokoro-82M / hexgrad',license='Apache-2.0',revision=read({'jq','-r','.kokoro.revision','art/comms/audio.json'})},
+ {name='ACE-Step 1.5 XL',license='MIT',url='https://huggingface.co/ACE-Step/acestep-v15-xl-turbo',source='Soundtrack pilot (art/workflows/music); the shipped score is MIDI written by tools/score'},
+ {name='Kokoro-82M / hexgrad',license='Apache-2.0',url='https://huggingface.co/hexgrad/Kokoro-82M',revision=read({'jq','-r','.kokoro.revision','art/comms/audio.json'})},
  -- The 2026-11-12 radio bank still ships Chatterbox takes. Chatterbox was dropped from the
  -- voice stack on 2026-11-16 and its pin left art/comms/audio.json, so the revision those
  -- takes used is kept here. Remove this row when the last Chatterbox clip is re-rendered.
- {name='Chatterbox / Resemble AI',license='MIT',revision='5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18'},
+ {name='Chatterbox / Resemble AI',license='MIT',url='https://huggingface.co/ResembleAI/chatterbox',revision='5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18'},
  -- Voice-stack engines (openspec/changes/voice-stack). Fish Audio and Boson AI require
  -- these exact credit lines wherever their audio is used (plan/licences-to-sign.md).
- {name='VoxCPM2 / OpenBMB',license='Apache-2.0',source='Voice stack: speech'},
- {name='Dia 1.6B / Nari Labs',license='Apache-2.0',source='Voice stack: non-verbals'},
- {name='Fish Audio S2-Pro · Built with Fish Audio',license='Fish Audio Research License',source='Voice stack: pilot challenger'},
- {name='Higgs Audio v2 · Built with Higgs Materials licensed from Boson AI USA, Inc., Copyright Boson AI USA, Inc., All Rights Reserved and Meta Llama 3 licensed under the Meta Llama 3 Community License, Copyright Meta Platforms, Inc., All Right Reserved',license='Boson Higgs Audio 2 Community License; Meta Llama 3 Community License',source='Voice stack: pilot challenger'},
+ {name='VoxCPM2 / OpenBMB',license='Apache-2.0',url='https://huggingface.co/openbmb/VoxCPM2',source='Voice stack: speech'},
+ {name='Dia 1.6B / Nari Labs',license='Apache-2.0',url='https://huggingface.co/nari-labs/Dia-1.6B-0626',source='Voice stack: non-verbals'},
+ {name='Fish Audio S2-Pro · Built with Fish Audio',license='Fish Audio Research License',url='https://huggingface.co/fishaudio/s2-pro',source='Voice stack: pilot challenger'},
+ {name='Higgs Audio v2 · Built with Higgs Materials licensed from Boson AI USA, Inc., Copyright Boson AI USA, Inc., All Rights Reserved and Meta Llama 3 licensed under the Meta Llama 3 Community License, Copyright Meta Platforms, Inc., All Right Reserved',license='Boson Higgs Audio 2 Community License; Meta Llama 3 Community License',url='https://huggingface.co/bosonai/higgs-tts-2-3b-base',source='Voice stack: pilot challenger'},
  -- Signed licence records: licences/acknowledgements/ (PRs #4-#7, 2026-11-17).
  {name='Built with Meta Llama 3 · Meta Llama 3 is licensed under the Meta Llama 3 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.',license='Meta Llama 3 Community License; Meta Llama 3 Acceptable Use Policy',source='Voice stack: bundled with Higgs Audio v2 (bosonai/higgs-tts-2-3b-base)'},
- {name='SDXL-Lightning / ByteDance',license='OpenRAIL++',source='Beach concept provenance'},
- {name='SDXL Base 1.0',license='OpenRAIL++',source='Project asset provenance register'},
- {name='Pixel Art XL / nerijs',license='CreativeML OpenRAIL-M',source='Beach concept provenance'},
- {name='Qwen Image Edit / Comfy-Org',license='Apache-2.0',source='Beach refinement provenance'},
- {name='Qwen Image Edit Lightning / lightx2v',license='Apache-2.0',source='Beach refinement provenance'},
+ {name='whisper.cpp models / ggerganov',license='MIT',url='https://huggingface.co/ggerganov/whisper.cpp',source='Voice stack: speech recogniser (plan/model-pins-voice.md)'},
+ -- openspec/specs/third-party-licence-demucs-weights-unstated: this exact name, marked analysis and reference only.
+ {name='Demucs, Alexandre Défossez',license='Weights licence unstated (likely CC BY-NC)',url='https://github.com/adefossez/demucs',source='Analysis and reference only: no separated audio ships'},
+ {name='SDXL-Lightning / ByteDance',license='OpenRAIL++',url='https://huggingface.co/ByteDance/SDXL-Lightning',source='Beach concept provenance'},
+ {name='SDXL Base 1.0',license='OpenRAIL++',url='https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0',source='Project asset provenance register'},
+ {name='Pixel Art XL / nerijs',license='CreativeML OpenRAIL-M',url='https://huggingface.co/nerijs/pixel-art-xl',source='Beach concept provenance'},
+ {name='LayerDiffuse / LayerDiffusion',license='CreativeML OpenRAIL-M',url='https://huggingface.co/LayerDiffusion/layerdiffusion-v1',source='Transparent sprite renders (art/workflows)'},
+ {name='IP-Adapter Plus SDXL / h94',license='Apache-2.0',url='https://huggingface.co/h94/IP-Adapter',source='Comms portrait workflow (art/workflows/comms)'},
+ {name='ControlNet Union SDXL ProMax / xinsir',license='Apache-2.0',url='https://huggingface.co/xinsir/controlnet-union-sdxl-1.0',source='Boss hero workflow (art/workflows/sprites)'},
+ {name='Wan 2.2 VACE Fun / alibaba-pai',license='Apache-2.0',url='https://huggingface.co/alibaba-pai/Wan2.2-VACE-Fun-A14B',source='Sprite in-between workflow (art/workflows/sprites)'},
+ {name='Qwen Image Edit / Comfy-Org',license='Apache-2.0',url='https://huggingface.co/Qwen/Qwen-Image-Edit-2511',source='Beach refinement provenance'},
+ {name='Qwen Image Edit Lightning / lightx2v',license='Apache-2.0',url='https://huggingface.co/lightx2v/Qwen-Image-Edit-2511-Lightning',source='Beach refinement provenance'},
 }
-local result={schema='demon-attack.credits/v1',title='Demon Attack',platform='Tillandsias.org',
- platform_url='https://tillandsias.org/',
- source_url='https://github.com/8007342/demon_attack',source_license='GPLv3 · see source LICENSE',
- sections={
-  -- The creator line reads "By <names>, with love"; then the art and the tools
-  -- that made it, then the code foundations.
-  {title='',degree='creator',lead='By ',tail=', with love',entries=authors,
-   alongside={lead='Made alongside ',name='Claude',url='https://claude.ai/',tail=' by Anthropic'}},
-  {title='Original art, score and voices',degree='models',entries=models},
-  {title='Production tools',degree='tools',entries={{name='ComfyUI studio'},{name='Lua orchestration · Go verification'},{name='Python model adapters · PyTorch · NumPy · SciPy · SoundFile'},{name='FFmpeg · Opus · WebP'}}},
-  {title='Built with',degree='direct',entries=sdks},
-  {title='Game and app packages',degree='direct',entries=direct_rows},
-  {title='Their foundations',degree='indirect',entries=indirect_rows},
- },
+-- Third-party licences: one row per signed acknowledgement in licences/acknowledgements/, titled from its licence
+-- text's own heading (licences/texts/) and linked to that text in the source repository.
+local repo='https://github.com/8007342/demon_attack'
+local licence_titles={
+ ['boson-higgs-audio-2-community']='Boson Higgs Audio 2 Community License Agreement',
+ ['fish-audio-research-license-2026-03-07']='Fish Audio Research License Agreement (March 7, 2026)',
+ ['meta-llama-3-acceptable-use-policy']='Meta Llama 3 Acceptable Use Policy',
+ ['meta-llama-3-community']='Meta Llama 3 Community License Agreement',
+ ['demucs-weights-unstated']='Demucs weights: licence unstated (analysis and reference only)',
+ ['creativeml-openrail-m']='CreativeML Open RAIL-M (August 22, 2022)',
+ ['creativeml-openrail-plus-plus-m-sdxl']='CreativeML Open RAIL++-M License (July 26, 2023): Stability AI',
+ ['creativeml-openrail-plus-plus-m-sdxl-lightning']='CreativeML Open RAIL++-M License (July 26, 2023): ByteDance SDXL-Lightning',
+}
+local licences={};local licence_seen={}
+for _,path in ipairs(lines(read({'sh','-c','ls licences/acknowledgements/*.yaml'})))do
+ local f=assert(io.open(path));local text=f:read('a');f:close()
+ local id=assert(text:match('\nlicence: ([%w%-%.]+)'),path)
+ local covers=assert(text:match('\ncovers: %[([^%]]*)%]'),path)
+ if not licence_seen[id]then
+  licence_seen[id]=true
+  local textfile='licences/texts/'..id..'.md'
+  local has=io.open(textfile);if has then has:close()end
+  licences[#licences+1]={name=assert(licence_titles[id],'no title for licence '..id),source='Covers '..covers,
+   url=has and(repo..'/blob/main/'..textfile)or(repo..'/blob/main/openspec/specs/third-party-licence-'..id..'/spec.md')}
+ end
+end
+table.sort(licences,function(a,b)return a.name<b.name end)
+-- The CC0 sample libraries the score's sample bank is cut from (plan/sample-bank-pins.md). The bank has not shipped:
+-- the score still plays its synth voices, so these rows say "coming" until it does.
+local samples={}
+for _,row in ipairs({
+ {'Big Rusty Drums / Karoryfer','https://github.com/sfzinstruments/karoryfer.big-rusty-drums'},
+ {'Growlybass / Karoryfer','https://github.com/sfzinstruments/karoryfer.growlybass'},
+ {'Black And Green Guitars / Karoryfer','https://github.com/sfzinstruments/karoryfer.black-and-green-guitars'},
+ {'Versilian Community Sample Library (VCSL)','https://github.com/sgossner/VCSL'},
+ {'VSCO 2 Community Edition','https://github.com/sgossner/VSCO-2-CE'},
+})do samples[#samples+1]={name=row[1],license='CC0 1.0',url=row[2],source='Coming with the score\'s sample bank'}end
+-- --- choir-pins: the brood choir's libraries (plan/choir-pins.md), desktop only, also coming. epic-choir is CC BY 4.0:
+-- its row is the credit line its README asks for, with the changes and the licence link CC BY 4.0 requires.
+for _,row in ipairs({
+ {'272 Merry Orks by Karoryfer Lecolds','CC0 1.0','https://github.com/sfzinstruments/karoryfer.272-merry-orks',
+  'Coming with the brood choir'},
+ {'Choir samples derived from VocalSet (Wilkins, Seetharaman, Wahl, Pardo 2018), CC BY 4.0, https://doi.org/10.5281/zenodo.1442513 — epic-choir by thepok',
+  'CC BY 4.0','https://github.com/thepok/epic-choir',
+  'Coming with the brood choir. Changed for this game: cut, pitched, downmixed to mono and encoded to Opus. Licence: https://creativecommons.org/licenses/by/4.0/'},
+})do samples[#samples+1]={name=row[1],license=row[2],url=row[3],source=row[4]}end
+-- --- choir-real: the two rows go live in the same build that ships their samples, i.e. once web/audio/bank/choir.json
+-- (built from art/music/bank/choir-real-recipe.json) names their source; epic-choir keeps its change note and licence
+-- link (CC BY 4.0). The approved choir (formant synth + ACE-Step) names neither, so they stay "coming".
+do
+ local live={['thepok/epic-choir']={url='https://github.com/thepok/epic-choir'},
+  ['local/orks-picks']={url='https://github.com/sfzinstruments/karoryfer.272-merry-orks',commit='a437e2c02014e02710a104a6692193eab8672d0a'}}
+ local f=io.open('web/audio/bank/choir.json','r')
+ if f then f:close()
+  local ok,list=pcall(read,{'jq','-r','.sources|to_entries[]|[.key,(.value.commit//"-")]|@tsv','web/audio/bank/choir.json'})
+  for _,row in ipairs(ok and lines(list)or{})do
+   local key,commit=row:match('^([^\t]+)\t([^\t]*)$')
+   local l=key and live[key]
+   if l then for _,r in ipairs(samples)do if r.url==l.url then
+    local pin=(commit~='-' and commit or l.commit or ''):sub(1,12)
+    r.source=r.source:gsub('^Coming with the brood choir%.?%s*','Brood choir (desktop), pinned at '..pin..(r.license=='CC BY 4.0' and '. ' or ''))
+   end end end
+  end
+ end
+end
+-- The open-source projects the game, its asset pipelines and its delivery are built on (credits-page design §5).
+local function group(title,rows)
+ local out={};for _,r in ipairs(rows)do out[#out+1]={name=r[1],url=r[2],license=r[3]}end
+ return {title=title,degree='projects',entries=out}
+end
+-- A licence shows only where it was confirmed on 2026-11-17 (the GitHub repository API's SPDX id, or the npm registry
+-- for wrangler 4.151.2); the others link to their home page, which states their terms.
+local projects={
+ group('Engine and languages',{
+  {'Flutter','https://flutter.dev/','BSD-3-Clause'},{'Dart','https://dart.dev/','BSD-3-Clause'},
+  {'Flame','https://flame-engine.org/','MIT'},{'Lua','https://www.lua.org/'},{'Go','https://go.dev/','BSD-3-Clause'},
+  {'Rust','https://www.rust-lang.org/'},{'Python','https://www.python.org/'},{'Node.js','https://nodejs.org/'}}),
+ group('Art, music and voice pipelines',{
+  {'Blender','https://www.blender.org/'},{'ComfyUI','https://github.com/Comfy-Org/ComfyUI'},
+  {'PyTorch','https://pytorch.org/'},{'NumPy','https://numpy.org/'},{'SciPy','https://scipy.org/','BSD-3-Clause'},
+  {'Pillow','https://python-pillow.org/'},{'python-soundfile','https://github.com/bastibe/python-soundfile','BSD-3-Clause'},
+  {'whisper.cpp','https://github.com/ggml-org/whisper.cpp','MIT'},{'FFmpeg','https://ffmpeg.org/'},
+  {'Opus','https://opus-codec.org/'},{'libwebp','https://developers.google.com/speed/webp','BSD-3-Clause'},
+  {'ImageMagick','https://imagemagick.org/'}}),
+ group('Planning, delivery and hosting',{
+  {'OpenSpec','https://openspec.dev/','MIT'},{'Git','https://git-scm.com/'},
+  {'Cloudflare Workers','https://workers.cloudflare.com/'},
+  {'Wrangler','https://developers.cloudflare.com/workers/wrangler/','MIT OR Apache-2.0'}}),
+}
+-- The three projects the forge stands on, shown as cards at the top (credits-page design §2). Only Tillandsias shows
+-- its own icon (its site's favicon, GPL-3.0 like this game); Fedora and Podman get neutral glyphs, not their marks.
+local built_on={
+ {name='Tillandsias',url='https://tillandsias.org/',icon='assets/images/credits/tillandsias.webp',
+  blurb='The forge this game is made in: private, ephemeral dev environments with local AI tools.'},
+ {name='Fedora',url='https://fedoraproject.org/',glyph='desktop',
+  blurb='The Linux distribution the forge and its toolchains run on.'},
+ {name='Podman',url='https://podman.io/',glyph='container',
+  blurb='The containers that hold every forge, toolchain and studio.'},
+}
+local sections={
+ -- The creator line reads "By <names>, with love"; then the models, the licences, the samples to come, the
+ -- open-source projects, and the code foundations.
+ {title='',degree='creator',lead='By ',tail=', with love',entries=authors,
+  alongside={lead='Made alongside ',name='Claude',url='https://claude.ai/',tail=' by Anthropic'}},
+ {title='Models used to make the art, music and voices',degree='models',entries=models},
+ {title='Third-party licences',degree='licences',entries=licences},
+ {title='Sample libraries (coming)',degree='samples',entries=samples},
+}
+for _,g in ipairs(projects)do sections[#sections+1]=g end
+for _,s in ipairs({
+ {title='Built with',degree='direct',entries=sdks},
+ {title='Game and app packages',degree='direct',entries=direct_rows},
+ {title='Their foundations',degree='indirect',entries=indirect_rows},
+})do sections[#sections+1]=s end
+local result={schema='demon-attack.credits/v2',title='Demon Attack',platform='Tillandsias.org',
+ platform_url='https://tillandsias.org/',built_on=built_on,
+ trademark_note='Fedora and Podman are named here only to credit the software this game is built with. This game is not affiliated with or endorsed by the Fedora Project, Red Hat or the Podman project.',
+ source_url=repo,source_label='github.com/8007342/demon_attack',source_license='GPLv3 · see source LICENSE',
+ sections=sections,
  sources={dependency_graph='flutter pub deps --json',lockfile='pubspec.lock',
   authors_ref='origin/game',authors_commit=read({'git','rev-parse','origin/game'}),
   lockfile_sha256=read({'sha256sum','pubspec.lock'}):match('^(%x+)'),
   model_pins='art/comms/audio.json',asset_provenance='plan/asset-provenance.md',
+  licences='licences/acknowledgements',sample_pins='plan/sample-bank-pins.md',
   beach_provenance='assets/research/battle-metal-radio/ending/beach-qwen-v1.provenance.json'},
  note='All game artwork, performances and musical themes are original project work. Package notices are available through the bundled license registry.'}
+-- --- sample-bank: once web/audio/bank/bank.json exists (tools/bank/bank_build.lua), the samples section's rows are
+-- the bank's own: each source's credit line from the recipe, its licence and the commit it was cut from.
+do
+ local bank_rows={}
+ local ok,list=pcall(read,{'jq','-r','.sources|to_entries|sort_by(.key)[]|[.value.credit,.value.spdx,.key,.value.commit]|@tsv','web/audio/bank/bank.json'})
+ for _,row in ipairs(ok and lines(list)or{})do
+  local credit,spdx,repo,commit=row:match('^([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]*)$')
+  if credit then bank_rows[#bank_rows+1]={name=(credit:gsub('%s*%(CC0 1%.0%)$','')),license=spdx=='CC0-1.0'and'CC0 1.0'or spdx,
+   url='https://github.com/'..repo,source='Score sample bank, pinned at '..commit:sub(1,12)}end
+ end
+ -- Libraries the built bank does not carry yet (the choir's) stay listed as coming.
+ local built={};for _,r in ipairs(bank_rows)do built[r.url]=true end
+ if #bank_rows>0 then for _,r in ipairs(samples)do if not built[r.url]then bank_rows[#bank_rows+1]=r end end end
+ if #bank_rows>0 then for _,s in ipairs(result.sections)do if s.degree=='samples'then s.entries=bank_rows end end end
+end
 local file=assert(io.open('assets/credits.json','w'));file:write(json(result),'\n');file:close()
-print('credits: '..#authors..' contributor name(s), '..#direct_rows..' direct packages, '..#indirect_rows..' runtime foundations, '..#models..' model credits')
+local project_count=0;for _,g in ipairs(projects)do project_count=project_count+#g.entries end
+print('credits: '..#authors..' contributor name(s), '..#direct_rows..' direct packages, '..#indirect_rows..' runtime foundations, '..#models..' model credits, '..#licences..' licences, '..#samples..' sample libraries (coming), '..project_count..' open-source projects')

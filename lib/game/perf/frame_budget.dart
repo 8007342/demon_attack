@@ -29,6 +29,7 @@ enum PerfTier {
 class FrameBudget {
   const FrameBudget._({
     required this.rainScale,
+    required this.windScale,
     required this.moteScale,
     required this.blasts,
     required this.sparks,
@@ -41,6 +42,9 @@ class FrameBudget {
 
   /// Rain drops and splashes, as a fraction of the weather's own count.
   final double rainScale;
+
+  /// --- crosswind: the wind's cloud wisps and billows, as a fraction.
+  final double windScale;
 
   /// Sector motes (dust, embers, spores), as a fraction.
   final double moteScale;
@@ -72,6 +76,7 @@ class FrameBudget {
 
   static const full = FrameBudget._(
     rainScale: 1,
+    windScale: 1,
     moteScale: 1,
     blasts: 28,
     sparks: true,
@@ -83,6 +88,7 @@ class FrameBudget {
   );
   static const lean = FrameBudget._(
     rainScale: .6,
+    windScale: .6,
     moteScale: .75,
     blasts: 20,
     sparks: true,
@@ -94,6 +100,7 @@ class FrameBudget {
   );
   static const lite = FrameBudget._(
     rainScale: .35,
+    windScale: .35,
     moteScale: .5,
     blasts: 14,
     sparks: false,
@@ -102,6 +109,23 @@ class FrameBudget {
     emergence: false,
     lurkers: 0,
     hatchVents: false,
+  );
+
+  /// --- reduced-effects (design §3): this budget with the eye candy capped
+  /// at LITE: rain, wind, motes and explosion sprites at most LITE's, no
+  /// ricochet sparks, no blur, the reduced fog, no emergence frames. The
+  /// telegraphs (hatch lurkers and pulse rings) keep the tier's own.
+  FrameBudget calmed() => FrameBudget._(
+    rainScale: math.min(rainScale, lite.rainScale),
+    windScale: math.min(windScale, lite.windScale),
+    moteScale: math.min(moteScale, lite.moteScale),
+    blasts: math.min(blasts, lite.blasts),
+    sparks: false,
+    blur: false,
+    fogReduced: true,
+    emergence: false,
+    lurkers: lurkers,
+    hatchVents: hatchVents,
   );
 
   static FrameBudget of(PerfTier t) => switch (t) {
@@ -137,6 +161,10 @@ class PerfGovernor {
 
   PerfTier _tier = PerfTier.full;
   PerfTier get tier => forced ?? _tier;
+
+  /// --- reduced-effects: the governor itself stepped down to LITE (not a
+  /// forced tier): the menu says the device is running at low power.
+  bool get lowPower => forced == null && _tier == PerfTier.lite;
   FrameBudget get budget => FrameBudget.of(tier);
 
   /// The lowest tier index adaptation may climb back to.

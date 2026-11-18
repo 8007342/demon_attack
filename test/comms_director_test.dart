@@ -784,10 +784,16 @@ void main() {
         ...commsHumanTriggers.values,
         ...commsDemonTriggers.values,
       ]) {
-        // carrier-hatches: the carrier hints are one line each.
+        // carrier-hatches: the carrier hints are one line each;
+        // bonus-briefing-clarity: so is each bonus level's briefing call
+        // (bonus-challenges: and its challenge call).
+        final single =
+            commsOneLineTriggers.contains(spec.name) ||
+            spec.name.startsWith('bonusCall.') ||
+            spec.name.startsWith('bonusChallenge.');
         expect(
           spec.lines.length,
-          inInclusiveRange(commsOneLineTriggers.contains(spec.name) ? 1 : 2, 30),
+          inInclusiveRange(single ? 1 : 2, 30),
           reason: spec.name,
         );
         for (final line in spec.lines) {
@@ -1020,7 +1026,8 @@ void rushRadio() {
       // the 9 Supply Run in-level lines that now show their own words
       // (mission-medals: the borrowed subtitles told the player nothing).
       // The carrier hints (carrier-hatches) are written lines: they borrow
-      // nothing, so the count is unchanged.
+      // nothing, so the count is unchanged. So are fang-and-wings-comms'
+      // 83 creed lines and dive war cries (written text, no placeholder).
       expect(borrowed, 55);
     });
 

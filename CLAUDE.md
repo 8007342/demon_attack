@@ -123,11 +123,17 @@ after the merge instead of resolving its text.
 | `lib/game/ground_atmosphere_atlas.dart` | `cd tools/ground_atmosphere && go run . pack` (`go run . check` compares) | `check` passes |
 | `lib/game/ground_blocks_atlas.dart` | `cd tools/ground_blocks && go run . offline` | runs, but the PNG bytes differ from the committed ones |
 | `lib/game/sentinel_silhouette_atlas.dart` | `cd tools/sentinel_silhouettes && go run .` | byte-identical |
+| `lib/game/spear_bearer_atlas.dart`, `assets/images/spear-bearers.png` | `cd tools/spear_bearers && go run . offline` (`go run . check` compares) | byte-identical (2026-11-18) |
+| `lib/game/bonus/levels/wind_kites_atlas.dart`, `assets/images/wind-kites.png` | `cd tools/wind_kites && go run . offline` (picks committed under `art/sprites/sources/wind-kites/`; checked 2026-11-17) | byte-identical |
+| `art/music/bank/sfz-keys.json` (the bank's keycenters from the pinned SFZ maps) | `lua tools/bank/bank_build.lua --fetch-maps --sync-keys` (maps only, each < 100 KB) | byte-identical |
+| `web/audio/bank/` (`bank.json`, `bank-*.ogg`: the score's CC0 sample bank, once the pins are admitted) | `forge-guard run -- lua tools/bank/bank_build.lua` (recipe `art/music/bank/recipe.json`; sources verified against `plan/sample-bank-pins.manifest.tsv`; `--dry-run` plans without audio; then rerun `mix-trim.json`) | not run (pins not admitted); a fixture rebuild is byte-identical |
+| `web/audio/bank/choir.json`, `choir-*.ogg`, `art/music/bank/choir.manifest.tsv` (the brood choir, `demon-choir`) | `lua tools/brood_choir/brood.lua all` (renders the formant zones; cuts the ACE-Step picks from the raws in `~/.cache/tillandsias-project/demon-choir/raw/`, which a reset loses), then `forge-guard run -- lua tools/bank/bank_build.lua --recipe art/music/bank/choir-recipe.json`, then `mix-trim.json` | synth zones byte-identical (2026-11-18); the bank rebuild is byte-identical from the same sources |
 | `web/audio/score/mix-trim.json` (the score's section trims; rerun after `tools/score/score_gen.lua`) | `node tools/mix_meter/trim.mjs` (`--check` compares; several minutes, wrap in `forge-guard run --`) | byte-identical |
 | `lib/game/swarm_policy.dart` | `node scripts/train-policy.mjs` (`plan/policy.md`) | byte-identical |
 | `lib/game/flyover_atlas.dart` | `tools/flyover_assets.py pack` (needs Pillow) | not run (no venv) |
 | `lib/game/ground_atlas.dart` | `tools/ground_forces_assets.py offline` (needs Pillow) | not run (no venv) |
 | `lib/game/combat_anchors.dart` | `tools/generate_sprites.py --anchors` (needs Pillow) | not run (no venv) |
+| `lib/game/wind_flap_atlas.dart`, `assets/images/wind-flap.png` | `python3 -I tools/generate_wind_flap.py` (needs Pillow; `--sheets` also redraws `art/contact/wind-flap-*.png`; recipe `art/families/wind-flap.json`) | byte-identical (2026-11-18) |
 | `lib/comms/comms_portraits.dart` | `$PY tools/comms_portraits.py offline` (needs Pillow) | not run (no venv) |
 
 The Pillow venvs live in `~/.cache` and are gone after a forge reset. Recreate one with
@@ -223,6 +229,11 @@ The audit is in `plan/provenance-audit.md`.
   forge's Lua has no JSON module, so read JSON with `jq`.
 - Stop a process with `pgrep -af <name>` and then `kill <PID>`. Never use `pkill -f` or `killall -r`. *Why:* the
   pattern also matches your own shell's command line and kills it.
+- **Never wait with `until ! pgrep -f '<pattern>'`.** The loop's own command line contains the pattern, so it matches
+  itself and never ends. Wait on the job instead: run it with `run_in_background` and take the completion notice, or
+  wait on its PID (`while kill -0 <PID>; do sleep 15; done`), or bracket the pattern (`pgrep -f '[f]lutter test'`).
+  Give every wait a bound (`timeout 3600`). *Why:* on 2026-11-18 the lead found 23 such loops left by finished
+  agents, still sleeping hours later (and one stalled the render agent for 4.5 h earlier).
 - Temp files go in your session scratchpad, not `/tmp` or the checkout.
 - **The checkout's disk is small.** In this forge `/home/forge/src` is a 3.6 GB tmpfs. On 2026-11-16 it filled to
   100% (`.git` 1.3 GB, `.dart_tool/flutter_build` 908 MB of stale build hashes), and a git index write and the web

@@ -10,10 +10,12 @@ import 'dart:ui';
 import '../comms/comms_bank.dart';
 import '../comms/comms_portraits.dart';
 import '../comms/comms_types.dart';
-import '../game/boss_atlas.dart';
 import '../game/flyover_atlas.dart';
 import '../game/ground_atlas.dart';
-import '../game/ground_troops_atlas.dart';
+import '../game/ground_wildlife_atlas.dart';
+import '../game/hatch_emergence_atlas.dart';
+import '../game/insignia_atlas.dart';
+import '../game/sentinel_silhouette_atlas.dart';
 import '../game/sprite_atlas.dart';
 import '../game/vegetation_atlas.dart';
 import 'review_notes.dart';
@@ -270,128 +272,16 @@ List<AtlasAnim> atlasAnimations({Map<String, Object?>? shipWeapons}) {
     }
   }
 
-  // --- boss hulls: idle bow per form (patch frames over frame 0), plumes.
-  for (final hull in BossAtlas.classes) {
-    AtlasLayer layer(BossSprite s) => AtlasLayer(
-      Rect.fromLTWH(s.x * 1.0, s.y * 1.0, s.w * 1.0, s.h * 1.0),
-      Offset(s.dx * 2, s.dy * 2),
-    );
-    for (var form = 0; form < hull.forms; form++) {
-      final frames = [
-        for (var i = 0; i < hull.hull[form].length; i++)
-          [
-            if (i > 0 && hull.hullPatch[form][i]) layer(hull.hull[form][0]),
-            layer(hull.hull[form][i]),
-          ],
-      ];
-      add(
-        'boss-${hull.key}',
-        'hull-form-${form + 1}',
-        '${hull.title} form ${form + 1}',
-        hull.asset,
-        frames,
-        4,
-        'hull[$form]',
-      );
-    }
-    for (var stage = 0; stage < hull.damage.length; stage++) {
-      add(
-        'boss-${hull.key}',
-        'damage-${stage + 1}',
-        'damage stage ${stage + 1}',
-        hull.asset,
-        [
-          for (final s in hull.damage[stage]) [layer(s)],
-        ],
-        5,
-        'damage[$stage]',
-      );
-    }
-    for (var size = 0; size < hull.plumes.length; size++) {
-      add(
-        'boss-${hull.key}',
-        'plume-$size',
-        'engine plume size $size (thrust 0-2)',
-        hull.asset,
-        [
-          for (final thrust in hull.plumes[size])
-            for (final s in thrust) [layer(s)],
-        ],
-        8,
-        'plumes[$size]',
-      );
-    }
-  }
+  // --- dev-pages-overhaul: no frontal boss hulls (BossAtlas.classes). Every
+  // tour draws a packed hero hull (BossPainter.heroForRun), so the frontal
+  // sheets are never on screen; the carrier is reviewed live in the
+  // gallery's carrier scenes instead.
 
-  // --- ground-forces.png (GroundAtlas).
+  // --- ground-forces.png (GroundAtlas): its effects only. Vehicles and
+  // allies are drawn from the per-sector ground blocks (ground-blocks-
+  // runtime; the old unit rows are only a loading fallback), reviewed live
+  // in the gallery's ground-war scenes.
   const gw = GroundAtlas.cellW * 1.0, gh = GroundAtlas.cellH * 1.0;
-  for (var s = 0; s < 4; s++) {
-    final g = 'ground-${_sectorNames[s]}';
-    final row = GroundAtlas.demonRow(s);
-    add(
-      g,
-      'demon-move',
-      'demon unit move',
-      'ground-forces.png',
-      _run(gw, gh, row, GroundAtlas.moveCol, GroundAtlas.moveFrames),
-      6,
-      'row $row cols 0-3',
-    );
-    add(
-      g,
-      'demon-fire',
-      'demon telegraph and fire',
-      'ground-forces.png',
-      _run(gw, gh, row, GroundAtlas.telegraphCol, 4),
-      6,
-      'row $row cols 4-7',
-    );
-    add(
-      g,
-      'demon-wreck',
-      'demon wreck',
-      'ground-forces.png',
-      _run(gw, gh, row, GroundAtlas.wreckCol, 2),
-      4,
-      'row $row cols 8-9',
-    );
-    for (var v = 0; v < GroundAtlas.allyVariants; v++) {
-      final ally = GroundAtlas.allyRow(s, v);
-      add(
-        g,
-        'ally-$v-move',
-        'ally ${v + 1} move',
-        'ground-forces.png',
-        _run(gw, gh, ally, GroundAtlas.allyMoveCol, GroundAtlas.allyMoveFrames),
-        6,
-        'row $ally cols 0-3',
-      );
-      add(
-        g,
-        'ally-$v-hit',
-        'ally ${v + 1} hit, totalled, pod',
-        'ground-forces.png',
-        _run(gw, gh, ally, GroundAtlas.allyHitCol, 4),
-        4,
-        'row $ally cols 4-7',
-      );
-      add(
-        g,
-        'ally-$v-turret',
-        'ally ${v + 1} turret angles',
-        'ground-forces.png',
-        _run(
-          gw,
-          gh,
-          ally,
-          GroundAtlas.allyTurretCol,
-          GroundAtlas.allyTurretFrames,
-        ),
-        4,
-        'row $ally cols 8-12',
-      );
-    }
-  }
   for (final (row, col, n, id) in [
     (
       GroundAtlas.effectRow,
@@ -444,103 +334,83 @@ List<AtlasAnim> atlasAnimations({Map<String, Object?>? shipWeapons}) {
     );
   }
 
-  // --- ground-troops.png (GroundTroopsAtlas).
-  const tw = GroundTroopsAtlas.cellW * 1.0, th = GroundTroopsAtlas.cellH * 1.0;
-  for (final (row, name) in [
-    (GroundTroopsAtlas.demonGruntRow, 'demon-grunt'),
-    (GroundTroopsAtlas.demonRocketRow, 'demon-rocket'),
-    (GroundTroopsAtlas.allyRifleRow, 'ally-rifle'),
-    (GroundTroopsAtlas.allyRocketRow, 'ally-rocket'),
-  ]) {
+  // --- dev-pages-overhaul: ground-troops.png is no longer listed: troops
+  // are drawn from the ground blocks (ground-blocks-runtime) and the sheet
+  // is only their loading fallback.
+
+  // --- insignia.png (gargoyle-insignia): each glyph's bone, angry and tell
+  // states, and the rank cells.
+  final glyphs = <String, List<Rect>>{};
+  for (final MapEntry(key: id, value: r) in InsigniaAtlas.rects.entries) {
+    glyphs.putIfAbsent(id.split('/').first, () => []).add(r);
+  }
+  for (final MapEntry(key: glyph, value: rects) in glyphs.entries) {
     add(
-      'troops',
-      '$name-walk',
-      '$name walk',
-      'ground-troops.png',
-      _run(
-        tw,
-        th,
-        row,
-        GroundTroopsAtlas.walkCol,
-        GroundTroopsAtlas.walkFrames,
-      ),
-      8,
-      'row $row cols 0-3',
-    );
-    add(
-      'troops',
-      '$name-aim-fire-hit',
-      '$name aim, fire, hit',
-      'ground-troops.png',
-      _run(tw, th, row, GroundTroopsAtlas.aimCol, 3),
-      4,
-      'row $row cols 4-6',
-    );
-    add(
-      'troops',
-      '$name-fall',
-      name.startsWith('demon') ? '$name topple, rubble' : '$name run',
-      'ground-troops.png',
-      _run(tw, th, row, 7, 2),
-      4,
-      'row $row cols 7-8',
+      'insignia',
+      glyph,
+      '$glyph states',
+      InsigniaAtlas.file,
+      [
+        for (final r in rects) [AtlasLayer(r)],
+      ],
+      2,
+      [
+        for (final id in InsigniaAtlas.rects.keys)
+          if (id.startsWith('$glyph/')) id,
+      ].join(', '),
     );
   }
-  const tank = GroundTroopsAtlas.demonTankRow;
-  add(
-    'troops',
-    'tank-move',
-    'demon tank move',
-    'ground-troops.png',
-    _run(
-      tw,
-      th,
-      tank,
-      GroundTroopsAtlas.tankMoveCol,
-      GroundTroopsAtlas.tankMoveFrames,
-    ),
-    8,
-    'row $tank cols 0-3',
-  );
-  add(
-    'troops',
-    'tank-fire',
-    'demon tank fire, recoil',
-    'ground-troops.png',
-    _run(tw, th, tank, GroundTroopsAtlas.tankFireCol, 2),
-    6,
-    'row $tank cols 4-5',
-  );
-  add(
-    'troops',
-    'tank-wreck',
-    'demon tank wreck',
-    'ground-troops.png',
-    _run(
-      tw,
-      th,
-      tank,
-      GroundTroopsAtlas.tankWreckCol,
-      GroundTroopsAtlas.tankWreckFrames,
-    ),
-    4,
-    'row $tank cols 6-7',
-  );
-  add(
-    'troops',
-    'crumble',
-    'stone crumble',
-    'ground-troops.png',
-    _run(
-      tw,
-      th,
-      GroundTroopsAtlas.fxRow,
-      GroundTroopsAtlas.crumbleCol,
-      GroundTroopsAtlas.crumbleFrames,
-    ),
-    8,
-    'row ${GroundTroopsAtlas.fxRow} cols 5-7',
-  );
+
+  // --- hatch-emergence.png: the climb-out poses, one row per species.
+  const hw = HatchEmergenceAtlas.cellWidth * 1.0;
+  const hh = HatchEmergenceAtlas.cellHeight * 1.0;
+  for (final (row, species) in HatchEmergenceAtlas.rows.indexed) {
+    add(
+      'carrier-hatch-emergence',
+      species,
+      '$species climb-out (${HatchEmergenceAtlas.poses.first}..'
+          '${HatchEmergenceAtlas.poses.last})',
+      HatchEmergenceAtlas.asset.split('/').last,
+      _run(hw, hh, row, 0, HatchEmergenceAtlas.poses.length),
+      8,
+      'row $row cols 0-${HatchEmergenceAtlas.poses.length - 1}',
+    );
+  }
+
+  // --- sentinel-silhouettes.png: the foreshadowing silhouettes' banks.
+  for (var species = 0; species < 2; species++) {
+    for (var blur = 0; blur < 2; blur++) {
+      add(
+        'sentinel',
+        'silhouette-${species == 0 ? 'warden' : 'colossus'}-'
+            '${blur == 0 ? 'near' : 'far'}',
+        'silhouette bank sweep, ${blur == 0 ? 'near' : 'far (blurred)'}',
+        SentinelSilhouetteAtlas.file,
+        [
+          for (var f = 0; f < SentinelSilhouetteAtlas.frames; f++)
+            [AtlasLayer(SentinelSilhouetteAtlas.cell(species, f, blur))],
+        ],
+        4,
+        'row ${species * 2 + blur} cols 0-${SentinelSilhouetteAtlas.frames - 1}',
+      );
+    }
+  }
+
+  // --- ground-wildlife.png: each sector's flock flyer, flapping.
+  for (var s = 0; s < GroundWildlifeAtlas.flockSpecies.length; s++) {
+    add(
+      'flyover-${_sectorNames[s]}',
+      'flock-${GroundWildlifeAtlas.flockSpecies[s]}',
+      '${GroundWildlifeAtlas.flockSpecies[s]} flock flap',
+      GroundWildlifeAtlas.file,
+      [
+        for (var flap = 0; flap < 2; flap++)
+          [AtlasLayer(GroundWildlifeAtlas.flock(s, flap))],
+      ],
+      6,
+      'row $s',
+    );
+  }
 
   // --- flyover creatures and vegetation.
   for (final cr in FlyoverAtlas.creatures) {
@@ -769,21 +639,185 @@ List<MusicCue> musicCues(Map<String, Object?> manifest) {
   return list;
 }
 
-/// The gallery's staged DemonScene pages (lib/gallery_main.dart).
-const scenePages = <(String, String)>[
-  ('creatures', 'Creatures: damage, hit flash, dive warning'),
-  ('elites', 'Elite armour and fire'),
-  ('actions', 'Fire and death loops'),
-  ('weapons', 'Ship weapons and combos'),
-  ('sentinels', 'Sentinels: hover, warning, last stand'),
-  ('carrier', 'Carrier forms and wrecks'),
+/// --- dev-pages-overhaul: the game areas the gallery's scenes are grouped
+/// by, in the order the gallery and the studio list them.
+enum GameArea {
+  swarm('SWARM'),
+  ship('SHIP'),
+  sentinels('SENTINELS'),
+  carrier('CARRIER'),
+  ground('GROUND WAR'),
+  weather('WEATHER'),
+  bonus('BONUS LEVELS'),
+  performance('PERFORMANCE'),
+  medals('MEDALS');
+
+  const GameArea(this.label);
+  final String label;
+}
+
+/// One gallery scene page: its address (`?page=<id>`), title, game area,
+/// the OpenSpec changes or specs it shows ([sources]: a change id under
+/// `openspec/changes/` or its archive, or a capability under
+/// `openspec/specs/`), and the image files its painters read by name.
+class ScenePage {
+  const ScenePage(
+    this.id,
+    this.title,
+    this.area,
+    this.sources, {
+    this.assets = const [],
+    this.live = false,
+  });
+  final String id, title;
+  final GameArea area;
+  final List<String> sources;
+
+  /// `assets/images/` files the scene draws (named literally in the game).
+  final List<String> assets;
+
+  /// Whether the scene runs the game's own simulation (a console-style run)
+  /// rather than a staged, frozen model.
+  final bool live;
+
+  /// "carrier-v3 · carrier-hatches", for the scene's label.
+  String get sourceLabel => sources.join(' · ');
+}
+
+/// The gallery's scene pages (lib/review/gallery_scenes.dart builds them).
+/// Every scene draws with the game's own DemonScene and its presentation
+/// pipeline (atlases, hero hulls, ground blocks, weather, the perf tier),
+/// on a model started the way the game starts one.
+const scenePages = <ScenePage>[
+  ScenePage(
+    'creatures',
+    'Creatures: molt, angry, hit flash, dive tell, dive',
+    GameArea.swarm,
+    ['sprite-64-grid-overhaul', 'continuous-swarm'],
+    assets: ['combat.png'],
+  ),
+  ScenePage(
+    'elites',
+    'Elite armour and fire',
+    GameArea.swarm,
+    ['sprite-64-grid-overhaul'],
+    assets: ['combat.png'],
+  ),
+  ScenePage(
+    'actions',
+    'Fire and death loops',
+    GameArea.swarm,
+    ['sprite-64-grid-overhaul'],
+    assets: ['combat.png'],
+  ),
+  ScenePage(
+    'insignia',
+    'Rank insignia: the rare-mark ladder over a dense swarm',
+    GameArea.swarm,
+    ['insignia-ranks', 'gargoyle-insignia', 'alien-insignia'],
+    assets: ['combat.png', 'insignia.png'],
+  ),
+  ScenePage(
+    'insignia-waves',
+    'Rank insignia in live waves: most of the swarm wears no mark',
+    GameArea.swarm,
+    ['insignia-ranks'],
+    assets: ['combat.png', 'insignia.png'],
+    live: true,
+  ),
+  ScenePage(
+    'dive-shields',
+    'Dive shields: one arc thinning to its 40 % floor',
+    GameArea.swarm,
+    ['dive-shield-thinning'],
+    assets: ['combat.png', 'sentinel-effects.png'],
+  ),
+  // --- spear-bearers
+  ScenePage(
+    'spear-bearers',
+    'Spear-bearers: buckler, levelled spear, wind-up glint, throw',
+    GameArea.swarm,
+    ['spear-bearers'],
+    assets: ['combat.png', 'spear-bearers.png'],
+  ),
+  ScenePage(
+    'weapons',
+    'Ship weapons and combos',
+    GameArea.ship,
+    ['combine-powerups', 'asset-review-progression'],
+    assets: ['ship-weapons.png', 'ship-weapons.json'],
+    live: true,
+  ),
+  ScenePage(
+    'sentinels',
+    'Sentinels: hover, damage, dive warning, last stand and rush',
+    GameArea.sentinels,
+    ['arcade-combat', 'atmosphere-and-swarms'],
+    assets: ['sentinel-effects.png', 'sentinel-silhouettes.png'],
+  ),
+  ScenePage(
+    'carrier',
+    'Carrier fight: hatches, emergence, approach and decay',
+    GameArea.carrier,
+    ['carrier-v3', 'carrier-hatches', 'hatch-emergence', 'boss-grandeur'],
+    assets: ['hatch-emergence.png'],
+    live: true,
+  ),
+  ScenePage(
+    'carrier-tours',
+    'Carrier tours: the hero hull of runs 2 to 5',
+    GameArea.carrier,
+    ['boss-hero-assets', 'carrier-render-engine'],
+    assets: ['hatch-emergence.png'],
+    live: true,
+  ),
+  ScenePage(
+    'ground-war',
+    'Ground war under sectors 1 to 4',
+    GameArea.ground,
+    ['ground-war-v4', 'ground-blocks-runtime', 'gargoyle-ground-army'],
+    assets: ['ground-forces.png', 'ground-atmosphere.png'],
+    live: true,
+  ),
+  ScenePage(
+    'weather',
+    'Weather: rain, wind, lightning and the brood in the wind',
+    GameArea.weather,
+    ['dynamic-weather', 'fog-restoration', 'crosswind', 'weather-everywhere'],
+    live: true,
+  ),
+  ScenePage('bonus', 'Bonus levels', GameArea.bonus, [
+    'bonus-levels',
+    'bonus-balance',
+  ], live: true),
+  ScenePage(
+    'perf-tiers',
+    'Perf tiers: full, lean and lite',
+    GameArea.performance,
+    ['phone-performance'],
+    live: true,
+  ),
+  ScenePage(
+    'medals',
+    'Mission medals',
+    GameArea.medals,
+    ['mission-medals'],
+    assets: ['mission-medals.png'],
+  ),
 ];
 
-ReviewAsset sceneAsset(String page, String title) => ReviewAsset(
-  kind: ReviewKind.scene,
-  id: page,
-  title: title,
-  source:
-      'lib/gallery_main.dart ?page=$page (combat.png, sentinel-effects.png, '
-      'ship-weapons.png, boss-*.png)',
-);
+/// The scene page [id], or null.
+ScenePage? scenePage(String id) =>
+    scenePages.where((p) => p.id == id).firstOrNull;
+
+ReviewAsset sceneAsset(String page, [String? title]) {
+  final p = scenePage(page);
+  return ReviewAsset(
+    kind: ReviewKind.scene,
+    id: page,
+    title: title ?? p?.title ?? 'Gallery page: $page',
+    source: p == null
+        ? 'lib/review/gallery_scenes.dart ?page=$page'
+        : 'lib/review/gallery_scenes.dart ?page=$page (${p.sourceLabel})',
+  );
+}

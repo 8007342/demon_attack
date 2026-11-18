@@ -71,3 +71,103 @@ and wings, through the asset pipeline.
 
 ## V2. Flat radio lines
 "There are still a few flat emotion radio chatter." Covered by `voice-direction`; this waits for the voice models.
+
+# Round 6 (2026-11-17, after PR #8 merged and a phone playtest)
+
+The operator merged PR #8 (main `58a1140f`; Cloudflare shows `demon-attack` redeployed 16:27 UTC) and played on a
+phone: "that midi music has a nice and smooth progression".
+
+## D1. Dev pages overhaul (change `dev-pages-overhaul`)
+"The /console, /studio, and /gallery could use some overhauling ;) some of them like the boss fight scene still shows
+assets from several versions of the game ago." Audit every scene on the three pages against the shipped atlases and
+painters; draw from the live code, never from frozen copies.
+
+## B2. Build version (change `build-version`)
+"Please file a spec to have a "vYY.MM.DD.<daily-build-number>", today would be v56.11.17.1, that way I could tell
+when the newer versions are live." The major is 56 on 2026-11-17 (the operator's numbering, same as the Tillandsias
+lane `56.11.x`), not the calendar's 26.
+
+## T1. Portrait radio: two independent toast lanes (change `portrait-comms-lanes`)
+- Today: one queue showing the last two messages; a toast slides left when the left one closes. Wrong.
+- Wanted: TWO independent queues, humans on one side and demons on the other, each with its own timeout and
+  persistence. A toast stays on its side until it expires.
+- Fixed size in portrait: a short line must not collapse to its text height, and must not grow when the other side
+  shows a taller one.
+- A comeback (human→demon or demon→human) shows in portrait as one combined toast across both lanes; the queues
+  support it.
+
+## T2. Radio during level transitions (same change, `portrait-comms-lanes`)
+During a level transition, show one or two radio lines at landscape size, centred over the flowing clouds: one longer
+line, or two short ones, or one line with its comeback. Follow the cinematic-flow advisories
+(`openspec/changes/cinematic-flow`, `openspec/specs/arcade-presentation`) so it stays non-invasive and keeps the game
+flowing.
+
+## B3. Bonus level instructions (change `bonus-briefing-clarity`)
+"The instructions for the Bonus Levels are still unclear, and the overlapping of the radio chatter closed the box
+before I was able to read it." Clear instructions; radio must not close or cover them. Each bonus level gets one radio
+line, a single sentence of instruction (it need not match the text), to keep the game flowing.
+
+## A1. Music: what "higher res" means now
+The MIDI score is the first layer, as decided. The next step is the CC0 sample bank (`adaptive-soundtrack` §8.5–8.13):
+real drum, bass, guitar, organ and brass samples replace the synth voices note for note, so the score keeps its
+seamless combining. Samples wait for the register to admit the pins in `plan/sample-bank-pins.md`; the bank builder,
+the sampler runtime and the score checks are built now.
+
+# Round 7 (2026-11-17, evening)
+
+- **Licences:** the operator merged PRs #9–#11 (Open RAIL++-M for SDXL and SDXL-Lightning, Open RAIL-M for Pixel Art XL
+  and LayerDiffuse). Merging is the acceptance. The inventory is in `plan/licences-round-2.md`. The coordinator cleared
+  the CC0 sample bank (196 pins) for a forge fetch at pinned commits.
+- **Credits page (change `credits-page`):** "remove the autoscroll, but make it have a nice soundtrack, and display all
+  of these licenses and models, and the pile of projects on which we build upon. Please include Tillandsias, Fedora, and
+  Podman, prominently near the top, with icons and links to their websites. A self link to the github repo".
+- **High-res score:** "I would rather preview the music score replacement with the high res assets until complete".
+  The bank ships off by default (`?bank=1` / console toggle) until the operator approves it from a listening page.
+- **Sentinel shadow (change `sentinel-shadow-align`):** the looming sentinel's shadow doesn't follow its silhouette
+  behind the clouds. "Don't use my percentages lol just make it smaller at a distance, and track the centinel as it
+  approaches. Once its shadow maps correctly it should behave correctly for size and perspective as well."
+- **Bonus 1UP challenges (change `bonus-challenges`):** "add a condition, and display it with iconography, like "catch
+  all the cargo for 1UP", or "dodge all lightning for 1UP", let's use radio comms and in-game idioms".
+- **Wind and a wind bonus level (change `crosswind`):** "significant wind effects, enough to deviate bullets, ours and
+  enemies, with swinging directions, sometimes even speeding up bullets a tiny little bit, we'll use clouds as effect
+  ... one bonus level that uses this wind gimmick for its goal, like no multifire". With pretty assets, radio chatter
+  and new musical accents (`bonus-music`), and "figure out how flexible and extensible our pipelines are early on"
+  (crosswind design §Pipelines).
+
+# Round 8 (2026-11-17, late)
+
+- **Sampled score (`bank-fidelity`):** "the new high res assets combine themselves smoothly, and respond nicely to game
+  events ... However it's the assets themselves, some of them still sound low res, and some even sound worse than the
+  MIDI ... please audit the sound pipeline, since our final sound assets will only be as good as the lowest resolution
+  step in the pipeline ... a bit of distortion there for the bass ... we better justify that extra weight with properly
+  enjoyable high res audio". The bank stays off by default until it beats the synth.
+- **1UP stinger:** "I like the A 1up audio." Variant A ships (already the default).
+- **Weather everywhere (`weather-everywhere`):** "Lightning and wind are regular weather effects that happen sometimes
+  normaly throughout the game, they're just rarer than regular rain. Radio chatter shall notice them. ... no need to
+  rebalance. Just make sure that the demons fighting the wind use strategically their sprites flapping their wings
+  sideways. The smarter enemies shall also use the wind to dive."
+- **Insignia (`insignia-ranks`):** "Currently there are A LOT of fangs on top of the demons, they're not meant to mark
+  everything, just higher ranks ... Make simpler versions of those [winged/crown elite marks] for the regular grunts,
+  to mark that they're elite grunts, but not elite as the centinels".
+- **Lore and war cries (`fang-and-wings-comms`):** "the Fang and Wings shall be their self appointed battle cry: "Fang
+  And Wings!" ... a more prevalent topic in the demons radio chatter ... Some dive attacks shall have their war cry".
+- **Spear-bearers (`spear-bearers`):** "a little shield and spear for the armored ones later, wielding the spear as they
+  dive, and throwing it mid dive ;) New enemy sprites".
+- **Demon choir (`demon-choir`):** "find a music model agents that could consider those grunts and war cryes as part
+  of the music ... our Epic/Doom metal had some wordless chorus, how about some wordless demon grunts".
+
+# Round 9 (2026-11-18)
+
+- **Choir:** "I like the choir, I approve."
+- **Bass (`bass-tone`):** "the old sound was the pure sound as it would have been picked by the bass picks, with
+  absolutely no postprocessing at all ... Our audio pipeline is missing the right amount of distortion for the bass to
+  make it sound like a metal soundtrack ... even the old bank was really good, it was just missing the postprocessing".
+  The sampled bass gets a researched metal post chain: clean lows, driven mids, cabinet, EQ and compression.
+- **Pending recommendations approved:** "Yes I approve the recommendations on what's pending."
+  - Stormfront's dimmed glow and the 3 Hz marker stay.
+  - Spear-bearers wear the crownlet.
+  - Pin epic-choir (CC BY 4.0) and 272 Merry Orks (CC0) (`work/choir-pins`).
+  - An in-game reduced-flashing toggle (`reduced-effects`).
+  - The release goes ahead once the bass is fixed.
+- **Reduced effects:** "Reduced flashing might also run reduced animations, friendly for low end devices as well."
+- **Release:** "Pleas fix the bass, then yes, merge to all to game, and prepare a pull request to release into main".

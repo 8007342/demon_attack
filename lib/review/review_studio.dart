@@ -15,6 +15,7 @@ import 'notes_panel.dart';
 import 'page_notes.dart';
 import 'review_audio_views.dart';
 import 'review_score_audio.dart';
+import 'dev_nav.dart';
 import 'review_catalog.dart';
 import 'review_notes.dart';
 import 'review_platform.dart';
@@ -119,7 +120,7 @@ class _ReviewStudioState extends State<ReviewStudio> {
     if (item != null) _open(tab, item);
     clip ??= clips.isEmpty ? null : clips.first.line.id;
     anim ??= anims.isEmpty ? null : anims.first.asset().id;
-    scene ??= scenePages.first.$1;
+    scene ??= scenePages.first.id;
   }
 
   void _changed() {
@@ -317,8 +318,8 @@ class _ReviewStudioState extends State<ReviewStudio> {
         final a = anims.where((a) => a.asset().id == anim).firstOrNull;
         return a == null ? null : _asset(a.asset());
       case StudioTab.scenes:
-        final s = scenePages.where((p) => p.$1 == scene).firstOrNull;
-        return s == null ? null : _asset(sceneAsset(s.$1, s.$2));
+        final s = scene == null ? null : scenePage(scene!);
+        return s == null ? null : _asset(sceneAsset(s.id));
       case StudioTab.radio:
         final c = clips.where((c) => c.line.id == clip).firstOrNull;
         return c == null ? null : _asset(c.asset());
@@ -519,40 +520,52 @@ class _ReviewStudioState extends State<ReviewStudio> {
               icon: const Icon(Icons.key),
             ),
           ],
+          // --- dev-pages-overhaul: the dev pages' navigation over the tabs.
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(40),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                children: [
-                  for (final t in StudioTab.values)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4, bottom: 6),
-                      child: ChoiceChip(
-                        key: ValueKey('tab-${t.name}'),
-                        label: Text(
-                          t == StudioTab.notes
-                              ? 'notes (${store.count})'
-                              : t.name,
-                          style: const TextStyle(fontSize: 12),
+            preferredSize: const Size.fromHeight(84),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.fromLTRB(8, 0, 8, 6),
+                  child: DevNavBar(current: DevPage.studio),
+                ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    children: [
+                      for (final t in StudioTab.values)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 4, bottom: 6),
+                          child: ChoiceChip(
+                            key: ValueKey('tab-${t.name}'),
+                            label: Text(
+                              t == StudioTab.notes
+                                  ? 'notes (${store.count})'
+                                  : t.name,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            selected: tab == t,
+                            visualDensity: VisualDensity.compact,
+                            onSelected: (_) => setState(() {
+                              tab = t;
+                              detail = false;
+                              search = '';
+                              link.clear();
+                            }),
+                          ),
                         ),
-                        selected: tab == t,
-                        visualDensity: VisualDensity.compact,
-                        onSelected: (_) => setState(() {
-                          tab = t;
-                          detail = false;
-                          search = '';
-                          link.clear();
-                        }),
-                      ),
-                    ),
-                ],
-              ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
         body: LayoutBuilder(builder: (context, box) => _layout(box.maxWidth)),
+        bottomNavigationBar: const DevFooter(page: DevPage.studio),
       ),
     );
   }
@@ -781,16 +794,33 @@ class _ReviewStudioState extends State<ReviewStudio> {
           ],
         );
       case StudioTab.scenes:
+        // --- dev-pages-overhaul: grouped by game area, each scene with
+        // the OpenSpec changes it shows.
         return ListView(
           children: [
-            for (final (page, title) in scenePages)
-              _row(
-                title: page,
-                subtitle: title,
-                ref: sceneAsset(page, title).ref,
-                selected: scene == page,
-                onTap: () => scene = page,
-              ),
+            for (final area in GameArea.values)
+              if (scenePages.any((p) => p.area == area)) ...[
+                Padding(
+                  key: ValueKey('scene-area-${area.name}'),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 2),
+                  child: Text(
+                    area.label,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      letterSpacing: 2,
+                      color: studioGold,
+                    ),
+                  ),
+                ),
+                for (final p in scenePages.where((p) => p.area == area))
+                  _row(
+                    title: p.title,
+                    subtitle: '${p.id} · ${p.sourceLabel}',
+                    ref: sceneAsset(p.id).ref,
+                    selected: scene == p.id,
+                    onTap: () => scene = p.id,
+                  ),
+              ],
           ],
         );
       case StudioTab.sprites:

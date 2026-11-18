@@ -1,21 +1,24 @@
-// Visual QA harness for the sprite overhaul; not part of the shipped app.
+// The art gallery and asset review studio; not part of the shipped app.
 //
-//   flutter build web -t lib/gallery_main.dart -o build/gallery
+//   flutter build web -t lib/gallery_main.dart --base-href /gallery/
 //
-// Pages (?page=...): creatures, elites, actions, weapons, sentinels, carrier.
-// Every tile is the real DemonScene renderer drawing a staged ArcadeModel,
-// so screenshots show exactly what the game draws.
+// /gallery/ lists the scene pages grouped by game area, each labelled with
+// the OpenSpec changes it shows; /gallery/?page=<id> opens one (&tile=<n>
+// one of its tiles). Every tile is the game's own DemonScene and its
+// presentation pipeline on a model started like the game's
+// (lib/review/gallery_scenes.dart), so screenshots show what the game
+// draws today.
 //
-// ?page=studio opens the asset review studio (lib/review/): backgrounds,
-// atlas animations, these staged scenes, radio clips and music cues, each
-// with targeted review notes (&tab=radio&item=<clip id> deep-links one).
+// /studio (or ?page=studio) opens the asset review studio (lib/review/):
+// backgrounds, atlas animations, these scenes, radio clips and music cues,
+// each with targeted review notes (&tab=radio&item=<clip id> deep-links
+// one).
 import 'dart:math' as math;
 
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-import 'game/model.dart';
-import 'game/scene.dart';
+import 'review/dev_nav.dart';
+import 'review/gallery_scenes.dart';
 import 'review/page_notes.dart';
 import 'review/review_catalog.dart';
 import 'review/review_studio.dart';
@@ -38,43 +41,25 @@ bool isStudioPath(String path) {
   return p == '/studio';
 }
 
-typedef Stage = void Function(ArcadeModel model, double dt, double t);
-
-class GalleryScene extends DemonScene {
-  GalleryScene(ArcadeModel model, {this.live = false, this.stage})
-    : super(model, () {});
-  final bool live;
-  final Stage? stage;
-  double t = 0;
-
-  @override
-  void update(double dt) {
-    t += dt;
-    if (live) {
-      stage?.call(model, dt, t);
-      super.update(dt);
-    } else {
-      model.clock += dt;
-      stage?.call(model, dt, t);
-      creatures.update(model, dt);
-    }
-  }
-
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-    paintArena(canvas, size);
-  }
-}
+const _ink = Color(0xFF0B0A1C);
+const _mint = Color(0xFF70F5D5);
+const _gold = Color(0xFFF4C35A);
+const _dim = Color(0xFF8D9EB3);
+const _line = Color(0xFF2B4254);
 
 class GalleryApp extends StatelessWidget {
-  const GalleryApp({super.key});
+  const GalleryApp({super.key, this.query, this.path});
+
+  /// The address's query and path (tests); defaults to [Uri.base].
+  final Map<String, String>? query;
+  final String? path;
 
   @override
   Widget build(BuildContext context) {
-    final query = Uri.base.queryParameters;
+    final query = this.query ?? Uri.base.queryParameters;
     final page =
-        query['page'] ?? (isStudioPath(Uri.base.path) ? 'studio' : 'creatures');
+        query['page'] ??
+        (isStudioPath(path ?? Uri.base.path) ? 'studio' : null);
     if (page == 'studio' || page == 'review') {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -88,53 +73,183 @@ class GalleryApp extends StatelessWidget {
         ),
       );
     }
+    final scene = page == null ? null : scenePage(page);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'Demon Attack gallery',
       home: Scaffold(
-        backgroundColor: const Color(0xFF0B0A1C),
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: GalleryPage(
-                page: page,
-                only: int.tryParse(query['tile'] ?? ''),
+        backgroundColor: _ink,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _GalleryHeader(
+                scene: scene,
+                unknown: page != null && scene == null,
               ),
-            ),
-            Positioned(
-              right: 12,
-              bottom: 12,
-              child: PageNotesButton(
-                asset: sceneAsset(
-                  page,
-                  scenePages.where((p) => p.$1 == page).firstOrNull?.$2 ??
-                      'Gallery page: $page',
-                ),
+              const Divider(height: 1, color: _line),
+              Expanded(
+                child: page == null
+                    ? const GalleryIndex()
+                    : Stack(
+                        children: [
+                          Positioned.fill(
+                            child: GalleryPage(
+                              page: page,
+                              only: int.tryParse(query['tile'] ?? ''),
+                            ),
+                          ),
+                          Positioned(
+                            right: 12,
+                            bottom: 12,
+                            child: PageNotesButton(asset: sceneAsset(page)),
+                          ),
+                        ],
+                      ),
               ),
-            ),
-          ],
+              const DevFooter(page: DevPage.gallery),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// One staged gallery page: a grid of live DemonScene tiles.
-class GalleryPage extends StatelessWidget {
+/// The gallery's top bar: the page navigation, and on a scene page its
+/// title, area and source changes with a link back to the index.
+class _GalleryHeader extends StatelessWidget {
+  const _GalleryHeader({this.scene, this.unknown = false});
+  final ScenePage? scene;
+  final bool unknown;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = scene;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const DevNavBar(current: DevPage.gallery),
+          if (s != null || unknown)
+            TextButton.icon(
+              key: const ValueKey('gallery-index'),
+              style: TextButton.styleFrom(foregroundColor: _dim),
+              onPressed: () => openDevPage(DevPage.gallery),
+              icon: const Icon(Icons.arrow_back, size: 14),
+              label: const Text('ALL SCENES', style: TextStyle(fontSize: 10)),
+            ),
+          if (s != null)
+            Text.rich(
+              key: const ValueKey('gallery-scene-label'),
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${s.area.label} · ',
+                    style: const TextStyle(color: _gold),
+                  ),
+                  TextSpan(
+                    text: s.title,
+                    style: const TextStyle(color: _mint),
+                  ),
+                  TextSpan(
+                    text: '   ${s.sourceLabel}',
+                    style: const TextStyle(color: _dim),
+                  ),
+                ],
+              ),
+              style: const TextStyle(fontSize: 11, letterSpacing: 1),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// /gallery/: every scene page, grouped by game area.
+class GalleryIndex extends StatelessWidget {
+  const GalleryIndex({super.key, this.onOpen});
+
+  /// Opens a scene page (tests replace it); defaults to `?page=<id>`.
+  final void Function(ScenePage page)? onOpen;
+
+  void _open(ScenePage p) => launchScene(p.id);
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    children: [
+      for (final area in GameArea.values)
+        if (scenePages.any((p) => p.area == area)) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 14, bottom: 6),
+            child: Text(
+              area.label,
+              style: const TextStyle(
+                color: _gold,
+                fontSize: 11,
+                letterSpacing: 2,
+              ),
+            ),
+          ),
+          for (final p in scenePages.where((p) => p.area == area))
+            ListTile(
+              key: ValueKey('gallery-scene-${p.id}'),
+              dense: true,
+              title: Text(p.title, style: const TextStyle(color: _mint)),
+              subtitle: Text(
+                '${p.live ? 'live run' : 'staged'} · ${p.sourceLabel}',
+                style: const TextStyle(color: _dim, fontSize: 11),
+              ),
+              trailing: Text(
+                '?page=${p.id}',
+                style: const TextStyle(
+                  color: _dim,
+                  fontSize: 10,
+                  fontFamily: 'monospace',
+                ),
+              ),
+              onTap: () => (onOpen ?? _open)(p),
+            ),
+        ],
+    ],
+  );
+}
+
+/// Opens scene page [id] in this tab.
+void launchScene(String id) => openDevPageAt('/gallery/?page=$id');
+
+/// One scene page: a grid of its tiles, built once (a rebuild of the
+/// studio around it keeps the runs going).
+class GalleryPage extends StatefulWidget {
   const GalleryPage({super.key, required this.page, this.only});
   final String page;
   final int? only;
 
   @override
+  State<GalleryPage> createState() => _GalleryPageState();
+}
+
+class _GalleryPageState extends State<GalleryPage> {
+  late List<GalleryTile> all = galleryTiles(widget.page);
+  late List<Widget> built = [for (final t in all) t.build()];
+
+  @override
+  void didUpdateWidget(GalleryPage old) {
+    super.didUpdateWidget(old);
+    if (old.page != widget.page) {
+      all = galleryTiles(widget.page);
+      built = [for (final t in all) t.build()];
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var tiles = switch (page) {
-      'elites' => [_tile('ELITES', _elites())],
-      'actions' => [_tile('FIRE / DEATH', _actions())],
-      'weapons' => _weapons(),
-      'sentinels' => [_tile('SENTINELS', _sentinels())],
-      'carrier' => _carriers(),
-      _ => [_tile('CREATURES', _creatures())],
-    };
-    final only = this.only;
+    var tiles = built;
+    final only = widget.only;
     if (only != null && only < tiles.length) tiles = [tiles[only]];
     return LayoutBuilder(
       builder: (context, box) {
@@ -163,289 +278,3 @@ class GalleryPage extends StatelessWidget {
     );
   }
 }
-
-Widget _tile(String label, GalleryScene scene) => Stack(
-  children: [
-    Positioned.fill(child: GameWidget(game: scene)),
-    Positioned(
-      left: 6,
-      top: 4,
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFF70F5D5),
-          fontSize: 11,
-          fontFamily: 'monospace',
-        ),
-      ),
-    ),
-  ],
-);
-
-ArcadeModel _staged() {
-  final m = ArcadeModel()
-    ..mode = RunMode.playing
-    ..shipX = 180;
-  return m;
-}
-
-const _speciesY = [70.0, 170.0, 270.0, 370.0];
-
-/// Rows: teal, violet, coral, gold. Columns: intact, molt 1-3, angry,
-/// hit flash, dive warning (anticipation), dive.
-GalleryScene _creatures() {
-  final m = _staged();
-  for (var k = 0; k < 4; k++) {
-    for (var col = 0; col < 8; col++) {
-      final d = Demon(24.0 + col * 44.6, _speciesY[k], k, 5, 0.0);
-      switch (col) {
-        case 1 || 2 || 3:
-          d.hp = 5 - col;
-        case 4:
-          d.hp = 1;
-        case 7:
-          d.dive = 1;
-      }
-      m.demons.add(d);
-    }
-  }
-  return GalleryScene(
-    m,
-    stage: (m, dt, t) {
-      for (var k = 0; k < 4; k++) {
-        m.demons[k * 8 + 5].flash = 0.1;
-        m.demons[k * 8 + 6].telegraph = 0.5;
-        m.demons[k * 8 + 7].dive = 1;
-      }
-      m.shots.clear();
-      m.shipX = -100;
-    },
-  );
-}
-
-/// Elite armour at each remaining health, plus an elite firing.
-GalleryScene _elites() {
-  final m = _staged();
-  for (var k = 0; k < 4; k++) {
-    for (var col = 0; col < 6; col++) {
-      final d = Demon(
-        30.0 + col * 60,
-        _speciesY[k],
-        k,
-        5,
-        0.3 * col,
-        elite: true,
-      );
-      d.hp = col < 5 ? 5 - col : 2;
-      m.demons.add(d);
-    }
-  }
-  return GalleryScene(
-    m,
-    stage: (m, dt, t) {
-      m.shipX = -100;
-      // Column 5 fires every 0.9 s so its mounts and muzzle animate.
-      if ((t * 10).floor() % 9 == 0 && m.shots.isEmpty) {
-        for (var k = 0; k < 4; k++) {
-          final d = m.demons[k * 6 + 5];
-          m.shots.add(Shot(d.x, d.y + 12, 0, 120, hostile: true));
-        }
-      }
-      for (final s in m.shots) {
-        s.y += 120 * dt;
-      }
-      m.shots.removeWhere((s) => s.y > m.demons[0].y + 300);
-    },
-  );
-}
-
-/// Each species firing (left two columns, normal and angry) and dying in a
-/// loop (right).
-GalleryScene _actions() {
-  final m = _staged();
-  final shooters = <Demon>[];
-  for (var k = 0; k < 4; k++) {
-    final a = Demon(40, _speciesY[k], k, 1, 0);
-    final b = Demon(110, _speciesY[k], k, 3, 0)..hp = 1;
-    shooters.addAll([a, b]);
-    m.demons.addAll([a, b]);
-  }
-  final dying = <int, Demon>{};
-  var lastCycle = -1;
-  return GalleryScene(
-    m,
-    stage: (m, dt, t) {
-      m.shipX = -100;
-      final cycle = (t / 1.1).floor();
-      if (cycle != lastCycle) {
-        lastCycle = cycle;
-        m.shots.removeWhere((s) => s.y > 470);
-        for (final d in shooters) {
-          m.shots.add(Shot(d.x, d.y + 12, 0, 110, hostile: true));
-        }
-        for (var k = 0; k < 4; k++) {
-          final old = dying[k];
-          if (old != null) {
-            old.hp = 0;
-            m.demons.remove(old);
-            m.blasts.add(Blast(old.x, old.y));
-          }
-          final fresh = Demon(250, _speciesY[k], k, 4, 0)..hp = 1;
-          dying[k] = fresh;
-        }
-      } else if ((t / 1.1) - cycle > 0.65) {
-        // Re-show the creature shortly before it dies again.
-        for (final d in dying.values) {
-          if (!m.demons.contains(d)) m.demons.add(d);
-        }
-      }
-      for (final s in m.shots) {
-        s.y += s.vy * dt;
-      }
-      for (final b in m.blasts) {
-        b.age += dt;
-      }
-      m.blasts.removeWhere((b) => b.age > .6);
-    },
-  );
-}
-
-GalleryScene _weaponScene(List<Power> powers, double sway) {
-  final m = ArcadeModel()..start();
-  m.mode = RunMode.playing;
-  m.lives = 99;
-  return GalleryScene(
-    m,
-    live: true,
-    stage: (m, dt, t) {
-      for (final p in powers) {
-        // Hold just past the deploy transition; the last module of a combo
-        // runs its full timer so wear/overheat states cycle.
-        m.powerTimers[p] = p == powers.last && powers.length > 1
-            ? 8.7 - (t % 8.5)
-            : ArcadeModel.powerDuration - 1;
-      }
-      m.mode = RunMode.playing;
-      m.lives = 99;
-      m.invulnerable = 0;
-      m.shots.removeWhere((s) => s.hostile);
-      m.demons.removeWhere((d) => d.dive > 0);
-      if (sway != 0) {
-        m.targetX = 180 + math.sin(t * 1.3) * sway;
-      }
-    },
-  );
-}
-
-List<Widget> _weapons() => [
-  _tile('NOSE (NO MODULE)', _weaponScene(const [], 0)),
-  _tile('RAPID WING CANNONS', _weaponScene(const [Power.rapid], 0)),
-  _tile('POWERFUL WING CANNONS', _weaponScene(const [Power.powerful], 60)),
-  _tile('SPREAD', _weaponScene(const [Power.spread], 0)),
-  _tile('LARGE', _weaponScene(const [Power.large], 0)),
-  _tile(
-    'POWERFUL+LARGE+SHIELD',
-    _weaponScene(const [Power.powerful, Power.large, Power.shield], 40),
-  ),
-  _tile('RAPID+SPREAD', _weaponScene(const [Power.rapid, Power.spread], 0)),
-  _tile('SHIELD', _weaponScene(const [Power.shield], 70)),
-];
-
-/// Two sentinel archetypes through hover, warning, dive, last-stand tell and
-/// rush, with shield/armour layers.
-GalleryScene _sentinels() {
-  final m = _staged();
-  final specs = <(EnemyArchetype, double, double)>[
-    (EnemyArchetype.shieldSentinel, 90, 80),
-    (EnemyArchetype.armoredSentinel, 270, 80),
-    (EnemyArchetype.shieldSentinel, 90, 200),
-    (EnemyArchetype.armoredSentinel, 270, 200),
-    (EnemyArchetype.shieldSentinel, 90, 320),
-    (EnemyArchetype.armoredSentinel, 270, 320),
-    (EnemyArchetype.shieldSentinel, 90, 430),
-    (EnemyArchetype.armoredSentinel, 270, 430),
-  ];
-  for (final (arch, x, y) in specs) {
-    m.demons.add(
-      Demon(
-        x,
-        y,
-        0,
-        8,
-        0,
-        archetype: arch,
-        shieldMax: 3,
-        armorMax: 3,
-        lastStandEligible: true,
-      ),
-    );
-  }
-  return GalleryScene(
-    m,
-    stage: (m, dt, t) {
-      m.shipX = -100;
-      final ds = m.demons;
-      // Row 2: damaged (shield gone, armour cracked), Row 3: dive warning,
-      // Row 4: last-stand tell / rush alternating.
-      for (final d in ds.sublist(2, 4)) {
-        d.shield = 0;
-        d.armor = 1;
-        d.hp = 3;
-      }
-      for (final d in ds.sublist(4, 6)) {
-        d.telegraph = 0.5;
-      }
-      final rush = (t % 2) > 1;
-      for (final d in ds.sublist(6, 8)) {
-        d.hp = 2;
-        d.shield = 0;
-        d.armor = 0;
-        d.lastStand = true;
-        d.rushing = rush;
-        d.telegraph = rush ? 0 : 0.9 - (t % 1) * 0.9;
-      }
-    },
-  );
-}
-
-GalleryScene _carrierScene(int cycle, double damage, {double door = 0}) {
-  final m = _staged()..cycle = cycle;
-  final b = Carrier(cycle);
-  b.core = (b.coreMax * (1 - damage)).round().clamp(1, b.coreMax);
-  b.shield = damage > 0.3 ? 0 : b.shieldMax;
-  m.boss = b;
-  return GalleryScene(
-    m,
-    stage: (m, dt, t) {
-      m.shipX = -100;
-      b.x = 180;
-      b.door = door < 0 ? (math.sin(t * 2) * .5 + .5) : door;
-      b.sideDoorLeft = (math.sin(t * 1.6) * .5 + .5);
-      b.sideDoorRight = (math.sin(t * 1.6 + 2) * .5 + .5);
-    },
-  );
-}
-
-/// The falling-wreck victory beat, looping its 4 s progress.
-GalleryScene _wreckScene(int cycle) {
-  final m = _staged()..cycle = cycle;
-  m.wreckBoss = Carrier(cycle)..core = 1;
-  m.mode = RunMode.victory;
-  m.transitionDuration = 4;
-  return GalleryScene(
-    m,
-    stage: (m, dt, t) {
-      m.shipX = -100;
-      m.transitionLeft = 4 - (t % 4);
-    },
-  );
-}
-
-List<Widget> _carriers() => [
-  _tile('CARRIER FORM 1', _carrierScene(0, 0)),
-  _tile('FORM 2 · HATCH CYCLE', _carrierScene(1, 0.3, door: -1)),
-  _tile('FORM 3 · DAMAGED', _carrierScene(2, 0.6, door: -1)),
-  _tile('FORM 4 · CRITICAL', _carrierScene(3, 0.85, door: -1)),
-  _tile('WRECK · FORM 1', _wreckScene(0)),
-  _tile('WRECK · FORM 4', _wreckScene(3)),
-];

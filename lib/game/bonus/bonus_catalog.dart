@@ -5,9 +5,11 @@
 // earlier entries' slots (bonus_plan.dart).
 import '../model.dart' show Power;
 import 'bonus_types.dart';
+import 'levels/crosswind.dart';
 import 'levels/stormfront.dart';
 import 'levels/supply_run.dart';
 
+export 'levels/crosswind.dart';
 export 'levels/stormfront.dart';
 export 'levels/supply_run.dart';
 
@@ -15,6 +17,7 @@ const bonusLevels = <BonusLevelDef>[
   supplyRun,
   // --- bonus level B: add yours below this line
   stormfront,
+  crosswind, // --- crosswind: bonus level #3
 ];
 
 /// Every bonus-only powerup, by id (crates name them by id).
@@ -80,6 +83,9 @@ RunModifierDef? runModifierById(String id) {
 String runTagLabel(String id) {
   final level = bonusLevelById(id);
   if (level != null) return level.label;
+  // --- bonus challenges: a level whose 1UP the run won.
+  final perfect = bonusLevelById(oneUpLevelOf(id) ?? '');
+  if (perfect != null) return '${perfect.label} · 1UP';
   final rule = runModifierById(id);
   if (rule != null && rule.label.isNotEmpty) return rule.label;
   return id

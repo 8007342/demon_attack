@@ -9,13 +9,20 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'arena_camera.dart';
 import 'atmosphere.dart';
+import 'weather/lightning_painter.dart'; // --- lightning-rework
 import 'weather/rain_layer.dart';
+import 'weather/wind_layer.dart'; // --- crosswind
+import 'weather/storm_layer.dart'; // --- weather-everywhere
+import 'weather/wind_flap.dart'; // --- weather-everywhere
+import 'wind_flap_atlas.dart'; // --- weather-everywhere
 import 'attract.dart';
 import 'boss_director.dart';
 import 'ground_atmosphere.dart';
 import 'ground_atmosphere_atlas.dart';
 import 'bonus/bonus_look.dart'; // --- bonus levels
 import 'bonus/bonus_painters.dart'; // --- bonus levels: mechanics
+import 'bonus/levels/crosswind_painter.dart'; // --- crosswind
+import 'bonus/levels/wind_kites_atlas.dart'; // --- crosswind
 import 'boss_painter.dart';
 import 'carrier_breakup_painter.dart';
 import 'carrier_hatch_painter.dart';
@@ -25,8 +32,12 @@ import 'dive_shield.dart'; // --- dive-shield-thinning
 import 'ground_painter.dart';
 import 'insignia_atlas.dart';
 import 'insignia_painter.dart';
+import 'spear_bearer_atlas.dart'; // --- spear-bearers
+import 'spear_bearer_painter.dart';
+import 'insignia_rank.dart';
 import 'model.dart';
 import 'perf/frame_budget.dart'; // --- phone-performance
+import 'reduced_effects.dart'; // --- reduced-effects
 import 'hatch_emergence.dart'; // --- hatch-emergence
 import 'carrier_gates.dart' show CarrierGate;
 import 'hatch_emergence_painter.dart';
@@ -57,6 +68,10 @@ class DemonScene extends FlameGame {
   bool Function() holdModel = _never;
   static bool _never() => false;
   ui.Image? atlas, effectsAtlas, sky, cockpitAtlas;
+
+  /// --- weather-everywhere: the brood's wind-flap frames (virtual rows
+  /// of [atlas] from [WindFlap.rowBase]).
+  ui.Image? windFlapAtlas;
 
   /// The foreshadow silhouette sheet (tools/sentinel_silhouettes); the
   /// placeholder from the flight frames is drawn while it is missing.
@@ -95,13 +110,25 @@ class DemonScene extends FlameGame {
   final atmosphere = Atmosphere();
   // --- dynamic-weather: a regular level's rain (lib/game/weather/).
   final rain = RainLayer();
+
+  // --- crosswind: the wind's clouds, wisps and windsock.
+  final wind = WindLayer();
+
+  // --- weather-everywhere: a regular sector's lightning storm.
+  final storm = StormLayer();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- phone-performance: the quality tier (from measured frame
   // intervals) and the batched, interpolated shot layer.
   final perf = PerfGovernor(
     forced: PerfTier.parse(Uri.base.queryParameters['perf']),
   );
-  FrameBudget get budget => perf.budget;
+  // --- reduced-effects: the calm look caps the eye candy at LITE.
+  FrameBudget get budget =>
+      ReducedEffects.budget(perf.tier, calm: sectors.flyover.reducedMotion);
+
+  /// --- reduced-effects: the calm look for painters that read the
+  /// model's flag (the system setting), resolved by the player's choice.
+  bool get calmLook => ReducedEffects.calm(model.reducedMotion);
   final shots = ShotLayer();
 
   /// The fog-bank boss shadow's cell and its pre-blurred copy (§4.4).
@@ -137,6 +164,7 @@ class DemonScene extends FlameGame {
     try {
       atlas = await images.load('combat.png');
       effectsAtlas = await images.load('sentinel-effects.png');
+      windFlapAtlas = await images.load(WindFlapAtlas.asset); // --- weather-everywhere
     } catch (e) {
       assetError = '$e';
     }
@@ -150,6 +178,14 @@ class DemonScene extends FlameGame {
     } catch (_) {}
     try {
       insignia.image = await images.load(InsigniaAtlas.file);
+    } catch (_) {}
+    try {
+      // --- spear-bearers: the buckler and spear (tools/spear_bearers).
+      SpearBearerPainter.image = await images.load(SpearBearerAtlas.file);
+    } catch (_) {}
+    try {
+      // --- crosswind: the kites (tools/wind_kites).
+      CrosswindPainter.image = await images.load(WindKitesAtlas.file);
     } catch (_) {}
     try {
       // --- hatch-emergence (tools/rigkit, plan/render-runs/hatch-emergence.md)
@@ -214,7 +250,9 @@ class DemonScene extends FlameGame {
       model.moveBy(keyboardDirection * dt * 280);
     }
     // --- cinematic flow: the accessibility setting picks the plan.
-    model.reducedMotion = sectors.flyover.reducedMotion;
+    // --- reduced-effects: the system's alone; the player's setting is
+    // rendering only and never reaches the model.
+    model.reducedMotion = sectors.flyover.systemReducedMotion;
     // --- phone-performance §5.1: a jittered vsync interval steps the
     // fixed-step model exactly once (snapFrameDelta), not 0 then 2.
     if (!held) model.update(snapFrameDelta(dt));
@@ -240,6 +278,8 @@ class DemonScene extends FlameGame {
     final b = budget;
     atmosphere.tierReduced = b.fogReduced;
     rain.budget = b.rainScale;
+    wind.budget = b.windScale; // --- crosswind
+    storm.lite = !b.sparks; // --- weather-everywhere: LITE drops branches
     sectors.moteScale = b.moteScale;
     // --- hatch-emergence §5: LITE skips the emergence and the vents.
     emergence
@@ -310,7 +350,7 @@ class DemonScene extends FlameGame {
       }
       // --- transition ascent: the streaks and the cloud billows scroll at
       // the world's speed (design §3).
-      if (flow.active && !model.reducedMotion) {
+      if (flow.active && !calmLook) {
         final factor = flow.plan.beat('speed') == null
             ? 1.0
             : flow.plan.speedFactor(flow.env('speed'));
@@ -325,6 +365,17 @@ class DemonScene extends FlameGame {
       syncAtmosphere(dt);
       // --- dynamic-weather: visual only; reads the run seed and the level.
       rain.advance(dt, model, reduced: sectors.flyover.reducedMotion);
+      // --- crosswind: the wind's look; a shower slants with it.
+      wind.advance(dt, model, reduced: sectors.flyover.reducedMotion);
+      // --- weather-everywhere: the storm's look follows the settings.
+      storm
+        ..reducedMotion = sectors.flyover.reducedMotion
+        ..reducedFlash = FlashSafety.reduced(
+          reducedMotion: sectors.flyover.reducedMotion,
+        );
+      if (wind.amount > .02) {
+        rain.wind += (wind.lateral * .3 - rain.wind) * wind.amount;
+      }
     }
   }
 
@@ -368,7 +419,7 @@ class DemonScene extends FlameGame {
       // --- cinematic flow: the Pursuit's cloud and the outro's thinning.
       ..cloudCover = model.flow.env('cloud')
       ..fogThin = model.flow.env('thin')
-      ..cloudScroll = model.reducedMotion ? 0 : cloudRun
+      ..cloudScroll = calmLook ? 0 : cloudRun
       // boss-grandeur (R8): the fight plays higher and faster: the fog
       // flows faster past it (the ground below slows by the altitude).
       // carrier-v3 §7: and each layer at its own rate, the near faster.
@@ -441,14 +492,16 @@ class DemonScene extends FlameGame {
       // pursuit about the ship. The band the drop uncovers is already
       // cloud. HUD, comms dock, ship and bullets are never pitched or
       // rolled (the flow ship and the cover are drawn after the world).
-      final tilt = model.flow.env('tilt') * flowTilt;
+      // --- reduced-effects: the calm look holds the camera level.
+      final still = calmLook ? 0.0 : 1.0;
+      final tilt = model.flow.env('tilt') * flowTilt * still;
       // carrier-v3 §7: the carrier's trauma shake joins the flow's (four
       // beats only). Its take-off pitch goes through the arena camera's
       // background transform (no uncovered band over the hull).
-      final q = model.flow.env('pitch');
+      final q = model.flow.env('pitch') * still;
       final drop = pitchDrop * q;
       final band = tilt + drop;
-      final roll = model.flow.env('roll');
+      final roll = model.flow.env('roll') * still;
       final shake = _flowShake() + bossDirector.shake;
       // playtest-fixes-3: the band the pitch uncovers is the deep sky above
       // the painted one in clear air, and cloud once the cloud is in (the
@@ -524,6 +577,13 @@ class DemonScene extends FlameGame {
         haze: atmosphere.cloud,
         perspective: model.perspective,
       );
+      wind.paintSky(
+        canvas,
+        headroom: headroom,
+        cloud: atmosphere.cloud,
+        blur: budget.blur,
+      ); // --- crosswind
+      storm.paintSky(canvas, model); // --- weather-everywhere: cloud glow
       if (active && combat) {
         // --- bonus levels: a level's mechanic, under the fight.
         BonusPainters.under(canvas, model, model.visualClock);
@@ -556,6 +616,8 @@ class DemonScene extends FlameGame {
         _mark(canvas, 'overlay');
         // --- bonus levels: a level's mechanic, over the fight.
         BonusPainters.over(canvas, model, model.visualClock);
+        storm.paintOver(canvas, model); // --- weather-everywhere: bolts
+        wind.paintSock(canvas); // --- crosswind: the windsock
         _bossOverflight(canvas); // --- boss-grandeur: over the ship
         _cinematic(canvas);
         if (_zoomApplied) {
@@ -708,7 +770,7 @@ class DemonScene extends FlameGame {
   /// Shake on the last kill: at most 2 units, none with reduced motion.
   Offset _flowShake() {
     final hit = model.flow.env('hit');
-    if (hit <= 0 || model.reducedMotion) return Offset.zero;
+    if (hit <= 0 || calmLook) return Offset.zero;
     final t = model.flow.seconds;
     return Offset(
       (math.sin(t * 91) * 2 * hit).roundToDouble(),
@@ -978,8 +1040,11 @@ class DemonScene extends FlameGame {
     ColorFilter? filter,
     double opacity = 1,
   }) {
-    final a = atlas;
+    // --- weather-everywhere: virtual rows address the wind-flap atlas.
+    final wf = WindFlap.isWind(row);
+    final a = wf ? windFlapAtlas : atlas;
     if (a == null) return;
+    if (wf) row -= WindFlap.rowBase;
     final paint = Paint()
       ..isAntiAlias = false
       ..color = Colors.white.withValues(alpha: opacity)
@@ -1148,6 +1213,8 @@ class DemonScene extends FlameGame {
           c.save();
           _scaleAbout(c, at, d.scale);
           _sentinel(c, at, d);
+          // --- lightning-rework: rod armour, its charge and the stun.
+          LightningPainter.creature(c, d, at, model.clock, reduced: calmLook);
           if (d.lastStand) _sentinelBerserk(c, at, d);
           c.restore();
         }
@@ -1170,17 +1237,27 @@ class DemonScene extends FlameGame {
       // renders), so the sprite is drawn upright; see CombatAtlas.creature.
       c.save();
       final tilt = creatures.look.of(d)?.tilt ?? 0;
-      if (tilt.abs() > .02) {
+      // --- lightning-rework: a stunned creature tumbles as it falls.
+      final roll =
+          tilt * .14 +
+          LightningPainter.tumble(d, model.clock, reduced: calmLook);
+      if (roll.abs() > .02 * .14) {
         // Wing tilt of the agitation wave: a small roll about the body.
         c.translate(pos.dx, pos.dy);
-        c.rotate(tilt * .14);
+        c.rotate(roll);
         c.translate(-pos.dx, -pos.dy);
       }
-      final cell = CombatAtlas.creature(
+      // --- weather-everywhere: fighting the wind, the wind-flap frames.
+      final cell = WindFlap.cell(
         d,
+        CombatAtlas.creature(
+          d,
+          model.clock,
+          fireAge: creatures.fireAge(d),
+          motion: creatures.motion.of(d),
+        ),
         model.clock,
-        fireAge: creatures.fireAge(d),
-        motion: creatures.motion.of(d),
+        lateral: windFlapAtlas == null ? 0 : model.wind.lateral,
       );
       final size = d.angry ? 44.0 : 40.0;
       final far =
@@ -1236,7 +1313,7 @@ class DemonScene extends FlameGame {
         final k = size / CombatAtlas.cell * d.scale;
         insignia.rank(
           d,
-          CombatAtlas.rankOf(d),
+          InsigniaRanks.markOf(d), // --- insignia-ranks
           pos + Offset(head.dx * k, (head.dy - 1) * k),
           tone: telling
               ? InsigniaTone.tell
@@ -1271,6 +1348,19 @@ class DemonScene extends FlameGame {
           opacity: reveal,
         );
       }
+      // --- spear-bearers: the buckler and spear over the armour.
+      if (d.spear != null && reveal > 0) {
+        SpearBearerPainter.gear(
+          c,
+          d,
+          pos,
+          size,
+          cell.lift,
+          model.clock,
+          alpha: reveal * far,
+          reduced: calmLook,
+        );
+      }
       _creatureLighting(
         c,
         pos,
@@ -1280,6 +1370,15 @@ class DemonScene extends FlameGame {
       );
       // --- dive-shield-thinning: one shield in the body's own transform.
       if (d.dive > 0 && reveal > 0) _diveShield(c, pos, d, reveal);
+      // --- lightning-rework: rod armour, its charge and the stun's crackle.
+      LightningPainter.creature(
+        c,
+        d,
+        pos,
+        model.clock,
+        reduced: calmLook,
+        alpha: reveal * far,
+      );
       c.restore();
       final fired = creatures.fireAge(d);
       if (fired != null && fired < 0.16) {
@@ -1362,6 +1461,9 @@ class DemonScene extends FlameGame {
       frameInterval: perf.interval,
       smear: !sectors.flyover.reducedMotion,
     );
+    // --- spear-bearers: thrown spears and knocked-away bucklers.
+    SpearBearerPainter.spears(c, model, ShotLayer.leadOf(model));
+    SpearBearerPainter.fallen(c, model);
     _mark(c, 'player');
     if (model.mode != RunMode.gameOver &&
         model.presentationMode != RunMode.levelClear &&
@@ -1369,6 +1471,7 @@ class DemonScene extends FlameGame {
         model.presentationMode != RunMode.victory &&
         model.presentationMode != RunMode.transition &&
         !model.shipAway && // --- life-loss sequence: the ship is away
+        !LightningPainter.shipFlickerOff(model) && // --- lightning-rework
         (model.invulnerable == 0 || (model.clock * 12).floor() % 2 == 0)) {
       // --- life-loss sequence: the reserve ship flies in from below.
       final rise = model.shipDrawY - ArcadeModel.shipY;
@@ -1382,6 +1485,14 @@ class DemonScene extends FlameGame {
       }
     }
     _lifeLossEffects(c); // --- life-loss sequence
+    // --- lightning-rework: static before a bolt, the zap after one.
+    LightningPainter.ship(
+      c,
+      model,
+      model.visualClock,
+      tells: BonusPainters.lightningTells(model),
+    );
+
     // Spent modules are debris outside the ship's own drawing, so they keep
     // falling through cutscenes and damage blinking instead of vanishing.
     _fallingParts(c);
@@ -1593,9 +1704,10 @@ class DemonScene extends FlameGame {
   void _carrierInsignia(Carrier b) {
     insignia.rank(
       b,
-      InsigniaPainter.carrierRank(b.phase),
+      RankMark.wingCrown,
       Offset(b.x, b.y + carrierSigilY),
       size: 2,
+      glyph: InsigniaPainter.carrierGlyph(b.phase), // --- insignia-ranks
     );
     final fx = creatures.shields;
     if (b.shieldMax <= 0 || (b.shield <= 0 && fx.bossFlashes.isEmpty)) return;
@@ -2811,11 +2923,13 @@ class DemonScene extends FlameGame {
     var h = d.altitude;
     if (h <= 0 && d.isLarge && d.entering && d.entranceProgress > 0) {
       // terrain-shadows §4: a sentinel rising out of the fog has no
-      // published altitude yet; its shadow eases from the lurking shadow's
-      // low pass down to its fight altitude (presentation only).
+      // published altitude yet; its shadow eases from the looming
+      // silhouette's (sentinel-shadow-align) down to its fight altitude
+      // (presentation only).
+      const h0 = SentinelForeshadow.shadowAltitude;
       h =
-          LurkTrack.nearAltitude +
-          (SwarmFlock.fightAltitude(d.homeY) - LurkTrack.nearAltitude) *
+          h0 +
+          (SwarmFlock.fightAltitude(d.homeY) - h0) *
               Perspective.smoothstep(0, 1, d.entranceProgress);
     }
     if (d.isLarge && h <= 0 && !d.entering) h = sentinelShadowAltitude(d);
@@ -2925,8 +3039,8 @@ class DemonScene extends FlameGame {
 
   /// lurk-visibility: the occluder's strength at its core (multiply
   /// darkening toward [lurkTint], plus [lurkDesaturate] of the colour
-  /// under it), and the smallest ground nearness its size uses.
-  static const lurkAlpha = .9, lurkDesaturate = .6, lurkMinNearness = .2;
+  /// under it).
+  static const lurkAlpha = .9, lurkDesaturate = .6;
 
   /// Share of the occluder repeated over the depth fog banks above it.
   static const lurkFog = .65;
@@ -2975,20 +3089,23 @@ class DemonScene extends FlameGame {
           ShadowProjector.flyerDir(_sunDrift),
         );
 
+  // --- sentinel-shadow-align: the looming silhouette's shadow is cast
+  // like every flyer's (the demons' projection in [_shadowOf]): from the
+  // ground under its nearness, below its drawn x, at its altitude, on this
+  // frame's sun. Position and size follow from that projection alone.
+
+  /// The flat-ground point under the looming silhouette (tests, review).
+  static Offset foreshadowBase(SentinelForeshadow f) =>
+      Offset(f.x, Perspective.groundY(f.nearness));
+
   _ShadowSpec? _lurkSpec(
     SentinelForeshadow f,
     ui.Image fx,
     ShadowSurface surface,
   ) {
-    final l = f.lurk;
-    final base = Offset(l.x(meander: !sectors.flyover.reducedMotion), l.flatY);
-    final hit = _flyerHit(surface, base, l.altitude);
-    // Size by the ground's nearness there: about 2.5 x the sentinel's own,
-    // growing 1.0 -> 1.3 as it nears (and its virtual altitude falls).
-    // lurk-visibility: never smaller than a broad patch near the fog, so it
-    // is seen as soon as it appears.
-    final n = ((hit.flat.dy - Perspective.horizonY) / Perspective.groundSpan)
-        .clamp(lurkMinNearness, 1.0);
+    const h = SentinelForeshadow.shadowAltitude;
+    final hit = _flyerHit(surface, foreshadowBase(f), h);
+    final n = groundNearness(hit.flat.dy);
     // Full within 1.5 s of the silhouette appearing.
     final rise = Perspective.smoothstep(0, .5, f.opacity);
     // In thick ground fog it is a little softer, never nothing (the fog
@@ -3006,7 +3123,7 @@ class DemonScene extends FlameGame {
         64,
       ),
       hit.center,
-      sentinelShadowScale(n, l.altitude),
+      sentinelShadowScale(n, h),
       alpha.clamp(0.0, lurkAlpha),
       2,
       hit.flat,
@@ -3019,12 +3136,13 @@ class DemonScene extends FlameGame {
   /// the 128 × 64 strip: the ground's nearness [n] under it (perspective)
   /// times its softness growth, spread by its altitude [h] above the
   /// fight's (a high caster's penumbra). In the fight it matches the
-  /// sentinel's own drawn size; far and high, the lurk is broad for the
-  /// ground it lies on, and nothing jumps at the hand-off.
+  /// sentinel's own drawn size; far away it is small with the ground it
+  /// lies on (sentinel-shadow-align: no nearness floor), and nothing jumps
+  /// at the hand-off.
   static double sentinelShadowScale(double n, double h) {
     final k = (h / _shadowHMax).clamp(0.0, 1.0);
     final spread = 1 + 1.2 * math.max(0.0, h - 90) / 130;
-    return 1.6 * n.clamp(lurkMinNearness, 1.0) * (1 + .3 * k) * spread;
+    return 1.6 * n.clamp(0.0, 1.0) * (1 + .3 * k) * spread;
   }
 
   /// The ground's nearness at flat-ground row [y].
@@ -3383,8 +3501,8 @@ class DemonScene extends FlameGame {
         ),
       );
     }
-    // terrain-shadows §4: a coming sentinel's lurking shadow creeps from the
-    // far terrain toward the front while it circles in the fog.
+    // terrain-shadows §4: a coming sentinel's shadow while it circles in
+    // the fog, under its silhouette (sentinel-shadow-align).
     final f = model.foreshadow;
     final fx = effectsAtlas;
     final lurk = f != null && f.visible && fx != null
@@ -3798,7 +3916,7 @@ class DemonScene extends FlameGame {
       // Overlays are queued in arena units (the canvas here is scaled).
       insignia.rank(
         demon,
-        AlienRank.sentinel,
+        RankMark.wingCrown,
         pos + Offset(0, sentinelHeadTop * demon.scale),
         tone: telling ? InsigniaTone.tell : InsigniaTone.bone,
         alpha: mark,
@@ -4563,7 +4681,7 @@ class DemonScene extends FlameGame {
     );
     // transition ascent (design §2): the plume grows with the speed and the
     // hull pulls away (a 4 % scale-down, none in reduced motion).
-    final nudge = model.reducedMotion ? 0.0 : shipNudge * speed;
+    final nudge = calmLook ? 0.0 : shipNudge * speed;
     _cinematicShip(
       c,
       flowShipAt(),
@@ -4608,7 +4726,7 @@ class DemonScene extends FlameGame {
   /// gain is 0).
   void _fogStreaks(Canvas c) {
     final k = model.flow.env('streaks');
-    if (k <= .01 || model.reducedMotion) return;
+    if (k <= .01 || calmLook) return;
     final ship = flowShipAt();
     final seed = model.seed * 31 + model.level * 7 + model.cycle;
     final colour = Color.lerp(atmosphere.cloud, Atmosphere.cloudLight, .7)!;

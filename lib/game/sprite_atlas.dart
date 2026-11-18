@@ -5,6 +5,7 @@ import 'creature_motion.dart';
 import 'insignia_painter.dart';
 import 'model.dart';
 import 'swarm_look.dart';
+import 'weather/wind_flap.dart'; // --- weather-everywhere
 
 /// One creature draw: the atlas cell, whether to tint it white (action
 /// frames without an authored flash), and the elite armour overlay cell with
@@ -18,19 +19,20 @@ typedef CreatureCell = ({
   int lift,
 });
 
-/// The brood's rank ladder (docs/styleguide/alien-troops.md §4): what the
-/// insignia above a creature's head says about how it will behave.
+/// The brood's behaviour ranks (docs/styleguide/alien-troops.md §4; the
+/// lightning dodge reads them). insignia-ranks: the mark above the head is
+/// rarer than the rank (`InsigniaRanks.markOf`, insignia_rank.dart).
 enum AlienRank {
   /// Small creatures (intelligence tier T0): no mark.
   drone,
 
-  /// Not-so-small creatures (T1): one fang.
+  /// Not-so-small creatures (T1): no mark, or the elite grunt's winglet.
   skirmisher,
 
-  /// Route-hardened T1 creatures (`maxHp >= 4`): twin fangs.
+  /// Route-hardened T1 creatures (`maxHp >= 4`): as the skirmisher.
   veteran,
 
-  /// Elites (T2): the winged fang, bat wings on an ember-cored fang.
+  /// Elites (T2): "Fang and Wings!", bat wings on an ember-cored fang.
   hunter,
 
   /// Sentinels (T3): the winged crown, three fangs rising between wings.
@@ -208,6 +210,8 @@ abstract final class CombatAtlas {
   /// variant, direction and pose). Cells without one (death, overlays) fall
   /// back to the species' neutral head top raised by [lift].
   static Offset headAnchor(int row, int col, {int lift = 0}) {
+    // --- weather-everywhere: the wind-flap frames' own anchors.
+    if (WindFlap.isWind(row)) return WindFlap.headAnchor(row, col);
     final i = (row * columns + col) * 2;
     if (row >= 0 && i + 1 < _anchors.length && col >= 0 && col < columns) {
       final x = _anchors[i], y = _anchors[i + 1];

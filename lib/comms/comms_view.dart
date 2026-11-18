@@ -10,13 +10,17 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../game/bonus/challenge_badge.dart'; // --- bonus challenges
 import 'comms_bank.dart';
 import 'comms_briefing.dart';
 import 'comms_director.dart';
+import 'comms_lanes.dart';
 import 'brood_script.dart';
 import 'comms_portraits.dart';
+import 'comms_transition_chatter.dart';
 import 'comms_types.dart';
-import 'comms_one_line.dart';
+import 'comms_one_line.dart'
+    show commsStripFont, commsStripTagFont, commsTileFont;
 
 part 'comms_briefing_view.dart';
 
@@ -775,9 +779,18 @@ class CommsSidePanels extends StatelessWidget {
 }
 
 /// Phones and narrow windows: a compact, translucent call dock at the top
-/// of the arena, just below the HUD band. Isolated calls occupy half the dock;
-/// linked dialogue shares one full-width toast with portraits at either end.
-/// It dims while the player is being hit ([dimmed]).
+/// of the arena, just below the HUD band. It dims while the player is being
+/// hit ([dimmed]).
+///
+/// portrait-comms-lanes: the dock is TWO independent lanes ([CommsLanes]):
+/// the squad and the ground link on the left, the brood on the right. Each
+/// lane has its own queue, timeout and persistence; a toast stays where it
+/// appeared until it expires, then closes in place. Every toast has one
+/// fixed size ([stripHeight] tall, half the dock wide): it never collapses
+/// to its text or grows to match its neighbour; a line longer than the box
+/// scrolls inside it, in time with its reading time. Linked dialogue (an
+/// exchange and its comeback) shares one full-width toast with portraits at
+/// either end.
 class CommsHudStack extends StatelessWidget {
   const CommsHudStack({
     super.key,
@@ -796,7 +809,8 @@ class CommsHudStack extends StatelessWidget {
   final bool hideTransmission;
 
   /// bonus-briefing: messages another card shows (the urgent-mission
-  /// card's turns), left out of the dock.
+  /// card's turns), left out of the dock. portrait-comms-lanes: also the
+  /// lines the transition chatter shows over the clouds.
   final Set<CommsMessage> hide;
 
   /// bonus-briefing: a card at the top of the dock (the urgent-mission
@@ -804,30 +818,30 @@ class CommsHudStack extends StatelessWidget {
   /// never do.
   final Widget? banner;
 
-  /// Cards are sized to their text (mobile-top-trim): [stripHeight] is the
-  /// tallest a card gets (four lines of radio text, or a brood grunt's
-  /// glyphs and three SIGINT lines, plus the frame).
-  // carrier-hatches §A12: four lines at the larger 14.5 px (was 76).
+  /// portrait-comms-lanes: the one toast height (four lines of radio text
+  /// at [commsStripFont], or a brood grunt's glyphs and three SIGINT lines,
+  /// plus the frame). carrier-hatches §A12 sized it (was 76).
   static const stripHeight = 84.0, chipHeight = 18.0, gap = 2.0;
 
-  /// The portrait is never taller than the text beside it, between
-  /// [minPortrait] (the half-scale face) and [portrait].
+  /// The toast's portrait side, and the half-scale face (narrow boxes).
   static const portrait = 40.0, minPortrait = 26.0;
 
-  /// Tallest the dock gets (dialogue cards plus exchange/queue label).
+  /// Tallest the dock gets (the toasts plus the exchange/queue label).
   static const maxHeight = stripHeight + gap + chipHeight;
+
+  bool _hidden(CommsMessage m) =>
+      (hideTransmission && m.transmission) || hide.contains(m);
 
   @override
   Widget build(BuildContext context) {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    final (:placed, :overflow) = dockEntries(
-      director.active,
-      hideTransmission: hideTransmission,
-      hide: hide,
-    );
+    final lanes = director.lanes
+      ..sync(now, director.active, queue: director.queue, hidden: _hidden);
+    final left = lanes.toast(CommsLane.human);
+    final right = lanes.toast(CommsLane.demon);
     final top = banner;
-    if (placed.isEmpty) return top ?? const SizedBox.shrink();
-    final dock = _dock(placed, overflow, reduce);
+    if (left == null && right == null) return top ?? const SizedBox.shrink();
+    final dock = _dock(left, right, reduce);
     if (top == null) return dock;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -840,18 +854,20 @@ class CommsHudStack extends StatelessWidget {
     );
   }
 
-  Widget _dock(
-    List<List<CommsMessage>> placed,
-    List<List<CommsMessage>> overflow,
-    bool reduce,
-  ) {
-    final pair = placed.where((e) => e.length == 2).firstOrNull;
-    final conversation = pair != null;
-    final opening = pair?.first;
-    final latest = pair?.last ?? placed.last.last;
-    final panels = pair ?? [for (final e in placed) e.single];
-    final ticker = overflow.isEmpty ? null : overflow.last.last;
-    final waiting = director.queue.where((m) => now >= m.readyAt).length;
+  Widget _dock(CommsToast? left, CommsToast? right, bool reduce) {
+    final pair = left != null && identical(left, right) ? left : null;
+    final lanes = director.lanes;
+    final waiting = [
+      for (final lane in CommsLane.values)
+        pair != null || lanes.pairWaiting ? 0 : lanes.waiting(lane),
+    ];
+    Widget label(String text, {TextAlign align = TextAlign.center}) => Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: align,
+      style: const TextStyle(color: _muted, fontSize: 9),
+    );
     return IgnorePointer(
       child: AnimatedOpacity(
         opacity: dimmed ? .3 : 1,
@@ -860,60 +876,100 @@ class CommsHudStack extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _maybeFramed(
-              key: conversation ? const ValueKey('comms-conversation') : null,
-              framed: conversation,
-              leading: Color(panels.first.character.accent),
-              trailing: Color(panels.last.character.accent),
-              lit: panels.any((m) => m.speaking(now)),
-              // Both cards of a row share the taller card's height.
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: _strip(
-                        panels.first,
-                        reduce,
-                        retained: identical(panels.first, opening),
-                        conversation: conversation,
-                      ),
-                    ),
-                    if (panels.length == 2) ...[
-                      SizedBox(width: conversation ? 0 : gap * 2),
-                      Expanded(
-                        child: _strip(
-                          panels.last,
-                          reduce,
-                          right: true,
-                          conversation: conversation,
+            SizedBox(
+              key: const ValueKey('comms-lanes'),
+              height: stripHeight,
+              child: pair != null
+                  ? _pairToast(pair, reduce)
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: left == null
+                              ? const SizedBox.shrink()
+                              : _single(left, reduce),
                         ),
+                        const SizedBox(width: gap * 2),
+                        Expanded(
+                          child: right == null
+                              ? const SizedBox.shrink()
+                              : _single(right, reduce, right: true),
+                        ),
+                      ],
+                    ),
+            ),
+            if (pair != null)
+              SizedBox(
+                height: chipHeight,
+                child: label(
+                  '${pair.messages.first.character.callsign} → '
+                  '${pair.messages.last.character.callsign}',
+                ),
+              )
+            else if (waiting.any((n) => n > 0))
+              SizedBox(
+                height: chipHeight,
+                child: Row(
+                  children: [
+                    for (final (i, n) in waiting.indexed) ...[
+                      if (i > 0) const SizedBox(width: gap * 2),
+                      Expanded(
+                        child: n > 0
+                            ? label(
+                                '+$n',
+                                align: i == 0
+                                    ? TextAlign.left
+                                    : TextAlign.right,
+                              )
+                            : const SizedBox.shrink(),
                       ),
-                    ] else if (!commsOneLine(panels.first.line.id)) ...[
-                      // carrier-hatches §A12: a one-line line takes the
-                      // full width; any other single call half of it.
-                      const SizedBox(width: gap * 2),
-                      const Spacer(),
                     ],
                   ],
                 ),
               ),
-            ),
-            if (ticker != null)
-              _ticker(ticker, overflow.length - 1, reduce)
-            else if (opening != null || waiting > 0)
-              SizedBox(
-                height: chipHeight,
-                child: Text(
-                  opening != null
-                      ? '${opening.character.callsign} → ${latest.character.callsign}'
-                      : '+$waiting',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: _muted, fontSize: 9),
-                ),
-              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// One lane's toast: framed, the speaker's portrait on the lane's outer
+  /// edge.
+  Widget _single(CommsToast t, bool reduce, {bool right = false}) {
+    final m = t.messages.single;
+    return Opacity(
+      key: ValueKey('comms-strip-${m.line.id}'),
+      alwaysIncludeSemantics: true,
+      opacity: t.opacity(now, queue: director.queue, reduce: reduce),
+      child: _maybeFramed(
+        framed: true,
+        leading: Color(m.character.accent),
+        barOnRight: right,
+        lit: m.speaking(now),
+        height: stripHeight,
+        child: _strip(m, t, reduce, right: right, keyed: false),
+      ),
+    );
+  }
+
+  /// An exchange and its comeback: one toast across both lanes.
+  Widget _pairToast(CommsToast t, bool reduce) {
+    final a = t.half(CommsLane.human), b = t.half(CommsLane.demon);
+    return Opacity(
+      alwaysIncludeSemantics: true,
+      opacity: t.opacity(now, queue: director.queue, reduce: reduce),
+      child: _maybeFramed(
+        key: const ValueKey('comms-conversation'),
+        framed: true,
+        leading: Color(a.character.accent),
+        trailing: Color(b.character.accent),
+        lit: a.speaking(now) || b.speaking(now),
+        height: stripHeight,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: _strip(a, t, reduce)),
+            Expanded(child: _strip(b, t, reduce, right: true)),
           ],
         ),
       ),
@@ -974,8 +1030,7 @@ class CommsHudStack extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius - 1),
         child: Stack(
-          // A card stretched to its taller neighbour centres its content.
-          alignment: Alignment.centerLeft,
+          fit: StackFit.expand,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -992,106 +1047,6 @@ class CommsHudStack extends StatelessWidget {
             ] else
               accentBar(leading, right: barOnRight),
           ],
-        ),
-      ),
-    );
-  }
-
-  /// What the dock shows: up to two halves, oldest first, so a card keeps
-  /// its place until it has been read (a linked exchange takes both
-  /// halves). Cards that do not fit wait in [overflow] (shown as a one-line
-  /// ticker under the dock) and move up when a half frees; nothing on
-  /// screen is hidden by a newer line.
-  static ({List<List<CommsMessage>> placed, List<List<CommsMessage>> overflow})
-  dockEntries(
-    Iterable<CommsMessage> active, {
-    bool hideTransmission = false,
-    Set<CommsMessage> hide = const {},
-  }) {
-    bool hidden(CommsMessage m) =>
-        (hideTransmission && m.transmission) || hide.contains(m);
-    final shown = [
-      for (final m in active)
-        if (!hidden(m)) m,
-    ]..sort((a, b) => a.startedAt.compareTo(b.startedAt));
-    final entries = <List<CommsMessage>>[];
-    final used = <CommsMessage>{};
-    for (final m in shown) {
-      if (used.contains(m)) continue;
-      used.add(m);
-      final reply = shown
-          .where((r) => identical(r.inReplyTo, m) && !used.contains(r))
-          .firstOrNull;
-      final opening = m.inReplyTo;
-      if (reply != null) {
-        used.add(reply);
-        entries.add([m, reply]);
-      } else if (opening != null &&
-          !used.contains(opening) &&
-          !hidden(opening)) {
-        // The opening already left the channel: keep it beside its answer.
-        entries.add([opening, m]);
-      } else {
-        entries.add([m]);
-      }
-    }
-    final placed = <List<CommsMessage>>[], overflow = <List<CommsMessage>>[];
-    var free = 2;
-    for (final e in entries) {
-      if (e.length <= free && overflow.isEmpty) {
-        placed.add(e);
-        free -= e.length;
-      } else {
-        overflow.add(e);
-      }
-    }
-    return (placed: placed, overflow: overflow);
-  }
-
-  /// One line under the dock for a card waiting for room: speaker and
-  /// text, readable at a glance.
-  Widget _ticker(CommsMessage m, int more, bool reduce) {
-    final c = m.character;
-    final accent = Color(c.accent);
-    final text = m.line.isGrunt
-        ? 'SIGINT · ${m.line.gloss ?? ''}'
-        : (m.line.text ?? '');
-    return Opacity(
-      key: ValueKey('comms-ticker-${m.line.id}'),
-      opacity: _fade(m, reduce),
-      child: Container(
-        height: chipHeight,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        margin: const EdgeInsets.only(top: gap),
-        decoration: BoxDecoration(
-          color: const Color(0xCC0A1220),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: accent.withValues(alpha: .45)),
-        ),
-        alignment: Alignment.centerLeft,
-        child: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: '${c.isDemon ? c.name : c.callsign}  ',
-                style: TextStyle(
-                  color: accent,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: .8,
-                ),
-              ),
-              TextSpan(text: text),
-              if (more > 0) TextSpan(text: '  +$more'),
-            ],
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: m.line.isGrunt ? const Color(0xFFFFB0A8) : _text,
-            fontSize: 11.5,
-            height: 1.1,
-          ),
         ),
       ),
     );
@@ -1115,112 +1070,230 @@ class CommsHudStack extends StatelessWidget {
                       ))
       : 1.0;
 
-  double _fade(CommsMessage m, bool reduce) => reduce
-      ? 1.0
-      : (math.min(m.age(now), m.endsAt - now) / .18).clamp(0.0, 1.0);
+  /// How far a line that overflows its box has scrolled: it holds its
+  /// first lines for the first 30 % of the toast's reading window, glides
+  /// to its last lines by 80 %, and holds them.
+  double _scroll(CommsMessage m, CommsToast t) {
+    if (!m.started) return 0;
+    final from = math.max(t.shownAt, m.startedAt);
+    final span = math.max(
+      .5,
+      t.endsAt(now, queue: director.queue) - CommsLanes.fade - from,
+    );
+    final u = ((now - from) / span - .3) / .5;
+    return Curves.easeInOut.transform(u.clamp(0.0, 1.0));
+  }
 
+  /// One speaker's half of a toast, at the fixed size: the portrait on the
+  /// lane's outer edge, the words beside it. An answer that has not started
+  /// yet shows its speaker waiting.
   Widget _strip(
     CommsMessage m,
+    CommsToast t,
     bool reduce, {
     bool right = false,
-    bool retained = false,
-    bool conversation = false,
+    bool keyed = true,
   }) {
     final c = m.character;
     final accent = Color(c.accent);
-    final speaking = m.speaking(now);
     final tag = c.isDemon ? c.name : c.callsign;
     final celebrating = director.celebrating(now) && !c.isDemon;
-    return Opacity(
-      key: ValueKey('comms-strip-${m.line.id}'),
-      opacity: retained ? 1 : _fade(m, reduce),
-      child: _maybeFramed(
-        framed: !conversation,
-        leading: accent,
-        barOnRight: right,
-        lit: speaking,
-        child: _PortraitRow(
-          portraitOnRight: right,
-          maxSide: portrait,
-          minSide: minPortrait,
-          children: [
-            KeyedSubtree(
-              key: ValueKey('comms-portrait-${m.line.id}'),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(5),
-                child: CustomPaint(
-                  painter: _MiniPortrait(
-                    c,
-                    _frame(m),
-                    _zoom(m, reduce),
-                    now,
-                    m,
-                    reduce,
-                  ),
-                ),
-              ),
+    final face = SizedBox.square(
+      dimension: portrait,
+      child: KeyedSubtree(
+        key: ValueKey('comms-portrait-${m.line.id}'),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: CustomPaint(
+            painter: _MiniPortrait(
+              c,
+              _frame(m),
+              _zoom(m, reduce),
+              now,
+              m,
+              reduce,
             ),
-            m.line.isGrunt
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tag,
-                        maxLines: 1,
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      CommsSubtitle(
-                        message: m,
-                        now: now,
-                        fontSize: 12.5,
-                        maxLines: 3,
-                        glyphHeight: 16,
-                        glyphRows: 2,
-                      ),
-                    ],
-                  )
-                : Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '${celebrating ? '★ ' : ''}$tag  ',
-                            style: TextStyle(
-                              color: celebrating
-                                  ? const Color(0xFFFFD86B)
-                                  : accent,
-                              fontSize: commsStripTagFont,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: .8,
-                            ),
-                          ),
-                          TextSpan(text: m.line.text ?? ''),
-                        ],
-                      ),
-                      // carrier-hatches §A12: flagged lines stay on one line.
-                      maxLines: commsOneLine(m.line.id) ? 1 : 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _text,
-                        fontSize: commsStripFont,
-                        height: 1.15,
-                        shadows: [
-                          Shadow(color: Color(0xFF000000), blurRadius: 2),
-                        ],
-                      ),
-                    ),
-                  ),
-          ],
+          ),
         ),
       ),
     );
+    final Widget words;
+    if (!m.started) {
+      words = Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          '$tag  …',
+          maxLines: 1,
+          style: TextStyle(
+            color: accent.withValues(alpha: .6),
+            fontSize: commsStripTagFont,
+            fontWeight: FontWeight.bold,
+            letterSpacing: .8,
+          ),
+        ),
+      );
+    } else if (m.line.isGrunt) {
+      words = CommsScrollBox(
+        progress: _scroll(m, t),
+        stepped: reduce,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              tag,
+              maxLines: 1,
+              style: TextStyle(
+                color: accent,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+            CommsSubtitle(
+              message: m,
+              now: now,
+              fontSize: 12.5,
+              maxLines: 6,
+              glyphHeight: 16,
+              glyphRows: 2,
+            ),
+          ],
+        ),
+      );
+    } else {
+      words = CommsScrollBox(
+        progress: _scroll(m, t),
+        stepped: reduce,
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: '${celebrating ? '★ ' : ''}$tag  ',
+                style: TextStyle(
+                  color: celebrating ? const Color(0xFFFFD86B) : accent,
+                  fontSize: commsStripTagFont,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: .8,
+                ),
+              ),
+              TextSpan(text: m.line.text ?? ''),
+            ],
+          ),
+          style: const TextStyle(
+            color: _text,
+            fontSize: commsStripFont,
+            height: 1.15,
+            shadows: [Shadow(color: Color(0xFF000000), blurRadius: 2)],
+          ),
+        ),
+      );
+    }
+    return KeyedSubtree(
+      key: keyed ? ValueKey('comms-strip-${m.line.id}') : null,
+      child: Row(
+        children: [
+          if (!right) ...[face, const SizedBox(width: 6)],
+          Expanded(child: words),
+          if (right) ...[const SizedBox(width: 6), face],
+        ],
+      ),
+    );
+  }
+}
+
+/// portrait-comms-lanes: a fixed box for a toast's words. Text that fits
+/// is centred vertically; text taller than the box scrolls up by
+/// [progress] (0: its first lines, 1: its last lines), or jumps a page at a
+/// time when [stepped] (reduced motion). The box never changes size.
+class CommsScrollBox extends SingleChildRenderObjectWidget {
+  const CommsScrollBox({
+    super.key,
+    required this.progress,
+    this.stepped = false,
+    required super.child,
+  });
+  final double progress;
+  final bool stepped;
+
+  @override
+  RenderCommsScrollBox createRenderObject(BuildContext context) =>
+      RenderCommsScrollBox(progress, stepped);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    RenderCommsScrollBox renderObject,
+  ) {
+    renderObject
+      ..progress = progress
+      ..stepped = stepped;
+  }
+}
+
+class RenderCommsScrollBox extends RenderShiftedBox {
+  RenderCommsScrollBox(this._progress, this._stepped) : super(null);
+
+  double _progress;
+  set progress(double v) {
+    if (v == _progress) return;
+    _progress = v;
+    markNeedsLayout();
+  }
+
+  bool _stepped;
+  set stepped(bool v) {
+    if (v == _stepped) return;
+    _stepped = v;
+    markNeedsLayout();
+  }
+
+  /// How much taller than the box the words are (0 when they fit).
+  double overflow = 0;
+
+  @override
+  void performLayout() {
+    size = constraints.biggest;
+    final c = child;
+    if (c == null) return;
+    c.layout(BoxConstraints(maxWidth: size.width), parentUsesSize: true);
+    overflow = math.max(0, c.size.height - size.height);
+    final data = c.parentData! as BoxParentData;
+    if (overflow <= 0) {
+      data.offset = Offset(0, (size.height - c.size.height) / 2);
+      return;
+    }
+    var p = _progress.clamp(0.0, 1.0);
+    if (_stepped) {
+      final pages = (c.size.height / size.height).ceil();
+      p = (p * pages).floorToDouble().clamp(0, pages - 1) / (pages - 1);
+    }
+    data.offset = Offset(0, -overflow * p);
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (child == null) return;
+    if (overflow <= 0) {
+      _clip.layer = null;
+      super.paint(context, offset);
+      return;
+    }
+    _clip.layer = context.pushClipRect(
+      needsCompositing,
+      offset,
+      Offset.zero & size,
+      super.paint,
+      oldLayer: _clip.layer,
+    );
+  }
+
+  final _clip = LayerHandle<ClipRectLayer>();
+
+  @override
+  void dispose() {
+    _clip.layer = null;
+    super.dispose();
   }
 }
 
@@ -1366,6 +1439,193 @@ class CommsTransmission extends StatelessWidget {
   }
 }
 
+/// portrait-comms-lanes: a level transition's radio chatter, at the
+/// landscape call tiles' size, in the middle of the arena over the clouds:
+/// one long line as one wide card; two short lines, or a line and its
+/// comeback, as two cards side by side (humans left, the brood right). A
+/// comeback's two cards share one frame. Cards never move: a short line's
+/// card holds its half from the start, so a second line fills the other.
+class TransitionChatterView extends StatelessWidget {
+  const TransitionChatterView({
+    super.key,
+    required this.chatter,
+    required this.now,
+    required this.maxWidth,
+    required this.maxHeight,
+  });
+  final TransitionChatter chatter;
+  final double now, maxWidth, maxHeight;
+
+  /// The landscape tiles' widest card, the gap between two cards, the
+  /// subtitle box and the tag row (as [CommsLayout]).
+  static const maxCard = 300.0, gap = 8.0, subtitle = 76.0, tagRow = 18.0;
+
+  /// The comeback frame's label row.
+  static const labelRow = 16.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final shape = chatter.shape;
+    if (shape == ChatterShape.none) return const SizedBox.shrink();
+    final comeback = shape == ChatterShape.comeback;
+    final wide = shape == ChatterShape.long;
+    final width = wide
+        ? math.min(maxCard, maxWidth)
+        : math.min(maxCard, (maxWidth - gap - (comeback ? 8 : 0)) / 2);
+    final room =
+        maxHeight - tagRow - subtitle - 2 - (comeback ? labelRow + 8 : 0);
+    final video = math.max(48.0, math.min(width - 2, room)).floorToDouble();
+    final messages = [...chatter.shown, ?chatter.pendingReply];
+    Widget card(CommsMessage? m) =>
+        m == null ? SizedBox(width: width) : _card(m, width, video, reduce);
+    final Widget body;
+    if (wide) {
+      body = card(messages.single);
+    } else {
+      // Humans left, the brood right; two of one side: in start order.
+      CommsMessage? left, right;
+      if (messages.length == 2 &&
+          messages.first.isDemon == messages.last.isDemon) {
+        (left, right) = (messages.first, messages.last);
+      } else {
+        for (final m in messages) {
+          if (m.isDemon) {
+            right = m;
+          } else {
+            left = m;
+          }
+        }
+      }
+      body = Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          card(left),
+          const SizedBox(width: gap),
+          card(right),
+        ],
+      );
+    }
+    final framed = comeback
+        ? Container(
+            key: const ValueKey('transition-chatter-comeback'),
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+            decoration: BoxDecoration(
+              color: const Color(0xB3050912),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: _line),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: labelRow,
+                  child: Center(
+                    child: Text(
+                      '${messages.first.character.callsign} → '
+                      '${messages.last.character.callsign}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: _muted, fontSize: 9),
+                    ),
+                  ),
+                ),
+                body,
+              ],
+            ),
+          )
+        : body;
+    return FittedBox(
+      key: const ValueKey('transition-chatter'),
+      fit: BoxFit.scaleDown,
+      child: framed,
+    );
+  }
+
+  Widget _card(CommsMessage m, double width, double video, bool reduce) {
+    final c = m.character;
+    final accent = Color(c.accent);
+    return Container(
+      key: ValueKey('transition-chatter-${m.line.id}'),
+      width: width,
+      decoration: BoxDecoration(
+        color: const Color(0xF2080D18),
+        border: Border.all(
+          color: m.speaking(now) ? accent : accent.withValues(alpha: .6),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: tagRow,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _tag(c),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Center(
+            child: SizedBox.square(
+              dimension: video,
+              child: CustomPaint(
+                painter: _TransmissionPortrait(m, now, reduce),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: subtitle,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(7, 5, 7, 4),
+              child: m.started
+                  ? CommsScrollBox(
+                      // Longer subtitles scroll in the fixed box over the
+                      // line's reading time, as the dock's toasts do.
+                      progress: Curves.easeInOut.transform(
+                        ((m.age(now) /
+                                        math.max(
+                                          .5,
+                                          CommsMessage.readingTime(m.line),
+                                        ) -
+                                    .3) /
+                                .5)
+                            .clamp(0.0, 1.0),
+                      ),
+                      stepped: reduce,
+                      child: CommsSubtitle(
+                        message: m,
+                        now: now,
+                        fontSize: commsTileFont,
+                        maxLines: 8,
+                        glyphHeight: 11,
+                      ),
+                    )
+                  : Text(
+                      '…',
+                      style: TextStyle(color: accent, fontSize: commsTileFont),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TransmissionPortrait extends CustomPainter {
   _TransmissionPortrait(this.m, this.now, this.reduce);
   final CommsMessage m;
@@ -1452,145 +1712,3 @@ class _CommsAtlasScopeState extends State<CommsAtlasScope> {
 
 /// Unawaited helper for callers that only want to start the load.
 void preloadCommsPortraits() => unawaited(CommsPortraitAtlas.instance.load());
-
-/// A toast's portrait beside its text (mobile-top-trim): the row is as tall
-/// as the text, and the square portrait follows the text's height between
-/// [minSide] and [maxSide], so it never adds empty space above or below
-/// the words. The portrait is the first child, the text the second.
-class _PortraitRow extends MultiChildRenderObjectWidget {
-  const _PortraitRow({
-    required this.portraitOnRight,
-    required this.maxSide,
-    required this.minSide,
-    required super.children,
-  });
-  final bool portraitOnRight;
-  final double maxSide, minSide;
-
-  @override
-  _RenderPortraitRow createRenderObject(BuildContext context) =>
-      _RenderPortraitRow(portraitOnRight, maxSide, minSide);
-
-  @override
-  void updateRenderObject(
-    BuildContext context,
-    _RenderPortraitRow renderObject,
-  ) {
-    renderObject
-      ..portraitOnRight = portraitOnRight
-      ..maxSide = maxSide
-      ..minSide = minSide;
-  }
-}
-
-class _PortraitRowData extends ContainerBoxParentData<RenderBox> {}
-
-class _RenderPortraitRow extends RenderBox
-    with
-        ContainerRenderObjectMixin<RenderBox, _PortraitRowData>,
-        RenderBoxContainerDefaultsMixin<RenderBox, _PortraitRowData> {
-  _RenderPortraitRow(this._right, this._maxSide, this._minSide);
-
-  /// Gap between portrait and text, and the margin after the text.
-  static const _gap = 6.0, _end = 4.0;
-
-  bool _right;
-  set portraitOnRight(bool v) {
-    if (v == _right) return;
-    _right = v;
-    markNeedsLayout();
-  }
-
-  double _maxSide, _minSide;
-  set maxSide(double v) {
-    if (v == _maxSide) return;
-    _maxSide = v;
-    markNeedsLayout();
-  }
-
-  set minSide(double v) {
-    if (v == _minSide) return;
-    _minSide = v;
-    markNeedsLayout();
-  }
-
-  @override
-  void setupParentData(RenderBox child) {
-    if (child.parentData is! _PortraitRowData) {
-      child.parentData = _PortraitRowData();
-    }
-  }
-
-  RenderBox get _face => firstChild!;
-  RenderBox get _words => lastChild!;
-
-  /// The portrait side and the text's height for a row [width] wide: the
-  /// text is measured beside the largest portrait, then once more beside
-  /// the portrait its height allows (narrower portrait, wider text).
-  (double, double) _measure(double width, double Function(double) textHeight) {
-    var side = _maxSide;
-    var h = textHeight(math.max(0, width - side - _gap - _end));
-    for (var i = 0; i < 2 && h < side; i++) {
-      side = h.clamp(_minSide, _maxSide).floorToDouble();
-      h = textHeight(math.max(0, width - side - _gap - _end));
-    }
-    return (side, h);
-  }
-
-  @override
-  double computeMinIntrinsicWidth(double height) =>
-      _minSide + _gap + _end + _words.getMinIntrinsicWidth(height);
-
-  @override
-  double computeMaxIntrinsicWidth(double height) =>
-      _maxSide + _gap + _end + _words.getMaxIntrinsicWidth(height);
-
-  @override
-  double computeMinIntrinsicHeight(double width) =>
-      computeMaxIntrinsicHeight(width);
-
-  @override
-  double computeMaxIntrinsicHeight(double width) {
-    final (side, h) = _measure(width, _words.getMaxIntrinsicHeight);
-    return math.max(side, h);
-  }
-
-  @override
-  Size computeDryLayout(BoxConstraints constraints) {
-    final (side, h) = _measure(
-      constraints.maxWidth,
-      (w) => _words.getDryLayout(BoxConstraints(maxWidth: w)).height,
-    );
-    return constraints.constrain(Size(constraints.maxWidth, math.max(side, h)));
-  }
-
-  @override
-  void performLayout() {
-    final width = constraints.maxWidth;
-    final (side, _) = _measure(width, (w) {
-      _words.layout(BoxConstraints(maxWidth: w), parentUsesSize: true);
-      return _words.size.height;
-    });
-    _face.layout(BoxConstraints.tight(Size.square(side)));
-    final h = math.max(side, _words.size.height);
-    size = constraints.constrain(Size(width, h));
-    final faceX = _right ? width - side : 0.0;
-    final textX = _right ? _end : side + _gap;
-    (_face.parentData! as _PortraitRowData).offset = Offset(
-      faceX,
-      (size.height - side) / 2,
-    );
-    (_words.parentData! as _PortraitRowData).offset = Offset(
-      textX,
-      (size.height - _words.size.height) / 2,
-    );
-  }
-
-  @override
-  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
-      defaultHitTestChildren(result, position: position);
-
-  @override
-  void paint(PaintingContext context, Offset offset) =>
-      defaultPaint(context, offset);
-}

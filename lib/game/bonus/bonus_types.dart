@@ -6,8 +6,10 @@
 import 'dart:math' as math;
 
 import '../model.dart' show Power;
+import 'bonus_challenge.dart';
 import 'bonus_mechanic.dart';
 
+export 'bonus_challenge.dart';
 export 'bonus_mechanic.dart';
 
 /// With probability [chance] a power drop becomes [power].
@@ -50,7 +52,9 @@ class PowerRules {
     if (isNone) return inner;
     return PowerRules(
       banned: {...banned, ...inner.banned},
-      only: inner.only ?? only,
+      // --- crosswind: a level that bans the run's `only` power wins
+      // (Crosswind under Spread Only: the drops fall back to the cycle).
+      only: inner.only ?? (inner.banned.contains(only) ? null : only),
       chances: [...chances, ...inner.chances],
       killDrops: killDrops && inner.killDrops,
     );
@@ -298,7 +302,14 @@ class BonusLevelDef {
     this.look = const BonusLook(),
     this.mechanic,
     this.brief = '',
+    this.how = '',
+    this.wind = false,
+    this.challenge,
   });
+
+  /// --- crosswind: the level blows the crosswind tier of the wind
+  /// (lib/game/weather/wind_field.dart) from its start to its end.
+  final bool wind;
 
   /// camelCase; the radio triggers key on it.
   final String id;
@@ -307,9 +318,14 @@ class BonusLevelDef {
   /// urgent-mission card (bonus-briefing); never drawn over the play area.
   final String label;
 
-  /// bonus-briefing: the level's twist or rule in one or two short lines,
-  /// shown on its urgent-mission card ('': the card shows none).
+  /// bonus-briefing: the level's goal, shown on its urgent-mission card
+  /// ('': the card shows none). bonus-briefing-clarity: one short line a
+  /// first-time player (a kid too) gets at a glance.
   final String brief;
+
+  /// bonus-briefing-clarity: how to do it, in one short line under the
+  /// goal (what to shoot, where to fly); '': none.
+  final String how;
 
   /// Relative odds among the levels eligible for the drawn slot.
   final double weight;
@@ -326,6 +342,10 @@ class BonusLevelDef {
   /// The level's own rule of play, when data is not enough (a constructor
   /// tear-off); null: none. See `bonus_mechanic.dart`.
   final BonusMechanicFactory? mechanic;
+
+  // --- bonus challenges: the level's perfect-run condition, paying a 1UP
+  // (bonus_challenge.dart); null: none.
+  final BonusChallengeDef? challenge;
 
   bool fits(int route, int sector) =>
       sectors.contains(sector) && route >= minRoute && route <= maxRoute;

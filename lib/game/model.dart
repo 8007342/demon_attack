@@ -14,12 +14,16 @@ import 'flow_director.dart';
 import 'game_events.dart';
 import 'ground_blocks_atlas.dart';
 import 'ground_blocks_cast.dart';
+import 'insignia_rank.dart'; // --- round8: the dive cry's mark (fang-and-wings-comms §API)
 import 'perspective.dart';
 import 'pilot_model.dart';
 import 'skill_meter.dart';
 import 'swarm_patterns.dart';
 import 'swarm_policy.dart';
 import 'swarm_stream.dart';
+import 'weather/wind_field.dart'; // --- crosswind
+import 'bonus/levels/storm_cell.dart'; // --- weather-everywhere
+import 'weather/storm_plan.dart'; // --- weather-everywhere
 export 'carrier_hatches.dart'
     show CarrierChapter, CarrierHatch, CarrierHatches, HatchState;
 export 'bonus/bonus_catalog.dart';
@@ -35,6 +39,8 @@ export 'skill_meter.dart';
 export 'swarm_policy.dart';
 export 'swarm_patterns.dart' show Squad, SquadState;
 export 'swarm_stream.dart' show SwarmState, SwarmGate, SwarmGateGeometry;
+export 'weather/wind_field.dart'; // --- crosswind
+export 'weather/storm_plan.dart'; // --- weather-everywhere
 
 // --- ground war (demon ground forces, allies, homing missiles) ---
 part 'ground_war.dart';
@@ -51,6 +57,18 @@ part 'model_bonus.dart';
 
 // --- the sentinel final rush (demon-intelligence design §6) ---
 part 'sentinel_rush.dart';
+
+// --- crosswind: the wind that drifts every shot ---
+part 'model_wind.dart';
+
+// --- lightning-rework: stuns, the ship's zap, rank dodges and rod armour ---
+part 'lightning.dart';
+
+// --- weather-everywhere: regular-sector storms, smart demons riding the wind
+part 'model_weather.dart';
+
+// --- spear-bearers: the buckler-and-spear hunter, its dive throw ---
+part 'spear_bearers.dart';
 
 enum RunMode {
   title,
@@ -76,7 +94,8 @@ enum HeartPart {
   int get mask => 1 << index;
 }
 
-enum ShotKind { ordinary, sentinel, powerful, large }
+// --- spear-bearers: `spear` is a bearer's thrown spear (hostile).
+enum ShotKind { ordinary, sentinel, powerful, large, spear }
 
 enum EnemyArchetype { ordinary, shieldSentinel, armoredSentinel }
 
@@ -107,6 +126,10 @@ class Demon {
        homeY = y;
   double x, y, homeX, homeY;
   double vx = 0, vy = 0, bank = 0;
+
+  /// --- crosswind: how far the wind has pushed it sideways (units). The
+  /// flight code steers in still air; the push rides on top of it.
+  double windOffset = 0;
   int diveShield = 0, diveShieldMax = 0;
   final int kind, maxHp;
   final bool elite, isEscort;
@@ -177,6 +200,26 @@ class Demon {
 
   /// Seconds left of the beat before a dive tell (`divePrep` fired).
   double divePrep = 0;
+
+  // --- lightning-rework (lightning.dart): a bolt's stun (seconds left,
+  // the fall still to go, its fall speed and where it was struck), the
+  // lightning-rod armour and its charge, and the rank dodge (an x offset on
+  // the formation target and the offset it is easing toward).
+  double stun = 0, stunFall = 0, stunVy = 0, stunFromY = 0;
+  bool lightningRods = false;
+  double charged = 0;
+  double boltDodge = 0, boltDodgeGoal = 0;
+  bool get stunned => stun > 0;
+
+  // --- weather-everywhere (model_weather.dart): a smart creature holding
+  // its dive for the wind (prep seconds left), the side it rides a
+  // tailwind to (0: not riding) and whether this dive was tallied.
+  double windWait = 0;
+  int windRide = 0;
+  bool windDiveSeen = false;
+  // --- spear-bearers (spear_bearers.dart): the buckler and spear (null:
+  // not a bearer).
+  SpearKit? spear;
   bool _prepLead = false;
   bool get angry => hp == 1 && maxHp > 1;
 
@@ -241,13 +284,12 @@ class Demon {
 /// Gerono figure-eight with depth, far behind the fog, nearer and larger
 /// each wave. No hitbox, no fire, no effect on the encounter.
 class SentinelForeshadow {
-  SentinelForeshadow(this.archetype, this.stage, {int lurkSeed = 0x5E57})
-    : growth = stage,
-      lurk = LurkTrack(lurkSeed);
+  SentinelForeshadow(this.archetype, this.stage) : growth = stage;
   EnemyArchetype archetype;
 
-  /// terrain-shadows §4: where its lurking shadow creeps on the ground.
-  final LurkTrack lurk;
+  // --- sentinel-shadow-align: its shadow is cast from this silhouette
+  // (x, nearness) at this altitude, the rising sentinel's starting one.
+  static const shadowAltitude = 120.0;
 
   /// Target growth (0 two waves ahead, .5 one wave ahead, 1 arriving) and
   /// the eased value shown.
@@ -288,59 +330,6 @@ class SentinelForeshadow {
   }
 }
 
-/// terrain-shadows design §4: the sentinel's lurking shadow's path on the
-/// ground, from the far terrain under its circling point toward the
-/// ground-war front at walking pace, meandering. Pure presentation: its
-/// own PRNG stream, never the simulation's draws.
-class LurkTrack {
-  LurkTrack(int seed) {
-    final r = math.Random(seed);
-    speed = 10 + 6 * r.nextDouble();
-    x0 = 180 + (r.nextDouble() * 2 - 1) * 54;
-    phase = r.nextDouble() * 2 * math.pi;
-  }
-
-  /// Screen travel (arena units per second, 10-16), start lateral and
-  /// meander phase.
-  late final double speed, x0, phase;
-
-  /// Far terrain near the fog, and the front's depth without a ground war.
-  static const startZ = 9 * GroundCamera.z0;
-  static const openFrontZ = 2 * GroundCamera.z0;
-  static const amplitude = 30.0, period = 9.0;
-
-  /// Its virtual altitude, high far out and lower near the front.
-  static const farAltitude = 220.0, nearAltitude = 120.0;
-
-  double clock = 0, travelled = 0;
-  double frontZ = openFrontZ;
-
-  static double get startY => GroundCamera.yOf(startZ);
-  double get endY => GroundCamera.yOf(frontZ);
-
-  /// Flat-ground y of the shadow's centre now.
-  double get flatY => math.min(startY + travelled, math.max(startY, endY));
-
-  /// 0 at the far terrain, 1 at the front.
-  double get progress =>
-      endY > startY ? ((flatY - startY) / (endY - startY)).clamp(0.0, 1.0) : 1;
-
-  double get altitude => farAltitude + (nearAltitude - farAltitude) * progress;
-
-  /// Lateral position; reduced motion drops the meander.
-  double x({bool meander = true}) =>
-      x0 +
-      (meander
-          ? amplitude * math.sin(2 * math.pi * clock / period + phase)
-          : 0);
-
-  void advance(double dt, {required double frontZ}) {
-    this.frontZ = frontZ;
-    clock += dt;
-    travelled += speed * dt;
-  }
-}
-
 class Shot {
   Shot(
     this.x,
@@ -365,6 +354,11 @@ class Shot {
   /// Seconds since it was fired (demon-intelligence: the planner's
   /// perception delay ignores younger shots).
   double age = 0;
+
+  /// --- crosswind: the wind's share of its velocity (u/s): the sideways
+  /// drift it has picked up, and a tailwind's one grid step along its
+  /// track (set at the muzzle).
+  double windVx = 0, windVy = 0;
 }
 
 class Pickup {
@@ -631,6 +625,14 @@ class ArcadeModel {
   // played and the bonus powers. Empty unless the run has a run seed.
   final BonusRun bonusRun = BonusRun();
 
+  /// --- crosswind: the level's wind (model_wind.dart).
+  final WindRun windRun = WindRun();
+
+  /// --- weather-everywhere: the level's storm, the wind-dive tallies.
+  final WeatherRun weatherRun = WeatherRun();
+  /// --- spear-bearers: the run's bearers (the next birth, fallen bucklers).
+  final SpearRun spearRun = SpearRun();
+
   /// The odds a seeded run's plan is drawn with.
   BonusTuning bonusTuning = BonusTuning.standard;
 
@@ -706,6 +708,14 @@ class ArcadeModel {
     return result;
   }
 
+  // --- lightning-rework state (see lightning.dart): the ship's lightning
+  // grace and its zap (seconds left, what the last zap stripped), and the
+  // stunned creatures shot down this step (a storm's mechanic drains it).
+  double lightningGrace = 0, shipShock = 0;
+  List<Power> shockLost = const [];
+  int shipZaps = 0;
+  final List<Demon> stunKills = [];
+
   // --- life-loss sequence state (see life_loss.dart) ---
   LifeLossPhase lifeLossPhase = LifeLossPhase.none;
   double lifeLossLeft = 0, lifeLossX = 180;
@@ -772,6 +782,14 @@ class ArcadeModel {
       'diveIn': (divePrepBeat + diveTellFor(d)) / (rate > 0 ? rate : 1),
       'sentinel': d.isLarge,
       'elite': d.elite,
+      // --- fang-and-wings-comms: species, toughness (the rank) and the
+      // seconds until the tell, for the dive war cries (dive_cry.dart).
+      'kind': d.kind,
+      'maxHp': d.maxHp,
+      'tellIn': divePrepBeat / (rate > 0 ? rate : 1),
+      // --- round8: the insignia mark above the diver's head
+      // (insignia-ranks), so the cry's rank is the mark the player sees.
+      'mark': InsigniaRanks.markOf(d).name,
     });
   }
 
@@ -1631,7 +1649,7 @@ class ArcadeModel {
 
   /// Left wing muzzle of each wing module, in logical px from the ship centre
   /// (the right muzzle mirrors it). The scene replaces these with the
-  /// `wing_muzzles` packed into ship-parts.json for the shipped art.
+  /// `wing_muzzles` packed into ship-weapons.json for the shipped art.
   final Map<Power, ({double x, double y})> wingMuzzles = {
     Power.rapid: (x: -15.5, y: -10.0),
     Power.powerful: (x: -17.0, y: -8.0),
@@ -1821,6 +1839,8 @@ class ArcadeModel {
     'heartSlots': List<int>.of(heartSlots),
     'activeMilliseconds': activeMilliseconds,
     if (bonusRun.seed != null) 'runSeed': bonusRun.seed, // --- bonus levels
+    // --- bonus challenges: the levels whose 1UP this run won.
+    if (bonusRun.oneUps.isNotEmpty) 'bonusOneUps': [...bonusRun.oneUps],
   };
 
   /// Restores a fresh wave, validating before changing this model.
@@ -1940,7 +1960,9 @@ class ArcadeModel {
     loomClock = 0;
     boss = _bossWave ? _newCarrier() : null;
     _bonusStartRun(restoredSeed); // --- bonus levels
+    _bonusRestoreOneUps(data['bonusOneUps']); // --- bonus challenges
     _bonusBeginLevel();
+    _windBeginLevel(); // --- crosswind
     _groundBeginLevel(); // --- ground war
     _spawnWave(fromCheckpoint: true);
     events.add(boss == null ? 'level' : 'boss');
@@ -2133,6 +2155,7 @@ class ArcadeModel {
     _resetApproach(); // --- carrier-v3
     boss = _bossWave ? _newCarrier() : null;
     _bonusBeginLevel(); // --- bonus levels
+    _windBeginLevel(); // --- crosswind
     levelClock = 0;
     pickups.clear();
     heartPickups.clear();
@@ -2254,7 +2277,7 @@ class ArcadeModel {
             route: cycle,
             armored: archetype == EnemyArchetype.armoredSentinel,
           ); // --- fire-rate-tune
-      final demon = Demon(
+      final demon = _spearUp(Demon( // --- spear-bearers
         large ? width / 2 : 38 + (i % 6) * 56.0,
         large
             ? 44
@@ -2273,7 +2296,7 @@ class ArcadeModel {
         // One draw, as before (the random sequence is unchanged): the
         // rush chance is decided against it when the rush would trigger.
         rushRoll: large ? random.nextDouble() : 1,
-      );
+      ));
       if (large) {
         demon.entranceProgress = 0;
         demon.waitingForEscort = true;
@@ -2614,14 +2637,16 @@ class ArcadeModel {
         for (var i = 0; i < count; i++) {
           final profile = _ordinaryProfile();
           group.add(
-            Demon(
-              width / 2,
-              Perspective.horizonY,
-              profile.$1,
-              profile.$2,
-              rng.nextDouble() * 8,
-              elite: profile.$3,
-            ),
+            _spearUp(
+              Demon(
+                width / 2,
+                Perspective.horizonY,
+                profile.$1,
+                profile.$2,
+                rng.nextDouble() * 8,
+                elite: profile.$3,
+              ),
+            ), // --- spear-bearers
           );
           hp += profile.$2;
         }
@@ -3125,6 +3150,7 @@ class ArcadeModel {
         !_bonusNoElites &&
         _eliteBirths < policy.eliteBudget(route: cycle);
     if (elite) _eliteBirths++;
+    spearRun.next = _spearFor(elite, w); // --- spear-bearers
     return (
       kind,
       policy.ordinaryHealth(route: cycle, kind: kind, elite: elite),
@@ -3228,15 +3254,17 @@ class ArcadeModel {
     for (var i = 0; i < count; i++) {
       final profile = _ordinaryProfile();
       final d =
-          Demon(
-              slots[i].$1,
-              slots[i].$2,
-              profile.$1,
-              profile.$2,
-              random.nextDouble() * 8,
-              elite: profile.$3,
-              isEscort: escort,
-            )
+          _spearUp(
+              Demon(
+                slots[i].$1,
+                slots[i].$2,
+                profile.$1,
+                profile.$2,
+                random.nextDouble() * 8,
+                elite: profile.$3,
+                isEscort: escort,
+              ),
+            ) // --- spear-bearers
             ..entranceProgress = 0
             ..entranceDelay = 0
             ..entranceDuration = .8
@@ -3537,6 +3565,7 @@ class ArcadeModel {
       _observeSkill(dt);
     }
     invulnerable = math.max(0, invulnerable - dt);
+    _lightningStep(dt); // --- lightning-rework: grace, zap, charge timers
     // Module timers freeze while the ship is away: the loadout survives.
     // boss-grandeur: and while the carrier rises (a held beat, as the
     // transition into a carrier sector held them before the loom).
@@ -3658,7 +3687,9 @@ class ArcadeModel {
     }
     if (!shipAway) _updateReinforcements(dt);
     _updateStream(dt); // --- continuous swarm: skein releases, reserve
+    _windUnpush(); // --- crosswind: fly in still air
     _updateDemons(dt);
+    _windPush(dt); // --- crosswind: then the wind's push on top
     _updateIncoming(dt); // --- continuous swarm (after formation targets move)
     _advanceFlock(dt); // --- atmosphere-and-swarms: arrivals drawn as a flock
     _publishSwarmStates(); // --- continuous swarm
@@ -3676,9 +3707,12 @@ class ArcadeModel {
       if (loomClock >= loomCap && !shipAway) _beginRise();
     }
     if (level == 5) _updateApproach(dt); // --- carrier-v3
+    _windStep(); // --- crosswind: the field now, its calls
+    _stormStep(dt); // --- weather-everywhere: a regular sector's storm
     for (final s in shots) {
-      s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1);
-      s.y += s.vy * dt;
+      _windShot(s, dt); // --- crosswind: the drift
+      s.x += s.vx * dt * (s.hostile ? policy.hostileRate : 1) + s.windVx * dt;
+      s.y += (s.vy + s.windVy) * dt;
       s.age += dt;
     }
     _collisions();
@@ -3734,7 +3768,7 @@ class ArcadeModel {
       Shot(
         shot.x,
         shot.y,
-        shot.vx,
+        shot.vx + _windLead(shot.y, hostileVy(shot.vy)), // --- crosswind
         hostileVy(shot.vy),
         hostile: true,
         kind: shot.kind,
@@ -3751,6 +3785,7 @@ class ArcadeModel {
 
   void _igniteDiveShield(Demon d) {
     if (demons.any((o) => o.isLarge && o.waitingForEscort)) return;
+    if (_spearIgnite(d)) return; // --- spear-bearers: the buckler instead
     // --- fire-rate-tune: one point less for a sentinel (was 4 + route ÷ 2)
     // and an elite (was 3); the heavier species' 2 is now 1, as the
     // light ones', so the slower gun still stops a diver (design §5).
@@ -3810,7 +3845,8 @@ class ArcadeModel {
       final nextX =
           (d.homeX +
                   math.sin(levelClock * .4 * speed + d.seed) * 42 +
-                  d.evadeOffset)
+                  d.evadeOffset +
+                  d.boltDodge) // --- lightning-rework: the rank dodge
               .clamp(62.0, width - 62.0);
       final nextY = d.homeY + math.sin(levelClock * .65 * speed + d.seed) * 5;
       return (nextX, nextY);
@@ -3824,7 +3860,7 @@ class ArcadeModel {
     final pattern = _patternTarget(d);
     if (pattern != null) {
       var (px, py) = pattern;
-      px += evadeX;
+      px += evadeX + d.boltDodge; // --- lightning-rework: the rank dodge
       py += evadeY;
       if (d.telegraph > 0) {
         final totalTell = d.elite ? 0.55 : 0.7;
@@ -3840,7 +3876,8 @@ class ArcadeModel {
                     29 +
                 math.sin(levelClock * .44 * policy.hostileRate) * 13 +
                 boidsX +
-                evadeX)
+                evadeX +
+                d.boltDodge) // --- lightning-rework: the rank dodge
             .clamp(20.0, width - 20.0);
     var targetFormY =
         d.homeY +
@@ -3974,10 +4011,6 @@ class ArcadeModel {
   /// waves ahead of it (pure presentation; null when none is due).
   SentinelForeshadow? foreshadow;
 
-  /// Where the lurking shadow stops: the ground war's fire line, or a
-  /// little nearer when no ground war is on.
-  double get _lurkFrontZ =>
-      ground.front.presence > 0 ? GroundTuning.fireZ : LurkTrack.openFrontZ;
 
   void _updateForeshadow(double dt) {
     final f = foreshadow;
@@ -4028,19 +4061,11 @@ class ArcadeModel {
       if (f == null) return;
       f.opacity = math.max(0, f.opacity - dt / .8);
       f.clock += dt;
-      f.lurk.advance(dt, frontZ: _lurkFrontZ);
       f.place();
       if (f.opacity <= 0) foreshadow = null;
       return;
     }
-    // terrain-shadows: the lurking shadow's own stream (seed ^ 0x5E57),
-    // one track per sentinel.
-    final g = foreshadow ??= SentinelForeshadow(
-      kind,
-      stage,
-      lurkSeed: seed ^ 0x5E57 ^ (level * 64 + wave),
-    );
-    g.lurk.advance(dt, frontZ: _lurkFrontZ);
+    final g = foreshadow ??= SentinelForeshadow(kind, stage);
     g
       ..archetype = kind
       ..stage = stage
@@ -4179,6 +4204,7 @@ class ArcadeModel {
 
   void _updateDemons(double dt) {
     planDecisionsThisFrame = 0; // --- demon intelligence
+    _spearFrame(dt); // --- spear-bearers: fallen bucklers tumble
     if (!shipAway) _dive -= dt * policy.hostileRate;
     var activeSmallDives = demons
         .where(
@@ -4192,6 +4218,7 @@ class ArcadeModel {
           (d) =>
               !d.entering &&
               !d.lastStand &&
+              !d.stunned && // --- lightning-rework
               d.dive == 0 &&
               d.telegraph <= 0 &&
               d.divePrep <= 0 &&
@@ -4201,7 +4228,7 @@ class ArcadeModel {
     if (!shipAway && _dive <= 0 && readyDivers.isNotEmpty) {
       final d = readyDivers[random.nextInt(readyDivers.length)];
       if (level >= 2 || cycle > 0) {
-        _prepDive(d);
+        _windPrepDive(d); // --- weather-everywhere: smart ones wait for wind
         if (!d.isLarge) activeSmallDives++;
         // --- demon intelligence: a pincer by a second ready hunter.
         final partner = _pincerPartner(d, readyDivers);
@@ -4256,7 +4283,10 @@ class ArcadeModel {
         _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
       }
+      _spearStep(d, dt); // --- spear-bearers: the wind-up and the throw
       if (_regroupDemon(d, prevX, prevY, dt)) continue; // --- life loss
+      if (_stunnedDemon(d, prevX, prevY, dt)) continue; // --- lightning-rework
+      _windDiveWait(d, dt); // --- weather-everywhere: a dive held for wind
       if (d.divePrep > 0 && dt > 0) {
         d.divePrep -= dt * policy.hostileRate;
         if (d.divePrep <= 0) _startDiveTell(d);
@@ -4269,7 +4299,8 @@ class ArcadeModel {
         continue;
       }
       if (d.isLarge && d.dive == 0 && d.telegraph <= 0) {
-        d.volleyLeft -= dt * policy.hostileRate;
+        // --- lightning-rework: a charged rod-armoured creature fires faster.
+        d.volleyLeft -= dt * policy.hostileRate * _chargeRate(d);
         if (d.volleyLeft <= 0) {
           final aim = ((shipX - d.x) * .35).clamp(-85.0, 85.0);
           _hostile(
@@ -4286,10 +4317,12 @@ class ArcadeModel {
         }
       }
       if ((d.elite || d.isLarge) && dt > 0) {
-        d.attackLeft -= dt * policy.hostileRate;
+        d.attackLeft -= dt * policy.hostileRate * _chargeRate(d);
         if (d.attackLeft <= 0) {
           final aim = ((shipX - d.x) * .3).clamp(-70.0, 70.0);
-          if (!d.isLarge) {
+          // --- spear-bearers: a bearer's weapon is its spear, never the
+          // hunter's triple spread (it replaces a hunter's pressure).
+          if (!d.isLarge && d.spear == null) {
             for (final offset in [-32.0, 0.0, 32.0]) {
               _hostile(
                 Shot(
@@ -4306,7 +4339,7 @@ class ArcadeModel {
               d.telegraph <= 0 &&
               d.divePrep <= 0 &&
               (d.isLarge || activeSmallDives < maxSmallDives)) {
-            _prepDive(d);
+            _windPrepDive(d); // --- weather-everywhere
             if (!d.isLarge) activeSmallDives++;
           }
           d.attackLeft = math.max(2.0, 4 - math.min(cycle, 5) * .3);
@@ -4434,7 +4467,9 @@ class ArcadeModel {
       }
     }
     _enemyFire -= dt * policy.hostileRate;
-    final shooters = demons.where((d) => !d.isLarge && !d.entering).toList();
+    final shooters = demons
+        .where((d) => !d.isLarge && !d.entering && !d.stunned)
+        .toList(); // --- lightning-rework: a stunned creature cannot fire
     if (_enemyFire <= 0 && shooters.isNotEmpty) {
       final d = shooters[random.nextInt(shooters.length)];
       final aim = ((shipX - d.x) * .22).clamp(-65.0, 65.0);
@@ -5098,6 +5133,8 @@ class ArcadeModel {
     d.flash = .12;
     // --- sentinel rush: the berserk transformation and the rush shield.
     if (_rushShieldHit(d, damage, homing: homing, atX: atX, atY: atY)) return;
+    // --- spear-bearers: a diving bearer's buckler takes it from the front.
+    if (_bucklerHit(d, damage, homing: homing, atY: atY)) return;
     if (d.dive > 0 && d.diveShieldMax == 0) {
       _igniteDiveShield(d);
     }
@@ -5142,12 +5179,13 @@ class ArcadeModel {
         }
       }
     }
-    if (d.shield > 0) {
+    // --- lightning-rework: a stunned creature's shield and armour are down.
+    if (d.shield > 0 && !d.stunned) {
       d.shield = math.max(0, d.shield - damage);
       events.add('hit');
       return;
     }
-    if (d.armor > 0) {
+    if (d.armor > 0 && !d.stunned) {
       d.armor = math.max(0, d.armor - damage);
       events.add('hit');
       return;
@@ -5156,6 +5194,7 @@ class ArcadeModel {
     if (d.hp <= 0) {
       final wasDiving = d.dive > 0;
       demons.remove(d);
+      if (d.stunned) stunKills.add(d); // --- lightning-rework
       if (boss == null) _reinforcementCasualties++;
       kills++;
       final basePoints = _killBase(d);
@@ -5201,7 +5240,7 @@ class ArcadeModel {
                       )
                       .length <
                   _maxConcurrentSmallDives)) {
-        _prepDive(d);
+        _windPrepDive(d); // --- weather-everywhere
       }
     }
   }
@@ -5370,10 +5409,12 @@ class ArcadeModel {
       powerTimers.remove(Power.shield);
       invulnerable = 1;
       events.add('hit');
+      _bonusShipHit(lost: false); // --- bonus challenges
       return;
     }
     lives--;
     bonusRun.shipsLost++; // --- bonus levels
+    _bonusShipHit(lost: true); // --- bonus challenges
     pilot.reset(shipX); // --- demon intelligence
     skill.lifeLost();
     _lastSkill = skill.level;

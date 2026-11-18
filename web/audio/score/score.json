@@ -1,18 +1,27 @@
 {
  "accents": {
   "breakthrough": "hit",
+  "cargo": "cargo",
+  "challenge-fail": "challenge-fail",
   "destroyed": "impact",
   "dive": "fill",
   "glass": "glass",
   "gloat": "gloat",
+  "gust": "gust",
   "hatch": "hatch",
   "impact": "impact",
   "laststand": "hit",
+  "oneup": "oneup",
   "reinforce": "rise",
   "respawn": "respawn",
   "riser": "riser",
   "stab": "stab",
-  "toll": "toll"
+  "thunder": "thunder",
+  "toll": "toll",
+  "warcry": "warcry"
+ },
+ "bonusSongs": {
+  "crosswind": "bonus-wind"
  },
  "bridges": {
   "c>k": "c-k",
@@ -32,8 +41,8 @@
  "masks": {
   "1": ["drums","bass","gtrL","gtrR","clean","uke"],
   "2": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani"],
-  "3": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani","drums2","lead2","organ"],
-  "4": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani","drums2","lead2","organ","strings","brass","choir","bells"]
+  "3": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani","drums2","lead2","organ","grunts"],
+  "4": ["drums","bass","gtrL","gtrR","clean","uke","lead","cymbals","timpani","drums2","lead2","organ","strings","brass","choir","bells","grunts","brood"]
  },
  "plays": [
   {
@@ -80,12 +89,54 @@
  ],
  "ppq": 480,
  "scenes": {
+  "credits": "credits:dawn",
   "ending": "coda:ukulele",
   "gameover": "defeat:cackle",
   "menu": "menu:overture"
  },
  "schema": "demon-attack.score/v1",
  "songs": {
+  "bonus-wind": {
+   "barSamples": 72000,
+   "bpm": 160,
+   "form": "bonus",
+   "key": "E minor",
+   "mode": "minor",
+   "name": "Crosswind",
+   "sections": {
+    "A": {
+     "bars": 8,
+     "bytes": 5274,
+     "file": "bonus-wind/A.mid",
+     "hold": 0,
+     "kind": "loop",
+     "masks": {
+      "1": ["drums","bass","gtrL","gtrR","clean","bells"],
+      "2": ["drums","bass","gtrL","gtrR","clean","bells","lead","cymbals","strings","timpani"],
+      "3": ["drums","bass","gtrL","gtrR","clean","bells","lead","cymbals","strings","timpani","drums2","lead2","brass"],
+      "4": ["drums","bass","gtrL","gtrR","clean","bells","lead","cymbals","strings","timpani","drums2","lead2","brass","choir"]
+     },
+     "sha256": "c048e72e66eef17b67ee6e7106e78e4a82c414e5db7927fbf2e57492887dcea8",
+     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","clean","lead","lead2","strings","timpani","bells"]
+    },
+    "B": {
+     "bars": 8,
+     "bytes": 6575,
+     "file": "bonus-wind/B.mid",
+     "hold": 0,
+     "kind": "loop",
+     "masks": {
+      "1": ["drums","bass","gtrL","gtrR","clean","bells"],
+      "2": ["drums","bass","gtrL","gtrR","clean","bells","lead","cymbals","strings","timpani"],
+      "3": ["drums","bass","gtrL","gtrR","clean","bells","lead","cymbals","strings","timpani","drums2","lead2","brass"],
+      "4": ["drums","bass","gtrL","gtrR","clean","bells","lead","cymbals","strings","timpani","drums2","lead2","brass","choir"]
+     },
+     "sha256": "6aba0cbc971bb319fdfbb5c9a3c047fe6d458903c1b2d0794fbd436eadfe67ed",
+     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","clean","lead","lead2","strings","brass","choir","timpani","bells"]
+    }
+   },
+   "tonic": 4
+  },
   "c-k": {
    "barSamples": 60632,
    "bpm": 190,
@@ -175,18 +226,18 @@
     },
     "core": {
      "bars": 8,
-     "bytes": 7880,
+     "bytes": 8013,
      "file": "c1/core.mid",
      "hold": 0,
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
-     "sha256": "83f467bb2091fab14973c72416dc4afe445179623287455209f8d9b6d9c6f7c2",
-     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
+     "sha256": "4d9eab005025b60155ec8624026977bb62e682329d9445d7426e677f023b18b5",
+     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells","brood"]
     },
     "transform": {
      "bars": 3,
@@ -288,9 +339,9 @@
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
      "sha256": "41e69e2e1b24cde7f49ad26bad288405e5cf30643ac8916e7eefc0e44afbd226",
      "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
@@ -405,9 +456,9 @@
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
      "sha256": "5b03fe5b60d666619e1c94aeb3ec4de1d446fd2be512cfbe6daf66ba8b5d9827",
      "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
@@ -522,9 +573,9 @@
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
      "sha256": "2c791fd25462d47fff2ebe011899b6a7b11449e712862f73f27d34d1dda14129",
      "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
@@ -649,9 +700,9 @@
      "kind": "loop",
      "masks": {
       "1": ["drums","bass","gtrL","gtrR","organ"],
-      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir"],
-      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2"],
-      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells"]
+      "2": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","brood"],
+      "3": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brood","grunts"],
+      "4": ["drums","bass","gtrL","gtrR","organ","lead","cymbals","timpani","choir","drums2","lead2","brass","strings","bells","brood","grunts"]
      },
      "sha256": "f7a3dbe3204831d083b065b6c5065025f27019623abd161038127f8c4f01329a",
      "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"]
@@ -742,6 +793,38 @@
     }
    },
    "tonic": 5
+  },
+  "credits": {
+   "barSamples": 160000,
+   "bpm": 72,
+   "form": "credits",
+   "key": "G major",
+   "mode": "major",
+   "name": "Credits",
+   "sections": {
+    "dawn": {
+     "bars": 4,
+     "bytes": 898,
+     "file": "credits/dawn.mid",
+     "hold": 0,
+     "kind": "tail",
+     "mask": "all",
+     "next": "drift",
+     "sha256": "bcfc3d9d33a628f93f6568e833706b9b1695fcbbeb4db2ac4bd8605595800be2",
+     "tracks": ["bass","clean","organ","strings","choir","bells"]
+    },
+    "drift": {
+     "bars": 16,
+     "bytes": 3179,
+     "file": "credits/drift.mid",
+     "hold": 0,
+     "kind": "loop",
+     "mask": "all",
+     "sha256": "93f25f92cc2d0c828d6f144beee681afe32180737d489dd7bfcfa536f5f464f0",
+     "tracks": ["drums","bass","clean","organ","strings","choir","bells"]
+    }
+   },
+   "tonic": 7
   },
   "defeat": {
    "barSamples": 96000,
@@ -1019,12 +1102,12 @@
     },
     "B": {
      "bars": 8,
-     "bytes": 6251,
+     "bytes": 6558,
      "file": "k/B.mid",
      "hold": 0,
      "kind": "loop",
-     "sha256": "beaeea586fda9b3726997428f889eef629187538518f8738ff5d6ddd7eee7663",
-     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells"],
+     "sha256": "715732abed8d3a0aeced14d1aace4b5152d4aab5ae30242608aaeb8f2250f750",
+     "tracks": ["drums","cymbals","drums2","bass","gtrL","gtrR","lead","lead2","organ","strings","brass","choir","timpani","bells","brood","grunts"],
      "wave": 2
     },
     "C": {
@@ -1266,6 +1349,75 @@
   }
  },
  "stingers": {
+  "cargo": {
+   "notes": [
+    {
+     "deg": 5,
+     "len": 0.25,
+     "oct": 4,
+     "t": 0,
+     "track": "bells",
+     "v": 72
+    },
+    {
+     "deg": 1,
+     "len": 0.75,
+     "oct": 5,
+     "t": 0.25,
+     "track": "bells",
+     "v": 84
+    },
+    {
+     "drum": 37,
+     "len": 0.25,
+     "t": 0,
+     "track": "drums",
+     "v": 70
+    }
+   ],
+   "over": ["wave"],
+   "quantum": 0.25,
+   "spacing": 1
+  },
+  "challenge-fail": {
+   "notes": [
+    {
+     "deg": 6,
+     "len": 0.9,
+     "oct": 2,
+     "t": 0,
+     "track": "gtrL",
+     "v": 84
+    },
+    {
+     "deg": 5,
+     "len": 1.2,
+     "oct": 2,
+     "t": 1,
+     "track": "gtrL",
+     "v": 76
+    },
+    {
+     "deg": 6,
+     "len": 0.9,
+     "oct": 4,
+     "t": 0,
+     "track": "lead",
+     "v": 86
+    },
+    {
+     "deg": 5,
+     "len": 1.2,
+     "oct": 4,
+     "t": 1,
+     "track": "lead",
+     "v": 78
+    }
+   ],
+   "over": ["wave","bonus","song:bonus-wind"],
+   "quantum": 1,
+   "spacing": 8
+  },
   "fill": {
    "notes": [
     {
@@ -1414,6 +1566,118 @@
      "v": 92
     }
    ],
+   "quantum": 1,
+   "spacing": 4
+  },
+  "gust": {
+   "notes": [
+    {
+     "drum": 51,
+     "len": 0.25,
+     "t": 0,
+     "track": "cymbals",
+     "v": 40
+    },
+    {
+     "drum": 51,
+     "len": 0.25,
+     "t": 0.25,
+     "track": "cymbals",
+     "v": 50
+    },
+    {
+     "drum": 51,
+     "len": 0.25,
+     "t": 0.5,
+     "track": "cymbals",
+     "v": 60
+    },
+    {
+     "drum": 51,
+     "len": 0.25,
+     "t": 0.75,
+     "track": "cymbals",
+     "v": 70
+    },
+    {
+     "drum": 51,
+     "len": 0.25,
+     "t": 1,
+     "track": "cymbals",
+     "v": 80
+    },
+    {
+     "drum": 51,
+     "len": 0.25,
+     "t": 1.25,
+     "track": "cymbals",
+     "v": 90
+    },
+    {
+     "deg": 1,
+     "len": 0.45,
+     "oct": 4,
+     "t": 0,
+     "track": "strings",
+     "v": 48
+    },
+    {
+     "deg": 5,
+     "len": 0.45,
+     "oct": 4,
+     "t": 0,
+     "track": "strings",
+     "v": 44
+    },
+    {
+     "deg": 1,
+     "len": 0.45,
+     "oct": 4,
+     "t": 0.5,
+     "track": "strings",
+     "v": 60
+    },
+    {
+     "deg": 5,
+     "len": 0.45,
+     "oct": 4,
+     "t": 0.5,
+     "track": "strings",
+     "v": 56
+    },
+    {
+     "deg": 1,
+     "len": 0.9,
+     "oct": 4,
+     "t": 1,
+     "track": "strings",
+     "v": 74
+    },
+    {
+     "deg": 5,
+     "len": 0.9,
+     "oct": 4,
+     "t": 1,
+     "track": "strings",
+     "v": 70
+    },
+    {
+     "deg": 8,
+     "len": 0.9,
+     "oct": 4,
+     "t": 1,
+     "track": "choir",
+     "v": 60
+    },
+    {
+     "drum": 57,
+     "len": 1,
+     "t": 1.5,
+     "track": "cymbals",
+     "v": 90
+    }
+   ],
+   "over": ["song:bonus-wind"],
    "quantum": 1,
    "spacing": 4
   },
@@ -1581,6 +1845,336 @@
    ],
    "quantum": 0.25,
    "spacing": 1
+  },
+  "oneup": {
+   "always": true,
+   "break": [0,4],
+   "notes": [
+    {
+     "drum": 38,
+     "len": 0.25,
+     "t": -1,
+     "track": "drums",
+     "v": 96
+    },
+    {
+     "drum": 45,
+     "len": 0.25,
+     "t": -0.75,
+     "track": "drums",
+     "v": 100
+    },
+    {
+     "drum": 38,
+     "len": 0.25,
+     "t": -0.5,
+     "track": "drums",
+     "v": 104
+    },
+    {
+     "drum": 45,
+     "len": 0.25,
+     "t": -0.25,
+     "track": "drums",
+     "v": 110
+    },
+    {
+     "drum": 36,
+     "len": 0.5,
+     "t": 0,
+     "track": "drums",
+     "v": 124
+    },
+    {
+     "drum": 49,
+     "len": 2,
+     "t": 0,
+     "track": "cymbals",
+     "v": 116
+    },
+    {
+     "drum": 38,
+     "len": 0.25,
+     "t": 1,
+     "track": "drums",
+     "v": 108
+    },
+    {
+     "drum": 36,
+     "len": 0.25,
+     "t": 2,
+     "track": "drums",
+     "v": 112
+    },
+    {
+     "drum": 38,
+     "len": 0.25,
+     "t": 3,
+     "track": "drums",
+     "v": 112
+    },
+    {
+     "drum": 36,
+     "len": 0.25,
+     "t": 2,
+     "track": "drums2",
+     "v": 84
+    },
+    {
+     "drum": 36,
+     "len": 0.25,
+     "t": 2.25,
+     "track": "drums2",
+     "v": 88
+    },
+    {
+     "drum": 36,
+     "len": 0.25,
+     "t": 2.5,
+     "track": "drums2",
+     "v": 90
+    },
+    {
+     "drum": 36,
+     "len": 0.25,
+     "t": 2.75,
+     "track": "drums2",
+     "v": 94
+    },
+    {
+     "drum": 36,
+     "len": 0.25,
+     "t": 3,
+     "track": "drums2",
+     "v": 96
+    },
+    {
+     "drum": 36,
+     "len": 0.25,
+     "t": 3.25,
+     "track": "drums2",
+     "v": 100
+    },
+    {
+     "deg": 1,
+     "len": 1.4,
+     "oct": 2,
+     "t": 0,
+     "track": "gtrL",
+     "v": 120
+    },
+    {
+     "deg": 6,
+     "len": 0.9,
+     "oct": 2,
+     "t": 2,
+     "track": "gtrL",
+     "v": 114
+    },
+    {
+     "deg": 5,
+     "len": 0.45,
+     "oct": 2,
+     "t": 3,
+     "track": "gtrL",
+     "v": 116
+    },
+    {
+     "deg": 1,
+     "len": 1.4,
+     "oct": 2,
+     "t": 0,
+     "track": "gtrR",
+     "v": 116
+    },
+    {
+     "deg": 6,
+     "len": 0.9,
+     "oct": 2,
+     "t": 2,
+     "track": "gtrR",
+     "v": 110
+    },
+    {
+     "deg": 5,
+     "len": 0.45,
+     "oct": 2,
+     "t": 3,
+     "track": "gtrR",
+     "v": 112
+    },
+    {
+     "deg": 1,
+     "len": 1.4,
+     "oct": 1,
+     "t": 0,
+     "track": "bass",
+     "v": 116
+    },
+    {
+     "deg": 6,
+     "len": 0.9,
+     "oct": 1,
+     "t": 2,
+     "track": "bass",
+     "v": 110
+    },
+    {
+     "deg": 5,
+     "len": 0.45,
+     "oct": 1,
+     "t": 3,
+     "track": "bass",
+     "v": 112
+    },
+    {
+     "deg": 1,
+     "len": 1.4,
+     "oct": 2,
+     "t": 0,
+     "track": "timpani",
+     "v": 112
+    },
+    {
+     "deg": 5,
+     "len": 0.45,
+     "oct": 2,
+     "t": 3,
+     "track": "timpani",
+     "v": 104
+    },
+    {
+     "deg": 1,
+     "len": 1.4,
+     "oct": 4,
+     "t": 0,
+     "track": "brass",
+     "v": 104
+    },
+    {
+     "deg": 3,
+     "len": 0.45,
+     "oct": 4,
+     "t": 1.5,
+     "track": "brass",
+     "v": 100
+    },
+    {
+     "deg": 5,
+     "len": 0.9,
+     "oct": 4,
+     "t": 2,
+     "track": "brass",
+     "v": 108
+    },
+    {
+     "len": 0.45,
+     "oct": 4,
+     "semi": 11,
+     "t": 3,
+     "track": "brass",
+     "v": 112
+    },
+    {
+     "deg": 5,
+     "len": 1.4,
+     "oct": 3,
+     "t": 0,
+     "track": "brass",
+     "v": 96
+    },
+    {
+     "deg": 3,
+     "len": 0.9,
+     "oct": 4,
+     "t": 2,
+     "track": "brass",
+     "v": 100
+    },
+    {
+     "deg": 5,
+     "len": 0.45,
+     "oct": 3,
+     "t": 3,
+     "track": "brass",
+     "v": 104
+    },
+    {
+     "deg": 1,
+     "len": 1.4,
+     "oct": 5,
+     "t": 0,
+     "track": "lead",
+     "v": 96
+    },
+    {
+     "deg": 3,
+     "len": 0.45,
+     "oct": 5,
+     "t": 1.5,
+     "track": "lead",
+     "v": 96
+    },
+    {
+     "deg": 5,
+     "len": 0.9,
+     "oct": 5,
+     "t": 2,
+     "track": "lead",
+     "v": 104
+    },
+    {
+     "len": 0.9,
+     "oct": 5,
+     "semi": 11,
+     "t": 3,
+     "track": "lead",
+     "v": 108
+    },
+    {
+     "deg": 8,
+     "len": 1,
+     "oct": 5,
+     "t": 4,
+     "track": "lead",
+     "v": 112
+    },
+    {
+     "deg": 1,
+     "len": 3.5,
+     "oct": 4,
+     "t": 0,
+     "track": "choir",
+     "v": 72
+    },
+    {
+     "deg": 3,
+     "len": 3.5,
+     "oct": 4,
+     "t": 0,
+     "track": "choir",
+     "v": 68
+    },
+    {
+     "deg": 5,
+     "len": 3.5,
+     "oct": 4,
+     "t": 0,
+     "track": "choir",
+     "v": 68
+    },
+    {
+     "deg": 8,
+     "len": 1.5,
+     "oct": 5,
+     "t": 4,
+     "track": "bells",
+     "v": 92
+    }
+   ],
+   "over": ["all"],
+   "quantum": 4,
+   "spacing": 16
   },
   "respawn": {
    "notes": [
@@ -1785,6 +2379,81 @@
    "quantum": 1,
    "spacing": 4
   },
+  "thunder": {
+   "notes": [
+    {
+     "deg": 1,
+     "len": 0.2,
+     "oct": 2,
+     "t": 0,
+     "track": "gtrL",
+     "v": 100
+    },
+    {
+     "deg": 1,
+     "len": 0.2,
+     "oct": 2,
+     "t": 0.25,
+     "track": "gtrL",
+     "v": 90
+    },
+    {
+     "deg": 1,
+     "len": 0.2,
+     "oct": 2,
+     "t": 0.5,
+     "track": "gtrL",
+     "v": 96
+    },
+    {
+     "deg": 3,
+     "len": 0.2,
+     "oct": 2,
+     "t": 0.75,
+     "track": "gtrL",
+     "v": 104
+    },
+    {
+     "deg": 1,
+     "len": 1,
+     "oct": 2,
+     "t": 1,
+     "track": "gtrL",
+     "v": 116
+    },
+    {
+     "drum": 41,
+     "len": 0.25,
+     "t": 1,
+     "track": "drums",
+     "v": 96
+    },
+    {
+     "drum": 41,
+     "len": 0.25,
+     "t": 1.25,
+     "track": "drums",
+     "v": 104
+    },
+    {
+     "drum": 41,
+     "len": 0.25,
+     "t": 1.5,
+     "track": "drums",
+     "v": 112
+    },
+    {
+     "drum": 41,
+     "len": 0.25,
+     "t": 1.75,
+     "track": "drums",
+     "v": 120
+    }
+   ],
+   "over": ["bonus"],
+   "quantum": 0.5,
+   "spacing": 4
+  },
   "toll": {
    "notes": [
     {
@@ -1822,6 +2491,22 @@
    ],
    "quantum": 1,
    "spacing": 4
+  },
+  "warcry": {
+   "notes": [
+    {
+     "deg": 1,
+     "len": 2,
+     "oct": 3,
+     "t": 0,
+     "track": "cries",
+     "v": 120
+    }
+   ],
+   "over": ["all"],
+   "quantum": 0.5,
+   "spacing": 8,
+   "speech": "yield"
   }
  },
  "tracks": {
@@ -1837,6 +2522,10 @@
    "channel": 8,
    "role": "brass"
   },
+  "brood": {
+   "channel": 15,
+   "role": "brood"
+  },
   "choir": {
    "channel": 10,
    "role": "choir"
@@ -1844,6 +2533,10 @@
   "clean": {
    "channel": 3,
    "role": "clean"
+  },
+  "cries": {
+   "channel": 15,
+   "role": "warcry"
   },
   "cymbals": {
    "channel": 9,
@@ -1860,6 +2553,10 @@
   "fanfare": {
    "channel": 13,
    "role": "brass"
+  },
+  "grunts": {
+   "channel": 15,
+   "role": "grunt"
   },
   "gtrL": {
    "channel": 1,

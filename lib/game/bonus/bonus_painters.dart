@@ -11,8 +11,11 @@
 import 'dart:ui';
 
 import '../model.dart';
+import '../reduced_effects.dart'; // --- reduced-effects
+import 'levels/crosswind_painter.dart';
 import 'levels/stormfront_painter.dart';
 import 'levels/supply_run_painter.dart';
+import '../weather/storm_layer.dart'; // --- weather-everywhere
 
 /// Draws one level's mechanic. [time] is the presentation clock.
 abstract class BonusPainter {
@@ -26,6 +29,8 @@ abstract final class BonusPainters {
     'stormfront': StormfrontPainter(),
     // --- mission-medals: Supply Run's cues on the crates and the cargo.
     'supplyRun': SupplyRunPainter(),
+    // --- crosswind: the kites and their tally.
+    'crosswind': CrosswindPainter(),
   };
 
   static BonusPainter? _of(ArcadeModel model) =>
@@ -36,6 +41,21 @@ abstract final class BonusPainters {
 
   static void over(Canvas canvas, ArcadeModel model, double time) =>
       _of(model)?.over(canvas, model, time);
+
+  /// --- lightning-rework: the columns told on the ship's row now (x and
+  /// tell progress 0-1), for the ship's static before a bolt.
+  static Iterable<({double x, double progress})> lightningTells(
+    ArcadeModel model,
+  ) {
+    final m = model.bonusMechanic;
+    // --- weather-everywhere: a regular sector's storm tells too.
+    final cell = m is StormfrontMechanic ? m.cell : model.stormCell;
+    if (cell == null) return const [];
+    return [
+      for (final s in cell.strikes)
+        if (s.telling) (x: s.x, progress: s.tellProgress),
+    ];
+  }
 }
 
 class StormfrontPainter extends BonusPainter {
@@ -46,16 +66,26 @@ class StormfrontPainter extends BonusPainter {
   void under(Canvas canvas, ArcadeModel model, double time) {
     final m = model.bonusMechanic;
     if (m is! StormfrontMechanic) return;
-    _storm.paintSky(canvas, m.cell, time: time, reduced: model.reducedMotion);
+    _storm.paintSky(
+      canvas,
+      m.cell,
+      time: time,
+      reduced: ReducedEffects.calm(model.reducedMotion), // reduced-effects
+      // --- weather-everywhere: reduced flashing (design §3).
+      noFlash: FlashSafety.reduced(reducedMotion: model.reducedMotion),
+    );
   }
 
   @override
   void over(Canvas canvas, ArcadeModel model, double time) {
     final m = model.bonusMechanic;
     if (m is! StormfrontMechanic) return;
-    final reduced = model.reducedMotion;
-    _storm.paintStrikes(canvas, m.cell, time: time, reduced: reduced);
-    final flash = StormPainter.flashOf(m.cell, reduced: reduced);
+    final reduced = ReducedEffects.calm(model.reducedMotion); // reduced-effects
+    // --- weather-everywhere: reduced flashing steadies the tells and
+    // drops the wash (design §3).
+    final steady = FlashSafety.reduced(reducedMotion: reduced);
+    _storm.paintStrikes(canvas, m.cell, time: time, reduced: steady);
+    final flash = StormPainter.flashOf(m.cell, reduced: steady);
     if (flash > 0) {
       canvas.drawRect(
         const Rect.fromLTWH(0, 0, ArcadeModel.width, ArcadeModel.height),

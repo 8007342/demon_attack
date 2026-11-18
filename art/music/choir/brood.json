@@ -1,0 +1,53 @@
+{
+ "schema": "demon-attack.brood-choir/v1",
+ "comment": "The brood choir's source recipe (openspec/changes/demon-choir design §3-§5). lua tools/brood_choir/brood.lua renders the formant-synth zones (synth) and cuts the picked ACE-Step takes (picks) into ~/.cache/tillandsias-project/demon-choir/src, then writes art/music/bank/choir.manifest.tsv; lua tools/bank/bank_build.lua --recipe art/music/bank/choir-recipe.json builds web/audio/bank/choir.json and its sprites. Vowel formants F1-F3: male means of Hillenbrand et al. (1995) /o/ and /ɑ/ (plan/demon-choir-research.md §7), F4-F5 fixed, scaled by tractScale for a longer (bigger) vocal tract; bandwidths our judgement. The picks' takes, seeds and prompts are in plan/render-runs/demon-choir.md; re-rendering a seed is not byte-identical (GPU), so the raws stay in the cache and the shipped sprite is the record.",
+ "rate": 48000,
+ "commit": "-",
+ "synth": {
+  "seconds": 2.6,
+  "voices": 8,
+  "detuneCents": 14,
+  "onsetSpread": 0.05,
+  "attack": 0.22,
+  "release": 0.05,
+  "shimmer": 0.06,
+  "breath": 0.35,
+  "glottis": { "open": 0.45, "close": 0.07 },
+  "vibrato": { "rate": [4.4, 5.6], "cents": [10, 22], "fadeIn": 0.6 },
+  "jitter": { "rateHz": 9, "cents": 9 },
+  "tractScale": [0.86, 0.92],
+  "presence": { "hz": 1500, "gain": 3 },
+  "growl": { "default": { "period": 0.03, "amp": 0.25 }, "oh": { "period": 0.02, "amp": 0.18 }, "ah": { "period": 0.045, "amp": 0.32 } },
+  "vowels": {
+   "oh": { "ipa": "o", "f": [498, 910, 2459, 3300, 3750], "bw": [70, 90, 130, 180, 220] },
+   "ah": { "ipa": "ɑ", "f": [756, 1309, 2535, 3300, 3750], "bw": [80, 90, 130, 180, 220] }
+  },
+  "zones": [
+{"vowel":"oh","note":36,"name":"C2","seed":1036},
+{"vowel":"oh","note":41,"name":"F2","seed":1041},
+{"vowel":"oh","note":46,"name":"A#2","seed":1046},
+{"vowel":"oh","note":51,"name":"D#3","seed":1051},
+{"vowel":"oh","note":56,"name":"G#3","seed":1056},
+{"vowel":"oh","note":61,"name":"C#4","seed":1061},
+{"vowel":"ah","note":36,"name":"C2","seed":2036},
+{"vowel":"ah","note":41,"name":"F2","seed":2041},
+{"vowel":"ah","note":46,"name":"A#2","seed":2046},
+{"vowel":"ah","note":51,"name":"D#3","seed":2051},
+{"vowel":"ah","note":56,"name":"G#3","seed":2056},
+{"vowel":"ah","note":61,"name":"C#4","seed":2061}
+  ]
+ },
+ "picks": [
+  { "name": "grunt_a_rr1", "group": "grunt", "take": "grunt-0000_00001.flac", "start": 0.00, "end": 0.40, "highpass": 100 },
+  { "name": "grunt_a_rr2", "group": "grunt", "take": "grunt-0000_00001.flac", "start": 0.63, "end": 1.00, "highpass": 100 },
+  { "name": "grunt_b_rr1", "group": "grunt", "take": "grunt-0000_00001.flac", "start": 2.48, "end": 2.85, "highpass": 100 },
+  { "name": "grunt_b_rr2", "group": "grunt", "take": "grunt-0000_00001.flac", "start": 3.12, "end": 3.50, "highpass": 100 },
+  { "name": "grunt_c_rr1", "group": "grunt", "take": "grunt-0000_00001.flac", "start": 7.48, "end": 7.85, "highpass": 100 },
+  { "name": "grunt_c_rr2", "group": "grunt", "take": "grunt-0000_00001.flac", "start": 8.12, "end": 8.50, "highpass": 100 },
+  { "name": "grunt_d_rr1", "group": "grunt", "take": "grunt-0000_00001.flac", "start": 10.08, "end": 10.45, "highpass": 100 },
+  { "name": "grunt_d_rr2", "group": "grunt", "take": "grunt-0000_00001.flac", "start": 10.68, "end": 11.05, "highpass": 100 },
+  { "name": "cry_a_rr1", "group": "warcry", "take": "grunt-0000_00001.flac", "start": 5.00, "end": 6.60, "fadeOut": 0.25 },
+  { "name": "cry_a_rr2", "group": "warcry", "take": "grunt-0000_00001.flac", "start": 12.50, "end": 14.10, "fadeOut": 0.25 },
+  { "name": "cry_b_rr1", "group": "warcry", "take": "grunt-0001_00001.flac", "start": 14.20, "end": 15.90, "fadeOut": 0.3 }
+ ]
+}

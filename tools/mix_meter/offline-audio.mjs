@@ -185,17 +185,27 @@ class Oscillator extends Scheduled {
 }
 
 class BufferSource extends Scheduled {
-  constructor(ctx) { super(ctx); this.buffer = null; this.playbackRate = new AudioParam(ctx, 1); this.pos = 0; this.loop = false; }
+  constructor(ctx) { super(ctx); this.buffer = null; this.playbackRate = new AudioParam(ctx, 1); this.pos = 0; this.loop = false; this.loopStart = 0; this.loopEnd = 0; this.endPos = Infinity; }
+  // start(when, offset, duration) as the spec: offset and duration in seconds of buffer content (the sample bank's
+  // sprite zones); loop between loopStart and loopEnd (the whole buffer when loopEnd is 0).
+  start(at = 0, offset = 0, duration) {
+    super.start(at);
+    const bsr = this.buffer?.sampleRate || this.ctx.sampleRate;
+    this.pos = Math.max(0, offset) * bsr;
+    if (duration !== undefined) this.endPos = this.pos + Math.max(0, duration) * bsr;
+  }
   process() {
     const sr = this.ctx.sampleRate, f0 = this.ctx.frame, rate = this.playbackRate.block().values[0];
     const channels = this.buffer?.numberOfChannels || 1;
     const out = Array.from({ length: channels }, () => new Float32Array(QUANTUM));
     if (this.ended || !this.buffer) return out;
-    const step = rate * this.buffer.sampleRate / sr, len = this.buffer.length;
+    const step = rate * this.buffer.sampleRate / sr, len = this.buffer.length, bsr = this.buffer.sampleRate;
+    const loopA = this.loopStart * bsr, loopB = this.loopEnd > 0 ? Math.min(this.loopEnd * bsr, len - 1) : len - 1;
     for (let i = 0; i < QUANTUM; i++) {
       const t = (f0 + i) / sr;
       if (t < this.startAt) continue;
-      if (t >= this.stopAt || this.pos >= len - 1) { this.finish(); break; }
+      if (this.loop && this.pos >= loopB && loopB > loopA) this.pos = loopA + (this.pos - loopB) % (loopB - loopA);
+      if (t >= this.stopAt || this.pos >= len - 1 || (!this.loop && this.pos >= this.endPos)) { this.finish(); break; }
       const k = Math.floor(this.pos), fr = this.pos - k;
       for (let c = 0; c < channels; c++) { const d = this.buffer.getChannelData(c); out[c][i] = d[k] + (d[k + 1] - d[k]) * fr; }
       this.pos += step;
@@ -437,13 +447,14 @@ export class OfflineContext {
   createDelay(max = 1) { return new Delay(this, max); }
   createDynamicsCompressor() { return new Compressor(this); }
   createBuffer(channels, length, rate) { return new AudioBuffer(channels, length, rate); }
-  // Bytes: little-endian float32 mono PCM at the context rate, prefixed by 'F32M' (the meter's own decode).
+  // Bytes: little-endian float32 PCM at the context rate, prefixed by 'F32M' (mono) or 'F32S' (stereo, interleaved):
+  // the meter's own decode.
   decodeAudioData(bytes, ok, fail) {
     try {
-      const view = new DataView(bytes);
-      if (view.getUint32(0) !== 0x4633324d) throw new Error('not F32M');
-      const n = (bytes.byteLength - 4) / 4, buffer = new AudioBuffer(1, n, this.sampleRate), d = buffer.getChannelData(0);
-      for (let i = 0; i < n; i++) d[i] = view.getFloat32(4 + i * 4, true);
+      const view = new DataView(bytes), tag = view.getUint32(0);
+      if (tag !== 0x4633324d && tag !== 0x46333253) throw new Error('not F32M or F32S');
+      const ch = tag === 0x46333253 ? 2 : 1, n = (bytes.byteLength - 4) / 4 / ch, buffer = new AudioBuffer(ch, n, this.sampleRate);
+      for (let c = 0; c < ch; c++) { const d = buffer.getChannelData(c); for (let i = 0; i < n; i++) d[i] = view.getFloat32(4 + (i * ch + c) * 4, true); }
       ok?.(buffer); return Promise.resolve(buffer);
     } catch (error) { fail?.(error); return Promise.reject(error); }
   }

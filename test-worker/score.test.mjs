@@ -137,7 +137,11 @@ test('the size totals: the whole run stays a small download', async () => {
   assert.ok(midi < 400 * 1024, `MIDI ${midi} B`);
   assert.ok(json.length < 64 * 1024, `score.json ${json.length} B`);
   assert.ok(gzipped < 160 * 1024, `score gzipped ${gzipped} B`);
-  assert.ok(player < 48 * 1024, `player ${player} B`);
+  // 48 KB until the sample bank's loader and zone lookup joined it (design §12.9): 52 KB raw, 16 KB gzipped; the
+  // brood choir's second bank and sampled-only roles (demon-choir) brought it to 57.5 KB raw, 18.2 KB gzipped; the
+  // sampled bass's metal chain (bass-tone, design §12.12) to 67.3 KB raw, 21.6 KB gzipped (the bank's own audio is 5 MB).
+  assert.ok(player < 72 * 1024, `player ${player} B`);
+  assert.ok(gzipSync(await readFile(web('audio/demon-score.js')), { level: 9 }).length < 24 * 1024, 'player gzipped');
   // Unique music: every section's written length (hold bars once).
   let seconds = 0;
   for (const song of Object.values(manifest.songs)) for (const s of Object.values(song.sections)) seconds += (s.bars + s.hold) * song.barSamples / 48000;
@@ -152,7 +156,9 @@ test('no recorded music: the engine never fetches a recorded cue, and the old di
   await run(3);
   audio.accent('dive'); audio.powerLayer(2, true); audio.sfx('explosion');
   await run(1);
-  assert.ok(fetched.every(p => p.startsWith('/audio/score/')), `only the score is fetched: ${fetched.filter(p => !p.startsWith('/audio/score/'))}`);
+  // The score, and the sample bank's bank.json (absent until the CC0 pins are admitted: design §12.9).
+  const other = fetched.filter(p => !p.startsWith('/audio/score/') && p !== '/audio/bank/bank.json');
+  assert.deepEqual(other, [], `only the score (and the bank's map) is fetched: ${other}`);
   for (const dir of ['audio/music', 'audio/midi']) await assert.rejects(stat(web(dir)), `${dir} is retired`);
   assert.equal(audio.cue, undefined, 'no recorded-cue API');
   assert.equal(audio.scoreEnabled, undefined, 'no score switch');
@@ -353,4 +359,42 @@ test('scheduling stays bounded: a long fight never exceeds the voice cap (48, an
     assert.ok(peak <= audio.state.score.cap, `peak ${peak} voices within the cap`);
     assert.ok(audio.state.score.scheduledUntil <= ctx().currentTime + .25 + 1e-9, 'never schedules further than the lookahead');
   }
+});
+
+// --- bonus-music (adaptive-soundtrack design §12.10): the bonus song, the bonus accents and the 1UP's stop-time.
+test('the bonus accents play by name over the bonus song; an unknown name plays nothing', async () => {
+  const { audio, ctx, run, started } = await player();
+  await audio.unlock(); await run(.1);
+  const t0 = audio.song({ song: 'bonus-wind', section: 'A', at: -1, quantum: 'bar', enter: 'start', tier: 4 });
+  await run(t0 - ctx().currentTime + .2);
+  for (const name of ['oneup', 'challenge-fail', 'gust', 'cargo', 'thunder']) assert.ok(manifest.accents[name], `accent ${name}`);
+  assert.equal(audio.accent('no-such-accent'), null, 'fails soft');
+  assert.equal(audio.accent('constructor'), null, 'not a stinger');
+  const n = started.length;
+  const at = audio.accent('gust');
+  assert.ok(at !== null && onLine(at, t0, bar('bonus-wind') / 4), 'the gust lands on a beat line');
+  assert.ok(started.length > n, 'its notes are scheduled');
+  assert.notEqual(audio.accent('challenge-fail'), null);
+  // Two stingers live: an ordinary one waits, the 1UP (`always`) still plays.
+  assert.equal(audio.accent('cargo'), null);
+  const up = audio.accent('oneup');
+  assert.ok(up !== null && onLine(up, t0, bar('bonus-wind')), 'the 1UP hits on a bar line');
+});
+
+test('the 1UP is a stop-time: the section rests for its bar and comes back on the next bar line', async () => {
+  const count = async withOneUp => {
+    const { audio, ctx, run, started } = await player();
+    await audio.unlock(); await run(.1);
+    const t0 = audio.song({ song: 'k', section: 'A', at: -1, quantum: 'bar', enter: 'start', tier: 4 });
+    await run(t0 - ctx().currentTime + bar('k') + .1);
+    const anchor = withOneUp ? audio.accent('oneup') : t0 + 3 * bar('k');
+    await run(anchor - ctx().currentTime + 2 * bar('k'));
+    const inside = started.filter(s => s.at > anchor + .01 && s.at < anchor + bar('k') - .01).length;
+    const after = started.filter(s => s.at >= anchor + bar('k') - 1e-6 && s.at < anchor + 2 * bar('k')).length;
+    return { anchor, inside, after, t0 };
+  };
+  const plainRun = await count(false), up = await count(true);
+  assert.ok(onLine(up.anchor, up.t0, bar('k')), 'on a bar line');
+  assert.ok(up.inside < plainRun.inside / 2, `the band rests (${up.inside} vs ${plainRun.inside} sources)`);
+  assert.ok(up.after > plainRun.after / 2, 'and comes back on the next bar line');
 });
