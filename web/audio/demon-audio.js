@@ -247,6 +247,11 @@
     // --- lightning-rework: a stun's crackle, the ship's zap (a hard buzz and a falling sweep: the powers are gone, never the ship), a rod drinking a bolt (a rising whine).
     if (name === 'stormStun') { noiseBurst(now, .09, .09, 5200); noiseBurst(now + .1, .07, .07, 4600); sweep(now + .02, .35, 1800, 420, .02, 'square'); return true; }
     if (name === 'shipZapped') { limitVoices('life'); noiseBurst(now, .25, .16, 6800); sweep(now, .5, 1600, 180, .035, 'sawtooth'); noiseBurst(now + .28, .3, .06, 900); return true; }
+    // --- spear-bearers: the wind-up's glint (a bright ting), the throw (an airy whoosh), the buckler struck (a dull clang) and knocked away (a clang and a falling rattle).
+    if (name === 'spearGlint') { sweep(now, .16, 2400, 3600, .018, 'sine'); sweep(now + .08, .2, 3200, 4200, .012, 'sine'); return true; }
+    if (name === 'spearRelease') { noiseBurst(now, .28, .07, 2600); sweep(now, .25, 900, 260, .02, 'triangle'); return true; }
+    if (name === 'bucklerClang') { limitVoices('hit'); sweep(now, .18, 520, 380, .035, 'square'); noiseBurst(now, .08, .06, 3800); return true; }
+    if (name === 'bucklerOff') { limitVoices('hit'); sweep(now, .22, 600, 300, .04, 'square'); noiseBurst(now + .05, .4, .05, 1400); sweep(now + .12, .45, 300, 90, .015, 'triangle'); return true; }
     if (name === 'demonCharged') { sweep(now, .45, 300, 1900, .02, 'square'); noiseBurst(now + .35, .12, .05, 5600); return true; }
     if (name === 'groundExplosion') {
  limitVoices('explosion'); voice({ pitch: 31, velocity: 100, channel: 9, tag: 'explosion' }, now, .3, effects); noiseBurst(now, .7, .16, 1500); return true; }

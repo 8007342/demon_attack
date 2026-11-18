@@ -133,6 +133,7 @@ List<GalleryTile> galleryTiles(String id) => switch (id) {
   'actions' => [GalleryTile.scene('FIRE / DEATH', _actions())],
   'insignia' => [GalleryTile.scene('TWIN-FANG INSIGNIA', _insignia())],
   'dive-shields' => _diveShields(),
+  'spear-bearers' => _spearBearers(), // --- spear-bearers
   'weapons' => _weapons(),
   'sentinels' => [GalleryTile.scene('SENTINELS', _sentinels())],
   'carrier' => _carrier(),
@@ -199,6 +200,135 @@ GalleryScene _creatures() {
       _noShip(m);
     },
   );
+}
+
+// --- spear-bearers (openspec/changes/spear-bearers design §7) -----------
+
+/// The spear-bearer: every gear state on the four species (rows: idle,
+/// tell, dive, wind-up with its glint, release, buckler hit, bare dive),
+/// and one bearer's whole dive in a 4 s loop: the levelled spear, the
+/// wind-up, the throw (a spear that drifts), a buckler hit and the knock-off.
+List<GalleryTile> _spearBearers() {
+  GalleryScene states() {
+    final m = stagedModel(sector: 3, route: 2);
+    for (var k = 0; k < 4; k++) {
+      for (var col = 0; col < 7; col++) {
+        m.demons.add(
+          Demon(30.0 + col * 50, _speciesY[k], k, 3, 0.3 * col, elite: true)
+            ..nearness = 1
+            ..spear = SpearKit(),
+        );
+      }
+    }
+    return GalleryScene(
+      m,
+      stage: (m, dt, t) {
+        _noShip(m);
+        final now = m.clock;
+        for (var k = 0; k < 4; k++) {
+          for (var col = 0; col < 7; col++) {
+            final d = m.demons[k * 7 + col];
+            final kit = d.spear!;
+            d
+              ..dive = col >= 2 ? 1 : 0
+              ..telegraph = col == 1 ? .4 : 0
+              ..vy = 0
+              ..y = _speciesY[k];
+            kit
+              ..armed = col != 4 && col != 6
+              ..windup = col == 3 ? SpearTuning.windup * (1 - t % 1) : 0
+              ..releasedAt = col == 4 ? now : -1e9
+              ..hitAt = col == 5 && (t * 2).floor().isEven ? now : -1e9
+              ..buckler = col == 6 ? 0 : SpearTuning.buckler;
+            if (col == 5) kit.armed = false;
+          }
+        }
+      },
+    );
+  }
+
+  GalleryScene dive() {
+    final m = stagedModel(sector: 3, route: 2);
+    final d = Demon(140, 90, 1, 3, 1.1, elite: true)
+      ..nearness = 1
+      ..spear = SpearKit();
+    m.demons.add(d);
+    var loop = -1;
+    Shot? spear;
+    return GalleryScene(
+      m,
+      stage: (m, dt, t) {
+        _noShip(m);
+        const period = 4.0;
+        final p = t % period;
+        final kit = d.spear!;
+        if ((t / period).floor() != loop) {
+          loop = (t / period).floor();
+          kit
+            ..armed = true
+            ..buckler = SpearTuning.buckler
+            ..windup = 0;
+          m.shots.clear();
+          m.spearRun.fallen.clear();
+          spear = null;
+        }
+        // Dive from y 90 at 130 u/s; the wind-up at 0.9-1.45 s, the throw.
+        d
+          ..dive = p < 3.2 ? 1 : 0
+          ..y = p < 3.2 ? 90 + 130 * p : 90
+          ..vy = 0;
+        kit.windup = p >= .9 && p < 1.45 ? 1.45 - p : 0;
+        if (p >= 1.45 && kit.armed) {
+          kit
+            ..armed = false
+            ..releasedAt = m.clock;
+          spear = Shot(
+            d.x + SpearTuning.releaseDx,
+            d.y + SpearTuning.releaseDy,
+            20,
+            255,
+            hostile: true,
+            kind: ShotKind.spear,
+          );
+          m.shots.add(spear!);
+        }
+        final s = spear;
+        if (s != null) {
+          // A crosswind from the left bends it as it falls.
+          s
+            ..windVx = math.min(30, s.windVx + 40 * dt)
+            ..x += (s.vx + s.windVx) * dt
+            ..y += s.vy * dt;
+        }
+        if (p >= 1.9 && kit.buckler == SpearTuning.buckler) {
+          kit
+            ..buckler = 1
+            ..hitAt = m.clock;
+        }
+        if (p >= 2.5 && kit.buckler == 1) {
+          kit
+            ..buckler = 0
+            ..hitAt = m.clock;
+          m.spearRun.fallen.add(
+            FallenBuckler(d.x - 6, d.y + 8, -50, -70, 9, 1),
+          );
+        }
+        for (final b in m.spearRun.fallen) {
+          b
+            ..vy += SpearTuning.fallGravity * dt
+            ..x += b.vx * dt
+            ..y += b.vy * dt
+            ..rotation += b.spin * dt
+            ..age += dt;
+        }
+      },
+    );
+  }
+
+  return [
+    GalleryTile.scene('SPEAR-BEARER STATES', states()),
+    GalleryTile.scene('SPEAR-BEARER DIVE', dive()),
+  ];
 }
 
 /// Elite armour at each remaining health, plus an elite firing.

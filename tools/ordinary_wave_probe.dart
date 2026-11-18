@@ -10,6 +10,12 @@
 // five (WindPlan.chance), so the scheduled effect is a fifth of the
 // difference between `wind=on` and `wind=off`.
 //
+// --- spear-bearers: `routes=2,3,4` picks the routes (default 0,1,2), and
+// `spears=off` turns the spear-bearers off (SpearTuning.enabled) and
+// `lead=L` sets the throw's aim lead (SpearTuning.lead): the
+// before of the same harness. It also counts the bearers born, the spears
+// thrown and the lives lost with a spear at the ship.
+//
 // The Average pilot of continuous-swarm (test/support/average_pilot.dart:
 // not invulnerable, 0.25 s reaction, 70 % aim, dodges the nearest shot)
 // plays sectors 1-4 of routes 0-2 from their start, with lives refilled so
@@ -36,14 +42,28 @@ void main(List<String> args) {
     777, 1001, 4242, 9001, 5, 13, 17, 23, 29, 31, 37, 41,
   ];
   final seeds = all.take(count).toList();
+  // --- spear-bearers
+  final routes = args
+      .firstWhere((a) => a.startsWith('routes='), orElse: () => 'routes=0,1,2')
+      .substring(7)
+      .split(',')
+      .map(int.parse)
+      .toList();
+  SpearTuning.enabled = !args.contains('spears=off');
+  SpearTuning.lead = double.parse(
+    args
+        .firstWhere((a) => a.startsWith('lead='), orElse: () => 'lead=0')
+        .substring(5),
+  );
   for (final difficulty in Difficulty.values) {
     var lost = 0, cleared = 0, runs = 0, withSentinel = 0;
     var sentinelSeconds = 0.0;
     var byRush = 0, byContact = 0;
     var seconds = 0.0;
+    var bearers = 0, throws = 0, bySpear = 0; // --- spear-bearers
     final perRoute = <String, double>{};
     final uncleared = <String>[];
-    for (final route in [0, 1, 2]) {
+    for (final route in routes) {
       var routeLost = 0;
       for (var sector = 1; sector <= 4; sector++) {
         for (final seed in seeds) {
@@ -77,16 +97,27 @@ void main(List<String> args) {
                   (d.x - m.shipX).abs() < d.contactHalf + 8 &&
                   (d.y - ArcadeModel.shipY).abs() < 40,
             );
+            final spear = m.shots.any(
+              (s) =>
+                  s.kind == ShotKind.spear &&
+                  (s.x - m.shipX).abs() < 24 &&
+                  (s.y - ArcadeModel.shipY).abs() < 30,
+            ); // --- spear-bearers
             m.update(1 / 60);
             final lives = m.takeEvents().where((e) => e == 'life').length;
+            if (spear && !rush && !contact) bySpear += lives;
             if (sentinel) withSentinel += lives;
             if (rush) {
               byRush += lives;
             } else if (contact) {
               byContact += lives;
             }
-            m.takeGameEvents();
+            throws += m
+                .takeGameEvents()
+                .where((e) => e.name == GameEventNames.spearThrow)
+                .length;
           }
+          bearers += m.spearRun.born;
           if (!done) uncleared.add('r$route s$sector #$seed ${m.mode.name}');
           lost += 99 - m.lives;
           routeLost += 99 - m.lives;
@@ -101,7 +132,9 @@ void main(List<String> args) {
     // ignore: avoid_print
     print(
       'ORDINARY_WAVES ${difficulty.name} wind=${windy ? 'on' : 'off'} '
-      'skill=$skill ${jsonEncode({
+      'skill=$skill routes=${routes.join(',')} '
+      'spears=${SpearTuning.enabled ? 'on' : 'off'} '
+      'lead=${SpearTuning.lead} ${jsonEncode({
         'livesPerSector': double.parse((lost / runs).toStringAsFixed(3)),
         'secondsPerSector': double.parse((seconds / runs).toStringAsFixed(1)),
         'cleared': '$cleared/$runs',
@@ -111,6 +144,9 @@ void main(List<String> args) {
         'livesToRush': double.parse((byRush / runs).toStringAsFixed(3)),
         'livesToContact': double.parse((byContact / runs).toStringAsFixed(3)),
         'livesPerRoute': perRoute,
+        'bearersPerSector': double.parse((bearers / runs).toStringAsFixed(2)),
+        'throwsPerSector': double.parse((throws / runs).toStringAsFixed(2)),
+        'livesToSpear': double.parse((bySpear / runs).toStringAsFixed(3)),
         'uncleared': uncleared,
       })}',
     );

@@ -60,6 +60,9 @@ part 'model_wind.dart';
 // --- lightning-rework: stuns, the ship's zap, rank dodges and rod armour ---
 part 'lightning.dart';
 
+// --- spear-bearers: the buckler-and-spear hunter, its dive throw ---
+part 'spear_bearers.dart';
+
 enum RunMode {
   title,
   playing,
@@ -84,7 +87,8 @@ enum HeartPart {
   int get mask => 1 << index;
 }
 
-enum ShotKind { ordinary, sentinel, powerful, large }
+// --- spear-bearers: `spear` is a bearer's thrown spear (hostile).
+enum ShotKind { ordinary, sentinel, powerful, large, spear }
 
 enum EnemyArchetype { ordinary, shieldSentinel, armoredSentinel }
 
@@ -199,6 +203,10 @@ class Demon {
   double charged = 0;
   double boltDodge = 0, boltDodgeGoal = 0;
   bool get stunned => stun > 0;
+
+  // --- spear-bearers (spear_bearers.dart): the buckler and spear (null:
+  // not a bearer).
+  SpearKit? spear;
   bool _prepLead = false;
   bool get angry => hp == 1 && maxHp > 1;
 
@@ -606,6 +614,9 @@ class ArcadeModel {
 
   /// --- crosswind: the level's wind (model_wind.dart).
   final WindRun windRun = WindRun();
+
+  /// --- spear-bearers: the run's bearers (the next birth, fallen bucklers).
+  final SpearRun spearRun = SpearRun();
 
   /// The odds a seeded run's plan is drawn with.
   BonusTuning bonusTuning = BonusTuning.standard;
@@ -2243,7 +2254,7 @@ class ArcadeModel {
             route: cycle,
             armored: archetype == EnemyArchetype.armoredSentinel,
           ); // --- fire-rate-tune
-      final demon = Demon(
+      final demon = _spearUp(Demon( // --- spear-bearers
         large ? width / 2 : 38 + (i % 6) * 56.0,
         large
             ? 44
@@ -2262,7 +2273,7 @@ class ArcadeModel {
         // One draw, as before (the random sequence is unchanged): the
         // rush chance is decided against it when the rush would trigger.
         rushRoll: large ? random.nextDouble() : 1,
-      );
+      ));
       if (large) {
         demon.entranceProgress = 0;
         demon.waitingForEscort = true;
@@ -2603,14 +2614,16 @@ class ArcadeModel {
         for (var i = 0; i < count; i++) {
           final profile = _ordinaryProfile();
           group.add(
-            Demon(
-              width / 2,
-              Perspective.horizonY,
-              profile.$1,
-              profile.$2,
-              rng.nextDouble() * 8,
-              elite: profile.$3,
-            ),
+            _spearUp(
+              Demon(
+                width / 2,
+                Perspective.horizonY,
+                profile.$1,
+                profile.$2,
+                rng.nextDouble() * 8,
+                elite: profile.$3,
+              ),
+            ), // --- spear-bearers
           );
           hp += profile.$2;
         }
@@ -3114,6 +3127,7 @@ class ArcadeModel {
         !_bonusNoElites &&
         _eliteBirths < policy.eliteBudget(route: cycle);
     if (elite) _eliteBirths++;
+    spearRun.next = _spearFor(elite, w); // --- spear-bearers
     return (
       kind,
       policy.ordinaryHealth(route: cycle, kind: kind, elite: elite),
@@ -3217,15 +3231,17 @@ class ArcadeModel {
     for (var i = 0; i < count; i++) {
       final profile = _ordinaryProfile();
       final d =
-          Demon(
-              slots[i].$1,
-              slots[i].$2,
-              profile.$1,
-              profile.$2,
-              random.nextDouble() * 8,
-              elite: profile.$3,
-              isEscort: escort,
-            )
+          _spearUp(
+              Demon(
+                slots[i].$1,
+                slots[i].$2,
+                profile.$1,
+                profile.$2,
+                random.nextDouble() * 8,
+                elite: profile.$3,
+                isEscort: escort,
+              ),
+            ) // --- spear-bearers
             ..entranceProgress = 0
             ..entranceDelay = 0
             ..entranceDuration = .8
@@ -3745,6 +3761,7 @@ class ArcadeModel {
 
   void _igniteDiveShield(Demon d) {
     if (demons.any((o) => o.isLarge && o.waitingForEscort)) return;
+    if (_spearIgnite(d)) return; // --- spear-bearers: the buckler instead
     // --- fire-rate-tune: one point less for a sentinel (was 4 + route ÷ 2)
     // and an elite (was 3); the heavier species' 2 is now 1, as the
     // light ones', so the slower gun still stops a diver (design §5).
@@ -4163,6 +4180,7 @@ class ArcadeModel {
 
   void _updateDemons(double dt) {
     planDecisionsThisFrame = 0; // --- demon intelligence
+    _spearFrame(dt); // --- spear-bearers: fallen bucklers tumble
     if (!shipAway) _dive -= dt * policy.hostileRate;
     var activeSmallDives = demons
         .where(
@@ -4241,6 +4259,7 @@ class ArcadeModel {
         _updateDemonKinematics(d, prevX, prevY, dt);
         continue;
       }
+      _spearStep(d, dt); // --- spear-bearers: the wind-up and the throw
       if (_regroupDemon(d, prevX, prevY, dt)) continue; // --- life loss
       if (_stunnedDemon(d, prevX, prevY, dt)) continue; // --- lightning-rework
       if (d.divePrep > 0 && dt > 0) {
@@ -4276,7 +4295,9 @@ class ArcadeModel {
         d.attackLeft -= dt * policy.hostileRate * _chargeRate(d);
         if (d.attackLeft <= 0) {
           final aim = ((shipX - d.x) * .3).clamp(-70.0, 70.0);
-          if (!d.isLarge) {
+          // --- spear-bearers: a bearer's weapon is its spear, never the
+          // hunter's triple spread (it replaces a hunter's pressure).
+          if (!d.isLarge && d.spear == null) {
             for (final offset in [-32.0, 0.0, 32.0]) {
               _hostile(
                 Shot(
@@ -5087,6 +5108,8 @@ class ArcadeModel {
     d.flash = .12;
     // --- sentinel rush: the berserk transformation and the rush shield.
     if (_rushShieldHit(d, damage, homing: homing, atX: atX, atY: atY)) return;
+    // --- spear-bearers: a diving bearer's buckler takes it from the front.
+    if (_bucklerHit(d, damage, homing: homing, atY: atY)) return;
     if (d.dive > 0 && d.diveShieldMax == 0) {
       _igniteDiveShield(d);
     }

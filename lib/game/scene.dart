@@ -29,6 +29,8 @@ import 'dive_shield.dart'; // --- dive-shield-thinning
 import 'ground_painter.dart';
 import 'insignia_atlas.dart';
 import 'insignia_painter.dart';
+import 'spear_bearer_atlas.dart'; // --- spear-bearers
+import 'spear_bearer_painter.dart';
 import 'model.dart';
 import 'perf/frame_budget.dart'; // --- phone-performance
 import 'hatch_emergence.dart'; // --- hatch-emergence
@@ -157,6 +159,10 @@ class DemonScene extends FlameGame {
     } catch (_) {}
     try {
       insignia.image = await images.load(InsigniaAtlas.file);
+    } catch (_) {}
+    try {
+      // --- spear-bearers: the buckler and spear (tools/spear_bearers).
+      SpearBearerPainter.image = await images.load(SpearBearerAtlas.file);
     } catch (_) {}
     try {
       // --- crosswind: the kites (tools/wind_kites).
@@ -1307,6 +1313,19 @@ class DemonScene extends FlameGame {
           opacity: reveal,
         );
       }
+      // --- spear-bearers: the buckler and spear over the armour.
+      if (d.spear != null && reveal > 0) {
+        SpearBearerPainter.gear(
+          c,
+          d,
+          pos,
+          size,
+          cell.lift,
+          model.clock,
+          alpha: reveal * far,
+          reduced: model.reducedMotion,
+        );
+      }
       _creatureLighting(
         c,
         pos,
@@ -1407,6 +1426,9 @@ class DemonScene extends FlameGame {
       frameInterval: perf.interval,
       smear: !sectors.flyover.reducedMotion,
     );
+    // --- spear-bearers: thrown spears and knocked-away bucklers.
+    SpearBearerPainter.spears(c, model, ShotLayer.leadOf(model));
+    SpearBearerPainter.fallen(c, model);
     _mark(c, 'player');
     if (model.mode != RunMode.gameOver &&
         model.presentationMode != RunMode.levelClear &&
