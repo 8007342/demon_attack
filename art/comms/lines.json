@@ -5141,6 +5141,214 @@
         {"speaker": "anvil", "text": "Wind's dying down. Back to straight shooting.", "emotion": "calm"},
         {"speaker": "nomad", "text": "Calm air again. Enjoy it while it lasts.", "emotion": "warm"}
       ]
+    },
+    "diveCry.grunt": {
+      "priority": 3,
+      "cooldown": 2,
+      "ttl": 1.5,
+      "pending": "text",
+      "lines": [],
+      "demon": {
+        "priority": 4,
+        "cooldown": 2,
+        "ttl": 1.5,
+        "delay": 0,
+        "lines": [
+          {"speaker": "skritch", "grunt": "cackle", "gloss": "Eep! Watch me!", "say": "Eep! Watch me!", "emotion": "excited"},
+          {"speaker": "skritch", "grunt": "warcry", "gloss": "Fang and... eep! Wings!", "say": "Fang and... eep! Wings!", "emotion": "excited"},
+          {"speaker": "grunnok", "grunt": "warcry", "gloss": "Big wings someday!", "say": "Big wings someday!", "emotion": "excited"},
+          {"speaker": "blatch", "grunt": "cackle", "gloss": "Eek! Coming through!", "say": "Eek! Coming through!", "emotion": "excited"},
+          {"speaker": "morth", "grunt": "warcry", "gloss": "For the crown! Later!", "say": "For the crown! Later!", "emotion": "excited"},
+          {"speaker": "nibb", "grunt": "warcry", "gloss": "Fangy-wingy!", "say": "Fangy-wingy!", "emotion": "excited"},
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "Me too! Me too!", "say": "Me too! Me too!", "emotion": "excited"},
+          {"speaker": "sliss", "grunt": "cackle", "gloss": "Ssswoop!", "say": "Ssswoop!", "emotion": "excited"}
+        ]
+      }
+    },
+    "diveCry.veteran": {
+      "priority": 3,
+      "cooldown": 2,
+      "ttl": 1.5,
+      "pending": "text",
+      "lines": [],
+      "demon": {
+        "priority": 4,
+        "cooldown": 2,
+        "ttl": 1.5,
+        "delay": 0,
+        "lines": [
+          {"speaker": "grunnok", "grunt": "roar", "gloss": "WINGS OUT!", "say": "WINGS OUT!", "emotion": "triumphant"},
+          {"speaker": "skritch", "grunt": "roar", "gloss": "Wings up, nose down!", "say": "Wings up, nose down!", "emotion": "triumphant"},
+          {"speaker": "blatch", "grunt": "roar", "gloss": "Got my wings! Fangs next!", "say": "Got my wings! Fangs next!", "emotion": "triumphant"},
+          {"speaker": "morth", "grunt": "roar", "gloss": "The crown dives!", "say": "The crown dives!", "emotion": "triumphant"},
+          {"speaker": "krag", "grunt": "roar", "gloss": "Wings! Rrrah!", "say": "Wings! Rrrah!", "emotion": "triumphant"},
+          {"speaker": "sliss", "grunt": "roar", "gloss": "Wingsss wide!", "say": "Wingsss wide!", "emotion": "triumphant"}
+        ]
+      }
+    },
+    "diveCry.hunter": {
+      "priority": 3,
+      "cooldown": 2,
+      "ttl": 1.5,
+      "pending": "text",
+      "lines": [],
+      "demon": {
+        "priority": 4,
+        "cooldown": 2,
+        "ttl": 1.5,
+        "delay": 0,
+        "lines": [
+          {"speaker": "blatch", "grunt": "snarl", "gloss": "Fangs first!", "say": "Fangs first!", "emotion": "stern"},
+          {"speaker": "skritch", "grunt": "snarl", "gloss": "Bite and dive!", "say": "Bite and dive!", "emotion": "stern"},
+          {"speaker": "grunnok", "grunt": "snarl", "gloss": "Fang and Wings!", "say": "Fang and Wings!", "emotion": "stern"},
+          {"speaker": "morth", "grunt": "snarl", "gloss": "Fang, wing and crown!", "say": "Fang, wing and crown!", "emotion": "stern"},
+          {"speaker": "sliss", "grunt": "snarl", "gloss": "Fangsss bared!", "say": "Fangsss bared!", "emotion": "stern"},
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "Fang and Wings, darling!", "say": "Fang and Wings, darling!", "emotion": "teasing"}
+        ]
+      }
+    },
+    "diveCry.sentinel": {
+      "priority": 3,
+      "cooldown": 2,
+      "ttl": 1.5,
+      "pending": "text",
+      "lines": [],
+      "demon": {
+        "priority": 4,
+        "cooldown": 2,
+        "ttl": 1.5,
+        "delay": 0,
+        "lines": [
+          {"speaker": "krag", "grunt": "warcry", "gloss": "FANG AND WINGS!", "say": "FANG AND WINGS!", "emotion": "triumphant"},
+          {"speaker": "gorrak", "grunt": "warcry", "gloss": "FANG! AND! WINGS!", "say": "FANG! AND! WINGS!", "emotion": "triumphant"},
+          {"speaker": "ulgra", "grunt": "roar", "gloss": "BY FANG AND WING!", "say": "BY FANG AND WING!", "emotion": "stern"},
+          {"speaker": "morth", "grunt": "rally", "gloss": "FANG AND WINGS! KNEEL!", "say": "FANG AND WINGS! KNEEL!", "emotion": "stern"},
+          {"speaker": "skarn", "grunt": "warcry", "gloss": "FANG AND WINGS! STOKE IT!", "say": "FANG AND WINGS! STOKE IT!", "emotion": "triumphant"},
+          {"speaker": "vexxa", "grunt": "warcry", "gloss": "FANG AND WINGS, PILOT!", "say": "FANG AND WINGS, PILOT!", "emotion": "triumphant"},
+          {"speaker": "grunnok", "grunt": "roar", "gloss": "FANG AND WIIINGS!", "say": "FANG AND WIIINGS!", "emotion": "triumphant"},
+          {"speaker": "skritch", "grunt": "warcry", "gloss": "FANG AND WINGS! BIG ONE!", "say": "FANG AND WINGS! BIG ONE!", "emotion": "triumphant"},
+          {"speaker": "blatch", "grunt": "warcry", "gloss": "FANG AND WINGS! ALL IN!", "say": "FANG AND WINGS! ALL IN!", "emotion": "triumphant"}
+        ]
+      }
+    },
+    "fangChatter": {
+      "priority": 3,
+      "cooldown": 25,
+      "ttl": 3,
+      "pending": "text",
+      "lines": [],
+      "demon": {
+        "priority": 3,
+        "cooldown": 25,
+        "ttl": 3,
+        "delay": 0,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "rally", "gloss": "Fang and Wings! Say it like you mean it!", "say": "Fang and Wings! Say it like you mean it!", "emotion": "triumphant"},
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "Wings are given. Fangs are earned, sweetie.", "say": "Wings are given. Fangs are earned, sweetie.", "emotion": "teasing"},
+          {"speaker": "skarn", "grunt": "order", "gloss": "Grunts! Earn your wings before you ask for fangs!", "say": "Grunts! Earn your wings before you ask for fangs!", "emotion": "stern"},
+          {"speaker": "morth", "grunt": "rally", "gloss": "Fang for the hunt. Wings for the flock.", "say": "Fang for the hunt. Wings for the flock.", "emotion": "stern"},
+          {"speaker": "ulgra", "grunt": "rally", "gloss": "The ark remembers every mark you earn.", "say": "The ark remembers every mark you earn.", "emotion": "stern"},
+          {"speaker": "grunnok", "grunt": "gloat", "gloss": "Polished my wings. Shiny, yes?", "say": "Polished my wings. Shiny, yes?", "emotion": "teasing"},
+          {"speaker": "skritch", "grunt": "cackle", "gloss": "One day, fangs! One day!", "say": "One day, fangs! One day!", "emotion": "excited"},
+          {"speaker": "nibb", "grunt": "alarm", "gloss": "My wing came unstuck!", "say": "My wing came unstuck!", "emotion": "panicked"},
+          {"speaker": "krag", "grunt": "snarl", "gloss": "Earned my fangs. Now where is my snack?", "say": "Earned my fangs. Now where is my snack?", "emotion": "stern"},
+          {"speaker": "blatch", "grunt": "order", "gloss": "Fangs up front! Wings on the flanks!", "say": "Fangs up front! Wings on the flanks!", "emotion": "stern"},
+          {"speaker": "sliss", "grunt": "snarl", "gloss": "Fangsss are earned in the dark.", "say": "Fangsss are earned in the dark.", "emotion": "stern"},
+          {"speaker": "morth", "grunt": "gloat", "gloss": "Who forgot the creed? Fang and Wings!", "say": "Who forgot the creed? Fang and Wings!", "emotion": "teasing"}
+        ]
+      }
+    },
+    "fangBanter": {
+      "priority": 4,
+      "cooldown": 40,
+      "ttl": 4,
+      "exchange": "demon",
+      "pending": "text",
+      "lines": [
+        {"speaker": "rook", "text": "Fang and Wings? More like Flap and Whine!", "emotion": "teasing", "signature": true},
+        {"speaker": "sparrow", "text": "Fang and Wings? Fangs for nothing!", "emotion": "teasing", "signature": true},
+        {"speaker": "sunny", "text": "Fangs and wings? Sounds like the lunch special.", "emotion": "teasing", "signature": true},
+        {"speaker": "anvil", "text": "Nice wings. Mine came with engines.", "emotion": "calm"},
+        {"speaker": "kestrel", "text": "Wear all the fangs you like. Aim still counts.", "emotion": "stern"},
+        {"speaker": "pip", "text": "Can I earn a fang too? For the fleet, I mean!", "emotion": "excited"},
+        {"speaker": "nomad", "text": "Every flock needs a motto. Ours is duck.", "emotion": "warm"},
+        {"speaker": "admiral", "text": "Mottos don't fly. Pilots do.", "emotion": "stern"},
+        {"speaker": "lindqvist", "text": "Battle cry logged. Threat level unchanged.", "emotion": "calm"},
+        {"speaker": "wisp", "text": "Translation: Fang and Wings. Accuracy: still pending.", "emotion": "calm"},
+        {"speaker": "kessler", "text": "Fang and Wings? Down here it's Tracks and Treads!", "emotion": "teasing"},
+        {"speaker": "march", "text": "Bastion has walls. Bring your wings.", "emotion": "stern"}
+      ],
+      "demon": {
+        "priority": 4,
+        "cooldown": 40,
+        "ttl": 4,
+        "delay": 0,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "rally", "gloss": "Look up, pilot! FANG AND WINGS!", "say": "Look up, pilot! FANG AND WINGS!", "emotion": "triumphant"},
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "Fang and Wings, shiny-shell. Read it and weep.", "say": "Fang and Wings, shiny-shell. Read it and weep.", "emotion": "teasing"},
+          {"speaker": "skarn", "grunt": "warcry", "gloss": "FANG AND WINGS! Feel the heat!", "say": "FANG AND WINGS! Feel the heat!", "emotion": "triumphant"},
+          {"speaker": "skritch", "grunt": "cackle", "gloss": "See my wings? Fang and Wings!", "say": "See my wings? Fang and Wings!", "emotion": "excited"},
+          {"speaker": "grunnok", "grunt": "roar", "gloss": "Fang and Wings! Count the fangs!", "say": "Fang and Wings! Count the fangs!", "emotion": "triumphant"},
+          {"speaker": "morth", "grunt": "rally", "gloss": "Every fang is earned. Every wing is sworn.", "say": "Every fang is earned. Every wing is sworn.", "emotion": "stern"},
+          {"speaker": "ulgra", "grunt": "roar", "gloss": "By Fang and Wings, this sky is ours!", "say": "By Fang and Wings, this sky is ours!", "emotion": "stern"},
+          {"speaker": "blatch", "grunt": "snarl", "gloss": "Fangs up! Wings out! Fang and Wings!", "say": "Fangs up! Wings out! Fang and Wings!", "emotion": "stern"},
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "Fang and Wings! I said it right!", "say": "Fang and Wings! I said it right!", "emotion": "excited"}
+        ]
+      }
+    },
+    "fangTease": {
+      "priority": 4,
+      "cooldown": 45,
+      "ttl": 4,
+      "exchange": "human",
+      "pending": "text",
+      "lines": [
+        {"speaker": "kestrel", "text": "Fangs on its head? That one hunts. Watch it.", "emotion": "stern"},
+        {"speaker": "nomad", "text": "Wings and a crown on the big one. Give it room.", "emotion": "calm"},
+        {"speaker": "admiral", "text": "Read the marks, pilot. No mark, just a rookie.", "emotion": "calm"},
+        {"speaker": "sparrow", "text": "That one has wings on its head. Is that a hat?", "emotion": "teasing"},
+        {"speaker": "rook", "text": "Hey, Fangs! Your little wings are crooked!", "emotion": "teasing"},
+        {"speaker": "sunny", "text": "Forecast: Fang and Wings, then Flap and Whine.", "emotion": "teasing", "signature": true},
+        {"speaker": "pip", "text": "How come the little ones don't get badges?", "emotion": "excited"}
+      ],
+      "demon": {
+        "priority": 4,
+        "cooldown": 45,
+        "ttl": 4,
+        "delay": 0,
+        "lines": [
+          {"speaker": "vexxa", "grunt": "snarl", "gloss": "These wings are EARNED, tin-can!", "say": "These wings are EARNED, tin-can!", "emotion": "stern"},
+          {"speaker": "gorrak", "grunt": "snarl", "gloss": "Mock the marks again. I dare you!", "say": "Mock the marks again. I dare you!", "emotion": "stern"},
+          {"speaker": "skritch", "grunt": "alarm", "gloss": "Not stickers! Badges! Very serious badges!", "say": "Not stickers! Badges! Very serious badges!", "emotion": "panicked"},
+          {"speaker": "grunnok", "grunt": "gloat", "gloss": "It is a crown! A small one! Still counts!", "say": "It is a crown! A small one! Still counts!", "emotion": "teasing"},
+          {"speaker": "skarn", "grunt": "snarl", "gloss": "Fang and WINGS, void-spawn. Say it right!", "say": "Fang and WINGS, void-spawn. Say it right!", "emotion": "stern"},
+          {"speaker": "blatch", "grunt": "gloat", "gloss": "Yes. Fear the fangs.", "say": "Yes. Fear the fangs.", "emotion": "teasing"},
+          {"speaker": "morth", "grunt": "gloat", "gloss": "Rookies earn wings first. Fangs come after.", "say": "Rookies earn wings first. Fangs come after.", "emotion": "stern"},
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "I get my wings next week!", "say": "I get my wings next week!", "emotion": "excited"}
+        ]
+      }
+    },
+    "spearThrow": {
+      "priority": 3,
+      "cooldown": 5,
+      "ttl": 1.2,
+      "pending": "text",
+      "lines": [],
+      "demon": {
+        "priority": 3,
+        "cooldown": 5,
+        "ttl": 1.2,
+        "chance": 0.6,
+        "delay": 0,
+        "lines": [
+          {"speaker": "grunnok", "grunt": "warcry", "gloss": "Catch!", "say": "Catch!", "emotion": "teasing"},
+          {"speaker": "krag", "grunt": "roar", "gloss": "Long fang! Hrrah!", "say": "Long fang! Hrrah!", "emotion": "triumphant"},
+          {"speaker": "skarn", "grunt": "warcry", "gloss": "Special delivery!", "say": "Special delivery!", "emotion": "teasing"},
+          {"speaker": "blatch", "grunt": "snarl", "gloss": "Fang from afar!", "say": "Fang from afar!", "emotion": "stern"},
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "Heads up, shiny-shell!", "say": "Heads up, shiny-shell!", "emotion": "teasing"},
+          {"speaker": "gorrak", "grunt": "warcry", "gloss": "Fang and Wings! THROW!", "say": "Fang and Wings! THROW!", "emotion": "triumphant"}
+        ]
+      }
     }
   }
 }
