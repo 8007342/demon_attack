@@ -164,6 +164,9 @@ assert(os.execute('mkdir -p ' .. q(tmp)))
 --    raised-cosine fade-in (at least 1 ms, for sources that start inside their attack), so the attack is whole and
 --    the first sample is silence (silenceremove's 20 ms RMS window started zones inside the attack: a click).
 -- 5. Resample 44.1 -> 48 kHz with a 256-tap Kaiser (beta 12) sinc: images -119 dB (ffmpeg's default: -48 dB).
+-- --- choir-real: `dc: true` subtracts each output channel's mean (over the decoded head) before the onset search:
+--    epic-choir's hall sums carry -55 to -67 dB of DC (re full scale, after normalising) against the standard's
+--    -58 (adaptive-soundtrack design §12.11). Off by default, so every other zone is byte for byte as before.
 local PREROLL, ONSET_DB = 0.002, -40
 local RESAMPLE = 'aresample=48000:filter_size=256:phase_shift=14:cutoff=0.97:kaiser_beta=12'
 local function unpackFloats(bytes)
@@ -238,6 +241,15 @@ local function decode(z)
     elseif z.pick == 'sum' then local m = {}; for i = 1, frames do local v = 0; for c = 1, sch do v = v + ch[c][i] end; m[i] = v / sch end; outc = { m }
     else outc = { ch[z.pick == 'R' and 2 or 1] } end
   else outc = sch == 1 and { ch[1], ch[1] } or { ch[1], ch[2] } end
+  if z.dc then
+    for c = 1, #outc do
+      local m, t = 0, {}
+      for i = 1, frames do m = m + outc[c][i] end
+      m = m / frames
+      for i = 1, frames do t[i] = outc[c][i] - m end
+      outc[c] = t
+    end
+  end
   local peak = 0
   for c = 1, #outc do for i = 1, frames do local a = math.abs(outc[c][i]); if a > peak then peak = a end end end
   local threshold, onset = peak * 10 ^ (ONSET_DB / 20), 1

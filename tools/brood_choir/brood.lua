@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 -- brood.lua: the brood choir's sources (openspec/changes/demon-choir design §3, §4). Pure Lua 5.4 + ffmpeg.
 --
--- Run from the repo root:
+-- Run from the repo root (--recipe FILE picks another recipe, e.g. art/music/choir/real.json; --manifest FILE its manifest):
 --   lua tools/brood_choir/brood.lua render [--src DIR]   render the formant-synth choir zones (vowel x pitch) from
 --                                                       art/music/choir/brood.json into DIR/local/brood-synth/
 --   lua tools/brood_choir/brood.lua cut [--raw DIR] [--src DIR]
@@ -192,6 +192,7 @@ end
 
 local function render()
   local synth = recipe.synth
+  if not synth then say('%s has no synth: nothing to render', recipePath); return end
   local dir = ('%s/local/brood-synth'):format(src)
   assert(os.execute('mkdir -p ' .. q(dir)))
   for _, z in ipairs(synth.zones) do
@@ -202,40 +203,61 @@ local function render()
   end
 end
 
+-- --- choir-real: a pick may cut a PINNED file (`source`, a path under --src such as
+-- sfzinstruments/karoryfer.272-merry-orks/samples/misc/ugh_rr1.wav, verified by tools/brood_choir/pins.lua) into its
+-- own folder (`dir`, default local/acestep-picks), and pitch it by `shift` semitones the way a tape does (formants
+-- move with the pitch and the length scales by 2^(-shift/12)): the source rate is relabelled, then resampled to the
+-- recipe's rate by the bank builder's 256-tap sinc. `start`/`end` are in the source's seconds; the fades in the output's.
+local RESAMPLE = 'aresample=%d:filter_size=256:phase_shift=14:cutoff=0.97:kaiser_beta=12'
+local function sourceRate(path)
+  local text = sh(('ffmpeg -hide_banner -nostdin -i %s 2>&1'):format(q(path)))
+  return tonumber(text:match('Audio: [^\n]-(%d+) Hz'))
+end
 local function cut()
-  local dir = ('%s/local/acestep-picks'):format(src)
-  assert(os.execute('mkdir -p ' .. q(dir)))
-  for _, p in ipairs(recipe.picks) do
-    local input = ('%s/%s'):format(raw, p.take)
+  for _, p in ipairs(recipe.picks or {}) do
+    local dir = ('%s/%s'):format(src, p.dir or 'local/acestep-picks')
+    assert(os.execute('mkdir -p ' .. q(dir)))
+    local input = p.source and ('%s/%s'):format(src, p.source) or ('%s/%s'):format(raw, p.take)
     local f = io.open(input, 'rb')
-    if not f then say('missing raw take %s: skipped (the ACE-Step picks need the raws, see the run ledger)', input) else
+    if not f then say('missing %s %s: skipped (%s)', p.source and 'pinned source' or 'raw take', input,
+      p.source and 'run lua tools/brood_choir/pins.lua fetch' or 'the ACE-Step picks need the raws, see the run ledger') else
       f:close()
       local fadeOut = p.fadeOut or 0.06
+      local stretch = 2 ^ (-(p.shift or 0) / 12)
+      local len = (p['end'] - p.start) * stretch
+      local pitch = ''
+      if (p.shift or 0) ~= 0 then
+        local sr = assert(sourceRate(input), 'no sample rate: ' .. input)
+        pitch = ('asetrate=%d,%s,'):format(math.floor(sr / stretch + 0.5), RESAMPLE:format(recipe.rate))
+      end
       -- `highpass` (Hz) removes the low drone some takes keep under the shouts.
-      local af = ('atrim=start=%.3f:end=%.3f,asetpts=PTS-STARTPTS,%safade=t=in:d=0.004,afade=t=out:st=%.3f:d=%.3f')
-        :format(p.start, p['end'], p.highpass and ('highpass=f=%d:poles=2,highpass=f=%d:poles=2,'):format(p.highpass, p.highpass) or '',
-          p['end'] - p.start - fadeOut, fadeOut)
+      local af = ('atrim=start=%.3f:end=%.3f,asetpts=PTS-STARTPTS,%s%safade=t=in:d=0.004,afade=t=out:st=%.3f:d=%.3f')
+        :format(p.start, p['end'], pitch, p.highpass and ('highpass=f=%d:poles=2,highpass=f=%d:poles=2,'):format(p.highpass, p.highpass) or '',
+          len - fadeOut, fadeOut)
       local out = ('%s/%s.wav'):format(dir, p.name)
       local c = ('ffmpeg -v error -nostdin -y -i %s -af %s -ac 1 -ar %d -c:a pcm_f32le -map_metadata -1 -fflags +bitexact -flags:a +bitexact %s')
         :format(q(input), q(af), recipe.rate, q(out))
       if not os.execute(c) then error('ffmpeg could not cut ' .. p.name) end
-      say('cut %s from %s %.2f-%.2f s', p.name, p.take, p.start, p['end'])
+      say('cut %s from %s %.2f-%.2f s%s', p.name, p.source or p.take, p.start, p['end'], p.shift and (' shifted %+d'):format(p.shift) or '')
     end
   end
 end
 
 local function manifest()
   local rows = { 'repo\tcommit\tgroup\tpath\tbytes\tgit_blob_sha1\traw_url' }
-  local function add(repo, group, path)
+  local function add(repo, group, path, commit)
     local file = ('%s/%s/%s'):format(src, repo, path)
     local f = io.open(file, 'rb')
     if not f then say('missing %s: not in the manifest', file); return end
     local bytes = f:seek('end'); f:close()
     local blob = sh('git hash-object --no-filters ' .. q(file)):match('^(%x+)')
-    rows[#rows + 1] = table.concat({ repo, recipe.commit or '-', group, path, tostring(bytes), blob, '' }, '\t')
+    rows[#rows + 1] = table.concat({ repo, commit or recipe.commit or '-', group, path, tostring(bytes), blob, '' }, '\t')
   end
-  for _, z in ipairs(recipe.synth.zones) do add('local/brood-synth', 'brood', ('brood_%s_%s.wav'):format(z.vowel, z.name)) end
-  for _, p in ipairs(recipe.picks) do add('local/acestep-picks', p.group, p.name .. '.wav') end
+  if recipe.synth then for _, z in ipairs(recipe.synth.zones) do add('local/brood-synth', 'brood', ('brood_%s_%s.wav'):format(z.vowel, z.name)) end end
+  -- --- choir-real: `sources` lists files used as they are (pinned samples by repo and path, or another recipe's
+  -- local renders and cuts); their blob sha1 is what the bank builder verifies.
+  for _, r in ipairs(recipe.sources or {}) do add(r.repo, r.group, r.path, r.commit) end
+  for _, p in ipairs(recipe.picks or {}) do add(p.dir or 'local/acestep-picks', p.group, p.name .. '.wav') end
   local path = opts.manifest or 'art/music/bank/choir.manifest.tsv'
   local f = assert(io.open(path, 'wb')); f:write(table.concat(rows, '\n'), '\n'); f:close()
   say('wrote %s (%d rows)', path, #rows - 1)

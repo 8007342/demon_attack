@@ -162,7 +162,7 @@ function B.plan(recipe, rows, keys, opts)
           channels = inst.channels or 1, trim = inst.trim, order = index,
           -- --- bank-fidelity (design §12.11): the encode rate, end fade, declip and stereo-to-mono pick per instrument.
           kbps = inst.kbps or recipe.kbps[tostring(inst.channels or 1)], fade = inst.fade or recipe.fadeSeconds,
-          declip = inst.declip, pick = inst.pick }
+          declip = inst.declip, pick = inst.pick, dc = inst.dc }
         -- Velocity range from the recipe's layer split; one layer covers 1..127.
         if inst.layers then
           local v = inst.layers[layer or '']

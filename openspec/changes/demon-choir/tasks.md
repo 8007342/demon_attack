@@ -46,3 +46,17 @@
       within 0.3 s, else at `tellIn`: `demonAudio.accent(name, inSeconds, fallbackIn)`, design §6.1)
 - [x] 7.3 Re-check the choir's sprites against `bank-fidelity` §12.11 once pushed (round 8: rebuilt, design §4.1)
 - [ ] 7.4 Phone tier for the choir, more sections, and the register (epic-choir, 272 Merry Orks)
+
+## 8. Real samples (`work/choir-real`, design §11)
+- [x] 8.1 `tools/brood_choir/pins.lua`: fetch and verify the pins (git blobs by size and sha1; the epic-choir zip by
+      sha256 before extraction, each member by CRC32); the zip stays in `~/.cache/tillandsias-project/choir-src/`
+- [x] 8.2 `brood.lua cut`: picks from pinned sources with a tape-style `shift`; `manifest`: `sources` used as they are
+- [x] 8.3 `bank_build.lua`: `dc: true` (opt-in; `bank.json` and the approved `choir.json` rebuild byte for byte)
+- [x] 8.4 Measure and pick: brood mono sum at 160 kbps, declip and DC, A#2 stretched to E2 (against two formant zones);
+      Orks grunts −7 with a 0.7 s trim; ACE-Step war cries kept (against the Orks growls); levels matched
+- [x] 8.5 Recipe `art/music/choir/real.json`, `art/music/bank/choir-real-recipe.json`, `choir-real.manifest.tsv`
+- [x] 8.6 Credits: the two choir rows go live when `choir.json` names their source; `assets/credits.json` regenerated
+- [x] 8.7 A/B listening page (approved, real, hybrid): https://claude.ai/artifact/BRp5LaDJBJYiiQAG7ioU35
+- [x] 8.8 Verdict: real recommended, not active (brood codec SNR 0.5 dB under the approved); score, `midi_stats`, trims
+      unchanged; §2 gates
+- [ ] 8.9 The operator's listen: ship the real candidate (design §11.6 commands) or keep the approved choir

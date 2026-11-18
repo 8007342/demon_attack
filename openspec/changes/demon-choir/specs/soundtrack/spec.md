@@ -61,3 +61,18 @@ A `diveCry` event SHALL play the `warcry` stinger. The stinger SHALL be a war-cr
 #### Scenario: Bank off
 - **WHEN** `diveCry` fires with the bank off
 - **THEN** `demonAudio.accent('warcry')` returns null and nothing sounds
+
+### Requirement: Choir candidates
+A choir recipe built from pinned sample libraries SHALL be verified before its samples are used and SHALL replace the active choir only if it measures at least as clean, instrument by instrument, as the choir it replaces. A CC BY source's credit line SHALL be listed in the credits before its samples ship and SHALL be marked live in the build that ships them.
+
+#### Scenario: A pin does not match
+- **WHEN** a fetched file's size, git blob sha1, CRC32 or the release zip's sha256 differs from `plan/choir-pins.manifest.tsv`
+- **THEN** `tools/brood_choir/pins.lua` deletes that file and exits 1, and no member of an unverified zip is extracted
+
+#### Scenario: The candidate is less clean on one count
+- **WHEN** the real candidate's brood encodes at 36.7 dB median magnitude SNR against the approved brood's 37.2 dB
+- **THEN** `web/audio/bank/choir.json` stays the approved build, and the candidate's recipe and manifest are committed beside it
+
+#### Scenario: The epic-choir samples ship
+- **WHEN** `web/audio/bank/choir.json` names the source `thepok/epic-choir`
+- **THEN** `tools/generate_credits.lua` lists its VocalSet credit line as live, with the changes made and the CC BY 4.0 link

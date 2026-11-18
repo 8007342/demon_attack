@@ -139,6 +139,25 @@ for _,row in ipairs({
   'CC BY 4.0','https://github.com/thepok/epic-choir',
   'Coming with the brood choir. Changed for this game: cut, pitched, downmixed to mono and encoded to Opus. Licence: https://creativecommons.org/licenses/by/4.0/'},
 })do samples[#samples+1]={name=row[1],license=row[2],url=row[3],source=row[4]}end
+-- --- choir-real: the two rows go live in the same build that ships their samples, i.e. once web/audio/bank/choir.json
+-- (built from art/music/bank/choir-real-recipe.json) names their source; epic-choir keeps its change note and licence
+-- link (CC BY 4.0). The approved choir (formant synth + ACE-Step) names neither, so they stay "coming".
+do
+ local live={['thepok/epic-choir']={url='https://github.com/thepok/epic-choir'},
+  ['local/orks-picks']={url='https://github.com/sfzinstruments/karoryfer.272-merry-orks',commit='a437e2c02014e02710a104a6692193eab8672d0a'}}
+ local f=io.open('web/audio/bank/choir.json','r')
+ if f then f:close()
+  local ok,list=pcall(read,{'jq','-r','.sources|to_entries[]|[.key,(.value.commit//"-")]|@tsv','web/audio/bank/choir.json'})
+  for _,row in ipairs(ok and lines(list)or{})do
+   local key,commit=row:match('^([^\t]+)\t([^\t]*)$')
+   local l=key and live[key]
+   if l then for _,r in ipairs(samples)do if r.url==l.url then
+    local pin=(commit~='-' and commit or l.commit or ''):sub(1,12)
+    r.source=r.source:gsub('^Coming with the brood choir%.?%s*','Brood choir (desktop), pinned at '..pin..(r.license=='CC BY 4.0' and '. ' or ''))
+   end end end
+  end
+ end
+end
 -- The open-source projects the game, its asset pipelines and its delivery are built on (credits-page design §5).
 local function group(title,rows)
  local out={};for _,r in ipairs(rows)do out[#out+1]={name=r[1],url=r[2],license=r[3]}end
