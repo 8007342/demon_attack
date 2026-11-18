@@ -47,6 +47,7 @@ const commsLineupGround = 2;
 const commsGroupGap = <String, double>{
   'ground': 6.0,
   'loot': 25.0,
+  'weather': 10.0,
 };
 
 /// Demon officers on the brood net per sector (1-5).
@@ -1841,6 +1842,85 @@ const commsHumanTriggers = <String, CommsTriggerSpec>{
       CommsLine(id: 'windStop.h1', speaker: 'nomad', duration: 2.66, text: 'Calm air again. Enjoy it while it lasts.', emotion: 'warm', silent: true),
     ],
   ),
+  'windStart.gale': CommsTriggerSpec(
+    name: 'windStart.gale',
+    priority: 4,
+    cooldown: 60.0,
+    ttl: 4.0,
+    mood: CommsMood.worried,
+    group: 'weather',
+    lines: [
+      CommsLine(id: 'windStart.gale.h0', speaker: 'rook', duration: 1.85, text: 'Gale rising! Aim into it.', emotion: 'urgent', silent: true),
+      CommsLine(id: 'windStart.gale.h1', speaker: 'kestrel', duration: 2.39, text: 'Strong wind, pilot. Lead your shots upwind.', emotion: 'calm', silent: true),
+      CommsLine(id: 'windStart.gale.h2', speaker: 'sparrow', duration: 1.85, text: 'Whoa, it\'s really blowing now!', emotion: 'excited', silent: true),
+    ],
+  ),
+  'windGust.swing': CommsTriggerSpec(
+    name: 'windGust.swing',
+    priority: 4,
+    cooldown: 14.0,
+    ttl: 1.5,
+    chance: 0.5,
+    mood: CommsMood.worried,
+    group: 'weather',
+    lines: [
+      CommsLine(id: 'windGust.swing.h0', speaker: 'wisp', duration: 1.85, text: 'Wind\'s turning! Check the sock.', emotion: 'urgent', silent: true),
+      CommsLine(id: 'windGust.swing.h1', speaker: 'anvil', duration: 1.31, text: 'Wind shift. Re-aim.', emotion: 'calm', silent: true),
+      CommsLine(id: 'windGust.swing.h2', speaker: 'sunny', duration: 1.58, text: 'Other way now! Adjust!', emotion: 'urgent', silent: true),
+    ],
+  ),
+  'windDive': CommsTriggerSpec(
+    name: 'windDive',
+    priority: 5,
+    cooldown: 25.0,
+    ttl: 1.5,
+    chance: 0.5,
+    mood: CommsMood.worried,
+    group: 'weather',
+    lines: [
+      CommsLine(id: 'windDive.h0', speaker: 'rook', duration: 1.85, text: 'One\'s riding the gust down!', emotion: 'urgent', silent: true),
+      CommsLine(id: 'windDive.h1', speaker: 'kestrel', duration: 2.39, text: 'Diver on the wind. It\'ll curve in.', emotion: 'urgent', silent: true),
+    ],
+  ),
+  'stormStart': CommsTriggerSpec(
+    name: 'stormStart',
+    priority: 5,
+    cooldown: 90.0,
+    ttl: 4.0,
+    mood: CommsMood.worried,
+    group: 'weather',
+    lines: [
+      CommsLine(id: 'stormStart.h0', speaker: 'kestrel', duration: 2.93, text: 'Lightning in this storm. Watch for the amber marks.', emotion: 'calm', silent: true),
+      CommsLine(id: 'stormStart.h1', speaker: 'sunny', duration: 3.2, text: 'Thunderstorm! Bolts won\'t hurt you, but they\'ll strip your gear.', emotion: 'urgent', silent: true),
+      CommsLine(id: 'stormStart.h2', speaker: 'anvil', duration: 2.39, text: 'Storm\'s live. Lure the bolts onto them.', emotion: 'stern', silent: true),
+    ],
+  ),
+  'stormStop': CommsTriggerSpec(
+    name: 'stormStop',
+    priority: 3,
+    cooldown: 90.0,
+    ttl: 3.0,
+    chance: 0.6,
+    mood: CommsMood.happy,
+    group: 'weather',
+    lines: [
+      CommsLine(id: 'stormStop.h0', speaker: 'nomad', duration: 1.85, text: 'Storm\'s moving off. Nice flying.', emotion: 'warm', silent: true),
+      CommsLine(id: 'stormStop.h1', speaker: 'wisp', duration: 1.85, text: 'No more bolts. Sky\'s clearing.', emotion: 'calm', silent: true),
+    ],
+  ),
+  'rainStart': CommsTriggerSpec(
+    name: 'rainStart',
+    priority: 2,
+    cooldown: 180.0,
+    ttl: 3.0,
+    chance: 0.5,
+    mood: CommsMood.happy,
+    group: 'weather',
+    lines: [
+      CommsLine(id: 'rainStart.h0', speaker: 'sparrow', duration: 1.85, text: 'Rain coming in. Eyes up.', emotion: 'calm', silent: true),
+      CommsLine(id: 'rainStart.h1', speaker: 'nomad', duration: 2.12, text: 'Here\'s the rain. Keep it steady.', emotion: 'warm', silent: true),
+    ],
+  ),
 };
 
 const commsDemonTriggers = <String, CommsTriggerSpec>{
@@ -2547,6 +2627,73 @@ const commsDemonTriggers = <String, CommsTriggerSpec>{
     lines: [
       CommsLine(id: 'windGust.d0', speaker: 'sliss', duration: 1.1, grunt: 'cackle', gloss: 'Wheee! Ride it, brood!', emotion: 'triumphant', silent: true),
       CommsLine(id: 'windGust.d1', speaker: 'skarn', duration: 1.1, grunt: 'roar', gloss: 'The gale answers the brood!', emotion: 'triumphant', silent: true),
+    ],
+  ),
+  'windStart.gale': CommsTriggerSpec(
+    name: 'windStart.gale',
+    priority: 3,
+    cooldown: 60.0,
+    ttl: 4.0,
+    delay: 1.2,
+    lines: [
+      CommsLine(id: 'windStart.gale.d0', speaker: 'skarn', duration: 1.1, grunt: 'roar', gloss: 'The gale wakes! Wings wide!', emotion: 'triumphant', silent: true),
+      CommsLine(id: 'windStart.gale.d1', speaker: 'nibb', duration: 1.1, grunt: 'cackle', gloss: 'Whee! Best weather ever!', emotion: 'excited', silent: true),
+    ],
+  ),
+  'windGust.swing': CommsTriggerSpec(
+    name: 'windGust.swing',
+    priority: 3,
+    cooldown: 24.0,
+    ttl: 2.0,
+    delay: 0.8,
+    lines: [
+      CommsLine(id: 'windGust.swing.d0', speaker: 'vexxa', duration: 1.1, grunt: 'gloat', gloss: 'The sky turns, and we turn with it.', emotion: 'teasing', silent: true),
+      CommsLine(id: 'windGust.swing.d1', speaker: 'morth', duration: 1.1, grunt: 'cackle', gloss: 'Swing left! Swing right! Fun!', emotion: 'excited', silent: true),
+    ],
+  ),
+  'windDive': CommsTriggerSpec(
+    name: 'windDive',
+    priority: 3,
+    cooldown: 25.0,
+    ttl: 2.0,
+    delay: 0.4,
+    lines: [
+      CommsLine(id: 'windDive.d0', speaker: 'gorrak', duration: 1.1, grunt: 'warcry', gloss: 'Ride the gust! Down we go!', emotion: 'triumphant', silent: true),
+      CommsLine(id: 'windDive.d1', speaker: 'sliss', duration: 1.1, grunt: 'cackle', gloss: 'Wind at my back! Wheee!', emotion: 'excited', silent: true),
+      CommsLine(id: 'windDive.d2', speaker: 'ulgra', duration: 1.1, grunt: 'snarl', gloss: 'The sky carries me to you.', emotion: 'stern', silent: true),
+    ],
+  ),
+  'stormStart': CommsTriggerSpec(
+    name: 'stormStart',
+    priority: 3,
+    cooldown: 90.0,
+    ttl: 4.0,
+    delay: 1.0,
+    lines: [
+      CommsLine(id: 'stormStart.d0', speaker: 'skarn', duration: 1.1, grunt: 'roar', gloss: 'Thunder! The sky sings for us!', emotion: 'triumphant', silent: true),
+      CommsLine(id: 'stormStart.d1', speaker: 'vexxa', duration: 1.1, grunt: 'gloat', gloss: 'Our storm. Our home. Mind your sparks.', emotion: 'teasing', silent: true),
+    ],
+  ),
+  'stormStop': CommsTriggerSpec(
+    name: 'stormStop',
+    priority: 2,
+    cooldown: 90.0,
+    ttl: 3.0,
+    delay: 1.0,
+    lines: [
+      CommsLine(id: 'stormStop.d0', speaker: 'morth', duration: 1.1, grunt: 'alarm', gloss: 'Come back, thunder! Come back!', emotion: 'panicked', silent: true),
+      CommsLine(id: 'stormStop.d1', speaker: 'skarn', duration: 1.1, grunt: 'snarl', gloss: 'The sky goes quiet. We do not.', emotion: 'stern', silent: true),
+    ],
+  ),
+  'rainStart': CommsTriggerSpec(
+    name: 'rainStart',
+    priority: 2,
+    cooldown: 180.0,
+    ttl: 3.0,
+    delay: 1.2,
+    lines: [
+      CommsLine(id: 'rainStart.d0', speaker: 'nibb', duration: 1.1, grunt: 'cackle', gloss: 'Puddles! Splashy splashy!', emotion: 'excited', silent: true),
+      CommsLine(id: 'rainStart.d1', speaker: 'vexxa', duration: 1.1, grunt: 'gloat', gloss: 'Rain on our wings. Home sweet home.', emotion: 'teasing', silent: true),
     ],
   ),
 };

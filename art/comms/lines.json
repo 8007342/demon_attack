@@ -2,7 +2,8 @@
   "comment": "Squad comms line bank v2. Trigger names are GameEvent names (lib/game/game_events.dart); 'sectorStart.3' is preferred over 'sectorStart' in sector 3, 'weaponPickup.spread' over 'weaponPickup'. Human lines are spoken by the named cast member (Kokoro TTS + radio chain); demon lines are grunts (kind = vocal gesture) shown as brood glyphs with a fleet SIGINT gloss. Speakers not on this run's lineup are skipped; if nobody on the call has a line, a fleet guest patches in. Clip ids are '<trigger>.h<n>' / '<trigger>.d<n>' in list order: append new lines, never reorder. priority 0-10 (>= 8 is gameplay-critical and may interrupt lower speech), cooldown seconds per trigger, ttl seconds a queued line may wait, chance = probability a chatter trigger speaks, delay = seconds before a demon reaction, mood = the face held after the line (happy, worried, stern), chain = extra lines from other crew after the first (celebrations). group = a rate-limit family; groupGap gives the seconds between two lines of one family (ground narration never drowns out the air callouts). 'signature': catchphrases and puns, rationed by the director. v3: every human line has an \"emotion\" (excited, urgent, panicked, triumphant, teasing, warm, exhausted, calm, stern) for the expressive TTS. \"urgent\": true marks the only gameplay-critical warnings that may cut a playing line; everything else queues. \"exchange\": \"human\"|\"demon\" makes the trigger a two-party exchange: that side speaks first, the other answers right after, and the channel is reserved for both turns. A demon part with \"overlap\": true (the regroup celebration) may overlap other voices for about a second. \"transmission\": true lines play as a full-size transmission in place of a transition on phones. groupGap rate-limits families: ground narration and loot/shield chatter. Tone: allies never die; a downed ship or squad is \"totalled\" and heads back to base. v4: \"divePrep\" (a demon is about to start a dive tell) carries brood battle cries; the reinforcements cheer chains a second brood voice; grunt kinds add \"cackle\" and \"warcry\". bonus-briefing: \"pending\": \"text\" on a trigger shows its unrecorded lines with their OWN words and speaker and plays no audio (a written radio line, mouth closed) instead of borrowing a placeholder; once recorded they are voiced as usual. Used for the urgent-mission card's chatter (bonusEntry*, bonusDare*) and the mid-level banter (bonusMidway*), whose words matter more than a borrowed voice. bonus-briefing-clarity: the card now speaks exactly one line, the level's bonusCall.<level> trigger (one sentence, one line per level); bonusEntry* still marks the transition slot as a bonus briefing, and bonusEntry* and bonusDare* keep their clip ids but are no longer spoken. bonus-challenges: a bonus level that declares a perfect-run challenge has the card speak its bonusChallenge.<level> line (the challenge call, one sentence) in place of bonusCall.<level>, which keeps its clip id; bonusChallengeFailed.<level> is the quip the moment the challenge breaks and bonusChallengeEarned(.<level>) the 1UP cheer, each with an optional brood retort.",
   "groupGap": {
     "ground": 6,
-    "loot": 25
+    "loot": 25,
+    "weather": 10
   },
   "triggers": {
     "sectorStart": {
@@ -5141,6 +5142,146 @@
         {"speaker": "anvil", "text": "Wind's dying down. Back to straight shooting.", "emotion": "calm"},
         {"speaker": "nomad", "text": "Calm air again. Enjoy it while it lasts.", "emotion": "warm"}
       ]
+    },
+    "windStart.gale": {
+      "priority": 4,
+      "cooldown": 60,
+      "ttl": 4,
+      "mood": "worried",
+      "pending": "text",
+      "group": "weather",
+      "lines": [
+        {"speaker": "rook", "text": "Gale rising! Aim into it.", "emotion": "urgent"},
+        {"speaker": "kestrel", "text": "Strong wind, pilot. Lead your shots upwind.", "emotion": "calm"},
+        {"speaker": "sparrow", "text": "Whoa, it's really blowing now!", "emotion": "excited"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 60,
+        "ttl": 4,
+        "delay": 1.2,
+        "lines": [
+          {"speaker": "skarn", "grunt": "roar", "gloss": "The gale wakes! Wings wide!", "say": "The gale wakes! Wings wide!", "emotion": "triumphant"},
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "Whee! Best weather ever!", "say": "Whee! Best weather ever!", "emotion": "excited"}
+        ]
+      }
+    },
+    "windGust.swing": {
+      "priority": 4,
+      "cooldown": 14,
+      "ttl": 1.5,
+      "chance": 0.5,
+      "mood": "worried",
+      "pending": "text",
+      "group": "weather",
+      "lines": [
+        {"speaker": "wisp", "text": "Wind's turning! Check the sock.", "emotion": "urgent"},
+        {"speaker": "anvil", "text": "Wind shift. Re-aim.", "emotion": "calm"},
+        {"speaker": "sunny", "text": "Other way now! Adjust!", "emotion": "urgent"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 24,
+        "ttl": 2,
+        "delay": 0.8,
+        "lines": [
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "The sky turns, and we turn with it.", "say": "The sky turns, and we turn with it.", "emotion": "teasing"},
+          {"speaker": "morth", "grunt": "cackle", "gloss": "Swing left! Swing right! Fun!", "say": "Swing left! Swing right! Fun!", "emotion": "excited"}
+        ]
+      }
+    },
+    "windDive": {
+      "priority": 5,
+      "cooldown": 25,
+      "ttl": 1.5,
+      "chance": 0.5,
+      "mood": "worried",
+      "pending": "text",
+      "group": "weather",
+      "lines": [
+        {"speaker": "rook", "text": "One's riding the gust down!", "emotion": "urgent"},
+        {"speaker": "kestrel", "text": "Diver on the wind. It'll curve in.", "emotion": "urgent"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 25,
+        "ttl": 2,
+        "delay": 0.4,
+        "lines": [
+          {"speaker": "gorrak", "grunt": "warcry", "gloss": "Ride the gust! Down we go!", "say": "Ride the gust! Down we go!", "emotion": "triumphant"},
+          {"speaker": "sliss", "grunt": "cackle", "gloss": "Wind at my back! Wheee!", "say": "Wind at my back! Wheee!", "emotion": "excited"},
+          {"speaker": "ulgra", "grunt": "snarl", "gloss": "The sky carries me to you.", "say": "The sky carries me to you.", "emotion": "stern"}
+        ]
+      }
+    },
+    "stormStart": {
+      "priority": 5,
+      "cooldown": 90,
+      "ttl": 4,
+      "mood": "worried",
+      "pending": "text",
+      "group": "weather",
+      "lines": [
+        {"speaker": "kestrel", "text": "Lightning in this storm. Watch for the amber marks.", "emotion": "calm"},
+        {"speaker": "sunny", "text": "Thunderstorm! Bolts won't hurt you, but they'll strip your gear.", "emotion": "urgent"},
+        {"speaker": "anvil", "text": "Storm's live. Lure the bolts onto them.", "emotion": "stern"}
+      ],
+      "demon": {
+        "priority": 3,
+        "cooldown": 90,
+        "ttl": 4,
+        "delay": 1.0,
+        "lines": [
+          {"speaker": "skarn", "grunt": "roar", "gloss": "Thunder! The sky sings for us!", "say": "Thunder! The sky sings for us!", "emotion": "triumphant"},
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "Our storm. Our home. Mind your sparks.", "say": "Our storm. Our home. Mind your sparks.", "emotion": "teasing"}
+        ]
+      }
+    },
+    "stormStop": {
+      "priority": 3,
+      "cooldown": 90,
+      "ttl": 3,
+      "chance": 0.6,
+      "mood": "happy",
+      "pending": "text",
+      "group": "weather",
+      "lines": [
+        {"speaker": "nomad", "text": "Storm's moving off. Nice flying.", "emotion": "warm"},
+        {"speaker": "wisp", "text": "No more bolts. Sky's clearing.", "emotion": "calm"}
+      ],
+      "demon": {
+        "priority": 2,
+        "cooldown": 90,
+        "ttl": 3,
+        "delay": 1.0,
+        "lines": [
+          {"speaker": "morth", "grunt": "alarm", "gloss": "Come back, thunder! Come back!", "say": "Come back, thunder! Come back!", "emotion": "panicked"},
+          {"speaker": "skarn", "grunt": "snarl", "gloss": "The sky goes quiet. We do not.", "say": "The sky goes quiet. We do not.", "emotion": "stern"}
+        ]
+      }
+    },
+    "rainStart": {
+      "priority": 2,
+      "cooldown": 180,
+      "ttl": 3,
+      "chance": 0.5,
+      "mood": "happy",
+      "pending": "text",
+      "group": "weather",
+      "lines": [
+        {"speaker": "sparrow", "text": "Rain coming in. Eyes up.", "emotion": "calm"},
+        {"speaker": "nomad", "text": "Here's the rain. Keep it steady.", "emotion": "warm"}
+      ],
+      "demon": {
+        "priority": 2,
+        "cooldown": 180,
+        "ttl": 3,
+        "delay": 1.2,
+        "lines": [
+          {"speaker": "nibb", "grunt": "cackle", "gloss": "Puddles! Splashy splashy!", "say": "Puddles! Splashy splashy!", "emotion": "excited"},
+          {"speaker": "vexxa", "grunt": "gloat", "gloss": "Rain on our wings. Home sweet home.", "say": "Rain on our wings. Home sweet home.", "emotion": "teasing"}
+        ]
+      }
     }
   }
 }

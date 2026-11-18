@@ -5,6 +5,7 @@ import 'creature_motion.dart';
 import 'insignia_painter.dart';
 import 'model.dart';
 import 'swarm_look.dart';
+import 'weather/wind_flap.dart'; // --- weather-everywhere
 
 /// One creature draw: the atlas cell, whether to tint it white (action
 /// frames without an authored flash), and the elite armour overlay cell with
@@ -208,6 +209,8 @@ abstract final class CombatAtlas {
   /// variant, direction and pose). Cells without one (death, overlays) fall
   /// back to the species' neutral head top raised by [lift].
   static Offset headAnchor(int row, int col, {int lift = 0}) {
+    // --- weather-everywhere: the wind-flap frames' own anchors.
+    if (WindFlap.isWind(row)) return WindFlap.headAnchor(row, col);
     final i = (row * columns + col) * 2;
     if (row >= 0 && i + 1 < _anchors.length && col >= 0 && col < columns) {
       final x = _anchors[i], y = _anchors[i + 1];

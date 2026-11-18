@@ -14,6 +14,7 @@ import '../model.dart';
 import 'levels/crosswind_painter.dart';
 import 'levels/stormfront_painter.dart';
 import 'levels/supply_run_painter.dart';
+import '../weather/storm_layer.dart'; // --- weather-everywhere
 
 /// Draws one level's mechanic. [time] is the presentation clock.
 abstract class BonusPainter {
@@ -46,9 +47,11 @@ abstract final class BonusPainters {
     ArcadeModel model,
   ) {
     final m = model.bonusMechanic;
-    if (m is! StormfrontMechanic) return const [];
+    // --- weather-everywhere: a regular sector's storm tells too.
+    final cell = m is StormfrontMechanic ? m.cell : model.stormCell;
+    if (cell == null) return const [];
     return [
-      for (final s in m.cell.strikes)
+      for (final s in cell.strikes)
         if (s.telling) (x: s.x, progress: s.tellProgress),
     ];
   }
@@ -62,7 +65,14 @@ class StormfrontPainter extends BonusPainter {
   void under(Canvas canvas, ArcadeModel model, double time) {
     final m = model.bonusMechanic;
     if (m is! StormfrontMechanic) return;
-    _storm.paintSky(canvas, m.cell, time: time, reduced: model.reducedMotion);
+    _storm.paintSky(
+      canvas,
+      m.cell,
+      time: time,
+      reduced: model.reducedMotion,
+      // --- weather-everywhere: reduced flashing (design §3).
+      noFlash: FlashSafety.reduced(reducedMotion: model.reducedMotion),
+    );
   }
 
   @override
@@ -70,8 +80,11 @@ class StormfrontPainter extends BonusPainter {
     final m = model.bonusMechanic;
     if (m is! StormfrontMechanic) return;
     final reduced = model.reducedMotion;
-    _storm.paintStrikes(canvas, m.cell, time: time, reduced: reduced);
-    final flash = StormPainter.flashOf(m.cell, reduced: reduced);
+    // --- weather-everywhere: reduced flashing steadies the tells and
+    // drops the wash (design §3).
+    final steady = FlashSafety.reduced(reducedMotion: reduced);
+    _storm.paintStrikes(canvas, m.cell, time: time, reduced: steady);
+    final flash = StormPainter.flashOf(m.cell, reduced: steady);
     if (flash > 0) {
       canvas.drawRect(
         const Rect.fromLTWH(0, 0, ArcadeModel.width, ArcadeModel.height),

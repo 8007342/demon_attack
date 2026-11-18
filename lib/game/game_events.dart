@@ -264,6 +264,22 @@ abstract final class GameEventNames {
   /// `gust`; `strength` 0-1; `endIn`). The music's `gust` stinger.
   static const windGust = 'windGust';
 
+  // --- weather-everywhere: a regular sector's lightning storm and the
+  // brood riding the wind (lib/game/model_weather.dart). Gameplay: queued
+  // by the model. The bolts themselves say `stormStrike` (a tell on the
+  // ship) and the lightning-rework events.
+
+  /// The storm begins striking (variant: the rain's tier, `rain` or
+  /// `downpour`; data `sector`).
+  static const stormStart = 'stormStart';
+
+  /// The storm has passed (the rain eased under the storm's threshold).
+  static const stormStop = 'stormStop';
+
+  /// A smart creature rides a tailwind into its dive (data `x`, `side`
+  /// it blows to, `sentinel`, `elite`).
+  static const windDive = 'windDive';
+
   static const weather = [
     rainStart,
     rainStop,
@@ -271,6 +287,9 @@ abstract final class GameEventNames {
     windStart,
     windStop,
     windGust,
+    stormStart, // --- weather-everywhere
+    stormStop,
+    windDive,
   ];
 
   static const all = [

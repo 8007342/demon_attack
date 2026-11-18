@@ -17,6 +17,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import '../model.dart';
+import 'storm_layer.dart'; // --- weather-everywhere: FlashSafety
 
 /// The rod armour's candidate shapes (the review sheet compares them;
 /// [LightningPainter.pick] is the pick, plan/render-runs/lightning-rework.md).
@@ -47,11 +48,17 @@ abstract final class LightningPainter {
   }
 
   /// Whether the ship is hidden this frame: it flickers for the first half
-  /// of its zap (never with reduced motion).
+  /// of its zap (never with reduced motion or reduced flashing).
+  /// weather-everywhere: at [flickerHz] (was 10 Hz, 20 toggles a second),
+  /// within WCAG 2.3.1's three flashes a second now that lightning comes to
+  /// every sector.
   static bool shipFlickerOff(ArcadeModel m) =>
-      !m.reducedMotion &&
+      !FlashSafety.reduced(reducedMotion: m.reducedMotion) &&
       m.shipShock > LightningTuning.shipShock / 2 &&
-      (m.visualClock * 20).floor().isOdd;
+      (m.visualClock * flickerHz * 2).floor().isOdd;
+
+  /// The zap flicker's rate (hidden then shown, per second).
+  static const flickerHz = 3.0;
 
   /// A creature's lightning gear and state, drawn in its own transform
   /// around [pos] at scale 1 (40-unit body; [large]: the 128-unit

@@ -246,3 +246,31 @@ on the audio studio (tillandsias#1103).
 | `windGust.d1` | demon | skarn | triumphant | [roar] The gale answers the brood! | (text card) |
 | `windStop.h0` | human | anvil | calm | Wind's dying down. Back to straight shooting. | (text card) |
 | `windStop.h1` | human | nomad | warm | Calm air again. Enjoy it while it lasts. | (text card) |
+| `windStart.gale.h0` | human | rook | urgent | Gale rising! Aim into it. | (text card) |
+| `windStart.gale.h1` | human | kestrel | calm | Strong wind, pilot. Lead your shots upwind. | (text card) |
+| `windStart.gale.h2` | human | sparrow | excited | Whoa, it's really blowing now! | (text card) |
+| `windStart.gale.d0` | demon | skarn | triumphant | [roar] The gale wakes! Wings wide! | (text card) |
+| `windStart.gale.d1` | demon | nibb | excited | [cackle] Whee! Best weather ever! | (text card) |
+| `windGust.swing.h0` | human | wisp | urgent | Wind's turning! Check the sock. | (text card) |
+| `windGust.swing.h1` | human | anvil | calm | Wind shift. Re-aim. | (text card) |
+| `windGust.swing.h2` | human | sunny | urgent | Other way now! Adjust! | (text card) |
+| `windGust.swing.d0` | demon | vexxa | teasing | [gloat] The sky turns, and we turn with it. | (text card) |
+| `windGust.swing.d1` | demon | morth | excited | [cackle] Swing left! Swing right! Fun! | (text card) |
+| `windDive.h0` | human | rook | urgent | One's riding the gust down! | (text card) |
+| `windDive.h1` | human | kestrel | urgent | Diver on the wind. It'll curve in. | (text card) |
+| `windDive.d0` | demon | gorrak | triumphant | [warcry] Ride the gust! Down we go! | (text card) |
+| `windDive.d1` | demon | sliss | excited | [cackle] Wind at my back! Wheee! | (text card) |
+| `windDive.d2` | demon | ulgra | stern | [snarl] The sky carries me to you. | (text card) |
+| `stormStart.h0` | human | kestrel | calm | Lightning in this storm. Watch for the amber marks. | (text card) |
+| `stormStart.h1` | human | sunny | urgent | Thunderstorm! Bolts won't hurt you, but they'll strip your gear. | (text card) |
+| `stormStart.h2` | human | anvil | stern | Storm's live. Lure the bolts onto them. | (text card) |
+| `stormStart.d0` | demon | skarn | triumphant | [roar] Thunder! The sky sings for us! | (text card) |
+| `stormStart.d1` | demon | vexxa | teasing | [gloat] Our storm. Our home. Mind your sparks. | (text card) |
+| `stormStop.h0` | human | nomad | warm | Storm's moving off. Nice flying. | (text card) |
+| `stormStop.h1` | human | wisp | calm | No more bolts. Sky's clearing. | (text card) |
+| `stormStop.d0` | demon | morth | panicked | [alarm] Come back, thunder! Come back! | (text card) |
+| `stormStop.d1` | demon | skarn | stern | [snarl] The sky goes quiet. We do not. | (text card) |
+| `rainStart.h0` | human | sparrow | calm | Rain coming in. Eyes up. | (text card) |
+| `rainStart.h1` | human | nomad | warm | Here's the rain. Keep it steady. | (text card) |
+| `rainStart.d0` | demon | nibb | excited | [cackle] Puddles! Splashy splashy! | (text card) |
+| `rainStart.d1` | demon | vexxa | teasing | [gloat] Rain on our wings. Home sweet home. | (text card) |

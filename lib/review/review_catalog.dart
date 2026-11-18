@@ -765,9 +765,9 @@ const scenePages = <ScenePage>[
   ),
   ScenePage(
     'weather',
-    'Weather: drizzle, rain and downpour',
+    'Weather: rain, wind, lightning and the brood in the wind',
     GameArea.weather,
-    ['dynamic-weather', 'fog-restoration'],
+    ['dynamic-weather', 'fog-restoration', 'crosswind', 'weather-everywhere'],
     live: true,
   ),
   ScenePage('bonus', 'Bonus levels', GameArea.bonus, [

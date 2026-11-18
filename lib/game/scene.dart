@@ -12,6 +12,9 @@ import 'atmosphere.dart';
 import 'weather/lightning_painter.dart'; // --- lightning-rework
 import 'weather/rain_layer.dart';
 import 'weather/wind_layer.dart'; // --- crosswind
+import 'weather/storm_layer.dart'; // --- weather-everywhere
+import 'weather/wind_flap.dart'; // --- weather-everywhere
+import 'wind_flap_atlas.dart'; // --- weather-everywhere
 import 'attract.dart';
 import 'boss_director.dart';
 import 'ground_atmosphere.dart';
@@ -62,6 +65,10 @@ class DemonScene extends FlameGame {
   static bool _never() => false;
   ui.Image? atlas, effectsAtlas, sky, cockpitAtlas;
 
+  /// --- weather-everywhere: the brood's wind-flap frames (virtual rows
+  /// of [atlas] from [WindFlap.rowBase]).
+  ui.Image? windFlapAtlas;
+
   /// The foreshadow silhouette sheet (tools/sentinel_silhouettes); the
   /// placeholder from the flight frames is drawn while it is missing.
   ui.Image? silhouetteAtlas;
@@ -102,6 +109,9 @@ class DemonScene extends FlameGame {
 
   // --- crosswind: the wind's clouds, wisps and windsock.
   final wind = WindLayer();
+
+  // --- weather-everywhere: a regular sector's lightning storm.
+  final storm = StormLayer();
   final music = MusicDirector(); // --- music event hook (read-only)
   // --- phone-performance: the quality tier (from measured frame
   // intervals) and the batched, interpolated shot layer.
@@ -144,6 +154,7 @@ class DemonScene extends FlameGame {
     try {
       atlas = await images.load('combat.png');
       effectsAtlas = await images.load('sentinel-effects.png');
+      windFlapAtlas = await images.load(WindFlapAtlas.asset); // --- weather-everywhere
     } catch (e) {
       assetError = '$e';
     }
@@ -252,6 +263,7 @@ class DemonScene extends FlameGame {
     atmosphere.tierReduced = b.fogReduced;
     rain.budget = b.rainScale;
     wind.budget = b.windScale; // --- crosswind
+    storm.lite = !b.sparks; // --- weather-everywhere: LITE drops branches
     sectors.moteScale = b.moteScale;
     // --- hatch-emergence §5: LITE skips the emergence and the vents.
     emergence
@@ -339,6 +351,12 @@ class DemonScene extends FlameGame {
       rain.advance(dt, model, reduced: sectors.flyover.reducedMotion);
       // --- crosswind: the wind's look; a shower slants with it.
       wind.advance(dt, model, reduced: sectors.flyover.reducedMotion);
+      // --- weather-everywhere: the storm's look follows the settings.
+      storm
+        ..reducedMotion = sectors.flyover.reducedMotion
+        ..reducedFlash = FlashSafety.reduced(
+          reducedMotion: sectors.flyover.reducedMotion,
+        );
       if (wind.amount > .02) {
         rain.wind += (wind.lateral * .3 - rain.wind) * wind.amount;
       }
@@ -547,6 +565,7 @@ class DemonScene extends FlameGame {
         cloud: atmosphere.cloud,
         blur: budget.blur,
       ); // --- crosswind
+      storm.paintSky(canvas, model); // --- weather-everywhere: cloud glow
       if (active && combat) {
         // --- bonus levels: a level's mechanic, under the fight.
         BonusPainters.under(canvas, model, model.visualClock);
@@ -579,6 +598,7 @@ class DemonScene extends FlameGame {
         _mark(canvas, 'overlay');
         // --- bonus levels: a level's mechanic, over the fight.
         BonusPainters.over(canvas, model, model.visualClock);
+        storm.paintOver(canvas, model); // --- weather-everywhere: bolts
         wind.paintSock(canvas); // --- crosswind: the windsock
         _bossOverflight(canvas); // --- boss-grandeur: over the ship
         _cinematic(canvas);
@@ -1002,8 +1022,11 @@ class DemonScene extends FlameGame {
     ColorFilter? filter,
     double opacity = 1,
   }) {
-    final a = atlas;
+    // --- weather-everywhere: virtual rows address the wind-flap atlas.
+    final wf = WindFlap.isWind(row);
+    final a = wf ? windFlapAtlas : atlas;
     if (a == null) return;
+    if (wf) row -= WindFlap.rowBase;
     final paint = Paint()
       ..isAntiAlias = false
       ..color = Colors.white.withValues(alpha: opacity)
@@ -1212,11 +1235,17 @@ class DemonScene extends FlameGame {
         c.rotate(roll);
         c.translate(-pos.dx, -pos.dy);
       }
-      final cell = CombatAtlas.creature(
+      // --- weather-everywhere: fighting the wind, the wind-flap frames.
+      final cell = WindFlap.cell(
         d,
+        CombatAtlas.creature(
+          d,
+          model.clock,
+          fireAge: creatures.fireAge(d),
+          motion: creatures.motion.of(d),
+        ),
         model.clock,
-        fireAge: creatures.fireAge(d),
-        motion: creatures.motion.of(d),
+        lateral: windFlapAtlas == null ? 0 : model.wind.lateral,
       );
       final size = d.angry ? 44.0 : 40.0;
       final far =

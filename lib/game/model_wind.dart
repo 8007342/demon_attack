@@ -74,6 +74,7 @@ extension ArcadeWind on ArcadeModel {
       ..told = -1e9
       ..blowing = false
       ..gusts = 0;
+    _stormBeginLevel(); // --- weather-everywhere: the level's storm
   }
 
   /// One combat step: the field at the level clock, and its calls.
@@ -88,6 +89,7 @@ extension ArcadeWind on ArcadeModel {
       run.blowing = true;
       _queueGameEvent(GameEventNames.windStart, {
         'tier': f.spec.tier.name,
+        'variant': f.spec.tier.name, // --- weather-everywhere: radio
         'sector': level,
         'side': run.now.lateral < 0 ? 'left' : 'right',
       });
@@ -107,6 +109,9 @@ extension ArcadeWind on ArcadeModel {
           'from': after < 0 ? 'right' : 'left', // where it blows from
           'to': after < 0 ? 'left' : 'right',
           'gust': s.gust,
+          // --- weather-everywhere: a swing (the wind turns) has its own
+          // radio lines; a gust keeps the trigger's own.
+          if (!s.gust) 'variant': 'swing',
           'strength': double.parse(after.abs().toStringAsFixed(2)),
           'endIn': WindField.lead,
         });
@@ -192,7 +197,11 @@ extension ArcadeWindDemons on ArcadeModel {
     final drift = windDrift;
     final k = math.min(1.0, dt / pushSettle);
     for (final d in demons) {
-      final target = drift * windYield(d) * pushHorizon;
+      // --- weather-everywhere: a smart diver rides a tailwind (a curve).
+      final ride = _windRide(d);
+      final target = ride
+          ? drift * ArcadeWindDive.rideYield * ArcadeWindDive.rideHorizon
+          : drift * windYield(d) * pushHorizon;
       d.windOffset += (target - d.windOffset) * k;
       final x = d.x + d.windOffset;
       final clamped = x.clamp(18.0, ArcadeModel.width - 18.0);
