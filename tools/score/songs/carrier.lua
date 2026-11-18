@@ -227,6 +227,12 @@ return function(A, spec, seed)
     for b = 1, 8 do s:chord('brass', (b - 1) * 4, b > 4 and 3.8 or 1, A.voicing(harmony[b]:match('^[^|]+'), P('F3'), 3), b > 4 and 90 or 104) end
     for b = 1, 8 do s:note('timpani', (b - 1) * 4, 1, b % 2 == 1 and 'F2' or 'C2', 108) end
     for b = 1, 8, 2 do s:note('bells', (b - 1) * 4, 3, 'F5', 82) end
+    -- --- demon-choir: the brood choir (sampled only: silent while the bank is off). Root drones from F2 on the
+    -- harmony, "oh" (velocity <= 84) for four bars, then "ah". Root only and no grunts: each zone is already an
+    -- ensemble, and the core already peaks at 29 voices, so the 1UP stinger (+3) still fits under 32. The core's
+    -- shouts are the dive war cries (the `warcry` stinger). Written last, so the other humanised velocities stay put.
+    A.drones(s, 'brood', harmony, P('F2'), 72, 1, 4, true)
+    A.drones(s, 'brood', harmony, P('F2'), 102, 5, 8, true)
   end
 
   -- collapse (8 bars, then the victory): monumental half-time doom finale --------------------------------------

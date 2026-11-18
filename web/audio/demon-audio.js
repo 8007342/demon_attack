@@ -105,7 +105,8 @@
   }
 
   // --- the score (demon-score.js, loaded first; absent in older pages and tests).
-  const score = window.demonScore?.create({ input: () => drop, lifeLoss }) || null;
+  // demon-choir: `speaking()` lets a stinger marked `speech: yield` (the dive war cry) give way to a radio line.
+  const score = window.demonScore?.create({ input: () => drop, lifeLoss, speaking: () => !!context && duckDepthAt(context.currentTime) > 0 }) || null;
 
   function schedule() {
     if (!context || paused || context.state !== 'running') return;

@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:demon_attack/comms/squad_comms.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/music_director.dart';
+import 'package:demon_attack/game/song_map.dart';
 import 'package:demon_attack/main.dart';
 import 'package:demon_attack/services/run_storage.dart';
 import 'package:demon_attack/services/scores.dart';
@@ -219,6 +220,20 @@ void main() {
       );
       bridge(const GameEvent(GameEventNames.musicPowerLayer));
       expect(calls, [(2, true), (0, false)]);
+    });
+
+    // demon-choir: a dive war cry plays the score's `warcry` stinger.
+    test('the bridge turns a dive war cry into the warcry stinger', () {
+      final accents = <String>[];
+      final bridge = MusicBridge(
+        onIntensity: (_) {},
+        onAccent: accents.add,
+        onFleetIntact: () {},
+        onPowerLayer: (_, _) {},
+      );
+      bridge(const GameEvent(MusicBridge.diveCryEvent, {'speaker': 'krag'}));
+      expect(accents, ['warcry']);
+      expect(scoreAccents, contains(MusicBridge.diveCryAccent));
     });
   });
 }

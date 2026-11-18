@@ -286,7 +286,7 @@ function bankFromPlan(p) {
 }
 // search: the page's query (the bank is off by default: these tests switch it on with ?bank=1 unless they say
 // otherwise); stored: localStorage's contents (the /console choice).
-async function player({ bank = null, decode = 'now', phone = false, search = '?bank=1', stored = {} } = {}) {
+async function player({ bank = null, choir = null, decode = 'now', phone = false, search = '?bank=1', stored = {} } = {}) {
   let tick;
   const { AudioContext, started } = mockAudio({ decode });
   const fetched = [];
@@ -302,7 +302,8 @@ async function player({ bank = null, decode = 'now', phone = false, search = '?b
         if (!bank) return { ok: false };
         const name = url.pathname.slice('/audio/bank/'.length);
         if (name === 'bank.json') return { ok: true, async json() { return JSON.parse(JSON.stringify(bank)); } };
-        const sprite = bank.sprites.find(s => s.file === name);
+        if (name === 'choir.json') return choir ? { ok: true, async json() { return JSON.parse(JSON.stringify(choir)); } } : { ok: false };
+        const sprite = [...bank.sprites, ...(choir?.sprites || [])].find(s => s.file === name);
         const bytes = new TextEncoder().encode(JSON.stringify({ file: name, frames: Math.round(sprite.seconds * 48000), channels: sprite.channels }));
         return { ok: true, async arrayBuffer() { return bytes.buffer; } };
       }
@@ -332,10 +333,10 @@ async function playKrybor(p, seconds = 8) {
 }
 const shape = started => started.map(s => [s.kind, s.type || null, +s.at.toFixed(6), s.frequency ? +s.frequency.value.toFixed(3) : null]);
 
-test('8.12 no bank: the synth path is untouched (only bank.json is asked for), and a bank still decoding plays the same synth notes', { skip: !tools && 'needs lua' }, async () => {
+test('8.12 no bank: the synth path is untouched (only bank.json and choir.json are asked for), and a bank still decoding plays the same synth notes', { skip: !tools && 'needs lua' }, async () => {
   const none = await player();
   await playKrybor(none);
-  assert.deepEqual(none.fetched.filter(f => f.startsWith('/audio/bank/')), ['/audio/bank/bank.json']);
+  assert.deepEqual(none.fetched.filter(f => f.startsWith('/audio/bank/')), ['/audio/bank/bank.json', '/audio/bank/choir.json']);
   assert.ok(none.started.length > 500 && none.started.every(s => s.kind === 'osc' || !s.offset), 'oscillators and noise only');
   const state = none.audio.state.score;
   assert.equal(state.bank.present, false);
@@ -439,4 +440,83 @@ test('8.12 phones: only the phone tier loads (within 16 MB decoded), and the cap
   assert.ok(peak <= 32, `peak ${peak}`);
   // Desktop-only zones (bells, the high guitar) are not in the phone's map: those tracks stay synthesized.
   assert.ok(p.started.some(s => s.kind === 'buffer' && s.buffer?.file));
+});
+
+// --- demon-choir: the brood choir's bank (choir.json), its sampled-only roles and the dive war cry ------------------
+let choirPlanCache = null;
+function choirPlan() {
+  if (choirPlanCache) return choirPlanCache;
+  const r = lua(['tools/bank/bank_build.lua', '--recipe', 'art/music/bank/choir-recipe.json', '--dry-run', '--json']);
+  assert.equal(r.status, 0, r.stderr);
+  choirPlanCache = JSON.parse(r.stdout);
+  return choirPlanCache;
+}
+const choirFromPlan = () => ({ ...bankFromPlan(choirPlan()), budgets: { decodedDesktop: 9e6, decodedPhone: 0 } });
+
+test('demon-choir: the choir plan covers every brood, grunt and war-cry note, desktop only, within its budget', { skip: !tools && 'needs lua' }, async () => {
+  const p = choirPlan();
+  assert.deepEqual(p.over, []);
+  assert.ok(p.zones.every(z => !z.phone), 'no phone zones');
+  const roles = new Set(p.zones.flatMap(z => z.roles));
+  assert.deepEqual([...roles].sort(), ['brood', 'grunt', 'warcry']);
+  for (const role of ['brood', 'grunt', 'warcry']) assert.equal(p.roles[role].cover, 'full', `${role} is cover: full`);
+  // The vowel axis: "oh" for velocity <= 84, "ah" above, at every brood root.
+  const brood = p.zones.filter(z => z.inst === 'brood');
+  for (const root of new Set(brood.map(z => z.root))) {
+    assert.deepEqual(brood.filter(z => z.root === root).map(z => [z.layer, z.vlo, z.vhi]).sort(), [['ah', 85, 127], ['oh', 1, 84]]);
+  }
+  const r = lua(['tools/midi_stats.lua', 'check']);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /zones brood +\d+ notes +100\.0 % covered/);
+  assert.match(r.stdout, /zones grunt +\d+ notes +100\.0 % covered/);
+  assert.match(r.stdout, /sting warcry +\d+ key\(s\) +100\.0 %/);
+});
+
+test('demon-choir: off with the bank (no choir note, no war cry); on: brood and grunt zones, the war cry on an 8th in key, yielding to the radio', { skip: !tools && 'needs lua' }, async () => {
+  const bank = bankFromPlan(plan()), choir = choirFromPlan();
+  // Bank off: nothing under audio/bank/ is fetched, the brood and grunt tracks rest, and the war cry plays nothing.
+  const off = await player({ bank, choir, search: '' });
+  await playKrybor(off, 4);
+  assert.deepEqual(off.fetched.filter(f => f.startsWith('/audio/bank/')), []);
+  assert.equal(off.audio.accent('warcry'), null);
+  // Bank on: the choir's sprites load after the bank's, within the joined budget.
+  const p = await player({ bank, choir });
+  const s0 = p.audio.state.score;
+  assert.equal(s0.bank.choir, true);
+  assert.equal(s0.bank.loaded, bank.sprites.length + choir.sprites.length);
+  assert.ok(s0.bankDecodedBytes <= 41e6 + 9e6);
+  const fetchedSprites = p.fetched.filter(f => /\/audio\/bank\/(bank|choir)-/.test(f));
+  assert.ok(fetchedSprites.findIndex(f => f.includes('choir-')) > fetchedSprites.findLastIndex(f => f.includes('/bank-')), 'the choir loads last');
+  await playKrybor(p, 8);
+  const zones = [...bank.zones, ...choir.zones];
+  const zoneOf = s => zones.find(z => z.sprite === s.buffer.file && Math.abs(z.offset - s.offset) < 1e-9);
+  const choirSources = p.started.filter(s => s.kind === 'buffer' && s.buffer?.file?.startsWith('choir-'));
+  const insts = new Set(choirSources.map(s => zoneOf(s).inst));
+  assert.ok(insts.has('brood') && insts.has('grunt'), `choir instruments ${[...insts]}`);
+  // The first grunt of k:B lands on its downbeat, pitched to the bar's root (E2 = 40) from its zone's root.
+  const st = p.audio.state.score;
+  const grunts = choirSources.filter(s => zoneOf(s).inst === 'grunt');
+  const bs = manifest.songs.k.barSamples / 48000 / 4;
+  assert.ok(grunts.every(s => Math.abs(((s.at - st.startAt) / bs) % 2) < 1e-6), 'grunts on beats 1 and 3');
+  assert.ok(Math.abs(12 * Math.log2(grunts[0].playbackRate.value) - (40 - zoneOf(grunts[0]).root)) < 1e-6);
+  // The war cry: on the next 8th line of the section's grid, in E minor (tonic E3 = 52) from the F3 zone.
+  const before = p.started.length;
+  const anchor = p.audio.accent('warcry');
+  assert.ok(anchor > p.ctx().currentTime);
+  const eighths = (anchor - st.startAt) / (bs / 2);
+  assert.ok(Math.abs(eighths - Math.round(eighths)) < 1e-6, `anchor on an 8th (${eighths})`);
+  await p.run(.5);
+  const cry = p.started.slice(before).find(s => s.kind === 'buffer' && zoneOf(s)?.inst === 'warcry');
+  assert.ok(cry, 'the war cry sounds');
+  assert.ok(Math.abs(cry.at - anchor) < 1e-9);
+  assert.ok(Math.abs(12 * Math.log2(cry.playbackRate.value) - (52 - zoneOf(cry).root)) < 1e-6, 'pitched to the tonic');
+  // Rate limit: a second cry inside 8 beats plays nothing.
+  assert.equal(p.audio.accent('warcry'), null);
+  // The radio outranks it: while a line holds the speech duck, a cry gives way.
+  await p.run(8 * bs + .1);
+  const now = p.ctx().currentTime;
+  assert.ok(p.audio.duck('line', 6, now, now + 2));
+  assert.equal(p.audio.accent('warcry'), null);
+  await p.run(3);
+  assert.ok(p.audio.accent('warcry') > p.ctx().currentTime, 'once the line is over, the cry plays again');
 });

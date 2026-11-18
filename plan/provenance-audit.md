@@ -365,3 +365,15 @@ guidelines", https://courses.ecuad.ca/mod/page/view.php?id=358042, unread: snipp
 |---|---|---|
 | <a id="mb-dialogue-gap"></a>mb-dialogue-gap | A game's music bed commonly sits about 8–10 LU under dialogue (no longer used: mix-balance design §5 sets 2–4 LU by operator ruling) | the task's figure; the pages that discuss it reset, snippets disagree (3–12 dB) |
 | <a id="mb-duck-depth"></a>mb-duck-depth | A few dB of music duck under a line, with tens of ms attack and a few hundred ms release, is usual | Godot gives only the 250 ms default release; Wwise and FMOD docs reset |
+
+## Part DC: demon choir (`demon-choir`, added 2026-11-18)
+
+`plan/demon-choir-research.md` §7 marks these claims. On 2026-11-18 Wikipedia, arXiv, zenodo.org and the ISMIR archives
+reset the connection from the forge; only GitHub and Hugging Face answered. The synth's numbers are our judgement and
+are measured on its output (`plan/render-runs/demon-choir.md`); these claims only motivate them.
+
+| Id | Claim | Why unsourced |
+|---|---|---|
+| <a id="dc-rosenberg-pulse"></a>dc-rosenberg-pulse | The Rosenberg glottal pulse (raised-cosine opening, cosine closing) is a usable voice source | Rosenberg (1971) and Fant, Liljencrants & Lin (1985) not reachable; only an unlicensed LF implementation's README was read |
+| <a id="dc-growl-period-doubling"></a>dc-growl-period-doubling | Metal growl and kargyraa add energy at f0/2 (period doubling of the false folds), which alternating glottal periods imitate | no phonation study reachable; the scream-detection paper read describes the classes, not the mechanism |
+| <a id="dc-choir-scatter"></a>dc-choir-scatter | A choir's sound comes from small pitch scatter, independent vibrato and onset spread among its singers (Ternström) | Ternström's papers not reachable; the SATB F0 dataset that could measure it was found but not fetched |

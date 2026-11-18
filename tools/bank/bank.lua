@@ -247,13 +247,14 @@ function B.plan(recipe, rows, keys, opts)
     if not used[g] then errors[#errors + 1] = ('manifest group %s is in no instrument'):format(g) end
   end
   -- Sprites: one per (tier, phone, channels), loaded in that order (tier 1 first; phone sprites before desktop-only).
-  local sprites, byKey = {}, {}
+  -- --- demon-choir: a recipe's `name` (default `bank`) prefixes its sprites, so a second bank (choir.json) shares the folder.
+  local sprites, byKey, prefix = {}, {}, recipe.name or 'bank'
   for i, z in ipairs(zones) do
     z.id = ('%s-%s%s-rr%d'):format(z.inst, tostring(z.root or (z.keys and z.keys[1])), z.layer and ('-' .. z.layer) or '', z.rr)
     local key = ('%d%s%s'):format(z.tier, z.phone and 'p' or 'd', z.channels == 2 and 's' or 'm')
     local s = byKey[key]
     if not s then
-      s = { key = key, file = ('bank-%s.ogg'):format(key), tier = z.tier, phone = z.phone, channels = z.channels, zones = {} }
+      s = { key = key, file = ('%s-%s.ogg'):format(prefix, key), tier = z.tier, phone = z.phone, channels = z.channels, zones = {} }
       byKey[key] = s; sprites[#sprites + 1] = s
     end
     z.sprite = s.file

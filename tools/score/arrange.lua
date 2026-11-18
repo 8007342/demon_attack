@@ -198,6 +198,26 @@ function Section:pads(track, harmony, floor, count, v, t0, bars)
   end
 end
 
+-- --- demon-choir: the brood choir's parts (sampled-only tracks, design §3). Drones: the root and fifth of each
+-- harmony part (the root alone with `rootOnly`, where the voice budget is tight) from `floor`, bars b0..b1, at velocity v (the bank's vowel axis: <= 84 "oh", above "ah"). Grunts: a
+-- shout on every downbeat on the bar's first chord root from `floor` (velocity 120: the hardest syllable), and on
+-- beat 3 of every `every`-th bar a softer one (104).
+function A.drones(s, track, harmony, floor, v, b0, b1, rootOnly)
+  for b = b0, b1 do
+    for _, part in ipairs(A.split(harmony[b])) do
+      local r = A.root(part.sym, floor)
+      s:chord(track, (b - 1) * 4 + part.t, part.len - 0.05, rootOnly and { r } or { r, r + 7 }, v)
+    end
+  end
+end
+function A.grunts(s, track, harmony, floor, every)
+  for b = 1, #harmony do
+    local r = A.root(harmony[b]:match('^[^|]+'), floor)
+    s:note(track, (b - 1) * 4, 0.5, r, 120)
+    if b % every == 0 then s:note(track, (b - 1) * 4 + 2, 0.5, r, 104) end
+  end
+end
+
 -- Drums (GM) ----------------------------------------------------------------------------------------------------
 A.kit = { kick = 36, snare = 38, rim = 37, hat = 42, pedal = 44, open = 46, crash = 49, crash2 = 57, ride = 51,
   bell = 53, china = 52, splash = 55, tomHi = 50, tomHM = 48, tomLM = 47, tomLo = 45, floorHi = 43, floorLo = 41 }
@@ -254,7 +274,7 @@ end
 -- note of that key; `mono` roles (lead, bass) sound one note at a time; `pad` roles articulate, ending each chord
 -- half a beat before the next one so its release fits (the voice's release tail carries the legato).
 A.monoRoles = { lead = true, bass = true }
-A.padRoles = { organ = true, strings = true, choir = true, brass = true }
+A.padRoles = { organ = true, strings = true, choir = true, brass = true, brood = true }
 A.release = 0.5
 
 function Section:articulate(tracks)
@@ -323,7 +343,7 @@ end
 
 -- GM programs, for auditions in any MIDI player (the game's voices are chosen by track role).
 A.programs = { bass = 34, gtrL = 30, gtrR = 30, clean = 27, lead = 29, lead2 = 29, organ = 19, strings = 48,
-  brass = 61, choir = 52, timpani = 47, bells = 14, fanfare = 56, uke = 24 }
+  brass = 61, choir = 52, timpani = 47, bells = 14, fanfare = 56, uke = 24, brood = 53 }
 
 -- Writes the section as SMF type 1: a conductor track (tempo, 4/4, key, section marker), then one track per
 -- part in `order`, named by role. `total` beats is the file length (bars plus any hold bars).

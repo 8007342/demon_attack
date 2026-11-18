@@ -285,10 +285,22 @@ class MusicBridge {
   /// plays nothing.
   static const accentEvent = 'musicAccent';
 
+  // --- demon-choir: a dive war cry becomes music. The structured event
+  // `diveCry` (fang-and-wings-comms queues it as a demon dives; this is the
+  // stub name until that change lands) plays the score's `warcry` stinger: a
+  // shout sample on the next 8th of the playing section, pitched to its
+  // tonic, through the music bus. The score rate-limits it (8 beats), drops
+  // it while a radio line is speaking, and plays it only while the sample
+  // bank is on (it has no synth voice).
+  static const diveCryEvent = 'diveCry';
+  static const diveCryAccent = 'warcry';
+
   void call(GameEvent event) {
     final accent = accents[event.name];
     if (accent != null) {
       onAccent(accent);
+    } else if (event.name == diveCryEvent) {
+      onAccent(diveCryAccent);
     } else if (event.name == accentEvent) {
       final name = event.data['name'];
       if (name is String && scoreAccents.contains(name)) onAccent(name);

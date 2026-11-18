@@ -1,0 +1,24 @@
+repo	commit	group	path	bytes	git_blob_sha1	raw_url
+local/brood-synth	-	brood	brood_oh_C2.wav	499244	73cfba43ce9e0afeac874a20f9ef34783cbd0603	
+local/brood-synth	-	brood	brood_oh_F2.wav	499244	10cb04f8564f960abe6247e5572b018bb41a814b	
+local/brood-synth	-	brood	brood_oh_A#2.wav	499244	e35799ac8d77b4ce2bcb5cdd21251e015ef16105	
+local/brood-synth	-	brood	brood_oh_D#3.wav	499244	abe0cba3c56c28d52d1a3ad23d4c2bc9c7c29d79	
+local/brood-synth	-	brood	brood_oh_G#3.wav	499244	d6dd980d15ae3da2633a70f52fb537014727e92e	
+local/brood-synth	-	brood	brood_oh_C#4.wav	499244	5d0d29747fe376c43f1f98502b147e4c1a1a6647	
+local/brood-synth	-	brood	brood_ah_C2.wav	499244	feb7b62cc1576c4811d4e4bea007f268c62b12ac	
+local/brood-synth	-	brood	brood_ah_F2.wav	499244	de7f1b8e42dfbce7abef0f876b9711e0ccde53a1	
+local/brood-synth	-	brood	brood_ah_A#2.wav	499244	f91e1f1d3cee6d89bbf0981f1c7fa07746e112e1	
+local/brood-synth	-	brood	brood_ah_D#3.wav	499244	d6f7e9575fcfab8c0eb1948ab7b97747ac612a1e	
+local/brood-synth	-	brood	brood_ah_G#3.wav	499244	4abecaf10694fab10133e8b43336210b7ef7573b	
+local/brood-synth	-	brood	brood_ah_C#4.wav	499244	35cec98dda4046b1d64b5f7f9469e4d8d12504e1	
+local/acestep-picks	-	grunt	grunt_a_rr1.wav	76858	4a4923011c699aff5d0f848c131c8089b5a66397	
+local/acestep-picks	-	grunt	grunt_a_rr2.wav	71098	5a7c6aa236c5685d63ce878a52d9e1adbb469d41	
+local/acestep-picks	-	grunt	grunt_b_rr1.wav	71098	f9a4ec8e699284e366becfd76c869b7f2e4cea8e	
+local/acestep-picks	-	grunt	grunt_b_rr2.wav	73018	d7798fa6013a5b0276292f47e793a543e43abfb6	
+local/acestep-picks	-	grunt	grunt_c_rr1.wav	71098	07e7abb00edf23bbf0749e5037a6fdf959765eec	
+local/acestep-picks	-	grunt	grunt_c_rr2.wav	73018	44732b4a59eb5089f2bb18169d6ee385c78975b6	
+local/acestep-picks	-	grunt	grunt_d_rr1.wav	71098	d2e364d922f93920d73e2c496e41cc8598a41dba	
+local/acestep-picks	-	grunt	grunt_d_rr2.wav	71098	e9dfb015c43ecf03947615b781af05a22612858f	
+local/acestep-picks	-	warcry	cry_a_rr1.wav	307258	039db82ed673fcc3c08c4335a42f0bc58e2b9044	
+local/acestep-picks	-	warcry	cry_a_rr2.wav	307258	3a42e469ef80858e166f4b2bbd7690220849cee9	
+local/acestep-picks	-	warcry	cry_b_rr1.wav	326458	7b5ce26d04233ce818878f4df0c0a63fd8a09a95	

@@ -13,9 +13,9 @@ function decodeClip(path, channels = 1) {
   bytes.set([0x46, 0x33, 0x32, channels === 2 ? 0x53 : 0x4d]); bytes.set(pcm, 4);
   return bytes.buffer;
 }
-// The sample bank's sprites (web/audio/bank/bank-<tier><p|d><m|s>.ogg): decoded with their channel count, once per
+// The sample bank's sprites (web/audio/bank/bank-<tier><p|d><m|s>.ogg, and the brood choir's choir-…ogg): decoded with their channel count, once per
 // process (decodeAudioData copies, so pages can share the bytes).
-const bankSprite = path => path.match(/^audio\/bank\/bank-\w+?([ms])\.ogg$/);
+const bankSprite = path => path.match(/^audio\/bank\/(?:bank|choir)-\w+?([ms])\.ogg$/);
 const spriteCache = new Map();
 function decodeSprite(path, channels) {
   if (!spriteCache.has(path)) spriteCache.set(path, decodeClip(path, channels));
