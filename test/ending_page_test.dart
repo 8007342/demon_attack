@@ -84,7 +84,7 @@ void main() {
       find.text('MODELS USED TO MAKE THE ART, MUSIC AND VOICES'),
     );
     final licences = top(find.text('THIRD-PARTY LICENCES'));
-    final samples = top(find.text('CC0 SAMPLE LIBRARIES (COMING)'));
+    final samples = top(find.text('SAMPLE LIBRARIES (COMING)'));
     final engine = top(find.text('ENGINE AND LANGUAGES'));
     final built = top(find.text('BUILT WITH'));
     expect(creator, lessThan(cards));
@@ -194,7 +194,7 @@ void main() {
     }
   });
 
-  test('credits list every signed licence, the CC0 libraries as coming, '
+  test('credits list every signed licence, the sample libraries as coming, '
       'and the open-source projects with links', () {
     final sections = creditSections();
     Map<String, dynamic> by(String degree) =>
@@ -219,7 +219,16 @@ void main() {
     final samples = by('samples');
     expect(samples['title'], contains('coming'));
     for (final e in samples['entries'] as List) {
-      expect(e['license'], 'CC0 1.0');
+      expect(e['license'], anyOf('CC0 1.0', 'CC BY 4.0'));
+      // CC BY 4.0 (epic-choir, plan/choir-pins.md §1.2): the credit line, the changes and the licence link.
+      if (e['license'] == 'CC BY 4.0') {
+        expect(e['name'], contains('VocalSet'));
+        expect(e['source'], contains('Changed for this game'));
+        expect(
+          e['source'],
+          contains('https://creativecommons.org/licenses/by/4.0/'),
+        );
+      }
     }
     final projects = sections
         .where((s) => s['degree'] == 'projects')
