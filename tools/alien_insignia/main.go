@@ -14,6 +14,8 @@
 //	go run . montage -out x.png -cols 3 -scale 1 a.png b.png ...
 //	go run . gargoyle -root ../..        # art/contact/gargoyle-insignia.png (gargoyle.go)
 //	go run . candidates -root ../.. -out x.png  # the shapes tried per rank
+//	go run . candidates -set ranks -root ../.. -out x.png  # insignia-ranks' elite-grunt marks
+//	go run . ranks -root ../.. -waves DIR  # art/contact/insignia-ranks.png (ranks.go)
 package main
 
 import (
@@ -38,6 +40,8 @@ func main() {
 	out := fs.String("out", "", "output png (probe, montage)")
 	cols := fs.Int("cols", 3, "montage columns")
 	scale := fs.Int("scale", 1, "montage nearest scale")
+	set := fs.String("set", "", "candidates: 'ranks' for the insignia-ranks elite-grunt marks")
+	wavesDir := fs.String("waves", "", "ranks: tools/insignia_share.dart output dir")
 	ingameDir := fs.String("ingame", "", "gargoyle: review-test frame dir")
 	_ = fs.Parse(args)
 	switch verb {
@@ -52,7 +56,11 @@ func main() {
 		writeAtlas(*root)
 	case "candidates":
 		atlas := mustLoad(filepath.Join(*root, "assets/images/combat.png"))
-		mustSave(*out, candidatesSheet(atlas))
+		if *set == "ranks" {
+			mustSave(*out, candidateList(atlas, rankCandidates, "INSIGNIA RANKS - ELITE-GRUNT CANDIDATES"))
+		} else {
+			mustSave(*out, candidatesSheet(atlas))
+		}
 	case "gargoyle":
 		// gargoyle-insignia: the old-against-new review sheet. The in-game
 		// rows need the frames of test/gargoyle_insignia_review_test.dart
@@ -80,6 +88,21 @@ func main() {
 			path = filepath.Join(*root, "art/contact/gargoyle-insignia.png")
 		}
 		mustSave(path, gargoyleSheet(atlas, g))
+	case "ranks":
+		// insignia-ranks: the rare-mark ladder and two sample waves, old
+		// against new. -waves: the out-dir of tools/insignia_share.dart.
+		checkGlyphs()
+		atlas := mustLoad(filepath.Join(*root, "assets/images/combat.png"))
+		w := loadWaves(*wavesDir)
+		if w == nil {
+			fmt.Fprintln(os.Stderr, "no sample-waves.json in", *wavesDir, "- run dart run tools/insignia_share.dart <dir> first")
+			os.Exit(1)
+		}
+		path := *out
+		if path == "" {
+			path = filepath.Join(*root, "art/contact/insignia-ranks.png")
+		}
+		mustSave(path, ranksSheet2(atlas, w, shareRows(*wavesDir)))
 	case "probe":
 		atlas := mustLoad(filepath.Join(*root, "assets/images/combat.png"))
 		c := cell(atlas, *kind, 0, glideCol)

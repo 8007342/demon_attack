@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:demon_attack/game/insignia_atlas.dart';
 import 'package:demon_attack/game/insignia_painter.dart';
+import 'package:demon_attack/game/insignia_rank.dart';
 import 'package:demon_attack/game/model.dart';
 import 'package:demon_attack/game/scene.dart';
 import 'package:demon_attack/game/sprite_atlas.dart';
@@ -127,54 +128,62 @@ void main() {
   });
 
   group('glyphs and legibility (styleguide §7)', () {
-    test('every rank has its own glyph; drones none; carrier ladder', () {
+    test('every mark has its own glyph; none draws nothing; carrier '
+        'ladder', () {
       final keys = {
-        for (final r in AlienRank.values.skip(1))
+        for (final r in RankMark.values.skip(1))
           InsigniaPainter.glyphKey(r, InsigniaTone.bone),
       };
       expect(keys, hasLength(4));
-      for (final k in keys) {
+      for (final k in [
+        ...keys,
+        for (var f = 0; f < 4; f++) '${InsigniaPainter.carrierGlyph(f)}/bone',
+      ]) {
         expect(InsigniaAtlas.rects, contains(k));
       }
+      expect(InsigniaPainter.glyphOf(RankMark.none), '');
       expect(
-        [for (var f = 0; f < 4; f++) InsigniaPainter.carrierRank(f)],
-        [
-          AlienRank.skirmisher,
-          AlienRank.veteran,
-          AlienRank.hunter,
-          AlienRank.sentinel,
-        ],
+        [for (var f = 0; f < 4; f++) InsigniaPainter.carrierGlyph(f)],
+        ['fang', 'fang2', 'wingfang', 'wingcrown'],
       );
     });
 
-    test('strokes are 2 glyph px (2.7 units) and the smallest fill is at '
+    test('strokes are 2 glyph px (2.7 units) and every mark\'s fill is at '
         'least 9 x 6 units', () {
       expect(2 * InsigniaPainter.unitsPerGlyphPx, closeTo(2.7, .01));
-      final fang = InsigniaPainter.sizeOf('fang/bone');
       // The atlas rect carries a 1 glyph px outline on each side.
       final outline = 2 * InsigniaPainter.unitsPerGlyphPx;
-      expect(fang.width - outline, greaterThanOrEqualTo(9));
-      expect(fang.height - outline, greaterThanOrEqualTo(6));
+      for (final g in [
+        for (final r in RankMark.values.skip(1)) InsigniaPainter.glyphOf(r),
+        'fang',
+        'fang2',
+      ]) {
+        final s = InsigniaPainter.sizeOf('$g/bone');
+        expect(s.width - outline, greaterThanOrEqualTo(9), reason: g);
+        expect(s.height - outline, greaterThanOrEqualTo(6), reason: g);
+      }
     });
 
-    // gargoyle-insignia (design §3): the fang-and-wing ladder escalates at
-    // a glance: every rank is wider than the one below it, and the two
-    // winged officer marks carry the ember core the fangs do not.
-    test('the gargoyle ladder widens with rank; officers carry ember', () {
-      final widths = [
-        for (final r in AlienRank.values.skip(1))
-          InsigniaPainter.sizeOf(InsigniaPainter.glyphKey(r, InsigniaTone.bone))
-              .width,
-      ];
-      for (var i = 1; i < widths.length; i++) {
-        expect(widths[i], greaterThan(widths[i - 1]), reason: 'rank $i');
+    // insignia-ranks (design §2): the ladder escalates at a glance: both
+    // elite-grunt marks are narrower and shorter than Fang and Wings, which
+    // is narrower than the winged crown.
+    test('the mark ladder escalates: elite grunts < fang and wings < '
+        'winged crown', () {
+      ui.Size size(RankMark r) => InsigniaPainter.sizeOf(
+        InsigniaPainter.glyphKey(r, InsigniaTone.bone),
+      );
+      final fw = size(RankMark.fangWings), wc = size(RankMark.wingCrown);
+      for (final g in [RankMark.winglet, RankMark.crownlet]) {
+        expect(size(g).width, lessThan(fw.width), reason: g.name);
+        expect(size(g).height, lessThan(fw.height), reason: g.name);
       }
+      expect(wc.width, greaterThan(fw.width));
       expect(
-        InsigniaPainter.glyphKey(AlienRank.skirmisher, InsigniaTone.bone),
-        'fang/bone',
+        InsigniaPainter.glyphKey(RankMark.fangWings, InsigniaTone.bone),
+        'wingfang/bone',
       );
       expect(
-        InsigniaPainter.glyphKey(AlienRank.sentinel, InsigniaTone.angry),
+        InsigniaPainter.glyphKey(RankMark.wingCrown, InsigniaTone.angry),
         'wingcrown/angry',
       );
     });
@@ -215,7 +224,7 @@ void main() {
     test('a fixed size under camera zoom; positions follow the camera', () {
       final p = InsigniaPainter()
         ..begin()
-        ..rank(Object(), AlienRank.hunter, const Offset(100, 100))
+        ..rank(Object(), RankMark.fangWings, const Offset(100, 100))
         ..cell(const Offset(100, 130), ShieldCell.lit);
       final z1 = p.layout();
       const centre = Offset(180, 260);
@@ -237,8 +246,8 @@ void main() {
       List<InsigniaMark> frame(double now, Offset lowAt) {
         p
           ..begin()
-          ..rank(low, AlienRank.skirmisher, lowAt)
-          ..rank(high, AlienRank.hunter, const Offset(100, 100));
+          ..rank(low, RankMark.winglet, lowAt)
+          ..rank(high, RankMark.fangWings, const Offset(100, 100));
         return p.layout(now: now);
       }
 
@@ -261,8 +270,8 @@ void main() {
       expect(InsigniaPainter.revealAlpha(.6), 0);
       expect(InsigniaPainter.revealAlpha(.75), 1);
       final (m, scene) = bareScene();
-      final fogged = Demon(100, 120, 2, 3, 1)..nearness = .05;
-      final clear = Demon(220, 120, 2, 3, 2)..nearness = 1;
+      final fogged = Demon(100, 120, 2, 3, 0)..nearness = .05;
+      final clear = Demon(220, 120, 2, 3, 3)..nearness = 1;
       m.demons.addAll([fogged, clear]);
       final marks = paintMarks(scene);
       expect(marks.where((k) => k.owner == fogged), isEmpty);
@@ -272,12 +281,12 @@ void main() {
     test('drones carry nothing; the glyph rides the head anchor', () {
       final (m, scene) = bareScene();
       final drone = Demon(80, 150, 0, 1, 1)..nearness = 1;
-      final vet = Demon(200, 150, 1, 4, 2)..nearness = 1;
+      final vet = Demon(200, 150, 2, 3, 6)..nearness = 1;
       m.demons.addAll([drone, vet]);
       final marks = paintMarks(scene);
       expect(marks.where((k) => k.owner == drone), isEmpty);
       final g = marks.singleWhere((k) => k.owner == vet);
-      expect(g.key, 'fang2/bone');
+      expect(g.key, 'winglet/bone');
       // Just above the skull: 5-12 units above the body centre.
       expect(150 - g.rect.bottom, inInclusiveRange(5, 12));
       expect((g.rect.center.dx - 200).abs(), lessThan(4));
@@ -285,19 +294,19 @@ void main() {
 
     test('angry glyphs turn gold; a telling creature flashes white', () {
       final (m, scene) = bareScene();
-      final angry = Demon(80, 150, 2, 3, 1)
+      final angry = Demon(80, 150, 2, 3, 0)
         ..nearness = 1
         ..hp = 1;
-      final tell = Demon(200, 150, 2, 3, 2)
+      final tell = Demon(200, 150, 2, 3, 3)
         ..nearness = 1
         ..telegraph = .5;
       m.demons.addAll([angry, tell]);
       final marks = paintMarks(scene);
-      expect(marks.singleWhere((k) => k.owner == angry).key, 'fang/angry');
+      expect(marks.singleWhere((k) => k.owner == angry).key, 'winglet/angry');
       final on = InsigniaPainter.tellOn(m.visualClock);
       expect(
         marks.singleWhere((k) => k.owner == tell).key,
-        on ? 'fang/tell' : 'fang/bone',
+        on ? 'winglet/tell' : 'winglet/bone',
       );
       expect(scene.rimCount, on ? 2 : 1);
       expect(InsigniaPainter.tellOn(1.05, reducedMotion: true), isTrue);

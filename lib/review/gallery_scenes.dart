@@ -15,6 +15,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 import '../game/ground_painter.dart';
+import '../game/insignia_rank.dart';
 import '../game/model.dart';
 import '../game/perf/frame_budget.dart';
 import '../game/scene.dart';
@@ -131,7 +132,16 @@ class GalleryTile {
 List<GalleryTile> galleryTiles(String id) => switch (id) {
   'elites' => [GalleryTile.scene('ELITES', _elites())],
   'actions' => [GalleryTile.scene('FIRE / DEATH', _actions())],
-  'insignia' => [GalleryTile.scene('TWIN-FANG INSIGNIA', _insignia())],
+  // --- insignia-ranks: the rare-mark ladder and the dense swarm (most of
+  // it now wears nothing); the live waves are their own (live) page.
+  'insignia' => [
+    GalleryTile.scene('RANK LADDER', _insigniaLadder()),
+    GalleryTile.scene('DENSE SWARM', _insignia()),
+  ],
+  'insignia-waves' => [
+    GalleryTile.scene('TOUR 1 SECTOR 4', sectorRun(4, wave: 2)),
+    GalleryTile.scene('TOUR 3 SECTOR 3', sectorRun(3, route: 2, wave: 3)),
+  ],
   'dive-shields' => _diveShields(),
   'spear-bearers' => _spearBearers(), // --- spear-bearers
   'weapons' => _weapons(),
@@ -417,6 +427,57 @@ GalleryScene _actions() {
         b.age += dt;
       }
       m.blasts.removeWhere((b) => b.age > .6);
+    },
+  );
+}
+
+/// insignia-ranks: the mark ladder, one row per mark, one column per
+/// species (the elite-grunt rows use the tough species 2-3, the only ones
+/// that can be picked): grunts (none), the elite grunt's winglet, the
+/// escort's crownlet, the hunter's Fang and Wings, and a sentinel's winged
+/// crown on top.
+GalleryScene _insigniaLadder() {
+  final m = stagedModel();
+  // Seeds whose elite-grunt roll is under (pick) or over (skip) the pick,
+  // from a bounded search.
+  double seed(bool picked) {
+    for (var i = 0; i < 200; i++) {
+      final d = Demon(0, 0, 2, 2, i * .25);
+      if (InsigniaRanks.eliteGrunt(d) == picked) return i * .25;
+    }
+    return 0;
+  }
+
+  final pick = seed(true), skip = seed(false);
+  const rows = [150.0, 210.0, 270.0, 330.0];
+  for (var col = 0; col < 4; col++) {
+    final x = 60.0 + col * 80;
+    final tough = 2 + col % 2;
+    m.demons.addAll([
+      Demon(x, rows[0], col, 2, skip)..nearness = 1,
+      Demon(x, rows[1], tough, 2, pick)..nearness = 1,
+      Demon(x, rows[2], tough, 2, pick, isEscort: true)..nearness = 1,
+      Demon(x, rows[3], col, 3, skip, elite: true)..nearness = 1,
+    ]);
+  }
+  m.demons.add(
+    Demon(
+      180,
+      70,
+      0,
+      9,
+      0,
+      archetype: EnemyArchetype.shieldSentinel,
+      shieldMax: 3,
+    )..nearness = 1,
+  );
+  return GalleryScene(
+    m,
+    stage: (m, dt, t) {
+      _noShip(m);
+      for (final d in m.demons) {
+        d.nearness = 1;
+      }
     },
   );
 }
