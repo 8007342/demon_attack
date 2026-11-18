@@ -1,0 +1,27 @@
+# Third-party licence acknowledgement (order 1956-ecpb, implements 1954-dvz9).
+# Signed over `statement` as SSHSIG in namespace tillandsias-approval@v1; verify with
+#   ssh-keygen -Y verify -n tillandsias-approval@v1 -I <grantor> -f <allowed_signers> -s <sig> < <statement>
+record: tillandsias-licence-acknowledgement v1
+licence: meta-llama-3-acceptable-use-policy
+licence_sha256: 716a6b46e9bc75220c7b78f27382f7d0b8ca4c95818661a0936c081708f87f7c
+covers: [bosonai/higgs-audio-v2-tokenizer]
+grantor: project-owner
+scope: project:demon_attack
+use: non-sale
+expiry: "standing"
+signed_at: "2026-11-18T07:04:28Z"
+strength: github-merge
+host: yoga
+statement: |
+  tillandsias-licence-acknowledgement v1
+  licence: meta-llama-3-acceptable-use-policy
+  licence_sha256: 716a6b46e9bc75220c7b78f27382f7d0b8ca4c95818661a0936c081708f87f7c
+  covers: bosonai/higgs-audio-v2-tokenizer
+  grantor: project-owner
+  scope: project:demon_attack
+  use: non-sale
+  expiry: standing
+  host: yoga
+  strength: github-merge
+  issued: 2026-11-18T07:04:28Z
+signature: ""
